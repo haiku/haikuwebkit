@@ -54,6 +54,7 @@ namespace WebGPU {
 class GPU;
 }
 
+enum class BroadcastFocusedElement : bool;
 enum class PlatformEventModifier : uint8_t;
 enum class TextDirection : bool;
 
@@ -85,6 +86,7 @@ class WorkerClient;
 struct AppHighlight;
 struct ContactInfo;
 struct ContactsRequestData;
+struct FocusOptions;
 struct ShareDataWithParsedURL;
 struct ViewportArguments;
 struct WindowFeatures;
@@ -163,7 +165,7 @@ public:
     bool canTakeFocus(FocusDirection) const;
     void takeFocus(FocusDirection);
 
-    void focusedElementChanged(Element*);
+    void focusedElementChanged(Element*, LocalFrame*, FocusOptions, BroadcastFocusedElement);
     void focusedFrameChanged(Frame*);
 
     WEBCORE_EXPORT RefPtr<Page> createWindow(LocalFrame&, const String& openedMainFrameName, const WindowFeatures&, const NavigationAction&);

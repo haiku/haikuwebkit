@@ -39,6 +39,7 @@
 #include "EventTargetInlines.h"
 #include "ExceptionOr.h"
 #include "HTMLNames.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "PlatformLocale.h"
 #include "RenderElement.h"

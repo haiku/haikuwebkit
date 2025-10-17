@@ -44,6 +44,7 @@
 #include "PseudoClassChangeInvalidation.h"
 #include "Quirks.h"
 #include "RenderBox.h"
+#include "RenderStyleInlines.h"
 #include "RenderTheme.h"
 #include "SelectionRestorationMode.h"
 #include "Settings.h"

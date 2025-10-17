@@ -224,6 +224,22 @@ void WebResourceLoadStatisticsStore::populateMemoryStoreFromDisk(CompletionHandl
     });
 }
 
+void WebResourceLoadStatisticsStore::loadWebsitesWithUserInteraction(CompletionHandler<void(HashSet<RegistrableDomain>&&)>&& completionHandler)
+{
+    if (isEphemeral())
+        return completionHandler({ });
+
+    ASSERT(RunLoop::isMain());
+    postTask([completionHandler = WTFMove(completionHandler)](auto& store) mutable {
+        HashSet<RegistrableDomain> domains;
+        if (RefPtr statisticsStore = store.m_statisticsStore)
+            domains = statisticsStore->loadWebsitesWithUserInteraction();
+        store.postTaskReply([domains = crossThreadCopy(WTFMove(domains)), completionHandler = WTFMove(completionHandler)] mutable {
+            completionHandler(WTFMove(domains));
+        });
+    });
+}
+
 void WebResourceLoadStatisticsStore::setResourceLoadStatisticsDebugMode(bool value, CompletionHandler<void()>&& completionHandler)
 {
     ASSERT(RunLoop::isMain());

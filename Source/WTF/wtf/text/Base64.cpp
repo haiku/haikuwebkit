@@ -175,7 +175,7 @@ void base64Encode(std::span<const std::byte> input, std::span<char16_t> destinat
     base64EncodeInternal(input, destination, options);
 }
 
-void base64Encode(std::span<const std::byte> input, std::span<LChar> destination, OptionSet<Base64EncodeOption> options)
+void base64Encode(std::span<const std::byte> input, std::span<Latin1Character> destination, OptionSet<Base64EncodeOption> options)
 {
     if (!destination.size())
         return;
@@ -309,7 +309,7 @@ String base64DecodeToString(StringView input, OptionSet<Base64DecodeOption> opti
     };
 
     if (input.is8Bit())
-        return toString(base64DecodeInternal<LChar, StringImplMalloc>(input.span8(), options));
+        return toString(base64DecodeInternal<Latin1Character, StringImplMalloc>(input.span8(), options));
     return toString(base64DecodeInternal<char16_t, StringImplMalloc>(input.span16(), options));
 }
 

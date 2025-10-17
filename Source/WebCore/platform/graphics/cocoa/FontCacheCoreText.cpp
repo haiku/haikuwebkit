@@ -232,7 +232,7 @@ bool FontCache::isSystemFontForbiddenForEditing(const String& fontFamily)
 static CTFontSymbolicTraits computeTraits(const FontDescription& fontDescription)
 {
     CTFontSymbolicTraits traits = 0;
-    if (fontDescription.italic())
+    if (fontDescription.fontStyleSlope())
         traits |= kCTFontTraitItalic;
     if (isFontWeightBold(fontDescription.weight()))
         traits |= kCTFontTraitBold;
@@ -257,7 +257,7 @@ SynthesisPair computeNecessarySynthesis(CTFontRef font, const FontDescription& f
 
     CTFontSymbolicTraits desiredTraits = computeTraits(fontDescription);
     CTFontSymbolicTraits actualTraits = 0;
-    if (isFontWeightBold(fontDescription.weight()) || isItalic(fontDescription.italic())) {
+    if (isFontWeightBold(fontDescription.weight()) || isItalic(fontDescription.fontStyleSlope())) {
         if (shouldComputePhysicalTraits == ShouldComputePhysicalTraits::Yes)
             actualTraits = CTFontGetPhysicalSymbolicTraits(font);
         else

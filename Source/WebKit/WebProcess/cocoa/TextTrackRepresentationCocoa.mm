@@ -35,7 +35,7 @@
 #import <WebCore/GraphicsContext.h>
 #import <WebCore/HTMLVideoElement.h>
 #import <WebCore/NativeImage.h>
-#import <WebCore/NodeInlines.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/Page.h>
 
 namespace WebKit {

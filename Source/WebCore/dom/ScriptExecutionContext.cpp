@@ -68,6 +68,7 @@
 #include "ServiceWorkerGlobalScope.h"
 #include "ServiceWorkerProvider.h"
 #include "Settings.h"
+#include "SocketProvider.h"
 #include "WebCoreJSClientData.h"
 #include "WebCoreOpaqueRoot.h"
 #include "WorkerGlobalScope.h"
@@ -1033,6 +1034,11 @@ bool ScriptExecutionContext::isAlwaysOnLoggingAllowed() const
 WebCoreOpaqueRoot root(ScriptExecutionContext* context)
 {
     return WebCoreOpaqueRoot { context };
+}
+
+RefPtr<SocketProvider> ScriptExecutionContext::protectedSocketProvider()
+{
+    return socketProvider();
 }
 
 } // namespace WebCore

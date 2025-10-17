@@ -34,6 +34,7 @@
 #include "LocalFrame.h"
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "SecurityOrigin.h"
 #include "SecurityOriginPolicy.h"

@@ -404,7 +404,13 @@ void UIScriptControllerMac::sendEventStream(JSStringRef eventsJSON, JSValueRef c
 
     auto currentTime = mach_absolute_time();
 
-    for (NSMutableDictionary *event in eventInfo[TopLevelEventInfoKey]) {
+    NSArray *events = eventInfo[TopLevelEventInfoKey];
+    for (NSUInteger i = 0; i < events.count; i++) {
+        NSMutableDictionary *event = events[i];
+        NSMutableDictionary *nextEvent = nil;
+
+        if (i + 1 < events.count)
+            nextEvent = events[i + 1];
 
         id eventType = event[EventTypeKey];
         if (!event[EventTypeKey]) {
@@ -450,8 +456,15 @@ void UIScriptControllerMac::sendEventStream(JSStringRef eventsJSON, JSValueRef c
             if (event[DeltaYKey])
                 deltaY = [event[DeltaYKey] floatValue];
 
+            // Look at the next ahead to see if it's momentum start
+            bool momentumWillBegin = false;
+            if (id phaseString = nextEvent[MomentumPhaseKey]) {
+                auto nextMomentumPhase = eventPhaseFromString(phaseString);
+                momentumWillBegin = nextMomentumPhase == EventSenderProxy::WheelEventPhase::Began;
+            }
+
             auto windowPoint = [webView convertPoint:CGPointMake(currentViewRelativeX, currentViewRelativeY) toView:nil];
-            eventSender->sendWheelEvent(currentTime, windowPoint.x, windowPoint.y, deltaX, deltaY, phase, momentumPhase);
+            eventSender->sendWheelEvent(currentTime, windowPoint.x, windowPoint.y, deltaX, deltaY, phase, momentumPhase, momentumWillBegin);
         }
 
         currentTime += nanosecondsEventInterval;

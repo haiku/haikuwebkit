@@ -30,10 +30,6 @@
 #include <WebCore/StylePrimitiveNumericTypes.h>
 
 namespace WebCore {
-
-struct Length;
-struct LengthPoint;
-
 namespace Style {
 
 struct PositionX : LengthWrapperBase<LengthPercentage<>> {
@@ -104,8 +100,6 @@ struct Position {
     {
     }
 
-    Position(const WebCore::LengthPoint&);
-
     bool operator==(const Position&) const = default;
 };
 template<size_t I> const auto& get(const Position& position)
@@ -139,13 +133,9 @@ template<> struct CSSValueConversion<PositionY> { auto operator()(BuilderState&,
 
 // MARK: - Evaluation
 
-template<> struct Evaluation<Position> {
-    auto operator()(const Position&, FloatSize, float zoom) -> FloatPoint;
+template<> struct Evaluation<Position, FloatPoint> {
+    auto operator()(const Position&, FloatSize, ZoomNeeded) -> FloatPoint;
 };
-
-// MARK: - Platform
-
-template<> struct ToPlatform<Position> { auto operator()(const Position&) -> WebCore::LengthPoint; };
 
 } // namespace Style
 } // namespace WebCore

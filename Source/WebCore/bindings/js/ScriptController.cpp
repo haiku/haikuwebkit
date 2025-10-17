@@ -55,6 +55,7 @@
 #include "ScriptSourceCode.h"
 #include "ScriptableDocumentParser.h"
 #include "Settings.h"
+#include "SpeculationRules.h"
 #include "TrustedType.h"
 #include "UserGestureIndicator.h"
 #include "WebCoreJITOperations.h"
@@ -971,6 +972,15 @@ void ScriptController::registerImportMap(const ScriptSourceCode& sourceCode, con
 
     if (newImportMap)
         globalObject->importMap().mergeExistingAndNewImportMaps(WTFMove(newImportMap.value()), reporter);
+}
+
+void ScriptController::registerSpeculationRules(const ScriptSourceCode& sourceCode, const URL& baseURL)
+{
+    RefPtr document = m_frame->document();
+    if (!document || !document->settings().speculationRulesPrefetchEnabled())
+        return;
+
+    document->speculationRules()->parseSpeculationRules(sourceCode.source(), baseURL, document->url());
 }
 
 } // namespace WebCore

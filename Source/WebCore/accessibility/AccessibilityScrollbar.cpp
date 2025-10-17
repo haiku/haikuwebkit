@@ -30,6 +30,7 @@
 #include "AccessibilityScrollbar.h"
 
 #include "AXObjectCache.h"
+#include "AccessibilityObjectInlines.h"
 #include "LocalFrameView.h"
 #include "ScrollView.h"
 #include "ScrollbarInlines.h"

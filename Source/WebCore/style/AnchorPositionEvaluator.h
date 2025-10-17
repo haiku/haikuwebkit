@@ -148,9 +148,10 @@ struct ResolvedAnchor {
 };
 
 struct AnchorPositionedToAnchorEntry {
-    // This key can be used to access the AnchorPositionedState struct of the current element
-    // in an AnchorPositionedStates map.
-    AnchorPositionedKey key;
+    // The pseudo-element identifier can be used to access the AnchorPositionedState struct
+    // of the current element in an AnchorPositionedStates map, in combination with the relevant
+    // Element object.
+    std::optional<PseudoElementIdentifier> pseudoElementIdentifier;
 
     Vector<ResolvedAnchor> anchors;
 
@@ -179,6 +180,7 @@ public:
     static AnchorToAnchorPositionedMap makeAnchorPositionedForAnchorMap(AnchorPositionedToAnchorMap&);
 
     static bool isAnchorPositioned(const RenderStyle&);
+    static bool isStyleTimeAnchorPositioned(const RenderStyle&);
     static bool isLayoutTimeAnchorPositioned(const RenderStyle&);
 
     static CSSPropertyID resolvePositionTryFallbackProperty(CSSPropertyID, WritingMode, const BuilderPositionTryFallback&);
@@ -191,6 +193,8 @@ public:
     static bool isImplicitAnchor(const RenderStyle&);
 
     static CheckedPtr<RenderBoxModelObject> defaultAnchorForBox(const RenderBox&);
+
+    static HashMap<AnchorPositionedKey, size_t> recordLastSuccessfulPositionOptions(const SingleThreadWeakHashSet<const RenderBox>& positionTryBoxes);
 
 private:
     static CheckedPtr<RenderBoxModelObject> findAnchorForAnchorFunctionAndAttemptResolution(BuilderState&, std::optional<ScopedName> elementName);

@@ -129,14 +129,17 @@ inline LayoutUnit blend(LayoutUnit from, LayoutUnit to, const BlendingContext& c
 
 inline IntPoint blend(const IntPoint& from, const IntPoint& to, const BlendingContext& context)
 {
-    return IntPoint(blend(from.x(), to.x(), context),
-        blend(from.y(), to.y(), context));
+    return IntPoint(blend(from.x(), to.x(), context), blend(from.y(), to.y(), context));
+}
+
+inline FloatPoint blend(const FloatPoint& from, const FloatPoint& to, const BlendingContext& context)
+{
+    return FloatPoint(blend(from.x(), to.x(), context), blend(from.y(), to.y(), context));
 }
 
 inline LayoutPoint blend(const LayoutPoint& from, const LayoutPoint& to, const BlendingContext& context)
 {
-    return LayoutPoint(blend(from.x(), to.x(), context),
-        blend(from.y(), to.y(), context));
+    return LayoutPoint(blend(from.x(), to.x(), context), blend(from.y(), to.y(), context));
 }
 
 } // namespace WebCore

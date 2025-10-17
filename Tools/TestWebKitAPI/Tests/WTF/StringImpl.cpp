@@ -753,7 +753,7 @@ TEST(WTF, StaticPrivateSymbolImpl)
 
 TEST(WTF, ExternalStringImplCreate8bit)
 {
-    constexpr LChar buffer[] = "hello";
+    constexpr Latin1Character buffer[] = "hello";
     constexpr size_t bufferStringLength = sizeof(buffer) - 1;
     bool freeFunctionCalled = false;
 
@@ -804,7 +804,7 @@ TEST(WTF, StringImplNotExternal)
 
 TEST(WTF, ExternalStringAtom)
 {
-    constexpr LChar buffer[] = "hello";
+    constexpr Latin1Character buffer[] = "hello";
     constexpr size_t bufferStringLength = sizeof(buffer) - 1;
     bool freeFunctionCalled = false;
 

@@ -100,6 +100,10 @@ public:
     virtual bool isSpatial() const { return false; }
 #endif
 
+#if ENABLE(SPATIAL_IMAGE_CONTROLS)
+    virtual bool isMaybePanoramic() const { return false; }
+#endif
+
     // ImageFrame Metadata
     virtual Seconds frameDurationAtIndex(unsigned) const { RELEASE_ASSERT_NOT_REACHED(); return 0_s; }
     virtual ImageOrientation frameOrientationAtIndex(unsigned) const { RELEASE_ASSERT_NOT_REACHED(); return ImageOrientation::Orientation::None; }

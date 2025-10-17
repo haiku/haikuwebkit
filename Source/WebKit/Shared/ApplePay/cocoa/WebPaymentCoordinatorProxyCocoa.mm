@@ -190,7 +190,7 @@ static RetainPtr<PKDateComponentsRange> toPKDateComponentsRange(const WebCore::A
 
 RetainPtr<PKShippingMethod> toPKShippingMethod(const WebCore::ApplePayShippingMethod& shippingMethod)
 {
-    RetainPtr<PKShippingMethod> result = [PAL::getPKShippingMethodClassSingleton() summaryItemWithLabel:shippingMethod.label.createNSString().get() amount:WebCore::toDecimalNumber(shippingMethod.amount)];
+    RetainPtr<PKShippingMethod> result = [PAL::getPKShippingMethodClassSingleton() summaryItemWithLabel:shippingMethod.label.createNSString().get() amount:WebCore::toProtectedDecimalNumber(shippingMethod.amount).get()];
     [result setIdentifier:shippingMethod.identifier.createNSString().get()];
     [result setDetail:shippingMethod.detail.createNSString().get()];
 #if HAVE(PASSKIT_SHIPPING_METHOD_DATE_COMPONENTS_RANGE)
@@ -326,7 +326,7 @@ RetainPtr<PKPaymentRequest> WebPaymentCoordinatorProxy::platformPaymentRequest(c
     }).get()];
 #endif
 
-    [result setPaymentSummaryItems:WebCore::platformSummaryItems(paymentRequest.total(), paymentRequest.lineItems())];
+    [result setPaymentSummaryItems:WebCore::platformSummaryItems(paymentRequest.total(), paymentRequest.lineItems()).get()];
 
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     [result setExpectsMerchantSession:YES];
@@ -500,7 +500,7 @@ void WebPaymentCoordinatorProxy::platformBeginApplePaySetup(const PaymentSetupCo
 
     auto request = adoptNS([PAL::allocPKPaymentSetupRequestInstance() init]);
     [request setConfiguration:configuration.platformConfiguration().get()];
-    [request setPaymentSetupFeatures:features.platformFeatures()];
+    [request setPaymentSetupFeatures:features.protectedPlatformFeatures().get()];
 
     auto completion = makeBlockPtr([reply = WTFMove(reply)](BOOL success) mutable {
         RunLoop::mainSingleton().dispatch([reply = WTFMove(reply), success]() mutable {

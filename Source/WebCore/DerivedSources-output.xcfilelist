@@ -2554,6 +2554,10 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableByteStreamController.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableByteStreamController.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStream.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStream.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBReader.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBReader.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBRequest.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamBYOBRequest.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultController.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultController.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSReadableStreamDefaultReader.cpp
@@ -3412,6 +3416,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportCloseInfo.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportCloseInfo.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportCongestionControl.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportCongestionControl.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportConnectionStats.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportConnectionStats.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportDatagramDuplexStream.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportDatagramDuplexStream.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportDatagramStats.cpp
@@ -3438,8 +3444,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportSendStreamOptions.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportSendStreamOptions.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportSendStreamStats.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportSendStreamStats.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportStats.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebTransportStats.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebXRBoundedReferenceSpace.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebXRBoundedReferenceSpace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebXRFrame+HandInput.cpp

@@ -31,8 +31,8 @@
 /* These need to be included first. */
 #include "pas_thread.h"
 #if defined(__has_include)
-#if __has_include(<System/pthread_machdep.h>)
-#include <System/pthread_machdep.h>
+#if __has_include(<pthread/tsd_private.h>)
+#include <pthread/tsd_private.h>
 #define PAS_HAVE_PTHREAD_MACHDEP_H 1
 #else
 #define PAS_HAVE_PTHREAD_MACHDEP_H 0
@@ -205,14 +205,6 @@ PAS_BEGIN_EXTERN_C;
 #ifndef PAS_SHOULD_PROFILE_BASIC_HEAP_PAGE
 #define PAS_SHOULD_PROFILE_BASIC_HEAP_PAGE(size_category) (false)
 #endif
-
-static PAS_ALWAYS_INLINE void pas_zero_memory(void* memory, size_t size)
-{
-    PAS_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    PAS_PROFILE(ZERO_MEMORY, memory, size);
-    memset(memory, 0, size);
-    PAS_ALLOW_UNSAFE_BUFFER_USAGE_END
-}
 
 /* NOTE: panic format string must have \n at the end. */
 PAS_API PAS_NO_RETURN void pas_panic(const char* format, ...) PAS_FORMAT_PRINTF(1, 2);

@@ -105,7 +105,7 @@ GStreamerPeerConnectionBackend::GStreamerPeerConnectionBackend(RTCPeerConnection
     auto& logObserver = webrtcLogObserverSingleton();
     logObserver.addWatch(logger());
 
-    auto identifier = makeString(hex(LOGIDENTIFIER.objectIdentifier));
+    auto identifier = makeString(LOGIDENTIFIER.objectIdentifier);
     GST_INFO_OBJECT(m_endpoint->pipeline(), "WebCore logs identifier for this pipeline is: %s", identifier.convertToASCIIUppercase().ascii().data());
 #endif
 }

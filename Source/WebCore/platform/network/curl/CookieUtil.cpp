@@ -81,7 +81,7 @@ bool domainMatch(const String& cookieDomain, const String& host)
     return false;
 }
 
-static std::optional<double> parseExpiresMS(std::span<const LChar> expires)
+static std::optional<double> parseExpiresMS(std::span<const Latin1Character> expires)
 {
     double tmp = parseDate(expires);
     if (isnan(tmp))
@@ -131,7 +131,7 @@ static void parseCookieAttributes(const String& attribute, bool& hasMaxAge, Cook
         }
     } else if (equalLettersIgnoringASCIICase(attributeName, "expires"_s) && !hasMaxAge) {
         // FIXME: This code passes a UTF-8 buffer to a function that expects to parse Latin1.
-        if (auto expiryTime = parseExpiresMS(byteCast<LChar>(attributeValue.utf8().span()))) {
+        if (auto expiryTime = parseExpiresMS(byteCast<Latin1Character>(attributeValue.utf8().span()))) {
             result.expires = expiryTime.value();
             result.session = false;
         } else if (!hasMaxAge) {

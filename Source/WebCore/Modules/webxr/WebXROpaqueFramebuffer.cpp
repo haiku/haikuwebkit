@@ -73,6 +73,12 @@ static void createAndBindCompositorBuffer(GL& gl, WebXRExternalRenderbuffer& buf
 
 static GL::ExternalImageSource makeExternalImageSource(PlatformXR::FrameData::ExternalTexture& imageSource, WebCore::IntSize size)
 {
+#if OS(ANDROID)
+    return GraphicsContextGLExternalImageSource {
+        .hardwareBuffer = RefPtr { imageSource },
+        .size = size,
+    };
+#else
     return GraphicsContextGLExternalImageSource {
         .fds = WTFMove(imageSource.fds),
         .strides = WTFMove(imageSource.strides),
@@ -81,6 +87,7 @@ static GL::ExternalImageSource makeExternalImageSource(PlatformXR::FrameData::Ex
         .modifier = imageSource.modifier,
         .size = size
     };
+#endif // OS(ANDROID)
 }
 
 static void createAndBindTempBuffer(GL& gl, WebXRExternalRenderbuffer& buffer, GCGLenum internalFormat, IntSize size)
@@ -436,7 +443,7 @@ bool WebXROpaqueFramebuffer::setupFramebuffer(GraphicsContextGL& gl, const Platf
 
 const std::array<WebXRExternalAttachments, 2>* WebXROpaqueFramebuffer::reusableDisplayAttachments(const PlatformXR::FrameData::ExternalTextureData& textureData) const
 {
-    if (!textureData.colorTexture.fds.isEmpty())
+    if (textureData.colorTexture)
         return nullptr;
 
     auto reusableTextureIndex = textureData.reusableTextureIndex;
@@ -472,8 +479,8 @@ void WebXROpaqueFramebuffer::bindCompositorTexturesForDisplay(GraphicsContextGL&
 
     releaseDisplayAttachmentsAtIndex(m_currentDisplayAttachmentIndex);
     for (int layer = 0; layer < layerCount; ++layer) {
-        ASSERT(!layerData.textureData->colorTexture.fds.isEmpty());
-        if (layerData.textureData->colorTexture.fds.isEmpty())
+        ASSERT(layerData.textureData->colorTexture);
+        if (!layerData.textureData->colorTexture)
             return;
 
         auto colorTextureSource = makeExternalImageSource(layerData.textureData->colorTexture, framebufferSize);
@@ -482,7 +489,7 @@ void WebXROpaqueFramebuffer::bindCompositorTexturesForDisplay(GraphicsContextGL&
         if (!m_displayAttachmentsSets[m_currentDisplayAttachmentIndex][layer].colorBuffer.image)
             return;
 
-        if (!layerData.textureData->depthStencilBuffer.fds.isEmpty()) {
+        if (layerData.textureData->depthStencilBuffer) {
             auto depthStencilBufferSource = makeExternalImageSource(layerData.textureData->depthStencilBuffer, framebufferSize);
             createAndBindCompositorBuffer(gl, m_displayAttachmentsSets[m_currentDisplayAttachmentIndex][layer].depthStencilBuffer, GL::DEPTH24_STENCIL8, WTFMove(depthStencilBufferSource), layer);
         }

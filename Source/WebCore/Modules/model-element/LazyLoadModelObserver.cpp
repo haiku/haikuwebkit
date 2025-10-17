@@ -34,6 +34,7 @@
 #include "IntersectionObserverEntry.h"
 #include "LocalFrame.h"
 #include "Logging.h"
+#include "NodeDocument.h"
 #include <limits>
 #include <wtf/TZoneMallocInlines.h>
 namespace WebCore {

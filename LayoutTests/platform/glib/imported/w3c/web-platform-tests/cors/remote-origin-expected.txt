@@ -1,32 +1,32 @@
 Access-Control-Allow-Origin handling
 
 
-FAIL Allow origin: * assert_equals: Request Origin: should be http://not-web-platform.test expected "http://not-web-platform.test" but got "http://not-web-platform.test:8800"
-FAIL Allow origin: _*__ assert_equals: Request Origin: should be http://not-web-platform.test expected "http://not-web-platform.test" but got "http://not-web-platform.test:8800"
-FAIL Allow origin: [tab]* assert_equals: Request Origin: should be http://not-web-platform.test expected "http://not-web-platform.test" but got "http://not-web-platform.test:8800"
-FAIL Allow origin: http://not-web-platform.test assert_equals: expected "load" but got "error"
-FAIL Allow origin: _http://not-web-platform.test assert_equals: expected "load" but got "error"
-FAIL Allow origin: _http://not-web-platform.test___[tab]_ assert_equals: expected "load" but got "error"
-FAIL Allow origin: [tab]http://not-web-platform.test assert_equals: expected "load" but got "error"
+PASS Allow origin: *
+PASS Allow origin: _*__
+PASS Allow origin: [tab]*
+PASS Allow origin: http://www1.web-platform.test:8800
+PASS Allow origin: _http://www1.web-platform.test:8800
+PASS Allow origin: _http://www1.web-platform.test:8800___[tab]_
+PASS Allow origin: [tab]http://www1.web-platform.test:8800
 PASS Disallow origin: http://web-platform.test:8800
-PASS Disallow origin: //not-web-platform.test
-PASS Disallow origin: ://not-web-platform.test
-PASS Disallow origin: ftp://not-web-platform.test
-PASS Disallow origin: http:://not-web-platform.test
-PASS Disallow origin: http:/not-web-platform.test
-PASS Disallow origin: http:not-web-platform.test
-PASS Disallow origin: not-web-platform.test
-PASS Disallow origin: http://not-web-platform.test?
-PASS Disallow origin: http://not-web-platform.test/
-PASS Disallow origin: http://not-web-platform.test_/
-PASS Disallow origin: http://not-web-platform.test#
-PASS Disallow origin: http://not-web-platform.test%23
-PASS Disallow origin: http://not-web-platform.test:80
-PASS Disallow origin: http://not-web-platform.test,_*
-PASS Disallow origin: http://not-web-platform.test\0
-PASS Disallow origin: HTTP://NOT-WEB-PLATFORM.TEST
-PASS Disallow origin: HTTP://not-web-platform.test
-PASS Disallow origin: http://NOT-WEB-PLATFORM.TEST
+PASS Disallow origin: //www1.web-platform.test:8800
+PASS Disallow origin: ://www1.web-platform.test:8800
+PASS Disallow origin: ftp://www1.web-platform.test:8800
+PASS Disallow origin: http:://www1.web-platform.test:8800
+PASS Disallow origin: http:/www1.web-platform.test:8800
+PASS Disallow origin: http:www1.web-platform.test:8800
+PASS Disallow origin: www1.web-platform.test:8800
+PASS Disallow origin: http://www1.web-platform.test:8800?
+PASS Disallow origin: http://www1.web-platform.test:8800/
+PASS Disallow origin: http://www1.web-platform.test:8800_/
+PASS Disallow origin: http://www1.web-platform.test:8800#
+PASS Disallow origin: http://www1.web-platform.test:8800%23
+PASS Disallow origin: http://www1.web-platform.test:8800:80
+PASS Disallow origin: http://www1.web-platform.test:8800,_*
+PASS Disallow origin: http://www1.web-platform.test:8800\0
+PASS Disallow origin: HTTP://WWW1.WEB-PLATFORM.TEST:8800
+PASS Disallow origin: HTTP://www1.web-platform.test:8800
+PASS Disallow origin: http://WWW1.WEB-PLATFORM.TEST:8800
 PASS Disallow origin: -
 PASS Disallow origin: **
 PASS Disallow origin: \0*
@@ -35,15 +35,15 @@ PASS Disallow origin: '*'
 PASS Disallow origin: "*"
 PASS Disallow origin: *_*
 PASS Disallow origin: *http://*
-PASS Disallow origin: *http://not-web-platform.test
-PASS Disallow origin: *_http://not-web-platform.test
-PASS Disallow origin: *,_http://not-web-platform.test
-PASS Disallow origin: \0http://not-web-platform.test
-PASS Disallow origin: null_http://not-web-platform.test
+PASS Disallow origin: *http://www1.web-platform.test:8800
+PASS Disallow origin: *_http://www1.web-platform.test:8800
+PASS Disallow origin: *,_http://www1.web-platform.test:8800
+PASS Disallow origin: \0http://www1.web-platform.test:8800
+PASS Disallow origin: null_http://www1.web-platform.test:8800
 PASS Disallow origin: http://example.net
 PASS Disallow origin: null
 PASS Disallow origin:
 PASS Disallow origin: http://web-platform.test:8800/cors/remote-origin.htm
 PASS Disallow origin: http://web-platform.test:8800/cors/
-PASS Disallow origin: http://not-web-platform.test:8800/cors/
+PASS Disallow origin: http://www1.web-platform.test:8800/cors/
 

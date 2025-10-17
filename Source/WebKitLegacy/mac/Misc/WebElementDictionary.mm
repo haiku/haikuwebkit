@@ -42,6 +42,7 @@
 #import <WebCore/ImageAdapter.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <WebKitLegacy/DOMCore.h>
 #import <WebKitLegacy/DOMExtensions.h>
@@ -71,11 +72,7 @@ static void cacheValueForKey(const void *key, const void *value, void *self)
 
 + (void)initialize
 {
-#if !PLATFORM(IOS_FAMILY)
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-#endif
+    WebCore::initializeMainThreadIfNeeded();
 }
 
 + (void)initializeLookupTable

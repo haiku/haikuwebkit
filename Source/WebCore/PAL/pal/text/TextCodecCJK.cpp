@@ -1086,7 +1086,7 @@ static Vector<uint8_t> gbkEncode(StringView string, Function<void(char32_t, Vect
     return gbEncodeShared(string, WTFMove(unencodableHandler), IsGBK::Yes);
 }
 
-constexpr size_t maxUChar32Digits = 10;
+constexpr size_t maxChar32Digits = 10;
 
 static void appendDecimal(char32_t c, Vector<uint8_t>& result)
 {
@@ -1097,7 +1097,7 @@ static void appendDecimal(char32_t c, Vector<uint8_t>& result)
 
 static void urlEncodedEntityUnencodableHandler(char32_t c, Vector<uint8_t>& result)
 {
-    result.reserveCapacity(result.size() + 9 + maxUChar32Digits);
+    result.reserveCapacity(result.size() + 9 + maxChar32Digits);
     result.appendList({ '%', '2', '6', '%', '2', '3' });
     appendDecimal(c, result);
     result.appendList({ '%', '3', 'B' });
@@ -1105,7 +1105,7 @@ static void urlEncodedEntityUnencodableHandler(char32_t c, Vector<uint8_t>& resu
 
 static void entityUnencodableHandler(char32_t c, Vector<uint8_t>& result)
 {
-    result.reserveCapacity(result.size() + 3 + maxUChar32Digits);
+    result.reserveCapacity(result.size() + 3 + maxChar32Digits);
     result.appendList({ '&', '#' });
     appendDecimal(c, result);
     result.append(';');

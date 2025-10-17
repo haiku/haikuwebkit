@@ -32,7 +32,7 @@
 
 namespace JSC  {
 
-inline Identifier::Identifier(VM& vm, std::span<const LChar> string)
+inline Identifier::Identifier(VM& vm, std::span<const Latin1Character> string)
     : m_string(add(vm, string))
 {
     ASSERT(m_string.impl()->isAtom());
@@ -138,7 +138,7 @@ ALWAYS_INLINE Identifier Identifier::fromString(VM& vm, ASCIILiteral s)
     return Identifier(vm, s);
 }
 
-inline Identifier Identifier::fromString(VM& vm, std::span<const LChar> s)
+inline Identifier Identifier::fromString(VM& vm, std::span<const Latin1Character> s)
 {
     return Identifier(vm, s);
 }

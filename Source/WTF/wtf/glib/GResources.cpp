@@ -22,6 +22,7 @@
 
 #if USE(GLIB)
 
+#include <mutex>
 #include <wtf/glib/GRefPtr.h>
 #include <wtf/glib/GUniquePtr.h>
 

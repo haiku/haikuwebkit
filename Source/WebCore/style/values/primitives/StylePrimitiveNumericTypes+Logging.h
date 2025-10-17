@@ -38,6 +38,11 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, Calc auto const& value)
     return ts << value.protectedCalculation().get();
 }
 
+template<auto R, typename V> WTF::TextStream& operator<<(WTF::TextStream& ts, const Length<R, V>& value)
+{
+    return ts << CSS::serializationForCSS(CSS::defaultSerializationContext(), CSS::SerializableNumber { static_cast<double>(value.unresolvedValue()), CSS::unitString(value.unit) });
+}
+
 WTF::TextStream& operator<<(WTF::TextStream& ts, Numeric auto const& value)
 {
     return ts << CSS::serializationForCSS(CSS::defaultSerializationContext(), CSS::SerializableNumber { static_cast<double>(value.value), CSS::unitString(value.unit) });

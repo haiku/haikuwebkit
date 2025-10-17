@@ -316,7 +316,7 @@ TEST(URLExtras, URLExtras_ParsingError)
     EXPECT_FALSE(url3.isValid());
     EXPECT_NULL([url3.createNSURL() absoluteString]);
     
-    std::array<LChar, 2> latin1 { 0xC2, 0xB6 };
+    std::array<Latin1Character, 2> latin1 { 0xC2, 0xB6 };
     WTF::URL url4 { String(latin1) };
     EXPECT_FALSE(url4.isValid());
     EXPECT_TRUE(url4.string().is8Bit());

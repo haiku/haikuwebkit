@@ -176,7 +176,7 @@ void WorkerInspectorProxy::workerTerminated()
 void WorkerInspectorProxy::resumeWorkerIfPaused()
 {
     m_workerThread->runLoop().postDebuggerTask([] (ScriptExecutionContext& context) {
-        downcast<WorkerGlobalScope>(context).thread().stopRunningDebuggerTasks();
+        downcast<WorkerGlobalScope>(context).thread()->stopRunningDebuggerTasks();
     });
 }
 
@@ -206,7 +206,7 @@ void WorkerInspectorProxy::disconnectFromWorkerInspectorController()
 
         // In case the worker is paused running debugger tasks, ensure we break out of
         // the pause since this will be the last debugger task we send to the worker.
-        downcast<WorkerGlobalScope>(context).thread().stopRunningDebuggerTasks();
+        downcast<WorkerGlobalScope>(context).thread()->stopRunningDebuggerTasks();
     });
 }
 

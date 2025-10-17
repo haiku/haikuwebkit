@@ -28,6 +28,7 @@
 #include "ComputedEffectTiming.h"
 #include "InspectorWebAgentBase.h"
 #include "Timer.h"
+#include <JavaScriptCore/InjectedScriptManager.h>
 #include <JavaScriptCore/InspectorBackendDispatchers.h>
 #include <JavaScriptCore/InspectorFrontendDispatchers.h>
 #include <JavaScriptCore/InspectorProtocolObjects.h>

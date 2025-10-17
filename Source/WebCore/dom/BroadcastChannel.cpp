@@ -118,7 +118,7 @@ void BroadcastChannel::MainThreadBridge::ensureOnMainThread(Function<void(Page*)
         return;
     }
 
-    CheckedPtr workerLoaderProxy = downcast<WorkerGlobalScope>(*context).thread().workerLoaderProxy();
+    CheckedPtr workerLoaderProxy = downcast<WorkerGlobalScope>(*context).thread()->workerLoaderProxy();
     if (!workerLoaderProxy)
         return;
 

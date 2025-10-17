@@ -37,6 +37,7 @@
 #include "FrameTracers.h"
 #include "InlineCallFrame.h"
 #include "JSArrayIterator.h"
+#include "JSAsyncFromSyncIterator.h"
 #include "JSAsyncFunction.h"
 #include "JSAsyncGeneratorFunction.h"
 #include "JSCellButterfly.h"
@@ -46,7 +47,11 @@
 #include "JSIteratorHelper.h"
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
+#include "JSPromiseAllContext.h"
+#include "JSPromiseReaction.h"
+#include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
+#include "JSWrapForValidIterator.h"
 #include "RegExpObject.h"
 #include "ResourceExhaustion.h"
 #include "VMTrapsInlines.h"
@@ -177,6 +182,21 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationPopulateObjectInOSR, void, (JSGlobalO
         case JSIteratorHelperType:
             materialize(jsCast<JSIteratorHelper*>(target));
             break;
+        case JSWrapForValidIteratorType:
+            materialize(jsCast<JSWrapForValidIterator*>(target));
+            break;
+        case JSAsyncFromSyncIteratorType:
+            materialize(jsCast<JSAsyncFromSyncIterator*>(target));
+            break;
+        case JSPromiseAllContextType:
+            materialize(jsCast<JSPromiseAllContext*>(target));
+            break;
+        case JSPromiseReactionType:
+            materialize(jsCast<JSPromiseReaction*>(target));
+            break;
+        case JSRegExpStringIteratorType:
+            materialize(jsCast<JSRegExpStringIterator*>(target));
+            break;
         case JSPromiseType:
             if (target->classInfo() == JSInternalPromise::info())
                 materialize(jsCast<JSInternalPromise*>(target));
@@ -255,6 +275,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMaterializeObjectInOSR, HeapCell*, (J
             throwOutOfMemoryError(globalObject, scope);
             OPERATION_RETURN(scope, nullptr);
         }
+        Butterfly::clearRange(materialization->indexingType(), result, 0, size);
 
         return std::bit_cast<HeapCell*>(result);
     }
@@ -451,38 +472,36 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMaterializeObjectInOSR, HeapCell*, (J
         // The real values will be put subsequently by
         // operationPopulateNewObjectInOSR. See the PhantomNewObject
         // case for details.
+        auto create = [&]<typename T>() -> T* {
+            auto* result = T::createWithInitialValues(vm, structure);
+            RELEASE_ASSERT(materialization->properties().size() - 1 == T::numberOfInternalFields);
+            return result;
+        };
+
         switch (structure->typeInfo().type()) {
-        case JSArrayIteratorType: {
-            JSArrayIterator* result = JSArrayIterator::createWithInitialValues(vm, structure);
-            RELEASE_ASSERT(materialization->properties().size() - 1 == JSArrayIterator::numberOfInternalFields);
-            return result;
-        }
-        case JSMapIteratorType: {
-            JSMapIterator* result = JSMapIterator::createWithInitialValues(vm, structure);
-            RELEASE_ASSERT(materialization->properties().size() - 1 == JSMapIterator::numberOfInternalFields);
-            return result;
-        }
-        case JSSetIteratorType: {
-            JSSetIterator* result = JSSetIterator::createWithInitialValues(vm, structure);
-            RELEASE_ASSERT(materialization->properties().size() - 1 == JSSetIterator::numberOfInternalFields);
-            return result;
-        }
-        case JSIteratorHelperType: {
-            JSIteratorHelper* result = JSIteratorHelper::createWithInitialValues(vm, structure);
-            RELEASE_ASSERT(materialization->properties().size() - 1 == JSIteratorHelper::numberOfInternalFields);
-            return result;
-        }
-        case JSPromiseType: {
-            if (structure->classInfoForCells() == JSInternalPromise::info()) {
-                JSInternalPromise* result = JSInternalPromise::createWithInitialValues(vm, structure);
-                RELEASE_ASSERT(materialization->properties().size() - 1 == JSInternalPromise::numberOfInternalFields);
-                return result;
-            }
+        case JSArrayIteratorType:
+            return create.operator()<JSArrayIterator>();
+        case JSMapIteratorType:
+            return create.operator()<JSMapIterator>();
+        case JSSetIteratorType:
+            return create.operator()<JSSetIterator>();
+        case JSIteratorHelperType:
+            return create.operator()<JSIteratorHelper>();
+        case JSWrapForValidIteratorType:
+            return create.operator()<JSWrapForValidIterator>();
+        case JSAsyncFromSyncIteratorType:
+            return create.operator()<JSAsyncFromSyncIterator>();
+        case JSPromiseAllContextType:
+            return create.operator()<JSPromiseAllContext>();
+        case JSPromiseReactionType:
+            return create.operator()<JSPromiseReaction>();
+        case JSRegExpStringIteratorType:
+            return create.operator()<JSRegExpStringIterator>();
+        case JSPromiseType:
+            if (structure->classInfoForCells() == JSInternalPromise::info())
+                return create.operator()<JSInternalPromise>();
             ASSERT(structure->classInfoForCells() == JSPromise::info());
-            JSPromise* result = JSPromise::createWithInitialValues(vm, structure);
-            RELEASE_ASSERT(materialization->properties().size() - 1 == JSPromise::numberOfInternalFields);
-            return result;
-        }
+            return create.operator()<JSPromise>();
         default:
             RELEASE_ASSERT_NOT_REACHED();
             return nullptr;

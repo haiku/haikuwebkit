@@ -176,9 +176,9 @@ SOFT_LINK_PRIVATE_FRAMEWORK(MediaExperience)
 SOFT_LINK_CONSTANT(MediaExperience, AVController_RouteDescriptionKey_RouteCurrentlyPicked, NSString *)
 SOFT_LINK_CONSTANT(MediaExperience, AVController_RouteDescriptionKey_RouteName, NSString *)
 SOFT_LINK_CONSTANT(MediaExperience, AVController_RouteDescriptionKey_AVAudioRouteName, NSString *)
-#define AVController_RouteDescriptionKey_RouteCurrentlyPicked getAVController_RouteDescriptionKey_RouteCurrentlyPicked()
-#define AVController_RouteDescriptionKey_RouteName getAVController_RouteDescriptionKey_RouteName()
-#define AVController_RouteDescriptionKey_AVAudioRouteName getAVController_RouteDescriptionKey_AVAudioRouteName()
+#define AVController_RouteDescriptionKey_RouteCurrentlyPicked getAVController_RouteDescriptionKey_RouteCurrentlyPickedSingleton()
+#define AVController_RouteDescriptionKey_RouteName getAVController_RouteDescriptionKey_RouteNameSingleton()
+#define AVController_RouteDescriptionKey_AVAudioRouteName getAVController_RouteDescriptionKey_AVAudioRouteNameSingleton()
 #endif // HAVE(MEDIAEXPERIENCE_AVSYSTEMCONTROLLER)
 
 #endif // PLATFORM(IOS_FAMILY)
@@ -813,7 +813,7 @@ void MediaPlayerPrivateAVFoundationObjC::createAVAssetForURL(const URL& url)
 
         if (cookies.size()) {
             auto nsCookies = createNSArray(cookies, [] (auto& cookie) -> NSHTTPCookie * {
-                return cookie;
+                return cookie.createNSHTTPCookie().autorelease();
             });
 
             [options setObject:nsCookies.get() forKey:AVURLAssetHTTPCookiesKey];

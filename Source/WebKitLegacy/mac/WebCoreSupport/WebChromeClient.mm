@@ -68,6 +68,9 @@
 #import <WebCore/FileChooser.h>
 #import <WebCore/FileIconLoader.h>
 #import <WebCore/FloatRect.h>
+#import <WebCore/FocusControllerTypes.h>
+#import <WebCore/FocusOptions.h>
+#import <WebCore/Frame.h>
 #import <WebCore/FrameDestructionObserverInlines.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/HTMLInputElement.h>
@@ -83,7 +86,7 @@
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/ModalContainerTypes.h>
 #import <WebCore/NavigationAction.h>
-#import <WebCore/NodeInlines.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/Page.h>
 #import <WebCore/PlatformScreen.h>
@@ -241,7 +244,7 @@ void WebChromeClient::takeFocus(FocusDirection direction)
 #endif
 }
 
-void WebChromeClient::focusedElementChanged(Element* element)
+void WebChromeClient::focusedElementChanged(Element* element, LocalFrame*, FocusOptions, BroadcastFocusedElement)
 {
     if (!is<HTMLInputElement>(element))
         return;
@@ -329,6 +332,8 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         if (!effectiveSandboxFlags.contains(WebCore::SandboxFlag::PropagatesToAuxiliaryBrowsingContexts))
             effectiveSandboxFlags = { };
         newPage->mainFrame().updateSandboxFlags(effectiveSandboxFlags, WebCore::Frame::NotifyUIProcess::No);
+        auto effectiveReferrerPolicy = frame.document()->referrerPolicy();
+        newPage->mainFrame().updateReferrerPolicy(effectiveReferrerPolicy);
         newPage->chrome().show();
         newPage->mainFrame().tree().setSpecifiedName(AtomString(openedMainFrameName));
     }

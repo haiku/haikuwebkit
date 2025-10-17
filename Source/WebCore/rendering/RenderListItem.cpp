@@ -34,7 +34,7 @@
 #include "PseudoElement.h"
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObjectInlines.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderObjectInlines.h"
 #include "RenderStyleSetters.h"
 #include "RenderTreeBuilder.h"

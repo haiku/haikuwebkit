@@ -43,6 +43,7 @@
 #include "LocalFrame.h"
 #include "Microtasks.h"
 #include "NavigationScheduler.h"
+#include "NodeDocument.h"
 #include "ScriptElement.h"
 #include "TaskSource.h"
 #include "ThrowOnDynamicMarkupInsertionCountIncrementer.h"

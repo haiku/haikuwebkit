@@ -120,6 +120,7 @@
 #import <WebCore/PlatformScreen.h>
 #import <WebCore/PlaybackSessionInterfaceMac.h>
 #import <WebCore/PromisedAttachmentInfo.h>
+#import <WebCore/ReferrerPolicy.h>
 #import <WebCore/ShareableBitmap.h>
 #import <WebCore/Site.h>
 #import <WebCore/TextAlternativeWithRange.h>
@@ -655,10 +656,11 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     self = [super init];
     if (!self)
         return nil;
-    _lastResponderInChain = chain;
-    while (RetainPtr next = [_lastResponderInChain nextResponder])
-        _lastResponderInChain = next.get();
-    [_lastResponderInChain setNextResponder:self];
+    RetainPtr current = chain;
+    while (RetainPtr next = [current nextResponder])
+        current = next.get();
+    [current setNextResponder:self];
+    _lastResponderInChain = current.get();
     return self;
 }
 
@@ -1358,7 +1360,7 @@ WebViewImpl::WebViewImpl(WKWebView *view, WebProcessPool& processPool, Ref<API::
     m_page->setAddsVisitedLinks(processPool.historyClient().addsVisitedLinks());
 
     auto& pageConfiguration = m_page->configuration();
-    m_page->initializeWebPage(pageConfiguration.openedSite(), pageConfiguration.initialSandboxFlags());
+    m_page->initializeWebPage(pageConfiguration.openedSite(), pageConfiguration.initialSandboxFlags(), pageConfiguration.initialReferrerPolicy());
 
     registerDraggedTypes();
 
@@ -2952,7 +2954,7 @@ void WebViewImpl::didBecomeEditable()
 void WebViewImpl::updateFontManagerIfNeeded()
 {
     BOOL fontPanelIsVisible = NSFontPanel.sharedFontPanelExists && NSFontPanel.sharedFontPanel.visible;
-    if (!fontPanelIsVisible && !m_page->editorState().isContentRichlyEditable)
+    if (!fontPanelIsVisible && !(m_page->isEditable() && m_page->editorState().isContentRichlyEditable))
         return;
 
     m_page->requestFontAttributesAtSelectionStart([] (auto& attributes) {
@@ -5150,7 +5152,7 @@ void WebViewImpl::doneWithKeyEvent(NSEvent *event, bool eventWasHandled)
     m_keyDownEventBeingResent = nullptr;
 }
 
-NSArray *WebViewImpl::validAttributesForMarkedText()
+NSArray *WebViewImpl::validAttributesForMarkedTextSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> validAttributes = @[
         NSUnderlineStyleAttributeName,

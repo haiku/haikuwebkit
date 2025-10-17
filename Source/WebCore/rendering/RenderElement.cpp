@@ -1354,7 +1354,7 @@ template<typename FillLayers> static bool mustRepaintFillLayers(const RenderElem
     if (!image || !image->canRender(&renderer, renderer.style().usedZoom()))
         return false;
 
-    if (!layer.xPosition().isZero() || !layer.yPosition().isZero())
+    if (!layer.xPosition().isKnownZero() || !layer.yPosition().isKnownZero())
         return true;
 
     return WTF::switchOn(layer.size(),
@@ -1503,19 +1503,19 @@ bool RenderElement::repaintAfterLayoutIfNeeded(SingleThreadWeakPtr<const RenderL
 
         auto insetExtent = [&] {
             // Inset "content" is inside the border box (e.g. border, negative outline and box shadow).
-            auto borderRightExtent = [&]() -> LayoutUnit {
+            auto borderRightExtent = [&] -> LayoutUnit {
                 auto* renderBox = dynamicDowncast<RenderBox>(*this);
                 if (!renderBox)
                     return { };
                 auto borderBoxWidth = renderBox->width();
                 return std::max({
                     renderBox->borderRight(),
-                    Style::evaluate(style.borderTopRightRadius().width(), borderBoxWidth, 1.0f /* FIXME ZOOM EFFECTED? */),
-                    Style::evaluate(style.borderBottomRightRadius().width(), borderBoxWidth, 1.0f /* FIXME ZOOM EFFECTED? */),
+                    Style::evaluate<LayoutUnit>(style.borderTopRightRadius().width(), borderBoxWidth, Style::ZoomNeeded { }),
+                    Style::evaluate<LayoutUnit>(style.borderBottomRightRadius().width(), borderBoxWidth, Style::ZoomNeeded { }),
                 });
             };
-            auto outlineRightInsetExtent = [&]() -> LayoutUnit {
-                auto offset = LayoutUnit { Style::evaluate(outlineStyle.outlineOffset(), 1.0f /* FIXME ZOOM EFFECTED? */) };
+            auto outlineRightInsetExtent = [&] -> LayoutUnit {
+                auto offset = Style::evaluate<LayoutUnit>(outlineStyle.outlineOffset(), Style::ZoomNeeded { });
                 return offset < 0 ? -offset : 0_lu;
             };
             auto boxShadowRightInsetExtent = [&] {
@@ -1554,12 +1554,12 @@ bool RenderElement::repaintAfterLayoutIfNeeded(SingleThreadWeakPtr<const RenderL
                 auto borderBoxHeight = renderBox->height();
                 return std::max({
                     renderBox->borderBottom(),
-                    Style::evaluate(style.borderBottomLeftRadius().height(), borderBoxHeight, 1.0f /* FIXME ZOOM EFFECTED? */),
-                    Style::evaluate(style.borderBottomRightRadius().height(), borderBoxHeight, 1.0f /* FIXME ZOOM EFFECTED? */),
+                    Style::evaluate<LayoutUnit>(style.borderBottomLeftRadius().height(), borderBoxHeight, Style::ZoomNeeded { }),
+                    Style::evaluate<LayoutUnit>(style.borderBottomRightRadius().height(), borderBoxHeight, Style::ZoomNeeded { }),
                 });
             };
-            auto outlineBottomInsetExtent = [&]() -> LayoutUnit {
-                auto offset = LayoutUnit { Style::evaluate(outlineStyle.outlineOffset(), 1.0f /* FIXME FIND ZOOM */) };
+            auto outlineBottomInsetExtent = [&] -> LayoutUnit {
+                auto offset = Style::evaluate<LayoutUnit>(outlineStyle.outlineOffset(), Style::ZoomNeeded { });
                 return offset < 0 ? -offset : 0_lu;
             };
             auto boxShadowBottomInsetExtent = [&]() -> LayoutUnit {
@@ -2120,22 +2120,22 @@ static bool useShrinkWrappedFocusRingForOutlineStyleAuto()
 
 static void drawFocusRing(GraphicsContext& context, const Path& path, const RenderStyle& style, const Color& color)
 {
-    context.drawFocusRing(path, Style::evaluate(style.outlineWidth(), 1.0f /* FIXME FIND ZOOM */), color);
+    context.drawFocusRing(path, Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
 }
 
 static void drawFocusRing(GraphicsContext& context, Vector<FloatRect> rects, const RenderStyle& style, const Color& color)
 {
 #if PLATFORM(MAC)
-    context.drawFocusRing(rects, 0, Style::evaluate(style.outlineWidth(), 1.0f /* FIXME FIND ZOOM */), color);
+    context.drawFocusRing(rects, 0, Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
 #else
-    context.drawFocusRing(rects, Style::evaluate(style.outlineOffset(), 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.outlineWidth(), 1.0f /* FIXME FIND ZOOM */), color);
+    context.drawFocusRing(rects, Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { }), Style::evaluate<float>(style.outlineWidth(), Style::ZoomNeeded { }), color);
 #endif
 }
 
 void RenderElement::paintFocusRing(const PaintInfo& paintInfo, const RenderStyle& style, const Vector<LayoutRect>& focusRingRects) const
 {
     ASSERT(style.outlineStyle() == OutlineStyle::Auto);
-    float outlineOffset = Style::evaluate(style.outlineOffset(), 1.0f /* FIXME FIND ZOOM */);
+    auto outlineOffset = Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { });
     Vector<FloatRect> pixelSnappedFocusRingRects;
     float deviceScaleFactor = document().deviceScaleFactor();
     for (auto rect : focusRingRects) {
@@ -2519,7 +2519,7 @@ static RenderObject::BlockContentHeightType includeNonFixedHeight(const RenderOb
         if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
             // For fixed height styles, if the overflow size of the element spills out of the specified
             // height, assume we can apply text auto-sizing.
-            if (block->effectiveOverflowY() == Overflow::Visible && fixedHeight->value < block->layoutOverflowRect().maxY())
+            if (block->effectiveOverflowY() == Overflow::Visible && fixedHeight->resolveZoom(Style::ZoomNeeded { }) < block->layoutOverflowRect().maxY())
                 return RenderObject::OverflowHeight;
         }
         return RenderObject::FixedHeight;

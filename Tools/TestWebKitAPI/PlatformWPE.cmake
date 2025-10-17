@@ -39,6 +39,7 @@ list(APPEND TestWebCore_SOURCES
     Tests/WebCore/UserAgentQuirks.cpp
 
     Tests/WebCore/glib/Damage.cpp
+    Tests/WebCore/glib/GraphicsContextGLTextureMapper.cpp
 
     Tests/WebCore/gstreamer/GStreamerTest.cpp
     Tests/WebCore/gstreamer/GstElementHarness.cpp

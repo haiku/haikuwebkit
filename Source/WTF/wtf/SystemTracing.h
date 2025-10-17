@@ -42,7 +42,7 @@
 #define WEBKIT_COMPONENT 47
 
 // Trace point codes can be up to 14 bits (0-16383).
-// When adding or changing these codes, update Tools/Tracing/SystemTracePoints.plist to match.
+// When adding or changing these codes, update Source/WebKit/Resources/Signposts/SystemTracePoints.plist to match.
 enum TracePointCode {
     WTFRange = 0,
 
@@ -118,6 +118,10 @@ enum TracePointCode {
     ProgrammaticScroll,
     FixedContainerEdgeSamplingStart,
     FixedContainerEdgeSamplingEnd,
+    ThreadTimersStart,
+    ThreadTimersEnd,
+    TimerFiredStart,
+    TimerFiredEnd,
 
     WebKitRange = 10000,
     WebHTMLViewPaintStart,
@@ -278,6 +282,10 @@ WTF_EXTERN_C_END
     M(UpdateAccessibilityIsolatedTree) \
     M(WebKitPerformance) \
     M(UserScript) \
+    M(ProcessPrewarming) \
+    M(JSScriptRef) \
+    M(NetworkCacheHit) \
+    M(NetworkCacheMiss) \
 
 #define DECLARE_WTF_SIGNPOST_NAME_ENUM(name) WTFOSSignpostName ## name,
 
@@ -306,9 +314,9 @@ enum WTFOSSignpostType {
 #define WTFSignpostsEnabled() true
 #endif
 
-// The first argument to WTF{Emit,Begin,End}Signpost is a pointer that can be used to disambiguate
-// nested intervals with the same name (i.e. used to create an os_signpost_id). If you don't care
-// about handling nested intervals, then pass `nullptr` as the pointer argument.
+// The first argument to WTF{Emit,Begin,End}Signpost is a pointer or uintptr_t that can be used to
+// disambiguate nested intervals with the same name (i.e. used to create an os_signpost_id). If you
+// don't care about handling nested intervals, then pass `nullptr` as the pointer argument.
 //
 // The second argument to these signpost APIs is a signpost name that must be listed in the
 // FOR_EACH_WTF_SIGNPOST_NAME macro above.
@@ -385,7 +393,7 @@ enum WTFOSSignpostType {
 #define WTFEmitSignpostDirectlyWithType(emitMacro, pointer, name, format, ...) \
     do { \
         RetainPtr<os_log_t> wtfHandle = WTFSignpostLogHandle(); \
-        const void *wtfPointer = (pointer); \
+        const void* wtfPointer = (const void *)(pointer); \
         os_signpost_id_t wtfSignpostID = wtfPointer ? os_signpost_id_make_with_pointer(wtfHandle.get(), wtfPointer) : OS_SIGNPOST_ID_EXCLUSIVE; \
         emitMacro(wtfHandle.get(), wtfSignpostID, #name, format, ##__VA_ARGS__); \
     } while (0)

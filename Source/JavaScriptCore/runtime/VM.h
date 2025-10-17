@@ -378,6 +378,8 @@ public:
     // topEntryFrame.
     // FIXME: This should be a void*, because it might not point to a CallFrame.
     // https://bugs.webkit.org/show_bug.cgi?id=160441
+    // The following two fields are sometimes treated as a pair in assembly code, making usages of the second one implicit.
+    // To find them, look for loadpairq/storepairq of "VM::topCallFrame" in *.asm files.
     CallFrame* topCallFrame { nullptr };
     EntryFrame* topEntryFrame { nullptr };
     void* maybeReturnPC { nullptr };
@@ -388,7 +390,7 @@ private:
         OptionSet<ConcurrentEntryScopeService, ConcurrencyTag::Atomic> m_concurrentEntryScopeServices;
     };
 
-    uint16_t m_entryScopeServicesRawBits;
+    uint16_t m_entryScopeServicesRawBits { 0 };
     static_assert(sizeof(EntryScopeServicesBits) == sizeof(m_entryScopeServicesRawBits));
 
     OptionSet<EntryScopeService>& entryScopeServices()
@@ -1021,6 +1023,9 @@ public:
     void notifyDebuggerHookInjected() { m_isDebuggerHookInjected = true; }
     bool isDebuggerHookInjected() const { return m_isDebuggerHookInjected; }
 
+    bool isWasmStopWorldActive() { return m_isWasmStopWorldActive; }
+    void setIsWasmStopWorldActive(bool isWasmStopWorldActive) { m_isWasmStopWorldActive = isWasmStopWorldActive; }
+
 private:
     VM(VMType, HeapType, WTF::RunLoop* = nullptr, bool* success = nullptr);
     static VM*& sharedInstanceInternal();
@@ -1139,6 +1144,7 @@ private:
     bool m_executionForbidden { false };
     bool m_executionForbiddenOnTermination { false };
     bool m_isDebuggerHookInjected { false };
+    bool m_isWasmStopWorldActive { false };
 
     Lock m_loopHintExecutionCountLock;
     UncheckedKeyHashMap<const JSInstruction*, std::pair<unsigned, std::unique_ptr<uintptr_t>>> m_loopHintExecutionCounts;
@@ -1169,6 +1175,8 @@ private:
     friend class VMTraps;
     friend class WTF::DoublyLinkedListNode<VM>;
 };
+
+static_assert(OBJECT_OFFSETOF(VM, topEntryFrame) == OBJECT_OFFSETOF(VM, topCallFrame) + sizeof(void*), "We load/store these using a pair instruction");
 
 #if ENABLE(GC_VALIDATION)
 inline bool VM::isInitializingObject() const

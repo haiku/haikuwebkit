@@ -48,7 +48,7 @@ struct PositionTryFallback {
     Vector<Tactic> tactics { };
 
     // A position-area fallback is mutually exclusive with the rest.
-    const RefPtr<const StyleProperties> positionAreaProperties { };
+    RefPtr<const StyleProperties> positionAreaProperties { };
 
     ~PositionTryFallback();
     friend bool operator==(const PositionTryFallback&, const PositionTryFallback&);

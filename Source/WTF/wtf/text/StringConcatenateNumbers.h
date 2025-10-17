@@ -81,7 +81,7 @@ public:
     template<typename CharacterType> void writeTo(std::span<CharacterType> destination) const { StringImpl::copyCharacters(destination, span()); }
 
 private:
-    std::span<const LChar> span() const LIFETIME_BOUND { return byteCast<LChar>(std::span { m_buffer }).first(m_length); }
+    std::span<const Latin1Character> span() const LIFETIME_BOUND { return byteCast<Latin1Character>(std::span { m_buffer }).first(m_length); }
 
     NumberToStringBuffer m_buffer;
     unsigned m_length;
@@ -105,8 +105,8 @@ public:
     }
 
     unsigned length() const { return m_length; }
-    const LChar* buffer() const LIFETIME_BOUND { return byteCast<LChar>(&m_buffer[0]); }
-    std::span<const LChar> span() const LIFETIME_BOUND { return byteCast<LChar>(std::span { m_buffer }).first(m_length); }
+    const Latin1Character* buffer() const LIFETIME_BOUND { return byteCast<Latin1Character>(&m_buffer[0]); }
+    std::span<const Latin1Character> span() const LIFETIME_BOUND { return byteCast<Latin1Character>(std::span { m_buffer }).first(m_length); }
 
 private:
     NumberToStringBuffer m_buffer;
@@ -139,8 +139,8 @@ public:
     } 
 
     unsigned length() const { return m_length; }
-    const LChar* buffer() const LIFETIME_BOUND { return byteCast<LChar>(&m_buffer[0]); }
-    std::span<const LChar> span() const LIFETIME_BOUND { return byteCast<LChar>(std::span { m_buffer }).first(m_length); }
+    const Latin1Character* buffer() const LIFETIME_BOUND { return byteCast<Latin1Character>(&m_buffer[0]); }
+    std::span<const Latin1Character> span() const LIFETIME_BOUND { return byteCast<Latin1Character>(std::span { m_buffer }).first(m_length); }
 
 private:
     NumberToCSSStringBuffer m_buffer;

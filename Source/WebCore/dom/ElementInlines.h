@@ -30,7 +30,8 @@
 #include <WebCore/Element.h>
 #include <WebCore/ElementData.h>
 #include <WebCore/HTMLNames.h>
-#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/NodeDocument.h>
+#include <WebCore/RenderStyle.h>
 #include <WebCore/StyleChange.h>
 
 namespace WebCore {

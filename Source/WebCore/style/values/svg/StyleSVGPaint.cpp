@@ -84,7 +84,7 @@ auto CSSValueConversion<SVGPaint>::operator()(BuilderState& state, const CSSValu
 
         case CSSValueCurrentcolor:
             state.style().setDisallowsFastPathInheritance();
-            return Color::currentColor();
+            return Color { Color::currentColor() };
 
         default:
             break;

@@ -29,7 +29,10 @@
 
 namespace WebCore {
 
+class LayoutUnit;
+
 using FloatBoxExtent = RectEdges<float>;
+using LayoutBoxExtent = RectEdges<LayoutUnit>;
 
 namespace Style {
 
@@ -50,7 +53,7 @@ struct LineWidth {
     constexpr bool isZero() const { return value.isZero(); }
     constexpr bool isPositive() const { return value.isPositive(); }
 
-    constexpr explicit operator bool() const { return !!value.value; }
+    constexpr explicit operator bool() const { return !isZero(); }
 
     constexpr bool operator==(const LineWidth&) const = default;
     constexpr auto operator<=>(const LineWidth&) const = default;
@@ -65,15 +68,18 @@ template<> struct CSSValueConversion<LineWidth> { auto operator()(BuilderState&,
 
 // MARK: - Evaluate
 
-template<> struct Evaluation<LineWidth> {
-    constexpr auto operator()(const LineWidth& value) -> float
+template<typename Result> struct Evaluation<LineWidth, Result> {
+    constexpr auto operator()(const LineWidth& value, ZoomNeeded token) -> Result
     {
-        return value.value.evaluate(1.0f /* FIXME FIND ZOOM */);
+        return Result(value.value.resolveZoom(token));
     }
 };
 
-template<> struct Evaluation<LineWidthBox> {
-    FloatBoxExtent operator()(const LineWidthBox&, float zoom);
+template<> struct Evaluation<LineWidthBox, FloatBoxExtent> {
+    auto operator()(const LineWidthBox&, ZoomNeeded) -> FloatBoxExtent;
+};
+template<> struct Evaluation<LineWidthBox, LayoutBoxExtent> {
+    auto operator()(const LineWidthBox&, ZoomNeeded) -> LayoutBoxExtent;
 };
 
 } // namespace Style

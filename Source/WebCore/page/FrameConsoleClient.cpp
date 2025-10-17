@@ -36,6 +36,7 @@
 #include "Document.h"
 #include "ElementChildIteratorInlines.h"
 #include "Frame.h"
+#include "FrameInlines.h"
 #include "FrameSnapshotting.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLImageElement.h"
@@ -96,7 +97,7 @@ using namespace Inspector;
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(FrameConsoleClient);
 
-FrameConsoleClient::FrameConsoleClient(Frame& frame)
+FrameConsoleClient::FrameConsoleClient(LocalFrame& frame)
     : m_frame(frame)
 {
 }
@@ -139,10 +140,7 @@ void FrameConsoleClient::logMessageToSystemConsole(const Inspector::ConsoleMessa
 
 void FrameConsoleClient::addMessage(std::unique_ptr<Inspector::ConsoleMessage>&& consoleMessage)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
+    Ref frame = m_frame.get();
     RefPtr page = frame->page();
     if (!page)
         return;
@@ -173,7 +171,7 @@ void FrameConsoleClient::addMessage(std::unique_ptr<Inspector::ConsoleMessage>&&
 #if ENABLE(WEBDRIVER_BIDI)
     AutomationInstrumentation::addMessageToConsole(consoleMessage);
 #endif
-    InspectorInstrumentation::addMessageToConsole(*frame, WTFMove(consoleMessage));
+    InspectorInstrumentation::addMessageToConsole(frame.get(), WTFMove(consoleMessage));
 }
 
 void FrameConsoleClient::addMessage(MessageSource source, MessageLevel level, const String& message, unsigned long requestIdentifier, Document* document)
@@ -209,10 +207,6 @@ void FrameConsoleClient::addMessage(MessageSource source, MessageLevel level, co
 
 void FrameConsoleClient::messageWithTypeAndLevel(MessageType type, MessageLevel level, JSC::JSGlobalObject* lexicalGlobalObject, Ref<Inspector::ScriptArguments>&& arguments)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
     String messageText;
     std::span<const String> additionalArguments;
     Vector<String> messageArgumentsVector = arguments->getArgumentsAsStrings();
@@ -230,7 +224,8 @@ void FrameConsoleClient::messageWithTypeAndLevel(MessageType type, MessageLevel 
 #if ENABLE(WEBDRIVER_BIDI)
     AutomationInstrumentation::addMessageToConsole(message);
 #endif
-    InspectorInstrumentation::addMessageToConsole(*frame, WTFMove(message));
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::addMessageToConsole(frame.get(), WTFMove(message));
 
     RefPtr page = frame->page();
     if (!page)
@@ -252,84 +247,57 @@ void FrameConsoleClient::messageWithTypeAndLevel(MessageType type, MessageLevel 
 
 void FrameConsoleClient::count(JSC::JSGlobalObject* lexicalGlobalObject, const String& label)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::consoleCount(*frame, lexicalGlobalObject, label);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::consoleCount(frame.get(), lexicalGlobalObject, label);
 }
 
 void FrameConsoleClient::countReset(JSC::JSGlobalObject* lexicalGlobalObject, const String& label)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::consoleCountReset(*frame, lexicalGlobalObject, label);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::consoleCountReset(frame.get(), lexicalGlobalObject, label);
 }
 
 void FrameConsoleClient::profile(JSC::JSGlobalObject*, const String& title)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::startProfiling(*frame, title);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::startProfiling(frame.get(), title);
 }
 
 void FrameConsoleClient::profileEnd(JSC::JSGlobalObject*, const String& title)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
+    Ref frame = m_frame.get();
     // FIXME: <https://webkit.org/b/153499> Web Inspector: console.profile should use the new Sampling Profiler
-    InspectorInstrumentation::stopProfiling(*frame, title);
+    InspectorInstrumentation::stopProfiling(frame.get(), title);
 }
 
 void FrameConsoleClient::takeHeapSnapshot(JSC::JSGlobalObject*, const String& title)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::takeHeapSnapshot(*frame, title);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::takeHeapSnapshot(frame.get(), title);
 }
 
 void FrameConsoleClient::time(JSC::JSGlobalObject* lexicalGlobalObject, const String& label)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::startConsoleTiming(*frame, lexicalGlobalObject, label);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::startConsoleTiming(frame.get(), lexicalGlobalObject, label);
 }
 
 void FrameConsoleClient::timeLog(JSC::JSGlobalObject* lexicalGlobalObject, const String& label, Ref<ScriptArguments>&& arguments)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::logConsoleTiming(*frame, lexicalGlobalObject, label, WTFMove(arguments));
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::logConsoleTiming(frame.get(), lexicalGlobalObject, label, WTFMove(arguments));
 }
 
 void FrameConsoleClient::timeEnd(JSC::JSGlobalObject* lexicalGlobalObject, const String& label)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::stopConsoleTiming(*frame, lexicalGlobalObject, label);
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::stopConsoleTiming(frame.get(), lexicalGlobalObject, label);
 }
 
 void FrameConsoleClient::timeStamp(JSC::JSGlobalObject*, Ref<ScriptArguments>&& arguments)
 {
-    RefPtr frame = dynamicDowncast<LocalFrame>(m_frame.get());
-    if (!frame)
-        return;
-
-    InspectorInstrumentation::consoleTimeStamp(*frame, WTFMove(arguments));
+    Ref frame = m_frame.get();
+    InspectorInstrumentation::consoleTimeStamp(frame.get(), WTFMove(arguments));
 }
 
 static JSC::JSObject* objectArgumentAt(ScriptArguments& arguments, unsigned index)
@@ -434,10 +402,9 @@ void FrameConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, Re
 
                 if (dataURL.isEmpty()) {
                     if (!snapshot) {
-                        if (RefPtr localFrame = dynamicDowncast<LocalFrame>(m_frame.get())) {
-                            if (RefPtr localMainFrame = localFrame->localMainFrame())
-                                snapshot = WebCore::snapshotNode(*localMainFrame, *node, { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() });
-                        }
+                        Ref frame = m_frame.get();
+                        if (RefPtr localMainFrame = frame->localMainFrame())
+                            snapshot = WebCore::snapshotNode(*localMainFrame, *node, { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() });
                     }
 
                     if (snapshot)
@@ -469,11 +436,10 @@ void FrameConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, Re
         } else if (auto* rect = JSDOMRectReadOnly::toWrapped(vm, possibleTarget)) {
             target = possibleTarget;
             if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
-                if (RefPtr localFrame = dynamicDowncast<LocalFrame>(m_frame.get())) {
-                    if (RefPtr localMainFrame = localFrame->localMainFrame()) {
-                        if (auto snapshot = WebCore::snapshotFrameRect(*localMainFrame, enclosingIntRect(rect->toFloatRect()), { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() }))
-                            dataURL = snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
-                    }
+                Ref frame = m_frame.get();
+                if (RefPtr localMainFrame = frame->localMainFrame()) {
+                    if (auto snapshot = WebCore::snapshotFrameRect(*localMainFrame, enclosingIntRect(rect->toFloatRect()), { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() }))
+                        dataURL = snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
                 }
             }
         } else {
@@ -487,13 +453,12 @@ void FrameConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, Re
 
     if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
         if (!target) {
-            if (RefPtr localFrame = dynamicDowncast<LocalFrame>(m_frame.get())) {
-                if (RefPtr localMainFrame = localFrame->localMainFrame()) {
-                    // If no target is provided, capture an image of the viewport.
-                    auto viewportRect = localMainFrame->view()->unobscuredContentRect();
-                    if (auto snapshot = WebCore::snapshotFrameRect(*localMainFrame, viewportRect, { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() }))
-                        dataURL = snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
-                }
+            Ref frame = m_frame.get();
+            if (RefPtr localMainFrame = frame->localMainFrame()) {
+                // If no target is provided, capture an image of the viewport.
+                auto viewportRect = localMainFrame->view()->unobscuredContentRect();
+                if (auto snapshot = WebCore::snapshotFrameRect(*localMainFrame, viewportRect, { { }, PixelFormat::BGRA8, DestinationColorSpace::SRGB() }))
+                    dataURL = snapshot->toDataURL("image/png"_s, std::nullopt, PreserveResolution::Yes);
             }
         }
 

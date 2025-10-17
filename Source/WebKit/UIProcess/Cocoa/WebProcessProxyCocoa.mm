@@ -131,7 +131,7 @@ bool WebProcessProxy::shouldEnableRemoteInspector()
 #if PLATFORM(IOS_FAMILY)
     return CFPreferencesGetAppIntegerValue(WIRRemoteInspectorEnabledKey, WIRRemoteInspectorDomainName, nullptr);
 #else
-    return CFPreferencesGetAppIntegerValue(CFSTR("ShowDevelopMenu"), bundleIdentifierForSandboxBroker(), nullptr);
+    return CFPreferencesGetAppIntegerValue(CFSTR("ShowDevelopMenu"), bundleIdentifierForSandboxBrokerSingleton(), nullptr);
 #endif
 }
 

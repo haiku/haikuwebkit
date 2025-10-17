@@ -48,6 +48,7 @@
 #include "MatchResultCache.h"
 #include "ProcessingInstruction.h"
 #include "RenderBoxInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayer.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
@@ -936,9 +937,11 @@ bool Scope::isForUserAgentShadowTree() const
 
 bool Scope::invalidateForLayoutDependencies(LayoutDependencyUpdateContext& context)
 {
-    return invalidateForContainerDependencies(context)
-        || invalidateForAnchorDependencies(context)
-        || invalidateForPositionTryFallbacks(context);
+    auto didInvalidate = false;
+    didInvalidate |= invalidateForContainerDependencies(context);
+    didInvalidate |= invalidateForAnchorDependencies(context);
+    didInvalidate |= invalidateForPositionTryFallbacks(context);
+    return didInvalidate;
 }
 
 bool Scope::invalidateForContainerDependencies(LayoutDependencyUpdateContext& context)
@@ -1120,6 +1123,23 @@ void Scope::updateAnchorPositioningStateAfterStyleResolution()
     m_anchorPositionedToAnchorMap.removeIf([](auto& elementAndState) {
         return elementAndState.value.anchors.isEmpty();
     });
+}
+
+std::optional<size_t> Scope::lastSuccessfulPositionOptionIndexFor(const Styleable& styleable)
+{
+    AnchorPositionedKey key { styleable.element, styleable.pseudoElementIdentifier };
+    return m_lastSuccessfulPositionOptionIndexes.getOptional(key);
+}
+
+void Scope::setLastSuccessfulPositionOptionIndexMap(HashMap<AnchorPositionedKey, size_t>&& map)
+{
+    m_lastSuccessfulPositionOptionIndexes = WTFMove(map);
+}
+
+void Scope::forgetLastSuccessfulPositionOptionIndex(const Styleable& styleable)
+{
+    AnchorPositionedKey key { styleable.element, styleable.pseudoElementIdentifier };
+    m_lastSuccessfulPositionOptionIndexes.remove(key);
 }
 
 }

@@ -645,7 +645,7 @@ static void updateIgnoreStrictTransportSecuritySetting(RetainPtr<NSURLRequest>& 
 #else
             UNUSED_PARAM(taskIdentifier);
 #endif
-            auto nsRequest = retainPtr(request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody));
+            RetainPtr nsRequest = request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
             updateIgnoreStrictTransportSecuritySetting(nsRequest, shouldIgnoreHSTS);
             completionHandler(nsRequest.get());
         });
@@ -657,7 +657,7 @@ static void updateIgnoreStrictTransportSecuritySetting(RetainPtr<NSURLRequest>& 
 #else
             UNUSED_PARAM(taskIdentifier);
 #endif
-            auto nsRequest = retainPtr(request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody));
+            RetainPtr nsRequest = request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
             completionHandler(nsRequest.get());
         });
     } else {
@@ -698,7 +698,7 @@ static void updateIgnoreStrictTransportSecuritySetting(RetainPtr<NSURLRequest>& 
 #else
             UNUSED_PARAM(taskIdentifier);
 #endif
-            auto nsRequest = retainPtr(request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody));
+            RetainPtr nsRequest = request.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
             updateIgnoreStrictTransportSecuritySetting(nsRequest, shouldIgnoreHSTS);
             completionHandler(nsRequest.get());
         });
@@ -2362,7 +2362,9 @@ void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8
         else
             zeroBytes(identifier);
 
-        auto nwProxyConfig = adoptNS(createProxyConfig(config.first.span().data(), config.first.size(), identifier));
+        // This is correct but static analysis does not seem to recognize that `createProxyConfig` returns
+        // a +1 value.
+        SUPPRESS_RETAINPTR_CTOR_ADOPT auto nwProxyConfig = adoptNS(createProxyConfig(config.first.span().data(), config.first.size(), identifier));
 
         if (requiresHTTPProtocols(nwProxyConfig.get()))
             recreateSessions = true;
@@ -2439,7 +2441,7 @@ void NetworkSessionCocoa::removeNetworkWebsiteData(std::optional<WallTime> modif
         return;
     }
 
-    RetainPtr<AnalyticsWorkspace> workspace = adoptNS([allocAnalyticsWorkspaceInstance() initWorkspaceWithService:getkSymptomAnalyticsServiceEndpoint()]);
+    RetainPtr<AnalyticsWorkspace> workspace = adoptNS([allocAnalyticsWorkspaceInstance() initWorkspaceWithService:getkSymptomAnalyticsServiceEndpointSingleton()]);
     RetainPtr<UsageFeed> usageFeed = adoptNS([allocUsageFeedInstance() initWithWorkspace:workspace.get()]);
 
     if (![usageFeed.get() respondsToSelector:@selector(performNetworkDomainsActionWithOptions:reply:)]
@@ -2468,12 +2470,12 @@ void NetworkSessionCocoa::removeNetworkWebsiteData(std::optional<WallTime> modif
         bundleID = "com.apple.mobilesafari"_s;
 
     NSDictionary *options = @{
-        (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryKey(): @{
-            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryBundleIDs(): @{
+        (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryKeySingleton(): @{
+            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryBundleIDsSingleton(): @{
                 bundleID.createNSString().get() : contextArray.get(),
             },
-            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryStartDate(): startDate,
-            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryEndDate(): [NSDate distantFuture]
+            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryStartDateSingleton(): startDate,
+            (id)getkSymptomAnalyticsServiceDomainTrackingClearHistoryEndDateSingleton(): [NSDate distantFuture]
         }
     };
 

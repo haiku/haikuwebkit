@@ -31,6 +31,7 @@
 #include "FontMetrics.h"
 #include "LegacyRenderSVGRoot.h"
 #include "LocalFrame.h"
+#include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGSVGElement.h"
@@ -114,7 +115,7 @@ template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeT
 {
     return WTF::switchOn(size,
         [&](const typename SizeType::Fixed& fixed) -> float {
-            return fixed.value;
+            return Style::evaluate<float>(fixed, Style::ZoomNeeded { });
         },
         [&](const typename SizeType::Percentage& percentage) -> float {
             auto result = convertValueFromPercentageToUserUnits(percentage.value / 100, lengthMode);
@@ -124,7 +125,7 @@ template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeT
         },
         [&](const typename SizeType::Calc& calc) -> float {
             auto viewportSize = this->viewportSize().value_or(FloatSize { });
-            return Style::evaluate(calc, dimensionForLengthMode(lengthMode, viewportSize), 1.0f /* FIXME FIND ZOOM */);
+            return Style::evaluate<float>(calc, dimensionForLengthMode(lengthMode, viewportSize));
         },
         [&](const auto&) -> float {
             return 0;

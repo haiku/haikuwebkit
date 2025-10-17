@@ -109,17 +109,17 @@ public:
     const Layout::ElementBox* layoutBox() const;
 
     // Note that even if these 2 "canContain" functions return true for a particular renderer, it does not necessarily mean the renderer is the containing block (see containingBlockForAbsolute(Fixed)Position).
-    inline bool canContainFixedPositionObjects(const RenderStyle* styleToUse = nullptr) const;
-    inline bool canContainAbsolutelyPositionedObjects(const RenderStyle* styleToUse = nullptr) const;
+    inline bool canContainFixedPositionObjects(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h.
+    inline bool canContainAbsolutelyPositionedObjects(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h.
     bool canEstablishContainingBlockWithTransform() const;
 
-    inline bool shouldApplyLayoutContainment(const RenderStyle* styleToUse = nullptr) const;
-    inline bool shouldApplySizeContainment() const;
-    inline bool shouldApplyInlineSizeContainment() const;
-    inline bool shouldApplySizeOrInlineSizeContainment() const;
-    inline bool shouldApplyStyleContainment() const;
-    inline bool shouldApplyPaintContainment(const RenderStyle* styleToUse = nullptr) const;
-    inline bool shouldApplyAnyContainment() const;
+    inline bool shouldApplyLayoutContainment(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h
+    inline bool shouldApplySizeContainment() const; // Defined in RenderElementStyleInlines.h
+    inline bool shouldApplyInlineSizeContainment() const; // Defined in RenderElementStyleInlines.h.
+    inline bool shouldApplySizeOrInlineSizeContainment() const; // Defined in RenderElementStyleInlines.h
+    inline bool shouldApplyStyleContainment() const; // Defined in RenderElementStyleInlines.h.
+    inline bool shouldApplyPaintContainment(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h.
+    inline bool shouldApplyAnyContainment() const; // Defined in RenderElementStyleInlines.h.
 
     bool hasEligibleContainmentForSizeQuery() const;
 
@@ -187,25 +187,25 @@ public:
     bool isInsideEntirelyHiddenLayer() const;
 
     // Returns true if this renderer requires a new stacking context.
-    static bool createsGroupForStyle(const RenderStyle&);
+    static bool createsGroupForStyle(const RenderStyle&); // Defined in RenderElementStyleInlines.h.
     bool createsGroup() const { return createsGroupForStyle(style()); }
 
-    inline bool isTransparent() const; // FIXME: This function is incorrectly named. It's isNotOpaque, sometimes called hasOpacity, not isEntirelyTransparent.
-    inline float opacity() const;
+    inline bool isTransparent() const; // FIXME: This function is incorrectly named. It's isNotOpaque, sometimes called hasOpacity, not isEntirelyTransparent. Defined in RenderElementStyleInlines.h.
+    inline float opacity() const; // Defined in RenderElementStyleInlines.h.
 
-    inline bool visibleToHitTesting(const std::optional<HitTestRequest>& = std::nullopt) const; // Defined in RenderElementInlines.h.
+    inline bool visibleToHitTesting(const std::optional<HitTestRequest>& = std::nullopt) const; // Defined in RenderElementStyleInlines.h.
 
-    inline bool hasBackground() const;
-    inline bool hasMask() const;
-    inline bool hasClip() const;
-    inline bool hasClipOrNonVisibleOverflow() const;
-    inline bool hasClipPath() const;
-    inline bool hasHiddenBackface() const;
+    inline bool hasBackground() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasMask() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasClip() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasClipOrNonVisibleOverflow() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasClipPath() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasHiddenBackface() const; // Defined in RenderElementStyleInlines.h.
     bool hasViewTransitionName() const;
     bool isViewTransitionRoot() const;
     bool requiresRenderingConsolidationForViewTransition() const;
     bool hasOutlineAnnotation() const;
-    inline bool hasOutline() const;
+    inline bool hasOutline() const; // Defined in RenderElementStyleInlines.h.
     bool hasSelfPaintingLayer() const;
 
     bool checkForRepaintDuringLayout() const;
@@ -219,14 +219,14 @@ public:
     // CSS scroll-margin that is set in the style of this RenderElement.
     MarginRect absoluteAnchorRectWithScrollMargin(bool* insideFixed = nullptr) const;
 
-    inline bool hasFilter() const;
-    inline bool hasBackdropFilter() const;
-    inline bool hasBlendMode() const;
-    inline bool hasShapeOutside() const;
+    inline bool hasFilter() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasBackdropFilter() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasBlendMode() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasShapeOutside() const; // Defined in RenderElementStyleInlines.h.
 
 #if HAVE(CORE_MATERIAL)
-    inline bool hasAppleVisualEffect() const;
-    inline bool hasAppleVisualEffectRequiringBackdropFilter() const;
+    inline bool hasAppleVisualEffect() const; // Defined in RenderElementStyleInlines.h.
+    inline bool hasAppleVisualEffectRequiringBackdropFilter() const; // Defined in RenderElementStyleInlines.h.
 #endif
 
     void registerForVisibleInViewportCallback();
@@ -281,8 +281,8 @@ public:
     virtual void transformRelatedPropertyDidChange() { }
 
     // https://www.w3.org/TR/css-transforms-1/#transform-box
-    inline FloatRect transformReferenceBoxRect(const RenderStyle&) const;
-    inline FloatRect transformReferenceBoxRect() const;
+    inline FloatRect transformReferenceBoxRect(const RenderStyle&) const; // Defined in RenderElementStyleInlines.h.
+    inline FloatRect transformReferenceBoxRect() const; // Defined in RenderElementStyleInlines.h.
 
     // https://www.w3.org/TR/css-transforms-1/#reference-box
     virtual FloatRect referenceBoxRect(CSSBoxType) const;
@@ -405,7 +405,7 @@ private:
     RenderObject* firstChildSlow() const final { return firstChild(); }
     RenderObject* lastChildSlow() const final { return lastChild(); }
 
-    inline bool mayContainOutOfFlowPositionedObjects(const RenderStyle* styleToUse = nullptr) const;
+    inline bool mayContainOutOfFlowPositionedObjects(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h.
 
     RenderElement* rendererForPseudoStyleAcrossShadowBoundary() const;
 
@@ -473,9 +473,9 @@ private:
     RenderStyle m_style;
 };
 
-inline int adjustForAbsoluteZoom(int, const RenderElement&);
-inline LayoutUnit adjustLayoutUnitForAbsoluteZoom(LayoutUnit, const RenderElement&);
-inline LayoutSize adjustLayoutSizeForAbsoluteZoom(LayoutSize, const RenderElement&);
+inline int adjustForAbsoluteZoom(int, const RenderElement&); // Defined in RenderElementStyleInlines.h.
+inline LayoutUnit adjustLayoutUnitForAbsoluteZoom(LayoutUnit, const RenderElement&); // Defined in RenderElementStyleInlines.h.
+inline LayoutSize adjustLayoutSizeForAbsoluteZoom(LayoutSize, const RenderElement&); // Defined in RenderElementStyleInlines.h.
 
 inline void RenderElement::setChildNeedsLayout(MarkingBehavior markParents)
 {

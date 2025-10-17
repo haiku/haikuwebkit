@@ -44,9 +44,7 @@ struct Transform : ListOrNone<TransformList> {
     Transform(std::initializer_list<TransformFunction>);
     Transform(TransformFunction&&);
 
-    WebCore::TransformOperations resolvedCalculatedValues(const FloatSize&) const;
-
-    template<TransformOperation::Type operationType>
+    template<TransformFunctionType operationType>
     bool hasTransformOfType() const;
 
     void apply(TransformationMatrix&, const FloatSize&, unsigned start = 0) const;
@@ -57,6 +55,8 @@ struct Transform : ListOrNone<TransformList> {
     bool isRepresentableIn2D() const;
     bool affectedByTransformOrigin() const;
     bool containsNonInvertibleMatrix(const LayoutSize&) const;
+
+    TransformFunctionSizeDependencies computeSizeDependencies() const;
 };
 
 inline Transform::Transform(std::initializer_list<TransformFunction> transformFunctions)
@@ -69,7 +69,7 @@ inline Transform::Transform(TransformFunction&& transformFunction)
 {
 }
 
-template<TransformOperation::Type operationType>
+template<TransformFunctionType operationType>
 bool Transform::hasTransformOfType() const
 {
     return m_value.hasTransformOfType<operationType>();
@@ -100,6 +100,11 @@ inline bool Transform::containsNonInvertibleMatrix(const LayoutSize& size) const
     return m_value.containsNonInvertibleMatrix(size);
 }
 
+inline TransformFunctionSizeDependencies Transform::computeSizeDependencies() const
+{
+    return m_value.computeSizeDependencies();
+}
+
 // MARK: - Conversion
 
 template<> struct CSSValueConversion<Transform> { auto operator()(BuilderState&, const CSSValue&) -> Transform; };
@@ -115,7 +120,7 @@ template<> struct Blending<Transform> {
 
 // MARK: - Platform
 
-template<> struct ToPlatform<Transform> { auto operator()(const Transform&) -> TransformOperations; };
+template<> struct ToPlatform<Transform> { auto operator()(const Transform&, const FloatSize&) -> TransformOperations; };
 
 } // namespace Style
 } // namespace WebCore

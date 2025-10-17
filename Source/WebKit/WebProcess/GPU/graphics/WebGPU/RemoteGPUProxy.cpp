@@ -30,8 +30,10 @@
 
 #include "GPUConnectionToWebProcessMessages.h"
 #include "GPUProcessConnection.h"
+#include "ModelConvertToBackingContext.h"
 #include "RemoteAdapterProxy.h"
 #include "RemoteCompositorIntegrationProxy.h"
+#include "RemoteDDMeshProxy.h"
 #include "RemoteGPU.h"
 #include "RemoteGPUMessages.h"
 #include "RemoteGPUProxyMessages.h"
@@ -49,19 +51,19 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteGPUProxy);
 
-RefPtr<RemoteGPUProxy> RemoteGPUProxy::create(WebGPU::ConvertToBackingContext& convertToBackingContext, WebPage& page)
+RefPtr<RemoteGPUProxy> RemoteGPUProxy::create(WebGPU::ConvertToBackingContext& convertToBackingContext, DDModel::ConvertToBackingContext& modelConvertToBackingContext, WebPage& page)
 {
-    return RemoteGPUProxy::create(convertToBackingContext, page.ensureProtectedRemoteRenderingBackendProxy(), RunLoop::mainSingleton());
+    return RemoteGPUProxy::create(convertToBackingContext, modelConvertToBackingContext, page.ensureProtectedRemoteRenderingBackendProxy(), RunLoop::mainSingleton());
 }
 
-RefPtr<RemoteGPUProxy> RemoteGPUProxy::create(WebGPU::ConvertToBackingContext& convertToBackingContext, RemoteRenderingBackendProxy& renderingBackend, SerialFunctionDispatcher& dispatcher)
+RefPtr<RemoteGPUProxy> RemoteGPUProxy::create(WebGPU::ConvertToBackingContext& convertToBackingContext, DDModel::ConvertToBackingContext& modelConvertToBackingContext, RemoteRenderingBackendProxy& renderingBackend, SerialFunctionDispatcher& dispatcher)
 {
     constexpr size_t connectionBufferSizeLog2 = 21;
     auto connectionPair = IPC::StreamClientConnection::create(connectionBufferSizeLog2, WebProcess::singleton().gpuProcessTimeoutDuration());
     if (!connectionPair)
         return nullptr;
     auto [clientConnection, serverConnectionHandle] = WTFMove(*connectionPair);
-    Ref instance = adoptRef(*new RemoteGPUProxy(convertToBackingContext, dispatcher));
+    Ref instance = adoptRef(*new RemoteGPUProxy(convertToBackingContext, modelConvertToBackingContext, dispatcher));
     instance->initializeIPC(WTFMove(clientConnection), renderingBackend.ensureBackendCreated(), WTFMove(serverConnectionHandle));
     // TODO: We must wait until initialized, because at the moment we cannot receive IPC messages
     // during wait while in synchronous stream send. Should be fixed as part of https://bugs.webkit.org/show_bug.cgi?id=217211.
@@ -70,8 +72,9 @@ RefPtr<RemoteGPUProxy> RemoteGPUProxy::create(WebGPU::ConvertToBackingContext& c
 }
 
 
-RemoteGPUProxy::RemoteGPUProxy(WebGPU::ConvertToBackingContext& convertToBackingContext, SerialFunctionDispatcher& dispatcher)
+RemoteGPUProxy::RemoteGPUProxy(WebGPU::ConvertToBackingContext& convertToBackingContext, DDModel::ConvertToBackingContext& modelConvertToBackingContext, SerialFunctionDispatcher& dispatcher)
     : m_convertToBackingContext(convertToBackingContext)
+    , m_modelConvertToBackingContext(modelConvertToBackingContext)
     , m_dispatcher(dispatcher)
 {
 }
@@ -216,6 +219,29 @@ void RemoteGPUProxy::requestAdapter(const WebCore::WebGPU::RequestAdapterOptions
         response->limits.maxStorageTexturesInVertexStage
     );
     callback(WebGPU::RemoteAdapterProxy::create(WTFMove(response->name), WTFMove(resultSupportedFeatures), WTFMove(resultSupportedLimits), response->isFallbackAdapter, options.xrCompatible, *this, m_convertToBackingContext, identifier));
+}
+
+
+RefPtr<WebCore::DDModel::DDMesh> RemoteGPUProxy::addMeshRequest(const WebCore::DDModel::DDMeshDescriptor& descriptor)
+{
+#if ENABLE(GPUP_MODEL)
+    auto convertedDescriptor = m_modelConvertToBackingContext->convertToBacking(descriptor);
+    if (!convertedDescriptor)
+        return nullptr;
+
+    auto identifier = DDModelIdentifier::generate();
+
+    auto sendResult = send(Messages::RemoteGPU::AddMeshRequest(*convertedDescriptor, identifier));
+    if (sendResult != IPC::Error::NoError)
+        return nullptr;
+
+    auto result = DDModel::RemoteDDMeshProxy::create(root(), m_modelConvertToBackingContext, identifier);
+    result->setLabel(WTFMove(convertedDescriptor->label));
+    return result;
+#else
+    UNUSED_PARAM(descriptor);
+    return nullptr;
+#endif
 }
 
 RefPtr<WebCore::WebGPU::PresentationContext> RemoteGPUProxy::createPresentationContext(const WebCore::WebGPU::PresentationContextDescriptor& descriptor)

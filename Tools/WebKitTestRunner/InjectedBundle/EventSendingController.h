@@ -52,9 +52,6 @@ public:
     void mouseDown(JSContextRef, int button, JSValueRef modifierArray, JSStringRef pointerType);
     void mouseUp(JSContextRef, int button, JSValueRef modifierArray, JSStringRef pointerType);
     void mouseMoveTo(double x, double y, JSStringRef pointerType);
-    void asyncMouseDown(JSContextRef, int button, JSValueRef modifierArray, JSStringRef pointerType, JSValueRef completionHandler);
-    void asyncMouseUp(JSContextRef, int button, JSValueRef modifierArray, JSStringRef pointerType, JSValueRef completionHandler);
-    void asyncMouseMoveTo(JSContextRef, double x, double y, JSStringRef pointerType, JSValueRef completionHandler);
     void mouseForceClick();
     void startAndCancelMouseForceClick();
     void mouseForceDown();
@@ -67,6 +64,8 @@ public:
     JSValueRef contextClick(JSContextRef);
     void leapForward(int milliseconds);
     void scheduleAsynchronousClick();
+
+    void setMousePosition(double x, double y) { m_position = WKPointMake(x, y); }
 
     void monitorWheelEvents(MonitorWheelEventsOptions*);
     void callAfterScrollingCompletes(JSContextRef, JSValueRef functionCallback);

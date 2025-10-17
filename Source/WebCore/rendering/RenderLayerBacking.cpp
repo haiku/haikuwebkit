@@ -1016,8 +1016,8 @@ static bool hasNonZeroTransformOrigin(const RenderLayerModelObject& renderer)
     auto& style = renderer.style();
     auto fixedTransformOriginX = style.transformOriginX().tryFixed();
     auto fixedTransformOriginY = style.transformOriginY().tryFixed();
-    return (fixedTransformOriginX && fixedTransformOriginX->value)
-        || (fixedTransformOriginY && fixedTransformOriginY->value);
+    return (fixedTransformOriginX && !fixedTransformOriginX->isZero())
+        || (fixedTransformOriginY && !fixedTransformOriginY->isZero());
 }
 
 bool RenderLayerBacking::updateCompositedBounds()
@@ -1087,7 +1087,7 @@ void RenderLayerBacking::updateAllowsBackingStoreDetaching(bool allowDetachingFo
             m_scrolledContentsLayer->setAllowsBackingStoreDetaching(allowDetaching);
     };
 
-    if (!m_owningLayer.behavesAsFixed()) {
+    if (!m_owningLayer.behavesAsFixed() && !m_owningLayer.behavesAsSticky()) {
         setAllowsBackingStoreDetaching(true);
         return;
     }
@@ -4343,6 +4343,10 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
     if (!hasOpacity && !hasRotate && !hasScale && !hasTranslate && !hasTransform && !hasFilter && !hasBackdropFilter)
         return false;
 
+    auto referenceBoxRect = renderer().transformReferenceBoxRect(renderer().style());
+    if (!renderer().isSVGLayerAwareRenderer())
+        referenceBoxRect = snappedIntRect(LayoutRect(referenceBoxRect));
+
     KeyframeValueList rotateVector(AnimatedProperty::Rotate);
     KeyframeValueList scaleVector(AnimatedProperty::Scale);
     KeyframeValueList translateVector(AnimatedProperty::Translate);
@@ -4361,16 +4365,16 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
         auto* tf = currentKeyframe.timingFunction();
 
         if (currentKeyframe.animatesProperty(CSSPropertyRotate))
-            rotateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->rotate()).get(), tf));
+            rotateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->rotate(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyScale))
-            scaleVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->scale()).get(), tf));
+            scaleVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->scale(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTranslate))
-            translateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->translate()).get(), tf));
+            translateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->translate(), referenceBoxRect.size()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTransform))
-            transformVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->transform()), tf));
+            transformVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->transform(), referenceBoxRect.size()), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyOpacity))
             opacityVector.insert(makeUnique<FloatAnimationValue>(offset, keyframeStyle->opacity().value.value, tf));
@@ -4384,29 +4388,25 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
 
     bool didAnimate = false;
 
-    auto referenceBoxRect = renderer().transformReferenceBoxRect(renderer().style());
-    if (!renderer().isSVGLayerAwareRenderer())
-        referenceBoxRect = snappedIntRect(LayoutRect(referenceBoxRect));
-
-    if (hasRotate && m_graphicsLayer->addAnimation(rotateVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasRotate && m_graphicsLayer->addAnimation(rotateVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasScale && m_graphicsLayer->addAnimation(scaleVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasScale && m_graphicsLayer->addAnimation(scaleVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasTranslate && m_graphicsLayer->addAnimation(translateVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasTranslate && m_graphicsLayer->addAnimation(translateVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasTransform && m_graphicsLayer->addAnimation(transformVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasTransform && m_graphicsLayer->addAnimation(transformVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasOpacity && m_graphicsLayer->addAnimation(opacityVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasOpacity && m_graphicsLayer->addAnimation(opacityVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasFilter && m_graphicsLayer->addAnimation(filterVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasFilter && m_graphicsLayer->addAnimation(filterVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasBackdropFilter && m_graphicsLayer->addAnimation(backdropFilterVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
+    if (hasBackdropFilter && m_graphicsLayer->addAnimation(backdropFilterVector, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
     if (didAnimate) {

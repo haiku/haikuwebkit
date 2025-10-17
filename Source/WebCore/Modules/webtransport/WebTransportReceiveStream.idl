@@ -31,5 +31,5 @@
     JSGenerateToJSObject,
     JSGenerateToNativeObject
 ] interface WebTransportReceiveStream : ReadableStream {
-    Promise<WebTransportReceiveStreamStats> getStats();
+    [CallWith=CurrentScriptExecutionContext] Promise<WebTransportReceiveStreamStats> getStats();
 };

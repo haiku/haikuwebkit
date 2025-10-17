@@ -4,5 +4,5 @@ This test validates the values of the window.performance.getEntriesByType("navig
 
 
 
-FAIL Navigation Timing 2 WPT TypeError: undefined is not an object (evaluating 'performanceNamespace.getEntriesByType("navigation")[0].type')
+PASS Navigation Timing 2 WPT
 

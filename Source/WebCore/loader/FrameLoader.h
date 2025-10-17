@@ -88,6 +88,7 @@ class ResourceRequest;
 class ResourceResponse;
 class SerializedScriptValue;
 class SubstituteData;
+class DocumentPrefetcher;
 
 enum class CachePolicy : uint8_t;
 enum class NewLoadInProgress : bool;
@@ -132,7 +133,7 @@ public:
     SubframeLoader& subframeLoader() { return m_subframeLoader; }
     const SubframeLoader& subframeLoader() const { return m_subframeLoader; }
 
-    void setupForReplace();
+    void setupForMultipartReplace();
 
     // FIXME: These are all functions which start loads. We have too many.
     WEBCORE_EXPORT void loadFrameRequest(FrameLoadRequest&&, Event*, RefPtr<FormState>&&, std::optional<PrivateClickMeasurement>&& = std::nullopt); // Called by submitForm, calls loadPostRequest and loadURL.
@@ -174,7 +175,6 @@ public:
 
     WEBCORE_EXPORT int numPendingOrLoadingRequests(bool recurse) const;
 
-    ReferrerPolicy effectiveReferrerPolicy() const;
     String referrer() const;
     WEBCORE_EXPORT String outgoingReferrer() const;
     WEBCORE_EXPORT URL outgoingReferrerURL();
@@ -208,8 +208,8 @@ public:
     static ResourceError blockedByContentFilterError(const ResourceRequest&);
 #endif
 
-    bool isReplacing() const;
-    void setReplacing();
+    bool isMultipartReplacing() const;
+    void setMultipartReplacing();
     bool subframeIsLoading() const;
     void willChangeTitle(DocumentLoader*);
     void didChangeTitle(DocumentLoader*);
@@ -363,6 +363,9 @@ public:
     uint64_t requiredCookiesVersion() const { return m_requiredCookiesVersion; }
 
     WEBCORE_EXPORT void prefetchDNSIfNeeded(const URL&);
+
+    void prefetch(const URL&, const Vector<String>&, const String&, bool lowPriority = false);
+    DocumentPrefetcher& documentPrefetcher() { return m_documentPrefetcher.get(); }
 
 private:
     enum FormSubmissionCacheLoadPolicy {
@@ -552,6 +555,8 @@ private:
     bool m_doNotAbortNavigationAPI { false };
     RefPtr<HistoryItem> m_pendingNavigationAPIItem;
     uint64_t m_requiredCookiesVersion { 0 };
+
+    const Ref<DocumentPrefetcher> m_documentPrefetcher;
 };
 
 // This function is called by createWindow() in JSDOMWindowBase.cpp, for example, for

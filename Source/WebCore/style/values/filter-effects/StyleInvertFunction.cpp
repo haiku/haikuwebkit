@@ -43,7 +43,7 @@ Ref<FilterOperation> createFilterOperation(const CSS::Invert& filter, const Buil
 {
     double value;
     if (auto parameter = filter.value)
-        value = evaluate(toStyle(*parameter, state));
+        value = evaluate<double>(toStyle(*parameter, state));
     else
         value = filterFunctionDefaultValue<CSS::InvertFunction::name>().value;
     return BasicComponentTransferFilterOperation::create(value, filterFunctionOperationType<CSS::InvertFunction::name>());

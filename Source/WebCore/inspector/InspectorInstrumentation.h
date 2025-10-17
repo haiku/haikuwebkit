@@ -41,6 +41,8 @@
 #include "Frame.h"
 #include "HitTestResult.h"
 #include "InspectorInstrumentationPublic.h"
+#include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "ResourceLoader.h"
 #include "ResourceLoaderIdentifier.h"
@@ -241,8 +243,6 @@ public:
     static void frameStartedLoading(LocalFrame&);
     static void frameStoppedLoading(LocalFrame&);
     static void didCompleteRenderingFrame(Frame&);
-    static void frameScheduledNavigation(Frame&, Seconds delay);
-    static void frameClearedScheduledNavigation(Frame&);
     static void accessibilitySettingsDidChange(Page&);
 #if ENABLE(DARK_MODE_CSS)
     static void defaultAppearanceDidChange(Page&);
@@ -457,8 +457,6 @@ private:
     static void frameStartedLoadingImpl(InstrumentingAgents&, LocalFrame&);
     static void didCompleteRenderingFrameImpl(InstrumentingAgents&);
     static void frameStoppedLoadingImpl(InstrumentingAgents&, LocalFrame&);
-    static void frameScheduledNavigationImpl(InstrumentingAgents&, Frame&, Seconds delay);
-    static void frameClearedScheduledNavigationImpl(InstrumentingAgents&, Frame&);
     static void accessibilitySettingsDidChangeImpl(InstrumentingAgents&);
 #if ENABLE(DARK_MODE_CSS)
     static void defaultAppearanceDidChangeImpl(InstrumentingAgents&);
@@ -1315,20 +1313,6 @@ inline void InspectorInstrumentation::frameStoppedLoading(LocalFrame& frame)
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (auto* agents = instrumentingAgents(frame))
         frameStoppedLoadingImpl(*agents, frame);
-}
-
-inline void InspectorInstrumentation::frameScheduledNavigation(Frame& frame, Seconds delay)
-{
-    FAST_RETURN_IF_NO_FRONTENDS(void());
-    if (auto* agents = instrumentingAgents(frame))
-        frameScheduledNavigationImpl(*agents, frame, delay);
-}
-
-inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& frame)
-{
-    FAST_RETURN_IF_NO_FRONTENDS(void());
-    if (auto* agents = instrumentingAgents(frame))
-        frameClearedScheduledNavigationImpl(*agents, frame);
 }
 
 inline void InspectorInstrumentation::accessibilitySettingsDidChange(Page& page)

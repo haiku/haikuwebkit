@@ -413,6 +413,9 @@ namespace WebCore {
     macro(RTCStatsReport) \
     macro(RTCTrackEvent) \
     macro(RTCTransformEvent) \
+    macro(ReadableByteStreamController) \
+    macro(ReadableStreamBYOBReader) \
+    macro(ReadableStreamBYOBRequest) \
     macro(ReadableStream) \
     macro(ReadableStreamDefaultController) \
     macro(ReadableStreamDefaultReader) \

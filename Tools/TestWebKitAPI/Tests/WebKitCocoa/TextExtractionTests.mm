@@ -163,6 +163,10 @@ TEST(TextExtractionTests, InteractionDebugDescription)
     RetainPtr composeID = extractNodeIdentifier(debugText.get(), @"Compose");
     RetainPtr selectID = extractNodeIdentifier(debugText.get(), @"select");
 
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+    EXPECT_FALSE([debugText containsString:@"crazy ones"]);
+#endif
+
     NSError *error = nil;
     NSString *description = nil;
     {

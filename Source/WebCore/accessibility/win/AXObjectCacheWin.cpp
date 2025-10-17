@@ -33,6 +33,7 @@
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "DocumentInlines.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "RenderObject.h"
 

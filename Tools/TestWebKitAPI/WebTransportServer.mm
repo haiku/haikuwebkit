@@ -47,7 +47,7 @@ struct WebTransportServer::Data : public RefCounted<WebTransportServer::Data> {
     Vector<CoroutineHandle<ConnectionTask::promise_type>> coroutineHandles;
 };
 
-WebTransportServer::WebTransportServer(Function<ConnectionTask(ConnectionGroup)>&& connectionGroupHandler)
+WebTransportServer::WebTransportServer(Function<ConnectionTask(ConnectionGroup)>&& connectionGroupHandler, sec_identity_t identity)
     : m_data(Data::create(WTFMove(connectionGroupHandler)))
 {
     auto configureWebTransport = [](nw_protocol_options_t options) {
@@ -56,9 +56,9 @@ WebTransportServer::WebTransportServer(Function<ConnectionTask(ConnectionGroup)>
         nw_webtransport_options_set_connection_max_sessions(options, 1);
     };
 
-    auto configureTLS = [](nw_protocol_options_t options) {
+    auto configureTLS = [identity = RetainPtr { identity }] (nw_protocol_options_t options) {
         RetainPtr securityOptions = adoptNS(nw_tls_copy_sec_protocol_options(options));
-        sec_protocol_options_set_local_identity(securityOptions.get(), adoptNS(sec_identity_create(testIdentity().get())).get());
+        sec_protocol_options_set_local_identity(securityOptions.get(), identity ? identity.get() : adoptNS(sec_identity_create(testIdentity().get())).get());
     };
 
     auto configureQUIC = [](nw_protocol_options_t options) {

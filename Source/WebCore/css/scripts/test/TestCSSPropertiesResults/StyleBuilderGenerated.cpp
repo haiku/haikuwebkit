@@ -128,26 +128,6 @@ public:
     {
         builderState.style().setTestAnimationWrapperAccelerationThreadedOnly(fromCSSValueDeducingType(builderState, value));
     }
-    static void applyInitialTestAutoFunctions(BuilderState& builderState)
-    {
-        builderState.style().setHasAutoTestAutoFunctions();
-    }
-    static void applyInheritTestAutoFunctions(BuilderState& builderState)
-    {
-        if (builderState.parentStyle().hasAutoTestAutoFunctions()) {
-            builderState.style().setHasAutoTestAutoFunctions();
-            return;
-        }
-        builderState.style().setTestAutoFunctions(forwardInheritedValue(builderState.parentStyle().testAutoFunctions()));
-    }
-    static void applyValueTestAutoFunctions(BuilderState& builderState, CSSValue& value)
-    {
-        if (value.valueID() == CSSValueAuto) {
-            builderState.style().setHasAutoTestAutoFunctions();
-            return;
-        }
-        builderState.style().setTestAutoFunctions(fromCSSValueDeducingType(builderState, value));
-    }
     static void applyInitialTestBoundedRepetitionWithCommas(BuilderState& builderState)
     {
         builderState.style().setTestBoundedRepetitionWithCommas(RenderStyle::initialTestBoundedRepetitionWithCommas());
@@ -345,9 +325,9 @@ public:
     static void applyValueTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState, CSSValue& value)
     {
         if (builderState.applyPropertyToRegularStyle())
-            builderState.style().setTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, fromCSSValueDeducingType(builderState, value), ForVisitedLink::No));
+            builderState.style().setTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::No));
         if (builderState.applyPropertyToVisitedLinkStyle())
-            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, fromCSSValueDeducingType(builderState, value), ForVisitedLink::Yes));
+            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::Yes));
     }
     static void applyInitialTestCustomExtractor(BuilderState& builderState)
     {
@@ -1417,19 +1397,6 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
             break;
         case ApplyValueType::Value:
             BuilderFunctions::applyValueTestAnimationWrapperAccelerationThreadedOnly(builderState, value);
-            break;
-        }
-        break;
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
-        switch (valueType) {
-        case ApplyValueType::Initial:
-            BuilderFunctions::applyInitialTestAutoFunctions(builderState);
-            break;
-        case ApplyValueType::Inherit:
-            BuilderFunctions::applyInheritTestAutoFunctions(builderState);
-            break;
-        case ApplyValueType::Value:
-            BuilderFunctions::applyValueTestAutoFunctions(builderState, value);
             break;
         }
         break;

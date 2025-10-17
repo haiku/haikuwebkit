@@ -20,6 +20,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-position-circular-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-chained-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-chained-002-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-chained-003-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-chained-004-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-chained-fallback-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-composited-scrolling-006-ref.html
@@ -31,6 +32,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-to-sticky-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-to-sticky-002-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-to-sticky-003-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-to-sticky-004-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-update-005-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/reference/anchor-scroll-update-006-ref.html

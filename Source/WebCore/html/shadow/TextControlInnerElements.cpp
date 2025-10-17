@@ -39,6 +39,7 @@
 #include "LocalFrame.h"
 #include "LocalizedStrings.h"
 #include "MouseEvent.h"
+#include "NodeDocument.h"
 #include "Quirks.h"
 #include "RenderSearchField.h"
 #include "RenderStyleSetters.h"

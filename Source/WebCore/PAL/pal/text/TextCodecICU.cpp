@@ -241,8 +241,8 @@ String TextCodecICU::decode(std::span<const uint8_t> source, bool flush, bool st
     UErrorCode err = U_ZERO_ERROR;
 
     do {
-        size_t ucharsDecoded = decodeToBuffer(target, source, offsets, flush, err);
-        result.append(target.first(ucharsDecoded));
+        size_t count = decodeToBuffer(target, source, offsets, flush, err);
+        result.append(target.first(count));
     } while (needsToGrowToProduceBuffer(err));
 
     if (U_FAILURE(err)) {

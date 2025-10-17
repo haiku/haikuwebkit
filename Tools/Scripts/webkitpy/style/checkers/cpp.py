@@ -2308,7 +2308,7 @@ def check_spacing(file_extension, clean_lines, line_number, file_state, error):
                   'Should have spaces around = in property synthesis.')
 
     # Don't try to do spacing checks for operator methods
-    line = sub(r'operator(==|!=|<|<<|<=|>=|>>|>|\+=|-=|\*=|/=|%=|&=|\|=|^=|<<=|>>=|/)\(', r'operator\(', line)
+    line = sub(r'operator(==|!=|<|<<|<=|>=|>>|>|\+=|-=|\*=|/=|%=|&=|\|=|^=|<<=|>>=|/|\|)\(', r'operator\(', line)
     # Don't try to do spacing checks for #include, #import, #if, or #elif statements at
     # minimum because it messes up checks for spacing around /
     if match(r'\s*#\s*(?:include|import|if|elif)', line):

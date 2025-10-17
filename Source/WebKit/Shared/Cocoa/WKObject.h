@@ -66,6 +66,16 @@ template<typename ObjectClass> inline typename WrapperTraits<ObjectClass>::Wrapp
     return object ? wrapper(*object) : nil;
 }
 
+template<typename ObjectClass> inline RetainPtr<typename WrapperTraits<ObjectClass>::WrapperClass> protectedWrapper(ObjectClass& object)
+{
+    return wrapper(object);
+}
+
+template<typename ObjectClass> inline RetainPtr<typename WrapperTraits<ObjectClass>::WrapperClass> protectedWrapper(ObjectClass* object)
+{
+    return wrapper(object);
+}
+
 template<typename ObjectClass> inline typename WrapperTraits<ObjectClass>::WrapperClass *wrapper(const Ref<ObjectClass>& object)
 {
     return wrapper(object.get());

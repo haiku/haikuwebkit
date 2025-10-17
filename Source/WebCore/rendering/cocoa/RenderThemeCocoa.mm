@@ -128,7 +128,7 @@ static void drawFocusRingForPathForVectorBasedControls(const RenderObject& box, 
     // macOS controls have never honored outline offset.
 #if PLATFORM(IOS_FAMILY)
     auto deviceScaleFactor = box.document().deviceScaleFactor();
-    auto outlineOffset = floorToDevicePixel(Style::evaluate(box.style().outlineOffset(), 1.0f /* FIXME FIND ZOOM */), deviceScaleFactor);
+    auto outlineOffset = floorToDevicePixel(Style::evaluate<float>(box.style().outlineOffset(), Style::ZoomNeeded { }), deviceScaleFactor);
 
     if (outlineOffset > 0) {
         const auto center = rect.center();
@@ -513,7 +513,7 @@ Color RenderThemeCocoa::platformGrammarMarkerColor(OptionSet<StyleColorOptions> 
 
 Color RenderThemeCocoa::controlTintColor(const RenderStyle& style, OptionSet<StyleColorOptions> options) const
 {
-    if (!style.hasAutoAccentColor())
+    if (!style.accentColor().isAuto())
         return style.usedAccentColor(options);
 
 #if PLATFORM(MAC)
@@ -2302,7 +2302,7 @@ static void adjustInputElementButtonStyleForVectorBasedControls(RenderStyle& sty
     applyCommonButtonPaddingToStyleForVectorBasedControls(style, inputElement);
 
     // Don't adjust the style if the width is specified.
-    if (auto fixedLogicalWidth = style.logicalWidth().tryFixed(); fixedLogicalWidth && fixedLogicalWidth->value > 0)
+    if (auto fixedLogicalWidth = style.logicalWidth().tryFixed(); fixedLogicalWidth && fixedLogicalWidth->isPositive())
         return;
 
     // Don't adjust for unsupported date input types.
@@ -2437,10 +2437,10 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
     constexpr auto controlBaseHeight = 20.0f;
     constexpr auto controlBaseFontSize = 11.0f;
 
-    if (style.logicalWidth().isIntrinsicOrLegacyIntrinsicOrAuto() || style.logicalHeight().isAuto()) {
+    if (!style.logicalWidth().isSpecified() || style.logicalHeight().isAuto()) {
         auto minimumHeight = controlBaseHeight / controlBaseFontSize * style.fontDescription().computedSize();
         if (auto fixedValue = style.logicalMinHeight().tryFixed())
-            minimumHeight = std::max(minimumHeight, fixedValue->value);
+            minimumHeight = std::max(minimumHeight, fixedValue->resolveZoom(Style::ZoomNeeded { }));
         // FIXME: This may need to be a layout time adjustment to support various
         // values like fit-content etc.
         style.setLogicalMinHeight(Style::MinimumSize::Fixed { minimumHeight });
@@ -2574,18 +2574,18 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
 
     auto glyphPaddingEnd = logicalRect.width();
     if (auto fixedPaddingEnd = box.style().paddingEnd().tryFixed())
-        glyphPaddingEnd = fixedPaddingEnd->value;
+        glyphPaddingEnd = fixedPaddingEnd->resolveZoom(Style::ZoomNeeded { });
 
     // Add RenderMenuList inner start padding for symmetry.
     if (CheckedPtr menulist = dynamicDowncast<RenderMenuList>(box); menulist && menulist->innerRenderer()) {
         if (auto innerPaddingStart = menulist->innerRenderer()->style().paddingStart().tryFixed())
-            glyphPaddingEnd += innerPaddingStart->value;
+            glyphPaddingEnd += innerPaddingStart->resolveZoom(Style::ZoomNeeded { });
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME ZOOM EFFECTED? */) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) - glyphPaddingEnd);
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate(box.style().borderEndWidth(), 1.0f /* FIXME ZOOM EFFECTED? */) + glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) + glyphPaddingEnd);
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();
@@ -2726,7 +2726,7 @@ static PathWithSize listButtonIndicatorPath(ControlSize controlSize)
 Color RenderThemeCocoa::controlTintColorWithContrast(const RenderStyle& style, const OptionSet<StyleColorOptions> styleColorOptions) const
 {
     const auto tintColor = controlTintColor(style, styleColorOptions);
-    if (style.hasAutoAccentColor())
+    if (style.accentColor().isAuto())
         return tintColor;
 
     const auto isDarkMode = styleColorOptions.contains(StyleColorOptions::UseDarkAppearance);
@@ -3891,7 +3891,7 @@ float RenderThemeCocoa::adjustedMaximumLogicalWidthForControl(const RenderStyle&
 
         if (auto paddingEdgeInlineStartFixed = paddingEdgeInlineStart.tryFixed()) {
             if (auto paddingEdgeInlineEndFixed = paddingEdgeInlineEnd.tryFixed())
-                maximumLogicalWidth += paddingEdgeInlineStartFixed->value - paddingEdgeInlineEndFixed->value;
+                maximumLogicalWidth += paddingEdgeInlineStartFixed->resolveZoom(Style::ZoomNeeded { }) - paddingEdgeInlineEndFixed->resolveZoom(Style::ZoomNeeded { });
         }
     }
 #else

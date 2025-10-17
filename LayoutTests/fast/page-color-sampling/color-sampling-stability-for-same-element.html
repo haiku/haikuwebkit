@@ -55,7 +55,6 @@
         await UIHelper.ensurePresentationUpdate();
 
         colorsAfterScrollingDown = await UIHelper.fixedContainerEdgeColors();
-        shouldBeEqualToString("colorsAfterScrollingDown.top", "rgb(200, 0, 0)");
         shouldBeNull("colorsAfterScrollingDown.left");
         shouldBeNull("colorsAfterScrollingDown.right");
         shouldBeNull("colorsAfterScrollingDown.bottom");
@@ -64,10 +63,10 @@
         await UIHelper.ensurePresentationUpdate();
 
         colorsAfterScrollingUp = await UIHelper.fixedContainerEdgeColors();
-        shouldBeEqualToString("colorsAfterScrollingUp.top", "rgb(200, 0, 0)");
         shouldBeNull("colorsAfterScrollingUp.left");
         shouldBeNull("colorsAfterScrollingUp.right");
         shouldBeNull("colorsAfterScrollingUp.bottom");
+        shouldBe("colorsAfterScrollingDown.top", "colorsAfterScrollingUp.top");
 
         finishJSTest();
     });

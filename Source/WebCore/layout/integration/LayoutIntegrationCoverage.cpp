@@ -394,11 +394,5 @@ bool canUseForFlexLayout(const RenderFlexibleBox& flexBox)
     return canUseForFlexLayoutWithReason(flexBox, IncludeReasons::First).isEmpty();
 }
 
-bool canUseForGridLayout(const RenderGrid&)
-{
-    // Grid integration is not enabled yet.
-    return false;
-}
-
 }
 }

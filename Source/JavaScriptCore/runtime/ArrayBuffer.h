@@ -160,7 +160,9 @@ public:
             m_hasMaxByteLength = !!m_shared->maxByteLength();
             m_maxByteLength = m_shared->maxByteLength().value_or(m_sizeInBytes);
         }
-        m_data = DataType { m_shared->data() };
+        // data() cannot destroy m_shared here so the code is safe as is so avoid
+        // refing for performance reasons.
+        SUPPRESS_UNCOUNTED_ARG m_data = DataType { m_shared->data() };
     }
 
     ArrayBufferContents(void* data, size_t sizeInBytes, size_t maxByteLength, Ref<BufferMemoryHandle>&& memoryHandle)
@@ -189,9 +191,9 @@ public:
 
     ~ArrayBufferContents()
     {
-        if (m_destructor) {
+        if (RefPtr destructor = m_destructor) {
             // FIXME: We shouldn't use getUnsafe here: https://bugs.webkit.org/show_bug.cgi?id=197698
-            m_destructor->run(m_data.getUnsafe());
+            destructor->run(m_data.getUnsafe());
         }
     }
     

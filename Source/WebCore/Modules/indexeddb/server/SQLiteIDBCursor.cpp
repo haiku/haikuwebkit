@@ -203,7 +203,7 @@ bool SQLiteIDBCursor::createSQLiteStatement(StringView sql)
         LOG_ERROR("Could not create cursor statement (prepare/id) - '%s'", database->lastErrorMsg());
         return false;
     }
-    m_statement = statement.value().moveToUniquePtr();
+    m_statement = WTFMove(statement);
 
     return bindArguments();
 }
@@ -305,12 +305,11 @@ bool SQLiteIDBCursor::resetAndRebindPreIndexStatementIfNecessary()
 
     CheckedPtr database = m_transaction->sqliteDatabase();
     if (!m_preIndexStatement) {
-        auto preIndexStatement = database->prepareHeapStatementSlow(buildPreIndexStatement(isDirectionNext()));
-        if (!preIndexStatement) {
+        m_preIndexStatement = database->prepareHeapStatementSlow(buildPreIndexStatement(isDirectionNext()));
+        if (!m_preIndexStatement) {
             LOG_ERROR("Could not prepare pre statement - '%s'", database->lastErrorMsg());
             return false;
         }
-        m_preIndexStatement = preIndexStatement.value().moveToUniquePtr();
     }
 
     CheckedRef preIndexStatement = *m_preIndexStatement;
@@ -552,7 +551,7 @@ SQLiteIDBCursor::FetchResult SQLiteIDBCursor::internalFetchNextRecord(SQLiteCurs
 
         if (!m_cachedObjectStoreStatement || CheckedRef { *m_cachedObjectStoreStatement }->reset() != SQLITE_OK) {
             if (auto cachedObjectStoreStatement = database->prepareHeapStatement("SELECT rowid, value FROM Records WHERE key = CAST(? AS TEXT) and objectStoreID = ?;"_s))
-                m_cachedObjectStoreStatement = cachedObjectStoreStatement.value().moveToUniquePtr();
+                m_cachedObjectStoreStatement = WTFMove(cachedObjectStoreStatement);
         }
 
         CheckedPtr cachedObjectStoreStatement = m_cachedObjectStoreStatement.get();

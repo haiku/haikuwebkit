@@ -47,7 +47,6 @@
 #include "HTMLFrameOwnerElement.h"
 #include "HistoryController.h"
 #include "HistoryItem.h"
-#include "InspectorInstrumentation.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "Logging.h"
@@ -98,6 +97,7 @@ public:
     virtual void didStartTimer(Frame&, Timer&) { }
     virtual void didStopTimer(Frame&, NewLoadInProgress) { }
     virtual bool targetIsCurrentFrame() const { return true; }
+    virtual bool isSameDocumentNavigation(Frame&) const { return false; }
 
     double delay() const { return m_delay; }
     LockHistory lockHistory() const { return m_lockHistory; }
@@ -163,10 +163,12 @@ protected:
             localFrame->loader().clientRedirectCancelledOrFinished(newLoadInProgress);
     }
 
-    Document& initiatingDocument() { return m_initiatingDocument.get(); }
+    Document& initiatingDocument() const { return m_initiatingDocument.get(); }
     SecurityOrigin* securityOrigin() const { return m_securityOrigin.get(); }
     const URL& url() const { return m_url; }
     const String& referrer() const { return m_referrer; }
+
+    bool isSameDocumentNavigation(Frame&) const final { return equalIgnoringFragmentIdentifier(initiatingDocument().url(), url()); }
 
 private:
     const Ref<Document> m_initiatingDocument;
@@ -313,6 +315,20 @@ public:
         page->goToItem(rootFrame, m_historyItem, FrameLoadType::IndexedBackForward, ShouldTreatAsContinuingLoad::No);
     }
 
+    bool isSameDocumentNavigation(Frame& frame) const final
+    {
+        RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
+        if (!localFrame)
+            return false;
+
+        RefPtr page { localFrame->page() };
+        if (!page || !page->checkedBackForward()->containsItem(m_historyItem))
+            return false;
+
+        URL url { m_historyItem->url() };
+        return equalIgnoringFragmentIdentifier(localFrame->document()->url(), url);
+    }
+
 private:
     const Ref<HistoryItem> m_historyItem;
 };
@@ -335,7 +351,7 @@ public:
             m_completionHandler(ScheduleHistoryNavigationResult::Aborted);
     }
 
-    std::optional<Ref<HistoryItem>> findBackForwardItemByKey(const LocalFrame& localFrame)
+    std::optional<Ref<HistoryItem>> findBackForwardItemByKey(const LocalFrame& localFrame) const
     {
         RefPtr entry = localFrame.window()->protectedNavigation()->findEntryByKey(m_key);
         if (!entry)
@@ -394,6 +410,24 @@ public:
         page->goToItemForNavigationAPI(rootFrame, *historyItem, FrameLoadType::IndexedBackForward, *localFrame, upcomingTraverseMethodTracker.get());
 
         completionHandler(ScheduleHistoryNavigationResult::Completed);
+    }
+
+    bool isSameDocumentNavigation(Frame& frame) const final
+    {
+        RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
+        if (!localFrame)
+            return false;
+
+        RefPtr page { localFrame->page() };
+        if (!page)
+            return false;
+
+        auto historyItem = findBackForwardItemByKey(*localFrame);
+        if (!historyItem)
+            return false;
+
+        URL url { (*historyItem)->url() };
+        return equalIgnoringFragmentIdentifier(localFrame->document()->url(), url);
     }
 
 private:
@@ -538,7 +572,7 @@ bool NavigationScheduler::redirectScheduledDuringLoad()
 
 bool NavigationScheduler::locationChangePending()
 {
-    return m_redirect && m_redirect->isLocationChange() && m_redirect->targetIsCurrentFrame();
+    return m_redirect && m_redirect->isLocationChange() && m_redirect->targetIsCurrentFrame() && !m_redirect->isSameDocumentNavigation(m_frame.get());
 }
 
 Ref<Frame> NavigationScheduler::protectedFrame() const
@@ -548,8 +582,6 @@ Ref<Frame> NavigationScheduler::protectedFrame() const
 
 void NavigationScheduler::clear()
 {
-    if (m_timer.isActive())
-        InspectorInstrumentation::frameClearedScheduledNavigation(protectedFrame());
     m_timer.stop();
     m_redirect = nullptr;
 }
@@ -771,16 +803,13 @@ void NavigationScheduler::timerFired()
     Ref frame = m_frame.get();
     if (!frame->page())
         return;
-    if (frame->page()->defersLoading()) {
-        InspectorInstrumentation::frameClearedScheduledNavigation(frame);
+    if (frame->page()->defersLoading())
         return;
-    }
 
     std::unique_ptr<ScheduledNavigation> redirect = std::exchange(m_redirect, nullptr);
     LOG(History, "NavigationScheduler %p timerFired - firing redirect %p", this, redirect.get());
 
     redirect->fire(frame);
-    InspectorInstrumentation::frameClearedScheduledNavigation(frame);
 }
 
 void NavigationScheduler::schedule(std::unique_ptr<ScheduledNavigation> redirect)
@@ -828,7 +857,6 @@ void NavigationScheduler::startTimer()
 
     Seconds delay = 1_s * m_redirect->delay();
     m_timer.startOneShot(delay);
-    InspectorInstrumentation::frameScheduledNavigation(frame, delay);
     m_redirect->didStartTimer(frame, m_timer); // m_redirect may be null on return (e.g. the client canceled the load)
 }
 
@@ -836,8 +864,6 @@ void NavigationScheduler::cancel(NewLoadInProgress newLoadInProgress)
 {
     LOG(History, "NavigationScheduler %p cancel(newLoadInProgress=%d)", this, newLoadInProgress == NewLoadInProgress::Yes);
 
-    if (m_timer.isActive())
-        InspectorInstrumentation::frameClearedScheduledNavigation(protectedFrame());
     m_timer.stop();
 
     if (auto redirect = std::exchange(m_redirect, nullptr))

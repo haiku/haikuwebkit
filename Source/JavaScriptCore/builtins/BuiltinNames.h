@@ -57,7 +57,6 @@ namespace JSC {
     macro(iteratedObject) \
     macro(iteratedString) \
     macro(promise) \
-    macro(promiseOrCapability) \
     macro(Object) \
     macro(Number) \
     macro(Array) \
@@ -78,8 +77,6 @@ namespace JSC {
     macro(homeObject) \
     macro(enqueueJob) \
     macro(hostPromiseRejectionTracker) \
-    macro(onFulfilled) \
-    macro(onRejected) \
     macro(push) \
     macro(repeatCharacter) \
     macro(starDefault) \
@@ -88,7 +85,6 @@ namespace JSC {
     macro(values) \
     macro(set) \
     macro(clear) \
-    macro(context) \
     macro(defer) \
     macro(delete) \
     macro(size) \
@@ -195,7 +191,6 @@ namespace JSC {
     macro(hasOwnPropertyFunction) \
     macro(createPrivateSymbol) \
     macro(entries) \
-    macro(outOfLineReactionCounts) \
     macro(emptyPropertyNameEnumerator) \
     macro(sentinelString) \
     macro(createRemoteFunction) \
@@ -216,6 +211,7 @@ namespace JSC {
     macro(wrapForValidIteratorCreate) \
     macro(asyncFromSyncIteratorCreate) \
     macro(promiseAllContextCreate) \
+    macro(promiseReactionCreate) \
     macro(regExpStringIteratorCreate) \
     macro(iteratorHelperCreate) \
     macro(syncIterator) \
@@ -253,12 +249,12 @@ public:
 
     PrivateSymbolImpl* lookUpPrivateName(const Identifier&) const;
     PrivateSymbolImpl* lookUpPrivateName(const String&) const;
-    PrivateSymbolImpl* lookUpPrivateName(std::span<const LChar>) const;
+    PrivateSymbolImpl* lookUpPrivateName(std::span<const Latin1Character>) const;
     PrivateSymbolImpl* lookUpPrivateName(std::span<const char16_t>) const;
 
     SymbolImpl* lookUpWellKnownSymbol(const Identifier&) const;
     SymbolImpl* lookUpWellKnownSymbol(const String&) const;
-    SymbolImpl* lookUpWellKnownSymbol(std::span<const LChar>) const;
+    SymbolImpl* lookUpWellKnownSymbol(std::span<const Latin1Character>) const;
     SymbolImpl* lookUpWellKnownSymbol(std::span<const char16_t>) const;
     
     void appendExternalName(const Identifier& publicName, const Identifier& privateName);

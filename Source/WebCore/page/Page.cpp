@@ -345,7 +345,7 @@ GCC_MAYBE_NO_INLINE static Ref<Frame> createMainFrame(Page& page, PageConfigurat
 {
     page.relaxAdoptionRequirement();
     return switchOn(WTFMove(clientCreator), [&] (PageConfiguration::LocalMainFrameCreationParameters&& creationParameters) -> Ref<Frame> {
-        return LocalFrame::createMainFrame(page, WTFMove(creationParameters.clientCreator), identifier, creationParameters.effectiveSandboxFlags, mainFrameOpener.get(), WTFMove(frameTreeSyncData));
+        return LocalFrame::createMainFrame(page, WTFMove(creationParameters.clientCreator), identifier, creationParameters.effectiveSandboxFlags, creationParameters.effectiveReferrerPolicy, mainFrameOpener.get(), WTFMove(frameTreeSyncData));
     }, [&] (CompletionHandler<UniqueRef<RemoteFrameClient>(RemoteFrame&)>&& remoteFrameClientCreator) -> Ref<Frame> {
         return RemoteFrame::createMainFrame(page, WTFMove(remoteFrameClientCreator), identifier, mainFrameOpener.get(), WTFMove(frameTreeSyncData));
     });
@@ -827,8 +827,9 @@ std::optional<AXTreeData> Page::accessibilityTreeData(IncludeDOMInfo includeDOMI
 void Page::clearAccessibilityIsolatedTree()
 {
     if (CheckedPtr cache = axObjectCache()) {
-        if (std::optional identifier = this->identifier())
-            AXIsolatedTree::removeTreeForPageID(*identifier);
+        forEachLocalFrame([] (LocalFrame& frame) {
+            AXIsolatedTree::removeTreeForFrameID(frame.frameID());
+        });
     }
 }
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -2363,11 +2364,11 @@ void Page::doAfterUpdateRendering()
             frame->eventHandler().updateCursorIfNeeded();
     });
 
-    forEachRenderableDocument([] (Document& document) {
+    runProcessingStep(RenderingUpdateStep::PaintTiming, [] (Document& document) {
         document.enqueuePaintTimingEntryIfNeeded();
     });
 
-    forEachRenderableDocument([] (Document& document) {
+    runProcessingStep(RenderingUpdateStep::EventTiming, [] (Document& document) {
         document.enqueueEventTimingEntriesIfNeeded();
     });
 
@@ -2416,14 +2417,14 @@ void Page::doAfterUpdateRendering()
     if (shouldUpdateAccessibilityRegions()) {
         m_lastAccessibilityObjectRegionsUpdate = m_lastRenderingUpdateTimestamp;
 
-        if (CheckedPtr axObjectCache = m_axObjectCache.get())
+        if (CheckedPtr axObjectCache = existingAXObjectCache())
             axObjectCache->onAccessibilityPaintStarted();
 
         forEachRenderableDocument([] (Document& document) {
             document.updateAccessibilityObjectRegions();
         });
 
-        if (CheckedPtr axObjectCache = m_axObjectCache.get())
+        if (CheckedPtr axObjectCache = existingAXObjectCache())
             axObjectCache->onAccessibilityPaintFinished();
     }
 #endif
@@ -3934,7 +3935,10 @@ void Page::logNavigation(const Navigation& navigation)
     case FrameLoadType::ReloadExpiredOnly:
         navigationDescription = "reloadRevalidatingExpired"_s;
         break;
-    case FrameLoadType::Replace:
+    case FrameLoadType::NavigationAPIReplace:
+        navigationDescription = "navigationAPIReplace"_s;
+        break;
+    case FrameLoadType::MultipartReplace:
     case FrameLoadType::RedirectWithLockedBackForwardList:
         // Not logging those for now.
         return;
@@ -4263,20 +4267,28 @@ void Page::appearanceDidChange()
 
 void Page::clearAXObjectCache()
 {
-    m_axObjectCache = nullptr;
+    RefPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get());
+    RefPtr mainFrameDocument = localMainFrame ? localMainFrame->document() : nullptr;
+    if (mainFrameDocument)
+        mainFrameDocument->clearAXObjectCache();
+}
+
+AXObjectCache* Page::existingAXObjectCache()
+{
+    RefPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get());
+    RefPtr mainFrameDocument = localMainFrame ? localMainFrame->document() : nullptr;
+    return mainFrameDocument ? mainFrameDocument->existingAXObjectCache() : nullptr;
 }
 
 AXObjectCache* Page::axObjectCache()
 {
-    if (!m_axObjectCache) {
-        RefPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get());
-        RefPtr mainFrameDocument = localMainFrame ? localMainFrame->document() : nullptr;
-        if (mainFrameDocument && !mainFrameDocument->hasLivingRenderTree())
-            return nullptr;
-        m_axObjectCache = makeUnique<AXObjectCache>(*this, mainFrameDocument.get());
-        Document::hasEverCreatedAnAXObjectCache = true;
-    }
-    return m_axObjectCache.get();
+    RefPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get());
+    RefPtr mainFrameDocument = localMainFrame ? localMainFrame->document() : nullptr;
+    if (!mainFrameDocument)
+        return nullptr;
+
+    // Always try to get or create the cache from the main frame document
+    return mainFrameDocument->axObjectCache();
 }
 
 void Page::setUnobscuredSafeAreaInsets(const FloatBoxExtent& insets)
@@ -4985,6 +4997,8 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, RenderingUpdateStep step)
     case RenderingUpdateStep::AnimationFrameCallbacks: ts << "AnimationFrameCallbacks"_s; break;
     case RenderingUpdateStep::PerformPendingViewTransitions: ts << "PerformPendingViewTransitions"_s; break;
     case RenderingUpdateStep::IntersectionObservations: ts << "IntersectionObservations"_s; break;
+    case RenderingUpdateStep::PaintTiming: ts << "PaintTiming"_s; break;
+    case RenderingUpdateStep::EventTiming: ts << "EventTiming"_s; break;
     case RenderingUpdateStep::UpdateContentRelevancy: ts << "UpdateContentRelevancy"_s; break;
     case RenderingUpdateStep::ResizeObservations: ts << "ResizeObservations"_s; break;
     case RenderingUpdateStep::Images: ts << "Images"_s; break;

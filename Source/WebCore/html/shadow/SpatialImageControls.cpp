@@ -99,7 +99,7 @@ bool shouldHaveSpatialControls(HTMLImageElement& element)
     if (!image)
         return false;
 
-    return hasSpatialcontrolsAttribute && image->isSpatial();
+    return hasSpatialcontrolsAttribute && (image->isSpatial() || image->isMaybePanoramic());
 }
 
 void ensureSpatialControls(HTMLImageElement& imageElement)
@@ -111,11 +111,27 @@ void ensureSpatialControls(HTMLImageElement& imageElement)
         RefPtr element = weakElement.get();
         if (!element)
             return;
-        Ref shadowRoot = element->ensureUserAgentShadowRoot();
-        Ref document = element->document();
 
         if (hasSpatialImageControls(*element))
             return;
+
+        // Determine if this is a spatial or panoramic image
+        auto* cachedImage = element->cachedImage();
+        if (!cachedImage)
+            return;
+
+        auto* image = cachedImage->image();
+        if (!image)
+            return;
+
+        bool isSpatialImage = image->isSpatial();
+        bool isPanoramicImage = image->isMaybePanoramic();
+
+        if (!isSpatialImage && !isPanoramicImage)
+            return;
+
+        Ref shadowRoot = element->ensureUserAgentShadowRoot();
+        Ref document = element->document();
 
         double paddingValue = 20;
         unsigned imageHeight = element->height();
@@ -132,6 +148,7 @@ void ensureSpatialControls(HTMLImageElement& imageElement)
         controlLayer->setInlineStyleProperty(CSSPropertyJustifyContent, "space-between"_s);
         controlLayer->setInlineStyleProperty(CSSPropertyPosition, "relative"_s);
         controlLayer->setInlineStyleProperty(CSSPropertyBoxSizing, "border-box"_s);
+        controlLayer->setInlineStyleProperty(CSSPropertyBorderRadius, "inherit"_s);
         controlLayer->setInlineStyleProperty(CSSPropertyPadding, paddingValue, CSSUnitType::CSS_PX);
         shadowRoot->appendChild(controlLayer);
 
@@ -162,11 +179,11 @@ void ensureSpatialControls(HTMLImageElement& imageElement)
 
         Ref bottomLabelText = HTMLDivElement::create(document.get());
         bottomLabelText->setIdAttribute("label"_s);
-        bottomLabelText->setTextContent("SPATIAL"_s);
+        bottomLabelText->setTextContent(isSpatialImage ? "SPATIAL"_s : "PANORAMA"_s);
         controlLayer->appendChild(bottomLabelText);
 
         Ref glyphSpan = HTMLSpanElement::create(document.get());
-        glyphSpan->setIdAttribute("spatial-glyph"_s);
+        glyphSpan->setIdAttribute(isSpatialImage ? "spatial-glyph"_s : "pano-glyph"_s);
         bottomLabelText->insertBefore(glyphSpan, bottomLabelText->protectedFirstChild());
 
         if (CheckedPtr renderImage = dynamicDowncast<RenderImage>(element->renderer()))

@@ -178,7 +178,7 @@ bool WebProcessCache::addProcess(Ref<CachedProcess>&& cachedProcess)
     return true;
 }
 
-RefPtr<WebProcessProxy> WebProcessCache::takeProcess(const WebCore::Site& site, WebsiteDataStore& dataStore, WebProcessProxy::LockdownMode lockdownMode, const API::PageConfiguration& pageConfiguration)
+RefPtr<WebProcessProxy> WebProcessCache::takeProcess(const WebCore::Site& site, WebsiteDataStore& dataStore, WebProcessProxy::LockdownMode lockdownMode, WebProcessProxy::EnhancedSecurity enhancedSecurity, const API::PageConfiguration& pageConfiguration)
 {
     auto it = m_processesPerSite.find(site);
     if (it == m_processesPerSite.end()) {
@@ -193,6 +193,11 @@ RefPtr<WebProcessProxy> WebProcessCache::takeProcess(const WebCore::Site& site, 
 
     if (it->value->process().lockdownMode() != lockdownMode) {
         WEBPROCESSCACHE_RELEASE_LOG("takeProcess: cannot take process, lockdown mode not identical", it->value->process().processID());
+        return nullptr;
+    }
+
+    if (it->value->process().enhancedSecurity() != enhancedSecurity) {
+        WEBPROCESSCACHE_RELEASE_LOG("takeProcess: cannot take process, enhanced security not identical", it->value->process().processID());
         return nullptr;
     }
 

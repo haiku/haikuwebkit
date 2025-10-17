@@ -24,7 +24,7 @@
 import os
 import argparse
 import sys
-
+import re
 
 def parser():
     parser = argparse.ArgumentParser(description='filter test output')
@@ -60,7 +60,9 @@ def filter_layout_tests(log_file_name):
     with open(log_file, 'w') as f:
         print_all_lines = False
         for line in sys.stdin:
-            f.write(line)
+            match = re.search(r'[\uD800-\uDFFF]', line)
+            if not match:
+                f.write(line)
             if print_all_lines:
                 print(line, end='')
             elif line.startswith('=> Results') or 'Exiting early' in line or 'leaks found' in line:

@@ -48,8 +48,7 @@ struct StrokeWidth {
     StrokeWidth(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : value { literal } { }
     StrokeWidth(CSS::ValueLiteral<CSS::PercentageUnit::Percentage> literal) : value { literal } { }
 
-    bool isZero() const { return value.isZero(); }
-    bool isPositive() const { return value.isPositive(); }
+    bool isPossiblyPositive() const { return value.isPossiblyPositive(); }
 
     template<typename... F> decltype(auto) switchOn(F&&... f) const
     {

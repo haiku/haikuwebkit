@@ -2,6 +2,8 @@
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AudioCaptureSampleManagerMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AudioSessionRoutingArbitratorProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AudioSessionRoutingArbitratorProxyMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AudioVideoRendererRemoteMessageReceiverMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AudioVideoRendererRemoteMessageReceiverMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AuthenticationManagerMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AuthenticationManagerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AutomationBackendDispatchers.cpp
@@ -234,6 +236,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioSourceProviderManagerMess
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioSourceProviderManagerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioTrackProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioTrackProxyMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioVideoRendererProxyManagerMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteAudioVideoRendererProxyManagerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteBarcodeDetectorMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteBarcodeDetectorMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteBindGroupLayoutMessageReceiver.cpp
@@ -266,6 +270,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteComputePassEncoderMessageRecei
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteComputePassEncoderMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteComputePipelineMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteComputePipelineMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteDDMeshMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteDDMeshMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteDeviceMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteDeviceMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteExternalTextureMessageReceiver.cpp
@@ -475,6 +481,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebAutomationSessionMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebAutomationSessionProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebAutomationSessionProxyMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebAutomationSessionProxyScriptSource.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebBackForwardListMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebBackForwardListMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebBroadcastChannelRegistryMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebBroadcastChannelRegistryMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebCacheStorageConnectionMessages.h

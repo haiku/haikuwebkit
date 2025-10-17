@@ -84,6 +84,7 @@ public:
     virtual unsigned frameCount() const { return 1; }
 
     virtual bool currentFrameKnownToBeOpaque() const = 0;
+    virtual bool currentFrameIsComplete() const = 0;
     virtual bool isAnimated() const { return false; }
 
     // Derived classes should override this if their rendering could leak
@@ -167,6 +168,10 @@ public:
 
 #if ENABLE(SPATIAL_IMAGE_DETECTION)
     virtual bool isSpatial() const { return false; }
+#endif
+
+#if ENABLE(SPATIAL_IMAGE_CONTROLS)
+    virtual bool isMaybePanoramic() const { return false; }
 #endif
 
     virtual void dump(WTF::TextStream&) const;

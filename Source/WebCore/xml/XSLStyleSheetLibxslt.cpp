@@ -28,6 +28,7 @@
 #include "FrameConsoleClient.h"
 #include "FrameDestructionObserverInlines.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "TransformSource.h"
 #include "XMLDocumentParser.h"

@@ -114,7 +114,7 @@ void WorkerInspectorController::frontendInitialized()
     }
 
     if (m_isAutomaticInspection && is<ServiceWorkerGlobalScope>(m_globalScope)) {
-        auto serviceWorkerIdentifier = Ref { downcast<ServiceWorkerGlobalScope>(m_globalScope.get()) }->thread().identifier();
+        auto serviceWorkerIdentifier = Ref { downcast<ServiceWorkerGlobalScope>(m_globalScope.get()) }->thread()->identifier();
         SWContextManager::singleton().stopRunningDebuggerTasksOnServiceWorker(serviceWorkerIdentifier);
     }
 #endif

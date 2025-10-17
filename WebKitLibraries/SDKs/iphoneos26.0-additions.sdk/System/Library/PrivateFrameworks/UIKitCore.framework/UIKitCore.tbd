@@ -1,0 +1,131 @@
+--- !tapi-tbd
+tbd-version: 4
+targets: [arm64-ios, arm64e-ios]
+install-name: /System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore
+current-version: 9088.1.103
+swift-abi-version: 7
+reexported-libraries:
+-       targets: [arm64-ios, arm64e-ios]
+        libraries: [/System/Library/PrivateFrameworks/CollectionViewCore.framework/CollectionViewCore, /System/Library/PrivateFrameworks/UIFoundation.framework/UIFoundation,
+                /System/Library/SubFrameworks/UIUtilities.framework/UIUtilities]
+exports:
+-       targets: [arm64-ios, arm64e-ios]
+        symbols: [_$s10Foundation15AttributeScopesO5UIKitE0D10AttributesV04FontB0OAA19AttributedStringKeyADMc, _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesV04FontB0OMn,
+                _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesV04FontB0ON, _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesV4fontAF04FontB0Ovg,
+                _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesV4fontAF04FontB0OvpMV, _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesVMa,
+                _$s10Foundation15AttributeScopesO5UIKitE0D10AttributesVMn, _$s10Foundation22AttributeDynamicLookupO5UIKitE13dynamicMemberxs7KeyPathCyAA0B6ScopesOADE0E10AttributesVxG_tcAA016AttributedStringH0Rzluig,
+                _$s10Foundation22AttributeDynamicLookupO5UIKitE13dynamicMemberxs7KeyPathCyAA0B6ScopesOADE0E10AttributesVxG_tcAA016AttributedStringH0RzluipMV,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C2idAC0C2IDVvgTj, _$s5UIKit16UITextEffectViewC015ReplacementTextC0C5chunk4view8delegate9fromColorAeA0bcF5ChunkC_AcE8Delegate_pSo7UIColorCtcfC,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateMp, _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP011replacementC11DidCompleteyyAEFTq,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegateP07performE18AndGeneratePreview3for6effect9animationSo010UITargetedK0CSgAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTq,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE015performAnimatedE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaF,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0C8DelegatePAAE07performE03for6effect9animationyAA0bcF5ChunkC_A2E19AnimationParametersVtYaFTu,
+                _$s5UIKit16UITextEffectViewC015ReplacementTextC0CAC0fC0AAWP, _$s5UIKit16UITextEffectViewC015ReplacementTextC0CMa,
+                _$s5UIKit16UITextEffectViewC03addC0yAC0C2IDVAC04TextC0_pFTj, _$s5UIKit16UITextEffectViewC06removeC0yyAC0C2IDVFTj,
+                _$s5UIKit16UITextEffectViewC09PonderingC0C2idAC0C2IDVvgTj, _$s5UIKit16UITextEffectViewC09PonderingC0C5chunk4view18lightConfigurationAeA0bC9TextChunkC_AcA018UIDirectionalLightcD0C0I0VtcfC,
+                _$s5UIKit16UITextEffectViewC09PonderingC0CAC04TextC0AAWP, _$s5UIKit16UITextEffectViewC09PonderingC0CMa, _$s5UIKit16UITextEffectViewC0C2IDV2eeoiySbAE_AEtFZ,
+                _$s5UIKit16UITextEffectViewC0C2IDVMa, _$s5UIKit16UITextEffectViewC0C2IDVMn, _$s5UIKit16UITextEffectViewC0C2IDVSHAAMc,
+                _$s5UIKit16UITextEffectViewC16removeAllEffectsyyFTj, _$s5UIKit16UITextEffectViewC6sourceAcA0bcD6Source_p_tcfC,
+                _$s5UIKit16UITextEffectViewCMa, _$s5UIKit16UITextEffectViewCMn, _$s5UIKit21UITextEffectTextChunkCMn, _$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationV9fillColorSo7UIColorCvg,
+                _$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationV9ponderingAEvgZ, _$s5UIKit28UIDirectionalLightEffectViewC13ConfigurationVMa,
+                _NSStringFromCGRect, _NSStringFromCGSize, _NSStringFromUIEdgeInsets, _UIAccessibilityGrayscaleStatusDidChangeNotification,
+                _UIAccessibilityInvertColorsStatusDidChangeNotification, _UIAccessibilityReduceMotionStatusDidChangeNotification,
+                _UIAccessibilityTraitHeader, _UIApplicationDidBecomeActiveNotification, _UIApplicationDidChangeStatusBarFrameNotification,
+                _UIApplicationDidChangeStatusBarOrientationNotification, _UIApplicationDidEnterBackgroundNotification, _UIApplicationDidFinishLaunchingNotification,
+                _UIApplicationInitialize, _UIApplicationInstantiateSingleton, _UIApplicationLaunchOptionsSourceApplicationKey,
+                _UIApplicationLaunchOptionsURLKey, _UIApplicationMain, _UIApplicationWillEnterForegroundNotification, _UIApplicationWillResignActiveNotification,
+                _UIBacklightLevelChangedNotification, _UIContentSizeCategoryDidChangeNotification, _UIEdgeInsetsAdd, _UIEdgeInsetsZero,
+                _UIFontTextStyleBody, _UIFontTextStyleFootnote, _UIFontTextStyleHeadline, _UIFontTextStyleLargeTitle, _UIFontTextStyleSubheadline,
+                _UIFontTextStyleTitle1, _UIFontTextStyleTitle3, _UIGraphicsBeginImageContext, _UIGraphicsBeginImageContextWithOptions,
+                _UIGraphicsBeginPDFContextToData, _UIGraphicsBeginPDFPage, _UIGraphicsEndImageContext, _UIGraphicsEndPDFContext,
+                _UIGraphicsGetCurrentContext, _UIGraphicsGetImageFromCurrentImageContext, _UIGraphicsGetPDFContextBounds,
+                _UIGraphicsPopContext, _UIGraphicsPushContext, _UIImageDataWriteToSavedPhotosAlbum, _UIImageJPEGRepresentation,
+                _UIImagePNGRepresentation, _UIImagePickerControllerImageURL, _UIImagePickerControllerMediaType, _UIImagePickerControllerMediaURL,
+                _UIImagePickerControllerOriginalImage, _UIKeyInputEscape, _UIKeyboardDidChangeFrameNotification, _UIKeyboardDidHideNotification,
+                _UIKeyboardDidShowNotification, _UIKeyboardEnabledInputModesAllowChineseTransliterationForText, _UIKeyboardEnabledInputModesAllowOneToManyShortcuts,
+                _UIKeyboardFrameEndUserInfoKey, _UIKeyboardIsLocalUserInfoKey, _UIKeyboardIsRightToLeftInputModeActive, _UIKeyboardPrivateDidRequestDismissalNotification,
+                _UIKeyboardWillChangeFrameNotification, _UIKeyboardWillHideNotification, _UIKeyboardWillShowNotification,
+                _UILayoutFittingCompressedSize, _UIMenuControllerDidHideMenuNotification, _UIMenuControllerDidShowMenuNotification,
+                _UIMenuControllerWillHideMenuNotification, _UIMenuFormat, _UIMenuRoot, _UIMenuShare, _UIPasteboardChangedNotification,
+                _UIPasteboardChangedTypesAddedKey, _UIPasteboardNameGeneral, _UIPasteboardTypeListImage, _UIPasteboardTypeListString,
+                _UIPresentationControllerDismissalTransitionDidEndCompletedKey, _UIPresentationControllerDismissalTransitionDidEndNotification,
+                _UIPreviewDataAttachmentIndex, _UIPreviewDataAttachmentList, _UIPreviewDataAttachmentListIsContentManaged,
+                _UIPreviewDataDDContext, _UIPreviewDataDDResult, _UIPreviewDataLink, _UIRectFill, _UISceneDidEnterBackgroundNotification,
+                _UISceneWillEnterForegroundNotification, _UIScreenCapturedDidChangeNotification, _UIScrollViewDecelerationRateFast,
+                _UIScrollViewDecelerationRateNormal, _UITextContentTypeAddressCity, _UITextContentTypeAddressState, _UITextContentTypeCellularEID,
+                _UITextContentTypeCellularIMEI, _UITextContentTypeCountryName, _UITextContentTypeEmailAddress, _UITextContentTypeFamilyName,
+                _UITextContentTypeFullStreetAddress, _UITextContentTypeGivenName, _UITextContentTypeJobTitle, _UITextContentTypeMiddleName,
+                _UITextContentTypeName, _UITextContentTypeNamePrefix, _UITextContentTypeNameSuffix, _UITextContentTypeNickname,
+                _UITextContentTypeOneTimeCode, _UITextContentTypeOrganizationName, _UITextContentTypePassword, _UITextContentTypePostalCode,
+                _UITextContentTypeStreetAddressLine1, _UITextContentTypeStreetAddressLine2, _UITextContentTypeSublocality,
+                _UITextContentTypeTelephoneNumber, _UITextContentTypeURL, _UITextContentTypeUsername, _UITransitionContextFromViewKey,
+                _UITransitionContextToViewKey, _UIWebViewGrowsAndShrinksToFitHeight, _UIWebViewScalesToFitScale, _UIWebViewStandardViewportWidth,
+                _UIWindowDidBecomeKeyNotification, _UIWindowDidMoveToScreenNotification, _UIWindowDidRotateNotification, _UIWindowLevelNormal,
+                _UIWindowNewScreenUserInfoKey, _UIWindowWillRotateNotification, __UIApplicationIsExtension, __UIApplicationLoadWebKit,
+                __UIDragInteractionDefaultLiftDelay, __UISceneDidCompleteSystemSnapshotSequence, __UISceneWillBeginSystemSnapshotSequence,
+                __UISolariumEnabled, __UIWindowSceneEnhancedWindowingModeChanged, __swift_FORCE_LOAD_$_swiftUIKit]
+        objc-classes: [UIAction, UIAlertAction, UIAlertController, UIApplication, UIApplicationRotationFollowingControllerNoTouches,
+                UIApplicationRotationFollowingWindow, UIBarButtonItem, UIBarButtonItemGroup, UIBezierPath, UIBlurEffect, UIButton,
+                UIButtonConfiguration, UICalendarSelectionWeekOfYear, UICalendarView, UIColor, UIColorPickerViewController,
+                UICommand, UIContextMenuConfiguration, UIContextMenuInteraction, UIControl, UIDatePicker, UIDevice, UIDocumentPasswordView,
+                UIDocumentPickerViewController, UIDragInteraction, UIDragItem, UIDragPreview, UIDragPreviewParameters, UIDragPreviewTarget,
+                UIDropInteraction, UIDropProposal, UIEvent, UIEventAttribution, UIFindInteraction, UIGestureRecognizer, UIGlassEffect,
+                UIGraphicsImageRenderer, UIHoverGestureRecognizer, UIImage, UIImageAsset, UIImagePickerController, UIImageSymbolConfiguration,
+                UIImageView, UIImpactFeedbackGenerator, UIIndirectScribbleInteraction, UIInputSuggestion, UIInputView, UIKeyCommand,
+                UIKeyboard, UIKeyboardImpl, UIKeyboardInputMode, UIKeyboardInputModeController, UIKeyboardPreferencesController,
+                UILabel, UILayoutGuide, UILongPressGestureRecognizer, UIMailConversationContext, UIMenu, UIMenuController,
+                UIMenuElement, UIMenuSystem, UINavigationController, UIPanGestureRecognizer, UIPasteConfiguration, UIPasteboard,
+                UIPercentDrivenInteractiveTransition, UIPeripheralHost, UIPickerContentView, UIPickerView, UIPinchGestureRecognizer,
+                UIPointerInteraction, UIPointerRegion, UIPointerRegionRequest, UIPointerShape, UIPointerStyle, UIPopoverController,
+                UIPopoverPresentationController, UIPress, UIPreviewAction, UIPreviewItemController, UIPreviewParameters, UIPreviewTarget,
+                UIRefreshControl, UIResponder, UISceneConfiguration, UIScreen, UIScribbleInteraction, UIScrollEdgeEffectStyle,
+                UIScrollEvent, UIScrollView, UISheetPresentationController, UISheetPresentationControllerDetent, UIStackView,
+                UIStoryboard, UISwipeGestureRecognizer, UITableView, UITableViewCell, UITableViewController, UITapGestureRecognizer,
+                UITargetedDragPreview, UITargetedPreview, UITextAutofillSuggestion, UITextChecker, UITextCursorDropPositionAnimator,
+                UITextEffectsWindow, UITextField, UITextInputAssistantItem, UITextInputTraits, UITextPlaceholder, UITextPosition,
+                UITextRange, UITextSearchOptions, UITextSearchingFindSession, UITextSelectionDisplayInteraction, UITextSelectionRect,
+                UITextSelectionRectCustomHandleInfo, UITextSuggestion, UITextView, UIToolbar, UIToolbarAppearance, UITouch,
+                UITraitCollection, UITraitHDRHeadroomUsageLimit, UIView, UIViewController, UIVisualEffectView, UIWKAutocorrectionContext,
+                UIWKAutocorrectionRects, UIWKDocumentContext, UIWKDocumentRequest, UIWKTextInteractionAssistant, UIWebBrowserView,
+                UIWebClip, UIWebScrollView, UIWebView, UIWindow, UIWindowScene, UIWindowSceneGeometryPreferencesIOS, _TtC5UIKit21UITextEffectTextChunk,
+                _UINavigationInteractiveTransitionBase, _UINavigationParallaxTransition, _UIParallaxTransitionPanGestureRecognizer,
+                _UIRemoteView, _UITextDragCaretView, _UIViewControllerOneToOneTransitionContext, _UIWebHighlightLongPressGestureRecognizer]
+...
+--- !tapi-tbd
+tbd-version: 4
+targets: [arm64-ios, arm64e-ios]
+install-name: /System/Library/PrivateFrameworks/CollectionViewCore.framework/CollectionViewCore
+exports: []
+...
+--- !tapi-tbd
+tbd-version: 4
+targets: [arm64-ios, arm64e-ios]
+install-name: /System/Library/PrivateFrameworks/UIFoundation.framework/UIFoundation
+current-version: 1014
+exports:
+-       targets: [arm64-ios, arm64e-ios]
+        symbols: [_NSAdaptiveImageGlyphAttributeName, _NSAttachmentAttributeName, _NSBackgroundColorAttributeName, _NSBaseURLDocumentOption,
+                _NSCharacterEncodingDocumentOption, _NSDocumentTypeDocumentAttribute, _NSDocumentTypeDocumentOption, _NSFontAttributeName,
+                _NSForegroundColorAttributeName, _NSHTMLTextDocumentType, _NSLinkAttributeName, _NSParagraphStyleAttributeName,
+                _NSRTFDTextDocumentType, _NSRTFTextDocumentType, _NSTextEncodingNameDocumentOption, _NSTextListMarkerCircle,
+                _NSTextListMarkerDecimal, _NSTextListMarkerDisc, _NSTextListMarkerLowercaseRoman, _NSTextSizeMultiplierDocumentOption,
+                _NSTimeoutDocumentOption, _NSUnderlineColorAttributeName, _NSUnderlineStyleAttributeName, _NSWebPreferencesDocumentOption,
+                _NSWebResourceLoadDelegateDocumentOption, _UIFontDescriptorFamilyAttribute, _UIFontDescriptorTextStyleAttribute,
+                _UIFontDescriptorTraitsAttribute, _UIFontWeightSemibold, _UIFontWeightTrait]
+        objc-classes: [NSAdaptiveImageGlyph, NSParagraphStyle, NSShadow, NSTextAlternatives, NSTextAttachment, NSTextList,
+                UIFont, UIFontDescriptor]
+reexports:
+-       targets: [arm64-ios, arm64e-ios]
+        objc-classes: [NSEmojiImageAsset, NSEmojiImageStrike]
+...
+--- !tapi-tbd
+tbd-version: 4
+targets: [arm64-ios, arm64e-ios]
+install-name: /System/Library/SubFrameworks/UIUtilities.framework/UIUtilities
+current-version: 9088.1.103
+exports: []
+...

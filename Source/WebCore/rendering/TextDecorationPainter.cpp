@@ -281,7 +281,7 @@ void TextDecorationPainter::paintBackgroundDecorations(const RenderStyle& style,
 
             auto shadowOffset = TextBoxPainter::rotateShadowOffset(shadow.location, m_writingMode);
             shadowOffset.expand(0, -extraOffset);
-            m_context.setDropShadow({ shadowOffset, shadow.blur.value, shadowColor, ShadowRadiusMode::Default });
+            m_context.setDropShadow({ shadowOffset, shadow.blur.resolveZoom(Style::ZoomNeeded { }), shadowColor, ShadowRadiusMode::Default });
 
             draw(&shadow);
         }

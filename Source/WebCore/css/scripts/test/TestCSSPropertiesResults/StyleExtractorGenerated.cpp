@@ -113,20 +113,6 @@ public:
     {
         ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testAnimationWrapperAccelerationThreadedOnly());
     }
-    static RefPtr<CSSValue> extractTestAutoFunctions(ExtractorState& extractorState)
-    {
-        if (extractorState.style.hasAutoTestAutoFunctions())
-            return CSSPrimitiveValue::create(CSSValueAuto);
-        return ExtractorConverter::convert(extractorState, extractorState.style.testAutoFunctions());
-    }
-    static void extractTestAutoFunctionsSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
-    {
-        if (extractorState.style.hasAutoTestAutoFunctions()) {
-            builder.append(nameLiteralForSerialization(CSSValueAuto));
-            return;
-        }
-        ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testAutoFunctions());
-    }
     static RefPtr<CSSValue> extractTestBoundedRepetitionWithCommas(ExtractorState& extractorState)
     {
         return ExtractorConverter::convert(extractorState, extractorState.style.testBoundedRepetitionWithCommas());
@@ -920,8 +906,6 @@ RefPtr<CSSValue> ExtractorGenerated::extractValue(ExtractorState& extractorState
         return ExtractorFunctions::extractTestAnimationWrapperAccelerationAlways(extractorState);
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
         return ExtractorFunctions::extractTestAnimationWrapperAccelerationThreadedOnly(extractorState);
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
-        return ExtractorFunctions::extractTestAutoFunctions(extractorState);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:
         return ExtractorFunctions::extractTestBoundedRepetitionWithCommas(extractorState);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed:
@@ -1174,9 +1158,6 @@ void ExtractorGenerated::extractValueSerialization(ExtractorState& extractorStat
         return;
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
         ExtractorFunctions::extractTestAnimationWrapperAccelerationThreadedOnlySerialization(extractorState, builder, context);
-        return;
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
-        ExtractorFunctions::extractTestAutoFunctionsSerialization(extractorState, builder, context);
         return;
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:
         ExtractorFunctions::extractTestBoundedRepetitionWithCommasSerialization(extractorState, builder, context);

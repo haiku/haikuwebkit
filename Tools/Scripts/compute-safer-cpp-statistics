@@ -113,14 +113,18 @@ def gather_statistics(line_counts, checkers, file_to_expectations_map, dir_path,
         expected_checkers = file_to_expectations_map.get(file_key)
         if expected_checkers:
             line_counts['unsafe'] += number_of_lines
+            line_counts['unsafeFiles'] += 1
         else:
             line_counts['safe'] += number_of_lines
+            line_counts['safeFiles'] += 1
         for checker in checkers:
             per_checker_counts = line_counts['checkers'][checker.name()]
             if expected_checkers and checker.name() in expected_checkers:
                 per_checker_counts['unsafe'] += number_of_lines
+                per_checker_counts['unsafeFiles'] += 1
             else:
                 per_checker_counts['safe'] += number_of_lines
+                per_checker_counts['safeFiles'] += 1
 
 
 def safe_ratio(line_counts):
@@ -128,7 +132,7 @@ def safe_ratio(line_counts):
 
 
 def print_percentage(label, line_counts):
-    return print('{}: {:.2f}% safe'.format(label, safe_ratio(line_counts) * 100))
+    return print('{}: {:.2f}% safe ({} safe files / {} unsafe files)'.format(label, safe_ratio(line_counts) * 100, line_counts['safeFiles'], line_counts['unsafeFiles']))
 
 
 def main():
@@ -139,9 +143,9 @@ def main():
         return
 
     file_to_expectations_map = load_expectations(checkers, args.project)
-    line_counts = {'safe': 0, 'unsafe': 0, 'checkers': {}}
+    line_counts = {'safe': 0, 'unsafe': 0, 'safeFiles': 0, 'unsafeFiles': 0, 'checkers': {}}
     for checker in checkers:
-        line_counts['checkers'][checker.name()] = {'safe': 0, 'unsafe': 0}
+        line_counts['checkers'][checker.name()] = {'safe': 0, 'unsafe': 0, 'safeFiles': 0, 'unsafeFiles': 0}
 
     project = args.project
     project_path = Checker.enumerate()[0].project_path(project)

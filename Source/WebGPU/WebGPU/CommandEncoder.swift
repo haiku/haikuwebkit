@@ -29,6 +29,7 @@ public typealias WTFString = String
 public typealias String = Swift.String
 // FIXME: rdar://140819194
 private let WGPU_COPY_STRIDE_UNDEFINED = WGPU_COPY_STRIDE_UNDEFINED_
+private let WGPU_MTLCounterDontSample: UInt = 0xffffffff
 
 // FIXME: rdar://140819448
 private let MTLBlitOptionNone = MTLBlitOptionNone_
@@ -44,12 +45,12 @@ public func resolveQuerySet(commandEncoder: WebGPU.CommandEncoder, querySet: Web
 }
 
 @_expose(Cxx)
-public func CommandEncoder_copyBufferToTexture_thunk(commandEncoder: WebGPU.CommandEncoder, source: WGPUImageCopyBuffer, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D){
+public func CommandEncoder_copyBufferToTexture_thunk(commandEncoder: WebGPU.CommandEncoder, source: WGPUImageCopyBuffer, destination: WGPUImageCopyTexture, copySize: WGPUExtent3D) {
     commandEncoder.copyBufferToTexture(source: source, destination: destination, copySize: copySize)
 }
 
 @_expose(Cxx)
-public func CommandEncoder_copyTextureToBuffer_thunk(commandEncoder: WebGPU.CommandEncoder, source: WGPUImageCopyTexture, destination: WGPUImageCopyBuffer, copySize: WGPUExtent3D){
+public func CommandEncoder_copyTextureToBuffer_thunk(commandEncoder: WebGPU.CommandEncoder, source: WGPUImageCopyTexture, destination: WGPUImageCopyBuffer, copySize: WGPUExtent3D) {
     commandEncoder.copyTextureToBuffer(source: source, destination: destination, copySize: copySize)
 }
 
@@ -72,6 +73,7 @@ public func CommandEncoder_beginRenderPass_thunk(commandEncoder: WebGPU.CommandE
 public func CommandEncoder_beginComputePass_thunk(commandEncoder: WebGPU.CommandEncoder, descriptor: WGPUComputePassDescriptor) -> WebGPU_Internal.RefComputePassEncoder {
     return commandEncoder.beginComputePass(descriptor: descriptor)
 }
+
 @_expose(Cxx)
 public func CommandEncoder_runClearEncoder_thunk(commandEncoder: WebGPU.CommandEncoder, attachmentsToClear: NSMutableDictionary, depthStencilAttachmentToClear: inout MTLTexture?, depthAttachmentToClear: Bool, stencilAttachmentToClear: Bool, depthClearValue: Double, stencilClearValue: UInt32, existingEncoder: MTLRenderCommandEncoder?) {
     let dInput = attachmentsToClear as? [NSNumber: TextureAndClearColor]
@@ -394,8 +396,12 @@ extension WebGPU.CommandEncoder {
         return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? 0 : writeIndex
     }
 
-    private func timestampWriteIndex(writeIndex: UInt32, defaultValue: UInt32, offset: UInt32) -> UInt32 {
-        writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? defaultValue : (writeIndex + offset)
+    private func timestampWriteIndex(
+        writeIndex: UInt,
+        defaultValue: UInt,
+        offset: UInt32
+    ) -> UInt {
+        return writeIndex == WGPU_QUERY_SET_INDEX_UNDEFINED ? defaultValue : (writeIndex + UInt(offset))
     }
 
     private func errorValidatingCopyBufferToBuffer(
@@ -823,7 +829,7 @@ extension WebGPU.CommandEncoder {
     public func beginRenderPass(descriptor: WGPURenderPassDescriptor) -> WebGPU_Internal.RefRenderPassEncoder {
         let collection = CollectionOfOne(descriptor)
         let descriptorSpan = collection.span
-        var maxDrawCount = descriptorSpan[0].maxDrawCount
+        let maxDrawCount = descriptorSpan[0].maxDrawCount
 
         guard prepareTheEncoderState() else {
             self.generateInvalidEncoderStateError()
@@ -840,20 +846,22 @@ extension WebGPU.CommandEncoder {
 
         let mtlDescriptor = MTLRenderPassDescriptor()
         var counterSampleBuffer: MTLCounterSampleBuffer? = nil
+        var counterSampleBufferOffset: UInt32 = 0
         if let wgpuTimestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)?[0] {
             let wgpuQuerySet = wgpuTimestampWrites.querySet
             let querySet = WebGPU.fromAPI(wgpuQuerySet)
             counterSampleBuffer = unsafe querySet.counterSampleBufferWithOffset().first
+            counterSampleBufferOffset = unsafe querySet.counterSampleBufferWithOffset().second
         }
 
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
             if counterSampleBuffer != nil {
                 let timestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)![0]
                 mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer;
-                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = Int(timestampWrites.beginningOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
-                mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = Int(timestampWrites.endOfPassWriteIndex)
+                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = Int(UInt(timestampWriteIndex(writeIndex: UInt(timestampWrites.beginningOfPassWriteIndex), defaultValue: WGPU_MTLCounterDontSample, offset: counterSampleBufferOffset)))
+                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = Int(UInt(timestampWriteIndex(writeIndex: UInt(timestampWrites.endOfPassWriteIndex), defaultValue: WGPU_MTLCounterDontSample, offset: counterSampleBufferOffset)))
+                mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex
+                mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex
                 m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
             } else {
                 mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? counterSampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 4)
@@ -2092,8 +2100,10 @@ extension WebGPU.CommandEncoder {
         if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
             let timestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0]
             computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? computePassDescriptor.sampleBufferAttachments[0].sampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 2)
-            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: timestampWrites!.beginningOfPassWriteIndex, defaultValue: UInt32(MTLCounterDontSample), offset: counterSampleBufferOffset))
-            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: timestampWrites!.endOfPassWriteIndex, defaultValue: UInt32(MTLCounterDontSample), offset: counterSampleBufferOffset))
+
+            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: UInt(timestampWrites!.beginningOfPassWriteIndex), defaultValue: WGPU_MTLCounterDontSample, offset: counterSampleBufferOffset))
+            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = Int(timestampWriteIndex(writeIndex: UInt(timestampWrites!.endOfPassWriteIndex), defaultValue: WGPU_MTLCounterDontSample, offset: counterSampleBufferOffset))
+
             if counterSampleBuffer != nil {
                 m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
             }

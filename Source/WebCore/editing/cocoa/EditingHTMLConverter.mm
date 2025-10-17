@@ -58,6 +58,7 @@
 #import "NodeName.h"
 #import "RenderImage.h"
 #import "RenderObjectStyle.h"
+#import "RenderStyleInlines.h"
 #import "RenderText.h"
 #import "StyleExtractor.h"
 #import "StyleProperties.h"

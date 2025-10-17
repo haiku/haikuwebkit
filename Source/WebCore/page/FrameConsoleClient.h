@@ -47,14 +47,14 @@ using JSC::MessageType;
 namespace WebCore {
 
 class Document;
-class Frame;
+class LocalFrame;
 class StringCallback;
 
 class WEBCORE_EXPORT FrameConsoleClient final : public JSC::ConsoleClient, public CanMakeCheckedPtr<FrameConsoleClient> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(FrameConsoleClient, WEBCORE_EXPORT);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FrameConsoleClient);
 public:
-    explicit FrameConsoleClient(Frame&);
+    explicit FrameConsoleClient(LocalFrame&);
     virtual ~FrameConsoleClient();
 
     FrameConsoleClient(const FrameConsoleClient&) = delete;
@@ -93,7 +93,7 @@ private:
     void recordEnd(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
     void screenshot(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
 
-    WeakRef<Frame> m_frame;
+    WeakRef<LocalFrame> m_frame;
 };
 
 } // namespace WebCore

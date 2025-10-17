@@ -59,7 +59,7 @@ public:
         return adoptRef(*new CurlRequest(request, &client, captureMetrics, WTFMove(messageQueue)));
     }
 
-    virtual ~CurlRequest();
+    ~CurlRequest() = default;
 
     WEBCORE_EXPORT void invalidateClient();
     WEBCORE_EXPORT void setAuthenticationScheme(ProtectionSpace::AuthenticationScheme);

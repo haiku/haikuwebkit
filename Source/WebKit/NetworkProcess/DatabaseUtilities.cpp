@@ -53,12 +53,11 @@ WebCore::SQLiteStatementAutoResetScope DatabaseUtilities::scopedStatement(std::u
 {
     ASSERT(!RunLoop::isMain());
     if (!statement) {
-        auto statementOrError = m_database.prepareHeapStatement(query);
-        if (!statementOrError) {
+        statement = m_database.prepareHeapStatement(query);
+        if (!statement) {
             RELEASE_LOG_ERROR(PrivateClickMeasurement, "%p - DatabaseUtilities::%s failed to prepare statement, error message: %" PUBLIC_LOG_STRING, this, logString.characters(), m_database.lastErrorMsg());
             return WebCore::SQLiteStatementAutoResetScope { };
         }
-        statement = statementOrError.value().moveToUniquePtr();
         ASSERT(m_database.isOpen());
     }
     return WebCore::SQLiteStatementAutoResetScope { statement.get() };
@@ -211,13 +210,12 @@ String DatabaseUtilities::stripIndexQueryToMatchStoredValue(const char* original
 
 TableAndIndexPair DatabaseUtilities::currentTableAndIndexQueries(const String& tableName)
 {
-    auto preparedTableStatement = m_database.prepareStatement("SELECT sql FROM sqlite_master WHERE tbl_name=? AND type = 'table'"_s);
-    if (!preparedTableStatement) {
+    auto getTableStatement = m_database.prepareHeapStatement("SELECT sql FROM sqlite_master WHERE tbl_name=? AND type = 'table'"_s);
+    if (!getTableStatement) {
         RELEASE_LOG_ERROR(PrivateClickMeasurement, "%p - DatabaseUtilities::currentTableAndIndexQueries Unable to prepare statement to fetch schema for the table, error message: %" PRIVATE_LOG_STRING, this, m_database.lastErrorMsg());
         return { };
     }
 
-    CheckedRef getTableStatement = *preparedTableStatement;
     if (getTableStatement->bindText(1, tableName) != SQLITE_OK) {
         RELEASE_LOG_ERROR(PrivateClickMeasurement, "%p - DatabaseUtilities::currentTableAndIndexQueries Unable to bind statement to fetch schema for the table, error message: %" PRIVATE_LOG_STRING, this, m_database.lastErrorMsg());
         return { };

@@ -549,6 +549,7 @@ bool CachedResourceLoader::allowedByContentSecurityPolicy(CachedResource::Type t
     case CachedResource::Type::Beacon:
     case CachedResource::Type::Ping:
     case CachedResource::Type::RawResource:
+    case CachedResource::Type::MainResource:
 #if ENABLE(MODEL_ELEMENT)
     case CachedResource::Type::EnvironmentMapResource:
     case CachedResource::Type::ModelResource:
@@ -890,6 +891,9 @@ bool CachedResourceLoader::shouldUpdateCachedResourceWithCurrentRequest(const Ca
         break;
     }
 
+    if (resource.options().cachingPolicy == CachingPolicy::AllowCachingPrefetch)
+        return false;
+
     if (resource.options().mode != request.options().mode || !serializedOriginsMatch(request.protectedOrigin().get(), resource.protectedOrigin().get()))
         return true;
 
@@ -917,7 +921,7 @@ static inline bool isResourceSuitableForDirectReuse(const CachedResource& resour
         return false;
 
     // FIXME: Implement reuse of cached raw resources.
-    if (resource.type() == CachedResource::Type::RawResource || resource.type() == CachedResource::Type::MediaResource)
+    if ((resource.type() == CachedResource::Type::RawResource || resource.type() == CachedResource::Type::MediaResource) && resource.options().cachingPolicy != CachingPolicy::AllowCachingPrefetch)
         return false;
 
     if (resource.type() == CachedResource::Type::Beacon || resource.type() == CachedResource::Type::Ping)
@@ -933,6 +937,9 @@ CachedResourceHandle<CachedResource> CachedResourceLoader::updateCachedResourceW
         return loadResource(resource.type(), sessionID, WTFMove(request), cookieJar, settings, MayAddToMemoryCache::Yes);
     }
 
+    // TODO: we're using the caching policy as a flag to signal that this is a prefetch match. We'd be better off with an explicit prefetch match flag.
+    if (resource.options().cachingPolicy == CachingPolicy::AllowCachingPrefetch)
+        request.setCachingPolicy(CachingPolicy::AllowCachingPrefetch);
     CachedResourceHandle resourceHandle = createResource(resource.type(), WTFMove(request), sessionID, &cookieJar, settings, protectedDocument().get());
     resourceHandle->loadFrom(resource);
     return resourceHandle;
@@ -1394,6 +1401,9 @@ CachedResourceHandle<CachedResource> CachedResourceLoader::loadResource(CachedRe
 
 static inline bool mustReloadFromServiceWorkerOptions(const ResourceLoaderOptions& options, const ResourceLoaderOptions& cachedOptions)
 {
+    if (cachedOptions.cachingPolicy == CachingPolicy::AllowCachingPrefetch)
+        return false;
+
     // FIXME: We should validate/specify this behavior.
     if (options.serviceWorkerRegistrationIdentifier != cachedOptions.serviceWorkerRegistrationIdentifier)
         return true;
@@ -1427,7 +1437,7 @@ CachedResourceLoader::RevalidationPolicy CachedResourceLoader::determineRevalida
         return Use;
 
     // If the same URL has been loaded as a different type, we need to reload.
-    if (existingResource->type() != type) {
+    if (existingResource->type() != type && existingResource->options().cachingPolicy != CachingPolicy::AllowCachingPrefetch) {
         LOG(ResourceLoading, "CachedResourceLoader::determineRevalidationPolicy reloading due to type mismatch.");
         return Reload;
     }
@@ -1480,7 +1490,7 @@ CachedResourceLoader::RevalidationPolicy CachedResourceLoader::determineRevalida
     auto cachePolicy = this->cachePolicy(type, request.url());
 
     // Validate the redirect chain.
-    bool cachePolicyIsHistoryBuffer = cachePolicy == CachePolicy::HistoryBuffer;
+    bool cachePolicyIsHistoryBuffer = cachePolicy == CachePolicy::HistoryBuffer || existingResource->options().cachingPolicy == CachingPolicy::AllowCachingPrefetch;
     if (!existingResource->redirectChainAllowsReuse(cachePolicyIsHistoryBuffer ? ReuseExpiredRedirection : DoNotReuseExpiredRedirection)) {
         LOG(ResourceLoading, "CachedResourceLoader::determineRevalidationPolicy reloading due to not cached or expired redirections.");
         return Reload;
@@ -1495,7 +1505,7 @@ CachedResourceLoader::RevalidationPolicy CachedResourceLoader::determineRevalida
     }
 
     // Don't reuse resources with Cache-control: no-store.
-    if (existingResource->response().cacheControlContainsNoStore()) {
+    if (existingResource->response().cacheControlContainsNoStore() && existingResource->options().cachingPolicy != CachingPolicy::AllowCachingPrefetch) {
         LOG(ResourceLoading, "CachedResourceLoader::determineRevalidationPolicy reloading due to Cache-control: no-store.");
         return Reload;
     }
@@ -1541,7 +1551,7 @@ CachedResourceLoader::RevalidationPolicy CachedResourceLoader::determineRevalida
     auto revalidationDecision = existingResource->makeRevalidationDecision(cachePolicy);
 
     // Check if the cache headers requires us to revalidate (cache expiration for example).
-    if (revalidationDecision != CachedResource::RevalidationDecision::No) {
+    if (revalidationDecision != CachedResource::RevalidationDecision::No && existingResource->options().cachingPolicy != CachingPolicy::AllowCachingPrefetch) {
         // See if the resource has usable ETag or Last-modified headers.
         if (existingResource->canUseCacheValidator()) {
             // Revalidating will mean exposing headers to the service worker, let's reload given the service worker already handled it.
@@ -1555,7 +1565,7 @@ CachedResourceLoader::RevalidationPolicy CachedResourceLoader::determineRevalida
             }
             return Revalidate;
         }
-        
+
         // No, must reload.
         LOG(ResourceLoading, "CachedResourceLoader::determineRevalidationPolicy reloading due to missing cache validators.");
         return Reload;

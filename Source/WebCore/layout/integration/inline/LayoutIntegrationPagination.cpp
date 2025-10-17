@@ -31,6 +31,9 @@
 #include "InlineIteratorLineBox.h"
 #include "PlacedFloats.h"
 #include "RenderBlockFlow.h"
+#include "RenderStyleInlines.h"
+#include "StyleOrphans.h"
+#include "StyleWidows.h"
 
 namespace WebCore {
 namespace LayoutIntegration {

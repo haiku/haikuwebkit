@@ -155,9 +155,9 @@ void LayoutState::destroyInlineContentCache(const ElementBox& formattingContextR
     m_inlineContentCaches.remove(&formattingContextRoot);
 }
 
-void LayoutState::layoutWithFormattingContextForBox(const ElementBox& box, std::optional<LayoutUnit> widthConstraint) const
+void LayoutState::layoutWithFormattingContextForBox(const ElementBox& box, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint) const
 {
-    const_cast<LayoutState&>(*this).m_formattingContextLayoutFunction(box, widthConstraint, const_cast<LayoutState&>(*this));
+    const_cast<LayoutState&>(*this).m_formattingContextLayoutFunction(box, widthConstraint, heightConstraint, const_cast<LayoutState&>(*this));
 }
 
 LayoutUnit LayoutState::logicalWidthWithFormattingContextForBox(const ElementBox& box, LayoutIntegration::LogicalWidthType logicalWidthType) const

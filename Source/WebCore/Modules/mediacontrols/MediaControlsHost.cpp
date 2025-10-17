@@ -56,6 +56,7 @@
 #include "Navigator.h"
 #include "NavigatorMediaSession.h"
 #include "Node.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "PageGroup.h"
 #include "Quirks.h"

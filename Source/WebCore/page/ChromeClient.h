@@ -164,6 +164,7 @@ enum class ActivityStateForCPUSampling : uint8_t;
 enum class AXLoadingEvent : uint8_t;
 enum class AXNotification : uint8_t;
 enum class AXTextChange : uint8_t;
+enum class BroadcastFocusedElement : bool;
 enum class CookieConsentDecisionResult : uint8_t;
 enum class DidFilterLinkDecoration : bool { No, Yes };
 enum class IsLoggedIn : uint8_t;
@@ -216,7 +217,7 @@ public:
     virtual bool canTakeFocus(FocusDirection) const = 0;
     virtual void takeFocus(FocusDirection) = 0;
 
-    virtual void focusedElementChanged(Element*) = 0;
+    virtual void focusedElementChanged(Element*, LocalFrame*, FocusOptions, BroadcastFocusedElement) = 0;
     virtual void focusedFrameChanged(Frame*) = 0;
 
     // The Frame pointer provides the ChromeClient with context about which

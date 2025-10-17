@@ -24,9 +24,8 @@
  */
 
 #include "pas_config.h"
-
 #if LIBPAS_ENABLED
-
+#include "pas_zero_memory.h"
 #include "pas_root.h"
 
 #include "pas_all_heaps.h"

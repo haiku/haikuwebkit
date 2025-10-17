@@ -33,7 +33,7 @@
 #include "FrameLoader.h"
 #include "LocalFrame.h"
 #include "MediaList.h"
-#include "Node.h"
+#include "NodeDocument.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
 #include "ResourceLoadInfo.h"

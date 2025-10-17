@@ -149,7 +149,7 @@ public:
     void didPostMessage(WebKit::WebPageProxy& page, WebKit::FrameInfoData&& frameInfoData, API::ContentWorld& world, WebKit::JavaScriptEvaluationResult&& jsMessage, CompletionHandler<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>&& replyHandler) final
     {
         @autoreleasepool {
-            RetainPtr message = wrapper(API::ScriptMessage::create(jsMessage.toID(), page, API::FrameInfo::create(WTFMove(frameInfoData)), m_name, world));
+            RetainPtr message = wrapper(API::ScriptMessage::create(jsMessage.toID(), page, API::FrameInfo::create(WTFMove(frameInfoData)), RetainPtr { m_name }, world));
 
             if (m_supportsAsyncReply) {
                 __block auto handler = CompletionHandlerWithFinalizer<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>(WTFMove(replyHandler), [](auto& function) {
@@ -178,7 +178,7 @@ public:
 private:
     const RetainPtr<WKUserContentController> m_controller;
     const RetainPtr<id> m_handler;
-    const String m_name;
+    const RetainPtr<NSString> m_name;
     const bool m_supportsAsyncReply { false };
 };
 

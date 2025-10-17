@@ -1890,6 +1890,13 @@ bool MediaPlayerPrivateGStreamer::handleNeedContextMessage(GstMessage* message)
     return false;
 }
 
+void MediaPlayerPrivateGStreamer::handleSyncErrorMessage(GstMessage*)
+{
+    GST_DEBUG_OBJECT(pipeline(), "Accounting queued sync error");
+    // This attribute is decremented later from handleMessage() in the main thread.
+    m_queuedSyncErrors.exchangeAdd(1);
+}
+
 // Returns the size of the video.
 FloatSize MediaPlayerPrivateGStreamer::naturalSize() const
 {
@@ -2058,51 +2065,67 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
     GST_LOG_OBJECT(pipeline(), "Message %s received from element %s", GST_MESSAGE_TYPE_NAME(message), GST_MESSAGE_SRC_NAME(message));
     switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_ERROR:
-        gst_message_parse_error(message, &err.outPtr(), &debug.outPtr());
-        GST_ERROR_OBJECT(pipeline(), "%s (url=%s) (code=%d)", err->message, m_url.string().utf8().data(), err->code);
+        {
+            auto onScopeExit = makeScopeExit([this] {
+                GST_DEBUG_OBJECT(pipeline(), "Decreasing m_queuedSyncErrors");
+                m_queuedSyncErrors.exchangeSub(1);
+            });
 
-        if (m_shouldResetPipeline || m_didErrorOccur || m_ignoreErrors)
-            break;
+            gst_message_parse_error(message, &err.outPtr(), &debug.outPtr());
 
-        m_errorMessage = String::fromLatin1(err->message);
+            if (m_shouldResetPipeline || m_didErrorOccur || m_ignoreErrors) {
+                GST_WARNING_OBJECT(pipeline(), "Ignoring error: %s (url=%s) (code=%d)", err->message, m_url.string().utf8().data(), err->code);
+                // Deferred reset of m_ignoreErrors because there were queued sync errors not yet processed and
+                // we're processing the last one now.
+                if (m_ignoreErrors && m_queuedSyncErrors.loadFullyFenced() == 1) {
+                    m_ignoreErrors = false;
+                    GST_DEBUG_OBJECT(pipeline(), "Last queued error processed while on ignoring state. Not ignoring errors anymore.");
+                }
+                break;
+            }
+
+            GST_ERROR_OBJECT(pipeline(), "%s (url=%s) (code=%d)", err->message, m_url.string().utf8().data(), err->code);
+
+            m_errorMessage = String::fromLatin1(err->message);
 #if ENABLE(MEDIA_TELEMETRY)
-        MediaTelemetryReport::singleton().reportPlaybackState(MediaTelemetryReport::AVPipelineState::PlaybackError,
-            m_errorMessage);
+            MediaTelemetryReport::singleton().reportPlaybackState(MediaTelemetryReport::AVPipelineState::PlaybackError,
+                m_errorMessage);
 #endif
 
-        error = MediaPlayer::NetworkState::Empty;
-        if (g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_CODEC_NOT_FOUND)
-            || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECRYPT)
-            || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECRYPT_NOKEY)
-            || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_WRONG_TYPE)
-            || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED)
-            || g_error_matches(err.get(), GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN)
-            || g_error_matches(err.get(), GST_CORE_ERROR, GST_CORE_ERROR_PAD)
-            || g_error_matches(err.get(), GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_NOT_FOUND))
-            error = MediaPlayer::NetworkState::FormatError;
-        else if (g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_TYPE_NOT_FOUND)) {
-            GST_ERROR_OBJECT(pipeline(), "Decode error, let the Media element emit a stalled event.");
-            m_loadingStalled = true;
-            error = MediaPlayer::NetworkState::DecodeError;
-            attemptNextLocation = true;
-        } else if (err->domain == GST_STREAM_ERROR
-            || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE)) {
-            error = MediaPlayer::NetworkState::DecodeError;
-            attemptNextLocation = true;
-        } else if (err->domain == GST_RESOURCE_ERROR)
-            error = MediaPlayer::NetworkState::NetworkError;
+            error = MediaPlayer::NetworkState::Empty;
+            if (g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_CODEC_NOT_FOUND)
+                || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECRYPT)
+                || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECRYPT_NOKEY)
+                || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_WRONG_TYPE)
+                || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED)
+                || g_error_matches(err.get(), GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN)
+                || g_error_matches(err.get(), GST_CORE_ERROR, GST_CORE_ERROR_PAD)
+                || g_error_matches(err.get(), GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_NOT_FOUND))
+                error = MediaPlayer::NetworkState::FormatError;
+            else if (g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_TYPE_NOT_FOUND)) {
+                GST_ERROR_OBJECT(pipeline(), "Decode error, let the Media element emit a stalled event.");
+                m_loadingStalled = true;
+                error = MediaPlayer::NetworkState::DecodeError;
+                attemptNextLocation = true;
+            } else if (err->domain == GST_STREAM_ERROR
+                || g_error_matches(err.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE)) {
+                error = MediaPlayer::NetworkState::DecodeError;
+                attemptNextLocation = true;
+            } else if (err->domain == GST_RESOURCE_ERROR)
+                error = MediaPlayer::NetworkState::NetworkError;
 
-        if (attemptNextLocation)
-            issueError = !loadNextLocation();
-        if (issueError) {
-            m_didErrorOccur = true;
-            if (m_networkState != error) {
-                m_networkState = error;
-                if (player)
-                    player->networkStateChanged();
+            if (attemptNextLocation)
+                issueError = !loadNextLocation();
+            if (issueError) {
+                m_didErrorOccur = true;
+                if (m_networkState != error) {
+                    m_networkState = error;
+                    if (player)
+                        player->networkStateChanged();
+                }
             }
+            break;
         }
-        break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning(message, &err.outPtr(), &debug.outPtr());
         GST_WARNING_OBJECT(pipeline(), "%s (url=%s) (code=%d)", err->message, m_url.string().utf8().data(), err->code);
@@ -2921,6 +2944,13 @@ void MediaPlayerPrivateGStreamer::updateStates()
         GST_DEBUG_OBJECT(pipeline(), "Async: State: %s, pending: %s", gst_element_state_get_name(m_currentState), gst_element_state_get_name(pending));
         // Change in progress.
 
+        if (m_currentState == GST_STATE_PAUSED && m_isBuffering) {
+            // If we are buffering, we could miss HaveCurrentData state if buffering finished before the transition completes.
+            GST_DEBUG_OBJECT(pipeline(), "Async: [Buffering] still buffering, so force HaveCurrentData.");
+            m_readyState = MediaPlayer::ReadyState::HaveCurrentData;
+            m_networkState = MediaPlayer::NetworkState::Loading;
+        }
+
         // Delay the m_isBuffering change by returning it to its previous value. Without this, the false --> true change
         // would go unnoticed by the code that should trigger a pause.
         if (m_wasBuffering != m_isBuffering && !m_isPaused && m_playbackRate) {
@@ -3370,7 +3400,7 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url)
     }
 
 #if !RELEASE_LOG_DISABLED && !defined(GST_DISABLE_GST_DEBUG)
-    auto identifier = makeString(hex(LOGIDENTIFIER.objectIdentifier));
+    auto identifier = makeString(LOGIDENTIFIER.objectIdentifier);
     GST_INFO_OBJECT(m_pipeline.get(), "WebCore logs identifier for this pipeline is: %s", identifier.convertToASCIIUppercase().ascii().data());
 #endif
     registerActivePipeline(m_pipeline);
@@ -3418,6 +3448,10 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url)
     // later than "updateend".
     g_signal_connect_swapped(bus.get(), "sync-message::stream-collection", G_CALLBACK(+[](MediaPlayerPrivateGStreamer* player, GstMessage* message) {
         player->handleStreamCollectionMessage(message);
+    }), this);
+
+    g_signal_connect_swapped(bus.get(), "sync-message::error", G_CALLBACK(+[](MediaPlayerPrivateGStreamer* player, GstMessage* message) {
+        player->handleSyncErrorMessage(message);
     }), this);
 
     g_object_set(m_pipeline.get(), "mute", static_cast<gboolean>(player->muted()), nullptr);

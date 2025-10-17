@@ -30,7 +30,7 @@
 #include "DocumentInlines.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
-#include "Node.h"
+#include "NodeDocument.h"
 #include "PerformanceEventTimingCandidate.h"
 #include <cmath>
 

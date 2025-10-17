@@ -79,9 +79,11 @@ template<> struct CSSValueConversion<BorderRadiusValue> { auto operator()(Builde
 
 // MARK: - Evaluation
 
-template<> struct Evaluation<BorderRadius> {
-    auto operator()(const BorderRadius&, FloatSize, float zoom) -> FloatRoundedRect::Radii;
-    auto operator()(const BorderRadius&, LayoutSize, float zoom) -> LayoutRoundedRect::Radii;
+template<> struct Evaluation<BorderRadius, FloatRoundedRect::Radii> {
+    auto operator()(const BorderRadius&, FloatSize, ZoomNeeded) -> FloatRoundedRect::Radii;
+};
+template<> struct Evaluation<BorderRadius, LayoutRoundedRect::Radii> {
+    auto operator()(const BorderRadius&, LayoutSize, ZoomNeeded) -> LayoutRoundedRect::Radii;
 };
 
 } // namespace Style

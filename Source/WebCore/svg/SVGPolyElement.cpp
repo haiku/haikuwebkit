@@ -26,6 +26,7 @@
 #include "DocumentInlines.h"
 #include "LegacyRenderSVGPath.h"
 #include "LegacyRenderSVGResource.h"
+#include "NodeDocument.h"
 #include "RenderSVGPath.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGParserUtilities.h"

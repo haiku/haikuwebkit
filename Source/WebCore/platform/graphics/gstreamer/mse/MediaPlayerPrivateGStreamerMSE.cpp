@@ -553,15 +553,25 @@ void MediaPlayerPrivateGStreamerMSE::setEosWithNoBuffers(bool eosWithNoBuffers)
     m_isEosWithNoBuffers = eosWithNoBuffers;
     // Parsebin will trigger an error, instruct MediaPlayerPrivateGStreamer to ignore it.
     if (eosWithNoBuffers) {
-        // On GStreamer 1.18.6, EOS with no buffers causes a parsebin error here:
+        // On GStreamer, EOS with no buffers causes a parsebin error here:
         // https://github.com/GStreamer/gst-plugins-base/blob/1.18.6/gst/playback/gstparsebin.c#L3495
-        // On GStreamer 1.24 (at least) that doesn't happen. Let's play safe and protect against the
-        // error in lower versions.
-        if (!webkitGstCheckVersion(1, 24, 0))
-            m_ignoreErrors = true;
+
+        m_ignoreErrors = true;
+
         GST_DEBUG_OBJECT(pipeline(), "EOS with no buffers, setting pipeline to READY state.");
         changePipelineState(GST_STATE_READY);
-        if (!webkitGstCheckVersion(1, 24, 0))
+
+        unsigned errorCount = m_queuedSyncErrors.loadFullyFenced();
+        if (errorCount) {
+            GST_WARNING_OBJECT(pipeline(), "%u errors pending to process happened while processing EOS with"
+                " no buffers and should be ignored, manually reporting EOS", errorCount);
+            didEnd();
+            // In the best case, m_ignoreErrors will be cleaned up (in the main thread) in MediaPlayerPrivateGStreamer::handleMessage()
+            // in the future, after the last pending error is processed on the main thread. In the worst case, didEnd() will trigger
+            // a pipeline teardown, which will trigger gst_bus_set_flushing() and the pending error message won't ever be processed
+            // by the main thread. That's not a problem, since the player itself will be destructed and nobody will care about the
+            // error count integrity anymore.
+        } else
             m_ignoreErrors = false;
     }
 }

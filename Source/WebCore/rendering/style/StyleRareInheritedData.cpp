@@ -52,7 +52,7 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     void* customPropertyDataRefs[1];
     unsigned bitfields[7];
     short pagedMediaShorts[2];
-    TabSize tabSize;
+    Style::TabSize tabSize;
     short hyphenationShorts[3];
 
 #if ENABLE(TEXT_AUTOSIZING)
@@ -86,7 +86,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , visitedLinkTextEmphasisColor(RenderStyle::initialTextEmphasisColor())
     , caretColor(Style::Color::currentColor())
     , visitedLinkCaretColor(Style::Color::currentColor())
-    , accentColor(Style::Color::currentColor())
+    , accentColor(RenderStyle::initialAccentColor())
     , scrollbarColor(RenderStyle::initialScrollbarColor())
     , dynamicRangeLimit(RenderStyle::initialDynamicRangeLimit())
     , textShadow(RenderStyle::initialTextShadow())
@@ -139,7 +139,6 @@ StyleRareInheritedData::StyleRareInheritedData()
     , hasSetStrokeColor(false)
     , hasAutoCaretColor(true)
     , hasVisitedLinkAutoCaretColor(true)
-    , hasAutoAccentColor(true)
     , effectiveInert(false)
     , effectivelyTransparent(false)
     , isInSubtreeWithBlendMode(false)
@@ -148,6 +147,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , autoRevealsWhenFound(false)
     , insideDefaultButton(false)
     , insideSubmitButton(false)
+    , enableEvaluationTimeZoom(false)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(static_cast<unsigned>(AppleVisualEffect::None))
 #endif
@@ -243,7 +243,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , hasSetStrokeColor(o.hasSetStrokeColor)
     , hasAutoCaretColor(o.hasAutoCaretColor)
     , hasVisitedLinkAutoCaretColor(o.hasVisitedLinkAutoCaretColor)
-    , hasAutoAccentColor(o.hasAutoAccentColor)
     , effectiveInert(o.effectiveInert)
     , effectivelyTransparent(o.effectivelyTransparent)
     , isInSubtreeWithBlendMode(o.isInSubtreeWithBlendMode)
@@ -252,6 +251,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , autoRevealsWhenFound(o.autoRevealsWhenFound)
     , insideDefaultButton(o.insideDefaultButton)
     , insideSubmitButton(o.insideSubmitButton)
+    , enableEvaluationTimeZoom(o.enableEvaluationTimeZoom)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(o.usedAppleVisualEffectForSubtree)
 #endif
@@ -372,7 +372,6 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && mathStyle == o.mathStyle
         && hasAutoCaretColor == o.hasAutoCaretColor
         && hasVisitedLinkAutoCaretColor == o.hasVisitedLinkAutoCaretColor
-        && hasAutoAccentColor == o.hasAutoAccentColor
         && isInSubtreeWithBlendMode == o.isInSubtreeWithBlendMode
         && isForceHidden == o.isForceHidden
         && autoRevealsWhenFound == o.autoRevealsWhenFound
@@ -392,7 +391,8 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && customProperties == o.customProperties
         && listStyleImage == o.listStyleImage
         && listStyleType == o.listStyleType
-        && blockEllipsis == o.blockEllipsis;
+        && blockEllipsis == o.blockEllipsis
+        && enableEvaluationTimeZoom == o.enableEvaluationTimeZoom;
 }
 
 bool StyleRareInheritedData::hasColorFilters() const
@@ -500,7 +500,6 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_IF_DIFFERENT_WITH_CAST(bool, hasAutoCaretColor);
     LOG_IF_DIFFERENT_WITH_CAST(bool, hasVisitedLinkAutoCaretColor);
-    LOG_IF_DIFFERENT_WITH_CAST(bool, hasAutoAccentColor);
     LOG_IF_DIFFERENT_WITH_CAST(bool, effectiveInert);
     LOG_IF_DIFFERENT_WITH_CAST(bool, effectivelyTransparent);
 
@@ -549,6 +548,8 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_IF_DIFFERENT(listStyleType);
     LOG_IF_DIFFERENT(blockEllipsis);
+
+    LOG_IF_DIFFERENT(enableEvaluationTimeZoom);
 }
 #endif
 

@@ -94,9 +94,9 @@
 
 #if ENABLE(PDF_PLUGIN)
 @interface WKPDFMenuTarget : NSObject {
-    NSMenuItem *_selectedMenuItem;
+    WeakObjCPtr<NSMenuItem> _selectedMenuItem;
 }
-- (NSMenuItem *)selectedMenuItem;
+- (RetainPtr<NSMenuItem>)selectedMenuItem;
 - (void)contextMenuAction:(NSMenuItem *)sender;
 @end
 
@@ -111,9 +111,9 @@
     return self;
 }
 
-- (NSMenuItem *)selectedMenuItem
+- (RetainPtr<NSMenuItem>)selectedMenuItem
 {
-    return _selectedMenuItem;
+    return _selectedMenuItem.get();
 }
 
 - (void)contextMenuAction:(NSMenuItem *)sender
@@ -160,19 +160,22 @@ String WebPageProxy::standardUserAgent(const String& applicationNameForUserAgent
 void WebPageProxy::getIsSpeaking(CompletionHandler<void(bool)>&& completionHandler)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    completionHandler([NSApp isSpeaking]);
+    // FIXME: This is a safer cpp false positive (rdar://problem/161068288).
+    SUPPRESS_UNRETAINED_ARG completionHandler([NSApp isSpeaking]);
 }
 
 void WebPageProxy::speak(const String& string)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    [NSApp speakString:string.createNSString().get()];
+    // FIXME: This is a safer cpp false positive (rdar://problem/161068288).
+    SUPPRESS_UNRETAINED_ARG [NSApp speakString:string.createNSString().get()];
 }
 
 void WebPageProxy::stopSpeaking()
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    [NSApp stopSpeaking:nil];
+    // FIXME: This is a safer cpp false positive (rdar://problem/161068288).
+    SUPPRESS_UNRETAINED_ARG [NSApp stopSpeaking:nil];
 }
 
 void WebPageProxy::searchTheWeb(const String& string)
@@ -312,7 +315,7 @@ void WebPageProxy::didPerformDictionaryLookup(const DictionaryPopupInfo& diction
     if (RefPtr pageClient = this->pageClient()) {
         pageClient->didPerformDictionaryLookup(dictionaryPopupInfo);
 
-        DictionaryLookup::showPopup(dictionaryPopupInfo, pageClient->viewForPresentingRevealPopover(), [this](TextIndicator& textIndicator) {
+        DictionaryLookup::showPopup(dictionaryPopupInfo, pageClient->protectedViewForPresentingRevealPopover().get(), [this](TextIndicator& textIndicator) {
             setTextIndicator(textIndicator.data(), WebCore::TextIndicatorLifetime::Permanent);
         }, nullptr, [weakThis = WeakPtr { *this }] {
             if (!weakThis)
@@ -510,16 +513,31 @@ CALayer *WebPageProxy::acceleratedCompositingRootLayer() const
     return pageClient ? pageClient->acceleratedCompositingRootLayer() : nullptr;
 }
 
+RetainPtr<CALayer> WebPageProxy::protectedAcceleratedCompositingRootLayer() const
+{
+    return acceleratedCompositingRootLayer();
+}
+
 CALayer *WebPageProxy::headerBannerLayer() const
 {
     RefPtr pageClient = this->pageClient();
     return pageClient ? pageClient->headerBannerLayer() : nullptr;
 }
 
+RetainPtr<CALayer> WebPageProxy::protectedHeaderBannerLayer() const
+{
+    return headerBannerLayer();
+}
+
 CALayer *WebPageProxy::footerBannerLayer() const
 {
     RefPtr pageClient = this->pageClient();
     return pageClient ? pageClient->footerBannerLayer() : nullptr;
+}
+
+RetainPtr<CALayer> WebPageProxy::protectedFooterBannerLayer() const
+{
+    return footerBannerLayer();
 }
 
 int WebPageProxy::headerBannerHeight() const
@@ -539,7 +557,8 @@ int WebPageProxy::footerBannerHeight() const
 static NSString *temporaryPDFDirectoryPath()
 {
     static NeverDestroyed path = [] {
-        RetainPtr temporaryDirectoryTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"WebKitPDFs-XXXXXX"];
+        RetainPtr temporaryDirectory = NSTemporaryDirectory();
+        RetainPtr temporaryDirectoryTemplate = [temporaryDirectory stringByAppendingPathComponent:@"WebKitPDFs-XXXXXX"];
         CString templateRepresentation = [temporaryDirectoryTemplate fileSystemRepresentation];
         if (mkdtemp(templateRepresentation.mutableSpanIncludingNullTerminator().data()))
             return adoptNS((NSString *)[[[NSFileManager defaultManager] stringWithFileSystemRepresentation:templateRepresentation.data() length:templateRepresentation.length()] copy]);
@@ -686,7 +705,7 @@ void WebPageProxy::showTelephoneNumberMenu(const String& telephoneNumber, const 
     if (!pageClient)
         return;
 
-    RetainPtr menu = menuForTelephoneNumber(telephoneNumber, pageClient->viewForPresentingRevealPopover(), rect);
+    RetainPtr menu = menuForTelephoneNumber(telephoneNumber, pageClient->protectedViewForPresentingRevealPopover().get(), rect);
     pageClient->showPlatformContextMenu(menu.get(), point);
 }
 #endif
@@ -724,6 +743,11 @@ NSWindow *WebPageProxy::platformWindow()
 {
     RefPtr pageClient = m_pageClient.get();
     return pageClient ? pageClient->platformWindow() : nullptr;
+}
+
+RetainPtr<NSWindow> WebPageProxy::protectedPlatformWindow()
+{
+    return platformWindow();
 }
 
 void WebPageProxy::rootViewToWindow(const WebCore::IntRect& viewRect, WebCore::IntRect& windowRect)
@@ -874,7 +898,7 @@ void WebPageProxy::showColorPanel()
 Color WebPageProxy::platformUnderPageBackgroundColor() const
 {
 #if ENABLE(DARK_MODE_CSS)
-    return WebCore::roundAndClampToSRGBALossy(NSColor.controlBackgroundColor.CGColor);
+    return WebCore::roundAndClampToSRGBALossy(RetainPtr { NSColor.controlBackgroundColor.CGColor }.get());
 #else
     return WebCore::Color::white;
 #endif

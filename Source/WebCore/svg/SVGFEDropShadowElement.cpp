@@ -24,12 +24,11 @@
 #include "ContainerNodeInlines.h"
 #include "NodeName.h"
 #include "RenderElement.h"
-#include "RenderStyle.h"
+#include "RenderStyleInlines.h"
 #include "SVGFilterRenderer.h"
 #include "SVGNames.h"
 #include "SVGParserUtilities.h"
 #include "SVGPropertyOwnerRegistry.h"
-#include "SVGRenderStyle.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -127,10 +126,10 @@ bool SVGFEDropShadowElement::setFilterEffectAttribute(FilterEffect& filterEffect
         return effect.setDy(dy());
     case AttributeNames::flood_colorAttr: {
         auto& style = renderer()->style();
-        return effect.setShadowColor(style.colorResolvingCurrentColor(style.svgStyle().floodColor()));
+        return effect.setShadowColor(style.colorResolvingCurrentColor(style.floodColor()));
     }
     case AttributeNames::flood_opacityAttr:
-        return effect.setShadowOpacity(renderer()->style().svgStyle().floodOpacity().value.value);
+        return effect.setShadowOpacity(renderer()->style().floodOpacity().value.value);
     default:
         break;
     }
@@ -160,12 +159,8 @@ RefPtr<FilterEffect> SVGFEDropShadowElement::createFilterEffect(const FilterEffe
         return nullptr;
 
     auto& style = renderer->style();
-    const SVGRenderStyle& svgStyle = style.svgStyle();
-    
-    Color color = style.colorWithColorFilter(svgStyle.floodColor());
-    float opacity = svgStyle.floodOpacity().value.value;
 
-    return FEDropShadow::create(stdDeviationX(), stdDeviationY(), dx(), dy(), color, opacity);
+    return FEDropShadow::create(stdDeviationX(), stdDeviationY(), dx(), dy(), style.colorWithColorFilter(style.floodColor()), style.floodOpacity().value.value);
 }
 
 } // namespace WebCore

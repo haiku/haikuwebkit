@@ -29,7 +29,6 @@
 #else
 #include <EGL/egl.h>
 #endif
-#include <openxr/openxr_platform.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/WTFString.h>

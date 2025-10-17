@@ -173,7 +173,7 @@ ALWAYS_INLINE bool isCanonicalNumericIndexString(UniquedStringImpl* propertyName
     double index = jsToNumber(propertyName);
     NumberToStringBuffer buffer;
     auto span = WTF::numberToStringAndSize(index, buffer);
-    return equal(propertyName, byteCast<LChar>(span));
+    return equal(propertyName, byteCast<Latin1Character>(span));
 }
 
 } // namespace JSC

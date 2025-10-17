@@ -558,6 +558,18 @@ public:
         return m_interval - secondsRemaining();
     }
 
+    void fireAndRestart()
+    {
+        bool wasActive = isActive();
+
+        if (wasActive)
+            pause();
+        m_function();
+        m_remainingInterval = m_interval;
+        if (wasActive)
+            start();
+    }
+
 private:
     void start(Seconds, Seconds) = delete;
     void startRepeating(Seconds) = delete;
@@ -679,7 +691,7 @@ void HTMLMediaElement::initializeMediaSession()
     if (document->settings().invisibleAutoplayNotPermitted())
         m_mediaSession->addBehaviorRestriction(MediaElementSession::InvisibleAutoplayNotPermitted);
 
-    if (document->settings().requiresPageVisibilityToPlayAudio())
+    if (document->settings().requiresPageVisibilityToPlayAudio() || document->quirks().requirePageVisibilityToPlayAudioQuirk())
         m_mediaSession->addBehaviorRestriction(MediaElementSession::RequirePageVisibilityToPlayAudio);
 
     if (document->ownerElement() || !document->isMediaDocument()) {
@@ -1188,6 +1200,7 @@ void HTMLMediaElement::removedFromAncestor(RemovalType removalType, ContainerNod
 void HTMLMediaElement::willAttachRenderers()
 {
     ASSERT(!renderer());
+    fireAndRestartWatchtimeTimer();
 }
 
 inline void HTMLMediaElement::updateRenderer()
@@ -1216,6 +1229,8 @@ void HTMLMediaElement::willDetachRenderers()
 {
     if (CheckedPtr renderer = this->renderer())
         renderer->unregisterForVisibleInViewportCallback();
+
+    fireAndRestartWatchtimeTimer();
 }
 
 void HTMLMediaElement::didDetachRenderers()
@@ -1795,23 +1810,23 @@ MediaPlayer::Preload HTMLMediaElement::effectivePreloadValue() const
 }
 
 #if USE(AVFOUNDATION) && ENABLE(MEDIA_SOURCE)
-static VideoMediaSampleRendererPreferences videoMediaSampleRendererPreferences(const Settings& settings, bool forceStereo)
+static VideoRendererPreferences videoRendererPreferences(const Settings& settings, bool forceStereo)
 {
-    VideoMediaSampleRendererPreferences preferences { VideoMediaSampleRendererPreference::PrefersDecompressionSession };
+    VideoRendererPreferences preferences { VideoRendererPreference::PrefersDecompressionSession };
 #if USE(MODERN_AVCONTENTKEYSESSION_WITH_VTDECOMPRESSIONSESSION)
     if (settings.videoRendererProtectedFallbackDisabled())
-        preferences.add(VideoMediaSampleRendererPreference::ProtectedFallbackDisabled);
+        preferences.add(VideoRendererPreference::ProtectedFallbackDisabled);
     if (settings.videoRendererUseDecompressionSessionForProtected())
-        preferences.add(VideoMediaSampleRendererPreference::UseDecompressionSessionForProtectedContent);
+        preferences.add(VideoRendererPreference::UseDecompressionSessionForProtectedContent);
 #else
     UNUSED_PARAM(settings);
 #endif
 #if PLATFORM(VISION)
     UNUSED_PARAM(forceStereo);
-    preferences.add(VideoMediaSampleRendererPreference::UseStereoDecoding);
+    preferences.add(VideoRendererPreference::UseStereoDecoding);
 #else
     if (forceStereo)
-        preferences.add(VideoMediaSampleRendererPreference::UseStereoDecoding);
+        preferences.add(VideoRendererPreference::UseStereoDecoding);
 #endif
     return preferences;
 }
@@ -1923,17 +1938,16 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
             return;
         }
 
-
         MediaPlayer::LoadOptions options = {
             .contentType = *result,
             .requiresRemotePlayback = !!protectedThis->m_remotePlaybackConfiguration,
-            .supportsLimitedMatroska = protectedThis->limitedMatroskaSupportEnabled()
+            .supportsLimitedMatroska = protectedThis->limitedMatroskaSupportEnabled(),
         };
 
 #if ENABLE(MEDIA_SOURCE)
 #if USE(AVFOUNDATION)
         if (protectedThis->document().settings().mediaSourcePrefersDecompressionSession())
-            options.videoMediaSampleRendererPreferences = videoMediaSampleRendererPreferences(protectedThis->document().settings(), protectedThis->m_forceStereoDecoding);
+            options.videoRendererPreferences = videoRendererPreferences(protectedThis->document().settings(), protectedThis->m_forceStereoDecoding);
 #endif
         if (!protectedThis->m_mediaSource && url.protocolIs(mediaSourceBlobProtocol) && !protectedThis->m_remotePlaybackConfiguration) {
             if (RefPtr mediaSource = MediaSource::lookup(url.string()))
@@ -1949,6 +1963,11 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
                 protectedThis->document().addConsoleMessage(MessageSource::MediaSource, MessageLevel::Error, makeString("Unable to attach detachable MediaSource via blob URL, use srcObject attribute"_s));
                 return protectedThis->mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
             }
+
+#if PLATFORM(IOS_FAMILY)
+            if (protectedThis->canShowWhileLocked())
+                options.videoRendererPreferences |= VideoRendererPreference::CanShowWhileLocked;
+#endif
 
             if (!protectedThis->m_mediaSource->attachToElement(protectedThis.get())) {
                 // Forget our reference to the MediaSource, so we leave it alone
@@ -1978,6 +1997,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
                 protectedThis->mediaPlayerRenderingModeChanged();
             return;
         }
+#endif
+#if PLATFORM(IOS_FAMILY)
+        if (protectedThis->canShowWhileLocked())
+            options.videoRendererPreferences |= VideoRendererPreference::CanShowWhileLocked;
 #endif
         if (!player->load(url, options))
             protectedThis->mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
@@ -3014,12 +3037,17 @@ void HTMLMediaElement::setNetworkState(MediaPlayer::NetworkState state)
             MediaPlayer::LoadOptions options = {
                 .contentType = *result,
                 .requiresRemotePlayback = !!protectedThis->m_remotePlaybackConfiguration,
-                .supportsLimitedMatroska = protectedThis->limitedMatroskaSupportEnabled()
+                .supportsLimitedMatroska = protectedThis->limitedMatroskaSupportEnabled(),
             };
 #if ENABLE(MEDIA_SOURCE) && USE(AVFOUNDATION)
             if (protectedThis->document().settings().mediaSourcePrefersDecompressionSession())
-                options.videoMediaSampleRendererPreferences = videoMediaSampleRendererPreferences(protectedThis->document().settings(), protectedThis->m_forceStereoDecoding);
+                options.videoRendererPreferences = videoRendererPreferences(protectedThis->document().settings(), protectedThis->m_forceStereoDecoding);
 #endif
+#if PLATFORM(IOS_FAMILY)
+            if (protectedThis->canShowWhileLocked())
+                options.videoRendererPreferences |= VideoRendererPreference::CanShowWhileLocked;
+#endif
+
             if (result->isEmpty() || lastContentType == *result || !player->load(url, options))
                 protectedThis->mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
             else
@@ -7003,6 +7031,8 @@ void HTMLMediaElement::setWirelessPlaybackTarget(Ref<MediaPlaybackTarget>&& devi
     bool hasActiveRoute = device->hasActiveRoute();
     ALWAYS_LOG(LOGIDENTIFIER, hasActiveRoute);
 
+    fireAndRestartWatchtimeTimer();
+
     if (RefPtr player = m_player)
         player->setWirelessPlaybackTarget(WTFMove(device));
     Ref { m_remote }->shouldPlayToRemoteTargetChanged(hasActiveRoute);
@@ -7325,6 +7355,8 @@ void HTMLMediaElement::enterFullscreen(VideoFullscreenMode mode)
 
     m_changingVideoFullscreenMode = true;
 
+    fireAndRestartWatchtimeTimer();
+
 #if ENABLE(FULLSCREEN_API) && ENABLE(VIDEO_USES_ELEMENT_FULLSCREEN)
     if (videoUsesElementFullscreen() && page->isDocumentFullscreenEnabled() && isInWindowOrStandardFullscreen(mode)) {
         m_temporarilyAllowingInlinePlaybackAfterFullscreen = false;
@@ -7470,6 +7502,8 @@ void HTMLMediaElement::prepareForVideoFullscreenStandby()
 
 void HTMLMediaElement::willBecomeFullscreenElement(VideoFullscreenMode mode)
 {
+    fireAndRestartWatchtimeTimer();
+
 #if PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE)
     HTMLMediaElementEnums::VideoFullscreenMode oldVideoFullscreenMode = m_videoFullscreenMode;
 #endif
@@ -7501,6 +7535,8 @@ void HTMLMediaElement::didBecomeFullscreenElement()
 
 void HTMLMediaElement::willStopBeingFullscreenElement()
 {
+    fireAndRestartWatchtimeTimer();
+
     if (isInWindowOrStandardFullscreen(fullscreenMode()))
         setFullscreenMode(VideoFullscreenModeNone);
 }
@@ -9846,6 +9882,11 @@ bool HTMLMediaElement::shouldLogWatchtimeEvent() const
     return true;
 }
 
+bool HTMLMediaElement::isWatchtimeTimerActive() const
+{
+    return m_watchtimeTimer && m_watchtimeTimer->isActive();
+}
+
 void HTMLMediaElement::startWatchtimeTimer()
 {
     if (!m_watchtimeTimer) {
@@ -9861,6 +9902,12 @@ void HTMLMediaElement::pauseWatchtimeTimer()
 {
     if (m_watchtimeTimer)
         m_watchtimeTimer->pause();
+}
+
+void HTMLMediaElement::fireAndRestartWatchtimeTimer()
+{
+    if (m_watchtimeTimer)
+        m_watchtimeTimer->fireAndRestart();
 }
 
 void HTMLMediaElement::invalidateWatchtimeTimer()
@@ -9974,10 +10021,12 @@ void HTMLMediaElement::watchtimeTimerFired()
     };
     auto presentationType = [&] {
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-        if (m_player && m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeAirPlay)
-            return PresentationType::AirPlay;
-        if (m_player && m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeTVOut)
-            return PresentationType::TV;
+        if (m_player && m_player->isCurrentPlaybackTargetWireless()) {
+            if (m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeAirPlay)
+                return PresentationType::AirPlay;
+            if (m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeTVOut)
+                return PresentationType::TV;
+        }
 #endif
         if (fullscreenMode() == VideoFullscreenModePictureInPicture)
             return PresentationType::PictureInPicture;

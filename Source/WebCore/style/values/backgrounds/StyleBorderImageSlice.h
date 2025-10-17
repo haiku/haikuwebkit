@@ -40,12 +40,10 @@ struct BorderImageSliceValue {
     {
     }
 
-
     BorderImageSliceValue(Percentage percentage)
         : m_value { percentage }
     {
     }
-
 
     bool isNumber() const { return WTF::holdsAlternative<Number>(m_value); }
     bool isPercentage() const { return WTF::holdsAlternative<Percentage>(m_value); }

@@ -370,7 +370,7 @@ static gboolean wpeDisplayDRMSetup(WPEDisplayDRM* displayDRM, const char* device
     std::optional<double> scaleFromEnvironment;
     if (const auto scaleString = StringView::fromLatin1(getenv("WPE_DRM_SCALE"))) {
         RELEASE_ASSERT(scaleString.is8Bit());
-        auto trimmedScaleString = scaleString.trim(isASCIIWhitespace<LChar>);
+        auto trimmedScaleString = scaleString.trim(isASCIIWhitespace<Latin1Character>);
         size_t parsedLength = 0;
         auto scale = parseDouble(trimmedScaleString, parsedLength);
         if (parsedLength == trimmedScaleString.length() && scaleIsInBounds(scale))

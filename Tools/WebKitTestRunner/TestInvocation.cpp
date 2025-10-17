@@ -381,7 +381,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
         }
         m_repaintRects = static_cast<WKArrayRef>(value(messageBodyDictionary, "RepaintRects"));
         m_audioResult = static_cast<WKDataRef>(value(messageBodyDictionary, "AudioResult"));
-        m_forceRepaint = booleanValue(messageBodyDictionary, "ForceRepaint");
         done();
         return;
     }
@@ -534,47 +533,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
         return;
     }
 
-    if (WKStringIsEqualToUTF8CString(messageName, "SetAuthenticationUsername")) {
-        WKStringRef username = stringValue(messageBody);
-        TestController::singleton().setAuthenticationUsername(toWTFString(username));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetAuthenticationPassword")) {
-        WKStringRef password = stringValue(messageBody);
-        TestController::singleton().setAuthenticationPassword(toWTFString(password));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetPluginSupportedMode")) {
-        WKStringRef mode = stringValue(messageBody);
-        TestController::singleton().setPluginSupportedMode(toWTFString(mode));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetAllowedMenuActions")) {
-        auto messageBodyArray = static_cast<WKArrayRef>(messageBody);
-        auto size = WKArrayGetSize(messageBodyArray);
-        Vector<String> actions;
-        actions.reserveInitialCapacity(size);
-        for (size_t index = 0; index < size; ++index)
-            actions.append(toWTFString(stringValue(WKArrayGetItemAtIndex(messageBodyArray, index))));
-        TestController::singleton().setAllowedMenuActions(actions);
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "SetOpenPanelFileURLs")) {
-        TestController::singleton().setOpenPanelFileURLs(static_cast<WKArrayRef>(messageBody));
-        return;
-    }
-
-#if PLATFORM(IOS_FAMILY)
-    if (WKStringIsEqualToUTF8CString(messageName, "SetOpenPanelFileURLsMediaIcon")) {
-        TestController::singleton().setOpenPanelFileURLsMediaIcon(static_cast<WKDataRef>(messageBody));
-        return;
-    }
-#endif
-
     if (WKStringIsEqualToUTF8CString(messageName, "ReloadFromOrigin")) {
         TestController::singleton().setUseWorkQueue(true);
         TestController::singleton().reloadFromOrigin();
@@ -588,14 +546,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
 
     if (WKStringIsEqualToUTF8CString(messageName, "SkipPolicyDelegateNotifyDone")) {
         TestController::singleton().skipPolicyDelegateNotifyDone();
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "FindStringMatches")) {
-        auto messageBodyDictionary = dictionaryValue(messageBody);
-        auto string = stringValue(messageBodyDictionary, "String");
-        auto findOptions = static_cast<WKFindOptions>(uint64Value(messageBodyDictionary, "FindOptions"));
-        WKPageFindStringMatches(TestController::singleton().mainWebView()->page(), string, findOptions, 0);
         return;
     }
 
@@ -660,6 +610,14 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         return nullptr;
     }
 
+    if (WKStringIsEqualToUTF8CString(messageName, "SetPrinting")) {
+        setPrinting();
+        return nullptr;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "GetIsPrinting"))
+        return adoptWK(WKBooleanCreate(isPrinting()));
+
     if (WKStringIsEqualToUTF8CString(messageName, "SetViewSize")) {
         auto messageBodyDictionary = dictionaryValue(messageBody);
         auto width = doubleValue(messageBodyDictionary, "width");
@@ -705,6 +663,7 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         TestController::singleton().setBackgroundFetchPermission(booleanValue(messageBody));
         return nullptr;
     }
+
     if (WKStringIsEqualToUTF8CString(messageName, "GetBackgroundFetchIdentifier"))
         return TestController::singleton().getBackgroundFetchIdentifier();
 
@@ -1209,6 +1168,11 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         return nullptr;
     }
 
+    if (WKStringIsEqualToUTF8CString(messageName, "DontForceRepaint")) {
+        dontForceRepaint();
+        return nullptr;
+    }
+
     if (WKStringIsEqualToUTF8CString(messageName, "DumpPrivateClickMeasurement")) {
         dumpPrivateClickMeasurement();
         return nullptr;
@@ -1342,6 +1306,9 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         TestController::singleton().setHasMouseDeviceForTesting((booleanValue(messageBody)));
         return nullptr;
     }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ShouldForceRepaint"))
+        return adoptWK(WKBooleanCreate(m_forceRepaint));
 
     ASSERT_NOT_REACHED();
     return nullptr;

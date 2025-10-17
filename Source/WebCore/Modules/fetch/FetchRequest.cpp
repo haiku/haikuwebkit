@@ -387,7 +387,7 @@ ResourceRequest FetchRequest::resourceRequest() const
     return request;
 }
 
-ExceptionOr<Ref<FetchRequest>> FetchRequest::clone()
+ExceptionOr<Ref<FetchRequest>> FetchRequest::clone(JSDOMGlobalObject& globalObject)
 {
     if (isDisturbedOrLocked())
         return Exception { ExceptionCode::TypeError, "Body is disturbed or locked"_s };
@@ -396,7 +396,7 @@ ExceptionOr<Ref<FetchRequest>> FetchRequest::clone()
         return Exception { ExceptionCode::InvalidStateError, "Cannot clone FetchRequest without a valid script execution context"_s };
     auto clone = adoptRef(*new FetchRequest(*context, std::nullopt, FetchHeaders::create(m_headers.get()), ResourceRequest { m_request }, FetchOptions { m_options }, String { m_referrer }));
     clone->suspendIfNeeded();
-    clone->cloneBody(*this);
+    clone->cloneBody(globalObject, *this);
     clone->setNavigationPreloadIdentifier(m_navigationPreloadIdentifier);
     clone->m_enableContentExtensionsCheck = m_enableContentExtensionsCheck;
     if (RefPtr document = dynamicDowncast<Document>(*context); document && document->settings().localNetworkAccessEnabled())

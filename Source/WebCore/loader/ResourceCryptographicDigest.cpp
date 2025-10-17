@@ -85,7 +85,7 @@ std::optional<ResourceCryptographicDigest> parseCryptographicDigest(StringParsin
     return parseCryptographicDigestImpl(buffer);
 }
 
-std::optional<ResourceCryptographicDigest> parseCryptographicDigest(StringParsingBuffer<LChar>& buffer)
+std::optional<ResourceCryptographicDigest> parseCryptographicDigest(StringParsingBuffer<Latin1Character>& buffer)
 {
     return parseCryptographicDigestImpl(buffer);
 }
@@ -118,7 +118,7 @@ std::optional<EncodedResourceCryptographicDigest> parseEncodedCryptographicDiges
     return parseEncodedCryptographicDigestImpl(buffer);
 }
 
-std::optional<EncodedResourceCryptographicDigest> parseEncodedCryptographicDigest(StringParsingBuffer<LChar>& buffer)
+std::optional<EncodedResourceCryptographicDigest> parseEncodedCryptographicDigest(StringParsingBuffer<Latin1Character>& buffer)
 {
     return parseEncodedCryptographicDigestImpl(buffer);
 }

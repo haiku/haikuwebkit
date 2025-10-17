@@ -26,6 +26,9 @@
 #pragma once
 
 #include <WebCore/FontCascade.h>
+#include <WebCore/StyleLetterSpacing.h>
+#include <WebCore/StyleWordSpacing.h>
+#include <WebCore/FontCascade.h>
 #include <wtf/DataRef.h>
 
 namespace WTF {
@@ -46,6 +49,8 @@ public:
     void dumpDifferences(TextStream&, const StyleFontData&) const;
 #endif
 
+    Style::LetterSpacing letterSpacing;
+    Style::WordSpacing wordSpacing;
     FontCascade fontCascade;
 
 private:

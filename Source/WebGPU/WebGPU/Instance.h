@@ -39,6 +39,8 @@
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/WeakPtr.h>
 
+@class DDBridgeReceiver;
+
 struct WGPUInstanceImpl {
 };
 
@@ -49,8 +51,10 @@ class MachSendRight;
 namespace WebGPU {
 
 class Adapter;
+class DDMesh;
 class Device;
 class PresentationContext;
+class Texture;
 
 // https://gpuweb.github.io/gpuweb/#gpu
 class Instance : public WGPUInstanceImpl, public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<Instance> {
@@ -75,6 +79,9 @@ public:
     using WorkItem = Function<void()>;
     void scheduleWork(WorkItem&&);
     const std::optional<const MachSendRight>& webProcessID() const;
+    Ref<DDMesh> createMesh(const WGPUDDMeshDescriptor&);
+    void updateMesh(DDMesh&, WGPUDDUpdateMeshDescriptor&);
+    void updateModel(Texture&);
 
 private:
     Instance(WGPUScheduleWorkBlock, const WTF::MachSendRight* webProcessResourceOwner);
@@ -91,6 +98,10 @@ private:
     const WGPUScheduleWorkBlock m_scheduleWorkBlock;
     Lock m_lock;
     bool m_isValid { true };
+
+    DDBridgeReceiver* m_ddReceiver;
+    NSUUID* m_ddMeshIdentifier;
+    id<MTLTexture> m_lastMeshTexture;
 };
 
 } // namespace WebGPU

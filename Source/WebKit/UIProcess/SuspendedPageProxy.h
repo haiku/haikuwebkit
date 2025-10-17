@@ -65,7 +65,7 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
-    static RefPtr<WebProcessProxy> findReusableSuspendedPageProcess(WebProcessPool&, const WebCore::RegistrableDomain&, WebsiteDataStore&, WebProcessProxy::LockdownMode, const API::PageConfiguration&);
+    static RefPtr<WebProcessProxy> findReusableSuspendedPageProcess(WebProcessPool&, const WebCore::RegistrableDomain&, WebsiteDataStore&, WebProcessProxy::LockdownMode, WebProcessProxy::EnhancedSecurity, const API::PageConfiguration&);
 
     WebPageProxy* page() const;
     WebCore::PageIdentifier webPageID() const { return m_webPageID; }
@@ -76,6 +76,8 @@ public:
 
     WebBackForwardCache& backForwardCache() const;
     Ref<WebBackForwardCache> protectedBackForwardCache() const;
+
+    WebPageProxyMessageReceiverRegistration& messageReceiverRegistration() { return m_messageReceiverRegistration; }
 
     bool pageIsClosedOrClosing() const;
 

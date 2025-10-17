@@ -46,6 +46,8 @@ class GridLayout {
 public:
     GridLayout(RenderGrid&);
 
+    void updateFormattingContextGeometries();
+
     void layout();
 
     friend WTF::TextStream& operator<<(WTF::TextStream&, const GridLayout&);
@@ -57,6 +59,7 @@ private:
     const RenderGrid& gridBoxRenderer() const { return downcast<RenderGrid>(*m_gridBox->rendererForIntegration()); }
     RenderGrid& gridBoxRenderer() { return downcast<RenderGrid>(*m_gridBox->rendererForIntegration()); }
 
+    Layout::LayoutState& layoutState() { return m_layoutState; }
     const Layout::LayoutState& layoutState() const { return m_layoutState; }
 
     const CheckedPtr<Layout::ElementBox> m_gridBox;

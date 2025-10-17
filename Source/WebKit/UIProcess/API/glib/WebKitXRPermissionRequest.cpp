@@ -141,12 +141,12 @@ static void webkit_xr_permission_request_class_init(WebKitXRPermissionRequestCla
 }
 
 /**
- * webkit_xr_permission_request_get_security_origin
+ * webkit_xr_permission_request_get_security_origin:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the origin of this request.
+ * Gets the security origin that initiated the permission request.
  *
- * Returns: (transfer none): A #WebKitSecurityOrigin of @request
+ * Returns: (transfer none): the #WebKitSecurityOrigin that initiated the request
  *
  * Since: 2.52
  */
@@ -162,12 +162,12 @@ WebKitSecurityOrigin* webkit_xr_permission_request_get_security_origin(WebKitXRP
 }
 
 /**
- * webkit_xr_permission_request_get_session_mode
+ * webkit_xr_permission_request_get_session_mode:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the XRSessionMode of this request.
+ * Gets the session mode for which permission is being requested.
  *
- * Returns: The #WebKitXRSessionMode of @request
+ * Returns: a #WebKitXRSessionMode
  *
  * Since: 2.52
  */
@@ -183,10 +183,14 @@ WebKitXRSessionMode webkit_xr_permission_request_get_session_mode(WebKitXRPermis
 }
 
 /**
- * webkit_xr_permission_request_get_granted_features
+ * webkit_xr_permission_request_get_granted_features:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the previously granted features for the XR device.
+ * Gets the features requested by the origin for the XR device, which
+ * are either granted by default or have been explicitly granted by
+ * the user.
+ *
+ * Returns: a #WebKitXRSessionFeatures flag combination
  *
  * Since: 2.52
  */
@@ -202,12 +206,15 @@ WebKitXRSessionFeatures webkit_xr_permission_request_get_granted_features(WebKit
 }
 
 /**
- * webkit_xr_permission_request_get_consent_required_features
+ * webkit_xr_permission_request_get_consent_required_features:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the consent required features of this request.
+ * Gets the required features that need user consent.
  *
- * Returns: The consent required features of @request
+ * These features are automatically granted if the request is allowed with
+ * webkit_permission_request_allow().
+ *
+ * Returns: a #WebKitXRSessionFeatures flag combination
  *
  * Since: 2.52
  */
@@ -223,12 +230,16 @@ WebKitXRSessionFeatures webkit_xr_permission_request_get_consent_required_featur
 }
 
 /**
- * webkit_xr_permission_request_get_consent_optional_features
+ * webkit_xr_permission_request_get_consent_optional_features:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the consent optional features of this request.
+ * Gets the optional features that need user consent.
  *
- * Returns: The optional features of @request
+ * These features can be granted by calling
+ * webkit_xr_permission_request_set_granted_optional_features()
+ * before allowing the request with webkit_permission_request_allow().
+ *
+ * Returns: a #WebKitXRSessionFeatures flag combination
  *
  * Since: 2.52
  */
@@ -244,12 +255,14 @@ WebKitXRSessionFeatures webkit_xr_permission_request_get_consent_optional_featur
 }
 
 /**
- * webkit_xr_permission_request_get_required_features_requested
+ * webkit_xr_permission_request_get_required_features_requested:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the requested required features of this request.
+ * Gets the full set of required features requested by the web application.
  *
- * Returns: The required features of @request
+ * This includes both already granted features and those requiring consent.
+ *
+ * Returns: a #WebKitXRSessionFeatures flag combination
  *
  * Since: 2.52
  */
@@ -265,14 +278,17 @@ WebKitXRSessionFeatures webkit_xr_permission_request_get_required_features_reque
 }
 
 /**
- * webkit_xr_permission_request_get_optional_features_requested
+ * webkit_xr_permission_request_get_optional_features_requested:
  * @request: a #WebKitXRPermissionRequest
  *
- * Get the requested optional features of this request.
+ * Gets the full set of optional features requested by the web application.
  *
- * Returns: The optional features of @request
+ * This includes both already granted features and those requiring consent.
+ *
+ * Returns: a #WebKitXRSessionFeatures flag combination
  *
  * Since: 2.52
+ *
  */
 WebKitXRSessionFeatures webkit_xr_permission_request_get_optional_features_requested(WebKitXRPermissionRequest* request)
 {
@@ -286,15 +302,21 @@ WebKitXRSessionFeatures webkit_xr_permission_request_get_optional_features_reque
 }
 
 /**
- * webkit_xr_permission_request_set_granted_features
+ * webkit_xr_permission_request_set_granted_optional_features:
  * @request: a #WebKitXRPermissionRequest
  * @granted: granted features
  *
- * Set the granted features for the XR device.
+ * Sets which optional features should be granted if the permission request is allowed.
+ *
+ * This function should be called with a subset of the features from
+ * webkit_xr_permission_request_get_consent_optional_features() before calling
+ * webkit_permission_request_allow(). If the request is denied, no features are
+ * granted, regardless of what is set here.
  *
  * Since: 2.52
+ *
  */
-void webkit_xr_permission_request_set_granted_features(WebKitXRPermissionRequest* request, WebKitXRSessionFeatures granted)
+void webkit_xr_permission_request_set_granted_optional_features(WebKitXRPermissionRequest* request, WebKitXRSessionFeatures granted)
 {
 #if ENABLE(WEBXR)
     g_return_if_fail(WEBKIT_IS_XR_PERMISSION_REQUEST(request));

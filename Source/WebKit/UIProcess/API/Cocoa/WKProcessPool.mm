@@ -381,11 +381,20 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     WebKit::WebProcessPool::setUseSeparateServiceWorkerProcess(useSeparateServiceWorkerProcess);
 }
 
-- (pid_t)_prewarmedProcessIdentifier
+- (NSSet<NSNumber *> *)_prewarmedProcessIdentifiersForTesting
 {
-    return _processPool->prewarmedProcessID();
+    auto result = adoptNS([[NSMutableSet alloc] init]);
+    for (auto pid : _processPool->prewarmedProcessIdentifiers())
+        [result addObject:@(pid)];
+    return result.autorelease();
 }
 
+- (void)_countWebPagesInAllProcessesForTesting:(void(^)(unsigned))completionHandler
+{
+    _processPool->countWebPagesInAllProcessesForTesting([completionHandler = makeBlockPtr(completionHandler)] (unsigned result) {
+        completionHandler(result);
+    });
+}
 
 - (void)_clearWebProcessCache
 {

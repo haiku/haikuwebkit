@@ -256,7 +256,7 @@ Ref<const LayoutShape> makeShapeForShapeOutside(const RenderBox& renderer)
     auto boxSize = computeLogicalBoxSize(renderer, isHorizontalWritingMode);
 
     auto logicalMargin = [&] {
-        auto shapeMargin = Style::evaluate(style.shapeMargin(), containingBlock.contentBoxLogicalWidth(), 1.0f /* FIXME FIND ZOOM */).toFloat();
+        auto shapeMargin = Style::evaluate<LayoutUnit>(style.shapeMargin(), containingBlock.contentBoxLogicalWidth(), Style::ZoomNeeded { }).toFloat();
         return isnan(shapeMargin) ? 0.0f : shapeMargin;
     }();
 

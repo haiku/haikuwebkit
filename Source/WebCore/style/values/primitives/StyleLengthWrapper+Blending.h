@@ -53,16 +53,26 @@ template<LengthWrapperBaseDerived T> struct Blending<T> {
     }
     T blendMixedSpecifiedTypes(const T& a, const T& b, const BlendingContext& context)
     {
+        ASSERT(a.isSpecified());
+        ASSERT(b.isSpecified());
+
         if (context.compositeOperation != CompositeOperation::Replace)
             return typename T::Calc { Calculation::add(copyCalculation(a), copyCalculation(b)) };
 
-        if (!b.isCalculated() && !a.isPercent() && (context.progress == 1 || a.isZero())) {
+        auto isFixedZero = [](const T& value) {
+            ASSERT(value.isFixed() || value.isCalculated());
+            if (auto fixed = value.tryFixed())
+                return fixed->isZero();
+            return false;
+        };
+
+        if (!b.isCalculated() && !a.isPercent() && (context.progress == 1 || isFixedZero(a))) {
             if (b.isPercent())
                 return Style::blend(typename T::Percentage { 0 }, typename T::Percentage { b.m_value.value() }, context);
             return Style::blend(typename T::Fixed { 0 }, typename T::Fixed { b.m_value.value() }, context);
         }
 
-        if (!a.isCalculated() && !b.isPercent() && (!context.progress || b.isZero())) {
+        if (!a.isCalculated() && !b.isPercent() && (!context.progress || isFixedZero(b))) {
             if (a.isPercent())
                 return Style::blend(typename T::Percentage { a.m_value.value() }, typename T::Percentage { 0 }, context);
             return Style::blend(typename T::Fixed { a.m_value.value() }, typename T::Fixed { 0 }, context);

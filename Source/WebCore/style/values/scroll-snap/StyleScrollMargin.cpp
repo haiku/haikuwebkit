@@ -28,33 +28,50 @@
 #include "LayoutRect.h"
 #include "StyleBuilderState.h"
 #include "StylePrimitiveNumericTypes+CSSValueConversion.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
 
-LayoutUnit Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, LayoutUnit, float zoom)
-{
-    return LayoutUnit(edge.m_value.value * zoom);
-}
-
-float Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, float, float zoom)
-{
-    return edge.m_value.value * zoom;
-}
+// MARK: - Conversion
 
 auto CSSValueConversion<ScrollMarginEdge>::operator()(BuilderState& state, const CSSValue& value) -> ScrollMarginEdge
 {
     return ScrollMarginEdge { toStyleFromCSSValue<Length<>>(state, value) };
 }
 
+// MARK: - Evaluation
+
+auto Evaluation<ScrollMarginEdge, LayoutUnit>::operator()(const ScrollMarginEdge& edge, LayoutUnit, ZoomNeeded token) -> LayoutUnit
+{
+    return evaluate<LayoutUnit>(edge.m_value, token);
+}
+
+auto Evaluation<ScrollMarginEdge, LayoutUnit>::operator()(const ScrollMarginEdge& edge, ZoomNeeded token) -> LayoutUnit
+{
+    return evaluate<LayoutUnit>(edge.m_value, token);
+}
+
+auto Evaluation<ScrollMarginEdge, float>::operator()(const ScrollMarginEdge& edge, float, ZoomNeeded token) -> float
+{
+    return evaluate<float>(edge.m_value, token);
+}
+
+auto Evaluation<ScrollMarginEdge, float>::operator()(const ScrollMarginEdge& edge, ZoomNeeded token) -> float
+{
+    return evaluate<float>(edge.m_value, token);
+}
+
+// MARK: - Extent
+
 LayoutBoxExtent extentForRect(const ScrollMarginBox& margin, const LayoutRect& rect)
 {
     return LayoutBoxExtent {
-        Style::evaluate(margin.top(), rect.height(), 1.0f /* FIXME ZOOM EFFECTED? */),
-        Style::evaluate(margin.right(), rect.width(), 1.0f/* FIXME ZOOM EFFECTED? */),
-        Style::evaluate(margin.bottom(), rect.height(), 1.0f /* FIXME ZOOM EFFECTED? */),
-        Style::evaluate(margin.left(), rect.width(), 1.0f /* FIXME ZOOM EFFECTED? */),
+        evaluate<LayoutUnit>(margin.top(), rect.height(), ZoomNeeded { }),
+        evaluate<LayoutUnit>(margin.right(), rect.width(), ZoomNeeded { }),
+        evaluate<LayoutUnit>(margin.bottom(), rect.height(), ZoomNeeded { }),
+        evaluate<LayoutUnit>(margin.left(), rect.width(), ZoomNeeded { }),
     };
 }
 

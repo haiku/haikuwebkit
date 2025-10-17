@@ -50,6 +50,8 @@ static HashMap<WebKit::ContentWorldIdentifier, WeakRef<ContentWorld>>& sharedWor
 
 ContentWorld* ContentWorld::worldForIdentifier(WebKit::ContentWorldIdentifier identifier)
 {
+    if (identifier == WebKit::pageContentWorldIdentifier())
+        return &pageContentWorldSingleton();
     return sharedWorldIdentifierMap().get(identifier);
 }
 
@@ -60,7 +62,7 @@ static WebKit::ContentWorldIdentifier generateIdentifier()
         // To make sure we don't use our shared pageContentWorld identifier for this
         // content world we're about to make, burn through one identifier.
         auto identifier = WebKit::ContentWorldIdentifier::generate();
-        ASSERT_UNUSED(identifier, identifier.toUInt64() >= WebKit::pageContentWorldIdentifier().toUInt64());
+        ASSERT_UNUSED(identifier, identifier.object().toUInt64() >= WebKit::pageContentWorldIdentifier().object().toUInt64());
     });
     return WebKit::ContentWorldIdentifier::generate();
 }

@@ -38,6 +38,11 @@
 #include <wtf/RefCounted.h>
 #include <wtf/text/WTFString.h>
 
+#if PLATFORM(COCOA)
+#include <pal/spi/cocoa/NetworkSPI.h>
+#include <wtf/OSObjectPtr.h>
+#endif // PLATFORM(COCOA)
+
 extern FILE* testResult;
 
 class TestRunner : public WTR::UIScriptContextDelegate, public RefCounted<TestRunner> {
@@ -399,6 +404,10 @@ public:
 
     void setHasMouseDeviceForTesting(bool);
 
+#if ENABLE(DNS_SERVER_FOR_TESTING)
+    void initializeDNS();
+#endif
+
 private:
     TestRunner(const std::string& testURL, const std::string& expectedPixelHash);
 
@@ -498,6 +507,10 @@ private:
     std::vector<std::string> m_openPanelFiles;
 #if PLATFORM(IOS_FAMILY)
     std::vector<uint8_t> m_openPanelFilesMediaIcon;
+#endif
+
+#if PLATFORM(COCOA)
+    OSObjectPtr<nw_resolver_config_t> m_resolverConfig;
 #endif
 
     static JSRetainPtr<JSClassRef> createJSClass();

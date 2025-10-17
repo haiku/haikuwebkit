@@ -35,20 +35,23 @@ namespace Style {
 PositionTryFallback::~PositionTryFallback() = default;
 bool operator==(const PositionTryFallback& lhs, const PositionTryFallback& rhs)
 {
-    if (lhs.positionAreaProperties && rhs.positionAreaProperties) {
-        if (lhs.positionAreaProperties == rhs.positionAreaProperties)
+    RefPtr lhsPositionAreaProperties = lhs.positionAreaProperties;
+    RefPtr rhsPositionAreaProperties = rhs.positionAreaProperties;
+
+    if (lhsPositionAreaProperties && rhsPositionAreaProperties) {
+        if (lhsPositionAreaProperties == rhsPositionAreaProperties)
             return true;
 
-        auto lhsPositionArea = lhs.positionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
+        auto lhsPositionArea = lhsPositionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
         ASSERT(lhsPositionArea);
 
-        auto rhsPositionArea = rhs.positionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
+        auto rhsPositionArea = rhsPositionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
         ASSERT(rhsPositionArea);
 
         return *lhsPositionArea == *rhsPositionArea;
     }
 
-    if (!lhs.positionAreaProperties && !rhs.positionAreaProperties)
+    if (!lhsPositionAreaProperties && !rhsPositionAreaProperties)
         return lhs.positionTryRuleName == rhs.positionTryRuleName && lhs.tactics == rhs.tactics;
 
     // If we got here, lhs and rhs don't have the same type (e.g comparing position-area with rule + tactics)
@@ -76,7 +79,13 @@ TextStream& operator<<(TextStream& ts, const PositionTryFallback& fallback)
 {
     ts << "(";
 
-    if (!fallback.positionAreaProperties) {
+    if (RefPtr positionAreaProperties = fallback.positionAreaProperties) {
+        ts << "type: PositionArea ";
+
+        auto positionAreaString = positionAreaProperties->getPropertyValue(CSSPropertyPositionArea);
+        ASSERT(!positionAreaString.isEmpty());
+        ts << "positionArea: " << positionAreaString;
+    } else {
         ts << "type: RuleAndTactic ";
 
         if (fallback.positionTryRuleName)
@@ -87,12 +96,6 @@ TextStream& operator<<(TextStream& ts, const PositionTryFallback& fallback)
         for (const auto& tactic : fallback.tactics)
             ts << std::exchange(separator, ", "_s) << tactic;
         ts << "]";
-    } else {
-        auto positionAreaString = fallback.positionAreaProperties->getPropertyValue(CSSPropertyPositionArea);
-        ASSERT(!positionAreaString.isEmpty());
-
-        ts << "type: PositionArea ";
-        ts << "positionArea: " << positionAreaString;
     }
 
     ts << ")";

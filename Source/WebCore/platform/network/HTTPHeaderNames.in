@@ -91,6 +91,7 @@ Sec-Fetch-Dest
 Sec-Fetch-Mode
 Sec-Fetch-Site
 Sec-Purpose
+Sec-Speculation-Tags
 Sec-WebSocket-Accept
 Sec-WebSocket-Extensions
 Sec-WebSocket-Key

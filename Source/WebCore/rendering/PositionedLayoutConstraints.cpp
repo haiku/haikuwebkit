@@ -73,6 +73,9 @@ PositionedLayoutConstraints::PositionedLayoutConstraints(const RenderBox& render
     m_containingInlineSize = containingInlineSize;
     m_originalContainingRange = m_containingRange;
 
+    // Adjust for scrollable area.
+    captureScrollableArea();
+
     // Adjust for grid-area.
     captureGridArea();
 
@@ -148,6 +151,26 @@ void PositionedLayoutConstraints::captureInsets()
 }
 
 // MARK: - Adjustments to the containing block.
+
+void PositionedLayoutConstraints::captureScrollableArea()
+{
+    // FIXME: Extend this logic to other scrollable containing blocks.
+    if (!is<RenderView>(m_container) || !m_style.positionArea())
+        return;
+
+    auto initialContainingBlock = downcast<RenderBox>(m_container.get());
+    for (CheckedPtr child = initialContainingBlock->firstChildBox(); child; child = child->nextSiblingBox()) {
+        if (child->isOutOfFlowPositioned())
+            continue;
+        LayoutUnit outerSize = BoxAxis::Vertical == m_physicalAxis
+            ? child->height() + std::max(0_lu, child->marginTop() + child->marginBottom())
+            : child->width() + std::max(0_lu, child->marginLeft() + child->marginRight());
+        if (startIsBefore())
+            m_containingRange.floorSizeFromMinEdge(outerSize);
+        else
+            m_containingRange.floorSizeFromMaxEdge(outerSize);
+    }
+}
 
 void PositionedLayoutConstraints::captureGridArea()
 {
@@ -474,19 +497,21 @@ ItemPosition PositionedLayoutConstraints::resolveAlignmentValue() const
 {
     auto alignmentPosition = [&] {
         auto itemPosition = m_alignment.position();
-        if (m_useStaticPosition) {
+        if (ItemPosition::Auto == itemPosition) {
+
+            if (m_useStaticPosition) {
 #if ASSERT_ENABLED
-            ASSERT(m_isEligibleForStaticRangeAlignment);
+                ASSERT(m_isEligibleForStaticRangeAlignment);
 #endif
-            auto* parentStyle = m_renderer->parentStyle();
-            return m_style.resolvedAlignSelf(parentStyle, ItemPosition::Start).position();
-        }
-        if (ItemPosition::Auto == itemPosition)
+                auto* parentStyle = m_renderer->parentStyle();
+                return m_style.resolvedAlignSelf(parentStyle, ItemPosition::Start).position();
+            }
             return ItemPosition::Normal;
+        }
         return itemPosition;
     }();
 
-    if (m_style.positionArea() && ItemPosition::Normal == alignmentPosition)
+    if (m_style.positionArea() && (ItemPosition::Normal == alignmentPosition || ItemPosition::Dialog == alignmentPosition))
         alignmentPosition = m_style.positionArea()->defaultAlignmentForAxis(m_physicalAxis, m_containingWritingMode, m_writingMode);
 
     if (!m_defaultAnchorBox && alignmentPosition == ItemPosition::AnchorCenter)

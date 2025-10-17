@@ -26,6 +26,7 @@
 
 #include "ContainerNodeInlines.h"
 #include "LegacyRenderSVGResourceMarker.h"
+#include "NodeDocument.h"
 #include "NodeName.h"
 #include "RenderSVGResourceMarker.h"
 #include "SVGNames.h"

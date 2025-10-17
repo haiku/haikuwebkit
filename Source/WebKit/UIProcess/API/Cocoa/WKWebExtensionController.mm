@@ -232,7 +232,7 @@ static inline NSSet *toAPI(const HashSet<Ref<T>>& inputSet)
         [context->wrapper() didCloseTab:closedTab windowIsClosing:windowIsClosing];
 }
 
-- (void)didActivateTab:(id<WKWebExtensionTab>)activatedTab previousActiveTab:(nullable id<WKWebExtensionTab>)previousTab
+- (void)didActivateTab:(id<WKWebExtensionTab>)activatedTab previousActiveTab:(id<WKWebExtensionTab>)previousTab
 {
     NSParameterAssert(activatedTab != nil);
 
@@ -394,7 +394,7 @@ static inline NSSet *toAPI(const HashSet<Ref<T>>& inputSet)
 {
 }
 
-- (void)didActivateTab:(id<WKWebExtensionTab>)activatedTab previousActiveTab:(nullable id<WKWebExtensionTab>)previousTab
+- (void)didActivateTab:(id<WKWebExtensionTab>)activatedTab previousActiveTab:(id<WKWebExtensionTab>)previousTab
 {
 }
 

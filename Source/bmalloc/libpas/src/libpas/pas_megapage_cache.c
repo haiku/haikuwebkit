@@ -33,6 +33,7 @@
 #include "pas_internal_config.h"
 #include "pas_large_free_heap_config.h"
 #include "pas_payload_reservation_page_list.h"
+#include "pas_zero_memory.h"
 #include <stdio.h>
 
 typedef struct {

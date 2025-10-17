@@ -26,7 +26,6 @@
 
 #pragma once
 
-#include <WebCore/LengthPoint.h>
 #include <WebCore/StyleAnimations.h>
 #include <WebCore/StyleAppearance.h>
 #include <WebCore/StyleAspectRatio.h>

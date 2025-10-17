@@ -29,6 +29,7 @@
 #include <WebCore/InlineItem.h>
 #include <WebCore/InlineLine.h>
 #include <WebCore/LayoutUnits.h>
+#include <WebCore/TextSpacing.h>
 #include <wtf/Range.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/TextBreakIterator.h>

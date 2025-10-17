@@ -39,7 +39,7 @@ namespace TestWebKitAPI {
 #if CPU(ARM64)
 TEST(WTF_StringCommon, Find8NonASCII)
 {
-    Vector<LChar> vector(4096);
+    Vector<Latin1Character> vector(4096);
     vector.fill('a');
 
     EXPECT_FALSE(WTF::find8NonASCII(vector.subspan(0, 4096)));
@@ -206,41 +206,41 @@ TEST(WTF_StringCommon, CopyElements32To16)
 TEST(WTF_StringCommon, CharactersContain8)
 {
     {
-        Vector<LChar> source;
-        EXPECT_FALSE((charactersContain<LChar, 0>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0, 1>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0, 1, 2>(source.span())));
+        Vector<Latin1Character> source;
+        EXPECT_FALSE((charactersContain<Latin1Character, 0>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0, 1>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0, 1, 2>(source.span())));
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned i = 0; i < 15; ++i)
             source.append(i);
-        EXPECT_TRUE((charactersContain<LChar, 0>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 1>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 2>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 2, 3>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 16, 14>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 16>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 16, 15>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 16, 15, 17>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 16, 15, 17, 18>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0x81>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0x81, 0x82>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 0>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 1>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 2>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 2, 3>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 16, 14>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 16>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 16, 15>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 16, 15, 17>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 16, 15, 17, 18>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0x81>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0x81, 0x82>(source.span())));
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned i = 0; i < 250; ++i) {
             if (i & 0x1)
                 source.append(i);
         }
-        EXPECT_FALSE((charactersContain<LChar, 0>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 0xff>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 0x81>(source.span())));
-        EXPECT_FALSE((charactersContain<LChar, 250>(source.span())));
-        EXPECT_TRUE((charactersContain<LChar, 249>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 0xff>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 0x81>(source.span())));
+        EXPECT_FALSE((charactersContain<Latin1Character, 250>(source.span())));
+        EXPECT_TRUE((charactersContain<Latin1Character, 249>(source.span())));
     }
 }
 
@@ -314,61 +314,61 @@ TEST(WTF_StringCommon, CharactersContain16)
 TEST(WTF_StringCommon, CountMatchedCharacters8)
 {
     {
-        Vector<LChar> source;
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 1)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 2)), 0U);
+        Vector<Latin1Character> source;
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 1)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 2)), 0U);
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned i = 0; i < 15; ++i)
             source.append(i);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 1)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 2)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 3)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 14)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 15)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 16)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 17)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 18)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0x81)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0x82)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 1)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 2)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 3)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 14)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 15)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 16)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 17)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 18)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0x81)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0x82)), 0U);
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned i = 0; i < 250; ++i) {
             if (i & 0x1)
                 source.append(i);
         }
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 1)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0xff)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0x81)), 1U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 250)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 249)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 1)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0xff)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0x81)), 1U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 250)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 249)), 1U);
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned c = 0; c < 1024; ++c) {
             for (unsigned i = 0; i < 250; ++i) {
                 if (i & 0x1)
                     source.append(i);
             }
         }
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 1)), 1024U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0xff)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0x81)), 1024U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 250)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 249)), 1024U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 1)), 1024U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0xff)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0x81)), 1024U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 250)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 249)), 1024U);
     }
 
     {
-        Vector<LChar> source;
+        Vector<Latin1Character> source;
         for (unsigned c = 0; c < 1024; ++c) {
             for (unsigned i = 0; i < 250; ++i)
                 source.append(1);
@@ -377,9 +377,9 @@ TEST(WTF_StringCommon, CountMatchedCharacters8)
         source.append(1);
         source.append(1);
 
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0)), 0U);
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 1)), source.size());
-        EXPECT_EQ((WTF::countMatchedCharacters<LChar>(source.span(), 0x81)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0)), 0U);
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 1)), source.size());
+        EXPECT_EQ((WTF::countMatchedCharacters<Latin1Character>(source.span(), 0x81)), 0U);
     }
 }
 

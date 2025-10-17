@@ -62,7 +62,7 @@
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "MouseEvent.h"
-#include "Node.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "OffscreenCanvasRenderingContext2D.h"
 #include "Page.h"

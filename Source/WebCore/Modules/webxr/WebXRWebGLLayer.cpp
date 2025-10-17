@@ -44,6 +44,7 @@
 #include "WebXRView.h"
 #include "WebXRViewport.h"
 #include "XRWebGLLayerInit.h"
+#include <JavaScriptCore/ConsoleMessage.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -54,6 +55,8 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRWebGLLayer);
 // Arbitrary value for minimum framebuffer scaling.
 // Below this threshold the resulting framebuffer would be too small to see.
 constexpr double MinFramebufferScalingFactor = 0.2;
+
+using namespace JSC;
 
 static ExceptionOr<std::unique_ptr<WebXROpaqueFramebuffer>> createOpaqueFramebuffer(WebXRSession& session, WebGLRenderingContextBase& context, const XRWebGLLayerInit& init)
 {
@@ -196,8 +199,12 @@ const WebGLFramebuffer* WebXRWebGLLayer::framebuffer() const
 
 unsigned WebXRWebGLLayer::framebufferWidth() const
 {
-    if (m_framebuffer)
-        return std::max<unsigned>(1, m_framebuffer->drawFramebufferSize().width());
+    if (m_framebuffer) {
+        auto framebufferSize = m_framebuffer->drawFramebufferSize();
+        if (framebufferSize.isEmpty())
+            addConsoleMessage(MessageLevel::Warning, "accurate framebufferWidth is unavailable until requestAnimationFrame processing; returning 1"_s);
+        return std::max<unsigned>(1, framebufferSize.width());
+    }
 
     return WTF::switchOn(m_context,
         [&](const RefPtr<WebGLRenderingContextBase>& baseContext) {
@@ -207,8 +214,12 @@ unsigned WebXRWebGLLayer::framebufferWidth() const
 
 unsigned WebXRWebGLLayer::framebufferHeight() const
 {
-    if (m_framebuffer)
-        return std::max<unsigned>(1, m_framebuffer->drawFramebufferSize().height());
+    if (m_framebuffer) {
+        auto framebufferSize = m_framebuffer->drawFramebufferSize();
+        if (framebufferSize.isEmpty())
+            addConsoleMessage(MessageLevel::Warning, "accurate framebufferHeight is unavailable until requestAnimationFrame processing; returning 1"_s);
+        return std::max<unsigned>(1, framebufferSize.height());
+    }
 
     return WTF::switchOn(m_context,
         [&](const RefPtr<WebGLRenderingContextBase>& baseContext) {
@@ -366,6 +377,16 @@ void WebXRWebGLLayer::computeViewports()
         auto viewport = m_framebuffer ? m_framebuffer->drawViewport(PlatformXR::Eye::None) : IntRect(0, 0, framebufferWidth(), framebufferHeight());
         m_leftViewportData.viewport->updateViewport(viewport);
     }
+}
+
+void WebXRWebGLLayer::addConsoleMessage(MessageLevel level, String&& message) const
+{
+    auto* scriptExecutionContext = this->scriptExecutionContext();
+    if (!scriptExecutionContext)
+        return;
+
+    auto consoleMessage = makeUnique<Inspector::ConsoleMessage>(MessageSource::Rendering, MessageType::Log, level, WTFMove(message));
+    scriptExecutionContext->addConsoleMessage(WTFMove(consoleMessage));
 }
 
 } // namespace WebCore

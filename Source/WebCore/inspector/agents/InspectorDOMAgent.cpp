@@ -149,7 +149,7 @@ using namespace Inspector;
 using namespace HTMLNames;
 
 static const size_t maxTextSize = 10000;
-static const char16_t horizontalEllipsisUChar[] = { horizontalEllipsis, 0 };
+static const char16_t horizontalEllipsisUTF16[] = { horizontalEllipsis, 0 };
 
 static std::optional<Color> parseColor(RefPtr<JSON::Object>&& colorObject)
 {
@@ -1982,7 +1982,7 @@ Ref<Inspector::Protocol::DOM::Node> InspectorDOMAgent::buildObjectForNode(Node* 
     case Node::CDATA_SECTION_NODE:
         nodeValue = node->nodeValue();
         if (nodeValue.length() > maxTextSize)
-            nodeValue = makeString(StringView(nodeValue).left(maxTextSize), horizontalEllipsisUChar);
+            nodeValue = makeString(StringView(nodeValue).left(maxTextSize), horizontalEllipsisUTF16);
         break;
     case Node::ATTRIBUTE_NODE:
         localName = node->localName();

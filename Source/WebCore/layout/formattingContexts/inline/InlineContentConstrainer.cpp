@@ -179,9 +179,9 @@ void InlineContentConstrainer::updateCachedWidths()
             isWordSeparator = textItem->isWordSeparator();
         // Opaque items are ignored by inline layout. Skip over these items.
         if (!item.isOpaque()) {
-            m_inlineItemWidths[i] = m_inlineFormattingContext.formattingUtils().inlineItemWidth(item, 0, false) +  (isWordSeparator ? item.style().wordSpacing() : 0.0f);
+            m_inlineItemWidths[i] = m_inlineFormattingContext.formattingUtils().inlineItemWidth(item, 0, false) +  (isWordSeparator ? item.style().usedWordSpacing() : 0.0f);
             m_inlineItemWidthsMax = std::max(m_inlineItemWidthsMax, m_inlineItemWidths[i]);
-            m_firstLineStyleInlineItemWidths[i] = m_inlineFormattingContext.formattingUtils().inlineItemWidth(item, 0, true) + (isWordSeparator ? item.firstLineStyle().wordSpacing() : 0.0f);
+            m_firstLineStyleInlineItemWidths[i] = m_inlineFormattingContext.formattingUtils().inlineItemWidth(item, 0, true) + (isWordSeparator ? item.firstLineStyle().usedWordSpacing() : 0.0f);
             m_inlineItemWidthsMax = std::max(m_inlineItemWidthsMax, m_firstLineStyleInlineItemWidths[i]);
         }
     }

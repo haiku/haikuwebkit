@@ -59,6 +59,7 @@ public:
 
     // FIXME: Implement this to be less conservative.
     bool currentFrameKnownToBeOpaque() const final { return false; }
+    bool currentFrameIsComplete() const final { return !!m_image; }
 
     RefPtr<NativeImage> currentNativeImage() final;
 

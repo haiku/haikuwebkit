@@ -51,6 +51,7 @@ static NSString * const LoadsAllSiteIconsKey = @"LoadsAllSiteIcons";
 static NSString * const UsesGameControllerFrameworkKey = @"UsesGameControllerFramework";
 static NSString * const IncrementalRenderingSuppressedPreferenceKey = @"IncrementalRenderingSuppressed";
 static NSString * const AcceleratedDrawingEnabledPreferenceKey = @"AcceleratedDrawingEnabled";
+static NSString * const EnhancedSecurityEnabledPreferenceKey = @"EnhancedSecurityEnabled";
 static NSString * const ResourceLoadStatisticsEnabledPreferenceKey = @"ResourceLoadStatisticsEnabled";
 
 static NSString * const NonFastScrollableRegionOverlayVisiblePreferenceKey = @"NonFastScrollableRegionOverlayVisible";
@@ -188,6 +189,7 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
     addItem(@"Enable Legacy Line Layout Visual Coverage", @selector(toggleLegacyLineLayoutVisualCoverageEnabled:));
     addItem(@"Suppress Incremental Rendering in New Windows", @selector(toggleIncrementalRenderingSuppressed:));
     addItem(@"Enable Accelerated Drawing", @selector(toggleAcceleratedDrawingEnabled:));
+    addItem(@"Enable Enhanced Security", @selector(toggleEnhancedSecurityEnabled:));
     addItem(@"Enable Resource Load Statistics", @selector(toggleResourceLoadStatisticsEnabled:));
     addItem(@"Enable Large Image Async Decoding", @selector(toggleLargeImageAsyncDecodingEnabled:));
     addItem(@"Enable Animated Image Async Decoding", @selector(toggleAnimatedImageAsyncDecodingEnabled:));
@@ -388,6 +390,8 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
         [menuItem setState:[self incrementalRenderingSuppressed] ? NSControlStateValueOn : NSControlStateValueOff];
     else if (action == @selector(toggleAcceleratedDrawingEnabled:))
         [menuItem setState:[self acceleratedDrawingEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
+    else if (action == @selector(toggleEnhancedSecurityEnabled:))
+        [menuItem setState:[self enhancedSecurityEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
     else if (action == @selector(toggleResourceLoadStatisticsEnabled:))
         [menuItem setState:[self resourceLoadStatisticsEnabled] ? NSControlStateValueOn : NSControlStateValueOff];
     else if (action == @selector(toggleLargeImageAsyncDecodingEnabled:))
@@ -582,6 +586,16 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
 - (BOOL)acceleratedDrawingEnabled
 {
     return [[NSUserDefaults standardUserDefaults] boolForKey:AcceleratedDrawingEnabledPreferenceKey];
+}
+
+- (void)toggleEnhancedSecurityEnabled:(id)sender
+{
+    [self _toggleBooleanDefault:EnhancedSecurityEnabledPreferenceKey];
+}
+
+- (BOOL)enhancedSecurityEnabled
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:EnhancedSecurityEnabledPreferenceKey];
 }
 
 - (void)toggleReserveSpaceForBanners:(id)sender

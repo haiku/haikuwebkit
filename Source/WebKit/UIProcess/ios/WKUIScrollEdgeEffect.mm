@@ -86,6 +86,11 @@ enum class HiddenScrollEdgeEffectSource : uint8_t {
     return _hiddenSources.contains(WebKit::HiddenScrollEdgeEffectSource::Internal);
 }
 
+- (BOOL)isHidden
+{
+    return _effect.hidden;
+}
+
 - (void)setHidden:(BOOL)hidden
 {
     [self _setHidden:hidden fromSource:WebKit::HiddenScrollEdgeEffectSource::Client];
@@ -103,7 +108,12 @@ enum class HiddenScrollEdgeEffectSource : uint8_t {
     if (oldVisible == newVisible)
         return;
 
+    RetainPtr isHiddenKeyName = NSStringFromSelector(@selector(isHidden));
+    [self willChangeValueForKey:isHiddenKeyName.get()];
+
     _effect.hidden = !newVisible;
+
+    [self didChangeValueForKey:isHiddenKeyName.get()];
 }
 
 - (void)setStyle:(UIScrollEdgeEffectStyle *)style

@@ -168,6 +168,7 @@ void OMGPlan::work()
 
     omgEntrypoint.calleeSaveRegisters = WTFMove(internalFunction->entrypoint.calleeSaveRegisters);
 
+    bool newlyInstalled = false;
     CodePtr<WasmEntryPtrTag> entrypoint;
     {
         ASSERT(m_calleeGroup.ptr() == m_module->calleeGroupFor(mode()));
@@ -178,8 +179,9 @@ void OMGPlan::work()
             NativeCalleeRegistry::singleton().addPCToCodeOriginMap(callee.ptr(), WTFMove(samplingProfilerMap));
 
         Locker locker { m_calleeGroup->m_lock };
-        m_calleeGroup->installOptimizedCallee(locker, m_moduleInformation, m_functionIndex, callee.copyRef(), internalFunction->outgoingJITDirectCallees);
-        {
+        newlyInstalled = m_calleeGroup->installOptimizedCallee(locker, m_moduleInformation, m_functionIndex, callee.copyRef(), internalFunction->outgoingJITDirectCallees);
+
+        if (newlyInstalled) {
             if (RefPtr bbqCallee = m_calleeGroup->bbqCallee(locker, m_functionIndex)) {
                 Locker locker { bbqCallee->tierUpCounter().getLock() };
                 bbqCallee->tierUpCounter().setCompilationStatusForOMG(mode(), TierUpCount::CompilationStatus::Compiled);
@@ -190,10 +192,12 @@ void OMGPlan::work()
         }
     }
 
-    if (Options::freeRetiredWasmCode()) {
-        WTF::storeStoreFence();
-        Locker locker { m_calleeGroup->m_lock };
-        m_calleeGroup->releaseBBQCallee(locker, m_functionIndex);
+    if (newlyInstalled) {
+        if (Options::freeRetiredWasmCode()) {
+            WTF::storeStoreFence();
+            Locker locker { m_calleeGroup->m_lock };
+            m_calleeGroup->releaseBBQCallee(locker, m_functionIndex);
+        }
     }
 
     dataLogLnIf(WasmOMGPlanInternal::verbose, "Finished OMG ", m_functionIndex);

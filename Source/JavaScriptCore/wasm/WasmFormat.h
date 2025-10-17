@@ -844,6 +844,9 @@ struct alignas(8) WasmCallableFunction {
     static constexpr ptrdiff_t offsetOfTargetInstance() { return OBJECT_OFFSETOF(WasmCallableFunction, targetInstance); }
     static constexpr ptrdiff_t offsetOfEntrypointLoadLocation() { return OBJECT_OFFSETOF(WasmCallableFunction, entrypointLoadLocation); }
 
+    // LoadLocation's dereference.
+    static constexpr ptrdiff_t offsetOfValueOfLoadLocation() { return 0; }
+
     bool isJS() const;
 
     CalleeBits boxedCallee { };

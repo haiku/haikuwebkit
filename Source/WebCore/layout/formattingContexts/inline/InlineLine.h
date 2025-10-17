@@ -28,7 +28,7 @@
 #include <WebCore/InlineDisplayBox.h>
 #include <WebCore/InlineItem.h>
 #include <WebCore/InlineTextItem.h>
-#include <WebCore/RenderStyleInlines.h>
+#include <WebCore/RenderStyle.h>
 #include <unicode/ubidi.h>
 #include <wtf/Range.h>
 
@@ -142,7 +142,7 @@ public:
         InlineLayoutUnit trailingWhitespaceWidth() const { return m_trailingWhitespace ? m_trailingWhitespace->width : 0.f; }
         bool isWhitespaceOnly() const { return hasTrailingWhitespace() && m_trailingWhitespace->length == m_textContent->length; }
 
-        TextDirection inlineDirection() const;
+        inline TextDirection inlineDirection() const;
         InlineLayoutUnit letterSpacing() const;
         bool hasTextCombine() const;
         InlineLayoutUnit textSpacingAdjustment() const { return m_textSpacingAdjustment; }
@@ -383,11 +383,6 @@ inline void Line::Run::setNeedsHyphen(InlineLayoutUnit hyphenLogicalWidth)
 inline TextDirection Line::Run::inlineDirection() const
 {
     return m_style.writingMode().bidiDirection();
-}
-
-inline InlineLayoutUnit Line::Run::letterSpacing() const
-{
-    return m_style.letterSpacing();
 }
 
 }

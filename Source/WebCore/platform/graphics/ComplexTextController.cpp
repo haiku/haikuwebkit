@@ -182,11 +182,25 @@ std::pair<float, float> ComplexTextController::enclosingGlyphBoundsForTextRun(co
     return { enclosingAscent.value_or(0.f), enclosingDescent.value_or(0.f) };
 }
 
-Vector<float> ComplexTextController::glyphBoundsForTextRun(const FontCascade& fontCascade, const TextRun& textRun)
+Vector<float> ComplexTextController::glyphAdvancesForTextRun(const FontCascade& fontCascade, const TextRun& textRun)
 {
-    UNUSED_PARAM(fontCascade);
-    UNUSED_PARAM(textRun);
-    return { };
+    ASSERT(textRun.rtl());
+
+    auto textController = ComplexTextController { fontCascade, textRun };
+    size_t numberOfCharacters = 0;
+    for (size_t runIndex = 0; runIndex < textController.m_complexTextRuns.size(); ++runIndex)
+        numberOfCharacters += textController.m_complexTextRuns[runIndex]->stringLength();
+
+    Vector<float> resolvedAdavances(numberOfCharacters);
+    size_t offset = 0;
+    for (auto runIndex = textController.m_complexTextRuns.size(); runIndex--;) {
+        auto complexRun = textController.m_complexTextRuns[runIndex];
+        auto advances = complexRun->baseAdvances();
+        for (size_t index = 0; index < advances.size(); ++index)
+            resolvedAdavances[offset + complexRun->indexAt(index)] += advances[index].width();
+        offset += complexRun->stringLength();
+    }
+    return resolvedAdavances;
 }
 
 void ComplexTextController::finishConstruction()

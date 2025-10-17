@@ -14,16 +14,6 @@ namespace WebCore {
 
 using namespace CSSPropertyParserHelpers;
 
-static bool isKeywordValidForTestAutoFunctions(CSSValueID keyword)
-{
-    switch (keyword) {
-    case CSSValueID::CSSValueAuto:
-        return true;
-    default:
-        return false;
-    }
-}
-
 static bool isKeywordValidForTestKeyword(CSSValueID keyword)
 {
     switch (keyword) {
@@ -181,15 +171,6 @@ static RefPtr<CSSValue> consumeBackgroundFillLayerTestSecondaryWithConverter(CSS
         return consumeListSeparatedBy<',', ListBounds::minimumOf(1), ListOptimization::SingleValue, CSSValueList>(range, consumeRepeatedTerm, state);
     };
     return consumeUnboundedRepetition(range, state);
-}
-
-static RefPtr<CSSValue> consumeTestAutoFunctions(CSSParserTokenRange& range, CSS::PropertyParserState& state)
-{
-    // auto
-    if (auto result = consumeIdent(range, isKeywordValidForTestAutoFunctions))
-        return result;
-    // <number>
-    return CSSPrimitiveValueResolver<CSS::Number<>>::consumeAndResolve(range, state);
 }
 
 static RefPtr<CSSValue> consumeTestBoundedRepetitionWithCommas(CSSParserTokenRange& range, CSS::PropertyParserState& state)
@@ -3219,8 +3200,6 @@ RefPtr<CSSValue> CSSPropertyParsing::parseStylePropertyLonghand(CSSParserTokenRa
         return consumeBackgroundFillLayerTestSecondary(range, state);
     case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
         return consumeBackgroundFillLayerTestSecondaryWithConverter(range, state);
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
-        return consumeTestAutoFunctions(range, state);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:
         return consumeTestBoundedRepetitionWithCommas(range, state);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed:
@@ -3419,8 +3398,6 @@ bool CSSPropertyParsing::parseStylePropertyShorthand(CSSParserTokenRange& range,
 bool CSSPropertyParsing::isKeywordValidForStyleProperty(CSSPropertyID id, CSSValueID keyword, CSS::PropertyParserState& state)
 {
     switch (id) {
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
-        return isKeywordValidForTestAutoFunctions(keyword);
     case CSSPropertyID::CSSPropertyTestKeyword:
         return isKeywordValidForTestKeyword(keyword);
     case CSSPropertyID::CSSPropertyTestKeywordWithAliasedTo:
@@ -3451,7 +3428,6 @@ bool CSSPropertyParsing::isKeywordValidForStyleProperty(CSSPropertyID id, CSSVal
 bool CSSPropertyParsing::isKeywordFastPathEligibleStyleProperty(CSSPropertyID id)
 {
     switch (id) {
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
     case CSSPropertyID::CSSPropertyTestKeyword:
     case CSSPropertyID::CSSPropertyTestKeywordWithAliasedTo:
     case CSSPropertyID::CSSPropertyTestMatchOneWithGroupWithSettingsFlag:

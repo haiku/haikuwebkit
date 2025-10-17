@@ -35,6 +35,7 @@
 #include "EventTarget.h"
 #include "HitTestResult.h"
 #include "MouseEventTypes.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "PointerEvent.h"
 #include "Quirks.h"
@@ -378,6 +379,12 @@ void PointerCaptureController::dispatchEventForTouchAtIndex(EventTarget& target,
     capturingData->previousTarget = nullptr;
 }
 #endif // ENABLE(TOUCH_EVENTS) && (PLATFORM(IOS_FAMILY) || PLATFORM(WPE))
+
+void PointerCaptureController::clearUnmatchedMouseDown(PointerID pointerID)
+{
+    if (RefPtr capturingData = m_activePointerIdsToCapturingData.get(pointerID))
+        capturingData->pointerIsPressed = false;
+}
 
 RefPtr<PointerEvent> PointerCaptureController::pointerEventForMouseEvent(const MouseEvent& mouseEvent, PointerID pointerId, const String& pointerType)
 {

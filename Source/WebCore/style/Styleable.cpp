@@ -49,6 +49,7 @@
 #include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "StyleAnimations.h"
+#include "StylableInlines.h"
 #include "StyleCustomPropertyData.h"
 #include "StyleInterpolation.h"
 #include "StyleOriginatedAnimation.h"
@@ -349,8 +350,11 @@ void Styleable::cancelStyleOriginatedAnimations(const WeakStyleOriginatedAnimati
 
 static bool keyframesRuleExistsForAnimation(Element& element, const Style::ScopedName& animationName)
 {
-    auto* styleScope = Style::Scope::forOrdinal(element, animationName.scopeOrdinal);
-    return styleScope && styleScope->resolver().isAnimationNameValid(animationName.name);
+    return Style::Scope::resolveTreeScopedReference(element, animationName, [](const Style::Scope& scope, const AtomString& name) -> bool {
+        if (auto* resolver = scope.resolverIfExists())
+            return resolver->isAnimationNameValid(name);
+        return false;
+    });
 }
 
 bool Styleable::animationListContainsNewlyValidAnimation(const Style::Animations& animations) const

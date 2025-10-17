@@ -670,7 +670,7 @@ webkit.org/b/61487 http/tests/media/video-cross-site.html [ Failure ]
 webkit.org/b/230708 [ Debug ] media/video-ended-seek-crash.html [ Pass Timeout ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=236113 mathml/presentation/fenced-mi.html is flakey when run with STIX Two
-mathml/presentation/fenced-mi.html [ Pass ImageOnlyFailure ]
+mathml/non-core/fenced-mi.html [ Pass ImageOnlyFailure ]
 
 # rdar://88981242 ([ Ventura ] media/accessibility-describes-video.html is a constant timeout)
 media/accessibility-describes-video.html [ Timeout ]
@@ -1397,6 +1397,7 @@ imported/w3c/web-platform-tests/pointerevents/pointerevent_releasepointercapture
 imported/w3c/web-platform-tests/pointerevents/pointerevent_setpointercapture_override_pending_capture_element.html?touch [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_setpointercapture_to_same_element_twice.html?touch [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointerrawupdate_changes_pointer_capture.https.html [ Skip ]
+imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-propagates-when-target-is-video_touch.html [ Skip ]
 
 webkit.org/b/274686 imported/w3c/web-platform-tests/pointerevents/pointerevent_capture_mouse_and_release_and_capture_again.html [ Skip ]
 
@@ -1644,6 +1645,7 @@ media/media-source/media-source-unnecessary-seek-seeked.html [ Pass Failure ]
 webkit.org/b/228094 imported/w3c/web-platform-tests/mathml/presentation-markup/operators/mo-stretch-properties-dynamic-001.html [ Pass Failure ]
 
 imported/w3c/web-platform-tests/mathml/relations/css-styling/table-width-1.xhtml [ ImageOnlyFailure Pass ]
+imported/w3c/web-platform-tests/mathml/presentation-markup/scripts/subsup-legacy-scriptshift-attributes-001.tentative.html [ ImageOnlyFailure ]
 
 media/media-source/media-source-webm-vp8-malformed-header.html [ Pass ]
 
@@ -2457,13 +2459,6 @@ webkit.org/b/295435 compositing/layer-creation/overlap-animation-container.html 
 # The padding for native select controls is overridden on macOS Sequoia and earlier.
 imported/w3c/web-platform-tests/css/css-ui/select-author-level-padding-applies.html [ Skip ]
 
-# rdar://154886047 (REGRESSION(Liquid Glass): Rebaseline? [ OS 26 ] 5X imported/w3c/web-platform-tests/css/css-view-transitions/ (Layout-Tests) are constant ImageOnlyFailures)
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-and-on-top-of-viewport-partially-onscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-left-of-viewport-offscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-on-top-of-viewport-offscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-right-and-left-of-viewport-partially-onscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/new-content-transform-position-fixed.html [ ImageOnlyFailure ]
-
 # rdar://154889639 (REGRESSION(Liquid Glass): [ OS 26 ] fast/forms/datalist/datalist-fallback-content.html is a constant ImageOnlyFailure)
 fast/forms/datalist/datalist-fallback-content.html [ ImageOnlyFailure ]
 
@@ -2507,11 +2502,7 @@ imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-position-under-
 
 [ Debug ] imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/interface.html [ Skip ]
 
-webkit.org/b/297434 imported/w3c/web-platform-tests/event-timing/retrievability.html [ Pass Failure ]
-
 webkit.org/b/294931 ipc/LocalSampleBufferDisplayLayer-LogIdentifier-data-race-uaf.html [ Skip ]
-
-webkit.org/b/297551 imported/w3c/web-platform-tests/event-timing/buffered-and-duration-threshold.html [ Pass Failure ] 
 
 webkit.org/b/297609 compositing/backing/backing-store-attachment-empty-keyframe.html [ Pass Failure ]
 
@@ -2530,3 +2521,7 @@ webkit.org/b/280234 imported/w3c/web-platform-tests/html/dom/idlharness.https.ht
 webkit.org/b/299131 [ Release ] inspector/unit-tests/target-manager.html [ Pass Crash ]
 
 webkit.org/b/299322 imported/w3c/web-platform-tests/uievents/mouse/mouse_boundary_events_after_reappending_last_over_target.tentative.html [ Pass Failure ]
+
+# webkit.org/b/299996 REGRESSION(299875@main?) [iOS macOS] ASSERTION FAILED: it != m_trackIdentifiers.end() in media/media-video-videorange.html
+media/media-video-videorange.html [ Pass Crash ]
+media/media-video-fullrange.html [ Pass Crash ]

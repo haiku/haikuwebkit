@@ -27,6 +27,7 @@
 #include "StyleOriginatedAnimationEvent.h"
 
 #include "Node.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "WebAnimationUtilities.h"
 

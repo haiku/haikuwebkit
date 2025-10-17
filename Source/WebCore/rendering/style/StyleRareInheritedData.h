@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleAccentColor.h>
 #include <WebCore/StyleBlockEllipsis.h>
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleCursor.h>
@@ -43,6 +44,7 @@
 #include <WebCore/StyleScrollbarColor.h>
 #include <WebCore/StyleStrokeMiterlimit.h>
 #include <WebCore/StyleStrokeWidth.h>
+#include <WebCore/StyleTabSize.h>
 #include <WebCore/StyleTextBoxEdge.h>
 #include <WebCore/StyleTextEmphasisStyle.h>
 #include <WebCore/StyleTextIndent.h>
@@ -53,7 +55,6 @@
 #include <WebCore/StyleWebKitTextStrokeWidth.h>
 #include <WebCore/StyleWebKitTouchCallout.h>
 #include <WebCore/StyleWidows.h>
-#include <WebCore/TabSize.h>
 #include <WebCore/TouchAction.h>
 #include <wtf/DataRef.h>
 #include <wtf/FixedVector.h>
@@ -117,7 +118,7 @@ public:
     Style::Color caretColor;
     Style::Color visitedLinkCaretColor;
 
-    Style::Color accentColor;
+    Style::AccentColor accentColor;
 
     Style::ScrollbarColor scrollbarColor;
 
@@ -185,7 +186,6 @@ public:
     PREFERRED_TYPE(bool) unsigned hasSetStrokeColor : 1;
     PREFERRED_TYPE(bool) unsigned hasAutoCaretColor : 1;
     PREFERRED_TYPE(bool) unsigned hasVisitedLinkAutoCaretColor : 1;
-    PREFERRED_TYPE(bool) unsigned hasAutoAccentColor : 1;
     PREFERRED_TYPE(bool) unsigned effectiveInert : 1;
     PREFERRED_TYPE(bool) unsigned effectivelyTransparent : 1;
     PREFERRED_TYPE(bool) unsigned isInSubtreeWithBlendMode : 1;
@@ -194,6 +194,7 @@ public:
     PREFERRED_TYPE(bool) unsigned autoRevealsWhenFound : 1;
     PREFERRED_TYPE(bool) unsigned insideDefaultButton : 1;
     PREFERRED_TYPE(bool) unsigned insideSubmitButton : 1;
+    PREFERRED_TYPE(bool) unsigned enableEvaluationTimeZoom : 1;
 #if HAVE(CORE_MATERIAL)
     PREFERRED_TYPE(AppleVisualEffect) unsigned usedAppleVisualEffectForSubtree : 4;
 #endif
@@ -219,7 +220,7 @@ public:
     DataRef<StyleAppleColorFilterData> appleColorFilter;
 
     Style::WebkitLineGrid lineGrid;
-    TabSize tabSize;
+    Style::TabSize tabSize;
 
 #if ENABLE(TEXT_AUTOSIZING)
     Style::TextSizeAdjust textSizeAdjust;

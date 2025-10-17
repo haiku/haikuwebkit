@@ -52,6 +52,12 @@
 #include <usp10.h>
 #endif
 
+#if USE(SKIA)
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
+#include <skia/core/SkTextBlob.h>
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
+#endif
+
 namespace WTF {
 class TextStream;
 }
@@ -239,6 +245,11 @@ public:
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
     MultiRepresentationHEICMetrics metricsForMultiRepresentationHEIC() const;
 #endif
+#endif
+
+#if USE(SKIA)
+    sk_sp<SkTextBlob> buildTextBlob(std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, FontSmoothingMode) const;
+    bool enableAntialiasing(FontSmoothingMode) const;
 #endif
 
     bool canRenderCombiningCharacterSequence(StringView) const;

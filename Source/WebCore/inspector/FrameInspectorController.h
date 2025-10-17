@@ -47,18 +47,18 @@ class FrontendRouter;
 
 namespace WebCore {
 
-class Frame;
 class InspectorBackendClient;
 class InspectorFrontendClient;
 class InspectorInstrumentation;
 class InstrumentingAgents;
+class LocalFrame;
 class WebInjectedScriptManager;
 
 class FrameInspectorController final : public Inspector::InspectorEnvironment, public CanMakeWeakPtr<FrameInspectorController> {
     WTF_MAKE_NONCOPYABLE(FrameInspectorController);
     WTF_MAKE_TZONE_ALLOCATED(FrameInspectorController);
 public:
-    FrameInspectorController(Frame&);
+    FrameInspectorController(LocalFrame&);
     ~FrameInspectorController() override;
 
     WEBCORE_EXPORT void ref() const;
@@ -83,7 +83,7 @@ private:
 
     void createLazyAgents();
 
-    WeakRef<Frame> m_frame;
+    WeakRef<LocalFrame> m_frame;
     const Ref<InstrumentingAgents> m_instrumentingAgents;
     const UniqueRef<WebInjectedScriptManager> m_injectedScriptManager;
     const Ref<Inspector::FrontendRouter> m_frontendRouter;

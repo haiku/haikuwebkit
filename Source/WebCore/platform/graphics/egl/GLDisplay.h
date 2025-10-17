@@ -60,6 +60,10 @@ public:
         bool EXT_image_dma_buf_import_modifiers { false };
         bool MESA_image_dma_buf_export { false };
         bool ANDROID_native_fence_sync { false };
+#if OS(ANDROID)
+        bool ANDROID_get_native_client_buffer { false };
+        bool ANDROID_image_native_buffer { false };
+#endif
     };
     const Extensions& extensions() const { return m_extensions; }
 

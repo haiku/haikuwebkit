@@ -65,7 +65,7 @@ Vector<WebSocket*> WorkerNetworkAgent::activeWebSockets()
 
 void WorkerNetworkAgent::setResourceCachingDisabledInternal(bool disabled)
 {
-    if (auto* workerDebuggerProxy = m_globalScope->workerOrWorkletThread()->workerDebuggerProxy())
+    if (auto* workerDebuggerProxy = Ref { m_globalScope.get() }->workerOrWorkletThread()->workerDebuggerProxy())
         workerDebuggerProxy->setResourceCachingDisabledByWebInspector(disabled);
 }
 

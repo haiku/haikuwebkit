@@ -46,7 +46,7 @@ String::String(std::span<const char16_t> characters)
 }
 
 // Construct a string with latin1 data.
-String::String(std::span<const LChar> characters)
+String::String(std::span<const Latin1Character> characters)
     : m_impl(characters.data() ? RefPtr { StringImpl::create(characters) } : nullptr)
 {
 }
@@ -450,7 +450,7 @@ CString String::utf8(ConversionMode mode) const
 
 String String::make8Bit(std::span<const char16_t> source)
 {
-    std::span<LChar> destination;
+    std::span<Latin1Character> destination;
     String result = String::createUninitialized(source.size(), destination);
     StringImpl::copyCharacters(destination, source);
     return result;
@@ -475,7 +475,7 @@ String fromUTF8Impl(std::span<const char8_t> string)
         return emptyString();
 
     if (charactersAreAllASCII(string))
-        return StringImpl::create(byteCast<LChar>(string));
+        return StringImpl::create(byteCast<Latin1Character>(string));
 
     Vector<char16_t, 1024> buffer(string.size());
  
@@ -509,7 +509,7 @@ String String::fromUTF8WithLatin1Fallback(std::span<const char8_t> string)
     if (!utf8) {
         // Do this assertion before chopping the size_t down to unsigned.
         RELEASE_ASSERT(string.size() <= String::MaxLength);
-        return byteCast<LChar>(string);
+        return byteCast<Latin1Character>(string);
     }
     return utf8;
 }
@@ -545,10 +545,10 @@ static inline double toDoubleType(std::span<const CharacterType> data, bool* ok,
     return number;
 }
 
-double charactersToDouble(std::span<const LChar> data, bool* ok)
+double charactersToDouble(std::span<const Latin1Character> data, bool* ok)
 {
     size_t parsedLength;
-    return toDoubleType<LChar, TrailingJunkPolicy::Disallow>(data, ok, parsedLength);
+    return toDoubleType<Latin1Character, TrailingJunkPolicy::Disallow>(data, ok, parsedLength);
 }
 
 double charactersToDouble(std::span<const char16_t> data, bool* ok)
@@ -557,11 +557,11 @@ double charactersToDouble(std::span<const char16_t> data, bool* ok)
     return toDoubleType<char16_t, TrailingJunkPolicy::Disallow>(data, ok, parsedLength);
 }
 
-float charactersToFloat(std::span<const LChar> data, bool* ok)
+float charactersToFloat(std::span<const Latin1Character> data, bool* ok)
 {
     // FIXME: This will return ok even when the string fits into a double but not a float.
     size_t parsedLength;
-    return static_cast<float>(toDoubleType<LChar, TrailingJunkPolicy::Disallow>(data, ok, parsedLength));
+    return static_cast<float>(toDoubleType<Latin1Character, TrailingJunkPolicy::Disallow>(data, ok, parsedLength));
 }
 
 float charactersToFloat(std::span<const char16_t> data, bool* ok)
@@ -571,10 +571,10 @@ float charactersToFloat(std::span<const char16_t> data, bool* ok)
     return static_cast<float>(toDoubleType<char16_t, TrailingJunkPolicy::Disallow>(data, ok, parsedLength));
 }
 
-float charactersToFloat(std::span<const LChar> data, size_t& parsedLength)
+float charactersToFloat(std::span<const Latin1Character> data, size_t& parsedLength)
 {
     // FIXME: This will return ok even when the string fits into a double but not a float.
-    return static_cast<float>(toDoubleType<LChar, TrailingJunkPolicy::Allow>(data, nullptr, parsedLength));
+    return static_cast<float>(toDoubleType<Latin1Character, TrailingJunkPolicy::Allow>(data, nullptr, parsedLength));
 }
 
 float charactersToFloat(std::span<const char16_t> data, size_t& parsedLength)

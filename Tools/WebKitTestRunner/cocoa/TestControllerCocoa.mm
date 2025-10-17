@@ -60,7 +60,6 @@
 #import <WebKit/_WKApplicationManifest.h>
 #import <WebKit/_WKWebsiteDataStoreConfiguration.h>
 #import <pal/spi/cocoa/LaunchServicesSPI.h>
-#import <pal/spi/cocoa/NetworkSPI.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/CompletionHandler.h>
 #import <wtf/MainThread.h>
@@ -199,15 +198,13 @@ void TestController::cocoaPlatformInitialize(const Options& options)
 
     [WKContentRuleListStore _setContentRuleListStoreForResourceMonitorURLsControllerForTesting:[WKContentRuleListStore storeWithURL:url.get()]];
 
-#if PLATFORM(MAC)
-    // See NetworkProcess::platformInitializeNetworkProcessCocoa for supporting a local DNS resolver on iOS.
+#if ENABLE(DNS_SERVER_FOR_TESTING) && !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+    // See NetworkProcess::platformInitializeNetworkProcessCocoa for supporting a local DNS resolver when ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS).
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        if (!options.useLocalDNSResolver)
-            return;
-        cocoaDNSInitialize();
+        initializeDNS();
     });
-#endif
+#endif // !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
 }
 
 #if ENABLE(IMAGE_ANALYSIS)
@@ -386,39 +383,44 @@ void TestController::finishCreatingPlatformWebView(PlatformWebView* view, const 
 #endif
 }
 
-#if PLATFORM(MAC)
-void TestController::cocoaDNSInitialize()
+#if ENABLE(DNS_SERVER_FOR_TESTING) && !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+void TestController::initializeDNS()
 {
     auto agentUUID = adoptNS([[NSUUID alloc] init]);
     uuid_t agentUUIDBytes;
     [agentUUID.get() getUUIDBytes:agentUUIDBytes];
     NSLog(@"useLocalDNSResolver: agent UUID: %@.", agentUUID.get());
 
-    static nw_resolver_config_t resolverConfig = nw_resolver_config_create();
-    nw_resolver_config_set_protocol(resolverConfig, nw_resolver_protocol_dns53);
-    nw_resolver_config_set_class(resolverConfig, nw_resolver_class_designated_direct);
-    nw_resolver_config_add_name_server(resolverConfig, "127.0.0.1:8053");
-    nw_resolver_config_add_match_domain(resolverConfig, "test");
-    nw_resolver_config_set_identifier(resolverConfig, agentUUIDBytes);
-    bool published = nw_resolver_config_publish(resolverConfig);
-    if (!published) {
-        NSLog(@"Failed to register DNS resolver agent UUID: %@. Using local DNS resolver failed.", agentUUID.get());
-        return;
+    m_resolverConfig = adoptOSObject(nw_resolver_config_create());
+    if (auto resolverConfig = m_resolverConfig) {
+        nw_resolver_config_set_protocol(resolverConfig.get(), nw_resolver_protocol_dns53);
+        nw_resolver_config_set_class(resolverConfig.get(), nw_resolver_class_designated_direct);
+        nw_resolver_config_add_name_server(resolverConfig.get(), "127.0.0.1:8053");
+        auto webPlatformTestDomain = "web-platform.test"_s;
+        nw_resolver_config_add_match_domain(resolverConfig.get(), webPlatformTestDomain);
+        nw_resolver_config_set_identifier(resolverConfig.get(), agentUUIDBytes);
+        bool published = nw_resolver_config_publish(resolverConfig.get());
+        if (!published) {
+            NSLog(@"Failed to register DNS resolver agent UUID: %@. Using local DNS resolver failed.", agentUUID.get());
+            RELEASE_ASSERT_NOT_REACHED();
+        }
     }
 
     // The following NetworkExtension policy is needed so we can run tests while a VPN is connected
-    RetainPtr policySession = adoptNS([[NEPolicySession alloc] init]);
-    RetainPtr domainPolicy = adoptNS([[NEPolicy alloc] initWithOrder:1 result:[NEPolicyResult netAgentUUID:agentUUID.get()] conditions:@[ [NEPolicyCondition domain:@"test"] ]]);
-    [policySession.get() addPolicy:domainPolicy.get()];
+    m_policySession = adoptNS([[NEPolicySession alloc] init]);
+    if (auto policySession = m_policySession) {
+        RetainPtr domainPolicy = adoptNS([[NEPolicy alloc] initWithOrder:1 result:[NEPolicyResult netAgentUUID:agentUUID.get()] conditions:@[ [NEPolicyCondition domain:@"test"] ]]);
+        [policySession addPolicy:domainPolicy.get()];
 
-    NSString *agentString = agentUUID.get().UUIDString;
-    RetainPtr agentPolicy = adoptNS([[NEPolicy alloc] initWithOrder:1 result:[NEPolicyResult netAgentUUID:agentUUID.get()] conditions:@[ [NEPolicyCondition domain:agentString] ]]);
-    [policySession.get() addPolicy:agentPolicy.get()];
+        NSString *agentString = agentUUID.get().UUIDString;
+        RetainPtr agentPolicy = adoptNS([[NEPolicy alloc] initWithOrder:1 result:[NEPolicyResult netAgentUUID:agentUUID.get()] conditions:@[ [NEPolicyCondition domain:agentString] ]]);
+        [policySession addPolicy:agentPolicy.get()];
 
-    policySession.get().priority = NEPolicySessionPriorityHigh;
-    [policySession.get() apply];
+        policySession.get().priority = NEPolicySessionPriorityHigh;
+        [policySession apply];
+    }
 }
-#endif
+#endif // !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
 
 void TestController::platformRunUntil(bool& done, WTF::Seconds timeout)
 {
@@ -742,6 +744,10 @@ void TestController::configureWebpagePreferences(WKWebViewConfiguration *configu
         [webpagePreferences _setNetworkConnectionIntegrityPolicy:_WKWebsiteNetworkConnectionIntegrityPolicyEnabled];
     else
         [webpagePreferences _setNetworkConnectionIntegrityPolicy:_WKWebsiteNetworkConnectionIntegrityPolicyNone];
+
+    if (options.enhancedSecurityEnabled())
+        webpagePreferences.get()._enhancedSecurityEnabled = YES;
+
 #if PLATFORM(IOS_FAMILY)
     [webpagePreferences setPreferredContentMode:contentMode(options)];
 #endif

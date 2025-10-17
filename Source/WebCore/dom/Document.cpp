@@ -168,6 +168,8 @@
 #include "JSViewTransitionUpdateCallback.h"
 #include "KeyboardEvent.h"
 #include "KeyframeEffect.h"
+#include "LargestContentfulPaint.h"
+#include "LargestContentfulPaintData.h"
 #include "LayoutDisallowedScope.h"
 #include "LazyLoadImageObserver.h"
 #include "LegacySchemeRegistry.h"
@@ -285,6 +287,8 @@
 #include "ShadowRoot.h"
 #include "SleepDisabler.h"
 #include "SocketProvider.h"
+#include "SpeculationRules.h"
+#include "SpeculationRulesMatcher.h"
 #include "SpeechRecognition.h"
 #include "StartViewTransitionOptions.h"
 #include "StaticNodeList.h"
@@ -294,6 +298,7 @@
 #include "StyleColorOptions.h"
 #include "StyleColorScheme.h"
 #include "StyleOriginatedTimelinesController.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StyleProperties.h"
 #include "StyleResolveForDocument.h"
 #include "StyleResolver.h"
@@ -650,6 +655,7 @@ Document::Document(LocalFrame* frame, const Settings& settings, const URL& url, 
     , ScriptExecutionContext(Type::Document, identifier)
     , FrameDestructionObserver(frame)
     , m_settings(settings)
+    , m_speculationRules(SpeculationRules::create())
     , m_parserContentPolicy(DefaultParserContentPolicy)
     , m_creationURL(url)
     , m_domTreeVersion(++s_globalTreeVersion)
@@ -1866,7 +1872,7 @@ enum class CustomElementNameCharacterKind : uint8_t {
     Upper,
 };
 
-static ALWAYS_INLINE CustomElementNameCharacterKind customElementNameCharacterKind(LChar character)
+static ALWAYS_INLINE CustomElementNameCharacterKind customElementNameCharacterKind(Latin1Character character)
 {
     using Kind = CustomElementNameCharacterKind;
     static constexpr std::array<Kind, 256> table {
@@ -2058,7 +2064,7 @@ void Document::setReadyState(ReadyState readyState)
                 eventTiming->domLoading = now;
             // We do this here instead of in the Document constructor because monotonicTimestamp() is 0 when the Document constructor is running.
             if (!url().isEmpty())
-                WTFBeginSignpostWithTimeDelta(this, NavigationAndPaintTiming, -Seconds(monotonicTimestamp()), "Loading %" PUBLIC_LOG_STRING " | isMainFrame: %d", url().string().utf8().data(), frame() && frame()->isMainFrame());
+                WTFBeginSignpostWithTimeDelta(this, NavigationAndPaintTiming, -Seconds(monotonicTimestamp()), "Loading %" PRIVATE_LOG_STRING " | isMainFrame: %d", url().string().utf8().data(), frame() && frame()->isMainFrame());
             WTFEmitSignpost(this, NavigationAndPaintTiming, "domLoading");
         }
         break;
@@ -2915,6 +2921,10 @@ void Document::resolveStyle(ResolveStyleType type)
 
     if (CheckedPtr styleOriginatedTimelinesController = this->styleOriginatedTimelinesController())
         styleOriginatedTimelinesController->documentDidResolveStyle();
+
+    // Re-evaluate speculation rules after DOM changes that trigger style recalculation.
+    // That helps ensure CSS selector matching works correctly.
+    considerSpeculationRules();
 }
 
 void Document::updateTextRenderer(Text& text, unsigned offsetOfReplacedText, unsigned lengthOfReplacedText)
@@ -3362,16 +3372,19 @@ void Document::pageSizeAndMarginsInPixels(int pageIndex, IntSize& pageSize, int&
             return pageSize;
         },
         [&](const Style::PageSize::Lengths& lengths) -> IntSize {
-            return { static_cast<int>(lengths.width().value), static_cast<int>(lengths.height().value) };
+            return {
+                static_cast<int>(lengths.width().resolveZoom(Style::ZoomNeeded { })),
+                static_cast<int>(lengths.height().resolveZoom(Style::ZoomNeeded { })),
+            };
         }
     );
 
     // The percentage is calculated with respect to the width even for margin top and bottom.
     // http://www.w3.org/TR/CSS2/box.html#margin-properties
-    marginTop = style->marginTop().isAuto() ? marginTop : Style::evaluate(style->marginTop(), pageSize.width(), 1.0f /* FIXME FIND ZOOM */);
-    marginRight = style->marginRight().isAuto() ? marginRight : Style::evaluate(style->marginRight(), pageSize.width(), 1.0f /* FIXME FIND ZOOM */);
-    marginBottom = style->marginBottom().isAuto() ? marginBottom : Style::evaluate(style->marginBottom(), pageSize.width(), 1.0f /* FIXME FIND ZOOM */);
-    marginLeft = style->marginLeft().isAuto() ? marginLeft : Style::evaluate(style->marginLeft(), pageSize.width(), 1.0f /* FIXME FIND ZOOM */);
+    marginTop = style->marginTop().isAuto() ? marginTop : Style::evaluate<int>(style->marginTop(), pageSize.width(), Style::ZoomNeeded { });
+    marginRight = style->marginRight().isAuto() ? marginRight : Style::evaluate<int>(style->marginRight(), pageSize.width(), Style::ZoomNeeded { });
+    marginBottom = style->marginBottom().isAuto() ? marginBottom : Style::evaluate<int>(style->marginBottom(), pageSize.width(), Style::ZoomNeeded { });
+    marginLeft = style->marginLeft().isAuto() ? marginLeft : Style::evaluate<int>(style->marginLeft(), pageSize.width(), Style::ZoomNeeded { });
 }
 
 void Document::fontsNeedUpdate(FontSelector&)
@@ -3768,23 +3781,41 @@ void Document::stopActiveDOMObjects()
 
 void Document::clearAXObjectCache()
 {
-    ASSERT(isTopDocument());
     // Clear the cache member variable before calling delete because attempts
     // are made to access it during destruction.
-    if (RefPtr page = this->page())
-        page->clearAXObjectCache();
+    m_axObjectCache = nullptr;
+
+#if !ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (m_topAXObjectCache || !isTopDocument()) {
+        if (RefPtr mainFrameDocument = this->mainFrameDocument()) {
+            if (mainFrameDocument.get() != this)
+                mainFrameDocument->clearAXObjectCache();
+        }
+    }
+
     m_topAXObjectCache = nullptr;
+#endif
 }
 
 AXObjectCache* Document::existingAXObjectCacheSlow() const
 {
     ASSERT(hasEverCreatedAnAXObjectCache);
-    if (m_topAXObjectCache)
-        return m_topAXObjectCache.get();
 
-    if (RefPtr page = this->page())
-        m_topAXObjectCache = page->existingAXObjectCache();
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    return m_axObjectCache.get();
+#else
+    if (m_axObjectCache)
+        return m_axObjectCache.get();
+
+    if (!isTopDocument() && !m_topAXObjectCache) {
+        if (RefPtr mainFrameDocument = this->mainFrameDocument()) {
+            if (mainFrameDocument.get() != this)
+                m_topAXObjectCache = mainFrameDocument->existingAXObjectCacheSlow();
+        }
+    }
+
     return m_topAXObjectCache.get();
+#endif // !ENABLE_ACCESSIBILITY_LOCAL_FRAME
 }
 
 AXObjectCache* Document::axObjectCache() const
@@ -3792,14 +3823,27 @@ AXObjectCache* Document::axObjectCache() const
     if (!AXObjectCache::accessibilityEnabled())
         return nullptr;
 
+    if (m_axObjectCache)
+        return m_axObjectCache.get();
+
+    if (!m_frame)
+        return nullptr;
+
+#if !ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (!isTopDocument()) {
+        if (RefPtr mainFrameDocument = this->mainFrameDocument()) {
+            if (mainFrameDocument.get() != this)
+                m_topAXObjectCache = mainFrameDocument->axObjectCache();
+        }
+    }
+
     if (m_topAXObjectCache)
         return m_topAXObjectCache.get();
+#endif // !ENABLE_ACCESSIBILITY_LOCAL_FRAME
 
-    RefPtr page = this->page();
-    if (!page)
-        return nullptr;
-    m_topAXObjectCache = page->axObjectCache();
-    return m_topAXObjectCache.get();
+    m_axObjectCache = makeUnique<AXObjectCache>(*m_frame, const_cast<Document*>(this));
+    Document::hasEverCreatedAnAXObjectCache = true;
+    return m_axObjectCache.get();
 }
 
 void Document::setVisuallyOrdered()
@@ -4345,9 +4389,6 @@ bool Document::supportsLargestContentfulPaint() const
 // https://w3c.github.io/paint-timing/#ref-for-mark-paint-timing
 void Document::enqueuePaintTimingEntryIfNeeded()
 {
-    if (m_didEnqueueFirstContentfulPaint)
-        return;
-
     if (!supportsPaintTiming())
         return;
 
@@ -4358,16 +4399,36 @@ void Document::enqueuePaintTimingEntryIfNeeded()
     if (!view()->isVisuallyNonEmpty() || view()->needsLayout())
         return;
 
-    if (!view()->hasContentfulDescendants())
-        return;
+    // Should this use frozenNowTimestamp()?
+    auto nowTime = protectedWindow()->performance().now();
 
-    if (!ContentfulPaintChecker::qualifiesForContentfulPaint(*view()))
-        return;
+    auto enqueuePaintTimingIfNecessary = [&]() {
+        if (!view()->hasContentfulDescendants())
+            return;
 
-    WTFEmitSignpost(this, NavigationAndPaintTiming, "firstContentfulPaint");
+        if (m_didEnqueueFirstContentfulPaint)
+            return;
 
-    protectedWindow()->performance().reportFirstContentfulPaint();
-    m_didEnqueueFirstContentfulPaint = true;
+        if (!ContentfulPaintChecker::qualifiesForContentfulPaint(*view()))
+            return;
+
+        WTFEmitSignpost(this, NavigationAndPaintTiming, "firstContentfulPaint");
+
+        protectedWindow()->performance().reportFirstContentfulPaint(nowTime);
+        m_didEnqueueFirstContentfulPaint = true;
+    };
+
+    auto enqueueLargestContentfulPaintIfNecessary = [&]() {
+        WTFEmitSignpost(this, NavigationAndPaintTiming, "largestContentfulPaint");
+
+        if (RefPtr entry = largestContentfulPaintData().takePendingEntry(nowTime)) {
+            Ref entryRef = entry.releaseNonNull();
+            protectedWindow()->performance().reportLargestContentfulPaint(WTFMove(entryRef));
+        }
+    };
+
+    enqueuePaintTimingIfNecessary();
+    enqueueLargestContentfulPaintIfNecessary();
 }
 
 void Document::enqueueEventTimingEntriesIfNeeded()
@@ -4692,6 +4753,40 @@ void Document::updateBaseURL()
         m_baseURL = URL();
 
     invalidateCachedCSSParserContext();
+    considerSpeculationRules();
+}
+
+void Document::considerSpeculationRules()
+{
+    if (!settings().speculationRulesPrefetchEnabled())
+        return;
+    RefPtr frame = this->frame();
+    if (!frame || frame->documentIsBeingReplaced() || !frame->window() || !isHTMLDocument())
+        return;
+    auto anchors = links();
+    auto iterator = anchors->createIterator(this);
+    for (RefPtr element = iterator.next(); element; element = iterator.next()) {
+        if (RefPtr anchorElement = dynamicDowncast<HTMLAnchorElement>(element.get())) {
+            if (auto prefetchRule = SpeculationRulesMatcher::hasMatchingRule(*this, *anchorElement))
+                anchorElement->setShouldBePrefetched(prefetchRule->conservative, WTFMove(prefetchRule->tags), WTFMove(prefetchRule->referrerPolicy));
+        }
+    }
+    // Prefetch all the URL lists that need to be prefetched immediately
+    constexpr bool lowPriority { true };
+    for (const auto& rule : speculationRules()->prefetchRules()) {
+        for (const auto& url : rule.urls)
+            frame->loader().prefetch(url, rule.tags, rule.referrerPolicy, lowPriority);
+    }
+}
+
+Ref<const SpeculationRules> Document::speculationRules() const
+{
+    return m_speculationRules;
+}
+
+Ref<SpeculationRules> Document::speculationRules()
+{
+    return m_speculationRules;
 }
 
 void Document::setBaseURLOverride(const URL& url)
@@ -4800,6 +4895,11 @@ IDBClient::IDBConnectionProxy* Document::idbConnectionProxy()
     return m_idbConnectionProxy.get();
 }
 
+RefPtr<IDBClient::IDBConnectionProxy> Document::protectedIDBConnectionProxy()
+{
+    return idbConnectionProxy();
+}
+
 StorageConnection* Document::storageConnection()
 {
     return page() ? &page()->storageConnection() : nullptr;
@@ -4808,6 +4908,11 @@ StorageConnection* Document::storageConnection()
 SocketProvider* Document::socketProvider()
 {
     return m_socketProvider.get();
+}
+
+RefPtr<SocketProvider> Document::protectedSocketProvider()
+{
+    return socketProvider();
 }
 
 RefPtr<RTCDataChannelRemoteHandlerConnection> Document::createRTCDataChannelRemoteHandlerConnection()
@@ -6295,12 +6400,12 @@ void Document::invalidateRenderingDependentRegions()
 #endif
 }
 
-bool Document::setFocusedElement(Element* element)
+bool Document::setFocusedElement(Element* element, BroadcastFocusedElement broadcast)
 {
-    return setFocusedElement(element, { });
+    return setFocusedElement(element, { }, broadcast);
 }
 
-bool Document::setFocusedElement(Element* newFocusedElement, const FocusOptions& options)
+bool Document::setFocusedElement(Element* newFocusedElement, const FocusOptions& options, BroadcastFocusedElement broadcast)
 {
     // Make sure newFocusedElement is actually in this document
     if (newFocusedElement && (&newFocusedElement->document() != this))
@@ -6462,7 +6567,7 @@ bool Document::setFocusedElement(Element* newFocusedElement, const FocusOptions&
     }
 
     if (RefPtr page = this->page())
-        page->chrome().focusedElementChanged(protectedFocusedElement().get());
+        page->chrome().focusedElementChanged(protectedFocusedElement().get(), page->focusController().focusedLocalFrame(), options, broadcast);
 
     return true;
 }
@@ -7238,7 +7343,7 @@ void Document::updateCachedCookiesEnabled()
     });
 }
 
-static bool isValidNameNonASCII(std::span<const LChar> characters)
+static bool isValidNameNonASCII(std::span<const Latin1Character> characters)
 {
     if (!isValidNameStart(characters[0]))
         return false;
@@ -7280,7 +7385,7 @@ static inline bool isValidNameASCII(std::span<const CharType> characters)
     return true;
 }
 
-static bool isValidNameASCIIWithoutColon(std::span<const LChar> characters)
+static bool isValidNameASCIIWithoutColon(std::span<const Latin1Character> characters)
 {
     auto c = characters.front();
     if (!(isASCIIAlpha(c) || c == '_'))
@@ -8221,7 +8326,7 @@ void Document::initSecurityContext()
     // Flags from CSP will be added when the response is received, but should not be carried over to the frame's next document.
     enforceSandboxFlags(m_frame->sandboxFlagsFromSandboxAttributeNotCSP());
 
-    setReferrerPolicy(m_frame->loader().effectiveReferrerPolicy());
+    setReferrerPolicy(m_frame->effectiveReferrerPolicy());
 
     if (shouldEnforceContentDispositionAttachmentSandbox())
         applyContentDispositionAttachmentSandbox();
@@ -8998,6 +9103,38 @@ double Document::monotonicTimestamp() const
     if (!loader)
         return 0.0;
     return (MonotonicTime::now() - loader->timing().startTime()).seconds();
+}
+
+LargestContentfulPaintData& Document::largestContentfulPaintData() const
+{
+    if (!m_largestContentfulPaintData)
+        m_largestContentfulPaintData = makeUnique<LargestContentfulPaintData>();
+
+    return *m_largestContentfulPaintData;
+}
+
+void Document::didLoadImage(Element& element, CachedImage* image) const
+{
+    if (!supportsLargestContentfulPaint())
+        return;
+
+    largestContentfulPaintData().didLoadImage(element, image);
+}
+
+void Document::didPaintImage(Element& element, CachedImage* image, FloatRect localRect) const
+{
+    if (!supportsLargestContentfulPaint())
+        return;
+
+    largestContentfulPaintData().didPaintImage(element, image, localRect);
+}
+
+void Document::didPaintText(const RenderBlockFlow& formattingContextRoot, FloatRect localRect) const
+{
+    if (!supportsLargestContentfulPaint())
+        return;
+
+    largestContentfulPaintData().didPaintText(formattingContextRoot, localRect);
 }
 
 int Document::requestAnimationFrame(Ref<RequestAnimationFrameCallback>&& callback)
@@ -10254,6 +10391,14 @@ void Document::updateResizeObservations(Page& page)
         addConsoleMessage(MessageSource::Other, MessageLevel::Info, "ResizeObservers silenced due to: http://webkit.org/b/258597"_s);
         return;
     }
+
+    if (m_renderView) {
+        // Per spec, this is recorded when ResizeObserver events are determined and delivered.
+        // See https://drafts.csswg.org/css-anchor-position-1/#last-successful-position-option.
+        auto lastSuccessfulPositionOptionMap = Style::AnchorPositionEvaluator::recordLastSuccessfulPositionOptions(m_renderView->positionTryBoxes());
+        styleScope().setLastSuccessfulPositionOptionIndexMap(WTFMove(lastSuccessfulPositionOptionMap));
+    }
+
     if (!hasResizeObservers() && !m_resizeObserverForContainIntrinsicSize && !m_contentVisibilityDocumentState)
         return;
 
@@ -11804,6 +11949,15 @@ double Document::lookupCSSRandomBaseValue(const CSSCalc::RandomCachingKey& key) 
     if (!m_randomCachingKeyMap)
         m_randomCachingKeyMap = CSSCalc::RandomCachingKeyMap::create();
     return m_randomCachingKeyMap->lookupCSSRandomBaseValue(key);
+}
+
+void Document::prefetch(const URL& url, const Vector<String>& tags, const String& referrerPolicy, bool lowPriority)
+{
+    RefPtr frame = this->frame();
+    if (!frame)
+        return;
+
+    frame->loader().prefetch(url, tags, referrerPolicy, lowPriority);
 }
 
 } // namespace WebCore

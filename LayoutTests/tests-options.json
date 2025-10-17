@@ -6041,13 +6041,25 @@
     "imported/w3c/web-platform-tests/svg/interact/scripted/module-02.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/trusted-types/ServiceWorkerContainer-register-from-ServiceWorker.https.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/trusted-types/TrustedTypePolicyFactory-getAttributeType-event-handler-content-attributes.tentative.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/trusted-types/TrustedTypePolicyFactory-metadata.tentative.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/trusted-types/navigate-to-javascript-url-csp-headers.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/trusted-types/should-sink-type-mismatch-violation-be-blocked-by-csp-001.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/trusted-types/should-sink-type-mismatch-violation-be-blocked-by-csp-002-worker.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/trusted-types/should-sink-type-mismatch-violation-be-blocked-by-csp-003.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-001.html": [
@@ -6057,6 +6069,15 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-003.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-004-worker.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-005.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/trusted-types/trusted-types-navigation.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/trusted-types/trusted-types-reporting.html": [

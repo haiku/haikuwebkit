@@ -39,9 +39,9 @@ IntegrationUtils::IntegrationUtils(const LayoutState& globalLayoutState)
 {
 }
 
-void IntegrationUtils::layoutWithFormattingContextForBox(const ElementBox& box, std::optional<LayoutUnit> widthConstraint) const
+void IntegrationUtils::layoutWithFormattingContextForBox(const ElementBox& box, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint) const
 {
-    m_globalLayoutState->layoutWithFormattingContextForBox(box, widthConstraint);
+    m_globalLayoutState->layoutWithFormattingContextForBox(box, widthConstraint, heightConstraint);
 }
 
 LayoutUnit IntegrationUtils::maxContentWidth(const ElementBox& box) const

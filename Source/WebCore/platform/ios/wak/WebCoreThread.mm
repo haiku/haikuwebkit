@@ -873,6 +873,12 @@ void _WebThreadUnlock()
 
 bool WebThreadIsLocked(void)
 {
+#if ENABLE(WEB_THREAD_DISABLEMENT)
+    // This is temporarily needed to avoid assertions in code assuming the web thread is used.
+    if (!WebThreadIsEnabled())
+        return true;
+#endif
+
     if (WebThreadIsCurrent())
         return webThreadLockCount;
 

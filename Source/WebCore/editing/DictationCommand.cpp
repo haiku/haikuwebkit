@@ -35,6 +35,7 @@
 #include "InsertParagraphSeparatorCommand.h"
 #include "InsertTextCommand.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Text.h"
 
 namespace WebCore {

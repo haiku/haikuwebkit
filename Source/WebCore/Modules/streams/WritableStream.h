@@ -54,11 +54,15 @@ public:
     void errorIfPossible(Exception&&);
 
     InternalWritableStream& internalWritableStream();
-    enum class Type : bool {
+    enum class Type : uint8_t {
         Default,
-        FileSystem
+        FileSystem,
+        WebTransport
     };
     virtual Type type() const { return Type::Default; }
+
+    enum class State : uint8_t { Writable, Closed, Errored };
+    State state() const;
 
 protected:
     static ExceptionOr<Ref<WritableStream>> create(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);

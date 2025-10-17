@@ -68,8 +68,7 @@ static HashMap<UserContentControllerIdentifier, WeakPtr<WebUserContentController
     return userContentControllers;
 }
 
-typedef HashMap<ContentWorldIdentifier, Ref<InjectedBundleScriptWorld>> WorldMap;
-
+using WorldMap = HashMap<ContentWorldIdentifier, Ref<InjectedBundleScriptWorld>>;
 static WorldMap& worldMap()
 {
     static NeverDestroyed<WorldMap> map(std::initializer_list<WorldMap::KeyValuePairType> { { pageContentWorldIdentifier(), InjectedBundleScriptWorld::normalWorldSingleton() } });
@@ -129,7 +128,7 @@ void WebUserContentController::addContentWorldIfNecessary(const ContentWorldData
         if (auto* existingWorld = InjectedBundleScriptWorld::find(world.name))
             return Ref<InjectedBundleScriptWorld> { *existingWorld };
 #endif
-        return InjectedBundleScriptWorld::create(world.name, InjectedBundleScriptWorld::Type::User);
+        return InjectedBundleScriptWorld::create(world.identifier, world.name, InjectedBundleScriptWorld::Type::User);
     });
 
     if (!addResult.isNewEntry)
@@ -169,7 +168,7 @@ void WebUserContentController::removeContentWorld(ContentWorldIdentifier worldId
 
     auto it = worldMap().find(worldIdentifier);
     if (it == worldMap().end()) {
-        RELEASE_LOG(UserContentController, "Trying to remove a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+        RELEASE_LOG(UserContentController, "Trying to remove a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
         return;
     }
 
@@ -182,7 +181,7 @@ void WebUserContentController::addUserScripts(Vector<WebUserScriptData>&& userSc
         addContentWorldIfNecessary(userScriptData.worldData);
         RefPtr world = worldMap().get(userScriptData.worldData.identifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to add a UserScript to a ContentWorld (id=%" PRIu64 ") that does not exist.", userScriptData.worldData.identifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to add a UserScript to a ContentWorld (id=%" PRIu64 ") that does not exist.", userScriptData.worldData.identifier.object().toUInt64());
             continue;
         }
 
@@ -195,7 +194,7 @@ void WebUserContentController::removeUserScript(ContentWorldIdentifier worldIden
 {
     RefPtr world = worldMap().get(worldIdentifier);
     if (!world) {
-        RELEASE_LOG(UserContentController, "Trying to remove a UserScript from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+        RELEASE_LOG(UserContentController, "Trying to remove a UserScript from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
         return;
     }
 
@@ -207,7 +206,7 @@ void WebUserContentController::removeAllUserScripts(const Vector<ContentWorldIde
     for (auto& worldIdentifier : worldIdentifiers) {
         RefPtr world = worldMap().get(worldIdentifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to remove all UserScripts from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to remove all UserScripts from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
             continue;
         }
 
@@ -221,7 +220,7 @@ void WebUserContentController::addUserStyleSheets(Vector<WebUserStyleSheetData>&
         addContentWorldIfNecessary(userStyleSheetData.worldData);
         RefPtr world = worldMap().get(userStyleSheetData.worldData.identifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to add a UserStyleSheet to a ContentWorld (id=%" PRIu64 ") that does not exist.", userStyleSheetData.worldData.identifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to add a UserStyleSheet to a ContentWorld (id=%" PRIu64 ") that does not exist.", userStyleSheetData.worldData.identifier.object().toUInt64());
             continue;
         }
         
@@ -236,7 +235,7 @@ void WebUserContentController::removeUserStyleSheet(ContentWorldIdentifier world
 {
     RefPtr world = worldMap().get(worldIdentifier);
     if (!world) {
-        RELEASE_LOG(UserContentController, "Trying to remove a UserStyleSheet from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+        RELEASE_LOG(UserContentController, "Trying to remove a UserStyleSheet from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
         return;
     }
 
@@ -249,7 +248,7 @@ void WebUserContentController::removeAllUserStyleSheets(const Vector<ContentWorl
     for (auto& worldIdentifier : worldIdentifiers) {
         RefPtr world = worldMap().get(worldIdentifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to remove all UserStyleSheets from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to remove all UserStyleSheets from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
             continue;
         }
 
@@ -348,7 +347,7 @@ void WebUserContentController::addUserScriptMessageHandlers(Vector<WebScriptMess
         addContentWorldIfNecessary(handler.worldData);
         RefPtr world = worldMap().get(handler.worldData.identifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to add a UserScriptMessageHandler to a ContentWorld (id=%" PRIu64 ") that does not exist.", handler.worldData.identifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to add a UserScriptMessageHandler to a ContentWorld (id=%" PRIu64 ") that does not exist.", handler.worldData.identifier.object().toUInt64());
             continue;
         }
 
@@ -364,7 +363,7 @@ void WebUserContentController::removeUserScriptMessageHandler(ContentWorldIdenti
 #if ENABLE(USER_MESSAGE_HANDLERS)
     RefPtr world = worldMap().get(worldIdentifier);
     if (!world) {
-        RELEASE_LOG(UserContentController, "Trying to remove a UserScriptMessageHandler from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+        RELEASE_LOG(UserContentController, "Trying to remove a UserScriptMessageHandler from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
         return;
     }
 
@@ -393,7 +392,7 @@ void WebUserContentController::removeAllUserScriptMessageHandlersForWorlds(const
     for (auto& worldIdentifier : worldIdentifiers) {
         RefPtr world = worldMap().get(worldIdentifier);
         if (!world) {
-            RELEASE_LOG(UserContentController, "Trying to remove all UserScriptMessageHandler from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.toUInt64());
+            RELEASE_LOG(UserContentController, "Trying to remove all UserScriptMessageHandler from a ContentWorld (id=%" PRIu64 ") that does not exist.", worldIdentifier.object().toUInt64());
             continue;
         }
 

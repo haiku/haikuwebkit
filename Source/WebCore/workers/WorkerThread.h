@@ -106,11 +106,6 @@ public:
     // Number of active worker threads.
     WEBCORE_EXPORT static unsigned workerThreadCount();
 
-#if ENABLE(NOTIFICATIONS)
-    NotificationClient* getNotificationClient() { return m_notificationClient; }
-    void setNotificationClient(NotificationClient* client) { m_notificationClient = client; }
-#endif
-    
     JSC::RuntimeFlags runtimeFlags() const { return m_runtimeFlags; }
     bool isInStaticScriptEvaluation() const { return m_isInStaticScriptEvaluation; }
 
@@ -133,6 +128,7 @@ private:
     virtual ASCIILiteral threadName() const = 0;
 
     virtual void finishedEvaluatingScript() { }
+    bool isWorkerThread() const final { return true; }
 
     // WorkerOrWorkletThread.
     Ref<Thread> createThread() final;
@@ -148,13 +144,13 @@ private:
 
     std::unique_ptr<WorkerThreadStartupData> m_startupData;
 
-#if ENABLE(NOTIFICATIONS)
-    NotificationClient* m_notificationClient { nullptr };
-#endif
-
     const RefPtr<IDBClient::IDBConnectionProxy> m_idbConnectionProxy;
     const RefPtr<SocketProvider> m_socketProvider;
     bool m_isInStaticScriptEvaluation { false };
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WorkerThread)
+    static bool isType(const WebCore::WorkerOrWorkletThread& thread) { return thread.isWorkerThread(); }
+SPECIALIZE_TYPE_TRAITS_END()

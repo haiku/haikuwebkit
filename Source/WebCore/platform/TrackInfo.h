@@ -112,6 +112,7 @@ struct VideoInfo : public TrackInfo {
     uint8_t bitDepth { 8 };
     PlatformVideoColorSpace colorSpace;
 
+    String boxType;
     RefPtr<SharedBuffer> atomData;
 
 private:
@@ -120,17 +121,18 @@ private:
 
     // Used by IPC generator
     friend struct IPC::ArgumentCoder<VideoInfo, void>;
-    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, RefPtr<SharedBuffer>&& atomData)
+    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, const String& boxType, RefPtr<SharedBuffer>&& atomData)
     {
-        return adoptRef(*new VideoInfo(codecName, codecString, trackID, size, displaySize, bitDepth, colorSpace, WTFMove(atomData)));
+        return adoptRef(*new VideoInfo(codecName, codecString, trackID, size, displaySize, bitDepth, colorSpace, boxType, WTFMove(atomData)));
     }
 
-    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, RefPtr<SharedBuffer>&& atomData)
+    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, const String& boxType, RefPtr<SharedBuffer>&& atomData)
         : TrackInfo(TrackType::Video, codecName, codecString, trackID)
         , size(size)
         , displaySize(displaySize)
         , bitDepth(bitDepth)
         , colorSpace(colorSpace)
+        , boxType(boxType)
         , atomData(WTFMove(atomData))
     {
     }

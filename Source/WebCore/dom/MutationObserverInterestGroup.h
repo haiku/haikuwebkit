@@ -32,6 +32,7 @@
 
 #include "Document.h"
 #include "MutationObserver.h"
+#include "NodeDocument.h"
 #include <memory>
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>

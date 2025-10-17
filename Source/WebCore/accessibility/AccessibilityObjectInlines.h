@@ -36,6 +36,7 @@
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/HTMLParserIdioms.h>
 #include <WebCore/LocalFrame.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/RenderInline.h>
 #include <WebCore/RenderLayer.h>
 #include <WebCore/SimpleRange.h>
@@ -147,11 +148,6 @@ inline bool AccessibilityObject::isRenderHidden() const
     return WebCore::isRenderHidden(style.get());
 }
 
-inline bool AccessibilityObject::isHidden() const
-{
-    return isAXHidden() || isRenderHidden();
-}
-
 inline ElementName AccessibilityObject::elementName() const
 {
     RefPtr element = this->element();
@@ -166,6 +162,16 @@ inline bool AccessibilityObject::isFigureElement() const
 inline bool AccessibilityObject::isOutput() const
 {
     return elementName() == ElementName::HTML_output;
+}
+
+inline bool AccessibilityObject::isHidden() const
+{
+    return isAXHidden() || isRenderHidden();
+}
+
+inline bool AccessibilityObject::isVisible() const
+{
+    return !isHidden();
 }
 
 inline AXObjectRareData& AccessibilityObject::ensureRareData()

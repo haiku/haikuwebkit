@@ -24,6 +24,9 @@
 (define (lockdown-mode)
     (require-entitlement "com.apple.private.webkit.lockdown-mode"))
 
+(define (enhanced-security)
+    (require-entitlement "com.apple.private.webkit.enhanced-security"))
+
 (define-once (framebuffer-access)
     ; IOMobileFramebuffer
     (with-filter (iokit-registry-entry-class "IOMobileFramebuffer")
@@ -264,11 +267,18 @@
         SYS_fsgetpath
         SYS_getpid
         SYS_kdebug_trace_string
+        SYS_kdebug_typefilter
         SYS_objc_bp_assist_cfg_np
         SYS_persona
         SYS_shared_region_check_np
         SYS_sigaction
         SYS_workq_open))
+
+(define (syscall-unix-developer-mode)
+    (syscall-number
+        SYS_kdebug_trace_string
+        SYS_kdebug_trace64
+        SYS_kdebug_typefilter))
 
 (define (syscall-unix-in-use-after-launch)
     (syscall-number
@@ -303,8 +313,6 @@
         SYS_getuid
         SYS_ioctl ;; needed by tcgetattr (TIOCGETA - debugging
         SYS_issetugid
-        SYS_kdebug_trace64
-        SYS_kdebug_typefilter
         SYS_kevent_id
         SYS_kevent_qos
         SYS_lseek
@@ -327,6 +335,8 @@
         SYS_psynch_cvwait
         SYS_psynch_mutexdrop
         SYS_psynch_mutexwait
+        SYS_psynch_rw_rdlock ;; <rdar://problem/51134351>
+        SYS_psynch_rw_unlock
         SYS_read
         SYS_read_nocancel
         SYS_readlink
@@ -361,8 +371,6 @@
     SYS_listxattr
     SYS_mkdir
     SYS_msync
-    SYS_psynch_rw_rdlock ;; <rdar://problem/51134351>
-    SYS_psynch_rw_unlock
     SYS_rename
     SYS_sem_close
     SYS_sem_open
@@ -384,6 +392,7 @@
         SYS_fgetxattr
         SYS_getxattr
         SYS_iopolicysys
+        SYS_psynch_rw_wrlock
 #if ASAN_ENABLED
         SYS_sigaltstack
 #endif
@@ -400,7 +409,6 @@
         SYS_getattrlistbulk ;; xpc_realpath and directory enumeration
         SYS_getgid
         SYS_open_dprotected_np
-        SYS_psynch_rw_wrlock
         SYS_setrlimit
 #if PLATFORM(WATCHOS)
         SYS_sigreturn

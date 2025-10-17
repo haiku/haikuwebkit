@@ -401,7 +401,7 @@ list(APPEND WebCore_SOURCES
 
     platform/network/cf/CertificateInfoCFNet.cpp
     platform/network/cf/DNSResolveQueueCFNet.cpp
-    platform/network/cf/FormDataStreamCFNet.cpp
+    platform/network/cf/FormDataStreamCFNet.mm
     platform/network/cf/NetworkStorageSessionCFNet.cpp
     platform/network/cf/ResourceRequestCFNet.cpp
 

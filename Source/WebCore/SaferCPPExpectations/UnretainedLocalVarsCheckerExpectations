@@ -31,10 +31,10 @@ platform/cocoa/RemoteCommandListenerCocoa.mm
 platform/cocoa/SearchPopupMenuCocoa.mm
 platform/cocoa/SerializedPlatformDataCueValue.mm
 platform/cocoa/SystemVersion.mm
+platform/graphics/DestinationColorSpace.cpp
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
 platform/graphics/avfoundation/FormatDescriptionUtilities.cpp
 platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp
-platform/graphics/avfoundation/MediaSelectionGroupAVFObjC.mm
 platform/graphics/avfoundation/objc/AVRoutePickerViewTargetPicker.mm
 platform/graphics/avfoundation/objc/CDMInstanceFairPlayStreamingAVFObjC.mm
 platform/graphics/avfoundation/objc/CDMSessionAVContentKeySession.mm
@@ -71,11 +71,8 @@ platform/libwebrtc/LibWebRTCVPXVideoDecoder.cpp
 platform/mediastream/mac/AVVideoCaptureSource.mm
 platform/mediastream/mac/CoreAudioSharedUnit.mm
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
-platform/network/mac/NetworkStateNotifierMac.cpp
 platform/network/mac/ResourceHandleMac.mm
-platform/network/mac/UTIUtilities.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
-platform/network/mac/WebCoreURLResponse.mm
 platform/text/cocoa/LocaleCocoa.mm
 rendering/AttachmentLayout.mm
 testing/Internals.mm

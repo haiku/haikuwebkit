@@ -32,6 +32,7 @@
 #include "HTMLTableCellElement.h"
 #include "HTMLTableElement.h"
 #include "HTMLTableSectionElement.h"
+#include "NodeDocument.h"
 #include "NodeList.h"
 #include "NodeRareData.h"
 #include "NodeInlines.h"

@@ -46,8 +46,8 @@ DisplayList::DisplayList(Vector<Item>&& items)
 
 DisplayList::~DisplayList()
 {
-    for (auto& observer : m_observers)
-        observer.willDestroyDisplayList(*this);
+    for (CheckedRef observer : m_observers)
+        observer->willDestroyDisplayList(*this);
 }
 
 String DisplayList::asText(OptionSet<AsTextFlag> flags) const

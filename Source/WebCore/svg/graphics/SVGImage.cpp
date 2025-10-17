@@ -49,7 +49,7 @@
 #include "Page.h"
 #include "PageConfiguration.h"
 #include "RenderSVGRoot.h"
-#include "RenderStyle.h"
+#include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGFEImageElement.h"

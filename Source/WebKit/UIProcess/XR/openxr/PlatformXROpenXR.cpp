@@ -38,7 +38,6 @@
 #include <WebCore/GLContext.h>
 #include <WebCore/GLDisplay.h>
 #include <WebCore/GLFence.h>
-#include <openxr/openxr_platform.h>
 #include <wtf/RunLoop.h>
 #include <wtf/WorkQueue.h>
 
@@ -46,6 +45,13 @@
 #include "DRMMainDevice.h"
 #include <WebCore/DRMDevice.h>
 #include <WebCore/GBMDevice.h>
+#endif
+
+#if OS(ANDROID)
+#include <dlfcn.h>
+using WPEAndroidRuntimeGetJavaVMFunction = JavaVM* (*)();
+using WPEAndroidRuntimeGetActivityFunction = jobject (*)();
+#undef jobject
 #endif
 
 namespace WebKit {
@@ -160,7 +166,9 @@ bool OpenXRCoordinator::collectSwapchainFormatsIfNeeded()
 
 std::unique_ptr<OpenXRSwapchain> OpenXRCoordinator::createSwapchain(uint32_t width, uint32_t height, bool alpha) const
 {
-    auto preferredFormat = alpha ? GL_RGBA8 : GL_RGB8;
+    // Even if alpha is false we always ask for the RGBA8 format, as the DRM_FORMAT_RGB8 is not supported by ANGLE.
+    // In this case we ignore the alpha channel by using DRM_FORMAT_XRGB8888 when exporting the texture.
+    auto preferredFormat = GL_RGBA8;
     auto format = m_supportedSwapchainFormats.contains(preferredFormat) ? preferredFormat : m_supportedSwapchainFormats.first();
     auto sampleCount = m_viewConfigurationViews.isEmpty() ? 1 : m_viewConfigurationViews.first().recommendedSwapchainSampleCount;
 
@@ -174,7 +182,7 @@ std::unique_ptr<OpenXRSwapchain> OpenXRCoordinator::createSwapchain(uint32_t wid
     info.sampleCount = sampleCount;
     info.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 
-    return OpenXRSwapchain::create(m_session, info);
+    return OpenXRSwapchain::create(m_session, info, alpha ? OpenXRSwapchain::HasAlpha::Yes : OpenXRSwapchain::HasAlpha::No);
 }
 
 void OpenXRCoordinator::createLayerProjection(uint32_t width, uint32_t height, bool alpha)
@@ -226,6 +234,7 @@ void OpenXRCoordinator::startSession(WebPageProxy& page, WeakPtr<PlatformXRCoord
                 .renderState = renderState,
                 .renderQueue = renderQueue.get()
             };
+            page.uiClient().didStartXRSession(page);
             renderQueue->dispatch([this, renderState] {
                 createSessionIfNeeded();
                 if (m_session == XR_NULL_HANDLE) {
@@ -261,6 +270,10 @@ void OpenXRCoordinator::endSessionIfExists(WebPageProxy& page)
 
             active.renderState->terminateRequested = true;
             active.renderQueue->dispatchSync([this, renderState = active.renderState] {
+                if (!m_isSessionRunning) {
+                    cleanupSessionAndAssociatedResources();
+                    return;
+                }
                 // OpenXR will transition the session to STOPPING state and then we will call xrEndSession().
                 CHECK_XRCMD(xrRequestExitSession(m_session));
                 while (m_session != XR_NULL_HANDLE)
@@ -339,7 +352,7 @@ void OpenXRCoordinator::createInstance()
     ASSERT(RunLoop::isMain());
     ASSERT(m_instance == XR_NULL_HANDLE);
 
-    Vector<char *, 2> extensions;
+    Vector<char *> extensions;
 #if defined(XR_USE_PLATFORM_EGL)
     if (OpenXRExtensions::singleton().isExtensionSupported(XR_MNDX_EGL_ENABLE_EXTENSION_NAME ""_span))
         extensions.append(const_cast<char*>(XR_MNDX_EGL_ENABLE_EXTENSION_NAME));
@@ -355,12 +368,36 @@ void OpenXRCoordinator::createInstance()
     if (OpenXRExtensions::singleton().isExtensionSupported(XR_EXT_HAND_TRACKING_EXTENSION_NAME ""_span))
         extensions.append(const_cast<char*>(XR_EXT_HAND_TRACKING_EXTENSION_NAME));
 #endif
+#if OS(ANDROID)
+    extensions.append(const_cast<char*>(XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME));
+#endif
 
     XrInstanceCreateInfo createInfo = createOpenXRStruct<XrInstanceCreateInfo, XR_TYPE_INSTANCE_CREATE_INFO >();
     createInfo.applicationInfo = { "WebKit", 1, "WebKit", 1, XR_CURRENT_API_VERSION };
     createInfo.enabledApiLayerCount = 0;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.enabledExtensionNames = extensions.mutableSpan().data();
+
+#if OS(ANDROID)
+    static WPEAndroidRuntimeGetJavaVMFunction s_wpeAndroidRuntimeGetJavaVM =
+        reinterpret_cast<WPEAndroidRuntimeGetJavaVMFunction>(dlsym(RTLD_DEFAULT, "wpe_android_runtime_get_current_java_vm"));
+    if (!s_wpeAndroidRuntimeGetJavaVM) [[unlikely]] {
+        RELEASE_LOG_ERROR(XR, "Cannot resolve wpe_android_runtime_get_current_java_vm(): %s.", dlerror());
+        return;
+    }
+
+    static WPEAndroidRuntimeGetActivityFunction s_wpeAndroidRuntimeGetActivity =
+        reinterpret_cast<WPEAndroidRuntimeGetActivityFunction>(dlsym(RTLD_DEFAULT, "wpe_android_runtime_get_current_activity"));
+    if (!s_wpeAndroidRuntimeGetActivity) [[unlikely]] {
+        RELEASE_LOG_ERROR(XR, "Cannot resolve wpe_android_runtime_get_current_activity(): %s.", dlerror());
+        return;
+    }
+
+    auto java = createOpenXRStruct<XrInstanceCreateInfoAndroidKHR, XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR>();
+    java.applicationVM = s_wpeAndroidRuntimeGetJavaVM();
+    java.applicationActivity = s_wpeAndroidRuntimeGetActivity();
+    createInfo.next = reinterpret_cast<XrBaseInStructure*>(&java);
+#endif
 
     CHECK_XRCMD(xrCreateInstance(&createInfo, &m_instance));
 }
@@ -380,6 +417,17 @@ RefPtr<WebCore::GLDisplay> OpenXRCoordinator::createGLDisplay() const
     };
 
     RefPtr<WebCore::GLDisplay> glDisplay;
+
+#if OS(ANDROID)
+    if (WebCore::GLContext::isExtensionSupported(extensions, "EGL_KHR_platform_android")) {
+        glDisplay = tryCreateDisplay(EGL_PLATFORM_ANDROID_KHR, EGL_DEFAULT_DISPLAY);
+        if (!glDisplay)
+            glDisplay = WebCore::GLDisplay::create(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+        if (glDisplay && !(glDisplay->extensions().ANDROID_get_native_client_buffer && glDisplay->extensions().ANDROID_image_native_buffer))
+            glDisplay = nullptr;
+    }
+#endif // OS(ANDROID)
+
     if (WebCore::GLContext::isExtensionSupported(extensions, "EGL_MESA_platform_surfaceless")) {
         glDisplay = tryCreateDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY);
         if (glDisplay && !glDisplay->extensions().MESA_image_dma_buf_export)
@@ -506,10 +554,12 @@ void OpenXRCoordinator::initializeBlendModes()
 
 void OpenXRCoordinator::tryInitializeGraphicsBinding()
 {
+#if !OS(ANDROID)
     if (!OpenXRExtensions::singleton().isExtensionSupported(XR_MNDX_EGL_ENABLE_EXTENSION_NAME ""_span)) {
         LOG(XR, "OpenXR MNDX_EGL_ENABLE extension is not supported.");
         return;
     }
+#endif
 
     if (!m_glContext) {
 #if USE(GBM)
@@ -524,11 +574,15 @@ void OpenXRCoordinator::tryInitializeGraphicsBinding()
         }
     }
 
+#if OS(ANDROID)
+    m_graphicsBinding = createOpenXRStruct<XrGraphicsBindingOpenGLESAndroidKHR, XR_TYPE_GRAPHICS_BINDING_OPENGL_ES_ANDROID_KHR>();
+#else
     m_graphicsBinding = createOpenXRStruct<XrGraphicsBindingEGLMNDX, XR_TYPE_GRAPHICS_BINDING_EGL_MNDX>();
+    m_graphicsBinding.getProcAddress = OpenXRExtensions::singleton().methods().getProcAddressFunc;
+#endif
     m_graphicsBinding.display = m_glDisplay->eglDisplay();
     m_graphicsBinding.context = m_glContext->platformContext();
     m_graphicsBinding.config = m_glContext->config();
-    m_graphicsBinding.getProcAddress = OpenXRExtensions::singleton().methods().getProcAddressFunc;
 }
 
 void OpenXRCoordinator::createSessionIfNeeded()
@@ -591,14 +645,6 @@ void OpenXRCoordinator::handleSessionStateChange()
         sessionBeginInfo.primaryViewConfigurationType = m_currentViewConfiguration;
         CHECK_XRCMD(xrBeginSession(m_session, &sessionBeginInfo));
         m_isSessionRunning = true;
-        callOnMainRunLoop([this] {
-            WTF::switchOn(m_state,
-                [&](Idle&) { },
-                [&](Active& active) {
-                    if (RefPtr page = WebProcessProxy::webPage(active.pageIdentifier))
-                        page->uiClient().didStartXRSession(*page);
-                });
-        });
         break;
     }
     case XR_SESSION_STATE_STOPPING:

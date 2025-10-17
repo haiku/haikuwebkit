@@ -207,7 +207,7 @@ ValueOrReference<String> NumberInputType::normalizeFullWidthNumberChars(const St
         auto character = input[i];
         if (character >= fullwidthDigitZero && character <= fullwidthDigitNine) {
             // Convert full-width digits (０-９, U+FF10-U+FF19) to ASCII digits (0-9)
-            result.append(static_cast<UChar>(character - fullwidthDigitZero + digitZeroCharacter));
+            result.append(static_cast<char16_t>(character - fullwidthDigitZero + digitZeroCharacter));
         } else if (character == katakanaHiraganaProlongedSoundMark
             || character == fullwidthHyphenMinus
             || character == minusSign) {
@@ -228,14 +228,14 @@ ValueOrReference<String> NumberInputType::normalizeFullWidthNumberChars(const St
             //
             // Since users generally intend to input negative numbers in such cases,
             // we normalize 'ー' (U+30FC), '－' (U+FF0D), and '−' (U+2212) to ASCII minus '-' (U+002D).
-            result.append(static_cast<UChar>(hyphenMinus));
+            result.append(static_cast<char16_t>(hyphenMinus));
         } else if (character == fullwidthFullStop) {
             // Convert full-width full stop (．, U+FF0E) to ASCII dot (.)
-            result.append(static_cast<UChar>(fullStopCharacter));
+            result.append(static_cast<char16_t>(fullStopCharacter));
         } else {
             // Preserve other characters
             // Unreachable in theory, since only normalization-needed characters reach here.
-            result.append(static_cast<UChar>(character));
+            result.append(static_cast<char16_t>(character));
         }
     }
     return String { result.toString() };
@@ -310,7 +310,7 @@ float NumberInputType::decorationWidth(float inputWidth) const
 
         // FIXME <https://webkit.org/b/294858>: This is incorrect for anything other than fixed widths.
         if (auto fixedLogicalWidth = spinButton->computedStyle()->logicalWidth().tryFixed())
-            width += fixedLogicalWidth->value;
+            width += fixedLogicalWidth->resolveZoom(Style::ZoomNeeded { });
         else if (auto percentageLogicalWidth = spinButton->computedStyle()->logicalWidth().tryPercentage()) {
             auto percentageLogicalWidthValue = percentageLogicalWidth->value;
             if (percentageLogicalWidthValue != 100.f)
@@ -345,22 +345,22 @@ static bool isE(char16_t ch)
     return ch == 'e' || ch == 'E';
 }
 
-static bool isPlusSign(UChar ch)
+static bool isPlusSign(char16_t ch)
 {
     return ch == '+';
 }
 
-static bool isSignPrefix(UChar ch)
+static bool isSignPrefix(char16_t ch)
 {
     return ch == '+' || ch == '-';
 }
 
-static bool isDigit(UChar ch)
+static bool isDigit(char16_t ch)
 {
     return ch >= '0' && ch <= '9';
 }
 
-static bool isDecimalSeparator(UChar ch)
+static bool isDecimalSeparator(char16_t ch)
 {
     return ch == '.';
 }

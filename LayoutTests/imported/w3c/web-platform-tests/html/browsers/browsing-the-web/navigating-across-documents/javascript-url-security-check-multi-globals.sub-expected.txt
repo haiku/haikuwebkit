@@ -1,4 +1,4 @@
 
-FAIL Using iframeEl.src promise_test: Unhandled rejection with value: object "TypeError: null is not an object (evaluating 'innerIframe.src = "javascript:'test'"')"
-FAIL Using location.href promise_test: Unhandled rejection with value: object "TypeError: undefined is not an object (evaluating 'iframe.contentWindow.frames[0].location')"
+PASS Using iframeEl.src
+PASS Using location.href
 

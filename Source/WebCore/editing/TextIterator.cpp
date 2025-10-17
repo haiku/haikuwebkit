@@ -2705,6 +2705,48 @@ SimpleRange findClosestPlainText(const SimpleRange& range, const String& target,
     return rangeForMatch(range, options, closestMatch);
 }
 
+Vector<SimpleRange> findAllPlainText(const SimpleRange& range, const String& target, FindOptions options, unsigned limit)
+{
+    Vector<SimpleRange> matches;
+    CharacterIterator it(range, findIteratorOptions(options));
+    size_t currentCharacterIndex = 0;
+
+    auto extractRange = [&](const CharacterRange& match) -> std::optional<SimpleRange> {
+        if (it.atEnd())
+            return std::nullopt;
+        auto start = it.range().start;
+        if (match.length > 1) {
+            // Advance to the last character of the match. We subtract 1 because
+            // it.range().end gives us the boundary *after* the current character,
+            it.advance(match.length - 1);
+            currentCharacterIndex += match.length - 1;
+        }
+        if (it.atEnd())
+            return std::nullopt;
+        auto end = it.range().end;
+        return { { WTFMove(start), WTFMove(end) } };
+    };
+
+    forEachMatch(range, target, options, [&] (CharacterRange match) {
+        // Advance iterator to match start position
+        if (currentCharacterIndex < match.location) {
+            it.advance(match.location - currentCharacterIndex);
+            currentCharacterIndex = match.location;
+        }
+
+        auto foundRange = extractRange(match);
+        if (!foundRange)
+            return true;
+
+        matches.append(WTFMove(*foundRange));
+
+        return limit > 0 && matches.size() >= limit;
+    });
+
+    return matches;
+}
+
+// FIXME: Do not iterate over the entire range if we are searching backwards.
 SimpleRange findPlainText(const SimpleRange& range, const String& target, FindOptions options)
 {
     // When searching forward stop since we want the first match.

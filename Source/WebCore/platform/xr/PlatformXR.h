@@ -38,6 +38,10 @@
 #include <wtf/unix/UnixFileDescriptor.h>
 #endif
 
+#if OS(ANDROID)
+#include <wtf/android/RefPtrAndroid.h>
+#endif
+
 #if PLATFORM(COCOA)
 #include <WebCore/IOSurface.h>
 #include <WebCore/XRGPUProjectionLayerInit.h>
@@ -301,6 +305,9 @@ struct FrameData {
 #endif
     };
 
+#if OS(ANDROID)
+    using ExternalTexture = RefPtr<AHardwareBuffer>;
+#else
     struct ExternalTexture {
 #if PLATFORM(COCOA)
         MachSendRight handle;
@@ -311,8 +318,11 @@ struct FrameData {
         Vector<uint32_t> offsets;
         uint32_t fourcc;
         uint64_t modifier;
+
+        explicit operator bool() const { return !fds.isEmpty(); }
 #endif
     };
+#endif
 
     struct ExternalTextureData {
         uint64_t reusableTextureIndex = 0;

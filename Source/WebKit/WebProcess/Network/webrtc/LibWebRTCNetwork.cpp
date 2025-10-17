@@ -41,9 +41,8 @@ namespace WebKit {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(LibWebRTCNetwork);
 
 LibWebRTCNetwork::LibWebRTCNetwork(WebProcess& webProcess)
-    : m_webProcess(webProcess)
+    : WebRTCNetworkBase(webProcess)
     , m_webNetworkMonitor(*this)
-    , m_mdnsRegister(*this)
 {
 }
 
@@ -52,20 +51,9 @@ LibWebRTCNetwork::~LibWebRTCNetwork()
     ASSERT_NOT_REACHED();
 }
 
-void LibWebRTCNetwork::ref() const
-{
-    m_webProcess->ref();
-}
-
-void LibWebRTCNetwork::deref() const
-{
-    m_webProcess->deref();
-}
-
 void LibWebRTCNetwork::setAsActive()
 {
-    ASSERT(!m_isActive);
-    m_isActive = true;
+    WebRTCNetworkBase::setAsActive();
     if (m_connection)
         setSocketFactoryConnection();
 }
@@ -84,7 +72,7 @@ void LibWebRTCNetwork::setConnection(RefPtr<IPC::Connection>&& connection)
 
     m_connection = WTFMove(connection);
 
-    if (m_isActive)
+    if (isActive())
         setSocketFactoryConnection();
     if (RefPtr connection = m_connection)
         connection->addMessageReceiver(*this, *this, Messages::LibWebRTCNetwork::messageReceiverName());
@@ -111,7 +99,7 @@ void LibWebRTCNetwork::setSocketFactoryConnection()
 
 void LibWebRTCNetwork::dispatch(Function<void()>&& callback)
 {
-    if (!m_isActive) {
+    if (!isActive()) {
         RELEASE_LOG_ERROR(WebRTC, "Received WebRTCSocket message while libWebRTCNetwork is not active");
         return;
     }

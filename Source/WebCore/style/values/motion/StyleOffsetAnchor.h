@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <WebCore/LengthPoint.h>
+#include <WebCore/AcceleratedEffectOffsetAnchor.h>
 #include <WebCore/StylePosition.h>
 #include <WebCore/StyleValueTypes.h>
 
@@ -37,8 +37,11 @@ struct OffsetAnchor {
     OffsetAnchor(CSS::Keyword::Auto keyword) : m_value { keyword} { }
     OffsetAnchor(Position&& position) : m_value { WTFMove(position) } { }
     OffsetAnchor(const Position& position) : m_value { position } { }
-    explicit OffsetAnchor(WebCore::LengthPoint&& point) : m_value { convert(point) } { }
-    explicit OffsetAnchor(const WebCore::LengthPoint& point) : m_value { convert(point) } { }
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    explicit OffsetAnchor(AcceleratedEffectOffsetAnchor&& point) : m_value { convert(point) } { }
+    explicit OffsetAnchor(const AcceleratedEffectOffsetAnchor& point) : m_value { convert(point) } { }
+#endif
 
     ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
     ALWAYS_INLINE bool isPosition() const { return holdsAlternative<Position>(); }
@@ -50,16 +53,9 @@ struct OffsetAnchor {
     bool operator==(const OffsetAnchor&) const = default;
 
 private:
-    static auto convert(const WebCore::LengthPoint& point) -> Variant<CSS::Keyword::Auto, Position>
-    {
-        if (point.x.isAuto() && point.y.isAuto())
-            return CSS::Keyword::Auto { };
-
-        if (point.x.isSpecified() && point.y.isSpecified())
-            return Position { point };
-
-        RELEASE_ASSERT_NOT_REACHED();
-    }
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    static auto convert(const AcceleratedEffectOffsetAnchor&) -> Variant<CSS::Keyword::Auto, Position>;
+#endif
 
     Variant<CSS::Keyword::Auto, Position> m_value;
 };
@@ -86,9 +82,15 @@ template<> struct Blending<OffsetAnchor> {
     auto blend(const OffsetAnchor&, const OffsetAnchor&, const BlendingContext&) -> OffsetAnchor;
 };
 
-// MARK: - Platform
+// MARK: - Evaluation
 
-template<> struct ToPlatform<OffsetAnchor> { auto operator()(const OffsetAnchor&) -> WebCore::LengthPoint; };
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+template<> struct Evaluation<OffsetAnchor, AcceleratedEffectOffsetAnchor> {
+    auto operator()(const OffsetAnchor&, FloatSize, ZoomNeeded) -> AcceleratedEffectOffsetAnchor;
+};
+
+#endif
 
 } // namespace Style
 } // namespace WebCore

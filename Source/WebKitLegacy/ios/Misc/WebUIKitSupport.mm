@@ -33,7 +33,7 @@
 #import "WebPreferencesDefinitions.h"
 #import "WebViewPrivate.h"
 #import <JavaScriptCore/InitializeThreading.h>
-#import <WebCore/BreakLines.h>
+#import <WebCore/BreakablePositions.h>
 #import <WebCore/Path.h>
 #import <WebCore/PathUtilities.h>
 #import <WebCore/ResourceRequest.h>
@@ -94,7 +94,7 @@ int WebKitGetLastLineBreakInBuffer(char16_t *characters, int position, int lengt
     unsigned lastBreakPos = position;
     unsigned breakPos = 0;
     CachedLineBreakIteratorFactory lineBreakIteratorFactory(StringView { std::span(characters, length) });
-    while (static_cast<int>(breakPos = BreakLines::nextBreakablePosition(lineBreakIteratorFactory, breakPos)) < position)
+    while (static_cast<int>(breakPos = BreakablePositions::next(lineBreakIteratorFactory, breakPos)) < position)
         lastBreakPos = breakPos++;
     return static_cast<int>(lastBreakPos) < position ? lastBreakPos : INT_MAX;
 }

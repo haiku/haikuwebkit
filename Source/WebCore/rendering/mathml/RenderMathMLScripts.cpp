@@ -278,7 +278,7 @@ RenderMathMLScripts::VerticalMetrics RenderMathMLScripts::verticalMetrics(const 
     LayoutUnit baseDescent = reference.base->logicalHeight() + reference.base->marginLogicalHeight() - baseAscent;
     if (scriptType() == MathMLScriptsElement::ScriptType::Sub || scriptType() == MathMLScriptsElement::ScriptType::SubSup || scriptType() == MathMLScriptsElement::ScriptType::Multiscripts || scriptType() == MathMLScriptsElement::ScriptType::Under || scriptType() == MathMLScriptsElement::ScriptType::UnderOver) {
         metrics.subShift = std::max(parameters.subscriptShiftDown, baseDescent + parameters.subscriptBaselineDropMin);
-        if (!isRenderMathMLUnderOver()) {
+        if (!isRenderMathMLUnderOver() && !document().settings().coreMathMLEnabled()) {
             // It is not clear how to interpret the default shift and it is not available yet anyway.
             // Hence we just pass 0 as the default value used by toUserUnits.
             LayoutUnit specifiedMinSubShift = toUserUnits(element().subscriptShift(), style(), 0);
@@ -287,7 +287,7 @@ RenderMathMLScripts::VerticalMetrics RenderMathMLScripts::verticalMetrics(const 
     }
     if (scriptType() == MathMLScriptsElement::ScriptType::Super || scriptType() == MathMLScriptsElement::ScriptType::SubSup || scriptType() == MathMLScriptsElement::ScriptType::Multiscripts  || scriptType() == MathMLScriptsElement::ScriptType::Over || scriptType() == MathMLScriptsElement::ScriptType::UnderOver) {
         metrics.supShift = std::max(parameters.superscriptShiftUp, baseAscent - parameters.superScriptBaselineDropMax);
-        if (!isRenderMathMLUnderOver()) {
+        if (!isRenderMathMLUnderOver() && !document().settings().coreMathMLEnabled()) {
             // It is not clear how to interpret the default shift and it is not available yet anyway.
             // Hence we just pass 0 as the default value used by toUserUnits.
             LayoutUnit specifiedMinSupShift = toUserUnits(element().superscriptShift(), style(), 0);

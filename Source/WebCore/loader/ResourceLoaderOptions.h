@@ -95,9 +95,10 @@ static constexpr unsigned bitWidthOfDefersLoadingPolicy = 1;
 
 enum class CachingPolicy : uint8_t {
     AllowCaching,
-    DisallowCaching
+    DisallowCaching,
+    AllowCachingPrefetch
 };
-static constexpr unsigned bitWidthOfCachingPolicy = 1;
+static constexpr unsigned bitWidthOfCachingPolicy = 2;
 
 enum class ClientCredentialPolicy : bool {
     CannotAskClientForCredentials,

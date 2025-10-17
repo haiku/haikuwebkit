@@ -762,7 +762,7 @@ TEST(WKWebView, SnapshotNodeByJSHandle)
 
     RetainPtr world = [WKContentWorld _worldWithConfiguration:worldConfiguration.get()];
     auto querySelector = [&](ASCIILiteral selector) -> RetainPtr<_WKJSHandle> {
-        RetainPtr script = [NSString stringWithFormat:@"webkit.jsHandle(document.querySelector('%s'))", selector.characters()];
+        RetainPtr script = [NSString stringWithFormat:@"webkit.createJSHandle(document.querySelector('%s'))", selector.characters()];
         return dynamic_objc_cast<_WKJSHandle>([webView objectByEvaluatingJavaScript:script.get() inFrame:nil inContentWorld:world.get()]);
     };
 
@@ -800,7 +800,7 @@ TEST(WKWebView, SnapshotNodeByJSHandle)
     }
 
     {
-        NSString *scriptToRun = @"window.randomObject = {'foo': 1}; webkit.jsHandle(randomObject)";
+        NSString *scriptToRun = @"window.randomObject = {'foo': 1}; webkit.createJSHandle(randomObject)";
         RetainPtr handle = dynamic_objc_cast<_WKJSHandle>([webView objectByEvaluatingJavaScript:scriptToRun inFrame:nil inContentWorld:world.get()]);
         auto [image, error] = [webView takeSnapshotOfNode:handle.get()];
         EXPECT_NOT_NULL(error);

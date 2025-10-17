@@ -55,7 +55,7 @@ using namespace Inspector;
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(FrameInspectorController);
 
-FrameInspectorController::FrameInspectorController(Frame& frame)
+FrameInspectorController::FrameInspectorController(LocalFrame& frame)
     : m_frame(frame)
     , m_instrumentingAgents(InstrumentingAgents::create(*this))
     , m_injectedScriptManager(makeUniqueRef<WebInjectedScriptManager>(*this, WebInjectedScriptHost::create()))

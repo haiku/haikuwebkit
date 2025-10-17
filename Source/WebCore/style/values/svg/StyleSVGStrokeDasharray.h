@@ -44,9 +44,6 @@ struct SVGStrokeDasharrayValue {
     SVGStrokeDasharrayValue(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : value { literal } { }
     SVGStrokeDasharrayValue(CSS::ValueLiteral<CSS::PercentageUnit::Percentage> literal) : value { literal } { }
 
-    bool isZero() const { return value.isZero(); }
-    bool isPositive() const { return value.isPositive(); }
-
     template<typename... F> decltype(auto) switchOn(F&&... f) const
     {
         return WTF::switchOn(value, std::forward<F>(f)...);

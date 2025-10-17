@@ -28,7 +28,7 @@
 #include "Image.h"
 #include "IntRect.h"
 #include "LegacyRenderSVGResourceMaskerInlines.h"
-#include "SVGRenderStyle.h"
+#include "RenderStyleInlines.h"
 #include "SVGRenderingContext.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -79,7 +79,7 @@ auto LegacyRenderSVGResourceMasker::applyResource(RenderElement& renderer, const
         auto maskColorSpace = DestinationColorSpace::SRGB();
         auto drawColorSpace = DestinationColorSpace::SRGB();
 
-        if (style().svgStyle().colorInterpolation() == ColorInterpolation::LinearRGB) {
+        if (style().colorInterpolation() == ColorInterpolation::LinearRGB) {
 #if USE(CG) || USE(SKIA)
             maskColorSpace = DestinationColorSpace::LinearSRGB();
 #endif
@@ -117,7 +117,7 @@ bool LegacyRenderSVGResourceMasker::drawContentIntoMaskImage(MaskerData* maskerD
 #endif
 
     // Create the luminance mask.
-    if (style().svgStyle().maskType() == MaskType::Luminance)
+    if (style().maskType() == MaskType::Luminance)
         maskImage->convertToLuminanceMask();
 
     return true;

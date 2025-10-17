@@ -68,6 +68,7 @@
 #include "SVGURIReference.h"
 #include "Settings.h"
 #include "ShadowRoot.h"
+#include "StylableInlines.h"
 #include "StyleSelfAlignmentData.h"
 #include "StyleTextDecorationLine.h"
 #include "StyleUpdate.h"
@@ -1077,11 +1078,6 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         static MainThreadNeverDestroyed<const AtomString> className("xnw9j1v"_s);
         if (is<HTMLDivElement>(*m_element) && m_element->hasClassName(className))
             style.setEffectiveDisplay(DisplayType::None);
-    }
-
-    if (m_document->quirks().needsTextInputBoxSizingBorderBoxQuirk()) {
-        if (RefPtr input = dynamicDowncast<HTMLInputElement>(m_element); input && input->isTextField())
-            style.setBoxSizing(BoxSizing::BorderBox);
     }
 }
 

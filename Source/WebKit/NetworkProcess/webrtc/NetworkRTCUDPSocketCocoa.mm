@@ -30,11 +30,13 @@
 
 #include "LibWebRTCNetworkMessages.h"
 #include "Logging.h"
+#include "NetworkRTCUtilitiesCocoa.h"
 #include <WebCore/STUNMessageParsing.h>
 #include <dispatch/dispatch.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <pal/spi/cocoa/NetworkSPI.h>
+#include <webrtc/rtc_base/async_packet_socket.h>
 #include <webrtc/rtc_base/time_utils.h>
 #include <wtf/BlockPtr.h>
 #include <wtf/SoftLinking.h>
@@ -98,12 +100,12 @@ private:
     std::optional<uint32_t> m_trafficClass;
 };
 
-static dispatch_queue_t udpSocketQueue()
+static dispatch_queue_t udpSocketQueueSingleton()
 {
     static LazyNeverDestroyed<RetainPtr<dispatch_queue_t>> queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue.construct(adoptNS(dispatch_queue_create("WebRTC UDP socket queue", DISPATCH_QUEUE_CONCURRENT)));
+        queue.construct(adoptNS(dispatch_queue_create("WebRTC UDP socket queue", RetainPtr { DISPATCH_QUEUE_CONCURRENT }.get())));
     });
     return queue.get().get();
 }
@@ -233,7 +235,7 @@ NetworkRTCUDPSocketCocoaConnections::NetworkRTCUDPSocketCocoaConnections(WebCore
     configureParameters(parameters.get(), address.family() == AF_INET ? nw_ip_version_4 : nw_ip_version_6);
 
     m_nwListener = adoptNS(nw_listener_create(parameters.get()));
-    nw_listener_set_queue(m_nwListener.get(), udpSocketQueue());
+    nw_listener_set_queue(m_nwListener.get(), udpSocketQueueSingleton());
 
     // The callback holds a reference to the nw_listener and we clear it when going in nw_listener_state_cancelled state, which is triggered when closing the socket.
     nw_listener_set_state_changed_handler(m_nwListener.get(), makeBlockPtr([nwListener = m_nwListener, connection = m_connection.copyRef(), protectedRTCProvider = Ref { rtcProvider }, identifier = m_identifier, weakThis = ThreadSafeWeakPtr { *this }](nw_listener_state_t state, nw_error_t error) mutable {
@@ -388,7 +390,7 @@ std::pair<RetainPtr<nw_connection_t>, Ref<NetworkRTCUDPSocketCocoaConnections::C
 
 void NetworkRTCUDPSocketCocoaConnections::setupNWConnection(nw_connection_t nwConnection, ConnectionStateTracker& connectionStateTracker, const webrtc::SocketAddress& remoteAddress)
 {
-    nw_connection_set_queue(nwConnection, udpSocketQueue());
+    nw_connection_set_queue(nwConnection, udpSocketQueueSingleton());
 
     nw_connection_set_state_changed_handler(nwConnection, makeBlockPtr([connectionStateTracker = Ref  { connectionStateTracker }](nw_connection_state_t state, _Nullable nw_error_t error) {
         RELEASE_LOG_ERROR_IF(state == nw_connection_state_failed, WebRTC, "NetworkRTCUDPSocketCocoaConnections connection failed with error %d", error ? nw_error_get_error_code(error) : 0);

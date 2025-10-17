@@ -322,7 +322,7 @@ static BOOL shouldShowDividersBetweenCells(const Vector<WebCore::DataListSuggest
 @implementation WKDataListSuggestionsController {
     WeakPtr<WebKit::WebDataListSuggestionsDropdownMac> _dropdown;
     Vector<WebCore::DataListSuggestion> _suggestions;
-    NSView *_presentingView;
+    RetainPtr<NSView> _presentingView;
 
     RetainPtr<NSScrollView> _scrollView;
     RetainPtr<WKDataListSuggestionWindow> _enclosingWindow;

@@ -26,16 +26,22 @@
 #include "config.h"
 #include "LargestContentfulPaint.h"
 
+#include "Element.h"
+#include "LargestContentfulPaintData.h"
+
 namespace WebCore {
 
 LargestContentfulPaint::LargestContentfulPaint(DOMHighResTimeStamp timeStamp)
-    : PerformanceEntry(emptyString(), timeStamp, timeStamp) // FIXME: Timestamps
+    : PerformanceEntry(emptyString(), timeStamp, timeStamp)
 {
 }
 
+LargestContentfulPaint::~LargestContentfulPaint() = default;
+
 DOMHighResTimeStamp LargestContentfulPaint::paintTime() const
 {
-    return 0;
+    // https://github.com/w3c/largest-contentful-paint/issues/145
+    return m_renderTime;
 }
 
 std::optional<DOMHighResTimeStamp> LargestContentfulPaint::presentationTime() const
@@ -45,32 +51,76 @@ std::optional<DOMHighResTimeStamp> LargestContentfulPaint::presentationTime() co
 
 DOMHighResTimeStamp LargestContentfulPaint::loadTime() const
 {
-    return 0;
+    return m_loadTime;
+}
+
+void LargestContentfulPaint::setLoadTime(DOMHighResTimeStamp loadTime)
+{
+    m_loadTime = loadTime;
 }
 
 DOMHighResTimeStamp LargestContentfulPaint::renderTime() const
 {
-    return 0;
+    return m_renderTime;
+}
+
+void LargestContentfulPaint::setRenderTime(DOMHighResTimeStamp renderTime)
+{
+    m_renderTime = renderTime;
+}
+
+DOMHighResTimeStamp LargestContentfulPaint::startTime() const
+{
+    return m_renderTime ? m_renderTime : m_loadTime;
 }
 
 unsigned LargestContentfulPaint::size() const
 {
-    return 0;
+    return m_pixelArea;
+}
+
+void LargestContentfulPaint::setSize(unsigned size)
+{
+    m_pixelArea = size;
 }
 
 String LargestContentfulPaint::id() const
 {
-    return emptyString();
+    return m_id;
+}
+
+void LargestContentfulPaint::setID(const String& idString)
+{
+    m_id = idString;
 }
 
 String LargestContentfulPaint::url() const
 {
-    return emptyString();
+    return m_urlString;
+}
+
+void LargestContentfulPaint::setURLString(const String& urlString)
+{
+    m_urlString = urlString;
 }
 
 Element* LargestContentfulPaint::element() const
 {
-    return nullptr;
+    RefPtr element = m_element.get();
+    if (!element)
+        return nullptr;
+
+    // The spec requires that the element accessor re-check connectedness.
+    // https://w3c.github.io/largest-contentful-paint/#ref-for-dom-largestcontentfulpaint-element
+    if (!LargestContentfulPaintData::isExposedForPaintTiming(*element))
+        return nullptr;
+
+    return element.get();
+}
+
+void LargestContentfulPaint::setElement(Element* element)
+{
+    m_element = element;
 }
 
 } // namespace WebCore

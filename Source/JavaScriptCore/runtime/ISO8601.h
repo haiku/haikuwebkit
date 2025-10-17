@@ -164,7 +164,7 @@ private:
     {
         if (value > 9)
             asStringImpl(builder, value / 10);
-        builder.append(static_cast<LChar>(static_cast<unsigned>(value % 10) + '0'));
+        builder.append(static_cast<Latin1Character>(static_cast<unsigned>(value % 10) + '0'));
     }
 
     Int128 m_epochNanoseconds { };
@@ -277,19 +277,27 @@ static_assert(sizeof(PlainDate) == sizeof(int32_t));
 
 using TimeZone = Variant<TimeZoneID, int64_t>;
 
+class PlainYearMonth final {
+public:
+    double year;
+    double month;
+    PlainYearMonth(double y, double m)
+        : year(y), month(m) { }
+};
+
 // https://tc39.es/proposal-temporal/#sec-temporal-parsetemporaltimezonestring
 // Record { [[Z]], [[OffsetString]], [[Name]] }
 struct TimeZoneRecord {
     bool m_z { false };
     std::optional<int64_t> m_offset;
-    Variant<Vector<LChar>, int64_t> m_nameOrOffset;
+    Variant<Vector<Latin1Character>, int64_t> m_nameOrOffset;
 };
 
 static constexpr unsigned minCalendarLength = 3;
 static constexpr unsigned maxCalendarLength = 8;
 enum class RFC9557Flag : bool { None, Critical }; // "Critical" = "!" flag
 enum class RFC9557Key : bool { Calendar, Other };
-using RFC9557Value = Vector<LChar, maxCalendarLength>;
+using RFC9557Value = Vector<Latin1Character, maxCalendarLength>;
 struct RFC9557Annotation {
     RFC9557Flag m_flag;
     RFC9557Key m_key;
@@ -321,6 +329,8 @@ String monthCode(uint32_t);
 uint8_t monthFromCode(StringView);
 
 bool isValidDuration(const Duration&);
+bool isValidISODate(double, double, double);
+PlainDate createISODateRecord(double, double, double);
 
 std::optional<ExactTime> parseInstant(StringView);
 
@@ -334,12 +344,5 @@ Int128 roundTimeDuration(JSGlobalObject*, Int128, unsigned, TemporalUnit, Roundi
 using CheckedInt128 = Checked<Int128, RecordOverflow>;
 
 CheckedInt128 checkedCastDoubleToInt128(double n);
-
-static constexpr Int128 absInt128(const Int128& value)
-{
-    if (value < 0)
-        return -value;
-    return value;
-}
 
 } // namespace JSC

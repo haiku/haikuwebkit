@@ -38,6 +38,7 @@
 #include "HTMLScriptElement.h"
 #include "HTMLTemplateElement.h"
 #include "JSNode.h"
+#include "NodeDocument.h"
 #include "ProcessingInstruction.h"
 #include "QualifiedName.h"
 #include "SVGScriptElement.h"

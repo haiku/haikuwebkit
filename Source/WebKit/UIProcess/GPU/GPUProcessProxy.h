@@ -28,6 +28,7 @@
 #if ENABLE(GPU_PROCESS)
 
 #include "AuxiliaryProcessProxy.h"
+#include "GPUProcessMediaCodecCapabilities.h"
 #include "ProcessLauncher.h"
 #include "ProcessThrottler.h"
 #include "RemoteSnapshotIdentifier.h"
@@ -175,8 +176,9 @@ public:
 #if PLATFORM(COCOA)
     void postWillTakeSnapshotNotification(CompletionHandler<void()>&&);
 
-    void sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier, const WebCore::IntSize&, WebCore::FrameIdentifier root, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
+    void sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier, const WebCore::FloatSize&, WebCore::FrameIdentifier root, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
 #endif
+    void sinkCompletedSnapshotToBitmap(RemoteSnapshotIdentifier, const WebCore::FloatSize&, WebCore::FrameIdentifier root, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&&);
     void releaseSnapshot(RemoteSnapshotIdentifier);
 
 private:
@@ -218,12 +220,7 @@ private:
     void didCreateContextForVisibilityPropagation(WebPageProxyIdentifier, WebCore::PageIdentifier, LayerHostingContextID);
 #endif
 
-#if ENABLE(VP9)
-    void setHasVP9HardwareDecoder(bool hasVP9HardwareDecoder) { s_hasVP9HardwareDecoder = hasVP9HardwareDecoder; }
-#endif
-#if ENABLE(AV1)
-    void setHasAV1HardwareDecoder(bool hasAV1HardwareDecoder) { s_hasAV1HardwareDecoder = hasAV1HardwareDecoder; }
-#endif
+    void setMediaCodecCapabilities(GPUProcessMediaCodecCapabilities&& mediaCodecCapabilities) { s_gpuProcessMediaCodecCapabilities = WTFMove(mediaCodecCapabilities); }
 
 #if ENABLE(MEDIA_STREAM)
     void voiceActivityDetected();
@@ -262,12 +259,7 @@ private:
 #if HAVE(SCREEN_CAPTURE_KIT)
     bool m_hasEnabledScreenCaptureKit { false };
 #endif
-#if ENABLE(VP9)
-    static std::optional<bool> s_hasVP9HardwareDecoder;
-#endif
-#if ENABLE(AV1)
-    static std::optional<bool> s_hasAV1HardwareDecoder;
-#endif
+    static std::optional<GPUProcessMediaCodecCapabilities> s_gpuProcessMediaCodecCapabilities;
 #if PLATFORM(COCOA)
     static bool s_enableMetalDebugDeviceInNewGPUProcessesForTesting;
     static bool s_enableMetalShaderValidationInNewGPUProcessesForTesting;

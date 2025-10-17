@@ -348,7 +348,7 @@ rendering/RenderCounter.cpp
 rendering/RenderDeprecatedFlexibleBox.cpp
 rendering/RenderElement.cpp
 rendering/RenderElement.h
-rendering/RenderElementInlines.h
+rendering/RenderElementStyleInlines.h
 rendering/RenderFileUploadControl.cpp
 rendering/RenderFlexibleBox.cpp
 rendering/RenderFragmentContainer.cpp
@@ -436,6 +436,7 @@ rendering/svg/RenderSVGInlineText.cpp
 rendering/svg/RenderSVGModelObject.cpp
 rendering/svg/RenderSVGPath.cpp
 rendering/svg/RenderSVGResourceClipper.cpp
+rendering/svg/RenderSVGResourceFilterPrimitive.cpp
 rendering/svg/RenderSVGRoot.cpp
 rendering/svg/RenderSVGShape.cpp
 rendering/svg/RenderSVGText.cpp
@@ -463,6 +464,7 @@ rendering/svg/legacy/LegacyRenderSVGResource.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceClipper.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceContainer.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceContainer.h
+rendering/svg/legacy/LegacyRenderSVGResourceFilterPrimitive.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceGradient.cpp
 rendering/svg/legacy/LegacyRenderSVGResourcePattern.cpp
 rendering/svg/legacy/LegacyRenderSVGRoot.cpp
@@ -500,6 +502,7 @@ style/StyleAdjuster.cpp
 style/StyleBuilder.cpp
 style/StyleBuilderConverter.h
 style/StyleBuilderCustom.h
+style/StyleBuilderState.cpp
 style/StyleBuilderStateInlines.h
 style/StyleCustomPropertyRegistry.cpp
 style/StyleExtractor.cpp
@@ -550,4 +553,3 @@ testing/js/WebCoreTestSupport.cpp
 workers/WorkerGlobalScope.cpp
 workers/WorkerOrWorkletThread.cpp
 workers/WorkerRunLoop.cpp
-workers/service/server/SWServer.cpp

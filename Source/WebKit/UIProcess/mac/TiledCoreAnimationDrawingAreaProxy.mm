@@ -177,7 +177,7 @@ MachSendRight TiledCoreAnimationDrawingAreaProxy::createFence()
     if (!page)
         return MachSendRight();
 
-    RetainPtr<CAContext> rootLayerContext = [page->acceleratedCompositingRootLayer() context];
+    RetainPtr<CAContext> rootLayerContext = [page->protectedAcceleratedCompositingRootLayer() context];
     if (!rootLayerContext)
         return MachSendRight();
 

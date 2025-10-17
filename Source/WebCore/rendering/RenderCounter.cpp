@@ -32,6 +32,7 @@
 #include "HTMLNames.h"
 #include "HTMLOListElement.h"
 #include "PseudoElement.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderElementInlines.h"
 #include "RenderListItem.h"
 #include "RenderObjectInlines.h"

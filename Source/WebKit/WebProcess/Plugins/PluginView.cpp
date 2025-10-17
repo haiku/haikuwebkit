@@ -65,6 +65,7 @@
 #include <WebCore/MouseEvent.h>
 #include <WebCore/NetscapePlugInStreamLoader.h>
 #include <WebCore/NetworkStorageSession.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/OriginAccessPatterns.h>
 #include <WebCore/PageInlines.h>
 #include <WebCore/PlatformMouseEvent.h>
@@ -947,7 +948,7 @@ void PluginView::focusPluginElement()
 
     Ref pluginElement = m_pluginElement;
     if (RefPtr page = frame->page())
-        page->focusController().setFocusedElement(pluginElement.ptr(), *frame);
+        page->focusController().setFocusedElement(pluginElement.ptr(), frame.get());
     else
         frame->protectedDocument()->setFocusedElement(pluginElement.ptr());
 }

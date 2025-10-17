@@ -53,7 +53,8 @@ public:
     [[nodiscard]] bool addFrameReference(WebCore::FrameIdentifier);
     [[nodiscard]] bool setFrame(WebCore::FrameIdentifier, Ref<const WebCore::DisplayList::DisplayList>&&, SerialFunctionDispatcher&);
     bool isComplete() const;
-    std::optional<RefPtr<WebCore::SharedBuffer>> drawToPDF(const WebCore::IntSize&, WebCore::FrameIdentifier rootFrameIdentifier);
+    std::optional<RefPtr<WebCore::SharedBuffer>> drawToPDF(const WebCore::FloatSize&, WebCore::FrameIdentifier rootFrameIdentifier);
+    std::optional<WebCore::ShareableBitmap::Handle> drawToBitmap(const WebCore::FloatSize&, WebCore::FrameIdentifier rootFrameIdentifier);
     [[nodiscard]] bool applyFrame(WebCore::FrameIdentifier, WebCore::GraphicsContext&) const;
 
 private:

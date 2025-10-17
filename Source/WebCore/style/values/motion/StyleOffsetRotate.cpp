@@ -97,6 +97,17 @@ auto Blending<OffsetRotate>::blend(const OffsetRotate& from, const OffsetRotate&
     return OffsetRotate { from.autoKeyword(), WebCore::Style::blend(from.angle(), to.angle(), context) };
 }
 
+// MARK: - Evaluation
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+auto Evaluation<OffsetRotate, AcceleratedEffectOffsetRotate>::operator()(const OffsetRotate& value) -> AcceleratedEffectOffsetRotate
+{
+    return { .hasAuto = value.hasAuto(), .angle = value.angle().value };
+}
+
+#endif
+
 // MARK: - Logging
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, const OffsetRotate& rotate)

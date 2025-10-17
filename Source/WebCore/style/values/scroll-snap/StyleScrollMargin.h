@@ -59,7 +59,8 @@ struct ScrollMarginEdge {
     bool operator==(const ScrollMarginEdge&) const = default;
 
 private:
-    friend struct Evaluation<ScrollMarginEdge>;
+    friend struct Evaluation<ScrollMarginEdge, LayoutUnit>;
+    friend struct Evaluation<ScrollMarginEdge, float>;
 
     Length<> m_value;
 };
@@ -74,9 +75,13 @@ template<> struct CSSValueConversion<ScrollMarginEdge> { auto operator()(Builder
 
 // MARK: - Evaluation
 
-template<> struct Evaluation<ScrollMarginEdge> {
-    auto operator()(const ScrollMarginEdge&, LayoutUnit referenceLength, float zoom) -> LayoutUnit;
-    auto operator()(const ScrollMarginEdge&, float referenceLength, float zoom) -> float;
+template<> struct Evaluation<ScrollMarginEdge, LayoutUnit> {
+    auto operator()(const ScrollMarginEdge&, LayoutUnit referenceLength, ZoomNeeded) -> LayoutUnit;
+    auto operator()(const ScrollMarginEdge&, ZoomNeeded) -> LayoutUnit;
+};
+template<> struct Evaluation<ScrollMarginEdge, float> {
+    auto operator()(const ScrollMarginEdge&, float referenceLength, ZoomNeeded) -> float;
+    auto operator()(const ScrollMarginEdge&, ZoomNeeded) -> float;
 };
 
 // MARK: - Extent

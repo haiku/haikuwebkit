@@ -88,7 +88,7 @@ public:
 
     const FetchHeaders& headers() const { return m_headers; }
     FetchHeaders& headers() { return m_headers; }
-    ExceptionOr<Ref<FetchResponse>> clone();
+    ExceptionOr<Ref<FetchResponse>> clone(JSDOMGlobalObject&);
 
     void consumeBodyAsStream() final;
     void feedStream() final;

@@ -732,6 +732,15 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::ColumnIndexRange:
         stream << "ColumnIndexRange";
         break;
+    case AXProperty::CrossFrameChildFrameID:
+        stream << "CrossFrameChildFrameID";
+        break;
+    case AXProperty::CrossFrameParentFrameID:
+        stream << "CrossFrameParentFrameID";
+        break;
+    case AXProperty::CrossFrameParentAXID:
+        stream << "CrossFrameParentAXID";
+        break;
     case AXProperty::CurrentState:
         stream << "CurrentState";
         break;
@@ -823,6 +832,9 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::HasPlainText:
         stream << "HasPlainText";
+        break;
+    case AXProperty::HasPointerEventsNone:
+        stream << "HasPointerEventsNone";
         break;
     case AXProperty::HasRemoteFrameChild:
         stream << "HasRemoteFrameChild";
@@ -1150,6 +1162,9 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::SetSize:
         stream << "SetSize";
+        break;
+    case AXProperty::ShowsCursorOnHover:
+        stream << "ShowsCursorOnHover";
         break;
     case AXProperty::SortDirection:
         stream << "SortDirection";

@@ -56,16 +56,9 @@ public:
 
     Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) const final;
 
-    bool isIdentity() const final { return m_x == 1 &&  m_y == 1 &&  m_z == 1; }
-
-    bool isRepresentableIn2D() const final { return m_z == 1; }
-
-    bool isAffectedByTransformOrigin() const final { return !isIdentity(); }
-
-    bool apply(TransformationMatrix& transform, const FloatSize&) const final
+    void apply(TransformationMatrix& transform) const final
     {
         transform.scale3d(m_x, m_y, m_z);
-        return false;
     }
 
     void dump(WTF::TextStream&) const final;

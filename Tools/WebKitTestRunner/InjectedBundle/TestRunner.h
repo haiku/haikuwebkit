@@ -104,6 +104,8 @@ public:
 
     bool isWebKit2() const { return true; }
 
+    bool isEnhancedSecurity();
+
     // The basics.
     WKURLRef testURL() const { return m_testURL.get(); }
     void setTestURL(WKURLRef url) { m_testURL = url; }
@@ -171,15 +173,13 @@ public:
     void display();
     void displayOnLoadFinish() { m_displayOnLoadFinish = true; }
     bool shouldDisplayOnLoadFinish() { return m_displayOnLoadFinish; }
-    void dontForceRepaint() { m_forceRepaint = false; }
-    bool shouldForceRepaint() { return m_forceRepaint; }
+    void dontForceRepaint() const;
 
     // UserContent testing.
     void addUserScript(JSStringRef source, bool runAtStart, bool allFrames);
     void addUserStyleSheet(JSStringRef source, bool allFrames);
 
     // Text search testing.
-    void findStringMatchesInPage(JSContextRef, JSStringRef, JSValueRef optionsArray);
     void replaceFindMatchesAtIndices(JSContextRef, JSValueRef matchIndices, JSStringRef replacementText, bool selectionOnly);
 
     // Local storage
@@ -203,19 +203,12 @@ public:
 
     // Printing
     bool isPageBoxVisible(JSContextRef, int pageIndex);
-    bool isPrinting() { return m_isPrinting; }
-    void setPrinting() { m_isPrinting = true; }
-
-    // Authentication
-    void setAuthenticationUsername(JSStringRef);
-    void setAuthenticationPassword(JSStringRef);
+    void setPrinting() const;
 
     void setValueForUser(JSContextRef, JSValueRef element, JSStringRef value);
 
     // Audio testing.
     void setAudioResult(JSContextRef, JSValueRef data);
-
-    void setPluginSupportedMode(JSStringRef);
 
     WhatToDump whatToDump() const;
     void setWhatToDump(WhatToDump);
@@ -351,9 +344,6 @@ public:
     bool didCancelClientRedirect() const { return m_didCancelClientRedirect; }
     void setDidCancelClientRedirect(bool value) { m_didCancelClientRedirect = value; }
 
-    // Contextual menu actions
-    void setAllowedMenuActions(JSContextRef, JSValueRef);
-
     void clearTestRunnerCallbacks();
 
     void accummulateLogsForChannel(JSStringRef channel);
@@ -412,10 +402,6 @@ public:
     // Storage Access API
     void setRequestStorageAccessThrowsExceptionUntilReload(bool enabled);
 
-    // Open panel
-    void setOpenPanelFiles(JSContextRef, JSValueRef);
-    void setOpenPanelFilesMediaIcon(JSContextRef, JSValueRef);
-
     // Modal alerts
     void setShouldDismissJavaScriptAlertsAsynchronously(bool);
     void abortModal();
@@ -445,8 +431,6 @@ public:
 
     bool hasAppBoundSession();
     void clearAppBoundSession();
-    void setAppBoundDomains(JSContextRef, JSValueRef originArray, JSValueRef callback);
-    void setManagedDomains(JSContextRef, JSValueRef originArray, JSValueRef callback);
 
     bool didLoadAppInitiatedRequest();
     bool didLoadNonAppInitiatedRequest();
@@ -536,8 +520,6 @@ private:
     bool m_testRepaint { false };
     bool m_testRepaintSweepHorizontally { false };
     bool m_displayOnLoadFinish { false };
-    bool m_forceRepaint { true };
-    bool m_isPrinting { false };
     bool m_willSendRequestReturnsNull { false };
     bool m_willSendRequestReturnsNullOnRedirect { false };
     bool m_shouldStopProvisionalFrameLoads { false };

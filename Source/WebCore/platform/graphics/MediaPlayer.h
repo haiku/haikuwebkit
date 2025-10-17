@@ -184,7 +184,7 @@ struct MediaPlayerLoadOptions {
     ContentType contentType { };
     bool requiresRemotePlayback { false };
     bool supportsLimitedMatroska { false };
-    VideoMediaSampleRendererPreferences videoMediaSampleRendererPreferences { };
+    VideoRendererPreferences videoRendererPreferences { };
 };
 
 class MediaPlayerClient : public CanMakeWeakPtr<MediaPlayerClient> {

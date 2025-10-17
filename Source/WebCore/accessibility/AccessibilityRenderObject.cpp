@@ -36,8 +36,8 @@
 #include "AXNotifications.h"
 #include "AXObjectCacheInlines.h"
 #include "AXUtilities.h"
-#include "AccessibilityObjectInlines.h"
 #include "AccessibilityMediaHelpers.h"
+#include "AccessibilityObjectInlines.h"
 #include "AccessibilitySVGObject.h"
 #include "AccessibilitySpinButton.h"
 #include "CachedImage.h"
@@ -127,6 +127,7 @@
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SVGSVGElement.h"
+#include "ShadowRootMode.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "Text.h"
 #include "TextControlInnerElements.h"
@@ -582,6 +583,20 @@ AccessibilityObject* AccessibilityRenderObject::parentObject() const
     return nullptr;
 }
 
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+
+AccessibilityObject* AccessibilityRenderObject::crossFrameParentObject() const
+{
+    return nullptr;
+}
+
+AccessibilityObject* AccessibilityRenderObject::crossFrameChildObject() const
+{
+    return nullptr;
+}
+
+#endif // ENABLE_ACCESSIBILITY_LOCAL_FRAME
+
 bool AccessibilityRenderObject::isAttachment() const
 {
     RefPtr widget = this->widget();
@@ -935,7 +950,7 @@ Path AccessibilityRenderObject::elementPath() const
         if (!needsPath)
             return { };
 
-        float outlineOffset = Style::evaluate(style.outlineOffset(), 1.0f /* FIXME ZOOM EFFECTED? */);
+        auto outlineOffset = Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { });
         float deviceScaleFactor = renderText->document().deviceScaleFactor();
         Vector<FloatRect> pixelSnappedRects;
         for (auto rect : rects) {
@@ -1416,8 +1431,14 @@ bool AccessibilityRenderObject::computeIsIgnored() const
 
     // Don't ignore generic focusable elements like <div tabindex=0>
     // unless they're completely empty, with no children.
-    if (isGenericFocusableElement() && node->firstChild())
+    if (isGenericFocusableElement() && node->firstChild()) {
+        RefPtr shadowRoot = node->containingShadowRoot();
+        if (shadowRoot && shadowRoot->mode() == ShadowRootMode::UserAgent && is<HTMLInputElement>(shadowRoot->host())) {
+            // We do still want to ignore the user-agent generic div rendered within text inputs.
+            return true;
+        }
         return false;
+    }
 
     // <span> tags are inline tags and not meant to convey information if they have no other aria
     // information on them. If we don't ignore them, they may emit signals expected to come from
@@ -3020,7 +3041,7 @@ bool AccessibilityRenderObject::hasItalicFont() const
     if (!m_renderer)
         return false;
 
-    return isItalic(m_renderer->style().fontDescription().italic());
+    return m_renderer->style().fontStyle().isConsideredItalic();
 }
 
 bool AccessibilityRenderObject::hasPlainText() const
@@ -3032,8 +3053,8 @@ bool AccessibilityRenderObject::hasPlainText() const
         return false;
 
     const RenderStyle& style = m_renderer->style();
-    return style.fontDescription().weight() == normalWeightValue()
-        && !isItalic(style.fontDescription().italic())
+    return style.fontWeight().isNormal()
+        && !style.fontStyle().isConsideredItalic()
         && style.textDecorationLineInEffect().isNone();
 }
 

@@ -32,9 +32,18 @@ namespace WebKit {
 
 WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(JSHandleInfo);
 
-JSHandleInfo::JSHandleInfo(WebCore::JSHandleIdentifier identifier, FrameInfoData&& frameInfo, Markable<WebCore::FrameIdentifier> windowProxyFrameIdentifier)
+JSHandleInfo::JSHandleInfo(WebCore::JSHandleIdentifier identifier, ContentWorldIdentifier worldIdentifier, FrameInfoData&& frameInfo, Markable<WebCore::FrameIdentifier> windowProxyFrameIdentifier)
     : identifier(identifier)
+    , worldIdentifier(worldIdentifier)
     , frameInfo(WTFMove(frameInfo))
     , windowProxyFrameIdentifier(windowProxyFrameIdentifier) { }
+
+bool JSHandleInfo::operator==(const JSHandleInfo& other) const
+{
+    // If these properties are equal, it implies the other properties are equal,
+    // so we intentionally don't need to check their equality.
+    return identifier == other.identifier
+        && worldIdentifier == other.worldIdentifier;
+}
 
 } // namespace WebKit

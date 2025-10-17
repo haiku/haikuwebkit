@@ -55,6 +55,7 @@
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "PopoverData.h"
 #include "RemoteFrame.h"
@@ -453,12 +454,14 @@ void FocusController::setFocusedFrame(Frame* frame, BroadcastFocusedFrame broadc
     if (m_focusedFrame == frame || m_isChangingFocusedFrame)
         return;
 
+    bool shouldBroadcast = broadcast == BroadcastFocusedFrame::Yes;
     m_isChangingFocusedFrame = true;
 
     RefPtr oldFrame { focusedLocalFrame() };
     RefPtr newFrame { dynamicDowncast<LocalFrame>(frame) };
 
     m_focusedFrame = frame;
+    m_focusedFrameBeforeRemoteFocusBroadcast = (is<RemoteFrame>(frame) && !shouldBroadcast) ? oldFrame.get() : nullptr;
 
     // Now that the frame is updated, fire events and update the selection focused states of both frames.
     if (auto* oldFrameView = oldFrame ? oldFrame->view() : nullptr) {
@@ -489,7 +492,7 @@ void FocusController::setFocusedFrame(Frame* frame, BroadcastFocusedFrame broadc
         } while (frame);
     }
 
-    if (broadcast == BroadcastFocusedFrame::Yes)
+    if (shouldBroadcast)
         protectedPage()->chrome().focusedFrameChanged(frame);
 
     m_isChangingFocusedFrame = false;
@@ -548,9 +551,8 @@ FocusableElementSearchResult FocusController::findFocusableElementDescendingInto
     RefPtr element = startingElement;
     while (RefPtr owner = dynamicDowncast<HTMLFrameOwnerElement>(element)) {
         if (RefPtr remoteFrame = dynamicDowncast<RemoteFrame>(owner->contentFrame())) {
-            remoteFrame->client().findFocusableElementDescendingIntoRemoteFrame(direction, focusEventData, [](FoundElementInRemoteFrame found) {
+            remoteFrame->client().findFocusableElementDescendingIntoRemoteFrame(direction, focusEventData, [](FoundElementInRemoteFrame) {
                 // FIXME: Implement sibling frame search by continuing here.
-                UNUSED_PARAM(found);
             });
 
             return { nullptr, ContinuedSearchInRemoteFrame::Yes };
@@ -637,7 +639,7 @@ bool FocusController::advanceFocusInDocumentOrder(FocusDirection direction, cons
     RefPtr startingNode = document->focusNavigationStartingNode(direction);
     auto findResult = findAndFocusElementInDocumentOrderStartingWithFrame(*frame, startingNode, startingNode, direction, focusEventData, initialFocus, ContinuingRemoteSearch::No);
 
-    return findResult.element;
+    return findResult.element || findResult.relinquishedFocusToChrome == RelinquishedFocusToChrome::Yes;
 }
 
 FocusableElementSearchResult FocusController::findAndFocusElementInDocumentOrderStartingWithFrame(Ref<LocalFrame> frame, RefPtr<Node> scopeNode, RefPtr<Node> startingNode, FocusDirection direction, const FocusEventData& focusEventData, InitialFocus initialFocus, ContinuingRemoteSearch continuingRemoteSearch)
@@ -667,8 +669,10 @@ FocusableElementSearchResult FocusController::findAndFocusElementInDocumentOrder
 
         // We didn't find a node to focus, so we should try to pass focus to Chrome.
         if (initialFocus == InitialFocus::No) {
-            if (relinquishFocusToChrome(direction))
+            if (relinquishFocusToChrome(direction)) {
+                findResult.relinquishedFocusToChrome = RelinquishedFocusToChrome::Yes;
                 return findResult;
+            }
         }
 
         // Chrome doesn't want focus, so we should wrap focus.
@@ -1007,10 +1011,14 @@ static bool shouldClearSelectionWhenChangingFocusedElement(const Page& page, Ref
     return true;
 }
 
-bool FocusController::setFocusedElement(Element* element, LocalFrame& newFocusedFrame, const FocusOptions& options)
+bool FocusController::setFocusedElement(Element* element, Frame* newFocusedFrame, const FocusOptions& options, BroadcastFocusedElement broadcast)
 {
-    Ref protectedNewFocusedFrame { newFocusedFrame };
-    RefPtr oldFocusedFrame { focusedLocalFrame() };
+    ASSERT(broadcast == BroadcastFocusedElement::Yes || (!element && is<RemoteFrame>(newFocusedFrame)));
+
+    RefPtr newFocusedLocalFrame { dynamicDowncast<LocalFrame>(newFocusedFrame) };
+    RefPtr oldFocusedFrame = focusedLocalFrame();
+    if (m_focusedFrameBeforeRemoteFocusBroadcast && broadcast == BroadcastFocusedElement::No)
+        oldFocusedFrame = std::exchange(m_focusedFrameBeforeRemoteFocusBroadcast, nullptr).get();
     RefPtr oldDocument = oldFocusedFrame ? oldFocusedFrame->document() : nullptr;
     
     RefPtr oldFocusedElement = oldDocument ? oldDocument->focusedElement() : nullptr;
@@ -1026,11 +1034,11 @@ bool FocusController::setFocusedElement(Element* element, LocalFrame& newFocused
         return false;
 
     if (shouldClearSelectionWhenChangingFocusedElement(page, WTFMove(oldFocusedElement), element))
-        clearSelectionIfNeeded(oldFocusedFrame.get(), &newFocusedFrame, element);
+        clearSelectionIfNeeded(oldFocusedFrame.get(), newFocusedLocalFrame.get(), element);
 
     if (!element) {
         if (oldDocument)
-            oldDocument->setFocusedElement(nullptr);
+            oldDocument->setFocusedElement(nullptr, broadcast);
         page->editorClient().setInputMethodState(nullptr);
         return true;
     }
@@ -1041,17 +1049,17 @@ bool FocusController::setFocusedElement(Element* element, LocalFrame& newFocused
         page->editorClient().setInputMethodState(element);
         return true;
     }
-    
-    if (oldDocument && oldDocument != newDocument.ptr())
-        oldDocument->setFocusedElement(nullptr);
 
-    if (!newFocusedFrame.page()) {
+    if (oldDocument && oldDocument != newDocument.ptr())
+        oldDocument->setFocusedElement(nullptr, broadcast);
+
+    if (newFocusedLocalFrame && !newFocusedLocalFrame->page()) {
         setFocusedFrame(nullptr);
         return false;
     }
-    setFocusedFrame(&newFocusedFrame);
+    setFocusedFrame(newFocusedFrame);
 
-    bool successfullyFocused = newDocument->setFocusedElement(element, options);
+    bool successfullyFocused = newDocument->setFocusedElement(element, options, broadcast);
     if (!successfullyFocused)
         return false;
 

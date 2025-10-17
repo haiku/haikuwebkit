@@ -44,8 +44,13 @@
 #if PLATFORM(COCOA)
 #include "ClassMethodSwizzler.h"
 #include "InstanceMethodSwizzler.h"
-#endif
+#if !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+#include <pal/spi/cocoa/NetworkSPI.h>
+#include <wtf/OSObjectPtr.h>
+#endif // !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+#endif // PLATFORM(COCOA)
 
+OBJC_CLASS NEPolicySession;
 OBJC_CLASS NSColor;
 OBJC_CLASS NSString;
 OBJC_CLASS UIKeyboardInputMode;
@@ -499,8 +504,8 @@ private:
 
 #if PLATFORM(COCOA)
     void cocoaPlatformInitialize(const Options&);
-#if PLATFORM(MAC)
-    void cocoaDNSInitialize();
+#if ENABLE(DNS_SERVER_FOR_TESTING) && !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+    void initializeDNS();
 #endif
     void cocoaResetStateToConsistentValues(const TestOptions&);
     void setApplicationBundleIdentifier(const std::string&);
@@ -549,8 +554,6 @@ private:
     // WKPageInjectedBundleClient
     static void didReceivePageMessageFromInjectedBundle(WKPageRef, WKStringRef messageName, WKTypeRef messageBody, const void*);
     static void didReceiveSynchronousPageMessageFromInjectedBundleWithListener(WKPageRef, WKStringRef messageName, WKTypeRef messageBody, WKMessageListenerRef, const void*);
-    static void didReceiveAsyncPageMessageFromInjectedBundleWithListener(WKPageRef, WKStringRef, WKTypeRef, WKMessageListenerRef, const void*);
-    void didReceiveAsyncMessageFromInjectedBundle(WKStringRef, WKTypeRef, WKMessageListenerRef);
 
     void didReceiveMessageFromInjectedBundle(WKStringRef messageName, WKTypeRef messageBody);
     void didReceiveSynchronousMessageFromInjectedBundle(WKStringRef messageName, WKTypeRef messageBody, WKMessageListenerRef);
@@ -830,7 +833,11 @@ private:
     
 #if PLATFORM(COCOA)
     bool m_hasSetApplicationBundleIdentifier { false };
-#endif
+#if !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+    RetainPtr<NEPolicySession> m_policySession;
+    OSObjectPtr<nw_resolver_config_t> m_resolverConfig;
+#endif // !ENABLE(DNS_SERVER_FOR_TESTING_IN_NETWORKING_PROCESS)
+#endif // PLATFORM(COCOA)
 
     bool m_isSpeechRecognitionPermissionGranted { false };
 

@@ -49,6 +49,7 @@
 #include "RenderImage.h"
 #include "RenderInline.h"
 #include "RenderObjectStyle.h"
+#include "RenderStyleInlines.h"
 #include "SVGAElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImageElement.h"

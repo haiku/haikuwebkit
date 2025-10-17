@@ -242,7 +242,7 @@ void Permissions::query(JSC::Strong<JSC::JSObject> permissionDescriptorValue, DO
         });
     };
 
-    if (CheckedPtr workerLoaderProxy = workerGlobalScope->thread().workerLoaderProxy())
+    if (CheckedPtr workerLoaderProxy = workerGlobalScope->thread()->workerLoaderProxy())
         workerLoaderProxy->postTaskToLoader(WTFMove(completionHandler));
 }
 

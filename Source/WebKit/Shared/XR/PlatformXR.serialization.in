@@ -129,6 +129,7 @@ header: <WebCore/PlatformXR.h>
 #endif
 };
 
+#if !OS(ANDROID)
 [Nested, RValue] struct PlatformXR::FrameData::ExternalTexture {
 #if PLATFORM(COCOA)
     MachSendRight handle;
@@ -142,6 +143,7 @@ header: <WebCore/PlatformXR.h>
     uint64_t modifier;
 #endif
 };
+#endif // !OS(ANDROID)
 
 [Nested, RValue] struct PlatformXR::FrameData::ExternalTextureData {
     uint64_t reusableTextureIndex;

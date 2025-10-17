@@ -33,6 +33,7 @@
 #include "HTMLNames.h"
 #include "KeyboardEvent.h"
 #include "LocalizedStrings.h"
+#include "NodeDocument.h"
 #include "PlatformLocale.h"
 #include "RenderStyle.h"
 #include "RenderTheme.h"

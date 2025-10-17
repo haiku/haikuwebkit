@@ -1,4 +1,4 @@
 
 
-FAIL Reports were sent in two requests. assert_equals: expected 2 but got 0
+PASS Reports were sent in two requests.
 

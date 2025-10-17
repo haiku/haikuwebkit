@@ -45,6 +45,7 @@
 #include "NodeTraversal.h"
 #include "RenderLineBreak.h"
 #include "RenderObject.h"
+#include "RenderStyleInlines.h"
 #include "RenderText.h"
 #include "ScriptDisallowedScope.h"
 #include "StyleExtractor.h"

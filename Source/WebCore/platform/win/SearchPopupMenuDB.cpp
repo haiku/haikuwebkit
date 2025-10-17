@@ -289,9 +289,7 @@ std::unique_ptr<SQLiteStatement> SearchPopupMenuDB::createPreparedStatement(ASCI
 {
     auto statement = m_database.prepareHeapStatement(sql);
     ASSERT(statement);
-    if (!statement)
-        return nullptr;
-    return statement.value().moveToUniquePtr();
+    return statement;
 }
 
 }

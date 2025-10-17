@@ -475,7 +475,7 @@ void WebAutomationSession::switchToBrowsingContext(const Inspector::Protocol::Au
     auto frameID = webFrameIDForHandle(frameHandle, frameNotFound);
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(frameNotFound, FrameNotFound);
 
-    m_client->requestSwitchToPage(*this, *page, [frameID, page = Ref { *page }, callback = WTFMove(callback)]() mutable {
+    m_client->requestSwitchToPage(*this, *page, [this, protectedThis = RefPtr { *this }, frameID, page = Ref { *page }, callback = WTFMove(callback)]() mutable {
         page->setFocus(true);
 
         if (!frameID) {
@@ -485,11 +485,14 @@ void WebAutomationSession::switchToBrowsingContext(const Inspector::Protocol::Au
 
         ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!WebFrameProxy::webFrame(frameID.value()), FrameNotFound);
 
-        page->sendWithAsyncReplyToProcessContainingFrameWithoutDestinationIdentifier(frameID, Messages::WebAutomationSessionProxy::FocusFrame(page->webPageIDInMainFrameProcess(), frameID.value()), WTF::CompletionHandler<void(std::optional<String>&&)> { [callback = WTFMove(callback)] (std::optional<String>&& optionalError) mutable {
-            ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF_SET(optionalError);
+        if (m_client->isShowingJavaScriptDialogOnPage(*this, page)) {
             callback({ });
-            }
-        });
+            return;
+        }
+
+        page->sendWithAsyncReplyToProcessContainingFrameWithoutDestinationIdentifier(frameID, Messages::WebAutomationSessionProxy::FocusFrame(page->webPageIDInMainFrameProcess(), frameID.value()), WTF::CompletionHandler<void(Inspector::CommandResult<void>&&)> { [callback = WTFMove(callback)] (auto result) mutable {
+            callback(WTFMove(result));
+        } });
     });
 }
 
@@ -921,7 +924,7 @@ void WebAutomationSession::documentLoadedForFrame(const WebFrameProxy& frame, st
         }
 
 #if ENABLE(WEBDRIVER_MOUSE_INTERACTIONS)
-        resetClickCount();
+        resetMouseState();
 #endif
     } else {
         if (auto callback = m_pendingEagerNavigationInBrowsingContextCallbacksPerFrame.take(frame.frameID())) {
@@ -1939,24 +1942,38 @@ void WebAutomationSession::viewportInViewCenterPointOfElement(WebPageProxy& page
 #if ENABLE(WEBDRIVER_MOUSE_INTERACTIONS)
 void WebAutomationSession::updateClickCount(MouseButton button, const WebCore::IntPoint& position, Seconds maxTime, int maxDistance)
 {
-    auto now = MonotonicTime::now();
-    if (now - m_lastClickTime < maxTime && button == m_lastClickButton && m_lastClickPosition.distanceSquaredToPoint(position) < maxDistance) {
-        m_clickCount++;
-        m_lastClickTime = now;
+    if (button != MouseButton::Left) {
+        m_lastClickPosition.reset();
+        m_clickCount = 1;
         return;
     }
 
-    m_clickCount = 1;
+    auto now = MonotonicTime::now();
+    if (!m_lastClickPosition || m_lastClickPosition->distanceSquaredToPoint(position) > maxDistance || now - m_lastClickTime > maxTime) {
+        m_lastClickPosition = position;
+        m_lastClickTime = now;
+        m_clickCount = 1;
+        return;
+    }
+
     m_lastClickTime = now;
-    m_lastClickButton = button;
-    m_lastClickPosition = position;
+    ++m_clickCount;
 }
 
-void WebAutomationSession::resetClickCount()
+void WebAutomationSession::updateLastPosition(const WebCore::IntPoint& position, int maxDistance)
+{
+    // Cancel multiple clicks if mouse strays too far:
+    if (m_lastClickPosition && m_lastClickPosition->distanceSquaredToPoint(position) > maxDistance)
+        m_lastClickPosition.reset();
+
+    m_lastPosition = position;
+}
+
+void WebAutomationSession::resetMouseState()
 {
     m_clickCount = 1;
-    m_lastClickButton = MouseButton::None;
-    m_lastClickPosition = { };
+    m_lastPosition.reset();
+    m_lastClickPosition.reset();
 }
 
 void WebAutomationSession::simulateMouseInteraction(WebPageProxy& page, MouseInteraction interaction, MouseButton mouseButton, const WebCore::IntPoint& locationInViewport, const String& pointerType, CompletionHandler<void(std::optional<AutomationCommandError>)>&& completionHandler)

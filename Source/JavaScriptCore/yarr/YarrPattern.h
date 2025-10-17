@@ -773,7 +773,7 @@ private:
 };
 
     void indentForNestingLevel(PrintStream&, unsigned);
-    void dumpUChar32(PrintStream&, char32_t);
+    void dumpChar32(PrintStream&, char32_t);
     void dumpCharacterClass(PrintStream&, YarrPattern*, CharacterClass*);
 
     struct BackTrackInfoPatternCharacter {

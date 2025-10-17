@@ -474,13 +474,30 @@ static LayoutRect boundingRectForFragmentedAnchor(const RenderBoxModelObject& an
     LayoutPoint offsetRelativeToFragmentedFlow = fragmentedFlow.mapFromLocalToFragmentedFlow(anchorRenderBox.get(), { }).location();
     auto unfragmentedBorderBox = anchorBox.borderBoundingBox();
     unfragmentedBorderBox.moveBy(offsetRelativeToFragmentedFlow);
+    fragmentedFlow.flipForWritingMode(unfragmentedBorderBox); // Convert to RenderLayer coords.
     auto fragmentsBoundingBox = fragmentedFlow.fragmentsBoundingBox(unfragmentedBorderBox);
+    fragmentedFlow.flipForWritingMode(fragmentsBoundingBox); // Convert to RenderBox coords.
+
+    // Now convert to physical coordinates (top/left origin) and walk up.
+    // RenderFragmentedFlow doesn't have a usable frame rect, so use its container's content rect.
+    CheckedPtr fragmentedFlowContainer = fragmentedFlow.containingBlock();
+    if (!fragmentedFlowContainer) {
+        ASSERT_NOT_REACHED();
+        return fragmentsBoundingBox;
+    }
+    auto fragmentedFlowRect = fragmentedFlowContainer->contentBoxRect();
+    if (fragmentedFlow.writingMode().isBlockFlipped()) {
+        if (fragmentedFlow.writingMode().isHorizontal())
+            fragmentsBoundingBox.setY(fragmentedFlowRect.height() - fragmentsBoundingBox.maxY());
+        else
+            fragmentsBoundingBox.setX(fragmentedFlowRect.width() - fragmentsBoundingBox.maxX());
+    }
+    fragmentsBoundingBox.moveBy(fragmentedFlowRect.location());
 
     // Change the location to be relative to the anchor's containing block.
-    fragmentsBoundingBox.move(offsetFromAncestorContainer(fragmentedFlow, containingBlock));
+    if (fragmentedFlowContainer.get() != &containingBlock)
+        fragmentsBoundingBox.move(offsetFromAncestorContainer(*fragmentedFlowContainer, containingBlock));
 
-    // FIXME: The final location of the fragments bounding box is not correctly
-    // computed in flipped writing modes (i.e. vertical-rl and horizontal-bt).
     return fragmentsBoundingBox;
 }
 
@@ -979,7 +996,7 @@ std::optional<double> AnchorPositionEvaluator::evaluateSize(BuilderState& builde
 static const RenderElement* penultimateContainingBlockChainElement(const RenderElement& descendant, const RenderElement* ancestor)
 {
     auto* currentElement = &descendant;
-    for (auto* nextElement = currentElement->containingBlock(); nextElement; nextElement = nextElement->containingBlock()) {
+    for (auto* nextElement = currentElement->container(); nextElement; nextElement = nextElement->container()) {
         if (nextElement == ancestor)
             return currentElement;
         currentElement = nextElement;
@@ -987,7 +1004,7 @@ static const RenderElement* penultimateContainingBlockChainElement(const RenderE
     return nullptr;
 }
 
-static bool firstChildPrecedesSecondChild(const RenderObject* firstChild, const RenderObject* secondChild, const RenderBlock* containingBlock)
+static bool firstChildPrecedesSecondChild(const RenderObject* firstChild, const RenderObject* secondChild, const RenderObject* containingBlock)
 {
     HashSet<CheckedRef<const RenderObject>> firstAncestorChain;
 
@@ -1105,7 +1122,7 @@ static bool isAcceptableAnchorElement(const RenderBoxModelObject& anchorRenderer
             return false;
     }
 
-    CheckedPtr containingBlock = anchorPositionedRenderer->containingBlock();
+    CheckedPtr containingBlock = anchorPositionedRenderer->container();
     ASSERT(containingBlock);
 
     // "possible anchor is laid out strictly before positioned el, aka one of the following is true:"
@@ -1253,7 +1270,7 @@ void AnchorPositionEvaluator::updateAnchorPositioningStatesAfterInterleavedLayou
                     });
                 }
                 document.styleScope().anchorPositionedToAnchorMap().set(*element, AnchorPositionedToAnchorEntry {
-                    .key = elementAndState.key,
+                    .pseudoElementIdentifier = elementAndState.key.second,
                     .anchors = WTFMove(anchors)
                 });
             }
@@ -1282,7 +1299,7 @@ void AnchorPositionEvaluator::updateAnchorPositionedStateForDefaultAnchorAndPosi
 
     // `position-visibility: no-overflow` should also work for non-anchor positioned out-of-flow boxes.
     // Create an empty anchor positioning state for it so we perform the required layout interleaving.
-    auto hasPositionVisibilityNoOverflow = style.hasOutOfFlowPosition() && style.positionVisibility().contains(PositionVisibility::NoOverflow);
+    auto hasPositionVisibilityNoOverflow = generatesBox(style) && style.hasOutOfFlowPosition() && style.positionVisibility().contains(PositionVisibility::NoOverflow);
 
     if (!shouldResolveDefaultAnchor && !hasPositionVisibilityNoOverflow)
         return;
@@ -1321,14 +1338,22 @@ auto AnchorPositionEvaluator::makeAnchorPositionedForAnchorMap(AnchorPositionedT
 
 bool AnchorPositionEvaluator::isAnchorPositioned(const RenderStyle& style)
 {
-    if (!style.hasOutOfFlowPosition())
+    return isStyleTimeAnchorPositioned(style) || isLayoutTimeAnchorPositioned(style);
+}
+
+bool AnchorPositionEvaluator::isStyleTimeAnchorPositioned(const RenderStyle& style)
+{
+    if (!generatesBox(style) || !style.hasOutOfFlowPosition())
         return false;
 
-    return isLayoutTimeAnchorPositioned(style) || style.usesAnchorFunctions();
+    return style.usesAnchorFunctions();
 }
 
 bool AnchorPositionEvaluator::isLayoutTimeAnchorPositioned(const RenderStyle& style)
 {
+    if (!generatesBox(style) || !style.hasOutOfFlowPosition())
+        return false;
+
     if (style.positionArea())
         return true;
 
@@ -1567,6 +1592,21 @@ CheckedPtr<RenderBoxModelObject> AnchorPositionEvaluator::defaultAnchorForBox(co
             return anchor.renderer.get();
     }
     return nullptr;
+}
+
+HashMap<AnchorPositionedKey, size_t> AnchorPositionEvaluator::recordLastSuccessfulPositionOptions(const SingleThreadWeakHashSet<const RenderBox>& positionTryBoxes)
+{
+    HashMap<Style::AnchorPositionedKey, size_t> lastSuccessfulPositionOptionMap;
+
+    for (const auto& positionTryBox : positionTryBoxes) {
+        auto styleable = Styleable::fromRenderer(positionTryBox);
+        ASSERT(styleable);
+
+        if (auto usedPositionOptionIndex = positionTryBox.style().usedPositionOptionIndex())
+            lastSuccessfulPositionOptionMap.add({ styleable->element, styleable->pseudoElementIdentifier }, *usedPositionOptionIndex);
+    }
+
+    return lastSuccessfulPositionOptionMap;
 }
 
 } // namespace Style

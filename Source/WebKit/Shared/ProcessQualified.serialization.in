@@ -109,3 +109,8 @@ header: <WebCore/WebKitJSHandle.h>
     WebCore::WebProcessJSHandleIdentifier object();
     WebCore::ProcessIdentifier processIdentifier();
 };
+
+[Alias=class WebCore::ProcessQualified<ObjectIdentifier<WebKit::ContentWorldIdentifierType>>, CustomHeader] alias WebKit::ContentWorldIdentifier {
+    WebKit::NonProcessQualifiedContentWorldIdentifier object();
+    WebCore::ProcessIdentifier processIdentifier();
+};

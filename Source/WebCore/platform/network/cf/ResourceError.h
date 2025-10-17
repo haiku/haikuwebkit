@@ -56,6 +56,7 @@ public:
     WEBCORE_EXPORT NSError *nsError() const;
     WEBCORE_EXPORT NSError *nsError(NSError *) const;
     WEBCORE_EXPORT operator NSError *() const;
+    WEBCORE_EXPORT RetainPtr<NSError> protectedNSError() const;
 
 
     struct IPCData {

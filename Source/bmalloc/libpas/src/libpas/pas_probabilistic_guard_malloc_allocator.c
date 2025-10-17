@@ -30,12 +30,10 @@
 
 #include "pas_probabilistic_guard_malloc_allocator.h"
 
-#include "iso_heap_config.h"
 #include "pas_heap.h"
 #include "pas_large_utility_free_heap.h"
 #include "pas_random.h"
 #include "pas_utility_heap.h"
-#include "pas_utility_heap_support.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -67,7 +65,7 @@ uint16_t pas_probabilistic_guard_malloc_counter = 0;
 bool pas_probabilistic_guard_malloc_can_use = false;
 bool pas_probabilistic_guard_malloc_is_initialized = false;
 
-/* 
+/*
  * Flag to indicate if PGM has enabled at all for this process,
  * even if it been subsequently disabled, or no guarded allocations have been made
 */
@@ -185,9 +183,9 @@ pas_allocation_result pas_probabilistic_guard_malloc_allocate(pas_large_heap* la
     virtualalloc_res = VirtualAlloc((void*) upper_guard, upper_guard_size, MEM_COMMIT, PAGE_NOACCESS);
     PAS_ASSERT(virtualalloc_res);
 
-    /* 
+    /*
      * ensure physical addresses are released
-     * loop using meminfo here if the upper guard free is failing 
+     * loop using meminfo here if the upper guard free is failing
      */
     bool virtualfree_res = VirtualFree((void*) lower_guard, lower_guard_size, MEM_DECOMMIT);
     PAS_ASSERT(virtualfree_res);

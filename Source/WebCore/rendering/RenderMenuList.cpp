@@ -45,6 +45,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObjectInlines.h"
 #include "RenderChildIterator.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderElementInlines.h"
 #include "RenderObjectInlines.h"
 #include "RenderScrollbar.h"
@@ -230,7 +231,7 @@ void RenderMenuList::updateOptionsWidth()
             // Add in the option's text indent.  We can't calculate percentage values for now.
             float optionWidth = 0;
             if (auto* optionStyle = option->computedStyleForEditability())
-                optionWidth += Style::evaluate(optionStyle->textIndent().length, 0, 1.0f /* FIXME FIND ZOOM */);
+                optionWidth += Style::evaluate<float>(optionStyle->textIndent().length, 0, Style::ZoomNeeded { });
             if (!text.isEmpty()) {
                 const FontCascade& font = style().fontCascade();
                 TextRun run = RenderBlock::constructTextRun(text, style());
@@ -350,7 +351,7 @@ void RenderMenuList::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, 
     }
     auto& logicalWidth = style().logicalWidth();
     if (logicalWidth.isCalculated())
-        minLogicalWidth = std::max(0_lu, Style::evaluate(logicalWidth, 0_lu, 1.0f /* FIXME FIND ZOOM */));
+        minLogicalWidth = std::max(0_lu, Style::evaluate<LayoutUnit>(logicalWidth, 0_lu, Style::ZoomNeeded { }));
     else if (!logicalWidth.isPercent())
         minLogicalWidth = maxLogicalWidth;
 }
@@ -365,7 +366,7 @@ void RenderMenuList::computePreferredLogicalWidths()
     m_minPreferredLogicalWidth = 0;
     m_maxPreferredLogicalWidth = 0;
     
-    if (auto fixedLogicalWidth = style().logicalWidth().tryFixed(); fixedLogicalWidth && fixedLogicalWidth->value > 0)
+    if (auto fixedLogicalWidth = style().logicalWidth().tryFixed(); fixedLogicalWidth && fixedLogicalWidth->isPositive())
         m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalWidth);
     else
         computeIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);

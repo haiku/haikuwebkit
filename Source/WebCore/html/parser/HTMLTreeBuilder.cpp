@@ -200,7 +200,7 @@ public:
     String takeRemainingWhitespace()
     {
         ASSERT(!isEmpty());
-        Vector<LChar, 8> whitespace;
+        Vector<Latin1Character, 8> whitespace;
         do {
             char16_t character = m_text[0];
             if (isASCIIWhitespace(character))

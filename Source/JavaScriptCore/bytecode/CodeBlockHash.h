@@ -89,7 +89,7 @@ public:
     template<typename CharacterType> void writeTo(std::span<CharacterType> destination) const
     {
         auto buffer = integerToSixCharacterHashString(m_hash.hash());
-        StringImpl::copyCharacters(destination, std::span<const LChar>(std::bit_cast<const LChar*>(buffer.data()), buffer.size()));
+        StringImpl::copyCharacters(destination, std::span<const Latin1Character>(std::bit_cast<const Latin1Character*>(buffer.data()), buffer.size()));
     }
 
 private:

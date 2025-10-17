@@ -60,22 +60,16 @@ Ref<TransformOperation> Matrix3DTransformOperation::blend(const TransformOperati
         return const_cast<Matrix3DTransformOperation&>(*this);
 
     // Convert the TransformOperations into matrices
-    FloatSize size;
     TransformationMatrix fromT;
     TransformationMatrix toT;
     if (from)
-        from->apply(fromT, size);
+        from->apply(fromT);
 
-    apply(toT, size);
+    apply(toT);
 
     if (blendToIdentity)
         return createOperation(fromT, toT, context);
     return createOperation(toT, fromT, context);
-}
-
-bool Matrix3DTransformOperation::isRepresentableIn2D() const
-{
-    return m_matrix.isAffine();
 }
 
 void Matrix3DTransformOperation::dump(TextStream& ts) const

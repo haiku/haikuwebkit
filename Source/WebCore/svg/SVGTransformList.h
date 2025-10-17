@@ -69,7 +69,7 @@ private:
         Replace
     };
     template<typename CharacterType> bool parseGeneric(StringParsingBuffer<CharacterType>&, ListReplacement = ListReplacement::Append);
-    bool parse(StringParsingBuffer<LChar>&);
+    bool parse(StringParsingBuffer<Latin1Character>&);
     bool parse(StringParsingBuffer<char16_t>&);
 };
 

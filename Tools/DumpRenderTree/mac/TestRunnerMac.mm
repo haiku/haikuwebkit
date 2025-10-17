@@ -92,6 +92,10 @@
 #import "WebHTMLViewForTestingMac.h"
 #endif
 
+#if ENABLE(DNS_SERVER_FOR_TESTING)
+#import <pal/spi/cocoa/NetworkSPI.h>
+#endif
+
 #if !PLATFORM(IOS_FAMILY)
 
 @interface CommandValidationTarget : NSObject <NSValidatedUserInterfaceItem>
@@ -1214,3 +1218,19 @@ void TestRunner::setObscuredContentInsets(double top, double right, double botto
 {
     [[mainFrame webView] _setObscuredTopContentInsetForTesting:top right:right bottom:bottom left:left];
 }
+
+#if ENABLE(DNS_SERVER_FOR_TESTING)
+void TestRunner::initializeDNS()
+{
+    auto webPlatformTestDomain = "web-platform.test"_s;
+    m_resolverConfig = adoptOSObject(nw_resolver_config_create());
+    RELEASE_ASSERT(m_resolverConfig);
+    if (auto resolverConfig = m_resolverConfig) {
+        nw_resolver_config_set_protocol(resolverConfig.get(), nw_resolver_protocol_dns53);
+        nw_resolver_config_set_class(resolverConfig.get(), nw_resolver_class_designated_direct);
+        nw_resolver_config_add_name_server(resolverConfig.get(), "127.0.0.1:8053");
+        nw_resolver_config_add_match_domain(resolverConfig.get(), webPlatformTestDomain.characters());
+        nw_privacy_context_require_encrypted_name_resolution(NW_DEFAULT_PRIVACY_CONTEXT, true, resolverConfig.get());
+    }
+}
+#endif

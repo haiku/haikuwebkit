@@ -41,6 +41,7 @@
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "ExceptionOr.h"
+#include "LargestContentfulPaint.h"
 #include "LocalFrame.h"
 #include "Logging.h"
 #include "PerformanceEntry.h"
@@ -211,6 +212,8 @@ Vector<Ref<PerformanceEntry>> Performance::getEntries() const
     if (m_firstContentfulPaint)
         entries.append(*m_firstContentfulPaint);
 
+    // getEntries should not include largest-contentful-paint.
+
     if (m_firstInput)
         entries.append(*m_firstInput);
 
@@ -230,6 +233,8 @@ Vector<Ref<PerformanceEntry>> Performance::getEntriesByType(const String& entryT
 
     if (m_firstContentfulPaint && entryType == "paint"_s)
         entries.append(*m_firstContentfulPaint);
+
+    // getEntriesByType should not include largest-contentful-paint.
 
     if (m_userTiming) {
         if (entryType == "mark"_s)
@@ -262,6 +267,8 @@ Vector<Ref<PerformanceEntry>> Performance::getEntriesByName(const String& name, 
     if (m_firstContentfulPaint && (entryType.isNull() || entryType == "paint"_s) && name == "first-contentful-paint"_s)
         entries.append(*m_firstContentfulPaint);
 
+    // getEntriesByName should not include largest-contentful-paint.
+
     if (m_userTiming) {
         if (entryType.isNull() || entryType == "mark"_s)
             entries.appendVector(m_userTiming->getMarks(name));
@@ -290,6 +297,9 @@ void Performance::appendBufferedEntriesByType(const String& entryType, Vector<Re
 
     if (entryType == "paint"_s && m_firstContentfulPaint)
         entries.append(*m_firstContentfulPaint);
+
+    if (entryType == "largest-contentful-paint"_s && m_largestContentfulPaint)
+        entries.append(*m_largestContentfulPaint);
 
     if (entryType == "event"_s)
         entries.appendVector(m_eventTimingBuffer);
@@ -363,11 +373,17 @@ void Performance::setResourceTimingBufferSize(unsigned size)
     m_resourceTimingBufferFullFlag = false;
 }
 
-void Performance::reportFirstContentfulPaint()
+void Performance::reportFirstContentfulPaint(DOMHighResTimeStamp timestamp)
 {
     ASSERT(!m_firstContentfulPaint);
-    m_firstContentfulPaint = PerformancePaintTiming::createFirstContentfulPaint(now());
+    m_firstContentfulPaint = PerformancePaintTiming::createFirstContentfulPaint(timestamp);
     queueEntry(*m_firstContentfulPaint);
+}
+
+void Performance::reportLargestContentfulPaint(Ref<LargestContentfulPaint>&& paintEntry)
+{
+    m_largestContentfulPaint = RefPtr { WTFMove(paintEntry) };
+    queueEntry(*m_largestContentfulPaint);
 }
 
 void Performance::addNavigationTiming(DocumentLoader& documentLoader, Document& document, CachedResource& resource, const DocumentLoadTiming& timing, const NetworkLoadMetrics& metrics)

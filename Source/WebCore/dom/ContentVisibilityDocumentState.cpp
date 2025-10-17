@@ -35,6 +35,7 @@
 #include "IntersectionObserverCallback.h"
 #include "IntersectionObserverEntry.h"
 #include "Logging.h"
+#include "NodeDocument.h"
 #include "NodeRenderStyle.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"

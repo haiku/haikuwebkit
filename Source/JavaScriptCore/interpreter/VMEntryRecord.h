@@ -41,6 +41,8 @@ struct VMEntryRecord {
      * after callee save registers where local variables would go.
      */
     VM* const m_vm;
+    // The following two fields are sometimes treated as a pair in assembly code, making usages of the second one implicit.
+    // To find them, look for loadpairq/storepairq of "VMEntryRecord::m_prevTopCallFrame" in *.asm files.
     CallFrame* const m_prevTopCallFrame;
     EntryFrame* const m_prevTopEntryFrame;
 

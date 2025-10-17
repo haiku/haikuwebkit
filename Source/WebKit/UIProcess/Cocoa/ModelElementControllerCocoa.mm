@@ -320,7 +320,8 @@ void ModelElementController::modelElementSizeDidChange(const String& uuid, WebCo
                 return;
             }
 
-            auto fenceSendRight = MachSendRight::adopt([strongFenceHandle copyPort]);
+            // FIXME: This is a safer cpp false positive.
+            SUPPRESS_RETAINPTR_CTOR_ADOPT auto fenceSendRight = MachSendRight::adopt([strongFenceHandle copyPort]);
             [strongFenceHandle invalidate];
             handler(WTFMove(fenceSendRight));
         });

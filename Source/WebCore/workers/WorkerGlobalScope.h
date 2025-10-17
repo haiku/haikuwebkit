@@ -114,8 +114,7 @@ public:
     WorkerSWClientConnection& swClientConnection();
     void updateServiceWorkerClientData() final;
 
-    WorkerThread& thread() const;
-    Ref<WorkerThread> protectedThread() const;
+    Ref<WorkerThread> thread() const;
 
     using ScriptExecutionContext::hasPendingActivity;
 
@@ -206,6 +205,7 @@ private:
     EventTarget* errorEventTarget() final;
     String resourceRequestIdentifier() const final { return m_inspectorIdentifier; }
     SocketProvider* socketProvider() final;
+    RefPtr<SocketProvider> protectedSocketProvider();
     RefPtr<RTCDataChannelRemoteHandlerConnection> createRTCDataChannelRemoteHandlerConnection() final;
 
     bool shouldBypassMainWorldContentSecurityPolicy() const final { return m_shouldBypassMainWorldContentSecurityPolicy; }

@@ -32,6 +32,7 @@
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
+#include "NodeDocument.h"
 #include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "Settings.h"
@@ -109,10 +110,10 @@ FloatBoxExtent PrintContext::computedPageMargin(FloatBoxExtent printMargin)
     auto marginLeft = style->marginLeft().tryFixed();
 
     return {
-        marginTop ? marginTop->value * pixelToPointScaleFactor : printMargin.top(),
-        marginRight ? marginRight->value * pixelToPointScaleFactor : printMargin.right(),
-        marginBottom ? marginBottom->value * pixelToPointScaleFactor : printMargin.bottom(),
-        marginLeft ? marginLeft->value * pixelToPointScaleFactor : printMargin.left(),
+        marginTop ? marginTop->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.top(),
+        marginRight ? marginRight->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.right(),
+        marginBottom ? marginBottom->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.bottom(),
+        marginLeft ? marginLeft->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.left(),
     };
 }
 
@@ -389,7 +390,7 @@ String PrintContext::pageProperty(LocalFrame* frame, const String& propertyName,
     // Implement formatters for properties we care about.
     if (propertyName == "margin-left"_s) {
         if (auto marginLeft = style->marginLeft().tryFixed())
-            return String::number(marginLeft->value);
+            return String::number(marginLeft->resolveZoom(Style::ZoomNeeded { }));
         return autoAtom();
     }
     if (propertyName == "line-height"_s)
@@ -410,7 +411,7 @@ String PrintContext::pageProperty(LocalFrame* frame, const String& propertyName,
                 return "portrait"_s;
             },
             [&](const Style::PageSize::Lengths& lengths) {
-                return makeString(lengths.width().value, ' ', lengths.height().value);
+                return makeString(lengths.width().resolveZoom(Style::ZoomNeeded { }), ' ', lengths.height().resolveZoom(Style::ZoomNeeded { }));
             }
         );
     }

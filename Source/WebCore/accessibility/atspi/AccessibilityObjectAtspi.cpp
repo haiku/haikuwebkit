@@ -366,6 +366,8 @@ static Atspi::Role atspiRole(AccessibilityRole role)
     case AccessibilityRole::TableHeaderContainer:
     case AccessibilityRole::Suggestion:
     case AccessibilityRole::RemoteFrame:
+    case AccessibilityRole::LocalFrame:
+    case AccessibilityRole::FrameHost:
         return Atspi::Role::Unknown;
     // Add most new roles above. The release assert is for roles that are handled specially.
     case AccessibilityRole::ListMarker:

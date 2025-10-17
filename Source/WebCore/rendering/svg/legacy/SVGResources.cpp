@@ -35,7 +35,6 @@
 #include "SVGMarkerElement.h"
 #include "SVGNames.h"
 #include "SVGPatternElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGURIReference.h"
 #include "StyleCachedImage.h"
 #include <wtf/RobinHoodHashSet.h>
@@ -221,8 +220,6 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
     if (tagName.isNull())
         return nullptr;
 
-    const SVGRenderStyle& svgStyle = style.svgStyle();
-
     auto ensureResources = [](std::unique_ptr<SVGResources>& resources) -> SVGResources& {
         if (!resources)
             resources = makeUnique<SVGResources>();
@@ -268,7 +265,7 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
         }
     }
 
-    if (markerTags().contains(tagName) && svgStyle.hasMarkers()) {
+    if (markerTags().contains(tagName) && style.hasMarkers()) {
         auto buildCachedMarkerResource = [&](const Style::SVGMarkerResource& markerResource, bool (SVGResources::*setMarker)(LegacyRenderSVGResourceMarker*)) {
             auto markerId = SVGURIReference::fragmentIdentifierFromIRIString(markerResource, document);
             if (auto* marker = getRenderSVGResourceById<LegacyRenderSVGResourceMarker>(treeScope, markerId))
@@ -276,25 +273,25 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
             else
                 treeScope->addPendingSVGResource(markerId, element);
         };
-        buildCachedMarkerResource(svgStyle.markerStart(), &SVGResources::setMarkerStart);
-        buildCachedMarkerResource(svgStyle.markerMid(), &SVGResources::setMarkerMid);
-        buildCachedMarkerResource(svgStyle.markerEnd(), &SVGResources::setMarkerEnd);
+        buildCachedMarkerResource(style.markerStart(), &SVGResources::setMarkerStart);
+        buildCachedMarkerResource(style.markerMid(), &SVGResources::setMarkerMid);
+        buildCachedMarkerResource(style.markerEnd(), &SVGResources::setMarkerEnd);
     }
 
     if (fillAndStrokeTags().contains(tagName)) {
-        if (svgStyle.hasFill()) {
+        if (style.hasFill()) {
             bool hasPendingResource = false;
             AtomString id;
-            if (auto* fill = paintingResourceFromSVGPaint(treeScope, svgStyle.fill(), id, hasPendingResource))
+            if (auto* fill = paintingResourceFromSVGPaint(treeScope, style.fill(), id, hasPendingResource))
                 ensureResources(foundResources).setFill(fill);
             else if (hasPendingResource)
                 treeScope->addPendingSVGResource(id, element);
         }
 
-        if (svgStyle.hasStroke()) {
+        if (style.hasStroke()) {
             bool hasPendingResource = false;
             AtomString id;
-            if (auto* stroke = paintingResourceFromSVGPaint(treeScope, svgStyle.stroke(), id, hasPendingResource))
+            if (auto* stroke = paintingResourceFromSVGPaint(treeScope, style.stroke(), id, hasPendingResource))
                 ensureResources(foundResources).setStroke(stroke);
             else if (hasPendingResource)
                 treeScope->addPendingSVGResource(id, element);

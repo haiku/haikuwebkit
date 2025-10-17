@@ -51,6 +51,7 @@ public:
 
 #if PLATFORM(COCOA)
     const RetainPtr<id>& body() const { return m_body; }
+    const RetainPtr<NSString> cocoaName() const { return m_cocoaName; }
 #endif
     API::Object* apiBody() const { return m_apiBody.get(); }
     WebKit::WebPageProxy* page() const;
@@ -61,9 +62,10 @@ public:
 private:
     ScriptMessage(RefPtr<API::Object>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, const WTF::String&, Ref<API::ContentWorld>&&);
 #if PLATFORM(COCOA)
-    ScriptMessage(RetainPtr<id>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, const WTF::String&, Ref<API::ContentWorld>&&);
+    ScriptMessage(RetainPtr<id>&&, WebKit::WebPageProxy&, Ref<API::FrameInfo>&&, RetainPtr<NSString>&&, Ref<API::ContentWorld>&&);
 
     const RetainPtr<id> m_body;
+    const RetainPtr<NSString> m_cocoaName;
 #endif
     const RefPtr<API::Object> m_apiBody;
     const WeakPtr<WebKit::WebPageProxy> m_page;

@@ -218,7 +218,7 @@ void PeerConnectionBackend::handleLogMessage(const WTFLogChannel& channel, WTFLo
         return;
 
     if (!m_logIdentifierString)
-        m_logIdentifierString = makeString(hex(m_logIdentifier));
+        m_logIdentifierString = makeString(m_logIdentifier);
 
     auto identifier = callSite.substring(leftParenthesisIndex + 1, rightParenthesisIndex - leftParenthesisIndex - 1);
     if (identifier != m_logIdentifierString)
@@ -253,7 +253,7 @@ void PeerConnectionBackend::createOfferSucceeded(String&& sdp)
     ASSERT(isMainThread());
 
 #if !RELEASE_LOG_DISABLED
-    logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "to:\n", sdp);
+    logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "SDP offer created:\n", sdp);
     RELEASE_LOG_FORWARDABLE(WebRTC, PEERCONNECTIONBACKEND_CREATEOFFERSUCCEEDED, logIdentifier(), sdp.utf8());
 #endif
 
@@ -289,7 +289,7 @@ void PeerConnectionBackend::createAnswerSucceeded(String&& sdp)
     ASSERT(isMainThread());
 
 #if !RELEASE_LOG_DISABLED
-    logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "to:\n", sdp);
+    logger().toObservers(LogWebRTC, WTFLogLevel::Always, LOGIDENTIFIER, "SDP answer created:\n", sdp);
     RELEASE_LOG_FORWARDABLE(WebRTC, PEERCONNECTIONBACKEND_CREATEANSWERSUCCEEDED, logIdentifier(), sdp.utf8());
 #endif
 

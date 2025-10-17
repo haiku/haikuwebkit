@@ -41,6 +41,7 @@
 #include "ImageBitmap.h"
 #include "ImageBitmapRenderingContext.h"
 #include "ImageData.h"
+#include "InspectorCanvasCallTracer.h"
 #include "InspectorInstrumentation.h"
 #include "InspectorShaderProgram.h"
 #include "InstrumentingAgents.h"
@@ -524,18 +525,7 @@ bool InspectorCanvasAgent::isWebGLProgramHighlighted(WebGLProgram& program)
 
 #endif // ENABLE(WEBGL)
 
-#define PROCESS_ARGUMENT_DEFINITION(ArgumentType) \
-std::optional<InspectorCanvasCallTracer::ProcessedArgument> InspectorCanvasAgent::processArgument(CanvasRenderingContext& canvasRenderingContext, ArgumentType argument) \
-{ \
-    auto inspectorCanvas = findInspectorCanvas(canvasRenderingContext); \
-    ASSERT(inspectorCanvas); \
-    return inspectorCanvas->processArgument(argument); \
-} \
-// end of PROCESS_ARGUMENT_DEFINITION
-    FOR_EACH_INSPECTOR_CANVAS_CALL_TRACER_ARGUMENT(PROCESS_ARGUMENT_DEFINITION)
-#undef PROCESS_ARGUMENT_DEFINITION
-
-void InspectorCanvasAgent::recordAction(CanvasRenderingContext& canvasRenderingContext, String&& name, InspectorCanvasCallTracer::ProcessedArguments&& arguments)
+void InspectorCanvasAgent::recordAction(CanvasRenderingContext& canvasRenderingContext, String&& name, InspectorCanvasProcessedArguments&& arguments)
 {
     ASSERT(canvasRenderingContext.hasActiveInspectorCanvasCallTracer());
 

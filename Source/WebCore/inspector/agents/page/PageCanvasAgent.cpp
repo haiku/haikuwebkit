@@ -44,6 +44,7 @@
 #include "InspectorDOMAgent.h"
 #include "InstrumentingAgents.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "Page.h"
 #include <wtf/TZoneMallocInlines.h>

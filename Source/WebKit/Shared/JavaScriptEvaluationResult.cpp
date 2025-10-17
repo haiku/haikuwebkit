@@ -32,8 +32,10 @@
 #include "APINumber.h"
 #include "APISerializedNode.h"
 #include "APIString.h"
+#include "InjectedBundleScriptWorld.h"
 #include "WKSharedAPICast.h"
 #include "WebFrame.h"
+#include <WebCore/DOMWrapperWorld.h>
 #include <WebCore/Document.h>
 #include <WebCore/ExceptionDetails.h>
 #include <WebCore/JSWebKitJSHandle.h>
@@ -114,7 +116,7 @@ RefPtr<API::Object> JavaScriptEvaluationResult::APIInserter::toAPI(Value&& root)
         m_dictionaries.append({ WTFMove(map), dictionary });
         return { WTFMove(dictionary) };
     }, [] (UniqueRef<JSHandleInfo>&& info) -> RefPtr<API::Object> {
-        return API::JSHandle::getOrCreate(WTFMove(info.get()));
+        return API::JSHandle::create(WTFMove(info.get()));
     }, [] (UniqueRef<WebCore::SerializedNode>&& node) -> RefPtr<API::Object> {
         return API::SerializedNode::create(WTFMove(node.get()));
     });
@@ -304,8 +306,9 @@ auto JavaScriptEvaluationResult::JSExtractor::toValue(JSGlobalContextRef context
         auto* domGlobalObject = jsCast<WebCore::JSDOMGlobalObject*>(globalObject);
         RefPtr document = dynamicDowncast<Document>(domGlobalObject->scriptExecutionContext());
         RefPtr frame = WebFrame::webFrame(document->frameID());
+        RefPtr world = InjectedBundleScriptWorld::get(domGlobalObject->world());
         Ref ref { info->wrapped() };
-        return makeUniqueRef<JSHandleInfo>(ref->identifier(), frame->info(), ref->windowFrameIdentifier());
+        return makeUniqueRef<JSHandleInfo>(ref->identifier(), world->identifier(), frame->info(), ref->windowFrameIdentifier());
     }
 
     if (auto* node = jsDynamicCast<JSWebKitSerializedNode*>(jsObject)) {

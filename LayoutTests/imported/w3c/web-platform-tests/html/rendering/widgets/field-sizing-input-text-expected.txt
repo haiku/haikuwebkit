@@ -15,8 +15,8 @@ PASS search: Auto width and auto height with a long text
 PASS search: Explicit width and heigth
 PASS search: Explicit width and auto height
 PASS search: Explicit height and auto width
-PASS search: Text caret is taller than the placeholder
-FAIL search: Text caret is shorter than the placeholder assert_less_than: expected a number less than 19 but got 19
+FAIL search: Text caret is taller than the placeholder assert_less_than: expected a number less than 114 but got 114
+PASS search: Text caret is shorter than the placeholder
 PASS search: Update field-sizing property dynamically
 PASS tel: Empty value
 PASS tel: Empty value with a size atttribute

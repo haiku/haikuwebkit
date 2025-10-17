@@ -1157,7 +1157,7 @@ size_t InlineDisplayContentBuilder::processRubyBase(size_t rubyBaseStart, Inline
     if (annotationBox) {
         auto placeAndSizeAnnotationBox = [&] {
             if (RubyFormattingContext::hasInterCharacterAnnotation(rubyBaseLayoutBox)) {
-                auto letterSpacing = LayoutUnit { rubyBaseLayoutBox.style().letterSpacing() };
+                auto letterSpacing = LayoutUnit { rubyBaseLayoutBox.style().usedLetterSpacing() };
                 // FIXME: Consult the LineBox to see if letter spacing indeed applies.
                 baseBorderBoxLogicalRect.setWidth(std::max(0_lu, baseBorderBoxLogicalRect.width() - letterSpacing));
             }

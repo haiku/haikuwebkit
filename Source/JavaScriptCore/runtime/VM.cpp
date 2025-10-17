@@ -1347,9 +1347,13 @@ void VM::drainMicrotasks()
     if (executionForbidden()) [[unlikely]]
         m_defaultMicrotaskQueue.clear();
     else {
+        std::optional<VMEntryScope> entryScope;
+        if (!m_defaultMicrotaskQueue.isEmpty())
+            entryScope.emplace(*this, nullptr);
         do {
             m_defaultMicrotaskQueue.performMicrotaskCheckpoint(*this,
                 [&](QueuedTask& task) ALWAYS_INLINE_LAMBDA {
+                    entryScope->setGlobalObject(task.globalObject());
                     if (RefPtr dispatcher = task.dispatcher())
                         return dispatcher->run(task);
 

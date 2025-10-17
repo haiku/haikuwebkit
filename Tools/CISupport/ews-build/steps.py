@@ -3917,7 +3917,8 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep, AddToLogMixin):
     descriptionDone = ['analyze-jsc-tests-results']
     NUM_FAILURES_TO_DISPLAY = 10
 
-    def start(self):
+    @defer.inlineCallbacks
+    def run(self):
         stress_failures_with_change = set(self.getProperty('jsc_stress_test_failures', []))
         binary_failures_with_change = set(self.getProperty('jsc_binary_failures', []))
         clean_tree_stress_failures = set(self.getProperty('jsc_clean_tree_stress_test_failures', []))
@@ -3935,26 +3936,28 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep, AddToLogMixin):
         self.new_stress_failures_to_display = ', '.join(sorted(list(new_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY])
         self.new_binary_failures_to_display = ', '.join(sorted(list(new_binary_failures))[:self.NUM_FAILURES_TO_DISPLAY])
 
-        self._addToLog('stderr', '\nFailures with change: {}'.format(list(binary_failures_with_change) + list(stress_failures_with_change))[:self.NUM_FAILURES_TO_DISPLAY])
-        self._addToLog('stderr', '\nFlaky Tests with change: {}'.format(', '.join(flaky_stress_failures_with_change)))
-        self._addToLog('stderr', '\nFailures on clean tree: {}'.format(clean_tree_failures_string))
-        self._addToLog('stderr', '\nFlaky Tests on clean tree: {}'.format(', '.join(clean_tree_flaky_stress_failures)))
+        yield self._addToLog('stderr', '\nFailures with change: {}'.format(list(binary_failures_with_change) + list(stress_failures_with_change))[:self.NUM_FAILURES_TO_DISPLAY])
+        yield self._addToLog('stderr', '\nFlaky Tests with change: {}'.format(', '.join(flaky_stress_failures_with_change)))
+        yield self._addToLog('stderr', '\nFailures on clean tree: {}'.format(clean_tree_failures_string))
+        yield self._addToLog('stderr', '\nFlaky Tests on clean tree: {}'.format(', '.join(clean_tree_flaky_stress_failures)))
 
         if (not stress_failures_with_change) and (not binary_failures_with_change):
             # If we've made it here, then jsc-tests and re-run-jsc-tests failed, which means
             # there should have been some test failures. Otherwise there is some unexpected issue.
             clean_tree_run_status = self.getProperty('clean_tree_run_status', FAILURE)
             if clean_tree_run_status in [SUCCESS, WARNINGS]:
-                return self.report_failure(set(), set())
+                self.report_failure(set(), set())
+                defer.returnValue(FAILURE)
             # TODO: email EWS admins
-            return self.retry_build('Unexpected infrastructure issue, retrying build')
+            self.retry_build('Unexpected infrastructure issue, retrying build')
+            defer.returnValue(RETRY)
 
         if new_stress_failures or new_binary_failures:
-            self._addToLog('stderr', '\nNew binary failures: {}.\nNew stress test failures: {}\n'.format(self.new_binary_failures_to_display, self.new_stress_failures_to_display))
-            return self.report_failure(new_binary_failures, new_stress_failures)
+            yield self._addToLog('stderr', '\nNew binary failures: {}.\nNew stress test failures: {}\n'.format(self.new_binary_failures_to_display, self.new_stress_failures_to_display))
+            self.report_failure(new_binary_failures, new_stress_failures)
+            defer.returnValue(FAILURE)
         else:
-            self._addToLog('stderr', '\nNo new failures\n')
-            self.finished(SUCCESS)
+            yield self._addToLog('stderr', '\nNo new failures\n')
             self.build.results = SUCCESS
             self.descriptionDone = 'Passed JSC tests'
             pluralSuffix = 's' if len(clean_tree_failures) > 1 else ''
@@ -3970,13 +3973,11 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep, AddToLogMixin):
                 for flaky_failure in flaky_stress_failures:
                     self.send_email_for_flaky_failure(flaky_failure)
             self.build.buildFinished([message], SUCCESS)
-        return defer.succeed(None)
+        defer.returnValue(SUCCESS)
 
     def retry_build(self, message):
         self.descriptionDone = message
-        self.finished(RETRY)
         self.build.buildFinished([message], RETRY)
-        return defer.succeed(None)
 
     def report_failure(self, new_binary_failures, new_stress_failures):
         message = ''
@@ -3993,11 +3994,9 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep, AddToLogMixin):
             if len(new_stress_failures) > self.NUM_FAILURES_TO_DISPLAY:
                 message += ' ...'
 
-        self.finished(FAILURE)
         self.build.results = FAILURE
         self.descriptionDone = message
         self.build.buildFinished([message], FAILURE)
-        return defer.succeed(None)
 
     def send_email_for_flaky_failure(self, test_name):
         try:
@@ -4325,6 +4324,7 @@ class RunWebKitTests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
             if RunWebKitTestsInStressMode.FAILURE_MSG_IN_STRESS_MODE not in previous_build_summary:
                 self.setProperty('build_summary', message)
             steps_to_add += [ArchiveTestResults(), UploadTestResults(), ExtractTestResults()]
+            self.build.addStepsAfterCurrentStep(steps_to_add)
             return WARNINGS
         else:
             steps_to_add += [
@@ -4841,7 +4841,7 @@ class AnalyzeLayoutTestsResults(buildstep.BuildStep, BugzillaMixin, GitHubMixin)
         clean_tree_results_failing_tests = set(self.getProperty('clean_tree_run_failures', []))
         flaky_failures = first_results_failing_tests.union(second_results_failing_tests) - first_results_failing_tests.intersection(second_results_failing_tests)
         num_flaky_failures = len(flaky_failures)
-        flaky_failures_string = ', '.join(sorted(flaky_failures))
+        flaky_failures_string = ', '.join(sorted(flaky_failures)[:self.NUM_FAILURES_TO_DISPLAY])
 
         if (not first_results_failing_tests) and (not second_results_failing_tests):
             # If we've made it here, then layout-tests and re-run-layout-tests failed, which means

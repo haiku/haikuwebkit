@@ -306,7 +306,7 @@ XrResult OpenXRInputSource::updateInteractionProfile()
     m_profiles.clear();
     for (auto& profile : openXRInteractionProfiles) {
         if (equalSpans(profile.path.span(), unsafeSpan(buffer))) {
-            m_usingHandInteractionProfile = equalSpans(profile.path.span(), handInteractionProfileName.span());
+            m_usingHandInteractionProfile = equalSpans(profile.path.span(), handInteractionProfilePath.span());
             LOG(XR, "Input source %s using interaction profile %s", m_subactionPathName.utf8().data(), profile.path.span().data());
             for (const auto& id : profile.profileIds)
                 m_profiles.append(String::fromUTF8(id));

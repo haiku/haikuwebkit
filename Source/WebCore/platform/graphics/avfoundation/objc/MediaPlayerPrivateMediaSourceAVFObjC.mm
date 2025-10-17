@@ -812,7 +812,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::acceleratedRenderingStateChanged()
             // Gathering video frame metadata changed.
             if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
                 mediaSourcePrivate->videoRendererWillReconfigure(*renderer);
-            renderer->setPreferences(m_loadOptions.videoMediaSampleRendererPreferences | VideoMediaSampleRendererPreference::PrefersDecompressionSession);
+            renderer->setPreferences(m_loadOptions.videoRendererPreferences | VideoRendererPreference::PrefersDecompressionSession);
             if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
                 mediaSourcePrivate->videoRendererDidReconfigure(*renderer);
             return;
@@ -1250,7 +1250,7 @@ Ref<VideoMediaSampleRenderer> MediaPlayerPrivateMediaSourceAVFObjC::createVideoM
     });
     setVideoFrameMetadataGatheringCallbackIfNeeded(videoRenderer);
     videoRenderer->setResourceOwner(m_resourceOwner);
-    videoRenderer->setPreferences(m_loadOptions.videoMediaSampleRendererPreferences);
+    videoRenderer->setPreferences(m_loadOptions.videoRendererPreferences);
     return videoRenderer;
 }
 
@@ -1261,9 +1261,9 @@ MediaPlayerPrivateMediaSourceAVFObjC::AcceleratedVideoMode MediaPlayerPrivateMed
 
 bool MediaPlayerPrivateMediaSourceAVFObjC::canUseDecompressionSession() const
 {
-    if (!m_loadOptions.videoMediaSampleRendererPreferences.contains(VideoMediaSampleRendererPreference::PrefersDecompressionSession))
+    if (!m_loadOptions.videoRendererPreferences.contains(VideoRendererPreference::PrefersDecompressionSession))
         return false;
-    if (m_loadOptions.videoMediaSampleRendererPreferences.contains(VideoMediaSampleRendererPreference::UseDecompressionSessionForProtectedContent))
+    if (m_loadOptions.videoRendererPreferences.contains(VideoRendererPreference::UseDecompressionSessionForProtectedContent))
         return true;
     RefPtr mediaSourcePrivate = m_mediaSourcePrivate;
     return !mediaSourcePrivate || (!mediaSourcePrivate->cdmInstance() && !mediaSourcePrivate->needsVideoLayer());
@@ -1283,7 +1283,7 @@ bool MediaPlayerPrivateMediaSourceAVFObjC::willUseDecompressionSessionIfNeeded()
     if (!canUseDecompressionSession())
         return false;
 
-    return m_loadOptions.videoMediaSampleRendererPreferences.contains(VideoMediaSampleRendererPreference::PrefersDecompressionSession) || m_isGatheringVideoFrameMetadata;
+    return m_loadOptions.videoRendererPreferences.contains(VideoRendererPreference::PrefersDecompressionSession) || m_isGatheringVideoFrameMetadata;
 }
 
 bool MediaPlayerPrivateMediaSourceAVFObjC::shouldBePlaying() const

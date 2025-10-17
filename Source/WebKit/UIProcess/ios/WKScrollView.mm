@@ -669,10 +669,14 @@ static inline bool valuesAreWithinOnePixel(CGFloat a, CGFloat b)
     [self _updateTopPocketColor];
 }
 
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)_setPocketColor:(UIColor *)color forEdge:(UIRectEdge)edge
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if (edge != UIRectEdgeTop) {
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         [super _setPocketColor:color forEdge:edge];
+ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
@@ -684,7 +688,9 @@ static inline bool valuesAreWithinOnePixel(CGFloat a, CGFloat b)
 - (void)_updateTopPocketColor
 {
     RetainPtr colorToSet = _topPocketColorSetByClient ?: _topPocketColorSetInternally;
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     [super _setPocketColor:colorToSet.get() forEdge:UIRectEdgeTop];
+ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (BOOL)_usesHardTopScrollEdgeEffect

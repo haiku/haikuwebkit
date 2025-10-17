@@ -27,6 +27,7 @@
 
 #include "FormattingContext.h"
 #include <WebCore/LayoutBoxGeometry.h>
+#include <WebCore/StyleZoomPrimitives.h>
 
 namespace WebCore {
 
@@ -129,14 +130,14 @@ std::optional<LayoutUnit> FormattingGeometry::computedValue(const auto& geometry
 {
     // In general, the computed value resolves the specified value as far as possible without laying out the content.
     if (geometryProperty.isSpecified())
-        return Style::evaluate(geometryProperty, containingBlockWidth, 1.0f /* FIXME FIND ZOOM */);
+        return Style::evaluate<LayoutUnit>(geometryProperty, containingBlockWidth, Style::ZoomNeeded { });
     return { };
 }
 
 std::optional<LayoutUnit> FormattingGeometry::fixedValue(const auto& geometryProperty) const
 {
     if (auto fixed = geometryProperty.tryFixed())
-        return LayoutUnit { fixed->value };
+        return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
     return { };
 }
 

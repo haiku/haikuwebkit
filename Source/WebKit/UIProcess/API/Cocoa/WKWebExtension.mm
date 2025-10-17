@@ -127,7 +127,7 @@ WK_OBJECT_DEALLOC_IMPL_ON_MAIN_THREAD(WKWebExtension, WebExtension, _webExtensio
     return [self initWithAppExtensionBundle:nil resourceBaseURL:resourceBaseURL error:error];
 }
 
-- (instancetype)initWithAppExtensionBundle:(nullable NSBundle *)appExtensionBundle resourceBaseURL:(nullable NSURL *)resourceBaseURL error:(NSError **)error
+- (instancetype)initWithAppExtensionBundle:(NSBundle *)appExtensionBundle resourceBaseURL:(NSURL *)resourceBaseURL error:(NSError **)error
 {
     NSParameterAssert(appExtensionBundle || resourceBaseURL);
 
@@ -408,7 +408,7 @@ WK_OBJECT_DEALLOC_IMPL_ON_MAIN_THREAD(WKWebExtension, WebExtension, _webExtensio
     return [self initWithAppExtensionBundle:nil resourceBaseURL:resourceBaseURL error:error];
 }
 
-- (instancetype)initWithAppExtensionBundle:(nullable NSBundle *)bundle resourceBaseURL:(nullable NSURL *)resourceBaseURL error:(NSError **)error
+- (instancetype)initWithAppExtensionBundle:(NSBundle *)bundle resourceBaseURL:(NSURL *)resourceBaseURL error:(NSError **)error
 {
     if (error)
         *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFeatureUnsupportedError userInfo:nil];

@@ -34,6 +34,7 @@
 #include "Range.h"
 #include "Sizes.h"
 #include <algorithm>
+#include <cstddef>
 
 #if BOS(WINDOWS)
 #include <windows.h>
@@ -43,6 +44,7 @@
 #endif
 
 #if BOS(DARWIN)
+#include <mach/mach.h>
 #include <mach/vm_page_size.h>
 #endif
 

@@ -60,7 +60,7 @@ static NSDictionary *interactionRegionEffectUserInfo()
     static bool cached = false;
     if (!cached) {
         if (canLoadRCPAllowedInputTypesUserInfoKey())
-            interactionRegionEffectUserInfo.get() = @{ getRCPAllowedInputTypesUserInfoKey(): @(interactionRegionInputTypes) };
+            interactionRegionEffectUserInfo.get() = @{ getRCPAllowedInputTypesUserInfoKeySingleton(): @(interactionRegionInputTypes) };
         cached = true;
     }
     return interactionRegionEffectUserInfo.get().get();

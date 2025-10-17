@@ -83,6 +83,12 @@ public:
     void addChildThread(WorkerOrWorkletThread&);
     void removeChildThread(WorkerOrWorkletThread&);
 
+    virtual bool isWorkerThread() const { return false; }
+    virtual bool isDedicatedWorkerThread() const { return false; }
+    virtual bool isServiceWorkerThread() const { return false; }
+    virtual bool isSharedWorkerThread() const { return false; }
+    virtual bool isAudioWorkletThread() const { return false; }
+
 protected:
     explicit WorkerOrWorkletThread(const String& inspectorIdentifier, WorkerThreadMode = WorkerThreadMode::CreateNewThread);
     void workerOrWorkletThread();

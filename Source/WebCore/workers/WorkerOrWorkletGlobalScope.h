@@ -53,7 +53,7 @@ public:
     USING_CAN_MAKE_WEAKPTR(ScriptExecutionContext);
 
     bool isClosing() const { return m_isClosing; }
-    WorkerOrWorkletThread* workerOrWorkletThread() const { return m_thread; }
+    RefPtr<WorkerOrWorkletThread> workerOrWorkletThread() const;
 
     WorkerOrWorkletScriptController* script() const { return m_script.get(); }
     void clearScript();
@@ -70,7 +70,7 @@ public:
     void postTask(Task&&) final; // Executes the task on context's thread asynchronously.
     std::optional<PAL::SessionID> sessionID() const final { return m_sessionID; }
 
-    // Defined specifcially for WorkerOrWorkletGlobalScope for cooperation with
+    // Defined specifically for WorkerOrWorkletGlobalScope for cooperation with
     // WorkerEventLoop and WorkerRunLoop, not part of ScriptExecutionContext.
     void postTaskForMode(Task&&, const String&);
 
@@ -113,7 +113,7 @@ private:
 
     std::unique_ptr<WorkerOrWorkletScriptController> m_script;
     const UniqueRef<ScriptModuleLoader> m_moduleLoader;
-    WorkerOrWorkletThread* m_thread;
+    ThreadSafeWeakPtr<WorkerOrWorkletThread> m_thread;
     const RefPtr<WorkerEventLoop> m_eventLoop;
     const std::unique_ptr<EventLoopTaskGroup> m_defaultTaskGroup;
     const UniqueRef<WorkerInspectorController> m_inspectorController;

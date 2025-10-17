@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "Options.h"
+#include <JavaScriptCore/Options.h>
 #include <JavaScriptCore/WasmName.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/text/CString.h>

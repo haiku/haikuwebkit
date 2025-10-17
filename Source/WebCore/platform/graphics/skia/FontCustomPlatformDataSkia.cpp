@@ -72,7 +72,7 @@ FontPlatformData FontCustomPlatformData::fontPlatformData(const FontDescription&
         if (description.fontStyleAxis() == FontStyleAxis::ital)
             applyVariation({ { 'i', 't', 'a', 'l' } }, 1);
         else {
-            float slope = description.italic().value_or(normalItalicValue());
+            float slope = description.fontStyleSlope().value_or(normalItalicValue());
             if (auto slopeValue = fontCreationContext.fontFaceCapabilities().weight)
                 slope = std::max(std::min(slope, static_cast<float>(slopeValue->maximum)), static_cast<float>(slopeValue->minimum));
             applyVariation({ { 's', 'l', 'n', 't' } }, slope);

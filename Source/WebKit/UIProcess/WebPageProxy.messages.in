@@ -42,6 +42,7 @@ messages -> WebPageProxy {
     SetFocus(bool focused)
     TakeFocus(enum:uint8_t WebCore::FocusDirection direction)
     FocusFromServiceWorker() -> ()
+    FocusedElementChanged(std::optional<WebCore::FrameIdentifier> frameID, struct WebCore::FocusOptions options)
     FocusedFrameChanged(std::optional<WebCore::FrameIdentifier> frameID)
     SetRenderTreeSize(uint64_t treeSize)
     SetIsResizable(bool isResizable)
@@ -122,7 +123,7 @@ messages -> WebPageProxy {
     EndNetworkRequestsForPageLoadTiming(WebCore::FrameIdentifier frameID, WallTime timestamp)
 
     # Frame lifetime messages
-    DidCreateSubframe(WebCore::FrameIdentifier parent, WebCore::FrameIdentifier newFrameID, String frameName, WebCore::SandboxFlags sandboxFlags, enum:uint8_t WebCore::ScrollbarMode scrollingMode) CanDispatchOutOfOrder
+    DidCreateSubframe(WebCore::FrameIdentifier parent, WebCore::FrameIdentifier newFrameID, String frameName, WebCore::SandboxFlags sandboxFlags, WebCore::ReferrerPolicy referrerPolicy, enum:uint8_t WebCore::ScrollbarMode scrollingMode) CanDispatchOutOfOrder
     DidDestroyFrame(WebCore::FrameIdentifier frameID)
 
     # Frame load messages
@@ -146,6 +147,7 @@ messages -> WebPageProxy {
     DidExplicitOpenForFrame(WebCore::FrameIdentifier frameID, URL url, String mimeType)
     DidDestroyNavigation(WebCore::NavigationIdentifier navigationID)
     UpdateSandboxFlags(WebCore::FrameIdentifier frameID, WebCore::SandboxFlags sandboxFlags)
+    UpdateReferrerPolicy(WebCore::FrameIdentifier frameID, WebCore::ReferrerPolicy referrerPolicy)
     UpdateOpener(WebCore::FrameIdentifier frameID, WebCore::FrameIdentifier newOpener)
     [EnabledBy=SiteIsolationEnabled] UpdateScrollingMode(WebCore::FrameIdentifier frameID, enum:uint8_t WebCore::ScrollbarMode scrollingMode)
     [EnabledBy=SiteIsolationEnabled] SetFramePrinting(WebCore::FrameIdentifier frameID, bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, enum:bool WebCore::AdjustViewSize shouldAdjustViewSize);
@@ -204,15 +206,6 @@ messages -> WebPageProxy {
 #endif
 
     # BackForward messages
-    BackForwardAddItem(Ref<WebKit::FrameState> navigatedFrameState)
-    BackForwardSetChildItem(WebCore::BackForwardFrameItemIdentifier frameItemID, Ref<WebKit::FrameState> frameState)
-    BackForwardClearChildren(WebCore::BackForwardItemIdentifier itemID, WebCore::BackForwardFrameItemIdentifier frameItemID)
-    BackForwardUpdateItem(Ref<WebKit::FrameState> frameState)
-    BackForwardGoToItem(WebCore::BackForwardItemIdentifier itemID) -> (struct WebKit::WebBackForwardListCounts counts) Synchronous
-    BackForwardAllItems(WebCore::FrameIdentifier frameID) -> (Vector<Ref<WebKit::FrameState>> frameStates) Synchronous
-    BackForwardItemAtIndex(int32_t itemIndex, WebCore::FrameIdentifier frameID) -> (RefPtr<WebKit::FrameState> frameState) Synchronous
-    BackForwardListContainsItem(WebCore::BackForwardItemIdentifier itemID) -> (bool contains) Synchronous
-    BackForwardListCounts() -> (struct WebKit::WebBackForwardListCounts counts) Synchronous
     ShouldGoToBackForwardListItem(WebCore::BackForwardItemIdentifier itemID, bool inBackForwardCache) -> (enum:uint8_t WebCore::ShouldGoToHistoryItem shouldGoToHistoryItem)
     ShouldGoToBackForwardListItemSync(WebCore::BackForwardItemIdentifier itemID) -> (enum:uint8_t WebCore::ShouldGoToHistoryItem shouldGoToHistoryItem) Synchronous
 
@@ -465,7 +458,6 @@ messages -> WebPageProxy {
     DidPerformImmediateActionHitTest(struct WebKit::WebHitTestResultData result, bool contentPreventsDefault, WebKit::UserData userData) CanDispatchOutOfOrder
 #endif
     HandleMessage(String messageName, WebKit::UserData messageBody) AllowedWhenWaitingForSyncReply
-    HandleMessageWithAsyncReply(String messageName, WebKit::UserData messageBody) -> (WebKit::UserData reply)
     HandleSynchronousMessage(String messageName, WebKit::UserData messageBody) -> (WebKit::UserData returnData) Synchronous
 
     HandleAutoFillButtonClick(WebKit::UserData userData)

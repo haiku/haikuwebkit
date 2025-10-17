@@ -152,7 +152,7 @@ ALWAYS_INLINE JSString* jsSpliceSubstringsWithSeparators(JSGlobalObject* globalO
         return jsEmptyString(vm);
 
     if (source.is8Bit() && allSeparators8Bit) {
-        std::span<LChar> buffer;
+        std::span<Latin1Character> buffer;
         auto impl = StringImpl::tryCreateUninitialized(totalLength, buffer);
         if (!impl) {
             throwOutOfMemoryError(globalObject, scope);
@@ -237,7 +237,7 @@ ALWAYS_INLINE JSString* jsSpliceSubstringsWithSeparator(JSGlobalObject* globalOb
         return jsEmptyString(vm);
 
     if (source.is8Bit() && allSeparators8Bit) {
-        std::span<LChar> buffer;
+        std::span<Latin1Character> buffer;
         auto impl = StringImpl::tryCreateUninitialized(totalLength, buffer);
         if (!impl) {
             throwOutOfMemoryError(globalObject, scope);
@@ -524,7 +524,7 @@ static ALWAYS_INLINE JSString* jsSpliceSubstrings(JSGlobalObject* globalObject, 
         return jsEmptyString(vm);
 
     if (source.is8Bit()) {
-        std::span<LChar> buffer;
+        std::span<Latin1Character> buffer;
         auto sourceData = source.span8();
         auto impl = StringImpl::tryCreateUninitialized(totalLength, buffer);
         if (!impl) {
@@ -819,7 +819,7 @@ static ALWAYS_INLINE JSString* replaceAllWithCacheUsingRegExpSearchThreeArgument
 
     StringView sourceView { source };
     if (sourceView.is8Bit() && replacementsAre8Bit) {
-        std::span<LChar> buffer;
+        std::span<Latin1Character> buffer;
         auto impl = StringImpl::tryCreateUninitialized(totalLength, buffer);
         if (!impl) [[unlikely]] {
             throwOutOfMemoryError(globalObject, scope);
@@ -964,7 +964,7 @@ static ALWAYS_INLINE JSString* replaceAllWithCacheUsingRegExpSearch(VM& vm, JSGl
 
         StringView sourceView { source };
         if (sourceView.is8Bit() && replacementsAre8Bit) {
-            std::span<LChar> buffer;
+            std::span<Latin1Character> buffer;
             auto impl = StringImpl::tryCreateUninitialized(totalLength, buffer);
             if (!impl) [[unlikely]] {
                 throwOutOfMemoryError(globalObject, scope);

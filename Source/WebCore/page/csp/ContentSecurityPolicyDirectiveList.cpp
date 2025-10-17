@@ -622,11 +622,12 @@ void ContentSecurityPolicyDirectiveList::parseRequireTrustedTypesFor(ParsedDirec
             }
 
             auto begin = buffer.position();
-            if (skipExactlyIgnoringASCIICase(buffer, "'script'"_s))
+            if (skipExactlyIgnoringASCIICase(buffer, "'script'"_s) && (buffer.atEnd() || isUnicodeCompatibleASCIIWhitespace(*buffer)))
                 m_requireTrustedTypesForScript = true;
             else {
+                skipWhile<isNotASCIISpace>(buffer);
                 m_policy->reportInvalidTrustedTypesSinkGroup(std::span { begin, buffer.position() });
-                return;
+                continue;
             }
 
             ASSERT(buffer.atEnd() || isUnicodeCompatibleASCIIWhitespace(*buffer));

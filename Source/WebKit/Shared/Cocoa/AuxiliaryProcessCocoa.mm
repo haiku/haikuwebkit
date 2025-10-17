@@ -133,7 +133,7 @@ void AuxiliaryProcess::didReceiveInvalidMessage(IPC::Connection&, IPC::MessageNa
 
 bool AuxiliaryProcess::parentProcessHasEntitlement(ASCIILiteral entitlement)
 {
-    return WTF::hasEntitlement(m_connection->xpcConnection(), entitlement);
+    return WTF::hasEntitlement(protectedParentProcessConnection()->protectedXPCConnection().get(), entitlement);
 }
 
 void AuxiliaryProcess::platformStopRunLoop()
@@ -145,7 +145,11 @@ void AuxiliaryProcess::platformStopRunLoop()
 
 void AuxiliaryProcess::registerWithStateDumper(ASCIILiteral title)
 {
-    os_state_add_handler(mainDispatchQueueSingleton(), [this, title] (os_state_hints_t hints) {
+    os_state_add_handler(mainDispatchQueueSingleton(), [weakThis = WeakPtr { *this }, title] (os_state_hints_t hints) -> os_state_data_s* {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return nullptr;
+
         @autoreleasepool {
             os_state_data_t os_state = nullptr;
 
@@ -154,7 +158,7 @@ void AuxiliaryProcess::registerWithStateDumper(ASCIILiteral title)
             if (hints->osh_api == OS_STATE_API_ERROR)
                 return os_state;
 
-            auto stateDictionary = additionalStateForDiagnosticReport();
+            auto stateDictionary = protectedThis->additionalStateForDiagnosticReport();
 
             // Submitting an empty process state object may provide an
             // indication of the existance of private sessions, which we'd like
@@ -334,7 +338,7 @@ bool AuxiliaryProcess::isSystemWebKit()
         if ([path hasPrefix:@"/Library/Apple/System/"])
             return true;
 #endif
-        return [path hasPrefix:FileSystem::systemDirectoryPath()];
+        return [path hasPrefix:RetainPtr { FileSystem::systemDirectoryPath() }.get()];
     }();
 
     return isSystemWebKit;

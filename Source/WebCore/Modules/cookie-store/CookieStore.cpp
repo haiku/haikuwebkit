@@ -115,7 +115,7 @@ void CookieStore::MainThreadBridge::ensureOnMainThread(Function<void(ScriptExecu
         return;
     }
 
-    downcast<WorkerGlobalScope>(*context).protectedThread()->checkedWorkerLoaderProxy()->postTaskToLoader(WTFMove(task));
+    downcast<WorkerGlobalScope>(*context).thread()->checkedWorkerLoaderProxy()->postTaskToLoader(WTFMove(task));
 }
 
 void CookieStore::MainThreadBridge::ensureOnContextThread(Function<void(CookieStore&)>&& task)

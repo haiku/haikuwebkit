@@ -136,8 +136,8 @@ bool RemoteLayerTreeHost::updateBannerLayers(const RemoteLayerTreeTransaction& t
     if (!page)
         return false;
 
-    bool headerBannerLayerChanged = updateBannerLayer(page->headerBannerLayer(), scrolledContentsLayer.get());
-    bool footerBannerLayerChanged = updateBannerLayer(page->footerBannerLayer(), scrolledContentsLayer.get());
+    bool headerBannerLayerChanged = updateBannerLayer(page->protectedHeaderBannerLayer().get(), scrolledContentsLayer.get());
+    bool footerBannerLayerChanged = updateBannerLayer(page->protectedFooterBannerLayer().get(), scrolledContentsLayer.get());
     return headerBannerLayerChanged || footerBannerLayerChanged;
 }
 #endif
@@ -216,14 +216,15 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
         RemoteLayerTreePropertyApplier::applyProperties(*node, this, properties, m_nodes);
 
         if (m_isDebugLayerTreeHost) {
+            RetainPtr layer = node->layer();
             if (properties.changedProperties.contains(LayerChange::BorderWidthChanged))
-                node->layer().borderWidth = properties.borderWidth / indicatorScaleFactor;
-            node->layer().masksToBounds = false;
+                layer.get().borderWidth = properties.borderWidth / indicatorScaleFactor;
+            layer.get().masksToBounds = false;
         }
     }
     
     for (const auto& layerAndClone : clonesToUpdate)
-        layerForID(layerAndClone.layerID).contents = layerForID(layerAndClone.cloneLayerID).contents;
+        protectedLayerForID(layerAndClone.layerID).get().contents = protectedLayerForID(layerAndClone.cloneLayerID).get().contents;
 
     for (auto& destroyedLayer : transaction.destroyedLayers())
         layerWillBeRemoved(processIdentifier, destroyedLayer);
@@ -234,7 +235,7 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
         RefPtr node = nodeForID(newlyUnreachableLayerID);
         ASSERT(node);
         if (node) {
-            node->layer().contents = nullptr;
+            node->protectedLayer().get().contents = nullptr;
             node->setAsyncContentsIdentifier(std::nullopt);
         }
     }
@@ -381,9 +382,19 @@ CALayer *RemoteLayerTreeHost::layerForID(std::optional<WebCore::PlatformLayerIde
     return node->layer();
 }
 
+RetainPtr<CALayer> RemoteLayerTreeHost::protectedLayerForID(std::optional<WebCore::PlatformLayerIdentifier> layerID) const
+{
+    return layerForID(layerID);
+}
+
 CALayer *RemoteLayerTreeHost::rootLayer() const
 {
     return m_rootNode ? m_rootNode->layer() : nil;
+}
+
+RetainPtr<CALayer> RemoteLayerTreeHost::protectedRootLayer() const
+{
+    return rootLayer();
 }
 
 void RemoteLayerTreeHost::createLayer(const RemoteLayerTreeTransaction::LayerCreationProperties& properties)
@@ -391,13 +402,13 @@ void RemoteLayerTreeHost::createLayer(const RemoteLayerTreeTransaction::LayerCre
     ASSERT(!m_nodes.contains(*properties.layerID));
 
     auto node = makeNode(properties);
-
-    if ([node->layer() respondsToSelector:@selector(setUsesWebKitBehavior:)]) {
-        [node->layer() setUsesWebKitBehavior:YES];
-        if ([node->layer() isKindOfClass:[CATransformLayer class]])
-            [node->layer() setSortsSublayers:YES];
+    RetainPtr layer = node->layer();
+    if ([layer respondsToSelector:@selector(setUsesWebKitBehavior:)]) {
+        [layer setUsesWebKitBehavior:YES];
+        if ([layer isKindOfClass:[CATransformLayer class]])
+            [layer setSortsSublayers:YES];
         else
-            [node->layer() setSortsSublayers:NO];
+            [layer setSortsSublayers:NO];
     }
 
     if (auto* hostIdentifier = std::get_if<WebCore::LayerHostingContextIdentifier>(&properties.additionalData)) {
@@ -436,7 +447,7 @@ RefPtr<RemoteLayerTreeNode> RemoteLayerTreeHost::makeNode(const RemoteLayerTreeT
         auto layer = RemoteLayerTreeNode::createWithPlainLayer(*properties.layerID);
         // So that the scrolling thread's performance logging code can find all the tiles, mark this as being a tile.
         if (properties.type == PlatformCALayer::LayerType::LayerTypeTiledBackingTileLayer)
-            [layer->layer() setValue:@YES forKey:@"isTile"];
+            [layer->protectedLayer() setValue:@YES forKey:@"isTile"];
         return layer;
     }
 

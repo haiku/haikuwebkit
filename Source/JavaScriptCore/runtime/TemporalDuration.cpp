@@ -27,6 +27,7 @@
 #include "config.h"
 #include "TemporalDuration.h"
 
+#include "FractionToDouble.h"
 #include "IntlObjectInlines.h"
 #include "JSCInlines.h"
 #include "TemporalObject.h"
@@ -344,16 +345,39 @@ Int128 TemporalDuration::timeDurationFromComponents(double hours, double minutes
     return nanos;
 }
 
-ISO8601::InternalDuration TemporalDuration::toInternalDurationRecordWith24HourDays(JSGlobalObject* globalObject, ISO8601::Duration d)
+// https://tc39.es/proposal-temporal/#sec-temporal-tointernaldurationrecordwith24hourdays
+ISO8601::InternalDuration TemporalDuration::toInternalDurationRecordWith24HourDays(JSGlobalObject* globalObject,
+    ISO8601::Duration d)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    Int128 timeDuration = timeDurationFromComponents(d.hours(), d.minutes(), d.seconds(), d.milliseconds(), d.microseconds(), d.nanoseconds());
+    Int128 timeDuration = timeDurationFromComponents(d.hours(), d.minutes(), d.seconds(),
+        d.milliseconds(), d.microseconds(), d.nanoseconds());
     timeDuration = add24HourDaysToTimeDuration(globalObject, timeDuration, d.days());
     RETURN_IF_EXCEPTION(scope, { });
-    ISO8601::Duration dateDuration = ISO8601::Duration { d.years(), d.months(), d.weeks(), 0, 0, 0, 0, 0, 0, 0 };
-    return ISO8601::InternalDuration::combineDateAndTimeDuration(dateDuration, timeDuration);
+    ISO8601::Duration dateDuration = ISO8601::Duration { d.years(), d.months(), d.weeks(),
+        0, 0, 0, 0, 0, 0, 0 };
+    return ISO8601::InternalDuration::combineDateAndTimeDuration(dateDuration,
+        timeDuration);
+}
+
+// https://tc39.es/proposal-temporal/#sec-temporal-regulateisodate
+std::optional<ISO8601::PlainDate> TemporalDuration::regulateISODate(double year, double month, double day, TemporalOverflow overflow)
+{
+    if (overflow == TemporalOverflow::Constrain) {
+        if (month < 1)
+            month = 1;
+        if (month > 12)
+            month = 12;
+        auto daysInMonth = ISO8601::daysInMonth(year, month);
+        if (day < 1)
+            day = 1;
+        if (day > daysInMonth)
+            day = daysInMonth;
+    } else if (!ISO8601::isValidISODate(year, month, day))
+        return std::nullopt;
+    return ISO8601::createISODateRecord(year, month, day);
 }
 
 // https://tc39.es/proposal-temporal/#sec-temporal-todatedurationrecordwithouttime
@@ -433,14 +457,32 @@ ISO8601::Duration TemporalDuration::add(JSGlobalObject* globalObject, JSValue ot
         return { };
     }
 
-    ISO8601::Duration result {
-        0, 0, 0, days() + other.days(),
-        hours() + other.hours(), minutes() + other.minutes(), seconds() + other.seconds(),
-        milliseconds() + other.milliseconds(), microseconds() + other.microseconds(), nanoseconds() + other.nanoseconds()
-    };
+    RELEASE_AND_RETURN(scope, addDurations(globalObject, AddOrSubtract::Add, other, largestUnit));
+}
 
-    balance(result, largestUnit);
-    return result;
+// https://tc39.es/proposal-temporal/#sec-temporal-adddurations
+/* static */ ISO8601::Duration TemporalDuration::addDurations(JSGlobalObject* globalObject,
+    AddOrSubtract op, ISO8601::Duration other, TemporalUnit largestUnit) const
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if (op == AddOrSubtract::Subtract)
+        other = -other;
+
+    auto d1 = toInternalDurationRecordWith24HourDays(globalObject, m_duration);
+    RETURN_IF_EXCEPTION(scope, { });
+    auto d2 = toInternalDurationRecordWith24HourDays(globalObject, other);
+    RETURN_IF_EXCEPTION(scope, { });
+    auto timeResult = d1.time() + d2.time();
+    if (absInt128(timeResult) > ISO8601::InternalDuration::maxTimeDuration) {
+        throwRangeError(globalObject, scope, "Sum of durations exceeds maximum time duration"_s);
+        return { };
+    }
+
+    auto result = ISO8601::InternalDuration::combineDateAndTimeDuration(ISO8601::Duration(),
+        timeResult);
+    return temporalDurationFromInternal(result, largestUnit);
 }
 
 ISO8601::InternalDuration TemporalDuration::toInternalDuration(ISO8601::Duration d)
@@ -549,14 +591,16 @@ ISO8601::Duration TemporalDuration::subtract(JSGlobalObject* globalObject, JSVal
         return { };
     }
 
-    ISO8601::Duration result {
-        0, 0, 0, days() - other.days(),
-        hours() - other.hours(), minutes() - other.minutes(), seconds() - other.seconds(),
-        milliseconds() - other.milliseconds(), microseconds() - other.microseconds(), nanoseconds() - other.nanoseconds()
-    };
+    RELEASE_AND_RETURN(scope, addDurations(globalObject, AddOrSubtract::Subtract, other, largestUnit));
+}
 
-    balance(result, largestUnit);
-    return result;
+// https://tc39.es/proposal-temporal/#sec-temporal-totaltimeduration
+static double totalTimeDuration(Int128 timeDuration, TemporalUnit unit)
+{
+    double divisor = static_cast<double>(lengthInNanoseconds(unit));
+    // guaranteed, maximum lengthInNanoseconds is 86400e9
+    ASSERT(isSafeInteger(divisor));
+    return fractionToDouble(timeDuration, divisor);
 }
 
 // RoundDuration ( years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds, increment, unit, roundingMode [ , relativeTo ] )
@@ -702,7 +746,10 @@ double TemporalDuration::total(JSGlobalObject* globalObject, JSValue optionsValu
     TemporalUnit unit = unitType.value();
 
     // FIXME: Implement relativeTo parameter after PlainDateTime / ZonedDateTime.
-    if (unit > TemporalUnit::Year && (years() || months() || weeks() || (days() && unit < TemporalUnit::Day))) {
+    if (unit == TemporalUnit::Week
+        || unit == TemporalUnit::Month
+        || unit == TemporalUnit::Year
+        || (years() || months() || weeks() || (days() && unit < TemporalUnit::Day))) {
         throwRangeError(globalObject, scope, "Cannot total a duration of years, months, or weeks without a relativeTo option"_s);
         return { };
     }
@@ -711,12 +758,9 @@ double TemporalDuration::total(JSGlobalObject* globalObject, JSValue optionsValu
         return { };
     }
 
-    ISO8601::Duration newDuration = m_duration;
-    auto infiniteResult = balance(newDuration, unit);
-    if (infiniteResult)
-        return infiniteResult.value();
-    double remainder = round(newDuration, 1, unit, RoundingMode::Trunc);
-    return newDuration[static_cast<uint8_t>(unit)] + remainder;
+    auto internalDuration = toInternalDurationRecordWith24HourDays(globalObject, m_duration);
+    RETURN_IF_EXCEPTION(scope, { });
+    return totalTimeDuration(internalDuration.time(), unit);
 }
 
 String TemporalDuration::toString(JSGlobalObject* globalObject, JSValue optionsValue) const

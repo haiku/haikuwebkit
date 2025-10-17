@@ -29,6 +29,7 @@
 #include <errno.h>
 #include "pas_internal_config.h"
 #include "pas_utils.h"
+#include "pas_zero_memory.h"
 #include "pas_zero_mode.h"
 
 PAS_BEGIN_EXTERN_C;

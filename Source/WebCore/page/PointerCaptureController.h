@@ -73,6 +73,9 @@ public:
     void dispatchEvent(PointerEvent&, EventTarget*);
     WEBCORE_EXPORT void cancelPointer(PointerID, const IntPoint&, PointerEvent* existingCancelEvent = nullptr);
     void processPendingPointerCapture(PointerID);
+    // Used for mouse presses that trigger contextmenu, causing
+    // the matching release to be suppressed.
+    WEBCORE_EXPORT void clearUnmatchedMouseDown(PointerID);
 
 private:
     struct CapturingData : public RefCounted<CapturingData> {

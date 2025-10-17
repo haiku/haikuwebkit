@@ -53,10 +53,10 @@
 #include "RenderSVGRoot.h"
 #include "RenderSVGShapeInlines.h"
 #include "RenderSVGText.h"
+#include "RenderStyleInlines.h"
 #include "SVGClipPathElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGGeometryElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
 #include "TransformOperationData.h"
@@ -86,7 +86,7 @@ std::optional<FloatRect> SVGRenderSupport::computeFloatVisibleRectInContainer(co
         return FloatRect();
 
     FloatRect adjustedRect = rect;
-    adjustedRect.inflate(Style::evaluate(renderer.style().outlineWidth(), 1.0f /* FIXME ZOOM EFFECTED? */));
+    adjustedRect.inflate(Style::evaluate<float>(renderer.style().outlineWidth(), Style::ZoomNeeded { }));
 
     // Translate to coords in our parent renderer, and then call computeFloatVisibleRectInContainer() on our parent.
     adjustedRect = renderer.localToParentTransform().mapRect(adjustedRect);
@@ -111,6 +111,9 @@ const RenderElement& SVGRenderSupport::localToParentTransform(const RenderElemen
 
 void SVGRenderSupport::mapLocalToContainer(const RenderElement& renderer, const RenderLayerModelObject* ancestorContainer, TransformState& transformState, bool* wasFixed)
 {
+    if (ancestorContainer == &renderer)
+        return;
+
     AffineTransform transform;
     auto& parent = localToParentTransform(renderer, transform);
 
@@ -488,8 +491,6 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
         return;
     }
 
-    const SVGRenderStyle& svgStyle = style.svgStyle();
-
     SVGLengthContext lengthContext(element.get());
     context.setStrokeThickness(lengthContext.valueForLength(style.strokeWidth()));
     context.setLineCap(style.capStyle());
@@ -497,7 +498,7 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
     if (style.joinStyle() == LineJoin::Miter)
         context.setMiterLimit(style.strokeMiterLimit().value.value);
 
-    auto& dashes = svgStyle.strokeDashArray();
+    auto& dashes = style.strokeDashArray();
     if (dashes.isNone())
         context.setStrokeStyle(StrokeStyle::SolidStroke);
     else {
@@ -523,7 +524,7 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
         });
 
         if (canSetLineDash)
-            context.setLineDash(dashArray, lengthContext.valueForLength(svgStyle.strokeDashOffset()) * scaleFactor);
+            context.setLineDash(dashArray, lengthContext.valueForLength(style.strokeDashOffset()) * scaleFactor);
         else
             context.setStrokeStyle(StrokeStyle::SolidStroke);
     }
@@ -562,7 +563,7 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
         // https://drafts.fxtf.org/css-masking/#compute-stroke-bounding-box
         // except that we ignore whether the stroke is none.
 
-        ASSERT(renderer.style().svgStyle().hasStroke());
+        ASSERT(renderer.style().hasStroke());
 
         auto strokeBoundingBox = fillBoundingBox;
         const float strokeWidth = renderer.strokeWidth();
@@ -582,7 +583,7 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
         case Renderer::ShapeType::RoundedRectangle: {
 #if USE(CG)
             // CoreGraphics can inflate the stroke by 1px when drawing a rectangle with antialiasing disabled at non-integer coordinates, we need to compensate.
-            if (renderer.style().svgStyle().shapeRendering() == ShapeRendering::CrispEdges)
+            if (renderer.style().shapeRendering() == ShapeRendering::CrispEdges)
                 delta += 1;
 #endif
             break;
@@ -608,7 +609,7 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
 
     auto calculateApproximateNonScalingStrokeBoundingBox = [&](const auto& renderer, FloatRect fillBoundingBox) -> FloatRect {
         ASSERT(renderer.hasPath());
-        ASSERT(renderer.style().svgStyle().hasStroke());
+        ASSERT(renderer.style().hasStroke());
         ASSERT(renderer.hasNonScalingStroke());
 
         auto strokeBoundingBox = fillBoundingBox;
@@ -624,7 +625,7 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
     };
 
     auto calculate = [&](const auto& renderer) {
-        if (!renderer.style().svgStyle().hasStroke())
+        if (!renderer.style().hasStroke())
             return renderer.objectBoundingBox();
         if (renderer.hasNonScalingStroke())
             return calculateApproximateNonScalingStrokeBoundingBox(renderer, renderer.objectBoundingBox());

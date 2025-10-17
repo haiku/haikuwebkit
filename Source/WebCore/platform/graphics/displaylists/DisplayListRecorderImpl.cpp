@@ -220,7 +220,7 @@ void RecorderImpl::drawImageBuffer(ImageBuffer& imageBuffer, const FloatRect& de
     m_items.append(DrawImageBuffer(imageBuffer, destRect, srcRect, options));
 }
 
-void RecorderImpl::drawNativeImageInternal(NativeImage& image, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
+void RecorderImpl::drawNativeImage(NativeImage& image, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
 {
     appendStateChangeItemIfNecessary();
     m_items.append(DrawNativeImage(image, destRect, srcRect, options));

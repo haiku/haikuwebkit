@@ -92,6 +92,7 @@
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
 #include "JSPromiseAllContext.h"
+#include "JSPromiseReaction.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
 #include "JSWeakMap.h"
@@ -1897,11 +1898,7 @@ private:
             break;
         }
 
-        case PhantomNewArrayWithButterfly: {
-            // It would be very bad to get here in this state and could lead to horrible GC bugs. See ObjectAllocationSinking::handleNode for details.
-            RELEASE_ASSERT(m_node->child2()->op() == PhantomNewButterflyWithSize);
-            [[fallthrough]];
-        }
+        case PhantomNewArrayWithButterfly:
         case PhantomLocal:
         case MovHint:
         case ZombieHint:
@@ -1967,34 +1964,41 @@ private:
     void compileUpsilon()
     {
         LValue upsilonValue = nullptr;
+        Node* phi = m_node->phi();
         switch (m_node->child1().useKind()) {
         case DoubleRepUse:
             upsilonValue = lowDouble(m_node->child1());
+            ASSERT(phi->result() == NodeResultDouble);
             break;
         case Int32Use:
         case KnownInt32Use:
             upsilonValue = lowInt32(m_node->child1());
+            ASSERT(phi->result() == NodeResultInt32);
             break;
         case Int52RepUse:
             upsilonValue = lowInt52(m_node->child1());
+            ASSERT(phi->result() == NodeResultInt52);
             break;
         case BooleanUse:
         case KnownBooleanUse:
             upsilonValue = lowBoolean(m_node->child1());
+            ASSERT(phi->result() == NodeResultBoolean);
             break;
         case CellUse:
         case KnownCellUse:
             upsilonValue = lowCell(m_node->child1());
+            ASSERT(phi->result() == NodeResultJS);
             break;
         case UntypedUse:
             upsilonValue = lowJSValue(m_node->child1());
+            ASSERT(phi->result() == NodeResultJS);
             break;
         default:
             DFG_CRASH(m_graph, m_node, "Bad use kind");
             break;
         }
         ValueFromBlock upsilon = m_out.anchor(upsilonValue);
-        LValue phiNode = m_phis.get(m_node->phi());
+        LValue phiNode = m_phis.get(phi);
         m_out.addIncomingToPhi(phiNode, upsilon);
     }
 
@@ -5256,7 +5260,7 @@ private:
         // Signify that the state against which the atomic operations are serialized is confined to just
         // the typed array storage, since that's as precise of an abstraction as we can have of shared
         // array buffer storage.
-        m_heaps.decorateFencedAccess(&m_heaps.typedArrayProperties, atomicValue);
+        m_heaps.decorateFencedAccess(&m_heaps.TypedArrayProperties, atomicValue);
 
         // We have to keep base alive since that keeps storage alive.
         ensureStillAliveHere(lowCell(baseEdge));
@@ -7316,7 +7320,7 @@ IGNORE_CLANG_WARNINGS_END
             ASSERT(isTypedView(type));
             {
                 TypedPointer pointer = TypedPointer(
-                    m_heaps.typedArrayProperties,
+                    m_heaps.TypedArrayProperties,
                     m_out.add(
                         storage,
                         m_out.shl(
@@ -9410,6 +9414,9 @@ IGNORE_CLANG_WARNINGS_END
         case JSPromiseAllContextType:
             compileNewInternalFieldObjectImpl<JSPromiseAllContext>(operationNewPromiseAllContext);
             break;
+        case JSPromiseReactionType:
+            compileNewInternalFieldObjectImpl<JSPromiseReaction>(operationNewPromiseReaction);
+            break;
         case JSRegExpStringIteratorType:
             compileNewInternalFieldObjectImpl<JSRegExpStringIterator>(operationNewRegExpStringIterator);
             break;
@@ -10375,7 +10382,7 @@ IGNORE_CLANG_WARNINGS_END
             m_out.int32Zero,
             m_out.castToInt32(m_out.lShr(byteSize, m_out.constIntPtr(3))),
             m_out.int64Zero,
-            m_heaps.typedArrayProperties);
+            m_heaps.TypedArrayProperties);
 
         ValueFromBlock haveStorage = m_out.anchor(storage);
 
@@ -17757,6 +17764,9 @@ IGNORE_CLANG_WARNINGS_END
         case JSPromiseAllContextType:
             compileMaterializeNewInternalFieldObjectImpl<JSPromiseAllContext>(operationNewPromiseAllContext);
             break;
+        case JSPromiseReactionType:
+            compileMaterializeNewInternalFieldObjectImpl<JSPromiseReaction>(operationNewPromiseReaction);
+            break;
         case JSPromiseType:
             if (m_node->structure()->classInfoForCells() == JSInternalPromise::info())
                 compileMaterializeNewInternalFieldObjectImpl<JSInternalPromise>(operationNewInternalPromise);
@@ -19531,7 +19541,7 @@ IGNORE_CLANG_WARNINGS_END
 
         LValue vector = caged(Gigacage::Primitive, m_out.loadPtr(dataView, m_heaps.JSArrayBufferView_vector), dataView);
 
-        TypedPointer pointer(m_heaps.typedArrayProperties, m_out.add(vector, m_out.zeroExtPtr(index)));
+        TypedPointer pointer(m_heaps.TypedArrayProperties, m_out.add(vector, m_out.zeroExtPtr(index)));
 
         if (m_node->op() == DataViewGetInt) {
             switch (data.byteSize) {
@@ -19722,7 +19732,7 @@ IGNORE_CLANG_WARNINGS_END
         }
 
         LValue vector = caged(Gigacage::Primitive, m_out.loadPtr(dataView, m_heaps.JSArrayBufferView_vector), dataView);
-        TypedPointer pointer(m_heaps.typedArrayProperties, m_out.add(vector, m_out.zeroExtPtr(index)));
+        TypedPointer pointer(m_heaps.TypedArrayProperties, m_out.add(vector, m_out.zeroExtPtr(index)));
 
         if (data.isFloatingPoint) {
             switch (data.byteSize) {
@@ -20772,10 +20782,11 @@ IGNORE_CLANG_WARNINGS_END
 
         m_out.appendTo(slowBlock);
         VM& vm = this->vm();
+        JSGlobalObject* globalObject = m_graph.globalObjectFor(m_origin.semantic);
         LValue slowButterflyBase = lazySlowPath(
             [=, &vm] (const Vector<Location>& locations) -> RefPtr<LazySlowPath::Generator> {
                 return createLazyCallGenerator(vm,
-                    operationAllocateUnitializedAuxiliaryBase, locations[0].directGPR(), CCallHelpers::TrustedImmPtr(&vm),
+                    operationAllocateUnitializedAuxiliaryBase, locations[0].directGPR(), CCallHelpers::TrustedImmPtr(globalObject),
                     locations[1].directGPR());
             },
             allocationSizeInBytes);
@@ -21477,7 +21488,7 @@ IGNORE_CLANG_WARNINGS_END
         {
         }
 
-        CharacterCase(LChar character, unsigned begin, unsigned end)
+        CharacterCase(Latin1Character character, unsigned begin, unsigned end)
             : character(character)
             , begin(begin)
             , end(end)
@@ -21489,7 +21500,7 @@ IGNORE_CLANG_WARNINGS_END
             return character < other.character;
         }
 
-        LChar character;
+        Latin1Character character;
         unsigned begin;
         unsigned end;
     };
@@ -21581,7 +21592,7 @@ IGNORE_CLANG_WARNINGS_END
         Vector<CharacterCase> characterCases;
         CharacterCase currentCase(cases[begin].string->at(commonChars), begin, begin + 1);
         for (unsigned i = begin + 1; i < end; ++i) {
-            LChar currentChar = cases[i].string->at(commonChars);
+            Latin1Character currentChar = cases[i].string->at(commonChars);
             if (currentChar != currentCase.character) {
                 currentCase.end = i;
                 characterCases.append(currentCase);
@@ -21870,7 +21881,7 @@ IGNORE_CLANG_WARNINGS_END
         LValue offset = m_out.shl(m_out.zeroExtPtr(index), m_out.constIntPtr(logElementSize(type)));
 
         return TypedPointer(
-            m_heaps.typedArrayProperties,
+            m_heaps.TypedArrayProperties,
             m_out.add(
                 storage,
                 offset
@@ -24791,6 +24802,10 @@ IGNORE_CLANG_WARNINGS_END
         value = m_doubleValues.get(node);
         if (isValid(value))
             return exitArgument(arguments, DataFormatDouble, value.value());
+
+        value = m_storageValues.get(node);
+        if (isValid(value))
+            return exitArgument(arguments, DataFormatStorage, value.value());
 
         DFG_CRASH(m_graph, m_node, toCString("Cannot find value for node: ", node).data());
         return ExitValue::dead();

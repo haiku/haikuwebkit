@@ -143,7 +143,7 @@ private:
     void record16(int);
     void record16(T);
     void recordUnicodeCodePoint(char32_t);
-    void append16(std::span<const LChar>);
+    void append16(std::span<const Latin1Character>);
     void append16(std::span<const char16_t> characters) { m_buffer16.append(characters); }
 
     static constexpr char32_t errorCodePoint = 0xFFFFFFFFu;
@@ -166,10 +166,9 @@ private:
     template<typename CharacterType>
     ALWAYS_INLINE const Identifier* makeIdentifier(std::span<const CharacterType>);
 
-    ALWAYS_INLINE const Identifier* makeLCharIdentifier(std::span<const LChar>);
-    ALWAYS_INLINE const Identifier* makeLCharIdentifier(std::span<const char16_t>);
+    ALWAYS_INLINE const Identifier* makeLatin1Identifier(std::span<const Latin1Character>);
+    ALWAYS_INLINE const Identifier* makeLatin1Identifier(std::span<const char16_t>);
     ALWAYS_INLINE const Identifier* makeRightSizedIdentifier(std::span<const char16_t>, char16_t orAllChars);
-    ALWAYS_INLINE const Identifier* makeIdentifierLCharFromUChar(std::span<const char16_t>);
     ALWAYS_INLINE const Identifier* makeEmptyIdentifier();
 
     ALWAYS_INLINE bool lastTokenWasRestrKeyword() const;
@@ -214,7 +213,7 @@ private:
     int m_lineNumber;
     int m_lastLineNumber;
 
-    Vector<LChar> m_buffer8;
+    Vector<Latin1Character> m_buffer8;
     Vector<char16_t> m_buffer16;
     Vector<char16_t> m_bufferForRawTemplateString16;
     bool m_hasLineTerminatorBeforeToken;
@@ -251,7 +250,7 @@ WTF_MAKE_TZONE_ALLOCATED_TEMPLATE_IMPL(template<typename T>, Lexer<T>);
 JS_EXPORT_PRIVATE extern const WTF::BitSet<256> whiteSpaceTable;
 
 template <>
-ALWAYS_INLINE bool Lexer<LChar>::isWhiteSpace(LChar ch)
+ALWAYS_INLINE bool Lexer<Latin1Character>::isWhiteSpace(Latin1Character ch)
 {
     return whiteSpaceTable.get(ch);
 }
@@ -259,11 +258,11 @@ ALWAYS_INLINE bool Lexer<LChar>::isWhiteSpace(LChar ch)
 template <>
 ALWAYS_INLINE bool Lexer<char16_t>::isWhiteSpace(char16_t ch)
 {
-    return isLatin1(ch) ? Lexer<LChar>::isWhiteSpace(static_cast<LChar>(ch)) : (u_charType(ch) == U_SPACE_SEPARATOR || ch == byteOrderMark);
+    return isLatin1(ch) ? Lexer<Latin1Character>::isWhiteSpace(static_cast<Latin1Character>(ch)) : (u_charType(ch) == U_SPACE_SEPARATOR || ch == byteOrderMark);
 }
 
 template <>
-ALWAYS_INLINE bool Lexer<LChar>::isLineTerminator(LChar ch)
+ALWAYS_INLINE bool Lexer<Latin1Character>::isLineTerminator(Latin1Character ch)
 {
     return ch == '\r' || ch == '\n';
 }
@@ -294,16 +293,16 @@ ALWAYS_INLINE const Identifier* Lexer<T>::makeIdentifier(std::span<const Charact
 }
 
 template <>
-ALWAYS_INLINE const Identifier* Lexer<LChar>::makeRightSizedIdentifier(std::span<const char16_t> characters, char16_t)
+ALWAYS_INLINE const Identifier* Lexer<Latin1Character>::makeRightSizedIdentifier(std::span<const char16_t> characters, char16_t)
 {
-    return &m_arena->makeIdentifierLCharFromUChar(m_vm, characters);
+    return &m_arena->makeLatin1Identifier(m_vm, characters);
 }
 
 template <>
 ALWAYS_INLINE const Identifier* Lexer<char16_t>::makeRightSizedIdentifier(std::span<const char16_t> characters, char16_t orAllChars)
 {
     if (!(orAllChars & ~0xff))
-        return &m_arena->makeIdentifierLCharFromUChar(m_vm, characters);
+        return &m_arena->makeLatin1Identifier(m_vm, characters);
 
     return &m_arena->makeIdentifier(m_vm, characters);
 }
@@ -315,7 +314,7 @@ ALWAYS_INLINE const Identifier* Lexer<T>::makeEmptyIdentifier()
 }
 
 template <>
-ALWAYS_INLINE void Lexer<LChar>::setCodeStart(StringView sourceString)
+ALWAYS_INLINE void Lexer<Latin1Character>::setCodeStart(StringView sourceString)
 {
     ASSERT(sourceString.is8Bit());
     m_codeStart = sourceString.span8().data();
@@ -329,21 +328,15 @@ ALWAYS_INLINE void Lexer<char16_t>::setCodeStart(StringView sourceString)
 }
 
 template <typename T>
-ALWAYS_INLINE const Identifier* Lexer<T>::makeIdentifierLCharFromUChar(std::span<const char16_t> characters)
-{
-    return &m_arena->makeIdentifierLCharFromUChar(m_vm, characters);
-}
-
-template <typename T>
-ALWAYS_INLINE const Identifier* Lexer<T>::makeLCharIdentifier(std::span<const LChar> characters)
+ALWAYS_INLINE const Identifier* Lexer<T>::makeLatin1Identifier(std::span<const Latin1Character> characters)
 {
     return &m_arena->makeIdentifier(m_vm, characters);
 }
 
 template <typename T>
-ALWAYS_INLINE const Identifier* Lexer<T>::makeLCharIdentifier(std::span<const char16_t> characters)
+ALWAYS_INLINE const Identifier* Lexer<T>::makeLatin1Identifier(std::span<const char16_t> characters)
 {
-    return &m_arena->makeIdentifierLCharFromUChar(m_vm, characters);
+    return &m_arena->makeLatin1Identifier(m_vm, characters);
 }
 
 #if ASSERT_ENABLED
@@ -393,7 +386,7 @@ ALWAYS_INLINE JSTokenType Lexer<T>::lexExpectIdentifier(JSToken* tokenRecord, Op
         )
         tokenData->ident = nullptr;
     else
-        tokenData->ident = makeLCharIdentifier({ start, ptr });
+        tokenData->ident = makeLatin1Identifier({ start, ptr });
 
     tokenRecord->m_startPosition = startPosition;
     tokenRecord->m_endPosition = currentPosition();

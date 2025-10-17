@@ -47,7 +47,7 @@
 #include <WebCore/JSNode.h>
 #include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
-#include <WebCore/Node.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/Page.h>
 #include <WebCore/PositionInlines.h>
 #include <WebCore/Range.h>

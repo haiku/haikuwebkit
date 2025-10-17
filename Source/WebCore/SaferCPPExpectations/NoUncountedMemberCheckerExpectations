@@ -52,7 +52,6 @@ page/scrolling/ScrollingTreeGestureState.h
 platform/PODInterval.h
 platform/encryptedmedia/CDMProxy.h
 platform/graphics/GraphicsLayer.h
-platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm
 platform/graphics/avfoundation/objc/MediaSourcePrivateAVFObjC.h
 platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
@@ -82,7 +81,5 @@ style/StyleScopeRuleSets.h
 style/Styleable.h
 svg/properties/SVGPropertyOwnerRegistry.h
 workers/WorkerMessagingProxy.h
-workers/WorkerOrWorkletGlobalScope.h
-workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.h
 xml/XPathGrammar.cpp
 xml/XPathGrammar.h

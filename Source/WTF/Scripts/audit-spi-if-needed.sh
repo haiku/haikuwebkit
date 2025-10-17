@@ -21,8 +21,11 @@ if [[ "${WK_AUDIT_SPI}" == YES && -f "${program}" ]]; then
     # greater. If all available directories are for newer SDKs, fall back to
     # the last one.
     for versioned_sdkdb_dir in $(printf '%s\n' ${WK_SDKDB_DIR}/${PLATFORM_NAME}* | sort -rV); do
-        if printf '%s\n' ${versioned_sdkdb_dir#${WK_SDKDB_DIR}/} ${SDK_NAME%.internal} | sort -CV; then
-            break
+        # Skip any empty directories that may have been left behind after being
+        # removed from the tree due to .DS_Store, etc.
+        if [ -n "$(ls "${versioned_sdkdb_dir}")" ] && \
+            printf '%s\n' ${versioned_sdkdb_dir#${WK_SDKDB_DIR}/} ${SDK_NAME%.internal} | sort -CV; then
+        break
         fi
     done
 

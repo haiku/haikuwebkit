@@ -40,7 +40,7 @@ template<typename CharacterType> static std::optional<SVGZoomAndPanType> parseZo
     return std::nullopt;
 }
 
-std::optional<SVGZoomAndPanType> SVGZoomAndPan::parseZoomAndPan(StringParsingBuffer<LChar>& buffer)
+std::optional<SVGZoomAndPanType> SVGZoomAndPan::parseZoomAndPan(StringParsingBuffer<Latin1Character>& buffer)
 {
     return parseZoomAndPanGeneric(buffer);
 }

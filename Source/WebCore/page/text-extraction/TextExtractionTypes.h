@@ -51,6 +51,11 @@ struct Interaction {
     bool replaceAll { false };
 };
 
+struct ExtractedText {
+    String text;
+    std::optional<NodeIdentifier> nodeIdentifier;
+};
+
 struct InteractionDescription {
     String description;
     Vector<String> stringsToValidate;

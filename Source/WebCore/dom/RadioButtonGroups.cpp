@@ -24,6 +24,7 @@
 #include "AXObjectCache.h"
 #include "DocumentInlines.h"
 #include "HTMLInputElement.h"
+#include "NodeDocument.h"
 #include "Range.h"
 #include <ranges>
 #include <wtf/HashSet.h>

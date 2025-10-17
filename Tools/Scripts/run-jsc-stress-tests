@@ -470,7 +470,7 @@ else
     $jscPath = Pathname.new(jscArg).realpath
 end
 
-$progressMeter = ($verbosity == 0 and $stdout.tty? and $remoteHosts.length <= 1)
+$progressMeter = ($verbosity == 0 and $stdout.tty? and $remoteHosts.length <= 1 and !ENV["JSCTEST_noProgressMeter"])
 
 if $bundle
     $jscPath = $bundle + ".vm" + "JavaScriptCore.framework" + "Helpers" + "jsc"
@@ -1342,7 +1342,7 @@ BASE_MODES = [
         "FTLNoCJITSmallPool",
         "ftl-no-cjit-small-pool",
         [
-            "--jitMemoryReservationSize=1048576",
+            $buildType == "debug" ? "--jitMemoryReservationSize=4194304" : "--jitMemoryReservationSize=1048576",
         ] +
         FTL_OPTIONS +
         NO_CJIT_OPTIONS

@@ -126,7 +126,7 @@ void SVGTransformList::parse(StringView value)
         clearItems();
 }
 
-bool SVGTransformList::parse(StringParsingBuffer<LChar>& buffer)
+bool SVGTransformList::parse(StringParsingBuffer<Latin1Character>& buffer)
 {
     return parseGeneric(buffer, ListReplacement::Append);
 }

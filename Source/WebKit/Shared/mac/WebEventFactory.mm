@@ -182,8 +182,12 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(NSEvent *event, NSView *windo
             return;
 
         auto ioHIDEvent = adoptCF(CGEventCopyIOHIDEvent(cgEvent.get()));
-        if (!ioHIDEvent)
+        if (!ioHIDEvent) {
+            // Testing only.
+            if (CGEventGetIntegerValueField(cgEvent.get(), kCGEventSourceUserData))
+                momentumPhase = WebWheelEvent::Phase::PhaseWillBegin;
             return;
+        }
 
         auto ioHIDEventTimestampMachAbsoluteTime = IOHIDEventGetTimeStamp(ioHIDEvent.get());
         ioHIDEventTimestamp = MonotonicTime::fromMachAbsoluteTime(ioHIDEventTimestampMachAbsoluteTime);

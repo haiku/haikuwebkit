@@ -219,7 +219,7 @@ void WebInspectorBackendClient::showPaintRect(const FloatRect& rect)
     Ref opacityAnimation = GraphicsLayerAnimation::create();
     opacityAnimation->setDuration(0.25);
 
-    paintLayer->addAnimation(fadeKeyframes, FloatSize(), opacityAnimation.ptr(), "opacity"_s, 0);
+    paintLayer->addAnimation(fadeKeyframes, opacityAnimation.ptr(), "opacity"_s, 0);
 
     Ref rawLayer = paintLayer.get();
     m_paintRectLayers.add(WTFMove(paintLayer));

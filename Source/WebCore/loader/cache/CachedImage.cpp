@@ -30,6 +30,7 @@
 #include "CachedResourceClientWalker.h"
 #include "CachedResourceLoader.h"
 #include "Font.h"
+#include "FontCascade.h"
 #include "FrameLoader.h"
 #include "FrameLoaderTypes.h"
 #include "ImageAdapter.h"
@@ -40,6 +41,7 @@
 #include "MemoryCache.h"
 #include "RenderElement.h"
 #include "RenderImage.h"
+#include "RenderStyleInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SecurityOrigin.h"
@@ -764,6 +766,12 @@ bool CachedImage::currentFrameKnownToBeOpaque(const RenderElement* renderer)
 {
     RefPtr image = imageForRenderer(renderer);
     return image->currentFrameKnownToBeOpaque();
+}
+
+bool CachedImage::currentFrameIsComplete(const RenderElement* renderer)
+{
+    RefPtr image = imageForRenderer(renderer);
+    return image->currentFrameIsComplete();
 }
 
 bool CachedImage::isOriginClean(SecurityOrigin* origin)

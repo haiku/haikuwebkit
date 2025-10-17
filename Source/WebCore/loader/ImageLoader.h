@@ -27,7 +27,7 @@
 #include <WebCore/CachedResourceHandle.h>
 #include <WebCore/Element.h>
 #include <WebCore/LoaderMalloc.h>
-#include <WebCore/NodeInlines.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/Timer.h>
 #include <wtf/Vector.h>
 #include <wtf/text/AtomString.h>

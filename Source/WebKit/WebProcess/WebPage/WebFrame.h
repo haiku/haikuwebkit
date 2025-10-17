@@ -293,6 +293,8 @@ private:
 
     void findFocusableElementDescendingIntoRemoteFrame(WebCore::FocusDirection, const WebCore::FocusEventData&, CompletionHandler<void(WebCore::FoundElementInRemoteFrame)>&&);
 
+    WebFrameInspectorTarget& ensureInspectorTarget();
+
     WeakPtr<WebCore::Frame> m_coreFrame;
     WeakPtr<WebPage> m_page;
     RefPtr<WebCore::LocalFrame> m_provisionalFrame;
@@ -316,7 +318,7 @@ private:
     Markable<WebCore::LayerHostingContextIdentifier> m_layerHostingContextIdentifier;
     Markable<WebCore::FrameIdentifier> m_frameIDBeforeProvisionalNavigation;
 
-    const UniqueRef<WebFrameInspectorTarget> m_inspectorTarget;
+    std::unique_ptr<WebFrameInspectorTarget> m_inspectorTarget;
 };
 
 } // namespace WebKit

@@ -26,6 +26,7 @@
 #pragma once
 
 #include "GridFormattingContext.h"
+#include "GridTypeAliases.h"
 #include "StyleGridTrackBreadth.h"
 
 namespace WebCore {
@@ -37,26 +38,48 @@ struct GridTrackSize;
 
 namespace Layout {
 
-class PlacedGridItem;
-class UnplacedGridItem;
-struct UnplacedGridItems;
+class ImplicitGrid;
+
+enum class PackingStrategy : bool {
+    Sparse,
+    Dense
+};
+
+enum class GridAutoFlowDirection : bool {
+    Row,
+    Column
+};
+
+struct GridAutoFlowOptions {
+    PackingStrategy strategy;
+    GridAutoFlowDirection direction;
+};
+
+struct UsedTrackSizes;
+struct UsedMargins;
 
 class GridLayout {
 public:
     GridLayout(const GridFormattingContext&);
 
     void layout(GridFormattingContext::GridLayoutConstraints, const UnplacedGridItems&);
-private:
-    struct TrackSizingFunctions {
-        Style::GridTrackBreadth min { CSS::Keyword::Auto { } };
-        Style::GridTrackBreadth max { CSS::Keyword::Auto { } };
-    };
-    using PlacedGridItems = Vector<PlacedGridItem>;
-    using TrackSizingFunctionsList = Vector<TrackSizingFunctions>;
 
-    static auto placeGridItems(const UnplacedGridItems&, const Vector<Style::GridTrackSize>& gridTemplateColumnsTrackSizes,
-        const Vector<Style::GridTrackSize>& gridTemplateRowsTrackSizes);
+private:
+
+    auto placeGridItems(const UnplacedGridItems&, const Vector<Style::GridTrackSize>& gridTemplateColumnsTrackSizes,
+        const Vector<Style::GridTrackSize>& gridTemplateRowsTrackSizes, GridAutoFlowOptions);
     static TrackSizingFunctionsList trackSizingFunctions(size_t implicitGridTracksCount, const Vector<Style::GridTrackSize> gridTemplateTrackSizes);
+
+    static UsedTrackSizes performGridSizingAlgorithm(const PlacedGridItems&, const TrackSizingFunctionsList& columnTrackSizingFunctionsList, const TrackSizingFunctionsList& rowTrackSizingFunctionsList);
+
+    using UsedInlineSizes = Vector<LayoutUnit>;
+    using UsedBlockSizes = Vector<LayoutUnit>;
+    std::pair<UsedInlineSizes, UsedBlockSizes> layoutGridItems(const PlacedGridItems&, const UsedTrackSizes&) const;
+
+    static Vector<UsedMargins> computeInlineMargins(const PlacedGridItems&);
+    static Vector<UsedMargins> computeBlockMargins(const PlacedGridItems&);
+
+    const GridFormattingContext& formattingContext() const { return m_gridFormattingContext.get(); }
 
     const ElementBox& gridContainer() const;
     const RenderStyle& gridContainerStyle() const;

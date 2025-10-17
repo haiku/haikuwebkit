@@ -31,10 +31,6 @@
 
 #include <errno.h>
 #include <math.h>
-#include "pas_config.h"
-#include "pas_internal_config.h"
-#include "pas_log.h"
-#include "pas_utils.h"
 #include <stdio.h>
 #include <string.h>
 #if !PAS_OS(WINDOWS)
@@ -45,6 +41,11 @@
 #include <mach/vm_page_size.h>
 #include <mach/vm_statistics.h>
 #endif
+
+#include "pas_internal_config.h"
+#include "pas_log.h"
+#include "pas_utils.h"
+#include "pas_zero_memory.h"
 
 size_t pas_page_malloc_num_allocated_bytes;
 size_t pas_page_malloc_cached_alignment;

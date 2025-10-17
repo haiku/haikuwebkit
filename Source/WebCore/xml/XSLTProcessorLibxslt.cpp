@@ -32,6 +32,7 @@
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
 #include "ResourceError.h"

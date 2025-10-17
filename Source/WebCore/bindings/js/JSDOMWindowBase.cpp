@@ -46,6 +46,7 @@
 #include "LocalFrame.h"
 #include "Logging.h"
 #include "Microtasks.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "Quirks.h"
 #include "RejectedPromiseTracker.h"

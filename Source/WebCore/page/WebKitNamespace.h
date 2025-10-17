@@ -54,7 +54,7 @@ public:
     virtual ~WebKitNamespace();
 
     UserMessageHandlersNamespace* messageHandlers();
-    Ref<WebKitJSHandle> jsHandle(JSC::JSGlobalObject&, JSC::Strong<JSC::JSObject>);
+    Ref<WebKitJSHandle> createJSHandle(JSC::JSGlobalObject&, JSC::Strong<JSC::JSObject>);
 
     struct SerializedNodeInit {
         bool deep { false };

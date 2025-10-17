@@ -327,10 +327,10 @@ IntrinsicWidthConstraints BlockFormattingGeometry::intrinsicWidthConstraints(con
     auto fixedMarginBorderAndPadding = [&](auto& layoutBox) {
         auto& style = layoutBox.style();
         return fixedValue(style.marginStart()).value_or(0)
-            + LayoutUnit { Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */) }
+            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { })
             + fixedValue(style.paddingLeft()).value_or(0)
             + fixedValue(style.paddingRight()).value_or(0)
-            + LayoutUnit { Style::evaluate(style.borderRightWidth(), 1.0f /* FIXME FIND ZOOM */) }
+            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { })
             + fixedValue(style.marginEnd()).value_or(0);
     };
 

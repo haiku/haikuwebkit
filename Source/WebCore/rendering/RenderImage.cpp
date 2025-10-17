@@ -56,6 +56,7 @@
 #include "RenderBoxModelObjectInlines.h"
 #include "RenderChildIterator.h"
 #include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderFragmentedFlow.h"
 #include "RenderImageResourceStyleImage.h"
 #include "RenderObjectInlines.h"
@@ -73,7 +74,7 @@
 #include <wtf/TZoneMallocInlines.h>
 
 #if PLATFORM(IOS_FAMILY)
-#include "LogicalSelectionOffsetCaches.h"
+#include "LogicalSelectionOffsetCachesInlines.h"
 #include "SelectionGeometry.h"
 #endif
 
@@ -342,8 +343,13 @@ void RenderImage::imageChanged(WrappedImagePtr newImage, const IntRect* rect)
         imageSizeChange = setImageSizeForAltText(cachedImage());
     }
     repaintOrMarkForLayout(imageSizeChange, rect);
-    if (AXObjectCache* cache = document().existingAXObjectCache())
+    if (CheckedPtr cache = document().existingAXObjectCache())
         cache->deferRecomputeIsIgnoredIfNeeded(element());
+
+    if (auto* image = cachedImage(); image && image->currentFrameIsComplete(this)) {
+        if (auto styleable = Styleable::fromRenderer(*this))
+            protectedDocument()->didLoadImage(styleable->protectedElement().get(), image);
+    }
 }
 
 void RenderImage::updateIntrinsicSizeIfNeeded(const LayoutSize& newSize)
@@ -653,7 +659,7 @@ void RenderImage::paintReplaced(PaintInfo& paintInfo, const LayoutPoint& paintOf
     if (showBorderForIncompleteImage && (result != ImageDrawResult::DidDraw || (cachedImage() && cachedImage()->isLoading())))
         paintIncompleteImageOutline(paintInfo, paintOffset, missingImageBorderWidth);
     
-    if (cachedImage() && paintInfo.phase == PaintPhase::Foreground) {
+    if (cachedImage() && paintInfo.phase == PaintPhase::Foreground && !context.paintingDisabled()) {
         // For now, count images as unpainted if they are still progressively loading. We may want 
         // to refine this in the future to account for the portion of the image that has painted.
         LayoutRect visibleRect = intersection(replacedContentRect, contentBoxRect);
@@ -661,6 +667,14 @@ void RenderImage::paintReplaced(PaintInfo& paintInfo, const LayoutPoint& paintOf
             page().addRelevantUnpaintedObject(*this, visibleRect);
         else
             page().addRelevantRepaintedObject(*this, visibleRect);
+
+        if (cachedImage()->currentFrameIsComplete(this)) {
+            if (auto styleable = Styleable::fromRenderer(*this)) {
+                auto localVisibleRect = visibleRect;
+                localVisibleRect.moveBy(-paintOffset);
+                protectedDocument()->didPaintImage(styleable->element, cachedImage(), localVisibleRect);
+            }
+        }
     }
 }
 
@@ -671,7 +685,7 @@ void RenderImage::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
     if (paintInfo.phase == PaintPhase::Outline)
         paintAreaElementFocusRing(paintInfo, paintOffset);
 }
-    
+
 void RenderImage::paintAreaElementFocusRing(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
     if (document().printing() || !frame().selection().isFocusedAndActive())
@@ -688,7 +702,7 @@ void RenderImage::paintAreaElementFocusRing(PaintInfo& paintInfo, const LayoutPo
     if (!areaElementStyle)
         return;
 
-    float outlineWidth = Style::evaluate(areaElementStyle->outlineWidth(), 1.0f /* FIXME ZOOM EFFECTED? */);
+    auto outlineWidth = Style::evaluate<float>(areaElementStyle->outlineWidth(), Style::ZoomNeeded { });
     if (!outlineWidth)
         return;
 
@@ -789,7 +803,7 @@ bool RenderImage::foregroundIsKnownToBeOpaqueInRect(const LayoutRect& localRect,
     if (backgroundClip == FillBox::BorderBox && style().hasBorder() && !borderObscuresBackground())
         return false;
     // Background shows in padding area.
-    if ((backgroundClip == FillBox::BorderBox || backgroundClip == FillBox::PaddingBox) && style().hasPadding())
+    if ((backgroundClip == FillBox::BorderBox || backgroundClip == FillBox::PaddingBox) && !Style::isKnownZero(style().paddingBox()))
         return false;
     // Object-fit may leave parts of the content box empty.
     if (auto objectFit = style().objectFit(); objectFit != ObjectFit::Fill && objectFit != ObjectFit::Cover)

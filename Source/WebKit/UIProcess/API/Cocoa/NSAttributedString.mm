@@ -157,7 +157,7 @@ static RetainPtr<NSString>& sourceApplicationBundleIdentifier()
 
 static BOOL shouldAllowNetworkLoads = shouldAllowNetworkLoadsByDefault;
 
-static NSMutableArray<NSURL *> *readOnlyAccessPaths()
+static NSMutableArray<NSURL *> *readOnlyAccessPathsSingleton()
 {
     static NeverDestroyed<RetainPtr<NSMutableArray>> readOnlyAccessPaths = adoptNS([[NSMutableArray alloc] initWithCapacity:maximumReadOnlyAccessPaths]);
     return readOnlyAccessPaths.get().get();
@@ -171,10 +171,10 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
 
         ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         RetainPtr<WKProcessPool> processPool;
-        if (readOnlyAccessPaths().count) {
-            RELEASE_ASSERT(readOnlyAccessPaths().count <= 2);
+        if (readOnlyAccessPathsSingleton().count) {
+            RELEASE_ASSERT(readOnlyAccessPathsSingleton().count <= 2);
             auto processPoolConfiguration = adoptNS([[_WKProcessPoolConfiguration alloc] init]);
-            [processPoolConfiguration setAdditionalReadAccessAllowedURLs:readOnlyAccessPaths()];
+            [processPoolConfiguration setAdditionalReadAccessAllowedURLs:readOnlyAccessPathsSingleton()];
             processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
         } else
             processPool = adoptNS([[WKProcessPool alloc] init]).get();
@@ -226,8 +226,8 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
     if (!errorMessage)
         return;
 
-    if (readOnlyAccessPaths().count) {
-        [readOnlyAccessPaths() removeAllObjects];
+    if (readOnlyAccessPathsSingleton().count) {
+        [readOnlyAccessPathsSingleton() removeAllObjects];
         [self clearConfiguration];
     }
     [NSException raise:NSInvalidArgumentException format:@"%@", errorMessage];
@@ -301,13 +301,13 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
     for (id fileURL in readAccessFileURLs)
         [self validateEntry:fileURL];
 
-    if ([readAccessFileURLs isEqualToArray:readOnlyAccessPaths()])
+    if ([readAccessFileURLs isEqualToArray:readOnlyAccessPathsSingleton()])
         return;
 
     if (readAccessFileURLs)
-        [readOnlyAccessPaths() setArray:readAccessFileURLs];
+        [readOnlyAccessPathsSingleton() setArray:readAccessFileURLs];
     else
-        [readOnlyAccessPaths() removeAllObjects];
+        [readOnlyAccessPathsSingleton() removeAllObjects];
     [self clearConfiguration];
 }
 

@@ -48,7 +48,7 @@
                 "expected": {"gtk": {"status": ["FAIL", "TIMEOUT"], "bug": "webkit.org/b/256557"}}
             },
             "/webkit/WebKitAccessibility/accessible/event-listener": {
-                "expected": {"gtk": {"status": ["FAIL"], "bug": "webkit.org/b/273682"}}
+                "expected": {"gtk": {"status": ["FAIL", "TIMEOUT"], "bug": "webkit.org/b/273682"}}
             },
             "/webkit/WebKitAccessibility/selection/listbox": {
                 "expected": {"gtk": {"status": ["FAIL", "TIMEOUT"], "bug": "webkit.org/b/273682"}}
@@ -154,6 +154,9 @@
             },
             "/webkit/WebKitWebContext/languages": {
                 "expected": {"all": {"status": ["PASS", "FAIL"], "bug": "webkit.org/b/281942"}}
+            },
+            "/webkit/WebKitWebContext/no-web-process-leak": {
+                "expected": {"gtk": {"status": ["TIMEOUT"], "bug": "webkit.org/b/299598"}}
             }
         }
     },
@@ -191,12 +194,23 @@
     "TestWebViewEditor": {
         "subtests": {
             "/webkit/WebKitWebView/cut-copy-paste/editable": {
-                "expected": {"gtk": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/263417"}}
+                "expected": {"gtk": {"status": ["FAIL", "PASS", "TIMEOUT"], "bug": "webkit.org/b/263417"}}
             },
             "/webkit/WebKitWebView/cut-copy-paste/non-editable": {
-                "expected": {"gtk": {"status": ["FAIL"], "bug": "webkit.org/b/285908"}}
+                "expected": {"gtk": {"status": ["FAIL", "TIMEOUT"], "bug": "webkit.org/b/285908"}}
             }
         }
+    },
+    "TestInspector": {
+        "subtests": {
+           "/webkit/WebKitWebInspector/custom-container-destroyed": {
+              "expected": {"gtk": {"status": ["TIMEOUT"], "bug": "webkit.org/b/299598"}}
+           },
+           "/webkit/WebKitWebInspector/manual-attach-detach": {
+              "expected": {"gtk": {"status": ["TIMEOUT"], "bug": "webkit.org/b/299598"}}
+           }
+        },
+        "expected": {"all": {"slow": true}}
     },
     "TestInspectorServer": {
         "subtests": {
@@ -231,10 +245,67 @@
                 "expected": {"gtk": {"status": ["FAIL", "PASS"], "bug":"webkit.org/b/284628"}}
             },
             "ImageBufferTests.ImageBufferSubTypeCreateCreatesSubtypes": {
-                "expected": {"all": {"status": ["CRASH"], "bug":"webkit.org/b/286456"}}
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
             },
             "ImageBufferTests.ImageBufferSubPixelDrawing": {
-                "expected": {"all": {"status": ["CRASH"], "bug":"webkit.org/b/286456"}}
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.SinkIntoNativeImageWorks/051byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.SinkIntoNativeImageWorks/11byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.SinkIntoNativeImageWorks/21byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.SinkIntoNativeImageWorks/51byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.GetPixelBufferDimensionsContainScale/051byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.GetPixelBufferDimensionsContainScale/11byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.GetPixelBufferDimensionsContainScale/21byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyScaleTest.GetPixelBufferDimensionsContainScale/51byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyTwoImageBufferOptionsTest.PutPixelBufferAffectsDrawOutput/1byteobject001byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyTwoImageBufferOptionsTest.PutPixelBufferAffectsDrawOutput/1byteobject011byteobject00": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "ImageBufferTests/AnyTwoImageBufferOptionsTest.PutPixelBufferAffectsDrawOutput/1byteobject011byteobject01": {
+                "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truetruetrue": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truetruefalse": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truefalsetrue": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truefalsefalse": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsetruetrue": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsetruefalse": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsefalsetrue": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
+            },
+            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsefalsefalse": {
+                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
             }
         }
     },
@@ -299,10 +370,10 @@
                 "expected": {"gtk": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
             },
             "WTF_Condition.OneProducerOneConsumerOneSlot": {
-                "expected": {"gtk": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
+                "expected": {"all": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
             },
             "WTF_Condition.OneProducerOneConsumerOneSlotTimeout": {
-                "expected": {"gtk": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
+                "expected": {"all": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
             },
             "WTF_Condition.OneProducerTenConsumersOneSlot": {
                 "expected": {"gtk": {"slow": true, "status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/246472" }}
@@ -375,6 +446,12 @@
             },
             "WTF_DateMath.calculateLocalTimeOffset": {
                 "expected": {"wpe": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/297780"}}
+            },
+            "CompletionHandlerDeathTest.MainThreadHandlerOnThreadAssertsDeathTest": {
+                "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/299598" }}
+            },
+            "CompletionHandlerDeathTest.ConstructionThreadHandlerOnThreadAssertsDeathTest": {
+                "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/299598" }}
             }
         }
     },
@@ -433,7 +510,7 @@
     "TestWebKitNetworkSession": {
         "subtests": {
             "/webkit/WebKitNetworkSession/proxy": {
-                "expected": {"all": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/264485"}}
+                "expected": {"all": {"status": ["FAIL", "PASS", "TIMEOUT"], "bug": "webkit.org/b/264485"}}
             }
         }
     },
@@ -446,7 +523,7 @@
                 "expected": {"all": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/284812"}}
             },
             "/webkit/WebKitWebView/web-process-crashed": {
-                "expected": {"wpe": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/297780"}}
+                "expected": {"all": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/297780"}}
             }
         }
     },
@@ -456,10 +533,10 @@
                 "expected": {"all": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/264507"}}
             },
             "/webkit/WebKitWebView/web-socket-tls-errors": {
-                "expected": {"all": {"status": ["TIMEOUT", "CRASH", "FAIL"], "bug": "webkit.org/b/286063"}}
+                "expected": {"all": {"status": ["TIMEOUT", "CRASH", "FAIL", "TIMEOUT"], "bug": "webkit.org/b/286063"}}
             },
             "/webkit/WebKitWebView/web-socket-client-side-certificate": {
-                "expected": {"all": {"status": ["TIMEOUT", "CRASH"], "bug": "webkit.org/b/286063"}}
+                "expected": {"all": {"status": ["TIMEOUT", "CRASH", "TIMEOUT"], "bug": "webkit.org/b/286063"}}
             }
         }
     },
@@ -517,10 +594,13 @@
             }
         }
     },
-    "TestWebKitImmersiveMode": {
+    "TestWebKitWebXR": {
         "subtests": {
-            "/webkit/WebKitImmersiveMode/leave-immersive-mode": {
-                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/297261"}}
+            "/webkit/WebKitWebXR/leave-immersive-mode": {
+                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/299080"}}
+            },
+            "/webkit/WebKitWebXR/permission-request": {
+                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/299080"}}
             }
         }
     }

@@ -54,6 +54,7 @@ public:
     void resetAnimation();
 
     virtual RefPtr<Image> image(const IntSize& size = { }) const;
+    virtual bool currentFrameIsComplete() const;
     virtual bool errorOccurred() const { return m_cachedImage && m_cachedImage->errorOccurred(); }
 
     virtual void setContainerContext(const IntSize&, const URL&);

@@ -58,6 +58,7 @@
 #include "RenderTreeUpdaterViewTransition.h"
 #include "RenderView.h"
 #include "SVGElement.h"
+#include "StylableInlines.h"
 #include "StyleResolver.h"
 #include "StyleTreeResolver.h"
 #include "TextManipulationController.h"
@@ -817,7 +818,7 @@ void RenderTreeUpdater::tearDownRenderers(Element& root, TeardownType teardownTy
         teardownStack.append(&element);
     };
 
-    auto pop = [&] (unsigned depth) {
+    auto pop = [&] (unsigned depth, NeedsRepaintAndLayout needsRepaintAndLayout) {
         while (teardownStack.size() > depth) {
             auto& element = *teardownStack.takeLast();
             auto styleable = Styleable::fromElement(element);
@@ -862,6 +863,13 @@ void RenderTreeUpdater::tearDownRenderers(Element& root, TeardownType teardownTy
             }
 
             if (auto* renderer = element.renderer()) {
+                if (needsRepaintAndLayout == NeedsRepaintAndLayout::Yes) {
+                    renderer->repaint();
+                    if (auto* parent = renderer->parent()) {
+                        parent->setChildNeedsLayout();
+                        parent->setNeedsPreferredWidthsUpdate();
+                    }
+                }
                 if (auto backdropRenderer = renderer->backdropRenderer())
                     builder.destroyAndCleanUpAnonymousWrappers(*backdropRenderer, { });
                 builder.destroyAndCleanUpAnonymousWrappers(*renderer, root.renderer());
@@ -879,7 +887,7 @@ void RenderTreeUpdater::tearDownRenderers(Element& root, TeardownType teardownTy
     auto didRepaintRoot = repaintAndMarkContainingBlockDirtyBeforeTearDown(root, descendants);
     auto needsDescendantRepaintAndLayout = !didRepaintRoot || *didRepaintRoot == DidRepaintAndMarkContainingBlock::Yes ? NeedsRepaintAndLayout::No : NeedsRepaintAndLayout::Yes;
     for (auto it = descendants.begin(), end = descendants.end(); it != end; ++it) {
-        pop(it.depth());
+        pop(it.depth(), needsDescendantRepaintAndLayout);
 
         if (auto* text = dynamicDowncast<Text>(*it)) {
             tearDownTextRenderer(*text, &root, builder, needsDescendantRepaintAndLayout);
@@ -889,7 +897,7 @@ void RenderTreeUpdater::tearDownRenderers(Element& root, TeardownType teardownTy
         push(downcast<Element>(*it));
     }
 
-    pop(0);
+    pop(0, needsDescendantRepaintAndLayout);
 
     tearDownLeftoverPaginationRenderersIfNeeded(root, builder);
 }

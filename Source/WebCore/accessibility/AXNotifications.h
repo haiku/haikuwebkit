@@ -83,6 +83,7 @@ namespace WebCore {
     macro(NewDocumentLoadComplete) \
     macro(PageScrolled) \
     macro(PlaceholderChanged) \
+    macro(PointerEventsChanged) \
     macro(PopoverTargetChanged) \
     macro(PositionInSetChanged) \
     macro(RoleChanged) \
@@ -94,6 +95,7 @@ namespace WebCore {
     macro(SelectedStateChanged) \
     macro(SelectedTextChanged) \
     macro(SetSizeChanged) \
+    macro(StyleChanged) \
     macro(TextColorChanged) \
     macro(TextCompositionBegan) \
     macro(TextCompositionEnded) \

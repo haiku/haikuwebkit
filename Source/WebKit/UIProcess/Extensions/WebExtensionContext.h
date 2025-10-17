@@ -564,15 +564,15 @@ public:
     void sendTestFinished(id argument);
 #endif
 
-#if PLATFORM(COCOA)
     URL backgroundContentURL();
+#if PLATFORM(COCOA)
     WKWebView *backgroundWebView() const { return m_backgroundWebView.get(); }
-    bool safeToLoadBackgroundContent() const { return m_safeToLoadBackgroundContent; }
 #endif
+    bool safeToLoadBackgroundContent() const { return m_safeToLoadBackgroundContent; }
 
     RefPtr<API::Error> backgroundContentLoadError() const { return m_backgroundContentLoadError; }
 
-    NSString *backgroundWebViewInspectionName();
+    const String& backgroundWebViewInspectionName();
     void setBackgroundWebViewInspectionName(const String&);
 
     bool decidePolicyForNavigationAction(WKWebView *, WKNavigationAction *);
@@ -617,8 +617,8 @@ public:
     void enumerateExtensionPages(NOESCAPE Function<void(WebPageProxy&, bool& stop)>&&);
 
     WKWebView *relatedWebView();
-    NSString *processDisplayName();
-    NSArray *corsDisablingPatterns();
+    String processDisplayName();
+    Vector<String> corsDisablingPatterns();
     void updateCORSDisablingPatternsOnAllExtensionPages();
     WKWebViewConfiguration *webViewConfiguration(WebViewPurpose = WebViewPurpose::Any);
 

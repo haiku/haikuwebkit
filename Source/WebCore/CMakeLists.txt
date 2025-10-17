@@ -136,6 +136,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/layout/formattingContexts/block"
     "${WEBCORE_DIR}/layout/formattingContexts/block/tablewrapper"
     "${WEBCORE_DIR}/layout/formattingContexts/flex"
+    "${WEBCORE_DIR}/layout/formattingContexts/grid"
     "${WEBCORE_DIR}/layout/floats"
     "${WEBCORE_DIR}/layout/formattingContexts/inline"
     "${WEBCORE_DIR}/layout/formattingContexts/inline/display"
@@ -159,6 +160,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/page/scrolling"
     "${WEBCORE_DIR}/page/text-extraction"
     "${WEBCORE_DIR}/platform/animation"
+    "${WEBCORE_DIR}/platform/animation/values"
     "${WEBCORE_DIR}/platform/audio"
     "${WEBCORE_DIR}/platform/calc"
     "${WEBCORE_DIR}/platform/encryptedmedia"
@@ -210,6 +212,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/style/values/fill-stroke"
     "${WEBCORE_DIR}/style/values/filter-effects"
     "${WEBCORE_DIR}/style/values/flexbox"
+    "${WEBCORE_DIR}/style/values/fonts"
     "${WEBCORE_DIR}/style/values/grid"
     "${WEBCORE_DIR}/style/values/images"
     "${WEBCORE_DIR}/style/values/inline"
@@ -234,6 +237,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/style/values/text"
     "${WEBCORE_DIR}/style/values/text-decoration"
     "${WEBCORE_DIR}/style/values/transforms"
+    "${WEBCORE_DIR}/style/values/transforms/functions"
     "${WEBCORE_DIR}/style/values/transitions"
     "${WEBCORE_DIR}/style/values/ui"
     "${WEBCORE_DIR}/style/values/view-transitions"
@@ -720,6 +724,9 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/streams/GenericTransformStream.idl
     Modules/streams/QueuingStrategy.idl
     Modules/streams/QueuingStrategySize.idl
+    Modules/streams/ReadableByteStreamController.idl
+    Modules/streams/ReadableStreamBYOBReader.idl
+    Modules/streams/ReadableStreamBYOBRequest.idl
     Modules/streams/ReadableStream.idl
     Modules/streams/ReadableStreamDefaultController.idl
     Modules/streams/ReadableStreamDefaultReader.idl
@@ -926,6 +933,7 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/webtransport/WebTransportBidirectionalStream.idl
     Modules/webtransport/WebTransportCloseInfo.idl
     Modules/webtransport/WebTransportCongestionControl.idl
+    Modules/webtransport/WebTransportConnectionStats.idl
     Modules/webtransport/WebTransportDatagramDuplexStream.idl
     Modules/webtransport/WebTransportDatagramStats.idl
     Modules/webtransport/WebTransportError.idl
@@ -939,7 +947,6 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/webtransport/WebTransportSendStream.idl
     Modules/webtransport/WebTransportSendStreamOptions.idl
     Modules/webtransport/WebTransportSendStreamStats.idl
-    Modules/webtransport/WebTransportStats.idl
 
     accessibility/AccessibilityRole.idl
     accessibility/AriaAttributes.idl
@@ -2083,6 +2090,7 @@ set(WebCore_USER_AGENT_STYLE_SHEETS
     ${WEBCORE_DIR}/css/html.css
     ${WEBCORE_DIR}/css/htmlSwitchControl.css
     ${WEBCORE_DIR}/css/mathml.css
+    ${WEBCORE_DIR}/css/mathmlCoreExtras.css
     ${WEBCORE_DIR}/css/popover.css
     ${WEBCORE_DIR}/css/quirks.css
     ${WEBCORE_DIR}/css/svg.css
@@ -2748,11 +2756,11 @@ list(APPEND WebCore_SOURCES ${WebCore_DERIVED_SOURCES_DIR}/HTTPHeaderNames.cpp)
 
 # Log messages
 add_custom_command(
-    OUTPUT ${WebCore_DERIVED_SOURCES_DIR}/WebCoreLogDefinitions.h
+    OUTPUT ${WebCore_DERIVED_SOURCES_DIR}/WebCoreLogDefinitions.h ${WebCore_DERIVED_SOURCES_DIR}/WebCoreVirtualLogFunctions.h
     MAIN_DEPENDENCY ${WEBCORE_DIR}/platform/LogMessages.in
     DEPENDS ${WEBCORE_DIR}/Scripts/generate-log-declarations.py
     WORKING_DIRECTORY ${WebCore_DERIVED_SOURCES_DIR}
-    COMMAND ${PYTHON_EXECUTABLE} ${WEBCORE_DIR}/Scripts/generate-log-declarations.py ${WEBCORE_DIR}/platform/LogMessages.in ${WebCore_DERIVED_SOURCES_DIR}/WebCoreLogDefinitions.h
+    COMMAND ${PYTHON_EXECUTABLE} ${WEBCORE_DIR}/Scripts/generate-log-declarations.py ${WEBCORE_DIR}/platform/LogMessages.in ${WebCore_DERIVED_SOURCES_DIR}/WebCoreLogDefinitions.h ${WebCore_DERIVED_SOURCES_DIR}/WebCoreVirtualLogFunctions.h
     VERBATIM)
 list(APPEND WebCore_SOURCES ${WebCore_DERIVED_SOURCES_DIR}/WebCoreLogDefinitions.h)
 
@@ -3030,6 +3038,8 @@ target_precompile_headers(WebCore PRIVATE WebCorePrefix.h)
 
 list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     ${WebCore_DERIVED_SOURCES_DIR}/ProcessSyncData.serialization.in
+
+    Modules/Model/InternalAPI/DDModel.serialization.in
 
     Modules/WebGPU/InternalAPI/WebGPU.serialization.in
     Modules/indexeddb/IndexedDB.serialization.in

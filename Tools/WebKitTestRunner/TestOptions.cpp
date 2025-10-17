@@ -214,6 +214,7 @@ const TestFeatures& TestOptions::defaults()
             { "enableMetalDebugDevice", false },
             { "enableMetalShaderValidation", false },
             { "pageTopColorSamplingEnabled", false },
+            { "enhancedSecurityEnabled", false },
         };
         features.doubleTestRunnerFeatures = {
             { "contentInset.top", 0 },
@@ -292,6 +293,7 @@ const std::unordered_map<std::string, TestHeaderKeyType>& TestOptions::keyTypeMa
         { "enableMetalDebugDevice", TestHeaderKeyType::BoolTestRunner },
         { "enableMetalShaderValidation", TestHeaderKeyType::BoolTestRunner },
         { "pageTopColorSamplingEnabled", TestHeaderKeyType::BoolTestRunner },
+        { "enhancedSecurityEnabled", TestHeaderKeyType::BoolTestRunner },
 
         { "contentInset.top", TestHeaderKeyType::DoubleTestRunner },
         { "obscuredInset.top", TestHeaderKeyType::DoubleTestRunner },

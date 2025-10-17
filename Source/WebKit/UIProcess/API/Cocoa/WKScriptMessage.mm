@@ -62,7 +62,7 @@
 
 - (NSString *)name
 {
-    return _scriptMessage->name().createNSString().autorelease();
+    return _scriptMessage->cocoaName().get();
 }
 
 - (WKContentWorld *)world

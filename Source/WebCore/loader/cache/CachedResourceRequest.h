@@ -71,7 +71,7 @@ public:
     void setInitiatorType(const AtomString&);
     const AtomString& initiatorType() const;
 
-    bool allowsCaching() const { return m_options.cachingPolicy == CachingPolicy::AllowCaching; }
+    bool allowsCaching() const { return m_options.cachingPolicy == CachingPolicy::AllowCaching || m_options.cachingPolicy == CachingPolicy::AllowCachingPrefetch; }
     void setCachingPolicy(CachingPolicy policy) { m_options.cachingPolicy = policy;  }
 
     // Whether this request should impact request counting and delay window.onload.

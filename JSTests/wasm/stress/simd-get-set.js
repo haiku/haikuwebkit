@@ -57,6 +57,21 @@ let wat = `
         (global.set $embedded_global_mut (global.get $exported_global))
         (v128.store (local.get $dst) (global.get $embedded_global_mut))
     )
+
+    ;; Helper function to poison the stack with known values
+    (func (export "poison_stack")
+        (local $poison v128)
+
+        (local.set $poison (v128.const i32x4 0xDEADBEEF 0xCAFEBABE 0xFEEDFACE 0xBADDCAFE))
+        (drop (local.get $poison))
+    )
+
+    ;; Test that uninitialized v128 local is fully zeroed (all 16 bytes)
+    (func (export "test_uninitialized_local") (param $dst i32)
+        (local $uninitialized v128)
+
+        (v128.store (local.get $dst) (local.get $uninitialized))
+    )
 )
 `
 
@@ -175,6 +190,21 @@ async function test() {
         assert.eq(result[1], 100);
         assert.eq(result[2], 200);
         assert.eq(result[3], 300);
+    }
+
+    // Test uninitialized v128 local is fully zeroed
+    {
+        const dstAddr = 288;
+
+        const { poison_stack, test_uninitialized_local } = instance.exports;
+        poison_stack();
+        test_uninitialized_local(dstAddr);
+
+        const result = getI32x4(dstAddr);
+        assert.eq(result[0], 0);
+        assert.eq(result[1], 0);
+        assert.eq(result[2], 0);
+        assert.eq(result[3], 0);
     }
 }
 

@@ -206,10 +206,12 @@ static WebCore::IntDegrees deviceOrientationForUIInterfaceOrientation(UIInterfac
     [_scrollView setBaseScrollViewDelegate:self];
     [_scrollView setBouncesZoom:YES];
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if ([_scrollView respondsToSelector:@selector(_setAvoidsJumpOnInterruptedBounce:)]) {
         [_scrollView setTracksImmediatelyWhileDecelerating:NO];
         [_scrollView _setAvoidsJumpOnInterruptedBounce:YES];
     }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
     _scrollViewDefaultAllowedTouchTypes = [_scrollView panGestureRecognizer].allowedTouchTypes;
 
@@ -840,6 +842,10 @@ static WebCore::Color scrollViewBackgroundColor(WKWebView *webView, AllowPageBac
 
 #if HAVE(UIKIT_RESIZABLE_WINDOWS)
     [self _invalidateResizeAssertions];
+#endif
+
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+    [self _clearTextExtractionFilterCache];
 #endif
 
     if (_gestureController)

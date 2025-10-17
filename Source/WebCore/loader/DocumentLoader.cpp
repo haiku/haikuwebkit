@@ -253,7 +253,6 @@ void DocumentLoader::setRequest(ResourceRequest&& req)
     // Replacing an unreachable URL with alternate content looks like a server-side
     // redirect at this point, but we can replace a committed dataSource.
     bool handlingUnreachableURL = false;
-
     handlingUnreachableURL = m_substituteData.isValid() && !m_substituteData.failingURL().isEmpty();
 
     bool shouldNotifyAboutProvisionalURLChange = false;
@@ -967,7 +966,7 @@ void DocumentLoader::responseReceived(ResourceResponse&& response, CompletionHan
 #endif
 
     if (m_isLoadingMultipartContent) {
-        setupForReplace();
+        setupForMultipartReplace();
         m_mainResource->clear();
     } else if (response.isMultipart())
         m_isLoadingMultipartContent = true;
@@ -1111,9 +1110,7 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
         if (RefPtr mainResourceLoader = this->mainResourceLoader())
             InspectorInstrumentation::continueWithPolicyDownload(*frame, *mainResourceLoader->identifier(), *this, m_response);
 
-        RefPtr document = frame->document();
-        bool shouldIgnoreSandboxFlags = frame->isMainFrame() && document && document->quirks().shouldAllowDownloadsInSpiteOfCSP();
-        if (!frame->effectiveSandboxFlags().contains(SandboxFlag::Downloads) || shouldIgnoreSandboxFlags) {
+        if (!frame->effectiveSandboxFlags().contains(SandboxFlag::Downloads)) {
             // When starting the request, we didn't know that it would result in download and not navigation. Now we know that main document URL didn't change.
             // Download may use this knowledge for purposes unrelated to cookies, notably for setting file quarantine data.
             protectedFrameLoader()->setOriginalURLForDownloadRequest(m_request);
@@ -1123,7 +1120,7 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
                 protectedFrameLoader()->protectedClient()->startDownload(m_request);
             } else
                 protectedFrameLoader()->protectedClient()->convertMainResourceLoadToDownload(this, m_request, m_response);
-        } else if (document)
+        } else if (RefPtr document = frame->document())
             document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not allowed to download due to sandboxing"_s);
 
         // The main resource might be loading from the memory cache, or its loader might have gone missing.
@@ -1313,7 +1310,7 @@ void DocumentLoader::commitData(const SharedBuffer& data)
             }
         }
         // Call receivedFirstData() exactly once per load. We should only reach this point multiple times
-        // for multipart loads, and FrameLoader::isReplacing() will be true after the first time.
+        // for multipart loads, and FrameLoader::isMultipartReplacing() will be true after the first time.
         if (!isMultipartReplacingLoad())
             protectedFrameLoader()->receivedFirstData();
 
@@ -1394,7 +1391,7 @@ void DocumentLoader::dataReceived(const SharedBuffer& buffer)
         commitLoad(buffer);
 }
 
-void DocumentLoader::setupForReplace()
+void DocumentLoader::setupForMultipartReplace()
 {
     if (!mainResourceData())
         return;
@@ -1404,7 +1401,7 @@ void DocumentLoader::setupForReplace()
     maybeFinishLoadingMultipartContent();
     maybeCreateArchive();
     m_writer.end();
-    protectedFrameLoader()->setReplacing();
+    protectedFrameLoader()->setMultipartReplacing();
     m_gotFirstByte = false;
 
     unregisterReservedServiceWorkerClient();
@@ -2032,7 +2029,7 @@ void DocumentLoader::removePlugInStreamLoader(ResourceLoader& loader)
 
 bool DocumentLoader::isMultipartReplacingLoad() const
 {
-    return isLoadingMultipartContent() && protectedFrameLoader()->isReplacing();
+    return isLoadingMultipartContent() && protectedFrameLoader()->isMultipartReplacing();
 }
 
 bool DocumentLoader::maybeLoadEmpty()
@@ -2313,7 +2310,8 @@ void DocumentLoader::loadMainResource(ResourceRequest&& request)
     ResourceRequest updatedRequest = mainResourceLoader() ? mainResourceLoader()->originalRequest() : mainResourceRequest.resourceRequest();
     // If there was a fragment identifier on m_request, the cache will have stripped it. m_request should include
     // the fragment identifier, so add that back in.
-    if (equalIgnoringFragmentIdentifier(m_request.url(), updatedRequest.url()))
+    // Otherwise, if the main resource was loaded from a prefetch, we need to conserve the redirect URL here
+    if (equalIgnoringFragmentIdentifier(m_request.url(), updatedRequest.url()) || (m_mainResource && m_mainResource->options().cachingPolicy == CachingPolicy::AllowCachingPrefetch))
         updatedRequest.setURL(URL { m_request.url() });
     setRequest(WTFMove(updatedRequest));
 }
@@ -2387,7 +2385,7 @@ void DocumentLoader::maybeFinishLoadingMultipartContent()
     if (!isMultipartReplacingLoad())
         return;
 
-    protectedFrameLoader()->setupForReplace();
+    protectedFrameLoader()->setupForMultipartReplace();
     m_committed = false;
     commitLoad(mainResourceData()->makeContiguous());
 }

@@ -31,7 +31,6 @@ namespace WebCore {
 
 class FloatSize;
 class LayoutSize;
-class TransformOperations;
 class TransformationMatrix;
 
 namespace Style {
@@ -68,9 +67,7 @@ struct TransformList {
 
     bool operator==(const TransformList&) const = default;
 
-    WebCore::TransformOperations resolvedCalculatedValues(const FloatSize&) const;
-
-    template<TransformOperation::Type>
+    template<TransformFunctionType>
     bool hasTransformOfType() const;
 
     void apply(TransformationMatrix&, const FloatSize&, unsigned start = 0) const;
@@ -82,6 +79,8 @@ struct TransformList {
     bool affectedByTransformOrigin() const;
     bool containsNonInvertibleMatrix(const LayoutSize&) const;
 
+    TransformFunctionSizeDependencies computeSizeDependencies() const;
+
 private:
     friend struct Blending<TransformList>;
     friend struct Transform;
@@ -91,7 +90,7 @@ private:
     Container m_value;
 };
 
-template<TransformOperation::Type operationType>
+template<TransformFunctionType operationType>
 bool TransformList::hasTransformOfType() const
 {
     return std::ranges::any_of(m_value, [](auto& op) { return op->type() == operationType; });

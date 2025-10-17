@@ -155,6 +155,9 @@ class GLibPort(Port):
                 "--xml-file=%s " \
                 "--suppressions=%s" % (xmlfile, suppressionsfile)
 
+        # WTF_DateMath.calculateLocalTimeOffset test only pass in Pacific Time Zone
+        environment['TZ'] = 'PST8PDT'
+
         return environment
 
     def setup_environ_for_minibrowser(self):

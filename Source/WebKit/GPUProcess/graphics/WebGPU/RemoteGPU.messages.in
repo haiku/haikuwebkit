@@ -34,6 +34,9 @@ messages -> RemoteGPU Stream {
     void CreateCompositorIntegration(WebKit::WebGPUIdentifier identifier)
 
     void IsValid(WebKit::WebGPUIdentifier identifier) -> (bool isValid, bool exists) Synchronous
+#if ENABLE(GPUP_MODEL)
+    void AddMeshRequest(WebKit::DDModel::DDMeshDescriptor descriptor, WebKit::DDModelIdentifier identifier)
+#endif
 }
 
 #endif

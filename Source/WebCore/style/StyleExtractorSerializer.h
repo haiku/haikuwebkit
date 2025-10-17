@@ -85,7 +85,6 @@ public:
     static void serializeTabSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const TabSize&);
     static void serializeLineBoxContain(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<Style::LineBoxContain>);
     static void serializeWebkitRubyPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, RubyPosition);
-    static void serializePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthPoint&);
     static void serializeTouchAction(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TouchAction>);
     static void serializeTextTransform(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextTransform>);
     static void serializeTextUnderlinePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextUnderlinePosition>);
@@ -114,10 +113,6 @@ public:
     // MARK: Font serializations
 
     static void serializeFontFamily(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const AtomString&);
-    static void serializeFontSizeAdjust(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontSizeAdjust&);
-    static void serializeFontPalette(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontPalette&);
-    static void serializeFontWeight(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FontSelectionValue);
-    static void serializeFontWidth(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, FontSelectionValue);
     static void serializeFontFeatureSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontFeatureSettings&);
     static void serializeFontVariationSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontVariationSettings&);
 
@@ -473,8 +468,8 @@ inline void ExtractorSerializer::serializePositionTryFallbacks(ExtractorState& s
 
     CSSValueListBuilder list;
     for (auto& fallback : fallbacks) {
-        if (fallback.positionAreaProperties) {
-            auto areaValue = fallback.positionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
+        if (RefPtr positionAreaProperties = fallback.positionAreaProperties) {
+            auto areaValue = positionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
             if (areaValue)
                 list.append(*areaValue);
             continue;
@@ -519,15 +514,6 @@ inline void ExtractorSerializer::serializeWillChange(ExtractorState& state, Stri
     builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
 }
 
-inline void ExtractorSerializer::serializeTabSize(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext& context, const TabSize& tabSize)
-{
-    auto value = tabSize.widthInPixels(1.0);
-    if (tabSize.isSpaces())
-        CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { value });
-    else
-        CSS::serializationForCSS(builder, context, CSS::LengthRaw<> { CSS::LengthUnit::Px, value });
-}
-
 inline void ExtractorSerializer::serializeLineBoxContain(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<Style::LineBoxContain> lineBoxContain)
 {
     if (!lineBoxContain) {
@@ -569,13 +555,6 @@ inline void ExtractorSerializer::serializeWebkitRubyPosition(ExtractorState& sta
     }
 
     RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline void ExtractorSerializer::serializePosition(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const LengthPoint& position)
-{
-    serializeLength(state, builder, context, position.x);
-    builder.append(' ');
-    serializeLength(state, builder, context, position.y);
 }
 
 inline void ExtractorSerializer::serializeTouchAction(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<TouchAction> touchActions)
@@ -1005,60 +984,6 @@ inline void ExtractorSerializer::serializeFontFamily(ExtractorState&, StringBuil
         builder.append(nameLiteralForSerialization(familyIdentifier));
     else
         builder.append(WebCore::serializeFontFamily(family));
-}
-
-inline void ExtractorSerializer::serializeFontSizeAdjust(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FontSizeAdjust& fontSizeAdjust)
-{
-    if (fontSizeAdjust.isNone()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-        return;
-    }
-
-    auto metric = fontSizeAdjust.metric;
-    auto value = fontSizeAdjust.shouldResolveFromFont() ? fontSizeAdjust.resolve(state.style.computedFontSize(), state.style.metricsOfPrimaryFont()) : fontSizeAdjust.value.asOptional();
-
-    if (!value) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-        return;
-    }
-
-    if (metric == FontSizeAdjust::Metric::ExHeight) {
-        CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { *value });
-        return;
-    }
-
-    serialize(state, builder, context, metric);
-    builder.append(' ');
-    CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { *value });
-}
-
-inline void ExtractorSerializer::serializeFontPalette(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FontPalette& fontPalette)
-{
-    switch (fontPalette.type) {
-    case FontPalette::Type::Normal:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    case FontPalette::Type::Light:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Light { });
-        return;
-    case FontPalette::Type::Dark:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Dark { });
-        return;
-    case FontPalette::Type::Custom:
-        serializationForCSS(builder, context, state.style, CustomIdentifier { fontPalette.identifier });
-        return;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline void ExtractorSerializer::serializeFontWeight(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext& context, FontSelectionValue fontWeight)
-{
-    CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { static_cast<float>(fontWeight) });
-}
-
-inline void ExtractorSerializer::serializeFontWidth(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext& context, FontSelectionValue fontWidth)
-{
-    CSS::serializationForCSS(builder, context, CSS::PercentageRaw<> { static_cast<float>(fontWidth) });
 }
 
 inline void ExtractorSerializer::serializeFontFeatureSettings(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FontFeatureSettings& fontFeatureSettings)

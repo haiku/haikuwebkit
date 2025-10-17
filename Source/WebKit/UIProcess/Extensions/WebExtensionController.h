@@ -196,7 +196,8 @@ public:
 
 #ifdef __OBJC__
     WKWebExtensionController *wrapper() const { return (WKWebExtensionController *)API::ObjectImpl<API::Object::Type::WebExtensionController>::wrapper(); }
-    WKWebExtensionControllerDelegatePrivate *delegate() const { return (WKWebExtensionControllerDelegatePrivate *)wrapper().delegate; }
+    RetainPtr<WKWebExtensionController> protectedWrapper() const { return wrapper(); }
+    WKWebExtensionControllerDelegatePrivate *delegate() const { return (WKWebExtensionControllerDelegatePrivate *)protectedWrapper().get().delegate; }
 #endif
 
 private:

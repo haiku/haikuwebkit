@@ -51,8 +51,8 @@ Gradient::Gradient(Data&& data, ColorInterpolationMethod colorInterpolationMetho
 
 Gradient::~Gradient()
 {
-    for (auto& observer : m_observers)
-        observer.willDestroyGradient(*this);
+    for (CheckedRef observer : m_observers)
+        observer->willDestroyGradient(*this);
 }
 
 void Gradient::adjustParametersForTiledDrawing(FloatSize& size, FloatRect& srcRect, const FloatSize& spacing)

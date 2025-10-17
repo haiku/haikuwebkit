@@ -28,9 +28,9 @@
 
 #include "WebFrame.h"
 #include "WebFrameInspectorTargetFrontendChannel.h"
-#include <WebCore/Frame.h>
 #include <WebCore/FrameInspectorController.h>
 #include <WebCore/InspectorController.h>
+#include <WebCore/LocalFrame.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 
@@ -65,7 +65,7 @@ void WebFrameInspectorTarget::connect(Inspector::FrontendChannel::ConnectionType
     Ref frame = m_frame.get();
     m_channel = makeUnique<WebFrameInspectorTargetFrontendChannel>(frame, identifier(), connectionType);
 
-    if (RefPtr coreFrame = frame->coreFrame())
+    if (RefPtr coreFrame = frame->coreLocalFrame())
         coreFrame->protectedInspectorController()->connectFrontend(*m_channel);
 }
 
@@ -74,7 +74,7 @@ void WebFrameInspectorTarget::disconnect()
     if (!m_channel)
         return;
 
-    if (RefPtr coreFrame = protectedFrame()->coreFrame())
+    if (RefPtr coreFrame = protectedFrame()->coreLocalFrame())
         coreFrame->protectedInspectorController()->disconnectFrontend(*m_channel);
 
     m_channel.reset();
@@ -82,7 +82,7 @@ void WebFrameInspectorTarget::disconnect()
 
 void WebFrameInspectorTarget::sendMessageToTargetBackend(const String& message)
 {
-    if (RefPtr coreFrame = protectedFrame()->coreFrame())
+    if (RefPtr coreFrame = protectedFrame()->coreLocalFrame())
         coreFrame->protectedInspectorController()->dispatchMessageFromFrontend(message);
 }
 

@@ -17,7 +17,7 @@ PASS invalid tt-policy-name name "policy*name"
 PASS invalid tt-policy-name name "policy$name"
 PASS invalid tt-policy-name name "policy?name"
 PASS invalid tt-policy-name name "policy!name"
-FAIL invalid tt-policy-name name "política" assert_true: createPolicy() should throw a TypeError. expected true got false
-FAIL directive "trusted-type _TTP1_%09_TTP2_%0A_TTP3_%0C_TTP4_%0D_TTP5_%20_TTP6_" (required-ascii-whitespace) assert_equals: expected null but got object "TypeError: Failed to execute 'createPolicy': Policy with name '_TTP3_' disallowed."
+PASS non-ASCII trusted-types directives are discarded ("política")
+PASS directive "trusted-type _TTP1_%09_TTP2_%0A%20_TTP3_%0C_TTP4_%0D_TTP5_%20_TTP6_" (required-ascii-whitespace)
 PASS invalid directive "trusted-type _TTP" (no ascii whitespace)
 

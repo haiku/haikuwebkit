@@ -33,6 +33,7 @@
 #include "ContainerQueryFeatures.h"
 #include "Document.h"
 #include "MediaList.h"
+#include "NodeDocument.h"
 #include "NodeRenderStyle.h"
 #include "RenderStyleInlines.h"
 #include "RenderView.h"

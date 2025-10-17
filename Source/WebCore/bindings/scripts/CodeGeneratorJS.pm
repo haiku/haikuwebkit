@@ -6023,7 +6023,7 @@ sub GenerateAttributeSetterBodyDefinition
         my $callTracer = $attribute->extendedAttributes->{CallTracer} || $interface->extendedAttributes->{CallTracer};
         if ($callTracer) {
             my $indent = "    ";
-            my @callTracerArguments = $readValue;
+            my @callTracerArguments = ( [GetIDLType($interface, $attribute->type), $readValue] );
             GenerateCallTracer($outputArray, $callTracer, $attribute->name, \@callTracerArguments, $indent);
         }
 
@@ -7247,7 +7247,7 @@ sub GenerateImplementationFunctionCall
 
     my $callTracer = $operation->extendedAttributes->{CallTracer} || $interface->extendedAttributes->{CallTracer};
     if ($callTracer) {
-        my @callTracerArguments = map { $_->name . "ConversionResult.returnValue()" } @{$operation->arguments};
+        my @callTracerArguments = map { [GetIDLTypeForArgument($interface, $_), $_->name . "ConversionResult.returnValue()"] } @{$operation->arguments};
         GenerateCallTracer($outputArray, $callTracer, $operation->name, \@callTracerArguments, $indent);
     }
 
@@ -7633,6 +7633,18 @@ sub GetIDLType
     my $baseIDLType = GetIDLTypeExcludingNullability($interface, $type);
     $baseIDLType = "IDLNullable<" . $baseIDLType . ">" if $type->isNullable;
     return $baseIDLType;
+}
+
+sub GetIDLTypeForArgument
+{
+    my ($interface, $argument) = @_;
+
+    my $defaultValueFunctor = GetArgumentDefaultValueFunctor($interface, $argument);
+    my $optional = $argument->isOptional && ((defined($argument->default) && !WillConvertUndefinedToDefaultParameterValue($argument->type, $argument->default))|| !defined($argument->default));
+
+    my $IDLType = GetIDLType($interface, $argument->type);
+    $IDLType = "IDLOptional<" . $IDLType . ">" if $optional && !$defaultValueFunctor;
+    return $IDLType;
 }
 
 sub ShouldPassArgumentByReference
@@ -8754,7 +8766,7 @@ sub GenerateCallTracer()
     push(@$outputArray, $indent . "if (impl.hasActive" . $callTracer . "()) [[unlikely]]\n");
     push(@$outputArray, $indent . "    " . $callTracer . "::recordAction(impl, \"" . $name . "\"_s");
     if (scalar(@$arguments)) {
-        push(@$outputArray, ", { " . join(", ", map { $callTracer . "::processArgument(impl, " . $_ . ")" } @$arguments) . " }");
+        push(@$outputArray, ", { " . join(", ", map { $callTracer . "::processArgument<". @$_[0] . ">(impl, " . @$_[1] . ")" } @$arguments) . " }");
     }
     push(@$outputArray, ");\n");
 }

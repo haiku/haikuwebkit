@@ -43,7 +43,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObjectInlines.h"
 #include "RenderChildIterator.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
 #include "RenderObjectEnums.h"
@@ -51,6 +51,7 @@
 #include "RenderReplaced.h"
 #include "RenderSVGRoot.h"
 #include "RenderStyleConstants.h"
+#include "RenderStyleInlines.h"
 #include "RenderTable.h"
 #include "RenderView.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
@@ -64,6 +65,44 @@
 namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RenderFlexibleBox);
+
+RenderFlexibleBox::FlexLayoutItem::FlexLayoutItem(RenderBox& flexItem, LayoutUnit flexBaseContentSize, LayoutUnit mainAxisBorderAndPadding, LayoutUnit mainAxisMargin, std::pair<LayoutUnit, LayoutUnit> minMaxSizes, bool everHadLayout)
+    : renderer(flexItem)
+    , flexBaseContentSize(flexBaseContentSize)
+    , mainAxisBorderAndPadding(mainAxisBorderAndPadding)
+    , mainAxisMargin(mainAxisMargin)
+    , minMaxSizes(minMaxSizes)
+    , hypotheticalMainContentSize(constrainSizeByMinMax(flexBaseContentSize))
+    , frozen(false)
+    , everHadLayout(everHadLayout)
+{
+    ASSERT(!flexItem.isOutOfFlowPositioned());
+}
+
+LayoutUnit RenderFlexibleBox::FlexLayoutItem::hypotheticalMainAxisMarginBoxSize() const
+{
+    return hypotheticalMainContentSize + mainAxisBorderAndPadding + mainAxisMargin;
+}
+
+LayoutUnit RenderFlexibleBox::FlexLayoutItem::flexBaseMarginBoxSize() const
+{
+    return flexBaseContentSize + mainAxisBorderAndPadding + mainAxisMargin;
+}
+
+LayoutUnit RenderFlexibleBox::FlexLayoutItem::flexedMarginBoxSize() const
+{
+    return flexedContentSize + mainAxisBorderAndPadding + mainAxisMargin;
+}
+
+const RenderStyle& RenderFlexibleBox::FlexLayoutItem::style() const
+{
+    return renderer->style();
+}
+
+LayoutUnit RenderFlexibleBox::FlexLayoutItem::constrainSizeByMinMax(const LayoutUnit size) const
+{
+    return std::max(minMaxSizes.first, std::min(size, minMaxSizes.second));
+}
 
 struct RenderFlexibleBox::LineState {
     LineState(LayoutUnit crossAxisOffset, LayoutUnit crossAxisExtent, std::optional<BaselineAlignmentState> baselineAlignmentState, FlexLayoutItems&& flexLayoutItems)
@@ -1112,17 +1151,17 @@ template<typename SizeType> LayoutUnit RenderFlexibleBox::computeMainSizeFromAsp
 
     auto crossSizeOptional = WTF::switchOn(crossSizeLength,
         [&](const SizeType::Fixed& fixedCrossSizeLength) -> std::optional<LayoutUnit> {
-            return LayoutUnit(fixedCrossSizeLength.value);
+            return LayoutUnit(fixedCrossSizeLength.resolveZoom(Style::ZoomNeeded { }));
         },
         [&](const SizeType::Percentage& percentageCrossSizeLength) -> std::optional<LayoutUnit> {
             return mainAxisIsFlexItemInlineAxis(flexItem)
                 ? flexItem.computePercentageLogicalHeight(percentageCrossSizeLength)
-                : adjustBorderBoxLogicalWidthForBoxSizing(Style::evaluate(percentageCrossSizeLength, contentBoxWidth(), 1.0f /* FIXME FIND ZOOM */));
+                : adjustBorderBoxLogicalWidthForBoxSizing(Style::evaluate<LayoutUnit>(percentageCrossSizeLength, contentBoxWidth()));
         },
         [&](const SizeType::Calc& calcCrossSizeLength) -> std::optional<LayoutUnit> {
             return mainAxisIsFlexItemInlineAxis(flexItem)
                 ? flexItem.computePercentageLogicalHeight(calcCrossSizeLength)
-                : adjustBorderBoxLogicalWidthForBoxSizing(Style::evaluate(calcCrossSizeLength, contentBoxWidth(), 1.0f /* FIXME FIND ZOOM */));
+                : adjustBorderBoxLogicalWidthForBoxSizing(Style::evaluate<LayoutUnit>(calcCrossSizeLength, contentBoxWidth()));
         },
         [&](const CSS::Keyword::Auto&) -> std::optional<LayoutUnit> {
             ASSERT(flexItemCrossSizeShouldUseContainerCrossSize(flexItem));
@@ -1650,7 +1689,7 @@ LayoutUnit RenderFlexibleBox::computeFlexItemMarginValue(const Style::MarginEdge
 {
     // When resolving the margins, we use the content size for resolving percent and calc (for percents in calc expressions) margins.
     // Fortunately, percent margins are always computed with respect to the block's width, even for margin-top and margin-bottom.
-    return Style::evaluateMinimum(margin, contentBoxLogicalWidth(), 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluateMinimum<LayoutUnit>(margin, contentBoxLogicalWidth(), Style::ZoomNeeded { });
 }
 
 void RenderFlexibleBox::prepareOrderIteratorAndMargins()
@@ -1745,7 +1784,7 @@ bool RenderFlexibleBox::canUseFlexItemForPercentageResolution(const RenderBox& f
             return true;
         }
 
-        if (m_inFlexItemLayout) {
+        if (m_inFlexItemLayout || &flexItem == view().frameView().layoutContext().subtreeLayoutRoot()) {
             // While running flex _item_ layout, we may only resolve percentage against the flex item when it is orthogonal to the flex container.
             return !mainAxisIsFlexItemInlineAxis(flexItem);
         }
@@ -1755,12 +1794,6 @@ bool RenderFlexibleBox::canUseFlexItemForPercentageResolution(const RenderBox& f
 
         if (m_inCrossAxisLayout)
             return true;
-
-        if (&flexItem == view().frameView().layoutContext().subtreeLayoutRoot()) {
-            ASSERT(!needsLayout());
-            // When the flex item is the root of a subtree layout, flex layout is not running (as we only layout the flex item's subtree).
-            return false;
-        }
 
         // Let's decide based on style when we are outside of layout (i.e. relative percent position).
         return !m_inLayout;
@@ -2034,6 +2067,7 @@ static LayoutUnit alignmentOffset(LayoutUnit availableFreeSpace, ItemPosition po
         return availableFreeSpace;
     case ItemPosition::Center:
     case ItemPosition::AnchorCenter:
+    case ItemPosition::Dialog:
         return availableFreeSpace / 2;
     case ItemPosition::Baseline:
     case ItemPosition::LastBaseline: 
@@ -2116,17 +2150,17 @@ LayoutUnit RenderFlexibleBox::computeCrossSizeForFlexItemUsingContainerCrossSize
         ASSERT(size.isFixed() || (size.isPercent() && availableLogicalHeightForPercentageComputation()));
         LayoutUnit definiteValue;
         if (auto fixedSize = size.tryFixed())
-            definiteValue = LayoutUnit { fixedSize->value };
+            definiteValue = LayoutUnit { fixedSize->resolveZoom(Style::ZoomNeeded { }) };
         else if (size.isPercent())
             definiteValue = availableLogicalHeightForPercentageComputation().value_or(0_lu);
 
         auto maximumSize = isHorizontal ? style().maxHeight() : style().maxWidth();
         if (auto fixedMaximumSize = maximumSize.tryFixed())
-            definiteValue = std::min(definiteValue, LayoutUnit { fixedMaximumSize->value });
+            definiteValue = std::min(definiteValue, LayoutUnit { fixedMaximumSize->resolveZoom(Style::ZoomNeeded { }) });
 
         auto minimumSize = isHorizontal ? style().minHeight() : style().minWidth();
         if (auto fixedMinimumSize = minimumSize.tryFixed())
-            definiteValue = std::max(definiteValue, LayoutUnit { fixedMinimumSize->value });
+            definiteValue = std::max(definiteValue, LayoutUnit { fixedMinimumSize->resolveZoom(Style::ZoomNeeded { }) });
 
         return definiteValue;
     };
@@ -2785,7 +2819,7 @@ LayoutUnit RenderFlexibleBox::computeGap(RenderFlexibleBox::GapType gapType) con
         return { };
 
     auto availableSize = usesRowGap ? availableLogicalHeightForPercentageComputation().value_or(0_lu) : contentBoxLogicalWidth();
-    return Style::evaluateMinimum(gap, availableSize, 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluateMinimum<LayoutUnit>(gap, availableSize, Style::ZoomNeeded { });
 }
 
 bool RenderFlexibleBox::layoutUsingFlexFormattingContext()

@@ -207,7 +207,7 @@ void DFABytecodeInterpreter::interpretTestFlagsAndAppendAction(uint32_t& program
 }
 
 template<bool caseSensitive>
-inline void DFABytecodeInterpreter::interpretJumpTable(std::span<const LChar> url, uint32_t& urlIndex, uint32_t& programCounter)
+inline void DFABytecodeInterpreter::interpretJumpTable(std::span<const Latin1Character> url, uint32_t& urlIndex, uint32_t& programCounter)
 {
     DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
 
@@ -249,13 +249,13 @@ auto DFABytecodeInterpreter::actionsMatchingEverything() -> Actions
 auto DFABytecodeInterpreter::interpret(const String& urlString, ResourceFlags flags) -> Actions
 {
     CString urlCString;
-    std::span<const LChar> url;
+    std::span<const Latin1Character> url;
     if (urlString.is8Bit()) [[likely]]
         url = urlString.span8();
     else {
         // FIXME: Stuffing a UTF-8 string into a Latin1 buffer seems wrong.
         urlCString = urlString.utf8();
-        url = byteCast<LChar>(urlCString.span());
+        url = byteCast<Latin1Character>(urlCString.span());
     }
     ASSERT(url.data());
     

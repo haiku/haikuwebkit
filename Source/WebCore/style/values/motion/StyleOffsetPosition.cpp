@@ -36,6 +36,24 @@
 namespace WebCore {
 namespace Style {
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+auto OffsetPosition::convert(const AcceleratedEffectOffsetPosition& value) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position>
+{
+    return WTF::switchOn(value.value,
+        [](const AcceleratedEffectOffsetPosition::Normal&) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position> {
+            return CSS::Keyword::Normal { };
+        },
+        [](const AcceleratedEffectOffsetPosition::Auto&) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position> {
+            return CSS::Keyword::Auto { };
+        },
+        [](const FloatPoint& position) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position> {
+            return Position { position };
+        }
+    );
+}
+
+#endif
 // MARK: - Conversion
 
 auto CSSValueConversion<OffsetPosition>::operator()(BuilderState& state, const CSSValue& value) -> OffsetPosition
@@ -75,22 +93,26 @@ auto Blending<OffsetPosition>::blend(const OffsetPosition& a, const OffsetPositi
     return OffsetPosition { Style::blend(*a.tryPosition(), *b.tryPosition(), context) };
 }
 
-// MARK: - Platform
+// MARK: - Evaluation
 
-auto ToPlatform<OffsetPosition>::operator()(const OffsetPosition& value) -> WebCore::LengthPoint
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+auto Evaluation<OffsetPosition, AcceleratedEffectOffsetPosition>::operator()(const OffsetPosition& value, FloatSize referenceBox, ZoomNeeded token) -> AcceleratedEffectOffsetPosition
 {
     return WTF::switchOn(value,
-        [](const CSS::Keyword::Auto&) {
-            return WebCore::LengthPoint { WebCore::LengthType::Auto, WebCore::LengthType::Auto };
+        [&](const Style::Position& position) -> AcceleratedEffectOffsetPosition {
+            return { .value = Style::evaluate<FloatPoint>(position, referenceBox, token) };
         },
-        [](const CSS::Keyword::Normal&) {
-            return WebCore::LengthPoint { WebCore::LengthType::Normal, WebCore::LengthType::Normal };
+        [](const CSS::Keyword::Normal&) -> AcceleratedEffectOffsetPosition {
+            return { .value = AcceleratedEffectOffsetPosition::Normal { } };
         },
-        [](const Position& position) {
-            return toPlatform(position);
+        [](const CSS::Keyword::Auto&) -> AcceleratedEffectOffsetPosition {
+            return { .value = AcceleratedEffectOffsetPosition::Auto { } };
         }
     );
 }
+
+#endif
 
 } // namespace Style
 } // namespace WebCore

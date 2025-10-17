@@ -149,6 +149,7 @@
 #include <algorithm>
 #include <pal/Logging.h>
 #include <wtf/CallbackAggregator.h>
+#include <wtf/CoroutineUtilities.h>
 #include <wtf/DateMath.h>
 #include <wtf/Language.h>
 #include <wtf/ProcessPrivilege.h>
@@ -384,6 +385,7 @@ WebProcess::~WebProcess()
 void WebProcess::initializeProcess(const AuxiliaryProcessInitializationParameters& parameters)
 {
     m_isLockdownModeEnabled = parameters.extraInitializationData.get<HashTranslatorASCIILiteral>("enable-lockdown-mode"_s) == "1"_s;
+    m_isEnhancedSecurityEnabled = parameters.extraInitializationData.get<HashTranslatorASCIILiteral>("enable-enhanced-security"_s) == "1"_s;
 
     WTF::setProcessPrivileges({ });
 
@@ -544,7 +546,7 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
             WTF::TextStream activityStateStream(WTF::TextStream::LineMode::SingleLine);
             activityStateStream << page->activityState();
 
-            RELEASE_LOG(ActivityState, "WebPage %p - load_time: %" PRId64 ", visible: %d, throttleable: %d , suspended: %d , websam_state: %" PUBLIC_LOG_STRING ", activity_state: %" PUBLIC_LOG_STRING ", url: %" PRIVATE_LOG_STRING, page.get(), loadCommitTime, page->isVisible(), page->isThrottleable(), page->isSuspended(), MemoryPressureHandler::processStateDescription().characters(), activityStateStream.release().utf8().data(), page->mainWebFrame().url().string().utf8().data());
+            RELEASE_LOG(ActivityState, "WebPage %p - load_time: %" PRId64 ", visible: %d, throttleable: %d , suspended: %d , websam_state: %" PUBLIC_LOG_STRING ", activity_state: %" PUBLIC_LOG_STRING ", url: %" PRIVATE_LOG_STRING, page.ptr(), loadCommitTime, page->isVisible(), page->isThrottleable(), page->isSuspended(), MemoryPressureHandler::processStateDescription().characters(), activityStateStream.release().utf8().data(), page->mainWebFrame().url().string().utf8().data());
         }
     });
 #endif
@@ -953,7 +955,7 @@ WebPage* WebProcess::focusedWebPage() const
 {    
     for (auto& page : m_pageMap.values()) {
         if (page->windowAndWebPageAreFocused())
-            return page.get();
+            return page.ptr();
     }
     return 0;
 }
@@ -970,15 +972,16 @@ WebPage* WebProcess::webPage(PageIdentifier pageID) const
 
 void WebProcess::createWebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 {
-    // It is necessary to check for page existence here since during a window.open() (or targeted
-    // link) the WebPage gets created both in the synchronous handler and through the normal way. 
-    auto result = m_pageMap.add(pageID, nullptr);
     m_hasEverHadAnyWebPages = true;
-    if (result.isNewEntry) {
-        ASSERT(!result.iterator->value);
-        auto page = WebPage::create(pageID, WTFMove(parameters));
-        result.iterator->value = page.copyRef();
 
+    auto addResult = m_pageMap.ensure(pageID, [&] {
+        return WebPage::create(pageID, WTFMove(parameters));
+    });
+    Ref page { addResult.iterator->value };
+
+    // It is necessary to check for page existence here since during a window.open() (or targeted
+    // link) the WebPage gets created both in the synchronous handler and through the normal way.
+    if (addResult.isNewEntry) {
 #if ENABLE(GPU_PROCESS)
         if (RefPtr gpuProcessConnection = m_gpuProcessConnection)
             page->gpuProcessConnectionDidBecomeAvailable(*gpuProcessConnection);
@@ -994,13 +997,17 @@ void WebProcess::createWebPage(PageIdentifier pageID, WebPageCreationParameters&
         RealTimeThreads::singleton().setEnabled(hasVisibleWebPage());
 #endif
     } else
-        RefPtr { result.iterator->value }->reinitializeWebPage(WTFMove(parameters));
+        page->reinitializeWebPage(WTFMove(parameters));
 
     if (m_hasPendingAccessibilityUnsuspension) {
         m_hasPendingAccessibilityUnsuspension = false;
         accessibilityRelayProcessSuspended(false);
     }
-    ASSERT(result.iterator->value);
+}
+
+Awaitable<unsigned> WebProcess::countWebPagesForTesting()
+{
+    co_return m_pageMap.size();
 }
 
 void WebProcess::removeWebPage(PageIdentifier pageID)
@@ -1163,6 +1170,11 @@ void WebProcess::userGestureTokenDestroyed(PageIdentifier pageID, UserGestureTok
 void WebProcess::isJITEnabled(CompletionHandler<void(bool)>&& completionHandler)
 {
     completionHandler(JSC::Options::useJIT());
+}
+
+void WebProcess::isEnhancedSecurityEnabled(CompletionHandler<void(bool)>&& completionHandler)
+{
+    completionHandler(m_isEnhancedSecurityEnabled.value_or(false));
 }
 
 void WebProcess::garbageCollectJavaScriptObjects()
@@ -1485,11 +1497,8 @@ GPUProcessConnection& WebProcess::ensureGPUProcessConnection()
 #endif
         m_gpuProcessConnection = GPUProcessConnection::create(WTFMove(gpuConnection));
         protectedParentProcessConnection()->send(Messages::WebProcessProxy::CreateGPUProcessConnection(m_gpuProcessConnection->identifier(),  WTFMove(connectionIdentifiers->client)), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
-        for (auto& page : m_pageMap.values()) {
-            // If page is null, then it is currently being constructed.
-            if (page)
-                page->gpuProcessConnectionDidBecomeAvailable(Ref { *m_gpuProcessConnection });
-        }
+        for (auto& page : m_pageMap.values())
+            page->gpuProcessConnectionDidBecomeAvailable(Ref { *m_gpuProcessConnection });
     }
     return *m_gpuProcessConnection;
 }
@@ -1510,10 +1519,8 @@ void WebProcess::gpuProcessConnectionClosed()
     ASSERT(m_gpuProcessConnection);
     m_gpuProcessConnection = nullptr;
 
-    for (auto& page : m_pageMap.values()) {
-        if (page)
-            page->gpuProcessConnectionWasDestroyed();
-    }
+    for (auto& page : m_pageMap.values())
+        page->gpuProcessConnectionWasDestroyed();
 
 #if ENABLE(MEDIA_STREAM) && PLATFORM(COCOA)
     if (m_audioMediaStreamTrackRendererInternalUnitManager)
@@ -1562,11 +1569,8 @@ ModelProcessConnection& WebProcess::ensureModelProcessConnection()
     if (!m_modelProcessConnection) {
         m_modelProcessConnection = ModelProcessConnection::create(Ref { *parentProcessConnection() });
 
-        for (auto& page : m_pageMap.values()) {
-            // If page is null, then it is currently being constructed.
-            if (page)
-                page->modelProcessConnectionDidBecomeAvailable(Ref { *m_modelProcessConnection });
-        }
+        for (auto& page : m_pageMap.values())
+            page->modelProcessConnectionDidBecomeAvailable(Ref { *m_modelProcessConnection });
     }
 
     return *m_modelProcessConnection;
@@ -1814,7 +1818,7 @@ void WebProcess::accessibilityRelayProcessSuspended(bool suspended)
     }
 
     // Take the first webpage. We only need to have the process on the other side relay this for the WebProcess.
-    AXRelayProcessSuspendedNotification(*m_pageMap.begin()->value, AXRelayProcessSuspendedNotification::AutomaticallySend::No).sendProcessSuspendMessage(suspended);
+    AXRelayProcessSuspendedNotification(m_pageMap.begin()->value, AXRelayProcessSuspendedNotification::AutomaticallySend::No).sendProcessSuspendMessage(suspended);
 }
 
 void WebProcess::markAllLayersVolatile(CompletionHandler<void()>&& completionHandler)

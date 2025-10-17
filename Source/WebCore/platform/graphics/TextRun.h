@@ -119,9 +119,9 @@ public:
     }
 
     char16_t operator[](unsigned i) const { RELEASE_ASSERT(i < m_text.length()); return m_text[i]; }
-    std::span<const LChar> span8() const LIFETIME_BOUND { ASSERT(is8Bit()); return m_text.span8(); }
+    std::span<const Latin1Character> span8() const LIFETIME_BOUND { ASSERT(is8Bit()); return m_text.span8(); }
     std::span<const char16_t> span16() const LIFETIME_BOUND { ASSERT(!is8Bit()); return m_text.span16(); }
-    std::span<const LChar> subspan8(unsigned i) const LIFETIME_BOUND { return span8().subspan(i); }
+    std::span<const Latin1Character> subspan8(unsigned i) const LIFETIME_BOUND { return span8().subspan(i); }
     std::span<const char16_t> subspan16(unsigned i) const LIFETIME_BOUND { return span16().subspan(i); }
 
     bool is8Bit() const { return m_text.is8Bit(); }

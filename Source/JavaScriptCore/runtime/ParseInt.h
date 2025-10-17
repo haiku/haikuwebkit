@@ -51,12 +51,12 @@ ALWAYS_INLINE static int parseDigit(unsigned short c, int radix)
     return digit;
 }
 
-static double parseIntOverflow(std::span<const LChar> s, int radix)
+static double parseIntOverflow(std::span<const Latin1Character> s, int radix)
 {
     double number = 0.0;
     double radixMultiplier = 1.0;
 
-    for (const LChar* p = s.data() + s.size() - 1; p >= s.data(); p--) {
+    for (const Latin1Character* p = s.data() + s.size() - 1; p >= s.data(); p--) {
         if (radixMultiplier == std::numeric_limits<double>::infinity()) {
             if (*p != '0') {
                 number = std::numeric_limits<double>::infinity();
@@ -100,7 +100,7 @@ ALWAYS_INLINE static bool isStrWhiteSpace(CharacterType c)
 {
     // https://tc39.github.io/ecma262/#sec-tonumber-applied-to-the-string-type
     if constexpr (sizeof(c) == 1)
-        return Lexer<LChar>::isWhiteSpace(c) || Lexer<LChar>::isLineTerminator(c);
+        return Lexer<Latin1Character>::isWhiteSpace(c) || Lexer<Latin1Character>::isLineTerminator(c);
     return Lexer<char16_t>::isWhiteSpace(c) || Lexer<char16_t>::isLineTerminator(c);
 }
 

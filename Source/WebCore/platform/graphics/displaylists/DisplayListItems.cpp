@@ -35,6 +35,10 @@
 #include "SharedBuffer.h"
 #include <wtf/text/TextStream.h>
 
+#if USE(SKIA)
+#include "GraphicsContextSkia.h"
+#endif
+
 namespace WebCore {
 namespace DisplayList {
 
@@ -276,7 +280,12 @@ void DrawFilteredImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) 
 
 void DrawGlyphs::apply(GraphicsContext& context) const
 {
-    return context.drawGlyphs(m_font, m_glyphs.span(), m_advances.span(), m_localAnchor, m_fontSmoothingMode);
+#if USE(SKIA)
+    if (m_textBlob)
+        static_cast<GraphicsContextSkia*>(&context)->drawSkiaText(m_textBlob, SkFloatToScalar(m_localAnchor.x()), SkFloatToScalar(m_localAnchor.y()), m_enableAntialiasing, m_isVertical);
+#else
+    context.drawGlyphs(m_font, m_glyphs.span(), m_advances.span(), m_localAnchor, m_fontSmoothingMode);
+#endif
 }
 
 void DrawGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag>) const
@@ -284,7 +293,7 @@ void DrawGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag>) const
     // FIXME: dump more stuff.
     ts.dumpProperty("local-anchor"_s, localAnchor());
     ts.dumpProperty("font-smoothing-mode"_s, fontSmoothingMode());
-    ts.dumpProperty("length"_s, glyphs().size());
+    ts.dumpProperty("length"_s, length());
 }
 
 DrawDisplayList::DrawDisplayList(Ref<const DisplayList>&& displayList)
@@ -341,7 +350,7 @@ void DrawImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 
 void DrawNativeImage::apply(GraphicsContext& context) const
 {
-    context.drawNativeImageInternal(m_image, m_destinationRect, m_srcRect, m_options);
+    context.drawNativeImage(m_image, m_destinationRect, m_srcRect, m_options);
 }
 
 void DrawNativeImage::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const

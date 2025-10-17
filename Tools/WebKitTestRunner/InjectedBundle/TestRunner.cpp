@@ -36,6 +36,7 @@
 #include <JavaScriptCore/JSCTestRunnerUtils.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/ResourceLoadObserver.h>
+#include <WebKit/WKBase.h>
 #include <WebKit/WKBundle.h>
 #include <WebKit/WKBundleBackForwardList.h>
 #include <WebKit/WKBundleFrame.h>
@@ -94,11 +95,6 @@ static WKBundlePageRef page()
 void TestRunner::display()
 {
     WKBundlePageForceRepaint(page());
-}
-
-static WKRetainPtr<WKDoubleRef> toWK(double value)
-{
-    return adoptWK(WKDoubleCreate(value));
 }
 
 static WKRetainPtr<WKDictionaryRef> createWKDictionary(std::initializer_list<std::pair<const char*, WKRetainPtr<WKTypeRef>>> pairs)
@@ -304,40 +300,6 @@ void TestRunner::execCommand(JSStringRef command, JSStringRef, JSStringRef value
         { "Command", toWK(command) },
         { "Value", toWK(value) },
     }));
-}
-
-static std::optional<WKFindOptions> findOptionsFromArray(JSContextRef context, JSValueRef optionsArrayAsValue)
-{
-    auto optionsArray = JSValueToObject(context, optionsArrayAsValue, nullptr);
-    auto length = arrayLength(context, optionsArray);
-    WKFindOptions options = 0;
-    for (unsigned i = 0; i < length; ++i) {
-        auto optionName = createJSString(context, JSObjectGetPropertyAtIndex(context, optionsArray, i, 0));
-        if (JSStringIsEqualToUTF8CString(optionName.get(), "CaseInsensitive"))
-            options |= kWKFindOptionsCaseInsensitive;
-        else if (JSStringIsEqualToUTF8CString(optionName.get(), "AtWordStarts"))
-            options |= kWKFindOptionsAtWordStarts;
-        else if (JSStringIsEqualToUTF8CString(optionName.get(), "TreatMedialCapitalAsWordStart"))
-            options |= kWKFindOptionsTreatMedialCapitalAsWordStart;
-        else if (JSStringIsEqualToUTF8CString(optionName.get(), "Backwards"))
-            options |= kWKFindOptionsBackwards;
-        else if (JSStringIsEqualToUTF8CString(optionName.get(), "WrapAround"))
-            options |= kWKFindOptionsWrapAround;
-        else if (JSStringIsEqualToUTF8CString(optionName.get(), "StartInSelection")) {
-            // FIXME: No kWKFindOptionsStartInSelection.
-        }
-    }
-    return options;
-}
-
-void TestRunner::findStringMatchesInPage(JSContextRef context, JSStringRef target, JSValueRef optionsArrayAsValue)
-{
-    if (auto options = findOptionsFromArray(context, optionsArrayAsValue)) {
-        postPageMessage("FindStringMatches", createWKDictionary({
-            { "String", toWK(target) },
-            { "FindOptions", toWK(*options) },
-        }));
-    }
 }
 
 void TestRunner::replaceFindMatchesAtIndices(JSContextRef context, JSValueRef matchIndicesAsValue, JSStringRef replacementText, bool selectionOnly)
@@ -877,24 +839,9 @@ void TestRunner::queueNonLoadingScript(JSStringRef script)
     InjectedBundle::singleton().queueNonLoadingScript(toWK(script).get());
 }
 
-void TestRunner::setAuthenticationUsername(JSStringRef username)
-{
-    postPageMessage("SetAuthenticationUsername", toWK(username));
-}
-
-void TestRunner::setAuthenticationPassword(JSStringRef password)
-{
-    postPageMessage("SetAuthenticationPassword", toWK(password));
-}
-
 bool TestRunner::secureEventInputIsEnabled() const
 {
     return postSynchronousPageMessageReturningBoolean("SecureEventInputIsEnabled");
-}
-
-void TestRunner::setPluginSupportedMode(JSStringRef mode)
-{
-    postPageMessage("SetPluginSupportedMode", toWK(mode));
 }
 
 JSValueRef TestRunner::failNextNewCodeBlock(JSContextRef context)
@@ -930,18 +877,6 @@ void TestRunner::terminateServiceWorkers()
 void TestRunner::setUseSeparateServiceWorkerProcess(bool value)
 {
     postSynchronousPageMessage("SetUseSeparateServiceWorkerProcess", value);
-}
-
-void TestRunner::setAllowedMenuActions(JSContextRef context, JSValueRef actions)
-{
-    auto messageBody = adoptWK(WKMutableArrayCreate());
-    auto actionsArray = JSValueToObject(context, actions, nullptr);
-    auto length = arrayLength(context, actionsArray);
-    for (unsigned i = 0; i < length; ++i) {
-        auto value = JSObjectGetPropertyAtIndex(context, actionsArray, i, nullptr);
-        WKArrayAppendItem(messageBody.get(), toWKString(context, value).get());
-    }
-    postPageMessage("SetAllowedMenuActions", messageBody);
 }
 
 void TestRunner::clearStatisticsDataForDomain(JSStringRef domain)
@@ -1386,61 +1321,6 @@ void TestRunner::setMockGamepadButtonValue(unsigned, unsigned, double)
 
 #endif // ENABLE(GAMEPAD)
 
-static WKRetainPtr<WKURLRef> makeOpenPanelURL(WKURLRef baseURL, char* filePath)
-{
-#if OS(WINDOWS)
-    if (!PathIsRelativeA(filePath)) {
-        char fileURI[INTERNET_MAX_PATH_LENGTH];
-        DWORD fileURILength = INTERNET_MAX_PATH_LENGTH;
-        UrlCreateFromPathA(filePath, fileURI, &fileURILength, 0);
-        return adoptWK(WKURLCreateWithUTF8CString(fileURI));
-    }
-#else
-    WKRetainPtr<WKURLRef> fileURL;
-    if (filePath[0] == '/') {
-        fileURL = adoptWK(WKURLCreateWithUTF8CString("file://"));
-        baseURL = fileURL.get();
-    }
-#endif
-    return adoptWK(WKURLCreateWithBaseURL(baseURL, filePath));
-}
-
-void TestRunner::setOpenPanelFiles(JSContextRef context, JSValueRef filesValue)
-{
-    if (!JSValueIsArray(context, filesValue))
-        return;
-
-    auto files = (JSObjectRef)filesValue;
-    auto fileURLs = adoptWK(WKMutableArrayCreate());
-    auto filesLength = arrayLength(context, files);
-    for (size_t i = 0; i < filesLength; ++i) {
-        JSValueRef fileValue = JSObjectGetPropertyAtIndex(context, files, i, nullptr);
-        if (!JSValueIsString(context, fileValue))
-            continue;
-
-        auto file = createJSString(context, fileValue);
-        size_t fileBufferSize = JSStringGetMaximumUTF8CStringSize(file.get()) + 1;
-        auto fileBuffer = makeUniqueArray<char>(fileBufferSize);
-        JSStringGetUTF8CString(file.get(), fileBuffer.get(), fileBufferSize);
-
-        WKArrayAppendItem(fileURLs.get(), makeOpenPanelURL(m_testURL.get(), fileBuffer.get()).get());
-    }
-
-    postPageMessage("SetOpenPanelFileURLs", fileURLs);
-}
-
-void TestRunner::setOpenPanelFilesMediaIcon(JSContextRef context, JSValueRef data)
-{
-#if PLATFORM(IOS_FAMILY)
-    // FIXME (123058): Use a JSC API to get buffer contents once such is exposed.
-    auto iconData = adoptWK(WKBundleCreateWKDataFromUInt8Array(InjectedBundle::singleton().bundle(), context, data));
-    postPageMessage("SetOpenPanelFileURLsMediaIcon", iconData);
-#else
-    UNUSED_PARAM(context);
-    UNUSED_PARAM(data);
-#endif
-}
-
 void TestRunner::clearDOMCache(JSStringRef origin)
 {
     postSynchronousMessage("ClearDOMCache", toWK(origin));
@@ -1530,6 +1410,11 @@ unsigned long TestRunner::serverTrustEvaluationCallbackCallsCount()
     return postSynchronousMessageReturningUInt64("ServerTrustEvaluationCallbackCallsCount");
 }
 
+void TestRunner::dontForceRepaint() const
+{
+    postSynchronousMessage("DontForceRepaint");
+}
+
 void TestRunner::setShouldDismissJavaScriptAlertsAsynchronously(bool shouldDismissAsynchronously)
 {
     postSynchronousMessage("ShouldDismissJavaScriptAlertsAsynchronously", shouldDismissAsynchronously);
@@ -1543,6 +1428,11 @@ void TestRunner::abortModal()
 void TestRunner::dumpPrivateClickMeasurement()
 {
     postSynchronousPageMessage("DumpPrivateClickMeasurement");
+}
+
+void TestRunner::setPrinting() const
+{
+    postSynchronousMessage("SetPrinting");
 }
 
 void TestRunner::clearMemoryCache()
@@ -1629,54 +1519,6 @@ bool TestRunner::hasAppBoundSession()
 void TestRunner::clearAppBoundSession()
 {
     postSynchronousMessage("ClearAppBoundSession");
-}
-
-void TestRunner::setAppBoundDomains(JSContextRef context, JSValueRef originArray, JSValueRef completionHandler)
-{
-    if (!JSValueIsArray(context, originArray))
-        return;
-
-    auto origins = JSValueToObject(context, originArray, nullptr);
-    auto originURLs = adoptWK(WKMutableArrayCreate());
-    auto originsLength = arrayLength(context, origins);
-    for (unsigned i = 0; i < originsLength; ++i) {
-        JSValueRef originValue = JSObjectGetPropertyAtIndex(context, origins, i, nullptr);
-        if (!JSValueIsString(context, originValue))
-            continue;
-
-        auto origin = createJSString(context, originValue);
-        size_t originBufferSize = JSStringGetMaximumUTF8CStringSize(origin.get()) + 1;
-        auto originBuffer = makeUniqueArray<char>(originBufferSize);
-        JSStringGetUTF8CString(origin.get(), originBuffer.get(), originBufferSize);
-
-        WKArrayAppendItem(originURLs.get(), adoptWK(WKURLCreateWithUTF8CString(originBuffer.get())).get());
-    }
-
-    postMessageWithAsyncReply(context, "SetAppBoundDomains", originURLs, completionHandler);
-}
-
-void TestRunner::setManagedDomains(JSContextRef context, JSValueRef originArray, JSValueRef completionHandler)
-{
-    if (!JSValueIsArray(context, originArray))
-        return;
-
-    auto origins = JSValueToObject(context, originArray, nullptr);
-    auto originURLs = adoptWK(WKMutableArrayCreate());
-    auto originsLength = arrayLength(context, origins);
-    for (unsigned i = 0; i < originsLength; ++i) {
-        JSValueRef originValue = JSObjectGetPropertyAtIndex(context, origins, i, nullptr);
-        if (!JSValueIsString(context, originValue))
-            continue;
-
-        auto origin = createJSString(context, originValue);
-        size_t originBufferSize = JSStringGetMaximumUTF8CStringSize(origin.get()) + 1;
-        auto originBuffer = makeUniqueArray<char>(originBufferSize);
-        JSStringGetUTF8CString(origin.get(), originBuffer.get(), originBufferSize);
-
-        WKArrayAppendItem(originURLs.get(), adoptWK(WKURLCreateWithUTF8CString(originBuffer.get())).get());
-    }
-
-    postMessageWithAsyncReply(context, "SetManagedDomains", originURLs, completionHandler);
 }
 
 bool TestRunner::didLoadAppInitiatedRequest()

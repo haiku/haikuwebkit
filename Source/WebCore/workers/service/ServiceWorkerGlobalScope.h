@@ -74,7 +74,7 @@ public:
 
     enum EventTargetInterfaceType eventTargetInterface() const final;
 
-    ServiceWorkerThread& thread();
+    Ref<ServiceWorkerThread> thread();
 
     void updateExtendedEventsSet(ExtendableEvent* newEvent = nullptr);
 

@@ -41,6 +41,7 @@ class Node;
 class RenderImage;
 class RenderStyle;
 class RenderObject;
+class StyleProperties;
 
 bool hasRole(Element&, StringView role);
 bool hasAnyRole(Element&, Vector<StringView>&& roles);
@@ -79,5 +80,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, AXNotification);
 void dumpAccessibilityTreeToStderr(Document&);
 
 String roleToString(AccessibilityRole);
+
+std::optional<CursorType> cursorTypeFrom(const StyleProperties&);
 
 } // WebCore

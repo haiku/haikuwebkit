@@ -27,6 +27,7 @@
 
 #if PLATFORM(MAC)
 
+#import "HTTPServer.h"
 #import "PlatformUtilities.h"
 #import "TestNavigationDelegate.h"
 #import "TestProtocol.h"
@@ -37,7 +38,132 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/darwin/DispatchExtras.h>
 
+@interface NSApplication ()
+- (void)_setKeyWindow:(NSWindow *)newKeyWindow;
+@end
+
+@interface TestNSTextView : NSTextView
+@property (readonly) BOOL didBecomeFirstResponder;
+@property (readonly) BOOL didSeeKeyDownEvent;
+@end
+
+@implementation TestNSTextView {
+    BOOL _isBecomingFirstResponder;
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+    _didSeeKeyDownEvent = YES;
+    [super keyDown:event];
+}
+
+- (BOOL)acceptsFirstResponder
+{
+    return YES;
+}
+
+- (BOOL)canBecomeKeyView
+{
+    return YES;
+}
+
+- (BOOL)becomeFirstResponder
+{
+    _didBecomeFirstResponder = YES;
+    [super becomeFirstResponder];
+    return YES;
+}
+
+- (BOOL)resignFirstResponder
+{
+    return NO;
+}
+
+@end
+
 namespace TestWebKitAPI {
+
+static auto advanceFocusRelinquishToChrome = R"FOCUSRESOURCE(
+<div id="div1" contenteditable="true" tabindex="1">Main 1</div><br>
+)FOCUSRESOURCE"_s;
+
+struct WebViewAndDelegates {
+    RetainPtr<TestWKWebView> webView;
+    RetainPtr<TestNavigationDelegate> navigationDelegate;
+    RetainPtr<TestUIDelegate> uiDelegate;
+};
+
+static WebViewAndDelegates makeWebViewAndDelegates(HTTPServer& server)
+{
+    RetainPtr configuration = server.httpsProxyConfiguration();
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400) configuration:configuration.get()]);
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    webView.get().navigationDelegate = navigationDelegate.get();
+
+    RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
+    [webView setUIDelegate:uiDelegate.get()];
+
+    return {
+        WTFMove(webView),
+        WTFMove(navigationDelegate),
+        WTFMove(uiDelegate)
+    };
+};
+
+
+// FIXME: To enable, need `typeCharacter:` support for TestWKWebView on iOS
+TEST(FocusWebView, AdvanceFocusRelinquishToChrome)
+{
+    HTTPServer server({
+        { "/example"_s, { advanceFocusRelinquishToChrome } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto webViewAndDelegates = makeWebViewAndDelegates(server);
+    RetainPtr webView = WTFMove(webViewAndDelegates.webView);
+    RetainPtr navigationDelegate = WTFMove(webViewAndDelegates.navigationDelegate);
+    RetainPtr uiDelegate = WTFMove(webViewAndDelegates.uiDelegate);
+
+    NSRect newWindowFrame = NSMakeRect(0, 0, 400, 500);
+    NSRect textFieldFrame = NSMakeRect(0, 400, 400, 100);
+
+    __block RetainPtr textField = [[TestNSTextView alloc] initWithFrame:textFieldFrame];
+    textField.get().editable = YES;
+    textField.get().selectable = YES;
+    [textField setString:@"Hello world"];
+
+    [[[webView window] contentView] addSubview:textField.get()];
+    [[webView window] setFrame:newWindowFrame display:YES];
+
+    [[webView window] makeKeyWindow];
+    [NSApp _setKeyWindow:[webView window]];
+    [[webView window] makeFirstResponder:webView.get()];
+
+    __block bool takeFocusCalled = false;
+    uiDelegate.get().takeFocus = ^(WKWebView *view, _WKFocusDirection) {
+        takeFocusCalled = true;
+        [view.window makeFirstResponder:textField.get()];
+    };
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView typeCharacter:'\t'];
+    [webView typeCharacter:'\t'];
+    Util::run(&takeFocusCalled);
+
+    // Bounce some JavaScript off the WebContent process to flush any lingering IPC messages
+    // that might cause the key event to continue processing.
+    __block bool jsDone = false;
+    [webView evaluateJavaScript:@"" completionHandler:^(id, NSError *) {
+        jsDone = true;
+    }];
+    Util::run(&jsDone);
+
+    EXPECT_TRUE(textField.get().didBecomeFirstResponder);
+    EXPECT_FALSE(textField.get().didSeeKeyDownEvent);
+}
 
 TEST(FocusWebView, DoNotFocusWebViewWhenUnparented)
 {

@@ -23,7 +23,7 @@
 #include <WebCore/FocusDirection.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/LayoutRect.h>
-#include <WebCore/Node.h>
+#include <WebCore/NodeDocument.h>
 #include <limits>
 
 namespace WebCore {

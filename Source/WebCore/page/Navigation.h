@@ -213,6 +213,9 @@ private:
     size_t entryIndexOfKey(const String&) const;
     bool hasEntryWithKey(const String&) const;
 
+    void disposeOfForwardEntriesInParents(BackForwardItemIdentifier);
+    void recursivelyDisposeOfForwardEntriesInParents(BackForwardItemIdentifier, LocalFrame* navigatedFrame);
+
     std::optional<size_t> m_currentEntryIndex;
     RefPtr<NavigationTransition> m_transition;
     RefPtr<NavigationActivation> m_activation;

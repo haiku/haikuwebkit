@@ -582,7 +582,7 @@ private:
     void commitLoad(const SharedBuffer&);
     void clearMainResourceLoader();
 
-    void setupForReplace();
+    void setupForMultipartReplace();
     void maybeFinishLoadingMultipartContent();
     
     bool maybeCreateArchive();

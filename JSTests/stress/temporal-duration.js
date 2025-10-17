@@ -189,6 +189,11 @@ for (const method of ['add', 'subtract']) {
 }
 shouldBe(Temporal.Duration.from('P1DT13H31M31S').add('P1DT13H31M31S').toString(), 'P3DT3H3M2S');
 shouldBe(Temporal.Duration.from('-PT1M59S').subtract('PT1M59S').toString(), '-PT3M58S');
+const duration1 = Temporal.Duration.from({microseconds: Number.MAX_SAFE_INTEGER + 1, nanoseconds: 0});
+const duration2 = Temporal.Duration.from({microseconds: -1, nanoseconds: -1000});
+shouldBe(duration1.subtract(duration2).toString(), 'PT9007199254.740994S');
+// Addition exceeds max duration
+shouldThrow(() => (new Temporal.Duration(0, 0, 0, 2, 0, 0, 0, 0, 0, 0)).add({ days: 104249991373 }), RangeError);
 
 shouldBe(Temporal.Duration.prototype.round.length, 1);
 shouldThrow(() => Temporal.Duration.prototype.round.call({}), TypeError);
@@ -240,6 +245,10 @@ shouldBe(posAbsolute.total({ unit: 'milliseconds' }), 93784005.006007);
 shouldBe(posAbsolute.total({ unit: 'microseconds' }), 93784005006.007);
 shouldBe(posAbsolute.total({ unit: 'nanoseconds' }), 93784005006007);
 shouldBe(Temporal.Duration.from('-PT123456789S').total({ unit: 'day' }), -1428.8980208333332);
+const posSubseconds = new Temporal.Duration(0, 0, 0, 0, 0, 0, 0, 999, 999999, 999999999);
+const negSubseconds = new Temporal.Duration(0, 0, 0, 0, 0, 0, 0, -999, -999999, -999999999);
+shouldBe(posSubseconds.total("seconds"), 2.998998999);
+shouldBe(negSubseconds.total("seconds"), -2.998998999);
 
 // At present, toLocaleString has the same behavior as toJSON or argumentless toString.
 for (const method of ['toString', 'toJSON', 'toLocaleString']) {    

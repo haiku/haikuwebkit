@@ -252,36 +252,6 @@ void EventSendingController::mouseMoveTo(double x, double y, JSStringRef pointer
     postSynchronousPageMessage("EventSender", waitForDidReceiveEventBody);
 }
 
-void EventSendingController::asyncMouseDown(JSContextRef context, int button, JSValueRef modifierArray, JSStringRef pointerType, JSValueRef completionHandler)
-{
-    if (m_isDisabled)
-        return;
-
-    postMessageWithAsyncReply(context, "EventSender", createMouseMessageBody(MouseDown, button, parseModifierArray(context, modifierArray), pointerType), completionHandler);
-}
-
-void EventSendingController::asyncMouseUp(JSContextRef context, int button, JSValueRef modifierArray, JSStringRef pointerType, JSValueRef completionHandler)
-{
-    if (m_isDisabled)
-        return;
-
-    postMessageWithAsyncReply(context, "EventSender", createMouseMessageBody(MouseUp, button, parseModifierArray(context, modifierArray), pointerType), completionHandler);
-}
-
-void EventSendingController::asyncMouseMoveTo(JSContextRef context, double x, double y, JSStringRef pointerType, JSValueRef completionHandler)
-{
-    if (m_isDisabled)
-        return;
-
-    auto body = createEventSenderDictionary("MouseMoveTo");
-    setValue(body, "X", adoptWK(WKDoubleCreate(x)));
-    setValue(body, "Y", adoptWK(WKDoubleCreate(y)));
-    if (pointerType)
-        setValue(body, "PointerType", pointerType);
-    m_position = WKPointMake(x, y);
-    postMessageWithAsyncReply(context, "EventSender", body, completionHandler);
-}
-
 void EventSendingController::mouseForceClick()
 {
     if (m_isDisabled)

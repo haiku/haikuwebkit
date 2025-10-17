@@ -116,6 +116,7 @@
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/SubresourceLoader.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <WebCore/WebScriptObjectPrivate.h>
 #import <WebCore/Widget.h>
@@ -564,7 +565,15 @@ void WebFrameLoaderClient::dispatchDidDispatchOnloadEvents()
 
 void WebFrameLoaderClient::dispatchDidReceiveServerRedirectForProvisionalLoad()
 {
-    m_webFrame->_private->provisionalURL = core(m_webFrame.get())->loader().provisionalDocumentLoader()->url().string().createNSString();
+    RefPtr frame = core(m_webFrame.get());
+    if (!frame)
+        return;
+
+    RefPtr provisionalDocumentLoader = frame->loader().provisionalDocumentLoader();
+    if (!provisionalDocumentLoader)
+        return;
+
+    m_webFrame->_private->provisionalURL = provisionalDocumentLoader->url().string().createNSString().autorelease();
 
     WebView *webView = getWebView(m_webFrame.get());
     WebFrameLoadDelegateImplementationCache* implementations = WebViewGetFrameLoadDelegateImplementations(webView);
@@ -2041,11 +2050,7 @@ void WebFrameLoaderClient::finishedLoadingIcon(WebCore::FragmentedSharedBuffer* 
 
 + (void)initialize
 {
-#if !PLATFORM(IOS_FAMILY)
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-#endif
+    WebCore::initializeMainThreadIfNeeded();
 }
 
 - (id)initWithFrame:(NakedPtr<WebCore::LocalFrame>)frame policyFunction:(WebCore::FramePolicyFunction&&)policyFunction defaultPolicy:(WebCore::PolicyAction)defaultPolicy

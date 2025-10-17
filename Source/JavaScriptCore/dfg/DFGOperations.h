@@ -177,6 +177,7 @@ JSC_DECLARE_JIT_OPERATION(operationNewIteratorHelper, JSCell*, (VM*, Structure*)
 JSC_DECLARE_JIT_OPERATION(operationNewWrapForValidIterator, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewAsyncFromSyncIterator, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewPromiseAllContext, JSCell*, (VM*, Structure*));
+JSC_DECLARE_JIT_OPERATION(operationNewPromiseReaction, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewRegExpStringIterator, JSCell*, (VM*, Structure*));
 
 JSC_DECLARE_JIT_OPERATION(operationPutByValCellStringStrict, void, (JSGlobalObject*, JSCell*, JSCell* string, EncodedJSValue encodedValue));
@@ -267,7 +268,7 @@ JSC_DECLARE_JIT_OPERATION(operationAllocateSimplePropertyStorage, Butterfly*, (V
 JSC_DECLARE_JIT_OPERATION(operationAllocateComplexPropertyStorageWithInitialCapacity, Butterfly*, (VM*, JSObject*));
 JSC_DECLARE_JIT_OPERATION(operationAllocateComplexPropertyStorage, Butterfly*, (VM*, JSObject*, size_t newSize));
 // Note: This doesn't return a `Butterfly*` because it's not shifted properly so you'll have to do `Butterfly::fromBase` yourself. Hence the `Base` suffix.
-JSC_DECLARE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (VM*, size_t allocationSizeInBytes));
+JSC_DECLARE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (JSGlobalObject*, size_t allocationSizeInBytes));
 JSC_DECLARE_JIT_OPERATION(operationEnsureInt32, Butterfly*, (VM*, JSCell*));
 JSC_DECLARE_JIT_OPERATION(operationEnsureDouble, Butterfly*, (VM*, JSCell*));
 JSC_DECLARE_JIT_OPERATION(operationEnsureContiguous, Butterfly*, (VM*, JSCell*));

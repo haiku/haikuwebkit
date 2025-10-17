@@ -53,6 +53,11 @@ Data::Data(Vector<uint8_t>&& data)
 {
 }
 
+RetainPtr<dispatch_data_t> Data::protectedDispatchData() const
+{
+    return dispatchData();
+}
+
 Data Data::empty()
 {
     return { OSObjectPtr<dispatch_data_t> { dispatch_data_empty } };
@@ -90,7 +95,7 @@ bool Data::apply(NOESCAPE const Function<bool(std::span<const uint8_t>)>& applie
 
 Data Data::subrange(size_t offset, size_t size) const
 {
-    return { adoptOSObject(dispatch_data_create_subrange(dispatchData(), offset, size)) };
+    return { adoptOSObject(dispatch_data_create_subrange(protectedDispatchData().get(), offset, size)) };
 }
 
 Data concatenate(const Data& a, const Data& b)
@@ -99,7 +104,7 @@ Data concatenate(const Data& a, const Data& b)
         return b;
     if (b.isNull())
         return a;
-    return { adoptOSObject(dispatch_data_create_concat(a.dispatchData(), b.dispatchData())) };
+    return { adoptOSObject(dispatch_data_create_concat(a.protectedDispatchData().get(), b.protectedDispatchData().get())) };
 }
 
 Data Data::adoptMap(FileSystem::MappedFileData&& mappedFile, FileSystem::FileHandle&& outputHandle)

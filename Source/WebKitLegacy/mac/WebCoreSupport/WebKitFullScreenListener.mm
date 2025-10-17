@@ -27,6 +27,7 @@
 
 #import <WebCore/DocumentInlines.h>
 #import <WebCore/Element.h>
+#import <WebCore/NodeDocument.h>
 
 #if ENABLE(FULLSCREEN_API)
 

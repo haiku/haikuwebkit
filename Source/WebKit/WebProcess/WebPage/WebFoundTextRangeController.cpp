@@ -36,6 +36,7 @@
 #include <WebCore/Editor.h>
 #include <WebCore/FindRevealAlgorithms.h>
 #include <WebCore/FocusController.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameSelection.h>
 #include <WebCore/GeometryUtilities.h>
 #include <WebCore/GraphicsContext.h>

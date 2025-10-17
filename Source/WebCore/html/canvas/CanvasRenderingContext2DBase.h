@@ -272,10 +272,10 @@ public:
         const FontCascade& fontCascade() const { return m_font; }
 
         float letterSpacing() const { return m_font.letterSpacing(); }
-        void setLetterSpacing(const Length& letterSpacing) { m_font.setLetterSpacing(letterSpacing); }
+        void setLetterSpacing(float letterSpacing) { m_font.setLetterSpacing(letterSpacing); }
 
         float wordSpacing() const { return m_font.wordSpacing(); }
-        void setWordSpacing(const Length& wordSpacing) { m_font.setWordSpacing(wordSpacing); }
+        void setWordSpacing(float wordSpacing) { m_font.setWordSpacing(wordSpacing); }
 
     private:
         void update(FontSelector&);

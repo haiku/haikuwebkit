@@ -92,8 +92,10 @@ public:
 
     VM& vm();
 
+    static constexpr uintptr_t StopRequestMarkerValue = std::numeric_limits<uintptr_t>::max();
+
 private:
-    static ALWAYS_INLINE void* stopRequestMarker() { return reinterpret_cast<void*>(std::numeric_limits<uintptr_t>::max()); }
+    static ALWAYS_INLINE void* stopRequestMarker() { return reinterpret_cast<void*>(StopRequestMarkerValue); }
 
     Atomic<void*> m_trapAwareSoftStackLimit { nullptr };
     void* m_softStackLimit { nullptr };

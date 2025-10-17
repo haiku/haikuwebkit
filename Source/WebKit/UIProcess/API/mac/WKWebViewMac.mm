@@ -719,7 +719,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 
 - (NSArray *)validAttributesForMarkedText
 {
-    return _impl->validAttributesForMarkedText();
+    return _impl->validAttributesForMarkedTextSingleton();
 }
 
 - (void)insertTextPlaceholderWithSize:(CGSize)size completionHandler:(void (^)(NSTextPlaceholder *))completionHandler

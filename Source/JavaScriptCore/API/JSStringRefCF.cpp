@@ -45,7 +45,7 @@ JSStringRef JSStringCreateWithCFString(CFStringRef string)
     if (!length)
         return &OpaqueJSString::create(""_span8).leakRef();
 
-    Vector<LChar, 1024> lcharBuffer(length);
+    Vector<Latin1Character, 1024> lcharBuffer(length);
     CFIndex usedBufferLength;
     CFIndex convertedSize = CFStringGetBytes(string, CFRangeMake(0, length), kCFStringEncodingISOLatin1, 0, false, lcharBuffer.mutableSpan().data(), length, &usedBufferLength);
     if (static_cast<size_t>(convertedSize) == length && static_cast<size_t>(usedBufferLength) == length)

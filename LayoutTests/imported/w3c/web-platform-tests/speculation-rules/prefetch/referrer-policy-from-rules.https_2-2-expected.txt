@@ -1,4 +1,3 @@
 
-Harness Error (FAIL), message = Error: assert_implements: <script type="speculationrules"> must be supported undefined
-
+PASS with "strict-origin" referrer policy in rule set override "no-referrer" of link
 

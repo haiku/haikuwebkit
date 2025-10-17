@@ -55,6 +55,7 @@ class Document;
 class DocumentLoadTiming;
 class DocumentLoader;
 class EventCounts;
+class LargestContentfulPaint;
 class NetworkLoadMetrics;
 class PerformanceUserTiming;
 class PerformanceEntry;
@@ -113,7 +114,8 @@ public:
     void navigationFinished(MonotonicTime loadEventEnd);
     void addResourceTiming(ResourceTiming&&);
 
-    void reportFirstContentfulPaint();
+    void reportFirstContentfulPaint(DOMHighResTimeStamp);
+    void reportLargestContentfulPaint(Ref<LargestContentfulPaint>&&);
 
     void removeAllObservers();
     void registerPerformanceObserver(PerformanceObserver&);
@@ -178,6 +180,7 @@ private:
 
     RefPtr<PerformanceNavigationTiming> m_navigationTiming;
     RefPtr<PerformancePaintTiming> m_firstContentfulPaint;
+    RefPtr<PerformanceEntry> m_largestContentfulPaint;
     std::unique_ptr<PerformanceUserTiming> m_userTiming;
 
     ListHashSet<RefPtr<PerformanceObserver>> m_observers;

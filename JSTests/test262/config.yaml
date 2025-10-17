@@ -173,12 +173,6 @@ skip:
     - test/built-ins/Temporal/Duration/compare/relativeto-string-zoneddatetime.js
     - test/built-ins/Temporal/Duration/compare/relativeto-sub-minute-offset.js
     - test/built-ins/Temporal/Duration/compare/relativeto-year.js
-    - test/built-ins/Temporal/Duration/prototype/add/balance-negative-result.js
-    - test/built-ins/Temporal/Duration/prototype/add/balance-negative-time-units.js
-    - test/built-ins/Temporal/Duration/prototype/add/infinity-throws-rangeerror.js
-    - test/built-ins/Temporal/Duration/prototype/add/nanoseconds-is-number-max-safe-integer.js
-    - test/built-ins/Temporal/Duration/prototype/add/negative-infinity-throws-rangeerror.js
-    - test/built-ins/Temporal/Duration/prototype/add/order-of-operations.js
     - test/built-ins/Temporal/Duration/prototype/round/calendar-possibly-required.js
     - test/built-ins/Temporal/Duration/prototype/round/calendar-temporal-object.js
     - test/built-ins/Temporal/Duration/prototype/round/duration-out-of-range-added-to-relativeto.js
@@ -214,22 +208,16 @@ skip:
     - test/built-ins/Temporal/Duration/prototype/round/total-duration-nanoseconds-too-large-with-zoned-datetime.js
     - test/built-ins/Temporal/Duration/prototype/round/year-zero.js
     - test/built-ins/Temporal/Duration/prototype/round/precision-exact-in-balance-time-duration.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/balance-negative-result.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/balance-negative-time-units.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/infinity-throws-rangeerror.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/nanoseconds-is-number-max-safe-integer.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/negative-infinity-throws-rangeerror.js
-    - test/built-ins/Temporal/Duration/prototype/subtract/order-of-operations.js
     - test/built-ins/Temporal/Duration/prototype/total/balances-days-up-to-both-years-and-months.js
     - test/built-ins/Temporal/Duration/prototype/total/calendar-possibly-required.js
     - test/built-ins/Temporal/Duration/prototype/total/calendar-temporal-object.js
     - test/built-ins/Temporal/Duration/prototype/total/does-not-accept-non-string-primitives-for-relativeTo.js
-    - test/built-ins/Temporal/Duration/prototype/total/duration-out-of-range-added-to-relativeto.js
     - test/built-ins/Temporal/Duration/prototype/total/order-of-operations.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-infinity-throws-rangeerror.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-leap-second.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeTo-must-have-required-properties.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-number.js
+    - test/built-ins/Temporal/Duration/prototype/total/relativeto-plaindatetime.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-calendar-number.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-calendar-wrong-type.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-no-time-units.js
@@ -243,10 +231,6 @@ skip:
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-string-zoneddatetime.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-sub-minute-offset.js
     - test/built-ins/Temporal/Duration/prototype/total/relativeto-wrong-type.js
-    - test/built-ins/Temporal/Duration/prototype/total/rounds-calendar-units-in-durations-without-calendar-units.js
-    - test/built-ins/Temporal/Duration/prototype/total/rounds-durations-with-calendar-units.js
-    - test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-5.js
-    - test/built-ins/Temporal/Duration/prototype/total/throws-on-wrong-offset-for-zoneddatetime-relativeto.js
     - test/built-ins/Temporal/PlainDate/prototype/since/rounding-relative.js
     - test/built-ins/Temporal/PlainDate/prototype/since/roundingincrement.js
     - test/built-ins/Temporal/PlainDate/prototype/since/roundingmode-ceil.js
@@ -462,3 +446,19 @@ skip:
     - test/built-ins/Temporal/PlainTime/prototype/since/argument-zoneddatetime-negative-epochnanoseconds.js
     - test/built-ins/Temporal/PlainTime/prototype/until/argument-zoneddatetime-balance-negative-time-units.js
     - test/built-ins/Temporal/PlainTime/prototype/until/argument-zoneddatetime-negative-epochnanoseconds.js
+
+    # transferToImmutable() is not implemented yet
+    - test/built-ins/ArrayBuffer/prototype/resize/this-is-immutable-arraybuffer-object.js
+    - test/built-ins/ArrayBuffer/prototype/transfer/this-is-immutable-arraybuffer.js
+    - test/built-ins/ArrayBuffer/prototype/transferToFixedLength/this-is-immutable-arraybuffer.js
+    - test/built-ins/DataView/prototype/setBigInt64/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setBigUint64/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setFloat16/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setFloat32/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setFloat64/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setInt16/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setInt32/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setInt8/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setUint16/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setUint32/immutable-buffer.js
+    - test/built-ins/DataView/prototype/setUint8/immutable-buffer.js

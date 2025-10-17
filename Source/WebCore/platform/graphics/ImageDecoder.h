@@ -100,6 +100,10 @@ public:
     virtual bool isSpatial() const { return false; }
 #endif
 
+#if ENABLE(SPATIAL_IMAGE_CONTROLS)
+    virtual bool isMaybePanoramic() const { return false; }
+#endif
+
     virtual IntSize frameSizeAtIndex(size_t, SubsamplingLevel = SubsamplingLevel::Default) const = 0;
     virtual bool frameIsCompleteAtIndex(size_t) const = 0;
     virtual ImageOrientation frameOrientationAtIndex(size_t) const { return ImageOrientation::Orientation::None; }

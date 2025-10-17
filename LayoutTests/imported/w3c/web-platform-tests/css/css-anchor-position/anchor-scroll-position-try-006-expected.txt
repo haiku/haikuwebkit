@@ -2,7 +2,7 @@
 PASS Should use the last (fourth) position option initially
 PASS Should still use the last position option as long as it fits.
 PASS Should use the third position option with enough space below, and not enough above
-FAIL Should use the second position option with enough space right assert_equals: Anchored element should be at the right of anchor expected 650 but got 450
-FAIL Should still use the second position option as long as it fits assert_equals: Anchored element should be at the right of anchor expected 650 but got 450
+PASS Should use the second position option with enough space right
+PASS Should still use the second position option as long as it fits
 PASS Should use the first position option with enough space below and right
 

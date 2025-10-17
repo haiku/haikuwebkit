@@ -138,7 +138,7 @@ void DOMWindow::close()
 
 FrameConsoleClient* DOMWindow::console() const
 {
-    RefPtr frame = this->frame();
+    RefPtr frame = dynamicDowncast<LocalFrame>(this->frame());
     return frame ? &frame->console() : nullptr;
 }
 

@@ -815,14 +815,6 @@
                 "parser-grammar": "<number>"
             }
         },
-        "test-auto-functions": {
-            "animation-type": "discrete",
-            "initial": "0",
-            "codegen-properties": {
-                "auto-functions": true,
-                "parser-grammar": "auto | <number>"
-            }
-        },
         "test-color-property-with-no-visited-link-support": {
             "animation-type": "discrete",
             "initial": "currentColor",

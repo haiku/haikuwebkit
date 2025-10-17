@@ -1,4 +1,3 @@
 
-Harness Error (FAIL), message = Error: assert_implements: <script type="speculationrules"> must be supported undefined
-
+PASS test www-authenticate basic does not forward credentials to cross-origin pages.
 

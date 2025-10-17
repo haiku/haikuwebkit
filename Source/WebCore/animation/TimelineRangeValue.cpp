@@ -32,6 +32,7 @@
 #include "CSSValuePool.h"
 #include "Document.h"
 #include "Element.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "StyleSingleAnimationRange.h"
 

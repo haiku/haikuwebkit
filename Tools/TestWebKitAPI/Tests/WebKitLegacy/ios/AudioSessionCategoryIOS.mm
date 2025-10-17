@@ -104,8 +104,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlayback());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlayback(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlaybackSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlaybackSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], routeSharingPolicyLongFormAudio());
 #if HAVE(ROUTE_SHARING_POLICY_LONG_FORM_VIDEO)
     EXPECT_NE([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], AVAudioSessionRouteSharingPolicyLongFormVideo);
@@ -117,8 +117,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbient());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbient(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbientSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbientSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], AVAudioSessionRouteSharingPolicyDefault);
 
     didBeginPlaying = false;
@@ -127,8 +127,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbient());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbient(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbientSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbientSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], AVAudioSessionRouteSharingPolicyDefault);
 
     didBeginPlaying = false;
@@ -137,8 +137,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbient());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbient(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryAmbientSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryAmbientSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], AVAudioSessionRouteSharingPolicyDefault);
 
     didBeginPlaying = false;
@@ -147,8 +147,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlayback());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlayback(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlaybackSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlaybackSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], routeSharingPolicyLongFormAudio());
 #if HAVE(ROUTE_SHARING_POLICY_LONG_FORM_VIDEO)
     EXPECT_NE([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], AVAudioSessionRouteSharingPolicyLongFormVideo);
@@ -160,8 +160,8 @@ TEST(WebKitLegacy, AudioSessionCategoryIOS)
 
     Util::run(&didBeginPlaying);
 
-    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlayback());
-    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlayback(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
+    waitUntilAudioSessionCategoryIsEqualTo(getAVAudioSessionCategoryPlaybackSingleton());
+    EXPECT_WK_STREQ(getAVAudioSessionCategoryPlaybackSingleton(), [[getAVAudioSessionClassSingleton() sharedInstance] category]);
     EXPECT_EQ([[getAVAudioSessionClassSingleton() sharedInstance] routeSharingPolicy], routeSharingPolicyLongFormAudio());
 }
 

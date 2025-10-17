@@ -115,6 +115,14 @@ selectors = [
 ]
 requires = ["ENABLE_OPT_IN_PARTITIONED_COOKIES"]
 
+[[temporary-usage]]
+request = "rdar://157886016"
+cleanup = "rdar://157886056"
+selectors = [
+    { name = "_storagePartition", class = "NSHTTPCookie" },
+]
+requires = ["ENABLE_OPT_IN_PARTITIONED_COOKIES"]
+
 [[equivalent-api]]
 request = "rdar://157885997"
 selectors = [

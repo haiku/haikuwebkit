@@ -29,8 +29,10 @@
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
 #import "TextExtractionFilter.h"
+#import "WKWebViewInternal.h"
 #import "_WKTextExtractionInternal.h"
 #import <WebCore/TextExtraction.h>
+#import <wtf/Box.h>
 #import <wtf/CallbackAggregator.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
@@ -239,29 +241,101 @@ RetainPtr<WKTextExtractionItem> createItem(const TextExtraction::Item& item, Roo
 
 #if ENABLE(TEXT_EXTRACTION_FILTER)
 
-static void filterTextRecursive(WKTextExtractionItem *item, MainRunLoopCallbackAggregator& aggregator)
+static void filterTextRecursive(WKWebView *view, WKTextExtractionItem *item, NSString *enclosingNodeIdentifier, MainRunLoopCallbackAggregator& aggregator)
 {
     if (RetainPtr textItem = dynamic_objc_cast<WKTextExtractionTextItem>(item)) {
-        TextExtractionFilter::singleton().shouldFilter([textItem content], [textItem, aggregator = Ref { aggregator }](bool shouldFilter) mutable {
-            if (!shouldFilter)
+        TextExtractionFilter::singleton().shouldFilter([textItem content], [
+            enclosingNodeIdentifier = retainPtr(enclosingNodeIdentifier),
+            view = retainPtr(view),
+            textItem,
+            aggregator = Ref { aggregator }
+        ](bool shouldFilter) mutable {
+            if (shouldFilter) {
+                [textItem setContent:@""];
+                [textItem setSelectedRange:NSMakeRange(NSNotFound, 0)];
                 return;
+            }
 
-            [textItem setContent:@""];
-            [textItem setSelectedRange:NSMakeRange(NSNotFound, 0)];
+            RetainPtr nodeIdentifier = [textItem nodeIdentifier] ?: enclosingNodeIdentifier.get();
+            RetainPtr lines = [[textItem content] componentsSeparatedByString:@"\n"];
+
+            auto components = Box<Vector<RetainPtr<NSString>>>::create();
+            components->resizeToFit([lines count]);
+
+            Ref innerAggregator = MainRunLoopCallbackAggregator::create([textItem, aggregator, components] {
+                RetainPtr componentsArray = createNSArray(WTFMove(*components), [](auto component) {
+                    return component.get();
+                });
+                [textItem setContent:[componentsArray componentsJoinedByString:@"\n"]];
+            });
+
+            [lines enumerateObjectsUsingBlock:[&](NSString *substring, NSUInteger index, BOOL*) mutable {
+                static constexpr auto minimumLengthForTextDetection = 100;
+                if (substring.length < minimumLengthForTextDetection) {
+                    components->at(index) = substring;
+                    return;
+                }
+
+                [view _validateText:substring inNode:nodeIdentifier.get() completionHandler:makeBlockPtr([innerAggregator = innerAggregator.copyRef(), components, index](NSString *string) {
+                    components->at(index) = string;
+                }).get()];
+            }];
         });
     }
 
     for (WKTextExtractionItem *child in item.children)
-        filterTextRecursive(child, aggregator);
+        filterTextRecursive(view, child, item.nodeIdentifier ?: enclosingNodeIdentifier, aggregator);
 }
 
-void filterText(WKTextExtractionItem *item, CompletionHandler<void()>&& completion)
+void filterText(WKWebView *view, WKTextExtractionItem *item, CompletionHandler<void()>&& completion)
 {
     Ref aggregator = MainRunLoopCallbackAggregator::create(WTFMove(completion));
-    filterTextRecursive(item, aggregator.get());
+    filterTextRecursive(view, item, nil, aggregator.get());
 }
 
 #endif // ENABLE(TEXT_EXTRACTION_FILTER)
+
+std::optional<double> computeSimilarity(NSString *stringA, NSString *stringB, unsigned minimumLength)
+{
+    if (stringA == stringB || [stringA isEqualToString:stringB])
+        return 1;
+
+    if (!stringA || !stringB)
+        return 0;
+
+    auto lengthA = [stringA length];
+    auto lengthB = [stringB length];
+    if (lengthA < minimumLength && lengthB < minimumLength)
+        return std::nullopt;
+
+    double maxLength = std::max(lengthA, lengthB);
+    if (!lengthA || !lengthB)
+        return 0;
+
+    Vector<Vector<size_t>> matrix(lengthA + 1, Vector<size_t>(lengthB + 1, 0));
+
+    for (size_t i = 0; i <= lengthA; i++)
+        matrix[i][0] = i;
+
+    for (size_t j = 0; j <= lengthB; j++)
+        matrix[0][j] = j;
+
+    for (size_t i = 1; i <= lengthA; i++) {
+        auto characterA = [stringA characterAtIndex:i - 1];
+        for (size_t j = 1; j <= lengthB; j++) {
+            auto characterB = [stringB characterAtIndex:j - 1];
+
+            auto cost = (characterA == characterB) ? 0 : 1;
+            auto deletion = matrix[i - 1][j] + 1;
+            auto insertion = matrix[i][j - 1] + 1;
+            auto substitution = matrix[i - 1][j - 1] + cost;
+
+            matrix[i][j] = std::min({ deletion, insertion, substitution });
+        }
+    }
+
+    return 1.0 - (matrix[lengthA][lengthB] / maxLength);
+}
 
 } // namespace WebKit
 

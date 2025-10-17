@@ -37,7 +37,7 @@ public:
     };
 
     TextureMapperAnimation() = default;
-    TextureMapperAnimation(const String&, const KeyframeValueList&, const FloatSize&, const GraphicsLayerAnimation&, MonotonicTime, Seconds, State);
+    TextureMapperAnimation(const String&, const KeyframeValueList&, const GraphicsLayerAnimation&, MonotonicTime, Seconds, State);
     ~TextureMapperAnimation() = default;
 
     WEBCORE_EXPORT TextureMapperAnimation(const TextureMapperAnimation&);
@@ -62,7 +62,6 @@ private:
 
     String m_name;
     KeyframeValueList m_keyframes { AnimatedProperty::Invalid };
-    FloatSize m_boxSize;
     RefPtr<TimingFunction> m_timingFunction;
     double m_iterationCount { 0 };
     double m_duration { 0 };

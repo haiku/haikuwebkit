@@ -87,7 +87,7 @@ template<FormattingGeometry::HeightType heightType> std::optional<LayoutUnit> Fo
             return { };
     }
     if (auto fixedHeight = height.tryFixed())
-        return LayoutUnit { fixedHeight->value };
+        return LayoutUnit { fixedHeight->resolveZoom(Style::ZoomNeeded { }) };
 
     if (!containingBlockHeight) {
         if (layoutState().inQuirksMode()) {
@@ -113,7 +113,7 @@ template<FormattingGeometry::HeightType heightType> std::optional<LayoutUnit> Fo
     if (!containingBlockHeight)
         return { };
 
-    return Style::evaluate(height, *containingBlockHeight, 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluate<LayoutUnit>(height, *containingBlockHeight, Style::ZoomNeeded { });
 }
 
 std::optional<LayoutUnit> FormattingGeometry::computedHeight(const Box& layoutBox, std::optional<LayoutUnit> containingBlockHeight) const
@@ -177,7 +177,7 @@ std::optional<LayoutUnit> FormattingGeometry::computedWidth(const Box& layoutBox
     if (auto computedWidth = computedWidthValue<WidthType::Normal>(layoutBox, containingBlockWidth)) {
         auto& style = layoutBox.style();
         // Non-quantitative values such as auto and min-content are not influenced by the box-sizing property.
-        if (style.boxSizing() == BoxSizing::ContentBox || style.width().isIntrinsicOrLegacyIntrinsicOrAuto())
+        if (style.boxSizing() == BoxSizing::ContentBox || !style.width().isSpecified())
             return computedWidth;
         auto& boxGeometry = formattingContext().geometryForBox(layoutBox);
         return *computedWidth - boxGeometry.horizontalBorderAndPadding();
@@ -1084,8 +1084,14 @@ BoxGeometry::Edges FormattingGeometry::computedBorder(const Box& layoutBox) cons
     auto& style = layoutBox.style();
     LOG_WITH_STREAM(FormattingContextLayout, stream << "[Border] -> layoutBox: " << &layoutBox);
     return {
-        { LayoutUnit(Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */)), LayoutUnit(Style::evaluate(style.borderRightWidth(), 1.0f /* FIXME FIND ZOOM */)) },
-        { LayoutUnit(Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */)), LayoutUnit(Style::evaluate(style.borderBottomWidth(), 1.0f /* FIXME FIND ZOOM */)) },
+        {
+            Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { })
+        },
+        {
+            Style::evaluate<LayoutUnit>(style.borderTopWidth(), Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.borderBottomWidth(), Style::ZoomNeeded { })
+        },
     };
 }
 
@@ -1097,8 +1103,13 @@ BoxGeometry::Edges FormattingGeometry::computedPadding(const Box& layoutBox, con
     auto& style = layoutBox.style();
     LOG_WITH_STREAM(FormattingContextLayout, stream << "[Padding] -> layoutBox: " << &layoutBox);
     return {
-        { Style::evaluate(style.paddingStart(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.paddingEnd(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */) },
-        { Style::evaluate(style.paddingBefore(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */), Style::evaluate(style.paddingAfter(), containingBlockWidth, 1.0f /* FIXME FIND ZOOM */) }
+        {
+            Style::evaluate<LayoutUnit>(style.paddingStart(), containingBlockWidth, Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.paddingEnd(), containingBlockWidth, Style::ZoomNeeded { }) },
+        {
+            Style::evaluate<LayoutUnit>(style.paddingBefore(), containingBlockWidth, Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.paddingAfter(), containingBlockWidth, Style::ZoomNeeded { })
+        }
     };
 }
 

@@ -58,6 +58,7 @@
 #include "DiagnosticLoggingResultType.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentPrefetcher.h"
 #include "Editor.h"
 #include "EditorClient.h"
 #include "ElementInlines.h"
@@ -204,7 +205,8 @@ bool isBackForwardLoadType(FrameLoadType type)
     case FrameLoadType::ReloadExpiredOnly:
     case FrameLoadType::Same:
     case FrameLoadType::RedirectWithLockedBackForwardList:
-    case FrameLoadType::Replace:
+    case FrameLoadType::MultipartReplace:
+    case FrameLoadType::NavigationAPIReplace:
         return false;
     case FrameLoadType::Back:
     case FrameLoadType::Forward:
@@ -225,7 +227,8 @@ bool isReload(FrameLoadType type)
     case FrameLoadType::Standard:
     case FrameLoadType::Same:
     case FrameLoadType::RedirectWithLockedBackForwardList:
-    case FrameLoadType::Replace:
+    case FrameLoadType::MultipartReplace:
+    case FrameLoadType::NavigationAPIReplace:
     case FrameLoadType::Back:
     case FrameLoadType::Forward:
     case FrameLoadType::IndexedBackForward:
@@ -376,6 +379,7 @@ FrameLoader::FrameLoader(LocalFrame& frame, CompletionHandler<UniqueRef<LocalFra
     , m_state(FrameState::Provisional)
     , m_loadType(FrameLoadType::Standard)
     , m_checkTimer(*this, &FrameLoader::checkTimerFired)
+    , m_documentPrefetcher(DocumentPrefetcher::create(*this))
 {
 }
 
@@ -1218,7 +1222,7 @@ static NavigationNavigationType determineNavigationType(FrameLoadType loadType, 
         return NavigationNavigationType::Traverse;
     if (isReload(loadType))
         return NavigationNavigationType::Reload;
-    if (loadType == FrameLoadType::Replace)
+    if (loadType == FrameLoadType::MultipartReplace || loadType == FrameLoadType::NavigationAPIReplace)
         return NavigationNavigationType::Replace;
 
     return NavigationNavigationType::Push;
@@ -1397,12 +1401,12 @@ void FrameLoader::prepareForLoadStart()
     }
 }
 
-void FrameLoader::setupForReplace()
+void FrameLoader::setupForMultipartReplace()
 {
     m_client->revertToProvisionalState(protectedDocumentLoader().get());
     setState(FrameState::Provisional);
     m_provisionalDocumentLoader = m_documentLoader;
-    FRAMELOADER_RELEASE_LOG(ResourceLoading, "setupForReplace: Setting provisional document loader (m_provisionalDocumentLoader=%p)", m_provisionalDocumentLoader.get());
+    FRAMELOADER_RELEASE_LOG(ResourceLoading, "setupForMultipartReplace: Setting provisional document loader (m_provisionalDocumentLoader=%p)", m_provisionalDocumentLoader.get());
     m_documentLoader = nullptr;
     detachChildren();
 }
@@ -1454,6 +1458,8 @@ void FrameLoader::loadFrameRequest(FrameLoadRequest&& request, Event* event, Ref
         loadType = FrameLoadType::Reload;
     else if (request.lockBackForwardList() == LockBackForwardList::Yes)
         loadType = FrameLoadType::RedirectWithLockedBackForwardList;
+    else if (request.isFromNavigationAPI() && request.navigationHistoryBehavior() == NavigationHistoryBehavior::Replace)
+        loadType = FrameLoadType::NavigationAPIReplace;
     else
         loadType = FrameLoadType::Standard;
 
@@ -1916,7 +1922,7 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
     policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { } /* redirectResponse */, loader, WTFMove(formState), [this, protectedThis = Ref { *this }, allowNavigationToInvalidURL, completionHandler = completionHandlerCaller.release()] (const ResourceRequest& request, WeakPtr<FormState>&& weakFormState, NavigationPolicyDecision navigationPolicyDecision) mutable {
         continueLoadAfterNavigationPolicy(request, RefPtr { weakFormState.get() }.get(), navigationPolicyDecision, allowNavigationToInvalidURL);
         completionHandler();
-    }, policyDecisionMode);
+    }, policyDecisionMode, determineNavigationType(type, NavigationHistoryBehavior::Auto));
 }
 
 void FrameLoader::clearProvisionalLoadForPolicyCheck()
@@ -2365,11 +2371,11 @@ void FrameLoader::commitProvisionalLoad()
         // Check to see if we need to cache the page we are navigating away from into the back/forward cache.
         // We are doing this here because we know for sure that a new page is about to be loaded.
         BackForwardCache::singleton().addIfCacheable(*history().protectedCurrentItem(), frame->protectedPage().get());
-        
+
         WebCore::jettisonExpensiveObjectsOnTopLevelNavigation();
     }
 
-    if (m_loadType != FrameLoadType::Replace)
+    if (m_loadType != FrameLoadType::MultipartReplace)
         closeOldDataSources();
 
     if (!cachedPage && !m_stateMachine.creatingInitialEmptyDocument())
@@ -2577,8 +2583,9 @@ void FrameLoader::transitionToCommitted(CachedPage* cachedPage)
     case FrameLoadType::ReloadFromOrigin:
     case FrameLoadType::ReloadExpiredOnly:
     case FrameLoadType::Same:
-    case FrameLoadType::Replace:
-        history().updateForReload();
+    case FrameLoadType::MultipartReplace:
+    case FrameLoadType::NavigationAPIReplace:
+        history().updateForReloadOrReplace();
         m_client->transitionToCommittedForNewPage(m_documentLoader && m_documentLoader->isInFinishedLoadingOfEmptyDocument() ?
             LocalFrameLoaderClient::InitializingIframe::Yes : LocalFrameLoaderClient::InitializingIframe::No);
         break;
@@ -2731,14 +2738,14 @@ void FrameLoader::open(CachedFrameBase& cachedFrame)
     cachedFrame.restore();
 }
 
-bool FrameLoader::isReplacing() const
+bool FrameLoader::isMultipartReplacing() const
 {
-    return m_loadType == FrameLoadType::Replace;
+    return m_loadType == FrameLoadType::MultipartReplace;
 }
 
-void FrameLoader::setReplacing()
+void FrameLoader::setMultipartReplacing()
 {
-    m_loadType = FrameLoadType::Replace;
+    m_loadType = FrameLoadType::MultipartReplace;
 }
 
 bool FrameLoader::subframeIsLoading() const
@@ -2807,7 +2814,8 @@ CachePolicy FrameLoader::subresourceCachePolicy(const URL& url) const
         ASSERT_NOT_REACHED(); // Already handled above.
         return CachePolicy::Reload;
     case FrameLoadType::RedirectWithLockedBackForwardList:
-    case FrameLoadType::Replace:
+    case FrameLoadType::MultipartReplace:
+    case FrameLoadType::NavigationAPIReplace:
     case FrameLoadType::Same:
     case FrameLoadType::Standard:
         return CachePolicy::Verify;
@@ -2909,7 +2917,7 @@ void FrameLoader::checkLoadCompleteForThisFrame(LoadWillContinueInAnotherProcess
             ASSERT(!provisionalDocumentLoader->isLoading());
 
             // If we're in the middle of loading multipart data, we need to restore the document loader.
-            if (isReplacing() && !m_documentLoader)
+            if (isMultipartReplacing() && !m_documentLoader)
                 setDocumentLoader(provisionalDocumentLoader.copyRef());
 
             // Finish resetting the load state, but only if another load hasn't been started by the
@@ -3623,7 +3631,7 @@ ResourceLoaderIdentifier FrameLoader::loadResourceSynchronously(const ResourceRe
 {
     ASSERT(m_frame->document());
     String referrer = SecurityPolicy::generateReferrerHeader(m_frame->document()->referrerPolicy(), request.url(), outgoingReferrerURL(), OriginAccessPatternsForWebProcess::singleton());
-    
+
     ResourceRequest initialRequest = request;
     initialRequest.setTimeoutInterval(10);
     
@@ -4140,7 +4148,7 @@ void FrameLoader::continueLoadAfterNavigationPolicy(const ResourceRequest& reque
             FRAMELOADER_RELEASE_LOG(ResourceLoading, "continueLoadAfterNavigationPolicy (completionHandler): Frame load canceled - no provisional document loader before prepareForLoadStart");
             return;
         }
-        
+
         prepareForLoadStart();
 
         // The load might be cancelled inside of prepareForLoadStart(), nulling out the m_provisionalDocumentLoader,
@@ -4530,9 +4538,10 @@ void FrameLoader::loadDifferentDocumentItem(HistoryItem& item, HistoryItem* from
         }
         case FrameLoadType::Standard:
         case FrameLoadType::RedirectWithLockedBackForwardList:
+        case FrameLoadType::NavigationAPIReplace:
             break;
         case FrameLoadType::Same:
-        case FrameLoadType::Replace:
+        case FrameLoadType::MultipartReplace:
             ASSERT_NOT_REACHED();
         }
 
@@ -4653,15 +4662,6 @@ RetainPtr<CFDictionaryRef> FrameLoader::connectionProperties(ResourceLoader* loa
     return m_client->connectionProperties(loader->documentLoader(), *loader->identifier());
 }
 #endif
-
-ReferrerPolicy FrameLoader::effectiveReferrerPolicy() const
-{
-    if (RefPtr parentFrame = dynamicDowncast<LocalFrame>(m_frame->tree().parent()))
-        return parentFrame->document()->referrerPolicy();
-    if (RefPtr opener = dynamicDowncast<LocalFrame>(m_frame->opener()))
-        return opener->document()->referrerPolicy();
-    return ReferrerPolicy::Default;
-}
 
 String FrameLoader::referrer() const
 {
@@ -4945,6 +4945,11 @@ void FrameLoader::prefetchDNSIfNeeded(const URL& url)
 
     if (url.isValid() && !url.isEmpty() && url.protocolIsInHTTPFamily())
         client().prefetchDNS(url.host().toString());
+}
+
+void FrameLoader::prefetch(const URL& url, const Vector<String>& tags, const String& referrerPolicyString, bool lowPriority)
+{
+    m_documentPrefetcher->prefetch(url, tags, referrerPolicyString, lowPriority);
 }
 
 } // namespace WebCore

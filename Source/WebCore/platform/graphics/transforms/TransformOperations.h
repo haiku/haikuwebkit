@@ -64,13 +64,13 @@ public:
     const Ref<TransformOperation>& first() const LIFETIME_BOUND { return m_operations.first(); }
     const Ref<TransformOperation>& last() const LIFETIME_BOUND { return m_operations.last(); }
 
-    void apply(TransformationMatrix&, const FloatSize&, unsigned start = 0) const;
+    void apply(TransformationMatrix&, unsigned start = 0) const;
 
     template<TransformOperation::Type operationType>
     bool hasTransformOfType() const;
 
-    bool isInvertible(const LayoutSize&) const;
-    bool containsNonInvertibleMatrix(const LayoutSize&) const;
+    bool isInvertible() const;
+    bool containsNonInvertibleMatrix() const;
 
 private:
     friend struct IPC::ArgumentCoder<TransformOperations, void>;
@@ -85,7 +85,7 @@ bool TransformOperations::hasTransformOfType() const
     return std::ranges::any_of(m_operations, [](auto& op) { return op->type() == operationType; });
 }
 
-TransformOperations blend(const TransformOperations& from, const TransformOperations& to, const BlendingContext&, const LayoutSize&);
+TransformOperations blend(const TransformOperations& from, const TransformOperations& to, const BlendingContext&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const TransformOperations&);
 

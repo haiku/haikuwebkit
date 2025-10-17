@@ -640,7 +640,7 @@ void CookieJarDB::createPrepareStatement(ASCIILiteral sql)
 {
     auto statement = m_database.prepareHeapStatement(sql);
     ASSERT(statement);
-    m_statements.add(sql, statement.value().moveToUniquePtr());
+    m_statements.add(sql, WTFMove(statement));
 }
 
 SQLiteStatement& CookieJarDB::preparedStatement(const String& sql)

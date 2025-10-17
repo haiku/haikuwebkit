@@ -790,12 +790,12 @@ typedef void (*WGPURequestDeviceCallback)(WGPURequestDeviceStatus status, WGPUDe
 typedef struct WGPUChainedStruct {
     struct WGPUChainedStruct const * next;
     WGPUSType sType;
-} SWIFT_ESCAPABLE WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUChainedStruct WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUChainedStructOut {
     struct WGPUChainedStructOut * next;
     WGPUSType sType;
-} SWIFT_ESCAPABLE WGPUChainedStructOut WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUChainedStructOut WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUAdapterProperties {
     uint32_t vendorID;
@@ -848,7 +848,7 @@ typedef struct WGPUColor {
 
 typedef struct WGPUCommandBufferDescriptor {
     WGPU_NULLABLE WTF::String label;
-} SWIFT_ESCAPABLE WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUCommandBufferDescriptor WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUCommandEncoderDescriptor {
     WGPU_NULLABLE char const * label;
@@ -870,7 +870,7 @@ typedef struct WGPUComputePassTimestampWrites {
     WGPUQuerySet querySet;
     uint32_t beginningOfPassWriteIndex;
     uint32_t endOfPassWriteIndex;
-} SWIFT_ESCAPABLE WGPUComputePassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUComputePassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUConstantEntry {
     char const * key;
@@ -1011,13 +1011,13 @@ typedef struct WGPURenderPassDepthStencilAttachment {
     WGPUStoreOp stencilStoreOp;
     uint32_t stencilClearValue;
     WGPUBool stencilReadOnly;
-} SWIFT_ESCAPABLE WGPURenderPassDepthStencilAttachment WGPU_STRUCTURE_ATTRIBUTE;
+} WGPURenderPassDepthStencilAttachment WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURenderPassTimestampWrites {
     WGPUQuerySet querySet;
     uint32_t beginningOfPassWriteIndex;
     uint32_t endOfPassWriteIndex;
-} SWIFT_ESCAPABLE WGPURenderPassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
+} WGPURenderPassTimestampWrites WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURequestAdapterOptions {
     WGPU_NULLABLE WGPUSurface compatibleSurface;
@@ -1142,7 +1142,7 @@ typedef struct WGPUTextureDataLayout {
     uint64_t offset;
     uint32_t bytesPerRow;
     uint32_t rowsPerImage;
-} SWIFT_ESCAPABLE WGPUTextureDataLayout WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUTextureDataLayout WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUTextureViewDescriptor {
     WGPU_NULLABLE char const * label;
@@ -1199,7 +1199,7 @@ inline std::span<const WGPUCompilationMessage> messagesSpan(const WGPUCompilatio
 typedef struct WGPUComputePassDescriptor {
     WGPU_NULLABLE WTF::String label;
     WGPU_NULLABLE WGPUComputePassTimestampWrites const * timestampWrites;
-} SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPUComputePassDescriptor WGPU_STRUCTURE_ATTRIBUTE; // FIXME: This is unsafe!
 
 static inline WGPU_NULLABLE WGPUComputePassTimestampWrites const * _Nullable __counted_by(1) wgpuGetComputePassDescriptorTimestampWrites(const WGPUComputePassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND) {
     return descriptor->timestampWrites;
@@ -1221,14 +1221,14 @@ typedef struct WGPUDepthStencilState {
 typedef struct WGPUImageCopyBuffer {
     WGPUTextureDataLayout layout;
     WGPUBuffer buffer;
-} SWIFT_ESCAPABLE WGPUImageCopyBuffer WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUImageCopyBuffer WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUImageCopyTexture {
     WGPUTexture texture;
     uint32_t mipLevel;
     WGPUOrigin3D origin;
     WGPUTextureAspect aspect;
-} SWIFT_ESCAPABLE WGPUImageCopyTexture WGPU_STRUCTURE_ATTRIBUTE;
+} WGPUImageCopyTexture WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPUProgrammableStageDescriptor {
     WGPUShaderModule module;
@@ -1248,7 +1248,7 @@ typedef struct WGPURenderPassColorAttachment {
     WGPULoadOp loadOp;
     WGPUStoreOp storeOp;
     WGPUColor clearValue;
-} SWIFT_ESCAPABLE WGPURenderPassColorAttachment WGPU_STRUCTURE_ATTRIBUTE;
+} WGPURenderPassColorAttachment WGPU_STRUCTURE_ATTRIBUTE;
 
 typedef struct WGPURequiredLimits {
     WGPULimits limits;
@@ -1332,7 +1332,7 @@ typedef struct WGPURenderPassDescriptor {
     WGPU_NULLABLE WGPURenderPassTimestampWrites const * timestampWrites;
 
     auto colorAttachmentsSpan() const { return unsafeMakeSpan(colorAttachments, colorAttachmentCount); }
-} SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE;
+} SWIFT_ESCAPABLE WGPURenderPassDescriptor WGPU_STRUCTURE_ATTRIBUTE; // FIXME: This is unsafe!
 
 inline WGPURenderPassTimestampWrites const * _Nullable __counted_by(1) wgpuGetRenderPassDescriptorTimestampWrites(const WGPURenderPassDescriptor * __counted_by(1) descriptor LIFETIME_BOUND) {
     return descriptor->timestampWrites;

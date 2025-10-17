@@ -29,6 +29,7 @@
 
 [
     Exposed=*,
+    JSCustomMarkFunction,
     PrivateIdentifier,
     PublicIdentifier
 ] interface ReadableStreamDefaultReader {

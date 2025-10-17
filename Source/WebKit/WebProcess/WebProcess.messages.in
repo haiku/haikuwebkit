@@ -29,6 +29,7 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
     SetWebsiteDataStoreParameters(struct WebKit::WebProcessDataStoreParameters parameters)
 
     CreateWebPage(WebCore::PageIdentifier newPageID, struct WebKit::WebPageCreationParameters pageCreationParameters)
+    CountWebPagesForTesting() -> (unsigned count)
 
     PrewarmWithDomainInformation(struct WebCore::PrewarmInformation prewarmInformation)
 
@@ -145,6 +146,7 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
 #endif
 
     IsJITEnabled() -> (bool enabled)
+    IsEnhancedSecurityEnabled() -> (bool enabled)
 
 #if PLATFORM(COCOA)
     SetMediaMIMETypes(Vector<String> types)

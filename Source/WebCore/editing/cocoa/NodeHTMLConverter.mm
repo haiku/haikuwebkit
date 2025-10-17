@@ -69,6 +69,7 @@
 #import "NodeName.h"
 #import "Quirks.h"
 #import "RenderImage.h"
+#import "RenderStyleInlines.h"
 #import "RenderText.h"
 #import "StyleExtractor.h"
 #import "StyleProperties.h"
@@ -2139,7 +2140,7 @@ void HTMLConverter::_processText(Text& text)
         unsigned count = originalString.length();
         bool wasLeading = true;
         StringBuilder builder;
-        LChar noBreakSpaceRepresentation = 0;
+        Latin1Character noBreakSpaceRepresentation = 0;
         for (unsigned i = 0; i < count; i++) {
             char16_t c = originalString.characterAt(i);
             bool isWhitespace = c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == 0xc || c == 0x200b;

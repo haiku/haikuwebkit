@@ -189,11 +189,6 @@ function platformRoleForStaticText() {
     return accessibilityController.platformName == "atspi" ? "AXRole: AXStatic" : "AXRole: AXStaticText";
 }
 
-function spinnerForTextInput(accessibilityObject) {
-    var index = accessibilityController.platformName == "atspi" ? 0 : 1;
-    return accessibilityObject.childAtIndex(index);
-}
-
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

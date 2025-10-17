@@ -440,15 +440,12 @@ list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
 )
 
 list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
-    ${GIO_UNIX_INCLUDE_DIRS}
-    ${GLIB_INCLUDE_DIRS}
     ${LIBSOUP_INCLUDE_DIRS}
 )
 
 list(APPEND WebKit_LIBRARIES
+    GLib::Module
     WPE::libwpe
-    ${GLIB_LIBRARIES}
-    ${GLIB_GMODULE_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
 )
 
@@ -614,14 +611,11 @@ if (ENABLE_WPE_QT_API)
             PRIVATE
                 Epoxy::Epoxy
                 WebKit
-                ${GLIB_GOBJECT_LIBRARIES}
-                ${GLIB_LIBRARIES}
         )
         target_include_directories(qtwpe PRIVATE
             $<TARGET_PROPERTY:WebKit,INCLUDE_DIRECTORIES>
             ${JavaScriptCoreGLib_FRAMEWORK_HEADERS_DIR}
             ${CMAKE_BINARY_DIR}
-            ${GLIB_INCLUDE_DIRS}
             ${LIBSOUP_INCLUDE_DIRS}
             ${WPE_INCLUDE_DIRS}
             ${WEBKIT_DIR}/UIProcess/API/wpe/qt6
@@ -655,18 +649,16 @@ if (ENABLE_WPE_QT_API)
 
         set(qtwpe_LIBRARIES
             Epoxy::Epoxy
+            GLib::Object
             Qt5::Core Qt5::Quick
             WPE::FDO
             WebKit
-            ${GLIB_GOBJECT_LIBRARIES}
-            ${GLIB_LIBRARIES}
         )
 
         set(qtwpe_INCLUDE_DIRECTORIES
             $<TARGET_PROPERTY:WebKit,INCLUDE_DIRECTORIES>
             ${JavaScriptCoreGLib_FRAMEWORK_HEADERS_DIR}
             ${CMAKE_BINARY_DIR}
-            ${GLIB_INCLUDE_DIRS}
             ${Qt5_INCLUDE_DIRS}
             ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
             ${LIBSOUP_INCLUDE_DIRS}

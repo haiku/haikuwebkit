@@ -117,6 +117,11 @@ inline WKStringRef stringValue(WKDictionaryRef dictionary, const char* key)
     return stringValue(value(dictionary, key));
 }
 
+inline WKArrayRef arrayValue(WKDictionaryRef dictionary, const char* key)
+{
+    return arrayValue(value(dictionary, key));
+}
+
 inline uint64_t uint64Value(WKDictionaryRef dictionary, const char* key)
 {
     return uint64Value(value(dictionary, key));

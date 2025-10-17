@@ -1072,6 +1072,7 @@
 		0FC4EC32234A91E200B710A3 /* pas_status_reporter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pas_status_reporter.c; sourceTree = "<group>"; };
 		0FC4EC33234A91E200B710A3 /* pas_string_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pas_string_stream.h; sourceTree = "<group>"; };
 		0FC4EC34234A91E200B710A3 /* pas_status_reporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pas_status_reporter.h; sourceTree = "<group>"; };
+		0F99999B26AAAA0000111111 /* pas_zero_memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pas_zero_memory.h; sourceTree = "<group>"; };
 		0FC4EC35234A91E300B710A3 /* pas_compute_summary_object_callbacks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pas_compute_summary_object_callbacks.c; sourceTree = "<group>"; };
 		0FC4EC36234A91E300B710A3 /* pas_fd_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pas_fd_stream.h; sourceTree = "<group>"; };
 		0FC4EC782351707B00B710A3 /* pas_segregated_page_emptiness_kind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pas_segregated_page_emptiness_kind.h; sourceTree = "<group>"; };
@@ -1971,6 +1972,7 @@
 				0F78088322FA22D200F37451 /* pas_virtual_range.c */,
 				0F78088222FA22D100F37451 /* pas_virtual_range.h */,
 				0F78088822FA534100F37451 /* pas_virtual_range_min_heap.h */,
+				0F99999B26AAAA0000111111 /* pas_zero_memory.h */,
 				0FDEA46D228B65430085E340 /* pas_zero_mode.h */,
 				0F8700A225B0A8C2000E1ABF /* thingy_heap.c */,
 				0F8700A325B0A8C2000E1ABF /* thingy_heap.h */,
@@ -2427,6 +2429,7 @@
 				0F68127022BD419E0036A02B /* pas_versioned_field.h in Headers */,
 				0F78088422FA22D200F37451 /* pas_virtual_range.h in Headers */,
 				0F78088E22FA534100F37451 /* pas_virtual_range_min_heap.h in Headers */,
+				0F99999D26AAAA0000111111 /* pas_zero_memory.h in Headers */,
 				0FE7EE3B22960142004F4166 /* pas_zero_mode.h in Headers */,
 				0F8700A825B0A8C2000E1ABF /* thingy_heap.h in Headers */,
 				0F8700AA25B0A8C3000E1ABF /* thingy_heap_config.h in Headers */,

@@ -92,14 +92,14 @@ inline void Callee::runWithDowncast(const Func& func)
 {
     switch (m_compilationMode) {
     case CompilationMode::IPIntMode:
-        func(static_cast<IPIntCallee*>(this));
+        func(uncheckedDowncast<IPIntCallee>(this));
         break;
     case CompilationMode::JSToWasmMode:
-        func(static_cast<JSToWasmCallee*>(this));
+        func(uncheckedDowncast<JSToWasmCallee>(this));
         break;
 #if ENABLE(WEBASSEMBLY_BBQJIT)
     case CompilationMode::BBQMode:
-        func(static_cast<BBQCallee*>(this));
+        func(uncheckedDowncast<BBQCallee>(this));
         break;
 #else
     case CompilationMode::BBQMode:
@@ -107,10 +107,10 @@ inline void Callee::runWithDowncast(const Func& func)
 #endif
 #if ENABLE(WEBASSEMBLY_OMGJIT)
     case CompilationMode::OMGMode:
-        func(static_cast<OMGCallee*>(this));
+        func(uncheckedDowncast<OMGCallee>(this));
         break;
     case CompilationMode::OMGForOSREntryMode:
-        func(static_cast<OMGOSREntryCallee*>(this));
+        func(uncheckedDowncast<OMGOSREntryCallee>(this));
         break;
 #else
     case CompilationMode::OMGMode:
@@ -119,14 +119,14 @@ inline void Callee::runWithDowncast(const Func& func)
 #endif
     case CompilationMode::JSToWasmICMode:
 #if ENABLE(JIT)
-        func(static_cast<JSToWasmICCallee*>(this));
+        func(uncheckedDowncast<JSToWasmICCallee>(this));
 #endif
         break;
     case CompilationMode::WasmToJSMode:
-        func(static_cast<WasmToJSCallee*>(this));
+        func(uncheckedDowncast<WasmToJSCallee>(this));
         break;
     case CompilationMode::WasmBuiltinMode:
-        func(static_cast<WasmBuiltinCallee*>(this));
+        func(uncheckedDowncast<WasmBuiltinCallee>(this));
         break;
     }
 }
@@ -232,7 +232,7 @@ IPIntCallee::IPIntCallee(FunctionIPIntMetadataGenerator& generator, FunctionSpac
     , m_metadata(WTFMove(generator.m_metadata))
     , m_argumINTBytecode(WTFMove(generator.m_argumINTBytecode))
     , m_uINTBytecode(WTFMove(generator.m_uINTBytecode))
-    , m_highestReturnStackOffset(generator.m_highestReturnStackOffset)
+    , m_topOfReturnStackFPOffset(generator.m_topOfReturnStackFPOffset)
     , m_localSizeToAlloc(roundUpToMultipleOf<2>(generator.m_numLocals))
     , m_numRethrowSlotsToAlloc(generator.m_numAlignedRethrowSlots)
     , m_numLocals(generator.m_numLocals)

@@ -1251,7 +1251,10 @@ class StyleProcessor(ProcessorBase):
 
         _log.debug("Using class: " + checker.__class__.__name__)
 
-        checker.check(lines)
+        current_error_count = self.error_count
+        output = checker.check(lines)
+        if isinstance(checker, SwiftChecker) and self.error_count > current_error_count:
+            _log.info("These errors can be fixed using swift format --in-place \"%s\"" % file_path)
 
     def do_association_check(self, files, cwd, host=Host()):
         _log.debug("Running TestExpectations linter")

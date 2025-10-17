@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2007 Nicholas Shanks <contact@nickshanks.com>
  * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +40,7 @@ namespace WebCore {
 FontDescription::FontDescription()
     : m_variantAlternates(FontCascadeDescription::initialVariantAlternates())
     , m_fontPalette({ FontPalette::Type::Normal, nullAtom() })
-    , m_fontSelectionRequest { FontCascadeDescription::initialWeight(), FontCascadeDescription::initialWidth(), FontCascadeDescription::initialItalic() }
+    , m_fontSelectionRequest { normalWeightValue(), normalWidthValue(), std::nullopt }
     , m_orientation(enumToUnderlyingType(FontOrientation::Horizontal))
     , m_nonCJKGlyphOrientation(enumToUnderlyingType(NonCJKGlyphOrientation::Mixed))
     , m_widthVariant(enumToUnderlyingType(FontWidthVariant::RegularWidth))
@@ -64,7 +65,7 @@ FontDescription::FontDescription()
     , m_variantEastAsianRuby(enumToUnderlyingType(FontVariantEastAsianRuby::Normal))
     , m_variantEmoji(enumToUnderlyingType(FontVariantEmoji::Normal))
     , m_opticalSizing(enumToUnderlyingType(FontOpticalSizing::Enabled))
-    , m_fontStyleAxis(FontCascadeDescription::initialFontStyleAxis() == FontStyleAxis::ital)
+    , m_fontStyleAxis(enumToUnderlyingType(FontStyleAxis::slnt))
     , m_shouldAllowUserInstalledFonts(enumToUnderlyingType(AllowUserInstalledFonts::No))
     , m_shouldDisableLigaturesForSpacing(false)
 {

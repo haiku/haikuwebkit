@@ -817,6 +817,7 @@ runtime/FileBasedFuzzerAgent.cpp
 runtime/FileBasedFuzzerAgentBase.cpp
 runtime/FinalizationRegistryConstructor.cpp
 runtime/FinalizationRegistryPrototype.cpp
+runtime/FractionToDouble.cpp
 runtime/FunctionConstructor.cpp
 runtime/FunctionExecutable.cpp
 runtime/FunctionExecutableDump.cpp
@@ -940,6 +941,7 @@ runtime/JSPromise.cpp
 runtime/JSPromiseAllContext.cpp
 runtime/JSPromiseConstructor.cpp
 runtime/JSPromisePrototype.cpp
+runtime/JSPromiseReaction.cpp
 runtime/JSPropertyNameEnumerator.cpp
 runtime/JSRawJSONObject.cpp
 runtime/JSRegExpStringIterator.cpp
@@ -1232,6 +1234,16 @@ wasm/js/WebAssemblyTablePrototype.cpp
 wasm/js/WebAssemblyTagConstructor.cpp
 wasm/js/WebAssemblyTagPrototype.cpp
 wasm/js/WebAssemblyWrapperFunction.cpp
+
+wasm/debugger/WasmBreakpointManager.cpp
+wasm/debugger/WasmDebugServer.cpp
+wasm/debugger/WasmDebugServerUtilities.cpp
+wasm/debugger/WasmExecutionHandler.cpp
+wasm/debugger/WasmMemoryHandler.cpp
+wasm/debugger/WasmModuleManager.cpp
+wasm/debugger/WasmQueryHandler.cpp
+wasm/debugger/WasmVirtualAddress.cpp
+wasm/debugger/WasmModuleDebugInfo.cpp
 
 yarr/RegularExpression.cpp
 yarr/YarrCanonicalizeUCS2.cpp

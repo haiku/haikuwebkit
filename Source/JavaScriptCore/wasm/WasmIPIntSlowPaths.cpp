@@ -43,6 +43,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include "WasmCallProfile.h"
 #include "WasmCallee.h"
 #include "WasmCallingConvention.h"
+#include "WasmDebugServer.h"
 #include "WasmIPIntGenerator.h"
 #include "WasmModuleInformation.h"
 #include "WasmOSREntryPlan.h"
@@ -65,7 +66,7 @@ namespace JSC { namespace IPInt {
     } while (false)
 
 #define IPINT_CALLEE(callFrame) \
-    static_cast<Wasm::IPIntCallee*>(callFrame->callee().asNativeCallee())
+    (uncheckedDowncast<Wasm::IPIntCallee>(uncheckedDowncast<Wasm::Callee>(callFrame->callee().asNativeCallee())))
 
 // For operation calls that may throw an exception, we return (<val>, 0)
 // if it is fine, and (<exception value>, SlowPathExceptionTag) if it is not
@@ -275,6 +276,57 @@ WASM_IPINT_EXTERN_CPP_DECL(prologue_osr, CallFrame* callFrame)
     WASM_RETURN_TWO(nullptr, nullptr);
 }
 
+template<SavedFPWidth savedFPWidth>
+static ALWAYS_INLINE uint64_t* buildEntryBufferForLoopOSR(Wasm::IPIntCallee* ipintCallee, Wasm::BBQCallee* bbqCallee, JSWebAssemblyInstance* instance, const Wasm::IPIntTierUpCounter::OSREntryData& osrEntryData, IPIntLocal* pl)
+{
+    ASSERT(bbqCallee->compilationMode() == Wasm::CompilationMode::BBQMode);
+    size_t osrEntryScratchBufferSize = bbqCallee->osrEntryScratchBufferSize();
+
+    constexpr unsigned valueSize = Wasm::Context::scratchBufferSlotsPerValue(savedFPWidth);
+    RELEASE_ASSERT(osrEntryScratchBufferSize >= valueSize * (ipintCallee->numLocals() + osrEntryData.numberOfStackValues + osrEntryData.tryDepth + Wasm::BBQCallee::extraOSRValuesForLoopIndex));
+
+    uint64_t* buffer = instance->vm().wasmContext.scratchBufferForSize(osrEntryScratchBufferSize);
+    if (!buffer)
+        return nullptr;
+
+    size_t bufferIndex = 0;
+    auto copyValueToBuffer = [&](const IPIntLocal& local) ALWAYS_INLINE_LAMBDA {
+        if constexpr (savedFPWidth == SavedFPWidth::SaveVectors)
+            *std::bit_cast<v128_t*>(buffer + bufferIndex) = local.v128;
+        else
+            buffer[bufferIndex] = local.i64;
+        bufferIndex += valueSize;
+    };
+
+    // The loop index isn't really an IPIntLocal value, but it occupies the first slot of the OSR scratch buffer
+    IPIntLocal loopIndexLocal = { };
+    loopIndexLocal.v128.u64x2[0] = osrEntryData.loopIndex;
+    loopIndexLocal.v128.u64x2[1] = 0;
+    copyValueToBuffer(loopIndexLocal);
+
+    for (uint32_t i = 0; i < ipintCallee->numLocals(); ++i)
+        copyValueToBuffer(pl[i]);
+
+    if (ipintCallee->rethrowSlots()) {
+        ASSERT(osrEntryData.tryDepth <= ipintCallee->rethrowSlots());
+        for (uint32_t i = 0; i < osrEntryData.tryDepth; ++i)
+            copyValueToBuffer(pl[ipintCallee->localSizeToAlloc() + i]);
+    } else {
+        // If there's no rethrow slots just 0 fill the buffer.
+        IPIntLocal zeroValue = { };
+        zeroValue.v128 = vectorAllZeros();
+        for (uint32_t i = 0; i < osrEntryData.tryDepth; ++i)
+            copyValueToBuffer(zeroValue);
+    }
+
+    for (uint32_t i = 0; i < osrEntryData.numberOfStackValues; ++i) {
+        pl -= 1;
+        copyValueToBuffer(*pl);
+    }
+    return buffer;
+}
+
+
 WASM_IPINT_EXTERN_CPP_DECL(loop_osr, CallFrame* callFrame, uint8_t* pc, IPIntLocal* pl)
 {
     Wasm::IPIntCallee* callee = IPINT_CALLEE(callFrame);
@@ -301,29 +353,17 @@ WASM_IPINT_EXTERN_CPP_DECL(loop_osr, CallFrame* callFrame, uint8_t* pc, IPIntLoc
     if (!compiledCallee)
         WASM_RETURN_TWO(nullptr, nullptr);
 
-    auto* bbqCallee = static_cast<Wasm::BBQCallee*>(compiledCallee.get());
+    auto* bbqCallee = uncheckedDowncast<Wasm::BBQCallee>(compiledCallee.get());
     ASSERT(bbqCallee->compilationMode() == Wasm::CompilationMode::BBQMode);
-    size_t osrEntryScratchBufferSize = bbqCallee->osrEntryScratchBufferSize();
-    RELEASE_ASSERT(osrEntryScratchBufferSize >= callee->numLocals() + osrEntryData.numberOfStackValues + osrEntryData.tryDepth);
 
-    uint64_t* buffer = instance->vm().wasmContext.scratchBufferForSize(osrEntryScratchBufferSize);
+    uint64_t* buffer;
+    if (bbqCallee->savedFPWidth() == SavedFPWidth::SaveVectors)
+        buffer = buildEntryBufferForLoopOSR<SavedFPWidth::SaveVectors>(callee, bbqCallee, instance, osrEntryData, pl);
+    else
+        buffer = buildEntryBufferForLoopOSR<SavedFPWidth::DontSaveVectors>(callee, bbqCallee, instance, osrEntryData, pl);
+
     if (!buffer)
         WASM_RETURN_TWO(nullptr, nullptr);
-
-    uint32_t index = 0;
-    buffer[index++] = osrEntryData.loopIndex;
-    for (uint32_t i = 0; i < callee->numLocals(); ++i)
-        buffer[index++] = pl[i].i64;
-
-    // If there's no rethrow slots just 0 fill the buffer.
-    ASSERT(osrEntryData.tryDepth <= callee->rethrowSlots() || !callee->rethrowSlots());
-    for (uint32_t i = 0; i < osrEntryData.tryDepth; ++i)
-        buffer[index++] = callee->rethrowSlots() ? pl[callee->localSizeToAlloc() + i].i64 : 0;
-
-    for (uint32_t i = 0; i < osrEntryData.numberOfStackValues; ++i) {
-        pl -= 1;
-        buffer[index++] = pl->i64;
-    }
 
     auto sharedLoopEntrypoint = bbqCallee->sharedLoopEntrypoint();
     RELEASE_ASSERT(sharedLoopEntrypoint);
@@ -350,6 +390,34 @@ WASM_IPINT_EXTERN_CPP_DECL(epilogue_osr, CallFrame* callFrame)
 }
 #endif
 
+static void copyExceptionStackToPayload(const Wasm::FunctionSignature& tagType, const IPIntStackEntry* stackPointer, FixedVector<uint64_t>& payload)
+{
+    unsigned payloadIndex = payload.size();
+    for (unsigned i = 0; i < tagType.argumentCount(); ++i) {
+        unsigned argIndex = tagType.argumentCount() - i - 1;
+        if (tagType.argumentType(argIndex).isV128()) {
+            payload[--payloadIndex] = stackPointer[i].v128.u64x2[1];
+            payload[--payloadIndex] = stackPointer[i].v128.u64x2[0];
+        } else
+            payload[--payloadIndex] = stackPointer[i].i64;
+    }
+    ASSERT(!payloadIndex);
+}
+
+static void copyExceptionPayloadToStack(const Wasm::FunctionSignature& tagType, const FixedVector<uint64_t>& payload, IPIntStackEntry* stackPointer)
+{
+    unsigned payloadIndex = payload.size();
+    for (unsigned i = 0; i < tagType.argumentCount(); ++i) {
+        unsigned argIndex = tagType.argumentCount() - i - 1;
+        if (tagType.argumentType(argIndex).isV128()) {
+            stackPointer[i].v128.u64x2[1] = payload[--payloadIndex];
+            stackPointer[i].v128.u64x2[0] = payload[--payloadIndex];
+        } else
+            stackPointer[i].i64 = payload[--payloadIndex];
+    }
+    ASSERT(!payloadIndex);
+}
+
 WASM_IPINT_EXTERN_CPP_DECL(retrieve_and_clear_exception, CallFrame* callFrame, IPIntStackEntry* stackPointer, IPIntLocal* pl)
 {
     VM& vm = instance->vm();
@@ -366,12 +434,7 @@ WASM_IPINT_EXTERN_CPP_DECL(retrieve_and_clear_exception, CallFrame* callFrame, I
         // We only have a stack pointer if we're doing a catch not a catch_all
         Exception* exception = throwScope.exception();
         auto* wasmException = jsSecureCast<JSWebAssemblyException*>(exception->value());
-
-        ASSERT(wasmException->payload().size() == wasmException->tag().parameterCount());
-        uint64_t size = wasmException->payload().size();
-
-        for (unsigned i = 0; i < size; ++i)
-            stackPointer[size - 1 - i].i64 = wasmException->payload()[i];
+        copyExceptionPayloadToStack(wasmException->tag().type(), wasmException->payload(), stackPointer);
     }
 
     // We want to clear the exception here rather than in the catch prologue
@@ -420,14 +483,10 @@ WASM_IPINT_EXTERN_CPP_DECL(retrieve_clear_and_push_exception_and_arguments, Call
     Exception* exception = throwScope.exception();
     auto* wasmException = jsSecureCast<JSWebAssemblyException*>(exception->value());
 
-    ASSERT(wasmException->payload().size() == wasmException->tag().parameterCount());
-    uint64_t size = wasmException->payload().size();
+    ASSERT(wasmException->payload().size() == wasmException->tag().parameterBufferSize());
 
     stackPointer[0].ref = JSValue::encode(exception->value());
-
-    // We only have a stack pointer if we're doing a catch_ref not a catch_all_ref
-    for (unsigned i = 0; i < size; ++i)
-        stackPointer[size - i].i64 = wasmException->payload()[i];
+    copyExceptionPayloadToStack(wasmException->tag().type(), wasmException->payload(), stackPointer + 1);
 
     // We want to clear the exception here rather than in the catch prologue
     // JIT code because clearing it also entails clearing a bit in an Atomic
@@ -449,8 +508,7 @@ WASM_IPINT_EXTERN_CPP_DECL(throw_exception, CallFrame* callFrame, IPIntStackEntr
     Ref<const Wasm::Tag> tag = instance->tag(exceptionIndex);
 
     FixedVector<uint64_t> values(tag->parameterBufferSize());
-    for (unsigned i = 0; i < tag->parameterBufferSize(); ++i)
-        values[tag->parameterBufferSize() - 1 - i] = arguments[i].i64;
+    copyExceptionStackToPayload(tag->type(), arguments, values);
 
     ASSERT(tag->type().returnsVoid());
     JSWebAssemblyException* exception = JSWebAssemblyException::create(vm, globalObject->webAssemblyExceptionStructure(), WTFMove(tag), WTFMove(values));
@@ -1138,7 +1196,7 @@ extern "C" UGPRPair SYSV_ABI slow_path_wasm_popcountll(const void* pc, uint64_t 
     WASM_RETURN_TWO(pc, result);
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(check_stack_and_vm_traps, void* candidateNewStackPointer)
+WASM_IPINT_EXTERN_CPP_DECL(check_stack_and_vm_traps, void* candidateNewStackPointer, Wasm::IPIntCallee* callee)
 {
     VM& vm = instance->vm();
     if (vm.traps().handleTrapsIfNeeded()) {
@@ -1148,10 +1206,66 @@ WASM_IPINT_EXTERN_CPP_DECL(check_stack_and_vm_traps, void* candidateNewStackPoin
     }
 
     // Redo stack check because we may really have gotten here due to an imminent StackOverflow.
-    if (vm.softStackLimit() <= candidateNewStackPointer)
+    if (vm.softStackLimit() <= candidateNewStackPointer) {
+        if (Options::enableWasmDebugger()) [[unlikely]] {
+            auto& debugServer = Wasm::DebugServer::singleton();
+            if (debugServer.interruptRequested())
+                debugServer.setInterruptBreakpoint(instance, callee);
+        }
         IPINT_RETURN(encodedJSValue()); // No stack overflow. Carry on.
+    }
 
     IPINT_THROW(Wasm::ExceptionType::StackOverflow);
+}
+
+static UNUSED_FUNCTION void displayWasmDebugState(JSWebAssemblyInstance* instance, Wasm::IPIntCallee* callee, IPIntStackEntry* sp, IPIntLocal* pl)
+{
+    dataLogLn("=== WASM Debug State ===");
+
+    uint32_t numLocals = callee->numLocals();
+    dataLogLn("WASM Locals (", numLocals, " entries):");
+    auto functionIndex = callee->functionIndex();
+    const auto& moduleInfo = instance->module().moduleInformation();
+    const Vector<Wasm::Type>& localTypes = moduleInfo.debugInfo->ensureFunctionDebugInfo(functionIndex).locals;
+    for (uint32_t i = 0; i < numLocals; ++i)
+        logWasmLocalValue(i,  pl[i], localTypes[i]);
+
+    constexpr size_t STACK_ENTRY_SIZE = 16;
+    if (sp && pl && sp <= reinterpret_cast<IPIntStackEntry*>(pl)) {
+        size_t stackDepth = (reinterpret_cast<uint8_t*>(pl) - reinterpret_cast<uint8_t*>(sp)) / STACK_ENTRY_SIZE;
+        dataLogLn("WASM Stack (", stackDepth, " entries - showing all type interpretations):");
+
+        IPIntStackEntry* currentEntry = sp;
+        for (size_t i = 0; i < stackDepth; ++i) {
+            dataLogLn("  Stack[", i, "]: i32=", currentEntry->i32, ", i64=", currentEntry->i64, ", f32=", currentEntry->f32, ", f64=", currentEntry->f64, ", ref=", currentEntry->ref);
+            currentEntry++;
+        }
+    } else
+        dataLogLn("WASM Stack: Invalid stack pointers");
+    dataLogLn("=== End WASM Debug State ===");
+}
+
+
+WASM_IPINT_EXTERN_CPP_DECL(unreachable_breakpoint_handler, CallFrame* callFrame, Register* sp)
+{
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Code][unreachable] Start");
+    bool breakpointHandled = false;
+    if (Options::enableWasmDebugger()) [[unlikely]] {
+        Wasm::DebugServer& debugServer = Wasm::DebugServer::singleton();
+        if (debugServer.needToHandleBreakpoints()) {
+            uint8_t* pc = static_cast<uint8_t*>(sp[2].pointer());
+            uint8_t* mc = static_cast<uint8_t*>(sp[3].pointer());
+            IPIntLocal* pl = static_cast<IPIntLocal*>(sp[0].pointer());
+            Wasm::IPIntCallee* callee = static_cast<Wasm::IPIntCallee*>(sp[1].pointer());
+    
+            IPIntStackEntry* stackPointer = reinterpret_cast<IPIntStackEntry*>(sp + 4);
+            if (Options::verboseWasmDebugger())
+                displayWasmDebugState(instance, callee, stackPointer, pl);
+            breakpointHandled = debugServer.stopCode(callFrame, instance, callee, pc, mc, pl, stackPointer);
+        }
+    }
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Code][unreachable] Done with breakpointHandled=", breakpointHandled);
+    IPINT_RETURN(static_cast<EncodedJSValue>(static_cast<int32_t>(breakpointHandled)));
 }
 
 } } // namespace JSC::IPInt

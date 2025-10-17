@@ -410,8 +410,6 @@ void SVGTextLayoutEngine::layoutTextOnLineOrPath(InlineIterator::SVGTextBoxItera
     
     bool definesTextLength = parentDefinesTextLength(textParent);
 
-    const SVGRenderStyle& svgStyle = style.svgStyle();
-
     m_visualMetricsListOffset = 0;
     m_visualCharacterOffset = 0;
 
@@ -429,7 +427,7 @@ void SVGTextLayoutEngine::layoutTextOnLineOrPath(InlineIterator::SVGTextBoxItera
     bool applySpacingToNextCharacter = false;
 
     float lastAngle = 0;
-    float baselineShift = baselineLayout.calculateBaselineShift(svgStyle);
+    float baselineShift = baselineLayout.calculateBaselineShift(style);
     baselineShift -= baselineLayout.calculateAlignmentBaselineShift(m_isVerticalText, text);
 
     // Main layout algorithm.
@@ -525,7 +523,7 @@ void SVGTextLayoutEngine::layoutTextOnLineOrPath(InlineIterator::SVGTextBoxItera
 
         // Calculate glyph orientation angle.
         const char16_t* currentCharacter = characters.subspan(m_visualCharacterOffset).data();
-        float orientationAngle = baselineLayout.calculateGlyphOrientationAngle(m_isVerticalText, svgStyle, *currentCharacter);
+        float orientationAngle = baselineLayout.calculateGlyphOrientationAngle(m_isVerticalText, style, *currentCharacter);
 
         // Calculate glyph advance & x/y orientation shifts.
         float xOrientationShift = 0;

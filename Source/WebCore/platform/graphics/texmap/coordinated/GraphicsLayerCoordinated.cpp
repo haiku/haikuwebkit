@@ -587,7 +587,7 @@ void GraphicsLayerCoordinated::setBackdropFiltersRect(const FloatRoundedRect& ba
     noteLayerPropertyChanged(Change::BackdropRect, ScheduleFlush::Yes);
 }
 
-bool GraphicsLayerCoordinated::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const GraphicsLayerAnimation* animation, const String& animationName, double timeOffset)
+bool GraphicsLayerCoordinated::addAnimation(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, double timeOffset)
 {
     ASSERT(!animationName.isEmpty());
     ASSERT(animation);
@@ -624,7 +624,7 @@ bool GraphicsLayerCoordinated::addAnimation(const KeyframeValueList& valueList, 
         return false;
     }
 
-    m_animations.add(TextureMapperAnimation(animationName, valueList, boxSize, *animation, MonotonicTime::now() - Seconds(timeOffset), 0_s, TextureMapperAnimation::State::Playing));
+    m_animations.add(TextureMapperAnimation(animationName, valueList, *animation, MonotonicTime::now() - Seconds(timeOffset), 0_s, TextureMapperAnimation::State::Playing));
     noteLayerPropertyChanged(Change::Animations, ScheduleFlush::Yes);
     return true;
 }

@@ -22,6 +22,7 @@
 
 struct WebKit::JSHandleInfo {
     WebCore::JSHandleIdentifier identifier;
+    WebKit::ContentWorldIdentifier worldIdentifier;
     WebKit::FrameInfoData frameInfo;
     Markable<WebCore::FrameIdentifier> windowProxyFrameIdentifier;
 };

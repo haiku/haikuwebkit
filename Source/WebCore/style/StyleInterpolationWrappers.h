@@ -536,85 +536,6 @@ public:
 
 #endif
 
-class FontWeightWrapper final : public Wrapper<FontSelectionValue> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontWeightWrapper, Animation);
-public:
-    FontWeightWrapper()
-        : Wrapper(CSSPropertyFontWeight, &RenderStyle::fontWeight, &RenderStyle::setFontWeight)
-    {
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        (destination.*m_setter)(FontSelectionValue(std::clamp(blendFunc(static_cast<float>(this->value(from)), static_cast<float>(this->value(to)), context), 1.0f, 1000.0f)));
-    }
-};
-
-class FontStyleWrapper final : public Wrapper<std::optional<FontSelectionValue>> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontStyleWrapper, Animation);
-public:
-    FontStyleWrapper()
-        : Wrapper(CSSPropertyFontStyle, &RenderStyle::fontItalic, &RenderStyle::setFontItalic)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return from.fontDescription().fontStyleAxis() == FontStyleAxis::slnt && to.fontDescription().fontStyleAxis() == FontStyleAxis::slnt;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto blendedStyleAxis = FontStyleAxis::slnt;
-        if (context.isDiscrete)
-            blendedStyleAxis = (context.progress < 0.5 ? from : to).fontDescription().fontStyleAxis();
-
-        auto fromFontItalic = from.fontItalic();
-        auto toFontItalic = to.fontItalic();
-        auto blendedFontItalic = context.progress < 0.5 ? fromFontItalic : toFontItalic;
-        if (!context.isDiscrete)
-            blendedFontItalic = blendFunc(fromFontItalic, toFontItalic, context);
-
-        auto description = destination.fontDescription();
-        description.setItalic(blendedFontItalic);
-        description.setFontStyleAxis(blendedStyleAxis);
-        destination.setFontDescription(WTFMove(description));
-    }
-};
-
-class FontSizeAdjustWrapper final : public WrapperWithGetter<FontSizeAdjust> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontSizeAdjustWrapper, Animation);
-public:
-    FontSizeAdjustWrapper()
-        : WrapperWithGetter(CSSPropertyFontSizeAdjust, &RenderStyle::fontSizeAdjust)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        auto fromFontSizeAdjust = from.fontSizeAdjust();
-        auto toFontSizeAdjust = to.fontSizeAdjust();
-        return fromFontSizeAdjust.metric == toFontSizeAdjust.metric
-            && fromFontSizeAdjust.value && toFontSizeAdjust.value;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto blendedFontSizeAdjust = [&]() -> FontSizeAdjust {
-            if (context.isDiscrete)
-                return (!context.progress ? from : to).fontSizeAdjust();
-
-            ASSERT(from.fontSizeAdjust().value && to.fontSizeAdjust().value);
-            auto blendedAdjust = blendFunc(*from.fontSizeAdjust().value, *to.fontSizeAdjust().value, context);
-
-            ASSERT(from.fontSizeAdjust().metric == to.fontSizeAdjust().metric);
-            return { to.fontSizeAdjust().metric, FontSizeAdjust::ValueType::Number, std::max(blendedAdjust, 0.0f) };
-        };
-
-        destination.setFontSizeAdjust(blendedFontSizeAdjust());
-    }
-};
-
 class LineHeightWrapper final : public LengthWrapper {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LineHeightWrapper, Animation);
 public:
@@ -639,28 +560,6 @@ public:
         // The default logic will now apply since <number> and <length-percentage> values
         // are converted to different LengthType values.
         return LengthWrapper::canInterpolate(from, to, compositeOperation);
-    }
-};
-
-class TabSizeWrapper final : public Wrapper<const TabSize&> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(TabSizeWrapper, Animation);
-public:
-    TabSizeWrapper()
-        : Wrapper(CSSPropertyTabSize, &RenderStyle::tabSize, &RenderStyle::setTabSize)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return value(from).isSpaces() == value(to).isSpaces();
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        if (context.isDiscrete)
-            (destination.*m_setter)(context.progress ? value(to) : value(from));
-        else
-            Wrapper::interpolate(destination, from, to, context);
     }
 };
 
@@ -720,41 +619,6 @@ public:
 
     ColorWrapper m_wrapper;
     ColorWrapper m_visitedWrapper;
-};
-
-class AccentColorWrapper final : public StyleTypeWrapper<Color, const Color&, Color&&> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(AccentColorWrapper, Animation);
-public:
-    AccentColorWrapper()
-        : StyleTypeWrapper(CSSPropertyAccentColor, &RenderStyle::accentColor, &RenderStyle::setAccentColor)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return a.hasAutoAccentColor() == b.hasAutoAccentColor()
-            && StyleTypeWrapper::equals(a, b);
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return !from.hasAutoAccentColor() && !to.hasAutoAccentColor();
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        if (canInterpolate(from, to, context.compositeOperation)) {
-            StyleTypeWrapper::interpolate(destination, from, to, context);
-            return;
-        }
-
-        ASSERT(!context.progress || context.progress == 1.0);
-        auto& blendingRenderStyle = context.progress ? to : from;
-        if (blendingRenderStyle.hasAutoAccentColor())
-            destination.setHasAutoAccentColor();
-        else
-            destination.setAccentColor(Color { blendingRenderStyle.accentColor() });
-    }
 };
 
 class CaretColorWrapper final : public VisitedAffectedStyleTypeWrapper<Color> {
@@ -901,57 +765,6 @@ public:
         return value(from) == Visibility::Visible || value(to) == Visibility::Visible;
     }
 };
-
-template<typename T, typename GetterType = T, typename SetterType = T>
-class DiscreteSVGWrapper final : public WrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteSVGWrapper, Animation);
-public:
-    DiscreteSVGWrapper(CSSPropertyID property, GetterType (SVGRenderStyle::*getter)() const, void (SVGRenderStyle::*setter)(SetterType))
-        : WrapperBase(property)
-        , m_getter(getter)
-        , m_setter(setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return this->value(a) == this->value(b);
-    }
-
-    bool canInterpolate(const RenderStyle&, const RenderStyle&, CompositeOperation) const final
-    {
-        return false;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        ASSERT(!context.progress || context.progress == 1.0);
-        (destination.accessSVGStyle().*this->m_setter)(T { this->value(context.progress ? to : from) });
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle&, const RenderStyle&, const RenderStyle&, double) const final
-    {
-    }
-#endif
-
-private:
-    T value(const RenderStyle& style) const
-    {
-        return (style.svgStyle().*this->m_getter)();
-    }
-
-    GetterType (SVGRenderStyle::*m_getter)() const;
-    void (SVGRenderStyle::*m_setter)(SetterType);
-};
-
-// Deduction guide for getter/setters that return and take values.
-template<typename T>
-DiscreteSVGWrapper(CSSPropertyID, T (SVGRenderStyle::*getter)() const, void (SVGRenderStyle::*setter)(T)) -> DiscreteSVGWrapper<T, T, T>;
-
-// Deduction guide for getter/setters that return const references and take r-value references.
-template<typename T>
-DiscreteSVGWrapper(CSSPropertyID, const T& (SVGRenderStyle::*getter)() const, void (SVGRenderStyle::*setter)(T&&)) -> DiscreteSVGWrapper<T, const T&, T&&>;
 
 // MARK: - FillLayer Wrappers
 

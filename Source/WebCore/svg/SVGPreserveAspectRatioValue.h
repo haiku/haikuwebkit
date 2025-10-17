@@ -73,7 +73,7 @@ public:
     AffineTransform getCTM(float logicalX, float logicalY, float logicalWidth, float logicalHeight, float physicalWidth, float physicalHeight) const;
 
     bool parse(StringView);
-    bool parse(StringParsingBuffer<LChar>&, bool validate);
+    bool parse(StringParsingBuffer<Latin1Character>&, bool validate);
     bool parse(StringParsingBuffer<char16_t>&, bool validate);
 
     String valueAsString() const;

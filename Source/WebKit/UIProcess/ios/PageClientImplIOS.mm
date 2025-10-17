@@ -345,9 +345,9 @@ void PageClientImpl::didCommitLoadForMainFrame(const String& mimeType, bool useC
     [webView _hidePasswordView];
     [webView _setHasCustomContentView:useCustomContentProvider loadedMIMEType:mimeType];
     [contentView() _didCommitLoadForMainFrame];
+
 #if ENABLE(TEXT_EXTRACTION_FILTER)
-    if (RefPtr filter = TextExtractionFilter::singletonIfCreated())
-        filter->resetCache();
+    [webView _clearTextExtractionFilterCache];
 #endif
 }
 

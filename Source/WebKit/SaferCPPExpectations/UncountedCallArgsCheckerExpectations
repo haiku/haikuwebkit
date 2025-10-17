@@ -45,7 +45,6 @@ UIProcess/API/Cocoa/_WKUserStyleSheet.mm
 UIProcess/API/Cocoa/_WKWebAuthenticationAssertionResponse.mm
 UIProcess/API/Cocoa/_WKWebAuthenticationPanel.mm
 UIProcess/API/Cocoa/_WKWebsiteDataStoreConfiguration.mm
-UIProcess/Cocoa/VideoPresentationManagerProxy.mm
 WebDriverBidiFrontendDispatchers.cpp
 WebDriverBidiProtocolObjects.h
 WebProcess/Automation/WebAutomationDOMWindowObserver.cpp
@@ -97,11 +96,7 @@ WebProcess/InjectedBundle/InjectedBundleDOMWindowExtension.cpp
 WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 WebProcess/Inspector/WebInspectorUI.cpp
 WebProcess/Inspector/WebInspectorUIExtensionController.cpp
-WebProcess/WebCoreSupport/ShareableBitmapUtilities.cpp
-WebProcess/WebCoreSupport/WebBroadcastChannelRegistry.cpp
-WebProcess/WebCoreSupport/WebCaptionPreferencesDelegate.cpp
 WebProcess/WebCoreSupport/WebChromeClient.cpp
-WebProcess/WebCoreSupport/WebEditorClient.cpp
 WebProcess/WebCoreSupport/mac/WebDragClientMac.mm
 WebProcess/WebPage/Cocoa/TextAnimationController.mm
 WebProcess/WebPage/RemoteLayerTree/PlatformCALayerRemote.mm
@@ -110,14 +105,11 @@ WebProcess/WebPage/RemoteLayerTree/PlatformCALayerRemoteModelHosting.mm
 WebProcess/WebPage/RemoteLayerTree/RemoteLayerTreeContext.mm
 WebProcess/WebPage/RemoteLayerTree/RemoteLayerTreeDrawingArea.mm
 WebProcess/WebPage/RemoteLayerTree/RemoteScrollingCoordinator.mm
-WebProcess/WebPage/ViewGestureGeometryCollector.cpp
 WebProcess/WebPage/mac/TiledCoreAnimationDrawingArea.mm
 WebProcess/WebPage/mac/TiledCoreAnimationScrollingCoordinator.mm
 WebProcess/WebPage/mac/WKAccessibilityWebPageObjectBase.mm
 WebProcess/WebPage/mac/WKAccessibilityWebPageObjectMac.mm
 WebProcess/cocoa/PlaybackSessionManager.mm
-WebProcess/cocoa/RemoteCaptureSampleManager.cpp
 WebProcess/cocoa/TextTrackRepresentationCocoa.mm
-WebProcess/cocoa/UserMediaCaptureManager.cpp
 WebProcess/cocoa/VideoPresentationManager.mm
 WebProcess/cocoa/WebProcessCocoa.mm

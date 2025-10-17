@@ -38,6 +38,7 @@
 #include "Element.h"
 #include "EventTargetInlines.h"
 #include "KeyframeEffectStack.h"
+#include "NodeDocument.h"
 #include "ScriptExecutionContext.h"
 #include "StyleAnimations.h"
 #include "StyleOriginatedAnimation.h"

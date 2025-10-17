@@ -683,51 +683,49 @@ template<CSSValueID Name, typename StyleType> struct Serialize<FunctionNotation<
 //        decltype(auto) operator()(const StyleType&, ...);
 //    };
 
-template<typename> struct Evaluation;
+template<typename, typename> struct Evaluation;
 
-template<typename StyleType, typename Reference> concept HasTwoParameterEvaluate = requires {
-    Evaluation<StyleType> { }(std::declval<const StyleType&>(), std::declval<Reference>());
+template<typename StyleType, typename Result, typename T1> concept HasTwoParameterEvaluate = requires {
+    Evaluation<StyleType, Result> { }(std::declval<const StyleType&>(), std::declval<T1>());
 };
 
-template<typename StyleType, typename Reference, typename Zoom> concept HasThreeParameterEvaluate = requires {
-    Evaluation<StyleType> { }(std::declval<const StyleType&>(), std::declval<Reference>(), std::declval<Zoom>());
+template<typename StyleType, typename Result, typename T1, typename T2> concept HasThreeParameterEvaluate = requires {
+    Evaluation<StyleType, Result> { }(std::declval<const StyleType&>(), std::declval<T1>(), std::declval<T2>());
 };
 
-// `Evaluation` Invokers
-template<typename StyleType> decltype(auto) evaluate(const StyleType& value)
-{
-    return Evaluation<StyleType> { }(value);
-}
+template<typename Result> struct EvaluationInvoker {
+    template<typename StyleType> Result operator()(const StyleType& value) const
+    {
+        return Evaluation<StyleType, Result> { }(value);
+    }
 
-template<typename StyleType, typename Reference> decltype(auto) evaluate(const StyleType& value, Reference&& reference)
-{
-    if constexpr (HasTwoParameterEvaluate<StyleType, Reference>)
-        return Evaluation<StyleType> { }(value, std::forward<Reference>(reference));
-    else
-        return evaluate(value);
-}
+    template<typename StyleType, typename T1> Result operator()(const StyleType& value, T1&& t1) const
+    {
+        if constexpr (HasTwoParameterEvaluate<StyleType, Result, T1>)
+            return Evaluation<StyleType, Result> { }(value, std::forward<T1>(t1));
+    }
 
-template<typename StyleType, typename Reference, typename Zoom> decltype(auto) evaluate(const StyleType& value, Reference&& reference, Zoom&& zoom)
-{
-    if constexpr (HasThreeParameterEvaluate<StyleType, Reference, Zoom>)
-        return Evaluation<StyleType> { }(value, std::forward<Reference>(reference), std::forward<Zoom>(zoom));
-    else
-        return evaluate(value, std::forward<Reference>(reference));
-}
+    template<typename StyleType, typename T1, typename T2> Result operator()(const StyleType& value, T1&& t1, T2&& t2) const
+    {
+        if constexpr (HasThreeParameterEvaluate<StyleType, Result, T1, T2>)
+            return Evaluation<StyleType, Result> { }(value, std::forward<T1>(t1), std::forward<T2>(t2));
+    }
+};
+template<typename Result> inline constexpr EvaluationInvoker<Result> evaluate{};
 
 // Constrained for `TreatAsVariantLike`.
-template<VariantLike StyleType> struct Evaluation<StyleType> {
-    template<typename... Rest> decltype(auto) operator()(const StyleType& value, Rest&&... rest)
+template<VariantLike StyleType, typename Result> struct Evaluation<StyleType, Result> {
+    template<typename... Rest> Result operator()(const StyleType& value, Rest&&... rest)
     {
-        return WTF::switchOn(value, [&](const auto& alternative) { return evaluate(alternative, std::forward<Rest>(rest)...); });
+        return WTF::switchOn(value, [&](const auto& alternative) { return evaluate<Result>(alternative, std::forward<Rest>(rest)...); });
     }
 };
 
 // Specialization for `TupleLike` (wrapper).
-template<TupleLike StyleType> requires (std::tuple_size_v<StyleType> == 1) struct Evaluation<StyleType> {
-    template<typename... Rest> decltype(auto) operator()(const StyleType& value, Rest&&... rest)
+template<TupleLike StyleType, typename Result> requires (std::tuple_size_v<StyleType> == 1) struct Evaluation<StyleType, Result> {
+    template<typename... Rest> Result operator()(const StyleType& value, Rest&&... rest)
     {
-        return evaluate(get<0>(value), std::forward<Rest>(rest)...);
+        return evaluate<Result>(get<0>(value), std::forward<Rest>(rest)...);
     }
 };
 
@@ -1392,6 +1390,49 @@ template<VariantLike T> struct IsZero<T> {
     }
 };
 
+// MARK: - IsKnownZero
+
+// All leaf types that want to conform to IsKnownZero must implement
+// the following:
+//
+//    template<> struct WebCore::Style::IsKnownZero<StyleType> {
+//        bool operator()(const StyleType&);
+//    };
+//
+// or have a member function such that the type matches the
+// `HasIsKnownZero` concept.
+
+template<typename> struct IsKnownZero;
+
+struct IsKnownZeroInvoker {
+    template<typename T> bool operator()(const T& value) const
+    {
+        if constexpr (HasIsKnownZero<T>)
+            return value.isKnownZero();
+        else if constexpr (HasIsZero<T>)
+            return !value.isZero();
+        else
+            return IsKnownZero<T>{}(value);
+    }
+};
+inline constexpr IsKnownZeroInvoker isKnownZero{};
+
+// Constrained for `TreatAsTupleLike`.
+template<TupleLike T> struct IsKnownZero<T> {
+    bool operator()(const T& value)
+    {
+        return WTF::apply([&](const auto& ...x) { return (isKnownZero(x) && ...); }, value);
+    }
+};
+
+// Constrained for `TreatAsVariantLike`.
+template<VariantLike T> struct IsKnownZero<T> {
+    bool operator()(const T& value)
+    {
+        return WTF::switchOn(value, [&](const auto& alternative) { return isKnownZero(alternative); });
+    }
+};
+
 // MARK: - IsEmpty
 
 // All leaf types that want to conform to IsEmpty must implement
@@ -1438,6 +1479,57 @@ template<typename T> struct IsEmpty<MinimallySerializingSpaceSeparatedSize<T>> {
     bool operator()(const auto& value)
     {
         return isZero(value.width()) || isZero(value.height());
+    }
+};
+
+// MARK: - IsKnownEmpty
+
+// All leaf types that want to conform to IsKnownEmpty must implement
+// the following:
+//
+//    template<> struct WebCore::Style::IsKnownEmpty<StyleType> {
+//        bool operator()(const StyleType&);
+//    };
+//
+// or have a member function such that the type matches the
+// `HasIsKnownEmpty` concept.
+
+template<typename> struct IsKnownEmpty;
+
+struct IsKnownEmptyInvoker {
+    template<typename T> bool operator()(const T& value) const
+    {
+        if constexpr (HasIsKnownEmpty<T>)
+            return value.isKnownEmpty();
+        else if constexpr (HasIsEmpty<T>)
+            return value.isEmpty();
+        else
+            return IsKnownEmpty<T>{}(value);
+    }
+};
+inline constexpr IsKnownEmptyInvoker isKnownEmpty{};
+
+// Specialization for `SpaceSeparatedSize`.
+template<typename T> struct IsKnownEmpty<SpaceSeparatedSize<T>> {
+    bool operator()(const auto& value)
+    {
+        return isKnownZero(value.width()) || isKnownZero(value.height());
+    }
+};
+
+// Specialization for `MinimallySerializingSpaceSeparatedPoint`.
+template<typename T> struct IsKnownEmpty<MinimallySerializingSpaceSeparatedPoint<T>> {
+    bool operator()(const auto& value)
+    {
+        return isKnownZero(value.x()) || isKnownZero(value.y());
+    }
+};
+
+// Specialization for `MinimallySerializingSpaceSeparatedSize`.
+template<typename T> struct IsKnownEmpty<MinimallySerializingSpaceSeparatedSize<T>> {
+    bool operator()(const auto& value)
+    {
+        return isKnownZero(value.width()) || isKnownZero(value.height());
     }
 };
 

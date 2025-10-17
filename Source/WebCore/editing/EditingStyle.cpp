@@ -57,8 +57,9 @@
 #include "QualifiedName.h"
 #include "Range.h"
 #include "RenderElement.h"
-#include "RenderStyle.h"
+#include "RenderStyleInlines.h"
 #include "SimpleRange.h"
+#include "StyleAppleColorFilter.h"
 #include "StyleColor.h"
 #include "StyleExtractor.h"
 #include "StyleFontSizeFunctions.h"
@@ -590,9 +591,14 @@ void EditingStyle::init(Node* initialNode, PropertiesToInclude propertiesToInclu
     }
 
     if (node && node->computedStyle()) {
-        CheckedPtr renderStyle = node->computedStyle();
-        removeTextFillAndStrokeColorsIfNeeded(renderStyle.get());
-        if (renderStyle->fontDescription().keywordSize()) {
+        bool shouldSetFontSize = false;
+        {
+            CheckedPtr renderStyle = node->computedStyle();
+            removeTextFillAndStrokeColorsIfNeeded(renderStyle.get());
+            shouldSetFontSize = renderStyle->fontDescription().keywordSize();
+        }
+
+        if (shouldSetFontSize) {
             if (auto cssValue = computedStyleAtPosition.getFontSizeCSSValuePreferringKeyword())
                 mutableStyle->setProperty(CSSPropertyFontSize, cssValue->cssText(CSS::defaultSerializationContext()));
         }

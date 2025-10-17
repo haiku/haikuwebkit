@@ -82,10 +82,12 @@ interaction-region [ Pass ]
 media/media-css-volume-locked.html [ Pass ]
 overlay-region [ Pass ]
 platform/visionos/transforms [ Pass ]
+fast/images/spatial-image-controls.html [ Pass ]
 
 imported/w3c/web-platform-tests/webxr [ Pass ]
 http/wpt/webxr [ Pass ]
 webxr [ Pass ]
+http/tests/iframe-monitor [ Pass ]
 
 ###################################################################################################
 ### START OF Legitimate failures (due to platform behavioral differences)

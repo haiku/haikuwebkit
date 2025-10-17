@@ -85,8 +85,8 @@ public:
 
     WEBCORE_EXPORT Expected<SQLiteStatement, int> prepareStatementSlow(StringView query);
     WEBCORE_EXPORT Expected<SQLiteStatement, int> prepareStatement(ASCIILiteral query);
-    WEBCORE_EXPORT Expected<UniqueRef<SQLiteStatement>, int> prepareHeapStatementSlow(StringView query);
-    WEBCORE_EXPORT Expected<UniqueRef<SQLiteStatement>, int> prepareHeapStatement(ASCIILiteral query);
+    WEBCORE_EXPORT std::unique_ptr<SQLiteStatement> prepareHeapStatementSlow(StringView query);
+    WEBCORE_EXPORT std::unique_ptr<SQLiteStatement> prepareHeapStatement(ASCIILiteral query);
 
     // Aborts the current database operation. This is thread safe.
     WEBCORE_EXPORT void interrupt();

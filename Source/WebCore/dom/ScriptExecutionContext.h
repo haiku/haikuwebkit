@@ -167,6 +167,7 @@ public:
     virtual IDBClient::IDBConnectionProxy* idbConnectionProxy() = 0;
 
     virtual SocketProvider* socketProvider() = 0;
+    RefPtr<SocketProvider> protectedSocketProvider();
 
     virtual GraphicsClient* graphicsClient() { return nullptr; }
 

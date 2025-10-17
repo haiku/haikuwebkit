@@ -1,8 +1,0 @@
-The green box should be a union of two blue boxes in the right, and the purple box should be at the right-bottom of the green box.
-
-
-PASS .target 1
-PASS .target 2
-PASS .target 3
-PASS .target 4
-

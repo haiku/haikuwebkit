@@ -121,14 +121,14 @@ Ref<const LayoutShape> LayoutShape::createShape(const Style::BasicShape& basicSh
             return createEllipseShape(logicalCenter, radii, logicalBoxSize.width());
         },
         [&](const Style::InsetFunction& inset) -> Ref<LayoutShape> {
-            float left = Style::evaluate(inset->insets.left(), boxWidth, 1.0f /* FIXME FIND ZOOM */);
-            float top = Style::evaluate(inset->insets.top(), boxHeight, 1.0f /* FIXME FIND ZOOM */);
+            auto left = Style::evaluate<float>(inset->insets.left(), boxWidth, Style::ZoomNeeded { });
+            auto top = Style::evaluate<float>(inset->insets.top(), boxHeight, Style::ZoomNeeded { });
 
             FloatRect rect {
                 left,
                 top,
-                std::max<float>(boxWidth - left - Style::evaluate(inset->insets.right(), boxWidth, 1.0f /* FIXME FIND ZOOM */), 0),
-                std::max<float>(boxHeight - top - Style::evaluate(inset->insets.bottom(), boxHeight, 1.0f /* FIXME FIND ZOOM */), 0)
+                std::max<float>(boxWidth - left - Style::evaluate<float>(inset->insets.right(), boxWidth, Style::ZoomNeeded { }), 0),
+                std::max<float>(boxHeight - top - Style::evaluate<float>(inset->insets.bottom(), boxHeight, Style::ZoomNeeded { }), 0)
             };
 
             auto logicalRect = physicalRectToLogical(rect, logicalBoxSize.height(), writingMode);
@@ -136,10 +136,10 @@ Ref<const LayoutShape> LayoutShape::createShape(const Style::BasicShape& basicSh
 
             auto boxSize = FloatSize(boxWidth, boxHeight);
             auto isBlockLeftToRight = writingMode.isBlockLeftToRight();
-            auto topLeftRadius = physicalSizeToLogical(Style::evaluate(horizontalWritingMode || isBlockLeftToRight ? inset->radii.topLeft() : inset->radii.topRight(), boxSize, 1.0f /* FIXME FIND ZOOM */), writingMode);
-            auto topRightRadius = physicalSizeToLogical(Style::evaluate(horizontalWritingMode ? inset->radii.topRight() : isBlockLeftToRight ? inset->radii.bottomLeft() : inset->radii.bottomRight(), boxSize, 1.0f /* FIXME FIND ZOOM */), writingMode);
-            auto bottomLeftRadius = physicalSizeToLogical(Style::evaluate(horizontalWritingMode ? inset->radii.bottomLeft() : isBlockLeftToRight ? inset->radii.topRight() : inset->radii.topLeft(), boxSize, 1.0f /* FIXME FIND ZOOM */), writingMode);
-            auto bottomRightRadius = physicalSizeToLogical(Style::evaluate(horizontalWritingMode ? inset->radii.bottomRight() : isBlockLeftToRight ? inset->radii.bottomRight() : inset->radii.bottomLeft(), boxSize, 1.0f /* FIXME FIND ZOOM */), writingMode);
+            auto topLeftRadius = physicalSizeToLogical(Style::evaluate<FloatSize>(horizontalWritingMode || isBlockLeftToRight ? inset->radii.topLeft() : inset->radii.topRight(), boxSize, Style::ZoomNeeded { }), writingMode);
+            auto topRightRadius = physicalSizeToLogical(Style::evaluate<FloatSize>(horizontalWritingMode ? inset->radii.topRight() : isBlockLeftToRight ? inset->radii.bottomLeft() : inset->radii.bottomRight(), boxSize, Style::ZoomNeeded { }), writingMode);
+            auto bottomLeftRadius = physicalSizeToLogical(Style::evaluate<FloatSize>(horizontalWritingMode ? inset->radii.bottomLeft() : isBlockLeftToRight ? inset->radii.topRight() : inset->radii.topLeft(), boxSize, Style::ZoomNeeded { }), writingMode);
+            auto bottomRightRadius = physicalSizeToLogical(Style::evaluate<FloatSize>(horizontalWritingMode ? inset->radii.bottomRight() : isBlockLeftToRight ? inset->radii.bottomRight() : inset->radii.bottomLeft(), boxSize, Style::ZoomNeeded { }), writingMode);
             auto cornerRadii = FloatRoundedRect::Radii(topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius);
             if (shouldFlipStartAndEndPoints(writingMode))
                 cornerRadii = { cornerRadii.topRight(), cornerRadii.topLeft(), cornerRadii.bottomRight(), cornerRadii.bottomLeft() };
@@ -151,7 +151,7 @@ Ref<const LayoutShape> LayoutShape::createShape(const Style::BasicShape& basicSh
             auto boxSize = FloatSize { boxWidth, boxHeight };
 
             auto vertices = polygon->vertices.value.map([&](const auto& vertex) {
-                return physicalPointToLogical(Style::evaluate(vertex, boxSize, 1.0f /* FIXME FIND ZOOM */) + borderBoxOffset, logicalBoxSize.height(), writingMode);
+                return physicalPointToLogical(Style::evaluate<FloatPoint>(vertex, boxSize, Style::ZoomNeeded { }) + borderBoxOffset, logicalBoxSize.height(), writingMode);
             });
 
             return createPolygonShape(WTFMove(vertices), logicalBoxSize.width());

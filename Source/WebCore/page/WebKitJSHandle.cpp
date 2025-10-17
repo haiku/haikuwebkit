@@ -35,7 +35,11 @@
 namespace WebCore {
 
 // FIXME: Make PairHashTraits work with PeekTypes and use a map<identifier, pair> instead of 2 hash lookups.
-using HandleMap = HashMap<JSHandleIdentifier, JSC::Strong<JSC::JSObject>>;
+struct StrongReferenceAndRefCount {
+    JSC::Strong<JSC::JSObject> strongReference;
+    size_t refCount { 0 };
+};
+using HandleMap = HashMap<JSHandleIdentifier, StrongReferenceAndRefCount>;
 static HandleMap& handleMap()
 {
     static MainThreadNeverDestroyed<HandleMap> map;
@@ -49,34 +53,28 @@ static GlobalObjectMap& globalObjectMap()
     return map.get();
 }
 
-using ObjectMap = HashMap<JSC::JSObject*, WeakPtr<WebKitJSHandle>>;
-static ObjectMap& objectMap()
+Ref<WebKitJSHandle> WebKitJSHandle::create(JSC::JSGlobalObject& globalObject, JSC::JSObject* object)
 {
-    static MainThreadNeverDestroyed<ObjectMap> map;
-    return map.get();
-}
-
-Ref<WebKitJSHandle> WebKitJSHandle::getOrCreate(JSC::JSGlobalObject& globalObject, JSC::JSObject* object)
-{
-    if (auto existingHandle = objectMap().get(object))
-        return *existingHandle;
     return adoptRef(*new WebKitJSHandle(globalObject, object));
 }
 
 void WebKitJSHandle::jsHandleDestroyed(JSHandleIdentifier identifier)
 {
-    ASSERT(handleMap().contains(identifier));
-    ASSERT(globalObjectMap().contains(identifier));
-    if (auto strong = handleMap().take(identifier)) {
-        ASSERT(objectMap().contains(strong.get()));
-        objectMap().remove(strong.get());
+    auto it = handleMap().find(identifier);
+    ASSERT(it != handleMap().end());
+    if (it != handleMap().end()) {
+        if (!--it->value.refCount)
+            handleMap().remove(identifier);
+        else
+            return;
     }
+    ASSERT(globalObjectMap().contains(identifier));
     globalObjectMap().remove(identifier);
 }
 
 std::pair<JSC::JSGlobalObject*, JSC::JSObject*> WebKitJSHandle::objectForIdentifier(JSHandleIdentifier identifier)
 {
-    return { globalObjectMap().get(identifier), handleMap().get(identifier).get() };
+    return { globalObjectMap().get(identifier), handleMap().get(identifier).strongReference.get() };
 }
 
 static Markable<FrameIdentifier> windowFrameIdentifier(JSC::JSObject* object)
@@ -89,12 +87,17 @@ static Markable<FrameIdentifier> windowFrameIdentifier(JSC::JSObject* object)
 }
 
 WebKitJSHandle::WebKitJSHandle(JSC::JSGlobalObject& globalObject, JSC::JSObject* object)
-    : m_identifier(JSHandleIdentifier::generate())
+    : m_identifier(JSHandleIdentifier(WebProcessJSHandleIdentifier(reinterpret_cast<uintptr_t>(object)), Process::identifier()))
     , m_windowFrameIdentifier(WebCore::windowFrameIdentifier(object))
 {
-    handleMap().add(m_identifier, JSC::Strong<JSC::JSObject> { globalObject.vm(), object });
+    auto addResult = handleMap().ensure(m_identifier, [&] {
+        return StrongReferenceAndRefCount {
+            JSC::Strong<JSC::JSObject> { globalObject.vm(), object },
+            0 // Immediately incremented.
+        };
+    });
+    addResult.iterator->value.refCount++;
     globalObjectMap().add(m_identifier, &globalObject);
-    objectMap().add(object, *this);
 }
 
 }

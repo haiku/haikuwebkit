@@ -103,7 +103,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , positionAnchor(RenderStyle::initialPositionAnchor())
     , positionArea(RenderStyle::initialPositionArea())
     , positionTryFallbacks(RenderStyle::initialPositionTryFallbacks())
-    , lastSuccessfulPositionTryFallbackIndex()
+    , usedPositionOptionIndex()
     , blockStepSize(RenderStyle::initialBlockStepSize())
     , blockStepAlign(static_cast<unsigned>(RenderStyle::initialBlockStepAlign()))
     , blockStepInsert(static_cast<unsigned>(RenderStyle::initialBlockStepInsert()))
@@ -141,6 +141,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , usesAnchorFunctions(false)
     , anchorFunctionScrollCompensatedAxes(0)
     , isPopoverInvoker(false)
+    , useSVGZoomRulesForLength(false)
 {
 }
 
@@ -209,7 +210,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , positionAnchor(o.positionAnchor)
     , positionArea(o.positionArea)
     , positionTryFallbacks(o.positionTryFallbacks)
-    , lastSuccessfulPositionTryFallbackIndex(o.lastSuccessfulPositionTryFallbackIndex)
+    , usedPositionOptionIndex(o.usedPositionOptionIndex)
     , blockStepSize(o.blockStepSize)
     , blockStepAlign(o.blockStepAlign)
     , blockStepInsert(o.blockStepInsert)
@@ -247,6 +248,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , usesAnchorFunctions(o.usesAnchorFunctions)
     , anchorFunctionScrollCompensatedAxes(o.anchorFunctionScrollCompensatedAxes)
     , isPopoverInvoker(o.isPopoverInvoker)
+    , useSVGZoomRulesForLength(o.useSVGZoomRulesForLength)
 {
 }
 
@@ -320,7 +322,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && positionAnchor == o.positionAnchor
         && positionArea == o.positionArea
         && positionTryFallbacks == o.positionTryFallbacks
-        && lastSuccessfulPositionTryFallbackIndex == o.lastSuccessfulPositionTryFallbackIndex
+        && usedPositionOptionIndex == o.usedPositionOptionIndex
         && blockStepSize == o.blockStepSize
         && blockStepAlign == o.blockStepAlign
         && blockStepInsert == o.blockStepInsert
@@ -359,7 +361,8 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && scrollbarWidth == o.scrollbarWidth
         && usesAnchorFunctions == o.usesAnchorFunctions
         && anchorFunctionScrollCompensatedAxes == o.anchorFunctionScrollCompensatedAxes
-        && isPopoverInvoker == o.isPopoverInvoker;
+        && isPopoverInvoker == o.isPopoverInvoker
+        && useSVGZoomRulesForLength == o.useSVGZoomRulesForLength;
 }
 
 OptionSet<Containment> StyleRareNonInheritedData::usedContain() const
@@ -479,7 +482,7 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT(positionAnchor);
     LOG_IF_DIFFERENT(positionArea);
     LOG_IF_DIFFERENT(positionTryFallbacks);
-    LOG_IF_DIFFERENT(lastSuccessfulPositionTryFallbackIndex);
+    LOG_IF_DIFFERENT(usedPositionOptionIndex);
     LOG_IF_DIFFERENT(positionVisibility);
 
     LOG_IF_DIFFERENT(blockStepSize);
@@ -532,6 +535,7 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT_WITH_CAST(bool, usesAnchorFunctions);
     LOG_IF_DIFFERENT_WITH_CAST(bool, anchorFunctionScrollCompensatedAxes);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isPopoverInvoker);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, useSVGZoomRulesForLength);
 }
 #endif // !LOG_DISABLED
 

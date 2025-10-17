@@ -389,6 +389,9 @@ public:
     Wasm::ExceptionType exception() const { return m_exception; }
     void* faultPC() const { return m_faultPC; }
 
+    void setDebugId(uint32_t id) { m_debugId = id; }
+    uint32_t debugId() const { return m_debugId; }
+
 private:
     JSWebAssemblyInstance(VM&, Structure*, JSWebAssemblyModule*, WebAssemblyModuleRecord*, RefPtr<SourceProvider>&&);
     ~JSWebAssemblyInstance();
@@ -428,6 +431,7 @@ private:
     // The actual callees are owned by builtins. Populated by WebAssemblyModuleRecord::initializeImports().
     CalleeBits m_builtinCalleeBits[WASM_BUILTIN_COUNT];
     Wasm::ExceptionType m_exception { Wasm::ExceptionType::Termination };
+    uint32_t m_debugId { 0 };
 };
 
 } // namespace JSC

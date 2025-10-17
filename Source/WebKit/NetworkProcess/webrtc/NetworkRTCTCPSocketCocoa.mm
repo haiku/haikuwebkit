@@ -49,12 +49,12 @@ namespace WebKit {
 
 using namespace WebCore;
 
-static dispatch_queue_t tcpSocketQueue()
+static dispatch_queue_t tcpSocketQueueSingleton()
 {
     static LazyNeverDestroyed<RetainPtr<dispatch_queue_t>> queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        queue.construct(adoptNS(dispatch_queue_create("WebRTC TCP socket queue", DISPATCH_QUEUE_CONCURRENT)));
+        queue.construct(adoptNS(dispatch_queue_create("WebRTC TCP socket queue", RetainPtr { DISPATCH_QUEUE_CONCURRENT }.get())));
     });
     return queue.get().get();
 }
@@ -114,7 +114,7 @@ NetworkRTCTCPSocketCocoa::NetworkRTCTCPSocketCocoa(LibWebRTCSocketIdentifier ide
     bool isTLS = options & webrtc::PacketSocketFactory::OPT_TLS;
     m_nwConnection = createNWConnection(rtcProvider, hostName.c_str(), String::number(remoteAddress.port()).utf8().data(), isTLS, attributedBundleIdentifier, isFirstParty, isRelayDisabled, domain);
 
-    nw_connection_set_queue(m_nwConnection.get(), tcpSocketQueue());
+    nw_connection_set_queue(m_nwConnection.get(), tcpSocketQueueSingleton());
     nw_connection_set_state_changed_handler(m_nwConnection.get(), makeBlockPtr([weakNWConnection = WeakObjCPtr { m_nwConnection.get() }, identifier = m_identifier, rtcProvider = Ref { rtcProvider }, connection = m_connection.copyRef()](nw_connection_state_t state, _Nullable nw_error_t error) {
         switch (state) {
         case nw_connection_state_invalid:
@@ -235,7 +235,7 @@ auto NetworkRTCTCPSocketCocoa::getInterfaceName(NetworkRTCProvider& rtcProvider,
     NamePromise::AutoRejectProducer promiseProducer;
     Ref promise = promiseProducer.promise();
 
-    nw_connection_set_queue(nwConnection.get(), tcpSocketQueue());
+    nw_connection_set_queue(nwConnection.get(), tcpSocketQueueSingleton());
     nw_connection_set_state_changed_handler(nwConnection.get(), makeBlockPtr([promiseProducer = WTFMove(promiseProducer), nwConnection](nw_connection_state_t state, _Nullable nw_error_t error) mutable {
         auto checkInterface = [&] {
             if (!nwConnection)

@@ -32,6 +32,7 @@
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "Element.h"
+#include "NodeDocument.h"
 #include "RenderStyleInlines.h"
 #include "StyleCustomProperty.h"
 #include "StyleExtractor.h"

@@ -286,37 +286,39 @@ enum class FinalizeRenderingUpdateFlags : uint8_t {
 };
 
 enum class RenderingUpdateStep : uint32_t {
-    Reveal                          = 1 << 0,
-    Resize                          = 1 << 1,
-    Scroll                          = 1 << 2,
-    MediaQueryEvaluation            = 1 << 3,
-    Animations                      = 1 << 4,
-    Fullscreen                      = 1 << 5,
-    AnimationFrameCallbacks         = 1 << 6,
-    UpdateContentRelevancy          = 1 << 7,
-    PerformPendingViewTransitions   = 1 << 8,
-    IntersectionObservations        = 1 << 9,
-    ResizeObservations              = 1 << 10,
-    Images                          = 1 << 11,
-    WheelEventMonitorCallbacks      = 1 << 12,
-    CursorUpdate                    = 1 << 13,
-    EventRegionUpdate               = 1 << 14,
-    LayerFlush                      = 1 << 15,
+    Reveal                              = 1 << 0,
+    Resize                              = 1 << 1,
+    Scroll                              = 1 << 2,
+    MediaQueryEvaluation                = 1 << 3,
+    Animations                          = 1 << 4,
+    Fullscreen                          = 1 << 5,
+    AnimationFrameCallbacks             = 1 << 6,
+    UpdateContentRelevancy              = 1 << 7,
+    PerformPendingViewTransitions       = 1 << 8,
+    IntersectionObservations            = 1 << 9,
+    ResizeObservations                  = 1 << 10,
+    PaintTiming                         = 1 << 11,
+    EventTiming                         = 1 << 12,
+    Images                              = 1 << 13,
+    WheelEventMonitorCallbacks          = 1 << 14,
+    CursorUpdate                        = 1 << 15,
+    EventRegionUpdate                   = 1 << 16,
+    LayerFlush                          = 1 << 17,
 #if ENABLE(ASYNC_SCROLLING)
-    ScrollingTreeUpdate             = 1 << 16,
+    ScrollingTreeUpdate                 = 1 << 18,
 #endif
-    FlushAutofocusCandidates        = 1 << 17,
-    VideoFrameCallbacks             = 1 << 18,
-    PrepareCanvasesForDisplayOrFlush = 1 << 19,
-    CaretAnimation                  = 1 << 20,
-    FocusFixup                      = 1 << 21,
-    UpdateValidationMessagePositions= 1 << 22,
+    FlushAutofocusCandidates            = 1 << 19,
+    VideoFrameCallbacks                 = 1 << 20,
+    PrepareCanvasesForDisplayOrFlush    = 1 << 21,
+    CaretAnimation                      = 1 << 22,
+    FocusFixup                          = 1 << 23,
+    UpdateValidationMessagePositions    = 1 << 25,
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    AccessibilityRegionUpdate       = 1 << 23,
+    AccessibilityRegionUpdate           = 1 << 26,
 #endif
-    RestoreScrollPositionAndViewState = 1 << 24,
-    AdjustVisibility                  = 1 << 25,
-    SnapshottedScrollOffsets          = 1 << 26,
+    RestoreScrollPositionAndViewState   = 1 << 27,
+    AdjustVisibility                    = 1 << 28,
+    SnapshottedScrollOffsets            = 1 << 29,
 
 };
 
@@ -341,6 +343,8 @@ constexpr OptionSet<RenderingUpdateStep> updateRenderingSteps = {
     RenderingUpdateStep::AnimationFrameCallbacks,
     RenderingUpdateStep::IntersectionObservations,
     RenderingUpdateStep::ResizeObservations,
+    RenderingUpdateStep::PaintTiming,
+    RenderingUpdateStep::EventTiming,
     RenderingUpdateStep::Images,
     RenderingUpdateStep::WheelEventMonitorCallbacks,
     RenderingUpdateStep::CursorUpdate,
@@ -717,7 +721,7 @@ public:
     WEBCORE_EXPORT void appearanceDidChange();
 
     void clearAXObjectCache();
-    AXObjectCache* existingAXObjectCache() { return m_axObjectCache.get(); }
+    AXObjectCache* existingAXObjectCache();
     WEBCORE_EXPORT AXObjectCache* axObjectCache();
 
     // Page and FrameView both store a Pagination value. Page::pagination() is set only by API,
@@ -1576,7 +1580,6 @@ private:
 #if ENABLE(ACCESSIBILITY_NON_BLINKING_CURSOR)
     bool m_prefersNonBlinkingCursor { false };
 #endif
-    std::unique_ptr<AXObjectCache> m_axObjectCache;
 
     TimerThrottlingState m_timerThrottlingState { TimerThrottlingState::Disabled };
     MonotonicTime m_timerThrottlingStateLastChangedTime;

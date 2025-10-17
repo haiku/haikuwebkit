@@ -29,10 +29,10 @@
 
 #include "IPCEvent.h"
 #include "ImageBufferSet.h"
+#include "ImageBufferSetIdentifier.h"
 #include "PrepareBackingStoreBuffersData.h"
 #include "RemoteGraphicsContextIdentifier.h"
 #include "RemoteImageBufferSetConfiguration.h"
-#include "RemoteImageBufferSetIdentifier.h"
 #include "RenderingUpdateID.h"
 #include "ScopedActiveMessageReceiveQueue.h"
 #include "StreamConnectionWorkQueue.h"
@@ -50,7 +50,7 @@ class RemoteRenderingBackend;
 
 class RemoteImageBufferSet : public IPC::StreamMessageReceiver, public ImageBufferSet {
 public:
-    static Ref<RemoteImageBufferSet> create(RemoteImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
+    static Ref<RemoteImageBufferSet> create(ImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
     ~RemoteImageBufferSet();
     void stopListeningForIPC();
 
@@ -66,7 +66,8 @@ public:
     bool makeBuffersVolatile(OptionSet<BufferInSetType> requestedBuffers, OptionSet<BufferInSetType>& volatileBuffers, bool forcePurge);
 
 private:
-    RemoteImageBufferSet(RemoteImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
+    RemoteImageBufferSet(ImageBufferSetIdentifier, RemoteGraphicsContextIdentifier, RemoteRenderingBackend&);
+
     void startListeningForIPC();
     IPC::StreamConnectionWorkQueue& workQueue() const;
 
@@ -87,11 +88,11 @@ private:
         return pixelFormatIsOpaque(m_configuration.bufferFormat.pixelFormat);
     }
 
-    const RemoteImageBufferSetIdentifier m_identifier;
     const RemoteGraphicsContextIdentifier m_contextIdentifier;
     const Ref<RemoteRenderingBackend> m_renderingBackend;
     RemoteImageBufferSetConfiguration m_configuration;
     IPC::ScopedActiveMessageReceiveQueue<RemoteImageBufferGraphicsContext> m_context;
+
     std::optional<WebCore::IntRect> m_previouslyPaintedRect;
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
     WebCore::DynamicContentScalingResourceCache m_dynamicContentScalingResourceCache;

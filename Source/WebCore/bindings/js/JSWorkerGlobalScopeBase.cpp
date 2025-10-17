@@ -136,7 +136,7 @@ bool JSWorkerGlobalScopeBase::shouldInterruptScriptBeforeTimeout(const JSGlobalO
 RuntimeFlags JSWorkerGlobalScopeBase::javaScriptRuntimeFlags(const JSGlobalObject* object)
 {
     const JSWorkerGlobalScopeBase *thisObject = jsCast<const JSWorkerGlobalScopeBase*>(object);
-    return thisObject->m_wrapped->thread().runtimeFlags();
+    return thisObject->m_wrapped->thread()->runtimeFlags();
 }
 
 JSC::ScriptExecutionStatus JSWorkerGlobalScopeBase::scriptExecutionStatus(JSC::JSGlobalObject* globalObject, JSC::JSObject* owner)

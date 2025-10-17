@@ -702,7 +702,7 @@
                   {
                     "name": "WPE-Linux-64-bit-Release-Cairo-Build", "factory": "BuildFactory",
                     "platform": "wpe", "configuration": "release", "architectures": ["x86_64"],
-                    "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF"],
+                    "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF", "--cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE"],
                     "workernames": ["wpe-linux-bot-35"]
                   },
                   {

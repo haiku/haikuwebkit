@@ -29,10 +29,9 @@
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
 #include "IntSize.h"
-#include "LengthFunctions.h"
 #include "MotionPath.h"
 #include "Path.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayerModelObject.h"
 #include "RenderStyleInlines.h"
 #include "StyleLengthWrapper+Platform.h"
@@ -46,42 +45,27 @@ namespace WebCore {
 
 AcceleratedEffectValues AcceleratedEffectValues::clone() const
 {
-    std::optional<TransformOperationData> clonedTransformOperationData;
-    if (transformOperationData)
-        clonedTransformOperationData = transformOperationData;
-
+    auto clonedOpacity = opacity;
+    auto clonedTransformOperationData = transformOperationData;
     auto clonedTransformOrigin = transformOrigin;
+    auto clonedTransformBox = transformBox;
     auto clonedTransform = transform.clone();
-
-    RefPtr<TransformOperation> clonedTranslate;
-    if (RefPtr srcTranslate = translate)
-        clonedTranslate = srcTranslate->clone();
-
-    RefPtr<TransformOperation> clonedScale;
-    if (RefPtr srcScale = scale)
-        clonedScale = srcScale->clone();
-
-    RefPtr<TransformOperation> clonedRotate;
-    if (RefPtr srcRotate = rotate)
-        clonedRotate = srcRotate->clone();
-
-    RefPtr<PathOperation> clonedOffsetPath;
-    if (RefPtr srcOffsetPath = offsetPath)
-        clonedOffsetPath = srcOffsetPath->clone();
-
+    RefPtr clonedTranslate = translate ? RefPtr { translate->clone() } : nullptr;
+    RefPtr clonedScale = scale ? RefPtr { scale->clone() } : nullptr;
+    RefPtr clonedRotate = rotate ? RefPtr { rotate->clone() } : nullptr;
+    RefPtr clonedOffsetPath = offsetPath ? RefPtr { offsetPath->clone() } : nullptr;
     auto clonedOffsetDistance = offsetDistance;
     auto clonedOffsetPosition = offsetPosition;
     auto clonedOffsetAnchor = offsetAnchor;
     auto clonedOffsetRotate = offsetRotate;
-
     auto clonedFilter = filter.clone();
     auto clonedBackdropFilter = backdropFilter.clone();
 
     return {
-        opacity,
+        WTFMove(clonedOpacity),
         WTFMove(clonedTransformOperationData),
         WTFMove(clonedTransformOrigin),
-        transformBox,
+        WTFMove(clonedTransformBox),
         WTFMove(clonedTransform),
         WTFMove(clonedTranslate),
         WTFMove(clonedScale),
@@ -96,50 +80,57 @@ AcceleratedEffectValues AcceleratedEffectValues::clone() const
     };
 }
 
-static LengthPoint resolveCalculateValuesFor(const LengthPoint& lengthPoint, IntSize borderBoxSize)
+static constexpr AcceleratedEffectTransformBox toAcceleratedEffectTransformBox(TransformBox transformBox)
 {
-    if (!lengthPoint.x.isCalculated() && !lengthPoint.y.isCalculated())
-        return lengthPoint;
-    return {
-        { floatValueForLength(lengthPoint.x, borderBoxSize.width(), 1.0f /* FIXME FIND ZOOM */), LengthType::Fixed },
-        { floatValueForLength(lengthPoint.y, borderBoxSize.height(), 1.0f /* FIXME FIND ZOOM */), LengthType::Fixed }
-    };
+    switch (transformBox) {
+    case TransformBox::StrokeBox:   return AcceleratedEffectTransformBox::StrokeBox;
+    case TransformBox::ContentBox:  return AcceleratedEffectTransformBox::ContentBox;
+    case TransformBox::BorderBox:   return AcceleratedEffectTransformBox::BorderBox;
+    case TransformBox::FillBox:     return AcceleratedEffectTransformBox::FillBox;
+    case TransformBox::ViewBox:     return AcceleratedEffectTransformBox::ViewBox;
+    }
+    RELEASE_ASSERT_NOT_REACHED();
 }
 
-template<typename T> static RefPtr<TransformOperation> resolveCalculateValuesForTransformOperation(const T& operation, const IntSize& borderBoxSize)
+static constexpr TransformBox toTransformBox(AcceleratedEffectTransformBox transformBox)
 {
-    if (!operation)
-        return nullptr;
-    return operation->selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
+    switch (transformBox) {
+    case AcceleratedEffectTransformBox::StrokeBox:   return TransformBox::StrokeBox;
+    case AcceleratedEffectTransformBox::ContentBox:  return TransformBox::ContentBox;
+    case AcceleratedEffectTransformBox::BorderBox:   return TransformBox::BorderBox;
+    case AcceleratedEffectTransformBox::FillBox:     return TransformBox::FillBox;
+    case AcceleratedEffectTransformBox::ViewBox:     return TransformBox::ViewBox;
+    }
+    RELEASE_ASSERT_NOT_REACHED();
 }
 
 AcceleratedEffectValues::AcceleratedEffectValues(const RenderStyle& style, const IntRect& borderBoxRect, const RenderLayerModelObject* renderer)
 {
-    opacity = style.opacity().value.value;
-
     auto borderBoxSize = borderBoxRect.size();
 
     if (renderer)
         transformOperationData = TransformOperationData(renderer->transformReferenceBoxRect(style), renderer);
 
-    transformBox = style.transformBox();
-    transform = style.transform().resolvedCalculatedValues(borderBoxSize);
-    translate = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.translate()), borderBoxSize);
-    scale = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.scale()), borderBoxSize);
-    rotate = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.rotate()), borderBoxSize);
-    transformOrigin = resolveCalculateValuesFor(Style::toPlatform(style.transformOrigin().xy()), borderBoxSize);
-    offsetPath = Style::toPlatform(style.offsetPath());
-    offsetPosition = resolveCalculateValuesFor(Style::toPlatform(style.offsetPosition()), borderBoxSize);
-    offsetAnchor = resolveCalculateValuesFor(Style::toPlatform(style.offsetAnchor()), borderBoxSize);
-    offsetRotate = style.offsetRotate();
-    offsetDistance = Style::toPlatform(style.offsetDistance());
-    if (offsetDistance.isCalculated() && offsetPath) {
-        auto anchor = borderBoxRect.location() + floatPointForLengthPoint(transformOrigin, borderBoxSize, 1.0f /* FIXME FIND ZOOM */);
-        if (!offsetAnchor.x.isAuto())
-            anchor = floatPointForLengthPoint(offsetAnchor, borderBoxRect.size(), 1.0f /* FIXME FIND ZOOM */) + borderBoxRect.location();
+    // FIXME: RenderStyle::applyCSSTransform uses `transformOperationData.boundingBox` for all the reference boxes, but this uses a mixture of `transformOperationData.boundingBox` and the passed in `borderBoxSize`. Instead, probably `TransformOperationData` should be passed in directly and `borderBoxRect` removed.
 
-        auto path = offsetPath->getPath(TransformOperationData(FloatRect(borderBoxRect)));
-        offsetDistance = { path ? path->length() : 0.0f, LengthType:: Fixed };
+    opacity = Style::evaluate<AcceleratedEffectOpacity>(style.opacity());
+    transformBox = toAcceleratedEffectTransformBox(style.transformBox());
+    transform = Style::toPlatform(style.transform(), borderBoxSize);
+    translate = Style::toPlatform(style.translate(), borderBoxSize);
+    scale = Style::toPlatform(style.scale(), borderBoxSize);
+    rotate = Style::toPlatform(style.rotate(), borderBoxSize);
+
+    if (!style.offsetPath().isNone() && transformOperationData) {
+        if (auto path = Style::tryPath(style.offsetPath(), *transformOperationData)) {
+            transformOrigin = { .value = style.computeTransformOrigin(transformOperationData->boundingBox).xy() };
+            offsetPath = Style::toPlatform(style.offsetPath());
+            offsetDistance = Style::evaluate<AcceleratedEffectOffsetDistance>(style.offsetDistance(), path->length(), Style::ZoomNeeded { });
+            offsetRotate = Style::evaluate<AcceleratedEffectOffsetRotate>(style.offsetRotate());
+            offsetAnchor = Style::evaluate<AcceleratedEffectOffsetAnchor>(style.offsetAnchor(), transformOperationData->boundingBox.size(), Style::ZoomNeeded { });
+
+            // FIXME: Its not clear if this is the right bounding box for this. MotionPath::motionPathDataForRenderer() uses MotionPathData::containingBlockBoundingRect and its not apparent that they are necessarily the same rect.
+            offsetPosition = Style::evaluate<AcceleratedEffectOffsetPosition>(style.offsetPosition(), transformOperationData->boundingBox.size(), Style::ZoomNeeded { });
+        }
     }
 
     filter = Style::toPlatform(style.filter());
@@ -158,24 +149,39 @@ TransformationMatrix AcceleratedEffectValues::computedTransformationMatrix(const
 
     // 3. Translate by the computed X, Y, and Z values of translate.
     if (translate)
-        translate->apply(matrix, boundingBox.size());
+        translate->apply(matrix);
 
     // 4. Rotate by the computed <angle> about the specified axis of rotate.
     if (rotate)
-        rotate->apply(matrix, boundingBox.size());
+        rotate->apply(matrix);
 
     // 5. Scale by the computed X, Y, and Z values of scale.
     if (scale)
-        scale->apply(matrix, boundingBox.size());
+        scale->apply(matrix);
 
     // 6. Translate and rotate by the transform specified by offset.
     if (transformOperationData && offsetPath) {
-        auto computedTransformOrigin = boundingBox.location() + floatPointForLengthPoint(transformOrigin, boundingBox.size(), 1.0f /* FIXME FIND ZOOM */);
-        MotionPath::applyMotionPathTransform(matrix, *transformOperationData, computedTransformOrigin, Style::OffsetPath { *offsetPath }, Style::OffsetAnchor { offsetAnchor }, Style::OffsetDistance { offsetDistance }, offsetRotate, transformBox);
+        if (auto path = Style::tryPath(Style::OffsetPath { *offsetPath }, *transformOperationData)) {
+            // FIXME: This transform of `transformOrigin` is not present in the overload of MotionPath::applyMotionPathTransform() that takes a `RenderStyle`.
+            auto computedTransformOrigin = boundingBox.location() + transformOrigin.value;
+
+            // FIXME: It is a layering violation to use `MotionPath::applyMotionPathTransform` here, as it is defined in the rendering directory.
+            MotionPath::applyMotionPathTransform(
+                matrix,
+                *transformOperationData,
+                computedTransformOrigin,
+                toTransformBox(transformBox),
+                *path,
+                offsetAnchor.value,
+                offsetDistance.value,
+                offsetRotate.angle,
+                offsetRotate.hasAuto
+            );
+        }
     }
 
     // 7. Multiply by each of the transform functions in transform from left to right.
-    transform.apply(matrix, boundingBox.size());
+    transform.apply(matrix);
 
     // 8. Translate by the negated computed X, Y and Z values of transform-origin.
     // (not needed, the GraphicsLayer handles that)

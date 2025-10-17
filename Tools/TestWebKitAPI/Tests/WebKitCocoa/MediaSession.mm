@@ -64,10 +64,10 @@ SOFT_LINK(MediaRemote, MRNowPlayingClientGetProcessIdentifier, pid_t, (MRNowPlay
 #define MRNowPlayingClientGetProcessIdentifier softLinkMRNowPlayingClientGetProcessIdentifier
 
 SOFT_LINK_CONSTANT(MediaRemote, kMRMediaRemoteOptionSkipInterval, CFStringRef)
-#define kMRMediaRemoteOptionSkipInterval getkMRMediaRemoteOptionSkipInterval()
+#define kMRMediaRemoteOptionSkipInterval getkMRMediaRemoteOptionSkipIntervalSingleton()
 
 SOFT_LINK_CONSTANT(MediaRemote, kMRMediaRemoteOptionPlaybackPosition, CFStringRef)
-#define kMRMediaRemoteOptionPlaybackPosition getkMRMediaRemoteOptionPlaybackPosition()
+#define kMRMediaRemoteOptionPlaybackPosition getkMRMediaRemoteOptionPlaybackPositionSingleton()
 
 #if !USE(APPLE_INTERNAL_SDK)
 @interface MRCommandInfo : NSObject

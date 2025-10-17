@@ -43,7 +43,7 @@ public:
 
     void notifyDone();
     void forceImmediateCompletion();
-    void dump(bool forceRepaint);
+    void dump();
 
     void resetAfterTest();
 

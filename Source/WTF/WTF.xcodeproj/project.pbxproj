@@ -645,7 +645,7 @@
 		DDF307D027C086DF006A526F /* TextBreakIteratorCF.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CCDB1491E566626006C73C0 /* TextBreakIteratorCF.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDF307D127C086DF006A526F /* StringConcatenateNumbers.h in Headers */ = {isa = PBXBuildFile; fileRef = 7CD4C26F1E2C82B900929470 /* StringConcatenateNumbers.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDF307D227C086DF006A526F /* UTextProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C181C8A1D307AB800F5FA16 /* UTextProvider.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		DDF307D327C086DF006A526F /* LChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 93AC91A718942FC400244939 /* LChar.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		DDF307D327C086DF006A526F /* Latin1Character.h in Headers */ = {isa = PBXBuildFile; fileRef = 93AC91A718942FC400244939 /* Latin1Character.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDF307D427C086DF006A526F /* TextBreakIteratorICU.h in Headers */ = {isa = PBXBuildFile; fileRef = 1CCDB14D1E566898006C73C0 /* TextBreakIteratorICU.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDF307D527C086DF006A526F /* LineEnding.h in Headers */ = {isa = PBXBuildFile; fileRef = C2BCFC541F621F3F00C9222C /* LineEnding.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDF307D627C086DF006A526F /* NullTextBreakIterator.h in Headers */ = {isa = PBXBuildFile; fileRef = DD4901ED27B474D900D7E50D /* NullTextBreakIterator.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -916,6 +916,15 @@
 		E3BE09A724A5854D009DF2B4 /* ICUHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3BE09A624A58545009DF2B4 /* ICUHelpers.cpp */; };
 		E3BFBA792E05EE9F00A38E4F /* MachSendRightAnnotated.h in Headers */ = {isa = PBXBuildFile; fileRef = E3BFBA782E05EE9F00A38E4F /* MachSendRightAnnotated.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E3DA37E7287AD1A10066808F /* StringCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3DA37E6287AD1A10066808F /* StringCommon.cpp */; };
+		E3EE4E902E8A34BC00398282 /* formattednumber.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E882E8A34BC00398282 /* formattednumber.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E912E8A34BC00398282 /* displayoptions.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E872E8A34BC00398282 /* displayoptions.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E922E8A34BC00398282 /* udisplayoptions.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8A2E8A34BC00398282 /* udisplayoptions.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E932E8A34BC00398282 /* usimplenumberformatter.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8F2E8A34BC00398282 /* usimplenumberformatter.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E942E8A34BC00398282 /* simplenumberformatter.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E892E8A34BC00398282 /* simplenumberformatter.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E952E8A34BC00398282 /* uformattednumber.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8B2E8A34BC00398282 /* uformattednumber.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E962E8A34BC00398282 /* ulocale.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8C2E8A34BC00398282 /* ulocale.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E972E8A34BC00398282 /* unumberoptions.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8E2E8A34BC00398282 /* unumberoptions.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3EE4E982E8A34BC00398282 /* ulocbuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = E3EE4E8D2E8A34BC00398282 /* ulocbuilder.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E4A0AD391A96245500536DF6 /* WorkQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4A0AD371A96245500536DF6 /* WorkQueue.cpp */; };
 		E4A0AD3D1A96253C00536DF6 /* WorkQueueCocoa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4A0AD3C1A96253C00536DF6 /* WorkQueueCocoa.cpp */; };
 		EB2C86D9267B275D0052CB9A /* CPUTimePOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB2C86D8267B275C0052CB9A /* CPUTimePOSIX.cpp */; };
@@ -1449,7 +1458,7 @@
 		93853DD228755A6600FF4E2B /* EscapedFormsForJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EscapedFormsForJSON.h; sourceTree = "<group>"; };
 		93934BD218A1E8C300D0D6A1 /* StringViewCocoa.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = StringViewCocoa.mm; sourceTree = "<group>"; };
 		93934BD418A1F16900D0D6A1 /* StringViewCF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringViewCF.cpp; sourceTree = "<group>"; };
-		93AC91A718942FC400244939 /* LChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LChar.h; sourceTree = "<group>"; };
+		93AC91A718942FC400244939 /* Latin1Character.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Latin1Character.h; sourceTree = "<group>"; };
 		93B07ED626B86BB500A09B34 /* SuspendableWorkQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SuspendableWorkQueue.h; sourceTree = "<group>"; };
 		93B07ED726B8715B00A09B34 /* SuspendableWorkQueue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SuspendableWorkQueue.cpp; sourceTree = "<group>"; };
 		93B5B44D2213D616004B7AA7 /* HexNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HexNumber.cpp; sourceTree = "<group>"; };
@@ -1982,6 +1991,15 @@
 		E3E158251EADA53C004A079D /* SystemFree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemFree.h; sourceTree = "<group>"; };
 		E3E64F0B22813428001E55B4 /* Nonmovable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Nonmovable.h; sourceTree = "<group>"; };
 		E3E8162F2764799300BAA45B /* RefCountedFixedVector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RefCountedFixedVector.h; sourceTree = "<group>"; };
+		E3EE4E872E8A34BC00398282 /* displayoptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = displayoptions.h; sourceTree = "<group>"; };
+		E3EE4E882E8A34BC00398282 /* formattednumber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = formattednumber.h; sourceTree = "<group>"; };
+		E3EE4E892E8A34BC00398282 /* simplenumberformatter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = simplenumberformatter.h; sourceTree = "<group>"; };
+		E3EE4E8A2E8A34BC00398282 /* udisplayoptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = udisplayoptions.h; sourceTree = "<group>"; };
+		E3EE4E8B2E8A34BC00398282 /* uformattednumber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = uformattednumber.h; sourceTree = "<group>"; };
+		E3EE4E8C2E8A34BC00398282 /* ulocale.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ulocale.h; sourceTree = "<group>"; };
+		E3EE4E8D2E8A34BC00398282 /* ulocbuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ulocbuilder.h; sourceTree = "<group>"; };
+		E3EE4E8E2E8A34BC00398282 /* unumberoptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unumberoptions.h; sourceTree = "<group>"; };
+		E3EE4E8F2E8A34BC00398282 /* usimplenumberformatter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usimplenumberformatter.h; sourceTree = "<group>"; };
 		E3FD6D6627A1F6AD00935000 /* GenericHashKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GenericHashKey.h; sourceTree = "<group>"; };
 		E419F2E623AB9E2300B26129 /* VectorHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorHash.h; sourceTree = "<group>"; };
 		E4A0AD371A96245500536DF6 /* WorkQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WorkQueue.cpp; sourceTree = "<group>"; };
@@ -2851,7 +2869,7 @@
 				50DE35F4215BB01500B979C7 /* ExternalStringImpl.h */,
 				461229712ACF6B3100BB1CCC /* FastCharacterComparison.h */,
 				26147B0815DDCCDC00DDB907 /* IntegerToStringConversion.h */,
-				93AC91A718942FC400244939 /* LChar.h */,
+				93AC91A718942FC400244939 /* Latin1Character.h */,
 				C2BCFC531F621F3F00C9222C /* LineEnding.cpp */,
 				C2BCFC541F621F3F00C9222C /* LineEnding.h */,
 				BC5267662C2726D600E422DD /* MakeString.h */,
@@ -2989,6 +3007,7 @@
 				DDD8BB2B27B347C500C109E0 /* dbbi.h */,
 				DDD8BB1327B347C500C109E0 /* dcfmtsym.h */,
 				DDD8BB1527B347C500C109E0 /* decimfmt.h */,
+				E3EE4E872E8A34BC00398282 /* displayoptions.h */,
 				DDD8BAFB27B347C500C109E0 /* docmain.h */,
 				DDD8BACD27B347C400C109E0 /* dtfmtsym.h */,
 				DDD8BAD727B347C400C109E0 /* dtintrv.h */,
@@ -3003,6 +3022,7 @@
 				DDD8BB3027B347C500C109E0 /* filteredbrk.h */,
 				DDD8BAD027B347C400C109E0 /* fmtable.h */,
 				DDD8BB6427B347C500C109E0 /* format.h */,
+				E3EE4E882E8A34BC00398282 /* formattednumber.h */,
 				DDD8BB6F27B347C500C109E0 /* formattedvalue.h */,
 				DDD8BADF27B347C400C109E0 /* fpositer.h */,
 				DDD8BB1227B347C500C109E0 /* gender.h */,
@@ -3048,6 +3068,7 @@
 				DDD8BB6A27B347C500C109E0 /* search.h */,
 				DDD8BB4E27B347C500C109E0 /* selfmt.h */,
 				DDD8BB5127B347C500C109E0 /* simpleformatter.h */,
+				E3EE4E892E8A34BC00398282 /* simplenumberformatter.h */,
 				DDD8BAF427B347C500C109E0 /* simpletz.h */,
 				DDD8BB4527B347C500C109E0 /* smpdtfmt.h */,
 				DDD8BAFA27B347C500C109E0 /* sortkey.h */,
@@ -3095,9 +3116,11 @@
 				DDD8BB5527B347C500C109E0 /* udateintervalformat.h */,
 				DDD8BB1727B347C500C109E0 /* udatpg.h */,
 				DDD8BB3927B347C500C109E0 /* udisplaycontext.h */,
+				E3EE4E8A2E8A34BC00398282 /* udisplayoptions.h */,
 				DDD8BAE827B347C500C109E0 /* uenum.h */,
 				DDD8BAC827B347C400C109E0 /* ufieldpositer.h */,
 				DDD8BB4F27B347C500C109E0 /* uformattable.h */,
+				E3EE4E8B2E8A34BC00398282 /* uformattednumber.h */,
 				DDD8BB3327B347C500C109E0 /* uformattedvalue.h */,
 				DDD8BB4D27B347C500C109E0 /* ugender.h */,
 				DDD8BB2F27B347C500C109E0 /* uidna.h */,
@@ -3105,6 +3128,8 @@
 				DDD8BAF627B347C500C109E0 /* uldnames.h */,
 				DDD8BB7A27B347C500C109E0 /* ulistformatter.h */,
 				DDD8BB0327B347C500C109E0 /* uloc.h */,
+				E3EE4E8C2E8A34BC00398282 /* ulocale.h */,
+				E3EE4E8D2E8A34BC00398282 /* ulocbuilder.h */,
 				DDD8BB2627B347C500C109E0 /* ulocdata.h */,
 				DDD8BB3B27B347C500C109E0 /* umachine.h */,
 				DDD8BB0127B347C500C109E0 /* umisc.h */,
@@ -3120,6 +3145,7 @@
 				DDD8BB2827B347C500C109E0 /* unorm2.h */,
 				DDD8BB3827B347C500C109E0 /* unum.h */,
 				DDD8BAF727B347C500C109E0 /* unumberformatter.h */,
+				E3EE4E8E2E8A34BC00398282 /* unumberoptions.h */,
 				E320BFE32A7CB712003C0B3A /* unumberrangeformatter.h */,
 				DDD8BB6B27B347C500C109E0 /* unumsys.h */,
 				DDD8BB1927B347C500C109E0 /* uobject.h */,
@@ -3135,6 +3161,7 @@
 				DDD8BAEE27B347C500C109E0 /* uset.h */,
 				DDD8BAD427B347C400C109E0 /* usetiter.h */,
 				DDD8BB4B27B347C500C109E0 /* ushape.h */,
+				E3EE4E8F2E8A34BC00398282 /* usimplenumberformatter.h */,
 				DDD8BB5E27B347C500C109E0 /* uspoof.h */,
 				DDD8BB1D27B347C500C109E0 /* usprep.h */,
 				DDD8BAC327B347C400C109E0 /* ustdio.h */,
@@ -3581,9 +3608,9 @@
 				DD3DC86F27A4BF8E007E5B61 /* JSValueMalloc.h in Headers */,
 				DD3DC99727A4BF8E007E5B61 /* KeyValuePair.h in Headers */,
 				DD3DC8BF27A4BF8E007E5B61 /* Language.h in Headers */,
+				DDF307D327C086DF006A526F /* Latin1Character.h in Headers */,
 				E32AB5012B5CE35D00B9FAAE /* LazyRef.h in Headers */,
 				E32AB5022B5CE35D00B9FAAE /* LazyUniqueRef.h in Headers */,
-				DDF307D327C086DF006A526F /* LChar.h in Headers */,
 				DD3DC88927A4BF8E007E5B61 /* LEBDecoder.h in Headers */,
 				6311592628989A55006A9A12 /* LibraryPathDiagnostics.h in Headers */,
 				DD3DC8B427A4BF8E007E5B61 /* LikelyDenseUnsignedIntegerSet.h in Headers */,
@@ -3960,6 +3987,7 @@
 				DDF3086527C44F08006A526F /* dbbi.h in Headers */,
 				DDF3083B27C44F08006A526F /* dcfmtsym.h in Headers */,
 				DDF308BB27C44F08006A526F /* decimfmt.h in Headers */,
+				E3EE4E912E8A34BC00398282 /* displayoptions.h in Headers */,
 				DDF3083227C44F08006A526F /* docmain.h in Headers */,
 				DDF308A127C44F08006A526F /* dtfmtsym.h in Headers */,
 				DDF308B327C44F08006A526F /* dtintrv.h in Headers */,
@@ -3974,6 +4002,7 @@
 				DDF3082327C44F08006A526F /* filteredbrk.h in Headers */,
 				DDF3089827C44F08006A526F /* fmtable.h in Headers */,
 				DDF3088B27C44F08006A526F /* format.h in Headers */,
+				E3EE4E902E8A34BC00398282 /* formattednumber.h in Headers */,
 				DDF3089527C44F08006A526F /* formattedvalue.h in Headers */,
 				DDF3088627C44F08006A526F /* fpositer.h in Headers */,
 				DDF3087C27C44F08006A526F /* gender.h in Headers */,
@@ -4019,6 +4048,7 @@
 				DDF308AC27C44F08006A526F /* search.h in Headers */,
 				DDF3085B27C44F08006A526F /* selfmt.h in Headers */,
 				DDF3086227C44F08006A526F /* simpleformatter.h in Headers */,
+				E3EE4E942E8A34BC00398282 /* simplenumberformatter.h in Headers */,
 				DDF3084A27C44F08006A526F /* simpletz.h in Headers */,
 				DDF3085F27C44F08006A526F /* smpdtfmt.h in Headers */,
 				DDF3085827C44F08006A526F /* sortkey.h in Headers */,
@@ -4066,9 +4096,11 @@
 				DDF308CA27C44F08006A526F /* udateintervalformat.h in Headers */,
 				DDF3082427C44F08006A526F /* udatpg.h in Headers */,
 				DDF3088027C44F08006A526F /* udisplaycontext.h in Headers */,
+				E3EE4E922E8A34BC00398282 /* udisplayoptions.h in Headers */,
 				DDF3089E27C44F08006A526F /* uenum.h in Headers */,
 				DDF3087827C44F08006A526F /* ufieldpositer.h in Headers */,
 				DDF308C627C44F08006A526F /* uformattable.h in Headers */,
+				E3EE4E952E8A34BC00398282 /* uformattednumber.h in Headers */,
 				DDF3086A27C44F08006A526F /* uformattedvalue.h in Headers */,
 				DDF308AD27C44F08006A526F /* ugender.h in Headers */,
 				DDF308CF27C44F08006A526F /* uidna.h in Headers */,
@@ -4076,6 +4108,8 @@
 				DDF3084D27C44F08006A526F /* uldnames.h in Headers */,
 				DDF3087B27C44F08006A526F /* ulistformatter.h in Headers */,
 				DDF3083927C44F08006A526F /* uloc.h in Headers */,
+				E3EE4E962E8A34BC00398282 /* ulocale.h in Headers */,
+				E3EE4E982E8A34BC00398282 /* ulocbuilder.h in Headers */,
 				DDF3086327C44F08006A526F /* ulocdata.h in Headers */,
 				DDF308C827C44F08006A526F /* umachine.h in Headers */,
 				DDF3082F27C44F08006A526F /* umisc.h in Headers */,
@@ -4091,6 +4125,7 @@
 				DDF3087D27C44F08006A526F /* unorm2.h in Headers */,
 				DDF308B127C44F08006A526F /* unum.h in Headers */,
 				DDF308A027C44F08006A526F /* unumberformatter.h in Headers */,
+				E3EE4E972E8A34BC00398282 /* unumberoptions.h in Headers */,
 				E320BFE52A7CB712003C0B3A /* unumberrangeformatter.h in Headers */,
 				DDF3083F27C44F08006A526F /* unumsys.h in Headers */,
 				DDF308AF27C44F08006A526F /* uobject.h in Headers */,
@@ -4106,6 +4141,7 @@
 				DDF308DC27C44F08006A526F /* uset.h in Headers */,
 				DDF308B627C44F08006A526F /* usetiter.h in Headers */,
 				DDF3085027C44F08006A526F /* ushape.h in Headers */,
+				E3EE4E932E8A34BC00398282 /* usimplenumberformatter.h in Headers */,
 				DDF3082D27C44F08006A526F /* uspoof.h in Headers */,
 				DDF308D527C44F08006A526F /* usprep.h in Headers */,
 				DDF308B727C44F08006A526F /* ustdio.h in Headers */,
@@ -4296,7 +4332,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ ${GENERATE_WTF_MODULEMAP} != YES ] && [ ${DEPLOYMENT_LOCATION} != YES ]; then\nrm -f \"${SCRIPT_OUTPUT_FILE_0}\"\nelif [ ${GENERATE_WTF_MODULEMAP} != YES ]; then\nrm -f \"${SCRIPT_OUTPUT_FILE_1}\"\nelif [ ${DEPLOYMENT_LOCATION} != YES ]; then\n\"${SCRIPT_INPUT_FILE_0}\" \"${SCRIPT_INPUT_FILE_1}\" --config \"${SCRIPT_INPUT_FILE_2}\" --relative-to \"${BUILT_PRODUCTS_DIR}${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_0}\"\nelse\n\"${SCRIPT_INPUT_FILE_0}\" ${DSTROOT}/${PRIVATE_HEADERS_FOLDER_PATH}/WTF.json --config \"${SCRIPT_INPUT_FILE_2}\" --relative-to \"<SDKROOT>/${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_1}\"\nfi\n";
+			shellScript = "if [ \"${GENERATE_WTF_MODULEMAP}\" != YES ] && [ \"${DEPLOYMENT_LOCATION}\" != YES ]; then\nrm -f \"${SCRIPT_OUTPUT_FILE_0}\"\nelif [ \"${GENERATE_WTF_MODULEMAP}\" != YES ]; then\nrm -f \"${SCRIPT_OUTPUT_FILE_1}\"\nelif [ \"${DEPLOYMENT_LOCATION}\" != YES ]; then\n\"${SCRIPT_INPUT_FILE_0}\" \"${SCRIPT_INPUT_FILE_1}\" --config \"${SCRIPT_INPUT_FILE_2}\" --relative-to \"${BUILT_PRODUCTS_DIR}${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_0}\"\nelse\n\"${SCRIPT_INPUT_FILE_0}\" ${DSTROOT}/${PRIVATE_HEADERS_FOLDER_PATH}/WTF.json --config \"${SCRIPT_INPUT_FILE_2}\" --relative-to \"<SDKROOT>/${PRIVATE_HEADERS_FOLDER_PATH}\" > \"${SCRIPT_OUTPUT_FILE_1}\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

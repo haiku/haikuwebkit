@@ -42,7 +42,7 @@ Ref<FilterOperation> createFilterOperation(const CSS::Blur& filter, const Builde
 {
     float stdDeviation = 0;
     if (auto parameter = filter.value)
-        stdDeviation = toStyle(*parameter, state).value;
+        stdDeviation = toStyle(*parameter, state).resolveZoom(Style::ZoomNeeded { });
     else
         stdDeviation = filterFunctionDefaultValue<CSS::BlurFunction::name>().value;
 

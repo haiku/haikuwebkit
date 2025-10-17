@@ -40,7 +40,6 @@
 #include "SVGFilterElement.h"
 #include "SVGMarkerElement.h"
 #include "SVGMaskElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGResourceElementClient.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -148,34 +147,33 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
         }
     }
 
-    const auto& svgStyle = style.svgStyle();
-    if (svgStyle.hasMarkers()) {
-        if (auto markerStartResource = svgStyle.markerStart(); !markerStartResource.isNone()) {
+    if (style.hasMarkers()) {
+        if (auto markerStartResource = style.markerStart(); !markerStartResource.isNone()) {
             auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(markerStartResource, document);
             if (!resourceID.isEmpty())
                 referencedResources.append({ resourceID, { SVGNames::markerTag } });
         }
 
-        if (auto markerMidResource = svgStyle.markerMid(); !markerMidResource.isNone()) {
+        if (auto markerMidResource = style.markerMid(); !markerMidResource.isNone()) {
             auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(markerMidResource, document);
             if (!resourceID.isEmpty())
                 referencedResources.append({ resourceID, { SVGNames::markerTag } });
         }
 
-        if (auto markerEndResource = svgStyle.markerEnd(); !markerEndResource.isNone()) {
+        if (auto markerEndResource = style.markerEnd(); !markerEndResource.isNone()) {
             auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(markerEndResource, document);
             if (!resourceID.isEmpty())
                 referencedResources.append({ resourceID, { SVGNames::markerTag } });
         }
     }
 
-    if (auto fillURL = svgStyle.fill().tryAnyURL()) {
+    if (auto fillURL = style.fill().tryAnyURL()) {
         auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(*fillURL, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });
     }
 
-    if (auto strokeURL = svgStyle.stroke().tryAnyURL()) {
+    if (auto strokeURL = style.stroke().tryAnyURL()) {
         auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(*strokeURL, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });

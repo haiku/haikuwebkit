@@ -45,6 +45,9 @@ private:
     void addToWindow() override;
     void removeFromWindow() override;
 
+    WKSize size() override;
+    void resize(WKSize) override;
+
     void focus() override;
 
     PlatformImage snapshot() override;

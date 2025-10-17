@@ -72,7 +72,7 @@ public:
     void endTransparencyLayer() final;
     void drawFilteredImageBuffer(ImageBuffer*, const FloatRect&, Filter&, FilterResults&) final;
     void drawImageBuffer(ImageBuffer&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
-    void drawNativeImageInternal(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
+    void drawNativeImage(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
     void drawSystemImage(SystemImage&, const FloatRect&) final;
     void drawRect(const FloatRect&, float) final;
     void drawLine(const FloatPoint& point1, const FloatPoint& point2) final;

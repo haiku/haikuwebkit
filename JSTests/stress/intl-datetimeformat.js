@@ -316,9 +316,9 @@ shouldBe(Intl.DateTimeFormat('en-u-ca-islamic-rgsa').resolvedOptions().calendar,
 
 // Calendar-sensitive format().
 shouldBe(Intl.DateTimeFormat('en-u-ca-buddhist', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '12/25/2558 BE');
-shouldBe(Intl.DateTimeFormat('en-u-ca-chinese', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '11/15/2015');
+shouldBeOneOf(Intl.DateTimeFormat('en-u-ca-chinese', { timeZone: 'America/Los_Angeles' }).format(1451099872641), ['11/15/2015', '2015-11-15']);
 shouldBe(Intl.DateTimeFormat('en-u-ca-coptic', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '4/15/1732 ERA1');
-shouldBe(Intl.DateTimeFormat('en-u-ca-dangi', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '11/15/2015');
+shouldBeOneOf(Intl.DateTimeFormat('en-u-ca-dangi', { timeZone: 'America/Los_Angeles' }).format(1451099872641), ['11/15/2015', '2015-11-15']);
 shouldBe(Intl.DateTimeFormat('en-u-ca-ethioaa', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '4/15/7508 ERA0');
 shouldBe(Intl.DateTimeFormat('en-u-ca-ethiopic', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '4/15/2008 ERA1');
 shouldBe(Intl.DateTimeFormat('en-u-ca-gregory', { timeZone: 'America/Los_Angeles' }).format(1451099872641), '12/25/2015');

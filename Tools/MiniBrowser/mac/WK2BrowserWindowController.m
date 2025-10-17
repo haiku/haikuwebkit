@@ -554,6 +554,7 @@ static BOOL areEssentiallyEqual(double a, double b)
     preferences._serviceControlsEnabled = settings.dataDetectorsEnabled;
     preferences._telephoneNumberDetectionIsEnabled = settings.dataDetectorsEnabled;
 
+    _webView.configuration.defaultWebpagePreferences._enhancedSecurityEnabled = settings.enhancedSecurityEnabled;
     _webView.configuration.websiteDataStore._resourceLoadStatisticsEnabled = settings.resourceLoadStatisticsEnabled;
 
     [self setWebViewFillsWindow:settings.webViewFillsWindow];

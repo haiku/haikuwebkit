@@ -28,13 +28,13 @@
 #include "LegacyRenderSVGResource.h"
 #include "MutableStyleProperties.h"
 #include "RenderSVGPath.h"
+#include "RenderStyleInlines.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGMPathElement.h"
 #include "SVGNames.h"
 #include "SVGPathUtilities.h"
 #include "SVGPoint.h"
-#include "SVGRenderStyle.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 

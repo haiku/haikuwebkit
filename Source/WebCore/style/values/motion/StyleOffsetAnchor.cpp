@@ -35,6 +35,17 @@
 namespace WebCore {
 namespace Style {
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+auto OffsetAnchor::convert(const AcceleratedEffectOffsetAnchor& value) -> Variant<CSS::Keyword::Auto, Position>
+{
+    if (!value.value)
+        return CSS::Keyword::Auto { };
+    return Position { *value.value };
+}
+
+#endif
+
 // MARK: - Conversion
 
 auto CSSValueConversion<OffsetAnchor>::operator()(BuilderState& state, const CSSValue& value) -> OffsetAnchor
@@ -72,19 +83,23 @@ auto Blending<OffsetAnchor>::blend(const OffsetAnchor& a, const OffsetAnchor& b,
     return OffsetAnchor { Style::blend(*a.tryPosition(), *b.tryPosition(), context) };
 }
 
-// MARK: - Platform
+// MARK: - Evaluation
 
-auto ToPlatform<OffsetAnchor>::operator()(const OffsetAnchor& value) -> WebCore::LengthPoint
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+auto Evaluation<OffsetAnchor, AcceleratedEffectOffsetAnchor>::operator()(const OffsetAnchor& value, FloatSize referenceBox, ZoomNeeded token) -> AcceleratedEffectOffsetAnchor
 {
     return WTF::switchOn(value,
-        [](const CSS::Keyword::Auto&) {
-            return WebCore::LengthPoint { WebCore::LengthType::Auto, WebCore::LengthType::Auto };
+        [&](const Position& position) -> AcceleratedEffectOffsetAnchor {
+            return { .value = evaluate<FloatPoint>(position, referenceBox, token) };
         },
-        [](const Position& position) {
-            return toPlatform(position);
+        [](const CSS::Keyword::Auto&) -> AcceleratedEffectOffsetAnchor {
+            return { .value = std::nullopt };
         }
     );
 }
+
+#endif
 
 } // namespace Style
 } // namespace WebCore

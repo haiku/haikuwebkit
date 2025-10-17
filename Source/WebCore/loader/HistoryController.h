@@ -70,7 +70,7 @@ public:
     void invalidateCurrentItemCachedPage();
 
     void updateForBackForwardNavigation();
-    void updateForReload();
+    void updateForReloadOrReplace();
     void updateForStandardLoad(HistoryUpdateType updateType = UpdateAll);
     void updateForRedirectWithLockedBackForwardList();
     void updateForClientRedirect();
@@ -118,7 +118,7 @@ private:
     enum class ForNavigationAPI : bool { No, Yes };
     void recursiveSetProvisionalItem(HistoryItem&, HistoryItem*, ForNavigationAPI = ForNavigationAPI::No);
     void recursiveGoToItem(HistoryItem&, HistoryItem*, FrameLoadType, ShouldTreatAsContinuingLoad);
-    bool isReplaceLoadTypeWithProvisionalItem(FrameLoadType);
+    bool isMultipartReplaceLoadTypeWithProvisionalItem(FrameLoadType);
     bool isReloadTypeWithProvisionalItem(FrameLoadType);
     void recursiveUpdateForCommit();
     void recursiveUpdateForSameDocumentNavigation();

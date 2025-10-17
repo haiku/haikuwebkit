@@ -24,14 +24,13 @@ namespace WebCore {
 
 static_assert(cssPropertyIDEnumValueCount <= (std::numeric_limits<uint16_t>::max() + 1), "CSSPropertyID should fit into uint16_t.");
 
-const std::array<CSSPropertyID, 106> computedPropertyIDs {
+const std::array<CSSPropertyID, 105> computedPropertyIDs {
     CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary,
     CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary,
     CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter,
     CSSPropertyID::CSSPropertyTestAnimationWrapper,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
-    CSSPropertyID::CSSPropertyTestAutoFunctions,
     CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas,
     CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed,
     CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt,
@@ -145,7 +144,6 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-animation-wrapper"_s,
     "test-animation-wrapper-acceleration-always"_s,
     "test-animation-wrapper-acceleration-threaded-only"_s,
-    "test-auto-functions"_s,
     "test-bounded-repetition-with-commas"_s,
     "test-bounded-repetition-with-commas-fixed"_s,
     "test-bounded-repetition-with-commas-no-single-item-opt"_s,
@@ -273,7 +271,6 @@ font, CSSPropertyID::CSSPropertyFont
 test-animation-wrapper, CSSPropertyID::CSSPropertyTestAnimationWrapper
 test-animation-wrapper-acceleration-always, CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways
 test-animation-wrapper-acceleration-threaded-only, CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly
-test-auto-functions, CSSPropertyID::CSSPropertyTestAutoFunctions
 test-bounded-repetition-with-commas, CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas
 test-bounded-repetition-with-commas-fixed, CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed
 test-bounded-repetition-with-commas-no-single-item-opt, CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt
@@ -410,7 +407,7 @@ const AtomString& nameString(CSSPropertyID id)
 
 String nameForIDL(CSSPropertyID id)
 {
-    LChar characters[maxCSSPropertyNameLength];
+    Latin1Character characters[maxCSSPropertyNameLength];
     const char* nameForCSS = nameLiteral(id);
     if (!nameForCSS)
         return emptyString();
@@ -426,7 +423,7 @@ String nameForIDL(CSSPropertyID id)
         }
         *nextCharacter++ = character;
     }
-    return std::span<const LChar> { characters, nextCharacter };
+    return std::span<const Latin1Character> { characters, nextCharacter };
 }
 
 
@@ -513,7 +510,6 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestAnimationWrapper
     false, // CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways
     false, // CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly
-    false, // CSSPropertyID::CSSPropertyTestAutoFunctions
     false, // CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas
     false, // CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed
     false, // CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt
@@ -676,7 +672,6 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasSingleItemOpt:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesNoSingleItemOpt:

@@ -71,11 +71,6 @@ Ref<PointerEvent> PointerEvent::create(const AtomString& type, const PlatformTou
     return adoptRef(*new PointerEvent(type, event, coalescedEvents, predictedEvents, typeCanBubble(type), typeIsCancelable(type), index, isPrimary, WTFMove(view), touchDelta));
 }
 
-// According to the PointerEvents spec all active pointer ids have to be unique.
-// Libinput on Linux assigns the ids of the touchpoints starting at 0, but
-// the ids 0 and 1 are used for the pointer ids of mouse and pen/stylus.
-const unsigned touchMinimumPointerId = WebCore::mousePointerID + 1;
-
 PointerEvent::PointerEvent(const AtomString& type, const PlatformTouchEvent& event, const Vector<Ref<PointerEvent>>& coalescedEvents, const Vector<Ref<PointerEvent>>& predictedEvents, CanBubble canBubble, IsCancelable isCancelable, unsigned index, bool isPrimary, Ref<WindowProxy>&& view, const DoublePoint& touchDelta)
     : MouseEvent(EventInterfaceType::PointerEvent, type, canBubble, isCancelable, typeIsComposed(type), event.timestamp(), WTFMove(view), 0, event.touchPoints().at(index).pos(), event.touchPoints().at(index).pos(), touchDelta.x(), touchDelta.y(), event.modifiers(), buttonForType(type), buttonsForType(type), nullptr, 0, SyntheticClickType::NoTap, { }, { }, IsSimulated::No, IsTrusted::Yes)
     , m_pointerId(event.touchPoints().at(index).id())

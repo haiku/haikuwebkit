@@ -40,6 +40,7 @@
 #include <wtf/NeverDestroyed.h>
 #include <wtf/ObjectIdentifier.h>
 #include <wtf/RunLoop.h>
+#include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/Scope.h>
 #include <wtf/SystemTracing.h>
 #include <wtf/WTFProcess.h>
@@ -48,6 +49,7 @@
 
 #if PLATFORM(COCOA)
 #include "MachMessage.h"
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #if USE(UNIX_DOMAIN_SOCKETS)
@@ -557,10 +559,29 @@ auto Connection::createSyncMessageEncoder(MessageName messageName, uint64_t dest
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
 
-void* Connection::generateSignpostIdentifier()
+static bool ipcSignpostsEnabled = false;
+
+void Connection::forceEnableSignposts()
+{
+    ipcSignpostsEnabled = true;
+}
+
+bool Connection::signpostsEnabled()
+{
+    static bool hasReadPreferences = false;
+    if (!hasReadPreferences) [[unlikely]] {
+        if (!isInAuxiliaryProcess() && CFPreferencesGetAppBooleanValue(CFSTR("WebKitDebugIPCSignposts"), kCFPreferencesCurrentApplication, nullptr))
+            ipcSignpostsEnabled = true;
+        hasReadPreferences = true;
+    }
+
+    return ipcSignpostsEnabled;
+}
+
+static uintptr_t generateSignpostIdentifier()
 {
     static std::atomic<uintptr_t> identifier;
-    return reinterpret_cast<void*>(++identifier);
+    return ++identifier;
 }
 
 #endif
@@ -568,17 +589,13 @@ void* Connection::generateSignpostIdentifier()
 Error Connection::sendMessage(UniqueRef<Encoder>&& encoder, OptionSet<SendOption> sendOptions, std::optional<Thread::QOS> qos)
 {
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    auto signpostIdentifier = generateSignpostIdentifier();
-    WTFBeginSignpost(signpostIdentifier, IPCConnection, "sendMessage: %" PUBLIC_LOG_STRING, description(encoder->messageName()).characters());
+    // Signposts can turn in to log message IPCs when emitted from WebContent. Don't emit a signpost
+    // for log messages to avoid an infinite number of signposts.
+    if (signpostsEnabled() && receiverName(encoder->messageName()) != IPC::ReceiverName::LogStream) [[unlikely]]
+        WTFEmitSignpost(generateSignpostIdentifier(), IPCConnection, "sendMessage: %" PUBLIC_LOG_STRING, description(encoder->messageName()).characters());
 #endif
 
-    auto error = sendMessageImpl(WTFMove(encoder), sendOptions, qos);
-
-#if ENABLE(CORE_IPC_SIGNPOSTS)
-    WTFEndSignpost(signpostIdentifier, IPCConnection);
-#endif
-
-    return error;
+    return sendMessageImpl(WTFMove(encoder), sendOptions, qos);
 }
 
 Error Connection::sendMessageImpl(UniqueRef<Encoder>&& encoder, OptionSet<SendOption> sendOptions, std::optional<Thread::QOS> qos)
@@ -686,13 +703,15 @@ Error Connection::sendMessageWithAsyncReply(UniqueRef<Encoder>&& encoder, AsyncR
     encoder.get() << replyID;
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    auto signpostIdentifier = generateSignpostIdentifier();
-    replyHandler.completionHandler = CompletionHandler<void(Decoder*)>([signpostIdentifier, handler = WTFMove(replyHandler.completionHandler)](Decoder *decoder) mutable {
-        WTFEndSignpost(signpostIdentifier, IPCConnection);
-        handler(decoder);
-    });
+    if (signpostsEnabled()) [[unlikely]] {
+        auto signpostIdentifier = generateSignpostIdentifier();
+        WTFBeginSignpost(signpostIdentifier, IPCConnection, "sendMessageWithAsyncReply: %" PUBLIC_LOG_STRING, description(encoder->messageName()).characters());
 
-    WTFBeginSignpost(signpostIdentifier, IPCConnection, "sendMessageWithAsyncReply: %" PUBLIC_LOG_STRING, description(encoder->messageName()).characters());
+        replyHandler.completionHandler = CompletionHandler<void(Connection*, Decoder*)>([signpostIdentifier, handler = WTFMove(replyHandler.completionHandler)](Connection* connection, Decoder *decoder) mutable {
+            WTFEndSignpost(signpostIdentifier, IPCConnection);
+            handler(connection, decoder);
+        });
+    }
 #endif
 
     addAsyncReplyHandler(WTFMove(replyHandler));
@@ -744,10 +763,15 @@ auto Connection::waitForMessage(MessageName messageName, uint64_t destinationID,
         return makeUnexpected(Error::InvalidConnection);
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    auto signpostIdentifier = generateSignpostIdentifier();
-    WTFBeginSignpost(signpostIdentifier, IPCConnection, "waitForMessage: %" PUBLIC_LOG_STRING, description(messageName).characters());
-    auto endSignpost = makeScopeExit([&] {
-        WTFEndSignpost(signpostIdentifier, IPCConnection);
+    uintptr_t signpostIdentifier = 0;
+    if (signpostsEnabled()) [[unlikely]] {
+        signpostIdentifier = generateSignpostIdentifier();
+        WTFBeginSignpost(signpostIdentifier, IPCConnection, "waitForMessage: %" PUBLIC_LOG_STRING, description(messageName).characters());
+    }
+
+    auto endSignpost = makeScopeExit([signpostIdentifier] {
+        if (signpostIdentifier) [[unlikely]]
+            WTFEndSignpost(signpostIdentifier, IPCConnection);
     });
 #endif
 
@@ -889,8 +913,11 @@ auto Connection::sendSyncMessage(SyncRequestID syncRequestID, UniqueRef<Encoder>
     auto messageName = encoder->messageName();
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    auto signpostIdentifier = generateSignpostIdentifier();
-    WTFBeginSignpost(signpostIdentifier, IPCConnection, "sendSyncMessage: %" PUBLIC_LOG_STRING, description(messageName).characters());
+    uintptr_t signpostIdentifier = 0;
+    if (signpostsEnabled()) [[unlikely]] {
+        signpostIdentifier = generateSignpostIdentifier();
+        WTFBeginSignpost(signpostIdentifier, IPCConnection, "sendSyncMessage: %" PUBLIC_LOG_STRING, description(messageName).characters());
+    }
 #endif
 
     // Since sync IPC is blocking the current thread, make sure we use the same priority for the IPC sending thread
@@ -903,7 +930,8 @@ auto Connection::sendSyncMessage(SyncRequestID syncRequestID, UniqueRef<Encoder>
     auto replyOrError = waitForSyncReply(syncRequestID, messageName, timeout, sendSyncOptions);
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    WTFEndSignpost(signpostIdentifier, IPCConnection);
+    if (signpostIdentifier) [[unlikely]]
+        WTFEndSignpost(signpostIdentifier, IPCConnection);
 #endif
 
     popPendingSyncRequestID(syncRequestID);

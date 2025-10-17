@@ -66,3 +66,10 @@ selectors = [
     { name = "_enumerateAllDeclaredTypesUsingBlock:", class = "UTType" },
     { name = "_parentTypes", class = "UTType" },
 ]
+
+[[temporary-usage]]
+request = "rdar://161241270"
+cleanup = "rdar://161241477"
+symbols = [
+    "CTFontDescriptorCreateMatchingFontDescriptorsWithOptions",
+]

@@ -39,6 +39,7 @@
 #import "WebExtensionPermission.h"
 #import "WebExtensionUtilities.h"
 #import <CoreFoundation/CFBundle.h>
+#import <WebCore/DataURLDecoder.h>
 #import <WebCore/LocalizedStrings.h>
 #import <wtf/FileSystem.h>
 #import <wtf/cf/TypeCastsCF.h>
@@ -221,18 +222,8 @@ Expected<Ref<API::Data>, RefPtr<API::Error>> WebExtension::resourceDataForPath(c
     auto *cocoaPath = path.createNSString().get();
 
     if ([cocoaPath hasPrefix:@"data:"]) {
-        if (auto base64Range = [cocoaPath rangeOfString:@";base64,"]; base64Range.location != NSNotFound) {
-            auto *base64String = [cocoaPath substringFromIndex:NSMaxRange(base64Range)];
-            auto *data = [[NSData alloc] initWithBase64EncodedString:base64String options:0];
-            return API::Data::createWithoutCopying(data);
-        }
-
-        if (auto commaRange = [cocoaPath rangeOfString:@","]; commaRange.location != NSNotFound) {
-            auto *urlEncodedString = [cocoaPath substringFromIndex:NSMaxRange(commaRange)];
-            auto *decodedString = [urlEncodedString stringByRemovingPercentEncoding];
-            auto *data = [decodedString dataUsingEncoding:NSUTF8StringEncoding];
-            return API::Data::createWithoutCopying(data);
-        }
+        if (auto decodedURL = WebCore::DataURLDecoder::decode(URL { path }))
+            return API::Data::create(decodedURL.value().data);
 
         ASSERT([cocoaPath isEqualToString:@"data:"]);
         return API::Data::create(std::span<const uint8_t> { });

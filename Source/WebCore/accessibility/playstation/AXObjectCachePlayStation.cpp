@@ -33,6 +33,7 @@
 #include "DocumentInlines.h"
 #include "HTMLSelectElement.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Page.h"
 
 namespace WebCore {

@@ -68,16 +68,6 @@ inline WebCoreOpaqueRoot Node::opaqueRoot() const
     return traverseToOpaqueRoot();
 }
 
-inline Document& Node::document() const
-{
-    return treeScope().documentScope();
-}
-
-inline Ref<Document> Node::protectedDocument() const
-{
-    return document();
-}
-
 inline Ref<TreeScope> Node::protectedTreeScope() const
 {
     return treeScope();

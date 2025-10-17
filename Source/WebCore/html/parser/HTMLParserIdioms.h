@@ -111,7 +111,7 @@ inline bool isHTMLLineBreak(char16_t character)
 ALWAYS_INLINE bool containsHTMLLineBreak(StringView view)
 {
     if (view.is8Bit())
-        return charactersContain<LChar, '\r', '\n'>(view.span8());
+        return charactersContain<Latin1Character, '\r', '\n'>(view.span8());
     return charactersContain<char16_t, '\r', '\n'>(view.span16());
 }
 

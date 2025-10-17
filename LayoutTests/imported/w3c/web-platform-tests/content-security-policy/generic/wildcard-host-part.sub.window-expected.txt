@@ -1,5 +1,5 @@
 
 PASS Host wildcard doesn't affect scheme matching.
-FAIL Host wildcard allows arbitrary hosts (www1). assert_unreached: Image from www2 host should have loaded. Reached unreachable code
-FAIL Host wildcard allows arbitrary hosts (www2). assert_unreached: Image from www2 host should have loaded. Reached unreachable code
+PASS Host wildcard allows arbitrary hosts (www1).
+PASS Host wildcard allows arbitrary hosts (www2).
 

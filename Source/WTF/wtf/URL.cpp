@@ -197,7 +197,7 @@ String URL::protocolHostAndPort() const
     );
 }
 
-static std::optional<LChar> decodeEscapeSequence(StringView input, unsigned index, unsigned length)
+static std::optional<Latin1Character> decodeEscapeSequence(StringView input, unsigned index, unsigned length)
 {
     if (index + 3 > length || input[index] != '%')
         return std::nullopt;
@@ -217,7 +217,7 @@ static String decodeEscapeSequencesFromParsedURL(StringView input)
         return input.toString();
 
     // FIXME: This 100 is arbitrary. Should make a histogram of how this function is actually used to choose a better value.
-    Vector<LChar, 100> percentDecoded;
+    Vector<Latin1Character, 100> percentDecoded;
     percentDecoded.reserveInitialCapacity(length);
     for (unsigned i = 0; i < length; ) {
         if (auto decodedCharacter = decodeEscapeSequence(input, i, length)) {

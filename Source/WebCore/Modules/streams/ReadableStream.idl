@@ -39,20 +39,23 @@ dictionary ReadableWritablePair {
     required WritableStream writable;
 };
 
-typedef ReadableStreamDefaultReader ReadableStreamReader;
+typedef (ReadableStreamDefaultReader or ReadableStreamBYOBReader) ReadableStreamReader;
+
 [
+    CustomToJSObject,
     ExportMacro=WEBCORE_EXPORT,
     Exposed=*,
+    JSCustomMarkFunction,
     PrivateIdentifier,
     PublicIdentifier
 ] interface ReadableStream {
     [CallWith=CurrentGlobalObject] constructor(optional object underlyingSource, optional object options);
 
     [Custom, ReturnsOwnPromise] Promise<any> cancel(optional any reason);
-    ReadableStreamReader getReader(optional ReadableStreamGetReaderOptions options = { });
+    [CallWith=CurrentGlobalObject] ReadableStreamReader getReader(optional ReadableStreamGetReaderOptions options = { });
     [Custom, ReturnsOwnPromise] Promise<undefined> pipeTo(WritableStream destination, optional StreamPipeOptions options = {});
     [Custom] ReadableStream pipeThrough(ReadableWritablePair transform, optional StreamPipeOptions options = {});
-    sequence<ReadableStream> tee();
+    [CallWith=CurrentGlobalObject] sequence<ReadableStream> tee();
 
     [ImplementedAs=isLocked] readonly attribute boolean locked;
 };

@@ -214,7 +214,7 @@
     "web-platform-tests/jpegxl": "skip",
     "web-platform-tests/js": "skip",
     "web-platform-tests/js-self-profiling": "skip",
-    "web-platform-tests/keyboard-lock": "skip",
+    "web-platform-tests/keyboard-lock": "import",
     "web-platform-tests/keyboard-map": "skip",
     "web-platform-tests/largest-contentful-paint": "import",
     "web-platform-tests/layout-instability": "skip",

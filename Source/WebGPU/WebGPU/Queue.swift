@@ -27,15 +27,14 @@ import WebGPU_Internal
 
 private let largeBufferSize = 32 * 1024 * 1024
 
-public func writeBuffer(
-    queue: WebGPU.Queue, buffer: WebGPU.Buffer, bufferOffset: UInt64, data: SpanUInt8
-) {
-    unsafe queue.writeBuffer(buffer.buffer(), bufferOffset: bufferOffset, data: data)
+@_expose(Cxx)
+public func Queue_writeBuffer_thunk(queue: WebGPU.Queue, buffer: MTLBuffer, bufferOffset: UInt64, data: SpanUInt8) {
+    queue.writeBuffer(buffer: buffer, bufferOffset: bufferOffset, data: unsafe MutableSpan<UInt8>(_unsafeCxxSpan: data)) // FIXME (rdar://161269480): We should be able to declare 'data' as MutableSpan<UInt8>, which will remove this use of 'unsafe'.
 }
 
 extension WebGPU.Queue {
-    public func writeBuffer(_ buffer: MTLBuffer, bufferOffset: UInt64, data: SpanUInt8) {
-        guard let device = self.metalDevice() else {
+    public func writeBuffer(buffer: MTLBuffer, bufferOffset: UInt64, data: consuming MutableSpan<UInt8>) {
+        guard let _ = self.metalDevice() else {
             return
         }
 
@@ -43,8 +42,9 @@ extension WebGPU.Queue {
             return
         }
 
-        let noCopy = unsafe data.size() >= largeBufferSize
-        let bufferWithOffset = unsafe newTemporaryBufferWithBytes(data, noCopy)
+        let count = data.count
+        let noCopy = data.count >= largeBufferSize
+        let bufferWithOffset = unsafe newTemporaryBufferWithBytes(SpanUInt8(data), noCopy) // FIXME: 'bufferWithOffset' may extend the lifetime of 'data', but we drop that information here
         let temporaryBuffer = unsafe bufferWithOffset.first
         let temporaryBufferOffset = unsafe bufferWithOffset.second
 
@@ -53,12 +53,12 @@ extension WebGPU.Queue {
             return
         }
 
-        unsafe blitCommandEncoder.copy(
+        blitCommandEncoder.copy(
             from: temporaryBuffer,
             sourceOffset: Int(temporaryBufferOffset),
             to: buffer,
             destinationOffset: Int(bufferOffset),
-            size: data.count
+            size: count
         )
 
         if noCopy {

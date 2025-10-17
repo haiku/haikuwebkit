@@ -117,6 +117,7 @@ public:
     double gregorianDateTimeToMS(const GregorianDateTime&, double milliseconds, TimeType);
     double localTimeToMS(double milliseconds, TimeType);
     JS_EXPORT_PRIVATE double parseDate(JSGlobalObject*, VM&, const WTF::String&);
+    std::tuple<int32_t, int32_t, int32_t> yearMonthDayFromDaysWithCache(int32_t days);
 
     static void timeZoneChanged();
 
@@ -188,8 +189,6 @@ private:
             timeZoneCacheSlow();
         return m_timeZoneCache.get();
     }
-
-    std::tuple<int32_t, int32_t, int32_t> yearMonthDayFromDaysWithCache(int32_t days);
 
     std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter> m_timeZoneCache;
     std::array<DSTCache, 2> m_caches;

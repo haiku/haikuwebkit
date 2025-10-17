@@ -46,6 +46,7 @@
 #import <WebCore/NetworkStorageSession.h>
 #import <WebCore/Settings.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <pal/spi/cf/CFNetworkSPI.h>
 #import <pal/text/TextEncodingRegistry.h>
 #import <wtf/BlockPtr.h>
@@ -383,11 +384,7 @@ public:
 // if we ever have more than one WebPreferences object, this would move to init
 + (void)initialize
 {
-#if PLATFORM(MAC)
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-#endif
+    WebCore::initializeMainThreadIfNeeded();
 
     NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
         INITIALIZE_DEFAULT_PREFERENCES_DICTIONARY_FROM_GENERATED_PREFERENCES

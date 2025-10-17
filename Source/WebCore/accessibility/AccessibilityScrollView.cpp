@@ -27,6 +27,7 @@
 #include "AccessibilityScrollView.h"
 
 #include "AXObjectCacheInlines.h"
+#include "AXLocalFrame.h"
 #include "AXRemoteFrame.h"
 #include "AccessibilityObjectInlines.h"
 #include "AccessibilityScrollbar.h"
@@ -59,7 +60,22 @@ AccessibilityScrollView::~AccessibilityScrollView()
 bool AccessibilityScrollView::isRoot() const
 {
     RefPtr frameView = dynamicDowncast<FrameView>(m_scrollView.get());
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    // A remote frame is not a root.
+    if (frameView && frameView->isRemoteFrameView())
+        return false;
+
+    // Interpret this as "is this the root of the local frame"
+    WeakPtr cache = axObjectCache();
+    if (!cache)
+        return false;
+
+    return document() == cache->document();
+#else
+    // Interpret this as "is this the root of the whole page"
     return frameView && frameView->frame().isMainFrame();
+#endif
 }
 
 String AccessibilityScrollView::ownerDebugDescription() const
@@ -178,7 +194,14 @@ void AccessibilityScrollView::updateScrollbars()
     if (!scrollView)
         return;
 
-    if (isWithinHiddenWebArea()) {
+    bool shouldHideScrollBars = isWithinHiddenWebArea();
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (!isRoot())
+        shouldHideScrollBars = true;
+#endif
+
+    if (shouldHideScrollBars) {
         removeChildScrollbar(m_horizontalScrollbar.get());
         m_horizontalScrollbar = nullptr;
 
@@ -245,8 +268,28 @@ void AccessibilityScrollView::clearChildren()
     m_childrenDirty = false;
 }
 
+AccessibilityRole AccessibilityScrollView::determineAccessibilityRole()
+{
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (!isRoot())
+        return AccessibilityRole::FrameHost;
+#endif
+
+    return AccessibilityRole::ScrollArea;
+}
+
 bool AccessibilityScrollView::computeIsIgnored() const
 {
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    WeakPtr cache = axObjectCache();
+    if (!cache)
+        return true;
+
+    // If this is the child of an iframe element, ignore it in favor of the scroll view from the frame's AXObjectCache.
+    if (!isRoot())
+        return true;
+#endif
+
     // Scroll view's that host remote frames won't have web area objects, but shouldn't be ignored so that they are also available in the isolated tree.
     if (m_remoteFrame)
         return false;
@@ -256,6 +299,46 @@ bool AccessibilityScrollView::computeIsIgnored() const
         return true;
 
     return webArea->isIgnored();
+}
+
+void AccessibilityScrollView::addLocalFrameChild()
+{
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    WeakPtr cache = axObjectCache();
+    if (!cache)
+        return;
+
+    if (!m_localFrame) {
+        RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get());
+        if (!localFrameView)
+            return;
+
+        RefPtr localFrame = localFrameView->frame();
+        if (!localFrame)
+            return;
+
+        RefPtr document = localFrame->document();
+        if (!document)
+            return;
+
+        WeakPtr frameAXObjectCache = document->axObjectCache();
+        if (!frameAXObjectCache)
+            return;
+
+        frameAXObjectCache->buildIsolatedTreeIfNeeded();
+
+        RefPtr frameRoot = frameAXObjectCache->rootObjectForFrame(*localFrame);
+        if (!frameRoot)
+            return;
+
+        m_localFrame = downcast<AXLocalFrame>(cache->create(AccessibilityRole::LocalFrame));
+        m_localFrame->setLocalFrameView(localFrameView.get());
+        m_localFrame->setWrapper(frameRoot->wrapper());
+    }
+
+    m_localFrame->setParent(this);
+    addChild(*m_localFrame);
+#endif // ENABLE_ACCESSIBILITY_LOCAL_FRAME
 }
 
 void AccessibilityScrollView::addRemoteFrameChild()
@@ -277,7 +360,7 @@ void AccessibilityScrollView::addRemoteFrameChild()
         // Generate a new token and pass it back to the other remote frame so it can bind these objects together.
         Ref remoteFrame = remoteFrameView->frame();
         m_remoteFrame->setFrameID(remoteFrame->frameID());
-        remoteFrame->bindRemoteAccessibilityFrames(getpid(), { m_remoteFrame->generateRemoteToken() }, [this, &remoteFrame, protectedAccessbilityRemoteFrame = RefPtr { m_remoteFrame }] (Vector<uint8_t> token, int processIdentifier) mutable {
+        remoteFrame->bindRemoteAccessibilityFrames(getpid(), { m_remoteFrame->generateRemoteToken() }, [this, protectedThis = Ref { *this }, &remoteFrame, protectedAccessbilityRemoteFrame = RefPtr { m_remoteFrame }] (Vector<uint8_t> token, int processIdentifier) mutable {
             protectedAccessbilityRemoteFrame->initializePlatformElementWithRemoteToken(token.span(), processIdentifier);
 
             // Update the remote side with the offset of this object so it can calculate frames correctly.
@@ -296,8 +379,18 @@ void AccessibilityScrollView::addChildren()
     ASSERT(!m_childrenInitialized);
     m_childrenInitialized = true;
 
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (isRoot())
+        addChild(webAreaObject());
+    else if (defaultObjectInclusion() != AccessibilityObjectInclusion::IgnoreObject) {
+        addLocalFrameChild();
+        addRemoteFrameChild();
+    }
+#else
     addRemoteFrameChild();
     addChild(webAreaObject());
+#endif
+
     updateScrollbars();
 
 #ifndef NDEBUG
@@ -367,11 +460,20 @@ AccessibilityObject* AccessibilityScrollView::parentObject() const
     if (!cache)
         return nullptr;
 
-    RefPtr<Element> ancestorElement = m_frameOwnerElement.get();
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (isRoot())
+        return nullptr;
+#endif
+
+    RefPtr<Element> ancestorElement;
+    ancestorElement = m_frameOwnerElement.get();
     if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
         ancestorElement = localFrameView->frame().ownerElement();
-    else if (RefPtr remoteFrameView = dynamicDowncast<RemoteFrameView>(m_scrollView.get()))
-        ancestorElement = remoteFrameView->frame().ownerElement();
+
+    if (!ancestorElement) {
+        if (RefPtr remoteFrameView = dynamicDowncast<RemoteFrameView>(m_scrollView.get()))
+            ancestorElement = remoteFrameView->frame().ownerElement();
+    }
 
     RefPtr<AccessibilityObject> ancestorAccessibilityObject;
     while (ancestorElement && !ancestorAccessibilityObject) {
@@ -381,6 +483,58 @@ AccessibilityObject* AccessibilityScrollView::parentObject() const
     }
     return ancestorAccessibilityObject.get();
 }
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+
+AccessibilityObject* AccessibilityScrollView::crossFrameParentObject() const
+{
+    WeakPtr cache = axObjectCache();
+    if (!cache)
+        return nullptr;
+
+    // If this is the child of an iframe element, do nothing.
+    if (!isRoot())
+        return nullptr;
+
+    // If this is the main frame, do nothing.
+    RefPtr frameView = dynamicDowncast<FrameView>(m_scrollView.get());
+    if (!frameView)
+        return nullptr;
+    if (frameView->frame().isMainFrame())
+        return nullptr;
+
+    RefPtr<Element> ancestorElement;
+    ancestorElement = m_frameOwnerElement.get();
+    if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
+        ancestorElement = localFrameView->frame().ownerElement();
+
+    if (!ancestorElement)
+        return nullptr;
+
+    RefPtr ancestorDocument = ancestorElement->document();
+    if (!ancestorDocument || ancestorDocument.get() == cache->document())
+        return nullptr;
+
+    WeakPtr ancestorCache = ancestorDocument->axObjectCache();
+    RefPtr<AccessibilityObject> ancestorAccessibilityObject;
+    while (ancestorElement && !ancestorAccessibilityObject) {
+        if ((ancestorAccessibilityObject = ancestorCache->getOrCreate(*ancestorElement)))
+            break;
+        ancestorElement = ancestorElement->parentElementInComposedTree();
+    }
+
+    if (ancestorAccessibilityObject->isIgnored())
+        return ancestorAccessibilityObject->parentObjectUnignored();
+    return ancestorAccessibilityObject.get();
+}
+
+AccessibilityObject* AccessibilityScrollView::crossFrameChildObject() const
+{
+    return nullptr;
+}
+
+#endif // ENABLE_ACCESSIBILITY_LOCAL_FRAME
+
 
 void AccessibilityScrollView::scrollTo(const IntPoint& point) const
 {

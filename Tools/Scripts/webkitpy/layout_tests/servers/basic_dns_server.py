@@ -21,7 +21,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from dnslib import CLASS, QTYPE, RR, RCODE
-from dnslib.server import BaseResolver, DNSServer
+from dnslib.server import BaseResolver, DNSLogger, DNSServer
 import logging
 from threading import Thread
 
@@ -32,7 +32,7 @@ class Resolver(BaseResolver):
     def __init__(self, allowed_hosts=[]):
         super().__init__()
         self.hosts = list(map(lambda x: x if x.endswith(".") else x + ".", allowed_hosts))
-        _log.debug("Initializing Resolver with hosts: {}".format(self.hosts))
+        _log.info("Initializing Resolver with hosts: {}".format(self.hosts))
 
     def resolve(self, request, handler):
         question = request.q

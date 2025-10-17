@@ -659,8 +659,7 @@ UNIFIED_PDF_TEST(StablePresentationUpdateCallback)
 
 #endif
 
-// FIXME: rdar://160728656
-UNIFIED_PDF_TEST(DISABLED_PasswordFormShouldDismissAfterNavigation)
+UNIFIED_PDF_TEST(PasswordFormShouldDismissAfterNavigation)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
 

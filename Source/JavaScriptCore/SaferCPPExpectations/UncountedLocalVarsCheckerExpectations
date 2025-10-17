@@ -61,14 +61,10 @@ heap/ConservativeRoots.cpp
 heap/HeapHelperPool.cpp
 heap/JITStubRoutineSet.cpp
 inspector/AsyncStackTrace.cpp
-inspector/InspectorBackendDispatcher.cpp
 inspector/JSJavaScriptCallFrame.cpp
 inspector/ScriptCallStackFactory.cpp
 inspector/agents/InspectorDebuggerAgent.cpp
 inspector/agents/InspectorScriptProfilerAgent.cpp
-inspector/remote/RemoteInspector.cpp
-inspector/remote/cocoa/RemoteConnectionToTargetCocoa.mm
-inspector/remote/cocoa/RemoteInspectorCocoa.mm
 interpreter/CallFrame.cpp
 interpreter/Interpreter.cpp
 interpreter/StackVisitor.cpp

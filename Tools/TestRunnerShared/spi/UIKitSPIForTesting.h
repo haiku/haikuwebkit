@@ -322,6 +322,8 @@ typedef NS_ENUM(NSInteger, _UITextSearchMatchMethod) {
 @property (nonatomic, readonly, getter=_isAnimatingZoom) BOOL isAnimatingZoom;
 @property (nonatomic, readonly, getter=_isAnimatingScroll) BOOL isAnimatingScroll;
 @property (nonatomic, getter=_isFirstResponderKeyboardAvoidanceEnabled, setter=_setFirstResponderKeyboardAvoidanceEnabled:) BOOL firstResponderKeyboardAvoidanceEnabled;
+- (UIColor *)_pocketColorForEdge:(UIRectEdge)edge;
+- (BOOL)_prefersSolidColorHardPocketForEdge:(UIRectEdge)edge;
 @end
 
 @interface UIView ()

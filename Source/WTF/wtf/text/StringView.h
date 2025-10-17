@@ -32,7 +32,7 @@
 #include <wtf/Vector.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/ConversionMode.h>
-#include <wtf/text/LChar.h>
+#include <wtf/text/Latin1Character.h>
 #include <wtf/text/StringCommon.h>
 #include <wtf/text/UTF8ConversionError.h>
 
@@ -66,13 +66,13 @@ public:
     StringView(const String& string LIFETIME_BOUND);
     StringView(const StringImpl& string LIFETIME_BOUND);
     StringView(const StringImpl* string LIFETIME_BOUND);
-    StringView(std::span<const LChar> span LIFETIME_BOUND);
+    StringView(std::span<const Latin1Character> span LIFETIME_BOUND);
     StringView(std::span<const char16_t> span LIFETIME_BOUND);
-    StringView(std::span<const char> span LIFETIME_BOUND); // FIXME: Consider dropping this overload. Callers should pass LChars/UChars instead.
+    StringView(std::span<const char> span LIFETIME_BOUND); // FIXME: Consider dropping this overload. Callers should pass Latin1Character/char16_t instead.
     StringView(const void* string LIFETIME_BOUND, unsigned length, bool is8bit);
     StringView(ASCIILiteral);
 
-    ALWAYS_INLINE static StringView fromLatin1(std::span<const LChar> span LIFETIME_BOUND) { return StringView { span }; } // FIXME: This can become span<const char> once CString::span() changes to match
+    ALWAYS_INLINE static StringView fromLatin1(std::span<const Latin1Character> span LIFETIME_BOUND) { return StringView { span }; } // FIXME: This can become span<const char> once CString::span() changes to match
     ALWAYS_INLINE static StringView fromLatin1(const char* characters) { return StringView { characters }; }
 
     unsigned length() const;
@@ -95,7 +95,7 @@ public:
 
     bool is8Bit() const;
     const void* rawCharacters() const LIFETIME_BOUND { return m_characters; }
-    std::span<const LChar> span8() const LIFETIME_BOUND;
+    std::span<const Latin1Character> span8() const LIFETIME_BOUND;
     std::span<const char16_t> span16() const LIFETIME_BOUND;
     template<typename CharacterType> std::span<const CharacterType> span() const LIFETIME_BOUND;
 
@@ -138,7 +138,7 @@ public:
     template<typename CharacterType> void getCharacters16(std::span<CharacterType>) const;
 
     enum class CaseConvertType { Upper, Lower };
-    WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, std::span<LChar>) const;
+    WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, std::span<Latin1Character>) const;
     WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, std::span<char16_t>) const;
 
     StringView substring(unsigned start, unsigned length = std::numeric_limits<unsigned>::max()) const;
@@ -153,8 +153,8 @@ public:
     SplitResult splitAllowingEmptyEntries(char16_t) const;
 
     size_t find(char16_t, unsigned start = 0) const;
-    size_t find(LChar, unsigned start = 0) const;
-    ALWAYS_INLINE size_t find(char c, unsigned start = 0) const { return find(byteCast<LChar>(c), start); }
+    size_t find(Latin1Character, unsigned start = 0) const;
+    ALWAYS_INLINE size_t find(char c, unsigned start = 0) const { return find(byteCast<Latin1Character>(c), start); }
     template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>* = nullptr>
     size_t find(CodeUnitMatchFunction&&, unsigned start = 0) const;
     ALWAYS_INLINE size_t find(ASCIILiteral literal, unsigned start = 0) const { return find(literal.span8(), start); }
@@ -213,11 +213,11 @@ private:
     friend WTF_EXPORT_PRIVATE bool equalRespectingNullity(StringView, StringView);
     friend size_t findCommon(StringView haystack, StringView needle, unsigned start);
 
-    void initialize(std::span<const LChar>);
+    void initialize(std::span<const Latin1Character>);
     void initialize(std::span<const char16_t>);
 
-    WTF_EXPORT_PRIVATE size_t find(std::span<const LChar> match, unsigned start) const;
-    WTF_EXPORT_PRIVATE size_t reverseFind(std::span<const LChar> match, unsigned start) const;
+    WTF_EXPORT_PRIVATE size_t find(std::span<const Latin1Character> match, unsigned start) const;
+    WTF_EXPORT_PRIVATE size_t reverseFind(std::span<const Latin1Character> match, unsigned start) const;
 
     template<typename CharacterType, typename MatchedCharacterPredicate>
     StringView trim(std::span<const CharacterType>, const MatchedCharacterPredicate&) const;
@@ -251,7 +251,7 @@ private:
 template<typename CharacterType, size_t inlineCapacity> void append(Vector<CharacterType, inlineCapacity>&, StringView);
 
 bool equal(StringView, StringView);
-bool equal(StringView, const LChar* b);
+bool equal(StringView, const Latin1Character* b);
 
 bool equalIgnoringASCIICase(StringView, StringView);
 bool equalIgnoringASCIICase(StringView, ASCIILiteral);
@@ -380,7 +380,7 @@ inline StringView& StringView::operator=(const StringView& other)
 
 #endif // CHECK_STRINGVIEW_LIFETIME
 
-inline void StringView::initialize(std::span<const LChar> characters)
+inline void StringView::initialize(std::span<const Latin1Character> characters)
 {
     m_characters = characters.data();
     m_length = characters.size();
@@ -394,7 +394,7 @@ inline void StringView::initialize(std::span<const char16_t> characters)
     m_is8Bit = false;
 }
 
-inline StringView::StringView(std::span<const LChar> characters)
+inline StringView::StringView(std::span<const Latin1Character> characters)
 {
     initialize(characters);
 }
@@ -411,7 +411,7 @@ inline StringView::StringView(const char* characters)
 
 inline StringView::StringView(std::span<const char> characters)
 {
-    initialize(byteCast<LChar>(characters));
+    initialize(byteCast<Latin1Character>(characters));
 }
 
 inline StringView::StringView(const void* characters, unsigned length, bool is8bit)
@@ -473,11 +473,11 @@ inline void StringView::clear()
     m_is8Bit = true;
 }
 
-inline std::span<const LChar> StringView::span8() const
+inline std::span<const Latin1Character> StringView::span8() const
 {
     ASSERT(is8Bit());
     ASSERT(underlyingStringIsValid());
-    return unsafeMakeSpan(static_cast<const LChar*>(m_characters), m_length);
+    return unsafeMakeSpan(static_cast<const Latin1Character*>(m_characters), m_length);
 }
 
 inline std::span<const char16_t> StringView::span16() const
@@ -494,7 +494,7 @@ inline unsigned StringView::hash() const
     return StringHasher::computeHashAndMaskTop8Bits(span16());
 }
 
-template<> ALWAYS_INLINE std::span<const LChar> StringView::span<LChar>() const
+template<> ALWAYS_INLINE std::span<const Latin1Character> StringView::span<Latin1Character>() const
 {
     return span8();
 }
@@ -688,7 +688,7 @@ inline size_t StringView::find(char16_t character, unsigned start) const
     return WTF::find(span16(), character, start);
 }
 
-inline size_t StringView::find(LChar character, unsigned start) const
+inline size_t StringView::find(Latin1Character character, unsigned start) const
 {
     if (is8Bit())
         return WTF::find(span8(), character, start);
@@ -760,7 +760,7 @@ ALWAYS_INLINE bool equal(StringView a, StringView b)
     return equalCommon(a, b);
 }
 
-inline bool equal(StringView a, const LChar* b)
+inline bool equal(StringView a, const Latin1Character* b)
 {
     if (!b)
         return !a.isEmpty();
@@ -994,7 +994,7 @@ inline auto StringView::CodePoints::Iterator::operator++() -> Iterator&
 #endif
     ASSERT(m_current < m_end);
     if (m_is8Bit)
-        m_current = static_cast<const LChar*>(m_current) + 1;
+        m_current = static_cast<const Latin1Character*>(m_current) + 1;
     else {
         unsigned i = 0;
         size_t length = static_cast<const char16_t*>(m_end) - static_cast<const char16_t*>(m_current);
@@ -1011,7 +1011,7 @@ inline char32_t StringView::CodePoints::Iterator::operator*() const
 #endif
     ASSERT(m_current < m_end);
     if (m_is8Bit)
-        return *static_cast<const LChar*>(m_current);
+        return *static_cast<const Latin1Character*>(m_current);
     char32_t codePoint;
     size_t length = static_cast<const char16_t*>(m_end) - static_cast<const char16_t*>(m_current);
     U16_GET(static_cast<const char16_t*>(m_current), 0, 0, length, codePoint);
@@ -1167,7 +1167,7 @@ template<typename MatchedCharacterPredicate>
 StringView StringView::trim(const MatchedCharacterPredicate& predicate) const
 {
     if (is8Bit())
-        return trim<LChar>(span8(), predicate);
+        return trim<Latin1Character>(span8(), predicate);
     return trim<char16_t>(span16(), predicate);
 }
 

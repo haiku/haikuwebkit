@@ -95,7 +95,7 @@ static NSCalendarUnit toCalendarUnit(ApplePayRecurringPaymentDateUnit unit)
     }
 }
 
-PKRecurringPaymentSummaryItem *platformRecurringSummaryItem(const ApplePayLineItem& lineItem)
+RetainPtr<PKRecurringPaymentSummaryItem> platformRecurringSummaryItem(const ApplePayLineItem& lineItem)
 {
     ASSERT(lineItem.paymentTiming == ApplePayPaymentTiming::Recurring);
     // FIXME: This is a static analysis false positive (rdar://160259918).
@@ -106,34 +106,34 @@ PKRecurringPaymentSummaryItem *platformRecurringSummaryItem(const ApplePayLineIt
     summaryItem.get().intervalCount = lineItem.recurringPaymentIntervalCount;
     if (!lineItem.recurringPaymentEndDate.isNaN())
         summaryItem.get().endDate = toProtectedDate(lineItem.recurringPaymentEndDate).get();
-    return summaryItem.get();
+    return summaryItem;
 }
 
 #endif // HAVE(PASSKIT_RECURRING_SUMMARY_ITEM)
 
 #if HAVE(PASSKIT_DEFERRED_SUMMARY_ITEM)
 
-PKDeferredPaymentSummaryItem *platformDeferredSummaryItem(const ApplePayLineItem& lineItem)
+RetainPtr<PKDeferredPaymentSummaryItem> platformDeferredSummaryItem(const ApplePayLineItem& lineItem)
 {
     ASSERT(lineItem.paymentTiming == ApplePayPaymentTiming::Deferred);
     // FIXME: This is a static analysis false positive (rdar://160259918).
     SUPPRESS_UNRETAINED_ARG RetainPtr<PKDeferredPaymentSummaryItem> summaryItem = [PAL::getPKDeferredPaymentSummaryItemClassSingleton() summaryItemWithLabel:lineItem.label.createNSString().get() amount:toProtectedDecimalNumber(lineItem.amount).get() type:toPKPaymentSummaryItemType(lineItem.type)];
     if (!lineItem.deferredPaymentDate.isNaN())
         summaryItem.get().deferredDate = toProtectedDate(lineItem.deferredPaymentDate).get();
-    return summaryItem.get();
+    return summaryItem;
 }
 
 #endif // HAVE(PASSKIT_DEFERRED_SUMMARY_ITEM)
 
 #if HAVE(PASSKIT_AUTOMATIC_RELOAD_SUMMARY_ITEM)
 
-PKAutomaticReloadPaymentSummaryItem *platformAutomaticReloadSummaryItem(const ApplePayLineItem& lineItem)
+RetainPtr<PKAutomaticReloadPaymentSummaryItem> platformAutomaticReloadSummaryItem(const ApplePayLineItem& lineItem)
 {
     ASSERT(lineItem.paymentTiming == ApplePayPaymentTiming::AutomaticReload);
     // FIXME: This is a static analysis false positive (rdar://160259918).
     SUPPRESS_UNRETAINED_ARG RetainPtr<PKAutomaticReloadPaymentSummaryItem> summaryItem = [PAL::getPKAutomaticReloadPaymentSummaryItemClassSingleton() summaryItemWithLabel:lineItem.label.createNSString().get() amount:toProtectedDecimalNumber(lineItem.amount).get() type:toPKPaymentSummaryItemType(lineItem.type)];
     summaryItem.get().thresholdAmount = toProtectedDecimalNumber(lineItem.automaticReloadPaymentThresholdAmount).get();
-    return summaryItem.get();
+    return summaryItem;
 }
 
 #endif // HAVE(PASSKIT_AUTOMATIC_RELOAD_SUMMARY_ITEM)
@@ -156,7 +156,7 @@ PKInstantFundsOutFeeSummaryItem *platformInstantFundsOutFeeSummaryItem(const App
 
 #endif // HAVE(PASSKIT_DISBURSEMENTS)
 
-PKPaymentSummaryItem *platformSummaryItem(const ApplePayLineItem& lineItem)
+RetainPtr<PKPaymentSummaryItem> platformSummaryItem(const ApplePayLineItem& lineItem)
 {
 #if HAVE(PASSKIT_DISBURSEMENTS)
     if (lineItem.disbursementLineItemType.has_value()) {
@@ -195,20 +195,20 @@ PKPaymentSummaryItem *platformSummaryItem(const ApplePayLineItem& lineItem)
 
 #if HAVE(PASSKIT_DISBURSEMENTS)
 // Disbursement Requests have a unique quirk: the total doesn't actually matter, we need to disregard any totals (this is a separate method to avoid confusion rather than making the total in `platformSummaryItems` optional
-NSArray *platformDisbursementSummaryItems(const Vector<ApplePayLineItem>& lineItems)
+RetainPtr<NSArray> platformDisbursementSummaryItems(const Vector<ApplePayLineItem>& lineItems)
 {
-    NSMutableArray *paymentSummaryItems = [NSMutableArray arrayWithCapacity:lineItems.size()];
+    RetainPtr paymentSummaryItems = adoptNS([[NSMutableArray alloc] initWithCapacity:lineItems.size()]);
     for (auto& lineItem : lineItems) {
         if (RetainPtr summaryItem = platformSummaryItem(lineItem))
             [paymentSummaryItems addObject:summaryItem.get()];
     }
-    return adoptNS([paymentSummaryItems copy]).autorelease();
+    return paymentSummaryItems;
 }
 #endif // HAVE(PASSKIT_DISBURSEMENTS)
 
-NSArray *platformSummaryItems(const ApplePayLineItem& total, const Vector<ApplePayLineItem>& lineItems)
+RetainPtr<NSArray> platformSummaryItems(const ApplePayLineItem& total, const Vector<ApplePayLineItem>& lineItems)
 {
-    NSMutableArray *paymentSummaryItems = [NSMutableArray arrayWithCapacity:lineItems.size() + 1];
+    RetainPtr paymentSummaryItems = adoptNS([[NSMutableArray alloc] initWithCapacity:lineItems.size() + 1]);
     for (auto& lineItem : lineItems) {
         if (RetainPtr summaryItem = platformSummaryItem(lineItem))
             [paymentSummaryItems addObject:summaryItem.get()];
@@ -217,7 +217,7 @@ NSArray *platformSummaryItems(const ApplePayLineItem& total, const Vector<AppleP
     if (RetainPtr totalItem = platformSummaryItem(total))
         [paymentSummaryItems addObject:totalItem.get()];
 
-    return adoptNS([paymentSummaryItems copy]).autorelease();
+    return paymentSummaryItems;
 }
 
 } // namespace WebCore

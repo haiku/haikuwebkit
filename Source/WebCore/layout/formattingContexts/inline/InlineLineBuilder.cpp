@@ -739,15 +739,17 @@ Vector<std::pair<size_t, size_t>> LineBuilder::collectShapeRanges(const LineCand
             type = ShapingType::Break;
             break;
         case InlineItem::Type::InlineBoxStart: {
+            [[fallthrough]];
+        case InlineItem::Type::InlineBoxEnd:
             auto& boxGeometry = formattingContext().geometryForBox(inlineItem.layoutBox());
-            auto hasDecoration = boxGeometry.marginStart() || boxGeometry.borderStart() || boxGeometry.paddingStart();
-            type = hasDecoration ? ShapingType::Break : ShapingType::Keep;
-            break;
-        }
-        case InlineItem::Type::InlineBoxEnd: {
-            auto& boxGeometry = formattingContext().geometryForBox(inlineItem.layoutBox());
-            auto hasDecoration = boxGeometry.marginEnd() || boxGeometry.borderEnd() || boxGeometry.paddingEnd();
-            type = hasDecoration ? ShapingType::Break : ShapingType::Keep;
+            auto& style = isFirstFormattedLineCandidate ? inlineItem.firstLineStyle() : inlineItem.style();
+            auto hasDecoration = [&] {
+                // Note that this depends on the content being RTL (inline-box-end vs. start decoration matching visual order -visual matching).
+                auto shouldCheckLogicalStart = style.writingMode().bidiDirection() == TextDirection::LTR ? inlineItem.type() == InlineItem::Type::InlineBoxEnd : inlineItem.type() == InlineItem::Type::InlineBoxStart;
+                return shouldCheckLogicalStart ? boxGeometry.marginStart() || boxGeometry.borderStart() || boxGeometry.paddingStart() : boxGeometry.marginEnd() || boxGeometry.borderEnd() || boxGeometry.paddingEnd();
+            };
+            auto hasBidiIsolation = isIsolated(style.unicodeBidi());
+            type = hasDecoration() || hasBidiIsolation ? ShapingType::Break : ShapingType::Keep;
             break;
         }
         case InlineItem::Type::HardLineBreak:
@@ -816,15 +818,16 @@ Vector<std::pair<size_t, size_t>> LineBuilder::collectShapeRanges(const LineCand
             break;
         case ShapingType::Content: {
             auto& inlineTextItem = downcast<InlineTextItem>(runs[entry.index].inlineItem);
+            auto& styleToUse = isFirstFormattedLineCandidate ? inlineTextItem.firstLineStyle() : inlineTextItem.style();
             auto& inlineTextBox = inlineTextItem.inlineTextBox();
             auto isEligibleText = !inlineTextBox.canUseSimpleFontCodePath() && !inlineTextBox.isCombined() && inlineTextItem.direction() == TextDirection::RTL;
 
             if (!leadingContentRunIndex) {
                 if (isEligibleText)
                     leadingContentRunIndex = entry.index;
-                lastFontCascade = isFirstFormattedLineCandidate ? &inlineTextItem.firstLineStyle().fontCascade() : &inlineTextItem.style().fontCascade();
+                lastFontCascade = &styleToUse.fontCascade();
             } else if (hasBoundaryBetween) {
-                auto hasMatchingFontCascade = *lastFontCascade.get() == (isFirstFormattedLineCandidate ? inlineTextItem.firstLineStyle().fontCascade() : inlineTextItem.style().fontCascade());
+                auto hasMatchingFontCascade = *lastFontCascade.get() == styleToUse.fontCascade();
                 if (isEligibleText && hasMatchingFontCascade)
                     trailingContentRunIndex = entry.index;
                 else
@@ -862,9 +865,9 @@ void LineBuilder::applyShapingOnRunRange(LineCandidate& lineCandidate, std::pair
     auto characterScanForCodePath = true;
     auto& style = isFirstFormattedLineCandidate() ? runs[range.first].inlineItem.firstLineStyle() : runs[range.first].inlineItem.style();
     auto textRun = TextRun { textContent, m_lineLogicalRect.left(), { }, ExpansionBehavior::defaultBehavior(), TextDirection::RTL, style.rtlOrdering() == Order::Visual, characterScanForCodePath };
-    auto glyphSizes = ComplexTextController::glyphBoundsForTextRun(style.fontCascade(), textRun);
+    auto glyphAdvances = ComplexTextController::glyphAdvancesForTextRun(style.fontCascade(), textRun);
 
-    if (glyphSizes.size() != textRun.length()) {
+    if (glyphAdvances.size() != textRun.length()) {
         ASSERT_NOT_REACHED();
         return;
     }
@@ -880,7 +883,7 @@ void LineBuilder::applyShapingOnRunRange(LineCandidate& lineCandidate, std::pair
         }
         auto runWidth = InlineLayoutUnit { };
         for (size_t i = 0; i < inlineTextItem->length(); ++i) {
-            runWidth += std::max(0.f, glyphSizes[glyphIndex]);
+            runWidth += std::max(0.f, glyphAdvances[glyphIndex]);
             ++glyphIndex;
         }
         run.adjustContentWidth(runWidth);

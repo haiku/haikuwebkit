@@ -31,6 +31,7 @@
 #include "InjectedBundlePage.h"
 #include "WebCoreTestSupport.h"
 #include <JavaScriptCore/Options.h>
+#include <WebKit/WKBase.h>
 #include <WebKit/WKBundle.h>
 #include <WebKit/WKBundleFrame.h>
 #include <WebKit/WKBundlePage.h>
@@ -185,6 +186,13 @@ static void postGCTask(void* context)
     WKRelease(page);
 }
 
+bool InjectedBundle::shouldForceRepaint() const
+{
+    WKTypeRef result = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(page()->page(), toWK("ShouldForceRepaint").get(), nullptr, &result);
+    return booleanValue(result);
+}
+
 void InjectedBundle::reportLiveDocuments(WKBundlePageRef page)
 {
     // Release memory again, after the GC and timer fire. This is necessary to clear entries from CachedResourceLoader's m_documentResources in some scenarios.
@@ -260,19 +268,19 @@ void InjectedBundle::didReceiveMessageToPage(WKBundlePageRef page, WKStringRef m
 
     if (WKStringIsEqualToUTF8CString(messageName, "NotifyDone")) {
         if (m_testRunner && InjectedBundle::page())
-            InjectedBundle::page()->dump(m_testRunner->shouldForceRepaint());
+            InjectedBundle::page()->dump();
         return;
     }
 
     if (WKStringIsEqualToUTF8CString(messageName, "WorkQueueProcessedCallback")) {
         if (!topLoadingFrame() && m_testRunner && !m_testRunner->shouldWaitUntilDone())
-            InjectedBundle::page()->dump(m_testRunner->shouldForceRepaint());
+            InjectedBundle::page()->dump();
         return;
     }
 
     if (WKStringIsEqualToUTF8CString(messageName, "ForceImmediateCompletion")) {
         if (m_testRunner && InjectedBundle::page())
-            InjectedBundle::page()->dump(m_testRunner->shouldForceRepaint());
+            InjectedBundle::page()->dump();
         return;
     }
 
@@ -283,6 +291,17 @@ void InjectedBundle::didReceiveMessageToPage(WKBundlePageRef page, WKStringRef m
             m_eventSendingController->sentWheelPhaseEndOrCancel();
         else if (bodyString == "SentWheelMomentumPhaseEnd"_s)
             m_eventSendingController->sentWheelMomentumPhaseEnd();
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "SetMousePosition")) {
+        auto pointArray = arrayValue(messageBody);
+        if (WKArrayGetSize(pointArray) == 2) {
+            double x = doubleValue(WKArrayGetItemAtIndex(pointArray, 0));
+            double y = doubleValue(WKArrayGetItemAtIndex(pointArray, 1));
+            m_eventSendingController->setMousePosition(x, y);
+        }
+
         return;
     }
 
@@ -359,7 +378,7 @@ void InjectedBundle::beginTesting(WKDictionaryRef settings, BegingTestingMode te
     // WKBundleSetDatabaseQuota(m_bundle.get(), 5 * 1024 * 1024);
 }
 
-void InjectedBundle::done(bool forceRepaint)
+void InjectedBundle::done()
 {
     setTopLoadingFrame(0);
 
@@ -372,7 +391,6 @@ void InjectedBundle::done(bool forceRepaint)
         setValue(body, "PixelResult", m_pixelResult);
     setValue(body, "RepaintRects", m_repaintRects);
     setValue(body, "AudioResult", m_audioResult);
-    setValue(body, "ForceRepaint", forceRepaint);
 
     WKBundlePagePostMessageIgnoringFullySynchronousMode(page()->page(), toWK("Done").get(), body.get());
     m_testRunner = nullptr;
@@ -556,6 +574,13 @@ bool InjectedBundle::shouldProcessWorkQueue() const
         return false;
 
     return booleanValue(adoptWK(result).get());
+}
+
+bool InjectedBundle::isPrinting() const
+{
+    WKTypeRef result = nullptr;
+    WKBundlePagePostSynchronousMessageForTesting(page()->page(), toWK("GetIsPrinting").get(), nullptr, &result);
+    return booleanValue(result);
 }
 
 void InjectedBundle::processWorkQueue()
@@ -757,59 +782,4 @@ void postSynchronousPageMessage(const char* name, bool value)
 {
     postSynchronousPageMessage(name, adoptWK(WKBooleanCreate(value)));
 }
-
-static JSValueRef stringArrayToJS(JSContextRef context, WKArrayRef strings)
-{
-    const size_t count = WKArrayGetSize(strings);
-    auto array = JSObjectMakeArray(context, 0, 0, nullptr);
-    for (size_t i = 0; i < count; ++i) {
-        auto stringRef = dynamic_wk_cast<WKStringRef>(WKArrayGetItemAtIndex(strings, i));
-        JSObjectSetPropertyAtIndex(context, array, i, JSValueMakeString(context, toJS(stringRef).get()), nullptr);
-    }
-    return array;
-}
-
-void postMessageWithAsyncReply(JSContextRef context, const char* messageName, WKRetainPtr<WKTypeRef> parameter, JSValueRef callback)
-{
-    auto globalContext = JSContextGetGlobalContext(context);
-    JSValueProtect(globalContext, callback);
-
-    Function<void(WKTypeRef)> completionHandler = [callback, globalContext = JSRetainPtr { globalContext }] (WKTypeRef result) mutable {
-        JSContextRef context = globalContext.get();
-
-        size_t argumentCount { 0 };
-        JSValueRef* arguments { nullptr };
-        JSValueRef resultJS { nullptr };
-
-        if (result) {
-            if (auto array = dynamic_wk_cast<WKArrayRef>(result))
-                resultJS = stringArrayToJS(context, array);
-            else if (auto string = dynamic_wk_cast<WKStringRef>(result))
-                resultJS = JSValueMakeString(context, toJS(string).get());
-            else if (auto boolean = dynamic_wk_cast<WKBooleanRef>(result))
-                resultJS = JSValueMakeBoolean(context, booleanValue(boolean));
-            else
-                RELEASE_ASSERT_NOT_REACHED();
-            arguments = &resultJS;
-            argumentCount = 1;
-        }
-
-        JSObjectCallAsFunction(context, JSValueToObject(context, callback, nullptr), JSContextGetGlobalObject(context), argumentCount, arguments, nullptr);
-        JSValueUnprotect(context, callback);
-    };
-
-    if (auto page = InjectedBundle::singleton().pageRef()) {
-        WKBundlePagePostMessageWithAsyncReply(page, toWK(messageName).get(), parameter.get(), [] (WKTypeRef result, void* context) {
-            auto function = WTF::adopt(static_cast<Function<void(WKTypeRef)>::Impl*>(context));
-            function(result);
-        }, completionHandler.leak());
-    } else
-        completionHandler(nullptr);
-}
-
-void postMessageWithAsyncReply(JSContextRef context, const char* messageName, JSValueRef callback)
-{
-    postMessageWithAsyncReply(context, messageName, nullptr, callback);
-}
-
 } // namespace WTR

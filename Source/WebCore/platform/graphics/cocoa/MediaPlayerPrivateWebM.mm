@@ -38,11 +38,13 @@
 #import "MediaPlaybackTarget.h"
 #import "MediaPlayer.h"
 #import "MediaSampleAVFObjC.h"
+#import "MediaStrategy.h"
 #import "NativeImage.h"
 #import "NotImplemented.h"
 #import "PixelBufferConformerCV.h"
 #import "PlatformDynamicRangeLimitCocoa.h"
 #import "PlatformMediaResourceLoader.h"
+#import "PlatformStrategies.h"
 #import "ResourceError.h"
 #import "ResourceRequest.h"
 #import "ResourceResponse.h"
@@ -77,6 +79,15 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaPlayerPrivateWebM);
 
 static const MediaTime discontinuityTolerance = MediaTime(1, 1);
 
+Ref<AudioVideoRenderer> MediaPlayerPrivateWebM::createRenderer(LoggerHelper& loggerHelper, HTMLMediaElementIdentifier mediaElementIdentifier, MediaPlayerIdentifier playerIdentifier)
+{
+    if (hasPlatformStrategies()) {
+        if (RefPtr renderer = platformStrategies()->mediaStrategy()->createAudioVideoRenderer(&loggerHelper, mediaElementIdentifier, playerIdentifier))
+            return renderer.releaseNonNull();
+    }
+    return AudioVideoRendererAVFObjC::create(Ref { loggerHelper.logger() }, loggerHelper.logIdentifier());
+}
+
 MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     : m_player(player)
     , m_parser(SourceBufferParserWebM::create().releaseNonNull())
@@ -84,7 +95,8 @@ MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     , m_logger(player->mediaPlayerLogger())
     , m_logIdentifier(player->mediaPlayerLogIdentifier())
     , m_seekTimer(*this, &MediaPlayerPrivateWebM::seekInternal)
-    , m_renderer(AudioVideoRendererAVFObjC::create(m_logger, m_logIdentifier))
+    , m_playerIdentifier(MediaPlayerIdentifier::generate())
+    , m_renderer(createRenderer(*this, player->clientIdentifier(), m_playerIdentifier))
 {
     ALWAYS_LOG(LOGIDENTIFIER);
     m_parser->setLogger(m_logger, m_logIdentifier);
@@ -102,11 +114,15 @@ MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     m_renderer->setVideoTarget(player->videoTarget());
 #endif
 
-    m_renderer->notifyWhenErrorOccurs([weakThis = WeakPtr { *this }](PlatformMediaError) {
+    m_renderer->notifyWhenErrorOccurs([weakThis = WeakPtr { *this }](PlatformMediaError error) {
         if (RefPtr protectedThis = weakThis.get()) {
+            protectedThis->m_errored = true;
+            if (RefPtr player = protectedThis->m_player.get(); player && error == PlatformMediaError::IPCError) {
+                player->reloadAndResumePlaybackIfNeeded();
+                return;
+            }
             protectedThis->setNetworkState(MediaPlayer::NetworkState::DecodeError);
             protectedThis->setReadyState(MediaPlayer::ReadyState::HaveNothing);
-            protectedThis->m_errored = true;
         }
     });
 
@@ -146,7 +162,16 @@ MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
             protectedThis->effectiveRateChanged();
     });
 
-    m_renderer->setPreferences(VideoMediaSampleRendererPreference::PrefersDecompressionSession);
+    m_renderer->setPreferences(VideoRendererPreference::PrefersDecompressionSession);
+
+    m_renderer->notifyVideoLayerSizeChanged([weakThis = WeakPtr { *this }](const MediaTime&, FloatSize size) {
+        if (RefPtr protectedThis = weakThis.get()) {
+            if (RefPtr player = protectedThis->m_player.get())
+                player->videoLayerSizeDidChange(size);
+        }
+    });
+
+    m_renderer->acceleratedRenderingStateChanged(player->renderingCanBeAccelerated());
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     m_defaultSpatialTrackingLabel = player->defaultSpatialTrackingLabel();
@@ -236,6 +261,8 @@ void MediaPlayerPrivateWebM::load(const URL& url, const LoadOptions& options)
     m_assetURL = url;
     if (options.supportsLimitedMatroska)
         m_parser->allowLimitedMatroska();
+
+    m_renderer->setPreferences(options.videoRendererPreferences | VideoRendererPreference::PrefersDecompressionSession);
 
     doPreload();
 }
@@ -343,7 +370,7 @@ void MediaPlayerPrivateWebM::cancelLoad()
 
 PlatformLayer* MediaPlayerPrivateWebM::platformLayer() const
 {
-    return m_renderer->platformVideoLayer().get();
+    return m_renderer->platformVideoLayer();
 }
 
 void MediaPlayerPrivateWebM::prepareToPlay()
@@ -653,7 +680,7 @@ RefPtr<NativeImage> MediaPlayerPrivateWebM::nativeImageForCurrentTime()
 
 bool MediaPlayerPrivateWebM::updateLastVideoFrame()
 {
-    RefPtr videoFrame = downcast<VideoFrameCV>(m_renderer->currentVideoFrame());
+    RefPtr videoFrame = m_renderer->currentVideoFrame();
     if (!videoFrame)
         return false;
 
@@ -665,25 +692,14 @@ bool MediaPlayerPrivateWebM::updateLastVideoFrame()
 bool MediaPlayerPrivateWebM::updateLastImage()
 {
     if (m_isGatheringVideoFrameMetadata) {
-        if (!m_lastVideoFrame)
-            return false;
         auto metrics = m_renderer->videoPlaybackQualityMetrics();
         auto sampleCount = metrics ? metrics->displayCompositedVideoFrames : 0;
         if (sampleCount == m_lastConvertedSampleCount)
             return false;
         m_lastConvertedSampleCount = sampleCount;
-    } else if (!updateLastVideoFrame())
-        return false;
-
-    ASSERT(m_lastVideoFrame);
-
-    if (!m_rgbConformer) {
-        auto attributes = @{ (__bridge NSString *)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA) };
-        m_rgbConformer = makeUnique<PixelBufferConformerCV>((__bridge CFDictionaryRef)attributes);
     }
-
-    m_lastImage = NativeImage::create(m_rgbConformer->createImageFromPixelBuffer(m_lastVideoFrame->pixelBuffer()));
-    return true;
+    m_lastImage = m_renderer->currentNativeImage();
+    return !!m_lastImage;
 }
 
 void MediaPlayerPrivateWebM::paint(GraphicsContext& context, const FloatRect& rect)
@@ -693,16 +709,7 @@ void MediaPlayerPrivateWebM::paint(GraphicsContext& context, const FloatRect& re
 
 void MediaPlayerPrivateWebM::paintCurrentFrameInContext(GraphicsContext& context, const FloatRect& outputRect)
 {
-    if (context.paintingDisabled())
-        return;
-
-    auto image = nativeImageForCurrentTime();
-    if (!image)
-        return;
-
-    GraphicsContextStateSaver stateSaver(context);
-    FloatRect imageRect { FloatPoint::zero(), image->size() };
-    context.drawNativeImage(*image, outputRect, imageRect);
+    m_renderer->paintCurrentVideoFrameInContext(context, outputRect);
 }
 
 RefPtr<VideoFrame> MediaPlayerPrivateWebM::videoFrameForCurrentTime()
@@ -1323,8 +1330,10 @@ void MediaPlayerPrivateWebM::checkNewVideoFrameMetadata(const MediaTime& present
     if (!updateLastVideoFrame())
         return;
 
+    Ref lastVideoFrame = *m_lastVideoFrame;
+
 #ifndef NDEBUG
-    if (m_lastVideoFrame->presentationTime() != presentationTime)
+    if (lastVideoFrame->presentationTime() != presentationTime)
         ALWAYS_LOG(LOGIDENTIFIER, "notification of new frame delayed retrieved:", m_lastVideoFrame->presentationTime(), " expected:", presentationTime);
 #else
     UNUSED_PARAM(presentationTime);
@@ -1336,10 +1345,10 @@ void MediaPlayerPrivateWebM::checkNewVideoFrameMetadata(const MediaTime& present
     metadata.presentedFrames = metrics ? metrics->displayCompositedVideoFrames : 0;
     metadata.presentationTime = displayTime;
     metadata.expectedDisplayTime = displayTime;
-    metadata.mediaTime = m_lastVideoFrame->presentationTime().toDouble();
+    metadata.mediaTime = lastVideoFrame->presentationTime().toDouble();
 
     m_videoFrameMetadata = metadata;
-    player->onNewVideoFrameMetadata(WTFMove(metadata), m_lastVideoFrame->pixelBuffer());
+    player->onNewVideoFrameMetadata(WTFMove(metadata), lastVideoFrame->pixelBuffer());
 }
 
 void MediaPlayerPrivateWebM::setResourceOwner(const ProcessIdentity& resourceOwner)
@@ -1517,6 +1526,16 @@ void MediaPlayerPrivateWebM::setLayerRequiresFlush()
 std::optional<VideoPlaybackQualityMetrics> MediaPlayerPrivateWebM::videoPlaybackQualityMetrics()
 {
     return m_renderer->videoPlaybackQualityMetrics();
+}
+
+WebCore::HostingContext MediaPlayerPrivateWebM::hostingContext() const
+{
+    return m_renderer->hostingContext();
+}
+
+void MediaPlayerPrivateWebM::setVideoLayerSizeFenced(const WebCore::FloatSize& size, WTF::MachSendRightAnnotated&& sendRightAnnotated)
+{
+    m_renderer->setVideoLayerSizeFenced(size, WTFMove(sendRightAnnotated));
 }
 
 } // namespace WebCore

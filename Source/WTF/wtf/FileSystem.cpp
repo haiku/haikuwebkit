@@ -121,7 +121,7 @@ constexpr std::array<bool, 128> needsEscaping = {
     false, false, false, false, true,  false, false, true,  /* 78-7F */
 };
 
-static inline bool shouldEscapeUChar(char16_t character, char16_t previousCharacter, char16_t nextCharacter)
+static inline bool shouldEscapeChar16(char16_t character, char16_t previousCharacter, char16_t nextCharacter)
 {
     if (character <= 127)
         return needsEscaping[character];
@@ -172,7 +172,7 @@ String encodeForFileName(const String& inputString)
     char16_t nextCharacter = inputString[0];
     for (unsigned i = 0; i < length; ++i) {
         auto character = std::exchange(nextCharacter, i + 1 < length ? inputString[i + 1] : 0);
-        if (shouldEscapeUChar(character, previousCharacter, nextCharacter)) {
+        if (shouldEscapeChar16(character, previousCharacter, nextCharacter)) {
             if (character <= 0xFF)
                 result.append('%', hex(character, 2));
             else

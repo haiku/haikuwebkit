@@ -194,17 +194,17 @@ RefPtr<WebCoreDecompressionSession> VideoMediaSampleRenderer::decompressionSessi
 
 bool VideoMediaSampleRenderer::useDecompressionSessionForProtectedFallback() const
 {
-    return useDecompressionSessionForProtectedContent() || m_preferences.contains(VideoMediaSampleRendererPreference::ProtectedFallbackDisabled);
+    return useDecompressionSessionForProtectedContent() || m_preferences.contains(VideoRendererPreference::ProtectedFallbackDisabled);
 }
 
 bool VideoMediaSampleRenderer::useDecompressionSessionForProtectedContent() const
 {
-    return m_preferences.contains(VideoMediaSampleRendererPreference::UseDecompressionSessionForProtectedContent);
+    return m_preferences.contains(VideoRendererPreference::UseDecompressionSessionForProtectedContent);
 }
 
 bool VideoMediaSampleRenderer::useStereoDecoding() const
 {
-    return m_preferences.contains(VideoMediaSampleRendererPreference::UseStereoDecoding);
+    return m_preferences.contains(VideoRendererPreference::UseStereoDecoding);
 }
 
 size_t VideoMediaSampleRenderer::decodedSamplesCount() const
@@ -329,7 +329,7 @@ bool VideoMediaSampleRenderer::prefersDecompressionSession() const
 {
     assertIsMainThread();
 
-    return m_preferences.contains(VideoMediaSampleRendererPreference::PrefersDecompressionSession);
+    return m_preferences.contains(VideoRendererPreference::PrefersDecompressionSession);
 }
 
 void VideoMediaSampleRenderer::setPreferences(Preferences preferences)
@@ -418,7 +418,7 @@ void VideoMediaSampleRenderer::enqueueSample(const MediaSample& sample, const Me
         // Only use a decompression session for vp8 or vp9 when software decoded.
         CMVideoFormatDescriptionRef videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(cmSampleBuffer.get());
         auto fourCC = PAL::CMFormatDescriptionGetMediaSubType(videoFormatDescription);
-        needsDecompressionSession = fourCC == 'vp08' || (fourCC == 'vp09' && !vp9HardwareDecoderAvailable());
+        needsDecompressionSession = fourCC == 'vp08' || (fourCC == 'vp09' && !vp9HardwareDecoderAvailableInProcess());
         m_currentCodec = fourCC;
     }
 #endif

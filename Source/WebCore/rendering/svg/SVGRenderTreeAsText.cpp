@@ -69,7 +69,6 @@
 #include "SVGPathUtilities.h"
 #include "SVGPolyElement.h"
 #include "SVGRectElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGRootInlineBox.h"
 #include "SVGStopElement.h"
 #include "StyleCachedImage.h"
@@ -190,9 +189,9 @@ static void writeSVGFillPaintingResource(TextStream& ts, const RenderElement& re
     ts << " [fill={"_s << s;
     writeSVGPaintingResource(ts, fillPaintingResource);
 
-    const auto& svgStyle = renderer.style().svgStyle();
-    writeIfNotDefault(ts, "opacity"_s, svgStyle.fillOpacity().value.value, 1.0f);
-    writeIfNotDefault(ts, "fill rule"_s, svgStyle.fillRule(), WindRule::NonZero);
+    auto& style = renderer.style();
+    writeIfNotDefault(ts, "opacity"_s, style.fillOpacity().value.value, 1.0f);
+    writeIfNotDefault(ts, "fill rule"_s, style.fillRule(), WindRule::NonZero);
     ts << "}]"_s;
 }
 
@@ -202,17 +201,16 @@ static void writeSVGStrokePaintingResource(TextStream& ts, const RenderElement& 
     ts << " [stroke={"_s << s;
     writeSVGPaintingResource(ts, strokePaintingResource);
 
-    const auto& style = renderer.style();
-    const auto& svgStyle = style.svgStyle();
+    auto& style = renderer.style();
 
     SVGLengthContext lengthContext(&shape);
-    double dashOffset = lengthContext.valueForLength(svgStyle.strokeDashOffset());
+    double dashOffset = lengthContext.valueForLength(style.strokeDashOffset());
     double strokeWidth = lengthContext.valueForLength(style.strokeWidth());
-    auto dashArray = DashArray::map(svgStyle.strokeDashArray(), [&](auto& length) -> DashArrayElement {
+    auto dashArray = DashArray::map(style.strokeDashArray(), [&](auto& length) -> DashArrayElement {
         return lengthContext.valueForLength(length);
     });
 
-    writeIfNotDefault(ts, "opacity"_s, svgStyle.strokeOpacity().value.value, 1.0f);
+    writeIfNotDefault(ts, "opacity"_s, style.strokeOpacity().value.value, 1.0f);
     writeIfNotDefault(ts, "stroke width"_s, strokeWidth, 1.0);
     writeIfNotDefault(ts, "miter limit"_s, style.strokeMiterLimit().value.value, 4.0f);
     writeIfNotDefault(ts, "line cap"_s, style.capStyle(), LineCap::Butt);
@@ -231,8 +229,7 @@ static void writeSVGStrokePaintingResource(TextStream& ts, const RenderElement& 
 
 void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, OptionSet<RenderAsTextFlag>)
 {
-    const RenderStyle& style = renderer.style();
-    Ref svgStyle = style.svgStyle();
+    auto& style = renderer.style();
 
     if (!renderer.localTransform().isIdentity())
         writeNameValuePair(ts, "transform"_s, renderer.localTransform());
@@ -247,7 +244,7 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
         if (auto* fillPaintingResource = LegacyRenderSVGResource::fillPaintingResource(const_cast<LegacyRenderSVGShape&>(*shape), shape->style(), fallbackColor))
             writeSVGFillPaintingResource(ts, renderer, *fillPaintingResource);
 
-        writeIfNotDefault(ts, "clip rule"_s, svgStyle->clipRule(), WindRule::NonZero);
+        writeIfNotDefault(ts, "clip rule"_s, style.clipRule(), WindRule::NonZero);
     } else if (auto* shape = dynamicDowncast<RenderSVGShape>(renderer)) {
         Color fallbackColor;
         if (auto* strokePaintingResource = LegacyRenderSVGResource::strokePaintingResource(const_cast<RenderSVGShape&>(*shape), shape->style(), fallbackColor))
@@ -256,7 +253,7 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
         if (auto* fillPaintingResource = LegacyRenderSVGResource::fillPaintingResource(const_cast<RenderSVGShape&>(*shape), shape->style(), fallbackColor))
             writeSVGFillPaintingResource(ts, renderer, *fillPaintingResource);
 
-        writeIfNotDefault(ts, "clip rule"_s, svgStyle->clipRule(), WindRule::NonZero);
+        writeIfNotDefault(ts, "clip rule"_s, style.clipRule(), WindRule::NonZero);
     }
 
     auto writeMarker = [&](ASCIILiteral name, const Style::SVGMarkerResource& value) {
@@ -268,9 +265,9 @@ void writeSVGPaintingFeatures(TextStream& ts, const RenderElement& renderer, Opt
         writeIfNotEmpty(ts, name, fragment);
     };
 
-    writeMarker("start marker"_s, svgStyle->markerStart());
-    writeMarker("middle marker"_s, svgStyle->markerMid());
-    writeMarker("end marker"_s, svgStyle->markerEnd());
+    writeMarker("start marker"_s, style.markerStart());
+    writeMarker("middle marker"_s, style.markerMid());
+    writeMarker("end marker"_s, style.markerEnd());
 }
 
 static TextStream& writePositionAndStyle(TextStream& ts, const RenderElement& renderer, OptionSet<RenderAsTextFlag> behavior = { })
@@ -349,7 +346,7 @@ static inline void writeSVGInlineTextBox(TextStream& ts, const InlineIterator::S
     if (fragments.isEmpty())
         return;
 
-    Ref svgStyle = textBox.renderer().style().svgStyle();
+    auto& style = textBox.renderer().style();
     String text = textBox.renderer().text();
 
     TextStream::IndentScope indentScope(ts);
@@ -364,7 +361,7 @@ static inline void writeSVGInlineTextBox(TextStream& ts, const InlineIterator::S
 
         // FIXME: Remove this hack, once the new text layout engine is completly landed. We want to preserve the old layout test results for now.
         ts << "chunk 1 "_s;
-        TextAnchor anchor = svgStyle->textAnchor();
+        auto anchor = style.textAnchor();
         bool isVerticalText = textBox.renderer().writingMode().isVertical();
         if (anchor == TextAnchor::Middle) {
             ts << "(middle anchor"_s;

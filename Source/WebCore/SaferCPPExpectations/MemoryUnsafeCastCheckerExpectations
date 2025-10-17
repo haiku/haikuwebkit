@@ -1,6 +1,7 @@
 EventTargetFactory.cpp
 HTMLNames.cpp
 MathMLNames.cpp
+Modules/Model/Implementation/ModelDowncastConvertToBackingContext.cpp
 Modules/WebGPU/Implementation/WebGPUBindGroupImpl.cpp
 Modules/WebGPU/Implementation/WebGPUDowncastConvertToBackingContext.cpp
 Modules/WebGPU/Implementation/WebGPUXRBindingImpl.cpp
@@ -28,7 +29,6 @@ Modules/push-api/ServiceWorkerRegistrationPushAPI.cpp
 Modules/screen-wake-lock/NavigatorScreenWakeLock.cpp
 Modules/speech/LocalDOMWindowSpeechSynthesis.cpp
 Modules/speech/SpeechSynthesis.cpp
-Modules/webaudio/AudioWorkletGlobalScope.cpp
 Modules/webaudio/WaveShaperProcessor.cpp
 Modules/webdriver/NavigatorWebDriver.cpp
 SVGNames.cpp
@@ -117,4 +117,3 @@ testing/Internals.cpp
 testing/cocoa/WebArchiveDumpSupport.mm
 workers/WorkerGlobalScope.cpp
 workers/WorkerThread.cpp
-workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.cpp

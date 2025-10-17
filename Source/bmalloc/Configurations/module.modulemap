@@ -1,4 +1,4 @@
-module bmalloc {
+module bmalloc [system] {
     // List of "semi-public" bmalloc headers. What does "semi-public" mean? These are
     // the headers which, in practice, are included by WTF headers. WTF headers are
     // exported as part of the WebKit SPI, and therefore these headers need to be

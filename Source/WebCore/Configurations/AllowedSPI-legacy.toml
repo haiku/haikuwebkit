@@ -16,12 +16,15 @@ selectors = [
 ]
 requires = ["ENABLE_MULTI_REPRESENTATION_HEIC"]
 
-# This is SPI, but it's marked as public on 26.x releases due to rdar://148943382.
+# -isSystemVoice is SPI, but it's marked as public on internal builds of 26.x
+# releases due to rdar://148943382.
 [[legacy]]
-selectors = [
-    { name = "isSystemVoice", class = "?" },
-]
+selectors = [{ name = "isSystemVoice", class = "?" }]
 requires = ["!SDKDB_HAS_148943382"]
+
+[[legacy]]
+selectors = [{ name = "isSystemVoice", class = "?" }]
+requires = ["!USE_APPLE_INTERNAL_SDK"]
 
 [[legacy]]
 classes = [

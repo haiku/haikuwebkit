@@ -32,7 +32,7 @@
 #include "Grid.h"
 #include "GridArea.h"
 #include "GridLayoutFunctions.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderGrid.h"
 #include "RenderObjectInlines.h"
 #include "RenderStyleConstants.h"
@@ -263,7 +263,7 @@ LayoutUnit GridTrackSizingAlgorithm::initialBaseSize(const Style::GridTrackSize&
 
     auto& trackLength = gridLength.length();
     if (trackLength.isSpecified())
-        return Style::evaluate(trackLength, std::max<LayoutUnit>(availableSpace().value_or(0), 0), 1.0f /* FIXME ZOOM EFFECTED? */);
+        return Style::evaluate<LayoutUnit>(trackLength, std::max<LayoutUnit>(availableSpace().value_or(0), 0), Style::ZoomNeeded { });
 
     ASSERT(trackLength.isMinContent() || trackLength.isAuto() || trackLength.isMaxContent());
     return 0;
@@ -277,7 +277,7 @@ LayoutUnit GridTrackSizingAlgorithm::initialGrowthLimit(const Style::GridTrackSi
 
     auto& trackLength = gridLength.length();
     if (trackLength.isSpecified())
-        return Style::evaluate(trackLength, std::max<LayoutUnit>(availableSpace().value_or(0), 0), 1.0f /* FIXME ZOOM EFFECTED? */);
+        return Style::evaluate<LayoutUnit>(trackLength, std::max<LayoutUnit>(availableSpace().value_or(0), 0), Style::ZoomNeeded { });
 
     ASSERT(trackLength.isMinContent() || trackLength.isAuto() || trackLength.isMaxContent());
     return infinity;
@@ -300,7 +300,7 @@ void GridTrackSizingAlgorithm::sizeTrackToFitSingleSpanMasonryGroup(const GridSp
     else if (trackSize.hasMaxContentOrAutoMaxTrackBreadth()) {
         auto growthLimit = masonryIndefiniteItems.maxContentSize;
         if (trackSize.isFitContent())
-            growthLimit = std::min(growthLimit, Style::evaluate(trackSize.fitContentTrackLength(), availableSpace().value_or(0), 1.0f /* FIXME ZOOM EFFECTED? */));
+            growthLimit = std::min(growthLimit, Style::evaluate<LayoutUnit>(trackSize.fitContentTrackLength(), availableSpace().value_or(0), Style::ZoomNeeded { }));
         track.setGrowthLimit(std::max(track.growthLimit(), growthLimit));
     }
 }
@@ -323,7 +323,7 @@ void GridTrackSizingAlgorithm::sizeTrackToFitNonSpanningItem(const GridSpan& spa
     } else if (trackSize.hasMaxContentOrAutoMaxTrackBreadth()) {
         LayoutUnit growthLimit = m_strategy->maxContentContributionForGridItem(gridItem, gridLayoutState);
         if (trackSize.isFitContent())
-            growthLimit = std::min(growthLimit, Style::evaluate(trackSize.fitContentTrackLength(), availableSpace().value_or(0), 1.0f /* FIXME ZOOM EFFECTED? */));
+            growthLimit = std::min(growthLimit, Style::evaluate<LayoutUnit>(trackSize.fitContentTrackLength(), availableSpace().value_or(0), Style::ZoomNeeded { }));
         track.setGrowthLimit(std::max(track.growthLimit(), growthLimit));
     }
 }
@@ -695,7 +695,7 @@ void GridTrackSizingAlgorithm::convertIndefiniteItemsToDefiniteMasonry(const Std
     auto& allTracks = tracks(m_direction);
 
     for (auto& indefiniteItem : indefiniteSpanSizes) {
-        for (auto trackIndex = 0u; trackIndex < allTracks.size(); trackIndex++) {
+        for (size_t trackIndex = 0; trackIndex < allTracks.size(); trackIndex++) {
             auto endLine = trackIndex + indefiniteItem.first;
             auto itemSpan = GridSpan::translatedDefiniteGridSpan(trackIndex, endLine);
 
@@ -828,7 +828,7 @@ std::optional<LayoutUnit> GridTrackSizingAlgorithm::estimatedGridAreaBreadthForG
         if (maxTrackSize.isContentSized() || maxTrackSize.isFlex() || GridLayoutFunctions::isRelativeGridTrackBreadthAsAuto(maxTrackSize, availableSpace(direction)))
             gridAreaIsIndefinite = true;
         else
-            gridAreaSize += Style::evaluate(maxTrackSize.length(), availableSize.value_or(0_lu), 1.0f /* FIXME ZOOM EFFECTED? */);
+            gridAreaSize += Style::evaluate<LayoutUnit>(maxTrackSize.length(), availableSize.value_or(0_lu), Style::ZoomNeeded { });
     }
 
     gridAreaSize += m_renderGrid->guttersSize(direction, span.startLine(), span.integerSpan(), availableSize);
@@ -1108,7 +1108,7 @@ LayoutUnit GridTrackSizingAlgorithmStrategy::minContentContributionForGridItem(R
             auto gridItemLogicalMinWidth = gridItem.style().logicalMinWidth();
 
             if (auto fixedFridItemLogicalMinWidth = gridItemLogicalMinWidth.tryFixed())
-                return LayoutUnit { fixedFridItemLogicalMinWidth->value };
+                return LayoutUnit { fixedFridItemLogicalMinWidth->resolveZoom(Style::ZoomNeeded { }) };
             if (gridItemLogicalMinWidth.isMaxContent())
                 return gridItem.maxPreferredLogicalWidth();
 
@@ -1193,7 +1193,7 @@ LayoutUnit GridTrackSizingAlgorithmStrategy::minContributionForGridItem(RenderBo
             if (!trackSize.hasFixedMaxTrackBreadth())
                 allFixed = false;
             else if (allFixed)
-                maxBreadth += Style::evaluate(trackSize.maxTrackBreadth().length(), availableSpace().value_or(0_lu), 1.0f /* FIXME ZOOM EFFECTED? */);
+                maxBreadth += Style::evaluate<LayoutUnit>(trackSize.maxTrackBreadth().length(), availableSpace().value_or(0_lu), Style::ZoomNeeded { });
         }
         if (!allFixed)
             return minSize;
@@ -1479,7 +1479,7 @@ double IndefiniteSizeStrategy::findUsedFlexFraction(Vector<unsigned>& flexibleSi
         }
     } else {
         Vector<SingleThreadWeakPtr<RenderBox>> indefiniteItems;
-        for (auto trackIndex = 0u; trackIndex < m_algorithm.tracks(direction).size(); trackIndex++) {
+        for (size_t trackIndex = 0; trackIndex < m_algorithm.tracks(direction).size(); trackIndex++) {
             GridIterator iterator(grid, direction, trackIndex);
             while (auto* gridItem = iterator.nextGridItem()) {
                 if (Style::GridPositionsResolver::resolveGridPositionsFromStyle(*m_algorithm.renderGrid(), *gridItem, direction).isIndefinite())
@@ -1647,7 +1647,7 @@ void GridTrackSizingAlgorithm::initializeTrackSizes()
         track.setInfinitelyGrowable(false);
 
         if (trackSize.isFitContent())
-            track.setGrowthLimitCap(Style::evaluate(trackSize.fitContentTrackLength(), maxSize, 1.0f /* FIXME ZOOM EFFECTED? */));
+            track.setGrowthLimitCap(Style::evaluate<LayoutUnit>(trackSize.fitContentTrackLength(), maxSize, Style::ZoomNeeded { }));
         if (trackSize.isContentSized())
             m_contentSizedTracksIndex.append(i);
         if (trackSize.maxTrackBreadth().isFlex())
@@ -1817,7 +1817,7 @@ void GridTrackSizingAlgorithm::computeDefiniteAndIndefiniteItemsForMasonry(StdMa
 
     auto& allTracks = tracks(m_direction);
     auto trackLength = allTracks.size();
-    for (auto trackIndex = 0u; trackIndex < trackLength; trackIndex++) {
+    for (size_t trackIndex = 0; trackIndex < trackLength; trackIndex++) {
         GridIterator iterator(m_grid, m_direction, trackIndex);
 
         while (CheckedPtr gridItem = iterator.nextGridItem()) {
@@ -2041,7 +2041,7 @@ void GridTrackSizingAlgorithm::setup(Style::GridTrackSizingDirection direction, 
             const auto subgridSpan = m_renderGrid->gridSpanForGridItem(subgrid, Style::GridTrackSizingDirection::Columns);
             auto& subgridRowStartMargin = subgrid.style().marginBefore(m_renderGrid->writingMode());
             if (!subgridRowStartMargin.isAuto())
-                m_renderGrid->setMarginBeforeForChild(subgrid, Style::evaluateMinimum(subgridRowStartMargin, computeGridSpanSize(tracks(Style::GridTrackSizingDirection::Columns), subgridSpan, std::make_optional(m_renderGrid->gridItemOffset(direction)), m_renderGrid->guttersSize(Style::GridTrackSizingDirection::Columns, subgridSpan.startLine(), subgridSpan.integerSpan(), this->availableSpace(Style::GridTrackSizingDirection::Columns))), 1.0f /* FIXME ZOOM EFFECTED? */));
+                m_renderGrid->setMarginBeforeForChild(subgrid, Style::evaluateMinimum<LayoutUnit>(subgridRowStartMargin, computeGridSpanSize(tracks(Style::GridTrackSizingDirection::Columns), subgridSpan, std::make_optional(m_renderGrid->gridItemOffset(direction)), m_renderGrid->guttersSize(Style::GridTrackSizingDirection::Columns, subgridSpan.startLine(), subgridSpan.integerSpan(), this->availableSpace(Style::GridTrackSizingDirection::Columns))), Style::ZoomNeeded { }));
         }
     };
     if (m_direction == Style::GridTrackSizingDirection::Rows && (m_sizingState == SizingState::RowSizingFirstIteration || m_sizingState == SizingState::RowSizingSecondIteration))

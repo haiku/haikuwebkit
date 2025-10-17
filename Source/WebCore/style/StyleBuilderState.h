@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,24 +50,21 @@ class StyleResolver;
 class TextAutospace;
 class TextSpacingTrim;
 
-struct FontPalette;
-struct FontSizeAdjust;
-
 namespace CSSCalc {
 struct RandomCachingKey;
-}
-
-namespace CSS {
-struct AppleColorFilter;
-struct Filter;
 }
 
 namespace Style {
 
 class BuilderState;
 struct Color;
+struct FontPalette;
+struct FontSizeAdjust;
+struct FontStyle;
+struct FontWeight;
+struct FontWidth;
 
-void maybeUpdateFontForLetterSpacing(BuilderState&, CSSValue&);
+void maybeUpdateFontForLetterSpacingOrWordSpacing(BuilderState&, CSSValue&);
 
 enum class ApplyValueType : uint8_t { Value, Initial, Inherit };
 
@@ -160,9 +158,10 @@ public:
     void setFontDescriptionFamilies(Vector<AtomString>&);
     void setFontDescriptionIsSpecifiedFont(bool);
     void setFontDescriptionFeatureSettings(FontFeatureSettings&&);
-    void setFontDescriptionFontPalette(const FontPalette&);
+    void setFontDescriptionFontPalette(FontPalette&&);
     void setFontDescriptionFontSizeAdjust(FontSizeAdjust);
     void setFontDescriptionFontSmoothing(FontSmoothingMode);
+    void setFontDescriptionFontStyle(FontStyle);
     void setFontDescriptionFontSynthesisSmallCaps(FontSynthesisLonghandValue);
     void setFontDescriptionFontSynthesisStyle(FontSynthesisLonghandValue);
     void setFontDescriptionFontSynthesisWeight(FontSynthesisLonghandValue);
@@ -176,8 +175,8 @@ public:
     void setFontDescriptionVariantEmoji(FontVariantEmoji);
     void setFontDescriptionVariantPosition(FontVariantPosition);
     void setFontDescriptionVariationSettings(FontVariationSettings&&);
-    void setFontDescriptionWeight(FontSelectionValue);
-    void setFontDescriptionWidth(FontSelectionValue);
+    void setFontDescriptionWeight(FontWeight);
+    void setFontDescriptionWidth(FontWidth);
     void setFontDescriptionVariantAlternates(const FontVariantAlternates&);
     void setFontDescriptionVariantEastAsianVariant(FontVariantEastAsianVariant);
     void setFontDescriptionVariantEastAsianWidth(FontVariantEastAsianWidth);
@@ -196,8 +195,8 @@ public:
     void disableNativeAppearanceIfNeeded(CSSPropertyID, PropertyCascade::Origin);
 
 private:
-    // See the comment in maybeUpdateFontForLetterSpacing() about why this needs to be a friend.
-    friend void maybeUpdateFontForLetterSpacing(BuilderState&, CSSValue&);
+    // See the comment in maybeUpdateFontForLetterSpacingOrWordSpacing() about why this needs to be a friend.
+    friend void maybeUpdateFontForLetterSpacingOrWordSpacing(BuilderState&, CSSValue&);
     friend class Builder;
 
     void adjustStyleForInterCharacterRuby();
@@ -209,6 +208,7 @@ private:
     void updateFontForZoomChange();
     void updateFontForGenericFamilyChange();
     void updateFontForOrientationChange();
+    void updateFontForSizeChange();
 
     RenderStyle& m_style;
     BuilderContext m_context;

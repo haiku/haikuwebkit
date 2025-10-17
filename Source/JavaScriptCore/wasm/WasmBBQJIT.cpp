@@ -2916,48 +2916,22 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addF32Copysign(Value lhs, Value rhs, Va
         "F32Copysign", TypeKind::F32,
         BLOCK(Value::fromF32(floatCopySign(lhs.asF32(), rhs.asF32()))),
         BLOCK(
-            // FIXME: Better than what we have in the Air backend, but still not great. I think
-            // there's some vector instruction we can use to do this much quicker.
-
-#if CPU(X86_64)
-            m_jit.moveFloatTo32(lhsLocation.asFPR(), wasmScratchGPR);
-            m_jit.and32(TrustedImm32(0x7fffffff), wasmScratchGPR);
-            m_jit.move32ToFloat(wasmScratchGPR, wasmScratchFPR);
-            m_jit.moveFloatTo32(rhsLocation.asFPR(), wasmScratchGPR);
-            m_jit.and32(TrustedImm32(static_cast<int32_t>(0x80000000u)), wasmScratchGPR, wasmScratchGPR);
-            m_jit.move32ToFloat(wasmScratchGPR, resultLocation.asFPR());
-            m_jit.orFloat(resultLocation.asFPR(), wasmScratchFPR, resultLocation.asFPR());
-#else
-            m_jit.moveFloatTo32(rhsLocation.asFPR(), wasmScratchGPR);
-            m_jit.and32(TrustedImm32(static_cast<int32_t>(0x80000000u)), wasmScratchGPR, wasmScratchGPR);
-            m_jit.move32ToFloat(wasmScratchGPR, wasmScratchFPR);
-            m_jit.absFloat(lhsLocation.asFPR(), lhsLocation.asFPR());
-            m_jit.orFloat(lhsLocation.asFPR(), wasmScratchFPR, resultLocation.asFPR());
-#endif
+            m_jit.move32ToFloat(TrustedImm32(std::numeric_limits<int32_t>::min()), wasmScratchFPR);
+            m_jit.andFloat(rhsLocation.asFPR(), wasmScratchFPR, wasmScratchFPR);
+            m_jit.absFloat(lhsLocation.asFPR(), resultLocation.asFPR());
+            m_jit.orFloat(wasmScratchFPR, resultLocation.asFPR(), resultLocation.asFPR());
         ),
         BLOCK(
             if (lhs.isConst()) {
-                m_jit.moveFloatTo32(rhsLocation.asFPR(), wasmScratchGPR);
-                m_jit.and32(TrustedImm32(static_cast<int32_t>(0x80000000u)), wasmScratchGPR, wasmScratchGPR);
-                m_jit.move32ToFloat(wasmScratchGPR, wasmScratchFPR);
-
+                m_jit.move32ToFloat(TrustedImm32(std::numeric_limits<int32_t>::min()), wasmScratchFPR);
+                m_jit.andFloat(rhsLocation.asFPR(), wasmScratchFPR, wasmScratchFPR);
                 emitMoveConst(Value::fromF32(std::abs(lhs.asF32())), resultLocation);
                 m_jit.orFloat(resultLocation.asFPR(), wasmScratchFPR, resultLocation.asFPR());
             } else {
                 bool signBit = std::bit_cast<uint32_t>(rhs.asF32()) & 0x80000000u;
-#if CPU(X86_64)
-                m_jit.moveDouble(lhsLocation.asFPR(), resultLocation.asFPR());
-                m_jit.move32ToFloat(TrustedImm32(0x7fffffff), wasmScratchFPR);
-                m_jit.andFloat(wasmScratchFPR, resultLocation.asFPR());
-                if (signBit) {
-                    m_jit.xorFloat(wasmScratchFPR, wasmScratchFPR);
-                    m_jit.subFloat(wasmScratchFPR, resultLocation.asFPR(), resultLocation.asFPR());
-                }
-#else
                 m_jit.absFloat(lhsLocation.asFPR(), resultLocation.asFPR());
                 if (signBit)
                     m_jit.negateFloat(resultLocation.asFPR(), resultLocation.asFPR());
-#endif
             }
         )
     )
@@ -3151,7 +3125,7 @@ ControlData WARN_UNUSED_RETURN BBQJIT::addTopLevel(BlockSignature signature)
 
     m_pcToCodeOriginMapBuilder.appendItem(m_jit.label(), PCToCodeOriginMapBuilder::defaultCodeOrigin());
     m_jit.emitFunctionPrologue();
-    emitSaveCalleeSaves();
+    emitPushCalleeSaves();
     m_topLevel = ControlData(*this, BlockType::TopLevel, signature, 0);
 
     JIT_COMMENT(m_jit, "Store boxed JIT callee");
@@ -3332,7 +3306,7 @@ MacroAssembler::Label BBQJIT::addLoopOSREntrypoint()
     //  - Don't need to zero our locals, since they are restored from the OSR entry scratch buffer anyway.
     auto label = m_jit.label();
     m_jit.emitFunctionPrologue();
-    emitSaveCalleeSaves();
+    emitPushCalleeSaves();
 
     m_jit.move(CCallHelpers::TrustedImmPtr(CalleeBits::boxNativeCallee(&m_callee)), wasmScratchGPR);
     static_assert(CallFrameSlot::codeBlock + 1 == CallFrameSlot::callee);
@@ -3480,7 +3454,8 @@ StackMap BBQJIT::makeStackMap(const ControlData& data, Stack& enclosingStack)
         stackMap[stackMapIndex ++] = OSREntryValue(toB3Rep(data.argumentLocations()[i]), toB3Type(data.argumentType(i).kind));
 
     RELEASE_ASSERT(stackMapIndex == numElements);
-    m_osrEntryScratchBufferSize = std::max(m_osrEntryScratchBufferSize, numElements + BBQCallee::extraOSRValuesForLoopIndex);
+    unsigned bufferSize = Context::scratchBufferSlotsPerValue(m_callee.savedFPWidth()) * (BBQCallee::extraOSRValuesForLoopIndex + numElements);
+    m_osrEntryScratchBufferSize = std::max(m_osrEntryScratchBufferSize, bufferSize);
     return stackMap;
 }
 
@@ -4469,11 +4444,11 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCall(unsigned callProfileIndex, Func
 
     // Our callee could have tail called someone else and changed SP so we need to restore it. Do this before restoring our results since results are stored at the top of the reserved stack space.
     m_frameSizeLabels.append(m_jit.moveWithPatch(TrustedImmPtr(nullptr), wasmScratchGPR));
-#if CPU(ARM_THUMB2)
+#if CPU(ARM64)
+    m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, MacroAssembler::stackPointerRegister);
+#else
     m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, wasmScratchGPR);
     m_jit.move(wasmScratchGPR, MacroAssembler::stackPointerRegister);
-#else
-    m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, MacroAssembler::stackPointerRegister);
 #endif
 
     // Push return value(s) onto the expression stack
@@ -4541,11 +4516,11 @@ void BBQJIT::emitIndirectCall(const char* opcode, unsigned callProfileIndex, con
 
     // Our callee could have tail called someone else and changed SP so we need to restore it. Do this before restoring our results since results are stored at the top of the reserved stack space.
     m_frameSizeLabels.append(m_jit.moveWithPatch(TrustedImmPtr(nullptr), wasmScratchGPR));
-#if CPU(ARM_THUMB2)
+#if CPU(ARM64)
+    m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, MacroAssembler::stackPointerRegister);
+#else
     m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, wasmScratchGPR);
     m_jit.move(wasmScratchGPR, MacroAssembler::stackPointerRegister);
-#else
-    m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, MacroAssembler::stackPointerRegister);
 #endif
 
     returnValuesFromCall(results, *signature.as<FunctionSignature>(), wasmCalleeInfo);
@@ -5318,8 +5293,15 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileBBQ(Compilati
     return result;
 }
 
-void BBQJIT::emitSaveCalleeSaves()
+void BBQJIT::emitPushCalleeSaves()
 {
+    size_t stackSizeForCalleeSaves = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(RegisterAtOffsetList::bbqCalleeSaveRegisters().registerCount() * sizeof(UCPURegister));
+#if CPU(X86_64) || CPU(ARM64)
+    m_jit.subPtr(GPRInfo::callFrameRegister, TrustedImm32(stackSizeForCalleeSaves), MacroAssembler::stackPointerRegister);
+#else
+    m_jit.subPtr(GPRInfo::callFrameRegister, TrustedImm32(stackSizeForCalleeSaves), wasmScratchGPR);
+    m_jit.move(wasmScratchGPR, MacroAssembler::stackPointerRegister);
+#endif
     m_jit.emitSaveCalleeSavesFor(&RegisterAtOffsetList::bbqCalleeSaveRegisters());
 }
 

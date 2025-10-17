@@ -35,11 +35,17 @@ using JSHandleIdentifier = ProcessQualified<ObjectIdentifier<JSHandleIdentifierT
 
 namespace WebKit {
 
+struct ContentWorldIdentifierType;
+using ContentWorldIdentifier = WebCore::ProcessQualified<ObjectIdentifier<ContentWorldIdentifierType>>;
+
 struct JSHandleInfo {
     WTF_MAKE_STRUCT_TZONE_ALLOCATED(JSHandleInfo);
-    JSHandleInfo(WebCore::JSHandleIdentifier, FrameInfoData&&, Markable<WebCore::FrameIdentifier>);
+    JSHandleInfo(WebCore::JSHandleIdentifier, ContentWorldIdentifier, FrameInfoData&&, Markable<WebCore::FrameIdentifier>);
+
+    bool operator==(const JSHandleInfo&) const;
 
     WebCore::JSHandleIdentifier identifier;
+    ContentWorldIdentifier worldIdentifier;
     FrameInfoData frameInfo;
     Markable<WebCore::FrameIdentifier> windowProxyFrameIdentifier;
 };

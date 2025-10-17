@@ -99,7 +99,7 @@ private:
             CharactersSpan()
                 : currentCharacter8()
             { }
-            std::span<const LChar> currentCharacter8;
+            std::span<const Latin1Character> currentCharacter8;
             std::span<const char16_t> currentCharacter16;
         } s;
         bool is8Bit { true };

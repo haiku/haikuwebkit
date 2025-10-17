@@ -159,7 +159,7 @@ RefPtr<VideoFrame> VideoFrame::createRGBA(std::span<const uint8_t> span, size_t 
     auto sourceBuffer = makeVImageBuffer8888(spanConstCast<uint8_t>(span), width, height, plane.sourceWidthBytes);
     auto destinationBuffer = makeVImageBuffer8888(pixelBuffer.get());
     uint8_t channelMap[4] = { 3, 0, 1, 2 };
-    auto error = vImagePermuteChannels_ARGB8888(&sourceBuffer, &destinationBuffer, channelMap, kvImageNoFlags);
+    auto error = vImagePermuteChannels_ARGB8888(&sourceBuffer, &destinationBuffer, channelMap, kvImageDoNotTile);
     // Permutation will not fail as long as the provided arguments are valid.
     ASSERT_UNUSED(error, error == kvImageNoError);
 
@@ -185,7 +185,7 @@ RefPtr<VideoFrame> VideoFrame::createBGRA(std::span<const uint8_t> span, size_t 
 
     auto sourceBuffer = makeVImageBuffer8888(spanConstCast<uint8_t>(span), width, height, plane.sourceWidthBytes);
     auto destinationBuffer = makeVImageBuffer8888(pixelBuffer.get());
-    auto error = vImageCopyBuffer(&sourceBuffer, &destinationBuffer, 4, kvImageNoFlags);
+    auto error = vImageCopyBuffer(&sourceBuffer, &destinationBuffer, 4, kvImageDoNotTile);
     // Copy will not fail as long as the provided arguments are valid.
     ASSERT_UNUSED(error, error == kvImageNoError);
 

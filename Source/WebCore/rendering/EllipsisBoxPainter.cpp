@@ -25,11 +25,14 @@
 #include "config.h"
 #include "EllipsisBoxPainter.h"
 
+#include "CSSPropertyNames.h"
 #include "InlineIteratorTextBox.h"
 #include "LineSelection.h"
 #include "PaintInfo.h"
 #include "RenderObjectDocument.h"
+#include "RenderStyleInlines.h"
 #include "RenderView.h"
+#include "StyleTextShadow.h"
 
 namespace WebCore {
 
@@ -69,7 +72,7 @@ void EllipsisBoxPainter::paint()
             return false;
         },
         [&](const auto& shadows) {
-            context.setDropShadow({ LayoutSize(shadows[0].location.x().value, shadows[0].location.y().value), shadows[0].blur.value, style.colorWithColorFilter(shadows[0].color), ShadowRadiusMode::Default });
+            context.setDropShadow({ LayoutSize(shadows[0].location.x().resolveZoom(Style::ZoomNeeded { }), shadows[0].location.y().resolveZoom(Style::ZoomNeeded { })), shadows[0].blur.resolveZoom(Style::ZoomNeeded { }), style.colorWithColorFilter(shadows[0].color), ShadowRadiusMode::Default });
             return true;
         }
     );

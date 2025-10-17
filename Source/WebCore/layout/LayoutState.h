@@ -68,7 +68,7 @@ public:
     // Primary layout state has a direct geometry cache in layout boxes.
     enum class Type { Primary, Secondary };
 
-    using FormattingContextLayoutFunction = Function<void(const ElementBox&, std::optional<LayoutUnit>, LayoutState&)>;
+    using FormattingContextLayoutFunction = Function<void(const ElementBox&, std::optional<LayoutUnit>, std::optional<LayoutUnit>, LayoutState&)>;
     using FormattingContextLogicalWidthFunction = Function<LayoutUnit(const ElementBox&, LayoutIntegration::LogicalWidthType)>;
     using FormattingContextLogicalHeightFunction = Function<LayoutUnit(const ElementBox&, LayoutIntegration::LogicalHeightType)>;
 
@@ -114,7 +114,9 @@ public:
 
     const ElementBox& root() const { return m_rootContainer; }
 
-    void layoutWithFormattingContextForBox(const ElementBox&, std::optional<LayoutUnit> widthConstraint) const;
+    // A height constraint is primarily given by Grid Formatting Contexts since it is able to determine
+    // one for grid items in many cases which drives the use of setOverridingBorderBoxLogicalHeight.
+    void layoutWithFormattingContextForBox(const ElementBox&, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint) const;
     LayoutUnit logicalWidthWithFormattingContextForBox(const ElementBox&, LayoutIntegration::LogicalWidthType) const;
     LayoutUnit logicalHeightWithFormattingContextForBox(const ElementBox&, LayoutIntegration::LogicalHeightType) const;
 

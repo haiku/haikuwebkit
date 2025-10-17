@@ -560,7 +560,7 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
                 // No function import means the import is a wasm builtin.
                 // The boxed callee in callLinkInfo is a WasmBuiltinCallee with a pointer to the builtin.
                 auto* callLinkInfo = m_instance->importFunctionInfo(functionIndexSpace);
-                auto* callee = std::bit_cast<Wasm::WasmBuiltinCallee*>(callLinkInfo->boxedCallee.asNativeCallee());
+                auto* callee = uncheckedDowncast<Wasm::WasmBuiltinCallee>(uncheckedDowncast<Wasm::Callee>(callLinkInfo->boxedCallee.asNativeCallee()));
                 ASSERT(callee->compilationMode() == Wasm::CompilationMode::WasmBuiltinMode);
                 const WebAssemblyBuiltin* builtin = callee->builtin();
                 wrapper = builtin->jsWrapper(globalObject);

@@ -603,7 +603,7 @@ bool GraphicsLayerTextureMapper::filtersCanBeComposited(const FilterOperations& 
     return !filters.hasReferenceFilter();
 }
 
-bool GraphicsLayerTextureMapper::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const GraphicsLayerAnimation* anim, const String& keyframesName, double timeOffset)
+bool GraphicsLayerTextureMapper::addAnimation(const KeyframeValueList& valueList, const GraphicsLayerAnimation* anim, const String& keyframesName, double timeOffset)
 {
     ASSERT(!keyframesName.isEmpty());
 
@@ -625,7 +625,7 @@ bool GraphicsLayerTextureMapper::addAnimation(const KeyframeValueList& valueList
     }
 
     const MonotonicTime currentTime = MonotonicTime::now();
-    m_animations.add(TextureMapperAnimation(keyframesName, valueList, boxSize, *anim, currentTime - Seconds(timeOffset), 0_s, TextureMapperAnimation::State::Playing));
+    m_animations.add(TextureMapperAnimation(keyframesName, valueList, *anim, currentTime - Seconds(timeOffset), 0_s, TextureMapperAnimation::State::Playing));
     // m_animationStartTime is the time of the first real frame of animation, now or delayed by a negative offset.
     if (Seconds(timeOffset) > 0_s)
         m_animationStartTime = currentTime;

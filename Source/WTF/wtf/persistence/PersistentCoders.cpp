@@ -138,7 +138,7 @@ std::optional<String> Coder<String>::decodeForPersistence(Decoder& decoder)
         return std::nullopt;
 
     if (*is8Bit)
-        return decodeStringText<LChar>(decoder, *length);
+        return decodeStringText<Latin1Character>(decoder, *length);
     return decodeStringText<char16_t>(decoder, *length);
 }
 

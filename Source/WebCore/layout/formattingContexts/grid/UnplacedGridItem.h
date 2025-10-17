@@ -53,6 +53,12 @@ public:
     int explicitRowStart() const;
     int explicitRowEnd() const;
 
+    bool hasDefiniteRowPosition() const;
+    bool hasDefiniteColumnPosition() const;
+    bool hasAutoColumnPosition() const;
+    size_t columnSpanSize() const;
+    std::pair<int, int> definiteRowStartEnd() const;
+
 private:
     CheckedRef<const ElementBox> m_layoutBox;
 
@@ -60,12 +66,19 @@ private:
     std::pair<Style::GridPosition, Style::GridPosition> m_columnPosition;
     std::pair<Style::GridPosition, Style::GridPosition> m_rowPosition;
 
+    friend class GridFormattingContext;
     friend class PlacedGridItem;
     friend void add(Hasher&, const WebCore::Layout::UnplacedGridItem&);
 };
 
+// https://drafts.csswg.org/css-grid-1/#auto-placement-algo
 struct UnplacedGridItems {
+    // 1. Position anything that’s not auto-positioned.
     Vector<UnplacedGridItem> nonAutoPositionedItems;
+    // 2. Process the items locked to a given row.
+    Vector<UnplacedGridItem> definiteRowPositionedItems;
+    // 4. Position the remaining grid items.
+    Vector<UnplacedGridItem> autoPositionedItems;
 };
 
 }
@@ -78,6 +91,7 @@ template<> struct HashTraits<WebCore::Layout::UnplacedGridItem> : SimpleClassHas
     static constexpr bool hasIsEmptyValueFunction = true;
 
     static bool isEmptyValue(const WebCore::Layout::UnplacedGridItem& unplacedGridItem) { return unplacedGridItem.isHashTableEmptyValue(); }
+    static WebCore::Layout::UnplacedGridItem emptyValue() { return WebCore::Layout::UnplacedGridItem { HashTableEmptyValueType::HashTableEmptyValue }; }
 };
 
 template<> struct DefaultHash<WebCore::Layout::UnplacedGridItem> {
@@ -89,4 +103,3 @@ template<> struct DefaultHash<WebCore::Layout::UnplacedGridItem> {
 };
 
 }
-

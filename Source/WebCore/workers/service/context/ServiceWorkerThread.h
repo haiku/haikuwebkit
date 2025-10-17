@@ -53,12 +53,9 @@ struct NotificationPayload;
 
 enum class AdvancedPrivacyProtections : uint16_t;
 
-class ServiceWorkerThread : public WorkerThread {
+class ServiceWorkerThread final : public WorkerThread {
 public:
-    template<typename... Args> static Ref<ServiceWorkerThread> create(Args&&... args)
-    {
-        return adoptRef(*new ServiceWorkerThread(std::forward<Args>(args)...));
-    }
+    static Ref<ServiceWorkerThread> create(ServiceWorkerContextData&&, ServiceWorkerData&&, String&& userAgent, WorkerThreadMode, const SettingsValues&, WorkerLoaderProxy&, WorkerDebuggerProxy&, WorkerBadgeProxy&, IDBClient::IDBConnectionProxy*, SocketProvider*, std::unique_ptr<NotificationClient>&&, PAL::SessionID, std::optional<uint64_t>, OptionSet<AdvancedPrivacyProtections>);
     virtual ~ServiceWorkerThread();
 
     WorkerObjectProxy& workerObjectProxy() const;
@@ -105,6 +102,7 @@ private:
 
     ASCIILiteral threadName() const final { return "WebCore: ServiceWorker"_s; }
     void finishedEvaluatingScript() final;
+    bool isServiceWorkerThread() const final { return true; }
 
     void finishedFiringInstallEvent(bool hasRejectedAnyPromise);
     void finishedFiringActivateEvent();
@@ -140,3 +138,7 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ServiceWorkerThread)
+    static bool isType(const WebCore::WorkerOrWorkletThread& thread) { return thread.isServiceWorkerThread(); }
+SPECIALIZE_TYPE_TRAITS_END()

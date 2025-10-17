@@ -135,7 +135,6 @@ interface TestRunner {
     attribute double databaseMaxQuota;
 
     // Text search testing.
-    undefined findStringMatchesInPage(DOMString target, object optionsArray);
     undefined replaceFindMatchesAtIndices(object matchIndicesArray, DOMString replacementText, boolean selectionOnly);
 
     // Evaluating script in a special context.
@@ -227,10 +226,6 @@ interface TestRunner {
     undefined queueLoadingScript(DOMString script);
     undefined queueNonLoadingScript(DOMString script);
 
-    // Authentication
-    undefined setAuthenticationUsername(DOMString username);
-    undefined setAuthenticationPassword(DOMString password);
-
     undefined setAllowsAnySSLCertificate(boolean value);
 
     undefined setShouldSwapToEphemeralSessionOnNextNavigation(boolean value);
@@ -238,9 +233,6 @@ interface TestRunner {
 
     // Secure text input mode (Mac only)
     readonly attribute boolean secureEventInputIsEnabled;
-    
-    // Override plugin load policy.
-    undefined setPluginSupportedMode(DOMString mode);
 
     // Hooks to the JSC compiler.
     object failNextNewCodeBlock();
@@ -250,9 +242,6 @@ interface TestRunner {
     unsigned long imageCountInGeneralPasteboard();
 
     undefined accummulateLogsForChannel(DOMString channel);
-
-    // Contextual menu actions
-    undefined setAllowedMenuActions(object actions);
 
     // Gamepad
     undefined setMockGamepadDetails(unsigned long index, DOMString id, DOMString mapping, unsigned long axisCount, unsigned long buttonCount, boolean supportsDualRumble, boolean wasConnected);
@@ -305,10 +294,6 @@ interface TestRunner {
     // Storage Access API
     undefined setRequestStorageAccessThrowsExceptionUntilReload(boolean enabled);
 
-    // Open panel
-    undefined setOpenPanelFiles(object filesArray);
-    undefined setOpenPanelFilesMediaIcon(object mediaIcon);
-
     // Modal alerts
     undefined setShouldDismissJavaScriptAlertsAsynchronously(boolean value);
     undefined abortModal();
@@ -342,11 +327,9 @@ interface TestRunner {
 
     boolean hasAppBoundSession();
     undefined clearAppBoundSession();
-    undefined setAppBoundDomains(object originsArray, object callback);
     boolean didLoadAppInitiatedRequest();
     boolean didLoadNonAppInitiatedRequest();
 
-    undefined setManagedDomains(object originsArray, object callback);
 
     undefined injectUserScript(DOMString string);
     readonly attribute unsigned long userScriptInjectedCount;

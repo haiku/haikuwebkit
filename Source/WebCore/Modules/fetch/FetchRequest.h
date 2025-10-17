@@ -77,7 +77,7 @@ public:
 
     const String& integrity() const { return m_options.integrity; }
 
-    ExceptionOr<Ref<FetchRequest>> clone();
+    ExceptionOr<Ref<FetchRequest>> clone(JSDOMGlobalObject&);
 
     const FetchOptions& fetchOptions() const { return m_options; }
     const ResourceRequest& internalRequest() const { return m_request; }

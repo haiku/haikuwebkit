@@ -46,7 +46,7 @@
 
 #define BAIL_IF_UNEXPECTED_TYPE(expr, classExpr)          \
     do {                                                  \
-        id value = (expr);                                \
+        RetainPtr value = (expr);                         \
         id classValue = (classExpr);                      \
         if (![value isKindOfClass:classValue])            \
             return;                                       \
@@ -54,7 +54,7 @@
 
 #define BAIL_IF_UNEXPECTED_TYPE_ALLOWING_NIL(expr, classExpr)   \
     do {                                                        \
-        id value = (expr);                                      \
+        RetainPtr value = (expr);                               \
         id classValue = (classExpr);                            \
         if (value && ![value isKindOfClass:classValue])         \
             return;                                             \
@@ -230,27 +230,28 @@ void RemoteInspector::sendAutomaticInspectionCandidateMessage(TargetID targetID)
         WIRTargetIdentifierKey : @(targetID),
         WIRTargetAllowsAutomaticInspectionInSameProcessKey : @(target->automaticInspectionAllowedInSameProcess()),
     };
-    m_relayConnection->sendMessage(WIRAutomaticInspectionCandidateMessage, details);
+    Ref { *m_relayConnection }->sendMessage(WIRAutomaticInspectionCandidateMessage, details);
 }
 
 void RemoteInspector::sendMessageToRemote(TargetID targetIdentifier, const String& message)
 {
     Locker locker { m_mutex };
 
-    if (!m_relayConnection)
+    RefPtr relayConnection = m_relayConnection;
+    if (!relayConnection)
         return;
 
-    auto targetConnection = m_targetConnectionMap.get(targetIdentifier);
+    RefPtr targetConnection = m_targetConnectionMap.get(targetIdentifier);
     if (!targetConnection)
         return;
 
-    NSData *messageData = [message.createNSString() dataUsingEncoding:NSUTF8StringEncoding];
-    NSUInteger messageLength = messageData.length;
+    RetainPtr messageData = [message.createNSString() dataUsingEncoding:NSUTF8StringEncoding];
+    NSUInteger messageLength = [messageData length];
     const NSUInteger maxChunkSize = 2 * 1024 * 1024; // 2 Mebibytes
 
     if (!m_messageDataTypeChunkSupported || messageLength < maxChunkSize) {
-        m_relayConnection->sendMessage(WIRRawDataMessage, @{
-            WIRRawDataKey: messageData,
+        relayConnection->sendMessage(WIRRawDataMessage, @{
+            WIRRawDataKey: messageData.get(),
             WIRMessageDataTypeKey: WIRMessageDataTypeFull,
             WIRConnectionIdentifierKey: targetConnection->connectionIdentifier(),
             WIRDestinationKey: targetConnection->destination()
@@ -263,7 +264,7 @@ void RemoteInspector::sendMessageToRemote(TargetID targetIdentifier, const Strin
             NSUInteger currentChunkSize = std::min(messageLength - offset, maxChunkSize);
             NSString *type = offset + currentChunkSize == messageLength ? WIRMessageDataTypeFinalChunk : WIRMessageDataTypeChunk;
 
-            m_relayConnection->sendMessage(WIRRawDataMessage, @{
+            relayConnection->sendMessage(WIRRawDataMessage, @{
                 WIRRawDataKey: [messageData subdataWithRange:NSMakeRange(offset, currentChunkSize)],
                 WIRMessageDataTypeKey: type,
                 WIRConnectionIdentifierKey: targetConnection->connectionIdentifier(),
@@ -308,13 +309,13 @@ void RemoteInspector::stopInternal(StopSource source)
 
     m_automaticInspectionCandidates.clear();
 
-    if (m_relayConnection) {
+    if (RefPtr relayConnection = m_relayConnection) {
         switch (source) {
         case StopSource::API:
-            m_relayConnection->close();
+            relayConnection->close();
             break;
         case StopSource::XPCMessage:
-            m_relayConnection->closeFromMessage();
+            relayConnection->closeFromMessage();
             break;
         }
 
@@ -330,9 +331,9 @@ void RemoteInspector::setupXPCConnectionIfNeeded()
 {
     Locker locker { m_mutex };
 
-    if (m_relayConnection) {
+    if (RefPtr relayConnection = m_relayConnection) {
         m_shouldReconnectToRelayOnFailure = true;
-        m_relayConnection->sendMessage(WIRPingMessage, nil);
+        relayConnection->sendMessage(WIRPingMessage, nil);
         return;
     }
 
@@ -342,8 +343,9 @@ void RemoteInspector::setupXPCConnectionIfNeeded()
         return;
     }
 
-    m_relayConnection = adoptRef(new RemoteInspectorXPCConnection(connection.get(), m_xpcQueue.get(), this));
-    m_relayConnection->sendMessage(@"syn", nil); // Send a simple message to initialize the XPC connection.
+    Ref relayConnection = adoptRef(*new RemoteInspectorXPCConnection(connection.get(), m_xpcQueue.get(), this));
+    m_relayConnection = relayConnection.copyRef();
+    relayConnection->sendMessage(@"syn", nil); // Send a simple message to initialize the XPC connection.
 
     if (m_automaticInspectionCandidates.size()) {
         // We already have a debuggable waiting to be automatically inspected.
@@ -469,10 +471,10 @@ void RemoteInspector::xpcConnectionUnhandledMessage(RemoteInspectorXPCConnection
 
 #pragma mark - Listings
 
-static NSString* identifierForPID(ProcessID pid)
+static RetainPtr<NSString> identifierForPID(ProcessID pid)
 {
     // This format matches that used in the relay process.
-    return [NSString stringWithFormat:@"PID:%lu", (unsigned long)pid];
+    return adoptNS([[NSString alloc] initWithFormat:@"PID:%lu", static_cast<unsigned long>(pid)]);
 }
 
 RetainPtr<NSDictionary> RemoteInspector::listingForInspectionTarget(const RemoteInspectionTarget& target) const
@@ -484,7 +486,8 @@ RetainPtr<NSDictionary> RemoteInspector::listingForInspectionTarget(const Remote
         return nil;
 
     RetainPtr<NSMutableDictionary> listing = adoptNS([[NSMutableDictionary alloc] init]);
-    [listing setObject:@(target.targetIdentifier()) forKey:WIRTargetIdentifierKey];
+    // FIXME: This is a safer cpp false positive (rdar://161698063).
+    SUPPRESS_UNRETAINED_ARG [listing setObject:@(target.targetIdentifier()) forKey:WIRTargetIdentifierKey];
 
     switch (target.type()) {
     case RemoteInspectionTarget::Type::ITML:
@@ -521,10 +524,10 @@ RetainPtr<NSDictionary> RemoteInspector::listingForInspectionTarget(const Remote
     }
 
     if (auto presentingApplicationPID = target.presentingApplicationPID())
-        [listing setObject:identifierForPID(presentingApplicationPID.value()) forKey:WIRHostApplicationIdentifierKey];
+        [listing setObject:identifierForPID(presentingApplicationPID.value()).get() forKey:WIRHostApplicationIdentifierKey];
 
-    if (auto* connectionToTarget = m_targetConnectionMap.get(target.targetIdentifier()))
-        [listing setObject:connectionToTarget->connectionIdentifier() forKey:WIRConnectionIdentifierKey];
+    if (RefPtr connectionToTarget = m_targetConnectionMap.get(target.targetIdentifier()))
+        [listing setObject:connectionToTarget->protectedConnectionIdentifier().get() forKey:WIRConnectionIdentifierKey];
 
     if (target.hasLocalDebugger())
         [listing setObject:@YES forKey:WIRHasLocalDebuggerKey];
@@ -542,25 +545,28 @@ RetainPtr<NSDictionary> RemoteInspector::listingForAutomationTarget(const Remote
         return nullptr;
 
     RetainPtr<NSMutableDictionary> listing = adoptNS([[NSMutableDictionary alloc] init]);
-    [listing setObject:@(target.targetIdentifier()) forKey:WIRTargetIdentifierKey];
+    // FIXME: This is a safer cpp false positive (rdar://161698063).
+    SUPPRESS_UNRETAINED_ARG [listing setObject:@(target.targetIdentifier()) forKey:WIRTargetIdentifierKey];
     [listing setObject:target.name().createNSString().get() forKey:WIRSessionIdentifierKey];
     [listing setObject:WIRTypeAutomation forKey:WIRTypeKey];
-    [listing setObject:@(target.isPaired()) forKey:WIRAutomationTargetIsPairedKey];
+    // FIXME: This is a safer cpp false positive (rdar://161698063).
+    SUPPRESS_UNRETAINED_ARG [listing setObject:@(target.isPaired()) forKey:WIRAutomationTargetIsPairedKey];
     if (m_clientCapabilities) {
         [listing setObject:m_clientCapabilities->browserName.createNSString().get() forKey:WIRAutomationTargetNameKey];
         [listing setObject:m_clientCapabilities->browserVersion.createNSString().get() forKey:WIRAutomationTargetVersionKey];
     }
 
-    if (auto connectionToTarget = m_targetConnectionMap.get(target.targetIdentifier()))
-        [listing setObject:connectionToTarget->connectionIdentifier() forKey:WIRConnectionIdentifierKey];
+    if (RefPtr connectionToTarget = m_targetConnectionMap.get(target.targetIdentifier()))
+        [listing setObject:connectionToTarget->protectedConnectionIdentifier().get() forKey:WIRConnectionIdentifierKey];
 
     return listing;
 }
 
 void RemoteInspector::pushListingsNow()
 {
-    ASSERT(m_relayConnection);
-    if (!m_relayConnection)
+    RefPtr relayConnection = m_relayConnection;
+    ASSERT(relayConnection);
+    if (!relayConnection)
         return;
 
     m_pushScheduled = false;
@@ -585,7 +591,7 @@ void RemoteInspector::pushListingsNow()
     BOOL isAllowed = m_clientCapabilities && m_clientCapabilities->remoteAutomationAllowed;
     [message setObject:@(isAllowed) forKey:WIRRemoteAutomationEnabledKey];
 
-    m_relayConnection->sendMessage(WIRListingMessage, message.get());
+    relayConnection->sendMessage(WIRListingMessage, message.get());
 }
 
 void RemoteInspector::pushListingsSoon()
@@ -639,8 +645,8 @@ void RemoteInspector::receivedSetupMessage(NSDictionary *userInfo)
         return;
 
     // Attempt to create a connection. This may fail if the page already has an inspector or if it disallows inspection.
-    RemoteControllableTarget* target = findResult->value;
-    auto connectionToTarget = adoptRef(*new RemoteConnectionToTarget(target, connectionIdentifier, sender));
+    RefPtr target = findResult->value;
+    auto connectionToTarget = adoptRef(*new RemoteConnectionToTarget(target.get(), connectionIdentifier, sender));
 
     if (is<RemoteInspectionTarget>(target)) {
         bool isAutomaticInspection = m_automaticInspectionCandidates.contains(target->targetIdentifier());
@@ -673,7 +679,7 @@ void RemoteInspector::receivedDataMessage(NSDictionary *userInfo)
     if (!targetIdentifier)
         return;
 
-    auto connectionToTarget = m_targetConnectionMap.get(targetIdentifier);
+    RefPtr connectionToTarget = m_targetConnectionMap.get(targetIdentifier);
     if (!connectionToTarget)
         return;
 
@@ -693,11 +699,11 @@ void RemoteInspector::receivedDidCloseMessage(NSDictionary *userInfo)
     if (!targetIdentifier)
         return;
 
-    auto connectionToTarget = m_targetConnectionMap.get(targetIdentifier);
+    RefPtr connectionToTarget = m_targetConnectionMap.get(targetIdentifier);
     if (!connectionToTarget)
         return;
 
-    if (![connectionIdentifier isEqualToString:connectionToTarget->connectionIdentifier()])
+    if (![connectionIdentifier isEqualToString:connectionToTarget->protectedConnectionIdentifier().get()])
         return;
 
     connectionToTarget->close();
@@ -731,7 +737,7 @@ void RemoteInspector::receivedIndicateMessage(NSDictionary *userInfo)
         return;
 
     dispatchAsyncOnMainThreadWithWebThreadLockIfNeeded(^{
-        RemoteControllableTarget* target = nullptr;
+        RefPtr<RemoteControllableTarget> target;
         {
             Locker locker { m_mutex };
 
@@ -741,15 +747,16 @@ void RemoteInspector::receivedIndicateMessage(NSDictionary *userInfo)
 
             target = findResult->value;
         }
-        if (auto* inspectionTarget = dynamicDowncast<RemoteInspectionTarget>(target))
+        if (RefPtr inspectionTarget = dynamicDowncast<RemoteInspectionTarget>(WTFMove(target)))
             inspectionTarget->setIndicating(indicateEnabled);
     });
 }
 
 void RemoteInspector::receivedProxyApplicationSetupMessage(NSDictionary *)
 {
-    ASSERT(m_relayConnection);
-    if (!m_relayConnection)
+    RefPtr relayConnection = m_relayConnection;
+    ASSERT(relayConnection);
+    if (!relayConnection)
         return;
 
     // Proxy applications using per-target `presentingApplicationPID`s do not require any additional setup. The remote
@@ -771,7 +778,7 @@ void RemoteInspector::receivedProxyApplicationSetupMessage(NSDictionary *)
 
     m_shouldSendParentProcessInformation = false;
 
-    m_relayConnection->sendMessage(WIRProxyApplicationSetupResponseMessage, @{
+    relayConnection->sendMessage(WIRProxyApplicationSetupResponseMessage, @{
         WIRProxyApplicationParentPIDKey: @(m_parentProcessIdentifier),
         WIRProxyApplicationParentAuditDataKey: (__bridge NSData *)m_parentProcessAuditData.get(),
     });
@@ -785,7 +792,7 @@ void RemoteInspector::receivedConnectionDiedMessage(NSDictionary *userInfo)
     auto it = m_targetConnectionMap.begin();
     auto end = m_targetConnectionMap.end();
     for (; it != end; ++it) {
-        if ([connectionIdentifier isEqualToString:it->value->connectionIdentifier()])
+        if ([connectionIdentifier isEqualToString:RefPtr { it->value }->protectedConnectionIdentifier().get()])
             break;
     }
 

@@ -41,7 +41,7 @@
 #include "LegacyRenderSVGRoot.h"
 #include "PointerEventsHitRules.h"
 #include "RenderBoxModelObjectInlines.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderIterator.h"
 #include "RenderObjectInlines.h"
 #include "RenderSVGBlockInlines.h"
@@ -49,12 +49,12 @@
 #include "RenderSVGInlineText.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGTextPath.h"
+#include "RenderStyleInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGInlineFlowBox.h"
 #include "SVGInlineTextBox.h"
 #include "SVGInlineTextBoxInlines.h"
 #include "SVGLengthList.h"
-#include "SVGRenderStyle.h"
 #include "SVGRenderingContext.h"
 #include "SVGResourcesCache.h"
 #include "SVGRootInlineBox.h"
@@ -659,8 +659,8 @@ bool RenderSVGText::nodeAtFloatPoint(const HitTestRequest& request, HitTestResul
 
     PointerEventsHitRules hitRules(PointerEventsHitRules::HitTestingTargetType::SVGText, request, usedPointerEvents());
     if (isVisibleToHitTesting(style(), request) || !hitRules.requireVisible) {
-        if ((hitRules.canHitStroke && (style().svgStyle().hasStroke() || !hitRules.requireStroke))
-            || (hitRules.canHitFill && (style().svgStyle().hasFill() || !hitRules.requireFill))) {
+        if ((hitRules.canHitStroke && (style().hasStroke() || !hitRules.requireStroke))
+            || (hitRules.canHitFill && (style().hasFill() || !hitRules.requireFill))) {
             static NeverDestroyed<SVGVisitedRendererTracking::VisitedSet> s_visitedSet;
 
             SVGVisitedRendererTracking recursionTracking(s_visitedSet);
@@ -690,8 +690,8 @@ bool RenderSVGText::nodeAtPoint(const HitTestRequest& request, HitTestResult& re
 
     PointerEventsHitRules hitRules(PointerEventsHitRules::HitTestingTargetType::SVGText, request, style().pointerEvents());
     if (isVisibleToHitTesting(style(), request) || !hitRules.requireVisible) {
-        if ((hitRules.canHitStroke && (style().svgStyle().hasStroke() || !hitRules.requireStroke))
-        || (hitRules.canHitFill && (style().svgStyle().hasFill() || !hitRules.requireFill))) {
+        if ((hitRules.canHitStroke && (style().hasStroke() || !hitRules.requireStroke))
+        || (hitRules.canHitFill && (style().hasFill() || !hitRules.requireFill))) {
             static NeverDestroyed<SVGVisitedRendererTracking::VisitedSet> s_visitedSet;
 
             SVGVisitedRendererTracking recursionTracking(s_visitedSet);
@@ -728,8 +728,8 @@ bool RenderSVGText::hitTestInlineChildren(const HitTestRequest& request, HitTest
             if (!isVisibleToHitTesting(renderer.style(), request) && hitRules.requireVisible)
                 continue;
 
-            bool hitsStroke = hitRules.canHitStroke && (renderer.style().svgStyle().hasStroke() || !hitRules.requireStroke);
-            bool hitsFill = hitRules.canHitFill && (renderer.style().svgStyle().hasFill() || !hitRules.requireFill);
+            bool hitsStroke = hitRules.canHitStroke && (renderer.style().hasStroke() || !hitRules.requireStroke);
+            bool hitsFill = hitRules.canHitFill && (renderer.style().hasFill() || !hitRules.requireFill);
             if (!hitsStroke && !hitsFill)
                 continue;
 
@@ -929,7 +929,7 @@ void RenderSVGText::paintInlineChildren(PaintInfo& paintInfo, const LayoutPoint&
 FloatRect RenderSVGText::strokeBoundingBox() const
 {
     FloatRect strokeBoundaries = objectBoundingBox();
-    if (!style().svgStyle().hasStroke())
+    if (!style().hasStroke())
         return strokeBoundaries;
 
     Ref textElement = this->textElement();

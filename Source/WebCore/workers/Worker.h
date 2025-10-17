@@ -32,6 +32,7 @@
 #include "EventTargetInterfaces.h"
 #include "FetchRequestCredentials.h"
 #include "MessagePort.h"
+#include "WorkerGlobalScopeProxy.h"
 #include "WorkerOptions.h"
 #include "WorkerScriptLoaderClient.h"
 #include "WorkerType.h"
@@ -52,7 +53,6 @@ class RTCRtpScriptTransform;
 class RTCRtpScriptTransformer;
 class ScriptExecutionContext;
 class TrustedScriptURL;
-class WorkerGlobalScopeProxy;
 class WorkerScriptLoader;
 
 struct StructuredSerializeOptions;

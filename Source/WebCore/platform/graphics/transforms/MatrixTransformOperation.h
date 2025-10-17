@@ -54,17 +54,13 @@ public:
     TransformationMatrix matrix() const { return TransformationMatrix(m_a, m_b, m_c, m_d, m_e, m_f); }
 
 private:
-    bool isIdentity() const override { return m_a == 1 && m_b == 0 && m_c == 0 && m_d == 1 && m_e == 0 && m_f == 0; }
-    bool isAffectedByTransformOrigin() const override { return !isIdentity(); }
-
     bool operator==(const MatrixTransformOperation& other) const { return operator==(static_cast<const TransformOperation&>(other)); }
     bool operator==(const TransformOperation&) const override;
 
-    bool apply(TransformationMatrix& transform, const FloatSize&) const override
+    void apply(TransformationMatrix& transform) const override
     {
         TransformationMatrix matrix(m_a, m_b, m_c, m_d, m_e, m_f);
         transform.multiply(matrix);
-        return false;
     }
 
     Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) const override;

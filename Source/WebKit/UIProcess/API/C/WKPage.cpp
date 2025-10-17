@@ -81,6 +81,7 @@
 #include "WKPagePolicyClientInternal.h"
 #include "WKPageRenderingProgressEventsInternal.h"
 #include "WKPluginInformation.h"
+#include "WebBackForwardCache.h"
 #include "WebBackForwardList.h"
 #include "WebFormClient.h"
 #include "WebFrameProxy.h"
@@ -3509,4 +3510,10 @@ void WKPageFindStringForTesting(WKPageRef pageRef, void* context, WKStringRef st
     toProtectedImpl(pageRef)->findString(toWTFString(string), toFindOptions(options), maxMatchCount, [context, completionHandler] (bool found) {
         completionHandler(found, context);
     });
+}
+
+void WKPageClearBackForwardCache(WKPageRef page)
+{
+    RefPtr protectedPage = toProtectedImpl(page);
+    protectedPage->protectedBackForwardCache()->removeEntriesForPage(*protectedPage);
 }

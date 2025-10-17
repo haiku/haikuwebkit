@@ -1,11 +1,7 @@
 
-FAIL Origin-clean check in cross-origin CSSOM Stylesheets assert_throws_dom: stylesheet.cssRules should throw SecurityError. function "function () {
-                    sheet.cssRules;
-                }" threw object "TypeError: null is not an object (evaluating 'sheet.cssRules')" that is not a DOMException SecurityError: property "code" is equal to undefined, expected 18
+PASS Origin-clean check in cross-origin CSSOM Stylesheets
 PASS Origin-clean check in cross-origin CSSOM Stylesheets (redirect from same-origin to cross-origin)
-FAIL Origin-clean check in cross-origin CSSOM Stylesheets (redirect from cross-origin to same-origin) assert_throws_dom: stylesheet.cssRules should throw SecurityError. function "function () {
-                    sheet.cssRules;
-                }" threw object "TypeError: null is not an object (evaluating 'sheet.cssRules')" that is not a DOMException SecurityError: property "code" is equal to undefined, expected 18
+PASS Origin-clean check in cross-origin CSSOM Stylesheets (redirect from cross-origin to same-origin)
 PASS Origin-clean check in loading error CSSOM Stylesheets
 PASS Origin-clean check in same-origin CSSOM Stylesheets
 PASS Origin-clean check in data:css CSSOM Stylesheets

@@ -32,15 +32,6 @@ if (ENABLE_REMOTE_INSPECTOR)
     endif ()
 endif ()
 
-if (USE_GLIB)
-    list(APPEND JavaScriptCore_SYSTEM_INCLUDE_DIRECTORIES
-        ${GLIB_INCLUDE_DIRS}
-    )
-    list(APPEND JavaScriptCore_LIBRARIES
-        ${GLIB_LIBRARIES}
-    )
-endif ()
-
 if (USE_LIBBACKTRACE)
     list(APPEND WTF_LIBRARIES
         LIBBACKTRACE::LIBBACKTRACE

@@ -26,6 +26,8 @@
 #include "config.h"
 #include "ImplicitGrid.h"
 
+#include "GridAreaLines.h"
+#include "GridLayout.h"
 #include "PlacedGridItem.h"
 #include "UnplacedGridItem.h"
 #include <wtf/Range.h>
@@ -38,7 +40,7 @@ namespace Layout {
 // implicit grid as exactly the explicit grid and allow placement to add implicit
 // tracks and grow the grid.
 ImplicitGrid::ImplicitGrid(size_t gridTemplateColumnsCount, size_t gridTemplateRowsCount)
-    : m_gridMatrix(Vector(gridTemplateRowsCount, Vector<std::optional<UnplacedGridItem>>(gridTemplateColumnsCount)))
+    : m_gridMatrix(Vector(gridTemplateRowsCount, Vector<GridCell>(gridTemplateColumnsCount)))
 {
 }
 
@@ -95,28 +97,113 @@ void ImplicitGrid::insertUnplacedGridItem(const UnplacedGridItem& unplacedGridIt
     auto rowsRange = WTF::Range(explicitRowStart, explicitRowEnd);
     for (auto rowIndex = rowsRange.begin(); rowIndex < rowsRange.end(); ++rowIndex) {
         for (auto columnIndex = columnsRange.begin(); columnIndex < columnsRange.end(); ++columnIndex)
-            m_gridMatrix[rowIndex][columnIndex] = unplacedGridItem;
+            m_gridMatrix[rowIndex][columnIndex].append(unplacedGridItem);
     }
 
 }
 
-PlacedGridItems ImplicitGrid::placedGridItems() const
+GridAreas ImplicitGrid::gridAreas() const
 {
-    HashSet<UnplacedGridItem> processedUnplacedGridItems;
-    PlacedGridItems placedGridItems;
+    GridAreas gridAreas;
+    gridAreas.reserveInitialCapacity(rowsCount() * columnsCount());
 
     for (size_t rowIndex = 0; rowIndex < m_gridMatrix.size(); ++rowIndex) {
         for (size_t columnIndex = 0; columnIndex < m_gridMatrix[rowIndex].size(); ++columnIndex) {
 
-            auto unplacedGridItem = m_gridMatrix[rowIndex][columnIndex];
-            if (!unplacedGridItem || processedUnplacedGridItems.contains(*unplacedGridItem))
-                continue;
-
-            processedUnplacedGridItems.add(*unplacedGridItem);
-            placedGridItems.append({ *unplacedGridItem, { columnIndex, columnIndex + 1, rowIndex, rowIndex + 1 } });
+            const auto& gridCell = m_gridMatrix[rowIndex][columnIndex];
+            for (const auto& unplacedGridItem : gridCell) {
+                gridAreas.ensure(unplacedGridItem, [&]() {
+                    return GridAreaLines { columnIndex, columnIndex + 1, rowIndex, rowIndex + 1 };
+                });
+            }
         }
     }
-    return placedGridItems;
+    return gridAreas;
+}
+
+void ImplicitGrid::insertDefiniteRowItem(const UnplacedGridItem& unplacedGridItem, GridAutoFlowOptions autoFlowOptions, HashMap<unsigned, unsigned, DefaultHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>>* rowCursors)
+{
+    // Step 2 of CSS Grid auto-placement algorithm:
+    // Process items locked to a given row (definite row position, auto column position)
+    // See: https://www.w3.org/TR/css-grid-1/#auto-placement-algo
+
+    auto columnSpan = unplacedGridItem.columnSpanSize();
+    // FIXME: Support multi-column spans
+    ASSERT(columnSpan == 1);
+
+    ASSERT(unplacedGridItem.hasDefiniteRowPosition() && !unplacedGridItem.hasDefiniteColumnPosition());
+    auto [rowStart, rowEnd] = unplacedGridItem.definiteRowStartEnd();
+    // FIXME: Support multi-row spans
+    ASSERT(rowEnd - rowStart == 1);
+
+    if (rowStart < 0 || rowEnd <= rowStart || rowEnd > static_cast<int>(rowsCount())) {
+        ASSERT_NOT_IMPLEMENTED_YET();
+        // FIXME: Handle implicit grid growth for items outside explicit grid
+        // FIXME Handle inverted row ranges (rowEnd <= rowStart)
+        return;
+    }
+
+    std::optional<size_t> columnPosition;
+    if (autoFlowOptions.strategy == PackingStrategy::Dense) {
+        // Dense packing: always start searching from column 0
+        columnPosition = findFirstAvailableColumnPosition(rowStart, rowEnd, columnSpan, 0);
+    } else {
+        // Sparse packing: use per-row cursors to maintain placement order
+        // For multi-row items, use the maximum cursor position across all spanned rows
+        size_t startSearchColumn = 0;
+        for (int row = rowStart; row < rowEnd; ++row)
+            startSearchColumn = std::max(startSearchColumn, static_cast<size_t>(rowCursors->get(row)));
+        columnPosition = findFirstAvailableColumnPosition(rowStart, rowEnd, columnSpan, startSearchColumn);
+    }
+
+    if (!columnPosition) {
+        ASSERT_NOT_IMPLEMENTED_YET();
+        // FIXME: Handle implicit grid growth when no space is found within current grid
+        return;
+    }
+
+    insertItemInArea(unplacedGridItem, *columnPosition, *columnPosition + columnSpan, rowStart, rowEnd);
+
+    if (autoFlowOptions.strategy != PackingStrategy::Dense) {
+        for (int row = rowStart; row < rowEnd; ++row)
+            rowCursors->set(row, static_cast<unsigned>(*columnPosition + columnSpan));
+    }
+}
+
+std::optional<size_t> ImplicitGrid::findFirstAvailableColumnPosition(int rowStart, int rowEnd, size_t columnSpan, size_t startSearchColumn) const
+{
+    auto currentColumnsCount = columnsCount();
+
+    // Validate we can fit the span within the grid
+    if (columnSpan > currentColumnsCount)
+        ASSERT_NOT_IMPLEMENTED_YET();
+
+    // Search within existing grid bounds
+    for (size_t columnStart = startSearchColumn; columnStart <= currentColumnsCount - columnSpan; ++columnStart) {
+        if (isCellRangeEmpty(columnStart, columnStart + columnSpan, rowStart, rowEnd))
+            return columnStart;
+    }
+    // FIXME: Support implicit grid growth
+    return std::nullopt;
+}
+
+bool ImplicitGrid::isCellRangeEmpty(size_t columnStart, size_t columnEnd, int rowStart, int rowEnd) const
+{
+    for (int row = rowStart; row < rowEnd; ++row) {
+        for (size_t column = columnStart; column < columnEnd; ++column) {
+            if (!m_gridMatrix[row][column].isEmpty())
+                return false;
+        }
+    }
+    return true;
+}
+
+void ImplicitGrid::insertItemInArea(const UnplacedGridItem& unplacedGridItem, size_t columnStart, size_t columnEnd, int rowStart, int rowEnd)
+{
+    for (int row = rowStart; row < rowEnd; ++row) {
+        for (size_t column = columnStart; column < columnEnd; ++column)
+            m_gridMatrix[row][column].append(unplacedGridItem);
+    }
 }
 
 } // namespace Layout

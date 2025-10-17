@@ -245,9 +245,15 @@ static bool canCachePage(Page& page)
         logBackForwardCacheFailureDiagnosticMessage(diagnosticLoggingClient, DiagnosticLoggingKeys::redirectKey());
         isCacheable = false;
         break;
-    case FrameLoadType::Replace:
+    case FrameLoadType::MultipartReplace:
         // No point writing to the cache on a replace, since we will just write over it again when we leave that page.
-        PCLOG("   -Load type is: Replace"_s);
+        PCLOG("   -Load type is: MultipartReplace"_s);
+        logBackForwardCacheFailureDiagnosticMessage(diagnosticLoggingClient, DiagnosticLoggingKeys::replaceKey());
+        isCacheable = false;
+        break;
+    case FrameLoadType::NavigationAPIReplace:
+        // No point writing to the cache on a replace, since we will just write over it again when we leave that page.
+        PCLOG("   -Load type is: NavigationAPIReplace"_s);
         logBackForwardCacheFailureDiagnosticMessage(diagnosticLoggingClient, DiagnosticLoggingKeys::replaceKey());
         isCacheable = false;
         break;

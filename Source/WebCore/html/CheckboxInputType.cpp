@@ -48,6 +48,7 @@
 #include "LocalFrameInlines.h"
 #include "LocalizedStrings.h"
 #include "MouseEvent.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"

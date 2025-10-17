@@ -119,7 +119,8 @@ MarqueeDirection RenderMarquee::direction() const
 
     // Now we have the real direction.  Next we check to see if the increment is negative.
     // If so, then we reverse the direction.
-    if (auto& increment = m_layer->renderer().style().marqueeIncrement(); increment.isNegative())
+    // FIXME: This will fail for `increment` that uses `calc()`, though this can currently never happen due to the property being internal
+    if (auto& increment = m_layer->renderer().style().marqueeIncrement(); increment.isKnownNegative())
         result = reverseDirection(result);
     
     return result;
@@ -176,7 +177,7 @@ int RenderMarquee::computePosition(MarqueeDirection dir, bool stopAtContentEdge)
 
 void RenderMarquee::start()
 {
-    if (m_timer.isActive() || m_layer->renderer().style().marqueeIncrement().isZero())
+    if (m_timer.isActive() || m_layer->renderer().style().marqueeIncrement().isKnownZero())
         return;
 
     CheckedPtr scrollableArea = m_layer->scrollableArea();
@@ -297,7 +298,7 @@ void RenderMarquee::timerFired()
         }
         bool positive = range > 0;
         int clientSize = (isHorizontal() ? roundToInt(renderBox->clientWidth()) : roundToInt(renderBox->clientHeight()));
-        int increment = std::abs(Style::evaluate(m_layer->renderer().style().marqueeIncrement(), clientSize, 1.0f /* FIXME FIND ZOOM */));
+        int increment = std::abs(Style::evaluate<float>(m_layer->renderer().style().marqueeIncrement(), clientSize, Style::ZoomNeeded { }));
         int currentPos = (isHorizontal() ? scrollableArea->scrollOffset().x() : scrollableArea->scrollOffset().y());
         newPos =  currentPos + (addIncrement ? increment : -increment);
         if (positive)

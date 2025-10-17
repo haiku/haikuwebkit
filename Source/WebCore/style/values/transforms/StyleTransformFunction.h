@@ -30,7 +30,8 @@
 
 #pragma once
 
-#include <WebCore/StyleTransformOperationWrapper.h>
+#include <WebCore/StyleTransformFunctionBase.h>
+#include <WebCore/StyleTransformFunctionWrapper.h>
 #include <WebCore/StyleValueTypes.h>
 #include <WebCore/TransformOperation.h>
 
@@ -39,8 +40,8 @@ namespace Style {
 
 // Any <transform-function>.
 // https://www.w3.org/TR/css-transforms-1/#typedef-transform-function
-struct TransformFunction : TransformOperationWrapper<TransformOperation> {
-    using TransformOperationWrapper<TransformOperation>::TransformOperationWrapper;
+struct TransformFunction : TransformFunctionWrapper<TransformFunctionBase> {
+    using TransformFunctionWrapper<TransformFunctionBase>::TransformFunctionWrapper;
 };
 
 // MARK: - Conversion
@@ -60,7 +61,7 @@ template<> struct Blending<TransformFunction> {
 
 // MARK: - Platform
 
-template<> struct ToPlatform<TransformFunction> { auto operator()(const TransformFunction&) -> Ref<TransformOperation>; };
+template<> struct ToPlatform<TransformFunction> { auto operator()(const TransformFunction&, const FloatSize&) -> Ref<TransformOperation>; };
 
 // MARK: - Logging
 

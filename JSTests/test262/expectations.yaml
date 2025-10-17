@@ -19,9 +19,6 @@ test/built-ins/Function/prototype/caller/prop-desc.js:
 test/built-ins/Function/prototype/toString/built-in-function-object.js:
   default: 'Test262Error: Conforms to NativeFunction Syntax: "function $*() {\n    [native code]\n}" (%RegExp%.$*)'
   strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function $*() {\n    [native code]\n}" (%RegExp%.$*)'
-test/built-ins/Iterator/concat/next-method-returns-throwing-value.js:
-  default: 'Test262Error: '
-  strict mode: 'Test262Error: '
 test/built-ins/Proxy/apply/arguments-realm.js:
   default: 'Test262Error: Expected SameValue(«function Array() {'
   strict mode: 'Test262Error: Expected SameValue(«function Array() {'
@@ -58,6 +55,9 @@ test/built-ins/Proxy/construct/return-not-object-throws-undefined-realm.js:
 test/built-ins/Proxy/construct/trap-is-not-callable-realm.js:
   default: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
   strict mode: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
+test/built-ins/Temporal/Duration/compare/blank-duration.js:
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
 test/built-ins/Temporal/Duration/compare/exhaustive.js:
   default: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
@@ -79,24 +79,9 @@ test/built-ins/Temporal/Duration/compare/relativeto-string-limits.js:
 test/built-ins/Temporal/Duration/compare/throws-when-target-zoned-date-time-outside-valid-limits.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(864n * 10n**19n, \"UTC\")')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(864n * 10n**19n, \"UTC\")')"
-test/built-ins/Temporal/Duration/from/argument-duration-max.js:
-  default: 'Test262Error: operation succeeds with property bag with max minutes Expected SameValue(«9007199254740994», «9007199254740992») to be true'
-  strict mode: 'Test262Error: operation succeeds with property bag with max minutes Expected SameValue(«9007199254740994», «9007199254740992») to be true'
 test/built-ins/Temporal/Duration/from/argument-duration-precision-exact-numerical-values.js:
   default: 'Test262Error: case where floating point inaccuracy brings total below limit, positive Expected SameValue(«"PT9007199254740992.000424S"», «"PT9007199254740991.975424S"») to be true'
   strict mode: 'Test262Error: case where floating point inaccuracy brings total below limit, positive Expected SameValue(«"PT9007199254740992.000424S"», «"PT9007199254740991.975424S"») to be true'
-test/built-ins/Temporal/Duration/prototype/add/argument-duration-max.js:
-  default: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-  strict mode: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-test/built-ins/Temporal/Duration/prototype/add/argument-duration-precision-exact-numerical-values.js:
-  default: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-  strict mode: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-test/built-ins/Temporal/Duration/prototype/add/precision-exact-mathematical-values.js:
-  default: 'Test262Error: duration1.add(duration2): nanoseconds result Expected SameValue(«24», «0») to be true'
-  strict mode: 'Test262Error: duration1.add(duration2): nanoseconds result Expected SameValue(«24», «0») to be true'
-test/built-ins/Temporal/Duration/prototype/add/precision-no-floating-point-loss.js:
-  default: 'Test262Error: duration1.add(duration2): milliseconds result: Expected SameValue(«926», «999») to be true'
-  strict mode: 'Test262Error: duration1.add(duration2): milliseconds result: Expected SameValue(«926», «999») to be true'
 test/built-ins/Temporal/Duration/prototype/round/accepts-datetime-strings-for-relative-to.js:
   default: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
   strict mode: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
@@ -115,6 +100,9 @@ test/built-ins/Temporal/Duration/prototype/round/balances-up-to-next-unit-after-
 test/built-ins/Temporal/Duration/prototype/round/balances-up-to-weeks.js:
   default: 'RangeError: Cannot round a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot round a duration of years, months, or weeks without a relativeTo option'
+test/built-ins/Temporal/Duration/prototype/round/blank-duration.js:
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
 test/built-ins/Temporal/Duration/prototype/round/days-24-hours-relative-to-zoned-date-time.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1_000_000_000_000_000_000n, \"+04:30\")')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1_000_000_000_000_000_000n, \"+04:30\")')"
@@ -187,18 +175,6 @@ test/built-ins/Temporal/Duration/prototype/round/throws-on-wrong-offset-for-zone
 test/built-ins/Temporal/Duration/prototype/round/valid-increments.js:
   default: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
   strict mode: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
-test/built-ins/Temporal/Duration/prototype/subtract/argument-duration-max.js:
-  default: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-  strict mode: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-test/built-ins/Temporal/Duration/prototype/subtract/argument-duration-precision-exact-numerical-values.js:
-  default: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-  strict mode: 'RangeError: Temporal.Duration properties must be finite and of consistent sign'
-test/built-ins/Temporal/Duration/prototype/subtract/precision-exact-mathematical-values.js:
-  default: 'Test262Error: duration1.subtract(duration2): nanoseconds result Expected SameValue(«24», «0») to be true'
-  strict mode: 'Test262Error: duration1.subtract(duration2): nanoseconds result Expected SameValue(«24», «0») to be true'
-test/built-ins/Temporal/Duration/prototype/subtract/precision-no-floating-point-loss.js:
-  default: 'Test262Error: duration1.subtract(duration2): milliseconds result: Expected SameValue(«926», «999») to be true'
-  strict mode: 'Test262Error: duration1.subtract(duration2): milliseconds result: Expected SameValue(«926», «999») to be true'
 test/built-ins/Temporal/Duration/prototype/toString/max-value.js:
   default: 'Test262Error: values do not lose precision intermediately Expected SameValue(«"PT9007199254740.992S"», «"PT9007199254740.993S"») to be true'
   strict mode: 'Test262Error: values do not lose precision intermediately Expected SameValue(«"PT9007199254740.992S"», «"PT9007199254740.993S"») to be true'
@@ -220,45 +196,24 @@ test/built-ins/Temporal/Duration/prototype/toString/throws-when-rounded-duration
 test/built-ins/Temporal/Duration/prototype/toString/total-of-duration-time-units-out-of-range.js:
   default: 'Test262Error: Expected a RangeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: Expected a RangeError to be thrown but no exception was thrown at all'
-test/built-ins/Temporal/Duration/prototype/total/balance-subseconds.js:
-  default: 'Test262Error: Expected SameValue(«2.9989989990000003», «2.998998999») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«2.9989989990000003», «2.998998999») to be true'
+test/built-ins/Temporal/Duration/prototype/total/blank-duration.js:
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1n, \"UTC\")')"
 test/built-ins/Temporal/Duration/prototype/total/incorrect-properties-ignored.js:
   default: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
 test/built-ins/Temporal/Duration/prototype/total/no-dst-day-length.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1_000_000_000_000_000_000n, \"+04:30\")')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(1_000_000_000_000_000_000n, \"+04:30\")')"
-test/built-ins/Temporal/Duration/prototype/total/no-precision-loss-for-small-units.js:
-  default: 'Test262Error: Expected SameValue(«0.0020310000000000003», «0.002031») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«0.0020310000000000003», «0.002031») to be true'
 test/built-ins/Temporal/Duration/prototype/total/options-read-before-algorithmic-validation.js:
   default: 'Test262Error: Actual [get options.unit, get options.unit.toString, call options.unit.toString] and expected [get options.relativeTo, get options.unit, get options.unit.toString, call options.unit.toString] should have the same contents. all options should be read first'
   strict mode: 'Test262Error: Actual [get options.unit, get options.unit.toString, call options.unit.toString] and expected [get options.relativeTo, get options.unit, get options.unit.toString, call options.unit.toString] should have the same contents. all options should be read first'
-test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-1.js:
-  default: 'Test262Error: return value of total() Expected SameValue(«4000», «4000.0000000000005») to be true'
-  strict mode: 'Test262Error: return value of total() Expected SameValue(«4000», «4000.0000000000005») to be true'
-test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-2.js:
-  default: 'Test262Error: Expected SameValue(«4001», «4000.9999999999995») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«4001», «4000.9999999999995») to be true'
-test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-6.js:
-  default: 'Test262Error: hours=816, nanoseconds=2049187497660 Expected SameValue(«816.5692187493501», «816.56921874935») to be true'
-  strict mode: 'Test262Error: hours=816, nanoseconds=2049187497660 Expected SameValue(«816.5692187493501», «816.56921874935») to be true'
-test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-7.js:
-  default: 'Test262Error: seconds=0, milliseconds=950 Expected SameValue(«0.9500000000000001», «0.95») to be true'
-  strict mode: 'Test262Error: seconds=0, milliseconds=950 Expected SameValue(«0.9500000000000001», «0.95») to be true'
-test/built-ins/Temporal/Duration/prototype/total/relativeto-plaindatetime.js:
-  default: 'Error: FIXME: years, months, or weeks totalling with relativeTo not implemented yet'
-  strict mode: 'Error: FIXME: years, months, or weeks totalling with relativeTo not implemented yet'
 test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-invalid-offset-string.js:
   default: 'Test262Error: "0" is not a valid offset string Expected a TypeError but got a RangeError'
   strict mode: 'Test262Error: "0" is not a valid offset string Expected a TypeError but got a RangeError'
 test/built-ins/Temporal/Duration/prototype/total/relativeto-string-limits.js:
   default: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
-test/built-ins/Temporal/Duration/prototype/total/throws-if-date-time-invalid-with-plaindate-relative.js:
-  default: 'Test262Error: Expected a RangeError but got a Error'
-  strict mode: 'Test262Error: Expected a RangeError but got a Error'
 test/built-ins/Temporal/Duration/prototype/total/throws-if-date-time-invalid-with-zoneddatetime-relative.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(864n * 10n**19n - 1n, \"UTC\")')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(864n * 10n**19n - 1n, \"UTC\")')"
@@ -433,6 +388,9 @@ test/built-ins/Temporal/PlainDate/prototype/add/balance-smaller-units-basic.js:
 test/built-ins/Temporal/PlainDate/prototype/add/basic.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+test/built-ins/Temporal/PlainDate/prototype/add/blank-duration.js:
+  default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+  strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDate/prototype/add/options-object.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
@@ -497,6 +455,9 @@ test/built-ins/Temporal/PlainDate/prototype/subtract/balance-smaller-units-basic
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDate/prototype/subtract/basic.js:
+  default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+  strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+test/built-ins/Temporal/PlainDate/prototype/subtract/blank-duration.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDate/prototype/subtract/options-object.js:
@@ -718,6 +679,9 @@ test/built-ins/Temporal/PlainDateTime/prototype/add/argument-string.js:
 test/built-ins/Temporal/PlainDateTime/prototype/add/balance-negative-time-units.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+test/built-ins/Temporal/PlainDateTime/prototype/add/blank-duration.js:
+  default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+  strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDateTime/prototype/add/hour-overflow.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
@@ -842,6 +806,9 @@ test/built-ins/Temporal/PlainDateTime/prototype/subtract/argument-string.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDateTime/prototype/subtract/balance-negative-time-units.js:
+  default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+  strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
+test/built-ins/Temporal/PlainDateTime/prototype/subtract/blank-duration.js:
   default: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: calendar must be string in canonicalizeCalendarEra Expected SameValue(«"undefined"», «"string"») to be true'
 test/built-ins/Temporal/PlainDateTime/prototype/subtract/hour-overflow.js:
@@ -1144,6 +1111,9 @@ test/intl402/Temporal/Duration/prototype/round/dst-balancing-result.js:
 test/intl402/Temporal/Duration/prototype/round/dst-rounding-result.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime("
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime("
+test/intl402/Temporal/Duration/prototype/round/relativeto-dst-back-transition.js:
+  default: "TypeError: undefined is not an object (evaluating 'Temporal.ZonedDateTime.from')"
+  strict mode: "TypeError: undefined is not an object (evaluating 'Temporal.ZonedDateTime.from')"
 test/intl402/Temporal/Duration/prototype/round/relativeto-sub-minute-offset.js:
   default: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
   strict mode: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
@@ -1162,6 +1132,9 @@ test/intl402/Temporal/Duration/prototype/total/dst-day-length.js:
 test/intl402/Temporal/Duration/prototype/total/dst-rounding-result.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime("
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime("
+test/intl402/Temporal/Duration/prototype/total/relativeto-dst-back-transition.js:
+  default: "TypeError: undefined is not an object (evaluating 'Temporal.ZonedDateTime.from')"
+  strict mode: "TypeError: undefined is not an object (evaluating 'Temporal.ZonedDateTime.from')"
 test/intl402/Temporal/Duration/prototype/total/relativeto-sub-minute-offset.js:
   default: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
@@ -1273,9 +1246,13 @@ test/language/statements/class/elements/nested-direct-eval-err-contains-argument
 test/language/statements/class/elements/nested-private-direct-eval-err-contains-arguments.js:
   default: 'Test262Error: Expected a SyntaxError but got a ReferenceError'
   strict mode: 'Test262Error: Expected a SyntaxError but got a ReferenceError'
+test/language/statements/class/elements/private-class-field-on-nonextensible-objects.js:
+  strict mode: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/language/statements/class/subclass/default-constructor-spread-override.js:
   default: 'Test262Error: @@iterator invoked'
   strict mode: 'Test262Error: @@iterator invoked'
+test/language/statements/class/subclass/private-class-field-on-nonextensible-return-override.js:
+  strict mode: "TypeError: t.val is not a function. (In 't.val()', 't.val' is undefined)"
 test/language/statements/for-await-of/head-lhs-async.js:
   default: "SyntaxError: Unexpected identifier 'of'"
   strict mode: "SyntaxError: Unexpected identifier 'of'"
@@ -1306,93 +1283,135 @@ test/language/statements/with/set-mutable-binding-idref-compound-assign-with-pro
   default: 'Test262Error: Actual [has:p, get:Symbol(Symbol.unscopables), get:p, has:p, set:p, getOwnPropertyDescriptor:p, defineProperty:p] and expected [has:p, get:Symbol(Symbol.unscopables), has:p, get:p, has:p, set:p, getOwnPropertyDescriptor:p, defineProperty:p] should have the same contents. '
 test/staging/sm/ArrayBuffer/slice-species.js:
   default: 'Test262Error: Expected SameValue(«function ArrayBuffer() {'
+  strict mode: 'Test262Error: Expected SameValue(«function ArrayBuffer() {'
 test/staging/sm/Date/to-temporal-instant.js:
   default: "TypeError: min.toZonedDateTimeISO is not a function. (In 'min.toZonedDateTimeISO('UTC')', 'min.toZonedDateTimeISO' is undefined)"
+  strict mode: "TypeError: min.toZonedDateTimeISO is not a function. (In 'min.toZonedDateTimeISO('UTC')', 'min.toZonedDateTimeISO' is undefined)"
 test/staging/sm/Date/two-digit-years.js:
   default: 'Test262Error: Expected SameValue(«923641200000», «NaN») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«923641200000», «NaN») to be true'
 test/staging/sm/Function/arguments-parameter-shadowing.js:
   default: 'Test262Error: Expected SameValue(«true», «false») to be true'
 test/staging/sm/Function/function-name-assignment.js:
   default: 'Test262Error: Expected SameValue(«"inParen"», «""») to be true'
 test/staging/sm/Function/function-toString-builtin-name.js:
   default: 'Test262Error: Incorrect match for undefined Expected SameValue(«"fn"», «undefined») to be true'
+  strict mode: 'Test262Error: Incorrect match for undefined Expected SameValue(«"fn"», «undefined») to be true'
+test/staging/sm/Math/acosh-exact.js:
+  default: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
+  strict mode: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
+test/staging/sm/Math/atanh-exact.js:
+  default: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
+  strict mode: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
+test/staging/sm/Math/log1p-exact.js:
+  default: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
+  strict mode: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
+test/staging/sm/Math/trunc.js:
+  default: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
+  strict mode: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
+test/staging/sm/PrivateName/modify-non-extensible.js:
+  default: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/staging/sm/Proxy/revoked-get-function-realm-typeerror.js:
-  default: 'Error: Assertion failed: expected exception TypeError, no exception thrown'
+  default: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
+  strict mode: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/staging/sm/RegExp/match-local-tolength-recompilation.js:
   default: 'Test262Error: Expected SameValue(«false», «true») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«false», «true») to be true'
 test/staging/sm/RegExp/replace-local-tolength-recompilation.js:
   default: 'Test262Error: Expected SameValue(«"b"», «"pass"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"b"», «"pass"») to be true'
 test/staging/sm/RegExp/replace-sticky-lastIndex.js:
   default: 'Test262Error: Expected SameValue(«"b"», «"a"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"b"», «"a"») to be true'
 test/staging/sm/RegExp/replace-sticky.js:
   default: 'Test262Error: Expected SameValue(«"ABCDEabcdeabcdefghij"», «"abcdeABCDEabcdefghij"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"ABCDEabcdeabcdefghij"», «"abcdeABCDEabcdefghij"») to be true'
 test/staging/sm/RegExp/split-limit.js:
   default: 'Test262Error: Expected SameValue(«3», «1») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«3», «1») to be true'
 test/staging/sm/RegExp/split-trace.js:
   default: 'Test262Error: Expected SameValue(«"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"», «"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"», «"get:constructor,get:species,get:flags,call:constructor,set:lastIndex,get:exec,call:exec,set:lastIndex,get:exec,call:exec,get:lastIndex,get:result[length],get:result[1],get:result[2],set:lastIndex,get:exec,call:exec,"») to be true'
 test/staging/sm/RegExp/unicode-braced.js:
   default: 'SyntaxError: Invalid regular expression: regular expression too large'
+  strict mode: 'SyntaxError: Invalid regular expression: regular expression too large'
 test/staging/sm/RegExp/unicode-class-braced.js:
   default: 'SyntaxError: Invalid regular expression: regular expression too large'
+  strict mode: 'SyntaxError: Invalid regular expression: regular expression too large'
 test/staging/sm/TypedArray/constructor-buffer-sequence.js:
-  default: 'Error: Assertion failed: expected exception ExpectedError, got Error: Poisoned Value'
+  default: 'Test262Error: Expected a ExpectedError but got a Error'
+  strict mode: 'Test262Error: Expected a ExpectedError but got a Error'
 test/staging/sm/TypedArray/iterator-next-with-detached.js:
   default: 'TypeError: Underlying ArrayBuffer has been detached from the view or out-of-bounds'
+  strict mode: 'TypeError: Underlying ArrayBuffer has been detached from the view or out-of-bounds'
 test/staging/sm/TypedArray/set-with-receiver.js:
   default: 'Test262Error: Expected SameValue(«47», «0») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«47», «0») to be true'
 test/staging/sm/TypedArray/slice-memcpy.js:
   default: 'Test262Error: Actual [1, 2, 1, 2, 3, 4] and expected [1, 2, 1, 2, 1, 2] should have the same contents. '
+  strict mode: 'Test262Error: Actual [1, 2, 1, 2, 3, 4] and expected [1, 2, 1, 2, 1, 2] should have the same contents. '
 test/staging/sm/TypedArray/subarray.js:
   default: 'Test262Error: Expected SameValue(«0», «1») to be true'
-test/staging/sm/async-functions/await-error.js:
-  default: 'Test262Error: Expected SameValue(«false», «true») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«0», «1») to be true'
 test/staging/sm/class/defaultConstructorDerivedSpread.js:
   default: 'Error: unexpected call'
+  strict mode: 'Error: unexpected call'
 test/staging/sm/class/superPropOrdering.js:
-  default: 'Error: Assertion failed: expected exception TypeError, no exception thrown'
+  default: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
+  strict mode: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/staging/sm/eval/redeclared-arguments-in-param-expression-eval.js:
   default: 'Test262Error: Expected SameValue(«true», «false») to be true'
 test/staging/sm/expressions/exponentiation-unparenthesised-unary.js:
-  default: 'Error: Assertion failed: expected exception SyntaxError, no exception thrown - AsyncFunction:await a ** 0'
+  default: 'Test262Error: AsyncFunction:await a ** 0 Expected a SyntaxError to be thrown but no exception was thrown at all'
+  strict mode: 'Test262Error: AsyncFunction:await a ** 0 Expected a SyntaxError to be thrown but no exception was thrown at all'
 test/staging/sm/expressions/object-literal-computed-property-evaluation.js:
   default: 'Test262Error: Expected SameValue(«undefined», «"abc"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«undefined», «"abc"») to be true'
 test/staging/sm/expressions/short-circuit-compound-assignment-anon-fns.js:
   default: 'Test262Error: Expected SameValue(«"a"», «""») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"a"», «""») to be true'
 test/staging/sm/expressions/short-circuit-compound-assignment-const.js:
   default: 'Test262Error: Expected SameValue(«true», «function fn() {'
+test/staging/sm/extensions/DataView-construct-arguments-detaching.js:
+  default: 'Test262Error: byteOffset weirdness should have thrown Expected a TypeError but got a RangeError'
+  strict mode: 'Test262Error: byteOffset weirdness should have thrown Expected a TypeError but got a RangeError'
 test/staging/sm/extensions/function-caller-skips-eval-frames.js:
   default: 'Test262Error: Expected SameValue(«null», «function nest() { return eval("innermost();"); }») to be true'
 test/staging/sm/extensions/new-cross-compartment.js:
-  default: 'Test262Error: Expected SameValue(«false», «true») to be true'
-test/staging/sm/extensions/regress-469625-01.js:
-  default: "Test262Error: TM: Array prototype and expression closures Expected SameValue(«\"TypeError: [].__proto__ is not a function\"», «\"TypeError: [].__proto__ is not a function. (In '[].__proto__()', '[].__proto__' is an instance of Array)\"») to be true"
+  default: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
+  strict mode: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
 test/staging/sm/fields/await-identifier-module-2.js:
   module: 'Test262: This statement should not be evaluated.'
 test/staging/sm/generators/delegating-yield-1.js:
   default: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
+  strict mode: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
 test/staging/sm/generators/delegating-yield-3.js:
   default: 'Test262Error: Expected SameValue(«true», «undefined») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«true», «undefined») to be true'
 test/staging/sm/generators/delegating-yield-5.js:
   default: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
+  strict mode: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
 test/staging/sm/generators/delegating-yield-6.js:
   default: 'Test262Error: Expected SameValue(«"indvndvndvndvndvndv"», «"indndndndndndv"») to be true'
+  strict mode: 'Test262Error: Expected SameValue(«"indvndvndvndvndvndv"», «"indndndndndndv"») to be true'
 test/staging/sm/generators/delegating-yield-7.js:
   default: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
+  strict mode: 'Test262Error: Expected [Object {value: 1}, Object {value: 34, done: true}] to be structurally equal to [Object {value: 1, done: false}, Object {value: 34, done: true}]. '
 test/staging/sm/lexical-environment/block-scoped-functions-annex-b-label.js:
   default: "TypeError: f1 is not a function. (In 'f1()', 'f1' is undefined)"
 test/staging/sm/lexical-environment/block-scoped-functions-deprecated-redecl.js:
   default: 'Test262Error: Expected SameValue(«3», «4») to be true'
 test/staging/sm/lexical-environment/for-loop.js:
-  default: "Test262Error: unexpected error for `for (const [z]; ; ) ;`: got Error: didn't throw Expected SameValue(«false», «true») to be true"
+  default: 'Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all'
+  strict mode: 'Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all'
 test/staging/sm/misc/future-reserved-words.js:
-  default: 'Test262Error: Implement FutureReservedWords per-spec: implements: function argument retroactively strict Expected SameValue(«"no error"», «"SyntaxError"») to be true'
+  default: 'Test262Error: implements: function argument retroactively strict Expected a SyntaxError to be thrown but no exception was thrown at all'
 test/staging/sm/module/await-restricted-nested.js:
   module: 'Test262: This statement should not be evaluated.'
 test/staging/sm/module/module-export-name-star.js:
   module: "ReferenceError: Can't find variable: y"
 test/staging/sm/object/defineProperties-order.js:
   default: 'Test262Error: Expected SameValue(«"ownKeys,getOwnPropertyDescriptor,getOwnPropertyDescriptor,get,get"», «"ownKeys,getOwnPropertyDescriptor,get,getOwnPropertyDescriptor,get"») to be true'
-test/staging/sm/syntax/syntax-parsed-arrow-then-directive.js:
-  default: "Test262Error: stack should contain 'http://example.com/foo.js': block, semi Expected SameValue(«false», «true») to be true"
+  strict mode: 'Test262Error: Expected SameValue(«"ownKeys,getOwnPropertyDescriptor,getOwnPropertyDescriptor,get,get"», «"ownKeys,getOwnPropertyDescriptor,get,getOwnPropertyDescriptor,get"») to be true'
 test/staging/top-level-await/tla-hang-entry.js:
   module: "TypeError: Module specifier, 'parent-tla_FIXTURE.js' is not absolute and does not start with \"./\" or \"../\"."

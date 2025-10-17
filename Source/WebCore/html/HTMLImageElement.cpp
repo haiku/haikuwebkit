@@ -58,7 +58,7 @@
 #include "NodeTraversal.h"
 #include "PlatformMouseEvent.h"
 #include "RenderBoxInlines.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderImage.h"
 #include "RenderView.h"
 #include "RequestPriority.h"

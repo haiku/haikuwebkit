@@ -77,9 +77,7 @@ else ()
 endif ()
 
 list(APPEND WTF_LIBRARIES
-    ${GLIB_GIO_LIBRARIES}
-    ${GLIB_GOBJECT_LIBRARIES}
-    ${GLIB_LIBRARIES}
+    GLib::Gio
     Threads::Threads
     ZLIB::ZLIB
 )
@@ -87,11 +85,6 @@ list(APPEND WTF_LIBRARIES
 if (ENABLE_JOURNALD_LOG)
     list(APPEND WTF_LIBRARIES Journald::Journald)
 endif ()
-
-list(APPEND WTF_SYSTEM_INCLUDE_DIRECTORIES
-    ${GIO_UNIX_INCLUDE_DIRS}
-    ${GLIB_INCLUDE_DIRS}
-)
 
 if (USE_LIBBACKTRACE)
     list(APPEND WTF_LIBRARIES

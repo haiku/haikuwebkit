@@ -85,6 +85,11 @@ GLDisplay::GLDisplay(EGLDisplay eglDisplay)
     m_extensions.EXT_image_dma_buf_import = findExtension("EGL_EXT_image_dma_buf_import"_s);
     m_extensions.EXT_image_dma_buf_import_modifiers = findExtension("EGL_EXT_image_dma_buf_import_modifiers"_s);
     m_extensions.MESA_image_dma_buf_export = findExtension("EGL_MESA_image_dma_buf_export"_s);
+
+#if OS(ANDROID)
+    m_extensions.ANDROID_get_native_client_buffer = findExtension("EGL_ANDROID_get_native_client_buffer"_s);
+    m_extensions.ANDROID_image_native_buffer = findExtension("EGL_ANDROID_image_native_buffer"_s);
+#endif
 }
 
 void GLDisplay::terminate()

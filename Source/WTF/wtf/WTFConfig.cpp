@@ -156,10 +156,6 @@ void Config::initialize()
 
     uint8_t* reservedConfigBytes = reinterpret_cast_ptr<uint8_t*>(WebConfig::g_config + WebConfig::reservedSlotsForExecutableAllocator);
 
-#if USE(APPLE_INTERNAL_SDK)
-    WTF_INITIALIZE_ADDITIONAL_CONFIG();
-#endif
-
     const char* useAllocationProfilingRaw = getenv("JSC_useAllocationProfiling");
     if (useAllocationProfilingRaw) {
         auto useAllocationProfiling = unsafeSpan(useAllocationProfilingRaw);

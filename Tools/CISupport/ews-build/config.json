@@ -45,6 +45,8 @@
     { "name": "playstation-ews-002", "platform": "playstation" },
     { "name": "playstation-ews-003", "platform": "playstation" },
     { "name": "playstation-ews-004", "platform": "playstation" },
+    { "name": "playstation-ews-005", "platform": "playstation" },
+    { "name": "playstation-ews-006", "platform": "playstation" },
     { "name": "win-bot-001", "platform": "win" },
     { "name": "win-bot-002", "platform": "win" },
     { "name": "win-bot-003", "platform": "win" },
@@ -364,7 +366,7 @@
       "name": "PlayStation-Build-EWS", "shortname": "playstation", "icon": "buildOnly",
       "factory": "PlayStationBuildFactory", "configuration": "release",
       "architectures": ["x86_64"], "platform": "playstation",
-      "workernames": ["playstation-ews-001", "playstation-ews-002", "playstation-ews-003", "playstation-ews-004"]
+      "workernames": ["playstation-ews-001", "playstation-ews-002", "playstation-ews-003", "playstation-ews-004", "playstation-ews-005", "playstation-ews-006"]
     },
     {
       "name": "Win-Build-EWS", "shortname": "win", "icon": "buildOnly",
@@ -398,7 +400,7 @@
       "name": "WPE-Cairo-Build-EWS", "shortname": "wpe-cairo", "icon": "buildOnly",
       "factory": "WPECairoBuildFactory", "platform": "wpe",
       "configuration": "release", "architectures": ["x86_64"],
-      "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF"],
+      "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF", "--cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE"],
       "workernames": ["igalia16-wpe-ews", "igalia17-wpe-ews", "igalia18-wpe-ews", "igalia19-wpe-ews"]
     },
     {

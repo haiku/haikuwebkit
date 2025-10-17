@@ -156,7 +156,7 @@ WK_OBJECT_DEALLOC_IMPL_ON_MAIN_THREAD(WKWebExtensionContext, WebExtensionContext
 
 - (NSString *)inspectionName
 {
-    return Ref { *_webExtensionContext }->backgroundWebViewInspectionName();
+    return Ref { *_webExtensionContext }->backgroundWebViewInspectionName().createNSString().get();
 }
 
 - (void)setInspectionName:(NSString *)name
@@ -870,7 +870,7 @@ static inline OptionSet<WebKit::WebExtensionTab::ChangedProperties> toImpl(WKWeb
 }
 
 #if ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)
-- (nullable _WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
+- (_WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
 {
     Ref extensionContext { *_webExtensionContext };
     if (RefPtr maybeSidebar = extensionContext->getOrCreateSidebar(toImplNullable(tab, extensionContext.get())))
@@ -878,7 +878,7 @@ static inline OptionSet<WebKit::WebExtensionTab::ChangedProperties> toImpl(WKWeb
     return nil;
 }
 #else
-- (nullable _WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
+- (_WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
 {
     return nil;
 }
@@ -1293,15 +1293,15 @@ static inline OptionSet<WebKit::WebExtensionTab::ChangedProperties> toImpl(WKWeb
 {
 }
 
-- (void)_sendTestStartedWithArgument:(nullable id)argument
+- (void)_sendTestStartedWithArgument:(id)argument
 {
 }
 
-- (void)_sendTestFinishedWithArgument:(nullable id)argument
+- (void)_sendTestFinishedWithArgument:(id)argument
 {
 }
 
-- (nullable _WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
+- (_WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
 {
     return nil;
 }

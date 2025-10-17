@@ -92,6 +92,7 @@ public:
     
     bool encodingRequiresPlatformData() const { return m_httpBody || m_nsRequest; }
     WEBCORE_EXPORT NSURLRequest *nsURLRequest(HTTPBodyUpdatePolicy) const;
+    WEBCORE_EXPORT RetainPtr<NSURLRequest> protectedNSURLRequest(HTTPBodyUpdatePolicy) const;
 
     WEBCORE_EXPORT static CFStringRef isUserInitiatedKey();
     WEBCORE_EXPORT ResourceRequestPlatformData getResourceRequestPlatformData() const;

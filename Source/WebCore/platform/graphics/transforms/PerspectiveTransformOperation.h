@@ -45,9 +45,7 @@ public:
     std::optional<float> perspective() const { return m_p; }
 
 private:
-    bool isIdentity() const override { return !m_p; }
-    bool isAffectedByTransformOrigin() const override { return !isIdentity(); }
-    bool isRepresentableIn2D() const final { return false; }
+    bool isIdentity() const { return !m_p; }
 
     bool operator==(const PerspectiveTransformOperation& other) const { return operator==(static_cast<const TransformOperation&>(other)); }
     bool operator==(const TransformOperation&) const override;
@@ -64,11 +62,10 @@ private:
         return std::max(1.0f, *m_p);
     }
 
-    bool apply(TransformationMatrix& transform, const FloatSize&) const override
+    void apply(TransformationMatrix& transform) const override
     {
         if (auto value = floatValue())
             transform.applyPerspective(*value);
-        return false;
     }
 
     Ref<TransformOperation> blend(const TransformOperation* from, const BlendingContext&, bool blendToIdentity = false) const override;

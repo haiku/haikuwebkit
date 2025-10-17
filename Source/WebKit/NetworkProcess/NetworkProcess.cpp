@@ -1616,6 +1616,20 @@ void NetworkProcess::setSessionIsControlledByAutomation(PAL::SessionID sessionID
         m_sessionsControlledByAutomation.remove(sessionID);
 }
 
+void NetworkProcess::fetchWebsitesWithUserInteractions(PAL::SessionID sessionID, CompletionHandler<void(HashSet<RegistrableDomain>&&)>&& completionHandler)
+{
+    CheckedPtr session = networkSession(sessionID);
+    ASSERT(session);
+    if (!session)
+        return completionHandler({ });
+
+    RefPtr resourceLoadStatistics = session->resourceLoadStatistics();
+    if (!resourceLoadStatistics)
+        return completionHandler({ });
+
+    resourceLoadStatistics->loadWebsitesWithUserInteraction(WTFMove(completionHandler));
+}
+
 void NetworkProcess::fetchWebsiteData(PAL::SessionID sessionID, OptionSet<WebsiteDataType> websiteDataTypes, OptionSet<WebsiteDataFetchOption> fetchOptions, CompletionHandler<void(WebsiteData&&)>&& completionHandler)
 {
     RELEASE_LOG(Storage, "NetworkProcess::fetchWebsiteData started to fetch data for session %" PRIu64, sessionID.toUInt64());

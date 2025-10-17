@@ -69,6 +69,7 @@ public:
     WEBCORE_EXPORT Image* imageForRenderer(const RenderObject*); // Returns the nullImage() if the image is not available yet.
     bool hasImage() const { return m_image.get(); }
     bool currentFrameKnownToBeOpaque(const RenderElement*);
+    bool currentFrameIsComplete(const RenderElement*);
 
     std::pair<WeakPtr<Image>, float> brokenImage(float deviceScaleFactor) const; // Returns an image and the image's resolution scale factor.
     bool willPaintBrokenImage() const;

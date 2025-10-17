@@ -26,7 +26,7 @@
 #import <JavaScriptCore/JSExportMacros.h>
 #import <JavaScriptCore/JavaScript.h>
 
-#if JSC_OBJC_API_ENABLED
+#if JSC_OBJC_API_ENABLED && defined(__OBJC__)
 
 #import <JavaScriptCore/JSVirtualMachine.h>
 

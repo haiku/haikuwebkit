@@ -176,6 +176,8 @@ struct WKAppPrivacyReportTestingData {
 
 - (void)_modelProcessModelPlayerCountForTesting:(void(^)(NSUInteger))completionHandler;
 
+- (NSString *)_webContentProcessVariantForFrame:(nullable _WKFrameHandle *)frameHandle;
+
 @end
 
 typedef NS_ENUM(NSInteger, _WKMediaSessionReadyState) {

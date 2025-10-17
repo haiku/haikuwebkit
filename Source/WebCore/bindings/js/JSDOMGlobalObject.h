@@ -117,6 +117,8 @@ public:
 
     bool allowsJSHandleCreation() const;
 
+    JSC::JSObject* readableStreamByteStrategySize();
+
 protected:
     JSDOMGlobalObject(JSC::VM&, JSC::Structure*, Ref<DOMWrapperWorld>&&, const JSC::GlobalObjectMethodTable* = nullptr);
     void finishCreation(JSC::VM&);
@@ -153,6 +155,7 @@ private:
     const UniqueRef<JSBuiltinInternalFunctions> m_builtinInternalFunctions;
     JSC::WeakGCMap<CrossOriginMapKey, JSC::JSFunction> m_crossOriginFunctionMap;
     JSC::WeakGCMap<CrossOriginMapKey, JSC::GetterSetter> m_crossOriginGetterSetterMap;
+    JSC::Weak<JSC::JSObject> m_readableStreamByteStrategySize;
 };
 
 JSDOMGlobalObject* toJSDOMGlobalObject(ScriptExecutionContext&, DOMWrapperWorld&);

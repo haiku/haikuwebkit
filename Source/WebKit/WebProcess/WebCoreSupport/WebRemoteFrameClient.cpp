@@ -31,13 +31,14 @@
 #include "WebFrameProxyMessages.h"
 #include "WebPage.h"
 #include "WebPageProxyMessages.h"
+#include <WebCore/FocusControllerTypes.h>
 #include <WebCore/FrameInlines.h>
 #include <WebCore/FrameLoadRequest.h>
 #include <WebCore/FrameTree.h>
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/HitTestResult.h>
-#include <WebCore/NodeInlines.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/PolicyChecker.h>
 #include <WebCore/RemoteFrame.h>
 

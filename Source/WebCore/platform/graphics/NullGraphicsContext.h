@@ -62,7 +62,7 @@ private:
 
     void didUpdateState(GraphicsContextState&) final { }
 
-    void drawNativeImageInternal(NativeImage&, const FloatRect&, const FloatRect&, ImagePaintingOptions) final { }
+    void drawNativeImage(NativeImage&, const FloatRect&, const FloatRect&, ImagePaintingOptions) final { }
 
     void drawSystemImage(SystemImage&, const FloatRect&) final { };
 

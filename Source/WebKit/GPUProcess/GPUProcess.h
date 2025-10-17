@@ -235,8 +235,9 @@ private:
     void updateProcessName();
 #endif
 #if PLATFORM(COCOA)
-    void sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier, WebCore::IntSize, WebCore::FrameIdentifier, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
+    void sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier, WebCore::FloatSize, WebCore::FrameIdentifier, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
 #endif
+    void sinkCompletedSnapshotToBitmap(WebKit::RemoteSnapshotIdentifier, const WebCore::FloatSize&, WebCore::FrameIdentifier, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&&);
     void releaseSnapshot(RemoteSnapshotIdentifier);
 
 #if USE(OS_STATE)

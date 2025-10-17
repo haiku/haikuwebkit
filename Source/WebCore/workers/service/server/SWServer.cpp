@@ -316,7 +316,7 @@ void SWServer::clearAll(CompletionHandler<void()>&& completionHandler)
 
     m_jobQueues.clear();
     while (!m_registrations.isEmpty())
-        m_registrations.begin()->value->clear();
+        Ref { m_registrations.begin()->value }->clear();
     m_pendingContextDatas.clear();
     m_originStore->clearAll();
 
@@ -514,25 +514,25 @@ void SWServer::scheduleJob(ServiceWorkerJobData&& jobData)
         if (!protectedThis)
             return;
         if (protectedThis->m_hasServiceWorkerEntitlement || isValid) {
-            auto& jobQueue = *protectedThis->m_jobQueues.ensure(jobData.registrationKey(), [&] {
+            CheckedRef jobQueue = *protectedThis->m_jobQueues.ensure(jobData.registrationKey(), [&] {
                 return makeUnique<SWServerJobQueue>(*protectedThis, jobData.registrationKey());
             }).iterator->value;
 
-            if (!jobQueue.size()) {
-                jobQueue.enqueueJob(WTFMove(jobData));
-                jobQueue.runNextJob();
+            if (!jobQueue->size()) {
+                jobQueue->enqueueJob(WTFMove(jobData));
+                jobQueue->runNextJob();
                 return;
             }
-            auto& lastJob = jobQueue.lastJob();
+            auto& lastJob = jobQueue->lastJob();
             if (jobData.isEquivalent(lastJob)) {
                 // FIXME: Per the spec, check if this job is equivalent to the last job on the queue.
                 // If it is, stack it along with that job. For now, we just make sure to not call soft-update too often.
                 if (jobData.type == ServiceWorkerJobType::Update && jobData.connectionIdentifier() == Process::identifier())
                     return;
             }
-            jobQueue.enqueueJob(WTFMove(jobData));
-            if (jobQueue.size() == 1)
-                jobQueue.runNextJob();
+            jobQueue->enqueueJob(WTFMove(jobData));
+            if (jobQueue->size() == 1)
+                jobQueue->runNextJob();
         } else
             protectedThis->rejectJob(jobData, { ExceptionCode::TypeError, "Job rejected for non app-bound domain"_s });
     });

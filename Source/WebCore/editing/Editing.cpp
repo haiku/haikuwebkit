@@ -388,7 +388,7 @@ String stringWithRebalancedWhitespace(const String& string, bool startIsStartOfP
             previousCharacterWasSpace = false;
             continue;
         }
-        LChar selectedWhitespaceCharacter;
+        Latin1Character selectedWhitespaceCharacter;
         // We need to ensure there is no next sibling text node. See https://bugs.webkit.org/show_bug.cgi?id=123163
         if (previousCharacterWasSpace || (!i && startIsStartOfParagraph) || (i == length - 1 && shouldEmitNBSPbeforeEnd)) {
             selectedWhitespaceCharacter = noBreakSpace;

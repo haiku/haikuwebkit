@@ -30,7 +30,9 @@
 #import <wtf/Function.h>
 #import <wtf/RetainPtr.h>
 
+OBJC_CLASS NSString;
 OBJC_CLASS WKTextExtractionItem;
+OBJC_CLASS WKWebView;
 
 namespace WebCore {
 class FloatRect;
@@ -46,8 +48,10 @@ using RootViewToWebViewConverter = Function<WebCore::FloatRect(const WebCore::Fl
 RetainPtr<WKTextExtractionItem> createItem(const WebCore::TextExtraction::Item&, RootViewToWebViewConverter&&);
 
 #if ENABLE(TEXT_EXTRACTION_FILTER)
-void filterText(WKTextExtractionItem *, CompletionHandler<void()>&&);
+void filterText(WKWebView *, WKTextExtractionItem *, CompletionHandler<void()>&&);
 #endif
+
+std::optional<double> computeSimilarity(NSString *a, NSString *b, unsigned minimumLength = 1);
 
 } // namespace WebKit
 

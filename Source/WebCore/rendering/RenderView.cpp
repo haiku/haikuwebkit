@@ -70,6 +70,7 @@
 #include "SVGSVGElement.h"
 #include "Settings.h"
 #include "StyleInheritedData.h"
+#include "StyleScope.h"
 #include "TransformState.h"
 #include <wtf/SetForScope.h>
 #include <wtf/StackStats.h>
@@ -1130,6 +1131,12 @@ void RenderView::registerPositionTryBox(const RenderBox& box)
 void RenderView::unregisterPositionTryBox(const RenderBox& box)
 {
     m_positionTryBoxes.remove(box);
+
+    // Explicitly forget the last successful position option here, so if the box
+    // ever comes back (i.e display: none to non-none), we don't accidentally reuse
+    // the last successful position option.
+    if (auto styleable = Styleable::fromRenderer(box))
+        document().styleScope().forgetLastSuccessfulPositionOptionIndex(*styleable);
 }
 
 void RenderView::addCounterNeedingUpdate(RenderCounter& renderer)

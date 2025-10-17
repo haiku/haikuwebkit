@@ -1790,7 +1790,7 @@ void testMemoryFill()
 {
     Procedure proc;
     BasicBlock* root = proc.addBlock();
-    auto arguments = cCallArgumentValues<void*, void*, void*>(proc, root);
+    auto arguments = cCallArgumentValues<void*, uint32_t, void*>(proc, root);
     root->appendNew<BulkMemoryValue>(proc, MemoryFill, Origin(), arguments[0], arguments[1], arguments[2]);
     root->appendNewControlValue(proc, Return, Origin());
 
@@ -1819,7 +1819,7 @@ void testMemoryFillConstant()
             Procedure proc;
             BasicBlock* root = proc.addBlock();
             auto arguments = cCallArgumentValues<void*>(proc, root);
-            root->appendNew<BulkMemoryValue>(proc, MemoryFill, Origin(), arguments[0], root->appendIntConstant(proc, Origin(), pointerType(), a.value), root->appendIntConstant(proc, Origin(), pointerType(), width));
+            root->appendNew<BulkMemoryValue>(proc, MemoryFill, Origin(), arguments[0], root->appendIntConstant(proc, Origin(), Int32, a.value), root->appendIntConstant(proc, Origin(), pointerType(), width));
             root->appendNewControlValue(proc, Return, Origin());
             auto code = compileProc(proc);
 

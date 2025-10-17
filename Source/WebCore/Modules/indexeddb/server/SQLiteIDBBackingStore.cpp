@@ -1982,37 +1982,36 @@ IDBError SQLiteIDBBackingStore::getRecord(const IDBResourceIdentifier& transacti
     int64_t recordID = 0;
     ThreadSafeDataBuffer keyResultBuffer, valueResultBuffer;
     {
-        SQLiteStatementAutoResetScope sql;
+        SQLiteStatementAutoResetScope statement;
 
         switch (type) {
         case IDBGetRecordDataType::KeyAndValue:
             if (keyRange.lowerOpen) {
                 if (keyRange.upperOpen)
-                    sql = cachedStatement(SQL::GetValueRecordsLowerOpenUpperOpen, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetValueRecordsLowerOpenUpperOpen, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
                 else
-                    sql = cachedStatement(SQL::GetValueRecordsLowerOpenUpperClosed, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetValueRecordsLowerOpenUpperClosed, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
             } else {
                 if (keyRange.upperOpen)
-                    sql = cachedStatement(SQL::GetValueRecordsLowerClosedUpperOpen, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetValueRecordsLowerClosedUpperOpen, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
                 else
-                    sql = cachedStatement(SQL::GetValueRecordsLowerClosedUpperClosed, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetValueRecordsLowerClosedUpperClosed, "SELECT key, value, ROWID FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
             }
             break;
         case IDBGetRecordDataType::KeyOnly:
             if (keyRange.lowerOpen) {
                 if (keyRange.upperOpen)
-                    sql = cachedStatement(SQL::GetKeyRecordsLowerOpenUpperOpen, "SELECT key FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetKeyRecordsLowerOpenUpperOpen, "SELECT key FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
                 else
-                    sql = cachedStatement(SQL::GetKeyRecordsLowerOpenUpperClosed, "SELECT key FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetKeyRecordsLowerOpenUpperClosed, "SELECT key FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
             } else {
                 if (keyRange.upperOpen)
-                    sql = cachedStatement(SQL::GetKeyRecordsLowerClosedUpperOpen, "SELECT key FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetKeyRecordsLowerClosedUpperOpen, "SELECT key FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT) ORDER BY key;"_s);
                 else
-                    sql = cachedStatement(SQL::GetKeyRecordsLowerClosedUpperClosed, "SELECT key FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
+                    statement = cachedStatement(SQL::GetKeyRecordsLowerClosedUpperClosed, "SELECT key FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT) ORDER BY key;"_s);
             }
         }
 
-        CheckedPtr statement = sql.get();
         if (!statement
             || statement->bindInt64(1, objectStoreID.toRawValue()) != SQLITE_OK
             || statement->bindBlob(2, lowerBuffer->span()) != SQLITE_OK
@@ -2371,19 +2370,17 @@ IDBError SQLiteIDBBackingStore::getCount(const IDBResourceIdentifier& transactio
         return IDBError { ExceptionCode::UnknownError, "Unable to serialize upper IDBKey in lookup range for count operation"_s };
     }
 
-    SQLiteStatementAutoResetScope sql;
-    CheckedPtr<SQLiteStatement> statement;
+    SQLiteStatementAutoResetScope statement;
     if (!indexIdentifier) {
         if (range.lowerOpen && range.upperOpen)
-            sql = cachedStatement(SQL::CountRecordsLowerOpenUpperOpen, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountRecordsLowerOpenUpperOpen, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
         else if (range.lowerOpen && !range.upperOpen)
-            sql = cachedStatement(SQL::CountRecordsLowerOpenUpperClosed, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountRecordsLowerOpenUpperClosed, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
         else if (!range.lowerOpen && range.upperOpen)
-            sql = cachedStatement(SQL::CountRecordsLowerClosedUpperOpen, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountRecordsLowerClosedUpperOpen, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
         else
-            sql = cachedStatement(SQL::CountRecordsLowerClosedUpperClosed, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
-        
-        statement = sql.get();
+            statement = cachedStatement(SQL::CountRecordsLowerClosedUpperClosed, "SELECT COUNT(*) FROM Records WHERE objectStoreID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
+
         if (!statement
             || statement->bindInt64(1, objectStoreIdentifier.toRawValue()) != SQLITE_OK
             || statement->bindBlob(2, lowerBuffer->span()) != SQLITE_OK
@@ -2394,15 +2391,14 @@ IDBError SQLiteIDBBackingStore::getCount(const IDBResourceIdentifier& transactio
         }
     } else {
         if (range.lowerOpen && range.upperOpen)
-            sql = cachedStatement(SQL::CountIndexRecordsLowerOpenUpperOpen, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountIndexRecordsLowerOpenUpperOpen, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key > CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
         else if (range.lowerOpen && !range.upperOpen)
-            sql = cachedStatement(SQL::CountIndexRecordsLowerOpenUpperClosed, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountIndexRecordsLowerOpenUpperClosed, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key > CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
         else if (!range.lowerOpen && range.upperOpen)
-            sql = cachedStatement(SQL::CountIndexRecordsLowerClosedUpperOpen, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountIndexRecordsLowerClosedUpperOpen, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key >= CAST(? AS TEXT) AND key < CAST(? AS TEXT);"_s);
         else
-            sql = cachedStatement(SQL::CountIndexRecordsLowerClosedUpperClosed, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
+            statement = cachedStatement(SQL::CountIndexRecordsLowerClosedUpperClosed, "SELECT COUNT(*) FROM IndexRecords WHERE indexID = ? AND key >= CAST(? AS TEXT) AND key <= CAST(? AS TEXT);"_s);
 
-        statement = sql.get();
         if (!statement
             || statement->bindInt64(1, indexIdentifier->toRawValue()) != SQLITE_OK
             || statement->bindBlob(2, lowerBuffer->span()) != SQLITE_OK
@@ -2422,8 +2418,7 @@ IDBError SQLiteIDBBackingStore::getCount(const IDBResourceIdentifier& transactio
 
 IDBError SQLiteIDBBackingStore::uncheckedGetKeyGeneratorValue(IDBObjectStoreIdentifier objectStoreID, uint64_t& outValue)
 {
-    auto sql = cachedStatement(SQL::GetKeyGeneratorValue, "SELECT currentKey FROM KeyGenerators WHERE objectStoreID = ?;"_s);
-    CheckedPtr statement = sql.get();
+    auto statement = cachedStatement(SQL::GetKeyGeneratorValue, "SELECT currentKey FROM KeyGenerators WHERE objectStoreID = ?;"_s);
     if (!statement
         || statement->bindInt64(1, objectStoreID.toRawValue()) != SQLITE_OK) {
         CheckedRef sqliteDB = *m_sqliteDB;
@@ -2446,8 +2441,7 @@ IDBError SQLiteIDBBackingStore::uncheckedGetKeyGeneratorValue(IDBObjectStoreIden
 
 IDBError SQLiteIDBBackingStore::uncheckedSetKeyGeneratorValue(IDBObjectStoreIdentifier objectStoreID, uint64_t value)
 {
-    auto sql = cachedStatement(SQL::SetKeyGeneratorValue, "INSERT INTO KeyGenerators VALUES (?, ?);"_s);
-    CheckedPtr statement = sql.get();
+    auto statement = cachedStatement(SQL::SetKeyGeneratorValue, "INSERT INTO KeyGenerators VALUES (?, ?);"_s);
     if (!statement
         || statement->bindInt64(1, objectStoreID.toRawValue()) != SQLITE_OK
         || statement->bindInt64(2, value) != SQLITE_OK
@@ -2630,11 +2624,10 @@ void SQLiteIDBBackingStore::deleteBackingStore()
     if (CheckedPtr sqliteDB = m_sqliteDB.get()) {
         Vector<String> blobFiles;
         {
-            auto sql = sqliteDB->prepareStatement("SELECT fileName FROM BlobFiles;"_s);
-            if (!sql)
+            auto statement = sqliteDB->prepareHeapStatement("SELECT fileName FROM BlobFiles;"_s);
+            if (!statement)
                 LOG_ERROR("Error preparing statement to get blob filenames (%i) - %s", sqliteDB->lastError(), sqliteDB->lastErrorMsg());
             else {
-                CheckedRef statement = *sql;
                 int result = statement->step();
                 while (result == SQLITE_ROW) {
                     blobFiles.append(statement->columnText(0));
@@ -2677,9 +2670,8 @@ SQLiteStatementAutoResetScope SQLiteIDBBackingStore::cachedStatement(SQLiteIDBBa
         return SQLiteStatementAutoResetScope { m_cachedStatements[static_cast<size_t>(sql)].get() };
 
     if (CheckedPtr sqliteDB = m_sqliteDB.get()) {
-        auto statement = sqliteDB->prepareHeapStatement(query);
-        if (statement)
-            m_cachedStatements[static_cast<size_t>(sql)] = statement.value().moveToUniquePtr();
+        if (auto statement = sqliteDB->prepareHeapStatement(query))
+            m_cachedStatements[static_cast<size_t>(sql)] = WTFMove(statement);
     }
 
     return SQLiteStatementAutoResetScope { m_cachedStatements[static_cast<size_t>(sql)].get() };

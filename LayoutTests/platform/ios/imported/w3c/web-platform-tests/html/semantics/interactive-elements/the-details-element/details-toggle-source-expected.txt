@@ -1,5 +1,6 @@
 command source
 summary
+details
 
 FAIL ToggleEvent.source on <details> elements: details.open. assert_equals: Opening toggle.source. expected (object) null but got (undefined) undefined
 FAIL ToggleEvent.source on <details> elements: click summary. assert_equals: toggle newstate should be open. expected "open" but got "closed"

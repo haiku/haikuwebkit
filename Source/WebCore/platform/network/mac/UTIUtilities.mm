@@ -117,7 +117,7 @@ struct UTIFromMIMETypeCachePolicy : TinyLRUCachePolicy<String, RetainPtr<NSStrin
 public:
     static RetainPtr<NSString> createValueForKey(const String& mimeType)
     {
-        if (auto type = UTIFromPotentiallyUnknownMIMEType(mimeType))
+        if (RetainPtr type = UTIFromPotentiallyUnknownMIMEType(mimeType))
             return type;
 
         if (RetainPtr type = [UTType typeWithMIMEType:mimeType.createNSString().get()])

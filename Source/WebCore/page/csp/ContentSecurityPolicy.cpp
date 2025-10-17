@@ -823,8 +823,8 @@ bool ContentSecurityPolicy::requireTrustedTypesForSinkGroup(const String& sinkGr
 // https://w3c.github.io/trusted-types/dist/spec/#should-block-sink-type-mismatch
 bool ContentSecurityPolicy::allowMissingTrustedTypesForSinkGroup(const String& stringContext, const String& sink, const String& sinkGroup, StringView source) const
 {
-    return std::ranges::all_of(m_policies, [&](auto& policy) {
-        bool isAllowed = true;
+    auto isAllowed = true;
+    for (auto& policy : m_policies) {
         if (policy->requiresTrustedTypesForScript() && sinkGroup == "script"_s) {
             if (!policy->isReportOnly())
                 isAllowed = false;
@@ -848,11 +848,10 @@ bool ContentSecurityPolicy::allowMissingTrustedTypesForSinkGroup(const String& s
                 }
             }
             String violationSample = makeString(sink, '|', sample.left(40));
-            // FIXME: Remove SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE once <rdar://160402332> is fixed.
-            SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE reportViolation("require-trusted-types-for"_s, *policy, "trusted-types-sink"_s, consoleMessage, nullString(), violationSample, TextPosition(OrdinalNumber::beforeFirst(), OrdinalNumber()), nullptr);
+            reportViolation("require-trusted-types-for"_s, *policy, "trusted-types-sink"_s, consoleMessage, nullString(), violationSample, TextPosition(OrdinalNumber::beforeFirst(), OrdinalNumber()), nullptr);
         }
-        return isAllowed;
-    });
+    }
+    return isAllowed;
 }
 
 static bool shouldReportProtocolOnly(const URL& url)

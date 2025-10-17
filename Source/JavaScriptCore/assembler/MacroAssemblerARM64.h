@@ -3137,12 +3137,14 @@ public:
 
     void moveDouble(FPRegisterID src, FPRegisterID dest)
     {
-        m_assembler.fmov<64>(dest, src);
+        if (src != dest)
+            m_assembler.fmov<64>(dest, src);
     }
 
     void moveVector(FPRegisterID src, FPRegisterID dest)
     {
-        m_assembler.vorr<128>(dest, src, src);
+        if (src != dest)
+            m_assembler.vorr<128>(dest, src, src);
     }
 
     void materializeVector(v128_t value, FPRegisterID dest)
@@ -3371,7 +3373,7 @@ public:
                 m_assembler.fcsel<datasize>(thenCase, elseCase, thenCase, Assembler::ConditionVS);
                 m_assembler.fcsel<datasize>(dest, thenCase, elseCase, Assembler::ConditionNE);
             } else {
-                m_assembler.fmov<64>(dest, elseCase);
+                moveDouble(elseCase, dest);
                 Jump unordered = makeBranch(Assembler::ConditionVS);
                 m_assembler.fcsel<datasize>(dest, thenCase, elseCase, Assembler::ConditionNE);
                 unordered.link(this);
@@ -3387,7 +3389,7 @@ public:
                 m_assembler.fcsel<datasize>(elseCase, thenCase, elseCase, Assembler::ConditionVS);
                 m_assembler.fcsel<datasize>(dest, thenCase, elseCase, Assembler::ConditionEQ);
             } else {
-                m_assembler.fmov<64>(dest, thenCase);
+                moveDouble(thenCase, dest);
                 Jump unordered = makeBranch(Assembler::ConditionVS);
                 m_assembler.fcsel<datasize>(dest, thenCase, elseCase, Assembler::ConditionEQ);
                 unordered.link(this);

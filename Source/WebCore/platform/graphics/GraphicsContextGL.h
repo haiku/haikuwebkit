@@ -43,6 +43,10 @@
 #include <wtf/RefCounted.h>
 #include <wtf/text/WTFString.h>
 
+#if OS(ANDROID)
+#include <wtf/android/RefPtrAndroid.h>
+#endif
+
 #if PLATFORM(COCOA)
 #include <wtf/MachSendRight.h>
 #endif
@@ -91,11 +95,15 @@ using GraphicsContextGLExternalSyncSource = std::tuple<MachSendRight, uint64_t>;
 #elif PLATFORM(GTK) || PLATFORM(WPE)
 
 struct GraphicsContextGLExternalImageSource {
+#if OS(ANDROID)
+    RefPtr<AHardwareBuffer> hardwareBuffer;
+#else
     Vector<WTF::UnixFileDescriptor> fds;
     Vector<uint32_t> strides;
     Vector<uint32_t> offsets;
     uint32_t fourcc;
     uint64_t modifier;
+#endif // OS(ANDROID)
     WebCore::IntSize size;
 };
 using GraphicsContextGLExternalSyncSource = int;

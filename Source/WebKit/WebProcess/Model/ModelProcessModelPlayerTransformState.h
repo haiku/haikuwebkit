@@ -27,7 +27,9 @@
 
 #if ENABLE(MODEL_PROCESS)
 
+#include <WebCore/FloatPoint3D.h>
 #include <WebCore/ModelPlayerTransformState.h>
+#include <WebCore/TransformationMatrix.h>
 
 namespace WebKit {
 

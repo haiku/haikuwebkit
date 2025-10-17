@@ -363,7 +363,7 @@ TEST(WTF, StringExistingHash)
     EXPECT_EQ(string2.existingHash(), 0u);
 }
 
-TEST(WTF, StringUnicodeEqualUCharArray)
+TEST(WTF, StringUnicodeEqualUTF16Array)
 {
     String string1("abc"_s);
     EXPECT_FALSE(string1.isNull());

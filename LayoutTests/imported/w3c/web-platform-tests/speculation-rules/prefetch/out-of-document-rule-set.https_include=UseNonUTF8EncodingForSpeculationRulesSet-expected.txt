@@ -1,4 +1,3 @@
 
-Harness Error (FAIL), message = Error: assert_implements: <script type="speculationrules"> must be supported undefined
-
+PASS The speculation rules set should always be encoded using UTF-8.
 

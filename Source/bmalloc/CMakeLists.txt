@@ -683,6 +683,7 @@ set(bmalloc_PUBLIC_HEADERS
     libpas/src/libpas/pas_versioned_field.h
     libpas/src/libpas/pas_virtual_range.h
     libpas/src/libpas/pas_virtual_range_min_heap.h
+    libpas/src/libpas/pas_zero_memory.h
     libpas/src/libpas/pas_zero_mode.h
     libpas/src/libpas/thingy_heap_config.h
     libpas/src/libpas/thingy_heap.h

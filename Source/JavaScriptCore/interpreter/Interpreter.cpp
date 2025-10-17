@@ -60,6 +60,7 @@
 #include "JSObject.h"
 #include "JSPromise.h"
 #include "JSPromiseAllContext.h"
+#include "JSPromiseReaction.h"
 #include "JSRemoteFunction.h"
 #include "JSString.h"
 #include "JSWebAssemblyException.h"
@@ -181,7 +182,7 @@ JSValue eval(CallFrame* callFrame, JSValue thisValue, JSScope* callerScopeChain,
         if (!(lexicallyScopedFeatures & StrictModeLexicallyScopedFeature)) {
             JSValue parsedValue;
             if (programSource.is8Bit()) {
-                LiteralParser<LChar, JSONReviverMode::Disabled> preparser(globalObject, programSource.span8(), SloppyJSON, callerBaselineCodeBlock);
+                LiteralParser<Latin1Character, JSONReviverMode::Disabled> preparser(globalObject, programSource.span8(), SloppyJSON, callerBaselineCodeBlock);
                 parsedValue = preparser.tryEval();
             } else {
                 LiteralParser<char16_t, JSONReviverMode::Disabled> preparser(globalObject, programSource.span16(), SloppyJSON, callerBaselineCodeBlock);
@@ -465,21 +466,20 @@ void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results,
     auto getContextValueFromPromise = [&](JSPromise* promise) -> JSValue {
         if (promise && promise->status(vm) == JSPromise::Status::Pending) {
             JSValue reactionsValue = promise->internalField(JSPromise::Field::ReactionsOrResult).get();
-            if (JSObject* reactions = jsDynamicCast<JSObject*>(reactionsValue)) {
-                Structure* reactionsStructure = reactions->structure();
-                unsigned contextFieldAttributes;
-                PropertyOffset contextOffset = reactionsStructure->getConcurrently(vm.propertyNames->builtinNames().contextPrivateName().impl(), contextFieldAttributes);
-                if (contextOffset != invalidOffset && !(contextFieldAttributes & (PropertyAttribute::Accessor | PropertyAttribute::CustomAccessorOrValue)))
-                    return reactions->getDirect(contextOffset);
-            }
+            if (auto* reaction = jsDynamicCast<JSPromiseReaction*>(reactionsValue))
+                return reaction->context();
         }
         return JSValue();
     };
 
     auto getParentGenerator = [&](JSGenerator* gen) -> JSGenerator* {
         JSValue generatorContext = gen->internalField(static_cast<unsigned>(JSGenerator::Field::Context)).get();
+        ASSERT(generatorContext);
         JSPromise* awaitedPromise = jsDynamicCast<JSPromise*>(generatorContext);
         JSValue promiseContext = getContextValueFromPromise(awaitedPromise);
+
+        if (!promiseContext)
+            return nullptr;
 
         // handle simple `await`
         if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
@@ -488,12 +488,23 @@ void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results,
         // handle `Promise.all`
         if (auto* promiseAllContext = jsDynamicCast<JSPromiseAllContext*>(promiseContext)) {
             JSValue promiseValue = promiseAllContext->promise();
+            ASSERT(promiseValue);
             if (auto* promise = jsDynamicCast<JSPromise*>(promiseValue)) {
-                JSValue promiseContext = getContextValueFromPromise(promise);
-                if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
+                if (JSValue promiseContext = getContextValueFromPromise(promise)) {
+                    if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
+                        return generator;
+                }
+            }
+        }
+
+        // handle `Promise.any` and `Promise.race`
+        if (auto* contextPromise = jsDynamicCast<JSPromise*>(promiseContext)) {
+            if (JSValue parentContext = getContextValueFromPromise(contextPromise)) {
+                if (auto* generator = jsDynamicCast<JSGenerator*>(parentContext))
                     return generator;
             }
         }
+
         return nullptr;
     };
 
@@ -811,7 +822,7 @@ public:
             case NativeCallee::Category::Wasm: {
 #if ENABLE(WEBASSEMBLY)
                 if (m_catchableFromWasm) {
-                    auto* wasmCallee = static_cast<Wasm::Callee*>(nativeCallee);
+                    auto* wasmCallee = uncheckedDowncast<Wasm::Callee>(nativeCallee);
                     if (wasmCallee->hasExceptionHandlers()) {
                         JSWebAssemblyInstance* instance = m_callFrame->wasmInstance();
                         unsigned exceptionHandlerIndex = visitor->wasmCallSiteIndex().bits();
@@ -1099,7 +1110,7 @@ JSValue Interpreter::executeProgram(const SourceCode& source, JSGlobalObject*, J
     if (programSource.isNull())
         return jsUndefined();
     if (programSource.is8Bit()) {
-        LiteralParser<LChar, JSONReviverMode::Disabled> literalParser(globalObject, programSource.span8(), JSONP);
+        LiteralParser<Latin1Character, JSONReviverMode::Disabled> literalParser(globalObject, programSource.span8(), JSONP);
         parseResult = literalParser.tryJSONPParse(JSONPData, globalObject->globalObjectMethodTable()->supportsRichSourceInfo(globalObject));
     } else {
         LiteralParser<char16_t, JSONReviverMode::Disabled> literalParser(globalObject, programSource.span16(), JSONP);

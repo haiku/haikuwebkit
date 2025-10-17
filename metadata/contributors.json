@@ -2876,6 +2876,16 @@
    },
    {
       "emails" : [
+         "eri@igalia.com"
+      ],
+      "github" : "eerii",
+      "name" : "Eri Pazos P\u00e9rez",
+      "nicks" : [
+         "eri"
+      ]
+   },
+   {
+      "emails" : [
          "eric.carlson@apple.com"
       ],
       "expertise" : "HTML5 Media Elements",

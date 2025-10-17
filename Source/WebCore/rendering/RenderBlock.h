@@ -148,7 +148,7 @@ public:
         ExpansionBehavior = ExpansionBehavior::defaultBehavior());
     static TextRun constructTextRun(const RenderText&, unsigned offset, unsigned length, const RenderStyle&,
         ExpansionBehavior = ExpansionBehavior::defaultBehavior());
-    static TextRun constructTextRun(std::span<const LChar> characters, const RenderStyle&,
+    static TextRun constructTextRun(std::span<const Latin1Character> characters, const RenderStyle&,
         ExpansionBehavior = ExpansionBehavior::defaultBehavior());
     static TextRun constructTextRun(std::span<const char16_t> characters, const RenderStyle&,
         ExpansionBehavior = ExpansionBehavior::defaultBehavior());

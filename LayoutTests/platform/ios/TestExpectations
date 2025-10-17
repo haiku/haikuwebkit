@@ -87,6 +87,9 @@ media/track/track-description-cue.html [ Pass ]
 media/track/track-extended-descriptions.html [ Pass ]
 media/wireless-route-monitoring.html [ Pass ]
 
+# Cocoa only tests
+http/tests/iframe-monitor [ Pass ]
+
 # mac-only IPC test
 ipc/webpageproxy-correctionpanel-no-crash.html [ Skip ]
 
@@ -288,6 +291,7 @@ webaudio/audiocontext-restriction-audiobuffersourcenode-start.html [ Skip ]
 webaudio/audiocontext-restriction.html [ Skip ]
 webaudio/suspend-context-while-interrupted.html [ Skip ]
 webaudio/codec-tests/vorbis [ Skip ]
+# vorbis decoder not available on simulator.
 webaudio/decode-audio-data-webm-vorbis.html [ Failure ]
 media/track/audio-track-configuration-webm.html
 
@@ -2413,6 +2417,7 @@ accessibility/table-display-block.html [ Pass ]
 accessibility/table-display-flex.html [ Pass ]
 accessibility/table-display-grid.html [ Pass ]
 accessibility/table-display-inline-block.html [ Pass ]
+accessibility/text-input-hit-test.html [ Pass ]
 accessibility/tree-update-with-dirty-layout.html [ Pass ]
 accessibility/tree-update-with-dynamically-ignored-inline-child-div.html [ Pass ]
 accessibility/tree-update-with-dynamically-ignored-tabindex-div.html [ Pass ]
@@ -4537,7 +4542,10 @@ webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/programmatic-cl
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/retrievability.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/retrieve-firstInput.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/shadow-dom-null-target.html [ Skip ]
+webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/timingconditions.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/toJSON.html [ Skip ]
+
+webkit.org/b/299907 imported/w3c/web-platform-tests/largest-contentful-paint/transparent-text.html [ Failure ]
 
 # rdar://105509003
 imported/w3c/web-platform-tests/css/css-text/line-break/line-break-anywhere-overrides-uax-behavior-009.html [ ImageOnlyFailure ]
@@ -4595,6 +4603,7 @@ fast/images/hdr-border-image.html [ Pass ]
 fast/images/hdr-image-layer-sdr-dynamic-range-limit.html [ Pass ]
 fast/images/hdr-pseudo-before-image.html [ Pass ]
 fast/images/hdr-svg-inline-image.html [ Pass ]
+fast/images/hdr-unaccelerated-basic-image.html [ Pass ]
 
 # Re-enabling tests fixed by DocumentManager in iOS16+ rdar://102159271
 fast/forms/ios/show-file-upload-context-menu-above-keyboard.html [ Pass ]
@@ -4721,9 +4730,6 @@ http/tests/site-isolation/mouse-events/ [ Skip ]
 webkit.org/b/257904 http/tests/site-isolation/draw-after-navigation.html [ Skip ]
 webkit.org/b/257904 http/tests/site-isolation/draw-with-size-after-same-origin-navigation.html [ Skip ]
 webkit.org/b/257904 http/tests/site-isolation/page-zoom.html [ Skip ]
-
-# This test can't be enabled on iOS until EventSenderProxy::keyDown() is implemented on iOS.
-http/tests/site-isolation/key-events.html [ Skip ]
 
 # Initial css/compositing test import
 imported/w3c/web-platform-tests/css/compositing/mix-blend-mode/mix-blend-mode-both-parent-and-blended-with-3D-transform.html [ ImageOnlyFailure ]
@@ -5555,7 +5561,6 @@ platform/ios/ios/fast/text/underline-scaling.html [ Failure ]
 fast/borders/dashed-border-on-subpixel-position.html [ ImageOnlyFailure ]
 fast/borders/dotted-border-on-subpixel-position.html [ ImageOnlyFailure ]
 fast/forms/select/select-painting.html [ ImageOnlyFailure ]
-fast/images/background-image-size-changes-fractional-position.html [ ImageOnlyFailure ]
 fast/masking/clip-path-on-subpixel-position.html [ ImageOnlyFailure ]
 fast/text/hidpi-text-selection-gap-between-words.html [ ImageOnlyFailure ]
 
@@ -6875,7 +6880,7 @@ imported/w3c/web-platform-tests/html/canvas/element/manual/imagebitmap/createIma
 imported/w3c/web-platform-tests/html/canvas/element/manual/imagebitmap/createImageBitmap-flipY.html [ Failure ]
 
 webkit.org/b/245588 mathml/presentation/mathvariant-inheritance.html [ ImageOnlyFailure ]
-webkit.org/b/245588 mathml/presentation/fenced-mi.html [ ImageOnlyFailure ]
+webkit.org/b/245588 mathml/non-core/fenced-mi.html [ ImageOnlyFailure ]
 
 # TODO: Pass expectation set above. Uncomment that line when this issue is resolved.
 webkit.org/b/245600 fast/attachment/attachment-wrapping-action.html [ ImageOnlyFailure ]
@@ -7520,6 +7525,7 @@ imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished
 imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-4-3.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/relations/html5-tree/tabindex-002.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/mathml/relations/css-styling/mozilla-393760-1.xml [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/mathml/presentation-markup/scripts/subsup-legacy-scriptshift-attributes-001.tentative.html [ ImageOnlyFailure ]
 
 webkit.org/b/277195 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/inert-label-focus.html [ Failure ]
 
@@ -7949,13 +7955,6 @@ webkit.org/b/295604 http/tests/blink/sendbeacon/beacon-cookie.html [ Pass Failur
 # rdar://148125924 (REGRESSION(291405@Main?): [ OS 26 ] apple-visual-effects/apple-visual-effect-parsing.html is a constant text failure)
 apple-visual-effects/apple-visual-effect-parsing.html [ Failure ]
 
-# rdar://154886047 (REGRESSION(Liquid Glass): Rebaseline? [ OS 26 ] 5X imported/w3c/web-platform-tests/css/css-view-transitions/ (Layout-Tests) are constant ImageOnlyFailures)
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-and-on-top-of-viewport-partially-onscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-left-of-viewport-offscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-on-top-of-viewport-offscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-right-and-left-of-viewport-partially-onscreen-new.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/new-content-transform-position-fixed.html [ ImageOnlyFailure ]
-
 # rdar://154889639 (REGRESSION (Liquid Glass): fast/forms/datalist/datalist-fallback-content.html is a constant ImageOnlyFailure)
 fast/forms/datalist/datalist-fallback-content.html [ ImageOnlyFailure ]
 
@@ -8260,6 +8259,16 @@ webkit.org/b/298962 imported/w3c/web-platform-tests/html/browsers/browsing-the-w
 
 webkit.org/b/298974 fast/forms/ios/keyboard-restoration-after-element-replacement.html [ Timeout ]
 
-webkit.org/b/280234 imported/w3c/web-platform-tests/html/dom/idlharness.https.html [ Skip ]
+webkit.org/b/280234 imported/w3c/web-platform-tests/html/dom/idlharness.https.html? [ Skip ]
 
-webkit.org/b/299110 webrtc/calling-peerconnection-once-closed.html? [ Pass Failure ]
+webkit.org/b/299567 editing/text-iterator/hidden-textarea-selection-quirk.html [ Timeout ]
+
+webkit.org/b/299811 fast/images/background-image-size-changes-fractional-position.html [ ImageOnlyFailure ]
+
+webkit.org/b/299501 http/tests/site-isolation/focus-tab-navigation-activeElement.html [ Pass Failure ]
+
+webkit.org/b/299501 http/tests/site-isolation/focus-click-navigation-activeElement.html [ Pass Failure ]
+
+# webkit.org/b/299996 REGRESSION(299875@main?) [iOS macOS] ASSERTION FAILED: it != m_trackIdentifiers.end() in media/media-video-videorange.html
+media/media-video-videorange.html [ Pass Crash ]
+media/media-video-fullrange.html [ Pass Crash ]

@@ -30,7 +30,7 @@
 #include "ExceptionOr.h"
 #include "JSDOMGlobalObject.h"
 #include "JSDOMPromise.h"
-#include "ScriptExecutionContext.h"
+#include "ScriptExecutionContextInlines.h"
 #include <JavaScriptCore/Microtask.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -73,7 +73,7 @@ void ExtendableEvent::addExtendLifetimePromise(Ref<DOMPromise>&& promise)
         RefPtr context = globalObject.scriptExecutionContext();
         if (!context)
             return;
-        context->eventLoop().queueMicrotask([this, protectedThis = WTFMove(protectedThis), settledPromise = WTFMove(settledPromise)]() mutable {
+        context->checkedEventLoop()->queueMicrotask([this, protectedThis = WTFMove(protectedThis), settledPromise = WTFMove(settledPromise)]() mutable {
             --m_pendingPromiseCount;
 
             // FIXME: Let registration be the context object's relevant global object's associated service worker's containing service worker registration.

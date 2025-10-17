@@ -129,7 +129,11 @@ class Events(service.BuildbotService):
             build['properties'] = yield self.master.db.builds.getBuildProperties(build.get('buildid'))
 
         builder = yield self.master.db.builders.getBuilder(build.get('builderid'))
-        builder_display_name = builder.get('description')
+        # Handle both buildbot 2.x (dict) and 4.x (model object)
+        if isinstance(builder, dict):
+            builder_display_name = builder.get('description', '')
+        else:
+            builder_display_name = builder.description
 
         data = {
             "type": self.type_prefix + "build",
@@ -186,7 +190,11 @@ class Events(service.BuildbotService):
             build['steps'] = yield self.master.db.steps.getSteps(build.get('buildid'))
 
         builder = yield self.master.db.builders.getBuilder(build.get('builderid'))
-        build['description'] = builder.get('description', '?')
+        # Handle both buildbot 2.x (dict) and 4.x (model object)
+        if isinstance(builder, dict):
+            build['description'] = builder.get('description', '?')
+        else:
+            build['description'] = builder.description
 
         if self.extractProperty(build, 'github.number') and (custom_suffix == ''):
             self.buildFinishedGitHub(build)
@@ -207,7 +215,7 @@ class Events(service.BuildbotService):
             "complete_at": build.get('complete_at'),
             "state_string": build.get('state_string'),
             "builder_name": self.getBuilderName(build),
-            "builder_display_name": builder.get('description'),
+            "builder_display_name": builder.get('description', '') if isinstance(builder, dict) else builder.description,
             "steps": build.get('steps'),
         }
 

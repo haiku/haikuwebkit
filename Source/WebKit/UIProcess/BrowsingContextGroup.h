@@ -27,6 +27,7 @@
 
 #include "WebProcessProxy.h"
 #include <WebCore/Site.h>
+#include <wtf/CompletionHandler.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakHashMap.h>
 #include <wtf/WeakListHashSet.h>
@@ -58,7 +59,7 @@ public:
     static Ref<BrowsingContextGroup> create() { return adoptRef(*new BrowsingContextGroup()); }
     ~BrowsingContextGroup();
 
-    RefPtr<FrameProcess> sharedProcessForSite(WebsiteDataStore&, API::WebsitePolicies*, const WebPreferences&, const WebCore::Site&, WebProcessProxy::LockdownMode, API::PageConfiguration&, IsMainFrame);
+    void sharedProcessForSite(WebsiteDataStore&, API::WebsitePolicies*, const WebPreferences&, const WebCore::Site&, WebProcessProxy::LockdownMode, WebProcessProxy::EnhancedSecurity, API::PageConfiguration&, IsMainFrame, CompletionHandler<void(FrameProcess*)>&&);
     Ref<FrameProcess> ensureProcessForSite(const WebCore::Site&, WebProcessProxy&, const WebPreferences&, InjectBrowsingContextIntoProcess = InjectBrowsingContextIntoProcess::Yes);
     FrameProcess* processForSite(const WebCore::Site&);
     void addFrameProcess(FrameProcess&);
@@ -84,6 +85,7 @@ private:
 
     WeakPtr<FrameProcess> m_sharedProcess;
     HashSet<WebCore::Site> m_sharedProcessSites;
+    WeakHashSet<WebPageProxy> m_pagesInSharedProcess;
 
     HashMap<WebCore::Site, WeakPtr<FrameProcess>> m_processMap;
     WeakListHashSet<WebPageProxy> m_pages;

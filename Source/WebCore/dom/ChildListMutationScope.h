@@ -33,6 +33,7 @@
 #include "ContainerNode.h"
 #include "Document.h"
 #include "MutationObserverOptions.h"
+#include "NodeDocument.h"
 #include <memory>
 #include <wtf/Noncopyable.h>
 #include <wtf/RefCounted.h>

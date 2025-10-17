@@ -985,26 +985,6 @@ void InspectorPageAgent::loaderDetachedFromFrame(DocumentLoader& loader)
     m_loaderToIdentifier.remove(&loader);
 }
 
-void InspectorPageAgent::frameStartedLoading(LocalFrame& frame)
-{
-    m_frontendDispatcher->frameStartedLoading(frameId(&frame));
-}
-
-void InspectorPageAgent::frameStoppedLoading(LocalFrame& frame)
-{
-    m_frontendDispatcher->frameStoppedLoading(frameId(&frame));
-}
-
-void InspectorPageAgent::frameScheduledNavigation(Frame& frame, Seconds delay)
-{
-    m_frontendDispatcher->frameScheduledNavigation(frameId(&frame), delay.value());
-}
-
-void InspectorPageAgent::frameClearedScheduledNavigation(Frame& frame)
-{
-    m_frontendDispatcher->frameClearedScheduledNavigation(frameId(&frame));
-}
-
 void InspectorPageAgent::accessibilitySettingsDidChange()
 {
     defaultUserPreferencesDidChange();

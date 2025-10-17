@@ -1286,6 +1286,18 @@ public:
             m_assembler.andnpd_rr(src, dst);
     }
 
+    void absFloat(FPRegisterID src, FPRegisterID dst)
+    {
+        if (supportsAVX()) {
+            m_assembler.vpslld_i8rr(1, src, dst);
+            m_assembler.vpsrld_i8rr(1, dst, dst);
+        } else {
+            moveDouble(src, dst);
+            m_assembler.pslld_i8r(1, dst);
+            m_assembler.psrld_i8r(1, dst);
+        }
+    }
+
     void negateDouble(FPRegisterID src, FPRegisterID dst)
     {
         ASSERT(src != dst);
@@ -1295,6 +1307,17 @@ public:
             m_assembler.vxorpd_rrr(src, dst, dst);
         else
             m_assembler.xorpd_rr(src, dst);
+    }
+
+    void negateFloat(FPRegisterID src, FPRegisterID dst)
+    {
+        ASSERT(src != dst);
+        static constexpr float negativeZeroConstant = -0.0f;
+        loadFloat(TrustedImmPtr(&negativeZeroConstant), dst);
+        if (supportsAVX())
+            m_assembler.vxorps_rrr(src, dst, dst);
+        else
+            m_assembler.xorps_rr(src, dst);
     }
 
     void ceilDouble(FPRegisterID src, FPRegisterID dst)

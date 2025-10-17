@@ -76,12 +76,25 @@ static std::pair<ASCIILiteral, RetainPtr<NSString>> serviceNameAndIdentifier(Pro
     switch (processType) {
     case ProcessLauncher::ProcessType::Web: {
         bool useCaptivePortal = client && client->shouldEnableLockdownMode();
+        bool useEnhancedSecurity = client && client->shouldEnableEnhancedSecurity();
         if (!hasExtensionsInAppBundle) {
-            if (!useCaptivePortal)
+            if (!useCaptivePortal && !useEnhancedSecurity)
                 return { "com.apple.WebKit.WebContent"_s, @"com.apple.WebKit.WebContent" };
+
+            if (useEnhancedSecurity)
+                return { "com.apple.WebKit.WebContent"_s, @"com.apple.WebKit.WebContent.EnhancedSecurity" };
+
             return { "com.apple.WebKit.WebContent"_s, @"com.apple.WebKit.WebContent.CaptivePortal" };
         }
-        NSString *webContentAppex = !useCaptivePortal ? @"WebContentExtension" : @"WebContentCaptivePortalExtension";
+        NSString *webContentAppex = nil;
+
+        if (useCaptivePortal)
+            webContentAppex = @"WebContentCaptivePortalExtension";
+        else if (useEnhancedSecurity)
+            webContentAppex = @"WebContentEnhancedSecurityExtension";
+        else
+            webContentAppex = @"WebContentExtension";
+
         return { "com.apple.WebKit.WebContent"_s, [NSString stringWithFormat:@"%@.%@", [[NSBundle mainBundle] bundleIdentifier], webContentAppex] };
     }
     case ProcessLauncher::ProcessType::Network:
@@ -148,6 +161,9 @@ static ASCIILiteral webContentServiceName(const ProcessLauncher::LaunchOptions& 
 {
     if (client && client->shouldEnableLockdownMode())
         return "com.apple.WebKit.WebContent.CaptivePortal"_s;
+
+    if (client && client->shouldEnableEnhancedSecurity())
+        return "com.apple.WebKit.WebContent.EnhancedSecurity"_s;
 
     return launchOptions.nonValidInjectedCodeAllowed ? "com.apple.WebKit.WebContent.Development"_s : "com.apple.WebKit.WebContent"_s;
 }

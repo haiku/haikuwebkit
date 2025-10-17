@@ -29,10 +29,12 @@
 #include "config.h"
 #include "AXCoreObject.h"
 
+#include "AXUtilities.h"
 #include "DocumentInlines.h"
 #include "HTMLAreaElement.h"
 #include "LocalFrameView.h"
 #include "RenderObjectStyle.h"
+#include "RenderStyleInlines.h"
 #include "Settings.h"
 #include "TextDecorationPainter.h"
 #include <wtf/Deque.h>
@@ -355,7 +357,83 @@ AXCoreObject* AXCoreObject::firstUnignoredChild()
     }
     return nullptr;
 }
+
 #endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+
+AXCoreObject::AccessibilityChildrenVector AXCoreObject::crossFrameUnignoredChildren()
+{
+    AXCoreObject::AccessibilityChildrenVector result = unignoredChildren(/* updateChildrenIfNeeded */ true);
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (result.isEmpty()) {
+        if (RefPtr crossFrameChild = crossFrameChildObject())
+            result.append(*crossFrameChild);
+    } else {
+        for (size_t i = 0; i < result.size(); i++) {
+            if (auto* crossFrameChild = result[i]->crossFrameChildObject())
+                result[i] = *crossFrameChild;
+        }
+    }
+#endif
+
+    return result;
+}
+
+AXCoreObject* AXCoreObject::crossFrameParentObjectUnignored() const
+{
+    RefPtr result = parentObjectUnignored();
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (!result) {
+        if (auto* crossFrameParent = crossFrameParentObject())
+            result = crossFrameParent;
+    }
+#endif
+
+    return result.get();
+}
+
+AXCoreObject::AccessibilityChildrenVector AXCoreObject::crossFrameChildrenIncludingIgnored(bool updateChildrenIfNeeded)
+{
+    AXCoreObject::AccessibilityChildrenVector result = childrenIncludingIgnored(updateChildrenIfNeeded);
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (result.isEmpty()) {
+        AXCoreObject* crossFrameChild = crossFrameChildObject();
+        if (crossFrameChild)
+            result.append(*crossFrameChild);
+    }
+#endif
+
+    return result;
+}
+
+bool AXCoreObject::crossFrameIsAncestorOfObject(const AXCoreObject& axObject) const
+{
+    return this == &axObject || axObject.crossFrameIsDescendantOfObject(*this);
+}
+
+bool AXCoreObject::crossFrameIsDescendantOfObject(const AXCoreObject& axObject) const
+{
+    return Accessibility::crossFrameFindAncestor<AXCoreObject>(*this, false, [&axObject] (const AXCoreObject& object) {
+        return &object == &axObject;
+    }) != nullptr;
+}
+
+AXCoreObject* AXCoreObject::parentObjectIncludingCrossFrame() const
+{
+    RefPtr result = parentObject();
+
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+    if (!result) {
+        if (auto* crossFrameParent = crossFrameParentObject())
+            result = crossFrameParent;
+    }
+#endif
+
+    return result.get();
+}
+
 
 #ifndef NDEBUG
 void AXCoreObject::verifyChildrenIndexInParent(const AccessibilityChildrenVector& children) const
@@ -375,7 +453,13 @@ void AXCoreObject::verifyChildrenIndexInParent(const AccessibilityChildrenVector
 
 AXCoreObject* AXCoreObject::nextInPreOrder(bool updateChildrenIfNeeded, AXCoreObject* stayWithin)
 {
-    const auto& children = childrenIncludingIgnored(updateChildrenIfNeeded);
+    return nextInPreOrder(updateChildrenIfNeeded, stayWithin, false);
+}
+
+AXCoreObject* AXCoreObject::nextInPreOrder(bool updateChildrenIfNeeded , AXCoreObject* stayWithin, bool includeCrossFrame)
+{
+    const auto& children = includeCrossFrame ? crossFrameChildrenIncludingIgnored(updateChildrenIfNeeded) : childrenIncludingIgnored(updateChildrenIfNeeded);
+
     if (!children.isEmpty()) {
         auto role = this->role();
         if (role != AccessibilityRole::Column && role != AccessibilityRole::TableHeaderContainer) {
@@ -389,9 +473,10 @@ AXCoreObject* AXCoreObject::nextInPreOrder(bool updateChildrenIfNeeded, AXCoreOb
         return nullptr;
 
     RefPtr current = this;
-    RefPtr next = nextSiblingIncludingIgnored(updateChildrenIfNeeded);
-    for (; !next; next = current->nextSiblingIncludingIgnored(updateChildrenIfNeeded)) {
-        current = current->parentObject();
+    RefPtr next = nextSiblingIncludingIgnored(updateChildrenIfNeeded, includeCrossFrame);
+    for (; !next; next = current->nextSiblingIncludingIgnored(updateChildrenIfNeeded, includeCrossFrame)) {
+        current = includeCrossFrame ? current->parentObjectIncludingCrossFrame() : current->parentObject();
+
         if (!current || stayWithin == current)
             return nullptr;
     }
@@ -444,11 +529,16 @@ size_t AXCoreObject::indexInSiblings(const AccessibilityChildrenVector& siblings
 
 AXCoreObject* AXCoreObject::nextSiblingIncludingIgnored(bool updateChildrenIfNeeded) const
 {
+    return nextSiblingIncludingIgnored(updateChildrenIfNeeded, /* crossFrame = */ false);
+}
+
+AXCoreObject* AXCoreObject::nextSiblingIncludingIgnored(bool updateChildrenIfNeeded, bool includeCrossFrame) const
+{
     RefPtr parent = parentObject();
     if (!parent)
         return nullptr;
 
-    const auto& siblings = parent->childrenIncludingIgnored(updateChildrenIfNeeded);
+    const auto& siblings = includeCrossFrame ? parent->crossFrameChildrenIncludingIgnored(updateChildrenIfNeeded) : parent->childrenIncludingIgnored(updateChildrenIfNeeded);
     size_t indexOfThis = indexInSiblings(siblings);
     if (indexOfThis == notFound)
         return nullptr;
@@ -1313,7 +1403,7 @@ unsigned AXCoreObject::hierarchicalLevel() const
 
 bool AXCoreObject::supportsPressAction() const
 {
-    if (role() == AccessibilityRole::Presentational)
+    if (role() == AccessibilityRole::Presentational || hasPointerEventsNone())
         return false;
 
     if (isImplicitlyInteractive() || hasClickHandler())
@@ -1324,54 +1414,65 @@ bool AXCoreObject::supportsPressAction() const
         // other appropriate ARIA markup indicating interactivity (e.g. by applying role="button"). We can repair these
         // scenarios by checking for a clickable ancestor. But want to do so selectively, as naively exposing press on
         // every text can be annoying as some screenreaders read "clickable" for each static text.
-        if (!hasCursorPointer()) {
+        bool foundCursor = hasCursorPointer();
+
+        RefPtr clickableAncestor = Accessibility::findAncestor(*this, /* includeSelf */ true, /* matchFunction */ [&foundCursor] (const auto& ancestor) {
+            if (!foundCursor)
+                foundCursor = ancestor.hasCursorPointer() || ancestor.showsCursorOnHover();
+            return ancestor.hasClickHandler();
+        }, /* stopTraversalFunction */ [] (const auto& ancestor) {
+            // Stop traversing and return nullptr if we walk over an implicitly interactive element on our
+            // way to the click handler, as we can rely on the semantics of that element to imply pressability.
+            // Also stop when encountering the body or main to avoid exposing pressability for everything in
+            // web apps that implement an event-delegation mechanism.
+            auto role = ancestor.role();
+            return ancestor.isImplicitlyInteractive() || role == AccessibilityRole::LandmarkMain || role == AccessibilityRole::Presentational || ancestor.hasBodyTag();
+        });
+
+        if (!clickableAncestor)
+            return false;
+
+        if (!foundCursor) {
             // If the author hasn't provided a pointer cursor, the visual experience also doesn't express
             // pressability, so return.
             return false;
         }
 
-        if (RefPtr clickableAncestor = Accessibility::clickableSelfOrAncestor(*this, /* stopFunction */ [&] (const auto& ancestor) {
-            // Stop iterating and return nullptr if we walk over an implicitly interactive element on our way to the
-            // click handler, as we can rely on the semantics of that element to imply pressability. Also stop when
-            // encountering the body or main to avoid exposing pressability for everything in web apps that implement
-            // an event-delegation mechanism.
-            return ancestor.isImplicitlyInteractive() || ancestor.role() == AccessibilityRole::LandmarkMain || ancestor.hasBodyTag();
-        })) {
-            unsigned matches = 0;
-            unsigned candidatesChecked = 0;
-            RefPtr candidate = clickableAncestor;
-            while ((candidate = candidate->nextInPreOrder(/* updateChildren */ true, /* stayWithin */ clickableAncestor.get()))) {
-                if (candidate->isStaticText() || candidate->isControl() || candidate->isImage() || candidate->isHeading() || candidate->isLink()) {
-                    if (!candidate->isIgnored()) {
-                        if (!matches && this != candidate.get()) {
-                            // Only support press action for the first descendant. Some ATs, like VoiceOver, use the result of this function
-                            // to read "clickable", but reading it for every descendant of the clickable ancestor would be excessive.
-                            return false;
-                        }
-                        ++matches;
-                    }
-
-                    static constexpr unsigned MAX_MATCHES = 6;
-                    if (matches >= MAX_MATCHES) {
-                        // If something has more than the arbitrarily-chosen number of valid matches,
-                        // this click handler is probably too coarse to be useful.
+        unsigned matches = 0;
+        unsigned candidatesChecked = 0;
+        RefPtr candidate = clickableAncestor;
+        while ((candidate = candidate->nextInPreOrder(/* updateChildren */ true, /* stayWithin */ clickableAncestor.get()))) {
+            if (candidate->isStaticText() || candidate->isControl() || candidate->isImage() || candidate->isHeading() || candidate->isLink()) {
+                if (!candidate->isIgnored()) {
+                    if (!matches && this != candidate.get()) {
+                        // Only support press action for the first descendant. Some ATs, like VoiceOver, use the result of this function
+                        // to read "clickable", but reading it for every descendant of the clickable ancestor would be excessive.
                         return false;
                     }
+                    ++matches;
                 }
 
-                ++candidatesChecked;
-                static constexpr unsigned MAX_CANDIDATES = 256;
-                if (candidatesChecked > MAX_CANDIDATES) {
-                    // If we've walked over the arbitrarily-chosen max number of potential candidates,
-                    // this click handler is probably too coarse to be useful, and too much traversing
-                    // can harm performance.
+                static constexpr unsigned MAX_MATCHES = 6;
+                if (matches >= MAX_MATCHES) {
+                    // If something has more than the arbitrarily-chosen number of valid matches,
+                    // this click handler is probably too coarse to be useful.
                     return false;
                 }
             }
-            // If we get here, and matches is greater than zero, we can assume we were the first matching
-            // candidate for the click handler, and that there weren't too many matches or candidates checked.
-            return matches > 0;
+
+            ++candidatesChecked;
+            static constexpr unsigned MAX_CANDIDATES = 256;
+            if (candidatesChecked > MAX_CANDIDATES) {
+                // If we've walked over the arbitrarily-chosen max number of potential candidates,
+                // this click handler is probably too coarse to be useful, and too much traversing
+                // can harm performance.
+                return false;
+            }
         }
+
+        // If we get here, and matches is greater than zero, we can assume we were the first matching
+        // candidate for the click handler, and that there weren't too many matches or candidates checked.
+        return matches > 0;
     }
     return false;
 }

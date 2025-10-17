@@ -27,7 +27,7 @@
 #include "RenderText.h"
 
 #include "AXObjectCache.h"
-#include "BreakLines.h"
+#include "BreakablePositions.h"
 #include "BreakingContext.h"
 #include "DocumentInlines.h"
 #include "DocumentMarkerController.h"
@@ -41,6 +41,7 @@
 #include "InlineRunAndOffset.h"
 #include "LayoutInlineTextBox.h"
 #include "LayoutIntegrationLineLayout.h"
+#include "LogicalSelectionOffsetCachesInlines.h"
 #include "LineSelection.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
@@ -76,7 +77,6 @@
 #if PLATFORM(IOS_FAMILY)
 #include "Document.h"
 #include "EditorClient.h"
-#include "LogicalSelectionOffsetCaches.h"
 #include "Page.h"
 #include "SelectionGeometry.h"
 #endif
@@ -942,7 +942,7 @@ ALWAYS_INLINE float RenderText::widthFromCache(const FontCascade& fontCascade, u
 
     TextRun run = RenderBlock::constructTextRun(*this, start, length, style);
     run.setCharacterScanForCodePath(!canUseSimpleFontCodePath());
-    run.setTabSize(!style.collapseWhiteSpace(), style.tabSize());
+    run.setTabSize(!style.collapseWhiteSpace(), Style::toPlatform(style.tabSize()));
     run.setXPos(xPos);
     return fontCascade.width(run, fallbackFonts, glyphOverflow);
 }
@@ -1333,7 +1333,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
             continue;
         }
 
-        bool hasBreak = breakAll || BreakLines::isBreakable(lineBreakIteratorFactory, i, nextBreakable, breakNBSP, canUseLineBreakShortcut, keepAllWords, breakAnywhere);
+        bool hasBreak = breakAll || BreakablePositions::isBreakable(lineBreakIteratorFactory, i, nextBreakable, breakNBSP, canUseLineBreakShortcut, keepAllWords, breakAnywhere);
         bool betweenWords = true;
         unsigned j = i;
         while (c != '\n' && !isSpaceAccordingToStyle(c, style) && c != '\t' && c != zeroWidthSpace && (c != softHyphen || style.hyphens() == Hyphens::None)) {
@@ -1344,7 +1344,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
             c = string[j];
             if (U_IS_LEAD(previousCharacter) && U_IS_TRAIL(c))
                 continue;
-            if (BreakLines::isBreakable(lineBreakIteratorFactory, j, nextBreakable, breakNBSP, canUseLineBreakShortcut, keepAllWords, breakAnywhere) && characterAt(j - 1) != softHyphen)
+            if (BreakablePositions::isBreakable(lineBreakIteratorFactory, j, nextBreakable, breakNBSP, canUseLineBreakShortcut, keepAllWords, breakAnywhere) && characterAt(j - 1) != softHyphen)
                 break;
             if (breakAll) {
                 // FIXME: This code is ultra wrong.
@@ -1424,7 +1424,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
                 currMaxWidth = 0;
             } else {
                 TextRun run = RenderBlock::constructTextRun(*this, i, 1, style);
-                run.setTabSize(!style.collapseWhiteSpace(), style.tabSize());
+                run.setTabSize(!style.collapseWhiteSpace(), Style::toPlatform(style.tabSize()));
                 run.setXPos(leadWidth + currMaxWidth);
 
                 currMaxWidth += font.width(run, &fallbackFonts);
@@ -1906,7 +1906,7 @@ float RenderText::width(unsigned from, unsigned length, const FontCascade& fontC
     } else {
         TextRun run = RenderBlock::constructTextRun(*this, from, length, style);
         run.setCharacterScanForCodePath(!canUseSimpleFontCodePath());
-        run.setTabSize(!style.collapseWhiteSpace(), style.tabSize());
+        run.setTabSize(!style.collapseWhiteSpace(), Style::toPlatform(style.tabSize()));
         run.setXPos(xPos);
 
         width = fontCascade.width(run, fallbackFonts, glyphOverflow);

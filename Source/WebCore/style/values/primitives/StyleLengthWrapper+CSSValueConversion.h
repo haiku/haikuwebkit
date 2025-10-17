@@ -63,14 +63,23 @@ template<LengthWrapperBaseDerived T> struct CSSValueConversion<T> {
         return false;
     }
 
+    static auto selectConversionData(BuilderState& builderState) -> CSSToLengthConversionData
+    {
+        if constexpr (T::Fixed::range.zoomOptions == CSS::RangeZoomOptions::Default) {
+            return builderState.useSVGZoomRulesForLength()
+                ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
+                : builderState.cssToLengthConversionData();
+        } else if constexpr (T::Fixed::range.zoomOptions == CSS::RangeZoomOptions::Unzoomed) {
+            return builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f);
+        }
+    }
+
     auto operator()(BuilderState& state, const CSSPrimitiveValue& primitiveValue) -> T
     {
         using namespace CSS::Literals;
 
         auto convertLengthPercentage = [&] -> T {
-            auto conversionData = state.useSVGZoomRulesForLength()
-                ? state.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
-                : state.cssToLengthConversionData();
+            auto conversionData = selectConversionData(state);
 
             if (primitiveValue.isLength()) {
                 return T {

@@ -310,7 +310,7 @@ String generateSegmentWildcardRegexp(const URLPatternStringOptions& options)
 template<typename CharacterType>
 static String escapeRegexStringForCharacters(std::span<const CharacterType> characters)
 {
-    static constexpr std::array regexEscapeCharacters { '.', '+', '*', '?', '^', '$', '{', '}', '(', ')', '[', ']', '|', '/', '\\' }; // NOLINT
+    static constexpr auto regexEscapeCharacters = std::to_array<const CharacterType>({ '.', '+', '*', '?', '^', '$', '{', '}', '(', ')', '[', ']', '|', '/', '\\' }); // NOLINT
 
     StringBuilder result;
     result.reserveCapacity(characters.size());
@@ -508,7 +508,7 @@ String generatePatternString(const Vector<Part>& partList, const URLPatternStrin
 template<typename CharacterType>
 static String escapePatternStringForCharacters(std::span<const CharacterType> characters)
 {
-    static constexpr std::array escapeCharacters { '+', '*', '?', ':', '(', ')', '\\', '{', '}' }; // NOLINT
+    static constexpr auto escapeCharacters = std::to_array<const CharacterType>({ '+', '*', '?', ':', '(', ')', '\\', '{', '}' }); // NOLINT
 
     StringBuilder result;
     result.reserveCapacity(characters.size());

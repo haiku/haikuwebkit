@@ -50,12 +50,12 @@ static inline FTPEntryType ParsingFailed(ListState& state)
     return FTPMiscEntry; /* its part of a comment or error message */
 }
 
-static bool isSpaceOrTab(LChar c)
+static bool isSpaceOrTab(Latin1Character c)
 {
     return c == ' ' || c == '\t';
 }
 
-FTPEntryType parseOneFTPLine(std::span<LChar> line, ListState& state, ListResult& result)
+FTPEntryType parseOneFTPLine(std::span<Latin1Character> line, ListState& state, ListResult& result)
 {
     result.clear();
 
@@ -84,7 +84,7 @@ FTPEntryType parseOneFTPLine(std::span<LChar> line, ListState& state, ListResult
 
     if (linelen > 0) {
         static constexpr auto monthNames = "JanFebMarAprMayJunJulAugSepOctNovDec"_span;
-        std::array<std::span<LChar>, 16> tokens; /* 16 is more than enough */
+        std::array<std::span<Latin1Character>, 16> tokens; /* 16 is more than enough */
         std::array<unsigned, tokens.size()> toklen;
         unsigned lineLenSansWsp; // line length sans whitespace
         unsigned numtoks = 0;

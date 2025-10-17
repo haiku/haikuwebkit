@@ -44,6 +44,8 @@ GPUProcess/graphics/RemoteSnapshotRecorder.cpp
 GPUProcess/graphics/ScopedRenderingResourcesRequest.cpp
 GPUProcess/graphics/ScopedWebGLRenderingResourcesRequest.cpp
 GPUProcess/graphics/ShareablePixelBuffer.cpp
+GPUProcess/graphics/Model/ModelObjectHeap.cpp
+GPUProcess/graphics/Model/RemoteDDMesh.cpp
 GPUProcess/graphics/WebGPU/RemoteAdapter.cpp
 GPUProcess/graphics/WebGPU/RemoteBindGroup.cpp
 GPUProcess/graphics/WebGPU/RemoteBindGroupLayout.cpp
@@ -77,6 +79,7 @@ GPUProcess/media/RemoteAudioHardwareListenerProxy.cpp
 GPUProcess/media/RemoteAudioSessionProxy.cpp
 GPUProcess/media/RemoteAudioSessionProxyManager.cpp
 GPUProcess/media/RemoteAudioTrackProxy.cpp
+GPUProcess/media/RemoteAudioVideoRendererProxyManager.cpp
 GPUProcess/media/RemoteCDMFactoryProxy.cpp
 GPUProcess/media/RemoteCDMInstanceProxy.cpp
 GPUProcess/media/RemoteCDMInstanceSessionProxy.cpp
@@ -321,6 +324,10 @@ Shared/Extensions/WebExtensionUtilities.cpp
 Shared/Gamepad/GamepadData.cpp
 
 Shared/graphics/ImageBufferSet.cpp
+
+Shared/Model/DDMeshDescriptor.cpp
+Shared/Model/DDUpdateMeshDescriptor.cpp
+Shared/Model/ModelObjectDescriptorBase.cpp
 
 Shared/WebGPU/WebGPUBindGroupDescriptor.cpp
 Shared/WebGPU/WebGPUBindGroupEntry.cpp
@@ -749,6 +756,8 @@ WebProcess/GPU/RemoteSharedResourceCacheProxy.cpp
 WebProcess/GPU/ShapeDetection/RemoteBarcodeDetectorProxy.cpp
 WebProcess/GPU/ShapeDetection/RemoteFaceDetectorProxy.cpp
 WebProcess/GPU/ShapeDetection/RemoteTextDetectorProxy.cpp
+WebProcess/GPU/graphics/Model/RemoteDDMeshProxy.cpp
+WebProcess/GPU/graphics/Model/ModelDowncastConvertToBackingContext.cpp
 WebProcess/GPU/graphics/WebGPU/RemoteAdapterProxy.cpp
 WebProcess/GPU/graphics/WebGPU/RemoteBindGroupLayoutProxy.cpp
 WebProcess/GPU/graphics/WebGPU/RemoteBindGroupProxy.cpp
@@ -788,11 +797,12 @@ WebProcess/GPU/graphics/RemoteGraphicsContextGLProxyFunctionsGenerated.cpp
 WebProcess/GPU/graphics/RemoteGraphicsContextProxy.cpp
 WebProcess/GPU/graphics/RemoteImageBufferProxy.cpp
 WebProcess/GPU/graphics/RemoteImageBufferSetProxy.cpp
-WebProcess/GPU/graphics/RemoteNativeImageBackendProxy.cpp
+WebProcess/GPU/graphics/RemoteNativeImageProxy.cpp
 WebProcess/GPU/graphics/RemoteSnapshotRecorderProxy.cpp
 WebProcess/GPU/graphics/RemoteRenderingBackendProxy.cpp
 WebProcess/GPU/graphics/RemoteResourceCacheProxy.cpp
 WebProcess/GPU/media/AudioTrackPrivateRemote.cpp
+WebProcess/GPU/media/AudioVideoRendererRemote.cpp
 WebProcess/GPU/media/MediaPlayerPrivateRemote.cpp
 WebProcess/GPU/media/MediaSourcePrivateRemote.cpp
 WebProcess/GPU/media/RemoteAudioDestinationProxy.cpp
@@ -828,7 +838,6 @@ WebProcess/Network/WebResourceLoader.cpp
 WebProcess/Network/WebSocketChannel.cpp @no-unify
 WebProcess/Network/WebSocketChannelManager.cpp
 WebProcess/Network/WebSocketProvider.cpp
-WebProcess/Network/WebTransportSendStreamSink.cpp
 WebProcess/Network/WebTransportSession.cpp
 
 WebProcess/Network/webrtc/LibWebRTCDnsResolverFactory.cpp
@@ -841,6 +850,7 @@ WebProcess/Network/webrtc/LibWebRTCSocketFactory.cpp
 WebProcess/Network/webrtc/RTCDataChannelRemoteManager.cpp
 WebProcess/Network/webrtc/WebMDNSRegister.cpp
 WebProcess/Network/webrtc/WebRTCMonitor.cpp
+WebProcess/Network/webrtc/WebRTCNetworkBase.cpp
 WebProcess/Network/webrtc/WebRTCResolver.cpp
 
 WebProcess/Notifications/NotificationPermissionRequestManager.cpp
@@ -935,6 +945,7 @@ WebProcess/WebStorage/WebStorageNamespaceProvider.cpp
 
 WebProcess/XR/PlatformXRSystemProxy.cpp
 
+AudioVideoRendererRemoteMessageReceiverMessageReceiver.cpp
 IPCConnectionTesterMessageReceiver.cpp
 IPCStreamTesterMessageReceiver.cpp
 IPCStreamTesterProxyMessageReceiver.cpp
@@ -955,6 +966,7 @@ PlatformXRSystemMessageReceiver.cpp
 PlatformXRSystemProxyMessageReceiver.cpp
 PushClientConnectionMessageReceiver.cpp
 RemoteAdapterMessageReceiver.cpp
+RemoteAudioVideoRendererProxyManagerMessageReceiver.cpp
 RemoteBarcodeDetectorMessageReceiver.cpp
 RemoteBindGroupMessageReceiver.cpp
 RemoteBindGroupLayoutMessageReceiver.cpp
@@ -964,6 +976,7 @@ RemoteCommandEncoderMessageReceiver.cpp
 RemoteCompositorIntegrationMessageReceiver.cpp
 RemoteComputePassEncoderMessageReceiver.cpp
 RemoteComputePipelineMessageReceiver.cpp
+RemoteDDMeshMessageReceiver.cpp
 RemoteDeviceMessageReceiver.cpp
 RemoteExternalTextureMessageReceiver.cpp
 RemoteFaceDetectorMessageReceiver.cpp

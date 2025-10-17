@@ -39,6 +39,7 @@
 #include "Page.h"
 #include "ScrollTimeline.h"
 #include "Settings.h"
+#include "StylableInlines.h"
 #include "ViewTimeline.h"
 #include "WebAnimation.h"
 #include "WebAnimationTypes.h"

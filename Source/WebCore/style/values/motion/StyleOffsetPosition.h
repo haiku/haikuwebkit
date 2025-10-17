@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <WebCore/LengthPoint.h>
+#include <WebCore/AcceleratedEffectOffsetPosition.h>
 #include <WebCore/StylePosition.h>
 #include <WebCore/StyleValueTypes.h>
 
@@ -38,8 +38,11 @@ struct OffsetPosition {
     OffsetPosition(CSS::Keyword::Normal keyword) : m_value { keyword} { }
     OffsetPosition(Position&& position) : m_value { WTFMove(position) } { }
     OffsetPosition(const Position& position) : m_value { position } { }
-    explicit OffsetPosition(WebCore::LengthPoint&& point) : m_value { convert(point) } { }
-    explicit OffsetPosition(const WebCore::LengthPoint& point) : m_value { convert(point) } { }
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    explicit OffsetPosition(AcceleratedEffectOffsetPosition&& point) : m_value { convert(point) } { }
+    explicit OffsetPosition(const AcceleratedEffectOffsetPosition& point) : m_value { convert(point) } { }
+#endif
 
     ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
     ALWAYS_INLINE bool isNormal() const { return holdsAlternative<CSS::Keyword::Auto>(); }
@@ -52,19 +55,9 @@ struct OffsetPosition {
     bool operator==(const OffsetPosition&) const = default;
 
 private:
-    static auto convert(const WebCore::LengthPoint& point) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position>
-    {
-        if (point.x.isAuto() && point.y.isAuto())
-            return CSS::Keyword::Auto { };
-
-        if (point.x.isNormal() && point.y.isNormal())
-            return CSS::Keyword::Auto { };
-
-        if (point.x.isSpecified() && point.y.isSpecified())
-            return Position { point };
-
-        RELEASE_ASSERT_NOT_REACHED();
-    }
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    static auto convert(const AcceleratedEffectOffsetPosition&) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position>;
+#endif
 
     Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position> m_value;
 };
@@ -91,9 +84,15 @@ template<> struct Blending<OffsetPosition> {
     auto blend(const OffsetPosition&, const OffsetPosition&, const BlendingContext&) -> OffsetPosition;
 };
 
-// MARK: - Platform
+// MARK: - Evaluation
 
-template<> struct ToPlatform<OffsetPosition> { auto operator()(const OffsetPosition&) -> WebCore::LengthPoint; };
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+template<> struct Evaluation<OffsetPosition, AcceleratedEffectOffsetPosition> {
+    auto operator()(const OffsetPosition&, FloatSize, ZoomNeeded) -> AcceleratedEffectOffsetPosition;
+};
+
+#endif
 
 } // namespace Style
 } // namespace WebCore

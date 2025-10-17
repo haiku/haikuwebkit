@@ -215,7 +215,7 @@ std::pair<LayoutUnit, LayoutUnit> InlineFormattingContext::minimumMaximumContent
     if (*minimumContentSize > *maximumContentSize) {
         auto hasNegativeImplicitMargin = [](auto& style) {
             auto textIndentFixedLength = style.textIndent().length.tryFixed();
-            return (textIndentFixedLength && textIndentFixedLength->value < 0) || style.wordSpacing() < 0 || style.letterSpacing() < 0;
+            return (textIndentFixedLength && textIndentFixedLength->isNegative()) || style.usedWordSpacing() < 0 || style.usedLetterSpacing() < 0;
         };
         auto contentHasNegativeImplicitMargin = hasNegativeImplicitMargin(root().style());
         if (!contentHasNegativeImplicitMargin) {

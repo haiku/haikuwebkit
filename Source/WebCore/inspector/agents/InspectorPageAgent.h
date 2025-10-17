@@ -133,10 +133,6 @@ public:
     void frameNavigated(LocalFrame&);
     void frameDetached(LocalFrame&);
     void loaderDetachedFromFrame(DocumentLoader&);
-    void frameStartedLoading(LocalFrame&);
-    void frameStoppedLoading(LocalFrame&);
-    void frameScheduledNavigation(Frame&, Seconds delay);
-    void frameClearedScheduledNavigation(Frame&);
     void accessibilitySettingsDidChange();
     void defaultUserPreferencesDidChange();
 #if ENABLE(DARK_MODE_CSS)

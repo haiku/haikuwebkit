@@ -254,7 +254,7 @@ static std::pair<LayoutType, std::optional<unsigned>> closestSnapOffsetWithInfoA
 static LayoutRect computeScrollSnapPortRect(const Style::ScrollPaddingBox& padding, const LayoutRect& rect)
 {
     auto result = rect;
-    result.contract(Style::extentForRect(padding, rect, 1.0f /* FIXME ZOOM EFFECTED? */));
+    result.contract(Style::extentForRect(padding, rect, Style::ZoomNeeded { }));
     return result;
 }
 

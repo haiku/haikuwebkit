@@ -238,10 +238,13 @@ ExceptionOr<DOMMatrixReadOnly::AbstractMatrix> DOMMatrixReadOnly::parseStringInt
     if (transform->isNone())
         return AbstractMatrix { };
 
+    auto [isWidthDependent, isHeightDependent] = transform->computeSizeDependencies();
+    if (isWidthDependent || isHeightDependent)
+        return Exception { ExceptionCode::SyntaxError };
+
     AbstractMatrix matrix;
     for (auto& function : *transform) {
-        if (function->apply(matrix.matrix, { 0, 0 }))
-            return Exception { ExceptionCode::SyntaxError };
+        function->apply(matrix.matrix, { 0, 0 });
         if (function->is3DOperation())
             matrix.is2D = false;
     }

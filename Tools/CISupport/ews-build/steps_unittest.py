@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2024 Apple Inc. All rights reserved.
+# Copyright (C) 2018-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -2811,7 +2811,7 @@ class TestAnalyzeLayoutTestsResults(BuildStepMixinAdditions, unittest.TestCase):
         self.setProperty('first_run_failures', [f'test{i}' for i in range(0, 5)])
         self.setProperty('second_results_exceed_failure_limit', False)
         self.setProperty('second_run_failures', [f'test{i}' for i in range(5, 12)])
-        failure_message = 'Too many flaky failures: test0, test1, test10, test11, test2, test3, test4, test5, test6, test7, test8, test9 (failure)'
+        failure_message = 'Too many flaky failures: test0, test1, test10, test11, test2, test3, test4, test5, test6, test7 (failure)'
         self.expectOutcome(result=FAILURE, state_string=failure_message)
         return self.runStep()
 

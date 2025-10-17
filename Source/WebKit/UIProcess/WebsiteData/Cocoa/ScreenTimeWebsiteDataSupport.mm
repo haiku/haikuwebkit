@@ -30,6 +30,7 @@
 
 #import "WebsiteDataStoreConfiguration.h"
 #import <wtf/BlockPtr.h>
+#import <wtf/CompletionHandler.h>
 #import <wtf/HashSet.h>
 #import <wtf/URL.h>
 #import <wtf/URLHash.h>

@@ -679,7 +679,8 @@ private:
     RefPtr<Element> m_capturingMouseEventsElement;
     RefPtr<Element> m_elementUnderMouse;
     RefPtr<Element> m_lastElementUnderMouse;
-    Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>, 32> m_ancestorsOfLastElementUnderMouse;
+    WeakPtr<Element, WeakPtrImplWithEventTargetData> m_mouseMoveTargetOverride;
+    Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>, 31> m_ancestorsOfLastElementUnderMouse;
     RefPtr<LocalFrame> m_lastMouseMoveEventSubframe;
     SingleThreadWeakPtr<Scrollbar> m_lastScrollbarUnderMouse;
     Cursor m_currentMouseCursor;

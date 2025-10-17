@@ -41,6 +41,7 @@ public:
     bool isClassicScript() const { return scriptType() == ScriptType::Classic; }
     bool isModuleScript() const { return scriptType() == ScriptType::Module; }
     bool isImportMap() const { return scriptType() == ScriptType::ImportMap; }
+    bool isSpeculationRules() const { return scriptType() == ScriptType::SpeculationRules; }
 
     const String& crossOriginMode() const { return m_crossOriginMode; }
 

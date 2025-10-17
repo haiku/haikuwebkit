@@ -188,6 +188,9 @@
 (with-filter (require-not (webcontent-process-launched))
     (allow syscall-unix (syscall-unix-only-in-use-during-launch)))
 
+(with-filter (system-attribute developer-mode)
+    (allow syscall-unix (syscall-unix-developer-mode)))
+
 (allow syscall-unix
     (syscall-unix-rarely-in-use)
     (syscall-unix-rarely-in-use-blocked-in-lockdown-mode)

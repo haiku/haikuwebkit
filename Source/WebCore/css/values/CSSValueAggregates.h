@@ -228,6 +228,10 @@ template<CSSValueID C, typename T> struct FunctionNotation {
     bool operator==(const FunctionNotation<C, T>&) const = default;
 };
 
+// Deduction guide for getter/setters that return values and take r-value references.
+template<typename Keyword, typename T>
+FunctionNotation(Keyword, T) -> FunctionNotation<Keyword::value, T>;
+
 template<CSSValueID C, typename T> bool operator==(const UniqueRef<FunctionNotation<C, T>>& a, const UniqueRef<FunctionNotation<C, T>>& b)
 {
     return arePointingToEqualData(a, b);

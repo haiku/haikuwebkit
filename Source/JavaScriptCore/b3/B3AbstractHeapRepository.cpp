@@ -48,6 +48,7 @@
 #include "JSWeakMap.h"
 #include "JSWebAssemblyArray.h"
 #include "JSWebAssemblyInstance.h"
+#include "JSWebAssemblyStruct.h"
 #include "JSWrapperObject.h"
 #include "KeyAtomStringCache.h"
 #include "NumericStrings.h"
@@ -58,6 +59,8 @@
 #include "StructureRareDataInlines.h"
 #include "Symbol.h"
 #include "WasmGlobal.h"
+#include "WasmTable.h"
+#include "WasmTypeDefinition.h"
 #include "WebAssemblyModuleRecord.h"
 
 namespace JSC::B3 {
@@ -68,6 +71,8 @@ AbstractHeapRepository::AbstractHeapRepository()
 #define ABSTRACT_HEAP_INITIALIZATION(name) , name(&root, #name)
     FOR_EACH_ABSTRACT_HEAP(ABSTRACT_HEAP_INITIALIZATION)
 #undef ABSTRACT_HEAP_INITIALIZATION
+
+    , WebAssemblyMemory(TypedArrayProperties)
 
 #define ABSTRACT_FIELD_INITIALIZATION(name, offset, mutability) , name(&root, #name, offset, mutability)
     FOR_EACH_ABSTRACT_FIELD(ABSTRACT_FIELD_INITIALIZATION)
@@ -173,8 +178,8 @@ void AbstractHeapRepository::computeRangesAndDecorateInstructions()
     for (HeapForValue entry : m_heapForMemory) {
         auto* memoryValue = entry.value->as<MemoryValue>();
         memoryValue->setRange(rangeFor(entry.heap));
-        if (memoryValue->isLoad())
-            memoryValue->setReadsMutability(entry.heap->mutability());
+        if (memoryValue->isLoad() && entry.heap->mutability() == B3::Mutability::Immutable)
+            memoryValue->setReadsMutability(B3::Mutability::Immutable);
     }
     for (HeapForValue entry : m_heapForCCallRead)
         entry.value->as<CCallValue>()->effects.reads = rangeFor(entry.heap);

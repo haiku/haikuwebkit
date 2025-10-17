@@ -53,6 +53,7 @@ typedef NS_ENUM(NSInteger, AttachmentElementEnabledState) {
 @property (nonatomic, readonly) BOOL useUISideCompositing;
 @property (nonatomic, readonly) BOOL perWindowWebProcessesDisabled;
 @property (nonatomic, readonly) BOOL acceleratedDrawingEnabled;
+@property (nonatomic, readonly) BOOL enhancedSecurityEnabled;
 @property (nonatomic, readonly) BOOL resourceLoadStatisticsEnabled;
 @property (nonatomic, readonly) BOOL largeImageAsyncDecodingEnabled;
 @property (nonatomic, readonly) BOOL animatedImageAsyncDecodingEnabled;

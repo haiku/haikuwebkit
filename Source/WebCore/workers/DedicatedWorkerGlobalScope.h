@@ -73,7 +73,7 @@ public:
 
     ExceptionOr<void> postMessage(JSC::JSGlobalObject&, JSC::JSValue message, StructuredSerializeOptions&&);
 
-    DedicatedWorkerThread& thread();
+    Ref<DedicatedWorkerThread> thread();
 
 #if ENABLE(NOTIFICATIONS)
     NotificationClient* notificationClient() final;

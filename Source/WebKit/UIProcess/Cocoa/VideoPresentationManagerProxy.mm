@@ -1098,7 +1098,7 @@ void VideoPresentationManagerProxy::setupFullscreenWithID(PlaybackSessionContext
     UNUSED_PARAM(blocksReturnToFullscreenFromPictureInPicture);
     IntRect initialWindowRect;
     page->rootViewToWindow(enclosingIntRect(screenRect), initialWindowRect);
-    interface->setupFullscreen(initialWindowRect, page->platformWindow(), videoFullscreenMode, allowsPictureInPicture);
+    interface->setupFullscreen(initialWindowRect, page->protectedPlatformWindow().get(), videoFullscreenMode, allowsPictureInPicture);
     interface->setupCaptionsLayer([view layer], initialSize);
 #endif
 }
@@ -1124,7 +1124,7 @@ void VideoPresentationManagerProxy::setHasVideo(PlaybackSessionContextIdentifier
 
     if (auto* modelAndInterface = findModelAndInterface(contextId)) {
         modelAndInterface->first->m_hasVideo = hasVideo;
-        modelAndInterface->second->hasVideoChanged(hasVideo);
+        Ref { modelAndInterface->second }->hasVideoChanged(hasVideo);
     }
 }
 
@@ -1202,7 +1202,7 @@ void VideoPresentationManagerProxy::exitFullscreen(PlaybackSessionContextIdentif
 #if PLATFORM(IOS_FAMILY)
     completionHandler(ensureInterface(contextId)->exitFullscreen(finalRect));
 #else
-    completionHandler(ensureInterface(contextId)->exitFullscreen(finalWindowRect, page->platformWindow()));
+    completionHandler(ensureInterface(contextId)->exitFullscreen(finalWindowRect, page->protectedPlatformWindow().get()));
 #endif
 }
 
@@ -1303,7 +1303,7 @@ void VideoPresentationManagerProxy::preparedToReturnToInline(PlaybackSessionCont
 #if PLATFORM(IOS_FAMILY)
     ensureInterface(contextId)->preparedToReturnToInline(visible, inlineRect);
 #else
-    ensureInterface(contextId)->preparedToReturnToInline(visible, inlineWindowRect, page->platformWindow());
+    ensureInterface(contextId)->preparedToReturnToInline(visible, inlineWindowRect, page->protectedPlatformWindow().get());
 #endif
 }
 
@@ -1480,7 +1480,7 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
         [layerHostView setVisibilityPropagationView:nil];
 #endif
 
-    [interface->layerHostView() removeFromSuperview];
+    [interface->protectedLayerHostView() removeFromSuperview];
     interface->removeCaptionsLayer();
     if (RetainPtr playerLayer = interface->playerLayer()) {
         // Return the video layer to the player layer
@@ -1489,7 +1489,7 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
         [playerLayer layoutSublayers];
     } else {
         [CATransaction flush];
-        [interface->layerHostView() removeFromSuperview];
+        [interface->protectedLayerHostView() removeFromSuperview];
         interface->setLayerHostView(nullptr);
     }
 

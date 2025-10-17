@@ -29,17 +29,12 @@
 #include "LogStreamIdentifier.h"
 #include "LogStreamMessages.h"
 #include "StreamClientConnection.h"
+#include "WebKitLogDefinitions.h"
 #include <WebCore/LogClient.h>
+#include <WebCore/WebCoreLogDefinitions.h>
 #include <wtf/Identified.h>
 #include <wtf/Lock.h>
 #include <wtf/Locker.h>
-
-#if __has_include("WebCoreLogDefinitions.h")
-#include "WebCoreLogDefinitions.h"
-#endif
-#if __has_include("WebKitLogDefinitions.h")
-#include "WebKitLogDefinitions.h"
-#endif
 
 namespace WebKit {
 

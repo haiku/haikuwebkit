@@ -884,7 +884,7 @@ private:
 
                 FrozenValue* globalObjectFrozenValue = m_graph.freeze(globalObject);
 
-                if (regExpObjectNode->op() == NewRegExp && regExpObjectNode->child1()->isInt32Constant())
+                if (regExpObjectNode && regExpObjectNode->op() == NewRegExp && regExpObjectNode->child1()->isInt32Constant())
                     lastIndex = regExpObjectNode->child1()->asUInt32();
 
                 MatchResult result;

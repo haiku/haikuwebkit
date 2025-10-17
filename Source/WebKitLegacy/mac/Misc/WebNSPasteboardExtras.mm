@@ -44,6 +44,7 @@
 #import <WebCore/Image.h>
 #import <WebCore/LegacyNSPasteboardTypes.h>
 #import <WebCore/MIMETypeRegistry.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/PasteboardCustomData.h>
 #import <WebCore/RenderAttachment.h>
 #import <WebCore/RenderImage.h>

@@ -29,6 +29,7 @@
 #if ENABLE(GPU_PROCESS)
 
 #include "GPUConnectionToWebProcess.h"
+#include "Logging.h"
 #include "RemoteCompositorIntegrationMessages.h"
 #include "RemoteGPU.h"
 #include "StreamServerConnection.h"

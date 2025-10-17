@@ -38,7 +38,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderButton.h"
 #include "RenderDeprecatedFlexibleBox.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderEmbeddedObject.h"
 #include "RenderFileUploadControl.h"
 #include "RenderFlexibleBox.h"
@@ -74,23 +74,23 @@ namespace LayoutIntegration {
 static LayoutUnit usedValueOrZero(const Style::MarginEdge& marginEdge, std::optional<LayoutUnit> availableWidth)
 {
     if (auto fixed = marginEdge.tryFixed())
-        return LayoutUnit { fixed->value };
+        return LayoutUnit { fixed->resolveZoom(Style::ZoomNeeded { }) };
 
     if (marginEdge.isAuto() || !availableWidth)
         return { };
 
-    return Style::evaluateMinimum(marginEdge, *availableWidth, 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluateMinimum<LayoutUnit>(marginEdge, *availableWidth, Style::ZoomNeeded { });
 }
 
 static LayoutUnit usedValueOrZero(const Style::PaddingEdge& paddingEdge, std::optional<LayoutUnit> availableWidth)
 {
     if (auto fixed = paddingEdge.tryFixed())
-        return LayoutUnit { fixed->value };
+        return LayoutUnit { fixed->resolveZoom(Style::ZoomNeeded { }) };
 
     if (!availableWidth)
         return { };
 
-    return Style::evaluateMinimum(paddingEdge, *availableWidth, 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluateMinimum<LayoutUnit>(paddingEdge, *availableWidth, Style::ZoomNeeded { });
 }
 
 static inline void adjustBorderForTableAndFieldset(const RenderBoxModelObject& renderer, RectEdges<LayoutUnit>& borderWidths)
@@ -241,7 +241,7 @@ Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxMode
     auto& style = renderer.style();
 
     auto borderWidths = RectEdges<LayoutUnit>::map(style.borderWidth(), [](auto width) {
-        return LayoutUnit { Style::evaluate(width, 1.0f /* FIXME ZOOM EFFECTED? */) };
+        return Style::evaluate<LayoutUnit>(width, Style::ZoomNeeded { });
     });
 
     if (!isIntrinsicWidthMode)
@@ -697,6 +697,12 @@ void BoxGeometryUpdater::setFormattingContextContentGeometry(std::optional<Layou
     if (rootLayoutBox().establishesFlexFormattingContext()) {
         for (auto* flexItemOrOutOfFlowPositionedChild = rootLayoutBox().firstChild(); flexItemOrOutOfFlowPositionedChild; flexItemOrOutOfFlowPositionedChild = flexItemOrOutOfFlowPositionedChild->nextSibling())
             updateBoxGeometry(downcast<RenderElement>(*flexItemOrOutOfFlowPositionedChild->rendererForIntegration()), availableLogicalWidth, intrinsicWidthMode);
+        return;
+    }
+
+    if (rootLayoutBox().establishesGridFormattingContext()) {
+        for (auto* gridItemOrOutOfFlowPositionedChild = rootLayoutBox().firstChild(); gridItemOrOutOfFlowPositionedChild; gridItemOrOutOfFlowPositionedChild = gridItemOrOutOfFlowPositionedChild->nextSibling())
+            updateBoxGeometry(downcast<RenderElement>(*gridItemOrOutOfFlowPositionedChild->rendererForIntegration()), availableLogicalWidth, intrinsicWidthMode);
         return;
     }
 

@@ -380,11 +380,11 @@ MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared()
 
         jit.load32(CCallHelpers::Address(GPRInfo::regWS0, JSToWasmCallee::offsetOfFrameSize()), GPRInfo::regWS1);
         jit.addPtr(CCallHelpers::TrustedImmPtr(JSToWasmCallee::SpillStackSpaceAligned), GPRInfo::regWS1);
-#if CPU(ARM_THUMB2)
+#if CPU(ARM64)
+        jit.subPtr(GPRInfo::callFrameRegister, GPRInfo::regWS1, CCallHelpers::stackPointerRegister);
+#else
         jit.subPtr(GPRInfo::callFrameRegister, GPRInfo::regWS1, GPRInfo::regWS1);
         jit.move(GPRInfo::regWS1, CCallHelpers::stackPointerRegister);
-#else
-        jit.subPtr(GPRInfo::callFrameRegister, GPRInfo::regWS1, CCallHelpers::stackPointerRegister);
 #endif
 
         // Save return registers

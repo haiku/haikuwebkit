@@ -84,7 +84,7 @@ def parse_args(argument_list):
     expectations = parser.add_mutually_exclusive_group(required=False)
     expectations.add_argument('--update-expectations', action='store_true', help='Update the existing expectations with the new test results')
     expectations.add_argument('--reset-expectations', action='store_true', help='Forget the existing expectations and create new ones based on this run')
-    parser.add_argument("--mvt-instance-address", default="https://mvt.rdkcentral.com", help="MVT instance address to use")
+    parser.add_argument("--mvt-instance-address", default="https://mvt-rdk.igalia.com", help="MVT instance address to use")
     parser.add_argument("--suite", default=None, choices=TEST_SUITES, help="Specific suite to run. Will run all suites if no suite is specified.")
     parser.add_argument("--retry-unexpected-failures", type=restricted_int_range(0,2000), help="Number of times to retry each unexpected failure. Pass 0 to disable.", default=3)
     parser.add_argument("--retry-webdriver-timeouts", type=restricted_int_range(0,2000), help="Number of times to retry when the connection with WebDriver times out. Pass 0 to disable.", default=3)
@@ -231,7 +231,7 @@ class MVTWebDriverRunner():
     def run_test_from_suite(self, suite, test_id, test_name, retry_if_timeout=True):
         if retry_if_timeout:
             return self._retry_if_timeout(self.run_test_from_suite, self.reset_driver, suite, test_id, test_name, False)
-        test_url = f"{self.mvt_instance_address}/?test_type={suite}&tests={test_id}"
+        test_url = f"{self.mvt_instance_address}/?test_type={suite}&testnumbers={test_id}"
         self.driver.get(test_url)
         WebDriverWait(self.driver, self.timeout_to_load).until(self._suite_has_loaded)
         # Due to browser security policies, there are issues when trying to play
@@ -243,7 +243,7 @@ class MVTWebDriverRunner():
         WebDriverWait(self.driver, self.timeout_to_run).until(self._have_all_tests_finished)
         results = self.driver.execute_script("return getMvtTestResults();")
         assert(results['name'] == suite)
-        assert(len(results['tests']) == 1)
+        assert(len(results['tests']) == 1), f"Unexpected number of test results: {len(results['tests'])}"
         assert(results['tests'][0]['name'] == test_name)
         return results['tests'][0]
 
@@ -331,6 +331,8 @@ class MVTResultsExpectationsParser():
                 dict_str  += '{i}{k} : {v}{e}'.format(i=' '*indent*ilevel, k=json.dumps(key), v=value_repr, e=ending)
             dict_str += '{i}}}'.format(i=' '*indent*(ilevel-1))
             return dict_str
+        elif isinstance(obj, list):
+            return json.dumps(sorted(obj))
         else:
             return json.dumps(obj)
 
@@ -412,7 +414,7 @@ def run_mvt_one_tsuite(mvtwebdriver_runner, mvtresultsexpectations_parser, suite
     tests_run = len(tests_run_list)
     exit_code = unexpected_failures
     tests_pass = tests_run - unexpected_failures - expected_failures
-    suite_summary_header_str = f"[Suite {suite}] Ran {tests_run} tests of which:"
+    suite_summary_header_str = f"[Suite {suite}] Ran {tests_run} tests, of which:"
     _log.info('-' * len(suite_summary_header_str))
     _log.info(suite_summary_header_str)
     _log.info(f"{'-':>4} {tests_pass} tests passed.")
@@ -432,13 +434,13 @@ def run_mvt_one_tsuite(mvtwebdriver_runner, mvtresultsexpectations_parser, suite
     old_tests_list = mvtresultsexpectations_parser.check_for_old_tests_and_maybe_delete_old_expectations(suite)
     old_tests = len(old_tests_list)
     if old_tests > 0:
-        _log.info(f"{'-':>4} {old_tests} tests are OLD tests (tracked in expectations but not longer found):")
+        _log.info(f"{'-':>4} {old_tests} tests are OLD tests (tracked in expectations but no longer found):")
         for test_name in old_tests_list:
             _log.info(f"{'':>8}{test_name}")
     new_tests_list = mvtresultsexpectations_parser.check_for_new_tests(suite)
     new_tests = len(new_tests_list)
     if new_tests > 0:
-        _log.info(f"{'-':>4} {new_tests} tests are NEW tests found (not tracked in expectations):")
+        _log.info(f"{'-':>4} {new_tests} tests are NEW tests (found but not tracked in expectations):")
         for test_name in new_tests_list:
             _log.info(f"{'':>8}{test_name}")
     _log.info('-' * len(suite_summary_header_str) + '\n')
@@ -455,7 +457,7 @@ def run_mvt_tsuites(mvtwebdriver_runner, mvtresultsexpectations_parser, suites, 
         total_unexpected_failures = len(test_results[suite][1])
         return total_unexpected_failures
 
-    # All suites were run so print a global summary
+    # All suites finished, so print a global summary
     _log.info('###########')
     _log.info('# SUMMARY #')
     _log.info('###########')
@@ -476,7 +478,7 @@ def run_mvt_tsuites(mvtwebdriver_runner, mvtresultsexpectations_parser, suites, 
     suites_str = ", ".join(suites)
     should_advice_update_expectations = False
     _log.info(f"Executed {num_suites} MVT test suites: {suites_str}")
-    _log.info(f"Ran {total_tests_run} tests in total of which:")
+    _log.info(f"Ran {total_tests_run} tests in total, of which:")
     _log.info(f"{'-':>4} {total_tests_pass} tests passed.")
     if total_unexpected_passes > 0:
         _log.info(f"{'-':>4} {total_unexpected_passes} tests were unexpected passes.")
@@ -486,10 +488,10 @@ def run_mvt_tsuites(mvtwebdriver_runner, mvtresultsexpectations_parser, suites, 
         _log.info(f"{'-':>4} {total_unexpected_failures} tests were unexpected failures.")
         should_advice_update_expectations = True
     if total_old_tests > 0:
-        _log.info(f"{'-':>4} {total_old_tests} tests are OLD tests (tracked in expectations but not longer found).")
+        _log.info(f"{'-':>4} {total_old_tests} tests are OLD tests (tracked in expectations but no longer found).")
         should_advice_update_expectations = True
     if total_new_tests > 0:
-        _log.info(f"{'-':>4} {total_new_tests} tests are NEW tests found (not tracked in expectations).")
+        _log.info(f"{'-':>4} {total_new_tests} tests are NEW tests (found but not tracked in expectations).")
         should_advice_update_expectations = True
     if should_advice_update_expectations and not will_update_expectations:
         log.info('Pass the flag "--update-expectations" to update the expectations')

@@ -24,7 +24,7 @@
 #include <WebCore/EventNames.h>
 #include <WebCore/HTMLElement.h>
 #include <WebCore/LocalDOMWindow.h>
-#include <WebCore/NodeInlines.h>
+#include <WebCore/NodeDocument.h>
 #include "WebCoreJSClientData.h"
 #include <JavaScriptCore/StrongInlines.h>
 #include <JavaScriptCore/Weak.h>

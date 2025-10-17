@@ -83,13 +83,10 @@ void RemoteLayerWithRemoteRenderingBackingStore::prepareToDisplay()
     if (!hasFrontBuffer() || !supportsPartialRepaint())
         setNeedsDisplay();
 
+    dirtyRepaintCounterIfNecessary();
+
     bufferSet->prepareToDisplay(dirtyRegion(), supportsPartialRepaint(), hasEmptyDirtyRegion(), drawingRequiresClearedPixels());
     m_contentsBufferHandle = std::nullopt;
-
-    if (!hasFrontBuffer() || !supportsPartialRepaint())
-        setNeedsDisplay();
-
-    dirtyRepaintCounterIfNecessary();
 }
 
 void RemoteLayerWithRemoteRenderingBackingStore::clearBackingStore()
@@ -148,23 +145,7 @@ void RemoteLayerWithRemoteRenderingBackingStore::ensureBackingStore(const Parame
     }
 }
 
-void RemoteLayerWithRemoteRenderingBackingStore::encodeBufferAndBackendInfos(IPC::Encoder& encoder) const
-{
-    auto encodeBuffer = [&](const  std::optional<WebCore::RenderingResourceIdentifier>& bufferIdentifier) {
-        if (bufferIdentifier) {
-            encoder << std::optional { BufferAndBackendInfo { *bufferIdentifier, m_bufferSet->generation() } };
-            return;
-        }
-
-        encoder << std::optional<BufferAndBackendInfo>();
-    };
-
-    encodeBuffer(m_bufferCacheIdentifiers.front);
-    encodeBuffer(m_bufferCacheIdentifiers.back);
-    encodeBuffer(m_bufferCacheIdentifiers.secondaryBack);
-}
-
-std::optional<RemoteImageBufferSetIdentifier> RemoteLayerWithRemoteRenderingBackingStore::bufferSetIdentifier() const
+std::optional<ImageBufferSetIdentifier> RemoteLayerWithRemoteRenderingBackingStore::bufferSetIdentifier() const
 {
     if (!m_bufferSet)
         return std::nullopt;
@@ -188,7 +169,6 @@ std::optional<DynamicContentScalingDisplayList> RemoteLayerWithRemoteRenderingBa
 void RemoteLayerWithRemoteRenderingBackingStore::dump(WTF::TextStream& ts) const
 {
     ts.dumpProperty("buffer set"_s, m_bufferSet);
-    ts.dumpProperty("cache identifiers"_s, m_bufferCacheIdentifiers);
     ts.dumpProperty("is opaque"_s, isOpaque());
 #if HAVE(SUPPORT_HDR_DISPLAY)
     ts.dumpProperty("requested-headroom", m_maxRequestedEDRHeadroom);

@@ -86,9 +86,7 @@ inspector/agents/InspectorConsoleAgent.cpp
 inspector/agents/InspectorDebuggerAgent.cpp
 inspector/agents/InspectorHeapAgent.cpp
 inspector/agents/InspectorScriptProfilerAgent.cpp
-inspector/agents/InspectorTargetAgent.cpp
 inspector/agents/JSGlobalObjectRuntimeAgent.cpp
-inspector/remote/cocoa/RemoteInspectorCocoa.mm
 jit/BaselineJITPlan.cpp
 jit/ExecutableAllocator.cpp
 jit/GCAwareJITStubRoutine.cpp
@@ -111,8 +109,6 @@ parser/UnlinkedSourceCode.cpp
 parser/UnlinkedSourceCode.h
 profiler/ProfilerDatabase.cpp
 profiler/ProfilerEvent.cpp
-runtime/ArrayBuffer.cpp
-runtime/ArrayBuffer.h
 runtime/ArrayBufferView.cpp
 runtime/ArrayBufferView.h
 runtime/AtomicsObject.cpp

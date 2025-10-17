@@ -169,6 +169,9 @@ static void* const safeAreaInsetsKVOContext = (void*)&safeAreaInsetsKVOContext;
 
     preferences._diagnosticLoggingEnabled = YES;
 
+    // Disable Site Isolation for Web Inspector View.
+    preferences._siteIsolationEnabled = NO;
+
     [_configuration applyToWebViewConfiguration:configuration.get()];
     
     if (!!_delegate && [_delegate respondsToSelector:@selector(inspectorViewControllerInspectorIsUnderTest:)]) {

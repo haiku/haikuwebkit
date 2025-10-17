@@ -50,6 +50,7 @@
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "MIMETypeRegistry.h"
+#include "NodeDocument.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
 #include "PendingScript.h"
@@ -1407,7 +1408,7 @@ xmlDocPtr xmlDocPtrForString(CachedResourceLoader& cachedResourceLoader, const S
 
     const bool is8Bit = source.is8Bit();
     auto characters = is8Bit ? byteCast<char>(source.span8()) : spanReinterpretCast<const char>(source.span16());
-    size_t sizeInBytes = source.length() * (is8Bit ? sizeof(LChar) : sizeof(char16_t));
+    size_t sizeInBytes = source.length() * (is8Bit ? sizeof(Latin1Character) : sizeof(char16_t));
     const char* encoding = is8Bit ? "iso-8859-1" : nativeEndianUTF16Encoding();
 
     XMLDocumentParserScope scope(&cachedResourceLoader, errorFunc);

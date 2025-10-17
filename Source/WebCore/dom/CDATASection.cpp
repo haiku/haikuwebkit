@@ -24,6 +24,7 @@
 
 #include "Document.h"
 #include "DocumentInlines.h"
+#include "NodeDocument.h"
 #include "SerializedNode.h"
 #include <wtf/TZoneMallocInlines.h>
 

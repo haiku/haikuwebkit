@@ -39,7 +39,7 @@ public:
         return makeQualifiedName(string);
     }
 
-    ALWAYS_INLINE static QualifiedName makeAttributeQualifiedName(std::span<const LChar> string)
+    ALWAYS_INLINE static QualifiedName makeAttributeQualifiedName(std::span<const Latin1Character> string)
     {
         return makeQualifiedName(string);
     }
@@ -49,7 +49,7 @@ public:
         return makeAtomString(string);
     }
 
-    ALWAYS_INLINE static AtomString makeAttributeValue(std::span<const LChar> string)
+    ALWAYS_INLINE static AtomString makeAttributeValue(std::span<const Latin1Character> string)
     {
         return makeAtomString(string);
     }

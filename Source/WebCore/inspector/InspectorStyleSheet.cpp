@@ -363,7 +363,7 @@ void StyleSheetHandler::endRuleHeader(unsigned offset)
     ASSERT(!m_currentRuleDataStack.isEmpty());
     
     if (m_parsedText.is8Bit())
-        setRuleHeaderEnd<LChar>(m_parsedText.span8().first(offset));
+        setRuleHeaderEnd<Latin1Character>(m_parsedText.span8().first(offset));
     else
         setRuleHeaderEnd<char16_t>(m_parsedText.span16().first(offset));
 }
@@ -485,7 +485,7 @@ void StyleSheetHandler::fixUnparsedPropertyRanges(CSSRuleSourceData* ruleData)
         return;
     
     if (m_parsedText.is8Bit()) {
-        fixUnparsedProperties<LChar>(m_parsedText.span8(), ruleData);
+        fixUnparsedProperties<Latin1Character>(m_parsedText.span8(), ruleData);
         return;
     }
     

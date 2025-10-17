@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "HostingContext.h"
 #include "MediaPlayerEnums.h"
 #include "MediaPromiseTypes.h"
 #include "PlatformLayer.h"
@@ -33,15 +34,19 @@
 #include "VideoTarget.h"
 #include <optional>
 #include <wtf/AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h>
+#include <wtf/CompletionHandler.h>
 #include <wtf/MediaTime.h>
 #include <wtf/NativePromise.h>
 #include <wtf/ObjectIdentifier.h>
 
 namespace WebCore {
 
+class CDMInstance;
 class FloatRect;
+class GraphicsContext;
 class LayoutRect;
 class MediaSample;
+class NativeImage;
 class PlatformDynamicRangeLimit;
 class ProcessIdentity;
 class TextTrackRepresentation;
@@ -78,8 +83,17 @@ public:
     virtual void setResourceOwner(const ProcessIdentity&) { }
     virtual void flushAndRemoveImage() { };
     virtual RefPtr<VideoFrame> currentVideoFrame() const = 0;
+    virtual void paintCurrentVideoFrameInContext(GraphicsContext&, const FloatRect&) { }
+    virtual RefPtr<NativeImage> currentNativeImage() const { return nullptr; }
     virtual std::optional<VideoPlaybackQualityMetrics> videoPlaybackQualityMetrics() = 0;
-    virtual PlatformLayerContainer platformVideoLayer() const { return nullptr; }
+    virtual PlatformLayer* platformVideoLayer() const { return nullptr; }
+
+    using LayerHostingContextCallback = CompletionHandler<void(HostingContext)>;
+    virtual void requestHostingContext(LayerHostingContextCallback&& completionHandler) { completionHandler({ }); }
+    virtual HostingContext hostingContext() const { return { }; }
+    virtual WebCore::FloatSize videoLayerSize() const { return { }; }
+    virtual void notifyVideoLayerSizeChanged(Function<void(const MediaTime&, FloatSize)>&&) { }
+    virtual void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) { }
 };
 
 class VideoFullscreenInterface {
@@ -109,7 +123,7 @@ public:
     virtual bool seeking() const = 0;
 };
 
-enum class SamplesRendererTrackIdentifierType { };
+struct SamplesRendererTrackIdentifierType;
 using SamplesRendererTrackIdentifier = AtomicObjectIdentifier<SamplesRendererTrackIdentifierType>;
 
 class TracksRendererManager {
@@ -119,7 +133,7 @@ public:
 
     virtual ~TracksRendererManager() = default;
 
-    virtual void setPreferences(VideoMediaSampleRendererPreferences) { }
+    virtual void setPreferences(VideoRendererPreferences) { }
     virtual void setHasProtectedVideoContent(bool) { }
 
     virtual TrackIdentifier addTrack(TrackType) = 0;
@@ -148,9 +162,13 @@ public:
 
     using SoundStageSize = MediaPlayerSoundStageSize;
     virtual void setSpatialTrackingInfo(bool /* prefersSpatialAudioExperience */, SoundStageSize, const String& /* sceneIdentifier */, const String& /* defaultLabel */, const String& /* label */) { }
+
+#if ENABLE(ENCRYPTED_MEDIA)
+    virtual void setCDMInstance(CDMInstance*) { }
+#endif
 };
 
-class AudioVideoRenderer : public AudioInterface, public VideoInterface, public VideoFullscreenInterface, public SynchronizerInterface, public TracksRendererManager, public AbstractThreadSafeRefCountedAndCanMakeWeakPtr {
+class WEBCORE_EXPORT AudioVideoRenderer : public AudioInterface, public VideoInterface, public VideoFullscreenInterface, public SynchronizerInterface, public TracksRendererManager, public AbstractThreadSafeRefCountedAndCanMakeWeakPtr {
 public:
     virtual ~AudioVideoRenderer() = default;
 };

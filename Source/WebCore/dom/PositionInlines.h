@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <WebCore/NodeDocument.h>
 #include <WebCore/NodeInlines.h>
 #include <WebCore/Position.h>
 

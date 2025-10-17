@@ -37,6 +37,8 @@
 #include "StyleInterpolation.h"
 #include "StyleProperties.h"
 #include "StyleResolver.h"
+#include "StyleTransform.h"
+#include "StyleTranslate.h"
 #include "TransformOperations.h"
 #include "TranslateTransformOperation.h"
 #include <wtf/CryptographicallyRandomNumber.h>
@@ -361,26 +363,15 @@ void BlendingKeyframes::analyzeKeyframe(const BlendingKeyframe& keyframe)
             return;
 
         if (keyframe.animatesProperty(CSSPropertyTransform)) {
-            for (auto& function : style->transform()) {
-                if (RefPtr translate = dynamicDowncast<TranslateTransformOperation>(function.platform())) {
-                    if (translate->x().isPercent())
-                        m_hasWidthDependentTransform = true;
-                    if (translate->y().isPercent())
-                        m_hasHeightDependentTransform = true;
-                }
-            }
+            auto [isWidthDependent, isHeightDependent] = style->transform().computeSizeDependencies();
+            m_hasWidthDependentTransform = isWidthDependent;
+            m_hasHeightDependentTransform = isHeightDependent;
         }
 
         if (keyframe.animatesProperty(CSSPropertyTranslate)) {
-            WTF::switchOn(style->translate(),
-                [&](const CSS::Keyword::None&) { },
-                [&](const Style::Translate::Operation& operation) {
-                    if (operation->x().isPercent())
-                        m_hasWidthDependentTransform = true;
-                    if (operation->y().isPercent())
-                        m_hasHeightDependentTransform = true;
-                }
-            );
+            auto [isWidthDependent, isHeightDependent] = style->translate().computeSizeDependencies();
+            m_hasWidthDependentTransform = isWidthDependent;
+            m_hasHeightDependentTransform = isHeightDependent;
         }
     };
 

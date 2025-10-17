@@ -132,6 +132,7 @@
 #import <WebCore/TextIndicator.h>
 #import <WebCore/TextUndoInsertionMarkupMac.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebCore/WebCoreNSFontManagerExtras.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <WebCore/WebNSAttributedStringExtras.h>
@@ -1040,17 +1041,14 @@ static NSControlStateValue kit(TriState state)
 
 @implementation WebHTMLViewPrivate
 
-#if PLATFORM(MAC)
-
 + (void)initialize
 {
     // FIXME: Shouldn't all of this move into +[WebHTMLView initialize]?
     // And some of this work is likely redundant since +[WebHTMLView initialize] is guaranteed to run first.
 
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
+    WebCore::initializeMainThreadIfNeeded();
 
+#if PLATFORM(MAC)
     if (!oldSetCursorForMouseLocationIMP) {
         Method setCursorMethod = class_getInstanceMethod([NSWindow class], @selector(_setCursorForMouseLocation:));
         ASSERT(setCursorMethod);
@@ -1059,9 +1057,8 @@ static NSControlStateValue kit(TriState state)
     }
 
     method_exchangeImplementations(class_getInstanceMethod([NSView class], @selector(setNeedsDisplayInRect:)), class_getInstanceMethod([NSView class], @selector(_web_setNeedsDisplayInRect:)));
-}
-
 #endif
+}
 
 - (void)dealloc
 {
@@ -2545,18 +2542,14 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 @implementation WebHTMLView
 
-#if PLATFORM(MAC)
-
 + (void)initialize
 {
+#if PLATFORM(MAC)
     [NSApp registerServicesMenuSendTypes:[[self class] _selectionPasteboardTypes] returnTypes:[[self class] _insertablePasteboardTypes]];
-
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-}
-
 #endif
+
+    WebCore::initializeMainThreadIfNeeded();
+}
 
 - (id)initWithFrame:(NSRect)frame
 {

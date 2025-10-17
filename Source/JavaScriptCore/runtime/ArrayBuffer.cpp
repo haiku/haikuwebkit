@@ -155,9 +155,9 @@ void ArrayBufferContents::makeShared()
 SharedArrayBufferContents::~SharedArrayBufferContents()
 {
     WaiterListManager::singleton().unregister(std::bit_cast<uint8_t*>(data()), m_sizeInBytes);
-    if (m_destructor) {
+    if (RefPtr destructor = m_destructor) {
         // FIXME: we shouldn't use getUnsafe here https://bugs.webkit.org/show_bug.cgi?id=197698
-        m_destructor->run(m_data.getUnsafe());
+        destructor->run(m_data.getUnsafe());
     }
 }
 
@@ -622,12 +622,13 @@ Expected<int64_t, GrowFailReason> SharedArrayBufferContents::grow(const Abstract
         return makeUnexpected(GrowFailReason::WouldExceedMaximum);
 
     if (newPageCount != oldPageCount) {
-        ASSERT(m_memoryHandle->maximum() >= newPageCount);
+        RefPtr memoryHandle = m_memoryHandle;
+        ASSERT(memoryHandle->maximum() >= newPageCount);
         size_t desiredSize = newPageCount.bytes();
         RELEASE_ASSERT(desiredSize <= MAX_ARRAY_BUFFER_SIZE);
-        RELEASE_ASSERT(desiredSize > m_memoryHandle->size());
+        RELEASE_ASSERT(desiredSize > memoryHandle->size());
 
-        size_t extraBytes = desiredSize - m_memoryHandle->size();
+        size_t extraBytes = desiredSize - memoryHandle->size();
         RELEASE_ASSERT(extraBytes);
         bool allocationSuccess = tryAllocate(&vm,
             [&] () -> BufferMemoryResult::Kind {
@@ -636,17 +637,17 @@ Expected<int64_t, GrowFailReason> SharedArrayBufferContents::grow(const Abstract
         if (!allocationSuccess)
             return makeUnexpected(GrowFailReason::OutOfMemory);
 
-        void* memory = m_memoryHandle->memory();
+        void* memory = memoryHandle->memory();
         RELEASE_ASSERT(memory);
 
         // Signaling memory must have been pre-allocated virtually.
-        uint8_t* startAddress = static_cast<uint8_t*>(memory) + m_memoryHandle->size();
+        uint8_t* startAddress = static_cast<uint8_t*>(memory) + memoryHandle->size();
 
         dataLogLnIf(ArrayBufferInternal::verbose, "Marking memory's ", RawPointer(memory), " as read+write in range [", RawPointer(startAddress), ", ", RawPointer(startAddress + extraBytes), ")");
         constexpr bool readable = true;
         constexpr bool writable = true;
         OSAllocator::protect(startAddress, extraBytes, readable, writable);
-        m_memoryHandle->updateSize(desiredSize);
+        memoryHandle->updateSize(desiredSize);
     }
 
     memset(std::bit_cast<uint8_t*>(data()) + sizeInBytes, 0, newByteLength - sizeInBytes);

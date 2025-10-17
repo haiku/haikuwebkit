@@ -30,9 +30,14 @@
 #include <WebCore/FourCC.h>
 #include <WebCore/GLContext.h>
 #include <WebCore/GLDisplay.h>
+#include <wtf/SafeStrerror.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/unix/UnixFileDescriptor.h>
+
+#if OS(ANDROID)
+#include <android/hardware_buffer.h>
+#endif
 
 #if USE(GBM)
 #include <WebCore/GBMDevice.h>
@@ -57,12 +62,98 @@ OpenXRLayer::~OpenXRLayer()
     ASSERT(WebCore::GLContext::current());
 #if USE(GBM)
     if (m_fbosForBlitting[0])
-        glDeleteFramebuffers(2, m_fbosForBlitting);
+        glDeleteFramebuffers(m_fbosForBlitting.size(), m_fbosForBlitting.data());
     for (auto texture : m_exportedTexturesMap.values())
         glDeleteTextures(1, &texture);
 #endif
 }
 
+#if OS(ANDROID)
+std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTextureAndroid(WebCore::GLDisplay& display, PlatformGLObject openxrTexture)
+{
+    static constexpr auto kHardwareBufferUsage = AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+
+    RefPtr<AHardwareBuffer> hardwareBuffer;
+    {
+        RELEASE_ASSERT(m_swapchain->width() > 0);
+        RELEASE_ASSERT(m_swapchain->height() > 0);
+
+        AHardwareBuffer_Desc bufferDesc = { };
+        bufferDesc.width = static_cast<uint32_t>(m_swapchain->width());
+        bufferDesc.height = static_cast<uint32_t>(m_swapchain->height());
+        bufferDesc.usage = kHardwareBufferUsage;
+        bufferDesc.layers = 1;
+
+        switch (m_swapchain->format()) {
+        case GL_RGBA8:
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+            break;
+        case GL_RGB8:
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM;
+            if (!AHardwareBuffer_isSupported(&bufferDesc))
+                bufferDesc.format = AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM;
+            break;
+        case GL_RGB565:
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM;
+            break;
+        case GL_RGBA16F:
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT;
+            break;
+        case GL_RGB10_A2:
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM;
+            break;
+        }
+
+        if (!bufferDesc.format || !AHardwareBuffer_isSupported(&bufferDesc)) {
+            RELEASE_LOG_INFO(XR, "AHardwareBuffer format %#" PRIX32 " not supported, using"
+                " RGBA8888 fallback that may result in slow blits", bufferDesc.format);
+            bufferDesc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+        }
+
+        AHardwareBuffer* buffer { nullptr };
+        if (auto error = AHardwareBuffer_allocate(&bufferDesc, &buffer)) {
+            if (error < 0)
+                RELEASE_LOG_ERROR(XR, "Failed to allocate AHardwareBuffer for OpenXR texture: %s", safeStrerror(-error).data());
+            else
+                RELEASE_LOG_ERROR(XR, "Failed to allocate AHardwareBuffer for OpenXR texture: %" PRIi32, error);
+            return { };
+        }
+        hardwareBuffer = adoptRef(buffer);
+    }
+
+    static PFNEGLGETNATIVECLIENTBUFFERANDROIDPROC s_eglGetNativeClientBufferANDROID { nullptr };
+    if (!s_eglGetNativeClientBufferANDROID) [[unlikely]] {
+        s_eglGetNativeClientBufferANDROID = reinterpret_cast<PFNEGLGETNATIVECLIENTBUFFERANDROIDPROC>(eglGetProcAddress("eglGetNativeClientBufferANDROID"));
+        RELEASE_ASSERT(s_eglGetNativeClientBufferANDROID);
+    }
+
+    static const Vector<EGLAttrib> attributes = { EGL_IMAGE_PRESERVED, EGL_TRUE, EGL_NONE };
+    auto clientBuffer = s_eglGetNativeClientBufferANDROID(hardwareBuffer.get());
+    auto image = display.createImage(EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, clientBuffer, attributes);
+    if (image == EGL_NO_IMAGE_KHR) {
+        RELEASE_LOG(XR, "Failed to create EGL image for OpenXR texture (%#06x)", eglGetError());
+        return { };
+    }
+
+    GLint boundTexture = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &boundTexture);
+    PlatformGLObject exportedTexture;
+    glGenTextures(1, &exportedTexture);
+    glBindTexture(GL_TEXTURE_2D, exportedTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, image);
+    glBindTexture(GL_TEXTURE_2D, boundTexture);
+
+    display.destroyImage(image);
+
+    m_exportedTexturesMap.add(openxrTexture, exportedTexture);
+
+    return hardwareBuffer;
+}
+#else
 std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTextureDMABuf(WebCore::GLDisplay& display, WebCore::GLContext& context, PlatformGLObject openxrTexture)
 {
     // Texture must be bound to be exported.
@@ -121,6 +212,7 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
         .modifier = modifier,
     };
 }
+#endif // !OS(ANDROID)
 
 #if USE(GBM)
 void OpenXRLayer::setGBMDevice(RefPtr<WebCore::GBMDevice> gbmDevice)
@@ -130,7 +222,7 @@ void OpenXRLayer::setGBMDevice(RefPtr<WebCore::GBMDevice> gbmDevice)
 
 std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTextureGBM(WebCore::GLDisplay& display, PlatformGLObject openxrTexture)
 {
-    WebCore::FourCC preferredDMABufFormat = m_swapchain->format() == GL_RGBA8 ? DRM_FORMAT_ARGB8888 : DRM_FORMAT_XRGB8888;
+    WebCore::FourCC preferredDMABufFormat = m_swapchain->hasAlpha() == OpenXRSwapchain::HasAlpha::Yes ? DRM_FORMAT_ARGB8888 : DRM_FORMAT_XRGB8888;
     WebCore::GLDisplay::BufferFormat format;
     const auto& supportedFormats = display.bufferFormats();
     for (const auto& supportedFormat : supportedFormats) {
@@ -229,7 +321,9 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
         .modifier = modifier
     };
 }
+#endif // USE(GBM)
 
+#if USE(GBM) || OS(ANDROID)
 void OpenXRLayer::blitTexture() const
 {
     auto openxrTexture = m_swapchain->acquiredTexture();
@@ -249,7 +343,7 @@ void OpenXRLayer::blitTexture() const
     glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-#endif
+#endif // USE(GBM) || OS(ANDROID)
 
 std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTexture(PlatformGLObject openxrTexture)
 {
@@ -259,8 +353,12 @@ std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRT
     auto display = glContext->display();
     ASSERT(display);
 
+#if OS(ANDROID)
+    return exportOpenXRTextureAndroid(*display, openxrTexture);
+#else
     if (display->extensions().MESA_image_dma_buf_export)
         return exportOpenXRTextureDMABuf(*display, *glContext, openxrTexture);
+#endif
 
 #if USE(GBM)
     if (m_gbmDevice)
@@ -325,10 +423,10 @@ std::optional<PlatformXR::FrameData::LayerData> OpenXRLayerProjection::startFram
 
 XrCompositionLayerBaseHeader* OpenXRLayerProjection::endFrame(const XRDeviceLayer& layer, XrSpace space, const Vector<XrView>& frameViews)
 {
-#if USE(GBM)
-    if (m_gbmDevice) {
+#if OS(ANDROID) || USE(GBM)
+    if (needsBlitTexture()) {
         if (!m_fbosForBlitting[0])
-            glGenFramebuffers(2, m_fbosForBlitting);
+            glGenFramebuffers(m_fbosForBlitting.size(), m_fbosForBlitting.data());
         blitTexture();
     }
 #endif

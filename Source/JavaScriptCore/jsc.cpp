@@ -83,6 +83,7 @@
 #include "VMManager.h"
 #include "VMTrapsInlines.h"
 #include "WasmCapabilities.h"
+#include "WasmDebugServer.h"
 #include "WasmFaultSignalHandler.h"
 #include "WebAssemblyMemoryConstructor.h"
 #include <span>
@@ -2344,7 +2345,7 @@ JSC_DEFINE_HOST_FUNCTION(functionCallerIsBBQOrOMGCompiled, (JSGlobalObject* glob
     ASSERT(wasmFrame.callerFrame()->callee().isNativeCallee());
     ASSERT(wasmFrame.callerFrame()->callee().asNativeCallee()->category() == NativeCallee::Category::Wasm);
 #if ENABLE(WEBASSEMBLY)
-    auto mode = static_cast<Wasm::Callee*>(wasmFrame.callerFrame()->callee().asNativeCallee())->compilationMode();
+    auto mode = uncheckedDowncast<Wasm::Callee>(wasmFrame.callerFrame()->callee().asNativeCallee())->compilationMode();
     return JSValue::encode(jsBoolean(isAnyBBQ(mode) || isAnyOMG(mode)));
 #endif
     RELEASE_ASSERT_NOT_REACHED();
@@ -4017,6 +4018,7 @@ static void runInteractive(GlobalObject* globalObject)
     fprintf(stderr, "  --destroy-vm               Destroy VM before exiting\n");
     fprintf(stderr, "  --can-block-is-false       Make main thread's Atomics.wait throw\n");
     fprintf(stderr, "  --singleStringSubArgList=<args>   Parse args as a space separated list of arguments. (For VSCode debuggers to pass arguments).\n");
+    fprintf(stderr, "  --wasm-debug[=port]        Enable WebAssembly debugging server (default port 1234)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Files with a .mjs extension will always be evaluated as modules.\n");
     fprintf(stderr, "\n");
@@ -4299,6 +4301,25 @@ void CommandLine::parseArguments(int argc, char** argv, int start)
             continue;
         }
 
+#if ENABLE(WEBASSEMBLY)
+        auto argView = StringView::fromLatin1(arg);
+        constexpr auto wasmDebugOption = "--wasm-debug"_s;
+        bool isBareOption = argView.length() == wasmDebugOption.length();
+        if (argView.startsWith(wasmDebugOption) && (isBareOption || argView[wasmDebugOption.length()] == '=')) {
+            JSC::Options::enableWasmDebugger() = true;
+            JSC::Options::useBBQJIT() = false;
+            JSC::Options::useOMGJIT() = false;
+            if (!isBareOption) {
+                StringView suffix = argView.substring(wasmDebugOption.length() + 1);
+                if (auto portOpt = WTF::parseInteger<uint16_t>(suffix, 10); portOpt && *portOpt)
+                    JSC::Wasm::DebugServer::singleton().setPort(*portOpt);
+                else
+                    dataLogLn("ERROR: invalid port number for --wasm-debug=", suffix);
+            }
+            continue;
+        }
+#endif
+
         // See if the -- option is a JSC VM option.
         if (strstr(arg, "--") == arg) {
             if (!JSC::Options::setOption(&arg[2], /* verify = */ false)) {
@@ -4373,6 +4394,12 @@ int runJSC(const CommandLine& options, bool isWorker, const Func& func)
             startTimeoutThreadIfNeeded(vm);
             globalObject = GlobalObject::create(vm, GlobalObject::createStructure(vm, jsNull()), options.m_arguments);
             globalObject->setInspectable(options.m_inspectable);
+
+#if ENABLE(WEBASSEMBLY)
+            if (Options::enableWasmDebugger()) [[unlikely]]
+                Wasm::DebugServer::singleton().start(&vm);
+#endif
+
             func(vm, globalObject, success);
             vm.drainMicrotasks();
         }
@@ -4472,6 +4499,11 @@ int runJSC(const CommandLine& options, bool isWorker, const Func& func)
         // thread to die before its compilation threads finish.
         vm.derefSuppressingSaferCPPChecking();
     }
+
+#if ENABLE(WEBASSEMBLY)
+    if (Options::enableWasmDebugger()) [[unlikely]]
+        Wasm::DebugServer::singleton().stop();
+#endif
 
     return result;
 }

@@ -36,11 +36,11 @@ namespace API {
 ScriptMessage::~ScriptMessage() = default;
 
 #if PLATFORM(COCOA)
-ScriptMessage::ScriptMessage(RetainPtr<id>&& body, WebKit::WebPageProxy& page, Ref<API::FrameInfo>&& frame, const WTF::String& name, Ref<API::ContentWorld>&& world)
+ScriptMessage::ScriptMessage(RetainPtr<id>&& body, WebKit::WebPageProxy& page, Ref<API::FrameInfo>&& frame, RetainPtr<NSString>&& name, Ref<API::ContentWorld>&& world)
     : m_body(WTFMove(body))
+    , m_cocoaName(WTFMove(name))
     , m_page(page)
     , m_frame(WTFMove(frame))
-    , m_name(name)
     , m_world(WTFMove(world)) { }
 #endif
 

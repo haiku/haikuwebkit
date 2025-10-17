@@ -96,7 +96,8 @@ TEST(WKWebView, EvaluateJavaScriptErrorCases)
 
     auto handler = adoptNS([TestScriptMessageHandler new]);
     auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    [[webView configuration].userContentController addScriptMessageHandler:handler.get() name:@"testHandler"];
+    NSString *handlerName = @"testHandler";
+    [[webView configuration].userContentController addScriptMessageHandler:handler.get() name:handlerName];
     NSString *postMessages = @""
         "window.webkit.messageHandlers.testHandler.postMessage(document.body);"
         "window.webkit.messageHandlers.testHandler.postMessage('abc');"
@@ -107,6 +108,8 @@ TEST(WKWebView, EvaluateJavaScriptErrorCases)
     "";
     [webView evaluateJavaScript:postMessages completionHandler:nil];
     RetainPtr firstMessage = [handler waitForMessage];
+    EXPECT_EQ(firstMessage.get().name, handlerName);
+    EXPECT_WK_STREQ(firstMessage.get().name, handlerName);
     EXPECT_WK_STREQ(firstMessage.get().body, "abc");
     EXPECT_EQ(firstMessage.get().body, firstMessage.get().body);
     EXPECT_EQ([handler waitForMessage].body, NSNull.null);

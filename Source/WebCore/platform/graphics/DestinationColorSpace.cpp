@@ -125,7 +125,7 @@ const DestinationColorSpace& DestinationColorSpace::ExtendedRec2020()
 bool operator==(const DestinationColorSpace& a, const DestinationColorSpace& b)
 {
 #if USE(CG)
-    return CGColorSpaceEqualToColorSpace(a.protectedPlatformColorSpace().get(), b.protectedPlatformColorSpace().get());
+    return CGColorSpaceEqualToColorSpace(a.platformColorSpace(), b.platformColorSpace());
 #elif USE(SKIA)
     return SkColorSpace::Equals(a.platformColorSpace().get(), b.platformColorSpace().get());
 #else
@@ -136,17 +136,17 @@ bool operator==(const DestinationColorSpace& a, const DestinationColorSpace& b)
 std::optional<DestinationColorSpace> DestinationColorSpace::asRGB() const
 {
 #if USE(CG)
-    RetainPtr<CGColorSpaceRef> colorSpace = platformColorSpace();
-    if (CGColorSpaceGetModel(colorSpace.get()) == kCGColorSpaceModelIndexed)
-        colorSpace = CGColorSpaceGetBaseColorSpace(colorSpace.get());
+    CGColorSpaceRef colorSpace = platformColorSpace();
+    if (CGColorSpaceGetModel(colorSpace) == kCGColorSpaceModelIndexed)
+        colorSpace = CGColorSpaceGetBaseColorSpace(colorSpace);
 
-    if (CGColorSpaceGetModel(colorSpace.get()) != kCGColorSpaceModelRGB)
+    if (CGColorSpaceGetModel(colorSpace) != kCGColorSpaceModelRGB)
         return std::nullopt;
 
     if (usesExtendedRange())
         return std::nullopt;
 
-    return DestinationColorSpace(colorSpace.get());
+    return DestinationColorSpace(colorSpace);
 
 #elif USE(SKIA)
     // When using skia, we're not using color spaces consisting of custom lookup tables, so we either yield SRGB or nothing.
@@ -164,7 +164,7 @@ std::optional<DestinationColorSpace> DestinationColorSpace::asExtended() const
     if (usesExtendedRange())
         return *this;
 #if USE(CG)
-    if (RetainPtr colorSpace = adoptCF(CGColorSpaceCreateExtended(protectedPlatformColorSpace().get())))
+    if (RetainPtr colorSpace = adoptCF(CGColorSpaceCreateExtended(platformColorSpace())))
         return DestinationColorSpace(WTFMove(colorSpace));
 #endif
     return std::nullopt;
@@ -173,7 +173,7 @@ std::optional<DestinationColorSpace> DestinationColorSpace::asExtended() const
 bool DestinationColorSpace::supportsOutput() const
 {
 #if USE(CG)
-    return CGColorSpaceSupportsOutput(protectedPlatformColorSpace().get());
+    return CGColorSpaceSupportsOutput(platformColorSpace());
 #else
     notImplemented();
     return true;
@@ -183,7 +183,7 @@ bool DestinationColorSpace::supportsOutput() const
 bool DestinationColorSpace::usesExtendedRange() const
 {
 #if USE(CG)
-    return CGColorSpaceUsesExtendedRange(protectedPlatformColorSpace().get());
+    return CGColorSpaceUsesExtendedRange(platformColorSpace());
 #else
     notImplemented();
     return false;
@@ -193,7 +193,7 @@ bool DestinationColorSpace::usesExtendedRange() const
 bool DestinationColorSpace::usesITUR_2100TF() const
 {
 #if USE(CG)
-    return CGColorSpaceUsesITUR_2100TF(protectedPlatformColorSpace().get());
+    return CGColorSpaceUsesITUR_2100TF(platformColorSpace());
 #else
     notImplemented();
     return false;
@@ -219,7 +219,7 @@ TextStream& operator<<(TextStream& ts, const DestinationColorSpace& colorSpace)
         ts << "ExtendedRec2020"_s;
 #endif
 #if USE(CG)
-    else if (auto description = adoptCF(CGColorSpaceCopyICCProfileDescription(colorSpace.protectedPlatformColorSpace().get())))
+    else if (auto description = adoptCF(CGColorSpaceCopyICCProfileDescription(colorSpace.platformColorSpace())))
         ts << String(description.get());
 #endif
 

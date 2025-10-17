@@ -1217,11 +1217,11 @@ end
 macro restoreStackPointerAfterCall()
     loadp CodeBlock[cfr], t2
     getFrameRegisterSizeForCodeBlock(t2, t2)
-    if ARMv7
+    if ARM64 or ARM64E
+        subp cfr, t2, sp
+    else
         subp cfr, t2, t2
         move t2, sp
-    else
-        subp cfr, t2, sp
     end
 end
 

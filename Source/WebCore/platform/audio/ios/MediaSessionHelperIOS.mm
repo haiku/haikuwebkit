@@ -295,7 +295,7 @@ void MediaSessionHelperIOS::providePresentingApplicationPID(ProcessID pid)
     m_presentedApplicationPID = pid;
 
     NSError *error = nil;
-    [[getAVSystemControllerClassSingleton() sharedAVSystemController] setAttribute:@(pid) forKey:getAVSystemController_PIDToInheritApplicationStateFrom() error:&error];
+    [[getAVSystemControllerClassSingleton() sharedAVSystemController] setAttribute:@(pid) forKey:getAVSystemController_PIDToInheritApplicationStateFromSingleton() error:&error];
     if (error)
         RELEASE_LOG_ERROR(Media, "Failed to set AVSystemController_PIDToInheritApplicationStateFrom: %@", error.localizedDescription);
 #else
@@ -401,7 +401,7 @@ void MediaSessionHelperIOS::externalOutputDeviceAvailableDidChange()
     [center addObserver:self selector:@selector(spatialPlaybackCapabilitiesChanged:) name:PAL::get_AVFoundation_AVAudioSessionSpatialPlaybackCapabilitiesChangedNotificationSingleton() object:nil];
 
 #if HAVE(MEDIAEXPERIENCE_AVSYSTEMCONTROLLER)
-    [center addObserver:self selector:@selector(mediaServerConnectionDied:) name:getAVSystemController_ServerConnectionDiedNotification() object:nil];
+    [center addObserver:self selector:@selector(mediaServerConnectionDied:) name:getAVSystemController_ServerConnectionDiedNotificationSingleton() object:nil];
 #endif
 
     // Now playing won't work unless we turn on the delivery of remote control events.

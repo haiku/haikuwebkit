@@ -83,7 +83,7 @@ static int fontWeightToFontconfigWeight(FontSelectionValue weight)
 
 bool FontCache::configurePatternForFontDescription(FcPattern* pattern, const FontDescription& fontDescription)
 {
-    if (!FcPatternAddInteger(pattern, FC_SLANT, fontDescription.italic() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN))
+    if (!FcPatternAddInteger(pattern, FC_SLANT, fontDescription.fontStyleSlope() ? FC_SLANT_ITALIC : FC_SLANT_ROMAN))
         return false;
     if (!FcPatternAddInteger(pattern, FC_WEIGHT, fontWeightToFontconfigWeight(fontDescription.weight())))
         return false;
@@ -119,7 +119,7 @@ static void getFontPropertiesFromPattern(FcPattern* pattern, const FontDescripti
     int actualFontSlant;
     bool allowSyntheticOblique = fontDescription.hasAutoFontSynthesisStyle()
         && !options.contains(FontLookupOptions::DisallowObliqueSynthesis);
-    if (allowSyntheticOblique && fontDescription.italic()
+    if (allowSyntheticOblique && fontDescription.fontStyleSlope()
         && FcPatternGetInteger(pattern, FC_SLANT, 0, &actualFontSlant) == FcResultMatch) {
         syntheticOblique = actualFontSlant == FC_SLANT_ROMAN;
     }

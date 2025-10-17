@@ -280,6 +280,8 @@ WK_EXPORT void WKPageSelectContextMenuItem(WKPageRef page, WKContextMenuItemRef 
 
 WK_EXPORT void WKPageClearNotificationPermissionState(WKPageRef page);
 
+WK_EXPORT void WKPageClearBackForwardCache(WKPageRef page);
+
 #ifdef __cplusplus
 }
 #endif

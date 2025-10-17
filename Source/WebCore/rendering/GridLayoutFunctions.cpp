@@ -51,10 +51,10 @@ static inline bool marginEndIsAuto(const RenderBox& gridItem, Style::GridTrackSi
 
 static bool gridItemHasMargin(const RenderBox& gridItem, Style::GridTrackSizingDirection direction)
 {
-    // Length::IsZero returns true for 'auto' margins, which is aligned with the purpose of this function.
+    // `isPossiblyZero` returns true for 'auto' margins, which is aligned with the purpose of this function.
     if (direction == Style::GridTrackSizingDirection::Columns)
-        return !gridItem.style().marginStart().isZero() || !gridItem.style().marginEnd().isZero();
-    return !gridItem.style().marginBefore().isZero() || !gridItem.style().marginAfter().isZero();
+        return !gridItem.style().marginStart().isPossiblyZero() || !gridItem.style().marginEnd().isPossiblyZero();
+    return !gridItem.style().marginBefore().isPossiblyZero() || !gridItem.style().marginAfter().isPossiblyZero();
 }
 
 LayoutUnit computeMarginLogicalSizeForGridItem(const RenderGrid& grid, Style::GridTrackSizingDirection direction, const RenderBox& gridItem)

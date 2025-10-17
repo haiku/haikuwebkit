@@ -27,6 +27,7 @@
 
 #if ENABLE(GPU_PROCESS)
 
+#include "ModelObjectHeap.h"
 #include "RemoteGPURequestAdapterResponse.h"
 #include "RemoteVideoFrameIdentifier.h"
 #include "SharedPreferencesForWebProcess.h"
@@ -54,6 +55,10 @@ struct PresentationContextDescriptor;
 
 namespace IPC {
 class Connection;
+}
+
+namespace DDMeshDescriptor {
+struct DDMeshDescriptor;
 }
 
 namespace WebCore {
@@ -121,6 +126,7 @@ private:
 
 
     void requestAdapter(const WebGPU::RequestAdapterOptions&, WebGPUIdentifier, CompletionHandler<void(std::optional<RemoteGPURequestAdapterResponse>&&)>&&);
+    void addMeshRequest(const DDModel::DDMeshDescriptor&, WebKit::DDModelIdentifier);
 
     void createPresentationContext(const WebGPU::PresentationContextDescriptor&, WebGPUIdentifier);
 
@@ -134,6 +140,7 @@ private:
     RefPtr<IPC::StreamServerConnection> m_streamConnection;
     RefPtr<WebCore::WebGPU::GPU> m_backing WTF_GUARDED_BY_CAPABILITY(workQueue());
     Ref<WebGPU::ObjectHeap> m_objectHeap WTF_GUARDED_BY_CAPABILITY(workQueue());
+    Ref<DDModel::ObjectHeap> m_modelObjectHeap WTF_GUARDED_BY_CAPABILITY(workQueue());
     const WebGPUIdentifier m_identifier;
     Ref<RemoteRenderingBackend> m_renderingBackend;
 };

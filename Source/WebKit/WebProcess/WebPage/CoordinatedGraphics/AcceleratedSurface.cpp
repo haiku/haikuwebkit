@@ -641,6 +641,9 @@ std::unique_ptr<AcceleratedSurface::RenderTarget> AcceleratedSurface::SwapChain:
     case Type::Invalid:
         break;
     }
+#if !(PLATFORM(GTK) || ENABLE(WPE_PLATFORM))
+    UNUSED_PARAM(m_surfaceID);
+#endif
     return nullptr;
 }
 

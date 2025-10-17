@@ -481,6 +481,7 @@ enum class ItemPosition : uint8_t {
     Left,
     Right,
     AnchorCenter,
+    Dialog
 };
 
 enum class OverflowAlignment : uint8_t {
@@ -1260,6 +1261,78 @@ enum class Scroller : uint8_t {
     Self
 };
 
+enum class TextAnchor : uint8_t {
+    Start,
+    Middle,
+    End
+};
+
+enum class ColorInterpolation : uint8_t {
+    Auto,
+    SRGB,
+    LinearRGB
+};
+
+enum class ShapeRendering : uint8_t {
+    Auto,
+    OptimizeSpeed,
+    CrispEdges,
+    GeometricPrecision
+};
+
+enum class GlyphOrientation : uint8_t {
+    Degrees0,
+    Degrees90,
+    Degrees180,
+    Degrees270,
+    Auto
+};
+
+enum class AlignmentBaseline : uint8_t {
+    Baseline,
+    BeforeEdge,
+    TextBeforeEdge,
+    Middle,
+    Central,
+    AfterEdge,
+    TextAfterEdge,
+    Ideographic,
+    Alphabetic,
+    Hanging,
+    Mathematical
+};
+
+enum class DominantBaseline : uint8_t {
+    Auto,
+    UseScript,
+    NoChange,
+    ResetSize,
+    Ideographic,
+    Alphabetic,
+    Hanging,
+    Mathematical,
+    Central,
+    Middle,
+    TextAfterEdge,
+    TextBeforeEdge
+};
+
+enum class VectorEffect : uint8_t {
+    None,
+    NonScalingStroke
+};
+
+enum class BufferedRendering : uint8_t {
+    Auto,
+    Dynamic,
+    Static
+};
+
+enum class MaskType : uint8_t {
+    Luminance,
+    Alpha
+};
+
 CSSBoxType transformBoxToCSSBoxType(TransformBox);
 
 constexpr float defaultMiterLimit = 4;
@@ -1394,5 +1467,15 @@ WTF::TextStream& operator<<(WTF::TextStream&, MathStyle);
 WTF::TextStream& operator<<(WTF::TextStream&, ContainIntrinsicSizeType);
 WTF::TextStream& operator<<(WTF::TextStream&, FieldSizing);
 WTF::TextStream& operator<<(WTF::TextStream&, OverflowContinue);
+
+WTF::TextStream& operator<<(WTF::TextStream&, AlignmentBaseline);
+WTF::TextStream& operator<<(WTF::TextStream&, BufferedRendering);
+WTF::TextStream& operator<<(WTF::TextStream&, ColorInterpolation);
+WTF::TextStream& operator<<(WTF::TextStream&, DominantBaseline);
+WTF::TextStream& operator<<(WTF::TextStream&, GlyphOrientation);
+WTF::TextStream& operator<<(WTF::TextStream&, MaskType);
+WTF::TextStream& operator<<(WTF::TextStream&, ShapeRendering);
+WTF::TextStream& operator<<(WTF::TextStream&, TextAnchor);
+WTF::TextStream& operator<<(WTF::TextStream&, VectorEffect);
 
 } // namespace WebCore

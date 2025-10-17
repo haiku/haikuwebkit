@@ -90,7 +90,7 @@ protected:
     const FetchBody& body() const { return *m_body; }
     bool isBodyNull() const { return !m_body; }
     bool isBodyNullOrOpaque() const { return !m_body || m_isBodyOpaque; }
-    void cloneBody(FetchBodyOwner&);
+    void cloneBody(JSDOMGlobalObject&, FetchBodyOwner&);
 
     ExceptionOr<void> extractBody(FetchBody::Init&&);
     void consumeOnceLoadingFinished(FetchBodyConsumer::Type, Ref<DeferredPromise>&&);

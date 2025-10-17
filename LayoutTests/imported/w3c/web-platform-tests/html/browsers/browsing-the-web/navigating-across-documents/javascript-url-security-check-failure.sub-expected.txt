@@ -1,6 +1,6 @@
 
-FAIL cross-origin, setting src assert_unreached: message event fired Reached unreachable code
-FAIL cross-origin, setting location.href assert_unreached: message event fired Reached unreachable code
+PASS cross-origin, setting src
+PASS cross-origin, setting location.href
 PASS cross-origin-domain but same-origin, setting src
 PASS cross-origin-domain but same-origin, setting location.href
 

@@ -49,7 +49,6 @@
 #include "LegacyRenderSVGRoot.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
-#include "LogicalSelectionOffsetCaches.h"
 #include "NodeInlines.h"
 #include "Page.h"
 #include "PseudoElement.h"
@@ -57,6 +56,7 @@
 #include "RenderChildIterator.h"
 #include "RenderCounter.h"
 #include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderFragmentedFlow.h"
 #include "RenderGrid.h"
 #include "RenderInline.h"
@@ -1760,6 +1760,7 @@ bool RenderObject::setCapturedInViewTransition(bool captured)
 
     if (layerToInvalidate) {
         layerToInvalidate->setNeedsPostLayoutCompositingUpdate();
+        layerToInvalidate->setNeedsCompositingConfigurationUpdate();
 
         // Invalidate transform applied by `RenderLayerBacking::updateTransform`.
         layerToInvalidate->setNeedsCompositingGeometryUpdate();

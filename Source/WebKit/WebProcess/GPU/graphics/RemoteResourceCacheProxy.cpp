@@ -31,13 +31,57 @@
 #include "ArgumentCoders.h"
 #include "Logging.h"
 #include "RemoteImageBufferProxy.h"
-#include "RemoteNativeImageBackendProxy.h"
+#include "RemoteNativeImageProxy.h"
 #include "RemoteRenderingBackendProxy.h"
 #include "WebProcess.h"
 #include <WebCore/FontCustomPlatformData.h>
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
 using namespace WebCore;
+
+namespace {
+struct CreateShareableBitmapResult {
+    Ref<ShareableBitmap> bitmap;
+    PlatformImagePtr platformImage;
+};
+}
+
+static std::optional<CreateShareableBitmapResult> createShareableBitmapForNativeImage(NativeImage& image, const DestinationColorSpace& fallbackColorSpace)
+{
+    RefPtr<ShareableBitmap> bitmap;
+    PlatformImagePtr platformImage;
+#if USE(CG)
+    bitmap = ShareableBitmap::createFromImagePixels(image);
+    if (bitmap)
+        platformImage = bitmap->createPlatformImage(DontCopyBackingStore, ShouldInterpolate::Yes);
+#endif
+
+    // If we failed to create ShareableBitmap or PlatformImage, fall back to image-draw method.
+    if (!platformImage) {
+        bitmap = ShareableBitmap::createFromImageDraw(image, fallbackColorSpace);
+        if (bitmap)
+            platformImage = bitmap->createPlatformImage(DontCopyBackingStore, ShouldInterpolate::Yes);
+
+        // If createGraphicsContext() failed because the image fallbackColorSpace is not
+        // supported for output, fallback to SRGB.
+        if (!platformImage) {
+            bitmap = ShareableBitmap::createFromImageDraw(image, DestinationColorSpace::SRGB());
+            if (bitmap)
+                platformImage = bitmap->createPlatformImage(DontCopyBackingStore, ShouldInterpolate::Yes);
+        }
+    }
+    if (!platformImage)
+        return std::nullopt;
+    return CreateShareableBitmapResult { bitmap.releaseNonNull(), WTFMove(platformImage) };
+}
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteResourceCacheProxy);
+
+UniqueRef<RemoteResourceCacheProxy> RemoteResourceCacheProxy::create(RemoteRenderingBackendProxy& remoteRenderingBackendProxy)
+{
+    return UniqueRef<RemoteResourceCacheProxy> { *new RemoteResourceCacheProxy(remoteRenderingBackendProxy) };
+}
 
 RemoteResourceCacheProxy::RemoteResourceCacheProxy(RemoteRenderingBackendProxy& remoteRenderingBackendProxy)
     : m_remoteRenderingBackendProxy(remoteRenderingBackendProxy)
@@ -46,6 +90,14 @@ RemoteResourceCacheProxy::RemoteResourceCacheProxy(RemoteRenderingBackendProxy& 
 
 RemoteResourceCacheProxy::~RemoteResourceCacheProxy()
 {
+}
+
+Ref<RemoteNativeImageProxy> RemoteResourceCacheProxy::createNativeImage(const IntSize& size, PlatformColorSpace&& colorSpace, bool hasAlpha)
+{
+    WeakRef weakThis = m_remoteNativeImageProxyWeakFactory.createWeakPtr(*this).releaseNonNull();
+    Ref nativeImage = RemoteNativeImageProxy::create(size, WTFMove(colorSpace), hasAlpha, WTFMove(weakThis));
+    m_nativeImages.add(nativeImage.ptr(), NativeImageEntry { nullptr, true });
+    return nativeImage;
 }
 
 RemoteGradientIdentifier RemoteResourceCacheProxy::recordGradientUse(Gradient& gradient)
@@ -69,23 +121,35 @@ void RemoteResourceCacheProxy::recordFilterUse(Filter& filter)
     }
 }
 
-void RemoteResourceCacheProxy::recordNativeImageUse(NativeImage& image, const DestinationColorSpace& colorSpace)
+void RemoteResourceCacheProxy::recordNativeImageUse(NativeImage& image, const DestinationColorSpace& fallbackColorSpace)
 {
     if (isMainRunLoop())
         WebProcess::singleton().deferNonVisibleProcessEarlyMemoryCleanupTimer();
-    auto identifier = image.renderingResourceIdentifier();
-    if (m_nativeImages.contains(identifier))
-        return;
-
-    RemoteNativeImageBackendProxy* backend = dynamicDowncast<RemoteNativeImageBackendProxy>(image.backend());
-    std::unique_ptr<RemoteNativeImageBackendProxy> newBackend;
-    if (!backend) {
-        newBackend = RemoteNativeImageBackendProxy::create(image, colorSpace);
-        backend = newBackend.get();
-    }
     std::optional<ShareableBitmap::Handle> handle;
-    if (backend)
-        handle = backend->createHandle();
+    auto entry = m_nativeImages.find(&image);
+    if (entry != m_nativeImages.end()) {
+        if (entry->value.existsInRemote)
+            return;
+        handle = RefPtr { entry->value.bitmap }->createHandle();
+        if (handle)
+            entry->value.existsInRemote = true;
+    } else {
+        auto result = createShareableBitmapForNativeImage(image, fallbackColorSpace);
+        if (result) {
+            Ref bitmap = WTFMove(result->bitmap);
+            PlatformImagePtr platformImage = WTFMove(result->platformImage);
+            handle = bitmap->createHandle();
+            if (handle) {
+                handle->takeOwnershipOfMemory(MemoryLedger::Graphics);
+                m_nativeImages.add(&image, NativeImageEntry { WTFMove(bitmap), true });
+                // Set itself as an observer to NativeImage, so releaseNativeImage()
+                // gets called when NativeImage is being deleted.
+                image.addObserver(m_nativeImageResourceObserverWeakFactory.createWeakPtr(static_cast<RenderingResourceObserver&>(*this)).releaseNonNull());
+                // Replace the contents of the original NativeImage to save memory.
+                image.replacePlatformImage(WTFMove(platformImage));
+            }
+        }
+    }
     if (!handle) {
         // FIXME: Failing to send the image to GPUP will crash it when referencing this image.
         LOG_WITH_STREAM(Images, stream
@@ -95,19 +159,7 @@ void RemoteResourceCacheProxy::recordNativeImageUse(NativeImage& image, const De
             << " ShareableBitmap could not be created; bailing.");
         return;
     }
-    m_nativeImages.add(identifier);
-    // Set itself as an observer to NativeImage, so releaseNativeImage()
-    // gets called when NativeImage is being deleleted.
-    image.addObserver(m_nativeImageResourceObserverWeakFactory.createWeakPtr(static_cast<RenderingResourceObserver&>(*this)).releaseNonNull());
-
-    handle->takeOwnershipOfMemory(MemoryLedger::Graphics);
-
-    // Replace the contents of the original NativeImage to save memory.
-    if (newBackend)
-        image.replaceBackend(makeUniqueRefFromNonNullUniquePtr(WTFMove(newBackend)));
-
-    // Tell the GPU process to cache this resource.
-    m_remoteRenderingBackendProxy->cacheNativeImage(WTFMove(*handle), identifier);
+    m_remoteRenderingBackendProxy->cacheNativeImage(WTFMove(*handle), image.renderingResourceIdentifier());
 }
 
 void RemoteResourceCacheProxy::recordFontUse(Font& font)
@@ -164,11 +216,34 @@ RemoteDisplayListIdentifier RemoteResourceCacheProxy::recordDisplayListUse(const
     return identifier;
 }
 
-void RemoteResourceCacheProxy::willDestroyNativeImage(RenderingResourceIdentifier identifier)
+void RemoteResourceCacheProxy::willDestroyNativeImage(const NativeImage& image)
 {
-    bool removed = m_nativeImages.remove(identifier);
-    RELEASE_ASSERT(removed);
-    m_remoteRenderingBackendProxy->releaseNativeImage(identifier);
+    auto entry = m_nativeImages.takeOptional(&image);
+    RELEASE_ASSERT(entry);
+    if (!entry->existsInRemote)
+        return;
+    m_remoteRenderingBackendProxy->releaseNativeImage(image.renderingResourceIdentifier());
+}
+
+void RemoteResourceCacheProxy::willDestroyRemoteNativeImageProxy(const RemoteNativeImageProxy& image)
+{
+    willDestroyNativeImage(image);
+}
+
+PlatformImagePtr RemoteResourceCacheProxy::platformImage(const RemoteNativeImageProxy& image)
+{
+    auto it = m_nativeImages.find(&image);
+    RELEASE_ASSERT(it != m_nativeImages.end());
+    auto& entry = it->value;
+    if (!entry.existsInRemote)
+        return nullptr;
+    if (!entry.bitmap) {
+        auto bitmap = m_remoteRenderingBackendProxy->nativeImageBitmap(image);
+        if (!bitmap)
+            return nullptr;
+        entry.bitmap = WTFMove(bitmap);
+    }
+    return RefPtr { entry.bitmap }->createPlatformImage();
 }
 
 void RemoteResourceCacheProxy::willDestroyGradient(const Gradient& gradient)
@@ -271,6 +346,19 @@ void RemoteResourceCacheProxy::releaseMemory()
     releaseNativeImages();
     releaseFonts();
     releaseFontCustomPlatformDatas();
+}
+
+void RemoteResourceCacheProxy::disconnect()
+{
+    m_resourceObserverWeakFactory.revokeAll();
+    m_filters.clear();
+    m_gradients.clear();
+    m_displayLists.clear();
+    releaseFonts();
+    releaseFontCustomPlatformDatas();
+
+    for (auto& value : m_nativeImages.values())
+        value.existsInRemote = false;
 }
 
 } // namespace WebKit

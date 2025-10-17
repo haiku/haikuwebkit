@@ -189,17 +189,18 @@ void WindowProxy::setDOMWindow(DOMWindow* newDOMWindow)
 
         windowProxy->setWindow(*newDOMWindow);
 
-        ScriptController* scriptController = nullptr;
+        if (RefPtr localFrame = dynamicDowncast<LocalFrame>(m_frame.get())) {
+            CheckedRef scriptController = localFrame->script();
+
+            // ScriptController's m_cacheableBindingRootObject persists between page navigations
+            // so needs to know about the new JSDOMWindow.
+            if (RefPtr cacheableBindingRootObject = scriptController->existingCacheableBindingRootObject())
+                cacheableBindingRootObject->updateGlobalObject(windowProxy->window());
+
+            windowProxy->window()->setConsoleClient(localFrame->console());
+        }
+
         RefPtr page = m_frame->page();
-        if (auto* localFrame = dynamicDowncast<LocalFrame>(*m_frame))
-            scriptController = &localFrame->script();
-
-        // ScriptController's m_cacheableBindingRootObject persists between page navigations
-        // so needs to know about the new JSDOMWindow.
-        if (RefPtr cacheableBindingRootObject = scriptController ? scriptController->existingCacheableBindingRootObject() : nullptr)
-            cacheableBindingRootObject->updateGlobalObject(windowProxy->window());
-
-        windowProxy->window()->setConsoleClient(m_frame->console());
         windowProxy->attachDebugger(page ? page->debugger() : nullptr);
         if (page)
             windowProxy->window()->setProfileGroup(page->group().identifier());

@@ -160,6 +160,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-action-table-none-test_touch.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-action-verification.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-adjustment_click_target.html
+/LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-propagates-when-target-is-video_touch.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointermove_after_pointerover_target_removed.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerup_after_pointerdown_target_removed.html
 /LayoutTests/imported/w3c/web-platform-tests/pointerevents/pointerup_button_value_matches_corresponding_pointerdown.html

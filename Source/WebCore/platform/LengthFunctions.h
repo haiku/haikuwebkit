@@ -23,25 +23,19 @@
 
 #pragma once
 
-#include <WebCore/LayoutPoint.h>
 #include <WebCore/LayoutUnit.h>
 #include <WebCore/Length.h>
 
 namespace WebCore {
 
 class FloatSize;
-class FloatPoint;
 class LayoutSize;
 
 struct Length;
-struct LengthPoint;
 
 int intValueForLength(const Length&, LayoutUnit maximumValue, float zoom);
 WEBCORE_EXPORT float floatValueForLength(const Length&, float maximumValue, float zoom);
 WEBCORE_EXPORT LayoutUnit valueForLength(const Length&, LayoutUnit maximumValue, float zoom);
-
-LayoutPoint pointForLengthPoint(const LengthPoint&, const LayoutSize& maximumValue, float zoom);
-FloatPoint floatPointForLengthPoint(const LengthPoint&, const FloatSize& maximumValue, float zoom);
 
 template<typename ReturnType, typename MaximumType>
 ReturnType minimumValueForLengthWithLazyMaximum(const Length& length, NOESCAPE const Invocable<MaximumType()> auto& lazyMaximumValueFunctor, float zoom)

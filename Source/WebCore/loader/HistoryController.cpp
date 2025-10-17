@@ -259,7 +259,7 @@ void HistoryController::restoreDocumentState()
     case FrameLoadType::ReloadFromOrigin:
     case FrameLoadType::ReloadExpiredOnly:
     case FrameLoadType::Same:
-    case FrameLoadType::Replace:
+    case FrameLoadType::MultipartReplace:
         // Not restoring the document state.
         return;
     case FrameLoadType::Back:
@@ -267,6 +267,7 @@ void HistoryController::restoreDocumentState()
     case FrameLoadType::IndexedBackForward:
     case FrameLoadType::RedirectWithLockedBackForwardList:
     case FrameLoadType::Standard:
+    case FrameLoadType::NavigationAPIReplace:
         break;
     }
 
@@ -519,9 +520,9 @@ void HistoryController::updateForBackForwardNavigation()
     updateCurrentItem();
 }
 
-void HistoryController::updateForReload()
+void HistoryController::updateForReloadOrReplace()
 {
-    LOG(History, "HistoryController %p updateForReload: Updating History for reload in frame %p (main frame %d) %s", this, m_frame.ptr(), m_frame->isMainFrame(), m_frame->loader().documentLoader() ? m_frame->loader().documentLoader()->url().string().utf8().data() : "");
+    LOG(History, "HistoryController %p updateForReloadOrReplace: Updating History for reload or replace in frame %p (main frame %d) %s", this, m_frame.ptr(), m_frame->isMainFrame(), m_frame->loader().documentLoader() ? m_frame->loader().documentLoader()->url().string().utf8().data() : "");
 
     if (RefPtr currentItem = m_currentItem) {
         BackForwardCache::singleton().remove(*currentItem);
@@ -651,7 +652,7 @@ void HistoryController::updateForCommit()
 
     FrameLoadType type = frameLoader->loadType();
     if (isBackForwardLoadType(type)
-        || isReplaceLoadTypeWithProvisionalItem(type)
+        || isMultipartReplaceLoadTypeWithProvisionalItem(type)
         || (isReloadTypeWithProvisionalItem(type) && !frameLoader->provisionalDocumentLoader()->unreachableURL().isEmpty())) {
         // Once committed, we want to use current item for saving DocState, and
         // the provisional item for restoring state.
@@ -678,11 +679,11 @@ void HistoryController::updateForCommit()
     }
 }
 
-bool HistoryController::isReplaceLoadTypeWithProvisionalItem(FrameLoadType type)
+bool HistoryController::isMultipartReplaceLoadTypeWithProvisionalItem(FrameLoadType type)
 {
-    // Going back to an error page in a subframe can trigger a FrameLoadType::Replace
+    // Going back to an error page in a subframe can trigger a FrameLoadType::MultipartReplace
     // while m_provisionalItem is set, so we need to commit it.
-    return type == FrameLoadType::Replace && m_provisionalItem;
+    return type == FrameLoadType::MultipartReplace && m_provisionalItem;
 }
 
 bool HistoryController::isReloadTypeWithProvisionalItem(FrameLoadType type)

@@ -36,11 +36,6 @@
 namespace WebCore {
 namespace Style {
 
-WebCore::TransformOperations Transform::resolvedCalculatedValues(const FloatSize& size) const
-{
-    return m_value.resolvedCalculatedValues(size);
-}
-
 // MARK: - Conversion
 
 auto CSSValueConversion<Transform>::operator()(BuilderState& state, const CSSValue& value) -> Transform
@@ -90,10 +85,10 @@ auto Blending<Transform>::blend(const Transform& from, const Transform& to, cons
 
 // MARK: - Platform
 
-auto ToPlatform<Transform>::operator()(const Transform& value) -> TransformOperations
+auto ToPlatform<Transform>::operator()(const Transform& value, const FloatSize& size) -> TransformOperations
 {
-    return TransformOperations { WTF::map(value, [](auto& transformFunction) {
-        return Style::toPlatform(transformFunction);
+    return TransformOperations { WTF::map(value, [&](auto& transformFunction) {
+        return Style::toPlatform(transformFunction, size);
     }) };
 }
 

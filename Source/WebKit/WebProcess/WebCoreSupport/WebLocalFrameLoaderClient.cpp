@@ -83,6 +83,7 @@
 #include <WebCore/MIMETypeRegistry.h>
 #include <WebCore/MediaDocument.h>
 #include <WebCore/MouseEvent.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/Page.h>
 #include <WebCore/PluginData.h>
@@ -506,6 +507,7 @@ void WebLocalFrameLoaderClient::didSameDocumentNavigationForFrameViaJS(SameDocum
         WebCore::LockBackForwardList::No,
         { }, /* clientRedirectSourceForHistory */
         localFrame->effectiveSandboxFlags(),
+        localFrame->effectiveReferrerPolicy(),
         std::nullopt, /* ownerPermissionsPolicy */
         std::nullopt, /* privateClickMeasurement */
         { }, /* advancedPrivacyProtections */
@@ -1014,6 +1016,7 @@ void WebLocalFrameLoaderClient::dispatchDecidePolicyForNewWindowAction(const Nav
         WebCore::LockBackForwardList::No,
         { }, /* clientRedirectSourceForHistory */
         localFrame->effectiveSandboxFlags(),
+        localFrame->effectiveReferrerPolicy(),
         std::nullopt, /* ownerPermissionsPolicy */
         navigationAction.privateClickMeasurement(),
         { }, /* advancedPrivacyProtections */

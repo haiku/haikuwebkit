@@ -83,6 +83,7 @@ private:
 
     // FIXME: Implement this to be less conservative.
     bool currentFrameKnownToBeOpaque() const override { return false; }
+    bool currentFrameIsComplete() const override { return m_hasPage; }
 
     void dump(WTF::TextStream&) const override;
 

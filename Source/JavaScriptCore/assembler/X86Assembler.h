@@ -3776,6 +3776,13 @@ public:
         m_formatter.immediate8(whichWord);
     }
 
+    void pslld_i8r(uint8_t imm8, XMMRegisterID dst)
+    {
+        m_formatter.prefix(PRE_SSE_66);
+        m_formatter.twoByteOp8(OP2_PSLLD_UdqIb, GROUP14_OP_PSLLD, (RegisterID)dst);
+        m_formatter.immediate8(imm8);
+    }
+
     void psllq_i8r(int imm, XMMRegisterID dst)
     {
         m_formatter.prefix(PRE_SSE_66);

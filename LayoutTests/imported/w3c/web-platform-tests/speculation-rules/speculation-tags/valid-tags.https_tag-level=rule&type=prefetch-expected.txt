@@ -1,4 +1,10 @@
 
-Harness Error (FAIL), message = Error: assert_implements: <script type="speculationrules"> must be supported undefined
-
+FAIL Sec-Speculation-Tags [rule-based]: string tag assert_equals: expected "\"my-rules\"" but got "my-rules"
+FAIL Sec-Speculation-Tags [rule-based]: 'null' string tag assert_equals: expected "\"null\"" but got "null"
+FAIL Sec-Speculation-Tags [rule-based]: empty string tag assert_equals: expected "\"\"" but got ""
+FAIL Sec-Speculation-Tags [rule-based]: single space tag assert_equals: expected "\" \"" but got ""
+FAIL Sec-Speculation-Tags [rule-based]: double quote tag assert_equals: expected "\"\\\"\"" but got "\""
+FAIL Sec-Speculation-Tags [rule-based]: double quotes tag assert_equals: expected "\"\\\"\\\"\\\"\"" but got "\"\"\""
+FAIL Sec-Speculation-Tags [rule-based]: backslash tag assert_equals: expected "\"\\\\\"" but got "\\"
+FAIL Sec-Speculation-Tags [rule-based]: backslashes tag assert_equals: expected "\"\\\\\\\\\\\\\"" but got "\\\\\\"
 

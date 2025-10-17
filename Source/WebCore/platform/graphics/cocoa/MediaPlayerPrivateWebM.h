@@ -29,6 +29,7 @@
 #if ENABLE(COCOA_WEBM_PLAYER)
 
 #include <WebCore/AudioVideoRenderer.h>
+#include <WebCore/HTMLMediaElementIdentifier.h>
 #include <WebCore/MediaPlayerPrivate.h>
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/SourceBufferParserWebM.h>
@@ -282,6 +283,11 @@ private:
     void setAllTracksForReenqueuing();
     void setTrackForReenqueuing(TrackID);
 
+    // Remote layer support
+    WebCore::HostingContext hostingContext() const final;
+    void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRightAnnotated&&) final;
+    std::optional<MediaPlayerIdentifier> identifier() const final { return m_playerIdentifier; }
+
     const Logger& logger() const final { return m_logger.get(); }
     Ref<const Logger> protectedLogger() const { return logger(); }
     ASCIILiteral logClassName() const final { return "MediaPlayerPrivateWebM"_s; }
@@ -296,12 +302,13 @@ private:
     void maybeFinishLoading();
     void readyToProcessData();
 
+    static Ref<AudioVideoRenderer> createRenderer(LoggerHelper&, HTMLMediaElementIdentifier, MediaPlayerIdentifier);
+
     URL m_assetURL;
     MediaPlayer::Preload m_preload { MediaPlayer::Preload::Auto };
     ThreadSafeWeakPtr<MediaPlayer> m_player;
-    RefPtr<VideoFrameCV> m_lastVideoFrame;
+    RefPtr<VideoFrame> m_lastVideoFrame;
     RefPtr<NativeImage> m_lastImage;
-    std::unique_ptr<PixelBufferConformerCV> m_rgbConformer;
     RefPtr<WebMResourceClient> m_resourceClient;
     bool m_needsResourceClient { true };
 
@@ -376,6 +383,7 @@ private:
     String m_defaultSpatialTrackingLabel;
     String m_spatialTrackingLabel;
 #endif
+    const MediaPlayerIdentifier m_playerIdentifier;
     const Ref<AudioVideoRenderer> m_renderer;
 };
 

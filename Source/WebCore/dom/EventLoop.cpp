@@ -560,7 +560,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(EventLoopFunctionMicrotaskDispatcher);
 
 void EventLoopTaskGroup::queueMicrotask(EventLoop::TaskFunction&& function)
 {
-    queueMicrotask(JSC::QueuedTask { EventLoopFunctionMicrotaskDispatcher::create(*this, WTFMove(function)) });
+    queueMicrotask(JSC::QueuedTask { EventLoopFunctionMicrotaskDispatcher::create(*this, WTFMove(function)), nullptr });
 }
 
 void EventLoopTaskGroup::queueMicrotask(JSC::QueuedTask&& task)

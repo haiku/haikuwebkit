@@ -1,6 +1,6 @@
 
 
-FAIL failed setting of document.domain assert_throws_dom: function "function() { document.domain = SUFFIX_HOST; }" did not throw
-FAIL same-origin-domain iframe null is not an object (evaluating 'iframe.contentDocument.domain')
+PASS failed setting of document.domain
+PASS same-origin-domain iframe
 PASS failed setting of document.domain for documents without browsing context
 

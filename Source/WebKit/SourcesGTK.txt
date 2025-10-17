@@ -53,6 +53,7 @@ NetworkProcess/soup/WebSocketTaskSoup.cpp
 NetworkProcess/webrtc/LibWebRTCSocketClient.cpp
 NetworkProcess/webrtc/NetworkRTCMonitor.cpp
 NetworkProcess/webrtc/NetworkRTCProvider.cpp
+NetworkProcess/webrtc/NetworkRTCSharedMonitor.cpp
 
 Platform/IPC/glib/ConnectionGLib.cpp
 

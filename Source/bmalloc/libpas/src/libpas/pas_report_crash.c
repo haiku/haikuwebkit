@@ -27,7 +27,6 @@
 
 #if LIBPAS_ENABLED
 
-#include "pas_ptr_hash_set.h"
 #include "pas_ptr_hash_map.h"
 #include "pas_root.h"
 
@@ -84,66 +83,76 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
 
     memory_reader_t* reader = setup_memory_reader(crm_reader);
 
-    pas_root* read_pas_dead_root = NULL;
-    pas_ptr_hash_map* hash_map = NULL;
-    pas_ptr_hash_map_entry* hash_map_entry = NULL;
-    pas_pgm_storage* pgm_metadata = NULL;
+    pas_root read_pas_dead_root;
+    pas_ptr_hash_map hash_map;
+    pas_ptr_hash_map_entry hash_map_entry;
+    pas_pgm_storage pgm_metadata;
+    bool pgm_has_been_used;
 
     size_t table_size = 0;
 
-    kern_return_t kr = reader(task, pas_dead_root, sizeof(pas_root), (void**)&read_pas_dead_root);
+    pas_root* temp_root = NULL;
+    kern_return_t kr = reader(task, pas_dead_root, sizeof(pas_root), (void**)&temp_root);
     if (kr != KERN_SUCCESS)
         return KERN_FAILURE;
-    if (!read_pas_dead_root)
+    if (!temp_root)
         return KERN_FAILURE;
+    read_pas_dead_root = *temp_root;
 
-    unsigned dead_root_crash_report_version = read_pas_dead_root->pas_crash_report_version;
+    unsigned dead_root_crash_report_version = read_pas_dead_root.pas_crash_report_version;
     if (version != dead_root_crash_report_version)
         return KERN_FAILURE;
 
-    if (!read_pas_dead_root->probabilistic_guard_malloc_has_been_used)
+    if (!read_pas_dead_root.probabilistic_guard_malloc_has_been_used)
         return KERN_FAILURE;
 
     bool* temp_pgm_has_been_used_ptr = NULL;
-    kr = reader(task, (vm_address_t)read_pas_dead_root->probabilistic_guard_malloc_has_been_used, sizeof(bool), (void**)&temp_pgm_has_been_used_ptr);
+    kr = reader(task, (vm_address_t)read_pas_dead_root.probabilistic_guard_malloc_has_been_used, sizeof(bool), (void**)&temp_pgm_has_been_used_ptr);
     if (kr != KERN_SUCCESS)
         return KERN_FAILURE;
     if (!temp_pgm_has_been_used_ptr)
         return KERN_FAILURE;
-    report->pgm_has_been_used = *temp_pgm_has_been_used_ptr;
+    pgm_has_been_used = *temp_pgm_has_been_used_ptr;
+    report->pgm_has_been_used = pgm_has_been_used;
 
-    kr = reader(task, (vm_address_t)read_pas_dead_root->pas_pgm_hash_map_instance, sizeof(pas_ptr_hash_map), (void**)&hash_map);
+    pas_ptr_hash_map* temp_hash_map = NULL;
+    kr = reader(task, (vm_address_t)read_pas_dead_root.pas_pgm_hash_map_instance, sizeof(pas_ptr_hash_map), (void**)&temp_hash_map);
     if (kr != KERN_SUCCESS)
         return KERN_FAILURE;
-    if (!hash_map)
+    if (!temp_hash_map)
         return KERN_FAILURE;
+    hash_map = *temp_hash_map;
 
-    table_size = hash_map->table_size;
+    table_size = hash_map.table_size;
 
     /* Check if hash_map has a valid table before iterating */
-    if (!hash_map->table)
+    if (!hash_map.table)
         return KERN_FAILURE;
 
     for (size_t i = 0; i < table_size; i++) {
-        kr = reader(task, (vm_address_t)(hash_map->table + i), sizeof(pas_ptr_hash_map_entry), (void**)&hash_map_entry);
+        pas_ptr_hash_map_entry* temp_entry = NULL;
+        kr = reader(task, (vm_address_t)(hash_map.table + i), sizeof(pas_ptr_hash_map_entry), (void**)&temp_entry);
         if (kr != KERN_SUCCESS)
             return KERN_FAILURE;
-        if (!hash_map_entry)
+        if (!temp_entry)
             return KERN_FAILURE;
+        hash_map_entry = *temp_entry;
 
         /* Skip entry if not there */
-        if (hash_map_entry->key == (void*)UINTPTR_MAX)
+        if (hash_map_entry.key == (void*)UINTPTR_MAX)
             continue;
 
-        kr = reader(task, (vm_address_t)hash_map_entry->value, sizeof(pas_pgm_storage), (void**)&pgm_metadata);
+        pas_pgm_storage* temp_metadata = NULL;
+        kr = reader(task, (vm_address_t)hash_map_entry.value, sizeof(pas_pgm_storage), (void**)&temp_metadata);
         if (kr != KERN_SUCCESS)
             return KERN_FAILURE;
-        if (!pgm_metadata)
+        if (!temp_metadata)
             return KERN_FAILURE;
+        pgm_metadata = *temp_metadata;
 
         pas_backtrace_metadata* resolved_alloc_backtrace = NULL;
-        if (pgm_metadata->alloc_backtrace) {
-            kr = reader(task, (vm_address_t)pgm_metadata->alloc_backtrace, sizeof(pas_backtrace_metadata), (void**)&resolved_alloc_backtrace);
+        if (pgm_metadata.alloc_backtrace) {
+            kr = reader(task, (vm_address_t)pgm_metadata.alloc_backtrace, sizeof(pas_backtrace_metadata), (void**)&resolved_alloc_backtrace);
             if (kr != KERN_SUCCESS)
                 return KERN_FAILURE;
             if (!resolved_alloc_backtrace)
@@ -153,8 +162,8 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
         }
 
         pas_backtrace_metadata* resolved_dealloc_backtrace = NULL;
-        if (pgm_metadata->dealloc_backtrace) {
-            kr = reader(task, (vm_address_t)pgm_metadata->dealloc_backtrace, sizeof(pas_backtrace_metadata), (void**)&resolved_dealloc_backtrace);
+        if (pgm_metadata.dealloc_backtrace) {
+            kr = reader(task, (vm_address_t)pgm_metadata.dealloc_backtrace, sizeof(pas_backtrace_metadata), (void**)&resolved_dealloc_backtrace);
             if (kr != KERN_SUCCESS)
                 return KERN_FAILURE;
             if (!resolved_dealloc_backtrace)
@@ -163,13 +172,13 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
                 return KERN_FAILURE;
         }
 
-        addr64_t key = (addr64_t)hash_map_entry->key;
-        addr64_t lower_guard = (addr64_t)pgm_metadata->start_of_allocated_pages;
-        size_t lower_guard_size = pgm_metadata->start_of_data_pages - pgm_metadata->start_of_allocated_pages;
-        addr64_t upper_guard = (addr64_t)(pgm_metadata->start_of_data_pages + pgm_metadata->size_of_data_pages);
-        size_t upper_guard_size = pgm_metadata->size_of_allocated_pages - lower_guard_size - pgm_metadata->size_of_data_pages;
+        addr64_t key = (addr64_t)hash_map_entry.key;
+        addr64_t lower_guard = (addr64_t)pgm_metadata.start_of_allocated_pages;
+        size_t lower_guard_size = pgm_metadata.start_of_data_pages - pgm_metadata.start_of_allocated_pages;
+        addr64_t upper_guard = (addr64_t)(pgm_metadata.start_of_data_pages + pgm_metadata.size_of_data_pages);
+        size_t upper_guard_size = pgm_metadata.size_of_allocated_pages - lower_guard_size - pgm_metadata.size_of_data_pages;
 
-        if (pgm_metadata->right_align) {
+        if (pgm_metadata.right_align) {
             /* [ lower_guard ][ remaining ][ allocated ][ upper_guard ] */
             report->alignment = "address right-aligned";
 
@@ -178,22 +187,21 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
             addr64_t top = (addr64_t)(lower_guard + lower_guard_size);
 
             if (pas_fault_address_is_in_bounds(fault_address, lower_guard, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "long-range UAF" : "long-range OOB", "low", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
-
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "long-range UAF" : "long-range OOB", "low", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
 
             /* Right-aligned "UAF + OOB" checking towards lower guard page */
-            bottom = (addr64_t)pgm_metadata->start_of_data_pages;
+            bottom = (addr64_t)pgm_metadata.start_of_data_pages;
             top = (addr64_t)key;
 
             if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "UAF" : "OOB", "low", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "UAF" : "OOB", "low", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
 
             /* Right-aligned "Upper PGM OOB" checking */
             bottom = (addr64_t)upper_guard;
             top = (addr64_t)(upper_guard + upper_guard_size);
 
             if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "UAF" : "OOB", "high", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "UAF" : "OOB", "high", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
 
         } else {
             /* [ lower_guard ][ allocated ][ remaining ][ upper_guard ] */
@@ -204,30 +212,29 @@ kern_return_t pas_report_crash_extract_pgm_failure(vm_address_t fault_address, m
             addr64_t top = key;
 
             if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "UAF" : "OOB", "high", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "UAF" : "OOB", "high", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
 
             /* Left-aligned "UAF + OOB" checking towards upper guard page */
-            bottom = (addr64_t)(key + pgm_metadata->allocation_size_requested);
+            bottom = (addr64_t)(key + pgm_metadata.allocation_size_requested);
             top = (addr64_t)upper_guard;
 
             if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "UAF" : "OOB", "low", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "UAF" : "OOB", "low", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
 
             /* Left-aligned "Upper PGM OOB" checking */
             bottom = upper_guard;
             top = upper_guard + upper_guard_size;
 
             if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-                return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "long-range UAF" : "long-range OOB", "low", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
-
+                return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "long-range UAF" : "long-range OOB", "low", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
         }
 
         /* Left-aligned "UAF" checking calculations are same as right-aligned checking "UAF" check */
         addr64_t bottom = (addr64_t)key;
-        addr64_t top = (addr64_t)(key + pgm_metadata->allocation_size_requested);
+        addr64_t top = (addr64_t)(key + pgm_metadata.allocation_size_requested);
 
         if (pas_fault_address_is_in_bounds(fault_address, bottom, top))
-            return pas_update_report_crash_fields(report, pgm_metadata->free_status ? "UAF" : "undefined", "low", fault_address, pgm_metadata->allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
+            return pas_update_report_crash_fields(report, pgm_metadata.free_status ? "UAF" : "undefined", "low", fault_address, pgm_metadata.allocation_size_requested, resolved_alloc_backtrace, resolved_dealloc_backtrace);
     }
     return KERN_NOT_FOUND;
 }

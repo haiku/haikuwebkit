@@ -33,11 +33,11 @@ namespace IPC {
 
 SocketPair createPlatformConnection(int socketType, unsigned options)
 {
-    int sockets[2];
+    std::array<int, 2> sockets;
 
 #if OS(LINUX)
     if ((options & SetCloexecOnServer) || (options & SetCloexecOnClient)) {
-        RELEASE_ASSERT(socketpair(AF_UNIX, socketType | SOCK_CLOEXEC, 0, sockets) != -1);
+        RELEASE_ASSERT(socketpair(AF_UNIX, socketType | SOCK_CLOEXEC, 0, sockets.data()) != -1);
 
         if (!(options & SetCloexecOnServer))
             RELEASE_ASSERT(unsetCloseOnExec(sockets[1]));
@@ -48,7 +48,7 @@ SocketPair createPlatformConnection(int socketType, unsigned options)
     }
 #endif
 
-    RELEASE_ASSERT(socketpair(AF_UNIX, socketType, 0, sockets) != -1);
+    RELEASE_ASSERT(socketpair(AF_UNIX, socketType, 0, sockets.data()) != -1);
 
     if (options & SetCloexecOnServer)
         RELEASE_ASSERT(setCloseOnExec(sockets[1]));

@@ -65,7 +65,7 @@ public:
 
     void dumpBackForwardListsForAllPages(StringBuilder&);
 
-    void done(bool forceRepaint);
+    void done();
     void setAudioResult(WKDataRef audioData) { m_audioResult = audioData; }
     void setPixelResult(WKImageRef image) { m_pixelResult = image; m_pixelResultIsPending = false; }
     void setPixelResultIsPending(bool isPending) { m_pixelResultIsPending = isPending; }
@@ -126,6 +126,8 @@ public:
 
     bool isAllowedHost(WKStringRef);
 
+    bool isPrinting() const;
+
     unsigned imageCountInGeneralPasteboard() const;
 
     void setAllowsAnySSLCertificate(bool);
@@ -150,6 +152,8 @@ public:
     WKRetainPtr<WKStringRef> lastRemovedBackgroundFetchIdentifier() const;
     WKRetainPtr<WKStringRef> lastUpdatedBackgroundFetchIdentifier() const;
     WKRetainPtr<WKStringRef> backgroundFetchState(WKStringRef);
+
+    bool shouldForceRepaint() const;
 
 private:
     InjectedBundle() = default;
@@ -261,8 +265,4 @@ template<typename T> void postSynchronousPageMessage(const char* name, const WKR
         WKBundlePagePostSynchronousMessageForTesting(page, toWK(name).get(), value.get(), nullptr);
     }
 }
-
-void postMessageWithAsyncReply(JSContextRef, const char* messageName, JSValueRef callback);
-void postMessageWithAsyncReply(JSContextRef, const char* messageName, WKRetainPtr<WKTypeRef> value, JSValueRef callback);
-
 } // namespace WTR

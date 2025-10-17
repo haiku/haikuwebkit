@@ -267,6 +267,11 @@ NSError *ResourceError::nsError() const
     return m_platformError.get();
 }
 
+RetainPtr<NSError> ResourceError::protectedNSError() const
+{
+    return nsError();
+}
+
 NSError *ResourceError::nsError(NSError *underlyingError) const
 {
     if (isNull()) {
@@ -304,10 +309,11 @@ ResourceError::operator CFErrorRef() const
 
 bool ResourceError::blockedKnownTracker() const
 {
-    if (id blockedTrackerFailure = nsError().userInfo[@"_NSURLErrorBlockedTrackerFailureKey"])
+    RetainPtr error = nsError();
+    if (id blockedTrackerFailure = error.get().userInfo[@"_NSURLErrorBlockedTrackerFailureKey"])
         return [blockedTrackerFailure boolValue];
     // This loop can be removed when the CFNetwork loader is no longer in use
-    for (NSError *underlyingError in nsError().underlyingErrors) {
+    for (NSError *underlyingError in error.get().underlyingErrors) {
         if ([underlyingError.userInfo[@"_NSURLErrorBlockedTrackerFailureKey"] boolValue])
             return true;
     }
@@ -318,14 +324,15 @@ String ResourceError::blockedTrackerHostName() const
 {
     ASSERT(blockedKnownTracker());
 
-    if (id failingPath = nsError().userInfo[@"_NSURLErrorNWPathKey"]) {
+    RetainPtr error = nsError();
+    if (id failingPath = error.get().userInfo[@"_NSURLErrorNWPathKey"]) {
         auto failingEndpoint = adoptNS(nw_path_copy_effective_remote_endpoint(failingPath));
         if (auto* hostName = nw_endpoint_get_known_tracker_name(failingEndpoint.get()))
             return String::fromUTF8(hostName);
         return { };
     }
     // This loop can be removed when the CFNetwork loader is no longer in use
-    for (NSError *underlyingError in nsError().underlyingErrors) {
+    for (NSError *underlyingError in error.get().underlyingErrors) {
         if (id failingPath = underlyingError.userInfo[@"_NSURLErrorNWPathKey"]) {
             auto failingEndpoint = adoptNS(nw_path_copy_effective_remote_endpoint(failingPath));
             if (auto* hostName = nw_endpoint_get_known_tracker_name(failingEndpoint.get()))
@@ -340,11 +347,12 @@ String ResourceError::blockedTrackerHostName() const
 #if USE(NSURL_ERROR_FAILING_URL_STRING_KEY)
 bool ResourceError::hasMatchingFailingURLKeys() const
 {
-    if (RetainPtr<id> nsErrorFailingURL = [nsError().userInfo objectForKey:NSURLErrorFailingURLErrorKey]) {
+    RetainPtr error = nsError();
+    if (RetainPtr<id> nsErrorFailingURL = [error.get().userInfo objectForKey:NSURLErrorFailingURLErrorKey]) {
         RetainPtr failingURL = dynamic_objc_cast<NSURL>(nsErrorFailingURL.get());
         if (!failingURL)
             return false;
-        if (RetainPtr<id> nsErrorFailingURLString = [nsError().userInfo objectForKey:NSURLErrorFailingURLStringErrorKey]) {
+        if (RetainPtr<id> nsErrorFailingURLString = [error.get().userInfo objectForKey:NSURLErrorFailingURLStringErrorKey]) {
             RetainPtr failingURLString = dynamic_objc_cast<NSString>(nsErrorFailingURLString.get());
             if (!failingURLString)
                 return false;

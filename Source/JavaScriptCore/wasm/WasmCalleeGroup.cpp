@@ -192,8 +192,7 @@ RefPtr<BBQCallee> CalleeGroup::tryGetBBQCalleeForLoopOSRConcurrently(VM& vm, Fun
 
 void CalleeGroup::releaseBBQCallee(const AbstractLocker& locker, FunctionCodeIndex functionIndex)
 {
-    if (!Options::freeRetiredWasmCode())
-        return;
+    ASSERT(Options::freeRetiredWasmCode());
 
     // It's possible there are still a IPIntCallee around even when the BBQCallee
     // is destroyed. Since this function was clearly hot enough to get to OMG we should
@@ -231,7 +230,7 @@ RefPtr<OMGCallee> CalleeGroup::tryGetOMGCalleeConcurrently(FunctionCodeIndex fun
 #endif
 
 #if ENABLE(WEBASSEMBLY_OMGJIT) || ENABLE(WEBASSEMBLY_BBQJIT)
-void CalleeGroup::startInstallingCallee(const AbstractLocker& locker, FunctionCodeIndex functionIndex, OptimizingJITCallee& callee)
+bool CalleeGroup::startInstallingCallee(const AbstractLocker& locker, FunctionCodeIndex functionIndex, OptimizingJITCallee& callee)
 {
     auto* slot = optimizedCalleesTuple(locker, functionIndex);
     if (!slot) [[unlikely]] {
@@ -240,20 +239,27 @@ void CalleeGroup::startInstallingCallee(const AbstractLocker& locker, FunctionCo
     }
     ASSERT(slot);
 
-    if (callee.compilationMode() == CompilationMode::OMGMode)
-        m_currentlyInstallingOptimizedCallees.m_omgCallee = Ref { static_cast<OMGCallee&>(callee) };
-    else
+    if (callee.compilationMode() == CompilationMode::OMGMode) {
+        // Why does it happen? It is possible that some code is still running IPIntCallee, and OMGCallee is installed and BBQCallee gets retired.
+        // But since IPIntCallee can only tier up to BBQCallee, it may spin up BBQCallee again.
+        // And because of BBQCallee's new TierUpCounter, we may start introducing OMGCallee again.
+        // For now, we make this defensive: making installation failed when OMGCallee is already installed.
+        if (slot->m_omgCallee) [[unlikely]]
+            return false;
+        m_currentlyInstallingOptimizedCallees.m_omgCallee = Ref { uncheckedDowncast<OMGCallee>(callee) };
+    } else
         m_currentlyInstallingOptimizedCallees.m_omgCallee = slot->m_omgCallee;
 
     {
         Locker replacerLocker { m_currentlyInstallingOptimizedCallees.m_bbqCalleeLock };
         Locker locker { slot->m_bbqCalleeLock };
         if (callee.compilationMode() == CompilationMode::BBQMode)
-            m_currentlyInstallingOptimizedCallees.m_bbqCallee = Ref { static_cast<BBQCallee&>(callee) };
+            m_currentlyInstallingOptimizedCallees.m_bbqCallee = Ref { uncheckedDowncast<BBQCallee>(callee) };
         else
             m_currentlyInstallingOptimizedCallees.m_bbqCallee = slot->m_bbqCallee;
     }
     m_currentlyInstallingOptimizedCalleesIndex = functionIndex;
+    return true;
 }
 
 void CalleeGroup::finalizeInstallingCallee(const AbstractLocker&, FunctionCodeIndex functionIndex)
@@ -270,14 +276,15 @@ void CalleeGroup::finalizeInstallingCallee(const AbstractLocker&, FunctionCodeIn
     m_currentlyInstallingOptimizedCalleesIndex = { };
 }
 
-void CalleeGroup::installOptimizedCallee(const AbstractLocker& locker, const ModuleInformation& info, FunctionCodeIndex functionIndex, Ref<OptimizingJITCallee>&& callee, const FixedBitVector& outgoingJITDirectCallees)
+bool CalleeGroup::installOptimizedCallee(const AbstractLocker& locker, const ModuleInformation& info, FunctionCodeIndex functionIndex, Ref<OptimizingJITCallee>&& callee, const FixedBitVector& outgoingJITDirectCallees)
 {
     // We want to make sure we publish our callee at the same time as we link our callsites. This enables us to ensure we
     // always call the fastest code. Any function linked after us will see our new code and the new callsites, which they
     // will update. It's also ok if they publish their code before we reset the instruction caches because after we release
     // the lock our code is ready to be published too.
 
-    startInstallingCallee(locker, functionIndex, callee.get());
+    if (!startInstallingCallee(locker, functionIndex, callee.get()))
+        return false;
     reportCallees(locker, callee.ptr(), outgoingJITDirectCallees);
 
     for (auto& call : callee->wasmToWasmCallsites()) {
@@ -303,6 +310,7 @@ void CalleeGroup::installOptimizedCallee(const AbstractLocker& locker, const Mod
     }
     WTF::storeStoreFence();
     finalizeInstallingCallee(locker, functionIndex);
+    return true;
 }
 
 void CalleeGroup::updateCallsitesToCallUs(const AbstractLocker& locker, CodeLocationLabel<WasmEntryPtrTag> entrypoint, FunctionCodeIndex functionIndex)

@@ -21,7 +21,6 @@
 
 #include "RenderSVGResourceGradient.h"
 #include "RenderView.h"
-#include "SVGRenderStyle.h"
 #include "SVGRenderSupport.h"
 
 namespace WebCore {
@@ -82,9 +81,9 @@ public:
     {
         // When rendering the mask for a RenderSVGResourceClipper, always use the initial fill paint server.
         if (targetRenderer.view().frameView().paintBehavior().contains(PaintBehavior::RenderingSVGClipOrMask))
-            return op == Operation::Fill ? SVGRenderStyle::initialFillColor().resolvedColor() : SVGRenderStyle::initialStrokeColor().resolvedColor();
+            return op == Operation::Fill ? RenderStyle::initialFill().colorDisregardingType().resolvedColor() : RenderStyle::initialStroke().colorDisregardingType().resolvedColor();
 
-        auto& paint = op == Operation::Fill ? style.svgStyle().fill() : style.svgStyle().stroke();
+        auto& paint = op == Operation::Fill ? style.fill() : style.stroke();
         if (paint.isNone())
             return { };
 
@@ -124,13 +123,12 @@ public:
 private:
     inline void prepareFillOperation(const RenderLayerModelObject& renderer, const RenderStyle& style, const Color& fillColor) const
     {
-        Ref svgStyle = style.svgStyle();
         if (renderer.view().frameView().paintBehavior().contains(PaintBehavior::RenderingSVGClipOrMask)) {
             m_context.setAlpha(1);
-            m_context.setFillRule(svgStyle->clipRule());
+            m_context.setFillRule(style.clipRule());
         } else {
-            m_context.setAlpha(svgStyle->fillOpacity().value.value);
-            m_context.setFillRule(svgStyle->fillRule());
+            m_context.setAlpha(style.fillOpacity().value.value);
+            m_context.setFillRule(style.fillRule());
         }
 
         m_context.setFillColor(style.colorByApplyingColorFilter(fillColor));
@@ -138,7 +136,7 @@ private:
 
     inline void prepareStrokeOperation(const RenderLayerModelObject& renderer, const RenderStyle& style, const Color& strokeColor) const
     {
-        m_context.setAlpha(style.svgStyle().strokeOpacity().value.value);
+        m_context.setAlpha(style.strokeOpacity().value.value);
         m_context.setStrokeColor(style.colorByApplyingColorFilter(strokeColor));
         SVGRenderSupport::applyStrokeStyleToContext(m_context, style, renderer);
     }
@@ -146,10 +144,9 @@ private:
     template<Operation op>
     static inline Color resolveColorFromStyle(const RenderStyle& style)
     {
-        Ref svgStyle = style.svgStyle();
         if (op == Operation::Fill)
-            return resolveColorFromStyle(style, svgStyle->fill(), svgStyle->visitedLinkFill());
-        return resolveColorFromStyle(style, svgStyle->stroke(), svgStyle->visitedLinkStroke());
+            return resolveColorFromStyle(style, style.fill(), style.visitedLinkFill());
+        return resolveColorFromStyle(style, style.stroke(), style.visitedLinkStroke());
     }
 
     static inline Color resolveColorFromStyle(const RenderStyle& style, const Style::SVGPaint& paint, const Style::SVGPaint& visitedLinkPaint)
@@ -178,8 +175,8 @@ private:
             return true;
         if (!renderer.parent())
             return false;
-        Ref parentSVGStyle = renderer.parent()->style().svgStyle();
-        color = renderer.style().colorResolvingCurrentColor(op == Operation::Fill ? parentSVGStyle->fill().colorDisregardingType() : parentSVGStyle->stroke().colorDisregardingType());
+        auto& parentStyle = renderer.parent()->style();
+        color = renderer.style().colorResolvingCurrentColor(op == Operation::Fill ? parentStyle.fill().colorDisregardingType() : parentStyle.stroke().colorDisregardingType());
         return true;
     }
 

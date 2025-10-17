@@ -333,7 +333,6 @@ layout/formattingContexts/inline/InlineItemsBuilder.cpp
 layout/formattingContexts/inline/InlineItemsBuilder.h
 layout/formattingContexts/inline/InlineLevelBoxInlines.h
 layout/formattingContexts/inline/InlineLine.cpp
-layout/formattingContexts/inline/InlineLine.h
 layout/formattingContexts/inline/InlineLineBox.cpp
 layout/formattingContexts/inline/InlineLineBox.h
 layout/formattingContexts/inline/InlineLineBoxBuilder.cpp
@@ -477,8 +476,6 @@ platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
 platform/mock/DeviceOrientationClientMock.cpp
 platform/mock/MockRealtimeVideoSource.cpp
-platform/sql/SQLiteDatabase.cpp
-platform/sql/SQLiteStatementAutoResetScope.cpp
 platform/text/cocoa/LocalizedDateCache.mm
 rendering/AccessibilityRegionContext.cpp
 rendering/AncestorSubgridIterator.cpp
@@ -509,7 +506,7 @@ rendering/LegacyInlineTextBox.cpp
 rendering/LegacyLineLayout.cpp
 rendering/LegacyRootInlineBox.cpp
 rendering/LineClampUpdater.h
-rendering/LogicalSelectionOffsetCaches.h
+rendering/LogicalSelectionOffsetCachesInlines.h
 rendering/MarkedText.cpp
 rendering/MotionPath.cpp
 rendering/OrderIterator.cpp
@@ -529,7 +526,7 @@ rendering/RenderDeprecatedFlexibleBox.cpp
 rendering/RenderDescendantIterator.h
 rendering/RenderElement.cpp
 rendering/RenderElement.h
-rendering/RenderElementInlines.h
+rendering/RenderElementStyleInlines.h
 rendering/RenderEmbeddedObject.cpp
 rendering/RenderFileUploadControl.cpp
 rendering/RenderFlexibleBox.cpp
@@ -618,7 +615,6 @@ rendering/mathml/RenderMathMLToken.cpp
 rendering/mathml/RenderMathMLUnderOver.cpp
 rendering/shapes/ShapeOutsideInfo.cpp
 rendering/style/RenderStyle.cpp
-rendering/style/RenderStyleInlines.h
 rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp
 rendering/style/StyleGeneratedImage.cpp
@@ -728,6 +724,7 @@ style/Styleable.h
 style/values/color/StyleColor.cpp
 style/values/color/StyleKeywordColor.cpp
 style/values/content/StyleContent.cpp
+style/values/fonts/StyleFontWeight.cpp
 style/values/grid/StyleGridPositionsResolver.cpp
 style/values/primitives/StyleLengthResolution.cpp
 svg/SVGAElement.cpp
@@ -761,10 +758,6 @@ workers/WorkerOrWorkletGlobalScope.cpp
 workers/WorkerOrWorkletScriptController.cpp
 workers/WorkerRunLoop.cpp
 workers/WorkerThread.cpp
-workers/service/ExtendableEvent.cpp
-workers/service/context/ServiceWorkerThread.cpp
-workers/service/context/ServiceWorkerThreadProxy.cpp
-workers/service/server/SWRegistrationDatabase.cpp
 workers/shared/context/SharedWorkerThreadProxy.cpp
 worklets/PaintWorkletGlobalScope.cpp
 worklets/WorkletGlobalScope.cpp

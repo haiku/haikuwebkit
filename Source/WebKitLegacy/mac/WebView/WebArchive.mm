@@ -37,6 +37,7 @@
 #import <WebCore/LegacyWebArchive.h>
 #import <WebCore/ThreadCheck.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <wtf/MainThread.h>
 #import <wtf/RunLoop.h>
@@ -68,11 +69,7 @@ static NSString * const WebSubframeArchivesKey = @"WebSubframeArchives";
 
 + (void)initialize
 {
-#if !PLATFORM(IOS_FAMILY)
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-#endif
+    WebCore::initializeMainThreadIfNeeded();
 }
 
 - (instancetype)init

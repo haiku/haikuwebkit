@@ -32,6 +32,7 @@
 #include "WebScreenOrientationManagerMessages.h"
 #include "WebScreenOrientationManagerProxyMessages.h"
 #include <WebCore/Exception.h>
+#include <WebCore/NodeDocument.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {

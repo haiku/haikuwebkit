@@ -350,7 +350,7 @@ void WorkerThreadableWebSocketChannel::Peer::didUpgradeURL()
 WorkerThreadableWebSocketChannel::Bridge::Bridge(Ref<ThreadableWebSocketChannelClientWrapper>&& workerClientWrapper, Ref<WorkerGlobalScope>&& workerGlobalScope, const String& taskMode, Ref<SocketProvider>&& socketProvider)
     : m_workerClientWrapper(WTFMove(workerClientWrapper))
     , m_workerGlobalScope(WTFMove(workerGlobalScope))
-    , m_loaderProxy(*m_workerGlobalScope->thread().workerLoaderProxy())
+    , m_loaderProxy(*m_workerGlobalScope->thread()->workerLoaderProxy())
     , m_taskMode(taskMode)
     , m_socketProvider(WTFMove(socketProvider))
 {

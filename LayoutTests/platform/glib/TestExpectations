@@ -118,6 +118,7 @@ imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-elem
 imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-button-min-height-001.html [ Pass ]
 imported/w3c/web-platform-tests/html/rendering/widgets/input-checkbox-zero-size.html [ Pass ]
 imported/w3c/web-platform-tests/html/rendering/widgets/the-select-element/option-add-label-quirks.html [ Pass ]
+imported/w3c/web-platform-tests/streams/readable-byte-streams/construct-byob-request.any.sharedworker.html [ Failure ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-1.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-none-1.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-001.svg [ Pass ]
@@ -1226,6 +1227,13 @@ imported/w3c/web-platform-tests/css/css-text-decor/text-emphasis-style-property-
 
 imported/w3c/web-platform-tests/css/css-mixins/function-attr.html [ Failure ]
 
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.html [ Failure ]
+imported/w3c/web-platform-tests/content-security-policy/generic/src-trailing-dot.sub.any.worker.html [ Failure ]
+imported/w3c/web-platform-tests/fetch/h1-parsing/lone-cr.window.html [ Failure ]
+imported/w3c/web-platform-tests/html/anonymous-iframe/cookie-store.tentative.https.window.html [ Failure ]
+imported/w3c/web-platform-tests/html/cross-origin-embedder-policy/anonymous-iframe/cookie-store.tentative.https.window.html [ Failure ]
+imported/w3c/web-platform-tests/streams/readable-byte-streams/non-transferable-buffers.any.sharedworker.html [ Failure ]
+
 webkit.org/b/237502 fast/dom/Range/getClientRects.html [ Failure ]
 
 webkit.org/b/294587 imported/w3c/web-platform-tests/css/css-variables/variable-css-wide-keywords.html [ Skip ]
@@ -1244,6 +1252,8 @@ imported/w3c/web-platform-tests/focus/activeelement-after-nested-loses-focus.htm
 
 # Assertion failure in Release build with ASSERT_ENABLED
 webkit.org/b/279421 imported/w3c/web-platform-tests/css/css-multicol/crashtests/inline-float-parallel-flow.html [ Skip ]
+
+imported/w3c/web-platform-tests/css/css-view-transitions/inline-with-offset-from-containing-block.html [ ImageOnlyFailure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of CSS-related bugs
@@ -1856,7 +1866,6 @@ webkit.org/b/245334 [ Debug ] imported/w3c/web-platform-tests/html/canvas/offscr
 # This failure is related with (incomplete?) webgl support for OffscreenCanvas.
 webkit.org/b/245952 [ Debug ] imported/w3c/web-platform-tests/webcodecs/videoFrame-texImage.any.worker.html [ Failure Crash ]
 webgl/1.0.x/conformance/offscreencanvas/offscreencanvas-transfer-image-bitmap.html [ Failure Timeout Pass ]
-webkit.org/b/267218 webgl/webgl-worker.html [ Failure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of OffscreenCanvas-related bugs
@@ -2828,7 +2837,8 @@ webkit.org/b/215912 http/tests/websocket/tests/hybi/handshake-fail-by-no-cr.html
 webkit.org/b/208988 http/tests/webxr/webxr-third-party-iframe-requestsession-denied-by-insufficient-feature-policy.html [ Timeout ]
 
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrViewport_valid.https.html [ Failure ]
-webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Failure ]
+webkit.org/b/299387 [ Debug ] imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Failure Crash ]
+webkit.org/b/208988 [ Release ] imported/w3c/web-platform-tests/webxr/xrWebGLLayer_viewports.https.html [ Failure ]
 
 webkit.org/b/296681 imported/w3c/web-platform-tests/webxr/ar-module/xrDevice_isSessionSupported_immersive-ar.https.html [ Pass ]
 webkit.org/b/296681 imported/w3c/web-platform-tests/webxr/ar-module/idlharness.https.window.html [ Pass ]
@@ -2840,7 +2850,8 @@ webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrDevice_disconnect_en
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrDevice_requestSession_requiredFeatures_unknown.https.html [ Pass ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrFrame_getViewerPose_getPose_identities.https.html [ Pass ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrSession_input_events_end.https.html [ Pass ]
-webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xrSession_requestReferenceSpace_features.https.html [ Pass ]
+webkit.org/b/299387 [ Debug ] imported/w3c/web-platform-tests/webxr/xrSession_requestReferenceSpace_features.https.html [ Pass Crash ]
+webkit.org/b/208988 [ Release ] imported/w3c/web-platform-tests/webxr/xrSession_requestReferenceSpace_features.https.html [ Pass ]
 webkit.org/b/227086 imported/w3c/web-platform-tests/webxr/xrWebGLLayer_constructor.https.html [ Pass ]
 webkit.org/b/208988 imported/w3c/web-platform-tests/webxr/xr_viewport_scale.https.html [ Pass ]
 
@@ -3428,6 +3439,9 @@ webkit.org/b/279434 fast/canvas/image-buffer-resource-limits.html [ Skip ]
 webkit.org/b/279434 fast/mediastream/media-stream-video-track-interrupted-from-audio.html [ Skip ]
 webkit.org/b/279434 webgl/offscreen-webgl-errors-to-console.html [ Skip ]
 webkit.org/b/279434 webgl/webgl-and-dom-in-gpup.html [ Skip ]
+webkit.org/b/279434 webkit.org/b/267218 webgl/webgl-worker.html [ Skip ]
+webkit.org/b/279434 fast/transforms/interleaved-2d-transforms-with-gpu-process.html [ Skip ]
+webkit.org/b/279434 webgl/webgl-fail-platform-context-creation-no-crash.html [ Skip ]
 
 # testRunner.webHistoryItemCount implementation is not implemented in WTR
 webkit.org/b/100238 fast/history/window-open.html [ Skip ]
@@ -4798,6 +4812,7 @@ webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/crashtests/lon
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault= [ Skip ]
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault=pointerdown [ Skip ]
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault=touchstart [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-propagates-when-target-is-video_touch.html [ Skip ]
 
 webkit.org/b/290133 svg/dom/SVGGeometry-isPointInFill-with-null-path.html [ Skip ]
 
@@ -4891,6 +4906,9 @@ webkit.org/b/299092 [ Debug ] accessibility/url-test.html [ Skip ]
 
 # Depends on 'UIScriptController::singleTapAtPointWithModifiers', which is not implemented yet for GLIB.
 webkit.org/b/278719 fast/events/touch/touch-fractional-coordinates.html [ Skip ]
+
+# Navigation API flaky tests
+webkit.org/b/299333 http/wpt/navigation-api/ [ Failure Pass ]
 
 # End: Common failures between GTK and WPE.
 

@@ -56,7 +56,6 @@
 #include "SVGGraphicsElement.h"
 #include "SVGMarkerElement.h"
 #include "SVGMaskElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGTextElement.h"
 #include "SVGURIReference.h"
 #include "Settings.h"
@@ -526,17 +525,17 @@ RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() co
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerStartResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerStart());
+    return svgMarkerResourceFromStyle(style().markerStart());
 }
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerMidResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerMid());
+    return svgMarkerResourceFromStyle(style().markerMid());
 }
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerEndResourceFromStyle() const
 {
-    return svgMarkerResourceFromStyle(style().svgStyle().markerEnd());
+    return svgMarkerResourceFromStyle(style().markerEnd());
 }
 
 RenderSVGResourceMarker* RenderLayerModelObject::svgMarkerResourceFromStyle(const Style::SVGMarkerResource& markerResource) const
@@ -564,7 +563,7 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgFillPaintServerResource
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    auto fillURL = style.svgStyle().fill().tryAnyURL();
+    auto fillURL = style.fill().tryAnyURL();
     if (!fillURL)
         return nullptr;
 
@@ -584,7 +583,7 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgStrokePaintServerResour
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    auto strokeURL = style.svgStyle().stroke().tryAnyURL();
+    auto strokeURL = style.stroke().tryAnyURL();
     if (!strokeURL)
         return nullptr;
 

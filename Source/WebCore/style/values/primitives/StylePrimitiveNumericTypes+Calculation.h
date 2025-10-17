@@ -53,6 +53,11 @@ template<auto R, typename V> Calculation::Child copyCalculation(const Percentage
     return Calculation::percentage(value.value);
 }
 
+template<auto R, typename V> Calculation::Child copyCalculation(const Length<R, V>& value)
+{
+    return Calculation::dimension(value.unresolvedValue());
+}
+
 inline Calculation::Child copyCalculation(Numeric auto const& value)
 {
     return Calculation::dimension(value.value);

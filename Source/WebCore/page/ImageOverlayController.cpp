@@ -40,6 +40,7 @@
 #include "LayoutRect.h"
 #include "LocalFrameInlines.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "PageOverlayController.h"
 #include "PlatformMouseEvent.h"

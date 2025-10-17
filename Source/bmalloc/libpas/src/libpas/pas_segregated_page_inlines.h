@@ -37,6 +37,7 @@
 #include "pas_segregated_shared_handle.h"
 #include "pas_segregated_shared_handle_inlines.h"
 #include "pas_thread_local_cache_node.h"
+#include "pas_zero_memory.h"
 
 PAS_BEGIN_EXTERN_C;
 

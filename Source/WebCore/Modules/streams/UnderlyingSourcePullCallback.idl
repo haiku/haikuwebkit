@@ -24,4 +24,4 @@
  */
 
 [ CallbackThisObject=any ]
-callback UnderlyingSourcePullCallback = Promise<undefined> (any controller);
+callback UnderlyingSourcePullCallback = Promise<undefined> (ReadableByteStreamController controller);

@@ -57,7 +57,7 @@
 #import <WebCore/Image.h>
 #import <WebCore/LocalFrameInlines.h>
 #import <WebCore/LocalFrameView.h>
-#import <WebCore/NodeInlines.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/Page.h>
 #import <WebCore/PagePasteboardContext.h>
 #import <WebCore/Pasteboard.h>

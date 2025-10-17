@@ -26,6 +26,7 @@
 #include "StyleLengthWrapper+DeprecatedCSSValueConversion.h"
 
 #include "ContainerNodeInlines.h"
+#include "NodeDocument.h"
 
 namespace WebCore {
 namespace Style {

@@ -111,7 +111,7 @@ struct Box {
     inline bool isHorizontal() const;
 
     bool hasContent() const { return m_hasContent; }
-    bool isVisible() const { return !isFullyTruncated() && style().usedVisibility() == Visibility::Visible; }
+    inline bool isVisible() const;
     bool isVisibleIgnoringUsedVisibility() const { return !isFullyTruncated() && style().visibility() == Visibility::Visible; }
     bool isFullyTruncated() const { return m_isFullyTruncated; } 
 

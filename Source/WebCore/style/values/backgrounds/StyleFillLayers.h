@@ -102,6 +102,7 @@ template<typename T> struct FillLayers {
     bool hasHDRContent() const;
     bool hasEntirelyFixedBackground() const;
     bool hasAnyBackgroundClipText() const;
+    RefPtr<StyleImage> findLayerUsedImage(WrappedImagePtr, bool& isNonEmpty) const;
 
     bool operator==(const FillLayers& other) const
     {
@@ -174,6 +175,49 @@ bool FillLayers<Layer>::hasAnyBackgroundClipText() const
     return std::ranges::any_of(*this, [](auto& layer) {
         return layer.clip() == FillBox::Text;
     });
+}
+
+template<typename Layer>
+RefPtr<StyleImage> FillLayers<Layer>::findLayerUsedImage(WrappedImagePtr image, bool& isNonEmpty) const
+{
+    for (auto& layer : *this) {
+        RefPtr layerImage = layer.image().tryStyleImage();
+        if (!layerImage || layerImage->data() != image)
+            continue;
+
+        // FIXME: This really needs to compute the tile rect with BackgroundPainter::calculateFillTileSize().
+        isNonEmpty = WTF::switchOn(layer.size(),
+            [&](const CSS::Keyword::Cover&) {
+                return false;
+            },
+            [&](const CSS::Keyword::Contain&) {
+                return false;
+            },
+            [&](const Style::BackgroundSize::LengthSize& size) {
+                auto isAutoOrKnownNonZero = [](auto& length) {
+                    return WTF::switchOn(length,
+                        [](const Style::BackgroundSizeLength::Fixed& fixed) {
+                            return !fixed.isZero();
+                        },
+                        [](const Style::BackgroundSizeLength::Percentage& percentage) {
+                            return !percentage.isZero();
+                        },
+                        [](const Style::BackgroundSizeLength::Calc&) {
+                            return false;
+                        },
+                        [](const CSS::Keyword::Auto&) {
+                            return true;
+                        }
+                    );
+                };
+                return isAutoOrKnownNonZero(size.width()) && isAutoOrKnownNonZero(size.height());
+            }
+        );
+        return layerImage;
+    }
+
+    isNonEmpty = false;
+    return nullptr;
 }
 
 template<typename Layer>

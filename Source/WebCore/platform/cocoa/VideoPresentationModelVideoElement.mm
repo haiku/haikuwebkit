@@ -40,7 +40,7 @@
 #import "LocalDOMWindow.h"
 #import "Logging.h"
 #import "MediaControlsHost.h"
-#import "NodeInlines.h"
+#import "NodeDocument.h"
 #import "Page.h"
 #import "PlaybackSessionModelMediaElement.h"
 #import "TextTrackList.h"

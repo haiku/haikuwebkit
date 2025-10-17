@@ -48,6 +48,7 @@
 #include "WebBackForwardListCounts.h"
 #include "WebBackForwardListFrameItem.h"
 #include "WebBackForwardListItem.h"
+#include "WebBackForwardListMessages.h"
 #include "WebErrors.h"
 #include "WebFrameProxy.h"
 #include "WebNavigationDataStore.h"
@@ -100,7 +101,7 @@ ProvisionalPageProxy::ProvisionalPageProxy(WebPageProxy& page, Ref<FrameProcess>
     PROVISIONALPAGEPROXY_RELEASE_LOG(ProcessSwapping, "ProvisionalPageProxy: suspendedPage=%p", suspendedPage.get());
 
     Ref process = this->process();
-    m_messageReceiverRegistration.startReceivingMessages(process, m_webPageID, *this);
+    m_messageReceiverRegistration.startReceivingMessages(process, m_webPageID, *this, *this);
     process->addProvisionalPageProxy(*this);
     ASSERT(!page.preferences().siteIsolationEnabled() || navigation.processID() == process->coreProcessIdentifier());
 
@@ -123,7 +124,7 @@ ProvisionalPageProxy::ProvisionalPageProxy(WebPageProxy& page, Ref<FrameProcess>
     } else if (m_isProcessSwappingForNewWindow)
         m_mainFrame = page.mainFrame();
     else {
-        Ref mainFrame = WebFrameProxy::create(page, m_frameProcess, generateFrameIdentifier(), previousMainFrame->effectiveSandboxFlags(), previousMainFrame->scrollingMode(), nullptr, IsMainFrame::Yes);
+        Ref mainFrame = WebFrameProxy::create(page, m_frameProcess, generateFrameIdentifier(), previousMainFrame->effectiveSandboxFlags(), previousMainFrame->effectiveReferrerPolicy(), previousMainFrame->scrollingMode(), nullptr, IsMainFrame::Yes);
         m_mainFrame = mainFrame.copyRef();
 
         m_needsMainFrameObserver = true;
@@ -266,7 +267,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
                 m_mainFrame = existingRemotePageProxy->page()->mainFrame();
                 m_needsMainFrameObserver = false;
                 m_messageReceiverRegistration.stopReceivingMessages();
-                m_messageReceiverRegistration.transferMessageReceivingFrom(existingRemotePageProxy->messageReceiverRegistration(), *this);
+                m_messageReceiverRegistration.transferMessageReceivingFrom(existingRemotePageProxy->messageReceiverRegistration(), *this, *this);
                 existingRemotePageProxy->setDrawingArea(nullptr);
                 m_needsDidStartProvisionalLoad = false;
                 m_needsCookieAccessAddedInNetworkProcess = true;
@@ -292,6 +293,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
             page->mainFrame() && !m_isProcessSwappingForNewWindow ? std::optional(page->mainFrame()->frameID()) : std::nullopt,
             std::nullopt,
             mainFrame->effectiveSandboxFlags(),
+            mainFrame->effectiveReferrerPolicy(),
             mainFrame->scrollingMode(),
             mainFrame->remoteFrameSize()
         };
@@ -686,10 +688,9 @@ void ProvisionalPageProxy::swipeAnimationDidEnd()
 
 void ProvisionalPageProxy::didReceiveMessage(IPC::Connection& connection, IPC::Decoder& decoder)
 {
-    ASSERT(decoder.messageReceiverName() == Messages::WebPageProxy::messageReceiverName());
+    ASSERT(decoder.messageReceiverName() == Messages::WebPageProxy::messageReceiverName() || decoder.messageReceiverName() == Messages::WebBackForwardList::messageReceiverName());
 
-    if (decoder.messageName() == Messages::WebPageProxy::BackForwardUpdateItem::name()
-        || decoder.messageName() == Messages::WebPageProxy::DidStartProgress::name()
+    if (decoder.messageName() == Messages::WebPageProxy::DidStartProgress::name()
         || decoder.messageName() == Messages::WebPageProxy::DidChangeProgress::name()
         || decoder.messageName() == Messages::WebPageProxy::DidFinishProgress::name()
         || decoder.messageName() == Messages::WebPageProxy::SetNetworkRequestsInProgress::name()
@@ -714,6 +715,12 @@ void ProvisionalPageProxy::didReceiveMessage(IPC::Connection& connection, IPC::D
         return;
     }
 
+    if (decoder.messageName() == Messages::WebBackForwardList::BackForwardUpdateItem::name()) {
+        if (RefPtr page = m_page.get())
+            page->backForwardList().didReceiveMessage(connection, decoder);
+        return;
+    }
+
     if (decoder.messageName() == Messages::WebPageProxy::DidDestroyNavigation::name()) {
         IPC::handleMessage<Messages::WebPageProxy::DidDestroyNavigation>(connection, decoder, this, &ProvisionalPageProxy::didDestroyNavigation);
         return;
@@ -733,8 +740,8 @@ void ProvisionalPageProxy::didReceiveMessage(IPC::Connection& connection, IPC::D
     }
 #endif
 
-    if (decoder.messageName() == Messages::WebPageProxy::BackForwardAddItem::name()) {
-        IPC::handleMessage<Messages::WebPageProxy::BackForwardAddItem>(connection, decoder, this, &ProvisionalPageProxy::backForwardAddItem);
+    if (decoder.messageName() == Messages::WebBackForwardList::BackForwardAddItem::name()) {
+        IPC::handleMessage<Messages::WebBackForwardList::BackForwardAddItem>(connection, decoder, this, &ProvisionalPageProxy::backForwardAddItem);
         return;
     }
 
@@ -834,8 +841,8 @@ void ProvisionalPageProxy::didReceiveMessage(IPC::Connection& connection, IPC::D
 
 void ProvisionalPageProxy::didReceiveSyncMessage(IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& replyEncoder)
 {
-    if (decoder.messageName() == Messages::WebPageProxy::BackForwardGoToItem::name()) {
-        IPC::handleMessageSynchronous<Messages::WebPageProxy::BackForwardGoToItem>(connection, decoder, replyEncoder, this, &ProvisionalPageProxy::backForwardGoToItem);
+    if (decoder.messageName() == Messages::WebBackForwardList::BackForwardGoToItem::name()) {
+        IPC::handleMessageSynchronous<Messages::WebBackForwardList::BackForwardGoToItem>(connection, decoder, replyEncoder, this, &ProvisionalPageProxy::backForwardGoToItem);
         return;
     }
 
@@ -845,8 +852,12 @@ void ProvisionalPageProxy::didReceiveSyncMessage(IPC::Connection& connection, IP
     }
 
     RefPtr page = m_page.get();
-    if (page)
-        page->didReceiveSyncMessage(connection, decoder, replyEncoder);
+    if (page) {
+        if (decoder.messageReceiverName() == Messages::WebBackForwardList::messageReceiverName())
+            page->backForwardList().didReceiveSyncMessage(connection, decoder, replyEncoder);
+        else
+            page->didReceiveSyncMessage(connection, decoder, replyEncoder);
+    }
 }
 
 IPC::Connection* ProvisionalPageProxy::messageSenderConnection() const

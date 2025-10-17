@@ -149,36 +149,38 @@ void OSREntryPlan::work()
 
     {
         Locker locker { m_calleeGroup->m_lock };
-        m_calleeGroup->recordOMGOSREntryCallee(locker, m_functionIndex, callee.get());
-        m_calleeGroup->reportCallees(locker, callee.ptr(), internalFunction->outgoingJITDirectCallees);
+        bool newlyInstalled = m_calleeGroup->recordOMGOSREntryCallee(locker, m_functionIndex, callee.get());
+        if (newlyInstalled) {
+            m_calleeGroup->reportCallees(locker, callee.ptr(), internalFunction->outgoingJITDirectCallees);
 
-        for (auto& call : callee->wasmToWasmCallsites()) {
-            CodePtr<WasmEntryPtrTag> entrypoint;
-            if (call.functionIndexSpace < m_module->moduleInformation().importFunctionCount())
-                entrypoint = m_calleeGroup->m_wasmToWasmExitStubs[call.functionIndexSpace].code();
-            else {
-                Ref wasmCallee = m_calleeGroup->wasmEntrypointCalleeFromFunctionIndexSpace(locker, call.functionIndexSpace);
-                entrypoint = wasmCallee->entrypoint().retagged<WasmEntryPtrTag>();
+            for (auto& call : callee->wasmToWasmCallsites()) {
+                CodePtr<WasmEntryPtrTag> entrypoint;
+                if (call.functionIndexSpace < m_module->moduleInformation().importFunctionCount())
+                    entrypoint = m_calleeGroup->m_wasmToWasmExitStubs[call.functionIndexSpace].code();
+                else {
+                    Ref wasmCallee = m_calleeGroup->wasmEntrypointCalleeFromFunctionIndexSpace(locker, call.functionIndexSpace);
+                    entrypoint = wasmCallee->entrypoint().retagged<WasmEntryPtrTag>();
+                }
+
+                MacroAssembler::repatchNearCall(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(entrypoint));
             }
 
-            MacroAssembler::repatchNearCall(call.callLocation, CodeLocationLabel<WasmEntryPtrTag>(entrypoint));
-        }
+            resetInstructionCacheOnAllThreads();
+            WTF::storeStoreFence();
 
-        resetInstructionCacheOnAllThreads();
-        WTF::storeStoreFence();
-
-        {
-            switch (m_callee->compilationMode()) {
-            case CompilationMode::BBQMode: {
-                BBQCallee* bbqCallee = static_cast<BBQCallee*>(m_callee.ptr());
-                Locker locker { bbqCallee->tierUpCounter().getLock() };
-                bbqCallee->setOSREntryCallee(callee.copyRef(), mode());
-                bbqCallee->tierUpCounter().osrEntryTriggers()[m_loopIndex] = TierUpCount::TriggerReason::CompilationDone;
-                bbqCallee->tierUpCounter().setCompilationStatusForOMGForOSREntry(mode(), TierUpCount::CompilationStatus::Compiled);
-                break;
-            }
-            default:
-                RELEASE_ASSERT_NOT_REACHED();
+            {
+                switch (m_callee->compilationMode()) {
+                case CompilationMode::BBQMode: {
+                    BBQCallee* bbqCallee = uncheckedDowncast<BBQCallee>(m_callee.ptr());
+                    Locker locker { bbqCallee->tierUpCounter().getLock() };
+                    bbqCallee->setOSREntryCallee(callee.copyRef(), mode());
+                    bbqCallee->tierUpCounter().osrEntryTriggers()[m_loopIndex] = TierUpCount::TriggerReason::CompilationDone;
+                    bbqCallee->tierUpCounter().setCompilationStatusForOMGForOSREntry(mode(), TierUpCount::CompilationStatus::Compiled);
+                    break;
+                }
+                default:
+                    RELEASE_ASSERT_NOT_REACHED();
+                }
             }
         }
     }

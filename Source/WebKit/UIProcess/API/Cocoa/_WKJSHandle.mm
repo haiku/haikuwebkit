@@ -26,6 +26,7 @@
 #import "config.h"
 #import "_WKJSHandleInternal.h"
 
+#import "WKContentWorldInternal.h"
 #import "WKFrameInfoInternal.h"
 #import "WebFrameProxy.h"
 #import "WebPageProxy.h"
@@ -47,6 +48,11 @@
     return wrapper(API::FrameInfo::create(WebKit::FrameInfoData { _ref->info().frameInfo })).autorelease();
 }
 
+- (WKContentWorld *)world
+{
+    return wrapper(API::ContentWorld::worldForIdentifier(_ref->info().worldIdentifier));
+}
+
 - (void)windowFrameInfo:(void (^)(WKFrameInfo *))completionHandler
 {
     RefPtr webFrame = WebKit::WebFrameProxy::webFrame(_ref->info().windowProxyFrameIdentifier);
@@ -57,6 +63,27 @@
             return completionHandler(nil);
         completionHandler(wrapper(API::FrameInfo::create(WTFMove(*data))).get());
     });
+}
+
+- (BOOL)isEqual:(id)object
+{
+    if (self == object)
+        return YES;
+
+    if (![object isKindOfClass:self.class])
+        return NO;
+
+    return _ref->info() == ((_WKJSHandle *)object)->_ref->info();
+}
+
+- (NSUInteger)hash
+{
+    return _ref->info().identifier.object().toUInt64();
+}
+
+- (id)copyWithZone:(NSZone *)zone
+{
+    return [self retain];
 }
 
 - (API::Object&)_apiObject

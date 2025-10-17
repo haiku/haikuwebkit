@@ -22,6 +22,7 @@
 #include "config.h"
 #include "TemporalObject.h"
 
+#include "FractionToDouble.h"
 #include "FunctionPrototype.h"
 #include "IntlObjectInlines.h"
 #include "JSCJSValueInlines.h"

@@ -58,6 +58,7 @@ public:
     void executeClassicScript(const ScriptSourceCode&);
     void executeModuleScript(LoadableModuleScript&);
     void registerImportMap(const ScriptSourceCode&);
+    void registerSpeculationRules(const ScriptSourceCode&);
 
     void executePendingScript(PendingScript&);
 
@@ -86,7 +87,7 @@ public:
     void ref() const;
     void deref() const;
 
-    static std::optional<ScriptType> determineScriptType(const String& typeAttribute, const String& languageAttribute, bool isHTMLDocument = true);
+    static std::optional<ScriptType> determineScriptType(const String& typeAttribute, const String& languageAttribute, bool isHTMLDocument = true, bool speculationRulesPrefetchEnabled = false);
 
 protected:
     ScriptElement(Element&, bool createdByParser, bool isEvaluated);

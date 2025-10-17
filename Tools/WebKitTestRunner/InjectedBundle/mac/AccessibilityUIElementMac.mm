@@ -490,7 +490,8 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::childAtIndexWithRemoteEle
 {
     RetainPtr<NSArray> children;
     s_controller->executeOnAXThreadAndWait([&children, index, this] {
-        children = [m_element _accessibilityChildrenFromIndex:index maxCount:1 returnPlatformElements:NO];
+        if ([m_element respondsToSelector:@selector(_accessibilityChildrenFromIndex:maxCount:returnPlatformElements:)])
+            children = [m_element _accessibilityChildrenFromIndex:index maxCount:1 returnPlatformElements:NO];
     });
     auto resultChildren = makeVector<RefPtr<AccessibilityUIElement>>(children.get());
     return resultChildren.size() == 1 ? resultChildren[0] : nullptr;

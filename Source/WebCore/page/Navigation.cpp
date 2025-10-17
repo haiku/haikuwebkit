@@ -625,11 +625,7 @@ void Navigation::updateNavigationEntry(Ref<HistoryItem>&& item, ShouldCopyStateO
     if (!frame())
         return;
 
-    RefPtr firstChild = frame()->tree().firstChild();
-    if (!firstChild)
-        return;
-
-    for (RefPtr child = firstChild.get(); child; child = child->tree().nextSibling()) {
+    for (RefPtr child = frame()->tree().firstChild(); child; child = child->tree().nextSibling()) {
         RefPtr localChild = dynamicDowncast<LocalFrame>(child.get());
         if (!localChild)
             continue;
@@ -641,6 +637,54 @@ void Navigation::updateNavigationEntry(Ref<HistoryItem>&& item, ShouldCopyStateO
 
             window->protectedNavigation()->updateNavigationEntry(childItem.releaseNonNull(), shouldCopyStateObjectFromCurrentEntry);
         }
+    }
+}
+
+void Navigation::disposeOfForwardEntriesInParents(BackForwardItemIdentifier itemID)
+{
+    RefPtr localMainFrame = protectedFrame()->localMainFrame();
+    if (!localMainFrame)
+        return;
+
+    RefPtr localMainFrameWindow = localMainFrame->window();
+    if (!localMainFrameWindow)
+        return;
+
+    localMainFrameWindow->protectedNavigation()->recursivelyDisposeOfForwardEntriesInParents(itemID, protectedFrame().get());
+}
+
+void Navigation::recursivelyDisposeOfForwardEntriesInParents(BackForwardItemIdentifier itemID, LocalFrame* navigatedFrame)
+{
+    if (frame() == navigatedFrame)
+        return;
+
+    std::optional<size_t> index = std::nullopt;
+    for (size_t i = 0; i < m_entries.size(); i++) {
+        if (m_entries[i]->associatedHistoryItem().itemID() == itemID) {
+            index = i;
+            break;
+        }
+    }
+
+    if (!index)
+        return;
+
+    for (size_t i = *index + 1; i < m_entries.size(); i++)
+        Ref { m_entries[i] }->dispatchDisposeEvent();
+
+    m_currentEntryIndex = index;
+    m_entries.resize(*m_currentEntryIndex + 1);
+
+    for (RefPtr child = frame()->tree().firstChild(); child; child = child->tree().nextSibling()) {
+        RefPtr localChild = dynamicDowncast<LocalFrame>(child.get());
+        if (!localChild)
+            continue;
+
+        RefPtr window = localChild->window();
+        if (!window)
+            continue;
+
+        window->protectedNavigation()->recursivelyDisposeOfForwardEntriesInParents(itemID, navigatedFrame);
     }
 }
 
@@ -663,6 +707,7 @@ void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigati
             return;
         break;
     case NavigationNavigationType::Push:
+        disposeOfForwardEntriesInParents(oldCurrentEntry->associatedHistoryItem().itemID());
         m_currentEntryIndex = *m_currentEntryIndex + 1;
         for (size_t i = *m_currentEntryIndex; i < m_entries.size(); i++)
             disposedEntries.append(m_entries[i]);
@@ -865,8 +910,13 @@ struct AwaitingPromiseData : public RefCounted<AwaitingPromiseData> {
 };
 
 // https://webidl.spec.whatwg.org/#wait-for-all
-static void waitForAllPromises(const Vector<RefPtr<DOMPromise>>& promises, Function<void()>&& fulfilledCallback, Function<void(JSC::JSValue)>&& rejectionCallback)
+static void waitForAllPromises(Document& document, const Vector<RefPtr<DOMPromise>>& promises, Function<void()>&& fulfilledCallback, Function<void(JSC::JSValue)>&& rejectionCallback)
 {
+    if (promises.isEmpty()) {
+        document.checkedEventLoop()->queueMicrotask(WTFMove(fulfilledCallback));
+        return;
+    }
+
     Ref awaitingData = adoptRef(*new AwaitingPromiseData(WTFMove(fulfilledCallback), WTFMove(rejectionCallback), promises.size()));
 
     for (const auto& promise : promises) {
@@ -1036,18 +1086,10 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
             }
         }
 
-        if (promiseList.isEmpty()) {
-            auto promiseAndWrapper = createPromiseAndWrapper(*document);
-            Ref { promiseAndWrapper.second }->resolveWithCallback([](JSDOMGlobalObject&) {
-                return JSC::jsUndefined();
-            });
-            promiseList.append(WTFMove(promiseAndWrapper.first));
-        }
-
         // FIXME: this emulates the behavior of a Promise wrapped around waitForAll, but we may want the real
         // thing if the ordering-and-transition tests show timing related issues related to this.
         scriptExecutionContext->checkedEventLoop()->queueTask(TaskSource::DOMManipulation, [weakThis = WeakPtr { this }, promiseList, abortController, document, apiMethodTracker]() {
-            waitForAllPromises(promiseList, [abortController, document, apiMethodTracker, weakThis]() mutable {
+            waitForAllPromises(*document, promiseList, [abortController, document, apiMethodTracker, weakThis]() mutable {
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis || abortController->signal().aborted() || !document->isFullyActive() || !protectedThis->m_ongoingNavigateEvent)
                     return;

@@ -112,7 +112,7 @@ static AtomString convertPropertyNameToAttributeName(const String& name)
 
     StringImpl* nameImpl = name.impl();
     if (nameImpl->is8Bit())
-        return convertPropertyNameToAttributeName<LChar>(*nameImpl);
+        return convertPropertyNameToAttributeName<Latin1Character>(*nameImpl);
     return convertPropertyNameToAttributeName<char16_t>(*nameImpl);
 }
 

@@ -438,6 +438,69 @@ void requestPayloadForQRCode(CGImageRef image, CompletionHandler<void(NSString *
     });
 }
 
+static WorkQueue& textRecognitionQueueSingleton()
+{
+    static NeverDestroyed queue {
+        WorkQueue::create("com.apple.WebKit.ImageAnalysisUtilities.TextRecognition"_s)
+    };
+    return queue.get();
+}
+
+void recognizeText(CGImageRef image, CompletionHandler<void(NSString *, NSError *)>&& completion)
+{
+    textRecognitionQueueSingleton().dispatch([image = retainPtr(image), completion = WTFMove(completion)] mutable {
+        __block RetainPtr<NSString> resultText;
+        __block RetainPtr<NSError> error;
+        RetainPtr request = adoptNS([PAL::allocVNRecognizeTextRequestInstance() initWithCompletionHandler:^(VNRequest *request, NSError *requestError) {
+            if (requestError) {
+                error = requestError;
+                return;
+            }
+
+            RetainPtr observations = dynamic_objc_cast<NSArray>(request.results);
+            if (![observations count]) {
+                resultText = @"";
+                return;
+            }
+
+            RetainPtr resultBuffer = adoptNS([NSMutableString new]);
+            for (VNRecognizedTextObservation *observation in observations.get()) {
+                RetainPtr best = [[observation topCandidates:1] firstObject];
+                if (!best)
+                    continue;
+
+                if ([resultBuffer length])
+                    [resultBuffer appendString:@" "];
+
+                [resultBuffer appendString:[best string]];
+            }
+
+            resultText = resultBuffer;
+        }]);
+
+        [request setAutomaticallyDetectsLanguage:YES];
+
+        @try {
+            RetainPtr handler = adoptNS([PAL::allocVNImageRequestHandlerInstance() initWithCGImage:image.get() options:@{ }]);
+            NSError *performError = nil;
+            [handler performRequests:@[ request.get() ] error:&performError];
+            if (performError)
+                error = performError;
+        } @catch (NSException *exception) {
+            error = [NSError errorWithDomain:@"com.apple.WebKit.ImageAnalysis" code:1 userInfo:@{
+                NSLocalizedDescriptionKey: exception.reason ?: @""
+            }];
+        }
+
+        RunLoop::mainSingleton().dispatch([resultText = WTFMove(resultText), error = WTFMove(error), completion = WTFMove(completion)] mutable {
+            if (error)
+                completion(nil, error.get());
+            else
+                completion(resultText.get(), nil);
+        });
+    });
+}
+
 #endif // HAVE(VISION)
 
 } // namespace WebKit

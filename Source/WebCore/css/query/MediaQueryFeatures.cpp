@@ -36,7 +36,7 @@
 #include "MediaQueryEvaluator.h"
 #include "Page.h"
 #include "Quirks.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayerCompositor.h"
 #include "RenderView.h"
 #include "ScreenProperties.h"

@@ -38,7 +38,6 @@
 #include "RenderLayer.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGImageElement.h"
-#include "SVGRenderStyle.h"
 #include "SVGRenderingContext.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
@@ -199,7 +198,7 @@ void LegacyRenderSVGImage::paint(PaintInfo& paintInfo, const LayoutPoint&)
         SVGRenderingContext renderingContext(*this, childPaintInfo);
 
         if (renderingContext.isRenderingPrepared()) {
-            if (style().svgStyle().bufferedRendering() == BufferedRendering::Static && renderingContext.bufferForeground(m_bufferedForeground))
+            if (style().bufferedRendering() == BufferedRendering::Static && renderingContext.bufferForeground(m_bufferedForeground))
                 return;
 
             paintForeground(childPaintInfo);
@@ -228,7 +227,12 @@ void LegacyRenderSVGImage::paintForeground(PaintInfo& paintInfo)
         style().dynamicRangeLimit().toPlatformDynamicRangeLimit()
     };
 
-    paintInfo.context().drawImage(*image, destRect, srcRect, options);
+    auto& context = paintInfo.context();
+    context.drawImage(*image, destRect, srcRect, options);
+
+    auto* cachedImage = imageResource().cachedImage();
+    if (cachedImage && !context.paintingDisabled())
+        protectedDocument()->didPaintImage(imageElement(), cachedImage, destRect);
 }
 
 void LegacyRenderSVGImage::invalidateBufferedForeground()
@@ -289,6 +293,11 @@ void LegacyRenderSVGImage::imageChanged(WrappedImagePtr, const IntRect*)
     invalidateBufferedForeground();
 
     repaint();
+
+    if (auto* image = imageResource().cachedImage(); image && image->currentFrameIsComplete(this)) {
+        if (auto styleable = Styleable::fromRenderer(*this))
+            protectedDocument()->didLoadImage(styleable->protectedElement().get(), image);
+    }
 }
 
 void LegacyRenderSVGImage::addFocusRingRects(Vector<LayoutRect>& rects, const LayoutPoint&, const RenderLayerModelObject*) const

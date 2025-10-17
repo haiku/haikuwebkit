@@ -28,6 +28,7 @@
 #if ENABLE(GPU_PROCESS)
 #include "RemoteSnapshot.h"
 
+#include "WebImage.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
@@ -106,7 +107,7 @@ RemoteSnapshot::DisplayListAndReleaseDispatcher::~DisplayListAndReleaseDispatche
 
 #if PLATFORM(COCOA)
 
-std::optional<RefPtr<SharedBuffer>> RemoteSnapshot::drawToPDF(const IntSize& size, FrameIdentifier rootIdentifier)
+std::optional<RefPtr<SharedBuffer>> RemoteSnapshot::drawToPDF(const FloatSize& size, FrameIdentifier rootIdentifier)
 {
     ASSERT(isComplete());
     RefPtr buffer = ImageBuffer::create(size, RenderingMode::PDFDocument, RenderingPurpose::Snapshot, 1, DestinationColorSpace::SRGB(), PixelFormat::BGRA8);
@@ -122,6 +123,21 @@ std::optional<RefPtr<SharedBuffer>> RemoteSnapshot::drawToPDF(const IntSize& siz
 }
 
 #endif
+
+std::optional<ShareableBitmap::Handle> RemoteSnapshot::drawToBitmap(const FloatSize& size, FrameIdentifier rootFrameIdentifier)
+{
+    ASSERT(isComplete());
+    RefPtr image = WebImage::create(size, ImageOption::Shareable, DestinationColorSpace::SRGB());
+    if (!image)
+        return std::nullopt;
+
+    auto& context = *image->context();
+
+    if (!applyFrame(rootFrameIdentifier, context))
+        return std::nullopt;
+
+    return image->createHandle(SharedMemory::Protection::ReadOnly);
+}
 
 }
 

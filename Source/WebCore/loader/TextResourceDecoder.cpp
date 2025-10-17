@@ -64,7 +64,7 @@ static size_t find(std::span<const uint8_t> subject, std::span<const uint8_t> ta
     return notFound;
 }
 
-static PAL::TextEncoding findTextEncoding(std::span<const LChar> encodingName)
+static PAL::TextEncoding findTextEncoding(std::span<const Latin1Character> encodingName)
 {
     return StringView { encodingName };
 }

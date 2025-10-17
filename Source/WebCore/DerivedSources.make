@@ -635,6 +635,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/streams/GenericTransformStream.idl \
     $(WebCore)/Modules/streams/QueuingStrategy.idl \
     $(WebCore)/Modules/streams/QueuingStrategySize.idl \
+    $(WebCore)/Modules/streams/ReadableByteStreamController.idl \
+    $(WebCore)/Modules/streams/ReadableStreamBYOBReader.idl \
+    $(WebCore)/Modules/streams/ReadableStreamBYOBRequest.idl \
     $(WebCore)/Modules/streams/ReadableStream.idl \
     $(WebCore)/Modules/streams/ReadableStreamDefaultController.idl \
     $(WebCore)/Modules/streams/ReadableStreamDefaultReader.idl \
@@ -834,6 +837,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webtransport/WebTransportBidirectionalStream.idl \
     $(WebCore)/Modules/webtransport/WebTransportCloseInfo.idl \
     $(WebCore)/Modules/webtransport/WebTransportCongestionControl.idl \
+    $(WebCore)/Modules/webtransport/WebTransportConnectionStats.idl \
     $(WebCore)/Modules/webtransport/WebTransportDatagramDuplexStream.idl \
     $(WebCore)/Modules/webtransport/WebTransportDatagramStats.idl \
     $(WebCore)/Modules/webtransport/WebTransportError.idl \
@@ -847,7 +851,6 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webtransport/WebTransportSendStream.idl \
     $(WebCore)/Modules/webtransport/WebTransportSendStreamOptions.idl \
     $(WebCore)/Modules/webtransport/WebTransportSendStreamStats.idl \
-    $(WebCore)/Modules/webtransport/WebTransportStats.idl \
     $(WebCore)/Modules/webxr/Navigator+WebXR.idl \
     $(WebCore)/Modules/webxr/WebXRBoundedReferenceSpace.idl \
     $(WebCore)/Modules/webxr/WebXRFrame+HandInput.idl \
@@ -2052,7 +2055,7 @@ DOMJITAbstractHeapRepository.h : $(WebCore)/domjit/generate-abstract-heap.rb $(W
 
 all : XMLViewerCSS.h
 
-XMLViewerCSS.h : $(WebCore)/xml/XMLViewer.css
+XMLViewerCSS.h : $(WebCore)/xml/XMLViewer.css $(JavaScriptCore_SCRIPTS_DIR)/cssmin.py $(JavaScriptCore_SCRIPTS_DIR)/xxd.pl
 	$(PYTHON) $(JavaScriptCore_SCRIPTS_DIR)/cssmin.py < "$(WebCore)/xml/XMLViewer.css" > XMLViewer.min.css
 	$(PERL) $(JavaScriptCore_SCRIPTS_DIR)/xxd.pl XMLViewer_css XMLViewer.min.css XMLViewerCSS.h
 	$(DELETE) XMLViewer.min.css
@@ -2063,7 +2066,7 @@ XMLViewerCSS.h : $(WebCore)/xml/XMLViewer.css
 
 all : XMLViewerJS.h
 
-XMLViewerJS.h : $(WebCore)/xml/XMLViewer.js
+XMLViewerJS.h : $(WebCore)/xml/XMLViewer.js $(JavaScriptCore_SCRIPTS_DIR)/jsmin.py $(JavaScriptCore_SCRIPTS_DIR)/xxd.pl
 	$(PYTHON) $(JavaScriptCore_SCRIPTS_DIR)/jsmin.py < "$(WebCore)/xml/XMLViewer.js" > XMLViewer.min.js
 	$(PERL) $(JavaScriptCore_SCRIPTS_DIR)/xxd.pl XMLViewer_js XMLViewer.min.js XMLViewerJS.h
 	$(DELETE) XMLViewer.min.js
@@ -2164,6 +2167,7 @@ USER_AGENT_STYLE_SHEETS = \
     $(WebCore)/css/html.css \
     $(WebCore)/css/htmlSwitchControl.css \
     $(WebCore)/css/mathml.css \
+    $(WebCore)/css/mathmlCoreExtras.css \
     $(WebCore)/css/popover.css \
     $(WebCore)/css/quirks.css \
     $(WebCore)/css/svg.css \

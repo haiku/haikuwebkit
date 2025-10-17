@@ -28,6 +28,7 @@
 #include <WebCore/Document.h>
 #include <WebCore/Element.h>
 #include <WebCore/LocalFrame.h>
+#include <WebCore/NodeDocument.h>
 #include <WebCore/RenderObject.h>
 
 namespace WebCore {

@@ -26,13 +26,20 @@
 #import "config.h"
 #import "NetworkTransportSession.h"
 
+#import "AuthenticationChallengeDisposition.h"
 #import "AuthenticationManager.h"
 #import "NetworkConnectionToWebProcess.h"
+#import "NetworkProcess.h"
+#import "NetworkSessionCocoa.h"
 #import "NetworkTransportStream.h"
 #import <Security/Security.h>
 #import <WebCore/AuthenticationChallenge.h>
+#import <WebCore/ClientOrigin.h>
 #import <WebCore/Exception.h>
 #import <WebCore/ExceptionCode.h>
+#import <WebCore/WebTransportConnectionStats.h>
+#import <WebCore/WebTransportReceiveStreamStats.h>
+#import <WebCore/WebTransportSendStreamStats.h>
 #import <pal/spi/cocoa/NetworkSPI.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/CompletionHandler.h>
@@ -45,14 +52,15 @@
 
 namespace WebKit {
 
-Ref<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess& connection, WebTransportSessionIdentifier identifier, nw_connection_group_t group, nw_endpoint_t endpoint)
+Ref<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess& connection, WebTransportSessionIdentifier identifier, WebCore::WebTransportOptions&& options, nw_connection_group_t group, nw_endpoint_t endpoint)
 {
-    return adoptRef(*new NetworkTransportSession(connection, identifier, group, endpoint));
+    return adoptRef(*new NetworkTransportSession(connection, identifier, WTFMove(options), group, endpoint));
 }
 
-NetworkTransportSession::NetworkTransportSession(NetworkConnectionToWebProcess& connection, WebTransportSessionIdentifier identifier, nw_connection_group_t connectionGroup, nw_endpoint_t endpoint)
+NetworkTransportSession::NetworkTransportSession(NetworkConnectionToWebProcess& connection, WebTransportSessionIdentifier identifier, WebCore::WebTransportOptions&& options, nw_connection_group_t connectionGroup, nw_endpoint_t endpoint)
     : m_connectionToWebProcess(connection)
     , m_identifier(identifier)
+    , m_options(WTFMove(options))
     , m_connectionGroup(connectionGroup)
     , m_endpoint(endpoint)
 {
@@ -61,8 +69,60 @@ NetworkTransportSession::NetworkTransportSession(NetworkConnectionToWebProcess& 
 
 #if HAVE(WEB_TRANSPORT)
 
-static void didReceiveServerTrustChallenge(Ref<NetworkConnectionToWebProcess>&& connectionToWebProcess, URL&& url, WebKit::WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin, sec_trust_t trust, sec_protocol_verify_complete_t completion)
+static bool leafCertificateMatchesWebTransportHash(sec_trust_t trust, const Vector<WebCore::WebTransportHash>& hashes)
 {
+    // https://www.w3.org/TR/webtransport/#verify-a-certificate-hash
+    RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
+    if (!secTrust)
+        return false;
+
+    RetainPtr chain = adoptCF(SecTrustCopyCertificateChain(secTrust.get()));
+    if (!chain || !CFArrayGetCount(chain.get()))
+        return false;
+
+    RetainPtr leafCertificate = checked_cf_cast<SecCertificateRef>(CFArrayGetValueAtIndex(chain.get(), 0));
+    if (!leafCertificate)
+        return false;
+
+    RetainPtr x509Data = adoptNS(bridge_cast(SecCertificateCopyData(leafCertificate.get())));
+    if (!x509Data)
+        return false;
+
+    std::array<uint8_t, CC_SHA256_DIGEST_LENGTH> sha2;
+    CC_SHA256([x509Data bytes], [x509Data length], sha2.data());
+
+    bool hashMatches = std::ranges::any_of(hashes, [&] (auto& hash) {
+        return hash.algorithm == "sha-256"_s && equalSpans(std::span(sha2), hash.value.span());
+    });
+    if (!hashMatches)
+        return false;
+
+    // https://www.w3.org/TR/webtransport/#custom-certificate-requirements
+    RetainPtr validityBegin = adoptCF(SecCertificateCopyNotValidBeforeDate(leafCertificate.get()));
+    if (!validityBegin)
+        return false;
+    RetainPtr validityEnd = adoptCF(SecCertificateCopyNotValidAfterDate(leafCertificate.get()));
+    if (!validityEnd)
+        return false;
+    CFAbsoluteTime currentTime = CFAbsoluteTimeGetCurrent();
+    CFAbsoluteTime beginTime = CFDateGetAbsoluteTime(validityBegin.get());
+    CFAbsoluteTime endTime = CFDateGetAbsoluteTime(validityEnd.get());
+    if (currentTime < beginTime || currentTime > endTime)
+        return false;
+
+    CFTimeInterval validityPeriod = endTime - beginTime;
+    constexpr double twoWeeks = 2 * 7 * 24 * 60 * 60;
+    if (validityPeriod <= 0 || validityPeriod > twoWeeks)
+        return false;
+
+    return true;
+}
+
+static void didReceiveServerTrustChallenge(NetworkConnectionToWebProcess& connectionToWebProcess, const URL& url, const Vector<WebCore::WebTransportHash>& hashes, WebKit::WebPageProxyIdentifier pageID, const WebCore::ClientOrigin& clientOrigin, sec_trust_t trust, sec_protocol_verify_complete_t completion)
+{
+    if (!hashes.isEmpty())
+        return completion(leafCertificateMatchesWebTransportHash(trust, hashes));
+
     uint16_t port = url.port() ? *url.port() : *defaultPortForProtocol(url.protocol());
     RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
     RetainPtr protectionSpace = adoptNS([[NSURLProtectionSpace alloc] initWithHost:url.host().createNSString().get() port:port protocol:NSURLProtectionSpaceHTTPS realm:nil authenticationMethod:NSURLAuthenticationMethodServerTrust]);
@@ -96,10 +156,15 @@ static void didReceiveServerTrustChallenge(Ref<NetworkConnectionToWebProcess>&& 
         RELEASE_ASSERT_NOT_REACHED();
     };
 
-    auto* sessionCocoa = static_cast<NetworkSessionCocoa*>(connectionToWebProcess->networkProcess().networkSession(connectionToWebProcess->sessionID()));
+    auto* sessionCocoa = static_cast<NetworkSessionCocoa*>(connectionToWebProcess.networkProcess().networkSession(connectionToWebProcess.sessionID()));
 
     if (sessionCocoa && sessionCocoa->fastServerTrustEvaluationEnabled()) {
-        auto decisionHandler = makeBlockPtr([connectionToWebProcess = WTFMove(connectionToWebProcess), pageID = WTFMove(pageID), clientOrigin = WTFMove(clientOrigin), challengeCompletionHandler = WTFMove(challengeCompletionHandler)](NSURLAuthenticationChallenge *challenge, OSStatus trustResult) mutable {
+        auto decisionHandler = makeBlockPtr([
+            connectionToWebProcess = Ref { connectionToWebProcess },
+            pageID = WTFMove(pageID),
+            clientOrigin = WTFMove(clientOrigin),
+            challengeCompletionHandler = WTFMove(challengeCompletionHandler)
+        ] (NSURLAuthenticationChallenge *challenge, OSStatus trustResult) mutable {
             if (trustResult == noErr) {
                 challengeCompletionHandler(AuthenticationChallengeDisposition::PerformDefaultHandling, WebCore::Credential());
                 return;
@@ -113,10 +178,10 @@ static void didReceiveServerTrustChallenge(Ref<NetworkConnectionToWebProcess>&& 
         return;
     }
 
-    connectionToWebProcess->networkProcess().protectedAuthenticationManager()->didReceiveAuthenticationChallenge(connectionToWebProcess->sessionID(), pageID, &clientOrigin.topOrigin, challenge.get(), NegotiatedLegacyTLS::No, WTFMove(challengeCompletionHandler));
+    connectionToWebProcess.networkProcess().protectedAuthenticationManager()->didReceiveAuthenticationChallenge(connectionToWebProcess.sessionID(), pageID, &clientOrigin.topOrigin, challenge.get(), NegotiatedLegacyTLS::No, WTFMove(challengeCompletionHandler));
 }
 
-static RetainPtr<nw_parameters_t> createParameters(NetworkConnectionToWebProcess& connectionToWebProcess, URL&& url, WebKit::WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin)
+static RetainPtr<nw_parameters_t> createParameters(NetworkConnectionToWebProcess& connectionToWebProcess, URL&& url, Vector<WebCore::WebTransportHash>&& hashes, WebKit::WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin)
 {
     auto configureWebTransport = [clientOrigin = clientOrigin.clientOrigin.toString()](nw_protocol_options_t options) {
         nw_webtransport_options_set_is_unidirectional(options, false);
@@ -126,11 +191,23 @@ static RetainPtr<nw_parameters_t> createParameters(NetworkConnectionToWebProcess
             softLink_Network_nw_webtransport_options_set_allow_joining_before_ready(options, true);
     };
 
-    auto configureTLS = [connectionToWebProcess = Ref { connectionToWebProcess }, url = WTFMove(url), pageID = WTFMove(pageID), clientOrigin = WTFMove(clientOrigin)] (nw_protocol_options_t options) {
+    auto configureTLS = [
+        connectionToWebProcess = Ref { connectionToWebProcess },
+        url = WTFMove(url),
+        pageID = WTFMove(pageID),
+        hashes = WTFMove(hashes),
+        clientOrigin = WTFMove(clientOrigin)
+    ](nw_protocol_options_t options) {
         RetainPtr securityOptions = adoptNS(nw_tls_copy_sec_protocol_options(options));
         sec_protocol_options_set_peer_authentication_required(securityOptions.get(), true);
-        sec_protocol_options_set_verify_block(securityOptions.get(), makeBlockPtr([connectionToWebProcess = WTFMove(connectionToWebProcess), url = WTFMove(url), pageID = WTFMove(pageID), clientOrigin = WTFMove(clientOrigin)](sec_protocol_metadata_t metadata, sec_trust_t trust, sec_protocol_verify_complete_t completion) mutable {
-            didReceiveServerTrustChallenge(WTFMove(connectionToWebProcess), WTFMove(url), WTFMove(pageID), WTFMove(clientOrigin), trust, completion);
+        sec_protocol_options_set_verify_block(securityOptions.get(), makeBlockPtr([
+            connectionToWebProcess = WTFMove(connectionToWebProcess),
+            url = WTFMove(url),
+            pageID = WTFMove(pageID),
+            hashes = WTFMove(hashes),
+            clientOrigin = WTFMove(clientOrigin)
+        ] (sec_protocol_metadata_t metadata, sec_trust_t trust, sec_protocol_verify_complete_t completion) mutable {
+            didReceiveServerTrustChallenge(connectionToWebProcess, url, hashes, pageID, clientOrigin, trust, completion);
         }).get(), mainDispatchQueueSingleton());
         // FIXME: Pipe client cert auth into this too, probably.
     };
@@ -145,7 +222,7 @@ static RetainPtr<nw_parameters_t> createParameters(NetworkConnectionToWebProcess
 }
 #endif // HAVE(WEB_TRANSPORT)
 
-RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess& connectionToWebProcess, WebTransportSessionIdentifier identifier, URL&& url, WebKit::WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin)
+RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess& connectionToWebProcess, WebTransportSessionIdentifier identifier, URL&& url, WebCore::WebTransportOptions&& options, WebKit::WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin)
 {
 #if HAVE(WEB_TRANSPORT)
     RetainPtr endpoint = adoptNS(nw_endpoint_create_url(url.string().utf8().data()));
@@ -154,7 +231,7 @@ RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectio
         return nullptr;
     }
 
-    RetainPtr parameters = createParameters(connectionToWebProcess, WTFMove(url), WTFMove(pageID), WTFMove(clientOrigin));
+    RetainPtr parameters = createParameters(connectionToWebProcess, WTFMove(url), std::exchange(options.serverCertificateHashes, { }), WTFMove(pageID), WTFMove(clientOrigin));
     if (!parameters) {
         ASSERT_NOT_REACHED();
         return nullptr;
@@ -172,7 +249,7 @@ RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectio
         return nullptr;
     }
 
-    return NetworkTransportSession::create(connectionToWebProcess, identifier, connectionGroup.get(), endpoint.get());
+    return NetworkTransportSession::create(connectionToWebProcess, identifier, WTFMove(options), connectionGroup.get(), endpoint.get());
 #else
     return nullptr;
 #endif // HAVE(WEB_TRANSPORT)
@@ -223,6 +300,12 @@ void NetworkTransportSession::initialize(CompletionHandler<void(bool)>&& complet
 void NetworkTransportSession::createBidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)
 {
     createStream(NetworkTransportStreamType::Bidirectional, WTFMove(completionHandler));
+}
+
+void NetworkTransportSession::getStats(CompletionHandler<void(WebCore::WebTransportConnectionStats&&)>&& completionHandler)
+{
+    // FIXME: Implement.
+    completionHandler({ });
 }
 
 void NetworkTransportSession::createOutgoingUnidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&& completionHandler)

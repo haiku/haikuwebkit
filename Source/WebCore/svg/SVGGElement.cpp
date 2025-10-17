@@ -25,6 +25,7 @@
 #include "LegacyRenderSVGHiddenContainer.h"
 #include "LegacyRenderSVGResource.h"
 #include "LegacyRenderSVGTransformableContainer.h"
+#include "NodeDocument.h"
 #include "RenderSVGHiddenContainer.h"
 #include "RenderSVGTransformableContainer.h"
 #include "SVGNames.h"

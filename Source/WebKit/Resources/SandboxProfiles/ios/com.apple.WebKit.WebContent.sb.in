@@ -28,6 +28,8 @@
 (allow dynamic-code-generation)
 (with-filter (lockdown-mode)
     (deny dynamic-code-generation))
+(with-filter (enhanced-security)
+    (deny dynamic-code-generation))
 
 (with-filter (mac-policy-name "Sandbox")
     (allow system-mac-syscall (mac-syscall-number 5 65)))
@@ -381,8 +383,10 @@
 (when (defined? 'SYS_map_with_linking_np)
     (allow syscall-unix (syscall-number SYS_map_with_linking_np)))
 
-(with-filter (system-attribute apple-internal)
-    (allow syscall-unix (syscall-number SYS_kdebug_trace_string))) ;; Needed for performance sampling, see <rdar://problem/48829655>.
+(with-filter (system-attribute developer-mode)
+    (allow syscall-unix (syscall-unix-developer-mode)))
+(with-filter (require-not (system-attribute developer-mode))
+    (deny syscall-unix (with no-report) (syscall-unix-developer-mode)))
 
 (with-filter (lockdown-mode)
     (deny syscall-unix (with telemetry) (with message "Lockdown mode")

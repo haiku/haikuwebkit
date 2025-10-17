@@ -132,6 +132,7 @@ namespace JSC {
     macro(JSAsyncFromSyncIteratorType, SpecObjectOther) \
     macro(JSPromiseType, SpecPromiseObject) \
     macro(JSPromiseAllContextType, SpecObjectOther) \
+    macro(JSPromiseReactionType, SpecObjectOther) \
     macro(JSMapType, SpecMapObject) \
     macro(JSSetType, SpecSetObject) \
     macro(JSWeakMapType, SpecWeakMapObject) \

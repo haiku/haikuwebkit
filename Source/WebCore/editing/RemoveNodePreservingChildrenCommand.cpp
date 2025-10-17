@@ -27,6 +27,7 @@
 #include "RemoveNodePreservingChildrenCommand.h"
 
 #include "Editing.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include <wtf/Assertions.h>
 

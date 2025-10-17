@@ -272,7 +272,7 @@ public:
     bool shouldSendResourceLoadCallbacks() const { return m_options.sendLoadCallbacks == SendCallbackPolicy::SendCallbacks; }
     DataBufferingPolicy dataBufferingPolicy() const { return m_options.dataBufferingPolicy; }
 
-    bool allowsCaching() const { return m_options.cachingPolicy == CachingPolicy::AllowCaching; }
+    bool allowsCaching() const { return m_options.cachingPolicy == CachingPolicy::AllowCaching || m_options.cachingPolicy == CachingPolicy::AllowCachingPrefetch; }
     const ResourceLoaderOptions& options() const { return m_options; }
 
     virtual void destroyDecodedData() { }

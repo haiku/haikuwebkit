@@ -40,7 +40,9 @@
 #include "RenderSVGModelObject.h"
 #include "ScrollAnchoringController.h"
 #include "ScrollingConstraints.h"
+#include "StylableInlines.h"
 #include "StyleLengthWrapper+DeprecatedCSSValueConversion.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleScrollPadding.h"
 #include "StyleSingleAnimationRange.h"
@@ -376,14 +378,14 @@ void ViewTimeline::cacheCurrentTime()
         float insetEnd = 0;
 
         if (m_insets.start().isAuto())
-            insetStart = Style::evaluate(scrollPadding(PaddingEdge::Start), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+            insetStart = Style::evaluate<float>(scrollPadding(PaddingEdge::Start), scrollContainerSize, Style::ZoomNeeded { });
         else
-            insetStart = Style::evaluate(m_insets.start(), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+            insetStart = Style::evaluate<float>(m_insets.start(), scrollContainerSize, Style::ZoomNeeded { });
 
         if (m_insets.end().isAuto())
-            insetEnd = Style::evaluate(scrollPadding(PaddingEdge::End), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+            insetEnd = Style::evaluate<float>(scrollPadding(PaddingEdge::End), scrollContainerSize, Style::ZoomNeeded { });
         else
-            insetEnd = Style::evaluate(m_insets.end(), scrollContainerSize, 1.0f /* FIXME FIND ZOOM */);
+            insetEnd = Style::evaluate<float>(m_insets.end(), scrollContainerSize, Style::ZoomNeeded { });
 
         StickinessAdjustmentData stickyData;
         if (auto stickyContainer = dynamicDowncast<RenderBoxModelObject>(this->stickyContainer())) {
@@ -583,7 +585,7 @@ std::pair<double, double> ViewTimeline::offsetIntervalForAttachmentRange(const S
     auto offsetForSingleTimelineRange = [&](const auto& rangeToConvert) {
         auto [conversionRangeStart, conversionRangeEnd] = intervalForTimelineRangeName(data, rangeToConvert.name());
         auto conversionRange = conversionRangeEnd - conversionRangeStart;
-        auto convertedValue = Style::evaluate(rangeToConvert.offset(), conversionRange, 1.0f /* FIXME FIND ZOOM */);
+        auto convertedValue = Style::evaluate<float>(rangeToConvert.offset(), conversionRange, Style::ZoomNeeded { });
         auto position = conversionRangeStart + convertedValue;
         return (position - data.rangeStart) / timelineRange;
     };
@@ -604,7 +606,7 @@ std::pair<WebAnimationTime, WebAnimationTime> ViewTimeline::intervalForAttachmen
 
     auto computeTime = [&](const auto& rangeToConvert) {
         auto mappedOffset = mapOffsetToTimelineRange(data, rangeToConvert.name(), [&](const float& subjectRange) {
-            return Style::evaluate(rangeToConvert.offset(), subjectRange, 1.0f /* FIXME FIND ZOOM */);
+            return Style::evaluate<float>(rangeToConvert.offset(), subjectRange, Style::ZoomNeeded { });
         });
         return WebAnimationTime::fromPercentage(mappedOffset * 100);
     };

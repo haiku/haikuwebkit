@@ -1,6 +1,10 @@
 include(CheckCXXSymbolExists)
 
 if (ENABLE_VIDEO OR ENABLE_WEB_AUDIO)
+    list(APPEND WebCore_LIBRARIES
+        GLib::GioUnix
+    )
+
     list(APPEND WebCore_PRIVATE_INCLUDE_DIRECTORIES
         "${WEBCORE_DIR}/Modules/mediastream/gstreamer"
         "${WEBCORE_DIR}/platform/graphics/gstreamer"

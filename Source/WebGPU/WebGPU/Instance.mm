@@ -28,6 +28,7 @@
 
 #import "APIConversions.h"
 #import "Adapter.h"
+#import "DDMesh.h"
 #import "HardwareCapabilities.h"
 #import "PresentationContext.h"
 #import <cstring>
@@ -37,9 +38,25 @@
 #import <wtf/StdLibExtras.h>
 #import <wtf/TZoneMallocInlines.h>
 
+#if ENABLE(WEBGPU_SWIFT)
+#import "WebGPUSwiftInternal.h"
+#endif
+
 namespace WebGPU {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Instance);
+
+static NSArray<id<MTLDevice>>* getDevices()
+{
+#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
+    NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
+#else
+    NSMutableArray<id<MTLDevice>> *devices = [NSMutableArray array];
+    if (id<MTLDevice> device = MTLCreateSystemDefaultDevice())
+        [devices addObject:device];
+#endif
+    return devices;
+}
 
 Ref<Instance> Instance::create(const WGPUInstanceDescriptor& descriptor)
 {
@@ -52,6 +69,11 @@ Instance::Instance(WGPUScheduleWorkBlock scheduleWorkBlock, const MachSendRight*
     : m_webProcessID(webProcessResourceOwner ? std::optional<MachSendRight>(*webProcessResourceOwner) : std::nullopt)
     , m_scheduleWorkBlock(scheduleWorkBlock ? WTFMove(scheduleWorkBlock) : ^(WGPUWorkItem workItem) { defaultScheduleWork(WTFMove(workItem)); })
 {
+#if ENABLE(WEBGPU_SWIFT)
+    m_ddReceiver = [[DDBridgeReceiver alloc] init];
+    [m_ddReceiver setDeviceWithDevice:getDevices()[0]];
+#endif
+    m_ddMeshIdentifier = [[NSUUID alloc] init];
 }
 
 Instance::Instance()
@@ -137,13 +159,7 @@ static NSArray<id<MTLDevice>> *sortedDevices(NSArray<id<MTLDevice>> *devices, WG
 
 void Instance::requestAdapter(const WGPURequestAdapterOptions& options, CompletionHandler<void(WGPURequestAdapterStatus, Ref<Adapter>&&, String&&)>&& callback)
 {
-#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
-    NSArray<id<MTLDevice>> *devices = MTLCopyAllDevices();
-#else
-    NSMutableArray<id<MTLDevice>> *devices = [NSMutableArray array];
-    if (id<MTLDevice> device = MTLCreateSystemDefaultDevice())
-        [devices addObject:device];
-#endif
+    auto devices = getDevices();
 
     // FIXME: Deal with options.compatibleSurface.
 
@@ -201,6 +217,106 @@ void Instance::retainDevice(Device& device, id<MTLCommandBuffer> commandBuffer)
     retainedDeviceInstances.removeIf([&] (auto& pair) {
         return !pair.value.size();
     });
+}
+
+void Instance::updateModel(Texture& texture)
+{
+    m_lastMeshTexture = texture.texture();
+#if ENABLE(WEBGPU_SWIFT)
+    [m_ddReceiver renderWithTexture:m_lastMeshTexture];
+#endif
+}
+
+#if ENABLE(WEBGPU_SWIFT)
+static DDBridgeChainedFloat4x4 *convertFloats(const Vector<simd_float4x4>& fs)
+{
+    auto count = fs.size();
+    if (!count)
+        return nil;
+
+    DDBridgeChainedFloat4x4 *result = [[DDBridgeChainedFloat4x4 alloc] initWithTransform:fs[0]];
+    DDBridgeChainedFloat4x4 *current = result;
+
+    for (uint32_t i = 1; i < count; ++i) {
+        DDBridgeChainedFloat4x4 *next = [[DDBridgeChainedFloat4x4 alloc] initWithTransform:fs[i]];
+        current.next = next;
+    }
+
+    return result;
+}
+
+static DDBridgeMeshPart *convertPart(const WGPUDDMeshPart& part)
+{
+    return [[DDBridgeMeshPart alloc] initWithIndexOffset:part.indexOffset indexCount:part.indexCount topology:part.topology materialIndex:part.materialIndex boundsMin:part.boundsMin boundsMax:part.boundsMax];
+}
+
+static NSArray<DDBridgeSetPart*> *convertParts(const Vector<KeyValuePair<int32_t, WGPUDDMeshPart>>& parts)
+{
+    NSMutableArray<DDBridgeSetPart*>* result = [NSMutableArray array];
+    for (auto& kvp : parts) {
+        DDBridgeSetPart* part = [[DDBridgeSetPart alloc] initWithIndex:kvp.key part:convertPart(kvp.value)];
+        [result addObject:part];
+    }
+    return result;
+}
+
+static NSArray<NSUUID *> *convertMaterialIDs(const Vector<String>& ids)
+{
+    NSMutableArray<NSUUID *>* result = [NSMutableArray array];
+    for (auto& i : ids)
+        [result addObject:[[NSUUID alloc] initWithUUIDString:i.createNSString().get()]];
+    return result;
+}
+
+static NSData* convertUint8s(const Vector<uint8_t>& data)
+{
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+    return [[NSData alloc] initWithBytes:data.span().data() length:data.sizeInBytes()];
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+}
+
+static NSArray<DDBridgeSetRenderFlags*> *convertRenderFlags(const Vector<KeyValuePair<int32_t, uint64_t>>& renderFlags)
+{
+    NSMutableArray<DDBridgeSetRenderFlags*>* result = [NSMutableArray array];
+    for (auto& r : renderFlags)
+        [result addObject:[[DDBridgeSetRenderFlags alloc] initWithIndex:r.key renderFlags:r.value]];
+    return result;
+}
+
+static NSArray<DDBridgeReplaceVertices*> *convertVertices(const Vector<WGPUDDReplaceVertices>& vertices)
+{
+    NSMutableArray<DDBridgeReplaceVertices*>* result = [NSMutableArray array];
+    for (auto& v : vertices)
+        [result addObject:[[DDBridgeReplaceVertices alloc] initWithBufferIndex:v.bufferIndex buffer:convertUint8s(v.buffer)]];
+
+    return result;
+}
+#endif
+
+#if ENABLE(WEBGPU_SWIFT)
+static DDBridgeUpdateMesh *convertDescriptor(WGPUDDUpdateMeshDescriptor& descriptor)
+{
+    DDBridgeUpdateMesh *result = [[DDBridgeUpdateMesh alloc] initWithPartCount:descriptor.partCount
+        parts:convertParts(descriptor.parts)
+        renderFlags:convertRenderFlags(descriptor.renderFlags)
+        vertices:convertVertices(descriptor.vertices)
+        indices:convertUint8s(descriptor.indices)
+        transform:descriptor.transform
+        instanceTransforms:convertFloats(descriptor.instanceTransforms4x4)
+        materialIds:convertMaterialIDs(descriptor.materialIds)];
+
+    return result;
+}
+#endif
+
+void Instance::updateMesh(DDMesh&, WGPUDDUpdateMeshDescriptor& descriptor)
+{
+#if ENABLE(WEBGPU_SWIFT)
+    [m_ddReceiver updateMesh:convertDescriptor(descriptor) identifier:m_ddMeshIdentifier];
+    [m_ddReceiver renderWithTexture:m_lastMeshTexture];
+#else
+    UNUSED_PARAM(descriptor);
+#endif
 }
 
 } // namespace WebGPU
@@ -390,4 +506,9 @@ WGPUBool wgpuXRProjectionLayerIsValid(WGPUXRProjectionLayer layer)
 WGPUBool wgpuXRViewIsValid(WGPUXRView view)
 {
     return WebGPU::protectedFromAPI(view)->isValid();
+}
+
+WGPUDDMesh wgpuDDMeshCreate(WGPUInstance instance, const WGPUDDMeshDescriptor* descriptor)
+{
+    return WebGPU::releaseToAPI(WebGPU::protectedFromAPI(instance)->createMesh(*descriptor));
 }

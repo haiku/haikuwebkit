@@ -640,7 +640,7 @@ void RemoteLayerTreeEventDispatcher::animationsWereRemovedFromNode(RemoteLayerTr
     ASSERT(isMainRunLoop());
     assertIsHeld(m_effectStacksLock);
     if (auto effectStack = m_effectStacks.take(node.layerID()))
-        effectStack->clear(node.layer());
+        effectStack->clear(node.protectedLayer().get());
 }
 
 void RemoteLayerTreeEventDispatcher::updateAnimations()

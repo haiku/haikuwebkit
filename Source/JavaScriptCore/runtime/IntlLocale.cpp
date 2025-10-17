@@ -194,7 +194,7 @@ bool LocaleIDBuilder::setKeywordValue(ASCIILiteral key, StringView value)
 
     ASSERT(value.containsOnlyASCII());
     Vector<char, 32> rawValue(value.length() + 1);
-    value.getCharacters(byteCast<LChar>(rawValue.mutableSpan()));
+    value.getCharacters(byteCast<Latin1Character>(rawValue.mutableSpan()));
     rawValue[value.length()] = '\0';
 
     UErrorCode status = U_ZERO_ERROR;

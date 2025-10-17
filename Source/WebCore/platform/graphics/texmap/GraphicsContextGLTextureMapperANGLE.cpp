@@ -54,6 +54,10 @@
 #include "TextureMapperGCGLPlatformLayer.h"
 #endif
 
+#if OS(ANDROID)
+#include "GraphicsContextGLTextureMapperAndroid.h"
+#endif
+
 #if USE(GBM)
 #include "GraphicsContextGLTextureMapperGBM.h"
 #endif
@@ -140,7 +144,17 @@ RefPtr<PixelBuffer> GraphicsContextGLTextureMapperANGLE::readCompositedResults()
 
 RefPtr<GraphicsContextGL> createWebProcessGraphicsContextGL(const GraphicsContextGLAttributes& attributes)
 {
-#if USE(GBM)
+#if OS(ANDROID) && ENABLE(WEBXR)
+    const auto& eglExtensions = PlatformDisplay::sharedDisplay().eglExtensions();
+    if (eglExtensions.ANDROID_get_native_client_buffer && eglExtensions.ANDROID_image_native_buffer) {
+        if (auto context = GraphicsContextGLTextureMapperAndroid::create(GraphicsContextGLAttributes { attributes }))
+            return context;
+        LOG_ERROR("Failed to create an Android graphics context, the fallback is not expected to work for WebXR content");
+    } else {
+        LOG_ERROR("Cannot create an Android graphics context: extension EGL_ANDROID_get_native_client_buffer %s, ANDROID_image_native_buffer %s; textures fallback not expected to work",
+            eglExtensions.ANDROID_get_native_client_buffer ? "found" : "missing", eglExtensions.ANDROID_image_native_buffer ? "found" : "missing");
+    }
+#elif USE(GBM)
     auto& display = PlatformDisplay::sharedDisplay();
     if (display.type() == PlatformDisplay::Type::GBM && display.eglExtensions().KHR_image_base && display.eglExtensions().EXT_image_dma_buf_import) {
         static const char* disableGBM = getenv("WEBKIT_WEBGL_DISABLE_GBM");

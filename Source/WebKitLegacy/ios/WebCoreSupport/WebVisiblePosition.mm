@@ -34,7 +34,7 @@
 #import <WebCore/Editing.h>
 #import <WebCore/FrameSelection.h>
 #import <WebCore/HTMLTextFormControlElement.h>
-#import <WebCore/Node.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/Position.h>
 #import <WebCore/Range.h>
 #import <WebCore/RenderTextControl.h>

@@ -26,7 +26,9 @@
 #pragma once
 
 #import <WebCore/Color.h>
+#import <WebCore/FontPlatformData.h>
 #import <WebCore/TextAttachmentForSerialization.h>
+#import <pal/spi/cf/CoreTextSPI.h>
 #import <wtf/ObjectIdentifier.h>
 #import <wtf/Platform.h>
 #import <wtf/RetainPtr.h>
@@ -207,12 +209,23 @@ struct WEBCORE_EXPORT AttributedString {
         Color color;
     };
 
+    struct FontWrapper {
+        Ref<Font> font;
+
+        String postScriptName() const;
+        double pointSize() const;
+        CTFontDescriptorOptions fontDescriptorOptions() const;
+        std::optional<WebCore::FontPlatformSerializedAttributes> fontSerializedAttributes() const;
+        static std::optional<FontWrapper> createFromIPCData(const String& postScriptName, double pointSize, const CTFontDescriptorOptions&, const std::optional<WebCore::FontPlatformSerializedAttributes>&);
+    };
+
     struct AttributeValue {
-        Variant<
+
+        using AttributeType = Variant<
             double,
             String,
             URL,
-            Ref<Font>,
+            FontWrapper,
             Vector<String>,
             Vector<double>,
             ParagraphStyle,
@@ -226,7 +239,9 @@ struct WEBCORE_EXPORT AttributedString {
 #endif
             TextAttachmentFileWrapper,
             TextAttachmentMissingImage
-        > value;
+            >;
+
+        AttributeType value;
     };
 
     String string;

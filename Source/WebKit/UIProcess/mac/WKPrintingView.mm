@@ -127,7 +127,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!_autodisplayResumeTimer) {
         _autodisplayResumeTimer = [NSTimer timerWithTimeInterval:0 target:self selector:@selector(_delayedResumeAutodisplayTimerFired) userInfo:nil repeats:NO];
         // The timer must be scheduled on main thread, because printing thread may finish before it fires.
-        [[NSRunLoop mainRunLoop] addTimer:_autodisplayResumeTimer forMode:NSDefaultRunLoopMode];
+        [[NSRunLoop mainRunLoop] addTimer:_autodisplayResumeTimer.get() forMode:NSDefaultRunLoopMode];
     }
 }
 

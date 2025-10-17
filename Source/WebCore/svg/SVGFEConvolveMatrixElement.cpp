@@ -24,6 +24,7 @@
 #include "CommonAtomStrings.h"
 #include "DocumentInlines.h"
 #include "FEConvolveMatrix.h"
+#include "NodeDocument.h"
 #include "NodeName.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGNames.h"

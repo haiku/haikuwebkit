@@ -31,6 +31,7 @@
 #include "IntersectionObserverCallback.h"
 #include "IntersectionObserverEntry.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include <limits>
 #include <wtf/TZoneMallocInlines.h>
 

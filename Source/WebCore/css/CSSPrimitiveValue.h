@@ -126,6 +126,7 @@ public:
 
     static Ref<CSSPrimitiveValue> createCustomIdent(String);
     bool isCustomIdent() const { return primitiveUnitType() == CSSUnitType::CustomIdent; }
+    String customIdent() const { ASSERT(isCustomIdent()); return stringValue(); }
 
     static Ref<CSSPrimitiveValue> createFontFamily(String);
     bool isFontFamily() const { return primitiveUnitType() == CSSUnitType::CSS_FONT_FAMILY; }

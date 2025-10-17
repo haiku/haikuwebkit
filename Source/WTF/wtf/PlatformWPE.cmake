@@ -66,9 +66,7 @@ list(APPEND WTF_PUBLIC_HEADERS
 )
 
 list(APPEND WTF_LIBRARIES
-    ${GLIB_GIO_LIBRARIES}
-    ${GLIB_GOBJECT_LIBRARIES}
-    ${GLIB_LIBRARIES}
+    GLib::Gio
     Threads::Threads
     ZLIB::ZLIB
 )
@@ -84,11 +82,6 @@ endif ()
 if (ANDROID)
     list(APPEND WTF_LIBRARIES Android::Android Android::Log)
 endif ()
-
-list(APPEND WTF_SYSTEM_INCLUDE_DIRECTORIES
-    ${GIO_UNIX_INCLUDE_DIRS}
-    ${GLIB_INCLUDE_DIRS}
-)
 
 if (USE_LIBBACKTRACE)
     list(APPEND WTF_LIBRARIES

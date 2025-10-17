@@ -40,7 +40,7 @@ class IntegrationUtils {
 public:
     IntegrationUtils(const LayoutState&);
 
-    void layoutWithFormattingContextForBox(const ElementBox&, std::optional<LayoutUnit> widthConstraint = { }) const;
+    void layoutWithFormattingContextForBox(const ElementBox&, std::optional<LayoutUnit> widthConstraint = { }, std::optional<LayoutUnit> heightConstraint = { }) const;
     LayoutUnit maxContentWidth(const ElementBox&) const;
     LayoutUnit minContentWidth(const ElementBox&) const;
     LayoutUnit minContentHeight(const ElementBox&) const;

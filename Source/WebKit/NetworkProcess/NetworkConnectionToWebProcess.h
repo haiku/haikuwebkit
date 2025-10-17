@@ -93,6 +93,7 @@ struct CookieStoreGetOptions;
 struct PolicyContainer;
 struct RequestStorageAccessResult;
 struct SameSiteInfo;
+struct WebTransportOptions;
 
 enum class HTTPCookieAcceptPolicy : uint8_t;
 enum class IncludeSecureCookies : bool;
@@ -119,10 +120,10 @@ class WebSharedWorkerServerConnection;
 class WebSharedWorkerServerToContextConnection;
 
 struct CoreIPCAuditToken;
+struct MessageBatchIdentifierType;
 struct NetworkProcessConnectionParameters;
 struct NetworkResourceLoadParameters;
 struct WebTransportSessionIdentifierType;
-struct MessageBatchIdentifierType;
 
 using WebTransportSessionIdentifier = AtomicObjectIdentifier<WebTransportSessionIdentifierType>;
 using MessageBatchIdentifier = ObjectIdentifier<MessageBatchIdentifierType>;
@@ -431,7 +432,7 @@ private:
     void navigatorGetPushPermissionState(URL&& scopeURL, CompletionHandler<void(Expected<uint8_t, WebCore::ExceptionData>&&)>&&);
 #endif
 
-    void initializeWebTransportSession(WebTransportSessionIdentifier, URL&&, WebPageProxyIdentifier&&, WebCore::ClientOrigin&&, CompletionHandler<void(bool)>&&);
+    void initializeWebTransportSession(WebTransportSessionIdentifier, URL&&, WebCore::WebTransportOptions&&, WebPageProxyIdentifier&&, WebCore::ClientOrigin&&, CompletionHandler<void(bool)>&&);
     void destroyWebTransportSession(WebTransportSessionIdentifier);
 
     struct ResourceNetworkActivityTracker {

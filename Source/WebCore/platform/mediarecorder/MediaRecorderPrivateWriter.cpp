@@ -95,11 +95,7 @@ Ref<GenericPromise> MediaRecorderPrivateWriter::close()
 {
     ASSERT(m_lastEndTime.isValid(), "writeFrames must have been called once");
 
-    if (!m_pendingFrames.isEmpty())
-        writeFrames({ }, m_lastEndTime); // Attempt one last time to write the frames we do have.
-
-    m_pendingFrames.clear();
-    return close(m_lastEndTime);
+    return close(std::exchange(m_pendingFrames, { }), m_lastEndTime);
 }
 
 } // namespace WebCore

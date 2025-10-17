@@ -25,7 +25,9 @@ $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/builtins_generate_wrapper_implementation.p
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/builtins_generator.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/builtins_model.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/builtins_templates.py
+$(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/cssmin.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/generate-js-builtins.py
+$(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/jsmin.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/lazywriter.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/make-js-file-arrays.py
 $(JAVASCRIPTCORE_PRIVATE_HEADERS_DIR)/wkbuiltins.py
@@ -1093,6 +1095,7 @@ $(PROJECT_DIR)/Modules/webtransport/WebTransport.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportBidirectionalStream.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportCloseInfo.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportCongestionControl.idl
+$(PROJECT_DIR)/Modules/webtransport/WebTransportConnectionStats.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportDatagramDuplexStream.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportDatagramStats.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportError.idl
@@ -1106,7 +1109,6 @@ $(PROJECT_DIR)/Modules/webtransport/WebTransportReliabilityMode.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportSendStream.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportSendStreamOptions.idl
 $(PROJECT_DIR)/Modules/webtransport/WebTransportSendStreamStats.idl
-$(PROJECT_DIR)/Modules/webtransport/WebTransportStats.idl
 $(PROJECT_DIR)/Modules/webxr/Navigator+WebXR.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRBoundedReferenceSpace.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRFrame+HandInput.idl
@@ -1340,6 +1342,7 @@ $(PROJECT_DIR)/css/html.css
 $(PROJECT_DIR)/css/htmlSwitchControl.css
 $(PROJECT_DIR)/css/make-css-file-arrays.pl
 $(PROJECT_DIR)/css/mathml.css
+$(PROJECT_DIR)/css/mathmlCoreExtras.css
 $(PROJECT_DIR)/css/popover.css
 $(PROJECT_DIR)/css/quirks.css
 $(PROJECT_DIR)/css/scripts/process-css-properties.py

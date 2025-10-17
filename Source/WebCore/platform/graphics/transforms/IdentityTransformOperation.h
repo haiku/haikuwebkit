@@ -41,16 +41,13 @@ public:
     }
 
 private:
-    bool isIdentity() const override { return true; }
-
     bool operator==(const TransformOperation& o) const override
     {
         return isSameType(o);
     }
 
-    bool apply(TransformationMatrix&, const FloatSize&) const override
+    void apply(TransformationMatrix&) const override
     {
-        return false;
     }
 
     Ref<TransformOperation> blend(const TransformOperation*, const BlendingContext&, bool = false) const override

@@ -43,7 +43,7 @@ Ref<FilterOperation> createFilterOperation(const CSS::Contrast& filter, const Bu
 {
     double value;
     if (auto parameter = filter.value)
-        value = evaluate(toStyle(*parameter, state));
+        value = evaluate<double>(toStyle(*parameter, state));
     else
         value = filterFunctionDefaultValue<CSS::ContrastFunction::name>().value;
 

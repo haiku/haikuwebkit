@@ -494,6 +494,16 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
     }
 }
 
+- (void)_setEnhancedSecurityEnabled:(BOOL)enhancedSecurityEnabled
+{
+    _websitePolicies->setEnhancedSecurityEnabled(enhancedSecurityEnabled ? true : false);
+}
+
+- (BOOL)_enhancedSecurityEnabled
+{
+    return _websitePolicies->enhancedSecurityEnabled();
+}
+
 - (void)_setCaptivePortalModeEnabled:(BOOL)enabled
 {
 #if PLATFORM(IOS_FAMILY)

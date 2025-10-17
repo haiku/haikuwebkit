@@ -136,7 +136,6 @@
 #include "RenderView.h"
 #include "SVGClipPathElement.h"
 #include "SVGNames.h"
-#include "ScaleTransformOperation.h"
 #include "ScrollAnimator.h"
 #include "ScrollSnapOffsetsInfo.h"
 #include "Scrollbar.h"
@@ -149,10 +148,11 @@
 #include "StyleLengthWrapper+Platform.h"
 #include "StyleProperties.h"
 #include "StyleResolver.h"
+#include "StyleScaleTransformFunction.h"
+#include "StyleTranslateTransformFunction.h"
 #include "Styleable.h"
 #include "TransformOperationData.h"
 #include "TransformationMatrix.h"
-#include "TranslateTransformOperation.h"
 #include "ViewTransition.h"
 #include "WheelEventTestMonitor.h"
 #include <stdio.h>
@@ -2292,7 +2292,7 @@ FloatPoint RenderLayer::perspectiveOrigin() const
 {
     if (!renderer().hasTransformRelatedProperty())
         return { };
-    return Style::evaluate(renderer().style().perspectiveOrigin(), renderer().transformReferenceBoxRect(renderer().style()).size(), 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluate<FloatPoint>(renderer().style().perspectiveOrigin(), renderer().transformReferenceBoxRect(renderer().style()).size(), Style::ZoomNeeded { });
 }
 
 static inline bool isContainerForPositioned(RenderLayer& layer, PositionType position, bool establishesTopLayer)
@@ -2935,10 +2935,15 @@ LayoutSize RenderLayer::offsetFromAncestor(const RenderLayer* ancestorLayer, Col
     return toLayoutSize(convertToLayerCoords(ancestorLayer, LayoutPoint(), adjustForColumns));
 }
 
-bool RenderLayer::shouldTryToScrollForScrollIntoView() const
+bool RenderLayer::shouldTryToScrollForScrollIntoView(const ScrollRectToVisibleOptions& options) const
 {
     if (!renderer().isRenderBox() || !renderer().hasNonVisibleOverflow())
         return false;
+
+    if (options.allowScrollingOverflowHidden == AllowScrollingOverflowHidden::No) {
+        if (renderer().style().overflowX() == Overflow::Hidden && renderer().style().overflowY() == Overflow::Hidden)
+            return false;
+    }
 
     // Don't scroll to reveal an overflow layer that is restricted by the -webkit-line-clamp property.
     // FIXME: Is this still needed? It used to be relevant for Safari RSS.
@@ -2975,8 +2980,8 @@ LayoutSize RenderLayer::minimumSizeForResizing(float zoomFactor) const
 {
     // Use the resizer size as the strict minimum size
     auto resizerRect = overflowControlsRects().resizer;
-    LayoutUnit minWidth = Style::evaluateMinimum(renderer().style().minWidth(), renderer().containingBlock()->width(), 1.0f /* FIXME FIND ZOOM */);
-    LayoutUnit minHeight = Style::evaluateMinimum(renderer().style().minHeight(), renderer().containingBlock()->height(), 1.0f /* FIXME FIND ZOOM */);
+    auto minWidth = Style::evaluateMinimum<LayoutUnit>(renderer().style().minWidth(), renderer().containingBlock()->width(), Style::ZoomNeeded { });
+    auto minHeight = Style::evaluateMinimum<LayoutUnit>(renderer().style().minHeight(), renderer().containingBlock()->height(), Style::ZoomNeeded { });
     minWidth = std::max(LayoutUnit(minWidth / zoomFactor), LayoutUnit(resizerRect.width()));
     minHeight = std::max(LayoutUnit(minHeight / zoomFactor), LayoutUnit(resizerRect.height()));
     return LayoutSize(minWidth, minHeight);
@@ -6307,33 +6312,38 @@ RenderStyle RenderLayer::createReflectionStyle()
     
     auto reflection = renderer().style().boxReflect().tryReflection();
 
+    // FIXME: This should be removed when bare LengthPercentage<> is moved off of LengthWrapperBase.
+    auto toTranslateLengthPercentage = [](const auto& boxReflectOffset) {
+        return WTF::switchOn(boxReflectOffset, [](const auto& value) { return Style::TranslateLengthPercentage { value }; });
+    };
+
     switch (reflection->direction) {
     case ReflectionDirection::Below:
-        newStyle.setTransform(Style::Transform {
-            Style::TransformFunction { TranslateTransformOperation::create(Length(0, LengthType::Fixed), Length(100., LengthType::Percent), TransformOperation::Type::Translate) },
-            Style::TransformFunction { TranslateTransformOperation::create(Length(0, LengthType::Fixed), Style::toPlatform(reflection->offset), TransformOperation::Type::Translate) },
-            Style::TransformFunction { ScaleTransformOperation::create(1.0, -1.0, ScaleTransformOperation::Type::Scale) },
+        newStyle.setTransform({
+            { Style::TranslateTransformFunction::create(0_css_px, 100_css_percentage, Style::TransformFunctionType::Translate) },
+            { Style::TranslateTransformFunction::create(0_css_px, toTranslateLengthPercentage(reflection->offset), Style::TransformFunctionType::Translate) },
+            { Style::ScaleTransformFunction::create(1_css_number, -1_css_number, Style::TransformFunctionType::Scale) },
         });
         break;
     case ReflectionDirection::Above:
-        newStyle.setTransform(Style::Transform {
-            Style::TransformFunction { ScaleTransformOperation::create(1.0, -1.0, ScaleTransformOperation::Type::Scale) },
-            Style::TransformFunction { TranslateTransformOperation::create(Length(0, LengthType::Fixed), Length(100., LengthType::Percent), TransformOperation::Type::Translate) },
-            Style::TransformFunction { TranslateTransformOperation::create(Length(0, LengthType::Fixed), Style::toPlatform(reflection->offset), TransformOperation::Type::Translate) },
+        newStyle.setTransform({
+            { Style::ScaleTransformFunction::create(1_css_number, -1_css_number, Style::TransformFunctionType::Scale) },
+            { Style::TranslateTransformFunction::create(0_css_px, 100_css_percentage, Style::TransformFunctionType::Translate) },
+            { Style::TranslateTransformFunction::create(0_css_px, toTranslateLengthPercentage(reflection->offset), Style::TransformFunctionType::Translate) },
         });
         break;
     case ReflectionDirection::Right:
-        newStyle.setTransform(Style::Transform {
-            Style::TransformFunction { TranslateTransformOperation::create(Length(100., LengthType::Percent), Length(0, LengthType::Fixed), TransformOperation::Type::Translate) },
-            Style::TransformFunction { TranslateTransformOperation::create(Style::toPlatform(reflection->offset), Length(0, LengthType::Fixed), TransformOperation::Type::Translate) },
-            Style::TransformFunction { ScaleTransformOperation::create(-1.0, 1.0, ScaleTransformOperation::Type::Scale) },
+        newStyle.setTransform({
+            { Style::TranslateTransformFunction::create(100_css_percentage, 0_css_px, Style::TransformFunctionType::Translate) },
+            { Style::TranslateTransformFunction::create(toTranslateLengthPercentage(reflection->offset), 0_css_px, Style::TransformFunctionType::Translate) },
+            { Style::ScaleTransformFunction::create(-1_css_number, 1_css_number, Style::TransformFunctionType::Scale) },
         });
         break;
     case ReflectionDirection::Left:
-        newStyle.setTransform(Style::Transform {
-            Style::TransformFunction { ScaleTransformOperation::create(-1.0, 1.0, ScaleTransformOperation::Type::Scale) },
-            Style::TransformFunction { TranslateTransformOperation::create(Length(100., LengthType::Percent), Length(0, LengthType::Fixed), TransformOperation::Type::Translate) },
-            Style::TransformFunction { TranslateTransformOperation::create(Style::toPlatform(reflection->offset), Length(0, LengthType::Fixed), TransformOperation::Type::Translate) },
+        newStyle.setTransform({
+            { Style::ScaleTransformFunction::create(-1_css_number, 1_css_number, Style::TransformFunctionType::Scale) },
+            { Style::TranslateTransformFunction::create(100_css_percentage, 0_css_px, Style::TransformFunctionType::Translate) },
+            { Style::TranslateTransformFunction::create(toTranslateLengthPercentage(reflection->offset), 0_css_px, Style::TransformFunctionType::Translate) },
         });
         break;
     }

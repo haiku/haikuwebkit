@@ -251,7 +251,7 @@ static SkSamplingOptions toSkSamplingOptions(InterpolationQuality quality)
     return SkSamplingOptions(SkFilterMode::kLinear, SkMipmapMode::kNearest);
 }
 
-void GraphicsContextSkia::drawNativeImageInternal(NativeImage& nativeImage, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
+void GraphicsContextSkia::drawNativeImage(NativeImage& nativeImage, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
 {
     auto image = nativeImage.platformImage();
     if (!image)

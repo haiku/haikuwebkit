@@ -44,7 +44,7 @@ public:
     {
         return adoptRef(*new CoordinatedSceneState());
     }
-    virtual ~CoordinatedSceneState();
+    ~CoordinatedSceneState();
 
     WebCore::CoordinatedPlatformLayer& rootLayer() const { return m_rootLayer.get(); }
 

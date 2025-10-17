@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <WebCore/AcceleratedEffectOffsetDistance.h>
 #include <WebCore/StyleLengthWrapper.h>
 
 namespace WebCore {
@@ -33,7 +34,24 @@ namespace Style {
 // https://drafts.fxtf.org/motion/#propdef-offset-distance
 struct OffsetDistance : LengthWrapperBase<LengthPercentage<>> {
     using Base::Base;
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    explicit OffsetDistance(AcceleratedEffectOffsetDistance distance) : Base { Fixed { distance.value } } { }
+#endif
 };
+
+// MARK: - Evaluation
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+
+template<> struct Evaluation<OffsetDistance, AcceleratedEffectOffsetDistance> {
+    auto operator()(const OffsetDistance& value, float pathLength, ZoomNeeded token) -> AcceleratedEffectOffsetDistance
+    {
+        return { .value = evaluate<float>(value, pathLength, token) };
+    }
+};
+
+#endif
 
 } // namespace Style
 } // namespace WebCore

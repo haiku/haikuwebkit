@@ -429,8 +429,8 @@ public:
     WEBCORE_EXPORT Document* ownerDocument() const;
 
     // Returns the document associated with this node. A document node returns itself.
-    inline Document& document() const; // Defined in NodeInlines.h
-    inline Ref<Document> protectedDocument() const; // Defined in NodeInlines.h
+    inline Document& document() const; // Defined in NodeDocument.h
+    inline Ref<Document> protectedDocument() const; // Defined in NodeDocument.h
 
     TreeScope& treeScope() const
     {

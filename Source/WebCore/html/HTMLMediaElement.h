@@ -1155,6 +1155,7 @@ private:
     bool isWatchtimeTimerActive() const;
     void startWatchtimeTimer();
     void pauseWatchtimeTimer();
+    void fireAndRestartWatchtimeTimer();
     void invalidateWatchtimeTimer();
     void watchtimeTimerFired();
     void startBufferingStopwatch();

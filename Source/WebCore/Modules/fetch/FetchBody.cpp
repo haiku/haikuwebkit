@@ -328,7 +328,7 @@ FetchBody::TakenData FetchBody::take()
     return nullptr;
 }
 
-FetchBody FetchBody::clone()
+FetchBody FetchBody::clone(JSDOMGlobalObject& globalObject)
 {
     FetchBody clone(m_consumer.clone());
 
@@ -345,7 +345,7 @@ FetchBody FetchBody::clone()
     else if (isURLSearchParams())
         clone.m_data = protectedURLSearchParamsBody();
     else if (RefPtr readableStream = m_readableStream) {
-        auto clones = readableStream->tee(true);
+        auto clones = readableStream->tee(globalObject, true);
         ASSERT(!clones.hasException());
         if (!clones.hasException()) {
             auto pair = clones.releaseReturnValue();

@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.join(top_level_directory, "Tools", "glib"))
 import common
 from webkitpy.common.host import Host
 from webkitpy.common.test_expectations import TestExpectations
+from webkitpy.port.monadodriver import MonadoDriver  # noqa: E402
 from webkitpy.port.westondriver import WestonDriver
 from webkitcorepy import Timeout
 
@@ -48,6 +49,7 @@ class TestRunner(object):
         self._port = Host().port_factory.get(port)
         self._driver = self._create_driver()
         self._weston = None
+        self._monado = None
 
         if self._options.debug:
             self._build_type = "Debug"
@@ -137,6 +139,8 @@ class TestRunner(object):
         if self._weston:
             self._weston.stop()
             self._weston = None
+        if self._monado:
+            self._monado.stop()
 
     def _test_cases_to_skip(self, test_program):
         if self._options.skipped_action != 'skip':
@@ -188,11 +192,16 @@ class TestRunner(object):
     def _run_test_glib(self, test_program, subtests, skipped_test_cases):
         timeout = self._options.timeout
         wpe_legacy_api = self._use_wpe_legacy_api()
-        env = self._weston_env if self.is_wpe_platform_wayland_test(test_program) else self._test_env
-        if self.is_wpe_platform_test(test_program):
-            # WPE Platform tests can run without swrast since nothing is rendered.
-            env = dict(env)
-            env.pop('LIBGL_ALWAYS_SOFTWARE')
+        if self.is_webxr_test(test_program):
+            env = self._monado_env | self._test_env
+            # WebXR tests use a null compositor
+            env.pop('LIBGL_ALWAYS_SOFTWARE', None)
+        else:
+            env = self._weston_env if self.is_wpe_platform_wayland_test(test_program) else self._test_env
+            if self.is_wpe_platform_test(test_program):
+                # WPE Platform tests can run without swrast since nothing is rendered.
+                env = dict(env)
+                env.pop('LIBGL_ALWAYS_SOFTWARE')
 
         def is_slow_test(test, subtest):
             return self._expectations.is_slow(test, subtest)
@@ -242,6 +251,7 @@ class TestRunner(object):
                 prefix = line
                 continue
             else:
+                line = line.partition('#')[0]
                 test_name = prefix + line.strip()
                 if not test_name in skipped_test_cases:
                     tests.append(test_name)
@@ -305,6 +315,9 @@ class TestRunner(object):
     def is_wpe_platform_wayland_test(self, test_program):
         raise NotImplementedError
 
+    def is_webxr_test(self, test_program):
+        return "WebXR" in os.path.basename(test_program)
+
     def _run_test(self, test_program, subtests, skipped_test_cases):
         if self.is_glib_test(test_program):
             return self._run_test_glib(test_program, subtests, skipped_test_cases)
@@ -358,11 +371,14 @@ class TestRunner(object):
         self._tests = [test for test in self._tests if self._should_run_test_program(test)]
         number_of_qt_tests = 0
         number_of_wpe_platform_wayland_tests = 0
+        number_of_webxr_tests = 0
         for test in self._tests:
             if self.is_qt_test(test):
                 number_of_qt_tests += 1
             elif self.is_wpe_platform_wayland_test(test):
                 number_of_wpe_platform_wayland_tests += 1
+            elif self.is_webxr_test(test):
+                number_of_webxr_tests += 1
 
         # Skip Qt tests if there is no GPU <https://webkit.org/b/264458>
         if number_of_qt_tests > 0 and not self._has_gpu_available():
@@ -378,6 +394,15 @@ class TestRunner(object):
                 # Skip tests if Weston is not available.
                 sys.stderr.write("WARNING: Skipping %d WPE Platform Wayland tests because Weston couldn't be found.\n" % number_of_wpe_platform_wayland_tests)
                 self._tests = [test for test in self._tests if not self.is_wpe_platform_wayland_test(test)]
+
+        if number_of_webxr_tests > 0:
+            if MonadoDriver.check_driver(self._port):
+                self._monado = MonadoDriver(self._port, worker_number=0, pixel_tests=False, no_timeout=True)
+                self._monado_env = self._monado._setup_environ_for_test()
+            else:
+                # Skip WebXR tests if monado is not available
+                sys.stderr.write("WARNING: Skipping %d WebXR tests because monado couldn't be found.\n" % number_of_webxr_tests)
+                self._tests = [test for test in self._tests if not self.is_webxr_test(test)]
 
         number_of_executed_tests = len(self._tests)
 

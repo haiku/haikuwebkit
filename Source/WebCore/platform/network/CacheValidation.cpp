@@ -29,6 +29,7 @@
 #include "CookieJar.h"
 #include "HTTPHeaderMap.h"
 #include "NetworkStorageSession.h"
+#include "ResourceLoaderOptions.h"
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
 #include "SameSiteInfo.h"
@@ -147,11 +148,11 @@ Seconds computeFreshnessLifetimeForHTTPFamily(const ResourceResponse& response, 
     }
 }
 
-void updateRedirectChainStatus(RedirectChainCacheStatus& redirectChainCacheStatus, const ResourceResponse& response)
+void updateRedirectChainStatus(RedirectChainCacheStatus& redirectChainCacheStatus, const ResourceResponse& response, const ResourceLoaderOptions& options)
 {
     if (redirectChainCacheStatus.status == RedirectChainCacheStatus::Status::NotCachedRedirection)
         return;
-    if (response.cacheControlContainsNoStore() || response.cacheControlContainsNoCache() || response.cacheControlContainsMustRevalidate()) {
+    if (options.cachingPolicy != CachingPolicy::AllowCachingPrefetch && (response.cacheControlContainsNoStore() || response.cacheControlContainsNoCache() || response.cacheControlContainsMustRevalidate())) {
         redirectChainCacheStatus.status = RedirectChainCacheStatus::Status::NotCachedRedirection;
         return;
     }

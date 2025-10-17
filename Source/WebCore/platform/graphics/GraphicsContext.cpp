@@ -312,11 +312,6 @@ RefPtr<ImageBuffer> GraphicsContext::createAlignedImageBuffer(const FloatRect& r
     return createScaledImageBuffer(rect, scaleFactor(), colorSpace, renderingModeForCompatibleBuffer(), renderingMethod);
 }
 
-void GraphicsContext::drawNativeImage(NativeImage& image, const FloatRect& destination, const FloatRect& source, ImagePaintingOptions options)
-{
-    image.draw(*this, destination, source, options);
-}
-
 void GraphicsContext::drawSystemImage(SystemImage& systemImage, const FloatRect& destinationRect)
 {
     systemImage.draw(*this, destinationRect);
@@ -380,7 +375,7 @@ void GraphicsContext::drawImageBuffer(ImageBuffer& image, const FloatRect& desti
     FloatRect sourceScaled = source;
     sourceScaled.scale(image.resolutionScale());
     if (auto nativeImage = nativeImageForDrawing(image))
-        drawNativeImageInternal(*nativeImage, destination, sourceScaled, options);
+        drawNativeImage(*nativeImage, destination, sourceScaled, options);
 }
 
 void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const FloatPoint& destination, ImagePaintingOptions imagePaintingOptions)
@@ -408,7 +403,7 @@ void GraphicsContext::drawConsumingImageBuffer(RefPtr<ImageBuffer> image, const 
     FloatRect scaledSource = source;
     scaledSource.scale(image->resolutionScale());
     if (auto nativeImage = ImageBuffer::sinkIntoNativeImage(WTFMove(image)))
-        drawNativeImageInternal(*nativeImage, destination, scaledSource, options);
+        drawNativeImage(*nativeImage, destination, scaledSource, options);
 }
 
 void GraphicsContext::drawFilteredImageBuffer(ImageBuffer* sourceImage, const FloatRect& sourceImageRect, Filter& filter, FilterResults& results)

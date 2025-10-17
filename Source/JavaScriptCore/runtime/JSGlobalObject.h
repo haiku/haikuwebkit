@@ -94,6 +94,7 @@ class JSModuleRecord;
 class JSPromise;
 class JSPromiseConstructor;
 class JSPromisePrototype;
+class JSPromiseReaction;
 class JSTypedArrayViewConstructor;
 class JSTypedArrayViewPrototype;
 class MapIteratorPrototype;
@@ -383,6 +384,7 @@ public:
     WriteBarrierStructureID m_setIteratorStructure;
     WriteBarrierStructureID m_wrapForValidIteratorStructure;
     WriteBarrierStructureID m_promiseAllContextStructure;
+    WriteBarrierStructureID m_promiseReactionStructure;
     WriteBarrierStructureID m_regExpMatchesArrayStructure;
     WriteBarrierStructureID m_regExpMatchesArrayWithIndicesStructure;
     WriteBarrierStructureID m_regExpMatchesIndicesArrayStructure;
@@ -909,6 +911,7 @@ public:
     Structure* setIteratorStructure() const { return m_setIteratorStructure.get(); }
     Structure* wrapForValidIteratorStructure() const { return m_wrapForValidIteratorStructure.get(); }
     Structure* promiseAllContextStructure() const { return m_promiseAllContextStructure.get(); }
+    Structure* promiseReactionStructure() const { return m_promiseReactionStructure.get(); }
     Structure* stringObjectStructure() const { return m_stringObjectStructure.get(); }
     Structure* symbolObjectStructure() const { return m_symbolObjectStructure.get(); }
     Structure* iteratorResultObjectStructure() const { return m_iteratorResultObjectStructure.get(this); }

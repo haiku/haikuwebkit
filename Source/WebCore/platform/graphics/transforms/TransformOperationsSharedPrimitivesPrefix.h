@@ -38,19 +38,20 @@ class TransformOperations;
 // the keyframes of an animation. After `update()` is called with the transform function range
 // of every keyframe, `primitives()` will return the prefix of primitives that are shared
 // by all keyframes passed to `update()`.
-class TransformOperationsSharedPrimitivesPrefix final {
+template<typename PrimitiveType> class TransformOperationsSharedPrimitivesPrefix final {
 public:
     void update(const auto&);
 
     bool hadIncompatibleTransformFunctions() { return m_indexOfFirstMismatch.has_value(); }
-    const Vector<TransformOperation::Type>& primitives() const { return m_primitives; }
+    const Vector<PrimitiveType>& primitives() const { return m_primitives; }
 
 private:
     std::optional<size_t> m_indexOfFirstMismatch;
-    Vector<TransformOperation::Type> m_primitives;
+    Vector<PrimitiveType> m_primitives;
 };
 
-void TransformOperationsSharedPrimitivesPrefix::update(const auto& operations)
+template<typename PrimitiveType>
+void TransformOperationsSharedPrimitivesPrefix<PrimitiveType>::update(const auto& operations)
 {
     size_t maxIteration = operations.size();
     if (m_indexOfFirstMismatch.has_value())

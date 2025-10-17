@@ -132,6 +132,11 @@ enum class DifferenceOperation : bool {
     Until
 };
 
+enum class AddOrSubtract : bool {
+    Add,
+    Subtract
+};
+
 double nonNegativeModulo(double x, double y);
 WTF::String ellipsizeAt(unsigned maxLength, const WTF::String&);
 PropertyName temporalUnitPluralPropertyName(VM&, TemporalUnit);
@@ -173,7 +178,7 @@ constexpr Int128 lengthInNanoseconds(TemporalUnit unit)
     case TemporalUnit::Hour:
         return 60 * lengthInNanoseconds(TemporalUnit::Minute);
     case TemporalUnit::Day:
-        return 24 * lengthInNanoseconds(TemporalUnit::Day);
+        return 24 * lengthInNanoseconds(TemporalUnit::Hour);
     default:
         break;
     }

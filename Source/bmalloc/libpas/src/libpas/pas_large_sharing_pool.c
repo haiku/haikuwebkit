@@ -41,6 +41,7 @@
 #include "pas_physical_memory_transaction.h"
 #include "pas_stream.h"
 #include "pas_utility_heap.h"
+#include "pas_zero_memory.h"
 
 bool pas_large_sharing_pool_enabled = true;
 pas_red_black_tree pas_large_sharing_tree = PAS_RED_BLACK_TREE_INITIALIZER;

@@ -26,11 +26,11 @@
 #pragma once
 
 #include "BufferIdentifierSet.h"
+#include "ImageBufferSetIdentifier.h"
 #include "MarkSurfacesAsVolatileRequestIdentifier.h"
 #include "PrepareBackingStoreBuffersData.h"
 #include "RemoteGraphicsContextProxy.h"
 #include "RemoteImageBufferSetConfiguration.h"
-#include "RemoteImageBufferSetIdentifier.h"
 #include "RenderingUpdateID.h"
 #include "WorkQueueMessageReceiver.h"
 #include <wtf/CheckedRef.h>
@@ -66,7 +66,7 @@ public:
     ThreadSafeImageBufferSetFlusher() = default;
     virtual ~ThreadSafeImageBufferSetFlusher() = default;
     // Returns true if flush succeeded, false if it failed.
-    virtual bool flushAndCollectHandles(HashMap<RemoteImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&) = 0;
+    virtual bool flushAndCollectHandles(HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&) = 0;
 };
 
 class ImageBufferSetClient {
@@ -93,7 +93,7 @@ public:
 // IPC call.
 // FIXME: It would be nice if this could actually be a subclass of ImageBufferSet, but
 // probably can't while it uses batching for prepare and volatility.
-class RemoteImageBufferSetProxy : public IPC::WorkQueueMessageReceiver<WTF::DestructionThread::MainRunLoop>, public Identified<RemoteImageBufferSetIdentifier> {
+class RemoteImageBufferSetProxy : public IPC::WorkQueueMessageReceiver<WTF::DestructionThread::MainRunLoop>, public Identified<ImageBufferSetIdentifier> {
 public:
     static Ref<RemoteImageBufferSetProxy> create(RemoteRenderingBackendProxy&, ImageBufferSetClient&);
     ~RemoteImageBufferSetProxy();

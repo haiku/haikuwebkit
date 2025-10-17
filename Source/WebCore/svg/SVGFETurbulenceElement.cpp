@@ -22,6 +22,7 @@
 #include "config.h"
 #include "SVGFETurbulenceElement.h"
 
+#include "NodeDocument.h"
 #include "NodeName.h"
 #include "NodeInlines.h"
 #include "SVGDocumentExtensions.h"

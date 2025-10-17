@@ -31,6 +31,7 @@
 #include "CommandEncoder.h"
 #include "CommandsMixin.h"
 #include "ComputePassEncoder.h"
+#include "DDModelTypes.h"
 #include "Device.h"
 #include "IsValidToUseWith.h"
 #include "Logging.h"

@@ -47,6 +47,7 @@
 #include "pas_system_heap.h"
 #include "pas_thread_local_cache.h"
 #include "pas_thread_local_cache_node.h"
+#include "pas_zero_memory.h"
 
 PAS_BEGIN_EXTERN_C;
 

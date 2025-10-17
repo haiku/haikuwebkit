@@ -100,10 +100,10 @@ static SkFontStyle skiaFontStyle(const FontDescription& fontDescription)
         skWidth = SkFontStyle::kUltraExpanded_Width;
 
     SkFontStyle::Slant skSlant = SkFontStyle::kUpright_Slant;
-    if (auto italic = fontDescription.italic()) {
-        if (italic.value() > normalItalicValue() && italic.value() <= italicThreshold())
+    if (auto fontStyleSlope = fontDescription.fontStyleSlope()) {
+        if (fontStyleSlope.value() > normalItalicValue() && fontStyleSlope.value() <= italicThreshold())
             skSlant = SkFontStyle::kItalic_Slant;
-        else if (italic.value() > italicThreshold())
+        else if (fontStyleSlope.value() > italicThreshold())
             skSlant = SkFontStyle::kOblique_Slant;
     }
 
@@ -118,7 +118,7 @@ static std::pair<bool, bool> computeSynthesisProperties(const SkTypeface& typefa
     bool allowsSyntheticBold = fontDescription.hasAutoFontSynthesisWeight() && !synthesisOptions.contains(FontLookupOptions::DisallowBoldSynthesis);
     bool syntheticBold = allowsSyntheticBold && isFontWeightBold(fontDescription.weight()) && !typeface.isBold();
     bool allowsSyntheticOblique = fontDescription.hasAutoFontSynthesisStyle() && !synthesisOptions.contains(FontLookupOptions::DisallowObliqueSynthesis);
-    bool syntheticOblique = allowsSyntheticOblique && isItalic(fontDescription.italic()) && !typeface.isItalic();
+    bool syntheticOblique = allowsSyntheticOblique && isItalic(fontDescription.fontStyleSlope()) && !typeface.isItalic();
     return { syntheticBold, syntheticOblique };
 }
 

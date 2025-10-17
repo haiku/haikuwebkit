@@ -84,6 +84,7 @@ private:
     void stop() final;
 
     SWClientConnection& swConnection();
+    Ref<SWClientConnection> protectedSWConnection();
 
     ServiceWorkerData m_data;
     bool m_isStopped { false };

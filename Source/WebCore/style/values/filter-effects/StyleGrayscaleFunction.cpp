@@ -43,7 +43,7 @@ Ref<FilterOperation> createFilterOperation(const CSS::Grayscale& filter, const B
 {
     double value;
     if (auto parameter = filter.value)
-        value = evaluate(toStyle(*parameter, state));
+        value = evaluate<double>(toStyle(*parameter, state));
     else
         value = filterFunctionDefaultValue<CSS::GrayscaleFunction::name>().value;
 

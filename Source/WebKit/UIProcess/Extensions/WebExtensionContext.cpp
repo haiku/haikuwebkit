@@ -33,12 +33,14 @@
 #include "APIContentRuleListStore.h"
 #include "InjectUserScriptImmediately.h"
 #include "Logging.h"
+#include "WebExtensionConstants.h"
 #include "WebExtensionContextParameters.h"
 #include "WebExtensionContextProxyMessages.h"
 #include "WebExtensionController.h"
 #include "WebExtensionPermission.h"
 #include "WebPageProxy.h"
 #include <WebCore/LocalizedStrings.h>
+#include <WebCore/TextResourceDecoder.h>
 #include <wtf/HashMap.h>
 #include <wtf/NeverDestroyed.h>
 
@@ -112,6 +114,139 @@ Vector<Ref<API::Error>> WebExtensionContext::errors()
     auto array = protectedExtension()->errors();
     array.appendVector(m_errors);
     return array;
+}
+
+String WebExtensionContext::stateFilePath() const
+{
+    if (!storageIsPersistent())
+        return nullString();
+    return FileSystem::pathByAppendingComponent(storageDirectory(), plistFileName());
+}
+
+void WebExtensionContext::setBaseURL(URL&& url)
+{
+    ASSERT(!isLoaded());
+    if (isLoaded())
+        return;
+
+    if (!url.isValid())
+        return;
+
+    m_baseURL = URL { url, "/"_s };
+}
+
+bool WebExtensionContext::isURLForThisExtension(const URL& url) const
+{
+    return url.isValid() && protocolHostAndPortAreEqual(baseURL(), url);
+}
+
+bool WebExtensionContext::isURLForAnyExtension(const URL& url)
+{
+    return url.isValid() && WebExtensionMatchPattern::extensionSchemes().contains(url.protocol().toString());
+}
+
+void WebExtensionContext::setUniqueIdentifier(String&& uniqueIdentifier)
+{
+    ASSERT(!isLoaded());
+    if (isLoaded())
+        return;
+
+    m_customUniqueIdentifier = !uniqueIdentifier.isEmpty();
+
+    if (uniqueIdentifier.isEmpty())
+        uniqueIdentifier = WTF::UUID::createVersion4().toString();
+
+    m_uniqueIdentifier = uniqueIdentifier;
+}
+
+RefPtr<WebExtensionLocalization> WebExtensionContext::localization()
+{
+    if (!m_localization)
+        m_localization = WebExtensionLocalization::create(protectedExtension()->localization()->localizationJSON(), baseURL().host().toString());
+    return m_localization;
+}
+
+RefPtr<API::Data> WebExtensionContext::localizedResourceData(const RefPtr<API::Data>& resourceData, const String& mimeType)
+{
+    if (!equalLettersIgnoringASCIICase(mimeType, "text/css"_s) || !resourceData)
+        return resourceData;
+
+    RefPtr decoder = WebCore::TextResourceDecoder::create(mimeType, PAL::UTF8Encoding());
+    auto stylesheetContents = decoder->decode(resourceData->span());
+
+    auto localizedString = localizedResourceString(stylesheetContents, mimeType);
+    if (localizedString == stylesheetContents)
+        return resourceData;
+
+    return API::Data::create(localizedString.utf8().span());
+}
+
+String WebExtensionContext::localizedResourceString(const String& resourceContents, const String& mimeType)
+{
+    if (!equalLettersIgnoringASCIICase(mimeType, "text/css"_s) || resourceContents.isEmpty() || !resourceContents.contains("__MSG_"_s))
+        return resourceContents;
+
+    RefPtr localization = this->localization();
+    if (!localization)
+        return resourceContents;
+
+    return localization->localizedStringForString(resourceContents);
+}
+
+void WebExtensionContext::setUnsupportedAPIs(HashSet<String>&& unsupported)
+{
+    ASSERT(!isLoaded());
+    if (isLoaded())
+        return;
+
+    m_unsupportedAPIs = WTFMove(unsupported);
+}
+
+URL WebExtensionContext::optionsPageURL() const
+{
+    RefPtr extension = m_extension;
+    if (!extension->hasOptionsPage())
+        return { };
+    return { m_baseURL, extension->optionsPagePath() };
+}
+
+URL WebExtensionContext::overrideNewTabPageURL() const
+{
+    RefPtr extension = m_extension;
+    if (!extension->hasOverrideNewTabPage())
+        return { };
+    return { m_baseURL, extension->overrideNewTabPagePath() };
+}
+
+void WebExtensionContext::setHasAccessToPrivateData(bool hasAccess)
+{
+    if (m_hasAccessToPrivateData == hasAccess)
+        return;
+
+    m_hasAccessToPrivateData = hasAccess;
+
+    if (!safeToInjectContent())
+        return;
+
+    if (m_hasAccessToPrivateData) {
+        addDeclarativeNetRequestRulesToPrivateUserContentControllers();
+
+        for (Ref controller : extensionController()->allPrivateUserContentControllers())
+            addInjectedContent(controller);
+
+#if ENABLE(INSPECTOR_EXTENSIONS)
+        loadInspectorBackgroundPagesForPrivateBrowsing();
+#endif
+    } else {
+        for (Ref controller : extensionController()->allPrivateUserContentControllers()) {
+            removeInjectedContent(controller);
+            controller->removeContentRuleList(uniqueIdentifier());
+        }
+
+#if ENABLE(INSPECTOR_EXTENSIONS)
+        unloadInspectorBackgroundPagesForPrivateBrowsing();
+#endif
+    }
 }
 
 const WebExtensionContext::PermissionsMap& WebExtensionContext::grantedPermissions()
@@ -1296,6 +1431,26 @@ void WebExtensionContext::addInjectedContent(WebUserContentControllerProxy& user
     }
 }
 
+bool WebExtensionContext::hasAccessToAllURLs()
+{
+    for (auto& pattern : currentPermissionMatchPatterns()) {
+        if (pattern->matchesAllURLs())
+            return true;
+    }
+
+    return false;
+}
+
+bool WebExtensionContext::hasAccessToAllHosts()
+{
+    for (auto& pattern : currentPermissionMatchPatterns()) {
+        if (pattern->matchesAllHosts())
+            return true;
+    }
+
+    return false;
+}
+
 void WebExtensionContext::removeInjectedContent()
 {
     if (!isLoaded())
@@ -1538,6 +1693,215 @@ WebExtensionContext::WebProcessProxySet WebExtensionContext::processes(EventList
     }
 
     return result;
+}
+
+String WebExtensionContext::processDisplayName()
+{
+    return WEB_UI_FORMAT_STRING("%s Web Extension", "Extension's process name that appears in Activity Monitor where the parameter is the name of the extension", protectedExtension()->displayShortName().utf8().data());
+}
+
+Vector<String> WebExtensionContext::corsDisablingPatterns()
+{
+    Vector<String> patterns;
+
+    auto grantedMatchPatterns = grantedPermissionMatchPatterns();
+    for (auto& entry : grantedMatchPatterns) {
+        Ref pattern = entry.key;
+        patterns.appendVector(pattern->expandedStrings());
+    }
+
+    removeRepeatedElements(patterns);
+
+    return patterns;
+}
+
+URL WebExtensionContext::backgroundContentURL()
+{
+    RefPtr extension = m_extension;
+    if (!extension->hasBackgroundContent())
+        return { };
+    return { m_baseURL, extension->backgroundContentPath() };
+}
+
+void WebExtensionContext::loadBackgroundContent(CompletionHandler<void(RefPtr<API::Error>)>&& completionHandler)
+{
+    if (!protectedExtension()->hasBackgroundContent()) {
+        if (completionHandler)
+            completionHandler(createError(Error::NoBackgroundContent));
+        return;
+    }
+
+    wakeUpBackgroundContentIfNecessary([this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)]() mutable {
+        if (completionHandler)
+            completionHandler(backgroundContentLoadError());
+    });
+}
+
+void WebExtensionContext::loadBackgroundWebViewDuringLoad()
+{
+    ASSERT(isLoaded());
+
+    RefPtr extension = m_extension;
+    if (!extension->hasBackgroundContent())
+        return;
+
+    m_safeToLoadBackgroundContent = true;
+
+    if (!extension->backgroundContentIsPersistent()) {
+        loadBackgroundPageListenersFromStorage();
+
+        bool hasEventsToFire = m_shouldFireStartupEvent || m_installReason != InstallReason::None;
+        if (m_backgroundContentEventListeners.isEmpty() || hasEventsToFire)
+            loadBackgroundWebView();
+    } else
+        loadBackgroundWebView();
+}
+
+bool WebExtensionContext::isBackgroundPage(WebCore::FrameIdentifier frameIdentifier) const
+{
+    RefPtr frame = WebFrameProxy::webFrame(frameIdentifier);
+    if (!frame)
+        return false;
+
+    RefPtr page = frame->page();
+    if (!page)
+        return false;
+
+    return isBackgroundPage(page->identifier());
+}
+
+const String& WebExtensionContext::backgroundWebViewInspectionName()
+{
+    if (!m_backgroundWebViewInspectionName.isEmpty())
+        return m_backgroundWebViewInspectionName;
+
+    if (protectedExtension()->backgroundContentIsServiceWorker())
+        m_backgroundWebViewInspectionName = WEB_UI_FORMAT_STRING("%s — Extension Service Worker", "Label for an inspectable Web Extension service worker", protectedExtension()->displayShortName().utf8().data());
+    else
+        m_backgroundWebViewInspectionName = WEB_UI_FORMAT_STRING("%s — Extension Background Page", "Label for an inspectable Web Extension background page", protectedExtension()->displayShortName().utf8().data());
+
+    return m_backgroundWebViewInspectionName;
+}
+
+void WebExtensionContext::wakeUpBackgroundContentIfNecessary(Function<void()>&& completionHandler)
+{
+    if (!protectedExtension()->hasBackgroundContent()) {
+        completionHandler();
+        return;
+    }
+
+    scheduleBackgroundContentToUnload();
+
+    if (backgroundContentIsLoaded()) {
+        completionHandler();
+        return;
+    }
+
+    RELEASE_LOG_DEBUG(Extensions, "Scheduled task for after background content loads");
+
+    m_actionsToPerformAfterBackgroundContentLoads.append(WTFMove(completionHandler));
+
+    loadBackgroundWebViewIfNeeded();
+}
+
+void WebExtensionContext::wakeUpBackgroundContentIfNecessaryToFireEvents(EventListenerTypeSet&& types, Function<void()>&& completionHandler)
+{
+    RefPtr extension = m_extension;
+    if (!extension->hasBackgroundContent()) {
+        completionHandler();
+        return;
+    }
+
+    if (!extension->backgroundContentIsPersistent()) {
+        bool backgroundContentListensToAtLeastOneEvent = false;
+        for (auto& type : types) {
+            if (m_backgroundContentEventListeners.contains(type)) {
+                backgroundContentListensToAtLeastOneEvent = true;
+                break;
+            }
+        }
+
+        // Don't load the background page if it isn't expecting these events.
+        if (!backgroundContentListensToAtLeastOneEvent) {
+            completionHandler();
+            return;
+        }
+    }
+
+    wakeUpBackgroundContentIfNecessary(WTFMove(completionHandler));
+}
+
+#if ENABLE(INSPECTOR_EXTENSIONS)
+URL WebExtensionContext::inspectorBackgroundPageURL() const
+{
+    RefPtr extension = m_extension;
+    if (!extension->hasInspectorBackgroundPage())
+        return { };
+    return { m_baseURL, extension->inspectorBackgroundPagePath() };
+}
+
+RefPtr<WebInspectorUIProxy> WebExtensionContext::inspector(const API::InspectorExtension& inspectorExtension) const
+{
+    ASSERT(isLoaded());
+    ASSERT(protectedExtension()->hasInspectorBackgroundPage());
+
+    for (auto entry : m_inspectorContextMap) {
+        if (entry.value.extension == &inspectorExtension)
+            return &entry.key;
+    }
+
+    return nullptr;
+}
+#endif // ENABLE(INSPECTOR_EXTENSIONS)
+
+size_t WebExtensionContext::quotaForStorageType(WebExtensionDataType storageType)
+{
+    switch (storageType) {
+    case WebExtensionDataType::Local:
+        return hasPermission(WebExtensionPermission::unlimitedStorage()) ? webExtensionUnlimitedStorageQuotaBytes : webExtensionStorageAreaLocalQuotaBytes;
+    case WebExtensionDataType::Session:
+        return webExtensionStorageAreaSessionQuotaBytes;
+    case WebExtensionDataType::Sync:
+        return webExtensionStorageAreaSyncQuotaBytes;
+    }
+
+    ASSERT_NOT_REACHED();
+    return 0;
+}
+
+Ref<WebExtensionStorageSQLiteStore> WebExtensionContext::localStorageStore()
+{
+    if (!m_localStorageStore)
+        m_localStorageStore = WebExtensionStorageSQLiteStore::create(m_uniqueIdentifier, WebExtensionDataType::Local, storageDirectory(), storageIsPersistent() ? WebExtensionStorageSQLiteStore::UsesInMemoryDatabase::No : WebExtensionStorageSQLiteStore::UsesInMemoryDatabase::Yes);
+    return *m_localStorageStore;
+}
+
+Ref<WebExtensionStorageSQLiteStore> WebExtensionContext::sessionStorageStore()
+{
+    if (!m_sessionStorageStore)
+        m_sessionStorageStore = WebExtensionStorageSQLiteStore::create(m_uniqueIdentifier, WebExtensionDataType::Session, storageDirectory(), WebExtensionStorageSQLiteStore::UsesInMemoryDatabase::Yes);
+    return *m_sessionStorageStore;
+}
+
+Ref<WebExtensionStorageSQLiteStore> WebExtensionContext::syncStorageStore()
+{
+    if (!m_syncStorageStore)
+        m_syncStorageStore = WebExtensionStorageSQLiteStore::create(m_uniqueIdentifier, WebExtensionDataType::Sync, storageDirectory(), storageIsPersistent() ? WebExtensionStorageSQLiteStore::UsesInMemoryDatabase::No : WebExtensionStorageSQLiteStore::UsesInMemoryDatabase::Yes);
+    return *m_syncStorageStore;
+}
+
+Ref<WebExtensionStorageSQLiteStore> WebExtensionContext::storageForType(WebExtensionDataType storageType)
+{
+    switch (storageType) {
+    case WebExtensionDataType::Local:
+        return localStorageStore();
+    case WebExtensionDataType::Session:
+        return sessionStorageStore();
+    case WebExtensionDataType::Sync:
+        return syncStorageStore();
+    }
+
+    return sessionStorageStore();
 }
 
 } // namespace WebKit

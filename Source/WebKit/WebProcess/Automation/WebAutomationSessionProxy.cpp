@@ -29,6 +29,7 @@
 #include "AutomationProtocolObjects.h"
 #include "CoordinateSystem.h"
 #include "WebAutomationDOMWindowObserver.h"
+#include "WebAutomationSessionMacros.h"
 #include "WebAutomationSessionMessages.h"
 #include "WebAutomationSessionProxyMessages.h"
 #include "WebAutomationSessionProxyScriptSource.h"
@@ -636,26 +637,26 @@ void WebAutomationSessionProxy::resolveParentFrame(WebCore::PageIdentifier pageI
     completionHandler(std::nullopt, parentFrame->frameID());
 }
 
-void WebAutomationSessionProxy::focusFrame(WebCore::PageIdentifier pageID, WebCore::FrameIdentifier frameID, CompletionHandler<void(std::optional<String>)>&& completionHandler)
+void WebAutomationSessionProxy::focusFrame(WebCore::PageIdentifier pageID, std::optional<WebCore::FrameIdentifier> frameID, CompletionHandler<void(Inspector::CommandResult<void>)>&& callback)
 {
-    RefPtr page = WebProcess::singleton().webPage(pageID);
-    if (!page || !page->corePage()) {
-        String windowNotFoundErrorType = Inspector::Protocol::AutomationHelpers::getEnumConstantValue(Inspector::Protocol::Automation::ErrorMessage::WindowNotFound);
-        completionHandler(windowNotFoundErrorType);
-        return;
+    RefPtr<WebCore::Frame> coreFrame;
+    if (frameID) {
+        RefPtr frame = WebProcess::singleton().webFrame(*frameID);
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!frame, FrameNotFound);
+        coreFrame = frame->coreFrame();
+    } else {
+        RefPtr page = WebProcess::singleton().webPage(pageID);
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page || !page->corePage(), WindowNotFound);
+        coreFrame = page->mainFrame();
     }
 
     // If frame is no longer connected to the page, then it is
     // closing and it's not possible to focus the frame.
-    RefPtr frame = WebProcess::singleton().webFrame(frameID);
-    if (!frame || !frame->coreFrame() || !frame->coreFrame()->page()) {
-        String frameNotFoundErrorType = Inspector::Protocol::AutomationHelpers::getEnumConstantValue(Inspector::Protocol::Automation::ErrorMessage::FrameNotFound);
-        completionHandler(frameNotFoundErrorType);
-        return;
-    }
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!coreFrame || !coreFrame->page(), FrameNotFound);
 
-    page->corePage()->focusController().setFocusedFrame(frame->protectedCoreFrame().get());
-    completionHandler(std::nullopt);
+    coreFrame->page()->focusController().setFocusedFrame(coreFrame.get());
+
+    callback({ });
 }
 
 static WebCore::Element* containerElementForElement(WebCore::Element& element)

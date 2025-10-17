@@ -434,7 +434,7 @@ void ResourceMonitorURLsController::prepare(CompletionHandler<void(WKContentRule
 
     Ref<API::ContentRuleListStore> store = m_contentRuleListStore ? *m_contentRuleListStore : API::ContentRuleListStore::defaultStoreSingleton();
 
-    [[PAL::getWPResourcesClassSingleton() sharedInstance] prepareResourceMonitorRulesForStore:wrapper(store.get()) completionHandler:^(WKContentRuleList *list, bool updated, NSError *error) {
+    [[PAL::getWPResourcesClassSingleton() sharedInstance] prepareResourceMonitorRulesForStore:protectedWrapper(store.get()).get() completionHandler:^(WKContentRuleList *list, bool updated, NSError *error) {
         if (error)
             RELEASE_LOG_ERROR(ResourceMonitoring, "Failed to request resource monitor urls from WebPrivacy: %@", error);
 

@@ -86,6 +86,10 @@ public:
 
     void runUISideScript(WKStringRef, unsigned callbackID);
 
+    void dontForceRepaint() { m_forceRepaint = false; }
+    bool isPrinting() const { return m_isPrinting; }
+    void setPrinting() { m_isPrinting = true; }
+
 private:
     TestInvocation(WKURLRef, const TestOptions&);
 
@@ -153,6 +157,7 @@ private:
     bool m_shouldDumpPrivateClickMeasurement { false };
     bool m_shouldDumpBackForwardListsForAllWindows { false };
     bool m_shouldDumpAllFrameScrollPositions { false };
+    bool m_isPrinting { false };
     WhatToDump m_whatToDump { WhatToDump::RenderTree };
 
     StringBuilder m_textOutput;

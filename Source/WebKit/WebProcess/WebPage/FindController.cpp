@@ -40,10 +40,12 @@
 #include <WebCore/FindRevealAlgorithms.h>
 #include <WebCore/FloatQuad.h>
 #include <WebCore/FocusController.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameSelection.h>
 #include <WebCore/GeometryUtilities.h>
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/ImageAnalysisQueue.h>
+#include <WebCore/ImageBuffer.h>
 #include <WebCore/ImageOverlay.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/LocalFrameView.h>

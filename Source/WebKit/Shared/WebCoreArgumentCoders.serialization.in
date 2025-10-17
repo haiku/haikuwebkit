@@ -2974,9 +2974,9 @@ header: <WebCore/KeyboardScroll.h>
 }
 
 [RefCounted] class WebCore::TranslateTransformOperation {
-    WebCore::Length x();
-    WebCore::Length y();
-    WebCore::Length z();
+    float x();
+    float y();
+    float z();
     [Validator='WebCore::TransformOperation::isTranslateTransformOperationType(*type)'] WebCore::TransformOperationType type();
 }
 
@@ -3139,11 +3139,6 @@ enum class WebCore::GraphicsContextGLSimulatedEventForTesting : uint8_t {
     WebCore::IdentityTransformOperation
 }
 
-struct WebCore::LengthPoint {
-    WebCore::Length x;
-    WebCore::Length y;
-}
-
 class WebCore::SVGPathByteStream {
     Vector<unsigned char> bytes();
 }
@@ -3168,11 +3163,11 @@ header: <WebCore/StylePrimitiveNumericTypes.h>
 };
 
 [CustomHeader, Nested] struct WebCore::Style::LengthNonnegative {
-    float value;
+    float unresolvedValue();
 };
 using WebCore::Style::LengthAll = WebCore::Style::Length<WebCore::CSS::All>;
 [CustomHeader, Nested] struct WebCore::Style::Length<WebCore::CSS::All> {
-    float value;
+    float unresolvedValue();
 };
 
 [CustomHeader, Nested] struct WebCore::Style::Percentage<WebCore::CSS::Nonnegative> {
@@ -4798,11 +4793,14 @@ header: <WebCore/MediaPlayer.h>
     MediaTime positiveThreshold;
 };
 
-[OptionSet] enum class WebCore::VideoMediaSampleRendererPreference : uint8_t {
+[OptionSet] enum class WebCore::VideoRendererPreference : uint8_t {
     PrefersDecompressionSession,
     ProtectedFallbackDisabled,
     UseDecompressionSessionForProtectedContent,
-    UseStereoDecoding
+    UseStereoDecoding,
+#if PLATFORM(IOS_FAMILY)
+    CanShowWhileLocked
+#endif
 };
 
 header: <WebCore/MediaPlayer.h>
@@ -4810,7 +4808,7 @@ header: <WebCore/MediaPlayer.h>
     WebCore::ContentType contentType;
     bool requiresRemotePlayback;
     bool supportsLimitedMatroska;
-    OptionSet<WebCore::VideoMediaSampleRendererPreference> videoMediaSampleRendererPreferences;
+    OptionSet<WebCore::VideoRendererPreference> videoRendererPreferences;
 };
 
 #endif
@@ -6181,9 +6179,10 @@ enum class WebCore::FrameLoadType : uint8_t {
     Reload,
     Same,
     RedirectWithLockedBackForwardList,
-    Replace,
+    MultipartReplace,
     ReloadFromOrigin,
-    ReloadExpiredOnly
+    ReloadExpiredOnly,
+    NavigationAPIReplace
 };
 
 enum class WebCore::NavigationType : uint8_t {
@@ -6760,25 +6759,6 @@ enum class WebCore::StorageType : uint8_t {
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
-header: <WebCore/RenderStyleConstants.h>
-[CustomHeader] enum class WebCore::TransformBox : uint8_t {
-    StrokeBox,
-    ContentBox,
-    BorderBox,
-    FillBox,
-    ViewBox
-};
-
-header: <WebCore/StyleOffsetRotate.h>
-using WebCore::CSS::Keyword::Auto = WebCore::Constant<WebCore::CSSValueAuto>;
-[CustomHeader, Nested] struct WebCore::Constant<WebCore::CSSValueAuto> {
-};
-
-[CustomHeader] struct WebCore::Style::OffsetRotate {
-    std::optional<WebCore::CSS::Keyword::Auto> autoKeyword();
-    WebCore::Style::AngleAllFloat angle();
-}
-
 [OptionSet] enum class WebCore::AcceleratedEffectProperty : uint16_t {
     Opacity,
     Transform,
@@ -6822,23 +6802,62 @@ enum class WebCore::CompositeOperation : uint8_t {
     Accumulate
 };
 
+struct WebCore::AcceleratedEffectOffsetAnchor {
+    std::optional<WebCore::FloatPoint> value;
+};
+
+struct WebCore::AcceleratedEffectOffsetDistance {
+    float value;
+};
+
+struct WebCore::AcceleratedEffectOffsetPosition {
+    Variant<WebCore::AcceleratedEffectOffsetPosition::Normal, WebCore::AcceleratedEffectOffsetPosition::Auto, WebCore::FloatPoint> value;
+}
+
+[Nested] struct WebCore::AcceleratedEffectOffsetPosition::Normal {
+};
+
+[Nested] struct WebCore::AcceleratedEffectOffsetPosition::Auto {
+};
+
+struct WebCore::AcceleratedEffectOffsetRotate {
+    bool hasAuto;
+    float angle;
+};
+
+struct WebCore::AcceleratedEffectOpacity {
+    float value;
+};
+
+enum class WebCore::AcceleratedEffectTransformBox : uint8_t {
+    StrokeBox,
+    ContentBox,
+    BorderBox,
+    FillBox,
+    ViewBox
+};
+
+struct WebCore::AcceleratedEffectTransformOrigin {
+    WebCore::FloatPoint value;
+};
+
 struct WebCore::AcceleratedEffectValues {
-    float opacity;
+    WebCore::AcceleratedEffectOpacity opacity;
     std::optional<WebCore::TransformOperationData> transformOperationData;
-    WebCore::LengthPoint transformOrigin;
-    WebCore::TransformBox transformBox;
+    WebCore::AcceleratedEffectTransformOrigin transformOrigin;
+    WebCore::AcceleratedEffectTransformBox transformBox;
     WebCore::TransformOperations transform;
     RefPtr<WebCore::TransformOperation> translate;
     RefPtr<WebCore::TransformOperation> scale;
     RefPtr<WebCore::TransformOperation> rotate;
     RefPtr<WebCore::PathOperation> offsetPath;
-    WebCore::Length offsetDistance;
-    WebCore::LengthPoint offsetPosition;
-    WebCore::LengthPoint offsetAnchor;
-    WebCore::Style::OffsetRotate offsetRotate;
+    WebCore::AcceleratedEffectOffsetDistance offsetDistance;
+    WebCore::AcceleratedEffectOffsetPosition offsetPosition;
+    WebCore::AcceleratedEffectOffsetAnchor offsetAnchor;
+    WebCore::AcceleratedEffectOffsetRotate offsetRotate;
     WebCore::FilterOperations filter;
     WebCore::FilterOperations backdropFilter;
-}
+};
 
 class WebCore::WebAnimationTime {
     std::optional<Seconds> time();
@@ -6883,6 +6902,7 @@ header: <WebCore/AcceleratedEffect.h>
     std::optional<WebCore::WebAnimationTime> startTime();
     std::optional<WebCore::WebAnimationTime> holdTime();
 };
+
 #endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
 
 #if PLATFORM(MAC)
@@ -7058,6 +7078,12 @@ header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::InteractionDescription {
     String description;
     Vector<String> stringsToValidate;
+};
+
+header: <WebCore/TextExtractionTypes.h>
+[CustomHeader] struct WebCore::TextExtraction::ExtractedText {
+    String text;
+    std::optional<WebCore::NodeIdentifier> nodeIdentifier;
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -8939,11 +8965,15 @@ using WebCore::GraphicsContextGL::ExternalSyncSource = std::tuple<MachSendRight,
 #if (PLATFORM(GTK) || PLATFORM(WPE))
 header: <WebCore/GraphicsContextGL.h>
 [CustomHeader] struct WebCore::GraphicsContextGLExternalImageSource {
+#if OS(ANDROID)
+    RefPtr<AHardwareBuffer> hardwareBuffer;
+#else
     Vector<WTF::UnixFileDescriptor> fds;
     Vector<uint32_t> strides;
     Vector<uint32_t> offsets;
     uint32_t fourcc;
     uint64_t modifier;
+#endif
     WebCore::IntSize size;
 };
 using WebCore::GraphicsContextGL::ExternalImageSource = WebCore::GraphicsContextGLExternalImageSource;
@@ -9016,6 +9046,10 @@ enum class WebCore::PlatformMediaError : uint8_t {
     DecoderCreationError,
     NotSupportedError,
     NetworkError,
+    NotReady,
+    AudioDecodingError,
+    VideoDecodingError,
+    RequiresFlushToResume,
 };
 #endif
 
@@ -9302,6 +9336,7 @@ header: <WebCore/TrackInfo.h>
     WebCore::FloatSize displaySize;
     uint8_t bitDepth;
     WebCore::PlatformVideoColorSpace colorSpace;
+    String boxType;
     RefPtr<WebCore::SharedBuffer> atomData;
 };
 
@@ -9320,6 +9355,12 @@ header: <WebCore/MediaSamplesBlock.h>
     std::optional<WebCore::HdrMetadataType> hdrMetadataType;
     uint32_t flags;
 };
+
+class WebCore::MediaSamplesBlock {
+    RefPtr<const WebCore::TrackInfo> m_info;
+    Vector<WebCore::MediaSamplesBlock::MediaSampleItem> m_samples;
+    std::optional<bool> m_discontinuity;
+}
 
 header: <WebCore/DocumentClasses.h>
 [OptionSet, CustomHeader] enum class WebCore::DocumentClass : uint16_t {
@@ -9388,7 +9429,7 @@ struct WebCore::HostingContext {
 #endif
 }
 
-header: <WebCore/FocusController.h>
+header: <WebCore/FocusControllerTypes.h>
 enum class WebCore::FoundElementInRemoteFrame : bool;
 
 struct WebCore::FocusEventData {
@@ -9438,3 +9479,36 @@ header: <WebCore/ImageAnalysisQueue.h>
     String target;
 };
 #endif
+
+enum class WebCore::SelectionRestorationMode : uint8_t {
+    RestoreOrSelectAll,
+    SelectAll,
+    PlaceCaretAtStart,
+};
+
+header: <WebCore/FocusOptions.h>
+[CustomHeader] enum class WebCore::FocusRemovalEventsMode : bool;
+
+header: <WebCore/FocusOptions.h>
+[CustomHeader] enum class WebCore::FocusTrigger : uint8_t {
+    Other,
+    Click,
+    Bindings
+};
+
+header: <WebCore/FocusOptions.h>
+[CustomHeader] enum class WebCore::FocusVisibility : uint8_t {
+    Invisible,
+    Visible,
+    ForceInvisible
+};
+
+struct WebCore::FocusOptions {
+    WebCore::SelectionRestorationMode selectionRestorationMode;
+    WebCore::FocusDirection direction;
+    WebCore::FocusRemovalEventsMode removalEventsMode;
+    WebCore::FocusTrigger trigger;
+    WebCore::FocusVisibility visibility;
+    bool preventScroll;
+    std::optional<bool> focusVisible;
+};

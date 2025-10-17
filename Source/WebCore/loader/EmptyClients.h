@@ -47,6 +47,8 @@ class DiagnosticLoggingClient;
 class EditorClient;
 class HTMLImageElement;
 class PageConfiguration;
+enum class BroadcastFocusedElement : bool;
+struct FocusOptions;
 
 class EmptyChromeClient : public ChromeClient {
     WTF_MAKE_TZONE_ALLOCATED(EmptyChromeClient);
@@ -64,7 +66,7 @@ class EmptyChromeClient : public ChromeClient {
     bool canTakeFocus(FocusDirection) const final { return false; }
     void takeFocus(FocusDirection) final { }
 
-    void focusedElementChanged(Element*) final { }
+    void focusedElementChanged(Element*, LocalFrame*, FocusOptions, BroadcastFocusedElement) final { }
     void focusedFrameChanged(Frame*) final { }
 
     RefPtr<Page> createWindow(LocalFrame&, const String&, const WindowFeatures&, const NavigationAction&) final { return nullptr; }

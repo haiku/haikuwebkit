@@ -182,7 +182,7 @@ void RemoteRenderingBackendProxy::didClose(IPC::Connection&)
     if (!m_connection)
         return;
     disconnectGPUProcess();
-    m_remoteResourceCacheProxy.releaseMemory();
+    m_remoteResourceCacheProxy->disconnect();
 
     for (auto& weakImageBuffer : m_imageBuffers.values()) {
         RefPtr imageBuffer = weakImageBuffer.get();
@@ -230,7 +230,7 @@ void RemoteRenderingBackendProxy::didBecomeUnresponsive()
 
 unsigned RemoteRenderingBackendProxy::nativeImageCountForTesting() const
 {
-    return m_remoteResourceCacheProxy.nativeImageCountForTesting();
+    return m_remoteResourceCacheProxy->nativeImageCountForTesting();
 }
 
 void RemoteRenderingBackendProxy::disconnectGPUProcess()
@@ -395,9 +395,9 @@ void RemoteRenderingBackendProxy::destroyGetPixelBufferSharedMemory()
     send(Messages::RemoteRenderingBackend::DestroyGetPixelBufferSharedMemory());
 }
 
-RefPtr<ShareableBitmap> RemoteRenderingBackendProxy::getShareableBitmap(RenderingResourceIdentifier imageBuffer, PreserveResolution preserveResolution)
+RefPtr<ShareableBitmap> RemoteRenderingBackendProxy::nativeImageBitmap(const RemoteNativeImageProxy& image)
 {
-    auto sendResult = sendSync(Messages::RemoteImageBuffer::GetShareableBitmap(preserveResolution), imageBuffer);
+    auto sendResult = sendSync(Messages::RemoteRenderingBackend::NativeImageBitmap(image.renderingResourceIdentifier()));
     if (!sendResult.succeeded())
         return { };
     auto [handle] = sendResult.takeReply();
@@ -486,7 +486,7 @@ void RemoteRenderingBackendProxy::releaseDisplayList(RemoteDisplayListIdentifier
 
 void RemoteRenderingBackendProxy::releaseMemory()
 {
-    m_remoteResourceCacheProxy.releaseMemory();
+    m_remoteResourceCacheProxy->releaseMemory();
     if (!m_connection)
         return;
     send(Messages::RemoteRenderingBackend::ReleaseMemory());
@@ -494,7 +494,7 @@ void RemoteRenderingBackendProxy::releaseMemory()
 
 void RemoteRenderingBackendProxy::releaseNativeImages()
 {
-    m_remoteResourceCacheProxy.releaseNativeImages();
+    m_remoteResourceCacheProxy->releaseNativeImages();
     if (!m_connection)
         return;
     send(Messages::RemoteRenderingBackend::ReleaseNativeImages());
@@ -563,7 +563,7 @@ void RemoteRenderingBackendProxy::prepareImageBufferSetForDisplay(LayerPrepareBu
 
 void RemoteRenderingBackendProxy::markSurfacesVolatile(Vector<std::pair<Ref<RemoteImageBufferSetProxy>, OptionSet<BufferInSetType>>>&& bufferSets, CompletionHandler<void(bool)>&& completionHandler, bool forcePurge)
 {
-    Vector<std::pair<RemoteImageBufferSetIdentifier, OptionSet<BufferInSetType>>> identifiers;
+    Vector<std::pair<ImageBufferSetIdentifier, OptionSet<BufferInSetType>>> identifiers;
     for (auto& pair : bufferSets) {
         identifiers.append(std::make_pair(pair.first->identifier(), pair.second));
         pair.first->addRequestedVolatility(pair.second);
@@ -576,7 +576,7 @@ void RemoteRenderingBackendProxy::markSurfacesVolatile(Vector<std::pair<Ref<Remo
         completionHandler(false);
 }
 
-void RemoteRenderingBackendProxy::didMarkLayersAsVolatile(MarkSurfacesAsVolatileRequestIdentifier requestIdentifier, Vector<std::pair<RemoteImageBufferSetIdentifier, OptionSet<BufferInSetType>>> markedBufferSets, bool didMarkAllLayersAsVolatile)
+void RemoteRenderingBackendProxy::didMarkLayersAsVolatile(MarkSurfacesAsVolatileRequestIdentifier requestIdentifier, Vector<std::pair<ImageBufferSetIdentifier, OptionSet<BufferInSetType>>> markedBufferSets, bool didMarkAllLayersAsVolatile)
 {
     auto completionHandler = m_markAsVolatileRequests.take(requestIdentifier);
     if (!completionHandler)
@@ -603,7 +603,7 @@ void RemoteRenderingBackendProxy::finalizeRenderingUpdate()
 
 void RemoteRenderingBackendProxy::didPaintLayers()
 {
-    m_remoteResourceCacheProxy.didPaintLayers();
+    m_remoteResourceCacheProxy->didPaintLayers();
 }
 
 bool RemoteRenderingBackendProxy::dispatchMessage(IPC::Connection& connection, IPC::Decoder& decoder)

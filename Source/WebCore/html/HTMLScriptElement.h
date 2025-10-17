@@ -64,7 +64,7 @@ public:
     using HTMLElement::ref;
     using HTMLElement::deref;
 
-    static bool supports(StringView type) { return type == "classic"_s || type == "module"_s || type == "importmap"_s; }
+    static bool supports(StringView type) { return type == "classic"_s || type == "module"_s || type == "importmap"_s || type == "speculationrules"_s; }
 
     String fetchPriorityForBindings() const;
     RequestPriority fetchPriority() const final;

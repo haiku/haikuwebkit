@@ -214,6 +214,8 @@ class Manager(object):
         if not self._set_up_run():
             return Manager.FAILED_BUILD_CHECK
 
+        configuration_for_upload = self._port.configuration_for_upload(self._port.target_host(0))
+
         self._stream.write_update('Collecting tests ...')
         try:
             test_names = self._collect_tests(args)
@@ -234,6 +236,7 @@ class Manager(object):
         if self._options.repeat_each != 1:
             _log.debug('Repeating each test {} times'.format(self._options.iterations))
 
+        runner = None
         try:
             _log.info('Running tests')
             runner = Runner(self._port, self._stream)
@@ -247,6 +250,9 @@ class Manager(object):
             self._clean_up_run()
 
         end_time = time.time()
+
+        if not runner:
+            return Manager.FAILED_TESTS
 
         successful = runner.result_map_by_status(runner.STATUS_PASSED)
         disabled = len(runner.result_map_by_status(runner.STATUS_DISABLED))
@@ -312,7 +318,7 @@ class Manager(object):
             }
             upload = Upload(
                 suite=self._options.suite or 'api-tests',
-                configuration=self._port.configuration_for_upload(self._port.target_host(0)),
+                configuration=configuration_for_upload,
                 details=Upload.create_details(options=self._options),
                 commits=self._port.commits_for_upload(),
                 run_stats=Upload.create_run_stats(

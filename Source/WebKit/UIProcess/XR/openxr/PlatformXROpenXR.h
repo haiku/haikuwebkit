@@ -112,7 +112,11 @@ private:
     Vector<XrView> m_views;
     HashMap<PlatformXR::LayerHandle, std::unique_ptr<OpenXRLayer>> m_layers;
     Vector<int64_t> m_supportedSwapchainFormats;
+#if OS(ANDROID)
+    XrGraphicsBindingOpenGLESAndroidKHR m_graphicsBinding;
+#else
     XrGraphicsBindingEGLMNDX m_graphicsBinding;
+#endif
     std::unique_ptr<WebCore::GLContext> m_glContext;
     XrSpace m_localSpace { XR_NULL_HANDLE };
     XrSpace m_floorSpace { XR_NULL_HANDLE };

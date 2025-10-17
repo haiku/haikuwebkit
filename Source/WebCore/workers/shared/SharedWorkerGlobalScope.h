@@ -39,17 +39,12 @@ class SharedWorkerGlobalScope final : public WorkerGlobalScope {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(SharedWorkerGlobalScope);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SharedWorkerGlobalScope);
 public:
-    template<typename... Args> static Ref<SharedWorkerGlobalScope> create(Args&&... args)
-    {
-        auto scope = adoptRef(*new SharedWorkerGlobalScope(std::forward<Args>(args)...));
-        scope->addToContextsMap();
-        return scope;
-    }
+    static Ref<SharedWorkerGlobalScope> create(const String& name, const WorkerParameters&, Ref<SecurityOrigin>&&, SharedWorkerThread&, Ref<SecurityOrigin>&& topOrigin, IDBClient::IDBConnectionProxy*, SocketProvider*, std::unique_ptr<WorkerClient>&&);
     ~SharedWorkerGlobalScope();
 
     Type type() const final { return Type::SharedWorker; }
     const String& name() const { return m_name; }
-    SharedWorkerThread& thread();
+    Ref<SharedWorkerThread> thread();
 
     void postConnectEvent(TransferredMessagePort&&, const String& sourceOrigin);
 

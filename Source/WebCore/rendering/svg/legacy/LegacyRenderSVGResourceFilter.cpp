@@ -33,7 +33,6 @@
 #include "Logging.h"
 #include "RenderObjectInlines.h"
 #include "SVGElementTypeHelpers.h"
-#include "SVGRenderStyle.h"
 #include "SVGRenderingContext.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>

@@ -102,7 +102,7 @@ static SignalAction trapHandler(Signal signal, SigInfo& sigInfo, PlatformRegiste
                 for (auto* callee : calleeRegistry.allCallees()) {
                     if (callee->category() != NativeCallee::Category::Wasm)
                         continue;
-                    auto* wasmCallee = static_cast<Wasm::Callee*>(callee);
+                    auto* wasmCallee = uncheckedDowncast<Wasm::Callee>(callee);
                     auto [start, end] = wasmCallee->range();
                     dataLogLnIf(WasmFaultSignalHandlerInternal::verbose, "function start: ", RawPointer(start), " end: ", RawPointer(end));
                     if (start <= faultingInstruction && faultingInstruction < end) {

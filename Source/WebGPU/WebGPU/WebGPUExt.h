@@ -42,6 +42,7 @@
 #endif
 
 #include <optional>
+#include <simd/simd.h>
 #include <wtf/MachSendRight.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/Vector.h>
@@ -49,6 +50,9 @@
 #ifdef __swift__
 typedef struct CF_BRIDGED_TYPE(id) __CVBuffer* CVPixelBufferRef;
 #endif
+
+typedef struct WGPUDDMeshImpl* WGPUDDMesh;
+typedef struct WGPUExternalTextureImpl* WGPUExternalTexture;
 
 typedef enum WGPUBufferBindingTypeExtended {
     WGPUBufferBindingType_Float3x2 = WGPUBufferBindingType_Force32 - 1,
@@ -63,6 +67,53 @@ typedef enum WGPUSTypeExtended {
     WGPUSTypeExtended_BindGroupLayoutEntryExternalTexture = 0x645C3DAA, // Random
     WGPUSTypeExtended_Force32 = 0x7FFFFFFF
 } WGPUSTypeExtended;
+
+typedef struct WGPUDDMeshPart {
+    uint32_t indexOffset;
+    uint32_t indexCount;
+    uint32_t topology;
+    uint32_t materialIndex;
+    simd_float3 boundsMin;
+    simd_float3 boundsMax;
+} WGPUDDMeshPart;
+
+typedef struct WGPUDDReplaceVertices {
+    int32_t bufferIndex;
+    Vector<uint8_t> buffer;
+} WGPUDDReplaceVertices;
+
+typedef struct WGPUDDUpdateMeshDescriptor {
+    int32_t partCount;
+    Vector<KeyValuePair<int32_t, WGPUDDMeshPart>> parts;
+    Vector<KeyValuePair<int32_t, uint64_t>> renderFlags;
+    Vector<WGPUDDReplaceVertices> vertices;
+    Vector<uint8_t> indices;
+    simd_float4x4 transform;
+    Vector<simd_float4x4> instanceTransforms4x4;
+    Vector<String> materialIds;
+} WGPUDDUpdateMeshDescriptor;
+
+typedef struct WGPUDDVertexAttributeFormat {
+    int32_t semantic;
+    int32_t format;
+    int32_t layoutIndex;
+    int32_t offset;
+} WGPUDDVertexAttributeFormat;
+
+typedef struct WGPUDDVertexLayout {
+    int32_t bufferIndex;
+    int32_t bufferOffset;
+    int32_t bufferStride;
+} WGPUDDVertexLayout;
+
+typedef struct WGPUDDMeshDescriptor {
+    int32_t indexCapacity;
+    int32_t indexType;
+    int32_t vertexBufferCount;
+    int32_t vertexCapacity;
+    Vector<WGPUDDVertexAttributeFormat> vertexAttributes;
+    Vector<WGPUDDVertexLayout> vertexLayouts;
+} WGPUDDMeshDescriptor;
 
 const int WGPUTextureSampleType_ExternalTexture = WGPUTextureSampleType_Force32 - 1;
 
@@ -88,12 +139,18 @@ typedef WGPUTexture (*WGPUProcSwapChainGetCurrentTexture)(WGPUSwapChain swapChai
 
 #if !defined(WGPU_SKIP_DECLARATIONS)
 
+WGPU_EXPORT WGPUDDMesh wgpuDDMeshCreate(WGPUInstance instance, const WGPUDDMeshDescriptor* descriptor);
+WGPU_EXPORT void wgpuDDMeshUpdate(WGPUDDMesh mesh, WGPUDDUpdateMeshDescriptor*);
+
 WGPU_EXPORT void wgpuRenderBundleSetLabel(WGPURenderBundle renderBundle, char const * label);
 
 // FIXME: https://github.com/webgpu-native/webgpu-headers/issues/89 is about moving this from WebGPUExt.h to WebGPU.h
 WGPU_EXPORT WGPUTexture wgpuSwapChainGetCurrentTexture(WGPUSwapChain swapChain, uint32_t frameIndex);
 
 WGPU_EXPORT WGPUExternalTexture wgpuDeviceImportExternalTexture(WGPUDevice device, const WGPUExternalTextureDescriptor* descriptor);
+
+WGPU_EXPORT void wgpuDDMeshReference(WGPUDDMesh mesh);
+WGPU_EXPORT void wgpuDDMeshRelease(WGPUDDMesh mesh);
 
 WGPU_EXPORT void wgpuDeviceSetDeviceLostCallback(WGPUDevice device, WGPUDeviceLostCallback callback, void* userdata);
 WGPU_EXPORT void wgpuDeviceSetDeviceLostCallbackWithBlock(WGPUDevice device, WGPUDeviceLostBlockCallback callback);

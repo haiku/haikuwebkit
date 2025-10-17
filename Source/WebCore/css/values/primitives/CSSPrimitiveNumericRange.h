@@ -32,7 +32,7 @@ namespace WebCore {
 namespace CSS {
 
 // Options to indicate how the range should be interpreted.
-enum class RangeOptions {
+enum class RangeClampOptions {
     // `Default` indicates that at parse time, out of range values invalidate the parse.
     // Out of range values at style building always clamp.
     Default,
@@ -53,6 +53,17 @@ enum class RangeOptions {
     ClampBoth
 };
 
+// Options to indicate how the primitive should consider its value with regards to zoom.
+// NOTE: This option is only meaningful for Style::Length`.
+// FIXME: These options are temporary while `zoom` is moving from style building time to use time.
+enum class RangeZoomOptions {
+    // `Default` indicates the value held in the primitive has had zoom applied to it.
+    Default,
+
+    // `Unzoomed` indicates the value held in the primitive has NOT had zoom applied to it.
+    Unzoomed
+};
+
 // Representation for `CSS bracketed range notation`. Represents a closed range between (and including) `min` and `max`.
 // https://drafts.csswg.org/css-values-4/#numeric-ranges
 struct Range {
@@ -61,12 +72,14 @@ struct Range {
 
     double min { -infinity };
     double max {  infinity };
-    RangeOptions options { RangeOptions::Default };
+    RangeClampOptions clampOptions { RangeClampOptions::Default };
+    RangeZoomOptions zoomOptions { RangeZoomOptions::Default };
 
-    constexpr Range(double min, double max, RangeOptions options = RangeOptions::Default)
+    constexpr Range(double min, double max, RangeClampOptions clampOptions = RangeClampOptions::Default, RangeZoomOptions zoomOptions = RangeZoomOptions::Default)
         : min { min }
         , max { max }
-        , options { options }
+        , clampOptions { clampOptions }
+        , zoomOptions { zoomOptions }
     {
     }
 
@@ -74,28 +87,36 @@ struct Range {
 };
 
 // Constant value for `[−∞,∞]`.
-inline constexpr auto All = Range { -Range::infinity, Range::infinity, RangeOptions::Default };
+inline constexpr auto All = Range { -Range::infinity, Range::infinity };
+inline constexpr auto AllUnzoomed = Range { -Range::infinity, Range::infinity, RangeClampOptions::Default, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,∞]`.
-inline constexpr auto Nonnegative = Range { 0, Range::infinity, RangeOptions::Default };
+inline constexpr auto Nonnegative = Range { 0, Range::infinity };
+inline constexpr auto NonnegativeUnzoomed = Range { 0, Range::infinity, RangeClampOptions::Default, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[1,∞]`.
-inline constexpr auto Positive = Range { 1, Range::infinity, RangeOptions::Default };
+inline constexpr auto Positive = Range { 1, Range::infinity };
+inline constexpr auto PositiveUnzoomed = Range { 1, Range::infinity, RangeClampOptions::Default, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,1]`.
 inline constexpr auto ClosedUnitRange = Range { 0, 1 };
+inline constexpr auto ClosedUnitRangeUnzoomed = Range { 0, 1, RangeClampOptions::Default, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,1(clamp upper)]`.
-inline constexpr auto ClosedUnitRangeClampUpper = Range { 0, 1, RangeOptions::ClampUpper };
+inline constexpr auto ClosedUnitRangeClampUpper = Range { 0, 1, RangeClampOptions::ClampUpper };
+inline constexpr auto ClosedUnitRangeClampUpperUnzoomed = Range { 0, 1, RangeClampOptions::ClampUpper, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,1(clamp both)]`.
-inline constexpr auto ClosedUnitRangeClampBoth = Range { 0, 1, RangeOptions::ClampBoth };
+inline constexpr auto ClosedUnitRangeClampBoth = Range { 0, 1, RangeClampOptions::ClampBoth };
+inline constexpr auto ClosedUnitRangeClampBothUnzoomed = Range { 0, 1, RangeClampOptions::ClampBoth, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,100]`.
 inline constexpr auto ClosedPercentageRange = Range { 0, 100 };
+inline constexpr auto ClosedPercentageRangeUnzoomed = Range { 0, 100, RangeClampOptions::Default, RangeZoomOptions::Unzoomed };
 
 // Constant value for `[0,100(clamp upper)]`.
-inline constexpr auto ClosedPercentageRangeClampUpper = Range { 0, 100, RangeOptions::ClampUpper };
+inline constexpr auto ClosedPercentageRangeClampUpper = Range { 0, 100, RangeClampOptions::ClampUpper };
+inline constexpr auto ClosedPercentageRangeClampUpperUnzoomed = Range { 0, 100, RangeClampOptions::ClampUpper, RangeZoomOptions::Unzoomed };
 
 // Clamps a floating point value to within `range`.
 template<Range range, std::floating_point T, typename U> constexpr T clampToRange(U value)

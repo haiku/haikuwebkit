@@ -55,7 +55,7 @@
 #include "RenderCombineText.h"
 #include "RenderCounter.h"
 #include "RenderDeprecatedFlexibleBox.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderFlexibleBox.h"
 #include "RenderInline.h"
 #include "RenderIterator.h"
@@ -291,7 +291,7 @@ void RenderBlockFlow::adjustIntrinsicLogicalWidthsForColumns(LayoutUnit& minLogi
         LayoutUnit colGap = columnGap();
         LayoutUnit gapExtra = (columnCount - 1) * colGap;
         if (auto columnWidthLength = style().columnWidth().tryLength()) {
-            columnWidth = Style::evaluate(*columnWidthLength, 1.0f /* FIXME ZOOM EFFECTED? */);
+            columnWidth = Style::evaluate<LayoutUnit>(*columnWidthLength, Style::ZoomNeeded { });
             minLogicalWidth = std::min(minLogicalWidth, columnWidth);
         } else
             minLogicalWidth = minLogicalWidth * columnCount + gapExtra;
@@ -332,7 +332,7 @@ void RenderBlockFlow::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth,
 
     if (auto* cell = dynamicDowncast<RenderTableCell>(*this)) {
         auto tableCellWidth = cell->styleOrColLogicalWidth();
-        if (auto fixedTableCellWidth = tableCellWidth.tryFixed(); fixedTableCellWidth && fixedTableCellWidth->value > 0)
+        if (auto fixedTableCellWidth = tableCellWidth.tryFixed(); fixedTableCellWidth && fixedTableCellWidth->isPositive())
             maxLogicalWidth = std::max(minLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedTableCellWidth));
     }
 
@@ -355,7 +355,7 @@ LayoutUnit RenderBlockFlow::columnGap() const
 {
     if (style().columnGap().isNormal())
         return LayoutUnit(style().fontDescription().computedSize()); // "1em" is recommended as the normal gap setting. Matches <p> margins.
-    return Style::evaluate(style().columnGap(), contentBoxLogicalWidth(), 1.0f /* FIXME ZOOM EFFECTED? */);
+    return Style::evaluate<LayoutUnit>(style().columnGap(), contentBoxLogicalWidth(), Style::ZoomNeeded { });
 }
 
 void RenderBlockFlow::computeColumnCountAndWidth()
@@ -373,7 +373,7 @@ void RenderBlockFlow::computeColumnCountAndWidth()
 
     LayoutUnit availWidth = desiredColumnWidth;
     LayoutUnit colGap = columnGap();
-    LayoutUnit colWidth = std::max(1_lu, LayoutUnit(Style::evaluate(style().columnWidth().tryLength().value_or(0_css_px), 1.0f /* FIXME ZOOM EFFECTED? */)));
+    LayoutUnit colWidth = std::max(1_lu, Style::evaluate<LayoutUnit>(style().columnWidth().tryLength().value_or(0_css_px), Style::ZoomNeeded { }));
     unsigned colCount = std::max<unsigned>(1, style().columnCount().tryValue().value_or(1).value);
 
     if (style().columnWidth().isAuto() && !style().columnCount().isAuto()) {
@@ -420,16 +420,12 @@ bool RenderBlockFlow::willCreateColumns(std::optional<unsigned> desiredColumnCou
     if (!style().hasInlineColumnAxis())
         return true;
 
-    // Non-auto column-width always initiates MultiColumnFlow.
-    if (!style().columnWidth().isAuto())
+    // Non-auto column-width or column-count always initiates MultiColumnFlow.
+    if (!style().columnWidth().isAuto() || !style().columnCount().isAuto())
         return true;
 
     if (desiredColumnCount)
         return desiredColumnCount.value() > 1;
-
-    // column-count > 1 always initiates MultiColumnFlow.
-    if (auto columnCount = style().columnCount().tryValue())
-        return columnCount->value > 1;
 
     ASSERT_NOT_REACHED();
     return false;
@@ -1087,7 +1083,7 @@ void RenderBlockFlow::layoutBlockChild(RenderBox& child, MarginInfo& marginInfo,
 
     auto& childStyle = child.style();
     if (auto blockStepSizeForChild = childStyle.blockStepSize().tryLength(); blockStepSizeForChild && BlockStepSizing::childHasSupportedStyle(childStyle))
-        performBlockStepSizing(child, LayoutUnit(blockStepSizeForChild->value));
+        performBlockStepSizing(child, LayoutUnit(blockStepSizeForChild->resolveZoom(Style::ZoomNeeded { })));
 
     // Cache if we are at the top of the block right now.
     bool atBeforeSideOfBlock = marginInfo.atBeforeSideOfBlock();
@@ -3840,7 +3836,7 @@ static bool hasSimpleStaticPositionForInlineLevelOutOfFlowChildrenByStyle(const 
 {
     if (rootStyle.textAlign() != TextAlignMode::Start)
         return false;
-    if (!rootStyle.textIndent().length.isZero())
+    if (!rootStyle.textIndent().length.isKnownZero())
         return false;
     return true;
 }
@@ -4462,7 +4458,7 @@ static LayoutUnit getBorderPaddingMargin(const RenderBoxModelObject& child, bool
 {
     auto borderMarginWidth = [](LayoutUnit childValue, const Style::MarginEdge& margin) -> LayoutUnit {
         if (auto fixed = margin.tryFixed())
-            return LayoutUnit(fixed->value);
+            return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
         if (margin.isAuto())
             return { };
         return childValue;
@@ -4470,7 +4466,7 @@ static LayoutUnit getBorderPaddingMargin(const RenderBoxModelObject& child, bool
 
     auto borderPaddingWidth = [](LayoutUnit childValue, const Style::PaddingEdge& padding) -> LayoutUnit {
         if (auto fixed = padding.tryFixed())
-            return LayoutUnit(fixed->value);
+            return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
         return childValue;
     };
 
@@ -4567,14 +4563,15 @@ static inline std::optional<LayoutUnit> textIndentForBlockContainer(const Render
 {
     auto& style = renderer.style();
     if (auto fixedTextIndent = style.textIndent().length.tryFixed())
-        return fixedTextIndent->value ? std::make_optional(LayoutUnit { fixedTextIndent->value }) : std::nullopt;
+        return !fixedTextIndent->isZero() ? std::make_optional(LayoutUnit { fixedTextIndent->resolveZoom(Style::ZoomNeeded { }) }) : std::nullopt;
 
     auto indentValue = LayoutUnit { };
     if (auto* containingBlock = renderer.containingBlock()) {
         if (auto containingBlockFixedLogicalWidth = containingBlock->style().logicalWidth().tryFixed()) {
+            auto containingBlockFixedLogicalWidthValue = Style::evaluate<LayoutUnit>(*containingBlockFixedLogicalWidth, Style::ZoomNeeded { });
             // At this point of the shrink-to-fit computation, we don't have a used value for the containing block width
             // (that's exactly to what we try to contribute here) unless the computed value is fixed.
-            indentValue = Style::evaluate(style.textIndent().length, containingBlockFixedLogicalWidth->value, 1.0f /* FIXME ZOOM EFFECTED? */);
+            indentValue = Style::evaluate<LayoutUnit>(style.textIndent().length, containingBlockFixedLogicalWidthValue, Style::ZoomNeeded { });
         }
     }
     return indentValue ? std::make_optional(indentValue) : std::nullopt;
@@ -4734,9 +4731,9 @@ void RenderBlockFlow::computeInlinePreferredLogicalWidths(LayoutUnit& minLogical
                         lastText = nullptr;
                     LayoutUnit margins;
                     if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
-                        margins += LayoutUnit::fromFloatCeil(fixedMarginStart->value);
+                        margins += LayoutUnit::fromFloatCeil(fixedMarginStart->resolveZoom(Style::ZoomNeeded { }));
                     if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
-                        margins += LayoutUnit::fromFloatCeil(fixedMarginEnd->value);
+                        margins += LayoutUnit::fromFloatCeil(fixedMarginEnd->resolveZoom(Style::ZoomNeeded { }));
                     childMin += margins.ceilToFloat();
                     childMax += margins.ceilToFloat();
                 }

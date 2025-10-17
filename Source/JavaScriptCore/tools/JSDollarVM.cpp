@@ -2377,13 +2377,13 @@ JSC_DEFINE_HOST_FUNCTION(functionOMGTrue, (JSGlobalObject* globalObject, CallFra
             allFramesAreValid = false;
             return Wasm::CompilationMode::IPIntMode;
         }
-        return static_cast<Wasm::Callee*>(visitor->callee().asNativeCallee())->compilationMode();
+        return uncheckedDowncast<Wasm::Callee>(visitor->callee().asNativeCallee())->compilationMode();
     };
 
     auto expectWasmToJS = [&](StackVisitor& visitor) {
         if (visitor->codeType() != StackVisitor::Frame::Wasm
             || !visitor->callee().isNativeCallee()
-            || !isAnyWasmToJS(static_cast<Wasm::Callee*>(visitor->callee().asNativeCallee())->compilationMode())) {
+            || !isAnyWasmToJS(uncheckedDowncast<Wasm::Callee>(visitor->callee().asNativeCallee())->compilationMode())) {
             allFramesAreValid = false;
             return;
         }

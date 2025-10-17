@@ -90,6 +90,71 @@ int UnplacedGridItem::explicitRowEnd() const
     return { };
 }
 
+bool UnplacedGridItem::hasDefiniteRowPosition() const
+{
+    return m_rowPosition.first.isExplicit() || m_rowPosition.second.isExplicit();
+}
+
+bool UnplacedGridItem::hasDefiniteColumnPosition() const
+{
+    return m_columnPosition.first.isExplicit() || m_columnPosition.second.isExplicit();
+}
+
+bool UnplacedGridItem::hasAutoColumnPosition() const
+{
+    return m_columnPosition.first.isAuto() && m_columnPosition.second.isAuto();
+}
+
+size_t UnplacedGridItem::columnSpanSize() const
+{
+    auto firstPosition = m_columnPosition.first;
+    auto secondPosition = m_columnPosition.second;
+
+    // Case 1: Both positions are explicit - calculate span size
+    if (firstPosition.isExplicit() && secondPosition.isExplicit()) {
+        auto spanSize = explicitColumnEnd() - explicitColumnStart();
+        return spanSize;
+    }
+
+    // Case 2: One position is a span - extract its span size.
+    ASSERT(!(firstPosition.isSpan() && secondPosition.isSpan()));
+    if (firstPosition.isSpan())
+        return firstPosition.spanPosition();
+    if (secondPosition.isSpan())
+        return secondPosition.spanPosition();
+
+    // Default to span 1
+    ASSERT(hasAutoColumnPosition());
+    return 1;
+}
+
+std::pair<int, int> UnplacedGridItem::definiteRowStartEnd() const
+{
+    auto startPosition = m_rowPosition.first;
+    auto endPosition = m_rowPosition.second;
+
+    if (startPosition.isExplicit() && endPosition.isExplicit())
+        return { explicitRowStart(), explicitRowEnd() };
+
+    if (startPosition.isExplicit() && endPosition.isSpan())
+        return { explicitRowStart(), explicitRowStart() + endPosition.spanPosition() };
+
+    if (startPosition.isSpan() && endPosition.isExplicit())
+        return { explicitRowEnd() - startPosition.spanPosition(), explicitRowEnd() };
+
+    if (startPosition.isExplicit() && endPosition.isAuto())
+        return { explicitRowStart(), explicitRowStart() + 1 };
+
+    if (startPosition.isAuto() && endPosition.isExplicit()) {
+        auto explicitEnd = explicitRowEnd();
+        ASSERT(explicitEnd >= 1);
+        return { explicitEnd - 1, explicitEnd };
+    }
+
+    ASSERT_NOT_REACHED();
+    return { 0, 0 };
+}
+
 bool UnplacedGridItem::operator==(const UnplacedGridItem& other) const
 {
     // Since the hash table empty value uses CheckedRef's empty value,
@@ -110,5 +175,5 @@ void add(Hasher& hasher, const WebCore::Layout::UnplacedGridItem& unplacedGridIt
 }
 
 } // namespace Layout
-} // namespace WebCore
 
+} // namespace WebCore

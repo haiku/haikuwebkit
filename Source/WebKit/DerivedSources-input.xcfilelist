@@ -45,6 +45,7 @@ $(PROJECT_DIR)/GPUProcess/RemoteSharedResourceCache.messages.in
 $(PROJECT_DIR)/GPUProcess/ShapeDetection/RemoteBarcodeDetector.messages.in
 $(PROJECT_DIR)/GPUProcess/ShapeDetection/RemoteFaceDetector.messages.in
 $(PROJECT_DIR)/GPUProcess/ShapeDetection/RemoteTextDetector.messages.in
+$(PROJECT_DIR)/GPUProcess/graphics/Model/RemoteDDMesh.messages.in
 $(PROJECT_DIR)/GPUProcess/graphics/PathSegment.serialization.in
 $(PROJECT_DIR)/GPUProcess/graphics/RemoteGraphicsContext.messages.in
 $(PROJECT_DIR)/GPUProcess/graphics/RemoteGraphicsContextGL.messages.in
@@ -92,6 +93,7 @@ $(PROJECT_DIR)/GPUProcess/media/RemoteAudioDestinationManager.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteAudioSessionProxy.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteAudioSessionProxyManager.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteAudioTrackProxy.messages.in
+$(PROJECT_DIR)/GPUProcess/media/RemoteAudioVideoRendererProxyManager.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteCDMFactoryProxy.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteCDMInstanceProxy.messages.in
 $(PROJECT_DIR)/GPUProcess/media/RemoteCDMInstanceSessionProxy.messages.in
@@ -159,6 +161,7 @@ $(PROJECT_DIR)/NetworkProcess/webrtc/NetworkRTCMonitor.messages.in
 $(PROJECT_DIR)/NetworkProcess/webrtc/NetworkRTCProvider.messages.in
 $(PROJECT_DIR)/NetworkProcess/webrtc/RTCDataChannelRemoteManagerProxy.messages.in
 $(PROJECT_DIR)/NetworkProcess/webtransport/NetworkTransportSession.messages.in
+$(PROJECT_DIR)/NetworkProcess/webtransport/WebTransport.serialization.in
 $(PROJECT_DIR)/Platform/IPC/ConnectionHandle.serialization.in
 $(PROJECT_DIR)/Platform/IPC/FormDataReference.serialization.in
 $(PROJECT_DIR)/Platform/IPC/IPCEvent.serialization.in
@@ -313,6 +316,7 @@ $(PROJECT_DIR)/Shared/FrameTreeCreationParameters.serialization.in
 $(PROJECT_DIR)/Shared/FrameTreeNodeData.serialization.in
 $(PROJECT_DIR)/Shared/FullScreenMediaDetails.serialization.in
 $(PROJECT_DIR)/Shared/GPUProcessConnectionParameters.serialization.in
+$(PROJECT_DIR)/Shared/GPUProcessMediaCodecCapabilities.serialization.in
 $(PROJECT_DIR)/Shared/Gamepad/GamepadData.serialization.in
 $(PROJECT_DIR)/Shared/GoToBackForwardItemParameters.serialization.in
 $(PROJECT_DIR)/Shared/HTTPSUpgrade/HTTPSUpgradeList.txt
@@ -330,6 +334,13 @@ $(PROJECT_DIR)/Shared/LayerTreeContext.serialization.in
 $(PROJECT_DIR)/Shared/LoadParameters.serialization.in
 $(PROJECT_DIR)/Shared/MediaPlaybackState.serialization.in
 $(PROJECT_DIR)/Shared/Model.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDMeshDescriptor.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDMeshPart.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDReplaceVertices.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDUpdateMeshDescriptor.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDVertexAttributeFormat.serialization.in
+$(PROJECT_DIR)/Shared/Model/DDVertexLayout.serialization.in
+$(PROJECT_DIR)/Shared/Model/ModelObjectDescriptorBase.serialization.in
 $(PROJECT_DIR)/Shared/ModelProcessConnectionParameters.serialization.in
 $(PROJECT_DIR)/Shared/MonotonicObjectIdentifier.serialization.in
 $(PROJECT_DIR)/Shared/NavigationActionData.serialization.in
@@ -544,6 +555,7 @@ $(PROJECT_DIR)/UIProcess/UserContent/WebUserContentControllerProxy.messages.in
 $(PROJECT_DIR)/UIProcess/ViewGestureController.messages.in
 $(PROJECT_DIR)/UIProcess/VisitedLinkStore.messages.in
 $(PROJECT_DIR)/UIProcess/WebAuthentication/WebAuthenticatorCoordinatorProxy.messages.in
+$(PROJECT_DIR)/UIProcess/WebBackForwardList.messages.in
 $(PROJECT_DIR)/UIProcess/WebFrameProxy.messages.in
 $(PROJECT_DIR)/UIProcess/WebFullScreenManagerProxy.messages.in
 $(PROJECT_DIR)/UIProcess/WebGeolocationManagerProxy.messages.in
@@ -619,15 +631,16 @@ $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteImageBufferProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteImageBufferSetProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteRenderingBackendProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/WebGPU/RemoteGPUProxy.messages.in
+$(PROJECT_DIR)/WebProcess/GPU/media/AudioVideoRendererRemoteMessageReceiver.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/MediaOverridesForTesting.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/media/MediaPlayerPrivateRemote.messages.in
-$(PROJECT_DIR)/WebProcess/GPU/media/MediaSourcePrivateRemote.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/MediaSourcePrivateRemoteMessageReceiver.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/MediaTimeUpdateData.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteAudioHardwareListener.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteAudioSession.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteAudioSessionConfiguration.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteAudioSourceProviderManager.messages.in
+$(PROJECT_DIR)/WebProcess/GPU/media/RemoteAudioVideoRendererState.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteCDMConfiguration.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteCDMInstance.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/RemoteCDMInstanceConfiguration.serialization.in
@@ -713,6 +726,7 @@ $(PROJECT_DIR)/webpushd/mac/com.apple.WebKit.webpushd.mac.sb.in
 $(PROJECT_DIR)/webpushd/mac/com.apple.WebKit.webpushd.relocatable.mac.sb.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/ActivityState.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/CodeGenerator.pm
+$(WEBCORE_PRIVATE_HEADERS_DIR)/DDModel.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/DragActions.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/HTTPHeaderNames.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/HTTPHeaderNames.serialization.in

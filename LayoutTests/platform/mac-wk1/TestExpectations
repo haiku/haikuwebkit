@@ -42,9 +42,14 @@ imported/w3c/web-platform-tests/video-rvfc/request-video-frame-callback-during-x
 
 webkit.org/b/235072 imported/w3c/web-platform-tests/video-rvfc/request-video-frame-callback-repeating.html [ Skip ]
 
+# DumpRenderTree's window does not autodisplay, breaking LCP tests (webkit.org/b/244756)
+imported/w3c/web-platform-tests/largest-contentful-paint/ [ Skip ]
+
 http/tests/webcodecs [ Skip ]
 http/wpt/webcodecs [ Skip ]
 imported/w3c/web-platform-tests/webcodecs [ Skip ]
+
+imported/w3c/web-platform-tests/speculation-rules [ Skip ]
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End platform-specific directories.
@@ -972,6 +977,8 @@ accessibility/mac/stale-input-value-from-subfield-change.html [ WontFix ]
 # Default ARIA for custom elements are not yet enabled
 accessibility/custom-elements/ [ Skip ]
 
+accessibility/text-input-hit-test.html [ Skip ]
+
 accessibility/mac/dynamic-drag.html [ Skip ]
 
 accessibility/display-contents/role-row-headers.html [ Skip ]
@@ -1277,6 +1284,7 @@ media/media-rvfc-paused-offscreen-webm.html [ Skip ]
 media/media-rvfc-paused-webm.html [ Skip ]
 media/media-rvfc-playing-webm.html [ Skip ]
 media/video-webm-seek-singlekeyframe.html [ Skip ]
+media/video-webm-canvas-drawing.html [ Skip ]
 media/media-source/media-source-webm-seek-singlekeyframe.html [ Skip ]
 
 # Managed MediaSource isn't enabled on WK1
@@ -1443,6 +1451,7 @@ imported/w3c/web-platform-tests/xhr/xhr-timeout-longtask.any.html
 webkit.org/b/187230 editing/mac/pasteboard/can-copy-url-without-title.html [ Skip ]
 
 webkit.org/b/270055 imported/w3c/web-platform-tests/navigation-api/ [ Skip ]
+webkit.org/b/270055 http/wpt/navigation-api/ [ Skip ]
 
 ### END OF (1) Failures with bug reports
 ########################################
@@ -3233,9 +3242,6 @@ webkit.org/b/292218 [ Sonoma Release ] media/media-source/media-source-video-ren
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
 
-# Test times out:
-webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/event-click-counts.html [ Skip ]
-
 # webkit.org/b/293249 third-party cookie blocking is not supported in WK1
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie-preexisting-cookie.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
@@ -3280,4 +3286,10 @@ webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-1.ht
 webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-2.html [ Skip ]
 webkit.org/b/298748 css3/text-decoration/text-decoration-line-grammar-error-3.html [ Skip ]
 
-webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading/fontfacesetloadevent-constructor.html [ Failure ]
+webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading [ Skip ]
+
+webkit.org/b/299495 fast/scrolling/anchor-overscroll-fixed.html [ Skip ]
+
+webkit.org/b/299636 imported/w3c/web-platform-tests/event-timing/only-observe-firstInput.html [ Pass Failure ]
+
+webkit.org/b/300050 imported/w3c/web-platform-tests/infrastructure/server/wpt-server-http.sub.html [ Skip ]

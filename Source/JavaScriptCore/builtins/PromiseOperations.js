@@ -27,31 +27,6 @@
 // @internal
 
 @linkTimeConstant
-function pushNewPromiseReaction(thenable, existingReactions, promiseOrCapability, onFulfilled, onRejected, context)
-{
-    "use strict";
-
-    if (!existingReactions) {
-        existingReactions = {
-            @promiseOrCapability: promiseOrCapability,
-            @onFulfilled: onFulfilled,
-            @onRejected: onRejected,
-            @context: context,
-            // This is 4x the number of out of line reactions (promise, fulfill callback, reject callback, context).
-            @outOfLineReactionCounts: 0,
-        };
-        @putPromiseInternalField(thenable, @promiseFieldReactionsOrResult, existingReactions);
-    } else {
-        var outOfLineReactionCounts = existingReactions.@outOfLineReactionCounts;
-        @putByValDirect(existingReactions, outOfLineReactionCounts++, promiseOrCapability);
-        @putByValDirect(existingReactions, outOfLineReactionCounts++, onFulfilled);
-        @putByValDirect(existingReactions, outOfLineReactionCounts++, onRejected);
-        @putByValDirect(existingReactions, outOfLineReactionCounts++, context);
-        existingReactions.@outOfLineReactionCounts = outOfLineReactionCounts;
-    }
-}
-
-@linkTimeConstant
 function newPromiseCapabilitySlow(constructor)
 {
     "use strict";
@@ -160,18 +135,27 @@ function triggerPromiseReactions(state, reactions, argument)
     if (!reactions)
         return;
 
+    // Reverse the order of singly-linked-list.
+    var previous = @undefined;
+    var current = reactions;
+    while (current) {
+        var next = @getPromiseReactionInternalField(current, @promiseReactionFieldNext);
+        @putPromiseReactionInternalField(current, @promiseReactionFieldNext, previous);
+        previous = current;
+        current = next;
+    }
+    reactions = previous;
+
     var isResolved = state === @promiseStateFulfilled;
-    var handler = isResolved ? reactions.@onFulfilled : reactions.@onRejected;
 
-    @enqueueJob(@promiseReactionJob, reactions.@promiseOrCapability, handler, argument, handler ? reactions.@context : state);
-
-    for (var i = 0, count = reactions.@outOfLineReactionCounts; i < count; i += 4) {
-        var promise = reactions[i];
-        var handler = isResolved ? reactions[i + 1] : reactions[i + 2];
-        var context = reactions[i + 3];
+    current = reactions;
+    while (current) {
+        var promise = @getPromiseReactionInternalField(current, @promiseReactionFieldPromise);
+        var handler = isResolved ? @getPromiseReactionInternalField(current, @promiseReactionFieldOnFulfilled) : @getPromiseReactionInternalField(current, @promiseReactionFieldOnRejected);
+        var context = @getPromiseReactionInternalField(current, @promiseReactionFieldContext);
+        current = @getPromiseReactionInternalField(current, @promiseReactionFieldNext);
         @enqueueJob(@promiseReactionJob, promise, handler, argument, handler ? context : state);
     }
-    @assert(i === count);
 }
 
 @linkTimeConstant
@@ -505,7 +489,7 @@ function promiseResolveThenableJobFast(thenable, promiseToResolve)
     var state = flags & @promiseStateMask;
     var reactionsOrResult = @getPromiseInternalField(thenable, @promiseFieldReactionsOrResult);
     if (state === @promiseStatePending)
-        @pushNewPromiseReaction(thenable, reactionsOrResult, promiseToResolve, @undefined, @undefined);
+        @putPromiseInternalField(thenable, @promiseFieldReactionsOrResult, @promiseReactionCreate(promiseToResolve, @undefined, @undefined, @undefined, reactionsOrResult));
     else {
         if (state === @promiseStateRejected && !(flags & @promiseFlagsIsHandled))
             @hostPromiseRejectionTracker(thenable, @promiseRejectionHandle);
@@ -533,7 +517,7 @@ function promiseResolveThenableJobWithoutPromiseFast(thenable, onFulfilled, onRe
     var state = flags & @promiseStateMask;
     var reactionsOrResult = @getPromiseInternalField(thenable, @promiseFieldReactionsOrResult);
     if (state === @promiseStatePending)
-        @pushNewPromiseReaction(thenable, reactionsOrResult, @undefined, onFulfilled, onRejected, context);
+        @putPromiseInternalField(thenable, @promiseFieldReactionsOrResult, @promiseReactionCreate(@undefined, onFulfilled, onRejected, context, reactionsOrResult));
     else {
         if (state === @promiseStateRejected) {
             if (!(flags & @promiseFlagsIsHandled))
@@ -588,6 +572,7 @@ function promiseEmptyOnRejected(argument)
 }
 
 @linkTimeConstant
+@alwaysInline
 function performPromiseThen(promise, onFulfilled, onRejected, promiseOrCapability, context)
 {
     "use strict";
@@ -602,7 +587,7 @@ function performPromiseThen(promise, onFulfilled, onRejected, promiseOrCapabilit
     var flags = @getPromiseInternalField(promise, @promiseFieldFlags);
     var state = flags & @promiseStateMask;
     if (state === @promiseStatePending)
-        @pushNewPromiseReaction(promise, reactionsOrResult, promiseOrCapability, onFulfilled, onRejected, context);
+        @putPromiseInternalField(promise, @promiseFieldReactionsOrResult, @promiseReactionCreate(promiseOrCapability, onFulfilled, onRejected, context, reactionsOrResult));
     else {
         var handler;
 

@@ -98,6 +98,7 @@ private:
 
     // FIXME: Implement this to be less conservative.
     bool currentFrameKnownToBeOpaque() const final { return false; }
+    bool currentFrameIsComplete() const final { return !!m_page; }
 
     bool hasHDRContent() const final;
     RefPtr<NativeImage> nativeImage(const DestinationColorSpace& = DestinationColorSpace::SRGB()) final;

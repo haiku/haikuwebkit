@@ -46,6 +46,7 @@ public final class WebPageWebView: WKWebView {
         delegate?.findInteraction(interaction, didEnd: session)
     }
 
+    #if USE_APPLE_INTERNAL_SDK
     override func supportsTextReplacement() -> Bool {
         guard let delegate else {
             return super.supportsTextReplacement()
@@ -53,6 +54,15 @@ public final class WebPageWebView: WKWebView {
 
         return super.supportsTextReplacement() && delegate.supportsTextReplacement()
     }
+    #else
+    override var supportsTextReplacement: Bool {
+        guard let delegate else {
+            return super.supportsTextReplacement
+        }
+
+        return super.supportsTextReplacement && delegate.supportsTextReplacement()
+    }
+    #endif // USE_APPLE_INTERNAL_SDK
     #endif
 
     func geometryDidChange(_ geometry: WKScrollGeometryAdapter) {

@@ -36,6 +36,7 @@
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/SortedArrayMap.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 
 namespace WebCore {
 
@@ -202,10 +203,10 @@ NSURLResponse *synthesizeRedirectResponseIfNecessary(NSURLRequest *currentReques
 
 RetainPtr<CFStringRef> filePathExtension(CFURLResponseRef response)
 {
-    auto responseURL = CFURLResponseGetURL(response);
-    if (![(__bridge NSURL *)responseURL isFileURL])
+    RetainPtr responseURL = CFURLResponseGetURL(response);
+    if (![bridge_cast(responseURL.get()) isFileURL])
         return nullptr;
-    return adoptCF(CFURLCopyPathExtension(responseURL));
+    return adoptCF(CFURLCopyPathExtension(responseURL.get()));
 }
 
 }

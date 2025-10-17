@@ -34,7 +34,7 @@
 #include <WebCore/AXTextRun.h>
 #include <WebCore/AXTreeStore.h>
 #include <WebCore/ColorHash.h>
-#include <WebCore/PageIdentifier.h>
+#include <WebCore/FrameIdentifier.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>
@@ -54,10 +54,9 @@ class AXIsolatedObject;
 class AXGeometryManager;
 class AXObjectCache;
 class AccessibilityObject;
-class Page;
 enum class AXStreamOptions : uint16_t;
 
-static constexpr uint16_t lastPropertyFlagIndex = 26;
+static constexpr uint16_t lastPropertyFlagIndex = 28;
 // The most common boolean properties are stored in a bitfield rather than in a HashMap.
 // If you edit these, make sure the corresponding AXProperty is ordered correctly in that
 // enum, and update lastPropertyFlagIndex above.
@@ -70,25 +69,27 @@ enum class AXPropertyFlag : uint32_t {
     HasCursorPointer                              = 1 << 5,
     HasItalicFont                                 = 1 << 6,
     HasPlainText                                  = 1 << 7,
-    IsEnabled                                     = 1 << 8,
-    IsExposedTableCell                            = 1 << 9,
-    IsExposedTableRow                             = 1 << 10,
-    IsGrabbed                                     = 1 << 11,
-    IsHiddenUntilFoundContainer                   = 1 << 12,
-    IsIgnored                                     = 1 << 13,
-    IsInlineText                                  = 1 << 14,
-    IsKeyboardFocusable                           = 1 << 15,
-    IsNonLayerSVGObject                           = 1 << 16,
+    HasPointerEventsNone                          = 1 << 8,
+    IsEnabled                                     = 1 << 9,
+    IsExposedTableCell                            = 1 << 10,
+    IsExposedTableRow                             = 1 << 11,
+    IsGrabbed                                     = 1 << 12,
+    IsHiddenUntilFoundContainer                   = 1 << 13,
+    IsIgnored                                     = 1 << 14,
+    IsInlineText                                  = 1 << 15,
+    IsKeyboardFocusable                           = 1 << 16,
+    IsNonLayerSVGObject                           = 1 << 17,
     // These IsTextEmissionBehavior flags are the variants of enum TextEmissionBehavior.
-    IsTextEmissionBehaviorTab                     = 1 << 17,
-    IsTextEmissionBehaviorNewline                 = 1 << 18,
-    IsTextEmissionBehaviorDoubleNewline           = 1 << 19,
-    IsVisited                                     = 1 << 20,
-    SupportsCheckedState                          = 1 << 21,
-    SupportsDragging                              = 1 << 22,
-    SupportsExpanded                              = 1 << 23,
-    SupportsPath                                  = 1 << 24,
-    SupportsPosInSet                              = 1 << 25,
+    IsTextEmissionBehaviorTab                     = 1 << 18,
+    IsTextEmissionBehaviorNewline                 = 1 << 19,
+    IsTextEmissionBehaviorDoubleNewline           = 1 << 20,
+    IsVisited                                     = 1 << 21,
+    ShowsCursorOnHover                            = 1 << 22,
+    SupportsCheckedState                          = 1 << 23,
+    SupportsDragging                              = 1 << 24,
+    SupportsExpanded                              = 1 << 25,
+    SupportsPath                                  = 1 << 26,
+    SupportsPosInSet                              = 1 << 27,
     SupportsSetSize                               = 1 << lastPropertyFlagIndex
 };
 
@@ -101,24 +102,26 @@ enum class AXProperty : uint16_t {
     HasCursorPointer = 5,
     HasItalicFont = 6,
     HasPlainText = 7,
-    IsEnabled = 8,
-    IsExposedTableCell = 9,
-    IsExposedTableRow = 10,
-    IsGrabbed = 11,
-    IsHiddenUntilFoundContainer = 12,
-    IsIgnored = 13,
-    IsInlineText = 14,
-    IsKeyboardFocusable = 15,
-    IsNonLayerSVGObject = 16,
-    IsTextEmissionBehaviorTab = 17,
-    IsTextEmissionBehaviorNewline = 18,
-    IsTextEmissionBehaviorDoubleNewline = 19,
-    IsVisited = 20,
-    SupportsCheckedState = 21,
-    SupportsDragging = 22,
-    SupportsExpanded = 23,
-    SupportsPath = 24,
-    SupportsPosInSet = 25,
+    HasPointerEventsNone = 8,
+    IsEnabled = 9,
+    IsExposedTableCell = 10,
+    IsExposedTableRow = 11,
+    IsGrabbed = 12,
+    IsHiddenUntilFoundContainer = 13,
+    IsIgnored = 14,
+    IsInlineText = 15,
+    IsKeyboardFocusable = 16,
+    IsNonLayerSVGObject = 17,
+    IsTextEmissionBehaviorTab = 18,
+    IsTextEmissionBehaviorNewline = 19,
+    IsTextEmissionBehaviorDoubleNewline = 20,
+    IsVisited = 21,
+    ShowsCursorOnHover = 22,
+    SupportsCheckedState = 23,
+    SupportsDragging = 24,
+    SupportsExpanded = 25,
+    SupportsPath = 26,
+    SupportsPosInSet = 27,
     SupportsSetSize = lastPropertyFlagIndex,
     // End bool attributes that are matched in order by AXPropertyFlag.
 
@@ -154,6 +157,9 @@ enum class AXProperty : uint16_t {
     Columns,
     ColumnIndex,
     ColumnIndexRange,
+    CrossFrameChildFrameID,
+    CrossFrameParentFrameID,
+    CrossFrameParentAXID,
     CurrentState,
     DateTimeComponentsType,
     DateTimeValue,
@@ -329,6 +335,7 @@ using AXPropertyValueVariant = Variant<std::nullptr_t, Markable<AXID>, String, b
     , FontOrientation
     , std::shared_ptr<AXTextRuns>
     , AXTextRunLineID
+    , FrameIdentifier
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 >;
 using AXPropertyVector = Vector<std::pair<AXProperty, AXPropertyValueVariant>>;
@@ -417,10 +424,12 @@ public:
     constexpr bool isEmptyContentTree() const { return m_isEmptyContentTree; }
     virtual ~AXIsolatedTree();
 
-    static void removeTreeForPageID(PageIdentifier);
+    static void removeTreeForFrameID(FrameIdentifier);
 
-    static RefPtr<AXIsolatedTree> treeForPageID(std::optional<PageIdentifier>);
-    static RefPtr<AXIsolatedTree> treeForPageID(PageIdentifier);
+    // Retrieve the tree for the frame ID of any LocalFrame
+    static RefPtr<AXIsolatedTree> treeForFrameID(std::optional<FrameIdentifier>);
+    static RefPtr<AXIsolatedTree> treeForFrameID(FrameIdentifier);
+    static RefPtr<AXIsolatedTree> treeForFrameIDAlreadyLocked(FrameIdentifier);
     AXObjectCache* axObjectCache() const;
     constexpr AXGeometryManager* geometryManager() const { return m_geometryManager.get(); }
 
@@ -570,7 +579,8 @@ private:
 
     void applyPendingChangesLocked() WTF_REQUIRES_LOCK(m_changeLogLock);
 
-    static HashMap<PageIdentifier, Ref<AXIsolatedTree>>& treePageCache() WTF_REQUIRES_LOCK(s_storeLock);
+    // rdar://161259641 (Figure out a way to enforce WTF_REQUIRES_LOCK when we might need to access it while already holding the lock)
+    static HashMap<FrameIdentifier, Ref<AXIsolatedTree>>& treeFrameCache(); // WTF_REQUIRES_LOCK(s_storeLock);
 
     void createEmptyContent(AccessibilityObject&);
     constexpr bool isUpdatingSubtree() const { return m_rootOfSubtreeBeingUpdated; }
@@ -708,9 +718,9 @@ inline AXObjectCache* AXIsolatedTree::axObjectCache() const
     return m_axObjectCache.get();
 }
 
-inline RefPtr<AXIsolatedTree> AXIsolatedTree::treeForPageID(std::optional<PageIdentifier> pageID)
+inline RefPtr<AXIsolatedTree> AXIsolatedTree::treeForFrameID(std::optional<FrameIdentifier> frameID)
 {
-    return pageID ? treeForPageID(*pageID) : nullptr;
+    return frameID ? treeForFrameID(*frameID) : nullptr;
 }
 
 template<typename U>

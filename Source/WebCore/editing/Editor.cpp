@@ -109,6 +109,7 @@
 #include "RenderInline.h"
 #include "RenderLayer.h"
 #include "RenderObjectStyle.h"
+#include "RenderStyleInlines.h"
 #include "RenderTextControl.h"
 #include "RenderedDocumentMarker.h"
 #include "RenderedPosition.h"
@@ -124,7 +125,9 @@
 #include "SpellingCorrectionCommand.h"
 #include "StaticPasteboard.h"
 #include "StylePropertiesInlines.h"
+#include "StyleTextShadow.h"
 #include "StyleTreeResolver.h"
+#include "StyleVerticalAlign.h"
 #include "SystemSoundManager.h"
 #include "TelephoneNumberDetector.h"
 #include "Text.h"
@@ -4086,42 +4089,17 @@ unsigned Editor::countMatchesForText(const String& target, const std::optional<S
     if (!searchRange)
         searchRange = makeRangeSelectingNodeContents(document);
 
-    auto originalEnd = searchRange->end;
+    auto allMatches = findAllPlainText(*searchRange, target, options - FindOption::Backwards, limit);
 
-    unsigned matchCount = 0;
-    do {
-        auto resultRange = findPlainText(*searchRange, target, options - FindOption::Backwards);
-        if (resultRange.collapsed()) {
-            if (!resultRange.start.container->isInShadowTree())
-                break;
+    if (matches)
+        matches->appendVector(allMatches);
 
-            searchRange->start = makeBoundaryPointAfterNodeContents(*resultRange.start.container->shadowHost());
-            searchRange->end = originalEnd;
-            continue;
-        }
+    if (markMatches) {
+        for (const auto& match : allMatches)
+            addMarker(match, DocumentMarkerType::TextMatch);
+    }
 
-        ++matchCount;
-        if (matches)
-            matches->append(resultRange);
-
-        if (markMatches)
-            addMarker(resultRange, DocumentMarkerType::TextMatch);
-
-        // Stop looking if we hit the specified limit. A limit of 0 means no limit.
-        if (limit > 0 && matchCount >= limit)
-            break;
-
-        // Set the new start for the search range to be the end of the previous result range.
-        // There is no need to use VisiblePosition here: findPlainText will use TextIterator to go over visible text nodes.
-        searchRange->start = WTFMove(resultRange.end);
-
-        if (searchRange->collapsed()) {
-            if (auto shadowTreeRoot = searchRange->start.container->containingShadowRoot())
-                searchRange->end = makeBoundaryPointAfterNodeContents(*shadowTreeRoot);
-        }
-    } while (true);
-
-    return matchCount;
+    return allMatches.size();
 }
 
 void Editor::setMarkedTextMatchesAreHighlighted(bool flag)
@@ -4625,8 +4603,8 @@ FontAttributes Editor::fontAttributesAtSelectionStart()
         [&](const auto& shadows) {
             return FontShadow {
                 style->colorWithColorFilter(shadows[0].color),
-                { shadows[0].location.x().value, shadows[0].location.y().value },
-                shadows[0].blur.value
+                { shadows[0].location.x().resolveZoom(Style::ZoomNeeded { }), shadows[0].location.y().resolveZoom(Style::ZoomNeeded { }) },
+                shadows[0].blur.resolveZoom(Style::ZoomNeeded { })
             };
         }
     );

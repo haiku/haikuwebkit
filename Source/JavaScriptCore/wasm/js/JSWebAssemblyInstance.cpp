@@ -41,6 +41,7 @@
 #include "Register.h"
 #include "WasmBaselineData.h"
 #include "WasmConstExprGenerator.h"
+#include "WasmDebugServer.h"
 #include "WasmModuleInformation.h"
 #include "WasmTag.h"
 #include "WasmTypeDefinitionInlines.h"
@@ -142,6 +143,9 @@ void JSWebAssemblyInstance::finishCreation(VM& vm)
 
     // Now, JSWebAssemblyInstance is fully initialized. Expose it to the concurrent compiler.
     m_anchor = m_module->registerAnchor(this);
+
+    if (Options::enableWasmDebugger()) [[unlikely]]
+        Wasm::DebugServer::singleton().trackInstance(this);
 }
 
 JSWebAssemblyInstance::~JSWebAssemblyInstance()
@@ -253,7 +257,7 @@ void JSWebAssemblyInstance::finalizeCreation(VM& vm, JSGlobalObject* globalObjec
             // the import is a Wasm function or a builtin
             auto calleeBits = info->boxedCallee;
             if (calleeBits.isNativeCallee()) {
-                auto* callee = std::bit_cast<Callee*>(calleeBits.asNativeCallee());
+                auto* callee = uncheckedDowncast<Wasm::Callee>(calleeBits.asNativeCallee());
                 // if the callee is a builtin, info->importFunctionStub has already been set
                 if (callee->compilationMode() != CompilationMode::WasmBuiltinMode)
                     info->importFunctionStub = wasmCalleeGroup->wasmToWasmExitStub(functionSpaceIndex);

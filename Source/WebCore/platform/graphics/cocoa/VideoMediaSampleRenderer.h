@@ -65,7 +65,7 @@ public:
     static Ref<VideoMediaSampleRenderer> create(WebSampleBufferVideoRendering *renderer) { return adoptRef(*new VideoMediaSampleRenderer(renderer)); }
     ~VideoMediaSampleRenderer();
 
-    using Preferences = VideoMediaSampleRendererPreferences;
+    using Preferences = VideoRendererPreferences;
     bool prefersDecompressionSession() const;
     void setPreferences(Preferences);
     bool isUsingDecompressionSession() const { return m_isUsingDecompressionSession; }

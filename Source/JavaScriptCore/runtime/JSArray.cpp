@@ -595,7 +595,7 @@ JSArray* JSArray::fastToReversed(JSGlobalObject* globalObject, uint64_t length)
             }
             std::reverse(resultBuffer, resultBuffer + length);
         }
-        Butterfly::clearOptimalVectorLengthGap(resultType, butterfly, vectorLength, length);
+        Butterfly::clearRange(resultType, butterfly, length, vectorLength);
         return createWithButterfly(vm, nullptr, resultStructure, butterfly);
     }
     case ArrayWithArrayStorage: {
@@ -703,7 +703,7 @@ JSArray* JSArray::fastWith(JSGlobalObject* globalObject, uint32_t index, JSValue
             resultBuffer[index].setWithoutWriteBarrier(value);
         }
 
-        Butterfly::clearOptimalVectorLengthGap(indexingType, butterfly, vectorLength, length);
+        Butterfly::clearRange(indexingType, butterfly, length, vectorLength);
         return createWithButterfly(vm, nullptr, resultStructure, butterfly);
     }
     case ArrayWithArrayStorage: {
@@ -980,7 +980,7 @@ JSArray* JSArray::fastToSpliced(JSGlobalObject* globalObject, CallFrame* callFra
         } else
             RELEASE_ASSERT_NOT_REACHED();
 
-        Butterfly::clearOptimalVectorLengthGap(resultIndexingType, resultButterfly, vectorLength, newLength);
+        Butterfly::clearRange(resultIndexingType, resultButterfly, newLength, vectorLength);
         return createWithButterfly(vm, nullptr, resultStructure, resultButterfly);
     }
     default: {
@@ -1002,7 +1002,7 @@ JSString* JSArray::fastToString(JSGlobalObject* globalObject)
         return jsEmptyString(vm);
 
     if (canUseFastArrayJoin(this)) [[likely]] {
-        const LChar comma = ',';
+        const Latin1Character comma = ',';
 
         bool isCoW = isCopyOnWrite(this->indexingMode());
         JSCellButterfly* immutableButterfly = nullptr;
@@ -1414,7 +1414,7 @@ JSArray* JSArray::fastSlice(JSGlobalObject* globalObject, JSObject* source, uint
         // We initialize Butterfly first before setting it to JSArray. In that case, butterfly is not scannoed so that we can safely use memcpy here.
         memcpy(butterfly->contiguous().data(), source->butterfly()->contiguous().data() + startIndex, sizeof(JSValue) * initialLength);
 
-        Butterfly::clearOptimalVectorLengthGap(indexingType, butterfly, vectorLength, initialLength);
+        Butterfly::clearRange(indexingType, butterfly, initialLength, vectorLength);
         return createWithButterfly(vm, nullptr, resultStructure, butterfly);
     }
     case ArrayWithArrayStorage: {
@@ -2185,7 +2185,7 @@ JSArray* tryCloneArrayFromFast(JSGlobalObject* globalObject, JSValue arrayValue)
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    Butterfly::clearOptimalVectorLengthGap(resultType, resultButterfly, vectorLength, resultSize);
+    Butterfly::clearRange(resultType, resultButterfly, resultSize, vectorLength);
     return JSArray::createWithButterfly(vm, nullptr, resultStructure, resultButterfly);
 }
 

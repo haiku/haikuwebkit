@@ -2230,7 +2230,7 @@ private:
 
     void emitIncrementCallProfileCount(unsigned callProfileIndex);
 
-    void emitSaveCalleeSaves();
+    void emitPushCalleeSaves();
     void emitRestoreCalleeSaves();
 
     WasmOrigin origin();

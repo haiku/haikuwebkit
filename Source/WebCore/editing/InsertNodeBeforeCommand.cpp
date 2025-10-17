@@ -30,6 +30,7 @@
 #include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "Editing.h"
+#include "NodeDocument.h"
 #include "RenderElement.h"
 #include "Text.h"
 

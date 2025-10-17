@@ -25,6 +25,7 @@
 #include "Event.h"
 #include "RenderCombineText.h"
 #include "RenderSVGInlineText.h"
+#include "RenderStyleInlines.h"
 #include "RenderText.h"
 #include "SVGElementInlines.h"
 #include "SVGNames.h"

@@ -29,6 +29,7 @@
 #include "FileSystemWritableFileStream.h"
 #include "JSDOMBinding.h"
 #include "JSFileSystemWritableFileStream.h"
+#include "JSWebTransportSendStream.h"
 
 namespace WebCore {
 
@@ -41,6 +42,9 @@ JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObj
 {
     if (is<FileSystemWritableFileStream>(stream.get()))
         return createWrapper<FileSystemWritableFileStream>(globalObject, WTFMove(stream));
+
+    if (is<WebTransportSendStream>(stream.get()))
+        return createWrapper<WebTransportSendStream>(globalObject, WTFMove(stream));
 
     return createWrapper<WritableStream>(globalObject, WTFMove(stream));
 }

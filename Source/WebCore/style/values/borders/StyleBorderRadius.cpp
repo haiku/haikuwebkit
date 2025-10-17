@@ -85,23 +85,23 @@ auto CSSValueConversion<BorderRadiusValue>::operator()(BuilderState& state, cons
 
 // MARK: - Evaluation
 
-auto Evaluation<BorderRadius>::operator()(const BorderRadius& value, FloatSize referenceSize, float zoom) -> FloatRoundedRect::Radii
+auto Evaluation<BorderRadius, FloatRoundedRect::Radii>::operator()(const BorderRadius& value, FloatSize referenceSize, ZoomNeeded token) -> FloatRoundedRect::Radii
 {
     return {
-        evaluate(value.topLeft(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.topRight(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.bottomLeft(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.bottomRight(), referenceSize, zoom /* FIXME FIND ZOOM */),
+        evaluate<FloatSize>(value.topLeft(), referenceSize, token),
+        evaluate<FloatSize>(value.topRight(), referenceSize, token),
+        evaluate<FloatSize>(value.bottomLeft(), referenceSize, token),
+        evaluate<FloatSize>(value.bottomRight(), referenceSize, token),
     };
 }
 
-auto Evaluation<BorderRadius>::operator()(const BorderRadius& value, LayoutSize referenceSize, float zoom) -> LayoutRoundedRect::Radii
+auto Evaluation<BorderRadius, LayoutRoundedRect::Radii>::operator()(const BorderRadius& value, LayoutSize referenceSize, ZoomNeeded token) -> LayoutRoundedRect::Radii
 {
     return {
-        evaluate(value.topLeft(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.topRight(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.bottomLeft(), referenceSize, zoom /* FIXME FIND ZOOM */),
-        evaluate(value.bottomRight(), referenceSize, zoom /* FIXME FIND ZOOM */),
+        evaluate<LayoutSize>(value.topLeft(), referenceSize, token),
+        evaluate<LayoutSize>(value.topRight(), referenceSize, token),
+        evaluate<LayoutSize>(value.bottomLeft(), referenceSize, token),
+        evaluate<LayoutSize>(value.bottomRight(), referenceSize, token),
     };
 }
 

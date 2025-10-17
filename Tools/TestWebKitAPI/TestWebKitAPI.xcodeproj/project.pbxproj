@@ -298,62 +298,62 @@
 		5C7C24FC237C975400599C91 /* HTTPServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C7C24FA237C972300599C91 /* HTTPServer.mm */; };
 		5C7C74CB1FB529BA002F9ABE /* WebViewScheduleInRunLoop.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C7C74CA1FB528D4002F9ABE /* WebViewScheduleInRunLoop.mm */; };
 		5C838F7F1DB04F900082858F /* LoadInvalidURLRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 57901FAE1CAF137100ED64F9 /* LoadInvalidURLRequest.mm */; };
-		5C9D922C22D7DE12008E9266 /* UnifiedSource1-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922922D7DE01008E9266 /* UnifiedSource1-mm.mm */; };
-		5C9D922D22D7DE19008E9266 /* UnifiedSource2-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922B22D7DE01008E9266 /* UnifiedSource2-mm.mm */; };
+		5C9D922C22D7DE12008E9266 /* UnifiedSource1-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922922D7DE01008E9266 /* UnifiedSource1-nonARC.mm */; };
+		5C9D922D22D7DE19008E9266 /* UnifiedSource2-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922B22D7DE01008E9266 /* UnifiedSource2-nonARC.mm */; };
 		5C9D922E22D7DE1C008E9266 /* UnifiedSource1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922A22D7DE01008E9266 /* UnifiedSource1.cpp */; };
 		5C9D922F22D7DE1F008E9266 /* UnifiedSource2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D922822D7DE00008E9266 /* UnifiedSource2.cpp */; };
-		5C9D923822D7E2B0008E9266 /* UnifiedSource3-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923422D7E235008E9266 /* UnifiedSource3-mm.mm */; };
+		5C9D923822D7E2B0008E9266 /* UnifiedSource3-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923422D7E235008E9266 /* UnifiedSource3-nonARC.mm */; };
 		5C9D923922D7E2B0008E9266 /* UnifiedSource3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923622D7E235008E9266 /* UnifiedSource3.cpp */; };
-		5C9D923A22D7E2B0008E9266 /* UnifiedSource4-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923722D7E235008E9266 /* UnifiedSource4-mm.mm */; };
+		5C9D923A22D7E2B0008E9266 /* UnifiedSource4-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923722D7E235008E9266 /* UnifiedSource4-nonARC.mm */; };
 		5C9D923B22D7E2B0008E9266 /* UnifiedSource4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923222D7E235008E9266 /* UnifiedSource4.cpp */; };
-		5C9D923C22D7E2B0008E9266 /* UnifiedSource5-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923522D7E235008E9266 /* UnifiedSource5-mm.mm */; };
+		5C9D923C22D7E2B0008E9266 /* UnifiedSource5-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923522D7E235008E9266 /* UnifiedSource5-nonARC.mm */; };
 		5C9D923D22D7E2B0008E9266 /* UnifiedSource5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C9D923322D7E235008E9266 /* UnifiedSource5.cpp */; };
 		5CA1DEC81F71F70100E71BD3 /* HTTPHeaderField.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5CA1DEC71F71F40700E71BD3 /* HTTPHeaderField.cpp */; };
-		5CABDBBF2735C9BD00B88BCB /* UnifiedSource16-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB922735C9BA00B88BCB /* UnifiedSource16-mm.mm */; };
-		5CABDBC02735C9BD00B88BCB /* UnifiedSource50-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB932735C9BA00B88BCB /* UnifiedSource50-mm.mm */; };
-		5CABDBC12735C9BD00B88BCB /* UnifiedSource49-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB942735C9BA00B88BCB /* UnifiedSource49-mm.mm */; };
-		5CABDBC22735C9BD00B88BCB /* UnifiedSource40-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB952735C9BA00B88BCB /* UnifiedSource40-mm.mm */; };
-		5CABDBC32735C9BD00B88BCB /* UnifiedSource7-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB962735C9BA00B88BCB /* UnifiedSource7-mm.mm */; };
-		5CABDBC42735C9BD00B88BCB /* UnifiedSource12-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB972735C9BA00B88BCB /* UnifiedSource12-mm.mm */; };
-		5CABDBC52735C9BD00B88BCB /* UnifiedSource28-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB982735C9BA00B88BCB /* UnifiedSource28-mm.mm */; };
-		5CABDBC62735C9BD00B88BCB /* UnifiedSource10-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB992735C9BB00B88BCB /* UnifiedSource10-mm.mm */; };
-		5CABDBC72735C9BD00B88BCB /* UnifiedSource9-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-mm.mm */; };
-		5CABDBC82735C9BD00B88BCB /* UnifiedSource6-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-mm.mm */; };
-		5CABDBC92735C9BD00B88BCB /* UnifiedSource19-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-mm.mm */; };
-		5CABDBCA2735C9BD00B88BCB /* UnifiedSource33-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-mm.mm */; };
-		5CABDBCB2735C9BD00B88BCB /* UnifiedSource24-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-mm.mm */; };
-		5CABDBCC2735C9BD00B88BCB /* UnifiedSource25-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-mm.mm */; };
-		5CABDBCD2735C9BD00B88BCB /* UnifiedSource42-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA02735C9BB00B88BCB /* UnifiedSource42-mm.mm */; };
-		5CABDBCE2735C9BD00B88BCB /* UnifiedSource18-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA12735C9BB00B88BCB /* UnifiedSource18-mm.mm */; };
-		5CABDBCF2735C9BD00B88BCB /* UnifiedSource41-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA22735C9BB00B88BCB /* UnifiedSource41-mm.mm */; };
-		5CABDBD02735C9BD00B88BCB /* UnifiedSource13-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA32735C9BB00B88BCB /* UnifiedSource13-mm.mm */; };
-		5CABDBD12735C9BD00B88BCB /* UnifiedSource29-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA42735C9BB00B88BCB /* UnifiedSource29-mm.mm */; };
-		5CABDBD22735C9BD00B88BCB /* UnifiedSource48-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA52735C9BB00B88BCB /* UnifiedSource48-mm.mm */; };
-		5CABDBD32735C9BD00B88BCB /* UnifiedSource35-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA62735C9BB00B88BCB /* UnifiedSource35-mm.mm */; };
-		5CABDBD42735C9BD00B88BCB /* UnifiedSource34-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA72735C9BB00B88BCB /* UnifiedSource34-mm.mm */; };
-		5CABDBD52735C9BD00B88BCB /* UnifiedSource38-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA82735C9BC00B88BCB /* UnifiedSource38-mm.mm */; };
-		5CABDBD62735C9BD00B88BCB /* UnifiedSource31-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA92735C9BC00B88BCB /* UnifiedSource31-mm.mm */; };
-		5CABDBD72735C9BD00B88BCB /* UnifiedSource21-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-mm.mm */; };
-		5CABDBD82735C9BD00B88BCB /* UnifiedSource45-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-mm.mm */; };
-		5CABDBD92735C9BD00B88BCB /* UnifiedSource11-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-mm.mm */; };
-		5CABDBDA2735C9BD00B88BCB /* UnifiedSource27-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-mm.mm */; };
-		5CABDBDB2735C9BD00B88BCB /* UnifiedSource20-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-mm.mm */; };
-		5CABDBDC2735C9BD00B88BCB /* UnifiedSource22-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-mm.mm */; };
-		5CABDBDD2735C9BD00B88BCB /* UnifiedSource14-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB02735C9BC00B88BCB /* UnifiedSource14-mm.mm */; };
-		5CABDBDE2735C9BD00B88BCB /* UnifiedSource39-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB12735C9BC00B88BCB /* UnifiedSource39-mm.mm */; };
-		5CABDBDF2735C9BD00B88BCB /* UnifiedSource23-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB22735C9BC00B88BCB /* UnifiedSource23-mm.mm */; };
-		5CABDBE02735C9BD00B88BCB /* UnifiedSource36-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB32735C9BC00B88BCB /* UnifiedSource36-mm.mm */; };
-		5CABDBE12735C9BD00B88BCB /* UnifiedSource15-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB42735C9BC00B88BCB /* UnifiedSource15-mm.mm */; };
-		5CABDBE22735C9BD00B88BCB /* UnifiedSource44-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB52735C9BC00B88BCB /* UnifiedSource44-mm.mm */; };
-		5CABDBE32735C9BD00B88BCB /* UnifiedSource46-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB62735C9BC00B88BCB /* UnifiedSource46-mm.mm */; };
-		5CABDBE42735C9BD00B88BCB /* UnifiedSource17-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB72735C9BD00B88BCB /* UnifiedSource17-mm.mm */; };
-		5CABDBE52735C9BD00B88BCB /* UnifiedSource26-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB82735C9BD00B88BCB /* UnifiedSource26-mm.mm */; };
-		5CABDBE62735C9BD00B88BCB /* UnifiedSource47-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB92735C9BD00B88BCB /* UnifiedSource47-mm.mm */; };
-		5CABDBE72735C9BD00B88BCB /* UnifiedSource30-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-mm.mm */; };
-		5CABDBE82735C9BD00B88BCB /* UnifiedSource43-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-mm.mm */; };
-		5CABDBE92735C9BD00B88BCB /* UnifiedSource8-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-mm.mm */; };
-		5CABDBEA2735C9BD00B88BCB /* UnifiedSource37-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-mm.mm */; };
-		5CABDBEB2735C9BD00B88BCB /* UnifiedSource32-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-mm.mm */; };
+		5CABDBBF2735C9BD00B88BCB /* UnifiedSource16-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB922735C9BA00B88BCB /* UnifiedSource16-nonARC.mm */; };
+		5CABDBC02735C9BD00B88BCB /* UnifiedSource50-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB932735C9BA00B88BCB /* UnifiedSource50-nonARC.mm */; };
+		5CABDBC12735C9BD00B88BCB /* UnifiedSource49-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB942735C9BA00B88BCB /* UnifiedSource49-nonARC.mm */; };
+		5CABDBC22735C9BD00B88BCB /* UnifiedSource40-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB952735C9BA00B88BCB /* UnifiedSource40-nonARC.mm */; };
+		5CABDBC32735C9BD00B88BCB /* UnifiedSource7-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB962735C9BA00B88BCB /* UnifiedSource7-nonARC.mm */; };
+		5CABDBC42735C9BD00B88BCB /* UnifiedSource12-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB972735C9BA00B88BCB /* UnifiedSource12-nonARC.mm */; };
+		5CABDBC52735C9BD00B88BCB /* UnifiedSource28-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB982735C9BA00B88BCB /* UnifiedSource28-nonARC.mm */; };
+		5CABDBC62735C9BD00B88BCB /* UnifiedSource10-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB992735C9BB00B88BCB /* UnifiedSource10-nonARC.mm */; };
+		5CABDBC72735C9BD00B88BCB /* UnifiedSource9-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-nonARC.mm */; };
+		5CABDBC82735C9BD00B88BCB /* UnifiedSource6-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-nonARC.mm */; };
+		5CABDBC92735C9BD00B88BCB /* UnifiedSource19-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-nonARC.mm */; };
+		5CABDBCA2735C9BD00B88BCB /* UnifiedSource33-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-nonARC.mm */; };
+		5CABDBCB2735C9BD00B88BCB /* UnifiedSource24-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-nonARC.mm */; };
+		5CABDBCC2735C9BD00B88BCB /* UnifiedSource25-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-nonARC.mm */; };
+		5CABDBCD2735C9BD00B88BCB /* UnifiedSource42-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA02735C9BB00B88BCB /* UnifiedSource42-nonARC.mm */; };
+		5CABDBCE2735C9BD00B88BCB /* UnifiedSource18-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA12735C9BB00B88BCB /* UnifiedSource18-nonARC.mm */; };
+		5CABDBCF2735C9BD00B88BCB /* UnifiedSource41-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA22735C9BB00B88BCB /* UnifiedSource41-nonARC.mm */; };
+		5CABDBD02735C9BD00B88BCB /* UnifiedSource13-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA32735C9BB00B88BCB /* UnifiedSource13-nonARC.mm */; };
+		5CABDBD12735C9BD00B88BCB /* UnifiedSource29-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA42735C9BB00B88BCB /* UnifiedSource29-nonARC.mm */; };
+		5CABDBD22735C9BD00B88BCB /* UnifiedSource48-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA52735C9BB00B88BCB /* UnifiedSource48-nonARC.mm */; };
+		5CABDBD32735C9BD00B88BCB /* UnifiedSource35-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA62735C9BB00B88BCB /* UnifiedSource35-nonARC.mm */; };
+		5CABDBD42735C9BD00B88BCB /* UnifiedSource34-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA72735C9BB00B88BCB /* UnifiedSource34-nonARC.mm */; };
+		5CABDBD52735C9BD00B88BCB /* UnifiedSource38-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA82735C9BC00B88BCB /* UnifiedSource38-nonARC.mm */; };
+		5CABDBD62735C9BD00B88BCB /* UnifiedSource31-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBA92735C9BC00B88BCB /* UnifiedSource31-nonARC.mm */; };
+		5CABDBD72735C9BD00B88BCB /* UnifiedSource21-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-nonARC.mm */; };
+		5CABDBD82735C9BD00B88BCB /* UnifiedSource45-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-nonARC.mm */; };
+		5CABDBD92735C9BD00B88BCB /* UnifiedSource11-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-nonARC.mm */; };
+		5CABDBDA2735C9BD00B88BCB /* UnifiedSource27-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-nonARC.mm */; };
+		5CABDBDB2735C9BD00B88BCB /* UnifiedSource20-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-nonARC.mm */; };
+		5CABDBDC2735C9BD00B88BCB /* UnifiedSource22-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-nonARC.mm */; };
+		5CABDBDD2735C9BD00B88BCB /* UnifiedSource14-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB02735C9BC00B88BCB /* UnifiedSource14-nonARC.mm */; };
+		5CABDBDE2735C9BD00B88BCB /* UnifiedSource39-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB12735C9BC00B88BCB /* UnifiedSource39-nonARC.mm */; };
+		5CABDBDF2735C9BD00B88BCB /* UnifiedSource23-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB22735C9BC00B88BCB /* UnifiedSource23-nonARC.mm */; };
+		5CABDBE02735C9BD00B88BCB /* UnifiedSource36-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB32735C9BC00B88BCB /* UnifiedSource36-nonARC.mm */; };
+		5CABDBE12735C9BD00B88BCB /* UnifiedSource15-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB42735C9BC00B88BCB /* UnifiedSource15-nonARC.mm */; };
+		5CABDBE22735C9BD00B88BCB /* UnifiedSource44-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB52735C9BC00B88BCB /* UnifiedSource44-nonARC.mm */; };
+		5CABDBE32735C9BD00B88BCB /* UnifiedSource46-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB62735C9BC00B88BCB /* UnifiedSource46-nonARC.mm */; };
+		5CABDBE42735C9BD00B88BCB /* UnifiedSource17-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB72735C9BD00B88BCB /* UnifiedSource17-nonARC.mm */; };
+		5CABDBE52735C9BD00B88BCB /* UnifiedSource26-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB82735C9BD00B88BCB /* UnifiedSource26-nonARC.mm */; };
+		5CABDBE62735C9BD00B88BCB /* UnifiedSource47-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBB92735C9BD00B88BCB /* UnifiedSource47-nonARC.mm */; };
+		5CABDBE72735C9BD00B88BCB /* UnifiedSource30-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-nonARC.mm */; };
+		5CABDBE82735C9BD00B88BCB /* UnifiedSource43-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-nonARC.mm */; };
+		5CABDBE92735C9BD00B88BCB /* UnifiedSource8-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-nonARC.mm */; };
+		5CABDBEA2735C9BD00B88BCB /* UnifiedSource37-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-nonARC.mm */; };
+		5CABDBEB2735C9BD00B88BCB /* UnifiedSource32-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-nonARC.mm */; };
 		5CB18BA81F5645E300EE23C4 /* ClickAutoFillButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CB18BA71F5645B200EE23C4 /* ClickAutoFillButton.mm */; };
 		5CC8B20626A2535F00909603 /* SchemeChangingPlugIn.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CC8B16226A2527C00909603 /* SchemeChangingPlugIn.mm */; };
 		5CE7594922A883D200C12409 /* TestContextMenuDriver.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CE7594722A883A500C12409 /* TestContextMenuDriver.mm */; };
@@ -3158,15 +3158,15 @@
 		5C9D921D22D7DBF7008E9266 /* Sources.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Sources.txt; sourceTree = "<group>"; };
 		5C9D921E22D7DBF8008E9266 /* SourcesCocoa.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourcesCocoa.txt; sourceTree = "<group>"; };
 		5C9D922822D7DE00008E9266 /* UnifiedSource2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource2.cpp; sourceTree = "<group>"; };
-		5C9D922922D7DE01008E9266 /* UnifiedSource1-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource1-mm.mm"; sourceTree = "<group>"; };
+		5C9D922922D7DE01008E9266 /* UnifiedSource1-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource1-nonARC.mm"; sourceTree = "<group>"; };
 		5C9D922A22D7DE01008E9266 /* UnifiedSource1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource1.cpp; sourceTree = "<group>"; };
-		5C9D922B22D7DE01008E9266 /* UnifiedSource2-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource2-mm.mm"; sourceTree = "<group>"; };
+		5C9D922B22D7DE01008E9266 /* UnifiedSource2-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource2-nonARC.mm"; sourceTree = "<group>"; };
 		5C9D923222D7E235008E9266 /* UnifiedSource4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource4.cpp; sourceTree = "<group>"; };
 		5C9D923322D7E235008E9266 /* UnifiedSource5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource5.cpp; sourceTree = "<group>"; };
-		5C9D923422D7E235008E9266 /* UnifiedSource3-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource3-mm.mm"; sourceTree = "<group>"; };
-		5C9D923522D7E235008E9266 /* UnifiedSource5-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource5-mm.mm"; sourceTree = "<group>"; };
+		5C9D923422D7E235008E9266 /* UnifiedSource3-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource3-nonARC.mm"; sourceTree = "<group>"; };
+		5C9D923522D7E235008E9266 /* UnifiedSource5-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource5-nonARC.mm"; sourceTree = "<group>"; };
 		5C9D923622D7E235008E9266 /* UnifiedSource3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource3.cpp; sourceTree = "<group>"; };
-		5C9D923722D7E235008E9266 /* UnifiedSource4-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource4-mm.mm"; sourceTree = "<group>"; };
+		5C9D923722D7E235008E9266 /* UnifiedSource4-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource4-nonARC.mm"; sourceTree = "<group>"; };
 		5C9E56841DF9143D00C9EE33 /* WebsitePolicies.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebsitePolicies.mm; sourceTree = "<group>"; };
 		5C9E56861DF9148E00C9EE33 /* contentBlockerCheck.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = contentBlockerCheck.html; sourceTree = "<group>"; };
 		5C9E593E1D3EB1DE00E3C62E /* ApplicationCache.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = ApplicationCache.db; sourceTree = "<group>"; };
@@ -3175,51 +3175,51 @@
 		5CA1DEC71F71F40700E71BD3 /* HTTPHeaderField.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTTPHeaderField.cpp; sourceTree = "<group>"; };
 		5CA1DED81F74A87100E71BD3 /* ContentRuleListNotification.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ContentRuleListNotification.mm; sourceTree = "<group>"; };
 		5CA985512113CB8C0057EB6B /* SafeBrowsing.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SafeBrowsing.mm; sourceTree = "<group>"; };
-		5CABDB922735C9BA00B88BCB /* UnifiedSource16-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource16-mm.mm"; sourceTree = "<group>"; };
-		5CABDB932735C9BA00B88BCB /* UnifiedSource50-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource50-mm.mm"; sourceTree = "<group>"; };
-		5CABDB942735C9BA00B88BCB /* UnifiedSource49-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource49-mm.mm"; sourceTree = "<group>"; };
-		5CABDB952735C9BA00B88BCB /* UnifiedSource40-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource40-mm.mm"; sourceTree = "<group>"; };
-		5CABDB962735C9BA00B88BCB /* UnifiedSource7-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource7-mm.mm"; sourceTree = "<group>"; };
-		5CABDB972735C9BA00B88BCB /* UnifiedSource12-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource12-mm.mm"; sourceTree = "<group>"; };
-		5CABDB982735C9BA00B88BCB /* UnifiedSource28-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource28-mm.mm"; sourceTree = "<group>"; };
-		5CABDB992735C9BB00B88BCB /* UnifiedSource10-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource10-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource9-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource6-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource19-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource33-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource24-mm.mm"; sourceTree = "<group>"; };
-		5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource25-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA02735C9BB00B88BCB /* UnifiedSource42-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource42-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA12735C9BB00B88BCB /* UnifiedSource18-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource18-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA22735C9BB00B88BCB /* UnifiedSource41-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource41-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA32735C9BB00B88BCB /* UnifiedSource13-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource13-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA42735C9BB00B88BCB /* UnifiedSource29-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource29-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA52735C9BB00B88BCB /* UnifiedSource48-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource48-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA62735C9BB00B88BCB /* UnifiedSource35-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource35-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA72735C9BB00B88BCB /* UnifiedSource34-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource34-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA82735C9BC00B88BCB /* UnifiedSource38-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource38-mm.mm"; sourceTree = "<group>"; };
-		5CABDBA92735C9BC00B88BCB /* UnifiedSource31-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource31-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource21-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource45-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource11-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource27-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource20-mm.mm"; sourceTree = "<group>"; };
-		5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource22-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB02735C9BC00B88BCB /* UnifiedSource14-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource14-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB12735C9BC00B88BCB /* UnifiedSource39-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource39-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB22735C9BC00B88BCB /* UnifiedSource23-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource23-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB32735C9BC00B88BCB /* UnifiedSource36-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource36-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB42735C9BC00B88BCB /* UnifiedSource15-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource15-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB52735C9BC00B88BCB /* UnifiedSource44-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource44-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB62735C9BC00B88BCB /* UnifiedSource46-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource46-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB72735C9BD00B88BCB /* UnifiedSource17-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource17-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB82735C9BD00B88BCB /* UnifiedSource26-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource26-mm.mm"; sourceTree = "<group>"; };
-		5CABDBB92735C9BD00B88BCB /* UnifiedSource47-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource47-mm.mm"; sourceTree = "<group>"; };
-		5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource30-mm.mm"; sourceTree = "<group>"; };
-		5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource43-mm.mm"; sourceTree = "<group>"; };
-		5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource8-mm.mm"; sourceTree = "<group>"; };
-		5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource37-mm.mm"; sourceTree = "<group>"; };
-		5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-mm.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource32-mm.mm"; sourceTree = "<group>"; };
+		5CABDB922735C9BA00B88BCB /* UnifiedSource16-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource16-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB932735C9BA00B88BCB /* UnifiedSource50-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource50-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB942735C9BA00B88BCB /* UnifiedSource49-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource49-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB952735C9BA00B88BCB /* UnifiedSource40-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource40-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB962735C9BA00B88BCB /* UnifiedSource7-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource7-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB972735C9BA00B88BCB /* UnifiedSource12-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource12-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB982735C9BA00B88BCB /* UnifiedSource28-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource28-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB992735C9BB00B88BCB /* UnifiedSource10-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource10-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource9-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource6-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource19-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource33-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource24-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource25-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA02735C9BB00B88BCB /* UnifiedSource42-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource42-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA12735C9BB00B88BCB /* UnifiedSource18-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource18-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA22735C9BB00B88BCB /* UnifiedSource41-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource41-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA32735C9BB00B88BCB /* UnifiedSource13-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource13-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA42735C9BB00B88BCB /* UnifiedSource29-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource29-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA52735C9BB00B88BCB /* UnifiedSource48-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource48-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA62735C9BB00B88BCB /* UnifiedSource35-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource35-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA72735C9BB00B88BCB /* UnifiedSource34-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource34-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA82735C9BC00B88BCB /* UnifiedSource38-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource38-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBA92735C9BC00B88BCB /* UnifiedSource31-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource31-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource21-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource45-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource11-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource27-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource20-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource22-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB02735C9BC00B88BCB /* UnifiedSource14-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource14-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB12735C9BC00B88BCB /* UnifiedSource39-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource39-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB22735C9BC00B88BCB /* UnifiedSource23-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource23-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB32735C9BC00B88BCB /* UnifiedSource36-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource36-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB42735C9BC00B88BCB /* UnifiedSource15-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource15-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB52735C9BC00B88BCB /* UnifiedSource44-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource44-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB62735C9BC00B88BCB /* UnifiedSource46-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource46-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB72735C9BD00B88BCB /* UnifiedSource17-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource17-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB82735C9BD00B88BCB /* UnifiedSource26-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource26-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBB92735C9BD00B88BCB /* UnifiedSource47-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource47-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource30-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource43-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource8-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource37-nonARC.mm"; sourceTree = "<group>"; };
+		5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-nonARC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource32-nonARC.mm"; sourceTree = "<group>"; };
 		5CABDBEC2735CB4D00B88BCB /* DeprecatedGlobalValues.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DeprecatedGlobalValues.cpp; sourceTree = "<group>"; };
 		5CABDBED2735CB4D00B88BCB /* DeprecatedGlobalValues.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeprecatedGlobalValues.h; sourceTree = "<group>"; };
 		5CABDBEE2735D27000B88BCB /* PasteboardUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PasteboardUtilities.h; sourceTree = "<group>"; };
@@ -3417,6 +3417,7 @@
 		83B88A331C80056D00BB2418 /* HTMLParserIdioms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HTMLParserIdioms.cpp; sourceTree = "<group>"; };
 		83BC5ABF20E6C0D300F5879F /* StartLoadInDidFailProvisionalLoad.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = StartLoadInDidFailProvisionalLoad.mm; sourceTree = "<group>"; };
 		83F22C6320B355EB0034277E /* NoPolicyDelegateResponse.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NoPolicyDelegateResponse.mm; sourceTree = "<group>"; };
+		869429BF2E53635100E0DA9D /* EnhancedSecurity.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EnhancedSecurity.mm; sourceTree = "<group>"; };
 		86BD19971A2DB05B006DCF0A /* RefCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RefCounter.cpp; sourceTree = "<group>"; };
 		8A2C750D16CED9550024F352 /* ResizeWindowAfterCrash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResizeWindowAfterCrash.cpp; sourceTree = "<group>"; };
 		8A3AF93A16C9ED2700D248C1 /* ReloadPageAfterCrash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ReloadPageAfterCrash.cpp; sourceTree = "<group>"; };
@@ -4790,6 +4791,7 @@
 				F44D06461F395C4D001A0E29 /* EditorStateTests.mm */,
 				F4DADCF62BABA65B008B398F /* ElementTargetingTests.mm */,
 				E502E42E2D39B79500C3D56D /* ElementTextPreview.mm */,
+				869429BF2E53635100E0DA9D /* EnhancedSecurity.mm */,
 				6B25A75125DC8D4E0070744F /* EventAttribution.mm */,
 				CDA29B2820FD2A9900F15CED /* ExitFullscreenOnEnterPiP.mm */,
 				1D12BEBF245BEF85004C0B7A /* ExitPiPOnSuspendVideoElement.mm */,
@@ -5304,61 +5306,61 @@
 		5C9D922722D7DD8B008E9266 /* unified-sources */ = {
 			isa = PBXGroup;
 			children = (
-				5C9D922922D7DE01008E9266 /* UnifiedSource1-mm.mm */,
+				5C9D922922D7DE01008E9266 /* UnifiedSource1-nonARC.mm */,
 				5C9D922A22D7DE01008E9266 /* UnifiedSource1.cpp */,
-				5C9D922B22D7DE01008E9266 /* UnifiedSource2-mm.mm */,
+				5C9D922B22D7DE01008E9266 /* UnifiedSource2-nonARC.mm */,
 				5C9D922822D7DE00008E9266 /* UnifiedSource2.cpp */,
-				5C9D923422D7E235008E9266 /* UnifiedSource3-mm.mm */,
+				5C9D923422D7E235008E9266 /* UnifiedSource3-nonARC.mm */,
 				5C9D923622D7E235008E9266 /* UnifiedSource3.cpp */,
-				5C9D923722D7E235008E9266 /* UnifiedSource4-mm.mm */,
+				5C9D923722D7E235008E9266 /* UnifiedSource4-nonARC.mm */,
 				5C9D923222D7E235008E9266 /* UnifiedSource4.cpp */,
-				5C9D923522D7E235008E9266 /* UnifiedSource5-mm.mm */,
+				5C9D923522D7E235008E9266 /* UnifiedSource5-nonARC.mm */,
 				5C9D923322D7E235008E9266 /* UnifiedSource5.cpp */,
-				5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-mm.mm */,
-				5CABDB962735C9BA00B88BCB /* UnifiedSource7-mm.mm */,
-				5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-mm.mm */,
-				5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-mm.mm */,
-				5CABDB992735C9BB00B88BCB /* UnifiedSource10-mm.mm */,
-				5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-mm.mm */,
-				5CABDB972735C9BA00B88BCB /* UnifiedSource12-mm.mm */,
-				5CABDBA32735C9BB00B88BCB /* UnifiedSource13-mm.mm */,
-				5CABDBB02735C9BC00B88BCB /* UnifiedSource14-mm.mm */,
-				5CABDBB42735C9BC00B88BCB /* UnifiedSource15-mm.mm */,
-				5CABDB922735C9BA00B88BCB /* UnifiedSource16-mm.mm */,
-				5CABDBB72735C9BD00B88BCB /* UnifiedSource17-mm.mm */,
-				5CABDBA12735C9BB00B88BCB /* UnifiedSource18-mm.mm */,
-				5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-mm.mm */,
-				5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-mm.mm */,
-				5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-mm.mm */,
-				5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-mm.mm */,
-				5CABDBB22735C9BC00B88BCB /* UnifiedSource23-mm.mm */,
-				5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-mm.mm */,
-				5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-mm.mm */,
-				5CABDBB82735C9BD00B88BCB /* UnifiedSource26-mm.mm */,
-				5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-mm.mm */,
-				5CABDB982735C9BA00B88BCB /* UnifiedSource28-mm.mm */,
-				5CABDBA42735C9BB00B88BCB /* UnifiedSource29-mm.mm */,
-				5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-mm.mm */,
-				5CABDBA92735C9BC00B88BCB /* UnifiedSource31-mm.mm */,
-				5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-mm.mm */,
-				5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-mm.mm */,
-				5CABDBA72735C9BB00B88BCB /* UnifiedSource34-mm.mm */,
-				5CABDBA62735C9BB00B88BCB /* UnifiedSource35-mm.mm */,
-				5CABDBB32735C9BC00B88BCB /* UnifiedSource36-mm.mm */,
-				5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-mm.mm */,
-				5CABDBA82735C9BC00B88BCB /* UnifiedSource38-mm.mm */,
-				5CABDBB12735C9BC00B88BCB /* UnifiedSource39-mm.mm */,
-				5CABDB952735C9BA00B88BCB /* UnifiedSource40-mm.mm */,
-				5CABDBA22735C9BB00B88BCB /* UnifiedSource41-mm.mm */,
-				5CABDBA02735C9BB00B88BCB /* UnifiedSource42-mm.mm */,
-				5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-mm.mm */,
-				5CABDBB52735C9BC00B88BCB /* UnifiedSource44-mm.mm */,
-				5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-mm.mm */,
-				5CABDBB62735C9BC00B88BCB /* UnifiedSource46-mm.mm */,
-				5CABDBB92735C9BD00B88BCB /* UnifiedSource47-mm.mm */,
-				5CABDBA52735C9BB00B88BCB /* UnifiedSource48-mm.mm */,
-				5CABDB942735C9BA00B88BCB /* UnifiedSource49-mm.mm */,
-				5CABDB932735C9BA00B88BCB /* UnifiedSource50-mm.mm */,
+				5CABDB9B2735C9BB00B88BCB /* UnifiedSource6-nonARC.mm */,
+				5CABDB962735C9BA00B88BCB /* UnifiedSource7-nonARC.mm */,
+				5CABDBBC2735C9BD00B88BCB /* UnifiedSource8-nonARC.mm */,
+				5CABDB9A2735C9BB00B88BCB /* UnifiedSource9-nonARC.mm */,
+				5CABDB992735C9BB00B88BCB /* UnifiedSource10-nonARC.mm */,
+				5CABDBAC2735C9BC00B88BCB /* UnifiedSource11-nonARC.mm */,
+				5CABDB972735C9BA00B88BCB /* UnifiedSource12-nonARC.mm */,
+				5CABDBA32735C9BB00B88BCB /* UnifiedSource13-nonARC.mm */,
+				5CABDBB02735C9BC00B88BCB /* UnifiedSource14-nonARC.mm */,
+				5CABDBB42735C9BC00B88BCB /* UnifiedSource15-nonARC.mm */,
+				5CABDB922735C9BA00B88BCB /* UnifiedSource16-nonARC.mm */,
+				5CABDBB72735C9BD00B88BCB /* UnifiedSource17-nonARC.mm */,
+				5CABDBA12735C9BB00B88BCB /* UnifiedSource18-nonARC.mm */,
+				5CABDB9C2735C9BB00B88BCB /* UnifiedSource19-nonARC.mm */,
+				5CABDBAE2735C9BC00B88BCB /* UnifiedSource20-nonARC.mm */,
+				5CABDBAA2735C9BC00B88BCB /* UnifiedSource21-nonARC.mm */,
+				5CABDBAF2735C9BC00B88BCB /* UnifiedSource22-nonARC.mm */,
+				5CABDBB22735C9BC00B88BCB /* UnifiedSource23-nonARC.mm */,
+				5CABDB9E2735C9BB00B88BCB /* UnifiedSource24-nonARC.mm */,
+				5CABDB9F2735C9BB00B88BCB /* UnifiedSource25-nonARC.mm */,
+				5CABDBB82735C9BD00B88BCB /* UnifiedSource26-nonARC.mm */,
+				5CABDBAD2735C9BC00B88BCB /* UnifiedSource27-nonARC.mm */,
+				5CABDB982735C9BA00B88BCB /* UnifiedSource28-nonARC.mm */,
+				5CABDBA42735C9BB00B88BCB /* UnifiedSource29-nonARC.mm */,
+				5CABDBBA2735C9BD00B88BCB /* UnifiedSource30-nonARC.mm */,
+				5CABDBA92735C9BC00B88BCB /* UnifiedSource31-nonARC.mm */,
+				5CABDBBE2735C9BD00B88BCB /* UnifiedSource32-nonARC.mm */,
+				5CABDB9D2735C9BB00B88BCB /* UnifiedSource33-nonARC.mm */,
+				5CABDBA72735C9BB00B88BCB /* UnifiedSource34-nonARC.mm */,
+				5CABDBA62735C9BB00B88BCB /* UnifiedSource35-nonARC.mm */,
+				5CABDBB32735C9BC00B88BCB /* UnifiedSource36-nonARC.mm */,
+				5CABDBBD2735C9BD00B88BCB /* UnifiedSource37-nonARC.mm */,
+				5CABDBA82735C9BC00B88BCB /* UnifiedSource38-nonARC.mm */,
+				5CABDBB12735C9BC00B88BCB /* UnifiedSource39-nonARC.mm */,
+				5CABDB952735C9BA00B88BCB /* UnifiedSource40-nonARC.mm */,
+				5CABDBA22735C9BB00B88BCB /* UnifiedSource41-nonARC.mm */,
+				5CABDBA02735C9BB00B88BCB /* UnifiedSource42-nonARC.mm */,
+				5CABDBBB2735C9BD00B88BCB /* UnifiedSource43-nonARC.mm */,
+				5CABDBB52735C9BC00B88BCB /* UnifiedSource44-nonARC.mm */,
+				5CABDBAB2735C9BC00B88BCB /* UnifiedSource45-nonARC.mm */,
+				5CABDBB62735C9BC00B88BCB /* UnifiedSource46-nonARC.mm */,
+				5CABDBB92735C9BD00B88BCB /* UnifiedSource47-nonARC.mm */,
+				5CABDBA52735C9BB00B88BCB /* UnifiedSource48-nonARC.mm */,
+				5CABDB942735C9BA00B88BCB /* UnifiedSource49-nonARC.mm */,
+				5CABDB932735C9BA00B88BCB /* UnifiedSource50-nonARC.mm */,
 			);
 			path = "unified-sources";
 			sourceTree = "<group>";
@@ -8001,61 +8003,61 @@
 				F460F6752614DE2F0064F2B6 /* UIFocusTests.mm in Sources */,
 				F46849BE1EEF58E400B937FE /* UIPasteboardTests.mm in Sources */,
 				F402F56C23ECC2FB00865549 /* UIWKInteractionViewProtocol.mm in Sources */,
-				5C9D922C22D7DE12008E9266 /* UnifiedSource1-mm.mm in Sources */,
+				5C9D922C22D7DE12008E9266 /* UnifiedSource1-nonARC.mm in Sources */,
 				5C9D922E22D7DE1C008E9266 /* UnifiedSource1.cpp in Sources */,
-				5C9D922D22D7DE19008E9266 /* UnifiedSource2-mm.mm in Sources */,
+				5C9D922D22D7DE19008E9266 /* UnifiedSource2-nonARC.mm in Sources */,
 				5C9D922F22D7DE1F008E9266 /* UnifiedSource2.cpp in Sources */,
-				5C9D923822D7E2B0008E9266 /* UnifiedSource3-mm.mm in Sources */,
+				5C9D923822D7E2B0008E9266 /* UnifiedSource3-nonARC.mm in Sources */,
 				5C9D923922D7E2B0008E9266 /* UnifiedSource3.cpp in Sources */,
-				5C9D923A22D7E2B0008E9266 /* UnifiedSource4-mm.mm in Sources */,
+				5C9D923A22D7E2B0008E9266 /* UnifiedSource4-nonARC.mm in Sources */,
 				5C9D923B22D7E2B0008E9266 /* UnifiedSource4.cpp in Sources */,
-				5C9D923C22D7E2B0008E9266 /* UnifiedSource5-mm.mm in Sources */,
+				5C9D923C22D7E2B0008E9266 /* UnifiedSource5-nonARC.mm in Sources */,
 				5C9D923D22D7E2B0008E9266 /* UnifiedSource5.cpp in Sources */,
-				5CABDBC82735C9BD00B88BCB /* UnifiedSource6-mm.mm in Sources */,
-				5CABDBC32735C9BD00B88BCB /* UnifiedSource7-mm.mm in Sources */,
-				5CABDBE92735C9BD00B88BCB /* UnifiedSource8-mm.mm in Sources */,
-				5CABDBC72735C9BD00B88BCB /* UnifiedSource9-mm.mm in Sources */,
-				5CABDBC62735C9BD00B88BCB /* UnifiedSource10-mm.mm in Sources */,
-				5CABDBD92735C9BD00B88BCB /* UnifiedSource11-mm.mm in Sources */,
-				5CABDBC42735C9BD00B88BCB /* UnifiedSource12-mm.mm in Sources */,
-				5CABDBD02735C9BD00B88BCB /* UnifiedSource13-mm.mm in Sources */,
-				5CABDBDD2735C9BD00B88BCB /* UnifiedSource14-mm.mm in Sources */,
-				5CABDBE12735C9BD00B88BCB /* UnifiedSource15-mm.mm in Sources */,
-				5CABDBBF2735C9BD00B88BCB /* UnifiedSource16-mm.mm in Sources */,
-				5CABDBE42735C9BD00B88BCB /* UnifiedSource17-mm.mm in Sources */,
-				5CABDBCE2735C9BD00B88BCB /* UnifiedSource18-mm.mm in Sources */,
-				5CABDBC92735C9BD00B88BCB /* UnifiedSource19-mm.mm in Sources */,
-				5CABDBDB2735C9BD00B88BCB /* UnifiedSource20-mm.mm in Sources */,
-				5CABDBD72735C9BD00B88BCB /* UnifiedSource21-mm.mm in Sources */,
-				5CABDBDC2735C9BD00B88BCB /* UnifiedSource22-mm.mm in Sources */,
-				5CABDBDF2735C9BD00B88BCB /* UnifiedSource23-mm.mm in Sources */,
-				5CABDBCB2735C9BD00B88BCB /* UnifiedSource24-mm.mm in Sources */,
-				5CABDBCC2735C9BD00B88BCB /* UnifiedSource25-mm.mm in Sources */,
-				5CABDBE52735C9BD00B88BCB /* UnifiedSource26-mm.mm in Sources */,
-				5CABDBDA2735C9BD00B88BCB /* UnifiedSource27-mm.mm in Sources */,
-				5CABDBC52735C9BD00B88BCB /* UnifiedSource28-mm.mm in Sources */,
-				5CABDBD12735C9BD00B88BCB /* UnifiedSource29-mm.mm in Sources */,
-				5CABDBE72735C9BD00B88BCB /* UnifiedSource30-mm.mm in Sources */,
-				5CABDBD62735C9BD00B88BCB /* UnifiedSource31-mm.mm in Sources */,
-				5CABDBEB2735C9BD00B88BCB /* UnifiedSource32-mm.mm in Sources */,
-				5CABDBCA2735C9BD00B88BCB /* UnifiedSource33-mm.mm in Sources */,
-				5CABDBD42735C9BD00B88BCB /* UnifiedSource34-mm.mm in Sources */,
-				5CABDBD32735C9BD00B88BCB /* UnifiedSource35-mm.mm in Sources */,
-				5CABDBE02735C9BD00B88BCB /* UnifiedSource36-mm.mm in Sources */,
-				5CABDBEA2735C9BD00B88BCB /* UnifiedSource37-mm.mm in Sources */,
-				5CABDBD52735C9BD00B88BCB /* UnifiedSource38-mm.mm in Sources */,
-				5CABDBDE2735C9BD00B88BCB /* UnifiedSource39-mm.mm in Sources */,
-				5CABDBC22735C9BD00B88BCB /* UnifiedSource40-mm.mm in Sources */,
-				5CABDBCF2735C9BD00B88BCB /* UnifiedSource41-mm.mm in Sources */,
-				5CABDBCD2735C9BD00B88BCB /* UnifiedSource42-mm.mm in Sources */,
-				5CABDBE82735C9BD00B88BCB /* UnifiedSource43-mm.mm in Sources */,
-				5CABDBE22735C9BD00B88BCB /* UnifiedSource44-mm.mm in Sources */,
-				5CABDBD82735C9BD00B88BCB /* UnifiedSource45-mm.mm in Sources */,
-				5CABDBE32735C9BD00B88BCB /* UnifiedSource46-mm.mm in Sources */,
-				5CABDBE62735C9BD00B88BCB /* UnifiedSource47-mm.mm in Sources */,
-				5CABDBD22735C9BD00B88BCB /* UnifiedSource48-mm.mm in Sources */,
-				5CABDBC12735C9BD00B88BCB /* UnifiedSource49-mm.mm in Sources */,
-				5CABDBC02735C9BD00B88BCB /* UnifiedSource50-mm.mm in Sources */,
+				5CABDBC82735C9BD00B88BCB /* UnifiedSource6-nonARC.mm in Sources */,
+				5CABDBC32735C9BD00B88BCB /* UnifiedSource7-nonARC.mm in Sources */,
+				5CABDBE92735C9BD00B88BCB /* UnifiedSource8-nonARC.mm in Sources */,
+				5CABDBC72735C9BD00B88BCB /* UnifiedSource9-nonARC.mm in Sources */,
+				5CABDBC62735C9BD00B88BCB /* UnifiedSource10-nonARC.mm in Sources */,
+				5CABDBD92735C9BD00B88BCB /* UnifiedSource11-nonARC.mm in Sources */,
+				5CABDBC42735C9BD00B88BCB /* UnifiedSource12-nonARC.mm in Sources */,
+				5CABDBD02735C9BD00B88BCB /* UnifiedSource13-nonARC.mm in Sources */,
+				5CABDBDD2735C9BD00B88BCB /* UnifiedSource14-nonARC.mm in Sources */,
+				5CABDBE12735C9BD00B88BCB /* UnifiedSource15-nonARC.mm in Sources */,
+				5CABDBBF2735C9BD00B88BCB /* UnifiedSource16-nonARC.mm in Sources */,
+				5CABDBE42735C9BD00B88BCB /* UnifiedSource17-nonARC.mm in Sources */,
+				5CABDBCE2735C9BD00B88BCB /* UnifiedSource18-nonARC.mm in Sources */,
+				5CABDBC92735C9BD00B88BCB /* UnifiedSource19-nonARC.mm in Sources */,
+				5CABDBDB2735C9BD00B88BCB /* UnifiedSource20-nonARC.mm in Sources */,
+				5CABDBD72735C9BD00B88BCB /* UnifiedSource21-nonARC.mm in Sources */,
+				5CABDBDC2735C9BD00B88BCB /* UnifiedSource22-nonARC.mm in Sources */,
+				5CABDBDF2735C9BD00B88BCB /* UnifiedSource23-nonARC.mm in Sources */,
+				5CABDBCB2735C9BD00B88BCB /* UnifiedSource24-nonARC.mm in Sources */,
+				5CABDBCC2735C9BD00B88BCB /* UnifiedSource25-nonARC.mm in Sources */,
+				5CABDBE52735C9BD00B88BCB /* UnifiedSource26-nonARC.mm in Sources */,
+				5CABDBDA2735C9BD00B88BCB /* UnifiedSource27-nonARC.mm in Sources */,
+				5CABDBC52735C9BD00B88BCB /* UnifiedSource28-nonARC.mm in Sources */,
+				5CABDBD12735C9BD00B88BCB /* UnifiedSource29-nonARC.mm in Sources */,
+				5CABDBE72735C9BD00B88BCB /* UnifiedSource30-nonARC.mm in Sources */,
+				5CABDBD62735C9BD00B88BCB /* UnifiedSource31-nonARC.mm in Sources */,
+				5CABDBEB2735C9BD00B88BCB /* UnifiedSource32-nonARC.mm in Sources */,
+				5CABDBCA2735C9BD00B88BCB /* UnifiedSource33-nonARC.mm in Sources */,
+				5CABDBD42735C9BD00B88BCB /* UnifiedSource34-nonARC.mm in Sources */,
+				5CABDBD32735C9BD00B88BCB /* UnifiedSource35-nonARC.mm in Sources */,
+				5CABDBE02735C9BD00B88BCB /* UnifiedSource36-nonARC.mm in Sources */,
+				5CABDBEA2735C9BD00B88BCB /* UnifiedSource37-nonARC.mm in Sources */,
+				5CABDBD52735C9BD00B88BCB /* UnifiedSource38-nonARC.mm in Sources */,
+				5CABDBDE2735C9BD00B88BCB /* UnifiedSource39-nonARC.mm in Sources */,
+				5CABDBC22735C9BD00B88BCB /* UnifiedSource40-nonARC.mm in Sources */,
+				5CABDBCF2735C9BD00B88BCB /* UnifiedSource41-nonARC.mm in Sources */,
+				5CABDBCD2735C9BD00B88BCB /* UnifiedSource42-nonARC.mm in Sources */,
+				5CABDBE82735C9BD00B88BCB /* UnifiedSource43-nonARC.mm in Sources */,
+				5CABDBE22735C9BD00B88BCB /* UnifiedSource44-nonARC.mm in Sources */,
+				5CABDBD82735C9BD00B88BCB /* UnifiedSource45-nonARC.mm in Sources */,
+				5CABDBE32735C9BD00B88BCB /* UnifiedSource46-nonARC.mm in Sources */,
+				5CABDBE62735C9BD00B88BCB /* UnifiedSource47-nonARC.mm in Sources */,
+				5CABDBD22735C9BD00B88BCB /* UnifiedSource48-nonARC.mm in Sources */,
+				5CABDBC12735C9BD00B88BCB /* UnifiedSource49-nonARC.mm in Sources */,
+				5CABDBC02735C9BD00B88BCB /* UnifiedSource50-nonARC.mm in Sources */,
 				5C6E27A7224EEBEA00128736 /* URLExtras.mm in Sources */,
 				E3A1E77F21B25B39008C6007 /* URLParserTextEncoding.cpp in Sources */,
 				7CCE7F2D1A411B1000447C4C /* UserContentTest.mm in Sources */,

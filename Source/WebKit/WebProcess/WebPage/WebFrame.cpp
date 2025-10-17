@@ -73,7 +73,10 @@
 #include <WebCore/EventHandler.h>
 #include <WebCore/File.h>
 #include <WebCore/FocusController.h>
+#include <WebCore/FocusControllerTypes.h>
 #include <WebCore/FocusEventData.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
+#include <WebCore/FrameInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/FrameSnapshotting.h>
 #include <WebCore/HTMLFormElement.h>
@@ -95,6 +98,8 @@
 #include <WebCore/OriginAccessPatterns.h>
 #include <WebCore/Page.h>
 #include <WebCore/PluginDocument.h>
+#include <WebCore/PointerCaptureController.h>
+#include <WebCore/ReferrerPolicy.h>
 #include <WebCore/RemoteDOMWindow.h>
 #include <WebCore/RemoteFrame.h>
 #include <WebCore/RemoteFrameView.h>
@@ -141,16 +146,19 @@ Ref<WebFrame> WebFrame::createSubframe(WebPage& page, WebFrame& parent, const At
     auto effectiveSandboxFlags = ownerElement.sandboxFlags();
     if (RefPtr parentLocalFrame = parent.coreLocalFrame())
         effectiveSandboxFlags.add(parentLocalFrame->effectiveSandboxFlags());
+    auto effectiveReferrerPolicy = ownerElement.referrerPolicy();
+    if (RefPtr localTopDocument = page.localTopDocument(); effectiveReferrerPolicy == ReferrerPolicy::EmptyString && localTopDocument)
+        effectiveReferrerPolicy = localTopDocument->referrerPolicy();
 
     auto frameID = WebCore::generateFrameIdentifier();
     auto frame = create(page, frameID);
     ASSERT(page.corePage());
     auto coreFrame = LocalFrame::createSubframe(*page.protectedCorePage(), [frame] (auto& localFrame, auto& frameLoader) {
         return makeUniqueRefWithoutRefCountedCheck<WebLocalFrameLoaderClient>(localFrame, frameLoader, frame.get(), frame->makeInvalidator());
-    }, frameID, effectiveSandboxFlags, ownerElement, WebCore::FrameTreeSyncData::create());
+    }, frameID, effectiveSandboxFlags, effectiveReferrerPolicy, ownerElement, WebCore::FrameTreeSyncData::create());
     frame->m_coreFrame = coreFrame.get();
 
-    page.send(Messages::WebPageProxy::DidCreateSubframe(parent.frameID(), coreFrame->frameID(), frameName, effectiveSandboxFlags, ownerElement.scrollingMode()));
+    page.send(Messages::WebPageProxy::DidCreateSubframe(parent.frameID(), coreFrame->frameID(), frameName, effectiveSandboxFlags, effectiveReferrerPolicy, ownerElement.scrollingMode()));
 
     coreFrame->tree().setSpecifiedName(frameName);
     ASSERT(ownerElement.document().frame());
@@ -184,8 +192,6 @@ Ref<WebFrame> WebFrame::createRemoteSubframe(WebPage& page, WebFrame& parent, We
 WebFrame::WebFrame(WebPage& page, WebCore::FrameIdentifier frameID)
     : m_page(page)
     , m_frameID(frameID)
-    // FIXME: <https://webkit.org/b/299052> Consider lazily creating this inspector target.
-    , m_inspectorTarget(makeUniqueRef<WebFrameInspectorTarget>(*this))
 {
     ASSERT(!WebProcess::singleton().webFrame(m_frameID));
     WebProcess::singleton().addWebFrame(m_frameID, this);
@@ -425,7 +431,7 @@ void WebFrame::loadDidCommitInAnotherProcess(std::optional<WebCore::LayerHosting
     m_coreFrame = newFrame.get();
 
     if (corePage->focusController().focusedFrame() == localFrame.get())
-        corePage->focusController().setFocusedFrame(newFrame.ptr(), FocusController::BroadcastFocusedFrame::No);
+        corePage->focusController().setFocusedFrame(newFrame.ptr(), WebCore::BroadcastFocusedFrame::No);
 
     localFrame->loader().detachFromParent();
 
@@ -451,7 +457,7 @@ void WebFrame::createProvisionalFrame(ProvisionalFrameCreationParameters&& param
     auto clientCreator = [this, protectedThis = Ref { *this }] (auto& localFrame, auto& frameLoader) mutable {
         return makeUniqueRefWithoutRefCountedCheck<WebLocalFrameLoaderClient>(localFrame, frameLoader, WTFMove(protectedThis), makeInvalidator());
     };
-    auto localFrame = parent ? LocalFrame::createProvisionalSubframe(*corePage, WTFMove(clientCreator), m_frameID, parameters.effectiveSandboxFlags, parameters.scrollingMode, *parent, Ref { remoteFrame->frameTreeSyncData() }) : LocalFrame::createMainFrame(*corePage, WTFMove(clientCreator), m_frameID, parameters.effectiveSandboxFlags, nullptr, Ref { remoteFrame->frameTreeSyncData() });
+    auto localFrame = parent ? LocalFrame::createProvisionalSubframe(*corePage, WTFMove(clientCreator), m_frameID, parameters.effectiveSandboxFlags, parameters.effectiveReferrerPolicy, parameters.scrollingMode, *parent, Ref { remoteFrame->frameTreeSyncData() }) : LocalFrame::createMainFrame(*corePage, WTFMove(clientCreator), m_frameID, parameters.effectiveSandboxFlags, parameters.effectiveReferrerPolicy, nullptr, Ref { remoteFrame->frameTreeSyncData() });
     ASSERT(!m_provisionalFrame);
     m_provisionalFrame = localFrame.ptr();
     m_frameIDBeforeProvisionalNavigation = parameters.frameIDBeforeProvisionalNavigation;
@@ -522,7 +528,7 @@ void WebFrame::commitProvisionalFrame()
         document->didBecomeCurrentDocumentInFrame();
 
     if (corePage->focusController().focusedFrame() == remoteFrame.get())
-        corePage->focusController().setFocusedFrame(localFrame.get(), FocusController::BroadcastFocusedFrame::No);
+        corePage->focusController().setFocusedFrame(localFrame.get(), WebCore::BroadcastFocusedFrame::No);
 
     if (ownerElement)
         ownerElement->scheduleInvalidateStyleAndLayerComposition();
@@ -1378,8 +1384,9 @@ bool WebFrame::handleContextMenuEvent(const PlatformMouseEvent& platformMouseEve
 
     bool handled = frame->eventHandler().sendContextMenuEvent(platformMouseEvent);
 #if ENABLE(CONTEXT_MENUS)
-    if (handled)
-        protectedPage()->protectedContextMenu()->show();
+    if (handled && protectedPage()->protectedContextMenu()->show())
+        protectedPage()->corePage()->pointerCaptureController().clearUnmatchedMouseDown(platformMouseEvent.pointerId());
+
 #endif
     return handled;
 }
@@ -1579,19 +1586,26 @@ void WebFrame::takeSnapshotOfNode(JSHandleIdentifier identifier, CompletionHandl
     completion(bitmap->createHandle(SharedMemory::Protection::ReadOnly));
 }
 
+WebFrameInspectorTarget& WebFrame::ensureInspectorTarget()
+{
+    if (!m_inspectorTarget)
+        m_inspectorTarget = makeUnique<WebFrameInspectorTarget>(*this);
+    return *m_inspectorTarget;
+}
+
 void WebFrame::connectInspector(Inspector::FrontendChannel::ConnectionType connectionType)
 {
-    m_inspectorTarget->connect(connectionType);
+    ensureInspectorTarget().connect(connectionType);
 }
 
 void WebFrame::disconnectInspector()
 {
-    m_inspectorTarget->disconnect();
+    ensureInspectorTarget().disconnect();
 }
 
 void WebFrame::sendMessageToInspectorTarget(const String& message)
 {
-    m_inspectorTarget->sendMessageToTargetBackend(message);
+    ensureInspectorTarget().sendMessageToTargetBackend(message);
 }
 
 } // namespace WebKit

@@ -216,7 +216,7 @@ static String marginBoxToString(const IntersectionObserverMarginBox& marginBox)
         if (auto percentage = edge.tryPercentage())
             stringBuilder.append(static_cast<int>(percentage->value), "%"_s, side != BoxSide::Left ? " "_s : ""_s);
         else
-            stringBuilder.append(static_cast<int>(edge.tryFixed()->value), "px"_s, side != BoxSide::Left ? " "_s : ""_s);
+            stringBuilder.append(static_cast<int>(edge.tryFixed()->resolveZoom(Style::ZoomNeeded { })), "px"_s, side != BoxSide::Left ? " "_s : ""_s);
     }
     return stringBuilder.toString();
 }
@@ -333,8 +333,8 @@ static void expandRootBoundsWithRootMargin(FloatRect& rootBounds, const Intersec
 {
     auto zoomAdjustedLength = [](const IntersectionObserverMarginEdge& edge, float maximumValue, float zoomFactor) {
         if (auto percentage = edge.tryPercentage())
-            return Style::evaluate(*percentage, maximumValue, 1.0f /* FIXME FIND ZOOM */);
-        return edge.tryFixed()->value * zoomFactor;
+            return Style::evaluate<float>(*percentage, maximumValue);
+        return Style::evaluate<float>(*edge.tryFixed(), Style::ZoomNeeded { }) * zoomFactor;
     };
 
     auto rootMarginEdges = FloatBoxExtent {
@@ -372,12 +372,11 @@ static std::optional<LayoutRect> computeClippedRectInRootContentsSpace(const Lay
         return absoluteClippedRect;
 
     auto frameRect = renderer->view().frameView().layoutViewportRect();
-    float zoom = 1.0f; /* FIXME FIND ZOOM */
     auto scrollMarginEdges = LayoutBoxExtent {
-        LayoutUnit(static_cast<int>(Style::evaluate(scrollMargin.top(), frameRect.height(), zoom))),
-        LayoutUnit(static_cast<int>(Style::evaluate(scrollMargin.right(), frameRect.width(), zoom))),
-        LayoutUnit(static_cast<int>(Style::evaluate(scrollMargin.bottom(), frameRect.height(), zoom))),
-        LayoutUnit(static_cast<int>(Style::evaluate(scrollMargin.left(), frameRect.width(), zoom)))
+        LayoutUnit(Style::evaluate<int>(scrollMargin.top(), frameRect.height(), Style::ZoomNeeded { })),
+        LayoutUnit(Style::evaluate<int>(scrollMargin.right(), frameRect.width(), Style::ZoomNeeded { })),
+        LayoutUnit(Style::evaluate<int>(scrollMargin.bottom(), frameRect.height(), Style::ZoomNeeded { })),
+        LayoutUnit(Style::evaluate<int>(scrollMargin.left(), frameRect.width(), Style::ZoomNeeded { })),
     };
     frameRect.expand(scrollMarginEdges);
 

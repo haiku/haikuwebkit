@@ -175,7 +175,7 @@ private:
     StdList<PotentialSilentPush> m_potentialSilentPushes;
 
 #if HAVE(FULL_FEATURED_USER_NOTIFICATIONS)
-    Class m_userNotificationCenterClass;
+    RetainPtr<Class> m_userNotificationCenterClass;
 #endif // HAVE(FULL_FEATURED_USER_NOTIFICATIONS)
 
 #if PLATFORM(IOS)

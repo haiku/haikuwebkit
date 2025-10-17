@@ -87,7 +87,7 @@ bool MathMLSelectElement::isHTMLEncoding(const AtomString& value)
 
 bool MathMLSelectElement::childShouldCreateRenderer(const Node& child) const
 {
-    return MathMLElement::childShouldCreateRenderer(child) && m_selectedChild == &child;
+    return MathMLElement::childShouldCreateRenderer(child) && (document().settings().coreMathMLEnabled() || m_selectedChild == &child);
 }
 
 void MathMLSelectElement::finishParsingChildren()
@@ -203,6 +203,9 @@ Element* MathMLSelectElement::getSelectedSemanticsChild()
 
 void MathMLSelectElement::updateSelectedChild()
 {
+    if (document().settings().coreMathMLEnabled())
+        return;
+
     auto* newSelectedChild = hasTagName(mactionTag) ? getSelectedActionChild() : getSelectedSemanticsChild();
 
     if (m_selectedChild == newSelectedChild)
@@ -217,7 +220,7 @@ void MathMLSelectElement::updateSelectedChild()
 
 void MathMLSelectElement::defaultEventHandler(Event& event)
 {
-    if (isAnyClick(event)) {
+    if (!document().settings().coreMathMLEnabled() && isAnyClick(event)) {
         if (attributeWithoutSynchronization(MathMLNames::actiontypeAttr) == "toggle"_s) {
             toggle();
             event.setDefaultHandled();
@@ -230,7 +233,7 @@ void MathMLSelectElement::defaultEventHandler(Event& event)
 
 bool MathMLSelectElement::willRespondToMouseClickEventsWithEditability(Editability editability) const
 {
-    return attributeWithoutSynchronization(MathMLNames::actiontypeAttr) == "toggle"_s || MathMLRowElement::willRespondToMouseClickEventsWithEditability(editability);
+    return (!document().settings().coreMathMLEnabled() && attributeWithoutSynchronization(MathMLNames::actiontypeAttr) == "toggle"_s) || MathMLRowElement::willRespondToMouseClickEventsWithEditability(editability);
 }
 
 void MathMLSelectElement::toggle()

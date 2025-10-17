@@ -66,7 +66,7 @@
 #include "PseudoElement.h"
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObject.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderFlexibleBox.h"
 #include "RenderGrid.h"
 #include "RenderInline.h"

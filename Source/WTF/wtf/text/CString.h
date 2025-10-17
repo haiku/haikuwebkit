@@ -72,8 +72,8 @@ public:
     WTF_EXPORT_PRIVATE CString(ASCIILiteral);
     WTF_EXPORT_PRIVATE CString(const char*); // Any encoding
     WTF_EXPORT_PRIVATE CString(std::span<const char>); // Any encoding
-    CString(std::span<const LChar>); // Latin1
-    CString(std::span<const char8_t> characters) : CString(byteCast<LChar>(characters)) { } // UTF-8
+    CString(std::span<const Latin1Character>); // Latin1
+    CString(std::span<const char8_t> characters) : CString(byteCast<Latin1Character>(characters)) { } // UTF-8
     CString(CStringBuffer* buffer) : m_buffer(buffer) { }
     WTF_EXPORT_PRIVATE static CString newUninitialized(size_t length, std::span<char>& characterBuffer);
     CString(HashTableDeletedValueType) : m_buffer(HashTableDeletedValue) { }
@@ -122,7 +122,7 @@ template<> struct DefaultHash<CString> : CStringHash { };
 template<typename> struct HashTraits;
 template<> struct HashTraits<CString> : SimpleClassHashTraits<CString> { };
 
-inline CString::CString(std::span<const LChar> bytes)
+inline CString::CString(std::span<const Latin1Character> bytes)
     : CString(byteCast<char>(bytes))
 {
 }

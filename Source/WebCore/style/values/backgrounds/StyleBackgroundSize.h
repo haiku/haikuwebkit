@@ -34,6 +34,24 @@ struct BackgroundSizeLength : LengthWrapperBase<LengthPercentage<CSS::Nonnegativ
     using Base::Base;
 
     ALWAYS_INLINE bool isAuto() const { return holdsAlternative<CSS::Keyword::Auto>(); }
+
+    bool isKnownZeroOrAuto() const
+    {
+        return switchOn(
+            [](const Base::Fixed& fixed) {
+                return fixed.isZero();
+            },
+            [](const Base::Percentage& percentage) {
+                return percentage.isZero();
+            },
+            [](const Base::Calc&) {
+                return false;
+            },
+            [](const CSS::Keyword::Auto&) {
+                return true;
+            }
+        );
+    }
 };
 
 // <bg-size> = [ <length-percentage [0,∞]> | auto ]{1,2}@(default=auto) | cover | contain
@@ -82,10 +100,11 @@ struct BackgroundSize {
         return WTF::switchOn(m_value, std::forward<F>(f)...);
     }
 
+    // FIXME: This name is confusing, given it can't really guarantee empty.
     bool isEmpty() const
     {
         if (auto* lengthSize = std::get_if<LengthSize>(&m_value))
-            return Style::isEmpty(*lengthSize);
+            return lengthSize->width().isKnownZeroOrAuto() || lengthSize->height().isKnownZeroOrAuto();
         return false;
     }
 

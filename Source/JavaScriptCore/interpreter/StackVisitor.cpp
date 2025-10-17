@@ -200,7 +200,7 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
     switch (callee.category()) {
     case NativeCallee::Category::Wasm: {
 #if ENABLE(WEBASSEMBLY)
-        auto& wasmCallee = static_cast<Wasm::Callee&>(callee);
+        auto& wasmCallee = uncheckedDowncast<Wasm::Callee>(callee);
         auto depth = m_frame.m_wasmDistanceFromDeepestInlineFrame;
         m_frame.m_callFrame = updatePreviousReturnPCIfNecessary(callFrame);
         m_frame.m_returnPC = m_previousReturnPC;
@@ -222,7 +222,7 @@ void StackVisitor::readInlinableNativeCalleeFrame(CallFrame* callFrame)
         if (!canInline)
             return;
 
-        const auto& omgCallee = *static_cast<const Wasm::OptimizingJITCallee*>(&wasmCallee);
+        const auto& omgCallee = uncheckedDowncast<const Wasm::OptimizingJITCallee>(wasmCallee);
         bool isInlined = false;
 
         // Because PC is just after the call instruction, to query to the origin for the call instruction, we decrease it by 1.
@@ -361,7 +361,7 @@ std::optional<RegisterAtOffsetList> StackVisitor::Frame::calleeSaveRegistersForU
         switch (nativeCallee->category()) {
         case NativeCallee::Category::Wasm: {
 #if ENABLE(WEBASSEMBLY)
-            auto* wasmCallee = static_cast<Wasm::Callee*>(nativeCallee);
+            auto* wasmCallee = uncheckedDowncast<Wasm::Callee>(nativeCallee);
             if (auto* calleeSaveRegisters = wasmCallee->calleeSaveRegisters())
                 return *calleeSaveRegisters;
 #endif // ENABLE(WEBASSEMBLY)

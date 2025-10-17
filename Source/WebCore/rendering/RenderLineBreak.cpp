@@ -31,7 +31,7 @@
 #include "InlineIteratorSVGTextBox.h"
 #include "InlineRunAndOffset.h"
 #include "LineSelection.h"
-#include "LogicalSelectionOffsetCaches.h"
+#include "LogicalSelectionOffsetCachesInlines.h"
 #include "RenderBlock.h"
 #include "RenderBoxModelObjectInlines.h"
 #include "RenderObjectInlines.h"

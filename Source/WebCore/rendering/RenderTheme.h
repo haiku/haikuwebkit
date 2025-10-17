@@ -27,6 +27,8 @@
 #include <WebCore/PopupMenuStyle.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/StyleColor.h>
+#include <WebCore/StyleMinimumSize.h>
+#include <WebCore/StylePreferredSize.h>
 #include <WebCore/SwitchTrigger.h>
 #include <WebCore/ThemeTypes.h>
 #include <wtf/HashMap.h>

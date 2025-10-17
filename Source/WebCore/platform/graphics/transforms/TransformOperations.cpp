@@ -55,34 +55,34 @@ TransformOperations TransformOperations::clone() const
     return TransformOperations { m_operations.map([](const auto& op) { return op->clone(); }) };
 }
 
-void TransformOperations::apply(TransformationMatrix& matrix, const FloatSize& size, unsigned start) const
+void TransformOperations::apply(TransformationMatrix& matrix, unsigned start) const
 {
     for (unsigned i = start; i < m_operations.size(); ++i)
-        m_operations[i]->apply(matrix, size);
+        m_operations[i]->apply(matrix);
 }
 
-bool TransformOperations::isInvertible(const LayoutSize& size) const
+bool TransformOperations::isInvertible() const
 {
     TransformationMatrix transform;
-    apply(transform, size);
+    apply(transform);
     return transform.isInvertible();
 }
 
-bool TransformOperations::containsNonInvertibleMatrix(const LayoutSize& boxSize) const
+bool TransformOperations::containsNonInvertibleMatrix() const
 {
-    return (hasTransformOfType<TransformOperation::Type::Matrix>() || hasTransformOfType<TransformOperation::Type::Matrix3D>()) && !isInvertible(boxSize);
+    return (hasTransformOfType<TransformOperation::Type::Matrix>() || hasTransformOfType<TransformOperation::Type::Matrix3D>()) && !isInvertible();
 }
 
-TransformOperations blend(const TransformOperations& from, const TransformOperations& to, const BlendingContext& context, const LayoutSize& boxSize)
+TransformOperations blend(const TransformOperations& from, const TransformOperations& to, const BlendingContext& context)
 {
-    bool shouldFallBackToDiscreteInterpolation = from.containsNonInvertibleMatrix(boxSize) || to.containsNonInvertibleMatrix(boxSize);
+    bool shouldFallBackToDiscreteInterpolation = from.containsNonInvertibleMatrix() || to.containsNonInvertibleMatrix();
 
     auto createBlendedMatrixOperationFromOperationsSuffix = [&](unsigned start) -> Ref<TransformOperation> {
         TransformationMatrix fromTransform;
-        from.apply(fromTransform, boxSize, start);
+        from.apply(fromTransform, start);
 
         TransformationMatrix toTransform;
-        to.apply(toTransform, boxSize, start);
+        to.apply(toTransform, start);
 
         auto progress = context.progress;
         auto compositeOperation = context.compositeOperation;

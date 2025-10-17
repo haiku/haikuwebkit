@@ -62,17 +62,13 @@ class VideoFrame;
 enum class RequiresClipToRect : bool { No, Yes };
 
 namespace DisplayList {
-class DrawNativeImage;
 class DisplayList;
 }
 
 class GraphicsContext {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(GraphicsContext, WEBCORE_EXPORT);
     WTF_MAKE_NONCOPYABLE(GraphicsContext);
-    friend class BifurcatedGraphicsContext;
-    friend class DisplayList::DrawNativeImage;
-    friend class NativeImage;
-    friend class ImageBuffer;
+
 public:
     // Indicates if draw operations read the sources such as NativeImage backing stores immediately
     // during draw operations.
@@ -260,7 +256,7 @@ public:
     WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createAlignedImageBuffer(const FloatSize&, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMethod> = std::nullopt) const;
     WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createAlignedImageBuffer(const FloatRect&, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMethod> = std::nullopt) const;
 
-    WEBCORE_EXPORT void drawNativeImage(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions = { });
+    WEBCORE_EXPORT virtual void drawNativeImage(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions = { }) = 0;
 
     WEBCORE_EXPORT virtual void drawSystemImage(SystemImage&, const FloatRect&);
 
@@ -379,9 +375,6 @@ public:
     HDC getWindowsContext(const IntRect&, bool supportAlphaBlend); // The passed in rect is used to create a bitmap for compositing inside transparency layers.
     void releaseWindowsContext(HDC, const IntRect&, bool supportAlphaBlend); // The passed in HDC should be the one handed back by getWindowsContext.
 #endif
-
-private:
-    virtual void drawNativeImageInternal(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions = { }) = 0;
 
 protected:
     WEBCORE_EXPORT RefPtr<NativeImage> nativeImageForDrawing(ImageBuffer&);

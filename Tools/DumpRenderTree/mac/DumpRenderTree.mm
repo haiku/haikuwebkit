@@ -66,6 +66,7 @@
 #import <JavaScriptCore/TestRunnerUtils.h>
 #import <WebCore/LogInitialization.h>
 #import <WebCore/NetworkStorageSession.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebKit/DOMElement.h>
 #import <WebKit/DOMExtensions.h>
 #import <WebKit/DOMRange.h>
@@ -864,6 +865,7 @@ static void setWebPreferencesForTestOptions(WebPreferences *preferences, const W
                     && ![feature.key isEqualToString:@"NeedsSiteSpecificQuirks"]
                     && ![feature.key isEqualToString:@"BeaconAPIEnabled"]
                     && ![feature.key isEqualToString:@"LocalFileContentSniffingEnabled"]
+                    && ![feature.key isEqualToString:@"HTTPSByDefaultEnabled"]
                     && ![feature.key isEqualToString:@"DeclarativeWebPush"]) {
                     [preferences _setEnabled:YES forFeature:feature];
                 }
@@ -1175,9 +1177,7 @@ void dumpRenderTree(int argc, const char *argv[])
     addTestPluginsToPluginSearchPath(argv[0]);
 
     JSC::Options::machExceptionHandlerSandboxPolicy = JSC::Options::SandboxPolicy::Allow;
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCoreTestSupport::populateJITOperations();
+    WebCore::initializeMainThreadIfNeeded();
 
     if (forceComplexText)
         [WebView _setAlwaysUsesComplexTextCodePath:YES];
@@ -1945,6 +1945,10 @@ static void runTest(const std::string& inputLine)
     gTestRunner->setCustomTimeout(command.timeout.milliseconds());
     gTestRunner->setDumpJSConsoleLogInStdErr(command.dumpJSConsoleLogInStdErr || options.dumpJSConsoleLogInStdErr());
 
+#if ENABLE(DNS_SERVER_FOR_TESTING)
+    gTestRunner->initializeDNS();
+#endif
+
     gTestRunner->setPortsForUpgradingInsecureScheme(options.insecureUpgradePort(), options.secureUpgradePort());
     [[mainFrame webView] _setPortsForUpgradingInsecureSchemeForTesting:options.insecureUpgradePort() withSecurePort:options.secureUpgradePort()];
 
@@ -2058,6 +2062,8 @@ static void runTest(const std::string& inputLine)
         }
 
         resetWebViewToConsistentState(options, ResetTime::AfterTest);
+
+        gTestRunner->clearBackForwardList();
 
         // Loading an empty request synchronously replaces the document with a blank one, which is necessary
         // to stop timers, WebSockets and other activity that could otherwise spill output into next test's results.

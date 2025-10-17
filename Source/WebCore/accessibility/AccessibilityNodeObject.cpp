@@ -44,12 +44,14 @@
 #include "AccessibilityRenderObject.h"
 #include "AccessibilitySpinButton.h"
 #include "AccessibilityTableColumn.h"
+#include "CSSSelector.h"
 #include "ComposedTreeIterator.h"
 #include "ContainerNodeInlines.h"
 #include "DateComponents.h"
 #include "EditingInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementChildIteratorInlines.h"
+#include "ElementRuleCollector.h"
 #include "Event.h"
 #include "EventHandler.h"
 #include "EventNames.h"
@@ -96,15 +98,19 @@
 #include "NodeList.h"
 #include "NodeTraversal.h"
 #include "ProgressTracker.h"
+#include "PseudoClassChangeInvalidation.h"
+#include "RenderBoxInlines.h"
 #include "RenderElementInlines.h"
 #include "RenderImage.h"
 #include "RenderListBox.h"
 #include "RenderListItem.h"
-#include "RenderStyleInlines.h"
 #include "RenderTableCell.h"
 #include "RenderView.h"
+#include "RuleFeature.h"
 #include "SVGElement.h"
 #include "ShadowRoot.h"
+#include "StyleListStyleType.h"
+#include "StyleResolver.h"
 #include "Text.h"
 #include "TextControlInnerElements.h"
 #include "TextIterator.h"
@@ -1582,6 +1588,87 @@ bool AccessibilityNodeObject::hasClickHandler() const
 {
     RefPtr element = this->element();
     return element && element->hasAnyEventListeners({ eventNames().clickEvent, eventNames().mousedownEvent, eventNames().mouseupEvent });
+}
+
+bool AccessibilityNodeObject::showsCursorOnHover() const
+{
+    // Perform role-based checks first to determine if this heuristic applies, as they
+    // are non-virtual and thus fast.
+    if (isImplicitlyInteractive()) {
+        // If there's an implicitly interactive element in the ancestry, we won't expose
+        // AXCoreObject::supportsPressAction, so don't bother doing any work.
+        return false;
+    }
+
+    if (isStaticText()) {
+        // Fast-path (non-virtual) exit for static text, which inherently
+        // cannot be a target of any :hover CSS rule.
+        return false;
+    }
+
+    CheckedPtr renderer = this->renderer();
+    if (!renderer || !renderer->hasVisibleBoxDecorations() || renderer->isPseudoElement()) {
+        // Only consider rendered, non-pseudo-elements objects with visible box decorations.
+        return false;
+    }
+
+    RefPtr element = this->element();
+    if (!element) {
+        // To be a target of a :hover CSS rule, this must be an element.
+        return false;
+    }
+
+    auto* box = dynamicDowncast<RenderBox>(*renderer);
+    if (box && (box->hasScrollableOverflowX() || box->hasScrollableOverflowY())) {
+        // This heuristic is not valid for scrollable boxes.
+        return false;
+    }
+
+    if (hasCursorPointer()) {
+        // If something already has a cursor pointer, this heuristic is not needed,
+        // since the intent is to check if something would have a cursor indicating
+        // interactivity if it were hovered.
+        return false;
+    }
+
+    if (hasPointerEventsNone()) {
+        // pointer-events:none means this cannot possibly have an interactive cursor, so exit.
+        return false;
+    }
+
+    // If we've made it all the way here, time do the the potentially expensive part: check for
+    // a matching :hover style rule that would apply cursor:pointer.
+    bool initialHoveredState = element->isUserActionElement() && element->document().userActionElements().isHovered(*element);
+    auto scopeExit = makeScopeExit([&element, &initialHoveredState] {
+        element->document().userActionElements().setHovered(*element, initialHoveredState);
+    });
+
+    for (auto key : Style::makePseudoClassInvalidationKeys(CSSSelector::PseudoClass::Hover, *element)) {
+        auto& ruleSets = element->styleResolver().ruleSets();
+        auto* invalidationRuleSets = ruleSets.pseudoClassInvalidationRuleSets(key);
+        if (!invalidationRuleSets)
+            continue;
+
+        for (auto& invalidationRuleSet : *invalidationRuleSets) {
+            element->document().userActionElements().setHovered(*element, invalidationRuleSet.isNegation == Style::IsNegation::No);
+
+            Style::ElementRuleCollector ruleCollector(*element, *invalidationRuleSet.ruleSet, nullptr, SelectorChecker::Mode::StyleInvalidation);
+            ruleCollector.matchAuthorRules();
+            Ref matchResult = ruleCollector.releaseMatchResult();
+
+            for (const auto& matchedProperties : matchResult->authorDeclarations) {
+                if (std::optional cursorType = cursorTypeFrom(matchedProperties.properties))
+                    return *cursorType == CursorType::Pointer;
+            }
+        }
+    }
+    return false;
+}
+
+bool AccessibilityNodeObject::hasPointerEventsNone() const
+{
+    CheckedPtr style = this->style();
+    return style && style->pointerEvents() == PointerEvents::None;
 }
 
 bool AccessibilityNodeObject::isDescendantOfBarrenParent() const

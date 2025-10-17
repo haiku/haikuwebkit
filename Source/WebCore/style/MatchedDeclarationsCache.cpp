@@ -34,6 +34,7 @@
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "FontCascade.h"
+#include "NodeDocument.h"
 #include "RenderStyleInlines.h"
 #include "StyleLengthResolution.h"
 #include "StyleResolver.h"

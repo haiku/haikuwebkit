@@ -89,7 +89,7 @@ JSC_DEFINE_HOST_FUNCTION(stringFromCharCode, (JSGlobalObject* globalObject, Call
         return JSValue::encode(jsSingleCharacterString(vm, code));
     }
 
-    std::span<LChar> buf8Bit;
+    std::span<Latin1Character> buf8Bit;
     auto impl8Bit = StringImpl::createUninitialized(length, buf8Bit);
     for (unsigned i = 0; i < length; ++i) {
         char16_t character = static_cast<char16_t>(callFrame->uncheckedArgument(i).toUInt32(globalObject));
@@ -106,7 +106,7 @@ JSC_DEFINE_HOST_FUNCTION(stringFromCharCode, (JSGlobalObject* globalObject, Call
             }
             RELEASE_AND_RETURN(scope, JSValue::encode(jsString(vm, WTFMove(impl16Bit))));
         }
-        buf8Bit[i] = static_cast<LChar>(character);
+        buf8Bit[i] = static_cast<Latin1Character>(character);
     }
     RELEASE_AND_RETURN(scope, JSValue::encode(jsString(vm, WTFMove(impl8Bit))));
 }

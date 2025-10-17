@@ -516,21 +516,11 @@ void GPUProcessProxy::processWillShutDown(IPC::Connection& connection)
         singleton() = nullptr;
 }
 
-#if ENABLE(VP9)
-std::optional<bool> GPUProcessProxy::s_hasVP9HardwareDecoder;
-#endif
-#if ENABLE(AV1)
-std::optional<bool> GPUProcessProxy::s_hasAV1HardwareDecoder;
-#endif
+std::optional<GPUProcessMediaCodecCapabilities> GPUProcessProxy::s_gpuProcessMediaCodecCapabilities;
 
 void GPUProcessProxy::createGPUProcessConnection(WebProcessProxy& webProcessProxy, IPC::Connection::Handle&& connectionIdentifier, GPUProcessConnectionParameters&& parameters)
 {
-#if ENABLE(VP9)
-    parameters.hasVP9HardwareDecoder = s_hasVP9HardwareDecoder;
-#endif
-#if ENABLE(AV1)
-    parameters.hasAV1HardwareDecoder = s_hasAV1HardwareDecoder;
-#endif
+    parameters.mediaCodecCapabilities = s_gpuProcessMediaCodecCapabilities;
 
     if (RefPtr store = webProcessProxy.websiteDataStore())
         addSession(*store);
@@ -641,7 +631,7 @@ void GPUProcessProxy::didFinishLaunching(ProcessLauncher* launcher, IPC::Connect
         gpuProcessExited(ProcessTerminationReason::Crash);
         return;
     }
-    
+
 #if PLATFORM(COCOA)
     if (auto networkProcess = NetworkProcessProxy::defaultNetworkProcess())
         networkProcess->sendXPCEndpointToProcess(*this);
@@ -922,6 +912,11 @@ void GPUProcessProxy::unregisterMemoryAttributionID(const String& attributionID,
 }
 #endif
 #endif
+
+void GPUProcessProxy::sinkCompletedSnapshotToBitmap(RemoteSnapshotIdentifier identifier, const WebCore::FloatSize& size, WebCore::FrameIdentifier rootFrameIdentifier, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::GPUProcess::SinkCompletedSnapshotToBitmap(identifier, size, rootFrameIdentifier), WTFMove(completionHandler));
+}
 
 void GPUProcessProxy::releaseSnapshot(RemoteSnapshotIdentifier identifier)
 {

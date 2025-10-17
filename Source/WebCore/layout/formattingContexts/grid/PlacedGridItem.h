@@ -25,7 +25,12 @@
 
 #pragma once
 
+#include "GridAreaLines.h"
 #include "LayoutElementBox.h"
+#include "StyleMargin.h"
+#include "StyleMaximumSize.h"
+#include "StyleMinimumSize.h"
+#include "StylePreferredSize.h"
 #include <wtf/HashTraits.h>
 
 namespace WebCore {
@@ -35,23 +40,32 @@ class UnplacedGridItem;
 
 class PlacedGridItem {
 public:
-    // https://drafts.csswg.org/css-grid-1/#grid-area
-    struct GridAreaLines {
-        size_t columnStartLine;
-        size_t columnEndLine;
-        size_t rowStartLine;
-        size_t rowEndLine;
+    struct ComputedSizes {
+        Style::PreferredSize preferredSize;
+        Style::MinimumSize minimumSize;
+        Style::MaximumSize maximumSize;
+
+        Style::MarginEdge marginStart;
+        Style::MarginEdge marginEnd;
     };
 
-    PlacedGridItem(const UnplacedGridItem&, GridAreaLines);
+    PlacedGridItem(const UnplacedGridItem&, GridAreaLines, ComputedSizes inlineAxisSizes, ComputedSizes blockAxisSizes);
+
+    const ComputedSizes& inlineAxisSizes() const { return m_inlineAxisSizes; }
+    const ComputedSizes& blockAxisSizes() const { return m_blockAxisSizes; }
 
     size_t columnStartLine() const { return m_gridAreaLines.columnStartLine; }
     size_t columnEndLine() const { return m_gridAreaLines.columnEndLine; }
     size_t rowStartLine() const { return m_gridAreaLines.rowStartLine; }
     size_t rowEndLine() const { return m_gridAreaLines.rowEndLine; }
 
+    const ElementBox& layoutBox() const { return m_layoutBox; }
+
 private:
     const CheckedRef<const ElementBox> m_layoutBox;
+
+    const ComputedSizes m_inlineAxisSizes;
+    const ComputedSizes m_blockAxisSizes;
 
     GridAreaLines m_gridAreaLines;
 };

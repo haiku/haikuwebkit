@@ -45,6 +45,7 @@ class Connection;
 namespace WebKit {
 
 class RemoteRenderingBackendProxy;
+class RemoteImageBufferProxyFlushFence;
 
 class RemoteImageBufferProxy final : public WebCore::ImageBuffer {
     WTF_MAKE_TZONE_ALLOCATED(RemoteImageBufferProxy);
@@ -102,15 +103,17 @@ private:
 
     void flushDrawingContext() final;
     bool flushDrawingContextAsync() final;
+    std::unique_ptr<WebCore::ThreadSafeImageBufferFlusher> createFlusher() final;
 
     void prepareForBackingStoreChange();
 
     void assertDispatcherIsCurrent() const;
-    template<typename T> void send(T&& message);
-    template<typename T> auto sendSync(T&& message);
+    template<typename T> void send(T&& message) const;
+    template<typename T> auto sendSync(T&& message) const;
     RefPtr<IPC::StreamClientConnection> connection() const;
     void didBecomeUnresponsive() const;
 
+    RefPtr<RemoteImageBufferProxyFlushFence> m_pendingFlush;
     mutable RemoteGraphicsContextProxy m_context;
     WeakPtr<RemoteRenderingBackendProxy> m_renderingBackend;
 };

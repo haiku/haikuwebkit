@@ -194,7 +194,7 @@ ALWAYS_INLINE JSString* LiteralParser<CharType, reviverMode>::makeJSString(VM& v
     return jsString(vm, Identifier::fromString(vm, token->string16()).releaseImpl());
 }
 
-[[maybe_unused]] static ALWAYS_INLINE bool cannotBeIdentPartOrEscapeStart(LChar)
+[[maybe_unused]] static ALWAYS_INLINE bool cannotBeIdentPartOrEscapeStart(Latin1Character)
 {
     RELEASE_ASSERT_NOT_REACHED();
 }
@@ -881,7 +881,7 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::nextMaybeId
 }
 
 template <>
-ALWAYS_INLINE void setParserTokenString<LChar>(LiteralParserToken<LChar>& token, const LChar* string)
+ALWAYS_INLINE void setParserTokenString<Latin1Character>(LiteralParserToken<Latin1Character>& token, const Latin1Character* string)
 {
     token.stringIs8Bit = 1;
     token.stringStart8 = string;
@@ -897,7 +897,7 @@ ALWAYS_INLINE void setParserTokenString<char16_t>(LiteralParserToken<char16_t>& 
 enum class SafeStringCharacterSet { Strict, Sloppy };
 
 template <SafeStringCharacterSet set>
-static ALWAYS_INLINE bool isSafeStringCharacter(LChar c, LChar terminator)
+static ALWAYS_INLINE bool isSafeStringCharacter(Latin1Character c, Latin1Character terminator)
 {
     if constexpr (set == SafeStringCharacterSet::Strict)
         return safeStringLatin1CharactersInStrictJSON[c];
@@ -910,14 +910,14 @@ static ALWAYS_INLINE bool isSafeStringCharacter(char16_t c, char16_t terminator)
 {
     if (!isLatin1(c))
         return true;
-    return isSafeStringCharacter<set>(static_cast<LChar>(c), static_cast<LChar>(terminator));
+    return isSafeStringCharacter<set>(static_cast<Latin1Character>(c), static_cast<Latin1Character>(terminator));
 }
 
 template <SafeStringCharacterSet set>
 static ALWAYS_INLINE bool isSafeStringCharacterForIdentifier(char16_t c, char16_t terminator)
 {
     if constexpr (set == SafeStringCharacterSet::Strict)
-        return isSafeStringCharacter<set>(static_cast<LChar>(c), static_cast<LChar>(terminator)) || !isLatin1(c);
+        return isSafeStringCharacter<set>(static_cast<Latin1Character>(c), static_cast<Latin1Character>(terminator)) || !isLatin1(c);
     else
         return (c >= ' ' && isLatin1(c) && c != '\\' && c != terminator) || (c == '\t');
 }
@@ -935,7 +935,7 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
             while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Strict>(*m_ptr, '"'))
                 ++m_ptr;
         } else {
-            using UnsignedType = std::make_unsigned_t<CharType>;
+            using UnsignedType = SIMD::SameSizeUnsignedInteger<CharType>;
             constexpr auto quoteMask = SIMD::splat<UnsignedType>('"');
             constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
             constexpr auto controlMask = SIMD::splat<UnsignedType>(' ');
@@ -958,7 +958,7 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
             while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Sloppy>(*m_ptr, terminator))
                 ++m_ptr;
         } else {
-            using UnsignedType = std::make_unsigned_t<CharType>;
+            using UnsignedType = SIMD::SameSizeUnsignedInteger<CharType>;
             auto quoteMask = SIMD::splat<UnsignedType>(terminator);
             constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
             constexpr auto controlMask = SIMD::splat<UnsignedType>(' ');
@@ -1906,9 +1906,9 @@ JSValue LiteralParser<CharType, reviverMode>::parse(VM& vm, ParserState initialS
 }
 
 // Instantiate the two flavors of LiteralParser we need instead of putting most of this file in LiteralParser.h
-template class LiteralParser<LChar, JSONReviverMode::Enabled>;
+template class LiteralParser<Latin1Character, JSONReviverMode::Enabled>;
 template class LiteralParser<char16_t, JSONReviverMode::Enabled>;
-template class LiteralParser<LChar, JSONReviverMode::Disabled>;
+template class LiteralParser<Latin1Character, JSONReviverMode::Disabled>;
 template class LiteralParser<char16_t, JSONReviverMode::Disabled>;
 
 }

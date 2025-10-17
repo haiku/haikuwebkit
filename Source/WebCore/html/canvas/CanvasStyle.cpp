@@ -40,6 +40,7 @@
 #include "Gradient.h"
 #include "GraphicsContext.h"
 #include "HTMLCanvasElement.h"
+#include "NodeDocument.h"
 #include "NodeInlines.h"
 #include "StyleProperties.h"
 

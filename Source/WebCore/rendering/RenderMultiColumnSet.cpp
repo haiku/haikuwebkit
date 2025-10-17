@@ -445,7 +445,7 @@ LayoutUnit RenderMultiColumnSet::columnGap() const
     auto& parentBlockGap = parentBlock.style().columnGap();
     if (parentBlockGap.isNormal())
         return LayoutUnit(parentBlock.style().fontDescription().computedSize()); // "1em" is recommended as the normal gap setting. Matches <p> margins.
-    return Style::evaluate(parentBlockGap, parentBlock.contentBoxLogicalWidth(), 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluate<LayoutUnit>(parentBlockGap, parentBlock.contentBoxLogicalWidth(), Style::ZoomNeeded { });
 }
 
 unsigned RenderMultiColumnSet::columnCount() const
@@ -631,9 +631,9 @@ void RenderMultiColumnSet::paintColumnRules(PaintInfo& paintInfo, const LayoutPo
     const RenderStyle& blockStyle = parent()->style();
     const Color& ruleColor = blockStyle.visitedDependentColorWithColorFilter(CSSPropertyColumnRuleColor);
     bool ruleTransparent = blockStyle.columnRuleIsTransparent();
-    BorderStyle ruleStyle = collapsedBorderStyle(blockStyle.columnRuleStyle());
-    LayoutUnit ruleThickness { Style::evaluate(blockStyle.columnRuleWidth(), 1.0f /* FIXME FIND ZOOM */) };
-    LayoutUnit colGap = columnGap();
+    auto ruleStyle = collapsedBorderStyle(blockStyle.columnRuleStyle());
+    auto ruleThickness = Style::evaluate<LayoutUnit>(blockStyle.columnRuleWidth(), Style::ZoomNeeded { });
+    auto colGap = columnGap();
     bool renderRule = ruleStyle > BorderStyle::Hidden && !ruleTransparent;
     if (!renderRule)
         return;

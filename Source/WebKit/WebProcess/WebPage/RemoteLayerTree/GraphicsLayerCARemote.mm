@@ -230,12 +230,38 @@ bool GraphicsLayerCARemote::shouldDirectlyCompositeImageBuffer(ImageBuffer* imag
     return !!dynamicDowncast<ImageBufferBackendHandleSharing>(image->toBackendSharing());
 }
 
+class ImageBufferFlusherFence final : public WebCore::PlatformCALayerDelegatedContentsFence {
+public:
+    static Ref<ImageBufferFlusherFence> create(std::unique_ptr<ThreadSafeImageBufferFlusher>&& flusher)
+    {
+        return adoptRef(*new ImageBufferFlusherFence(WTFMove(flusher)));
+    }
+
+    bool waitFor(Seconds) final
+    {
+        m_flusher->flush();
+        return true;
+    }
+
+private:
+    ImageBufferFlusherFence(std::unique_ptr<ThreadSafeImageBufferFlusher>&& flusher)
+        : m_flusher(WTFMove(flusher))
+    {
+    }
+
+    std::unique_ptr<ThreadSafeImageBufferFlusher> m_flusher;
+};
+
 void GraphicsLayerCARemote::setLayerContentsToImageBuffer(PlatformCALayer* layer, ImageBuffer* image)
 {
     if (!image)
         return;
 
     image->flushDrawingContextAsync();
+
+    RefPtr<PlatformCALayerDelegatedContentsFence> fence;
+    if (auto flusher = image->createFlusher())
+        fence = ImageBufferFlusherFence::create(WTFMove(flusher));
 
     auto* sharing = dynamicDowncast<ImageBufferBackendHandleSharing>(image->toBackendSharing());
     if (!sharing)
@@ -248,7 +274,7 @@ void GraphicsLayerCARemote::setLayerContentsToImageBuffer(PlatformCALayer* layer
 #if HAVE(SUPPORT_HDR_DISPLAY)
     layer->setTonemappingEnabled(true);
 #endif
-    downcast<PlatformCALayerRemote>(layer)->setRemoteDelegatedContents({ ImageBufferBackendHandle { *backendHandle }, { }, std::nullopt  });
+    downcast<PlatformCALayerRemote>(layer)->setRemoteDelegatedContents({ ImageBufferBackendHandle { *backendHandle }, fence, std::nullopt });
 }
 
 GraphicsLayer::LayerMode GraphicsLayerCARemote::layerMode() const

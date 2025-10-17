@@ -322,7 +322,7 @@ static void* lib##Library() \
 
 #define SOFT_LINK_CONSTANT(framework, name, type) \
     static type init##name(); \
-    static type (*get##name)() = init##name; \
+    static type (*get##name##Singleton)() = init##name; \
     struct Constant##name##Wrapper { SUPPRESS_UNRETAINED_LOCAL type constant; }; \
     static Constant##name##Wrapper constant##name; \
     \
@@ -337,13 +337,13 @@ static void* lib##Library() \
         void* constant = dlsym(framework##Library(), auditedName); \
         RELEASE_ASSERT_WITH_MESSAGE(constant, "%s", dlerror()); \
         constant##name.constant = *static_cast<type const *>(constant); \
-        get##name = name##Function; \
+        get##name##Singleton = name##Function; \
         return constant##name.constant; \
     }
 
 #define SOFT_LINK_CONSTANT_MAY_FAIL(framework, name, type) \
     static bool init##name(); \
-    static type (*get##name)() = 0; \
+    static type (*get##name##Singleton)() = 0; \
     struct Constant##name##Wrapper { SUPPRESS_UNRETAINED_LOCAL type constant; }; \
     static Constant##name##Wrapper constant##name; \
     \
@@ -360,13 +360,13 @@ static void* lib##Library() \
     \
     static bool init##name() \
     { \
-        ASSERT(!get##name); \
+        ASSERT(!get##name##Singleton); \
         _STORE_IN_DLSYM_SECTION static char const auditedName[] = #name; \
         void* constant = dlsym(framework##Library(), auditedName); \
         if (!constant) \
             return false; \
         constant##name.constant = *static_cast<type const *>(constant); \
-        get##name = name##Function; \
+        get##name##Singleton = name##Function; \
         return true; \
     }
 

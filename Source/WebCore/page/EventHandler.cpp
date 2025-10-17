@@ -126,6 +126,7 @@
 #include "ShadowRoot.h"
 #include "StaticPasteboard.h"
 #include "StyleCachedImage.h"
+#include "StyleCursor.h"
 #include "Styleable.h"
 #include "TextEvent.h"
 #include "TextIterator.h"
@@ -522,6 +523,11 @@ void EventHandler::nodeWillBeRemoved(Node& nodeToBeRemoved)
 {
     if (nodeToBeRemoved.isShadowIncludingInclusiveAncestorOf(RefPtr { m_clickNode }.get()))
         m_clickNode = nullptr;
+
+    if (nodeToBeRemoved.isShadowIncludingInclusiveAncestorOf(RefPtr { m_elementUnderMouse }.get())) {
+        if (RefPtr elementBeingRemoved = dynamicDowncast<Element>(nodeToBeRemoved))
+            m_mouseMoveTargetOverride = elementBeingRemoved->parentElementInComposedTree();
+    }
 
     if (nodeToBeRemoved.isShadowIncludingInclusiveAncestorOf(RefPtr { m_lastElementUnderMouse }.get()))
         m_lastElementUnderMouse = nullptr;
@@ -2360,8 +2366,10 @@ HandleUserInputEventResult EventHandler::handleMouseMoveEvent(const PlatformMous
 
     bool swallowEvent = false;
     auto subframe = isCapturingMouseEventsElement() ? subframeForTargetNode(m_capturingMouseEventsElement.get()) : subframeForHitTestResult(mouseEvent);
-    if (auto remoteMouseEventData = userInputEventDataForRemoteFrame(dynamicDowncast<RemoteFrame>(subframe).get(), mouseEvent.hitTestResult().roundedPointInInnerNodeFrame()))
+    if (auto remoteMouseEventData = userInputEventDataForRemoteFrame(dynamicDowncast<RemoteFrame>(subframe).get(), mouseEvent.hitTestResult().roundedPointInInnerNodeFrame())) {
+        updateMouseEventTargetNode(eventNames().mousemoveEvent, mouseEvent.protectedTargetNode().get(), platformMouseEvent, FireMouseOverOut::Yes);
         return *remoteMouseEventData;
+    }
 
     RefPtr localSubframe = dynamicDowncast<LocalFrame>(subframe.get());
  
@@ -3061,6 +3069,8 @@ void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node*
                 }
             }
 
+            if (!elementsUnderMouse.isEmpty())
+                elementsUnderMouse.removeAt(0);
             m_ancestorsOfLastElementUnderMouse = WTFMove(elementsUnderMouse);
         }
 
@@ -3128,9 +3138,6 @@ void EventHandler::updateMouseEventTargetAfterLayoutIfNeeded()
     Ref frame = m_frame.get();
     RefPtr view = frame->view();
     if (!view || !m_elementUnderMouse)
-        return;
-
-    if (!m_elementUnderMouse)
         return;
 
     RefPtr document = frame->document();
@@ -3236,6 +3243,7 @@ bool EventHandler::dispatchAnyClickEvent(const AtomString& eventType, Node* clic
 
 bool EventHandler::dispatchMouseEvent(const AtomString& eventType, Node* targetNode, int clickCount, const PlatformMouseEvent& platformMouseEvent, FireMouseOverOut fireMouseOverOut)
 {
+    m_mouseMoveTargetOverride = nullptr;
     Ref frame = m_frame.get();
 
     if (eventType == eventNames().clickEvent) {
@@ -3246,8 +3254,19 @@ bool EventHandler::dispatchMouseEvent(const AtomString& eventType, Node* targetN
 
     bool isMouseDownEvent = eventType == eventNames().mousedownEvent;
 
-    if (auto elementUnderMouse = m_elementUnderMouse) {
+    RefPtr elementUnderMouse = m_elementUnderMouse;
+    if (eventType == eventNames().mousemoveEvent && m_mouseMoveTargetOverride) {
+        // If m_mouseMoveTargetOverride is set, targetNode must have been disconnected during the execution of this method.
+        // One situation this may occur is an event listener for a boundary event immediately deleting the target node. In
+        // this scenario, the `mousemove` event that follows should be sent to the parent node instead.
+        // FIXME: Is there a more elegant way to handle this case? Should we do the same for other events besides `mousemove`?
+
+        elementUnderMouse = m_mouseMoveTargetOverride.get();
+    }
+
+    if (elementUnderMouse) {
         auto [eventIsDispatched, eventIsDefaultPrevented] = elementUnderMouse->dispatchMouseEvent(platformMouseEvent, eventType, clickCount, nullptr, IsSyntheticClick::No);
+        m_mouseMoveTargetOverride = nullptr;
         m_capturesDragging = CapturesDragging::InabilityReason::Unknown;
         if (eventIsDefaultPrevented == Element::EventIsDefaultPrevented::Yes) {
             if (isMouseDownEvent)
@@ -3317,7 +3336,7 @@ bool EventHandler::dispatchMouseEvent(const AtomString& eventType, Node* targetN
 
     // If focus shift is blocked, we eat the event.
     RefPtr page = frame->page();
-    if (page && !page->focusController().setFocusedElement(element.get(), protectedFrame(), { { }, { }, { }, FocusTrigger::Click, { } }))
+    if (page && !page->focusController().setFocusedElement(element.get(), protectedFrame().ptr(), { { }, { }, { }, FocusTrigger::Click, { } }))
         return false;
 
     if (element && m_mouseDownDelegatedFocus)

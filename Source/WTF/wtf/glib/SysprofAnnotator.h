@@ -166,6 +166,8 @@ public:
         case WebXRCPFrameStartSubmissionStart:
         case WebXRCPFrameEndSubmissionStart:
         case WakeUpAndApplyDisplayListStart:
+        case ThreadTimersStart:
+        case TimerFiredStart:
             beginMark(nullptr, tracePointCodeName(code).spanIncludingNullTerminator(), "%s", "");
             break;
 
@@ -229,6 +231,8 @@ public:
         case WebXRCPFrameStartSubmissionEnd:
         case WebXRCPFrameEndSubmissionEnd:
         case WakeUpAndApplyDisplayListEnd:
+        case ThreadTimersEnd:
+        case TimerFiredEnd:
             endMark(nullptr, tracePointCodeName(code).spanIncludingNullTerminator(), "%s", "");
             break;
 
@@ -404,6 +408,12 @@ private:
         case FixedContainerEdgeSamplingStart:
         case FixedContainerEdgeSamplingEnd:
             return "FixedContainerEdgeSampling"_s;
+        case ThreadTimersStart:
+        case ThreadTimersEnd:
+            return "WebCoreThreadTimers"_s;
+        case TimerFiredStart:
+        case TimerFiredEnd:
+            return "WebCoreTimerExecution"_s;
 
         case WebHTMLViewPaintStart:
         case WebHTMLViewPaintEnd:

@@ -70,6 +70,8 @@ enum class NavigationPolicyDecision : uint8_t {
     LoadWillContinueInAnotherProcess,
 };
 
+enum class NavigationNavigationType : uint8_t;
+
 enum class PolicyDecisionMode { Synchronous, Asynchronous };
 
 class PolicyChecker : public CanMakeWeakPtr<PolicyChecker> {
@@ -81,7 +83,7 @@ public:
     using NavigationPolicyDecisionFunction = CompletionHandler<void(ResourceRequest&&, WeakPtr<FormState>&&, NavigationPolicyDecision)>;
     using NewWindowPolicyDecisionFunction = CompletionHandler<void(ResourceRequest&&, WeakPtr<FormState>&&, const AtomString& frameName, const NavigationAction&, ShouldContinuePolicyCheck)>;
 
-    void checkNavigationPolicy(ResourceRequest&&, const ResourceResponse& redirectResponse, DocumentLoader*, RefPtr<FormState>&&, NavigationPolicyDecisionFunction&&, PolicyDecisionMode = PolicyDecisionMode::Asynchronous);
+    void checkNavigationPolicy(ResourceRequest&&, const ResourceResponse& redirectResponse, DocumentLoader*, RefPtr<FormState>&&, NavigationPolicyDecisionFunction&&, PolicyDecisionMode = PolicyDecisionMode::Asynchronous, std::optional<NavigationNavigationType> = std::nullopt);
     void checkNavigationPolicy(ResourceRequest&&, const ResourceResponse& redirectResponse, NavigationPolicyDecisionFunction&&);
     void checkNewWindowPolicy(NavigationAction&&, ResourceRequest&&, RefPtr<FormState>&&, const AtomString& frameName, NewWindowPolicyDecisionFunction&&);
 

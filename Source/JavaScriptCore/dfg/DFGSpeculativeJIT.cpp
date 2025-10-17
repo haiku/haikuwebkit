@@ -67,6 +67,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
 #include "JSPromiseAllContext.h"
+#include "JSPromiseReaction.h"
 #include "JSPropertyNameEnumerator.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
@@ -12667,7 +12668,7 @@ struct CharacterCase {
         return character < other.character;
     }
     
-    LChar character;
+    Latin1Character character;
     unsigned begin;
     unsigned end;
 };
@@ -14866,7 +14867,7 @@ void SpeculativeJIT::compileNewButterflyWithSize(Node* node)
     JumpList slowCases;
     emitAllocate(storageGPR, JITAllocator::constant(vm().auxiliarySpace().allocatorForNonInline(allocationSize, AllocatorForMode::EnsureAllocator)), scratchGPR, scratch2GPR, slowCases, SlowAllocationResult::UndefinedBehavior);
 
-    addSlowPathGenerator(slowPathCall(slowCases, this, operationAllocateUnitializedAuxiliaryBase, storageGPR, TrustedImmPtr(&vm()), TrustedImmPtr(allocationSize)));
+    addSlowPathGenerator(slowPathCall(slowCases, this, operationAllocateUnitializedAuxiliaryBase, storageGPR, LinkableConstant::globalObject(*this, node), TrustedImmPtr(allocationSize)));
 
     GPRReg sizeGPR = scratch2GPR;
 
@@ -15559,6 +15560,9 @@ void SpeculativeJIT::compileNewInternalFieldObject(Node* node)
         break;
     case JSPromiseAllContextType:
         compileNewInternalFieldObjectImpl<JSPromiseAllContext>(node, operationNewPromiseAllContext);
+        break;
+    case JSPromiseReactionType:
+        compileNewInternalFieldObjectImpl<JSPromiseReaction>(node, operationNewPromiseReaction);
         break;
     case JSRegExpStringIteratorType:
         compileNewInternalFieldObjectImpl<JSRegExpStringIterator>(node, operationNewRegExpStringIterator);

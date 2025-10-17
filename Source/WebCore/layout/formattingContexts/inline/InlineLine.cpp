@@ -295,7 +295,7 @@ void Line::appendInlineBoxStart(const InlineItem& inlineItem, const RenderStyle&
         logicalWidth -= marginStart;
     }
 
-    auto mayPullNonInlineBoxContentToLogicalLeft = style.letterSpacing() < 0;
+    auto mayPullNonInlineBoxContentToLogicalLeft = style.usedLetterSpacing() < 0;
     if (mayPullNonInlineBoxContentToLogicalLeft)
         m_inlineBoxLogicalLeftStack.append(logicalLeft);
 
@@ -319,7 +319,7 @@ void Line::appendInlineBoxEnd(const InlineItem& inlineItem, const RenderStyle& s
     // https://drafts.csswg.org/css-text-3/#letter-spacing-property See example 21.
     removeTrailingLetterSpacing();
     auto logicalLeft = lastRunLogicalRight();
-    auto mayPullNonInlineBoxContentToLogicalLeft = style.letterSpacing() < 0;
+    auto mayPullNonInlineBoxContentToLogicalLeft = style.usedLetterSpacing() < 0;
     if (mayPullNonInlineBoxContentToLogicalLeft) {
         // Do not let negative spacing pull content to the left of the inline box logical left.
         // e.g. <span style="border-left: solid red; letter-spacing: -200px;">content</span>This should not be to the left of the red border)
@@ -407,7 +407,7 @@ void Line::appendText(const InlineTextItem& inlineTextItem, const RenderStyle& s
     } else {
         auto& lastRun = m_runs.last();
         ASSERT(lastRun.isText());
-        if (style.letterSpacing() >= 0) {
+        if (style.usedLetterSpacing() >= 0) {
             lastRun.expand(inlineTextItem, logicalWidth);
             contentLogicalRight = lastRun.logicalRight();
         } else {
@@ -507,7 +507,7 @@ void Line::appendTextFast(const InlineTextItem& inlineTextItem, const RenderStyl
     } else {
         auto& lastRun = m_runs.last();
         ASSERT(lastRun.isText());
-        if (style.letterSpacing() >= 0) {
+        if (style.usedLetterSpacing() >= 0) {
             lastRun.expand(inlineTextItem, logicalWidth);
             m_contentLogicalWidth = lastRun.logicalRight();
         } else {
@@ -929,6 +929,11 @@ bool Line::Run::isContentfulOrHasDecoration(const Run& run, const InlineFormatti
 bool Line::Run::hasTextCombine() const
 {
     return m_style.hasTextCombine();
+}
+
+InlineLayoutUnit Line::Run::letterSpacing() const
+{
+    return m_style.usedLetterSpacing();
 }
 
 }

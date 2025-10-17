@@ -1,5 +1,5 @@
 //@ slow!
-//@ skip if $buildType == "debug"
+//@ skip if $buildType == "debug" or $memoryLimited
 
 function instantiate(moduleBase64, importObject) {
     let bytes = Uint8Array.fromBase64(moduleBase64);

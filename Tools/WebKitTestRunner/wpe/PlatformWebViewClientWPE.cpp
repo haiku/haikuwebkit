@@ -71,6 +71,18 @@ void PlatformWebViewClientWPE::removeFromWindow()
     // FIXME: implement.
 }
 
+WKSize PlatformWebViewClientWPE::size()
+{
+    int width, height;
+    wpe_toplevel_get_size(wpe_view_get_toplevel(WKViewGetView(m_view)), &width, &height);
+    return { static_cast<double>(width), static_cast<double>(height) };
+}
+
+void PlatformWebViewClientWPE::resize(WKSize size)
+{
+    wpe_toplevel_resize(wpe_view_get_toplevel(WKViewGetView(m_view)), size.width, size.height);
+}
+
 void PlatformWebViewClientWPE::focus()
 {
     wpe_view_focus_in(WKViewGetView(m_view));

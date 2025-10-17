@@ -556,6 +556,28 @@ void WebsiteDataStore::handleResolvedDirectoriesAsynchronously(const WebsiteData
     });
 }
 
+void WebsiteDataStore::fetchDomainsWithUserInteraction(CompletionHandler<void(const HashSet<WebCore::RegistrableDomain>&)>&& completionHandler)
+{
+    if (m_domainsWithUserInteractions)
+        return completionHandler(*m_domainsWithUserInteractions);
+
+    bool shouldFetch = m_domainsWithUserInteractionsCompletionHandler.isEmpty();
+    m_domainsWithUserInteractionsCompletionHandler.append(WTFMove(completionHandler));
+
+    if (!shouldFetch)
+        return;
+
+    protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::FetchWebsitesWithUserInteractions(sessionID()), [this, protectedThis = RefPtr { *this }](HashSet<WebCore::RegistrableDomain>&& domains) {
+        m_domainsWithUserInteractions = WTFMove(domains);
+
+        for (auto& domain : std::exchange(m_pendingDomainsWithUserInteractions, { }))
+            m_domainsWithUserInteractions->add(domain);
+
+        for (auto& completionHandler : std::exchange(m_domainsWithUserInteractionsCompletionHandler, { }))
+            completionHandler(*m_domainsWithUserInteractions);
+    });
+}
+
 static WebsiteDataStore::ProcessAccessType computeNetworkProcessAccessTypeForDataFetch(OptionSet<WebsiteDataType> dataTypes, bool isNonPersistentStore)
 {
     for (auto dataType : dataTypes) {
@@ -1496,6 +1518,23 @@ void WebsiteDataStore::setTimeToLiveUserInteraction(Seconds seconds, CompletionH
     protectedNetworkProcess()->setTimeToLiveUserInteraction(m_sessionID, seconds, WTFMove(completionHandler));
 }
 
+void WebsiteDataStore::didHaveUserInteractionForSiteIsolation(const URL& url)
+{
+    if (url.protocolIsAbout() || url.isEmpty())
+        return;
+
+    WebCore::RegistrableDomain registrableDomain { url };
+    if (m_domainsWithUserInteractions)
+        m_domainsWithUserInteractions->add(registrableDomain);
+    else if (!m_domainsWithUserInteractionsCompletionHandler.isEmpty()) {
+        // Currently waiting for the network process's reply.
+        // Add this domain to the hash set we get from the network process
+        // since the network process may have replied before it had
+        // notififed of user interaction by the web content process.
+        m_pendingDomainsWithUserInteractions.append(registrableDomain);
+    }
+}
+
 void WebsiteDataStore::logUserInteraction(const URL& url, CompletionHandler<void()>&& completionHandler)
 {
     ASSERT(RunLoop::isMain());
@@ -1504,7 +1543,7 @@ void WebsiteDataStore::logUserInteraction(const URL& url, CompletionHandler<void
         completionHandler();
         return;
     }
-    
+
     protectedNetworkProcess()->logUserInteraction(m_sessionID, WebCore::RegistrableDomain { url }, WTFMove(completionHandler));
 }
 

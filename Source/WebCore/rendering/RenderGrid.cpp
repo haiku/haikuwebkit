@@ -33,12 +33,13 @@
 #include "GridMasonryLayout.h"
 #include "GridTrackSizingAlgorithm.h"
 #include "HitTestLocation.h"
-#include "LayoutIntegrationCoverage.h"
+#include "LayoutIntegrationGridCoverage.h"
 #include "LayoutIntegrationGridLayout.h"
 #include "LayoutRange.h"
 #include "LayoutRepainter.h"
 #include "RenderChildIterator.h"
 #include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
 #include "RenderObjectInlines.h"
@@ -419,8 +420,6 @@ const std::optional<LayoutUnit> RenderGrid::availableLogicalHeightForContentBox(
 
 void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
 {
-    if (layoutUsingGridFormattingContext())
-        return;
 
     LayoutRepainter repainter(*this);
     {
@@ -442,6 +441,9 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
         resetLogicalHeightBeforeLayoutIfNeeded();
 
         updateLogicalWidth();
+
+        if (layoutUsingGridFormattingContext())
+            return;
 
         // Fieldsets need to find their legend and position it inside the border of the object.
         // The legend then gets skipped during normal layout. The same is true for ruby text.
@@ -549,6 +551,8 @@ bool RenderGrid::layoutUsingGridFormattingContext()
         return false;
 
     auto gridLayout = LayoutIntegration::GridLayout { *this };
+    gridLayout.updateFormattingContextGeometries();
+
     gridLayout.layout();
     return true;
 }
@@ -698,7 +702,7 @@ LayoutUnit RenderGrid::gridGap(Style::GridTrackSizingDirection direction, std::o
         return downcast<RenderGrid>(parent())->gridGap(parentDirection);
     }
 
-    return Style::evaluate(gap, availableSize.value_or(0_lu), 1.0f /* FIXME FIND ZOOM */);
+    return Style::evaluate<LayoutUnit>(gap, availableSize.value_or(0_lu), Style::ZoomNeeded { });
 }
 
 LayoutUnit RenderGrid::gridGap(Style::GridTrackSizingDirection direction) const
@@ -892,19 +896,19 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
         auto& maxSize = isRowAxis ? style().logicalMaxWidth() : style().logicalMaxHeight();
         auto availableMaxSize = WTF::switchOn(maxSize,
             [&](const Style::MaximumSize::Fixed& fixedMaxSize) -> std::optional<LayoutUnit> {
-                auto maxSizeValue = LayoutUnit { fixedMaxSize.value };
+                auto maxSizeValue = LayoutUnit { fixedMaxSize.resolveZoom(Style::ZoomNeeded { }) };
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
             },
             [&](const Style::MaximumSize::Percentage& percentageMaxSize) -> std::optional<LayoutUnit> {
-                auto maxSizeValue = Style::evaluate(percentageMaxSize, containingBlockAvailableSize(), 1.0f /* FIXME FIND ZOOM */);
+                auto maxSizeValue = Style::evaluate<LayoutUnit>(percentageMaxSize, containingBlockAvailableSize());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
             },
             [&](const Style::MaximumSize::Calc& calcMaxSize) -> std::optional<LayoutUnit> {
-                auto maxSizeValue = Style::evaluate(calcMaxSize, containingBlockAvailableSize(), 1.0f /* FIXME FIND ZOOM */);
+                auto maxSizeValue = Style::evaluate<LayoutUnit>(calcMaxSize, containingBlockAvailableSize());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
@@ -924,19 +928,19 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
 
         auto availableMinSize = WTF::switchOn(minSize,
             [&](const Style::MinimumSize::Fixed& fixedMinSize) -> std::optional<LayoutUnit> {
-                auto minSizeValue = LayoutUnit { fixedMinSize.value };
+                auto minSizeValue = LayoutUnit { fixedMinSize.resolveZoom(Style::ZoomNeeded { }) };
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
             },
             [&](const Style::MinimumSize::Percentage& percentageMinSize) -> std::optional<LayoutUnit> {
-                auto minSizeValue = Style::evaluate(percentageMinSize, containingBlockAvailableSize(), 1.0f /* FIXME FIND ZOOM */);
+                auto minSizeValue = Style::evaluate<LayoutUnit>(percentageMinSize, containingBlockAvailableSize());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
             },
             [&](const Style::MinimumSize::Calc& calcMinSize) -> std::optional<LayoutUnit> {
-                auto minSizeValue = Style::evaluate(calcMinSize, containingBlockAvailableSize(), 1.0f /* FIXME FIND ZOOM */);
+                auto minSizeValue = Style::evaluate<LayoutUnit>(calcMinSize, containingBlockAvailableSize());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
@@ -969,8 +973,8 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
 
         auto contributingTrackSize = [&] {
             if (hasDefiniteMaxTrackSizingFunction && hasDefiniteMinTrackSizingFunction)
-                return std::max(Style::evaluate(minTrackSizingFunction.length(), *availableSize, 1.0f /* FIXME FIND ZOOM */), Style::evaluate(maxTrackSizingFunction.length(), *availableSize, 1.0f /* FIXME FIND ZOOM */));
-            return hasDefiniteMaxTrackSizingFunction ? Style::evaluate(maxTrackSizingFunction.length(), *availableSize, 1.0f /* FIXME FIND ZOOM */) : Style::evaluate(minTrackSizingFunction.length(), *availableSize, 1.0f /* FIXME FIND ZOOM */);
+                return std::max(Style::evaluate<LayoutUnit>(minTrackSizingFunction.length(), *availableSize, Style::ZoomNeeded { }), Style::evaluate<LayoutUnit>(maxTrackSizingFunction.length(), *availableSize, Style::ZoomNeeded { }));
+            return hasDefiniteMaxTrackSizingFunction ? Style::evaluate<LayoutUnit>(maxTrackSizingFunction.length(), *availableSize, Style::ZoomNeeded { }) : Style::evaluate<LayoutUnit>(minTrackSizingFunction.length(), *availableSize, Style::ZoomNeeded { });
         };
         autoRepeatTracksSize += contributingTrackSize();
     }
@@ -985,7 +989,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
     for (const auto& track : trackSizes) {
         bool hasDefiniteMaxTrackBreadth = track.maxTrackBreadth().isLength() && !track.maxTrackBreadth().isContentSized();
         ASSERT(hasDefiniteMaxTrackBreadth || (track.minTrackBreadth().isLength() && !track.minTrackBreadth().isContentSized()));
-        tracksSize += Style::evaluate(hasDefiniteMaxTrackBreadth ? track.maxTrackBreadth().length() : track.minTrackBreadth().length(), availableSize.value(), 1.0f /* FIXME FIND ZOOM */);
+        tracksSize += Style::evaluate<LayoutUnit>(hasDefiniteMaxTrackBreadth ? track.maxTrackBreadth().length() : track.minTrackBreadth().length(), availableSize.value(), Style::ZoomNeeded { });
     }
 
     // Add gutters as if auto repeat tracks were only repeated once. Gaps between different repetitions will be added later when
@@ -2037,6 +2041,7 @@ GridAxisPosition RenderGrid::columnAxisPositionForGridItem(const RenderBox& grid
         return GridAxisPosition::GridAxisStart;
     case ItemPosition::Center:
     case ItemPosition::AnchorCenter:
+    case ItemPosition::Dialog:
         return GridAxisPosition::GridAxisCenter;
     case ItemPosition::FlexStart: // Only used in flex layout, otherwise equivalent to 'start'.
         // Aligns the alignment subject to be flush with the alignment container's 'start' edge (block-start) in the column axis.
@@ -2095,6 +2100,7 @@ GridAxisPosition RenderGrid::rowAxisPositionForGridItem(const RenderBox& gridIte
         return writingMode().isBidiLTR() ? GridAxisPosition::GridAxisEnd : GridAxisPosition::GridAxisStart;
     case ItemPosition::Center:
     case ItemPosition::AnchorCenter:
+    case ItemPosition::Dialog:
         return GridAxisPosition::GridAxisCenter;
     case ItemPosition::FlexStart: // Only used in flex layout, otherwise equivalent to 'start'.
         // Aligns the alignment subject to be flush with the alignment container's 'start' edge (inline-start) in the row axis.

@@ -52,9 +52,10 @@ public:
         Suspended,
     };
 
-    QueuedTask(RefPtr<MicrotaskDispatcher>&& dispatcher)
+    QueuedTask(RefPtr<MicrotaskDispatcher>&& dispatcher, JSGlobalObject* globalObject)
         : m_dispatcher(WTFMove(dispatcher))
         , m_identifier(MicrotaskIdentifier::generate())
+        , m_globalObject(globalObject)
     {
     }
 
@@ -83,7 +84,7 @@ public:
 private:
     RefPtr<MicrotaskDispatcher> m_dispatcher;
     MicrotaskIdentifier m_identifier;
-    JSGlobalObject* m_globalObject { nullptr };
+    JSGlobalObject* m_globalObject;
     JSValue m_job { };
     JSValue m_arguments[maxArguments] { };
 };

@@ -310,7 +310,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncRepeatCharacter, (JSGlobalObject* global
     char16_t character = view[0];
     scope.release();
     if (isLatin1(character))
-        return JSValue::encode(repeatCharacter(globalObject, static_cast<LChar>(character), repeatCount));
+        return JSValue::encode(repeatCharacter(globalObject, static_cast<Latin1Character>(character), repeatCount));
     return JSValue::encode(repeatCharacter(globalObject, character, repeatCount));
 }
 
@@ -832,7 +832,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSplitFast, (JSGlobalObject* globalObject
     if (separatorLength == 1) {
         char16_t separatorCharacter = separatorImpl->at(0);
         if (stringImpl->is8Bit()) {
-            if (splitStringByOneCharacterImpl<LChar>(result, stringImpl, separatorCharacter, limit))
+            if (splitStringByOneCharacterImpl<Latin1Character>(result, stringImpl, separatorCharacter, limit))
                 RELEASE_AND_RETURN(scope, JSValue::encode(cacheAndCreateArray()));
         } else {
             if (splitStringByOneCharacterImpl<char16_t>(result, stringImpl, separatorCharacter, limit))

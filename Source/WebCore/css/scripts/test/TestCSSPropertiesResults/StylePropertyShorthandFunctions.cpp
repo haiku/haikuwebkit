@@ -19,7 +19,6 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestAnimationWrapper,
         CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
         CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
-        CSSPropertyID::CSSPropertyTestAutoFunctions,
         CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas,
         CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed,
         CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt,
@@ -181,7 +180,6 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
-    case CSSPropertyID::CSSPropertyTestAutoFunctions:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt:

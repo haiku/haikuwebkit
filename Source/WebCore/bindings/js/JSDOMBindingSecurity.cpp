@@ -30,6 +30,7 @@
 #include "JSDOMWindowCustom.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "RemoteDOMWindow.h"
 #include "SecurityOrigin.h"
 #include <wtf/text/MakeString.h>

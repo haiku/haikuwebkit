@@ -270,7 +270,7 @@ static gboolean decidePermissionRequest(WebKitWebView *, WebKitPermissionRequest
     if (WEBKIT_IS_XR_PERMISSION_REQUEST(request)) {
         WebKitXRPermissionRequest* xrRequest = WEBKIT_XR_PERMISSION_REQUEST(request);
         /* Grant all optional features */
-        webkit_xr_permission_request_set_granted_features(xrRequest, webkit_xr_permission_request_get_consent_optional_features(xrRequest));
+        webkit_xr_permission_request_set_granted_optional_features(xrRequest, webkit_xr_permission_request_get_consent_optional_features(xrRequest));
     }
 
     webkit_permission_request_allow(request);

@@ -820,9 +820,6 @@ void InspectorInstrumentation::frameStartedLoadingImpl(InstrumentingAgents& inst
         if (auto* pageTimelineAgent = instrumentingAgents.enabledPageTimelineAgent())
             pageTimelineAgent->mainFrameStartedLoading();
     }
-
-    if (auto* inspectorPageAgent = instrumentingAgents.enabledPageAgent())
-        inspectorPageAgent->frameStartedLoading(frame);
 }
 
 void InspectorInstrumentation::didCompleteRenderingFrameImpl(InstrumentingAgents& instrumentingAgents)
@@ -837,21 +834,6 @@ void InspectorInstrumentation::frameStoppedLoadingImpl(InstrumentingAgents& inst
         if (auto* pageDebuggerAgent = instrumentingAgents.enabledPageDebuggerAgent())
             pageDebuggerAgent->mainFrameStoppedLoading();
     }
-
-    if (auto* inspectorPageAgent = instrumentingAgents.enabledPageAgent())
-        inspectorPageAgent->frameStoppedLoading(frame);
-}
-
-void InspectorInstrumentation::frameScheduledNavigationImpl(InstrumentingAgents& instrumentingAgents, Frame& frame, Seconds delay)
-{
-    if (auto* inspectorPageAgent = instrumentingAgents.enabledPageAgent())
-        inspectorPageAgent->frameScheduledNavigation(frame, delay);
-}
-
-void InspectorInstrumentation::frameClearedScheduledNavigationImpl(InstrumentingAgents& instrumentingAgents, Frame& frame)
-{
-    if (auto* inspectorPageAgent = instrumentingAgents.enabledPageAgent())
-        inspectorPageAgent->frameClearedScheduledNavigation(frame);
 }
 
 void InspectorInstrumentation::accessibilitySettingsDidChangeImpl(InstrumentingAgents& instrumentingAgents)

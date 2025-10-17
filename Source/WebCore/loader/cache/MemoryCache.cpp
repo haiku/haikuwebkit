@@ -691,7 +691,7 @@ void MemoryCache::adjustSize(bool live, long long delta)
 void MemoryCache::removeRequestFromSessionCaches(ScriptExecutionContext& context, const ResourceRequest& request)
 {
     if (auto* globalScope = dynamicDowncast<WorkerGlobalScope>(context)) {
-        auto* workerLoaderProxy = globalScope->thread().workerLoaderProxy();
+        auto* workerLoaderProxy = globalScope->thread()->workerLoaderProxy();
         if (!workerLoaderProxy)
             return;
         workerLoaderProxy->postTaskToLoader([request = request.isolatedCopy()] (ScriptExecutionContext& context) {

@@ -50,7 +50,7 @@
 #include "NodeInlines.h"
 #include "Page.h"
 #include "RenderBoxInlines.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderImage.h"
 #include "RenderText.h"
 #include "ShadowRoot.h"

@@ -51,7 +51,7 @@ private:
             workerDebuggerProxy->postMessageToDebugger(message);
     }
 
-    CheckedPtr<WorkerOrWorkletGlobalScope> m_globalScope;
+    const CheckedPtr<WorkerOrWorkletGlobalScope> m_globalScope;
 };
 
 } // namespace WebCore

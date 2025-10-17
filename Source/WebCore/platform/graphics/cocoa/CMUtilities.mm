@@ -29,6 +29,7 @@
 #if PLATFORM(COCOA)
 
 #import "CAAudioStreamDescription.h"
+#import "FormatDescriptionUtilities.h"
 #import "Logging.h"
 #import "MediaSampleAVFObjC.h"
 #import "MediaSamplesBlock.h"
@@ -194,24 +195,29 @@ RetainPtr<CMFormatDescriptionRef> createFormatDescriptionFromTrackInfo(const Tra
 
     if (RefPtr atomData = videoInfo.atomData) {
         RetainPtr data = atomData->createCFData();
-        ASSERT(videoInfo.codecName == kCMVideoCodecType_VP9 || videoInfo.codecName == 'vp08' || videoInfo.codecName == kCMVideoCodecType_H264 || videoInfo.codecName == kCMVideoCodecType_HEVC || videoInfo.codecName == kCMVideoCodecType_AV1);
-        CFStringRef keyName = [](auto codec) {
-            switch (codec) {
-            case kCMVideoCodecType_VP9:
-            case 'vp08':
-                return CFSTR("vpcC");
-            case kCMVideoCodecType_H264:
-                return CFSTR("avcC");
-            case kCMVideoCodecType_HEVC:
-                return CFSTR("hvcC");
-            case kCMVideoCodecType_AV1:
-                return CFSTR("av1C");
-            default:
-                ASSERT_NOT_REACHED();
-                return CFSTR("baad");
-            }
-        }(videoInfo.codecName.value);
-        CFTypeRef configurationKeys[] = { keyName };
+        RetainPtr<CFStringRef> keyName;
+        if (!videoInfo.boxType.isEmpty())
+            keyName = videoInfo.boxType.createCFString();
+        else {
+            ASSERT(videoInfo.codecName == kCMVideoCodecType_VP9 || videoInfo.codecName == 'vp08' || videoInfo.codecName == kCMVideoCodecType_H264 || videoInfo.codecName == kCMVideoCodecType_HEVC || videoInfo.codecName == kCMVideoCodecType_AV1);
+            keyName = [](auto codec) {
+                switch (codec) {
+                case kCMVideoCodecType_VP9:
+                case 'vp08':
+                    return CFSTR("vpcC");
+                case kCMVideoCodecType_H264:
+                    return CFSTR("avcC");
+                case kCMVideoCodecType_HEVC:
+                    return CFSTR("hvcC");
+                case kCMVideoCodecType_AV1:
+                    return CFSTR("av1C");
+                default:
+                    ASSERT_NOT_REACHED();
+                    return CFSTR("baad");
+                }
+            }(videoInfo.codecName.value);
+        }
+        CFTypeRef configurationKeys[] = { keyName.get() };
         CFTypeRef configurationValues[] = { data.get() };
         RetainPtr configurationDict = adoptCF(CFDictionaryCreate(kCFAllocatorDefault, configurationKeys, configurationValues, std::size(configurationKeys), &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
         CFDictionaryAddValue(extensions.get(), PAL::kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms, configurationDict.get());
@@ -275,6 +281,53 @@ RefPtr<AudioInfo> createAudioInfoFromFormatDescription(CMFormatDescriptionRef de
     return audioInfo;
 }
 
+RefPtr<VideoInfo> createVideoInfoFromFormatDescription(CMFormatDescriptionRef description)
+{
+    // This method currently only works for compressed content.
+    auto mediaType = PAL::CMFormatDescriptionGetMediaType(description);
+    if (mediaType != kCMMediaType_Video)
+        return nullptr;
+
+    Ref videoInfo = VideoInfo::create();
+    videoInfo->codecName = PAL::CMFormatDescriptionGetMediaSubType(description);
+    auto dimensions = PAL::CMVideoFormatDescriptionGetDimensions(description);
+    videoInfo->size = IntSize { dimensions.width, dimensions.height };
+    videoInfo->displaySize = presentationSizeFromFormatDescription(description);
+
+    RetainPtr<CFDataRef> atomData;
+    RetainPtr extensionAtoms = PAL::CMFormatDescriptionGetExtension(description, PAL::kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms);
+    if (RetainPtr atomDictionary = dynamic_cf_cast<CFDictionaryRef>(extensionAtoms.get())) {
+        CFIndex extensionCount = CFDictionaryGetCount(atomDictionary.get());
+        if (extensionCount != 1)
+            RELEASE_LOG_INFO(Media, "kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms having %ld keys keys expected only 1", extensionCount);
+        else {
+            Vector<const void*, 1> keys(extensionCount);
+            Vector<const void*, 1> values(extensionCount);
+            CFDictionaryGetKeysAndValues(atomDictionary.get(), keys.mutableSpan().data(), values.mutableSpan().data());
+            if (RetainPtr key = dynamic_cf_cast<CFStringRef>(keys[0]))
+                videoInfo->boxType = key.get();
+            atomData = dynamic_cf_cast<CFDataRef>(values[0]);
+        }
+    } else if (RetainPtr atomArray = dynamic_cf_cast<CFArrayRef>(extensionAtoms.get()); atomArray && CFArrayGetCount(atomArray.get()) > 0)
+        atomData = dynamic_cf_cast<CFDataRef>(CFArrayGetValueAtIndex(atomArray.get(), 0));
+    if (atomData)
+        videoInfo->atomData = SharedBuffer::create(atomData.get());
+    else
+        RELEASE_LOG_ERROR(Media, "Couldn't retrieve atomData from CMFormatDescription");
+
+    int bitDepth;
+    if (RetainPtr bitsPerComponent = dynamic_cf_cast<CFNumberRef>(PAL::CMFormatDescriptionGetExtension(description, PAL::kCMFormatDescriptionExtension_BitsPerComponent))) {
+        CFNumberGetValue(bitsPerComponent.get(), kCFNumberIntType, &bitDepth);
+        videoInfo->bitDepth = bitDepth;
+    } else
+        videoInfo->bitDepth = 8;
+
+    if (auto colorSpace = colorSpaceFromFormatDescription(description))
+        videoInfo->colorSpace = *colorSpace;
+
+    return videoInfo;
+}
+
 Expected<RetainPtr<CMSampleBufferRef>, CString> toCMSampleBuffer(const MediaSamplesBlock& samples, CMFormatDescriptionRef formatDescription)
 {
     if (!samples.info())
@@ -332,6 +385,9 @@ Expected<RetainPtr<CMSampleBufferRef>, CString> toCMSampleBuffer(const MediaSamp
             if (!(samples[i].flags & MediaSample::SampleFlags::IsSync))
                 CFDictionarySetValue(attachments, PAL::kCMSampleAttachmentKey_NotSync, kCFBooleanTrue);
 
+            if (samples[i].flags & MediaSample::SampleFlags::IsNonDisplaying)
+                CFDictionarySetValue(attachments, PAL::kCMSampleAttachmentKey_DoNotDisplay, kCFBooleanTrue);
+
             // Attach HDR10+ (aka SMPTE ST 2094-40) metadata, if present:
             if (samples[i].hdrMetadataType == HdrMetadataType::SmpteSt209440 && samples[i].hdrMetadata)
                 CFDictionarySetValue(attachments, PAL::kCMSampleAttachmentKey_HDR10PlusPerFrameData, Ref { *samples[i].hdrMetadata }->createCFData().get());
@@ -347,15 +403,19 @@ Expected<RetainPtr<CMSampleBufferRef>, CString> toCMSampleBuffer(const MediaSamp
     return adoptCF(rawSampleBuffer);
 }
 
-UniqueRef<MediaSamplesBlock> samplesBlockFromCMSampleBuffer(CMSampleBufferRef cmSample, TrackInfo* trackInfo)
+UniqueRef<MediaSamplesBlock> samplesBlockFromCMSampleBuffer(CMSampleBufferRef cmSample, const TrackInfo* trackInfo)
 {
     ASSERT(cmSample);
     RefPtr info = trackInfo;
     if (!trackInfo) {
         // While this path is currently unused; we only support creating a TrackInfo from an Audio CMFormatDescription
         if (RetainPtr description = PAL::CMSampleBufferGetFormatDescription(cmSample)) {
-            ASSERT(PAL::CMFormatDescriptionGetMediaType(description.get()) == kCMMediaType_Audio);
-            info = createAudioInfoFromFormatDescription(description.get());
+            if (PAL::CMFormatDescriptionGetMediaType(description.get()) == kCMMediaType_Audio)
+                info = createAudioInfoFromFormatDescription(description.get());
+            else {
+                ASSERT(PAL::CMFormatDescriptionGetMediaType(description.get()) == kCMMediaType_Video);
+                info = createVideoInfoFromFormatDescription(description.get());
+            }
         }
     }
 

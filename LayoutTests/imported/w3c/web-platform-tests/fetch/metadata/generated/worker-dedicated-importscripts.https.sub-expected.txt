@@ -1,20 +1,18 @@
 
-Harness Error (FAIL), message = NetworkError: Load failed
-
 PASS sec-fetch-site - Same origin
 PASS sec-fetch-site - Cross-site
-FAIL sec-fetch-site - Same site promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
+PASS sec-fetch-site - Same site
 PASS sec-fetch-site - Same-Origin -> Cross-Site -> Same-Origin redirect
-FAIL sec-fetch-site - Same-Origin -> Same-Site -> Same-Origin redirect promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
+PASS sec-fetch-site - Same-Origin -> Same-Site -> Same-Origin redirect
 PASS sec-fetch-site - Cross-Site -> Same Origin
-FAIL sec-fetch-site - Cross-Site -> Same-Site promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
+PASS sec-fetch-site - Cross-Site -> Same-Site
 PASS sec-fetch-site - Cross-Site -> Cross-Site
 PASS sec-fetch-site - Same-Origin -> Same Origin
-FAIL sec-fetch-site - Same-Origin -> Same-Site promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
+PASS sec-fetch-site - Same-Origin -> Same-Site
 PASS sec-fetch-site - Same-Origin -> Cross-Site
-FAIL sec-fetch-site - Same-Site -> Same Origin promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
-FAIL sec-fetch-site - Same-Site -> Same-Site promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
-FAIL sec-fetch-site - Same-Site -> Cross-Site promise_test: Unhandled rejection with value: object "[object ErrorEvent]"
+PASS sec-fetch-site - Same-Site -> Same Origin
+PASS sec-fetch-site - Same-Site -> Same-Site
+PASS sec-fetch-site - Same-Site -> Cross-Site
 PASS sec-fetch-mode
 PASS sec-fetch-dest
 PASS sec-fetch-user

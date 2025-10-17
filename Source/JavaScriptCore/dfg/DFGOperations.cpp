@@ -68,6 +68,7 @@
 #include "JSMapIterator.h"
 #include "JSPromiseAllContext.h"
 #include "JSPromiseConstructor.h"
+#include "JSPromiseReaction.h"
 #include "JSPropertyNameEnumerator.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSet.h"
@@ -2372,6 +2373,16 @@ JSC_DEFINE_JIT_OPERATION(operationNewPromiseAllContext, JSCell*, (VM* vmPointer,
     OPERATION_RETURN(scope, JSPromiseAllContext::createWithInitialValues(vm, structure));
 }
 
+JSC_DEFINE_JIT_OPERATION(operationNewPromiseReaction, JSCell*, (VM* vmPointer, Structure* structure))
+{
+    VM& vm = *vmPointer;
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    OPERATION_RETURN(scope, JSPromiseReaction::createWithInitialValues(vm, structure));
+}
+
 JSC_DEFINE_JIT_OPERATION(operationNewRegExpStringIterator, JSCell*, (VM* vmPointer, Structure* structure))
 {
     VM& vm = *vmPointer;
@@ -2611,9 +2622,9 @@ JSC_DEFINE_JIT_OPERATION(operationAllocateComplexPropertyStorage, Butterfly*, (V
     OPERATION_RETURN(scope, object->allocateMoreOutOfLineStorage(vm, object->structure()->outOfLineCapacity(), newSize));
 }
 
-JSC_DEFINE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (VM* vmPointer, size_t allocationSize))
+JSC_DEFINE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (JSGlobalObject* globalObject, size_t allocationSize))
 {
-    VM& vm = *vmPointer;
+    VM& vm = globalObject->vm();
     CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
     JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -2626,8 +2637,11 @@ JSC_DEFINE_JIT_OPERATION(operationAllocateUnitializedAuxiliaryBase, void*, (VM* 
     constexpr bool hasIndexingHeader = true;
     unsigned preCapacity = 0;
     unsigned propertyCapacity = 0;
-    Butterfly* result = Butterfly::createUninitialized(vm, nullptr, preCapacity, propertyCapacity, hasIndexingHeader, indexingPayloadInBytes);
-
+    Butterfly* result = Butterfly::tryCreateUninitialized(vm, nullptr, preCapacity, propertyCapacity, hasIndexingHeader, indexingPayloadInBytes);
+    if (!result) [[unlikely]] {
+        throwOutOfMemoryError(globalObject, scope);
+        OPERATION_RETURN(scope,  nullptr);
+    }
 
     OPERATION_RETURN(scope, result->base(preCapacity, propertyCapacity));
 }

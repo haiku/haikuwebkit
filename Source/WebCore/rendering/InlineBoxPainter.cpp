@@ -33,11 +33,14 @@
 #include "InlineIteratorLineBox.h"
 #include "PaintInfo.h"
 #include "RenderBlockFlow.h"
-#include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
 #include "RenderView.h"
+#include "StyleBorderImage.h"
 #include "StyleBoxShadow.h"
+#include "StyleFillLayers.h"
+#include "StyleMaskBorder.h"
 
 namespace WebCore {
 

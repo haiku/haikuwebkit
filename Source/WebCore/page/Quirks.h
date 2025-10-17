@@ -89,7 +89,7 @@ public:
 
     bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscape() const;
     bool shouldFlipScreenDimensions() const;
-    bool shouldAllowDownloadsInSpiteOfCSP() const;
+    bool requirePageVisibilityToPlayAudioQuirk() const;
 
     WEBCORE_EXPORT bool shouldDispatchSyntheticMouseEventsWhenModifyingSelection() const;
     WEBCORE_EXPORT bool shouldSuppressAutocorrectionAndAutocapitalizationInHiddenEditableAreas() const;
@@ -279,8 +279,6 @@ public:
     WEBCORE_EXPORT bool needsNowPlayingFullscreenSwapQuirk() const;
 
     bool needsWebKitMediaTextTrackDisplayQuirk() const;
-
-    bool needsTextInputBoxSizingBorderBoxQuirk() const;
 
     bool shouldSupportHoverMediaQueries() const;
 

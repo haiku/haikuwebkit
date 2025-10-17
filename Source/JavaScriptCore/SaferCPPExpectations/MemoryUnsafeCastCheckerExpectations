@@ -49,7 +49,6 @@ interpreter/CallFrame.cpp
 interpreter/CallFrame.h
 interpreter/CallFrameInlines.h
 interpreter/Interpreter.cpp
-interpreter/StackVisitor.cpp
 jit/JITOperations.cpp
 jit/JITThunks.cpp
 jsc.cpp
@@ -108,7 +107,6 @@ runtime/JSString.h
 runtime/JSStringInlines.h
 runtime/JSTemplateObjectDescriptor.cpp
 runtime/ModuleProgramExecutable.cpp
-runtime/NativeCallee.cpp
 runtime/NativeExecutable.cpp
 runtime/ObjectConstructor.cpp
 runtime/ProgramExecutable.cpp
@@ -139,11 +137,8 @@ tools/HeapVerifier.cpp
 tools/JSDollarVM.cpp
 tools/VMInspector.cpp
 wasm/WasmCalleeGroup.cpp
-wasm/WasmFaultSignalHandler.cpp
 wasm/WasmIPIntSlowPaths.cpp
 wasm/WasmModule.cpp
-wasm/WasmOMGIRGenerator.cpp
-wasm/WasmOSREntryPlan.cpp
 wasm/WasmOperations.cpp
 wasm/WasmStreamingCompiler.cpp
 wasm/js/JSWebAssemblyException.cpp

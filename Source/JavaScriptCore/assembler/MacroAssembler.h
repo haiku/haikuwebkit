@@ -599,6 +599,8 @@ public:
 
     void moveDouble(Address src, Address dest, FPRegisterID scratch)
     {
+        if (src == dest)
+            return;
         loadDouble(src, scratch);
         storeDouble(scratch, dest);
     }

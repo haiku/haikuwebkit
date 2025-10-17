@@ -148,7 +148,7 @@ static bool isTransformTypeNumber(TransformOperation::Type transformType)
     return !isTransformTypeTransformationMatrix(transformType) && !isTransformTypeFloatPoint3D(transformType);
 }
 
-static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, const FloatSize& size, float& value)
+static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, float& value)
 {
     switch (transformType) {
     case TransformOperation::Type::Rotate:
@@ -166,20 +166,20 @@ static void getTransformFunctionValue(const TransformOperation* transformOp, Tra
         value = transformOp ? narrowPrecisionToFloat(downcast<ScaleTransformOperation>(*transformOp).z()) : 1;
         break;
     case TransformOperation::Type::TranslateX:
-        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).xAsFloat(size) : 0;
+        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).x() : 0;
         break;
     case TransformOperation::Type::TranslateY:
-        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).yAsFloat(size) : 0;
+        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).y() : 0;
         break;
     case TransformOperation::Type::TranslateZ:
-        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).zAsFloat() : 0;
+        value = transformOp ? downcast<TranslateTransformOperation>(*transformOp).z() : 0;
         break;
     default:
         break;
     }
 }
 
-static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, const FloatSize& size, FloatPoint3D& value)
+static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, FloatPoint3D& value)
 {
     switch (transformType) {
     case TransformOperation::Type::Scale:
@@ -193,9 +193,9 @@ static void getTransformFunctionValue(const TransformOperation* transformOp, Tra
     case TransformOperation::Type::Translate:
     case TransformOperation::Type::Translate3D: {
         const auto* translateTransformOp = downcast<TranslateTransformOperation>(transformOp);
-        value.setX(translateTransformOp ? translateTransformOp->xAsFloat(size) : 0);
-        value.setY(translateTransformOp ? translateTransformOp->yAsFloat(size) : 0);
-        value.setZ(translateTransformOp ? translateTransformOp->zAsFloat() : 0);
+        value.setX(translateTransformOp ? translateTransformOp->x() : 0);
+        value.setY(translateTransformOp ? translateTransformOp->y() : 0);
+        value.setZ(translateTransformOp ? translateTransformOp->z() : 0);
         break;
     }
     default:
@@ -203,7 +203,7 @@ static void getTransformFunctionValue(const TransformOperation* transformOp, Tra
     }
 }
 
-static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, const FloatSize& size, TransformationMatrix& value)
+static void getTransformFunctionValue(const TransformOperation* transformOp, TransformOperation::Type transformType, TransformationMatrix& value)
 {
     switch (transformType) {
     case TransformOperation::Type::SkewX:
@@ -216,7 +216,7 @@ static void getTransformFunctionValue(const TransformOperation* transformOp, Tra
     case TransformOperation::Type::Identity:
     case TransformOperation::Type::None:
         if (transformOp)
-            transformOp->applyUnrounded(value, size);
+            transformOp->applyUnrounded(value);
         else
             value.makeIdentity();
         break;
@@ -1160,7 +1160,7 @@ static bool animationCanBeAccelerated(const KeyframeValueList& valueList, const 
     return true;
 }
 
-bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const GraphicsLayerAnimation* anim, const String& animationName, double timeOffset)
+bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const GraphicsLayerAnimation* anim, const String& animationName, double timeOffset)
 {
     LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " addAnimation " << anim << " " << animationName << " duration " << anim->duration() << " (can be accelerated " << animationCanBeAccelerated(valueList, anim) << ")");
 
@@ -1179,7 +1179,7 @@ bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const Flo
 
     bool createdAnimations = false;
     if (animatedPropertyIsTransformOrRelated(valueList.property()))
-        createdAnimations = createTransformAnimationsFromKeyframes(valueList, anim, animationName, Seconds { timeOffset }, boxSize, keyframesShouldUseAnimationWideTimingFunction);
+        createdAnimations = createTransformAnimationsFromKeyframes(valueList, anim, animationName, Seconds { timeOffset }, keyframesShouldUseAnimationWideTimingFunction);
     else if (valueList.property() == AnimatedProperty::Filter) {
         if (supportsAcceleratedFilterAnimations())
             createdAnimations = createFilterAnimationsFromKeyframes(valueList, anim, animationName, Seconds { timeOffset }, keyframesShouldUseAnimationWideTimingFunction);
@@ -3373,15 +3373,15 @@ GraphicsLayerCA::CloneID GraphicsLayerCA::ReplicaState::cloneID() const
 {
     size_t depth = m_replicaBranches.size();
 
-    const size_t bitsPerUChar = sizeof(char16_t) * 8;
-    size_t vectorSize = (depth + bitsPerUChar - 1) / bitsPerUChar;
+    const size_t bitsPerChar16 = sizeof(char16_t) * 8;
+    size_t vectorSize = (depth + bitsPerChar16 - 1) / bitsPerChar16;
     
     Vector<char16_t> result(vectorSize, 0);
 
     // Create a string from the bit sequence which we can use to identify the clone.
     // Note that the string may contain embedded nulls, but that's OK.
     for (size_t i = 0; i < depth; ++i) {
-        char16_t& currChar = result[i / bitsPerUChar];
+        char16_t& currChar = result[i / bitsPerChar16];
         currChar = (currChar << 1) | m_replicaBranches[i];
     }
     
@@ -3786,19 +3786,19 @@ bool GraphicsLayerCA::createAnimationFromKeyframes(const KeyframeValueList& valu
     return true;
 }
 
-bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, TransformOperation::Type operationType, const GraphicsLayerAnimation* animation, const String& animationName, const FloatSize& boxSize, unsigned animationIndex, Seconds timeOffset, bool isMatrixAnimation, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, TransformOperation::Type operationType, const GraphicsLayerAnimation* animation, const String& animationName, unsigned animationIndex, Seconds timeOffset, bool isMatrixAnimation, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     RefPtr<PlatformCAAnimation> caAnimation;
     bool validMatrices = true;
     if (isKeyframe(valueList)) {
         caAnimation = createKeyframeAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
-        validMatrices = setTransformAnimationKeyframes(valueList, animation, caAnimation.get(), animationIndex, operationType, isMatrixAnimation, boxSize, keyframesShouldUseAnimationWideTimingFunction);
+        validMatrices = setTransformAnimationKeyframes(valueList, animation, caAnimation.get(), animationIndex, operationType, isMatrixAnimation, keyframesShouldUseAnimationWideTimingFunction);
     } else {
         if (animation->timingFunction()->isSpringTimingFunction())
             caAnimation = createSpringAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
         else
             caAnimation = createBasicAnimation(animation, PlatformCAAnimation::makeKeyPath(valueList.property()), false, keyframesShouldUseAnimationWideTimingFunction);
-        validMatrices = setTransformAnimationEndpoints(valueList, animation, caAnimation.get(), animationIndex, operationType, isMatrixAnimation, boxSize);
+        validMatrices = setTransformAnimationEndpoints(valueList, animation, caAnimation.get(), animationIndex, operationType, isMatrixAnimation);
     }
     
     if (!validMatrices)
@@ -3813,7 +3813,7 @@ static const TransformOperations& transformationAnimationValueAt(const KeyframeV
     return static_cast<const TransformAnimationValue&>(valueList.at(i)).value();
 }
 
-static bool hasBig3DRotation(const KeyframeValueList& valueList, const TransformOperationsSharedPrimitivesPrefix& prefix)
+static bool hasBig3DRotation(const KeyframeValueList& valueList, const TransformOperationsSharedPrimitivesPrefix<TransformOperation::Type>& prefix)
 {
     // Hardware non-matrix animations are used for every function in the shared primitives prefix.
     // These kind of animations have issues with large rotation angles, so for every function that
@@ -3839,7 +3839,7 @@ static bool hasBig3DRotation(const KeyframeValueList& valueList, const Transform
     return false;
 }
 
-bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, Seconds timeOffset, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, const String& animationName, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     ASSERT(animatedPropertyIsTransformOrRelated(valueList.property()));
 
@@ -3853,7 +3853,7 @@ bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValue
     // FIXME: Currently, this only supports situations where every keyframe shares the same prefix of shared
     // transformation primitives, but the specification says direct interpolation should be determined by
     // the primitives shared between any two adjacent keyframes.
-    TransformOperationsSharedPrimitivesPrefix prefix;
+    TransformOperationsSharedPrimitivesPrefix<TransformOperation::Type> prefix;
     for (size_t i = 0; i < valueList.size(); ++i)
         prefix.update(transformationAnimationValueAt(valueList, i));
 
@@ -3869,7 +3869,7 @@ bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValue
     removeAnimation(animationName, valueList.property());
 
     for (unsigned animationIndex = 0; animationIndex < numberOfSharedPrimitives; ++animationIndex) {
-        if (!appendToUncommittedAnimations(valueList, primitives[animationIndex], animation, animationName, boxSize, animationIndex, timeOffset, false /* isMatrixAnimation */, keyframesShouldUseAnimationWideTimingFunction))
+        if (!appendToUncommittedAnimations(valueList, primitives[animationIndex], animation, animationName, animationIndex, timeOffset, false /* isMatrixAnimation */, keyframesShouldUseAnimationWideTimingFunction))
             return false;
     }
 
@@ -3878,7 +3878,7 @@ bool GraphicsLayerCA::createTransformAnimationsFromKeyframes(const KeyframeValue
 
     // If there were any incompatible transform functions, they will be appended to the animation list
     // as a single combined transformation matrix animation.
-    return appendToUncommittedAnimations(valueList, TransformOperation::Type::Matrix3D, animation, animationName, boxSize, primitives.size(), timeOffset, true /* isMatrixAnimation */, keyframesShouldUseAnimationWideTimingFunction);
+    return appendToUncommittedAnimations(valueList, TransformOperation::Type::Matrix3D, animation, animationName, primitives.size(), timeOffset, true /* isMatrixAnimation */, keyframesShouldUseAnimationWideTimingFunction);
 }
 
 bool GraphicsLayerCA::appendToUncommittedAnimations(const KeyframeValueList& valueList, const FilterOperation& operation, const GraphicsLayerAnimation* animation, const String& animationName, int animationIndex, Seconds timeOffset, bool keyframesShouldUseAnimationWideTimingFunction)
@@ -4072,7 +4072,7 @@ bool GraphicsLayerCA::setAnimationKeyframes(const KeyframeValueList& valueList, 
     return true;
 }
 
-bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* basicAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize)
+bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* basicAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation)
 {
     ASSERT(valueList.size() == 2);
 
@@ -4086,8 +4086,8 @@ bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& va
 
     if (isMatrixAnimation) {
         TransformationMatrix fromTransform, toTransform;
-        startValue.apply(fromTransform, boxSize);
-        endValue.apply(toTransform, boxSize);
+        startValue.apply(fromTransform);
+        endValue.apply(toTransform);
 
         // If any matrix is singular, CA won't animate it correctly. So fall back to software animation
         if (!fromTransform.isInvertible() || !toTransform.isInvertible())
@@ -4098,27 +4098,27 @@ bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& va
     } else {
         if (isTransformTypeNumber(transformOpType)) {
             float fromValue;
-            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, boxSize, fromValue);
+            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, fromValue);
             basicAnim->setFromValue(fromValue);
             
             float toValue;
-            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, boxSize, toValue);
+            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, toValue);
             basicAnim->setToValue(toValue);
         } else if (isTransformTypeFloatPoint3D(transformOpType)) {
             FloatPoint3D fromValue;
-            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, boxSize, fromValue);
+            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, fromValue);
             basicAnim->setFromValue(fromValue);
             
             FloatPoint3D toValue;
-            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, boxSize, toValue);
+            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, toValue);
             basicAnim->setToValue(toValue);
         } else {
             TransformationMatrix fromValue;
-            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, boxSize, fromValue);
+            getTransformFunctionValue(RefPtr { startValue.at(functionIndex) }.get(), transformOpType, fromValue);
             basicAnim->setFromValue(fromValue);
 
             TransformationMatrix toValue;
-            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, boxSize, toValue);
+            getTransformFunctionValue(RefPtr { endValue.at(functionIndex) }.get(), transformOpType, toValue);
             basicAnim->setToValue(toValue);
         }
     }
@@ -4130,7 +4130,7 @@ bool GraphicsLayerCA::setTransformAnimationEndpoints(const KeyframeValueList& va
     return true;
 }
 
-bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, const FloatSize& boxSize, bool keyframesShouldUseAnimationWideTimingFunction)
+bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& valueList, const GraphicsLayerAnimation* animation, PlatformCAAnimation* keyframeAnim, int functionIndex, TransformOperation::Type transformOpType, bool isMatrixAnimation, bool keyframesShouldUseAnimationWideTimingFunction)
 {
     Vector<float> keyTimes;
     Vector<float> floatValues;
@@ -4147,7 +4147,7 @@ bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& va
 
         if (isMatrixAnimation) {
             TransformationMatrix transform;
-            curValue.value().apply(transform, boxSize, functionIndex);
+            curValue.value().apply(transform, functionIndex);
 
             // If any matrix is singular, CA won't animate it correctly. So fall back to software animation
             if (!transform.isInvertible())
@@ -4158,15 +4158,15 @@ bool GraphicsLayerCA::setTransformAnimationKeyframes(const KeyframeValueList& va
             RefPtr transformOp = curValue.value().at(functionIndex);
             if (isTransformTypeNumber(transformOpType)) {
                 float value;
-                getTransformFunctionValue(transformOp.get(), transformOpType, boxSize, value);
+                getTransformFunctionValue(transformOp.get(), transformOpType, value);
                 floatValues.append(value);
             } else if (isTransformTypeFloatPoint3D(transformOpType)) {
                 FloatPoint3D value;
-                getTransformFunctionValue(transformOp.get(), transformOpType, boxSize, value);
+                getTransformFunctionValue(transformOp.get(), transformOpType, value);
                 floatPoint3DValues.append(value);
             } else {
                 TransformationMatrix value;
-                getTransformFunctionValue(transformOp.get(), transformOpType, boxSize, value);
+                getTransformFunctionValue(transformOp.get(), transformOpType, value);
                 transformationMatrixValues.append(value);
             }
         }

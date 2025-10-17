@@ -31,6 +31,7 @@
 #include "Document.h"
 #include "Element.h"
 #include "KeyframeEffect.h"
+#include "NodeDocument.h"
 #include "RenderStyle.h"
 #include "StyleBuilder.h"
 #include "StyleCustomProperty.h"

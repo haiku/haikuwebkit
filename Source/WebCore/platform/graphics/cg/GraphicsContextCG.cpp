@@ -264,7 +264,7 @@ void GraphicsContextCG::restore(GraphicsContextState::Purpose purpose)
     m_userToDeviceTransformKnownToBeIdentity = false;
 }
 
-void GraphicsContextCG::drawNativeImageInternal(NativeImage& nativeImage, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
+void GraphicsContextCG::drawNativeImage(NativeImage& nativeImage, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
 {
     auto image = nativeImage.platformImage();
     if (!image)
@@ -388,7 +388,7 @@ void GraphicsContextCG::drawNativeImageInternal(NativeImage& nativeImage, const 
         headroom = Headroom(std::min<float>(headroom, *m_maxEDRHeadroom));
 
     if (nativeImage.headroom() > headroom) {
-        LOG_WITH_STREAM(HDR, stream << "GraphicsContextCG::drawNativeImageInternal setEDRTargetHeadroom " << headroom << " max(" << m_maxEDRHeadroom << ")");
+        LOG_WITH_STREAM(HDR, stream << "GraphicsContextCG::drawNativeImage setEDRTargetHeadroom " << headroom << " max(" << m_maxEDRHeadroom << ")");
         CGContextSetEDRTargetHeadroom(context, headroom);
     }
 
@@ -428,7 +428,7 @@ void GraphicsContextCG::drawNativeImageInternal(NativeImage& nativeImage, const 
 #endif
     }
 
-    LOG_WITH_STREAM(Images, stream << "GraphicsContextCG::drawNativeImageInternal " << image.get() << " size " << imageSize << " into " << destRect << " took " << (MonotonicTime::now() - startTime).milliseconds() << "ms");
+    LOG_WITH_STREAM(Images, stream << "GraphicsContextCG::drawNativeImage " << image.get() << " size " << imageSize << " into " << destRect << " took " << (MonotonicTime::now() - startTime).milliseconds() << "ms");
 }
 
 static void drawPatternCallback(void* info, CGContextRef context)

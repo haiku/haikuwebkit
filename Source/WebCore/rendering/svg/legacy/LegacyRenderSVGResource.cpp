@@ -39,7 +39,6 @@
 #include "RenderSVGRoot.h"
 #include "RenderSVGShape.h"
 #include "RenderView.h"
-#include "SVGRenderStyle.h"
 #include "SVGResourceElementClient.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
@@ -59,12 +58,11 @@ static inline LegacyRenderSVGResource* requestPaintingResource(RenderSVGResource
         
         // But always use the initial fill paint server.
         LegacyRenderSVGResourceSolidColor* colorResource = LegacyRenderSVGResource::sharedSolidPaintingResource();
-        colorResource->setColor(SVGRenderStyle::initialFillColor().resolvedColor());
+        colorResource->setColor(RenderStyle::initialFill().colorDisregardingType().resolvedColor());
         return colorResource;
     }
 
-    const auto& svgStyle = style.svgStyle();
-    const auto& paint = applyToFill ? svgStyle.fill() : svgStyle.stroke();
+    const auto& paint = applyToFill ? style.fill() : style.stroke();
 
     // If we have no fill/stroke, return nullptr.
     if (paint.isNone())
@@ -76,7 +74,7 @@ static inline LegacyRenderSVGResource* requestPaintingResource(RenderSVGResource
 
     if (style.insideLink() == InsideLink::InsideVisited) {
         // FIXME: This code doesn't support the uri component of the visited link paint, https://bugs.webkit.org/show_bug.cgi?id=70006
-        auto& visitedPaint = applyToFill ? svgStyle.visitedLinkFill() : svgStyle.visitedLinkStroke();
+        auto& visitedPaint = applyToFill ? style.visitedLinkFill() : style.visitedLinkStroke();
 
         // For `currentcolor`, 'color' already contains the 'visitedColor'.
         if (auto visitedPaintColor = visitedPaint.tryColor(); visitedPaintColor && !visitedPaintColor->isCurrentColor()) {

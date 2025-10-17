@@ -190,6 +190,9 @@ TEST(WebKit, PreferenceChangesWithSuspendedProcess)
         return [webView stringByEvaluatingJavaScript:js].intValue;
     };
 
+    unsigned tries = 0;
+    while (preferenceValue() != 1 && ++tries < 50)
+        TestWebKitAPI::Util::runFor(100_ms);
     EXPECT_EQ(preferenceValue(), 1);
 
     CLEAR_DEFAULTS();

@@ -221,13 +221,36 @@ static GBytes* wpeBufferDMABufImportToPixels(WPEBuffer* buffer, GError** error)
             return nullptr;
         }
 
-        if (priv->format != DRM_FORMAT_ARGB8888 && priv->format != DRM_FORMAT_XRGB8888 && priv->modifier != DRM_FORMAT_MOD_LINEAR && priv->modifier != DRM_FORMAT_MOD_INVALID) {
+        if (priv->format != DRM_FORMAT_ARGB8888 && priv->format != DRM_FORMAT_XRGB8888) {
             g_set_error_literal(error, WPE_BUFFER_ERROR, WPE_BUFFER_ERROR_IMPORT_FAILED, "Failed to import buffer to pixels_buffer: unsupported buffer format");
             return nullptr;
         }
 
-        struct gbm_import_fd_data fdData = { priv->fds[0].value(), width, height, priv->strides[0], priv->format };
-        priv->bufferObject = gbm_bo_import(priv->device.value(), GBM_BO_IMPORT_FD, &fdData, GBM_BO_USE_RENDERING | GBM_BO_USE_LINEAR);
+        uint32_t planeCount = static_cast<uint32_t>(priv->fds.size());
+        struct gbm_import_fd_modifier_data fdModifierData = {
+            width,
+            height,
+            priv->format,
+            planeCount, {
+                priv->fds[0].value(),
+                planeCount > 1 ? priv->fds[1].value() : -1,
+                planeCount > 2 ? priv->fds[2].value() : -1,
+                planeCount > 3 ? priv->fds[3].value() : -1
+            }, {
+                static_cast<int>(priv->strides[0]),
+                planeCount > 1 ? static_cast<int>(priv->strides[1]) : 0,
+                planeCount > 2 ? static_cast<int>(priv->strides[2]) : 0,
+                planeCount > 3 ? static_cast<int>(priv->strides[3]) : 0
+            }, {
+                static_cast<int>(priv->offsets[0]),
+                planeCount > 1 ? static_cast<int>(priv->offsets[1]) : 0,
+                planeCount > 2 ? static_cast<int>(priv->offsets[2]) : 0,
+                planeCount > 3 ? static_cast<int>(priv->offsets[3]) : 0
+            },
+            priv->modifier
+        };
+
+        priv->bufferObject = gbm_bo_import(priv->device.value(), GBM_BO_IMPORT_FD_MODIFIER, &fdModifierData, 0);
         if (!priv->bufferObject) {
             g_set_error_literal(error, WPE_BUFFER_ERROR, WPE_BUFFER_ERROR_IMPORT_FAILED, "Failed to import buffer to pixels_buffer: gbm_bo_import failed");
             return nullptr;

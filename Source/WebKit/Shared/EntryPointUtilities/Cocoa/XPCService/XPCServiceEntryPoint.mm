@@ -145,6 +145,11 @@ bool XPCServiceInitializerDelegate::getExtraInitializationData(HashMap<String, S
     auto isLockdownModeEnabled = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "enable-lockdown-mode"_s);
     if (!isLockdownModeEnabled.isEmpty())
         extraInitializationData.add("enable-lockdown-mode"_s, isLockdownModeEnabled);
+    else {
+        auto enableEnhancedSecurity = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "enable-enhanced-security"_s);
+        if (!enableEnhancedSecurity.isEmpty())
+            extraInitializationData.add("enable-enhanced-security"_s, enableEnhancedSecurity);
+    }
 
     if (!isClientSandboxed()) {
         auto userDirectorySuffix = xpcDictionaryGetString(extraDataInitializationDataObject.get(), "user-directory-suffix"_s);
@@ -194,13 +199,14 @@ void setOSTransaction(OSObjectPtr<os_transaction_t>&& transaction)
 }
 #endif
 
-void setJSCOptions(xpc_object_t initializerMessage, EnableLockdownMode enableLockdownMode, bool isWebContentProcess)
+void setJSCOptions(xpc_object_t initializerMessage, EnableLockdownMode enableLockdownMode, EnableEnhancedSecurity enableEnhancedSecurity, bool isWebContentProcess)
 {
     RELEASE_ASSERT(!g_jscConfig.initializeHasBeenCalled);
 
     if (xpc_dictionary_get_bool(initializerMessage, "configure-jsc-for-testing"))
         JSC::Config::configureForTesting();
     if (enableLockdownMode == EnableLockdownMode::Yes) {
+        RELEASE_ASSERT(enableEnhancedSecurity == EnableEnhancedSecurity::No);
         JSC::Options::machExceptionHandlerSandboxPolicy = JSC::Options::SandboxPolicy::Block;
         JSC::Options::initialize([] {
             JSC::ExecutableAllocator::disableJIT();
@@ -212,7 +218,7 @@ void setJSCOptions(xpc_object_t initializerMessage, EnableLockdownMode enableLoc
             JSC::Options::allowDoubleShape() = false;
             JSC::Options::alwaysHaveABadTime() = true;
         });
-    } else if (xpc_dictionary_get_bool(initializerMessage, "disable-jit")) {
+    } else if (xpc_dictionary_get_bool(initializerMessage, "disable-jit") || enableEnhancedSecurity == EnableEnhancedSecurity::Yes) {
         JSC::Options::initialize([] {
             JSC::ExecutableAllocator::disableJIT();
         });

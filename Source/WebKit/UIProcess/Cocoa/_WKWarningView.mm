@@ -571,10 +571,10 @@ static RetainPtr<ViewType> makeLabel(NSAttributedString *attributedString)
     if (!_completionHandler)
         return;
 
-    if ([link isEqual:WebKit::BrowsingWarning::visitUnsafeWebsiteSentinel()])
+    if ([link isEqual:WebKit::BrowsingWarning::visitUnsafeWebsiteSentinel().get()])
         return _completionHandler(WebKit::ContinueUnsafeLoad::Yes);
 
-    if ([link isEqual:WebKit::BrowsingWarning::confirmMalwareSentinel()]) {
+    if ([link isEqual:WebKit::BrowsingWarning::confirmMalwareSentinel().get()]) {
 #if PLATFORM(MAC)
         auto alert = adoptNS([NSAlert new]);
         [alert setMessageText:WEB_UI_NSSTRING(@"Are you sure you wish to go to this site?", "Malware confirmation dialog title")];

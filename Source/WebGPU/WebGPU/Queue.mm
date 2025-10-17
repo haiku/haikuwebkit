@@ -571,12 +571,6 @@ void Queue::writeBuffer(Buffer& buffer, uint64_t bufferOffset, std::span<uint8_t
             return;
         }
     }
-#if ENABLE(WEBGPU_SWIFT)
-    if (isWebGPUSwiftEnabled()) {
-        WebGPU::writeBuffer(this, &buffer, bufferOffset, data);
-        return;
-    }
-#endif
     writeBuffer(buffer.buffer(), bufferOffset, data);
 }
 
@@ -609,6 +603,13 @@ std::pair<id<MTLBuffer>, uint64_t> Queue::newTemporaryBufferWithBytes(std::span<
 
 void Queue::writeBuffer(id<MTLBuffer> buffer, uint64_t bufferOffset, std::span<uint8_t> data)
 {
+#if ENABLE(WEBGPU_SWIFT)
+    if (isWebGPUSwiftEnabled()) {
+        Queue_writeBuffer_thunk(this, buffer, bufferOffset, data);
+        return;
+    }
+#endif
+
     auto device = m_device.get();
     if (!device)
         return;

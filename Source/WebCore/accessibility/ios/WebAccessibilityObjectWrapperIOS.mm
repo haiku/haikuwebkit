@@ -649,6 +649,15 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     return ancestor ? ancestor->wrapper() : nil;
 }
 
+// FIXME: Switch to exposing BEAccessibilityContainerTypeFieldset directly in the wrapper via browserAccessibilityContainerType.
+- (BOOL)accessibilityIsFieldset
+{
+    if (![self _prepareAccessibilityCall])
+        return NO;
+
+    return self.axBackingObject->isFieldset();
+}
+
 - (AccessibilityObjectWrapper *)_accessibilityFrameAncestor
 {
     if (![self _prepareAccessibilityCall])
@@ -1054,6 +1063,8 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     case AccessibilityRole::LineBreak:
     case AccessibilityRole::Presentational:
     case AccessibilityRole::RemoteFrame:
+    case AccessibilityRole::LocalFrame:
+    case AccessibilityRole::FrameHost:
     case AccessibilityRole::Unknown:
         return false;
     }
@@ -1864,7 +1875,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     if (![self _prepareAccessibilityCall])
         return nil;
 
-    auto* focus = self.axBackingObject->focusedUIElement();
+    auto* focus = self.axBackingObject->focusedUIElementInAnyLocalFrame();
     return focus ? focus->wrapper() : nil;
 }
 

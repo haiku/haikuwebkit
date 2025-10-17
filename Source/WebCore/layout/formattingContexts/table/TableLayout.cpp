@@ -339,10 +339,10 @@ TableFormattingContext::TableLayout::DistributedSpaces TableFormattingContext::T
                 return { std::nullopt, GridSpace::Type::Auto };
             },
             [&](const Style::Length<CSS::Nonnegative, float>& fixed) -> std::pair<std::optional<float>, GridSpace::Type> {
-                return { fixed.value, GridSpace::Type::Fixed };
+                return { fixed.resolveZoom(Style::ZoomNeeded { }), GridSpace::Type::Fixed };
             },
             [&](const Style::Percentage<CSS::Nonnegative, float>& percentage) -> std::pair<std::optional<float>, GridSpace::Type> {
-                return { Style::evaluate(percentage, availableHorizontalSpace), GridSpace::Type::Percent };
+                return { Style::evaluate<float>(percentage, availableHorizontalSpace), GridSpace::Type::Percent };
             }
         );
 

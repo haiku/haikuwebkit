@@ -231,14 +231,24 @@ header: <WebCore/AttributedString.h>
     Vector<WebCore::TextTab> textTabs;
 }
 
-[Nested] struct WebCore::AttributedString::AttributeValue {
+[Nested, CreateUsing=createFromIPCData] struct WebCore::AttributedString::FontWrapper {
+    String postScriptName();
+    double pointSize();
+    CTFontDescriptorOptions fontDescriptorOptions();
+    std::optional<WebCore::FontPlatformSerializedAttributes> fontSerializedAttributes();
+}
+
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
-    Variant<double, String, URL, Ref<WebCore::Font>, Vector<String>, Vector<double>, WebCore::ParagraphStyle, RetainPtr<NSPresentationIntent>, RetainPtr<NSShadow>, RetainPtr<NSDate>, WebCore::AttributedString::ColorFromCGColor, WebCore::AttributedString::ColorFromPlatformColor, WebCore::MultiRepresentationHEICAttachmentData, WebCore::TextAttachmentFileWrapper, WebCore::TextAttachmentMissingImage> value;
+[Nested] struct WebCore::AttributedString::AttributeValue {
+    Variant<double, String, URL, WebCore::AttributedString::FontWrapper, Vector<String>, Vector<double>, WebCore::ParagraphStyle, RetainPtr<NSPresentationIntent>, RetainPtr<NSShadow>, RetainPtr<NSDate>, WebCore::AttributedString::ColorFromCGColor, WebCore::AttributedString::ColorFromPlatformColor, WebCore::MultiRepresentationHEICAttachmentData, WebCore::TextAttachmentFileWrapper, WebCore::TextAttachmentMissingImage> value;
+}
 #endif
 #if !ENABLE(MULTI_REPRESENTATION_HEIC)
-    Variant<double, String, URL, Ref<WebCore::Font>, Vector<String>, Vector<double>, WebCore::ParagraphStyle, RetainPtr<NSPresentationIntent>, RetainPtr<NSShadow>, RetainPtr<NSDate>, WebCore::AttributedString::ColorFromCGColor, WebCore::AttributedString::ColorFromPlatformColor, WebCore::TextAttachmentFileWrapper, WebCore::TextAttachmentMissingImage> value;
-#endif
+[Nested] struct WebCore::AttributedString::AttributeValue {
+    Variant<double, String, URL, WebCore::AttributedString::FontWrapper, Vector<String>, Vector<double>, WebCore::ParagraphStyle, RetainPtr<NSPresentationIntent>, RetainPtr<NSShadow>, RetainPtr<NSDate>, WebCore::AttributedString::ColorFromCGColor, WebCore::AttributedString::ColorFromPlatformColor, WebCore::TextAttachmentFileWrapper, WebCore::TextAttachmentMissingImage> value;
 }
+#endif
+
 
 [Nested] struct WebCore::AttributedString::ColorFromPlatformColor {
     WebCore::Color color

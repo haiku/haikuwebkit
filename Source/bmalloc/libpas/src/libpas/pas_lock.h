@@ -30,6 +30,7 @@
 #include "pas_race_test_hooks.h"
 #include "pas_utils.h"
 #include "pas_thread.h"
+#include "pas_zero_memory.h"
 
 PAS_BEGIN_EXTERN_C;
 

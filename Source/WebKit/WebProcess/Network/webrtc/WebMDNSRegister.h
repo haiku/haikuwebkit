@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(WEB_RTC) && USE(LIBWEBRTC)
+#if ENABLE(WEB_RTC)
 
 #include <WebCore/MDNSRegisterError.h>
 #include <WebCore/ProcessQualified.h>
@@ -43,11 +43,11 @@ class Decoder;
 }
 
 namespace WebKit {
-class LibWebRTCNetwork;
+class WebRTCNetworkBase;
 
 class WebMDNSRegister : public CanMakeWeakPtr<WebMDNSRegister> {
 public:
-    explicit WebMDNSRegister(LibWebRTCNetwork&);
+    explicit WebMDNSRegister(WebRTCNetworkBase&);
 
     void ref() const;
     void deref() const;
@@ -62,9 +62,9 @@ private:
 
     HashMap<WebCore::ScriptExecutionContextIdentifier, HashMap<String, String>> m_registeringDocuments;
 
-    WeakRef<LibWebRTCNetwork> m_libWebRTCNetwork;
+    WeakRef<WebRTCNetworkBase> m_webRTCNetwork;
 };
 
 } // namespace WebKit
 
-#endif // ENABLE(WEB_RTC) && USE(LIBWEBRTC)
+#endif // ENABLE(WEB_RTC)

@@ -565,7 +565,8 @@ void UniqueIDBDatabase::openDBRequestCancelled(const IDBResourceIdentifier& requ
         m_currentOpenDBRequest = nullptr;
 
     if (RefPtr versionChangeDatabaseConnection = m_versionChangeDatabaseConnection; versionChangeDatabaseConnection && versionChangeDatabaseConnection->openRequestIdentifier() == requestIdentifier) {
-        ASSERT(!m_versionChangeTransaction || m_versionChangeTransaction->databaseConnection() == versionChangeDatabaseConnection);
+        RefPtr versionChangeTransaction = m_versionChangeTransaction;
+        ASSERT(!m_versionChangeTransaction || versionChangeTransaction->databaseConnection() == versionChangeDatabaseConnection);
 
         connectionClosedFromClient(*versionChangeDatabaseConnection);
     }
@@ -1606,8 +1607,9 @@ std::optional<IDBDatabaseNameAndVersion> UniqueIDBDatabase::nameAndVersion() con
     if (!m_backingStore)
         return std::nullopt;
 
-    if (m_versionChangeTransaction) {
-        if (auto databaseInfo = m_versionChangeTransaction->originalDatabaseInfo()) {
+    RefPtr versionChangeTransaction = m_versionChangeTransaction;
+    if (versionChangeTransaction) {
+        if (auto databaseInfo = versionChangeTransaction->originalDatabaseInfo()) {
             // The database is newly created.
             if (!databaseInfo->version())
                 return std::nullopt;

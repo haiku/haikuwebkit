@@ -60,34 +60,27 @@ function createInternalReadableStreamFromUnderlyingSource(underlyingSource, stra
         return stream;
     }
 
-    const type = underlyingSource.type;
-    const typeString = @toString(type);
+    @assert(underlyingSource.type === @undefined);
+    let highWaterMark = strategy.highWaterMark;
+    if (highWaterMark !== @undefined)
+        highWaterMark = @toNumber(highWaterMark);
+    else
+        highWaterMark = 1;
+    const size = strategy.size;
+    if (size !== @undefined && !@isCallable(size))
+        @throwTypeError("size parameter must be a function");
 
-    if (typeString === "bytes")
-        @throwTypeError("ReadableByteStreamController is not implemented");
-    else if (type === @undefined) {
-        let highWaterMark = strategy.highWaterMark;
-        if (highWaterMark !== @undefined)
-            highWaterMark = @toNumber(highWaterMark);
-        else
-            highWaterMark = 1;
-        const size = strategy.size;
-        if (size !== @undefined && !@isCallable(size))
-            @throwTypeError("size parameter must be a function");
+    const cancel = underlyingSource.cancel;
+    if (cancel !== @undefined && !@isCallable(cancel))
+        @throwTypeError("underlyingSource cancel must be a function");
+    const pull = underlyingSource.pull;
+    if (pull !== @undefined && !@isCallable(pull))
+        @throwTypeError("underlyingSource pull must be a function");
+    const start = underlyingSource.start;
+    if (start !== @undefined && !@isCallable(start))
+        @throwTypeError("underlyingSource start must be a function");
 
-        const cancel = underlyingSource.cancel;
-        if (cancel !== @undefined && !@isCallable(cancel))
-            @throwTypeError("underlyingSource cancel must be a function");
-        const pull = underlyingSource.pull;
-        if (pull !== @undefined && !@isCallable(pull))
-            @throwTypeError("underlyingSource pull must be a function");
-        const start = underlyingSource.start;
-        if (start !== @undefined && !@isCallable(start))
-            @throwTypeError("underlyingSource start must be a function");
-
-        @setupReadableStreamDefaultController(stream, underlyingSource, size, highWaterMark, start, pull, cancel);
-    } else
-        @throwTypeError("Invalid type for underlying source");
+    @setupReadableStreamDefaultController(stream, underlyingSource, size, highWaterMark, start, pull, cancel);
 
     return stream;
 }
@@ -809,8 +802,7 @@ function readableStreamError(stream, error)
     const promise = @getByIdDirectPrivate(reader, "closedPromiseCapability").promise;
     @markPromiseAsHandled(promise);
 
-    if (@isReadableStreamDefaultReader(reader))
-        @readableStreamDefaultReaderErrorReadRequests(reader, error);
+    @readableStreamDefaultReaderErrorReadRequests(reader, error);
 }
 
 function readableStreamDefaultControllerShouldCallPull(controller)

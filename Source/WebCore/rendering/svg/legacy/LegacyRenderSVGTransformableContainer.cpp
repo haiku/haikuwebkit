@@ -22,8 +22,7 @@
 #include "config.h"
 #include "LegacyRenderSVGTransformableContainer.h"
 
-#include "RenderElementInlines.h"
-#include "RenderStyleInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGGElement.h"
 #include "SVGGraphicsElement.h"

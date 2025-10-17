@@ -1285,8 +1285,9 @@ typedef NS_ENUM(NSUInteger, _UIScrollDeviceCategory) {
 
 #if HAVE(LIQUID_GLASS)
 
-@interface UIScrollView (Staging_155261419)
+@interface UIScrollView ()
 - (void)_setPrefersSolidColorHardPocket:(BOOL)prefersSolidColorHardPocket forEdge:(UIRectEdge)edge;
+- (void)_setPocketColor:(UIColor *)color forEdge:(UIRectEdge)edge;
 @end
 
 #endif // HAVE(LIQUID_GLASS)

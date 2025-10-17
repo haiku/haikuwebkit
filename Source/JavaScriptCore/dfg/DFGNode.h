@@ -29,7 +29,7 @@
 
 #include "B3SparseCollection.h"
 #include "BasicBlockLocation.h"
-#include "CheckPrivateBrandVariant.h"
+#include "CheckPrivateBrandStatus.h"
 #include "CodeBlock.h"
 #include "DFGAdjacencyList.h"
 #include "DFGArithMode.h"

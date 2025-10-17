@@ -142,11 +142,12 @@ enum class ShouldAllowCrossOriginScrolling : bool { No, Yes };
 
 struct ScrollRectToVisibleOptions {
     SelectionRevealMode revealMode { SelectionRevealMode::Reveal };
-    const ScrollAlignment& alignX { ScrollAlignment::alignCenterIfNeeded };
-    const ScrollAlignment& alignY { ScrollAlignment::alignCenterIfNeeded };
+    ScrollAlignment alignX { ScrollAlignment::alignCenterIfNeeded };
+    ScrollAlignment alignY { ScrollAlignment::alignCenterIfNeeded };
     ShouldAllowCrossOriginScrolling shouldAllowCrossOriginScrolling { ShouldAllowCrossOriginScrolling::No };
     ScrollBehavior behavior { ScrollBehavior::Auto };
     OnlyAllowForwardScrolling onlyAllowForwardScrolling { OnlyAllowForwardScrolling::No };
+    AllowScrollingOverflowHidden allowScrollingOverflowHidden { AllowScrollingOverflowHidden::Yes };
     std::optional<LayoutRect> visibilityCheckRect { std::nullopt };
 };
 
@@ -502,7 +503,7 @@ public:
     void updateScrollbarSteps();
 
     // Returns true if this RenderLayer is a candidate for scrolling during scrollIntoView operations.
-    bool shouldTryToScrollForScrollIntoView() const;
+    bool shouldTryToScrollForScrollIntoView(const ScrollRectToVisibleOptions&) const;
     void autoscroll(const IntPoint&);
 
     bool canResize() const;
@@ -565,6 +566,8 @@ public:
     
     void setBehavesAsFixed(bool);
     bool behavesAsFixed() const { return m_behavesAsFixed; }
+
+    bool behavesAsSticky() const { return m_hasStickyAncestor || renderer().isStickilyPositioned(); }
 
     struct PaintedContentRequest {
         PaintedContentRequest() = default;

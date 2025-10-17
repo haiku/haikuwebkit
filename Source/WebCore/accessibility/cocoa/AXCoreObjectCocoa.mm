@@ -40,17 +40,17 @@
 SOFT_LINK_PRIVATE_FRAMEWORK(AXRuntime);
 
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenFontName, NSString *);
-#define AccessibilityTokenFontName getUIAccessibilityTokenFontName()
+#define AccessibilityTokenFontName getUIAccessibilityTokenFontNameSingleton()
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenFontFamily, NSString *);
-#define AccessibilityTokenFontFamily getUIAccessibilityTokenFontFamily()
+#define AccessibilityTokenFontFamily getUIAccessibilityTokenFontFamilySingleton()
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenFontSize, NSString *);
-#define AccessibilityTokenFontSize getUIAccessibilityTokenFontSize()
+#define AccessibilityTokenFontSize getUIAccessibilityTokenFontSizeSingleton()
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenBold, NSString *);
-#define AccessibilityTokenBold getUIAccessibilityTokenBold()
+#define AccessibilityTokenBold getUIAccessibilityTokenBoldSingleton()
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenItalic, NSString *);
-#define AccessibilityTokenItalic getUIAccessibilityTokenItalic()
+#define AccessibilityTokenItalic getUIAccessibilityTokenItalicSingleton()
 SOFT_LINK_CONSTANT(AXRuntime, UIAccessibilityTokenAttachment, NSString *);
-#define AccessibilityTokenAttachment getUIAccessibilityTokenAttachment()
+#define AccessibilityTokenAttachment getUIAccessibilityTokenAttachmentSingleton()
 
 #endif // PLATFORM(IOS_FAMILY)
 
@@ -486,13 +486,13 @@ bool AXCoreObject::isEmptyGroup()
         && ![renderWidgetChildren(*this) count];
 }
 
-AXCoreObject::AccessibilityChildrenVector AXCoreObject::sortedDescendants(size_t limit, PreSortedObjectType type) const
+AXCoreObject::AccessibilityChildrenVector AXCoreObject::crossFrameSortedDescendants(size_t limit, PreSortedObjectType type) const
 {
     ASSERT(type == PreSortedObjectType::LiveRegion || type == PreSortedObjectType::WebArea);
     auto sortedObjects = type == PreSortedObjectType::LiveRegion ? allSortedLiveRegions() : allSortedNonRootWebAreas();
     AXCoreObject::AccessibilityChildrenVector results;
     for (const Ref<AXCoreObject>& object : sortedObjects) {
-        if (isAncestorOfObject(object)) {
+        if (crossFrameIsAncestorOfObject(object)) {
             results.append(object);
             if (results.size() >= limit)
                 break;
@@ -638,6 +638,8 @@ PlatformRoleMap createPlatformRoleMap()
         { AccessibilityRole::Model, NSAccessibilityGroupRole },
         { AccessibilityRole::Suggestion, NSAccessibilityGroupRole },
         { AccessibilityRole::RemoteFrame, NSAccessibilityGroupRole },
+        { AccessibilityRole::LocalFrame, NSAccessibilityGroupRole },
+        { AccessibilityRole::FrameHost, NSAccessibilityGroupRole },
     };
     PlatformRoleMap roleMap;
     for (auto& role : roles)

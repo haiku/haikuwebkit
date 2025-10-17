@@ -34,6 +34,7 @@
 #include <WebCore/DocumentClasses.h>
 #include <WebCore/DocumentEnums.h>
 #include <WebCore/DocumentEventTiming.h>
+#include <WebCore/FocusControllerTypes.h>
 #include <WebCore/FontSelectorClient.h>
 #include <WebCore/FrameDestructionObserver.h>
 #include <WebCore/FrameIdentifier.h>
@@ -106,6 +107,7 @@ class CSSFontSelector;
 class CSSStyleProperties;
 class CSSStyleSheet;
 class CachedCSSStyleSheet;
+class CachedImage;
 class CachedFrameBase;
 class CachedResourceLoader;
 class CachedScript;
@@ -185,6 +187,7 @@ class IntPoint;
 class IntersectionObserver;
 class JSNode;
 class JSViewTransitionUpdateCallback;
+class LargestContentfulPaintData;
 class LayoutPoint;
 class LayoutRect;
 class LazyLoadImageObserver;
@@ -219,6 +222,7 @@ class RTCNetworkManager;
 class Range;
 class RealtimeMediaSource;
 class Region;
+class RenderBlockFlow;
 class RenderTreeBuilder;
 class RenderView;
 class ReportingScope;
@@ -243,6 +247,7 @@ class SerializedScriptValue;
 class Settings;
 class SleepDisabler;
 class SpaceSplitString;
+class SpeculationRules;
 class SpeechRecognition;
 class StorageConnection;
 class StringCallback;
@@ -854,6 +859,11 @@ public:
     HTMLBaseElement* firstBaseElement() const;
     void processBaseElement();
 
+    // https://wicg.github.io/nav-speculation/speculation-rules.html#consider-speculation
+    void considerSpeculationRules();
+    Ref<const SpeculationRules> speculationRules() const;
+    Ref<SpeculationRules> speculationRules();
+
     URL baseURLForComplete(const URL& baseURLOverride) const;
     WEBCORE_EXPORT URL completeURL(const String&, ForceUTF8 = ForceUTF8::No) const final;
     URL completeURL(const String&, const URL& baseURLOverride, ForceUTF8 = ForceUTF8::No) const;
@@ -872,8 +882,10 @@ public:
     bool requiresTrustedTypes() const { return m_requiresTrustedTypes && !shouldBypassMainWorldContentSecurityPolicy(); }
 
     IDBClient::IDBConnectionProxy* idbConnectionProxy() final;
+    RefPtr<IDBClient::IDBConnectionProxy> protectedIDBConnectionProxy();
     StorageConnection* storageConnection();
     SocketProvider* socketProvider() final;
+    RefPtr<SocketProvider> protectedSocketProvider();
     RefPtr<RTCDataChannelRemoteHandlerConnection> createRTCDataChannelRemoteHandlerConnection() final;
 
 #if ENABLE(WEB_RTC)
@@ -947,8 +959,8 @@ public:
     MouseEventWithHitTestResults prepareMouseEvent(const HitTestRequest&, const LayoutPoint&, const PlatformMouseEvent&);
     // Returns whether focus was blocked. A true value does not necessarily mean the element was focused.
     // The element could have already been focused or may not be focusable (e.g. <input disabled>).
-    WEBCORE_EXPORT bool setFocusedElement(Element*);
-    WEBCORE_EXPORT bool setFocusedElement(Element*, const FocusOptions&);
+    WEBCORE_EXPORT bool setFocusedElement(Element*, BroadcastFocusedElement = BroadcastFocusedElement::Yes);
+    WEBCORE_EXPORT bool setFocusedElement(Element*, const FocusOptions&, BroadcastFocusedElement = BroadcastFocusedElement::Yes);
     Element* focusedElement() const { return m_focusedElement.get(); }
     inline RefPtr<Element> protectedFocusedElement() const; // Defined in DocumentInlines.h.
     inline bool wasLastFocusByClick() const;
@@ -1474,6 +1486,11 @@ public:
 
     WEBCORE_EXPORT double monotonicTimestamp() const;
     const DocumentEventTiming& eventTiming() const { return m_eventTiming; }
+
+    LargestContentfulPaintData& largestContentfulPaintData() const;
+    void didLoadImage(Element&, CachedImage*) const;
+    void didPaintImage(Element&, CachedImage*, FloatRect localRect) const;
+    void didPaintText(const RenderBlockFlow&, FloatRect localRect) const;
 
     int requestAnimationFrame(Ref<RequestAnimationFrameCallback>&&);
     void cancelAnimationFrame(int id);
@@ -2010,6 +2027,7 @@ public:
     void attributeAddedToElement(const QualifiedName& attribute);
     void elementDisconnectedFromDocument(const Element&);
 
+    WEBCORE_EXPORT void prefetch(const URL&, const Vector<String>&, const String&, bool lowPriority = false);
 
 protected:
     enum class ConstructionFlag : uint8_t {
@@ -2193,6 +2211,8 @@ private:
     const Ref<const Settings> m_settings;
 
     const std::unique_ptr<Quirks> m_quirks;
+
+    const Ref<SpeculationRules> m_speculationRules;
 
     RefPtr<LocalDOMWindow> m_domWindow;
     WeakPtr<Document, WeakPtrImplWithEventTargetData> m_contextDocument;
@@ -2386,6 +2406,7 @@ private:
     ViewportArguments m_viewportArguments;
 
     DocumentEventTiming m_eventTiming;
+    mutable std::unique_ptr<LargestContentfulPaintData> m_largestContentfulPaintData;
 
     RefPtr<MediaQueryMatcher> m_mediaQueryMatcher;
     
@@ -2741,8 +2762,10 @@ private:
     mutable std::unique_ptr<CSSParserContext> m_cachedCSSParserContext;
     mutable std::unique_ptr<PermissionsPolicy> m_permissionsPolicy;
 
-    // FIXME: This will need to be re-evaluated for site isolation.
+    mutable std::unique_ptr<AXObjectCache> m_axObjectCache;
+#if !ENABLE_ACCESSIBILITY_LOCAL_FRAME
     mutable WeakPtr<AXObjectCache> m_topAXObjectCache;
+#endif
     RefPtr<FrameMemoryMonitor> m_frameMemoryMonitor;
 
 #if ENABLE(CONTENT_EXTENSIONS)

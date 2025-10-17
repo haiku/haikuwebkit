@@ -36,12 +36,11 @@
 #include "Logging.h"
 #include "RenderObjectDocument.h"
 #include "RenderSVGText.h"
-#include "RenderStyle.h"
+#include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "SVGClipPathElement.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGNames.h"
-#include "SVGRenderStyle.h"
 #include "SVGRenderingContext.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
@@ -133,7 +132,7 @@ auto LegacyRenderSVGResourceClipper::pathOnlyClipping(GraphicsContext& context, 
         }
 
         clipPath = graphicsElement->toClipPath();
-        clipRule = renderer->style().svgStyle().clipRule();
+        clipRule = renderer->style().clipRule();
     }
 
     // Only one visible shape/path was found. Directly continue clipping and transform the content to userspace if necessary.
@@ -269,14 +268,14 @@ bool LegacyRenderSVGResourceClipper::drawContentIntoMaskImage(ImageBuffer& maskI
         if (style.display() == DisplayType::None || style.usedVisibility() != Visibility::Visible)
             continue;
 
-        WindRule newClipRule = style.svgStyle().clipRule();
+        WindRule newClipRule = style.clipRule();
         RefPtr useElement = dynamicDowncast<SVGUseElement>(child);
         if (useElement) {
             renderer = useElement->rendererClipChild();
             if (!renderer)
                 continue;
             if (!useElement->hasAttributeWithoutSynchronization(SVGNames::clip_ruleAttr))
-                newClipRule = renderer->style().svgStyle().clipRule();
+                newClipRule = renderer->style().clipRule();
         }
 
         // Only shapes, paths and texts are allowed for clipping.

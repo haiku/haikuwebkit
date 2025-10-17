@@ -456,7 +456,7 @@ static gboolean decidePermissionRequest(WebKitWebView *webView, WebKitPermission
             "origin=%s mode=%s granted=(%s) consentRequired=(%s) consentOptional=(%s) requiredFeaturesRequested=(%s) optionalFeaturesRequested=(%s)",
             originStr, webKitXRSessionModeToString(mode), grantedFeatures, consentRequiredFeatures, consentOptionalFeatures, requiredFeaturesRequested, optionalFeaturesRequested);
         /* Needs UI to select optional features to grant */
-        webkit_xr_permission_request_set_granted_features(xrRequest, webkit_xr_permission_request_get_consent_optional_features(xrRequest));
+        webkit_xr_permission_request_set_granted_optional_features(xrRequest, webkit_xr_permission_request_get_consent_optional_features(xrRequest));
     } else {
         g_print("%s request not handled\n", G_OBJECT_TYPE_NAME(request));
         return FALSE;

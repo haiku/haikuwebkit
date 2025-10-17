@@ -2012,7 +2012,7 @@ void NetworkResourceLoader::logSlowCacheRetrieveIfNeeded(const NetworkCache::Cac
     if (duration < 1_s)
         return;
     LOADER_RELEASE_LOG("logSlowCacheRetrieveIfNeeded: Took %.0fms, priority %d", duration.milliseconds(), info.priority);
-    if (info.wasSpeculativeLoad)
+    if (info.speculativeLoadDecision && *info.speculativeLoadDecision == NetworkCache::SpeculativeLoadDecision::Yes)
         LOADER_RELEASE_LOG("logSlowCacheRetrieveIfNeeded: Was speculative load");
     if (!info.storageTimings.startTime)
         return;

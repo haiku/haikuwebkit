@@ -52,10 +52,16 @@ WK_HEADERS_VFS_FILE = $(CPP_HEADERMAP_PRODUCT_HEADERS_VFS_FILE);
 // gradually expand to the most recent of all platforms.
 // This variable affects whether a custom action generates a modulemap
 // in the pbxproj file.
-GENERATE_WTF_MODULEMAP = NO
-GENERATE_WTF_MODULEMAP[sdk=macosx*] = $(GENERATE_WTF_MODULEMAP$(WK_MACOS_2600));
+GENERATE_WTF_MODULEMAP[sdk=macosx*] = YES;
+GENERATE_WTF_MODULEMAP[sdk=macosx14*] = ;
+GENERATE_WTF_MODULEMAP[sdk=macosx15*] = ;
+// Work around SDKs which do not have the bug fix for rdar://157124281.
+// Building with modules locally is fine in those configurations, but not in
+// install-style builds.
+GENERATE_WTF_MODULEMAP[sdk=macosx26.0*] = $(WK_NOT_$(DEPLOYMENT_LOCATION));
+GENERATE_WTF_MODULEMAP[sdk=macosx26.1*] = $(WK_NOT_$(DEPLOYMENT_LOCATION));
+GENERATE_WTF_MODULEMAP[sdk=macosx26.2*] = $(WK_NOT_$(DEPLOYMENT_LOCATION));
+GENERATE_WTF_MODULEMAP[sdk=macosx26.3*] = $(WK_NOT_$(DEPLOYMENT_LOCATION));
+
 GENERATE_WTF_MODULEMAP[sdk=iphone*] = $(GENERATE_WTF_MODULEMAP$(WK_IOS_26));
-GENERATE_WTF_MODULEMAP_MACOS_SINCE_2600 = YES;
-GENERATE_WTF_MODULEMAP_MACOS_BEFORE_2600 = NO;
 GENERATE_WTF_MODULEMAP_IOS_SINCE_26 = YES;
-GENERATE_WTF_MODULEMAP_IOS_BEFORE_26 = NO;

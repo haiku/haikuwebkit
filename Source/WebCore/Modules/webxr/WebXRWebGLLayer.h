@@ -33,6 +33,7 @@
 #include "GraphicsTypesGL.h"
 #include "PlatformXR.h"
 #include "WebXRLayer.h"
+#include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Ref.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -97,6 +98,9 @@ private:
     void canvasChanged(CanvasBase&, const FloatRect&) final { };
     void canvasResized(CanvasBase&) final;
     void canvasDestroyed(CanvasBase&) final { };
+
+    void addConsoleMessage(JSC::MessageLevel, String&&) const;
+
     RefPtr<WebXRSession> m_session;
     WebXRRenderingContext m_context;
 

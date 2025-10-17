@@ -74,9 +74,19 @@ template<typename T> concept HasIsZero = requires(T t) {
     { t.isZero() } -> std::convertible_to<bool>;
 };
 
+// The `HasIsKnownZero` concept can be used to filter to types that have an `isKnownZero` member function.
+template<typename T> concept HasIsKnownZero = requires(T t) {
+    { t.isKnownZero() } -> std::convertible_to<bool>;
+};
+
 // The `HasIsEmpty` concept can be used to filter to types that have an `isEmpty` member function.
 template<typename T> concept HasIsEmpty = requires(T t) {
     { t.isEmpty() } -> std::convertible_to<bool>;
+};
+
+// The `HasIsKnownEmpty` concept can be used to filter to types that have an `isKnownEmpty` member function.
+template<typename T> concept HasIsKnownEmpty = requires(T t) {
+    { t.isKnownEmpty() } -> std::convertible_to<bool>;
 };
 
 } // namespace WebCore

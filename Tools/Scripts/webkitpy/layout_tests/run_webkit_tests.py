@@ -125,7 +125,7 @@ def parse_args(args):
         optparse.make_option("--no-remote-layer-tree", action="store_true", default=False,
             help="Disable the remote layer tree drawing model (OS X WebKit2 only)"),
         optparse.make_option("--wpe-legacy-api", action="store_true", default=False,
-            help="Use the WPE legacy API (WPE only)"),
+            help="Use the WPE legacy API (WPE only), including its own expectations and result report flavor"),
         optparse.make_option("--internal-feature", type="string", action="append", default=[],
             help="Enable (disable) an internal feature (--internal-feature FeatureName[=true|false])"),
         optparse.make_option("--experimental-feature", type="string", action="append", default=[],
@@ -377,7 +377,6 @@ def parse_args(args):
     option_group_definitions.append(("Web Platform Test Server Options", [
         optparse.make_option("--disable-wpt-hostname-aliases", action="store_true", default=False, help="Disable running tests from WPT against the web-platform.test domain, if the port supports it."),
         optparse.make_option("--wptserver-doc-root", type="string", help=("Set web platform server document root, relative to LayoutTests directory")),
-        optparse.make_option("--local-dns-resolver", action="store_true", default=False, help="Run and use a local DNS resolver, if the port supports it.")
     ]))
 
     option_group_definitions.append(('Upload Options', upload_options()))
@@ -433,6 +432,11 @@ def parse_args(args):
         if not options.internal_feature:
             options.internal_feature = []
         options.internal_feature.append('UseAsyncUIKitInteractions=0')
+
+    if options.wpe_legacy_api:
+        if options.result_report_flavor:
+            raise RuntimeError('--wpe-legacy-api implicitly sets the result flavor, this should not be overriden')
+        options.result_report_flavor = 'wpe-legacy-api'
 
     return options, args
 

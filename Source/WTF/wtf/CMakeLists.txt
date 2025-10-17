@@ -467,7 +467,7 @@ set(WTF_PUBLIC_HEADERS
     text/ExternalStringImpl.h
     text/FastCharacterComparison.h
     text/IntegerToStringConversion.h
-    text/LChar.h
+    text/Latin1Character.h
     text/LineEnding.h
     text/MakeString.h
     text/NullTextBreakIterator.h

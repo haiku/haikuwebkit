@@ -340,6 +340,7 @@ public:
 
 #if OS(DARWIN)
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
+    OSObjectPtr<xpc_connection_t> protectedXPCConnection() const { return xpcConnection(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
 #endif
@@ -543,7 +544,8 @@ public:
     void markCurrentlyDispatchedMessageAsInvalid();
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
-    static void* generateSignpostIdentifier();
+    static bool signpostsEnabled();
+    static void forceEnableSignposts();
 #endif
 
     static bool shouldCrashOnMessageCheckFailure();

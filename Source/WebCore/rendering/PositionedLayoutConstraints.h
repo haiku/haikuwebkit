@@ -75,10 +75,10 @@ public:
     Style::MarginEdge marginAfter() const { return m_marginAfter; }
     Style::InsetEdge insetBefore() const { return m_insetBefore; }
     Style::InsetEdge insetAfter() const { return m_insetAfter; }
-    LayoutUnit marginBeforeValue() const { return Style::evaluateMinimum(m_marginBefore, m_containingInlineSize, 1.0f /* FIXME ZOOM EFFECTED? */); }
-    LayoutUnit marginAfterValue() const { return Style::evaluateMinimum(m_marginAfter, m_containingInlineSize, 1.0f /* FIXME ZOOM EFFECTED? */); }
-    LayoutUnit insetBeforeValue() const { return Style::evaluateMinimum(m_insetBefore, containingSize(), 1.0f /* FIXME ZOOM EFFECTED? */); }
-    LayoutUnit insetAfterValue() const { return Style::evaluateMinimum(m_insetAfter, containingSize(), 1.0f /* FIXME ZOOM EFFECTED? */); }
+    LayoutUnit marginBeforeValue() const { return Style::evaluateMinimum<LayoutUnit>(m_marginBefore, m_containingInlineSize, Style::ZoomNeeded { }); }
+    LayoutUnit marginAfterValue() const { return Style::evaluateMinimum<LayoutUnit>(m_marginAfter, m_containingInlineSize, Style::ZoomNeeded { }); }
+    LayoutUnit insetBeforeValue() const { return Style::evaluateMinimum<LayoutUnit>(m_insetBefore, containingSize(), Style::ZoomNeeded { }); }
+    LayoutUnit insetAfterValue() const { return Style::evaluateMinimum<LayoutUnit>(m_insetAfter, containingSize(), Style::ZoomNeeded { }); }
 
     LayoutUnit insetModifiedContainingSize() const { return m_insetModifiedContainingRange.size(); }
     LayoutRange insetModifiedContainingRange() const { return m_insetModifiedContainingRange; }
@@ -94,6 +94,7 @@ private:
     bool containingCoordsAreFlipped() const;
 
     void captureInsets();
+    void captureScrollableArea();
     void captureGridArea();
     void captureAnchorGeometry();
     LayoutRange adjustForPositionArea(const LayoutRange rangeToAdjust, const LayoutRange anchorArea, const BoxAxis containerAxis);

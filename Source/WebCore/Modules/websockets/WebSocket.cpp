@@ -339,7 +339,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     };
     if (is<Document>(context))
         reportRegistrableDomain(context.get());
-    else if (auto* workerLoaderProxy = downcast<WorkerGlobalScope>(context)->thread().workerLoaderProxy())
+    else if (auto* workerLoaderProxy = downcast<WorkerGlobalScope>(context)->thread()->workerLoaderProxy())
         workerLoaderProxy->postTaskToLoader(WTFMove(reportRegistrableDomain));
 
     m_pendingActivity = makePendingActivity(*this);

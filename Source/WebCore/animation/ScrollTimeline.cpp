@@ -35,6 +35,7 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
+#include "StylableInlines.h"
 #include "StyleSingleAnimationRange.h"
 #include "WebAnimation.h"
 
@@ -318,13 +319,6 @@ ScrollableArea* ScrollTimeline::scrollableAreaForSourceRenderer(const RenderElem
     return renderBox->hasLayer() ? renderBox->layer()->scrollableArea() : nullptr;
 }
 
-float ScrollTimeline::floatValueForOffset(const Length& offset, float maxValue)
-{
-    if (offset.isNormal() || offset.isAuto())
-        return 0.f;
-    return floatValueForLength(offset, maxValue, 1.0f /* FIXME FIND ZOOM */);
-}
-
 Style::SingleAnimationRange ScrollTimeline::defaultRange() const
 {
     return Style::SingleAnimationRange::defaultForScrollTimeline();
@@ -352,7 +346,7 @@ std::pair<WebAnimationTime, WebAnimationTime> ScrollTimeline::intervalForAttachm
     auto computedPercentageIfNecessary = [&](const auto& rangeOffset) {
         if (auto percentage = rangeOffset.tryPercentage())
             return percentage->value;
-        return Style::evaluate(rangeOffset, maxScrollOffset, 1.0f /* FIXME FIND ZOOM */) / maxScrollOffset * 100;
+        return Style::evaluate<float>(rangeOffset, maxScrollOffset, Style::ZoomNeeded { }) / maxScrollOffset * 100;
     };
 
     return {

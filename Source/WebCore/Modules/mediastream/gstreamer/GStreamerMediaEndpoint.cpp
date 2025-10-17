@@ -1653,8 +1653,6 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
             codecs = registryScanner.audioRtpCapabilities(GStreamerRegistryScanner::Configuration::Decoding).codecs;
     }
 
-    String mediaStreamId;
-    String trackId;
     if (init.streams.isEmpty()) {
         switchOn(source, [&](Ref<RealtimeOutgoingAudioSourceGStreamer>& source) {
             source->setMediaStreamID("-"_s);
@@ -1662,18 +1660,19 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
             source->setMediaStreamID("-"_s);
         }, [](std::nullptr_t&) { });
     }
+    StringBuilder msidBuilder;
     switchOn(source, [&](Ref<RealtimeOutgoingAudioSourceGStreamer>& source) {
-        mediaStreamId = source->mediaStreamID();
+        msidBuilder.append(source->mediaStreamID());
         if (auto track = source->track())
-            trackId = track->id();
+            msidBuilder.append(' ', track->id());
     }, [&](Ref<RealtimeOutgoingVideoSourceGStreamer>& source) {
-        mediaStreamId = source->mediaStreamID();
+        msidBuilder.append(source->mediaStreamID());
         if (auto track = source->track())
-            trackId = track->id();
+            msidBuilder.append(' ', track->id());
     }, [](std::nullptr_t&) { });
 
     int payloadType = pickAvailablePayloadType();
-    auto msid = makeString(mediaStreamId, ' ', trackId);
+    auto msid = msidBuilder.toString();
     bool msidSet = false;
     auto caps = capsFromRtpCapabilities({ .codecs = codecs, .headerExtensions = rtpExtensions }, [&payloadType, &msid, &msidSet](GstStructure* structure) {
         if (!gst_structure_has_field(structure, "payload"))

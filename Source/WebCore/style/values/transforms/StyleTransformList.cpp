@@ -26,22 +26,14 @@
 #include "StyleTransformList.h"
 
 #include "LayoutSize.h"
-#include "Matrix3DTransformOperation.h"
 #include "RenderBox.h"
 #include "StyleInterpolationClient.h"
 #include "StyleInterpolationContext.h"
-#include "TransformOperations.h"
+#include "StyleMatrix3DTransformFunction.h"
 #include "TransformationMatrix.h"
 
 namespace WebCore {
 namespace Style {
-
-WebCore::TransformOperations TransformList::resolvedCalculatedValues(const FloatSize& size) const
-{
-    return WebCore::TransformOperations { WTF::map(m_value, [&size](const auto& function) {
-        return function->selfOrCopyWithResolvedCalculatedValues(size);
-    }) };
-}
 
 void TransformList::apply(TransformationMatrix& matrix, const FloatSize& size, unsigned start) const
 {
@@ -73,7 +65,20 @@ bool TransformList::isInvertible(const LayoutSize& size) const
 
 bool TransformList::containsNonInvertibleMatrix(const LayoutSize& boxSize) const
 {
-    return (hasTransformOfType<TransformOperation::Type::Matrix>() || hasTransformOfType<TransformOperation::Type::Matrix3D>()) && !isInvertible(boxSize);
+    return (hasTransformOfType<TransformFunctionType::Matrix>() || hasTransformOfType<TransformFunctionType::Matrix3D>()) && !isInvertible(boxSize);
+}
+
+TransformFunctionSizeDependencies TransformList::computeSizeDependencies() const
+{
+    TransformFunctionSizeDependencies result { };
+    for (auto& function : m_value) {
+        auto [isWidthDependent, isHeightDependent] = function->computeSizeDependencies();
+        if (isWidthDependent)
+            result.isWidthDependent = true;
+        if (isHeightDependent)
+            result.isHeightDependent = true;
+    }
+    return result;
 }
 
 // MARK: - Blending
@@ -111,7 +116,7 @@ auto Blending<TransformList>::blend(const TransformList& from, const TransformLi
 
     bool shouldFallBackToDiscrete = shouldFallBackToDiscreteInterpolation(from, to, boxSize);
 
-    auto createBlendedMatrixOperationFromOperationsSuffix = [&](unsigned i) -> TransformFunction {
+    auto createBlendedMatrixFunctionFromOperationsSuffix = [&](unsigned i) -> TransformFunction {
         TransformationMatrix fromTransform;
         from.apply(fromTransform, boxSize, i);
 
@@ -126,22 +131,22 @@ auto Blending<TransformList>::blend(const TransformList& from, const TransformLi
         }
 
         toTransform.blend(fromTransform, progress, compositeOperation);
-        return TransformFunction { Matrix3DTransformOperation::create(toTransform) };
+        return TransformFunction { Matrix3DTransformFunction::create(toTransform) };
     };
 
-    auto createBlendedOperation = [&](unsigned i) -> TransformFunction {
-        RefPtr<TransformOperation> fromOperation = (i < fromLength) ? from.m_value[i].value.ptr() : nullptr;
-        RefPtr<TransformOperation> toOperation = (i < toLength) ? to.m_value[i].value.ptr() : nullptr;
+    auto createBlendedFunction = [&](unsigned i) -> TransformFunction {
+        RefPtr<const TransformFunctionBase> fromFunction = (i < fromLength) ? from.m_value[i].value.ptr() : nullptr;
+        RefPtr<const TransformFunctionBase> toFunction = (i < toLength) ? to.m_value[i].value.ptr() : nullptr;
 
-        if (fromOperation && toOperation)
-            return TransformFunction { toOperation->blend(fromOperation.get(), context) };
-        if (!fromOperation)
-            return TransformFunction { toOperation->blend(nullptr, 1 - context.progress, true) };
-        return TransformFunction { fromOperation->blend(nullptr, context, true) };
+        if (fromFunction && toFunction)
+            return TransformFunction { toFunction->blend(fromFunction.get(), context) };
+        if (!fromFunction)
+            return TransformFunction { toFunction->blend(nullptr, 1 - context.progress, true) };
+        return TransformFunction { fromFunction->blend(nullptr, context, true) };
     };
 
     if (shouldFallBackToDiscrete)
-        return TransformList { createBlendedMatrixOperationFromOperationsSuffix(0) };
+        return TransformList { createBlendedMatrixFunctionFromOperationsSuffix(0) };
 
     auto prefixLengthFromContext = [&] -> std::optional<unsigned> {
         // We cannot use the pre-computed prefix when dealing with accumulation
@@ -165,9 +170,9 @@ auto Blending<TransformList>::blend(const TransformList& from, const TransformLi
             if (prefixLengthFromContext && i >= *prefixLengthFromContext)
                 return i;
 
-            RefPtr<TransformOperation> fromOperation = (i < fromLength) ? from.m_value[i].value.ptr() : nullptr;
-            RefPtr<TransformOperation> toOperation = (i < toLength) ? to.m_value[i].value.ptr() : nullptr;
-            if (fromOperation && toOperation && !fromOperation->sharedPrimitiveType(toOperation.get()))
+            RefPtr<const TransformFunctionBase> fromFunction = (i < fromLength) ? from.m_value[i].value.ptr() : nullptr;
+            RefPtr<const TransformFunctionBase> toFunction = (i < toLength) ? to.m_value[i].value.ptr() : nullptr;
+            if (fromFunction && toFunction && !fromFunction->sharedPrimitiveType(toFunction.get()))
                 return i;
         }
 
@@ -177,13 +182,13 @@ auto Blending<TransformList>::blend(const TransformList& from, const TransformLi
     if (prefixLength) {
         return TransformList::Container::createWithSizeFromGenerator(*prefixLength + 1, [&](auto i) {
             if (i == *prefixLength)
-                return createBlendedMatrixOperationFromOperationsSuffix(i);
-            return createBlendedOperation(i);
+                return createBlendedMatrixFunctionFromOperationsSuffix(i);
+            return createBlendedFunction(i);
         });
     }
 
     return TransformList::Container::createWithSizeFromGenerator(maxLength, [&](auto i) {
-        return createBlendedOperation(i);
+        return createBlendedFunction(i);
     });
 }
 

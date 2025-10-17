@@ -27,6 +27,7 @@
 #include "RangeBasedLineBuilder.h"
 
 #include "InlineFormattingContext.h"
+#include "RenderStyleInlines.h"
 
 namespace WebCore {
 namespace Layout {

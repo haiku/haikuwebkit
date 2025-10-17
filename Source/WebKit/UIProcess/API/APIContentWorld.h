@@ -75,8 +75,8 @@ private:
     explicit ContentWorld(const WTF::String&, OptionSet<WebKit::ContentWorldOption>);
     explicit ContentWorld(WebKit::ContentWorldIdentifier);
 
-    WebKit::ContentWorldIdentifier m_identifier;
-    WTF::String m_name;
+    const WebKit::ContentWorldIdentifier m_identifier;
+    const WTF::String m_name;
     OptionSet<WebKit::ContentWorldOption> m_options;
     mutable WeakHashSet<WebKit::WebProcessProxy> m_processes;
 };

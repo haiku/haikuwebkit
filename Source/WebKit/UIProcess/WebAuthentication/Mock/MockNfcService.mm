@@ -91,9 +91,9 @@ uint8_t tagID2[] = { 0x02 };
 
 - (void)dealloc
 {
-    [_AppData release];
+    SUPPRESS_UNRETAINED_ARG [_AppData release];
     _AppData = nil;
-    [_UID release];
+    SUPPRESS_UNRETAINED_ARG [_UID release];
     _UID = nil;
 
     [super dealloc];
@@ -136,6 +136,10 @@ using Mock = WebCore::MockWebAuthenticationConfiguration;
 namespace {
 
 static id<NFReaderSessionDelegate> globalNFReaderSessionDelegate;
+static RetainPtr<id<NFReaderSessionDelegate>> protectedGlobalNFReaderSessionDelegate()
+{
+    return globalNFReaderSessionDelegate;
+}
 
 static WeakPtr<MockNfcService>& weakGlobalNfcService()
 {
@@ -273,7 +277,7 @@ void MockNfcService::detectTags() const
             [tags addObject:adoptNS([[WKMockNFTag alloc] initWithType:NFTagTypeGeneric4A tagID:toNSDataNoCopy(std::span { tagID2 }, FreeWhenDone::No).get()]).get()];
 
         auto readerSession = adoptNS([allocNFReaderSessionInstance() initWithUIType:NFReaderSessionUINone]);
-        [globalNFReaderSessionDelegate readerSession:readerSession.get() didDetectTags:tags.get()];
+        [protectedGlobalNFReaderSessionDelegate() readerSession:readerSession.get() didDetectTags:tags.get()];
     });
     dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), callback.get());
 #endif // HAVE(NEAR_FIELD)

@@ -29,9 +29,7 @@
 #include <wtf/Platform.h>
 #include <wtf/text/WTFString.h>
 
-#if __has_include("WebKitLogDefinitions.h")
 #include "WebKitLogDefinitions.h"
-#endif
 
 #define COMMA() ,
 #define OPTIONAL_ARGS(...) __VA_OPT__(COMMA()) __VA_ARGS__

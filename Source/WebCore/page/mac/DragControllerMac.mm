@@ -42,6 +42,7 @@
 #import "HTMLAttachmentElement.h"
 #import "LocalFrame.h"
 #import "LocalFrameView.h"
+#import "NodeDocument.h"
 #import "Page.h"
 #import "Pasteboard.h"
 #import "PasteboardStrategy.h"

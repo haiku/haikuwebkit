@@ -125,9 +125,13 @@ void NavigateEvent::processScrollBehavior(Document& document)
     ASSERT(m_interceptionState == InterceptionState::Committed);
     m_interceptionState = InterceptionState::Scrolled;
 
-    if (m_navigationType == NavigationNavigationType::Traverse || m_navigationType == NavigationNavigationType::Reload)
+    if (m_navigationType == NavigationNavigationType::Traverse || m_navigationType == NavigationNavigationType::Reload) {
+        if (m_navigationType == NavigationNavigationType::Reload && document.url().hasFragmentIdentifier()) {
+            if (document.frame()->view()->scrollToFragment(document.url()))
+                return;
+        }
         document.frame()->loader().history().restoreScrollPositionAndViewState();
-    else if (!document.frame()->view()->scrollToFragment(document.url())) {
+    } else if (!document.frame()->view()->scrollToFragment(document.url())) {
         if (!document.url().hasFragmentIdentifier())
             document.frame()->view()->scrollTo({ 0, 0 });
     }

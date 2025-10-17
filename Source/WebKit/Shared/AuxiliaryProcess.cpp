@@ -27,10 +27,12 @@
 #include "AuxiliaryProcess.h"
 
 #include "AuxiliaryProcessCreationParameters.h"
+#include "Connection.h"
 #include "ContentWorldShared.h"
 #include "LogInitialization.h"
 #include "Logging.h"
 #include "SandboxInitializationParameters.h"
+#include "StreamClientConnection.h"
 #include "WebPageProxyIdentifier.h"
 #include <WebCore/LogInitialization.h>
 #include <pal/SessionID.h>
@@ -110,7 +112,6 @@ void AuxiliaryProcess::initialize(AuxiliaryProcessInitializationParameters&& par
 
     // In WebKit2, only the UI process should ever be generating certain identifiers.
     PAL::SessionID::enableGenerationProtection();
-    ContentWorldIdentifier::enableGenerationProtection();
     WebPageProxyIdentifier::enableGenerationProtection();
 
     Ref connection = IPC::Connection::createClientConnection(WTFMove(parameters.connectionIdentifier));
@@ -256,6 +257,12 @@ void AuxiliaryProcess::applyProcessCreationParameters(AuxiliaryProcessCreationPa
 #endif
 #if PLATFORM(COCOA)
     SecureCoding::applyProcessCreationParameters(WTFMove(parameters));
+#endif
+#if ENABLE(CORE_IPC_SIGNPOSTS)
+    if (parameters.shouldEnableIPCSignposts)
+        IPC::Connection::forceEnableSignposts();
+    if (parameters.shouldEnableStreamingIPCSignposts)
+        IPC::StreamClientConnection::forceEnableSignposts();
 #endif
 }
 

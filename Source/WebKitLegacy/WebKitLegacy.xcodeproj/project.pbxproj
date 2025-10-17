@@ -168,30 +168,30 @@
 		7C023215251B925C00BA7BB6 /* WebFeature.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C023213251B925C00BA7BB6 /* WebFeature.m */; };
 		7C02321A251B988200BA7BB6 /* WebFeatureInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = 7C023219251B988200BA7BB6 /* WebFeatureInternal.h */; };
 		7C023A06251BA18C00BA7BB6 /* WebPreferencesExperimentalFeatures.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A05251BA18C00BA7BB6 /* WebPreferencesExperimentalFeatures.mm */; };
-		7C023A07251BA19600BA7BB6 /* UnifiedSource3-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-mm.mm */; };
-		7C023A08251BA19600BA7BB6 /* UnifiedSource21-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-mm.mm */; };
-		7C023A09251BA19600BA7BB6 /* UnifiedSource20-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-mm.mm */; };
-		7C023A0A251BA19600BA7BB6 /* UnifiedSource2-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-mm.mm */; };
-		7C023A0B251BA19600BA7BB6 /* UnifiedSource8-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A01251BA01A00BA7BB6 /* UnifiedSource8-mm.mm */; };
-		7C023A0C251BA19600BA7BB6 /* UnifiedSource14-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A02251BA01A00BA7BB6 /* UnifiedSource14-mm.mm */; };
+		7C023A07251BA19600BA7BB6 /* UnifiedSource3-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-nonARC.mm */; };
+		7C023A08251BA19600BA7BB6 /* UnifiedSource21-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-nonARC.mm */; };
+		7C023A09251BA19600BA7BB6 /* UnifiedSource20-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-nonARC.mm */; };
+		7C023A0A251BA19600BA7BB6 /* UnifiedSource2-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-nonARC.mm */; };
+		7C023A0B251BA19600BA7BB6 /* UnifiedSource8-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A01251BA01A00BA7BB6 /* UnifiedSource8-nonARC.mm */; };
+		7C023A0C251BA19600BA7BB6 /* UnifiedSource14-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A02251BA01A00BA7BB6 /* UnifiedSource14-nonARC.mm */; };
 		7C023A0D251BA19600BA7BB6 /* UnifiedSource4.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FC251BA01A00BA7BB6 /* UnifiedSource4.cpp */; };
-		7C023A0E251BA19600BA7BB6 /* UnifiedSource19-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-mm.mm */; };
-		7C023A0F251BA19600BA7BB6 /* UnifiedSource9-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-mm.mm */; };
-		7C023A10251BA19600BA7BB6 /* UnifiedSource1-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-mm.mm */; };
-		7C023A11251BA19600BA7BB6 /* UnifiedSource12-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A04251BA01A00BA7BB6 /* UnifiedSource12-mm.mm */; };
-		7C023A12251BA19600BA7BB6 /* UnifiedSource15-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-mm.mm */; };
+		7C023A0E251BA19600BA7BB6 /* UnifiedSource19-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-nonARC.mm */; };
+		7C023A0F251BA19600BA7BB6 /* UnifiedSource9-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-nonARC.mm */; };
+		7C023A10251BA19600BA7BB6 /* UnifiedSource1-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-nonARC.mm */; };
+		7C023A11251BA19600BA7BB6 /* UnifiedSource12-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A04251BA01A00BA7BB6 /* UnifiedSource12-nonARC.mm */; };
+		7C023A12251BA19600BA7BB6 /* UnifiedSource15-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-nonARC.mm */; };
 		7C023A13251BA19600BA7BB6 /* UnifiedSource3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F8251BA01A00BA7BB6 /* UnifiedSource3.cpp */; };
-		7C023A14251BA19600BA7BB6 /* UnifiedSource11-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-mm.mm */; };
-		7C023A15251BA19600BA7BB6 /* UnifiedSource13-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-mm.mm */; };
-		7C023A16251BA19600BA7BB6 /* UnifiedSource17-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-mm.mm */; };
-		7C023A17251BA19600BA7BB6 /* UnifiedSource16-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A00251BA01A00BA7BB6 /* UnifiedSource16-mm.mm */; };
+		7C023A14251BA19600BA7BB6 /* UnifiedSource11-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-nonARC.mm */; };
+		7C023A15251BA19600BA7BB6 /* UnifiedSource13-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-nonARC.mm */; };
+		7C023A16251BA19600BA7BB6 /* UnifiedSource17-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-nonARC.mm */; };
+		7C023A17251BA19600BA7BB6 /* UnifiedSource16-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A00251BA01A00BA7BB6 /* UnifiedSource16-nonARC.mm */; };
 		7C023A18251BA19600BA7BB6 /* UnifiedSource2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F7251BA01A00BA7BB6 /* UnifiedSource2.cpp */; };
-		7C023A19251BA19600BA7BB6 /* UnifiedSource18-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-mm.mm */; };
-		7C023A1A251BA19600BA7BB6 /* UnifiedSource7-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-mm.mm */; };
-		7C023A1B251BA19600BA7BB6 /* UnifiedSource5-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-mm.mm */; };
-		7C023A1C251BA19600BA7BB6 /* UnifiedSource10-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A03251BA01A00BA7BB6 /* UnifiedSource10-mm.mm */; };
-		7C023A1D251BA19600BA7BB6 /* UnifiedSource4-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-mm.mm */; };
-		7C023A1E251BA19600BA7BB6 /* UnifiedSource6-mm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-mm.mm */; };
+		7C023A19251BA19600BA7BB6 /* UnifiedSource18-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-nonARC.mm */; };
+		7C023A1A251BA19600BA7BB6 /* UnifiedSource7-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-nonARC.mm */; };
+		7C023A1B251BA19600BA7BB6 /* UnifiedSource5-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-nonARC.mm */; };
+		7C023A1C251BA19600BA7BB6 /* UnifiedSource10-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C023A03251BA01A00BA7BB6 /* UnifiedSource10-nonARC.mm */; };
+		7C023A1D251BA19600BA7BB6 /* UnifiedSource4-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-nonARC.mm */; };
+		7C023A1E251BA19600BA7BB6 /* UnifiedSource6-nonARC.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-nonARC.mm */; };
 		7C023A1F251BA19600BA7BB6 /* UnifiedSource1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FB251BA01A00BA7BB6 /* UnifiedSource1.cpp */; };
 		7C023A20251BA19600BA7BB6 /* UnifiedSource5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7C0239FD251BA01A00BA7BB6 /* UnifiedSource5.cpp */; };
 		7C023A23251BA43E00BA7BB6 /* WebPreferencesDefaultValues.h in Headers */ = {isa = PBXBuildFile; fileRef = 7C023A21251BA43E00BA7BB6 /* WebPreferencesDefaultValues.h */; };
@@ -905,32 +905,32 @@
 		7C023213251B925C00BA7BB6 /* WebFeature.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WebFeature.m; sourceTree = "<group>"; };
 		7C023216251B96E400BA7BB6 /* WebPreferencesExperimentalFeatures.mm.erb */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WebPreferencesExperimentalFeatures.mm.erb; sourceTree = "<group>"; };
 		7C023219251B988200BA7BB6 /* WebFeatureInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebFeatureInternal.h; sourceTree = "<group>"; };
-		7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource2-mm.mm"; sourceTree = "<group>"; };
-		7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource21-mm.mm"; sourceTree = "<group>"; };
-		7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource18-mm.mm"; sourceTree = "<group>"; };
-		7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource4-mm.mm"; sourceTree = "<group>"; };
-		7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource6-mm.mm"; sourceTree = "<group>"; };
-		7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource1-mm.mm"; sourceTree = "<group>"; };
-		7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource20-mm.mm"; sourceTree = "<group>"; };
-		7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource3-mm.mm"; sourceTree = "<group>"; };
-		7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource7-mm.mm"; sourceTree = "<group>"; };
-		7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource19-mm.mm"; sourceTree = "<group>"; };
-		7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource5-mm.mm"; sourceTree = "<group>"; };
-		7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource9-mm.mm"; sourceTree = "<group>"; };
+		7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource2-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource21-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource18-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource4-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource6-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource1-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource20-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource3-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource7-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource19-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource5-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource9-nonARC.mm"; sourceTree = "<group>"; };
 		7C0239F7251BA01A00BA7BB6 /* UnifiedSource2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource2.cpp; sourceTree = "<group>"; };
 		7C0239F8251BA01A00BA7BB6 /* UnifiedSource3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource3.cpp; sourceTree = "<group>"; };
-		7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource15-mm.mm"; sourceTree = "<group>"; };
-		7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource17-mm.mm"; sourceTree = "<group>"; };
+		7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource15-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource17-nonARC.mm"; sourceTree = "<group>"; };
 		7C0239FB251BA01A00BA7BB6 /* UnifiedSource1.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource1.cpp; sourceTree = "<group>"; };
 		7C0239FC251BA01A00BA7BB6 /* UnifiedSource4.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource4.cpp; sourceTree = "<group>"; };
 		7C0239FD251BA01A00BA7BB6 /* UnifiedSource5.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource5.cpp; sourceTree = "<group>"; };
-		7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource13-mm.mm"; sourceTree = "<group>"; };
-		7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource11-mm.mm"; sourceTree = "<group>"; };
-		7C023A00251BA01A00BA7BB6 /* UnifiedSource16-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource16-mm.mm"; sourceTree = "<group>"; };
-		7C023A01251BA01A00BA7BB6 /* UnifiedSource8-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource8-mm.mm"; sourceTree = "<group>"; };
-		7C023A02251BA01A00BA7BB6 /* UnifiedSource14-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource14-mm.mm"; sourceTree = "<group>"; };
-		7C023A03251BA01A00BA7BB6 /* UnifiedSource10-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource10-mm.mm"; sourceTree = "<group>"; };
-		7C023A04251BA01A00BA7BB6 /* UnifiedSource12-mm.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource12-mm.mm"; sourceTree = "<group>"; };
+		7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource13-nonARC.mm"; sourceTree = "<group>"; };
+		7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource11-nonARC.mm"; sourceTree = "<group>"; };
+		7C023A00251BA01A00BA7BB6 /* UnifiedSource16-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource16-nonARC.mm"; sourceTree = "<group>"; };
+		7C023A01251BA01A00BA7BB6 /* UnifiedSource8-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource8-nonARC.mm"; sourceTree = "<group>"; };
+		7C023A02251BA01A00BA7BB6 /* UnifiedSource14-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource14-nonARC.mm"; sourceTree = "<group>"; };
+		7C023A03251BA01A00BA7BB6 /* UnifiedSource10-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource10-nonARC.mm"; sourceTree = "<group>"; };
+		7C023A04251BA01A00BA7BB6 /* UnifiedSource12-nonARC.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "UnifiedSource12-nonARC.mm"; sourceTree = "<group>"; };
 		7C023A05251BA18C00BA7BB6 /* WebPreferencesExperimentalFeatures.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPreferencesExperimentalFeatures.mm; sourceTree = "<group>"; };
 		7C023A21251BA43E00BA7BB6 /* WebPreferencesDefaultValues.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebPreferencesDefaultValues.h; sourceTree = "<group>"; };
 		7C023A22251BA43E00BA7BB6 /* WebPreferencesDefaultValues.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WebPreferencesDefaultValues.mm; sourceTree = "<group>"; };
@@ -1899,32 +1899,32 @@
 		7C0239EA251BA01A00BA7BB6 /* unified-sources */ = {
 			isa = PBXGroup;
 			children = (
-				7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-mm.mm */,
+				7C0239F0251BA01A00BA7BB6 /* UnifiedSource1-nonARC.mm */,
 				7C0239FB251BA01A00BA7BB6 /* UnifiedSource1.cpp */,
-				7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-mm.mm */,
+				7C0239EB251BA01A00BA7BB6 /* UnifiedSource2-nonARC.mm */,
 				7C0239F7251BA01A00BA7BB6 /* UnifiedSource2.cpp */,
-				7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-mm.mm */,
+				7C0239F2251BA01A00BA7BB6 /* UnifiedSource3-nonARC.mm */,
 				7C0239F8251BA01A00BA7BB6 /* UnifiedSource3.cpp */,
-				7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-mm.mm */,
+				7C0239EE251BA01A00BA7BB6 /* UnifiedSource4-nonARC.mm */,
 				7C0239FC251BA01A00BA7BB6 /* UnifiedSource4.cpp */,
-				7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-mm.mm */,
+				7C0239F5251BA01A00BA7BB6 /* UnifiedSource5-nonARC.mm */,
 				7C0239FD251BA01A00BA7BB6 /* UnifiedSource5.cpp */,
-				7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-mm.mm */,
-				7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-mm.mm */,
-				7C023A01251BA01A00BA7BB6 /* UnifiedSource8-mm.mm */,
-				7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-mm.mm */,
-				7C023A03251BA01A00BA7BB6 /* UnifiedSource10-mm.mm */,
-				7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-mm.mm */,
-				7C023A04251BA01A00BA7BB6 /* UnifiedSource12-mm.mm */,
-				7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-mm.mm */,
-				7C023A02251BA01A00BA7BB6 /* UnifiedSource14-mm.mm */,
-				7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-mm.mm */,
-				7C023A00251BA01A00BA7BB6 /* UnifiedSource16-mm.mm */,
-				7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-mm.mm */,
-				7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-mm.mm */,
-				7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-mm.mm */,
-				7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-mm.mm */,
-				7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-mm.mm */,
+				7C0239EF251BA01A00BA7BB6 /* UnifiedSource6-nonARC.mm */,
+				7C0239F3251BA01A00BA7BB6 /* UnifiedSource7-nonARC.mm */,
+				7C023A01251BA01A00BA7BB6 /* UnifiedSource8-nonARC.mm */,
+				7C0239F6251BA01A00BA7BB6 /* UnifiedSource9-nonARC.mm */,
+				7C023A03251BA01A00BA7BB6 /* UnifiedSource10-nonARC.mm */,
+				7C0239FF251BA01A00BA7BB6 /* UnifiedSource11-nonARC.mm */,
+				7C023A04251BA01A00BA7BB6 /* UnifiedSource12-nonARC.mm */,
+				7C0239FE251BA01A00BA7BB6 /* UnifiedSource13-nonARC.mm */,
+				7C023A02251BA01A00BA7BB6 /* UnifiedSource14-nonARC.mm */,
+				7C0239F9251BA01A00BA7BB6 /* UnifiedSource15-nonARC.mm */,
+				7C023A00251BA01A00BA7BB6 /* UnifiedSource16-nonARC.mm */,
+				7C0239FA251BA01A00BA7BB6 /* UnifiedSource17-nonARC.mm */,
+				7C0239ED251BA01A00BA7BB6 /* UnifiedSource18-nonARC.mm */,
+				7C0239F4251BA01A00BA7BB6 /* UnifiedSource19-nonARC.mm */,
+				7C0239F1251BA01A00BA7BB6 /* UnifiedSource20-nonARC.mm */,
+				7C0239EC251BA01A00BA7BB6 /* UnifiedSource21-nonARC.mm */,
 			);
 			path = "unified-sources";
 			sourceTree = "<group>";
@@ -3485,32 +3485,32 @@
 				1A6B31371A51F3A900422975 /* StorageSyncManager.cpp in Sources */,
 				1A6B31391A51F3A900422975 /* StorageThread.cpp in Sources */,
 				1A6B313B1A51F3A900422975 /* StorageTracker.cpp in Sources */,
-				7C023A10251BA19600BA7BB6 /* UnifiedSource1-mm.mm in Sources */,
+				7C023A10251BA19600BA7BB6 /* UnifiedSource1-nonARC.mm in Sources */,
 				7C023A1F251BA19600BA7BB6 /* UnifiedSource1.cpp in Sources */,
-				7C023A0A251BA19600BA7BB6 /* UnifiedSource2-mm.mm in Sources */,
+				7C023A0A251BA19600BA7BB6 /* UnifiedSource2-nonARC.mm in Sources */,
 				7C023A18251BA19600BA7BB6 /* UnifiedSource2.cpp in Sources */,
-				7C023A07251BA19600BA7BB6 /* UnifiedSource3-mm.mm in Sources */,
+				7C023A07251BA19600BA7BB6 /* UnifiedSource3-nonARC.mm in Sources */,
 				7C023A13251BA19600BA7BB6 /* UnifiedSource3.cpp in Sources */,
-				7C023A1D251BA19600BA7BB6 /* UnifiedSource4-mm.mm in Sources */,
+				7C023A1D251BA19600BA7BB6 /* UnifiedSource4-nonARC.mm in Sources */,
 				7C023A0D251BA19600BA7BB6 /* UnifiedSource4.cpp in Sources */,
-				7C023A1B251BA19600BA7BB6 /* UnifiedSource5-mm.mm in Sources */,
+				7C023A1B251BA19600BA7BB6 /* UnifiedSource5-nonARC.mm in Sources */,
 				7C023A20251BA19600BA7BB6 /* UnifiedSource5.cpp in Sources */,
-				7C023A1E251BA19600BA7BB6 /* UnifiedSource6-mm.mm in Sources */,
-				7C023A1A251BA19600BA7BB6 /* UnifiedSource7-mm.mm in Sources */,
-				7C023A0B251BA19600BA7BB6 /* UnifiedSource8-mm.mm in Sources */,
-				7C023A0F251BA19600BA7BB6 /* UnifiedSource9-mm.mm in Sources */,
-				7C023A1C251BA19600BA7BB6 /* UnifiedSource10-mm.mm in Sources */,
-				7C023A14251BA19600BA7BB6 /* UnifiedSource11-mm.mm in Sources */,
-				7C023A11251BA19600BA7BB6 /* UnifiedSource12-mm.mm in Sources */,
-				7C023A15251BA19600BA7BB6 /* UnifiedSource13-mm.mm in Sources */,
-				7C023A0C251BA19600BA7BB6 /* UnifiedSource14-mm.mm in Sources */,
-				7C023A12251BA19600BA7BB6 /* UnifiedSource15-mm.mm in Sources */,
-				7C023A17251BA19600BA7BB6 /* UnifiedSource16-mm.mm in Sources */,
-				7C023A16251BA19600BA7BB6 /* UnifiedSource17-mm.mm in Sources */,
-				7C023A19251BA19600BA7BB6 /* UnifiedSource18-mm.mm in Sources */,
-				7C023A0E251BA19600BA7BB6 /* UnifiedSource19-mm.mm in Sources */,
-				7C023A09251BA19600BA7BB6 /* UnifiedSource20-mm.mm in Sources */,
-				7C023A08251BA19600BA7BB6 /* UnifiedSource21-mm.mm in Sources */,
+				7C023A1E251BA19600BA7BB6 /* UnifiedSource6-nonARC.mm in Sources */,
+				7C023A1A251BA19600BA7BB6 /* UnifiedSource7-nonARC.mm in Sources */,
+				7C023A0B251BA19600BA7BB6 /* UnifiedSource8-nonARC.mm in Sources */,
+				7C023A0F251BA19600BA7BB6 /* UnifiedSource9-nonARC.mm in Sources */,
+				7C023A1C251BA19600BA7BB6 /* UnifiedSource10-nonARC.mm in Sources */,
+				7C023A14251BA19600BA7BB6 /* UnifiedSource11-nonARC.mm in Sources */,
+				7C023A11251BA19600BA7BB6 /* UnifiedSource12-nonARC.mm in Sources */,
+				7C023A15251BA19600BA7BB6 /* UnifiedSource13-nonARC.mm in Sources */,
+				7C023A0C251BA19600BA7BB6 /* UnifiedSource14-nonARC.mm in Sources */,
+				7C023A12251BA19600BA7BB6 /* UnifiedSource15-nonARC.mm in Sources */,
+				7C023A17251BA19600BA7BB6 /* UnifiedSource16-nonARC.mm in Sources */,
+				7C023A16251BA19600BA7BB6 /* UnifiedSource17-nonARC.mm in Sources */,
+				7C023A19251BA19600BA7BB6 /* UnifiedSource18-nonARC.mm in Sources */,
+				7C023A0E251BA19600BA7BB6 /* UnifiedSource19-nonARC.mm in Sources */,
+				7C023A09251BA19600BA7BB6 /* UnifiedSource20-nonARC.mm in Sources */,
+				7C023A08251BA19600BA7BB6 /* UnifiedSource21-nonARC.mm in Sources */,
 				CEDA12DB152CBE6800D9E08D /* WebAlternativeTextClient.mm in Sources */,
 				9398111D0824BF01008DF038 /* WebArchive.mm in Sources */,
 				939810CF0824BF01008DF038 /* WebAuthenticationPanel.m in Sources */,

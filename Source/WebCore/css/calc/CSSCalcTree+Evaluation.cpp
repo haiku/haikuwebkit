@@ -34,7 +34,6 @@
 #include "CSSUnevaluatedCalc.h"
 #include "CalculationExecutor.h"
 #include "RenderStyle.h"
-#include "RenderStyleInlines.h"
 #include "StyleBuilderState.h"
 
 namespace WebCore {

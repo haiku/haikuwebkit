@@ -39,6 +39,7 @@
 #include "RenderBlock.h"
 #include "RenderBoxInlines.h"
 #include "RenderChildIterator.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderElementInlines.h"
 #include "RenderFragmentedFlow.h"
 #include "RenderGeometryMap.h"
@@ -349,9 +350,9 @@ LayoutPoint RenderInline::firstInlineBoxTopLeft() const
 
 static LayoutUnit computeMargin(const RenderInline* renderer, const Style::MarginEdge& margin)
 {
-    return Style::evaluateMinimum(margin, [&] ALWAYS_INLINE_LAMBDA {
+    return Style::evaluateMinimum<LayoutUnit>(margin, [&] ALWAYS_INLINE_LAMBDA {
         return std::max<LayoutUnit>(0, renderer->containingBlock()->contentBoxLogicalWidth());
-    }, 1.0f /* FIXME FIND ZOOM */);
+    }, Style::ZoomNeeded { });
 }
 
 LayoutUnit RenderInline::marginLeft() const
@@ -873,11 +874,18 @@ LayoutSize RenderInline::offsetForInFlowPositionedInline(const RenderBox* child)
     return writingMode().isHorizontal() ? logicalOffset : logicalOffset.transposedSize();
 }
 
-void RenderInline::imageChanged(WrappedImagePtr, const IntRect*)
+void RenderInline::imageChanged(WrappedImagePtr image, const IntRect*)
 {
     if (!parent())
         return;
-        
+
+    bool isNonEmpty;
+    RefPtr styleImage = style().backgroundLayers().findLayerUsedImage(image, isNonEmpty);
+    if (styleImage && isNonEmpty) {
+        if (auto styleable = Styleable::fromRenderer(*this))
+            protectedDocument()->didLoadImage(styleable->protectedElement().get(), styleImage->cachedImage());
+    }
+
     // FIXME: We can do better.
     repaint();
 }

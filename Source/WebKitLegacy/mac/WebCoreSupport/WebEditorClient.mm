@@ -72,6 +72,7 @@
 #import <WebCore/LocalFrameInlines.h>
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MutableStyleProperties.h>
+#import <WebCore/NodeDocument.h>
 #import <WebCore/Page.h>
 #import <WebCore/PlatformKeyboardEvent.h>
 #import <WebCore/Settings.h>
@@ -82,6 +83,7 @@
 #import <WebCore/VisibleUnits.h>
 #import <WebCore/WebContentReader.h>
 #import <WebCore/WebCoreJITOperations.h>
+#import <WebCore/WebCoreMainThread.h>
 #import <WebCore/WebCoreObjCExtras.h>
 #import <pal/spi/cocoa/NSAttributedStringSPI.h>
 #import <pal/spi/mac/NSSpellCheckerSPI.h>
@@ -137,11 +139,7 @@ static WebViewInsertAction kit(EditorInsertAction action)
 
 + (void)initialize
 {
-#if !PLATFORM(IOS_FAMILY)
-    JSC::initialize();
-    WTF::initializeMainThread();
-    WebCore::populateJITOperations();
-#endif
+    WebCore::initializeMainThreadIfNeeded();
 }
 
 - (id)initWithUndoStep:(Ref<UndoStep>&&)step

@@ -111,6 +111,7 @@ public:
 #if PLATFORM(MAC)
     NSWindow *window() const { return m_window.get(); }
     WKWebView *webView() const;
+    RetainPtr<WKWebView> protectedWebView() const;
 
     const WebCore::FloatRect& sheetRect() const { return m_sheetRect; }
 
@@ -176,6 +177,8 @@ private:
     void platformOpenURLExternally(const String& url);
     void platformRevealFileExternally(const String& path);
     void platformShowCertificate(const WebCore::CertificateInfo&);
+
+    CheckedPtr<RemoteWebInspectorUIProxyClient> checkedClient() const { return m_client.get(); }
 
     WeakPtr<RemoteWebInspectorUIProxyClient> m_client;
     WeakPtr<WebPageProxy> m_inspectorPage;

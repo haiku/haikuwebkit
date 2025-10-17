@@ -161,7 +161,7 @@ RefPtr<WebCore::FragmentedSharedBuffer> Attachment::associatedElementData() cons
     return WebCore::SharedBuffer::create(data);
 }
 
-NSData *Attachment::associatedElementNSData() const
+RetainPtr<NSData> Attachment::associatedElementNSData() const
 {
     Locker locker { m_fileWrapperLock };
 

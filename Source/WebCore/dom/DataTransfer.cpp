@@ -43,6 +43,7 @@
 #include "HostWindow.h"
 #include "Image.h"
 #include "LocalFrame.h"
+#include "NodeDocument.h"
 #include "Page.h"
 #include "PagePasteboardContext.h"
 #include "Pasteboard.h"

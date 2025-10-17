@@ -196,7 +196,7 @@ Style::PreferredSize RenderTableCell::logicalWidthFromColumns(RenderTableCol* fi
             return colWidth;
         }
 
-        colWidthSum += fixedColWidth->value;
+        colWidthSum += fixedColWidth->resolveZoom(Style::ZoomNeeded { });
         tableCol = tableCol->nextColumn();
         // If no next <col> tag found for the span we just return what we have for now.
         if (!tableCol)
@@ -237,7 +237,7 @@ void RenderTableCell::computePreferredLogicalWidths()
         // to make the minwidth of the cell into the fixed width. They do this
         // even in strict mode, so do not make this a quirk. Affected the top
         // of hiptop.com.
-        m_minPreferredLogicalWidth = std::max(LayoutUnit(fixedLogicalWidth->value), m_minPreferredLogicalWidth);
+        m_minPreferredLogicalWidth = std::max(LayoutUnit(fixedLogicalWidth->resolveZoom(Style::ZoomNeeded { })), m_minPreferredLogicalWidth);
     }
 }
 
@@ -367,7 +367,7 @@ LayoutUnit RenderTableCell::logicalHeightForRowSizing() const
     auto specifiedSize = !isOrthogonal() ? style().logicalHeight() : style().logicalWidth();
     if (!specifiedSize.isSpecified())
         return usedLogicalSize;
-    auto computedLogicaSize = Style::evaluate(specifiedSize, 0_lu, 1.0f /* FIXME FIND ZOOM */);
+    auto computedLogicaSize = Style::evaluate<LayoutUnit>(specifiedSize, 0_lu, Style::ZoomNeeded { });
     // In strict mode, box-sizing: content-box do the right thing and actually add in the border and padding.
     // Call computedCSSPadding* directly to avoid including implicitPadding.
     if (!document().inQuirksMode() && style().boxSizing() != BoxSizing::BorderBox)
@@ -382,7 +382,6 @@ void RenderTableCell::setCellLogicalWidth(LayoutUnit logicalWidthInTableDirectio
         return;
 
     setNeedsLayout(MarkOnlyThis);
-    row()->setChildNeedsLayout(MarkOnlyThis);
     setCellWidthChanged(true);
 
     if (!isOrthogonal()) {

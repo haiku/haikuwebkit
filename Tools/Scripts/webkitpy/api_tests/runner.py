@@ -155,28 +155,53 @@ class Runner(object):
                     initialized_devices=self.port.DEVICE_MANAGER.INITIALIZED_DEVICES,
                 )
 
-            with TaskPool(
-                workers=self._num_workers,
-                mutually_exclusive_groups=mutually_exclusive_groups,
-                setup=setup_shard, setupkwargs=dict(port=self.port, devices=devices, log_limit=self.log_limit), teardown=teardown_shard,
-            ) as pool:
-                was_sent = set()
+            # Separate system and non-system shards
+            system_shards = {}
+            non_system_shards = {}
 
-                # Dispatch shards from groups first, so we start dedicated groups running before all our other shards
-                for name, tests in iteritems(shards):
-                    group = self.port.group_for_shard(type('Shard', (), {'name': name})(), suite='api-tests')
-                    if not group or self.port.get_option('fully_parallel'):
-                        continue
+            for name, tests in iteritems(shards):
+                group = self.port.group_for_shard(type('Shard', (), {'name': name})(), suite='api-tests')
+                if group == 'system' and not self.port.get_option('fully_parallel'):
+                    system_shards[name] = tests
+                else:
+                    non_system_shards[name] = tests
 
-                    was_sent.add(name)
-                    pool.do(run_shard, name, *tests, group=group)
+            # Run non-system tests first
+            if non_system_shards:
+                non_system_groups = [group for group in mutually_exclusive_groups if group != 'system']
+                with TaskPool(
+                    workers=self._num_workers,
+                    mutually_exclusive_groups=non_system_groups,
+                    setup=setup_shard, setupkwargs=dict(port=self.port, devices=devices, log_limit=self.log_limit), teardown=teardown_shard,
+                ) as pool:
+                    was_sent = set()
 
-                for name, tests in iteritems(shards):
-                    if name in was_sent:
-                        continue
-                    pool.do(run_shard, name, *tests)
+                    # Dispatch shards from non-system groups first
+                    for name, tests in iteritems(non_system_shards):
+                        group = self.port.group_for_shard(type('Shard', (), {'name': name})(), suite='api-tests')
+                        if group and group != 'system' and not self.port.get_option('fully_parallel'):
+                            was_sent.add(name)
+                            pool.do(run_shard, name, *tests, group=group)
 
-                pool.wait()
+                    # Dispatch remaining non-system shards
+                    for name, tests in iteritems(non_system_shards):
+                        if name in was_sent:
+                            continue
+                        pool.do(run_shard, name, *tests)
+
+                    pool.wait()
+
+            # Run system tests after all non-system tests complete
+            if system_shards:
+                with TaskPool(
+                    workers=1,  # System tests run with single worker to avoid conflicts
+                    mutually_exclusive_groups=[],
+                    setup=setup_shard, setupkwargs=dict(port=self.port, devices=devices, log_limit=self.log_limit), teardown=teardown_shard,
+                ) as pool:
+                    for name, tests in iteritems(system_shards):
+                        pool.do(run_shard, name, *tests)
+
+                    pool.wait()
 
         finally:
             server_process_logger.setLevel(original_level)

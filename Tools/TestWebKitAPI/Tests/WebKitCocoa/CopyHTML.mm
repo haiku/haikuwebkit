@@ -123,7 +123,12 @@ TEST(CopyHTML, SanitizationPreservesCharacterSetInSelectedText)
     EXPECT_WK_STREQ("我叫謝文昇", [attributedString string]);
 }
 
+// FIXME: rdar://158345822
+#if PLATFORM(IOS)
+TEST(CopyHTML, DISABLED_SanitizationPreservesCharacterSet)
+#else
 TEST(CopyHTML, SanitizationPreservesCharacterSet)
+#endif
 {
     Vector<std::pair<RetainPtr<NSString>, RetainPtr<NSData>>, 3> markupStringsAndData;
     auto webView = createWebViewWithCustomPasteboardDataEnabled();

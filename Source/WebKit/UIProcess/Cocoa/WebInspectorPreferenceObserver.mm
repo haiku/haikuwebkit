@@ -51,7 +51,7 @@
     if (!(self = [super init]))
         return nil;
 
-    RetainPtr sandboxBrokerBundleIdentifier = bridge_cast(WebKit::bundleIdentifierForSandboxBroker());
+    RetainPtr sandboxBrokerBundleIdentifier = bridge_cast(WebKit::bundleIdentifierForSandboxBrokerSingleton());
     m_userDefaults = adoptNS([[NSUserDefaults alloc] initWithSuiteName:sandboxBrokerBundleIdentifier.get()]);
     if (!m_userDefaults) {
         WTFLogAlways("Could not init user defaults instance for domain %@.", sandboxBrokerBundleIdentifier.get());

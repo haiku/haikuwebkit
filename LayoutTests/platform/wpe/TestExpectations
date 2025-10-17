@@ -22,11 +22,8 @@ webkit.org/b/136754 imported/w3c/web-platform-tests/css/css-flexbox/flexbox_flex
 imported/w3c/web-platform-tests/css/css-flexbox/grid-flex-item-007.html [ Pass ]
 
 imported/w3c/web-platform-tests/css/compositing/mix-blend-mode/mix-blend-mode-intermediate-element-overflow-hidden-and-border-radius.html [ Pass ]
-imported/w3c/web-platform-tests/css/css-animations/nested-scale-animations.html [ Pass ]
-imported/w3c/web-platform-tests/css/css-animations/transform-animation-under-large-scale.html [ Pass ]
 
 imported/w3c/web-platform-tests/css/css-images/out-of-range-color-stop-conic.html [ Pass ]
-imported/w3c/web-platform-tests/css/css-transforms/3d-scene-with-iframe-001.html [ Pass ]
 
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/skip-outbound-vt-before-reveal.html [ Pass ]
 
@@ -249,6 +246,10 @@ imported/w3c/web-platform-tests/xhr/xmlhttprequest-timeout-worker-overridesexpir
 # WebXR
 
 webkit.org/b/299366 imported/w3c/web-platform-tests/webxr/xrSession_visibilityState_inline.https.html [ Skip ] # Timeout
+
+# WTR window size handling
+
+webkit.org/b/299429 loader/go-back-to-different-window-size.html [ Failure ]
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations
@@ -529,14 +530,13 @@ webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/duration-with-t
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/event-retarget.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/first-input-shadow-dom.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/interactionid-auxclick.html [ Skip ]
+webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown-and-pointerdown.html [ Skip ]
+webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/keydown.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/large-duration-threshold.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/medium-duration-threshold.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/retrievability.html [ Skip ]
-
-webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/interactionid-click.html [ Pass ]
-webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/retrieve-firstInput.html [ Pass ]
 
 # notImplemented in WTR::UIScriptController::isShowingDateTimePicker
 fast/forms/datalist [ Skip ]
@@ -1188,6 +1188,12 @@ imported/w3c/web-platform-tests/css/css-text/hyphens/hyphens-character.html [ Im
 imported/w3c/web-platform-tests/mathml/relations/css-styling/color-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/relations/css-styling/color-004.tentative.html [ ImageOnlyFailure ]
 
+webkit.org/b/298386 imported/w3c/web-platform-tests/speculation-rules/prefetch/different-initiators.sub.https.html?cross-site-1 [ Failure ]
+webkit.org/b/298386 imported/w3c/web-platform-tests/speculation-rules/prefetch/referrer-policy.https.html?4-last [ Failure ]
+webkit.org/b/298386 imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-a-element.sub.https.html?cross-site [ DumpJSConsoleLogInStdErr Failure ]
+webkit.org/b/298386 imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-window-open.sub.https.html?cross-site [ DumpJSConsoleLogInStdErr Failure ]
+webkit.org/b/298386 imported/w3c/web-platform-tests/speculation-rules/prefetch/redirect-url.https.html?origin=cross-site-initial [ DumpJSConsoleLogInStdErr Failure ]
+
 # Failures that happen with WEBKIT_SKIA_ENABLE_CPU_RENDERING=1 (which is enabled on the bots)
 webkit.org/b/287572 compositing/clipping/border-radius-async-overflow-stacking.html [ ImageOnlyFailure ]
 webkit.org/b/287572 compositing/overlap-blending/reflection-opacity-huge.html [ ImageOnlyFailure ]
@@ -1344,3 +1350,5 @@ webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-3.h
 webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-1.html [ Skip ]
 webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-2.html [ Skip ]
 webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-3.html [ Skip ]
+
+webkit.org/b/299944 http/wpt/mediarecorder/record-96KHz-long-mp4.html [ Skip ]

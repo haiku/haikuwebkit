@@ -2045,7 +2045,7 @@ GstBuffer* gst_buffer_new_memdup(gconstpointer data, gsize size)
 }
 #endif
 
-#if !GST_CHECK_VERSION(1, 27, 0)
+#if !GST_CHECK_VERSION_FULL(1, 27, 2, 1) && !GST_CHECK_VERSION(1, 27, 3) && !GST_CHECK_VERSION(1, 28, 0)
 void gst_pad_probe_info_set_buffer(GstPadProbeInfo* info, GstBuffer* buffer)
 {
     g_return_if_fail(info->type & GST_PAD_PROBE_TYPE_BUFFER);

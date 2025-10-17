@@ -16,7 +16,6 @@
 		079D1D9826950DD700883577 /* SystemStatusSoftLink.mm in Sources */ = {isa = PBXBuildFile; fileRef = 079D1D9626950DD700883577 /* SystemStatusSoftLink.mm */; };
 		0CF99CA41F736375007EE793 /* MediaTimeAVFoundation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0C00CFD11F68CE4600AAC26D /* MediaTimeAVFoundation.cpp */; };
 		0CF99CA81F738437007EE793 /* CoreMediaSoftLink.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0CF99CA61F738436007EE793 /* CoreMediaSoftLink.cpp */; };
-		1C022EFE22CFE8E1006DF01B /* Gunzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C022EFC22CFE8E0006DF01B /* Gunzip.cpp */; };
 		1C09D0561E31C46500725F18 /* CryptoDigestCommonCrypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C09D0551E31C46500725F18 /* CryptoDigestCommonCrypto.cpp */; };
 		1C4876D81F8D7F4E00CCEEBD /* Logging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C4876D61F8D7F4E00CCEEBD /* Logging.cpp */; };
 		1C5C57C927571531003B540D /* TextCodecICU.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C5C57BD27571524003B540D /* TextCodecICU.cpp */; };
@@ -287,7 +286,6 @@
 		DD20DE5D27BC90D80093D175 /* UnencodableHandling.h in Headers */ = {isa = PBXBuildFile; fileRef = 93E5909C1F93BF1E0067F8CF /* UnencodableHandling.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD20DE5E27BC90D80093D175 /* ExportMacros.h in Headers */ = {isa = PBXBuildFile; fileRef = 0C2D9E721EEF5AF600DBC317 /* ExportMacros.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD20DE5F27BC90D80093D175 /* FileSizeFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = F442915F1FA5261E002CC93E /* FileSizeFormatter.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		DD20DE6027BC90D80093D175 /* Gunzip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C022EFD22CFE8E1006DF01B /* Gunzip.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD20DE6127BC90D80093D175 /* HysteresisActivity.h in Headers */ = {isa = PBXBuildFile; fileRef = A39DE74D1F7C443C007BCB00 /* HysteresisActivity.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD20DE6227BC90D80093D175 /* Logging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C4876D71F8D7F4E00CCEEBD /* Logging.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD20DE6327BC90D80093D175 /* SessionID.h in Headers */ = {isa = PBXBuildFile; fileRef = A3C66CDB1F462D6A009E6EE9 /* SessionID.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -533,8 +531,6 @@
 		0C7785881F45130F00F4EBB6 /* TelephonyUtilitiesSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TelephonyUtilitiesSPI.h; sourceTree = "<group>"; };
 		0CF99CA61F738436007EE793 /* CoreMediaSoftLink.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CoreMediaSoftLink.cpp; sourceTree = "<group>"; };
 		0CF99CA71F738437007EE793 /* CoreMediaSoftLink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CoreMediaSoftLink.h; sourceTree = "<group>"; };
-		1C022EFC22CFE8E0006DF01B /* Gunzip.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Gunzip.cpp; sourceTree = "<group>"; };
-		1C022EFD22CFE8E1006DF01B /* Gunzip.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Gunzip.h; sourceTree = "<group>"; };
 		1C09D03D1E31C32800725F18 /* libPAL.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPAL.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C09D0521E31C44100725F18 /* CryptoDigest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CryptoDigest.h; sourceTree = "<group>"; };
 		1C09D0551E31C46500725F18 /* CryptoDigestCommonCrypto.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CryptoDigestCommonCrypto.cpp; sourceTree = "<group>"; };
@@ -1058,7 +1054,6 @@
 				0C2D9E721EEF5AF600DBC317 /* ExportMacros.h */,
 				F44291621FA52670002CC93E /* FileSizeFormatter.cpp */,
 				F442915F1FA5261E002CC93E /* FileSizeFormatter.h */,
-				1C022EFD22CFE8E1006DF01B /* Gunzip.h */,
 				A39DE74D1F7C443C007BCB00 /* HysteresisActivity.h */,
 				1C4876D61F8D7F4E00CCEEBD /* Logging.cpp */,
 				1C4876D71F8D7F4E00CCEEBD /* Logging.h */,
@@ -1133,7 +1128,6 @@
 				F4DDD01A264DC69E00EF1B91 /* DataDetectorsCoreSoftLink.h */,
 				F4DDD019264DC69E00EF1B91 /* DataDetectorsCoreSoftLink.mm */,
 				F44291661FA52705002CC93E /* FileSizeFormatterCocoa.mm */,
-				1C022EFC22CFE8E0006DF01B /* Gunzip.cpp */,
 				F47471EC2ACA17AF00E0D4AB /* LinkPresentationSoftLink.h */,
 				F47471ED2ACA17AF00E0D4AB /* LinkPresentationSoftLink.mm */,
 				7A46A80F2A3265C8007BDD04 /* LockdownModeCocoa.h */,
@@ -1458,7 +1452,6 @@
 				DD20DE5F27BC90D80093D175 /* FileSizeFormatter.h in Headers */,
 				4469328B28483EF700614F16 /* FoundationSPI.h in Headers */,
 				DD20DE1227BC90D80093D175 /* GraphicsServicesSPI.h in Headers */,
-				DD20DE6027BC90D80093D175 /* Gunzip.h in Headers */,
 				DD20DE1E27BC90D80093D175 /* HIServicesSPI.h in Headers */,
 				DD20DE1F27BC90D80093D175 /* HIToolboxSPI.h in Headers */,
 				DD20DE6127BC90D80093D175 /* HysteresisActivity.h in Headers */,
@@ -1786,7 +1779,6 @@
 				1C5C57D427571626003B540D /* EncodingTables.cpp in Sources */,
 				F44291641FA52670002CC93E /* FileSizeFormatter.cpp in Sources */,
 				F44291681FA52705002CC93E /* FileSizeFormatterCocoa.mm in Sources */,
-				1C022EFE22CFE8E1006DF01B /* Gunzip.cpp in Sources */,
 				A30D41221F0DD0EA00B71954 /* KillRing.cpp in Sources */,
 				A30D41251F0DD12D00B71954 /* KillRingMac.mm in Sources */,
 				F47471EF2ACA17AF00E0D4AB /* LinkPresentationSoftLink.mm in Sources */,

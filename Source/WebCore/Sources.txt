@@ -21,6 +21,8 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
+Modules/Model/Implementation/DDMeshImpl.cpp
+Modules/Model/Implementation/ModelDowncastConvertToBackingContext.cpp
 Modules/ShapeDetection/BarcodeDetector.cpp
 Modules/ShapeDetection/FaceDetector.cpp
 Modules/ShapeDetection/TextDetector.cpp
@@ -373,10 +375,16 @@ Modules/speech/SpeechSynthesisUtterance.cpp
 Modules/speech/SpeechSynthesisVoice.cpp
 Modules/storage/StorageManager.cpp
 Modules/storage/WorkerStorageConnection.cpp
+Modules/streams/ByteLengthQueuingStrategy.cpp
+Modules/streams/ReadableByteStreamController.cpp
 Modules/streams/ReadableStream.cpp
+Modules/streams/ReadableStreamBYOBReader.cpp
+Modules/streams/ReadableStreamBYOBRequest.cpp
 Modules/streams/ReadableStreamDefaultReader.cpp
+Modules/streams/ReadableStreamReadRequest.cpp
 Modules/streams/ReadableStreamSink.cpp
 Modules/streams/ReadableStreamSource.cpp
+Modules/streams/StreamTeeUtilities.cpp
 Modules/streams/TransformStream.cpp
 Modules/streams/WritableStream.cpp
 Modules/url-pattern/URLPattern.cpp
@@ -513,13 +521,13 @@ Modules/webtransport/DatagramSink.cpp
 Modules/webtransport/DatagramSource.cpp
 Modules/webtransport/WebTransport.cpp
 Modules/webtransport/WebTransportBidirectionalStream.cpp
-Modules/webtransport/WebTransportBidirectionalStreamConstructionParameters.cpp
 Modules/webtransport/WebTransportBidirectionalStreamSource.cpp
 Modules/webtransport/WebTransportDatagramDuplexStream.cpp
 Modules/webtransport/WebTransportError.cpp
 Modules/webtransport/WebTransportReceiveStream.cpp
 Modules/webtransport/WebTransportReceiveStreamSource.cpp
 Modules/webtransport/WebTransportSendStream.cpp
+Modules/webtransport/WebTransportSendStreamSink.cpp
 Modules/webtransport/WebTransportSession.cpp
 Modules/webtransport/WorkerWebTransportSession.cpp
 Modules/webxr/NavigatorWebXR.cpp
@@ -561,6 +569,7 @@ accessibility/AXAttributeCacheScope.cpp
 accessibility/AXComputedObjectAttributeCache.cpp
 accessibility/AXCoreObject.cpp
 accessibility/AXGeometryManager.cpp
+accessibility/AXLocalFrame.cpp
 accessibility/AXLogger.cpp
 accessibility/AXLoggerBase.cpp
 accessibility/AXObjectCache.cpp
@@ -639,6 +648,7 @@ bindings/js/IDBBindingUtilities.cpp
 bindings/js/InternalReadableStream.cpp
 bindings/js/InternalReadableStreamDefaultReader.cpp
 bindings/js/InternalWritableStream.cpp
+bindings/js/InternalWritableStreamWriter.cpp
 bindings/js/JSAbortSignalCustom.cpp
 bindings/js/JSAbstractRangeCustom.cpp
 bindings/js/JSAnimationEffectCustom.cpp
@@ -671,6 +681,7 @@ bindings/js/JSDOMConvertDate.cpp
 bindings/js/JSDOMConvertNumbers.cpp
 bindings/js/JSDOMConvertStrings.cpp
 bindings/js/JSDOMConvertWebGL.cpp
+bindings/js/JSDOMExceptionCustom.cpp
 bindings/js/JSDOMExceptionHandling.cpp
 bindings/js/JSDOMGlobalObject.cpp
 bindings/js/JSDOMGuardedObject.cpp
@@ -746,6 +757,7 @@ bindings/js/JSPopStateEventCustom.cpp
 bindings/js/JSPromiseRejectionEventCustom.cpp
 bindings/js/JSRTCRtpSFrameTransformCustom.cpp
 bindings/js/JSRangeCustom.cpp
+bindings/js/JSReadableStreamCustom.cpp
 bindings/js/JSReadableStreamSourceCustom.cpp
 bindings/js/JSReportBodyCustom.cpp
 bindings/js/JSReportingObserverCustom.cpp
@@ -1360,6 +1372,7 @@ dom/SimulatedClick.cpp
 dom/SlotAssignment.cpp
 dom/SpaceSplitString.cpp
 dom/SpatialBackdropSource.cpp
+dom/SpeculationRulesMatcher.cpp
 dom/StaticNodeList.cpp
 dom/StaticRange.cpp
 dom/StringCallback.cpp
@@ -1837,6 +1850,7 @@ inspector/InspectorAuditAccessibilityObject.cpp
 inspector/InspectorAuditDOMObject.cpp
 inspector/InspectorAuditResourcesObject.cpp
 inspector/InspectorCanvas.cpp
+inspector/InspectorCanvasArguments.cpp
 inspector/InspectorCanvasCallTracer.cpp
 inspector/InspectorController.cpp
 inspector/InspectorFrontendAPIDispatcher.cpp
@@ -1922,8 +1936,10 @@ layout/formattingContexts/flex/FlexFormattingUtils.cpp
 layout/formattingContexts/flex/FlexLayout.cpp
 layout/formattingContexts/grid/GridFormattingContext.cpp
 layout/formattingContexts/grid/GridLayout.cpp
+layout/formattingContexts/grid/GridLayoutUtils.cpp
 layout/formattingContexts/grid/ImplicitGrid.cpp
 layout/formattingContexts/grid/PlacedGridItem.cpp
+layout/formattingContexts/grid/TrackSizingAlgorithm.cpp
 layout/formattingContexts/grid/UnplacedGridItem.cpp
 layout/formattingContexts/inline/AbstractLineBuilder.cpp
 layout/formattingContexts/inline/InlineContentAligner.cpp
@@ -1959,6 +1975,7 @@ layout/formattingContexts/table/TableLayout.cpp
 layout/integration/LayoutIntegrationBoxGeometryUpdater.cpp
 layout/integration/LayoutIntegrationBoxTreeUpdater.cpp
 layout/integration/LayoutIntegrationCoverage.cpp
+layout/integration/grid/LayoutIntegrationGridCoverage.cpp
 layout/integration/LayoutIntegrationFormattingContextLayout.cpp
 layout/integration/LayoutIntegrationUtils.cpp
 layout/integration/flex/LayoutIntegrationFlexLayout.cpp
@@ -1997,6 +2014,7 @@ loader/DefaultResourceLoadPriority.cpp
 loader/DocumentLoader.cpp
 loader/DocumentThreadableLoader.cpp
 loader/DocumentWriter.cpp
+loader/DocumentPrefetcher.cpp
 loader/EmptyClients.cpp
 loader/FTPDirectoryParser.cpp
 loader/FetchIdioms.cpp
@@ -2044,6 +2062,7 @@ loader/ResourceTimingInformation.cpp
 loader/ServerTiming.cpp
 loader/ServerTimingParser.cpp
 loader/SinkDocument.cpp
+loader/SpeculationRules.cpp
 loader/SubframeLoader.cpp
 loader/SubresourceIntegrity.cpp
 loader/SubresourceLoader.cpp
@@ -2135,6 +2154,7 @@ page/InteractionRegion.cpp
 page/IntersectionObserver.cpp
 page/IntersectionObserverEntry.cpp
 page/LargestContentfulPaint.cpp
+page/LargestContentfulPaintData.cpp
 page/LocalDOMWindow.cpp
 page/LocalDOMWindowProperty.cpp
 page/LocalFrame.cpp
@@ -2304,13 +2324,13 @@ platform/LayoutUnit.cpp
 platform/LegacySchemeRegistry.cpp
 platform/Length.cpp
 platform/LengthFunctions.cpp
-platform/LengthPoint.cpp
 platform/LocalizedStrings.cpp
 platform/LogInitialization.cpp
 platform/Logging.cpp
 platform/LowPowerModeNotifier.cpp
 platform/MIMETypeRegistry.cpp
 platform/MainThreadSharedTimer.cpp
+platform/MediaSamplesBlock.cpp
 platform/MediaStrategy.cpp
 platform/NotImplemented.cpp
 platform/NowPlayingManager.cpp
@@ -2377,11 +2397,18 @@ platform/VideoDecoder.cpp
 platform/VideoEncoder.cpp
 platform/VideoFrame.cpp
 platform/VideoPixelFormat.cpp
+platform/WebCoreMainThread.cpp
 platform/WebCorePersistentCoders.cpp
 platform/Widget.cpp
 platform/animation/AcceleratedEffect.cpp
 platform/animation/AcceleratedEffectValues.cpp
 platform/animation/TimingFunction.cpp
+platform/animation/values/AcceleratedEffectOffsetAnchor.cpp
+platform/animation/values/AcceleratedEffectOffsetDistance.cpp
+platform/animation/values/AcceleratedEffectOffsetPosition.cpp
+platform/animation/values/AcceleratedEffectOffsetRotate.cpp
+platform/animation/values/AcceleratedEffectOpacity.cpp
+platform/animation/values/AcceleratedEffectTransformOrigin.cpp
 platform/audio/AudioBus.cpp
 platform/audio/AudioChannel.cpp
 platform/audio/AudioDSPKernelProcessor.cpp
@@ -2792,7 +2819,7 @@ rendering/BlockStepSizing.cpp
 rendering/BorderEdge.cpp
 rendering/BorderPainter.cpp
 rendering/BorderShape.cpp
-rendering/BreakLines.cpp
+rendering/BreakablePositions.cpp
 rendering/CSSFilterRenderer.cpp
 rendering/CaretRectComputation.cpp
 rendering/ClipRect.cpp
@@ -3201,6 +3228,11 @@ style/values/filter-effects/StyleOpacityFunction.cpp
 style/values/filter-effects/StyleSaturateFunction.cpp
 style/values/filter-effects/StyleSepiaFunction.cpp
 style/values/flexbox/StyleFlexBasis.cpp
+style/values/fonts/StyleFontPalette.cpp
+style/values/fonts/StyleFontSizeAdjust.cpp
+style/values/fonts/StyleFontStyle.cpp
+style/values/fonts/StyleFontWeight.cpp
+style/values/fonts/StyleFontWidth.cpp
 style/values/grid/StyleGridNamedLinesMap.cpp
 style/values/grid/StyleGridPosition.cpp
 style/values/grid/StyleGridPositionsResolver.cpp
@@ -3283,7 +3315,18 @@ style/values/text-decoration/StyleTextDecorationThickness.cpp
 style/values/text-decoration/StyleTextEmphasisStyle.cpp
 style/values/text-decoration/StyleTextShadow.cpp
 style/values/text-decoration/StyleTextUnderlineOffset.cpp
+style/values/text/StyleLetterSpacing.cpp
+style/values/text/StyleTabSize.cpp
 style/values/text/StyleTextIndent.cpp
+style/values/text/StyleWordSpacing.cpp
+style/values/transforms/functions/StyleMatrix3DTransformFunction.cpp
+style/values/transforms/functions/StyleMatrixTransformFunction.cpp
+style/values/transforms/functions/StylePerspectiveTransformFunction.cpp
+style/values/transforms/functions/StyleRotateTransformFunction.cpp
+style/values/transforms/functions/StyleScaleTransformFunction.cpp
+style/values/transforms/functions/StyleSkewTransformFunction.cpp
+style/values/transforms/functions/StyleTransformFunctionBase.cpp
+style/values/transforms/functions/StyleTranslateTransformFunction.cpp
 style/values/transforms/StylePerspective.cpp
 style/values/transforms/StyleRotate.cpp
 style/values/transforms/StyleScale.cpp
@@ -3293,6 +3336,7 @@ style/values/transforms/StyleTransformList.cpp
 style/values/transforms/StyleTranslate.cpp
 style/values/transitions/StyleSingleTransitionProperty.cpp
 style/values/transitions/StyleTransition.cpp
+style/values/ui/StyleAccentColor.cpp
 style/values/ui/StyleCursor.cpp
 style/values/view-transitions/StyleViewTransitionName.cpp
 svg/DocumentSVG.cpp
@@ -4621,6 +4665,9 @@ JSRTCTrackEvent.cpp
 JSRTCTransformEvent.cpp
 JSRadioNodeList.cpp
 JSRange.cpp
+JSReadableByteStreamController.cpp
+JSReadableStreamBYOBReader.cpp
+JSReadableStreamBYOBRequest.cpp
 JSReadableStream.cpp
 JSReadableStreamDefaultController.cpp
 JSReadableStreamDefaultReader.cpp
@@ -5031,6 +5078,7 @@ JSWebTransport.cpp
 JSWebTransportBidirectionalStream.cpp
 JSWebTransportCloseInfo.cpp
 JSWebTransportCongestionControl.cpp
+JSWebTransportConnectionStats.cpp
 JSWebTransportDatagramDuplexStream.cpp
 JSWebTransportDatagramStats.cpp
 JSWebTransportError.cpp
@@ -5044,7 +5092,6 @@ JSWebTransportReliabilityMode.cpp
 JSWebTransportSendStream.cpp
 JSWebTransportSendStreamOptions.cpp
 JSWebTransportSendStreamStats.cpp
-JSWebTransportStats.cpp
 JSWebXRBoundedReferenceSpace.cpp
 JSWebXRFrame.cpp
 JSWebXRHand.cpp

@@ -45,23 +45,34 @@ BrowsingContextGroup::BrowsingContextGroup() = default;
 
 BrowsingContextGroup::~BrowsingContextGroup() = default;
 
-RefPtr<FrameProcess> BrowsingContextGroup::sharedProcessForSite(WebsiteDataStore& websiteDataStore, API::WebsitePolicies* websitePolicies, const WebPreferences& preferences, const WebCore::Site& site, WebProcessProxy::LockdownMode lockdownMode, API::PageConfiguration& pageConfiguration, IsMainFrame isMainFrame)
+void BrowsingContextGroup::sharedProcessForSite(WebsiteDataStore& websiteDataStore, API::WebsitePolicies* websitePolicies, const WebPreferences& preferences, const WebCore::Site& site,
+    WebProcessProxy::LockdownMode lockdownMode, WebProcessProxy::EnhancedSecurity enhancedSecurity, API::PageConfiguration& pageConfiguration, IsMainFrame isMainFrame, CompletionHandler<void(FrameProcess*)>&& completionHandler)
 {
     if (!preferences.siteIsolationEnabled() || !preferences.siteIsolationSharedProcessEnabled())
-        return nullptr;
-    if (isMainFrame == IsMainFrame::Yes)
-        return nullptr;
+        return completionHandler(nullptr);
     if (site.isEmpty())
-        return nullptr;
-    if (websitePolicies && !websitePolicies->allowSharedProcess() && !m_sharedProcessSites.contains(site))
-        return nullptr;
-    m_sharedProcessSites.add(site);
-    if (m_sharedProcess)
-        return m_sharedProcess.get();
-    Ref process = pageConfiguration.protectedProcessPool()->processForSite(websiteDataStore, site, lockdownMode, pageConfiguration, ProcessSwapDisposition::Other);
-    Ref frameProcess = FrameProcess::create(process, *this, std::nullopt, preferences, InjectBrowsingContextIntoProcess::Yes);
-    m_sharedProcess = frameProcess.ptr();
-    return frameProcess;
+        return completionHandler(nullptr);
+    if (!m_sharedProcessSites.contains(site)) {
+        if (isMainFrame == IsMainFrame::Yes)
+            return completionHandler(nullptr);
+        if (websitePolicies && !websitePolicies->allowSharedProcess())
+            return completionHandler(nullptr);
+    }
+    websiteDataStore.fetchDomainsWithUserInteraction([protectedThis = Ref { *this }, websiteDataStore = Ref { websiteDataStore }, preferences = Ref { preferences }, site = Site { site },
+        lockdownMode, enhancedSecurity, pageConfiguration = Ref { pageConfiguration }, completionHandler = WTFMove(completionHandler)](const HashSet<WebCore::RegistrableDomain>& domainsWithUserInteraction) mutable {
+
+        if (domainsWithUserInteraction.contains(site.domain()) && !protectedThis->m_sharedProcessSites.contains(site))
+            return completionHandler(nullptr);
+
+        protectedThis->m_sharedProcessSites.add(site);
+        if (RefPtr frameProcess = protectedThis->m_sharedProcess.get())
+            return completionHandler(frameProcess.get());
+
+        Ref process = pageConfiguration->protectedProcessPool()->processForSite(websiteDataStore.get(), site, lockdownMode, enhancedSecurity, pageConfiguration.get(), ProcessSwapDisposition::Other);
+        Ref frameProcess = FrameProcess::create(process, protectedThis, std::nullopt, preferences, InjectBrowsingContextIntoProcess::Yes);
+        protectedThis->m_sharedProcess = frameProcess.ptr();
+        completionHandler(frameProcess.ptr());
+    });
 }
 
 Ref<FrameProcess> BrowsingContextGroup::ensureProcessForSite(const Site& site, WebProcessProxy& process, const WebPreferences& preferences, InjectBrowsingContextIntoProcess injectBrowsingContextIntoProcess)
@@ -128,6 +139,8 @@ void BrowsingContextGroup::addFrameProcessAndInjectPageContextIf(FrameProcess& p
     if (process.isSharedProcess()) {
         Ref processProxy = process.process();
         for (Ref page : m_pages) {
+            if (!m_pagesInSharedProcess.add(page).isNewEntry)
+                continue;
             for (auto site : m_sharedProcessSites)
                 createRemotePageIfNeeded(page, site);
         }

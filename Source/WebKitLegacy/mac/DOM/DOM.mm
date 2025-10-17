@@ -448,9 +448,9 @@ id <DOMEventTarget> kit(EventTarget* target)
     auto& style = renderer->style();
     IntRect boundingBox = renderer->absoluteBoundingBoxRect(true /* use transforms*/);
 
-    boundingBox.move(WebCore::Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */), WebCore::Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */));
-    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate(style.borderLeftWidth(), 1.0f /* FIXME FIND ZOOM */) - WebCore::Style::evaluate(style.borderRightWidth(), 1.0f /* FIXME FIND ZOOM */));
-    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate(style.borderBottomWidth(), 1.0f /* FIXME FIND ZOOM */) - WebCore::Style::evaluate(style.borderTopWidth(), 1.0f /* FIXME FIND ZOOM */));
+    boundingBox.move(WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }), WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
+    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderRightWidth(), WebCore::Style::ZoomNeeded { }));
+    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate<float>(style.borderBottomWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
 
     // FIXME: This function advertises returning a quad, but it actually returns a bounding box (so there is no rotation, for instance).
     return wkQuadFromFloatQuad(FloatQuad(boundingBox));

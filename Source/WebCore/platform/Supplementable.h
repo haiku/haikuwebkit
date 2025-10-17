@@ -91,6 +91,7 @@ public:
     virtual bool isDocumentMediaElement() const { return false; }
     virtual bool isGeolocationController() const { return false; }
     virtual bool isWorkerGlobalScopeIndexedDatabase() const { return false; }
+    virtual bool isServiceWorkerRegistrationBackgroundFetchAPI() const { return false; }
 };
 
 template<typename T>

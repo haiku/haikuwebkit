@@ -66,7 +66,7 @@ void WorkerStorageConnection::getPersisted(ClientOrigin&& origin, StorageConnect
     RefPtr scope = m_scope.get();
     ASSERT(scope);
 
-    auto* workerLoaderProxy = scope->thread().workerLoaderProxy();
+    auto* workerLoaderProxy = scope->thread()->workerLoaderProxy();
     if (!workerLoaderProxy)
         return completionHandler(false);
 
@@ -101,7 +101,7 @@ void WorkerStorageConnection::getEstimate(ClientOrigin&& origin, StorageConnecti
     RefPtr scope = m_scope.get();
     ASSERT(scope);
 
-    auto* workerLoaderProxy = scope->thread().workerLoaderProxy();
+    auto* workerLoaderProxy = scope->thread()->workerLoaderProxy();
     if (!workerLoaderProxy)
         return completionHandler(Exception { ExceptionCode::InvalidStateError });
 
@@ -136,7 +136,7 @@ void WorkerStorageConnection::fileSystemGetDirectory(ClientOrigin&& origin, Stor
     RefPtr scope = m_scope.get();
     ASSERT(scope);
 
-    auto* workerLoaderProxy = scope->thread().workerLoaderProxy();
+    auto* workerLoaderProxy = scope->thread()->workerLoaderProxy();
     if (!workerLoaderProxy)
         return completionHandler(Exception { ExceptionCode::InvalidStateError });
     

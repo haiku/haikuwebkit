@@ -11,6 +11,7 @@ set(WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/GPUProcess"
     "${WEBKIT_DIR}/GPUProcess/ShapeDetection"
     "${WEBKIT_DIR}/GPUProcess/graphics"
+    "${WEBKIT_DIR}/GPUProcess/graphics/Model"
     "${WEBKIT_DIR}/GPUProcess/graphics/WebGPU"
     "${WEBKIT_DIR}/GPUProcess/media"
     "${WEBKIT_DIR}/GPUProcess/webrtc"
@@ -39,6 +40,7 @@ set(WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/Shared/API/c"
     "${WEBKIT_DIR}/Shared/ApplePay"
     "${WEBKIT_DIR}/Shared/Authentication"
+    "${WEBKIT_DIR}/Shared/Automation"
     "${WEBKIT_DIR}/Shared/CoreIPCSupport"
     "${WEBKIT_DIR}/Shared/Databases"
     "${WEBKIT_DIR}/Shared/Databases/IndexedDB"
@@ -46,6 +48,7 @@ set(WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/Shared/FileAPI"
     "${WEBKIT_DIR}/Shared/graphics"
     "${WEBKIT_DIR}/Shared/Gamepad"
+    "${WEBKIT_DIR}/Shared/Model"
     "${WEBKIT_DIR}/Shared/Notifications"
     "${WEBKIT_DIR}/Shared/RemoteLayerTree"
     "${WEBKIT_DIR}/Shared/WebGPU"
@@ -95,6 +98,7 @@ set(WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/WebProcess/GPU"
     "${WEBKIT_DIR}/WebProcess/GPU/ShapeDetection"
     "${WEBKIT_DIR}/WebProcess/GPU/graphics"
+    "${WEBKIT_DIR}/WebProcess/GPU/graphics/Model"
     "${WEBKIT_DIR}/WebProcess/GPU/graphics/WebGPU"
     "${WEBKIT_DIR}/WebProcess/GPU/media"
     "${WEBKIT_DIR}/WebProcess/GPU/webrtc"
@@ -189,6 +193,8 @@ set(WebKit_MESSAGES_IN_FILES
     GPUProcess/graphics/RemoteImageBufferSet
     GPUProcess/graphics/RemoteRenderingBackend
 
+    GPUProcess/graphics/Model/RemoteDDMesh
+
     GPUProcess/graphics/WebGPU/RemoteAdapter
     GPUProcess/graphics/WebGPU/RemoteBindGroup
     GPUProcess/graphics/WebGPU/RemoteBindGroupLayout
@@ -219,6 +225,7 @@ set(WebKit_MESSAGES_IN_FILES
     GPUProcess/graphics/WebGPU/RemoteXRView
 
     GPUProcess/media/RemoteAudioDestinationManager
+    GPUProcess/media/RemoteAudioVideoRendererProxyManager
     GPUProcess/media/RemoteAudioSessionProxy
     GPUProcess/media/RemoteCDMFactoryProxy
     GPUProcess/media/RemoteCDMInstanceProxy
@@ -292,6 +299,7 @@ set(WebKit_MESSAGES_IN_FILES
     UIProcess/SpeechRecognitionRemoteRealtimeMediaSourceManager
     UIProcess/SpeechRecognitionServer
     UIProcess/VisitedLinkStore
+    UIProcess/WebBackForwardList
     UIProcess/WebFrameProxy
     UIProcess/WebFullScreenManagerProxy
     UIProcess/WebGeolocationManagerProxy
@@ -341,6 +349,7 @@ set(WebKit_MESSAGES_IN_FILES
 
     WebProcess/GPU/graphics/WebGPU/RemoteGPUProxy
 
+    WebProcess/GPU/media/AudioVideoRendererRemoteMessageReceiver
     WebProcess/GPU/media/RemoteAudioHardwareListener
     WebProcess/GPU/media/MediaPlayerPrivateRemote
     WebProcess/GPU/media/MediaSourcePrivateRemoteMessageReceiver
@@ -442,6 +451,8 @@ set(WebKit_SERIALIZATION_IN_FILES
 
     NetworkProcess/storage/FileSystemStorageError.serialization.in
 
+    NetworkProcess/webtransport/WebTransport.serialization.in
+
     Platform/IPC/ConnectionHandle.serialization.in
     Platform/IPC/FormDataReference.serialization.in
     Platform/IPC/IPCEvent.serialization.in
@@ -474,6 +485,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/FrameTreeNodeData.serialization.in
     Shared/FullScreenMediaDetails.serialization.in
     Shared/GPUProcessConnectionParameters.serialization.in
+    Shared/GPUProcessMediaCodecCapabilities.serialization.in
     Shared/GoToBackForwardItemParameters.serialization.in
     Shared/ImageOptions.serialization.in
     Shared/InspectorExtensionTypes.serialization.in
@@ -590,7 +602,13 @@ set(WebKit_SERIALIZATION_IN_FILES
 
     Shared/Gamepad/GamepadData.serialization.in
 
-    Shared/graphics/RemoteImageBufferSetConfiguration.serialization.in
+    Shared/Model/DDMeshDescriptor.serialization.in
+    Shared/Model/DDMeshPart.serialization.in
+    Shared/Model/DDReplaceVertices.serialization.in
+    Shared/Model/DDUpdateMeshDescriptor.serialization.in
+    Shared/Model/DDVertexAttributeFormat.serialization.in
+    Shared/Model/DDVertexLayout.serialization.in
+    Shared/Model/ModelObjectDescriptorBase.serialization.in
 
     Shared/WebGPU/WebGPUBindGroupDescriptor.serialization.in
     Shared/WebGPU/WebGPUBindGroupEntry.serialization.in
@@ -667,6 +685,8 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/XR/PlatformXR.serialization.in
     Shared/XR/XRSystem.serialization.in
 
+    Shared/graphics/RemoteImageBufferSetConfiguration.serialization.in
+
     UIProcess/Extensions/WebExtension.serialization.in
 
     WebProcess/GPU/GPUProcessConnectionInfo.serialization.in
@@ -677,6 +697,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     WebProcess/GPU/media/MediaOverridesForTesting.serialization.in
     WebProcess/GPU/media/MediaTimeUpdateData.serialization.in
     WebProcess/GPU/media/RemoteAudioSessionConfiguration.serialization.in
+    WebProcess/GPU/media/RemoteAudioVideoRendererState.serialization.in
     WebProcess/GPU/media/RemoteCDMConfiguration.serialization.in
     WebProcess/GPU/media/RemoteCDMInstanceConfiguration.serialization.in
     WebProcess/GPU/media/RemoteMediaPlayerConfiguration.serialization.in
@@ -702,6 +723,7 @@ set(WebCore_GENERATED_SERIALIZATION_IN_FILES
 
 set(WebCore_SERIALIZATION_IN_FILES
     ActivityState.serialization.in
+    DDModel.serialization.in
     DragActions.serialization.in
     InbandTextTrackPrivate.serialization.in
     IndexedDB.serialization.in

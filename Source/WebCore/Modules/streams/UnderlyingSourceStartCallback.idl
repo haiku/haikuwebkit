@@ -24,4 +24,4 @@
  */
 
 [ CallbackThisObject=any ]
-callback UnderlyingSourceStartCallback = any (any controller);
+callback UnderlyingSourceStartCallback = any (ReadableByteStreamController controller);

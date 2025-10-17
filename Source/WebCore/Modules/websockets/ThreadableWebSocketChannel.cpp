@@ -61,8 +61,8 @@ RefPtr<ThreadableWebSocketChannel> ThreadableWebSocketChannel::create(Document& 
 RefPtr<ThreadableWebSocketChannel> ThreadableWebSocketChannel::create(ScriptExecutionContext& context, WebSocketChannelClient& client, SocketProvider& provider)
 {
     if (RefPtr workerGlobalScope = dynamicDowncast<WorkerGlobalScope>(context)) {
-        WorkerRunLoop& runLoop = workerGlobalScope->thread().runLoop();
-        return WorkerThreadableWebSocketChannel::create(*workerGlobalScope, client, makeString("webSocketChannelMode"_s, runLoop.createUniqueId()), provider);
+        auto identifier = workerGlobalScope->thread()->runLoop().createUniqueId();
+        return WorkerThreadableWebSocketChannel::create(*workerGlobalScope, client, makeString("webSocketChannelMode"_s, identifier), provider);
     }
 
     return create(downcast<Document>(context), client, provider);

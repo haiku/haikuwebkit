@@ -63,6 +63,7 @@
 #include "PlatformMouseEvent.h"
 #include "QuirksData.h"
 #include "RegistrableDomain.h"
+#include "RenderStyleInlines.h"
 #include "ResourceLoadObserver.h"
 #include "ResourceRequest.h"
 #include "SVGElementTypeHelpers.h"
@@ -1506,6 +1507,16 @@ bool Quirks::shouldFlipScreenDimensions() const
 #endif
 }
 
+// Firefox and Firefox Focus (rdar://159977164)
+bool Quirks::requirePageVisibilityToPlayAudioQuirk() const
+{
+#if PLATFORM(IOS_FAMILY)
+    return needsQuirks() && m_quirksData.requirePageVisibilityToPlayAudioQuirk;
+#else
+    return false;
+#endif
+}
+
 // This section is dedicated to UA override for iPad. iPads (but iPad Mini) are sending a desktop user agent
 // to websites. In some cases, the website breaks in some ways, not expecting a touch interface for the website.
 // Controls not active or too small, form factor, etc. In this case it is better to send the iPad Mini UA.
@@ -1599,15 +1610,6 @@ bool Quirks::shouldUseEphemeralPartitionedStorageForDOMCookies(const URL& url) c
         return true;
 
     return false;
-}
-
-// rdar://155649992
-bool Quirks::shouldAllowDownloadsInSpiteOfCSP() const
-{
-    if (!needsQuirks())
-        return false;
-
-    return isDomain("dropbox.com"_s);
 }
 
 // rdar://127398734
@@ -1998,12 +2000,6 @@ bool Quirks::needsNowPlayingFullscreenSwapQuirk() const
 bool Quirks::needsWebKitMediaTextTrackDisplayQuirk() const
 {
     return needsQuirks() && m_quirksData.needsWebKitMediaTextTrackDisplayQuirk;
-}
-
-// logic-masters.de rdar://159975950
-bool Quirks::needsTextInputBoxSizingBorderBoxQuirk() const
-{
-    return needsQuirks() && m_quirksData.needsTextInputBoxSizingBorderBoxQuirk;
 }
 
 // rdar://138806698
@@ -2716,14 +2712,6 @@ static void handleLiveQuirks(QuirksData& quirksData, const URL& quirksURL, const
 #endif
 }
 
-static void handleLogicMastersQuirks(QuirksData& quirksData, const URL&, const String& quirksDomainString, const URL&)
-{
-    if (quirksDomainString != "logic-masters.de"_s)
-        return;
-
-    quirksData.needsTextInputBoxSizingBorderBoxQuirk = true;
-}
-
 static void handleMarcusQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
     if (quirksDomainString != "marcus.com"_s)
@@ -3076,6 +3064,8 @@ void Quirks::determineRelevantQuirks()
     m_quirksData.shouldDisableLazyIframeLoadingQuirk = shouldDisableLazyIframeLoadingQuirk;
     // DOFUS Touch app (rdar://112679186)
     m_quirksData.needsResettingTransitionCancelsRunningTransitionQuirk = needsResettingTransitionCancelsRunningTransitionQuirk;
+
+    m_quirksData.requirePageVisibilityToPlayAudioQuirk = (WTF::IOSApplication::isFirefox() || WTF::IOSApplication::isFirefoxFocus()) && !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::AllowBackgroundAudioPlayback);
 #endif
 
 #if PLATFORM(MAC)
@@ -3145,7 +3135,6 @@ void Quirks::determineRelevantQuirks()
         { "instagram"_s, &handleInstagramQuirks },
 #endif
         { "live"_s, &handleLiveQuirks },
-        { "logic-masters"_s, &handleLogicMastersQuirks },
 #if PLATFORM(IOS_FAMILY)
         { "mailchimp"_s, &handleMailChimpQuirks },
 #endif

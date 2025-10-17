@@ -627,7 +627,7 @@ public:
     CGFloat totalHeightOfBanners() const { return m_totalHeightOfBanners; }
 
     void doneWithKeyEvent(NSEvent *, bool eventWasHandled);
-    NSArray *validAttributesForMarkedText();
+    NSArray *validAttributesForMarkedTextSingleton();
     void doCommandBySelector(SEL);
     void insertText(id string);
     void insertText(id string, NSRange replacementRange);

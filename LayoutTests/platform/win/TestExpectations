@@ -1855,8 +1855,6 @@ webkit.org/b/277121 [ Debug ] fast/events/event-handler-detached-document.html
 webkit.org/b/168136 performance-api/performance-observer-periodic.html [ Pass Failure ]
 
 # ReadableByteStreamController is not implemented
-streams/readable-byte-stream-controller.html [ Skip ]
-streams/readable-byte-stream-controller-worker.html [ Skip ]
 streams/readable-stream-byob-reader.html [ Skip ]
 streams/readable-stream-byob-reader-worker.html [ Skip ]
 streams/readable-stream-byob-request.html [ Skip ]
@@ -1958,15 +1956,8 @@ webkit.org/b/222563 http/tests/loading/basic-auth-load-URL-with-consecutive-slas
 #  webkit.org/b/259464 fast/events/wheel/redispatched-wheel-event.html [ Failure Pass ]
 webkit.org/b/271223 fast/events/wheel/redispatched-wheel-event.html [ Skip ] # Timeout
 
-# Trusted Types aren't implemented yet
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/trusted-types-reporting.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/trusted-types-reporting-check-report.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/trusted-types-eval-reporting-report-only.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/trusted-types-eval-reporting-no-unsafe-eval.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/trusted-types-eval-reporting.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-001.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-002.html [ Skip ]
-webkit.org/b/266630 imported/w3c/web-platform-tests/trusted-types/should-trusted-type-policy-creation-be-blocked-by-csp-003.html [ Skip ]
+# Trusted Types tests fail and timeout on Windows
+webkit.org/b/299516 imported/w3c/web-platform-tests/trusted-types/ [ Skip ]
 
 # Failing with non-English keyboard
 webkit.org/b/267251 imported/w3c/web-platform-tests/css/selectors/invalidation/user-valid-user-invalid.html [ Failure Pass ]
@@ -1986,6 +1977,8 @@ imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html
 # Fail with AccessDeniedAccess
 imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]
 imported/w3c/web-platform-tests/event-timing/interactionid-auxclick.html [ Skip ]
+imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown-and-pointerdown.html [ Skip ]
+imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown.html [ Skip ]
 imported/w3c/web-platform-tests/event-timing/first-input-interactionid-key.html [ Skip ]
 
 compositing/video [ Skip ]
@@ -4528,6 +4521,18 @@ imported/w3c/web-platform-tests/wasm/core/simd/simd_f64x2_cmp.wast.js.html [ Tim
 imported/w3c/web-platform-tests/wasm/core/simd/simd_f64x2_pmin_pmax.wast.js.html [ Timeout Pass ]
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
+
+imported/w3c/web-platform-tests/speculation-rules/prefetch/different-initiators.sub.https.html?cross-site-1 [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-a-element.sub.https.html?cross-site [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-window-open.sub.https.html?cross-site [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/redirect-url.https.html?origin=cross-site-initial [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/referrer-policy.https.html?4-last [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/user-pass.https.html?cross-origin=false [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/prefetch/user-pass.https.html?cross-origin=true [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/speculation-tags/invalid-tags.https.html?tag-level=rule&type=prefetch [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/speculation-tags/invalid-tags.https.html?tag-level=ruleset&type=prefetch [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/speculation-tags/valid-tags.https.html?tag-level=rule&type=prefetch [ Failure ]
+imported/w3c/web-platform-tests/speculation-rules/speculation-tags/valid-tags.https.html?tag-level=ruleset&type=prefetch [ Failure ]
 
 # Lockdown Mode does not apply
 dom/xsl/lockdown-mode [ Skip ]

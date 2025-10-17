@@ -364,7 +364,7 @@ Ref<RemoteSnapshot> GPUProcess::getOrCreateSnapshot(RemoteSnapshotIdentifier sna
 
 #if PLATFORM(COCOA)
 
-void GPUProcess::sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier identifier, IntSize size, FrameIdentifier rootFrameIdentifier, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&& completionHandler)
+void GPUProcess::sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier identifier, FloatSize size, FrameIdentifier rootFrameIdentifier, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&& completionHandler)
 {
     RefPtr<RemoteSnapshot> snapshot;
     {
@@ -390,6 +390,26 @@ void GPUProcess::sinkCompletedSnapshotToPDF(RemoteSnapshotIdentifier identifier,
 }
 
 #endif
+
+void GPUProcess::sinkCompletedSnapshotToBitmap(RemoteSnapshotIdentifier identifier, const FloatSize& size, FrameIdentifier rootFrameIdentifier, CompletionHandler<void(std::optional<WebCore::ShareableBitmap::Handle>&&)>&& completionHandler)
+{
+    RefPtr<RemoteSnapshot> snapshot;
+    {
+        Locker locker(m_globalResourceLocker);
+        snapshot = m_snapshots.take(identifier);
+    }
+    if (!snapshot) {
+        // Currently it's not possible to know if a snapshot exists, hence no ASSERT.
+        completionHandler({ });
+        return;
+    }
+    if (!snapshot->isComplete()) {
+        // Currently the callbacks ensure the completeness.
+        ASSERT_NOT_REACHED();
+        return;
+    }
+    completionHandler(snapshot->drawToBitmap(size, rootFrameIdentifier));
+}
 
 void GPUProcess::releaseSnapshot(RemoteSnapshotIdentifier identifier)
 {

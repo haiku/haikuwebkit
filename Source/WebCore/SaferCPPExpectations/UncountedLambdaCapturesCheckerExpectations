@@ -18,10 +18,8 @@ Modules/webcodecs/WebCodecsBase.cpp
 Modules/webcodecs/WebCodecsVideoDecoder.cpp
 Modules/webcodecs/WebCodecsVideoEncoder.cpp
 Modules/webdatabase/DatabaseThread.cpp
-accessibility/AccessibilityScrollView.cpp
 accessibility/isolatedtree/AXIsolatedObject.cpp
 accessibility/isolatedtree/AXIsolatedObject.h
-accessibility/isolatedtree/AXIsolatedTree.cpp
 accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm
 animation/KeyframeEffect.cpp
 bindings/js/JSDOMPromiseDeferred.cpp
@@ -62,8 +60,6 @@ platform/mediastream/RealtimeVideoCaptureSource.cpp
 platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/mediastream/mac/RealtimeOutgoingAudioSourceCocoa.cpp
-platform/network/cocoa/NetworkStorageSessionCocoa.mm
-platform/sql/SQLiteDatabase.cpp
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
 rendering/RenderBox.cpp
@@ -89,6 +85,4 @@ testing/MockMediaSessionCoordinator.cpp
 workers/Worker.cpp
 workers/WorkerMessagingProxy.cpp
 workers/WorkerOrWorkletThread.cpp
-workers/service/ServiceWorkerContainer.cpp
-workers/service/ServiceWorkerGlobalScope.cpp
 workers/shared/SharedWorkerObjectConnection.cpp

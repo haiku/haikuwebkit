@@ -91,6 +91,9 @@ public:
 
     std::unique_ptr<MergedProfile> createMergedProfile(IPIntCallee&);
 
+    uint32_t debugId() const;
+    void setDebugId(uint32_t);
+
 private:
     Ref<CalleeGroup> getOrCreateCalleeGroup(VM&, MemoryMode);
 

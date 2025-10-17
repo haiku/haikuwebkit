@@ -36,11 +36,13 @@ class JSValue;
 
 namespace WebCore {
 
+class ReadableByteStreamController;
+
 class UnderlyingSourcePullCallback : public RefCounted<UnderlyingSourcePullCallback>, public ActiveDOMCallback {
 public:
     using ActiveDOMCallback::ActiveDOMCallback;
 
-    virtual CallbackResult<RefPtr<DOMPromise>> invoke(JSC::JSValue thisValue, JSC::JSValue controller) = 0;
+    virtual CallbackResult<RefPtr<DOMPromise>> invoke(JSC::JSValue, ReadableByteStreamController&) = 0;
 
 private:
     virtual bool hasCallback() const = 0;

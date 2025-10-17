@@ -99,6 +99,7 @@ public:
     // The default constructor initializes to Style::CurrentColor to preserve old behavior,
     // we might want to remove it entirely at some point.
     Color();
+    Color(CSS::Keyword::Currentcolor);
 
     // Convenience constructors that create Style::ResolvedColor.
     Color(WebCore::Color);
@@ -136,7 +137,7 @@ public:
 
     bool operator==(const Color&) const;
 
-    static Color currentColor();
+    static const Color& currentColor();
 
     bool containsCurrentColor() const;
     bool isCurrentColor() const;
@@ -191,6 +192,7 @@ template<> struct ToStyle<CSS::Color> {
 
 template<> struct CSSValueConversion<Color> {
     auto operator()(BuilderState&, const CSSValue&, ForVisitedLink) -> Color;
+    auto operator()(BuilderState&, const CSSValue&) -> Color;
 };
 template<> struct CSSValueCreation<Color> {
     auto operator()(CSSValuePool&, const RenderStyle&, const Color&) -> Ref<CSSValue>;

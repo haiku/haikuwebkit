@@ -1941,6 +1941,10 @@ sub isARM64()
 
 sub isCrossCompilation()
 {
+    if (isPlayStation()) {
+        return 1;
+    }
+
     my $compiler = "";
     $compiler = $ENV{'CC'} if (defined($ENV{'CC'}));
     if ($compiler =~ /gcc/) {

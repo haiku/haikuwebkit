@@ -29,6 +29,7 @@
 #include "MessageSender.h"
 #include "WebPageProxyIdentifier.h"
 #include <WebCore/ProcessQualified.h>
+#include <WebCore/WebTransportOptions.h>
 #include <wtf/Identified.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
@@ -41,6 +42,9 @@
 namespace WebCore {
 class Exception;
 struct ClientOrigin;
+struct WebTransportConnectionStats;
+struct WebTransportReceiveStreamStats;
+struct WebTransportSendStreamStats;
 struct WebTransportStreamIdentifierType;
 using WebTransportStreamIdentifier = ObjectIdentifier<WebTransportStreamIdentifierType>;
 using WebTransportSessionErrorCode = uint32_t;
@@ -61,7 +65,7 @@ using WebTransportSessionIdentifier = AtomicObjectIdentifier<WebTransportSession
 class NetworkTransportSession : public RefCounted<NetworkTransportSession>, public IPC::MessageReceiver, public IPC::MessageSender {
     WTF_MAKE_TZONE_ALLOCATED(NetworkTransportSession);
 public:
-    static RefPtr<NetworkTransportSession> create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, URL&&, WebKit::WebPageProxyIdentifier&&, WebCore::ClientOrigin&&);
+    static RefPtr<NetworkTransportSession> create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, URL&&, WebCore::WebTransportOptions&&, WebKit::WebPageProxyIdentifier&&, WebCore::ClientOrigin&&);
 
     ~NetworkTransportSession();
 
@@ -73,6 +77,9 @@ public:
     void sendDatagram(std::span<const uint8_t>, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&&);
     void createOutgoingUnidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&&);
     void createBidirectionalStream(CompletionHandler<void(std::optional<WebCore::WebTransportStreamIdentifier>)>&&);
+    void getStats(CompletionHandler<void(WebCore::WebTransportConnectionStats&&)>&&);
+    void getSendStreamStats(WebCore::WebTransportStreamIdentifier, CompletionHandler<void(std::optional<WebCore::WebTransportSendStreamStats>&&)>&&);
+    void getReceiveStreamStats(WebCore::WebTransportStreamIdentifier, CompletionHandler<void(std::optional<WebCore::WebTransportReceiveStreamStats>&&)>&&);
     void destroyOutgoingUnidirectionalStream(WebCore::WebTransportStreamIdentifier);
     void destroyBidirectionalStream(WebCore::WebTransportStreamIdentifier);
     void streamSendBytes(WebCore::WebTransportStreamIdentifier, std::span<const uint8_t>, bool withFin, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&&);
@@ -91,8 +98,8 @@ public:
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
 private:
 #if PLATFORM(COCOA)
-    static Ref<NetworkTransportSession> create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, nw_connection_group_t, nw_endpoint_t);
-    NetworkTransportSession(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, nw_connection_group_t, nw_endpoint_t);
+    static Ref<NetworkTransportSession> create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, WebCore::WebTransportOptions&&, nw_connection_group_t, nw_endpoint_t);
+    NetworkTransportSession(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, WebCore::WebTransportOptions&&, nw_connection_group_t, nw_endpoint_t);
 #else
     NetworkTransportSession();
 #endif
@@ -107,6 +114,7 @@ private:
     HashMap<WebCore::WebTransportStreamIdentifier, Ref<NetworkTransportStream>> m_streams;
     WeakPtr<NetworkConnectionToWebProcess> m_connectionToWebProcess;
     const WebTransportSessionIdentifier m_identifier;
+    const WebCore::WebTransportOptions m_options;
 
 #if PLATFORM(COCOA)
     const RetainPtr<nw_connection_group_t> m_connectionGroup;

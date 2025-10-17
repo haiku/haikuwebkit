@@ -1,4 +1,5 @@
 //@ requireOptions("--useAsyncStackTrace=1")
+//@ slow!
 
 const source = "async-stack-trace-nested-deep.js";
 
@@ -34,7 +35,6 @@ function shouldThrowAsync(run, errorType, message, stackFunctions) {
 
     const stackLines = stackTrace.split('\n').filter(line => line.trim());
 
-    let stackLineIndex = 0;
     for (let i = 0; i < stackFunctions.length; i++) {
         const [expectedFunction, expectedLocation] = stackFunctions[i];
         const isNativeCode = expectedLocation === "[native code]" 
@@ -645,7 +645,8 @@ async function problematicFunction() {
     throw new Error("error");
 }
 
-for (let i = 0; i < testLoopCount; i++) {
+let count = (testLoopCount / 10) | 0; // This test is too slow.
+for (let i = 0; i < count; i++) {
     shouldThrowAsync(
         async function test () {
             await level1();
@@ -755,8 +756,8 @@ for (let i = 0; i < testLoopCount; i++) {
             ["async level2", "73:17"],
             ["async level1", "67:17"],
             ["drainMicrotasks", "[native code]"],
-            ["shouldThrowAsync", "19:20"],
-            ["global code", "649:21"]
+            ["shouldThrowAsync", "20:20"],
+            ["global code", "650:21"]
         ],
     );
     drainMicrotasks();

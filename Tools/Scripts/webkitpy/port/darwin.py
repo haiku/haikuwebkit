@@ -53,10 +53,33 @@ class DarwinPort(ApplePort):
             # with MallocStackLogging enabled.
             self.set_option_default("batch_size", 1000)
 
+    def _load_api_test_suite_allowlist(self):
+        """Load the allowlist of test suites that should not go to the system shard."""
+        allowlist_path = os.path.join(os.path.dirname(__file__), '..', 'api_tests', 'allowlist.txt')
+        if not self._filesystem.exists(allowlist_path):
+            return []
+
+        allowlist = set()
+        try:
+            content = self._filesystem.read_text_file(allowlist_path)
+            for line in content.splitlines():
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    allowlist.add(line)
+        except OSError:
+            pass
+        return sorted(list(allowlist))
+
+    def _should_use_system_shard(self, shard_name):
+        """Check if a shard should be placed in the system shard based on the allowlist."""
+        allowlist = self._load_api_test_suite_allowlist()
+        return shard_name not in allowlist
+
     def sharding_groups(self, suite=None):
         if suite == 'api-tests':
             return {
-                'system': lambda shard: shard.name.startswith('TestWebKitAPI') or shard.name.startswith('TestWGSL') or shard.name.startswith('TestIPC'),
+                'system': lambda shard: self._should_use_system_shard(shard.name),
+                'system': lambda shard: self._should_use_system_shard(shard.name),
             }
         return {
             'media': lambda shard: 'media' in shard.name or 'webaudio' in shard.name,

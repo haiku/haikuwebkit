@@ -278,21 +278,27 @@ function any(iterable)
         for (var value of iterable) {
             @putByValDirect(errors, index, @undefined);
             var nextPromise = promiseResolve.@call(this, value);
+            var then = nextPromise.then;
             let currentIndex = index++;
             ++remainingElementsCount;
-            nextPromise.then(resolve, (reason) => {
-                if (currentIndex < 0)
-                    return @undefined;
 
-                @putByValDirect(errors, currentIndex, reason);
-                currentIndex = -1;
-
-                --remainingElementsCount;
-                if (remainingElementsCount === 0)
-                    return reject.@call(@undefined, new @AggregateError(errors));
-
+            // Use comma expr for avoiding unnecessary Function.prototype.name
+            var onRejected = (0, (reason) => {
+              if (currentIndex < 0)
                 return @undefined;
+
+              @putByValDirect(errors, currentIndex, reason);
+              currentIndex = -1;
+
+              if (!--remainingElementsCount)
+                reject.@call(@undefined, new @AggregateError(errors));
+
+              return @undefined;
             });
+            if (@isPromise(nextPromise) && then === @defaultPromiseThen)
+                @performPromiseThen(nextPromise, resolve, onRejected, @undefined, /* context */ promise);
+            else
+                then.@call(nextPromise, resolve, onRejected);
         }
 
         --remainingElementsCount;
@@ -324,7 +330,11 @@ function race(iterable)
 
         for (var value of iterable) {
             var nextPromise = promiseResolve.@call(this, value);
-            nextPromise.then(resolve, reject);
+            var then = nextPromise.then;
+            if (@isPromise(nextPromise) && then === @defaultPromiseThen)
+                @performPromiseThen(nextPromise, resolve, reject, @undefined, /* context */ promise);
+            else
+                nextPromise.then(resolve, reject);
         }
     } catch (error) {
         reject.@call(@undefined, error);

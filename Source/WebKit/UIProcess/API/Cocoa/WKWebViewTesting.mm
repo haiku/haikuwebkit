@@ -59,6 +59,10 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/TZoneMallocInlines.h>
+#if USE(APPLE_INTERNAL_SDK)
+#import <wtf/cocoa/Entitlements.h>
+#import <wtf/spi/darwin/XPCSPI.h>
+#endif
 #import <wtf/text/MakeString.h>
 
 #if PLATFORM(MAC)
@@ -1091,6 +1095,43 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
 #else
     completionHandler(0);
 #endif
+}
+
+- (NSString *)_webContentProcessVariantForFrame:(_WKFrameHandle *)frameHandle
+{
+#if USE(APPLE_INTERNAL_SDK)
+    if (!_page)
+        return @"standard";
+
+    RefPtr<WebKit::WebProcessProxy> process;
+
+    if (frameHandle) {
+        auto frameID = frameHandle->_frameHandle.get() ? frameHandle->_frameHandle->frameID() : std::nullopt;
+        if (!frameID)
+            return @"standard";
+
+        process = _page->processContainingFrame(frameID);
+        if (!process)
+            process = _page->legacyMainFrameProcess();
+    } else {
+        // No frameHandle provided, check main frame process
+        process = _page->legacyMainFrameProcess();
+    }
+
+    if (!process || !process->hasConnection())
+        return @"standard";
+
+    Ref connection = process->connection();
+    bool hasEnhancedSecurity = hasEntitlement(connection->xpcConnection(), "com.apple.private.webkit.enhanced-security"_s);
+    bool hasLockdownMode = hasEntitlement(connection->xpcConnection(), "com.apple.private.webkit.lockdown-mode"_s);
+
+    if (hasEnhancedSecurity)
+        return @"security";
+    if (hasLockdownMode)
+        return @"lockdown";
+
+#endif
+    return @"standard";
 }
 
 @end

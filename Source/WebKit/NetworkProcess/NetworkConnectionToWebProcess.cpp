@@ -1786,7 +1786,7 @@ void NetworkConnectionToWebProcess::navigatorGetPushPermissionState(URL&& scopeU
 }
 #endif // ENABLE(DECLARATIVE_WEB_PUSH)
 
-void NetworkConnectionToWebProcess::initializeWebTransportSession(WebTransportSessionIdentifier identifier, URL&& url, WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin, CompletionHandler<void(bool)>&& completionHandler)
+void NetworkConnectionToWebProcess::initializeWebTransportSession(WebTransportSessionIdentifier identifier, URL&& url, WebCore::WebTransportOptions&& options, WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (!url.isValid()
         || !portAllowed(url)
@@ -1794,7 +1794,7 @@ void NetworkConnectionToWebProcess::initializeWebTransportSession(WebTransportSe
         || m_networkTransportSessions.contains(identifier))
         return completionHandler(false);
 
-    RefPtr session = NetworkTransportSession::create(*this, identifier, WTFMove(url), WTFMove(pageID), WTFMove(clientOrigin));
+    RefPtr session = NetworkTransportSession::create(*this, identifier, WTFMove(url), WTFMove(options), WTFMove(pageID), WTFMove(clientOrigin));
     if (!session)
         return completionHandler(false);
     session->initialize(WTFMove(completionHandler));

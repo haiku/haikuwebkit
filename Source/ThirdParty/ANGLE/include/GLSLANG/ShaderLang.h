@@ -157,8 +157,8 @@ struct ShPixelLocalStorageOptions
 struct ShCompileOptions
 {
     ShCompileOptions();
-    ShCompileOptions(const ShCompileOptions &other);
-    ShCompileOptions &operator=(const ShCompileOptions &other);
+    ShCompileOptions(const ShCompileOptions &other) = default;
+    ShCompileOptions &operator=(const ShCompileOptions &other) = default;
 
     // Translates intermediate tree to glsl, hlsl, msl, or SPIR-V binary.  Can be queried by
     // calling sh::GetObjectCode().
@@ -488,8 +488,8 @@ using ShHashFunction64 = khronos_uint64_t (*)(const char *, size_t);
 struct ShBuiltInResources
 {
     ShBuiltInResources();
-    ShBuiltInResources(const ShBuiltInResources &other);
-    ShBuiltInResources &operator=(const ShBuiltInResources &other);
+    ShBuiltInResources(const ShBuiltInResources &) = default;
+    ShBuiltInResources &operator=(const ShBuiltInResources &) = default;
 
     // Constants.
     int MaxVertexAttribs;

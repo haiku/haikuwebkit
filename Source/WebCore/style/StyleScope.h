@@ -33,6 +33,7 @@
 #include <WebCore/LayoutSize.h>
 #include <WebCore/StyleScopeIdentifier.h>
 #include <WebCore/StyleScopeOrdinal.h>
+#include <WebCore/Styleable.h>
 #include <WebCore/Timer.h>
 #include <memory>
 #include <wtf/CheckedPtr.h>
@@ -173,6 +174,10 @@ public:
     const AnchorPositionedToAnchorMap& anchorPositionedToAnchorMap() const { return m_anchorPositionedToAnchorMap; }
     void updateAnchorPositioningStateAfterStyleResolution();
 
+    std::optional<size_t> lastSuccessfulPositionOptionIndexFor(const Styleable&);
+    void setLastSuccessfulPositionOptionIndexMap(HashMap<AnchorPositionedKey, size_t>&&);
+    void forgetLastSuccessfulPositionOptionIndex(const Styleable&);
+
     bool invalidateForAnchorDependencies(LayoutDependencyUpdateContext&);
 
 private:
@@ -273,6 +278,9 @@ private:
         bool operator==(const AnchorPosition&) const = default;
     };
     SingleThreadWeakHashMap<const RenderBoxModelObject, AnchorPosition> m_anchorPositionsOnLastUpdate;
+    // Stores the last successful position option for each anchor-positioned element.
+    // This is recorded when ResizeObserver events are delivered, at Document::updateResizeObservations
+    HashMap<AnchorPositionedKey, size_t> m_lastSuccessfulPositionOptionIndexes;
 
     std::unique_ptr<MatchResultCache> m_matchResultCache;
 

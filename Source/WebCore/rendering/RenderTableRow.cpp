@@ -33,6 +33,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObjectInlines.h"
 #include "RenderElementInlines.h"
+#include "RenderElementStyleInlines.h"
 #include "RenderLayoutState.h"
 #include "RenderObjectInlines.h"
 #include "RenderTableCell.h"
