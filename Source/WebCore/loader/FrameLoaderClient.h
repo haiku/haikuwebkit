@@ -34,6 +34,7 @@
 
 namespace WebCore {
 
+class DocumentLoader;
 class FormState;
 class Frame;
 class HitTestResult;

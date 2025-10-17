@@ -420,11 +420,6 @@ void ChromeClientHaiku::reachedMaxAppCacheSize(int64_t /*spaceNeeded*/)
     notImplemented();
 }
 
-void ChromeClientHaiku::reachedApplicationCacheOriginQuota(SecurityOrigin&, int64_t /*totalSpaceNeeded*/)
-{
-    notImplemented();
-}
-
 void ChromeClientHaiku::runOpenPanel(LocalFrame&, FileChooser& chooser)
 {
     BMessage message(B_REFS_RECEIVED);

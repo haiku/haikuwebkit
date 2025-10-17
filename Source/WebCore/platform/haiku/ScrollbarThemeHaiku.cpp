@@ -31,6 +31,7 @@
 #include "GraphicsContext.h"
 #include "Scrollbar.h"
 #include "ScrollableArea.h"
+#include "ScrollbarInlines.h"
 #include <ControlLook.h>
 #include <InterfaceDefs.h>
 #include <Shape.h>

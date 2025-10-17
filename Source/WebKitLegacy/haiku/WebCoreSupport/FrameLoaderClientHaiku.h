@@ -208,6 +208,8 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
 
     void prefetchDNS(const String&) override { }
 
+    void setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize) override {}
+
     void didRestoreFromBackForwardCache() final {}
 
     void sendH2Ping(const WTF::URL&, WTF::CompletionHandler<void(std::experimental::fundamentals_v3::expected<WTF::Seconds, WebCore::ResourceError>&&)>&&) final { notImplemented(); }
