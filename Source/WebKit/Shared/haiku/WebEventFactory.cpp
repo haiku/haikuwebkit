@@ -114,7 +114,7 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const BMessage* message)
     if (message->FindInt32("be:delta_y", &deltaY) != B_OK)
         deltaY = 0;
 
-    return WebMouseEvent( { type, modifiers, WallTime::now() }, currentMouseButton, currentMouseButtons,
+    return WebMouseEvent( WebEvent( type, modifiers, MonotonicTime::now() ), currentMouseButton, currentMouseButtons,
         IntPoint(viewPosition), IntPoint(globalPosition), deltaX, deltaY, 0, clickCount);
 }
 
