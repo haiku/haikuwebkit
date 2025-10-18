@@ -67,7 +67,7 @@ namespace WebCore {
         bool canTakeFocus(FocusDirection) const override;
         void takeFocus(FocusDirection) override;
 
-        void focusedElementChanged(Element*) override;
+        void focusedElementChanged(Element*, WebCore::LocalFrame*, WebCore::FocusOptions, WebCore::BroadcastFocusedElement) override;
         void focusedFrameChanged(Frame*) override;
 
         RefPtr<Page> createWindow(LocalFrame&, const WTF::String&, const WindowFeatures&, const NavigationAction&) override;
@@ -78,16 +78,12 @@ namespace WebCore {
         bool canRunModal() const override;
         void runModal() override;
 
-        void setToolbarsVisible(bool) override;
         bool toolbarsVisible() const override;
 
-        void setStatusbarVisible(bool) override;
         bool statusbarVisible() const override;
 
-        void setScrollbarsVisible(bool) override;
         bool scrollbarsVisible() const override;
 
-        void setMenubarVisible(bool) override;
         bool menubarVisible() const override;
 
         void setResizable(bool) override;
@@ -142,7 +138,6 @@ namespace WebCore {
 
         void exceededDatabaseQuota(LocalFrame&, const String& databaseName, DatabaseDetails) override;
         void reachedMaxAppCacheSize(int64_t spaceNeeded) override;
-        void reachedApplicationCacheOriginQuota(SecurityOrigin&, int64_t totalSpaceNeeded) override;
 
         void attachRootGraphicsLayer(LocalFrame&, GraphicsLayer*) override;
         void setNeedsOneShotDrawingSynchronization() override;

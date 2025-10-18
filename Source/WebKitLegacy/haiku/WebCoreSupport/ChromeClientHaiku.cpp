@@ -188,19 +188,9 @@ void ChromeClientHaiku::runModal()
     notImplemented();
 }
 
-void ChromeClientHaiku::setToolbarsVisible(bool visible)
-{
-    m_webPage->setToolbarsVisible(visible);
-}
-
 bool ChromeClientHaiku::toolbarsVisible() const
 {
     return m_webPage->areToolbarsVisible();
-}
-
-void ChromeClientHaiku::setStatusbarVisible(bool visible)
-{
-    m_webPage->setStatusbarVisible(visible);
 }
 
 bool ChromeClientHaiku::statusbarVisible() const
@@ -208,19 +198,9 @@ bool ChromeClientHaiku::statusbarVisible() const
     return m_webPage->isStatusbarVisible();
 }
 
-void ChromeClientHaiku::setScrollbarsVisible(bool visible)
-{
-    m_webPage->MainFrame()->SetAllowsScrolling(visible);
-}
-
 bool ChromeClientHaiku::scrollbarsVisible() const
 {
     return m_webPage->MainFrame()->AllowsScrolling();
-}
-
-void ChromeClientHaiku::setMenubarVisible(bool visible)
-{
-    m_webPage->setMenubarVisible(visible);
 }
 
 bool ChromeClientHaiku::menubarVisible() const
