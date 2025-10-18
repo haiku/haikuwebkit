@@ -33,14 +33,25 @@
 
 namespace WebCore {
 
-IntSize PlatformImageNativeImageBackend::size() const
+IntSize NativeImage::size() const
 {
     return IntSize(platformImage()->Bounds().Size());
 }
 
-bool PlatformImageNativeImageBackend::hasAlpha() const
+bool NativeImage::hasAlpha() const
 {
     return platformImage()->ColorSpace() == B_RGBA32;
+}
+
+DestinationColorSpace NativeImage::colorSpace() const
+{
+    notImplemented();
+    return DestinationColorSpace::SRGB();
+}
+
+Headroom NativeImage::headroom() const
+{
+    return Headroom::None;
 }
 
 std::optional<Color> NativeImage::singlePixelSolidColor() const
@@ -49,22 +60,6 @@ std::optional<Color> NativeImage::singlePixelSolidColor() const
         return std::nullopt;
 
     return (asSRGBA(PackedColor::ARGB { *(uint32*)platformImage()->Bits()}));
-}
-
-DestinationColorSpace PlatformImageNativeImageBackend::colorSpace() const
-{
-    notImplemented();
-    return DestinationColorSpace::SRGB();
-}
-
-Headroom PlatformImageNativeImageBackend::headroom() const
-{
-    return Headroom::None;
-}
-
-void NativeImage::draw(GraphicsContext& context, const FloatRect& destinationRect, const FloatRect& sourceRect, ImagePaintingOptions options)
-{
-    context.drawNativeImageInternal(*this, destinationRect, sourceRect, options);
 }
 
 void NativeImage::clearSubimages()

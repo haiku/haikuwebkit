@@ -97,14 +97,15 @@ static void findMatchingFontStyle(const font_family& fontFamily, bool bold, bool
 
 FontPlatformData::FontPlatformData(const FontDescription& fontDescription, const AtomString& familyName)
 {
-	m_font = std::make_unique<BFont>();
+    m_font = std::make_unique<BFont>();
     m_font->SetSize(fontDescription.computedSize());
 
     font_family fontFamily;
     findMatchingFontFamily(familyName, fontFamily);
 
     font_style fontStyle;
-    findMatchingFontStyle(fontFamily, fontDescription.weight() == boldWeightValue(), fontDescription.italic() != std::nullopt, &fontStyle);
+    findMatchingFontStyle(fontFamily, fontDescription.weight() == boldWeightValue(),
+        fontDescription.fontStyleSlope() != std::nullopt, &fontStyle);
 
     m_font->SetFamilyAndStyle(fontFamily, fontStyle);
 
@@ -122,7 +123,8 @@ FontPlatformData::FontPlatformData(const BFont& font, const FontDescription& fon
 
     font.GetFamilyAndStyle(&fontFamily, &fontStyle);
 
-    findMatchingFontStyle(fontFamily, fontDescription.weight() == boldWeightValue(), fontDescription.italic() != std::nullopt, &fontStyle);
+    findMatchingFontStyle(fontFamily, fontDescription.weight() == boldWeightValue(),
+        fontDescription.fontStyleSlope() != std::nullopt, &fontStyle);
 
     m_font->SetFamilyAndStyle(fontFamily, fontStyle);
 

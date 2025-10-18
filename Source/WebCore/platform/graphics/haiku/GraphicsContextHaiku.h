@@ -64,7 +64,7 @@ public:
     void setLineDash(const DashArray&, float dashOffset) override;
     void setLineJoin(LineJoin) override;
     void setMiterLimit(float) override;
-    void drawNativeImageInternal(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) override;
+    void drawNativeImage(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) override;
     void drawPattern(NativeImage&, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform& patternTransform, const FloatPoint& phase, const FloatSize& spacing, ImagePaintingOptions = { }) override;
     void clip(const FloatRect&) override;
     void clipOut(const FloatRect&) override;

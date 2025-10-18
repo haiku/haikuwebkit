@@ -32,6 +32,8 @@
 #include "CurlResponse.h"
 #include "ProtectionSpace.h"
 #include "ResourceRequest.h"
+#include "SynchronousLoaderClient.h"
+
 #include <wtf/FileSystem.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/Noncopyable.h>

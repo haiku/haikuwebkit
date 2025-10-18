@@ -434,19 +434,18 @@ BWebFrame* BWebFrame::AddChild(BWebPage* page, BString name,
         data->frame = WebCore::LocalFrame::createSubframe(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, *ownerElement, FrameTreeSyncData::create());
+            WebCore::FrameIdentifier::generate(), {}, {}, *ownerElement, FrameTreeSyncData::create());
     } else {
         data->frame = WebCore::LocalFrame::createMainFrame(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, nullptr, FrameTreeSyncData::create());
+            WebCore::FrameIdentifier::generate(), {}, {}, nullptr, FrameTreeSyncData::create());
     }
     FrameLoaderClientHaiku& client = static_cast<FrameLoaderClientHaiku&>(data->frame->loader().client());
     client.setFrame(frame);
     data->frame->tree().setSpecifiedName(AtomString::fromUTF8(name.String()));
 
     data->frame->init();
-    // TODO? evas_object_smart_member_add(frame, ewkFrame);
 
     // The creation of the frame may have run arbitrary JavaScript that removed
     // it from the page already.

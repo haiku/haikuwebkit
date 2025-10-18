@@ -120,7 +120,7 @@ void ChromeClientHaiku::takeFocus(FocusDirection)
 {
 }
 
-void ChromeClientHaiku::focusedElementChanged(Element* node)
+void ChromeClientHaiku::focusedElementChanged(Element* node, WebCore::LocalFrame*, WebCore::FocusOptions, WebCore::BroadcastFocusedElement)
 {
     if (node)
         focus();
