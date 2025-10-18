@@ -36,13 +36,15 @@
 #include <spawn.h>
 #include <unistd.h>
 
+#include <sys/socket.h>
+
 using namespace WebCore;
 
 namespace WebKit {
 
 void ProcessLauncher::launchProcess()
 {
-    IPC::SocketPair socketPair = IPC::createPlatformConnection(
+    IPC::SocketPair socketPair = IPC::createPlatformConnection(SOCK_DGRAM, 
         IPC::PlatformConnectionOptions::SetCloexecOnClient | IPC::PlatformConnectionOptions::SetCloexecOnServer);
 
     BString executablePath;
