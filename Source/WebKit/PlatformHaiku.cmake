@@ -16,6 +16,7 @@ list(APPEND WebKit_SOURCES
     Platform/IPC/haiku/IPCSemaphoreHaiku.cpp
     Platform/IPC/unix/ArgumentCodersUnix.cpp
     Platform/IPC/unix/ConnectionUnix.cpp
+    Platform/IPC/unix/IPCUtilitiesUnix.cpp
     Platform/unix/LoggingUnix.cpp
 
     Shared/haiku/NativeWebMouseEventHaiku.cpp
