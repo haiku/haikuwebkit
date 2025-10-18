@@ -54,7 +54,7 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
 
     WebProcessPool& processPool = config->processPool();
     fPage = processPool.createWebPage(*fPageClient, WTFMove(config));
-    fPage->initializeWebPage(Site(aboutBlankURL()), {});
+    fPage->initializeWebPage(Site(aboutBlankURL()), {}, {});
 
     if (fPage->drawingArea()) {
         fPage->drawingArea()->setSize(IntSize(rect.right - rect.left,
