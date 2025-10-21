@@ -57,7 +57,9 @@ FontPlatformData::FontPlatformData(float size, bool syntheticBold, bool syntheti
 }
 
 FontPlatformData::~FontPlatformData() = default;
+#if !PLATFORM(HAIKU)
 FontPlatformData::FontPlatformData(const FontPlatformData&) = default;
+#endif
 FontPlatformData& FontPlatformData::operator=(const FontPlatformData&) = default;
 
 #if !USE(FREETYPE)
