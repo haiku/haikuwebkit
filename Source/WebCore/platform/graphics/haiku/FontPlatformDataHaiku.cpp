@@ -95,6 +95,13 @@ static void findMatchingFontStyle(const font_family& fontFamily, bool bold, bool
 
 // #pragma mark -
 
+FontPlatformData::FontPlatformData(const FontPlatformData& source)
+{
+	*this = source;
+	m_font = std::make_shared<BFont>(source.font());
+}
+
+
 FontPlatformData::FontPlatformData(const FontDescription& fontDescription, const AtomString& familyName)
 {
     m_font = std::make_unique<BFont>();
