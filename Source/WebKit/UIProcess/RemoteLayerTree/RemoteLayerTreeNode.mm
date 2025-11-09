@@ -280,7 +280,8 @@ RemoteLayerTreeNode* RemoteLayerTreeNode::forCALayer(CALayer *layer)
 NSString *RemoteLayerTreeNode::appendLayerDescription(NSString *description, CALayer *layer)
 {
     auto layerID = WebKit::RemoteLayerTreeNode::layerID(layer);
-    RetainPtr layerDescription = adoptNS([[NSString alloc] initWithFormat:@" layerID = %llu \"%@\"", layerID ? layerID->object().toUInt64() : 0, layer.name ? layer.name : @""]);
+    RetainPtr<NSString> name = layer.name ? layer.name : @"";
+    RetainPtr layerDescription = adoptNS([[NSString alloc] initWithFormat:@" layerID = %llu \"%@\"", layerID ? layerID->object().toUInt64() : 0, name.get()]);
     return [description stringByAppendingString:layerDescription.get()];
 }
 
@@ -316,7 +317,8 @@ void RemoteLayerTreeNode::setAcceleratedEffectsAndBaseValues(const WebCore::Acce
         return;
 
     Ref animationStack = RemoteAnimationStack::create(effects.map([&](const Ref<AcceleratedEffect>& effect) {
-        RefPtr timeline = host.timeline(m_layerID.processIdentifier());
+        TimelineID timelineID { effect->timelineIdentifier(), m_layerID.processIdentifier() };
+        RefPtr timeline = host.timeline(timelineID);
         ASSERT(timeline);
         return RemoteAnimation::create(Ref { effect }.get(), *timeline);
     }), baseValues.clone(), layer.get().bounds);

@@ -30,7 +30,7 @@
 
 - (void)dealloc
 {
-    [_appid release];
+    SUPPRESS_UNRETAINED_ARG [_appid release];
     [super dealloc];
 }
 

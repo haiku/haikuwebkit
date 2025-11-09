@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +31,7 @@
 #include <wtf/Mmap.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/SystemMalloc.h>
 #include <wtf/TypeTraits.h>
 
 // MallocSpan is a smart pointer class that wraps a std::span and calls fastFree in its destructor.
@@ -155,6 +156,23 @@ private:
     }
 
     std::span<T> m_span;
+};
+
+// Specialization for SystemMalloc to access <typename T>.
+template<typename T> class MallocSpan<T, SystemMalloc> : public MallocSpan<T, SystemMallocBase<T>> {
+public:
+    using Base = MallocSpan<T, SystemMallocBase<T>>;
+    using Base::Base;
+
+    MallocSpan() = default;
+    MallocSpan(MallocSpan&&) = default;
+    MallocSpan& operator=(MallocSpan&&) = default;
+
+    MallocSpan& operator=(Base&& other)
+    {
+        Base::operator=(WTFMove(other));
+        return *this;
+    }
 };
 
 template<typename U, typename OtherMalloc> MallocSpan<U, OtherMalloc> adoptMallocSpan(std::span<U> span)

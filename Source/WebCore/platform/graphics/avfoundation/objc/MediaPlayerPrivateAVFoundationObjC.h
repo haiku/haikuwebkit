@@ -518,8 +518,8 @@ private:
     std::optional<VideoFrameMetadata> m_videoFrameMetadata;
     mutable std::optional<NSTimeInterval> m_cachedSeekableTimeRangesLastModifiedTime;
     mutable std::optional<NSTimeInterval> m_cachedLiveUpdateInterval;
-    std::unique_ptr<Observer<void()>> m_currentImageChangedObserver;
-    std::unique_ptr<Observer<void()>> m_waitForVideoOutputMediaDataWillChangeObserver;
+    RefPtr<Observer<void()>> m_currentImageChangedObserver;
+    RefPtr<Observer<void()>> m_waitForVideoOutputMediaDataWillChangeObserver;
     ProcessIdentity m_resourceOwner;
     PlatformTimeRanges m_buffered;
     TrackID m_currentTextTrackID { 0 };

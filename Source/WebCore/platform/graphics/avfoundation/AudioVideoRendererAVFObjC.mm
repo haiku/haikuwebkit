@@ -27,18 +27,22 @@
 #import "AudioVideoRendererAVFObjC.h"
 
 #import "AudioMediaStreamTrackRenderer.h"
+#import "CDMFairPlayStreaming.h"
 #import "CDMInstanceFairPlayStreamingAVFObjC.h"
+#import "CDMSessionAVContentKeySession.h"
 #import "EffectiveRateChangedListener.h"
 #import "FormatDescriptionUtilities.h"
 #import "GraphicsContext.h"
 #import "LayoutRect.h"
 #import "Logging.h"
+#import "MediaSampleAVFObjC.h"
 #import "MediaSessionManagerCocoa.h"
 #import "NativeImage.h"
 #import "PixelBufferConformerCV.h"
 #import "PlatformDynamicRangeLimitCocoa.h"
 #import "SpatialAudioExperienceHelper.h"
 #import "TextTrackRepresentation.h"
+#import "Timer.h"
 #import "VideoFrameCV.h"
 #import "VideoLayerManagerObjC.h"
 #import "VideoMediaSampleRenderer.h"
@@ -85,6 +89,12 @@ AudioVideoRendererAVFObjC::AudioVideoRendererAVFObjC(const Logger& originalLogge
     , m_synchronizer([adoptNS(PAL::allocAVSampleBufferRenderSynchronizerInstance()) init])
     , m_listener(WebAVSampleBufferListener::create(*this))
     , m_startupTime(MonotonicTime::now())
+#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
+    , m_keyStatusesChangedObserver(Observer<void()>::create([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->tryToEnqueueBlockedSamples();
+    }))
+#endif
 {
     // addPeriodicTimeObserverForInterval: throws an exception if you pass a non-numeric CMTime, so just use
     // an arbitrarily large time value of once an hour:
@@ -122,6 +132,11 @@ AudioVideoRendererAVFObjC::~AudioVideoRendererAVFObjC()
     destroyVideoTrack();
     destroyAudioRenderers();
     m_listener->invalidate();
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
+    if (RefPtr session = m_session.get())
+        session->removeRenderer(*this);
+#endif
 }
 
 void AudioVideoRendererAVFObjC::setPreferences(VideoRendererPreferences preferences)
@@ -192,6 +207,15 @@ void AudioVideoRendererAVFObjC::enqueueSample(TrackIdentifier trackId, Ref<Media
     auto type = typeOf(trackId);
     if (!type)
         return;
+
+#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
+    if (!canEnqueueSample(trackId, sample)) {
+        DEBUG_LOG(LOGIDENTIFIER, "Can't enqueue sample: ", sample.get(), " for track: ", toString(trackId));
+        m_blockedSamples.append({ trackId, sample });
+        return;
+    }
+    attachContentKeyToSampleIfNeeded(sample);
+#endif
 
     switch (*type) {
     case TrackType::Video: {
@@ -675,9 +699,7 @@ void AudioVideoRendererAVFObjC::setIsVisible(bool visible)
 
 void AudioVideoRendererAVFObjC::setPresentationSize(const IntSize& newSize)
 {
-    if (std::exchange(m_presentationSize, newSize) == newSize || !m_sampleBufferDisplayLayer)
-        return;
-    m_videoLayerManager->setPresentationSize(newSize);
+    m_presentationSize = newSize;
 }
 
 void AudioVideoRendererAVFObjC::setShouldMaintainAspectRatio(bool shouldMaintainAspectRatio)
@@ -821,13 +843,6 @@ void AudioVideoRendererAVFObjC::setVideoLayerSizeFenced(const FloatSize& newSize
         updateDisplayLayerIfNeeded();
 }
 
-#if ENABLE(ENCRYPTED_MEDIA)
-void AudioVideoRendererAVFObjC::notifyInsufficientExternalProtectionChanged(Function<void(bool)>&& callback)
-{
-    m_insufficientExternalProtectionChangedCallback = WTFMove(callback);
-}
-#endif
-
 void AudioVideoRendererAVFObjC::setVideoFullscreenLayer(PlatformLayer *videoFullscreenLayer, WTF::Function<void()>&& completionHandler)
 {
     RefPtr currentImage = currentNativeImage();
@@ -865,8 +880,7 @@ void AudioVideoRendererAVFObjC::isInFullscreenOrPictureInPictureChanged(bool isI
 {
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     ALWAYS_LOG(LOGIDENTIFIER, isInFullscreenOrPictureInPicture);
-    if (acceleratedVideoMode() == AcceleratedVideoMode::VideoRenderer)
-        destroyVideoLayerIfNeeded();
+    destroyExpiringVideoRenderersIfNeeded();
 #else
     UNUSED_PARAM(isInFullscreenOrPictureInPicture);
 #endif
@@ -941,10 +955,7 @@ void AudioVideoRendererAVFObjC::removeAudioRenderer(TrackIdentifier trackId)
 
 void AudioVideoRendererAVFObjC::destroyAudioRenderer(RetainPtr<AVSampleBufferAudioRenderer> renderer)
 {
-    // False positive see webkit.org/b/298024
-    SUPPRESS_UNRETAINED_ARG CMTime currentTime = PAL::CMTimebaseGetTime([m_synchronizer timebase]);
-    [m_synchronizer removeRenderer:renderer.get() atTime:currentTime completionHandler:nil];
-
+    removeRendererFromSynchronizerIfNeeded(renderer.get());
     m_listener->stopObservingAudioRenderer(renderer.get());
     [renderer flush];
     [renderer stopRequestingMediaData];
@@ -1133,10 +1144,12 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::ensureLayerOrVideoRenderer()
 
 void AudioVideoRendererAVFObjC::ensureLayer()
 {
-    if (m_sampleBufferDisplayLayer)
+    if (m_sampleBufferDisplayLayer) {
+        if (m_sampleBufferDisplayLayerState == SampleBufferLayerState::AddedToSynchronizer)
+            return;
+        configureLayerOrVideoRenderer(m_sampleBufferDisplayLayer.get());
         return;
-
-    destroyVideoLayerIfNeeded();
+    }
 
     m_sampleBufferDisplayLayer = [adoptNS(PAL::allocAVSampleBufferDisplayLayerInstance()) init];
     if (!m_sampleBufferDisplayLayer) {
@@ -1164,27 +1177,18 @@ void AudioVideoRendererAVFObjC::destroyLayer()
 
     ALWAYS_LOG(LOGIDENTIFIER);
 
-    // False positive see webkit.org/b/298024
-    SUPPRESS_UNRETAINED_ARG CMTime currentTime = PAL::CMTimebaseGetTime([m_synchronizer timebase]);
-    [m_synchronizer removeRenderer:m_sampleBufferDisplayLayer.get() atTime:currentTime completionHandler:nil];
+    removeRendererFromSynchronizerIfNeeded(m_sampleBufferDisplayLayer.get());
 
     m_videoLayerManager->didDestroyVideoLayer();
 
     m_sampleBufferDisplayLayer = nullptr;
-    m_needsDestroyVideoLayer = false;
-}
-
-void AudioVideoRendererAVFObjC::destroyVideoLayerIfNeeded()
-{
-    if (!m_needsDestroyVideoLayer)
-        return;
-    m_needsDestroyVideoLayer = false;
-    m_videoLayerManager->didDestroyVideoLayer();
 }
 
 void AudioVideoRendererAVFObjC::ensureVideoRenderer()
 {
 #if ENABLE(LINEAR_MEDIA_PLAYER)
+    destroyExpiringVideoRenderersIfNeeded();
+
     if (m_sampleBufferVideoRenderer)
         return;
 
@@ -1210,14 +1214,20 @@ void AudioVideoRendererAVFObjC::destroyVideoRenderer()
 
     ALWAYS_LOG(LOGIDENTIFIER);
 
-    // False positive see webkit.org/b/298024
-    SUPPRESS_UNRETAINED_ARG CMTime currentTime = PAL::CMTimebaseGetTime([m_synchronizer timebase]);
-    [m_synchronizer removeRenderer:m_sampleBufferVideoRenderer.get() atTime:currentTime completionHandler:nil];
+    removeRendererFromSynchronizerIfNeeded(m_sampleBufferVideoRenderer.get());
 
     if ([m_sampleBufferVideoRenderer respondsToSelector:@selector(removeAllVideoTargets)])
         [m_sampleBufferVideoRenderer removeAllVideoTargets];
     m_sampleBufferVideoRenderer = nullptr;
 #endif // ENABLE(LINEAR_MEDIA_PLAYER)
+}
+
+void AudioVideoRendererAVFObjC::destroyExpiringVideoRenderersIfNeeded()
+{
+#if ENABLE(LINEAR_MEDIA_PLAYER)
+    for (RetainPtr renderer : std::exchange(m_expiringSampleBufferVideoRenderers, { }))
+        [renderer removeAllVideoTargets];
+#endif
 }
 
 Ref<GenericPromise> AudioVideoRendererAVFObjC::setVideoRenderer(WebSampleBufferVideoRendering *renderer)
@@ -1240,13 +1250,15 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::setVideoRenderer(WebSampleBufferV
     SUPPRESS_UNRETAINED_ARG videoRenderer->setTimebase([m_synchronizer timebase]);
     videoRenderer->notifyWhenDecodingErrorOccurred([weakThis = WeakPtr { *this }](NSError *error) {
         if (RefPtr protectedThis = weakThis.get()) {
-#if ENABLE(ENCRYPTED_MEDIA)
+#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
             if ([error code] == 'HDCP') {
-                bool obscured = [[[error userInfo] valueForKey:@"obscured"] boolValue];
-                if (protectedThis->m_insufficientExternalProtectionChangedCallback)
-                    protectedThis->m_insufficientExternalProtectionChangedCallback(obscured);
+                bool obscured = [[retainPtr([error userInfo]) valueForKey:@"obscured"] boolValue];
+                if (RefPtr cdmInstance = protectedThis->m_cdmInstance)
+                    cdmInstance->setHDCPStatus(obscured ? CDMInstance::HDCPStatus::OutputRestricted : CDMInstance::HDCPStatus::Valid);
                 return;
             }
+#else
+            UNUSED_PARAM(error);
 #endif
             protectedThis->notifyError(PlatformMediaError::VideoDecodingError);
         }
@@ -1314,6 +1326,10 @@ void AudioVideoRendererAVFObjC::configureLayerOrVideoRenderer(WebSampleBufferVid
     if ([renderer respondsToSelector:@selector(setPreventsAutomaticBackgroundingDuringVideoPlayback:)])
         renderer.preventsAutomaticBackgroundingDuringVideoPlayback = NO;
 
+    bool isAVSBDL = is_objc<AVSampleBufferDisplayLayer>(renderer);
+    if (isAVSBDL && m_sampleBufferDisplayLayerState == SampleBufferLayerState::AddedToSynchronizer)
+        return;
+
     @try {
         [m_synchronizer addRenderer:renderer];
     } @catch(NSException *exception) {
@@ -1323,6 +1339,9 @@ void AudioVideoRendererAVFObjC::configureLayerOrVideoRenderer(WebSampleBufferVid
         notifyError(PlatformMediaError::DecoderCreationError);
         return;
     }
+
+    if (isAVSBDL)
+        m_sampleBufferDisplayLayerState = SampleBufferLayerState::AddedToSynchronizer;
 }
 
 RefPtr<VideoMediaSampleRenderer> AudioVideoRendererAVFObjC::protectedVideoRenderer() const
@@ -1403,15 +1422,17 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::stageVideoRenderer(WebSampleBuffe
     }
     ASSERT(!renderer || hasSelectedVideo());
 
-    Vector<RetainPtr<WebSampleBufferVideoRendering>> renderersToExpire { 2u };
+    RetainPtr<WebSampleBufferVideoRendering> rendererToExpire;
     if (renderer) {
         switch (acceleratedVideoMode()) {
         case AcceleratedVideoMode::Layer:
-            renderersToExpire.append(std::exchange(m_sampleBufferVideoRenderer, { }));
+            m_expiringSampleBufferVideoRenderers.append(m_sampleBufferVideoRenderer);
+            rendererToExpire = std::exchange(m_sampleBufferVideoRenderer, { });
             break;
         case AcceleratedVideoMode::VideoRenderer:
-            m_needsDestroyVideoLayer = true;
-            renderersToExpire.append(std::exchange(m_sampleBufferDisplayLayer, { }));
+            // We only need to remove the AVSampleBufferDisplayLayer from the synchronizer.
+            rendererToExpire = m_sampleBufferDisplayLayer;
+            m_sampleBufferDisplayLayerState = SampleBufferLayerState::PendingRemovalFromSynchronizer;
             break;
         }
     } else {
@@ -1424,17 +1445,12 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::stageVideoRenderer(WebSampleBuffe
     m_readyToRequestVideoData = !flushRequired;
     ALWAYS_LOG(LOGIDENTIFIER, "renderer: ", !!renderer, " videoTrackChangeOnly: ", videoTrackChangeOnly, " flushRequired: ", flushRequired);
 
-    return videoRenderer->changeRenderer(renderer)->whenSettled(RunLoop::mainSingleton(), [weakThis = WeakPtr { *this }, renderersToExpire = WTFMove(renderersToExpire), flushRequired]() mutable {
+    return videoRenderer->changeRenderer(renderer)->whenSettled(RunLoop::mainSingleton(), [weakThis = WeakPtr { *this }, rendererToExpire = WTFMove(rendererToExpire), flushRequired]() {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return GenericPromise::createAndReject();
-        for (auto& rendererToExpire : renderersToExpire) {
-            if (!rendererToExpire)
-                continue;
-            // False positive see webkit.org/b/298024
-            SUPPRESS_UNRETAINED_ARG CMTime currentTime = PAL::CMTimebaseGetTime([protectedThis->m_synchronizer timebase]);
-            [protectedThis->m_synchronizer removeRenderer:rendererToExpire.get() atTime:currentTime completionHandler:nil];
-        }
+        if (rendererToExpire)
+            protectedThis->removeRendererFromSynchronizerIfNeeded(rendererToExpire.get());
         if (flushRequired)
             protectedThis->notifyRequiresFlushToResume();
         return GenericPromise::createAndResolve();
@@ -1448,6 +1464,18 @@ void AudioVideoRendererAVFObjC::destroyVideoTrack()
     destroyLayer();
     destroyVideoRenderer();
     m_enabledVideoTrackId.reset();
+}
+
+void AudioVideoRendererAVFObjC::removeRendererFromSynchronizerIfNeeded(id renderer)
+{
+    bool isAVSBDL = is_objc<AVSampleBufferDisplayLayer>(renderer);
+    if (isAVSBDL && m_sampleBufferDisplayLayerState == SampleBufferLayerState::RemovedFromSynchronizer)
+        return;
+    // False positive see webkit.org/b/298024
+    SUPPRESS_UNRETAINED_ARG CMTime currentTime = PAL::CMTimebaseGetTime([m_synchronizer timebase]);
+    [m_synchronizer removeRenderer:renderer atTime:currentTime completionHandler:nil];
+    if (isAVSBDL)
+        m_sampleBufferDisplayLayerState = SampleBufferLayerState::RemovedFromSynchronizer;
 }
 
 AudioVideoRendererAVFObjC::AcceleratedVideoMode AudioVideoRendererAVFObjC::acceleratedVideoMode() const
@@ -1496,12 +1524,20 @@ void AudioVideoRendererAVFObjC::audioRendererWasAutomaticallyFlushed(AVSampleBuf
 #if HAVE(SPATIAL_TRACKING_LABEL)
 void AudioVideoRendererAVFObjC::setSpatialTrackingInfo(bool prefersSpatialAudioExperience, SoundStageSize soundStage, const String& sceneIdentifier, const String& defaultLabel, const String& label)
 {
+    if (m_prefersSpatialAudioExperience == prefersSpatialAudioExperience
+        && m_soundStage == soundStage
+        && m_sceneIdentifier == sceneIdentifier
+        && m_defaultSpatialTrackingLabel == defaultLabel
+        && m_spatialTrackingLabel == label)
+        return;
+
     m_prefersSpatialAudioExperience = prefersSpatialAudioExperience;
     m_soundStage = soundStage;
     m_sceneIdentifier = sceneIdentifier;
     m_defaultSpatialTrackingLabel = defaultLabel;
     m_spatialTrackingLabel = label;
 
+    ALWAYS_LOG(LOGIDENTIFIER, "prefersSpatialAudioExperience(", prefersSpatialAudioExperience, "), soundStage(", soundStage, "), sceneIdentifier(", sceneIdentifier, "), defaultLabel(", defaultLabel, "), label(", label, ")");
     updateSpatialTrackingLabel();
 }
 
@@ -1521,6 +1557,7 @@ void AudioVideoRendererAVFObjC::updateSpatialTrackingLabel()
             .spatialTrackingLabel = m_spatialTrackingLabel,
 #endif
         });
+        ALWAYS_LOG(LOGIDENTIFIER, "Setting spatialAudioExperience: ", spatialAudioExperienceDescription(experience.get()));
         [m_synchronizer setIntendedSpatialAudioExperience:experience.get()];
         return;
     }
@@ -1562,15 +1599,153 @@ void AudioVideoRendererAVFObjC::updateSpatialTrackingLabel()
 }
 #endif
 
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
+#if HAVE(AVCONTENTKEYSESSION)
+#if ENABLE(ENCRYPTED_MEDIA)
 void AudioVideoRendererAVFObjC::setCDMInstance(CDMInstance* instance)
 {
     RefPtr fpsInstance = dynamicDowncast<CDMInstanceFairPlayStreamingAVFObjC>(instance);
     if (fpsInstance == m_cdmInstance)
         return;
 
+    ALWAYS_LOG(LOGIDENTIFIER);
+    if (RefPtr cdmInstance = m_cdmInstance)
+        cdmInstance->removeKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
+
     m_cdmInstance = fpsInstance;
+    if (fpsInstance)
+        fpsInstance->addKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
+
+    attemptToDecrypt();
 }
+
+Ref<MediaPromise> AudioVideoRendererAVFObjC::setInitData(Ref<SharedBuffer> initData)
+{
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+    m_initData = initData.copyRef();
+    if (RefPtr session = m_session.get()) {
+        session->setInitData(initData);
+        return MediaPromise::createAndResolve();
+    }
+#endif
+    auto keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(initData);
+    AtomString initDataType = CDMPrivateFairPlayStreaming::sinfName();
+#if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
+    if (!keyIDs) {
+        keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(initData);
+        initDataType = CDMPrivateFairPlayStreaming::mptsName();
+    }
+#endif
+    if (!keyIDs)
+        return MediaPromise::createAndResolve();
+
+    if (RefPtr cdmInstance = m_cdmInstance) {
+        if (RefPtr instanceSession = cdmInstance->sessionForKeyIDs(keyIDs.value()))
+            return MediaPromise::createAndResolve();
+    }
+
+    m_keyIDs = WTFMove(keyIDs.value());
+    return MediaPromise::createAndReject(PlatformMediaError::CDMInstanceKeyNeeded);
+}
+
+void AudioVideoRendererAVFObjC::attemptToDecrypt()
+{
+    if (m_blockedSamples.isEmpty())
+        return;
+    if (m_cdmInstance && m_keyIDs.isEmpty()) {
+        ALWAYS_LOG(LOGIDENTIFIER, "CDMInstance set, but no keyIDs");
+        return;
+    }
+
+    if (RefPtr cdmInstance = m_cdmInstance) {
+        RefPtr instanceSession = cdmInstance->sessionForKeyIDs(m_keyIDs);
+        if (!instanceSession)
+            return;
+    } else if (!m_session.get())
+        return;
+
+    tryToEnqueueBlockedSamples();
+}
+
+void AudioVideoRendererAVFObjC::tryToEnqueueBlockedSamples()
+{
+    while (!m_blockedSamples.isEmpty()) {
+        auto& firstPair = m_blockedSamples.first();
+
+        // If we still can't enqueue the sample, bail.
+        if (!canEnqueueSample(firstPair.first, firstPair.second))
+            return;
+
+        auto firstPairTaken = m_blockedSamples.takeFirst();
+        enqueueSample(firstPairTaken.first, WTFMove(firstPairTaken.second), { });
+    }
+}
+
+bool AudioVideoRendererAVFObjC::canEnqueueSample(TrackIdentifier trackId, const MediaSample& sample)
+{
+    // if sample is unencrytped: enqueue sample
+    if (!sample.isProtected())
+        return true;
+
+    // if sample is encrypted, but we are not attached to a CDM: do not enqueue sample.
+    if (!m_cdmInstance && !m_session.get())
+        return false;
+
+    if (typeOf(trackId) == TrackType::Video && !isEnabledVideoTrackId(trackId))
+        return false;
+
+    Ref sampleAVFObjC = downcast<MediaSampleAVFObjC>(sample);
+
+    // if sample is encrypted, and keyIDs match the current set of keyIDs: enqueue sample.
+    if (auto findResult = m_currentTrackIds.find(trackId); findResult != m_currentTrackIds.end() && findResult->value == sampleAVFObjC->keyIDs())
+        return true;
+
+    // if sample's set of keyIDs does not match the current set of keyIDs, consult with the CDM
+    // to determine if the keyIDs are usable; if so, update the current set of keyIDs and enqueue sample.
+    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && cdmInstance->isAnyKeyUsable(sampleAVFObjC->keyIDs())) {
+        m_currentTrackIds.add(trackId, sampleAVFObjC->keyIDs());
+        return true;
+    }
+
+    if (RefPtr session = m_session.get(); session && session->isAnyKeyUsable(sampleAVFObjC->keyIDs())) {
+        m_currentTrackIds.add(trackId, sampleAVFObjC->keyIDs());
+        return true;
+    }
+
+    ALWAYS_LOG(LOGIDENTIFIER, "Can't enqueue sample: ", sample, " no suitable CDM");
+    return false;
+}
+
+void AudioVideoRendererAVFObjC::attachContentKeyToSampleIfNeeded(const MediaSample& sample)
+{
+    if (RefPtr cdmInstance = m_cdmInstance)
+        cdmInstance->attachContentKeyToSample(downcast<MediaSampleAVFObjC>(sample));
+    else if (RefPtr session = m_session.get())
+        session->attachContentKeyToSample(downcast<MediaSampleAVFObjC>(sample));
+}
+#endif
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+void AudioVideoRendererAVFObjC::setCDMSession(LegacyCDMSession* session)
+{
+    RefPtr oldSession = m_session.get();
+    if (session == oldSession)
+        return;
+
+    ALWAYS_LOG(LOGIDENTIFIER);
+
+    if (RefPtr oldSession = m_session.get())
+        oldSession->removeRenderer(*this);
+
+    m_session = dynamicDowncast<CDMSessionAVContentKeySession>(session);
+
+    if (RefPtr session = m_session.get()) {
+        session->addRenderer(*this);
+        if (RefPtr initData = m_initData)
+            session->setInitData(*initData);
+        attemptToDecrypt();
+    }
+}
+#endif
 #endif
 
 void AudioVideoRendererAVFObjC::setSynchronizerRate(float rate, std::optional<MonotonicTime> hostTime)

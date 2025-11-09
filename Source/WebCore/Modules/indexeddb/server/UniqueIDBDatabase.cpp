@@ -250,7 +250,7 @@ void UniqueIDBDatabase::performCurrentOpenOperationAfterSpaceCheck(bool isGrante
     RefPtr currentOpenDBRequest = m_currentOpenDBRequest;
     if (backingStoreOpenError) {
         auto result = IDBResultData::error(currentOpenDBRequest->requestData().requestIdentifier(), backingStoreOpenError);
-        currentOpenDBRequest->connection().didOpenDatabase(result);
+        currentOpenDBRequest->didOpenDatabase(result);
         m_currentOpenDBRequest = nullptr;
         return;
     }
@@ -274,7 +274,7 @@ void UniqueIDBDatabase::performCurrentOpenOperationAfterSpaceCheck(bool isGrante
     // If the database version higher than the requested version, abort these steps and return a VersionError.
     if (requestedVersion < m_databaseInfo->version()) {
         auto result = IDBResultData::error(currentOpenDBRequest->requestData().requestIdentifier(), IDBError(ExceptionCode::VersionError));
-        currentOpenDBRequest->connection().didOpenDatabase(result);
+        currentOpenDBRequest->didOpenDatabase(result);
         m_currentOpenDBRequest = nullptr;
         return;
     }
@@ -286,7 +286,7 @@ void UniqueIDBDatabase::performCurrentOpenOperationAfterSpaceCheck(bool isGrante
         addOpenDatabaseConnection(WTFMove(connection));
 
         auto result = IDBResultData::openDatabaseSuccess(currentOpenDBRequest->requestData().requestIdentifier(), *rawConnection);
-        currentOpenDBRequest->connection().didOpenDatabase(result);
+        currentOpenDBRequest->didOpenDatabase(result);
         m_currentOpenDBRequest = nullptr;
         return;
     }
@@ -362,7 +362,7 @@ void UniqueIDBDatabase::didDeleteBackingStore(uint64_t deletedVersion)
         m_mostRecentDeletedDatabaseInfo = makeUnique<IDBDatabaseInfo>(m_identifier.databaseName(), deletedVersion, 0);
 
     if (RefPtr request = std::exchange(m_currentOpenDBRequest, nullptr))
-        request->notifyDidDeleteDatabase(*m_mostRecentDeletedDatabaseInfo);
+        request->didDeleteDatabase(IDBResultData::deleteDatabaseSuccess(request->requestData().requestIdentifier(), *m_mostRecentDeletedDatabaseInfo));
 }
 
 void UniqueIDBDatabase::clearStalePendingOpenDBRequests()
@@ -395,11 +395,12 @@ void UniqueIDBDatabase::handleDatabaseOperations()
 void UniqueIDBDatabase::handleCurrentOperation()
 {
     LOG(IndexedDB, "UniqueIDBDatabase::handleCurrentOperation");
-    ASSERT(m_currentOpenDBRequest);
+    RefPtr currentOpenDBRequest = m_currentOpenDBRequest;
+    RELEASE_ASSERT(currentOpenDBRequest);
 
-    if (m_currentOpenDBRequest->isOpenRequest())
+    if (currentOpenDBRequest->isOpenRequest())
         performCurrentOpenOperation();
-    else if (m_currentOpenDBRequest->isDeleteRequest())
+    else if (currentOpenDBRequest->isDeleteRequest())
         performCurrentDeleteOperation();
     else
         ASSERT_NOT_REACHED();
@@ -449,17 +450,19 @@ void UniqueIDBDatabase::startVersionChangeTransaction()
     
     auto error = checkedBackingStore()->beginTransaction(versionChangeTransactionInfo);
     RefPtr operation = std::exchange(m_currentOpenDBRequest, nullptr);
+    operation->setVersionChangeTransaction(versionChangeTransaction.get());
+
     IDBResultData result;
     if (error.isNull()) {
         addOpenDatabaseConnection(*versionChangeDatabaseConnection);
         m_databaseInfo->setVersion(versionChangeTransactionInfo.newVersion());
         result = IDBResultData::openDatabaseUpgradeNeeded(operation->requestData().requestIdentifier(), versionChangeTransaction, *versionChangeDatabaseConnection);
-        operation->connection().didOpenDatabase(result);
+        operation->didOpenDatabase(result);
     } else {
         versionChangeDatabaseConnection->abortTransactionWithoutCallback(versionChangeTransaction);
         m_versionChangeDatabaseConnection = nullptr;
         result = IDBResultData::error(operation->requestData().requestIdentifier(), error);
-        operation->connection().didOpenDatabase(result);
+        operation->didOpenDatabase(result);
     }
 }
 
@@ -1522,9 +1525,9 @@ static void errorOpenDBRequestForUserDelete(ServerOpenDBRequest& request)
 {
     auto result = IDBResultData::error(request.requestData().requestIdentifier(), IDBError::userDeleteError());
     if (request.isOpenRequest())
-        request.connection().didOpenDatabase(result);
+        request.didOpenDatabase(result);
     else
-        request.connection().didDeleteDatabase(result);
+        request.didDeleteDatabase(result);
 }
 
 void UniqueIDBDatabase::immediateClose()

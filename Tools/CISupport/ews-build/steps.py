@@ -1269,6 +1269,8 @@ class CheckChangeRelevance(AnalyzeChange):
         re.compile(rb'Tools/Scripts/libraries/resultsdbpy', re.IGNORECASE),
         re.compile(rb'Tools/Scripts/libraries/webkitcorepy', re.IGNORECASE),
         re.compile(rb'Tools/Scripts/libraries/webkitscmpy', re.IGNORECASE),
+        re.compile(rb'Tools/Scripts/webkitpy/autoinstalled', re.IGNORECASE),
+        re.compile(rb'Tools/Scripts/webkitpy/__init__.py', re.IGNORECASE),
     ]
 
     jsc_path_regexes = [

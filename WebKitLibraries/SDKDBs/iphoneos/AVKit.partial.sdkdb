@@ -521,7 +521,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "AVAudioSessionRouteSelection"},
     {"access": "public", "name": "AVCaptureEventPhase"},
@@ -675,7 +675,7 @@
      "unavailable": true
     }
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

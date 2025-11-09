@@ -65,6 +65,8 @@ static void computeStyleForPseudoElementStyle(StyledMarkedText::Style& style, co
 
 static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, const StyledMarkedText::Style& baseStyle, const RenderText& renderer, const RenderStyle& lineStyle, const PaintInfo& paintInfo)
 {
+    static constexpr OptionSet systemAppearanceOptions { StyleColorOptions::UseSystemAppearance };
+
     auto style = baseStyle;
     switch (markedText.type) {
     case MarkedText::Type::Correction:
@@ -99,14 +101,20 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
             break;
         }
 
-        OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
-        style.backgroundColor = renderer.theme().annotationHighlightColor(styleColorOptions);
+        style.backgroundColor = renderer.theme().annotationHighlightBackgroundColor(systemAppearanceOptions);
+        style.textStyles.fillColor = renderer.theme().annotationHighlightForegroundColor(systemAppearanceOptions);
+        break;
+    }
+    case MarkedText::Type::TextExtractionHighlight: {
+        // FIXME: This just uses the same color as annotation highlights for now, but we may eventually require a different appearance.
+        style.backgroundColor = renderer.theme().annotationHighlightBackgroundColor(systemAppearanceOptions);
+        style.textStyles.fillColor = renderer.theme().annotationHighlightForegroundColor(systemAppearanceOptions);
         break;
     }
 #if ENABLE(APP_HIGHLIGHTS)
     case MarkedText::Type::AppHighlight: {
-        OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
-        style.backgroundColor = renderer.theme().annotationHighlightColor(styleColorOptions);
+        style.backgroundColor = renderer.theme().annotationHighlightBackgroundColor(systemAppearanceOptions);
+        style.textStyles.fillColor = renderer.theme().annotationHighlightForegroundColor(systemAppearanceOptions);
         break;
     }
 #endif
@@ -127,11 +135,10 @@ static StyledMarkedText resolveStyleForMarkedText(const MarkedText& markedText, 
     }
     case MarkedText::Type::TextMatch: {
         // Text matches always use the light system appearance.
-        OptionSet<StyleColorOptions> styleColorOptions = { StyleColorOptions::UseSystemAppearance };
 #if PLATFORM(MAC)
-        style.textStyles.fillColor = renderer.theme().systemColor(CSSValueAppleSystemLabel, styleColorOptions);
+        style.textStyles.fillColor = renderer.theme().systemColor(CSSValueAppleSystemLabel, systemAppearanceOptions);
 #endif
-        style.backgroundColor = renderer.theme().textSearchHighlightColor(styleColorOptions);
+        style.backgroundColor = renderer.theme().textSearchHighlightColor(systemAppearanceOptions);
         break;
     }
     }

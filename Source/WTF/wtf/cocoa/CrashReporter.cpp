@@ -24,7 +24,7 @@
 */
 
 #include "config.h"
-#include "CrashReporter.h"
+#include <wtf/cocoa/CrashReporter.h>
 
 #include <wtf/NeverDestroyed.h>
 #include <wtf/spi/cocoa/CrashReporterClientSPI.h>

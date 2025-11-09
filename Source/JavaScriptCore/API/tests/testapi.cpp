@@ -719,12 +719,19 @@ void TestAPI::proxyReturnedWithJSSubclassing()
     JSObjectRef subclass = const_cast<JSObjectRef>(result.value());
 
     check(scriptResultIs(evaluateScript("globalThis.triggeredProxy"), JSValueMakeUndefined(context)), "creating a subclass should not have triggered the proxy");
+
+    // As testapi.c defines ASSERT_ENABLED unconditionally, we use NDEBUG here instead.
+#ifdef NDEBUG
     // In a debug build using CLoop, the following test may fail with a stack overflow because
     // executing its code involves 3 nested calls to CLoop::execute, which requires a very large
     // stack frame when compiled with '-O0'. The frame size was reduced to an acceptable level by
     // https://bugs.webkit.org/show_bug.cgi?id=295796, but it still is close to the threshold.
     // If the failure returns, more work is needed to further reduce the frame size.
     check(functionReturnsTrue("(function (subclass, Superclass) { return subclass.__proto__ == Superclass.prototype; })", subclass, Superclass), "proxy's prototype should match Superclass.prototype");
+#else
+    UNUSED_VARIABLE(subclass);
+    UNUSED_VARIABLE(Superclass);
+#endif
 }
 
 void TestAPI::testJSObjectSetOnGlobalObjectSubclassDefinition()

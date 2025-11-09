@@ -140,8 +140,6 @@ public:
     void waitingForKeyChanged();
 #endif
 
-    void outputObscuredDueToInsufficientExternalProtectionChanged(bool);
-
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA)
     void keyNeeded(const SharedBuffer&);
 #endif
@@ -341,7 +339,7 @@ private:
     Timer m_seekTimer;
     bool m_seeking { false };
     std::optional<SeekTarget> m_pendingSeek;
-    NativePromiseRequest m_rendererSeekRequest;
+    const Ref<NativePromiseRequest> m_rendererSeekRequest;
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
     ThreadSafeWeakPtr<CDMSessionAVContentKeySession> m_session;

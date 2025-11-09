@@ -136,18 +136,22 @@ static bool pageExplicitlyAllowsElementToAutoplayInline(const HTMLMediaElement& 
 }
 
 #if ENABLE(MEDIA_SESSION)
-class MediaElementSessionObserver : public MediaSessionObserver {
+class MediaElementSessionObserver : public MediaSessionObserver, public RefCounted<MediaElementSessionObserver> {
     WTF_MAKE_TZONE_ALLOCATED(MediaElementSessionObserver);
 public:
-    MediaElementSessionObserver(MediaElementSession& session, const Ref<MediaSession>& mediaSession)
-        : m_session(session), m_mediaSession(mediaSession)
+    static Ref<MediaElementSessionObserver> create(MediaElementSession& session, const Ref<MediaSession>& mediaSession)
     {
-        m_mediaSession->addObserver(*this);
+        return adoptRef(*new MediaElementSessionObserver(session, mediaSession));
     }
+
     ~MediaElementSessionObserver()
     {
         m_mediaSession->removeObserver(*this);
     }
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     void metadataChanged(const RefPtr<MediaMetadata>& metadata) final
     {
         if (m_session)
@@ -169,6 +173,12 @@ public:
             m_session->actionHandlersChanged();
     }
 private:
+    MediaElementSessionObserver(MediaElementSession& session, const Ref<MediaSession>& mediaSession)
+        : m_session(session), m_mediaSession(mediaSession)
+    {
+        m_mediaSession->addObserver(*this);
+    }
+
     WeakPtr<MediaElementSession> m_session;
     const Ref<MediaSession> m_mediaSession;
 };
@@ -1621,7 +1631,7 @@ void MediaElementSession::ensureIsObservingMediaSession()
     auto* session = mediaSession();
     if (!session || m_observer)
         return;
-    m_observer = makeUnique<MediaElementSessionObserver>(*this, *session);
+    m_observer = MediaElementSessionObserver::create(*this, *session);
 #endif
 }
 

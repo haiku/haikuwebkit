@@ -67,9 +67,9 @@ Credential::Credential(const Credential& original, CredentialPersistence persist
         return;
 
     if (RetainPtr<NSString> user = originalNSURLCredential.get().user)
-        m_nsCredential = adoptNS([[NSURLCredential alloc] initWithUser:user.get() password:originalNSURLCredential.get().password persistence:toNSURLCredentialPersistence(persistence)]);
+        m_nsCredential = adoptNS([[NSURLCredential alloc] initWithUser:user.get() password:retainPtr(originalNSURLCredential.get().password).get() persistence:toNSURLCredentialPersistence(persistence)]);
     else if (RetainPtr<SecIdentityRef> identity = originalNSURLCredential.get().identity)
-        m_nsCredential = adoptNS([[NSURLCredential alloc] initWithIdentity:identity.get() certificates:originalNSURLCredential.get().certificates persistence:toNSURLCredentialPersistence(persistence)]);
+        m_nsCredential = adoptNS([[NSURLCredential alloc] initWithIdentity:identity.get() certificates:retainPtr(originalNSURLCredential.get().certificates).get() persistence:toNSURLCredentialPersistence(persistence)]);
     else {
         // It is not possible to set the persistence of server trust credentials.
         ASSERT_NOT_REACHED();

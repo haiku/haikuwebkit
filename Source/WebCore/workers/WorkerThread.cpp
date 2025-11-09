@@ -159,14 +159,14 @@ void WorkerThread::evaluateScriptIfNecessary(String& exceptionMessage)
     WeakPtr<ScriptBufferSourceProvider> sourceProvider;
     if (m_startupData->params.workerType == WorkerType::Classic) {
         ScriptSourceCode sourceCode(m_startupData->sourceCode, URL(m_startupData->params.scriptURL));
-        sourceProvider = static_cast<ScriptBufferSourceProvider&>(sourceCode.provider());
+        sourceProvider = downcast<ScriptBufferSourceProvider>(sourceCode.provider());
         globalScope->script()->evaluate(sourceCode, &exceptionMessage);
         finishedEvaluatingScript();
     } else {
         auto parameters = ModuleFetchParameters::create(JSC::ScriptFetchParameters::Type::JavaScript, emptyString(), /* isTopLevelModule */ true);
         auto scriptFetcher = WorkerScriptFetcher::create(WTFMove(parameters), globalScope->credentials(), globalScope->destination(), globalScope->referrerPolicy());
         ScriptSourceCode sourceCode(m_startupData->sourceCode, URL(m_startupData->params.scriptURL), { }, { }, JSC::SourceProviderSourceType::Module, scriptFetcher.copyRef());
-        sourceProvider = static_cast<ScriptBufferSourceProvider&>(sourceCode.provider());
+        sourceProvider = downcast<ScriptBufferSourceProvider>(sourceCode.provider());
         bool success = globalScope->script()->loadModuleSynchronously(scriptFetcher.get(), sourceCode);
         if (success) {
             if (auto error = scriptFetcher->error()) {

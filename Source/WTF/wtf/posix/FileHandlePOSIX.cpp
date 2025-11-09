@@ -27,7 +27,7 @@
  */
 
 #include "config.h"
-#include "FileHandle.h"
+#include <wtf/FileHandle.h>
 
 #include <sys/file.h>
 #include <sys/stat.h>

@@ -44,6 +44,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemoteCommandBufferProxy() const { return false; }
+
 protected:
     CommandBuffer() = default;
 

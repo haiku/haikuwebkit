@@ -49,6 +49,7 @@ public:
 
     // "A new GPUBindGroupLayout wrapper is returned each time"
     virtual Ref<BindGroupLayout> getBindGroupLayout(uint32_t index) = 0;
+    virtual bool isRemoteComputePipelineProxy() const { return false; }
 
 protected:
     ComputePipeline() = default;

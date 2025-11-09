@@ -148,11 +148,11 @@ AtomString InbandTextTrackPrivateAVFObjC::label() const
     if (!commonMetadata)
         return emptyAtom();
 
-    NSString *title = 0;
-    NSArray *titles = [PAL::getAVMetadataItemClassSingleton() metadataItemsFromArray:commonMetadata withKey:AVMetadataCommonKeyTitle keySpace:AVMetadataKeySpaceCommon];
+    RetainPtr<NSString> title;
+    RetainPtr<NSArray> titles = [PAL::getAVMetadataItemClassSingleton() metadataItemsFromArray:commonMetadata withKey:AVMetadataCommonKeyTitle keySpace:AVMetadataKeySpaceCommon];
     if ([titles count]) {
         // If possible, return a title in one of the user's preferred languages.
-        NSArray *titlesForPreferredLanguages = [PAL::getAVMetadataItemClassSingleton() metadataItemsFromArray:titles filteredAndSortedAccordingToPreferredLanguages:[NSLocale preferredLanguages]];
+        RetainPtr<NSArray> titlesForPreferredLanguages = [PAL::getAVMetadataItemClassSingleton() metadataItemsFromArray:titles.get() filteredAndSortedAccordingToPreferredLanguages:[NSLocale preferredLanguages]];
         if ([titlesForPreferredLanguages count])
             title = [[titlesForPreferredLanguages objectAtIndex:0] stringValue];
 
@@ -160,7 +160,7 @@ AtomString InbandTextTrackPrivateAVFObjC::label() const
             title = [[titles objectAtIndex:0] stringValue];
     }
 
-    return title ? AtomString(title) : emptyAtom();
+    return title ? AtomString(title.get()) : emptyAtom();
 }
 
 AtomString InbandTextTrackPrivateAVFObjC::language() const

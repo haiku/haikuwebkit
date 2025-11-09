@@ -34,6 +34,10 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#include "RemoteProgressBasedTimelineRegistry.h"
+#endif
+
 namespace WebCore {
 class PlatformMouseEvent;
 };
@@ -41,6 +45,10 @@ class PlatformMouseEvent;
 namespace WebKit {
 
 class RemoteScrollingCoordinatorProxy;
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class RemoteAnimationTimeline;
+#endif
 
 class RemoteScrollingTree : public WebCore::ScrollingTree {
     WTF_MAKE_TZONE_ALLOCATED(RemoteScrollingTree);
@@ -81,6 +89,11 @@ public:
 
     void tryToApplyLayerPositions();
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&);
+    RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
+#endif
+
 protected:
     explicit RemoteScrollingTree(RemoteScrollingCoordinatorProxy&);
 
@@ -94,6 +107,11 @@ protected:
     // This gets nulled out via invalidate(), since the scrolling thread can hold a ref to the ScrollingTree after the RemoteScrollingCoordinatorProxy has gone away.
     WeakPtr<RemoteScrollingCoordinatorProxy> m_scrollingCoordinatorProxy;
     bool m_hasNodesWithSynchronousScrollingReasons WTF_GUARDED_BY_LOCK(m_treeLock) { false };
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+private:
+    std::unique_ptr<RemoteProgressBasedTimelineRegistry> m_progressBasedTimelineRegistry;
+#endif
 };
 
 class RemoteLayerTreeHitTestLocker {

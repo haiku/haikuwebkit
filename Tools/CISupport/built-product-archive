@@ -346,6 +346,11 @@ def extractBuiltProduct(configuration, platform):
 
     archiveFile = os.path.join(_topLevelBuildDirectory, configuration + '.zip')
 
+    # Sometimes there's files remaining in WebKitBuild that hit a permission error on unlinking
+    # The rm utility in msys bash is able to remove the files, so we'll use that here
+    if platform in ('win'):
+        subprocess.call(['bash', '-c', 'rm -rf '+ _configurationBuildDirectory])
+
     removeDirectoryIfExists(_configurationBuildDirectory)
     os.makedirs(_configurationBuildDirectory)
 

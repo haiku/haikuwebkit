@@ -173,7 +173,6 @@ fast/images/jpegxl-as-image.html [ Pass ]
 fast/images/jpegxl-image-decoding.html [ Pass ]
 fast/images/jpegxl-with-color-profile.html [ Pass ]
 fast/images/animated-jpegxl-loop-count.html [ Pass ]
-fast/images/image-size-unsigned-overflow.html [ Skip ]
 
 # Some Apple ports don't support RTL scrollbars.
 fast/scrolling/rtl-scrollbars-alternate-body-dir-attr-does-not-update-scrollbar-placement.html [ Pass ]
@@ -429,6 +428,8 @@ imported/w3c/web-platform-tests/mathml/presentation-markup/fractions/frac-invali
 imported/w3c/web-platform-tests/mathml/presentation-markup/fractions/frac-invalid-3.html [ Pass ]
 mathml/non-core/mathvariant/mathvariant-double-struck-font-style-font-weight.html [ Pass ]
 imported/w3c/web-platform-tests/mathml/relations/css-styling/mi-fontstyle-fontweight.html [ Pass ]
+imported/w3c/web-platform-tests/mathml/presentation-markup/mrow/semantics-002.html [ Pass ]
+imported/w3c/web-platform-tests/mathml/presentation-markup/mrow/semantics-003.html [ Pass ]
 
 imported/w3c/web-platform-tests/quirks/line-height-trailing-collapsable-whitespace.html [ Pass ]
 imported/w3c/web-platform-tests/quirks/text-decoration-doesnt-propagate-into-tables/standards.html [ Pass ]
@@ -2075,19 +2076,10 @@ webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-basi
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-fonts/variations/font-slant-2a.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-below-target-text.html [ Pass ]
 imported/w3c/web-platform-tests/css/css-images/conic-gradient-angle-negative.html [ Pass ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-decreasing-hue-hsl.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-decreasing-hue-lch.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-eval-006.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-eval-008.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-increasing-hue-hsl.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-increasing-hue-lch.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-001.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-002.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-003.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-004.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-005.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-006.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-hsl-007.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-lch-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-lch-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-longer-hue-lch-003.html [ ImageOnlyFailure ]
@@ -2863,6 +2855,10 @@ imported/w3c/web-platform-tests/webxr/exclusive_requestFrame_nolayer.https.html 
 imported/w3c/web-platform-tests/webxr/webGLCanvasContext_create_xrcompatible.https.html [ Failure ]
 
 imported/w3c/web-platform-tests/webxr/hand-input/ [ Pass ]
+
+imported/w3c/web-platform-tests/webxr/hit-test/idlharness.https.html [ Pass ]
+imported/w3c/web-platform-tests/webxr/hit-test/xrRay_constructor.https.html [ Pass ]
+imported/w3c/web-platform-tests/webxr/hit-test/xrRay_matrix.https.html [ Pass ]
 
 http/wpt/webxr [ Pass ]
 webxr [ Pass ]
@@ -3989,7 +3985,7 @@ webkit.org/b/207062 webkit.org/b/244776 imported/w3c/web-platform-tests/media-so
 imported/w3c/web-platform-tests/mathml/presentation-markup/fractions/frac-linethickness-005.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/presentation-markup/fractions/frac-linethickness-006.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/presentation-markup/fractions/frac-linethickness-007.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/mathml/relations/css-styling/mozilla-393760-2.xml [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/mathml/relations/css-styling/mozilla-393760-2.xml [ ImageOnlyFailure Pass ]
 
 css2.1/20110323/height-applies-to-010a.htm [ ImageOnlyFailure ]
 fast/hidpi/hidpi-nested-layers-missing-content.html [ ImageOnlyFailure ]
@@ -4927,6 +4923,9 @@ webkit.org/b/299092 [ Debug ] accessibility/url-test.html [ Skip ]
 
 # Depends on 'UIScriptController::singleTapAtPointWithModifiers', which is not implemented yet for GLIB.
 webkit.org/b/278719 fast/events/touch/touch-fractional-coordinates.html [ Skip ]
+
+# Need rebaseline
+svg/zoom/page/ [ Skip ]
 
 # Navigation API flaky tests
 webkit.org/b/299333 http/wpt/navigation-api/ [ Failure Pass ]

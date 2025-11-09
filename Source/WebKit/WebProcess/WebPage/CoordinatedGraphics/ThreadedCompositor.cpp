@@ -31,6 +31,7 @@
 #include "CompositingRunLoop.h"
 #include "CoordinatedSceneState.h"
 #include "LayerTreeHost.h"
+#include "RenderProcessInfo.h"
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/CoordinatedPlatformLayer.h>
@@ -47,6 +48,7 @@
 #endif
 
 #if USE(LIBEPOXY)
+#include <epoxy/egl.h>
 #include <epoxy/gl.h>
 #else
 #include <GLES2/gl2.h>
@@ -416,5 +418,27 @@ void ThreadedCompositor::updateFPSCounter()
         m_fpsCounter.fps = std::nullopt;
 }
 
+void ThreadedCompositor::fillGLInformation(RenderProcessInfo&& info, CompletionHandler<void(RenderProcessInfo&&)>&& completionHandler)
+{
+    ASSERT(m_compositingRunLoop);
+    m_compositingRunLoop->performTask([protectedThis = Ref { *this }, info = WTFMove(info), completionHandler = WTFMove(completionHandler)]() mutable {
+        info.glRenderer = String::fromUTF8(reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+        info.glVendor = String::fromUTF8(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+        info.glVersion = String::fromUTF8(reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+        info.glShadingVersion = String::fromUTF8(reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+        info.glExtensions = String::fromUTF8(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+
+        auto eglDisplay = eglGetCurrentDisplay();
+        info.eglVersion = String::fromUTF8(eglQueryString(eglDisplay, EGL_VERSION));
+        info.eglVendor = String::fromUTF8(eglQueryString(eglDisplay, EGL_VENDOR));
+        info.eglExtensions = makeString(unsafeSpan(eglQueryString(nullptr, EGL_EXTENSIONS)), ' ', unsafeSpan(eglQueryString(eglDisplay, EGL_EXTENSIONS)));
+
+        RunLoop::mainSingleton().dispatch([info = WTFMove(info), completionHandler = WTFMove(completionHandler)]() mutable {
+            completionHandler(WTFMove(info));
+        });
+    });
 }
+
+} // namespace WebKit
+
 #endif // USE(COORDINATED_GRAPHICS)

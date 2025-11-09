@@ -1332,6 +1332,13 @@ void NetworkStorageManager::suspend(CompletionHandler<void()>&& completionHandle
     }, WTFMove(completionHandler));
 }
 
+bool NetworkStorageManager::isSuspended() const
+{
+    ASSERT(RunLoop::isMain());
+
+    return workQueue().isSuspended();
+}
+
 void NetworkStorageManager::resume()
 {
     ASSERT(RunLoop::isMain());

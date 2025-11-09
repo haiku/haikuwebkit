@@ -483,6 +483,11 @@ RenderLayer* RenderObject::enclosingLayer() const
     return nullptr;
 }
 
+CheckedPtr<RenderLayer> RenderObject::checkedEnclosingLayer() const
+{
+    return enclosingLayer();
+}
+
 RenderBox& RenderObject::enclosingBox() const
 {
     return *lineageOfType<RenderBox>(const_cast<RenderObject&>(*this)).first();

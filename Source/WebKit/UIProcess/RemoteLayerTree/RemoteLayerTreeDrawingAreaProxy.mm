@@ -32,6 +32,7 @@
 #import "Logging.h"
 #import "MessageSenderInlines.h"
 #import "ProcessThrottler.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeDrawingAreaProxyMessages.h"
 #import "RemotePageDrawingAreaProxy.h"
 #import "RemotePageProxy.h"
@@ -286,12 +287,12 @@ void RemoteLayerTreeDrawingAreaProxy::willCommitLayerTree(IPC::Connection& conne
     state.pendingLayerTreeTransactionID = transactionID;
 }
 
-void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connection, const Vector<std::pair<RemoteLayerTreeTransaction, RemoteScrollingCoordinatorTransaction>>& transactions, HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&& handlesMap)
+void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connection, const RemoteLayerTreeCommitBundle& bundle, HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&& handlesMap)
 {
     // The `sendRights` vector must have __block scope to be captured by
     // the commit handler block below without the need to copy it.
     __block Vector<MachSendRight, 16> sendRights;
-    for (auto& transaction : transactions) {
+    for (auto& transaction : bundle.transactions) {
         // commitLayerTreeTransaction consumes the incoming buffers, so we need to grab them first.
         for (auto& [layerID, properties] : CheckedRef { transaction.first }->changedLayerProperties()) {
             auto* backingStoreProperties = properties->backingStoreOrProperties.properties.get();
@@ -309,9 +310,18 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
         }
     }
 
+    if (bundle.mainFrameData) {
+        m_activityStateChangeID = bundle.mainFrameData->activityStateChangeID;
+
+        if (m_activityStateChangeID == m_activityStateChangeForUnhidingContent) {
+            RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ")::hideContentUntilDidUpdateActivityState completed", identifier().toUInt64());
+            m_activityStateChangeForUnhidingContent = std::nullopt;
+        }
+    }
+
     WeakPtr weakThis { *this };
 
-    for (auto& transaction : transactions) {
+    for (auto& transaction : bundle.transactions) {
         commitLayerTreeTransaction(connection, CheckedRef { transaction.first }.get(), transaction.second);
         if (!weakThis)
             return;
@@ -370,12 +380,6 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTreeTransaction(IPC::Connection
     if (layerTreeTransaction.isMainFrameProcessTransaction()) {
         ASSERT(layerTreeTransaction.transactionID() == m_lastVisibleTransactionID.next());
         m_transactionIDForPendingCACommit = layerTreeTransaction.transactionID();
-        m_activityStateChangeID = layerTreeTransaction.activityStateChangeID();
-
-        if (m_activityStateChangeID == m_activityStateChangeForUnhidingContent) {
-            RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ")::hideContentUntilDidUpdateActivityState completed", identifier().toUInt64());
-            m_activityStateChangeForUnhidingContent = std::nullopt;
-        }
 
         // FIXME(site-isolation): Editor state should be updated for subframes.
         didUpdateEditorState = layerTreeTransaction.hasEditorState() && page->updateEditorState(EditorState { layerTreeTransaction.editorState() }, WebPageProxy::ShouldMergeVisualEditorState::Yes);
@@ -397,62 +401,64 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTreeTransaction(IPC::Connection
         }
     }
 
-    CheckedRef scrollingCoordinatorProxy = *page->scrollingCoordinatorProxy();
-    auto commitLayerAndScrollingTrees = [&] {
-        if (layerTreeTransaction.hasAnyLayerChanges())
-            ++m_countOfTransactionsWithNonEmptyLayerChanges;
-        if (m_remoteLayerTreeHost->updateLayerTree(connection, layerTreeTransaction)) {
-            if (!m_replyForUnhidingContent && !m_activityStateChangeForUnhidingContent) {
-                if (m_hasDetachedRootLayer)
-                    RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ") Unhiding layer tree", identifier().toUInt64());
-                page->setRemoteLayerTreeRootNode(m_remoteLayerTreeHost->protectedRootNode().get());
-                m_hasDetachedRootLayer = false;
-            } else
-                m_remoteLayerTreeHost->detachRootLayer();
-        }
+    {
+        CheckedRef scrollingCoordinatorProxy = *page->scrollingCoordinatorProxy();
+        auto commitLayerAndScrollingTrees = [&] {
+            if (layerTreeTransaction.hasAnyLayerChanges())
+                ++m_countOfTransactionsWithNonEmptyLayerChanges;
+            if (m_remoteLayerTreeHost->updateLayerTree(connection, layerTreeTransaction)) {
+                if (!m_replyForUnhidingContent && !m_activityStateChangeForUnhidingContent) {
+                    if (m_hasDetachedRootLayer)
+                        RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ") Unhiding layer tree", identifier().toUInt64());
+                    page->setRemoteLayerTreeRootNode(m_remoteLayerTreeHost->protectedRootNode().get());
+                    m_hasDetachedRootLayer = false;
+                } else
+                    m_remoteLayerTreeHost->detachRootLayer();
+            }
 #if ENABLE(ASYNC_SCROLLING)
-        requestedScroll = scrollingCoordinatorProxy->commitScrollingTreeState(connection, scrollingTreeTransaction, layerTreeTransaction.remoteContextHostedIdentifier());
+            requestedScroll = scrollingCoordinatorProxy->commitScrollingTreeState(connection, scrollingTreeTransaction, layerTreeTransaction.remoteContextHostedIdentifier());
 #endif
-    };
+        };
 
-    scrollingCoordinatorProxy->willCommitLayerAndScrollingTrees();
-    commitLayerAndScrollingTrees();
-    scrollingCoordinatorProxy->didCommitLayerAndScrollingTrees();
+        scrollingCoordinatorProxy->willCommitLayerAndScrollingTrees();
+        commitLayerAndScrollingTrees();
+        scrollingCoordinatorProxy->didCommitLayerAndScrollingTrees();
 
-    page->didCommitLayerTree(layerTreeTransaction);
-    didCommitLayerTree(connection, layerTreeTransaction, scrollingTreeTransaction);
+        page->didCommitLayerTree(layerTreeTransaction);
+        didCommitLayerTree(connection, layerTreeTransaction, scrollingTreeTransaction);
 
 #if ENABLE(ASYNC_SCROLLING)
-    scrollingCoordinatorProxy->applyScrollingTreeLayerPositionsAfterCommit();
+        scrollingCoordinatorProxy->applyScrollingTreeLayerPositionsAfterCommit();
 #if PLATFORM(IOS_FAMILY)
-    page->adjustLayersForLayoutViewport(page->unobscuredContentRect().location(), page->unconstrainedLayoutViewportRect(), page->displayedContentScale());
+        page->adjustLayersForLayoutViewport(page->unobscuredContentRect().location(), page->unconstrainedLayoutViewportRect(), page->displayedContentScale());
 #endif
 
-    // Handle requested scroll position updates from the scrolling tree transaction after didCommitLayerTree()
-    // has updated the view size based on the content size.
-    if (requestedScroll) {
-        auto currentScrollPosition = scrollingCoordinatorProxy->currentMainFrameScrollPosition();
-        if (auto previousData = std::exchange(requestedScroll->requestedDataBeforeAnimatedScroll, std::nullopt)) {
-            auto& [requestType, positionOrDeltaBeforeAnimatedScroll, scrollType, clamping] = *previousData;
-            if (requestType != ScrollRequestType::CancelAnimatedScroll)
-                currentScrollPosition = RequestedScrollData::computeDestinationPosition(currentScrollPosition, requestType, positionOrDeltaBeforeAnimatedScroll);
-        }
+        // Handle requested scroll position updates from the scrolling tree transaction after didCommitLayerTree()
+        // has updated the view size based on the content size.
+        if (requestedScroll) {
+            auto currentScrollPosition = scrollingCoordinatorProxy->currentMainFrameScrollPosition();
+            if (auto previousData = std::exchange(requestedScroll->requestedDataBeforeAnimatedScroll, std::nullopt)) {
+                auto& [requestType, positionOrDeltaBeforeAnimatedScroll, scrollType, clamping] = *previousData;
+                if (requestType != ScrollRequestType::CancelAnimatedScroll)
+                    currentScrollPosition = RequestedScrollData::computeDestinationPosition(currentScrollPosition, requestType, positionOrDeltaBeforeAnimatedScroll);
+            }
 
-        page->requestScroll(requestedScroll->destinationPosition(currentScrollPosition), layerTreeTransaction.scrollOrigin(), requestedScroll->animated);
-    }
+            page->requestScroll(requestedScroll->destinationPosition(currentScrollPosition), layerTreeTransaction.scrollOrigin(), requestedScroll->animated);
+        }
 #endif // ENABLE(ASYNC_SCROLLING)
 
-    if (m_debugIndicatorLayerTreeHost && layerTreeTransaction.isMainFrameProcessTransaction()) {
-        float scale = indicatorScale(layerTreeTransaction.contentsSize());
-        scrollingCoordinatorProxy->willCommitLayerAndScrollingTrees();
-        bool rootLayerChanged = m_debugIndicatorLayerTreeHost->updateLayerTree(connection, layerTreeTransaction, scale);
-        scrollingCoordinatorProxy->didCommitLayerAndScrollingTrees();
-        IntPoint scrollPosition;
+        if (m_debugIndicatorLayerTreeHost && layerTreeTransaction.isMainFrameProcessTransaction()) {
+            float scale = indicatorScale(layerTreeTransaction.contentsSize());
+            scrollingCoordinatorProxy->willCommitLayerAndScrollingTrees();
+            bool rootLayerChanged = m_debugIndicatorLayerTreeHost->updateLayerTree(connection, layerTreeTransaction, scale);
+            scrollingCoordinatorProxy->didCommitLayerAndScrollingTrees();
+            IntPoint scrollPosition;
 #if PLATFORM(MAC)
-        scrollPosition = layerTreeTransaction.scrollPosition();
+            scrollPosition = layerTreeTransaction.scrollPosition();
 #endif
-        updateDebugIndicator(layerTreeTransaction.contentsSize(), rootLayerChanged, scale, scrollPosition);
-        m_debugIndicatorLayerTreeHost->protectedRootLayer().get().name = @"Indicator host root";
+            updateDebugIndicator(layerTreeTransaction.contentsSize(), rootLayerChanged, scale, scrollPosition);
+            m_debugIndicatorLayerTreeHost->protectedRootLayer().get().name = @"Indicator host root";
+        }
     }
 
     page->layerTreeCommitComplete();
@@ -840,16 +846,16 @@ void RemoteLayerTreeDrawingAreaProxy::animationsWereRemovedFromNode(RemoteLayerT
         page->checkedScrollingCoordinatorProxy()->animationsWereRemovedFromNode(node);
 }
 
-void RemoteLayerTreeDrawingAreaProxy::registerTimelineIfNecessary(WebCore::ProcessIdentifier processIdentifier, Seconds originTime, MonotonicTime now)
+void RemoteLayerTreeDrawingAreaProxy::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
 {
     if (RefPtr page = this->page())
-        page->checkedScrollingCoordinatorProxy()->registerTimelineIfNecessary(processIdentifier, originTime, now);
+        page->checkedScrollingCoordinatorProxy()->updateTimelineRegistration(processIdentifier, timelineRepresentations, now);
 }
 
-const RemoteAnimationTimeline* RemoteLayerTreeDrawingAreaProxy::timeline(WebCore::ProcessIdentifier processIdentifier) const
+RefPtr<const RemoteAnimationTimeline> RemoteLayerTreeDrawingAreaProxy::timeline(const TimelineID& timelineID) const
 {
     if (RefPtr page = this->page())
-        return page->checkedScrollingCoordinatorProxy()->timeline(processIdentifier);
+        return page->checkedScrollingCoordinatorProxy()->timeline(timelineID);
     return nullptr;
 }
 #endif // ENABLE(THREADED_ANIMATION_RESOLUTION)

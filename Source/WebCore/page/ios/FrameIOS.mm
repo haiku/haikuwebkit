@@ -289,7 +289,7 @@ Node* LocalFrame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLoc
 
     // We have the candidate node at the location, check whether it or one of its ancestors passes
     // the qualifier function, which typically checks if the node responds to a particular event type.
-    Node* approximateNode = nodeQualifierFunction(candidateInfo, 0, 0);
+    Node* approximateNode = nodeQualifierFunction(candidateInfo, nullptr, nullptr);
 
     if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode && approximateNode->isContentEditable()) {
         // If we are in editable content, we look for the root editable element.

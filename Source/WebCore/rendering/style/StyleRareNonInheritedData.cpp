@@ -138,7 +138,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
 #if HAVE(CORE_MATERIAL)
     , appleVisualEffect(static_cast<unsigned>(RenderStyle::initialAppleVisualEffect()))
 #endif
-    , scrollbarWidth(static_cast<unsigned>(RenderStyle::initialScrollbarWidth()))
+    , scrollbarWidth(static_cast<unsigned>(RenderStyle::initialScrollbarWidth().platform()))
     , usesAnchorFunctions(false)
     , anchorFunctionScrollCompensatedAxes(0)
     , isPopoverInvoker(false)
@@ -280,7 +280,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && scrollMargin == o.scrollMargin
         && scrollPadding == o.scrollPadding
         && counterDirectives == o.counterDirectives
-        && arePointingToEqualData(willChange, o.willChange)
+        && willChange == o.willChange
         && boxReflect == o.boxReflect
         && maskBorder == o.maskBorder
         && pageSize == o.pageSize

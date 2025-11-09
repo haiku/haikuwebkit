@@ -71,13 +71,17 @@ public:
     AnchorScrollAdjuster(RenderBox& anchored, const RenderBoxModelObject& defaultAnchor);
     RenderBox* anchored() const;
 
-    bool mayNeedAdjustment() const { return m_needsXAdjustment | m_needsYAdjustment; }
     inline bool isEmpty() const;
+    bool mayNeedAdjustment() const { return m_needsXAdjustment | m_needsYAdjustment; }
+    bool mayNeedXAdjustment() const { return m_needsXAdjustment; }
+    bool mayNeedYAdjustment() const { return m_needsYAdjustment; }
+
     bool isHidden() const { return m_isHidden; }
     void setHidden(bool hide) { m_isHidden = hide; }
 
     inline void addSnapshot(const RenderBox& scroller);
     inline void addViewportSnapshot(const RenderView&);
+    bool hasViewportSnapshot() const { return m_adjustForViewport; }
 
     enum Diff : uint8_t { New, SnapshotsDiffer, SnapshotsMatch };
     bool recaptureDiffers(const AnchorScrollAdjuster&) const; // Snapshot differences can require invalidation.

@@ -272,6 +272,7 @@ Tests/WebKitCocoa/SpeechRecognition.mm @nonARC
 Tests/WebKitCocoa/StopSuspendResumeAllMedia.mm @nonARC
 Tests/WebKitCocoa/StorageQuota.mm @nonARC
 Tests/WebKitCocoa/StoreBlobThenDelete.mm @nonARC
+Tests/WebKitCocoa/StringMatcher.mm @nonARC
 Tests/WebKitCocoa/SwitchInputTests.mm @nonARC
 Tests/WebKitCocoa/SystemColors.mm @nonARC
 Tests/WebKitCocoa/SystemPreview.mm @nonARC

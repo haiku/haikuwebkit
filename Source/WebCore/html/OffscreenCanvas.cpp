@@ -140,6 +140,7 @@ void OffscreenCanvas::setWidth(unsigned newWidth)
     if (m_detached)
         return;
     setSize(IntSize(newWidth, height()));
+    didUpdateSizeProperties();
 }
 
 void OffscreenCanvas::setHeight(unsigned newHeight)
@@ -147,12 +148,21 @@ void OffscreenCanvas::setHeight(unsigned newHeight)
     if (m_detached)
         return;
     setSize(IntSize(width(), newHeight));
+    didUpdateSizeProperties();
 }
 
-void OffscreenCanvas::setSize(const IntSize& newSize)
+void OffscreenCanvas::didUpdateSizeProperties()
 {
-    CanvasBase::setSize(newSize);
-    reset();
+    resetGraphicsContextState();
+    if (RefPtr context = dynamicDowncast<OffscreenCanvasRenderingContext2D>(m_context.get()))
+        context->reset();
+
+    setHasCreatedImageBuffer(false);
+    setImageBuffer(nullptr);
+    clearCopiedImage();
+
+    notifyObserversCanvasResized();
+    scheduleCommitToPlaceholderCanvas();
 
     if (RefPtr context = dynamicDowncast<GPUBasedCanvasRenderingContext>(m_context.get()))
         context->reshape();
@@ -438,20 +448,6 @@ void OffscreenCanvas::setImageBufferAndMarkDirty(RefPtr<ImageBuffer>&& buffer)
     setImageBuffer(WTFMove(buffer));
 
     CanvasBase::didDraw(FloatRect(FloatPoint(), size()));
-}
-
-void OffscreenCanvas::reset()
-{
-    resetGraphicsContextState();
-    if (RefPtr context = dynamicDowncast<OffscreenCanvasRenderingContext2D>(m_context.get()))
-        context->reset();
-
-    setHasCreatedImageBuffer(false);
-    setImageBuffer(nullptr);
-    clearCopiedImage();
-
-    notifyObserversCanvasResized();
-    scheduleCommitToPlaceholderCanvas();
 }
 
 void OffscreenCanvas::queueTaskKeepingObjectAlive(TaskSource source, Function<void(CanvasBase&)>&& task)

@@ -82,6 +82,7 @@ class HTTPHeaderMap;
 class InspectorTimelineAgent;
 class InstrumentingAgents;
 class KeyframeEffect;
+class LargestContentfulPaint;
 class LocalFrame;
 class LocalFrameView;
 class NetworkLoadMetrics;
@@ -281,6 +282,9 @@ public:
     static void consoleStopRecordingCanvas(CanvasRenderingContext&);
 
     static void performanceMark(ScriptExecutionContext&, const String&, std::optional<MonotonicTime>);
+
+    static void didEnqueueFirstContentfulPaint(ScriptExecutionContext&);
+    static void didEnqueueLargestContentfulPaint(ScriptExecutionContext&, const LargestContentfulPaint&);
 
     static void didRequestAnimationFrame(ScriptExecutionContext&, int callbackId);
     static void didCancelAnimationFrame(ScriptExecutionContext&, int callbackId);
@@ -484,6 +488,8 @@ private:
     static void consoleStopRecordingCanvasImpl(InstrumentingAgents&, CanvasRenderingContext&);
 
     static void performanceMarkImpl(InstrumentingAgents&, const String& label, std::optional<MonotonicTime>);
+    static void didEnqueueFirstContentfulPaintImpl(InstrumentingAgents&);
+    static void didEnqueueLargestContentfulPaintImpl(InstrumentingAgents&, const LargestContentfulPaint&);
 
     static void didRequestAnimationFrameImpl(InstrumentingAgents&, int callbackId, ScriptExecutionContext&);
     static void didCancelAnimationFrameImpl(InstrumentingAgents&, int callbackId);
@@ -1658,6 +1664,20 @@ inline void InspectorInstrumentation::performanceMark(ScriptExecutionContext& co
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (auto* agents = instrumentingAgents(context))
         performanceMarkImpl(*agents, label, WTFMove(startTime));
+}
+
+inline void InspectorInstrumentation::didEnqueueFirstContentfulPaint(ScriptExecutionContext& context)
+{
+    FAST_RETURN_IF_NO_FRONTENDS(void());
+    if (auto* agents = instrumentingAgents(context))
+        didEnqueueFirstContentfulPaintImpl(*agents);
+}
+
+inline void InspectorInstrumentation::didEnqueueLargestContentfulPaint(ScriptExecutionContext& context, const LargestContentfulPaint& entry)
+{
+    FAST_RETURN_IF_NO_FRONTENDS(void());
+    if (auto* agents = instrumentingAgents(context))
+        didEnqueueLargestContentfulPaintImpl(*agents, entry);
 }
 
 inline void InspectorInstrumentation::didRequestAnimationFrame(ScriptExecutionContext& scriptExecutionContext, int callbackId)

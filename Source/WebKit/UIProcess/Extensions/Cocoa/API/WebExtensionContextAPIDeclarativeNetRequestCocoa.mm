@@ -36,7 +36,6 @@
 #import "WebExtensionConstants.h"
 #import "WebExtensionPermission.h"
 #import "WebExtensionUtilities.h"
-#import "_WKWebExtensionSQLiteStore.h"
 #import <wtf/BlockPtr.h>
 #import <wtf/cocoa/VectorCocoa.h>
 

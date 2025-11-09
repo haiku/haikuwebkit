@@ -180,7 +180,7 @@
     if (!_page->mainFrame())
         return;
 
-    RefPtr { _page.get() }->performImmediateActionHitTestAtLocation(_page->mainFrame()->frameID(), [immediateActionRecognizer locationInView:immediateActionRecognizer.view]);
+    RefPtr { _page.get() }->performImmediateActionHitTestAtLocation(_page->mainFrame()->frameID(), [immediateActionRecognizer locationInView:retainPtr(immediateActionRecognizer.view).get()]);
 }
 
 - (void)immediateActionRecognizerWillBeginAnimation:(NSImmediateActionGestureRecognizer *)immediateActionRecognizer
@@ -442,7 +442,7 @@
         [self _clearImmediateActionState];
     }];
 
-    [_currentActionContext setHighlightFrame:[view.get().window convertRectToScreen:[view convertRect:_hitTestResultData.platformData.detectedDataBoundingBox toView:nil]]];
+    [_currentActionContext setHighlightFrame:[retainPtr(view.get().window) convertRectToScreen:[view convertRect:_hitTestResultData.platformData.detectedDataBoundingBox toView:nil]]];
 
     RetainPtr menuItems = [[PAL::getDDActionsManagerClassSingleton() sharedManager] menuItemsForResult:RetainPtr { [_currentActionContext mainResult] }.get() actionContext:_currentActionContext.get()];
 
@@ -474,7 +474,7 @@
         [self _clearImmediateActionState];
     }];
 
-    [_currentActionContext setHighlightFrame:[view.get().window convertRectToScreen:[view convertRect:_hitTestResultData.elementBoundingBox toView:nil]]];
+    [_currentActionContext setHighlightFrame:[retainPtr(view.get().window) convertRectToScreen:[view convertRect:_hitTestResultData.elementBoundingBox toView:nil]]];
 
     RefPtr<API::HitTestResult> hitTestResult = [self _webHitTestResult];
     if (!hitTestResult)

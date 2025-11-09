@@ -1665,7 +1665,8 @@
      "name": "NSProcessInfoPlatform",
      "properties": [
       {"access": "public", "attr": [ "readonly" ], "getter": "isMacCatalystApp", "introduced": "13", "name": "macCatalystApp"},
-      {"access": "public", "attr": [ "readonly" ], "getter": "isiOSAppOnMac", "introduced": "14", "name": "iOSAppOnMac"}
+      {"access": "public", "attr": [ "readonly" ], "getter": "isiOSAppOnMac", "introduced": "14", "name": "iOSAppOnMac"},
+      {"access": "public", "attr": [ "readonly" ], "getter": "isiOSAppOnVision", "introduced": "26.1", "name": "iOSAppOnVision"}
      ]
     },
     {
@@ -3604,7 +3605,8 @@
      "constants": [
       {"access": "public", "name": "NSURLErrorNetworkUnavailableReasonCellular"},
       {"access": "public", "name": "NSURLErrorNetworkUnavailableReasonExpensive"},
-      {"access": "public", "name": "NSURLErrorNetworkUnavailableReasonConstrained"}
+      {"access": "public", "name": "NSURLErrorNetworkUnavailableReasonConstrained"},
+      {"access": "public", "introduced": "26.1", "name": "NSURLErrorNetworkUnavailableReasonUltraConstrained"}
      ],
      "introduced": "13",
      "name": "NSURLErrorNetworkUnavailableReason"
@@ -4132,7 +4134,7 @@
       {"access": "public", "introduced": "8", "name": "NSURLErrorBackgroundSessionInUseByAnotherProcess"},
       {"access": "public", "introduced": "8", "name": "NSURLErrorBackgroundSessionWasDisconnected"}
      ],
-     "name": "enum (unnamed at NSURLError.h:1001)"
+     "name": "enum (unnamed at NSURLError.h:1011)"
     },
     {
      "access": "public",
@@ -7641,6 +7643,7 @@
       {"access": "public", "getter": "allowsCellularAccess", "introduced": "6", "name": "allowsCellularAccess", "setter": "setAllowsCellularAccess:"},
       {"access": "public", "getter": "allowsExpensiveNetworkAccess", "introduced": "13", "name": "allowsExpensiveNetworkAccess", "setter": "setAllowsExpensiveNetworkAccess:"},
       {"access": "public", "getter": "allowsConstrainedNetworkAccess", "introduced": "13", "name": "allowsConstrainedNetworkAccess", "setter": "setAllowsConstrainedNetworkAccess:"},
+      {"access": "public", "getter": "allowsUltraConstrainedNetworkAccess", "introduced": "26.1", "name": "allowsUltraConstrainedNetworkAccess", "setter": "setAllowsUltraConstrainedNetworkAccess:"},
       {"access": "public", "getter": "assumesHTTP3Capable", "introduced": "14.5", "name": "assumesHTTP3Capable", "setter": "setAssumesHTTP3Capable:"},
       {"access": "public", "getter": "attribution", "introduced": "15", "name": "attribution", "setter": "setAttribution:"},
       {"access": "public", "getter": "requiresDNSSECValidation", "introduced": "16.1", "name": "requiresDNSSECValidation", "setter": "setRequiresDNSSECValidation:"},
@@ -9240,6 +9243,7 @@
       {"access": "public", "attr": [ "readonly" ], "getter": "allowsCellularAccess", "introduced": "6", "name": "allowsCellularAccess"},
       {"access": "public", "attr": [ "readonly" ], "getter": "allowsExpensiveNetworkAccess", "introduced": "13", "name": "allowsExpensiveNetworkAccess"},
       {"access": "public", "attr": [ "readonly" ], "getter": "allowsConstrainedNetworkAccess", "introduced": "13", "name": "allowsConstrainedNetworkAccess"},
+      {"access": "public", "attr": [ "readonly" ], "getter": "allowsUltraConstrainedNetworkAccess", "introduced": "26.1", "name": "allowsUltraConstrainedNetworkAccess"},
       {"access": "public", "attr": [ "readonly" ], "getter": "assumesHTTP3Capable", "introduced": "14.5", "name": "assumesHTTP3Capable"},
       {"access": "public", "attr": [ "readonly" ], "getter": "attribution", "introduced": "15", "name": "attribution"},
       {"access": "public", "attr": [ "readonly" ], "getter": "requiresDNSSECValidation", "introduced": "16.1", "name": "requiresDNSSECValidation"},
@@ -9348,6 +9352,7 @@
       {"access": "public", "getter": "allowsCellularAccess", "name": "allowsCellularAccess", "setter": "setAllowsCellularAccess:"},
       {"access": "public", "getter": "allowsExpensiveNetworkAccess", "introduced": "13", "name": "allowsExpensiveNetworkAccess", "setter": "setAllowsExpensiveNetworkAccess:"},
       {"access": "public", "getter": "allowsConstrainedNetworkAccess", "introduced": "13", "name": "allowsConstrainedNetworkAccess", "setter": "setAllowsConstrainedNetworkAccess:"},
+      {"access": "public", "getter": "allowsUltraConstrainedNetworkAccess", "introduced": "26.1", "name": "allowsUltraConstrainedNetworkAccess", "setter": "setAllowsUltraConstrainedNetworkAccess:"},
       {"access": "public", "getter": "requiresDNSSECValidation", "introduced": "16", "name": "requiresDNSSECValidation", "setter": "setRequiresDNSSECValidation:"},
       {"access": "public", "getter": "waitsForConnectivity", "introduced": "11", "name": "waitsForConnectivity", "setter": "setWaitsForConnectivity:"},
       {"access": "public", "getter": "isDiscretionary", "introduced": "7", "name": "discretionary", "setter": "setDiscretionary:"},
@@ -11009,7 +11014,7 @@
      "name": "NSXPCProxyCreating"
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "NSActivityOptions"},
     {"access": "public", "name": "NSAttributedStringEnumerationOptions"},
@@ -12652,6 +12657,10 @@
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$s10Foundation10URLRequestV30allowsConstrainedNetworkAccessSbvpMV"},
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$s10Foundation10URLRequestV30allowsConstrainedNetworkAccessSbvs"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation10URLRequestV34_conditionallyBridgeFromObjectiveC_6resultSbSo12NSURLRequestC_ACSgztFZ"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s10Foundation10URLRequestV35allowsUltraConstrainedNetworkAccessSbvM"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s10Foundation10URLRequestV35allowsUltraConstrainedNetworkAccessSbvg"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s10Foundation10URLRequestV35allowsUltraConstrainedNetworkAccessSbvpMV"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s10Foundation10URLRequestV35allowsUltraConstrainedNetworkAccessSbvs"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation10URLRequestV36_unconditionallyBridgeFromObjectiveCyACSo12NSURLRequestCSgFZ"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation10URLRequestV3url11cachePolicy15timeoutIntervalAcA3URLV_So017NSURLRequestCacheE0VSdtcfC"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation10URLRequestV3urlAA3URLVSgvM"},
@@ -22030,6 +22039,7 @@
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV23noPermissionsToReadFileAC4CodeVvgZ"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV23noPermissionsToReadFileAC4CodeVvpZMV"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV24NetworkUnavailableReasonO11constrainedyA2EmFWC"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s10Foundation8URLErrorV24NetworkUnavailableReasonO16ultraConstrainedyA2EmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV24NetworkUnavailableReasonO8cellularyA2EmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV24NetworkUnavailableReasonO8rawValueAESgSi_tcfC"},
     {"access": "public", "linkage": "exported", "name": "_$s10Foundation8URLErrorV24NetworkUnavailableReasonO8rawValueSivg"},
@@ -24833,10 +24843,10 @@
      "super": "NSObject"
     }
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

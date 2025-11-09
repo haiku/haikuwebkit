@@ -67,6 +67,9 @@ public:
     void removeUserStyleSheets(InjectedBundleScriptWorld&);
     void removeAllUserContent();
 
+    bool hasStringMatchersForWorld(const WebCore::DOMWrapperWorld&) const final;
+    WebCore::WebKitStringMatcher* stringMatcher(const WebCore::DOMWrapperWorld&, const String&) const final;
+
     InjectedBundleScriptWorld* worldForIdentifier(ContentWorldIdentifier);
 
     void addContentWorldIfNecessary(const ContentWorldData&);
@@ -105,6 +108,9 @@ private:
     void removeAllUserScriptMessageHandlersForWorlds(const Vector<ContentWorldIdentifier>&);
     void removeAllUserScriptMessageHandlers();
 
+    void addStringMatcher(WebStringMatcherData&&);
+    void removeStringMatcher(ContentWorldIdentifier, const String&);
+
 #if ENABLE(CONTENT_EXTENSIONS)
     void removeContentRuleList(const String& name);
     void removeAllContentRuleLists();
@@ -134,6 +140,7 @@ private:
 #if ENABLE(CONTENT_EXTENSIONS)
     WebCore::ContentExtensions::ContentExtensionsBackend m_contentExtensionBackend;
 #endif
+    HashMap<ContentWorldIdentifier, HashMap<String, RefPtr<WebCore::WebKitStringMatcher>>> m_stringMatchers;
 };
 
 } // namespace WebKit

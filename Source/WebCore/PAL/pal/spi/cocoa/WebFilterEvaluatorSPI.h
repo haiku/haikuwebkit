@@ -35,6 +35,7 @@ DECLARE_SYSTEM_HEADER
 
 #else
 
+#import <Foundation/Foundation.h>
 #import <TargetConditionals.h>
 
 enum {

@@ -82,7 +82,7 @@
     [result setDrawsBackground:NO];
 
     if ((NSUInteger)row < [_siteList count]) {
-        [[result textStorage].mutableString setString:_siteList.get()[row]];
+        [retainPtr([result textStorage].mutableString) setString:retainPtr(_siteList.get()[row]).get()];
         [result textStorage].font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [result textStorage].foregroundColor = NSColor.whiteColor;
     }
@@ -97,7 +97,7 @@
         frame.size.height -= _tableView.get().frame.size.height;
     else
         frame.size.height += _tableView.get().frame.size.height;
-    [_alert.get().window setFrame:frame display:YES];
+    [retainPtr(_alert.get().window) setFrame:frame display:YES];
     [_alert layout];
 }
 @end
@@ -223,14 +223,14 @@ void displayStorageAccessAlert(WKWebView *webView, NSString *alertTitle, NSStrin
 
         NSRect frame = alert.get().window.frame;
         frame.size.width += 100.;
-        [alert.get().window setFrame:frame display:YES];
+        [retainPtr(alert.get().window) setFrame:frame display:YES];
 
         [alert setAccessoryView:accessoryStackView.get()];
         [alert layout];
     }
     [alert addButtonWithTitle:allowButtonString.get()];
     [alert addButtonWithTitle:doNotAllowButtonString.get()];
-    [alert beginSheetModalForWindow:webView.window completionHandler:makeBlockPtr([ssoSiteList, completionBlock](NSModalResponse returnCode) {
+    [alert beginSheetModalForWindow:retainPtr(webView.window).get() completionHandler:makeBlockPtr([ssoSiteList, completionBlock](NSModalResponse returnCode) {
         auto shouldAllow = returnCode == NSAlertFirstButtonReturn;
         completionBlock(shouldAllow);
     }).get()];

@@ -91,10 +91,11 @@
     
         // Test zoom.
         window.addEventListener("click", checkZoom, false);
-        node.style.zoom = 2.0;
+        const zoom = 2.0;
+        node.style.zoom = zoom;
         rects = range.getClientRects();
-        var x = Math.round(rects[0].left);
-        var y = Math.round(rects[0].top + rects[0].width / 2);
+        var x = Math.round(rects[0].left/zoom);
+        var y = Math.round(rects[0].top/zoom + (rects[0].width/zoom) / 2);
         sendClick(x * 2, y);
         window.removeEventListener("click", checkZoom, false);
     

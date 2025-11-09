@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLRenderSharedExponent);
 WebGLRenderSharedExponent::WebGLRenderSharedExponent(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::WebGLRenderSharedExponent)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_QCOM_render_shared_exponent"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::QCOM_render_shared_exponent);
 }
 
 WebGLRenderSharedExponent::~WebGLRenderSharedExponent() = default;
 
 bool WebGLRenderSharedExponent::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_QCOM_render_shared_exponent"_s);
+    return context.supportsExtension(GCGLExtension::QCOM_render_shared_exponent);
 }
 
 } // namespace WebCore

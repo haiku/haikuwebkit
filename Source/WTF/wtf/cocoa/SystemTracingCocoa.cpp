@@ -24,13 +24,13 @@
 */
 
 #import "config.h"
-#import "SystemTracing.h"
+#import <wtf/SystemTracing.h>
 
 #if HAVE(OS_SIGNPOST)
 
-#import "ContinuousTime.h"
 #import <dispatch/dispatch.h>
 #import <mach/mach_time.h>
+#import <wtf/ContinuousTime.h>
 
 bool WTFSignpostIndirectLoggingEnabled;
 

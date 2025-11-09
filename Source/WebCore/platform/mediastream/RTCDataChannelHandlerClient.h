@@ -28,24 +28,15 @@
 #if ENABLE(WEB_RTC)
 
 #include <WebCore/RTCDataChannelState.h>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/ThreadSafeRefCounted.h>
-#include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
-
-namespace WebCore {
-class RTCDataChannelHandlerClient;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::RTCDataChannelHandlerClient> : std::true_type { };
-}
 
 namespace WebCore {
 
 class RTCError;
 
-class RTCDataChannelHandlerClient : public CanMakeWeakPtr<RTCDataChannelHandlerClient, WeakPtrFactoryInitialization::Eager> {
+class RTCDataChannelHandlerClient : public AbstractRefCountedAndCanMakeWeakPtr<RTCDataChannelHandlerClient, WeakPtrFactoryInitialization::Eager> {
 public:
     virtual ~RTCDataChannelHandlerClient() = default;
 

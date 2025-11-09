@@ -53,7 +53,7 @@ struct InteractionInformationAtPosition {
     InteractionInformationRequest request;
 
     bool canBeValid { true };
-    std::optional<bool> nodeAtPositionHasDoubleClickHandler;
+    std::optional<bool> hitNodeOrWindowHasDoubleClickListener;
 
     enum class Selectability : uint8_t {
         Selectable,

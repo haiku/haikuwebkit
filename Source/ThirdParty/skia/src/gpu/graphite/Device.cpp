@@ -145,7 +145,7 @@ const SkStrokeRec& DefaultFillStyle() {
 /** If the paint can be reduced to a solid flood-fill, determine the correct color to fill with. */
 std::optional<SkColor4f> extract_paint_color(const PaintParams& paint,
                                              const SkColorInfo& dstColorInfo) {
-    std::optional<SkBlendMode> bm = paint.finalBlendMode();
+    SkBlendMode bm = paint.finalBlendMode();
     // Since we don't depend on the dst, a dst-out blend mode implies source is
     // opaque, which causes dst-out to behave like clear.
     if (bm == SkBlendMode::kClear || bm == SkBlendMode::kDstOut) {
@@ -293,24 +293,34 @@ SkIRect rect_to_pixelbounds(const Rect& r) {
 bool is_pixel_aligned(const Rect& r, const Transform& t) {
     if (t.type() <= Transform::Type::kRectStaysRect) {
         Rect devRect = t.mapRect(r);
-        return devRect.nearlyEquals(devRect.makeRound());
+        return devRect.nearlyEquals(devRect.makeRound(), Shape::kDefaultPixelTolerance);
     }
 
     return false;
 }
 
-bool is_simple_shape(const Shape& shape, SkStrokeRec::Style type) {
-    // We send regular filled and hairline [round] rectangles, stroked/hairline lines, and stroked
-    // [r]rects with circular corners to a single Renderer that does not trigger MSAA.
-    // Per-edge AA quadrilaterals also use the same Renderer but those are not "Shapes".
-    // These shapes and quads may also be combined with a second non-AA inner fill. This fill step
-    // is also directly used for flooding the clip
-    return shape.isFloodFill() ||
-           (!shape.inverted() && type != SkStrokeRec::kStrokeAndFill_Style &&
-            (shape.isRect() ||
-             (shape.isLine() && type != SkStrokeRec::kFill_Style) ||
-             (shape.isRRect() && (type != SkStrokeRec::kStroke_Style ||
-                                  SkRRectPriv::AllCornersCircular(shape.rrect())))));
+bool is_simple_shape(const Shape& shape, const Transform& localToDevice, SkStrokeRec::Style type) {
+    if (shape.isFloodFill()) {
+        return true; // Always supported
+    } else if (!shape.inverted() && type != SkStrokeRec::kStrokeAndFill_Style) {
+        // A filled line renders nothing but that should be caught earlier, so the actual branches
+        // in this function can be simplified.
+        SkASSERT(!shape.isLine() || type != SkStrokeRec::kFill_Style);
+
+        if (shape.isRRect() && type == SkStrokeRec::kStroke_Style) {
+            // Non-hairline stroked round rects require the corner radii to be circular to be
+            // compatible with the shared Renderer.
+            const float tol =
+                    localToDevice.localAARadius(shape.bounds()) * Shape::kDefaultPixelTolerance;
+            return SkRRectPriv::AllCornersRelativelyCircular(shape.rrect(), tol);
+        } else if (shape.isRRect() || shape.isRect() || shape.isLine()) {
+            // There are no restrictions on filled or hairline [r]rects and lines.
+            return true;
+        } // Fallthrough
+    }
+
+    // Requires path rendering
+    return false;
 }
 
 bool use_compute_atlas_when_available(PathRendererStrategy strategy) {
@@ -320,21 +330,32 @@ bool use_compute_atlas_when_available(PathRendererStrategy strategy) {
            strategy == PathRendererStrategy::kDefault;
 }
 
-class AutoResetForDraw {
+class ScopedDrawBuilder {
 public:
-    explicit AutoResetForDraw(PipelineDataGatherer* gatherer) : fDataGatherer(gatherer) {}
-
-    ~AutoResetForDraw() {
-        if (fDataGatherer) {
-            fDataGatherer->resetForDraw();
-        }
+    explicit ScopedDrawBuilder(Recorder* recorder)
+            : fRecorder(recorder),
+              fKeyAndDataBuilder(fRecorder->priv().popOrCreateKeyAndDataBuilder()) {
+        SkASSERT(fKeyAndDataBuilder);
+        SkDEBUGCODE(this->gatherer()->checkReset());
+        SkDEBUGCODE(this->builder()->checkReset());
     }
 
-    AutoResetForDraw(const AutoResetForDraw&) = delete;
-    AutoResetForDraw& operator=(const AutoResetForDraw&) = delete;
+    ~ScopedDrawBuilder() {
+        SkASSERT(fKeyAndDataBuilder && fRecorder);
+        // The PipelineDataGatherer must be reset before being returned to the pool for reuse.
+        this->gatherer()->resetForDraw();
+        fRecorder->priv().pushKeyAndDataBuilder(std::move(fKeyAndDataBuilder));
+    }
+
+    PipelineDataGatherer* gatherer() { return &fKeyAndDataBuilder->first; }
+    PaintParamsKeyBuilder* builder() { return &fKeyAndDataBuilder->second; }
+
+    ScopedDrawBuilder(const ScopedDrawBuilder&) = delete;
+    ScopedDrawBuilder& operator=(const ScopedDrawBuilder&) = delete;
 
 private:
-    PipelineDataGatherer* fDataGatherer;
+    Recorder* fRecorder;
+    std::unique_ptr<KeyAndDataBuilder> fKeyAndDataBuilder;
 };
 
 } // anonymous namespace
@@ -497,12 +518,6 @@ Device::Device(Recorder* recorder, sk_sp<DrawContext> dc)
                     fRecorder->priv().caps()->defaultMSAASamplesCount());
         }
     }
-
-    const bool useStorageBuffers = fRecorder->priv().caps()->storageBufferSupport();
-    const auto& bindingReq = fRecorder->priv().caps()->resourceBindingRequirements();
-    fDataGatherer = std::make_unique<PipelineDataGatherer>(
-            useStorageBuffers ? bindingReq.fStorageBufferLayout : bindingReq.fUniformBufferLayout);
-    fKeyBuilder = std::make_unique<PaintParamsKeyBuilder>(fRecorder->priv().shaderCodeDictionary());
 }
 
 Device::~Device() {
@@ -534,6 +549,71 @@ void Device::setImmutable() {
         // and is relied on by Image::notifyInUse() to detect when it can unlink from a Device.
         this->abandonRecorder();
     }
+}
+
+bool Device::notifyInUse(Recorder* recorder, DrawContext* drawContext) {
+    if (this->isScratchDevice()) {
+        if (fLastTask) {
+            // Increment the pending read count for the device's target
+            recorder->priv().addPendingRead(this->target());
+            if (drawContext) {
+                // Add a reference to the device's drawTask to `drawContext` if that's provided.
+                drawContext->recordDependency(fLastTask);
+            } else {
+                // If there's no `drawContext` this notify represents a copy, so for now append the
+                // task to the root task list since that is where the subsequent copy task will go
+                // as well.
+                recorder->priv().add(fLastTask);
+            }
+        } else {
+            // If there's no draw task yet, there are two possible scenarios:
+            //
+            // 1) the device is being drawn into a child scratch device (backdrop filter or
+            //    init-from-prev layer), and the child will later on be drawn back into the device's
+            //    `drawContext`. In this case `device` should already have performed an internal
+            //    flush and have no pending work, and not yet be marked immutable. The correct
+            //    action at this point in time is to do nothing: the final task order in the
+            //    device's DrawTask will be pre-notified tasks into the device's target, then the
+            //    child's DrawTask when it's drawn back into `device`, and then any post tasks that
+            //    further modify the `device`'s target.
+            // 2) the scratch device was flushed to a drawContext's local task list, resulting in no
+            //    pending work but also no lastTask. The correct action is again to do nothing. In
+            //    this case, it is also possible that the device was not registered with the
+            //    recorder.
+            SkASSERT(!fRecorder || fRecorder == recorder);
+        }
+
+        // Scratch devices are often already marked immutable, but they are also the way in which
+        // Image finds the last snapped DrawTask so we don't unlink scratch devices. The scratch
+        // image view will be short-lived as well, or the device will transition to a non-scratch
+        // device in a future Recording and then it will be unlinked then. Thus, we always return
+        // false for scratch devices so they are not unlinked from their images.
+        return false;
+    } else {
+        // Automatic flushing of image views only happens when mixing reads and writes on the
+        // originating Recorder. Draws of the view on another Recorder will always see the texture
+        // content dependent on how Recordings are inserted.
+        if (fRecorder == recorder) {
+            // Non-scratch devices push their tasks to the root task list to maintain an order
+            // consistent with the client-triggering actions. Because of this, there's no need to
+            // add references to the `drawContext` that the device is being drawn into.
+            this->flushPendingWork(/*drawContext=*/nullptr);
+
+            if (drawContext) {
+                // But if we are being drawn into another context, remember that there is an
+                // outstanding dependency on the current state of this device, in which case it's
+                // next flush must also flush those other devices before its new tasks are added.
+                fMustFlushDependencies = true;
+            }
+        }
+        // Return true (to unlink with the image) if the non-scratch surface is immutable since this
+        // Device cannot record any more commands that will modify its texture.
+        return !SkToBool(fRecorder) || this->unique();
+    }
+}
+
+bool Device::hasPendingReads(const TextureProxy* texture) const {
+    return fRecorder && fDC->readsTexture(texture);
 }
 
 const Transform& Device::localToDeviceTransform() {
@@ -967,7 +1047,6 @@ void Device::drawRRect(const SkRRect& rr, const SkPaint& paint) {
 }
 
 void Device::drawDRRect(const SkRRect& outer, const SkRRect& inner, const SkPaint& paint) {
-#if !defined(SK_DISABLE_CLIP_DRAW_GEOMETRIC_INTERSECTION)
     // If there's a path effect or inverse fill, fall back to path rendering
     if (paint.getPathEffect() || paint.getStyle() != SkPaint::kFill_Style) {
         this->SkDevice::drawDRRect(outer, inner, paint);
@@ -977,7 +1056,8 @@ void Device::drawDRRect(const SkRRect& outer, const SkRRect& inner, const SkPain
     // This holds the positive insets from `outer` to `inner`
     Rect strokeRect{outer.rect()};
     skvx::float4 gap = Rect(inner.rect()).vals() - strokeRect.vals();
-    const float tolerance = 0.001f * this->localToDeviceTransform().localAARadius(strokeRect);
+    const float tolerance = Shape::kDefaultPixelTolerance *
+                            this->localToDeviceTransform().localAARadius(strokeRect);
     const float strokeWidth = gap[0];
     if (!all((gap > tolerance) & (abs(gap - strokeWidth) <= tolerance))) {
         // Either not approximately equal insets on all sides, or it would create a hairline stroke
@@ -1019,7 +1099,9 @@ void Device::drawDRRect(const SkRRect& outer, const SkRRect& inner, const SkPain
             SkVector innerCornerRadii = inner.radii((SkRRect::Corner) i);
 
             float strokeCorner;
-            if (!SkScalarNearlyEqual(outerCornerRadii.fX, outerCornerRadii.fY, tolerance)) {
+            if (!SkRRectPriv::IsRelativelyCircular(outerCornerRadii.fX,
+                                                   outerCornerRadii.fY,
+                                                   tolerance)) {
                 // Not circular; a stroked ellipse is not just a larger ellipse
                 break;
             } else if (SkScalarNearlyZero(outerCornerRadii.fX, tolerance)) {
@@ -1048,8 +1130,12 @@ void Device::drawDRRect(const SkRRect& outer, const SkRRect& inner, const SkPain
             }
 
             float expectedInnerRadius = std::max(0.f, strokeCorner - strokeRadius);
-            if (!SkScalarNearlyEqual(innerCornerRadii.fX, expectedInnerRadius) ||
-                !SkScalarNearlyEqual(innerCornerRadii.fY, expectedInnerRadius)) {
+            if (!SkRRectPriv::IsRelativelyCircular(innerCornerRadii.fX,
+                                                   expectedInnerRadius,
+                                                   tolerance) ||
+                !SkRRectPriv::IsRelativelyCircular(innerCornerRadii.fY,
+                                                   expectedInnerRadius,
+                                                   tolerance)) {
                 // Inner corner doesn't match expectation
                 break;
             }
@@ -1085,9 +1171,6 @@ void Device::drawDRRect(const SkRRect& outer, const SkRRect& inner, const SkPain
         this->drawRRect(outer, paint);
     }
     fClip.restore();
-#else
-    this->SkDevice::drawDRRect(outer, inner, paint);
-#endif
 }
 
 void Device::drawPath(const SkPath& path, const SkPaint& paint) {
@@ -1119,7 +1202,6 @@ void Device::drawPath(const SkPath& path, const SkPaint& paint) {
             this->drawRect(rect, paint);
             return;
         }
-#if !defined(SK_DISABLE_CLIP_DRAW_GEOMETRIC_INTERSECTION)
         // Detect filled nested rect contours
         SkRect rects[2];
         SkPathDirection dirs[2];
@@ -1135,7 +1217,6 @@ void Device::drawPath(const SkPath& path, const SkPaint& paint) {
                 return;
             }
         }
-#endif
     }
     this->drawGeometry(this->localToDeviceTransform(), Geometry(Shape(path)),
                        paint, SkStrokeRec(paint));
@@ -1368,7 +1449,7 @@ void Device::drawGeometry(const Transform& localToDevice,
                           sk_sp<SkBlender> primitiveBlender,
                           bool skipColorXform) {
     ASSERT_SINGLE_OWNER
-    AutoResetForDraw autoReset(fDataGatherer.get());
+    ScopedDrawBuilder scopedDrawBuilder(fRecorder);
     if (!localToDevice.valid()) {
         // If the transform is not invertible or not finite then drawing isn't well defined.
         SKGPU_LOG_W("Skipping draw with non-invertible/non-finite transform.");
@@ -1420,7 +1501,7 @@ void Device::drawGeometry(const Transform& localToDevice,
     // transform to device space so we draw something approximately correct (barring local coord
     // issues).
     if (geometry.isShape() && localToDevice.type() == Transform::Type::kPerspective &&
-        !is_simple_shape(geometry.shape(), style.getStyle())) {
+        !is_simple_shape(geometry.shape(), localToDevice, style.getStyle())) {
         SkPath devicePath = geometry.shape().asPath().makeTransform(localToDevice.matrix().asM33());
         devicePath.setIsVolatile(true);
         this->drawGeometry(Transform::Identity(), Geometry(Shape(devicePath)), paint, style, flags,
@@ -1535,24 +1616,20 @@ void Device::drawGeometry(const Transform& localToDevice,
     KeyContext keyContext{fRecorder,
                           fDC.get(),
                           fRecorder->priv().refFloatStorageManager().get(),
-                          fKeyBuilder.get(),
-                          fDataGatherer.get(),
+                          scopedDrawBuilder.builder(),
+                          scopedDrawBuilder.gatherer(),
                           localToDevice.matrix(),
                           fDC->colorInfo(),
                           geometry.isShape() || geometry.isEdgeAAQuad()
                                 ? KeyGenFlags::kDefault
                                 : KeyGenFlags::kDisableSamplingOptimization,
                           paint.getColor4f()};
-    SkDEBUGCODE(fDataGatherer->checkReset());
-    SkDEBUGCODE(fKeyBuilder->checkReset());
-
     auto keyResult = shading.toKey(keyContext);
     if (!keyResult) {
         // Converting the SkPaint to a pipeline and set of uniform values + sampled textures failed.
         SKGPU_LOG_W("Key context creation failed in Device::drawGeometry, draw dropped!");
         return;
     }
-
     auto [paintID, dstUsage] = *keyResult;
 
     // If we are unclipped, do not depend on the dst, and cover the target, then we can adjust
@@ -1691,7 +1768,7 @@ void Device::drawGeometry(const Transform& localToDevice,
         SkASSERT(atlasMask.has_value());
         auto [mask, origin] = *atlasMask;
         fDC->recordDraw(renderer, Transform::Translate(origin.fX, origin.fY), Geometry(mask), clip,
-                        order, paintID, dstUsage, fDataGatherer.get(), nullptr);
+                        order, paintID, dstUsage, scopedDrawBuilder.gatherer(), nullptr);
     } else {
         if (styleType == SkStrokeRec::kStroke_Style ||
             styleType == SkStrokeRec::kHairline_Style ||
@@ -1703,7 +1780,7 @@ void Device::drawGeometry(const Transform& localToDevice,
                                    ? fRecorder->priv().rendererProvider()->tessellatedStrokes()
                                    : renderer,
                             localToDevice, geometry, clip, order, paintID, dstUsage,
-                            fDataGatherer.get(), &stroke);
+                            scopedDrawBuilder.gatherer(), &stroke);
         }
         if (styleType == SkStrokeRec::kFill_Style ||
             styleType == SkStrokeRec::kStrokeAndFill_Style) {
@@ -1722,13 +1799,13 @@ void Device::drawGeometry(const Transform& localToDevice,
                 orderWithoutCoverage.reverseDepthAsStencil();
                 fDC->recordDraw(fRecorder->priv().rendererProvider()->nonAABounds(), localToDevice,
                                 Geometry(Shape(innerFillBounds)), clip, orderWithoutCoverage,
-                                paintID, dstUsage, fDataGatherer.get(), nullptr);
+                                paintID, dstUsage, scopedDrawBuilder.gatherer(), nullptr);
                 // Force the coverage draw to come after the non-AA draw in order to benefit from
                 // early depth testing.
                 order.dependsOnPaintersOrder(orderWithoutCoverage.paintOrder());
             }
             fDC->recordDraw(renderer, localToDevice, geometry, clip, order, paintID, dstUsage,
-                            fDataGatherer.get(), nullptr);
+                            scopedDrawBuilder.gatherer(), nullptr);
         }
     }
 
@@ -1746,7 +1823,7 @@ void Device::drawClipShape(const Transform& localToDevice,
                            const Shape& shape,
                            const Clip& clip,
                            DrawOrder order) {
-    AutoResetForDraw autoReset(fDataGatherer.get());
+    ScopedDrawBuilder scopedDrawBuilder(fRecorder);
 
     // A clip draw's state is almost fully defined by the ClipStack. The only thing we need
     // to account for is selecting a Renderer and tracking the stencil buffer usage.
@@ -1779,12 +1856,12 @@ void Device::drawClipShape(const Transform& localToDevice,
     if (localToDevice.type() == Transform::Type::kPerspective) {
         SkPath devicePath = geometry.shape().asPath().makeTransform(localToDevice.matrix().asM33());
         fDC->recordDraw(renderer, Transform::Identity(), Geometry(Shape(devicePath)), clip, order,
-                        UniquePaintParamsID::Invalid(), DstUsage::kNone, fDataGatherer.get(),
-                        /*stroke=*/nullptr);
+                        UniquePaintParamsID::Invalid(), DstUsage::kNone,
+                        scopedDrawBuilder.gatherer(), /*stroke=*/nullptr);
     } else {
         fDC->recordDraw(renderer, localToDevice, geometry, clip, order,
-                        UniquePaintParamsID::Invalid(), DstUsage::kNone, fDataGatherer.get(),
-                        /*stroke=*/nullptr);
+                        UniquePaintParamsID::Invalid(), DstUsage::kNone,
+                        scopedDrawBuilder.gatherer(), /*stroke=*/nullptr);
     }
     // This ensures that draws recorded after this clip shape has been popped off the stack will
     // be unaffected by the Z value the clip shape wrote to the depth attachment.
@@ -1849,7 +1926,7 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
 
     const Shape& shape = geometry.shape();
     // We can't use this renderer if we require MSAA for an effect (i.e. clipping or stroke+fill).
-    if (!requireMSAA && is_simple_shape(shape, type)) {
+    if (!requireMSAA && is_simple_shape(shape, localToDevice, type)) {
         // For pixel-aligned rects, use the the non-AA bounds renderer to avoid triggering any
         // dst-read requirement due to src blending.
         bool pixelAlignedRect = false;
@@ -1865,12 +1942,15 @@ std::pair<const Renderer*, PathAtlas*> Device::chooseRenderer(const Transform& l
         }
     }
 
-    if (!requireMSAA && shape.isArc() &&
-        SkScalarNearlyEqual(shape.arc().oval().width(), shape.arc().oval().height()) &&
-        SkScalarAbs(shape.arc().sweepAngle()) < 360.f &&
-        localToDevice.type() <= Transform::Type::kAffine) {
-        float maxScale, minScale;
-        std::tie(maxScale, minScale) = localToDevice.scaleFactors({0, 0});
+    if (!requireMSAA &&
+        shape.isArc() &&
+        std::abs(shape.arc().sweepAngle()) < 360.f &&
+        localToDevice.type() <= Transform::Type::kAffine &&
+        SkRRectPriv::IsRelativelyCircular(shape.arc().oval().width(), shape.arc().oval().height(),
+                                          Shape::kDefaultPixelTolerance *
+                                                localToDevice.localAARadius(drawBounds))) {
+        // We aren't perspective, so the point passed to scaleFactors() doesn't matter
+        auto [minScale, maxScale] = localToDevice.scaleFactors({0, 0});
         if (SkScalarNearlyEqual(maxScale, minScale)) {
             // Arc support depends on the style.
             SkStrokeRec::Style recStyle = style.getStyle();
@@ -2017,6 +2097,19 @@ void Device::flushPendingWork(DrawContext* drawContext) {
         return;
     } else {
         fIsFlushing = true;
+    }
+
+    // Ideally we would just check if `drawTask` was non-null and then call flushTrackedDevices()
+    // before we appended `drawTask` afterwards. Unfortunately, internalFlush() is not 100% internal
+    // because it can record atlas uploads to the DrawContext. If those uploads were moved to
+    // `drawTask` before flushTrackedDevices() is called, any other Devices would incorrectly assume
+    // that the uploads would be executed before their tasks, even though that's not the case here.
+    if (fDC->modifiesTarget() && fMustFlushDependencies) {
+        // If this is a client-owned Device that has also been used as an image in the same Recorder
+        // we need flush all tracked devices that have pending reads from this Device, because those
+        // need to be resolved *before* `drawTask` would be executed and modify its texture state.
+        fMustFlushDependencies = false;
+        fRecorder->priv().flushTrackedDevices(this->target());
     }
 
     this->internalFlush();

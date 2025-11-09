@@ -254,7 +254,7 @@ class ParallelWebAssemblyDebuggerTestRunner:
 
         try:
             subprocess.run(
-                "pkill -f 'jsc.*--wasm-debug'",
+                "pkill -f 'jsc.*--wasm-debugger'",
                 shell=True,
                 capture_output=True,
                 timeout=5,

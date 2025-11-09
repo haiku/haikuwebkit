@@ -55,7 +55,12 @@ PASS Placement: --bottom, --left, --top, --right
 PASS Placement: --right flip-inline
 PASS Placement: --bottom flip-block
 PASS Placement: --left flip-start
+PASS Placement: --right flip-x
+PASS Placement: --bottom flip-y
 PASS Placement: --left flip-inline, --top
+PASS Placement: --left flip-x, --top
 PASS Placement: --top flip-block, --left
+PASS Placement: --top flip-y, --left
 PASS Placement: --left flip-start flip-block, --left
+PASS Placement: --left flip-start flip-y, --left
 

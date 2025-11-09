@@ -69,7 +69,7 @@ if ARM64 or ARM64E
     addlshiftp t7, t0, (constexpr (WTF::fastLog2(JSC::IPInt::alignIPInt))), t0
     emit "br x0"
 elsif X86_64
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_dispatch_base[t1], t1
     lshiftq (constexpr (WTF::fastLog2(JSC::IPInt::alignIPInt))), t0
     addq t1, t0
@@ -3206,7 +3206,7 @@ ipintOp(_gc_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 30 (0x00 -> 0x1e)
     biaeq t0, 0x1f, .ipint_gc_nonexistent
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_gc_dispatch_base[t1], t1
     if ARM64 or ARM64E
         emit "add x0, x1, x0, lsl 8"
@@ -3225,7 +3225,7 @@ ipintOp(_conversion_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 18 (0x00 -> 0x11)
     biaeq t0, 0x12, .ipint_conversion_nonexistent
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_conversion_dispatch_base[t1], t1
     if ARM64 or ARM64E
         emit "add x0, x1, x0, lsl 8"
@@ -3244,7 +3244,7 @@ ipintOp(_simd_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 256 (0x00 -> 0xff)
     biaeq t0, 0x100, .ipint_simd_nonexistent
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_simd_dispatch_base[t1], t1
     if ARM64 or ARM64E
         emit "add x0, x1, x0, lsl 8"
@@ -3263,7 +3263,7 @@ ipintOp(_atomic_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 78 (0x00 -> 0x4e)
     biaeq t0, 0x4f, .ipint_atomic_nonexistent
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_atomic_dispatch_base[t1], t1
     if ARM64 or ARM64E
         emit "add x0, x1, x0, lsl 8"
@@ -10567,8 +10567,10 @@ mintAlign(_call)
     pop wasmInstance, ws0
     # pop targetInstance, targetEntrypoint
 
-    # Save stack pointer, if we tail call someone who changes the frame above's stack argument size
+    # Save stack pointer, if we tail call someone who changes the frame above's stack argument size.
+    # Store its value relative to cfp so stack frames can be easily relocated for JSPI.
     move sp, sc1
+    subp cfr, sc1
     storep sc1, ThisArgumentOffset[cfr]
 
     # Swap instances
@@ -10597,6 +10599,7 @@ _wasm_ipint_call_return_location_wide16:
 _wasm_ipint_call_return_location_wide32:
     # Restore the stack pointer
     loadp ThisArgumentOffset[cfr], sc0
+    addp cfr, sc0
     move sc0, sp
 
     # <first non-arg>   <- t3

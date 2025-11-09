@@ -149,10 +149,10 @@ bool MockCDM::supportsConfiguration(const MediaKeySystemConfiguration& configura
         return true;
     };
 
-    if (!configuration.audioCapabilities.isEmpty() && !std::ranges::any_of(configuration.audioCapabilities, capabilityHasSupportedEncryptionScheme))
+    if (!configuration.audioCapabilities.isEmpty() && std::ranges::none_of(configuration.audioCapabilities, capabilityHasSupportedEncryptionScheme))
         return false;
 
-    if (!configuration.videoCapabilities.isEmpty() && !std::ranges::any_of(configuration.videoCapabilities, capabilityHasSupportedEncryptionScheme))
+    if (!configuration.videoCapabilities.isEmpty() && std::ranges::none_of(configuration.videoCapabilities, capabilityHasSupportedEncryptionScheme))
         return false;
 
     return true;

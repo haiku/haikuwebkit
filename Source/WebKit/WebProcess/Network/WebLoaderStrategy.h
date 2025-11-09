@@ -31,6 +31,7 @@
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceLoader.h>
 #include <WebCore/ResourceResponse.h>
+#include <wtf/CanMakeWeakPtr.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/HashSet.h>
 #include <wtf/RunLoop.h>
@@ -49,7 +50,7 @@ class WebPage;
 class WebProcess;
 class WebURLSchemeTaskProxy;
 
-class WebLoaderStrategy final : public WebCore::LoaderStrategy {
+class WebLoaderStrategy final : public WebCore::LoaderStrategy, public CanMakeWeakPtr<WebLoaderStrategy> {
     WTF_MAKE_TZONE_ALLOCATED(WebLoaderStrategy);
     WTF_MAKE_NONCOPYABLE(WebLoaderStrategy);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebLoaderStrategy);

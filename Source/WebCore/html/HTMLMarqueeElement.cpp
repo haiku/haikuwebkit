@@ -148,13 +148,13 @@ void HTMLMarqueeElement::collectPresentationalHintsForAttribute(const QualifiedN
 
 void HTMLMarqueeElement::start()
 {
-    if (auto* renderer = renderMarquee())
+    if (CheckedPtr renderer = renderMarquee())
         renderer->start();
 }
 
 void HTMLMarqueeElement::stop()
 {
-    if (auto* renderer = renderMarquee())
+    if (CheckedPtr renderer = renderMarquee())
         renderer->stop();
 }
 
@@ -200,13 +200,13 @@ void HTMLMarqueeElement::didMoveToNewDocument(Document& oldDocument, Document& n
 
 void HTMLMarqueeElement::suspend(ReasonForSuspension)
 {
-    if (RenderMarquee* marqueeRenderer = renderMarquee())
+    if (CheckedPtr marqueeRenderer = renderMarquee())
         marqueeRenderer->suspend();
 }
 
 void HTMLMarqueeElement::resume()
 {
-    if (RenderMarquee* marqueeRenderer = renderMarquee())
+    if (CheckedPtr marqueeRenderer = renderMarquee())
         marqueeRenderer->updateMarqueePosition();
 }
 
@@ -214,7 +214,7 @@ RenderMarquee* HTMLMarqueeElement::renderMarquee() const
 {
     if (!renderer() || !renderer()->hasLayer())
         return nullptr;
-    auto* scrollableArea = renderBoxModelObject()->layer()->scrollableArea();
+    CheckedPtr scrollableArea = renderBoxModelObject()->layer()->scrollableArea();
     if (!scrollableArea)
         return nullptr;
     return scrollableArea->marquee();

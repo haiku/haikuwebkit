@@ -265,14 +265,14 @@ Ref<PlaybackSessionInterfaceLMK> PlaybackSessionInterfaceLMK::create(WebCore::Pl
     return interface;
 }
 
-static WebCore::NowPlayingMetadataObserver nowPlayingMetadataObserver(PlaybackSessionInterfaceLMK& interface)
+static Ref<WebCore::NowPlayingMetadataObserver> nowPlayingMetadataObserver(PlaybackSessionInterfaceLMK& interface)
 {
-    return {
+    return WebCore::NowPlayingMetadataObserver::create({
         [weakInterface = WeakPtr { interface }](auto& metadata) {
             if (RefPtr interface = weakInterface.get())
                 interface->nowPlayingMetadataChanged(metadata);
         }
-    };
+    });
 }
 
 PlaybackSessionInterfaceLMK::PlaybackSessionInterfaceLMK(WebCore::PlaybackSessionModel& model)

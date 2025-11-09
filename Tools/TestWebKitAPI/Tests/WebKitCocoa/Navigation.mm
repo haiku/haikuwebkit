@@ -4101,6 +4101,51 @@ TEST(WKNavigation, GeneratePageLoadTiming)
     [webView loadRequest:request];
     TestWebKitAPI::Util::run(&done);
 }
+
+TEST(WKNavigation, GeneratePageLoadTimingWithNoSubresources)
+{
+    using namespace TestWebKitAPI;
+    HTTPServer server({
+        { "/index.html"_s, { "Hello world!"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setHTTPSProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", server.port()]]];
+    [storeConfiguration setAllowsHSTSWithUntrustedRootCertificate:YES];
+    auto viewConfiguration = adoptNS([WKWebViewConfiguration new]);
+    [viewConfiguration setWebsiteDataStore:adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get()];
+
+    RetainPtr window = adoptNS([[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 400, 400) styleMask:0 backing:NSBackingStoreBuffered defer:NO]);
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400) configuration:viewConfiguration.get()]);
+
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    [webView setNavigationDelegate:delegate.get()];
+    [window.get().contentView addSubview:webView.get()];
+
+    [window.get() makeKeyAndOrderFront:nil];
+    EXPECT_TRUE([window.get() isVisible]);
+
+    __block NSDate *beforeStart = [NSDate now];
+    __block bool done = false;
+    delegate.get().didGeneratePageLoadTiming = ^(_WKPageLoadTiming *timing) {
+        NSDate *afterEnd = [NSDate now];
+        EXPECT_EQ([beforeStart compare:timing.navigationStart], NSOrderedAscending);
+        EXPECT_EQ([timing.navigationStart compare:afterEnd], NSOrderedAscending);
+        EXPECT_EQ([timing.navigationStart compare:timing.firstVisualLayout], NSOrderedAscending);
+        EXPECT_EQ([timing.firstVisualLayout compare:afterEnd], NSOrderedAscending);
+        EXPECT_EQ([timing.navigationStart compare:timing.firstMeaningfulPaint], NSOrderedAscending);
+        EXPECT_EQ([timing.firstMeaningfulPaint compare:afterEnd], NSOrderedAscending);
+        EXPECT_EQ([timing.navigationStart compare:timing.documentFinishedLoading], NSOrderedAscending);
+        EXPECT_EQ([timing.documentFinishedLoading compare:afterEnd], NSOrderedAscending);
+        EXPECT_EQ([timing.navigationStart compare:timing.allSubresourcesFinishedLoading], NSOrderedAscending);
+        EXPECT_EQ([timing.allSubresourcesFinishedLoading compare:afterEnd], NSOrderedAscending);
+        done = true;
+    };
+
+    auto request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/index.html"]];
+    [webView loadRequest:request];
+    TestWebKitAPI::Util::run(&done);
+}
 #endif // PLATFORM(MAC)
 
 struct PrivateTokenTestSetupState {
@@ -4620,4 +4665,48 @@ TEST(Navigation, CookieTransformOnRedirect)
 
     TestWebKitAPI::Util::run(&done);
     EXPECT_EQ(transformCallbackCount, 2u);
+}
+
+TEST(WKNavigation, AllowResourceLoadFromBlockedPortWithCustomScheme)
+{
+    using namespace TestWebKitAPI;
+    HTTPServer httpsServer({
+        { "/page1"_s, { 302, {{ "Location"_s, "custom://site.example:0/"_s } }, "redirecting..."_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    auto handler = adoptNS([TestURLSchemeHandler new]);
+    __block unsigned requestsSchemeHandled = 0;
+    [handler setStartURLSchemeTaskHandler:^(WKWebView *, id<WKURLSchemeTask> task) {
+        NSString *responseString = nil;
+        if ([task.request.URL.absoluteString isEqualToString:@"custom://site.example:0/"])
+            responseString = @"<script src='custom://site.example:0/script.js'></script>";
+        else if ([task.request.URL.absoluteString isEqualToString:@"custom://site.example:0/script.js"])
+            responseString = @"alert('This resource was loaded');";
+        ASSERT(responseString);
+        requestsSchemeHandled++;
+        auto response = adoptNS([[NSURLResponse alloc] initWithURL:task.request.URL MIMEType:@"text/html" expectedContentLength:responseString.length textEncodingName:nil]);
+        [task didReceiveResponse:response.get()];
+        [task didReceiveData:[responseString dataUsingEncoding:NSUTF8StringEncoding]];
+        [task didFinish];
+    }];
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"custom"];
+
+    auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setProxyConfiguration:@{
+        (NSString *)kCFStreamPropertyHTTPSProxyHost: @"127.0.0.1",
+        (NSString *)kCFStreamPropertyHTTPSProxyPort: @(httpsServer.port())
+    }];
+    auto dataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]);
+    [configuration setWebsiteDataStore:dataStore.get()];
+
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration.get()]);
+    auto navDelegate = adoptNS([TestNavigationDelegate new]);
+    [navDelegate allowAnyTLSCertificate];
+    [webView setNavigationDelegate:navDelegate.get()];
+    auto uiDelegate = adoptNS([TestUIDelegate new]);
+    [webView setUIDelegate:uiDelegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://site.example/page1"]]];
+    EXPECT_WK_STREQ([uiDelegate waitForAlert], "This resource was loaded");
+    EXPECT_EQ(requestsSchemeHandled, 2u);
 }

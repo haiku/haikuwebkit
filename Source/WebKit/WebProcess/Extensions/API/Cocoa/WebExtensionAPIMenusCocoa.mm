@@ -248,12 +248,12 @@ bool WebExtensionAPIMenus::parseCreateAndUpdateProperties(ForUpdate forUpdate, N
     }
 
     if (JSValue *clickCallback = properties[onclickKey]) {
-        if (!clickCallback._isFunction) {
+        if (!isFunction(clickCallback.context.JSGlobalContextRef, clickCallback.JSValueRef)) {
             *outExceptionString = toErrorString(nullString(), onclickKey, @"it must be a function").createNSString().autorelease();
             return false;
         }
 
-        outClickCallback = WebExtensionCallbackHandler::create(clickCallback);
+        outClickCallback = WebExtensionCallbackHandler::create(clickCallback.context.JSGlobalContextRef, JSValueToObject(clickCallback.context.JSGlobalContextRef, clickCallback.JSValueRef, nullptr), protectedRuntime());
     }
 
     NSDictionary *iconDictionary;

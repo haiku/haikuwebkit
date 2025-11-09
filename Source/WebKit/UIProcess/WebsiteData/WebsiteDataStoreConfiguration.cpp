@@ -178,6 +178,7 @@ Ref<WebsiteDataStoreConfiguration> WebsiteDataStoreConfiguration::copy() const
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
     copy->m_webContentRestrictionsConfigurationFile = this->m_webContentRestrictionsConfigurationFile;
 #endif
+    copy->m_additionalDomainsWithUserInteractionForTesting = this->m_additionalDomainsWithUserInteractionForTesting;
 
     return copy;
 }

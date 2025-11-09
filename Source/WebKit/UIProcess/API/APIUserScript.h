@@ -50,7 +50,7 @@ public:
     
 private:
     WebCore::UserScript m_userScript;
-    Ref<ContentWorld> m_world;
+    const Ref<ContentWorld> m_world;
 };
 
 } // namespace API

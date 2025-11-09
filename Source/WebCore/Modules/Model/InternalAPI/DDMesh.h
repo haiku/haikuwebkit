@@ -31,6 +31,11 @@
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 
+#if PLATFORM(COCOA)
+#include <simd/simd.h>
+#include <wtf/MachSendRight.h>
+#endif
+
 namespace WebCore::DDModel {
 
 struct DDMaterialDescriptor;
@@ -58,10 +63,12 @@ public:
     virtual void updateTexture(const DDUpdateTextureDescriptor&) = 0;
     virtual void addMaterial(const DDMaterialDescriptor&) = 0;
     virtual void updateMaterial(const DDUpdateMaterialDescriptor&) = 0;
+    virtual bool isRemoteDDMeshProxy() const { return false; }
 
     virtual void render() = 0;
 #if PLATFORM(COCOA)
     virtual Vector<MachSendRight> ioSurfaceHandles() { return { }; }
+    virtual std::pair<simd_float4, simd_float4> getCenterAndExtents() const { return std::make_pair(simd_make_float4(0.f), simd_make_float4(0.f)); }
 #endif
 
 protected:

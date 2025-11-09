@@ -1090,7 +1090,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "8", "name": "VTCompressionOutputCallback"},
     {"access": "public", "introduced": "9", "name": "VTCompressionOutputHandler"},

@@ -306,7 +306,7 @@
      "super": "NSSymbolEffect"
     }
    ],
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -684,7 +684,7 @@
     {"access": "public", "introduced": "17", "linkage": "exported", "name": "_$s7Symbols25VariableColorSymbolEffectVSHAAMc"},
     {"access": "public", "introduced": "17", "linkage": "exported", "name": "_$s7Symbols25VariableColorSymbolEffectVSQAAMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

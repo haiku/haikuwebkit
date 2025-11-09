@@ -187,7 +187,7 @@
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSo9MTLDeviceP5MetalE23makeRenderPipelineState10descriptor7optionsSo09MTLRendereF0_p_So0iE10ReflectionCSgtSo07MTLMeshdE10DescriptorC_So17MTLPipelineOptionVtKF"},
     {"access": "public", "introduced": "11", "linkage": "exported", "name": "_$sSo9MTLDeviceP5MetalE25getDefaultSamplePositions11sampleCountSaySo17MTLSamplePositionaGSi_tF"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

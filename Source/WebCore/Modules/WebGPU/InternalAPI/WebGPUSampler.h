@@ -44,6 +44,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemoteSamplerProxy() const { return false; }
+
 protected:
     Sampler() = default;
 

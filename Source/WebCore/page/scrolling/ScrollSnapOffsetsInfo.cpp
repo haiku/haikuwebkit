@@ -279,6 +279,19 @@ static LayoutUnit computeScrollSnapAlignOffset(LayoutUnit minLocation, LayoutUni
     }
 }
 
+bool hasScrollSnappedBoxes(const RenderBox& scrollingElementBox)
+{
+    auto scrollSnapTypeContainer = scrollingElementBox.style().scrollSnapType().tryContainer();
+    if (!scrollSnapTypeContainer)
+        return false;
+
+    auto& boxesWithScrollSnapPositions = scrollingElementBox.view().boxesWithScrollSnapPositions();
+    if (boxesWithScrollSnapPositions.isEmptyIgnoringNullReferences())
+        return false;
+
+    return true;
+}
+
 void updateSnapOffsetsForScrollableArea(ScrollableArea& scrollableArea, const RenderBox& scrollingElementBox, const RenderStyle& scrollingElementStyle, LayoutRect viewportRectInBorderBoxCoordinates, WritingMode writingMode, Element* focusedElement)
 {
     auto scrollSnapTypeContainer = scrollingElementStyle.scrollSnapType().tryContainer();

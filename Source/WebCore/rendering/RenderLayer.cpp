@@ -413,18 +413,6 @@ RenderLayer::~RenderLayer()
     RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(renderer().renderTreeBeingDestroyed() || !firstChild());
 }
 
-RenderLayer::PaintedContentRequest::PaintedContentRequest(const RenderLayer& owningLayer)
-{
-#if HAVE(SUPPORT_HDR_DISPLAY)
-    if (owningLayer.renderer().document().drawsHDRContent())
-        makeHDRContentUnknown();
-    else
-        makeHDRContentFalse();
-#else
-    UNUSED_PARAM(owningLayer);
-#endif
-}
-
 void RenderLayer::removeClipperClientIfNeeded() const
 {
     WTF::switchOn(renderer().style().clipPath(),
@@ -615,7 +603,7 @@ static bool canCreateStackingContext(const RenderLayer& layer)
         || renderer.style().hasIsolation()
         || renderer.shouldApplyPaintContainment()
         || !renderer.style().usedZIndex().isAuto()
-        || (renderer.style().willChange() && renderer.style().willChange()->canCreateStackingContext())
+        || renderer.style().willChange().canCreateStackingContext()
         || layer.establishesTopLayer();
 }
 
@@ -665,7 +653,7 @@ bool RenderLayer::computeCanBeBackdropRoot() const
         || renderer().hasBlendMode()
         || renderer().hasMask()
         || (renderer().requiresRenderingConsolidationForViewTransition() && !renderer().isDocumentElementRenderer())
-        || (renderer().style().willChange() && renderer().style().willChange()->canBeBackdropRoot());
+        || renderer().style().willChange().canBeBackdropRoot();
 }
 
 bool RenderLayer::setIsNormalFlowOnly(bool isNormalFlowOnly)
@@ -1306,8 +1294,8 @@ void RenderLayer::recursiveUpdateLayerPositions(OptionSet<UpdateLayerPositionsFl
     auto repaintIfNecessary = [&](bool checkForRepaint) {
         if (mode == Verify) {
             WeakPtr repaintContainer = renderer().containerForRepaint().renderer.get();
-            LAYER_POSITIONS_ASSERT(repaintRects() || (isVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer()));
-            if (isVisibilityHiddenOrOpacityZero())
+            LAYER_POSITIONS_ASSERT(repaintRects() || (isSubtreeVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer()));
+            if (isSubtreeVisibilityHiddenOrOpacityZero())
                 LAYER_POSITIONS_ASSERT(!m_repaintContainer);
             else
                 LAYER_POSITIONS_ASSERT(m_repaintContainer == repaintContainer);
@@ -1499,12 +1487,12 @@ void RenderLayer::computeRepaintRects(const RenderLayerModelObject* repaintConta
 {
     ASSERT(!m_visibleContentStatusDirty);
 
-    if (isVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer())
+    if (isSubtreeVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer())
         clearRepaintRects();
     else
         setRepaintRects(renderer().rectsForRepaintingAfterLayout(repaintContainer, RepaintOutlineBounds::Yes));
 
-    if (isVisibilityHiddenOrOpacityZero())
+    if (isSubtreeVisibilityHiddenOrOpacityZero())
         m_repaintContainer = nullptr;
     else
         m_repaintContainer = repaintContainer;
@@ -2981,8 +2969,8 @@ LayoutSize RenderLayer::minimumSizeForResizing(float zoomFactor) const
 {
     // Use the resizer size as the strict minimum size
     auto resizerRect = overflowControlsRects().resizer;
-    auto minWidth = Style::evaluateMinimum<LayoutUnit>(renderer().style().minWidth(), renderer().containingBlock()->width(), Style::ZoomNeeded { });
-    auto minHeight = Style::evaluateMinimum<LayoutUnit>(renderer().style().minHeight(), renderer().containingBlock()->height(), Style::ZoomNeeded { });
+    auto minWidth = Style::evaluateMinimum<LayoutUnit>(renderer().style().minWidth(), renderer().containingBlock()->width(), renderer().style().usedZoomForLength());
+    auto minHeight = Style::evaluateMinimum<LayoutUnit>(renderer().style().minHeight(), renderer().containingBlock()->height(), renderer().style().usedZoomForLength());
     minWidth = std::max(LayoutUnit(minWidth / zoomFactor), LayoutUnit(resizerRect.width()));
     minHeight = std::max(LayoutUnit(minHeight / zoomFactor), LayoutUnit(resizerRect.height()));
     return LayoutSize(minWidth, minHeight);
@@ -6081,20 +6069,20 @@ static void determineNonLayerDescendantsPaintedContent(const RenderElement& rend
                 return;
         }
         
-        CheckedPtr childElement = dynamicDowncast<RenderElement>(child);
-        if (!childElement)
+        CheckedPtr childRenderElement = dynamicDowncast<RenderElement>(child);
+        if (!childRenderElement)
             continue;
 
-        if (auto* modelObject = dynamicDowncast<RenderLayerModelObject>(*childElement); modelObject && modelObject->hasSelfPaintingLayer())
+        if (auto* modelObject = dynamicDowncast<RenderLayerModelObject>(*childRenderElement); modelObject && modelObject->hasSelfPaintingLayer())
             continue;
 
-        if (hasVisibleBoxDecorationsOrBackground(*childElement)) {
+        if (hasVisibleBoxDecorationsOrBackground(*childRenderElement)) {
             request.setHasPaintedContent();
             if (request.isSatisfied())
                 return;
         }
         
-        if (is<RenderReplaced>(*childElement)) {
+        if (is<RenderReplaced>(*childRenderElement)) {
             request.setHasPaintedContent();
 
             if (request.isSatisfied())
@@ -6102,7 +6090,7 @@ static void determineNonLayerDescendantsPaintedContent(const RenderElement& rend
         }
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-        if (!request.isHDRContentSatisfied() && rendererHasHDRContent(*childElement)) {
+        if (!request.isHDRContentSatisfied() && rendererHasHDRContent(*childRenderElement)) {
             request.setHasHDRContent();
 
             if (request.isSatisfied())
@@ -6110,7 +6098,7 @@ static void determineNonLayerDescendantsPaintedContent(const RenderElement& rend
         }
 #endif
 
-        determineNonLayerDescendantsPaintedContent(*childElement, renderersTraversed, request);
+        determineNonLayerDescendantsPaintedContent(*childRenderElement, renderersTraversed, request);
         if (request.isSatisfied())
             return;
     }
@@ -6149,6 +6137,11 @@ bool RenderLayer::isVisibilityHiddenOrOpacityZero() const
     return !hasVisibleContent() || renderer().style().opacity().isTransparent();
 }
 
+bool RenderLayer::isSubtreeVisibilityHiddenOrOpacityZero() const
+{
+    return (!hasVisibleContent() && !hasVisibleDescendant()) || renderer().style().opacity().isTransparent();
+}
+
 bool RenderLayer::isVisuallyNonEmpty(PaintedContentRequest* request) const
 {
     ASSERT(!m_visibleContentStatusDirty);
@@ -6164,6 +6157,15 @@ bool RenderLayer::isVisuallyNonEmpty(PaintedContentRequest* request) const
         if (request->isSatisfied())
             return true;
     }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (request && !request->isHDRContentSatisfied() && WebCore::rendererHasHDRContent(renderer())) {
+        request->setHasHDRContent();
+
+        if (request->isSatisfied())
+            return true;
+    }
+#endif
 
     if (hasVisibleBoxDecorationsOrBackground()) {
         if (!request)
@@ -6366,7 +6368,6 @@ RenderLayerFilters& RenderLayer::ensureLayerFilters()
         return *m_filters;
     
     m_filters = makeUnique<RenderLayerFilters>(*this);
-    m_filters->setPreferredFilterRenderingModes(renderer().page().preferredFilterRenderingModes());
     m_filters->setFilterScale({ page().deviceScaleFactor(), page().deviceScaleFactor() });
     return *m_filters;
 }

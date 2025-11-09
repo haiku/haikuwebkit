@@ -39,15 +39,6 @@
 #include <WebCore/ContentFilterUnblockHandler.h>
 #endif
 
-namespace WebCore {
-class PolicyChecker;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::PolicyChecker> : std::true_type { };
-}
-
 namespace WTF {
 template<typename> class CompletionHandler;
 class CompletionHandlerCallingScope;
@@ -74,9 +65,10 @@ enum class NavigationNavigationType : uint8_t;
 
 enum class PolicyDecisionMode { Synchronous, Asynchronous };
 
-class PolicyChecker : public CanMakeWeakPtr<PolicyChecker> {
+class PolicyChecker final : public CanMakeWeakPtr<PolicyChecker>, public CanMakeCheckedPtr<PolicyChecker> {
     WTF_MAKE_NONCOPYABLE(PolicyChecker);
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(PolicyChecker, Loader);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(PolicyChecker);
 public:
     explicit PolicyChecker(LocalFrame&);
 

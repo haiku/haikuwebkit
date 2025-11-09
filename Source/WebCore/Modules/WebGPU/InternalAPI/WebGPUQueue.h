@@ -99,6 +99,8 @@ public:
         const Extent3D& copySize) = 0;
 
     virtual RefPtr<WebCore::NativeImage> getNativeImage(WebCore::VideoFrame&) = 0;
+    virtual bool isRemoteQueueProxy() const { return false; }
+
 protected:
     Queue() = default;
 

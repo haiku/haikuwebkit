@@ -302,7 +302,7 @@ void SubresourceLoader::willSendRequestInternal(ResourceRequest&& newRequest, co
             return completionHandler(WTFMove(newRequest));
         }
 
-        if (!portAllowed(newRequest.url())) {
+        if (!isPortAllowed(newRequest.url())) {
             SUBRESOURCELOADER_RELEASE_LOG(SUBRESOURCELOADER_WILLSENDREQUESTINTERNAL_RESOURCE_LOAD_CANCELLED_AFTER_USING_BLOCKED_PORT);
             if (RefPtr frame = m_frame.get())
                 FrameLoader::reportBlockedLoadFailed(*frame, newRequest.url());

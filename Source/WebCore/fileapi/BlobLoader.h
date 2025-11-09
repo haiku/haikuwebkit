@@ -46,6 +46,10 @@ public:
     static Ref<BlobLoader> create(CompleteCallback&& callback) { return adoptRef(*new BlobLoader(WTFMove(callback))); }
     ~BlobLoader();
 
+    // FileReaderLoaderClient.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     void start(Blob&, ScriptExecutionContext*, FileReaderLoader::ReadType);
     void start(const URL&, ScriptExecutionContext*, FileReaderLoader::ReadType);
 

@@ -1,4 +1,3 @@
-[ Mac ] PAL/pal/mac/DataDetectorsSoftLink.h
 platform/audio/cocoa/AudioSampleBufferConverter.mm
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
 platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm

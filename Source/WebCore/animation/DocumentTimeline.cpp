@@ -53,6 +53,8 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 #include "AcceleratedEffectStackUpdater.h"
+#include "LocalDOMWindow.h"
+#include "Performance.h"
 #endif
 
 namespace WebCore {
@@ -416,10 +418,8 @@ void DocumentTimeline::applyPendingAcceleratedAnimations()
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     if (m_document && m_document->settings().threadedAnimationResolutionEnabled()) {
         m_acceleratedAnimationsPendingRunningStateChange.clear();
-        if (CheckedPtr timelinesController = m_document->timelinesController()) {
-            if (auto* acceleratedEffectStackUpdater = timelinesController->existingAcceleratedEffectStackUpdater())
-                acceleratedEffectStackUpdater->updateEffectStacks();
-        }
+        if (CheckedPtr timelinesController = m_document->timelinesController())
+            timelinesController->updateAcceleratedEffectStacks();
         return;
     }
 #endif
@@ -540,5 +540,20 @@ Seconds DocumentTimeline::convertTimelineTimeToOriginRelativeTime(Seconds timeli
     // https://drafts.csswg.org/web-animations-1/#ref-for-timeline-time-to-origin-relative-time
     return timelineTime + m_originTime;
 }
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+Ref<AcceleratedTimeline> DocumentTimeline::createAcceleratedRepresentation()
+{
+    // The origin time of a document timeline is relative to the time origin
+    // of the document's associated performance object. We must convert this
+    // origin time back to the time scale used in the remote layer tree.
+    ASSERT(m_document);
+    ASSERT(m_document->window());
+    Ref window = *Ref { *m_document }->window();
+    auto monotonicOriginTime = MonotonicTime::fromRawSeconds(m_originTime.seconds());
+    auto convertedOriginTime = m_originTime - window->performance().relativeTimeFromTimeOriginInReducedResolutionSeconds(monotonicOriginTime);
+    return AcceleratedTimeline::create(m_acceleratedTimelineIdentifier, convertedOriginTime);
+}
+#endif
 
 } // namespace WebCore

@@ -70,6 +70,12 @@ TextStream& operator<<(TextStream& ts, const PositionTryFallback::Tactic& tactic
     case PositionTryFallback::Tactic::FlipStart:
         ts << "flip-start"_s;
         break;
+    case PositionTryFallback::Tactic::FlipX:
+        ts << "flip-x"_s;
+        break;
+    case PositionTryFallback::Tactic::FlipY:
+        ts << "flip-y"_s;
+        break;
     }
 
     return ts;

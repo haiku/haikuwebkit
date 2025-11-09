@@ -33,7 +33,7 @@ struct WebKit::InteractionInformationAtPosition {
     WebKit::InteractionInformationRequest request;
 
     bool canBeValid;
-    std::optional<bool> nodeAtPositionHasDoubleClickHandler;
+    std::optional<bool> hitNodeOrWindowHasDoubleClickListener;
 
     WebKit::InteractionInformationAtPosition::Selectability selectability;
 

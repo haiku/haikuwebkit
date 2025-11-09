@@ -878,14 +878,15 @@ PlatformLayerContainer VideoPresentationManagerProxy::createLayerWithID(Playback
     if (!interface->playerLayer()) {
         ALWAYS_LOG(LOGIDENTIFIER, model->logIdentifier(), ", Creating AVPlayerLayer, initialSize: ", initialSize, ", nativeSize: ", nativeSize);
         auto playerLayer = adoptNS([[WebAVPlayerLayer alloc] init]);
+        RetainPtr viewLayer = [view layer];
 
         [playerLayer setPresentationModel:model.ptr()];
-        [playerLayer setVideoSublayer:[view layer]];
+        [playerLayer setVideoSublayer:viewLayer.get()];
 
         // The videoView may already be reparented in fullscreen, so only parent the view
         // if it has no existing parent:
-        if (![[view layer] superlayer])
-            [playerLayer addSublayer:[view layer]];
+        if (![viewLayer superlayer])
+            [playerLayer addSublayer:viewLayer.get()];
 
         interface->setPlayerLayer(playerLayer.get());
 
@@ -944,7 +945,7 @@ RetainPtr<WKLayerHostView> VideoPresentationManagerProxy::createLayerHostViewWit
     [view setContextID:hostingContext.contextID];
 #endif
 
-    interface->setupCaptionsLayer([view layer], initialSize);
+    interface->setupCaptionsLayer(retainPtr([view layer]).get(), initialSize);
 
     return view;
 }
@@ -1109,7 +1110,7 @@ void VideoPresentationManagerProxy::setupFullscreenWithID(PlaybackSessionContext
     IntRect initialWindowRect;
     page->rootViewToWindow(enclosingIntRect(screenRect), initialWindowRect);
     interface->setupFullscreen(initialWindowRect, page->protectedPlatformWindow().get(), videoFullscreenMode, allowsPictureInPicture);
-    interface->setupCaptionsLayer([view layer], initialSize);
+    interface->setupCaptionsLayer(retainPtr([view layer]).get(), initialSize);
 #endif
 }
 
@@ -1500,7 +1501,7 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
     if (RetainPtr playerLayer = interface->playerLayer()) {
         // Return the video layer to the player layer
         RetainPtr videoView = interface->layerHostView();
-        [playerLayer addSublayer:[videoView layer]];
+        [playerLayer addSublayer:retainPtr([videoView layer]).get()];
         [playerLayer layoutSublayers];
     } else {
         [CATransaction flush];

@@ -60,7 +60,6 @@
       {"access": "public", "attr": [ "readonly" ], "getter": "localizedTitle", "name": "localizedTitle"},
       {"access": "public", "attr": [ "readonly" ], "getter": "availability", "name": "availability"},
       {"access": "public", "getter": "image", "name": "image", "setter": "setImage:"},
-      {"access": "public", "getter": "imageOnlyForContextMenu", "name": "imageOnlyForContextMenu", "setter": "setImageOnlyForContextMenu:"},
       {"access": "public", "getter": "supportedContentTypes", "name": "supportedContentTypes", "setter": "setSupportedContentTypes:"},
       {"access": "public", "getter": "supportsMultipleItems", "name": "supportsMultipleItems", "setter": "setSupportsMultipleItems:"}
      ],

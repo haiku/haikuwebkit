@@ -1001,7 +1001,6 @@ private:
     const CompilationMode m_compilationMode;
     const FunctionCodeIndex m_functionIndex;
     const unsigned m_loopIndexForOSREntry { UINT_MAX };
-    std::unique_ptr<MergedProfile> m_profile;
 
     struct RootBlock {
         BasicBlock* block;
@@ -1151,7 +1150,6 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
     , m_compilationMode(CompilationMode::OMGMode)
     , m_functionIndex(functionIndex)
     , m_loopIndexForOSREntry(-1)
-    , m_profile(module.createMergedProfile(profiledCallee))
     , m_proc(rootCaller.m_proc)
     , m_returnContinuation(returnContinuation)
     , m_inlineRoot(&rootCaller)
@@ -1189,7 +1187,6 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
     , m_compilationMode(compilationMode)
     , m_functionIndex(functionIndex)
     , m_loopIndexForOSREntry(loopIndexForOSREntry)
-    , m_profile(module.createMergedProfile(profiledCallee))
     , m_proc(procedure)
     , m_inlineRoot(this)
     , m_inlinedBytes(m_info.functionWasmSize(m_functionIndex))
@@ -6241,49 +6238,10 @@ auto OMGIRGenerator::createTailCallPatchpoint(BasicBlock* block, const TypeDefin
     return { patchpoint, nullptr, WTFMove(prepareForCall) };
 }
 
-bool OMGIRGenerator::canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const
+bool OMGIRGenerator::canInline(FunctionSpaceIndex, unsigned) const
 {
     ASSERT(!m_inlinedBytes || !m_inlineParent);
-    if (!Options::useOMGInlining() || is32Bit())
-        return false;
-
-    size_t wasmSize = m_info.functionWasmSizeImportSpace(functionIndexSpace);
-    if (wasmSize >= Options::maximumWasmCalleeSizeForInlining())
-        return false;
-
-    {
-        unsigned selfRecursionCount = 0;
-        for (auto* cursor = this; cursor; cursor = cursor->m_inlineParent) {
-            if (&cursor->m_info == &m_info && cursor->m_info.toSpaceIndex(cursor->m_functionIndex) == functionIndexSpace) {
-                ++selfRecursionCount;
-                if (selfRecursionCount >= Options::maximumWasmSelfRecursionDepthForInlining())
-                    return false;
-            }
-        }
-    }
-
-    // If this callsite is never used by IPInt and BBQ, we should skip inlining. Likely a dead code.
-    // FIXME: This is still very naive. We can forcefully inline if wasm byte size is
-    // too small (then call sequence can be larger than the inlined content).
-    // Also, we could eventually consider emitting OSR exit, and stop generating
-    // the rest of the code for this and subsequent basic blocks.
-    if (!m_profile->isCalled(callProfileIndex))
-        return false;
-
-    if (m_inlineDepth >= Options::maximumWasmDepthForInlining())
-        return false;
-
-    if (m_inlineRoot->m_inlinedBytes.value() >= Options::maximumWasmCallerSizeForInlining())
-        return false;
-
-    if (m_inlineDepth > 1 && !StackCheck(Thread::currentSingleton().stack(), StackBounds::DefaultReservedZone * 2).isSafeToRecurse())
-        return false;
-
-    // FIXME: There's no fundamental reason we can't inline these including imports.
-    if (m_info.callCanClobberInstance(functionIndexSpace))
-        return false;
-
-    return true;
+    return false;
 }
 
 auto OMGIRGenerator::emitInlineDirectCall(FunctionCodeIndex calleeFunctionIndex, const TypeDefinition& calleeSignature, ArgumentList& args, ValueResults& results) -> PartialResult
@@ -6621,37 +6579,6 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_targetInstance, calleeInstance);
 
     ValueResults fastValues;
-    if (m_profile->isCalled(callProfileIndex)) {
-        if (auto* callee = m_profile->callee(callProfileIndex)) {
-            if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
-                BasicBlock* slowCase = m_proc.addBlock();
-                BasicBlock* directCall = m_proc.addBlock();
-
-                Value* isSameContextInstance = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeInstance, instanceValue());
-                Value* isSameCallee = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeCallee, constant(pointerType(), std::bit_cast<uintptr_t>(CalleeBits::boxNativeCallee(callee))));
-                m_currentBlock->appendNewControlValue(m_proc, Branch, origin(), m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(), isSameContextInstance, isSameCallee), FrequentedBlock(directCall), FrequentedBlock(slowCase, FrequencyClass::Rare));
-                directCall->addPredecessor(m_currentBlock);
-                slowCase->addPredecessor(m_currentBlock);
-
-                m_currentBlock = directCall;
-                auto result = emitDirectCall(callProfileIndex, callee->index(), signature, args, fastValues, callType);
-                if (!result.has_value()) [[unlikely]]
-                    return result;
-
-                if (!isTailCallRootCaller) {
-                    for (Value*& value : fastValues) {
-                        auto* input = value;
-                        value = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), input);
-                    }
-                    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-                    continuation->addPredecessor(m_currentBlock);
-                }
-
-                m_currentBlock = slowCase;
-            }
-        }
-    }
-
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), callableFunction, safeCast<int32_t>(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_entrypointLoadLocation, calleeCodeLocation);
 
@@ -6781,37 +6708,6 @@ auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition&
     BasicBlock* continuation = m_proc.addBlock();
 
     ValueResults fastValues;
-    if (m_profile->isCalled(callProfileIndex)) {
-        if (auto* callee = m_profile->callee(callProfileIndex)) {
-            if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
-                BasicBlock* slowCase = m_proc.addBlock();
-                BasicBlock* directCall = m_proc.addBlock();
-
-                Value* isSameContextInstance = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeInstance, instanceValue());
-                Value* isSameCallee = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeCallee, constant(pointerType(), std::bit_cast<uintptr_t>(CalleeBits::boxNativeCallee(callee))));
-                m_currentBlock->appendNewControlValue(m_proc, B3::Branch, origin(), m_currentBlock->appendNew<Value>(m_proc, B3::BitAnd, origin(), isSameContextInstance, isSameCallee), FrequentedBlock(directCall), FrequentedBlock(slowCase));
-                directCall->addPredecessor(m_currentBlock);
-                slowCase->addPredecessor(m_currentBlock);
-
-                m_currentBlock = directCall;
-                auto result = emitDirectCall(callProfileIndex, callee->index(), signature, args, fastValues, callType);
-                if (!result.has_value()) [[unlikely]]
-                    return result;
-
-                if (!isTailCallRootCaller) {
-                    for (Value*& value : fastValues) {
-                        auto* input = value;
-                        value = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), input);
-                    }
-                    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-                    continuation->addPredecessor(m_currentBlock);
-                }
-
-                m_currentBlock = slowCase;
-            }
-        }
-    }
-
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), pointerOfWasmRef(callee), safeCast<int32_t>(WebAssemblyFunctionBase::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WebAssemblyFunctionBase_entrypointLoadLocation, calleeCodeLocation);
 

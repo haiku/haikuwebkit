@@ -78,14 +78,15 @@ void BackendDispatcher::CallbackBase::sendSuccess(Ref<JSON::Object>&& partialMes
     m_backendDispatcher->sendResponse(m_requestId, WTFMove(partialMessage), false);
 }
 
-BackendDispatcher::BackendDispatcher(Ref<FrontendRouter>&& router)
+BackendDispatcher::BackendDispatcher(Ref<FrontendRouter>&& router, BackendDispatcher* fallback)
     : m_frontendRouter(WTFMove(router))
+    , m_fallbackDispatcher(fallback)
 {
 }
 
-Ref<BackendDispatcher> BackendDispatcher::create(Ref<FrontendRouter>&& router)
+Ref<BackendDispatcher> BackendDispatcher::create(Ref<FrontendRouter>&& router, BackendDispatcher* fallback)
 {
-    return adoptRef(*new BackendDispatcher(WTFMove(router)));
+    return adoptRef(*new BackendDispatcher(WTFMove(router), fallback));
 }
 
 bool BackendDispatcher::isActive() const
@@ -175,6 +176,11 @@ void BackendDispatcher::dispatch(const String& message)
         String domain = domainAndMethod[0];
         RefPtr domainDispatcher = m_dispatchers.get(domain);
         if (!domainDispatcher) {
+            if (RefPtr fallback = m_fallbackDispatcher.get()) {
+                fallback->dispatch(message);
+                return;
+            }
+
             reportProtocolError(MethodNotFound, makeString('\'', domain, "' domain was not found"_s));
             sendPendingErrors();
             return;

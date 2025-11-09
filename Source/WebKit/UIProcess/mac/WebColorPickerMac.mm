@@ -191,7 +191,7 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
 }
 
 - (void)popoverDidClose:(NSNotification *)notification {
-    [self.webDelegate didClosePopover];
+    [retainPtr(self.webDelegate) didClosePopover];
 }
 
 - (NSView *)hitTest:(NSPoint)point
@@ -217,7 +217,7 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
         return self;
 
     [_popoverWell setAlphaValue:0.0];
-    [[view window].contentView addSubview:_popoverWell.get()];
+    [retainPtr([view window].contentView) addSubview:_popoverWell.get()];
 
     return self;
 }
@@ -236,7 +236,7 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
     if (suggestions.size()) {
         suggestedColors = adoptNS([[NSColorList alloc] init]);
         for (size_t i = 0; i < std::min(suggestions.size(), maxColorSuggestions); i++)
-            [suggestedColors insertColor:cocoaColor(suggestions.at(i)).get() key:@(i).stringValue atIndex:i];
+            [suggestedColors insertColor:cocoaColor(suggestions.at(i)).get() key:retainPtr(@(i).stringValue).get() atIndex:i];
     }
 
     [_popoverWell setSuggestedColors:suggestedColors.get()];
@@ -288,7 +288,7 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
     }
 
     if (RefPtr picker = _picker.get())
-        picker->didChooseColor(WebCore::colorFromCocoaColor([_popoverWell color]));
+        picker->didChooseColor(WebCore::colorFromCocoaColor(retainPtr([_popoverWell color]).get()));
 }
 
 - (void)setColor:(NSColor *)color

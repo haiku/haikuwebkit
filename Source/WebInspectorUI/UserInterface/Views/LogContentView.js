@@ -520,7 +520,8 @@ WI.LogContentView = class LogContentView extends WI.ContentView
 
     _previousMessageRepeatCountUpdated(event)
     {
-        if (!this._logViewController.updatePreviousMessageRepeatCount(event.data.count, event.data.timestamp))
+        let {target, count, timestamp} = event.data;
+        if (!this._logViewController.updatePreviousMessageRepeatCount(target, count, timestamp))
             return;
 
         if (this._lastMessageView) {

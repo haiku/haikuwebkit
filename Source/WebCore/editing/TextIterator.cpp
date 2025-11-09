@@ -2557,10 +2557,10 @@ SimpleRange resolveCharacterRange(const SimpleRange& scope, CharacterRange range
         }
 
         auto boundary = [&] (uint64_t targetLocation) -> BoundaryPoint {
-            if (is<Text>(textRunRange.start.container)) {
-                ASSERT(targetLocation - location <= downcast<Text>(textRunRange.start.container.get()).length());
+            if (RefPtr textNode = dynamicDowncast<Text>(textRunRange.start.container)) {
+                ASSERT(targetLocation - location <= textNode->length());
                 unsigned offset = textRunRange.start.offset + targetLocation - location;
-                return { textRunRange.start.container.copyRef(), offset };
+                return { textNode.releaseNonNull(), offset };
             }
             return targetLocation == location ? textRunRange.start : textRunRange.end;
         };

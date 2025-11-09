@@ -53,16 +53,16 @@ int IdleCallbackController::queueIdleCallback(Ref<IdleRequestCallback>&& callbac
     m_idleRequestCallbacks.append({ handle, WTFMove(callback), hasTimeout ? std::optional { MonotonicTime::now() + timeout } : std::nullopt });
 
     if (hasTimeout) {
-        Timer::schedule(timeout, [weakThis = WeakPtr { *this }, handle]() {
-            if (!weakThis)
+        Timer::schedule(timeout, [weakThis = WeakPtr { *this }, handle]() mutable {
+            CheckedPtr checkedThis = weakThis.get();
+            if (!checkedThis)
                 return;
-            RefPtr document = weakThis->m_document.get();
+            RefPtr document = checkedThis->m_document.get();
             if (!document)
                 return;
-            document->eventLoop().queueTask(TaskSource::IdleTask, [weakThis, handle]() {
-                if (!weakThis)
-                    return;
-                weakThis->invokeIdleCallbackTimeout(handle);
+            document->eventLoop().queueTask(TaskSource::IdleTask, [weakThis = WTFMove(weakThis), handle]() {
+                if (CheckedPtr checkedThis = weakThis.get())
+                    checkedThis->invokeIdleCallbackTimeout(handle);
             });
         });
     }
@@ -104,9 +104,12 @@ void IdleCallbackController::startIdlePeriod()
 void IdleCallbackController::queueTaskToInvokeIdleCallbacks()
 {
     Ref document = *m_document;
-    document->eventLoop().queueTask(TaskSource::IdleTask, [this, document] {
-        RELEASE_ASSERT(document->idleCallbackController() == this);
-        while (invokeIdleCallbacks()) { }
+    document->eventLoop().queueTask(TaskSource::IdleTask, [weakThis = WeakPtr { *this }, document] {
+        CheckedPtr checkedThis = weakThis.get();
+        if (!checkedThis)
+            return;
+        RELEASE_ASSERT(document->idleCallbackController() == checkedThis.get());
+        while (checkedThis->invokeIdleCallbacks()) { }
     });
 }
 

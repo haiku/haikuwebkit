@@ -39,7 +39,7 @@
 
 namespace WebCore {
     
-class LayerPool final : public CanMakeCheckedPtr<LayerPool> {
+class LayerPool final : public CanMakeCheckedPtr<LayerPool, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(LayerPool, WEBCORE_EXPORT);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LayerPool);
     WTF_MAKE_NONCOPYABLE(LayerPool);

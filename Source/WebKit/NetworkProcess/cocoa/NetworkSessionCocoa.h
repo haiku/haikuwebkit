@@ -59,7 +59,7 @@ enum class NegotiatedLegacyTLS : bool;
 class LegacyCustomProtocolManager;
 class NetworkSessionCocoa;
 
-struct SessionWrapper : public CanMakeWeakPtr<SessionWrapper>, public CanMakeCheckedPtr<SessionWrapper> {
+struct SessionWrapper : public CanMakeWeakPtr<SessionWrapper>, public CanMakeCheckedPtr<SessionWrapper, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(SessionWrapper);
     WTF_STRUCT_OVERRIDE_DELETE_FOR_CHECKED_PTR(SessionWrapper);
 

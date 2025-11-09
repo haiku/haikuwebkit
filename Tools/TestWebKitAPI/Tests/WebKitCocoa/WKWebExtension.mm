@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -2488,6 +2488,64 @@ TEST(WKWebExtension, ContentScriptImport)
     [manager runUntilTestMessage:@"Load Tab"];
 
     [manager.get().defaultTab.webView loadRequest:urlRequest];
+
+    [manager run];
+}
+
+TEST(WKWebExtension, ContentScriptNotInjectedForExcludedMatchPattern)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/test"_s, { { { "Content-Type"_s, "text/html"_s } }, ""_s } }
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    static auto *manifest = @{
+        @"manifest_version": @3,
+
+        @"name": @"Test Extension",
+        @"description": @"Test Extension",
+        @"version": @"1.0",
+
+        @"background": @{
+            @"scripts": @[ @"background.js" ],
+            @"persistent": @NO
+        },
+
+        @"content_scripts": @[@{
+            @"matches": @[ @"*://*/*" ],
+            @"js": @[ @"content.js" ],
+            @"exclude_matches": @[@"*://*/test"]
+        }]
+    };
+
+    static auto *contentScript = Util::constructScript(@[
+        @"browser.runtime.sendMessage('Hello from content script')"
+    ]);
+
+    static auto *backgroundScript = Util::constructScript(@[
+        @"browser.runtime.onMessage.addListener((message, sender) => {",
+        @"  browser.test.notifyFail('Content script should not have been injected.')",
+        @"})",
+
+        @"browser.test.sendMessage('Load Tab')",
+
+        @"setTimeout(() => {",
+        @"  browser.test.notifyPass()",
+        @"}, 1000)"
+    ]);
+
+    auto *resources = @{
+        @"background.js": backgroundScript,
+        @"content.js": contentScript
+    };
+
+    auto manager = Util::loadExtension(manifest, resources);
+
+    auto *url = server.requestWithLocalhost("/test"_s).URL;
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:url];
+
+    [manager runUntilTestMessage:@"Load Tab"];
+
+    [manager.get().defaultTab.webView loadRequest:[NSURLRequest requestWithURL:url]];
 
     [manager run];
 }

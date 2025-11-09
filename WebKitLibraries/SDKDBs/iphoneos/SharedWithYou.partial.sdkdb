@@ -325,7 +325,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "SWAttributionViewBackgroundStyle"},
     {"access": "public", "name": "SWAttributionViewDisplayContext"},
@@ -619,7 +619,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "SWCollaborationIdentifier"},
     {"access": "public", "name": "SWLocalCollaborationIdentifier"}
@@ -644,14 +644,14 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo23SWCollaborationMetadataC13SharedWithYouE22transferRepresentationQrvpZQOMQ"},
     {"access": "public", "linkage": "exported", "name": "_$sSo23SWCollaborationMetadataC16CoreTransferable0D013SharedWithYouMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
     {"access": "public", "linkage": "exported", "name": "_$sSo21SWCollaborationOptionC17SharedWithYouCoreE5title10identifier8subtitle8selected26requiredOptionsIdentifiersABSS_S2SSbSaySSGtcfC"},
     {"access": "public", "linkage": "exported", "name": "_$sSo21SWCollaborationOptionC17SharedWithYouCoreE5title10identifier8subtitle8selected26requiredOptionsIdentifiersABSS_S2SSbSaySSGtcfc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

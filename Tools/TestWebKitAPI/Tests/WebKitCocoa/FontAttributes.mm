@@ -237,14 +237,14 @@ TEST(FontAttributes, FontAttributesAfterChangingSelection)
 
     auto expectFontManagerState = [] (FontExpectation expectedFont, ColorExpectation expectedColor, std::optional<ShadowExpectation> expectedShadow, BOOL underline, BOOL strikeThrough, BOOL expectMultipleFonts) {
 #if PLATFORM(MAC)
-        NSFontManager *fontManager = NSFontManager.sharedFontManager;
         NSFontPanel *fontPanel = NSFontPanel.sharedFontPanel;
+        NSFontManager *fontManager = NSFontManager.sharedFontManager;
+        RetainPtr shadow = [fontPanel lastTextShadow];
+        EXPECT_EQ(!!shadow, !!expectedShadow);
         if (expectedShadow) {
-            EXPECT_TRUE(fontPanel.hasShadow);
-            EXPECT_LT(std::abs(expectedShadow->opacity - fontPanel.shadowOpacity), 0.0001);
-            EXPECT_EQ(expectedShadow->blurRadius, fontPanel.shadowBlur);
-        } else
-            EXPECT_FALSE(fontPanel.hasShadow);
+            EXPECT_LT(std::abs(expectedShadow->opacity - [shadow shadowColor].alphaComponent), 0.0001);
+            EXPECT_EQ(expectedShadow->blurRadius, [shadow shadowBlurRadius]);
+        }
         EXPECT_EQ(underline, fontPanel.hasUnderline);
         EXPECT_EQ(strikeThrough, fontPanel.hasStrikeThrough);
         checkColor([fontPanel.foregroundColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace], { WTFMove(expectedColor) });

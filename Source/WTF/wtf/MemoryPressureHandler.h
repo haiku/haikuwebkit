@@ -28,6 +28,7 @@
 
 #include <atomic>
 #include <ctime>
+#include <wtf/CanMakeWeakPtr.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
@@ -82,7 +83,7 @@ struct MemoryPressureHandlerConfiguration {
     Seconds pollInterval;
 };
 
-class MemoryPressureHandler {
+class MemoryPressureHandler : public CanMakeWeakPtr<MemoryPressureHandler> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(MemoryPressureHandler);
     friend class WTF::LazyNeverDestroyed<MemoryPressureHandler>;
 public:

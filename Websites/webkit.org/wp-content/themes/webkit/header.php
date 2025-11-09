@@ -27,7 +27,9 @@
     <link rel="alternate" type="application/atom+xml" title="Atom 0.3" href="<?php bloginfo('atom_url'); ?>">
     <link rel="pingback" href="<?php bloginfo('pingback_url'); ?>">
 
-    <link rel="shortcut icon" sizes="32x32" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="shortcut icon" sizes="any" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
 
     <?php wp_head(); ?>
 </head>

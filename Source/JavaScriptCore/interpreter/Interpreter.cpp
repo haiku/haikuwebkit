@@ -599,6 +599,17 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     size_t asyncStackTraceInsertPos = 0;
     EntryFrame* previousEntryFrame = nullptr;
     size_t previousEntryFrameStackTraceInsertPos = 0;
+    auto updateAsyncStackTraceOriginGenerator = [&]() -> void {
+        ASSERT(Options::useAsyncStackTrace());
+        auto* record = vmEntryRecord(previousEntryFrame);
+        if (record->m_context) {
+            if (auto* generator = jsDynamicCast<JSGenerator*>(record->m_context)) {
+                asyncStackTraceOriginGenerator = generator;
+                asyncStackTraceInsertPos = previousEntryFrameStackTraceInsertPos;
+            }
+        }
+    };
+
     StackVisitor::visit(callFrame, vm, [&] (StackVisitor& visitor) ALWAYS_INLINE_LAMBDA {
         if (results.size() >= maxStackSize)
             return IterationStatus::Done;
@@ -617,17 +628,8 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
 
         if (Options::useAsyncStackTrace()) {
             auto* currentEntryFrame = visitor->entryFrame();
-            if (currentEntryFrame != previousEntryFrame) {
-                if (previousEntryFrame) {
-                    auto* record = vmEntryRecord(previousEntryFrame);
-                    if (record->m_context) {
-                        if (auto* generator = jsDynamicCast<JSGenerator*>(record->m_context)) {
-                            asyncStackTraceOriginGenerator = generator;
-                            asyncStackTraceInsertPos = previousEntryFrameStackTraceInsertPos;
-                        }
-                    }
-                }
-            }
+            if (currentEntryFrame != previousEntryFrame && previousEntryFrame)
+                updateAsyncStackTraceOriginGenerator();
             previousEntryFrame = currentEntryFrame;
             previousEntryFrameStackTraceInsertPos = results.size();
         }
@@ -654,6 +656,10 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     });
 
     if (Options::useAsyncStackTrace()) {
+        // Check if the last entry frame had a generator context
+        // that wasn't captured during stack traversal (e.g. TLA)
+        if (!asyncStackTraceOriginGenerator && previousEntryFrame)
+            updateAsyncStackTraceOriginGenerator();
         if (asyncStackTraceOriginGenerator) {
             Vector<StackFrame> asyncFrames;
             getAsyncStackTrace(owner, asyncFrames, asyncStackTraceOriginGenerator, maxStackSize);

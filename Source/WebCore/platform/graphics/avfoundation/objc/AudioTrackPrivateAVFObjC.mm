@@ -52,7 +52,10 @@ AudioTrackPrivateAVFObjC::AudioTrackPrivateAVFObjC(MediaSelectionOptionAVFObjC& 
 
 AudioTrackPrivateAVFObjC::AudioTrackPrivateAVFObjC(Ref<AVTrackPrivateAVFObjCImpl>&& impl)
     : m_impl(WTFMove(impl))
-    , m_audioTrackConfigurationObserver([this] { audioTrackConfigurationChanged(); })
+    , m_audioTrackConfigurationObserver(AudioTrackConfigurationObserver::create([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->audioTrackConfigurationChanged();
+    }))
 {
     m_impl->setAudioTrackConfigurationObserver(m_audioTrackConfigurationObserver);
     resetPropertiesFromTrack();

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
 #import <WebCore/Color.h>
 #import <WebCore/LayerHostingContextIdentifier.h>
 #import <WebCore/Model.h>
+#import <WebCore/ModelPlayerGraphicsLayerConfiguration.h>
 #import <WebCore/ResourceError.h>
 #import <WebKitAdditions/REModel.h>
 #import <WebKitAdditions/REModelLoader.h>
@@ -698,9 +700,8 @@ void ModelProcessModelPlayerProxy::sizeDidChange(WebCore::LayoutSize layoutSize)
     [m_layer setFrame:CGRectMake(0, 0, width, height)];
 }
 
-PlatformLayer* ModelProcessModelPlayerProxy::layer()
+void ModelProcessModelPlayerProxy::configureGraphicsLayer(WebCore::GraphicsLayer&, WebCore::ModelPlayerGraphicsLayerConfiguration&&)
 {
-    return nullptr;
 }
 
 std::optional<WebCore::LayerHostingContextIdentifier> ModelProcessModelPlayerProxy::layerHostingContextIdentifier()

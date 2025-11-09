@@ -67,17 +67,11 @@
 #endif
 
 namespace WebCore {
-class RealtimeMediaSourceObserver;
 
 #if PLATFORM(COCOA)
 class ImageRotationSessionVT;
 #endif
 
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::RealtimeMediaSourceObserver> : std::true_type { };
 }
 
 namespace WTF {
@@ -101,7 +95,7 @@ struct CaptureSourceError;
 struct CaptureSourceOrError;
 struct VideoFrameAdaptor;
 
-class RealtimeMediaSourceObserver : public CanMakeWeakPtr<RealtimeMediaSourceObserver> {
+class RealtimeMediaSourceObserver : public CanMakeWeakPtr<RealtimeMediaSourceObserver>, public AbstractCanMakeCheckedPtr {
 public:
     WEBCORE_EXPORT RealtimeMediaSourceObserver();
     WEBCORE_EXPORT virtual ~RealtimeMediaSourceObserver();

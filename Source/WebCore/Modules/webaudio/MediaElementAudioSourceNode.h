@@ -51,10 +51,12 @@ public:
     HTMLMediaElement& mediaElement() { return m_mediaElement; }
 
     // AudioNode
-    void process(size_t framesToProcess) override;
+    void process(size_t framesToProcess) final;
     
     // AudioSourceProviderClient
-    void setFormat(size_t numberOfChannels, float sampleRate) override;
+    void setFormat(size_t numberOfChannels, float sampleRate) final;
+    void ref() const final { AudioNode::ref(); }
+    void deref() const final { AudioNode::deref(); }
 
     Lock& processLock() WTF_RETURNS_LOCK(m_processLock) { return m_processLock; }
 

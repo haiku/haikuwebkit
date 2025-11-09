@@ -199,7 +199,6 @@ if (EXISTS "${WAYLAND_PROTOCOLS_DATADIR}/unstable/xdg-decoration/xdg-decoration-
 endif ()
 
 add_library(WPEPlatformWayland OBJECT ${WPEPlatformWayland_SOURCES})
-add_dependencies(WPEPlatformWayland WPEPlatformGeneratedEnumTypesHeader)
 target_compile_definitions(WPEPlatformWayland PRIVATE ${WPEPlatformWayland_DEFINITIONS})
 target_include_directories(WPEPlatformWayland PRIVATE ${WPEPlatformWayland_PRIVATE_INCLUDE_DIRECTORIES})
 target_include_directories(WPEPlatformWayland SYSTEM PRIVATE ${WPEPlatformWayland_SYSTEM_INCLUDE_DIRECTORIES})

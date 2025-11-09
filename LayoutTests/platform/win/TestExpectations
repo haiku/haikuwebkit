@@ -219,7 +219,6 @@ fast/images/jpegxl-as-image.html [ Pass ]
 fast/images/jpegxl-image-decoding.html [ Pass ]
 fast/images/jpegxl-with-color-profile.html [ Pass ]
 fast/images/animated-jpegxl-loop-count.html [ Pass ]
-fast/images/image-size-unsigned-overflow.html [ Skip ]
 
 # DataTransferItems is not yet implemented
 fast/events/clipboard-dataTransferItemList.html [ Skip ]
@@ -1980,7 +1979,9 @@ imported/w3c/web-platform-tests/event-timing/interaction-count-click.html [ Skip
 imported/w3c/web-platform-tests/event-timing/interaction-count-press-key.html [ Skip ]
 
 # Timeout:
-imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-keydown-keyup.html [ Skip ]
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-pointerdown-pointerup.html [ Skip ]
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
 
 # Fail with AccessDeniedAccess
 imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]

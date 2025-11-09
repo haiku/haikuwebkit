@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <WebCore/CSSParser.h>
 #include <WebCore/CSSPropertyParserConsumer+Color.h>
 #include <WebCore/Color.h>
 #include <WebCore/ColorSerialization.h>
@@ -29,6 +30,7 @@
 #include <WebCore/FloatRect.h>
 #include <WebCore/QualifiedName.h>
 #include <WebCore/SVGParserUtilities.h>
+#include <WebCore/StyleColor.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
@@ -48,12 +50,9 @@ template<>
 struct SVGPropertyTraits<Color> {
     static Color initialValue() { return Color(); }
     static Color fromString(const String& string) { return CSSPropertyParserHelpers::deprecatedParseColorRawWithoutContext(string.trim(deprecatedIsSpaceOrNewline)); }
-    static std::optional<Color> parse(const QualifiedName&, const String& string)
+    static std::optional<Style::Color> parse(const String& string)
     {
-        auto color = CSSPropertyParserHelpers::deprecatedParseColorRawWithoutContext(string.trim(deprecatedIsSpaceOrNewline));
-        if (!color.isValid())
-            return std::nullopt;
-        return color;
+        return CSSParser::parseColorOrCurrentColorWithoutContext(string.trim(deprecatedIsSpaceOrNewline));
     }
     static String toString(const Color& type) { return serializationForHTML(type); }
 };

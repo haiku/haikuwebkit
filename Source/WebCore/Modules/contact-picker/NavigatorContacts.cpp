@@ -56,7 +56,7 @@ RefPtr<ContactsManager> NavigatorContacts::contacts()
 
 NavigatorContacts* NavigatorContacts::from(Navigator& navigator)
 {
-    auto* supplement = static_cast<NavigatorContacts*>(Supplement<Navigator>::from(&navigator, supplementName()));
+    auto* supplement = downcast<NavigatorContacts>(Supplement<Navigator>::from(&navigator, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorContacts>(navigator);
         supplement = newSupplement.get();
@@ -65,9 +65,4 @@ NavigatorContacts* NavigatorContacts::from(Navigator& navigator)
     return supplement;
 }
 
-ASCIILiteral NavigatorContacts::supplementName()
-{
-    return "NavigatorContacts"_s;
-}
-
-}
+} // namespace WebCore

@@ -49,15 +49,6 @@
 #endif
 
 namespace WebCore {
-class MediaStreamTrackPrivateSourceObserverSourceProxy;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::MediaStreamTrackPrivateSourceObserverSourceProxy> : std::true_type { };
-}
-
-namespace WebCore {
 
 Ref<MediaStreamTrackPrivate> MediaStreamTrackPrivate::create(Ref<const Logger>&& logger, Ref<RealtimeMediaSource>&& source, std::function<void(Function<void()>&&)>&& postTask)
 {
@@ -78,8 +69,9 @@ Ref<MediaStreamTrackPrivate> MediaStreamTrackPrivate::create(Ref<const Logger>&&
     return privateTrack;
 }
 
-class MediaStreamTrackPrivateSourceObserverSourceProxy final : public RealtimeMediaSourceObserver {
+class MediaStreamTrackPrivateSourceObserverSourceProxy final : public RealtimeMediaSourceObserver, public CanMakeCheckedPtr<MediaStreamTrackPrivateSourceObserverSourceProxy> {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaStreamTrackPrivateSourceObserverSourceProxy);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaStreamTrackPrivateSourceObserverSourceProxy);
 public:
     MediaStreamTrackPrivateSourceObserverSourceProxy(WeakPtr<MediaStreamTrackPrivate>&& privateTrack, Ref<RealtimeMediaSource>&& source, std::function<void(Function<void()>&&)>&& postTask)
         : m_privateTrack(WTFMove(privateTrack))
@@ -89,6 +81,13 @@ public:
         ASSERT(m_postTask);
         ASSERT(isMainThread());
     }
+
+    // RealtimeMediaSourceObserver.
+    uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     std::function<void(Function<void()>&&)> getPostTask()
     {
@@ -229,7 +228,7 @@ public:
     void initialize(MediaStreamTrackPrivate& privateTrack)
     {
         ensureOnMainThread([this, protectedThis = Ref { *this }, privateTrack = WeakPtr { privateTrack }, postTask = m_postTask, source = m_source, interrupted = privateTrack.interrupted(), muted = privateTrack.muted()] () mutable {
-            m_sourceProxy = makeUnique<MediaStreamTrackPrivateSourceObserverSourceProxy>(WTFMove(privateTrack), WTFMove(source), WTFMove(postTask));
+            lazyInitialize(m_sourceProxy, makeUnique<MediaStreamTrackPrivateSourceObserverSourceProxy>(WTFMove(privateTrack), WTFMove(source), WTFMove(postTask)));
             m_sourceProxy->initialize(interrupted, muted);
         });
     }
@@ -303,7 +302,7 @@ private:
     }
 
     const Ref<RealtimeMediaSource> m_source;
-    std::unique_ptr<MediaStreamTrackPrivateSourceObserverSourceProxy> m_sourceProxy;
+    const std::unique_ptr<MediaStreamTrackPrivateSourceObserverSourceProxy> m_sourceProxy;
     std::function<void(Function<void()>&&)> m_postTask;
     HashMap<uint64_t, ApplyConstraintsHandler> m_applyConstraintsCallbacks;
     uint64_t m_applyConstraintsCallbacksIdentifier { 0 };
@@ -386,6 +385,15 @@ bool MediaStreamTrackPrivate::isOnCreationThread()
     return m_creationThreadId ? m_creationThreadId == Thread::currentSingleton().uid() : isMainThread();
 }
 #endif
+
+void MediaStreamTrackPrivate::updateLabelIfRemoteTrack()
+{
+    if (!isMainThread() || !(protectedSource()->isIncomingAudioSource() || protectedSource()->isIncomingVideoSource()))
+        return;
+
+    m_label = makeString(m_label, " - "_s, m_id);
+}
+
 
 void MediaStreamTrackPrivate::forEachObserver(NOESCAPE const Function<void(MediaStreamTrackPrivateObserver&)>& apply)
 {

@@ -61,13 +61,13 @@ static Vector<Landmark> convertLandmarks(VNFaceLandmarks2D *landmarks, const Flo
 {
     return {
         {
-            convertLandmark(landmarks.leftEye, imageSize),
+            convertLandmark(retainPtr(landmarks.leftEye).get(), imageSize),
             WebCore::ShapeDetection::LandmarkType::Eye,
         }, {
-            convertLandmark(landmarks.rightEye, imageSize),
+            convertLandmark(retainPtr(landmarks.rightEye).get(), imageSize),
             WebCore::ShapeDetection::LandmarkType::Eye,
         }, {
-            convertLandmark(landmarks.nose, imageSize),
+            convertLandmark(retainPtr(landmarks.nose).get(), imageSize),
             WebCore::ShapeDetection::LandmarkType::Nose,
         },
     };
@@ -104,7 +104,7 @@ void FaceDetectorImpl::detect(Ref<ImageBuffer>&& imageBuffer, CompletionHandler<
     for (VNFaceObservation *observation in request.get().results) {
         results.append({
             convertRectFromVisionToWeb(nativeImage->size(), observation.boundingBox),
-            { convertLandmarks(observation.landmarks, nativeImage->size()) },
+            { convertLandmarks(retainPtr(observation.landmarks).get(), nativeImage->size()) },
         });
         if (results.size() >= m_maxDetectedFaces)
             break;

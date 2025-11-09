@@ -81,7 +81,7 @@ static void pas_mte_do_initialization(void)
     uint8_t* mode_byte = &PAS_MTE_CONFIG_BYTE(PAS_MTE_MODE_BITS);
     uint8_t* medium_byte = &PAS_MTE_CONFIG_BYTE(PAS_MTE_MEDIUM_TAGGING_ENABLE_FLAG);
     uint8_t* lockdown_mode_byte = &PAS_MTE_CONFIG_BYTE(PAS_MTE_LOCKDOWN_MODE_FLAG);
-    uint8_t* is_wcp_byte = &PAS_MTE_CONFIG_BYTE(PAS_MTE_IS_WCP_FLAG);
+    uint8_t* hardened_byte = &PAS_MTE_CONFIG_BYTE(PAS_MTE_HARDENED_FLAG);
 
     struct proc_bsdinfo info;
     int rc = proc_pidinfo(getpid(), PROC_PIDTBSDINFO, 0, &info, sizeof(info));
@@ -102,9 +102,8 @@ static void pas_mte_do_initialization(void)
     if (get_value_if_available(&mode, "JSC_allocationProfilingMode"))
         *mode_byte = (uint8_t)(mode & 0xFF);
 
-    const char* name = info.pbi_name[0] ? info.pbi_name : info.pbi_comm;
+    const char* name = getprogname();
     bool isWebContentProcess = !strncmp(name, "com.apple.WebKit.WebContent", 27) || !strncmp(name, "jsc", 3);
-    *is_wcp_byte = isWebContentProcess;
 
     unsigned taggingRate = 100;
     if (isWebContentProcess) {
@@ -121,20 +120,37 @@ static void pas_mte_do_initialization(void)
     PAS_MTE_CONFIG_BYTE(PAS_MTE_TAGGING_RATE) = taggingRate;
 
     if (isWebContentProcess) {
-        *medium_byte = 0;
-#if !PAS_USE_MTE_IN_WEBCONTENT
-        // Disable tagging in libpas by default in WebContent process
-        *enabled_byte = 0;
-#endif
+        // For a variety of reasons, a full MTE implementation in the WebContent process is not generally practical.
+        // As such, by default, we disable MTE in the WebContent process while leaving it on in the privileged
+        // processes. However, in certain "extra secure" contexts, this disablement is overridden such that we
+        // treat WebContent like any other process for the purposes of MTE.
+
+        bool wcp_is_hardened = false;
+        bool isEnhancedSecurityWebContentProcess = !strncmp(name, "com.apple.WebKit.WebContent.EnhancedSecurity", 44);
+        if (isEnhancedSecurityWebContentProcess)
+            wcp_is_hardened = true;
+
         uint64_t ldmState = 0;
         size_t sysCtlLen = sizeof(ldmState);
         if (sysctlbyname("security.mac.lockdown_mode_state", &ldmState, &sysCtlLen, NULL, 0) >= 0 && ldmState == 1) {
-            *enabled_byte = 1;
-            *medium_byte = 1;
+            wcp_is_hardened = true;
             *lockdown_mode_byte = 1;
-        } else {
+        } else
             *lockdown_mode_byte = 0;
 
+        if (wcp_is_hardened) {
+            *medium_byte = 1;
+            *enabled_byte = 1;
+            *hardened_byte = 1;
+        } else {
+            *medium_byte = 0;
+#if !PAS_USE_MTE_IN_WEBCONTENT
+            // Disable tagging in libpas by default in WebContent process
+            *enabled_byte = 0;
+#else
+            *enabled_byte = 1;
+#endif
+            *hardened_byte = 0;
             // FIXME: rdar://159974195
             bmalloc_common_primitive_heap.is_non_compact_heap = false;
         }

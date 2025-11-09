@@ -140,8 +140,8 @@ public:
     void forceContextLost() final;
 
 private:
-    explicit RemoteGraphicsContextGLProxyCocoa(const WebCore::GraphicsContextGLAttributes& attributes)
-        : RemoteGraphicsContextGLProxy(attributes)
+    explicit RemoteGraphicsContextGLProxyCocoa(const WebCore::GraphicsContextGLAttributes& attributes, RemoteRenderingBackendProxy& renderingBackend)
+        : RemoteGraphicsContextGLProxy(attributes, renderingBackend)
         , m_layerContentsDisplayDelegate(DisplayBufferDisplayDelegate::create(!attributes.alpha))
     {
     }
@@ -168,6 +168,7 @@ void RemoteGraphicsContextGLProxyCocoa::prepareForDisplay()
     auto [displayBufferSendRight] = sendResult.takeReply();
     if (!displayBufferSendRight)
         return;
+    m_hasPreparedForDisplay = true;
     auto finishedFence = DisplayBufferFence::create(WTFMove(finishedSignaller));
     addNewFence(finishedFence);
     m_layerContentsDisplayDelegate->setDisplayBuffer(WTFMove(displayBufferSendRight), WTFMove(finishedFence));
@@ -193,9 +194,9 @@ void RemoteGraphicsContextGLProxyCocoa::addNewFence(Ref<DisplayBufferFence> newF
 
 }
 
-Ref<RemoteGraphicsContextGLProxy> RemoteGraphicsContextGLProxy::platformCreate(const WebCore::GraphicsContextGLAttributes& attributes)
+Ref<RemoteGraphicsContextGLProxy> RemoteGraphicsContextGLProxy::platformCreate(const WebCore::GraphicsContextGLAttributes& attributes, RemoteRenderingBackendProxy& renderingBackend)
 {
-    return adoptRef(*new RemoteGraphicsContextGLProxyCocoa(attributes));
+    return adoptRef(*new RemoteGraphicsContextGLProxyCocoa(attributes, renderingBackend));
 }
 
 }

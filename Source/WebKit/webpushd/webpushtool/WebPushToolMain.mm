@@ -89,22 +89,22 @@ static void printUsageAndTerminate(NSString *message)
 
 static std::unique_ptr<PushMessageForTesting> pushMessageFromArguments(NSEnumerator<NSString *> *enumerator)
 {
-    NSString *registrationString = [enumerator nextObject];
+    RetainPtr<NSString> registrationString = [enumerator nextObject];
     if (!registrationString)
         return nullptr;
 
-    NSURL *registrationURL = [NSURL URLWithString:registrationString];
+    RetainPtr<NSURL> registrationURL = [NSURL URLWithString:registrationString.get()];
     if (!registrationURL)
         return nullptr;
 
-    NSString *message = [enumerator nextObject];
+    RetainPtr<NSString> message = [enumerator nextObject];
     if (!message)
         return nullptr;
 
 #if ENABLE(DECLARATIVE_WEB_PUSH)
-    PushMessageForTesting pushMessage = { { }, { }, registrationURL, message, WebKit::WebPushD::PushMessageDisposition::Legacy, std::nullopt };
+    PushMessageForTesting pushMessage = { { }, { }, registrationURL.get(), message.get(), WebKit::WebPushD::PushMessageDisposition::Legacy, std::nullopt };
 #else
-    PushMessageForTesting pushMessage = { { }, { }, registrationURL, message, WebKit::WebPushD::PushMessageDisposition::Legacy };
+    PushMessageForTesting pushMessage = { { }, { }, registrationURL.get(), message.get(), WebKit::WebPushD::PushMessageDisposition::Legacy };
 #endif
 
     return makeUniqueWithoutFastMallocCheck<PushMessageForTesting>(WTFMove(pushMessage));
@@ -114,12 +114,12 @@ static bool registerDaemonWithLaunchD(WebPushTool::PreferTestService preferTestS
 {
     // For now webpushtool only knows how to host webpushd when they're in the same directory
     // e.g. the build directory of a WebKit contributor.
-    NSString *currentExecutablePath = [[NSBundle mainBundle] executablePath];
-    NSURL *currentExecutableDirectoryURL = [[NSURL fileURLWithPath:currentExecutablePath isDirectory:NO] URLByDeletingLastPathComponent];
-    NSURL *daemonExecutablePathURL = [currentExecutableDirectoryURL URLByAppendingPathComponent:@"webpushd"];
+    RetainPtr<NSString> currentExecutablePath = [[NSBundle mainBundle] executablePath];
+    RetainPtr<NSURL> currentExecutableDirectoryURL = [[NSURL fileURLWithPath:currentExecutablePath.get() isDirectory:NO] URLByDeletingLastPathComponent];
+    RetainPtr<NSURL> daemonExecutablePathURL = [currentExecutableDirectoryURL URLByAppendingPathComponent:@"webpushd"];
 
-    if (![[NSFileManager defaultManager] fileExistsAtPath:daemonExecutablePathURL.path]) {
-        NSLog(@"Daemon executable does not exist at path %@", daemonExecutablePathURL.path);
+    if (![[NSFileManager defaultManager] fileExistsAtPath:retainPtr(daemonExecutablePathURL.get().path).get()]) {
+        NSLog(@"Daemon executable does not exist at path %@", retainPtr(daemonExecutablePathURL.get().path).get());
         return false;
     }
 
@@ -133,8 +133,8 @@ static bool registerDaemonWithLaunchD(WebPushTool::PreferTestService preferTestS
 
     {
         auto environmentVariables = adoptNS(xpc_dictionary_create(nullptr, nullptr, 0));
-        xpc_dictionary_set_string(environmentVariables.get(), "DYLD_FRAMEWORK_PATH", currentExecutableDirectoryURL.fileSystemRepresentation);
-        xpc_dictionary_set_string(environmentVariables.get(), "DYLD_LIBRARY_PATH", currentExecutableDirectoryURL.fileSystemRepresentation);
+        xpc_dictionary_set_string(environmentVariables.get(), "DYLD_FRAMEWORK_PATH", currentExecutableDirectoryURL.get().fileSystemRepresentation);
+        xpc_dictionary_set_string(environmentVariables.get(), "DYLD_LIBRARY_PATH", currentExecutableDirectoryURL.get().fileSystemRepresentation);
         xpc_dictionary_set_value(plist.get(), "EnvironmentVariables", environmentVariables.get());
     }
     {
@@ -145,9 +145,9 @@ static bool registerDaemonWithLaunchD(WebPushTool::PreferTestService preferTestS
     {
         auto programArguments = adoptNS(xpc_array_create(nullptr, 0));
 #if PLATFORM(MAC)
-        xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, daemonExecutablePathURL.fileSystemRepresentation);
+        xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, daemonExecutablePathURL.get().fileSystemRepresentation);
 #else
-        xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, daemonExecutablePathURL.path.fileSystemRepresentation);
+        xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, daemonExecutablePathURL.get().path.fileSystemRepresentation);
 #endif
         xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, "--machServiceName");
         xpc_array_set_string(programArguments.get(), XPC_ARRAY_APPEND, serviceName);
@@ -247,12 +247,12 @@ int WebPushToolMain(int, char **)
     RetainPtr<NSString> pushPartition;
 
     @autoreleasepool {
-        NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-        if (arguments.count == 1)
+        RetainPtr<NSArray> arguments = [[NSProcessInfo processInfo] arguments];
+        if (arguments.get().count == 1)
             printUsageAndTerminate(@"No arguments provided");
 
-        NSEnumerator<NSString *> *enumerator = [[arguments subarrayWithRange:NSMakeRange(1, arguments.count - 1)] objectEnumerator];
-        NSString *argument = [enumerator nextObject];
+        RetainPtr<NSEnumerator<NSString *>> enumerator = [retainPtr([arguments subarrayWithRange:NSMakeRange(1, arguments.get().count - 1)]) objectEnumerator];
+        RetainPtr<NSString> argument = [enumerator nextObject];
         while (argument) {
             if ([argument isEqualToString:@"--production"])
                 preferTestService = WebPushTool::PreferTestService::No;
@@ -267,7 +267,7 @@ int WebPushToolMain(int, char **)
             else if ([argument isEqualToString:@"streamDebugMessages"])
                 execl("/usr/bin/log", "log", "stream", "--debug", "--info", "--process", "webpushd");
             else if ([argument isEqualToString:@"injectPushMessage"]) {
-                auto pushMessage = pushMessageFromArguments(enumerator);
+                auto pushMessage = pushMessageFromArguments(enumerator.get());
                 if (!pushMessage)
                     printUsageAndTerminate(adoptNS([[NSString alloc] initWithFormat:@"Invalid push arguments specified"]).get());
                 verb = makeUnique<InjectPushMessageVerb>(WTFMove(*pushMessage));
@@ -278,7 +278,7 @@ int WebPushToolMain(int, char **)
                 String scope { [enumerator nextObject] };
                 verb = makeUnique<RequestPushPermissionVerb>(scope);
             } else
-                printUsageAndTerminate(adoptNS([[NSString alloc] initWithFormat:@"Invalid option provided: %@", argument]).get());
+                printUsageAndTerminate(adoptNS([[NSString alloc] initWithFormat:@"Invalid option provided: %@", argument.get()]).get());
 
             argument = [enumerator nextObject];
         }

@@ -23,13 +23,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-function catch(onRejected)
-{
-    "use strict";
-
-    return this.then(@undefined, onRejected);
-}
-
 function finally(onFinally)
 {
     "use strict";

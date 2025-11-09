@@ -2074,6 +2074,29 @@ JSArray* constructArrayNegativeIndexed(JSGlobalObject* globalObject, Structure* 
     return array;
 }
 
+JSArray* constructArrayPair(JSGlobalObject* globalObject, JSValue first, JSValue second)
+{
+    VM& vm = globalObject->vm();
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    ObjectInitializationScope initializationScope(vm);
+
+    IndexingType indexingType = ArrayWithUndecided;
+    indexingType = leastUpperBoundOfIndexingTypeAndValue(indexingType, first);
+    indexingType = leastUpperBoundOfIndexingTypeAndValue(indexingType, second);
+
+    Structure* structure = globalObject->arrayStructureForIndexingTypeDuringAllocation(indexingType);
+
+    JSArray* array = JSArray::tryCreateUninitializedRestricted(initializationScope, structure, 2);
+    if (!array) [[unlikely]] {
+        throwOutOfMemoryError(globalObject, throwScope);
+        return nullptr;
+    }
+    array->initializeIndex(initializationScope, 0, first);
+    array->initializeIndex(initializationScope, 1, second);
+
+    return array;
+}
+
 template<>
 void clearElement(double& element)
 {

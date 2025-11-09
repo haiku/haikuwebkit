@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 //@ skip if $memoryLimited
 //@ skip if $buildType == "debug"
 //@ runDefault("--collectContinuously=1")

@@ -327,7 +327,7 @@ Vector<AtomString> CDMPrivateFairPlayStreaming::supportedInitDataTypes() const
 
 bool CDMPrivateFairPlayStreaming::supportsConfiguration(const CDMKeySystemConfiguration& configuration) const
 {
-    if (!std::ranges::any_of(configuration.initDataTypes, [](auto& initDataType) { return validInitDataTypes().contains(initDataType); })) {
+    if (std::ranges::none_of(configuration.initDataTypes, [](auto& initDataType) { return validInitDataTypes().contains(initDataType); })) {
         INFO_LOG(LOGIDENTIFIER, " false, no initDataType supported");
         return false;
     }
@@ -352,13 +352,13 @@ bool CDMPrivateFairPlayStreaming::supportsConfiguration(const CDMKeySystemConfig
     }
 
     if (!configuration.audioCapabilities.isEmpty()
-        && !std::ranges::any_of(configuration.audioCapabilities, CDMInstanceFairPlayStreamingAVFObjC::supportsMediaCapability)) {
+        && std::ranges::none_of(configuration.audioCapabilities, CDMInstanceFairPlayStreamingAVFObjC::supportsMediaCapability)) {
         INFO_LOG(LOGIDENTIFIER, "false, no audio configuration supported");
         return false;
     }
 
     if (!configuration.videoCapabilities.isEmpty()
-        && !std::ranges::any_of(configuration.videoCapabilities, CDMInstanceFairPlayStreamingAVFObjC::supportsMediaCapability)) {
+        && std::ranges::none_of(configuration.videoCapabilities, CDMInstanceFairPlayStreamingAVFObjC::supportsMediaCapability)) {
             INFO_LOG(LOGIDENTIFIER, "false, no video configuration supported");
         return false;
     }

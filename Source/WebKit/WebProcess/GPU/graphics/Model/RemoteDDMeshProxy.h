@@ -33,6 +33,10 @@
 #include <WebCore/DDMeshDescriptor.h>
 #include <wtf/TZoneMalloc.h>
 
+#if PLATFORM(COCOA)
+#include <simd/simd.h>
+#endif
+
 namespace WebKit::DDModel {
 
 class ConvertToBackingContext;
@@ -59,6 +63,8 @@ private:
     RemoteDDMeshProxy& operator=(const RemoteDDMeshProxy&) = delete;
     RemoteDDMeshProxy& operator=(RemoteDDMeshProxy&&) = delete;
 
+    bool isRemoteDDMeshProxy() const final { return true; }
+
     DDModelIdentifier backing() const { return m_backing; }
 
     template<typename T>
@@ -73,6 +79,9 @@ private:
     void updateTexture(const WebCore::DDModel::DDUpdateTextureDescriptor&) final;
     void addMaterial(const WebCore::DDModel::DDMaterialDescriptor&) final;
     void updateMaterial(const WebCore::DDModel::DDUpdateMaterialDescriptor&) final;
+#if PLATFORM(COCOA)
+    std::pair<simd_float4, simd_float4> getCenterAndExtents() const final;
+#endif
 
     void render() final;
     void setLabelInternal(const String&) final;
@@ -80,8 +89,16 @@ private:
     const DDModelIdentifier m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;
     const Ref<RemoteGPUProxy> m_root;
+#if PLATFORM(COCOA)
+    simd_float4 m_center;
+    simd_float4 m_extents;
+#endif
 };
 
 }
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::DDModel::RemoteDDMeshProxy)
+    static bool isType(const WebCore::DDModel::DDMesh& mesh) { return mesh.isRemoteDDMeshProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

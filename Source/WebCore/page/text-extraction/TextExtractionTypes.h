@@ -41,6 +41,7 @@ enum class Action : uint8_t {
     SelectMenuItem,
     TextInput,
     KeyPress,
+    HighlightText,
 };
 
 struct Interaction {
@@ -49,6 +50,7 @@ struct Interaction {
     std::optional<FloatPoint> locationInRootView;
     std::optional<NodeIdentifier> nodeIdentifier;
     bool replaceAll { false };
+    bool scrollToVisible { false };
 };
 
 struct ExtractedText {

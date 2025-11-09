@@ -43,6 +43,7 @@ class UserContentProvider;
 class UserMessageHandlersNamespace;
 class WebKitJSHandle;
 class WebKitSerializedNode;
+class WebKitStringMatchersNamespace;
 
 class WebKitNamespace : public LocalDOMWindowProperty, public RefCounted<WebKitNamespace> {
 public:
@@ -54,6 +55,7 @@ public:
     virtual ~WebKitNamespace();
 
     UserMessageHandlersNamespace* messageHandlers();
+    WebKitStringMatchersNamespace& stringMatchers();
     Ref<WebKitJSHandle> createJSHandle(JSC::JSGlobalObject&, JSC::Strong<JSC::JSObject>);
 
     struct SerializedNodeInit {
@@ -65,6 +67,7 @@ private:
     explicit WebKitNamespace(LocalDOMWindow&, UserContentProvider&);
 
     const Ref<UserMessageHandlersNamespace> m_messageHandlerNamespace;
+    const Ref<WebKitStringMatchersNamespace> m_stringMatchers;
 };
 
 } // namespace WebCore

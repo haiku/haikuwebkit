@@ -131,9 +131,9 @@ messages -> RemoteGraphicsContextGL Stream {{
 #if !PLATFORM(COCOA) && !USE(GRAPHICS_LAYER_WC) && !USE(GBM)
     void PrepareForDisplay() -> () Synchronous
 #endif
-    void EnsureExtensionEnabled(CString extension)
+    void EnsureExtensionEnabled(WebCore::GCGLExtension extension)
     void GetErrors() -> (GCGLErrorCodeSet returnValue) Synchronous
-    void DrawSurfaceBufferToImageBuffer(enum:bool WebCore::GraphicsContextGLSurfaceBuffer buffer, WebCore::RenderingResourceIdentifier imageBuffer) -> () Synchronous
+    void copyNativeImageYFlipped(enum:bool WebCore::GraphicsContextGLSurfaceBuffer buffer, WebCore::RenderingResourceIdentifier nativeImageIdentifier)
 #if ENABLE(MEDIA_STREAM) || ENABLE(WEB_CODECS)
     void SurfaceBufferToVideoFrame(enum:bool WebCore::GraphicsContextGLSurfaceBuffer buffer) -> (struct std::optional<WebKit::RemoteVideoFrameProxyProperties> properties) Synchronous
 #endif
@@ -160,6 +160,7 @@ messages -> RemoteGraphicsContextGL Stream {{
 #if ENABLE(WEBXR)
     [EnabledBy=WebXREnabled] void FramebufferDiscard(uint32_t target, std::span<const uint32_t> attachments)
 #endif
+    void SetDrawingBufferColorSpace(WebCore::DestinationColorSpace colorSpace)
 {}
 }}
 
@@ -1224,8 +1225,8 @@ def main():
 
     size_t_cpp_type = get_cpp_type("size_t")
     webkit_ipc_types[size_t_cpp_type] = get_cpp_type("uint64_t")
-
-    for builtin_type in webkit_ipc_builtin_types:
+    active_info_types = set(["WebCore::GCGLAttribActiveInfo", "WebCore::GCGLUniformActiveInfo", "WebCore::GCGLTransformFeedbackActiveInfo"])
+    for builtin_type in webkit_ipc_builtin_types | active_info_types:
         cpp_type = get_cpp_type(builtin_type)
         webkit_ipc_types[cpp_type] = cpp_type
 

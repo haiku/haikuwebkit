@@ -84,6 +84,7 @@ messages -> NetworkProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
     SetCacheModelSynchronouslyForTesting(enum:uint8_t WebKit::CacheModel cacheModel) -> () Synchronous
 
     ProcessWillSuspendImminentlyForTestingSync() -> () Synchronous
+    IsStorageSuspendedForTesting(PAL::SessionID sessionID) -> (bool isStorageSuspended)
     PrepareToSuspend(bool isSuspensionImminent, MonotonicTime estimatedSuspendTime) -> ()
     ProcessDidResume(bool forForegroundActivity)
 

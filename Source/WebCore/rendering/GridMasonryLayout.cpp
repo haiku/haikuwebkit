@@ -240,10 +240,4 @@ GridArea GridMasonryLayout::masonryGridAreaFromGridAxisSpan(const GridSpan& grid
         ? GridArea { m_masonryAxisSpan, gridAxisSpan }
         : GridArea { gridAxisSpan, m_masonryAxisSpan };
 }
-
-bool GridMasonryLayout::hasEnoughSpaceAtPosition(unsigned startingPosition, unsigned spanLength) const
-{
-    ASSERT(startingPosition < m_gridAxisTracksCount);
-    return (startingPosition + spanLength) <= m_gridAxisTracksCount;
-}
 } // end namespace WebCore

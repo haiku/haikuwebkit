@@ -110,6 +110,8 @@ public:
     JS_EXPORT_PRIVATE void unlockUnderlyingBuffer();
     JS_EXPORT_PRIVATE virtual CodeBlockHash codeBlockHashConcurrently(int startOffset, int endOffset, CodeSpecializationKind);
 
+    virtual bool isScriptBufferSourceProvider() const { return false; }
+
 private:
     JS_EXPORT_PRIVATE virtual void lockUnderlyingBufferImpl();
     JS_EXPORT_PRIVATE virtual void unlockUnderlyingBufferImpl();

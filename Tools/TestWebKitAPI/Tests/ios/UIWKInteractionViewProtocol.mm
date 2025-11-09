@@ -121,7 +121,8 @@ TEST(UIWKInteractionViewProtocol, SelectTextWithCharacterGranularity)
     EXPECT_WK_STREQ("Hello world", [webView stringByEvaluatingJavaScript:@"getSelection().toString()"]);
 }
 
-TEST(UIWKInteractionViewProtocol, UpdateSelectionWithExtentPoint)
+// FIXME: rdar://163667371 (REGRESSION(iOS26): TestWebKitAPI.UIWKInteractionViewProtocol.UpdateSelectionWithExtentPoint is a constant failure (301654))
+TEST(UIWKInteractionViewProtocol, DISABLED_UpdateSelectionWithExtentPoint)
 {
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 400, 400)]);
     [webView synchronouslyLoadHTMLString:@"<body contenteditable style='font-size: 20px;'>Hello world</body>"];

@@ -62,11 +62,11 @@ void TextTrackLoader::cueLoadTimerFired()
 {
     if (m_newCuesAvailable) {
         m_newCuesAvailable = false;
-        m_client->newCuesAvailable(*this);
+        protectedClient()->newCuesAvailable(*this);
     }
 
     if (m_state >= Finished)
-        m_client->cueLoadingCompleted(*this, m_state == Failed);
+        protectedClient()->cueLoadingCompleted(*this, m_state == Failed);
 }
 
 void TextTrackLoader::cancelLoad()
@@ -176,12 +176,12 @@ void TextTrackLoader::newCuesParsed()
 
 void TextTrackLoader::newRegionsParsed()
 {
-    m_client->newRegionsAvailable(*this);
+    protectedClient()->newRegionsAvailable(*this);
 }
 
 void TextTrackLoader::newStyleSheetsParsed()
 {
-    m_client->newStyleSheetsAvailable(*this);
+    protectedClient()->newStyleSheetsAvailable(*this);
 }
 
 void TextTrackLoader::fileFailedToParse()

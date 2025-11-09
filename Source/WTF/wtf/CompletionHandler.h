@@ -59,6 +59,20 @@ public:
     {
     }
 
+#if defined(__APPLE__)
+    // Always use C++ lambdas to create a WTF::CompletionHandler in Objective-C++.
+    // Always use Swift closures (implicitly as Objective-C blocks) to create a WTF::CompletionHandler in Swift.
+#ifndef __swift__
+    CompletionHandler(Out (^block)(In... args), ThreadLikeAssertion = CompletionHandlerCallThread::ConstructionThread) = delete;
+#else
+    CompletionHandler(Out (^block)(In... args), ThreadLikeAssertion callThread = CompletionHandlerCallThread::ConstructionThread)
+        : m_function(block)
+        , m_callThread(WTFMove(callThread))
+    {
+    }
+#endif
+#endif // defined(__APPLE__)
+
     CompletionHandler(CompletionHandler&&) = default;
     CompletionHandler& operator=(CompletionHandler&&) = default;
 

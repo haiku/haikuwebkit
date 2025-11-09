@@ -276,7 +276,7 @@ static RetainPtr<NSArray> mediaSelectionOptions(const Vector<MediaSelectionOptio
     auto webOptions = mediaSelectionOptions(options);
     [self setAudioTouchBarMediaSelectionOptions:webOptions.get()];
     if (selectedIndex < [webOptions count])
-        [self setCurrentAudioTouchBarMediaSelectionOption:[webOptions objectAtIndex:selectedIndex]];
+        [self setCurrentAudioTouchBarMediaSelectionOption:retainPtr([webOptions objectAtIndex:selectedIndex]).get()];
 }
 
 - (void)setLegibleMediaSelectionOptions:(const Vector<MediaSelectionOption>&)options withSelectedIndex:(NSUInteger)selectedIndex
@@ -284,7 +284,7 @@ static RetainPtr<NSArray> mediaSelectionOptions(const Vector<MediaSelectionOptio
     auto webOptions = mediaSelectionOptions(options);
     [self setLegibleTouchBarMediaSelectionOptions:webOptions.get()];
     if (selectedIndex < [webOptions count])
-        [self setCurrentLegibleTouchBarMediaSelectionOption:[webOptions objectAtIndex:selectedIndex]];
+        [self setCurrentLegibleTouchBarMediaSelectionOption:retainPtr([webOptions objectAtIndex:selectedIndex]).get()];
 }
 
 - (void)setAudioMediaSelectionIndex:(NSUInteger)selectedIndex

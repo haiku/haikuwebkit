@@ -121,10 +121,17 @@ void SpeechRecognitionServer::handleRequest(UniqueRef<WebCore::SpeechRecognition
 
         protectedThis->sendUpdate(update);
 
-        if (update.type() == WebCore::SpeechRecognitionUpdateType::Error)
-            protectedThis->checkedRecognizer()->abort();
-        else if (update.type() == WebCore::SpeechRecognitionUpdateType::End)
-            protectedThis->checkedRecognizer()->setInactive();
+        if (update.type() == WebCore::SpeechRecognitionUpdateType::Error) {
+            // Do this asynchronously to as synchronous object destruction trips CheckedPtrs.
+            callOnMainRunLoop([protectedThis] {
+                protectedThis->checkedRecognizer()->abort();
+            });
+        } else if (update.type() == WebCore::SpeechRecognitionUpdateType::End) {
+            // Do this asynchronously to as synchronous object destruction trips CheckedPtrs.
+            callOnMainRunLoop([protectedThis] {
+                protectedThis->checkedRecognizer()->setInactive();
+            });
+        }
     }, WTFMove(request));
 
 #if ENABLE(MEDIA_STREAM)

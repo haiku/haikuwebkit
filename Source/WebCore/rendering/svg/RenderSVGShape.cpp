@@ -206,15 +206,15 @@ void RenderSVGShape::strokeShape(const RenderStyle& style, GraphicsContext& cont
 
 void RenderSVGShape::fillStrokeMarkers(PaintInfo& childPaintInfo)
 {
-    for (auto type : RenderStyle::paintTypesForPaintOrder(style().paintOrder())) {
+    for (auto type : style().paintOrder()) {
         switch (type) {
-        case PaintType::Fill:
+        case Style::PaintType::Fill:
             fillShape(style(), childPaintInfo.context());
             break;
-        case PaintType::Stroke:
+        case Style::PaintType::Stroke:
             strokeShape(style(), childPaintInfo.context());
             break;
-        case PaintType::Markers:
+        case Style::PaintType::Markers:
             drawMarkers(childPaintInfo);
             break;
         }
@@ -390,7 +390,7 @@ FloatRect RenderSVGShape::calculateApproximateStrokeBoundingBox() const
 float RenderSVGShape::strokeWidth() const
 {
     SVGLengthContext lengthContext(protectedGraphicsElement().ptr());
-    auto strokeWidth = lengthContext.valueForLength(style().strokeWidth());
+    auto strokeWidth = lengthContext.valueForLength(style().strokeWidth(), Style::ZoomNeeded { });
     return std::isnan(strokeWidth) ? 0 : strokeWidth;
 }
 

@@ -109,14 +109,15 @@ bool ContentChangeObserver::isVisuallyHidden(const Node& node)
 
     auto fixedTop = style.logicalTop().tryFixed();
     auto fixedLeft = style.logicalLeft().tryFixed();
+    auto usedZoom = style.usedZoomForLength();
     // FIXME: This is trying to check if the element is outside of the viewport. This is incorrect for many reasons.
-    if (fixedLeft && fixedWidth && -fixedLeft->resolveZoom(Style::ZoomNeeded { }) >= fixedWidth->resolveZoom(Style::ZoomNeeded { }))
+    if (fixedLeft && fixedWidth && -fixedLeft->resolveZoom(usedZoom) >= fixedWidth->resolveZoom(usedZoom))
         return true;
-    if (fixedTop && fixedHeight && -fixedTop->resolveZoom(Style::ZoomNeeded { }) >= fixedHeight->resolveZoom(Style::ZoomNeeded { }))
+    if (fixedTop && fixedHeight && -fixedTop->resolveZoom(usedZoom) >= fixedHeight->resolveZoom(usedZoom))
         return true;
 
     // It's a common technique used to position content offscreen.
-    if (style.hasOutOfFlowPosition() && fixedLeft && fixedLeft->resolveZoom(Style::ZoomNeeded { }) <= -999)
+    if (style.hasOutOfFlowPosition() && fixedLeft && fixedLeft->resolveZoom(usedZoom) <= -999)
         return true;
 
     // FIXME: Check for other cases like zero height with overflow hidden.
@@ -146,10 +147,10 @@ bool ContentChangeObserver::isConsideredVisible(const Node& node)
 
     // 1px width or height content is not considered visible.
     auto& style = *node.renderStyle();
-
-    if (auto fixedWidth = style.logicalWidth().tryFixed(); fixedWidth && fixedWidth->resolveZoom(Style::ZoomNeeded { }) <= 1)
+    auto usedZoom = style.usedZoomForLength();
+    if (auto fixedWidth = style.logicalWidth().tryFixed(); fixedWidth && fixedWidth->resolveZoom(usedZoom) <= 1)
         return false;
-    if (auto fixedHeight = style.logicalHeight().tryFixed(); fixedHeight && fixedHeight->resolveZoom(Style::ZoomNeeded { }) <= 1)
+    if (auto fixedHeight = style.logicalHeight().tryFixed(); fixedHeight && fixedHeight->resolveZoom(usedZoom) <= 1)
         return false;
     return true;
 }

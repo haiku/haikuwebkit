@@ -1303,6 +1303,7 @@ fast/css/hover-affects-child.html [ Skip ]
 fast/css/hover-display-block-inline.html [ Skip ]
 fast/css/hover-display-block-none.html [ Skip ]
 fast/css/hover-display-block.html [ Skip ]
+fast/css/hover-invalidation-no-jit.html [ Skip ]
 fast/css/hover-update.html [ Skip ]
 fast/css/nested-layers-with-hover.html [ Skip ]
 fast/css/pseudo-element-selector-scrollbar-hover.html [ Skip ]
@@ -4545,6 +4546,10 @@ webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/shadow-dom-null
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/timingconditions.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/toJSON.html [ Skip ]
 
+# Timing out because single down/up events are not issued by iOS when testing:
+webkit.org/b/301105 imported/w3c/web-platform-tests/event-timing/gap-keydown-keyup.html [ Skip ]
+webkit.org/b/301105 imported/w3c/web-platform-tests/event-timing/gap-pointerdown-pointerup.html [ Skip ]
+
 webkit.org/b/299907 imported/w3c/web-platform-tests/largest-contentful-paint/transparent-text.html [ Failure ]
 webkit.org/b/301028 imported/w3c/web-platform-tests/largest-contentful-paint/web-font-styled-text-resize-swap-after-interaction.html [ Failure ]
 
@@ -4590,7 +4595,6 @@ imported/w3c/web-platform-tests/html/dom/elements/global-attributes/dir_auto-tex
 # https://bugs.webkit.org/show_bug.cgi?id=248545 — re-enable them here.
 fast/images/animations-resume-from-last-displayed-frame.html [ Pass ]
 fast/images/individual-animation-toggle.html [ Pass ]
-fast/images/page-wide-animation-toggle.html [ Pass ]
 fast/images/pagewide-play-pause-animateTransform-svg-animation.html [ Pass ]
 fast/images/pagewide-play-pause-offscreen-animations.html [ Pass ]
 
@@ -4605,6 +4609,7 @@ fast/images/hdr-image-layer-sdr-dynamic-range-limit.html [ Pass ]
 fast/images/hdr-pseudo-before-image.html [ Pass ]
 fast/images/hdr-svg-inline-image.html [ Pass ]
 fast/images/hdr-unaccelerated-basic-image.html [ Pass ]
+fast/images/hdr-unaccelerated-image-blur-filter.html [ Pass ]
 
 # Re-enabling tests fixed by DocumentManager in iOS16+ rdar://102159271
 fast/forms/ios/show-file-upload-context-menu-above-keyboard.html [ Pass ]
@@ -4807,6 +4812,8 @@ webkit.org/b/274628 imported/w3c/web-platform-tests/css/css-text/word-break/auto
 webkit.org/b/257698 imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-overflow-001.html [ ImageOnlyFailure ]
 webkit.org/b/257698 imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-001.html [ ImageOnlyFailure ]
 webkit.org/b/257698 imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-fallback-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-007.html [ ImageOnlyFailure ]
 
 # CSS Ruby 1px difference
 imported/w3c/web-platform-tests/css/css-ruby/ruby-text-combine-upright-002a.html [ ImageOnlyFailure ]
@@ -6336,8 +6343,6 @@ webkit.org/b/209869 crypto/subtle/rsa-indexeddb-non-exportable-private.html [ Pa
 webkit.org/b/210201 [ Debug ] editing/editability/empty-document-delete.html [ Pass Crash ]
 
 webkit.org/b/210219 [ Debug ] http/tests/IndexedDB/collect-IDB-objects.https.html [ Pass Crash ]
-
-webkit.org/b/209189 http/tests/IndexedDB/storage-limit.https.html [ Pass Failure Timeout ]
 
 webkit.org/b/211928 http/tests/resourceLoadStatistics/standalone-web-application-exempt-from-website-data-deletion.html [ Pass Timeout ]
 
@@ -8099,8 +8104,6 @@ webkit.org/b/296010 [ Debug ] fast/frames/frame-append-body-child-crash.html [ P
 
 webkit.org/b/295992 [ Release ] http/tests/geolocation/geolocation-watch-position-does-not-leak.https.html [ Pass Failure ]
 
-webkit.org/b/295993 http/tests/IndexedDB/storage-limit-1.https.html [ Pass Failure ]
-
 webkit.org/b/295989 [ Release ] http/tests/misc/embed-image-load-outlives-gc-without-crashing.html [ Pass Timeout ]
 
 webkit.org/b/296095 fast/forms/switch/click-animation-disabled.html [ Pass Timeout ]
@@ -8251,7 +8254,7 @@ webkit.org/b/298042 [ Release ] http/tests/security/clipboard/copy-paste-html-cr
 
 imported/w3c/web-platform-tests/css/css-break/block-in-inline-012.html [ ImageOnlyFailure ]
 
-webkit.org/b/298244 imported/w3c/web-platform-tests/css/css-scroll-anchoring/shadow-dom-subscroller.html [ Pass Failure ]
+webkit.org/b/300905 imported/w3c/web-platform-tests/css/css-scroll-anchoring/shadow-dom-subscroller.html [ Pass Failure ]
 
 webkit.org/b/298256 [ Debug ] fast/dom/document-all.html [ Timeout ]
 
@@ -8285,3 +8288,76 @@ webkit.org/b/299501 http/tests/site-isolation/focus-click-navigation-activeEleme
 webkit.org/b/300137 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/json-module/repeated-imports.any.sharedworker.html [ Pass Failure ]
 
 webkit.org/b/300946 http/tests/site-isolation/key-events.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301131 [ iOS 26 ] 6x tests (layout-tests) are constant text failures 
+fast/html/details-no-summary4.html [ Pass Failure ]
+fast/html/details-open-javascript.html [ Pass Failure ]
+fast/html/details-open2.html [ Pass Failure ]
+fast/html/details-open4.html [ Pass Failure ]
+fast/html/details-replace-summary-child.html [ Pass Failure ]
+fast/html/details-replace-text.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301133 [ iOS 26 ] editing/input/cocoa/writing-suggestions-textarea-multiple-lines.html is a constant text failure 
+editing/input/cocoa/writing-suggestions-textarea-multiple-lines.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301173 [ iOS 26 ] fast/text/international/hindi-spacing.html is a constant text failure
+fast/text/international/hindi-spacing.html [ Pass Failure ]
+
+webkit.org/b/301204 imported/w3c/web-platform-tests/css/css-flexbox/negative-overflow-002.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301221 [ iOS 26 ] 3x imported/w3c/web-platform-tests/html tests (layout-tests) are flaky text failures
+imported/w3c/web-platform-tests/html/user-activation/activation-trigger-pointerevent.html?touch [ Pass Failure Timeout ]
+imported/w3c/web-platform-tests/html/semantics/popovers/popover-invoking-attribute.html [ Pass Failure ]
+imported/w3c/web-platform-tests/html/semantics/popovers/popover-light-dismiss-command.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301243 [ iOS 26 ] imported/w3c/web-platform-tests/html/semantics/disabled-elements/disabled-event-dispatch.tentative.html is a flaky text failure
+imported/w3c/web-platform-tests/html/semantics/disabled-elements/disabled-event-dispatch.tentative.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301246 [ iOS 26 ] scrollingcoordinator/ios/fixed-scrolling-with-keyboard.html is a constant text failure
+scrollingcoordinator/ios/fixed-scrolling-with-keyboard.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301247 [ iOS 26 ] fast/forms/ios/inputmode-removing-none.html is a constant text failure
+fast/forms/ios/inputmode-removing-none.html [ Pass Failure ]
+
+# webkit.org/b/301449 [iOS26] 7x test in imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target are constantly failing
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interestevent-dispatch-shadow.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-anchor-event-dispatch.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-area-event-dispatch.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-basic-delays.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-button-event-dispatch.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-on-popover-behavior.tentative.html [ Failure ]
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-svg-a-event-dispatch.tentative.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301384 REGRESSION(301931@main): [macOS x86_64, iOS] two tests in imported/w3c/web-platform-tests/css/css-backgrounds are constant image only failure
+imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-6.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-7.html [ ImageOnlyFailure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301452 [ iOS 26 ] 2x imported/w3c/web-platform-tests/dom/ tests (layout-tests) are constant failures
+imported/w3c/web-platform-tests/dom/events/focus-event-document-move.html [ Failure ]
+imported/w3c/web-platform-tests/dom/events/pointer-event-document-move.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301454 [ iOS 26 ] 3x imported/w3c/web-platform-tests/dom/ tests (layout-tests) are constant failures
+imported/w3c/web-platform-tests/css/css-cascade/scope-hover.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301534 [ iOS 26 ] imported/w3c/web-platform-tests/dom/nodes/Document-createEvent.https.html is a constant text failure 
+imported/w3c/web-platform-tests/dom/nodes/Document-createEvent.https.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301524 [ iOS 26 ] 2x imported/w3c/web-platform-tests/editing/run tests (layout-tests) are constant text failures 
+imported/w3c/web-platform-tests/editing/run/multitest.html?9001-last [ Failure ]
+imported/w3c/web-platform-tests/editing/run/inserttext.html?2001-last [ Failure ]
+
+# webkit.org/b/301546 [iOS26] Two tests in imported/w3c/web-platform-tests/uievents/mouse are constant failures
+imported/w3c/web-platform-tests/uievents/mouse/mouseover-at-removing-mousedown-target.html?duration=16 [ Failure ]
+imported/w3c/web-platform-tests/uievents/mouse/mouseover-at-removing-mousedown-target.html?duration=42 [ Failure ]
+
+webkit.org/b/301548 imported/w3c/web-platform-tests/uievents/mouse/offset_and_page_after_dispatch.tentative.html [ Failure ]
+
+# webkit.org/b/301591 [ iOS 26 ] imported/w3c/web-platform-tests/editing/other/empty-elements-insertion.html is a constant text failure 
+imported/w3c/web-platform-tests/editing/other/empty-elements-insertion.html [ Failure ]
+
+# webkit.org/b/301602 [ iOS 26 ] imported/w3c/web-platform-tests/inert/inert-pseudo-element-hittest.html is a constant text failure
+imported/w3c/web-platform-tests/inert/inert-pseudo-element-hittest.html [ Failure ]
+
+webkit.org/b/301655 fast/images/page-wide-animation-toggle.html [ Pass Timeout ]
+
+webkit.org/b/301670 imported/w3c/web-platform-tests/css/css-anchor-position/popover-implicit-anchor.html [ Failure ]

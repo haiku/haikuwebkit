@@ -196,6 +196,8 @@ public:
     virtual bool isCALayerContext() const = 0;
 #endif
 
+    virtual bool knownToHaveFloatBasedBacking() const { return false; }
+
     virtual RenderingMode renderingMode() const { return RenderingMode::Unaccelerated; }
     WEBCORE_EXPORT RenderingMode renderingModeForCompatibleBuffer() const;
 

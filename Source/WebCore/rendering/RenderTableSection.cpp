@@ -82,7 +82,7 @@ static inline void updateLogicalHeightForCell(RenderTableSection::RowStruct& row
             if (auto percentageRowLogicalHeight = row.logicalHeight.tryPercentage(); !percentageRowLogicalHeight || percentageRowLogicalHeight->value < percentageLogicalHeight->value)
                 row.logicalHeight = logicalHeight;
         } else if (auto fixedLogicalHeight = logicalHeight.tryFixed()) {
-            if (auto fixedRowLogicalHeight = row.logicalHeight.tryFixed(); row.logicalHeight.isAuto() || (fixedRowLogicalHeight && fixedRowLogicalHeight->resolveZoom(Style::ZoomNeeded { }) < fixedLogicalHeight->resolveZoom(Style::ZoomNeeded { })))
+            if (auto fixedRowLogicalHeight = row.logicalHeight.tryFixed(); row.logicalHeight.isAuto() || (fixedRowLogicalHeight && fixedRowLogicalHeight->resolveZoom(cell->style().usedZoomForLength()) < fixedLogicalHeight->resolveZoom(cell->style().usedZoomForLength())))
                 row.logicalHeight = logicalHeight;
         }
     }
@@ -217,12 +217,12 @@ void RenderTableSection::addCell(RenderTableCell* cell, RenderTableRow* row)
     cell->setCol(table()->effColToCol(col));
 }
 
-static LayoutUnit resolveLogicalHeightForRow(const Style::PreferredSize& rowLogicalHeight)
+static LayoutUnit resolveLogicalHeightForRow(const Style::PreferredSize& rowLogicalHeight, Style::ZoomFactor usedZoom)
 {
     if (auto fixedRowLogicalHeight = rowLogicalHeight.tryFixed())
-        return Style::evaluate<LayoutUnit>(*fixedRowLogicalHeight, Style::ZoomNeeded { });
+        return Style::evaluate<LayoutUnit>(*fixedRowLogicalHeight, usedZoom);
     if (rowLogicalHeight.isCalculated())
-        return Style::evaluate<LayoutUnit>(rowLogicalHeight, 0, Style::ZoomNeeded { });
+        return Style::evaluate<LayoutUnit>(rowLogicalHeight, 0, usedZoom);
     return 0;
 }
 
@@ -252,7 +252,7 @@ LayoutUnit RenderTableSection::calcRowLogicalHeight()
 
         if (m_grid[r].logicalHeight.isSpecified()) {
         // Our base size is the biggest logical height from our cells' styles (excluding row spanning cells).
-            m_rowPos[r + 1] = std::max(m_rowPos[r] + resolveLogicalHeightForRow(m_grid[r].logicalHeight), 0_lu);
+            m_rowPos[r + 1] = std::max(m_rowPos[r] + resolveLogicalHeightForRow(m_grid[r].logicalHeight, m_grid[r].rowRenderer->style().usedZoomForLength()), 0_lu);
         } else {
         // Non-specified lengths are ignored because the row already accounts for the cells intrinsic logical height.
             m_rowPos[r + 1] = std::max(m_rowPos[r], 0_lu);

@@ -1,5 +1,0 @@
-
-
-FAIL checkbox assert_not_equals: Zoom should be applied got disallowed value 16
-FAIL radio assert_not_equals: Zoom should be applied got disallowed value 16
-

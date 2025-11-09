@@ -270,7 +270,7 @@ RefPtr<SharedBuffer> Editor::dataInRTFDFormat(NSAttributedString *string)
         return nullptr;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return SharedBuffer::create([string RTFDFromRange:NSMakeRange(0, length) documentAttributes:@{ }]);
+    return SharedBuffer::create(retainPtr([string RTFDFromRange:NSMakeRange(0, length) documentAttributes:@{ }]).get());
     END_BLOCK_OBJC_EXCEPTIONS
 
     return nullptr;
@@ -283,7 +283,7 @@ RefPtr<SharedBuffer> Editor::dataInRTFFormat(NSAttributedString *string)
         return nullptr;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return SharedBuffer::create([string RTFFromRange:NSMakeRange(0, length) documentAttributes:@{ }]);
+    return SharedBuffer::create(retainPtr([string RTFFromRange:NSMakeRange(0, length) documentAttributes:@{ }]).get());
     END_BLOCK_OBJC_EXCEPTIONS
 
     return nullptr;

@@ -34,7 +34,7 @@ namespace WebKit {
 
 class WebProcessProxy;
 
-class BackgroundProcessResponsivenessTimer : public CanMakeCheckedPtr<BackgroundProcessResponsivenessTimer> {
+class BackgroundProcessResponsivenessTimer : public CanMakeCheckedPtr<BackgroundProcessResponsivenessTimer, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(BackgroundProcessResponsivenessTimer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(BackgroundProcessResponsivenessTimer);
 public:

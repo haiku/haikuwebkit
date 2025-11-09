@@ -90,6 +90,7 @@
 #import "_WKResourceLoadStatisticsFirstPartyInternal.h"
 #import "_WKResourceLoadStatisticsThirdPartyInternal.h"
 #import "_WKSerializedNodeInternal.h"
+#import "_WKStringMatcherInternal.h"
 #import "_WKTargetedElementInfoInternal.h"
 #import "_WKTargetedElementRequestInternal.h"
 #import "_WKTextRunInternal.h"
@@ -532,6 +533,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     case Type::JSHandle:
         SUPPRESS_RETAINPTR_CTOR_ADOPT wrapper = [_WKJSHandle alloc];
+        break;
+
+    case Type::StringMatcher:
+        SUPPRESS_RETAINPTR_CTOR_ADOPT wrapper = [_WKStringMatcher alloc];
         break;
 
     default:

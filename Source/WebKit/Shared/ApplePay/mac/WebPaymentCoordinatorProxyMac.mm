@@ -140,7 +140,7 @@ void WebPaymentCoordinatorProxy::platformHidePaymentUI()
     [[NSNotificationCenter defaultCenter] removeObserver:m_sheetWindowWillCloseObserver.get()];
     m_sheetWindowWillCloseObserver = nullptr;
 
-    [[m_sheetWindow sheetParent] endSheet:m_sheetWindow.get()];
+    [retainPtr([m_sheetWindow sheetParent]) endSheet:m_sheetWindow.get()];
 
     if (RefPtr authorizationPresenter = m_authorizationPresenter)
         authorizationPresenter->dismiss();

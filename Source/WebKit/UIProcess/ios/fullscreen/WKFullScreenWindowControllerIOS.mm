@@ -614,7 +614,9 @@ static constexpr NSString *kPrefersFullScreenDimmingKey = @"WebKitPrefersFullScr
 
     _transform3D = window.transform3D;
     _windowClass = object_getClass(window);
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     _preferredDarkness = UIApplication.sharedApplication.mrui_activeStage.preferredDarkness;
+ALLOW_DEPRECATED_DECLARATIONS_END
 
     UIWindowScene *windowScene = window.windowScene;
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
@@ -780,7 +782,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif // QUICKLOOK_FULLSCREEN
 #endif
 
-    std::unique_ptr<WebKit::VideoPresentationManagerProxy::VideoInPictureInPictureDidChangeObserver> _pipObserver;
+    RefPtr<WebKit::VideoPresentationManagerProxy::VideoInPictureInPictureDidChangeObserver> _pipObserver;
     BOOL _shouldReturnToFullscreenFromPictureInPicture;
     BOOL _enterFullscreenNeedsExitPictureInPicture;
     BOOL _returnToFullscreenFromPictureInPicture;
@@ -932,7 +934,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
 #if PLATFORM(VISION)
     if (self.isFullScreen)
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         UIApplication.sharedApplication.mrui_activeStage.preferredDarkness = MRUIDarknessPreferenceUnspecified;
+ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 }
 
@@ -947,7 +951,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if (RefPtr bestVideo = videoPresentationManager->bestVideoForElementFullscreen())
             prefersAutoDimming = bestVideo->playbackSessionModel()->prefersAutoDimming();
     }
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     UIApplication.sharedApplication.mrui_activeStage.preferredDarkness = prefersAutoDimming ? MRUIDarknessPreferenceDark : MRUIDarknessPreferenceUnspecified;
+ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 }
 
@@ -1229,11 +1235,14 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
             if (auto* videoPresentationManager = self._videoPresentationManager) {
                 if (!_pipObserver) {
-                    _pipObserver = WTF::makeUnique<WebKit::VideoPresentationManagerProxy::VideoInPictureInPictureDidChangeObserver>([self] (bool inPiP) {
+                    _pipObserver = WebKit::VideoPresentationManagerProxy::VideoInPictureInPictureDidChangeObserver::create([weakSelf = WeakObjCPtr { self }] (bool inPiP) {
+                        RetainPtr strongSelf = weakSelf.get();
+                        if (!strongSelf)
+                            return;
                         if (inPiP)
-                            [self didEnterPictureInPicture];
+                            [strongSelf didEnterPictureInPicture];
                         else
-                            [self didExitPictureInPicture];
+                            [strongSelf didExitPictureInPicture];
                     });
                     videoPresentationManager->addVideoInPictureInPictureDidChangeObserver(*_pipObserver);
                 }
@@ -2005,6 +2014,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     inWindow.transform3D = CATransform3DTranslate(originalState.transform3D, 0, 0, kIncomingWindowZOffset);
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     MRUIStage *stage = UIApplication.sharedApplication.mrui_activeStage;
     MRUIDarknessPreference targetDarkness = enter ? (self.prefersSceneDimming ? MRUIDarknessPreferenceDark : originalState.preferredDarkness) : originalState.preferredDarkness;
 
@@ -2013,6 +2023,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             stage.preferredDarkness = targetDarkness;
         } completion:nil];
     }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
     [UIView animateWithDuration:kOutgoingWindowFadeDuration delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
         if (enter)
@@ -2094,9 +2105,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
     if (self.isFullScreen) {
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         MRUIDarknessPreference target = updatedPrefersSceneDimming ? MRUIDarknessPreferenceDark : (_parentWindowState ? [_parentWindowState preferredDarkness] : MRUIDarknessPreferenceUnspecified);
         MRUIStage *stage = UIApplication.sharedApplication.mrui_activeStage;
         stage.preferredDarkness = target;
+ALLOW_DEPRECATED_DECLARATIONS_END
     }
 }
 

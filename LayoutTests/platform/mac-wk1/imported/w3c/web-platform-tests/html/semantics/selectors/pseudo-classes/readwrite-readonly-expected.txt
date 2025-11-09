@@ -22,6 +22,8 @@ PASS The :read-only pseudo-class must not match elements that are editable
 PASS The :read-write pseudo-class must match elements that are editing hosts
 PASS The :read-only pseudo-class must not match elements that are editing hosts
 PASS The :read-write pseudo-class must match elements that are inside editing hosts, but not match inputs and textareas inside that aren't
+PASS The :read-only pseudo-class must match form-associated custom elements
+PASS The :read-write pseudo-class must match form-associated contenteditable custom elements
 
 
 
@@ -31,3 +33,4 @@ paragraph1.
 paragraph2.
 
 
+content content content content content

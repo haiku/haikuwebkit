@@ -422,6 +422,7 @@ inline bool isJSArray(JSValue v) { return v.isCell() && isJSArray(v.asCell()); }
 JS_EXPORT_PRIVATE JSArray* constructArray(JSGlobalObject*, Structure*, const ArgList& values);
 JS_EXPORT_PRIVATE JSArray* constructArray(JSGlobalObject*, Structure*, const JSValue* values, unsigned length);
 JS_EXPORT_PRIVATE JSArray* constructArrayNegativeIndexed(JSGlobalObject*, Structure*, const JSValue* values, unsigned length);
+JS_EXPORT_PRIVATE JSArray* constructArrayPair(JSGlobalObject*, JSValue first, JSValue second);
 
 ALWAYS_INLINE uint64_t toLength(JSGlobalObject*, JSObject*);
 

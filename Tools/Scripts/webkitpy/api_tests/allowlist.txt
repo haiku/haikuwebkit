@@ -324,7 +324,6 @@ TestWebKitAPI.IOSurfacePoolTest
 TestWebKitAPI.IOSurfaceTest
 TestWebKitAPI.IPAddressSpace
 TestWebKitAPI.IPAddressTests
-TestWebKitAPI.IPCTestingAPI
 TestWebKitAPI.ISOBox
 TestWebKitAPI.IconLoading
 TestWebKitAPI.ImageBufferTests

@@ -28,30 +28,19 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
-#include "Document.h"
-#include "LocalDOMWindow.h"
-#include "Page.h"
-#include "Performance.h"
 #include "RenderElement.h"
 #include "RenderLayer.h"
 #include "RenderLayerBacking.h"
 #include "RenderLayerModelObject.h"
 #include "RenderStyleConstants.h"
 #include "Styleable.h"
-#include <wtf/MonotonicTime.h>
 
 namespace WebCore {
 
-AcceleratedEffectStackUpdater::AcceleratedEffectStackUpdater(Document& document)
-{
-    auto now = MonotonicTime::now();
-    m_timeOrigin = now.secondsSinceEpoch();
-    if (RefPtr window = document.window())
-        m_timeOrigin -= Seconds::fromMilliseconds(window->performance().relativeTimeFromTimeOriginInReducedResolution(now));
-}
-
 void AcceleratedEffectStackUpdater::updateEffectStacks()
 {
+    m_timelines.clear();
+
     auto targetsPendingUpdate = std::exchange(m_targetsPendingUpdate, { });
     for (auto [element, pseudoElementIdentifier] : targetsPendingUpdate) {
         if (!element)
@@ -65,7 +54,7 @@ void AcceleratedEffectStackUpdater::updateEffectStacks()
 
         auto* renderLayer = renderer->layer();
         ASSERT(renderLayer && renderLayer->backing());
-        renderLayer->backing()->updateAcceleratedEffectsAndBaseValues();
+        renderLayer->backing()->updateAcceleratedEffectsAndBaseValues(m_timelines);
     }
 }
 

@@ -80,18 +80,48 @@ public:
     // a TypeCastTraits specialization. The isBar() function needed for this
     // specialization can be implemented here and overridden in the base class.
 
+    virtual bool isCSSNumericFactory() const { return false; }
+    virtual bool isDOMCSSPaintWorklet() const { return false; }
+    virtual bool isDOMCSSRegisterCustomProperty() const { return false; }
     virtual bool isDOMWindowCaches() const { return false; }
     virtual bool isDOMWindowIndexedDatabase() const { return false; }
+    virtual bool isDOMWindowTrustedTypes() const { return false; }
+    virtual bool isDeviceMotionController() const { return false; }
+    virtual bool isDeviceOrientationController() const { return false; }
+    virtual bool isDocumentMediaElement() const { return false; }
+    virtual bool isDocumentPictureInPicture() const { return false; }
+    virtual bool isDocumentStorageAccess() const { return false; }
+    virtual bool isGeolocationController() const { return false; }
+    virtual bool isHTMLVideoElementPictureInPicture() const { return false; }
+    virtual bool isInternalSettingsWrapper() const { return false; }
+    virtual bool isLocalDOMWindowMediaControls() const { return false; }
+    virtual bool isLocalDOMWindowSpeechSynthesis() const { return false; }
+    virtual bool isMediaKeySystemController() const { return false; }
+    virtual bool isNavigatorAudioSession() const { return false; }
+    virtual bool isNavigatorBeacon() const { return false; }
     virtual bool isNavigatorClipboard() const { return false; }
+    virtual bool isNavigatorContacts() const { return false; }
     virtual bool isNavigatorCookieConsent() const { return false; }
+    virtual bool isNavigatorCredentials() const { return false; }
     virtual bool isNavigatorGamepad() const { return false; }
+    virtual bool isNavigatorGeolocation() const { return false; }
+    virtual bool isNavigatorLoginStatus() const { return false; }
+    virtual bool isNavigatorMediaCapabilities() const { return false; }
+    virtual bool isNavigatorMediaDevices() const { return false; }
+    virtual bool isNavigatorMediaSession() const { return false; }
+    virtual bool isNavigatorPermissions() const { return false; }
+    virtual bool isNavigatorScreenWakeLock() const { return false; }
+    virtual bool isNavigatorUserActivation() const { return false; }
+    virtual bool isNavigatorWebDriver() const { return false; }
+    virtual bool isNotificationController() const { return false; }
+    virtual bool isServiceWorkerRegistrationBackgroundFetchAPI() const { return false; }
+    virtual bool isServiceWorkerRegistrationPushAPI() const { return false; }
     virtual bool isUserMediaController() const { return false; }
     virtual bool isWorkerGlobalScopeCaches() const { return false; }
-    virtual bool isLocalDOMWindowMediaControls() const { return false; }
-    virtual bool isDocumentMediaElement() const { return false; }
-    virtual bool isGeolocationController() const { return false; }
     virtual bool isWorkerGlobalScopeIndexedDatabase() const { return false; }
-    virtual bool isServiceWorkerRegistrationBackgroundFetchAPI() const { return false; }
+    virtual bool isWorkerGlobalScopeTrustedTypes() const { return false; }
+    virtual bool isWorkerNavigatorMediaCapabilities() const { return false; }
+    virtual bool isWorkerNavigatorPermissions() const { return false; }
 };
 
 template<typename T>

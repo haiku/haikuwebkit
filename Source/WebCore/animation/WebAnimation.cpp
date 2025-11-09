@@ -1645,6 +1645,7 @@ void WebAnimation::stop()
 {
     ActiveDOMObject::stop();
     removeAllEventListeners();
+    setEffectInternal(nullptr);
 }
 
 bool WebAnimation::virtualHasPendingActivity() const

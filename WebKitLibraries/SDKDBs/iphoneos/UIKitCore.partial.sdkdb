@@ -8615,7 +8615,6 @@
       {"access": "public", "name": "borderedProminentButtonConfiguration"},
       {"access": "public", "introduced": "26", "name": "glassButtonConfiguration"},
       {"access": "public", "introduced": "26", "name": "prominentGlassButtonConfiguration"},
-      {"access": "public", "name": "tintedGlassButtonConfiguration", "unavailable": true},
       {"access": "public", "introduced": "26", "name": "clearGlassButtonConfiguration"},
       {"access": "public", "introduced": "26", "name": "prominentClearGlassButtonConfiguration"},
       {"access": "public", "name": "new", "unavailable": true}
@@ -9606,6 +9605,16 @@
       "NSCopying"
      ],
      "super": "NSObject"
+    },
+    {
+     "access": "public",
+     "classMethods": [
+      {"access": "public", "introduced": "26.1", "name": "effectWithColor:"}
+     ],
+     "introduced": "11",
+     "linkage": "exported",
+     "name": "UIColorEffect",
+     "super": "UIVisualEffect"
     },
     {
      "access": "public",
@@ -13245,7 +13254,8 @@
       {"access": "public", "attr": [ "readonly" ], "getter": "frameOfPresentedViewInContainerView", "name": "frameOfPresentedViewInContainerView"},
       {"access": "public", "attr": [ "readonly" ], "getter": "shouldPresentInFullscreen", "name": "shouldPresentInFullscreen"},
       {"access": "public", "attr": [ "readonly" ], "getter": "shouldRemovePresentersView", "name": "shouldRemovePresentersView"},
-      {"access": "public", "getter": "overrideTraitCollection", "introduced": "8", "name": "overrideTraitCollection", "setter": "setOverrideTraitCollection:"}
+      {"access": "public", "getter": "overrideTraitCollection", "introduced": "8", "name": "overrideTraitCollection", "setter": "setOverrideTraitCollection:"},
+      {"access": "public", "getter": "backgroundEffect", "introduced": "26.1", "name": "backgroundEffect", "setter": "setBackgroundEffect:"}
      ],
      "protocols": [
       "UIAppearanceContainer",
@@ -14454,7 +14464,8 @@
      "linkage": "exported",
      "name": "UISheetPresentationControllerDetent",
      "properties": [
-      {"access": "public", "attr": [ "readonly" ], "getter": "identifier", "introduced": "16", "name": "identifier"}
+      {"access": "public", "attr": [ "readonly" ], "getter": "identifier", "introduced": "16", "name": "identifier"},
+      {"access": "public", "getter": "backgroundEffect", "introduced": "26.1", "name": "backgroundEffect", "setter": "setBackgroundEffect:"}
      ],
      "super": "NSObject"
     },
@@ -15167,7 +15178,8 @@
       {"access": "public", "attr": [ "readonly" ], "getter": "displayOrder", "name": "displayOrder"},
       {"access": "public", "getter": "managingNavigationController", "name": "managingNavigationController", "setter": "setManagingNavigationController:"},
       {"access": "public", "getter": "sidebarActions", "name": "sidebarActions", "setter": "setSidebarActions:"},
-      {"access": "public", "getter": "sidebarAppearance", "name": "sidebarAppearance", "setter": "setSidebarAppearance:"}
+      {"access": "public", "getter": "sidebarAppearance", "name": "sidebarAppearance", "setter": "setSidebarAppearance:"},
+      {"access": "public", "getter": "isSidebarDestination", "introduced": "26", "name": "isSidebarDestination", "setter": "setIsSidebarDestination:"}
      ],
      "super": "UITab"
     },
@@ -20138,7 +20150,7 @@
       {"access": "public", "getter": "writingToolsBehavior", "introduced": "18", "name": "writingToolsBehavior", "optional": true, "setter": "setWritingToolsBehavior:"},
       {"access": "public", "getter": "allowedWritingToolsResultOptions", "introduced": "18", "name": "allowedWritingToolsResultOptions", "optional": true, "setter": "setAllowedWritingToolsResultOptions:"},
       {"access": "public", "getter": "conversationContext", "introduced": "18.4", "name": "conversationContext", "optional": true, "setter": "setConversationContext:"},
-      {"access": "public", "getter": "allowsNumberPadPopover", "name": "allowsNumberPadPopover", "optional": true, "setter": "setAllowsNumberPadPopover:"}
+      {"access": "public", "getter": "allowsNumberPadPopover", "introduced": "26", "name": "allowsNumberPadPopover", "optional": true, "setter": "setAllowsNumberPadPopover:"}
      ],
      "protocols": [
       "NSObject"

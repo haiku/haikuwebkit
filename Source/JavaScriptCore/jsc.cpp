@@ -311,6 +311,7 @@ static JSC_DECLARE_HOST_FUNCTION(functionCreateBigInt32);
 static JSC_DECLARE_HOST_FUNCTION(functionUseBigInt32);
 static JSC_DECLARE_HOST_FUNCTION(functionIsBigInt32);
 static JSC_DECLARE_HOST_FUNCTION(functionIsHeapBigInt);
+static JSC_DECLARE_HOST_FUNCTION(functionIs8BitString);
 static JSC_DECLARE_HOST_FUNCTION(functionCreateNonRopeNonAtomString);
 
 static JSC_DECLARE_HOST_FUNCTION(functionPrintStdOut);
@@ -719,6 +720,7 @@ private:
         addFunction(vm, "isBigInt32"_s, functionIsBigInt32, 1);
         addFunction(vm, "isHeapBigInt"_s, functionIsHeapBigInt, 1);
 
+        addFunction(vm, "is8BitString"_s, functionIs8BitString, 1);
         addFunction(vm, "createNonRopeNonAtomString"_s, functionCreateNonRopeNonAtomString, 1);
 
         addFunction(vm, "dumpTypesForAllVariables"_s, functionDumpTypesForAllVariables , 0);
@@ -3085,6 +3087,14 @@ JSC_DEFINE_HOST_FUNCTION(functionIsHeapBigInt, (JSGlobalObject*, CallFrame* call
     return JSValue::encode(jsBoolean(callFrame->argument(0).isHeapBigInt()));
 }
 
+JSC_DEFINE_HOST_FUNCTION(functionIs8BitString, (JSGlobalObject*, CallFrame* callFrame))
+{
+    JSString* string = jsDynamicCast<JSString*>(callFrame->argument(0));
+    if (!string)
+        return JSValue::encode(jsBoolean(false));
+    return JSValue::encode(jsBoolean(string->is8Bit()));
+}
+
 JSC_DEFINE_HOST_FUNCTION(functionCreateNonRopeNonAtomString, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
     VM& vm = globalObject->vm();
@@ -4009,7 +4019,7 @@ static void runInteractive(GlobalObject* globalObject)
     fprintf(stderr, "  --destroy-vm               Destroy VM before exiting\n");
     fprintf(stderr, "  --can-block-is-false       Make main thread's Atomics.wait throw\n");
     fprintf(stderr, "  --singleStringSubArgList=<args>   Parse args as a space separated list of arguments. (For VSCode debuggers to pass arguments).\n");
-    fprintf(stderr, "  --wasm-debug[=port]        Enable WebAssembly debugging server (default port 1234)\n");
+    fprintf(stderr, "  --wasm-debugger[=port]        Enable WebAssembly debugging server (default port 1234)\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Files with a .mjs extension will always be evaluated as modules.\n");
     fprintf(stderr, "\n");
@@ -4294,7 +4304,7 @@ void CommandLine::parseArguments(int argc, char** argv, int start)
 
 #if ENABLE(WEBASSEMBLY)
         auto argView = StringView::fromLatin1(arg);
-        constexpr auto wasmDebugOption = "--wasm-debug"_s;
+        constexpr auto wasmDebugOption = "--wasm-debugger"_s;
         bool isBareOption = argView.length() == wasmDebugOption.length();
         if (argView.startsWith(wasmDebugOption) && (isBareOption || argView[wasmDebugOption.length()] == '=')) {
             JSC::Options::enableWasmDebugger() = true;
@@ -4305,7 +4315,7 @@ void CommandLine::parseArguments(int argc, char** argv, int start)
                 if (auto portOpt = WTF::parseInteger<uint16_t>(suffix, 10); portOpt && *portOpt)
                     JSC::Wasm::DebugServer::singleton().setPort(*portOpt);
                 else
-                    dataLogLn("ERROR: invalid port number for --wasm-debug=", suffix);
+                    dataLogLn("ERROR: invalid port number for --wasm-debugger=", suffix);
             }
             continue;
         }

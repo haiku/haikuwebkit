@@ -601,6 +601,7 @@ uppercase
 lowercase
 full-size-kana
 // full-width
+math-auto
 // none
 //
 // CSS_PROP_VISIBILITY:
@@ -1766,6 +1767,10 @@ selector
 font-format
 font-tech
 
+// math-depth
+auto-add
+// add
+
 // math-style
 // normal
 compact
@@ -1862,6 +1867,8 @@ most-inline-size
 flip-block
 flip-inline
 flip-start
+flip-x
+flip-y
 // position-area
 self-block-end
 self-block-end-start

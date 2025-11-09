@@ -115,7 +115,7 @@ void ArrayPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().forEachPublicName(), arrayPrototypeForEachCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().somePublicName(), arrayPrototypeSomeCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().indexOfPublicName(), arrayProtoFuncIndexOf, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public, ArrayIndexOfIntrinsic);
-    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION("lastIndexOf"_s, arrayProtoFuncLastIndexOf, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public);
+    JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION("lastIndexOf"_s, arrayProtoFuncLastIndexOf, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public, ArrayLastIndexOfIntrinsic);
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().filterPublicName(), arrayPrototypeFilterCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().flatPublicName(), arrayPrototypeFlatCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
     JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->builtinNames().flatMapPublicName(), arrayPrototypeFlatMapCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
@@ -1577,27 +1577,6 @@ static JSArray* concatAppendArray(JSGlobalObject* globalObject, VM& vm, JSArray*
     return JSArray::createWithButterfly(vm, nullptr, resultStructure, butterfly);
 }
 
-JSC_DEFINE_HOST_FUNCTION(arrayProtoPrivateFuncAppendMemcpy, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    ASSERT(callFrame->argumentCount() == 3);
-
-    VM& vm = globalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
-    JSArray* resultArray = jsCast<JSArray*>(callFrame->uncheckedArgument(0));
-    JSArray* otherArray = jsCast<JSArray*>(callFrame->uncheckedArgument(1));
-    JSValue startValue = callFrame->uncheckedArgument(2);
-    ASSERT(startValue.isUInt32AsAnyInt());
-    unsigned startIndex = startValue.asUInt32AsAnyInt();
-    bool success = resultArray->appendMemcpy(globalObject, vm, startIndex, otherArray);
-    EXCEPTION_ASSERT(!scope.exception() || !success);
-    if (success)
-        return JSValue::encode(jsUndefined());
-    RETURN_IF_EXCEPTION(scope, encodedJSValue());
-    scope.release();
-    moveArrayElements<ArrayFillMode::Empty>(globalObject, vm, resultArray, startIndex, otherArray, otherArray->length());
-    return JSValue::encode(jsUndefined());
-}
-
 JSC_DEFINE_HOST_FUNCTION(arrayProtoPrivateFuncFromFastFillWithUndefined, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
     VM& vm = globalObject->vm();
@@ -1612,27 +1591,6 @@ JSC_DEFINE_HOST_FUNCTION(arrayProtoPrivateFuncFromFastFillWithUndefined, (JSGlob
         return JSValue::encode(jsUndefined());
 
     JSArray* array = tryCloneArrayFromFast<ArrayFillMode::Undefined>(globalObject, arrayValue);
-    RETURN_IF_EXCEPTION(scope, { });
-    if (array)
-        return JSValue::encode(array);
-
-    return JSValue::encode(jsUndefined());
-}
-
-JSC_DEFINE_HOST_FUNCTION(arrayProtoPrivateFuncFromFastFillWithEmpty, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    VM& vm = globalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
-
-    JSValue constructor = callFrame->uncheckedArgument(0);
-    if (constructor != globalObject->arrayConstructor() && constructor.isObject()) [[unlikely]]
-        return JSValue::encode(jsUndefined());
-
-    JSValue arrayValue = callFrame->uncheckedArgument(1);
-    if (!isJSArray(arrayValue)) [[unlikely]]
-        return JSValue::encode(jsUndefined());
-
-    JSArray* array = tryCloneArrayFromFast<ArrayFillMode::Empty>(globalObject, arrayValue);
     RETURN_IF_EXCEPTION(scope, { });
     if (array)
         return JSValue::encode(array);

@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleGridAutoFlow.h>
 #include <WebCore/StyleGridTemplateAreas.h>
 #include <WebCore/StyleGridTemplateList.h>
 #include <WebCore/StyleGridTrackSizes.h>
@@ -50,7 +51,7 @@ public:
     void dumpDifferences(TextStream&, const StyleGridData&) const;
 #endif
 
-    unsigned gridAutoFlow() const { return m_gridAutoFlow; }
+    Style::GridAutoFlow gridAutoFlow() const { return m_gridAutoFlow; }
     const Style::GridTrackSizes& gridAutoColumns() const { return m_gridAutoColumns; }
     const Style::GridTrackSizes& gridAutoRows() const { return m_gridAutoRows; }
     const Style::GridTemplateAreas& gridTemplateAreas() { return m_gridTemplateAreas; }
@@ -60,7 +61,7 @@ public:
 private:
     friend class RenderStyle;
 
-    unsigned m_gridAutoFlow : GridAutoFlowBits;
+    Style::GridAutoFlow m_gridAutoFlow;
     Style::GridTrackSizes m_gridAutoColumns;
     Style::GridTrackSizes m_gridAutoRows;
     Style::GridTemplateAreas m_gridTemplateAreas;

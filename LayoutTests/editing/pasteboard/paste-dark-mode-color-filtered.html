@@ -59,7 +59,7 @@
     }
 
     // Transformed on paste
-    testCopyPaste("<span style=\"color: white; background-color: black\">Hello</span>", "<span style=\"caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);\">Hello</span>");
+    testCopyPaste("<span style=\"color: white; background-color: black\">Hello</span>", "<span style=\"background-color: rgb(255, 255, 255);\">Hello</span>");
     testCopyPaste("<span style=\"color: rgb(238, 238, 238); background-color: rgb(51, 51, 51)\">Hello</span>", "<span style=\"caret-color: rgb(21, 21, 21); color: rgb(21, 21, 21); background-color: rgb(255, 255, 255);\">Hello</span>");
     testCopyPaste("<span style=\"color: rgb(238, 238, 238); background-color: rgb(85, 85, 85)\">Hello</span>", "<span style=\"caret-color: rgb(21, 21, 21); color: rgb(21, 21, 21); background-color: rgb(213, 213, 213);\">Hello</span>");
     testCopyPaste("<span style=\"color: rgb(170, 170, 170)\">Hello</span><span style=\"color: rgb(153, 153, 153)\">Hello 2</span>", "<span style=\"color: rgb(106, 106, 106);\">Hello</span><span style=\"color: rgb(127, 128, 127);\">Hello 2</span>");
@@ -69,7 +69,7 @@
     testCopyPaste("<span style=\"color: color(display-p3 0.93 0.93 0.93); background-color: color(display-p3 0.2 0.2 0.2)\">Hello</span>", "<span style=\"caret-color: rgb(22, 22, 22); color: rgb(22, 22, 22); background-color: rgb(255, 255, 255);\">Hello</span>");
 
     // Transformed list items on paste
-    testCopyPaste("<li><span style=\"color: white; background-color: black\">Hello</span></li>", "<li>Item 1</li><li><span style=\"color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);\">Hello</span></li><li>Item 2</li>", true);
+    testCopyPaste("<li><span style=\"color: white; background-color: black\">Hello</span></li>", "<li>Item 1</li><li><span style=\"background-color: rgb(255, 255, 255);\">Hello</span></li><li>Item 2</li>", true);
     testCopyPaste("<li style=\"color: rgb(238, 238, 238); background-color: rgb(85, 85, 85)\">Hello 1</li><li>Hello 2</li>", "<li>Item 1</li><li style=\"color: rgb(21, 21, 21); background-color: rgb(213, 213, 213);\">Hello 1</li><li>Hello 2</li><li>Item 2</li>", true);
     testCopyPaste("<li>Hello 1</li><li style=\"color: rgb(153, 153, 153)\">Hello 2</li>", "<li>Item 1</li><li>Hello 1</li><li style=\"color: rgb(127, 128, 127);\">Hello 2</li><li>Item 2</li>", true);
 

@@ -41,6 +41,7 @@
 #import "WebPageProxy.h"
 #import "WebScriptMessageHandler.h"
 #import "WebUserContentControllerProxy.h"
+#import "_WKStringMatcherInternal.h"
 #import "_WKUserContentFilterInternal.h"
 #import "_WKUserContentWorldInternal.h"
 #import "_WKUserStyleSheetInternal.h"
@@ -154,6 +155,9 @@ public:
     void didPostMessage(WebKit::WebPageProxy& page, WebKit::FrameInfoData&& frameInfoData, API::ContentWorld& world, WebKit::JavaScriptEvaluationResult&& jsMessage, CompletionHandler<void(Expected<WebKit::JavaScriptEvaluationResult, String>&&)>&& replyHandler) final
     {
         @autoreleasepool {
+            if (!page.cocoaView())
+                return replyHandler(makeUnexpected("The WKWebView was deallocated before the message was delivered"_s));
+
             RetainPtr message = wrapper(API::ScriptMessage::create(jsMessage.toID(), page, API::FrameInfo::create(WTFMove(frameInfoData)), RetainPtr { m_name }, world));
 
             if (m_supportsAsyncReply) {
@@ -313,6 +317,16 @@ private:
     protectedUserContentControllerProxy(self)->removeAllUserStyleSheets(Ref { *contentWorld->_contentWorld });
 }
 
+- (void)_addStringMatcher:(_WKStringMatcher *)matcher contentWorld:(WKContentWorld *)world name:(NSString *)name
+{
+    protectedUserContentControllerProxy(self)->addStringMatcher(Ref { *matcher->_matcher }, Ref { *world->_contentWorld }, name);
+}
+
+- (void)_removeStringMatcherWithName:(NSString *)name contentWorld:(WKContentWorld *)world
+{
+    protectedUserContentControllerProxy(self)->removeStringMatcher(Ref { *world->_contentWorld }, name);
+}
+
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 - (void)_addScriptMessageHandler:(id <WKScriptMessageHandler>)scriptMessageHandler name:(NSString *)name userContentWorld:(_WKUserContentWorld *)userContentWorld
 {
@@ -323,7 +337,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 
 - (void)_addScriptMessageHandler:(id <WKScriptMessageHandler>)scriptMessageHandler name:(NSString *)name contentWorld:(WKContentWorld *)contentWorld
 {
-    [self _addScriptMessageHandler:scriptMessageHandler name:name userContentWorld:contentWorld._userContentWorld];
+    [self _addScriptMessageHandler:scriptMessageHandler name:name userContentWorld:retainPtr(contentWorld._userContentWorld).get()];
 }
 
 - (void)_removeScriptMessageHandlerForName:(NSString *)name userContentWorld:(_WKUserContentWorld *)userContentWorld

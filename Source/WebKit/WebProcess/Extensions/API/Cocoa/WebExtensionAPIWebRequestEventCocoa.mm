@@ -59,7 +59,7 @@ void WebExtensionAPIWebRequestEvent::enumerateListeners(WebExtensionTabIdentifie
         if (filter && ![filter matchesRequestForResourceOfType:resourceType URL:resourceURL.createNSURL().get() tabID:toWebAPI(tabIdentifier) windowID:toWebAPI(windowIdentifier)])
             continue;
 
-        function(*listener.callback, listener.extraInfo);
+        function(Ref { *listener.callback }, listener.extraInfo);
     }
 }
 

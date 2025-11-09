@@ -70,8 +70,8 @@ void unregisterAudioInputMuteChangeListener(WebCoreAudioInputMuteChangeListener*
 
 - (void)handleMuteStatusChangedNotification:(NSNotification*)notification
 {
-    NSNumber* newMuteState = [notification.userInfo valueForKey:AVAudioApplicationMuteStateKey];
-    WebCore::CoreAudioSharedUnit::singleton().handleMuteStatusChangedNotification(newMuteState.boolValue);
+    RetainPtr<NSNumber> newMuteState = [notification.userInfo valueForKey:AVAudioApplicationMuteStateKey];
+    WebCore::CoreAudioSharedUnit::singleton().handleMuteStatusChangedNotification(newMuteState.get().boolValue);
 }
 
 @end

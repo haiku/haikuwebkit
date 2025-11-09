@@ -87,7 +87,7 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
-    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const;
+    RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
 #endif
 
     void detachFromDrawingArea();

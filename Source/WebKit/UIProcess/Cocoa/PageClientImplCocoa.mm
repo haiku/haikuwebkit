@@ -221,7 +221,7 @@ void PageClientImplCocoa::removeDictationAlternatives(WebCore::DictationContext 
 
 Vector<String> PageClientImplCocoa::dictationAlternatives(WebCore::DictationContext dictationContext)
 {
-    return makeVector<String>(RetainPtr { platformDictationAlternatives(dictationContext) }.get().alternativeStrings);
+    return makeVector<String>(retainPtr(RetainPtr { platformDictationAlternatives(dictationContext) }.get().alternativeStrings).get());
 }
 
 PlatformTextAlternatives *PageClientImplCocoa::platformDictationAlternatives(WebCore::DictationContext dictationContext)

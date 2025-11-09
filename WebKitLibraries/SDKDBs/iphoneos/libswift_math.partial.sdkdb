@@ -157,7 +157,7 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$sSo13audit_token_taSQ6DarwinMc"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$sSo13audit_token_taSe6DarwinMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -256,7 +256,7 @@
     {"access": "public", "introduced": "7", "linkage": "exported", "name": "_$s6Darwin9nextafteryS2f_SftF"},
     {"access": "public", "introduced": "7", "linkage": "exported", "name": "_$s6Darwin9remainderyxx_xtSFRzlF"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -276,7 +276,7 @@
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$ss8DurationV6DarwinEyABSo7timevalVcfC"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$ss8DurationV6DarwinEyABSo8timespecVcfC"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -287,7 +287,7 @@
     {"access": "public", "introduced": "7", "linkage": "exported", "name": "_$s6Darwin7SIG_IGNyys5Int32VXCvg"},
     {"access": "public", "introduced": "7", "linkage": "exported", "name": "_$s6Darwin8SIG_HOLDyys5Int32VXCvg"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

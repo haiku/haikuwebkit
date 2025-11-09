@@ -613,6 +613,18 @@ static std::pair<CSSPropertyID, bool> applyTryTacticsToInset(CSSPropertyID prope
                 isFlipped = true;
             }
             break;
+        case PositionTryFallback::Tactic::FlipX:
+            if (BoxAxis::Horizontal == mapInsetPropertyToPhysicalAxis(propertyID, writingMode)) {
+                propertyID = getOppositeInset(propertyID);
+                isFlipped = true;
+            }
+            break;
+        case PositionTryFallback::Tactic::FlipY:
+            if (BoxAxis::Vertical == mapInsetPropertyToPhysicalAxis(propertyID, writingMode)) {
+                propertyID = getOppositeInset(propertyID);
+                isFlipped = true;
+            }
+            break;
         case PositionTryFallback::Tactic::FlipStart:
             propertyID = [&] {
                 switch (propertyID) {
@@ -1450,6 +1462,12 @@ CSSPropertyID AnchorPositionEvaluator::resolvePositionTryFallbackProperty(CSSPro
             break;
         case PositionTryFallback::Tactic::FlipBlock:
             propertyID = writingMode.isHorizontal() ? flipVertical(propertyID) : flipHorizontal(propertyID);
+            break;
+        case PositionTryFallback::Tactic::FlipX:
+            propertyID = flipHorizontal(propertyID);
+            break;
+        case PositionTryFallback::Tactic::FlipY:
+            propertyID = flipVertical(propertyID);
             break;
         case PositionTryFallback::Tactic::FlipStart:
             propertyID = flipStart(propertyID, writingMode);

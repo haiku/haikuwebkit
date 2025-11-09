@@ -41,8 +41,6 @@
 #include <WebCore/XRCanvasConfiguration.h>
 #include <wtf/Vector.h>
 
-using namespace PlatformXR;
-
 namespace WebKit {
 
 PlatformXRSystemProxy::PlatformXRSystemProxy(WebPage& page)
@@ -61,13 +59,13 @@ Ref<WebPage> PlatformXRSystemProxy::protectedPage() const
     return m_page.get();
 }
 
-void PlatformXRSystemProxy::enumerateImmersiveXRDevices(CompletionHandler<void(const Instance::DeviceList&)>&& completionHandler)
+void PlatformXRSystemProxy::enumerateImmersiveXRDevices(CompletionHandler<void(const PlatformXR::DeviceList&)>&& completionHandler)
 {
     protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::EnumerateImmersiveXRDevices(), [this, weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](Vector<XRDeviceInfo>&& devicesInfos) mutable {
         if (!weakThis)
             return;
 
-        PlatformXR::Instance::DeviceList devices;
+        PlatformXR::DeviceList devices;
         for (auto& deviceInfo : devicesInfos) {
             if (auto device = deviceByIdentifier(deviceInfo.identifier))
                 devices.append(*device);
@@ -113,13 +111,17 @@ void PlatformXRSystemProxy::requestFrame(std::optional<PlatformXR::RequestData>&
 std::optional<PlatformXR::LayerHandle> PlatformXRSystemProxy::createLayerProjection(uint32_t width, uint32_t height, bool alpha)
 {
 #if USE(OPENXR)
-    protectedPage()->send(Messages::PlatformXRSystem::CreateLayerProjection(width, height, alpha));
+    auto result = protectedPage()->sendSync(Messages::PlatformXRSystem::CreateLayerProjection(width, height, alpha));
+    if (!result.succeeded())
+        return std::nullopt;
+    auto [layerHandle] = result.takeReply();
+    return layerHandle;
 #else
     UNUSED_PARAM(width);
     UNUSED_PARAM(height);
     UNUSED_PARAM(alpha);
-#endif
     return PlatformXRCoordinator::defaultLayerHandle();
+#endif
 }
 
 #if USE(OPENXR)

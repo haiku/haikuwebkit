@@ -866,4 +866,16 @@ TEST(WTF, ExternalStringToSymbol)
     ASSERT_TRUE(freeFunctionCalled);
 }
 
+TEST(WTF, CreateSubstringSharingImpl)
+{
+    auto base = String::fromUTF8("日本語 Hello World This is a bit longer text than tested");
+    ASSERT_FALSE(base.impl()->is8Bit());
+    auto small8Bit = StringImpl::createSubstringSharingImpl(*base.impl(), 10, 2);
+    ASSERT_TRUE(equal(small8Bit.ptr(), "Wo"));
+    ASSERT_TRUE(small8Bit->is8Bit());
+    auto small16Bit = StringImpl::createSubstringSharingImpl(*base.impl(), 0, 3);
+    ASSERT_TRUE(!small16Bit->is8Bit());
+    ASSERT_TRUE(equal(small16Bit.ptr(), String::fromUTF8("日本語").impl()));
+}
+
 } // namespace TestWebKitAPI

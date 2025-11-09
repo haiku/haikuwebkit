@@ -77,7 +77,7 @@ private:
     RTCDataChannelIdentifier m_remoteIdentifier;
     Markable<RTCDataChannelIdentifier> m_localIdentifier;
 
-    RTCDataChannelHandlerClient* m_client { nullptr };
+    WeakPtr<RTCDataChannelHandlerClient> m_client;
     const Ref<RTCDataChannelRemoteHandlerConnection> m_connection;
 
     struct Message {

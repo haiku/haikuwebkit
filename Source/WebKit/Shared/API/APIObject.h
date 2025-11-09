@@ -173,6 +173,7 @@ public:
         ScriptMessage,
         SerializedNode,
         SpeechRecognitionPermissionCallback,
+        StringMatcher,
         TextChecker,
         TextRun,
         URLSchemeTask,

@@ -729,7 +729,7 @@ AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation
 #endif
 
     bool isYouTubeReplacement = false;
-    if (CheckedPtr renderer = node.renderer()) {
+    if (CheckedPtr renderer = nodeRendererIsValid(node) ? node.renderer() : nullptr) {
         if (!renderer->isYouTubeReplacement()) [[likely]]
             return getOrCreate(*renderer);
         isYouTubeReplacement = true;

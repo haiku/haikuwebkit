@@ -6,17 +6,17 @@ FAIL rect[focusable=true] should be focusable. assert_equals: expected Element n
 PASS a should not be focusable.
 PASS a[href] should be focusable.
 FAIL a[focusable=false] should not be focusable. assert_not_equals: got disallowed value Element node <a href="" focusable="false"></a>
-FAIL iframe should be focusable. assert_equals: expected Element node <iframe src="resources/blank.htm"></iframe> but got Element node <a href="" focusable="false"></a>
-FAIL audio[controls] should be focusable. assert_equals: expected Element node <audio controls="controls"></audio> but got Element node <a href="" focusable="false"></a>
-FAIL video[controls] should be focusable. assert_equals: expected Element node <video controls="controls"></video> but got Element node <a href="" focusable="false"></a>
-FAIL canvas[tabindex] should be focusable. assert_equals: expected Element node <canvas tabindex="0"></canvas> but got Element node <a href="" focusable="false"></a>
+PASS iframe should be focusable.
+PASS audio[controls] should be focusable.
+PASS video[controls] should be focusable.
+PASS canvas[tabindex] should be focusable.
 PASS circle[tabindex] should be focusable.
 PASS ellipse[tabindex] should be focusable.
 PASS foreignObject[tabindex] should be focusable.
 PASS g[tabindex] should be focusable.
 PASS image[tabindex] should be focusable.
 PASS line[tabindex] should be focusable.
-FAIL mesh[tabindex] should be focusable. assert_equals: expected Element node <mesh tabindex="0"></mesh> but got Element node <line tabindex="0"></line>
+PASS mesh[tabindex] should be focusable.
 PASS path[tabindex] should be focusable.
 PASS polygon[tabindex] should be focusable.
 PASS rect[tabindex] should be focusable.
@@ -25,21 +25,21 @@ PASS switch[tabindex] should be focusable.
 PASS text[tabindex] should be focusable.
 PASS textPath[tabindex] should be focusable.
 PASS tspan[tabindex] should be focusable.
-FAIL unknown[tabindex] should be focusable. assert_equals: expected Element node <unknown tabindex="0"></unknown> but got Element node <tspan tabindex="0"></tspan>
+PASS unknown[tabindex] should be focusable.
 PASS use[tabindex] should be focusable.
 PASS clipPath[tabindex] should not be focusable.
 PASS defs[tabindex] should not be focusable.
 PASS desc[tabindex] should not be focusable.
-PASS hatch[tabindex] should not be focusable.
-FAIL linearGradient[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <linearGradient tabindex="0"></linearGradient>
-FAIL marker[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <marker tabindex="0"></marker>
-FAIL mask[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <mask tabindex="0"></mask>
-PASS meshgradient[tabindex] should not be focusable.
+FAIL hatch[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <hatch tabindex="0"></hatch>
+PASS linearGradient[tabindex] should not be focusable.
+PASS marker[tabindex] should not be focusable.
+PASS mask[tabindex] should not be focusable.
+FAIL meshgradient[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <meshgradient tabindex="0"></meshgradient>
 PASS metadata[tabindex] should not be focusable.
-FAIL pattern[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <pattern tabindex="0"></pattern>
-FAIL radialGradient[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <radialGradient tabindex="0"></radialGradient>
+PASS pattern[tabindex] should not be focusable.
+PASS radialGradient[tabindex] should not be focusable.
 PASS script[tabindex] should not be focusable.
 PASS style[tabindex] should not be focusable.
 PASS title[tabindex] should not be focusable.
-FAIL symbol[tabindex] should not be focusable. assert_not_equals: got disallowed value Element node <symbol tabindex="0"></symbol>
+PASS symbol[tabindex] should not be focusable.
 

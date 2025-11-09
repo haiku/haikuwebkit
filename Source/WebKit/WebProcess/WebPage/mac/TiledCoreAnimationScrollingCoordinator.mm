@@ -48,11 +48,12 @@ void TiledCoreAnimationScrollingCoordinator::pageDestroyed()
 
 void TiledCoreAnimationScrollingCoordinator::hasNodeWithAnimatedScrollChanged(bool haveAnimatedScrollingNodes)
 {
-    if (!m_page)
+    RefPtr page = m_page.get();
+    if (!page)
         return;
 
     ScrollingCoordinatorMac::hasNodeWithAnimatedScrollChanged(haveAnimatedScrollingNodes);
-    m_page->setHasActiveAnimatedScrolls(haveAnimatedScrollingNodes);
+    page->setHasActiveAnimatedScrolls(haveAnimatedScrollingNodes);
 }
 
 } // namespace WebKit

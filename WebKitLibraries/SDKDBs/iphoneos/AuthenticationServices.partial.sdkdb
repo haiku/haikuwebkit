@@ -1055,6 +1055,7 @@
      "linkage": "exported",
      "name": "ASAuthorizationWebBrowserPublicKeyCredentialManager",
      "properties": [
+      {"access": "public", "attr": [ "readonly", "class" ], "getter": "isDeviceConfiguredForPasskeys", "introduced": "26.2", "name": "isDeviceConfiguredForPasskeys"},
       {"access": "public", "attr": [ "readonly" ], "getter": "authorizationStateForPlatformCredentials", "name": "authorizationStateForPlatformCredentials"}
      ],
      "super": "NSObject"
@@ -1872,7 +1873,7 @@
      "unavailable": true
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "ASAuthorizationAppleIDButtonStyle"},
     {"access": "public", "name": "ASAuthorizationAppleIDButtonType"},
@@ -1941,6 +1942,7 @@
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV2id10Foundation4DataVvg"},
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV2id10Foundation4DataVvpMV"},
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV2id10Foundation4DataVvs"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV2id5title8subtitle8favorite5scope11credentials4tagsAC10Foundation4DataV_S2SSgSbAA0C15CredentialScopeVSgSayAA0cN0OGSaySSGtcfC"},
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV2id7created12lastModified5title8subtitle8favorite5scope11credentials4tagsAC10Foundation4DataV_AM4DateVAQS2SSgSbAA0C15CredentialScopeVSgSayAA0cR0OGSaySSGtcfC"},
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV4fromACs7Decoder_p_tKcfC"},
     {"access": "public", "linkage": "exported", "name": "_$s22AuthenticationServices16ASImportableItemV4hash4intoys6HasherVz_tF"},
@@ -3294,6 +3296,8 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo51ASAuthorizationPlatformPublicKeyCredentialAssertionC22AuthenticationServicesE9largeBlobAC0acde5LargejF6OutputVSgvpMV"},
     {"access": "public", "linkage": "exported", "name": "_$sSo51ASAuthorizationWebBrowserPublicKeyCredentialManagerC22AuthenticationServicesE19platformCredentials15forRelyingPartySayAC0abc8PlatformdeF0VGSS_tYaF"},
     {"access": "public", "linkage": "exported", "name": "_$sSo51ASAuthorizationWebBrowserPublicKeyCredentialManagerC22AuthenticationServicesE19platformCredentials15forRelyingPartySayAC0abc8PlatformdeF0VGSS_tYaFTu"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$sSo51ASAuthorizationWebBrowserPublicKeyCredentialManagerC22AuthenticationServicesE29isDeviceConfiguredForPasskeysSbvgZ"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$sSo51ASAuthorizationWebBrowserPublicKeyCredentialManagerC22AuthenticationServicesE29isDeviceConfiguredForPasskeysSbvpZMV"},
     {"access": "public", "linkage": "exported", "name": "_$sSo54ASAuthorizationPlatformPublicKeyCredentialRegistrationC22AuthenticationServicesE3prfAC0acdE21PRFRegistrationOutputVSgvg"},
     {"access": "public", "linkage": "exported", "name": "_$sSo54ASAuthorizationPlatformPublicKeyCredentialRegistrationC22AuthenticationServicesE3prfAC0acdE21PRFRegistrationOutputVSgvpMV"},
     {"access": "public", "linkage": "exported", "name": "_$sSo54ASAuthorizationPlatformPublicKeyCredentialRegistrationC22AuthenticationServicesE9largeBlobAC0acde5LargejF6OutputVSgvg"},
@@ -3356,7 +3360,7 @@
      "super": "ASAuthorizationRequest"
     }
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

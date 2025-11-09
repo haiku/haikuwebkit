@@ -78,7 +78,7 @@ private:
 
     RetainPtr<WKSLinearMediaPlayer> m_player;
     RetainPtr<WKLinearMediaPlayerDelegate> m_playerDelegate;
-    WebCore::NowPlayingMetadataObserver m_nowPlayingMetadataObserver;
+    const Ref<WebCore::NowPlayingMetadataObserver> m_nowPlayingMetadataObserver;
     WebCore::VideoReceiverEndpoint m_videoReceiverEndpoint;
 };
 

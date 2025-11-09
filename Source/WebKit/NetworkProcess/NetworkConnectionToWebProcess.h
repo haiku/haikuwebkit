@@ -151,6 +151,14 @@ public:
     USING_CAN_MAKE_WEAKPTR(MessageReceiver);
     USING_CAN_MAKE_CHECKEDPTR(IPC::Connection::Client);
 
+    void setDidBeginCheckedPtrDeletion()
+    {
+#if ENABLE(APPLE_PAY_REMOTE_UI)
+        WebPaymentCoordinatorProxy::Client::setDidBeginCheckedPtrDeletion();
+#endif
+        IPC::Connection::Client::setDidBeginCheckedPtrDeletion();
+    }
+
     using RegistrableDomain = WebCore::RegistrableDomain;
 
     static Ref<NetworkConnectionToWebProcess> create(NetworkProcess&, WebCore::ProcessIdentifier, PAL::SessionID, NetworkProcessConnectionParameters&&, IPC::Connection::Identifier&&);

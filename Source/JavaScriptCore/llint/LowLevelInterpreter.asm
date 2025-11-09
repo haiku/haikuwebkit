@@ -472,26 +472,26 @@ end
 
 macro validateOpcodeConfig(scratchReg)
     if ARM64E
-        leap _g_opcodeConfigStorage, scratchReg
+        leap _os_script_config_storage, scratchReg
         loadp [scratchReg], scratchReg
     end
 end
 
 macro nextInstruction()
     loadb [PB, PC, 1], t0
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     jmp JSC::LLInt::OpcodeConfig::opcodeMap[t1, t0, PtrSize]
 end
 
 macro nextInstructionWide16()
     loadb OpcodeIDNarrowSize[PB, PC, 1], t0
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     jmp JSC::LLInt::OpcodeConfig::opcodeMapWide16[t1, t0, PtrSize]
 end
 
 macro nextInstructionWide32()
     loadb OpcodeIDNarrowSize[PB, PC, 1], t0
-    leap _g_opcodeConfigStorage, t1
+    leap _os_script_config_storage, t1
     jmp JSC::LLInt::OpcodeConfig::opcodeMapWide32[t1, t0, PtrSize]
 end
 
@@ -3040,10 +3040,6 @@ op(ipint_trampoline, macro ()
 end)
 
 op(ipint_entry, macro ()
-    crash()
-end)
-
-op(ipint_simd_entry, macro ()
     crash()
 end)
 

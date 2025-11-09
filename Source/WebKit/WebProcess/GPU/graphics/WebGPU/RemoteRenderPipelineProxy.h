@@ -61,6 +61,8 @@ private:
     RemoteRenderPipelineProxy& operator=(const RemoteRenderPipelineProxy&) = delete;
     RemoteRenderPipelineProxy& operator=(RemoteRenderPipelineProxy&&) = delete;
 
+    bool isRemoteRenderPipelineProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -79,5 +81,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteRenderPipelineProxy)
+    static bool isType(const WebCore::WebGPU::RenderPipeline& pipeline) { return pipeline.isRemoteRenderPipelineProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

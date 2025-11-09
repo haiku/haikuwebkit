@@ -61,7 +61,7 @@ private:
     SerializedNode serializeNode(CloningOperation) const override;
     void didMoveToNewDocument(Document& oldDocument, Document& newDocument) final;
 
-    mutable RefPtr<TemplateContentDocumentFragment> m_content;
+    const RefPtr<TemplateContentDocumentFragment> m_content;
     WeakPtr<ShadowRoot, WeakPtrImplWithEventTargetData> m_declarativeShadowRoot;
 };
 

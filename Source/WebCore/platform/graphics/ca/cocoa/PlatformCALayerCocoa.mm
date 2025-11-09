@@ -1025,7 +1025,7 @@ void PlatformCALayerCocoa::setVideoGravity(MediaPlayerVideoGravity gravity)
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     if ([m_layer respondsToSelector:@selector(setVideoGravity:)])
-        [(AVPlayerLayer *)m_layer setVideoGravity:convertMediaPlayerToAVLayerVideoGravity(gravity)];
+        [(AVPlayerLayer *)m_layer setVideoGravity:convertMediaPlayerToAVLayerVideoGravity(gravity).get()];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 

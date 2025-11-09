@@ -362,6 +362,11 @@ EditorClient* Editor::client() const
     return m_client.get();
 }
 
+CheckedPtr<EditorClient> Editor::checkedClient() const
+{
+    return client();
+}
+
 TextCheckerClient* Editor::textChecker() const
 {
     if (EditorClient* owner = client())

@@ -568,6 +568,7 @@ void WebsiteDataStore::fetchDomainsWithUserInteraction(CompletionHandler<void(co
         return;
 
     protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::FetchWebsitesWithUserInteractions(sessionID()), [this, protectedThis = RefPtr { *this }](HashSet<WebCore::RegistrableDomain>&& domains) {
+        domains.addAll(platformAdditionalDomainsWithUserInteraction());
         m_domainsWithUserInteractions = WTFMove(domains);
 
         for (auto& domain : std::exchange(m_pendingDomainsWithUserInteractions, { }))
@@ -577,6 +578,13 @@ void WebsiteDataStore::fetchDomainsWithUserInteraction(CompletionHandler<void(co
             completionHandler(*m_domainsWithUserInteractions);
     });
 }
+
+#if !PLATFORM(COCOA)
+HashSet<WebCore::RegistrableDomain> WebsiteDataStore::platformAdditionalDomainsWithUserInteraction() const
+{
+    return { };
+}
+#endif
 
 static WebsiteDataStore::ProcessAccessType computeNetworkProcessAccessTypeForDataFetch(OptionSet<WebsiteDataType> dataTypes, bool isNonPersistentStore)
 {
@@ -2934,6 +2942,11 @@ void WebsiteDataStore::setStorageAccessPermissionForTesting(bool granted, WebPag
 void WebsiteDataStore::clearStorageAccessForTesting(CompletionHandler<void()>&& completionHandler)
 {
     protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::ClearStorageAccessForTesting(m_sessionID), WTFMove(completionHandler));
+}
+
+void WebsiteDataStore::isStorageSuspendedForTesting(CompletionHandler<void(bool)>&& completionHandler) const
+{
+    protectedNetworkProcess()->isStorageSuspendedForTesting(m_sessionID, WTFMove(completionHandler));
 }
 
 } // namespace WebKit

@@ -123,19 +123,16 @@ public:
     void setStreamingAllowed(bool value) { m_streamingAllowed = value; }
     bool streamingAllowed() const { return m_streamingAllowed; }
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    void setCDMSession(LegacyCDMSession*);
-#endif
-
 protected:
-    MediaSourcePrivate(MediaSourcePrivateClient&, GuaranteedSerialFunctionDispatcher&);
+    MediaSourcePrivate(MediaSourcePrivateClient&, WorkQueue&);
     void ensureOnDispatcher(Function<void()>&&) const;
+    void ensureOnDispatcherSync(NOESCAPE Function<void()>&&) const;
 
     Vector<RefPtr<SourceBufferPrivate>> m_sourceBuffers;
     Vector<SourceBufferPrivate*> m_activeSourceBuffers;
     std::atomic<bool> m_isEnded { false }; // Set on MediaSource's dispatcher.
     std::atomic<MediaSourceReadyState> m_readyState; // Set on MediaSource's dispatcher.
-    const Ref<GuaranteedSerialFunctionDispatcher> m_dispatcher; // SerialFunctionDispatcher the SourceBufferPrivate/MediaSourcePrivate is running on.
+    const Ref<WorkQueue> m_dispatcher; // SerialFunctionDispatcher the SourceBufferPrivate/MediaSourcePrivate is running on.
 
 private:
     mutable Lock m_lock;

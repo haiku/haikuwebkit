@@ -31,6 +31,7 @@
 #import "APIUIClient.h"
 #import "CocoaImage.h"
 #import "CompletionHandlerCallChecker.h"
+#import "DefaultWebBrowserChecks.h"
 #import "DocumentEditingContext.h"
 #import "ImageAnalysisUtilities.h"
 #import "InsertTextOptions.h"
@@ -1147,10 +1148,13 @@ static WKDragSessionContext *ensureLocalDragSessionContext(id <UIDragSession> se
 #endif
 @end
 
-#define RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED() do { \
+#define ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED() do { \
     if (self.shouldUseAsyncInteractions) [[unlikely]] { \
         RELEASE_LOG_ERROR(TextInteraction, "Received unexpected call to %s", __PRETTY_FUNCTION__); \
-        RELEASE_ASSERT_NOT_REACHED(); \
+        if (WebKit::isFullWebBrowserOrRunningTest()) \
+            RELEASE_ASSERT_NOT_REACHED(); \
+        else \
+            ASSERT_NOT_REACHED(); \
     } \
 } while (0)
 
@@ -1524,6 +1528,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _selectionInteractionType = SelectionInteractionType::None;
 
+    _editingEndedByUser = YES;
+
     _hasSetUpInteractions = YES;
 }
 
@@ -1829,7 +1835,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)startAutoscroll:(CGPoint)pointInDocument
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     _page->startAutoscrollAtPosition(pointInDocument);
 }
@@ -1842,7 +1848,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)scrollSelectionToVisible:(BOOL)animated
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
     // Used to scroll selection on keyboard up; we already scroll to visible.
 }
 
@@ -2059,6 +2065,8 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
 
 - (void)endEditingAndUpdateFocusAppearanceWithReason:(EndEditingReason)reason
 {
+    _editingEndedByUser = YES;
+
     if (!self.webView._retainingActiveFocusedState) {
         // We need to complete the editing operation before we blur the element.
         [self _endEditing];
@@ -2962,7 +2970,7 @@ static inline WebCore::FloatSize tapHighlightBorderRadius(WebCore::FloatSize bor
 
 - (CGRect)_selectionClipRect
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return self.selectionClipRect;
 }
@@ -3505,7 +3513,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             if (![self ensurePositionInformationIsUpToDate:request])
                 return NO;
         }
-        return _positionInformation.nodeAtPositionHasDoubleClickHandler.value_or(false);
+        return _positionInformation.hitNodeOrWindowHasDoubleClickListener.value_or(false);
     }
 
     if (gestureRecognizer == _highlightLongPressGestureRecognizer
@@ -3772,7 +3780,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (NSArray *)webSelectionRects
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     if (!_page->editorState().hasPostLayoutAndVisualData() || _page->editorState().selectionIsNone)
         return nil;
@@ -4117,7 +4125,7 @@ static void cancelPotentialTapIfNecessary(WKContentView* contentView)
 
 - (void)clearSelection
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalClearSelection];
 }
@@ -4288,7 +4296,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_lookupForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self lookupForWebView:sender];
 }
@@ -4324,7 +4332,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_shareForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self shareForWebView:sender];
 }
@@ -4346,7 +4354,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_translateForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self translateForWebView:sender];
 }
@@ -4373,7 +4381,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_addShortcutForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self addShortcutForWebView:sender];
 }
@@ -4439,7 +4447,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_promptForReplaceForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self promptForReplaceForWebView:sender];
 }
@@ -4457,7 +4465,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
 
 - (void)_transliterateChineseForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self transliterateChineseForWebView:sender];
 }
@@ -5052,7 +5060,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_defineForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self lookupForWebView:sender];
 }
@@ -5530,7 +5538,7 @@ static void selectionChangedWithTouch(WKTextInteractionWrapper *interaction, con
 // The completion handler can pass nil if input does not match the actual text preceding the insertion point.
 - (void)requestAutocorrectionRectsForString:(NSString *)input withCompletionHandler:(void (^)(UIWKAutocorrectionRects *rectsForInput))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     if (!completionHandler) {
         [NSException raise:NSInvalidArgumentException format:@"Expected a nonnull completion handler in %s.", __PRETTY_FUNCTION__];
@@ -5910,7 +5918,7 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 
 - (BOOL)_selectionAtDocumentStart
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return self.selectionAtDocumentStart;
 }
@@ -5961,7 +5969,7 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 // The completion handler should pass the rect of the correction text after replacing the input text, or nil if the replacement could not be performed.
 - (void)applyAutocorrection:(NSString *)correction toString:(NSString *)input isCandidate:(BOOL)isCandidate withCompletionHandler:(void (^)(UIWKAutocorrectionRects *rectsForCorrection))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalReplaceText:input withText:correction isCandidate:isCandidate completion:[completionHandler = makeBlockPtr(completionHandler), view = retainPtr(self)](bool wasApplied) {
         completionHandler(wasApplied ? [WKAutocorrectionRects autocorrectionRectsWithFirstCGRect:view->_autocorrectionData.textFirstRect lastCGRect:view->_autocorrectionData.textLastRect] : nil);
@@ -6009,7 +6017,7 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 
 - (void)requestAutocorrectionContextWithCompletionHandler:(void (^)(UIWKAutocorrectionContext *autocorrectionContext))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     if (!completionHandler) {
         [NSException raise:NSInvalidArgumentException format:@"Expected a nonnull completion handler in %s.", __PRETTY_FUNCTION__];
@@ -6158,6 +6166,9 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 #endif
 
     [_textInteractionWrapper reset];
+
+    _keyboardDismissedInCurrentPresentationUpdate = NO;
+    _editingEndedByUser = YES;
 }
 
 - (void)_nextAccessoryTabForWebView:(id)sender
@@ -6334,14 +6345,14 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 
 - (BOOL)_allowAnimatedUpdateSelectionRectViews
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return NO;
 }
 
 - (void)beginSelectionChange
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalBeginSelectionChange];
 }
@@ -6368,7 +6379,7 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 
 - (void)endSelectionChange
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalEndSelectionChange];
 }
@@ -7193,7 +7204,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 - (UITextInputTraits *)textInputTraits
 {
     if (!self._requiresLegacyTextInputTraits)
-        RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+        ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     _legacyTextInputTraits = [_webView _textInputTraits];
     return _legacyTextInputTraits.get();
@@ -7398,7 +7409,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 // (i.e. selectionRange) has shipped as API.
 - (NSRange)selectionRange
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return NSMakeRange(NSNotFound, 0);
 }
@@ -7426,7 +7437,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 // Modify text without starting a new undo grouping.
 - (void)replaceRangeWithTextWithoutClosingTyping:(UITextRange *)range replacementText:(NSString *)text
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 }
 
 // Caret rect support.  Shouldn't be necessary, but firstRectForRange doesn't offer precisely
@@ -7537,7 +7548,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)modifierFlagsDidChangeFrom:(UIKeyModifierFlags)oldFlags to:(UIKeyModifierFlags)newFlags
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     auto dispatchSyntheticFlagsChangedEvents = [&] (UIKeyModifierFlags flags, bool keyDown) {
         if (flags & UIKeyModifierShift)
@@ -7623,7 +7634,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)handleKeyWebEvent:(::WebEvent *)theEvent
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalHandleKeyWebEvent:theEvent];
 }
@@ -7635,7 +7646,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)handleKeyWebEvent:(::WebEvent *)event withCompletionHandler:(void (^)(::WebEvent *theEvent, BOOL wasHandled))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalHandleKeyWebEvent:event withCompletionHandler:completionHandler];
 }
@@ -7904,56 +7915,56 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)_deleteByWord
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteWordBackward"];
 }
 
 - (void)_deleteForwardByWord
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteWordForward"];
 }
 
 - (void)_deleteToStartOfLine
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteToBeginningOfLine"];
 }
 
 - (void)_deleteToEndOfLine
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteToEndOfLine"];
 }
 
 - (void)_deleteForwardAndNotify:(BOOL)notify
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteForward"];
 }
 
 - (void)_deleteToEndOfParagraph
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:@"deleteToEndOfParagraph"];
 }
 
 - (void)_transpose
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self transposeCharactersAroundSelection];
 }
 
 - (UITextInputArrowKeyHistory *)_moveUp:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveUpAndModifySelection" : @"moveUp"];
     return nil;
@@ -7961,7 +7972,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveDown:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveDownAndModifySelection" : @"moveDown"];
     return nil;
@@ -7969,7 +7980,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveLeft:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending? @"moveLeftAndModifySelection" : @"moveLeft"];
     return nil;
@@ -7977,7 +7988,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveRight:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveRightAndModifySelection" : @"moveRight"];
     return nil;
@@ -7985,7 +7996,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToStartOfWord:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveWordBackwardAndModifySelection" : @"moveWordBackward"];
     return nil;
@@ -7993,7 +8004,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToStartOfParagraph:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveBackwardAndModifySelection" : @"moveBackward"];
     [self _executeEditCommand:extending ? @"moveToBeginningOfParagraphAndModifySelection" : @"moveToBeginningOfParagraph"];
@@ -8002,7 +8013,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToStartOfLine:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveToBeginningOfLineAndModifySelection" : @"moveToBeginningOfLine"];
     return nil;
@@ -8010,7 +8021,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToStartOfDocument:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveToBeginningOfDocumentAndModifySelection" : @"moveToBeginningOfDocument"];
     return nil;
@@ -8018,7 +8029,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToEndOfWord:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveWordForwardAndModifySelection" : @"moveWordForward"];
     return nil;
@@ -8026,7 +8037,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToEndOfParagraph:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveForwardAndModifySelection" : @"moveForward"];
     [self _executeEditCommand:extending ? @"moveToEndOfParagraphAndModifySelection" : @"moveToEndOfParagraph"];
@@ -8035,7 +8046,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToEndOfLine:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveToEndOfLineAndModifySelection" : @"moveToEndOfLine"];
     return nil;
@@ -8043,7 +8054,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (UITextInputArrowKeyHistory *)_moveToEndOfDocument:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _executeEditCommand:extending ? @"moveToEndOfDocumentAndModifySelection" : @"moveToEndOfDocument"];
     return nil;
@@ -8052,12 +8063,12 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 // Sets a buffer to make room for autocorrection views
 - (void)setBottomBufferHeight:(CGFloat)bottomBuffer
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 }
 
 - (UIView *)automaticallySelectedOverlay
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return [self unscaledView];
 }
@@ -8097,7 +8108,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (BOOL)hasContent
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return self._hasContent;
 }
@@ -8110,12 +8121,12 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)selectAll
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 }
 
 - (BOOL)hasSelection
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return NO;
 }
@@ -8153,7 +8164,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 
 - (void)takeTraitsFrom:(UITextInputTraits *)traits
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [[self textInputTraits] takeTraitsFrom:traits];
 }
@@ -8168,9 +8179,17 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
     [self reloadInputViews];
 }
 
-- (void)_hideKeyboard
+- (void)_hideKeyboard:(BOOL)editableChanged
 {
     SetForScope isHidingKeyboardScope { _isHidingKeyboard, YES };
+
+    if (editableChanged) {
+        _keyboardDismissedInCurrentPresentationUpdate = YES;
+        _page->callAfterNextPresentationUpdate([weakSelf = WeakObjCPtr<WKContentView>(self)] {
+            if (RetainPtr strongSelf = weakSelf.get())
+                strongSelf->_keyboardDismissedInCurrentPresentationUpdate = NO;
+        });
+    }
 
     self.inputDelegate = nil;
     [self setUpTextSelectionAssistant];
@@ -8369,6 +8388,9 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
             if (userIsInteracting)
                 return YES;
 
+            if (_keyboardDismissedInCurrentPresentationUpdate && !_editingEndedByUser)
+                return YES;
+
             if (self.isFirstResponder || _becomingFirstResponder) {
                 // When the software keyboard is being used to enter an url, only the focus activity state is changing.
                 // In this case, auto focus on the page being navigated to should be disabled, unless a hardware
@@ -8408,6 +8430,9 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
         [self startDeferringInputViewUpdates:WebKit::InputViewUpdateDeferralSource::ChangingFocusedElement];
         [self _elementDidBlur];
     }
+
+    if (shouldShowInputView)
+        _editingEndedByUser = NO;
 
     if (!shouldShowInputView || information.elementType == WebKit::InputType::None) {
         _page->setIsShowingInputViewForFocusedElement(false);
@@ -8639,7 +8664,7 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
     if (editableChanged)
         _seenHardwareKeyDownInNonEditableElement = NO;
 
-    [self _hideKeyboard];
+    [self _hideKeyboard:editableChanged];
 
 #if HAVE(PEPPER_UI_CORE)
     [self dismissAllInputViewControllers:YES];
@@ -9487,7 +9512,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 #if ENABLE(REVEAL)
 - (void)requestRVItemInSelectedRangeWithCompletionHandler:(void(^)(RVItem *item))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     _page->requestRVItemInCurrentSelectedRange([completionHandler = makeBlockPtr(completionHandler), weakSelf = WeakObjCPtr<WKContentView>(self)](const WebKit::RevealItem& item) {
         auto strongSelf = weakSelf.get();
@@ -9500,7 +9525,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
 - (void)prepareSelectionForContextMenuWithLocationInView:(CGPoint)locationInView completionHandler:(void(^)(BOOL shouldPresentMenu, RVItem *item))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self _internalSelectTextForContextMenuWithLocationInView:locationInView completionHandler:[completionHandler = makeBlockPtr(completionHandler)](BOOL shouldPresentMenu, const WebKit::RevealItem& item) {
         completionHandler(shouldPresentMenu, item.item());
@@ -9543,7 +9568,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
 - (BOOL)_shouldSuppressSelectionCommands
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     return self.shouldSuppressEditMenu;
 }
@@ -11889,7 +11914,7 @@ static WebKit::DocumentEditingContextRequest toWebRequest(id request)
 
 - (void)adjustSelectionWithDelta:(NSRange)deltaRange completionHandler:(void (^)(void))completionHandler
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     // UIKit is putting casted signed integers into NSRange. Cast them back to reveal any negative values.
     [self _internalAdjustSelectionWithOffset:static_cast<NSInteger>(deltaRange.location) lengthDelta:static_cast<NSInteger>(deltaRange.length) completionHandler:completionHandler];
@@ -12646,7 +12671,7 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
 
 - (void)_findSelectedForWebView:(id)sender
 {
-    RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
+    ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED();
 
     [self findSelectedForWebView:sender];
 }
@@ -14194,14 +14219,14 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
 
 - (UIView *)_selectionContainerViewAboveText
 {
-    // FIXME: Consider adding RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
+    // FIXME: Consider adding ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
     // once the changes in rdar://150645383 are in all relevant builds.
     return self._selectionContainerViewInternal;
 }
 
 - (UIView *)selectionContainerView
 {
-    // FIXME: Consider adding RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
+    // FIXME: Consider adding ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
     // once the changes in rdar://150645383 are in all relevant builds.
     return self._selectionContainerViewInternal;
 }
@@ -16034,10 +16059,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 + (WKAutocorrectionContext *)autocorrectionContextWithWebContext:(const WebKit::WebAutocorrectionContext&)webCorrection
 {
     auto correction = adoptNS([[WKAutocorrectionContext alloc] init]);
-    [correction setContextBeforeSelection:nsStringNilIfEmpty(webCorrection.contextBefore)];
-    [correction setSelectedText:nsStringNilIfEmpty(webCorrection.selectedText)];
-    [correction setMarkedText:nsStringNilIfEmpty(webCorrection.markedText)];
-    [correction setContextAfterSelection:nsStringNilIfEmpty(webCorrection.contextAfter)];
+    [correction setContextBeforeSelection:nsStringNilIfEmpty(webCorrection.contextBefore).get()];
+    [correction setSelectedText:nsStringNilIfEmpty(webCorrection.selectedText).get()];
+    [correction setMarkedText:nsStringNilIfEmpty(webCorrection.markedText).get()];
+    [correction setContextAfterSelection:nsStringNilIfEmpty(webCorrection.contextAfter).get()];
     [correction setRangeInMarkedText:webCorrection.selectedRangeInMarkedText];
     return correction.autorelease();
 }

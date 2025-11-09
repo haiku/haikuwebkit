@@ -534,6 +534,8 @@ namespace WebCore {
     macro(XRGPUProjectionLayerInit) \
     macro(XRGPUSubImage) \
     macro(XRHand) \
+    macro(XRHitTestResult) \
+    macro(XRHitTestSource) \
     macro(XRInputSource) \
     macro(XRInputSourceArray) \
     macro(XRInputSourceEvent) \
@@ -545,6 +547,7 @@ namespace WebCore {
     macro(XRPose) \
     macro(XRProjectionLayer) \
     macro(XRQuadLayer) \
+    macro(XRRay) \
     macro(XRReferenceSpace) \
     macro(XRReferenceSpaceEvent) \
     macro(XRRenderState) \
@@ -555,6 +558,9 @@ namespace WebCore {
     macro(XRSubImage) \
     macro(XRSystem) \
     macro(XRTest) \
+    macro(XRTransientInputHitTest) \
+    macro(XRTransientInputHitTestResult) \
+    macro(XRTransientInputHitTestSource) \
     macro(XRView) \
     macro(XRViewerPose) \
     macro(XRViewport) \

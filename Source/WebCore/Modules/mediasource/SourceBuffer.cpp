@@ -186,7 +186,7 @@ SourceBuffer::SourceBuffer(Ref<SourceBufferPrivate>&& sourceBufferPrivate, Media
     , m_private(WTFMove(sourceBufferPrivate))
     , m_client(SourceBufferClientImpl::create(*this))
     , m_source(&source)
-    , m_opaqueRootProvider([this] { return opaqueRoot(); })
+    , m_opaqueRootProvider(Observer<WebCoreOpaqueRoot()>::create([opaqueRoot = WebCoreOpaqueRoot { this }] { return opaqueRoot; }))
     , m_appendWindowStart(MediaTime::zeroTime())
     , m_appendWindowEnd(MediaTime::positiveInfiniteTime())
     , m_appendState(WaitingForSegment)

@@ -63,6 +63,7 @@
 #include <WebCore/StyleScrollSnapType.h>
 #include <WebCore/StyleScrollTimelines.h>
 #include <WebCore/StyleScrollbarGutter.h>
+#include <WebCore/StyleScrollbarWidth.h>
 #include <WebCore/StyleSelfAlignmentData.h>
 #include <WebCore/StyleShapeImageThreshold.h>
 #include <WebCore/StyleShapeMargin.h>
@@ -76,6 +77,7 @@
 #include <WebCore/StyleWebKitBoxReflect.h>
 #include <WebCore/StyleWebKitInitialLetter.h>
 #include <WebCore/StyleWebKitLineClamp.h>
+#include <WebCore/StyleWillChange.h>
 #include <WebCore/TouchAction.h>
 #include <memory>
 #include <wtf/DataRef.h>
@@ -100,7 +102,6 @@ class StyleGridItemData;
 class StyleMultiColData;
 class StyleResolver;
 class StyleTransformData;
-class WillChangeData;
 
 struct StyleMarqueeData;
 
@@ -162,7 +163,7 @@ public:
 
     CounterDirectiveMap counterDirectives;
 
-    RefPtr<WillChangeData> willChange; // Null indicates 'auto'.
+    Style::WillChange willChange;
 
     Style::WebkitBoxReflect boxReflect;
 
@@ -265,7 +266,7 @@ public:
 #if HAVE(CORE_MATERIAL)
     PREFERRED_TYPE(AppleVisualEffect) unsigned appleVisualEffect : 5;
 #endif
-    PREFERRED_TYPE(ScrollbarWidth) unsigned scrollbarWidth : 2;
+    PREFERRED_TYPE(Style::ScrollbarWidth) unsigned scrollbarWidth : 2;
     PREFERRED_TYPE(bool) unsigned usesAnchorFunctions : 1;
     PREFERRED_TYPE(EnumSet<BoxAxis>) unsigned anchorFunctionScrollCompensatedAxes : 2;
     PREFERRED_TYPE(bool) unsigned usesTreeCountingFunctions : 1;

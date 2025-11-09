@@ -261,7 +261,10 @@
       {"access": "public", "name": "kGUARD_EXC_SEC_ACCESS_FAULT"},
       {"access": "public", "name": "kGUARD_EXC_SEC_ASYNC_ACCESS_FAULT"},
       {"access": "public", "name": "kGUARD_EXC_SEC_COPY_DENIED"},
-      {"access": "public", "name": "kGUARD_EXC_SEC_SHARING_DENIED"}
+      {"access": "public", "name": "kGUARD_EXC_SEC_SHARING_DENIED"},
+      {"access": "public", "name": "kGUARD_EXC_MTE_SYNC_FAULT"},
+      {"access": "public", "name": "kGUARD_EXC_MTE_ASYNC_USER_FAULT"},
+      {"access": "public", "name": "kGUARD_EXC_MTE_ASYNC_KERN_FAULT"}
      ],
      "name": "virtual_memory_guard_exception_code_t"
     }
@@ -1123,6 +1126,7 @@
       {"access": "public", "name": "CRYPTEX1_AUTH_ENV_GENERIC_SUPPLEMENTAL"},
       {"access": "public", "name": "CRYPTEX_AUTH_PDI_NONCE"},
       {"access": "public", "name": "CRYPTEX_AUTH_MOBILE_ASSET"},
+      {"access": "public", "name": "CRYPTEX_AUTH_MOBILE_ASSET_WITH_CODE"},
       {"access": "public", "name": "CRYPTEX_AUTH_MAX"}
      ],
      "name": "cryptex_auth_type_t"
@@ -1165,6 +1169,7 @@
       {"access": "public", "name": "GRAFTDMG_CRYPTEX_PDI_NONCE"},
       {"access": "public", "name": "GRAFTDMG_CRYPTEX_EFFECTIVE_AP"},
       {"access": "public", "name": "GRAFTDMG_CRYPTEX_MOBILE_ASSET"},
+      {"access": "public", "name": "GRAFTDMG_CRYPTEX_MOBILE_ASSET_WITH_CODE"},
       {"access": "public", "name": "GRAFTDMG_CRYPTEX_MAX"}
      ],
      "name": "graftdmg_type_t"

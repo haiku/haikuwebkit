@@ -31,6 +31,7 @@
 #import "NativeImage.h"
 #import "WebCoreCALayerExtras.h"
 
+#import <QuartzCore/CALayer.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 
 namespace WebCore {

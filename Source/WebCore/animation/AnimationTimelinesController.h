@@ -71,8 +71,9 @@ public:
     bool animationsAreSuspended() const { return m_isSuspended; }
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    AcceleratedEffectStackUpdater* existingAcceleratedEffectStackUpdater() const { return m_acceleratedEffectStackUpdater.get(); }
     AcceleratedEffectStackUpdater& acceleratedEffectStackUpdater();
+    AcceleratedEffectStackUpdater* existingAcceleratedEffectStackUpdater() const { return m_acceleratedEffectStackUpdater.get(); }
+    void updateAcceleratedEffectStacks();
 #endif
 
 private:

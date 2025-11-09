@@ -257,8 +257,8 @@ void HIDGamepadProvider::deviceAdded(IOHIDDeviceRef device)
     }
 
     auto eventVisibility = m_initialGamepadsConnected ? EventMakesGamepadsVisible::Yes : EventMakesGamepadsVisible::No;
-    for (auto& client : m_clients)
-        client.platformGamepadConnected(*m_gamepadVector[index], eventVisibility);
+    for (Ref client : m_clients)
+        client->platformGamepadConnected(*m_gamepadVector[index], eventVisibility);
 
     // If we are working together with the GameController provider, let it know
     // that gamepads should now be visible.
@@ -281,8 +281,8 @@ void HIDGamepadProvider::deviceRemoved(IOHIDDeviceRef device)
 
     LOG(Gamepad, "HIDGamepadProvider device %p removed", device);
 
-    for (auto& client : m_clients)
-        client.platformGamepadDisconnected(*removedGamepad);
+    for (Ref client : m_clients)
+        client->platformGamepadDisconnected(*removedGamepad);
 }
 
 void HIDGamepadProvider::valuesChanged(IOHIDValueRef value)

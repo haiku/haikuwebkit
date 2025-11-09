@@ -1,5 +1,5 @@
 //@skip if $memoryLimited
-//@ runDefault("--useBBQJIT=0", "--useConcurrentJIT=0", "--thresholdForOMGOptimizeSoon=0", "--thresholdForOMGOptimizeAfterWarmUp=0")
+//@ runDefaultWasm("--useBBQJIT=0", "--useConcurrentJIT=0", "--thresholdForOMGOptimizeSoon=0", "--thresholdForOMGOptimizeAfterWarmUp=0")
 function instantiate(filename, importObject) {
   let bytes = read(filename, 'binary');
   return WebAssembly.instantiate(bytes, importObject);

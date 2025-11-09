@@ -239,6 +239,26 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     return *_preferences;
 }
 
+#if PLATFORM(VISION)
+- (void)setIsLookToScrollEnabled:(BOOL)enabled
+{
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+    protectedPreferences(self)->setOverlayRegionsEnabled(enabled);
+#else
+    UNUSED_PARAM(enabled);
+#endif
+}
+
+- (BOOL)isLookToScrollEnabled
+{
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+    return protectedPreferences(self)->overlayRegionsEnabled();
+#else
+    return NO;
+#endif
+}
+#endif
+
 @end
 
 @implementation WKPreferences (WKPrivate)
@@ -1933,9 +1953,5 @@ static WebCore::EditableLinkBehavior toEditableLinkBehavior(_WKEditableLinkBehav
 {
     WebKit::WebPreferences::forceSiteIsolationAlwaysOnForTesting();
 }
-
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WKPreferencesAdditions.mm>)
-#import <WebKitAdditions/WKPreferencesAdditions.mm>
-#endif
 
 @end

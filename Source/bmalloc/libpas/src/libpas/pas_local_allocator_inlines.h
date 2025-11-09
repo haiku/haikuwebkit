@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Apple Inc. All rights reserved.
+ * Copyright (c) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,8 @@
 #include "pas_thread_local_cache.h"
 #include "pas_thread_local_cache_node.h"
 #include "pas_zero_memory.h"
+
+#if LIBPAS_ENABLED
 
 PAS_BEGIN_EXTERN_C;
 
@@ -1887,5 +1889,5 @@ pas_local_allocator_try_allocate(pas_local_allocator* allocator,
 
 PAS_END_EXTERN_C;
 
+#endif /* LIBPAS_ENABLED */
 #endif /* PAS_LOCAL_ALLOCATOR_INLINES_H */
-

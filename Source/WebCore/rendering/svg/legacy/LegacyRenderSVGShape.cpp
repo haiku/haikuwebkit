@@ -249,15 +249,15 @@ void LegacyRenderSVGShape::strokeShape(const RenderStyle& style, GraphicsContext
 
 void LegacyRenderSVGShape::fillStrokeMarkers(PaintInfo& childPaintInfo)
 {
-    for (auto type : RenderStyle::paintTypesForPaintOrder(style().paintOrder())) {
+    for (auto type : style().paintOrder()) {
         switch (type) {
-        case PaintType::Fill:
+        case Style::PaintType::Fill:
             fillShape(style(), childPaintInfo.context());
             break;
-        case PaintType::Stroke:
+        case Style::PaintType::Stroke:
             strokeShape(style(), childPaintInfo.context());
             break;
-        case PaintType::Markers:
+        case Style::PaintType::Markers:
             drawMarkers(childPaintInfo);
             break;
         }
@@ -453,7 +453,7 @@ float LegacyRenderSVGShape::strokeWidth() const
 {
     Ref graphicsElement = this->graphicsElement();
     SVGLengthContext lengthContext(graphicsElement.ptr());
-    auto strokeWidth = lengthContext.valueForLength(style().strokeWidth());
+    auto strokeWidth = lengthContext.valueForLength(style().strokeWidth(), Style::ZoomNeeded { });
     return std::isnan(strokeWidth) ? 0 : strokeWidth;
 }
 

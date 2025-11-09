@@ -295,7 +295,7 @@ void HTMLButtonElement::defaultEventHandler(Event& event)
             return;
         }
 
-        handlePopoverTargetAction(event.target());
+        handlePopoverTargetAction(event.protectedTarget().get());
     }
 
     if (RefPtr keyboardEvent = dynamicDowncast<KeyboardEvent>(event)) {

@@ -34,6 +34,7 @@ class WebKitTableOfContents {
 
     public static function hasIndex() {
         $toc = get_post_meta( get_the_ID(), 'toc', true );
+        if (!is_array($toc)) return false;
         array_walk($toc, array('WebKitTableOfContents', 'filterIndex'));
         return ( ! empty(self::$toc) && count(self::$toc) > 2 );
     }

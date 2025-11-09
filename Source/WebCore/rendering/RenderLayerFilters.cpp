@@ -147,6 +147,8 @@ GraphicsContext* RenderLayerFilters::beginFilterEffect(RenderElement& renderer, 
     auto expandedDirtyRect = dirtyRect;
     auto targetBoundingBox = intersection(filterBoxRect, dirtyRect);
 
+    auto preferredFilterRenderingModes = renderer.page().preferredFilterRenderingModes(context);
+
     auto outsets = calculateOutsets(renderer, targetBoundingBox);
     if (!outsets.isZero()) {
         LayoutBoxExtent flippedOutsets { outsets.bottom(), outsets.left(), outsets.top(), outsets.right() };
@@ -163,10 +165,10 @@ GraphicsContext* RenderLayerFilters::beginFilterEffect(RenderElement& renderer, 
     if (targetBoundingBox.isEmpty())
         return nullptr;
 
-    if (!m_filter || m_targetBoundingBox != targetBoundingBox) {
+    if (!m_filter || m_targetBoundingBox != targetBoundingBox || m_preferredFilterRenderingModes != preferredFilterRenderingModes) {
         m_targetBoundingBox = targetBoundingBox;
         // FIXME: This rebuilds the entire effects chain even if the filter style didn't change.
-        m_filter = CSSFilterRenderer::create(renderer, renderer.style().filter(), m_preferredFilterRenderingModes, m_filterScale, m_targetBoundingBox, context);
+        m_filter = CSSFilterRenderer::create(renderer, renderer.style().filter(), preferredFilterRenderingModes, m_filterScale, m_targetBoundingBox, context);
     }
 
     if (!m_filter)
@@ -186,8 +188,9 @@ GraphicsContext* RenderLayerFilters::beginFilterEffect(RenderElement& renderer, 
 
     // For CSSFilterRenderer, sourceImageRect = filterRegion.
     bool hasUpdatedBackingStore = false;
-    if (m_filterRegion != filterRegion) {
+    if (m_filterRegion != filterRegion || m_preferredFilterRenderingModes != preferredFilterRenderingModes) {
         m_filterRegion = filterRegion;
+        m_preferredFilterRenderingModes = preferredFilterRenderingModes;
         hasUpdatedBackingStore = true;
     }
 

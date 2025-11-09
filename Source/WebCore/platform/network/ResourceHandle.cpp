@@ -189,6 +189,11 @@ ResourceRequest& ResourceHandle::firstRequest()
     return d->m_firstRequest;
 }
 
+const ResourceRequest& ResourceHandle::firstRequest() const
+{
+    return d->m_firstRequest;
+}
+
 NetworkingContext* ResourceHandle::context() const
 {
     return d->m_context.get();

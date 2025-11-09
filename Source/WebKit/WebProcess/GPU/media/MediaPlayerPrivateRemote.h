@@ -113,7 +113,6 @@ public:
     WebCore::MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier() const { return m_remoteEngineIdentifier; }
     std::optional<WebCore::MediaPlayerIdentifier> identifier() const final { return m_id; }
     IPC::Connection& connection() const { return protectedManager()->gpuProcessConnection().connection(); }
-    // FIXME: <rdar://152831358> We only need protectedConnection() for MediaPlayerPrivateRemoteCocoa.mm which is suspect.
     Ref<IPC::Connection> protectedConnection() const { return protectedManager()->gpuProcessConnection().connection(); }
     RefPtr<WebCore::MediaPlayer> player() const { return m_player.get(); }
 

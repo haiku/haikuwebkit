@@ -32,9 +32,42 @@
       "value": "drop-shadow(rgb(0, 0, 0) 5px 5px 5px)",
       "otherValues": ["drop-shadow(rgb(0, 0, 0) 10px 10px 10px)"]
     },
+    "height": {
+      "value": "9x",
+      "otherValues": ["18px"]
+    },
+    "inset": {
+      "value": "2px 4px 6px 8px",
+      "otherValues": ["-20px 40px 60px -80px"],
+      "requiredProperties": { "position": "absolute" }
+    },
     "line-height" : {
       "value": "7px",
       "otherValues": ["13px"]
+    },
+    "margin" : {
+      "value": "-10px 20px 30px -40px",
+      "otherValues": ["-20px 40px 60px -80px"]
+    },
+    "max-height" : {
+      "value": "9px",
+      "otherValues": ["18px"]
+    },
+    "max-width" : {
+      "value": "9px",
+      "otherValues": ["18px"]
+    },
+    "min-height" : {
+      "value": "9px",
+      "otherValues": ["18px"]
+    },
+    "min-width" : {
+      "value": "9px",
+      "otherValues": ["18px"]
+    },
+    "padding": {
+      "value": "10px 20px 30px 40px",
+      "otherValues": ["20px 40px 60px 80px"]
     },
     "text-decoration-thickness": {
       "value": "2px",
@@ -52,6 +85,11 @@
       "value": "2px",
       "otherValues": ["4px"]
     },
+    "width": {
+      "value": "9px",
+      "otherValues": ["19px"]
+    },
+
   };
 
   for (const [property, {value, otherValues, requiredProperties}] of Object.entries(properties)) {

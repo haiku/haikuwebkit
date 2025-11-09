@@ -42,11 +42,6 @@ NavigatorCredentials::NavigatorCredentials() = default;
 
 NavigatorCredentials::~NavigatorCredentials() = default;
 
-ASCIILiteral NavigatorCredentials::supplementName()
-{
-    return "NavigatorCredentials"_s;
-}
-
 CredentialsContainer* NavigatorCredentials::credentials(WeakPtr<Document, WeakPtrImplWithEventTargetData>&& document)
 {
     if (!m_credentialsContainer)
@@ -64,7 +59,7 @@ CredentialsContainer* NavigatorCredentials::credentials(Navigator& navigator)
 
 NavigatorCredentials* NavigatorCredentials::from(Navigator* navigator)
 {
-    NavigatorCredentials* supplement = static_cast<NavigatorCredentials*>(Supplement<Navigator>::from(navigator, supplementName()));
+    NavigatorCredentials* supplement = downcast<NavigatorCredentials>(Supplement<Navigator>::from(navigator, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorCredentials>();
         supplement = newSupplement.get();

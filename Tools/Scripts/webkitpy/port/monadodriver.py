@@ -59,7 +59,6 @@ class MonadoDriver(Driver):
 
     def _setup_environ_for_test(self):
         driver_environment = super(MonadoDriver, self)._setup_environ_for_test()
-        driver_environment['WITH_OPENXR_RUNTIME'] = 'y'
         driver_environment['XRT_COMPOSITOR_NULL'] = 'TRUE'
         driver_environment['XRT_NO_STDIN'] = 'TRUE'
         driver_environment['XR_RUNTIME_JSON'] = self._get_runtime_path(driver_environment)

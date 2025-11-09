@@ -47,8 +47,6 @@ class FontSelectionValue;
 class RenderStyle;
 class StyleImage;
 class StyleResolver;
-class TextAutospace;
-class TextSpacingTrim;
 
 namespace CSSCalc {
 struct RandomCachingKey;
@@ -69,6 +67,8 @@ struct FontVariantNumeric;
 struct FontVariationSettings;
 struct FontWeight;
 struct FontWidth;
+struct TextAutospace;
+struct TextSpacingTrim;
 
 void maybeUpdateFontForLetterSpacingOrWordSpacing(BuilderState&, CSSValue&);
 

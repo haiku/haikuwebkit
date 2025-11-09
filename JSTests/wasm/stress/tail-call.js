@@ -1,4 +1,4 @@
-//@ requireOptions("--useWasmTailCalls=true", "--maximumWasmCalleeSizeForInlining=0")
+//@ requireOptions("--useWasmTailCalls=true", "--wasmInliningMaximumWasmCalleeSize=0")
 import * as assert from "../assert.js";
 import Builder from "../Builder.js";
 

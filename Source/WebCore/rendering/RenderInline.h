@@ -144,8 +144,6 @@ private:
 
     void imageChanged(WrappedImagePtr, const IntRect* = 0) final;
 
-    inline bool willChangeCreatesStackingContext() const;
-
     // All of the line boxes created for this svg inline.
     RenderLineBoxList m_legacyLineBoxes;
 };

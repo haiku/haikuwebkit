@@ -28,6 +28,7 @@
 #if USE(AUDIO_SESSION)
 
 #include <memory>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/Noncopyable.h>
@@ -42,14 +43,12 @@
 namespace WebCore {
 class AudioSessionInterruptionObserver;
 class AudioSessionRoutingArbitrationClient;
-class AudioSessionConfigurationChangeObserver;
 }
 
 namespace WTF {
 template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
 template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::AudioSessionInterruptionObserver> : std::true_type { };
 template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::AudioSessionRoutingArbitrationClient> : std::true_type { };
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::AudioSessionConfigurationChangeObserver> : std::true_type { };
 }
 
 namespace WTF {
@@ -95,7 +94,7 @@ class AudioSession;
 class AudioSessionRoutingArbitrationClient;
 class AudioSessionInterruptionObserver;
 
-class AudioSessionConfigurationChangeObserver : public CanMakeWeakPtr<AudioSessionConfigurationChangeObserver> {
+class AudioSessionConfigurationChangeObserver : public AbstractRefCountedAndCanMakeWeakPtr<AudioSessionConfigurationChangeObserver> {
 public:
     virtual ~AudioSessionConfigurationChangeObserver() = default;
 

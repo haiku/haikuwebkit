@@ -131,8 +131,8 @@
     if (!_complete && !_expectedContentSize)
         return NO;
 
-    if (auto dataRequest = request.dataRequest) {
-        if (dataRequest.requestedOffset > static_cast<long long>(_data.get().length))
+    if (RetainPtr<AVAssetResourceLoadingDataRequest> dataRequest = request.dataRequest) {
+        if (dataRequest.get().requestedOffset > static_cast<long long>(_data.get().length))
             return NO;
     }
 
@@ -159,36 +159,36 @@
 
 - (void)fulfillRequest:(AVAssetResourceLoadingRequest *)request
 {
-    if (auto infoRequest = request.contentInformationRequest) {
+    if (RetainPtr<AVAssetResourceLoadingContentInformationRequest> infoRequest = request.contentInformationRequest) {
         RefPtr parent = _parent.get();
         RELEASE_ASSERT(parent);
-        infoRequest.contentType = parent->uti().createNSString().get();
-        infoRequest.byteRangeAccessSupported = YES;
-        infoRequest.contentLength = _complete ? _data.get().length : _expectedContentSize;
+        infoRequest.get().contentType = parent->uti().createNSString().get();
+        infoRequest.get().byteRangeAccessSupported = YES;
+        infoRequest.get().contentLength = _complete ? _data.get().length : _expectedContentSize;
     }
 
-    if (auto dataRequest = request.dataRequest) {
-        long long availableLength = _data.get().length - dataRequest.requestedOffset;
+    if (RetainPtr<AVAssetResourceLoadingDataRequest> dataRequest = request.dataRequest) {
+        long long availableLength = _data.get().length - dataRequest.get().requestedOffset;
         if (availableLength <= 0)
             return;
 
         long long requestedLength;
-        if (dataRequest.requestsAllDataToEndOfResource)
+        if (dataRequest.get().requestsAllDataToEndOfResource)
             requestedLength = availableLength;
         else
-            requestedLength = std::min<long long>(availableLength, dataRequest.requestedLength);
+            requestedLength = std::min<long long>(availableLength, dataRequest.get().requestedLength);
 
-        auto range = NSMakeRange(static_cast<NSUInteger>(dataRequest.requestedOffset), static_cast<NSUInteger>(requestedLength));
-        NSData* requestedData = [_data subdataWithRange:range];
+        auto range = NSMakeRange(static_cast<NSUInteger>(dataRequest.get().requestedOffset), static_cast<NSUInteger>(requestedLength));
+        RetainPtr<NSData> requestedData = [_data subdataWithRange:range];
         if (!requestedData)
             return;
 
-        [dataRequest respondWithData:requestedData];
+        [dataRequest respondWithData:requestedData.get()];
 
-        if (dataRequest.requestsAllDataToEndOfResource) {
+        if (dataRequest.get().requestsAllDataToEndOfResource) {
             if (!_complete)
                 return;
-        } else if (dataRequest.requestedOffset + dataRequest.requestedLength > dataRequest.currentOffset)
+        } else if (dataRequest.get().requestedOffset + dataRequest.get().requestedLength > dataRequest.get().currentOffset)
             return;
     }
 
@@ -359,7 +359,7 @@ ImageDecoderAVFObjC::ImageDecoderAVFObjC(const FragmentedSharedBuffer& data, con
     m_decompressionSession->setResourceOwner(m_resourceOwner);
     [m_loader updateData:data.makeContiguous()->createNSData().get() complete:NO];
 
-    [m_asset.get().resourceLoader setDelegate:m_loader.get() queue:globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
+    [retainPtr(m_asset.get().resourceLoader) setDelegate:m_loader.get() queue:globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
     [m_asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:[protectedThis = Ref { *this }] () mutable {
         callOnMainThread([protectedThis = WTFMove(protectedThis)] {
             protectedThis->setTrack(protectedThis->protectedFirstEnabledTrack().get());
@@ -637,7 +637,7 @@ PlatformImagePtr ImageDecoderAVFObjC::createFrameImageAtIndex(size_t index, Subs
 
         if (auto byteRange = cursorSample->byteRange()) {
             auto& byteRangeValue = byteRange.value();
-            auto* data = m_loader.get().data;
+            RetainPtr<NSData> data = m_loader.get().data;
             CMBlockBufferCustomBlockSource source {
                 0,
                 nullptr,
@@ -647,7 +647,7 @@ PlatformImagePtr ImageDecoderAVFObjC::createFrameImageAtIndex(size_t index, Subs
                 [data retain]
             };
             CMBlockBufferRef rawBlockBuffer = nullptr;
-            if (noErr != PAL::CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, const_cast<void*>(data.bytes), data.length, nullptr, &source, byteRangeValue.byteOffset, byteRangeValue.byteLength, 0, &rawBlockBuffer))
+            if (noErr != PAL::CMBlockBufferCreateWithMemoryBlock(kCFAllocatorDefault, const_cast<void*>(data.get().bytes), data.get().length, nullptr, &source, byteRangeValue.byteOffset, byteRangeValue.byteLength, 0, &rawBlockBuffer))
                 return nullptr;
 
             if (!rawBlockBuffer)

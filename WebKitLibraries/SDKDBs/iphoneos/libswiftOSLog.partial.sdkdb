@@ -16,7 +16,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo21OSLogMessageComponentC0A0E8argumentAbCE8ArgumentOvg"},
     {"access": "public", "linkage": "exported", "name": "_$sSo21OSLogMessageComponentC0A0E8argumentAbCE8ArgumentOvpMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

@@ -98,6 +98,7 @@ TextExtractionInteractionOptions* toTextExtractionInteractionOptions(JSContextRe
         options.text = nullptr;
 
     options.replaceAll = booleanProperty(context, (JSObjectRef)argument, "replaceAll");
+    options.scrollToVisible = booleanProperty(context, (JSObjectRef)argument, "scrollToVisible");
 
     if (auto locationObject = objectProperty(context, (JSObjectRef)argument, "location")) {
         options.location = {

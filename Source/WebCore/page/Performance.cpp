@@ -41,6 +41,7 @@
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "ExceptionOr.h"
+#include "InspectorInstrumentation.h"
 #include "LargestContentfulPaint.h"
 #include "LocalFrame.h"
 #include "Logging.h"
@@ -375,6 +376,9 @@ void Performance::setResourceTimingBufferSize(unsigned size)
 
 void Performance::reportFirstContentfulPaint(DOMHighResTimeStamp timestamp)
 {
+    if (RefPtr context = scriptExecutionContext())
+        InspectorInstrumentation::didEnqueueFirstContentfulPaint(*context);
+
     ASSERT(!m_firstContentfulPaint);
     m_firstContentfulPaint = PerformancePaintTiming::createFirstContentfulPaint(timestamp);
     queueEntry(*m_firstContentfulPaint);
@@ -382,6 +386,9 @@ void Performance::reportFirstContentfulPaint(DOMHighResTimeStamp timestamp)
 
 void Performance::enqueueLargestContentfulPaint(Ref<LargestContentfulPaint>&& paintEntry)
 {
+    if (RefPtr context = scriptExecutionContext())
+        InspectorInstrumentation::didEnqueueLargestContentfulPaint(*context, paintEntry.get());
+
     m_largestContentfulPaint = RefPtr { WTFMove(paintEntry) };
     queueEntry(*m_largestContentfulPaint);
 }

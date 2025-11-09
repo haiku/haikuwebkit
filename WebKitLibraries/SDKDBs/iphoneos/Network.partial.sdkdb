@@ -1028,7 +1028,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "nw_advertise_descriptor_t"},
     {"access": "public", "name": "nw_browse_descriptor_t"},
@@ -1344,6 +1344,8 @@
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelC7receiveqd_0_7content_AA5CoderV8MetadataVyqd__qd_0_qd_1__G8metadatatyYaKAGyqd__qd_0_qd_1_GRszSERd__SeRd_0_AA0aE0Rd_1_r1_lFTu"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelC8metadata10definitionAA18NWProtocolMetadataCSgAA0E10DefinitionC_tFTj"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelC8metadata10definitionAA18NWProtocolMetadataCSgAA0E10DefinitionC_tFTq"},
+    {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelC9hashValueSivg"},
+    {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelC9hashValueSivpMV"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelCA2A14StreamProtocolRzrlE14sendIdempotent_05endOfC08metadatayqd___SbSayAA18NWProtocolMetadataCGyXEt10Foundation04DataD0Rd__lF"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelCA2A14StreamProtocolRzrlE14sendIdempotent_05endOfC08metadatayqd___SbSayAA18NWProtocolMetadataCGyXEtAA0A17FixedWidthIntegerRd__lF"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelCA2A14StreamProtocolRzrlE4send_05endOfC08metadatayqd___SbSayAA18NWProtocolMetadataCGyXEtYaK10Foundation04DataD0Rd__lF"},
@@ -1393,6 +1395,9 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s7Network0A7ChannelCMu"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelCfD"},
     {"access": "public", "linkage": "exported", "name": "_$s7Network0A7ChannelCfd"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s7Network0A7ChannelCyxGSHAAMc"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s7Network0A7ChannelCyxGSQAAMc"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s7Network0A7ChannelCyxGs12IdentifiableAAMc"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s7Network0A7ChannelCyxGs28CustomDebugStringConvertibleAAMc"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s7Network0A7DecoderMp"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s7Network0A7DecoderP6decode_4fromqd__qd__m_10Foundation4DataVtKSeRd__lFTj"},
@@ -4225,7 +4230,7 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$ss6UInt64V7Network0B17FixedWidthIntegerACMc"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$ss6UInt64V7Network0B17FixedWidthIntegerACWP"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

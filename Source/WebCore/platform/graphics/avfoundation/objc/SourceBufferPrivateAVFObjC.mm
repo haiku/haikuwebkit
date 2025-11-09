@@ -34,7 +34,6 @@
 #import "CDMFairPlayStreaming.h"
 #import "CDMInstanceFairPlayStreamingAVFObjC.h"
 #import "CDMSessionAVContentKeySession.h"
-#import "CDMSessionMediaSourceAVFObjC.h"
 #import "FourCC.h"
 #import "InbandTextTrackPrivateAVFObjC.h"
 #import "Logging.h"
@@ -64,7 +63,6 @@
 #import <wtf/MainThread.h>
 #import <wtf/NativePromise.h>
 #import <wtf/SoftLinking.h>
-#import <wtf/WTFSemaphore.h>
 #import <wtf/WeakPtr.h>
 #import <wtf/WorkQueue.h>
 #import <wtf/cocoa/Entitlements.h>
@@ -91,13 +89,6 @@ SourceBufferPrivateAVFObjC::SourceBufferPrivateAVFObjC(MediaSourcePrivateAVFObjC
     , m_parser(WTFMove(parser))
     , m_appendQueue(WorkQueue::create("SourceBufferPrivateAVFObjC data parser queue"_s))
     , m_renderer(WTFMove(renderer))
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    , m_keyStatusesChangedObserver(makeUniqueRef<Observer<void()>>([this] { tryToEnqueueBlockedSamples(); }))
-    , m_streamDataParser([&] {
-        auto* sourceBufferParser = dynamicDowncast<SourceBufferParserAVFObjC>(m_parser.get());
-        return sourceBufferParser ? sourceBufferParser->streamDataParser() : nil;
-    }())
-#endif
 #if !RELEASE_LOG_DISABLED
     , m_logger(parent.logger())
     , m_logIdentifier(parent.nextSourceBufferLogIdentifier())
@@ -108,6 +99,40 @@ SourceBufferPrivateAVFObjC::SourceBufferPrivateAVFObjC(MediaSourcePrivateAVFObjC
     RefPtr player = this->player();
     if (RefPtr webmParser = dynamicDowncast<SourceBufferParserWebM>(m_parser); webmParser && player && player->supportsLimitedMatroska())
         webmParser->allowLimitedMatroska();
+
+    m_parser->setCallOnClientThreadCallback([dispatcher = m_dispatcher](auto&& function) {
+        dispatcher->dispatch(WTFMove(function));
+    });
+
+    m_parser->setDidParseInitializationDataCallback([weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher] (InitializationSegment&& segment) {
+        assertIsCurrent(dispatcher);
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->didReceiveInitializationSegment(WTFMove(segment));
+    });
+
+    m_parser->setDidProvideMediaDataCallback([weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher] (Ref<MediaSampleAVFObjC>&& sample, TrackID trackId, const String& mediaType) {
+        assertIsCurrent(dispatcher);
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->didProvideMediaDataForTrackId(WTFMove(sample), trackId, mediaType);
+    });
+
+    m_parser->setDidUpdateFormatDescriptionForTrackIDCallback([weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher] (Ref<TrackInfo>&& formatDescription, TrackID trackId) {
+        assertIsCurrent(dispatcher);
+        if (RefPtr protectedThis = weakThis.get(); protectedThis)
+            protectedThis->didUpdateFormatDescriptionForTrackId(WTFMove(formatDescription), trackId);
+    });
+
+    m_parser->setDidProvideContentKeyRequestInitializationDataForTrackIDCallback([weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher](Ref<SharedBuffer>&& initData, TrackID trackID) {
+        assertIsCurrent(dispatcher);
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->didProvideContentKeyRequestInitializationDataForTrackID(WTFMove(initData), trackID);
+    });
+
+    m_parser->setDidProvideContentKeyRequestIdentifierForTrackIDCallback([weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher] (Ref<SharedBuffer>&& initData, TrackID trackID) {
+        assertIsCurrent(dispatcher);
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->didProvideContentKeyRequestInitializationDataForTrackID(WTFMove(initData), trackID);
+    });
 
 #if !RELEASE_LOG_DISABLED
     m_parser->setLogger(m_logger.get(), m_logIdentifier);
@@ -322,40 +347,46 @@ void SourceBufferPrivateAVFObjC::didProvideContentKeyRequestInitializationDataFo
 
     m_protectedTrackID = trackID;
     m_initData = initData.copyRef();
-    mediaSource->sourceBufferKeyNeeded(this, initData);
-
-    if (player->cdmSession())
-        return;
+    player->keyNeeded(initData);
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    auto keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(initData);
-    AtomString initDataType = CDMPrivateFairPlayStreaming::sinfName();
-#if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
-    if (!keyIDs) {
-        keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(initData);
-        initDataType = CDMPrivateFairPlayStreaming::mptsName();
-    }
-#endif
-    if (!keyIDs)
-        return;
-
-    if (RefPtr cdmInstance = m_cdmInstance) {
-        if (RefPtr instanceSession = cdmInstance->sessionForKeyIDs(keyIDs.value())) {
-            m_waitingForKey = false;
+    protectedRenderer()->setInitData(initData)->whenSettled(RunLoop::mainSingleton(), [weakThis = ThreadSafeWeakPtr { *this }, initData = initData](auto&& result) {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+        if (result) {
+            protectedThis->m_waitingForKey = false;
+            if (RefPtr player = protectedThis->player())
+                player->waitingForKeyChanged();
             return;
         }
-    }
-
-    m_keyIDs = WTFMove(keyIDs.value());
-    player->initializationDataEncountered(initDataType, initData->tryCreateArrayBuffer());
-    player->needsVideoLayerChanged();
-
-    m_waitingForKey = true;
-    player->waitingForKeyChanged();
+        switch (result.error()) {
+        case PlatformMediaError::CDMInstanceKeyNeeded: {
+            auto keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(initData);
+            AtomString initDataType = CDMPrivateFairPlayStreaming::sinfName();
+#if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
+            if (!keyIDs) {
+                keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(initData);
+                initDataType = CDMPrivateFairPlayStreaming::mptsName();
+            }
 #endif
-
-    UNUSED_PARAM(initData);
+            if (!keyIDs)
+                return;
+            protectedThis->m_waitingForKey = true;
+            if (RefPtr player = protectedThis->player()) {
+                player->initializationDataEncountered(initDataType, initData->tryCreateArrayBuffer());
+                player->waitingForKeyChanged();
+                player->needsVideoLayerChanged();
+            }
+            return;
+        }
+        default:
+            ASSERT_NOT_REACHED();
+            return;
+        }
+    });
+#endif
     UNUSED_PARAM(trackID);
 }
 
@@ -372,42 +403,10 @@ Ref<MediaPromise> SourceBufferPrivateAVFObjC::appendInternal(Ref<SharedBuffer>&&
 {
     ALWAYS_LOG(LOGIDENTIFIER, "data length = ", data->size());
 
-    return invokeAsync(m_appendQueue, [data = WTFMove(data), parser = m_parser, weakThis = ThreadSafeWeakPtr { *this }]() mutable {
-        parser->setDidParseInitializationDataCallback([weakThis] (InitializationSegment&& segment) {
-            ASSERT(isMainThread());
-            if (RefPtr protectedThis = weakThis.get())
-                protectedThis->didReceiveInitializationSegment(WTFMove(segment));
-        });
-
-        parser->setDidProvideMediaDataCallback([weakThis] (Ref<MediaSampleAVFObjC>&& sample, TrackID trackId, const String& mediaType) {
-            ASSERT(isMainThread());
-            if (RefPtr protectedThis = weakThis.get())
-                protectedThis->didProvideMediaDataForTrackId(WTFMove(sample), trackId, mediaType);
-        });
-
-        parser->setDidUpdateFormatDescriptionForTrackIDCallback([weakThis] (Ref<TrackInfo>&& formatDescription, TrackID trackId) {
-            ASSERT(isMainThread());
-            if (RefPtr protectedThis = weakThis.get(); protectedThis)
-                protectedThis->didUpdateFormatDescriptionForTrackId(WTFMove(formatDescription), trackId);
-        });
-
-        parser->setDidProvideContentKeyRequestInitializationDataForTrackIDCallback([weakThis](Ref<SharedBuffer>&& initData, TrackID trackID) mutable {
-            // Called on the data parser queue.
-            callOnMainThread([weakThis, initData = WTFMove(initData), trackID] () mutable {
-                if (RefPtr protectedThis = weakThis.get())
-                    protectedThis->didProvideContentKeyRequestInitializationDataForTrackID(WTFMove(initData), trackID);
-            });
-        });
-
-        parser->setDidProvideContentKeyRequestIdentifierForTrackIDCallback([weakThis] (Ref<SharedBuffer>&& initData, TrackID trackID) {
-            ASSERT(isMainThread());
-            if (RefPtr protectedThis = weakThis.get())
-                protectedThis->didProvideContentKeyRequestInitializationDataForTrackID(WTFMove(initData), trackID);
-        });
-
+    return invokeAsync(m_appendQueue, [data = WTFMove(data), parser = m_parser, weakThis = ThreadSafeWeakPtr { *this }, dispatcher = m_dispatcher]() mutable {
         Ref ensureDestroyedSharedBuffer = WTFMove(data);
         return MediaPromise::createAndSettle(parser->appendData(WTFMove(ensureDestroyedSharedBuffer)));
-    })->whenSettled(RunLoop::currentSingleton(), [weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
+    })->whenSettled(m_dispatcher, [weakThis = ThreadSafeWeakPtr { *this }, parser = m_parser](auto&& result) {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->appendCompleted(!!result);
         return MediaPromise::createAndSettle(WTFMove(result));
@@ -532,87 +531,11 @@ void SourceBufferPrivateAVFObjC::trackDidChangeEnabled(AudioTrackPrivate& track,
         player->addAudioTrack(trackIdentifier);
 }
 
-#if (ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)) || ENABLE(LEGACY_ENCRYPTED_MEDIA)
-void SourceBufferPrivateAVFObjC::setCDMSession(LegacyCDMSession* session)
-{
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    RefPtr oldSession = m_session.get();
-    if (session == oldSession)
-        return;
-
-    ALWAYS_LOG(LOGIDENTIFIER);
-
-    if (oldSession)
-        oldSession->removeSourceBuffer(this);
-
-    // FIXME: This is a false positive. Remove the suppression once rdar://145631564 is fixed.
-    SUPPRESS_UNCOUNTED_ARG m_session = toCDMSessionAVContentKeySession(session);
-
-    if (RefPtr session = m_session.get())
-        session->addSourceBuffer(this);
-#else
-    UNUSED_PARAM(session);
-#endif
-}
-
-void SourceBufferPrivateAVFObjC::setCDMInstance(CDMInstance* instance)
-{
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    RefPtr fpsInstance = dynamicDowncast<CDMInstanceFairPlayStreamingAVFObjC>(instance);
-    if (fpsInstance == m_cdmInstance)
-        return;
-
-    ALWAYS_LOG(LOGIDENTIFIER);
-    if (RefPtr cdmInstance = m_cdmInstance)
-        cdmInstance->removeKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
-
-    m_cdmInstance = fpsInstance;
-    if (fpsInstance)
-        fpsInstance->addKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
-
-    attemptToDecrypt();
-#else
-    UNUSED_PARAM(instance);
-#endif
-}
-
-void SourceBufferPrivateAVFObjC::attemptToDecrypt()
-{
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    if (m_keyIDs.isEmpty() || !m_waitingForKey)
-        return;
-
-    if (RefPtr cdmInstance = m_cdmInstance) {
-        RefPtr instanceSession = cdmInstance->sessionForKeyIDs(m_keyIDs);
-        if (!instanceSession)
-            return;
-    } else if (!m_session.get())
-        return;
-
-    m_waitingForKey = false;
-
-    tryToEnqueueBlockedSamples();
-#endif
-}
-#endif // (ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)) || ENABLE(LEGACY_ENCRYPTED_MEDIA)
-
 std::optional<AudioVideoRenderer::TrackIdentifier> SourceBufferPrivateAVFObjC::trackIdentifierFor(TrackID trackId) const
 {
     if (auto it = m_trackIdentifiers.find(trackId); it != m_trackIdentifiers.end())
         return it->second;
     return std::nullopt;
-}
-
-void SourceBufferPrivateAVFObjC::registerForErrorNotifications(SourceBufferPrivateAVFObjCErrorClient* client)
-{
-    ASSERT(!m_errorClients.contains(client));
-    m_errorClients.append(client);
-}
-
-void SourceBufferPrivateAVFObjC::unregisterForErrorNotifications(SourceBufferPrivateAVFObjCErrorClient* client)
-{
-    ASSERT(m_errorClients.contains(client));
-    m_errorClients.removeFirst(client);
 }
 
 void SourceBufferPrivateAVFObjC::setVideoRenderer(bool videoEnabled)
@@ -672,65 +595,12 @@ void SourceBufferPrivateAVFObjC::removeTrackID(TrackID trackID)
     }
 }
 
-bool SourceBufferPrivateAVFObjC::trackIsBlocked(TrackID trackID) const
+bool SourceBufferPrivateAVFObjC::canEnqueueSample(TrackID trackID, const MediaSampleAVFObjC&)
 {
-    for (auto& samplePair : m_blockedSamples) {
-        if (samplePair.first == trackID)
-            return true;
-    }
-    return false;
-}
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-void SourceBufferPrivateAVFObjC::tryToEnqueueBlockedSamples()
-{
-    while (!m_blockedSamples.isEmpty()) {
-        auto& firstPair = m_blockedSamples.first();
-
-        // If we still can't enqueue the sample, bail.
-        if (!canEnqueueSample(firstPair.first, firstPair.second))
-            return;
-
-        auto firstPairTaken = m_blockedSamples.takeFirst();
-        enqueueSample(WTFMove(firstPairTaken.second), firstPairTaken.first);
-    }
-}
-#endif
-
-bool SourceBufferPrivateAVFObjC::canEnqueueSample(TrackID trackID, const MediaSampleAVFObjC& sample)
-{
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    // if sample is unencrytped: enqueue sample
-    if (!sample.isProtected())
-        return true;
-
-    // if sample is encrypted, but we are not attached to a CDM: do not enqueue sample.
-    if (!m_cdmInstance && !m_session.get())
-        return false;
-
     if (isEnabledVideoTrackID(trackID) && !m_isSelectedForVideo)
         return false;
 
-    // if sample is encrypted, and keyIDs match the current set of keyIDs: enqueue sample.
-    if (auto findResult = m_currentTrackIDs.find(trackID); findResult != m_currentTrackIDs.end() && findResult->second == sample.keyIDs())
-        return true;
-
-    // if sample's set of keyIDs does not match the current set of keyIDs, consult with the CDM
-    // to determine if the keyIDs are usable; if so, update the current set of keyIDs and enqueue sample.
-    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && cdmInstance->isAnyKeyUsable(sample.keyIDs())) {
-        m_currentTrackIDs.try_emplace(trackID, sample.keyIDs());
-        return true;
-    }
-
-    if (RefPtr session = m_session.get(); session && session->isAnyKeyUsable(sample.keyIDs())) {
-        m_currentTrackIDs.try_emplace(trackID, sample.keyIDs());
-        return true;
-    }
-
-    return false;
-#else
     return true;
-#endif
 }
 
 void SourceBufferPrivateAVFObjC::enqueueSample(Ref<MediaSample>&& sample, TrackID trackId)
@@ -740,14 +610,7 @@ void SourceBufferPrivateAVFObjC::enqueueSample(Ref<MediaSample>&& sample, TrackI
         return;
 
     ASSERT(is<MediaSampleAVFObjC>(sample));
-    if (RefPtr sampleAVFObjC = dynamicDowncast<MediaSampleAVFObjC>(WTFMove(sample))) {
-        if (!canEnqueueSample(trackId, *sampleAVFObjC)) {
-            m_blockedSamples.append({ trackId, sampleAVFObjC.releaseNonNull() });
-            return;
-        }
-
-        enqueueSample(sampleAVFObjC.releaseNonNull(), trackId);
-    }
+    enqueueSample(downcast<MediaSampleAVFObjC>(WTFMove(sample)), trackId);
 }
 
 void SourceBufferPrivateAVFObjC::enqueueSample(Ref<MediaSampleAVFObjC>&& sample, TrackID trackId)
@@ -765,18 +628,8 @@ void SourceBufferPrivateAVFObjC::enqueueSample(Ref<MediaSampleAVFObjC>&& sample,
     }
     auto mediaType = PAL::CMFormatDescriptionGetMediaType(formatDescription);
 
-    if (auto trackIdentifier = trackIdentifierFor(trackId)) {
-        attachContentKeyToSampleIfNeeded(sample);
+    if (auto trackIdentifier = trackIdentifierFor(trackId))
         protectedRenderer()->enqueueSample(*trackIdentifier, sample, mediaType == kCMMediaType_Video ? minimumUpcomingPresentationTimeForTrackID(trackId) : std::optional<MediaTime> { });
-    }
-}
-
-void SourceBufferPrivateAVFObjC::attachContentKeyToSampleIfNeeded(const MediaSampleAVFObjC& sample)
-{
-    if (RefPtr cdmInstance = m_cdmInstance)
-        cdmInstance->attachContentKeyToSample(sample);
-    else if (RefPtr session = m_session.get())
-        session->attachContentKeyToSample(sample);
 }
 
 bool SourceBufferPrivateAVFObjC::isReadyForMoreSamples(TrackID trackId)
@@ -807,9 +660,6 @@ void SourceBufferPrivateAVFObjC::didBecomeReadyForMoreSamples(TrackID trackId)
     if (auto trackIdentifier = trackIdentifierFor(trackId))
         protectedRenderer()->stopRequestingMediaData(*trackIdentifier);
     else
-        return;
-
-    if (trackIsBlocked(trackId))
         return;
 
     provideMediaData(trackId);

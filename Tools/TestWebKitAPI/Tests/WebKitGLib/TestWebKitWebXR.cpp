@@ -133,11 +133,6 @@ static void serverCallback(SoupServer*, SoupServerMessage* message, const char* 
 
 static void testWebKitWebXRLeaveImmersiveModeAndWaitUntilImmersiveModeChanged(WebXRTest* test, gconstpointer)
 {
-    if (!g_getenv("WITH_OPENXR_RUNTIME")) {
-        g_test_skip("Unable to run without an OpenXR runtime");
-        return;
-    }
-
     WebViewTest::NetworkPolicyGuard guard(test, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
 
     g_assert_false(webkit_web_view_is_immersive_mode_enabled(test->m_webView.get()));
@@ -155,11 +150,6 @@ static void testWebKitWebXRLeaveImmersiveModeAndWaitUntilImmersiveModeChanged(We
 
 static void testWebKitXRPermissionRequest(WebXRTest* test, gconstpointer)
 {
-    if (!g_getenv("WITH_OPENXR_RUNTIME")) {
-        g_test_skip("Unable to run without an OpenXR runtime");
-        return;
-    }
-
     enum class Answer {
         Deny,
         Allow,
@@ -208,8 +198,6 @@ static void testWebKitXRPermissionRequest(WebXRTest* test, gconstpointer)
         return TRUE;
     };
 
-    test->loadHtml("", "https://foo.com/bar");
-    test->waitUntilLoadFinished();
     test->showInWindow();
 
     auto testPermissionRequest = [&](StringView mode, StringView options, Answer answer) {
@@ -226,10 +214,11 @@ static void testWebKitXRPermissionRequest(WebXRTest* test, gconstpointer)
             "start()"_s);
         data.answer = answer;
         data.resetResult();
+        test->loadHtml("", "https://foo.com/bar");
+        test->waitUntilLoadFinished();
         test->runJavaScriptAndWaitUntilFinished(script.utf8().data(), nullptr);
         test->waitUntilTitleChanged();
         data.result.title = String::fromUTF8(webkit_web_view_get_title(test->webView()));
-        test->runJavaScriptAndWaitUntilFinished("document.title = ''", nullptr);
     };
 
     // requestSession is rejected by default without a permission-request callback

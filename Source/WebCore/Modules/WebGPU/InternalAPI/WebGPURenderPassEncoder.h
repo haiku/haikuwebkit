@@ -100,6 +100,8 @@ public:
     virtual void executeBundles(Vector<Ref<RenderBundle>>&&) = 0;
     virtual void end() = 0;
 
+    virtual bool isRemoteRenderPassEncoderProxy() const { return false; }
+
 protected:
     RenderPassEncoder() = default;
 

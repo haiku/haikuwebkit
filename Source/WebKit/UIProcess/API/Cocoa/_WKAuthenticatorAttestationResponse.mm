@@ -54,8 +54,8 @@
 
 - (void)dealloc
 {
-    [_attestationObject release];
-    [_transports release];
+    SUPPRESS_UNRETAINED_ARG [_attestationObject release];
+    SUPPRESS_UNRETAINED_ARG [_transports release];
     [super dealloc];
 }
 

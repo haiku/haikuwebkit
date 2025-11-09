@@ -237,7 +237,6 @@ messages -> WebPage WantsAsyncDispatchMessage {
     GetRenderTreeExternalRepresentation() -> (String string)
     GetSelectionOrContentsAsString() -> (String string)
     GetSourceForFrame(WebCore::FrameIdentifier frameID) -> (String string)
-    GetWebArchiveOfFrame(std::optional<WebCore::FrameIdentifier> frameID) -> (std::optional<IPC::SharedBufferReference> dataReference)
     GetWebArchiveOfFrameWithFileName(WebCore::FrameIdentifier frameID, Vector<WebCore::MarkupExclusionRule> markupExclusionRules, String fileName) -> (std::optional<IPC::SharedBufferReference> dataReference)
 #if PLATFORM(COCOA)
     GetWebArchiveData() -> (std::optional<IPC::SharedBufferReference> dataReference)
@@ -666,7 +665,6 @@ messages -> WebPage WantsAsyncDispatchMessage {
     SetUserInterfaceLayoutDirection(uint32_t direction)
 
     DidGetLoadDecisionForIcon(bool decision, WebKit::CallbackID loadIdentifier) -> (IPC::SharedBufferReference iconData)
-    SetUseIconLoadingClient(bool useIconLoadingClient)
 
 #if ENABLE(GAMEPAD)
     GamepadActivity(Vector<std::optional<WebKit::GamepadData>> gamepadDatas, enum:bool WebCore::EventMakesGamepadsVisible eventVisibility)
@@ -726,6 +724,8 @@ messages -> WebPage WantsAsyncDispatchMessage {
 #if PLATFORM(GTK) || PLATFORM(WPE)
     SendMessageToWebProcessExtension(struct WebKit::UserMessage userMessage)
     SendMessageToWebProcessExtensionWithReply(struct WebKit::UserMessage userMessage) -> (struct WebKit::UserMessage replyMessage)
+
+    GetRenderProcessInfo() -> (struct WebKit::RenderProcessInfo info)
 #endif
 
 #if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)

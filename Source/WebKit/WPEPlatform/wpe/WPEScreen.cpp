@@ -155,6 +155,8 @@ static void wpeScreenInvalidate(WPEScreen* screen)
 {
 #if USE(LIBDRM)
     screen->priv->syncObserver = nullptr;
+#else
+    UNUSED_PARAM(screen);
 #endif
 }
 

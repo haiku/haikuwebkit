@@ -149,7 +149,6 @@ header: "RemoteLayerBackingStore.h"
     WebCore::InteractiveWidget m_viewportMetaTagInteractiveWidget;
     uint64_t m_renderTreeSize;
     WebKit::TransactionID m_transactionID;
-    WebKit::ActivityStateChangeID m_activityStateChangeID;
     OptionSet<WebCore::LayoutMilestone> m_newlyReachedPaintingMilestones;
     bool m_scaleWasSetByUIProcess;
     bool m_allowsUserScaling;
@@ -164,7 +163,7 @@ header: "RemoteLayerBackingStore.h"
 #endif
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    Seconds m_acceleratedTimelineTimeOrigin;
+    HashSet<Ref<WebCore::AcceleratedTimeline>> m_timelines;
 #endif
 }
 
@@ -186,7 +185,7 @@ headers: "LayerProperties.h" "PlatformCALayerRemote.h"
 [Nested] struct WebKit::RemoteLayerTreeTransaction::LayerCreationProperties::CustomData {
     uint32_t hostingContextID;
 #if ENABLE(MACH_PORT_LAYER_HOSTING)
-    std::optional<WTF::MachSendRightAnnotated> sendRightAnnotated;
+    std::optional<MachSendRightAnnotated> sendRightAnnotated;
 #endif
     float hostingDeviceScaleFactor;
     bool preservesFlip;
@@ -290,3 +289,15 @@ headers: "LayerProperties.h" "PlatformCALayerRemote.h"
 };
 
 using WebKit::LayerHostingContextID = uint32_t;
+
+using WebKit::RemoteLayerTreeCommitBundle::RootFrameData = std::pair<WebKit::RemoteLayerTreeTransaction, WebKit::RemoteScrollingCoordinatorTransaction>;
+
+headers: "RemoteLayerTreeCommitBundle.h"
+struct WebKit::RemoteLayerTreeCommitBundle {
+    Vector<WebKit::RemoteLayerTreeCommitBundle::RootFrameData> transactions;
+    std::optional<WebKit::RemoteLayerTreeCommitBundle::MainFrameData> mainFrameData;
+};
+
+[Nested] struct WebKit::RemoteLayerTreeCommitBundle::MainFrameData {
+    WebKit::ActivityStateChangeID activityStateChangeID;
+};

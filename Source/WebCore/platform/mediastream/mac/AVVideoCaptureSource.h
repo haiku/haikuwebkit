@@ -159,6 +159,7 @@ private:
     void resolvePendingPhotoRequest(Vector<uint8_t>&&, const String&);
     RetainPtr<AVCapturePhotoSettings> photoConfiguration(const PhotoSettings&);
     IntSize maxPhotoSizeForCurrentPreset(IntSize requestedSize) const;
+    IntSize maxPhotoSizeForActiveFormat(AVCaptureDeviceFormat *, IntSize) const;
     AVCapturePhotoOutput* photoOutput();
 
     RefPtr<VideoFrame> m_buffer;

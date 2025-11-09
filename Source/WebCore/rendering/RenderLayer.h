@@ -568,11 +568,8 @@ public:
     void setBehavesAsFixed(bool);
     bool behavesAsFixed() const { return m_behavesAsFixed; }
 
-    bool behavesAsSticky() const { return m_hasStickyAncestor || renderer().isStickilyPositioned(); }
-
     struct PaintedContentRequest {
         PaintedContentRequest() = default;
-        PaintedContentRequest(const RenderLayer& owningLayer);
 
         void setHasPaintedContent() { hasPaintedContent = RequestState::True; }
         void makePaintedContentUndetermined() { hasPaintedContent = RequestState::Undetermined; }
@@ -582,7 +579,8 @@ public:
 #if HAVE(SUPPORT_HDR_DISPLAY)
         void setHasHDRContent() { hasHDRContent = RequestState::True; }
         void makeHDRContentFalse() { hasHDRContent = RequestState::False; }
-        void makeHDRContentUnknown() { hasHDRContent = RequestState::Unknown; }
+
+        void setHDRRequestState(RequestState state) { hasHDRContent = state; }
         bool isHDRContentSatisfied() const { return hasHDRContent != RequestState::Unknown; }
 #endif
 
@@ -602,6 +600,7 @@ public:
     };
 
     bool isVisibilityHiddenOrOpacityZero() const;
+    bool isSubtreeVisibilityHiddenOrOpacityZero() const;
 
     // Returns true if this layer has visible content (ignoring any child layers).
     bool isVisuallyNonEmpty(PaintedContentRequest* = nullptr) const;

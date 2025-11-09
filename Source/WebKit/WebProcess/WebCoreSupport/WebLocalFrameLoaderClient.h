@@ -51,8 +51,6 @@ public:
 
     bool frameHasCustomContentProvider() const { return m_frameHasCustomContentProvider; }
 
-    void setUseIconLoadingClient(bool useIconLoadingClient) { m_useIconLoadingClient = useIconLoadingClient; }
-
     void applyWebsitePolicies(WebsitePoliciesData&&) final;
 
     std::optional<WebPageProxyIdentifier> webPageProxyID() const;
@@ -297,7 +295,6 @@ private:
     bool m_didCompletePageTransition { false };
     bool m_frameHasCustomContentProvider { false };
     bool m_frameCameFromBackForwardCache { false };
-    bool m_useIconLoadingClient { false };
     std::optional<FrameSpecificStorageAccessIdentifier> m_frameSpecificStorageAccessIdentifier;
     WeakRef<WebCore::LocalFrame> m_localFrame;
 

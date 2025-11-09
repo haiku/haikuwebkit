@@ -44,8 +44,8 @@ namespace WebCore {
 std::optional<WebCore::AttributedString> TextRecognitionResult::extractAttributedString(VKCImageAnalysis *analysis)
 {
     if ([analysis isKindOfClass:PAL::getVKCImageAnalysisClassSingleton()]; [analysis respondsToSelector:@selector(_attributedStringForRange:)]) {
-        if (auto attributedString = [analysis _attributedStringForRange:NSMakeRange(0, NSIntegerMax)])
-            return { AttributedString::fromNSAttributedString(attributedString) };
+        if (RetainPtr attributedString = [analysis _attributedStringForRange:NSMakeRange(0, NSIntegerMax)])
+            return { AttributedString::fromNSAttributedString(attributedString.get()) };
     }
     return std::nullopt;
 }

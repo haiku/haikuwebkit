@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +30,7 @@
 #include "FloatPoint3D.h"
 #include "Logging.h"
 #include "Model.h"
+#include "ModelPlayerGraphicsLayerConfiguration.h"
 #include "ModelPlayerTransformState.h"
 #include "TransformationMatrix.h"
 #include <wtf/CompletionHandler.h>
@@ -202,14 +204,9 @@ void PlaceholderModelPlayer::setStageMode(WebCore::StageModeOperation stageModeO
 #endif
 
 // Empty implementation
-PlatformLayer* PlaceholderModelPlayer::layer()
-{
-    return nullptr;
-}
 
-std::optional<LayerHostingContextIdentifier> PlaceholderModelPlayer::layerHostingContextIdentifier()
+void PlaceholderModelPlayer::configureGraphicsLayer(GraphicsLayer&, ModelPlayerGraphicsLayerConfiguration&&)
 {
-    return std::nullopt;
 }
 
 void PlaceholderModelPlayer::sizeDidChange(LayoutSize)
@@ -285,20 +282,6 @@ void PlaceholderModelPlayer::setIsMuted(bool, CompletionHandler<void(bool succes
 ModelPlayerAccessibilityChildren PlaceholderModelPlayer::accessibilityChildren()
 {
     return { };
-}
-
-#endif
-
-#if ENABLE(GPU_PROCESS_MODEL)
-
-const MachSendRight* PlaceholderModelPlayer::displayBuffer() const
-{
-    return nullptr;
-}
-
-GraphicsLayerContentsDisplayDelegate* PlaceholderModelPlayer::contentsDisplayDelegate()
-{
-    return nullptr;
 }
 
 #endif

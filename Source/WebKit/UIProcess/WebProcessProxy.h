@@ -85,6 +85,10 @@
 #include "ServiceWorkerDebuggableProxy.h"
 #endif
 
+#if ENABLE(REMOTE_INSPECTOR) && ENABLE(WEBASSEMBLY)
+#include "WasmDebuggerDebuggable.h"
+#endif
+
 namespace API {
 class Navigation;
 class PageConfiguration;
@@ -578,6 +582,17 @@ public:
     bool receivedLogsDuringLaunchForTesting() const { return m_didReceiveLogsDuringLaunchForTesting; }
 #endif
 
+#if ENABLE(REMOTE_INSPECTOR) && ENABLE(WEBASSEMBLY)
+    void createWasmDebuggerTarget();
+    void destroyWasmDebuggerTarget();
+    void connectWasmDebuggerTarget(bool isAutomaticConnection, bool immediatelyPause);
+    void disconnectWasmDebuggerTarget();
+    void dispatchWasmDebuggerMessage(const String& message);
+    void setWasmDebuggerTargetIndicating(bool);
+
+    void sendWasmDebuggerResponse(const String& response);
+#endif
+
 private:
     Type type() const final { return Type::WebContent; }
 
@@ -626,6 +641,10 @@ private:
 
     void platformInitialize();
     void platformDestroy();
+
+#if PLATFORM(COCOA)
+    static void registerNotifyObservers();
+#endif
 
     ProcessTerminationReason terminationReason() const;
 
@@ -889,6 +908,9 @@ private:
 #endif
 #if ENABLE(REMOTE_INSPECTOR) && PLATFORM(COCOA)
     HashMap<WebCore::ServiceWorkerIdentifier, Ref<ServiceWorkerDebuggableProxy>> m_serviceWorkerDebuggableProxies;
+#endif
+#if ENABLE(REMOTE_INSPECTOR) && ENABLE(WEBASSEMBLY)
+    RefPtr<WasmDebuggerDebuggable> m_wasmDebuggerDebuggable;
 #endif
 
     HashMap<String, SandboxExtension::Handle> m_fileSandboxExtensions;

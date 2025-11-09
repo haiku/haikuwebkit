@@ -458,7 +458,8 @@ static void encodeObject(WKRemoteObjectEncoder *encoder, id object)
     if (![object conformsToProtocol:@protocol(NSSecureCoding)] && ![object isKindOfClass:[NSInvocation class]])
         [NSException raise:NSInvalidArgumentException format:@"%@ does not conform to NSSecureCoding", object];
 
-    if (class_isMetaClass(object_getClass(object)))
+    // FIXME: This is a safer cpp false positive (rdar://163108778).
+    SUPPRESS_UNRETAINED_ARG if (class_isMetaClass(object_getClass(object)))
         [NSException raise:NSInvalidArgumentException format:@"Class objects may not be encoded"];
 
     RetainPtr<Class> objectClass = [object classForCoder];
@@ -466,8 +467,9 @@ static void encodeObject(WKRemoteObjectEncoder *encoder, id object)
         [NSException raise:NSInvalidArgumentException format:@"-classForCoder returned nil for %@", object];
 
     if (encoder->_objectsBeingEncoded.contains(object)) {
-        RELEASE_LOG_FAULT(IPC, "WKRemoteObjectCode::encodeObject: Object of type '%{private}s' contains a cycle", class_getName(object_getClass(object)));
-        [NSException raise:NSInvalidArgumentException format:@"Object of type '%s' contains a cycle", class_getName(object_getClass(object))];
+        // FIXME: This is a safer cpp false positive (rdar://163108778).
+        SUPPRESS_UNRETAINED_ARG RELEASE_LOG_FAULT(IPC, "WKRemoteObjectCode::encodeObject: Object of type '%{private}s' contains a cycle", class_getName(object_getClass(object)));
+        SUPPRESS_UNRETAINED_ARG [NSException raise:NSInvalidArgumentException format:@"Object of type '%s' contains a cycle", class_getName(object_getClass(object))];
         return;
     }
 

@@ -1,16 +1,16 @@
 function shouldBe(actual, expected) {
     if (actual !== expected)
-        throw new Error('bad value: ' + actual);
+        throw new Error("bad value: " + actual);
 }
 
 function test1(start, end) {
-    return "/assets/omfg".substring(start, end) === '/assets/';
+    return "/assets/omfg".substring(start, end) === "/assets/";
 }
 noInline(test1);
 
 var count = 0;
-for (var i = 0; i < 1e6; ++i) {
+for (var i = 0; i < testLoopCount; ++i) {
     if (test1(0, 8))
         ++count;
 }
-shouldBe(count, 1e6);
+shouldBe(count, testLoopCount);

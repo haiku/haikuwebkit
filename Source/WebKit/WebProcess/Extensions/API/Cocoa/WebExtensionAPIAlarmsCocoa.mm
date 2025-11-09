@@ -109,7 +109,7 @@ void WebExtensionAPIAlarms::createAlarm(NSString *name, NSDictionary *alarmInfo,
             initialInterval = repeatInterval;
     }
 
-    if (!extensionContext().inTestingMode()) {
+    if (!protectedExtensionContext()->inTestingMode()) {
         // Enforce a minimum interval outside of testing.
         initialInterval = std::max(initialInterval, webExtensionMinimumAlarmInterval);
         repeatInterval = repeatInterval ? std::max(repeatInterval, webExtensionMinimumAlarmInterval) : 0_s;

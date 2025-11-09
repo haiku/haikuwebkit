@@ -1389,7 +1389,7 @@
                 "font-property": true,
                 "high-priority": true,
                 "sink-priority": true,
-                "style-converter": "TextSpacingTrim",
+                "style-converter": "StyleType<TextSpacingTrim>",
                 "parser-grammar": "<<values>>",
                 "parser-grammar-comment": "Current spec grammar is 'space-all | normal | space-first | trim-start | trim-both | trim-all | auto'"
             },
@@ -1416,7 +1416,7 @@
                 "font-property": true,
                 "high-priority": true,
                 "sink-priority": true,
-                "style-converter": "TextAutospace",
+                "style-converter": "StyleType<TextAutospace>",
                 "parser-grammar": "normal | auto | no-autospace | [ ideograph-alpha || ideograph-numeric ]@(no-single-item-opt)",
                 "parser-grammar-comment": "Current spec grammar is 'normal | auto | no-autospace | [ [ ideograph-alpha || ideograph-numeric || punctuation ] || [ insert | replace ] ]'"
             },
@@ -1569,7 +1569,7 @@
             "codegen-properties": {
                 "cascade-alias": "ruby-position",
                 "skip-style-builder": true,
-                "style-extractor-converter": "WebkitRubyPosition",
+                "style-extractor-custom": true,
                 "parser-grammar": "before | after | inter-character@(aliased-to=legacy-inter-character)",
                 "parser-grammar-comment": "Current spec grammar is '[ alternate || [ over | under ] ] | inter-character'."
             },
@@ -4593,13 +4593,13 @@
                 "none"
             ],
             "codegen-properties": {
-                "style-converter": "ImageOrientation",
+                "style-converter": "StyleType<ImageOrientation>",
                 "parser-grammar": "<<values>>",
                 "parser-grammar-comment": "Current spec grammar is 'from-image | none | [ <angle> || flip ]'"
             },
             "specification": {
                 "category": "css-images",
-                "url": "https://www.w3.org/TR/css3-images/#the-image-orientation"
+                "url": "https://drafts.csswg.org/css-images-3/#propdef-image-orientation"
             }
         },
         "image-rendering": {
@@ -5843,6 +5843,26 @@
             "specification": {
                 "category": "css-masking",
                 "url": "https://drafts.fxtf.org/css-masking-1/#propdef-mask-type"
+            }
+        },
+        "math-depth": {
+            "animation-type": "by computed value",
+            "inherited": true,
+            "initial": "0",
+            "values": [
+                "auto-add"
+            ],
+            "codegen-properties": {
+                "animation-wrapper": "StyleTypeWrapper",
+                "settings-flag": "cssMathDepthEnabled",
+                "style-converter": "StyleType<MathDepth>",
+                "top-priority": true,
+                "top-priority-reason": "This is top priority since it affects 'font-size', which is 'high-priority'",
+                "parser-grammar": "auto-add | add(<integer>) | <integer>"
+            },
+            "specification": {
+                "category": "mathml-core",
+                "url": "https://w3c.github.io/mathml-core/#propdef-math-depth"
             }
         },
         "math-shift": {
@@ -7162,7 +7182,7 @@
                 "markers"
             ],
             "codegen-properties": {
-                "style-converter": "PaintOrder",
+                "style-converter": "StyleType<SVGPaintOrder>",
                 "parser-function": "consumePaintOrder",
                 "parser-grammar-unused": "normal | [ fill || stroke || markers ]",
                 "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
@@ -7855,6 +7875,10 @@
                 "lowercase",
                 "full-size-kana",
                 "full-width",
+                {
+                    "value": "math-auto",
+                    "settings-flag": "cssTextTransformMathAutoEnabled"
+                },
                 "none"
             ],
             "codegen-properties": {
@@ -7862,7 +7886,7 @@
                     "-epub-text-transform"
                 ],
                 "style-converter": "TextTransform",
-                "parser-grammar": "none | [ [ capitalize | uppercase | lowercase ] || full-width || full-size-kana ]@(no-single-item-opt)"
+                "parser-grammar": "none | [ [ capitalize | uppercase | lowercase ] || full-width || full-size-kana ]@(no-single-item-opt) | math-auto@(settings-flag=cssTextTransformMathAutoEnabled)"
             },
             "specification": {
                 "category": "css-text",
@@ -8311,7 +8335,7 @@
                 "contents"
             ],
             "codegen-properties": {
-                "style-converter": "WillChange",
+                "style-converter": "StyleType<WillChange>",
                 "parser-function": "consumeWillChange",
                 "parser-grammar-unused": "auto | [ scroll-position | contents | <custom-ident excluding=will-change,none,all,auto,scroll-position,contents> ]#",
                 "parser-grammar-unused-reason": "Needs support for CSS property names in the value of a property."
@@ -10029,7 +10053,7 @@
             "animation-type": "discrete",
             "initial": "row",
             "codegen-properties": {
-                "style-converter": "GridAutoFlow",
+                "style-converter": "StyleType<GridAutoFlow>",
                 "parser-function": "consumeGridAutoFlow",
                 "parser-grammar-unused": "[ row | column ] || dense",
                 "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
@@ -10641,7 +10665,7 @@
                 ],
                 "cascade-alias": "text-combine-upright",
                 "skip-style-builder": true,
-                "style-extractor-converter": "WebkitTextCombine",
+                "style-extractor-custom": true,
                 "parser-grammar": "<<values>>"
             },
             "status": {
@@ -11861,7 +11885,7 @@
             ],
             "codegen-properties": {
                 "settings-flag": "cssScrollbarWidthEnabled",
-                "style-builder-converter": "ScrollbarWidth",
+                "style-converter": "StyleType<ScrollbarWidth>",
                 "parser-grammar": "<<values>>"
             },
             "specification": {

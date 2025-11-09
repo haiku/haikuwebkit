@@ -71,8 +71,8 @@ inline void ScriptExecutionContext::postCrossThreadTask(Arguments&&... arguments
 template<typename Promise, typename TaskType>
 void ScriptExecutionContext::enqueueTaskWhenSettled(Ref<Promise>&& promise, TaskSource taskSource, TaskType&& task)
 {
-    auto request = makeUnique<NativePromiseRequest>();
-    WeakPtr weakRequest { *request };
+    auto request = NativePromiseRequest::create();
+    WeakPtr weakRequest { request.get() };
     auto command = promise->whenSettled(nativePromiseDispatcher(), [weakThis = WeakPtr { *this }, taskSource, task = WTFMove(task), request = WTFMove(request)] (auto&& result) mutable {
         request->complete();
         RefPtr protectedThis = weakThis.get();

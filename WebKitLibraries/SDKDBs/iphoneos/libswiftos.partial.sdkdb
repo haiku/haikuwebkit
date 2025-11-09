@@ -630,7 +630,7 @@
     {"access": "public", "introduced": "10", "linkage": "exported", "name": "_$sSo9OS_os_logC0B0E9subsystem8categoryABSS_SStcfC"},
     {"access": "public", "introduced": "10", "linkage": "exported", "name": "_$sSo9OS_os_logC0B0E9subsystem8categoryABSS_SStcfc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

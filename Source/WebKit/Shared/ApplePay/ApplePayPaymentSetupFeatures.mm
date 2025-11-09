@@ -40,13 +40,25 @@ namespace WebKit {
 static RetainPtr<NSArray<PKPaymentSetupFeature *>> toPlatformFeatures(Vector<Ref<WebCore::ApplePaySetupFeature>>&& features)
 {
     RetainPtr platformFeatures = adoptNS([[NSMutableArray alloc] initWithCapacity:features.size()]);
-    for (auto& feature : features) {
+    for (auto& feature : features)
         [platformFeatures addObject:RetainPtr { feature->platformFeature() }.get()];
-    }
+    return platformFeatures;
+}
+
+static RetainPtr<NSArray<PKPaymentSetupFeature *>> toPlatformFeatures(Vector<RetainPtr<PKPaymentSetupFeature>>&& features)
+{
+    RetainPtr platformFeatures = adoptNS([[NSMutableArray alloc] initWithCapacity:features.size()]);
+    for (auto& feature : features)
+        [platformFeatures addObject:feature.get()];
     return platformFeatures;
 }
 
 PaymentSetupFeatures::PaymentSetupFeatures(Vector<Ref<WebCore::ApplePaySetupFeature>>&& features)
+    : m_platformFeatures { toPlatformFeatures(WTFMove(features)) }
+{
+}
+
+PaymentSetupFeatures::PaymentSetupFeatures(Vector<RetainPtr<PKPaymentSetupFeature>>&& features)
     : m_platformFeatures { toPlatformFeatures(WTFMove(features)) }
 {
 }
@@ -65,6 +77,14 @@ PaymentSetupFeatures::operator Vector<Ref<WebCore::ApplePaySetupFeature>>() cons
             features.append(WebCore::ApplePaySetupFeature::create(platformFeature));
     }
     return features;
+}
+
+Vector<RetainPtr<PKPaymentSetupFeature>> PaymentSetupFeatures::serializableFeatures() const
+{
+    Vector<RetainPtr<PKPaymentSetupFeature>> result;
+    for (PKPaymentSetupFeature *feature in m_platformFeatures.get())
+        result.append(feature);
+    return result;
 }
 
 } // namespace WebKit

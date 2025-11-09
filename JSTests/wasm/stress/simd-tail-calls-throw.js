@@ -1,4 +1,4 @@
-//@ requireOptions("--useWasmSIMD=1", "--useWasmTailCalls=true", "--maximumWasmCalleeSIzeForInlining=0")
+//@ requireOptions("--useWasmSIMD=1", "--useWasmTailCalls=true", "--wasmInliningMaximumWasmCalleeSize=0")
 //@ skip if !$isSIMDPlatform
 import { instantiate } from "../wabt-wrapper.js"
 import * as assert from "../assert.js"

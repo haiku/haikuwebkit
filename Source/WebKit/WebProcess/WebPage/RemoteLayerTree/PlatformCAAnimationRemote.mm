@@ -506,7 +506,7 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
         }
 
         if (properties.timingFunctions.size())
-            [basicAnimation setTimingFunction:toCAMediaTimingFunction(properties.timingFunctions[0].get(), properties.reverseTimingFunctions)];
+            [basicAnimation setTimingFunction:toCAMediaTimingFunction(properties.timingFunctions[0].get(), properties.reverseTimingFunctions).get()];
 
         caAnimation = WTFMove(basicAnimation);
         break;
@@ -542,11 +542,11 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
         }
 
         if (properties.timingFunction)
-            [keyframeAnimation setTimingFunction:toCAMediaTimingFunction(Ref { *properties.timingFunction }, false)]; // FIXME: handle reverse.
+            [keyframeAnimation setTimingFunction:toCAMediaTimingFunction(Ref { *properties.timingFunction }, false).get()]; // FIXME: handle reverse.
 
         if (properties.timingFunctions.size()) {
             [keyframeAnimation setTimingFunctions:createNSArray(properties.timingFunctions, [&] (auto& function) {
-                return toCAMediaTimingFunction(function.get(), properties.reverseTimingFunctions);
+                return toCAMediaTimingFunction(function.get(), properties.reverseTimingFunctions).autorelease();
             }).get()];
         }
 
@@ -587,11 +587,11 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
     if ([caAnimation isKindOfClass:[CAPropertyAnimation class]]) {
         [(CAPropertyAnimation *)caAnimation setAdditive:properties.additive];
         if (properties.valueFunction != PlatformCAAnimation::ValueFunctionType::NoValueFunction)
-            [(CAPropertyAnimation *)caAnimation setValueFunction:[CAValueFunction functionWithName:toCAValueFunctionType(properties.valueFunction)]];
+            [(CAPropertyAnimation *)caAnimation setValueFunction:[CAValueFunction functionWithName:toCAValueFunctionType(properties.valueFunction).get()]];
     }
 
     if (properties.fillMode != PlatformCAAnimation::FillModeType::NoFillMode)
-        [caAnimation setFillMode:toCAFillModeType(properties.fillMode)];
+        [caAnimation setFillMode:toCAFillModeType(properties.fillMode).get()];
 
     if (properties.hasExplicitBeginTime)
         [caAnimation setValue:@YES forKey:WKExplicitBeginTimeFlag];

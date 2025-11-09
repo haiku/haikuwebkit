@@ -115,6 +115,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldSynthesizeTouchEventsAfterNonSyntheticClickQuirk : 1 { false };
     bool shouldTreatAddingMouseOutEventListenerAsContentChange : 1 { false };
     bool requirePageVisibilityToPlayAudioQuirk : 1 { false };
+    bool needsClaudeSidebarViewportUnitQuirk : 1 { false };
 #endif // PLATFORM(IOS_FAMILY)
 
 #if PLATFORM(IOS) || PLATFORM(VISION)
@@ -156,6 +157,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldEnableSpeakerSelectionPermissionsPolicyQuirk : 1 { false };
     bool shouldEnableEnumerateDeviceQuirk : 1 { false };
     bool shouldEnableCameraAndMicrophonePermissionStateQuirk : 1 { false };
+    bool shouldEnableRemoteTrackLabelQuirk : 1 { false };
 #endif
 #if ENABLE(WEB_RTC)
     bool shouldEnableRTCEncodedStreamsQuirk : 1 { false };

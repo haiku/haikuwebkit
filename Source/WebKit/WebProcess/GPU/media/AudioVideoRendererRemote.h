@@ -49,6 +49,8 @@ class Decoder;
 namespace WebCore {
 struct HostingContext;
 class VideoLayerManager;
+class CDMInstance;
+class LegacyCDMSession;
 }
 
 namespace WebKit {
@@ -190,6 +192,15 @@ private:
     bool inVideoFullscreenOrPictureInPicture() const final;
     WebCore::FloatSize naturalSize() const final { return m_naturalSize; }
 
+#if ENABLE(ENCRYPTED_MEDIA)
+    void setCDMInstance(WebCore::CDMInstance*) final;
+    Ref<WebCore::MediaPromise> setInitData(Ref<WebCore::SharedBuffer>) final;
+    void attemptToDecrypt() final;
+#endif
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+    void setCDMSession(WebCore::LegacyCDMSession*) final;
+#endif
+
     // Logger
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger.get(); }
@@ -208,7 +219,7 @@ private:
 
     const ThreadSafeWeakPtr<GPUProcessConnection> m_gpuProcessConnection;
     const Ref<MessageReceiver> m_receiver;
-    RemoteAudioVideoRendererIdentifier m_identifier;
+    const RemoteAudioVideoRendererIdentifier m_identifier;
 
     bool m_shutdown { false };
 

@@ -190,13 +190,15 @@ void Navigator::share(Document& document, const ShareData& data, Ref<DeferredPro
         ShareDataOriginator::Web,
     };
     if (document.settings().webShareFileAPIEnabled() && !data.files.isEmpty()) {
-        if (m_loader)
-            m_loader->cancel();
+        RefPtr loader = m_loader;
+        if (loader)
+            loader->cancel();
 
-        m_loader = ShareDataReader::create([this, promise = WTFMove(promise)](ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
+        loader = ShareDataReader::create([this, protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<ShareDataWithParsedURL&> readData) mutable {
             showShareData(readData, WTFMove(promise));
         });
-        m_loader->start(&document, WTFMove(shareData));
+        m_loader = loader.copyRef();
+        loader->start(&document, WTFMove(shareData));
         return;
     }
     this->showShareData(shareData, WTFMove(promise));
@@ -260,7 +262,7 @@ void Navigator::initializePluginAndMimeTypeArrays()
         return;
 
     RefPtr frame = this->frame();
-    bool needsEmptyNavigatorPluginsQuirk = frame && frame->document() && frame->document()->quirks().shouldNavigatorPluginsBeEmpty();
+    bool needsEmptyNavigatorPluginsQuirk = frame && frame->document() && frame->protectedDocument()->quirks().shouldNavigatorPluginsBeEmpty();
     if (!frame || !frame->page() || needsEmptyNavigatorPluginsQuirk) {
         if (needsEmptyNavigatorPluginsQuirk)
             frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Info, "QUIRK: Navigator plugins / mimeTypes empty on marcus.com. More information at https://bugs.webkit.org/show_bug.cgi?id=248798"_s);
@@ -278,7 +280,7 @@ void Navigator::initializePluginAndMimeTypeArrays()
 
     // macOS uses a PDF Plugin (which may be disabled). Other ports handle PDF's through native
     // platform views outside the engine, or use pdf.js.
-    PluginInfo pdfPluginInfo = frame->page()->pluginData().builtInPDFPlugin().value_or(PluginData::dummyPDFPluginInfo());
+    PluginInfo pdfPluginInfo = frame->protectedPage()->pluginData().builtInPDFPlugin().value_or(PluginData::dummyPDFPluginInfo());
 
     Vector<Ref<DOMPlugin>> domPlugins;
     Vector<Ref<DOMMimeType>> domMimeTypes;
@@ -457,7 +459,7 @@ NavigatorUAData& Navigator::userAgentData() const
     RefPtr frame = this->frame();
     if (frame && frame->page()) {
         RefPtr client = frame->loader().client();
-        if (client->hasCustomUserAgent() || (frame->document() && frame->document()->quirks().needsCustomUserAgentData())) {
+        if (client->hasCustomUserAgent() || (frame->document() && frame->protectedDocument()->quirks().needsCustomUserAgentData())) {
             auto userAgentString = frame->loader().userAgent({ });
             Ref parser = UserAgentStringParser::create(userAgentString);
             std::optional userAgentStringData = parser->parse();

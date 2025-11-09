@@ -47,6 +47,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemoteBindGroupProxy() const { return false; }
+
 protected:
     BindGroup() = default;
 

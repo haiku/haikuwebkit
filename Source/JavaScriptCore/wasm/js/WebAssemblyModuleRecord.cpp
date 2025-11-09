@@ -553,18 +553,20 @@ void WebAssemblyModuleRecord::initializeExports(JSGlobalObject* globalObject)
 
         // 1. If e is a closure c:
         //   i. If there is an Exported Function Exotic Object func in funcs whose func.[[Closure]] equals c, then return func.
-        //   ii. (Note: At most one wrapper is created for any closure, so func is unique, even if there are multiple occurrances in the list. Moreover, if the item was an import that is already an Exported Function Exotic Object, then the original function object will be found. For imports that are regular JS functions, a new wrapper will be created.)
+        //   ii. (Note: At most one wrapper is created for any closure, so func is unique, even if there are multiple occurrences in the list. Moreover, if the item was an import that is already an Exported Function Exotic Object, then the original function object will be found. For imports that are regular JS functions, a new wrapper will be created.)
         if (functionIndexSpace < functionImportCount) {
             JSObject* functionImport = m_instance->importFunction(functionIndexSpace).get();
             if (!functionImport) {
-                // No function import means the import is a wasm builtin.
+                // No functionImport means the import is a Wasm builtin, and we should use its jsWrapper() as the functionImport.
                 // The boxed callee in callLinkInfo is a WasmBuiltinCallee with a pointer to the builtin.
                 auto* callLinkInfo = m_instance->importFunctionInfo(functionIndexSpace);
                 auto* callee = uncheckedDowncast<Wasm::WasmBuiltinCallee>(uncheckedDowncast<Wasm::Callee>(callLinkInfo->boxedCallee.asNativeCallee()));
                 ASSERT(callee->compilationMode() == Wasm::CompilationMode::WasmBuiltinMode);
                 const WebAssemblyBuiltin* builtin = callee->builtin();
-                wrapper = builtin->jsWrapper(globalObject);
-            } else if (isWebAssemblyHostFunction(functionImport))
+                functionImport = builtin->jsWrapper(globalObject);
+            }
+
+            if (isWebAssemblyHostFunction(functionImport))
                 wrapper = functionImport;
             else {
                 Wasm::TypeIndex typeIndex = module->typeIndexFromFunctionIndexSpace(functionIndexSpace);

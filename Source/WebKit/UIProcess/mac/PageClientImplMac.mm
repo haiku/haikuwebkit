@@ -180,7 +180,7 @@ bool PageClientImpl::isViewFocused()
 
 void PageClientImpl::assistiveTechnologyMakeFirstResponder()
 {
-    [[m_view.get() window] makeFirstResponder:m_view.get().get()];
+    [retainPtr([m_view.get() window]) makeFirstResponder:m_view.get().get()];
 }
     
 void PageClientImpl::makeFirstResponder()
@@ -188,7 +188,7 @@ void PageClientImpl::makeFirstResponder()
     if (m_shouldSuppressFirstResponderChanges)
         return;
 
-    [[m_view.get() window] makeFirstResponder:m_view.get().get()];
+    [retainPtr([m_view.get() window]) makeFirstResponder:m_view.get().get()];
 }
     
 bool PageClientImpl::isViewVisible(NSView *view, NSWindow *viewWindow)
@@ -369,7 +369,7 @@ void PageClientImpl::registerEditCommand(Ref<WebEditCommandProxy>&& command, Und
 
 void PageClientImpl::registerInsertionUndoGrouping()
 {
-    registerInsertionUndoGroupingWithUndoManager([m_view.get() undoManager]);
+    registerInsertionUndoGroupingWithUndoManager(retainPtr([m_view.get() undoManager]).get());
 }
 
 void PageClientImpl::createPDFHUD(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID, const WebCore::IntRect& rect)
@@ -399,12 +399,14 @@ void PageClientImpl::clearAllEditCommands()
 
 bool PageClientImpl::canUndoRedo(UndoOrRedo undoOrRedo)
 {
-    return (undoOrRedo == UndoOrRedo::Undo) ? [[m_view.get() undoManager] canUndo] : [[m_view.get() undoManager] canRedo];
+    RetainPtr undoManager = [m_view.get() undoManager];
+    return undoOrRedo == UndoOrRedo::Undo ? [undoManager canUndo] : [undoManager canRedo];
 }
 
 void PageClientImpl::executeUndoRedo(UndoOrRedo undoOrRedo)
 {
-    return (undoOrRedo == UndoOrRedo::Undo) ? [[m_view.get() undoManager] undo] : [[m_view.get() undoManager] redo];
+    RetainPtr undoManager = [m_view.get() undoManager];
+    return undoOrRedo == UndoOrRedo::Undo ? [undoManager undo] : [undoManager redo];
 }
 
 void PageClientImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& image, const std::optional<WebCore::NodeIdentifier>& nodeID)
@@ -437,12 +439,12 @@ void PageClientImpl::notifyInputContextAboutDiscardedComposition()
 
 FloatRect PageClientImpl::convertToDeviceSpace(const FloatRect& rect)
 {
-    return toDeviceSpace(rect, [m_view.get() window]);
+    return toDeviceSpace(rect, retainPtr([m_view.get() window]).get());
 }
 
 FloatRect PageClientImpl::convertToUserSpace(const FloatRect& rect)
 {
-    return toUserSpace(rect, [m_view.get() window]);
+    return toUserSpace(rect, retainPtr([m_view.get() window]).get());
 }
 
 void PageClientImpl::pinnedStateWillChange()
@@ -463,14 +465,14 @@ void PageClientImpl::drawPageBorderForPrinting(WebCore::FloatSize&& size)
 IntPoint PageClientImpl::screenToRootView(const IntPoint& point)
 {
     RetainPtr view = m_view.get();
-    NSPoint windowCoord = [[view window] convertPointFromScreen:point];
+    NSPoint windowCoord = [retainPtr([view window]) convertPointFromScreen:point];
     return IntPoint([view convertPoint:windowCoord fromView:nil]);
 }
 
 IntPoint PageClientImpl::rootViewToScreen(const IntPoint& point)
 {
     RetainPtr view = m_view.get();
-    return IntPoint([[view window] convertPointToScreen:[view convertPoint:point toView:nil]]);
+    return IntPoint([retainPtr([view window]) convertPointToScreen:[view convertPoint:point toView:nil]]);
 }
 
 IntRect PageClientImpl::rootViewToScreen(const IntRect& rect)
@@ -478,7 +480,7 @@ IntRect PageClientImpl::rootViewToScreen(const IntRect& rect)
     NSRect tempRect = rect;
     RetainPtr view = m_view.get();
     tempRect = [view convertRect:tempRect toView:nil];
-    tempRect.origin = [[view window] convertPointToScreen:tempRect.origin];
+    tempRect.origin = [retainPtr([view window]) convertPointToScreen:tempRect.origin];
     return enclosingIntRect(tempRect);
 }
 

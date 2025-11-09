@@ -33,9 +33,11 @@
 #include "config.h"
 #include "InspectorTimelineAgent.h"
 
+#include "Element.h"
 #include "Event.h"
 #include "InspectorAnimationAgent.h"
 #include "InspectorCPUProfilerAgent.h"
+#include "InspectorDOMAgent.h"
 #include "InspectorMemoryAgent.h"
 #include "InstrumentingAgents.h"
 #include "JSExecState.h"
@@ -346,6 +348,20 @@ void InspectorTimelineAgent::didPerformanceMark(const String& label, std::option
     appendRecord(TimelineRecordFactory::createTimeStampData(label), TimelineRecordType::TimeStamp, true, timestamp);
 }
 
+void InspectorTimelineAgent::didEnqueueFirstContentfulPaint()
+{
+    appendRecord(JSON::Object::create(), TimelineRecordType::FirstContentfulPaint, false);
+}
+
+void InspectorTimelineAgent::didEnqueueLargestContentfulPaint(Element* element, unsigned area)
+{
+    Inspector::Protocol::DOM::NodeId nodeID = 0;
+    if (auto* domAgent = Ref { m_instrumentingAgents.get() }->persistentDOMAgent())
+        nodeID = domAgent->pushNodeToFrontend(element);
+
+    appendRecord(TimelineRecordFactory::createLargestContentfulPaintData(nodeID, area), TimelineRecordType::LargestContentfulPaint, false);
+}
+
 void InspectorTimelineAgent::startProgrammaticCapture()
 {
     ASSERT(!tracking());
@@ -570,6 +586,11 @@ static Inspector::Protocol::Timeline::EventType toProtocol(TimelineRecordType ty
 
     case TimelineRecordType::ObserverCallback:
         return Inspector::Protocol::Timeline::EventType::ObserverCallback;
+
+    case TimelineRecordType::FirstContentfulPaint:
+        return Inspector::Protocol::Timeline::EventType::FirstContentfulPaint;
+    case TimelineRecordType::LargestContentfulPaint:
+        return Inspector::Protocol::Timeline::EventType::LargestContentfulPaint;
 
     case TimelineRecordType::Screenshot:
         return Inspector::Protocol::Timeline::EventType::Screenshot;

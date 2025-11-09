@@ -30,8 +30,6 @@
 #include <wtf/HashTraits.h>
 #include <wtf/PtrTag.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WTF {
 
 class PrintStream;
@@ -207,11 +205,13 @@ public:
     template<typename T, typename = std::enable_if_t<!std::is_same<T, bool>::value>>
     operator T() = delete;
 
-    CodePtr operator+(size_t sizeInBytes) const { return CodePtr::fromUntaggedPtr(untaggedPtr<uint8_t*>() + sizeInBytes); }
-    CodePtr operator-(size_t sizeInBytes) const { return CodePtr::fromUntaggedPtr(untaggedPtr<uint8_t*>() - sizeInBytes); }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+    WTF_UNSAFE_BUFFER_USAGE CodePtr operator+(size_t sizeInBytes) const { return CodePtr::fromUntaggedPtr(untaggedPtr<uint8_t*>() + sizeInBytes); }
+    WTF_UNSAFE_BUFFER_USAGE CodePtr operator-(size_t sizeInBytes) const { return CodePtr::fromUntaggedPtr(untaggedPtr<uint8_t*>() - sizeInBytes); }
 
-    CodePtr& operator+=(size_t sizeInBytes) { return *this = *this + sizeInBytes; }
-    CodePtr& operator-=(size_t sizeInBytes) { return *this = *this - sizeInBytes; }
+    WTF_UNSAFE_BUFFER_USAGE CodePtr& operator+=(size_t sizeInBytes) { return *this = *this + sizeInBytes; }
+    WTF_UNSAFE_BUFFER_USAGE CodePtr& operator-=(size_t sizeInBytes) { return *this = *this - sizeInBytes; }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     void dumpWithName(ASCIILiteral name, PrintStream& out) const
     {
@@ -299,5 +299,3 @@ struct HashTraits<CodePtr<tag, attr>> : public CustomHashTraits<CodePtr<tag, att
 } // namespace WTF
 
 using WTF::CodePtr;
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

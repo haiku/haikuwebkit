@@ -10,16 +10,16 @@ msgstr ""
 "Project-Id-Version: webkit HEAD\n"
 "Report-Msgid-Bugs-To: https://bugs.webkit.org/enter_bug.cgi?"
 "product=WebKit&component=WebKitGTK\n"
-"POT-Creation-Date: 2025-09-23 16:06+0000\n"
-"PO-Revision-Date: 2025-09-11 11:37+0200\n"
+"POT-Creation-Date: 2025-10-26 04:12+0000\n"
+"PO-Revision-Date: 2025-10-26 09:29+0100\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || "
-"n%100==4 ? 3 : 0);\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
+"%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 2.2.1\n"
 
@@ -1195,7 +1195,15 @@ msgstr "Pokaži prostorsko"
 msgid "View Immersive"
 msgstr "Poglobljeni pogled"
 
-#: ../../network/soup/NetworkStorageSessionSoup.cpp:327
+#: ../../LocalizedStrings.cpp:1628
+msgid "SPATIAL"
+msgstr "PROSTORSKO"
+
+#: ../../LocalizedStrings.cpp:1633
+msgid "PANORAMA"
+msgstr "PANORAMA"
+
+#: ../../network/soup/NetworkStorageSessionSoup.cpp:331
 msgid "WebKitGTK password"
 msgstr "Geslo za WebKitGTK"
 
@@ -1476,7 +1484,7 @@ msgid "Plug-in handled load"
 msgstr "Obremenitev, ki jo prenaša vstavek"
 
 #: ../../../../WebKit/Shared/WebErrors.cpp:95
-#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:2635
+#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:2634
 msgid "Load request cancelled"
 msgstr "Zahteva po nalaganju preklicana"
 
@@ -1504,21 +1512,21 @@ msgstr "Neveljaven obseg strani"
 msgid "User cancelled the download"
 msgstr "Uporabnik je preklical prejemanje"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:180
+#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:179
 msgid "Favicons database not initialized yet"
 msgstr "Podatkovna zbirka ikon zaznamkov še ni začeta"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:187
+#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:186
 #, c-format
 msgid "Page %s does not have a favicon"
 msgstr "Stran %s nima navedene ikone zaznamka"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:198
+#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:197
 #, c-format
 msgid "Unknown favicon for page %s"
 msgstr "Ni ikone zaznamke za stran %s"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:270
+#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:269
 msgid "Failed to create texture"
 msgstr "Ustvarjanje teksture ni uspelo"
 
@@ -2062,7 +2070,7 @@ msgid "WebRTC UDP ports range, the format is min-port:max-port"
 msgstr "Obseg vrat WebRTC UDP, oblika je najm-vrata:najv-vrata"
 
 #: ../../../../WebKit/UIProcess/API/glib/WebKitWebResource.cpp:358
-#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5423
+#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5422
 #: ../../../../WebKit/WebProcess/InjectedBundle/API/glib/WebKitWebExtension.cpp:281
 #: ../../../../WebKit/WebProcess/InjectedBundle/API/glib/WebKitWebPage.cpp:940
 msgid "Operation was cancelled"
@@ -2072,12 +2080,12 @@ msgstr "Postopek je bil preklican"
 msgid "Local files"
 msgstr "Krajevne datoteke"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5184
-#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5208
+#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5183
+#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5207
 msgid "There was an error creating the snapshot"
 msgstr "Pri ustvarjanju posnetka je prišlo do napake"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5429
+#: ../../../../WebKit/UIProcess/API/glib/WebKitWebView.cpp:5428
 #: ../../../../WebKit/WebProcess/InjectedBundle/API/glib/WebKitWebExtension.cpp:287
 #: ../../../../WebKit/WebProcess/InjectedBundle/API/glib/WebKitWebPage.cpp:946
 #, c-format
@@ -2170,7 +2178,7 @@ msgstr "Ostani na strani"
 msgid "Leave Page"
 msgstr "Zapusti stran"
 
-#: ../../../../WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp:2665
+#: ../../../../WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp:2666
 msgid "Website running in fullscreen mode"
 msgstr "Spletna stran se izvaja v celozaslonskem načinu"
 

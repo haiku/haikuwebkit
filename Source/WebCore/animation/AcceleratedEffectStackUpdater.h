@@ -30,7 +30,6 @@
 #include <WebCore/AcceleratedEffect.h>
 #include <WebCore/AnimationMalloc.h>
 #include <wtf/HashSet.h>
-#include <wtf/Seconds.h>
 
 namespace WebCore {
 
@@ -41,19 +40,17 @@ struct Styleable;
 class AcceleratedEffectStackUpdater {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(AcceleratedEffectStackUpdater, Animation);
 public:
-    AcceleratedEffectStackUpdater(Document&);
+    AcceleratedEffectStackUpdater() = default;
 
     void updateEffectStacks();
     void updateEffectStackForTarget(const Styleable&);
 
-    Seconds timeOrigin() const { return m_timeOrigin; }
-
-protected:
+    const HashSet<Ref<AcceleratedTimeline>>& timelines() const { return m_timelines; }
 
 private:
     using HashedStyleable = std::pair<Element*, std::optional<Style::PseudoElementIdentifier>>;
     HashSet<HashedStyleable> m_targetsPendingUpdate;
-    Seconds m_timeOrigin;
+    HashSet<Ref<AcceleratedTimeline>> m_timelines;
 };
 
 } // namespace WebCore

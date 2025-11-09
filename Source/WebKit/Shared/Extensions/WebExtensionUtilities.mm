@@ -100,13 +100,13 @@ static NSString *valueToTypeString(NSObject *value, bool plural = false)
         if (scriptValue.isUndefined)
             return plural ? @"undefined values" : @"undefined";
 
-        if (scriptValue._isRegularExpression)
+        if (isRegularExpression(scriptValue.context.JSGlobalContextRef, scriptValue.JSValueRef))
             return plural ? @"regular expressions" : @"a regular expression";
 
-        if (scriptValue._isThenable)
+        if (isThenable(scriptValue.context.JSGlobalContextRef, scriptValue.JSValueRef))
             return plural ? @"promises" : @"a promise";
 
-        if (scriptValue._isFunction)
+        if (isFunction(scriptValue.context.JSGlobalContextRef, scriptValue.JSValueRef))
             return plural ? @"functions" : @"a function";
     }
 

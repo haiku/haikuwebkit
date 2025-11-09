@@ -422,7 +422,7 @@ void NetworkDataTaskCocoa::didReceiveResponse(WebCore::ResourceResponse&& respon
     if (isTopLevelNavigation())
         updateFirstPartyInfoForSession(response.url());
 #if ENABLE(NETWORK_ISSUE_REPORTING)
-    else if (NetworkIssueReporter::shouldReport([m_task _incompleteTaskMetrics])) {
+    else if (NetworkIssueReporter::shouldReport(retainPtr([m_task _incompleteTaskMetrics]).get())) {
         if (CheckedPtr session = networkSession())
             session->reportNetworkIssue(*m_webPageProxyID, firstRequest().url());
     }

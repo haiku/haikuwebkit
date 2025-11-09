@@ -54,6 +54,12 @@ public:
     WEBCORE_EXPORT static void platformSetCaptionDisplayMode(CaptionDisplayMode);
     WEBCORE_EXPORT static void setCachedCaptionDisplayMode(CaptionDisplayMode);
 
+    WEBCORE_EXPORT static Vector<String> platformProfileIDs();
+    WEBCORE_EXPORT static String platformActiveProfileID();
+    WEBCORE_EXPORT static bool canSetActiveProfileID();
+    WEBCORE_EXPORT static bool setActiveProfileID(const String&);
+    WEBCORE_EXPORT static String nameForProfileID(const String&);
+
     bool userPrefersCaptions() const override;
     bool userPrefersSubtitles() const override;
     bool userPrefersTextDescriptions() const final;

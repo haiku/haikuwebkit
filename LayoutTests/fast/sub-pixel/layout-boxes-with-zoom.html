@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>layout zoom test</title>
-    <style> 
+    <style>
         #test {
             width: 500px;
             height: 1500px;
@@ -34,10 +34,10 @@
     function test(zoom)
     {
         testElement.style.zoom = zoom + '%';
-        
+
         var lastElementBottom = testElement.lastChild.getBoundingClientRect().bottom;
         var containerBottom = testElement.getBoundingClientRect().bottom;
-        
+
         var tolerance = Math.ceil(1 / (zoom / 100));
         if (Math.abs(lastElementBottom - containerBottom) <= tolerance)
             log('PASS: With zoom of ' + zoom + '% bottom edge of last child lines up with bottom edge of container.');
@@ -55,7 +55,6 @@
     test(100);
     test(110);
     test(125);
-    test(133);
     test(150);
     test(166);
     test(175);

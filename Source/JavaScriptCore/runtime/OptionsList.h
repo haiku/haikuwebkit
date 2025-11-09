@@ -329,10 +329,14 @@ bool hasCapacityToUseLargeGigacage();
     v(Unsigned, maximumBinaryStringSwitchTotalLength, 2000, Normal, nullptr) \
     v(Unsigned, maximumRegExpTestInlineCodesize, 500, Normal, "Maximum code size in bytes for inlined RegExp.test JIT code."_s) \
     \
-    v(Unsigned, maximumWasmDepthForInlining, isIOS() ? 2 : 8, Normal, "Maximum inlining depth to consider inlining a wasm function."_s) \
-    v(Unsigned, maximumWasmCalleeSizeForInlining, 200, Normal, "Maximum wasm size in bytes to consider inlining a wasm function."_s) \
-    v(Unsigned, maximumWasmCallerSizeForInlining, 10000, Normal, "Maximum wasm size in bytes for the caller of an inlined function."_s) \
-    v(Unsigned, maximumWasmSelfRecursionDepthForInlining, 5, Normal, "Maximum self cursion inlining depth to consider inlining a wasm function."_s) \
+    v(Unsigned, wasmInliningMaximumDepth, 7, Normal, "Maximum inlining depth to consider inlining a wasm function."_s) \
+    v(Unsigned, wasmInliningMaximumWasmCalleeSize, 500, Normal, "Maximum wasm size in bytes to consider inlining a wasm function."_s) \
+    v(Unsigned, wasmInliningMaximumCount, 60, Normal, "Maximum inlining count to consider inlining a wasm function."_s) \
+    v(Unsigned, wasmInliningMinimumBudget, 50, Normal, "Minimum budget for which the wasmInliningFactor does not apply"_s) \
+    v(Unsigned, wasmInliningFactor, 5, Normal, "Maximum multiple budget in comparison to initial wasm size"_s) \
+    v(Unsigned, wasmInliningBudget, 6000, Normal, "Maximum budget that allows inlining more"_s) \
+    v(Unsigned, wasmInliningTinyFunctionThreshold, 12, Normal, "Wasm size threshold for tiny wasm functions"_s) \
+    v(Unsigned, wasmInliningSmallFunctionThreshold, 50, Normal, "Wasm size threshold for small wasm functions"_s) \
     \
     v(Double, jitPolicyScale, 1.0, Normal, "scale JIT thresholds to this specified ratio between 0.0 (compile ASAP) and 1.0 (compile like normal)."_s) \
     v(Bool, forceEagerCompilation, false, Normal, nullptr) \

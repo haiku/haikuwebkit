@@ -643,6 +643,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/model-element/ModelPlayerAccessibilityChildren.h
     Modules/model-element/ModelPlayerAnimationState.h
     Modules/model-element/ModelPlayerClient.h
+    Modules/model-element/ModelPlayerGraphicsLayerConfiguration.h
     Modules/model-element/ModelPlayerIdentifier.h
     Modules/model-element/ModelPlayerProvider.h
     Modules/model-element/ModelPlayerTransformState.h
@@ -1039,9 +1040,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     bridge/IdentifierRep.h
 
     bridge/jsc/BridgeJSC.h
-
-    bridge/objc/WebScriptObject.h
-    bridge/objc/WebScriptObjectPrivate.h
 
     bridge/runtime_method.h
     bridge/runtime_object.h
@@ -2197,6 +2195,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/WebKitJSHandle.h
     page/WebKitNamespace.h
     page/WebKitSerializedNode.h
+    page/WebKitStringMatcher.h
     page/WheelEventDeltaFilter.h
     page/WheelEventTestMonitor.h
     page/WindowFeatures.h
@@ -2447,7 +2446,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/animation/AcceleratedEffect.h
     platform/animation/AcceleratedEffectStack.h
     platform/animation/AcceleratedEffectValues.h
+    platform/animation/AcceleratedTimeline.h
     platform/animation/AnimationUtilities.h
+    platform/animation/ProgressResolutionData.h
+    platform/animation/TimelineIdentifier.h
     platform/animation/TimingFunction.h
     platform/animation/values/AcceleratedEffectOffsetAnchor.h
     platform/animation/values/AcceleratedEffectOffsetDistance.h
@@ -2583,6 +2585,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/FontSizeAdjust.h
     platform/graphics/FontTaggedSettings.h
     platform/graphics/FourCC.h
+    platform/graphics/GCGLExtension.h
     platform/graphics/GCGLSpan.h
     platform/graphics/GeneratedImage.h
     platform/graphics/GeometryUtilities.h
@@ -2969,6 +2972,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/network/BlobRegistry.h
     platform/network/BlobRegistryImpl.h
     platform/network/BlobResourceHandle.h
+    platform/network/BlobResourceHandleBase.h
     platform/network/CacheValidation.h
     platform/network/CertificateSummary.h
     platform/network/CookieRequestHeaderFieldProxy.h
@@ -3198,7 +3202,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/StyleSurroundData.h
     rendering/style/StyleTransformData.h
     rendering/style/StyleVisitedLinkColorData.h
-    rendering/style/WillChangeData.h
 
     rendering/svg/RenderSVGInlineText.h
     rendering/svg/RenderSVGModelObject.h
@@ -3326,6 +3329,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/fonts/StyleFontWeight.h
     style/values/fonts/StyleFontWidth.h
 
+    style/values/grid/StyleGridAutoFlow.h
     style/values/grid/StyleGridNamedAreaMap.h
     style/values/grid/StyleGridNamedLinesMap.h
     style/values/grid/StyleGridOrderedNamedLinesMap.h
@@ -3341,6 +3345,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/images/StyleGradient.h
     style/values/images/StyleImageOrNone.h
+    style/values/images/StyleImageOrientation.h
     style/values/images/StyleImageWrapper.h
     style/values/images/StyleObjectPosition.h
 
@@ -3365,6 +3370,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/masking/StyleMaskBorderSource.h
     style/values/masking/StyleMaskBorderWidth.h
     style/values/masking/StyleMaskLayer.h
+
+    style/values/math/StyleMathDepth.h
 
     style/values/motion/StyleOffsetAnchor.h
     style/values/motion/StyleOffsetDistance.h
@@ -3431,6 +3438,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/scroll-snap/StyleScrollSnapType.h
 
     style/values/scrollbars/StyleScrollbarColor.h
+    style/values/scrollbars/StyleScrollbarWidth.h
 
     style/values/shapes/StyleBasicShape.h
     style/values/shapes/StyleCircleFunction.h
@@ -3464,6 +3472,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/svg/StyleSVGGlyphOrientationVertical.h
     style/values/svg/StyleSVGMarkerResource.h
     style/values/svg/StyleSVGPaint.h
+    style/values/svg/StyleSVGPaintOrder.h
     style/values/svg/StyleSVGPathData.h
     style/values/svg/StyleSVGRadius.h
     style/values/svg/StyleSVGRadiusComponent.h
@@ -3475,7 +3484,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/text/StyleHyphenateLimitLines.h
     style/values/text/StyleLetterSpacing.h
     style/values/text/StyleTabSize.h
+    style/values/text/StyleTextAutospace.h
     style/values/text/StyleTextIndent.h
+    style/values/text/StyleTextSpacingTrim.h
     style/values/text/StyleWordSpacing.h
 
     style/values/text-decoration/StyleTextDecorationLine.h
@@ -3516,6 +3527,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/view-transitions/StyleViewTransitionClass.h
     style/values/view-transitions/StyleViewTransitionName.h
+
+    style/values/will-change/StyleWillChange.h
 
     svg/SVGAngle.h
     svg/SVGDocument.h

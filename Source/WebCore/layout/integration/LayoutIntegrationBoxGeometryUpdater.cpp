@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,26 +71,26 @@
 namespace WebCore {
 namespace LayoutIntegration {
 
-static LayoutUnit usedValueOrZero(const Style::MarginEdge& marginEdge, std::optional<LayoutUnit> availableWidth)
+static LayoutUnit usedValueOrZero(const Style::MarginEdge& marginEdge, std::optional<LayoutUnit> availableWidth, const Style::ZoomFactor& zoomFactor)
 {
     if (auto fixed = marginEdge.tryFixed())
-        return LayoutUnit { fixed->resolveZoom(Style::ZoomNeeded { }) };
+        return LayoutUnit { fixed->resolveZoom(zoomFactor) };
 
     if (marginEdge.isAuto() || !availableWidth)
         return { };
 
-    return Style::evaluateMinimum<LayoutUnit>(marginEdge, *availableWidth, Style::ZoomNeeded { });
+    return Style::evaluateMinimum<LayoutUnit>(marginEdge, *availableWidth, zoomFactor);
 }
 
-static LayoutUnit usedValueOrZero(const Style::PaddingEdge& paddingEdge, std::optional<LayoutUnit> availableWidth)
+static LayoutUnit usedValueOrZero(const Style::PaddingEdge& paddingEdge, std::optional<LayoutUnit> availableWidth, Style::ZoomFactor usedZoom)
 {
     if (auto fixed = paddingEdge.tryFixed())
-        return LayoutUnit { fixed->resolveZoom(Style::ZoomNeeded { }) };
+        return LayoutUnit { fixed->resolveZoom(usedZoom) };
 
     if (!availableWidth)
         return { };
 
-    return Style::evaluateMinimum<LayoutUnit>(paddingEdge, *availableWidth, Style::ZoomNeeded { });
+    return Style::evaluateMinimum<LayoutUnit>(paddingEdge, *availableWidth, usedZoom);
 }
 
 static inline void adjustBorderForTableAndFieldset(const RenderBoxModelObject& renderer, RectEdges<LayoutUnit>& borderWidths)
@@ -212,16 +212,17 @@ static inline LayoutUnit contentLogicalHeightForRenderer(const RenderBox& render
 Layout::BoxGeometry::HorizontalEdges BoxGeometryUpdater::horizontalLogicalMargin(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode, bool retainMarginStart, bool retainMarginEnd)
 {
     auto& style = renderer.style();
+    const auto& zoomFactor = style.usedZoomForLength();
 
     if (writingMode.isHorizontal()) {
-        auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginLeft() : style.marginRight(), availableWidth) : 0_lu;
-        auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginRight() : style.marginLeft(), availableWidth) : 0_lu;
+        auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginLeft() : style.marginRight(), availableWidth, zoomFactor) : 0_lu;
+        auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginRight() : style.marginLeft(), availableWidth, zoomFactor) : 0_lu;
 
         return { marginInlineStart, marginInlineEnd };
     }
 
-    auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginTop() : style.marginBottom(), availableWidth) : 0_lu;
-    auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginBottom() : style.marginTop(), availableWidth) : 0_lu;
+    auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginTop() : style.marginBottom(), availableWidth, zoomFactor) : 0_lu;
+    auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginBottom() : style.marginTop(), availableWidth, zoomFactor) : 0_lu;
 
     return { marginInlineStart, marginInlineEnd };
 }
@@ -230,10 +231,10 @@ Layout::BoxGeometry::VerticalEdges BoxGeometryUpdater::verticalLogicalMargin(con
 {
     auto& style = renderer.style();
     if (writingMode.isHorizontal())
-        return { usedValueOrZero(style.marginTop(), availableWidth), usedValueOrZero(style.marginBottom(), availableWidth) };
+        return { usedValueOrZero(style.marginTop(), availableWidth, style.usedZoomForLength()), usedValueOrZero(style.marginBottom(), availableWidth, style.usedZoomForLength()) };
     if (writingMode.isLineOverLeft())
-        return { usedValueOrZero(style.marginLeft(), availableWidth), usedValueOrZero(style.marginRight(), availableWidth) };
-    return { usedValueOrZero(style.marginRight(), availableWidth), usedValueOrZero(style.marginLeft(), availableWidth) };
+        return { usedValueOrZero(style.marginLeft(), availableWidth, style.usedZoomForLength()), usedValueOrZero(style.marginRight(), availableWidth, style.usedZoomForLength()) };
+    return { usedValueOrZero(style.marginRight(), availableWidth, style.usedZoomForLength()), usedValueOrZero(style.marginLeft(), availableWidth, style.usedZoomForLength()) };
 }
 
 Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxModelObject& renderer, WritingMode writingMode, bool isIntrinsicWidthMode, bool retainBorderStart, bool retainBorderEnd)
@@ -263,11 +264,12 @@ Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxMode
 Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalPadding(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode, bool retainPaddingStart, bool retainPaddingEnd)
 {
     auto& style = renderer.style();
+    auto usedZoom = style.usedZoomForLength();
 
-    auto paddingLeft = usedValueOrZero(style.paddingLeft(), availableWidth);
-    auto paddingRight = usedValueOrZero(style.paddingRight(), availableWidth);
-    auto paddingTop = usedValueOrZero(style.paddingTop(), availableWidth);
-    auto paddingBottom = usedValueOrZero(style.paddingBottom(), availableWidth);
+    auto paddingLeft = usedValueOrZero(style.paddingLeft(), availableWidth, usedZoom);
+    auto paddingRight = usedValueOrZero(style.paddingRight(), availableWidth, usedZoom);
+    auto paddingTop = usedValueOrZero(style.paddingTop(), availableWidth, usedZoom);
+    auto paddingBottom = usedValueOrZero(style.paddingBottom(), availableWidth, usedZoom);
 
     if (writingMode.isHorizontal()) {
         auto paddingInlineStart = retainPaddingStart ? writingMode.isInlineLeftToRight() ? paddingLeft : paddingRight : 0_lu;

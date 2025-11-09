@@ -34,8 +34,8 @@ promise_test(async () => {
     const startX = box.getBoundingClientRect().right;
     const startY = box.getBoundingClientRect().bottom;
     await drag(startX, startY, startX - 395, startY - 395);
-    assert_equals(box.style.width, "15px");
-    assert_equals(box.style.height, "15px");
+    assert_equals(box.getBoundingClientRect().width, 15);
+    assert_equals(box.getBoundingClientRect().height, 15);
 }, "Test for resizing the box below its min intrinsic size.");
 </script>
 </body>

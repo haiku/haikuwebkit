@@ -222,13 +222,13 @@ private:
         HashMap<WTF::String, bool> result;
         RetainPtr permissions = [m_delegate.get() notificationPermissionsForWebsiteDataStore:m_dataStore.get().get()];
         for (NSString *key in permissions.get()) {
-            NSNumber *value = permissions.get()[key];
+            RetainPtr<NSNumber> value = permissions.get()[key];
             auto originString = WebCore::SecurityOriginData::fromURL(URL(key)).toString();
             if (originString.isEmpty()) {
                 RELEASE_LOG(Push, "[WKWebsiteDataStoreDelegate notificationPermissionsForWebsiteDataStore:] returned a URL string that could not be parsed into a security origin. Skipping.");
                 continue;
             }
-            result.set(originString, value.boolValue);
+            result.set(originString, value.get().boolValue);
         }
 
         return result;
@@ -619,8 +619,8 @@ struct WKWebsiteData {
         }
 
         NSString *unsupportedPrefix = @"This API does not support fetching: ";
-        NSString *unsupportedMessage = [unsupportedPrefix stringByAppendingString:dataType];
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : unsupportedMessage, };
+        RetainPtr<NSString> unsupportedMessage = [unsupportedPrefix stringByAppendingString:dataType];
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : unsupportedMessage.get(), };
 
         completionHandler(nullptr, adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:userInfo]).get());
 
@@ -745,7 +745,7 @@ struct WKWebsiteData {
             _WKWebsiteDataTypeAlternativeServices
         ];
 
-        allWebsiteDataTypes.get() = [[self allWebsiteDataTypes] setByAddingObjectsFromArray:privateTypes];
+        allWebsiteDataTypes.get() = [retainPtr([self allWebsiteDataTypes]) setByAddingObjectsFromArray:privateTypes];
     });
 
     return allWebsiteDataTypes.get().get();
@@ -1601,6 +1601,14 @@ struct WKWebsiteData {
     [self restoreData:data completionHandler:makeBlockPtr([completionHandler = makeBlockPtr(completionHandler)](NSError *error) {
         completionHandler(!error);
     }).get()];
+}
+
+- (void)_isStorageSuspendedForTesting:(void(^)(BOOL))completionHandler
+{
+    auto completionHandlerCopy = makeBlockPtr(completionHandler);
+    protectedWebsiteDataStore(self)->isStorageSuspendedForTesting([completionHandlerCopy = WTFMove(completionHandlerCopy)](auto result) {
+        completionHandlerCopy(result);
+    });
 }
 
 @end

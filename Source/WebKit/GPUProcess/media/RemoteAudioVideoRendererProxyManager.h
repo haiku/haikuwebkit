@@ -34,6 +34,8 @@
 #include "MessageReceiver.h"
 #include "RemoteAudioVideoRendererIdentifier.h"
 #include "RemoteAudioVideoRendererState.h"
+#include "RemoteCDMInstanceIdentifier.h"
+#include "RemoteLegacyCDMSessionIdentifier.h"
 #include "RemoteVideoFrameProxy.h"
 #include <WebCore/AudioVideoRenderer.h>
 #include <WebCore/HTMLMediaElementIdentifier.h>
@@ -145,6 +147,15 @@ private:
 #endif
     void setTextTrackRepresentation(RemoteAudioVideoRendererIdentifier, WebCore::TextTrackRepresentation*);
     void syncTextTrackBounds(RemoteAudioVideoRendererIdentifier);
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+    void setLegacyCDMSession(RemoteAudioVideoRendererIdentifier, std::optional<RemoteLegacyCDMSessionIdentifier>);
+#endif
+#if ENABLE(ENCRYPTED_MEDIA)
+    void setCDMInstance(RemoteAudioVideoRendererIdentifier, std::optional<RemoteCDMInstanceIdentifier>);
+    void setInitData(RemoteAudioVideoRendererIdentifier, Ref<WebCore::SharedBuffer>, CompletionHandler<void(Expected<void, WebCore::PlatformMediaError>)>&&);
+    void attemptToDecrypt(RemoteAudioVideoRendererIdentifier);
+#endif
 
     struct RendererContext {
         RefPtr<WebCore::AudioVideoRenderer> renderer;

@@ -68,7 +68,7 @@ ExceptionOr<Ref<HTMLTableRowElement>> HTMLTableSectionElement::insertRow(int ind
     int numRows = children->length();
     if (index > numRows)
         return Exception { ExceptionCode::IndexSizeError };
-    auto row = HTMLTableRowElement::create(trTag, document());
+    Ref row = HTMLTableRowElement::create(trTag, protectedDocument());
     ExceptionOr<void> result;
     if (numRows == index || index == -1)
         result = appendChild(row);
@@ -90,7 +90,7 @@ ExceptionOr<void> HTMLTableSectionElement::deleteRow(int index)
     }
     if (index < 0 || index >= numRows)
         return Exception { ExceptionCode::IndexSizeError };
-    return removeChild(*children->item(index));
+    return removeChild(Ref { *children->item(index) });
 }
 
 int HTMLTableSectionElement::numRows() const

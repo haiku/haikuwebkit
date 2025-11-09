@@ -139,7 +139,7 @@
 namespace TestWebKitAPI {
 
 // TLSVersion broke on iOS 26 https://bugs.webkit.org/show_bug.cgi?id=301010
-#define BUG_301010 (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 260000 && !USE(APPLE_INTERNAL_SDK))
+#define BUG_301010 ((PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 260000 && !USE(APPLE_INTERNAL_SDK)) || (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000))
 const uint16_t tls1_1 = 0x0302;
 
 #if BUG_301010

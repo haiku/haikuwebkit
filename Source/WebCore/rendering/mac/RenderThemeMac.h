@@ -63,7 +63,7 @@ public:
     Color platformInactiveListBoxSelectionForegroundColor(OptionSet<StyleColorOptions>) const final;
     Color platformFocusRingColor(OptionSet<StyleColorOptions>) const final;
     Color platformTextSearchHighlightColor(OptionSet<StyleColorOptions>) const final;
-    Color platformAnnotationHighlightColor(OptionSet<StyleColorOptions>) const final;
+    Color platformAnnotationHighlightBackgroundColor(OptionSet<StyleColorOptions>) const final;
     Color platformDefaultButtonTextColor(OptionSet<StyleColorOptions>) const final;
     Color platformAutocorrectionReplacementMarkerColor(OptionSet<StyleColorOptions>) const final;
 

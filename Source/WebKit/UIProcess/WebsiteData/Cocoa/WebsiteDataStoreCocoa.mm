@@ -43,6 +43,7 @@
 #import <WebCore/NetworkStorageSession.h>
 #import <WebCore/RegistrableDomain.h>
 #import <WebCore/SearchPopupMenuCocoa.h>
+#import <WebCore/SecurityOriginData.h>
 #import <pal/spi/cf/CFNetworkSPI.h>
 #import <pal/spi/cocoa/NetworkSPI.h>
 #import <wtf/FileSystem.h>
@@ -839,7 +840,8 @@ void WebsiteDataStore::initializeManagedDomains(ForceReinitialization forceReini
         bool isSafari = false;
 #if PLATFORM(MAC)
         isSafari = WTF::MacApplication::isSafari();
-        RetainPtr managedSitesPrefs = adoptNS([[NSDictionary alloc] initWithContentsOfFile:[adoptNS([[NSString alloc] initWithFormat:@"/Library/Managed Preferences/%@/%@.plist", RetainPtr { NSUserName() }.get(), managedSitesIdentifierSingleton()]) stringByStandardizingPath]]);
+        RetainPtr path = [adoptNS([[NSString alloc] initWithFormat:@"/Library/Managed Preferences/%@/%@.plist", RetainPtr { NSUserName() }.get(), managedSitesIdentifierSingleton()]) stringByStandardizingPath];
+        RetainPtr managedSitesPrefs = adoptNS([[NSDictionary alloc] initWithContentsOfFile:path.get()]);
         crossSiteTrackingPreventionRelaxedDomains = [managedSitesPrefs objectForKey:crossSiteTrackingPreventionRelaxedDomainsKeySingleton()];
         crossSiteTrackingPreventionRelaxedApps = [managedSitesPrefs objectForKey:crossSiteTrackingPreventionRelaxedAppsKeySingleton()];
 #elif !PLATFORM(MACCATALYST)
@@ -1055,6 +1057,39 @@ void WebsiteDataStore::removeRecentSearches(WallTime oldestTimeToRemove, Complet
         WebCore::removeRecentlyModifiedRecentSearchesFromFile(time, directory);
         RunLoop::mainSingleton().dispatch(WTFMove(completionHandler));
     });
+}
+
+HashSet<WebCore::RegistrableDomain> WebsiteDataStore::platformAdditionalDomainsWithUserInteraction() const
+{
+    RetainPtr<id> arrayOrCommaDelimitedString;
+    if (!m_configuration->additionalDomainsWithUserInteractionForTesting().isEmpty())
+        arrayOrCommaDelimitedString = m_configuration->additionalDomainsWithUserInteractionForTesting().createNSString();
+    else
+        arrayOrCommaDelimitedString = [[NSUserDefaults standardUserDefaults] objectForKey:@"WebKitDebugAdditionalDomainsWithUserInteraction"];
+
+    if (!arrayOrCommaDelimitedString)
+        return { };
+
+    HashSet<WebCore::RegistrableDomain> result { };
+    auto addHost = [&result](String host) {
+        WebCore::SecurityOriginData origin { "https"_s, host, std::nullopt };
+        WebCore::RegistrableDomain domain { origin };
+        if (!domain.isEmpty())
+            result.add(domain);
+    };
+
+    if ([arrayOrCommaDelimitedString isKindOfClass:[NSArray class]]) {
+        for (id host in arrayOrCommaDelimitedString.get()) {
+            if ([host isKindOfClass:[NSString class]])
+                addHost((NSString *)host);
+        }
+    } else if ([arrayOrCommaDelimitedString isKindOfClass:[NSString class]]) {
+        String commaDelimitedString = (NSString *)arrayOrCommaDelimitedString;
+        for (String host : commaDelimitedString.split(","_s))
+            addHost(host.trim(isASCIIWhitespace<char16_t>));
+    }
+
+    return result;
 }
 
 }

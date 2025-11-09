@@ -176,7 +176,7 @@ void HTMLCanvasElement::collectPresentationalHintsForAttribute(const QualifiedNa
 void HTMLCanvasElement::attributeChanged(const QualifiedName& name, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason attributeModificationReason)
 {
     if (name == widthAttr || name == heightAttr)
-        reset();
+        didUpdateSizeProperties();
     HTMLElement::attributeChanged(name, oldValue, newValue, attributeModificationReason);
 }
 
@@ -220,16 +220,16 @@ ExceptionOr<void> HTMLCanvasElement::setWidth(unsigned value)
     return { };
 }
 
-void HTMLCanvasElement::setSize(const IntSize& newSize)
+void HTMLCanvasElement::setCSSCanvasContextSize(const IntSize& newSize)
 {
     if (newSize == size())
         return;
 
-    m_ignoreReset = true;
+    m_ignoreDidUpdateSizeProperties = true;
     setWidth(newSize.width());
     setHeight(newSize.height());
-    m_ignoreReset = false;
-    reset();
+    m_ignoreDidUpdateSizeProperties = false;
+    didUpdateSizeProperties();
 }
 
 ExceptionOr<std::optional<RenderingContext>> HTMLCanvasElement::getContext(JSC::JSGlobalObject& state, const String& contextId, FixedVector<JSC::Strong<JSC::Unknown>>&& arguments)
@@ -605,9 +605,9 @@ void HTMLCanvasElement::didDraw(const std::optional<FloatRect>& rect, ShouldAppl
     CanvasBase::didDraw(rect, shouldApplyPostProcessingToDirtyRect);
 }
 
-void HTMLCanvasElement::reset()
+void HTMLCanvasElement::didUpdateSizeProperties()
 {
-    if (m_ignoreReset || isControlledByOffscreen())
+    if (m_ignoreDidUpdateSizeProperties || isControlledByOffscreen())
         return;
 
     bool hadImageBuffer = hasCreatedImageBuffer();
@@ -630,7 +630,10 @@ void HTMLCanvasElement::reset()
         return;
     }
 
-    setSurfaceSize(newSize);
+    setSize(newSize);
+    setHasCreatedImageBuffer(false);
+    setImageBuffer(nullptr);
+    clearCopiedImage();
 
     if (m_context) {
         if (RefPtr context = dynamicDowncast<GPUBasedCanvasRenderingContext>(*m_context))
@@ -684,14 +687,6 @@ void HTMLCanvasElement::paint(GraphicsContext& context, const LayoutRect& r)
 
     if (m_context->hasActiveInspectorCanvasCallTracer()) [[unlikely]]
         InspectorInstrumentation::didFinishRecordingCanvasFrame(*m_context);
-}
-
-void HTMLCanvasElement::setSurfaceSize(const IntSize& size)
-{
-    CanvasBase::setSize(size);
-    setHasCreatedImageBuffer(false);
-    setImageBuffer(nullptr);
-    clearCopiedImage();
 }
 
 static String toEncodingMimeType(const String& mimeType)

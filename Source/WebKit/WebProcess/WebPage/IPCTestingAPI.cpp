@@ -214,6 +214,7 @@ private:
     JSIPCStreamClientConnection(JSIPC& jsIPC, RefPtr<IPC::StreamClientConnection> connection)
         : m_jsIPC(jsIPC)
         , m_streamConnection { WTFMove(connection) }
+        , m_dummyMessageReceiver { makeUniqueRefWithoutRefCountedCheck<MessageReceiver>(*this) }
     {
     }
 
@@ -263,7 +264,8 @@ private:
 
     private:
         WeakRef<JSIPCStreamClientConnection> m_connection;
-    } m_dummyMessageReceiver { *this };
+    };
+    UniqueRef<MessageReceiver> m_dummyMessageReceiver;
 };
 
 class JSIPCStreamServerConnectionHandle : public RefCounted<JSIPCStreamServerConnectionHandle> {
@@ -1029,7 +1031,15 @@ void JSIPCStreamClientConnection::initialize(JSContextRef, JSObjectRef object)
 
 void JSIPCStreamClientConnection::finalize(JSObjectRef object)
 {
-    unwrap(object)->deref();
+    auto* wrapper = unwrap(object);
+
+    // The StreamClientConnection destructor asserts the connection is not valid
+    // when it runs, so we need to invalidate it here if it hasn't already been
+    // done explicitly in the test code.
+    if (wrapper->m_streamConnection)
+        wrapper->m_streamConnection->invalidate();
+
+    wrapper->deref();
 }
 
 const JSStaticFunction* JSIPCStreamClientConnection::staticFunctions()
@@ -1057,7 +1067,7 @@ JSValueRef JSIPCStreamClientConnection::open(JSContextRef context, JSObjectRef, 
         *exception = createTypeError(context, "Wrong type"_s);
         return JSValueMakeUndefined(context);
     }
-    jsIPC->m_streamConnection->open(jsIPC->m_dummyMessageReceiver);
+    jsIPC->m_streamConnection->open(jsIPC->m_dummyMessageReceiver.get());
     return JSValueMakeUndefined(context);
 }
 

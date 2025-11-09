@@ -1046,8 +1046,6 @@ webkit.org/b/209148 imported/w3c/web-platform-tests/mediacapture-streams/MediaSt
 
 webkit.org/b/209183 webrtc/concurrentVideoPlayback.html [ Pass Timeout ]
 
-webkit.org/b/209189 http/tests/IndexedDB/storage-limit.https.html [ Pass Failure ]
-
 webkit.org/b/209283 tiled-drawing/scrolling/scroll-iframe-latched-selects.html [ Pass Failure ]
 
 webkit.org/b/209564 svg/as-image/svg-image-with-data-uri-background.html [ Pass ImageOnlyFailure ]
@@ -1342,8 +1340,6 @@ webkit.org/b/179853 imported/blink/fast/text/international-iteration-simple-text
 
 webkit.org/b/239566 media/audio-session-category-at-most-recent-playback.html [ Pass Failure ]
 
-webkit.org/b/239577 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_block_downloads.tentative.html [ Pass Failure ]
-
 webkit.org/b/261919 webanimations/frame-rate/animation-frame-rate-alignment-started-with-one-frame-separation.html [ Pass Failure ] # old: webkit.org/b/239574
 
 webkit.org/b/195635 scrollingcoordinator/mac/multiple-fixed.html [ Pass ImageOnlyFailure ]
@@ -1481,6 +1477,7 @@ webkit.org/b/260113 [ arm64 ] http/wpt/webauthn/ctap-hid-failure.https.html [ Pa
 [ Sequoia+ ] fast/images/hdr-pseudo-before-image.html [ Pass ]
 [ Sequoia+ ] fast/images/hdr-svg-inline-image.html [ Pass ]
 [ Sequoia+ ] fast/images/hdr-unaccelerated-basic-image.html [ Pass ]
+[ Sequoia+ ] fast/images/hdr-unaccelerated-image-blur-filter.html [ Pass ]
 
 # The direct image codepath is not used with the remote layer tree.
 [ Sonoma+ ] compositing/images/direct-image-object-fit.html [ Skip ]
@@ -1993,8 +1990,6 @@ webkit.org/b/288011 [ Sonoma+ Release ] tiled-drawing/top-left-content-insets.ht
 
 webkit.org/b/280019 [ Sonoma+ Release ] fast/canvas/offscreen-giant.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/288006 http/tests/dom/noreferrer-window-not-targetable.html [ Failure ]
-
 # webkit.org/b/287679 REGRESSION(289499@main):[macOS Debug ] imported/w3c/web-platform-tests/css/selectors/invalidation/modal-pseudo-class-in-has.html is flaky (failure in EWS)
 imported/w3c/web-platform-tests/css/selectors/invalidation/modal-pseudo-class-in-has.html [ Pass Failure ]
 imported/w3c/web-platform-tests/screen-orientation/fullscreen-interactions.html [ Pass Failure ]
@@ -2040,8 +2035,6 @@ webkit.org/b/288660 [ Sonoma Release x86_64 ] media/media-hevc-video-as-img.html
 
 # webkit.org/b/280219 [EWS] imported/w3c/web-platform-t ests/css/css-view-transitio ns/massive-element-below-vi ewport-offscreen-old.html is a constant failure on Ventura+ Intel
 [ Sonoma Release x86_64 ] imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-viewport-offscreen-old.html [ Skip ]
-
-webkit.org/b/288742 [ Debug ] ipc/media-player-invalid-test.html [ Crash ]
 
 webkit.org/b/288878 media/modern-media-controls/tracks-support/audio-multiple-tracks.html [ Pass Timeout ]
 
@@ -2302,6 +2295,8 @@ webkit.org/b/296814 [ arm64 ] imported/w3c/web-platform-tests/css/css-view-trans
 webkit.org/b/293808 [ Sequoia Debug arm64 ] http/tests/webgpu/webgpu/shader/validation/expression/call/builtin/atan2.html [ Timeout ]
 webkit.org/b/293808 [ Sequoia Debug arm64 ] http/tests/webgpu/webgpu/shader/execution/expression/call/builtin/bitcast.html [ Timeout ]
 
+webkit.org/b/296885 [ Debug arm64 ] fast/scrolling/mac/scrollend-event-user-scroll-basic.html [ Pass Failure ]
+
 # webkit.org/b/296890 [ macOS wk2 ] 3x fast/webgpu/nocrash/fuzz tests (layout-tests) are flaky text failures 
 fast/webgpu/nocrash/fuzz-282097.html [ Pass Failure ]
 [ x86_64 ] fast/webgpu/nocrash/fuzz-282086.html [ Pass Failure ]
@@ -2340,6 +2335,8 @@ webkit.org/b/297121 fast/page-color-sampling/color-sampling-fixed-ancestor-with-
 webkit.org/b/297251 fast/mediastream/getUserMedia-echoCancellation.html [ Pass Failure ]
 
 webkit.org/b/297343 [ Debug ] ipc/storage-area-cache-use-after-free.html [ Slow ]
+
+webkit.org/b/297483 fast/scrolling/mac/scrollend-event-on-select-element.html [ Pass Failure ]
 
 webkit.org/b/297551 imported/w3c/web-platform-tests/event-timing/buffered-and-duration-threshold.html [ Pass Failure ]
 
@@ -2395,7 +2392,23 @@ webkit.org/b/299830 imported/w3c/web-platform-tests/storage-access-api/hasStorag
 
 webkit.org/b/299826 [ Release x86_64 ] media/modern-media-controls/media-controller/media-controller-click-on-video-background-should-pause.html [ Crash ]
 
-webkit.org/b/300864 imported/w3c/web-platform-tests/css/css-viewport/zoom/filters-drop-shadow.html [ Pass Failure ]
+webkit.org/b/300864 imported/w3c/web-platform-tests/css/css-viewport/zoom/filters-drop-shadow.html [ Pass ImageOnlyFailure ]
 
-# https://bugs.webkit.org/show_bug.cgi?id=301021 [ macOS Tahoe wk2 Debug x86_64 ] ipc/serialized-type-info.html is a constant text failure
-[ Tahoe Debug x86_64 ] ipc/serialized-type-info.html [ Failure ]
+webkit.org/b/301153 [ Debug ] fast/parser/entity-comment-in-textarea.html [ Pass Timeout ]
+
+webkit.org/b/301566 [ Debug ] imported/w3c/web-platform-tests/custom-elements/registries/Element-innerHTML.html [ Skip ]
+
+# webkit.org/b/301384 REGRESSION(301931@main): [macOS x86_64] two tests in imported/w3c/web-platform-tests/css/css-backgrounds are constant image only failure 
+[ Release x86_64 ] imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-6.html [ ImageOnlyFailure ]
+[ Release x86_64 ] imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat-space-7.html [ ImageOnlyFailure ]
+
+# webkit.org/b/301589 [Tahoe wk2 Debug arm64] 6 tests in http/tests/media/hls are timing out
+[ Tahoe Debug arm64 ] http/tests/media/hls/hls-audio-tracks-language.html [ Timeout ]
+[ Tahoe Debug arm64 ] http/tests/media/hls/hls-webvtt-default.html [ Timeout ]
+[ Tahoe Debug arm64 ] http/tests/media/hls/hls-webvtt-style.html [ Timeout ]
+[ Tahoe Debug arm64 ] http/tests/media/hls/range-request-cross-origin.html [ Timeout ]
+[ Tahoe Debug arm64 ] http/tests/media/hls/track-in-band-multiple-cues.html [ Timeout ]
+[ Tahoe Debug arm64 ] http/tests/media/hls/track-webvtt-multitracks.html [ Timeout ]
+
+webkit.org/b/301700 [ Tahoe ] fast/forms/month/month-editable-components/month-editable-components-mouse-events.html [ Failure ]
+webkit.org/b/301700 [ Tahoe ] fast/forms/time/time-editable-components/time-editable-components-mouse-events.html [ Failure ]

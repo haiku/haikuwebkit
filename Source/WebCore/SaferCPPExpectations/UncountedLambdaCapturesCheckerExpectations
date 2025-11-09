@@ -41,10 +41,11 @@ loader/NetscapePlugInStreamLoader.cpp
 loader/WorkerThreadableLoader.cpp
 page/ImageAnalysisQueue.cpp
 page/IntelligenceTextEffectsSupport.cpp
-page/Navigator.cpp
 page/ShareDataReader.cpp
 page/cocoa/ResourceUsageOverlayCocoa.mm
+[ iOS ] page/ios/FrameIOS.mm
 page/writing-tools/WritingToolsController.mm
+[ iOS ] platform/PreviewConverter.cpp
 platform/ScrollableArea.cpp
 platform/cocoa/NetworkExtensionContentFilter.mm
 platform/encryptedmedia/CDMProxy.cpp
@@ -53,11 +54,15 @@ platform/graphics/ShadowBlur.cpp
 platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp
 platform/graphics/avfoundation/objc/CDMInstanceFairPlayStreamingAVFObjC.mm
 platform/graphics/avfoundation/objc/InbandChapterTrackPrivateAVFObjC.mm
+[ iOS ] platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
 platform/graphics/cocoa/VideoMediaSampleRenderer.mm
 platform/graphics/filters/FilterOperation.cpp
+[ iOS ] platform/ios/DragImageIOS.mm
 platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
 platform/mediastream/RealtimeVideoCaptureSource.cpp
 platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
+[ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
+[ iOS ] platform/mediastream/mac/CoreAudioSharedUnit.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/mediastream/mac/RealtimeOutgoingAudioSourceCocoa.cpp
 rendering/BackgroundPainter.cpp
@@ -77,11 +82,11 @@ rendering/svg/RenderSVGText.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceGradient.cpp
 rendering/svg/legacy/SVGResourcesCycleSolver.cpp
 rendering/updating/RenderTreeUpdater.cpp
+style/StyleBuilderCustom.h
 style/StyleCustomProperty.cpp
 style/Styleable.cpp
 style/values/StyleValueTypes.h
 style/values/backgrounds/StyleFillLayers.h
-style/values/fonts/StyleFontFeatureSettings.cpp
 style/values/fonts/StyleFontVariationSettings.cpp
 style/values/images/StyleGradient.cpp
 style/values/primitives/StylePrimitiveKeyword+CSSValueCreation.h
@@ -91,9 +96,3 @@ workers/Worker.cpp
 workers/WorkerMessagingProxy.cpp
 workers/WorkerOrWorkletThread.cpp
 workers/shared/SharedWorkerObjectConnection.cpp
-[ iOS ] page/ios/FrameIOS.mm
-[ iOS ] platform/PreviewConverter.cpp
-[ iOS ] platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
-[ iOS ] platform/ios/DragImageIOS.mm
-[ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
-[ iOS ] platform/mediastream/mac/CoreAudioSharedUnit.cpp

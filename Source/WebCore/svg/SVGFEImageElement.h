@@ -42,6 +42,11 @@ public:
     uint32_t checkedPtrCountWithoutThreadCheck() const { return SVGFilterPrimitiveStandardAttributes::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const { SVGFilterPrimitiveStandardAttributes::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const { SVGFilterPrimitiveStandardAttributes::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion()
+    {
+        SVGFilterPrimitiveStandardAttributes::setDidBeginCheckedPtrDeletion();
+        CachedImageClient::setDidBeginCheckedPtrDeletion();
+    }
 
     bool renderingTaintsOrigin() const;
 

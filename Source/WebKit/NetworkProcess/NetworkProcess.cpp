@@ -2424,6 +2424,15 @@ void NetworkProcess::runningOrTerminatingServiceWorkerCountForTesting(PAL::Sessi
     completionHandler(session->ensureSWServer().runningOrTerminatingCount());
 }
 
+void NetworkProcess::isStorageSuspendedForTesting(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler)
+{
+    CheckedPtr session = networkSession(sessionID);
+    if (!session)
+        return completionHandler(true);
+
+    completionHandler(session->storageManager().isSuspended());
+}
+
 void NetworkProcess::prepareToSuspend(bool isSuspensionImminent, MonotonicTime estimatedSuspendTime, CompletionHandler<void()>&& completionHandler)
 {
 #if !RELEASE_LOG_DISABLED

@@ -66,6 +66,7 @@ PresentationContextIOSurface::~PresentationContextIOSurface() = default;
 
 void PresentationContextIOSurface::renderBuffersWereRecreated(NSArray<IOSurface *> *ioSurfaces)
 {
+    m_existingRenderBuffers = WTFMove(m_renderBuffers);
     m_ioSurfaces = ioSurfaces;
 #if HAVE(IOSURFACE_SET_OWNERSHIP_IDENTITY) && HAVE(TASK_IDENTITY_TOKEN)
     if (m_webProcessID) {
@@ -147,6 +148,75 @@ static void generateAValidationError(Device& device, NSString* message, bool gen
 {
     if (generateValidationError)
         device.generateAValidationError(message);
+}
+
+id<MTLComputePipelineState> PresentationContextIOSurface::resizeComputePipelineState()
+{
+    if (m_resizeComputePipelineState)
+        return m_resizeComputePipelineState;
+
+    NSError *error = nil;
+    MTLCompileOptions* options = [MTLCompileOptions new];
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+    options.fastMathEnabled = YES;
+    ALLOW_DEPRECATED_DECLARATIONS_END
+    id<MTLDevice> device = m_device->device();
+    /* NOLINT */ id<MTLLibrary> library = [device newLibraryWithSource:@R"(
+using namespace metal;
+kernel void resize(texture2d<float, access::read>  inTexture  [[texture(0)]],
+    texture2d<float, access::write> outTexture [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= outTexture.get_width() || gid.y >= outTexture.get_height())
+        return;
+
+    float2 remappedGid = float2(static_cast<float>(gid.x), static_cast<float>(gid.y)) * float2(static_cast<float>(inTexture.get_width()) / outTexture.get_width(), static_cast<float>(inTexture.get_height()) / outTexture.get_height());
+    float4 color = inTexture.read(uint2((uint)remappedGid.x, (uint)remappedGid.y));
+    outTexture.write(color, gid);
+})" /* NOLINT */ options:options error:&error];
+    if (error) {
+        WTFLogAlways("%@", error); // NOLINT
+        return nil;
+    }
+    id<MTLFunction> function = [library newFunctionWithName:@"resize"];
+    m_resizeComputePipelineState = [device newComputePipelineStateWithFunction:function error:&error];
+    if (error) {
+        WTFLogAlways("%@", error); // NOLINT
+        return nil;
+    }
+
+    return m_resizeComputePipelineState;
+}
+
+void PresentationContextIOSurface::copyTextureToTexture(id<MTLTexture> destination, id<MTLTexture> source, id<MTLCommandBuffer> commandBuffer)
+{
+    if (!source || !destination)
+        return;
+
+    id<MTLComputePipelineState> pso = resizeComputePipelineState();
+    if (!pso)
+        return;
+
+    RefPtr device = m_device;
+    Ref deviceQueue = device->getQueue();
+
+    MTLComputePassDescriptor* computeDescriptor = [MTLComputePassDescriptor new];
+    computeDescriptor.dispatchType = MTLDispatchTypeSerial;
+
+    id<MTLComputeCommandEncoder> computeEncoder = [commandBuffer computeCommandEncoderWithDescriptor:computeDescriptor];
+    deviceQueue->setEncoderForBuffer(commandBuffer, computeEncoder);
+    [computeEncoder setComputePipelineState:pso];
+
+    [computeEncoder setTexture:source atIndex:0];
+    [computeEncoder setTexture:destination atIndex:1];
+    auto threadgroupSize = MTLSizeMake(16, 16, 1);
+
+    MTLSize threadgroupCount;
+    threadgroupCount.width  = (destination.width  + threadgroupSize.width -  1) / threadgroupSize.width;
+    threadgroupCount.height = (destination.height + threadgroupSize.height - 1) / threadgroupSize.height;
+    threadgroupCount.depth = 1;
+    [computeEncoder dispatchThreadgroups:threadgroupCount threadsPerThreadgroup:threadgroupSize];
+    deviceQueue->endEncoding(computeEncoder, commandBuffer);
 }
 
 void PresentationContextIOSurface::configure(Device& device, const WGPUSwapChainDescriptor& descriptor)
@@ -235,16 +305,20 @@ void PresentationContextIOSurface::configure(Device& device, const WGPUSwapChain
         return;
     }
 
-    textureDescriptor.usage |= MTLTextureUsageRenderTarget;
+    textureDescriptor.usage |= (MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead);
     bool needsLuminanceClampFunction = textureDescriptor.pixelFormat == MTLPixelFormatRGBA16Float && m_toneMappingMode == WGPUToneMappingMode_Standard;
     auto existingUsage = textureDescriptor.usage;
+    Ref deviceQueue = device.getQueue();
+    id<MTLCommandBuffer> resizeCommandBuffer = nil;
     for (IOSurface *iosurface in m_ioSurfaces) {
         RefPtr<Texture> parentLuminanceClampTexture;
+        MTLTextureDescriptor* luminanceClampDescriptor = nil;
         if (needsLuminanceClampFunction) {
             textureDescriptor.pixelFormat = MTLPixelFormatRGBA16Float;
             wgpuTextureDescriptor.format = WGPUTextureFormat_RGBA16Float;
             textureDescriptor.usage = existingUsage;
             textureDescriptor.usage |= MTLTextureUsageShaderRead;
+            luminanceClampDescriptor = textureDescriptor;
             id<MTLTexture> luminanceClampTexture = device.newTextureWithDescriptor(textureDescriptor);
             luminanceClampTexture.label = fromAPI(descriptor.label).createNSString().get();
             auto viewFormats = descriptor.viewFormats;
@@ -261,8 +335,29 @@ void PresentationContextIOSurface::configure(Device& device, const WGPUSwapChain
         auto parentTexture = Texture::create(texture, wgpuTextureDescriptor, WTFMove(viewFormats), device);
         parentTexture->makeCanvasBacking();
         m_renderBuffers.append({ parentTexture, parentLuminanceClampTexture });
+        if (m_existingRenderBuffers.size() >= m_renderBuffers.size()) {
+            if (!resizeCommandBuffer)
+                resizeCommandBuffer = deviceQueue->commandBufferWithDescriptor([MTLCommandBufferDescriptor new]);
+
+            auto existingBufferIndex = m_renderBuffers.size() - 1;
+            auto& existingRenderBuffer = m_existingRenderBuffers[existingBufferIndex];
+            textureDescriptor.usage |= MTLTextureUsageShaderWrite;
+            RetainPtr<IOSurfaceRef> iosurface = parentTexture->texture().iosurface;
+            id<MTLTexture> destinationTexture = device.newTextureWithDescriptor(textureDescriptor, iosurface.get());
+            copyTextureToTexture(destinationTexture, existingRenderBuffer.texture->texture(), resizeCommandBuffer);
+            if (parentLuminanceClampTexture && existingRenderBuffer.luminanceClampTexture) {
+                luminanceClampDescriptor.usage |= MTLTextureUsageShaderWrite;
+                iosurface = parentLuminanceClampTexture->texture().iosurface;
+                destinationTexture = device.newTextureWithDescriptor(luminanceClampDescriptor, iosurface.get());
+                copyTextureToTexture(destinationTexture, existingRenderBuffer.luminanceClampTexture->texture(), resizeCommandBuffer);
+            }
+        }
     }
     ASSERT(m_ioSurfaces.count == m_renderBuffers.size());
+    if (resizeCommandBuffer) {
+        deviceQueue->commitMTLCommandBuffer(resizeCommandBuffer);
+        m_existingRenderBuffers.clear();
+    }
 
     if (needsLuminanceClampFunction) {
         NSError *error = nil;

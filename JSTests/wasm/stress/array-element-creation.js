@@ -1,5 +1,5 @@
 //@ skip if $memoryLimited
-//@ runDefault("--useConcurrentJIT=0")
+//@ runDefaultWasm("--useConcurrentJIT=0")
 
 function main() {
     const wasm_module_code = readFile('./resources/array-element-creation.wasm', 'binary');

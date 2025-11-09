@@ -62,6 +62,7 @@ public:
     WEBCORE_EXPORT void restoreScrollPositionAndViewState();
 
     void updateBackForwardListForFragmentScroll();
+    void updateBackForwardListForReplaceState(RefPtr<SerializedScriptValue>&&, const String&);
 
     void saveDocumentState();
     WEBCORE_EXPORT void saveDocumentAndScrollState();

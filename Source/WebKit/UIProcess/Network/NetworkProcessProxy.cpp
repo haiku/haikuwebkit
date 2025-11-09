@@ -1372,6 +1372,11 @@ void NetworkProcessProxy::sendProcessWillSuspendImminentlyForTesting()
         sendSync(Messages::NetworkProcess::ProcessWillSuspendImminentlyForTestingSync(), 0);
 }
 
+void NetworkProcessProxy::isStorageSuspendedForTesting(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::NetworkProcess::IsStorageSuspendedForTesting(sessionID), WTFMove(completionHandler), 0, { }, ShouldStartProcessThrottlerActivity::No);
+}
+
 static bool s_suspensionAllowedForTesting { true };
 void NetworkProcessProxy::setSuspensionAllowedForTesting(bool allowed)
 {

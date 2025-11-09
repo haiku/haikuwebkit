@@ -82,9 +82,10 @@ void LibWebRTCDTMFSenderBackend::OnToneChange(const std::string& tone, const std
     // We are just interested in notifying the end of the tone, which corresponds to the empty string.
     if (!tone.empty())
         return;
-    callOnMainThread([this, weakThis = WeakPtr { *this }] {
-        if (weakThis && m_onTonePlayed)
-            m_onTonePlayed();
+    callOnMainThread([weakThis = WeakPtr { *this }] {
+        CheckedPtr checkedThis = weakThis.get();
+        if (checkedThis && checkedThis->m_onTonePlayed)
+            checkedThis->m_onTonePlayed();
     });
 }
 

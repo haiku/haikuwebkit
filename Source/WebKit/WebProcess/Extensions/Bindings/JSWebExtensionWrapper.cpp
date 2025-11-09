@@ -143,6 +143,73 @@ RefPtr<WebPage> toWebPage(JSContextRef context)
     return frame ? frame->page() : nullptr;
 }
 
+String toJSONString(JSContextRef context, JSValueRef value)
+{
+    if (!context)
+        return nullString();
+
+    return serializeJSObject(context, value, nullptr);
+}
+
+bool isFunction(JSContextRef context, JSValueRef value)
+{
+    if (!context || !value || !JSValueIsObject(context, value))
+        return false;
+
+    JSObjectRef functionRef = JSValueToObject(context, value, nullptr);
+    return functionRef && JSObjectIsFunction(context, functionRef);
+}
+
+bool isDictionary(JSContextRef context, JSValueRef value)
+{
+    // Equivalent to JavaScript: this.__proto__ === Object.prototype
+    if (!context || !JSValueIsObject(context, value))
+        return false;
+
+    if (isThenable(context, value))
+        return false;
+
+    JSRetainPtr protoString = toJSString("__proto__");
+    JSRetainPtr objectString = toJSString("Object");
+    JSRetainPtr prototypeString = toJSString("prototype");
+
+    JSObjectRef thisObject = JSValueToObject(context, value, nullptr);
+    JSObjectRef globalObject = JSContextGetGlobalObject(context);
+
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSValueRef protoObject = JSObjectGetProperty(context, thisObject, protoString.get(), nullptr);
+    SUPPRESS_UNCOUNTED_ARG JSObjectRef contextObject = JSValueToObject(context, JSObjectGetProperty(context, globalObject, objectString.get(), nullptr), nullptr);
+    SUPPRESS_UNCOUNTED_ARG JSValueRef prototypeObject = JSObjectGetProperty(context, contextObject, prototypeString.get(), nullptr);
+
+    return JSValueIsStrictEqual(context, protoObject, prototypeObject);
+}
+
+bool isRegularExpression(JSContextRef context, JSValueRef value)
+{
+    if (!context || !JSValueIsObject(context, value))
+        return false;
+
+    JSRetainPtr regexpString = toJSString("RegExp");
+    JSObjectRef globalObject = JSContextGetGlobalObject(context);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSObjectRef regexpValue = JSValueToObject(context, JSObjectGetProperty(context, globalObject, regexpString.get(), nullptr), nullptr);
+
+    return JSValueIsInstanceOfConstructor(context, value, regexpValue, nullptr);
+}
+
+bool isThenable(JSContextRef context, JSValueRef value)
+{
+    if (!context || !JSValueIsObject(context, value))
+        return false;
+
+    JSRetainPtr thenableString = toJSString("then");
+    JSObjectRef valueObject = JSValueToObject(context, value, nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSValueRef thenableObject = JSObjectGetProperty(context, valueObject, thenableString.get(), nullptr);
+
+    return isFunction(context, thenableObject);
+}
+
 } // namespace WebKit
 
 #endif // ENABLE(WK_WEB_EXTENSIONS)

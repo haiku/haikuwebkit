@@ -726,6 +726,9 @@ static void testWebsiteDataITP(WebsiteDataTest* test, gconstpointer)
     g_unlink(itpDatabaseFile.get());
     g_rmdir(itpDirectory.get());
 
+    g_assert_false(g_file_test(itpDirectory.get(), G_FILE_TEST_IS_DIR));
+    g_assert_false(g_file_test(itpDatabaseFile.get(), G_FILE_TEST_IS_REGULAR));
+
 #if ENABLE(2022_GLIB_API)
     g_assert_false(webkit_network_session_get_itp_enabled(test->m_networkSession.get()));
 #else
@@ -734,6 +737,9 @@ static void testWebsiteDataITP(WebsiteDataTest* test, gconstpointer)
     test->loadURI(kServer->getURIForPath("/empty").data());
     test->waitUntilLoadFinished();
 
+    g_assert_false(g_file_test(itpDirectory.get(), G_FILE_TEST_IS_DIR));
+    g_assert_false(g_file_test(itpDatabaseFile.get(), G_FILE_TEST_IS_REGULAR));
+
 #if ENABLE(2022_GLIB_API)
     webkit_network_session_set_itp_enabled(test->m_networkSession.get(), TRUE);
     g_assert_true(webkit_network_session_get_itp_enabled(test->m_networkSession.get()));
@@ -741,8 +747,6 @@ static void testWebsiteDataITP(WebsiteDataTest* test, gconstpointer)
     webkit_website_data_manager_set_itp_enabled(test->m_manager, TRUE);
     g_assert_true(webkit_website_data_manager_get_itp_enabled(test->m_manager));
 #endif
-    g_assert_false(g_file_test(itpDirectory.get(), G_FILE_TEST_IS_DIR));
-    g_assert_false(g_file_test(itpDatabaseFile.get(), G_FILE_TEST_IS_REGULAR));
 
     test->loadURI(kServer->getURIForPath("/empty").data());
     test->waitUntilLoadFinished();
@@ -751,7 +755,7 @@ static void testWebsiteDataITP(WebsiteDataTest* test, gconstpointer)
     g_assert_true(g_file_test(itpDatabaseFile.get(), G_FILE_TEST_IS_REGULAR));
 
     // Give some time for the database to be updated.
-    test->wait(0.5);
+    test->wait(1);
 
     GList* dataList = test->fetch(WEBKIT_WEBSITE_DATA_ITP);
     g_assert_nonnull(dataList);
@@ -790,6 +794,7 @@ static void testWebsiteDataServiceWorkerRegistrations(WebsiteDataTest* test, gco
 
     test->loadURI(kServer->getURIForPath("/service/register.html").data());
     test->waitUntilLoadFinished();
+    test->wait(1);
 
     dataList = test->fetch(WEBKIT_WEBSITE_DATA_SERVICE_WORKER_REGISTRATIONS);
     g_assert_cmpuint(g_list_length(dataList), ==, 1);

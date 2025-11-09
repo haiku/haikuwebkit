@@ -90,6 +90,8 @@ private:
     {
     }
 
+    bool isScriptBufferSourceProvider() const final { return true; }
+
     StringView sourceImpl(const AbstractLocker&) const
     {
         if (m_scriptBuffer.isEmpty())
@@ -123,3 +125,7 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ScriptBufferSourceProvider)
+    static bool isType(const JSC::SourceProvider& provider) { return provider.isScriptBufferSourceProvider(); }
+SPECIALIZE_TYPE_TRAITS_END()

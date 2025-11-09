@@ -1485,7 +1485,7 @@ void MediaPlayerPrivateAVFoundationObjC::startVideoFrameMetadataGathering()
     // the QueuedVideoOutput so paints of the current frame succeed;
     updateLastPixelBuffer();
 
-    m_currentImageChangedObserver = WTF::makeUnique<Observer<void()>>([weakThis = ThreadSafeWeakPtr { *this }] {
+    m_currentImageChangedObserver = Observer<void()>::create([weakThis = ThreadSafeWeakPtr { *this }] {
         if (RefPtr protectedThis = weakThis.get()) {
             protectedThis->m_currentImageChangedObserver = nullptr;
             protectedThis->checkNewVideoFrameMetadata();
@@ -1493,7 +1493,7 @@ void MediaPlayerPrivateAVFoundationObjC::startVideoFrameMetadataGathering()
     });
 
     if (RefPtr videoOutput = m_videoOutput)
-        videoOutput->addCurrentImageChangedObserver(*m_currentImageChangedObserver);
+        videoOutput->addCurrentImageChangedObserver(Ref { *m_currentImageChangedObserver });
 
     m_isGatheringVideoFrameMetadata = true;
 }
@@ -2666,11 +2666,11 @@ void MediaPlayerPrivateAVFoundationObjC::createVideoOutput()
         ERROR_LOG(LOGIDENTIFIER, "-[AVPlayerItemVideoOutput initWithPixelBufferAttributes:] failed!");
         return;
     }
-    if (m_currentImageChangedObserver)
-        videoOutput->addCurrentImageChangedObserver(*m_currentImageChangedObserver);
+    if (RefPtr observer = m_currentImageChangedObserver)
+        videoOutput->addCurrentImageChangedObserver(*observer);
 
-    if (m_waitForVideoOutputMediaDataWillChangeObserver)
-        videoOutput->addCurrentImageChangedObserver(*m_waitForVideoOutputMediaDataWillChangeObserver);
+    if (RefPtr observer = m_waitForVideoOutputMediaDataWillChangeObserver)
+        videoOutput->addCurrentImageChangedObserver(*observer);
 
     setNeedsRenderingModeChanged();
 }
@@ -2860,12 +2860,12 @@ auto MediaPlayerPrivateAVFoundationObjC::waitForVideoOutputMediaDataWillChange()
     std::optional<RunLoop::Timer> timeoutTimer;
 
     if (!m_runLoopNestingLevel) {
-        m_waitForVideoOutputMediaDataWillChangeObserver = WTF::makeUnique<Observer<void()>>([weakThis = ThreadSafeWeakPtr { *this }] {
+        m_waitForVideoOutputMediaDataWillChangeObserver = Observer<void()>::create([weakThis = ThreadSafeWeakPtr { *this }] {
             if (RefPtr protectedThis = weakThis.get(); protectedThis && protectedThis->m_runLoopNestingLevel)
                 RunLoop::mainSingleton().stop();
         });
         if (RefPtr videoOutput = m_videoOutput)
-            videoOutput->addCurrentImageChangedObserver(*m_waitForVideoOutputMediaDataWillChangeObserver);
+            videoOutput->addCurrentImageChangedObserver(Ref { *m_waitForVideoOutputMediaDataWillChangeObserver });
 
         timeoutTimer.emplace(RunLoop::mainSingleton(), "MediaPlayerPrivateAVFoundationObjC::TimeoutTimer"_s, [&] {
             RunLoop::mainSingleton().stop();

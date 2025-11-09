@@ -253,9 +253,6 @@ fast/loader/crash-copying-backforwardlist.html
 # WebKitTestRunner needs testRunner.authenticateSession
 http/tests/xmlhttprequest/cross-origin-authorization-with-embedder.html
 
-# WebKitTestRunner needs testRunner.pageProperty
-printing/page-rule-selection.html
-
 # WebKitTestRunner needs testRunner.dumpUserGestureInFrameLoadCallbacks
 fast/frames/location-redirect-user-gesture.html
 fast/frames/meta-refresh-user-gesture.html

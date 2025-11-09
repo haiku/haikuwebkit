@@ -27,7 +27,7 @@
 
 #include "AllocationCounts.h"
 #include "BAssert.h"
-#include "BCompiler.h"
+#include "BPlatform.h"
 #include "BSyscall.h"
 #include "BVMTags.h"
 #include "Logging.h"

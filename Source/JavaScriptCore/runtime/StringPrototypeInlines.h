@@ -68,7 +68,9 @@ ALWAYS_INLINE std::tuple<int32_t, int32_t> extractSliceOffsets(int32_t length, i
     return { from, to };
 }
 
-template<typename NumberType>
+template<typename T> concept Arithmetic = std::is_arithmetic_v<T>;
+
+template<Arithmetic NumberType>
 ALWAYS_INLINE JSString* stringSlice(JSGlobalObject* globalObject, VM& vm, JSString* string, int32_t length, NumberType start, std::optional<NumberType> endValue)
 {
     if constexpr (std::is_same_v<NumberType, int32_t>) {
@@ -91,10 +93,8 @@ ALWAYS_INLINE JSString* stringSlice(JSGlobalObject* globalObject, VM& vm, JSStri
 
 ALWAYS_INLINE std::tuple<int32_t, int32_t> extractSubstringOffsets(int32_t length, int32_t startValue, std::optional<int32_t> endValue)
 {
-    int32_t start = std::min<int32_t>(std::max<int32_t>(startValue, 0), length);
-    int32_t end = length;
-    if (endValue)
-        end = std::min<int32_t>(std::max<int32_t>(endValue.value(), 0), length);
+    int32_t start = std::clamp(startValue, 0, length);
+    int32_t end = std::clamp(endValue.value_or(length), 0, length);
 
     ASSERT(start >= 0);
     ASSERT(end >= 0);

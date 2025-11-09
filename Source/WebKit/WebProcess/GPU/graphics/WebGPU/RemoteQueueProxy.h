@@ -61,6 +61,8 @@ private:
     RemoteQueueProxy& operator=(const RemoteQueueProxy&) = delete;
     RemoteQueueProxy& operator=(RemoteQueueProxy&&) = delete;
 
+    bool isRemoteQueueProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
 
     template<typename T>
@@ -122,5 +124,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteQueueProxy)
+    static bool isType(const WebCore::WebGPU::Queue& queue) { return queue.isRemoteQueueProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

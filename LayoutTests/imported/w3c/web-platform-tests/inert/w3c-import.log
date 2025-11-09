@@ -22,6 +22,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-canvas-fallback-content.html
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-computed-style.html
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-does-not-match-disabled-selector.html
+/LayoutTests/imported/w3c/web-platform-tests/inert/inert-form-control.html
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-iframe-hittest.html
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-iframe-tabbing.html
 /LayoutTests/imported/w3c/web-platform-tests/inert/inert-in-shadow-dom.html

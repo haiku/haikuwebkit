@@ -28,7 +28,8 @@
 #if ENABLE(WEBXR_LAYERS)
 
 #include "XRSubImage.h"
-
+#include <wtf/Ref.h>
+#include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

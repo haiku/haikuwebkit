@@ -126,7 +126,7 @@ public:
     CheckedPtr<FrameConsoleClient> checkedConsole() const;
 
     WindowProxy* opener() const;
-    Document* documentIfLocal();
+    WEBCORE_EXPORT Document* documentIfLocal();
     RefPtr<Document> protectedDocumentIfLocal();
 
     WindowProxy* top() const;

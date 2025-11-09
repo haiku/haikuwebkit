@@ -123,7 +123,7 @@ private:
     GPUIntegerCoordinate m_height { 0 };
 #if HAVE(SUPPORT_HDR_DISPLAY)
     using ScreenPropertiesChangedObserver = Observer<void(PlatformDisplayID)>;
-    std::optional<ScreenPropertiesChangedObserver> m_screenPropertiesChangedObserver;
+    RefPtr<ScreenPropertiesChangedObserver> m_screenPropertiesChangedObserver;
     PlatformDynamicRangeLimit m_dynamicRangeLimit { PlatformDynamicRangeLimit::initialValue() };
     float m_currentEDRHeadroom { 1 };
     bool m_suppressEDR { false };

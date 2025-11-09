@@ -22,6 +22,17 @@
 
 headers: "ArgumentCodersCocoa.h"
 
+# FIXME: Make WebFilterEvaluator no longer use WKKeyedCoder once rdar://163060208 is complete.
+#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+secure_coding_header: <pal/cocoa/WebContentAnalysisSoftLink.h>
+[WebKitSecureCodingClass=PAL::getWebFilterEvaluatorClassSingleton()] webkit_secure_coding WebFilterEvaluator {
+    WebContentFilterStateKey: Number
+    WebContentFilterURLKey: URL
+    WebContentFilterPageTitleKey: String
+}
+WebFilterEvaluator wrapped by CoreIPCWebFilterEvaluator
+#endif
+
 #if ENABLE(CONTENT_FILTERING)
 class WebCore::ContentFilterUnblockHandler {
     String unblockURLHost()
@@ -30,7 +41,7 @@ class WebCore::ContentFilterUnblockHandler {
     std::optional<URL> evaluatedURL();
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    Vector<uint8_t> webFilterEvaluatorData()
+    RetainPtr<WebFilterEvaluator> webFilterEvaluator()
 #endif
     bool unblockedAfterRequest()
 }
@@ -423,11 +434,8 @@ NSURLRequest wrapped by CoreIPCNSURLRequest
 AVOutputContext wrapped by CoreIPCAVOutputContext
 #endif
 
-#if USE(PASSKIT) && !HAVE(WK_SECURE_CODING_PKDATECOMPONENTSRANGE)
-PKDateComponentsRange wrapped by CoreIPCPKDateComponentsRange
-#endif
-
 #if USE(PASSKIT)
+PKDateComponentsRange wrapped by CoreIPCPKDateComponentsRange
 PKPaymentMethod wrapped by CoreIPCPKPaymentMethod
 PKPaymentMerchantSession wrapped by CoreIPCPKPaymentMerchantSession
 PKPaymentSetupFeature wrapped by CoreIPCPKPaymentSetupFeature

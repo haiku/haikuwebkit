@@ -45,16 +45,18 @@ PlatformXRCoordinator* PlatformXRSystem::xrCoordinator()
     return &xrCoordinator.get();
 }
 
-void PlatformXRSystem::createLayerProjection(IPC::Connection&, uint32_t width, uint32_t height, bool alpha)
+void PlatformXRSystem::createLayerProjection(IPC::Connection&, uint32_t width, uint32_t height, bool alpha, CompletionHandler<void(std::optional<PlatformXR::LayerHandle>)>&& reply)
 {
     ASSERT(RunLoop::isMain());
 
     RefPtr page = m_page.get();
-    if (!page)
+    if (!page) {
+        reply(std::nullopt);
         return;
+    }
 
     if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
-        xrCoordinator->createLayerProjection(width, height, alpha);
+        xrCoordinator->createLayerProjection(width, height, alpha, WTFMove(reply));
 }
 
 } // namespace WebKit

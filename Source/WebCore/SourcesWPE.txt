@@ -66,6 +66,7 @@ platform/graphics/PlatformDisplay.cpp @no-unify
 
 platform/graphics/angle/PlatformDisplayANGLE.cpp @no-unify
 
+platform/graphics/glib/IconGLib.cpp
 platform/graphics/glib/ImageAdapterGLib.cpp
 platform/graphics/glib/SystemFontDatabaseGLib.cpp
 
@@ -107,5 +108,3 @@ platform/wpe/PasteboardWPE.cpp
 platform/wpe/PlatformScreenWPE.cpp
 
 platform/xdg/MIMETypeRegistryXdg.cpp
-
-platform/xr/openxr/PlatformXROpenXR.cpp

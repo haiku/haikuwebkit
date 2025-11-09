@@ -148,7 +148,7 @@ private:
     Vector<std::pair<Ref<SharedBuffer>, MediaKeyStatus>> m_statuses;
 
     using DisplayChangedObserver = Observer<void(PlatformDisplayID)>;
-    DisplayChangedObserver m_displayChangedObserver;
+    const Ref<DisplayChangedObserver> m_displayChangedObserver;
 };
 
 } // namespace WebCore

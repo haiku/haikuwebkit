@@ -68,7 +68,7 @@ FontDescription::FontDescription()
     , m_fontStyleAxis(enumToUnderlyingType(FontStyleAxis::slnt))
     , m_shouldAllowUserInstalledFonts(enumToUnderlyingType(AllowUserInstalledFonts::No))
     , m_shouldDisableLigaturesForSpacing(false)
-    , m_enableEvaluationTimeZoom(false)
+    , m_evaluationTimeZoomEnabled(false)
 {
 }
 

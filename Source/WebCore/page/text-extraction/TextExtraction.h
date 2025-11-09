@@ -43,7 +43,7 @@ WEBCORE_EXPORT Item extractItem(Request&&, Page&);
 WEBCORE_EXPORT Vector<std::pair<String, FloatRect>> extractAllTextAndRects(Page&);
 
 WEBCORE_EXPORT void handleInteraction(Interaction&&, Page&, CompletionHandler<void(bool, String&&)>&&);
-WEBCORE_EXPORT InteractionDescription interactionDescription(const Interaction&);
+WEBCORE_EXPORT InteractionDescription interactionDescription(const Interaction&, Page&);
 
 WEBCORE_EXPORT std::optional<SimpleRange> rangeForExtractedText(const LocalFrame&, ExtractedText&&);
 

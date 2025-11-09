@@ -5183,6 +5183,13 @@
    },
    {
       "emails" : [
+         "k_bolisetty@apple.com"
+      ],
+      "github" : "kbolisetty",
+      "name" : "Kishore Sri Venkata Ganesh Bolisetty"
+   },
+   {
+      "emails" : [
          "kocsen_chung@apple.com"
       ],
       "github" : "kocsenc",
@@ -6113,6 +6120,14 @@
    },
    {
       "emails" : [
+         "michaeldo@chromium.org",
+         "michaeldo@google.com"
+      ],
+      "github" : "michaeldo1",
+      "name" : "Mike Dougherty"
+   },
+   {
+      "emails" : [
          "mifenton@blackberry.com",
          "mifenton@rim.com",
          "mike.fenton@torchmobile.com"
@@ -6439,6 +6454,7 @@
          "nipun_shukla@apple.com",
          "nipunshukla002@gmail.com"
       ],
+      "github" : "nipunshukla21",
       "name" : "Nipun Shukla",
       "nicks" : [
          "nipunshukla21"

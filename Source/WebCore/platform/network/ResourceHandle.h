@@ -181,6 +181,7 @@ public:
     WEBCORE_EXPORT void setDefersLoading(bool);
 
     WEBCORE_EXPORT ResourceRequest& firstRequest();
+    WEBCORE_EXPORT const ResourceRequest& firstRequest() const;
     const String& lastHTTPMethod() const;
 
     void failureTimerFired();

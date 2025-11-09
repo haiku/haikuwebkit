@@ -55,6 +55,8 @@ private:
 #if ENABLE(USER_MESSAGE_HANDLERS)
     void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const final;
 #endif
+    bool hasStringMatchersForWorld(const DOMWrapperWorld&) const override { return false; }
+    WebKitStringMatcher* stringMatcher(const DOMWrapperWorld&, const String&) const override { return nullptr; }
 #if ENABLE(CONTENT_EXTENSIONS)
     const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const override { return m_contentExtensionBackend; }
 #endif

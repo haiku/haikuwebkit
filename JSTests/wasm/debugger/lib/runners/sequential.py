@@ -152,7 +152,7 @@ class WebAssemblyDebuggerTestRunner:
 
         try:
             subprocess.run(
-                "pkill -f 'jsc.*--wasm-debug'", shell=True, capture_output=True
+                "pkill -f 'jsc.*--wasm-debugger'", shell=True, capture_output=True
             )
         except Exception:
             pass

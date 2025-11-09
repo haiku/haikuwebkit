@@ -2,7 +2,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2007 David Smith (catfish.man@gmail.com)
- * Copyright (C) 2003-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  * Copyright (C) Research In Motion Limited 2010. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -373,6 +373,9 @@ bool RenderBlock::isSelfCollapsingBlock() const
     // (d) have a min-height
     // (e) have specified that one of our margins can't collapse using a CSS extension
 
+    if (isOutOfFlowPositioned())
+        return false;
+
     auto minHeightIsPositive = [&] {
         return WTF::switchOn(style().logicalMinHeight(),
             [](const Style::MinimumSize::Fixed& fixedValue) {
@@ -560,32 +563,25 @@ void RenderBlock::layoutBlock(RelayoutChildren, LayoutUnit)
 
 // Overflow is always relative to the border-box of the element in question.
 // Therefore, if the element has a vertical scrollbar placed on the left, an overflow rect at x=2px would conceptually intersect the scrollbar.
-void RenderBlock::computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> options)
+void RenderBlock::computeOverflow(LayoutRect contentArea, OptionSet<ComputeOverflowOptions> options)
 {
     clearOverflow();
     addOverflowFromInFlowChildren(options);
     addOverflowFromOutOfFlowBoxes();
 
-    if (hasNonVisibleOverflow()) {
-        auto includePaddingAfter = [&] {
-            // When we have overflow clip, propagate the original spillout since it will include collapsed bottom margins and bottom padding.
-            auto clientRect = flippedClientBoxRect();
-            auto rectToApply = clientRect;
-            // Set the axis we don't care about to be 1, since we want this overflow to always be considered reachable.
-            if (isHorizontalWritingMode()) {
-                rectToApply.setWidth(1);
-                rectToApply.setHeight(std::max(0_lu, oldClientAfterEdge - clientRect.y()));
-            } else {
-                rectToApply.setWidth(std::max(0_lu, oldClientAfterEdge - clientRect.x()));
-                rectToApply.setHeight(1);
-            }
-            addLayoutOverflow(rectToApply);
-        };
-        includePaddingAfter();
-        if (hasRenderOverflow())
-            m_overflow->setLayoutClientAfterEdge(oldClientAfterEdge);
+    if (hasPotentiallyScrollableOverflow()) {
+        if (!flippedContentBoxRect().contains(contentArea))
+            ensureOverflow();
+        if (hasRenderOverflow()) {
+            m_overflow->addContentOverflow(contentArea);
+            auto contentOverflow = m_overflow->contentArea();
+            flipForWritingMode(contentOverflow);
+            contentOverflow.expand(padding());
+            flipForWritingMode(contentOverflow);
+            addLayoutOverflow(contentOverflow);
+        }
     }
-        
+
     // Add visual overflow from box-shadow, border-image-outset and outline.
     addVisualEffectOverflow();
 
@@ -597,14 +593,15 @@ void RenderBlock::clearLayoutOverflow()
 {
     if (!m_overflow)
         return;
-    
+
     if (visualOverflowRect() == borderBoxRect()) {
         // FIXME: Implement complete solution for fragments overflow.
         clearOverflow();
         return;
     }
-    
+
     m_overflow->setLayoutOverflow(borderBoxRect());
+    m_overflow->setContentArea(flippedContentBoxRect());
 }
 
 void RenderBlock::addOverflowFromOutOfFlowBoxes()
@@ -733,8 +730,8 @@ bool RenderBlock::simplifiedLayout()
     // lowestPosition on every relayout so it's not a regression.
     // computeOverflow expects the bottom edge before we clamp our height. Since this information isn't available during
     // simplifiedLayout, we cache the value in m_overflow.
-    LayoutUnit oldClientAfterEdge = hasRenderOverflow() ? m_overflow->layoutClientAfterEdge() : clientLogicalBottom();
-    computeOverflow(oldClientAfterEdge, ComputeOverflowOptions::RecomputeFloats);
+    auto contentArea = hasRenderOverflow() ? m_overflow->contentArea() : flippedContentBoxRect();
+    computeOverflow(contentArea, ComputeOverflowOptions::RecomputeFloats);
 
     updateLayerTransform();
 
@@ -780,11 +777,12 @@ LayoutUnit RenderBlock::marginIntrinsicLogicalWidthForChild(RenderBox& child) co
     // Fixed margins can be added in as is.
     auto& marginLeft = child.style().marginStart(writingMode());
     auto& marginRight = child.style().marginEnd(writingMode());
+    const auto& zoomFactor = child.style().usedZoomForLength();
     LayoutUnit margin;
     if (auto fixedMarginLeft = marginLeft.tryFixed(); fixedMarginLeft && !shouldTrimChildMargin(MarginTrimType::InlineStart, child))
-        margin += fixedMarginLeft->resolveZoom(Style::ZoomNeeded { });
+        margin += fixedMarginLeft->resolveZoom(zoomFactor);
     if (auto fixedMarginRight = marginRight.tryFixed(); fixedMarginRight && !shouldTrimChildMargin(MarginTrimType::InlineEnd, child))
-        margin += fixedMarginRight->resolveZoom(Style::ZoomNeeded { });
+        margin += fixedMarginRight->resolveZoom(zoomFactor);
     return margin;
 }
 
@@ -2241,7 +2239,7 @@ void RenderBlock::computePreferredLogicalWidths()
 
     auto& styleToUse = style();
     auto logicalWidth = overridingLogicalWidthForFlexBasisComputation().value_or(styleToUse.logicalWidth());
-    if (auto fixedLogicalWidth = logicalWidth.tryFixed(); !isRenderTableCell() && fixedLogicalWidth && fixedLogicalWidth->isPositiveOrZero() && !(isDeprecatedFlexItem() && !static_cast<int>(fixedLogicalWidth->resolveZoom(Style::ZoomNeeded { })))) {
+    if (auto fixedLogicalWidth = logicalWidth.tryFixed(); !isRenderTableCell() && fixedLogicalWidth && fixedLogicalWidth->isPositiveOrZero() && !(isDeprecatedFlexItem() && !static_cast<int>(fixedLogicalWidth->resolveZoom(style().usedZoomForLength())))) {
         m_minPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalWidth);
         m_maxPreferredLogicalWidth = m_minPreferredLogicalWidth;
     } else if (logicalWidth.isMaxContent()) {
@@ -2306,10 +2304,11 @@ void RenderBlock::computeBlockPreferredLogicalWidths(LayoutUnit& minLogicalWidth
         // Fixed margins can be added in as is.
         LayoutUnit marginStart;
         LayoutUnit marginEnd;
+        const auto& childZoomFactor = childStyle.usedZoomForLength();
         if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
-            marginStart += fixedMarginStart->resolveZoom(Style::ZoomNeeded { });
+            marginStart += fixedMarginStart->resolveZoom(childZoomFactor);
         if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
-            marginEnd += fixedMarginEnd->resolveZoom(Style::ZoomNeeded { });
+            marginEnd += fixedMarginEnd->resolveZoom(childZoomFactor);
         auto margin = marginStart + marginEnd;
 
         LayoutUnit childMinPreferredLogicalWidth;
@@ -2383,7 +2382,7 @@ void RenderBlock::computeChildPreferredLogicalWidths(RenderBox& childBox, Layout
                 childBox.verticalBorderAndPaddingExtent(),
                 LayoutUnit { childBoxStyle.logicalAspectRatio() },
                 childBoxStyle.boxSizingForAspectRatio(),
-                LayoutUnit { fixedChildBoxStyleLogicalWidth->resolveZoom(Style::ZoomNeeded { }) },
+                LayoutUnit { fixedChildBoxStyleLogicalWidth->resolveZoom(childBoxStyle.usedZoomForLength()) },
                 style().aspectRatio(),
                 isRenderReplaced()
             );
@@ -3067,7 +3066,7 @@ std::optional<LayoutUnit> RenderBlock::availableLogicalHeightForPercentageComput
 
         auto& style = this->style();
         if (auto fixedLogicalHeight = style.logicalHeight().tryFixed()) {
-            auto contentBoxHeight = adjustContentBoxLogicalHeightForBoxSizing(LayoutUnit { fixedLogicalHeight->resolveZoom(Style::ZoomNeeded { }) });
+            auto contentBoxHeight = adjustContentBoxLogicalHeightForBoxSizing(LayoutUnit { fixedLogicalHeight->resolveZoom(style.usedZoomForLength()) });
             return std::max(0_lu, constrainContentBoxLogicalHeightByMinMax(contentBoxHeight - scrollbarLogicalHeight(), { }));
         }
 
@@ -3336,13 +3335,14 @@ bool RenderBlock::computePreferredWidthsForExcludedChildren(LayoutUnit& minWidth
     maxWidth -= scrollbarWidth;
     
     const auto& childStyle = legend->style();
+    const auto& childZoomFactor = childStyle.usedZoomForLength();
 
     LayoutUnit marginStart;
     LayoutUnit marginEnd;
     if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
-        marginStart += fixedMarginStart->resolveZoom(Style::ZoomNeeded { });
+        marginStart += fixedMarginStart->resolveZoom(childZoomFactor);
     if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
-        marginEnd += fixedMarginEnd->resolveZoom(Style::ZoomNeeded { });
+        marginEnd += fixedMarginEnd->resolveZoom(childZoomFactor);
 
     auto margin = marginStart + marginEnd;
 

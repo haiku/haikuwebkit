@@ -326,12 +326,13 @@ IntrinsicWidthConstraints BlockFormattingGeometry::intrinsicWidthConstraints(con
 {
     auto fixedMarginBorderAndPadding = [&](auto& layoutBox) {
         auto& style = layoutBox.style();
-        return fixedValue(style.marginStart()).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), style.usedZoomForLength())
-            + fixedValue(style.paddingLeft()).value_or(0)
-            + fixedValue(style.paddingRight()).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), style.usedZoomForLength())
-            + fixedValue(style.marginEnd()).value_or(0);
+        const auto& zoomFactor = style.usedZoomForLength();
+        return fixedValue(style.marginStart(), zoomFactor).value_or(0)
+            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), zoomFactor)
+            + fixedValue(style.paddingLeft(), zoomFactor).value_or(0)
+            + fixedValue(style.paddingRight(), zoomFactor).value_or(0)
+            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), zoomFactor)
+            + fixedValue(style.marginEnd(), zoomFactor).value_or(0);
     };
 
     auto computedIntrinsicWidthConstraints = [&]() -> IntrinsicWidthConstraints {
@@ -341,7 +342,7 @@ IntrinsicWidthConstraints BlockFormattingGeometry::intrinsicWidthConstraints(con
         if (needsResolvedContainingBlockWidth)
             return { };
 
-        if (auto width = fixedValue(logicalWidth))
+        if (auto width = fixedValue(logicalWidth, layoutBox.style().usedZoomForLength()))
             return { *width, *width };
 
         if (layoutBox.isReplacedBox()) {

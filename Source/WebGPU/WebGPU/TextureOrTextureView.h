@@ -43,6 +43,14 @@ public:
         : m_view(&view)
     {
     }
+    TextureOrTextureView(Texture* texture)
+        : m_texture(texture)
+    {
+    }
+    TextureOrTextureView(TextureView* view)
+        : m_view(view)
+    {
+    }
 
 #define TEXTURE_OR_VIEW_INVOKE(x) return m_view ? RefPtr { m_view }->x() : RefPtr { m_texture }->x()
 #define TEXTURE_OR_VIEW_HELPER(x) auto x() const { TEXTURE_OR_VIEW_INVOKE(x); }
@@ -87,6 +95,8 @@ public:
 #undef TEXTURE_OR_VIEW_HELPER
 #undef TEXTURE_OR_VIEW_HELPER_REF
 #undef TEXTURE_OR_VIEW_HELPER_NONCONST
+
+    operator bool() const { return m_texture || m_view; }
 
 private:
     RefPtr<Texture> m_texture;

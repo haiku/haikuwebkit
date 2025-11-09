@@ -44,6 +44,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemoteRenderBundleProxy() const { return false; }
+
 protected:
     RenderBundle() = default;
 

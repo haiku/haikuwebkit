@@ -643,5 +643,10 @@ void UniqueIDBDatabaseTransaction::didGenerateIndexKeyForRecord(IDBResourceIdent
     database->didGenerateIndexKeyForRecord(*this, indexInfo, key, value, recordID);
 }
 
+void UniqueIDBDatabaseTransaction::addOpenRequestResult(const IDBError& error)
+{
+    m_requestResults.append(error);
+}
+
 } // namespace IDBServer
 } // namespace WebCore

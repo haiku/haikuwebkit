@@ -45,14 +45,14 @@ void WebGLLoseContext::loseContext()
 {
     if (isContextLost())
         return;
-    protectedContext()->forceLostContext(WebGLRenderingContextBase::SyntheticLostContext);
+    context()->forceLostContext(WebGLRenderingContextBase::SyntheticLostContext);
 }
 
 void WebGLLoseContext::restoreContext()
 {
     if (isContextLost())
         return;
-    protectedContext()->forceRestoreContext();
+    context()->forceRestoreContext();
 }
 
 } // namespace WebCore

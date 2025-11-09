@@ -153,7 +153,6 @@ private:
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }
     using EventTarget::dispatchEvent;
-    void dispatchEvent(Event&) final;
     enum EventTargetInterfaceType eventTargetInterface() const final { return EventTargetInterfaceType::TextTrackCue; }
     ScriptExecutionContext* scriptExecutionContext() const final;
 

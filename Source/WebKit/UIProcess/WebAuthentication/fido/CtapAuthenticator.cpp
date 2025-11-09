@@ -199,13 +199,13 @@ void CtapAuthenticator::continueMakeCredentialAfterCheckExcludedCredentials(bool
     }
     auto internalUVAvailability = m_info.options().userVerificationAvailability();
     auto residentKeyAvailability = m_info.options().residentKeyAvailability();
-    if (options.authenticatorSelection && options.authenticatorSelection->userVerification == UserVerificationRequirement::Required && !isUVSetup()) {
+    if (options.authenticatorSelection && options.authenticatorSelection->userVerification() == UserVerificationRequirement::Required && !isUVSetup()) {
         performAuthenticatorSelectionForSetupPin();
         return;
     }
     Vector<String> authenticatorSupportedExtensions;
     if (m_isKeyStoreFull || (m_info.remainingDiscoverableCredentials() && !m_info.remainingDiscoverableCredentials())) {
-        if (options.authenticatorSelection && (options.authenticatorSelection->requireResidentKey || options.authenticatorSelection->residentKey == ResidentKeyRequirement::Required)) {
+        if (options.authenticatorSelection && (options.authenticatorSelection->requireResidentKey || options.authenticatorSelection->residentKey() == ResidentKeyRequirement::Required)) {
             protectedObserver()->authenticatorStatusUpdated(WebAuthenticationStatus::KeyStoreFull);
             return;
         }
@@ -213,7 +213,7 @@ void CtapAuthenticator::continueMakeCredentialAfterCheckExcludedCredentials(bool
     }
 
     // If UV is required, then either built-in uv or a pin will work.
-    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && (!options.authenticatorSelection || options.authenticatorSelection->userVerification != UserVerificationRequirement::Discouraged) && m_pinAuth.isEmpty())
+    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && (!options.authenticatorSelection || options.authenticatorSelection->userVerification() != UserVerificationRequirement::Discouraged) && m_pinAuth.isEmpty())
         cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, residentKeyAvailability, authenticatorSupportedExtensions, std::nullopt, m_info.algorithms(), WTFMove(overrideExcludeCredentials));
     else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet)
         cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, residentKeyAvailability, authenticatorSupportedExtensions, PinParameters { pin::kProtocolVersion, m_pinAuth }, m_info.algorithms(), WTFMove(overrideExcludeCredentials));
@@ -234,7 +234,7 @@ void CtapAuthenticator::continueMakeCredentialAfterResponseReceived(Vector<uint8
 {
     auto error = getResponseCode(data);
     CTAP_RELEASE_LOG("continueMakeCredentialAfterResponseReceived: Got error code: %hhu from authenticator.", enumToUnderlyingType(error));
-    auto response = readCTAPMakeCredentialResponse(data, AuthenticatorAttachment::CrossPlatform, transports(), std::get<PublicKeyCredentialCreationOptions>(requestData().options).attestation);
+    auto response = readCTAPMakeCredentialResponse(data, AuthenticatorAttachment::CrossPlatform, transports(), std::get<PublicKeyCredentialCreationOptions>(requestData().options).attestation());
     if (!response) {
         CTAP_RELEASE_LOG("makeCredential: Failed to parse response %s", base64EncodeToString(data).utf8().data());
 
@@ -249,7 +249,7 @@ void CtapAuthenticator::continueMakeCredentialAfterResponseReceived(Vector<uint8
         }
         if (error == CtapDeviceResponseCode::kCtap2ErrKeyStoreFull) {
             auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
-            if (options.authenticatorSelection->requireResidentKey || options.authenticatorSelection->residentKey == ResidentKeyRequirement::Required)
+            if (options.authenticatorSelection->requireResidentKey || options.authenticatorSelection->residentKey() == ResidentKeyRequirement::Required)
                 protectedObserver()->authenticatorStatusUpdated(WebAuthenticationStatus::KeyStoreFull);
             else if (!m_isKeyStoreFull) {
                 m_isKeyStoreFull = true;
@@ -273,9 +273,9 @@ void CtapAuthenticator::continueMakeCredentialAfterResponseReceived(Vector<uint8
     auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
     if (options.extensions && options.extensions->credProps) {
         auto extensionOutputs = response->extensions();
-        
+
         auto rkSupported = m_info.options().residentKeyAvailability() == AuthenticatorSupportedOptions::ResidentKeyAvailability::kSupported;
-        auto rkRequested = options.authenticatorSelection && ((options.authenticatorSelection->residentKey && options.authenticatorSelection->residentKey != ResidentKeyRequirement::Discouraged) || options.authenticatorSelection->requireResidentKey);
+        auto rkRequested = options.authenticatorSelection && ((options.authenticatorSelection->residentKey() && *options.authenticatorSelection->residentKey() != ResidentKeyRequirement::Discouraged) || options.authenticatorSelection->requireResidentKey);
         extensionOutputs.credProps = CredentialPropertiesOutput { rkSupported && rkRequested && !m_isKeyStoreFull };
         response->setExtensions(WTFMove(extensionOutputs));
     }
@@ -341,11 +341,11 @@ void CtapAuthenticator::continueGetAssertionAfterCheckAllowCredentials()
     std::optional<Vector<PublicKeyCredentialDescriptor>> overrideAllowCredentials;
     if (options.allowCredentials.size() > 1 && m_currentBatch < m_batches.size())
         overrideAllowCredentials = m_batches[m_currentBatch];
-    CTAP_RELEASE_LOG("getAssertion uv: %hhu internalUvAvailability %d", options.userVerification, internalUVAvailability);
+    CTAP_RELEASE_LOG("getAssertion uv: %hhu internalUvAvailability %d", static_cast<uint8_t>(options.userVerification()), internalUVAvailability);
     // If UV is required, then either built-in uv or a pin will work.
-    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && options.userVerification != UserVerificationRequirement::Discouraged && m_pinAuth.isEmpty())
+    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && options.userVerification() != UserVerificationRequirement::Discouraged && m_pinAuth.isEmpty())
         cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials));
-    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet && options.userVerification != UserVerificationRequirement::Discouraged)
+    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet && options.userVerification() != UserVerificationRequirement::Discouraged)
         cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, PinParameters { pin::kProtocolVersion, m_pinAuth }, WTFMove(overrideAllowCredentials));
     else
         cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials));

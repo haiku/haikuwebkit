@@ -186,6 +186,7 @@ target_compile_options(WPEPlatform PRIVATE ${DEVELOPER_MODE_CXX_FLAGS})
 target_include_directories(WPEPlatform PRIVATE ${WPEPlatform_PRIVATE_INCLUDE_DIRECTORIES})
 target_include_directories(WPEPlatform SYSTEM PRIVATE ${WPEPlatform_SYSTEM_INCLUDE_DIRECTORIES})
 target_link_libraries(WPEPlatform ${WPEPlatform_LIBRARIES})
+add_dependencies(WPEPlatform WPEPlatformGeneratedEnumTypesHeader)
 
 GI_INTROSPECT(WPEPlatform ${WPE_API_VERSION} wpe/wpe-platform.h
     TARGET WebKit

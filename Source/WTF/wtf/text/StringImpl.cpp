@@ -316,6 +316,17 @@ Ref<StringImpl> StringImpl::create8BitIfPossible(std::span<const char16_t> chara
     return string;
 }
 
+Ref<StringImpl> StringImpl::create8BitUnconditionally(std::span<const char16_t> characters)
+{
+    if (characters.empty())
+        return *empty();
+
+    std::span<Latin1Character> data;
+    auto string = createUninitializedInternalNonEmpty(characters.size(), data);
+    copyElements(data, characters);
+    return string;
+}
+
 Ref<StringImpl> StringImpl::substring(unsigned start, unsigned length)
 {
     if (start >= m_length)

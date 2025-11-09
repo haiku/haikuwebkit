@@ -62,8 +62,13 @@ public:
     explicit MediaControlsHost(HTMLMediaElement&);
     ~MediaControlsHost();
 
+#if ENABLE(MEDIA_SESSION)
+    void ref() const final;
+    void deref() const final;
+#else
     void ref() const;
     void deref() const;
+#endif
 
     static const AtomString& automaticKeyword();
     static const AtomString& forcedOnlyKeyword();

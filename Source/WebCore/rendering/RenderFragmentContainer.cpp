@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Adobe Systems Incorporated. All rights reserved.
- * Copyright (C) 2020 Google  Inc. All rights reserved.
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2020 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -156,26 +157,27 @@ LayoutPoint RenderFragmentContainer::fragmentedFlowPortionLocation() const
 LayoutRect RenderFragmentContainer::overflowRectForFragmentedFlowPortion(const LayoutRect& fragmentedFlowPortionRect, bool isFirstPortion, bool isLastPortion) const
 {
     ASSERT(isValid());
-    if (shouldClipFragmentedFlowContent())
-        return fragmentedFlowPortionRect;
 
-    LayoutRect fragmentedFlowOverflow = visualOverflowRectForBox(*m_fragmentedFlow);
-    LayoutRect clipRect;
+    auto renderableInfiniteRect = [] {
+        // Return a infinite-like rect whose values are such that, when converted to float pixel values, they can reasonably represent device pixels.
+        return LayoutRect(LayoutUnit::nearlyMin() / 32, LayoutUnit::nearlyMin() / 32, LayoutUnit::nearlyMax() / 16, LayoutUnit::nearlyMax() / 16);
+    }();
+
+    // Only clip along the block direction axis.
+    LayoutRect clipRect(renderableInfiniteRect);
+
     if (m_fragmentedFlow->isHorizontalWritingMode()) {
-        LayoutUnit minY = isFirstPortion ? fragmentedFlowOverflow.y() : fragmentedFlowPortionRect.y();
-        LayoutUnit maxY = isLastPortion ? std::max(fragmentedFlowPortionRect.maxY(), fragmentedFlowOverflow.maxY()) : fragmentedFlowPortionRect.maxY();
-        bool clipX = effectiveOverflowX() != Overflow::Visible;
-        LayoutUnit minX = clipX ? fragmentedFlowPortionRect.x() : std::min(fragmentedFlowPortionRect.x(), fragmentedFlowOverflow.x());
-        LayoutUnit maxX = clipX ? fragmentedFlowPortionRect.maxX() : std::max(fragmentedFlowPortionRect.maxX(), fragmentedFlowOverflow.maxX());
-        clipRect = LayoutRect(minX, minY, maxX - minX, maxY - minY);
-    } else {
-        LayoutUnit minX = isFirstPortion ? fragmentedFlowOverflow.x() : fragmentedFlowPortionRect.x();
-        LayoutUnit maxX = isLastPortion ? std::max(fragmentedFlowPortionRect.maxX(), fragmentedFlowOverflow.maxX()) : fragmentedFlowPortionRect.maxX();
-        bool clipY = effectiveOverflowY() != Overflow::Visible;
-        LayoutUnit minY = clipY ? fragmentedFlowPortionRect.y() : std::min(fragmentedFlowPortionRect.y(), fragmentedFlowOverflow.y());
-        LayoutUnit maxY = clipY ? fragmentedFlowPortionRect.maxY() : std::max(fragmentedFlowPortionRect.y(), fragmentedFlowOverflow.maxY());
-        clipRect = LayoutRect(minX, minY, maxX - minX, maxY - minY);
+        if (!isFirstPortion)
+            clipRect.shiftYEdgeTo(fragmentedFlowPortionRect.y());
+        if (!isLastPortion)
+            clipRect.shiftMaxYEdgeTo(fragmentedFlowPortionRect.maxY());
+        return clipRect;
     }
+
+    if (!isFirstPortion)
+        clipRect.shiftXEdgeTo(fragmentedFlowPortionRect.x());
+    if (!isLastPortion)
+        clipRect.shiftMaxXEdgeTo(fragmentedFlowPortionRect.maxX());
     return clipRect;
 }
 

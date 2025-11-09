@@ -29,6 +29,7 @@
 #if ENABLE(WEBGL)
 
 #include <WebCore/DestinationColorSpace.h>
+#include <WebCore/GCGLExtension.h>
 #include <WebCore/GraphicsContextGLActiveInfo.h>
 #include <WebCore/GraphicsContextGLAttributes.h>
 #include <WebCore/GraphicsContextGLEnums.h>
@@ -38,6 +39,7 @@
 #include <WebCore/IntRect.h>
 #include <WebCore/IntSize.h>
 #include <span>
+#include <wtf/EnumSet.h>
 #include <wtf/FunctionDispatcher.h>
 #include <wtf/HashSet.h>
 #include <wtf/RefCounted.h>
@@ -1303,10 +1305,8 @@ public:
 
     virtual void generateMipmap(GCGLenum target) = 0;
 
-    virtual std::optional<GraphicsContextGLActiveInfo> getActiveAttrib(PlatformGLObject program, GCGLuint index) = 0;
-    virtual std::optional<GraphicsContextGLActiveInfo> getActiveUniform(PlatformGLObject program, GCGLuint index) = 0;
-
-    virtual GCGLint getAttribLocation(PlatformGLObject, const CString& name) = 0;
+    virtual Vector<GCGLAttribActiveInfo> activeAttribs(PlatformGLObject program) = 0;
+    virtual Vector<GCGLUniformActiveInfo> activeUniforms(PlatformGLObject program) = 0;
 
     virtual GCGLint getBufferParameteri(GCGLenum target, GCGLenum pname) = 0;
 
@@ -1345,8 +1345,6 @@ public:
     virtual void getUniformfv(PlatformGLObject program, GCGLint location, std::span<GCGLfloat> value) = 0;
     virtual void getUniformiv(PlatformGLObject program, GCGLint location, std::span<GCGLint> value) = 0;
     virtual void getUniformuiv(PlatformGLObject program, GCGLint location, std::span<GCGLuint> value) = 0;
-
-    virtual GCGLint getUniformLocation(PlatformGLObject, const CString& name) = 0;
 
     virtual GCGLsizeiptr getVertexAttribOffset(GCGLuint index, GCGLenum pname) = 0;
 
@@ -1533,15 +1531,12 @@ public:
     virtual void beginTransformFeedback(GCGLenum primitiveMode) = 0;
     virtual void endTransformFeedback() = 0;
     virtual void transformFeedbackVaryings(PlatformGLObject program, const Vector<CString>& varyings, GCGLenum bufferMode) = 0;
-    virtual std::optional<GraphicsContextGLActiveInfo> getTransformFeedbackVarying(PlatformGLObject program, GCGLuint index) = 0;
+    virtual std::optional<GCGLTransformFeedbackActiveInfo> getTransformFeedbackVarying(PlatformGLObject program, GCGLuint index) = 0;
     virtual void pauseTransformFeedback() = 0;
     virtual void resumeTransformFeedback() = 0;
 
     virtual void bindBufferBase(GCGLenum target, GCGLuint index, PlatformGLObject buffer) = 0;
     virtual void bindBufferRange(GCGLenum target, GCGLuint index, PlatformGLObject buffer, GCGLintptr offset, GCGLsizeiptr size) = 0;
-    // getIndexedParameter -> use getParameter calls above.
-    virtual Vector<GCGLuint> getUniformIndices(PlatformGLObject program, const Vector<CString>& uniformNames) = 0;
-    virtual Vector<GCGLint> getActiveUniforms(PlatformGLObject program, const Vector<GCGLuint>& uniformIndices, GCGLenum pname) = 0;
 
     virtual GCGLuint getUniformBlockIndex(PlatformGLObject program, const CString& uniformBlockName) = 0;
     // getActiveUniformBlockParameter
@@ -1586,15 +1581,9 @@ public:
     virtual void multiDrawElementsANGLE(GCGLenum mode, GCGLSpanTuple<const GCGLsizei, const GCGLsizei> countsAndOffsets, GCGLenum type) = 0;
     virtual void multiDrawElementsInstancedANGLE(GCGLenum mode, GCGLSpanTuple<const GCGLsizei, const GCGLsizei, const GCGLsizei> countsOffsetsAndInstanceCounts, GCGLenum type) = 0;
 
-    virtual bool supportsExtension(const CString&) = 0;
-
-    // This method may only be called with extension names for which supports returns true.
-    virtual void ensureExtensionEnabled(const CString&) = 0;
-
-    // Takes full name of extension: for example, "GL_EXT_texture_format_BGRA8888".
-    // Checks to see whether the given extension is actually enabled (see ensureExtensionEnabled).
-    // Has no other side-effects.
-    virtual bool isExtensionEnabled(const CString&) = 0;
+    WEBCORE_EXPORT virtual bool supportsExtension(GCGLExtension);
+    // Returns true if extension was supported and thus enabled.
+    virtual bool enableExtension(GCGLExtension) = 0;
 
 #if ENABLE(WEBXR)
     virtual bool enableRequiredWebXRExtensions() { return false; }
@@ -1673,11 +1662,8 @@ public:
 
     virtual void prepareForDisplay() = 0;
 
-    // FIXME: these should be removed, they're part of drawing buffer and
-    // display buffer abstractions that the caller should hold separate to
-    // the context.
     using SurfaceBuffer = GraphicsContextGLSurfaceBuffer;
-    virtual void drawSurfaceBufferToImageBuffer(SurfaceBuffer, ImageBuffer&) = 0;
+    virtual RefPtr<NativeImage> copyNativeImageYFlipped(SurfaceBuffer) = 0;
 #if ENABLE(MEDIA_STREAM) || ENABLE(WEB_CODECS)
     virtual RefPtr<VideoFrame> surfaceBufferToVideoFrame(SurfaceBuffer) = 0;
 #endif
@@ -1746,6 +1732,8 @@ protected:
     int m_currentHeight { 0 };
     Client* m_client { nullptr };
     bool m_contextLost { false };
+    EnumSet<GCGLExtension> m_knownActiveExtensions; // Not a full list since some extensions are implicitly enabled once another extension is enabled.
+    EnumSet<GCGLExtension> m_requestableExtensions;
 
 private:
     GraphicsContextGLAttributes m_attrs;

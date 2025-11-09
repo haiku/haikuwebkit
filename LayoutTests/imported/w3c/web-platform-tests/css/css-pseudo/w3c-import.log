@@ -64,6 +64,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-after-dynamic-custom-property-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-after-dynamic-custom-property-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-after-dynamic-custom-property-001.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-as-flex-container-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-as-flex-container-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-as-flex-container.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-dynamic-display-none-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-dynamic-display-none.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/before-in-display-none-thcrash.html
@@ -597,6 +600,14 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/spelling-error-006.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-002-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-002.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-fill-only-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-fill-only.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-shadow-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-shadow.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-stroke-only-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-stroke-only.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-transparent-background-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/svg-text-selection-transparent-background.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/target-text-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/target-text-001.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/target-text-002-expected.html

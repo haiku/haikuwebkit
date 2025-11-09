@@ -130,7 +130,7 @@ inline bool areBuffersEqual(const WebGPU::Buffer& a, const WebGPU::Buffer& b)
 
 inline NSString * convertWTFStringToNSString(const String& input)
 {
-    return nsStringNilIfEmpty(input);
+    return nsStringNilIfEmpty(input).autorelease();
 }
 
 inline ThreadSafeWeakPtr<WebGPU::CommandBuffer> commandBufferThreadSafeWeakPtr(const WebGPU::CommandBuffer* input)

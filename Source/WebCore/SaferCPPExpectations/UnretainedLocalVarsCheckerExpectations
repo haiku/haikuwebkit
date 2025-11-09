@@ -74,7 +74,6 @@ platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
 platform/text/cocoa/LocaleCocoa.mm
 rendering/AttachmentLayout.mm
 testing/Internals.mm
-testing/cocoa/WebArchiveDumpSupport.mm
 testing/cocoa/WebViewVisualIdentificationOverlay.mm
 [ iOS ] Modules/async-clipboard/ios/ClipboardImageReaderIOS.mm
 [ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm

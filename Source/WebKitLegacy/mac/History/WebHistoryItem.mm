@@ -170,19 +170,19 @@ void WKNotifyHistoryItemChanged()
 // FIXME: Need to decide if this class ever returns URLs and decide on the name of this method
 - (NSString *)URLString
 {
-    return nsStringNilIfEmpty(core(_private)->urlString());
+    return nsStringNilIfEmpty(core(_private)->urlString()).autorelease();
 }
 
 // The first URL we loaded to get to where this history item points.  Includes both client
 // and server redirects.
 - (NSString *)originalURLString
 {
-    return nsStringNilIfEmpty(core(_private)->originalURLString());
+    return nsStringNilIfEmpty(core(_private)->originalURLString()).autorelease();
 }
 
 - (NSString *)title
 {
-    return nsStringNilIfEmpty(core(_private)->title());
+    return nsStringNilIfEmpty(core(_private)->title()).autorelease();
 }
 
 - (void)setAlternateTitle:(NSString *)alternateTitle
@@ -192,7 +192,7 @@ void WKNotifyHistoryItemChanged()
 
 - (NSString *)alternateTitle
 {
-    return nsStringNilIfEmpty(core(_private)->alternateTitle());
+    return nsStringNilIfEmpty(core(_private)->alternateTitle()).autorelease();
 }
 
 #if !PLATFORM(IOS_FAMILY)
@@ -441,7 +441,7 @@ WebHistoryItem *kit(HistoryItem* item)
 
 - (NSString *)target
 {
-    return nsStringNilIfEmpty(core(_private)->target());
+    return nsStringNilIfEmpty(core(_private)->target()).autorelease();
 }
 
 - (BOOL)isTargetItem
@@ -451,7 +451,7 @@ WebHistoryItem *kit(HistoryItem* item)
 
 - (NSString *)RSSFeedReferrer
 {
-    return nsStringNilIfEmpty(core(_private)->referrer());
+    return nsStringNilIfEmpty(core(_private)->referrer()).autorelease();
 }
 
 - (void)setRSSFeedReferrer:(NSString *)referrer

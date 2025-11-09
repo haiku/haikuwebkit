@@ -68,7 +68,7 @@ HTMLVideoElementPictureInPicture::~HTMLVideoElementPictureInPicture()
 
 HTMLVideoElementPictureInPicture* HTMLVideoElementPictureInPicture::from(HTMLVideoElement& videoElement)
 {
-    HTMLVideoElementPictureInPicture* supplement = static_cast<HTMLVideoElementPictureInPicture*>(Supplement<HTMLVideoElement>::from(&videoElement, supplementName()));
+    auto* supplement = downcast<HTMLVideoElementPictureInPicture>(Supplement<HTMLVideoElement>::from(&videoElement, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<HTMLVideoElementPictureInPicture>(videoElement);
         supplement = newSupplement.get();

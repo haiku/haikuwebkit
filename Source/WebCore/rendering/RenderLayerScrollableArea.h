@@ -65,6 +65,7 @@ public:
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     RenderLayer& layer() { return m_layer; }
 
@@ -239,11 +240,6 @@ public:
     bool positionOverflowControls(const IntSize&);
 
     void updateAllScrollbarRelatedStyle();
-
-    LayoutUnit overflowTop() const;
-    LayoutUnit overflowBottom() const;
-    LayoutUnit overflowLeft() const;
-    LayoutUnit overflowRight() const;
 
     RenderLayer::OverflowControlRects overflowControlsRects() const;
 

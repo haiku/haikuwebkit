@@ -66,6 +66,7 @@ HTMLFormControlElement::HTMLFormControlElement(const QualifiedName& tagName, Doc
     , m_isRequired(false)
     , m_valueMatchesRenderer(false)
     , m_wasChangedSinceLastFormControlChangeEvent(false)
+    , m_wasCreatedByTaintedScript(document.requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::FormControls, ScriptExecutionContext::IncludeConsoleLog::No))
 {
 }
 

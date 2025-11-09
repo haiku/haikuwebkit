@@ -725,7 +725,8 @@ TEST(KeyboardInputTests, DisableSpellChecking)
     checkSmartQuotesAndDashesType(UITextSmartDashesTypeDefault, UITextSmartQuotesTypeDefault, UITextSpellCheckingTypeDefault);
 }
 
-TEST(KeyboardInputTests, SelectionClipRectsWhenPresentingInputView)
+// FIXME: rdar://163669257 (REGRESSION(iOS26):TestWebKitAPI.KeyboardInputTests.SelectionClipRectsWhenPresentingInputView is a constant failure (301658))
+TEST(KeyboardInputTests, DISABLED_SelectionClipRectsWhenPresentingInputView)
 {
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     auto inputDelegate = adoptNS([[TestInputDelegate alloc] init]);

@@ -134,9 +134,9 @@ private:
             }
 
             NSFileManager *fileManager = [NSFileManager defaultManager];
-            if (![fileManager fileExistsAtPath:[destination URLByDeletingLastPathComponent].path])
+            if (![fileManager fileExistsAtPath:retainPtr([destination URLByDeletingLastPathComponent].path).get()])
                 return completionHandler(WebKit::AllowOverwrite::No, { });
-            if ([fileManager fileExistsAtPath:destination.path])
+            if ([fileManager fileExistsAtPath:retainPtr(destination.path).get()])
                 return completionHandler(WebKit::AllowOverwrite::No, { });
 
             protectedWrapper(download.get()).get().progress.fileURL = destination;
@@ -301,7 +301,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 
 - (NSURLRequest *)originalRequest
 {
-    return _download->request().nsURLRequest(WebCore::HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
+    return _download->request().protectedNSURLRequest(WebCore::HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody).autorelease();
 }
 
 - (WKWebView *)webView

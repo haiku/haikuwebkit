@@ -300,13 +300,13 @@ WebGLAny WebGLRenderingContext::getFramebufferAttachmentParameter(GCGLenum targe
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE:
         if (!isTexture)
             break;
-        return protectedGraphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
+        return graphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING_EXT:
         if (!m_extsRGB) {
             synthesizeGLError(GraphicsContextGL::INVALID_ENUM, functionName, "invalid parameter name, EXT_sRGB not enabled"_s);
             return nullptr;
         }
-        return protectedGraphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
+        return graphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
     case GraphicsContextGL::FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE_EXT:
         if (!m_extColorBufferHalfFloat && !m_webglColorBufferFloat) {
             synthesizeGLError(GraphicsContextGL::INVALID_ENUM, functionName, "invalid parameter name, EXT_color_buffer_half_float or WEBGL_color_buffer_float not enabled"_s);
@@ -316,7 +316,7 @@ WebGLAny WebGLRenderingContext::getFramebufferAttachmentParameter(GCGLenum targe
             synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, functionName, "component type cannot be queried for DEPTH_STENCIL_ATTACHMENT"_s);
             return nullptr;
         }
-        return protectedGraphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
+        return graphicsContextGL()->getFramebufferAttachmentParameteri(target, attachment, pname);
     }
 
     synthesizeGLError(GraphicsContextGL::INVALID_ENUM, functionName, "invalid parameter name"_s);
@@ -325,7 +325,7 @@ WebGLAny WebGLRenderingContext::getFramebufferAttachmentParameter(GCGLenum targe
 
 long long WebGLRenderingContext::getInt64Parameter(GCGLenum pname)
 {
-    return protectedGraphicsContextGL()->getInteger64EXT(pname);
+    return graphicsContextGL()->getInteger64EXT(pname);
 }
 
 GCGLint WebGLRenderingContext::maxDrawBuffers()
@@ -346,7 +346,7 @@ GCGLint WebGLRenderingContext::maxColorAttachments()
     if (!supportsDrawBuffers())
         return 0;
     if (!m_maxColorAttachments)
-        m_maxColorAttachments = protectedGraphicsContextGL()->getInteger(GraphicsContextGL::MAX_COLOR_ATTACHMENTS_EXT);
+        m_maxColorAttachments = graphicsContextGL()->getInteger(GraphicsContextGL::MAX_COLOR_ATTACHMENTS_EXT);
     return m_maxColorAttachments;
 }
 

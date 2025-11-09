@@ -19,7 +19,7 @@ function test() {
     positioned.offsetHeight;
     if (window.testRunner && window.internals) {
         repaintRects = internals.repaintRectsAsText();
-        shouldNotBe("repaintRects.indexOf('rect 0 0 101.50 100')", "-1");
+        shouldNotBe("repaintRects.indexOf('rect 0 0 150.50 100')", "-1");
         internals.stopTrackingRepaints();
         finishJSTest();
     }

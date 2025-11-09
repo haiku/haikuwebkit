@@ -36,6 +36,7 @@
 #include "src/gpu/graphite/ContextPriv.h"
 #include "src/gpu/graphite/Device.h"
 #include "src/gpu/graphite/Log.h"
+#include "src/gpu/graphite/PaintParamsKey.h"
 #include "src/gpu/graphite/PipelineData.h"
 #include "src/gpu/graphite/ProxyCache.h"
 #include "src/gpu/graphite/QueueManager.h"
@@ -101,14 +102,19 @@ RecorderOptions::RecorderOptions(const RecorderOptions&) = default;
 RecorderOptions::~RecorderOptions() = default;
 
 /**************************************************************************************************/
-static uint32_t next_id() {
-    static std::atomic<uint32_t> nextID{1};
+
+namespace {
+
+uint32_t next_id() {
+    static std::atomic<uint32_t> nextID{SK_InvalidGenID + 1};
     uint32_t id;
     do {
         id = nextID.fetch_add(1, std::memory_order_relaxed);
     } while (id == SK_InvalidGenID);
     return id;
 }
+
+} // anonymous namespace
 
 Recorder::Recorder(sk_sp<SharedContext> sharedContext,
                    const RecorderOptions& options,
@@ -145,7 +151,7 @@ Recorder::Recorder(sk_sp<SharedContext> sharedContext,
     fUploadBufferManager = std::make_unique<UploadBufferManager>(fResourceProvider,
                                                                  fSharedContext->caps());
 
-    DrawBufferManager::DrawBufferManagerOptions dbmOpts = {};
+    DrawBufferManager::Options dbmOpts = {};
 #if defined(GPU_TEST_UTILS)
     if (options.fRecorderOptionsPriv && options.fRecorderOptionsPriv->fDbmOptions.has_value()) {
         dbmOpts = *options.fRecorderOptionsPriv->fDbmOptions;
@@ -257,6 +263,13 @@ std::unique_ptr<Recording> Recorder::snap() {
         fAtlasProvider->invalidateAtlases();
     }
 
+    // For each KeyAndDataBuilder owned by the Recorder, check if the high watermark of data usage
+    // over the lifetime snap is less than half of allocated capacity. If so, shrink the capacity.
+    for (const std::unique_ptr<KeyAndDataBuilder>& keyDB : fKeyAndDataBuilders) {
+        SkASSERT(keyDB);
+        keyDB->first.tryShrinkCapacity();
+        keyDB->second.tryShrinkCapacity();
+    }
     return recording;
 }
 
@@ -602,6 +615,32 @@ void RecorderPriv::add(sk_sp<Task> task) {
     fRecorder->fRootTaskList->add(std::move(task));
 }
 
+void RecorderPriv::flushTrackedDevices(const TextureProxy* dependency) {
+    // This version of flushTrackedDevices() must be re-entrant because it is entirely possible for
+    // client-owned surfaces to read and write to each other, where this will be called with
+    // different textures for `dependency`. The recursion stops once the encountered surfaces have
+    // snapped remaining pending work from their DrawContext. But because we might recurse, we do
+    // not perform any cleanup of the fTrackedDevices list. That is deferred until snap() time.
+
+    for (int i = 0; i < fRecorder->fTrackedDevices.size(); ++i) {
+        // Entries may be set to null from a call to deregisterDevice(), which will be cleaned up
+        // along with any immutable or uniquely held Devices once everything is snapped.
+        Device* device = fRecorder->fTrackedDevices[i].get();
+        if (device && device->hasPendingReads(dependency)) {
+            device->flushPendingWork(/*drawContext=*/nullptr);
+        }
+    }
+
+    // TODO(michaelludwig): These flushes are currently only triggered for client-owned surfaces
+    // drawn into other surfaces. This function could be used to flush a more targeted set of
+    // devices when an atlas fills up; in that case we could increment the flush token as part of
+    // that work. As-is, we don't increment the flush token because there could be a tracked atlas
+    // that depended on the atlas's texture state that did *not* depend on `dependency` so it still
+    // requires the atlas to be using the old flush token. The surfaces that were flushed here could
+    // advance to a new token but the token tracking isn't that precise. This all may be moot
+    // anyways if we can successfully switch to a rolling atlas page system.
+}
+
 void RecorderPriv::flushTrackedDevices(SK_DUMP_TASKS_CODE(const char* flushSource)) {
     ASSERT_SINGLE_OWNER_PRIV
 
@@ -659,6 +698,33 @@ void RecorderPriv::flushTrackedDevices(SK_DUMP_TASKS_CODE(const char* flushSourc
 
         fRecorder->fFlushingDevicesIndex = -1;
     }
+}
+
+std::unique_ptr<KeyAndDataBuilder> RecorderPriv::popOrCreateKeyAndDataBuilder() {
+    if (!fRecorder->fKeyAndDataBuilders.empty()) {
+        std::unique_ptr<KeyAndDataBuilder> keyDB = std::move(fRecorder->fKeyAndDataBuilders.back());
+        fRecorder->fKeyAndDataBuilders.pop_back();
+        return keyDB;
+    }
+
+    const bool useStorageBuffers = this->caps()->storageBufferSupport();
+    const auto& bindingReq = this->caps()->resourceBindingRequirements();
+    auto gathererLayout = useStorageBuffers ? bindingReq.fStorageBufferLayout
+                                            : bindingReq.fUniformBufferLayout;
+
+    return std::make_unique<KeyAndDataBuilder>(
+        PipelineDataGatherer(gathererLayout),
+        PaintParamsKeyBuilder(this->shaderCodeDictionary()));
+    }
+
+void RecorderPriv::pushKeyAndDataBuilder(std::unique_ptr<KeyAndDataBuilder> keyDB) {
+    SkASSERT(keyDB);
+
+    if (fRecorder->fKeyAndDataBuilders.size() < Recorder::kMaxKeyAndDataBuilders) {
+        fRecorder->fKeyAndDataBuilders.push_back(std::move(keyDB));
+        return;
+    }
+    // If no empty slot was found, the "keyDB" unique_ptr goes out of scope here.
 }
 
 sk_sp<TextureProxy> RecorderPriv::CreateCachedProxy(Recorder* recorder,

@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <WebCore/CSSPropertyNames.h>
 #include <WebCore/CSSValueConcepts.h>
 #include <WebCore/CSSValueKeywords.h>
 #include <WebCore/RectCorners.h>
@@ -203,6 +204,16 @@ TextStream& operator<<(TextStream&, const CustomIdentifier&);
 
 void add(Hasher&, const CustomIdentifier&);
 
+// Helper type used to represent an arbitrary property identifier.
+struct PropertyIdentifier {
+    CSSPropertyID value;
+
+    bool operator==(const PropertyIdentifier&) const = default;
+};
+TextStream& operator<<(TextStream&, const PropertyIdentifier&);
+
+void add(Hasher&, const PropertyIdentifier&);
+
 template<CSSValueID C> TextStream& operator<<(TextStream& ts, const Constant<C>&)
 {
     return ts << nameLiteral(C);
@@ -212,7 +223,7 @@ template<CSSValueID C> TextStream& operator<<(TextStream& ts, const Constant<C>&
 
 // Helper type used to represent a CSS function.
 template<CSSValueID C, typename T> struct FunctionNotation {
-    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CustomIdentifier);
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(FunctionNotation);
 
     static constexpr auto name = C;
     T parameters;

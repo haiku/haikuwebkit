@@ -855,8 +855,11 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/Navigator+WebXR.idl \
     $(WebCore)/Modules/webxr/WebXRBoundedReferenceSpace.idl \
     $(WebCore)/Modules/webxr/WebXRFrame+HandInput.idl \
+    $(WebCore)/Modules/webxr/WebXRFrame+HitTest.idl \
     $(WebCore)/Modules/webxr/WebXRFrame.idl \
     $(WebCore)/Modules/webxr/WebXRHand.idl \
+    $(WebCore)/Modules/webxr/WebXRHitTestResult.idl \
+    $(WebCore)/Modules/webxr/WebXRHitTestSource.idl \
     $(WebCore)/Modules/webxr/WebXRInputSource+Gamepad.idl \
     $(WebCore)/Modules/webxr/WebXRInputSource.idl \
     $(WebCore)/Modules/webxr/WebXRInputSourceArray.idl \
@@ -865,15 +868,19 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/WebXRJointSpace.idl \
     $(WebCore)/Modules/webxr/WebXRLayer.idl \
     $(WebCore)/Modules/webxr/WebXRPose.idl \
+    $(WebCore)/Modules/webxr/WebXRRay.idl \
     $(WebCore)/Modules/webxr/WebXRReferenceSpace.idl \
     $(WebCore)/Modules/webxr/WebXRRenderState.idl \
     $(WebCore)/Modules/webxr/WebXRRenderState+Layers.idl \
     $(WebCore)/Modules/webxr/WebXRRigidTransform.idl \
     $(WebCore)/Modules/webxr/WebXRSession+AR.idl \
+    $(WebCore)/Modules/webxr/WebXRSession+HitTest.idl \
     $(WebCore)/Modules/webxr/WebXRSession.idl \
     $(WebCore)/Modules/webxr/WebXRSpace.idl \
     $(WebCore)/Modules/webxr/WebXRSystem.idl \
     $(WebCore)/Modules/webxr/WebXRViewerPose.idl \
+    $(WebCore)/Modules/webxr/WebXRTransientInputHitTestResult.idl \
+    $(WebCore)/Modules/webxr/WebXRTransientInputHitTestSource.idl \
     $(WebCore)/Modules/webxr/WebXRView.idl \
     $(WebCore)/Modules/webxr/WebXRViewport.idl \
     $(WebCore)/Modules/webxr/WebXRWebGLLayer.idl \
@@ -893,6 +900,8 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/XRGPUSubImage.idl \
     $(WebCore)/Modules/webxr/XRHandJoint.idl \
     $(WebCore)/Modules/webxr/XRHandedness.idl \
+    $(WebCore)/Modules/webxr/XRHitTestOptionsInit.idl \
+    $(WebCore)/Modules/webxr/XRHitTestTrackableType.idl \
     $(WebCore)/Modules/webxr/XRInputSourceEvent.idl \
     $(WebCore)/Modules/webxr/XRInputSourcesChangeEvent.idl \
     $(WebCore)/Modules/webxr/XRInteractionMode.idl \
@@ -904,6 +913,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/XRProjectionLayerInit.idl \
     $(WebCore)/Modules/webxr/XRQuadLayer.idl \
     $(WebCore)/Modules/webxr/XRQuadLayerInit.idl \
+    $(WebCore)/Modules/webxr/XRRayDirectionInit.idl \
     $(WebCore)/Modules/webxr/XRReferenceSpaceEvent.idl \
     $(WebCore)/Modules/webxr/XRReferenceSpaceType.idl \
     $(WebCore)/Modules/webxr/XRRenderStateInit.idl \
@@ -913,6 +923,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/XRSubImage.idl \
     $(WebCore)/Modules/webxr/XRTargetRayMode.idl \
     $(WebCore)/Modules/webxr/XRTextureType.idl \
+    $(WebCore)/Modules/webxr/XRTransientInputHitTestOptionsInit.idl \
     $(WebCore)/Modules/webxr/XRVisibilityState.idl \
     $(WebCore)/Modules/webxr/XRWebGLBinding.idl \
     $(WebCore)/Modules/webxr/XRWebGLLayerInit.idl \
@@ -1624,6 +1635,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/page/WindowOrWorkerGlobalScope.idl \
     $(WebCore)/page/WindowPostMessageOptions.idl \
     $(WebCore)/page/WindowSessionStorage.idl \
+    $(WebCore)/page/WebKitStringMatcher.idl \
+    $(WebCore)/page/WebKitStringMatcherOptions.idl \
+    $(WebCore)/page/WebKitStringMatchersNamespace.idl \
     $(WebCore)/page/WorkerNavigator.idl \
     $(WebCore)/page/csp/CSPViolationReportBody.idl \
     $(WebCore)/plugins/DOMMimeType.idl \

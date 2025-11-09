@@ -89,7 +89,7 @@ public:
 
     std::optional<RepaintRects> computeVisibleRectsInContainer(const RepaintRects&, const RenderLayerModelObject* container, VisibleRectContext) const override;
     void repaintRootContents();
-    void repaintViewRectangle(const LayoutRect&) const;
+    void repaintViewRectangle(const LayoutRect&);
     void repaintViewAndCompositedLayers();
 
     void paint(PaintInfo&, const LayoutPoint&) override;
@@ -196,7 +196,7 @@ public:
         ~RepaintRegionAccumulator();
 
     private:
-        SingleThreadWeakPtr<RenderView> m_rootView;
+        SingleThreadWeakPtr<RenderView> m_view;
         bool m_wasAccumulatingRepaintRegion { false };
     };
 
@@ -237,6 +237,9 @@ private:
     void computeColumnCountAndWidth() override;
 
     bool shouldRepaint(const LayoutRect&) const;
+
+    // Returns true if we determine that the accumulated dirty rect makes up a significant fraction of viewRect.
+    bool accumulateRepaintRect(IntRect dirtyRect, IntRect viewRect);
     void flushAccumulatedRepaintRegion() const;
 
     void layoutContent(const RenderLayoutState&);

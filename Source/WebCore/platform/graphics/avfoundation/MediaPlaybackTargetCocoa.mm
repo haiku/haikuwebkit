@@ -56,7 +56,7 @@ String MediaPlaybackTargetContextCocoa::deviceName() const
 
     auto outputDeviceNames = adoptNS([[NSMutableArray alloc] init]);
     for (AVOutputDevice *outputDevice in [m_outputContext outputDevices])
-        [outputDeviceNames addObject:[outputDevice deviceName]];
+        [outputDeviceNames addObject:retainPtr([outputDevice deviceName]).get()];
 
     return [outputDeviceNames componentsJoinedByString:@" + "];
 }

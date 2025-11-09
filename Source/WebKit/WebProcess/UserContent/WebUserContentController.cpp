@@ -33,6 +33,7 @@
 #include "JavaScriptEvaluationResult.h"
 #include "Logging.h"
 #include "ScriptMessageHandlerIdentifier.h"
+#include "SharedMemoryStringMatcher.h"
 #include "UserContentControllerParameters.h"
 #include "WebCompiledContentRuleList.h"
 #include "WebFrame.h"
@@ -89,6 +90,8 @@ Ref<WebUserContentController> WebUserContentController::getOrCreate(UserContentC
     userContentController->addUserScripts(WTFMove(parameters.userScripts), InjectUserScriptImmediately::No);
     userContentController->addUserStyleSheets(WTFMove(parameters.userStyleSheets));
     userContentController->addUserScriptMessageHandlers(WTFMove(parameters.messageHandlers));
+    for (auto&& stringMatcher : WTFMove(parameters.stringMatchers))
+        userContentController->addStringMatcher(WTFMove(stringMatcher));
 #if ENABLE(CONTENT_EXTENSIONS)
     userContentController->addContentRuleLists(WTFMove(parameters.contentRuleLists));
 #endif
@@ -165,6 +168,11 @@ void WebUserContentController::addContentWorldIfNecessary(const ContentWorldData
 void WebUserContentController::removeContentWorld(ContentWorldIdentifier worldIdentifier)
 {
     ASSERT(worldIdentifier != pageContentWorldIdentifier());
+
+    for (auto weakController : userContentControllers().values()) {
+        if (RefPtr controller = weakController.get())
+            controller->m_stringMatchers.remove(worldIdentifier);
+    }
 
     auto it = worldMap().find(worldIdentifier);
     if (it == worldMap().end()) {
@@ -652,5 +660,42 @@ void WebUserContentController::forEachUserMessageHandler(NOESCAPE const Function
     }
 }
 #endif
+
+void WebUserContentController::addStringMatcher(WebStringMatcherData&& data)
+{
+    addContentWorldIfNecessary(data.worldData);
+    m_stringMatchers.ensure(data.worldData.identifier, [] {
+        return HashMap<String, RefPtr<WebCore::WebKitStringMatcher>>();
+    }).iterator->value.set(data.name, SharedMemoryStringMatcher::create(WTFMove(data.data)));
+}
+
+void WebUserContentController::removeStringMatcher(ContentWorldIdentifier identifier, const String& name)
+{
+    auto it = m_stringMatchers.find(identifier);
+    if (it == m_stringMatchers.end())
+        return;
+    it->value.remove(name);
+    if (it->value.isEmpty())
+        m_stringMatchers.remove(it);
+}
+
+bool WebUserContentController::hasStringMatchersForWorld(const WebCore::DOMWrapperWorld& coreWorld) const
+{
+    RefPtr world = InjectedBundleScriptWorld::get(coreWorld);
+    if (!world)
+        return false;
+    return m_stringMatchers.contains(world->identifier());
+}
+
+WebCore::WebKitStringMatcher* WebUserContentController::stringMatcher(const WebCore::DOMWrapperWorld& coreWorld, const String& name) const
+{
+    RefPtr world = InjectedBundleScriptWorld::get(coreWorld);
+    if (!world)
+        return nullptr;
+    auto it = m_stringMatchers.find(world->identifier());
+    if (it == m_stringMatchers.end())
+        return nullptr;
+    return it->value.get(name);
+}
 
 } // namespace WebKit

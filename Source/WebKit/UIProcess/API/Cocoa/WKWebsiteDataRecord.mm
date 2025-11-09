@@ -67,7 +67,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(WKWebsiteDataRecord.class, self))
         return;
 
-    _websiteDataRecord->API::WebsiteDataRecord::~WebsiteDataRecord();
+    SUPPRESS_UNRETAINED_ARG _websiteDataRecord->API::WebsiteDataRecord::~WebsiteDataRecord();
 
     [super dealloc];
 }
@@ -122,10 +122,10 @@ static NSString *dataTypesToString(NSSet *dataTypes)
 
 - (NSString *)description
 {
-    auto result = adoptNS([[NSMutableString alloc] initWithFormat:@"<%@: %p; displayName = %@; dataTypes = { %@ }", NSStringFromClass(self.class), self, self.displayName, dataTypesToString(self.dataTypes)]);
+    auto result = adoptNS([[NSMutableString alloc] initWithFormat:@"<%@: %p; displayName = %@; dataTypes = { %@ }", RetainPtr { NSStringFromClass(self.class) }.get(), self, self.displayName, RetainPtr { dataTypesToString(self.dataTypes) }.get()]);
 
-    if (auto* dataSize = self._dataSize)
-        [result appendFormat:@"; _dataSize = { %llu bytes }", dataSize.totalSize];
+    if (RetainPtr<_WKWebsiteDataSize> dataSize = self._dataSize)
+        [result appendFormat:@"; _dataSize = { %llu bytes }", dataSize.get().totalSize];
 
     [result appendString:@">"];
     return result.autorelease();

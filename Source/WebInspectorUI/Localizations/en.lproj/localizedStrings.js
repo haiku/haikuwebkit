@@ -794,6 +794,7 @@ localizedStrings["Filter Full URL"] = "Filter Full URL";
 localizedStrings["Filter:"] = "Filter:";
 localizedStrings["Find Next (%s)"] = "Find Next (%s)";
 localizedStrings["Find Previous (%s)"] = "Find Previous (%s)";
+localizedStrings["First Contentful Paint"] = "First Contentful Paint";
 /* Flexbox layout section name */
 localizedStrings["Flexbox @ Elements details sidebar"] = "Flexbox";
 localizedStrings["Flows"] = "Flows";
@@ -989,6 +990,7 @@ localizedStrings["Key Path"] = "Key Path";
 /* Label indicating that network activity is being simulated with LTE connectivity */
 localizedStrings["LTE"] = "LTE";
 localizedStrings["Label"] = "Label";
+localizedStrings["Largest Contentful Paint"] = "Largest Contentful Paint";
 localizedStrings["Latency"] = "Latency";
 localizedStrings["Layer Count: %d"] = "Layer Count: %d";
 localizedStrings["Layer Info"] = "Layer Info";

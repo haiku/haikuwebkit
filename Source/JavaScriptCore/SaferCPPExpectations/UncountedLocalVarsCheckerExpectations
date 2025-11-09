@@ -93,7 +93,6 @@ runtime/JSCJSValueInlines.h
 runtime/JSFinalizationRegistry.cpp
 runtime/JSGlobalObject.cpp
 runtime/JSObject.cpp
-runtime/JSRunLoopTimer.cpp
 runtime/JSString.cpp
 runtime/JSSymbolTableObject.h
 runtime/KeyAtomStringCacheInlines.h

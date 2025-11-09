@@ -27,6 +27,7 @@
 #import "config.h"
 #import "DigitalCredentialsRequestValidatorBridge.h"
 
+#import "Logging.h"
 #import "WKIdentityDocumentRawRequestValidator.h"
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/ConsoleMessage.h>
@@ -42,6 +43,7 @@
 #import "WebKitSwiftSoftLink.h"
 
 namespace WebKit {
+using namespace WebCore;
 
 static RetainPtr<SecTrustRef> createSecTrustForChain(const Vector<RetainPtr<SecCertificateRef>> &chain)
 {
@@ -174,10 +176,10 @@ Vector<WebCore::ValidatedDigitalCredentialRequest> DigitalCredentials::validateR
         RetainPtr iso18013Request = adoptNS([WebKit::allocWKISO18013RequestInstance() initWithEncryptionInfo:convertedEncryptionInfo.get() deviceRequest:convertedDeviceRequest.get()]);
 
         NSError *error = nil;
-        auto validatedISORequest = [validator validateISO18013Request:iso18013Request.get() origin:convertedTopOrigin.get() error:&error];
+        RetainPtr validatedISORequest = [validator validateISO18013Request:iso18013Request.get() origin:convertedTopOrigin.get() error:&error];
 
         if (validatedISORequest) {
-            auto validatedMobileDocumentRequest = buildValidatedRequest(validatedISORequest);
+            auto validatedMobileDocumentRequest = buildValidatedRequest(validatedISORequest.get());
             auto resultVariant = WTF::Variant<WebCore::ValidatedMobileDocumentRequest, WebCore::OpenID4VPRequest>(validatedMobileDocumentRequest);
             validatedRequests.append(WTFMove(resultVariant));
         } else if (error) {

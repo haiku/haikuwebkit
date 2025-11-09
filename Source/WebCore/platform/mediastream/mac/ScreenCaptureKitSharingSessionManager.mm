@@ -353,7 +353,7 @@ void ScreenCaptureKitSharingSessionManager::sharingSessionDidChangeContent(SCCon
     }
 
     activeSource->updateContentFilter(sharingSession.content);
-    activeSource->observer()->sessionFilterDidChange(sharingSession.content);
+    activeSource->checkedObserver()->sessionFilterDidChange(sharingSession.content);
 }
 
 void ScreenCaptureKitSharingSessionManager::contentSharingPickerSelectedFilterForStream(SCContentFilter* contentFilter, SCStream*)
@@ -642,13 +642,13 @@ void ScreenCaptureSessionSource::updateContentFilter(SCContentFilter* contentFil
 {
     ASSERT(m_observer);
     m_contentFilter = contentFilter;
-    m_observer->sessionFilterDidChange(contentFilter);
+    CheckedRef { *m_observer }->sessionFilterDidChange(contentFilter);
 }
 
 void ScreenCaptureSessionSource::streamDidEnd()
 {
     ASSERT(m_observer);
-    m_observer->sessionStreamDidEnd(m_stream.get());
+    CheckedRef { *m_observer }->sessionStreamDidEnd(m_stream.get());
 }
 
 } // namespace WebCore

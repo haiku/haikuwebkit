@@ -75,6 +75,8 @@ protected:
 private:
     void didBecomeUnresponsive() const;
 
+    bool knownToHaveFloatBasedBacking() const final;
+
     WebCore::RenderingMode renderingMode() const final;
 
     void save(WebCore::GraphicsContextState::Purpose) final;

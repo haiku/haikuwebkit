@@ -87,7 +87,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "categories": [
@@ -135,7 +135,7 @@
     {"access": "public", "linkage": "exported", "name": "_$s7SwiftUI4ViewP08ContactsB0E26contactAccessButtonCaptionyQrAD07ContactfG0V0H0OFQOMQ"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSo16CNMutableContactC10ContactsUIE2id10Foundation4UUIDVvg"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

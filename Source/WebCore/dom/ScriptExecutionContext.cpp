@@ -979,7 +979,7 @@ GuaranteedSerialFunctionDispatcher& ScriptExecutionContext::nativePromiseDispatc
     return *m_nativePromiseDispatcher;
 }
 
-bool ScriptExecutionContext::requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory category)
+bool ScriptExecutionContext::requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory category, IncludeConsoleLog includeConsoleLog)
 {
     RefPtr vm = vmIfExists();
     if (!vm)
@@ -1015,7 +1015,7 @@ bool ScriptExecutionContext::requiresScriptTrackingPrivacyProtection(ScriptTrack
     if (!page->settings().scriptTrackingPrivacyLoggingEnabled())
         return true;
 
-    if (!page->reportScriptTrackingPrivacy(taintedURL, category))
+    if (includeConsoleLog == IncludeConsoleLog::No || !page->reportScriptTrackingPrivacy(taintedURL, category))
         return true;
 
     addConsoleMessage(MessageSource::JS, MessageLevel::Info, makeLogMessage(taintedURL, category));

@@ -758,15 +758,6 @@ enum class WebCore::IndexedDB::RequestType : uint8_t {
     Downloads
 };
 
-#if ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
-header: <WebCore/GraphicsContextGLActiveInfo.h>
-[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] class WebCore::GraphicsContextGLActiveInfo {
-    CString name;
-    GCGLenum type;
-    GCGLint size;
-};
-#endif
-
 enum class WebCore::ViewportFit : uint8_t {
     Auto,
     Contain,
@@ -1583,10 +1574,10 @@ struct WebCore::CurrentUserDetailsOptions {
 };
 
 struct WebCore::AuthenticatorSelectionCriteria {
-    std::optional<WebCore::AuthenticatorAttachment> authenticatorAttachment;
-    std::optional<WebCore::ResidentKeyRequirement> residentKey;
+    String authenticatorAttachmentString;
+    String residentKeyString;
     bool requireResidentKey;
-    WebCore::UserVerificationRequirement userVerification;
+    String userVerificationString;
 };
 
 struct WebCore::PublicKeyCredentialEntity {
@@ -1606,7 +1597,7 @@ struct WebCore::PublicKeyCredentialUserEntity : WebCore::PublicKeyCredentialEnti
 struct WebCore::PublicKeyCredentialDescriptor {
     WebCore::PublicKeyCredentialType type;
     WebCore::BufferSource id;
-    Vector<WebCore::AuthenticatorTransport> transports;
+    Vector<String> transports;
 };
 #endif // ENABLE(WEB_AUTHN)
 
@@ -1630,7 +1621,7 @@ struct WebCore::PublicKeyCredentialCreationOptions {
     std::optional<unsigned> timeout;
     Vector<WebCore::PublicKeyCredentialDescriptor> excludeCredentials;
     std::optional<WebCore::AuthenticatorSelectionCriteria> authenticatorSelection;
-    WebCore::AttestationConveyancePreference attestation;
+    String attestationString;
     std::optional<WebCore::AuthenticationExtensionsClientInputs> extensions;
 #endif // ENABLE(WEB_AUTHN)
 };
@@ -1641,7 +1632,7 @@ struct WebCore::PublicKeyCredentialRequestOptions {
     std::optional<unsigned> timeout;
     String rpId;
     Vector<WebCore::PublicKeyCredentialDescriptor> allowCredentials;
-    WebCore::UserVerificationRequirement userVerification;
+    String userVerificationString;
     std::optional<WebCore::AuthenticationExtensionsClientInputs> extensions;
     [NotSerialized] std::optional<WebCore::AuthenticatorAttachment> authenticatorAttachment;
 #endif // ENABLE(WEB_AUTHN)
@@ -2115,17 +2106,6 @@ enum class WebCore::MediaCaptureType : uint8_t {
     MediaCaptureTypeUser,
     MediaCaptureTypeEnvironment
 };
-
-#if PLATFORM(COCOA) && ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
-header: <WebCore/GraphicsContextGL.h>
-[CustomHeader, RValue] struct WebCore::GraphicsContextGLExternalImageSourceIOSurfaceHandle {
-    MachSendRight handle;
-};
-
-[CustomHeader, RValue] struct WebCore::GraphicsContextGLExternalImageSourceMTLSharedTextureHandle {
-    MachSendRight handle;
-};
-#endif // PLATFORM(COCOA) && ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
 
 #if ENABLE(ATTACHMENT_ELEMENT)
 struct WebCore::SerializedAttachmentData {
@@ -2703,6 +2683,7 @@ class WebCore::DragData {
     WebCore::IntPoint globalPosition();
 #if PLATFORM(COCOA)
     Vector<String> fileNames();
+    Vector<String> promisedFileMIMETypes();
 #endif
     OptionSet<WebCore::DragOperation> draggingSourceOperationMask();
     OptionSet<WebCore::DragApplicationFlags> flags();
@@ -2937,48 +2918,6 @@ header: <WebCore/ThreadSafeDataBuffer.h>
 class WebCore::ThreadSafeDataBuffer {
     RefPtr<WebCore::ThreadSafeDataBufferImpl> m_impl;
 };
-
-#if ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
-header: <WebCore/GraphicsContextGLAttributes.h>
-[CustomHeader] enum class WebCore::GraphicsContextGLPowerPreference : uint8_t {
-    Default,
-    LowPower,
-    HighPerformance
-};
-
-header: <WebCore/GraphicsContextGLAttributes.h>
-[CustomHeader] enum class WebCore::GraphicsContextGLSimulatedCreationFailure : uint8_t {
-    None,
-    IPCBufferOOM,
-    CreationTimeout,
-    FailPlatformContextCreation
-};
-
-struct WebCore::GraphicsContextGLAttributes {
-    bool alpha;
-    bool depth;
-    bool stencil;
-    bool antialias;
-    bool premultipliedAlpha;
-    bool preserveDrawingBuffer;
-    WebCore::GraphicsContextGLPowerPreference powerPreference;
-    bool isWebGL2;
-#if PLATFORM(MAC)
-    uint64_t windowGPUID;
-#endif
-#if ENABLE(WEBXR)
-    bool xrCompatible;
-#endif
-    WebCore::GraphicsContextGLSimulatedCreationFailure failContextCreationForTesting;
-};
-
-enum class WebCore::GraphicsContextGLSimulatedEventForTesting : uint8_t {
-    GPUStatusFailure,
-    Timeout,
-    DisplayBufferAllocationFailure
-};
-
-#endif // ENABLE(GPU_PROCESS) && ENABLE(WEBGL)
 
 [RefCounted] class WebCore::TimingFunction subclasses {
   WebCore::LinearTimingFunction,
@@ -4316,6 +4255,7 @@ header: <WebCore/ScrollingStateNode.h>
     WheelEventGesturesBecomeNonBlocking
     ScrollingPerformanceTestingEnabled
     LayoutViewport
+    SizeForVisibleContent
     MinLayoutViewportOrigin
     MaxLayoutViewportOrigin
     OverrideVisualViewportSize
@@ -5007,10 +4947,6 @@ header: <WebCore/GraphicsTypes.h>
     WebCore::DocumentMarkerLineStyleMode mode;
     WebCore::Color color;
 };
-
-header: <WebCore/GraphicsTypesGL.h>
-using PlatformGLObject = GCGLuint
-using GCGLuint = unsigned
 
 [Nested, AdditionalEncoder=StreamConnectionEncoder]  enum class WebCore::ShadowRadiusMode : bool;
 
@@ -6570,6 +6506,21 @@ struct WebCore::AnimationEffectTiming {
     [NotSerialized] std::optional<Seconds> specifiedIterationDuration;
 };
 
+struct WebCore::ProgressResolutionData {
+    WebCore::ScrollingNodeID source;
+    WebCore::WebAnimationTime duration;
+    bool isVertical;
+    bool isReversed;
+    float scrollOffset;
+    float rangeStart;
+    float rangeEnd;
+};
+
+[RefCounted] class WebCore::AcceleratedTimeline {
+    WebCore::TimelineIdentifier identifier();
+    Variant<Seconds, WebCore::ProgressResolutionData> data();
+};
+
 header: <WebCore/AcceleratedEffect.h>
 [CustomHeader, Nested] class WebCore::AcceleratedEffect::Keyframe {
     double offset();
@@ -6581,6 +6532,8 @@ header: <WebCore/AcceleratedEffect.h>
 
 [RefCounted] class WebCore::AcceleratedEffect {
     WebCore::AnimationEffectTiming timing();
+    [NotSerialized] RefPtr<WebCore::AcceleratedTimeline> timeline();
+    WebCore::TimelineIdentifier timelineIdentifier();
     Vector<WebCore::AcceleratedEffect::Keyframe> keyframes();
     WebCore::WebAnimationType animationType();
     WebCore::CompositeOperation compositeOperation();
@@ -6751,7 +6704,8 @@ header: <WebCore/TextExtractionTypes.h>
     SelectText,
     SelectMenuItem,
     TextInput,
-    KeyPress
+    KeyPress,
+    HighlightText
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -6761,6 +6715,7 @@ header: <WebCore/TextExtractionTypes.h>
     std::optional<WebCore::FloatPoint> locationInRootView;
     std::optional<WebCore::NodeIdentifier> nodeIdentifier;
     bool replaceAll;
+    bool scrollToVisible;
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -8495,35 +8450,6 @@ using WebCore::Glyph = unsigned short
 enum class WebCore::ContentExtensionDefaultEnablement : bool
 using WebCore::ContentExtensionEnablement = std::pair<WebCore::ContentExtensionDefaultEnablement, HashSet<String>>;
 
-#if ENABLE(WEBGL)
-header: <WebCore/GraphicsContextGL.h>
-#endif
-#if PLATFORM(COCOA) && ENABLE(WEBGL)
-using WebCore::GraphicsContextGL::ExternalImageSource = Variant<WebCore::GraphicsContextGLExternalImageSourceIOSurfaceHandle, WebCore::GraphicsContextGLExternalImageSourceMTLSharedTextureHandle>
-using WebCore::GraphicsContextGL::ExternalSyncSource = std::tuple<MachSendRight, uint64_t>
-#endif
-#if !PLATFORM(COCOA) && ENABLE(WEBGL)
-#if (PLATFORM(GTK) || PLATFORM(WPE))
-header: <WebCore/GraphicsContextGL.h>
-[CustomHeader] struct WebCore::GraphicsContextGLExternalImageSource {
-#if OS(ANDROID)
-    RefPtr<AHardwareBuffer> hardwareBuffer;
-#else
-    Vector<WTF::UnixFileDescriptor> fds;
-    Vector<uint32_t> strides;
-    Vector<uint32_t> offsets;
-    uint32_t fourcc;
-    uint64_t modifier;
-#endif
-    WebCore::IntSize size;
-};
-using WebCore::GraphicsContextGL::ExternalImageSource = WebCore::GraphicsContextGLExternalImageSource;
-#else
-using WebCore::GraphicsContextGL::ExternalImageSource = int
-#endif
-using WebCore::GraphicsContextGL::ExternalSyncSource = int
-#endif
-
 using WebCore::DOMCacheEngine::CacheInfosOrError = Expected<WebCore::DOMCacheEngine::CacheInfos, WebCore::DOMCacheEngine::Error>;
 using WebCore::DOMCacheEngine::CacheIdentifierOrError = Expected<WebCore::DOMCacheEngine::CacheIdentifierOperationResult, WebCore::DOMCacheEngine::Error>
 using WebCore::DOMCacheEngine::RecordIdentifiersOrError = Expected<Vector<uint64_t>, WebCore::DOMCacheEngine::Error>
@@ -8591,6 +8517,7 @@ enum class WebCore::PlatformMediaError : uint8_t {
     AudioDecodingError,
     VideoDecodingError,
     RequiresFlushToResume,
+    CDMInstanceKeyNeeded,
 };
 #endif
 
@@ -8846,7 +8773,7 @@ enum class WebCore::DOMAudioSessionType : uint8_t {
 #endif
 
 header: <WebCore/TrackInfo.h>
-[Nested] enum class WebCore::TrackInfoTrackType : uint8_t {
+enum class WebCore::TrackInfoTrackType : uint8_t {
     Unknown,
     Audio,
     Video,
@@ -8854,10 +8781,21 @@ header: <WebCore/TrackInfo.h>
 };
 
 header: <WebCore/TrackInfo.h>
+enum class WebCore::EncryptionBoxType : uint8_t {
+    CommonEncryptionTrackEncryptionBox,
+    TransportStreamEncryptionInitData
+};
+
+header: <WebCore/TrackInfo.h>
 [CustomHeader, RefCounted, DisableMissingMemberCheck] struct WebCore::AudioInfo {
     WebCore::FourCC codecName;
     String codecString;
     WebCore::TrackID trackID;
+#if ENABLE(ENCRYPTED_MEDIA)
+    std::optional<std::pair<WebCore::EncryptionBoxType, Ref<WebCore::SharedBuffer>>> encryptionData;
+    std::optional<WebCore::FourCC> encryptionOriginalFormat;
+    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> encryptionInitDatas;
+#endif
     [NotSerialized] WebCore::TrackInfoTrackType m_type;
     uint32_t rate;
     uint32_t channels;
@@ -8871,12 +8809,17 @@ header: <WebCore/TrackInfo.h>
     WebCore::FourCC codecName;
     String codecString;
     WebCore::TrackID trackID;
+#if ENABLE(ENCRYPTED_MEDIA)
+    std::optional<std::pair<WebCore::EncryptionBoxType, Ref<WebCore::SharedBuffer>>> encryptionData;
+    std::optional<WebCore::FourCC> encryptionOriginalFormat;
+    Vector<std::pair<WebCore::FourCC, Ref<WebCore::SharedBuffer>>> encryptionInitDatas;
+#endif
     [NotSerialized] WebCore::TrackInfoTrackType m_type;
     WebCore::FloatSize size;
     WebCore::FloatSize displaySize;
     uint8_t bitDepth;
     WebCore::PlatformVideoColorSpace colorSpace;
-    String boxType;
+    WebCore::FourCC boxType;
     RefPtr<WebCore::SharedBuffer> atomData;
 };
 
@@ -8894,6 +8837,11 @@ header: <WebCore/MediaSamplesBlock.h>
     RefPtr<WebCore::SharedBuffer> hdrMetadata;
     std::optional<WebCore::HdrMetadataType> hdrMetadataType;
     uint32_t flags;
+#if ENABLE(ENCRYPTED_MEDIA)
+    int32_t bytesOfClearDataCount;
+    RefPtr<WebCore::SharedBuffer> cryptorIV;
+    RefPtr<WebCore::SharedBuffer> cryptorSubsampleAuxiliaryData;
+#endif
 };
 
 class WebCore::MediaSamplesBlock {
@@ -8965,7 +8913,7 @@ struct WebCore::MessageForTesting {
 struct WebCore::HostingContext {
     uint32_t contextID;
 #if ENABLE(MACH_PORT_LAYER_HOSTING)
-    WTF::MachSendRightAnnotated sendRightAnnotated;
+    MachSendRightAnnotated sendRightAnnotated;
 #endif
 }
 

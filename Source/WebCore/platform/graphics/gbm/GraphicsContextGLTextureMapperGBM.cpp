@@ -95,7 +95,7 @@ bool GraphicsContextGLTextureMapperGBM::platformInitialize()
 
 bool GraphicsContextGLTextureMapperGBM::platformInitializeExtensions()
 {
-    if (!enableExtension("GL_OES_EGL_image"_s))
+    if (!enableExtensionsImpl({ "GL_OES_EGL_image"_s }))
         return false;
 
     const auto& eglExtensions = PlatformDisplay::sharedDisplay().eglExtensions();
@@ -349,11 +349,13 @@ bool GraphicsContextGLTextureMapperGBM::enableRequiredWebXRExtensions()
     if (!makeContextCurrent())
         return false;
 
-    return enableExtension("GL_OES_EGL_image"_s)
-        && enableExtension("GL_OES_EGL_image_external"_s)
-        && enableExtension("EGL_KHR_image_base"_s)
-        && enableExtension("EGL_EXT_image_dma_buf_import"_s)
-        && enableExtension("EGL_KHR_surfaceless_context"_s);
+    return enableExtensionsImpl({
+        "GL_OES_EGL_image"_s,
+        "GL_OES_EGL_image_external"_s,
+        "EGL_KHR_image_base"_s,
+        "EGL_EXT_image_dma_buf_import"_s,
+        "EGL_KHR_surfaceless_context"_s
+    });
 }
 #endif // ENABLE(WEBXR)
 

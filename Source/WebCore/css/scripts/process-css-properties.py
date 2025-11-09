@@ -4077,7 +4077,7 @@ class GenerateStyleBuilderGenerated:
                 return "&fromCSSValueDeducingType"
 
         if property.codegen_properties.fill_layer_primary:
-            to.write(f"applyValuePrimaryFillLayerProperty<&RenderStyle::{property.method_name_for_set_layers}, {converter(property)}, {property.type_name_for_layers}>(builderState, value);")
+            to.write(f"applyValuePrimaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &RenderStyle::{property.method_name_for_set_layers},  &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_initial}, {converter(property)}, {property.type_name_for_layers}>(builderState, value);")
         else:
             to.write(f"applyValueSecondaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_initial}, {converter(property)}>(builderState, value);")
 

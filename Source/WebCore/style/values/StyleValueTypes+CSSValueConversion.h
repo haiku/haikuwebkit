@@ -89,6 +89,25 @@ template<> struct CSSValueConversion<CustomIdentifier> {
     }
 };
 
+// Specialization for `PropertyIdentifier`.
+template<> struct CSSValueConversion<PropertyIdentifier> {
+    PropertyIdentifier operator()(BuilderState& state, const CSSPrimitiveValue& value)
+    {
+        if (!value.isPropertyID()) [[unlikely]] {
+            state.setCurrentPropertyInvalidAtComputedValueTime();
+            return { .value = CSSPropertyInvalid };
+        }
+        return { .value = value.propertyID() };
+    }
+    PropertyIdentifier operator()(BuilderState& state, const CSSValue& value)
+    {
+        RefPtr primitiveValue = requiredDowncast<CSSPrimitiveValue>(state, value);
+        if (!primitiveValue) [[unlikely]]
+            return { .value = CSSPropertyInvalid };
+        return this->operator()(state, *primitiveValue);
+    }
+};
+
 // Specialization for `TupleLike` (wrapper).
 template<TupleLike StyleType> requires (std::tuple_size_v<StyleType> == 1) struct CSSValueConversion<StyleType> {
     StyleType operator()(BuilderState& state, const CSSValue& value)

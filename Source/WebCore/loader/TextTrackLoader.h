@@ -33,17 +33,9 @@
 #include "Timer.h"
 #include "WebVTTParser.h"
 #include <memory>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/WeakPtr.h>
-
-namespace WebCore {
-class TextTrackLoaderClient;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::TextTrackLoaderClient> : std::true_type { };
-}
 
 namespace WebCore {
 
@@ -53,7 +45,7 @@ class HTMLTrackElement;
 class TextTrackLoader;
 class VTTCue;
 
-class TextTrackLoaderClient : public CanMakeWeakPtr<TextTrackLoaderClient> {
+class TextTrackLoaderClient : public AbstractRefCountedAndCanMakeWeakPtr<TextTrackLoaderClient> {
 public:
     virtual ~TextTrackLoaderClient() = default;
     
@@ -95,6 +87,8 @@ private:
 
     Ref<Document> protectedDocument() const;
     CachedResourceHandle<CachedTextTrack> protectedResource() const;
+
+    Ref<TextTrackLoaderClient> protectedClient() const { return m_client.get(); }
 
     enum State { Idle, Loading, Finished, Failed };
 

@@ -96,6 +96,8 @@ private:
 
     Vector<RuleSet::ResolverMutatingRule> m_collectedResolverMutatingRules;
     bool requiresStaticMediaQueryEvaluation { false };
+
+    RuleFeatureSet::CollectionContext m_featureCollectionContext;
 };
 
 }

@@ -71,7 +71,7 @@ void HTMLTitleElement::didFinishInsertingNode()
     HTMLElement::didFinishInsertingNode();
 
     m_title = computedTextWithDirection();
-    document().titleElementAdded(*this);
+    protectedDocument()->titleElementAdded(*this);
 }
 
 void HTMLTitleElement::removedFromAncestor(RemovalType removalType, ContainerNode& oldParentOfRemovedTree)
@@ -79,7 +79,7 @@ void HTMLTitleElement::removedFromAncestor(RemovalType removalType, ContainerNod
     HTMLElement::removedFromAncestor(removalType, oldParentOfRemovedTree);
 
     if (removalType.disconnectedFromDocument)
-        document().titleElementRemoved(*this);
+        protectedDocument()->titleElementRemoved(*this);
 }
 
 void HTMLTitleElement::childrenChanged(const ChildChange& change)
@@ -88,7 +88,7 @@ void HTMLTitleElement::childrenChanged(const ChildChange& change)
 
     if (isConnected()) {
         m_title = computedTextWithDirection();
-        document().titleElementTextChanged(*this);
+        protectedDocument()->titleElementTextChanged(*this);
     }
 }
 
@@ -103,7 +103,7 @@ StringWithDirection HTMLTitleElement::computedTextWithDirection()
     if (!firstChild())
         return { };
     auto direction = TextDirection::LTR;
-    if (auto* computedStyle = this->computedStyle())
+    if (CheckedPtr computedStyle = this->computedStyle())
         direction = computedStyle->writingMode().computedTextDirection();
     return { text(), direction };
 }

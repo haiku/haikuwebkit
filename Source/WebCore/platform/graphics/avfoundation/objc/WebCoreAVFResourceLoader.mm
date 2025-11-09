@@ -301,18 +301,18 @@ void WebCoreAVFResourceLoader::startLoading()
     if (m_dataURLMediaLoader || m_resourceMediaLoader || m_platformMediaLoader || !parent)
         return;
 
-    NSURLRequest *nsRequest = [m_avRequest request];
+    RetainPtr<NSURLRequest> nsRequest = [m_avRequest request];
 
-    ResourceRequest request(nsRequest);
+    ResourceRequest request(nsRequest.get());
     request.setPriority(ResourceLoadPriority::Low);
 
-    AVAssetResourceLoadingDataRequest* dataRequest = [m_avRequest dataRequest];
+    RetainPtr<AVAssetResourceLoadingDataRequest> dataRequest = [m_avRequest dataRequest];
     m_currentOffset = m_requestedOffset = dataRequest ? [dataRequest requestedOffset] : -1;
     m_requestedLength = dataRequest ? [dataRequest requestedLength] : -1;
 
     if (dataRequest && m_requestedLength > 0
         && !request.hasHTTPHeaderField(HTTPHeaderName::Range)) {
-        String rangeEnd = dataRequest.requestsAllDataToEndOfResource ? emptyString() : makeString(m_requestedOffset + m_requestedLength - 1);
+        String rangeEnd = dataRequest.get().requestsAllDataToEndOfResource ? emptyString() : makeString(m_requestedOffset + m_requestedLength - 1);
         request.addHTTPHeaderField(HTTPHeaderName::Range, makeString("bytes="_s, m_requestedOffset, '-', rangeEnd));
     }
 
@@ -369,7 +369,7 @@ bool WebCoreAVFResourceLoader::responseReceived(const String& mimeType, int stat
 
     m_responseOffset = contentRange.isValid() ? static_cast<NSUInteger>(contentRange.firstBytePosition()) : 0;
 
-    if (AVAssetResourceLoadingContentInformationRequest* contentInfo = [m_avRequest contentInformationRequest]) {
+    if (RetainPtr<AVAssetResourceLoadingContentInformationRequest> contentInfo = [m_avRequest contentInformationRequest]) {
         String uti = UTIFromMIMEType(mimeType);
 
         [contentInfo setContentType:uti.createNSString().get()];
@@ -423,7 +423,7 @@ bool WebCoreAVFResourceLoader::newDataStoredInSharedBuffer(const FragmentedShare
 {
     assertIsCurrent(m_targetDispatcher.get());
 
-    AVAssetResourceLoadingDataRequest* dataRequest = [m_avRequest dataRequest];
+    RetainPtr<AVAssetResourceLoadingDataRequest> dataRequest = [m_avRequest dataRequest];
     if (!dataRequest)
         return true;
 

@@ -13,7 +13,7 @@ for (let i = 0; i <= testLoopCount; ++i) {
     noInline(iterable.next);
     try {
         for (_ of iterable)
-            throw new Erorr();
+            throw new Error();
     } catch (e) {
         if (e !== error)
             throw e;

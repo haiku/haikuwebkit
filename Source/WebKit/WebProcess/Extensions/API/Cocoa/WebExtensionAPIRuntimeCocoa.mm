@@ -159,11 +159,12 @@ bool WebExtensionAPIRuntime::parseConnectOptions(NSDictionary *options, std::opt
 
 bool WebExtensionAPIRuntime::isPropertyAllowed(const ASCIILiteral& name, WebPage*)
 {
-    if (extensionContext().isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
+    Ref extensionContext = this->extensionContext();
+    if (extensionContext->isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
         return false;
 
     if (name == "connectNative"_s || name == "sendNativeMessage"_s)
-        return extensionContext().hasPermission("nativeMessaging"_s);
+        return extensionContext->hasPermission("nativeMessaging"_s);
 
     ASSERT_NOT_REACHED();
     return false;
@@ -227,7 +228,7 @@ void WebExtensionAPIRuntime::getBackgroundPage(Ref<WebExtensionCallbackHandler>&
 {
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/runtime/getBackgroundPage
 
-    if (auto backgroundPage = extensionContext().backgroundPage()) {
+    if (auto backgroundPage = protectedExtensionContext()->backgroundPage()) {
         callback->call(toWindowObject(callback->globalContext(), *backgroundPage) ?: NSNull.null);
         return;
     }
@@ -375,7 +376,7 @@ RefPtr<WebExtensionAPIPort> WebExtensionAPIRuntime::connect(WebPageProxyIdentifi
         if (result)
             return;
 
-        port->setError(runtime().reportError(result.error().createNSString().get(), globalContext.get()));
+        port->setError(protectedRuntime()->reportError(result.error().createNSString().get(), globalContext.get()));
         port->disconnect();
     }, extensionContext().identifier());
 
@@ -406,7 +407,7 @@ RefPtr<WebExtensionAPIPort> WebExtensionAPIRuntime::connectNative(WebPageProxyId
         if (result)
             return;
 
-        port->setError(runtime().reportError(result.error().createNSString().get(), globalContext.get()));
+        port->setError(protectedRuntime()->reportError(result.error().createNSString().get(), globalContext.get()));
         port->disconnect();
     }, extensionContext().identifier());
 
@@ -438,7 +439,7 @@ void WebExtensionAPIWebPageRuntime::sendMessage(WebPage& page, WebFrame& frame, 
         documentIdentifier.value(),
     };
 
-    RefPtr destinationExtensionContext = page.webExtensionControllerProxy()->extensionContext(extensionID);
+    RefPtr destinationExtensionContext = page.protectedWebExtensionControllerProxy()->extensionContext(extensionID);
     if (!destinationExtensionContext) {
         // Respond after a random delay to prevent the page from easily detecting if extensions are not installed.
         callAfterRandomDelay([callback = WTFMove(callback)]() {
@@ -484,7 +485,7 @@ RefPtr<WebExtensionAPIPort> WebExtensionAPIWebPageRuntime::connect(WebPage& page
         documentIdentifier.value(),
     };
 
-    RefPtr destinationExtensionContext = page.webExtensionControllerProxy()->extensionContext(extensionID);
+    RefPtr destinationExtensionContext = page.protectedWebExtensionControllerProxy()->extensionContext(extensionID);
     if (!destinationExtensionContext) {
         // Return a port that cant send messages, and disconnect after a random delay to prevent the page from easily detecting if extensions are not installed.
         Ref port = WebExtensionAPIPort::create(*this, resolvedName);
@@ -496,13 +497,13 @@ RefPtr<WebExtensionAPIPort> WebExtensionAPIWebPageRuntime::connect(WebPage& page
         return port;
     }
 
-    Ref port = WebExtensionAPIPort::create(contentWorldType(), runtime(), *destinationExtensionContext, page.webPageProxyIdentifier(), WebExtensionContentWorldType::Main, resolvedName);
+    Ref port = WebExtensionAPIPort::create(contentWorldType(), protectedRuntime(), *destinationExtensionContext, page.webPageProxyIdentifier(), WebExtensionContentWorldType::Main, resolvedName);
 
     WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::RuntimeWebPageConnect(extensionID, port->channelIdentifier(), resolvedName, senderParameters), [=, this, protectedThis = Ref { *this }, globalContext = JSRetainPtr { JSContextGetGlobalContext(context) }](Expected<void, WebExtensionError>&& result) {
         if (result)
             return;
 
-        port->setError(runtime().reportError(result.error().createNSString().get(), globalContext.get()));
+        port->setError(protectedRuntime()->reportError(result.error().createNSString().get(), globalContext.get()));
         port->disconnect();
     }, destinationExtensionContext->identifier());
 
@@ -665,9 +666,9 @@ void WebExtensionContextProxy::internalDispatchRuntimeMessageEvent(WebExtensionC
 
         WebExtensionAPIEvent::ListenerVector listeners;
         if (sourceContentWorldType == WebExtensionContentWorldType::WebPage)
-            listeners = namespaceObject.runtime().onMessageExternal().listeners();
+            listeners = namespaceObject.protectedRuntime()->onMessageExternal().listeners();
         else
-            listeners = namespaceObject.runtime().onMessage().listeners();
+            listeners = namespaceObject.protectedRuntime()->onMessage().listeners();
 
         if (listeners.isEmpty())
             return;
@@ -686,17 +687,20 @@ void WebExtensionContextProxy::internalDispatchRuntimeMessageEvent(WebExtensionC
             }
 
             JSValue *value = dynamic_objc_cast<JSValue>(returnValue);
-            if (!value._isThenable)
+            if (!isThenable(value.context.JSGlobalContextRef, value.JSValueRef))
                 continue;
 
             anyListenerHandledMessage = true;
 
-            [value _awaitThenableResolutionWithCompletionHandler:^(JSValue *replyMessage, id error) {
-                if (error)
-                    return;
-
+            auto resolveBlock = ^(JSValue *replyMessage) {
                 callbackAggregatorWrapper.get().aggregator(replyMessage, IsDefaultReply::No);
-            }];
+            };
+
+            auto rejectBlock = ^(JSValue *error) {
+                return;
+            };
+
+            [value invokeMethod:@"then" withArguments:@[ resolveBlock, rejectBlock ]];
         }
     }, toDOMWrapperWorld(contentWorldType));
 

@@ -68,7 +68,7 @@ CString currentExecutablePath()
     if (result == -1)
         return { };
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // Linux port
-    return CString({ readLinkBuffer, static_cast<size_t>(result) });
+    return CString(std::span { readLinkBuffer, static_cast<size_t>(result) });
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 #elif OS(HURD)

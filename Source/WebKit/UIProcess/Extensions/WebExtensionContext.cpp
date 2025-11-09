@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2025 Igalia, S.L. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1290,8 +1290,8 @@ void WebExtensionContext::addInjectedContent(const InjectedContentVector& inject
         if (!pattern.matchesPattern(deniedMatchPattern, { WebExtensionMatchPattern::Options::IgnorePaths, WebExtensionMatchPattern::Options::MatchBidirectionally }))
             continue;
 
-        for (const auto& deniedMatchPattern : deniedMatchPattern->expandedStrings())
-            baseExcludeMatchPatternsSet.add(deniedMatchPattern);
+        for (const auto& deniedMatchPatternString : deniedMatchPattern->expandedStrings())
+            baseExcludeMatchPatternsSet.add(deniedMatchPatternString);
     }
 
     auto& userContentControllers = this->userContentControllers();
@@ -1337,18 +1337,13 @@ void WebExtensionContext::addInjectedContent(const InjectedContentVector& inject
         if (includeMatchPatternsSet.isEmpty())
             continue;
 
-        // FIXME: <rdar://problem/57613243> Support injecting into about:blank, honoring self.contentMatchesAboutBlank. Appending @"about:blank" to the includeMatchPatterns does not work currently.
-        Vector<String> includeMatchPatterns;
-        for (const auto& includeMatchPattern : includeMatchPatternsSet)
-            includeMatchPatterns.append(includeMatchPattern);
+        auto includeMatchPatterns = copyToVector(includeMatchPatternsSet);
 
         HashSet<String> excludeMatchPatternsSet;
         excludeMatchPatternsSet.addAll(injectedContentData.expandedExcludeMatchPatternStrings());
         excludeMatchPatternsSet.unionWith(baseExcludeMatchPatternsSet);
 
-        Vector<String> excludeMatchPatterns;
-        for (const auto& excludeMatchPattern : excludeMatchPatterns)
-            excludeMatchPatterns.append(excludeMatchPattern);
+        auto excludeMatchPatterns = copyToVector(excludeMatchPatternsSet);
 
         auto injectedFrames = injectedContentData.injectsIntoAllFrames ? WebCore::UserContentInjectedFrames::InjectInAllFrames : WebCore::UserContentInjectedFrames::InjectInTopFrameOnly;
         auto injectionTime = toImpl(injectedContentData.injectionTime);
@@ -1902,6 +1897,13 @@ Ref<WebExtensionStorageSQLiteStore> WebExtensionContext::storageForType(WebExten
     }
 
     return sessionStorageStore();
+}
+
+Ref<WebExtensionRegisteredScriptsSQLiteStore> WebExtensionContext::registeredContentScriptsStore()
+{
+    if (!m_registeredContentScriptsStorage)
+        m_registeredContentScriptsStorage = WebExtensionRegisteredScriptsSQLiteStore::create(m_uniqueIdentifier, storageDirectory(), !storageIsPersistent());
+    return *m_registeredContentScriptsStorage;
 }
 
 } // namespace WebKit

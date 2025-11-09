@@ -38,13 +38,14 @@
 #include "DocumentPage.h"
 #include "ExceptionDetails.h"
 #include "FloatRect.h"
+#include "FrameInspectorController.h"
 #include "FrameLoadRequest.h"
 #include "FrameLoader.h"
 #include "InspectorController.h"
 #include "InspectorFrontendHost.h"
 #include "InspectorPageAgent.h"
-#include "LocalFrameInlines.h"
 #include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "Page.h"
@@ -79,9 +80,9 @@ static const float minimumAttachedInspectedWidth = 320.0f;
 class InspectorBackendDispatchTask : public RefCounted<InspectorBackendDispatchTask> {
     WTF_MAKE_TZONE_ALLOCATED(InspectorBackendDispatchTask);
 public:
-    static Ref<InspectorBackendDispatchTask> create(InspectorController* inspectedPageController)
+    static Ref<InspectorBackendDispatchTask> create(InspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
     {
-        return adoptRef(*new InspectorBackendDispatchTask(inspectedPageController));
+        return adoptRef(*new InspectorBackendDispatchTask(inspectedPageController, dispatchTarget));
     }
 
     void dispatch(const String& message)
@@ -99,8 +100,9 @@ public:
     }
 
 private:
-    InspectorBackendDispatchTask(InspectorController* inspectedPageController)
+    InspectorBackendDispatchTask(InspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
         : m_inspectedPageController(inspectedPageController)
+        , m_dispatchTarget(dispatchTarget)
     {
         ASSERT_ARG(inspectedPageController, inspectedPageController);
     }
@@ -127,14 +129,26 @@ private:
             return;
         }
 
-        if (!m_messages.isEmpty())
-            Ref { *m_inspectedPageController }->dispatchMessageFromFrontend(m_messages.takeFirst());
+        if (!m_messages.isEmpty()) {
+            Ref controller { *m_inspectedPageController };
+            bool dispatched = false;
+            if (m_dispatchTarget == InspectorFrontendClientLocal::DispatchBackendTarget::MainFrame) {
+                if (RefPtr localMainFrame = controller->protectedInspectedPage()->localMainFrame()) {
+                    localMainFrame->protectedInspectorController()->dispatchMessageFromFrontend(m_messages.takeFirst());
+                    dispatched = true;
+                }
+            }
+
+            if (!dispatched)
+                controller->dispatchMessageFromFrontend(m_messages.takeFirst());
+        }
 
         if (!m_messages.isEmpty() && m_inspectedPageController)
             scheduleOneShot();
     }
 
     WeakPtr<InspectorController> m_inspectedPageController;
+    InspectorFrontendClientLocal::DispatchBackendTarget m_dispatchTarget;
     Deque<String> m_messages;
     bool m_hasScheduledTask { false };
 };
@@ -154,12 +168,12 @@ void InspectorFrontendClientLocal::Settings::deleteProperty(const String&)
 {
 }
 
-InspectorFrontendClientLocal::InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings)
+InspectorFrontendClientLocal::InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings, DispatchBackendTarget dispatchTarget)
     : m_inspectedPageController(inspectedPageController)
     , m_frontendPage(frontendPage)
     , m_settings(WTFMove(settings))
     , m_dockSide(DockSide::Undocked)
-    , m_dispatchTask(InspectorBackendDispatchTask::create(inspectedPageController))
+    , m_dispatchTask(InspectorBackendDispatchTask::create(inspectedPageController, dispatchTarget))
     , m_frontendAPIDispatcher(InspectorFrontendAPIDispatcher::create(*frontendPage))
 {
     m_frontendPage->settings().setAllowFileAccessFromFileURLs(true);

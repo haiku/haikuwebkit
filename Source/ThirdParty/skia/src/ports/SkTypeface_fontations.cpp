@@ -20,6 +20,7 @@
 #include "src/codec/SkCodecPriv.h"
 #include "src/core/SkFontDescriptor.h"
 #include "src/core/SkFontPriv.h"
+#include "src/core/SkStreamPriv.h"
 #include "src/ports/SkTypeface_fontations_priv.h"
 #include "src/ports/fontations/src/skpath_bridge.h"
 
@@ -45,7 +46,7 @@ sk_sp<SkData> streamToData(const std::unique_ptr<SkStreamAsset>& font_data) {
     }
     // TODO(drott): Remove this once SkData::MakeFromStream is able to do this itself.
     if (font_data->getData()) {
-        return font_data->getData();
+        return SkStreamPriv::GetNonConstData(font_data.get());
     }
     if (font_data->getMemoryBase() && font_data->getLength()) {
         return SkData::MakeWithCopy(font_data->getMemoryBase(), font_data->getLength());
@@ -583,9 +584,7 @@ protected:
                         clipBox.x_min, -clipBox.y_max, clipBox.x_max, -clipBox.y_min);
 
                 if (!fRemainingMatrix.isIdentity()) {
-                    SkPath boundsPath = SkPath::Rect(boundsRect);
-                    boundsPath.transform(fRemainingMatrix);
-                    boundsRect = boundsPath.getBounds();
+                    boundsRect = fRemainingMatrix.mapRect(boundsRect);
                 }
 
                 boundsRect.roundOut(&mx.bounds);
@@ -765,10 +764,12 @@ protected:
                           fontations_ffi::BridgeScalerMetrics& scalerMetrics) {
         if (auto path = generatePathForGlyphId(glyphId, fScale.y(),
                                                *fHintingInstance, scalerMetrics)) {
-            return {{
-                path->makeTransform(fRemainingMatrix),
-                !fRemainingMatrix.isIdentity()
-            }};
+            if (auto newpath = path->tryMakeTransform(fRemainingMatrix)) {
+                return {{
+                    *newpath,
+                    !fRemainingMatrix.isIdentity()
+                }};
+            }
         }
         return {};
     }
@@ -1666,15 +1667,15 @@ void BoundsPainter::push_clip_glyph(uint16_t glyph_id) {
     if (auto path = fScalerContext.generatePathForGlyphId(glyph_id, fUpem,
                                                           *fontations_ffi::no_hinting_instance(),
                                                           scalerMetrics)) {
-        fBounds.join(path->makeTransform(fMatrixStack.back()).getBounds());
+        if (auto newpath = path->tryMakeTransform(fMatrixStack.back())) {
+            fBounds.join(newpath->getBounds());
+        }
     }
 }
 
 void BoundsPainter::push_clip_rectangle(float x_min, float y_min, float x_max, float y_max) {
-    SkRect clipRect = SkRect::MakeLTRB(x_min, -y_min, x_max, -y_max);
-    SkPath rectPath = SkPath::Rect(clipRect);
-    rectPath.transform(fMatrixStack.back());
-    fBounds.join(rectPath.getBounds());
+    const SkRect clipRect = SkRect::MakeLTRB(x_min, -y_min, x_max, -y_max);
+    fBounds.join(fMatrixStack.back().mapRect(clipRect));
 }
 
 void BoundsPainter::fill_glyph_solid(uint16_t glyph_id, uint16_t, float) {

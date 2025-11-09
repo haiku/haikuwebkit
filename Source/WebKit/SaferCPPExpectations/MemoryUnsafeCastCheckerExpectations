@@ -1,9 +1,5 @@
 AutomationProtocolObjects.h
-Shared/API/c/cf/WKStringCF.mm
-Shared/API/c/cf/WKURLCF.mm
 WebDriverBidiProtocolObjects.h
-WebProcess/GPU/graphics/Model/ModelDowncastConvertToBackingContext.cpp
-WebProcess/GPU/graphics/WebGPU/WebGPUDowncastConvertToBackingContext.cpp
 [ iOS ] NetworkProcess/ios/NetworkConnectionToWebProcessIOS.mm
 [ iOS ] Shared/RemoteLayerTree/RemoteLayerTreePropertyApplier.mm
 [ iOS ] UIProcess/API/ios/WKWebViewIOS.mm

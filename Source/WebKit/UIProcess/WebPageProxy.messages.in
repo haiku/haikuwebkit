@@ -662,6 +662,10 @@ messages -> WebPageProxy {
     [EnabledBy=GamepadsEnabled] GamepadsRecentlyAccessed()
 #endif
 
+#if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
+    EnsureRemoteMediaSessionManagerProxy()
+#endif
+
     HasActiveNowPlayingSessionChanged(bool hasActiveNowPlayingSessionChanged)
 
     SetAllowsLayoutViewportHeightExpansion(bool newValue)

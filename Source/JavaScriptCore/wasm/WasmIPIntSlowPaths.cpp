@@ -113,18 +113,22 @@ static inline RefPtr<Wasm::JITCallee> jitCompileAndSetHeuristics(Wasm::IPIntCall
     ASSERT(instance->memoryMode() == memoryMode);
     ASSERT(memoryMode == calleeGroup.mode());
 
+    Wasm::FunctionCodeIndex functionIndex = callee.functionIndex();
+    const Wasm::ModuleInformation& moduleInformation = instance->module().moduleInformation();
+    bool needsSIMDReplacement = !Options::useWasmIPIntSIMD() && moduleInformation.usesSIMD(functionIndex);
+
     auto getReplacement = [&] () -> RefPtr<Wasm::JITCallee> {
         switch (osrFor) {
         case OSRFor::Prologue: {
-            if (Options::useWasmIPInt()) [[likely]]
-                return nullptr;
-            return calleeGroup.tryGetReplacementConcurrently(callee.functionIndex());
+            if (!Options::useWasmIPInt() || needsSIMDReplacement) [[unlikely]]
+                return calleeGroup.tryGetReplacementConcurrently(functionIndex);
+            return nullptr;
         }
         case OSRFor::Epilogue: {
             return nullptr;
         }
         case OSRFor::Loop: {
-            return calleeGroup.tryGetBBQCalleeForLoopOSRConcurrently(instance->vm(), callee.functionIndex());
+            return calleeGroup.tryGetBBQCalleeForLoopOSRConcurrently(instance->vm(), functionIndex);
         }
         }
         RELEASE_ASSERT_NOT_REACHED();
@@ -157,11 +161,10 @@ static inline RefPtr<Wasm::JITCallee> jitCompileAndSetHeuristics(Wasm::IPIntCall
     }
 
     if (compile) {
-        Wasm::FunctionCodeIndex functionIndex = callee.functionIndex();
         if (Wasm::BBQPlan::ensureGlobalBBQAllowlist().containsWasmFunction(functionIndex)) {
-            auto plan = Wasm::BBQPlan::create(instance->vm(), const_cast<Wasm::ModuleInformation&>(instance->module().moduleInformation()), functionIndex, Ref { callee }, Ref { instance->module() }, Ref(*instance->calleeGroup()), Wasm::Plan::dontFinalize());
+            auto plan = Wasm::BBQPlan::create(instance->vm(), const_cast<Wasm::ModuleInformation&>(moduleInformation), functionIndex, Ref { callee }, Ref { instance->module() }, Ref(*instance->calleeGroup()), Wasm::Plan::dontFinalize());
             Wasm::ensureWorklist().enqueue(plan.get());
-            if (!Options::useConcurrentJIT() || !Options::useWasmIPInt()) [[unlikely]]
+            if (!Options::useConcurrentJIT() || !Options::useWasmIPInt() || needsSIMDReplacement) [[unlikely]]
                 plan->waitForCompletion();
             else
                 tierUpCounter.optimizeAfterWarmUp();
@@ -169,90 +172,6 @@ static inline RefPtr<Wasm::JITCallee> jitCompileAndSetHeuristics(Wasm::IPIntCall
     }
 
     return getReplacement();
-}
-
-static inline Expected<RefPtr<Wasm::JITCallee>, Wasm::CompilationError> jitCompileSIMDFunctionSynchronously(Wasm::IPIntCallee& callee, JSWebAssemblyInstance* instance)
-{
-    ASSERT(Options::useWasmSIMD() && !Options::useWasmIPIntSIMD());
-    Wasm::IPIntTierUpCounter& tierUpCounter = callee.tierUpCounter();
-
-    MemoryMode memoryMode = instance->memory()->mode();
-    Wasm::CalleeGroup& calleeGroup = *instance->calleeGroup();
-    {
-        Locker locker { calleeGroup.m_lock };
-        if (RefPtr replacement = calleeGroup.replacement(locker, callee.index()))  {
-            dataLogLnIf(Options::verboseOSR(), "\tSIMD code was already compiled.");
-            return replacement;
-        }
-    }
-
-    bool compile = false;
-    while (!compile) {
-        Locker locker { tierUpCounter.m_lock };
-        switch (tierUpCounter.compilationStatus(memoryMode)) {
-        case Wasm::IPIntTierUpCounter::CompilationStatus::NotCompiled:
-            compile = true;
-            tierUpCounter.setCompilationStatus(memoryMode, Wasm::IPIntTierUpCounter::CompilationStatus::Compiling);
-            break;
-        case Wasm::IPIntTierUpCounter::CompilationStatus::Compiling:
-            Thread::yield();
-            continue;
-        case Wasm::IPIntTierUpCounter::CompilationStatus::Compiled: {
-            // We can't hold a tierUpCounter lock while holding the calleeGroup lock since calleeGroup could reset our counter while releasing BBQ code.
-            // Besides we're outside the critical section.
-            locker.unlockEarly();
-            {
-                Locker locker { calleeGroup.m_lock };
-                RefPtr replacement = calleeGroup.replacement(locker, callee.index());
-                RELEASE_ASSERT(replacement);
-                return replacement;
-            }
-        }
-        case Wasm::IPIntTierUpCounter::CompilationStatus::Failed:
-            return makeUnexpected(tierUpCounter.compilationError(memoryMode));
-        }
-    }
-
-    Wasm::FunctionCodeIndex functionIndex = callee.functionIndex();
-    ASSERT(instance->module().moduleInformation().usesSIMD(functionIndex));
-    auto plan = Wasm::BBQPlan::create(instance->vm(), const_cast<Wasm::ModuleInformation&>(instance->module().moduleInformation()), functionIndex, Ref { callee }, Ref { instance->module() }, Ref(*instance->calleeGroup()), Wasm::Plan::dontFinalize());
-    Wasm::ensureWorklist().enqueue(plan.get());
-    plan->waitForCompletion();
-    if (plan->failed())
-        return makeUnexpected(plan->error());
-
-    {
-        Locker locker { tierUpCounter.m_lock };
-        RELEASE_ASSERT(tierUpCounter.compilationStatus(memoryMode) == Wasm::IPIntTierUpCounter::CompilationStatus::Compiled);
-    }
-
-    Locker locker { calleeGroup.m_lock };
-    RefPtr replacement = calleeGroup.replacement(locker, callee.index());
-    RELEASE_ASSERT(replacement);
-    return replacement;
-}
-
-WASM_IPINT_EXTERN_CPP_DECL(simd_go_straight_to_bbq, CallFrame* cfr)
-{
-    auto* callee = IPINT_CALLEE(cfr);
-
-    RELEASE_ASSERT(Options::useWasmSIMD());
-    RELEASE_ASSERT(!Options::useWasmIPIntSIMD());
-    RELEASE_ASSERT(shouldJIT(callee));
-
-    dataLogLnIf(Options::verboseOSR(), *callee, ": Entered simd_go_straight_to_bbq_osr with tierUpCounter = ", callee->tierUpCounter());
-
-    auto result = jitCompileSIMDFunctionSynchronously(*callee, instance);
-    if (result.has_value()) [[likely]]
-        WASM_RETURN_TWO(result.value()->entrypoint().taggedPtr(), nullptr);
-
-    switch (result.error()) {
-    case Wasm::CompilationError::OutOfMemory:
-        IPINT_THROW(Wasm::ExceptionType::OutOfMemory);
-    default:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
 }
 
 WASM_IPINT_EXTERN_CPP_DECL(prologue_osr, CallFrame* callFrame)

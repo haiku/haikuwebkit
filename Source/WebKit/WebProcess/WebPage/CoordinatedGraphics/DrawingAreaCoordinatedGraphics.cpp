@@ -811,4 +811,14 @@ void DrawingAreaCoordinatedGraphics::foreachRegionInDamageHistoryForTesting(Func
 }
 #endif
 
+#if PLATFORM(GTK) || PLATFORM(WPE)
+void DrawingAreaCoordinatedGraphics::fillGLInformation(RenderProcessInfo&& info, CompletionHandler<void(RenderProcessInfo&&)>&& completionHandler)
+{
+    if (m_layerTreeHost)
+        m_layerTreeHost->fillGLInformation(WTFMove(info), WTFMove(completionHandler));
+    else
+        completionHandler(WTFMove(info));
+}
+#endif
+
 } // namespace WebKit

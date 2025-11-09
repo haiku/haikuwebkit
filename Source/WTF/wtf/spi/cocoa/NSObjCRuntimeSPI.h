@@ -27,6 +27,8 @@
 
 DECLARE_SYSTEM_HEADER
 
+#ifdef __OBJC__
+
 #if USE(APPLE_INTERNAL_SDK)
 #include <Foundation/NSObjCRuntime_Private.h>
 #endif
@@ -50,3 +52,5 @@ DECLARE_SYSTEM_HEADER
 #define NS_DIRECT_MEMBERS
 #endif
 #endif
+
+#endif // __OBJC__

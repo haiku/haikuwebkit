@@ -607,7 +607,7 @@ bool isValid(std::optional<WebExtensionTabIdentifier> identifier, NSString **out
 
 bool WebExtensionAPITabs::isPropertyAllowed(const ASCIILiteral& name, WebPage*)
 {
-    if (extensionContext().isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
+    if (protectedExtensionContext()->isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
         return false;
 
     static NeverDestroyed<HashSet<AtomString>> removedInManifestVersion3 { HashSet { AtomString("executeScript"_s), AtomString("getSelected"_s), AtomString("insertCSS"_s), AtomString("removeCSS"_s) } };
@@ -1053,7 +1053,7 @@ RefPtr<WebExtensionAPIPort> WebExtensionAPITabs::connect(WebFrame& frame, JSCont
         if (result)
             return;
 
-        port->setError(runtime().reportError(result.error().createNSString().get(), globalContext.get()));
+        port->setError(protectedRuntime()->reportError(result.error().createNSString().get(), globalContext.get()));
         port->disconnect();
     }, extensionContext().identifier());
 

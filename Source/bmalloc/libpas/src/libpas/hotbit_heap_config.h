@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021 Apple Inc. All rights reserved.
+ * Copyright (c) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +27,8 @@
 #define HOTBIT_HEAP_CONFIG_H
 
 #include "pas_config.h"
+
+#if LIBPAS_ENABLED
 
 #if PAS_ENABLE_HOTBIT
 
@@ -88,5 +90,5 @@ PAS_END_EXTERN_C;
 
 #endif /* PAS_ENABLE_HOTBIT */
 
+#endif /* LIBPAS_ENABLED */
 #endif /* HOTBIT_HEAP_CONFIG_H */
-

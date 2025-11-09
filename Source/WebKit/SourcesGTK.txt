@@ -230,7 +230,9 @@ UIProcess/Automation/gtk/WebAutomationSessionGtk.cpp @no-unify
 
 UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 
-UIProcess/Extensions/gtk/WebExtensionGtk.cpp
+UIProcess/Extensions/glib/WebExtensionGLib.cpp
+
+UIProcess/Extensions/gtk/WebExtensionGTK.cpp
 
 UIProcess/Gamepad/gtk/UIGamepadProviderGtk.cpp
 UIProcess/Gamepad/manette/UIGamepadProviderManette.cpp

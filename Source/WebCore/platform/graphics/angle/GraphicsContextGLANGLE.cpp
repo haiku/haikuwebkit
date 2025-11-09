@@ -41,11 +41,15 @@
 #include "NotImplemented.h"
 #include <algorithm>
 #include <cstring>
+#include <sstream>
+#include <string>
 #include <wtf/MallocSpan.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/Seconds.h>
+#include <wtf/SortedArrayMap.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/CString.h>
+#include <wtf/text/CStringView.h>
 #include <wtf/text/StringBuilder.h>
 
 #if ENABLE(VIDEO) && USE(AVFOUNDATION)
@@ -92,6 +96,95 @@ static std::span<uint8_t> glMapBufferRangeSpan(GLenum target, GLintptr offset, G
     return unsafeMakeSpan(static_cast<uint8_t*>(ptr), length);
 }
 
+static constexpr std::pair<ComparableASCIILiteral, GCGLExtension> extensionsMapping[] {
+    { "GL_ANGLE_base_vertex_base_instance"_s, GCGLExtension::ANGLE_base_vertex_base_instance },
+    { "GL_ANGLE_clip_cull_distance"_s, GCGLExtension::ANGLE_clip_cull_distance },
+    { "GL_ANGLE_compressed_texture_etc"_s, GCGLExtension::ANGLE_compressed_texture_etc },
+    { "GL_ANGLE_depth_texture"_s, GCGLExtension::ANGLE_depth_texture },
+    { "GL_ANGLE_instanced_arrays"_s, GCGLExtension::ANGLE_instanced_arrays },
+    { "GL_ANGLE_multi_draw"_s, GCGLExtension::ANGLE_multi_draw },
+    { "GL_ANGLE_pack_reverse_row_order"_s, GCGLExtension::ANGLE_pack_reverse_row_order },
+    { "GL_ANGLE_polygon_mode"_s, GCGLExtension::ANGLE_polygon_mode },
+    { "GL_ANGLE_provoking_vertex"_s, GCGLExtension::ANGLE_provoking_vertex },
+    { "GL_ANGLE_stencil_texturing"_s, GCGLExtension::ANGLE_stencil_texturing },
+    { "GL_ANGLE_texture_compression_dxt3"_s, GCGLExtension::ANGLE_texture_compression_dxt3 },
+    { "GL_ANGLE_texture_compression_dxt5"_s, GCGLExtension::ANGLE_texture_compression_dxt5 },
+    { "GL_ANGLE_translated_shader_source"_s, GCGLExtension::ANGLE_translated_shader_source },
+    { "GL_CHROMIUM_color_buffer_float_rgb"_s, GCGLExtension::CHROMIUM_color_buffer_float_rgb },
+    { "GL_CHROMIUM_color_buffer_float_rgba"_s, GCGLExtension::CHROMIUM_color_buffer_float_rgba },
+    { "GL_EXT_blend_func_extended"_s, GCGLExtension::EXT_blend_func_extended },
+    { "GL_EXT_blend_minmax"_s, GCGLExtension::EXT_blend_minmax },
+    { "GL_EXT_clip_control"_s, GCGLExtension::EXT_clip_control },
+    { "GL_EXT_color_buffer_float"_s, GCGLExtension::EXT_color_buffer_float },
+    { "GL_EXT_color_buffer_half_float"_s, GCGLExtension::EXT_color_buffer_half_float },
+    { "GL_EXT_conservative_depth"_s, GCGLExtension::EXT_conservative_depth },
+    { "GL_EXT_depth_clamp"_s, GCGLExtension::EXT_depth_clamp },
+    { "GL_EXT_disjoint_timer_query"_s, GCGLExtension::EXT_disjoint_timer_query },
+    { "GL_EXT_draw_buffers"_s, GCGLExtension::EXT_draw_buffers },
+    { "GL_EXT_float_blend"_s, GCGLExtension::EXT_float_blend },
+    { "GL_EXT_frag_depth"_s, GCGLExtension::EXT_frag_depth },
+    { "GL_EXT_polygon_offset_clamp"_s, GCGLExtension::EXT_polygon_offset_clamp },
+    { "GL_EXT_render_snorm"_s, GCGLExtension::EXT_render_snorm },
+    { "GL_EXT_sRGB"_s, GCGLExtension::EXT_sRGB },
+    { "GL_EXT_shader_texture_lod"_s, GCGLExtension::EXT_shader_texture_lod },
+    { "GL_EXT_texture_compression_bptc"_s, GCGLExtension::EXT_texture_compression_bptc },
+    { "GL_EXT_texture_compression_dxt1"_s, GCGLExtension::EXT_texture_compression_dxt1 },
+    { "GL_EXT_texture_compression_rgtc"_s, GCGLExtension::EXT_texture_compression_rgtc },
+    { "GL_EXT_texture_compression_s3tc_srgb"_s, GCGLExtension::EXT_texture_compression_s3tc_srgb },
+    { "GL_EXT_texture_filter_anisotropic"_s, GCGLExtension::EXT_texture_filter_anisotropic },
+    { "GL_EXT_texture_mirror_clamp_to_edge"_s, GCGLExtension::EXT_texture_mirror_clamp_to_edge },
+    { "GL_EXT_texture_norm16"_s, GCGLExtension::EXT_texture_norm16 },
+    { "GL_IMG_texture_compression_pvrtc"_s, GCGLExtension::IMG_texture_compression_pvrtc },
+    { "GL_KHR_parallel_shader_compile"_s, GCGLExtension::KHR_parallel_shader_compile },
+    { "GL_KHR_texture_compression_astc_hdr"_s, GCGLExtension::KHR_texture_compression_astc_hdr },
+    { "GL_KHR_texture_compression_astc_ldr"_s, GCGLExtension::KHR_texture_compression_astc_ldr },
+    { "GL_NV_shader_noperspective_interpolation"_s, GCGLExtension::NV_shader_noperspective_interpolation },
+    { "GL_OES_compressed_ETC1_RGB8_texture"_s, GCGLExtension::OES_compressed_ETC1_RGB8_texture },
+    { "GL_OES_depth_texture"_s, GCGLExtension::OES_depth_texture },
+    { "GL_OES_draw_buffers_indexed"_s, GCGLExtension::OES_draw_buffers_indexed },
+    { "GL_OES_element_index_uint"_s, GCGLExtension::OES_element_index_uint },
+    { "GL_OES_fbo_render_mipmap"_s, GCGLExtension::OES_fbo_render_mipmap },
+    { "GL_OES_packed_depth_stencil"_s, GCGLExtension::OES_packed_depth_stencil },
+    { "GL_OES_sample_variables"_s, GCGLExtension::OES_sample_variables },
+    { "GL_OES_shader_multisample_interpolation"_s, GCGLExtension::OES_shader_multisample_interpolation },
+    { "GL_OES_standard_derivatives"_s, GCGLExtension::OES_standard_derivatives },
+    { "GL_OES_texture_float"_s, GCGLExtension::OES_texture_float },
+    { "GL_OES_texture_float_linear"_s, GCGLExtension::OES_texture_float_linear },
+    { "GL_OES_texture_half_float"_s, GCGLExtension::OES_texture_half_float },
+    { "GL_OES_texture_half_float_linear"_s, GCGLExtension::OES_texture_half_float_linear },
+    { "GL_OES_vertex_array_object"_s, GCGLExtension::OES_vertex_array_object },
+    { "GL_QCOM_render_shared_exponent"_s, GCGLExtension::QCOM_render_shared_exponent },
+};
+// Enums are expected to map the strings. Verify that the extensions are in ascending order, like the strings.
+static_assert(std::is_sorted(std::begin(extensionsMapping), std::end(extensionsMapping), [](auto& a, auto b) {
+    return a.second < b.second;
+}));
+
+static ASCIILiteral extensionName(GCGLExtension extension)
+{
+    size_t index = static_cast<size_t>(extension);
+    std::span mapping { extensionsMapping };
+    if (mapping.size() < index) {
+        ASSERT_NOT_REACHED();
+        return { };
+    }
+    auto [name, enumValue] = mapping[index];
+    if (enumValue != extension) {
+        // Verifies that the enums do not get disconnected from the string.
+        ASSERT_NOT_REACHED();
+        return { };
+    }
+    return name.literal;
+}
+
+static std::optional<GCGLExtension> extensionEnum(const CString& extension)
+{
+    static constexpr SortedArrayMap map { extensionsMapping };
+    if (auto* result = map.tryGet(extension.span()))
+        return *result;
+    return std::nullopt;
+}
+
 GraphicsContextGLANGLE::GraphicsContextGLANGLE(GraphicsContextGLAttributes attributes)
     : GraphicsContextGL(attributes)
 {
@@ -107,23 +200,19 @@ bool GraphicsContextGLANGLE::initialize()
     {
         StringView extensionsString { unsafeSpan8(byteCast<char>(GL_GetString(GL_EXTENSIONS))) };
         for (auto extension : extensionsString.split(' '))
-            m_availableExtensions.add(extension.span8());
+            m_extensions.add(extension.span8());
     }
     {
         StringView extensionsString { unsafeSpan8(byteCast<char>(GL_GetString(GL_REQUESTABLE_EXTENSIONS_ANGLE))) };
         for (auto extension : extensionsString.split(' '))
-            m_requestableExtensions.add(extension.span8());
+            m_allRequestableExtensions.add(extension.span8());
     }
 
     validateAttributes();
     auto attributes = contextAttributes(); // They may have changed during validation.
 
-    if (m_isForWebGL2) {
-        if (!enableExtension("GL_EXT_occlusion_query_boolean"_s))
-            return false;
-        if (!enableExtension("GL_ANGLE_framebuffer_multisample"_s))
-            return false;
-    }
+    if (m_isForWebGL2 && !enableExtensionsImpl({ "GL_EXT_occlusion_query_boolean"_s, "GL_ANGLE_framebuffer_multisample"_s }))
+        return false;
 
     if (!platformInitializeExtensions())
         return false;
@@ -196,22 +285,40 @@ bool GraphicsContextGLANGLE::initialize()
         usedDisplays().add(m_displayObj);
     }
 
-    if (supportsExtension("GL_KHR_debug"_s)) {
-        ensureExtensionEnabled("GL_KHR_debug"_s);
-        GL_Enable(DEBUG_OUTPUT);
-        GL_Enable(DEBUG_OUTPUT_SYNCHRONOUS);
-        GL_DebugMessageControlKHR(DONT_CARE, DONT_CARE, DONT_CARE, 0, nullptr, 0);
-        GL_DebugMessageControlKHR(DEBUG_SOURCE_API, DONT_CARE, DONT_CARE, 0, nullptr, 1);
-        auto debugMessageCallback = [](GCGLenum, GCGLenum type, GCGLenum id, GCGLenum severity, GCGLsizei length, const GCGLchar* message, const void* context) {
-            auto* gl = reinterpret_cast<const GraphicsContextGLANGLE*>(context);
-            if (gl->m_client)
-                gl->m_client->addDebugMessage(type, id, severity, CString { unsafeMakeSpan(message, length) });
-        };
-        GL_DebugMessageCallbackKHR(debugMessageCallback, this);
-    }
+    bool khrDebugIsSupported = enableExtensionsImpl({ "GL_KHR_debug"_s });
+    ASSERT_UNUSED(khrDebugIsSupported, khrDebugIsSupported);
+    GL_Enable(DEBUG_OUTPUT);
+    GL_Enable(DEBUG_OUTPUT_SYNCHRONOUS);
+    GL_DebugMessageControlKHR(DONT_CARE, DONT_CARE, DONT_CARE, 0, nullptr, 0);
+    GL_DebugMessageControlKHR(DEBUG_SOURCE_API, DONT_CARE, DONT_CARE, 0, nullptr, 1);
+    auto debugMessageCallback = [](GCGLenum, GCGLenum type, GCGLenum id, GCGLenum severity, GCGLsizei length, const GCGLchar* message, const void* context) {
+        auto* gl = reinterpret_cast<const GraphicsContextGLANGLE*>(context);
+        if (gl->m_client)
+            gl->m_client->addDebugMessage(type, id, severity, CString { unsafeMakeSpan(message, length) });
+    };
+    GL_DebugMessageCallbackKHR(debugMessageCallback, this);
+
+    bool packReverseRowOrderIsSupported = enableExtensionsImpl({ "GL_ANGLE_pack_reverse_row_order"_s });
+#if PLATFORM(COCOA)
+    ASSERT_UNUSED(packReverseRowOrderIsSupported, packReverseRowOrderIsSupported);
+#else
+    UNUSED_VARIABLE(packReverseRowOrderIsSupported);
+#endif
 
     ASSERT(GL_GetError() == NO_ERROR);
 
+    for (auto& extensionString : m_extensions) {
+        if (auto extension = extensionEnum(extensionString))
+            m_knownActiveExtensions.add(*extension);
+    }
+    for (auto& extensionString : m_allEnabledRequestableExtensions) {
+        if (auto extension = extensionEnum(extensionString))
+            m_knownActiveExtensions.add(*extension);
+    }
+    for (auto& extensionString : m_allRequestableExtensions) {
+        if (auto extension = extensionEnum(extensionString))
+            m_requestableExtensions.add(*extension);
+    }
     return true;
 }
 
@@ -306,9 +413,40 @@ RefPtr<PixelBuffer> GraphicsContextGLANGLE::readPixelsForPaintResults()
 
 void GraphicsContextGLANGLE::validateAttributes()
 {
-    m_internalColorFormat = contextAttributes().alpha ? GL_RGBA8 : GL_RGB8;
+    auto attrs = contextAttributes();
+    m_internalColorFormat = attrs.alpha ? GL_RGBA8 : GL_RGB8;
+    if (attrs.stencil && attrs.depth) {
+        if (supportsExtensionImpl("GL_OES_packed_depth_stencil"_s))
+            m_internalDepthStencilFormat = GL_DEPTH24_STENCIL8_OES;
+        else {
+            // Combined buffer not supported, prefer depth when both requested.
+            if (supportsExtensionImpl("GL_OES_depth24"_s))
+                m_internalDepthStencilFormat = GL_DEPTH_COMPONENT24_OES;
+            else
+                m_internalDepthStencilFormat = GL_DEPTH_COMPONENT16;
+            attrs.stencil = false;
+            setContextAttributes(attrs);
+        }
+    } else if (attrs.stencil)
+        m_internalDepthStencilFormat = GL_STENCIL_INDEX8;
+    else if (attrs.depth) {
+        if (supportsExtensionImpl("GL_OES_depth24"_s))
+            m_internalDepthStencilFormat = GL_DEPTH_COMPONENT24_OES;
+        else
+            m_internalDepthStencilFormat = GL_DEPTH_COMPONENT16;
+    }
 
-    validateDepthStencil("GL_OES_packed_depth_stencil"_s);
+    if (attrs.antialias) {
+        // FIXME: must adjust this when upgrading to WebGL 2.0 / OpenGL ES 3.0 support.
+        if (!enableExtensionsImpl({ "GL_ANGLE_framebuffer_multisample"_s, "GL_ANGLE_framebuffer_blit"_s, "GL_OES_rgb8_rgba8"_s })) {
+            attrs.antialias = false;
+            setContextAttributes(attrs);
+        }
+    } else if (attrs.preserveDrawingBuffer) {
+        // Needed for preserveDrawingBuffer:true support without antialiasing.
+        bool supported = enableExtensionsImpl({ "GL_ANGLE_framebuffer_blit"_s });
+        ASSERT_UNUSED(supported, supported);
+    }
 }
 
 bool GraphicsContextGLANGLE::reshapeFBOs(const IntSize& size)
@@ -623,53 +761,6 @@ std::optional<IntSize> GraphicsContextGLANGLE::readPixelsImpl(IntRect rect, GCGL
         wipeAlphaChannelFromPixels(data);
 #endif
     return IntSize { rows, columns };
-}
-
-// The contents of GraphicsContextGLANGLECommon follow, ported to use ANGLE.
-
-void GraphicsContextGLANGLE::validateDepthStencil(ASCIILiteral packedDepthStencilExtension)
-{
-    auto attrs = contextAttributes();
-    if (attrs.stencil && attrs.depth) {
-        ASSERT(packedDepthStencilExtension == "GL_OES_packed_depth_stencil"_s);
-        CString packedDepthStencilExtensionString { packedDepthStencilExtension };
-        if (supportsExtension(packedDepthStencilExtensionString)) {
-            // This extension is always enabled when supported
-            m_internalDepthStencilFormat = GL_DEPTH24_STENCIL8_OES;
-        } else {
-            // Combined buffer not supported, prefer depth when both requested.
-            // This extension is always enabled when supported
-            if (supportsExtension("GL_OES_depth24"_s))
-                m_internalDepthStencilFormat = GL_DEPTH_COMPONENT24_OES;
-            else
-                m_internalDepthStencilFormat = GL_DEPTH_COMPONENT16;
-            attrs.stencil = false;
-            setContextAttributes(attrs);
-        }
-    } else if (attrs.stencil)
-        m_internalDepthStencilFormat = GL_STENCIL_INDEX8;
-    else if (attrs.depth) {
-        // This extension is always enabled when supported
-        if (supportsExtension("GL_OES_depth24"_s))
-            m_internalDepthStencilFormat = GL_DEPTH_COMPONENT24_OES;
-        else
-            m_internalDepthStencilFormat = GL_DEPTH_COMPONENT16;
-    }
-
-    if (attrs.antialias) {
-        // FIXME: must adjust this when upgrading to WebGL 2.0 / OpenGL ES 3.0 support.
-        if (!supportsExtension("GL_ANGLE_framebuffer_multisample"_s) || !supportsExtension("GL_ANGLE_framebuffer_blit"_s) || !supportsExtension("GL_OES_rgb8_rgba8"_s)) {
-            attrs.antialias = false;
-            setContextAttributes(attrs);
-        } else {
-            ensureExtensionEnabled("GL_ANGLE_framebuffer_multisample"_s);
-            ensureExtensionEnabled("GL_ANGLE_framebuffer_blit"_s);
-            ensureExtensionEnabled("GL_OES_rgb8_rgba8"_s);
-        }
-    } else if (attrs.preserveDrawingBuffer) {
-        // Needed for preserveDrawingBuffer:true support without antialiasing.
-        ensureExtensionEnabled("GL_ANGLE_framebuffer_blit"_s);
-    }
 }
 
 void GraphicsContextGLANGLE::prepareTexture()
@@ -1069,17 +1160,6 @@ void GraphicsContextGLANGLE::compressedTexSubImage3D(GCGLenum target, int level,
     GL_CompressedTexSubImage3DRobustANGLE(target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, 0, reinterpret_cast<GLvoid*>(offset));
 }
 
-Vector<GCGLint> GraphicsContextGLANGLE::getActiveUniforms(PlatformGLObject program, const Vector<GCGLuint>& uniformIndices, GCGLenum pname)
-{
-    Vector<GCGLint> result(uniformIndices.size(), 0);
-    ASSERT(program);
-    if (!makeContextCurrent())
-        return result;
-
-    GL_GetActiveUniformsiv(program, uniformIndices.size(), uniformIndices.span().data(), pname, result.mutableSpan().data());
-    return result;
-}
-
 GCGLenum GraphicsContextGLANGLE::checkFramebufferStatus(GCGLenum target)
 {
     if (!makeContextCurrent())
@@ -1316,49 +1396,83 @@ void GraphicsContextGLANGLE::generateMipmap(GCGLenum target)
     GL_GenerateMipmap(target);
 }
 
-std::optional<GraphicsContextGLActiveInfo> GraphicsContextGLANGLE::getActiveAttrib(PlatformGLObject program, GCGLuint index)
+Vector<GCGLAttribActiveInfo> GraphicsContextGLANGLE::activeAttribs(PlatformGLObject program)
 {
     if (!makeContextCurrent())
-        return std::nullopt;
+        return { };
     GLint maxLength = 0;
     GL_GetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &maxLength);
-    // maxLength == 0 is ok, trying to access index in below call sets the consistent error.
-    Vector<char, 64> buffer(maxLength); // GL_ACTIVE_ATTRIBUTE_MAX_LENGTH includes nul termination.
-    GLsizei length = 0;
-    GLint size = 0;
-    GLenum type = 0;
-    GL_GetActiveAttrib(program, index, maxLength, &length, &size, &type, buffer.mutableSpan().data());
-    if (!length)
-        return std::nullopt;
-    return GraphicsContextGLActiveInfo { buffer.subspan(0, length), type, size };
+    if (!maxLength)
+        return { };
+    GLsizei activeAttribs = 0;
+    GL_GetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &activeAttribs);
+    std::string name;
+    Vector<GCGLAttribActiveInfo> result;
+    result.reserveCapacity(activeAttribs);
+    for (GLsizei index = 0; index < activeAttribs; ++index) {
+        name.resize(maxLength); // GL_ACTIVE_ATTRIBUTE_MAX_LENGTH includes nul termination.
+        GLsizei length = 0;
+        GLint size = 0;
+        GLenum type = 0;
+        GL_GetActiveAttrib(program, index, maxLength, &length, &size, &type, name.data());
+        if (length < 1 || size != 1) {
+            ASSERT_NOT_REACHED();
+            return { };
+        }
+        name.resize(length);
+        result.append(GCGLAttribActiveInfo { name.data(), type, GL_GetAttribLocation(program, name.data()) });
+    }
+    return result;
 }
 
-std::optional<GraphicsContextGLActiveInfo> GraphicsContextGLANGLE::getActiveUniform(PlatformGLObject program, GCGLuint index)
+Vector<GCGLUniformActiveInfo> GraphicsContextGLANGLE::activeUniforms(PlatformGLObject program)
 {
     if (!makeContextCurrent())
-        return std::nullopt;
+        return { };
+
     GLint maxLength = 0;
     GL_GetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxLength);
-    // maxLength == 0 is ok, trying to access index in below call sets the consistent error.
-    Vector<char, 64> buffer(maxLength); // GL_ACTIVE_UNIFORM_MAX_LENGTH includes nul termination.
-    GLsizei length = 0;
-    GLint size = 0;
-    GLenum type = 0;
-    GL_GetActiveUniform(program, index, maxLength, &length, &size, &type, buffer.mutableSpan().data());
-    if (!length)
-        return std::nullopt;
-    return GraphicsContextGLActiveInfo { buffer.subspan(0, length), type, size };
-}
-
-int GraphicsContextGLANGLE::getAttribLocation(PlatformGLObject program, const CString& name)
-{
-    if (!program)
-        return -1;
-
-    if (!makeContextCurrent())
-        return -1;
-
-    return GL_GetAttribLocation(program, name.span().data());
+    if (!maxLength)
+        return { };
+    GLsizei activeUniforms = 0;
+    GL_GetProgramiv(program, GL_ACTIVE_UNIFORMS, &activeUniforms);
+    std::string name;
+    Vector<GCGLUniformActiveInfo> result;
+    result.reserveCapacity(activeUniforms);
+    for (GLuint index = 0; index < static_cast<GLuint>(activeUniforms); ++index) {
+        name.resize(maxLength); // GL_ACTIVE_UNIFORM_MAX_LENGTH includes nul termination.
+        GCGLUniformActiveInfo info;
+        GLsizei length = 0;
+        GLint size = 0;
+        GL_GetActiveUniform(program, index, maxLength, &length, &size, &info.type, name.data());
+        if (length < 1 || size < 1) {
+            ASSERT_NOT_REACHED();
+            return { };
+        }
+        name.resize(length);
+        info.name = name;
+        info.locations.append(GL_GetUniformLocation(program, name.data()));
+        if (m_isForWebGL2) {
+            GL_GetActiveUniformsiv(program, 1, &index, GL_UNIFORM_BLOCK_INDEX, &info.blockIndex);
+            GL_GetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET, &info.offset);
+            GL_GetActiveUniformsiv(program, 1, &index, GL_UNIFORM_ARRAY_STRIDE, &info.arrayStride);
+            GL_GetActiveUniformsiv(program, 1, &index, GL_UNIFORM_MATRIX_STRIDE, &info.matrixStride);
+            GL_GetActiveUniformsiv(program, 1, &index, GL_UNIFORM_IS_ROW_MAJOR, &info.isRowMajor);
+        }
+        if (size > 1) {
+            if (!name.ends_with("[0]")) {
+                ASSERT_NOT_REACHED();
+                return { };
+            }
+            name.resize(name.length() - 3);
+            for (GLint arrayIndex = 1; arrayIndex < size; ++arrayIndex) {
+                auto elementName = (std::ostringstream() << name << '[' << arrayIndex << ']').str();
+                info.locations.append(GL_GetUniformLocation(program, elementName.data()));
+            }
+        }
+        result.append(WTFMove(info));
+    }
+    return result;
 }
 
 bool GraphicsContextGLANGLE::updateErrors()
@@ -2075,16 +2189,6 @@ void GraphicsContextGLANGLE::getUniformuiv(PlatformGLObject program, GCGLint loc
     GL_GetUniformuivRobustANGLE(program, location, bufSize, nullptr, value.data());
 }
 
-GCGLint GraphicsContextGLANGLE::getUniformLocation(PlatformGLObject program, const CString& name)
-{
-    ASSERT(program);
-
-    if (!makeContextCurrent())
-        return -1;
-
-    return GL_GetUniformLocation(program, name.data());
-}
-
 GCGLsizeiptr GraphicsContextGLANGLE::getVertexAttribOffset(GCGLuint index, GCGLenum pname)
 {
     if (!makeContextCurrent())
@@ -2381,7 +2485,7 @@ void GraphicsContextGLANGLE::transformFeedbackVaryings(PlatformGLObject program,
     GL_TransformFeedbackVaryings(program, pointersToVaryings.size(), pointersToVaryings.span().data(), bufferMode);
 }
 
-std::optional<GraphicsContextGLActiveInfo> GraphicsContextGLANGLE::getTransformFeedbackVarying(PlatformGLObject program, GCGLuint index)
+std::optional<GCGLTransformFeedbackActiveInfo> GraphicsContextGLANGLE::getTransformFeedbackVarying(PlatformGLObject program, GCGLuint index)
 {
     if (!makeContextCurrent())
         return std::nullopt;
@@ -2395,7 +2499,7 @@ std::optional<GraphicsContextGLActiveInfo> GraphicsContextGLANGLE::getTransformF
     GL_GetTransformFeedbackVarying(program, index, maxLength, &length, &size, &type, buffer.mutableSpan().data());
     if (!length)
         return std::nullopt;
-    return GraphicsContextGLActiveInfo { buffer.subspan(0, length), type, size };
+    return GCGLTransformFeedbackActiveInfo { buffer.subspan(0, length), type, size };
 }
 
 void GraphicsContextGLANGLE::bindBufferBase(GCGLenum target, GCGLuint index, PlatformGLObject buffer)
@@ -2413,7 +2517,7 @@ void GraphicsContextGLANGLE::blitFramebuffer(GCGLint srcX0, GCGLint srcY0, GCGLi
     prepareForDrawingBufferWriteIfBound();
     if (m_isForWebGL2)
         GL_BlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
-    else if (isExtensionEnabled("GL_NV_framebuffer_blit"_s))
+    else if (isExtensionEnabledImpl("GL_NV_framebuffer_blit"_s))
         GL_BlitFramebufferNV(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
     else
         GL_BlitFramebufferANGLE(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
@@ -2858,18 +2962,6 @@ void GraphicsContextGLANGLE::bindBufferRange(GCGLenum target, GCGLuint index, Pl
     GL_BindBufferRange(target, index, buffer, offset, size);
 }
 
-Vector<GCGLuint> GraphicsContextGLANGLE::getUniformIndices(PlatformGLObject program, const Vector<CString>& uniformNames)
-{
-    ASSERT(program);
-    if (!makeContextCurrent())
-        return { };
-
-    Vector<const char*> cstr = uniformNames.map([](auto& x) { return x.data(); });
-    Vector<GCGLuint> result(cstr.size(), 0);
-    GL_GetUniformIndices(program, cstr.size(), cstr.span().data(), result.mutableSpan().data());
-    return result;
-}
-
 void GraphicsContextGLANGLE::getActiveUniformBlockiv(PlatformGLObject program, GCGLuint uniformBlockIndex, GCGLenum pname, std::span<GCGLint> params)
 {
     if (!makeContextCurrent())
@@ -2965,24 +3057,53 @@ void GraphicsContextGLANGLE::multiDrawElementsInstancedANGLE(GCGLenum mode, GCGL
     checkGPUStatus();
 }
 
-bool GraphicsContextGLANGLE::supportsExtension(const CString& name)
+bool GraphicsContextGLANGLE::enableExtension(GCGLExtension extension)
 {
-    return m_availableExtensions.contains(name) || m_requestableExtensions.contains(name);
-}
-
-void GraphicsContextGLANGLE::ensureExtensionEnabled(const CString& name)
-{
-    // Enable support in ANGLE (if not enabled already).
-    if (m_requestableExtensions.contains(name) && !m_enabledExtensions.contains(name)) {
-        if (!makeContextCurrent())
-            return;
-        requestExtension(name);
+    if (m_knownActiveExtensions.contains(extension))
+        return true;
+    if (!m_requestableExtensions.contains(extension))
+        return false;
+    auto name = extensionName(extension);
+    if (name.isEmpty()) {
+        ASSERT_NOT_REACHED();
+        return false;
     }
+    m_knownActiveExtensions.add(extension);
+    if (!makeContextCurrent())
+        return true;
+    bool success = enableExtensionsImpl({ name });
+    ASSERT_UNUSED(success, success);
+    return true;
 }
 
-bool GraphicsContextGLANGLE::isExtensionEnabled(const CString& name)
+bool GraphicsContextGLANGLE::enableExtensionsImpl(std::initializer_list<ASCIILiteral> names)
 {
-    return m_availableExtensions.contains(name) || m_enabledExtensions.contains(name);
+    Vector<ASCIILiteral> requests;
+    requests.reserveCapacity(names.size());
+    for (auto name : names) {
+        if (m_extensions.contains(name))
+            continue;
+        if (!m_allRequestableExtensions.contains(name))
+            return false;
+        if (m_allEnabledRequestableExtensions.contains(name))
+            continue;
+        requests.append(name);
+    }
+    for (auto name : requests) {
+        GL_RequestExtensionANGLE(name.span().data());
+        m_allEnabledRequestableExtensions.add(name);
+    }
+    return true;
+}
+
+bool GraphicsContextGLANGLE::supportsExtensionImpl(ASCIILiteral name) const
+{
+    return m_extensions.contains(name);
+}
+
+bool GraphicsContextGLANGLE::isExtensionEnabledImpl(ASCIILiteral name) const
+{
+    return m_extensions.contains(name) || m_allEnabledRequestableExtensions.contains(name);
 }
 
 CString GraphicsContextGLANGLE::getTranslatedShaderSourceANGLE(PlatformGLObject shader)
@@ -3231,13 +3352,7 @@ void GraphicsContextGLANGLE::simulateEventForTesting(SimulatedEventForTesting ev
     }
 }
 
-void GraphicsContextGLANGLE::drawSurfaceBufferToImageBuffer(SurfaceBuffer buffer, ImageBuffer& imageBuffer)
-{
-    if (RefPtr image = bufferAsNativeImage(buffer))
-        paintToCanvas(*image, imageBuffer.backendSize(), imageBuffer.context());
-}
-
-RefPtr<NativeImage> GraphicsContextGLANGLE::bufferAsNativeImage(SurfaceBuffer source)
+RefPtr<NativeImage> GraphicsContextGLANGLE::copyNativeImageYFlipped(SurfaceBuffer source)
 {
     if (!makeContextCurrent())
         return nullptr;
@@ -3289,6 +3404,16 @@ void GraphicsContextGLANGLE::addError(GCGLErrorCode errorCode)
     m_errors.add(errorCode);
 }
 
+EnumSet<GCGLExtension> GraphicsContextGLANGLE::knownActiveExtensions() const
+{
+    return m_knownActiveExtensions;
+}
+
+EnumSet<GCGLExtension> GraphicsContextGLANGLE::requestableExtensions() const
+{
+    return m_requestableExtensions;
+}
+
 void GraphicsContextGLANGLE::invalidateKnownTextureContent(GCGLuint)
 {
 }
@@ -3298,9 +3423,9 @@ GCGLenum GraphicsContextGLANGLE::adjustWebGL1TextureInternalFormat(GCGLenum inte
     // The implementation of WEBGL_color_buffer_float for WebGL 1.0 / ES 2.0 requires a sized
     // internal format. Adjust it if necessary at this lowest level.
     if (type == GL_FLOAT) {
-        if (m_webglColorBufferFloatRGBA && format == GL_RGBA && internalformat == GL_RGBA)
+        if (m_knownActiveExtensions.contains(GCGLExtension::CHROMIUM_color_buffer_float_rgba) && format == GL_RGBA && internalformat == GL_RGBA)
             return GL_RGBA32F;
-        if (m_webglColorBufferFloatRGB && format == GL_RGB && internalformat == GL_RGB)
+        if (m_knownActiveExtensions.contains(GCGLExtension::CHROMIUM_color_buffer_float_rgb) && format == GL_RGB && internalformat == GL_RGB)
             return GL_RGB32F;
     }
     return internalformat;
@@ -3320,26 +3445,6 @@ void GraphicsContextGLANGLE::setPackParameters(GCGLint alignment, GCGLint rowLen
         GL_PixelStorei(GL_PACK_REVERSE_ROW_ORDER_ANGLE, reverseRowOrder);
         m_packReverseRowOrder = reverseRowOrder;
     }
-}
-
-bool GraphicsContextGLANGLE::enableExtension(const CString& name)
-{
-    if (m_availableExtensions.contains(name) || m_enabledExtensions.contains(name))
-        return true;
-    if (!m_requestableExtensions.contains(name))
-        return false;
-    requestExtension(name);
-    return true;
-}
-
-void GraphicsContextGLANGLE::requestExtension(const CString& name)
-{
-    GL_RequestExtensionANGLE(name.data());
-    m_enabledExtensions.add(name);
-    if (name == "GL_CHROMIUM_color_buffer_float_rgba"_s)
-        m_webglColorBufferFloatRGBA = true;
-    else if (name == "GL_CHROMIUM_color_buffer_float_rgb"_s)
-        m_webglColorBufferFloatRGB = true;
 }
 
 bool GraphicsContextGLANGLE::validateClearBufferv(GCGLenum buffer, size_t valuesSize)

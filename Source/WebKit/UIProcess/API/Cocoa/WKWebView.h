@@ -543,7 +543,7 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
 
 /*! @abstract A Boolean value indicating whether Screen Time blocking has occurred.
  */
-@property (nonatomic, readonly) BOOL isBlockedByScreenTime WK_API_AVAILABLE(macos(26.0), ios(26.0));
+@property (nonatomic, readonly) BOOL isBlockedByScreenTime WK_API_AVAILABLE(macos(26.0), ios(26.0)) WK_API_UNAVAILABLE(visionos);
 
 /*! @abstract Sets the webpage contents from the passed data as if it was the
  response to the supplied request. The request is never actually sent to the
@@ -666,7 +666,7 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
  @discussion Set this conversation context before the keyboard appears; the keyboard uses this context to initialize its conversation context value. When your conversation updates, update the smart reply by setting this property.
  */
 
-@property (strong, nonatomic) UIConversationContext *conversationContext WK_API_AVAILABLE(ios(WK_IOS_TBA)) WK_API_UNAVAILABLE(tvos, watchos, visionos, macCatalyst);
+@property (strong, nonatomic) UIConversationContext *conversationContext WK_API_AVAILABLE(ios(26.0)) WK_API_UNAVAILABLE(tvos, watchos, visionos, macCatalyst);
 
 #endif // TARGET_OS_IOS && !TARGET_OS_MACCATALYST && __IPHONE_OS_VERSION_MIN_REQUIRED >= 180400
 

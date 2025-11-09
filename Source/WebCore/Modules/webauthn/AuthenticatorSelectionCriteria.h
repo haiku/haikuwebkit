@@ -40,11 +40,16 @@ namespace WebCore {
 enum class AuthenticatorAttachment : uint8_t;
 
 struct AuthenticatorSelectionCriteria {
-    std::optional<AuthenticatorAttachment> authenticatorAttachment;
+    String authenticatorAttachmentString;
+    WEBCORE_EXPORT std::optional<AuthenticatorAttachment> authenticatorAttachment() const;
+
     // residentKey replaces requireResidentKey, see: https://www.w3.org/TR/webauthn-2/#dictionary-authenticatorSelection
-    std::optional<ResidentKeyRequirement> residentKey;
+    String residentKeyString;
+    WEBCORE_EXPORT std::optional<ResidentKeyRequirement> residentKey() const;
     bool requireResidentKey { false };
-    UserVerificationRequirement userVerification { UserVerificationRequirement::Preferred };
+
+    String userVerificationString { String { "preferred"_s } };
+    WEBCORE_EXPORT UserVerificationRequirement userVerification() const;
 };
 
 }

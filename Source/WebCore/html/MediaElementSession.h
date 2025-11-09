@@ -255,7 +255,7 @@ private:
     
 #if ENABLE(MEDIA_SESSION)
     bool m_isScrubbing { false };
-    std::unique_ptr<MediaElementSessionObserver> m_observer;
+    RefPtr<MediaElementSessionObserver> m_observer;
 #endif
 };
 

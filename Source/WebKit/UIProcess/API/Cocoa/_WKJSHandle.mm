@@ -39,7 +39,7 @@
 {
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(_WKJSHandle.class, self))
         return;
-    _ref->API::JSHandle::~JSHandle();
+    SUPPRESS_UNRETAINED_ARG _ref->API::JSHandle::~JSHandle();
     [super dealloc];
 }
 

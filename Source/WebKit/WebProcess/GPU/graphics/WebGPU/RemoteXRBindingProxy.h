@@ -72,6 +72,8 @@ private:
     RemoteXRBindingProxy& operator=(const RemoteXRBindingProxy&) = delete;
     RemoteXRBindingProxy& operator=(RemoteXRBindingProxy&&) = delete;
 
+    bool isRemoteXRBindingProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
 
     RefPtr<WebCore::WebGPU::XRProjectionLayer> createProjectionLayer(const WebCore::WebGPU::XRProjectionLayerInit&) final;
@@ -96,5 +98,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteXRBindingProxy)
+    static bool isType(const WebCore::WebGPU::XRBinding& binding) { return binding.isRemoteXRBindingProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

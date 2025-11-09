@@ -123,7 +123,6 @@ MacroAssemblerCodeRef<JSEntryPtrTag> returnLocationThunk(OpcodeID, OpcodeSize);
 
 #if ENABLE(WEBASSEMBLY)
 MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterEntryThunk();
-MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterSIMDEntryThunk();
 MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterCatchEntryThunk();
 MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterCatchAllEntryThunk();
 MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterTableCatchEntryThunk();

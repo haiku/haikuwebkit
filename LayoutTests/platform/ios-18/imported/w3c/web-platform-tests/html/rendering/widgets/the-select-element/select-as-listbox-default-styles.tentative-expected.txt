@@ -41,7 +41,6 @@ PASS <select multiple=""><option>1 - scrollbar-width
 PASS <select multiple=""><option>1 - vertical-align
 PASS <select multiple=""><option>1 - user-select
 PASS <select multiple=""><option>1 - page-break-inside
-PASS <select multiple=""><option>1 - overflow-clip-box
 PASS <select multiple=""><option>1 - font-variant-ligatures
 PASS <select multiple=""><option>1 - font-variant-caps
 PASS <select multiple=""><option>1 - font-variant-numeric
@@ -89,7 +88,6 @@ PASS <option>1 (in <select multiple="">) - overflow
 PASS <option>1 (in <select multiple="">) - vertical-align
 PASS <option>1 (in <select multiple="">) - user-select
 PASS <option>1 (in <select multiple="">) - page-break-inside
-PASS <option>1 (in <select multiple="">) - overflow-clip-box
 PASS <option>1 (in <select multiple="">) - font-variant-ligatures
 PASS <option>1 (in <select multiple="">) - font-variant-caps
 PASS <option>1 (in <select multiple="">) - font-variant-numeric
@@ -137,7 +135,6 @@ PASS <optgroup label="2"><option>3 (in <select multiple="">) - overflow
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - vertical-align
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - user-select
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - page-break-inside
-PASS <optgroup label="2"><option>3 (in <select multiple="">) - overflow-clip-box
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - font-variant-ligatures
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - font-variant-caps
 PASS <optgroup label="2"><option>3 (in <select multiple="">) - font-variant-numeric
@@ -185,7 +182,6 @@ PASS <option>3 (in <select multiple=""><optgroup label="2">) - overflow
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - vertical-align
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - user-select
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - page-break-inside
-PASS <option>3 (in <select multiple=""><optgroup label="2">) - overflow-clip-box
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - font-variant-ligatures
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - font-variant-caps
 PASS <option>3 (in <select multiple=""><optgroup label="2">) - font-variant-numeric

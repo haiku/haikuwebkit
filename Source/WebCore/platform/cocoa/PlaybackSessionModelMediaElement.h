@@ -60,11 +60,14 @@ public:
     }
     WEBCORE_EXPORT virtual ~PlaybackSessionModelMediaElement();
 
+    USING_CAN_MAKE_WEAKPTR(PlaybackSessionModel);
+
     // CheckedPtr interface
     uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     WEBCORE_EXPORT void setMediaElement(HTMLMediaElement*);
     HTMLMediaElement* mediaElement() const { return m_mediaElement.get(); }
@@ -168,7 +171,7 @@ private:
     std::optional<SpatialVideoMetadata> m_spatialVideoMetadata;
     std::optional<VideoProjectionMetadata> m_videoProjectionMetadata;
 
-    Observer<void()> m_videoTrackConfigurationObserver;
+    const Ref<Observer<void()>> m_videoTrackConfigurationObserver;
 };
 
 }

@@ -101,7 +101,7 @@ private:
     void inlineStyleChanged();
     CSSStyleProperties* inlineStyleCSSOMWrapper();
     void setInlineStyleFromString(const AtomString&);
-    MutableStyleProperties& ensureMutableInlineStyle();
+    Ref<MutableStyleProperties> ensureMutableInlineStyle();
 
     void rebuildPresentationalHintStyle();
 };

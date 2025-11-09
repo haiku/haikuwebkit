@@ -71,6 +71,10 @@ webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-a
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown-and-pointerdown.html [ Skip ]
 webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-aux-pointerdown.html [ Skip ]
 
+# Event timing: timing out for unclear reasons - perhaps scheduling. Events handlers are called but event timing entries aren't produced
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-keydown-keyup.html [ Skip ]
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-pointerdown-pointerup.html [ Skip ]
+
 # Media controls
 accessibility/gtk/media-controls-panel-title.html [ Failure ]
 
@@ -548,6 +552,9 @@ fast/forms/validation-message-clone.html [ Skip ]
 fast/forms/validation-message-in-relative-body.html [ Skip ]
 fast/forms/validation-message-appearance.html [ Skip ]
 fast/forms/validation-message-on-textarea.html [ Skip ]
+
+
+webkit.org/b/301556 transforms/2d/zoom-menulist.html [ Skip ]
 
 webkit.org/b/137096 svg/W3C-SVG-1.1/text-altglyph-01-b.svg [ Failure ]
 webkit.org/b/137096 svg/custom/altglyph.svg [ Failure ]

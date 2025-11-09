@@ -260,7 +260,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "8", "name": "PHAssetPlaybackStyle"},
     {"access": "public", "introduced": "9.1", "name": "PHLivePhotoBadgeOptions"},
@@ -438,7 +438,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo22PHPickerViewControllerC8PhotosUIE8delegateAC0abC8Delegate_pSgvpMV"},
     {"access": "public", "linkage": "exported", "name": "_$sSo22PHPickerViewControllerC8PhotosUIE8delegateAC0abC8Delegate_pSgvs"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -547,7 +547,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo11PHLivePhotoC015_PhotosUI_SwiftD0E22transferRepresentationQrvpZQOMQ"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSo11PHLivePhotoC16CoreTransferable0D0015_PhotosUI_SwiftF0Mc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

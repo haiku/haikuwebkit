@@ -128,7 +128,7 @@ public:
 private:
     WebFullScreenManagerProxy(WebPageProxy&, WebFullScreenManagerProxyClient&);
 
-    Awaitable<std::optional<WebCore::IntRect>> enterFullScreen(IPC::Connection&, WebCore::FrameIdentifier, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails, WebCore::FrameIdentifier rootFrameID, WebCore::IntRect initialFrameInRootFrameCoordinates);
+    Awaitable<bool> enterFullScreen(IPC::Connection&, WebCore::FrameIdentifier, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails);
     void didEnterFullScreen(CompletionHandler<void(bool)>&&);
 #if ENABLE(QUICKLOOK_FULLSCREEN)
     void updateImageSource(FullScreenMediaDetails&&);

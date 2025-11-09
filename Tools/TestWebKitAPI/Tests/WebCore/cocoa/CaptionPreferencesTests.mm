@@ -25,13 +25,49 @@
 
 #import "config.h"
 
+#import "PlatformUtilities.h"
+#import "SoftLinkShim.h"
 #import <CoreFoundation/CoreFoundation.h>
 #import <WebCore/CaptionUserPreferencesMediaAF.h>
 #import <WebCore/Color.h>
 #import <WebCore/PageGroup.h>
-#import "SoftLinkShim.h"
+#import <WebKit/_WKCaptionStyleMenuController.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/darwin/DispatchExtras.h>
+
+#if PLATFORM(IOS_FAMILY)
+#import <UIKit/UIAction.h>
+#endif
 
 #import <WebCore/MediaAccessibilitySoftLink.h>
+
+#if PLATFORM(MAC)
+@interface NSMenu (PrivateHighlightItem)
+- (void)highlightItem:(NSMenuItem *)item;
+@end
+#elif USE(UICONTEXTMENU)
+@interface UIContextMenuInteraction (PrivatePresentMenu)
+- (void)_presentMenuAtLocation:(CGPoint)location;
+@end
+#endif
+
+static bool s_captionStyleMenuWillOpenCalled = false;
+static bool s_captionStyleMenuDidCloseCalled = false;
+
+@interface CaptionPreferenceTestMenuControllerDelegate : NSObject<WKCaptionStyleMenuControllerDelegate>
+@end
+
+@implementation CaptionPreferenceTestMenuControllerDelegate
+- (void)captionStyleMenuWillOpen:(PlatformMenu *)menu
+{
+    s_captionStyleMenuWillOpenCalled = true;
+}
+
+- (void)captionStyleMenuDidClose:(PlatformMenu *)menu
+{
+    s_captionStyleMenuDidCloseCalled = true;
+}
+@end
 
 namespace TestWebKitAPI {
 
@@ -42,8 +78,13 @@ using namespace WebCore;
     static resultType shimmed##functionName(args) { return functionName##Result; } \
     SoftLinkShim<resultType, args> functionName##Shim { &softLink##framework##functionName, shimmed##functionName }; \
 
+#define SOFT_LINK_SHIM_CF_COPY_VOID_MAY_FAIL(framework, functionName, resultType) \
+    static RetainPtr<resultType> functionName##Result; \
+    static resultType shimmed##functionName() { return (resultType)CFRetain(functionName##Result.get()); } \
+    SoftLinkShim<resultType> functionName##Shim { &softLink##framework##functionName, shimmed##functionName, canLoad_##framework##_##functionName }; \
+
 #define SOFT_LINK_SHIM_CF_COPY(framework, functionName, resultType, args...) \
-static RetainPtr<resultType> functionName##Result; \
+    static RetainPtr<resultType> functionName##Result; \
     static resultType shimmed##functionName(args) { return (resultType)CFRetain(functionName##Result.get()); } \
     SoftLinkShim<resultType, args> functionName##Shim { &softLink##framework##functionName, shimmed##functionName }; \
 
@@ -71,6 +112,14 @@ public:
     SOFT_LINK_SHIM_CF_COPY(MediaAccessibility, MACaptionAppearanceCopyPreferredCaptioningMediaCharacteristics, CFArrayRef, MACaptionAppearanceDomain);
     SOFT_LINK_SHIM_CF_COPY(MediaAccessibility, MACaptionAppearanceCopyFontDescriptorWithStrokeForStyle, CTFontDescriptorRef, DOMAIN_AND_BEHAVIOR, MACaptionAppearanceFontStyle, CFStringRef, CGFloat, CGFloat *);
     SOFT_LINK_SHIM(MediaAccessibility, MACaptionAppearanceGetTextEdgeStyle, MACaptionAppearanceTextEdgeStyle, DOMAIN_AND_BEHAVIOR);
+    SOFT_LINK_SHIM_CF_COPY_VOID_MAY_FAIL(MediaAccessibility, MACaptionAppearanceCopyProfileIDs, CFArrayRef)
+    SOFT_LINK_SHIM_CF_COPY_VOID_MAY_FAIL(MediaAccessibility, MACaptionAppearanceCopyActiveProfileID, CFStringRef)
+
+    static void shimmedMACaptionAppearanceSetActiveProfileID(CFStringRef profileID) { MACaptionAppearanceCopyActiveProfileIDResult = profileID; }
+    SoftLinkShim<void, CFStringRef> MACaptionAppearanceSetActiveProfileIDShim { &softLinkMediaAccessibilityMACaptionAppearanceSetActiveProfileID, shimmedMACaptionAppearanceSetActiveProfileID, canLoad_MediaAccessibility_MACaptionAppearanceSetActiveProfileID };
+
+    static CFStringRef shimmedMACaptionAppearanceCopyProfileName(CFStringRef profileID) { return profileID; }
+    SoftLinkShim<CFStringRef, CFStringRef> MACaptionAppearanceCopyProfileNameShim { &softLinkMediaAccessibilityMACaptionAppearanceCopyProfileName, shimmedMACaptionAppearanceCopyProfileName, canLoad_MediaAccessibility_MACaptionAppearanceCopyProfileName };
 
     void resetToDefaultValues()
     {
@@ -88,6 +137,8 @@ public:
         SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceCopyFontDescriptorWithStrokeForStyle, adoptCF(CTFontDescriptorCreateWithNameAndSize(CFSTR(".AppleSystemUIFont"), 10)));
         SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceGetRelativeCharacterSize, (CGFloat)1.f);
         SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceGetTextEdgeStyle, kMACaptionAppearanceTextEdgeStyleNone);
+        SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceCopyProfileIDs, adoptCF((__bridge CFArrayRef)@[@"Profile 1", @"Profile 2", @"Profile 3"]));
+        SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceCopyActiveProfileID, CFSTR("Profile 1"));
     }
     MediaAccessibilityShim() { resetToDefaultValues(); }
     ~MediaAccessibilityShim() { resetToDefaultValues(); }
@@ -107,8 +158,90 @@ SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceCopySelectedLanguages, RetainPtr
 SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceCopyPreferredCaptioningMediaCharacteristics, RetainPtr<CFArrayRef>);
 SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceCopyFontDescriptorWithStrokeForStyle, RetainPtr<CTFontDescriptorRef>);
 SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceGetTextEdgeStyle, MACaptionAppearanceTextEdgeStyle);
+SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceCopyProfileIDs, RetainPtr<CFArrayRef>);
+SOFT_LINK_SHIM_DEFINE_RESULT(MACaptionAppearanceCopyActiveProfileID, RetainPtr<CFStringRef>);
 
-TEST(CaptionPreferenceTests, ShimTest)
+class CaptionPreferenceTests : public testing::Test {
+public:
+    WKCaptionStyleMenuController *ensureController()
+    {
+        if (!m_styleMenuController) {
+            m_delegate = adoptNS([[CaptionPreferenceTestMenuControllerDelegate alloc] init]);
+            m_styleMenuController = adoptNS([[WKCaptionStyleMenuController alloc] init]);
+            [m_styleMenuController setDelegate:m_delegate.get()];
+        }
+        return m_styleMenuController.get();
+    }
+
+    PlatformMenu *ensureMenu()
+    {
+        return [ensureController() captionStyleMenu];
+    }
+
+    void showMenuAndThen(Function<void(PlatformMenu*)>&& function)
+    {
+#if PLATFORM(MAC)
+        RetainPtr window = adoptNS([[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 300, 300) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO]);
+
+        bool done = false;
+        RetainPtr menu = ensureMenu();
+        RunLoop::mainSingleton().dispatch([&] {
+            function(menu.get());
+            [menu cancelTracking];
+            done = true;
+        });
+
+        [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(0, 0) inView:[window contentView]];
+        Util::run(&done);
+#elif USE(UICONTEXTMENU)
+        RetainPtr window = adoptNS([[UIWindow alloc] initWithFrame:NSMakeRect(0, 0, 300, 300)]);
+
+        RetainPtr viewController = adoptNS([[UIViewController alloc] init]);
+        RetainPtr testView = adoptNS([[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 300)]);
+        [viewController setView:testView.get()];
+        [window setRootViewController:viewController.get()];
+        [window makeKeyAndVisible];
+        [testView addInteraction:ensureController().contextMenuInteraction];
+
+        [ensureController().contextMenuInteraction _presentMenuAtLocation:CGPointMake(0, 0)];
+
+        function(ensureMenu());
+
+        [ensureController().contextMenuInteraction dismissMenu];
+#else
+        function(nil);
+#endif
+    }
+
+    void runAndWaitForCaptionStyleMenuWillOpenCalled(Function<void()>&& function)
+    {
+        s_captionStyleMenuWillOpenCalled = false;
+        function();
+        Util::run(&s_captionStyleMenuWillOpenCalled);
+    }
+
+    void runAndWaitForCaptionStyleMenuDidCloseCalled(Function<void()>&& function)
+    {
+        s_captionStyleMenuDidCloseCalled = false;
+        function();
+        Util::run(&s_captionStyleMenuDidCloseCalled);
+    }
+
+    void selectProfileAtIndex(NSUInteger index)
+    {
+#if PLATFORM(MAC)
+        [ensureMenu() performActionForItemAtIndex:index];
+#elif PLATFORM(IOS_FAMILY)
+        PlatformMenu *profileMenu = dynamic_objc_cast<PlatformMenu>(ensureMenu().children.firstObject);
+        [dynamic_objc_cast<UIAction>(profileMenu.children[index]) performWithSender:nil target:nil];
+#endif
+    }
+private:
+    RetainPtr<WKCaptionStyleMenuController> m_styleMenuController;
+    RetainPtr<CaptionPreferenceTestMenuControllerDelegate> m_delegate;
+};
+
+TEST_F(CaptionPreferenceTests, ShimTest)
 {
     auto originalOpacity = MACaptionAppearanceGetForegroundOpacity(kMACaptionAppearanceDomainDefault, nullptr);
     {
@@ -121,11 +254,11 @@ TEST(CaptionPreferenceTests, ShimTest)
     EXPECT_EQ(originalOpacity, MACaptionAppearanceGetForegroundOpacity(kMACaptionAppearanceDomainDefault, nullptr));
 }
 
-TEST(CaptionPreferenceTests, FontFace)
+TEST_F(CaptionPreferenceTests, FontFace)
 {
     MediaAccessibilityShim shim;
 
-    PageGroup group { "CaptionPreferenceTests"_s };
+    UniqueRef group = PageGroup::create("CaptionPreferenceTests"_s);
     auto preferences = CaptionUserPreferencesMediaAF::create(group);
 
     SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceCopyFontDescriptorForStyle, adoptCF(CTFontDescriptorCreateWithNameAndSize(CFSTR(".AppleSystemUIFontMonospaced-Romulan"), 10)));
@@ -138,11 +271,14 @@ TEST(CaptionPreferenceTests, FontFace)
     EXPECT_STREQ(preferences->captionsDefaultFontCSS().utf8().data(), "font-family: \"WingDings\";");
 }
 
-TEST(CaptionPreferenceTests, FontSize)
+TEST_F(CaptionPreferenceTests, FontSize)
 {
+    if (!canLoad_MediaAccessibility_MACaptionAppearanceIsCustomized())
+        return;
+
     MediaAccessibilityShim shim;
 
-    PageGroup group { "CaptionPreferenceTests"_s };
+    UniqueRef group = PageGroup::create("CaptionPreferenceTests"_s);
     auto preferences = CaptionUserPreferencesMediaAF::create(group);
 
     SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceGetRelativeCharacterSize, 2.f);
@@ -153,11 +289,11 @@ TEST(CaptionPreferenceTests, FontSize)
     EXPECT_STREQ(preferences->captionsFontSizeCSS().utf8().data(), "font-size: 10cqmin;");
 }
 
-TEST(CaptionPreferenceTests, Colors)
+TEST_F(CaptionPreferenceTests, Colors)
 {
     MediaAccessibilityShim shim;
 
-    PageGroup group { "CaptionPreferenceTests"_s };
+    UniqueRef group = PageGroup::create("CaptionPreferenceTests"_s);
     auto preferences = CaptionUserPreferencesMediaAF::create(group);
 
     SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceCopyForegroundColor, cachedCGColor(Color::red));
@@ -177,22 +313,22 @@ TEST(CaptionPreferenceTests, Colors)
     EXPECT_STREQ(preferences->captionsWindowCSS().utf8().data(), "background-color:rgba(0, 255, 0, 0.25);");
 }
 
-TEST(CaptionPreferenceTests, BorderRadius)
+TEST_F(CaptionPreferenceTests, BorderRadius)
 {
     MediaAccessibilityShim shim;
 
-    PageGroup group { "CaptionPreferenceTests"_s };
+    UniqueRef group = PageGroup::create("CaptionPreferenceTests"_s);
     auto preferences = CaptionUserPreferencesMediaAF::create(group);
 
     SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceGetWindowRoundedCornerRadius, 8.f);
     EXPECT_STREQ(preferences->windowRoundedCornerRadiusCSS().utf8().data(), "border-radius:8px;padding:2px;");
 }
 
-TEST(CaptionPreferenceTests, TextEdge)
+TEST_F(CaptionPreferenceTests, TextEdge)
 {
     MediaAccessibilityShim shim;
 
-    PageGroup group { "CaptionPreferenceTests"_s };
+    UniqueRef group = PageGroup::create("CaptionPreferenceTests"_s);
     auto preferences = CaptionUserPreferencesMediaAF::create(group);
 
     EXPECT_STREQ(preferences->captionsTextEdgeCSS().utf8().data(), "");
@@ -208,6 +344,107 @@ TEST(CaptionPreferenceTests, TextEdge)
 
     SOFT_LINK_SHIM_SET_RESULT(MACaptionAppearanceGetTextEdgeStyle, kMACaptionAppearanceTextEdgeStyleUniform);
     EXPECT_STREQ(preferences->captionsTextEdgeCSS().utf8().data(), "stroke-color:black;paint-order:stroke;stroke-linejoin:round;stroke-linecap:round;");
+}
+
+TEST_F(CaptionPreferenceTests, CaptionStyleMenu)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    PlatformMenu *menu = ensureMenu();
+
+#if PLATFORM(MAC)
+    EXPECT_EQ(menu.numberOfItems, 5);
+    EXPECT_WK_STREQ("Profile 1", [[menu itemAtIndex:0] title]);
+    EXPECT_WK_STREQ("Profile 2", [[menu itemAtIndex:1] title]);
+    EXPECT_WK_STREQ("Profile 3", [[menu itemAtIndex:2] title]);
+
+    EXPECT_EQ(NSControlStateValueOn, [[menu itemAtIndex:0] state]);
+    EXPECT_EQ(NSControlStateValueOff, [[menu itemAtIndex:1] state]);
+    EXPECT_EQ(NSControlStateValueOff, [[menu itemAtIndex:2] state]);
+
+    [menu performActionForItemAtIndex:1];
+    EXPECT_WK_STREQ("Profile 2", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+    [menu performActionForItemAtIndex:2];
+    EXPECT_WK_STREQ("Profile 3", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+#elif PLATFORM(IOS_FAMILY)
+    EXPECT_EQ(menu.children.count, 2UL);
+    PlatformMenu *profileMenu = dynamic_objc_cast<PlatformMenu>(menu.children.firstObject);
+
+    EXPECT_EQ(profileMenu.children.count, 3UL);
+    EXPECT_WK_STREQ("Profile 1", profileMenu.children[0].title);
+    EXPECT_WK_STREQ("Profile 2", profileMenu.children[1].title);
+    EXPECT_WK_STREQ("Profile 3", profileMenu.children[2].title);
+
+    EXPECT_EQ(UIMenuElementStateOn, dynamic_objc_cast<UIAction>(profileMenu.children[0]).state);
+    EXPECT_EQ(UIMenuElementStateOff, dynamic_objc_cast<UIAction>(profileMenu.children[1]).state);
+    EXPECT_EQ(UIMenuElementStateOff, dynamic_objc_cast<UIAction>(profileMenu.children[2]).state);
+
+    [dynamic_objc_cast<UIAction>(profileMenu.children[1]) performWithSender:nil target:nil];
+    EXPECT_WK_STREQ("Profile 2", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+    [dynamic_objc_cast<UIAction>(profileMenu.children[2]) performWithSender:nil target:nil];
+    EXPECT_WK_STREQ("Profile 3", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+#endif
+}
+
+TEST_F(CaptionPreferenceTests, CaptionStyleMenuHighlight)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    showMenuAndThen([&] (PlatformMenu *menu) {
+        // TODO: Menu highlighting is currently not supported on IOS_FAMILY
+#if PLATFORM(MAC)
+        [menu performSelector:@selector(highlightItem:) withObject:[menu itemAtIndex:1]];
+        EXPECT_WK_STREQ("Profile 2", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+        [menu performSelector:@selector(highlightItem:) withObject:[menu itemAtIndex:2]];
+        EXPECT_WK_STREQ("Profile 3", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+#endif
+    });
+
+    // Verify that cancelling the menu without making a selection will restore the active profile
+    // to its previous state.
+    EXPECT_WK_STREQ("Profile 1", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+}
+
+TEST_F(CaptionPreferenceTests, CaptionStyleMenuSelect)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    showMenuAndThen([&] (PlatformMenu *menu) {
+        selectProfileAtIndex(1);
+        EXPECT_WK_STREQ("Profile 2", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+        selectProfileAtIndex(2);
+        EXPECT_WK_STREQ("Profile 3", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+    });
+
+    EXPECT_WK_STREQ("Profile 3", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+}
+
+TEST_F(CaptionPreferenceTests, CaptionStyleMenuDelegate)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    runAndWaitForCaptionStyleMenuWillOpenCalled([&] {
+        runAndWaitForCaptionStyleMenuDidCloseCalled([&] {
+            showMenuAndThen([] (PlatformMenu *) {
+            });
+        });
+    });
 }
 
 }

@@ -1628,9 +1628,9 @@ ExceptionOr<void> CanvasRenderingContext2DBase::drawImage(HTMLImageElement& imag
     auto orientation = ImageOrientation::Orientation::FromImage;
     if (imageElement.allowsOrientationOverride()) {
         if (CheckedPtr renderer = imageElement.renderer())
-            orientation = renderer->style().imageOrientation().orientation();
+            orientation = Style::toPlatform(renderer->style().imageOrientation()).orientation();
         else if (auto* computedStyle = imageElement.computedStyle())
-            orientation = computedStyle->imageOrientation().orientation();
+            orientation = Style::toPlatform(computedStyle->imageOrientation()).orientation();
     }
 
     auto result = drawImage(imageElement.protectedDocument().get(), *cachedImage, imageElement.checkedRenderer().get(), imageRect, srcRect, dstRect, op, blendMode, orientation);

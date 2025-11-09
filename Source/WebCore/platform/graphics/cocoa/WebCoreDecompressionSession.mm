@@ -271,7 +271,9 @@ Expected<RetainPtr<VTDecompressionSessionRef>, OSStatus> WebCoreDecompressionSes
         return RetainPtr<VTDecompressionSessionRef> { };
 
     RetainPtr videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(cmSample);
-    if (m_decompressionSession && !VTDecompressionSessionCanAcceptFormatDescription(m_decompressionSession.get(), videoFormatDescription.get())) {
+    bool videoFormatDescriptionChanged = !m_lastFormatDescription || !PAL::CMFormatDescriptionEqual(videoFormatDescription.get(), m_lastFormatDescription.get());
+
+    if (m_decompressionSession && videoFormatDescriptionChanged && !VTDecompressionSessionCanAcceptFormatDescription(m_decompressionSession.get(), videoFormatDescription.get())) {
         auto status = VTDecompressionSessionWaitForAsynchronousFrames(m_decompressionSession.get());
         Ref sample = MediaSampleAVFObjC::create(cmSample, 0);
         m_decompressionSession = nullptr;
@@ -282,6 +284,7 @@ Expected<RetainPtr<VTDecompressionSessionRef>, OSStatus> WebCoreDecompressionSes
         }
         RELEASE_LOG_INFO(Media, "VTDecompressionSession can't accept format description change on keyframe, creating new VTDecompressionSession status:%d", int(status));
     }
+    m_lastFormatDescription = videoFormatDescription;
 
     if (!m_decompressionSession) {
         auto videoDecoderSpecification = @{ (__bridge NSString *)kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder: @YES };

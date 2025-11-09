@@ -50,7 +50,7 @@
         <table id="measure" cellspacing="0" border="0" cellpadding="0">
             <tr><td>Measurement</td><td>table</td><td>...</td></tr>
         </table>
-        
+
         <script>
             var mainTable = document.getElementById('main');
             var measureTable = document.getElementById('measure');
@@ -60,7 +60,7 @@
                 return Math.round(n);
             }
 
-            function computeHeights()
+            function computeHeights(zoom)
             {
                 rowHeights.length = 0;
                 var rowElement = measureTable.tBodies[0].rows[0];
@@ -70,37 +70,39 @@
                     var height = r((20 + i) * 0.93 + i);
                     rowElement.style.height = height + 'px';
                     rect = rowElement.getBoundingClientRect();
-                    rowHeights.push(rect.bottom - rect.top);
+                    rowHeights.push(rect.bottom/zoom - rect.top/zoom);
                 }
             }
-            
+
 
             function testHeights(zoom)
             {
                 document.body.style.zoom = zoom;
-                computeHeights();
-                
+                computeHeights(zoom);
+
                 var rows = mainTable.tBodies[0].rows;
                 for (var i = 0; i < rows.length; i++) {
                     var rowElement = rows[i];
                     rowElement.style.height = rowHeights[i] + 'px';
                     var rect = rowElement.getBoundingClientRect();
                     if (i) {
-                        rowElement.cells[0].firstChild.nodeValue = r(rowHeights[i]);
-                        rowElement.cells[1].firstChild.nodeValue = r(rect.height);
-                        rowElement.cells[2].firstChild.nodeValue = r(rect.bottom - rect.top);
+                        rowElement.cells[0].firstChild.nodeValue = r(rowHeights[i]/zoom);
+                        rowElement.cells[1].firstChild.nodeValue = r(rect.height/zoom);
+                        rowElement.cells[2].firstChild.nodeValue = r(rect.bottom/zoom - rect.top/zoom);
                     }
                 }
 
                 var failures = 0;
                 for (var i = 0; i < rows.length; i++) {
                     var rect = rows[i].getBoundingClientRect();
-                    if (r(rowHeights[i]) != r(rect.height)) {
-                        testFailed('At ' + r(zoom * 100) + '% zoom getBoundingClientRect returned a height of ' + r(rect.height) + ', expected ' + r(rowHeights[i]) + '.');
+                    const rectHeight = rect.height / zoom;
+                    if (r(rowHeights[i]) != r(rectHeight)) {
+                        testFailed('At ' + r(zoom * 100) + '% zoom getBoundingClientRect returned a height of ' + r(rectHeight) + ', expected ' + r(rowHeights[i]) + '.');
                         failures++;
                     }
-                    if (r(rowHeights[i]) != r(rect.bottom - rect.top)) {
-                        testFailed('At ' + r(zoom * 100) + '% zoom getBoundingClientRect returned a rect with bottom - top of ' + (rect.bottom - rect.top) + ', expected ' + rowHeights[i] + '.');
+                    const rectDiff = (rect.bottom - rect.top) / zoom;
+                    if (r(rowHeights[i]) != r(rectDiff)) {
+                        testFailed('At ' + r(zoom * 100) + '% zoom getBoundingClientRect returned a rect with bottom - top of ' + (rectDiff) + ', expected ' + rowHeights[i] + '.');
                         failures++;
                     }
                 }

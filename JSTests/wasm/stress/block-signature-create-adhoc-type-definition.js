@@ -1,5 +1,5 @@
 //@ slow!
-//@ runDefault("--useDollarVM=1", "--jitPolicyScale=0.1", "--useConcurrentJIT=0")
+//@ runDefaultWasm("--useDollarVM=1", "--jitPolicyScale=0.1", "--useConcurrentJIT=0")
 
 // If a sample with this instrumentation crashes, it may need the `fuzzilli` function to reproduce the crash.
 if (typeof fuzzilli === 'undefined') fuzzilli = function() {};

@@ -55,21 +55,4 @@ RetainPtr<id> CoreIPCPKDateComponentsRange::toID() const
 
 } // namespace WebKit
 
-namespace IPC {
-
-template<> void encodeObjectDirectly<PKDateComponentsRange>(Encoder& encoder, PKDateComponentsRange *instance)
-{
-    encoder << (instance ? std::optional(WebKit::CoreIPCPKDateComponentsRange(instance)) : std::nullopt);
-}
-
-template<> std::optional<RetainPtr<id>> decodeObjectDirectlyRequiringAllowedClasses<PKDateComponentsRange>(Decoder& decoder)
-{
-    return decoder.decode<std::optional<WebKit::CoreIPCPKDateComponentsRange>>()
-        .and_then([](const std::optional<WebKit::CoreIPCPKDateComponentsRange>& inner) -> std::optional<RetainPtr<id>> {
-            return inner ? inner->toID() : nullptr;
-        });
-}
-
-} // namespace IPC
-
 #endif

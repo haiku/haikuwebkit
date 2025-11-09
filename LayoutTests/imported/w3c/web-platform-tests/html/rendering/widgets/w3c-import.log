@@ -24,6 +24,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-input-text-relayout-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-input-text-relayout.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-input-text.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-placeholder-stretch-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-placeholder-stretch-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-placeholder-stretch.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-select-contain-size.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-select.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-textarea-relayout-expected.html
@@ -88,5 +91,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/text-control-flow-root-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/text-control-flow-root.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/textarea-cols-rows.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/textarea-scroll-restoration.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/textarea-scrollbar-sizing-001.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/widgets/textarea-scrollbar-sizing-002.html

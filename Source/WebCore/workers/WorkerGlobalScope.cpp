@@ -169,7 +169,7 @@ void WorkerGlobalScope::prepareForDestruction()
 {
     WorkerOrWorkletGlobalScope::prepareForDestruction();
 
-    if (auto* trustedTypes = static_cast<WorkerGlobalScopeTrustedTypes*>(requireSupplement(WorkerGlobalScopeTrustedTypes::supplementName())))
+    if (auto* trustedTypes = downcast<WorkerGlobalScopeTrustedTypes>(requireSupplement(WorkerGlobalScopeTrustedTypes::supplementName())))
         trustedTypes->prepareForDestruction();
 
     if (settingsValues().serviceWorkersEnabled)
@@ -446,7 +446,7 @@ ExceptionOr<void> WorkerGlobalScope::importScripts(const FixedVector<Variant<Ref
         {
             NakedPtr<JSC::Exception> exception;
             ScriptSourceCode sourceCode(scriptLoader->script(), URL(scriptLoader->responseURL()), scriptLoader->isRedirected() ? URL(scriptLoader->url()) : URL());
-            sourceProvider = static_cast<ScriptBufferSourceProvider&>(sourceCode.provider());
+            sourceProvider = downcast<ScriptBufferSourceProvider>(sourceCode.provider());
             script()->evaluate(sourceCode, exception);
             if (exception) {
                 if (mutedErrors)

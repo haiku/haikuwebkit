@@ -970,6 +970,12 @@ bool Quirks::shouldEnableCameraAndMicrophonePermissionStateQuirk() const
 {
     return needsQuirks() && m_quirksData.shouldEnableCameraAndMicrophonePermissionStateQuirk;
 }
+
+bool Quirks::shouldEnableRemoteTrackLabelQuirk() const
+{
+    return needsQuirks() && m_quirksData.shouldEnableRemoteTrackLabelQuirk;
+}
+
 #endif
 
 bool Quirks::shouldEnableSpeakerSelectionPermissionsPolicyQuirk() const
@@ -1558,6 +1564,13 @@ std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const
     if (hostDomain.string() == "app.aktiv.com")
         return firefoxUserAgent;
 
+#if PLATFORM(IOS)
+    auto chromeUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"_s;
+    // amazon.com rdar://117771731
+    if (PublicSuffixStore::singleton().topPrivatelyControlledDomain(hostDomain.string()).startsWith("amazon."_s) && url.path() == "/gp/video/"_s)
+        return chromeUserAgent;
+#endif
+
 #if PLATFORM(COCOA)
     // FIXME(rdar://148759791): Remove this once TikTok removes the outdated error message.
     if (hostDomain.string() == "tiktok.com"_s)
@@ -1965,6 +1978,28 @@ bool Quirks::needsHotelsAnimationQuirk(Element& element, const RenderStyle& styl
     auto matches = Ref { element }->matches(".uitk-menu-mounted .uitk-menu-container.uitk-menu-container-autoposition.uitk-menu-container-has-intersection-root-el"_s);
     return !matches.hasException() && matches.returnValue();
 }
+
+#if PLATFORM(IOS_FAMILY)
+// claude.ai rdar://162616694
+bool Quirks::needsClaudeSidebarViewportUnitQuirk(Element& element, const RenderStyle& style) const
+{
+    if (!needsQuirks() || !m_quirksData.needsClaudeSidebarViewportUnitQuirk)
+        return false;
+
+    if (style.position() != PositionType::Fixed)
+        return false;
+
+    if (element.attributeWithoutSynchronization(HTMLNames::aria_labelAttr) != "Sidebar"_s)
+        return false;
+
+    if (auto fixedHeight = style.height().tryFixed()) {
+        if (fixedHeight->resolveZoom(style.usedZoomForLength()) == m_document->renderView()->sizeForCSSDefaultViewportUnits().height())
+            return true;
+    }
+
+    return false;
+}
+#endif
 
 bool Quirks::needsLimitedMatroskaSupport() const
 {
@@ -2460,6 +2495,19 @@ static void handleDailyMailCoUkQuirks(QuirksData& quirksData, const URL& quirksU
     quirksData.shouldUnloadHeavyFrames = true;
 }
 
+#if PLATFORM(IOS_FAMILY)
+static void handleClaudeQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    if (quirksDomainString != "claude.ai"_s)
+        return;
+
+    UNUSED_PARAM(quirksURL);
+    UNUSED_PARAM(documentURL);
+
+    quirksData.needsClaudeSidebarViewportUnitQuirk = true;
+}
+#endif
+
 #if ENABLE(TEXT_AUTOSIZING)
 static void handleYCombinatorQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
@@ -2503,8 +2551,33 @@ static void handleFacebookQuirks(QuirksData& quirksData, const URL& quirksURL, c
 #if ENABLE(MEDIA_STREAM)
     // facebook.com rdar://158736355
     quirksData.shouldEnableCameraAndMicrophonePermissionStateQuirk = true;
+    quirksData.shouldEnableRemoteTrackLabelQuirk = true;
     // facebook.com rdar://41104397
     quirksData.shouldEnableFacebookFlagQuirk = true;
+    // facebook.com rdar://161269819
+    quirksData.shouldEnableEnumerateDeviceQuirk = true;
+#endif
+#if ENABLE(WEB_RTC)
+    // facebook.com rdar://158736355
+    quirksData.shouldEnableRTCEncodedStreamsQuirk = true;
+#endif
+}
+
+static void handleFacebookMessengerQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    UNUSED_PARAM(quirksData);
+    UNUSED_PARAM(quirksURL);
+    UNUSED_PARAM(documentURL);
+
+    if (quirksDomainString != "messenger.com"_s)
+        return;
+
+#if ENABLE(MEDIA_STREAM)
+    // facebook.com rdar://158736355
+    quirksData.shouldEnableCameraAndMicrophonePermissionStateQuirk = true;
+    quirksData.shouldEnableRemoteTrackLabelQuirk = true;
+    // facebook.com rdar://161269819
+    quirksData.shouldEnableEnumerateDeviceQuirk = true;
 #endif
 #if ENABLE(WEB_RTC)
     // facebook.com rdar://158736355
@@ -2538,6 +2611,7 @@ static void handleRedditQuirks(QuirksData& quirksData, const URL& quirksURL, con
 
 static void handleAmazonQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
+    // Note: There is a userAgent override for rdar://117771731, see needsCustomUserAgentOverride()
     UNUSED_PARAM(quirksDomainString);
     UNUSED_PARAM(quirksURL);
     UNUSED_PARAM(documentURL);
@@ -3194,6 +3268,7 @@ void Quirks::determineRelevantQuirks()
 #endif
         { "medium"_s, &handleMediumQuirks },
         { "menlosecurity"_s, &handleMenloSecurityQuirks },
+        { "messenger"_s, &handleFacebookMessengerQuirks },
         { "netflix"_s, &handleNetflixQuirks },
         { "nba"_s, &handleNBAQuirks },
         { "nhl"_s, &handleNHLQuirks },
@@ -3256,7 +3331,10 @@ void Quirks::determineRelevantQuirks()
         { "zomato"_s, &handleZomatoQuirks },
 #endif
         { "zoom"_s, &handleZoomQuirks },
-        { "dailymail"_s, &handleDailyMailCoUkQuirks }
+        { "dailymail"_s, &handleDailyMailCoUkQuirks },
+#if PLATFORM(IOS_FAMILY)
+        { "claude"_s, &handleClaudeQuirks },
+#endif
     });
 
     auto findResult = dispatchMap->find(quirkDomainWithoutPSL);

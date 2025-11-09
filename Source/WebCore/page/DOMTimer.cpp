@@ -431,11 +431,11 @@ Seconds DOMTimer::intervalClampedToMinimum() const
     return interval;
 }
 
-std::optional<MonotonicTime> ScriptExecutionContext::alignedFireTime(bool hasReachedMaxNestingLevel, MonotonicTime fireTime) const
+MonotonicTime ScriptExecutionContext::alignedFireTime(bool hasReachedMaxNestingLevel, MonotonicTime fireTime) const
 {
     Seconds alignmentInterval = domTimerAlignmentInterval(hasReachedMaxNestingLevel);
     if (!alignmentInterval)
-        return std::nullopt;
+        return fireTime;
     
     static const double randomizedProportion = cryptographicallyRandomUnitInterval();
 

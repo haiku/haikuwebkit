@@ -59,6 +59,8 @@ private:
     RemoteQuerySetProxy& operator=(const RemoteQuerySetProxy&) = delete;
     RemoteQuerySetProxy& operator=(RemoteQuerySetProxy&&) = delete;
 
+    bool isRemoteQuerySetProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -77,5 +79,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteQuerySetProxy)
+    static bool isType(const WebCore::WebGPU::QuerySet& set) { return set.isRemoteQuerySetProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

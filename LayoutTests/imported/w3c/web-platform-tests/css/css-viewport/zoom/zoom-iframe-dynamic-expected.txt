@@ -1,6 +1,4 @@
 
 
-Harness Error (TIMEOUT), message = null
-
-TIMEOUT Dynamic CSS zoom change on iframe Test timed out
+PASS Dynamic CSS zoom change on iframe
 

@@ -1,5 +1,5 @@
 //@ skip if $addressBits <= 32
-//@ runDefault("--maximumWasmDepthForInlining=10", "--maximumWasmCalleeSizeForInlining=10000000", "--maximumWasmCallerSizeForInlining=10000000", "--useBBQJIT=0")
+//@ runDefaultWasm("--wasmInliningMaximumDepth=10", "--wasmInliningMaximumWasmCalleeSize=10000000", "--wasmInliningBudget=100000", "--useBBQJIT=0")
 var wasm_code = read('simple-inline-stacktrace-with-catch.wasm', 'binary')
 var wasm_module = new WebAssembly.Module(wasm_code);
 let throwCounter = 0

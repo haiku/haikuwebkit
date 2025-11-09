@@ -258,8 +258,6 @@ imported/w3c/web-platform-tests/encoding/textdecoder-streaming.any.sharedworker.
 imported/w3c/web-platform-tests/eventsource/eventsource-constructor-empty-url.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/eventsource/eventsource-constructor-url-bogus.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/eventsource/shared-worker [ Skip ]
-imported/w3c/web-platform-tests/event-timing/idlharness.any.serviceworker.html [ Skip ]
-imported/w3c/web-platform-tests/event-timing/idlharness.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/api/abort/cache.https.any.serviceworker.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/api/abort/cache.https.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/api/abort/cache.https.any.worker.html [ Skip ]
@@ -923,10 +921,6 @@ imported/w3c/web-platform-tests/fetch/content-encoding/gzip-body.any.servicework
 imported/w3c/web-platform-tests/fetch/content-encoding/gzip-body.any.sharedworker.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/content-encoding/gzip-body.any.worker.html [ Skip ]
 imported/w3c/web-platform-tests/webtransport/ [ Skip ]
-
-# Event timing: times out, missing automation
-webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/contextmenu.html [ Skip ]
-webkit.org/b/214677 imported/w3c/web-platform-tests/event-timing/interactionid-orphan-pointerup.html [ Skip ]
 
 # WebKitLegacy doesn't support https-based WPT
 webkit.org/b/246719 imported/w3c/web-platform-tests/reporting/generateTestReport-honors-endpoint.https.sub.html [ Failure ]
@@ -1701,9 +1695,6 @@ http/wpt/cross-origin-opener-policy [ Skip ]
 http/wpt/html/cross-origin-embedder-policy [ Skip ]
 
 # Quota check missing in WK1
-http/tests/IndexedDB/storage-limit.https.html [ Skip ]
-http/tests/IndexedDB/storage-limit-1.https.html [ Skip ]
-http/tests/IndexedDB/storage-limit-2.https.html [ Skip ]
 storage/indexeddb/storage-limit.html [ Skip ]
 storage/indexeddb/storage-limit-with-indices.html [ Skip ]
 storage/indexeddb/request-size-estimate.html [ Skip ]
@@ -2037,6 +2028,9 @@ fast/html/details-remove-summary-3-and-click.html [ Pass Failure ]
 fast/html/details-remove-summary-4-and-click.html [ Pass Failure ]
 fast/html/details-remove-summary-5-and-click.html [ Pass Failure ]
 fast/html/details-remove-summary-6-and-click.html [ Pass Failure ]
+
+# Event timing has been disabled in WK1. Tests are skipped to avoid timeouts
+imported/w3c/web-platform-tests/event-timing/ [ Skip ]
 
 # rdar://92765314 ([ Ventura wk1 Release x86_64 ] 8X fast/forms/number/number- (Layout-Tests) are flaky text failures)
 [ Release ] fast/forms/number/number-change-type-on-focus.html [ Pass Failure ]
@@ -3298,6 +3292,10 @@ webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading [ Skip 
 
 webkit.org/b/299495 fast/scrolling/anchor-overscroll-fixed.html [ Skip ]
 
-webkit.org/b/299636 imported/w3c/web-platform-tests/event-timing/only-observe-firstInput.html [ Pass Failure ]
-
 webkit.org/b/300050 imported/w3c/web-platform-tests/infrastructure/server/wpt-server-http.sub.html [ Skip ]
+
+webkit.org/b/301065 imported/w3c/web-platform-tests/upgrade-insecure-requests/gen [ Skip ]
+
+webkit.org/b/301198 [ Sonoma ] imported/w3c/web-platform-tests/media-source/mediasource-seek-during-pending-seek.html [ Failure ]
+webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading/fontfacesetloadevent-constructor.html [ Failure ]
+imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-same-site-subresource-to-cross-site-redirect.tentative.https.html [ Failure Pass ]

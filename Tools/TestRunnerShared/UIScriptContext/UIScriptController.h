@@ -74,6 +74,7 @@ struct TextExtractionInteractionOptions {
     JSRetainPtr<JSStringRef> text;
     std::optional<std::pair<double, double>> location;
     bool replaceAll { false };
+    bool scrollToVisible { false };
 };
 
 TextExtractionInteractionOptions* toTextExtractionInteractionOptions(JSContextRef, JSValueRef);

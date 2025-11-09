@@ -849,6 +849,43 @@ function testRecGroup() {
     `);
 }
 
+function testZeroLengthDeclarativeElemAndNewElem() {
+    let m = instantiate(`
+       (module
+         (type $array (array (mut anyref)))
+         (elem declare anyref)
+         (func $create_zero_array (result (ref null $array))
+           (array.new_elem $array 0
+             (i32.const 0)  ;; offset in elem segment
+             (i32.const 0)  ;; size of array to create
+           )
+         )
+         (export "create_zero_array" (func $create_zero_array))
+       )
+    `);
+
+    m.exports.create_zero_array();
+}
+
+function testZeroLengthActiveElemAndNewElem() {
+    let m = instantiate(`
+       (module
+         (table 10 funcref)
+         (type $array (array (mut funcref)))
+         (elem (i32.const 0))
+         (func $create_zero_array (result (ref null $array))
+           (array.new_elem $array 0
+             (i32.const 0)  ;; offset in elem segment
+             (i32.const 0)  ;; size of array to create
+           )
+         )
+         (export "create_zero_array" (func $create_zero_array))
+       )
+    `);
+
+    m.exports.create_zero_array();
+}
+
 testRefCallNullary();
 testRefCall();
 testArrayNewCanonElemExternref();
@@ -872,3 +909,5 @@ testNullFunctionIndex();
 testImportFunctions();
 testJSFunctions();
 testRecGroup();
+testZeroLengthDeclarativeElemAndNewElem();
+testZeroLengthActiveElemAndNewElem();

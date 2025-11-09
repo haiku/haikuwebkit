@@ -156,7 +156,7 @@ void setImageSourceAllowableTypes(const Vector<String>& supportedImageTypes)
     std::call_once(onceFlag, [supportedImageTypes] {
         auto allowableTypes = createNSArray(supportedImageTypes);
         auto status = CGImageSourceSetAllowableTypes((__bridge CFArrayRef)allowableTypes.get());
-        RELEASE_ASSERT_WITH_MESSAGE(supportedImageTypes.isEmpty() || status == noErr, "CGImageSourceSetAllowableTypes() returned error: %d.", status);
+        RELEASE_ASSERT_WITH_MESSAGE(supportedImageTypes.isEmpty() || status == noErr, "CGImageSourceSetAllowableTypes() returned error: %ld.", static_cast<long>(status));
     });
 }
 

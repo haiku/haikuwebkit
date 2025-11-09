@@ -99,6 +99,8 @@ public:
     ResourceError blockedByContentBlockerError();
     ResourceError cannotShowURLError();
     ResourceError httpsUpgradeRedirectLoopError();
+
+    static bool isPortAllowed(const URL&);
     
     virtual void setDefersLoading(bool);
     bool defersLoading() const { return m_defersLoading; }

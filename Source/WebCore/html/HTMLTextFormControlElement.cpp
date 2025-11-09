@@ -155,6 +155,7 @@ void HTMLTextFormControlElement::didEditInnerTextValue(bool wasUserEdit)
     LOG(Editing, "HTMLTextFormControlElement %p didEditInnerTextValue", this);
 
     m_lastChangeWasUserEdit = wasUserEdit;
+    m_wasEverChangedByUserEdit |= wasUserEdit;
     subtreeHasChanged();
 }
 
@@ -652,6 +653,13 @@ bool HTMLTextFormControlElement::lastChangeWasUserEdit() const
     return m_lastChangeWasUserEdit;
 }
 
+bool HTMLTextFormControlElement::wasEverChangedByUserEdit() const
+{
+    if (!isTextField())
+        return false;
+    return m_wasEverChangedByUserEdit;
+}
+
 static void stripTrailingNewline(StringBuilder& result)
 {
     // Remove one trailing newline; there's always one that's collapsed out by rendering.
@@ -872,8 +880,8 @@ HTMLTextFormControlElement* enclosingTextFormControl(const Position& position)
 String HTMLTextFormControlElement::directionForFormData() const
 {
     auto direction = [this] {
-        for (auto& element : lineageOfType<HTMLElement>(*this)) {
-            auto& value = element.attributeWithoutSynchronization(dirAttr);
+        for (Ref element : lineageOfType<HTMLElement>(*this)) {
+            auto& value = element->attributeWithoutSynchronization(dirAttr);
             if (equalLettersIgnoringASCIICase(value, "rtl"_s))
                 return TextDirection::RTL;
             if (equalLettersIgnoringASCIICase(value, "ltr"_s))
@@ -911,7 +919,7 @@ void HTMLTextFormControlElement::adjustInnerTextStyle(const RenderStyle& parentS
     textBlockStyle.setUnicodeBidi(parentStyle.unicodeBidi());
 
     if (auto innerText = innerTextElement()) {
-        if (auto* properties = innerText->presentationalHintStyle()) {
+        if (RefPtr properties = innerText->presentationalHintStyle()) {
             if (auto value = properties->propertyAsValueID(CSSPropertyWebkitUserModify))
                 textBlockStyle.setUserModify(fromCSSValueID<UserModify>(*value));
         }
@@ -945,6 +953,12 @@ void HTMLTextFormControlElement::adjustInnerTextStyle(const RenderStyle& parentS
         textBlockStyle.setDirection(TextDirection::LTR);
     }
 #endif
+}
+
+bool HTMLTextFormControlElement::shouldApplyScriptTrackingPrivacyProtection() const
+{
+    return (wasEverChangedByUserEdit() || !wasCreatedByTaintedScript())
+        && protectedDocument()->requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::FormControls);
 }
 
 } // namespace WebCore

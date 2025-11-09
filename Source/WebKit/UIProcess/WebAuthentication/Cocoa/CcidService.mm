@@ -158,7 +158,7 @@ void CcidService::updateSlots(NSArray *slots)
     callOnMainRunLoop([service = m_service, change = retainPtr(change)] () mutable {
         if (!service)
             return;
-        service->updateSlots(change.get()[NSKeyValueChangeNewKey]);
+        service->updateSlots(retainPtr(change.get()[NSKeyValueChangeNewKey]).get());
     });
 }
 @end

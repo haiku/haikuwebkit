@@ -44,6 +44,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemoteTextureViewProxy() const { return false; }
+
 protected:
     TextureView() = default;
 

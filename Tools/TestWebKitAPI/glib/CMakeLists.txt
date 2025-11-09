@@ -1,7 +1,6 @@
 set(WebKitGLibAPITests_SOURCES
     ${TOOLS_DIR}/TestWebKitAPI/glib/WebKitGLib/LoadTrackingTest.cpp
     ${TOOLS_DIR}/TestWebKitAPI/glib/WebKitGLib/TestMain.cpp
-    ${TOOLS_DIR}/TestWebKitAPI/glib/WebKitGLib/WebExtensionUtilities.cpp
     ${TOOLS_DIR}/TestWebKitAPI/glib/WebKitGLib/WebKitTestServer.cpp
     ${TOOLS_DIR}/TestWebKitAPI/glib/WebKitGLib/WebViewTest.cpp
 )

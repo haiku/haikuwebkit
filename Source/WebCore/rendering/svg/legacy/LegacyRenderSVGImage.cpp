@@ -92,22 +92,24 @@ FloatRect LegacyRenderSVGImage::calculateObjectBoundingBox() const
     Ref imageElement = this->imageElement();
     SVGLengthContext lengthContext(imageElement.ptr());
 
-    auto& width = style().width();
-    auto& height = style().height();
+    CheckedRef style = this->style();
+    auto& width = style->width();
+    auto& height = style->height();
+    auto usedZoom = style->usedZoomForLength();
 
     float concreteWidth;
     if (!width.isAuto())
-        concreteWidth = lengthContext.valueForLength(width, SVGLengthMode::Width);
+        concreteWidth = lengthContext.valueForLength(width, usedZoom, SVGLengthMode::Width);
     else if (!height.isAuto() && !intrinsicSize.isEmpty())
-        concreteWidth = lengthContext.valueForLength(height, SVGLengthMode::Height) * intrinsicSize.width() / intrinsicSize.height();
+        concreteWidth = lengthContext.valueForLength(height, usedZoom, SVGLengthMode::Height) * intrinsicSize.width() / intrinsicSize.height();
     else
         concreteWidth = intrinsicSize.width();
 
     float concreteHeight;
     if (!height.isAuto())
-        concreteHeight = lengthContext.valueForLength(height, SVGLengthMode::Height);
+        concreteHeight = lengthContext.valueForLength(height, usedZoom, SVGLengthMode::Height);
     else if (!width.isAuto() && !intrinsicSize.isEmpty())
-        concreteHeight = lengthContext.valueForLength(width, SVGLengthMode::Width) * intrinsicSize.height() / intrinsicSize.width();
+        concreteHeight = lengthContext.valueForLength(width, usedZoom, SVGLengthMode::Width) * intrinsicSize.height() / intrinsicSize.width();
     else
         concreteHeight = intrinsicSize.height();
 

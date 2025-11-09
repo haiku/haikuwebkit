@@ -55,7 +55,7 @@ namespace WebCore {
 PlatformDisplayID displayID(NSScreen *screen)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    return [[screen.deviceDescription objectForKey:@"NSScreenNumber"] intValue];
+    return [[retainPtr(screen.deviceDescription) objectForKey:@"NSScreenNumber"] intValue];
 }
 
 static PlatformDisplayID displayID(Widget* widget)

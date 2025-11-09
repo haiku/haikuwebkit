@@ -25,6 +25,10 @@
 
 #pragma once
 
+#ifdef __OBJC__
 @class WKWebView;
+#else
+class WKWebView;
+#endif
 
 bool isSiteIsolationEnabled(WKWebView*);

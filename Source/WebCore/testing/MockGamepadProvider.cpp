@@ -97,12 +97,12 @@ bool MockGamepadProvider::connectMockGamepad(unsigned index)
 
     EventMakesGamepadsVisible eventMakesGamepadsVisible = m_mockGamepadVector[index]->wasConnected() ?
         EventMakesGamepadsVisible::No : EventMakesGamepadsVisible::Yes;
-    for (auto& client : m_clients) {
-        client.platformGamepadConnected(*m_connectedGamepadVector[index], eventMakesGamepadsVisible);
-        auto gamepadsForClient = m_invisibleGamepadsForClient.find(client);
+    for (Ref client : m_clients) {
+        client->platformGamepadConnected(*m_connectedGamepadVector[index], eventMakesGamepadsVisible);
+        auto gamepadsForClient = m_invisibleGamepadsForClient.find(client.get());
         if (gamepadsForClient != m_invisibleGamepadsForClient.end()) {
             for (auto& invisibleGamepad : gamepadsForClient->value)
-                client.platformGamepadConnected(invisibleGamepad, eventMakesGamepadsVisible);
+                client->platformGamepadConnected(invisibleGamepad, eventMakesGamepadsVisible);
             m_invisibleGamepadsForClient.remove(gamepadsForClient);
         }
     }
@@ -124,10 +124,10 @@ bool MockGamepadProvider::disconnectMockGamepad(unsigned index)
     m_connectedGamepadVector[index] = nullptr;
 
     auto gamepadToRemove = m_mockGamepadVector[index].get();
-    for (auto& client : m_clients) {
-        auto gamepadsForClient = m_invisibleGamepadsForClient.find(client);
+    for (Ref client : m_clients) {
+        auto gamepadsForClient = m_invisibleGamepadsForClient.find(client.get());
         if (gamepadsForClient == m_invisibleGamepadsForClient.end() || !gamepadsForClient->value.remove(*gamepadToRemove))
-            client.platformGamepadDisconnected(*m_mockGamepadVector[index]);
+            client->platformGamepadDisconnected(*m_mockGamepadVector[index]);
     }
 
     return true;

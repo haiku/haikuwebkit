@@ -46,10 +46,6 @@ DeviceController::~DeviceController() = default;
 
 void DeviceController::addDeviceEventListener(LocalDOMWindow& window)
 {
-    RefPtr document = window.document();
-    if (!document)
-        return;
-
     bool wasEmpty = m_listeners.isEmpty();
     m_listeners.add(&window);
 
@@ -60,7 +56,7 @@ void DeviceController::addDeviceEventListener(LocalDOMWindow& window)
     }
 
     if (wasEmpty)
-        checkedClient()->startUpdating(document->securityOrigin().data());
+        checkedClient()->startUpdating();
 }
 
 void DeviceController::removeDeviceEventListener(LocalDOMWindow& window)

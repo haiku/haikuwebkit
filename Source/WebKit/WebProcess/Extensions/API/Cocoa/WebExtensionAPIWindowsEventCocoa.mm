@@ -54,7 +54,7 @@ void WebExtensionAPIWindowsEvent::invokeListenersWithArgument(id argument, Optio
         if (!listener.second.containsAny(windowTypeFilter))
             continue;
 
-        listener.first->call(argument);
+        Ref { *listener.first }->call(argument);
     }
 }
 

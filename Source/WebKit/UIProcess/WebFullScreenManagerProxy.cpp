@@ -193,7 +193,7 @@ bool WebFullScreenManagerProxy::blocksReturnToFullscreenFromPictureInPicture() c
     return m_blocksReturnToFullscreenFromPictureInPicture;
 }
 
-Awaitable<std::optional<WebCore::IntRect>> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& connection, FrameIdentifier frameID, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails mediaDetails, FrameIdentifier rootFrameID, WebCore::IntRect initialFrameInRootFrameCoordinates)
+Awaitable<bool> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& connection, FrameIdentifier frameID, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails mediaDetails)
 {
     m_fullScreenProcess = dynamicDowncast<WebProcessProxy>(AuxiliaryProcessProxy::fromConnection(connection));
     m_blocksReturnToFullscreenFromPictureInPicture = blocksReturnToFullscreenFromPictureInPicture;
@@ -213,16 +213,7 @@ Awaitable<std::optional<WebCore::IntRect>> WebFullScreenManagerProxy::enterFullS
 
     CheckedPtr client = m_client;
     if (!client)
-        co_return std::nullopt;
-
-    RefPtr page = m_page.get();
-    if (!page)
-        co_return std::nullopt;
-
-    IntRect initialFrameInScreenCoordinates { initialFrameInRootFrameCoordinates };
-    std::optional<FloatRect> mainFrameCoordinates = co_await page->convertRectToMainFrameCoordinates(WebCore::FloatRect(initialFrameInRootFrameCoordinates), rootFrameID);
-    if (mainFrameCoordinates)
-        initialFrameInScreenCoordinates = page->syncRootViewToScreen(IntRect(*mainFrameCoordinates));
+        co_return false;
 
     bool success = co_await AwaitableFromCompletionHandler<bool> { [=] (auto completionHandler) {
         client->enterFullScreen(mediaDetails.mediaDimensions, WTFMove(completionHandler));
@@ -230,7 +221,7 @@ Awaitable<std::optional<WebCore::IntRect>> WebFullScreenManagerProxy::enterFullS
 
     ALWAYS_LOG(LOGIDENTIFIER);
     if (!success)
-        co_return std::nullopt;
+        co_return false;
     m_fullscreenState = FullscreenState::EnteringFullscreen;
     if (RefPtr page = m_page.get())
         page->fullscreenClient().willEnterFullscreen(page.get());
@@ -242,7 +233,7 @@ Awaitable<std::optional<WebCore::IntRect>> WebFullScreenManagerProxy::enterFullS
     if (RefPtr page = m_page.get(); page && page->protectedPreferences()->siteIsolationEnabled())
         co_await page->nextPresentationUpdate();
 
-    co_return initialFrameInScreenCoordinates;
+    co_return true;
 }
 
 void WebFullScreenManagerProxy::enterFullScreenForOwnerElementsInOtherProcesses(FrameIdentifier frameID, CompletionHandler<void()>&& completionHandler)

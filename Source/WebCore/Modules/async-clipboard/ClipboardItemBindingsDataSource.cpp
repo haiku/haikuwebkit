@@ -310,7 +310,8 @@ void ClipboardItemBindingsDataSource::ClipboardItemTypeLoader::sanitizeDataIfNee
         if (markupToSanitize.isEmpty())
             return;
 
-        m_data = { sanitizeMarkup(markupToSanitize) };
+        RefPtr document = documentFromClipboard(RefPtr { m_writingDestination.get() }.get());
+        m_data = { sanitizeMarkup(markupToSanitize, document.get()) };
     }
 
     if (m_type == "image/png"_s) {

@@ -81,9 +81,6 @@ static void initializeSQLiteIfNecessary()
     });
 }
 
-static Lock isDatabaseOpeningForbiddenLock;
-static bool isDatabaseOpeningForbidden WTF_GUARDED_BY_LOCK(isDatabaseOpeningForbiddenLock) { false };
-
 void SQLiteDatabase::useFastMalloc()
 {
 #if ENABLE(SQLITE_FAST_MALLOC)
@@ -104,12 +101,6 @@ void SQLiteDatabase::useFastMalloc()
     returnCode = sqlite3_config(SQLITE_CONFIG_MALLOC, &fastMallocMethods);
     RELEASE_LOG_ERROR_IF(returnCode != SQLITE_OK, SQLDatabase, "Unable to replace SQLite malloc: %d", returnCode);
 #endif
-}
-
-void SQLiteDatabase::setIsDatabaseOpeningForbidden(bool isForbidden)
-{
-    Locker locker { isDatabaseOpeningForbiddenLock };
-    isDatabaseOpeningForbidden = isForbidden;
 }
 
 SQLiteDatabase::SQLiteDatabase() = default;
@@ -135,12 +126,6 @@ bool SQLiteDatabase::open(const String& filename, OpenMode openMode, OptionSet<O
     });
 
     {
-        Locker locker { isDatabaseOpeningForbiddenLock };
-        if (isDatabaseOpeningForbidden) {
-            m_openErrorMessage = "opening database is forbidden";
-            return false;
-        }
-
         int flags = SQLITE_OPEN_AUTOPROXY;
         switch (openMode) {
         case OpenMode::ReadOnly:

@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(NVShaderNoperspectiveInterpolation);
 NVShaderNoperspectiveInterpolation::NVShaderNoperspectiveInterpolation(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::NVShaderNoperspectiveInterpolation)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_NV_shader_noperspective_interpolation"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::NV_shader_noperspective_interpolation);
 }
 
 NVShaderNoperspectiveInterpolation::~NVShaderNoperspectiveInterpolation() = default;
 
 bool NVShaderNoperspectiveInterpolation::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_NV_shader_noperspective_interpolation"_s);
+    return context.supportsExtension(GCGLExtension::NV_shader_noperspective_interpolation);
 }
 
 } // namespace WebCore

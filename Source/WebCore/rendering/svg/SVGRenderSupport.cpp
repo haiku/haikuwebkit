@@ -493,7 +493,7 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
     }
 
     SVGLengthContext lengthContext(element.get());
-    context.setStrokeThickness(lengthContext.valueForLength(style.strokeWidth()));
+    context.setStrokeThickness(lengthContext.valueForLength(style.strokeWidth(), Style::ZoomNeeded { }));
     context.setLineCap(style.capStyle());
     context.setLineJoin(style.joinStyle());
     if (style.joinStyle() == LineJoin::Miter)
@@ -518,14 +518,14 @@ void SVGRenderSupport::applyStrokeStyleToContext(GraphicsContext& context, const
         
         bool canSetLineDash = false;
         auto dashArray = DashArray::map(dashes, [&](auto& dash) -> DashArrayElement {
-            auto value = lengthContext.valueForLength(dash) * scaleFactor;
+            auto value = lengthContext.valueForLength(dash, Style::ZoomNeeded { }) * scaleFactor;
             if (value > 0)
                 canSetLineDash = true;
             return value;
         });
 
         if (canSetLineDash)
-            context.setLineDash(dashArray, lengthContext.valueForLength(style.strokeDashOffset()) * scaleFactor);
+            context.setLineDash(dashArray, lengthContext.valueForLength(style.strokeDashOffset(), Style::ZoomNeeded { }) * scaleFactor);
         else
             context.setStrokeStyle(StrokeStyle::SolidStroke);
     }

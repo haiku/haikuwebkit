@@ -133,7 +133,7 @@ RefPtr<Image> StyleFilterImage::image(const RenderElement* renderer, const Float
     if (!image || image->isNull())
         return &Image::nullImage();
 
-    auto preferredFilterRenderingModes = renderer->protectedPage()->preferredFilterRenderingModes();
+    auto preferredFilterRenderingModes = renderer->protectedPage()->preferredFilterRenderingModes(destinationContext);
     auto sourceImageRect = FloatRect { { }, size };
 
     auto cssFilter = CSSFilterRenderer::create(const_cast<RenderElement&>(*renderer), m_filter, preferredFilterRenderingModes, FloatSize { 1, 1 }, sourceImageRect, NullGraphicsContext());

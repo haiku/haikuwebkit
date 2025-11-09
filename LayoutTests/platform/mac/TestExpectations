@@ -1723,9 +1723,6 @@ webkit.org/b/221152 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-a
 
 webkit.org/b/221491 animations/keyframe-pseudo-shadow.html [ Pass ImageOnlyFailure ]
 
-# webkit.org/b/221973 for failure, webkit.org/b/300940 for crash
-media/media-webm-no-duration.html [ Crash Failure ]
-
 webkit.org/b/221100 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioworklet-interface/audioworkletnode-channel-count.https.html [ Pass Failure ]
 
 webkit.org/b/222205 css3/calc/transforms-translate.html [ Pass ImageOnlyFailure ]
@@ -2134,6 +2131,8 @@ webkit.org/b/274628 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/wor
 webkit.org/b/257698 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-overflow-001.html [ ImageOnlyFailure ]
 webkit.org/b/257698 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-001.html [ ImageOnlyFailure ]
 webkit.org/b/257698 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-wbr-nobr-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-fallback-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-007.html [ ImageOnlyFailure ]
 
 # Deprecated CSS System Colors https://drafts.csswg.org/css-color-4/#deprecated-system-colors
 webkit.org/b/245347 imported/w3c/web-platform-tests/css/css-color/deprecated-sameas-001.html [ ImageOnlyFailure ]
@@ -2303,7 +2302,7 @@ imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-upright-s
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/decode/image-decode-path-changes-svg.tentative.html [ Pass Failure ]
 
 # webkit.org/b/280193 [ Sequoia ] fast/inline/justify-emphasi s-inline-box.html is a constant failure. 
-[ Sequoia ] fast/inline/justify-emphasis-inline-box.html [ Failure ]
+fast/inline/justify-emphasis-inline-box.html [ Failure ]
 
 webkit.org/b/257011 imported/w3c/web-platform-tests/css/css-text/hyphens/hyphenate-character-002.html [ ImageOnlyFailure ]
 
@@ -2505,7 +2504,7 @@ imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-v
 imported/w3c/web-platform-tests/css/css-scrollbars/textarea-scrollbar-width-none.html [ Pass ImageOnlyFailure ]
 fast/scrolling/mac/scrollbars/scrollbar-width-dynamic-none-to-auto.html [ Pass ImageOnlyFailure ]
 webgl/1.0.x/conformance/glsl/bugs/sampler-array-using-loop-index.html [ Pass Failure ]
-imported/w3c/web-platform-tests/html/canvas/element/manual/drawing-images-to-the-canvas/drawimage_canvas.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/manual/drawing-images-to-the-canvas/drawimage_canvas.html [ Pass ImageOnlyFailure Failure ]
 imported/w3c/web-platform-tests/fetch/h1-parsing/lone-cr.window.html [ Pass Failure ]
 imported/w3c/web-platform-tests/digital-credentials/allow-attribute-with-get.https.html [ Pass Failure ]
 imported/w3c/web-platform-tests/digital-credentials/get.tentative.https.html [ Pass Failure ]
@@ -2514,7 +2513,7 @@ imported/w3c/web-platform-tests/cookies/name/name-ctl.html [ Pass Failure ]
 imported/w3c/web-platform-tests/cookies/value/value-ctl.html [ Pass Failure ]
 http/tests/inspector/network/xhr-response-body.html [ Pass Failure ]
 accessibility/checkbox-radio-element-rect.html [ Pass Failure ]
-fast/forms/select/mac-wk2/inactive-appearance.html [ Pass Failure ]
+fast/forms/select/mac-wk2/inactive-appearance.html [ Pass Failure ImageOnlyFailure ]
 workers/btoa-oom.html [ Pass Timeout ]
 fast/canvas/offscreen-giant.html [ Pass ImageOnlyFailure ]
 fast/images/pagewide-play-pause-offscreen-animations.html [ Pass Failure ]
@@ -2553,7 +2552,10 @@ fast/forms/number/number-appearance-spinbutton-disabled-readonly.html [ Pass Fai
 fast/forms/number/number-appearance-spinbutton-layer.html [ Pass Failure ]
 fast/forms/select-style.html [ Pass Failure ]
 fast/forms/textarea-metrics.html [ Pass Failure ]
-fast/forms/time/time-editable-components/time-editable-components-mouse-events.html [ Pass Failure ]
+http/tests/workers/service/shownotification-allowed.html [ Pass Failure ]
+webgl/2.0.y/conformance/glsl/bugs/sampler-array-using-loop-index.html [ Pass Failure ]
+webgl/2.0.y/conformance/ogles/GL/greaterThan/greaterThan_001_to_008.html [ Pass Failure ]
+inspector/timeline/timeline-event-CancelAnimationFrame.html [ Pass Crash ]
 
 webkit.org/b/300994 fast/animation/request-animation-frame-throttling-aggressiveThermalMitigation.html [ Pass Failure ]
 
@@ -2566,8 +2568,6 @@ webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Fail
 [ Tahoe Debug ] fast/forms/switch/click-animation-redundant-checked.html  [ ImageOnlyFailure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=301000 [ macOS Tahoe ] 3x fast/ tests (layout-tests) are constant text failures
-[ Tahoe Debug ] fast/forms/month/month-editable-components/month-editable-components-mouse-events.html [ Failure ]
-[ Tahoe Debug ] fast/html/text-field-input-types.html [ Failure ]
 [ Tahoe Debug ] fast/repaint/block-inputrange-repaint.html [ Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=301002 [ macOS Tahoe ] fast/css/apple-system-control-colors.html is a constant text failure
@@ -2575,3 +2575,10 @@ webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Fail
 
 # https://bugs.webkit.org/show_bug.cgi?id=301013 [ macOS Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html is a flaky text failure
 [ Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301143# [ macOS Tahoe ] fast/html/text-field-input-types.html is a constant text failure 
+[ Tahoe Debug ] fast/html/text-field-input-types.html [ Failure ]
+
+webkit.org/b/301655 fast/images/page-wide-animation-toggle.html [ Pass Timeout ]
+
+webkit.org/b/301668 fast/repaint/iframe-avoid-redundant-repaint.html [ Pass Failure ]

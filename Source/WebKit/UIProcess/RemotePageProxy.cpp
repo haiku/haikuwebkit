@@ -37,6 +37,7 @@
 #include "ProvisionalFrameProxy.h"
 #include "RemotePageDrawingAreaProxy.h"
 #include "RemotePageFullscreenManagerProxy.h"
+#include "RemotePageScreenOrientationManagerProxy.h"
 #include "RemotePageVisitedLinkStoreRegistration.h"
 #include "UserMediaProcessManager.h"
 #include "WebBackForwardList.h"
@@ -48,6 +49,7 @@
 #include "WebProcessActivityState.h"
 #include "WebProcessMessages.h"
 #include "WebProcessProxy.h"
+#include "WebScreenOrientationManagerProxy.h"
 #include <WebCore/MediaProducer.h>
 #include <WebCore/PageIdentifier.h>
 #include <WebCore/RemoteUserInputEventData.h>
@@ -108,6 +110,10 @@ void RemotePageProxy::injectPageIntoNewProcess()
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
     m_playbackSessionManager = RemotePagePlaybackSessionManagerProxy::create(pageID(), page->protectedPlaybackSessionManager().get(), m_process);
 #endif
+
+    if (RefPtr screenOrientationManager = page->screenOrientationManager())
+        m_screenOrientationManager = RemotePageScreenOrientationManagerProxy::create(m_webPageID, screenOrientationManager.get(), m_process);
+
     m_visitedLinkStoreRegistration = makeUnique<RemotePageVisitedLinkStoreRegistration>(*page, m_process);
 
     RefPtr websitePolicies = page->mainFrameWebsitePolicies();
@@ -232,6 +238,16 @@ void RemotePageProxy::setDrawingArea(DrawingAreaProxy* drawingArea)
             })
         ), 0
     );
+}
+
+void RemotePageProxy::setCurrentOrientation(WebCore::ScreenOrientationType orientation)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+
+    if (RefPtr manager = page->screenOrientationManager())
+        manager->setCurrentOrientation(orientation);
 }
 
 }

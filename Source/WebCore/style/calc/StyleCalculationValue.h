@@ -43,6 +43,10 @@ enum class Category : uint8_t;
 }
 
 namespace Style {
+
+struct ZoomFactor;
+struct ZoomNeeded;
+
 namespace Calculation {
 
 class Value : public RefCounted<Value> {
@@ -51,7 +55,8 @@ public:
     WEBCORE_EXPORT static Ref<Value> create(CSS::Category, CSS::Range, Tree&&);
     WEBCORE_EXPORT ~Value();
 
-    double evaluate(double percentResolutionLength) const;
+    double evaluate(double percentResolutionLength, const ZoomFactor& usedZoom) const;
+    double evaluate(double percentResolutionLength, const ZoomNeeded&) const;
 
     CSS::Category category() const { return m_category; }
     CSS::Range range() const { return m_range; }

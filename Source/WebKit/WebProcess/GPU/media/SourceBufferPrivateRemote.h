@@ -146,7 +146,6 @@ private:
     MediaTime minimumUpcomingPresentationTimeForTrackID(TrackID) final;
     void setMaximumQueueDepthForTrackID(TrackID, uint64_t) final;
 
-    void ensureOnDispatcherSync(Function<void()>&&);
     void ensureWeakOnDispatcher(Function<void(SourceBufferPrivateRemote&)>&&);
 
     template<typename T> void sendToProxy(T&& message);

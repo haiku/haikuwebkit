@@ -16,7 +16,11 @@ onload = function() {
         shouldBeEqualToString("w.location.href", "about:blank");
         w.onload = function() {
             if (window.testRunner) {
-                shouldBe("testRunner.windowCount()", "3");
+                if (testRunner.isWebKit2) {
+                    shouldBe("testRunner.windowCount()", "2");
+                } else {
+                    shouldBe("testRunner.windowCount()", "3");
+                }
             }
             finishJSTest();
         }

@@ -43,6 +43,7 @@ class RemoteLayerTreeTransaction;
 class RemotePageDrawingAreaProxy;
 class RemoteScrollingCoordinatorProxy;
 class RemoteScrollingCoordinatorTransaction;
+struct RemoteLayerTreeCommitBundle;
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 class RemoteAnimationTimeline;
@@ -82,8 +83,8 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
-    void registerTimelineIfNecessary(WebCore::ProcessIdentifier, Seconds originTime, MonotonicTime now);
-    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const;
+    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime);
+    RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
 #endif
 
     // For testing.
@@ -177,7 +178,7 @@ private:
 
     void willCommitLayerTree(IPC::Connection&, TransactionID);
     void commitLayerTreeNotTriggered(IPC::Connection&, TransactionID);
-    void commitLayerTree(IPC::Connection&, const Vector<std::pair<RemoteLayerTreeTransaction, RemoteScrollingCoordinatorTransaction>>&, HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&&);
+    void commitLayerTree(IPC::Connection&, const RemoteLayerTreeCommitBundle&, HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&&);
     void commitLayerTreeTransaction(IPC::Connection&, const RemoteLayerTreeTransaction&, const RemoteScrollingCoordinatorTransaction&);
     virtual void didCommitLayerTree(IPC::Connection&, const RemoteLayerTreeTransaction&, const RemoteScrollingCoordinatorTransaction&) { }
 

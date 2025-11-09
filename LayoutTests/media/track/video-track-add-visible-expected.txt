@@ -5,6 +5,6 @@ RUN(track = video.addTextTrack("subtitles"))
 RUN(track.mode = "showing")
 RUN(cue = new VTTCue(0, video.duration, "cue text"))
 RUN(track.addCue(cue))
-EXPECTED (internals.shadowRoot(video).querySelector(".media-controls-container").innerText == 'cue text') OK
+EXPECTED (internals.shadowRoot(video).textContent.includes("cue text") == 'true') OK
 END OF TEST
 

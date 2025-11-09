@@ -1591,35 +1591,37 @@ void SourceBufferParserWebM::returnSamples(MediaSamplesBlock&& block, CMFormatDe
         return;
     }
 
-    m_callOnClientThreadCallback([this, protectedThis = Ref { *this }, trackID = block.info()->trackID, sampleBuffer = WTFMove(expectedBuffer.value())] () mutable {
-        if (!m_didProvideMediaDataCallback)
+    m_callOnClientThreadCallback([protectedThis = Ref { *this }, trackID = block.info()->trackID, sampleBuffer = WTFMove(expectedBuffer.value())] () mutable {
+        if (!protectedThis->m_didProvideMediaDataCallback)
             return;
 
         auto mediaSample = MediaSampleAVFObjC::create(sampleBuffer.get(), trackID);
 
-        m_didProvideMediaDataCallback(WTFMove(mediaSample), trackID, emptyString());
+        protectedThis->m_didProvideMediaDataCallback(WTFMove(mediaSample), trackID, emptyString());
     });
 }
 
 void SourceBufferParserWebM::parsedTrimmingData(uint64_t trackID, const MediaTime& padding)
 {
-    m_callOnClientThreadCallback([this, protectedThis = Ref { *this }, trackID, padding] () {
-        if (m_didParseTrimmingDataCallback)
-            m_didParseTrimmingDataCallback(trackID, padding);
+    m_callOnClientThreadCallback([protectedThis = Ref { *this }, trackID, padding] () {
+        if (protectedThis->m_didParseTrimmingDataCallback)
+            protectedThis->m_didParseTrimmingDataCallback(trackID, padding);
     });
 }
 
 void SourceBufferParserWebM::contentKeyRequestInitializationDataForTrackID(Ref<SharedBuffer>&& keyID, uint64_t trackID)
 {
-    if (m_didProvideContentKeyRequestInitializationDataForTrackIDCallback)
-        m_didProvideContentKeyRequestInitializationDataForTrackIDCallback(WTFMove(keyID), trackID);
+    m_callOnClientThreadCallback([protectedThis = Ref { *this }, keyID = WTFMove(keyID), trackID]() mutable {
+        if (protectedThis->m_didProvideContentKeyRequestInitializationDataForTrackIDCallback)
+            protectedThis->m_didProvideContentKeyRequestInitializationDataForTrackIDCallback(WTFMove(keyID), trackID);
+    });
 }
 
 void SourceBufferParserWebM::formatDescriptionChangedForTrackID(Ref<TrackInfo>&& formatDescription, uint64_t trackID)
 {
-    m_callOnClientThreadCallback([this, protectedThis = Ref { *this }, formatDescription = WTFMove(formatDescription), trackID]() mutable {
-        if (m_didUpdateFormatDescriptionForTrackIDCallback)
-            m_didUpdateFormatDescriptionForTrackIDCallback(WTFMove(formatDescription), trackID);
+    m_callOnClientThreadCallback([protectedThis = Ref { *this }, formatDescription = WTFMove(formatDescription), trackID]() mutable {
+        if (protectedThis->m_didUpdateFormatDescriptionForTrackIDCallback)
+            protectedThis->m_didUpdateFormatDescriptionForTrackIDCallback(WTFMove(formatDescription), trackID);
     });
 }
 

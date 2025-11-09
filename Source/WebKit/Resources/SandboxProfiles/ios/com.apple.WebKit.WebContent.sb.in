@@ -44,8 +44,10 @@
 
 (deny file-write-mount file-write-unmount)
 
-(deny process-iopolicy-get (with telemetry))
-(deny process-iopolicy-set (with telemetry))
+; FIXME: remove this check once this is supported in all SDKs.
+(when (defined? 'process-iopolicy-get)
+    (deny process-iopolicy-get (with telemetry))
+    (deny process-iopolicy-set (with telemetry)))
 
 (allow file-read-metadata
     (vnode-type DIRECTORY))
@@ -364,7 +366,7 @@
     (syscall-unix-in-use-after-launch-blocked-in-lockdown-mode))
 
 (with-filter (require-not (webcontent-process-launched))
-    (allow syscall-unix (syscall-unix-only-in-use-during-launch)))
+    (allow-syscall-unix-only-in-use-during-launch))
 
 (allow syscall-unix
     (syscall-unix-rarely-in-use)
@@ -387,9 +389,7 @@
     (allow syscall-unix (syscall-number SYS_map_with_linking_np)))
 
 (with-filter (system-attribute developer-mode)
-    (allow syscall-unix (syscall-unix-developer-mode)))
-(with-filter (require-not (system-attribute developer-mode))
-    (deny syscall-unix (with no-report) (syscall-unix-developer-mode)))
+    (allow-syscall-unix-developer-mode))
 
 (with-filter (lockdown-mode)
     (deny syscall-unix (with telemetry) (with message "Lockdown mode")

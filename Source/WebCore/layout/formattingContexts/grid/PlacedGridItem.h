@@ -51,7 +51,7 @@ public:
     };
 
     PlacedGridItem(const UnplacedGridItem&, GridAreaLines, const ComputedSizes& inlineAxisSizes, const ComputedSizes& blockAxisSizes,
-    const StyleSelfAlignmentData& inlineAxisAlignment, const StyleSelfAlignmentData& blockAxisAlignment);
+    const StyleSelfAlignmentData& inlineAxisAlignment, const StyleSelfAlignmentData& blockAxisAlignment, const Style::ZoomFactor& usedZoom);
 
     const ComputedSizes& inlineAxisSizes() const { return m_inlineAxisSizes; }
     const ComputedSizes& blockAxisSizes() const { return m_blockAxisSizes; }
@@ -67,6 +67,8 @@ public:
 
     const GridAreaLines& gridAreaLines() const { return m_gridAreaLines; }
 
+    const Style::ZoomFactor& usedZoom() const { return m_usedZoom; }
+
 private:
     const CheckedRef<const ElementBox> m_layoutBox;
 
@@ -75,6 +77,8 @@ private:
 
     const StyleSelfAlignmentData m_inlineAxisAlignment;
     const StyleSelfAlignmentData m_blockAxisAlignment;
+
+    const Style::ZoomFactor m_usedZoom { 1.0f, 1.0f };
 
     GridAreaLines m_gridAreaLines;
 };

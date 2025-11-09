@@ -986,7 +986,7 @@ RefPtr<BaselineJITCode> JIT::link(LinkBuffer& patchBuffer)
     if (jitCode->m_unlinkedCalls.size()) {
         std::move(m_unlinkedCalls.begin(), m_unlinkedCalls.end(), jitCode->m_unlinkedCalls.begin());
         // It is almost always already sorted.
-        WTF::bubbleSort(jitCode->m_unlinkedCalls.begin(), jitCode->m_unlinkedCalls.end(),
+        WTF::bubbleSort(jitCode->m_unlinkedCalls.mutableSpan(),
             [](const auto& lhs, const auto& rhs) {
                 return lhs.bytecodeIndex < rhs.bytecodeIndex;
             });

@@ -375,8 +375,17 @@ bool AnimationTimelinesController::isPendingTimelineAttachment(const WebAnimatio
 AcceleratedEffectStackUpdater& AnimationTimelinesController::acceleratedEffectStackUpdater()
 {
     if (!m_acceleratedEffectStackUpdater)
-        m_acceleratedEffectStackUpdater = makeUnique<AcceleratedEffectStackUpdater>(m_document.get());
+        m_acceleratedEffectStackUpdater = makeUnique<AcceleratedEffectStackUpdater>();
     return *m_acceleratedEffectStackUpdater;
+}
+
+void AnimationTimelinesController::updateAcceleratedEffectStacks()
+{
+    if (!m_acceleratedEffectStackUpdater)
+        return;
+    for (Ref timeline : m_timelines)
+        timeline->clearAcceleratedRepresentation();
+    m_acceleratedEffectStackUpdater->updateEffectStacks();
 }
 #endif
 

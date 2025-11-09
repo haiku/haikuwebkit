@@ -105,7 +105,7 @@
 
     [[NSNotificationCenter defaultCenter] addObserver:self
         selector:@selector(systemColorsDidChange:) name:systemColorsChangedNotification.get() object:nil];
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+    [retainPtr([[NSWorkspace sharedWorkspace] notificationCenter]) addObserver:self
         selector:@selector(accessibilityDisplayOptionsDidChange:) name:accessibilityDisplayOptionsChangedNotification.get() object:nil];
 
     return self;
@@ -390,7 +390,7 @@ Color RenderThemeMac::platformTextSearchHighlightColor(OptionSet<StyleColorOptio
     return colorFromCocoaColor([NSColor findHighlightColor]);
 }
 
-Color RenderThemeMac::platformAnnotationHighlightColor(OptionSet<StyleColorOptions>) const
+Color RenderThemeMac::platformAnnotationHighlightBackgroundColor(OptionSet<StyleColorOptions>) const
 {
     // FIXME: expose the real value from AppKit.
     return SRGBA<uint8_t> { 255, 238, 190 };
@@ -720,13 +720,13 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
         case CSSValueAppleSystemEvenAlternatingContentBackground: {
             NSArray<NSColor *> *alternateColors = [NSColor alternatingContentBackgroundColors];
             ASSERT(alternateColors.count >= 2);
-            return semanticColorFromNSColor(alternateColors[0]);
+            return semanticColorFromNSColor(retainPtr(alternateColors[0]).get());
         }
 
         case CSSValueAppleSystemOddAlternatingContentBackground: {
             NSArray<NSColor *> *alternateColors = [NSColor alternatingContentBackgroundColors];
             ASSERT(alternateColors.count >= 2);
-            return semanticColorFromNSColor(alternateColors[1]);
+            return semanticColorFromNSColor(retainPtr(alternateColors[1]).get());
         }
 
         // FIXME: Remove this fallback when AppKit without tertiary-fill is not used anymore; see rdar://108340604.
@@ -1196,7 +1196,7 @@ static NSControlSize controlSizeForFont(const RenderStyle& style)
 
 static IntSize sizeForFont(const RenderStyle& style, std::span<const IntSize, 4> sizes)
 {
-    if (style.usedZoom() != 1.0f) {
+    if (style.usedZoom() != 1.0f && !style.evaluationTimeZoomEnabled()) {
         IntSize result = sizes[controlSizeForFont(style)];
         return IntSize(result.width() * style.usedZoom(), result.height() * style.usedZoom());
     }
@@ -1249,7 +1249,7 @@ void RenderThemeMac::adjustListButtonStyle(RenderStyle& style, const Element* el
 #endif
 
     // Add a margin to place the button at end of the input field.
-    style.setMarginEnd(-4_css_px);
+    style.setMarginEnd(-4_css_px / style.usedZoomForLength().value);
 }
 
 #if ENABLE(SERVICE_CONTROLS)
@@ -1367,24 +1367,24 @@ Style::PaddingBox RenderThemeMac::popupInternalPaddingBox(const RenderStyle& sty
     if (style.usedAppearance() == StyleAppearance::Menulist) {
         auto padding = popupButtonPadding(controlSizeForFont(style), style.writingMode().isBidiRTL());
         return {
-            toTruncatedPaddingEdge(padding[topPadding] * style.usedZoom()),
-            toTruncatedPaddingEdge(padding[rightPadding] * style.usedZoom()),
-            toTruncatedPaddingEdge(padding[bottomPadding] * style.usedZoom()),
-            toTruncatedPaddingEdge(padding[leftPadding] * style.usedZoom()),
+            toTruncatedPaddingEdge(padding[topPadding]),
+            toTruncatedPaddingEdge(padding[rightPadding]),
+            toTruncatedPaddingEdge(padding[bottomPadding]),
+            toTruncatedPaddingEdge(padding[leftPadding]),
         };
     }
 
     if (style.usedAppearance() == StyleAppearance::MenulistButton) {
         float arrowWidth = baseArrowWidth * (style.computedFontSize() / baseFontSize);
         float rightPadding = ceilf(arrowWidth + (arrowPaddingBefore + arrowPaddingAfter + paddingBeforeSeparator) * style.usedZoom());
-        float leftPadding = styledPopupPaddingLeft * style.usedZoom();
+        float leftPadding = styledPopupPaddingLeft;
         if (style.writingMode().isBidiRTL())
             std::swap(rightPadding, leftPadding);
 
         return {
-            toTruncatedPaddingEdge(styledPopupPaddingTop * style.usedZoom()),
-            toTruncatedPaddingEdge(rightPadding),
-            toTruncatedPaddingEdge(styledPopupPaddingBottom * style.usedZoom()),
+            toTruncatedPaddingEdge(styledPopupPaddingTop),
+            toTruncatedPaddingEdge(rightPadding / style.usedZoom()),
+            toTruncatedPaddingEdge(styledPopupPaddingBottom),
             toTruncatedPaddingEdge(leftPadding),
         };
     }
@@ -1801,12 +1801,12 @@ static RefPtr<Icon> iconForAttachment(const String& fileName, const String& atta
     }
 
     RetainPtr nsTitle = title.createNSString();
-    if (auto fileExtension = nsTitle.get().pathExtension; fileExtension.length) {
-        if (auto icon = Icon::createIconForFileExtension(fileExtension)) {
-            LOG_ATTACHMENT("-> Got icon for title file extension '%s'", String(fileExtension).utf8().data());
+    if (RetainPtr<NSString> fileExtension = nsTitle.get().pathExtension; fileExtension.get().length) {
+        if (auto icon = Icon::createIconForFileExtension(fileExtension.get())) {
+            LOG_ATTACHMENT("-> Got icon for title file extension '%s'", String(fileExtension.get()).utf8().data());
             return icon;
         }
-        LOG_ATTACHMENT("-> No icon for title file extension '%s'! Will fallback to public.data icon", String(fileExtension).utf8().data());
+        LOG_ATTACHMENT("-> No icon for title file extension '%s'! Will fallback to public.data icon", String(fileExtension.get()).utf8().data());
     } else
         LOG_ATTACHMENT("-> No file extension in title! Will fallback to public.data icon");
 

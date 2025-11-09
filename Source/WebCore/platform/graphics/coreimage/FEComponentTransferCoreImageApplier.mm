@@ -159,13 +159,13 @@ bool FEComponentTransferCoreImageApplier::applyGamma(RetainPtr<CIImage> inputIma
         @(m_effect->blueFunction().amplitude),  @(m_effect->blueFunction().exponent),  @(m_effect->blueFunction().offset)
     ];
 
-    CIImage *outputImage = [kernel applyWithExtent:inputImage.get().extent
+    RetainPtr<CIImage> outputImage = [kernel applyWithExtent:inputImage.get().extent
         roiCallback:^CGRect(int, CGRect destRect) {
             return destRect;
         }
         arguments:arguments.get()];
 
-    result.setCIImage(outputImage);
+    result.setCIImage(WTFMove(outputImage));
     return true;
 }
 #endif

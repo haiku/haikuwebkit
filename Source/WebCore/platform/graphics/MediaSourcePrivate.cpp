@@ -72,11 +72,11 @@ bool MediaSourcePrivate::hasFutureTime(const MediaTime& currentTime, const Media
 }
 
 MediaSourcePrivate::MediaSourcePrivate(MediaSourcePrivateClient& client)
-    : MediaSourcePrivate(client, RunLoop::currentSingleton())
+    : MediaSourcePrivate(client, WorkQueue::mainSingleton())
 {
 }
 
-MediaSourcePrivate::MediaSourcePrivate(MediaSourcePrivateClient& client, GuaranteedSerialFunctionDispatcher& dispatcher)
+MediaSourcePrivate::MediaSourcePrivate(MediaSourcePrivateClient& client, WorkQueue& dispatcher)
     : m_readyState(MediaSourceReadyState::Closed)
     , m_dispatcher(dispatcher)
     , m_client(client)
@@ -268,16 +268,6 @@ const PlatformTimeRanges& MediaSourcePrivate::liveSeekableRange() const
     IGNORE_CLANG_WARNINGS_END
 }
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-void MediaSourcePrivate::setCDMSession(LegacyCDMSession* session)
-{
-    assertIsCurrent(m_dispatcher);
-
-    for (auto& sourceBuffer : m_sourceBuffers)
-        sourceBuffer->setCDMSession(session);
-}
-#endif
-
 void MediaSourcePrivate::ensureOnDispatcher(Function<void()>&& function) const
 {
     Ref dispatcher = m_dispatcher;
@@ -286,6 +276,14 @@ void MediaSourcePrivate::ensureOnDispatcher(Function<void()>&& function) const
         return;
     }
     dispatcher->dispatch(WTFMove(function));
+}
+
+void MediaSourcePrivate::ensureOnDispatcherSync(NOESCAPE Function<void()>&& function) const
+{
+    if (m_dispatcher->isCurrent())
+        function();
+    else
+        m_dispatcher->dispatchSync(WTFMove(function));
 }
 
 MediaTime MediaSourcePrivate::currentTime() const

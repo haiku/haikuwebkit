@@ -328,7 +328,7 @@
     {"access": "public", "kind": "function", "linkage": "exported", "name": "_voucher_mach_msg_set"},
     {"access": "public", "kind": "variable", "linkage": "exported", "name": "_vprintf_stderr_func"}
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "__Reply___host_page_size_t"},
     {"access": "public", "name": "__Reply__act_get_state_t"},

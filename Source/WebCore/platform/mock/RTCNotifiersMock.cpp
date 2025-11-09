@@ -109,7 +109,8 @@ DataChannelStateNotifier::DataChannelStateNotifier(RTCDataChannelHandlerClient* 
 
 void DataChannelStateNotifier::fire()
 {
-    m_client->didChangeReadyState(m_state);
+    if (RefPtr client = m_client.get())
+        client->didChangeReadyState(m_state);
 }
 
 } // namespace WebCore

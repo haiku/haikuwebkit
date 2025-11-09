@@ -31,7 +31,7 @@
 #include <wtf/TZoneMalloc.h>
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-#import "RemoteAnimationTimeline.h"
+#import "RemoteMonotonicTimelineRegistry.h"
 #endif
 
 OBJC_CLASS UIScrollView;
@@ -75,8 +75,8 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void animationsWereAddedToNode(RemoteLayerTreeNode&) override WTF_IGNORES_THREAD_SAFETY_ANALYSIS;
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&) override;
-    void registerTimelineIfNecessary(WebCore::ProcessIdentifier, Seconds, MonotonicTime) override;
-    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const override;
+    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime) override;
+    RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const override;
     void updateAnimations();
 #endif
 
@@ -106,7 +106,7 @@ private:
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     HashSet<WebCore::PlatformLayerIdentifier> m_animatedNodeLayerIDs;
-    HashMap<WebCore::ProcessIdentifier, Ref<RemoteAnimationTimeline>> m_timelines;
+    std::unique_ptr<RemoteMonotonicTimelineRegistry> m_monotonicTimelineRegistry;
 #endif
 };
 

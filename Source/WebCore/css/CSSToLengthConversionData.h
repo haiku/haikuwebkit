@@ -69,6 +69,7 @@ public:
     bool computingFontSize() const { return m_propertyToCompute == CSSPropertyFontSize; }
     bool computingLineHeight() const { return m_propertyToCompute == CSSPropertyLineHeight; }
     CSSPropertyID propertyToCompute() const { return m_propertyToCompute.value_or(CSSPropertyInvalid); }
+    bool evaluationTimeZoomEnabled() const;
     const RenderView* renderView() const { return m_renderView; }
     const Element* elementForContainerUnitResolution() const { return m_elementForContainerUnitResolution.get(); }
 

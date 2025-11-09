@@ -647,7 +647,7 @@ void collect_lifted_expressions(SkSpan<const ShaderNode*> nodes,
 
         collect_lifted_expressions(node->children(), childArgs, lifted);
     }
-};
+}
 
 std::vector<LiftedExpression> collect_lifted_expressions(SkSpan<const ShaderNode*> nodes) {
     std::vector<LiftedExpression> lifted;
@@ -825,10 +825,8 @@ std::string dst_read_strategy_to_str(DstReadStrategy strategy) {
             return "ReadFromInput";
         case DstReadStrategy::kFramebufferFetch:
             return "FramebufferFetch";
-        default:
-            SkUNREACHABLE;
     }
-    return "";
+    SkUNREACHABLE;
 }
 } // anonymous
 
@@ -922,9 +920,8 @@ void ShaderInfo::generateFragmentSkSL(const Caps* caps,
         finalBlendRootSnippetId >= kFixedBlendIDOffset) {
         finalBlendMode = static_cast<SkBlendMode>(finalBlendRootSnippetId - kFixedBlendIDOffset);
     }
-    const bool useHardwareBlending =
-            CanUseHardwareBlending(caps, targetFormat, finalBlendMode, finalCoverage);
-    if (useHardwareBlending) {
+    if (finalBlendMode.has_value() &&
+        CanUseHardwareBlending(caps, targetFormat, *finalBlendMode, finalCoverage)) {
         // If we can use hardware blending, update the dstReadStrategy to be kNoneRequired to ensure
         // that ShaderInfo properly informs PipelineInfo of the pipeline's dst read requirement.
         fDstReadStrategy = DstReadStrategy::kNoneRequired;
@@ -1100,8 +1097,7 @@ void ShaderInfo::generateFragmentSkSL(const Caps* caps,
 
     // If not using hardware blending, we perform a dst read in the shader and must add SkSL
     // accordingly.
-    const bool readDstInShader = !useHardwareBlending;
-    if (readDstInShader) {
+    if (fDstReadStrategy != DstReadStrategy::kNoneRequired) {
         // Get the current dst color into a local variable, it may be used later on for coverage
         // blending as well as the final blend.
         mainBody += "half4 dstColor;";
@@ -1165,7 +1161,7 @@ void ShaderInfo::generateFragmentSkSL(const Caps* caps,
         }
 
         const char* outColor = args.fPriorStageOutput.c_str();
-        if (readDstInShader) {
+        if (fDstReadStrategy != DstReadStrategy::kNoneRequired) {
             // If this draw uses a non-coherent dst read, we want to keep the existing dst color (or
             // whatever has been previously drawn) when there's no coverage. This helps for batching
             // text draws that need to read from a dst copy for blends. However, this only helps the

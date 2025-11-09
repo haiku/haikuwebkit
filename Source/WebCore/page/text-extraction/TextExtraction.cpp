@@ -56,6 +56,7 @@
 #include "HTMLOptionElement.h"
 #include "HTMLSelectElement.h"
 #include "HandleUserInputEventResult.h"
+#include "HighlightRegistry.h"
 #include "HitTestResult.h"
 #include "ImageOverlay.h"
 #include "LocalFrame.h"
@@ -72,6 +73,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "SimpleRange.h"
+#include "StaticRange.h"
 #include "Text.h"
 #include "TextIterator.h"
 #include "TypedElementDescendantIteratorInlines.h"
@@ -956,6 +958,9 @@ Vector<std::pair<String, FloatRect>> extractAllTextAndRects(Page& page)
 
 static std::optional<SimpleRange> searchForText(Node& node, const String& searchText)
 {
+    if (searchText.isEmpty())
+        return std::nullopt;
+
     auto searchRange = makeRangeSelectingNodeContents(node);
     auto foundRange = findPlainText(searchRange, searchText, {
         FindOption::DoNotRevealSelection,
@@ -968,9 +973,12 @@ static std::optional<SimpleRange> searchForText(Node& node, const String& search
     return { WTFMove(foundRange) };
 }
 
-static String invalidNodeIdentifierDescription(NodeIdentifier identifier)
+static String invalidNodeIdentifierDescription(std::optional<NodeIdentifier>&& identifier)
 {
-    return makeString("Failed to resolve nodeIdentifier "_s, identifier.loggingString());
+    if (!identifier)
+        return "Missing nodeIdentifier"_s;
+
+    return makeString("Failed to resolve nodeIdentifier "_s, identifier->loggingString());
 }
 
 static String searchTextNotFoundDescription(const String& searchText)
@@ -1002,6 +1010,17 @@ static void dispatchSimulatedClick(Page& page, IntPoint location, CompletionHand
     completion(true, { });
 }
 
+static Node* findNodeAtRootViewLocation(const LocalFrameView& view, Document& document, FloatPoint locationInRootView)
+{
+    static constexpr OptionSet defaultHitTestOptions {
+        HitTestRequest::Type::ReadOnly,
+        HitTestRequest::Type::DisallowUserAgentShadowContent,
+    };
+
+    HitTestResult result { view.rootViewToContents(roundedIntPoint(locationInRootView)) };
+    return document.hitTest(defaultHitTestOptions, result) ? result.innerNode() : nullptr;
+}
+
 static void dispatchSimulatedClick(Node& targetNode, const String& searchText, CompletionHandler<void(bool, String&&)>&& completion)
 {
     RefPtr element = dynamicDowncast<Element>(targetNode);
@@ -1029,11 +1048,6 @@ static void dispatchSimulatedClick(Node& targetNode, const String& searchText, C
     if (!page)
         return completion(false, "Document has been detached from the page"_s);
 
-    static constexpr OptionSet defaultHitTestOptions {
-        HitTestRequest::Type::ReadOnly,
-        HitTestRequest::Type::DisallowUserAgentShadowContent,
-    };
-
     std::optional<FloatRect> targetRectInRootView;
     if (!searchText.isEmpty()) {
         auto foundRange = searchForText(*element, searchText);
@@ -1053,13 +1067,9 @@ static void dispatchSimulatedClick(Node& targetNode, const String& searchText, C
         targetRectInRootView = rootViewBounds(*element);
 
     auto centerInRootView = roundedIntPoint(targetRectInRootView->center());
-    auto centerInContents = view->rootViewToContents(centerInRootView);
-    HitTestResult result { centerInContents };
-    if (document->hitTest(defaultHitTestOptions, result)) {
-        if (RefPtr target = result.innerNode(); target && (target == element || target->isShadowIncludingDescendantOf(*element))) {
-            // Dispatch mouse events over the center of the element, if possible.
-            return dispatchSimulatedClick(*page, centerInRootView, WTFMove(completion));
-        }
+    if (RefPtr target = findNodeAtRootViewLocation(*view, document, centerInRootView); target && (target == element || target->isShadowIncludingDescendantOf(*element))) {
+        // Dispatch mouse events over the center of the element, if possible.
+        return dispatchSimulatedClick(*page, centerInRootView, WTFMove(completion));
     }
 
     UserGestureIndicator indicator { IsProcessingUserGesture::Yes, element->protectedDocument().ptr() };
@@ -1097,11 +1107,35 @@ static bool selectOptionByValue(NodeIdentifier identifier, const String& optionT
     return false;
 }
 
-static void selectText(NodeIdentifier identifier, const String& searchText, CompletionHandler<void(bool, String&&)>&& completion)
+static RefPtr<Node> resolveNodeWithBodyAsFallback(Page& page, std::optional<NodeIdentifier> identifier)
 {
-    RefPtr foundNode = Node::fromIdentifier(identifier);
+    if (identifier)
+        return Node::fromIdentifier(WTFMove(*identifier));
+
+    RefPtr mainFrame = page.localMainFrame();
+    if (!mainFrame)
+        return { };
+
+    RefPtr document = mainFrame->document();
+    if (!document)
+        return { };
+
+    return document->body();
+}
+
+static std::optional<SimpleRange> rangeForTextInContainer(const String& searchText, Ref<Node>&& node)
+{
+    if (searchText.isEmpty() && !is<HTMLBodyElement>(node))
+        return makeRangeSelectingNodeContents(node);
+
+    return searchForText(node, searchText);
+}
+
+static void selectText(Page& page, std::optional<NodeIdentifier>&& identifier, const String& searchText, bool revealText, CompletionHandler<void(bool, String&&)>&& completion)
+{
+    RefPtr foundNode = resolveNodeWithBodyAsFallback(page, identifier);
     if (!foundNode)
-        return completion(false, invalidNodeIdentifierDescription(identifier));
+        return completion(false, invalidNodeIdentifierDescription(WTFMove(identifier)));
 
     if (RefPtr control = dynamicDowncast<HTMLTextFormControlElement>(*foundNode)) {
         // FIXME: This should probably honor `searchText`.
@@ -1109,17 +1143,39 @@ static void selectText(NodeIdentifier identifier, const String& searchText, Comp
         return completion(true, { });
     }
 
-    std::optional<SimpleRange> targetRange;
-    if (searchText.isEmpty())
-        targetRange = makeRangeSelectingNodeContents(*foundNode);
-    else
-        targetRange = searchForText(*foundNode, searchText);
-
+    auto targetRange = rangeForTextInContainer(searchText, *foundNode);
     if (!targetRange)
         return completion(false, searchTextNotFoundDescription(searchText));
 
-    if (!foundNode->protectedDocument()->selection().setSelectedRange(*targetRange, Affinity::Downstream, FrameSelection::ShouldCloseTyping::Yes, UserTriggered::Yes))
+    Ref document = foundNode->document();
+    if (!document->selection().setSelectedRange(*targetRange, Affinity::Downstream, FrameSelection::ShouldCloseTyping::Yes, UserTriggered::Yes))
         return completion(false, "Failed to set selected range"_s);
+
+    if (revealText)
+        document->selection().revealSelection();
+
+    return completion(true, { });
+}
+
+static void highlightText(Page& page, std::optional<NodeIdentifier>&& identifier, const String& searchText, bool scrollToVisible, CompletionHandler<void(bool, String&&)>&& completion)
+{
+    RefPtr foundNode = resolveNodeWithBodyAsFallback(page, identifier);
+    if (!foundNode)
+        return completion(false, invalidNodeIdentifierDescription(WTFMove(identifier)));
+
+    auto range = rangeForTextInContainer(searchText, *foundNode);
+    if (!range)
+        return completion(false, searchTextNotFoundDescription(searchText));
+
+    Ref document = foundNode->document();
+    RefPtr view = document->view();
+    if (!view)
+        return completion(false, nullFrameDescription);
+
+    document->textExtractionHighlightRegistry().addAnnotationHighlightWithRange(StaticRange::create(*range));
+
+    if (scrollToVisible)
+        view->revealRangeWithTemporarySelection(*range);
 
     return completion(true, { });
 }
@@ -1247,13 +1303,14 @@ void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<
     }
     case Action::SelectText: {
         if (auto identifier = interaction.nodeIdentifier) {
-            if (selectOptionByValue(*identifier, interaction.text))
+            if (selectOptionByValue(WTFMove(*identifier), interaction.text))
                 return completion(true, interactedWithSelectElementDescription);
-
-            return selectText(*identifier, WTFMove(interaction.text), WTFMove(completion));
         }
 
-        return completion(false, "Missing nodeIdentifier"_s);
+        if (interaction.text.isEmpty() && !interaction.nodeIdentifier)
+            return completion(false, "Missing nodeIdentifier and/or text"_s);
+
+        return selectText(page, WTFMove(interaction.nodeIdentifier), WTFMove(interaction.text), interaction.scrollToVisible, WTFMove(completion));
     }
     case Action::TextInput: {
         if (auto identifier = interaction.nodeIdentifier)
@@ -1263,6 +1320,12 @@ void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<
     }
     case Action::KeyPress:
         return simulateKeyPress(page, WTFMove(interaction.nodeIdentifier), interaction.text, WTFMove(completion));
+    case Action::HighlightText: {
+        if (interaction.text.isEmpty() && !interaction.nodeIdentifier)
+            return completion(false, "Missing nodeIdentifier and/or text"_s);
+
+        return highlightText(page, WTFMove(interaction.nodeIdentifier), WTFMove(interaction.text), interaction.scrollToVisible, WTFMove(completion));
+    }
     default:
         ASSERT_NOT_REACHED();
         break;
@@ -1368,12 +1431,8 @@ static String textDescription(const Element& element, Vector<String>& stringsToV
     return parentDescription;
 }
 
-static String textDescription(std::optional<NodeIdentifier> identifier, Vector<String>& stringsToValidate)
+static String textDescription(Node* node, Vector<String>& stringsToValidate)
 {
-    if (!identifier)
-        return { };
-
-    RefPtr node = Node::fromIdentifier(*identifier);
     if (!node)
         return { };
 
@@ -1413,7 +1472,36 @@ static String textDescription(std::optional<NodeIdentifier> identifier, Vector<S
     return { };
 }
 
-InteractionDescription interactionDescription(const Interaction& interaction)
+static String textDescription(std::optional<NodeIdentifier> identifier, Vector<String>& stringsToValidate)
+{
+    if (!identifier)
+        return { };
+
+    return textDescription(RefPtr { Node::fromIdentifier(*identifier) }.get(), stringsToValidate);
+}
+
+static String textDescription(Page& page, FloatPoint locationInRootView, Vector<String>& stringsToValidate)
+{
+    RefPtr frame = page.localMainFrame();
+    if (!frame)
+        return { };
+
+    RefPtr document = frame->document();
+    if (!document)
+        return { };
+
+    RefPtr view = frame->view();
+    if (!view)
+        return { };
+
+    RefPtr targetNode = findNodeAtRootViewLocation(*view, *document, locationInRootView);
+    if (!targetNode)
+        return { };
+
+    return textDescription(targetNode.get(), stringsToValidate);
+}
+
+InteractionDescription interactionDescription(const Interaction& interaction, Page& page)
 {
     auto action = interaction.action;
     bool isSingleKeyPress = action == Action::KeyPress && PlatformKeyboardEvent::syntheticEventFromText(PlatformEvent::Type::KeyUp, interaction.text);
@@ -1433,6 +1521,8 @@ InteractionDescription interactionDescription(const Interaction& interaction)
         case Action::TextInput:
         case Action::KeyPress:
             return "Enter text"_s;
+        case Action::HighlightText:
+            return "Highlight text"_s;
         }
         ASSERT_NOT_REACHED();
         return { };
@@ -1448,13 +1538,12 @@ InteractionDescription interactionDescription(const Interaction& interaction)
         }
     }
 
-    if (auto location = interaction.locationInRootView) {
-        auto roundedLocation = roundedIntPoint(*location);
-        description.append(" at coordinates ("_s, roundedLocation.x(), ", "_s, roundedLocation.y(), ')');
-    }
+    auto appendElementString = [&]<typename... T>(T&&... args) {
+        auto elementString = textDescription(std::forward<T>(args)...);
+        if (elementString.isEmpty())
+            return;
 
-    if (auto elementString = textDescription(interaction.nodeIdentifier, stringsToValidate); !elementString.isEmpty()) {
-        auto prefix = [action] -> String {
+        auto elementPrefix = [action] -> String {
             switch (action) {
             case Action::Click:
                 return " on "_s;
@@ -1462,6 +1551,7 @@ InteractionDescription interactionDescription(const Interaction& interaction)
                 return " inside "_s;
             case Action::SelectMenuItem:
             case Action::KeyPress:
+            case Action::HighlightText:
                 return " in "_s;
             case Action::TextInput:
                 return " into "_s;
@@ -1469,11 +1559,25 @@ InteractionDescription interactionDescription(const Interaction& interaction)
             ASSERT_NOT_REACHED();
             return { };
         }();
-        description.append(makeString(WTFMove(prefix), WTFMove(elementString)));
+
+        description.append(makeString(WTFMove(elementPrefix), WTFMove(elementString)));
+    };
+
+    if (auto location = interaction.locationInRootView) {
+        auto roundedLocation = roundedIntPoint(*location);
+        description.append(" at coordinates ("_s, roundedLocation.x(), ", "_s, roundedLocation.y(), ')');
+        appendElementString(page, *location, stringsToValidate);
+    } else
+        appendElementString(interaction.nodeIdentifier, stringsToValidate);
+
+    bool appendedReplaceTextDescription = false;
+    if ((action == Action::KeyPress || action == Action::TextInput) && interaction.replaceAll) {
+        appendedReplaceTextDescription = true;
+        description.append(", replacing any existing content"_s);
     }
 
-    if ((action == Action::KeyPress || action == Action::TextInput) && interaction.replaceAll)
-        description.append(", replacing any existing content"_s);
+    if ((action == Action::SelectText || action == Action::HighlightText) && interaction.scrollToVisible)
+        description.append(makeString(appendedReplaceTextDescription ? " and"_s : ","_s, " scrolling the targeted range into view"_s));
 
     return { description.toString(), WTFMove(stringsToValidate) };
 }

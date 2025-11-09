@@ -41,7 +41,10 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioMediaStreamTrackRendererCocoa);
 
 AudioMediaStreamTrackRendererCocoa::AudioMediaStreamTrackRendererCocoa(Init&& init)
     : AudioMediaStreamTrackRenderer(WTFMove(init))
-    , m_resetObserver([this] { reset(); })
+    , m_resetObserver(ResetObserver::create([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->reset();
+    }))
     , m_deviceID(AudioMediaStreamTrackRenderer::defaultDeviceID())
 {
 }

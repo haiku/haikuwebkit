@@ -46,6 +46,10 @@
 #import <wtf/SystemTracing.h>
 #import <wtf/TZoneMallocInlines.h>
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#import "RemoteMonotonicTimeline.h"
+#endif
+
 namespace WebKit {
 using namespace WebCore;
 
@@ -643,19 +647,27 @@ void RemoteLayerTreeEventDispatcher::animationsWereRemovedFromNode(RemoteLayerTr
         animationStack->clear(node.protectedLayer().get());
 }
 
-void RemoteLayerTreeEventDispatcher::registerTimelineIfNecessary(WebCore::ProcessIdentifier processIdentifier, Seconds originTime, MonotonicTime now)
+void RemoteLayerTreeEventDispatcher::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
 {
     assertIsHeld(m_animationLock);
-    if (m_timelines.find(processIdentifier) == m_timelines.end())
-        m_timelines.set(processIdentifier, RemoteAnimationTimeline::create(originTime, now));
+    if (auto scrollingTree = this->scrollingTree())
+        scrollingTree->updateTimelineRegistration(processIdentifier, timelineRepresentations);
+    if (!m_monotonicTimelineRegistry)
+        m_monotonicTimelineRegistry = makeUnique<RemoteMonotonicTimelineRegistry>();
+    m_monotonicTimelineRegistry->update(processIdentifier, timelineRepresentations, now);
+    if (m_monotonicTimelineRegistry->isEmpty())
+        m_monotonicTimelineRegistry = nullptr;
 }
 
-const RemoteAnimationTimeline* RemoteLayerTreeEventDispatcher::timeline(WebCore::ProcessIdentifier processIdentifier) const
+RefPtr<const RemoteAnimationTimeline> RemoteLayerTreeEventDispatcher::timeline(const TimelineID& timelineID)
 {
     assertIsHeld(m_animationLock);
-    auto it = m_timelines.find(processIdentifier);
-    if (it != m_timelines.end())
-        return it->value.ptr();
+    if (m_monotonicTimelineRegistry) {
+        if (RefPtr timeline = m_monotonicTimelineRegistry->get(timelineID))
+            return timeline;
+    }
+    if (auto scrollingTree = this->scrollingTree())
+        return scrollingTree->timeline(timelineID);
     return nullptr;
 }
 
@@ -667,9 +679,8 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
     // FIXME: Rather than using 'now' at the point this is called, we
     // should probably be using the timestamp of the (next?) display
     // link update or vblank refresh.
-    auto now = MonotonicTime::now();
-    for (auto& timeline : m_timelines.values())
-        timeline->updateCurrentTime(now);
+    if (m_monotonicTimelineRegistry)
+        m_monotonicTimelineRegistry->advanceCurrentTime(MonotonicTime::now());
 
     auto animationStacks = std::exchange(m_animationStacks, { });
     for (auto [layerID, currentAnimationStack] : animationStacks) {

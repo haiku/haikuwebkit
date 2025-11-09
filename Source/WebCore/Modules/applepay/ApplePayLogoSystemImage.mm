@@ -43,17 +43,17 @@ static NSBundle *passKitBundleSingleton()
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         RetainPtr systemDirectoryPath = FileSystem::systemDirectoryPath();
-        passKitBundle = [NSBundle bundleWithURL:[NSURL fileURLWithPath:[systemDirectoryPath stringByAppendingPathComponent:@"Library/Frameworks/PassKit.framework"] isDirectory:YES]];
+        passKitBundle = [NSBundle bundleWithURL:[NSURL fileURLWithPath:retainPtr([systemDirectoryPath stringByAppendingPathComponent:@"Library/Frameworks/PassKit.framework"]).get() isDirectory:YES]];
     });
     return passKitBundle;
 }
 
 static RetainPtr<CGPDFPageRef> loadPassKitPDFPage(NSString *imageName)
 {
-    NSURL *url = [passKitBundleSingleton() URLForResource:imageName withExtension:@"pdf"];
+    RetainPtr<NSURL> url = [passKitBundleSingleton() URLForResource:imageName withExtension:@"pdf"];
     if (!url)
         return nullptr;
-    auto document = adoptCF(CGPDFDocumentCreateWithURL((CFURLRef)url));
+    auto document = adoptCF(CGPDFDocumentCreateWithURL((CFURLRef)url.get()));
     if (!document)
         return nullptr;
     if (!CGPDFDocumentGetNumberOfPages(document.get()))

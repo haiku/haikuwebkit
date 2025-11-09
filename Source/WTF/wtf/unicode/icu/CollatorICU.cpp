@@ -42,6 +42,7 @@
 #if OS(DARWIN) && USE(CF)
 #include <CoreFoundation/CoreFoundation.h>
 #include <wtf/RetainPtr.h>
+#include <wtf/cf/TypeCastsCF.h>
 #endif
 
 namespace WTF {
@@ -75,10 +76,11 @@ static inline CString copyShortASCIIString(CFStringRef string)
 static CString copyDefaultLocale()
 {
 #if !PLATFORM(IOS_FAMILY)
-    return copyShortASCIIString(static_cast<CFStringRef>(CFLocaleGetValue(adoptCF(CFLocaleCopyCurrent()).get(), kCFLocaleCollatorIdentifier)));
+    RetainPtr locale = checked_cf_cast<CFStringRef>(CFLocaleGetValue(adoptCF(CFLocaleCopyCurrent()).get(), kCFLocaleCollatorIdentifier));
+    return copyShortASCIIString(locale.get());
 #else
     // FIXME: Documentation claims the code above would work on iOS 4.0 and later. After test that works, we should remove this and use that instead.
-    return copyShortASCIIString(adoptCF(static_cast<CFStringRef>(CFPreferencesCopyValue(CFSTR("AppleCollationOrder"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost))).get());
+    return copyShortASCIIString(adoptCF(checked_cf_cast<CFStringRef>(CFPreferencesCopyValue(CFSTR("AppleCollationOrder"), kCFPreferencesAnyApplication, kCFPreferencesCurrentUser, kCFPreferencesAnyHost))).get());
 #endif
 }
 

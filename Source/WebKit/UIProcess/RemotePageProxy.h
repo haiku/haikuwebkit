@@ -64,6 +64,7 @@ class NativeWebMouseEvent;
 class RemotePageDrawingAreaProxy;
 class RemotePageFullscreenManagerProxy;
 class RemotePagePlaybackSessionManagerProxy;
+class RemotePageScreenOrientationManagerProxy;
 class RemotePageVideoPresentationManagerProxy;
 class RemotePageVisitedLinkStoreRegistration;
 class UserData;
@@ -71,6 +72,7 @@ class WebFrameProxy;
 class WebPageProxy;
 class WebProcessActivityState;
 class WebProcessProxy;
+class WebScreenOrientationManagerProxy;
 
 struct FrameInfoData;
 struct FrameTreeCreationParameters;
@@ -106,6 +108,8 @@ public:
     WebCore::MediaProducerMediaStateFlags mediaState() const { return m_mediaState; }
     void setDrawingArea(DrawingAreaProxy*);
 
+    void setCurrentOrientation(WebCore::ScreenOrientationType);
+
 private:
     RemotePageProxy(WebPageProxy&, WebProcessProxy&, const WebCore::Site&, WebPageProxyMessageReceiverRegistration*, std::optional<WebCore::PageIdentifier>);
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
@@ -130,6 +134,7 @@ private:
     std::unique_ptr<RemotePageVisitedLinkStoreRegistration> m_visitedLinkStoreRegistration;
     WebPageProxyMessageReceiverRegistration m_messageReceiverRegistration;
     WebCore::MediaProducerMediaStateFlags m_mediaState;
+    RefPtr<RemotePageScreenOrientationManagerProxy> m_screenOrientationManager;
 };
 
 }

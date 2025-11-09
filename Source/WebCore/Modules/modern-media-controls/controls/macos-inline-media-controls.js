@@ -64,7 +64,7 @@ class MacOSInlineMediaControls extends InlineMediaControls
             return;
         }
         
-        if (!this.mediaControlsHost.isMediaControlsMacInlineSizeSpecsEnabled) {
+        if (!this.mediaControlsHost.isMediaControlsMacInlineSizeSpecsEnabled || this.element.classList.contains('audio')) {
             this.timeControl.scrubber.knobStyle = Slider.KnobStyle.Bar;
             this._volumeSliderContainer.children = [new BackgroundTint, this.volumeSlider];
             
@@ -121,7 +121,7 @@ class MacOSInlineMediaControls extends InlineMediaControls
         if (!this._inlineBottomControlsBarHeight)
             this._inlineBottomControlsBarHeight = this.computedValueForStylePropertyInPx("--inline-controls-bar-height");
 
-        if (this.mediaControlsHost && !this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled) {
+        if (this.mediaControlsHost && (!this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled || this.element.classList.contains('audio'))) {
             this._volumeSliderContainer.x = this.rightContainer.x + this.muteButton.x;
             this._volumeSliderContainer.y = this.bottomControlsBar.y - this._inlineBottomControlsBarHeight - this._inlineInsideMargin;
         } else {
@@ -139,10 +139,16 @@ class MacOSInlineMediaControls extends InlineMediaControls
                 this._volumeSliderContainer.children = [new BackgroundTint, this.volumeSlider, this.muteButton];
                 children.push(this._volumeSliderContainer);
                 this.children = children;
+
+                if (this.muteButton)
+                    this.muteButton.visible = true;
             } else if (!shouldShowVolumeContainer && children.includes(this._volumeSliderContainer)) {
                 const volumeContainerIndex = children.indexOf(this._volumeSliderContainer);
                 children.splice(volumeContainerIndex, 1);
                 this.children = children;
+
+                if (this.muteButton)
+                    this.muteButton.visible = false;
             }
         }
     }
@@ -158,7 +164,7 @@ class MacOSInlineMediaControls extends InlineMediaControls
             this._setupVolumeSliderConfiguration();
         }
 
-        if (this.mediaControlsHost && !this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled) {
+        if (this.mediaControlsHost && (!this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled || this.element.classList.contains('audio'))) {
             if (event.type === "mouseenter" && event.currentTarget === this.muteButton.element) {
                 if (this.muteButton.parent === this.rightContainer) {
                     this.addChild(this._volumeSliderContainer);
@@ -177,7 +183,7 @@ class MacOSInlineMediaControls extends InlineMediaControls
             this._setupVolumeSliderConfiguration();
         }
 
-        if (this.mediaControlsHost && this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled) {
+        if (this.mediaControlsHost && this.mediaControlsHost?.isMediaControlsMacInlineSizeSpecsEnabled && !this.element.classList.contains('audio')) {
             const buttons = super.rightContainerButtons();
             if (buttons && this.muteButton) {
                 const muteButtonIndex = buttons.indexOf(this.muteButton);

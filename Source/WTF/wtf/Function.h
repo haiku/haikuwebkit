@@ -28,14 +28,20 @@
 #include <memory>
 #include <wtf/FastMalloc.h>
 #include <wtf/Forward.h>
+#include <wtf/SwiftBridging.h>
 
 namespace WTF {
 
 namespace Detail {
 
+class CallableWrapperAllocatorBase {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(CallableWrapperAllocatorBase);
+public:
+    virtual ~CallableWrapperAllocatorBase() { }
+};
+
 template<typename Out, typename... In>
-class CallableWrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(CallableWrapperBase);
+class CallableWrapperBase : public CallableWrapperAllocatorBase {
 public:
     virtual ~CallableWrapperBase() { }
     virtual Out call(In...) = 0;
@@ -75,6 +81,19 @@ public:
     template<typename FunctionType, class = typename std::enable_if<std::is_pointer<FunctionType>::value && std::is_function<typename std::remove_pointer<FunctionType>::type>::value>::type>
     Function(FunctionType f)
         : m_callableWrapper(makeUnique<Detail::CallableWrapper<FunctionType, Out, In...>>(std::forward<FunctionType>(f))) { }
+
+#if defined(__APPLE__)
+    // Always use C++ lambdas to create a WTF::Function in Objective-C++.
+    // Always use Swift closures (implicitly as Objective-C blocks) to create a WTF::Function in Swift.
+#ifndef __swift__
+    Function(Out (^block)(In... args)) = delete;
+#else
+    Function(Out (^block)(In... args))
+        : m_callableWrapper(makeUnique<Detail::CallableWrapper<Out (^)(In...), Out, In...>>(std::forward<Out (^)(In...)>(block)))
+    {
+    }
+#endif
+#endif // defined(__APPLE__)
 
     Out operator()(In... in) const
     {
@@ -119,7 +138,7 @@ private:
     friend Function adopt<Out, In...>(Impl*);
 
     std::unique_ptr<Impl> m_callableWrapper;
-};
+} SWIFT_ESCAPABLE;
 
 template<typename Out, typename... In> Function<Out(In...)> adopt(Detail::CallableWrapperBase<Out, In...>* impl)
 {

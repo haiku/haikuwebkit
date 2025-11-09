@@ -533,7 +533,7 @@ void TextChecker::getGuessesForWord(SpellDocumentTag spellDocumentTag, const Str
         [checker checkString:context.createNSString().get() range:NSMakeRange(0, context.length()) types:NSTextCheckingTypeOrthography options:options inSpellDocumentWithTag:spellDocumentTag orthography:&orthography wordCount:0];
         language = [checker languageForWordRange:NSMakeRange(0, context.length()) inString:context.createNSString().get() orthography:orthography];
     }
-    guesses = makeVector<String>([checker guessesForWordRange:NSMakeRange(0, word.length()) inString:word.createNSString().get() language:language.get() inSpellDocumentWithTag:spellDocumentTag]);
+    guesses = makeVector<String>(retainPtr([checker guessesForWordRange:NSMakeRange(0, word.length()) inString:word.createNSString().get() language:language.get() inSpellDocumentWithTag:spellDocumentTag]).get());
 }
 
 void TextChecker::learnWord(SpellDocumentTag, const String& word)

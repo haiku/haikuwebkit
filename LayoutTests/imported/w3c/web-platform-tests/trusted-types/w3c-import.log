@@ -104,6 +104,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/block-string-assignment-to-text-and-url-sinks.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/block-text-node-insertion-into-script-element.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/block-text-node-insertion-into-svg-script-element.html
+/LayoutTests/imported/w3c/web-platform-tests/trusted-types/cjk-string-assignment-to-paragraph-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/trusted-types/cjk-string-assignment-to-paragraph-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/trusted-types/cjk-string-assignment-to-paragraph.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/csp-block-eval.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/default-policy-callback-arguments.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/default-policy-report-only.html
@@ -123,6 +126,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/eval-function-constructor.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/eval-no-csp-no-tt-default-policy.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/eval-no-csp-no-tt.html
+/LayoutTests/imported/w3c/web-platform-tests/trusted-types/eval-with-non-trusted-script-object.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/eval-with-permissive-csp.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/get-trusted-types-compliant-attribute-value.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/idlharness.window.js
@@ -163,6 +167,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-attributes-mutations-in-callback.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-attributes-no-require-trusted-types.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-attributes-require-trusted-types-default-policy.html
+/LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-attributes-require-trusted-types-no-default-policy-error-cases.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-attributes-require-trusted-types-no-default-policy.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/set-event-handlers-content-attributes.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/trusted-types/should-sink-type-mismatch-violation-be-blocked-by-csp-001.html

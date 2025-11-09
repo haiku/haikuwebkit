@@ -282,6 +282,34 @@ TEST(PasteWebArchive, WebArchiveTypeIdentifier)
     EXPECT_WK_STREQ("rgb(255, 0, 0)", [webView stringByEvaluatingJavaScript:@"getComputedStyle(document.querySelector('strong')).color"]);
 }
 
+TEST(PasteWebArchive, DestinationUsesDarkMode)
+{
+    RetainPtr url = [NSURL URLWithString:@"file:///some-file.html"];
+    RetainPtr markup = @"<p class='p1'><span class='s1'>Test</span></p>";
+
+    RetainPtr mainResource = adoptNS([[WebResource alloc] initWithData:[markup dataUsingEncoding:NSUTF8StringEncoding] URL:url.get() MIMEType:@"text/html" textEncodingName:@"utf-8" frameName:nil]);
+    RetainPtr archive = adoptNS([[WebArchive alloc] initWithMainResource:mainResource.get() subresources:nil subframeArchives:nil]);
+
+    RetainPtr pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard declareTypes:@[UTTypeWebArchive.identifier] owner:nil];
+    [pasteboard setData:[archive data] forType:UTTypeWebArchive.identifier];
+
+    RetainPtr webView = createWebViewWithCustomPasteboardDataEnabled();
+    [webView forceDarkMode];
+    [webView _setEditable:YES];
+    [webView synchronouslyLoadHTMLString:@"<html><head><style> :root { color-scheme: light dark; } </style></head><body><br><div id='AppleMailSignature' dir='ltr'>Sent from my iPhone</div></body></html>"];
+
+    [webView stringByEvaluatingJavaScript:@"document.body.focus()"];
+    [webView paste:nil];
+
+    EXPECT_WK_STREQ("rgb(255, 255, 255)", [webView stringByEvaluatingJavaScript:@"getComputedStyle(document.querySelector('.s1')).color"]);
+
+    [webView forceLightMode];
+    [webView waitForNextPresentationUpdate];
+
+    EXPECT_WK_STREQ("rgb(0, 0, 0)", [webView stringByEvaluatingJavaScript:@"getComputedStyle(document.querySelector('.s1')).color"]);
+}
+
 #if ENABLE(DATA_DETECTION)
 
 TEST(PasteWebArchive, StripsDataDetectorsLinks)

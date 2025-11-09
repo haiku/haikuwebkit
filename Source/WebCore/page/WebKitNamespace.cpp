@@ -34,6 +34,7 @@
 #include "Logging.h"
 #include "WebKitJSHandle.h"
 #include "WebKitSerializedNode.h"
+#include "WebKitStringMatchersNamespace.h"
 #include <JavaScriptCore/JSCellInlines.h>
 
 #define WEBKIT_NAMESPACE_RELEASE_LOG_ERROR(channel, fmt, ...) RELEASE_LOG_ERROR(channel, "%p - WebKitNamespace::" fmt, this, ##__VA_ARGS__)
@@ -48,6 +49,7 @@ namespace WebCore {
 WebKitNamespace::WebKitNamespace(LocalDOMWindow& window, UserContentProvider& userContentProvider)
     : LocalDOMWindowProperty(&window)
     , m_messageHandlerNamespace(UserMessageHandlersNamespace::create(*window.protectedFrame(), userContentProvider))
+    , m_stringMatchers(WebKitStringMatchersNamespace::create(*window.protectedFrame(), userContentProvider))
 {
     ASSERT(window.frame());
 }
@@ -66,7 +68,12 @@ UserMessageHandlersNamespace* WebKitNamespace::messageHandlers()
     }
 #endif
 
-    return &m_messageHandlerNamespace.get();
+    return m_messageHandlerNamespace.ptr();
+}
+
+WebKitStringMatchersNamespace& WebKitNamespace::stringMatchers()
+{
+    return m_stringMatchers;
 }
 
 Ref<WebKitJSHandle> WebKitNamespace::createJSHandle(JSC::JSGlobalObject& globalObject, JSC::Strong<JSC::JSObject> object)

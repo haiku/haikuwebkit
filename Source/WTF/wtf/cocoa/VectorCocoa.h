@@ -28,6 +28,8 @@
 
 #pragma once
 
+#ifdef __OBJC__
+
 #include <wtf/BlockPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/Vector.h>
@@ -123,3 +125,5 @@ inline RetainPtr<dispatch_data_t> makeDispatchData(Vector<T>&& vector)
 using WTF::createNSArray;
 using WTF::makeDispatchData;
 using WTF::makeVector;
+
+#endif // __OBJC__

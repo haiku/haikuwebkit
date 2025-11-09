@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@ class DDMesh;
 
 namespace WebCore {
 
+class GraphicsLayerContentsDisplayDelegate;
 class ModelDisplayBufferDisplayDelegate;
 class ModelPlayerClient;
 class Page;
@@ -62,8 +64,7 @@ private:
     // ModelPlayer overrides.
     void load(Model&, LayoutSize) override;
     void sizeDidChange(LayoutSize) override;
-    CALayer *layer() override;
-    std::optional<LayerHostingContextIdentifier> layerHostingContextIdentifier() override;
+    void configureGraphicsLayer(GraphicsLayer&, ModelPlayerGraphicsLayerConfiguration&&) override;
     void enterFullscreen() override;
     void handleMouseDown(const LayoutPoint&, MonotonicTime) override;
     void handleMouseMove(const LayoutPoint&, MonotonicTime) override;
@@ -82,11 +83,11 @@ private:
     void setIsMuted(bool, CompletionHandler<void(bool success)>&&) override;
     ModelPlayerAccessibilityChildren accessibilityChildren() override;
 
-    const MachSendRight* displayBuffer() const override;
-    GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate() override;
+    const MachSendRight* displayBuffer() const;
+    GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate();
     void ensureOnMainThreadWithProtectedThis(Function<void(Ref<DDModelPlayer>)>&& task);
 
-    ThreadSafeWeakPtr<ModelPlayerClient> m_client;
+    WeakPtr<ModelPlayerClient> m_client;
 
     WebCore::ModelPlayerIdentifier m_id;
     RetainPtr<WebUSDModelLoader> m_modelLoader;
@@ -95,6 +96,7 @@ private:
     WeakRef<Page> m_page;
     mutable RefPtr<ModelDisplayBufferDisplayDelegate> m_contentsDisplayDelegate;
     uint32_t m_currentTexture { 0 };
+    bool m_didFinishLoading { false };
 };
 
 }

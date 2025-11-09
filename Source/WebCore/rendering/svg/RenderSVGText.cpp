@@ -934,7 +934,7 @@ FloatRect RenderSVGText::strokeBoundingBox() const
 
     Ref textElement = this->textElement();
     SVGLengthContext lengthContext(textElement.ptr());
-    strokeBoundaries.inflate(lengthContext.valueForLength(style().strokeWidth()));
+    strokeBoundaries.inflate(lengthContext.valueForLength(style().strokeWidth(), Style::ZoomNeeded { }));
     return strokeBoundaries;
 }
 

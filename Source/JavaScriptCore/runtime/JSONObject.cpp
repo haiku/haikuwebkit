@@ -714,6 +714,7 @@ private:
     void append(JSValue);
     String result();
 
+    // FIXME These should probably just take an ASCIILiteral.
     void append(char, char, char, char);
     void append(char, char, char, char, char);
     template<typename T> void recordFailure(FailureReason, T&& reason);
@@ -1257,32 +1258,23 @@ void FastStringifier<CharType, bufferMode>::append(JSValue value)
             recordFailure("String::tryGetValue"_s);
             return;
         }
-
         auto stringLength = string.data.length();
-        if constexpr (sizeof(CharType) == 1) {
-            if (!string.data.is8Bit()) [[unlikely]] {
-                if constexpr (bufferMode == BufferMode::DynamicBuffer)
-                    recordFailure(FailureReason::Unknown, "16-bit string"_s);
-                else
-                    recordFailure(m_length < (m_capacity / 2) ? FailureReason::Found16BitEarly : FailureReason::Found16BitLate, "16-bit string"_s);
-                return;
-            }
-            if (!hasRemainingCapacity(1 + stringLength + 1)) [[unlikely]] {
-                recordBufferFull();
-                return;
-            }
-            buffer()[m_length] = '"';
-            if (!stringCopySameType(string.data.span8(), buffer() + m_length + 1)) [[likely]] {
-                buffer()[m_length + 1 + stringLength] = '"';
-                m_length += 1 + stringLength + 1;
-                return;
+        if (!hasRemainingCapacity(1 + stringLength + 1)) [[unlikely]] {
+            recordBufferFull();
+            return;
+        }
+        buffer()[m_length] = '"';
+
+        if constexpr (std::same_as<CharType, Latin1Character>) {
+            if (string.data.is8Bit()) [[likely]] {
+                if (!stringCopySameType(string.data.span8(), buffer() + m_length + 1)) [[likely]] {
+                    buffer()[m_length + 1 + stringLength] = '"';
+                    m_length += 1 + stringLength + 1;
+                    return;
+                }
             }
         } else {
-            if (!hasRemainingCapacity(1 + stringLength + 1)) [[unlikely]] {
-                recordBufferFull();
-                return;
-            }
-            buffer()[m_length] = '"';
+            static_assert(std::same_as<CharType, char16_t>);
             if (string.data.is8Bit()) {
                 if (!stringCopyUpconvert(string.data.span8(), buffer() + m_length + 1)) [[likely]] {
                     buffer()[m_length + 1 + stringLength] = '"';
@@ -1307,14 +1299,30 @@ void FastStringifier<CharType, bufferMode>::append(JSValue value)
             recordBufferFull();
             return;
         }
+
+        ASSERT(buffer()[m_length] == '"');
         auto output = bufferSpan().subspan(m_length + 1);
-        if constexpr (sizeof(CharType) == 2) {
+        if constexpr (std::same_as<CharType, char16_t>) {
             if (string.data.is8Bit())
                 WTF::appendEscapedJSONStringContent(output, string.data.span8());
             else
                 WTF::appendEscapedJSONStringContent(output, string.data.span16());
-        } else
-            WTF::appendEscapedJSONStringContent(output, string.data.span8());
+        } else {
+            if (string.data.is8Bit())
+                WTF::appendEscapedJSONStringContent(output, string.data.span8());
+            else {
+                // It's possible the UTF-16 string is actually Latin-1. We try to avoid that but bailing out here is _way_ more expensive if it does sometimes happen.
+                bool success = WTF::appendEscapedJSONStringContent(output, string.data.span16());
+                if (!success) [[unlikely]] {
+                    if constexpr (bufferMode == BufferMode::DynamicBuffer)
+                        recordFailure(FailureReason::Unknown, "16-bit string, "_s);
+                    else
+                        recordFailure(m_length < (m_capacity / 2) ? FailureReason::Found16BitEarly : FailureReason::Found16BitLate, "16-bit string, "_s);
+                    return;
+                }
+            }
+        }
+
         consume(output) = '"';
         m_length = output.data() - buffer();
         return;
@@ -1362,6 +1370,7 @@ void FastStringifier<CharType, bufferMode>::append(JSValue value)
             }
 
             // Right now, we do not support 16-bit name here since name in 16-bit is significantly more rare than 16-bit string.
+            // FIXME: We should just extract the `StringType` case into a helper and use that.
             if (!name.is8Bit()) [[unlikely]] {
                 recordFailure("16-bit property name"_s);
                 return false;
@@ -1386,7 +1395,7 @@ void FastStringifier<CharType, bufferMode>::append(JSValue value)
                 buffer()[m_length++] = ',';
             buffer()[m_length] = '"';
 
-            if constexpr (sizeof(CharType) == 2) {
+            if constexpr (std::same_as<CharType, char16_t>) {
                 if (stringCopyUpconvert(span, buffer() + m_length + 1)) [[unlikely]] {
                     recordFailure("property name character needs escaping"_s);
                     return false;

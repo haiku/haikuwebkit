@@ -106,7 +106,7 @@ void AuxiliaryProcess::platformInitialize(const AuxiliaryProcessInitializationPa
 #endif
     floatingPointEnvironment.saveMainThreadEnvironment();
 
-    [[NSFileManager defaultManager] changeCurrentDirectoryPath:[[NSBundle mainBundle] bundlePath]];
+    [[NSFileManager defaultManager] changeCurrentDirectoryPath:retainPtr([[NSBundle mainBundle] bundlePath]).get()];
 
     setApplicationBundleIdentifier(parameters.clientBundleIdentifier);
 

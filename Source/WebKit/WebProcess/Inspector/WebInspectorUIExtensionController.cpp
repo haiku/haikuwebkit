@@ -238,7 +238,7 @@ void WebInspectorUIExtensionController::evaluateScriptForExtension(const Inspect
         WTFMove(optionalArguments)
     };
 
-    m_frontendClient->frontendAPIDispatcher().dispatchCommandWithResultAsync("evaluateScriptForExtension"_s, WTFMove(arguments), [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](WebCore::InspectorFrontendAPIDispatcher::EvaluationResult&& result) mutable {
+    m_frontendClient->protectedFrontendAPIDispatcher()->dispatchCommandWithResultAsync("evaluateScriptForExtension"_s, WTFMove(arguments), [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](WebCore::InspectorFrontendAPIDispatcher::EvaluationResult&& result) mutable {
         if (!weakThis) {
             completionHandler(makeUnexpected(std::nullopt), Inspector::ExtensionError::ContextDestroyed);
             return;

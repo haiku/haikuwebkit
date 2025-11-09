@@ -72,6 +72,9 @@ OS_OBJECT_RETURNS_RETAINED nw_protocol_options_t nw_webtransport_create_options(
 bool nw_protocol_options_is_webtransport(nw_protocol_options_t);
 void nw_webtransport_options_set_is_unidirectional(nw_protocol_options_t, bool);
 void nw_webtransport_options_set_is_datagram(nw_protocol_options_t, bool);
+OS_OBJECT_RETURNS_RETAINED nw_protocol_definition_t nw_protocol_copy_webtransport_definition(void);
+bool nw_webtransport_metadata_get_is_unidirectional(nw_protocol_metadata_t);
+
 void nw_webtransport_options_set_connection_max_sessions(nw_protocol_options_t, uint64_t);
 void nw_webtransport_options_add_connect_request_header(nw_protocol_options_t, const char*, const char*);
 uint32_t nw_webtransport_metadata_get_session_error_code(nw_protocol_metadata_t);

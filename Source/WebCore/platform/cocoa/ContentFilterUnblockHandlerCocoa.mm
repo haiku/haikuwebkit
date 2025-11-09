@@ -47,11 +47,6 @@
 #import <wtf/CompletionHandler.h>
 #endif
 
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-SOFT_LINK_PRIVATE_FRAMEWORK(WebContentAnalysis);
-SOFT_LINK_CLASS(WebContentAnalysis, WebFilterEvaluator);
-#endif
-
 namespace WebCore {
 
 ContentFilterUnblockHandler::ContentFilterUnblockHandler(String unblockURLHost, UnblockRequesterFunction&& unblockRequester)
@@ -84,63 +79,21 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(
     std::optional<URL>&& evaluatedURL,
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    Vector<uint8_t>&& webFilterEvaluatorData,
+    RetainPtr<WebFilterEvaluator>&& webFilterEvaluator,
 #endif
-    bool unblockedAfterRequest)
+    bool unblockedAfterRequest
+)
     : m_unblockURLHost(WTFMove(unblockURLHost))
     , m_unreachableURL(WTFMove(unreachableURL))
 #if HAVE(WEBCONTENTRESTRICTIONS)
     , m_evaluatedURL(WTFMove(evaluatedURL))
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    , m_webFilterEvaluatorData(WTFMove(webFilterEvaluatorData))
+    , m_webFilterEvaluator(WTFMove(webFilterEvaluator))
 #endif
     , m_unblockedAfterRequest(unblockedAfterRequest)
 {
 }
-
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-// FIXME: Remove the conversion to and from Vector<uint8_t> and serialize individual members when rdar://107281862 is resolved.
-Vector<uint8_t> ContentFilterUnblockHandler::webFilterEvaluatorData() const
-{
-    if (!m_webFilterEvaluatorData.isEmpty())
-        return m_webFilterEvaluatorData;
-
-    if (!m_webFilterEvaluator)
-        return { };
-
-    NSError *error = nil;
-    return makeVector([NSKeyedArchiver archivedDataWithRootObject:m_webFilterEvaluator.get() requiringSecureCoding:YES error:&error]);
-}
-
-static RetainPtr<WebFilterEvaluator> unpackWebFilterEvaluatorData(Vector<uint8_t>&& vector)
-{
-    NSError *error { nil };
-    NSSet<Class> *classes = [NSSet setWithObjects:getWebFilterEvaluatorClassSingleton(), NSNumber.class, NSURL.class, NSString.class, NSMutableString.class, nil];
-    RetainPtr data = toNSDataNoCopy(vector.span(), FreeWhenDone::No);
-    return [NSKeyedUnarchiver _strictlyUnarchivedObjectOfClasses:classes fromData:data.get() error:&error];
-}
-
-bool ContentFilterUnblockHandler::hasWebFilterEvaluator() const
-{
-    if (!m_webFilterEvaluatorData.isEmpty()) {
-        RELEASE_ASSERT(!m_webFilterEvaluator);
-        return true;
-    }
-    return !!m_webFilterEvaluator;
-}
-
-RetainPtr<WebFilterEvaluator> ContentFilterUnblockHandler::webFilterEvaluator()
-{
-    if (!m_webFilterEvaluatorData.isEmpty()) {
-        RELEASE_ASSERT(!m_webFilterEvaluator);
-        m_webFilterEvaluator = unpackWebFilterEvaluatorData(std::exchange(m_webFilterEvaluatorData, { }));
-    }
-
-    return m_webFilterEvaluator;
-}
-
-#endif
 
 void ContentFilterUnblockHandler::wrapWithDecisionHandler(const DecisionHandlerFunction& decisionHandler)
 {
@@ -155,7 +108,6 @@ void ContentFilterUnblockHandler::wrapWithDecisionHandler(const DecisionHandlerF
     m_evaluatedURL = { };
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    m_webFilterEvaluatorData.clear();
     m_webFilterEvaluator = nullptr;
 #endif
     std::swap(m_unblockRequester, wrappedRequester);
@@ -168,10 +120,6 @@ bool ContentFilterUnblockHandler::needsUIProcess() const
         return true;
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    if (!m_webFilterEvaluatorData.isEmpty()) {
-        RELEASE_ASSERT(!m_webFilterEvaluator);
-        return true;
-    }
     return !!m_webFilterEvaluator;
 #else
     return false;
@@ -198,7 +146,7 @@ bool ContentFilterUnblockHandler::canHandleRequest(const ResourceRequest& reques
         hasEvaluatedURL = !!m_evaluatedURL;
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-        hasWebFilterEvaluator = this->hasWebFilterEvaluator();
+        hasWebFilterEvaluator = !!m_webFilterEvaluator;
 #endif
         if (!hasEvaluatedURL && !hasWebFilterEvaluator)
             return false;

@@ -75,6 +75,7 @@ public:
 
 private:
     static ASCIILiteral supplementName() { return "HTMLVideoElementPictureInPicture"_s; }
+    bool isHTMLVideoElementPictureInPicture() const final { return true; }
 
     bool m_autoPictureInPicture { false };
     bool m_disablePictureInPicture { false };
@@ -91,5 +92,9 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::HTMLVideoElementPictureInPicture)
+    static bool isType(const WebCore::SupplementBase& supplement) { return supplement.isHTMLVideoElementPictureInPicture(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(PICTURE_IN_PICTURE_API)

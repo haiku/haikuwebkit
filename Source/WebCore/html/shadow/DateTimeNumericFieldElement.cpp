@@ -81,7 +81,7 @@ void DateTimeNumericFieldElement::adjustMinInlineSize(RenderStyle& style) const
         inlineSize = std::max(inlineSize, font->width(RenderBlock::constructTextRun(numberString, style)));
     }
 
-    style.setLogicalMinWidth(Style::MinimumSize::Fixed { inlineSize });
+    style.setLogicalMinWidth(Style::MinimumSize::Fixed { inlineSize / style.usedZoomForLength().value });
 }
 
 int DateTimeNumericFieldElement::maximum() const

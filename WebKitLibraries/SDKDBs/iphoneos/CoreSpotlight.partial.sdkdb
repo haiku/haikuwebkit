@@ -688,7 +688,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "CSIndexErrorCode"},
     {"access": "public", "name": "CSSearchQueryErrorCode"},
@@ -815,7 +815,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo13CSSearchQueryC13CoreSpotlightE7resultsAbCE7ResultsVvg"},
     {"access": "public", "linkage": "exported", "name": "_$sSo13CSSearchQueryC13CoreSpotlightE7resultsAbCE7ResultsVvpMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

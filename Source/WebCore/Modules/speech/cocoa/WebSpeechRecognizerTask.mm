@@ -223,7 +223,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (task.state == SFSpeechRecognitionTaskStateCanceling || (!_doMultipleRecognitions && task.state == SFSpeechRecognitionTaskStateCompleted))
         return;
 
-    [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
+    [self callbackWithTranscriptions:retainPtr(recognitionResult.transcriptions).get() isFinal:YES];
 
     if (!_doMultipleRecognitions)
         [self stop];

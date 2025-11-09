@@ -32,6 +32,8 @@ namespace Inspector {
 
 using namespace WebCore;
 
+DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(InspectorThreadableLoaderClient);
+
 void InspectorThreadableLoaderClient::didReceiveResponse(ScriptExecutionContextIdentifier, std::optional<ResourceLoaderIdentifier>, const ResourceResponse& response)
 {
     m_mimeType = response.mimeType();

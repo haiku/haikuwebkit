@@ -57,6 +57,7 @@ dictionary TextExtractionInteractionOptions {
     double x = -1;
     double y = -1;
     boolean replaceAll = false;
+    boolean scrollToVisible = false;
 };
 
 interface UIScriptController {

@@ -27,6 +27,8 @@
 
 DECLARE_SYSTEM_HEADER
 
+#ifdef __OBJC__
+
 #if USE(APPLE_INTERNAL_SDK)
 
 #include <CoreServices/CoreServicesPriv.h>
@@ -38,3 +40,5 @@ WTF_EXTERN_C_BEGIN
 Boolean MDItemSetAttribute(MDItemRef, CFStringRef name, CFTypeRef attr);
 
 WTF_EXTERN_C_END
+
+#endif // __OBJC__

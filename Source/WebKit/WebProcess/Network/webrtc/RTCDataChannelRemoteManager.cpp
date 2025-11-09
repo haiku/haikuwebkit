@@ -74,7 +74,7 @@ bool RTCDataChannelRemoteManager::connectToRemoteSource(WebCore::RTCDataChannelI
     if (!handler)
         return false;
 
-    auto iterator = m_sources.add(remoteIdentifier.object(), makeUniqueRef<WebCore::RTCDataChannelRemoteSource>(remoteIdentifier, makeUniqueRefFromNonNullUniquePtr(WTFMove(handler)), remoteSourceConnection()));
+    auto iterator = m_sources.add(remoteIdentifier.object(), WebCore::RTCDataChannelRemoteSource::create(remoteIdentifier, makeUniqueRefFromNonNullUniquePtr(WTFMove(handler)), remoteSourceConnection()));
     return iterator.isNewEntry;
 }
 
@@ -120,7 +120,7 @@ WebCore::RTCDataChannelRemoteSource* RTCDataChannelRemoteManager::sourceFromIden
 
 void RTCDataChannelRemoteManager::sendData(WebCore::RTCDataChannelIdentifier sourceIdentifier, bool isRaw, std::span<const uint8_t> data)
 {
-    if (auto* source = sourceFromIdentifier(sourceIdentifier)) {
+    if (RefPtr source = sourceFromIdentifier(sourceIdentifier)) {
         if (isRaw)
             source->sendRawData(data);
         else
@@ -130,7 +130,7 @@ void RTCDataChannelRemoteManager::sendData(WebCore::RTCDataChannelIdentifier sou
 
 void RTCDataChannelRemoteManager::close(WebCore::RTCDataChannelIdentifier sourceIdentifier)
 {
-    if (auto* source = sourceFromIdentifier(sourceIdentifier))
+    if (RefPtr source = sourceFromIdentifier(sourceIdentifier))
         source->close();
 }
 

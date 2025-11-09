@@ -74,10 +74,9 @@ static inline RenderWidget* findWidgetRenderer(const Node* node)
     return nullptr;
 }
 
-RenderWidget* HTMLEmbedElement::renderWidgetLoadingPlugin() const
+CheckedPtr<RenderWidget> HTMLEmbedElement::renderWidgetLoadingPlugin() const
 {
-    RenderWidget* widget = HTMLPlugInElement::renderWidgetLoadingPlugin();
-
+    CheckedPtr widget = HTMLPlugInElement::renderWidgetLoadingPlugin();
     return widget ? widget : findWidgetRenderer(this);
 }
 

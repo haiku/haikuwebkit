@@ -46,7 +46,7 @@ private:
 
     bool isInteractiveContent() const final { return true; }
 
-    RenderWidget* renderWidgetLoadingPlugin() const final;
+    CheckedPtr<RenderWidget> renderWidgetLoadingPlugin() const final;
 
     void updateWidget(CreatePlugins) final;
 

@@ -188,7 +188,7 @@ struct LinkImageLayout {
 
 LinkImageLayout::LinkImageLayout(URL& url, const String& titleString)
 {
-    NSString *title = nsStringNilIfEmpty(titleString);
+    RetainPtr title = nsStringNilIfEmpty(titleString);
     RetainPtr nsURL = url.createNSURL();
     NSString *absoluteURLString = [nsURL absoluteString];
 
@@ -269,7 +269,7 @@ LinkImageLayout::LinkImageLayout(URL& url, const String& titleString)
     };
 
     if (title)
-        buildLines(title, titleColor, titleFont, linkImageTitleMaximumLineCount, kCTLineBreakByTruncatingTail);
+        buildLines(title.get(), titleColor, titleFont, linkImageTitleMaximumLineCount, kCTLineBreakByTruncatingTail);
 
     if (title && domain)
         currentY += linkImageDomainBaselineToTitleBaseline - (domainFont.ascender - domainFont.descender);

@@ -1077,6 +1077,18 @@ void Connection::processIncomingMessage(UniqueRef<Decoder> message)
         return;
 
     if (message->isAsyncReplyMessage()) {
+        // Disallow async replies with invalid destinationIDs to be sent
+        if (!AtomicObjectIdentifier<AsyncReplyIDType>::isValidIdentifier(message->destinationID())) {
+            incomingMessagesLocker.unlockEarly();
+            waitForMessagesLocker.unlockEarly();
+#if ENABLE(IPC_TESTING_API)
+            // Don't terminate WebContent sender for IPC Testing
+            if (m_ignoreInvalidMessageForTesting)
+                return;
+#endif
+            dispatchDidReceiveInvalidMessage(message->messageName(), message->indicesOfObjectsFailingDecoding());
+            return;
+        }
         if (auto replyHandlerWithDispatcher = takeAsyncReplyHandlerWithDispatcherWithLockHeld(AtomicObjectIdentifier<AsyncReplyIDType>(message->destinationID()))) {
             replyHandlerWithDispatcher(this, message.moveToUniquePtr());
             return;

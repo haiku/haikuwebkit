@@ -1437,6 +1437,93 @@ TEST(WKUserContentController, AllowElementUserInfo)
 }
 #endif
 
+TEST(WKUserContentController, LastChangeWasUserEdit)
+{
+    scriptMessagesVector.clear();
+    isDoneWithNavigation = false;
+    receivedScriptMessage = false;
+
+    RetainPtr contentWorldConfiguration = adoptNS([[_WKContentWorldConfiguration alloc] init]);
+    [contentWorldConfiguration setName:@"TestWorldAllowingAutofill"];
+    [contentWorldConfiguration setAllowAutofill:YES];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:contentWorldConfiguration.get()];
+
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
+
+    RetainPtr delegate = adoptNS([[SimpleNavigationDelegate alloc] init]);
+    [webView setNavigationDelegate:delegate.get()];
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"]];
+
+    isDoneWithNavigation = false;
+    [webView loadRequest:request.get()];
+    TestWebKitAPI::Util::run(&isDoneWithNavigation);
+
+    __block bool isDoneEvaluatingScript = false;
+    __block RetainPtr resultValue = @"";
+    [webView evaluateJavaScript:@"typeof(document.createElement('input').lastChangeWasUserEdit)" inFrame:nil inContentWorld:world.get() completionHandler:^(id value, NSError *error) {
+        resultValue = value;
+        isDoneEvaluatingScript = true;
+    }];
+    TestWebKitAPI::Util::run(&isDoneEvaluatingScript);
+    isDoneEvaluatingScript = false;
+    EXPECT_WK_STREQ(@"boolean", resultValue.get());
+
+    // check in main world
+    [webView evaluateJavaScript:@"typeof(document.createElement('input').lastChangeWasUserEdit)" completionHandler:^(id value, NSError *error) {
+        resultValue = value;
+        isDoneEvaluatingScript = true;
+    }];
+    TestWebKitAPI::Util::run(&isDoneEvaluatingScript);
+    isDoneEvaluatingScript = false;
+    EXPECT_WK_STREQ(@"undefined", resultValue.get());
+}
+
+TEST(WKUserContentController, LastChangeWasUserEditNonAutofillWorld)
+{
+    scriptMessagesVector.clear();
+    isDoneWithNavigation = false;
+    receivedScriptMessage = false;
+
+    RetainPtr contentWorldConfiguration = adoptNS([[_WKContentWorldConfiguration alloc] init]);
+    [contentWorldConfiguration setName:@"TestWorldNotAllowingAutofill"];
+    [contentWorldConfiguration setAllowAutofill:NO];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:contentWorldConfiguration.get()];
+
+    RetainPtr webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
+
+    RetainPtr delegate = adoptNS([[SimpleNavigationDelegate alloc] init]);
+    [webView setNavigationDelegate:delegate.get()];
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"]];
+
+    isDoneWithNavigation = false;
+    [webView loadRequest:request.get()];
+    TestWebKitAPI::Util::run(&isDoneWithNavigation);
+
+    __block bool isDoneEvaluatingScript = false;
+    __block RetainPtr resultValue = @"";
+    [webView evaluateJavaScript:@"typeof(document.createElement('input').lastChangeWasUserEdit)" inFrame:nil inContentWorld:world.get() completionHandler:^(id value, NSError *error) {
+        resultValue = value;
+        isDoneEvaluatingScript = true;
+    }];
+    TestWebKitAPI::Util::run(&isDoneEvaluatingScript);
+    isDoneEvaluatingScript = false;
+    EXPECT_WK_STREQ(@"undefined", resultValue.get());
+
+    // check in main world
+    [webView evaluateJavaScript:@"typeof(document.createElement('input').lastChangeWasUserEdit)" completionHandler:^(id value, NSError *error) {
+        resultValue = value;
+        isDoneEvaluatingScript = true;
+    }];
+    TestWebKitAPI::Util::run(&isDoneEvaluatingScript);
+    isDoneEvaluatingScript = false;
+    EXPECT_WK_STREQ(@"undefined", resultValue.get());
+}
+
+
 TEST(WKUserContentController, AllowAccessToClosedShadowRoots)
 {
     scriptMessagesVector.clear();

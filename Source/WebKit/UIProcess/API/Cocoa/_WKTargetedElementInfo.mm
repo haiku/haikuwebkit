@@ -36,6 +36,11 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
+static Ref<API::TargetedElementInfo> protectedInfo(_WKTargetedElementInfo *info)
+{
+    return *info->_info;
+}
+
 @implementation _WKTargetedElementInfo
 
 - (void)dealloc
@@ -74,7 +79,7 @@
 
 - (CGRect)boundsInWebView
 {
-    return _info->boundsInWebView();
+    return protectedInfo(self)->boundsInWebView();
 }
 
 - (CGRect)boundsInClientCoordinates
@@ -137,7 +142,7 @@
 
 - (void)getChildFrames:(void(^)(NSArray<_WKFrameTreeNode *> *))completion
 {
-    return _info->childFrames([completion = makeBlockPtr(completion)](auto&& nodes) {
+    return protectedInfo(self)->childFrames([completion = makeBlockPtr(completion)](auto&& nodes) {
         completion(createNSArray(WTFMove(nodes), [](API::FrameTreeNode& node) {
             return wrapper(node);
         }).autorelease());
@@ -146,7 +151,7 @@
 
 - (BOOL)isSameElement:(_WKTargetedElementInfo *)other
 {
-    return _info->isSameElement(*other->_info);
+    return protectedInfo(self)->isSameElement(protectedInfo(other));
 }
 
 - (BOOL)isNearbyTarget
@@ -191,7 +196,7 @@
 
 - (void)takeSnapshotWithCompletionHandler:(void(^)(CGImageRef))completion
 {
-    return _info->takeSnapshot([completion = makeBlockPtr(completion)](std::optional<WebCore::ShareableBitmapHandle>&& imageHandle) mutable {
+    return protectedInfo(self)->takeSnapshot([completion = makeBlockPtr(completion)](std::optional<WebCore::ShareableBitmapHandle>&& imageHandle) mutable {
         if (!imageHandle)
             return completion(nullptr);
 

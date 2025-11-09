@@ -108,8 +108,6 @@ private:
 
     void bufferedChanged(const WebCore::PlatformTimeRanges&) final;
 
-    void ensureOnDispatcherSync(Function<void()>&&) const;
-
     bool isGPURunning() const { return !m_shutdown; }
 
     ThreadSafeWeakPtr<GPUProcessConnection> m_gpuProcessConnection;

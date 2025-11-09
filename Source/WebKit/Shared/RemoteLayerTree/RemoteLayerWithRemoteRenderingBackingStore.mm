@@ -160,6 +160,9 @@ void RemoteLayerWithRemoteRenderingBackingStore::setNeedsDisplay()
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
 std::optional<DynamicContentScalingDisplayList> RemoteLayerWithRemoteRenderingBackingStore::displayListHandle() const
 {
+    if (!m_layer->owner())
+        return { };
+
     if (auto list = m_layer->owner()->platformCALayerDynamicContentScalingDisplayList(m_layer.ptr()))
         return list;
     return m_bufferSet ? m_bufferSet->dynamicContentScalingDisplayList() : std::nullopt;

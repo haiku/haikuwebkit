@@ -19,9 +19,8 @@ add_action('wp_head', function() {
     $published_time = '';
     $modified_time = '';
 
-    $fb_admins = array(
-        'Jon Davis' => '1085088865'
-    );
+    // Default preview image
+    $image_url = get_stylesheet_directory_uri() . '/images/preview-card.jpg';
 
     if (is_front_page()) { // Landing page
         $title = get_bloginfo('name');
@@ -90,7 +89,7 @@ add_action('wp_head', function() {
 
     <!-- Twitter Card data -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image:src" content="<?php echo esc_url(!empty($image_url) ? $image_url : get_stylesheet_directory_uri() . '/images/twitter-card.png'); ?>">
+    <meta name="twitter:image:src" content="<?php echo esc_url(!empty($image_url) ? $image_url : get_stylesheet_directory_uri() . '/images/preview-card.png'); ?>">
     <meta name="twitter:site" content="@webkit">
     <meta name="twitter:title" content="<?php echo esc_attr($title); ?>">
 <?php if ($description): ?>

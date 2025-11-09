@@ -116,9 +116,9 @@ private:
     // Bridge for Peer.  Running on the worker thread.
     class Bridge : public RefCounted<Bridge> {
     public:
-        static Ref<Bridge> create(Ref<ThreadableWebSocketChannelClientWrapper>&& workerClientWrapper, Ref<WorkerGlobalScope>&& workerGlobalScope, const String& taskMode, Ref<SocketProvider>&& provider)
+        static Ref<Bridge> create(Ref<ThreadableWebSocketChannelClientWrapper>&& workerClientWrapper, WorkerGlobalScope& workerGlobalScope, const String& taskMode, Ref<SocketProvider>&& provider)
         {
-            return adoptRef(*new Bridge(WTFMove(workerClientWrapper), WTFMove(workerGlobalScope), taskMode, WTFMove(provider)));
+            return adoptRef(*new Bridge(WTFMove(workerClientWrapper), workerGlobalScope, taskMode, WTFMove(provider)));
         }
         ~Bridge();
         void initialize(WorkerGlobalScope&);
@@ -136,7 +136,7 @@ private:
         using RefCounted<Bridge>::deref;
 
     private:
-        Bridge(Ref<ThreadableWebSocketChannelClientWrapper>&&, Ref<WorkerGlobalScope>&&, const String& taskMode, Ref<SocketProvider>&&);
+        Bridge(Ref<ThreadableWebSocketChannelClientWrapper>&&, WorkerGlobalScope&, const String& taskMode, Ref<SocketProvider>&&);
 
         static void setWebSocketChannel(ScriptExecutionContext*, Bridge* thisPtr, Peer*, Ref<ThreadableWebSocketChannelClientWrapper>&&);
 
@@ -145,6 +145,8 @@ private:
 
         // Executed on the worker context's thread.
         void clearClientWrapper();
+
+        CheckedRef<WorkerLoaderProxy> checkedLoaderProxy();
 
         const Ref<ThreadableWebSocketChannelClientWrapper> m_workerClientWrapper;
         RefPtr<WorkerGlobalScope> m_workerGlobalScope;

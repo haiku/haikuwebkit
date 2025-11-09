@@ -69,7 +69,8 @@ void WebExtensionControllerProxy::globalObjectIsAvailableForFrame(WebPage& page,
     if (!browserString)
         return;
 
-    auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
     if (namespaceObject && JSValueIsObject(context, namespaceObject))
         return;
 
@@ -89,10 +90,13 @@ void WebExtensionControllerProxy::globalObjectIsAvailableForFrame(WebPage& page,
 
     namespaceObject = toJS(context, WebExtensionAPINamespace::create(contentWorldType, *extension).ptr());
 
-    JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
 
-    if (JSRetainPtr chromeString = toJSString("chrome"))
-        JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    if (JSRetainPtr chromeString = toJSString("chrome")) {
+        // This is a safer cpp false positive (rdar://163760990).
+        SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    }
 }
 
 void WebExtensionControllerProxy::serviceWorkerGlobalObjectIsAvailableForFrame(WebPage& page, WebFrame& frame, DOMWrapperWorld& world)
@@ -110,7 +114,8 @@ void WebExtensionControllerProxy::serviceWorkerGlobalObjectIsAvailableForFrame(W
     if (!browserString)
         return;
 
-    auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
     if (namespaceObject && JSValueIsObject(context, namespaceObject))
         return;
 
@@ -118,9 +123,12 @@ void WebExtensionControllerProxy::serviceWorkerGlobalObjectIsAvailableForFrame(W
 
     namespaceObject = toJS(context, WebExtensionAPINamespace::create(WebExtensionContentWorldType::Main, *extension).ptr());
 
-    JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
-    if (JSRetainPtr chromeString = toJSString("chrome"))
-        JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    if (JSRetainPtr chromeString = toJSString("chrome")) {
+        // This is a safer cpp false positive (rdar://163760990).
+        SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    }
 }
 
 void WebExtensionControllerProxy::addBindingsToWebPageFrameIfNecessary(WebFrame& frame, DOMWrapperWorld& world)
@@ -132,13 +140,15 @@ void WebExtensionControllerProxy::addBindingsToWebPageFrameIfNecessary(WebFrame&
     if (!browserString)
         return;
 
-    auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG auto namespaceObject = JSObjectGetProperty(context, globalObject, browserString.get(), nullptr);
     if (namespaceObject && JSValueIsObject(context, namespaceObject))
         return;
 
     namespaceObject = toJS(context, WebExtensionAPIWebPageNamespace::create(WebExtensionContentWorldType::WebPage).ptr());
 
-    JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
+    // This is a safer cpp false positive (rdar://163760990).
+    SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
 }
 
 static WebExtensionFrameParameters toFrameParameters(WebFrame& frame, const URL& url, bool includeDocumentIdentifier = true)

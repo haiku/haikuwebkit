@@ -226,7 +226,7 @@ void alertForPermission(WebPageProxy& page, MediaPermissionReason reason, const 
     button.get().keyEquivalent = @"";
     button = [alert addButtonWithTitle:doNotAllowButtonString.get()];
     button.get().keyEquivalent = @"\E";
-    [alert beginSheetModalForWindow:[webView window] completionHandler:[completionBlock](NSModalResponse returnCode) {
+    [alert beginSheetModalForWindow:retainPtr([webView window]).get() completionHandler:[completionBlock](NSModalResponse returnCode) {
         auto shouldAllow = returnCode == NSAlertFirstButtonReturn;
         completionBlock(shouldAllow);
     }];

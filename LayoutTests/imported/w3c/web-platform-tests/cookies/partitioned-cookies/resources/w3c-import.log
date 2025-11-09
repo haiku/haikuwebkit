@@ -14,6 +14,13 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/ancestor-chain-cross-site-embed.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/ancestor-chain-same-site-embed.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/ancestor-chain-same-site-to-cross-site-embed.html
 /LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-cross-site-embed.html
 /LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-cross-site-window.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-empty-embed.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-samesite-attributes-embed.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-top-level-redirect.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/redirect-and-echo-cookie-header.py
 /LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/test-helpers.js

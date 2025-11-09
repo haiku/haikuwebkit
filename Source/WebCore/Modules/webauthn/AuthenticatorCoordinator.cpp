@@ -289,7 +289,7 @@ void AuthenticatorCoordinator::discoverFromExternalSource(const Document& docume
     }
 
     // The request will be aborted in WebAuthenticatorCoordinatorProxy if conditional mediation is not available.
-    if (requestOptions.mediation != MediationRequirement::Conditional && !document.hasFocus()) {
+    if (requestOptions.mediation() != MediationRequirement::Conditional && !document.hasFocus()) {
         promise.reject(Exception { ExceptionCode::NotAllowedError, "The document is not focused."_s });
         return;
     }
@@ -385,12 +385,12 @@ void AuthenticatorCoordinator::discoverFromExternalSource(const Document& docume
             RefPtr frame = weakFrame.get();
             if (!frame)
                 return;
-            weakThis->m_client->getAssertion(*weakFrame, options, requestOptions.mediation, scopeCrossOriginParent, WTFMove(callback));
+            weakThis->m_client->getAssertion(*weakFrame, options, requestOptions.mediation(), scopeCrossOriginParent, WTFMove(callback));
         };
         return;
     }
     // Async operations are dispatched and handled in the messenger.
-    m_client->getAssertion(*frame, options, requestOptions.mediation, scopeCrossOriginParent, WTFMove(callback));
+    m_client->getAssertion(*frame, options, requestOptions.mediation(), scopeCrossOriginParent, WTFMove(callback));
 }
 
 void AuthenticatorCoordinator::isUserVerifyingPlatformAuthenticatorAvailable(const Document& document, DOMPromiseDeferred<IDLBoolean>&& promise) const

@@ -3,7 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
  *           (C) 2006 Alexey Proskuryakov (ap@nypop.com)
- * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2010-2017 Google Inc. All rights reserved.
  * Copyright (C) 2011 Motorola Mobility, Inc. All rights reserved.
  *
@@ -32,6 +32,7 @@
 #include "Document.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "HTMLDataListElement.h"
+#include "HTMLHRElement.h"
 #include "HTMLNames.h"
 #include "HTMLOptGroupElement.h"
 #include "HTMLSelectElement.h"
@@ -88,6 +89,37 @@ ExceptionOr<Ref<HTMLOptionElement>> HTMLOptionElement::createForLegacyFactoryFun
     element->setSelected(selected);
 
     return element;
+}
+
+auto HTMLOptionElement::insertedIntoAncestor(InsertionType insertionType, ContainerNode& parentOfInsertedTree) -> InsertedIntoAncestorResult
+{
+    auto result = HTMLElement::insertedIntoAncestor(insertionType, parentOfInsertedTree);
+
+    if (!document().settings().htmlEnhancedSelectParsingEnabled() || m_ownerSelect)
+        return result;
+
+    if (RefPtr select = HTMLSelectElement::findOwnerSelect(protectedParentNode().get(), HTMLSelectElement::ExcludeOptGroup::No)) {
+        m_ownerSelect = select.get();
+        select->setRecalcListItems();
+    }
+
+    return result;
+}
+
+void HTMLOptionElement::removedFromAncestor(RemovalType removalType, ContainerNode& oldParentOfRemovedTree)
+{
+    HTMLElement::removedFromAncestor(removalType, oldParentOfRemovedTree);
+
+    if (!document().settings().htmlEnhancedSelectParsingEnabled() || !m_ownerSelect)
+        return;
+
+    if (RefPtr select = HTMLSelectElement::findOwnerSelect(protectedParentNode().get(), HTMLSelectElement::ExcludeOptGroup::No)) {
+        ASSERT_UNUSED(select, select == m_ownerSelect.get());
+        return;
+    }
+
+    if (RefPtr select = std::exchange(m_ownerSelect, nullptr).get())
+        select->setRecalcListItems();
 }
 
 bool HTMLOptionElement::isFocusable() const
@@ -269,6 +301,9 @@ void HTMLOptionElement::childrenChanged(const ChildChange& change)
 
 HTMLSelectElement* HTMLOptionElement::ownerSelectElement() const
 {
+    if (document().settings().htmlEnhancedSelectParsingEnabled())
+        return m_ownerSelect.get();
+
     if (auto* parent = parentElement()) {
         if (auto* select = dynamicDowncast<HTMLSelectElement>(*parent))
             return select;
@@ -306,9 +341,18 @@ void HTMLOptionElement::willResetComputedStyle()
 
 String HTMLOptionElement::textIndentedToRespectGroupLabel() const
 {
-    RefPtr parent = parentNode();
-    if (is<HTMLOptGroupElement>(parent))
-        return makeString("    "_s, label());
+    if (!document().settings().htmlEnhancedSelectParsingEnabled()) {
+        if (is<HTMLOptGroupElement>(parentNode()))
+            return makeString("    "_s, label());
+        return label();
+    }
+
+    for (Ref ancestor : ancestorsOfType<HTMLElement>(*this)) {
+        if (is<HTMLOptGroupElement>(ancestor))
+            return makeString("    "_s, label());
+        if (is<HTMLDataListElement>(ancestor) || is<HTMLSelectElement>(ancestor) || is<HTMLOptionElement>(ancestor) || is<HTMLHRElement>(ancestor))
+            return label();
+    }
     return label();
 }
 
@@ -317,8 +361,18 @@ bool HTMLOptionElement::isDisabledFormControl() const
     if (ownElementDisabled())
         return true;
 
-    auto* parentOptGroup = dynamicDowncast<HTMLOptGroupElement>(parentNode());
-    return parentOptGroup && parentOptGroup->isDisabledFormControl();
+    if (!document().settings().htmlEnhancedSelectParsingEnabled()) {
+        auto* parentOptGroup = dynamicDowncast<HTMLOptGroupElement>(parentNode());
+        return parentOptGroup && parentOptGroup->isDisabledFormControl();
+    }
+
+    for (Ref ancestor : ancestorsOfType<HTMLElement>(*this)) {
+        if (RefPtr optGroup = dynamicDowncast<HTMLOptGroupElement>(ancestor))
+            return optGroup->isDisabledFormControl();
+        if (is<HTMLDataListElement>(ancestor) || is<HTMLSelectElement>(ancestor) || is<HTMLOptionElement>(ancestor) || is<HTMLHRElement>(ancestor))
+            return false;
+    }
+    return false;
 }
 
 String HTMLOptionElement::collectOptionInnerText() const

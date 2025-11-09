@@ -33,7 +33,7 @@ GST_DEBUG_CATEGORY(webkit_webrtc_incoming_audio_debug);
 namespace WebCore {
 
 RealtimeIncomingAudioSourceGStreamer::RealtimeIncomingAudioSourceGStreamer(AtomString&& audioTrackId)
-    : RealtimeIncomingSourceGStreamer(CaptureDevice { WTFMove(audioTrackId), CaptureDevice::DeviceType::Microphone, emptyString() })
+    : RealtimeIncomingSourceGStreamer(CaptureDevice { WTFMove(audioTrackId), CaptureDevice::DeviceType::Microphone, "remote audio"_s })
 {
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {

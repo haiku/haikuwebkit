@@ -102,6 +102,7 @@ private:
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     void insert(SegmentedString&&) final;
     void append(RefPtr<StringImpl>&&) final;
@@ -152,6 +153,8 @@ private:
 
     void doWrite(const String&);
     void doEnd();
+
+    RefPtr<Text> protectedLeafTextNode() const { return m_leafTextNode; }
 
     xmlParserCtxtPtr context() const { return m_context ? m_context->context() : nullptr; };
 

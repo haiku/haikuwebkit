@@ -519,7 +519,7 @@ private:
     void updateScrollLayerPosition();
     void updateScrollLayerClipping();
 
-    FloatPoint positionForClipLayer() const;
+    FloatRect insetClipLayerRect() const;
 
     void notifyIFramesOfCompositingChange();
 

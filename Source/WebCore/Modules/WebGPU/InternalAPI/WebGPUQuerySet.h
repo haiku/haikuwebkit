@@ -45,6 +45,7 @@ public:
     }
 
     virtual void destroy() = 0;
+    virtual bool isRemoteQuerySetProxy() const { return false; }
 
 protected:
     QuerySet() = default;

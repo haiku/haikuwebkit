@@ -57,6 +57,7 @@
 @synthesize replaceAll = _replaceAll;
 @synthesize location = _location;
 @synthesize hasSetLocation = _hasSetLocation;
+@synthesize scrollToVisible = _scrollToVisible;
 
 - (instancetype)initWithAction:(_WKTextExtractionAction)action
 {

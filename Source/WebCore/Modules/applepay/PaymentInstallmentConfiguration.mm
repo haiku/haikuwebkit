@@ -158,10 +158,10 @@ static std::optional<ApplePayInstallmentItem> makeVectorElement(const ApplePayIn
     PKPaymentInstallmentItem *item = arrayElement;
     return ApplePayInstallmentItem {
         applePayItemType([item installmentItemType]),
-        fromDecimalNumber([item amount]),
+        fromDecimalNumber(retainPtr([item amount]).get()),
         [item currencyCode],
         [item programIdentifier],
-        fromDecimalNumber([item apr]),
+        fromDecimalNumber(retainPtr([item apr]).get()),
         [item programTerms],
     };
 }
@@ -264,20 +264,20 @@ std::optional<ApplePayInstallmentConfiguration> PaymentInstallmentConfiguration:
     else
         return std::nullopt;
 
-    installmentConfiguration.bindingTotalAmount = fromDecimalNumber([configuration bindingTotalAmount]);
+    installmentConfiguration.bindingTotalAmount = fromDecimalNumber(retainPtr([configuration bindingTotalAmount]).get());
     installmentConfiguration.currencyCode = [configuration currencyCode];
     installmentConfiguration.isInStorePurchase = [configuration isInStorePurchase];
-    installmentConfiguration.openToBuyThresholdAmount = fromDecimalNumber([configuration openToBuyThresholdAmount]);
+    installmentConfiguration.openToBuyThresholdAmount = fromDecimalNumber(retainPtr([configuration openToBuyThresholdAmount]).get());
 
-    installmentConfiguration.merchandisingImageData = [[configuration merchandisingImageData] base64EncodedStringWithOptions:0];
+    installmentConfiguration.merchandisingImageData = [retainPtr([configuration merchandisingImageData]) base64EncodedStringWithOptions:0];
     installmentConfiguration.merchantIdentifier = [configuration installmentMerchantIdentifier];
     installmentConfiguration.referrerIdentifier = [configuration referrerIdentifier];
 
     if (!PAL::getPKPaymentInstallmentItemClassSingleton())
         return WTFMove(installmentConfiguration);
 
-    installmentConfiguration.items = makeVector<ApplePayInstallmentItem>([configuration installmentItems]);
-    installmentConfiguration.applicationMetadata = applicationMetadataString([configuration applicationMetadata]);
+    installmentConfiguration.items = makeVector<ApplePayInstallmentItem>(retainPtr([configuration installmentItems]).get());
+    installmentConfiguration.applicationMetadata = applicationMetadataString(retainPtr([configuration applicationMetadata]).get());
     installmentConfiguration.retailChannel = applePayRetailChannel([configuration retailChannel]);
 
     return WTFMove(installmentConfiguration);

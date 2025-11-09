@@ -25,8 +25,10 @@
 #include <optional>
 #include <tuple>
 
+class SkPathData;
 class SkRRect;
 struct SkPathRaw;
+class SkString;
 
 class SK_API SkPathBuilder {
 public:
@@ -43,7 +45,7 @@ public:
         @param fillType  SkPathFillType to set on the SkPathBuilder.
         @return          empty SkPathBuilder
     */
-    SkPathBuilder(SkPathFillType fillType);
+    explicit SkPathBuilder(SkPathFillType fillType);
 
     /** Constructs an SkPathBuilder that is a copy of an existing SkPath.
         Copies the FillType and replays all of the verbs from the SkPath into the SkPathBuilder.
@@ -51,7 +53,7 @@ public:
         @param path  SkPath to copy
         @return      SkPathBuilder
     */
-    SkPathBuilder(const SkPath& path);
+    explicit SkPathBuilder(const SkPath& path);
 
     SkPathBuilder(const SkPathBuilder&) = default;
     ~SkPathBuilder();
@@ -63,8 +65,10 @@ public:
         @return      SkPathBuilder
     */
     SkPathBuilder& operator=(const SkPath&);
-
     SkPathBuilder& operator=(const SkPathBuilder&) = default;
+
+    bool operator==(const SkPathBuilder&) const;
+    bool operator!=(const SkPathBuilder& o) const { return !(*this == o); }
 
     /** Returns SkPathFillType, the rule used to fill SkPath.
 
@@ -85,6 +89,12 @@ public:
     std::optional<SkRect> computeFiniteBounds() const {
         return SkRect::Bounds(fPts);
     }
+
+    /** Like computeFiniteBounds() but returns a 'tight' bounds, meaning when there are curve
+     *  segments, this computes the X/Y limits of the curve itself, not the curve's control
+     *  point(s). For a polygon, this returns the same as computeFiniteBounds().
+    */
+    std::optional<SkRect> computeTightBounds() const;
 
     // DEPRECATED -- returns "empty" if the bounds are non-finite
     SkRect computeBounds() const {
@@ -109,6 +119,9 @@ public:
         @return  SkPath representing the current state of the builder.
      */
     SkPath detach(const SkMatrix* mx = nullptr);
+
+    sk_sp<SkPathData> snapshotData() const;
+    sk_sp<SkPathData> detachData();
 
     /** Sets SkPathFillType, the rule used to fill SkPath. While there is no
         check that ft is legal, values outside of SkPathFillType are not supported.
@@ -138,7 +151,7 @@ public:
 
     /** Sets SkPathBuilder to its initial state.
         Removes verb array, SkPoint array, and weights, and sets FillType to kWinding.
-        Internal storage associated with SkPathBuilder is released.
+        Internal storage associated with SkPathBuilder is preserved.
 
         @return  reference to SkPathBuilder
     */
@@ -542,6 +555,8 @@ public:
         return this->rCubicTo({x1, y1}, {x2, y2}, {x3, y3});
     }
 
+    // Arcs
+
     enum ArcSize {
         kSmall_ArcSize, //!< smaller of arc pair
         kLarge_ArcSize, //!< larger of arc pair
@@ -564,19 +579,15 @@ public:
         opposite the integer value of sweep; SVG "sweep-flag" uses 1 for clockwise, while
         kCW_Direction cast to int is zero.
 
-        @param rx           radius before x-axis rotation
-        @param ry           radius before x-axis rotation
+        @param r            radii on axes before x-axis rotation
         @param xAxisRotate  x-axis rotation in degrees; positive values are clockwise
         @param largeArc     chooses smaller or larger arc
         @param sweep        chooses clockwise or counterclockwise arc
-        @param dx           x-axis offset end of arc from last SkPath SkPoint
-        @param dy           y-axis offset end of arc from last SkPath SkPoint
+        @param dxdy         offset end of arc from last SkPath point
         @return             reference to SkPath
     */
-    SkPathBuilder& rArcTo(SkScalar rx, SkScalar ry, SkScalar xAxisRotate, ArcSize largeArc,
-                          SkPathDirection sweep, SkScalar dx, SkScalar dy);
-
-    // Arcs
+    SkPathBuilder& rArcTo(SkPoint r, SkScalar xAxisRotate, ArcSize largeArc,
+                          SkPathDirection sweep, SkPoint dxdy);
 
     /** Appends arc to the builder. Arc added is part of ellipse
         bounded by oval, from startAngle through sweepAngle. Both startAngle and
@@ -840,10 +851,11 @@ public:
         May improve performance and use less memory by
         reducing the number and size of allocations when creating SkPathBuilder.
 
-        @param extraPtCount    number of additional SkPoint to allocate
-        @param extraVerbCount  number of additional verbs
+        @param extraPtCount     number of additional SkPoint to allocate
+        @param extraVerbCount   number of additional verbs
+        @param extraConicCount  number of additional conic weights
     */
-    void incReserve(int extraPtCount, int extraVerbCount);
+    void incReserve(int extraPtCount, int extraVerbCount, int extraConicCount);
 
     /** Grows SkPathBuilder verb array and SkPoint array to contain additional space.
         May improve performance and use less memory by
@@ -852,7 +864,7 @@ public:
         @param extraPtCount    number of additional SkPoints and verbs to allocate
     */
     void incReserve(int extraPtCount) {
-        this->incReserve(extraPtCount, extraPtCount);
+        this->incReserve(extraPtCount, extraPtCount, 0);
     }
 
     /** Offsets SkPoint array by (dx, dy).
@@ -870,12 +882,6 @@ public:
     */
     SkPathBuilder& transform(const SkMatrix& matrix);
 
-#ifdef SK_SUPPORT_LEGACY_APPLYPERSPECTIVECLIP
-    SkPathBuilder& transform(const SkMatrix& matrix, SkApplyPerspectiveClip) {
-        return this->transform(matrix);
-    }
-#endif
-
     /*
      *  Returns true if the builder is empty, or all of its points are finite.
      */
@@ -885,7 +891,7 @@ public:
         unmodified by the original SkPathFillType.
     */
     SkPathBuilder& toggleInverseFillType() {
-        fFillType = (SkPathFillType)((unsigned)fFillType ^ 2);
+        fFillType = SkPathFillType_ToggleInverse(fFillType);
         return *this;
     }
 
@@ -904,6 +910,14 @@ public:
         example: https://fiddle.skia.org/c/@Path_getLastPt
     */
     std::optional<SkPoint> getLastPt() const;
+
+    /** Change the point at the specified index (see countPoints()).
+     *  If index is out of range, the call does nothing.
+     *
+     *  @param index which point to replace
+     *  @param p the new point value
+     */
+    void setPoint(size_t index, SkPoint p);
 
     /** Sets the last point on the path. If SkPoint array is empty, append kMove_Verb to
         verb array and append p to SkPoint array.
@@ -950,6 +964,18 @@ public:
 
     SkPathIter iter() const;
 
+    enum class DumpFormat {
+        kDecimal,
+        kHex,
+    };
+    SkString dumpToString(DumpFormat = DumpFormat::kDecimal) const;
+    void dump(DumpFormat) const;
+    // can't use default argument easily in debugger, so we name this
+    // helper explicitly.
+    void dump() const { this->dump(DumpFormat::kDecimal); }
+
+    bool contains(SkPoint) const;
+
 private:
     SkPathRef::PointsArray fPts;
     SkPathRef::VerbsArray fVerbs;
@@ -960,9 +986,7 @@ private:
     SkPathConvexity fConvexity;
 
     unsigned    fSegmentMask;
-    SkPoint     fLastMovePoint;
     int         fLastMoveIndex; // only needed until SkPath is immutable
-    bool        fNeedsMoveVerb;
 
     SkPathIsAType fType = SkPathIsAType::kGeneral;
     SkPathIsAData fIsA {};
@@ -970,8 +994,10 @@ private:
     // called right before we add a (non-move) verb
     void ensureMove() {
         fType = SkPathIsAType::kGeneral;
-        if (fNeedsMoveVerb) {
-            this->moveTo(fLastMovePoint);
+        if (fVerbs.empty()) {
+            this->moveTo({0, 0});
+        } else if (fVerbs.back() == SkPathVerb::kClose) {
+            this->moveTo(fPts[fLastMoveIndex]);
         }
     }
 

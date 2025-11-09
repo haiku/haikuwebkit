@@ -58,6 +58,8 @@ private:
     RemoteCommandBufferProxy& operator=(const RemoteCommandBufferProxy&) = delete;
     RemoteCommandBufferProxy& operator=(RemoteCommandBufferProxy&&) = delete;
 
+    bool isRemoteCommandBufferProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -74,5 +76,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteCommandBufferProxy)
+    static bool isType(const WebCore::WebGPU::CommandBuffer& buffer) { return buffer.isRemoteCommandBufferProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

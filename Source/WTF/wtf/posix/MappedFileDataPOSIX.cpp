@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "MappedFileData.h"
+#include <wtf/MappedFileData.h>
 
 namespace WTF::FileSystemImpl {
 

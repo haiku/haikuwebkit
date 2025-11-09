@@ -38,3 +38,5 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/reference/selection-overlay-and-spelling-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/reference/selection-textarea-011-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/reference/svg-text-selection-002-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/reference/svg-text-selection-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-pseudo/reference/svg-text-selection-shadow-ref.html

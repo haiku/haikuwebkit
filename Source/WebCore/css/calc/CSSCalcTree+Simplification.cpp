@@ -172,12 +172,8 @@ std::optional<CanonicalDimension> canonicalize(NonCanonicalDimension root, const
     };
 
     auto tryMakeCanonical = [&](double value, CSS::LengthUnit lengthUnit) -> std::optional<CanonicalDimension> {
-        if (conversionData) {
-            // We are only interested in canonicalizing to `px`, not adjusting for zoom, which will be handled later. When computing font-size, zoom is not applied in the same way, so must be special cased here.
-            if (conversionData->computingFontSize())
-                return CanonicalDimension { .value = Style::computeNonCalcLengthDouble(value, lengthUnit, *conversionData), .dimension = CanonicalDimension::Dimension::Length };
-            return CanonicalDimension { .value = Style::computeNonCalcLengthDouble(value, lengthUnit, *conversionData) / conversionData->style()->usedZoom(), .dimension = CanonicalDimension::Dimension::Length };
-        }
+        if (conversionData)
+            return CanonicalDimension { .value = Style::computeCanonicalNonCalcLengthDouble(value, lengthUnit, *conversionData), .dimension = CanonicalDimension::Dimension::Length };
         return { };
     };
 

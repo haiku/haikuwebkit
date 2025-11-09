@@ -391,6 +391,15 @@ bool defaultPreferSpatialAudioExperience()
 }
 #endif
 
+bool defaultRTCEncodedStreamsQuirkEnabled()
+{
+#if PLATFORM(MAC)
+    return WTF::MacApplication::isSafariTechnologyPreview();
+#else
+    return false;
+#endif
+}
+
 #if PLATFORM(COCOA)
 static bool isSafariOrWebApp()
 {
@@ -415,6 +424,15 @@ bool defaultTrustedTypesEnabled()
 {
 #if PLATFORM(COCOA)
     return linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::EnableTrustedTypesByDefault);
+#else
+    return true;
+#endif
+}
+
+bool defaultGetBoundingClientRectZoomedEnabled()
+{
+#if PLATFORM(IOS_FAMILY)
+    return linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::GetBoundingClientRectZoomed);
 #else
     return true;
 #endif

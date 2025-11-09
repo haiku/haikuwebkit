@@ -62,6 +62,10 @@ public:
         JavaScript,
         Page,
         ServiceWorker,
+        // This is specifically for the JSC Wasm Debugger server, which is a standalone
+        // debugging target for WebAssembly execution. This is NOT used by regular Web Inspector
+        // when debugging WebAssembly inside web pages - that will use the normal Page/Frame targets.
+        WasmDebugger,
         WebPage,
     };
     virtual Type type() const = 0;

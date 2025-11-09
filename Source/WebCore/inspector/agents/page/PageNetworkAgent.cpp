@@ -81,7 +81,7 @@ Vector<WebSocket*> PageNetworkAgent::activeWebSockets()
     Vector<WebSocket*> webSockets;
 
     for (auto* webSocket : WebSocket::allActiveWebSockets()) {
-        auto channel = webSocket->channel();
+        RefPtr channel = webSocket->channel();
         if (!channel)
             continue;
 

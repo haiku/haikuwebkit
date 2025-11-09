@@ -55,10 +55,10 @@ void DeviceMotionController::suspendUpdates()
     m_client->stopUpdating();
 }
 
-void DeviceMotionController::resumeUpdates(const SecurityOriginData& origin)
+void DeviceMotionController::resumeUpdates()
 {
     if (hasListeners())
-        m_client->startUpdating(origin);
+        m_client->startUpdating();
 }
 
 #endif
@@ -79,14 +79,9 @@ RefPtr<Event> DeviceMotionController::getLastEvent()
     return DeviceMotionEvent::create(eventNames().devicemotionEvent, lastMotion.get());
 }
 
-ASCIILiteral DeviceMotionController::supplementName()
-{
-    return "DeviceMotionController"_s;
-}
-
 DeviceMotionController* DeviceMotionController::from(Page* page)
 {
-    return static_cast<DeviceMotionController*>(Supplement<Page>::from(page, supplementName()));
+    return downcast<DeviceMotionController>(Supplement<Page>::from(page, supplementName()));
 }
 
 bool DeviceMotionController::isActiveAt(Page* page)

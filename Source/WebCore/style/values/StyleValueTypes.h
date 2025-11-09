@@ -109,6 +109,9 @@ template<CSSValueID C> inline constexpr bool TreatAsNonConverting<Constant<C>> =
 // Specialize `TreatAsNonConverting` for `CustomIdentifier`, to indicate that its type does not change from the CSS representation.
 template<> inline constexpr bool TreatAsNonConverting<CustomIdentifier> = true;
 
+// Specialize `TreatAsNonConverting` for `PropertyIdentifier`, to indicate that its type does not change from the CSS representation.
+template<> inline constexpr bool TreatAsNonConverting<PropertyIdentifier> = true;
+
 // Specialize `TreatAsNonConverting` for `WTF::AtomString`, to indicate that its type does not change from the CSS representation.
 template<> inline constexpr bool TreatAsNonConverting<WTF::AtomString> = true;
 

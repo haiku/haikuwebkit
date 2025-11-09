@@ -32,6 +32,7 @@
 #include <wtf/CheckedRef.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/EnumTraits.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
@@ -89,7 +90,7 @@ public:
     }
 
 private:
-    class CachedAssertion : public RefCounted<CachedAssertion> {
+    class CachedAssertion : public RefCountedAndCanMakeWeakPtr<CachedAssertion> {
         WTF_MAKE_TZONE_ALLOCATED(CachedAssertion);
     public:
         static Ref<CachedAssertion> create(ProcessAssertionCache& cache, Ref<ProcessAssertion>&& assertion)
@@ -152,9 +153,31 @@ ProcessThrottler::~ProcessThrottler()
     invalidateAllActivities();
 }
 
+static void assertIfCalledFromBackgroundThread()
+{
+#if PLATFORM(COCOA)
+    if (isMainRunLoop())
+        return;
+
+    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::CrashWhenPreconnectingFromBackgroundThread)) {
+        static bool didLog;
+        if (!didLog) {
+            didLog = true;
+            RELEASE_LOG_FAULT(API, "Detected usage of WebKit APIs off the main thread. This is a misuse of the API that can lead to corruption of WebKit's internal data, and will cause a crash when using newer SDKs.");
+            return;
+        }
+    }
+
+    RELEASE_ASSERT_NOT_REACHED("Terminating process due to improper usage of WebKit APIs off the main thread.");
+#else
+    ASSERT(isMainRunLoop());
+#endif
+}
+
 bool ProcessThrottler::addActivity(Activity& activity)
 {
-    ASSERT(isMainRunLoop());
+    assertIfCalledFromBackgroundThread();
+
     if (!m_allowsActivities) {
         if (!activity.isQuietActivity())
             PROCESSTHROTTLER_RELEASE_LOG("addActivity: not allowed to add %s activity %s", activity.isForeground() ? "foreground" : "background", activity.name().characters());
@@ -171,7 +194,8 @@ bool ProcessThrottler::addActivity(Activity& activity)
 
 void ProcessThrottler::removeActivity(Activity& activity)
 {
-    ASSERT(isMainRunLoop());
+    assertIfCalledFromBackgroundThread();
+
     if (!m_allowsActivities) {
         ASSERT(m_foregroundActivities.isEmptyIgnoringNullReferences());
         ASSERT(m_backgroundActivities.isEmptyIgnoringNullReferences());
@@ -192,7 +216,8 @@ void ProcessThrottler::removeActivity(Activity& activity)
 
 void ProcessThrottler::invalidateAllActivities()
 {
-    ASSERT(isMainRunLoop());
+    assertIfCalledFromBackgroundThread();
+
     PROCESSTHROTTLER_RELEASE_LOG("invalidateAllActivities: BEGIN (foregroundActivityCount: %u, backgroundActivityCount: %u)", m_foregroundActivities.computeSize(), m_backgroundActivities.computeSize());
     while (!m_foregroundActivities.isEmptyIgnoringNullReferences())
         Ref { *m_foregroundActivities.begin() }->invalidate(ProcessThrottlerActivity::ForceEnableActivityLogging::Yes);
@@ -264,6 +289,8 @@ ProcessAssertionType ProcessThrottler::assertionTypeForState(ProcessThrottleStat
 
 void ProcessThrottler::setThrottleState(ProcessThrottleState newState)
 {
+    assertIfCalledFromBackgroundThread();
+
     m_state = newState;
 
     ProcessAssertionType newType = assertionTypeForState(newState);

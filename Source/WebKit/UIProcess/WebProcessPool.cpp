@@ -2084,11 +2084,10 @@ void WebProcessPool::updateProcessAssertions()
     // Check on next run loop since the web process proxy tokens are probably being updated.
     callOnMainRunLoop([] {
         remoteWorkerProcesses().forEach([](auto& workerProcess) {
-            Ref protectedWorkerProcess { workerProcess };
-            if (protectedWorkerProcess->isRunningServiceWorkers())
-                protectedWorkerProcess->updateRemoteWorkerProcessAssertion(RemoteWorkerType::ServiceWorker);
-            if (protectedWorkerProcess->isRunningSharedWorkers())
-                protectedWorkerProcess->updateRemoteWorkerProcessAssertion(RemoteWorkerType::SharedWorker);
+            if (workerProcess.isRunningServiceWorkers())
+                workerProcess.updateRemoteWorkerProcessAssertion(RemoteWorkerType::ServiceWorker);
+            if (workerProcess.isRunningSharedWorkers())
+                workerProcess.updateRemoteWorkerProcessAssertion(RemoteWorkerType::SharedWorker);
         });
     });
 }

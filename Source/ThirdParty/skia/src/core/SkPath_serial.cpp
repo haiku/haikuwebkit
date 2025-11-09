@@ -91,7 +91,7 @@ size_t SkPath::writeToMemoryAsRRect(void* storage) const {
         return sizeNeeded;
     }
 
-    int32_t packed = (fFillType << kFillType_SerializationShift) |
+    int32_t packed = (static_cast<int>(fFillType) << kFillType_SerializationShift) |
                      ((int)firstDir << kDirection_SerializationShift) |
                      (SerializationType::kRRect << kType_SerializationShift) |
                      kCurrent_Version;
@@ -112,7 +112,7 @@ size_t SkPath::writeToMemory(void* storage) const {
         return bytes;
     }
 
-    int32_t packed = (fFillType << kFillType_SerializationShift) |
+    int32_t packed = (static_cast<int>(fFillType) << kFillType_SerializationShift) |
                      (SerializationType::kGeneral << kType_SerializationShift) |
                      kCurrent_Version;
 
@@ -188,8 +188,7 @@ size_t SkPath::readAsRRect(const void* storage, size_t length) {
     if (!buffer.readS32(&start) || start != SkTPin(start, 0, 7)) {
         return 0;
     }
-    this->reset();
-    this->addRRect(rrect, rrectDir, SkToUInt(start));
+    *this = SkPath::RRect(rrect, rrectDir, SkToUInt(start));
     this->setFillType(fillType);
     buffer.skipToAlign4();
     return buffer.pos();

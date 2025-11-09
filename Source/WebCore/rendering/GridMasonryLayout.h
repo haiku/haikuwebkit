@@ -76,7 +76,6 @@ private:
     bool hasDefiniteGridAxisPosition(const RenderBox& gridItem, Style::GridTrackSizingDirection masonryDirection) const;
     GridArea masonryGridAreaFromGridAxisSpan(const GridSpan&) const;
     GridSpan gridAxisSpanFromArea(const GridArea&) const;
-    bool hasEnoughSpaceAtPosition(unsigned startingPosition, unsigned spanLength) const;
 
     unsigned m_gridAxisTracksCount;
 

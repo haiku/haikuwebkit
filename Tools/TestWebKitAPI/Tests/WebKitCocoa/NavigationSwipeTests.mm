@@ -52,7 +52,8 @@ namespace TestWebKitAPI {
 
 #if PLATFORM(IOS_FAMILY)
 
-TEST(NavigationSwipeTests, RestoreFirstResponderAfterNavigationSwipe)
+// FIXME: rdar://163668275 (REGRESSION(iOS26): TestWebKitAPI.NavigationSwipeTests.RestoreFirstResponderAfterNavigationSwipe is a constant failure (301656))
+TEST(NavigationSwipeTests, DISABLED_RestoreFirstResponderAfterNavigationSwipe)
 {
     poseAsClass("TestNavigationInteractiveTransition", "_UINavigationInteractiveTransitionBase");
 

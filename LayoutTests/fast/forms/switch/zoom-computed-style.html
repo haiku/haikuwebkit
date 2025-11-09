@@ -13,8 +13,8 @@ const controlWidth = UIHelper.roundToDevicePixel(controlRect.width);
 const controlHeight = UIHelper.roundToDevicePixel(controlRect.height);
 
 const controlZoomRect = controlZoom.getBoundingClientRect();
-const controlZoomWidth = UIHelper.roundToDevicePixel(controlZoomRect.width);
-const controlZoomHeight = UIHelper.roundToDevicePixel(controlZoomRect.height);
+const controlZoomWidth = UIHelper.roundToDevicePixel(controlZoomRect.width / 5);
+const controlZoomHeight = UIHelper.roundToDevicePixel(controlZoomRect.height / 5);
 
 shouldBe("controlWidth", "controlZoomWidth");
 shouldBe("controlHeight", "controlZoomHeight");

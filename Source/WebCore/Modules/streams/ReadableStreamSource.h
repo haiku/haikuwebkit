@@ -71,8 +71,8 @@ class RefCountedReadableStreamSource
     : public ReadableStreamSource
     , public RefCounted<RefCountedReadableStreamSource> {
 public:
-    void ref() const final { RefCounted::ref(); }
-    void deref() const final { RefCounted::deref(); }
+    void ref() const override { RefCounted::ref(); }
+    void deref() const override { RefCounted::deref(); }
 };
 
 class SimpleReadableStreamSource

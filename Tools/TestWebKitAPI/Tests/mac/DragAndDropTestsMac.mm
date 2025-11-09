@@ -113,6 +113,9 @@ TEST(DragAndDropTests, DragPromisedImageFileIntoFileUpload)
     TestWebKitAPI::Util::waitForConditionWithLogging([&] () -> bool {
         return [webView stringByEvaluatingJavaScript:@"imageload.textContent"].boolValue;
     }, 2, @"Expected image to finish loading.");
+    static constexpr auto expectedDataTransferItems = "[{\"kind\":\"file\",\"type\":\"image/gif\",\"file\":null}]";
+    EXPECT_WK_STREQ(expectedDataTransferItems, [webView stringByEvaluatingJavaScript:@"dragenterItems.textContent"]);
+    EXPECT_WK_STREQ(expectedDataTransferItems, [webView stringByEvaluatingJavaScript:@"dragoverItems.textContent"]);
     EXPECT_EQ(1, [webView stringByEvaluatingJavaScript:@"filecount.textContent"].integerValue);
 
     TestDraggingInfo *draggingInfo = [simulator draggingInfo];

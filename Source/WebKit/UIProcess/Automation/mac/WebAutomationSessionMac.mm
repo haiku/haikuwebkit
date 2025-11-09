@@ -85,8 +85,10 @@ void WebAutomationSession::sendSynthesizedEventsToPage(WebPageProxy& page, NSArr
     // +[NSEvent pressedMouseButtons] does not account for the NSEvent objects created through eventSender JS in tests.
     // As such, that method always returns 0. To fix this, we swizzle out +[NSEvent pressedMouseButtons], keep track of
     // the mouse button currently being pressed down, and supply the appropriate return value as specified in documentation.
-    auto methodToSwizzle = class_getClassMethod(objc_getMetaClass(NSStringFromClass([NSEvent class]).UTF8String), @selector(pressedMouseButtons));
-    auto originalImplementation = method_setImplementation(methodToSwizzle, imp_implementationWithBlock([&mouseButtonsCurrentlyDown = m_mouseButtonsCurrentlyDown] {
+    auto methodToSwizzle = class_getClassMethod(RetainPtr { objc_getMetaClass(NSStringFromClass([NSEvent class]).UTF8String) }.get(), @selector(pressedMouseButtons));
+    // FIXME: This looks like a safer cpp false positive. It wants me to retain the Objective C block passed to imp_implementationWithBlock(),
+    // which gets implicitly constructed from a C++ lambda on this line.
+    SUPPRESS_UNRETAINED_ARG auto originalImplementation = method_setImplementation(methodToSwizzle, imp_implementationWithBlock([&mouseButtonsCurrentlyDown = m_mouseButtonsCurrentlyDown] {
         NSUInteger mouseButtons = 0;
         static constexpr std::array<MouseButton, 3> potentialMouseButtons { MouseButton::Left, MouseButton::Right, MouseButton::Middle };
         for (std::size_t idx = 0; idx < potentialMouseButtons.size(); ++idx) {
@@ -855,9 +857,9 @@ void WebAutomationSession::platformSimulateWheelInteraction(WebPageProxy& page, 
     locationOnScreen = CGPointMake(locationOnScreen.x, NSScreen.screens.firstObject.frame.size.height - locationOnScreen.y);
     CGEventSetLocation(cgScrollEvent.get(), locationOnScreen);
 
-    NSEvent *scrollEvent = [[NSEvent eventWithCGEvent:cgScrollEvent.get()] _eventRelativeToWindow:window.get()];
+    RetainPtr<NSEvent> scrollEvent = [[NSEvent eventWithCGEvent:cgScrollEvent.get()] _eventRelativeToWindow:window.get()];
 
-    sendSynthesizedEventsToPage(page, @[scrollEvent]);
+    sendSynthesizedEventsToPage(page, @[scrollEvent.get()]);
 }
 
 #endif // ENABLE(WEBDRIVER_WHEEL_INTERACTIONS)

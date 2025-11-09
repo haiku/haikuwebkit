@@ -107,7 +107,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
 {
     RetainPtr toRemove = adoptNS([NSMutableArray new]);
     for (UNNotification *notification in m_notifications.get()) {
-        if ([identifiers containsObject:notification.request.identifier])
+        if ([identifiers containsObject:retainPtr(notification.request.identifier).get()])
             [toRemove addObject:notification];
     }
 

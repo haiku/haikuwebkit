@@ -36,6 +36,7 @@
 #include <WebCore/PlatformScreen.h>
 #include <WebCore/TextureMapperFPSCounter.h>
 #include <WebCore/Timer.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -48,20 +49,12 @@ class Page;
 }
 
 namespace WebKit {
-class LayerTreeHost;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedTimerSmartPointerException;
-template<> struct IsDeprecatedTimerSmartPointerException<WebKit::LayerTreeHost> : std::true_type { };
-}
-
-namespace WebKit {
 
 class WebPage;
 
-class LayerTreeHost : public WebCore::GraphicsLayerClient {
+class LayerTreeHost final : public WebCore::GraphicsLayerClient, public CanMakeCheckedPtr<LayerTreeHost> {
     WTF_MAKE_TZONE_ALLOCATED(LayerTreeHost);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LayerTreeHost);
 public:
     explicit LayerTreeHost(WebPage&);
     ~LayerTreeHost();

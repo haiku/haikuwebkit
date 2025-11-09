@@ -141,7 +141,7 @@
      "super": "NSObject"
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "MACaptionAppearanceBehavior"},
     {"access": "public", "name": "MACaptionAppearanceDisplayType"},
@@ -166,7 +166,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo25MAFlashingLightsProcessorC18MediaAccessibilityE6ResultVMn"},
     {"access": "public", "linkage": "exported", "name": "_$sSo25MAFlashingLightsProcessorC18MediaAccessibilityE6ResultVN"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

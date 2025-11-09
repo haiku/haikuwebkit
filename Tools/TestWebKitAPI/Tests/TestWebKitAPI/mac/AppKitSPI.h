@@ -111,6 +111,7 @@ NSString * const NSInspectorBarTextAlignmentItemIdentifier = @"NSInspectorBarTex
 
 @interface NSScrollPocket : NSView
 @property (copy, nullable) NSColor *captureColor;
+@property BOOL prefersSolidColorHardPocket;
 @end
 
 @interface NSImage (SPI)
@@ -142,6 +143,14 @@ NSString * const NSInspectorBarTextAlignmentItemIdentifier = @"NSInspectorBarTex
 
 @interface NSFontOptions : NSObject
 + (instancetype)sharedFontOptions;
+@end
+
+@interface NSFontPanel (IPI)
+@property (nonatomic, readonly) NSString *_selectedFaceName;
+- (void)_chooseFace:(id)sender;
+@end
+
+@interface NSFontEffectsBox : NSBox
 @end
 
 #endif // PLATFORM(MAC)

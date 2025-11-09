@@ -215,6 +215,7 @@ static void testDisplayStringParsingWithLocalization(Test*, gconstpointer)
     g_assert_no_error(error.get());
 }
 
+#if PLATFORM(GTK)
 static void testActionParsing(Test*, gconstpointer)
 {
     GUniqueOutPtr<GError> error;
@@ -304,6 +305,7 @@ static void testActionParsing(Test*, gconstpointer)
     g_assert_cmpstr(webkit_web_extension_get_display_action_label(extension.get()), ==, "Button Title");
     g_assert_nonnull(webkit_web_extension_get_action_icon(extension.get(), 16, 16));
 }
+#endif
 
 static void testContentScriptsParsing(Test*, gconstpointer)
 {
@@ -1165,7 +1167,9 @@ void beforeAll()
     Test::add("WebKitWebExtension", "display-string-parsing", testDisplayStringParsing);
     Test::add("WebKitWebExtension", "default-locale-parsing", testDefaultLocaleParsing);
     Test::add("WebKitWebExtension", "display-string-parsing-with-localization", testDisplayStringParsingWithLocalization);
+#if PLATFORM(GTK)
     Test::add("WebKitWebExtension", "action-parsing", testActionParsing);
+#endif
     Test::add("WebKitWebExtension", "content-scripts-parsing", testContentScriptsParsing);
     Test::add("WebKitWebExtension", "permissions-parsing", testPermissionsParsing);
     Test::add("WebKitWebExtension", "background-parsing", testBackgroundParsing);

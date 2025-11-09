@@ -59,6 +59,8 @@ private:
     RemotePipelineLayoutProxy& operator=(const RemotePipelineLayoutProxy&) = delete;
     RemotePipelineLayoutProxy& operator=(RemotePipelineLayoutProxy&&) = delete;
 
+    bool isRemotePipelineLayoutProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -75,5 +77,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemotePipelineLayoutProxy)
+    static bool isType(const WebCore::WebGPU::PipelineLayout& layout) { return layout.isRemotePipelineLayoutProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLBlendFuncExtended);
 WebGLBlendFuncExtended::WebGLBlendFuncExtended(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::WebGLBlendFuncExtended)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_EXT_blend_func_extended"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::EXT_blend_func_extended);
 }
 
 WebGLBlendFuncExtended::~WebGLBlendFuncExtended() = default;
 
 bool WebGLBlendFuncExtended::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_EXT_blend_func_extended"_s);
+    return context.supportsExtension(GCGLExtension::EXT_blend_func_extended);
 }
 
 } // namespace WebCore

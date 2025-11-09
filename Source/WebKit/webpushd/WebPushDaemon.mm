@@ -506,7 +506,7 @@ void WebPushDaemon::injectEncryptedPushMessageForTesting(PushClientConnection& c
         if (!obj || ![obj isKindOfClass:[NSDictionary class]])
             return replySender(false);
 
-        daemon.m_pushService->didReceivePushMessage(obj[@"topic"], obj[@"userInfo"], [replySender = WTFMove(replySender)]() mutable {
+        daemon.m_pushService->didReceivePushMessage(retainPtr(obj[@"topic"]).get(), retainPtr(obj[@"userInfo"]).get(), [replySender = WTFMove(replySender)]() mutable {
             replySender(true);
         });
     });
@@ -1076,7 +1076,7 @@ void WebPushDaemon::getNotifications(PushClientConnection& connection, const URL
         ensureOnMainRunLoop([identifier = crossThreadCopy(identifier), notifications = RetainPtr { notifications }, registrationURL = crossThreadCopy(WTFMove(registrationURL)), tag = crossThreadCopy(WTFMove(tag)), completionHandler = WTFMove(completionHandler)] mutable {
             Vector<WebCore::NotificationData> notificationDatas;
             for (UNNotification *notification in notifications.get()) {
-                auto notificationData = WebCore::NotificationData::fromDictionary(notification.request.content.userInfo);
+                auto notificationData = WebCore::NotificationData::fromDictionary(retainPtr(notification.request.content.userInfo).get());
                 if (!notificationData) {
                     RELEASE_LOG_ERROR(Push, "WebPushDaemon::getNotifications error: skipping notification with invalid Notification userInfo for subscription %{public}s", identifier.debugDescription().utf8().data());
                     continue;
@@ -1239,7 +1239,7 @@ void WebPushDaemon::setAppBadge(PushClientConnection& connection, WebCore::Secur
 
     RetainPtr content = adoptNS([UNMutableNotificationContent new]);
     content.get().badge = appBadge ? [NSNumber numberWithLongLong:*appBadge] : nil;
-    RetainPtr request = [UNNotificationRequest requestWithIdentifier:NSUUID.UUID.UUIDString content:content.get() trigger:nil];
+    RetainPtr request = [UNNotificationRequest requestWithIdentifier:retainPtr(NSUUID.UUID.UUIDString).get() content:content.get() trigger:nil];
     RetainPtr debugDescription = identifier.debugDescription().createNSString().get();
     [center addNotificationRequest:request.get() withCompletionHandler:^(NSError *error) {
         if (error) {
@@ -1262,7 +1262,7 @@ void WebPushDaemon::getAppBadgeForTesting(PushClientConnection& connection, Comp
 
     String bundleIdentifier = connection.pushPartitionIfExists().isEmpty() ? connection.hostAppCodeSigningIdentifier() : connection.pushPartitionIfExists();
     RetainPtr center = adoptNS([[_WKMockUserNotificationCenter alloc] initWithBundleIdentifier:bundleIdentifier.createNSString().get()]);
-    NSNumber *centerBadge = [center getAppBadgeForTesting];
+    RetainPtr<NSNumber> centerBadge = [center getAppBadgeForTesting];
 
     if (centerBadge)
         completionHandler([centerBadge unsignedLongLongValue]);

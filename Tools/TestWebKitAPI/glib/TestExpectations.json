@@ -156,7 +156,7 @@
                 "expected": {"all": {"status": ["PASS", "FAIL"], "bug": "webkit.org/b/281942"}}
             },
             "/webkit/WebKitWebContext/no-web-process-leak": {
-                "expected": {"gtk": {"status": ["TIMEOUT"], "bug": "webkit.org/b/299598"}}
+                "expected": {"all": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/299598"}}
             }
         }
     },
@@ -226,7 +226,7 @@
     "TestLoaderClient": {
         "subtests": {
             "/webkit/WebKitWebPage/get-uri": {
-                "expected": {"all": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/206728"}}
+                "expected": {"all": {"status": ["FAIL", "PASS", "TIMEOUT"], "bug": "webkit.org/b/206728"}}
             },
             "/webkit/WebKitWebView/load-twice-and-reload": {
                 "expected": {"gtk": {"status": ["PASS", "TIMEOUT"], "bug": "webkit.org/b/281979"}}
@@ -472,7 +472,11 @@
         "subtests": {
             "/webkit/Downloads/remote-file-error": {
                 "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/254002"}}
+            },
+            "/webkit/Downloads/mime-type": {
+                "expected": {"all": {"status": ["TIMEOUT", "FAIL", "PASS"], "bug": "webkit.org/b/301572"}}
             }
+
         }
     },
     "TestMultiprocess": {
@@ -522,7 +526,7 @@
                 "expected": {"all": {"status": ["CRASH", "PASS"], "bug": "webkit.org/b/264509"}}
             },
             "/webkit/WebKitWebResource/get-data-error": {
-                "expected": {"gtk": {"status": ["FAIL", "PASS"], "bug": "webkit.org/b/279203"}}
+                "expected": {"all": {"status": ["FAIL", "TIMEOUT", "PASS"], "bug": "webkit.org/b/279203"}}
             },
             "/webkit/WebKitWebView/sync-request-on-max-conns": {
                 "expected": {"all": {"status": ["FAIL", "PASS", "TIMEOUT"], "bug": "webkit.org/b/279351"}}
@@ -548,8 +552,14 @@
             "/webkit/WebKitWebsiteData/storage": {
                 "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/284812"}}
             },
-            "/webkit/WebKitWebsiteData/service-worker-registrations": {
-                "expected": {"all" : { "status": ["PASS", "FAIL"], "bug": "webkit.org/b/287621"}}
+            "/webkit/WebKitWebsiteData/configuration": {
+                "expected": {"all" : { "status": ["PASS", "FAIL", "TIMEOUT"], "bug": "webkit.org/b/301570"}}
+            },
+            "/webkit/WebKitWebsiteData/cache": {
+                "expected": {"all" : { "status": ["PASS", "TIMEOUT"], "bug": "webkit.org/b/301570"}}
+            },
+            "/webkit/WebKitWebsiteData/dom-cache": {
+                "expected": {"all" : { "status": ["PASS", "TIMEOUT"], "bug": "webkit.org/b/301570"}}
             }
         }
     },

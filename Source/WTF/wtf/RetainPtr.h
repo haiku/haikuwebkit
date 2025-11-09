@@ -194,14 +194,14 @@ template<typename T> inline RetainPtr<T>::RetainPtr(PtrType ptr)
     : m_ptr(ptr)
 {
     if (m_ptr)
-        retainFoundationPtr(m_ptr);
+        SUPPRESS_UNRETAINED_ARG retainFoundationPtr(m_ptr);
 }
 
 template<typename T> inline RetainPtr<T>::RetainPtr(const RetainPtr& o)
     : m_ptr(o.m_ptr)
 {
     if (m_ptr)
-        retainFoundationPtr(m_ptr);
+        SUPPRESS_UNRETAINED_ARG retainFoundationPtr(m_ptr);
 }
 
 template<typename T> template<typename U> inline RetainPtr<T>::RetainPtr(const RetainPtr<U>& o)

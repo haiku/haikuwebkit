@@ -195,7 +195,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return 0;
 
     // Need to directly access the dictionary because -[NSPrintOperation pageRange] verifies pagination, potentially causing recursion.
-    return [[[[_printOperation.get() printInfo] dictionary] objectForKey:NSPrintFirstPage] unsignedIntegerValue];
+    return [retainPtr([retainPtr([retainPtr([_printOperation.get() printInfo]) dictionary]) objectForKey:NSPrintFirstPage]) unsignedIntegerValue];
 }
 
 - (NSUInteger)_lastPrintedPageNumber
@@ -206,8 +206,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return 0;
 
     // Need to directly access the dictionary because -[NSPrintOperation pageRange] verifies pagination, potentially causing recursion.
-    NSUInteger firstPage = [[[[_printOperation.get() printInfo] dictionary] objectForKey:NSPrintFirstPage] unsignedIntegerValue];
-    NSUInteger lastPage = [[[[_printOperation.get() printInfo] dictionary] objectForKey:NSPrintLastPage] unsignedIntegerValue];
+    NSUInteger firstPage = [[retainPtr([retainPtr([_printOperation.get() printInfo]) dictionary]) objectForKey:NSPrintFirstPage] unsignedIntegerValue];
+    NSUInteger lastPage = [[retainPtr([retainPtr([_printOperation.get() printInfo]) dictionary]) objectForKey:NSPrintLastPage] unsignedIntegerValue];
     if (lastPage - firstPage >= _printingPageRects.size())
         return _printingPageRects.size();
     return lastPage;
@@ -456,7 +456,7 @@ static void prepareDataForPrintingOnSecondaryThread(WKPrintingView *view)
 
 static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestination *destination)
 {
-    return adoptNS([[NSString alloc] initWithFormat:@"%lu-%f-%f", (unsigned long)[document indexForPage:destination.page], destination.point.x, destination.point.y]);
+    return adoptNS([[NSString alloc] initWithFormat:@"%lu-%f-%f", (unsigned long)[document indexForPage:retainPtr(destination.page).get()], destination.point.x, destination.point.y]);
 }
 
 - (void)_drawPDFDocument:(PDFDocument *)pdfDocument page:(unsigned)page atPoint:(NSPoint)point
@@ -608,7 +608,7 @@ static RetainPtr<NSString> linkDestinationName(PDFDocument *document, PDFDestina
                 if (!destination)
                     continue;
 
-                unsigned destinationPageIndex = [_printedPagesPDFDocument indexForPage:destination.get().page];
+                unsigned destinationPageIndex = [_printedPagesPDFDocument indexForPage:retainPtr(destination.get().page).get()];
                 _linkDestinationsPerPage[destinationPageIndex].append(WTFMove(destination));
             }
         }

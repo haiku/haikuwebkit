@@ -56,6 +56,7 @@ layer at (0,0) size 800x600
           text run at (596,339) width 4: " "
         RenderText {#text} at (0,0) size 0x0
         RenderText {#text} at (0,0) size 0x0
+        RenderText {#text} at (0,0) size 0x0
 layer at (8,63) size 116x76
   RenderBlock {DIV} at (0,10) size 116x76 [color=#ADD8E6] [border: (3px solid #000000)]
     RenderBlock {DIV} at (8,8) size 100x10 [bgcolor=#C0C0C0]

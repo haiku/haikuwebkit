@@ -147,17 +147,20 @@ void PlatformXRSystem::requestPermissionOnSessionFeatures(IPC::Connection& conne
         return;
     }
 
+    if (!PlatformXR::isImmersive(mode)) {
+        completionHandler(granted);
+        return;
+    }
+
     auto* xrCoordinator = PlatformXRSystem::xrCoordinator();
     if (!xrCoordinator) {
         completionHandler(granted);
         return;
     }
 
-    if (PlatformXR::isImmersive(mode)) {
-        MESSAGE_CHECK_COMPLETION(m_immersiveSessionState == ImmersiveSessionState::Idle || m_immersiveSessionState == ImmersiveSessionState::SessionEndingFromWebContent, connection, completionHandler({ }));
-        setImmersiveSessionState(ImmersiveSessionState::RequestingPermissions, [](bool) mutable { });
-        m_immersiveSessionGrantedFeatures = std::nullopt;
-    }
+    MESSAGE_CHECK_COMPLETION(m_immersiveSessionState == ImmersiveSessionState::Idle || m_immersiveSessionState == ImmersiveSessionState::SessionEndingFromWebContent, connection, completionHandler({ }));
+    setImmersiveSessionState(ImmersiveSessionState::RequestingPermissions, [](bool) mutable { });
+    m_immersiveSessionGrantedFeatures = std::nullopt;
 
     xrCoordinator->requestPermissionOnSessionFeatures(*page, securityOriginData, mode, granted, consentRequired, consentOptional, requiredFeaturesRequested, optionalFeaturesRequested, [weakThis = WeakPtr { *this }, mode, securityOriginData, consentRequired, completionHandler = WTFMove(completionHandler)](std::optional<PlatformXR::Device::FeatureList>&& grantedFeatures) mutable {
         ASSERT(RunLoop::isMain());
@@ -316,7 +319,7 @@ void PlatformXRSystem::setImmersiveSessionState(ImmersiveSessionState state, Com
     m_immersiveSessionState = state;
 #if PLATFORM(COCOA)
     RefPtr page = m_page.get();
-    if (!page) {
+    if (!page || page->isClosed()) {
         completion(false);
         return;
     }

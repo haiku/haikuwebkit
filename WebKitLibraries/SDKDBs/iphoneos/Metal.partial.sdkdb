@@ -3188,7 +3188,8 @@
      "linkage": "exported",
      "name": "MTLFunctionReflection",
      "properties": [
-      {"access": "public", "attr": [ "readonly" ], "getter": "bindings", "name": "bindings"}
+      {"access": "public", "attr": [ "readonly" ], "getter": "bindings", "name": "bindings"},
+      {"access": "public", "attr": [ "readonly" ], "getter": "userAnnotation", "introduced": "26", "name": "userAnnotation"}
      ],
      "super": "NSObject"
     },
@@ -5343,7 +5344,8 @@
       {"access": "public", "attr": [ "readonly" ], "getter": "supportsFunctionPointers", "introduced": "14", "name": "supportsFunctionPointers"},
       {"access": "public", "attr": [ "readonly" ], "getter": "supportsFunctionPointersFromRender", "introduced": "15", "name": "supportsFunctionPointersFromRender"},
       {"access": "public", "attr": [ "readonly" ], "getter": "supportsRaytracingFromRender", "introduced": "15", "name": "supportsRaytracingFromRender"},
-      {"access": "public", "attr": [ "readonly" ], "getter": "supportsPrimitiveMotionBlur", "introduced": "14", "name": "supportsPrimitiveMotionBlur"}
+      {"access": "public", "attr": [ "readonly" ], "getter": "supportsPrimitiveMotionBlur", "introduced": "14", "name": "supportsPrimitiveMotionBlur"},
+      {"access": "public", "attr": [ "readonly" ], "getter": "maximumConcurrentCompilationTaskCount", "introduced": "26", "name": "maximumConcurrentCompilationTaskCount"}
      ],
      "protocols": [
       "NSObject"
@@ -6222,7 +6224,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "MTL4AlphaToCoverageState"},
     {"access": "public", "name": "MTL4AlphaToOneState"},

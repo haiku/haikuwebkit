@@ -138,6 +138,7 @@ private:
 
     void drawSkiaRect(const SkRect&, SkPaint&);
     void drawSkiaPath(const SkPath&, SkPaint&);
+    bool drawPathAsSingleElement(const Path&, SkPaint&);
 
     class SkiaState {
     public:

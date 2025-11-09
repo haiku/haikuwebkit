@@ -36,6 +36,7 @@
 #include <wtf/LoggerHelper.h>
 #include <wtf/RunLoop.h>
 #include <wtf/SortedArrayMap.h>
+#include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringToIntegerConversion.h>
 #include <wtf/text/WTFString.h>
@@ -56,6 +57,8 @@
 
 namespace WebDriver {
 
+WTF_MAKE_TZONE_ALLOCATED_IMPL(WebDriverService);
+
 // https://w3c.github.io/webdriver/webdriver-spec.html#dfn-maximum-safe-integer
 static const double maxSafeInteger = 9007199254740991.0; // 2 ^ 53 - 1
 
@@ -63,7 +66,10 @@ WebDriverService::WebDriverService()
     : m_server(*this)
 #if ENABLE(WEBDRIVER_BIDI)
     , m_bidiServer(WebSocketServer::create(*this))
-    , m_browserTerminatedObserver([this](const String& sessionID) { onBrowserTerminated(sessionID); })
+    , m_browserTerminatedObserver(SessionHost::BrowserTerminatedObserver::create([weakThis = WeakPtr { *this }](const String& sessionID) {
+        if (CheckedPtr checkedThis = weakThis.get())
+            checkedThis->onBrowserTerminated(sessionID);
+    }))
 #endif
 {
 #if ENABLE(WEBDRIVER_BIDI)

@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 //@ runDefault("--ignoreUncaughtExceptions")
 
 // This is just check that we have sufficient Reserved Zone size to handle stack

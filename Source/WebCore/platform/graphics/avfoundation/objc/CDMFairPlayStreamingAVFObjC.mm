@@ -38,15 +38,15 @@ namespace WebCore {
 
 Vector<Ref<SharedBuffer>> CDMPrivateFairPlayStreaming::keyIDsForRequest(AVContentKeyRequest *request)
 {
-    if (auto *identiferStr = dynamic_objc_cast<NSString>(request.identifier))
-        return { SharedBuffer::create([identiferStr dataUsingEncoding:NSUTF8StringEncoding]) };
-    if (auto *identifierData = dynamic_objc_cast<NSData>(request.identifier))
-        return { SharedBuffer::create(identifierData) };
+    if (RetainPtr identiferStr = dynamic_objc_cast<NSString>(request.identifier))
+        return { SharedBuffer::create(retainPtr([identiferStr dataUsingEncoding:NSUTF8StringEncoding]).get()) };
+    if (RetainPtr identifierData = dynamic_objc_cast<NSData>(request.identifier))
+        return { SharedBuffer::create(identifierData.get()) };
     if (request.initializationData) {
-        if (auto sinfKeyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(SharedBuffer::create(request.initializationData)))
+        if (auto sinfKeyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(SharedBuffer::create(retainPtr(request.initializationData).get())))
             return WTFMove(sinfKeyIDs.value());
 #if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
-        if (auto mptsKeyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(SharedBuffer::create(request.initializationData)))
+        if (auto mptsKeyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(SharedBuffer::create(retainPtr(request.initializationData).get())))
             return WTFMove(mptsKeyIDs.value());
 #endif
     }

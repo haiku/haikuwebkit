@@ -7,4 +7,4 @@ PASS Context menu was presented above the keyboard
 PASS successfullyParsed is true
 
 TEST COMPLETE
-Show file picker
+ Show file picker

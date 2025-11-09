@@ -74,7 +74,7 @@ void PageBanner::didAddParentLayer(GraphicsLayer* parentLayer)
         return;
 
     m_layer.get().bounds = CGRectMake(0, 0, parentLayer->size().width(), parentLayer->size().height());
-    [parentLayer->platformLayer() addSublayer:m_layer.get()];
+    [parentLayer->protectedPlatformLayer() addSublayer:m_layer.get()];
 }
 
 void PageBanner::detachFromPage()

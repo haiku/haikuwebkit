@@ -55,27 +55,32 @@ RTCDataChannelRemoteHandler::~RTCDataChannelRemoteHandler() = default;
 
 void RTCDataChannelRemoteHandler::didChangeReadyState(RTCDataChannelState state)
 {
-    m_client->didChangeReadyState(state);
+    if (RefPtr client = m_client.get())
+        client->didChangeReadyState(state);
 }
 
 void RTCDataChannelRemoteHandler::didReceiveStringData(String&& text)
 {
-    m_client->didReceiveStringData(text);
+    if (RefPtr client = m_client.get())
+        client->didReceiveStringData(text);
 }
 
 void RTCDataChannelRemoteHandler::didReceiveRawData(std::span<const uint8_t> data)
 {
-    m_client->didReceiveRawData(data);
+    if (RefPtr client = m_client.get())
+        client->didReceiveRawData(data);
 }
 
 void RTCDataChannelRemoteHandler::didDetectError(Ref<RTCError>&& error)
 {
-    m_client->didDetectError(WTFMove(error));
+    if (RefPtr client = m_client.get())
+        client->didDetectError(WTFMove(error));
 }
 
 void RTCDataChannelRemoteHandler::bufferedAmountIsDecreasing(size_t amount)
 {
-    m_client->bufferedAmountIsDecreasing(amount);
+    if (RefPtr client = m_client.get())
+        client->bufferedAmountIsDecreasing(amount);
 }
 
 void RTCDataChannelRemoteHandler::readyToSend()
@@ -92,7 +97,7 @@ void RTCDataChannelRemoteHandler::readyToSend()
 
 void RTCDataChannelRemoteHandler::setClient(RTCDataChannelHandlerClient& client, std::optional<ScriptExecutionContextIdentifier> contextIdentifier)
 {
-    m_client = &client;
+    m_client = client;
     m_connection->connectToSource(*this, contextIdentifier, *m_localIdentifier, m_remoteIdentifier);
 }
 

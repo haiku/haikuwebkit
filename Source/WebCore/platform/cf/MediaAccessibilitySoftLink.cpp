@@ -56,4 +56,9 @@ SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, 
 SOFT_LINK_FUNCTION_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MAAudibleMediaPrefCopyPreferDescriptiveVideo, CFBooleanRef, (), (), WEBCORE_EXPORT)
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MACaptionAppearanceIsCustomized, bool, (MACaptionAppearanceDomain domain), (domain), WEBCORE_EXPORT);
 SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MACaptionAppearanceCopyActiveProfileID, CFStringRef, (), (), WEBCORE_EXPORT);
+
+SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MACaptionAppearanceCopyProfileIDs, CFArrayRef, (), (), WEBCORE_EXPORT)
+SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MACaptionAppearanceSetActiveProfileID, void, (CFStringRef profileID), (profileID), WEBCORE_EXPORT)
+SOFT_LINK_FUNCTION_MAY_FAIL_FOR_SOURCE_WITH_EXPORT(WebCore, MediaAccessibility, MACaptionAppearanceCopyProfileName, CFStringRef, (CFStringRef profileID), (profileID), WEBCORE_EXPORT)
+
 #endif // HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)

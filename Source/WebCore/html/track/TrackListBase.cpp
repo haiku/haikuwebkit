@@ -61,7 +61,8 @@ void TrackListBase::didMoveToNewDocument(Document& newDocument)
 
 WebCoreOpaqueRoot TrackListBase::opaqueRoot()
 {
-    if (auto* rootObserver = m_opaqueRootObserver.get())
+    // Cannot ref the observer as this gets called on the GC thread.
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* rootObserver = m_opaqueRootObserver.get())
         return (*rootObserver)();
     return WebCoreOpaqueRoot { this };
 }

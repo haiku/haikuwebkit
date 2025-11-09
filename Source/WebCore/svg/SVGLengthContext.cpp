@@ -112,11 +112,12 @@ static inline float dimensionForLengthMode(SVGLengthMode mode, FloatSize viewpor
     return 0;
 }
 
-template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeType& size, SVGLengthMode lengthMode)
+template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeType& size, Style::ZoomFactor usedZoom, SVGLengthMode lengthMode)
+    requires (SizeType::Fixed::zoomOptions == CSS::RangeZoomOptions::Unzoomed || SizeType::Calc::range.zoomOptions == CSS::RangeZoomOptions::Unzoomed)
 {
     return WTF::switchOn(size,
         [&](const typename SizeType::Fixed& fixed) -> float {
-            return Style::evaluate<float>(fixed, Style::ZoomNeeded { });
+            return Style::evaluate<float>(fixed, usedZoom);
         },
         [&](const typename SizeType::Percentage& percentage) -> float {
             auto result = convertValueFromPercentageToUserUnits(percentage.value / 100, lengthMode);
@@ -126,7 +127,7 @@ template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeT
         },
         [&](const typename SizeType::Calc& calc) -> float {
             auto viewportSize = this->viewportSize().value_or(FloatSize { });
-            return Style::evaluate<float>(calc, dimensionForLengthMode(lengthMode, viewportSize));
+            return Style::evaluate<float>(calc, dimensionForLengthMode(lengthMode, viewportSize), usedZoom);
         },
         [&](const auto&) -> float {
             return 0;
@@ -134,44 +135,68 @@ template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeT
     );
 
 }
-float SVGLengthContext::valueForLength(const Style::PreferredSize& size, SVGLengthMode lengthMode)
+
+template<typename SizeType> float SVGLengthContext::valueForSizeType(const SizeType& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return WTF::switchOn(size,
+        [&](const typename SizeType::Fixed& fixed) -> float {
+            return Style::evaluate<float>(fixed, zoomNeeded);
+        },
+        [&](const typename SizeType::Percentage& percentage) -> float {
+            auto result = convertValueFromPercentageToUserUnits(percentage.value / 100, lengthMode);
+            if (result.hasException())
+                return 0;
+            return result.releaseReturnValue();
+        },
+        [&](const typename SizeType::Calc& calc) -> float {
+            auto viewportSize = this->viewportSize().value_or(FloatSize { });
+            return Style::evaluate<float>(calc, dimensionForLengthMode(lengthMode, viewportSize), zoomNeeded);
+        },
+        [&](const auto&) -> float {
+            return 0;
+        }
+    );
+
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGCenterCoordinateComponent& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::PreferredSize& size, Style::ZoomFactor usedZoom, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, usedZoom, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGCoordinateComponent& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGCenterCoordinateComponent& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGRadius& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGCoordinateComponent& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGRadiusComponent& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGRadius& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGStrokeDasharrayValue& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGRadiusComponent& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::SVGStrokeDashoffset& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGStrokeDasharrayValue& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
-float SVGLengthContext::valueForLength(const Style::StrokeWidth& size, SVGLengthMode lengthMode)
+float SVGLengthContext::valueForLength(const Style::SVGStrokeDashoffset& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
 {
-    return valueForSizeType(size, lengthMode);
+    return valueForSizeType(size, zoomNeeded, lengthMode);
+}
+
+float SVGLengthContext::valueForLength(const Style::StrokeWidth& size, Style::ZoomNeeded zoomNeeded, SVGLengthMode lengthMode)
+{
+    return valueForSizeType(size, zoomNeeded, lengthMode);
 }
 
 float SVGLengthContext::computeNonCalcLength(float inputValue, CSS::LengthUnit unit) const

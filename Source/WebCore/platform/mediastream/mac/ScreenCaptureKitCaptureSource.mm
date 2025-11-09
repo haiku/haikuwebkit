@@ -41,6 +41,7 @@
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/NeverDestroyed.h>
+#import <wtf/TZoneMallocInlines.h>
 #import <wtf/cf/TypeCastsCF.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/text/StringToIntegerConversion.h>
@@ -164,6 +165,8 @@ using namespace WebCore;
 #pragma clang diagnostic pop
 
 namespace WebCore {
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(ScreenCaptureKitCaptureSource);
 
 ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
 

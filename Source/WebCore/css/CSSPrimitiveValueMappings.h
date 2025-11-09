@@ -45,11 +45,13 @@
 #include "SVGRenderStyleDefs.h"
 #include "ScrollAxis.h"
 #include "ScrollTypes.h"
+#include "StyleImageOrientation.h"
 #include "StyleScrollBehavior.h"
 #include "StyleTextDecorationLine.h"
 #include "StyleWebKitOverflowScrolling.h"
 #include "StyleWebKitTouchCallout.h"
 #include "TextFlags.h"
+#include "TextSpacing.h"
 #include "ThemeTypes.h"
 #include "TouchAction.h"
 #include "UnicodeBidi.h"
@@ -138,16 +140,18 @@ inline TypeDeducingCSSValueMapper fromCSSValueDeducingType(const Style::BuilderS
 
 #define EMIT_TO_CSS_SWITCH_CASE(VALUE) case TYPE::VALUE: return CSSValue##VALUE;
 #define EMIT_FROM_CSS_SWITCH_CASE(VALUE) case CSSValue##VALUE: return TYPE::VALUE;
+#define EMIT_VALUE_REPRESENTATION_CSS_SWITCH_CASE(VALUE) case WebCore::TYPE::VALUE: return visitor(CSS::Keyword::VALUE { });
 
-#define DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS \
+#define DEFINE_TO_CSS_VALUE_ID_FUNCTION \
 constexpr CSSValueID toCSSValueID(TYPE value) { \
     switch (value) { \
     FOR_EACH(EMIT_TO_CSS_SWITCH_CASE) \
     } \
     ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT(); \
     return CSSValueInvalid; \
-} \
-\
+}
+
+#define DEFINE_FROM_CSS_VALUE_ID_FUNCTION \
 template<> constexpr TYPE fromCSSValueID(CSSValueID value) { \
     switch (value) { \
     FOR_EACH(EMIT_FROM_CSS_SWITCH_CASE) \
@@ -157,6 +161,23 @@ template<> constexpr TYPE fromCSSValueID(CSSValueID value) { \
     ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT(); \
     return { }; \
 }
+
+#define DEFINE_VALUE_REPRESENTATION_CSS_VALUE_ID_FUNCTION \
+template<> struct Style::ValueRepresentation<WebCore::TYPE> { \
+    template<typename... F> constexpr decltype(auto) operator()(WebCore::TYPE value, F&&... f) \
+    { \
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...); \
+        switch (value) { \
+        FOR_EACH(EMIT_VALUE_REPRESENTATION_CSS_SWITCH_CASE) \
+        } \
+        RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT(); \
+    } \
+};
+
+#define DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS \
+    DEFINE_TO_CSS_VALUE_ID_FUNCTION \
+    DEFINE_FROM_CSS_VALUE_ID_FUNCTION \
+    DEFINE_VALUE_REPRESENTATION_CSS_VALUE_ID_FUNCTION
 
 #define TYPE ReflectionDirection
 #define FOR_EACH(CASE) CASE(Above) CASE(Below) CASE(Left) CASE(Right)
@@ -1247,7 +1268,7 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef FOR_EACH
 
 #define TYPE TextTransform
-#define FOR_EACH(CASE) CASE(Capitalize) CASE(Uppercase) CASE(Lowercase) CASE(FullSizeKana) CASE(FullWidth)
+#define FOR_EACH(CASE) CASE(Capitalize) CASE(Uppercase) CASE(Lowercase) CASE(FullSizeKana) CASE(FullWidth) CASE(MathAuto)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
@@ -2498,7 +2519,7 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef FOR_EACH
 
 #define TYPE Style::PositionTryFallback::Tactic
-#define FOR_EACH(CASE) CASE(FlipBlock) CASE(FlipInline) CASE(FlipStart)
+#define FOR_EACH(CASE) CASE(FlipBlock) CASE(FlipInline) CASE(FlipStart) CASE(FlipX) CASE(FlipY)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
@@ -2563,6 +2584,18 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
+#define TYPE TextSpacingTrim::TrimType
+#define FOR_EACH(CASE) CASE(SpaceAll) CASE(TrimAll) CASE(Auto)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE Style::ImageOrientation
+#define FOR_EACH(CASE) CASE(FromImage) CASE(None)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
 
 #define TYPE Style::WebkitOverflowScrolling
@@ -2585,6 +2618,10 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 
 #undef EMIT_TO_CSS_SWITCH_CASE
 #undef EMIT_FROM_CSS_SWITCH_CASE
+#undef EMIT_VALUE_REPRESENTATION_CSS_SWITCH_CASE
+#undef DEFINE_TO_CSS_VALUE_ID_FUNCTION
+#undef DEFINE_FROM_CSS_VALUE_ID_FUNCTION
+#undef DEFINE_VALUE_REPRESENTATION_CSS_VALUE_ID_FUNCTION
 #undef DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 
 }

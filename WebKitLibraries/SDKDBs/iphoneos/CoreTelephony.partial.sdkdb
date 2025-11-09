@@ -242,7 +242,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "CTCellularDataRestrictedState"},
     {"access": "public", "introduced": "26", "name": "CTCellularPlanCapability"},
@@ -258,7 +258,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo24CTCellularPlanPropertiesC13CoreTelephonyE20supportedRegionCodesSay10Foundation6LocaleV0G0VGvpMV"},
     {"access": "public", "linkage": "exported", "name": "_$sSo24CTCellularPlanPropertiesC13CoreTelephonyE20supportedRegionCodesSay10Foundation6LocaleV0G0VGvs"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

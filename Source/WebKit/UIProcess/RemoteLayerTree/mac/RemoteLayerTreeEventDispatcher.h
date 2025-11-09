@@ -44,10 +44,13 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 #include "RemoteAnimationStack.h"
-#include "RemoteAnimationTimeline.h"
+#include "RemoteMonotonicTimelineRegistry.h"
 #endif
 
 namespace WebCore {
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class AcceleratedTimeline;
+#endif
 class PlatformWheelEvent;
 class WheelEventDeltaFilter;
 struct WheelEventHandlingResult;
@@ -61,16 +64,14 @@ namespace WebKit {
 
 class DisplayLink;
 class NativeWebWheelEvent;
-class RemoteAnimationStack;
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class RemoteAnimationTimeline;
+#endif
 class RemoteScrollingCoordinatorProxyMac;
 class RemoteLayerTreeDrawingAreaProxyMac;
 class RemoteLayerTreeNode;
 class RemoteScrollingTree;
 class RemoteLayerTreeEventDispatcherDisplayLinkClient;
-
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-class RemoteAnimationTimeline;
-#endif
 
 // This class exists to act as a threadsafe DisplayLink::Client client, allowing RemoteScrollingCoordinatorProxyMac to
 // be main-thread only. It's the UI-process analogue of WebPage/EventDispatcher.
@@ -110,9 +111,9 @@ public:
     void unlockForAnimationChanges() WTF_RELEASES_LOCK(m_animationLock);
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
+    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime);
+    RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&);
     void updateAnimations();
-    void registerTimelineIfNecessary(WebCore::ProcessIdentifier, Seconds, MonotonicTime);
-    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const;
 #endif
 
 private:
@@ -203,7 +204,7 @@ private:
     friend class RemoteScrollingCoordinatorProxyMac;
     Lock m_animationLock;
     HashMap<WebCore::PlatformLayerIdentifier, Ref<RemoteAnimationStack>> m_animationStacks WTF_GUARDED_BY_LOCK(m_animationLock);
-    HashMap<WebCore::ProcessIdentifier, Ref<RemoteAnimationTimeline>> m_timelines WTF_GUARDED_BY_LOCK(m_animationLock);
+    std::unique_ptr<RemoteMonotonicTimelineRegistry> m_monotonicTimelineRegistry WTF_GUARDED_BY_LOCK(m_animationLock);
 #endif
 
 #if ENABLE(MOMENTUM_EVENT_DISPATCHER)

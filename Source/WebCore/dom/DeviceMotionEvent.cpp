@@ -149,7 +149,7 @@ void DeviceMotionEvent::requestPermission(Document& document, PermissionPromise&
         return promise.resolve(PermissionState::Denied);
     }
 
-    document.deviceOrientationAndMotionAccessController().shouldAllowAccess(document, [promise = WTFMove(promise)](auto permissionState) mutable {
+    document.checkedDeviceOrientationAndMotionAccessController()->shouldAllowAccess(document, [promise = WTFMove(promise)](auto permissionState) mutable {
         if (permissionState == PermissionState::Prompt)
             return promise.reject(Exception { ExceptionCode::NotAllowedError, "Requesting device motion access requires a user gesture to prompt"_s });
         promise.resolve(permissionState);

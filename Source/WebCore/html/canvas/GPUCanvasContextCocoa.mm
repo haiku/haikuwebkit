@@ -172,17 +172,20 @@ GPUCanvasContextCocoa::GPUCanvasContextCocoa(CanvasBase& canvas, Ref<GPUComposit
     , m_width(getCanvasWidth(htmlOrOffscreenCanvas()))
     , m_height(getCanvasHeight(htmlOrOffscreenCanvas()))
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    , m_screenPropertiesChangedObserver([this](PlatformDisplayID displayID) {
+    , m_screenPropertiesChangedObserver(ScreenPropertiesChangedObserver::create([weakThis = WeakPtr { *this }](PlatformDisplayID displayID) {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
         if (auto* screenData = WebCore::screenData(displayID))
-            updateScreenHeadroom(screenData->currentEDRHeadroom, screenData->suppressEDR);
-    })
+            protectedThis->updateScreenHeadroom(screenData->currentEDRHeadroom, screenData->suppressEDR);
+    }))
 #endif // HAVE(SUPPORT_HDR_DISPLAY)
 {
 #if HAVE(SUPPORT_HDR_DISPLAY)
     if (document)
         document->addScreenPropertiesChangedObserver(*m_screenPropertiesChangedObserver);
     else
-        m_screenPropertiesChangedObserver = std::nullopt;
+        m_screenPropertiesChangedObserver = nullptr;
 #else
     UNUSED_PARAM(document);
 #endif

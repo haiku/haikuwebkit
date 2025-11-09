@@ -1,7 +1,5 @@
 
 
 PASS Setting innerHTML on a node inserted by the parser.
-FAIL Setting innerHTML on a node adopted from a subframe. assert_throws_js: function "_ => divAdoptedFromIframe.innerHTML = 'unsafe'" threw object "TypeError: This assignment requires a TrustedHTML" ("TypeError") expected instance of function "function TypeError() {
-    [native code]
-}" ("TypeError")
+PASS Setting innerHTML on a node adopted from a subframe.
 

@@ -36,11 +36,14 @@
 #include <WebCore/StyleHyphenateLimitEdge.h>
 #include <WebCore/StyleHyphenateLimitLines.h>
 #include <WebCore/StyleImageOrNone.h>
+#include <WebCore/StyleImageOrientation.h>
 #include <WebCore/StyleLineBoxContain.h>
 #include <WebCore/StyleLineFitEdge.h>
 #include <WebCore/StyleListStyleType.h>
+#include <WebCore/StyleMathDepth.h>
 #include <WebCore/StyleOrphans.h>
 #include <WebCore/StyleQuotes.h>
+#include <WebCore/StyleSVGPaintOrder.h>
 #include <WebCore/StyleScrollbarColor.h>
 #include <WebCore/StyleStrokeMiterlimit.h>
 #include <WebCore/StyleStrokeWidth.h>
@@ -160,7 +163,7 @@ public:
     PREFERRED_TYPE(TextEmphasisPosition) unsigned textEmphasisPosition : 4;
     PREFERRED_TYPE(TextUnderlinePosition) unsigned textUnderlinePosition : 4;
     PREFERRED_TYPE(OptionSet<Style::LineBoxContain>) unsigned lineBoxContain: 7;
-    PREFERRED_TYPE(ImageOrientation) unsigned imageOrientation : 1;
+    PREFERRED_TYPE(Style::ImageOrientation) unsigned imageOrientation : 1;
     PREFERRED_TYPE(ImageRendering) unsigned imageRendering : 3;
     PREFERRED_TYPE(LineSnap) unsigned lineSnap : 2;
     PREFERRED_TYPE(LineAlign) unsigned lineAlign : 1;
@@ -180,7 +183,7 @@ public:
     PREFERRED_TYPE(Style::WebkitTouchCallout) unsigned webkitTouchCallout : 1;
 #endif
     PREFERRED_TYPE(OptionSet<HangingPunctuation>) unsigned hangingPunctuation : 4;
-    PREFERRED_TYPE(PaintOrder) unsigned paintOrder : 3;
+    PREFERRED_TYPE(Style::SVGPaintOrder::Type) unsigned paintOrder : 3;
     PREFERRED_TYPE(LineCap) unsigned capStyle : 2;
     PREFERRED_TYPE(LineJoin) unsigned joinStyle : 2;
     PREFERRED_TYPE(bool) unsigned hasSetStrokeWidth : 1;
@@ -195,7 +198,7 @@ public:
     PREFERRED_TYPE(bool) unsigned autoRevealsWhenFound : 1;
     PREFERRED_TYPE(bool) unsigned insideDefaultButton : 1;
     PREFERRED_TYPE(bool) unsigned insideSubmitButton : 1;
-    PREFERRED_TYPE(bool) unsigned enableEvaluationTimeZoom : 1;
+    PREFERRED_TYPE(bool) unsigned evaluationTimeZoomEnabled : 1;
 #if HAVE(CORE_MATERIAL)
     PREFERRED_TYPE(AppleVisualEffect) unsigned usedAppleVisualEffectForSubtree : 5;
 #endif
@@ -232,6 +235,8 @@ public:
 #endif
     Style::ListStyleType listStyleType;
     Style::BlockEllipsis blockEllipsis;
+
+    Style::MathDepth mathDepth;
 
 private:
     StyleRareInheritedData();

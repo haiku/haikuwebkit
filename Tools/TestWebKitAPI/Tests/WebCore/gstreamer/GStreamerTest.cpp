@@ -34,6 +34,7 @@
 #include <WebCore/GUniquePtrGStreamer.h>
 #include <WebCore/IntSize.h>
 #include <WebCore/PlatformVideoColorSpace.h>
+#include <wtf/URL.h>
 #include <wtf/text/MakeString.h>
 
 using namespace WebCore;
@@ -261,6 +262,98 @@ TEST_F(GStreamerTest, displayAspectRatioCalculation)
     TEST_DAR_CALCULATION(330, 196, 7201628, 7170075, 331, 196); // 330x196 custom PAR (value too high)
 
 #undef TEST_DAR_CALCULATION
+}
+
+TEST_F(GStreamerTest, protocolValidation)
+{
+    // Test protocols allowed by default
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "https://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "file:///path/to/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "http://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "blob:https://example.com/uuid"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "data:video/mp4;base64,data"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediasourceblob://source-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediastream://stream-id"_s }));
+
+    // Test allowed protocols: mix of lower and upper-case
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "Https://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "fILe:///path/to/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "HTTP://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "bloB:https://example.com/uuid"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "DAta:video/mp4;base64,data"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediasourceBLOB://source-id"_s }));
+
+    // Test forbidden protocols
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "about:blank"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "mediasource://source-id"_s }));
+
+    // Allow ftp protocol
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "ftp", TRUE);
+
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "https://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "file:///path/to/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "http://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "blob:https://example.com/uuid"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "data:video/mp4;base64,data"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediasourceblob://source-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediastream://stream-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "about:blank"_s }));
+
+    // Allow rtsp protocol
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "rtsp", TRUE);
+
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "https://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "file:///path/to/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "http://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "blob:https://example.com/uuid"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "data:video/mp4;base64,data"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediasourceblob://source-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediastream://stream-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "about:blank"_s }));
+
+    // Allow ftp and rtsp protocols
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "rtsp,ftp", TRUE);
+
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "https://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "file:///path/to/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "http://example.com/video.mp4"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "blob:https://example.com/uuid"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "data:video/mp4;base64,data"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediasourceblob://source-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "mediastream://stream-id"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "about:blank"_s }));
+
+    g_unsetenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS");
+}
+
+TEST_F(GStreamerTest, protocolValidationEnvironmentVariable)
+{
+    // Introduce typos in the environment variable
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "rtsp;ftp", TRUE);
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "rtsp,   ftp   ", TRUE);
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_TRUE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "rtsp:ftp", TRUE);
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+
+    g_setenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS", "-rtsp-ftp", TRUE);
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "rtsp://example.com/stream"_s }));
+    ASSERT_FALSE(isProtocolAllowed(WTF::URL { "ftp://example.com/video.mp4"_s }));
+
+    g_unsetenv("WEBKIT_GST_ALLOWED_URI_PROTOCOLS");
 }
 } // namespace TestWebKitAPI
 

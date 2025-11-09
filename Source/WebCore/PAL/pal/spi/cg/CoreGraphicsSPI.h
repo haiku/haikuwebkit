@@ -382,6 +382,7 @@ CGContextRef CGIOSurfaceContextCreate(IOSurfaceRef, size_t, size_t, size_t, size
 CGImageRef CGIOSurfaceContextCreateImage(CGContextRef);
 CGImageRef CGIOSurfaceContextCreateImageReference(CGContextRef);
 CGColorSpaceRef CGIOSurfaceContextGetColorSpace(CGContextRef);
+size_t CGIOSurfaceContextGetBitmapInfo(CGContextRef);
 void CGIOSurfaceContextSetDisplayMask(CGContextRef, uint32_t mask);
 IOSurfaceRef CGIOSurfaceContextGetSurface(CGContextRef);
 void CGIOSurfaceContextInvalidateSurface(CGContextRef);

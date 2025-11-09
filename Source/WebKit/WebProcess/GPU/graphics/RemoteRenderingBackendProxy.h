@@ -109,6 +109,7 @@ public:
     // Returns backing store bitmap for the RemoteNativeImageProxy.
     RefPtr<WebCore::ShareableBitmap> nativeImageBitmap(const RemoteNativeImageProxy&);
     void cacheNativeImage(WebCore::ShareableBitmap::Handle&&, WebCore::RenderingResourceIdentifier);
+    void cacheNativeImageFromSharedNativeImage(const RemoteNativeImageProxy&);
     void releaseNativeImage(WebCore::RenderingResourceIdentifier);
     void cacheFont(const WebCore::Font::Attributes&, const WebCore::FontPlatformDataAttributes&, std::optional<WebCore::RenderingResourceIdentifier>);
     void releaseFont(WebCore::RenderingResourceIdentifier);

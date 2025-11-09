@@ -243,7 +243,7 @@ void XPCServiceEventHandler(xpc_connection_t peer)
 
             auto reply = adoptOSObject(xpc_dictionary_create_reply(event));
             xpc_dictionary_set_string(reply.get(), "message-name", "process-finished-launching");
-            xpc_connection_send_message(xpc_dictionary_get_remote_connection(event), reply.get());
+            xpc_connection_send_message(OSObjectPtr { xpc_dictionary_get_remote_connection(event) }.get(), reply.get());
 
             int fd = xpc_dictionary_dup_fd(event, "stdout");
             if (fd != -1)

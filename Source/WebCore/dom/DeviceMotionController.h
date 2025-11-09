@@ -47,7 +47,7 @@ public:
     // FIXME: We should look to reconcile the iOS and OpenSource differences with this class
     // so that we can either remove these methods or remove the PLATFORM(IOS_FAMILY)-guard.
     void suspendUpdates();
-    void resumeUpdates(const SecurityOriginData&);
+    void resumeUpdates();
 #endif
 
     void didChangeDeviceMotion(DeviceMotionData*);
@@ -56,12 +56,18 @@ public:
     RefPtr<Event> getLastEvent() override;
     DeviceClient& client() final;
 
-    static ASCIILiteral supplementName();
     static DeviceMotionController* from(Page*);
     static bool isActiveAt(Page*);
 
 private:
+    static ASCIILiteral supplementName() { return "DeviceMotionController"_s; }
+    bool isDeviceMotionController() const final { return true; }
+
     WeakRef<DeviceMotionClient> m_client;
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::DeviceMotionController)
+    static bool isType(const WebCore::SupplementBase& supplement) { return supplement.isDeviceMotionController(); }
+SPECIALIZE_TYPE_TRAITS_END()

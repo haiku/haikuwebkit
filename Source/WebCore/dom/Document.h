@@ -444,6 +444,12 @@ public:
     USING_CAN_MAKE_WEAKPTR(EventTarget);
     USING_CAN_MAKE_CHECKEDPTR(ScriptExecutionContext);
 
+    void setDidBeginCheckedPtrDeletion()
+    {
+        ContainerNode::setDidBeginCheckedPtrDeletion();
+        ScriptExecutionContext::setDidBeginCheckedPtrDeletion();
+    }
+
     inline static Ref<Document> create(const Settings&, const URL&);
     static Ref<Document> createNonRenderedPlaceholder(LocalFrame&, const URL&);
     static Ref<Document> create(Document&);
@@ -802,6 +808,7 @@ public:
 
     inline AXObjectCache* existingAXObjectCache() const;
     WEBCORE_EXPORT AXObjectCache* axObjectCache() const;
+    WEBCORE_EXPORT CheckedPtr<AXObjectCache> checkedAXObjectCache() const;
     void clearAXObjectCache();
 
     WEBCORE_EXPORT std::optional<PageIdentifier> pageID() const;
@@ -1483,6 +1490,7 @@ public:
 
 #if ENABLE(DEVICE_ORIENTATION)
     DeviceOrientationAndMotionAccessController& deviceOrientationAndMotionAccessController();
+    CheckedRef<DeviceOrientationAndMotionAccessController> checkedDeviceOrientationAndMotionAccessController();
 #endif
 
     WEBCORE_EXPORT double monotonicTimestamp() const;
@@ -1491,7 +1499,7 @@ public:
     LargestContentfulPaintData& largestContentfulPaintData() const;
     void didLoadImage(Element&, CachedImage*) const;
     void didPaintImage(Element&, CachedImage*, FloatRect localRect) const;
-    void didPaintText(const RenderBlockFlow&, FloatRect localRect) const;
+    void didPaintText(const RenderBlockFlow&, FloatRect localRect, bool isOnlyTextBoxForElement) const;
 
     int requestAnimationFrame(Ref<RequestAnimationFrameCallback>&&);
     void cancelAnimationFrame(int id);
@@ -1564,6 +1572,7 @@ public:
     void suspendScheduledTasks(ReasonForSuspension);
     void resumeScheduledTasks(ReasonForSuspension);
 
+    std::optional<float> zoomForClient(const RenderStyle&) const;
     void convertAbsoluteToClientQuads(Vector<FloatQuad>&, const RenderStyle&);
     void convertAbsoluteToClientRects(Vector<FloatRect>&, const RenderStyle&);
     void convertAbsoluteToClientRect(FloatRect&, const RenderStyle&);
@@ -1600,6 +1609,7 @@ public:
 
     const Document* templateDocument() const;
     Document& ensureTemplateDocument();
+    Ref<Document> ensureProtectedTemplateDocument();
     void setTemplateDocumentHost(Document* templateDocumentHost) { m_templateDocumentHost = templateDocumentHost; }
     Document* templateDocumentHost() { return m_templateDocumentHost.get(); }
     bool isTemplateDocument() const { return !!m_templateDocumentHost; }
@@ -1909,15 +1919,19 @@ public:
 #endif
 
     WEBCORE_EXPORT TextManipulationController& textManipulationController();
+    WEBCORE_EXPORT CheckedRef<TextManipulationController> checkedTextManipulationController();
     TextManipulationController* textManipulationControllerIfExists() { return m_textManipulationController.get(); }
 
     bool hasHighlight() const;
-    HighlightRegistry* highlightRegistryIfExists() { return m_highlightRegistry.get(); }
+    HighlightRegistry* highlightRegistryIfExists() const { return m_highlightRegistry.get(); }
     HighlightRegistry& highlightRegistry();
     void updateHighlightPositions();
 
-    HighlightRegistry* fragmentHighlightRegistryIfExists() { return m_fragmentHighlightRegistry.get(); }
+    HighlightRegistry* fragmentHighlightRegistryIfExists() const { return m_fragmentHighlightRegistry.get(); }
     HighlightRegistry& fragmentHighlightRegistry();
+
+    HighlightRegistry* textExtractionHighlightRegistryIfExists() const { return m_textExtractionHighlightRegistry.get(); }
+    HighlightRegistry& textExtractionHighlightRegistry();
         
 #if ENABLE(APP_HIGHLIGHTS)
     HighlightRegistry* appHighlightRegistryIfExists() { return m_appHighlightRegistry.get(); }
@@ -2458,6 +2472,7 @@ private:
         
     RefPtr<HighlightRegistry> m_highlightRegistry;
     RefPtr<HighlightRegistry> m_fragmentHighlightRegistry;
+    RefPtr<HighlightRegistry> m_textExtractionHighlightRegistry;
 #if ENABLE(APP_HIGHLIGHTS)
     RefPtr<HighlightRegistry> m_appHighlightRegistry;
     std::unique_ptr<AppHighlightStorage> m_appHighlightStorage;

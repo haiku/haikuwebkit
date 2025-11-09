@@ -58,6 +58,8 @@ private:
     RemoteComputePassEncoderProxy& operator=(const RemoteComputePassEncoderProxy&) = delete;
     RemoteComputePassEncoderProxy& operator=(RemoteComputePassEncoderProxy&&) = delete;
 
+    bool isRemoteComputePassEncoderProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -92,5 +94,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteComputePassEncoderProxy)
+    static bool isType(const WebCore::WebGPU::ComputePassEncoder& encoder) { return encoder.isRemoteComputePassEncoderProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

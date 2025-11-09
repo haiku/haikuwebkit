@@ -12,10 +12,15 @@
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkPicture.h"
+#include "include/core/SkSurfaceProps.h"
 #include "include/docs/SkMultiPictureDocument.h"
-#include "include/gpu/graphite/PrecompileContext.h"
 #include "tools/flags/CommonFlagsConfig.h"
 #include "tools/ganesh/MemoryCache.h"
+
+#if defined(SK_GRAPHITE)
+#include "include/gpu/graphite/PrecompileContext.h"
+#include "tools/graphite/GraphiteMemoryPipelineStorage.h"
+#endif
 
 #include <functional>
 
@@ -39,6 +44,7 @@ namespace DM {
 
 // This is just convenience.  It lets you use either return "foo" or return SkStringPrintf(...).
 struct ImplicitString : public SkString {
+    // This constructor is intentionally not explicit to allow for convenient implicit conversions.
     template <typename T>
     ImplicitString(const T& s) : SkString(s) {}
     ImplicitString() : SkString("") {}
@@ -104,6 +110,9 @@ struct Src {
     [[nodiscard]] virtual Result draw(SkCanvas* canvas, GraphiteTestContext*) const = 0;
     virtual SkISize size() const = 0;
     virtual Name name() const = 0;
+    // Called by sinks to modify the default-default surface properties (if applicable).
+    // Sinks may then further update the value based on other criteria.
+    virtual void modifySurfaceProps(SkSurfaceProps*) const {}
     virtual void modifyGrContextOptions(GrContextOptions*) const  {}
     virtual void modifyGraphiteContextOptions(skgpu::graphite::ContextOptions*) const {}
     virtual bool veto(SinkFlags) const { return false; }
@@ -148,6 +157,7 @@ public:
     Result draw(SkCanvas*, GraphiteTestContext*) const override;
     SkISize size() const override;
     Name name() const override;
+    void modifySurfaceProps(SkSurfaceProps*) const override;
     void modifyGrContextOptions(GrContextOptions* options) const override;
 #if defined(SK_GRAPHITE)
     void modifyGraphiteContextOptions(skgpu::graphite::ContextOptions*) const override;
@@ -401,7 +411,7 @@ public:
     }
 
 protected:
-    sk_sp<SkSurface> createDstSurface(GrDirectContext*, SkISize size) const;
+    sk_sp<SkSurface> createDstSurface(GrDirectContext*, const Src&) const;
     bool readBack(SkSurface*, SkBitmap* dst) const;
 
 private:
@@ -560,7 +570,7 @@ public:
 
 class SVGSink : public Sink {
 public:
-    SVGSink(int pageIndex = 0);
+    explicit SVGSink(int pageIndex = 0);
 
     Result draw(const Src&, SkBitmap*, SkWStream*, SkString*) const override;
     const char* fileExtension() const override { return "svg"; }
@@ -586,13 +596,29 @@ public:
     }
 
 protected:
-    sk_sp<SkSurface> makeSurface(skgpu::graphite::Recorder*, SkISize) const;
+    sk_sp<SkSurface> makeSurface(skgpu::graphite::Recorder*, const Src&) const;
 
     skiatest::graphite::TestOptions fOptions;
     skgpu::ContextType fContextType;
     SkColorType fColorType;
     SkAlphaType fAlphaType;
     sk_sp<SkColorSpace> fColorSpace;
+};
+
+class GraphitePersistentPipelineStorageTestingSink : public GraphiteSink {
+public:
+    GraphitePersistentPipelineStorageTestingSink(const SkCommandLineConfigGraphite*,
+                                                 const skiatest::graphite::TestOptions&);
+
+    Result draw(const Src&, SkBitmap*, SkWStream*, SkString*) const override;
+
+    const char* fileExtension() const override {
+        // Suppress writing out results from this config - we just want to do our matching test
+        return nullptr;
+    }
+
+private:
+    mutable sk_gpu_test::GraphiteMemoryPipelineStorage fMemoryPipelineStorage;
 };
 
 #if defined(SK_ENABLE_PRECOMPILE)

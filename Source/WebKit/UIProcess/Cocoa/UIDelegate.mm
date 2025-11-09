@@ -890,9 +890,8 @@ bool UIDelegate::UIClient::focusFromServiceWorker(WebKit::WebPageProxy& proxy)
         if (!webView || !webView.get().window)
             return false;
 
-
-        [webView.get().window makeKeyAndOrderFront:nil];
-        [[webView window] makeFirstResponder:webView.get()];
+        [retainPtr(webView.get().window) makeKeyAndOrderFront:nil];
+        [retainPtr([webView window]) makeFirstResponder:webView.get()];
         return true;
 #else
         return false;
@@ -1729,7 +1728,7 @@ std::optional<double> UIDelegate::UIClient::dataDetectionReferenceDate()
         return std::nullopt;
 
 #if ENABLE(DATA_DETECTION)
-    return WebCore::DataDetection::extractReferenceDate([static_cast<id<WKUIDelegatePrivate>>(delegate) _dataDetectionContextForWebView:uiDelegate->m_webView.get().get()]);
+    return WebCore::DataDetection::extractReferenceDate(retainPtr([static_cast<id<WKUIDelegatePrivate>>(delegate) _dataDetectionContextForWebView:uiDelegate->m_webView.get().get()]).get());
 #else
     return std::nullopt;
 #endif

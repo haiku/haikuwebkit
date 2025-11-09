@@ -547,6 +547,24 @@ TEST(ScriptTrackingPrivacyTests, DirectFormFieldAccess)
 
     FingerprintingScriptsRequestSwizzler swizzler { @[ @"tainted.net" ] };
 
+    const auto expectedPureValue = [](const auto& field) {
+        if (field == "dateField"_s)
+            return "1999-12-31"_str;
+        if (field == "monthField"_s)
+            return "1999-12"_str;
+        if (field == "timeField"_s)
+            return "00:00:00"_str;
+        if (field == "textAreaField"_s)
+            return "Text Area"_str;
+        if (field == "textAreaInput"_s)
+            return "text value"_str;
+        if (field == "selectField"_s)
+            return "Primary"_str;
+        if (field == "fileField"_s)
+            return emptyString();
+        return makeString(field, "Value"_s);
+    };
+
     auto makeScriptSource = ^(NSString *pureOrTainted) {
         return [NSString stringWithFormat:@"var %@InputElements = document.querySelectorAll(\"input\");"
             "var %@InputElementsValues = [];"
@@ -557,7 +575,15 @@ TEST(ScriptTrackingPrivacyTests, DirectFormFieldAccess)
             "var %@DateInputGetElementByIdValue = document.getElementById(\"dateField\")?.value;"
             "var %@TextAreaGetElementByIdValue = document.getElementById(\"textAreaField\")?.value;"
             "var %@SelectGetElementByIdValue = document.getElementById(\"selectField\")?.value;"
-            , pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted];
+            "var %@TextAreaInput = document.createElement(\"textarea\");"
+            "%@TextAreaInput.id = \"%@TextAreaInput\";"
+            "%@TextAreaInput.value = \"%s\";"
+            "document.body.appendChild(%@TextAreaInput);"
+            "var %@TextAreaInputValue = %@TextAreaInput.value;"
+            "function %@GetElementValueById(id) { return document.getElementById(id)?.value; }"
+            , pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted
+            , pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted, expectedPureValue("textAreaInput"_s).utf8().data()
+            , pureOrTainted, pureOrTainted, pureOrTainted, pureOrTainted];
     };
 
     RetainPtr webView = setUpWebViewForFingerprintingTests(@"test://top-domain.org/index.html", @{
@@ -581,22 +607,6 @@ TEST(ScriptTrackingPrivacyTests, DirectFormFieldAccess)
         , "textAreaField"_s
         , "selectField"_s } };
 
-    const auto expectedPureValue = [](const auto& field) {
-        if (field == "dateField"_s)
-            return "1999-12-31"_str;
-        if (field == "monthField"_s)
-            return "1999-12"_str;
-        if (field == "timeField"_s)
-            return "00:00:00"_str;
-        if (field == "textAreaField"_s)
-            return "Text Area"_str;
-        if (field == "selectField"_s)
-            return "Primary"_str;
-        if (field == "fileField"_s)
-            return emptyString();
-        return makeString(field, "Value"_s);
-    };
-
     auto pureNumberInputElements = [[webView objectByEvaluatingJavaScript:@"pureInputElementsValues.length"] unsignedIntValue];
     EXPECT_EQ(pureNumberInputElements, 11u);
     for (size_t i = 0; i < pureNumberInputElements; ++i) {
@@ -616,6 +626,10 @@ TEST(ScriptTrackingPrivacyTests, DirectFormFieldAccess)
     EXPECT_WK_STREQ(pureTextAreaGetElementById, expectedPureValue("textAreaField"_s));
     auto pureSelectGetElementById = [webView stringByEvaluatingJavaScript:@"pureSelectGetElementByIdValue"];
     EXPECT_WK_STREQ(pureSelectGetElementById, expectedPureValue("selectField"_s));
+    auto pureTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"pureTextAreaInputValue"];
+    EXPECT_WK_STREQ(pureTextAreaInputValue, expectedPureValue("textAreaInput"_s));
+    auto pureFunctionTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"pureGetElementValueById(\"pureTextAreaInput\")"];
+    EXPECT_WK_STREQ(pureFunctionTextAreaInputValue, expectedPureValue("textAreaInput"_s));
 
     auto taintedNumberInputElements = [[webView objectByEvaluatingJavaScript:@"taintedInputElements.length"] unsignedIntValue];
     EXPECT_EQ(taintedNumberInputElements, 11u);
@@ -637,6 +651,22 @@ TEST(ScriptTrackingPrivacyTests, DirectFormFieldAccess)
     EXPECT_WK_STREQ(taintedTextAreaGetElementById, emptyString());
     auto taintedSelectGetElementById = [webView stringByEvaluatingJavaScript:@"taintedSelectGetElementByIdValue"];
     EXPECT_WK_STREQ(taintedSelectGetElementById, emptyString());
+
+    auto taintedTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"taintedTextAreaInputValue"];
+    EXPECT_WK_STREQ(taintedTextAreaInputValue, expectedPureValue("textAreaInput"_s));
+    auto taintedFunctionTaintedTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"taintedGetElementValueById(\"taintedTextAreaInput\")"];
+    EXPECT_WK_STREQ(taintedFunctionTaintedTextAreaInputValue, expectedPureValue("textAreaInput"_s));
+    auto taintedFunctionPureTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"taintedGetElementValueById(\"pureTextAreaInput\")"];
+    EXPECT_WK_STREQ(taintedFunctionPureTextAreaInputValue, emptyString());
+
+    [webView objectByEvaluatingJavaScript:@"document.getElementById(\"taintedTextAreaInput\").focus()"];
+    [webView _synchronouslyExecuteEditCommand:@"InsertText" argument:@"user input"];
+
+    taintedFunctionTaintedTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"taintedGetElementValueById(\"taintedTextAreaInput\")"];
+    EXPECT_WK_STREQ(taintedFunctionTaintedTextAreaInputValue, emptyString());
+
+    auto pureFunctionTaintedTextAreaInputValue = [webView stringByEvaluatingJavaScript:@"pureGetElementValueById(\"taintedTextAreaInput\")"];
+    EXPECT_WK_STREQ(pureFunctionTaintedTextAreaInputValue, "text valueuser input"_s);
 }
 
 TEST(ScriptTrackingPrivacyTests, ScriptAccessCategories)

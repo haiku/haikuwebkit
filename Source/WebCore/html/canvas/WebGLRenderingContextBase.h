@@ -425,8 +425,7 @@ public:
     using SimulatedEventForTesting = GraphicsContextGL::SimulatedEventForTesting;
     WEBCORE_EXPORT void simulateEventForTesting(SimulatedEventForTesting);
 
-    GraphicsContextGL* graphicsContextGL() const { return m_context.get(); }
-    RefPtr<GraphicsContextGL> protectedGraphicsContextGL() const { return m_context; }
+    RefPtr<GraphicsContextGL> graphicsContextGL() const { return m_context; }
 
     RefPtr<GraphicsLayerContentsDisplayDelegate> layerContentsDisplayDelegate() override;
 
@@ -584,7 +583,6 @@ protected:
     RefPtr<Image> videoFrameToImage(HTMLVideoElement&, ASCIILiteral functionName);
 #endif
 
-    bool enableSupportedExtension(ASCIILiteral extensionNameLiteral);
     void loseExtensions(LostContextMode);
 
     virtual void uncacheDeletedBuffer(const AbstractLocker&, WebGLBuffer*);

@@ -40,6 +40,5 @@
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
 [ iOS ] WebProcess/WebPage/ios/WebPageIOS.mm
-[ iOS ] WebProcess/cocoa/WebProcessCocoa.mm
 [ iOS ] webpushd/WebClipCache.mm
 [ iOS ] webpushd/WebPushDaemon.mm

@@ -63,7 +63,9 @@ class HideEditMenuScope {
 public:
     HideEditMenuScope(WKTextInteractionWrapper *wrapper, DeactivateSelection deactivateSelection)
         : m_wrapper { wrapper }
+#if HAVE(UI_TEXT_SELECTION_DISPLAY_INTERACTION)
         , m_reactivateSelection { deactivateSelection == DeactivateSelection::Yes }
+#endif
     {
         [wrapper.textInteractionAssistant willStartScrollingOverflow];
 #if USE(BROWSERENGINEKIT)
@@ -95,7 +97,9 @@ public:
 
 private:
     __weak WKTextInteractionWrapper *m_wrapper { nil };
+#if HAVE(UI_TEXT_SELECTION_DISPLAY_INTERACTION)
     bool m_reactivateSelection { false };
+#endif
 };
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(HideEditMenuScope);

@@ -2088,36 +2088,6 @@ const AtomString& Element::getAttributeNS(const AtomString& namespaceURI, const 
     return getAttribute(QualifiedName(nullAtom(), localName, namespaceURI));
 }
 
-static ExceptionOr<String> trustedTypesCompliantAttributeValue(const String attributeType, const TrustedTypeOrString& value, Element* element, String sink)
-{
-    auto stringValueHolder = WTF::switchOn(value,
-        [&](const String& string) -> ExceptionOr<String> {
-            if (attributeType.isNull())
-                return String(string);
-            return trustedTypeCompliantString(stringToTrustedType(attributeType), *(element->document().scriptExecutionContext()), string, sink);
-        },
-        [&](const RefPtr<TrustedHTML>& trustedHTML) -> ExceptionOr<String> {
-            if (attributeType.isNull() || attributeType == "TrustedHTML"_s)
-                return trustedHTML->toString();
-            return trustedTypeCompliantString(stringToTrustedType(attributeType), *(element->document().scriptExecutionContext()), trustedHTML->toString(), sink);
-        },
-        [&](const RefPtr<TrustedScript>& trustedScript) -> ExceptionOr<String> {
-            if (attributeType.isNull() || attributeType == "TrustedScript"_s)
-                return trustedScript->toString();
-            return trustedTypeCompliantString(stringToTrustedType(attributeType), *(element->document().scriptExecutionContext()), trustedScript->toString(), sink);
-        },
-        [&](const RefPtr<TrustedScriptURL>& trustedScriptURL) -> ExceptionOr<String> {
-            if (attributeType.isNull() || attributeType == "TrustedScriptURL"_s)
-                return trustedScriptURL->toString();
-            return trustedTypeCompliantString(stringToTrustedType(attributeType), *(element->document().scriptExecutionContext()), trustedScriptURL->toString(), sink);
-        }
-    );
-    if (stringValueHolder.hasException())
-        return stringValueHolder.releaseException();
-
-    return stringValueHolder.releaseReturnValue();
-}
-
 ALWAYS_INLINE unsigned Element::validateAttributeIndex(unsigned index, const QualifiedName& qname) const
 {
     if (!elementData())
@@ -2171,40 +2141,27 @@ ExceptionOr<void> Element::setAttribute(const AtomString& qualifiedName, const T
     if (!document().settings().trustedTypesEnabled())
         setAttributeInternal(index, name, std::get<AtomString>(value), InSynchronizationOfLazyAttribute::No);
     else {
-        AttributeTypeAndSink attributeTypeAndSink;
+        AttributeTypeAndSink type;
         if (document().requiresTrustedTypes())
-            attributeTypeAndSink = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
-        auto attributeValue = trustedTypesCompliantAttributeValue(attributeTypeAndSink.attributeType, value, this, attributeTypeAndSink.sink);
+            type = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
+        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value, type.sink);
 
-        if (attributeValue.hasException())
-            return attributeValue.releaseException();
+        if (compliantValue.hasException())
+            return compliantValue.releaseException();
 
-        if (!attributeTypeAndSink.attributeType.isNull())
+        if (!type.attributeType.isNull())
             index = validateAttributeIndex(index, name);
 
-        setAttributeInternal(index, name,  AtomString(attributeValue.releaseReturnValue()), InSynchronizationOfLazyAttribute::No);
+        setAttributeInternal(index, name, compliantValue.releaseReturnValue(), InSynchronizationOfLazyAttribute::No);
     }
     return { };
 }
 
-ExceptionOr<void> Element::setAttribute(const QualifiedName& name, const AtomString& value, bool enforceTrustedTypes)
+void Element::setAttribute(const QualifiedName& name, const AtomString& value)
 {
     synchronizeAttribute(name);
-    if (enforceTrustedTypes && document().requiresTrustedTypes()) {
-        auto attributeTypeAndSink = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
-        auto attributeValue = trustedTypesCompliantAttributeValue(attributeTypeAndSink.attributeType, value, this, attributeTypeAndSink.sink);
-
-        if (attributeValue.hasException())
-            return attributeValue.releaseException();
-
-        unsigned index = elementData() ? elementData()->findAttributeIndexByName(name) : ElementData::attributeNotFound;
-        setAttributeInternal(index, name, AtomString(attributeValue.releaseReturnValue()), InSynchronizationOfLazyAttribute::No);
-    } else {
-        unsigned index = elementData() ? elementData()->findAttributeIndexByName(name) : ElementData::attributeNotFound;
-        setAttributeInternal(index, name, value, InSynchronizationOfLazyAttribute::No);
-    }
-
-    return { };
+    unsigned index = elementData() ? elementData()->findAttributeIndexByName(name) : ElementData::attributeNotFound;
+    setAttributeInternal(index, name, value, InSynchronizationOfLazyAttribute::No);
 }
 
 void Element::setAttributeWithoutOverwriting(const QualifiedName& name, const AtomString& value)
@@ -3786,6 +3743,20 @@ void Element::attachAttributeNodeIfNeeded(Attr& attrNode)
 
 ExceptionOr<RefPtr<Attr>> Element::setAttributeNode(Attr& attrNode)
 {
+    // Attr::value() will return its 'm_standaloneValue' member any time its Element is set to nullptr. We need to cache this value
+    // before making changes to attrNode's Element connections.
+    auto attrNodeValue = attrNode.value();
+
+    if (document().requiresTrustedTypes()) {
+        auto& name = attrNode.qualifiedName();
+        auto type = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
+        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, attrNodeValue, type.sink);
+
+        if (compliantValue.hasException())
+            return compliantValue.releaseException();
+        attrNodeValue = compliantValue.releaseReturnValue();
+    }
+
     RefPtr oldAttrNode = attrIfExists(attrNode.qualifiedName());
     if (oldAttrNode.get() == &attrNode)
         return oldAttrNode;
@@ -3801,22 +3772,6 @@ ExceptionOr<RefPtr<Attr>> Element::setAttributeNode(Attr& attrNode)
     }
 
     auto& elementData = ensureUniqueElementData();
-
-    // Attr::value() will return its 'm_standaloneValue' member any time its Element is set to nullptr. We need to cache this value
-    // before making changes to attrNode's Element connections.
-    auto attrNodeValue = attrNode.value();
-
-    if (document().requiresTrustedTypes()) {
-        auto attributeTypeAndSink = trustedTypeForAttribute(nodeName(), attrNode.qualifiedName().localName().convertToASCIILowercase(), this->namespaceURI(), attrNode.qualifiedName().namespaceURI());
-        auto attributeNodeValue = trustedTypesCompliantAttributeValue(attributeTypeAndSink.attributeType, attrNodeValue, this, attributeTypeAndSink.sink);
-
-        if (attributeNodeValue.hasException())
-            return attributeNodeValue.releaseException();
-        attrNodeValue = AtomString(attributeNodeValue.releaseReturnValue());
-
-        if (!attributeTypeAndSink.attributeType.isNull() && attrNode.ownerElement() && attrNode.ownerElement() != this)
-            return Exception { ExceptionCode::InUseAttributeError };
-    }
 
     auto existingAttributeIndex = elementData.findAttributeIndexByName(attrNode.qualifiedName());
 
@@ -3845,6 +3800,23 @@ ExceptionOr<RefPtr<Attr>> Element::setAttributeNode(Attr& attrNode)
 
 ExceptionOr<RefPtr<Attr>> Element::setAttributeNodeNS(Attr& attrNode)
 {
+    // Attr::value() will return its 'm_standaloneValue' member any time its Element is set to nullptr. We need to cache this value
+    // before making changes to attrNode's Element connections.
+    auto attrNodeValue = attrNode.value();
+
+    if (document().requiresTrustedTypes()) {
+        auto& name = attrNode.qualifiedName();
+        auto type = trustedTypeForAttribute(nodeName(), name.localName(), this->namespaceURI(), name.namespaceURI());
+        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, attrNodeValue, type.sink);
+
+        if (compliantValue.hasException())
+            return compliantValue.releaseException();
+        attrNodeValue = compliantValue.releaseReturnValue();
+
+        if (!type.attributeType.isNull() && attrNode.ownerElement() && attrNode.ownerElement() != this)
+            return Exception { ExceptionCode::InUseAttributeError };
+    }
+
     RefPtr oldAttrNode = attrIfExists(attrNode.qualifiedName());
     if (oldAttrNode == &attrNode)
         return oldAttrNode;
@@ -3854,22 +3826,7 @@ ExceptionOr<RefPtr<Attr>> Element::setAttributeNodeNS(Attr& attrNode)
     if (attrNode.ownerElement() && attrNode.ownerElement() != this)
         return Exception { ExceptionCode::InUseAttributeError };
 
-    // Attr::value() will return its 'm_standaloneValue' member any time its Element is set to nullptr. We need to cache this value
-    // before making changes to attrNode's Element connections.
-    auto attrNodeValue = attrNode.value();
     unsigned index = 0;
-
-    if (document().requiresTrustedTypes()) {
-        auto attributeTypeAndSink = trustedTypeForAttribute(nodeName(), attrNode.qualifiedName().localName(), this->namespaceURI(), attrNode.qualifiedName().namespaceURI());
-        auto attributeNodeValue = trustedTypesCompliantAttributeValue(attributeTypeAndSink.attributeType, attrNodeValue, this, attributeTypeAndSink.sink);
-
-        if (attributeNodeValue.hasException())
-            return attributeNodeValue.releaseException();
-        attrNodeValue = AtomString(attributeNodeValue.releaseReturnValue());
-
-        if (!attributeTypeAndSink.attributeType.isNull() && attrNode.ownerElement() && attrNode.ownerElement() != this)
-            return Exception { ExceptionCode::InUseAttributeError };
-    }
 
     {
         ScriptDisallowedScope::InMainThread scriptDisallowedScope;
@@ -3940,16 +3897,16 @@ ExceptionOr<void> Element::setAttributeNS(const AtomString& namespaceURI, const 
     if (!document().settings().trustedTypesEnabled())
         setAttribute(result.releaseReturnValue(), std::get<AtomString>(value));
     else {
-        QualifiedName parsedAttributeName  = result.returnValue();
-        AttributeTypeAndSink attributeTypeAndSink;
+        QualifiedName parsedAttributeName = result.returnValue();
+        AttributeTypeAndSink type;
         if (document().requiresTrustedTypes())
-            attributeTypeAndSink = trustedTypeForAttribute(nodeName(), parsedAttributeName.localName(), this->namespaceURI(), parsedAttributeName.namespaceURI());
-        auto attributeValue = trustedTypesCompliantAttributeValue(attributeTypeAndSink.attributeType, value, this, attributeTypeAndSink.sink);
+            type = trustedTypeForAttribute(nodeName(), parsedAttributeName.localName(), this->namespaceURI(), parsedAttributeName.namespaceURI());
+        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value, type.sink);
 
-        if (attributeValue.hasException())
-            return attributeValue.releaseException();
+        if (compliantValue.hasException())
+            return compliantValue.releaseException();
 
-        setAttribute(result.releaseReturnValue(), AtomString(attributeValue.releaseReturnValue()));
+        setAttribute(result.releaseReturnValue(), compliantValue.releaseReturnValue());
     }
 
     return { };

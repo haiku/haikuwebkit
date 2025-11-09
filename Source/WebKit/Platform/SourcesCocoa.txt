@@ -17,6 +17,7 @@ Platform/IPC/cocoa/MachMessage.cpp
 
 Platform/IPC/darwin/IPCEventDarwin.cpp
 Platform/IPC/darwin/IPCSemaphoreDarwin.cpp
+Platform/IPC/darwin/MachPort.mm @nonARC
 
 Platform/mac/MachUtilities.cpp
 

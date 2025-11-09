@@ -102,19 +102,19 @@
 - (JSValue *)jsCSSStyleDeclarationForCSSStyleDeclarationHandle:(WKWebProcessPlugInCSSStyleDeclarationHandle *)cssStyleDeclarationHandle inWorld:(WKWebProcessPlugInScriptWorld *)world
 {
     JSValueRef valueRef = _frame->jsWrapperForWorld(&[cssStyleDeclarationHandle _cssStyleDeclarationHandle], &[world _scriptWorld]);
-    return [JSValue valueWithJSValueRef:valueRef inContext:[self jsContextForWorld:world]];
+    return [JSValue valueWithJSValueRef:valueRef inContext:retainPtr([self jsContextForWorld:world]).get()];
 }
 
 - (JSValue *)jsNodeForNodeHandle:(WKWebProcessPlugInNodeHandle *)nodeHandle inWorld:(WKWebProcessPlugInScriptWorld *)world
 {
     JSValueRef valueRef = _frame->jsWrapperForWorld(&[nodeHandle _nodeHandle], &[world _scriptWorld]);
-    return [JSValue valueWithJSValueRef:valueRef inContext:[self jsContextForWorld:world]];
+    return [JSValue valueWithJSValueRef:valueRef inContext:retainPtr([self jsContextForWorld:world]).get()];
 }
 
 - (JSValue *)jsRangeForRangeHandle:(WKWebProcessPlugInRangeHandle *)rangeHandle inWorld:(WKWebProcessPlugInScriptWorld *)world
 {
     JSValueRef valueRef = _frame->jsWrapperForWorld(&[rangeHandle _rangeHandle], &[world _scriptWorld]);
-    return [JSValue valueWithJSValueRef:valueRef inContext:[self jsContextForWorld:world]];
+    return [JSValue valueWithJSValueRef:valueRef inContext:retainPtr([self jsContextForWorld:world]).get()];
 }
 
 - (WKWebProcessPlugInBrowserContextController *)_browserContextController

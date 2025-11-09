@@ -156,13 +156,15 @@ public:
     PaintedContentsInfo(RenderLayerBacking& inBacking)
         : m_backing(inBacking)
     {
-#if HAVE(SUPPORT_HDR_DISPLAY)
-        if (m_backing.renderer().document().drawsHDRContent()) {
-            m_hasHDRContent = RequestState::Unknown;
-            m_rendererHasHDRContent = RequestState::Unknown;
-        }
-#endif
     }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    void setDetectsHDRContent()
+    {
+        m_hdrContent = RequestState::Unknown;
+        m_rendererHDRContent = RequestState::Unknown;
+    }
+#endif
 
     void determinePaintsBoxDecorations();
     bool paintsBoxDecorations()
@@ -175,7 +177,7 @@ public:
     bool isPaintsContentSatisfied() const
     {
 #if HAVE(SUPPORT_HDR_DISPLAY)
-        if (m_hasHDRContent == RequestState::Unknown)
+        if (m_hdrContent == RequestState::Unknown)
             return false;
 #endif
         return m_content != RequestState::Unknown;
@@ -192,14 +194,14 @@ public:
     bool paintsHDRContent()
     {
         determinePaintsContent();
-        return m_hasHDRContent == RequestState::True;
+        return m_hdrContent == RequestState::True;
     }
 #endif
 
     bool isContentsTypeSatisfied() const
     {
 #if HAVE(SUPPORT_HDR_DISPLAY)
-        if (m_rendererHasHDRContent == RequestState::Unknown)
+        if (m_rendererHDRContent == RequestState::Unknown)
             return false;
 #endif
         return m_contentsType != ContentsType::Unknown;
@@ -225,10 +227,10 @@ public:
     }
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    bool rendererHasHDRContent()
+    bool rendererHasHDRContent() // FIXME: Why do we need this?
     {
         determineContentsType();
-        return m_rendererHasHDRContent == RequestState::True;
+        return m_rendererHDRContent == RequestState::True;
     }
 #endif
 
@@ -236,8 +238,8 @@ public:
     RequestState m_boxDecorations { RequestState::Unknown };
     RequestState m_content { RequestState::Unknown };
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    RequestState m_hasHDRContent { RequestState::DontCare };
-    RequestState m_rendererHasHDRContent { RequestState::DontCare };
+    RequestState m_hdrContent { RequestState::DontCare };
+    RequestState m_rendererHDRContent { RequestState::DontCare };
 #endif
 
     ContentsType m_contentsType { ContentsType::Unknown };
@@ -256,12 +258,15 @@ void PaintedContentsInfo::determinePaintsContent()
     if (isPaintsContentSatisfied())
         return;
 
-    RenderLayer::PaintedContentRequest contentRequest(m_backing.owningLayer());
+    auto contentRequest = RenderLayer::PaintedContentRequest { };
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    contentRequest.setHDRRequestState(m_hdrContent);
+#endif
 
     m_backing.determinePaintsContent(contentRequest);
     m_content = contentRequest.hasPaintedContent;
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    m_hasHDRContent = contentRequest.hasHDRContent;
+    m_hdrContent = contentRequest.hasHDRContent;
 #endif
 }
 
@@ -280,8 +285,8 @@ void PaintedContentsInfo::determineContentsType()
         m_contentsType = ContentsType::Painted;
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    if (m_rendererHasHDRContent == RequestState::Unknown)
-        m_rendererHasHDRContent = m_backing.rendererHasHDRContent() ? RequestState::True : RequestState::False;
+    if (m_rendererHDRContent == RequestState::Unknown)
+        m_rendererHDRContent = m_backing.rendererHasHDRContent() ? RequestState::True : RequestState::False;
 #endif
 }
 
@@ -1088,7 +1093,7 @@ void RenderLayerBacking::updateAllowsBackingStoreDetaching(bool allowDetachingFo
             m_scrolledContentsLayer->setAllowsBackingStoreDetaching(allowDetaching);
     };
 
-    if (!m_owningLayer.behavesAsFixed() && !m_owningLayer.behavesAsSticky()) {
+    if (!m_owningLayer.behavesAsFixed()) {
         setAllowsBackingStoreDetaching(true);
         return;
     }
@@ -1317,29 +1322,13 @@ bool RenderLayerBacking::updateConfiguration(const RenderLayer* compositingAnces
     else if (is<RenderModel>(renderer())) {
         auto element = downcast<HTMLModelElement>(renderer().element());
 
-        // Some ModelPlayers use a platformLayer() and some pass the Model to the layer as contents,
-        // but this is a runtime decision.
-        if (element->usesPlatformLayer())
-            m_graphicsLayer->setContentsToPlatformLayer(element->platformLayer(), GraphicsLayer::ContentsLayerPurpose::Model);
-#if ENABLE(MODEL_CONTEXT) && !ENABLE(GPU_PROCESS_MODEL)
-        else if (auto modelContext = element->modelContext(); modelContext && element->document().settings().modelProcessEnabled()) {
-            modelContext->setBackgroundColor(rendererBackgroundColor());
-            m_graphicsLayer->setContentsToModelContext(*modelContext, GraphicsLayer::ContentsLayerPurpose::HostedModel);
-        }
-#endif
-        else if (auto model = element->model()) {
-#if ENABLE(GPU_PROCESS_MODEL)
-            m_graphicsLayer->setContentsDisplayDelegate(element->contentsDisplayDelegate(), GraphicsLayer::ContentsLayerPurpose::Canvas);
-#else
-            m_graphicsLayer->setContentsToModel(WTFMove(model), element->isInteractive() ? GraphicsLayer::ModelInteraction::Enabled : GraphicsLayer::ModelInteraction::Disabled);
-#endif
-        }
-
+        element->configureGraphicsLayer(*m_graphicsLayer, rendererBackgroundColor());
         element->sizeMayHaveChanged();
 
         layerConfigChanged = true;
     }
 #endif // ENABLE(MODEL_ELEMENT)
+
     // FIXME: Why do we do this twice?
     if (CheckedPtr widget = dynamicDowncast<RenderWidget>(renderer())) {
         if (compositor.attachWidgetContentLayersIfNecessary(*widget).layerHierarchyChanged) {
@@ -2047,6 +2036,11 @@ void RenderLayerBacking::updateDrawsContent(PaintedContentsInfo& contentsInfo)
         m_scrolledContentsLayer->setDrawsContent(hasScrollingPaintedContent);
         return;
     }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (renderer().document().drawsHDRContent())
+        contentsInfo.setDetectsHDRContent();
+#endif
 
     bool hasPaintedContent = containsPaintedContent(contentsInfo);
 
@@ -3273,12 +3267,14 @@ static std::optional<bool> intersectsWithAncestor(const RenderLayer& child, cons
     return overlap.intersects(ancestorCompositedBounds);
 }
 
-// Conservative test for having no rendered children.
 void RenderLayerBacking::determineNonCompositedLayerDescendantsPaintedContent(RenderLayer::PaintedContentRequest& request) const
 {
     bool hasPaintingDescendant = false;
     traverseVisibleNonCompositedDescendantLayers(m_owningLayer, [&hasPaintingDescendant, &request, this](const RenderLayer& layer) {
-        RenderLayer::PaintedContentRequest localRequest(m_owningLayer);
+        auto localRequest = RenderLayer::PaintedContentRequest { };
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        localRequest.setHDRRequestState(request.hasHDRContent);
+#endif
         if (layer.isVisuallyNonEmpty(&localRequest)) {
             bool mayIntersect = intersectsWithAncestor(layer, m_owningLayer, compositedBounds()).value_or(true);
             if (mayIntersect) {
@@ -3287,8 +3283,8 @@ void RenderLayerBacking::determineNonCompositedLayerDescendantsPaintedContent(Re
             }
         }
 #if HAVE(SUPPORT_HDR_DISPLAY)
-        if (localRequest.probablyHasPaintedContent())
-            request.hasHDRContent = localRequest.hasHDRContent;
+        if (localRequest.probablyHasPaintedContent() && localRequest.hasHDRContent == RequestState::True)
+            request.hasHDRContent = RequestState::True;
 #endif
         return (hasPaintingDescendant && request.isSatisfied()) ? LayerTraversal::Stop : LayerTraversal::Continue;
     });
@@ -4428,7 +4424,7 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
 }
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-bool RenderLayerBacking::updateAcceleratedEffectsAndBaseValues()
+bool RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<AcceleratedTimeline>>& timelines)
 {
     auto& renderer = this->renderer();
     OptionSet<AcceleratedEffectProperty> disallowedAcceleratedProperties;
@@ -4462,7 +4458,10 @@ bool RenderLayerBacking::updateAcceleratedEffectsAndBaseValues()
                 if ((animatesWidth && blendingKeyframes.hasWidthDependentTransform()) || (animatesHeight && blendingKeyframes.hasHeightDependentTransform()))
                     disallowedAcceleratedProperties.add(transformRelatedAcceleratedProperties);
             }
-            auto acceleratedEffect = AcceleratedEffect::create(*effect, borderBoxRect, baseValues, disallowedAcceleratedProperties);
+            ASSERT(effect->animation());
+            ASSERT(effect->animation()->timeline());
+            Ref acceleratedTimeline = Ref { *effect->animation()->timeline() }->acceleratedRepresentation();
+            auto acceleratedEffect = AcceleratedEffect::create(*effect, acceleratedTimeline->identifier(), borderBoxRect, baseValues, disallowedAcceleratedProperties);
             if (!acceleratedEffect)
                 continue;
             if (!hasInterpolatingEffect && effect->isRunningAccelerated())
@@ -4470,6 +4469,7 @@ bool RenderLayerBacking::updateAcceleratedEffectsAndBaseValues()
             effect->setAcceleratedRepresentation(acceleratedEffect.get());
             weakAcceleratedEffects.add(*acceleratedEffect);
             acceleratedEffects.append(acceleratedEffect.releaseNonNull());
+            timelines.add(WTFMove(acceleratedTimeline));
         }
         effectStack->setAcceleratedEffects(WTFMove(weakAcceleratedEffects));
     }

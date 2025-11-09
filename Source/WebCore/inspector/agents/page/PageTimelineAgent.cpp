@@ -112,12 +112,15 @@ void PageTimelineAgent::internalStart(std::optional<int>&& maxCallStackDepth)
     // FIXME: Abstract away platform-specific code once https://bugs.webkit.org/show_bug.cgi?id=142748 is fixed.
 
 #if PLATFORM(COCOA)
-    m_frameStartObserver = makeUnique<RunLoopObserver>(RunLoopObserver::WellKnownOrder::InspectorFrameBegin, [this] {
-        if (!tracking() || m_environment.debugger()->isPaused())
+    m_frameStartObserver = makeUnique<RunLoopObserver>(RunLoopObserver::WellKnownOrder::InspectorFrameBegin, [weakThis = WeakPtr { *this }] {
+        CheckedPtr checkedThis = weakThis.get();
+        if (!checkedThis)
             return;
-        if (!m_runLoopNestingLevel) {
-            pushCurrentRecord(JSON::Object::create(), TimelineRecordType::RenderingFrame, false);
-            m_runLoopNestingLevel++;
+        if (!checkedThis->tracking() || checkedThis->m_environment.debugger()->isPaused())
+            return;
+        if (!checkedThis->m_runLoopNestingLevel) {
+            checkedThis->pushCurrentRecord(JSON::Object::create(), TimelineRecordType::RenderingFrame, false);
+            checkedThis->m_runLoopNestingLevel++;
         }
     });
 
@@ -129,18 +132,21 @@ void PageTimelineAgent::internalStart(std::optional<int>&& maxCallStackDepth)
 
     m_runLoopNestingLevel = 1;
 #elif USE(GLIB_EVENT_LOOP)
-    m_runLoopObserver = makeUnique<RunLoop::EventObserver>([this](RunLoop::Event event, const String& name) {
-        if (!tracking() || m_environment.debugger()->isPaused())
+    m_runLoopObserver = RunLoop::EventObserver::create([weakThis = WeakPtr { *this }](RunLoop::Event event, const String& name) {
+        CheckedPtr checkedThis = weakThis.get();
+        if (!checkedThis)
+            return;
+        if (!checkedThis->tracking() || checkedThis->m_environment.debugger()->isPaused())
             return;
 
         switch (event) {
         case RunLoop::Event::WillDispatch:
-            pushCurrentRecord(TimelineRecordFactory::createRenderingFrameData(name), TimelineRecordType::RenderingFrame, false);
+            checkedThis->pushCurrentRecord(TimelineRecordFactory::createRenderingFrameData(name), TimelineRecordType::RenderingFrame, false);
             break;
         case RunLoop::Event::DidDispatch:
-            if (m_startedComposite)
-                didComposite();
-            didCompleteCurrentRecord(TimelineRecordType::RenderingFrame);
+            if (checkedThis->m_startedComposite)
+                checkedThis->didComposite();
+            checkedThis->didCompleteCurrentRecord(TimelineRecordType::RenderingFrame);
             break;
         }
     });

@@ -32,6 +32,7 @@
 #import "IsValidToUseWith.h"
 #import "Pipeline.h"
 #import "RenderBundleEncoder.h"
+#import "TextureOrTextureView.h"
 #import "WGSLShaderModule.h"
 #import <wtf/IndexedRange.h>
 #import <wtf/TZoneMallocInlines.h>
@@ -1861,16 +1862,16 @@ bool RenderPipeline::validateDepthStencilState(bool depthReadOnly, bool stencilR
     return true;
 }
 
-NSString* RenderPipeline::errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor& descriptor, const Vector<RefPtr<TextureView>>& colorAttachmentViews, const RefPtr<TextureView>& depthStencilView) const
+NSString* RenderPipeline::errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor& descriptor, const Vector<TextureOrTextureView>& colorAttachmentViews, const std::optional<TextureOrTextureView>& depthStencilView) const
 {
     if (!m_descriptor.fragment) {
         if (descriptor.colorAttachmentCount)
             return @"No fragment shader but render pass has color attachments";
     } else {
         for (size_t i = 0, maxCount = std::max<size_t>(m_descriptorTargets.size(), colorAttachmentViews.size()); i < maxCount; ++i) {
-            RefPtr attachmentView = i < colorAttachmentViews.size() ? colorAttachmentViews[i] : nullptr;
+            auto* attachmentView = i < colorAttachmentViews.size() ? &colorAttachmentViews[i] : nullptr;
             auto descriptorTargetFormat = i < m_descriptorTargets.size() ? m_descriptorTargets[i].format : WGPUTextureFormat_Undefined;
-            if (!attachmentView) {
+            if (!attachmentView || !*attachmentView) {
                 if (descriptorTargetFormat == WGPUTextureFormat_Undefined)
                     continue;
                 return [NSString stringWithFormat:@"No attachment view but descriptorTargetFormat(%d)", descriptorTargetFormat];
@@ -1890,9 +1891,9 @@ NSString* RenderPipeline::errorValidatingColorDepthStencilTargets(const WGPURend
     }
 
     if (descriptor.depthStencilAttachment) {
-        if (!depthStencilView)
+        if (!depthStencilView || !*depthStencilView)
             return @"depthStencilAttachment exists but no depthStencilView";
-        auto& texture = *depthStencilView.get();
+        auto& texture = *depthStencilView;
         if (texture.format() != m_descriptor.depthStencil->format)
             return [NSString stringWithFormat:@"texture.format(%d) != m_descriptor.depthStencil->format(%d)", texture.format(), m_descriptor.depthStencil->format];
         auto mtlPixelFormat = texture.texture().pixelFormat;
@@ -1978,6 +1979,9 @@ id<MTLRenderPipelineState> RenderPipeline::renderPipelineState() const
         return m_renderPipelineState;
 
     m_renderPipelineState = [m_device->device() newRenderPipelineStateWithDescriptor:m_renderPipelineDescriptor error:nil];
+    if (!m_renderPipelineState)
+        m_device->generateAnOutOfMemoryError("Render pipeline failed compilation likely due to being too complex, please reduce its size"_s);
+
     return m_renderPipelineState;
 }
 
@@ -1988,6 +1992,9 @@ id<MTLRenderPipelineState> RenderPipeline::icbRenderPipelineState() const
 
     m_renderPipelineDescriptor.supportIndirectCommandBuffers = YES;
     m_renderPipelineState = [m_device->device() newRenderPipelineStateWithDescriptor:m_renderPipelineDescriptor error:nil];
+    if (!m_renderPipelineState)
+        m_device->generateAnOutOfMemoryError("Render pipeline failed compilation likely due to being too complex, please reduce its size"_s);
+
     return m_renderPipelineState;
 }
 

@@ -396,6 +396,7 @@ public:
 #endif
 
     WEBCORE_EXPORT RenderLayer* enclosingLayer() const;
+    WEBCORE_EXPORT CheckedPtr<RenderLayer> checkedEnclosingLayer() const;
 
     WEBCORE_EXPORT RenderBox& enclosingBox() const;
     RenderBoxModelObject& enclosingBoxModelObject() const;

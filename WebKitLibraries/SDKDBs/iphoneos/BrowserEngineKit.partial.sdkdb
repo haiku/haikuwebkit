@@ -954,7 +954,7 @@
      "name": "BETextSelectionDirectionNavigation"
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "BEAccessibilityContainerType"},
     {"access": "public", "name": "BEAccessibilityPressedState"},
@@ -1243,7 +1243,7 @@
      "super": "NSObject"
     }
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

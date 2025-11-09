@@ -52,7 +52,7 @@ void WebExtensionAPIWebNavigationEvent::invokeListenersWithArgument(id argument,
         if (filter && ![filter matchesURL:targetURL])
             continue;
 
-        listener.first->call(argument);
+        Ref { *listener.first }->call(argument);
     }
 }
 

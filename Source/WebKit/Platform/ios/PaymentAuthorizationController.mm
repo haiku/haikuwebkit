@@ -124,14 +124,14 @@
 {
     if (!_presenter)
         return nil;
-    return nsStringNilIfEmpty(_presenter->sceneIdentifier());
+    return nsStringNilIfEmpty(_presenter->sceneIdentifier()).autorelease();
 }
 
 - (NSString *)presentationSceneBundleIdentifierForPaymentAuthorizationController:(PKPaymentAuthorizationController *)controller
 {
     if (!_presenter)
         return applicationBundleIdentifier().createNSString().autorelease();
-    return nsStringNilIfEmpty(_presenter->bundleIdentifier());
+    return nsStringNilIfEmpty(_presenter->bundleIdentifier()).autorelease();
 }
 #endif
 

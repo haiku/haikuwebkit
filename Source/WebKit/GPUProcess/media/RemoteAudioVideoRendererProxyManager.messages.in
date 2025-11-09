@@ -26,9 +26,9 @@
 #if ENABLE(GPU_PROCESS) && ENABLE(VIDEO)
 
 [
+    ExceptionForEnabledBy,
     DispatchedFrom=WebContent,
-    DispatchedTo=GPU,
-    EnabledBy=UseGPUProcessForMediaEnabled
+    DispatchedTo=GPU
 ]
 messages -> RemoteAudioVideoRendererProxyManager {
     Create(WebKit::RemoteAudioVideoRendererIdentifier identifier, WebCore::MediaPlayerClientIdentifier mediaElementIdentifier, WebCore::MediaPlayerIdentifier playerIdentifier)
@@ -92,6 +92,16 @@ messages -> RemoteAudioVideoRendererProxyManager {
 #if PLATFORM(COCOA)
     SetVideoLayerSizeFenced(WebKit::RemoteAudioVideoRendererIdentifier identifier, WebCore::FloatSize size, struct MachSendRightAnnotated sendRightAnnotated)
 #endif
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+    [EnabledBy=LegacyEncryptedMediaAPIEnabled] SetLegacyCDMSession(WebKit::RemoteAudioVideoRendererIdentifier identifier, std::optional<WebKit::RemoteLegacyCDMSessionIdentifier> instanceId)
+#endif
+#if ENABLE(ENCRYPTED_MEDIA)
+    [EnabledBy=EncryptedMediaAPIEnabled] SetCDMInstance(WebKit::RemoteAudioVideoRendererIdentifier identifier, std::optional<WebKit::RemoteCDMInstanceIdentifier> instanceId)
+    [EnabledBy=EncryptedMediaAPIEnabled] SetInitData(WebKit::RemoteAudioVideoRendererIdentifier identifier, Ref<WebCore::SharedBuffer> initData) -> (Expected<void, WebCore::PlatformMediaError> result)
+    [EnabledBy=EncryptedMediaAPIEnabled] AttemptToDecrypt(WebKit::RemoteAudioVideoRendererIdentifier identifier)
+#endif
+
 }
 
 #endif

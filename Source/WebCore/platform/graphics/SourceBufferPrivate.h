@@ -161,21 +161,17 @@ public:
     virtual uint64_t sourceBufferLogIdentifier() = 0;
 #endif
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    virtual void setCDMSession(LegacyCDMSession*) { }
-#endif
 #if ENABLE(ENCRYPTED_MEDIA)
-    virtual void setCDMInstance(CDMInstance*) { }
     virtual bool waitingForKey() const { return false; }
-    virtual void attemptToDecrypt() { }
 #endif
 
 protected:
-    WEBCORE_EXPORT explicit SourceBufferPrivate(MediaSourcePrivate&, GuaranteedSerialFunctionDispatcher&);
+    WEBCORE_EXPORT explicit SourceBufferPrivate(MediaSourcePrivate&, WorkQueue&);
     MediaTime currentTime() const;
     MediaTime mediaSourceDuration() const;
 
     WEBCORE_EXPORT void ensureOnDispatcher(Function<void()>&&) const;
+    WEBCORE_EXPORT void ensureOnDispatcherSync(NOESCAPE Function<void()>&&);
 
     using InitializationSegment = SourceBufferPrivateClient::InitializationSegment;
     WEBCORE_EXPORT void didReceiveInitializationSegment(InitializationSegment&&);
@@ -217,7 +213,7 @@ protected:
     WEBCORE_EXPORT RefPtr<SourceBufferPrivateClient> client() const;
 
     ThreadSafeWeakPtr<MediaSourcePrivate> m_mediaSource { nullptr };
-    const Ref<GuaranteedSerialFunctionDispatcher> m_dispatcher; // SerialFunctionDispatcher the SourceBufferPrivate/MediaSourcePrivate
+    const Ref<WorkQueue> m_dispatcher; // SerialFunctionDispatcher the SourceBufferPrivate/MediaSourcePrivate
 
     SourceBufferEvictionData m_evictionData;
 

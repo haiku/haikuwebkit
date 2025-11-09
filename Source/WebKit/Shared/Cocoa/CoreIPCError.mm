@@ -144,7 +144,7 @@ CoreIPCError::CoreIPCError(NSError *nsError)
                 // The SecIdentity member is the key information of this attribute. Without it, we should nil
                 // the attribute.
                 if (status != errSecSuccess) {
-                    LOG_ERROR("Failed to encode nsError.userInfo[NSErrorClientCertificateChainKey]: %d", status);
+                    LOG_ERROR("Failed to encode nsError.userInfo[NSErrorClientCertificateChainKey]: %ld", static_cast<long>(status));
                     clientCertificates = nil;
                     break;
                 }

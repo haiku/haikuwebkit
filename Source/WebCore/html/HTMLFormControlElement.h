@@ -60,6 +60,7 @@ public:
 
     bool wasChangedSinceLastFormControlChangeEvent() const { return m_wasChangedSinceLastFormControlChangeEvent; }
     void setChangedSinceLastFormControlChangeEvent(bool);
+    bool wasCreatedByTaintedScript() const { return m_wasCreatedByTaintedScript; }
 
     virtual void dispatchFormControlChangeEvent();
     void dispatchChangeEvent();
@@ -143,6 +144,7 @@ private:
     unsigned m_isRequired : 1;
     unsigned m_valueMatchesRenderer : 1;
     unsigned m_wasChangedSinceLastFormControlChangeEvent : 1;
+    unsigned m_wasCreatedByTaintedScript : 1;
 };
 
 } // namespace WebCore

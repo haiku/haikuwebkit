@@ -7,36 +7,6 @@ Modules/push-api/PushDatabase.cpp
 Modules/storage/WorkerStorageConnection.cpp
 Modules/webaudio/AudioWorkletGlobalScope.cpp
 Modules/webdatabase/SQLStatement.cpp
-Modules/websockets/WebSocket.cpp
-[ Mac ]  testing/Internals.mm
-[ Mac ] accessibility/isolatedtree/AXIsolatedObject.cpp
-[ Mac ] accessibility/isolatedtree/AXIsolatedTree.cpp
-[ Mac ] accessibility/mac/AccessibilityObjectMac.mm
-[ Mac ] dom/mac/ImageControlsMac.cpp
-[ Mac ] editing/AlternativeTextController.cpp
-[ Mac ] editing/mac/EditorMac.mm
-[ Mac ] editing/mac/FrameSelectionMac.mm
-[ Mac ] page/ContextMenuController.cpp
-[ Mac ] page/mac/EventHandlerMac.mm
-[ Mac ] page/mac/ImageOverlayControllerMac.mm
-[ Mac ] page/mac/ServicesOverlayController.mm
-[ iOS ] accessibility/cocoa/AXTextMarkerCocoa.mm
-[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
-[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
-[ iOS ] editing/cocoa/EditorCocoa.mm
-[ iOS ] editing/ios/DictationCommandIOS.cpp
-[ iOS ] html/HTMLAnchorElement.cpp
-[ iOS ] html/HTMLImageLoader.cpp
-[ iOS ] page/Chrome.cpp
-[ iOS ] page/DOMTimer.cpp
-[ iOS ] page/ios/ContentChangeObserver.cpp
-[ iOS ] page/ios/EventHandlerIOS.mm
-[ iOS ] page/ios/FrameIOS.mm
-[ iOS ] platform/ios/DragImageIOS.mm
-[ iOS ] platform/ios/PasteboardIOS.mm
-[ iOS ] platform/ios/WebVideoFullscreenControllerAVKit.mm
-[ iOS ] rendering/RenderLineBreak.cpp
-[ iOS ] rendering/ios/RenderThemeIOS.mm
 accessibility/AXObjectCache.cpp
 accessibility/AccessibilityListBoxOption.cpp
 accessibility/AccessibilityMathMLElement.cpp
@@ -45,7 +15,13 @@ accessibility/AccessibilityObject.cpp
 accessibility/AccessibilityRenderObject.cpp
 accessibility/AccessibilityScrollView.cpp
 accessibility/AccessibilitySlider.cpp
+[ iOS ] accessibility/cocoa/AXTextMarkerCocoa.mm
 accessibility/cocoa/AccessibilityObjectCocoa.mm
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
+[ Mac ] accessibility/isolatedtree/AXIsolatedObject.cpp
+[ Mac ] accessibility/isolatedtree/AXIsolatedTree.cpp
+[ Mac ] accessibility/mac/AccessibilityObjectMac.mm
 animation/AcceleratedEffectStackUpdater.cpp
 animation/BlendingKeyframes.cpp
 animation/DocumentTimeline.cpp
@@ -126,6 +102,8 @@ dom/StaticRange.cpp
 dom/TreeScope.cpp
 dom/TypedElementDescendantIteratorInlines.h
 dom/ViewTransition.cpp
+[ Mac ] dom/mac/ImageControlsMac.cpp
+[ Mac ] editing/AlternativeTextController.cpp
 editing/ApplyBlockElementCommand.cpp
 editing/ApplyStyleCommand.cpp
 editing/BreakBlockquoteCommand.cpp
@@ -143,8 +121,12 @@ editing/VisibleUnits.cpp
 editing/cocoa/DataDetection.mm
 editing/cocoa/DictionaryLookup.mm
 editing/cocoa/EditingHTMLConverter.mm
+[ iOS ] editing/cocoa/EditorCocoa.mm
 editing/cocoa/NodeHTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
+[ iOS ] editing/ios/DictationCommandIOS.cpp
+[ Mac ] editing/mac/EditorMac.mm
+[ Mac ] editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
 history/CachedFrame.cpp
 html/Autofill.cpp
@@ -152,27 +134,17 @@ html/CachedHTMLCollectionInlines.h
 html/CollectionTraversalInlines.h
 html/FormAssociatedCustomElement.cpp
 html/FormListedElement.cpp
-html/HTMLAttachmentElement.cpp
-html/HTMLDialogElement.cpp
+[ iOS ] html/HTMLAnchorElement.cpp
 html/HTMLDocument.cpp
-html/HTMLEmbedElement.cpp
 html/HTMLFormControlElement.cpp
 html/HTMLFormElement.cpp
 html/HTMLImageElement.cpp
+[ iOS ] html/HTMLImageLoader.cpp
 html/HTMLInputElement.cpp
-html/HTMLLabelElement.cpp
-html/HTMLMapElement.cpp
-html/HTMLMarqueeElement.cpp
 html/HTMLMediaElement.cpp
-html/HTMLPictureElement.cpp
-html/HTMLPlugInElement.cpp
 html/HTMLSlotElement.cpp
 html/HTMLStyleElement.cpp
-html/HTMLTableCellElement.cpp
-html/HTMLTableElement.cpp
-html/HTMLTableRowElement.cpp
 html/HTMLTextFormControlElement.cpp
-html/HTMLTitleElement.cpp
 html/HTMLVideoElement.cpp
 html/MediaElementSession.cpp
 html/ModelDocument.cpp
@@ -271,6 +243,9 @@ loader/cache/CachedImage.cpp
 loader/cache/MemoryCache.cpp
 mathml/MathMLSelectElement.cpp
 page/AutoscrollController.cpp
+[ iOS ] page/Chrome.cpp
+[ Mac ] page/ContextMenuController.cpp
+[ iOS ] page/DOMTimer.cpp
 page/DeviceController.cpp
 page/DragController.cpp
 page/ElementTargetingController.cpp
@@ -301,7 +276,12 @@ page/ScreenOrientation.cpp
 page/ScrollBehavior.cpp
 page/SpatialNavigation.cpp
 page/TextIndicator.cpp
-page/WorkerNavigator.cpp
+[ iOS ] page/ios/ContentChangeObserver.cpp
+[ iOS ] page/ios/EventHandlerIOS.mm
+[ iOS ] page/ios/FrameIOS.mm
+[ Mac ] page/mac/EventHandlerMac.mm
+[ Mac ] page/mac/ImageOverlayControllerMac.mm
+[ Mac ] page/mac/ServicesOverlayController.mm
 page/scrolling/AsyncScrollingCoordinator.cpp
 page/scrolling/ScrollAnchoringController.cpp
 page/scrolling/ScrollSnapOffsetsInfo.cpp
@@ -318,8 +298,11 @@ platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
+[ iOS ] platform/ios/DragImageIOS.mm
+[ iOS ] platform/ios/PasteboardIOS.mm
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
+[ iOS ] platform/ios/WebVideoFullscreenControllerAVKit.mm
 platform/network/mac/ResourceHandleMac.mm
 rendering/AccessibilityRegionContext.cpp
 rendering/AncestorSubgridIterator.cpp
@@ -377,6 +360,7 @@ rendering/RenderLayerModelObject.cpp
 rendering/RenderLayerScrollableArea.cpp
 rendering/RenderLayoutState.cpp
 rendering/RenderLineBoxList.cpp
+[ iOS ] rendering/RenderLineBreak.cpp
 rendering/RenderListBox.cpp
 rendering/RenderListItem.cpp
 rendering/RenderListMarker.cpp
@@ -413,6 +397,7 @@ rendering/TextAutoSizing.cpp
 rendering/TextBoxPainter.cpp
 rendering/TextBoxTrimmer.cpp
 rendering/TextDecorationPainter.cpp
+[ iOS ] rendering/ios/RenderThemeIOS.mm
 rendering/line/BreakingContext.h
 rendering/line/LineInlineHeaders.h
 rendering/line/WordTrailingSpace.h
@@ -555,6 +540,7 @@ svg/graphics/SVGImage.cpp
 svg/properties/SVGAnimatedString.cpp
 svg/properties/SVGAnimationAdditiveValueFunctionImpl.cpp
 testing/Internals.cpp
+[ Mac ] testing/Internals.mm
 testing/ServiceWorkerInternals.cpp
 testing/js/WebCoreTestSupport.cpp
 workers/WorkerGlobalScope.cpp

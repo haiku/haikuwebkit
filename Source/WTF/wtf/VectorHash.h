@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "HashFunctions.h"
-#include "Hasher.h"
+#include <wtf/HashFunctions.h>
+#include <wtf/Hasher.h>
 
 namespace WTF {
 

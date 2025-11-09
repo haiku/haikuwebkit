@@ -89,14 +89,16 @@
 
 <form class="webkit-survey-form" method="POST">
 <?php
-wp_nonce_field("webkit_survey-" . get_the_ID(), "_nonce", $true);
+wp_nonce_field("webkit_survey-" . get_the_ID(), "_nonce", true);
 foreach ($Survey->survey as $id => $Entry):
+    
+    $response_count = count($Entry->responses);
 ?>
     <h3><?php echo $Entry->question; ?></h3>
     
     <ul>
     <?php foreach ($Entry->responses as $value => $response): ?>
-        <li><label><input type="radio" name="questions[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($value); ?>" required> <span><?php echo esc_html($response); ?></span>
+        <li><label><input type="radio" name="questions[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($value); ?>" required <?php echo ($response_count == 1) ? "checked": "" ?>> <?php if($response_count > 1):?> <span><?php echo esc_html($response); ?></span><?php endif; ?>
         <?php if ($response == "Other:"): ?>
             <input type="text" name="other[<?php echo esc_attr($id); ?>]" maxlength="144">
         <?php endif; ?>

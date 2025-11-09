@@ -139,7 +139,7 @@ Node::InsertedIntoAncestorResult HTMLFormElement::insertedIntoAncestor(Insertion
 
 void HTMLFormElement::removedFromAncestor(RemovalType removalType, ContainerNode& oldParentOfRemovedTree)
 {
-    auto& root = traverseToRootNode(); // Do not rely on rootNode() because our IsInTreeScope is outdated.
+    Ref root = traverseToRootNode(); // Do not rely on rootNode() because our IsInTreeScope is outdated.
     auto listedElements = copyListedElementsVector();
     for (auto& listedElement : listedElements)
         listedElement->formOwnerRemovedFromTree(root);
@@ -159,7 +159,7 @@ unsigned HTMLFormElement::length() const
     for (auto& weakElement : m_listedElements) {
         RefPtr element { weakElement.get() };
         ASSERT(element);
-        auto* listedElement = element->asFormListedElement();
+        RefPtr listedElement = element->asFormListedElement();
         ASSERT(listedElement);
         if (listedElement->isEnumeratable())
             ++length;
@@ -354,13 +354,13 @@ RefPtr<HTMLFormControlElement> HTMLFormElement::findSubmitButton(HTMLFormControl
         return nullptr;
     RefPtr<HTMLFormControlElement> firstSuccessfulSubmitButton;
     for (auto& listedElement : m_listedElements) {
-        auto* control = dynamicDowncast<HTMLFormControlElement>(*listedElement);
+        RefPtr control = dynamicDowncast<HTMLFormControlElement>(*listedElement);
         if (!control)
             continue;
         if (control->isActivatedSubmit())
             return nullptr;
         if (!firstSuccessfulSubmitButton && control->isSuccessfulSubmitButton())
-            firstSuccessfulSubmitButton = control;
+            firstSuccessfulSubmitButton = WTFMove(control);
     }
     return firstSuccessfulSubmitButton;
 }
@@ -534,30 +534,30 @@ unsigned HTMLFormElement::formElementIndexWithFormAttribute(Element* element, un
 
 unsigned HTMLFormElement::formElementIndex(FormListedElement& listedElement)
 {
-    HTMLElement& listedHTMLElement = listedElement.asHTMLElement();
+    Ref listedHTMLElement = listedElement.asHTMLElement();
 
     // Treats separately the case where this element has the form attribute
     // for performance consideration.
-    if (listedHTMLElement.hasAttributeWithoutSynchronization(formAttr) && listedHTMLElement.isConnected()) {
+    if (listedHTMLElement->hasAttributeWithoutSynchronization(formAttr) && listedHTMLElement->isConnected()) {
         unsigned short position;
         if (document().settings().shadowRootReferenceTargetEnabled())
-            position = listedHTMLElement.treeScope().retargetToScope(*this)->compareDocumentPosition(listedHTMLElement);
+            position = listedHTMLElement->treeScope().retargetToScope(*this)->compareDocumentPosition(listedHTMLElement);
         else
             position = compareDocumentPosition(listedHTMLElement);
         ASSERT(!(position & DOCUMENT_POSITION_DISCONNECTED));
         if (position & DOCUMENT_POSITION_PRECEDING) {
             ++m_listedElementsBeforeIndex;
             ++m_listedElementsAfterIndex;
-            return HTMLFormElement::formElementIndexWithFormAttribute(&listedHTMLElement, 0, m_listedElementsBeforeIndex - 1);
+            return HTMLFormElement::formElementIndexWithFormAttribute(listedHTMLElement.ptr(), 0, m_listedElementsBeforeIndex - 1);
         }
         if (position & DOCUMENT_POSITION_FOLLOWING && !(position & DOCUMENT_POSITION_CONTAINED_BY))
-            return HTMLFormElement::formElementIndexWithFormAttribute(&listedHTMLElement, m_listedElementsAfterIndex, m_listedElements.size());
+            return HTMLFormElement::formElementIndexWithFormAttribute(listedHTMLElement.ptr(), m_listedElementsAfterIndex, m_listedElements.size());
     }
 
     unsigned currentListedElementsAfterIndex = m_listedElementsAfterIndex;
     ++m_listedElementsAfterIndex;
 
-    if (!listedHTMLElement.isDescendantOf(*this))
+    if (!listedHTMLElement->isDescendantOf(*this))
         return currentListedElementsAfterIndex;
 
     auto descendants = descendantsOfType<HTMLElement>(*this);
@@ -570,12 +570,12 @@ unsigned HTMLFormElement::formElementIndex(FormListedElement& listedElement)
         return currentListedElementsAfterIndex;
 
     unsigned i = m_listedElementsBeforeIndex;
-    for (auto& element : descendants) {
-        if (&element == &listedHTMLElement)
+    for (Ref element : descendants) {
+        if (element == listedHTMLElement)
             return i;
-        if (!element.isFormListedElement())
+        if (!element->isFormListedElement())
             continue;
-        if (element.asFormListedElement()->form() != this)
+        if (element->asFormListedElement()->form() != this)
             continue;
         ++i;
     }
@@ -970,8 +970,8 @@ RefPtr<DOMFormData> HTMLFormElement::constructEntryList(RefPtr<HTMLFormControlEl
         submitter->setActivatedSubmit(true);
     
     for (auto& control : this->copyListedElementsVector()) {
-        auto& element = control->asHTMLElement();
-        if (!element.isDisabledFormControl())
+        Ref element = control->asHTMLElement();
+        if (!element->isDisabledFormControl())
             control->appendFormData(domFormData.get());
         if (RefPtr input = dynamicDowncast<HTMLInputElement>(element); formValues && input) {
             if (input->isTextField()) {

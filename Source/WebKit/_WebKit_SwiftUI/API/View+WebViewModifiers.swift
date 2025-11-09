@@ -71,7 +71,7 @@ extension View {
     ///
     /// - Parameter menu: A closure that produces the menu. The single parameter to the closure describes the type of webpage element that was acted upon.
     /// - Returns: A view that can display an item-based context menu.
-    @available(WK_MAC_TBA, *)
+    @available(macOS 26.0, *)
     @available(iOS, unavailable)
     @available(visionOS, unavailable)
     @available(watchOS, unavailable)

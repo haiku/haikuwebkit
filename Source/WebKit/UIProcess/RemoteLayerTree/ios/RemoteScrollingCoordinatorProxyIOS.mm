@@ -457,18 +457,23 @@ void RemoteScrollingCoordinatorProxyIOS::animationsWereRemovedFromNode(RemoteLay
         drawingAreaIOS().pauseDisplayRefreshCallbacksForAnimation();
 }
 
-void RemoteScrollingCoordinatorProxyIOS::registerTimelineIfNecessary(WebCore::ProcessIdentifier processIdentifier, Seconds originTime, MonotonicTime now)
+void RemoteScrollingCoordinatorProxyIOS::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
 {
-    if (m_timelines.find(processIdentifier) == m_timelines.end())
-        m_timelines.set(processIdentifier, RemoteAnimationTimeline::create(originTime, now));
+    scrollingTree().updateTimelineRegistration(processIdentifier, timelineRepresentations);
+    if (!m_monotonicTimelineRegistry)
+        m_monotonicTimelineRegistry = makeUnique<RemoteMonotonicTimelineRegistry>();
+    m_monotonicTimelineRegistry->update(processIdentifier, timelineRepresentations, now);
+    if (m_monotonicTimelineRegistry->isEmpty())
+        m_monotonicTimelineRegistry = nullptr;
 }
 
-const RemoteAnimationTimeline* RemoteScrollingCoordinatorProxyIOS::timeline(WebCore::ProcessIdentifier processIdentifier) const
+RefPtr<const RemoteAnimationTimeline> RemoteScrollingCoordinatorProxyIOS::timeline(const TimelineID& timelineID) const
 {
-    auto it = m_timelines.find(processIdentifier);
-    if (it != m_timelines.end())
-        return it->value.ptr();
-    return nullptr;
+    if (m_monotonicTimelineRegistry) {
+        if (RefPtr timeline = m_monotonicTimelineRegistry->get(timelineID))
+            return timeline;
+    }
+    return scrollingTree().timeline(timelineID);
 }
 
 void RemoteScrollingCoordinatorProxyIOS::updateAnimations()
@@ -476,9 +481,8 @@ void RemoteScrollingCoordinatorProxyIOS::updateAnimations()
     // FIXME: Rather than using 'now' at the point this is called, we
     // should probably be using the timestamp of the (next?) display
     // link update or vblank refresh.
-    auto now = MonotonicTime::now();
-    for (auto& timeline : m_timelines.values())
-        timeline->updateCurrentTime(now);
+    if (m_monotonicTimelineRegistry)
+        m_monotonicTimelineRegistry->advanceCurrentTime(MonotonicTime::now());
 
     auto& layerTreeHost = drawingAreaIOS().remoteLayerTreeHost();
 

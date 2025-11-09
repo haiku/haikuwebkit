@@ -50,6 +50,7 @@ class UnixFileDescriptor;
 
 namespace WebKit {
 
+class ViewSnapshot;
 class WebPageProxy;
 class WebProcessProxy;
 
@@ -66,6 +67,10 @@ public:
     void deref() const final { RefCounted::deref(); }
 
     void updateSurfaceID(uint64_t);
+
+#if USE(SKIA)
+    Expected<Ref<ViewSnapshot>, String> takeSnapshot(std::optional<WebCore::IntRect>&&);
+#endif
 
     RendererBufferDescription bufferDescription() const;
 

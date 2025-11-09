@@ -294,7 +294,9 @@ public:
     void setUserAgentPart(Element&, const AtomString&);
 
     // DOMTimers throttling testing.
+    int timerNestingLevel();
     ExceptionOr<bool> isTimerThrottled(int timeoutId);
+    ExceptionOr<bool> isTimerAligned(int timeoutId);
     String requestAnimationFrameThrottlingReasons() const;
     double requestAnimationFrameInterval() const;
     bool scriptedAnimationsAreSuspended() const;
@@ -1488,6 +1490,8 @@ public:
     unsigned numberOfAppHighlights();
 #endif
 
+    Vector<Ref<AbstractRange>> textExtractionHighlightRanges() const;
+
 #if ENABLE(WEBXR)
     ExceptionOr<RefPtr<WebXRTest>> xrTest();
 #endif
@@ -1635,6 +1639,7 @@ private:
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 #endif // ENABLE(MEDIA_STREAM)
 
     Document* contextDocument() const;

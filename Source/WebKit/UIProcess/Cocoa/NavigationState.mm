@@ -606,7 +606,7 @@ void NavigationState::NavigationClient::decidePolicyForNavigationAction(WebPageP
             // A file URL shouldn't fall through to here, but if it did,
             // it would be a security risk to open it.
             if (![[nsURLRequest URL] isFileURL])
-                [[NSWorkspace sharedWorkspace] openURL:[nsURLRequest URL]];
+                [[NSWorkspace sharedWorkspace] openURL:retainPtr([nsURLRequest URL]).get()];
 #endif
 
             listener->ignore();
@@ -777,7 +777,7 @@ void NavigationState::NavigationClient::decidePolicyForNavigationResponse(WebPag
         RetainPtr<NSURL> url = navigationResponse->response().protectedNSURLResponse().get().URL;
         if ([url isFileURL]) {
             BOOL isDirectory = NO;
-            BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:url.get().path isDirectory:&isDirectory];
+            BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:retainPtr(url.get().path).get() isDirectory:&isDirectory];
 
             if (exists && !isDirectory && navigationResponse->canShowMIMEType())
                 listener->use();
@@ -930,7 +930,7 @@ static RetainPtr<NSError> createErrorWithRecoveryAttempter(WKWebView *webView, c
     if (RetainPtr<NSDictionary> originalUserInfo = originalError.userInfo)
         [userInfo addEntriesFromDictionary:originalUserInfo.get()];
 
-    return adoptNS([[NSError alloc] initWithDomain:originalError.domain code:originalError.code userInfo:userInfo.get()]);
+    return adoptNS([[NSError alloc] initWithDomain:retainPtr(originalError.domain).get() code:originalError.code userInfo:userInfo.get()]);
 }
 
 void NavigationState::NavigationClient::didFailProvisionalNavigationWithError(WebPageProxy& page, FrameInfoData&& frameInfo, API::Navigation* navigation, const URL& url, const WebCore::ResourceError& error, API::Object*)

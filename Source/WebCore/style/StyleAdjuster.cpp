@@ -454,7 +454,7 @@ static bool shouldTreatAutoZIndexAsZero(const RenderStyle& style)
         || style.hasIsolation()
         || style.position() == PositionType::Sticky
         || style.position() == PositionType::Fixed
-        || style.willChangeCreatesStackingContext();
+        || style.willChange().canCreateStackingContext();
 }
 
 void Adjuster::adjustFromBuilder(RenderStyle& style)
@@ -990,8 +990,8 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         return;
 
     if (is<HTMLBodyElement>(*m_element) && m_document->quirks().needsBodyScrollbarWidthNoneDisabledQuirk()) {
-        if (style.scrollbarWidth() == ScrollbarWidth::None)
-            style.setScrollbarWidth(ScrollbarWidth::Auto);
+        if (style.scrollbarWidth().isNone())
+            style.setScrollbarWidth(CSS::Keyword::Auto { });
     }
 
     if (m_document->quirks().needsGMailOverflowScrollQuirk()) {
@@ -1089,6 +1089,11 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         if (is<HTMLDivElement>(*m_element) && m_element->hasClassName(className))
             style.setEffectiveDisplay(DisplayType::None);
     }
+
+#if PLATFORM(IOS_FAMILY)
+    if (m_document->quirks().needsClaudeSidebarViewportUnitQuirk(*m_element, style))
+        style.setHeight(Style::PreferredSize::Fixed { m_document->renderView()->sizeForCSSDynamicViewportUnits().height() });
+#endif
 }
 
 void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& update, const Document& document)

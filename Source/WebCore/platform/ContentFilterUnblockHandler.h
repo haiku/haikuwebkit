@@ -68,7 +68,7 @@ public:
         std::optional<URL>&& evaluatedURL,
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-        Vector<uint8_t>&& webFilterEvaluatorData,
+        RetainPtr<WebFilterEvaluator>&&,
 #endif
         bool unblockedAfterRequest
     );
@@ -93,18 +93,13 @@ public:
     void setConfigurationPath(const String& path) { m_configurationPath = path; }
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    WEBCORE_EXPORT Vector<uint8_t> webFilterEvaluatorData() const;
+    RetainPtr<WebFilterEvaluator> webFilterEvaluator() const { return m_webFilterEvaluator; }
 #endif
 
     WEBCORE_EXPORT void setUnblockedAfterRequest(bool);
     bool unblockedAfterRequest() const { return m_unblockedAfterRequest; }
 
 private:
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    bool hasWebFilterEvaluator() const;
-    RetainPtr<WebFilterEvaluator> webFilterEvaluator();
-#endif
-
     String m_unblockURLHost;
     URL m_unreachableURL;
     UnblockRequesterFunction m_unblockRequester;
@@ -115,7 +110,6 @@ private:
     String m_configurationPath;
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
-    Vector<uint8_t> m_webFilterEvaluatorData;
     RetainPtr<WebFilterEvaluator> m_webFilterEvaluator;
 #endif
     bool m_unblockedAfterRequest { false };

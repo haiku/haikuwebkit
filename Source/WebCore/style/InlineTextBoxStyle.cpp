@@ -158,7 +158,7 @@ static float computedUnderlineOffset(const UnderlineOffsetArguments& context)
     if (isAlignedForUnder(styleToUse)) {
         ASSERT(context.textUnderlinePositionUnder);
         // FIXME: This needs to be flipped for sideways-lr.
-        if (textUnderlinePosition.contains(TextUnderlinePosition::Right)) {
+        if (styleToUse.writingMode().isVerticalTypographic() && textUnderlinePosition.contains(TextUnderlinePosition::Right)) {
             ASSERT(!textUnderlinePosition.contains(TextUnderlinePosition::Left));
             // In vertical typographic modes, the underline is aligned as for under, except it is always aligned to the right edge of the text.
             underlineOffset = 0.f - (styleToUse.textUnderlineOffset().resolve(styleToUse) + defaultGap(styleToUse));

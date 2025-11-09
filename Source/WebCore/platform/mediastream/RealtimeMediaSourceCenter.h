@@ -65,7 +65,7 @@ public:
     virtual void deviceWillBeRemoved(const String& persistentId) = 0;
 };
 
-class WEBCORE_EXPORT RealtimeMediaSourceCenter : public ThreadSafeRefCounted<RealtimeMediaSourceCenter, WTF::DestructionThread::MainRunLoop> {
+class WEBCORE_EXPORT RealtimeMediaSourceCenter : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<RealtimeMediaSourceCenter, WTF::DestructionThread::MainRunLoop> {
 public:
     ~RealtimeMediaSourceCenter();
 

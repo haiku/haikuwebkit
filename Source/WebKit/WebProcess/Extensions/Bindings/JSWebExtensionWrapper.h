@@ -35,22 +35,6 @@
 #endif
 #include <wtf/WeakPtr.h>
 
-#if JSC_OBJC_API_ENABLED && defined(__OBJC__)
-
-@interface JSValue (WebKitExtras)
-- (NSString *)_toJSONString;
-- (NSString *)_toSortedJSONString;
-
-@property (nonatomic, readonly, getter=_isFunction) BOOL _function;
-@property (nonatomic, readonly, getter=_isDictionary) BOOL _dictionary;
-@property (nonatomic, readonly, getter=_isRegularExpression) BOOL _regularExpression;
-@property (nonatomic, readonly, getter=_isThenable) BOOL _thenable;
-
-- (void)_awaitThenableResolutionWithCompletionHandler:(void (^)(JSValue *result, JSValue *error))completionHandler;
-@end
-
-#endif // JSC_OBJC_API_ENABLED && defined(__OBJC__)
-
 namespace WebKit {
 
 class WebFrame;
@@ -92,9 +76,6 @@ public:
 #endif
 
 private:
-#ifdef __OBJC__
-    WebExtensionCallbackHandler(JSValue *callbackFunction);
-#endif
     WebExtensionCallbackHandler(JSContextRef, JSObjectRef resolveFunction, JSObjectRef rejectFunction);
     WebExtensionCallbackHandler(JSContextRef, JSObjectRef callbackFunction, WebExtensionAPIRuntimeBase&);
     WebExtensionCallbackHandler(JSContextRef, WebExtensionAPIRuntimeBase&);
@@ -171,6 +152,13 @@ JSRetainPtr<JSStringRef> toJSString(const String&);
 JSValueRef deserializeJSONString(JSContextRef, const String& jsonString);
 String serializeJSObject(JSContextRef, JSValueRef, JSValueRef* exception);
 
+String toJSONString(JSContextRef, JSValueRef);
+String toSortedJSONString(JSContextRef, JSValueRef);
+bool isFunction(JSContextRef, JSValueRef);
+bool isDictionary(JSContextRef, JSValueRef);
+bool isRegularExpression(JSContextRef, JSValueRef);
+bool isThenable(JSContextRef, JSValueRef);
+
 #ifdef __OBJC__
 
 id toNSObject(JSContextRef, JSValueRef, Class containingObjectsOfClass = Nil, NullValuePolicy = NullValuePolicy::NotAllowed, ValuePolicy = ValuePolicy::Recursive);
@@ -190,8 +178,6 @@ JSValueRef toJSValueRef(JSContextRef, const String&, NullOrEmptyString = NullOrE
 JSValueRef toJSValueRef(JSContextRef, NSURL *, NullOrEmptyString = NullOrEmptyString::NullStringAsEmptyString);
 
 JSValueRef toJSValueRefOrJSNull(JSContextRef, id);
-
-inline bool isDictionary(JSContextRef context, JSValueRef value) { return toJSValue(context, value)._isDictionary; }
 
 #endif // __OBJC__
 

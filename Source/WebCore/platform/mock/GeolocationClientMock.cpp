@@ -41,12 +41,8 @@
 namespace WebCore {
 
 GeolocationClientMock::GeolocationClientMock()
-    : m_controller(0)
-    , m_hasError(false)
-    , m_controllerTimer(*this, &GeolocationClientMock::controllerTimerFired)
+    : m_controllerTimer(*this, &GeolocationClientMock::controllerTimerFired)
     , m_permissionTimer(*this, &GeolocationClientMock::permissionTimerFired)
-    , m_isActive(false)
-    , m_permissionState(PermissionStateUnset)
 {
 }
 
@@ -55,7 +51,7 @@ GeolocationClientMock::~GeolocationClientMock()
     ASSERT(!m_isActive);
 }
 
-void GeolocationClientMock::setController(GeolocationController *controller)
+void GeolocationClientMock::setController(GeolocationController* controller)
 {
     ASSERT(controller && !m_controller);
     m_controller = controller;
@@ -172,14 +168,15 @@ void GeolocationClientMock::asyncUpdateController()
 
 void GeolocationClientMock::controllerTimerFired()
 {
-    ASSERT(m_controller);
+    CheckedPtr controller = m_controller.get();
+    ASSERT(controller);
 
     if (m_lastPosition) {
         ASSERT(!m_hasError);
-        m_controller->positionChanged(*m_lastPosition);
+        controller->positionChanged(*m_lastPosition);
     } else if (m_hasError) {
         auto geolocatioError = GeolocationError::create(GeolocationError::PositionUnavailable, m_errorMessage);
-        m_controller->errorOccurred(geolocatioError.get());
+        controller->errorOccurred(geolocatioError.get());
     }
 }
 

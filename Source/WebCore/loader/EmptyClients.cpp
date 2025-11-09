@@ -276,6 +276,7 @@ class EmptyDragClient final : public DragClient {
 
 class EmptyEditorClient final : public EditorClient {
     WTF_MAKE_TZONE_ALLOCATED(EmptyEditorClient);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(EmptyEditorClient);
 private:
     bool shouldDeleteRange(const std::optional<SimpleRange>&) final { return false; }
     bool smartInsertDeleteEnabled() final { return false; }
@@ -592,6 +593,8 @@ class EmptyUserContentProvider final : public UserContentProvider {
 #if ENABLE(USER_MESSAGE_HANDLERS)
     void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const final { }
 #endif
+    bool hasStringMatchersForWorld(const DOMWrapperWorld&) const final { return false; }
+    WebKitStringMatcher* stringMatcher(const DOMWrapperWorld&, const String&) const final { return nullptr; }
 #if ENABLE(CONTENT_EXTENSIONS)
     const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const final { static NeverDestroyed<ContentExtensions::ContentExtensionsBackend> backend; return backend.get(); };
 #endif

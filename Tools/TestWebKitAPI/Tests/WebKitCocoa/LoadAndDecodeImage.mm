@@ -231,6 +231,20 @@ TEST(WebKit, GetInformationFromImageData)
     Util::run(&done);
 }
 
+TEST(WebKit, GetInformationFromImageDataAfterClosingWebView)
+{
+    RetainPtr webView = adoptNS([WKWebView new]);
+    [webView _close];
+
+    done = false;
+    RetainPtr pngData = [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"icon" withExtension:@"png"]];
+    [webView _getInformationFromImageData:pngData.get() completionHandler:^(NSString *typeIdentifier, NSArray<NSValue *> *availableSizes, NSError *error) {
+        EXPECT_NOT_NULL(error);
+        done = true;
+    }];
+    Util::run(&done);
+}
+
 TEST(WebKit, CreateIconDataFromImageData)
 {
     RetainPtr webView = adoptNS([WKWebView new]);

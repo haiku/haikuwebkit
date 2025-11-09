@@ -63,6 +63,8 @@ private:
     RemoteAdapterProxy& operator=(const RemoteAdapterProxy&) = delete;
     RemoteAdapterProxy& operator=(RemoteAdapterProxy&&) = delete;
 
+    bool isRemoteAdapterProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     bool xrCompatible() final;
     
@@ -86,5 +88,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteAdapterProxy)
+    static bool isType(const WebCore::WebGPU::Adapter& adapter) { return adapter.isRemoteAdapterProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

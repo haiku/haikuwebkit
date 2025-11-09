@@ -212,6 +212,15 @@ TEST(TextExtractionTests, InteractionDebugDescription)
         EXPECT_WK_STREQ("Select menu item “Three” in select with role “menu”", description);
         EXPECT_NULL(error);
     }
+    {
+        RetainPtr interaction = adoptNS([[_WKTextExtractionInteraction alloc] initWithAction:_WKTextExtractionActionClick]);
+        auto clickLocation = [webView elementMidpointFromSelector:@"#test-button"];
+        [interaction setLocation:clickLocation];
+        description = [interaction debugDescriptionInWebView:webView.get() error:&error];
+        RetainPtr expectedString = [NSString stringWithFormat:@"Click at coordinates (%.0f, %.0f) on child node of button labeled “Click Me”, with rendered text “Test”", clickLocation.x, clickLocation.y];
+        EXPECT_WK_STREQ(expectedString.get(), description);
+        EXPECT_NULL(error);
+    }
 }
 
 } // namespace TestWebKitAPI

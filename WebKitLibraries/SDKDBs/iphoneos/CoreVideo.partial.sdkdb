@@ -486,7 +486,7 @@
     {"access": "public", "introduced": "4", "kind": "variable", "linkage": "exported", "name": "_kCVPixelFormatVerticalSubsampling"},
     {"access": "public", "kind": "variable", "linkage": "exported", "name": "_kCVZeroTime"}
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "CVAttachmentMode"},
     {"access": "public", "name": "CVBufferRef"},
@@ -1142,7 +1142,7 @@
     {"access": "public", "introduced": "4", "linkage": "exported", "name": "_$sSo6CVTimea9CoreVideoE4zeroABvpZMV"},
     {"access": "public", "introduced": "4", "linkage": "exported", "name": "_$sSo6CVTimea9CoreVideoE9timeValue0D5ScaleABs5Int64V_s5Int32VtcfC"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

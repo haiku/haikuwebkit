@@ -1,6 +1,6 @@
 
 PASS Ensure that the framebuffer given by the WebGL layer is opaque for immersive - webgl
-FAIL Ensure that the framebuffer given by the WebGL layer is opaque for immersive - webgl2 assert_implements: webgl2 not supported. undefined
+PASS Ensure that the framebuffer given by the WebGL layer is opaque for immersive - webgl2
 PASS Ensure that the framebuffer given by the WebGL layer is opaque for non-immersive - webgl
-FAIL Ensure that the framebuffer given by the WebGL layer is opaque for non-immersive - webgl2 assert_implements: webgl2 not supported. undefined
+PASS Ensure that the framebuffer given by the WebGL layer is opaque for non-immersive - webgl2
 

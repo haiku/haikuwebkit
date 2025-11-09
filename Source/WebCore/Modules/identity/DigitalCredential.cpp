@@ -112,7 +112,7 @@ void DigitalCredential::discoverFromExternalSource(const Document& document, Cre
 {
     ASSERT(options.digital);
 
-    if (options.mediation != MediationRequirement::Required) {
+    if (options.mediation() != MediationRequirement::Required) {
         promise.reject(Exception { ExceptionCode::TypeError, "User mediation is required for DigitalCredential."_s });
         return;
     }

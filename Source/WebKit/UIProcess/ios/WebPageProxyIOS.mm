@@ -32,6 +32,7 @@
 #import "APIPageConfiguration.h"
 #import "APIUIClient.h"
 #import "APIWebsitePolicies.h"
+#import "BrowsingContextGroup.h"
 #import "Connection.h"
 #import "DocumentEditingContext.h"
 #import "DragInitiationResult.h"
@@ -52,6 +53,7 @@
 #import "RemoteLayerTreeHost.h"
 #import "RemoteLayerTreeNode.h"
 #import "RemoteLayerTreeTransaction.h"
+#import "RemotePageProxy.h"
 #import "RemoteScrollingCoordinatorProxy.h"
 #import "RevealItem.h"
 #import "TapHandlingResult.h"
@@ -333,14 +335,26 @@ WebCore::ScreenOrientationType WebPageProxy::toScreenOrientationType(IntDegrees 
 
 void WebPageProxy::setDeviceOrientation(IntDegrees deviceOrientation)
 {
-    if (m_screenOrientationManager)
-        m_screenOrientationManager->setCurrentOrientation(toScreenOrientationType(deviceOrientation));
+    if (deviceOrientation == m_deviceOrientation)
+        return;
 
-    if (deviceOrientation != m_deviceOrientation) {
-        m_deviceOrientation = deviceOrientation;
-        if (hasRunningProcess())
-            m_legacyMainFrameProcess->send(Messages::WebPage::SetDeviceOrientation(deviceOrientation), webPageIDInMainFrameProcess());
-    }
+    m_deviceOrientation = deviceOrientation;
+    auto orientation = toScreenOrientationType(deviceOrientation);
+
+    // Update screen orientation for main page and all remote pages (site-isolated iframes)
+    if (m_screenOrientationManager)
+        m_screenOrientationManager->setCurrentOrientation(orientation);
+
+    protectedBrowsingContextGroup()->forEachRemotePage(*this, [orientation](auto& remotePageProxy) {
+        remotePageProxy.setCurrentOrientation(orientation);
+    });
+
+    // Update device orientation for all web processes
+    forEachWebContentProcess([deviceOrientation](auto& process, auto pageID) {
+        if (!process.hasConnection())
+            return;
+        process.send(Messages::WebPage::SetDeviceOrientation(deviceOrientation), pageID);
+    });
 }
 
 void WebPageProxy::setOverrideViewportArguments(const std::optional<ViewportArguments>& viewportArguments)

@@ -1008,7 +1008,51 @@ Vector<RefPtr<TextTrack>> CaptionUserPreferencesMediaAF::sortedTrackListForMenu(
 
     return tracksForMenu;
 }
-    
+
+Vector<String> CaptionUserPreferencesMediaAF::platformProfileIDs()
+{
+    if (!canLoad_MediaAccessibility_MACaptionAppearanceCopyProfileIDs())
+        return { };
+    RetainPtr<CFArrayRef> cfProfileIDs = adoptCF(MACaptionAppearanceCopyProfileIDs());
+    return makeVector<String>(cfProfileIDs.get());
+}
+
+String CaptionUserPreferencesMediaAF::platformActiveProfileID()
+{
+    if (!canLoad_MediaAccessibility_MACaptionAppearanceCopyActiveProfileID())
+        return nullString();
+    RetainPtr cfProfileID = adoptCF(MACaptionAppearanceCopyActiveProfileID());
+    return cfProfileID.get();
+}
+
+bool CaptionUserPreferencesMediaAF::canSetActiveProfileID()
+{
+    return canLoad_MediaAccessibility_MACaptionAppearanceSetActiveProfileID();
+}
+
+bool CaptionUserPreferencesMediaAF::setActiveProfileID(const String& profileID)
+{
+    if (!canSetActiveProfileID())
+        return false;
+
+    if (profileID == platformActiveProfileID())
+        return true;
+
+    RetainPtr cfProfileID = profileID.createCFString();
+    MACaptionAppearanceSetActiveProfileID(cfProfileID.get());
+    return true;
+}
+
+String CaptionUserPreferencesMediaAF::nameForProfileID(const String& profileID)
+{
+    if (!canLoad_MediaAccessibility_MACaptionAppearanceCopyProfileName())
+        return nullString();
+
+    RetainPtr cfProfileID = profileID.createCFString();
+    RetainPtr cfProfileName = adoptCF(MACaptionAppearanceCopyProfileName(cfProfileID.get()));
+    return cfProfileName.get();
+}
+
 }
 
 #endif // ENABLE(VIDEO)

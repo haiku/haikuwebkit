@@ -38,15 +38,6 @@
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
-class CanvasDisplayBufferObserver;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::CanvasDisplayBufferObserver> : std::true_type { };
-}
-
-namespace WebCore {
 
 class AffineTransform;
 class CanvasBase;
@@ -65,9 +56,9 @@ class WebCoreOpaqueRoot;
 
 enum class ShouldApplyPostProcessingToDirtyRect : bool { No, Yes };
 
-class CanvasDisplayBufferObserver : public CanMakeWeakPtr<CanvasDisplayBufferObserver> {
+class CanvasDisplayBufferObserver : public AbstractRefCountedAndCanMakeWeakPtr<CanvasDisplayBufferObserver> {
 public:
-    virtual ~CanvasDisplayBufferObserver() = default;
+    virtual ~CanvasDisplayBufferObserver();
 
     virtual void canvasDisplayBufferPrepared(CanvasBase&) = 0;
 };
@@ -159,7 +150,7 @@ protected:
     RefPtr<ScriptExecutionContext> protectedCanvasBaseScriptExecutionContext() const;
     virtual std::unique_ptr<CSSParserContext> createCSSParserContext() const = 0;
 
-    virtual void setSize(const IntSize&);
+    void setSize(const IntSize&);
 
     RefPtr<ImageBuffer> setImageBuffer(RefPtr<ImageBuffer>&&) const;
     String lastFillText() const { return m_lastFillText; }

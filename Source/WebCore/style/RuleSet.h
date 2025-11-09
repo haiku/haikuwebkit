@@ -147,7 +147,7 @@ private:
     using ContainerQueryIdentifier = unsigned;
     using ScopeRuleIdentifier = unsigned;
 
-    void addRule(RuleData&&, CascadeLayerIdentifier, ContainerQueryIdentifier, ScopeRuleIdentifier);
+    void addRule(RuleData&&, CascadeLayerIdentifier, ContainerQueryIdentifier, ScopeRuleIdentifier, RuleFeatureSet::CollectionContext*);
 
     struct ResolverMutatingRule {
         Ref<StyleRuleBase> rule;

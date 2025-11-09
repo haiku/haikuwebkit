@@ -31,11 +31,21 @@
 #include "MacroAssemblerCodeRef.h"
 #include "Opcode.h"
 
+#if defined(__has_include)
+#if __has_include(<os/script_config_private.h>)
+#include <os/script_config_private.h>
+#endif // __has_include(<libproc.h>)
+#endif // defined(__has_include)
+
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC {
 
 class VM;
+
+#if USE(APPLE_INTERNAL_SDK) && defined(OS_SCRIPT_CONFIG_SPI_VERSION) && !PLATFORM(IOS_FAMILY_SIMULATOR)
+#define HAVE_OS_SCRIPT_CONFIG_SPI 1
+#endif
 
 #if ENABLE(C_LOOP)
 typedef OpcodeID LLIntCode;
@@ -44,9 +54,6 @@ typedef void (SYSV_ABI *LLIntCode)();
 #endif
 
 namespace LLInt {
-
-constexpr size_t OpcodeConfigAlignment = CeilingOnPageSize;
-constexpr size_t OpcodeConfigSizeToProtect = std::max(CeilingOnPageSize, 16 * KB);
 
 struct OpcodeConfig {
     JSC::Opcode opcodeMap[numOpcodeIDs];
@@ -60,11 +67,19 @@ struct OpcodeConfig {
     void* ipint_atomic_dispatch_base;
 };
 
-extern "C" WTF_EXPORT_PRIVATE JSC::Opcode g_opcodeConfigStorage[];
+constexpr size_t OpcodeConfigAlignment = CeilingOnPageSize;
+constexpr size_t OpcodeConfigSizeToProtect = std::max(CeilingOnPageSize, 16 * KB);
+
+#if HAVE(OS_SCRIPT_CONFIG_SPI)
+static_assert(OS_SCRIPT_CONFIG_STORAGE_SIZE == OpcodeConfigAlignment);
+static_assert(OS_SCRIPT_CONFIG_STORAGE_SIZE == OpcodeConfigSizeToProtect);
+#else
+extern "C" WTF_EXPORT_PRIVATE uint8_t os_script_config_storage[];
+#endif
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-inline OpcodeConfig* addressOfOpcodeConfig() { return std::bit_cast<OpcodeConfig*>(&g_opcodeConfigStorage); }
+inline OpcodeConfig* addressOfOpcodeConfig() { return std::bit_cast<OpcodeConfig*>(&os_script_config_storage); }
 
 #define g_opcodeConfig (*JSC::LLInt::addressOfOpcodeConfig())
 

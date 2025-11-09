@@ -202,7 +202,6 @@ private:
     bool isPlacedWithinExtrinsicallySizedExplicitTracks(const RenderBox&) const;
     void placeSpecifiedMajorAxisItemsOnGrid(const Vector<RenderBox*>&);
     void placeAutoMajorAxisItemsOnGrid(const Vector<RenderBox*>&);
-    void placeItemUsingMasonryPositioning(Grid&, RenderBox*) const;
     typedef std::pair<unsigned, unsigned> AutoPlacementCursor;
     void placeAutoMajorAxisItemOnGrid(RenderBox&, AutoPlacementCursor&);
     Style::GridTrackSizingDirection autoPlacementMajorAxisDirection() const;
@@ -248,7 +247,7 @@ private:
     void paintChildren(PaintInfo& forSelf, const LayoutPoint& paintOffset, PaintInfo& forChild, bool usePrintRect) override;
     bool hitTestChildren(const HitTestRequest&, HitTestResult&, const HitTestLocation&, const LayoutPoint& adjustedLocation, HitTestAction) override;
     LayoutOptionalOutsets allowedLayoutOverflow() const override;
-    void computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> = { }) override;
+    LayoutRect contentOverflowRect() const;
 
     StyleSelfAlignmentData justifySelfForGridItem(const RenderBox&, StretchingMode = StretchingMode::Any, const RenderStyle* = nullptr) const;
     StyleSelfAlignmentData alignSelfForGridItem(const RenderBox&, StretchingMode = StretchingMode::Any, const RenderStyle* = nullptr) const;

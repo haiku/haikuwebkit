@@ -103,6 +103,7 @@ Ref<AudioVideoRenderer> MediaPlayerPrivateMediaSourceAVFObjC::createRenderer(Log
 MediaPlayerPrivateMediaSourceAVFObjC::MediaPlayerPrivateMediaSourceAVFObjC(MediaPlayer* player)
     : m_player(player)
     , m_seekTimer(*this, &MediaPlayerPrivateMediaSourceAVFObjC::seekInternal)
+    , m_rendererSeekRequest(NativePromiseRequest::create())
     , m_networkState(MediaPlayer::NetworkState::Empty)
     , m_readyState(MediaPlayer::ReadyState::HaveNothing)
     , m_logger(player->mediaPlayerLogger())
@@ -169,13 +170,6 @@ MediaPlayerPrivateMediaSourceAVFObjC::MediaPlayerPrivateMediaSourceAVFObjC(Media
                 player->videoLayerSizeDidChange(size);
         }
     });
-
-#if ENABLE(ENCRYPTED_MEDIA)
-    m_renderer->notifyInsufficientExternalProtectionChanged([weakThis = WeakPtr { *this }](bool obscured) {
-        if (RefPtr protectedThis = weakThis.get())
-            protectedThis->outputObscuredDueToInsufficientExternalProtectionChanged(obscured);
-    });
-#endif
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     if (RetainPtr videoTarget = player->videoTarget())
@@ -515,7 +509,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::seekInternal()
 
 void MediaPlayerPrivateMediaSourceAVFObjC::startSeek(const MediaTime& seekTime)
 {
-    if (m_rendererSeekRequest) {
+    if (m_rendererSeekRequest->hasCallback()) {
         ALWAYS_LOG(LOGIDENTIFIER, "Seeking pending, cancel earlier seek");
         cancelPendingSeek();
     }
@@ -527,7 +521,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::startSeek(const MediaTime& seekTime)
         if (!protectedThis)
             return;
 
-        protectedThis->m_rendererSeekRequest.complete();
+        protectedThis->m_rendererSeekRequest->complete();
 
         if (!result) {
             ASSERT(result.error() == PlatformMediaError::RequiresFlushToResume);
@@ -537,13 +531,13 @@ void MediaPlayerPrivateMediaSourceAVFObjC::startSeek(const MediaTime& seekTime)
             return;
         }
         protectedThis->completeSeek(*result);
-    })->track(m_rendererSeekRequest);
+    })->track(m_rendererSeekRequest.get());
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::cancelPendingSeek()
 {
-    if (m_rendererSeekRequest)
-        m_rendererSeekRequest.disconnect();
+    if (m_rendererSeekRequest->hasCallback())
+        m_rendererSeekRequest->disconnect();
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::completeSeek(const MediaTime& seekedTime)
@@ -909,22 +903,14 @@ RefPtr<CDMSessionAVContentKeySession> MediaPlayerPrivateMediaSourceAVFObjC::cdmS
 
 void MediaPlayerPrivateMediaSourceAVFObjC::setCDMSession(LegacyCDMSession* session)
 {
-    if (session == m_session.get())
-        return;
-
     ALWAYS_LOG(LOGIDENTIFIER);
 
-    // FIXME: This is a false positive. Remove the suppression once rdar://145631564 is fixed.
-    SUPPRESS_UNCOUNTED_ARG m_session = toCDMSessionAVContentKeySession(session);
-
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->setCDMSession(session);
+    m_renderer->setCDMSession(session);
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::keyAdded()
 {
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->keyAdded();
+    m_renderer->attemptToDecrypt();
 }
 
 #endif // ENABLE(LEGACY_ENCRYPTED_MEDIA)
@@ -937,45 +923,27 @@ void MediaPlayerPrivateMediaSourceAVFObjC::keyNeeded(const SharedBuffer& initDat
 }
 #endif
 
-void MediaPlayerPrivateMediaSourceAVFObjC::outputObscuredDueToInsufficientExternalProtectionChanged(bool obscured)
-{
-#if ENABLE(ENCRYPTED_MEDIA)
-    ALWAYS_LOG(LOGIDENTIFIER, obscured);
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->outputObscuredDueToInsufficientExternalProtectionChanged(obscured);
-#else
-    UNUSED_PARAM(obscured);
-#endif
-}
-
 #if ENABLE(ENCRYPTED_MEDIA)
 void MediaPlayerPrivateMediaSourceAVFObjC::cdmInstanceAttached(CDMInstance& instance)
 {
     ALWAYS_LOG(LOGIDENTIFIER);
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->cdmInstanceAttached(instance);
-
     m_renderer->setCDMInstance(&instance);
 
     needsVideoLayerChanged();
 }
 
-void MediaPlayerPrivateMediaSourceAVFObjC::cdmInstanceDetached(CDMInstance& instance)
+void MediaPlayerPrivateMediaSourceAVFObjC::cdmInstanceDetached(CDMInstance&)
 {
     ALWAYS_LOG(LOGIDENTIFIER);
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->cdmInstanceDetached(instance);
-
     m_renderer->setCDMInstance(nullptr);
 
     needsVideoLayerChanged();
 }
 
-void MediaPlayerPrivateMediaSourceAVFObjC::attemptToDecryptWithInstance(CDMInstance& instance)
+void MediaPlayerPrivateMediaSourceAVFObjC::attemptToDecryptWithInstance(CDMInstance&)
 {
     ALWAYS_LOG(LOGIDENTIFIER);
-    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
-        mediaSourcePrivate->attemptToDecryptWithInstance(instance);
+    m_renderer->attemptToDecrypt();
 }
 
 bool MediaPlayerPrivateMediaSourceAVFObjC::waitingForKey() const
@@ -1006,10 +974,8 @@ const Vector<ContentType>& MediaPlayerPrivateMediaSourceAVFObjC::mediaContentTyp
 
 void MediaPlayerPrivateMediaSourceAVFObjC::needsVideoLayerChanged()
 {
-    if (!m_mediaSourcePrivate)
-        return;
-    RefPtr mediaSourcePrivate = m_mediaSourcePrivate;
-    m_renderer->setHasProtectedVideoContent(mediaSourcePrivate->cdmInstance() && mediaSourcePrivate->needsVideoLayer());
+    if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
+        m_renderer->setHasProtectedVideoContent(mediaSourcePrivate->needsVideoLayer());
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::setReadyState(MediaPlayer::ReadyState readyState)

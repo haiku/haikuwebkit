@@ -1543,6 +1543,9 @@ ExceptionOr<void> InspectorStyleSheet::setRuleStyleText(const InspectorCSSId& id
     if (!cssRule)
         return Exception { ExceptionCode::NotFoundError };
 
+    if (!ensureParsedDataReady())
+        return Exception { ExceptionCode::NotFoundError };
+
     RefPtr<CSSRuleSourceData> sourceData = ruleSourceDataFor(cssRule);
     if (!sourceData)
         return Exception { ExceptionCode::NotFoundError };

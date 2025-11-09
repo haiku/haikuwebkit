@@ -137,7 +137,6 @@ Modules/speech/cocoa/WebSpeechRecognizerTask.mm @nonARC
 Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm @nonARC
 Modules/system-preview/ARKitBadgeSystemImage.mm @nonARC
 Modules/webdatabase/cocoa/DatabaseManagerCocoa.mm @nonARC
-Modules/webxr/WebXROpaqueFramebufferCocoa.cpp
 accessibility/cocoa/AXCoreObjectCocoa.mm @nonARC
 accessibility/cocoa/AXTextMarkerCocoa.mm @nonARC
 accessibility/cocoa/AccessibilityObjectCocoa.mm @nonARC
@@ -354,11 +353,11 @@ platform/graphics/MediaPlaybackTargetPicker.cpp
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm @nonARC @no-unify
 platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm @nonARC @no-unify
 platform/graphics/avfoundation/AudioVideoRendererAVFObjC.mm @nonARC
-platform/graphics/avfoundation/CDMPrivateMediaSourceAVFObjC.mm @nonARC
 platform/graphics/avfoundation/FormatDescriptionUtilities.cpp
 platform/graphics/avfoundation/ISOFairPlayStreamingPsshBox.cpp
 platform/graphics/avfoundation/InbandMetadataTextTrackPrivateAVF.cpp
 platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp
+platform/graphics/avfoundation/LegacyCDMPrivateAVFObjC.mm @nonARC
 platform/graphics/avfoundation/MediaPlaybackTargetCocoa.mm @nonARC
 platform/graphics/avfoundation/MediaPlayerPrivateAVFoundation.cpp
 platform/graphics/avfoundation/MediaSelectionGroupAVFObjC.mm @nonARC
@@ -375,7 +374,6 @@ platform/graphics/avfoundation/objc/AudioTrackPrivateMediaSourceAVFObjC.cpp
 platform/graphics/avfoundation/objc/CDMFairPlayStreamingAVFObjC.mm @nonARC
 platform/graphics/avfoundation/objc/CDMSessionAVContentKeySession.mm @nonARC
 platform/graphics/avfoundation/objc/CDMSessionAVFoundationObjC.mm @nonARC
-platform/graphics/avfoundation/objc/CDMSessionMediaSourceAVFObjC.mm @nonARC
 platform/graphics/avfoundation/objc/ContentKeyGroupFactoryAVFObjC.mm @nonARC
 platform/graphics/avfoundation/objc/ImageDecoderAVFObjC.mm @nonARC
 platform/graphics/avfoundation/objc/InbandTextTrackPrivateAVFObjC.mm @nonARC @no-unify
@@ -716,7 +714,6 @@ platform/text/mac/TextBoundaries.mm @nonARC
 platform/text/mac/TextCheckingMac.mm @nonARC
 platform/video-codecs/cocoa/RTCVideoDecoderVTBAV1.mm @nonARC
 platform/video-codecs/cocoa/WebRTCVideoDecoder.mm @nonARC
-platform/xr/cocoa/PlatformXRCocoa.mm @nonARC
 platform/xr/cocoa/PlatformXRPose.cpp
 platform/text/mac/CoreTextChineseCompositionEngine.cpp
 platform/text/mac/CoreTextCompositionEngine.cpp

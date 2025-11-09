@@ -1,5 +1,3 @@
-WebProcess/InjectedBundle/API/c/WKBundlePage.cpp
-WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] NetworkProcess/cocoa/NetworkSessionCocoa.mm
 [ iOS ] NetworkProcess/ios/NetworkConnectionToWebProcessIOS.mm
 [ iOS ] UIProcess/API/ios/WKWebViewIOS.mm
@@ -9,6 +7,7 @@ WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] UIProcess/ios/WKContentView.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
+WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] WebProcess/WebCoreSupport/WebLocalFrameLoaderClient.cpp
 [ iOS ] WebProcess/WebPage/Cocoa/WebPageCocoa.mm
 [ iOS ] WebProcess/WebPage/ViewGestureGeometryCollector.cpp

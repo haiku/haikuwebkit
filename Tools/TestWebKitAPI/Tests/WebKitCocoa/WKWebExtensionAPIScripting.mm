@@ -1836,6 +1836,57 @@ TEST(WKWebExtensionAPIScripting, InjectScriptWithTrustedTypesCSP)
     [manager run];
 }
 
+TEST(WKWebExtensionAPIScripting, MigrateScriptDataToNewFormat)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"var expectedResults = [{",
+        @"  id: '1',",
+        @"  js: ['content.js'],",
+        @"  matches: ['*://localhost/*'],",
+        @"  persistAcrossSessions: true",
+        @"}]",
+
+        @"var results",
+        @"var resultsPassingIds",
+
+        @"results = await browser.scripting.getRegisteredContentScripts()",
+        @"resultsPassingIds = await browser.scripting.getRegisteredContentScripts({ ids: ['1'] })",
+
+        @"browser.test.assertDeepEq(results, resultsPassingIds)",
+        @"browser.test.assertDeepEq(results, expectedResults)",
+
+        @"browser.test.notifyPass()",
+    ]);
+
+    static auto *resources = @{
+        @"background.js": backgroundScript,
+        @"content.js": Util::constructScript(@[]),
+    };
+
+    auto manager = Util::parseExtension(scriptingManifest, resources, WKWebExtensionControllerConfiguration._temporaryConfiguration);
+
+    // Give the extension a unique identifier so it opts into saving data in the temporary configuration.
+    manager.get().context.uniqueIdentifier = @"org.webkit.test.extension (76C788B8)";
+
+    [manager load];
+
+    auto *storageDirectory = manager.get().controller.configuration._storageDirectoryPath;
+    storageDirectory = [storageDirectory stringByAppendingPathComponent:manager.get().context.uniqueIdentifier];
+
+    static auto *files = @[
+        [NSBundle.test_resourcesBundle URLForResource:@"RegisteredContentScripts" withExtension:@"db"],
+        [NSBundle.test_resourcesBundle URLForResource:@"RegisteredContentScripts" withExtension:@"db-shm"],
+        [NSBundle.test_resourcesBundle URLForResource:@"RegisteredContentScripts" withExtension:@"db-wal"]
+    ];
+
+    for (NSURL *file in files) {
+        NSString *combinedPath = [storageDirectory stringByAppendingPathComponent:[file lastPathComponent]];
+        [NSFileManager.defaultManager copyItemAtURL:file toURL:[NSURL fileURLWithPath:combinedPath] error:nil];
+    }
+
+    [manager run];
+}
+
 } // namespace TestWebKitAPI
 
 #endif // ENABLE(WK_WEB_EXTENSIONS)

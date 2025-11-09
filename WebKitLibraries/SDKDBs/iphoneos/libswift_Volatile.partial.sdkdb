@@ -270,7 +270,7 @@
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$ss17CodingUserInfoKeyV11DistributedE011actorSystemD0ABvgZ"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$ss17CodingUserInfoKeyV11DistributedE011actorSystemD0ABvpZMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -311,7 +311,7 @@
     {"access": "public", "linkage": "exported", "name": "_$s11Observation12ObservationsVyACyxq_GxyYbq_YKYAccfC"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s11Observation12ObservationsVyxq_GSciAAMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -523,7 +523,7 @@
     {"access": "public", "linkage": "exported", "name": "_$ss7UnicodeO6ScalarV12RegexBuilderE5regex17_StringProcessing0C0VySsGvpMV"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$ss7UnicodeO6ScalarV17_StringProcessing14RegexComponent0E7BuilderMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -757,7 +757,7 @@
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sxSg15Synchronization19AtomicRepresentableA2B0b8OptionalC0RzlMc"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sxSg15Synchronization19AtomicRepresentableA2B0b8OptionalC0RzlWP"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -1870,7 +1870,7 @@
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$ss9_contains_5whereSbx_Sb7ElementQzYaKXEtYaKSciRzlFTu"},
     {"access": "public", "linkage": "exported", "name": "_pthread_main_np"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -2060,7 +2060,7 @@
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSy17_StringProcessingE8containsySbSSF"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSy17_StringProcessingE8containsySbSsF"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -2078,7 +2078,7 @@
     {"access": "public", "linkage": "exported", "name": "_$s9_Volatile0A14MappedRegisterVMa"},
     {"access": "public", "linkage": "exported", "name": "_$s9_Volatile0A14MappedRegisterVMn"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

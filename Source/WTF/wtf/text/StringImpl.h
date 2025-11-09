@@ -25,6 +25,7 @@
 #include <wtf/Compiler.h>
 
 #include <limits.h>
+#include <unicode/uchar.h>
 #include <unicode/ustring.h>
 #include <wtf/ASCIICType.h>
 #include <wtf/CheckedArithmetic.h>
@@ -255,6 +256,7 @@ public:
     WTF_EXPORT_PRIVATE static Ref<StringImpl> create(std::span<const Latin1Character>);
     ALWAYS_INLINE static Ref<StringImpl> create(std::span<const char> characters) { return create(byteCast<Latin1Character>(characters)); }
     WTF_EXPORT_PRIVATE static Ref<StringImpl> create8BitIfPossible(std::span<const char16_t>);
+    WTF_EXPORT_PRIVATE static Ref<StringImpl> create8BitUnconditionally(std::span<const char16_t>);
 
     // Not using create() naming to encourage developers to call create(ASCIILiteral) when they have a string literal.
     ALWAYS_INLINE static Ref<StringImpl> createFromCString(const char* characters) { return create(unsafeSpan8(characters)); }
@@ -1055,8 +1057,12 @@ ALWAYS_INLINE Ref<StringImpl> StringImpl::createSubstringSharingImpl(StringImpl&
         if (substringSize >= allocationSize<Latin1Character>(length))
             return create(rep.span8().subspan(offset, length));
     } else {
+        auto span = rep.span16().subspan(offset, length);
+        if (substringSize >= allocationSize<Latin1Character>(length) && charactersAreAllLatin1(span))
+            return create8BitUnconditionally(span);
+
         if (substringSize >= allocationSize<char16_t>(length))
-            return create(rep.span16().subspan(offset, length));
+            return create(span);
     }
 
     SUPPRESS_UNCOUNTED_LOCAL auto* ownerRep = ((rep.bufferOwnership() == BufferSubstring) ? rep.substringBuffer() : &rep);

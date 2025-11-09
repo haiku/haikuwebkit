@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,10 +36,13 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/FloatPoint3D.h>
+#include <WebCore/GraphicsLayer.h>
 #include <WebCore/LayerHostingContextIdentifier.h>
 #include <WebCore/MIMETypeRegistry.h>
 #include <WebCore/Model.h>
+#include <WebCore/ModelContext.h>
 #include <WebCore/ModelPlayerAnimationState.h>
+#include <WebCore/ModelPlayerGraphicsLayerConfiguration.h>
 #include <WebCore/Page.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/Settings.h>
@@ -91,7 +95,7 @@ void ModelProcessModelPlayer::didCreateLayer(WebCore::LayerHostingContextIdentif
     RELEASE_ASSERT(modelProcessEnabled());
 
     m_layerHostingContextIdentifier = identifier;
-    protectedClient()->didUpdateLayerHostingContextIdentifier(*this, identifier);
+    protectedClient()->didUpdate(*this);
 }
 
 void ModelProcessModelPlayer::didFinishLoading(const WebCore::FloatPoint3D& boundingBoxCenter, const WebCore::FloatPoint3D& boundingBoxExtents)
@@ -218,9 +222,26 @@ void ModelProcessModelPlayer::sizeDidChange(WebCore::LayoutSize size)
     send(Messages::ModelProcessModelPlayerProxy::SizeDidChange(size));
 }
 
-PlatformLayer* ModelProcessModelPlayer::layer()
+void ModelProcessModelPlayer::configureGraphicsLayer(WebCore::GraphicsLayer& graphicsLayer, WebCore::ModelPlayerGraphicsLayerConfiguration&& configuration)
 {
-    return nullptr;
+    auto modelLayerIdentifier = graphicsLayer.primaryLayerID();
+    if (!modelLayerIdentifier)
+        return;
+
+    auto layerHostingContextIdentifier = m_layerHostingContextIdentifier;
+    if (!layerHostingContextIdentifier)
+        return;
+
+    graphicsLayer.setContentsToModelContext(
+        WebCore::ModelContext::create(
+            *modelLayerIdentifier,
+            *layerHostingContextIdentifier,
+            configuration.contentSize,
+            configuration.hasPortal ? WebCore::ModelContextDisablePortal::No : WebCore::ModelContextDisablePortal::Yes,
+            configuration.backgroundColor
+        ),
+        WebCore::GraphicsLayer::ContentsLayerPurpose::HostedModel
+    );
 }
 
 void ModelProcessModelPlayer::handleMouseDown(const WebCore::LayoutPoint&, MonotonicTime)

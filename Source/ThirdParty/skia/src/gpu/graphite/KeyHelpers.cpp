@@ -227,7 +227,7 @@ void add_linear_gradient_uniform_data(const KeyContext& keyContext,
 
     add_gradient_preamble(gradData, keyContext.pipelineDataGatherer());
     add_gradient_postamble(gradData, bufferOffset, keyContext.pipelineDataGatherer());
-};
+}
 
 void add_radial_gradient_uniform_data(const KeyContext& keyContext,
                                       BuiltInCodeSnippetID codeSnippetID,
@@ -237,7 +237,7 @@ void add_radial_gradient_uniform_data(const KeyContext& keyContext,
 
     add_gradient_preamble(gradData, keyContext.pipelineDataGatherer());
     add_gradient_postamble(gradData, bufferOffset, keyContext.pipelineDataGatherer());
-};
+}
 
 void add_sweep_gradient_uniform_data(const KeyContext& keyContext,
                                      BuiltInCodeSnippetID codeSnippetID,
@@ -249,7 +249,7 @@ void add_sweep_gradient_uniform_data(const KeyContext& keyContext,
     keyContext.pipelineDataGatherer()->write(gradData.fBias);
     keyContext.pipelineDataGatherer()->write(gradData.fScale);
     add_gradient_postamble(gradData, bufferOffset, keyContext.pipelineDataGatherer());
-};
+}
 
 void add_conical_gradient_uniform_data(const KeyContext& keyContext,
                                      BuiltInCodeSnippetID codeSnippetID,
@@ -284,7 +284,7 @@ void add_conical_gradient_uniform_data(const KeyContext& keyContext,
     keyContext.pipelineDataGatherer()->write(a);
     keyContext.pipelineDataGatherer()->write(invA);
     add_gradient_postamble(gradData, bufferOffset, keyContext.pipelineDataGatherer());
-};
+}
 
 } // anonymous namespace
 
@@ -2184,11 +2184,7 @@ static void add_to_key(const KeyContext& keyContext,
         return;
     }
 
-    // NOTE: Don't call CachedImageInfo::makeImage() since that uses the legacy makeImageSnapshot()
-    // API, which results in an extra texture copy on a Graphite Surface.
-    surface->getCanvas()->concat(info.matrixForDraw);
-    surface->getCanvas()->drawPicture(shader->picture().get());
-    sk_sp<SkImage> img = SkSurfaces::AsImage(std::move(surface));
+    sk_sp<SkImage> img = info.makeImage(std::move(surface), shader->picture().get());
     // TODO: 'img' did not exist when notify_in_use() was called, but ideally the DrawTask to render
     // into 'surface' would be a child of the current device. While we push all tasks to the root
     // list this works out okay, but will need to be addressed before we move off that system.
@@ -2523,5 +2519,45 @@ void AddToKey(const KeyContext& keyContext, const SkShader* shader) {
     }
     SkUNREACHABLE;
 }
+
+void AddFixedBlendMode(const KeyContext& keyContext, SkBlendMode bm) {
+    SkASSERT(bm <= SkBlendMode::kLastMode);
+    BuiltInCodeSnippetID id = static_cast<BuiltInCodeSnippetID>(kFixedBlendIDOffset +
+                                                                static_cast<int>(bm));
+    keyContext.paintParamsKeyBuilder()->addBlock(id);
+}
+
+void AddBlendMode(const KeyContext& keyContext, SkBlendMode bm) {
+    // For non-fixed blends, coefficient blend modes are combined into the same shader snippet.
+    // The same goes for the HSLC advanced blends. The remaining advanced blends are fairly unique
+    // in their implementations. To avoid having to compile all of their SkSL, they are treated as
+    // fixed blend modes.
+    SkSpan<const float> coeffs = skgpu::GetPorterDuffBlendConstants(bm);
+    if (!coeffs.empty()) {
+        PorterDuffBlenderBlock::AddBlock(keyContext, coeffs);
+    } else if (bm >= SkBlendMode::kHue) {
+        ReducedBlendModeInfo blendInfo = GetReducedBlendModeInfo(bm);
+        HSLCBlenderBlock::AddBlock(keyContext, blendInfo.fUniformData);
+    } else {
+        AddFixedBlendMode(keyContext, bm);
+    }
+}
+
+void AddDitherBlock(const KeyContext& keyContext, SkColorType ct) {
+    static const SkBitmap gLUT = skgpu::MakeDitherLUT();
+
+    sk_sp<TextureProxy> proxy = RecorderPriv::CreateCachedProxy(keyContext.recorder(), gLUT,
+                                                                "DitherLUT");
+    if (keyContext.recorder() && !proxy) {
+        SKGPU_LOG_W("Couldn't create dither shader's LUT");
+        keyContext.paintParamsKeyBuilder()->addBlock(BuiltInCodeSnippetID::kPriorOutput);
+        return;
+    }
+
+    DitherShaderBlock::DitherData data(skgpu::DitherRangeForConfig(ct), std::move(proxy));
+
+    DitherShaderBlock::AddBlock(keyContext, data);
+}
+
 
 } // namespace skgpu::graphite

@@ -44,7 +44,9 @@
     var TZ_ADJUST = TZ_DIFF * msPerHour;
 
     // get the current time
-    var now = (new Date()).valueOf();
+    // This test does not work well with DST, so using a fixed date. See https://github.com/WebKit/WebKit/pull/53239
+    // var now = (new Date()).valueOf();
+    var now = 1764524660000;
 
     // get time for 29 feb 2000
 

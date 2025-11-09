@@ -88,7 +88,7 @@ bool WebExtensionAPIExtension::parseViewFilters(NSDictionary *filter, std::optio
 
 bool WebExtensionAPIExtension::isPropertyAllowed(const ASCIILiteral& name, WebPage*)
 {
-    if (extensionContext().isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
+    if (protectedExtensionContext()->isUnsupportedAPI(propertyPath(), name)) [[unlikely]]
         return false;
 
     // This method was removed in manifest version 3.
@@ -110,7 +110,7 @@ JSValue *WebExtensionAPIExtension::getBackgroundPage(JSContextRef context)
 {
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/extension/getBackgroundPage
 
-    auto backgroundPage = extensionContext().backgroundPage();
+    auto backgroundPage = protectedExtensionContext()->backgroundPage();
     if (!backgroundPage)
         return toJSValue(context, JSValueMakeNull(context));
 
@@ -131,24 +131,25 @@ NSArray *WebExtensionAPIExtension::getViews(JSContextRef context, NSDictionary *
 
     NSMutableArray *result = [NSMutableArray array];
 
+    Ref extensionContext = this->extensionContext();
     // Only include the background page if there aren't any filters specified.
     // Any of the filters (type, tabId, or windowId) would preclude the background page.
     if (!anyFiltersSpecified) {
-        if (auto backgroundPage = extensionContext().backgroundPage()) {
+        if (auto backgroundPage = extensionContext->backgroundPage()) {
             if (auto *windowObject = toWindowObject(context, *backgroundPage))
                 [result addObject:windowObject];
         }
     }
 
     if (!viewType || viewType == ViewType::Popup) {
-        for (auto& page : extensionContext().popupPages(tabIdentifier, windowIdentifier)) {
+        for (auto& page : extensionContext->popupPages(tabIdentifier, windowIdentifier)) {
             if (auto *windowObject = toWindowObject(context, page))
                 [result addObject:windowObject];
         }
     }
 
     if (!viewType || viewType == ViewType::Tab) {
-        for (auto& page : extensionContext().tabPages(tabIdentifier, windowIdentifier)) {
+        for (auto& page : extensionContext->tabPages(tabIdentifier, windowIdentifier)) {
             if (auto *windowObject = toWindowObject(context, page))
                 [result addObject:windowObject];
         }

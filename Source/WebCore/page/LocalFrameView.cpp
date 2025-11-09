@@ -276,7 +276,7 @@ void LocalFrameView::reset()
     m_pendingTextFragmentIndicatorText = String();
     m_haveCreatedTextIndicator = false;
     m_lastViewportSize = IntSize();
-    m_lastZoomFactor = 1.0f;
+    m_lastUsedZoomFactor = 1.0f;
     m_isTrackingRepaints = false;
     m_trackedRepaintRects.clear();
     m_lastPaintTime = MonotonicTime();
@@ -1279,7 +1279,7 @@ void LocalFrameView::willDoLayout(SingleThreadWeakPtr<RenderElement> layoutRoot)
     auto firstLayout = !layoutContext().didFirstLayout();
     if (firstLayout) {
         m_lastViewportSize = sizeForResizeEvent();
-        m_lastZoomFactor = layoutRoot->style().zoom();
+        m_lastUsedZoomFactor = layoutRoot->style().usedZoom();
         m_firstLayoutCallbackPending = true;
     }
     adjustScrollbarsForLayout(firstLayout);
@@ -2186,10 +2186,11 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
 
     struct FixedContainerResult {
         RefPtr<Element> container;
-        bool foundBackdropFilter { false };
-        bool retryHonoringPointerEvents { false };
-        bool isViewportSized { false };
-        bool isDimmingLayer { false };
+        bool foundBackdropFilter : 1 { false };
+        bool retryHonoringPointerEvents : 1 { false };
+        bool isViewportSized : 1 { false };
+        bool isDimmingLayer : 1 { false };
+        bool isSidebar : 1 { false };
         Color backgroundColor;
     };
 
@@ -2311,6 +2312,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         TooLarge,
         NegativeZIndex,
         IsViewportSizedCandidate,
+        IsSidebar,
         IsDimmingLayer,
         IsCandidate,
     };
@@ -2352,7 +2354,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         }
 
         if (lengthOnSide == ViewportComparison::Smaller)
-            return TooSmall;
+            return lengthOnAdjacentSide != ViewportComparison::Smaller ? IsSidebar : TooSmall;
 
         if (!isProbablyDimmingContainer && lengthOnAdjacentSide == ViewportComparison::Larger)
             return TooLarge;
@@ -2395,6 +2397,37 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         if (!renderer)
             return { };
 
+        auto containerResultFromBackdrop = [&] -> std::optional<FixedContainerResult> {
+            RefPtr container = dynamicDowncast<Element>(*hitNode);
+            if (!container)
+                return std::nullopt;
+
+            CheckedPtr elementRenderer = dynamicDowncast<RenderElement>(*renderer);
+            if (!elementRenderer)
+                return std::nullopt;
+
+            auto backdropRenderer = elementRenderer->backdropRenderer();
+            if (!backdropRenderer)
+                return std::nullopt;
+
+            auto backgroundColor = primaryBackgroundColorForRenderer(side, *backdropRenderer);
+            if (!backgroundColor.isVisible())
+                backgroundColor = page->pageExtendedBackgroundColor();
+
+            return { {
+                .container = container.releaseNonNull(),
+                .foundBackdropFilter = false,
+                .retryHonoringPointerEvents = false,
+                .isViewportSized = true,
+                .isDimmingLayer = true,
+                .isSidebar = false,
+                .backgroundColor = WTFMove(backgroundColor),
+            } };
+        }();
+
+        if (containerResultFromBackdrop)
+            return WTFMove(*containerResultFromBackdrop);
+
         bool hasMultipleBackgroundColors = false;
         Color primaryBackgroundColor;
         bool foundBackdropFilter = false;
@@ -2425,6 +2458,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             }
             case IsViewportSizedCandidate:
             case IsDimmingLayer:
+            case IsSidebar:
             case IsCandidate: {
                 return {
                     .container = { ancestor->element() },
@@ -2432,6 +2466,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
                     .retryHonoringPointerEvents = false,
                     .isViewportSized = candidateType == IsViewportSizedCandidate,
                     .isDimmingLayer = candidateType == IsDimmingLayer,
+                    .isSidebar = candidateType == IsSidebar,
                     .backgroundColor = hasMultipleBackgroundColors ? Color { } : WTFMove(primaryBackgroundColor),
                 };
             }
@@ -2444,6 +2479,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             .retryHonoringPointerEvents = hitInvisiblePointerEventsNoneContainer,
             .isViewportSized = false,
             .isDimmingLayer = false,
+            .isSidebar = false,
             .backgroundColor = { },
         };
     };
@@ -2524,7 +2560,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             continue;
         }
 
-        bool preferExistingColor = result.isDimmingLayer || result.isViewportSized;
+        bool preferExistingColor = result.isDimmingLayer || result.isViewportSized || result.isSidebar;
         if (preferExistingColor && page->fixedContainerEdges().hasFixedEdge(side)) {
             edges.colors.setAt(side, page->fixedContainerEdges().colors.at(side));
             continue;
@@ -2560,7 +2596,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
     return { WTFMove(edges), WTFMove(containers) };
 }
 
-FloatPoint LocalFrameView::positionForInsetClipLayer(const FloatPoint& scrollPosition, const FloatBoxExtent& obscuredContentInset)
+FloatRect LocalFrameView::insetClipLayerRect(const FloatPoint& scrollPosition, const FloatBoxExtent& obscuredContentInset, const FloatSize& sizeForVisibleContent)
 {
     auto computeOffset = [](float scrollAmount, float insetAmount) {
         if (!insetAmount)
@@ -2573,7 +2609,14 @@ FloatPoint LocalFrameView::positionForInsetClipLayer(const FloatPoint& scrollPos
 
         return insetAmount - clampedScrollPosition;
     };
-    return { computeOffset(scrollPosition.x(), obscuredContentInset.left()), computeOffset(scrollPosition.y(), obscuredContentInset.top()) };
+
+    FloatPoint position { computeOffset(scrollPosition.x(), obscuredContentInset.left()), computeOffset(scrollPosition.y(), obscuredContentInset.top()) };
+
+    auto adjustedSize = sizeForVisibleContent;
+    if (obscuredContentInset.top())
+        adjustedSize.setHeight(std::max(0.f, sizeForVisibleContent.height() - position.y()));
+
+    return { position, adjustedSize };
 }
 
 float LocalFrameView::yPositionForHeaderLayer(const FloatPoint& scrollPosition, float topInset)
@@ -2989,7 +3032,7 @@ bool LocalFrameView::scrollToTextFragment(IsRetry isRetry)
     }
 
     // FIXME: <http://webkit.org/b/245262> (Scroll To Text Fragment should use DelegateMainFrameScroll)
-    TemporarySelectionChange selectionChange(document, { range }, { TemporarySelectionOption::RevealSelection, TemporarySelectionOption::RevealSelectionBounds, TemporarySelectionOption::UserTriggered, TemporarySelectionOption::ForceCenterScroll });
+    auto selectionChange = revealRangeWithTemporarySelection(range);
     if (m_frame->settings().scrollToTextFragmentIndicatorEnabled() && !m_frame->page()->isControlledByAutomation())
         m_delayedTextFragmentIndicatorTimer.startOneShot(100_ms);
 
@@ -3287,7 +3330,7 @@ void LocalFrameView::textFragmentIndicatorTimerFired()
     auto range = m_pendingTextFragmentIndicatorRange.value();
 
     // FIXME: <http://webkit.org/b/245262> (Scroll To Text Fragment should use DelegateMainFrameScroll)
-    TemporarySelectionChange selectionChange(document, { range }, { TemporarySelectionOption::RevealSelection, TemporarySelectionOption::RevealSelectionBounds, TemporarySelectionOption::UserTriggered, TemporarySelectionOption::ForceCenterScroll });
+    auto selectionChange = revealRangeWithTemporarySelection(range);
     
     maintainScrollPositionAtScrollToTextFragmentRange(range);
 }
@@ -3312,6 +3355,25 @@ static void adjustScrollRectToVisibleOptionsForHiddenOverflow(ScrollRectToVisibl
         options.alignY = ScrollAlignment::noScroll;
 }
 
+static void adjustForScrollByAnchor(const RenderLayerModelObject& renderer, EnumSet<BoxAxis>& isFixed)
+{
+    if (!renderer.isFixedPositioned())
+        return;
+    auto* renderBox = dynamicDowncast<RenderBox>(&renderer);
+    ASSERT(renderBox);
+
+    if (!renderBox || !Style::AnchorPositionEvaluator::isAnchorPositioned(renderBox->style()))
+        return;
+    auto adjuster = renderBox->layoutContext().anchorScrollAdjusterFor(*renderBox);
+    if (!adjuster || !adjuster->hasViewportSnapshot())
+        return;
+
+    if (adjuster->mayNeedXAdjustment())
+        isFixed.remove(BoxAxis::Horizontal);
+    if (adjuster->mayNeedYAdjustment())
+        isFixed.remove(BoxAxis::Vertical);
+}
+
 bool LocalFrameView::scrollRectToVisible(const LayoutRect& absoluteRect, const RenderObject& renderer, bool insideFixed, const ScrollRectToVisibleOptions& options)
 {
     if (options.revealMode == SelectionRevealMode::DoNotReveal)
@@ -3327,6 +3389,7 @@ bool LocalFrameView::scrollRectToVisible(const LayoutRect& absoluteRect, const R
     // FIXME: It would be nice to use RenderLayer::enclosingScrollableLayer here, but that seems to skip overflow:hidden layers.
     auto adjustedRect = absoluteRect;
     ScrollRectToVisibleOptions adjustedOptions = options;
+    EnumSet<BoxAxis> isFixed(insideFixed ? EnumSet<BoxAxis> { BoxAxis::Horizontal, BoxAxis::Vertical } : EnumSet<BoxAxis> { });
 
     for (; layer; layer = layer->enclosingContainingBlockLayer(CrossFrameBoundaries::No)) {
         if (layer->shouldTryToScrollForScrollIntoView(adjustedOptions)) {
@@ -3335,15 +3398,29 @@ bool LocalFrameView::scrollRectToVisible(const LayoutRect& absoluteRect, const R
             if (adjustedOptions.visibilityCheckRect)
                 adjustedOptions.visibilityCheckRect->setLocation(adjustedRect.location());
         }
+        // FIXME: Make scroll adjustments work for more than just fixedpos elements.
+        if (insideFixed)
+            adjustForScrollByAnchor(layer->renderer(), isFixed);
     }
 
     auto& frameView = renderer.view().frameView();
     RefPtr ownerElement = frameView.m_frame->document() ? frameView.m_frame->document()->ownerElement() : nullptr;
     if (ownerElement && ownerElement->renderer())
-        frameView.scrollRectToVisibleInChildView(adjustedRect, insideFixed, adjustedOptions, ownerElement.get());
+        frameView.scrollRectToVisibleInChildView(adjustedRect, isFixed, adjustedOptions, ownerElement.get());
     else
-        frameView.scrollRectToVisibleInTopLevelView(adjustedRect, insideFixed, adjustedOptions);
+        frameView.scrollRectToVisibleInTopLevelView(adjustedRect, isFixed, adjustedOptions);
     return true;
+}
+
+TemporarySelectionChange LocalFrameView::revealRangeWithTemporarySelection(const SimpleRange& range, OptionSet<TemporarySelectionOption> extraOptions)
+{
+    static constexpr OptionSet defaultOptions {
+        TemporarySelectionOption::RevealSelection,
+        TemporarySelectionOption::RevealSelectionBounds,
+        TemporarySelectionOption::UserTriggered,
+        TemporarySelectionOption::ForceCenterScroll
+    };
+    return { range.startContainer().protectedDocument(), { range }, defaultOptions | extraOptions };
 }
 
 static ScrollPositionChangeOptions scrollPositionChangeOptionsForElement(const LocalFrameView& frameView, Element* element, const ScrollRectToVisibleOptions& options)
@@ -3356,7 +3433,7 @@ static ScrollPositionChangeOptions scrollPositionChangeOptionsForElement(const L
     return scrollPositionOptions;
 };
 
-void LocalFrameView::scrollRectToVisibleInChildView(const LayoutRect& absoluteRect, bool insideFixed, const ScrollRectToVisibleOptions& options, const HTMLFrameOwnerElement* ownerElement)
+void LocalFrameView::scrollRectToVisibleInChildView(const LayoutRect& absoluteRect, EnumSet<BoxAxis> isFixed, const ScrollRectToVisibleOptions& options, const HTMLFrameOwnerElement* ownerElement)
 {
     // If scrollbars aren't explicitly forbidden, permit scrolling.
     if (m_frame->scrollingMode() == ScrollbarMode::AlwaysOff) {
@@ -3380,7 +3457,7 @@ void LocalFrameView::scrollRectToVisibleInChildView(const LayoutRect& absoluteRe
     if (auto* renderer = element ? element->renderBox() : nullptr)
         targetRect.expand(renderer->scrollPaddingForViewportRect(viewRect));
 
-    auto revealRect = getPossiblyFixedRectToExpose(viewRect, targetRect, insideFixed, options.alignX, options.alignY);
+    auto revealRect = getPossiblyFixedRectToExpose(viewRect, targetRect, isFixed, options.alignX, options.alignY);
     auto scrollPosition = roundedIntPoint(revealRect.location());
     scrollPosition = constrainedScrollPosition(scrollPosition);
 
@@ -3396,7 +3473,7 @@ void LocalFrameView::scrollRectToVisibleInChildView(const LayoutRect& absoluteRe
         scrollRectToVisible(contentsToContainingViewContents(enclosingIntRect(targetRect)), *ownerRenderer, false /* insideFixed */, options);
 }
 
-void LocalFrameView::scrollRectToVisibleInTopLevelView(const LayoutRect& absoluteRect, bool insideFixed, const ScrollRectToVisibleOptions& options)
+void LocalFrameView::scrollRectToVisibleInTopLevelView(const LayoutRect& absoluteRect, EnumSet<BoxAxis> isFixed, const ScrollRectToVisibleOptions& options)
 {
     if (options.revealMode == SelectionRevealMode::RevealUpToMainFrame && m_frame->isMainFrame())
         return;
@@ -3438,7 +3515,7 @@ void LocalFrameView::scrollRectToVisibleInTopLevelView(const LayoutRect& absolut
     if (auto* renderBox = element ? element->renderBox() : nullptr)
         targetRect.expand(renderBox->scrollPaddingForViewportRect(viewRect));
 
-    LayoutRect revealRect = getPossiblyFixedRectToExpose(viewRect, targetRect, insideFixed, options.alignX, options.alignY);
+    LayoutRect revealRect = getPossiblyFixedRectToExpose(viewRect, targetRect, isFixed, options.alignX, options.alignY);
 
     // Avoid scrolling to the rounded value of revealRect.location() if we don't actually need to scroll
     if (revealRect != viewRect) {
@@ -4426,9 +4503,7 @@ void LocalFrameView::scrollToPendingTextFragmentRange()
     SetForScope skipScrollResetOfScrollToTextFragmentRange(m_skipScrollResetOfScrollToTextFragmentRange, true);
 
     // FIXME: <http://webkit.org/b/245262> (Scroll To Text Fragment should use DelegateMainFrameScroll)
-    TemporarySelectionChange selectionChange(document, { range }, { TemporarySelectionOption::RevealSelection, TemporarySelectionOption::RevealSelectionBounds, TemporarySelectionOption::UserTriggered, TemporarySelectionOption::ForceCenterScroll,
-        TemporarySelectionOption::OnlyAllowForwardScrolling
-    });
+    auto selectionChange = revealRangeWithTemporarySelection(range, TemporarySelectionOption::OnlyAllowForwardScrolling);
 
     if (m_delayedTextFragmentIndicatorTimer.isActive())
         return;
@@ -4658,13 +4733,15 @@ void LocalFrameView::scheduleResizeEventIfNeeded()
         return;
 
     IntSize currentSize = sizeForResizeEvent();
-    float currentZoomFactor = renderView->style().zoom();
+    float currentZoomFactor = renderView->style().usedZoom();
+    float currentFrameScaleFactor = m_frame->frameScaleFactor();
 
-    if (currentSize == m_lastViewportSize && currentZoomFactor == m_lastZoomFactor)
+    if (currentSize == m_lastViewportSize && currentZoomFactor == m_lastUsedZoomFactor && currentFrameScaleFactor == m_lastFrameScaleFactor)
         return;
 
     m_lastViewportSize = currentSize;
-    m_lastZoomFactor = currentZoomFactor;
+    m_lastUsedZoomFactor = currentZoomFactor;
+    m_lastFrameScaleFactor = currentFrameScaleFactor;
 
     if (!layoutContext().didFirstLayout())
         return;
@@ -6934,7 +7011,7 @@ ScrollbarWidth LocalFrameView::scrollbarWidthStyle()  const
     auto* document = m_frame->document();
     auto scrollingObject = document && document->documentElement() ? document->documentElement()->renderer() : nullptr;
     if (scrollingObject && renderView())
-        return scrollingObject->style().scrollbarWidth();
+        return scrollingObject->style().scrollbarWidth().value;
     return ScrollbarWidth::Auto;
 }
 
@@ -6961,9 +7038,23 @@ bool LocalFrameView::isVisibleToHitTesting() const
     return isVisibleToHitTest;
 }
 
-LayoutRect LocalFrameView::getPossiblyFixedRectToExpose(const LayoutRect& visibleRect, const LayoutRect& exposeRect, bool insideFixed, const ScrollAlignment& alignX, const ScrollAlignment& alignY) const
+LayoutRect LocalFrameView::getPossiblyFixedRectToExpose(const LayoutRect& visibleRect, const LayoutRect& exposeRect, EnumSet<BoxAxis> isFixed, const ScrollAlignment& alignX, const ScrollAlignment& alignY) const
 {
-    if (!insideFixed)
+    if (!isFixed.containsAny({ BoxAxis::Horizontal, BoxAxis::Vertical }))
+        return getPossiblyFixedRectToExpose(visibleRect, exposeRect, false, alignX, alignY);
+    if (isFixed.containsAll({ BoxAxis::Horizontal, BoxAxis::Vertical }))
+        return getPossiblyFixedRectToExpose(visibleRect, exposeRect, true, alignX, alignY);
+
+    auto fixedRect = getPossiblyFixedRectToExpose(visibleRect, exposeRect, true, alignX, alignY);
+    auto scrollRect = getPossiblyFixedRectToExpose(visibleRect, exposeRect, false, alignX, alignY);
+    if (isFixed.contains(BoxAxis::Horizontal))
+        return { fixedRect.x(), scrollRect.y(), fixedRect.width(), scrollRect.height() };
+    return { scrollRect.x(), fixedRect.y(), scrollRect.width(), fixedRect.height() };
+}
+
+LayoutRect LocalFrameView::getPossiblyFixedRectToExpose(const LayoutRect& visibleRect, const LayoutRect& exposeRect, bool isFixed, const ScrollAlignment& alignX, const ScrollAlignment& alignY) const
+{
+    if (!isFixed)
         return getRectToExposeForScrollIntoView(visibleRect, exposeRect, alignX, alignY);
 
     // If the element is inside position:fixed and we're not scaled, no amount of scrolling is going to move things around.

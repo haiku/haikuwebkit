@@ -467,12 +467,14 @@ static String generateOpenerHTML(const char* templateHTML, const String& substit
 ALLOW_NONLITERAL_FORMAT_END
 #endif
 
-static void checkAuthorizationOptions(bool userActionInitiated, String initiatorOrigin, int initiatingAction)
+static void checkAuthorizationOptions(bool userActionInitiated, String initiatorOrigin, int initiatingAction, String path = { })
 {
     EXPECT_TRUE(gAuthorization);
     EXPECT_EQ(((NSNumber *)[gAuthorization authorizationOptions][SOAuthorizationOptionUserActionInitiated]).boolValue, userActionInitiated);
     EXPECT_WK_STREQ([gAuthorization authorizationOptions][SOAuthorizationOptionInitiatorOrigin], initiatorOrigin);
     EXPECT_EQ(((NSNumber *)[gAuthorization authorizationOptions][SOAuthorizationOptionInitiatingAction]).intValue, initiatingAction);
+    if (!path.isNull())
+        EXPECT_WK_STREQ([gAuthorization authorizationOptions][kSOAuthorizationOptionInitiatingPath], path);
 }
 
 #define SWIZZLE_SOAUTH(SOAuthClass) \
@@ -1473,6 +1475,26 @@ TEST(SOAuthorizationRedirect, AuthorizationOptions)
     checkAuthorizationOptions(true, "http://www.webkit.org"_s, 0);
     EXPECT_TRUE(policyForAppSSOPerformed);
 }
+
+TEST(SOAuthorizationRedirect, AuthorizationOptionsWithPath)
+{
+    resetState();
+    SWIZZLE_SOAUTH(PAL::getSOAuthorizationClassSingleton());
+
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
+    auto delegate = adoptNS([[TestSOAuthorizationDelegate alloc] init]);
+    configureSOAuthorizationWebView(webView.get(), delegate.get());
+
+    [webView loadHTMLString:@"" baseURL:URL { "http://www.webkit.org/some/path"_str }.createNSURL().get()];
+    Util::run(&navigationCompleted);
+
+    [delegate setShouldOpenExternalSchemes:true];
+    [webView evaluateJavaScript: @"location = 'http://www.example.com/test/path'" completionHandler:nil];
+    Util::run(&authorizationPerformed);
+    checkAuthorizationOptions(true, "http://www.webkit.org"_s, 0, "/some/path"_s);
+    EXPECT_TRUE(policyForAppSSOPerformed);
+}
+
 
 TEST(SOAuthorizationRedirect, InterceptionDidNotHandleTwice)
 {

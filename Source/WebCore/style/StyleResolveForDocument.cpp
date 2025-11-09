@@ -87,8 +87,8 @@ RenderStyle resolveForDocument(const Document& document)
         fontDescription.setSpecifiedLocale(document.contentLanguage());
         fontDescription.setOneFamily(standardFamily);
         fontDescription.setShouldAllowUserInstalledFonts(settings.shouldAllowUserInstalledFonts() ? AllowUserInstalledFonts::Yes : AllowUserInstalledFonts::No);
-        // FIXME: We need enableEvaluationTimeZoom to be accessible from FontDescription, not only from RenderStyle. Would it be weird to move it to FontDescription (which is already accessible from RenderStyle)?
-        fontDescription.setEnableEvaluationTimeZoom(document.settings().evaluationTimeZoomEnabled());
+        // FIXME: We need evaluationTimeZoomEnabled to be accessible from FontDescription, not only from RenderStyle. Would it be weird to move it to FontDescription (which is already accessible from RenderStyle)?
+        fontDescription.setEvaluationTimeZoomEnabled(document.settings().evaluationTimeZoomEnabled());
 
         fontDescription.setKeywordSizeFromIdentifier(CSSValueMedium);
         int size = fontSizeForKeyword(CSSValueMedium, false, document);
@@ -110,7 +110,7 @@ RenderStyle resolveForDocument(const Document& document)
     fontCascade.update(WTFMove(fontSelector));
     documentStyle.setFontCascade(WTFMove(fontCascade));
 
-    documentStyle.setEnableEvaluationTimeZoom(document.settings().evaluationTimeZoomEnabled());
+    documentStyle.setEvaluationTimeZoomEnabled(document.settings().evaluationTimeZoomEnabled());
 
     documentStyle.setDeviceScaleFactor(document.deviceScaleFactor());
 

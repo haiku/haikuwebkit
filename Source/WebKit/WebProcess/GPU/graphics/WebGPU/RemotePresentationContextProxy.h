@@ -69,6 +69,8 @@ private:
     RemotePresentationContextProxy& operator=(const RemotePresentationContextProxy&) = delete;
     RemotePresentationContextProxy& operator=(RemotePresentationContextProxy&&) = delete;
 
+    bool isRemotePresentationContextProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
 
     RefPtr<WebCore::NativeImage> getMetalTextureAsNativeImage(uint32_t, bool& isIOSurfaceSupportedFormat) final;
@@ -92,5 +94,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemotePresentationContextProxy)
+    static bool isType(const WebCore::WebGPU::PresentationContext& context) { return context.isRemotePresentationContextProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

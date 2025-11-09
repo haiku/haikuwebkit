@@ -119,6 +119,7 @@ public:
     InspectorFrontendClient* inspectorFrontendClient() const { return m_inspectorFrontendClient; }
 
     InstrumentingAgents& instrumentingAgents() const { return m_instrumentingAgents.get(); }
+    Inspector::BackendDispatcher& backendDispatcher() const { return m_backendDispatcher.get(); }
 
     Inspector::InspectorAgent& ensureInspectorAgent();
     InspectorDOMAgent& ensureDOMAgent();

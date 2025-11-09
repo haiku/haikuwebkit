@@ -54,6 +54,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-popover-position-with-zoom.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-remove.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-required-attribute.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-selectedOptions-nesting.window.js
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-selectedOptions.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-setcustomvalidity.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/select-tab-navigation.tentative.html

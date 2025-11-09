@@ -89,6 +89,7 @@ public:
     WEBCORE_EXPORT void deleteRecord(const IDBRequestData&, const IDBKeyRangeData&);
     WEBCORE_EXPORT void openCursor(const IDBRequestData&, const IDBCursorInfo&);
     WEBCORE_EXPORT void iterateCursor(const IDBRequestData&, const IDBIterateCursorData&);
+    void addOpenRequestResult(const IDBError&);
 
     void didActivateInBackingStore(const IDBError&);
 

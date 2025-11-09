@@ -80,10 +80,9 @@ platform/graphics/gbm/GraphicsContextGLTextureMapperGBM.cpp @no-unify
 platform/graphics/gbm/MemoryMappedGPUBuffer.cpp
 platform/graphics/gbm/PlatformDisplayGBM.cpp @no-unify
 
+platform/graphics/glib/IconGLib.cpp
 platform/graphics/glib/ImageAdapterGLib.cpp
 platform/graphics/glib/SystemFontDatabaseGLib.cpp
-
-platform/graphics/gtk/IconGtk.cpp
 
 platform/graphics/opentype/OpenTypeVerticalData.cpp
 
@@ -108,5 +107,3 @@ platform/unix/LoggingUnix.cpp
 platform/unix/SharedMemoryUnix.cpp
 
 platform/xdg/MIMETypeRegistryXdg.cpp
-
-platform/xr/openxr/PlatformXROpenXR.cpp

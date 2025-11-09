@@ -147,7 +147,6 @@ namespace JSC {
     macro(instanceOf) \
     macro(isArraySlow) \
     macro(sameValue) \
-    macro(appendMemcpy) \
     macro(regExpCreate) \
     macro(isRegExp) \
     macro(isFinite) \
@@ -214,7 +213,6 @@ namespace JSC {
     macro(createRemoteFunction) \
     macro(isRemoteFunction) \
     macro(arrayFromFastFillWithUndefined) \
-    macro(arrayFromFastFillWithEmpty) \
     macro(jsonParse) \
     macro(jsonStringify) \
     macro(String) \

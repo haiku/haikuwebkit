@@ -31,6 +31,7 @@ DECLARE_SYSTEM_HEADER
 
 #include <Security/SecAccessControlPriv.h>
 #include <Security/SecCertificatePriv.h>
+#include <Security/SecCertificateRequest.h>
 #include <Security/SecCode.h>
 #include <Security/SecCodePriv.h>
 #include <Security/SecIdentityPriv.h>
@@ -88,10 +89,13 @@ OSStatus SecCodeCopySigningInformation(SecStaticCodeRef, SecCSFlags, CFDictionar
 OSStatus SecTrustedApplicationCreateFromPath(const char* path, SecTrustedApplicationRef * CF_RETURNS_RETAINED);
 #endif
 
+SecCertificateRef SecGenerateSelfSignedCertificate(CFArrayRef, CFDictionaryRef,
+    SecKeyRef, SecKeyRef);
 SecSignatureHashAlgorithm SecCertificateGetSignatureHashAlgorithm(SecCertificateRef);
-extern const CFStringRef kSecAttrNoLegacy;
 
+extern const CFStringRef kSecAttrNoLegacy;
 extern const CFStringRef kSecAttrAlias;
+extern const CFStringRef kSecCertificateLifetime;
 
 WTF_EXTERN_C_END
 

@@ -31,6 +31,7 @@
 #include <wtf/GetPtr.h>
 #include <wtf/RawPtrTraits.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/SwiftBridging.h>
 #include <wtf/TypeCasts.h>
 
 #if ASAN_ENABLED
@@ -171,7 +172,7 @@ private:
     }
 
     typename PtrTraits::StorageType m_ptr;
-};
+} SWIFT_ESCAPABLE;
 
 template<typename T, typename _PtrTraits, typename RefDerefTraits> Ref<T, _PtrTraits, RefDerefTraits> adoptRef(T&);
 

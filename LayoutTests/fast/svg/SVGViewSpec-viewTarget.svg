@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" id="my-svg">
+    <defs>
+        <clipPath id="testClipPath">
+            <circle cx="50" cy="50" r="40"/>
+        </clipPath>
+    </defs>
+    
+    <circle id="testCircle" cx="100" cy="100" r="50" fill="red"/>
+    <rect id="testRect" x="200" y="200" width="100" height="100" fill="blue"/>
+    <g id="testGroup">
+        <circle cx="300" cy="100" r="30" fill="green"/>
+    </g>
+   
+    <foreignObject id="testForeignObject" x="10" y="450" width="150" height="100">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="background: lightgreen; padding: 10px;">
+            Foreign Content
+        </div>
+    </foreignObject> 
+    
+    <script type="text/javascript">
+        <![CDATA[
+        if (window.testRunner) {
+            testRunner.waitUntilDone();
+            testRunner.dumpAsText();
+        }
+        var results = [];
+        var currentTest = 0;
+        
+        var tests = [
+            { fragment: '#svgView(viewTarget(testClipPath))', expectedId: 'testClipPath' },
+            { fragment: '#svgView(viewTarget(testCircle))', expectedId: 'testCircle' },
+            { fragment: '#svgView(viewTarget(testRect))', expectedId: 'testRect' },
+            { fragment: '#svgView(viewTarget(testGroup))', expectedId: 'testGroup' },
+            { fragment: '#svgView(viewTarget(testForeignObject))', expectedId: 'testForeignObject' }
+        ];
+        
+        function runTest() {
+            if (currentTest >= tests.length) {
+                displayResults();
+                return;
+            }
+            
+            var test = tests[currentTest];
+            window.location.hash = test.fragment;
+            
+            setTimeout(function() {
+                var svg = document.documentElement;
+                var viewTarget = svg.currentView ? svg.currentView.viewTarget : null;
+                var expectedElement = document.getElementById(test.expectedId);
+                
+                var result = {
+                    fragment: test.fragment,
+                    expectedId: test.expectedId,
+                    hasCurrentView: !!svg.currentView,
+                    viewTargetString: svg.currentView ? svg.currentView.viewTargetString : null,
+                    viewTarget: viewTarget,
+                    viewTargetMatches: svg.currentView && viewTarget === expectedElement,
+                    viewTargetId: viewTarget ? viewTarget.id : null,
+                    passed: false
+                };
+                
+                // Test passes if:
+                // 1. currentView exists
+                // 2. viewTargetString matches expected ID
+                // 3. viewTarget references the correct element
+                result.passed = result.hasCurrentView && 
+                               result.viewTargetString === test.expectedId &&
+                               result.viewTargetMatches;
+                
+                results.push(result);
+                
+                currentTest++;
+                runTest();
+            }, 0);
+        }
+        
+        function displayResults() {
+            var passCount = 0;
+            var text = 'SVGViewSpec.viewTarget Tests:\n\n';
+            
+            for (var i = 0; i < results.length; i++) {
+                var r = results[i];
+                if (r.passed) passCount++;
+                
+                text += (r.passed ? 'PASS' : 'FAIL') + ' - ' + r.expectedId + '\n';
+                text += '  viewTargetString: "' + r.viewTargetString + '"\n';
+                text += '  viewTarget.id: ' + r.viewTargetId + '\n';
+                text += '  viewTarget matches: ' + r.viewTargetMatches + '\n';
+            }
+            
+            text += '\nSummary: ' + passCount + '/' + results.length + ' passed';
+            
+            console.log('=== All Tests Complete ===');
+            console.log(text);
+            
+            if (window.testRunner)
+                testRunner.notifyDone();
+        }
+        
+        window.addEventListener('load', function() {
+            setTimeout(runTest, 0);
+        });
+        ]]>
+    </script>
+</svg>
+

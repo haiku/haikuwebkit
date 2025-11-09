@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESTextureFloatLinear);
 OESTextureFloatLinear::OESTextureFloatLinear(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::OESTextureFloatLinear)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_OES_texture_float_linear"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::OES_texture_float_linear);
 }
 
 OESTextureFloatLinear::~OESTextureFloatLinear() = default;
 
 bool OESTextureFloatLinear::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_OES_texture_float_linear"_s);
+    return context.supportsExtension(GCGLExtension::OES_texture_float_linear);
 }
 
 } // namespace WebCore

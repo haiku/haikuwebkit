@@ -4,7 +4,7 @@
 <head>
     <style>
         .container {
-            zoom: 2.3;
+            zoom: 2;
         }
 
         #inside-zoom-box {
@@ -39,16 +39,16 @@
             } else {
                 debug('This tests uses eventSender to zoom in twice');
             }
-            
+
             box = document.getElementById('inside-zoom-box');
             bounds = box.getBoundingClientRect();
 
             debug('');
             debug('Testing box with CSS zoom on an ancestor')
-            shouldBeEqualToString('bounds.left.toFixed(2)', '18.00');
-            shouldBeEqualToString('bounds.top.toFixed(2)', '150.00');
-            shouldBeEqualToString('bounds.width.toFixed(2)', '40.00');
-            shouldBeEqualToString('bounds.height.toFixed(2)', '50.00');
+            shouldBeCloseTo('bounds.left', 36, 0.01);
+            shouldBeCloseTo('bounds.top', 300, 0.01);
+            shouldBeCloseTo('bounds.width', 80, 0.01);
+            shouldBeCloseTo('bounds.height', 100, 0.01);
 
             box = document.getElementById('outside-zoom-box');
             bounds = box.getBoundingClientRect();
@@ -60,7 +60,7 @@
             shouldBeEqualToString('bounds.width.toFixed(2)', '40.00');
             shouldBeEqualToString('bounds.height.toFixed(2)', '50.00');
         }
-        
+
         window.addEventListener('load', doTest, false);
     </script>
 </head>

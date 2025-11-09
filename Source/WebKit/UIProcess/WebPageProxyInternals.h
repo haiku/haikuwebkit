@@ -237,6 +237,14 @@ public:
     uint32_t checkedPtrCountWithoutThreadCheck() const { return WebPopupMenuProxy::Client::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const { WebPopupMenuProxy::Client::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const { WebPopupMenuProxy::Client::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion()
+    {
+        WebPopupMenuProxy::Client::setDidBeginCheckedPtrDeletion();
+#if ENABLE(APPLE_PAY)
+        WebPaymentCoordinatorProxy::Client::setDidBeginCheckedPtrDeletion();
+#endif
+        WebColorPickerClient::setDidBeginCheckedPtrDeletion();
+    }
 
 #if PLATFORM(MACCATALYST)
     // EndowmentStateTrackerClient

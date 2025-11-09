@@ -132,6 +132,11 @@ std::pair<Ref<ComputePipeline>, NSString*> Device::createComputePipeline(const W
         loseTheDevice(WGPUDeviceLostReason_Undefined);
         return returnInvalidComputePipeline(*this, isAsync, @"too many compute pipelines");
     }
+    auto returnFailedPSOCreation = ^{
+        generateAnOutOfMemoryError("Compute pipeline failed compilation likely due to being too complex, please reduce its size"_s);
+        return returnInvalidComputePipeline(*this, isAsync, @"GPUCompuePipeline could not compile");
+    };
+
     if (pipelineLayout->isAutoLayout() && entryPointInformation.defaultLayout) {
         Vector<Vector<WGPUBindGroupLayoutEntry>> bindGroupEntries;
         if (NSString* error = addPipelineLayouts(bindGroupEntries, entryPointInformation.defaultLayout))
@@ -141,10 +146,16 @@ std::pair<Ref<ComputePipeline>, NSString*> Device::createComputePipeline(const W
         if (!generatedPipelineLayout->isValid())
             return returnInvalidComputePipeline(*this, isAsync);
         auto computePipelineState = createComputePipelineState(m_device, function, generatedPipelineLayout, size, label.get(), shaderValidationState(), WTFMove(shaderSource));
+        if (!computePipelineState)
+            return returnFailedPSOCreation();
+
         return std::make_pair(ComputePipeline::create(computePipelineState, WTFMove(generatedPipelineLayout), size, WTFMove(minimumBufferSizes), ++m_computePipelineId, *this), nil);
     }
 
     auto computePipelineState = createComputePipelineState(m_device, function, pipelineLayout, size, label.get(), shaderValidationState(), WTFMove(shaderSource));
+    if (!computePipelineState)
+        return returnFailedPSOCreation();
+
     return std::make_pair(ComputePipeline::create(computePipelineState, WTFMove(pipelineLayout), size, WTFMove(minimumBufferSizes), ++m_computePipelineId, *this), nil);
 }
 

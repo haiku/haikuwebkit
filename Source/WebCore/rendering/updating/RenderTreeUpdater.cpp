@@ -175,12 +175,13 @@ void RenderTreeUpdater::updateRebuildRoots()
             return true;
         }
 
-        if (!element.renderer())
-            return element.hasDisplayContents();
+        CheckedPtr existingStyle = element.renderOrDisplayContentsStyle();
+        if (!existingStyle)
+            return false;
 
         auto* parent = composedTreeAncestors(element).first();
         m_styleUpdate->addElement(element, parent, Style::ElementUpdate {
-            makeUnique<RenderStyle>(RenderStyle::cloneIncludingPseudoElements(element.renderer()->style())),
+            makeUnique<RenderStyle>(RenderStyle::cloneIncludingPseudoElements(*existingStyle)),
             Style::Change::Renderer
         });
         return true;
@@ -585,7 +586,23 @@ bool RenderTreeUpdater::textRendererIsNeeded(const Text& textNode)
         return true;
     }
 
-    if (parentRenderer.isRenderBlock() && !parentRenderer.childrenInline() && (!previousRenderer || !previousRenderer->isInline()))
+    auto wouldBeFirstInlineContentInsideBlock = [&] {
+        if (!parentRenderer.isRenderBlock())
+            return false;
+
+        if (!previousRenderer)
+            return !parentRenderer.childrenInline();
+
+        if (previousRenderer->parent() == &parentRenderer)
+            return !parentRenderer.childrenInline() && !previousRenderer->isInline();
+
+        if (CheckedPtr parent = previousRenderer->parent(); parent->isAnonymous())
+            return !parent->childrenInline() && !previousRenderer->isInline();
+
+        // Can't tell yet.
+        return false;
+    };
+    if (wouldBeFirstInlineContentInsideBlock())
         return false;
 
     return renderingParent.hasPrecedingInFlowChild;

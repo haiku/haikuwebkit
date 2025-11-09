@@ -122,7 +122,7 @@ RefPtr<Filter> CanvasRenderingContext2D::createFilter(const FloatRect& bounds) c
     if (!page)
         return nullptr;
 
-    auto preferredFilterRenderingModes = page->preferredFilterRenderingModes();
+    auto preferredFilterRenderingModes = page->preferredFilterRenderingModes(*context);
     auto filter = CSSFilterRenderer::create(*renderer, state().filter, preferredFilterRenderingModes, { 1, 1 }, bounds, *context);
     if (!filter)
         return nullptr;

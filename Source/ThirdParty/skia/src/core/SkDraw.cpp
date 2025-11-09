@@ -48,6 +48,7 @@
 #include "src/core/SkMask.h"
 #include "src/core/SkMaskFilterBase.h"
 #include "src/core/SkMatrixUtils.h"
+#include "src/core/SkPathData.h"
 #include "src/core/SkPathEffectBase.h"
 #include "src/core/SkPathPriv.h"
 #include "src/core/SkRasterClip.h"
@@ -137,28 +138,28 @@ static void bw_pt_hair_proc(const PtProcRec& rec, SkSpan<const SkPoint> devPts,
 
 static void bw_line_hair_proc(const PtProcRec& rec, SkSpan<const SkPoint> devPts,
                               SkBlitter* blitter) {
-    for (size_t i = 0; i < devPts.size(); i += 2) {
-        SkScan::HairLine(&devPts[i], 2, *rec.fRC, blitter);
+    for (size_t i = 0; i+1 < devPts.size(); i += 2) {
+        SkScan::HairLine({&devPts[i], 2}, *rec.fRC, blitter);
     }
 }
 
 static void bw_poly_hair_proc(const PtProcRec& rec, SkSpan<const SkPoint> devPts,
                               SkBlitter* blitter) {
-    SkScan::HairLine(devPts.data(), SkToInt(devPts.size()), *rec.fRC, blitter);
+    SkScan::HairLine(devPts, *rec.fRC, blitter);
 }
 
 // aa versions
 
 static void aa_line_hair_proc(const PtProcRec& rec, SkSpan<const SkPoint> devPts,
                               SkBlitter* blitter) {
-    for (size_t i = 0; i < devPts.size(); i += 2) {
-        SkScan::AntiHairLine(&devPts[i], 2, *rec.fRC, blitter);
+    for (size_t i = 0; i+1 < devPts.size(); i += 2) {
+        SkScan::AntiHairLine({&devPts[i], 2}, *rec.fRC, blitter);
     }
 }
 
 static void aa_poly_hair_proc(const PtProcRec& rec, SkSpan<const SkPoint> devPts,
                               SkBlitter* blitter) {
-    SkScan::AntiHairLine(devPts.data(), SkToInt(devPts.size()), *rec.fRC, blitter);
+    SkScan::AntiHairLine(devPts, *rec.fRC, blitter);
 }
 
 // square procs (strokeWidth > 0 but matrix is square-scale (sx == sy)
@@ -815,7 +816,7 @@ bool DrawTreatAAStrokeAsHairline(SkScalar strokeWidth, const SkMatrix& matrix, S
     SkScalar len1 = fast_len(dst[1]);
     if (len0 <= SK_Scalar1 && len1 <= SK_Scalar1) {
         if (coverage) {
-            *coverage = SkScalarAve(len0, len1);
+            *coverage = sk_float_midpoint(len0, len1);
         }
         return true;
     }
@@ -1013,7 +1014,7 @@ void Draw::drawPath(const SkPath& origSrcPath,
     std::optional<SkPathRaw> raw;      // will point to either origSrcPath or builder
     bool          doFill = true;
 
-    SkPath scratchPath;
+    sk_sp<SkPathData> pdata;
 
     if (needsFillPath) {
         SkRect cullRect;
@@ -1022,15 +1023,18 @@ void Draw::drawPath(const SkPath& origSrcPath,
             cullRectPtr = &cullRect;
         }
 
-        SkPath prePathStorage;
+        std::optional<SkPath> prePathStorage;
         const SkPath* pathPtr = &origSrcPath;
         if (prePathMatrix) {
-            prePathStorage = pathPtr->makeTransform(*prePathMatrix);
-            pathPtr = &prePathStorage;
+            prePathStorage = pathPtr->tryMakeTransform(*prePathMatrix);
+            if (!prePathStorage.has_value()) {
+                return;
+            }
+            pathPtr = &prePathStorage.value();
         }
         doFill = skpathutils::FillPathWithPaint(*pathPtr, *paint, &builder, cullRectPtr, *fCTM);
         builder.transform(*fCTM);
-        raw = SkPathPriv::Raw(builder);
+        raw = SkPathPriv::Raw(builder, SkResolveConvexity::kYes);
     } else {
         SkMatrix matrix = *fCTM;
         if (prePathMatrix) {
@@ -1038,12 +1042,14 @@ void Draw::drawPath(const SkPath& origSrcPath,
         }
 
         if (matrix.isIdentity()) {
-            // special case, to avoid copying the origSrcPath into the builder
-            raw = SkPathPriv::Raw(origSrcPath);
+            raw = SkPathPriv::Raw(origSrcPath, SkResolveConvexity::kYes);
         } else {
-            builder = origSrcPath;
-            builder.transform(matrix);
-            raw = SkPathPriv::Raw(builder);
+            raw = SkPathPriv::Raw(origSrcPath, SkResolveConvexity::kNo);
+            if (raw && (pdata = SkPathData::MakeTransform(*raw, matrix))) {
+                raw = pdata->raw(origSrcPath.getFillType(), SkResolveConvexity::kYes);
+            } else {
+                return; // failed to create pdata
+            }
         }
     }
 

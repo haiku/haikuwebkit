@@ -35,6 +35,8 @@ namespace JSC {
 
 STATIC_ASSERT_IS_TRIVIALLY_DESTRUCTIBLE(JSPromisePrototype);
 
+static JSC_DECLARE_HOST_FUNCTION(promiseProtoFuncCatch);
+
 }
 
 #include "JSPromisePrototype.lut.h"
@@ -45,7 +47,6 @@ const ClassInfo JSPromisePrototype::s_info = { "Promise"_s, &Base::s_info, &prom
 
 /* Source for JSPromisePrototype.lut.h
 @begin promisePrototypeTable
-  catch        JSBuiltin            DontEnum|Function 1
   finally      JSBuiltin            DontEnum|Function 1
 @end
 */
@@ -72,6 +73,7 @@ void JSPromisePrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
 {
     Base::finishCreation(vm);
     putDirectWithoutTransition(vm, vm.propertyNames->builtinNames().thenPublicName(), globalObject->promiseProtoThenFunction(), static_cast<unsigned>(PropertyAttribute::DontEnum));
+    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->catchKeyword, promiseProtoFuncCatch, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public);
     JSC_TO_STRING_TAG_WITHOUT_TRANSITION();
 }
 
@@ -122,6 +124,30 @@ JSC_DEFINE_HOST_FUNCTION(promiseProtoFuncThen, (JSGlobalObject* globalObject, Ca
         return throwVMTypeError(globalObject, scope, "|this| is not a Promise");
 
     RELEASE_AND_RETURN(scope, JSValue::encode(promise->then(globalObject, onFulfilled, onRejected)));
+}
+
+JSC_DEFINE_HOST_FUNCTION(promiseProtoFuncCatch, (JSGlobalObject* globalObject, CallFrame* callFrame))
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    JSValue thisValue = callFrame->thisValue().toThis(globalObject, ECMAMode::strict());
+    JSValue onRejected = callFrame->argument(0);
+
+    if (auto* promise = jsDynamicCast<JSPromise*>(thisValue); promise && promise->isThenFastAndNonObservable()) [[likely]]
+        RELEASE_AND_RETURN(scope, JSValue::encode(promise->then(globalObject, jsUndefined(), onRejected)));
+
+    JSValue then = thisValue.get(globalObject, vm.propertyNames->then);
+    RETURN_IF_EXCEPTION(scope, { });
+
+    auto thenCallData = getCallDataInline(then);
+    if (thenCallData.type == CallData::Type::None) [[unlikely]]
+        return throwVMTypeError(globalObject, scope, "|this|.then is not a function"_s);
+    MarkedArgumentBuffer thenArguments;
+    thenArguments.append(jsUndefined());
+    thenArguments.append(onRejected);
+    ASSERT(!thenArguments.hasOverflowed());
+    RELEASE_AND_RETURN(scope, JSValue::encode(call(globalObject, then, thenCallData, thisValue, thenArguments)));
 }
 
 } // namespace JSC

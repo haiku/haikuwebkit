@@ -55,18 +55,13 @@ NavigatorBeacon::~NavigatorBeacon()
 
 NavigatorBeacon* NavigatorBeacon::from(Navigator& navigator)
 {
-    auto* supplement = static_cast<NavigatorBeacon*>(Supplement<Navigator>::from(&navigator, supplementName()));
+    auto* supplement = downcast<NavigatorBeacon>(Supplement<Navigator>::from(&navigator, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorBeacon>(navigator);
         supplement = newSupplement.get();
         provideTo(&navigator, supplementName(), WTFMove(newSupplement));
     }
     return supplement;
-}
-
-ASCIILiteral NavigatorBeacon::supplementName()
-{
-    return "NavigatorBeacon"_s;
 }
 
 void NavigatorBeacon::notifyFinished(CachedResource& resource, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess)

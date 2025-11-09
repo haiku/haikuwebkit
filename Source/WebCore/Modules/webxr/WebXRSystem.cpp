@@ -283,6 +283,9 @@ bool WebXRSystem::isFeaturePermitted(PlatformXR::SessionFeature feature) const
 #if ENABLE(WEBXR_HANDS)
     case PlatformXR::SessionFeature::HandTracking:
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    case PlatformXR::SessionFeature::HitTest:
+#endif
         RefPtr document = downcast<Document>(scriptExecutionContext());
         return document && PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::XRSpatialTracking, *document);
     }

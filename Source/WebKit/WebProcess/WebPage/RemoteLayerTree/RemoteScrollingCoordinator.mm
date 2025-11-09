@@ -76,14 +76,6 @@ void RemoteScrollingCoordinator::scheduleTreeStateCommit()
         webPage->protectedDrawingArea()->triggerRenderingUpdate();
 }
 
-void RemoteScrollingCoordinator::applyScrollUpdate(ScrollUpdate&& update, ScrollType scrollType)
-{
-    if (RefPtr webPage = m_webPage.get())
-        webPage->markPendingLocalScrollPositionChange();
-
-    AsyncScrollingCoordinator::applyScrollUpdate(WTFMove(update), scrollType);
-}
-
 bool RemoteScrollingCoordinator::coordinatesScrollingForFrameView(const LocalFrameView& frameView) const
 {
     CheckedPtr renderView = frameView.renderView();
@@ -121,7 +113,7 @@ RemoteScrollingCoordinatorTransaction RemoteScrollingCoordinator::buildTransacti
     willCommitTree(rootFrameID);
 
     return {
-        ensureScrollingStateTreeForRootFrameID(rootFrameID).commit(LayerRepresentation::PlatformLayerIDRepresentation),
+        ensureCheckedScrollingStateTreeForRootFrameID(rootFrameID)->commit(LayerRepresentation::PlatformLayerIDRepresentation),
         std::exchange(m_clearScrollLatchingInNextTransaction, false),
         { },
         RemoteScrollingCoordinatorTransaction::FromDeserialization::No

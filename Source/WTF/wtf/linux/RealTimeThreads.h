@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <wtf/CanMakeWeakPtr.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/ThreadGroup.h>
 
@@ -32,7 +33,7 @@ typedef struct _GDBusProxy GDBusProxy;
 
 namespace WTF {
 
-class RealTimeThreads {
+class RealTimeThreads : public CanMakeWeakPtr<RealTimeThreads> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(RealTimeThreads);
     friend class LazyNeverDestroyed<RealTimeThreads>;
 public:

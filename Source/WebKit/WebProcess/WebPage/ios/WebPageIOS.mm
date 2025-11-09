@@ -98,6 +98,8 @@
 #import <WebCore/ElementAncestorIteratorInlines.h>
 #import <WebCore/ElementAnimationContext.h>
 #import <WebCore/EventHandler.h>
+#import <WebCore/EventNames.h>
+#import <WebCore/EventTargetInlines.h>
 #import <WebCore/File.h>
 #import <WebCore/FloatQuad.h>
 #import <WebCore/FrameDestructionObserverInlines.h>
@@ -135,6 +137,7 @@
 #import <WebCore/InputMode.h>
 #import <WebCore/KeyboardEvent.h>
 #import <WebCore/LibWebRTCProvider.h>
+#import <WebCore/LocalDOMWindow.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameLoaderClient.h>
 #import <WebCore/LocalFrameView.h>
@@ -771,18 +774,13 @@ WebCore::IntPoint WebPage::accessibilityRemoteFrameOffset()
     return [m_mockAccessibilityElement accessibilityRemoteFrameOffset];
 }
 
-WKAccessibilityWebPageObject* WebPage::accessibilityRemoteObject()
-{
-    return m_mockAccessibilityElement.get();
-}
-
 bool WebPage::platformCanHandleRequest(const WebCore::ResourceRequest& request)
 {
-    NSURLRequest *nsRequest = request.nsURLRequest(HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
-    if (!nsRequest.URL)
+    RetainPtr nsRequest = request.nsURLRequest(HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
+    if (!nsRequest.get().URL)
         return false;
 
-    return [NSURLConnection canHandleRequest:nsRequest];
+    return [NSURLConnection canHandleRequest:nsRequest.get()];
 }
 
 void WebPage::shouldDelayWindowOrderingEvent(const WebKit::WebMouseEvent&, CompletionHandler<void(bool)>&& completionHandler)
@@ -1096,15 +1094,37 @@ void WebPage::attemptSyntheticClick(const IntPoint& point, OptionSet<WebEventMod
         handleSyntheticClick(std::nullopt, *nodeRespondingToClick, adjustedPoint, modifiers);
 }
 
+static RefPtr<LocalDOMWindow> windowWithDoubleClickEventListener(RefPtr<LocalFrame> frame)
+{
+    if (!frame)
+        return nullptr;
+
+    RefPtr window = frame->window();
+    if (!window || !window->hasEventListeners(WebCore::eventNames().dblclickEvent))
+        return nullptr;
+
+    return window;
+}
+
 void WebPage::handleDoubleTapForDoubleClickAtPoint(const IntPoint& point, OptionSet<WebEventModifier> modifiers, TransactionID lastLayerTreeTransactionId)
 {
     FloatPoint adjustedPoint;
     RefPtr localMainFrame = m_page->localMainFrame();
     auto* nodeRespondingToDoubleClick = localMainFrame ? localMainFrame->nodeRespondingToDoubleClickEvent(point, adjustedPoint) : nullptr;
-    if (!nodeRespondingToDoubleClick)
+
+    RefPtr windowListeningToDoubleClickEvents = windowWithDoubleClickEventListener(localMainFrame);
+
+    if (!nodeRespondingToDoubleClick && !windowListeningToDoubleClickEvents)
         return;
 
-    auto* frameRespondingToDoubleClick = nodeRespondingToDoubleClick->document().frame();
+    RefPtr<LocalFrame> frameRespondingToDoubleClick;
+    if (nodeRespondingToDoubleClick)
+        frameRespondingToDoubleClick = nodeRespondingToDoubleClick->document().frame();
+    else if (windowListeningToDoubleClickEvents) {
+        RefPtr document = windowListeningToDoubleClickEvents->documentIfLocal();
+        frameRespondingToDoubleClick = document ? document->frame() : nullptr;
+    }
+
     if (!frameRespondingToDoubleClick)
         return;
 
@@ -1116,10 +1136,10 @@ void WebPage::handleDoubleTapForDoubleClickAtPoint(const IntPoint& point, Option
 
     auto platformModifiers = platform(modifiers);
     auto roundedAdjustedPoint = roundedIntPoint(adjustedPoint);
-    nodeRespondingToDoubleClick->document().frame()->eventHandler().handleMousePressEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MousePressed, 2, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::OneFingerTap));
+    frameRespondingToDoubleClick->eventHandler().handleMousePressEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MousePressed, 2, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::OneFingerTap));
     if (m_isClosed)
         return;
-    nodeRespondingToDoubleClick->document().frame()->eventHandler().handleMouseReleaseEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MouseReleased, 2, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::OneFingerTap));
+    frameRespondingToDoubleClick->eventHandler().handleMouseReleaseEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MouseReleased, 2, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::OneFingerTap));
 }
 
 void WebPage::requestFocusedElementInformation(CompletionHandler<void(const std::optional<FocusedElementInformation>&)>&& completionHandler)
@@ -3905,7 +3925,7 @@ InteractionInformationAtPosition WebPage::positionInformation(const InteractionI
     info.adjustedPointForNodeRespondingToClickEvents = adjustedPoint;
 
     if (request.includeHasDoubleClickHandler)
-        info.nodeAtPositionHasDoubleClickHandler = localMainFrame->nodeRespondingToDoubleClickEvent(request.point, adjustedPoint);
+        info.hitNodeOrWindowHasDoubleClickListener = localMainFrame->nodeRespondingToDoubleClickEvent(request.point, adjustedPoint) || windowWithDoubleClickEventListener(localMainFrame);
 
     auto hitTestRequestTypes = OptionSet<HitTestRequest::Type> {
         HitTestRequest::Type::ReadOnly,
@@ -5059,23 +5079,6 @@ static bool selectionIsInsideFixedPositionContainer(LocalFrame& frame)
     return isInsideFixedPosition;
 }
 
-void WebPage::markPendingLocalScrollPositionChange()
-{
-    if (m_pendingLocalChangeTransactionID)
-        return;
-
-    if (auto* drawingArea = dynamicDowncast<RemoteLayerTreeDrawingArea>(this->drawingArea()))
-        m_pendingLocalChangeTransactionID = drawingArea->nextTransactionID();
-}
-
-bool WebPage::shouldIgnoreScrollPositionUpdate(TransactionID receivedTransactionID) const
-{
-    if (m_pendingLocalChangeTransactionID)
-        return receivedTransactionID.lessThanSameProcess(*m_pendingLocalChangeTransactionID);
-
-    return false;
-}
-
 void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visibleContentRectUpdateInfo, MonotonicTime oldestTimestamp)
 {
     LOG_WITH_STREAM(VisibleRects, stream << "\nWebPage " << m_identifier << " updateVisibleContentRects " << visibleContentRectUpdateInfo);
@@ -5121,7 +5124,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
 
     auto layoutViewportRect = visibleContentRectUpdateInfo.layoutViewportRect();
     auto unobscuredContentRect = visibleContentRectUpdateInfo.unobscuredContentRect();
-    auto scrollPosition = shouldIgnoreScrollPositionUpdate(visibleContentRectUpdateInfo.lastLayerTreeTransactionID()) ? frameView.scrollPosition() : roundedIntPoint(unobscuredContentRect.location());
+    auto scrollPosition = roundedIntPoint(unobscuredContentRect.location());
 
     // Computation of layoutViewportRect is done in LayoutUnits which loses some precision, so test with an epsilon.
     // FIXME: The loss of precision when converting floating point values to LayoutUnit does not, by itself, explain

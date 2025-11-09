@@ -1,3 +1,4 @@
+//@ skip if !$isWasmPlatform
 //@ requireOptions("--forceDiskCache=0")
 //@ requireOptions("--jitMemoryReservationSize=268435456")
 
@@ -119,6 +120,3 @@ let startupModule = new WebAssembly.Module(startup);
 }
 
 `);
-
-
-

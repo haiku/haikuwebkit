@@ -106,9 +106,14 @@ constexpr std::array<uint8_t, 16> aaguid = { 0xFB, 0xFC, 0x30, 0x07, 0x15, 0x4E,
 
 constexpr char kLargeBlobMapKey[] = "largeBlob";
 
-static inline bool emptyTransportsOrContain(const Vector<AuthenticatorTransport>& transports, AuthenticatorTransport target)
+static inline bool emptyTransportsOrContain(const Vector<String>& transports, AuthenticatorTransport target)
 {
-    return transports.isEmpty() ? true : transports.contains(target);
+    if (transports.isEmpty())
+        return true;
+    return transports.containsIf([&](auto& transportString) {
+        auto transport = convertStringToAuthenticatorTransport(transportString);
+        return transport && *transport == target;
+    });
 }
 
 // A Base64 encoded string of the Credential ID is used as the key of the hash set.
@@ -193,7 +198,7 @@ std::optional<Vector<Ref<AuthenticatorAssertionResponse>>> LocalAuthenticator::g
     Vector<Ref<AuthenticatorAssertionResponse>> result;
     result.reserveInitialCapacity([sortedAttributesArray count]);
     for (NSDictionary *attributes in sortedAttributesArray.get()) {
-        auto decodedResponse = cbor::CBORReader::read(makeVector(attributes[(id)kSecAttrApplicationTag]));
+        auto decodedResponse = cbor::CBORReader::read(makeVector(retainPtr(attributes[(id)kSecAttrApplicationTag]).get()));
         if (!decodedResponse || !decodedResponse->isMap()) {
             ASSERT_NOT_REACHED();
             return std::nullopt;
@@ -202,9 +207,8 @@ std::optional<Vector<Ref<AuthenticatorAssertionResponse>>> LocalAuthenticator::g
 
         RefPtr<ArrayBuffer> userHandle;
         auto it = responseMap.find(CBOR(fido::kEntityIdMapKey));
-        if (it != responseMap.end() && it->second.isByteString()) {
+        if (it != responseMap.end() && it->second.isByteString())
             userHandle = LocalAuthenticatorInternal::toArrayBuffer(it->second.getByteString());
-        }
 
         it = responseMap.find(CBOR(fido::kEntityNameMapKey));
         if (it == responseMap.end() || !it->second.isString()) {
@@ -221,13 +225,14 @@ std::optional<Vector<Ref<AuthenticatorAssertionResponse>>> LocalAuthenticator::g
         } else
             credentialID = attributes[(id)kSecAttrApplicationLabel];
 
-        auto response = AuthenticatorAssertionResponse::create(LocalAuthenticatorInternal::toArrayBuffer(credentialID.get()), WTFMove(userHandle), String(username), (__bridge SecAccessControlRef)attributes[(id)kSecAttrAccessControl], AuthenticatorAttachment::Platform);
+        RetainPtr<SecAccessControlRef> secAccessControl = (__bridge SecAccessControlRef)attributes[(id)kSecAttrAccessControl];
+        auto response = AuthenticatorAssertionResponse::create(LocalAuthenticatorInternal::toArrayBuffer(credentialID.get()), WTFMove(userHandle), String(username), secAccessControl.get(), AuthenticatorAttachment::Platform);
 
         auto group = groupForAttributes(attributes);
         if (!group.isNull()) {
             response->setGroup(group);
             response->setSynchronizable(true);
-        } else if ([[attributes allKeys] containsObject:bridge_cast(kSecAttrSynchronizable)])
+        } else if ([retainPtr([attributes allKeys]) containsObject:bridge_cast(kSecAttrSynchronizable)])
             response->setSynchronizable([attributes[(id)kSecAttrSynchronizable] isEqual:@YES]);
         it = responseMap.find(CBOR(fido::kDisplayNameMapKey));
         if (it != responseMap.end() && it->second.isString())
@@ -399,7 +404,7 @@ std::optional<WebCore::ExceptionData> LocalAuthenticator::processLargeBlobExtens
         // FIXME: The Security framework API is missing the `CF_RETURNS_RETAINED` annotation (rdar://161546781).
         SUPPRESS_RETAINPTR_CTOR_ADOPT RetainPtr dict = bridge_cast(adoptCF(checked_cf_cast<CFDictionaryRef>(attributesArrayRef)));
 
-        auto decodedResponse = cbor::CBORReader::read(makeVector(dict.get()[(id)kSecAttrApplicationTag]));
+        auto decodedResponse = cbor::CBORReader::read(makeVector(retainPtr(dict.get()[(id)kSecAttrApplicationTag]).get()));
         if (!decodedResponse || !decodedResponse->isMap()) {
             ASSERT_NOT_REACHED();
             return WebCore::ExceptionData { ExceptionCode::UnknownError, "Could not read credential."_s };

@@ -36,7 +36,6 @@
 #import "Utilities.h"
 #import "WebTransportServer.h"
 #import <CommonCrypto/CommonDigest.h>
-#import <Security/SecCertificateRequest.h>
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <WebKit/_WKInternalDebugFeature.h>
@@ -264,8 +263,6 @@ TEST(WebTransport, ServerBidirectional)
         "    let c = await t.createBidirectionalStream();"
         "    let w = c.writable.getWriter();"
         "    await w.write(new TextEncoder().encode('abc'));"
-        "    await w.close();"
-        "    await c.readable.getReader().cancel();"
         "    let sr = t.incomingBidirectionalStreams.getReader();"
         "    let {value: s, d} = await sr.read();"
         "    let r = s.readable.getReader();"
@@ -533,7 +530,8 @@ TEST(WebTransport, WorkerAfterNetworkProcessCrash)
         "    self.postMessage('successfully read ' + new TextDecoder().decode(value));"
         "  } catch (e) { self.postMessage('caught ' + e); }"
         "};"
-        "addEventListener('message', test);", transportServer.port()];
+        "addEventListener('message', test);"
+        "self.postMessage('started worker');", transportServer.port()];
 
     HTTPServer loadingServer({
         { "/"_s, { mainHTML } },
@@ -548,7 +546,11 @@ TEST(WebTransport, WorkerAfterNetworkProcessCrash)
     [webView setNavigationDelegate:delegate.get()];
     [webView loadRequest:loadingServer.request()];
     [delegate waitForDidFinishNavigation];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "message from worker: started worker");
     kill([configuration.get().websiteDataStore _networkProcessIdentifier], SIGKILL);
+    while ([[configuration websiteDataStore] _networkProcessExists])
+        TestWebKitAPI::Util::spinRunLoop();
+    [webView objectByEvaluatingJavaScript:@"'wait for web process to be informed of network process termination'"];
     [webView evaluateJavaScript:@"worker.postMessage('start')" completionHandler:nil];
     EXPECT_WK_STREQ([webView _test_waitForAlert], "message from worker: successfully read abc");
 }

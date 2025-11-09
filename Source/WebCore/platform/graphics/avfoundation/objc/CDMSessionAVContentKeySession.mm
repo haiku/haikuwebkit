@@ -26,12 +26,13 @@
 #import "config.h"
 #import "CDMSessionAVContentKeySession.h"
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA) && ENABLE(MEDIA_SOURCE)
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
 
+#import "AudioVideoRenderer.h"
 #import "CDMFairPlayStreaming.h"
 #import "CDMInstanceFairPlayStreamingAVFObjC.h"
-#import "CDMPrivateMediaSourceAVFObjC.h"
 #import "LegacyCDM.h"
+#import "LegacyCDMPrivateAVFObjC.h"
 #import "Logging.h"
 #import "MediaPlayer.h"
 #import "MediaSampleAVFObjC.h"
@@ -123,8 +124,9 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(CDMSessionAVContentKeySession);
 
 constexpr Seconds kDidProvideContentKeyRequestTimeout { 5_s };
 
-CDMSessionAVContentKeySession::CDMSessionAVContentKeySession(Vector<int>&& protocolVersions, int cdmVersion, CDMPrivateMediaSourceAVFObjC& cdm, LegacyCDMSessionClient& client)
-    : CDMSessionMediaSourceAVFObjC(cdm, client)
+CDMSessionAVContentKeySession::CDMSessionAVContentKeySession(Vector<int>&& protocolVersions, int cdmVersion, LegacyCDMPrivateAVFObjC& cdm, LegacyCDMSessionClient& client)
+    : m_cdm(cdm)
+    , m_client(client)
     , m_contentKeySessionDelegate(adoptNS([[WebCDMSessionAVContentKeySessionDelegate alloc] initWithParent:this]))
     , m_delegateQueue(WorkQueue::create("CDMSessionAVContentKeySession delegate queue"_s))
     , m_hasKeyRequestSemaphore(0)
@@ -145,11 +147,13 @@ CDMSessionAVContentKeySession::~CDMSessionAVContentKeySession()
     [m_contentKeySessionDelegate invalidate];
 
     if (hasContentKeySession()) {
-        for (auto& sourceBuffer : m_sourceBuffers)
-            sourceBuffer->flush();
-
+        for (RefPtr renderer : m_renderers)
+            renderer->flush();
         [contentKeySession() expire];
     }
+
+    if (RefPtr cdm = m_cdm.get())
+        cdm->invalidateSession(this);
 }
 
 bool CDMSessionAVContentKeySession::isAvailable()
@@ -191,8 +195,9 @@ void CDMSessionAVContentKeySession::releaseKeys()
 {
     if (hasContentKeySession()) {
         m_stopped = true;
-        for (auto& sourceBuffer : m_sourceBuffers)
-            sourceBuffer->flush();
+
+        for (RefPtr renderer : m_renderers)
+            renderer->flush();
 
         ALWAYS_LOG(LOGIDENTIFIER, "expiring stream session");
         [contentKeySession() expire];
@@ -282,20 +287,12 @@ bool CDMSessionAVContentKeySession::update(Uint8Array* key, RefPtr<Uint8Array>& 
         // In the com.apple.fps.2_0 communication protocol, the client must first attach the
         // session to the protected SourceBuffer in order to get access to the initialization
         // data.
-        RefPtr<SourceBufferPrivateAVFObjC> protectedSourceBuffer;
-        for (auto& sourceBuffer : m_sourceBuffers) {
-            if (sourceBuffer->protectedTrackID()) {
-                protectedSourceBuffer = sourceBuffer;
-                break;
-            }
-        }
-
-        if (!protectedSourceBuffer) {
+        if (!m_sourceBufferInitData) {
             errorCode = MediaPlayer::InvalidPlayerState;
             return false;
         }
         
-        m_initData = protectedSourceBuffer->initData();
+        m_initData = m_sourceBufferInitData;
     }
 
     if (!hasContentKeyRequest()) {
@@ -393,6 +390,16 @@ void CDMSessionAVContentKeySession::attachContentKeyToSample(const MediaSampleAV
         ERROR_LOG(LOGIDENTIFIER, "Failed to attach content key with error: %{public}@", error);
 }
 
+void CDMSessionAVContentKeySession::addRenderer(AudioVideoRenderer& renderer)
+{
+    m_renderers.add(renderer);
+}
+
+void CDMSessionAVContentKeySession::removeRenderer(AudioVideoRenderer& renderer)
+{
+    m_renderers.remove(renderer);
+}
+
 RefPtr<Uint8Array> CDMSessionAVContentKeySession::generateKeyReleaseMessage(unsigned short& errorCode, uint32_t& systemCode)
 {
     ASSERT(m_mode == KeyRelease);
@@ -448,10 +455,10 @@ RetainPtr<AVContentKeySession> CDMSessionAVContentKeySession::createContentKeySe
     return adoptNS([PAL::allocAVContentKeySessionInstance() initWithStorageDirectoryAtURL:storageURL]);
 }
 
-AVContentKeySession* CDMSessionAVContentKeySession::contentKeySession()
+RetainPtr<AVContentKeySession> CDMSessionAVContentKeySession::contentKeySession()
 {
     if (m_contentKeySession)
-        return m_contentKeySession.get();
+        return m_contentKeySession;
 
     if (!PAL::canLoad_AVFoundation_AVContentKeySystemFairPlayStreaming())
         return nil;
@@ -472,8 +479,34 @@ AVContentKeySession* CDMSessionAVContentKeySession::contentKeySession()
     lazyInitialize(m_contentKeySession, createContentKeySession(storageURL));
 
     [m_contentKeySession setDelegate:m_contentKeySessionDelegate.get() queue:m_delegateQueue->dispatchQueue()];
-    return m_contentKeySession.get();
+    return m_contentKeySession;
 }
+
+void CDMSessionAVContentKeySession::setInitData(SharedBuffer& initData)
+{
+    if (m_sourceBufferInitData)
+        return;
+    m_sourceBufferInitData = &initData;
+}
+
+String CDMSessionAVContentKeySession::storagePath() const
+{
+    if (!m_client)
+        return emptyString();
+
+    String storageDirectory = m_client->mediaKeysStorageDirectory();
+    if (storageDirectory.isEmpty())
+        return emptyString();
+
+    return FileSystem::pathByAppendingComponent(storageDirectory, "SecureStop.plist"_s);
+}
+
+#if !RELEASE_LOG_DISABLED
+WTFLogChannel& CDMSessionAVContentKeySession::logChannel() const
+{
+    return LogEME;
+}
+#endif
 
 }
 

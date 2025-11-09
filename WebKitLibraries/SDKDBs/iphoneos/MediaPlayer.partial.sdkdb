@@ -1591,7 +1591,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "MPChangeLanguageOptionSetting"},
     {"access": "public", "name": "MPErrorCode"},
@@ -1632,7 +1632,7 @@
     {"access": "public", "introduced": "11", "linkage": "exported", "name": "_$sSo27MPMusicPlayerPlayParametersCSE05MediaB0Mc"},
     {"access": "public", "introduced": "11", "linkage": "exported", "name": "_$sSo27MPMusicPlayerPlayParametersCSe05MediaB0Mc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

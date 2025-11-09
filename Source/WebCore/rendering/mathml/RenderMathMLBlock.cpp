@@ -116,7 +116,7 @@ LayoutUnit toUserUnits(const MathMLElement::Length& length, const RenderStyle& s
     case MathMLElement::LengthType::Em:
         return LayoutUnit(length.value * style.fontCascade().size());
     case MathMLElement::LengthType::Ex:
-        return LayoutUnit(length.value * style.metricsOfPrimaryFont().xHeight().value_or(0));
+        return LayoutUnit(length.value * style.metricsOfPrimaryFont().xHeight().value_or(0) * style.usedZoom());
     case MathMLElement::LengthType::MathUnit:
         return LayoutUnit(length.value * style.fontCascade().size() / 18);
     case MathMLElement::LengthType::Percentage:
@@ -277,15 +277,17 @@ void RenderMathMLBlock::adjustLayoutForBorderAndPadding()
 RenderMathMLBlock::SizeAppliedToMathContent RenderMathMLBlock::sizeAppliedToMathContent(LayoutPhase phase)
 {
     SizeAppliedToMathContent sizes;
+    auto& style = this->style();
+    auto usedZoom = style.usedZoomForLength();
     // FIXME: Resolve percentages.
     // https://github.com/w3c/mathml-core/issues/76
-    if (auto fixedLogicalWidth = style().logicalWidth().tryFixed())
-        sizes.logicalWidth = fixedLogicalWidth->resolveZoom(Style::ZoomNeeded { });
+    if (auto fixedLogicalWidth = style.logicalWidth().tryFixed())
+        sizes.logicalWidth = fixedLogicalWidth->resolveZoom(usedZoom);
 
     // FIXME: Resolve percentages.
     // https://github.com/w3c/mathml-core/issues/77
-    if (auto fixedLogicalHeight = style().logicalHeight().tryFixed(); phase == LayoutPhase::Layout && fixedLogicalHeight)
-        sizes.logicalHeight = fixedLogicalHeight->resolveZoom(Style::ZoomNeeded { });
+    if (auto fixedLogicalHeight = style.logicalHeight().tryFixed(); phase == LayoutPhase::Layout && fixedLogicalHeight)
+        sizes.logicalHeight = fixedLogicalHeight->resolveZoom(usedZoom);
 
     return sizes;
 }

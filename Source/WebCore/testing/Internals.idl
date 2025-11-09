@@ -912,8 +912,10 @@ enum ContentsFormat {
     undefined setCanvasNoiseInjectionSalt(HTMLCanvasElement element, unsigned long long salt);
     boolean doesCanvasHavePendingCanvasNoiseInjection(HTMLCanvasElement element);
 
+    long timerNestingLevel();
     // Query if a timer is currently throttled, to debug timer throttling.
     boolean isTimerThrottled(long timerHandle);
+    boolean isTimerAligned(long timerHandle);
 
     DOMString requestAnimationFrameThrottlingReasons();
     boolean areTimersThrottled();
@@ -1383,6 +1385,8 @@ enum ContentsFormat {
     
     [Conditional=APP_HIGHLIGHTS] readonly attribute sequence<DOMString> appHighlightContextMenuItemTitles;
     [Conditional=APP_HIGHLIGHTS] unsigned long numberOfAppHighlights();
+
+    readonly attribute sequence<AbstractRange> textExtractionHighlightRanges;
 
 #if defined(ENABLE_WEBXR) && ENABLE_WEBXR
     [Conditional=WEBXR] readonly attribute WebXRTest xrTest;

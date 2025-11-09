@@ -31,7 +31,7 @@
 #include <WebCore/Timer.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
-#include <wtf/RefCounted.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -39,7 +39,7 @@ namespace WebKit {
 
 class WebExtensionContext;
 
-class WebExtensionAlarm : public RefCounted<WebExtensionAlarm> {
+class WebExtensionAlarm : public RefCountedAndCanMakeWeakPtr<WebExtensionAlarm> {
     WTF_MAKE_NONCOPYABLE(WebExtensionAlarm);
     WTF_MAKE_TZONE_ALLOCATED(WebExtensionAlarm);
 

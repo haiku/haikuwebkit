@@ -380,7 +380,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo14NSItemProviderC22UniformTypeIdentifiersE26registerDataRepresentation3for10visibility11loadHandleryAC6UTTypeV_So0abH10VisibilityVSo10NSProgressCSgy10Foundation0G0VSg_s5Error_pSgtcYbctF"},
     {"access": "public", "linkage": "exported", "name": "_$sSo14NSItemProviderC22UniformTypeIdentifiersE26registerFileRepresentation3for10visibility11openInPlace11loadHandleryAC6UTTypeV_So0abH10VisibilityVSbSo10NSProgressCSgy10Foundation3URLVSg_Sbs5Error_pSgtcYbctF"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

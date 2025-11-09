@@ -135,28 +135,17 @@ public:
     // MARK: Shared conversions
 
     static Ref<CSSValue> convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType>);
-    static Ref<CSSValue> convertWebkitTextCombine(ExtractorState&, TextCombine);
-    static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
     static Ref<CSSValue> convertContain(ExtractorState&, OptionSet<Containment>);
-    static Ref<CSSValue> convertTextSpacingTrim(ExtractorState&, TextSpacingTrim);
-    static Ref<CSSValue> convertTextAutospace(ExtractorState&, TextAutospace);
     static Ref<CSSValue> convertPositionTryFallbacks(ExtractorState&, const FixedVector<PositionTryFallback>&);
-    static Ref<CSSValue> convertWillChange(ExtractorState&, const WillChangeData*);
     static Ref<CSSValue> convertLineBoxContain(ExtractorState&, OptionSet<Style::LineBoxContain>);
-    static Ref<CSSValue> convertWebkitRubyPosition(ExtractorState&, RubyPosition);
     static Ref<CSSValue> convertTouchAction(ExtractorState&, OptionSet<TouchAction>);
     static Ref<CSSValue> convertTextTransform(ExtractorState&, OptionSet<TextTransform>);
     static Ref<CSSValue> convertTextUnderlinePosition(ExtractorState&, OptionSet<TextUnderlinePosition>);
     static Ref<CSSValue> convertTextEmphasisPosition(ExtractorState&, OptionSet<TextEmphasisPosition>);
     static Ref<CSSValue> convertSpeakAs(ExtractorState&, OptionSet<SpeakAs>);
     static Ref<CSSValue> convertHangingPunctuation(ExtractorState&, OptionSet<HangingPunctuation>);
-    static Ref<CSSValue> convertPageBreak(ExtractorState&, BreakBetween);
-    static Ref<CSSValue> convertPageBreak(ExtractorState&, BreakInside);
-    static Ref<CSSValue> convertWebkitColumnBreak(ExtractorState&, BreakBetween);
-    static Ref<CSSValue> convertWebkitColumnBreak(ExtractorState&, BreakInside);
     static Ref<CSSValue> convertSelfOrDefaultAlignmentData(ExtractorState&, const StyleSelfAlignmentData&);
     static Ref<CSSValue> convertContentAlignmentData(ExtractorState&, const StyleContentAlignmentData&);
-    static Ref<CSSValue> convertPaintOrder(ExtractorState&, PaintOrder);
     static Ref<CSSValue> convertPositionAnchor(ExtractorState&, const std::optional<ScopedName>&);
     static Ref<CSSValue> convertPositionArea(ExtractorState&, const PositionArea&);
     static Ref<CSSValue> convertPositionArea(ExtractorState&, const std::optional<PositionArea>&);
@@ -173,10 +162,6 @@ public:
     // MARK: Font conversions
 
     static Ref<CSSValue> convertFontFamily(ExtractorState&, const AtomString&);
-
-    // MARK: Grid conversions
-
-    static Ref<CSSValue> convertGridAutoFlow(ExtractorState&, GridAutoFlow);
 };
 
 // MARK: - Strong value conversions
@@ -300,20 +285,6 @@ inline Ref<CSSValue> ExtractorConverter::convertMarginTrim(ExtractorState&, Opti
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertWebkitTextCombine(ExtractorState& state, TextCombine textCombine)
-{
-    if (textCombine == TextCombine::All)
-        return CSSPrimitiveValue::create(CSSValueHorizontal);
-    return convert(state, textCombine);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertImageOrientation(ExtractorState&, ImageOrientation imageOrientation)
-{
-    if (imageOrientation == ImageOrientation::Orientation::FromImage)
-        return CSSPrimitiveValue::create(CSSValueFromImage);
-    return CSSPrimitiveValue::create(CSSValueNone);
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertContain(ExtractorState&, OptionSet<Containment> containment)
 {
     if (!containment)
@@ -335,41 +306,6 @@ inline Ref<CSSValue> ExtractorConverter::convertContain(ExtractorState&, OptionS
         list.append(CSSPrimitiveValue::create(CSSValuePaint));
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
-
-inline Ref<CSSValue> ExtractorConverter::convertTextSpacingTrim(ExtractorState&, TextSpacingTrim textSpacingTrim)
-{
-    switch (textSpacingTrim.type()) {
-    case TextSpacingTrim::TrimType::SpaceAll:
-        return CSSPrimitiveValue::create(CSSValueSpaceAll);
-    case TextSpacingTrim::TrimType::Auto:
-        return CSSPrimitiveValue::create(CSSValueAuto);
-    case TextSpacingTrim::TrimType::TrimAll:
-        return CSSPrimitiveValue::create(CSSValueTrimAll);
-    default:
-        ASSERT_NOT_REACHED();
-        break;
-    }
-    return CSSPrimitiveValue::create(CSSValueSpaceAll);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertTextAutospace(ExtractorState&, TextAutospace textAutospace)
-{
-    if (textAutospace.isAuto())
-        return CSSPrimitiveValue::create(CSSValueAuto);
-    if (textAutospace.isNoAutospace())
-        return CSSPrimitiveValue::create(CSSValueNoAutospace);
-    if (textAutospace.isNormal())
-        return CSSPrimitiveValue::create(CSSValueNormal);
-
-    CSSValueListBuilder list;
-    if (textAutospace.hasIdeographAlpha())
-        list.append(CSSPrimitiveValue::create(CSSValueIdeographAlpha));
-    if (textAutospace.hasIdeographNumeric())
-        list.append(CSSPrimitiveValue::create(CSSValueIdeographNumeric));
-
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
 
 inline Ref<CSSValue> ExtractorConverter::convertPositionTryFallbacks(ExtractorState& state, const FixedVector<PositionTryFallback>& fallbacks)
 {
@@ -396,32 +332,6 @@ inline Ref<CSSValue> ExtractorConverter::convertPositionTryFallbacks(ExtractorSt
     return CSSValueList::createCommaSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertWillChange(ExtractorState&, const WillChangeData* willChangeData)
-{
-    if (!willChangeData || !willChangeData->numFeatures())
-        return CSSPrimitiveValue::create(CSSValueAuto);
-
-    CSSValueListBuilder list;
-    for (size_t i = 0; i < willChangeData->numFeatures(); ++i) {
-        auto feature = willChangeData->featureAt(i);
-        switch (feature.first) {
-        case WillChangeData::Feature::ScrollPosition:
-            list.append(CSSPrimitiveValue::create(CSSValueScrollPosition));
-            break;
-        case WillChangeData::Feature::Contents:
-            list.append(CSSPrimitiveValue::create(CSSValueContents));
-            break;
-        case WillChangeData::Feature::Property:
-            list.append(CSSPrimitiveValue::create(feature.second));
-            break;
-        case WillChangeData::Feature::Invalid:
-            ASSERT_NOT_REACHED();
-            break;
-        }
-    }
-    return CSSValueList::createCommaSeparated(WTFMove(list));
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertLineBoxContain(ExtractorState&, OptionSet<Style::LineBoxContain> lineBoxContain)
 {
     if (!lineBoxContain)
@@ -443,22 +353,6 @@ inline Ref<CSSValue> ExtractorConverter::convertLineBoxContain(ExtractorState&, 
     if (lineBoxContain.contains(LineBoxContain::InitialLetter))
         list.append(CSSPrimitiveValue::create(CSSValueInitialLetter));
     return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertWebkitRubyPosition(ExtractorState&, RubyPosition position)
-{
-    return CSSPrimitiveValue::create([&] {
-        switch (position) {
-        case RubyPosition::Over:
-            return CSSValueBefore;
-        case RubyPosition::Under:
-            return CSSValueAfter;
-        case RubyPosition::InterCharacter:
-        case RubyPosition::LegacyInterCharacter:
-            return CSSValueInterCharacter;
-        }
-        return CSSValueBefore;
-    }());
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertTouchAction(ExtractorState&, OptionSet<TouchAction> touchActions)
@@ -497,6 +391,11 @@ inline Ref<CSSValue> ExtractorConverter::convertTextTransform(ExtractorState&, O
 
     if (textTransform.contains(TextTransform::FullSizeKana))
         list.append(CSSPrimitiveValue::create(CSSValueFullSizeKana));
+
+    if (textTransform.contains(TextTransform::MathAuto)) {
+        ASSERT(list.isEmpty());
+        list.append(CSSPrimitiveValue::create(CSSValueMathAuto));
+    }
 
     if (list.isEmpty())
         return CSSPrimitiveValue::create(CSSValueNone);
@@ -572,39 +471,6 @@ inline Ref<CSSValue> ExtractorConverter::convertHangingPunctuation(ExtractorStat
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertPageBreak(ExtractorState&, BreakBetween value)
-{
-    if (value == BreakBetween::Page || value == BreakBetween::LeftPage || value == BreakBetween::RightPage
-        || value == BreakBetween::RectoPage || value == BreakBetween::VersoPage)
-        return CSSPrimitiveValue::create(CSSValueAlways); // CSS 2.1 allows us to map these to always.
-    if (value == BreakBetween::Avoid || value == BreakBetween::AvoidPage)
-        return CSSPrimitiveValue::create(CSSValueAvoid);
-    return CSSPrimitiveValue::create(CSSValueAuto);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertPageBreak(ExtractorState&, BreakInside value)
-{
-    if (value == BreakInside::Avoid || value == BreakInside::AvoidPage)
-        return CSSPrimitiveValue::create(CSSValueAvoid);
-    return CSSPrimitiveValue::create(CSSValueAuto);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertWebkitColumnBreak(ExtractorState&, BreakBetween value)
-{
-    if (value == BreakBetween::Column)
-        return CSSPrimitiveValue::create(CSSValueAlways);
-    if (value == BreakBetween::Avoid || value == BreakBetween::AvoidColumn)
-        return CSSPrimitiveValue::create(CSSValueAvoid);
-    return CSSPrimitiveValue::create(CSSValueAuto);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertWebkitColumnBreak(ExtractorState&, BreakInside value)
-{
-    if (value == BreakInside::Avoid || value == BreakInside::AvoidColumn)
-        return CSSPrimitiveValue::create(CSSValueAvoid);
-    return CSSPrimitiveValue::create(CSSValueAuto);
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertSelfOrDefaultAlignmentData(ExtractorState& state, const StyleSelfAlignmentData& data)
 {
     CSSValueListBuilder list;
@@ -655,41 +521,6 @@ inline Ref<CSSValue> ExtractorConverter::convertContentAlignmentData(ExtractorSt
     ASSERT(list.size() > 0);
     ASSERT(list.size() <= 3);
     return CSSValueList::createSpaceSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertPaintOrder(ExtractorState&, PaintOrder paintOrder)
-{
-    if (paintOrder == PaintOrder::Normal)
-        return CSSPrimitiveValue::create(CSSValueNormal);
-
-    CSSValueListBuilder paintOrderList;
-    switch (paintOrder) {
-    case PaintOrder::Normal:
-        ASSERT_NOT_REACHED();
-        break;
-    case PaintOrder::Fill:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueFill));
-        break;
-    case PaintOrder::FillMarkers:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueFill));
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueMarkers));
-        break;
-    case PaintOrder::Stroke:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueStroke));
-        break;
-    case PaintOrder::StrokeMarkers:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueStroke));
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueMarkers));
-        break;
-    case PaintOrder::Markers:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueMarkers));
-        break;
-    case PaintOrder::MarkersStroke:
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueMarkers));
-        paintOrderList.append(CSSPrimitiveValue::create(CSSValueStroke));
-        break;
-    }
-    return CSSValueList::createSpaceSeparated(WTFMove(paintOrderList));
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertPositionAnchor(ExtractorState& state, const std::optional<ScopedName>& positionAnchor)
@@ -951,24 +782,6 @@ inline Ref<CSSValue> ExtractorConverter::convertFontFamily(ExtractorState& state
     if (auto familyIdentifier = identifierForFamily(family))
         return CSSPrimitiveValue::create(familyIdentifier);
     return state.pool.createFontFamilyValue(family);
-}
-
-// MARK: - Grid conversions
-
-inline Ref<CSSValue> ExtractorConverter::convertGridAutoFlow(ExtractorState&, GridAutoFlow gridAutoFlow)
-{
-    ASSERT(gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionRow) || gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionColumn));
-
-    CSSValueListBuilder list;
-    if (gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionColumn))
-        list.append(CSSPrimitiveValue::create(CSSValueColumn));
-    else if (!(gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowAlgorithmDense)))
-        list.append(CSSPrimitiveValue::create(CSSValueRow));
-
-    if (gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowAlgorithmDense))
-        list.append(CSSPrimitiveValue::create(CSSValueDense));
-
-    return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
 } // namespace Style

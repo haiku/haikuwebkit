@@ -4489,59 +4489,71 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCall(unsigned callProfileIndex, Func
     return { };
 }
 
-void BBQJIT::emitIndirectCall(const char* opcode, unsigned callProfileIndex, const Value& callee, GPRReg boxedCallee, GPRReg calleeInstance, GPRReg calleeCode, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results)
+void BBQJIT::emitIndirectCall(const char* opcode, unsigned callProfileIndex, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results)
 {
-    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(calleeCode, IgnoreVectors));
+    ASSERT(importableFunction == GPRInfo::nonPreservedNonArgumentGPR1);
+    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(importableFunction, IgnoreVectors));
+    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(wasmScratchGPR, IgnoreVectors));
 
     const auto& callingConvention = wasmCallingConvention();
     CallInformation wasmCalleeInfo = callingConvention.callInformationFor(signature, CallRole::Caller);
     Checked<int32_t> calleeStackSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(wasmCalleeInfo.headerAndArgumentStackSizeInBytes);
     m_maxCalleeStackSize = std::max<int>(calleeStackSize, m_maxCalleeStackSize);
 
+    prepareForExceptions();
+    saveValuesAcrossCallAndPassArguments(arguments, wasmCalleeInfo, signature); // Keep in mind that this clobbers wasmScratchGPR and wasmScratchFPR.
+
+    // Now, all argument GPRs are set up, but
+    // 1. Callee save registers are kept, thus we can access GPRInfo::jitDataRegister.
+    // 2. boxedCallee is placed in GPRInfo::nonPreservedNonArgumentGPR1, so not clobbered via arguments set up.
+    // 3. wasmScratchGPR can be clobbered now.
+
+    JumpList afterCall;
+    m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfBoxedCallee()), wasmScratchGPR);
+    m_jit.storeWasmCalleeToCalleeCallFrame(wasmScratchGPR);
     if (m_profile->isMegamorphic(callProfileIndex)) {
+        m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfTargetInstance()), wasmScratchGPR);
         // Do a context switch if needed.
-        Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, calleeInstance, GPRInfo::wasmContextInstancePointer);
-        m_jit.move(calleeInstance, GPRInfo::wasmContextInstancePointer);
+        Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, wasmScratchGPR, GPRInfo::wasmContextInstancePointer);
+        m_jit.move(wasmScratchGPR, GPRInfo::wasmContextInstancePointer);
 #if USE(JSVALUE64)
         loadWebAssemblyGlobalState(wasmBaseMemoryPointer, wasmBoundsCheckingSizeRegister);
 #endif
         isSameInstanceBefore.link(m_jit);
     } else {
         JumpList profilingDone;
-        JumpList profilingGiveUp;
+        JumpList updateProfile;
 
-        // Do a context switch if needed.
-        Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, calleeInstance, GPRInfo::wasmContextInstancePointer);
-        m_jit.move(calleeInstance, GPRInfo::wasmContextInstancePointer);
+        m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfTargetInstance()), m_jit.scratchRegister());
+        Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, m_jit.scratchRegister(), GPRInfo::wasmContextInstancePointer);
+        m_jit.move(m_jit.scratchRegister(), GPRInfo::wasmContextInstancePointer);
 #if USE(JSVALUE64)
         loadWebAssemblyGlobalState(wasmBaseMemoryPointer, wasmBoundsCheckingSizeRegister);
 #endif
-        profilingGiveUp.append(m_jit.jump());
-
-        isSameInstanceBefore.link(&m_jit);
         m_jit.loadPtr(CCallHelpers::Address(GPRInfo::jitDataRegister, safeCast<int32_t>(BaselineData::offsetOfData() + sizeof(CallProfile) * callProfileIndex + CallProfile::offsetOfBoxedCallee())), wasmScratchGPR);
-        profilingDone.append(m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, boxedCallee));
-        profilingDone.append(m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, TrustedImmPtr(CallProfile::megamorphicCallee)));
-        profilingGiveUp.append(m_jit.branchTestPtr(CCallHelpers::NonZero, wasmScratchGPR));
-        m_jit.move(boxedCallee, wasmScratchGPR);
-        auto store = m_jit.jump();
+        m_jit.orPtr(TrustedImm32(CallProfile::Megamorphic), wasmScratchGPR);
+        updateProfile.append(m_jit.jump());
 
-        profilingGiveUp.link(m_jit);
-        m_jit.move(TrustedImm32(CallProfile::megamorphicCallee), wasmScratchGPR);
+        isSameInstanceBefore.link(m_jit);
+        m_jit.loadPtr(CCallHelpers::Address(GPRInfo::jitDataRegister, safeCast<int32_t>(BaselineData::offsetOfData() + sizeof(CallProfile) * callProfileIndex + CallProfile::offsetOfBoxedCallee())), m_jit.scratchRegister());
+        profilingDone.append(m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, m_jit.scratchRegister()));
+        profilingDone.append(m_jit.branchTestPtr(CCallHelpers::NonZero, m_jit.scratchRegister(), TrustedImm32(CallProfile::Megamorphic)));
 
-        store.link(m_jit);
-        m_jit.storePtr(wasmScratchGPR, CCallHelpers::Address(GPRInfo::jitDataRegister, safeCast<int32_t>(BaselineData::offsetOfData() + sizeof(CallProfile) * callProfileIndex + CallProfile::offsetOfBoxedCallee()))); // Give up for cross-instance indirect calls.
+        updateProfile.append(m_jit.branchTestPtr(CCallHelpers::Zero, m_jit.scratchRegister()));
+        m_jit.addPtr(TrustedImm32(safeCast<int32_t>(BaselineData::offsetOfData() + sizeof(CallProfile) * callProfileIndex)), GPRInfo::jitDataRegister, GPRInfo::wasmContextInstancePointer);
+        m_jit.nearCallThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(callPolymorphicCalleeGenerator).code()));
+        afterCall.append(m_jit.jump());
+
+        updateProfile.link(&m_jit);
+        m_jit.storePtr(wasmScratchGPR, CCallHelpers::Address(GPRInfo::jitDataRegister, safeCast<int32_t>(BaselineData::offsetOfData() + sizeof(CallProfile) * callProfileIndex + CallProfile::offsetOfBoxedCallee())));
         profilingDone.link(m_jit);
     }
 
-    m_jit.loadPtr(Address(calleeCode), calleeCode);
-    prepareForExceptions();
-    saveValuesAcrossCallAndPassArguments(arguments, wasmCalleeInfo, signature); // Keep in mind that this clobbers wasmScratchGPR and wasmScratchFPR.
-
-    // Why can we still call calleeCode after saveValuesAcrossCallAndPassArguments? CalleeCode is a scratch and not any argument GPR.
-    m_jit.call(calleeCode, WasmEntryPtrTag);
+    m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()), wasmScratchGPR);
+    m_jit.call(CCallHelpers::Address(wasmScratchGPR), WasmEntryPtrTag);
 
     // Our callee could have tail called someone else and changed SP so we need to restore it. Do this before restoring our results since results are stored at the top of the reserved stack space.
+    afterCall.link(m_jit);
     m_frameSizeLabels.append(m_jit.moveWithPatch(TrustedImmPtr(nullptr), wasmScratchGPR));
 #if CPU(ARM64)
     m_jit.subPtr(GPRInfo::callFrameRegister, wasmScratchGPR, MacroAssembler::stackPointerRegister);
@@ -4557,19 +4569,22 @@ void BBQJIT::emitIndirectCall(const char* opcode, unsigned callProfileIndex, con
     LOG_INSTRUCTION(opcode, callee, arguments, "=> ", results);
 }
 
-void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRReg calleeInstance, GPRReg calleeCode, const TypeDefinition& signature, ArgumentList& arguments)
+void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments)
 {
-    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(calleeCode, IgnoreVectors));
-    m_jit.loadPtr(Address(calleeCode), calleeCode);
+    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(importableFunction, IgnoreVectors));
+    ASSERT(!RegisterSetBuilder::argumentGPRs().contains(wasmScratchGPR, IgnoreVectors));
+
+    m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfBoxedCallee()), wasmScratchGPR);
+    m_jit.storeWasmCalleeToCalleeCallFrame(wasmScratchGPR);
 
     // Do a context switch if needed.
-    Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, calleeInstance, GPRInfo::wasmContextInstancePointer);
-    m_jit.move(calleeInstance, GPRInfo::wasmContextInstancePointer);
+    m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfTargetInstance()), wasmScratchGPR);
+    Jump isSameInstanceBefore = m_jit.branchPtr(RelationalCondition::Equal, wasmScratchGPR, GPRInfo::wasmContextInstancePointer);
+    m_jit.move(wasmScratchGPR, GPRInfo::wasmContextInstancePointer);
 #if USE(JSVALUE64)
     loadWebAssemblyGlobalState(wasmBaseMemoryPointer, wasmBoundsCheckingSizeRegister);
 #endif
     isSameInstanceBefore.link(&m_jit);
-    // calleeInstance is dead now.
 
     const auto& callingConvention = wasmCallingConvention();
     CallInformation callInfo = callingConvention.callInformationFor(signature, CallRole::Callee);
@@ -4607,7 +4622,7 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
     parameterLocations.append(Location::fromStack(tailCallStackOffsetFromFP + Checked<int>(sizeof(Register))));
 #elif CPU(ARM64) || CPU(ARM_THUMB2)
     auto preserved = callingConvention.argumentGPRs();
-    preserved.add(calleeCode, IgnoreVectors);
+    preserved.add(importableFunction, IgnoreVectors);
     if constexpr (isARM64E())
         preserved.add(callingConvention.prologueScratchGPRs[0], IgnoreVectors);
     ScratchScope<1, 0> scratches(*this, WTFMove(preserved));
@@ -4669,7 +4684,8 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
     UNREACHABLE_FOR_PLATFORM();
 #endif
 
-    m_jit.farJump(calleeCode, WasmEntryPtrTag);
+    m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()), importableFunction);
+    m_jit.farJump(CCallHelpers::Address(importableFunction), WasmEntryPtrTag);
     LOG_INSTRUCTION(opcode, callee, arguments);
 
     // Because we're returning, we need to consume all elements of the
@@ -4690,14 +4706,11 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned callProfileInd
     ASSERT(m_info.tables[tableIndex].type() == TableElementType::Funcref);
 
     Location calleeIndexLocation;
-    GPRReg calleeInstance;
-    GPRReg calleeCode;
-    GPRReg calleeRTT;
-
+    GPRReg importableFunction = GPRInfo::nonPreservedNonArgumentGPR1;
     {
-        ScratchScope<1, 0> calleeCodeScratch(*this, RegisterSetBuilder::argumentGPRs());
-        calleeCode = calleeCodeScratch.gpr(0);
-        calleeCodeScratch.unbindPreserved();
+        clobber(importableFunction);
+        ScratchScope<0, 0> importableFunctionScope(*this, importableFunction);
+        static_assert(GPRInfo::nonPreservedNonArgumentGPR0 == wasmScratchGPR);
 
         {
             ScratchScope<2, 0> scratches(*this);
@@ -4707,7 +4720,6 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned callProfileInd
             else
                 calleeIndexLocation = loadIfNecessary(calleeIndex);
 
-            GPRReg callableFunctionBufferLength = calleeCode;
             GPRReg callableFunctionBuffer = scratches.gpr(0);
 
             ASSERT(tableIndex < m_info.tableCount());
@@ -4717,59 +4729,56 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned callProfileInd
                 if (!tableIndex)
                     m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfCachedTable0Buffer()), callableFunctionBuffer);
                 else {
-                    m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfTable(m_info, tableIndex)), callableFunctionBufferLength);
+                    m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfTable(m_info, tableIndex)), wasmScratchGPR);
                     if (!tableInformation.isImport())
-                        m_jit.addPtr(TrustedImm32(FuncRefTable::offsetOfFunctionsForFixedSizedTable()), callableFunctionBufferLength, callableFunctionBuffer);
+                        m_jit.addPtr(TrustedImm32(FuncRefTable::offsetOfFunctionsForFixedSizedTable()), wasmScratchGPR, callableFunctionBuffer);
                     else
-                        m_jit.loadPtr(Address(callableFunctionBufferLength, FuncRefTable::offsetOfFunctions()), callableFunctionBuffer);
+                        m_jit.loadPtr(Address(wasmScratchGPR, FuncRefTable::offsetOfFunctions()), callableFunctionBuffer);
                 }
-                m_jit.move(TrustedImm32(tableInformation.initial()), callableFunctionBufferLength);
+                m_jit.move(TrustedImm32(tableInformation.initial()), wasmScratchGPR);
             } else {
                 if (!tableIndex) {
                     m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfCachedTable0Buffer()), callableFunctionBuffer);
-                    m_jit.load32(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfCachedTable0Length()), callableFunctionBufferLength);
+                    m_jit.load32(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfCachedTable0Length()), wasmScratchGPR);
                 } else {
-                    m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfTable(m_info, tableIndex)), callableFunctionBufferLength);
-                    m_jit.loadPtr(Address(callableFunctionBufferLength, FuncRefTable::offsetOfFunctions()), callableFunctionBuffer);
-                    m_jit.load32(Address(callableFunctionBufferLength, FuncRefTable::offsetOfLength()), callableFunctionBufferLength);
+                    m_jit.loadPtr(Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfTable(m_info, tableIndex)), wasmScratchGPR);
+                    m_jit.loadPtr(Address(wasmScratchGPR, FuncRefTable::offsetOfFunctions()), callableFunctionBuffer);
+                    m_jit.load32(Address(wasmScratchGPR, FuncRefTable::offsetOfLength()), wasmScratchGPR);
                 }
             }
             ASSERT(calleeIndexLocation.isGPR());
 
             JIT_COMMENT(m_jit, "Check the index we are looking for is valid");
-            recordJumpToThrowException(ExceptionType::OutOfBoundsCallIndirect, m_jit.branch32(RelationalCondition::AboveOrEqual, calleeIndexLocation.asGPR(), callableFunctionBufferLength));
+            recordJumpToThrowException(ExceptionType::OutOfBoundsCallIndirect, m_jit.branch32(RelationalCondition::AboveOrEqual, calleeIndexLocation.asGPR(), wasmScratchGPR));
 
-            // Neither callableFunctionBuffer nor callableFunctionBufferLength are used before any of these
+            // Neither callableFunctionBuffer nor wasmScratchGPR are used before any of these
             // are def'd below, so we can reuse the registers and save some pressure.
-            calleeInstance = scratches.gpr(0);
-            calleeRTT = scratches.gpr(1);
 
             static_assert(sizeof(TypeIndex) == sizeof(void*));
-            GPRReg calleeSignatureIndex = wasmScratchGPR;
 
             JIT_COMMENT(m_jit, "Compute the offset in the table index space we are looking for");
             if constexpr (hasOneBitSet(sizeof(FuncRefTable::Function))) {
                 m_jit.zeroExtend32ToWord(calleeIndexLocation.asGPR(), calleeIndexLocation.asGPR());
 #if CPU(ARM64)
-                m_jit.addLeftShift64(callableFunctionBuffer, calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), calleeSignatureIndex);
+                m_jit.addLeftShift64(callableFunctionBuffer, calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), importableFunction);
 #elif CPU(ARM)
-                m_jit.lshift32(calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), calleeSignatureIndex);
-                m_jit.addPtr(callableFunctionBuffer, calleeSignatureIndex);
+                m_jit.lshift32(calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), importableFunction);
+                m_jit.addPtr(callableFunctionBuffer, importableFunction);
 #else
-                m_jit.lshift64(calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), calleeSignatureIndex);
-                m_jit.addPtr(callableFunctionBuffer, calleeSignatureIndex);
+                m_jit.lshift64(calleeIndexLocation.asGPR(), TrustedImm32(getLSBSet(sizeof(FuncRefTable::Function))), importableFunction);
+                m_jit.addPtr(callableFunctionBuffer, importableFunction);
 #endif
             } else {
-                m_jit.move(TrustedImmPtr(sizeof(FuncRefTable::Function)), calleeSignatureIndex);
+                m_jit.move(TrustedImmPtr(sizeof(FuncRefTable::Function)), importableFunction);
 #if CPU(ARM64)
-                m_jit.multiplyAddZeroExtend32(calleeIndexLocation.asGPR(), calleeSignatureIndex, callableFunctionBuffer, calleeSignatureIndex);
+                m_jit.multiplyAddZeroExtend32(calleeIndexLocation.asGPR(), importableFunction, callableFunctionBuffer, importableFunction);
 #elif CPU(ARM)
-                m_jit.mul32(calleeIndexLocation.asGPR(), calleeSignatureIndex);
-                m_jit.addPtr(callableFunctionBuffer, calleeSignatureIndex);
+                m_jit.mul32(calleeIndexLocation.asGPR(), importableFunction);
+                m_jit.addPtr(callableFunctionBuffer, importableFunction);
 #else
                 m_jit.zeroExtend32ToWord(calleeIndexLocation.asGPR(), calleeIndexLocation.asGPR());
-                m_jit.mul64(calleeIndexLocation.asGPR(), calleeSignatureIndex);
-                m_jit.addPtr(callableFunctionBuffer, calleeSignatureIndex);
+                m_jit.mul64(calleeIndexLocation.asGPR(), importableFunction);
+                m_jit.addPtr(callableFunctionBuffer, importableFunction);
 #endif
             }
             consume(calleeIndex);
@@ -4779,30 +4788,25 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallIndirect(unsigned callProfileInd
             // error to use in the exception handler.
 
             auto targetRTT = TypeInformation::getCanonicalRTT(originalSignature.index());
-            static_assert(static_cast<ptrdiff_t>(WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation() + sizeof(void*)) == WasmToWasmImportableFunction::offsetOfRTT());
-            m_jit.loadPairPtr(calleeSignatureIndex, TrustedImm32(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()), calleeCode, calleeRTT);
+            m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfRTT()), wasmScratchGPR);
             if (originalSignature.isFinalType())
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, calleeRTT, TrustedImmPtr(targetRTT.ptr())));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, wasmScratchGPR, TrustedImmPtr(targetRTT.ptr())));
             else {
-                auto indexEqual = m_jit.branchPtr(CCallHelpers::Equal, calleeRTT, TrustedImmPtr(targetRTT.ptr()));
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchTestPtr(ResultCondition::Zero, calleeRTT));
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branch32(CCallHelpers::BelowOrEqual, Address(calleeRTT, RTT::offsetOfDisplaySizeExcludingThis()), TrustedImm32(targetRTT->displaySizeExcludingThis())));
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, CCallHelpers::Address(calleeRTT, RTT::offsetOfData() + targetRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)), TrustedImmPtr(targetRTT.ptr())));
+                auto indexEqual = m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, TrustedImmPtr(targetRTT.ptr()));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchTestPtr(ResultCondition::Zero, wasmScratchGPR));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branch32(CCallHelpers::BelowOrEqual, Address(wasmScratchGPR, RTT::offsetOfDisplaySizeExcludingThis()), TrustedImm32(targetRTT->displaySizeExcludingThis())));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, CCallHelpers::Address(wasmScratchGPR, RTT::offsetOfData() + targetRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)), TrustedImmPtr(targetRTT.ptr())));
 
                 indexEqual.link(&m_jit);
             }
-
-            m_jit.loadPtr(Address(calleeSignatureIndex, FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfBoxedCallee()), calleeRTT);
-            m_jit.storeWasmCalleeToCalleeCallFrame(calleeRTT);
-            m_jit.loadPtr(Address(calleeSignatureIndex, FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfTargetInstance()), calleeInstance);
         }
     }
 
     JIT_COMMENT(m_jit, "Finished loading callee code");
     if (callType == CallType::Call)
-        emitIndirectCall("CallIndirect", callProfileIndex, calleeIndex, calleeRTT, calleeInstance, calleeCode, signature, args, results);
+        emitIndirectCall("CallIndirect", callProfileIndex, calleeIndex, importableFunction, signature, args, results);
     else
-        emitIndirectTailCall("ReturnCallIndirect", calleeIndex, calleeInstance, calleeCode, signature, args);
+        emitIndirectTailCall("ReturnCallIndirect", calleeIndex, importableFunction, signature, args);
     return { };
 }
 

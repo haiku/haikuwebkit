@@ -32,19 +32,15 @@
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
-class GStreamerCapturerObserver;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::GStreamerCapturerObserver> : std::true_type { };
-}
-
-namespace WebCore {
 
 class GStreamerCapturerObserver : public CanMakeWeakPtr<GStreamerCapturerObserver> {
 public:
     virtual ~GStreamerCapturerObserver();
+
+    void ref() const { virtualRef(); }
+    void deref() const { virtualDeref(); }
+    virtual void virtualRef() const = 0;
+    virtual void virtualDeref() const = 0;
 
     virtual void sourceCapsChanged(const GstCaps*) { }
     virtual void captureEnded() { }

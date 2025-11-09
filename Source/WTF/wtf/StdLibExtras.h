@@ -1017,32 +1017,6 @@ bool equalSpans(std::span<T, TExtent> a, std::span<U, UExtent> b)
     return !memcmp(a.data(), b.data(), a.size_bytes()); // NOLINT
 }
 
-#if !HAVE(MEMMEM)
-
-inline const void* memmem(const void* haystack, size_t haystackLength, const void* needle, size_t needleLength)
-{
-    if (!needleLength)
-        return haystack;
-
-    if (haystackLength < needleLength)
-        return nullptr;
-
-    auto haystackSpan = unsafeMakeSpan(static_cast<const uint8_t*>(haystack), haystackLength);
-    auto needleSpan = unsafeMakeSpan(static_cast<const uint8_t*>(needle), needleLength);
-
-    size_t lastPossiblePosition = haystackLength - needleLength;
-
-    for (size_t i = 0; i <= lastPossiblePosition; ++i) {
-        auto candidateSpan = haystackSpan.subspan(i, needleLength);
-        if (equalSpans(candidateSpan, needleSpan))
-            return candidateSpan.data();
-    }
-
-    return nullptr;
-}
-
-#endif
-
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
 bool spanHasPrefix(std::span<T, TExtent> span, std::span<U, UExtent> prefix)
 {
@@ -1088,10 +1062,29 @@ size_t find(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 {
     static_assert(sizeof(T) == 1);
     static_assert(sizeof(T) == sizeof(U));
+
+#if !HAVE(MEMMEM)
+    if (needle.empty())
+        return 0;
+
+    if (haystack.size() < needle.size())
+        return notFound;
+
+    size_t lastPossiblePosition = haystack.size() - needle.size();
+
+    for (size_t i = 0; i <= lastPossiblePosition; ++i) {
+        auto candidateSpan = haystack.subspan(i, needle.size());
+        if (equalSpans(candidateSpan, needle))
+            return i;
+    }
+
+    return notFound;
+#else
     auto* result = static_cast<T*>(memmem(haystack.data(), haystack.size(), needle.data(), needle.size())); // NOLINT
     if (!result)
         return notFound;
     return result - haystack.data();
+#endif
 }
 
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
@@ -1099,7 +1092,7 @@ size_t contains(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 {
     static_assert(sizeof(T) == 1);
     static_assert(sizeof(T) == sizeof(U));
-    return !!memmem(haystack.data(), haystack.size(), needle.data(), needle.size()); // NOLINT
+    return find(haystack, needle) != notFound;
 }
 
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
@@ -1556,6 +1549,19 @@ struct SizedUnsignedTrait<8> {
 template<typename T>
 using SameSizeUnsignedInteger = SizedUnsignedTrait<sizeof(T)>::Type;
 
+// We use this primitive on ARM to express memory ordering efficiently.
+template<typename T>
+inline T* addOpaqueZero(T* pointer, unsigned opaqueZero)
+{
+    ASSERT(!opaqueZero); // Use a debug ASSERT only so the RELEASE compiler doesn't optimize out this function.
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+    // This is bounds-safe because opaqueZero is always zero.
+    return std::bit_cast<T*>(std::bit_cast<char*>(pointer) + opaqueZero);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+}
+
+
 } // namespace WTF
 
 #define WTFMove(value) std::move<WTF::CheckMoveParameter>(value)
@@ -1574,6 +1580,7 @@ template<typename T, typename U> constexpr auto forward_like_preserving_const(U&
 using WTF::GB;
 using WTF::KB;
 using WTF::MB;
+using WTF::addOpaqueZero;
 using WTF::approximateBinarySearch;
 using WTF::asBytes;
 using WTF::asByteSpan;
@@ -1605,9 +1612,6 @@ using WTF::makeUnique;
 using WTF::makeUniqueWithoutFastMallocCheck;
 using WTF::makeUniqueWithoutRefCountedCheck;
 using WTF::memcpySpan;
-#if !HAVE(MEMMEM)
-using WTF::memmem;
-#endif
 using WTF::memmoveSpan;
 using WTF::memsetSpan;
 using WTF::mergeDeduplicatedSorted;

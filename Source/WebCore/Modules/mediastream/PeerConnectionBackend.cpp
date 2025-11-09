@@ -327,12 +327,12 @@ struct MediaStreamAndTrackItem {
 static void setAssociatedRemoteStreams(RTCRtpReceiver& receiver, const PeerConnectionBackend::TransceiverState& state, Vector<MediaStreamAndTrackItem>& addList, Vector<MediaStreamAndTrackItem>& removeList)
 {
     for (auto& currentStream : receiver.associatedStreams()) {
-        if (currentStream && !std::ranges::any_of(state.receiverStreams, [&currentStream](auto& stream) { return stream->id() == currentStream->id(); }))
+        if (currentStream && std::ranges::none_of(state.receiverStreams, [&currentStream](auto& stream) { return stream->id() == currentStream->id(); }))
             removeList.append({ Ref { *currentStream }, Ref { receiver.track() } });
     }
 
     for (auto& stream : state.receiverStreams) {
-        if (!std::ranges::any_of(receiver.associatedStreams(), [&stream](auto& currentStream) { return stream->id() == currentStream->id(); }))
+        if (std::ranges::none_of(receiver.associatedStreams(), [&stream](auto& currentStream) { return stream->id() == currentStream->id(); }))
             addList.append({ stream, Ref { receiver.track() } });
     }
 
@@ -465,7 +465,7 @@ void PeerConnectionBackend::setRemoteDescriptionSucceeded(std::optional<Descript
         Vector<MediaStreamAndTrackItem> removeList;
         if (transceiverStates) {
             for (auto& transceiver : peerConnection.currentTransceivers()) {
-                if (!std::ranges::any_of(*transceiverStates, [&transceiver](auto& state) { return state.mid == transceiver->mid(); })) {
+                if (std::ranges::none_of(*transceiverStates, [&transceiver](auto& state) { return state.mid == transceiver->mid(); })) {
                     for (auto& stream : transceiver->receiver().associatedStreams()) {
                         if (stream)
                             removeList.append({ Ref { *stream }, Ref { transceiver->receiver().track() } });

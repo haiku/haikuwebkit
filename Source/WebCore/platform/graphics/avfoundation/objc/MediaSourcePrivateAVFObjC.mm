@@ -29,7 +29,7 @@
 #if ENABLE(MEDIA_SOURCE) && USE(AVFOUNDATION)
 
 #import "CDMInstance.h"
-#import "CDMSessionMediaSourceAVFObjC.h"
+#import "CDMSessionAVContentKeySession.h"
 #import "ContentType.h"
 #import "Logging.h"
 #import "MediaPlayerPrivateMediaSourceAVFObjC.h"
@@ -100,9 +100,6 @@ MediaSourcePrivate::AddStatus MediaSourcePrivateAVFObjC::addSourceBuffer(const C
 #endif
 
     auto newSourceBuffer = SourceBufferPrivateAVFObjC::create(*this, parser.releaseNonNull(), platformPlayer()->audioVideoRenderer());
-#if ENABLE(ENCRYPTED_MEDIA)
-    newSourceBuffer->setCDMInstance(m_cdmInstance.get());
-#endif
     newSourceBuffer->setResourceOwner(m_resourceOwner);
     outPrivate = newSourceBuffer.copyRef();
     newSourceBuffer->setMediaSourceDuration(duration());
@@ -159,22 +156,6 @@ void MediaSourcePrivateAVFObjC::setMediaPlayerReadyState(MediaPlayer::ReadyState
         player->setReadyState(readyState);
 }
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-void MediaSourcePrivateAVFObjC::sourceBufferKeyNeeded(SourceBufferPrivateAVFObjC* buffer, const SharedBuffer& initData)
-{
-    m_sourceBuffersNeedingSessions.append(buffer);
-
-    if (auto player = platformPlayer())
-        player->keyNeeded(initData);
-}
-
-void MediaSourcePrivateAVFObjC::keyAdded()
-{
-    for (auto& sourceBuffer : m_sourceBuffers)
-        sourceBuffer->attemptToDecrypt();
-}
-#endif
-
 bool MediaSourcePrivateAVFObjC::hasSelectedVideo() const
 {
     return std::ranges::any_of(m_activeSourceBuffers, [](auto* sourceBuffer) {
@@ -208,44 +189,11 @@ void MediaSourcePrivateAVFObjC::flushAndReenqueueActiveVideoSourceBuffers()
 }
 
 #if ENABLE(ENCRYPTED_MEDIA)
-void MediaSourcePrivateAVFObjC::cdmInstanceAttached(CDMInstance& instance)
-{
-    if (m_cdmInstance.get() == &instance)
-        return;
-
-    ASSERT(!m_cdmInstance);
-    m_cdmInstance = instance;
-    for (auto& sourceBuffer : m_sourceBuffers)
-        sourceBuffer->setCDMInstance(&instance);
-}
-
-void MediaSourcePrivateAVFObjC::cdmInstanceDetached(CDMInstance& instance)
-{
-    ASSERT_UNUSED(instance, m_cdmInstance && m_cdmInstance == &instance);
-    for (auto& sourceBuffer : m_sourceBuffers)
-        sourceBuffer->setCDMInstance(nullptr);
-
-    m_cdmInstance = nullptr;
-}
-
-void MediaSourcePrivateAVFObjC::attemptToDecryptWithInstance(CDMInstance& instance)
-{
-    ASSERT_UNUSED(instance, m_cdmInstance && m_cdmInstance == &instance);
-    for (auto& sourceBuffer : m_sourceBuffers)
-        sourceBuffer->attemptToDecrypt();
-}
-
 bool MediaSourcePrivateAVFObjC::waitingForKey() const
 {
     return std::ranges::any_of(m_sourceBuffers, [](auto& sourceBuffer) {
         return sourceBuffer->waitingForKey();
     });
-}
-
-void MediaSourcePrivateAVFObjC::outputObscuredDueToInsufficientExternalProtectionChanged(bool obscured)
-{
-    if (m_cdmInstance)
-        m_cdmInstance->setHDCPStatus(obscured ? CDMInstance::HDCPStatus::OutputRestricted : CDMInstance::HDCPStatus::Valid);
 }
 #endif
 

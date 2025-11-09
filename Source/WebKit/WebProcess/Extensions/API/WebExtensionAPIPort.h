@@ -147,8 +147,8 @@ private:
     RetainPtr<JSValue> m_error;
     std::optional<WebExtensionMessageSenderParameters> m_senderParameters;
 
-    RefPtr<WebExtensionAPIEvent> m_onMessage;
-    RefPtr<WebExtensionAPIEvent> m_onDisconnect;
+    const RefPtr<WebExtensionAPIEvent> m_onMessage;
+    const RefPtr<WebExtensionAPIEvent> m_onDisconnect;
 #endif
 };
 

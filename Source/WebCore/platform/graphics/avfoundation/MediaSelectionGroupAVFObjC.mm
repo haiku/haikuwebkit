@@ -81,7 +81,7 @@ int MediaSelectionOptionAVFObjC::index() const
         return 0;
 
     RetainPtr avMediaSelectionGroup = m_group->avMediaSelectionGroup();
-    return [[avMediaSelectionGroup options] indexOfObject:m_mediaSelectionOption.get()];
+    return [retainPtr([avMediaSelectionGroup options]) indexOfObject:m_mediaSelectionOption.get()];
 }
 
 AVAssetTrack* MediaSelectionOptionAVFObjC::assetTrack() const
@@ -149,10 +149,10 @@ void MediaSelectionGroupAVFObjC::updateOptions(const Vector<String>& characteris
         m_options.remove((__bridge CFTypeRef)removedAVOption);
     }
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    AVMediaSelectionOption* selectedOption = [m_playerItem selectedMediaOptionInMediaSelectionGroup:m_mediaSelectionGroup.get()];
+    RetainPtr<AVMediaSelectionOption> selectedOption = [m_playerItem selectedMediaOptionInMediaSelectionGroup:m_mediaSelectionGroup.get()];
 ALLOW_DEPRECATED_DECLARATIONS_END
     for (AVMediaSelectionOption* addedAVOption in addedAVOptions.get()) {
-        auto addedOption = MediaSelectionOptionAVFObjC::create(*this, addedAVOption);
+        Ref addedOption = MediaSelectionOptionAVFObjC::create(*this, addedAVOption);
         if (addedAVOption == selectedOption)
             m_selectedOption = addedOption.ptr();
         m_options.set((__bridge CFTypeRef)addedAVOption, WTFMove(addedOption));
@@ -178,12 +178,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (![filteredOptions count])
         return;
 
-    AVMediaSelectionOption* preferredOption = [filteredOptions objectAtIndex:0];
+    RetainPtr preferredOption = [filteredOptions objectAtIndex:0];
     if (m_selectedOption && m_selectedOption->avMediaSelectionOption() == preferredOption)
         return;
 
-    ASSERT(m_options.contains((__bridge CFTypeRef)preferredOption));
-    m_selectedOption = m_options.get((__bridge CFTypeRef)preferredOption);
+    ASSERT(m_options.contains((__bridge CFTypeRef)preferredOption.get()));
+    m_selectedOption = m_options.get((__bridge CFTypeRef)preferredOption.get());
     m_selectionTimer.startOneShot(0_s);
 }
 

@@ -383,7 +383,7 @@ public:
     virtual void setApproximatePosition(const FloatPoint& p) { m_approximatePosition = p; }
 
     // For platforms that move underlying platform layers on a different thread for scrolling; just update the GraphicsLayer state.
-    virtual void syncPosition(const FloatPoint& p) { m_position = p; }
+    virtual void syncPosition(const FloatPoint& p) { m_approximatePosition = std::nullopt; m_position = p; }
 
     // Anchor point: (0, 0) is top left, (1, 1) is bottom right. The anchor point
     // affects the origin of the transforms.
@@ -581,7 +581,7 @@ public:
     // For hosting this GraphicsLayer in a native layer hierarchy.
     virtual PlatformLayer* platformLayer() const { return nullptr; }
 #if PLATFORM(COCOA)
-    RetainPtr<CALayer> protectedPlatformLayer() const;
+    WEBCORE_EXPORT RetainPtr<CALayer> protectedPlatformLayer() const;
 #endif
 
     // Flippedness of the contents of this layer. Does not affect sublayer geometry.

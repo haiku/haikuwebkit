@@ -65,9 +65,13 @@
 #endif
 
 #define PAGE_ID (m_frame->pageID() ? m_frame->pageID()->toUInt64() : 0)
+#define PAGE_ID_WITH_THIS(thisPtr) (thisPtr->m_frame->pageID() ? thisPtr->m_frame->pageID()->toUInt64() : 0)
 #define FRAME_ID (m_frame->loader().frameID().toUInt64())
+#define FRAME_ID_WITH_THIS(thisPtr) (thisPtr->m_frame->loader().frameID().toUInt64())
+#define POLICYCHECKER_RELEASE_LOG_WITH_THIS(thisPtr, fmt, ...) RELEASE_LOG(Loading, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 "] PolicyChecker::" fmt, WTF::getPtr(thisPtr), PAGE_ID_WITH_THIS(thisPtr), FRAME_ID_WITH_THIS(thisPtr), ##__VA_ARGS__)
 #define POLICYCHECKER_RELEASE_LOG(fmt, ...) RELEASE_LOG(Loading, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 "] PolicyChecker::" fmt, this, PAGE_ID, FRAME_ID, ##__VA_ARGS__)
 #define POLICYCHECKER_RELEASE_LOG_FORWARDABLE(fmt, ...) RELEASE_LOG_FORWARDABLE(Loading, fmt, PAGE_ID, FRAME_ID, ##__VA_ARGS__)
+#define POLICYCHECKER_RELEASE_LOG_FORWARDABLE_WITH_THIS(thisPtr, fmt, ...) RELEASE_LOG_FORWARDABLE(Loading, fmt, PAGE_ID_WITH_THIS(thisPtr), FRAME_ID_WITH_THIS(thisPtr), ##__VA_ARGS__)
 
 namespace WebCore {
 
@@ -227,7 +231,6 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
         }
     }
     FramePolicyFunction decisionHandler = [
-        this,
         weakThis = WeakPtr { *this },
         function = WTFMove(function),
         request = ResourceRequest(request),
@@ -238,12 +241,13 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
         isInitialEmptyDocumentLoad,
         fromDownloadAttribute
     ] (PolicyAction policyAction) mutable {
-        if (!weakThis)
+        CheckedPtr checkedThis = weakThis.get();
+        if (!checkedThis)
             return function({ }, nullptr, NavigationPolicyDecision::IgnoreLoad);
 
-        m_delegateIsDecidingNavigationPolicy = false;
+        checkedThis->m_delegateIsDecidingNavigationPolicy = false;
 
-        Ref frame = m_frame.get();
+        Ref frame = checkedThis->m_frame.get();
         Ref frameLoader = frame->loader();
         switch (policyAction) {
         case PolicyAction::Download:
@@ -254,22 +258,26 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
                 document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not allowed to download due to sandboxing"_s);
             [[fallthrough]];
         case PolicyAction::Ignore:
-            POLICYCHECKER_RELEASE_LOG("checkNavigationPolicy: ignoring because policyAction from dispatchDecidePolicyForNavigationAction is Ignore");
+            POLICYCHECKER_RELEASE_LOG_WITH_THIS(checkedThis, "checkNavigationPolicy: ignoring because policyAction from dispatchDecidePolicyForNavigationAction is Ignore");
+            checkedThis = nullptr;
             return function({ }, nullptr, NavigationPolicyDecision::IgnoreLoad);
         case PolicyAction::LoadWillContinueInAnotherProcess:
-            POLICYCHECKER_RELEASE_LOG_FORWARDABLE(POLICYCHECKIER_CHECKNAVIGATIONPOLICY_CONTINUE_LOAD_IN_ANOTHER_PROCESS);
+            POLICYCHECKER_RELEASE_LOG_FORWARDABLE_WITH_THIS(checkedThis, POLICYCHECKER_CHECKNAVIGATIONPOLICY_CONTINUE_LOAD_IN_ANOTHER_PROCESS);
+            checkedThis = nullptr;
             function({ }, nullptr, NavigationPolicyDecision::LoadWillContinueInAnotherProcess);
             return;
         case PolicyAction::Use:
             if (!requestIsJavaScriptURL && !frameLoader->client().canHandleRequest(request)) {
-                handleUnimplementablePolicy(platformStrategies()->loaderStrategy()->cannotShowURLError(request));
-                POLICYCHECKER_RELEASE_LOG("checkNavigationPolicy: ignoring because frame loader client can't handle the request");
+                checkedThis->handleUnimplementablePolicy(platformStrategies()->loaderStrategy()->cannotShowURLError(request));
+                POLICYCHECKER_RELEASE_LOG_WITH_THIS(checkedThis, "checkNavigationPolicy: ignoring because frame loader client can't handle the request");
+                checkedThis = nullptr;
                 return function({ }, { }, NavigationPolicyDecision::IgnoreLoad);
             }
             if (isInitialEmptyDocumentLoad)
-                POLICYCHECKER_RELEASE_LOG_FORWARDABLE(POLICYCHECKIER_CHECKNAVIGATIONPOLICY_CONTINUE_INITIAL_EMPTY_DOCUMENT);
+                POLICYCHECKER_RELEASE_LOG_FORWARDABLE_WITH_THIS(checkedThis, POLICYCHECKER_CHECKNAVIGATIONPOLICY_CONTINUE_INITIAL_EMPTY_DOCUMENT);
             else
-                POLICYCHECKER_RELEASE_LOG("checkNavigationPolicy: continuing because this policyAction from dispatchDecidePolicyForNavigationAction is Use");
+                POLICYCHECKER_RELEASE_LOG_WITH_THIS(checkedThis, "checkNavigationPolicy: continuing because this policyAction from dispatchDecidePolicyForNavigationAction is Use");
+            checkedThis = nullptr;
             return function(WTFMove(request), formState, NavigationPolicyDecision::ContinueLoad);
         }
         ASSERT_NOT_REACHED();

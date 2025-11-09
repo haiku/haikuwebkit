@@ -40,7 +40,7 @@ TEST(WTF, CStringNullStringConstructor)
     ASSERT_EQ(stringFromCharPointer.data(), static_cast<const char*>(0));
     ASSERT_EQ(stringFromCharPointer.length(), zeroLength);
 
-    CString stringFromCharAndLength({ static_cast<const char*>(0), zeroLength });
+    CString stringFromCharAndLength(std::span { static_cast<const char*>(0), zeroLength });
     ASSERT_TRUE(stringFromCharAndLength.isNull());
     ASSERT_EQ(stringFromCharAndLength.data(), static_cast<const char*>(0));
     ASSERT_EQ(stringFromCharAndLength.length(), zeroLength);
@@ -69,7 +69,7 @@ TEST(WTF, CStringEmptyRegularConstructor)
     ASSERT_EQ(string.length(), strlen(referenceString));
     ASSERT_STREQ(referenceString, string.data());
 
-    CString stringWithLength({ referenceString, 6 });
+    CString stringWithLength(std::span { referenceString, 6 });
     ASSERT_FALSE(stringWithLength.isNull());
     ASSERT_EQ(stringWithLength.length(), strlen(referenceString));
     ASSERT_STREQ(referenceString, stringWithLength.data());
@@ -93,7 +93,7 @@ TEST(WTF, CStringUninitializedConstructor)
 TEST(WTF, CStringZeroTerminated)
 {
     const char* referenceString = "WebKit";
-    CString stringWithLength({ referenceString, 3 });
+    CString stringWithLength(std::span { referenceString, 3 });
     ASSERT_EQ(stringWithLength.data()[3], 0);
 }
 
@@ -195,3 +195,56 @@ TEST(WTF, CStringComparison)
     ASSERT_FALSE(c == d);
     ASSERT_TRUE(c != d);
 }
+
+TEST(WTF, CStringStdStringInterop)
+{
+    // Null CString round-trip is lossy: null CStrings convert to empty std::strings that convert to empty CStrings.
+    {
+        CString a;
+        EXPECT_TRUE(a.isNull());
+        std::string stda;
+        EXPECT_EQ(a.toStdString(), stda);
+        CString b = stda;
+        EXPECT_NE(a, b);
+        EXPECT_EQ(b.length(), 0u);
+        EXPECT_FALSE(b.isNull());
+    }
+
+    // Non-null string round-trip is exact.
+    constexpr ASCIILiteral inputs[] = {
+        ""_s,
+        "some thing"_s,
+        "some\0thing"_s
+    };
+    for (auto& input : inputs) {
+        SCOPED_TRACE(::testing::Message() << "input: " << (input.characters() ? input.characters() : "nullptr"));
+        // As const char*.
+        {
+            CString a { input.characters() };
+            std::string stda { input.characters() };
+            EXPECT_EQ(a.toStdString(), stda);
+            CString b = stda;
+            EXPECT_EQ(a, b);
+        }
+        // As ASCIILiteral / span.
+        {
+            CString a { input };
+            auto inputSpan = input.span();
+            std::string stda { inputSpan.begin(), inputSpan.end() };
+            EXPECT_EQ(a.toStdString(), stda);
+            CString b = stda;
+            EXPECT_EQ(a, b);
+        }
+    }
+
+    // Explict length strings, i.e. strings with nul chars inside, are exact.
+    {
+        auto inputSpan = unsafeMakeSpan("some\0thing", 10);
+        CString a { inputSpan };
+        EXPECT_EQ(a.length(), 10u);
+        std::string stda { inputSpan.begin(), inputSpan.end() };
+        EXPECT_EQ(stda.length(), 10u);
+        EXPECT_EQ(a.toStdString(), stda);
+    }
+}
+

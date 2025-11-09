@@ -47,8 +47,10 @@
 #include "DeprecatedGlobalSettings.h"
 #include "DocumentFragment.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
 #include "DocumentQuirks.h"
 #include "DocumentType.h"
+#include "DocumentView.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "EditorClient.h"
@@ -197,11 +199,29 @@ void removeSubresourceURLAttributes(Ref<DocumentFragment>&& fragment, Function<b
         element->removeAttribute(attribute);
 }
 
-Ref<Page> createPageForSanitizingWebContent()
+Ref<Page> createPageForSanitizingWebContent(Document* destinationDocument)
 {
+    bool useDarkAppearance = false;
+    bool useElevatedUserInterfaceLevel = false;
+
+    if (destinationDocument) {
+        if (RefPtr destinationPage = destinationDocument->page()) {
+            bool documentNeedsDarkAppearance = [&] {
+                if (RefPtr destinationFrameView = destinationDocument->view())
+                    return destinationFrameView->useDarkAppearance();
+
+                return false;
+            }();
+
+            useDarkAppearance = documentNeedsDarkAppearance && destinationPage->useDarkAppearance();
+            useElevatedUserInterfaceLevel = destinationPage->useElevatedUserInterfaceLevel();
+        }
+    }
+
     auto pageConfiguration = pageConfigurationWithEmptyClients(std::nullopt, PAL::SessionID::defaultSessionID());
     
     Ref page = Page::create(WTFMove(pageConfiguration));
+    page->setUseColorAppearance(useDarkAppearance, useElevatedUserInterfaceLevel);
 #if ENABLE(VIDEO)
     page->settings().setMediaEnabled(false);
 #endif
@@ -218,7 +238,7 @@ Ref<Page> createPageForSanitizingWebContent()
     frame->init();
 
     FrameLoader& loader = frame->loader();
-    static constexpr ASCIILiteral markup = "<!DOCTYPE html><html><body></body></html>"_s;
+    static constexpr ASCIILiteral markup = "<!DOCTYPE html><html><head><meta name='color-scheme' content='light dark'/></head><body></body></html>"_s;
     RefPtr activeDocumentLoader = loader.activeDocumentLoader();
     ASSERT(activeDocumentLoader);
     auto& writer = activeDocumentLoader->writer();
@@ -231,9 +251,9 @@ Ref<Page> createPageForSanitizingWebContent()
     return page;
 }
 
-String sanitizeMarkup(const String& rawHTML, MSOListQuirks msoListQuirks, std::optional<Function<void(DocumentFragment&)>> fragmentSanitizer)
+String sanitizeMarkup(const String& rawHTML, Document* destinationDocument, MSOListQuirks msoListQuirks, std::optional<Function<void(DocumentFragment&)>> fragmentSanitizer)
 {
-    Ref page = createPageForSanitizingWebContent();
+    Ref page = createPageForSanitizingWebContent(destinationDocument);
     RefPtr stagingDocument = page->localTopDocument();
     if (!stagingDocument)
         return String();

@@ -259,7 +259,6 @@ public:
     std::optional<MediaSessionGroupIdentifier> mediaSessionGroupIdentifier() const final;
 
     WEBCORE_EXPORT bool isActiveNowPlayingSession() const;
-    void isActiveNowPlayingSessionChanged() final;
 
 // DOM API
 // error state
@@ -737,6 +736,11 @@ public:
     uint32_t checkedPtrCountWithoutThreadCheck() const { return CanMakeCheckedPtr<Node>::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const { CanMakeCheckedPtr<Node>::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const { CanMakeCheckedPtr<Node>::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion()
+    {
+        PlatformMediaSessionClient::setDidBeginCheckedPtrDeletion();
+        CanMakeCheckedPtr<Node>::setDidBeginCheckedPtrDeletion();
+    }
 
     void forceStereoDecoding() { m_forceStereoDecoding = true; }
 protected:
@@ -1393,7 +1397,7 @@ private:
     RefPtr<Blob> m_blob;
     URLKeepingBlobAlive m_blobURLForReading;
     MediaProvider m_mediaProvider;
-    WTF::Observer<WebCoreOpaqueRoot()> m_opaqueRootProvider;
+    const Ref<WTF::Observer<WebCoreOpaqueRoot()>> m_opaqueRootProvider;
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
     bool m_hasNeedkeyListener { false };
@@ -1463,7 +1467,7 @@ private:
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     using DefaultSpatialTrackingLabelChangedObserver = WTF::Observer<void(String&&)>;
-    DefaultSpatialTrackingLabelChangedObserver m_defaultSpatialTrackingLabelChangedObserver;
+    const Ref<DefaultSpatialTrackingLabelChangedObserver> m_defaultSpatialTrackingLabelChangedObserver;
     String m_spatialTrackingLabel;
 #endif
 

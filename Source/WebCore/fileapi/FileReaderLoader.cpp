@@ -191,8 +191,8 @@ void FileReaderLoader::didReceiveResponse(ScriptExecutionContextIdentifier, std:
     if (!processResponse(response))
         return;
 
-    if (m_client)
-        m_client->didStartLoading();
+    if (RefPtr client = m_client.get())
+        client->didStartLoading();
 }
 
 void FileReaderLoader::didReceiveData(const SharedBuffer& buffer)
@@ -204,8 +204,8 @@ void FileReaderLoader::didReceiveData(const SharedBuffer& buffer)
         return;
 
     if (m_readType == ReadType::ReadAsBinaryChunks) {
-        if (m_client)
-            m_client->didReceiveBinaryChunk(buffer);
+        if (RefPtr client = m_client.get())
+            client->didReceiveBinaryChunk(buffer);
         return;
     }
 
@@ -248,8 +248,8 @@ void FileReaderLoader::didReceiveData(const SharedBuffer& buffer)
 
     m_isRawDataConverted = false;
 
-    if (m_client)
-        m_client->didReceiveData();
+    if (RefPtr client = m_client.get())
+        client->didReceiveData();
 }
 
 void FileReaderLoader::didFinishLoading(ScriptExecutionContextIdentifier, std::optional<ResourceLoaderIdentifier>, const NetworkLoadMetrics&)
@@ -259,8 +259,8 @@ void FileReaderLoader::didFinishLoading(ScriptExecutionContextIdentifier, std::o
         m_totalBytes = m_bytesLoaded;
     }
     cleanup();
-    if (m_client)
-        m_client->didFinishLoading();
+    if (RefPtr client = m_client.get())
+        client->didFinishLoading();
 }
 
 void FileReaderLoader::didFail(std::optional<ScriptExecutionContextIdentifier>, const ResourceError& error)
@@ -276,8 +276,8 @@ void FileReaderLoader::failed(ExceptionCode errorCode)
 {
     m_errorCode = errorCode;
     cleanup();
-    if (m_client)
-        m_client->didFail(errorCode);
+    if (RefPtr client = m_client.get())
+        client->didFail(errorCode);
 }
 
 ExceptionCode FileReaderLoader::toErrorCode(BlobResourceHandle::Error error)

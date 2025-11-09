@@ -44,6 +44,7 @@
 #include "FrameLoader.h"
 #include "HTMLFrameOwnerElement.h"
 #include "InspectorInstrumentation.h"
+#include "LegacySchemeRegistry.h"
 #include "LoaderStrategy.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
@@ -160,7 +161,7 @@ void ResourceLoader::init(ResourceRequest&& clientRequest, CompletionHandler<voi
         return completionHandler(false);
     }
 
-    if (!portAllowed(clientRequest.url())) {
+    if (!isPortAllowed(clientRequest.url())) {
         RESOURCELOADER_RELEASE_LOG("init: Cancelling load to a blocked port.");
         FrameLoader::reportBlockedLoadFailed(*frame, clientRequest.url());
         releaseResources();
@@ -777,6 +778,11 @@ ResourceError ResourceLoader::cannotShowURLError()
 ResourceError ResourceLoader::httpsUpgradeRedirectLoopError()
 {
     return platformStrategies()->loaderStrategy()->httpsUpgradeRedirectLoopError(m_request);
+}
+
+bool ResourceLoader::isPortAllowed(const URL& url)
+{
+    return portAllowed(url) || (url.port() && !url.port().value() && LegacySchemeRegistry::schemeIsHandledBySchemeHandler(url.protocol()));
 }
 
 void ResourceLoader::willSendRequestAsync(ResourceHandle* handle, ResourceRequest&& request, ResourceResponse&& redirectResponse, CompletionHandler<void(ResourceRequest&&)>&& completionHandler)

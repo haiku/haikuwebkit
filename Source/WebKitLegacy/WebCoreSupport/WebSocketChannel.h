@@ -69,6 +69,10 @@ public:
     static Ref<WebSocketChannel> create(Document& document, WebSocketChannelClient& client, SocketProvider& provider) { return adoptRef(*new WebSocketChannel(document, client, provider)); }
     virtual ~WebSocketChannel();
 
+    // FileReaderLoaderClient.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     void send(std::span<const uint8_t> data);
 
     // ThreadableWebSocketChannel functions.
@@ -104,9 +108,6 @@ public:
     bool isConnected() const final { return m_handshake->mode() == WebSocketHandshake::Mode::Connected; }
     ResourceRequest clientHandshakeRequest(const CookieGetter&) const final;
     const ResourceResponse& serverHandshakeResponse() const final;
-
-    using RefCounted<WebSocketChannel>::ref;
-    using RefCounted<WebSocketChannel>::deref;
 
     Document* document();
     

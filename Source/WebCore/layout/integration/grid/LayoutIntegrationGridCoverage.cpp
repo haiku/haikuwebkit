@@ -99,7 +99,7 @@ static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid
     if (!renderGrid.firstInFlowChild())
         return AvoidanceReason::GridIsEmpty;
 
-    if (renderGridStyle->gridAutoFlow() != GridAutoFlow::AutoFlowRow)
+    if (renderGridStyle->gridAutoFlow() != RenderStyle::initialGridAutoFlow())
         return AvoidanceReason::GridHasNonInitialGridAutoFlow;
 
     if (!renderGridStyle->rowGap().isNormal() || !renderGridStyle->columnGap().isNormal())

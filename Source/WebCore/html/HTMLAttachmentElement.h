@@ -137,14 +137,14 @@ private:
 
     Vector<uint8_t> m_iconForWideLayout;
 
-    RefPtr<HTMLImageElement> m_imageElement;
-    RefPtr<HTMLElement> m_containerElement;
-    RefPtr<HTMLElement> m_placeholderElement;
-    RefPtr<HTMLElement> m_progressElement;
-    RefPtr<HTMLElement> m_informationBlock;
-    RefPtr<HTMLElement> m_actionTextElement;
-    RefPtr<HTMLElement> m_titleElement;
-    RefPtr<HTMLElement> m_subtitleElement;
+    const RefPtr<HTMLImageElement> m_imageElement;
+    const RefPtr<HTMLElement> m_containerElement;
+    const RefPtr<HTMLElement> m_placeholderElement;
+    const RefPtr<HTMLElement> m_progressElement;
+    const RefPtr<HTMLElement> m_informationBlock;
+    const RefPtr<HTMLElement> m_actionTextElement;
+    const RefPtr<HTMLElement> m_titleElement;
+    const RefPtr<HTMLElement> m_subtitleElement;
     RefPtr<HTMLElement> m_saveArea;
     RefPtr<HTMLElement> m_saveButton;
     mutable RefPtr<DOMRectReadOnly> m_saveButtonClientRect;

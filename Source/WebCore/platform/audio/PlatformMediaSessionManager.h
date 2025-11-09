@@ -35,7 +35,7 @@ struct MediaConfiguration;
 struct NowPlayingInfo;
 struct NowPlayingMetadata;
 
-class PlatformMediaSessionManager : public MediaSessionManagerInterface
+class WEBCORE_EXPORT PlatformMediaSessionManager : public MediaSessionManagerInterface
 {
     WTF_MAKE_TZONE_ALLOCATED(PlatformMediaSessionManager);
 public:

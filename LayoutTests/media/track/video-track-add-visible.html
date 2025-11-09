@@ -12,7 +12,7 @@
         run('track.mode = "showing"');
         run('cue = new VTTCue(0, video.duration, "cue text")');
         run('track.addCue(cue)');
-        await testExpectedEventually('internals.shadowRoot(video).querySelector(".media-controls-container").innerText', 'cue text');
+        await testExpectedEventually('internals.shadowRoot(video).textContent.includes("cue text")', true);
         endTest();
     });
     </script>

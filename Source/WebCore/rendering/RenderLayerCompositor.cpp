@@ -78,7 +78,6 @@
 #include "TransformState.h"
 #include "TranslateTransformOperation.h"
 #include "ViewTransition.h"
-#include "WillChangeData.h"
 #include <wtf/HexNumber.h>
 #include <wtf/MemoryPressureHandler.h>
 #include <wtf/ObjectIdentifier.h>
@@ -1241,7 +1240,7 @@ static bool canSkipComputeCompositingRequirementsForSubtree(const RenderLayer& l
 
 bool RenderLayerCompositor::allowBackingStoreDetachingForFixedPosition(RenderLayer& layer, const LayoutRect& absoluteBounds)
 {
-    ASSERT_UNUSED(layer, layer.behavesAsFixed() || layer.behavesAsSticky());
+    ASSERT_UNUSED(layer, layer.behavesAsFixed());
 
     // We'll allow detaching if the layer is outside the layout viewport. Fixed layers inside
     // the layout viewport can be revealed by async scrolling, so we want to pin their backing store.
@@ -1387,7 +1386,7 @@ void RenderLayerCompositor::computeCompositingRequirements(RenderLayer* ancestor
         layerWillComposite();
         currentState.subtreeIsCompositing = true;
         becameCompositedAfterDescendantTraversal = true;
-        if (layer.behavesAsFixed() || layer.behavesAsSticky())
+        if (layer.behavesAsFixed())
             allowsBackingStoreDetachingForFixed = allowBackingStoreDetachingForFixedPosition(layer, layerExtent.bounds);
     };
 
@@ -1397,7 +1396,7 @@ void RenderLayerCompositor::computeCompositingRequirements(RenderLayer* ancestor
         computeExtent(overlapMap, layer, layerExtent);
         currentState.ancestorHasTransformAnimation |= layerExtent.hasTransformAnimation;
 
-        if (!allowsBackingStoreDetachingForFixed && (layer.behavesAsFixed() || layer.behavesAsSticky()))
+        if (!allowsBackingStoreDetachingForFixed && layer.behavesAsFixed())
             currentState.ancestorAllowsBackingStoreDetachingForFixed = allowsBackingStoreDetachingForFixed = allowBackingStoreDetachingForFixedPosition(layer, layerExtent.bounds);
 
         // Too hard to compute animated bounds if both us and some ancestor is animating transform.
@@ -2861,15 +2860,17 @@ void RenderLayerCompositor::updateScrollLayerClipping()
     if (!layerForClipping)
         return;
 
-    auto layerSize = m_renderView.frameView().sizeForVisibleContent();
-    layerForClipping->setSize(layerSize);
-    layerForClipping->setPosition(positionForClipLayer());
+    Ref frameView = m_renderView.frameView();
+
+    auto layerRect = insetClipLayerRect();
+    layerForClipping->setSize(layerRect.size());
+    layerForClipping->setPosition(layerRect.location());
 
 #if ENABLE(SCROLLING_THREAD)
     if (layerForClipping == m_clipLayer) {
         EventRegion eventRegion;
         auto eventRegionContext = eventRegion.makeContext();
-        eventRegionContext.unite(FloatRoundedRect(FloatRect({ }, layerSize)), m_renderView, RenderStyle::defaultStyleSingleton());
+        eventRegionContext.unite(FloatRoundedRect(FloatRect({ }, layerRect.size())), m_renderView, RenderStyle::defaultStyleSingleton());
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
         eventRegionContext.copyInteractionRegionsToEventRegion(m_renderView.settings().interactionRegionMinimumCornerRadius());
 #endif
@@ -2878,12 +2879,13 @@ void RenderLayerCompositor::updateScrollLayerClipping()
 #endif
 }
 
-FloatPoint RenderLayerCompositor::positionForClipLayer() const
+FloatRect RenderLayerCompositor::insetClipLayerRect() const
 {
     Ref frameView = m_renderView.frameView();
 
-    auto clipLayerPosition = LocalFrameView::positionForInsetClipLayer(frameView->scrollPosition(), frameView->obscuredContentInsets());
-    return FloatPoint(frameView->insetForLeftScrollbarSpace() + clipLayerPosition.x(), clipLayerPosition.y());
+    auto insetClipLayerRect = LocalFrameView::insetClipLayerRect(frameView->scrollPosition(), frameView->obscuredContentInsets(), frameView->sizeForVisibleContent());
+    insetClipLayerRect.move(frameView->insetForLeftScrollbarSpace(), 0);
+    return insetClipLayerRect;
 }
 
 void RenderLayerCompositor::frameViewDidScroll()
@@ -3969,7 +3971,7 @@ bool RenderLayerCompositor::requiresCompositingForFilters(RenderLayerModelObject
 
 bool RenderLayerCompositor::requiresCompositingForWillChange(RenderLayerModelObject& renderer) const
 {
-    if (!renderer.style().willChange() || !renderer.style().willChange()->canTriggerCompositing())
+    if (!renderer.style().willChange().canTriggerCompositing())
         return false;
 
 #if ENABLE(FULLSCREEN_API)
@@ -3987,7 +3989,7 @@ bool RenderLayerCompositor::requiresCompositingForWillChange(RenderLayerModelObj
     if (is<RenderBox>(renderer))
         return true;
 
-    return renderer.style().willChange()->canTriggerCompositingOnInline();
+    return renderer.style().willChange().canTriggerCompositingOnInline();
 }
 
 bool RenderLayerCompositor::requiresCompositingForModel(RenderLayerModelObject& renderer) const
@@ -5144,7 +5146,7 @@ void RenderLayerCompositor::ensureRootLayer()
             }
 #endif
             // FIXME: m_scrollContainerLayer and m_clipLayer have similar roles here, but m_clipLayer has some special positioning to
-            // account for clipping and top content inset (see LocalFrameView::positionForInsetClipLayer()).
+            // account for clipping and top content inset (see LocalFrameView::insetClipLayerRect()).
             if (!m_scrollContainerLayer) {
                 m_clipLayer = GraphicsLayer::create(graphicsLayerFactory(), *this);
                 RefPtr clipLayer = m_clipLayer;

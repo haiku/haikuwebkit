@@ -28,9 +28,7 @@
 
 #pragma once
 
-#if defined(__OBJC__) && !defined(__clang_tapi__)
-#error Please use @autoreleasepool instead of AutodrainedPool.
-#endif
+#if !(defined(__OBJC__) && !defined(__clang_tapi__))
 
 #include <wtf/Noncopyable.h>
 
@@ -62,3 +60,5 @@ private:
 } // namespace WTF
 
 using WTF::AutodrainedPool;
+
+#endif // !(defined(__OBJC__) && !defined(__clang_tapi__))

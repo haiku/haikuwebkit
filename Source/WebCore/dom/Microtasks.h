@@ -34,6 +34,28 @@ class VM;
 
 namespace WebCore {
 
+class MicrotaskCheckpointScope final {
+    WTF_FORBID_HEAP_ALLOCATION;
+    WTF_MAKE_NONCOPYABLE(MicrotaskCheckpointScope);
+    WTF_MAKE_NONMOVABLE(MicrotaskCheckpointScope);
+public:
+    explicit MicrotaskCheckpointScope(EventLoop& eventLoop)
+    {
+        eventLoop.forEachAssociatedContext([this](auto& context) {
+            m_savedNestingLevels.set(context, context.timerNestingLevel());
+            context.setTimerNestingLevel(0);
+        });
+    }
+
+    ~MicrotaskCheckpointScope()
+    {
+        for (auto [context, savedNestingLevel] : m_savedNestingLevels)
+            Ref { context }->setTimerNestingLevel(savedNestingLevel);
+    }
+private:
+    WeakHashMap<ScriptExecutionContext, int> m_savedNestingLevels;
+};
+
 class WebCoreMicrotaskDispatcher : public JSC::MicrotaskDispatcher {
     WTF_MAKE_COMPACT_TZONE_ALLOCATED(WebCoreMicrotaskDispatcher);
 public:

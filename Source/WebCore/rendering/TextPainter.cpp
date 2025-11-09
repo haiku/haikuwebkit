@@ -164,17 +164,16 @@ void TextPainter::paintTextWithShadows(const Style::TextShadows* shadows, const 
 void TextPainter::paintTextAndEmphasisMarksIfNeeded(const TextRun& textRun, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset,
     const TextPaintStyle& paintStyle, const Style::TextShadows& shadow, const Style::AppleColorFilter& shadowColorFilter)
 {
-    if (paintStyle.paintOrder == PaintOrder::Normal) {
+    if (paintStyle.paintOrder.isNormal()) {
         // FIXME: Truncate right-to-left text correctly.
         paintTextWithShadows(&shadow, shadowColorFilter, m_font, textRun, boxRect, textOrigin, startOffset, endOffset, nullAtom(), 0, paintStyle.strokeWidth > 0);
     } else {
         auto textDrawingMode = m_context.textDrawingMode();
-        auto paintOrder = RenderStyle::paintTypesForPaintOrder(paintStyle.paintOrder);
         auto shadowToUse = &shadow;
 
-        for (auto order : paintOrder) {
-            switch (order) {
-            case PaintType::Fill: {
+        for (auto paintType : paintStyle.paintOrder) {
+            switch (paintType) {
+            case Style::PaintType::Fill: {
                 auto textDrawingModeWithoutStroke = textDrawingMode;
                 textDrawingModeWithoutStroke.remove(TextDrawingMode::Stroke);
                 m_context.setTextDrawingMode(textDrawingModeWithoutStroke);
@@ -183,7 +182,7 @@ void TextPainter::paintTextAndEmphasisMarksIfNeeded(const TextRun& textRun, cons
                 m_context.setTextDrawingMode(textDrawingMode);
                 break;
             }
-            case PaintType::Stroke: {
+            case Style::PaintType::Stroke: {
                 auto textDrawingModeWithoutFill = textDrawingMode;
                 textDrawingModeWithoutFill.remove(TextDrawingMode::Fill);
                 m_context.setTextDrawingMode(textDrawingModeWithoutFill);
@@ -192,7 +191,7 @@ void TextPainter::paintTextAndEmphasisMarksIfNeeded(const TextRun& textRun, cons
                 m_context.setTextDrawingMode(textDrawingMode);
             }
                 break;
-            case PaintType::Markers:
+            case Style::PaintType::Markers:
                 continue;
             }
         }

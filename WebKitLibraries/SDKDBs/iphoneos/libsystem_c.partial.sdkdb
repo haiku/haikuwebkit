@@ -1178,7 +1178,7 @@
     {"access": "public", "introduced": "7", "kind": "function", "linkage": "exported", "name": "_xprintf"},
     {"access": "public", "introduced": "7", "kind": "function", "linkage": "exported", "name": "_xprintf_exec"}
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "ACTION"},
     {"access": "public", "name": "BKT"},

@@ -8,10 +8,10 @@ PASS successfullyParsed is true
 TEST COMPLETE
 
 Testing box with CSS zoom on an ancestor
-PASS bounds.left.toFixed(2) is "18.00"
-PASS bounds.top.toFixed(2) is "150.00"
-PASS bounds.width.toFixed(2) is "40.00"
-PASS bounds.height.toFixed(2) is "50.00"
+PASS bounds.left is within 0.01 of 36
+PASS bounds.top is within 0.01 of 300
+PASS bounds.width is within 0.01 of 80
+PASS bounds.height is within 0.01 of 100
 
 Testing box without CSS zoom on an ancestor
 PASS bounds.left.toFixed(2) is "21.00"

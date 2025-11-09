@@ -35,6 +35,15 @@
 #include <wtf/glib/GRefPtr.h>
 
 namespace WebKit {
+class DOMObjectCacheFrameObserver;
+}
+
+namespace WTF {
+template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
+template<> struct IsDeprecatedWeakRefSmartPointerException<WebKit::DOMObjectCacheFrameObserver> : std::true_type { };
+}
+
+namespace WebKit {
 
 struct DOMObjectCacheData {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(DOMObjectCacheData);
@@ -102,7 +111,7 @@ public:
         if (window && (!m_domWindowObserver || m_domWindowObserver->window() != window)) {
             // New LocalDOMWindow, clear the cache and create a new DOMWindowObserver.
             clear();
-            m_domWindowObserver = makeUnique<DOMWindowObserver>(*window, *this);
+            m_domWindowObserver = DOMWindowObserver::create(*window, *this);
         }
 
         m_objects.append(&data);
@@ -110,14 +119,12 @@ public:
     }
 
 private:
-    class DOMWindowObserver final : public WebCore::LocalDOMWindowObserver {
+    class DOMWindowObserver final : public RefCounted<DOMWindowObserver>, public WebCore::LocalDOMWindowObserver {
         WTF_MAKE_TZONE_ALLOCATED_INLINE(DOMWindowObserver);
     public:
-        DOMWindowObserver(WebCore::LocalDOMWindow& window, DOMObjectCacheFrameObserver& frameObserver)
-            : m_window(window)
-            , m_frameObserver(frameObserver)
+        static Ref<DOMWindowObserver> create(WebCore::LocalDOMWindow& window, DOMObjectCacheFrameObserver& frameObserver)
         {
-            window.registerObserver(*this);
+            return adoptRef(*new DOMWindowObserver(window, frameObserver));
         }
 
         ~DOMWindowObserver()
@@ -128,14 +135,26 @@ private:
 
         WebCore::LocalDOMWindow* window() const { return m_window.get(); }
 
+        // WebCore::LocalDOMWindowObserver.
+        void ref() const final { RefCounted::ref(); }
+        void deref() const final { RefCounted::deref(); }
+
     private:
+        DOMWindowObserver(WebCore::LocalDOMWindow& window, DOMObjectCacheFrameObserver& frameObserver)
+            : m_window(window)
+            , m_frameObserver(frameObserver)
+        {
+            window.registerObserver(*this);
+        }
+
         void willDetachGlobalObjectFromFrame() override
         {
-            m_frameObserver.willDetachGlobalObjectFromFrame();
+            if (m_frameObserver)
+                m_frameObserver->willDetachGlobalObjectFromFrame();
         }
 
         WeakPtr<WebCore::LocalDOMWindow, WebCore::WeakPtrImplWithEventTargetData> m_window;
-        DOMObjectCacheFrameObserver& m_frameObserver;
+        WeakPtr<DOMObjectCacheFrameObserver> m_frameObserver;
     };
 
     static void objectFinalizedCallback(gpointer userData, GObject* finalizedObject)
@@ -185,7 +204,7 @@ private:
     }
 
     Vector<DOMObjectCacheData*, 8> m_objects;
-    std::unique_ptr<DOMWindowObserver> m_domWindowObserver;
+    RefPtr<DOMWindowObserver> m_domWindowObserver;
 };
 
 static DOMObjectCacheFrameObserver& getOrCreateDOMObjectCacheFrameObserver(WebCore::LocalFrame& frame)

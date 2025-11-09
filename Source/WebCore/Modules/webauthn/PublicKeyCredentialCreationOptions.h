@@ -56,7 +56,8 @@ struct PublicKeyCredentialCreationOptions {
     std::optional<unsigned> timeout;
     Vector<PublicKeyCredentialDescriptor> excludeCredentials;
     std::optional<AuthenticatorSelectionCriteria> authenticatorSelection;
-    AttestationConveyancePreference attestation;
+    String attestationString { "none"_s };
+    WEBCORE_EXPORT AttestationConveyancePreference attestation() const;
     mutable std::optional<AuthenticationExtensionsClientInputs> extensions;
 #endif // ENABLE(WEB_AUTHN)
 };

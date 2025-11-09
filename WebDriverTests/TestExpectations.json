@@ -1950,28 +1950,37 @@
         "subtests": {
             "test_frame_element": {
                 "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/226134"}}
+            },
+            "test_source_origin[cross_origin]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/205994"}}
             }
         }
     },
 
     "imported/w3c/webdriver/tests/classic/take_element_screenshot/screenshot.py": {
         "subtests": {
-            "test_no_top_browsing_context": {
-                "expected": {"wpe": {"status": ["FAIL"], "bug": "webkit.org/b/212950"}}
+            "test_no_such_element_with_shadow_root": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/230612"}}
             },
-            "test_no_browsing_context": {
-                "expected": {"wpe": {"status": ["FAIL"], "bug": "webkit.org/b/212950"}}
+            "test_no_such_element_from_other_window_handle[open]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/230612"}}
+            },
+            "test_no_such_element_from_other_window_handle[closed]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/230612"}}
+            },
+            "test_no_such_element_from_other_frame[open]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/230612"}}
+            },
+            "test_no_such_element_from_other_frame[closed]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/230612"}}
             }
         }
     },
 
-    "imported/w3c/webdriver/tests/classic/take_screenshot/screenshot.py": {
+    "imported/w3c/webdriver/tests/classic/take_screenshot/iframe.py": {
         "subtests": {
-            "test_no_top_browsing_context": {
-                "expected": {"wpe": {"status": ["FAIL"], "bug": "webkit.org/b/212950"}}
-            },
-            "test_no_browsing_context": {
-                "expected": {"wpe": {"status": ["FAIL"], "bug": "webkit.org/b/212950"}}
+            "test_source_origin[cross_origin]": {
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/205994"}}
             }
         }
     },

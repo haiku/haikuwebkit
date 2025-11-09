@@ -65,6 +65,9 @@ public:
     static Ref<VideoMediaSampleRenderer> create(WebSampleBufferVideoRendering *renderer) { return adoptRef(*new VideoMediaSampleRenderer(renderer)); }
     ~VideoMediaSampleRenderer();
 
+    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
+    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
+
     using Preferences = VideoRendererPreferences;
     bool prefersDecompressionSession() const;
     void setPreferences(Preferences);

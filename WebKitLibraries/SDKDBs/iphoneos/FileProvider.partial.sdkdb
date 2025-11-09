@@ -1044,7 +1044,7 @@
      "unavailable": true
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "16", "name": "NSFileProviderContentPolicy"},
     {"access": "public", "name": "NSFileProviderCreateItemOptions"},
@@ -1082,7 +1082,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo27NSFileProviderDomainVersionC04FileB0E1loiySbAB_ABtFZ"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sSo27NSFileProviderDomainVersionCSL04FileB0Mc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

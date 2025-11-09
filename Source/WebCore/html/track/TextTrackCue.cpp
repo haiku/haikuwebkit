@@ -336,15 +336,6 @@ void TextTrackCue::setPauseOnExit(bool value)
     m_pauseOnExit = value;
 }
 
-void TextTrackCue::dispatchEvent(Event& event)
-{
-    // When a TextTrack's mode is disabled: no cues are active, no events fired.
-    if (!track() || track()->mode() == TextTrack::Mode::Disabled)
-        return;
-
-    EventTarget::dispatchEvent(event);
-}
-
 bool TextTrackCue::isActive() const
 {
     return m_isActive && track() && track()->mode() != TextTrack::Mode::Disabled;

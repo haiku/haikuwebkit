@@ -67,6 +67,7 @@
 #include "WasmFaultSignalHandler.h"
 #include "WasmFunctionParser.h"
 #include "WasmIRGeneratorHelpers.h"
+#include "WasmInliningDecision.h"
 #include "WasmMemory.h"
 #include "WasmMergedProfile.h"
 #include "WasmOSREntryData.h"
@@ -384,8 +385,8 @@ public:
         return m_callSiteIndex;
     }
 
-    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, Module&, CalleeGroup&, const ModuleInformation&, IPIntCallee&, OptimizingJITCallee&, Procedure&, Vector<UnlinkedWasmToWasmCall>&, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode, CompilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry);
-    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, OMGIRGenerator& inlineCaller, OMGIRGenerator& inlineRoot, Module&, CalleeGroup&, unsigned functionIndex, IPIntCallee&, BasicBlock* returnContinuation, Vector<Value*> args);
+    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, Module&, CalleeGroup&, const ModuleInformation&, IPIntCallee&, InliningNode*, OptimizingJITCallee&, Procedure&, Vector<UnlinkedWasmToWasmCall>&, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode, CompilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry);
+    OMGIRGenerator(AbstractHeapRepository&, CompilationContext&, OMGIRGenerator& inlineCaller, OMGIRGenerator& inlineRoot, Module&, CalleeGroup&, unsigned functionIndex, IPIntCallee&, InliningNode*, BasicBlock* returnContinuation, Vector<Value*> args);
 
     void computeStackCheckSize(bool& needsOverflowCheck, int32_t& checkSize);
 
@@ -768,15 +769,15 @@ public:
 
     using ValueResults = Vector<Value*, 16>;
     void fillCallResults(Value* callResult, const TypeDefinition& signature, ValueResults&);
-    PartialResult WARN_UNUSED_RETURN emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ValueResults&, CallType = CallType::Call);
+    PartialResult WARN_UNUSED_RETURN emitDirectCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
     PartialResult WARN_UNUSED_RETURN emitIndirectCall(Value* calleeInstance, Value* calleeCode, Value* boxedCalleeCallee, const TypeDefinition&, const ArgumentList& args, ValueResults&, CallType = CallType::Call);
 
     Vector<ConstrainedValue> createCallConstrainedArgs(BasicBlock*, const CallInformation& wasmCalleeInfo, const ArgumentList&);
     auto createCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation&, const ArgumentList& tmpArgs) -> CallPatchpointData;
     auto createTailCallPatchpoint(BasicBlock*, const TypeDefinition&, const CallInformation& wasmCallerInfoAsCallee, const CallInformation& wasmCalleeInfoAsCallee, const ArgumentList& tmpArgSourceLocations, Vector<B3::ConstrainedValue> patchArgs) -> CallPatchpointData;
 
-    bool canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const;
-    PartialResult WARN_UNUSED_RETURN emitInlineDirectCall(FunctionCodeIndex calleeIndex, const TypeDefinition&, ArgumentList& args, ValueResults&);
+    InliningNode* canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const;
+    PartialResult WARN_UNUSED_RETURN emitInlineDirectCall(InliningNode*, FunctionCodeIndex calleeIndex, const TypeDefinition&, const ArgumentList& args, ValueResults&);
 
     void dump(const ControlStack&, const Stack* expressionStack);
     void setParser(FunctionParser<OMGIRGenerator>* parser) { m_parser = parser; };
@@ -978,6 +979,8 @@ private:
         return m_mode == MemoryMode::Signaling;
     }
 
+    Expected<Vector<ValueResults>, ErrorType> tryInliningPolymorphicCalls(unsigned callProfileIndex, Value* calleeInstance, Value* calleeCallee, const TypeDefinition& signature, const ArgumentList&, CallType, bool isTailCallRootCaller, BasicBlock* continuation);
+
     template<typename... Args>
     void traceValue(Type, Value*, Args&&... info);
     template<typename... Args>
@@ -995,7 +998,7 @@ private:
     const CompilationMode m_compilationMode;
     const FunctionCodeIndex m_functionIndex;
     const unsigned m_loopIndexForOSREntry { UINT_MAX };
-    std::unique_ptr<MergedProfile> m_profile;
+    InliningNode* m_inlining { nullptr };
 
     struct RootBlock {
         BasicBlock* block;
@@ -1013,8 +1016,6 @@ private:
     OMGIRGenerator* m_inlineParent { nullptr };
     Vector<Value*> m_inlinedArgs;
     Vector<Variable*> m_inlinedResults;
-    unsigned m_inlineDepth { 0 };
-    Checked<uint32_t> m_inlinedBytes { 0 };
 
     Vector<Variable*> m_locals;
     Vector<Variable*> m_stack;
@@ -1132,7 +1133,7 @@ void OMGIRGenerator::computeStackCheckSize(bool& needsOverflowCheck, int32_t& ch
     needsOverflowCheck = needsOverflowCheck || needUnderflowCheck;
 }
 
-OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, OMGIRGenerator& parentCaller, OMGIRGenerator& rootCaller, Module& module, CalleeGroup& calleeGroup, unsigned functionIndex, IPIntCallee& profiledCallee, BasicBlock* returnContinuation, Vector<Value*> args)
+OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, OMGIRGenerator& parentCaller, OMGIRGenerator& rootCaller, Module& module, CalleeGroup& calleeGroup, unsigned functionIndex, IPIntCallee& profiledCallee, InliningNode* inlining, BasicBlock* returnContinuation, Vector<Value*> args)
     : m_heaps(heaps)
     , m_context(context)
     , m_module(module)
@@ -1144,13 +1145,12 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
     , m_compilationMode(CompilationMode::OMGMode)
     , m_functionIndex(functionIndex)
     , m_loopIndexForOSREntry(-1)
-    , m_profile(module.createMergedProfile(profiledCallee))
+    , m_inlining(inlining)
     , m_proc(rootCaller.m_proc)
     , m_returnContinuation(returnContinuation)
     , m_inlineRoot(&rootCaller)
     , m_inlineParent(&parentCaller)
     , m_inlinedArgs(WTFMove(args))
-    , m_inlineDepth(parentCaller.m_inlineDepth + 1)
     , m_unlinkedWasmToWasmCalls(rootCaller.m_unlinkedWasmToWasmCalls)
     , m_directCallees(rootCaller.m_directCallees)
     , m_osrEntryScratchBufferSize(nullptr)
@@ -1170,7 +1170,7 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
         m_hasExceptionHandlers = true;
 }
 
-OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, Module& module, CalleeGroup& calleeGroup, const ModuleInformation& info, IPIntCallee& profiledCallee, OptimizingJITCallee& callee, Procedure& procedure, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode mode, CompilationMode compilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry)
+OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext& context, Module& module, CalleeGroup& calleeGroup, const ModuleInformation& info, IPIntCallee& profiledCallee, InliningNode* inlining, OptimizingJITCallee& callee, Procedure& procedure, Vector<UnlinkedWasmToWasmCall>& unlinkedWasmToWasmCalls, FixedBitVector& outgoingDirectCallees, unsigned& osrEntryScratchBufferSize, MemoryMode mode, CompilationMode compilationMode, unsigned functionIndex, unsigned loopIndexForOSREntry)
     : m_heaps(heaps)
     , m_context(context)
     , m_module(module)
@@ -1182,10 +1182,9 @@ OMGIRGenerator::OMGIRGenerator(AbstractHeapRepository& heaps, CompilationContext
     , m_compilationMode(compilationMode)
     , m_functionIndex(functionIndex)
     , m_loopIndexForOSREntry(loopIndexForOSREntry)
-    , m_profile(module.createMergedProfile(profiledCallee))
+    , m_inlining(inlining)
     , m_proc(procedure)
     , m_inlineRoot(this)
-    , m_inlinedBytes(m_info.functionWasmSize(m_functionIndex))
     , m_unlinkedWasmToWasmCalls(unlinkedWasmToWasmCalls)
     , m_directCallees(outgoingDirectCallees)
     , m_osrEntryScratchBufferSize(&osrEntryScratchBufferSize)
@@ -6025,52 +6024,19 @@ auto OMGIRGenerator::createTailCallPatchpoint(BasicBlock* block, const TypeDefin
     return { patchpoint, nullptr, WTFMove(prepareForCall) };
 }
 
-bool OMGIRGenerator::canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const
+InliningNode* OMGIRGenerator::canInline(FunctionSpaceIndex functionIndexSpace, unsigned callProfileIndex) const
 {
-    ASSERT(!m_inlinedBytes || !m_inlineParent);
-    if (!Options::useOMGInlining())
-        return false;
+    auto* result = m_inlining->callTarget(functionIndexSpace, callProfileIndex);
+    if (!result)
+        return nullptr;
 
-    size_t wasmSize = m_info.functionWasmSizeImportSpace(functionIndexSpace);
-    if (wasmSize >= Options::maximumWasmCalleeSizeForInlining())
-        return false;
+    if (result->depth() > 1 && !StackCheck(Thread::currentSingleton().stack(), StackBounds::DefaultReservedZone * 2).isSafeToRecurse())
+        return nullptr;
 
-    {
-        unsigned selfRecursionCount = 0;
-        for (auto* cursor = this; cursor; cursor = cursor->m_inlineParent) {
-            if (&cursor->m_info == &m_info && cursor->m_info.toSpaceIndex(cursor->m_functionIndex) == functionIndexSpace) {
-                ++selfRecursionCount;
-                if (selfRecursionCount >= Options::maximumWasmSelfRecursionDepthForInlining())
-                    return false;
-            }
-        }
-    }
-
-    // If this callsite is never used by IPInt and BBQ, we should skip inlining. Likely a dead code.
-    // FIXME: This is still very naive. We can forcefully inline if wasm byte size is
-    // too small (then call sequence can be larger than the inlined content).
-    // Also, we could eventually consider emitting OSR exit, and stop generating
-    // the rest of the code for this and subsequent basic blocks.
-    if (!m_profile->isCalled(callProfileIndex))
-        return false;
-
-    if (m_inlineDepth >= Options::maximumWasmDepthForInlining())
-        return false;
-
-    if (m_inlineRoot->m_inlinedBytes.value() >= Options::maximumWasmCallerSizeForInlining())
-        return false;
-
-    if (m_inlineDepth > 1 && !StackCheck(Thread::currentSingleton().stack(), StackBounds::DefaultReservedZone * 2).isSafeToRecurse())
-        return false;
-
-    // FIXME: There's no fundamental reason we can't inline these including imports.
-    if (m_info.callCanClobberInstance(functionIndexSpace))
-        return false;
-
-    return true;
+    return result;
 }
 
-auto OMGIRGenerator::emitInlineDirectCall(FunctionCodeIndex calleeFunctionIndex, const TypeDefinition& calleeSignature, ArgumentList& args, ValueResults& results) -> PartialResult
+auto OMGIRGenerator::emitInlineDirectCall(InliningNode* inlining, FunctionCodeIndex calleeFunctionIndex, const TypeDefinition& calleeSignature, const ArgumentList& args, ValueResults& results) -> PartialResult
 {
     Vector<Value*> getArgs;
 
@@ -6085,7 +6051,7 @@ auto OMGIRGenerator::emitInlineDirectCall(FunctionCodeIndex calleeFunctionIndex,
 
     const FunctionData& function = m_info.functions[calleeFunctionIndex];
     Ref<IPIntCallee> profiledCallee = m_calleeGroup.ipintCalleeFromFunctionIndexSpace(m_calleeGroup.toSpaceIndex(calleeFunctionIndex));
-    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_heaps, m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), continuation, WTFMove(getArgs)));
+    m_protectedInlineeGenerators.append(makeUnique<OMGIRGenerator>(m_heaps, m_context, *this, *m_inlineRoot, m_module, m_calleeGroup, calleeFunctionIndex, profiledCallee.get(), inlining, continuation, WTFMove(getArgs)));
     auto& irGenerator = *m_protectedInlineeGenerators.last();
     m_protectedInlineeParsers.append(makeUnique<FunctionParser<OMGIRGenerator>>(irGenerator, function.data, calleeSignature, m_info));
     auto& parser = *m_protectedInlineeParsers.last();
@@ -6117,7 +6083,7 @@ auto OMGIRGenerator::emitInlineDirectCall(FunctionCodeIndex calleeFunctionIndex,
     advanceCallSiteIndex();
     m_callee->addCodeOrigin(firstInlineCallSiteIndex, lastInlineCallSiteIndex, m_info, calleeFunctionIndex + m_numImportFunctions);
 
-    dataLogLnIf(WasmOMGIRGeneratorInternal::verboseInlining, "Inlining CallSiteIndex range: ", firstInlineCallSiteIndex, " -> ", lastInlineCallSiteIndex, " [", m_inlineDepth, "]");
+    dataLogLnIf(WasmOMGIRGeneratorInternal::verboseInlining, "Inlining CallSiteIndex range: ", firstInlineCallSiteIndex, " -> ", lastInlineCallSiteIndex, " [", inlining->depth(), "]");
 
     return { };
 }
@@ -6144,7 +6110,7 @@ auto OMGIRGenerator::addCall(unsigned callProfileIndex, FunctionSpaceIndex funct
     return { };
 }
 
-auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceIndex functionIndexSpace, const TypeDefinition& signature, ArgumentList& args, ValueResults& results, CallType callType) -> PartialResult
+auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceIndex functionIndexSpace, const TypeDefinition& signature, const ArgumentList& args, ValueResults& results, CallType callType) -> PartialResult
 {
     if (!m_info.isImportedFunctionFromFunctionIndexSpace(functionIndexSpace)) {
         // Record the callee so the callee knows to look for it in updateCallsitesToCallUs.
@@ -6262,11 +6228,12 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
         return { };
     }
 
-    if (callType == CallType::Call && canInline(functionIndexSpace, callProfileIndex)) {
-        auto functionIndex = m_info.toCodeIndex(functionIndexSpace);
-        dataLogLnIf(WasmOMGIRGeneratorInternal::verboseInlining, " inlining call to ", functionIndex, " from ", m_functionIndex, " depth ", m_inlineDepth);
-        m_inlineRoot->m_inlinedBytes += m_info.functionWasmSizeImportSpace(functionIndexSpace);
-        return emitInlineDirectCall(functionIndex, signature, args, results);
+    if (callType == CallType::Call) {
+        if (auto* inlining = canInline(functionIndexSpace, callProfileIndex)) {
+            auto functionIndex = m_info.toCodeIndex(functionIndexSpace);
+            dataLogLnIf(WasmOMGIRGeneratorInternal::verboseInlining, " inlining call to ", functionIndex, " from ", m_functionIndex, " depth ", inlining->depth());
+            return emitInlineDirectCall(inlining, functionIndex, signature, args, results);
+        }
     }
 
     // We do not need to store |this| with JS instance since,
@@ -6288,6 +6255,64 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
 
     return { };
 }
+
+auto OMGIRGenerator::tryInliningPolymorphicCalls(unsigned callProfileIndex, Value* calleeInstance, Value* calleeCallee, const TypeDefinition& signature, const ArgumentList& args, CallType callType, bool isTailCallRootCaller, BasicBlock* continuation) -> Expected<Vector<ValueResults>, ErrorType>
+{
+    if (callProfileIndex >= m_inlining->callSites().size())
+        return { };
+
+    auto& callSite = m_inlining->callSites()[callProfileIndex];
+    if (callSite.isEmpty())
+        return { };
+
+    Vector<ValueResults> fastValuesList;
+    BasicBlock* slowCase = m_proc.addBlock();
+    BasicBlock* calleeCheck = m_proc.addBlock();
+
+    Value* isSameContextInstance = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeInstance, instanceValue());
+    m_currentBlock->appendNewControlValue(m_proc, Branch, origin(), isSameContextInstance, FrequentedBlock(calleeCheck), FrequentedBlock(slowCase, FrequencyClass::Rare));
+    calleeCheck->addPredecessor(m_currentBlock);
+    slowCase->addPredecessor(m_currentBlock);
+
+    for (unsigned i = 0; i < callSite.size(); ++i) {
+        auto* inlining = callSite[i];
+        auto& callee = inlining->callee();
+
+        BasicBlock* nextCase = slowCase;
+        if ((i + 1) != callSite.size())
+            nextCase = m_proc.addBlock();
+        BasicBlock* directCall = m_proc.addBlock();
+
+        m_currentBlock = calleeCheck;
+        ValueResults fastValues;
+        Value* isSameCallee = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeCallee, constant(pointerType(), std::bit_cast<uintptr_t>(CalleeBits::boxNativeCallee(&const_cast<IPIntCallee&>(callee)))));
+        m_currentBlock->appendNewControlValue(m_proc, Branch, origin(), isSameCallee, FrequentedBlock(directCall), FrequentedBlock(nextCase));
+        directCall->addPredecessor(m_currentBlock);
+        nextCase->addPredecessor(m_currentBlock);
+
+        m_currentBlock = directCall;
+        auto result = emitDirectCall(callProfileIndex, callee.index(), signature, args, fastValues, callType);
+        if (!result.has_value()) [[unlikely]]
+            return makeUnexpected(result.error());
+
+        if (!isTailCallRootCaller) {
+            for (Value*& value : fastValues) {
+                auto* input = value;
+                value = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), input);
+            }
+            m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
+            continuation->addPredecessor(m_currentBlock);
+        }
+
+        calleeCheck = nextCase;
+        fastValuesList.append(WTFMove(fastValues));
+    }
+
+    m_currentBlock = slowCase;
+
+    return fastValuesList;
+}
+
 
 auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType) -> PartialResult
 {
@@ -6384,37 +6409,11 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
     Value* calleeInstance = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), callableFunction, safeCast<int32_t>(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfTargetInstance()));
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_targetInstance, calleeInstance);
 
-    ValueResults fastValues;
-    if (m_profile->isCalled(callProfileIndex)) {
-        if (auto* callee = m_profile->callee(callProfileIndex)) {
-            if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
-                BasicBlock* slowCase = m_proc.addBlock();
-                BasicBlock* directCall = m_proc.addBlock();
+    auto inliningResult = tryInliningPolymorphicCalls(callProfileIndex, calleeInstance, calleeCallee, signature, args, callType, isTailCallRootCaller, continuation);
+    if (!inliningResult.has_value()) [[unlikely]]
+        return makeUnexpected(WTFMove(inliningResult.error()));
 
-                Value* isSameContextInstance = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeInstance, instanceValue());
-                Value* isSameCallee = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeCallee, constant(pointerType(), std::bit_cast<uintptr_t>(CalleeBits::boxNativeCallee(callee))));
-                m_currentBlock->appendNewControlValue(m_proc, Branch, origin(), m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(), isSameContextInstance, isSameCallee), FrequentedBlock(directCall), FrequentedBlock(slowCase, FrequencyClass::Rare));
-                directCall->addPredecessor(m_currentBlock);
-                slowCase->addPredecessor(m_currentBlock);
-
-                m_currentBlock = directCall;
-                auto result = emitDirectCall(callProfileIndex, callee->index(), signature, args, fastValues, callType);
-                if (!result.has_value()) [[unlikely]]
-                    return result;
-
-                if (!isTailCallRootCaller) {
-                    for (Value*& value : fastValues) {
-                        auto* input = value;
-                        value = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), input);
-                    }
-                    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-                    continuation->addPredecessor(m_currentBlock);
-                }
-
-                m_currentBlock = slowCase;
-            }
-        }
-    }
+    auto fastValuesList = WTFMove(inliningResult.value());
 
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), callableFunction, safeCast<int32_t>(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_entrypointLoadLocation, calleeCodeLocation);
@@ -6491,9 +6490,9 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
             auto* slowValue = slowValues[i];
             auto* phi = m_currentBlock->appendNew<Value>(m_proc, Phi, slowValue->child(0)->type(), origin());
             slowValue->as<UpsilonValue>()->setPhi(phi);
-            if (!fastValues.isEmpty()) {
+            for (auto& fastValues : fastValuesList) {
                 auto* fastValue = fastValues[i];
-                fastValue->as<UpsilonValue>()->setPhi(phi);
+                fastValue->as<B3::UpsilonValue>()->setPhi(phi);
             }
             results.append(push(phi));
         }
@@ -6544,37 +6543,11 @@ auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition&
 
     BasicBlock* continuation = m_proc.addBlock();
 
-    ValueResults fastValues;
-    if (m_profile->isCalled(callProfileIndex)) {
-        if (auto* callee = m_profile->callee(callProfileIndex)) {
-            if (callee->compilationMode() == Wasm::CompilationMode::IPIntMode) {
-                BasicBlock* slowCase = m_proc.addBlock();
-                BasicBlock* directCall = m_proc.addBlock();
+    auto inliningResult = tryInliningPolymorphicCalls(callProfileIndex, calleeInstance, calleeCallee, signature, args, callType, isTailCallRootCaller, continuation);
+    if (!inliningResult.has_value()) [[unlikely]]
+        return makeUnexpected(WTFMove(inliningResult.error()));
 
-                Value* isSameContextInstance = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeInstance, instanceValue());
-                Value* isSameCallee = m_currentBlock->appendNew<Value>(m_proc, Equal, origin(), calleeCallee, constant(pointerType(), std::bit_cast<uintptr_t>(CalleeBits::boxNativeCallee(callee))));
-                m_currentBlock->appendNewControlValue(m_proc, B3::Branch, origin(), m_currentBlock->appendNew<Value>(m_proc, B3::BitAnd, origin(), isSameContextInstance, isSameCallee), FrequentedBlock(directCall), FrequentedBlock(slowCase));
-                directCall->addPredecessor(m_currentBlock);
-                slowCase->addPredecessor(m_currentBlock);
-
-                m_currentBlock = directCall;
-                auto result = emitDirectCall(callProfileIndex, callee->index(), signature, args, fastValues, callType);
-                if (!result.has_value()) [[unlikely]]
-                    return result;
-
-                if (!isTailCallRootCaller) {
-                    for (Value*& value : fastValues) {
-                        auto* input = value;
-                        value = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), input);
-                    }
-                    m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
-                    continuation->addPredecessor(m_currentBlock);
-                }
-
-                m_currentBlock = slowCase;
-            }
-        }
-    }
+    auto fastValuesList = WTFMove(inliningResult.value());
 
     Value* calleeCodeLocation = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), pointerOfWasmRef(callee), safeCast<int32_t>(WebAssemblyFunctionBase::offsetOfEntrypointLoadLocation()));
     m_heaps.decorateMemory(&m_heaps.WebAssemblyFunctionBase_entrypointLoadLocation, calleeCodeLocation);
@@ -6600,7 +6573,7 @@ auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition&
             auto* slowValue = slowValues[i];
             auto* phi = m_currentBlock->appendNew<Value>(m_proc, Phi, slowValue->child(0)->type(), origin());
             slowValue->as<B3::UpsilonValue>()->setPhi(phi);
-            if (!fastValues.isEmpty()) {
+            for (auto& fastValues : fastValuesList) {
                 auto* fastValue = fastValues[i];
                 fastValue->as<B3::UpsilonValue>()->setPhi(phi);
             }
@@ -6700,6 +6673,8 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
     Wasm::Thunks::singleton().stub(Wasm::catchInWasmThunkGenerator);
 
     auto result = makeUnique<InternalFunction>();
+    InliningDecision inliningDecision(module, profiledCallee);
+    inliningDecision.expand();
 
     AbstractHeapRepository heaps;
     compilationContext.wasmEntrypointJIT = makeUnique<CCallHelpers>();
@@ -6726,7 +6701,7 @@ Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileOMG(Compilati
     procedure.code().setForceIRCRegisterAllocation();
 
     result->outgoingJITDirectCallees = FixedBitVector(info.internalFunctionCount());
-    OMGIRGenerator irGenerator(heaps, compilationContext, module, calleeGroup, info, profiledCallee, callee, procedure, unlinkedWasmToWasmCalls, result->outgoingJITDirectCallees, result->osrEntryScratchBufferSize, mode, compilationMode, functionIndex, loopIndexForOSREntry);
+    OMGIRGenerator irGenerator(heaps, compilationContext, module, calleeGroup, info, profiledCallee, inliningDecision.root(), callee, procedure, unlinkedWasmToWasmCalls, result->outgoingJITDirectCallees, result->osrEntryScratchBufferSize, mode, compilationMode, functionIndex, loopIndexForOSREntry);
     FunctionParser<OMGIRGenerator> parser(irGenerator, function.data, signature, info);
     WASM_FAIL_IF_HELPER_FAILS(parser.parse());
 

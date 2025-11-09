@@ -27,25 +27,33 @@
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
 
+#include <WebCore/ProcessQualified.h>
+#include <WebCore/TimelineIdentifier.h>
 #include <WebCore/WebAnimationTime.h>
-#include <wtf/Ref.h>
+#include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebKit {
 
-class RemoteAnimationTimeline final : public RefCounted<RemoteAnimationTimeline> {
-    WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RemoteAnimationTimeline);
-public:
-    static Ref<RemoteAnimationTimeline> create(Seconds, MonotonicTime);
+using TimelineID = WebCore::ProcessQualified<WebCore::TimelineIdentifier>;
 
-    void updateCurrentTime(MonotonicTime);
+class RemoteAnimationTimeline : public RefCounted<RemoteAnimationTimeline> {
+    WTF_MAKE_TZONE_ALLOCATED(RemoteAnimationTimeline);
+public:
+    virtual ~RemoteAnimationTimeline() = default;
+
     const WebCore::WebAnimationTime& currentTime() const { return m_currentTime; }
+    const std::optional<WebCore::WebAnimationTime>& duration() const { return m_duration; }
+    const TimelineID& identifier() const { return m_identifier; }
+
+protected:
+    RemoteAnimationTimeline(TimelineID, std::optional<WebCore::WebAnimationTime> duration);
+
+    WebCore::WebAnimationTime m_currentTime;
 
 private:
-    RemoteAnimationTimeline(Seconds, WebCore::WebAnimationTime);
-
-    Seconds m_originTime;
-    WebCore::WebAnimationTime m_currentTime;
+    TimelineID m_identifier;
+    std::optional<WebCore::WebAnimationTime> m_duration;
 };
 
 } // namespace WebKit

@@ -62,11 +62,11 @@ bool HTMLMapElement::mapMouseEvent(LayoutPoint location, const LayoutSize& size,
 {
     RefPtr<HTMLAreaElement> defaultArea;
 
-    for (auto& area : descendantsOfType<HTMLAreaElement>(*this)) {
-        if (area.isDefault()) {
+    for (Ref area : descendantsOfType<HTMLAreaElement>(*this)) {
+        if (area->isDefault()) {
             if (!defaultArea)
-                defaultArea = area;
-        } else if (area.mapMouseEvent(location, size, result))
+                defaultArea = area.ptr();
+        } else if (area->mapMouseEvent(location, size, result))
             return true;
     }
     

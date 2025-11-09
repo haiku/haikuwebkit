@@ -48,10 +48,11 @@ public:
     explicit WorkerMessagingProxy(Worker&);
     virtual ~WorkerMessagingProxy();
 
-    uint32_t checkedPtrCount() const { return CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::checkedPtrCount(); }
-    uint32_t checkedPtrCountWithoutThreadCheck() const { return CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::checkedPtrCountWithoutThreadCheck(); }
-    void incrementCheckedPtrCount() const { CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::incrementCheckedPtrCount(); }
-    void decrementCheckedPtrCount() const { CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::decrementCheckedPtrCount(); }
+    uint32_t checkedPtrCount() const final { return CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeThreadSafeCheckedPtr<WorkerMessagingProxy>::setDidBeginCheckedPtrDeletion(); }
 
 private:
     // Implementations of WorkerGlobalScopeProxy.
@@ -99,6 +100,7 @@ private:
     void setAppBadge(std::optional<uint64_t>) final;
     
     RefPtr<ScriptExecutionContext> m_scriptExecutionContext;
+    Markable<ScriptExecutionContextIdentifier> m_scriptExecutionContextIdentifier;
     ScriptExecutionContextIdentifier m_loaderContextIdentifier;
     const Ref<WorkerInspectorProxy> m_inspectorProxy;
     RefPtr<WorkerUserGestureForwarder> m_userGestureForwarder;

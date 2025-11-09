@@ -53,8 +53,7 @@
               let errorThreshold = 4.8223e-2;
               should(
                   Math.abs(compressor.reduction),
-                  'Math.abs(compressor.reduction) ('
-                    + Math.abs(compressor.reduction) + ')')
+                  'Math.abs(compressor.reduction)')
                   .beLessThanOrEqualTo(errorThreshold);
               task.done();
             });

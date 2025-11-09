@@ -50,10 +50,10 @@ Ref<GameControllerHapticEngines> GameControllerHapticEngines::create(GCControlle
 }
 
 GameControllerHapticEngines::GameControllerHapticEngines(GCController *gamepad)
-    : m_leftHandleEngine([gamepad.haptics createEngineWithLocality:get_GameController_GCHapticsLocalityLeftHandleSingleton()])
-    , m_rightHandleEngine([gamepad.haptics createEngineWithLocality:get_GameController_GCHapticsLocalityRightHandleSingleton()])
-    , m_leftTriggerEngine([gamepad.haptics createEngineWithLocality:get_GameController_GCHapticsLocalityLeftTriggerSingleton()])
-    , m_rightTriggerEngine([gamepad.haptics createEngineWithLocality:get_GameController_GCHapticsLocalityRightTriggerSingleton()])
+    : m_leftHandleEngine([retainPtr(gamepad.haptics) createEngineWithLocality:get_GameController_GCHapticsLocalityLeftHandleSingleton()])
+    , m_rightHandleEngine([retainPtr(gamepad.haptics) createEngineWithLocality:get_GameController_GCHapticsLocalityRightHandleSingleton()])
+    , m_leftTriggerEngine([retainPtr(gamepad.haptics) createEngineWithLocality:get_GameController_GCHapticsLocalityLeftTriggerSingleton()])
+    , m_rightTriggerEngine([retainPtr(gamepad.haptics) createEngineWithLocality:get_GameController_GCHapticsLocalityRightTriggerSingleton()])
 {
 }
 

@@ -27,6 +27,7 @@
 
 #import "BindableResource.h"
 #import "CommandsMixin.h"
+#import "TextureOrTextureView.h"
 #import <wtf/FastMalloc.h>
 #import <wtf/HashMap.h>
 #import <wtf/HashSet.h>
@@ -52,6 +53,7 @@ class Device;
 class QuerySet;
 class RenderBundle;
 class RenderPipeline;
+class TextureOrTextureView;
 class TextureView;
 
 struct BindableResources;
@@ -122,7 +124,9 @@ private:
     bool runIndexBufferValidation(uint32_t firstInstance, uint32_t instanceCount);
     void runVertexBufferValidation(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance);
     void addResourceToActiveResources(const TextureView&, OptionSet<BindGroupEntryUsage>);
+    void addResourceToActiveResources(const TextureOrTextureView&, OptionSet<BindGroupEntryUsage>);
     void addResourceToActiveResources(const TextureView&, OptionSet<BindGroupEntryUsage>, WGPUTextureAspect);
+    void addResourceToActiveResources(const TextureOrTextureView&, OptionSet<BindGroupEntryUsage>, WGPUTextureAspect);
     void addResourceToActiveResources(const Texture&, OptionSet<BindGroupEntryUsage>);
     void addTextureToActiveResources(const void*, id<MTLResource>, OptionSet<BindGroupEntryUsage>, uint32_t baseMipLevel, uint32_t baseArrayLayer, WGPUTextureAspect);
     void addResourceToActiveResources(const void*, OptionSet<BindGroupEntryUsage>);
@@ -184,8 +188,8 @@ private:
     WGPURenderPassDescriptor m_descriptor;
     Vector<WGPURenderPassColorAttachment> m_descriptorColorAttachments;
     WGPURenderPassDepthStencilAttachment m_descriptorDepthStencilAttachment;
-    Vector<RefPtr<TextureView>> m_colorAttachmentViews;
-    RefPtr<TextureView> m_depthStencilView;
+    Vector<TextureOrTextureView> m_colorAttachmentViews;
+    std::optional<TextureOrTextureView> m_depthStencilView;
     struct BufferAndOffset {
         id<MTLBuffer> buffer { nil };
         uint64_t offset { 0 };

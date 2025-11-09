@@ -321,8 +321,9 @@ static NSDictionary *toWebAPI(const Vector<WebExtensionMatchedRuleParameters>& m
 
 void WebExtensionAPIDeclarativeNetRequest::getMatchedRules(NSDictionary *filter, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
 {
-    bool hasFeedbackPermission = extensionContext().hasPermission("declarativeNetRequestFeedback"_s);
-    bool hasActiveTabPermission = extensionContext().hasPermission("activeTab"_s);
+    Ref extensionContext = this->extensionContext();
+    bool hasFeedbackPermission = extensionContext->hasPermission("declarativeNetRequestFeedback"_s);
+    bool hasActiveTabPermission = extensionContext->hasPermission("activeTab"_s);
 
     if (!hasFeedbackPermission && !hasActiveTabPermission) {
         *outExceptionString = toErrorString(nullString(), nullString(), @"either the 'declarativeNetRequestFeedback' or 'activeTab' permission is required").createNSString().autorelease();
@@ -361,7 +362,7 @@ void WebExtensionAPIDeclarativeNetRequest::getMatchedRules(NSDictionary *filter,
         }
 
         callback->call(toWebAPI(result.value()));
-    }, extensionContext().identifier());
+    }, extensionContext->identifier());
 }
 
 void WebExtensionAPIDeclarativeNetRequest::isRegexSupported(NSDictionary *options, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)

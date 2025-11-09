@@ -1,4 +1,26 @@
 ================
+WebKitGTK 2.51.1
+================
+
+What's new in WebKitGTK 2.51.1?
+
+  - Use the GPU process for WebGL by default.
+  - Add initial API for web extensions.
+  - Add API to handle WebXR permission requests.
+  - Add new API to query the immersive session status.
+  - Improve text rendering performance
+  - Compute the layers tile size, using a different strategy depending on whether
+    GPU rendering is enabled.
+  - Add support for run loop observers that are now used to replace the layer flush
+    timer and properly implement the opportunistic task scheduler.
+  - Fix rendering fo gradients with hue interpolation method.
+  - Fix rendering of layers with fractional transforms.
+  - Fix pasting image data (like image/png) from the clipboard.
+  - Remove support for building with libsoup2.
+  - Fix several crashes and rendering issues.
+  - Translation updates: Bulgarian, Slovenian, Swedish.
+
+================
 WebKitGTK 2.49.4
 ================
 

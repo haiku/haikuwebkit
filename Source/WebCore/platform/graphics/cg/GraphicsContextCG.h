@@ -84,6 +84,7 @@ public:
     void strokeEllipse(const FloatRect& ellipse) final;
 
     bool isCALayerContext() const final;
+    bool knownToHaveFloatBasedBacking() const final;
 
     RenderingMode renderingMode() const final;
 

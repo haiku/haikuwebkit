@@ -33,6 +33,8 @@
 #include "ThreadableWebSocketChannel.h"
 
 #include "ContentRuleListResults.h"
+#include "Document.h"
+#include "FrameDestructionObserverInlines.h"
 #include "DocumentLoader.h"
 #include "DocumentPage.h"
 #include "DocumentQuirks.h"
@@ -112,7 +114,7 @@ std::optional<ResourceRequest> ThreadableWebSocketChannel::webSocketConnectReque
     request.setDomainForCachePartition(document.domainForCachePartition());
     request.setAllowCookies(validatedURL->areCookiesAllowed);
     request.setFirstPartyForCookies(document.firstPartyForCookies());
-    request.setHTTPHeaderField(HTTPHeaderName::Origin, document.securityOrigin().toString());
+    request.setHTTPHeaderField(HTTPHeaderName::Origin, document.protectedSecurityOrigin()->toString());
 
     if (RefPtr documentLoader = document.loader())
         request.setIsAppInitiated(documentLoader->lastNavigationWasAppInitiated());

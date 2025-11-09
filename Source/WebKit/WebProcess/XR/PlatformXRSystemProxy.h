@@ -47,7 +47,7 @@ public:
     PlatformXRSystemProxy(WebPage&);
     virtual ~PlatformXRSystemProxy();
 
-    void enumerateImmersiveXRDevices(CompletionHandler<void(const PlatformXR::Instance::DeviceList&)>&&);
+    void enumerateImmersiveXRDevices(CompletionHandler<void(const PlatformXR::DeviceList&)>&&);
     void requestPermissionOnSessionFeatures(const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList& /* granted */, const PlatformXR::Device::FeatureList& /* consentRequired */, const PlatformXR::Device::FeatureList& /* consentOptional */, const PlatformXR::Device::FeatureList& /* requiredFeaturesRequested */, const PlatformXR::Device::FeatureList& /* optionalFeaturesRequested */,  CompletionHandler<void(std::optional<PlatformXR::Device::FeatureList>&&)>&&);
     void initializeTrackingAndRendering(std::optional<WebCore::XRCanvasConfiguration>&&);
     void shutDownTrackingAndRendering();
@@ -76,7 +76,7 @@ private:
     void sessionDidEnd(XRDeviceIdentifier);
     void sessionDidUpdateVisibilityState(XRDeviceIdentifier, PlatformXR::VisibilityState);
 
-    PlatformXR::Instance::DeviceList m_devices;
+    PlatformXR::DeviceList m_devices;
     WeakRef<WebPage> m_page;
 };
 

@@ -54,6 +54,9 @@ public:
     void setTrackIndex(int index) { m_index = index; }
     void setAudioOutputDevice(const String&);
 
+    void ref() const final { AudioTrackPrivate::ref(); }
+    void deref() const final { AudioTrackPrivate::deref(); }
+
     MediaStreamTrackPrivate& streamTrack() { return m_streamTrack.get(); }
     Ref<MediaStreamTrackPrivate> protectedStreamTrack() { return m_streamTrack; }
 
@@ -82,6 +85,7 @@ private:
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     static RefPtr<AudioMediaStreamTrackRenderer> createRenderer(AudioTrackPrivateMediaStream&);
 

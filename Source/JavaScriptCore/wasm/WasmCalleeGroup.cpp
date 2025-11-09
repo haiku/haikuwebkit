@@ -165,12 +165,32 @@ RefPtr<JITCallee> CalleeGroup::tryGetReplacementConcurrently(FunctionCodeIndex f
 }
 
 #if ENABLE(WEBASSEMBLY_BBQJIT)
+RefPtr<BBQCallee> CalleeGroup::tryGetBBQCallee(FunctionCodeIndex functionIndex)
+{
+    if (m_optimizedCallees.isEmpty())
+        return nullptr;
+
+    // Do not use optimizedCalleesTuple. optimizedCalleesTuple adjusts the result with currently-installing Callee. But we do not want to handle it actually.
+    // We would like to peek the callee when it is stored into m_optimizedCallees without taking a lock.
+    auto* tuple = &m_optimizedCallees[functionIndex];
+
+    Locker bbqLocker { tuple->m_bbqCalleeLock };
+    RefPtr bbqCallee = tuple->m_bbqCallee.get();
+    if (!bbqCallee)
+        return nullptr;
+
+    if (tuple->m_bbqCallee.isStrong())
+        return bbqCallee;
+
+    return nullptr;
+}
+
 RefPtr<BBQCallee> CalleeGroup::tryGetBBQCalleeForLoopOSRConcurrently(VM& vm, FunctionCodeIndex functionIndex)
 {
     if (m_optimizedCallees.isEmpty())
         return nullptr;
 
-    // Do not use optimizedCalleesTuple. optimizedCalleesTuple handles currently-installing Callee. But we do not want to handle it actually.
+    // Do not use optimizedCalleesTuple. optimizedCalleesTuple adjusts the result with currently-installing Callee. But we do not want to handle it actually.
     // We would like to peek the callee when it is stored into m_optimizedCallees without taking a lock.
     auto* tuple = &m_optimizedCallees[functionIndex];
     RefPtr<BBQCallee> bbqCallee;

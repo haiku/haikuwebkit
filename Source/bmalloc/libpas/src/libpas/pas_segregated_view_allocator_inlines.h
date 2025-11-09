@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Apple Inc. All rights reserved.
+ * Copyright (c) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,8 @@
 #include "pas_segregated_page_inlines.h"
 #include "pas_segregated_partial_view.h"
 #include "pas_segregated_view.h"
+
+#if LIBPAS_ENABLED
 
 PAS_BEGIN_EXTERN_C;
 
@@ -451,5 +453,5 @@ pas_segregated_view_did_stop_allocating(pas_segregated_view view,
 
 PAS_END_EXTERN_C;
 
+#endif /* LIBPAS_ENABLED */
 #endif /* PAS_SEGREGATED_VIEW_ALLOCATOR_INLINES_H */
-

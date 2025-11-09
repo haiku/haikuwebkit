@@ -53,7 +53,7 @@ public:
         // We prefer a stable sort, and we don't want it to go off the rails if we see NaN. Also, the number
         // of successors is bounded. In fact, it currently cannot be more than 2. :-)
         bubbleSort(
-            m_successors.begin(), m_successors.end(),
+            m_successors.mutableSpan(),
             [] (BasicBlock* left, BasicBlock* right) {
                 return left->frequency() < right->frequency();
             });

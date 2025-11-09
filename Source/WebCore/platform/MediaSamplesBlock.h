@@ -51,6 +51,11 @@ public:
         std::optional<HdrMetadataType> hdrMetadataType { std::nullopt };
         uint32_t flags { };
         bool isSync() const { return flags & MediaSample::IsSync; }
+#if ENABLE(ENCRYPTED_MEDIA)
+        int32_t bytesOfClearDataCount { 0 };
+        RefPtr<SharedBuffer> cryptorIV { };
+        RefPtr<SharedBuffer> cryptorSubsampleAuxiliaryData { };
+#endif
     };
 
     using MediaSampleDataType = MediaSampleItem::MediaSampleDataType;

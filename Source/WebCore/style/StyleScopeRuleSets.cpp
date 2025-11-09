@@ -334,8 +334,21 @@ static Vector<InvalidationRuleSet>* ensureInvalidationRuleSets(const KeyType& ke
 
             builder.ruleSet->addRule(*feature.styleRule, feature.selectorIndex, feature.selectorListIndex);
 
-            if constexpr (std::is_same<typename RuleFeatureVectorType::ValueType, RuleFeatureWithInvalidationSelector>::value)
-                builder.invalidationSelectors.append(&feature.invalidationSelector);
+            if constexpr (std::is_same<typename RuleFeatureVectorType::ValueType, RuleFeatureWithInvalidationSelector>::value) {
+                auto alreadyContains = [&](const CSSSelectorList& invalidationSelector) {
+                    constexpr auto maximumSearchCount = 8;
+                    auto count = 0;
+                    for (auto& existing : makeReversedRange(builder.invalidationSelectors)) {
+                        if (++count > maximumSearchCount)
+                            break;
+                        if (invalidationSelector == *existing)
+                            return true;
+                    }
+                    return false;
+                };
+                if (!alreadyContains(feature.invalidationSelector))
+                    builder.invalidationSelectors.append(&feature.invalidationSelector);
+            }
         }
 
         return makeUnique<Vector<InvalidationRuleSet>>(WTF::map(builderMap.values(), [](auto&& builder) {

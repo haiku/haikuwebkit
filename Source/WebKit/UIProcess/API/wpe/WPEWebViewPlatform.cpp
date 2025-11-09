@@ -48,10 +48,10 @@
 #endif
 
 #if USE(SKIA)
+#include "ViewSnapshotStore.h"
+
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
-IGNORE_CLANG_WARNINGS_BEGIN("cast-align")
 #include <skia/core/SkPixmap.h>
-IGNORE_CLANG_WARNINGS_END
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
@@ -130,6 +130,10 @@ ViewPlatform::ViewPlatform(WPEDisplay* display, const API::PageConfiguration& co
         webView.page().preferredBufferFormatsDidChange();
     }), this);
 #endif
+    g_signal_connect_after(m_wpeView.get(), "buffer-rendered", G_CALLBACK(+[](WPEView*, WPEBuffer*, gpointer userData) {
+        auto& webView = *reinterpret_cast<ViewPlatform*>(userData);
+        webView.frameDisplayed();
+    }), this);
 
     createWebPage(configuration);
     m_pageProxy->setIntrinsicDeviceScaleFactor(wpe_view_get_scale(m_wpeView.get()));
@@ -663,6 +667,13 @@ void ViewPlatform::callAfterNextPresentationUpdate(CompletionHandler<void()>&& c
         }), this);
     }
 }
+
+#if USE(SKIA)
+Expected<Ref<ViewSnapshot>, String> ViewPlatform::takeViewSnapshot(std::optional<WebCore::IntRect>&& clipRect)
+{
+    return m_backingStore->takeSnapshot(WTFMove(clipRect));
+}
+#endif
 
 } // namespace WKWPE
 

@@ -341,8 +341,10 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     callOnMainThread([weakThis = m_weakFactory.createWeakPtr(*this), numberOfChannels, sampleRate] {
         auto* self = weakThis.get();
-        if (self && self->m_client)
-            self->m_client->setFormat(numberOfChannels, sampleRate);
+        if (!self)
+            return;
+        if (RefPtr client = self->m_client.get())
+            client->setFormat(numberOfChannels, sampleRate);
     });
 }
 

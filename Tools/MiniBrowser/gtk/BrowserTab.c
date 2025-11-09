@@ -353,7 +353,8 @@ static gchar *WebKitXRSessionFeaturesToString(WebKitXRSessionFeatures features)
     APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_LOCAL_FLOOR, "local-floor");
     APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_BOUNDED_FLOOR, "bounded-floor");
     APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_UNBOUNDED, "unbounded");
-    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING, "hand_tracking");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING, "hand-tracking");
+    APPEND_FEATURE(WEBKIT_XR_SESSION_FEATURES_HIT_TEST, "hit-test");
 #undef APPEND_FEATURE
     gchar *result = str->str;
     g_string_free(str, FALSE);

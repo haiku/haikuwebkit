@@ -2588,6 +2588,7 @@
     {"access": "public", "introduced": "7", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeMPEGLayer3"},
     {"access": "public", "introduced": "14", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeProfileMPEG4AppleHLS"},
     {"access": "public", "introduced": "14", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeProfileMPEG4CMAFCompliant"},
+    {"access": "public", "introduced": "26", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeQuickTimeAudio"},
     {"access": "public", "introduced": "4", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeQuickTimeMovie"},
     {"access": "public", "introduced": "18", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeSCC"},
     {"access": "public", "introduced": "7", "kind": "variable", "linkage": "exported", "name": "_AVFileTypeSunAU"},

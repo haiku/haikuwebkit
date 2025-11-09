@@ -83,7 +83,7 @@ public:
     virtual ~LegacyCDMSession() = default;
     virtual void invalidate() { }
 
-    virtual LegacyCDMSessionType type() { return CDMSessionTypeUnknown; }
+    virtual LegacyCDMSessionType type() const { return CDMSessionTypeUnknown; }
     virtual const String& sessionId() const = 0;
     virtual RefPtr<Uint8Array> generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, uint32_t& systemCode) = 0;
     virtual void releaseKeys() = 0;

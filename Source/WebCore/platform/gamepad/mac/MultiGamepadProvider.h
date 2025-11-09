@@ -41,6 +41,10 @@ public:
 
     WEBCORE_EXPORT static MultiGamepadProvider& singleton();
 
+    // Do nothing since this is a singleton.
+    void ref() const final { }
+    void deref() const final { }
+
     void setUsesOnlyHIDGamepadProvider(bool hidProviderOnly) { m_usesOnlyHIDProvider = hidProviderOnly; }
 
     // GamepadProvider

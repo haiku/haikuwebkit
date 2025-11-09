@@ -38,6 +38,7 @@
 #include <wtf/Noncopyable.h>
 #include <wtf/NotFound.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/SwiftBridging.h>
 #include <wtf/ValueCheck.h>
 #include <wtf/VectorTraits.h>
 
@@ -936,7 +937,7 @@ private:
 #if ASAN_ENABLED
     using Base::endOfBuffer;
 #endif
-};
+} SWIFT_ESCAPABLE_IF(T);
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
 Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::Vector(const Vector& other)
@@ -1852,6 +1853,13 @@ struct CompactMapTraits<RefPtr<T>> {
     using ItemType = Ref<T>;
     static bool hasValue(const RefPtr<T>& returnValue) { return !!returnValue; }
     static ItemType extractValue(RefPtr<T>&& returnValue) { return returnValue.releaseNonNull(); }
+};
+
+template<typename T>
+struct CompactMapTraits<CheckedPtr<T>> {
+    using ItemType = CheckedRef<T>;
+    static bool hasValue(const CheckedPtr<T>& returnValue) { return !!returnValue; }
+    static ItemType extractValue(CheckedPtr<T>&& returnValue) { return returnValue.releaseNonNull(); }
 };
 
 template<typename T>

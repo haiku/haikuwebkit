@@ -288,7 +288,8 @@ TEST(WKNavigationAction, TargetFrameName)
     EXPECT_NULL(targetFrameNames[4]);
 }
 
-#if PLATFORM(MAC) || PLATFORM(IOS)
+// FIXME: rdar://163673801 (REGRESSION(iOS26) TestWebKitAPI.WKNavigationAction.UserInputState is a constant timeout (301666))
+#if PLATFORM(MAC)
 
 TEST(WKNavigationAction, UserInputState)
 {

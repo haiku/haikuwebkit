@@ -39,9 +39,11 @@ class ThreadableLoader;
 
 namespace Inspector {
 
+DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(InspectorThreadableLoaderClient);
+
 class InspectorThreadableLoaderClient final : public WebCore::ThreadableLoaderClient {
     WTF_MAKE_NONCOPYABLE(InspectorThreadableLoaderClient);
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(InspectorThreadableLoaderClient, Loader);
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(InspectorThreadableLoaderClient, InspectorThreadableLoaderClient);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(InspectorThreadableLoaderClient);
 public:
     InspectorThreadableLoaderClient(RefPtr<LoadResourceCallback>&& callback)

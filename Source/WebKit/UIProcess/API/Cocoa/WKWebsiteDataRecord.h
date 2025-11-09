@@ -72,7 +72,7 @@ WK_EXTERN NSString * const WKWebsiteDataTypeMediaKeys WK_API_AVAILABLE(macos(14.
 WK_EXTERN NSString * const WKWebsiteDataTypeHashSalt WK_API_AVAILABLE(macos(14.0), ios(17.0));
 
 /*! @constant WKWebsiteDataTypeScreenTime Screen Time information */
-WK_EXTERN NSString * const WKWebsiteDataTypeScreenTime WK_API_AVAILABLE(macos(26.0), ios(26.0));
+WK_EXTERN NSString * const WKWebsiteDataTypeScreenTime WK_API_AVAILABLE(macos(26.0), ios(26.0)) WK_API_UNAVAILABLE(visionos);
 
 /*! A WKWebsiteDataRecord represents website data, grouped by domain name using the public suffix list. */
 WK_SWIFT_UI_ACTOR

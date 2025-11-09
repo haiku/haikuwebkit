@@ -1613,7 +1613,7 @@
     {"access": "public", "linkage": "exported", "name": "_$ss5SIMD4V4simdE19_descriptionAsArraySSvg"},
     {"access": "public", "linkage": "exported", "name": "_$ss5SIMD4V4simdE19_descriptionAsArraySSvpMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

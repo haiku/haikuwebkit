@@ -25,6 +25,8 @@
 
 #pragma once
 
+#ifdef __OBJC__
+
 #import <wtf/Assertions.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/TollFreeBridging.h>
@@ -188,3 +190,5 @@ using WTF::bridge_id_cast;
 using WTF::checked_objc_cast;
 using WTF::dynamic_objc_cast;
 using WTF::is_objc;
+
+#endif // __OBJC__

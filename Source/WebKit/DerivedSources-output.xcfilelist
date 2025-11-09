@@ -330,6 +330,10 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionHelperMessageRecei
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionHelperMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionHelperProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionHelperProxyMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionManagerMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionManagerMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionManagerProxyMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSessionManagerProxyMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSourceProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteMediaSourceProxyMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/RemoteObjectRegistryMessageReceiver.cpp
@@ -528,6 +532,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebIDBConnectionToServerMessageRecei
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebIDBConnectionToServerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebInspectorBackendProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebInspectorBackendProxyMessages.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WasmDebuggerDispatcherMessageReceiver.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WasmDebuggerDispatcherMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebInspectorInterruptDispatcherMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebInspectorInterruptDispatcherMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebInspectorMessageReceiver.cpp

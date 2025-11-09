@@ -4,6 +4,7 @@ list(APPEND PAL_SOURCES
     crypto/openssl/CryptoDigestOpenSSL.cpp
 
     system/ClockGeneric.cpp
+
     system/haiku/SoundHaiku.cpp
 
     text/KillRing.cpp

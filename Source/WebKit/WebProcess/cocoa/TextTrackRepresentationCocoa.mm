@@ -50,9 +50,10 @@ WebTextTrackRepresentationCocoa::WebTextTrackRepresentationCocoa(WebCore::TextTr
 
 void WebTextTrackRepresentationCocoa::update()
 {
-    if (!m_page)
+    RefPtr page = m_page.get();
+    if (!page)
         return;
-    Ref fullscreenManager = m_page->videoPresentationManager();
+    Ref fullscreenManager = page->videoPresentationManager();
     if (!m_mediaElement || !is<WebCore::HTMLVideoElement>(m_mediaElement))
         return;
     
@@ -77,9 +78,10 @@ void WebTextTrackRepresentationCocoa::update()
 void WebTextTrackRepresentationCocoa::setContentScale(float scale)
 {
     WebCore::TextTrackRepresentationCocoa::setContentScale(scale);
-    if (!m_page)
+    RefPtr page = m_page.get();
+    if (!page)
         return;
-    Ref fullscreenManager = m_page->videoPresentationManager();
+    Ref fullscreenManager = page->videoPresentationManager();
     RefPtr videoElement = dynamicDowncast<WebCore::HTMLVideoElement>(m_mediaElement.get());
     if (!videoElement)
         return;
@@ -89,9 +91,10 @@ void WebTextTrackRepresentationCocoa::setContentScale(float scale)
 void WebTextTrackRepresentationCocoa::setHidden(bool hidden) const
 {
     WebCore::TextTrackRepresentationCocoa::setHidden(hidden);
-    if (!m_page)
+    RefPtr page = m_page.get();
+    if (!page)
         return;
-    Ref fullscreenManager = m_page->videoPresentationManager();
+    Ref fullscreenManager = page->videoPresentationManager();
     RefPtr videoElement = dynamicDowncast<WebCore::HTMLVideoElement>(m_mediaElement.get());
     if (!videoElement)
         return;

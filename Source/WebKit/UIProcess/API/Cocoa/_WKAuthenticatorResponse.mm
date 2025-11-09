@@ -61,9 +61,9 @@
 
 - (void)dealloc
 {
-    [_clientDataJSON release];
-    [_rawId release];
-    [_extensionOutputsCBOR release];
+    SUPPRESS_UNRETAINED_ARG [_clientDataJSON release];
+    SUPPRESS_UNRETAINED_ARG [_rawId release];
+    SUPPRESS_UNRETAINED_ARG [_extensionOutputsCBOR release];
     [super dealloc];
 }
 

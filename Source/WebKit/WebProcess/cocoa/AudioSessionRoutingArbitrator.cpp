@@ -41,13 +41,28 @@ using namespace WebCore;
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioSessionRoutingArbitrator);
 
 AudioSessionRoutingArbitrator::AudioSessionRoutingArbitrator(WebProcess& process)
-    : m_observer([this] (AudioSession& session) { session.setRoutingArbitrationClient(*this); })
+    : m_observer(WebCore::AudioSession::ChangedObserver::create([weakThis = WeakPtr { *this }] (AudioSession& session) {
+        if (RefPtr protectedThis = weakThis.get())
+            session.setRoutingArbitrationClient(protectedThis.get());
+    }))
     , m_logIdentifier(LoggerHelper::uniqueLogIdentifier())
 {
     AudioSession::addAudioSessionChangedObserver(m_observer);
 }
 
 AudioSessionRoutingArbitrator::~AudioSessionRoutingArbitrator() = default;
+
+void AudioSessionRoutingArbitrator::ref() const
+{
+    // Owned by WebProcess.
+    WebProcess::singleton().ref();
+}
+
+void AudioSessionRoutingArbitrator::deref() const
+{
+    // Owned by WebProcess.
+    WebProcess::singleton().deref();
+}
 
 void AudioSessionRoutingArbitrator::beginRoutingArbitrationWithCategory(AudioSession::CategoryType category, CompletionHandler<void(RoutingArbitrationError, DefaultRouteChanged)>&& callback)
 {

@@ -30,7 +30,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
+#include <utility>
 #include <wtf/Forward.h>
 
 // SFINAE depends on overload resolution. We indicate the overload we'd prefer

@@ -58,6 +58,11 @@ class WebXRViewerSpace;
 struct XRCanvasConfiguration;
 struct XRRenderStateInit;
 
+#if ENABLE(WEBXR_HIT_TEST)
+struct XRHitTestOptionsInit;
+struct XRTransientInputHitTestOptionsInit;
+#endif
+
 class WebXRSession final : public RefCounted<WebXRSession>, public EventTarget, public ActiveDOMObject, public PlatformXR::TrackingAndRenderingClient, VisibilityChangeClient {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRSession);
 public:
@@ -114,6 +119,13 @@ public:
     
 #if ENABLE(WEBXR_HANDS)
     bool isHandTrackingEnabled() const;
+#endif
+
+#if ENABLE(WEBXR_HIT_TEST)
+    using RequestHitTestSourcePromise = DOMPromiseDeferred<IDLInterface<WebXRHitTestSource>>;
+    void requestHitTestSource(const XRHitTestOptionsInit&, RequestHitTestSourcePromise&&);
+    using RequestHitTestSourceForTransientInputPromise = DOMPromiseDeferred<IDLInterface<WebXRTransientInputHitTestSource>>;
+    void requestHitTestSourceForTransientInput(const XRTransientInputHitTestOptionsInit&, RequestHitTestSourceForTransientInputPromise&&);
 #endif
 
     void initializeTrackingAndRendering(std::optional<XRCanvasConfiguration>&&);

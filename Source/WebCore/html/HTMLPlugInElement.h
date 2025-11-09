@@ -111,7 +111,7 @@ protected:
     void didAddUserAgentShadowRoot(ShadowRoot&) final;
 
     // This will load the plugin if necessary.
-    virtual RenderWidget* renderWidgetLoadingPlugin() const;
+    virtual CheckedPtr<RenderWidget> renderWidgetLoadingPlugin() const;
 
     bool isImageType();
     HTMLImageLoader* imageLoader() { return m_imageLoader.get(); }

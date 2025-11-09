@@ -94,7 +94,7 @@ AcceleratedEffect::Keyframe AcceleratedEffect::Keyframe::clone() const
     };
 }
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(AcceleratedEffect);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(AcceleratedEffect);
 
 static AcceleratedEffectProperty acceleratedPropertyFromCSSProperty(AnimatableCSSProperty property, const Settings& settings)
 {
@@ -170,18 +170,18 @@ static CSSPropertyID cssPropertyFromAcceleratedProperty(AcceleratedEffectPropert
     }
 }
 
-RefPtr<AcceleratedEffect> AcceleratedEffect::create(const KeyframeEffect& effect, const IntRect& borderBoxRect, const AcceleratedEffectValues& baseValues, OptionSet<AcceleratedEffectProperty>& disallowedProperties)
+RefPtr<AcceleratedEffect> AcceleratedEffect::create(const KeyframeEffect& effect, const TimelineIdentifier& timelineIdentifier, const IntRect& borderBoxRect, const AcceleratedEffectValues& baseValues, OptionSet<AcceleratedEffectProperty>& disallowedProperties)
 {
-    RefPtr acceleratedEffect = adoptRef(new AcceleratedEffect(effect, borderBoxRect, disallowedProperties));
+    RefPtr acceleratedEffect = adoptRef(new AcceleratedEffect(effect, timelineIdentifier, borderBoxRect, disallowedProperties));
     acceleratedEffect->validateFilters(baseValues, disallowedProperties);
     if (acceleratedEffect->animatedProperties().isEmpty())
         return nullptr;
     return acceleratedEffect;
 }
 
-Ref<AcceleratedEffect> AcceleratedEffect::create(AnimationEffectTiming timing, Vector<Keyframe>&& keyframes, WebAnimationType type, CompositeOperation composite, RefPtr<TimingFunction>&& defaultKeyframeTimingFunction, OptionSet<WebCore::AcceleratedEffectProperty>&& animatedProperties, bool paused, double playbackRate, std::optional<WebAnimationTime> startTime, std::optional<WebAnimationTime> holdTime)
+Ref<AcceleratedEffect> AcceleratedEffect::create(AnimationEffectTiming timing, TimelineIdentifier&& timelineIdentifier, Vector<Keyframe>&& keyframes, WebAnimationType type, CompositeOperation composite, RefPtr<TimingFunction>&& defaultKeyframeTimingFunction, OptionSet<WebCore::AcceleratedEffectProperty>&& animatedProperties, bool paused, double playbackRate, std::optional<WebAnimationTime> startTime, std::optional<WebAnimationTime> holdTime)
 {
-    return adoptRef(*new AcceleratedEffect(WTFMove(timing), WTFMove(keyframes), type, composite, WTFMove(defaultKeyframeTimingFunction), WTFMove(animatedProperties), paused, playbackRate, startTime, holdTime));
+    return adoptRef(*new AcceleratedEffect(WTFMove(timing), WTFMove(timelineIdentifier), WTFMove(keyframes), type, composite, WTFMove(defaultKeyframeTimingFunction), WTFMove(animatedProperties), paused, playbackRate, startTime, holdTime));
 }
 
 Ref<AcceleratedEffect> AcceleratedEffect::clone() const
@@ -195,8 +195,9 @@ Ref<AcceleratedEffect> AcceleratedEffect::clone() const
         clonedDefaultKeyframeTimingFunction = defaultKeyframeTimingFunction->clone();
 
     auto clonedAnimatedProperties = m_animatedProperties;
+    auto clonedIdentifier = m_timelineIdentifier;
 
-    return AcceleratedEffect::create(m_timing, WTFMove(clonedKeyframes), m_animationType, m_compositeOperation, WTFMove(clonedDefaultKeyframeTimingFunction), WTFMove(clonedAnimatedProperties), m_paused, m_playbackRate, m_startTime, m_holdTime);
+    return AcceleratedEffect::create(m_timing, WTFMove(clonedIdentifier), WTFMove(clonedKeyframes), m_animationType, m_compositeOperation, WTFMove(clonedDefaultKeyframeTimingFunction), WTFMove(clonedAnimatedProperties), m_paused, m_playbackRate, m_startTime, m_holdTime);
 }
 
 Ref<AcceleratedEffect> AcceleratedEffect::copyWithProperties(OptionSet<AcceleratedEffectProperty>& propertyFilter) const
@@ -204,7 +205,8 @@ Ref<AcceleratedEffect> AcceleratedEffect::copyWithProperties(OptionSet<Accelerat
     return adoptRef(*new AcceleratedEffect(*this, propertyFilter));
 }
 
-AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect& borderBoxRect, const OptionSet<AcceleratedEffectProperty>& disallowedProperties)
+AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const TimelineIdentifier& timelineIdentifier, const IntRect& borderBoxRect, const OptionSet<AcceleratedEffectProperty>& disallowedProperties)
+    : m_timelineIdentifier(timelineIdentifier)
 {
     m_timing = effect.timing();
     m_compositeOperation = effect.composite();
@@ -215,8 +217,8 @@ AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect
         m_paused = animation->playState() == WebAnimation::PlayState::Paused;
         m_playbackRate = animation->playbackRate();
         ASSERT(animation->holdTime() || animation->startTime());
-        m_holdTime = animation->holdTime() ? animation->holdTime()->time() : std::nullopt;
-        m_startTime = animation->startTime() ? animation->startTime()->time() : std::nullopt;
+        m_holdTime = animation->holdTime();
+        m_startTime = animation->startTime();
         if (RefPtr styleAnimation = dynamicDowncast<StyleOriginatedAnimation>(*animation)) {
             if (RefPtr defaultKeyframeTimingFunction = styleAnimation->backingAnimationTimingFunction())
                 m_defaultKeyframeTimingFunction = WTFMove(defaultKeyframeTimingFunction);
@@ -253,8 +255,9 @@ AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect
     m_animatedProperties.remove(disallowedProperties);
 }
 
-AcceleratedEffect::AcceleratedEffect(AnimationEffectTiming timing, Vector<Keyframe>&& keyframes, WebAnimationType type, CompositeOperation composite, RefPtr<TimingFunction>&& defaultKeyframeTimingFunction, OptionSet<WebCore::AcceleratedEffectProperty>&& animatedProperties, bool paused, double playbackRate, std::optional<WebAnimationTime> startTime, std::optional<WebAnimationTime> holdTime)
+AcceleratedEffect::AcceleratedEffect(AnimationEffectTiming timing, TimelineIdentifier&& timelineIdentifier, Vector<Keyframe>&& keyframes, WebAnimationType type, CompositeOperation composite, RefPtr<TimingFunction>&& defaultKeyframeTimingFunction, OptionSet<WebCore::AcceleratedEffectProperty>&& animatedProperties, bool paused, double playbackRate, std::optional<WebAnimationTime> startTime, std::optional<WebAnimationTime> holdTime)
     : m_timing(timing)
+    , m_timelineIdentifier(WTFMove(timelineIdentifier))
     , m_keyframes(WTFMove(keyframes))
     , m_animationType(type)
     , m_compositeOperation(composite)
@@ -268,6 +271,7 @@ AcceleratedEffect::AcceleratedEffect(AnimationEffectTiming timing, Vector<Keyfra
 }
 
 AcceleratedEffect::AcceleratedEffect(const AcceleratedEffect& source, OptionSet<AcceleratedEffectProperty>& propertyFilter)
+    : m_timelineIdentifier(source.m_timelineIdentifier)
 {
     m_timing = source.m_timing;
     m_animationType = source.m_animationType;
@@ -350,22 +354,20 @@ static void blend(AcceleratedEffectProperty property, AcceleratedEffectValues& o
     }
 }
 
-void AcceleratedEffect::apply(WebAnimationTime currentTime, AcceleratedEffectValues& values) const
+void AcceleratedEffect::apply(AcceleratedEffectValues& values, WebAnimationTime timelineTime, std::optional<WebAnimationTime> timelineDuration) const
 {
-    auto localTime = [&]() -> WebAnimationTime {
+    auto localTime = [&] {
         ASSERT(m_holdTime || m_startTime);
         if (m_holdTime)
             return *m_holdTime;
-        return (currentTime - *m_startTime) * m_playbackRate;
+        return (timelineTime - *m_startTime) * m_playbackRate;
     }();
 
-    // FIXME: when we add threaded animation support support for scroll-driven animations,
-    // pass in the associated timeline's current time and duration.
     auto resolvedTiming = m_timing.resolve({
-        std::nullopt,
-        std::nullopt,
-        { m_holdTime ? *m_holdTime : *m_startTime },
-        { localTime },
+        timelineTime,
+        timelineDuration,
+        m_holdTime ? *m_holdTime : *m_startTime,
+        localTime,
         EndpointInclusiveActiveInterval::No,
         m_playbackRate
     });

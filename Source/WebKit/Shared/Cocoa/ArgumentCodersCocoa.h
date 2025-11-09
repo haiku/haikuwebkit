@@ -65,6 +65,10 @@ OBJC_CLASS PKPaymentToken;
 OBJC_CLASS PKShippingMethod;
 #endif
 
+#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+OBJC_CLASS WebFilterEvaluator;
+#endif
+
 OBJC_CLASS PlatformColor;
 OBJC_CLASS NSShadow;
 
@@ -158,6 +162,9 @@ template<> Class getClass<PKShippingMethod>();
 template<> Class getClass<PKDateComponentsRange>();
 template<> Class getClass<PKPaymentMethod>();
 template<> Class getClass<PKSecureElementPass>();
+#endif
+#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+template<> Class getClass<WebFilterEvaluator>();
 #endif
 
 template<> Class getClass<PlatformColor>();

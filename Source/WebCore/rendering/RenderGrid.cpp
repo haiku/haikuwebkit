@@ -529,7 +529,7 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
 
         m_trackSizingAlgorithm.reset();
 
-        computeOverflow(layoutOverflowLogicalBottom(*this));
+        computeOverflow(contentOverflowRect(), ComputeOverflowOptions::MarginsExtendLayoutOverflow);
 
         updateDescendantTransformsAfterLayout();
     }
@@ -676,7 +676,7 @@ void RenderGrid::layoutMasonry(RelayoutChildren relayoutChildren)
 
         m_trackSizingAlgorithm.reset();
 
-        computeOverflow(layoutOverflowLogicalBottom(*this));
+        computeOverflow(contentOverflowRect());
 
         updateDescendantTransformsAfterLayout();
     }
@@ -897,7 +897,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
         auto& maxSize = isRowAxis ? style().logicalMaxWidth() : style().logicalMaxHeight();
         auto availableMaxSize = WTF::switchOn(maxSize,
             [&](const Style::MaximumSize::Fixed& fixedMaxSize) -> std::optional<LayoutUnit> {
-                auto maxSizeValue = LayoutUnit { fixedMaxSize.resolveZoom(Style::ZoomNeeded { }) };
+                auto maxSizeValue = LayoutUnit { fixedMaxSize.resolveZoom(style().usedZoomForLength()) };
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
@@ -909,7 +909,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
             },
             [&](const Style::MaximumSize::Calc& calcMaxSize) -> std::optional<LayoutUnit> {
-                auto maxSizeValue = Style::evaluate<LayoutUnit>(calcMaxSize, containingBlockAvailableSize());
+                auto maxSizeValue = Style::evaluate<LayoutUnit>(calcMaxSize, containingBlockAvailableSize(), style().usedZoomForLength());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
@@ -929,7 +929,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
 
         auto availableMinSize = WTF::switchOn(minSize,
             [&](const Style::MinimumSize::Fixed& fixedMinSize) -> std::optional<LayoutUnit> {
-                auto minSizeValue = LayoutUnit { fixedMinSize.resolveZoom(Style::ZoomNeeded { }) };
+                auto minSizeValue = LayoutUnit { fixedMinSize.resolveZoom(style().usedZoomForLength()) };
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
@@ -941,7 +941,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(Style::GridTrackSizingDirectio
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
             },
             [&](const Style::MinimumSize::Calc& calcMinSize) -> std::optional<LayoutUnit> {
-                auto minSizeValue = Style::evaluate<LayoutUnit>(calcMinSize, containingBlockAvailableSize());
+                auto minSizeValue = Style::evaluate<LayoutUnit>(calcMinSize, containingBlockAvailableSize(), style().usedZoomForLength());
                 return isRowAxis
                     ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
                     : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
@@ -1332,7 +1332,7 @@ bool RenderGrid::isPlacedWithinExtrinsicallySizedExplicitTracks(const RenderBox&
 void RenderGrid::placeSpecifiedMajorAxisItemsOnGrid(const Vector<RenderBox*>& autoGridItems)
 {
     bool isForColumns = autoPlacementMajorAxisDirection() == Style::GridTrackSizingDirection::Columns;
-    bool isGridAutoFlowDense = style().isGridAutoFlowAlgorithmDense();
+    bool isGridAutoFlowDense = style().gridAutoFlow().isDense();
 
     // Mapping between the major axis tracks (rows or columns) and the last auto-placed item's position inserted on
     // that track. This is needed to implement "sparse" packing for items locked to a given track.
@@ -1361,7 +1361,7 @@ void RenderGrid::placeSpecifiedMajorAxisItemsOnGrid(const Vector<RenderBox*>& au
 void RenderGrid::placeAutoMajorAxisItemsOnGrid(const Vector<RenderBox*>& autoGridItems)
 {
     AutoPlacementCursor autoPlacementCursor = {0, 0};
-    bool isGridAutoFlowDense = style().isGridAutoFlowAlgorithmDense();
+    bool isGridAutoFlowDense = style().gridAutoFlow().isDense();
 
     for (auto& autoGridItem : autoGridItems) {
         placeAutoMajorAxisItemOnGrid(*autoGridItem, autoPlacementCursor);
@@ -1435,7 +1435,7 @@ Style::GridTrackSizingDirection RenderGrid::autoPlacementMajorAxisDirection() co
     if (areMasonryRows())
         return Style::GridTrackSizingDirection::Rows;
 
-    return style().isGridAutoFlowDirectionColumn() ? Style::GridTrackSizingDirection::Columns : Style::GridTrackSizingDirection::Rows;
+    return style().gridAutoFlow().isColumn() ? Style::GridTrackSizingDirection::Columns : Style::GridTrackSizingDirection::Rows;
 }
 
 Style::GridTrackSizingDirection RenderGrid::autoPlacementMinorAxisDirection() const
@@ -2250,7 +2250,13 @@ LayoutRange RenderGrid::gridAreaRangeForOutOfFlow(const RenderBox& gridItem, Sty
 
     LayoutUnit start;
     LayoutUnit end;
+
     auto& positions = this->positions(direction);
+    if (positions.isEmpty()) {
+        ASSERT_WITH_SECURITY_IMPLICATION(!positions.isEmpty());
+        return LayoutRange(borderEdge, isRowAxis ? clientLogicalWidth() : clientLogicalHeight());
+    }
+
     if (startIsAuto)
         start = borderEdge;
     else {
@@ -2386,6 +2392,33 @@ ContentAlignmentData RenderGrid::computeContentPositionAndDistributionOffset(Sty
         ASSERT_NOT_REACHED();
         return { };
     }
+}
+
+LayoutRect RenderGrid::contentOverflowRect() const
+{
+    // FIXME: Handle subgrids and masonry.
+    if (!hasPotentiallyScrollableOverflow() || isMasonry() || isSubgridRows() || isSubgridColumns())
+        return flippedContentBoxRect();
+
+    // Get the grid rectangle.
+    LayoutRect contentArea;
+    if (writingMode().isInlineFlipped()) {
+        contentArea.shiftEdgesTo(
+            translateRTLCoordinate(m_columnPositions.first()),
+            m_rowPositions.first(),
+            translateRTLCoordinate(m_columnPositions.last()),
+            m_rowPositions.last());
+    } else {
+        contentArea.shiftEdgesTo(
+            m_columnPositions.first(),
+            m_rowPositions.first(),
+            m_columnPositions.last(),
+            m_rowPositions.last());
+    }
+
+    if (writingMode().isVertical())
+        return contentArea.transposedRect();
+    return contentArea;
 }
 
 LayoutOptionalOutsets RenderGrid::allowedLayoutOverflow() const
@@ -2573,21 +2606,6 @@ RenderGrid::GridWrapper::GridWrapper(RenderGrid& renderGrid)
 void RenderGrid::GridWrapper::resetCurrentGrid() const
 {
     m_currentGrid = std::ref(const_cast<Grid&>(m_layoutGrid));
-}
-
-void RenderGrid::computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> options)
-{
-    RenderBlock::computeOverflow(oldClientAfterEdge, options);
-
-    if (!hasPotentiallyScrollableOverflow() || isMasonry() || isSubgridRows() || isSubgridColumns())
-        return;
-
-    // FIXME: We should handle RTL and other writing modes also.
-    if (writingMode().isBidiLTR() && isHorizontalWritingMode()) {
-        auto gridAreaSize = LayoutSize { m_columnPositions.last(), m_rowPositions.last() };
-        gridAreaSize += { paddingEnd(), paddingAfter() };
-        addLayoutOverflow({ { }, gridAreaSize });
-    }
 }
 
 void RenderGrid::updateIntrinsicLogicalHeightsForRowSizingFirstPassCacheAvailability()

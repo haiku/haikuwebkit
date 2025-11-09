@@ -39,7 +39,8 @@ class AbortSignal;
 using CredentialMediationRequirement = MediationRequirement;
 
 struct CredentialRequestOptions {
-    MediationRequirement mediation;
+    String mediationString { "optional"_s };
+    WEBCORE_EXPORT MediationRequirement mediation() const;
     RefPtr<AbortSignal> signal;
     std::optional<PublicKeyCredentialRequestOptions> publicKey;
     std::optional<DigitalCredentialRequestOptions> digital;

@@ -75,6 +75,7 @@
 #include "StyleResolver.h"
 #include "StyleScope.h"
 #include "StyleSingleAnimationRange.h"
+#include "StyleWillChange.h"
 #include "StyledElement.h"
 #include "TimelineRangeOffset.h"
 #include "TimingFunction.h"
@@ -1461,7 +1462,7 @@ void KeyframeEffect::computeStackingContextImpact()
 {
     m_triggersStackingContext = false;
     for (auto property : m_blendingKeyframes.properties()) {
-        if (std::holds_alternative<CSSPropertyID>(property) && WillChangeData::propertyCreatesStackingContext(std::get<CSSPropertyID>(property))) {
+        if (std::holds_alternative<CSSPropertyID>(property) && Style::WillChangeAnimatableFeature::propertyCreatesStackingContext(std::get<CSSPropertyID>(property))) {
             m_triggersStackingContext = true;
             break;
         }

@@ -237,6 +237,7 @@ RefPtr<LargestContentfulPaint> LargestContentfulPaintData::generateLargestConten
             auto& imageData = lcpData.imageData[findIndex];
             if (imageData.rect.isEmpty())
                 continue;
+
             auto intersectionRect = computeViewportIntersectionRect(*element, imageData.rect);
             auto loadTimeSeconds = imageData.loadTime ? *imageData.loadTime : MonotonicTime::now();
             potentiallyAddLargestContentfulPaintEntry(*element, image.get(), imageData.rect, intersectionRect, loadTimeSeconds, paintTimestamp, viewportSize);
@@ -249,6 +250,9 @@ RefPtr<LargestContentfulPaint> LargestContentfulPaintData::generateLargestConten
             continue;
 
         auto rect = element->ensureLargestContentfulPaintData().accumulatedTextRect;
+        if (canCompareWithLargestPaintArea(*element) && rect.area() <= m_largestPaintArea)
+            continue;
+
         auto intersectionRect = computeViewportIntersectionRect(*element, rect);
         potentiallyAddLargestContentfulPaintEntry(*element, nullptr, { }, intersectionRect, { }, paintTimestamp, viewportSize);
     }
@@ -331,10 +335,14 @@ FloatRect LargestContentfulPaintData::computeViewportIntersectionRectForTextCont
 
 void LargestContentfulPaintData::didLoadImage(Element& element, CachedImage* image)
 {
-    LOG_WITH_STREAM(LargestContentfulPaint, stream << "LargestContentfulPaintData " << this << " didLoadImage() " << element << " image " << (image ? image->url().string() : emptyString()));
-
     if (!image)
         return;
+
+    // `loadTime` isn't interesting for a data URI, so let's avoid the overhead of tracking it.
+    if (image->url().protocolIsData())
+        return;
+
+    LOG_WITH_STREAM(LargestContentfulPaint, stream << "LargestContentfulPaintData " << this << " didLoadImage() " << element << " image " << (image ? image->url().string() : emptyString()));
 
     auto& lcpData = element.ensureLargestContentfulPaintData();
     auto findIndex = lcpData.imageData.findIf([&](auto& value) {
@@ -401,7 +409,7 @@ void LargestContentfulPaintData::didPaintImage(Element& element, CachedImage* im
     scheduleRenderingUpdateIfNecessary(element);
 }
 
-void LargestContentfulPaintData::didPaintText(const RenderBlockFlow& formattingContextRoot, FloatRect localRect)
+void LargestContentfulPaintData::didPaintText(const RenderBlockFlow& formattingContextRoot, FloatRect localRect, bool isOnlyTextBoxForElement)
 {
     if (localRect.isEmpty())
         return;
@@ -427,7 +435,8 @@ void LargestContentfulPaintData::didPaintText(const RenderBlockFlow& formattingC
     if (element->isInLargestContentfulPaintTextContentSet())
         return;
 
-    // FIXME: If we know that this is the only text paint for a given element, we can use canCompareWithLargestPaintArea() and early return.
+    if (isOnlyTextBoxForElement && canCompareWithLargestPaintArea(*element) && localRect.area() <= m_largestPaintArea)
+        return;
 
     if (!isExposedForPaintTiming(*element))
         return;

@@ -64,23 +64,16 @@ DocumentStorageAccess* DocumentStorageAccess::from(Document& document)
     if (!page || !page->settings().storageAccessAPIEnabled())
         return nullptr;
 
-    auto* supplement = static_cast<DocumentStorageAccess*>(Supplement<Document>::from(&document, supplementName()));
-    if (!supplement) {
-        auto newSupplement = makeUnique<DocumentStorageAccess>(document);
-        supplement = newSupplement.get();
+    if (!Supplement<Document>::from(&document, supplementName())) {
+        auto newSupplement = makeUniqueWithoutRefCountedCheck<DocumentStorageAccess>(document);
         provideTo(&document, supplementName(), WTFMove(newSupplement));
     }
-    return supplement;
-}
-
-ASCIILiteral DocumentStorageAccess::supplementName()
-{
-    return "DocumentStorageAccess"_s;
+    return downcast<DocumentStorageAccess>(Supplement<Document>::from(&document, supplementName()));
 }
 
 void DocumentStorageAccess::hasStorageAccess(Document& document, Ref<DeferredPromise>&& promise)
 {
-    auto* storageAccess = DocumentStorageAccess::from(document);
+    RefPtr storageAccess = DocumentStorageAccess::from(document);
     if (!storageAccess) {
         promise->reject(ExceptionCode::InvalidStateError);
         return;
@@ -163,7 +156,7 @@ void DocumentStorageAccess::hasStorageAccess(Ref<DeferredPromise>&& promise)
 
 bool DocumentStorageAccess::hasStorageAccessForDocumentQuirk(Document& document)
 {
-    auto* storageAccess = DocumentStorageAccess::from(document);
+    RefPtr storageAccess = DocumentStorageAccess::from(document);
     if (!storageAccess)
         return false;
 
@@ -175,7 +168,7 @@ bool DocumentStorageAccess::hasStorageAccessForDocumentQuirk(Document& document)
 
 void DocumentStorageAccess::requestStorageAccess(Document& document, Ref<DeferredPromise>&& promise)
 {
-    auto* storageAccess = DocumentStorageAccess::from(document);
+    RefPtr storageAccess = DocumentStorageAccess::from(document);
     if (!storageAccess) {
         promise->reject(ExceptionCode::InvalidStateError);
         return;
@@ -242,8 +235,9 @@ void DocumentStorageAccess::requestStorageAccess(Ref<DeferredPromise>&& promise)
         m_storageAccessScope = StorageAccessScope::PerFrame;
 
     auto hasOrShouldIgnoreUserGesture = frame->requestSkipUserActivationCheckForStorageAccess(RegistrableDomain { document->url() }) || UserGestureIndicator::processingUserGesture() ? HasOrShouldIgnoreUserGesture::Yes : HasOrShouldIgnoreUserGesture::No;
-    page->chrome().client().requestStorageAccess(RegistrableDomain::uncheckedCreateFromHost(document->protectedSecurityOrigin()->host()), RegistrableDomain::uncheckedCreateFromHost(document->protectedTopOrigin()->host()), *frame, m_storageAccessScope, hasOrShouldIgnoreUserGesture, [this, weakThis = WeakPtr { *this }, promise = WTFMove(promise)] (RequestStorageAccessResult result) mutable {
-        if (!weakThis)
+    page->chrome().client().requestStorageAccess(RegistrableDomain::uncheckedCreateFromHost(document->protectedSecurityOrigin()->host()), RegistrableDomain::uncheckedCreateFromHost(document->protectedTopOrigin()->host()), *frame, m_storageAccessScope, hasOrShouldIgnoreUserGesture, [weakThis = WeakPtr { *this }, promise = WTFMove(promise)] (RequestStorageAccessResult result) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
             return;
 
         // Consume the user gesture only if the user explicitly denied access.
@@ -257,11 +251,11 @@ void DocumentStorageAccess::requestStorageAccess(Ref<DeferredPromise>&& promise)
             shouldPreserveUserGesture = result.promptWasShown == StorageAccessPromptWasShown::No;
         }
 
-        Ref document = m_document.get();
+        Ref document = protectedThis->m_document.get();
         if (shouldPreserveUserGesture) {
-            document->checkedEventLoop()->queueMicrotask([this, weakThis] {
-                if (weakThis)
-                    enableTemporaryTimeUserGesture();
+            document->checkedEventLoop()->queueMicrotask([weakThis] {
+                if (RefPtr protectedThis = weakThis.get())
+                    protectedThis->enableTemporaryTimeUserGesture();
             });
         }
 
@@ -279,17 +273,27 @@ void DocumentStorageAccess::requestStorageAccess(Ref<DeferredPromise>&& promise)
         }
         case StorageAccessWasGranted::No:
             if (result.promptWasShown == StorageAccessPromptWasShown::Yes)
-                setWasExplicitlyDeniedFrameSpecificStorageAccess();
+                protectedThis->setWasExplicitlyDeniedFrameSpecificStorageAccess();
             promise->reject(ExceptionCode::NotAllowedError);
         }
 
         if (shouldPreserveUserGesture) {
-            document->checkedEventLoop()->queueMicrotask([this, weakThis] {
-                if (weakThis)
-                    consumeTemporaryTimeUserGesture();
+            document->checkedEventLoop()->queueMicrotask([weakThis] {
+                if (RefPtr protectedThis = weakThis.get())
+                    protectedThis->consumeTemporaryTimeUserGesture();
             });
         }
     });
+}
+
+void DocumentStorageAccess::ref() const
+{
+    m_document->ref();
+}
+
+void DocumentStorageAccess::deref() const
+{
+    m_document->deref();
 }
 
 Ref<Document> DocumentStorageAccess::protectedDocument() const
@@ -299,7 +303,7 @@ Ref<Document> DocumentStorageAccess::protectedDocument() const
 
 void DocumentStorageAccess::requestStorageAccessForDocumentQuirk(Document& document, CompletionHandler<void(StorageAccessWasGranted)>&& completionHandler)
 {
-    auto* storageAccess = DocumentStorageAccess::from(document);
+    RefPtr storageAccess = DocumentStorageAccess::from(document);
     if (!storageAccess) {
         completionHandler(StorageAccessWasGranted::No);
         return;
@@ -319,7 +323,7 @@ void DocumentStorageAccess::requestStorageAccessForDocumentQuirk(CompletionHandl
 
 void DocumentStorageAccess::requestStorageAccessForNonDocumentQuirk(Document& hostingDocument, RegistrableDomain&& requestingDomain, CompletionHandler<void(StorageAccessWasGranted)>&& completionHandler)
 {
-    auto* storageAccess = DocumentStorageAccess::from(hostingDocument);
+    RefPtr storageAccess = DocumentStorageAccess::from(hostingDocument);
     if (!storageAccess) {
         completionHandler(StorageAccessWasGranted::No);
         return;
@@ -345,17 +349,18 @@ void DocumentStorageAccess::requestStorageAccessQuirk(RegistrableDomain&& reques
     auto topFrameDomain = RegistrableDomain(page->mainFrameURL());
 
     RefPtr frame = document->frame();
-    page->chrome().client().requestStorageAccess(WTFMove(requestingDomain), WTFMove(topFrameDomain), *frame, m_storageAccessScope, HasOrShouldIgnoreUserGesture::Yes, [this, weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (RequestStorageAccessResult result) mutable {
-        if (!weakThis)
+    page->chrome().client().requestStorageAccess(WTFMove(requestingDomain), WTFMove(topFrameDomain), *frame, m_storageAccessScope, HasOrShouldIgnoreUserGesture::Yes, [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (RequestStorageAccessResult result) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
             return;
 
         // Consume the user gesture only if the user explicitly denied access.
         bool shouldPreserveUserGesture = result.wasGranted == StorageAccessWasGranted::Yes || result.promptWasShown == StorageAccessPromptWasShown::No;
 
         if (shouldPreserveUserGesture) {
-            protectedDocument()->checkedEventLoop()->queueMicrotask([this, weakThis] {
-                if (weakThis)
-                    enableTemporaryTimeUserGesture();
+            protectedThis->protectedDocument()->checkedEventLoop()->queueMicrotask([weakThis] {
+                if (RefPtr protectedThis = weakThis.get())
+                    protectedThis->enableTemporaryTimeUserGesture();
             });
         }
 
@@ -366,14 +371,14 @@ void DocumentStorageAccess::requestStorageAccessQuirk(RegistrableDomain&& reques
             break;
         case StorageAccessWasGranted::No:
             if (result.promptWasShown == StorageAccessPromptWasShown::Yes)
-                setWasExplicitlyDeniedFrameSpecificStorageAccess();
+                protectedThis->setWasExplicitlyDeniedFrameSpecificStorageAccess();
             completionHandler(StorageAccessWasGranted::No);
         }
 
         if (shouldPreserveUserGesture) {
-            protectedDocument()->checkedEventLoop()->queueMicrotask([this, weakThis] {
-                if (weakThis)
-                    consumeTemporaryTimeUserGesture();
+            protectedThis->protectedDocument()->checkedEventLoop()->queueMicrotask([weakThis] {
+                if (RefPtr protectedThis = weakThis.get())
+                    protectedThis->consumeTemporaryTimeUserGesture();
             });
         }
     });

@@ -41,6 +41,11 @@ void serializationForCSSCustomIdentifier(StringBuilder& builder, const Serializa
     WebCore::serializeIdentifier(value.value, builder);
 }
 
+void serializationForCSSPropertyIdentifier(StringBuilder& builder, const SerializationContext&, const PropertyIdentifier& value)
+{
+    builder.append(nameLiteral(value.value));
+}
+
 void serializationForCSSString(StringBuilder& builder, const SerializationContext&, const WTF::AtomString& value)
 {
     WebCore::serializeString(value, builder);
@@ -59,6 +64,11 @@ Ref<CSSValue> makePrimitiveCSSValue(CSSValueID value)
 Ref<CSSValue> makePrimitiveCSSValue(const CustomIdentifier& value)
 {
     return CSSPrimitiveValue::createCustomIdent(value.value);
+}
+
+Ref<CSSValue> makePrimitiveCSSValue(const PropertyIdentifier& value)
+{
+    return CSSPrimitiveValue::create(value.value);
 }
 
 Ref<CSSValue> makePrimitiveCSSValue(const WTF::AtomString& value)

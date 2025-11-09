@@ -63,7 +63,6 @@ public:
     void updateReferenceFilterClients(const Style::Filter&);
     void removeReferenceFilterClients();
 
-    void setPreferredFilterRenderingModes(OptionSet<FilterRenderingMode> preferredFilterRenderingModes) { m_preferredFilterRenderingModes = preferredFilterRenderingModes; }
     void setFilterScale(const FloatSize& filterScale) { m_filterScale = filterScale; }
 
     static bool isIdentity(RenderElement&);

@@ -164,6 +164,7 @@ public:
     uint32_t checkedPtrCountWithoutThreadCheck() const final { return AuxiliaryProcess::checkedPtrCountWithoutThreadCheck(); }
     void incrementCheckedPtrCount() const final { AuxiliaryProcess::incrementCheckedPtrCount(); }
     void decrementCheckedPtrCount() const final { AuxiliaryProcess::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { AuxiliaryProcess::setDidBeginCheckedPtrDeletion(); }
 
     template<typename T>
     T* supplement()
@@ -215,6 +216,7 @@ public:
     void addStorageSession(PAL::SessionID, const WebsiteDataStoreParameters&);
 
     void processWillSuspendImminentlyForTestingSync(CompletionHandler<void()>&&);
+    void isStorageSuspendedForTesting(PAL::SessionID, CompletionHandler<void(bool)>&&);
     void prepareToSuspend(bool isSuspensionImminent, MonotonicTime estimatedSuspendTime, CompletionHandler<void()>&&);
     void processDidResume(bool forForegroundActivity);
 

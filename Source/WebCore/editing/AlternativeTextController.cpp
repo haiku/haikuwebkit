@@ -120,9 +120,8 @@ void AlternativeTextController::startAlternativeTextUITimer(AlternativeTextType 
         m_rangeWithAlternative = std::nullopt;
     m_type = type;
     m_timer = protectedDocument()->checkedEventLoop()->scheduleTask(correctionPanelTimerInterval, TaskSource::UserInteraction, [weakThis = WeakPtr { *this }] {
-        if (!weakThis)
-            return;
-        weakThis->timerFired();
+        if (CheckedPtr checkedThis = weakThis.get())
+            checkedThis->timerFired();
     });
 }
 

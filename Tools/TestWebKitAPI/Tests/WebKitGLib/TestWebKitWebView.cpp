@@ -1802,12 +1802,6 @@ public:
 
 static void testWebViewFrameDisplayed(FrameDisplayedTest* test, gconstpointer)
 {
-#if ENABLE(WPE_PLATFORM)
-    if (test->m_display) {
-        g_test_skip(nullptr);
-        return;
-    }
-#endif
     test->showInWindow();
 
     test->loadHtml("<html></html>", nullptr);

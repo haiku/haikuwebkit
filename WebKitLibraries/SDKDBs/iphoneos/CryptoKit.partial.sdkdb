@@ -1314,7 +1314,7 @@
     {"access": "public", "introduced": "17", "linkage": "exported", "name": "_$s9PublicKey9CryptoKit010KEMPrivateB0PTl"},
     {"access": "public", "introduced": "17", "linkage": "exported", "name": "_$s9PublicKey9CryptoKit013DiffieHellmanB9AgreementPTl"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

@@ -2684,6 +2684,8 @@ void FrameSelection::revealSelection(const RevealSelectionOptions& revealSelecti
         return;
 #endif
 
+    m_selectionRevealMode = SelectionRevealMode::DoNotReveal;
+
     // FIXME: This code only handles scrolling the startContainer's layer, but
     // the selection rect could intersect more than just that.
     // See <rdar://problem/4799899>.

@@ -135,6 +135,7 @@
 #include <pal/crypto/CryptoDigest.h>
 #include <wtf/Function.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/WeakPtr.h>
 #include <wtf/text/Base64.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
@@ -264,6 +265,9 @@ public:
 
     void handleEvent(ScriptExecutionContext&, Event& event) final
     {
+        if (!m_domAgent)
+            return;
+
         RefPtr node = dynamicDowncast<Node>(event.target());
         if (!node || m_domAgent->m_dispatchedEvents.contains(&event))
             return;
@@ -292,7 +296,7 @@ private:
     {
     }
 
-    const CheckedRef<InspectorDOMAgent> m_domAgent;
+    const WeakPtr<InspectorDOMAgent> m_domAgent;
 };
 
 String InspectorDOMAgent::toErrorString(ExceptionCode ec)

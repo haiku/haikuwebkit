@@ -36,6 +36,7 @@
 #include <WebCore/GraphicsLayerClient.h>
 #include <WebCore/GraphicsLayerFactory.h>
 #include <WebCore/PlatformScreen.h>
+#include <WebCore/RunLoopObserver.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/Lock.h>
@@ -63,12 +64,9 @@ class PaintingEngine;
 }
 
 namespace WebKit {
-class LayerTreeHost;
-}
-
-namespace WebKit {
 class CoordinatedSceneState;
 class WebPage;
+struct RenderProcessInfo;
 
 class LayerTreeHost final : public CanMakeCheckedPtr<LayerTreeHost>, public WebCore::GraphicsLayerFactory, public WebCore::CoordinatedPlatformLayer::Client
 {
@@ -120,10 +118,12 @@ public:
 #if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)
     void preferredBufferFormatsDidChange();
 #endif
+
+    void fillGLInformation(RenderProcessInfo&&, CompletionHandler<void(RenderProcessInfo&&)>&&);
 private:
     void updateRootLayer();
     WebCore::FloatRect visibleContentsRect() const;
-    void layerFlushTimerFired();
+    void layerFlushRunLoopObserverFired();
     void flushLayers();
     void commitSceneState();
 
@@ -176,7 +176,7 @@ private:
         CompletionHandler<void()> callback;
         std::optional<uint32_t> compositionRequestID;
     } m_forceRepaintAsync;
-    RunLoop::Timer m_layerFlushTimer;
+    std::unique_ptr<WebCore::RunLoopObserver> m_layerFlushRunLoopObserver;
 #if USE(CAIRO)
     std::unique_ptr<WebCore::Cairo::PaintingEngine> m_paintingEngine;
 #elif USE(SKIA)

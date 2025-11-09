@@ -140,9 +140,9 @@ String MIMETypeRegistry::mimeTypeForExtension(StringView extension)
 {
     auto string = extension.createNSStringWithoutCopying();
 
-    NSString *mimeType = [[NSURLFileTypeMappings sharedMappings] MIMETypeForExtension:string.get()];
-    if (mimeType.length)
-        return mimeType;
+    RetainPtr<NSString> mimeType = [[NSURLFileTypeMappings sharedMappings] MIMETypeForExtension:string.get()];
+    if (mimeType.get().length)
+        return mimeType.get();
 
     auto mapEntry = additionalMimeTypesMap().find<ASCIICaseInsensitiveStringViewHashTranslator>(extension);
     if (mapEntry != additionalMimeTypesMap().end())

@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(EXTShaderTextureLOD);
 EXTShaderTextureLOD::EXTShaderTextureLOD(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::EXTShaderTextureLOD)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_EXT_shader_texture_lod"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::EXT_shader_texture_lod);
 }
 
 EXTShaderTextureLOD::~EXTShaderTextureLOD() = default;
 
 bool EXTShaderTextureLOD::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_EXT_shader_texture_lod"_s);
+    return context.supportsExtension(GCGLExtension::EXT_shader_texture_lod);
 }
 
 } // namespace WebCore

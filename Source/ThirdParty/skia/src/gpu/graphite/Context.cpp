@@ -40,6 +40,7 @@
 #include "include/private/base/SkTo.h"
 #include "src/base/SkEnumBitMask.h"
 #include "src/base/SkRectMemcpy.h"
+#include "src/capture/SkCapture.h"
 #include "src/capture/SkCaptureManager.h"
 #include "src/core/SkAutoPixmapStorage.h"
 #include "src/core/SkCPUContextImpl.h"
@@ -145,6 +146,8 @@ Context::Context(sk_sp<SharedContext> sharedContext,
     if (options.fEnableCapture) {
         fSharedContext->setCaptureManager(sk_make_sp<SkCaptureManager>());
     }
+
+    fPersistentPipelineStorage = options.fPersistentPipelineStorage;
 }
 
 Context::~Context() {
@@ -915,18 +918,26 @@ GpuStatsFlags Context::supportedGpuStats() const {
     return fSharedContext->caps()->supportedGpuStats();
 }
 
+void Context::syncPipelineData(size_t maxSize) {
+    ASSERT_SINGLE_OWNER
+
+    if (fPersistentPipelineStorage) {
+        fSharedContext->syncPipelineData(fPersistentPipelineStorage, maxSize);
+    }
+}
+
 void Context::startCapture() {
     if (fSharedContext->captureManager()) {
         fSharedContext->captureManager()->toggleCapture(true);
     }
 }
 
-void Context::endCapture() {
-    // TODO (b/412351769): Return an SkData block of serialized SKPs and other capture data
+sk_sp<SkCapture> Context::endCapture() {
     if (fSharedContext->captureManager()) {
         fSharedContext->captureManager()->toggleCapture(false);
-        fSharedContext->captureManager()->serializeCapture();
+        return fSharedContext->captureManager()->getLastCapture();
     }
+    return nullptr;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

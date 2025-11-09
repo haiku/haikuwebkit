@@ -40,6 +40,7 @@ class RenderBlock;
 class RenderStyle;
 class RenderTreeBuilder;
 class StyleImage;
+struct ImageOrientation;
 
 struct MarginRect {
     LayoutRect marginRect;

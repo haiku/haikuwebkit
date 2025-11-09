@@ -30,6 +30,7 @@
 
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
+#include <wtf/OSObjectPtr.h>
 #include <wtf/RetainPtr.h>
 
 namespace WebKit {

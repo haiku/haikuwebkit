@@ -346,10 +346,10 @@ inline void swap(String& a, String& b) { a.swap(b); }
 #ifdef __OBJC__
 
 // Used in a small number of places where the long standing behavior has been "nil if empty".
-NSString * nsStringNilIfEmpty(const String&);
+RetainPtr<NSString> nsStringNilIfEmpty(const String&);
 
 // Used in a small number of places where null strings should be converted to nil but empty strings should be maintained.
-NSString * nsStringNilIfNull(const String&);
+RetainPtr<NSString> nsStringNilIfNull(const String&);
 
 #endif
 
@@ -523,18 +523,18 @@ inline RetainPtr<NSString> String::createNSString() const
     return @"";
 }
 
-inline NSString * nsStringNilIfEmpty(const String& string)
+inline RetainPtr<NSString> nsStringNilIfEmpty(const String& string)
 {
     if (string.isEmpty())
         return nil;
-    return *string.impl();
+    return string.impl()->createNSString();
 }
 
-inline NSString * nsStringNilIfNull(const String& string)
+inline RetainPtr<NSString> nsStringNilIfNull(const String& string)
 {
     if (string.isNull())
         return nil;
-    return *string.impl();
+    return string.impl()->createNSString();
 }
 
 #endif

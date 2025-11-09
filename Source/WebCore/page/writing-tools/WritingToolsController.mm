@@ -240,7 +240,7 @@ void WritingToolsController::willBeginWritingToolsSession(const std::optional<Wr
 
         ASSERT(session->type == WritingTools::Session::Type::Composition);
 
-        m_state = CompositionState { { }, { WritingToolsCompositionCommand::create(Ref { *document }, *contextRange) }, *session };
+        m_state = CompositionState::create({ }, { WritingToolsCompositionCommand::create(Ref { *document }, *contextRange) }, *session).moveToUniquePtr();
 
         completionHandler({ { std::nullopt, AttributedString::fromNSAttributedString(adoptNS([[NSAttributedString alloc] initWithString:@""])), CharacterRange { 0, 0 } } });
         return;
@@ -275,7 +275,7 @@ void WritingToolsController::willBeginWritingToolsSession(const std::optional<Wr
 
     switch (session->type) {
     case WritingTools::Session::Type::Proofreading:
-        m_state = ProofreadingState { createLiveRange(*contextRange), *session, 0 };
+        m_state = ProofreadingState::create(createLiveRange(*contextRange), *session, 0).moveToUniquePtr();
         break;
 
     case WritingTools::Session::Type::Composition:
@@ -283,7 +283,7 @@ void WritingToolsController::willBeginWritingToolsSession(const std::optional<Wr
         // the command itself is never applied or unapplied.
         //
         // The range associated with each command is the resulting context range after the command is applied.
-        m_state = CompositionState { { }, { WritingToolsCompositionCommand::create(Ref { *document }, *contextRange) }, *session };
+        m_state = CompositionState::create({ }, { WritingToolsCompositionCommand::create(Ref { *document }, *contextRange) }, *session).moveToUniquePtr();
         break;
     }
 
@@ -493,7 +493,7 @@ void WritingToolsController::removeCompositionClearStateDeferralReason()
     // (Since animations are done async, they may end up still being in progress after the session
     // has ended, and since they depend on the current state this would lead to issues in the animation).
 
-    CheckedPtr state = std::get_if<CompositionState>(&m_state);
+    CheckedPtr state = dynamicDowncast<CompositionState>(m_state.get());
     if (!state) {
         ASSERT_NOT_REACHED();
         return;
@@ -505,7 +505,7 @@ void WritingToolsController::removeCompositionClearStateDeferralReason()
         return;
 
     state = nullptr;
-    m_state = { };
+    m_state = nullptr;
 }
 
 void WritingToolsController::intelligenceTextAnimationsDidComplete()
@@ -520,7 +520,7 @@ void WritingToolsController::intelligenceTextAnimationsDidComplete()
         return;
     }
 
-    CheckedPtr state = std::get_if<CompositionState>(&m_state);
+    CheckedPtr state = dynamicDowncast<CompositionState>(m_state.get());
     if (!state) {
         ASSERT_NOT_REACHED();
         return;
@@ -952,7 +952,7 @@ void WritingToolsController::willEndWritingToolsSession(const WritingTools::Sess
 template<>
 void WritingToolsController::didEndWritingToolsSession<WritingTools::Session::Type::Proofreading>(bool)
 {
-    m_state = { };
+    m_state = nullptr;
 }
 
 template<>
@@ -1004,7 +1004,7 @@ void WritingToolsController::didEndWritingToolsSession(const WritingTools::Sessi
 
     // FIXME: Remove this branch once all composition types use the new effects system.
     if (session.type == WritingTools::Session::Type::Composition && session.compositionType == WritingTools::Session::CompositionType::SmartReply) {
-        m_state = { };
+        m_state = nullptr;
         return;
     }
 
@@ -1094,23 +1094,23 @@ void WritingToolsController::respondToReappliedEditing(EditCommandComposition* c
 
 std::optional<SimpleRange> WritingToolsController::activeSessionRange() const
 {
-    return WTF::switchOn(m_state,
-        [](std::monostate) -> std::optional<SimpleRange> { return std::nullopt; },
-        [](const ProofreadingState& state) -> std::optional<SimpleRange> { return makeSimpleRange(state.contextRange); },
-        [](const CompositionState& state) -> std::optional<SimpleRange> { return state.reappliedCommands.last()->currentContextRange(); }
-    );
+    if (CheckedPtr state = dynamicDowncast<CompositionState>(m_state.get()))
+        return state->reappliedCommands.last()->currentContextRange();
+    if (CheckedPtr state = dynamicDowncast<ProofreadingState>(m_state.get()))
+        return makeSimpleRange(state->contextRange);
+    return std::nullopt;
 }
 
 template<WritingTools::Session::Type Type>
 WritingToolsController::StateFromSessionType<Type>::Value* WritingToolsController::currentState()
 {
-    return std::get_if<typename WritingToolsController::StateFromSessionType<Type>::Value>(&m_state);
+    return dynamicDowncast<typename WritingToolsController::StateFromSessionType<Type>::Value>(m_state.get());
 }
 
 template<WritingTools::Session::Type Type>
 const WritingToolsController::StateFromSessionType<Type>::Value* WritingToolsController::currentState() const
 {
-    return std::get_if<typename WritingToolsController::StateFromSessionType<Type>::Value>(&m_state);
+    return dynamicDowncast<typename WritingToolsController::StateFromSessionType<Type>::Value>(m_state.get());
 }
 
 RefPtr<Document> WritingToolsController::document() const

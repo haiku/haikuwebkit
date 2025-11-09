@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,8 +102,7 @@ public:
     WebCore::ModelPlayerIdentifier identifier() const final { return m_id; }
     void load(WebCore::Model&, WebCore::LayoutSize) final;
     void sizeDidChange(WebCore::LayoutSize) final;
-    PlatformLayer* layer() final;
-    std::optional<WebCore::LayerHostingContextIdentifier> layerHostingContextIdentifier() final;
+    void configureGraphicsLayer(WebCore::GraphicsLayer&, WebCore::ModelPlayerGraphicsLayerConfiguration&&) final;
     void setEntityTransform(WebCore::TransformationMatrix) final;
     void enterFullscreen() final;
     bool supportsMouseInteraction() final;
@@ -159,6 +159,7 @@ private:
     void notifyModelPlayerOfEntityTransformChange();
     void applyDefaultIBL();
     void updateForCurrentStageMode();
+    std::optional<WebCore::LayerHostingContextIdentifier> layerHostingContextIdentifier();
 
     WebCore::ModelPlayerIdentifier m_id;
     bool m_isVisible { true };

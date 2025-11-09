@@ -57,7 +57,7 @@ auto CSSValueConversion<LineWidth>::operator()(BuilderState& state, const CSSVal
         }
     }
 
-    if (shouldUseEvaluationTimeZoom(state))
+    if (evaluationTimeZoomEnabled(state))
         return toStyleFromCSSValue<LineWidth::Length>(state, value);
 
     // Any original result that was >= 1 should not be allowed to fall below 1. This keeps border lines from vanishing.

@@ -48,7 +48,7 @@
     return nil;
 }
 
-- (NSURL *)scope
+- (NSURL *)scopeURL
 {
     return _message->scope().createNSURL().autorelease();
 }

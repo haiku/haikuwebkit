@@ -99,7 +99,6 @@ class JSGlobalObject;
     v(repeatCharacter, nullptr) \
     v(isArray, nullptr) \
     v(isArraySlow, nullptr) \
-    v(appendMemcpy, nullptr) \
     v(Set, nullptr) \
     v(Map, nullptr) \
     v(importInRealm, nullptr) \
@@ -146,7 +145,6 @@ class JSGlobalObject;
     v(createRemoteFunction, nullptr) \
     v(isRemoteFunction, nullptr) \
     v(arrayFromFastFillWithUndefined, nullptr) \
-    v(arrayFromFastFillWithEmpty, nullptr) \
     v(jsonParse, nullptr) \
     v(jsonStringify, nullptr) \
     v(String, nullptr) \

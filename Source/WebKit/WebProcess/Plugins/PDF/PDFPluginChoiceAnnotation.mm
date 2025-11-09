@@ -75,10 +75,10 @@ Ref<Element> PDFPluginChoiceAnnotation::createAnnotationElement()
     element->setInlineStyleProperty(CSSPropertyColor, serializationForHTML(colorFromCocoaColor([choiceAnnotation fontColor])));
     element->setInlineStyleProperty(CSSPropertyFontFamily, [[choiceAnnotation font] familyName]);
 
-    NSArray *choices = [choiceAnnotation choices];
-    NSString *selectedChoice = [choiceAnnotation widgetStringValue];
+    RetainPtr<NSArray> choices = [choiceAnnotation choices];
+    RetainPtr<NSString> selectedChoice = [choiceAnnotation widgetStringValue];
 
-    for (NSString *choice in choices) {
+    for (NSString *choice in choices.get()) {
         auto choiceOption = document->createElement(optionTag, false);
         choiceOption->setAttributeWithoutSynchronization(valueAttr, choice);
         choiceOption->setTextContent(choice);

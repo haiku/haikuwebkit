@@ -368,4 +368,34 @@ bool isEventHandlerAttribute(const QualifiedName& attributeName)
     return eventHandlerNames->contains(attributeName.localName());
 }
 
+ExceptionOr<AtomString> trustedTypesCompliantAttributeValue(ScriptExecutionContext& scriptExecutionContext, const String& attributeType, const TrustedTypeOrString& value, const String& sink)
+{
+    auto stringValueHolder = WTF::switchOn(value,
+        [&](const String& string) -> ExceptionOr<String> {
+            if (attributeType.isNull())
+                return String(string);
+            return trustedTypeCompliantString(stringToTrustedType(attributeType), scriptExecutionContext, string, sink);
+        },
+        [&](const RefPtr<TrustedHTML>& trustedHTML) -> ExceptionOr<String> {
+            if (attributeType.isNull() || attributeType == "TrustedHTML"_s)
+                return trustedHTML->toString();
+            return trustedTypeCompliantString(stringToTrustedType(attributeType), scriptExecutionContext, trustedHTML->toString(), sink);
+        },
+        [&](const RefPtr<TrustedScript>& trustedScript) -> ExceptionOr<String> {
+            if (attributeType.isNull() || attributeType == "TrustedScript"_s)
+                return trustedScript->toString();
+            return trustedTypeCompliantString(stringToTrustedType(attributeType), scriptExecutionContext, trustedScript->toString(), sink);
+        },
+        [&](const RefPtr<TrustedScriptURL>& trustedScriptURL) -> ExceptionOr<String> {
+            if (attributeType.isNull() || attributeType == "TrustedScriptURL"_s)
+                return trustedScriptURL->toString();
+            return trustedTypeCompliantString(stringToTrustedType(attributeType), scriptExecutionContext, trustedScriptURL->toString(), sink);
+        }
+    );
+    if (stringValueHolder.hasException())
+        return stringValueHolder.releaseException();
+
+    return AtomString { stringValueHolder.releaseReturnValue() };
+}
+
 } // namespace WebCore

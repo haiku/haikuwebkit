@@ -40,7 +40,7 @@ RefPtr<GraphicsContextGLTextureMapperAndroid> GraphicsContextGLTextureMapperAndr
 
 bool GraphicsContextGLTextureMapperAndroid::platformInitializeExtensions()
 {
-    if (!enableExtension("GL_OES_EGL_image"_s))
+    if (!enableExtensions(GCGLExtension::GL_OES_EGL_image))
         return false;
 
     const auto& eglExtensions = PlatformDisplay::sharedDisplay().eglExtensions();
@@ -104,12 +104,14 @@ bool GraphicsContextGLTextureMapperAndroid::enableRequiredWebXRExtensions()
     if (!makeContextCurrent())
         return false;
 
-    return enableExtension("GL_OES_EGL_image"_s)
-        && enableExtension("GL_OES_EGL_image_external"_s)
-        && enableExtension("EGL_KHR_image_base"_s)
-        && enableExtension("EGL_KHR_surfaceless_context"_s)
-        && enableExtension("EGL_ANDROID_get_native_client_buffer"_s)
-        && enableExtension("EGL_ANDROID_image_native_buffer"_s);
+    return enableExtensions({
+        GCGLExtension::GL_OES_EGL_image,
+        GCGLExtension::GL_OES_EGL_image_external,
+        GCGLExtension::EGL_KHR_image_base,
+        GCGLExtension::EGL_KHR_surfaceless_context,
+        GCGLExtension::EGL_ANDROID_get_native_client_buffer,
+        GCGLExtension::EGL_ANDROID_image_native_buffer,
+    });
 }
 #endif // ENABLE(WEBXR)
 

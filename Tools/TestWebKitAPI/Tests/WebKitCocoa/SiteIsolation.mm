@@ -231,7 +231,7 @@ static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> si
 
 enum class EnableProcessCache : bool { No, Yes };
 static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> siteIsolatedViewWithSharedProcess(const HTTPServer& server,
-    EnableProcessCache enableProcessCache = EnableProcessCache::No, NSURL *dataStoreDirectory = nil, NSURL *itpRoot = nil)
+    EnableProcessCache enableProcessCache = EnableProcessCache::No, NSURL *dataStoreDirectory = nil, NSURL *itpRoot = nil, NSString *domainsWithUserInteraction = nil)
 {
     RetainPtr<_WKWebsiteDataStoreConfiguration> dataStoreConfiguration;
     if (!dataStoreDirectory || !itpRoot)
@@ -242,6 +242,8 @@ static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> si
     }
 
     [dataStoreConfiguration setHTTPSProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", server.port()]]];
+    [dataStoreConfiguration setAdditionalDomainsWithUserInteractionForTesting:domainsWithUserInteraction];
+
     auto dataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration.get()]);
     [dataStore _setResourceLoadStatisticsEnabled:YES];
 
@@ -1634,16 +1636,38 @@ TEST(SiteIsolation, CrossOriginOpenerPolicy)
     [webView waitForNextPresentationUpdate];
 }
 
-TEST(SiteIsolation, CrossOriginOpenerPolicyMainFrame)
+static void testCrossOriginOpenerPolicyMainFrame(bool useSharedProcess)
 {
     HTTPServer server({
-        { "/example"_s, { { { "cross-origin-opener-policy"_s, "same-origin-allow-popups"_s } }, "hi"_s } }
+        { "/example"_s, { { { "cross-origin-opener-policy"_s, "same-origin-allow-popups"_s } }, "<iframe src='https://webkit.org/webkit'></iframe>"_s } },
+        { "/webkit"_s, { "iframe content"_s } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    RetainPtr<TestWKWebView> webView;
+    RetainPtr<TestNavigationDelegate> navigationDelegate;
+
+    if (useSharedProcess)
+        std::tie(webView, navigationDelegate) = siteIsolatedViewWithSharedProcess(server);
+    else
+        std::tie(webView, navigationDelegate) = siteIsolatedViewAndDelegate(server);
 
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
     [navigationDelegate waitForDidFinishNavigation];
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s, { { RemoteFrame } } },
+        { RemoteFrame, { { "https://webkit.org"_s } } }
+    });
+    [webView waitForNextPresentationUpdate];
+}
+
+TEST(SiteIsolation, CrossOriginOpenerPolicyMainFrame)
+{
+    testCrossOriginOpenerPolicyMainFrame(false);
+}
+
+TEST(SiteIsolation, CrossOriginOpenerPolicyMainFrameWithSharedProcess)
+{
+    testCrossOriginOpenerPolicyMainFrame(true);
 }
 
 TEST(SiteIsolation, NavigationWithIFrames)
@@ -1936,7 +1960,12 @@ TEST(SiteIsolation, RunOpenPanel)
         Util::spinRunLoop();
 }
 
+// FIXME when rdar://163227871 is resolved.
+#if PLATFORM(MAC)
+TEST(SiteIsolation, DISABLED_CancelOpenPanel)
+#else
 TEST(SiteIsolation, CancelOpenPanel)
+#endif
 {
     auto subframeHTML = "<!DOCTYPE html><input style='width: 100vw; height: 100vh;' id='file' type='file'>"
         "<script>"
@@ -4336,17 +4365,25 @@ TEST(SiteIsolation, IframeOpener)
 
 TEST(SiteIsolation, CrossProtocolNavigationWithAboutURL)
 {
-    HTTPServer server({
+    HTTPServer secureServer({
         { "/example"_s, { "hi"_s } },
     }, HTTPServer::Protocol::HttpsProxy);
 
-    RetainPtr processPoolConfiguration = adoptNS([[_WKProcessPoolConfiguration alloc] init]);
-    processPoolConfiguration.get().usesWebProcessCache = YES;
-    RetainPtr processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
-    RetainPtr webViewConfiguration = server.httpsProxyConfiguration();
-    [webViewConfiguration setProcessPool:processPool.get()];
+    HTTPServer plaintextServer({
+        { "http://example.com/example"_s, { "hi"_s } },
+    });
 
-    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(webViewConfiguration.get());
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    RetainPtr storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setHTTPSProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", secureServer.port()]]];
+    [storeConfiguration setHTTPProxy:[NSURL URLWithString:[NSString stringWithFormat:@"https://127.0.0.1:%d/", plaintextServer.port()]]];
+    RetainPtr viewConfiguration = adoptNS([WKWebViewConfiguration new]);
+    [viewConfiguration setWebsiteDataStore:adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]).get()];
+    enableSiteIsolation(viewConfiguration.get());
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:viewConfiguration.get()]);
+    webView.get().navigationDelegate = navigationDelegate.get();
+
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
     [navigationDelegate waitForDidFinishNavigation];
     auto processIdentifier1 = [webView _webProcessIdentifier];
@@ -6339,6 +6376,35 @@ TEST(SiteIsolation, SharedProcessWebProcessCacheSharedProcessForSiteWithUserInte
     EXPECT_EQ(mainFrameProcessC, mainFrameProcess);
     EXPECT_EQ(childFrameProcess1C, childFrameProcess1);
     EXPECT_NE(childFrameProcess2C, childFrameProcess2);
+}
+
+TEST(SiteIsolation, SharedProcessWithUserInteractionOverride)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://webkit.org/webkit'></iframe><iframe src='https://apple.com/apple'></iframe><iframe src='https://w3.org/w3c'></iframe>"_s } },
+        { "/apple"_s, { "apple content"_s } },
+        { "/webkit"_s, { "webkit content"_s } },
+        { "/w3c"_s, { "w3c content"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewWithSharedProcess(server, EnableProcessCache::No, nil, nil, @"apple.com");
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    checkFrameTreesInProcesses(webView.get(), {
+        {
+            "https://example.com"_s,
+            { { RemoteFrame }, { RemoteFrame }, { RemoteFrame } }
+        },
+        {
+            RemoteFrame,
+            { { "https://webkit.org"_s }, { RemoteFrame }, { "https://w3.org"_s } }
+        },
+        {
+            RemoteFrame,
+            { { RemoteFrame }, { "https://apple.com"_s }, { RemoteFrame } }
+        }
+    });
 }
 
 #endif

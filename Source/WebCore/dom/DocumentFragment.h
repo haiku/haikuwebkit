@@ -42,7 +42,7 @@ public:
     virtual bool isTemplateContent() const { return false; }
 
     // From the NonElementParentNode interface - https://dom.spec.whatwg.org/#interface-nonelementparentnode
-    WEBCORE_EXPORT Element* getElementById(const AtomString&) const;
+    WEBCORE_EXPORT RefPtr<Element> getElementById(const AtomString&) const;
 
 protected:
     DocumentFragment(Document&, OptionSet<TypeFlag> = { });

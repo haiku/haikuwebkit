@@ -64,8 +64,8 @@ static void safeRemoveFromSuperview(NSView *view)
 {
     // If the view is the first responder, then set the window's first responder to nil so
     // we don't leave the window pointing to a view that's no longer in it.
-    NSWindow *window = [view window];
-    auto *firstResponderView = dynamic_objc_cast<NSView>([window firstResponder]);
+    RetainPtr<NSWindow> window = [view window];
+    RetainPtr firstResponderView = dynamic_objc_cast<NSView>([window firstResponder]);
     if ([firstResponderView isDescendantOf:view])
         [window makeFirstResponder:nil];
 
@@ -211,7 +211,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 ALLOW_DEPRECATED_DECLARATIONS_END
         // This is the common case of drawing into a window or an inclusive layer, or printing.
         BEGIN_BLOCK_OBJC_EXCEPTIONS
-        [view displayRectIgnoringOpacity:[view convertRect:r fromView:[view superview]]];
+        [view displayRectIgnoringOpacity:[view convertRect:r fromView:retainPtr([view superview]).get()]];
         END_BLOCK_OBJC_EXCEPTIONS
         return;
     }
@@ -249,7 +249,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     {
         NSGraphicsContext *nsContext = [NSGraphicsContext graphicsContextWithCGContext:cgContext.get() flipped:NO];
-        [view displayRectIgnoringOpacity:[view convertRect:r fromView:[view superview]] inContext:nsContext];
+        [view displayRectIgnoringOpacity:[view convertRect:r fromView:retainPtr([view superview]).get()] inContext:nsContext];
     }
     END_BLOCK_OBJC_EXCEPTIONS
 

@@ -2,7 +2,7 @@
 {
  "PublicSDKContentRoot": [
   {
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -197,7 +197,7 @@
     {"access": "public", "introduced": "17.2", "linkage": "exported", "name": "_$s22ManagedAppDistribution8PlatformVSQAAMc"},
     {"access": "public", "introduced": "17.2", "linkage": "exported", "name": "_$s22ManagedAppDistribution8PlatformVs23CustomStringConvertibleAAMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -254,7 +254,9 @@
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO21mismatchedInstallTypeyA2CmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO22installationRestrictedyA2CmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO24insufficientStorageSpaceyAC10Foundation11MeasurementVySo017NSUnitInformationE0CGcACmFWC"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO27ageRatingExceptionNotNeededyA2CmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO31missingInstallVerificationTokenyA2CmFWC"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO32missingAgeRatingExceptionRequestyA2CmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO34minimumPlatformVersionNotSatisfiedyACSScACmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO40invalidAlternativeDistributionPackageURLyA2CmFWC"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit0aB5ErrorO46invalidAlternativeDistributionPackageSignatureyA2CmFWC"},
@@ -301,6 +303,8 @@
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C2eeoiySbAE_AEtFZ"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C2ids6UInt64Vvg"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C2ids6UInt64VvpMV"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C39presentAgeExceptionApproveInPersonSheetyyYaKF"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C39presentAgeExceptionApproveInPersonSheetyyYaKFTu"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C4hash4intoys6HasherVz_tF"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C8MetadataV12shortVersionSSvg"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC0C0C8MetadataV12shortVersionSSvpMV"},
@@ -341,6 +345,31 @@
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC15searchTerritorySSSgvg"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC15searchTerritorySSSgvgTu"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC15searchTerritorySSSgvpMV"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV11appleItemIDs6UInt64Vvg"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV11appleItemIDs6UInt64VvpMV"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV4fromAEs7Decoder_p_tKcfC"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO7pendingyA2GmFWC"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO8approvedyA2GmFWC"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO8declinedyA2GmFWC"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO8rawValueAGSgSi_tcfC"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO8rawValueSivg"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusO8rawValueSivpMV"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOMa"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOMn"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusON"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOSEAAMc"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOSHAAMc"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOSQAAMc"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOSYAAMc"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6StatusOSeAAMc"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6encode2toys7Encoder_p_tKF"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6statusAE6StatusOvg"},
+    {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestV6statusAE6StatusOvpMV"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestVMa"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestVMn"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestVN"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestVSEAAMc"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC16ExceptionRequestVSeAAMc"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC18setSearchTerritoryyySSSgYaF"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC18setSearchTerritoryyySSSgYaFTu"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC19InstallationRequestV11appShareURL10Foundation0I0VSgvM"},
@@ -367,6 +396,8 @@
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC21requestLicenseRenewal12appleItemIDsySays6UInt64VG_tYaKFTu"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC23maximumAllowedAgeRatingSivg"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC23maximumAllowedAgeRatingSivpMV"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC27currentAgeExceptionRequestsSayAC0G7RequestVGyYaKF"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC27currentAgeExceptionRequestsSayAC0G7RequestVGyYaKFTu"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC3app14forAppleItemIDAC0C0Cs6UInt64V_tF"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC7currentACvgZ"},
     {"access": "public", "linkage": "exported", "name": "_$s14MarketplaceKit10AppLibraryC7currentACvpZMV"},
@@ -457,7 +488,7 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s14MarketplaceKit20TransactionReportingOMn"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s14MarketplaceKit20TransactionReportingON"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

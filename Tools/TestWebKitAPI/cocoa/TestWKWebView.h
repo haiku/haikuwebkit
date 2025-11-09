@@ -29,6 +29,7 @@
 #import <wtf/Forward.h>
 #import <wtf/IterationStatus.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/text/WTFString.h>
 #endif
 
 @class _WKFrameTreeNode;

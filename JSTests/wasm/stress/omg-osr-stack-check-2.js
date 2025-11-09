@@ -1,4 +1,4 @@
-//@ runDefault("--jitPolicyScale=0", "--useConcurrentJIT=0")
+//@ runDefaultWasm("--jitPolicyScale=0", "--useConcurrentJIT=0")
 let tools;
 if (globalThis.callerIsBBQOrOMGCompiled) {
   function instantiateJsc(filename, importObject) {

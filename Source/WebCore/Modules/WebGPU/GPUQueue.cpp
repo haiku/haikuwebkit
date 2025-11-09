@@ -46,6 +46,7 @@
 #include "VideoFrame.h"
 #include "WebCodecsVideoFrame.h"
 #include "WebGPUDevice.h"
+#include <wtf/CheckedArithmetic.h>
 #include <wtf/MallocSpan.h>
 
 #if PLATFORM(COCOA)
@@ -721,13 +722,16 @@ static GPUIntegerCoordinate dimension(const GPUOrigin2D& origin, size_t dimensio
 static bool isStateValid(const auto& source, const std::optional<GPUOrigin2D>& origin, const GPUExtent3D& copySize, ExceptionCode& errorCode)
 {
     using ResultType = bool;
-    auto horizontalDimension = (origin ? dimension(*origin, 0) : 0) + dimension(copySize, 0);
-    auto verticalDimension = (origin ? dimension(*origin, 1) : 0) + dimension(copySize, 1);
+    auto checkedHorizontalDimension = checkedSum<uint32_t>((origin ? dimension(*origin, 0) : 0), dimension(copySize, 0));
+    auto checkedVerticalDimension = checkedSum<uint32_t>((origin ? dimension(*origin, 1) : 0), dimension(copySize, 1));
     auto depthDimension = dimension(copySize, 2);
-    if (depthDimension > 1) {
+    if (depthDimension > 1 || checkedHorizontalDimension.hasOverflowed() || checkedVerticalDimension.hasOverflowed()) {
         errorCode = ExceptionCode::OperationError;
         return false;
     }
+
+    uint32_t horizontalDimension = checkedHorizontalDimension.value();
+    uint32_t verticalDimension = checkedVerticalDimension.value();
 
     return WTF::switchOn(source, [&](const RefPtr<ImageBitmap>& imageBitmap) -> ResultType {
         if (!imageBitmap->buffer()) {

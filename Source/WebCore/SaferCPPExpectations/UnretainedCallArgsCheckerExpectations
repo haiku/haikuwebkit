@@ -1,8 +1,13 @@
 Modules/WebGPU/GPUQueue.cpp
 [ Mac ] Modules/model-element/scenekit/SceneKitModelPlayer.mm
+[ iOS ] Modules/notifications/NotificationDataCocoa.mm
+[ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm
 [ Mac ] accessibility/cocoa/AXCoreObjectCocoa.mm
 [ Mac ] accessibility/cocoa/AXTextMarkerCocoa.mm
 [ Mac ] accessibility/cocoa/AccessibilityObjectCocoa.mm
+[ iOS ] accessibility/ios/AXObjectCacheIOS.mm
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
 [ Mac ] accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm
 [ Mac ] accessibility/mac/AXObjectCacheMac.mm
 [ Mac ] accessibility/mac/AccessibilityObjectMac.mm
@@ -22,14 +27,16 @@ editing/cocoa/WebContentReaderCocoa.mm
 inspector/agents/page/PageTimelineAgent.cpp
 page/cocoa/PageCocoa.mm
 page/cocoa/WebTextIndicatorLayer.mm
+[ iOS ] page/ios/EventHandlerIOS.mm
 [ Mac ] page/mac/EventHandlerMac.mm
 [ Mac ] page/mac/ImageOverlayControllerMac.mm
 [ Mac ] page/mac/ServicesOverlayController.mm
 [ Mac ] page/scrolling/mac/ScrollingTreeOverflowScrollingNodeMac.mm
-[ Mac ]page/scrolling/mac/ScrollingTreePluginScrollingNodeMac.mm
-[ Mac ]page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
+[ Mac ] page/scrolling/mac/ScrollingTreePluginScrollingNodeMac.mm
+[ Mac ] page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
 platform/audio/cocoa/AudioFileReaderCocoa.cpp
 platform/audio/cocoa/PlatformRawAudioDataCocoa.cpp
+[ iOS ] platform/audio/ios/MediaSessionHelperIOS.mm
 platform/cf/KeyedDecoderCF.cpp
 platform/cf/KeyedEncoderCF.cpp
 platform/cf/MainThreadSharedTimerCF.cpp
@@ -38,11 +45,11 @@ platform/cf/MainThreadSharedTimerCF.cpp
 platform/cocoa/FileMonitorCocoa.mm
 platform/cocoa/LocalizedStringsCocoa.mm
 platform/cocoa/NetworkExtensionContentFilter.mm
-platform/cocoa/ParentalControlsContentFilter.mm
 platform/cocoa/PlatformPasteboardCocoa.mm
 platform/cocoa/SearchPopupMenuCocoa.mm
 platform/cocoa/UserAgentCocoa.mm
 platform/cocoa/WebAVPlayerLayer.mm
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
 [ Mac ] platform/gamepad/mac/HIDGamepadElement.cpp
 platform/graphics/BitmapImageDescriptor.cpp
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
@@ -74,6 +81,7 @@ platform/graphics/cg/ImageBufferCGBitmapBackend.cpp
 platform/graphics/cg/ImageBufferCGPDFDocumentBackend.cpp
 platform/graphics/cg/ImageBufferIOSurfaceBackend.cpp
 platform/graphics/cg/ImageBufferUtilitiesCG.cpp
+[ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
 platform/graphics/cg/PathCG.cpp
 platform/graphics/cocoa/CMUtilities.mm
 platform/graphics/cocoa/FontCacheCoreText.cpp
@@ -85,35 +93,12 @@ platform/graphics/cocoa/VideoMediaSampleRenderer.mm
 platform/graphics/cocoa/WebCoreCALayerExtras.mm
 platform/graphics/coreimage/FilterImageCoreImage.mm
 platform/graphics/coreimage/SourceGraphicCoreImageApplier.mm
+[ iOS ] platform/graphics/ios/DisplayRefreshMonitorIOS.mm
 [ Mac ] platform/graphics/mac/PDFDocumentImageMac.mm
 [ Mac ] platform/graphics/mac/ScrollbarTrackCornerSystemImageMac.mm
 [ Mac ] platform/graphics/mac/controls/InnerSpinButtonMac.mm
 [ Mac ] platform/graphics/mac/controls/ToggleButtonMac.mm
 [ Mac ] platform/graphics/mac/controls/WebControlView.mm
-platform/ios/WebAVPlayerController.mm
-platform/libwebrtc/LibWebRTCVPXVideoEncoder.cpp
-platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
-platform/mediastream/mac/AVVideoCaptureSource.mm
-[ Mac ] platform/mediastream/mac/ScreenCaptureKitCaptureSource.mm
-[ Mac ] platform/mediastream/mac/ScreenCaptureKitSharingSessionManager.mm
-platform/network/cf/DNSResolveQueueCFNet.cpp
-platform/network/mac/ResourceHandleMac.mm
-platform/network/mac/SynchronousLoaderClient.mm
-platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
-platform/text/cocoa/LocalizedDateCache.mm
-rendering/AttachmentLayout.mm
-[ Mac ] testing/ServiceWorkerInternals.mm
-testing/cocoa/WebArchiveDumpSupport.mm
-[ iOS ] Modules/notifications/NotificationDataCocoa.mm
-[ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm
-[ iOS ] accessibility/ios/AXObjectCacheIOS.mm
-[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
-[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
-[ iOS ] page/ios/EventHandlerIOS.mm
-[ iOS ] platform/audio/ios/MediaSessionHelperIOS.mm
-[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
-[ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
-[ iOS ] platform/graphics/ios/DisplayRefreshMonitorIOS.mm
 [ iOS ] platform/ios/ColorIOS.mm
 [ iOS ] platform/ios/DeviceMotionClientIOS.mm
 [ iOS ] platform/ios/DeviceOrientationClientIOS.mm
@@ -129,6 +114,7 @@ testing/cocoa/WebArchiveDumpSupport.mm
 [ iOS ] platform/ios/ValidationBubbleIOS.mm
 [ iOS ] platform/ios/VideoPresentationInterfaceAVKitLegacy.mm
 [ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
+platform/ios/WebAVPlayerController.mm
 [ iOS ] platform/ios/WebEvent.mm
 [ iOS ] platform/ios/WebItemProviderPasteboard.mm
 [ iOS ] platform/ios/WidgetIOS.mm
@@ -139,7 +125,19 @@ testing/cocoa/WebArchiveDumpSupport.mm
 [ iOS ] platform/ios/wak/WKView.mm
 [ iOS ] platform/ios/wak/WebCoreThread.mm
 [ iOS ] platform/ios/wak/WebCoreThreadRun.cpp
+platform/libwebrtc/LibWebRTCVPXVideoEncoder.cpp
+platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
 [ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
+platform/mediastream/mac/AVVideoCaptureSource.mm
+[ Mac ] platform/mediastream/mac/ScreenCaptureKitCaptureSource.mm
+[ Mac ] platform/mediastream/mac/ScreenCaptureKitSharingSessionManager.mm
+platform/network/cf/DNSResolveQueueCFNet.cpp
 [ iOS ] platform/network/mac/ResourceErrorMac.mm
+platform/network/mac/ResourceHandleMac.mm
+platform/network/mac/SynchronousLoaderClient.mm
+platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
+platform/text/cocoa/LocalizedDateCache.mm
 [ iOS ] platform/text/mac/TextBoundaries.mm
+rendering/AttachmentLayout.mm
 [ iOS ] rendering/ios/RenderThemeIOS.mm
+[ Mac ] testing/ServiceWorkerInternals.mm

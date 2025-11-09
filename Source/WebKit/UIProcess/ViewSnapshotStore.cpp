@@ -39,6 +39,8 @@ static const size_t maximumSnapshotCacheSize = 400 * (1024 * 1024);
 namespace WebKit {
 using namespace WebCore;
 
+#if !(PLATFORM(WPE) && USE(CAIRO))
+
 ViewSnapshotStore::ViewSnapshotStore()
 {
 }
@@ -123,6 +125,8 @@ void ViewSnapshotStore::discardSnapshotImagesForOrigin(const WebCore::SecurityOr
             viewSnapshot->clearImage();
     }
 }
+
+#endif // !(PLATFORM(WPE) && USE(CAIRO))
 
 ViewSnapshot::~ViewSnapshot()
 {

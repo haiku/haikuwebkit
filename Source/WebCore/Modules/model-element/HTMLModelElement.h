@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2020-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,10 +65,6 @@ class Model;
 class ModelPlayerProvider;
 class MouseEvent;
 
-#if ENABLE(MODEL_CONTEXT)
-class ModelContext;
-#endif
-
 template<typename IDLType> class DOMPromiseDeferred;
 template<typename IDLType> class DOMPromiseProxy;
 template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
@@ -93,32 +90,16 @@ public:
     const URL& currentSrc() const { return m_sourceURL; }
     bool complete() const { return m_dataComplete; }
 
+    void configureGraphicsLayer(GraphicsLayer&, Color backgroundColor);
+
+    std::optional<PlatformLayerIdentifier> layerID() const;
+
     // MARK: DOM Functions and Attributes
 
     using ReadyPromise = DOMPromiseProxyWithResolveCallback<IDLInterface<HTMLModelElement>>;
     ReadyPromise& ready() { return m_readyPromise.get(); }
 
     WEBCORE_EXPORT RefPtr<Model> model() const;
-
-    bool usesPlatformLayer() const;
-    PlatformLayer* platformLayer() const;
-
-    std::optional<PlatformLayerIdentifier> layerID() const;
-
-    // FIXME: It is a layering violation for WebCore to be concerned with LayerHostingContextIdentifiers. It should not be aware that layer hosting is being used.
-    std::optional<LayerHostingContextIdentifier> layerHostingContextIdentifier() const;
-
-#if ENABLE(GPU_PROCESS_MODEL)
-    // FIXME: It is a layering violation for WebCore to be concerned with MachSendRights like this. It should not be aware that other processes are being used.
-    WEBCORE_EXPORT const MachSendRight* displayBuffer() const;
-    GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate();
-#endif
-
-    RefPtr<GraphicsLayer> graphicsLayer() const;
-
-#if ENABLE(MODEL_CONTEXT)
-    RefPtr<ModelContext> modelContext() const;
-#endif
 
 #if ENABLE(MODEL_ELEMENT_ENTITY_TRANSFORM)
     const DOMMatrixReadOnly& entityTransform() const;
@@ -206,8 +187,8 @@ public:
     size_t externalMemoryCost() const;
 #endif
 
+    bool isIntersectingViewport() const { return m_isIntersectingViewport; }
     void viewportIntersectionChanged(bool isIntersecting);
-    bool isIntersectingViewport() const final { return m_isIntersectingViewport; }
 
     WEBCORE_EXPORT String modelElementStateForTesting() const;
 
@@ -253,23 +234,20 @@ private:
     void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) final;
 
     // ModelPlayerClient overrides.
-    void didUpdateLayerHostingContextIdentifier(ModelPlayer&, LayerHostingContextIdentifier) final;
-#if ENABLE(GPU_PROCESS_MODEL)
-    void didUpdateDisplayDelegate(ModelPlayer&) const final;
-#endif
+    void didFinishLoading(ModelPlayer&) final;
+    void didFailLoading(ModelPlayer&, const ResourceError&) final;
+    void didUnload(ModelPlayer&) final;
+    void didUpdate(ModelPlayer&) final;
 #if ENABLE(MODEL_ELEMENT_ENTITY_TRANSFORM)
     void didUpdateEntityTransform(ModelPlayer&, const TransformationMatrix&) final;
 #endif
 #if ENABLE(MODEL_ELEMENT_BOUNDING_BOX)
     void didUpdateBoundingBox(ModelPlayer&, const FloatPoint3D&, const FloatPoint3D&) final;
 #endif
-    void didFinishLoading(ModelPlayer&) final;
-    void didFailLoading(ModelPlayer&, const ResourceError&) final;
 #if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
     void didFinishEnvironmentMapLoading(ModelPlayer&, bool succeeded) final;
 #endif
-    void didUnload(ModelPlayer&) final;
-    std::optional<PlatformLayerIdentifier> modelContentsLayerID() const final;
+    RefPtr<GraphicsLayer> graphicsLayer() const final;
     bool isVisible() const final;
     void logWarning(ModelPlayer&, const String&) final;
 

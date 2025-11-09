@@ -59,14 +59,13 @@ class TimeControl extends LayoutItem
         this._loading = false;
         this._supportsSeeking = true;
 
-        let children = [this._loading ? this.activityIndicator : this.elapsedTimeLabel, this.scrubber, this.remainingTimeLabel]
         if (this._shouldShowDurationTimeLabel) {
             this.element.classList.add("duration");
-            children.push(this.durationTimeLabel);
             this.durationTimeLabel.element.addEventListener("click", this);
             this.remainingTimeLabel.element.addEventListener("click", this);
         }
-        this.children = children;
+
+        this.needsLayout = true;
     }
 
     // Public
@@ -154,6 +153,11 @@ class TimeControl extends LayoutItem
 
     _performIdealLayout()
     {
+        let children = [this._loading ? this.activityIndicator : this.elapsedTimeLabel, this.scrubber, this.remainingTimeLabel];
+        if (this._shouldShowDurationTimeLabel)
+            children.push(this.durationTimeLabel);
+        this.children = children;
+
         if (this._loading) {
             this.durationTimeLabel.value = NaN;
             this.remainingTimeLabel.value = NaN;

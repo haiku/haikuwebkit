@@ -1381,24 +1381,6 @@ class CppStyleTest(CppStyleTestBase):
                                      'structured multi-line comments.  [readability/multiline_comment] [5]'])
         self.assert_multi_line_lint(r'''    // /* comment, but not multi-line''', '')
 
-    def test_multiline_strings(self):
-        multiline_string_error_message = (
-            'Multi-line string ("...") found.  This lint script doesn\'t '
-            'do well with such strings, and may give bogus warnings.  They\'re '
-            'ugly and unnecessary, and you should use concatenation instead".'
-            '  [readability/multiline_string] [5]')
-
-        file_path = 'mydir/foo.cpp'
-
-        error_collector = ErrorCollector(self.assertTrue)
-        self.process_file_data(file_path, 'cpp',
-                               ['const char* str = "This is a\\',
-                                ' multiline string.";'],
-                               error_collector)
-        self.assertEqual(
-            2,  # One per line.
-            error_collector.result_list().count(multiline_string_error_message))
-
     def test_platformh_comments(self):
         check_platformh_message = (
             'CPP comments are not allowed in Platform.h, '
@@ -7218,6 +7200,30 @@ class WebKitStyleTest(CppStyleTestBase):
         self.assert_lint('WK_API_AVAILABLE(ios(WK_IOS_TBA), macos(WK_MAC_TBA))', '')  # WK_MAC_TBA and WK_IOS_TBA are OK, backwards.
         self.assert_lint('WK_API_AVAILABLE(macos(WK_IOS_TBA))', 'macos(WK_IOS_TBA) is invalid; expected WK_MAC_TBA or a major.minor version  [build/wk_api_available] [5]')
         self.assert_lint('WK_API_AVAILABLE(ios(WK_MAC_TBA))', 'ios(WK_MAC_TBA) is invalid; expected WK_IOS_TBA or a major.minor version  [build/wk_api_available] [5]')
+
+        # Test for incorrect TBA macro usage - each platform should use its own TBA macro.
+        self.assert_lint('WK_API_AVAILABLE(macos(WK_XROS_TBA))', 'macos(WK_XROS_TBA) is invalid; expected WK_MAC_TBA or a major.minor version  [build/wk_api_available] [5]')
+        self.assert_lint('WK_API_AVAILABLE(ios(WK_XROS_TBA))', 'ios(WK_XROS_TBA) is invalid; expected WK_IOS_TBA or a major.minor version  [build/wk_api_available] [5]')
+        self.assert_lint('WK_API_AVAILABLE(visionos(WK_MAC_TBA))', 'visionos(WK_MAC_TBA) is invalid; expected WK_XROS_TBA or a major.minor version  [build/wk_api_available] [5]')
+        self.assert_lint('WK_API_AVAILABLE(visionos(WK_IOS_TBA))', 'visionos(WK_IOS_TBA) is invalid; expected WK_XROS_TBA or a major.minor version  [build/wk_api_available] [5]')
+
+        # Test that correct TBA macro usage doesn't produce errors.
+        self.assert_lint('WK_API_AVAILABLE(visionos(WK_XROS_TBA))', '')
+        self.assert_lint('WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))', '')
+
+        # Test different platform orderings work correctly.
+        self.assert_lint('WK_API_AVAILABLE(ios(WK_IOS_TBA), macos(WK_MAC_TBA))', '')
+        self.assert_lint('WK_API_AVAILABLE(visionos(WK_XROS_TBA), ios(WK_IOS_TBA), macos(WK_MAC_TBA))', '')
+        self.assert_lint('WK_API_AVAILABLE(ios(14.0), visionos(1.0))', '')
+
+        # Test duplicate platform detection.
+        self.assert_lint('WK_API_AVAILABLE(macos(WK_MAC_TBA), macos(WK_MAC_TBA))', 'Duplicate platform names in WK_API_AVAILABLE  [build/wk_api_available] [5]')
+        self.assert_lint('WK_API_AVAILABLE(ios(14.0), macos(11.0), ios(15.0))', 'Duplicate platform names in WK_API_AVAILABLE  [build/wk_api_available] [5]')
+
+        # Test for the original bug that prompted this check - WK_MAC_TBA used for all platforms.
+        self.assert_lint('} WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_MAC_TBA), visionos(WK_MAC_TBA));',
+                         ['ios(WK_MAC_TBA) is invalid; expected WK_IOS_TBA or a major.minor version  [build/wk_api_available] [5]',
+                          'visionos(WK_MAC_TBA) is invalid; expected WK_XROS_TBA or a major.minor version  [build/wk_api_available] [5]'])
 
     def test_os_version_checks(self):
         self.assert_lint('#if PLATFORM(IOS_FAMILY) && __IPHONE_OS_VERSION_MIN_REQUIRED < 110000', 'Misplaced OS version check. Please use a named macro in one of headers in the wtf/Platform.h suite of files or an appropriate internal file.  [build/version_check] [5]')

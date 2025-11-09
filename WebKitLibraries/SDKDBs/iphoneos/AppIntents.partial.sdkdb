@@ -2,7 +2,7 @@
 {
  "PublicSDKContentRoot": [
   {
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -7507,7 +7507,7 @@
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sxSg10AppIntents12_IntentValueA2bCRzlMc"},
     {"access": "public", "introduced": "16", "linkage": "exported", "name": "_$sxSg10AppIntents12_IntentValueA2bCRzlWP"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

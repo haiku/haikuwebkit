@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebGLStencilTexturing);
 WebGLStencilTexturing::WebGLStencilTexturing(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::WebGLStencilTexturing)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_ANGLE_stencil_texturing"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::ANGLE_stencil_texturing);
 }
 
 WebGLStencilTexturing::~WebGLStencilTexturing() = default;
 
 bool WebGLStencilTexturing::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_ANGLE_stencil_texturing"_s);
+    return context.supportsExtension(GCGLExtension::ANGLE_stencil_texturing);
 }
 
 } // namespace WebCore

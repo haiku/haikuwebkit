@@ -1,4 +1,30 @@
 =================
+WPE WebKit 2.51.1
+=================
+
+What's new in WPE WebKit 2.51.1?
+
+  - Use the GPU process for WebGL by default.
+  - Add initial API for web extensions.
+  - Add API to handle WebXR permission requests.
+  - Add new API to query the immersive session status.
+  - Improve text rendering performance
+  - Compute the layers tile size, using a different strategy depending on whether
+    GPU rendering is enabled.
+  - Add support for run loop observers that are now used to replace the layer flush
+    timer and properly implement the opportunistic task scheduler.
+  - Add initial support for WebXR on Android.
+  - Improve WPEBufferDMABuf to allow importing more kinds of buffers as into pixel
+    buffers using wpe_buffer_import_to_pixels().
+  - Remove support for building with libsoup2.
+  - Fix speaker enumeration for ALSA PCM sinks.
+  - Fix rendering for gradients with hue interpolation method.
+  - Fix rendering of layers with fractional transforms.
+  - Fix pasting image data (like image/png) from the clipboard.
+  - Fix importing a WPEBufferAndroid as an EGLImage when using EGL 1.4 or older.
+  - Fix several crashes and rendering issues.
+
+=================
 WPE WebKit 2.49.4
 =================
 

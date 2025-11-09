@@ -54,8 +54,7 @@
 #endif
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-#include <WebCore/AcceleratedEffect.h>
-#include <WebCore/AcceleratedEffectValues.h>
+#include <WebCore/AcceleratedTimeline.h>
 #endif
 
 #if ENABLE(MODEL_ELEMENT)
@@ -86,7 +85,7 @@ struct ChangedLayers {
     ~ChangedLayers();
 };
 
-class RemoteLayerTreeTransaction : public CanMakeCheckedPtr<RemoteLayerTreeTransaction> {
+class RemoteLayerTreeTransaction final : public CanMakeCheckedPtr<RemoteLayerTreeTransaction, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_MAKE_TZONE_ALLOCATED(RemoteLayerTreeTransaction);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RemoteLayerTreeTransaction);
 public:
@@ -254,9 +253,6 @@ public:
 
     TransactionID transactionID() const { return m_transactionID; }
 
-    ActivityStateChangeID activityStateChangeID() const { return m_activityStateChangeID; }
-    void setActivityStateChangeID(ActivityStateChangeID activityStateChangeID) { m_activityStateChangeID = activityStateChangeID; }
-
     using TransactionCallbackID = IPC::AsyncReplyID;
     const Vector<TransactionCallbackID>& callbackIDs() const { return m_callbackIDs; }
     void setCallbackIDs(Vector<TransactionCallbackID>&& callbackIDs) { m_callbackIDs = WTFMove(callbackIDs); }
@@ -273,13 +269,13 @@ public:
     void setDynamicViewportSizeUpdateID(DynamicViewportSizeUpdateID resizeID) { m_dynamicViewportSizeUpdateID = resizeID; }
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    Seconds acceleratedTimelineTimeOrigin() const { return m_acceleratedTimelineTimeOrigin; }
-    void setAcceleratedTimelineTimeOrigin(Seconds timeOrigin) { m_acceleratedTimelineTimeOrigin = timeOrigin; }
-#endif
-
     const std::optional<WebCore::FixedContainerEdges>& fixedContainerEdges() const { return m_fixedContainerEdges; }
     void setFixedContainerEdges(const WebCore::FixedContainerEdges& edges) { m_fixedContainerEdges = edges; }
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelines() const { return m_timelines; }
+    void setTimelines(const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelines) { m_timelines = timelines; }
+#endif
 
 private:
     friend struct IPC::ArgumentCoder<RemoteLayerTreeTransaction, void>;
@@ -324,7 +320,6 @@ private:
     double m_viewportMetaTagWidth { -1 };
     uint64_t m_renderTreeSize { 0 };
     TransactionID m_transactionID;
-    ActivityStateChangeID m_activityStateChangeID { ActivityStateChangeAsynchronous };
     OptionSet<WebCore::LayoutMilestone> m_newlyReachedPaintingMilestones;
     bool m_scaleWasSetByUIProcess { false };
     bool m_allowsUserScaling { false };
@@ -339,7 +334,7 @@ private:
     std::optional<DynamicViewportSizeUpdateID> m_dynamicViewportSizeUpdateID;
 #endif
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    Seconds m_acceleratedTimelineTimeOrigin;
+    HashSet<Ref<WebCore::AcceleratedTimeline>> m_timelines;
 #endif
 };
 

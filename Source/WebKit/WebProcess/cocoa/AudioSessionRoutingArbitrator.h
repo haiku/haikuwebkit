@@ -43,6 +43,9 @@ public:
     explicit AudioSessionRoutingArbitrator(WebProcess&);
     virtual ~AudioSessionRoutingArbitrator();
 
+    void ref() const;
+    void deref() const;
+
     static ASCIILiteral supplementName();
 
     // AudioSessionRoutingAbritrator
@@ -53,7 +56,7 @@ private:
     uint64_t logIdentifier() const final { return m_logIdentifier; }
     bool canLog() const final;
 
-    WebCore::AudioSession::ChangedObserver m_observer;
+    const Ref<WebCore::AudioSession::ChangedObserver> m_observer;
     const uint64_t m_logIdentifier;
 };
 

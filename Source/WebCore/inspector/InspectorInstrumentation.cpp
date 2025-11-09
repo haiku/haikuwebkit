@@ -55,6 +55,7 @@
 #include "InspectorWorkerAgent.h"
 #include "InstrumentingAgents.h"
 #include "KeyframeEffect.h"
+#include "LargestContentfulPaint.h"
 #include "LoaderStrategy.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
@@ -999,6 +1000,18 @@ void InspectorInstrumentation::performanceMarkImpl(InstrumentingAgents& instrume
 {
     if (auto* timelineAgent = instrumentingAgents.trackingTimelineAgent())
         timelineAgent->didPerformanceMark(label, timestamp);
+}
+
+void InspectorInstrumentation::didEnqueueFirstContentfulPaintImpl(InstrumentingAgents& instrumentingAgents)
+{
+    if (auto* timelineAgent = instrumentingAgents.trackingTimelineAgent())
+        timelineAgent->didEnqueueFirstContentfulPaint();
+}
+
+void InspectorInstrumentation::didEnqueueLargestContentfulPaintImpl(InstrumentingAgents& instrumentingAgents, const LargestContentfulPaint& entry)
+{
+    if (auto* timelineAgent = instrumentingAgents.trackingTimelineAgent())
+        timelineAgent->didEnqueueLargestContentfulPaint(entry.element(), entry.size());
 }
 
 void InspectorInstrumentation::consoleStartRecordingCanvasImpl(InstrumentingAgents& instrumentingAgents, CanvasRenderingContext& context, JSC::JSGlobalObject& exec, JSC::JSObject* options)

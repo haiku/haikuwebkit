@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,9 +78,8 @@ private:
 #endif
 
     // Empty implementation
+    void configureGraphicsLayer(GraphicsLayer&, ModelPlayerGraphicsLayerConfiguration&&) final;
     void sizeDidChange(LayoutSize) final;
-    PlatformLayer* layer() final;
-    std::optional<LayerHostingContextIdentifier> layerHostingContextIdentifier() final;
     void enterFullscreen() final;
     void handleMouseDown(const LayoutPoint&, MonotonicTime) final;
     void handleMouseMove(const LayoutPoint&, MonotonicTime) final;
@@ -99,10 +99,6 @@ private:
 #if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
     ModelPlayerAccessibilityChildren accessibilityChildren() final;
 #endif
-#if ENABLE(GPU_PROCESS_MODEL)
-    const MachSendRight* displayBuffer() const override;
-    GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate() override;
-#endif
 
     std::optional<bool> m_lastPausedStateIfSuspended;
     ModelPlayerAnimationState m_animationState;
@@ -110,4 +106,4 @@ private:
     ModelPlayerIdentifier m_id;
 };
 
-}
+} // namespace WebCore

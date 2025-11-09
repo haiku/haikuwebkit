@@ -31,6 +31,7 @@
 #import "ImportanceAssertion.h"
 #import "Logging.h"
 #import "MachMessage.h"
+#import "MachPort.h"
 #import "MachUtilities.h"
 #import "WKCrashReporter.h"
 #import "XPCUtilities.h"
@@ -163,7 +164,7 @@ void Connection::platformOpen()
         requestNoSenderNotifications(m_receivePort);
     } else {
         ASSERT(!m_receivePort);
-        auto kr = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, &m_receivePort);
+        auto kr = allocateImmovableConnectionPort(&m_receivePort);
         if (kr != KERN_SUCCESS) {
             LOG_ERROR("Could not allocate mach port, error %x: %s", kr, mach_error_string(kr));
             CRASH();

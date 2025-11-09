@@ -47,7 +47,7 @@ class DatabaseAuthorizer;
 class SQLiteStatement;
 class SQLiteTransaction;
 
-class SQLiteDatabase final : public CanMakeThreadSafeCheckedPtr<SQLiteDatabase> {
+class SQLiteDatabase final : public CanMakeThreadSafeCheckedPtr<SQLiteDatabase, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(SQLiteDatabase, WEBCORE_EXPORT);
     WTF_MAKE_NONCOPYABLE(SQLiteDatabase);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SQLiteDatabase);
@@ -164,8 +164,6 @@ public:
 #endif
 
     WEBCORE_EXPORT static void useFastMalloc();
-
-    WEBCORE_EXPORT static void setIsDatabaseOpeningForbidden(bool);
 
     WEBCORE_EXPORT void releaseMemory();
 

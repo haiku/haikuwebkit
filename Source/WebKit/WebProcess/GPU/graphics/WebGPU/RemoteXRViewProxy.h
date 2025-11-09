@@ -71,6 +71,8 @@ private:
     RemoteXRViewProxy& operator=(const RemoteXRViewProxy&) = delete;
     RemoteXRViewProxy& operator=(RemoteXRViewProxy&&) = delete;
 
+    bool isRemoteXRViewProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
 
     template<typename T>
@@ -90,5 +92,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteXRViewProxy)
+    static bool isType(const WebCore::WebGPU::XRView& view) { return view.isRemoteXRViewProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

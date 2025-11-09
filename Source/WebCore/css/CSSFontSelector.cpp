@@ -73,7 +73,10 @@ CSSFontSelector::CSSFontSelector(ScriptExecutionContext& context)
     : ActiveDOMObject(&context)
     , m_context(context)
     , m_cssFontFaceSet(CSSFontFaceSet::create(this))
-    , m_fontModifiedObserver([this] { fontModified(); })
+    , m_fontModifiedObserver(CSSFontFaceSet::FontModifiedObserver::create([weakThis = WeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->fontModified();
+    }))
     , m_uniqueId(++fontSelectorId)
     , m_version(0)
 {

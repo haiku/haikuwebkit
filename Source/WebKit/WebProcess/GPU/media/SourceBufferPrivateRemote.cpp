@@ -59,14 +59,6 @@ WorkQueue& SourceBufferPrivateRemote::queueSingleton()
     return MediaSourcePrivateRemote::queueSingleton();
 }
 
-void SourceBufferPrivateRemote::ensureOnDispatcherSync(Function<void()>&& function)
-{
-    if (queueSingleton().isCurrent())
-        function();
-    else
-        queueSingleton().dispatchSync(WTFMove(function));
-}
-
 void SourceBufferPrivateRemote::ensureWeakOnDispatcher(Function<void(SourceBufferPrivateRemote&)>&& function)
 {
     auto weakWrapper = [function = WTFMove(function), weakThis = ThreadSafeWeakPtr(*this)] {

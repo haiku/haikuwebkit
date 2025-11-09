@@ -1073,10 +1073,6 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
             return matchesFocusWithinPseudoClass(element);
         case CSSSelector::PseudoClass::Hover:
             if (m_strictParsing || element.isLink() || canMatchHoverOrActiveInQuirksMode(context)) {
-                // See the comment in generateElementIsHovered() in SelectorCompiler.
-                if (checkingContext.resolvingMode == SelectorChecker::Mode::StyleInvalidation && !context.isMatchElement)
-                    return true;
-
                 if (element.hovered() || InspectorInstrumentation::forcePseudoState(element, CSSSelector::PseudoClass::Hover))
                     return true;
             }

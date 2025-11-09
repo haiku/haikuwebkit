@@ -81,7 +81,7 @@ public:
     
     using EventTimestamp = uint64_t; // mach_absolute_time units.
 
-    void sendWheelEvent(EventTimestamp, double globalX, double globalY, double deltaX, double deltaY, WheelEventPhase, WheelEventPhase momentumPhase, bool momentumWillBegin = false);
+    void sendWheelEvent(EventTimestamp, double globalX, double globalY, double deltaX, double deltaY, WheelEventPhase, WheelEventPhase momentumPhase);
 #endif
 
     void leapForward(int milliseconds);

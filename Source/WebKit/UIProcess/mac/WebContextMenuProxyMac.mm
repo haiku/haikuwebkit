@@ -256,7 +256,7 @@ void WebContextMenuProxyMac::handleShareMenuItem()
 {
     RetainPtr shareMenuItem = createShareMenuItem(ShareMenuItemType::Popover);
     [shareMenuItem setMenu:m_menu.get()];
-    [[NSApplication sharedApplication] sendAction:[shareMenuItem action] to:[shareMenuItem target] from:shareMenuItem.get()];
+    [[NSApplication sharedApplication] sendAction:[shareMenuItem action] to:retainPtr([shareMenuItem target]).get() from:shareMenuItem.get()];
 }
 
 #if ENABLE(SERVICE_CONTROLS)
@@ -280,7 +280,7 @@ void WebContextMenuProxyMac::setupServicesMenu()
             RetainPtr cgImage = image->createPlatformImage(DontCopyBackingStore);
             auto nsImage = adoptNS([[NSImage alloc] initWithCGImage:cgImage.get() size:image->size()]);
 
-            itemProvider = adoptNS([[NSItemProvider alloc] initWithItem:[nsImage TIFFRepresentation] typeIdentifier:UTTypeTIFF.identifier]);
+            itemProvider = adoptNS([[NSItemProvider alloc] initWithItem:retainPtr([nsImage TIFFRepresentation]).get() typeIdentifier:UTTypeTIFF.identifier]);
         }
         items = @[ itemProvider.get() ];
         
@@ -304,7 +304,7 @@ void WebContextMenuProxyMac::setupServicesMenu()
     NSRect imageRect = m_context.controlledImageBounds();
     auto webView = m_webView.get();
     imageRect = [webView convertRect:imageRect toView:nil];
-    imageRect = [[webView window] convertRectToScreen:imageRect];
+    imageRect = [retainPtr([webView window]) convertRectToScreen:imageRect];
     [[WKSharingServicePickerDelegate sharedSharingServicePickerDelegate] setSourceFrame:imageRect];
     [[WKSharingServicePickerDelegate sharedSharingServicePickerDelegate] setAttachmentID:m_context.controlledImageAttachmentID()];
 
@@ -508,7 +508,7 @@ RetainPtr<NSMenuItem> WebContextMenuProxyMac::createShareMenuItem(ShareMenuItemT
         return nil;
 
     if (usePlaceholder) {
-        RetainPtr placeholder = adoptNS([[NSMenuItem alloc] initWithTitle:[shareMenuItem title] action:@selector(performShare:) keyEquivalent:@""]);
+        RetainPtr placeholder = adoptNS([[NSMenuItem alloc] initWithTitle:retainPtr([shareMenuItem title]).get() action:@selector(performShare:) keyEquivalent:@""]);
         [placeholder setTarget:[WKMenuTarget sharedMenuTarget]];
 #if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
         [placeholder _setActionImage:[shareMenuItem _actionImage]];
@@ -759,7 +759,7 @@ void WebContextMenuProxyMac::getContextMenuFromItems(const Vector<WebContextMenu
     auto filteredItems = items;
     auto webView = m_webView.get();
 
-    bool isPopover = webView.get().window._childWindowOrderingPriority == NSWindowChildOrderingPriorityPopover;
+    bool isPopover = retainPtr(webView.get().window).get()._childWindowOrderingPriority == NSWindowChildOrderingPriorityPopover;
     bool isLookupDisabled = [NSUserDefaults.standardUserDefaults boolForKey:@"LULookupDisabled"];
 
     if (isLookupDisabled || isPopover) {

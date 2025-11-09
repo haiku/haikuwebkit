@@ -34,7 +34,6 @@ class WebKit_Survey {
     public static function survey_shortcode($atts, $content) {
         $json_string = str_replace(array('“','”'), '"', html_entity_decode(strip_tags($content)));
         $Survey = json_decode($json_string);
-
         // Capture survey settings data when updating the post
         if (self::$post_update) {
             $post_id = get_the_ID();
@@ -53,7 +52,7 @@ class WebKit_Survey {
         include($results_template);
         if ($atts['closed'] == "false" && !self::responded())
             include($survey_template);
-        echo '</div';
+        echo '</div>';
         return ob_get_clean();
     }
 
@@ -110,7 +109,7 @@ class WebKit_Survey {
             ],
             'other' => [
                 'flags'     => FILTER_REQUIRE_ARRAY,
-                'filter'    => FILTER_VALIDATE_SCALAR
+                'filter'    => FILTER_SANITIZE_STRING
             ]
         ]);
 
@@ -158,6 +157,7 @@ class WebKit_Survey {
             return unserialize($cached);
 
         $responses = get_post_custom_values($key);
+        if (!$responses) $responses = [];
         $max = 0;
 
         // Add the tabulated responses to the survey data

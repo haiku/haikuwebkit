@@ -134,14 +134,17 @@ ExceptionOr<void> HTMLDialogElement::showModal()
 
     setIsModal(true);
 
-    CheckedPtr<RenderBlock> containingBlockBeforeStyleResolution;
-    if (auto* renderer = this->renderer())
-        containingBlockBeforeStyleResolution = renderer->containingBlock();
+    {
+        CheckedPtr<RenderBlock> containingBlockBeforeStyleResolution;
+        CheckedPtr renderer = this->renderer();
+        if (renderer)
+            containingBlockBeforeStyleResolution = renderer->containingBlock();
 
-    if (!isInTopLayer())
-        addToTopLayer();
+        if (!isInTopLayer())
+            addToTopLayer();
 
-    RenderElement::markRendererDirtyAfterTopLayerChange(this->checkedRenderer().get(), containingBlockBeforeStyleResolution.get());
+        RenderElement::markRendererDirtyAfterTopLayerChange(renderer.get(), containingBlockBeforeStyleResolution.get());
+    }
 
     m_previouslyFocusedElement = document->focusedElement();
 

@@ -578,11 +578,21 @@ int MediaSessionManagerInterface::countActiveAudioCaptureSources()
 void MediaSessionManagerInterface::processDidReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument& argument)
 {
 #if ENABLE(VIDEO) || ENABLE(audio)
-    WeakPtr weakActiveSession = firstSessionMatching([](auto& session) {
-        return session.canReceiveRemoteControlCommands();
-    });
+    RefPtr<PlatformMediaSessionInterface> activeSession;
+    for (auto& weakSession : copySessionsToVector()) {
+        RefPtr session = weakSession.get();
+        if (!session || !session->canReceiveRemoteControlCommands())
+            continue;
 
-    if (RefPtr activeSession = weakActiveSession.get())
+        if (session->isNowPlayingEligible()) {
+            activeSession = WTFMove(session);
+            break;
+        }
+        if (!activeSession)
+            activeSession = WTFMove(session);
+    }
+
+    if (activeSession)
         activeSession->didReceiveRemoteControlCommand(command, argument);
 #else
     UNUSED_PARAM(command);

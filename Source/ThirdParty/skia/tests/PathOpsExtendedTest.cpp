@@ -190,8 +190,8 @@ static int pathsDrawTheSame(const SkPath& one, const SkPath& two, SkBitmap& bits
         SkPath& scaledTwo, int& error2x2) {
     SkMatrix scale;
     scaleMatrix(one, two, scale);
-    one.transform(scale, &scaledOne);
-    two.transform(scale, &scaledTwo);
+    scaledOne = one.makeTransform(scale);
+    scaledTwo = two.makeTransform(scale);
     return pathsDrawTheSame(bits, scaledOne, scaledTwo, error2x2);
 }
 
@@ -357,13 +357,6 @@ static void appendTest(const char* pathStr, const char* pathPrefix, const char* 
     appendTestName(nameSuffix, out);
     out.append("),\n");
 #endif
-}
-
-void markTestFlakyForPathKit() {
-    if (PathOpsDebug::gJson) {
-        SkASSERT(!PathOpsDebug::gMarkJsonFlaky);
-        PathOpsDebug::gMarkJsonFlaky = true;
-    }
 }
 
 bool testSimplify(SkPath& path, bool useXor, SkPath& out, PathOpsThreadState& state,
@@ -591,19 +584,14 @@ static bool innerPathOp(skiatest::Reporter* reporter, const SkPath& a, const SkP
     SkMatrix scale;
     scaleMatrix(a, b, scale);
     SkRegion scaledRgnA, scaledRgnB, scaledRgnOut;
-    SkPath scaledA, scaledB;
-    scaledA.addPath(a, scale);
-    scaledA.setFillType(a.getFillType());
-    scaledB.addPath(b, scale);
-    scaledB.setFillType(b.getFillType());
+    SkPath scaledA = SkPathBuilder(a.getFillType()).addPath(a, scale).detach(),
+           scaledB = SkPathBuilder(b.getFillType()).addPath(b, scale).detach();
     scaledRgnA.setPath(scaledA, openClip);
     scaledRgnB.setPath(scaledB, openClip);
     scaledRgnOut.op(scaledRgnA, scaledRgnB, (SkRegion::Op) shapeOp);
     SkPath scaledPathOut = scaledRgnOut.getBoundaryPath();
     SkBitmap bitmap;
-    SkPath scaledOut;
-    scaledOut.addPath(*out, scale);
-    scaledOut.setFillType(out->getFillType());
+    SkPath scaledOut = SkPathBuilder(out->getFillType()).addPath(*out, scale).detach();
     int result = comparePaths(reporter, testName, pathOut, scaledPathOut, *out, scaledOut, bitmap,
             a, b, shapeOp, scale, expectMatch);
     reporter->bumpTestCount();

@@ -14,4 +14,10 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-a-b-a-embed.tentative.https.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-cross-site-subresource-to-same-site-redirect.tentative.https.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-parallel-iframes.embed.tentative.https.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-same-site-subresource-to-cross-site-redirect.tentative.https.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-samesite-attribute.https.html
+/LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-top-level-redirect.tentative.https.html
 /LayoutTests/imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies.tentative.https.html

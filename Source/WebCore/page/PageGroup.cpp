@@ -57,6 +57,16 @@ static unsigned getUniqueIdentifier()
 
 // --------
 
+UniqueRef<PageGroup> PageGroup::create(const String& name)
+{
+    return UniqueRef<PageGroup>(*new PageGroup(name));
+}
+
+UniqueRef<PageGroup> PageGroup::create(Page& page)
+{
+    return UniqueRef<PageGroup>(*new PageGroup(page));
+}
+
 PageGroup::PageGroup(const String& name)
     : m_name(name)
     , m_identifier(getUniqueIdentifier())

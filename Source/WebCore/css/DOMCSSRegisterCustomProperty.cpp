@@ -97,7 +97,7 @@ ExceptionOr<void> DOMCSSRegisterCustomProperty::registerProperty(Document& docum
 
 DOMCSSRegisterCustomProperty* DOMCSSRegisterCustomProperty::from(DOMCSSNamespace& css)
 {
-    auto* supplement = static_cast<DOMCSSRegisterCustomProperty*>(Supplement<DOMCSSNamespace>::from(&css, supplementName()));
+    auto* supplement = downcast<DOMCSSRegisterCustomProperty>(Supplement<DOMCSSNamespace>::from(&css, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<DOMCSSRegisterCustomProperty>(css);
         supplement = newSupplement.get();
@@ -106,9 +106,4 @@ DOMCSSRegisterCustomProperty* DOMCSSRegisterCustomProperty::from(DOMCSSNamespace
     return supplement;
 }
 
-ASCIILiteral DOMCSSRegisterCustomProperty::supplementName()
-{
-    return "DOMCSSRegisterCustomProperty"_s;
-}
-
-}
+} // namespace WebCore

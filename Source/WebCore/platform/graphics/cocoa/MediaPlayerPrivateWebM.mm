@@ -88,6 +88,11 @@ Ref<AudioVideoRenderer> MediaPlayerPrivateWebM::createRenderer(LoggerHelper& log
     return AudioVideoRendererAVFObjC::create(Ref { loggerHelper.logger() }, loggerHelper.logIdentifier());
 }
 
+Ref<MediaPlayerPrivateWebM> MediaPlayerPrivateWebM::create(MediaPlayer* player)
+{
+    return adoptRef(*new MediaPlayerPrivateWebM(player));
+}
+
 MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     : m_player(player)
     , m_parser(SourceBufferParserWebM::create().releaseNonNull())
@@ -95,6 +100,7 @@ MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     , m_logger(player->mediaPlayerLogger())
     , m_logIdentifier(player->mediaPlayerLogIdentifier())
     , m_seekTimer(*this, &MediaPlayerPrivateWebM::seekInternal)
+    , m_rendererSeekRequest(NativePromiseRequest::create())
     , m_playerIdentifier(MediaPlayerIdentifier::generate())
     , m_renderer(createRenderer(*this, player->clientIdentifier(), m_playerIdentifier))
 {
@@ -504,8 +510,8 @@ void MediaPlayerPrivateWebM::seekInternal()
 
 void MediaPlayerPrivateWebM::cancelPendingSeek()
 {
-    if (m_rendererSeekRequest)
-        m_rendererSeekRequest.disconnect();
+    if (m_rendererSeekRequest->hasCallback())
+        m_rendererSeekRequest->disconnect();
     if (auto promise = std::exchange(m_waitForTimeBufferedPromise, std::nullopt))
         promise->reject();
 }
@@ -520,7 +526,7 @@ void MediaPlayerPrivateWebM::startSeek(const MediaTime& seekTime)
         if (!protectedThis)
             return;
 
-        protectedThis->m_rendererSeekRequest.complete();
+        protectedThis->m_rendererSeekRequest->complete();
 
         if (!result) {
             ASSERT(result.error() == PlatformMediaError::RequiresFlushToResume);
@@ -530,7 +536,7 @@ void MediaPlayerPrivateWebM::startSeek(const MediaTime& seekTime)
             return protectedThis->startSeek(seekTime);
         }
         protectedThis->completeSeek(*result);
-    })->track(m_rendererSeekRequest);
+    })->track(m_rendererSeekRequest.get());
 }
 
 void MediaPlayerPrivateWebM::completeSeek(const MediaTime& seekedTime)
@@ -1370,7 +1376,7 @@ private:
 
     Ref<MediaPlayerPrivateInterface> createMediaEnginePlayer(MediaPlayer* player) const final
     {
-        return adoptRef(*new MediaPlayerPrivateWebM(player));
+        return MediaPlayerPrivateWebM::create(player);
     }
 
     void getSupportedTypes(HashSet<String>& types) const final

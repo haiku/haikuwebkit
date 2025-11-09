@@ -1,4 +1,5 @@
 //@ skip if $memoryLimited
+//@ skip if $useCompressedHeap
 //@ runDefault
 
 // Should not crash with this test.

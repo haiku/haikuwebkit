@@ -197,8 +197,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     RetainPtr<NSMutableArray> visiblePageElements = adoptNS([[NSMutableArray alloc] init]);
     for (id page in [self accessibilityChildren]) {
-        id focusedElement = [page accessibilityFocusedUIElement];
-        if (focusedElement)
+        if ([page accessibilityFocusedUIElement])
             [visiblePageElements addObject:page];
     }
     return visiblePageElements.autorelease();
@@ -212,7 +211,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (NSRect)accessibilityFrame
 {
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    id accessibilityParent = [self accessibilityParent];
+    RetainPtr<id> accessibilityParent = [self accessibilityParent];
     NSSize size = [[accessibilityParent accessibilityAttributeValue:NSAccessibilitySizeAttribute] sizeValue];
     NSPoint origin = [[accessibilityParent accessibilityAttributeValue:NSAccessibilityPositionAttribute] pointValue];
 ALLOW_DEPRECATED_DECLARATIONS_END
@@ -342,9 +341,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (id)accessibilityHitTest:(NSPoint)point
 {
     for (id element in [self accessibilityChildren]) {
-        id result = [element accessibilityHitTest:point];
-        if (result)
-            return result;
+        if (RetainPtr<id> result = [element accessibilityHitTest:point])
+            return result.autorelease();
     }
     return self;
 }

@@ -36,13 +36,13 @@ namespace WebCore {
 
 Color SVGAnimationColorFunction::colorFromString(SVGElement& targetElement, const String& string)
 {
-    static MainThreadNeverDestroyed<const AtomString> currentColor("currentColor"_s);
-
-    if (string != currentColor.get())
-        return SVGPropertyTraits<Color>::fromString(string);
-
-    if (auto* renderer = targetElement.renderer())
-        return renderer->style().visitedDependentColor(CSSPropertyColor);
+    if (auto color = SVGPropertyTraits<Color>::parse(string)) {
+        if (color->isCurrentColor()) {
+            if (auto* renderer = targetElement.renderer())
+                return renderer->style().visitedDependentColor(CSSPropertyColor);
+        }
+        return color->resolvedColor();
+    }
 
     return { };
 }

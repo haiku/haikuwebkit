@@ -128,7 +128,7 @@ auto LegacyRenderSVGResourceFilter::applyResource(RenderElement& renderer, const
     // Determine scale factor for filter. The size of intermediate ImageBuffers shouldn't be bigger than kMaxFilterSize.
     ImageBuffer::sizeNeedsClamping(filterData->sourceImageRect.size(), filterScale);
 
-    auto preferredFilterModes = renderer.page().preferredFilterRenderingModes();
+    auto preferredFilterModes = renderer.page().preferredFilterRenderingModes(*context);
 
     // Create the SVGFilterRenderer object.
     filterData->filter = SVGFilterRenderer::create(contextElement.get(), filterElement, preferredFilterModes, filterScale, filterRegion, targetBoundingBox, *context, RenderingResourceIdentifier::generate());

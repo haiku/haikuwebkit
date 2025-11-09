@@ -44,6 +44,8 @@ public:
         setLabelInternal(m_label);
     }
 
+    virtual bool isRemotePipelineLayoutProxy() const { return false; }
+
 protected:
     PipelineLayout() = default;
 

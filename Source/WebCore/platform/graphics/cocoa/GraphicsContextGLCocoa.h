@@ -121,7 +121,7 @@ public:
     void setDrawingBufferColorSpace(const DestinationColorSpace&) final;
     void prepareForDisplay() override;
 
-    RefPtr<NativeImage> bufferAsNativeImage(SurfaceBuffer) override;
+    RefPtr<NativeImage> copyNativeImageYFlipped(SurfaceBuffer) override;
 
     // Prepares current frame for display. The `finishedSignal` will be invoked once the frame has finished rendering.
     void prepareForDisplayWithFinishedSignal(Function<void()> finishedSignal);

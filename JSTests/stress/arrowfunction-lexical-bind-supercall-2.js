@@ -59,7 +59,7 @@ var C = class C extends A {
       var arrow = () => {
           let __proto__ = 'some-text';
           var arr = () => {
-              testCase(typeof  __proto__, 'string', "Erorr: __proto__ variable has wrong type");
+              testCase(typeof  __proto__, 'string', "Error: __proto__ variable has wrong type");
               super();
               testCase(this.idValue, testValue, "Error: super() should create this and put value into idValue property");
            };

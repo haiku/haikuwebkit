@@ -257,4 +257,22 @@ bool CSSSelectorList::hasOnlyNestingSelector() const
     return singleSelector->match() == CSSSelector::Match::NestingParent;
 }
 
+bool CSSSelectorList::operator==(const CSSSelectorList& other) const
+{
+    for (auto a = begin(), b = other.begin(); a != end() || b != other.end(); ++a, ++b) {
+        if (a == end() || b == other.end())
+            return false;
+        if (!complexSelectorsEqual(*a, *b))
+            return false;
+    }
+    return true;
+}
+
+void add(Hasher& hasher, const CSSSelectorList& list)
+{
+    for (auto& selector : list)
+        addComplexSelector(hasher, selector);
+}
+
+
 } // namespace WebCore

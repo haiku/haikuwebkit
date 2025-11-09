@@ -38,6 +38,7 @@
 #include "StyledElement.h"
 #include "TextNodeTraversal.h"
 #include "TreeScopeInlines.h"
+#include "TrustedType.h"
 #include "XMLNSNames.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/AtomString.h>
@@ -101,9 +102,29 @@ ExceptionOr<void> Attr::setPrefix(const AtomString& prefix)
 
 ExceptionOr<void> Attr::setValue(const AtomString& value)
 {
-    if (RefPtr element = m_element.get())
-        return element->setAttribute(qualifiedName(), value, true);
-    else
+    if (RefPtr element = m_element.get()) {
+        auto verifiedValue = value;
+        if (document().requiresTrustedTypes()) {
+            auto type = trustedTypeForAttribute(element->nodeName(), qualifiedName().localName(),
+                element->namespaceURI(), qualifiedName().namespaceURI());
+            if (!type.attributeType.isNull()) {
+                auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value,
+                    type.sink);
+                if (compliantValue.hasException())
+                    return compliantValue.releaseException();
+
+                verifiedValue = compliantValue.releaseReturnValue();
+
+                if (RefPtr newElement = m_element.get(); newElement != element) {
+                    if (!newElement)
+                        m_standaloneValue = WTFMove(verifiedValue);
+                    return { };
+                }
+            }
+        }
+
+        element->setAttribute(qualifiedName(), verifiedValue);
+    } else
         m_standaloneValue = value;
 
     return { };

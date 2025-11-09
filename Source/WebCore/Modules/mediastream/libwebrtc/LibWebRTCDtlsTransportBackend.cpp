@@ -82,7 +82,8 @@ LibWebRTCDtlsTransportBackendObserver::LibWebRTCDtlsTransportBackendObserver(RTC
 
 void LibWebRTCDtlsTransportBackendObserver::updateState(webrtc::DtlsTransportInformation&& info)
 {
-    if (!m_client)
+    RefPtr client = m_client.get();
+    if (!client)
         return;
 
     Vector<webrtc::Buffer> certificates;
@@ -93,7 +94,7 @@ void LibWebRTCDtlsTransportBackendObserver::updateState(webrtc::DtlsTransportInf
             certificates.append(WTFMove(certificate));
         }
     }
-    m_client->onStateChanged(toRTCDtlsTransportState(info.state()), map(certificates, [](auto& certificate) -> Ref<JSC::ArrayBuffer> {
+    client->onStateChanged(toRTCDtlsTransportState(info.state()), map(certificates, [](auto& certificate) -> Ref<JSC::ArrayBuffer> {
         return JSC::ArrayBuffer::create(certificate);
     }));
 }
@@ -126,8 +127,8 @@ void LibWebRTCDtlsTransportBackendObserver::OnStateChange(webrtc::DtlsTransportI
 void LibWebRTCDtlsTransportBackendObserver::OnError(webrtc::RTCError)
 {
     callOnMainThread([protectedThis = Ref { *this }] {
-        if (protectedThis->m_client)
-            protectedThis->m_client->onError();
+        if (RefPtr client = protectedThis->m_client.get())
+            client->onError();
     });
 }
 

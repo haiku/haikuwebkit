@@ -27,8 +27,8 @@
 #include "src/gpu/graphite/ContextPriv.h"
 #include "src/gpu/graphite/RecorderPriv.h"
 #include "src/gpu/graphite/ResourceTypes.h"
+#include "tests/ComparePixels.h"
 #include "tests/Test.h"
-#include "tests/TestUtils.h"
 #include "tools/ToolUtils.h"
 #include "tools/gpu/BackendTextureImageFactory.h"
 #include "tools/gpu/ManagedBackendTexture.h"
@@ -224,7 +224,7 @@ static SkAutoPixmapStorage make_ref_data(const SkImageInfo& info, bool forceOpaq
         surface->getCanvas()->drawPaint(paint);
     }
     return result;
-};
+}
 }  // anonymous namespace
 
 template <typename T>
@@ -518,7 +518,7 @@ static void async_callback(void* c, std::unique_ptr<const SkImage::AsyncReadResu
     auto context = static_cast<AsyncContext*>(c);
     context->fResult = std::move(result);
     context->fCalled = true;
-};
+}
 
 DEF_CONDITIONAL_GRAPHITE_TEST_FOR_RENDERING_CONTEXTS(ImageAsyncReadPixelsGraphite,
                                                      reporter,

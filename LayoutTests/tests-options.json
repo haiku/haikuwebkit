@@ -1769,13 +1769,25 @@
     "imported/w3c/web-platform-tests/cookies/ordering/resources/ordering-child.sub.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-a-b-a-embed.tentative.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-cross-site-subresource-to-same-site-redirect.tentative.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-parallel-iframes.embed.tentative.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-same-site-subresource-to-cross-site-redirect.tentative.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-samesite-attribute.https.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-top-level-redirect.tentative.https.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies.tentative.https.html": [
-        "slow"
-    ],
-    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-cross-site-embed.html": [
-        "slow"
-    ],
-    "imported/w3c/web-platform-tests/cookies/partitioned-cookies/resources/partitioned-cookies-cross-site-window.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/cookies/path/match.html": [
@@ -3683,6 +3695,9 @@
     "imported/w3c/web-platform-tests/html/rendering/replaced-elements/svg-embedded-sizing/svg-in-object-percentage.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/html/select/options-length-too-large.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/html/semantics/disabled-elements/disabled-event-dispatch.tentative.html": [
         "slow"
     ],
@@ -5097,6 +5112,9 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/mst-content-hint/RTCRtpSendParameters-degradationEffect.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/page-lifecycle/idlharness.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/payment-request/payment-is-showing.https.html": [

@@ -494,30 +494,35 @@ bool TextOnlySimpleLineBuilder::isEligibleForSimplifiedTextOnlyInlineLayoutByCon
     return true;
 }
 
-bool TextOnlySimpleLineBuilder::isEligibleForSimplifiedInlineLayoutByStyle(const RenderStyle& style)
+bool TextOnlySimpleLineBuilder::isEligibleForSimplifiedInlineLayoutByStyle(const Box& box)
 {
-    if (style.fontCascade().wordSpacing())
-        return false;
-    if (style.writingMode().isBidiRTL())
-        return false;
-    if (style.wordBreak() == WordBreak::AutoPhrase)
-        return false;
-    if (style.textIndent() != RenderStyle::initialTextIndent())
-        return false;
-    if (style.textAlignLast() == TextAlignLast::Justify || style.textAlign() == TextAlignMode::Justify || style.display() == DisplayType::RubyAnnotation)
-        return false;
-    if (style.boxDecorationBreak() == BoxDecorationBreak::Clone)
-        return false;
-    if (!style.hangingPunctuation().isEmpty())
-        return false;
-    if (!style.hyphenateLimitLines().isNoLimit())
-        return false;
-    if (style.textWrapMode() == TextWrapMode::Wrap && (style.textWrapStyle() == TextWrapStyle::Balance || style.textWrapStyle() == TextWrapStyle::Pretty))
-        return false;
-    if (style.lineAlign() != LineAlign::None || style.lineSnap() != LineSnap::None)
-        return false;
+    auto isEligibleByStyle = [](auto& style) {
+        if (style.fontCascade().wordSpacing())
+            return false;
+        if (style.writingMode().isBidiRTL())
+            return false;
+        if (style.wordBreak() == WordBreak::AutoPhrase)
+            return false;
+        if (style.textIndent() != RenderStyle::initialTextIndent())
+            return false;
+        if (style.textAlignLast() == TextAlignLast::Justify || style.textAlign() == TextAlignMode::Justify || style.display() == DisplayType::RubyAnnotation)
+            return false;
+        if (style.boxDecorationBreak() == BoxDecorationBreak::Clone)
+            return false;
+        if (!style.hangingPunctuation().isEmpty())
+            return false;
+        if (!style.hyphenateLimitLines().isNoLimit())
+            return false;
+        if (style.textWrapMode() == TextWrapMode::Wrap && (style.textWrapStyle() == TextWrapStyle::Balance || style.textWrapStyle() == TextWrapStyle::Pretty))
+            return false;
+        if (style.lineAlign() != LineAlign::None || style.lineSnap() != LineSnap::None)
+            return false;
+        return true;
+    };
 
-    return true;
+    auto& style = box.style();
+    auto& firstLineStyle = box.firstLineStyle();
+    return isEligibleByStyle(style) && (&style == &firstLineStyle || isEligibleByStyle(firstLineStyle));
 }
 
 }

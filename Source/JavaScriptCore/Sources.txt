@@ -1144,6 +1144,7 @@ wasm/WasmBBQJIT64.cpp @no-unify
 wasm/WasmBBQPlan.cpp
 wasm/WasmBinding.cpp
 wasm/WasmBranchHintsSectionParser.cpp
+wasm/WasmCallProfile.cpp
 wasm/WasmCallee.cpp
 wasm/WasmCalleeGroup.cpp
 wasm/WasmCallingConvention.cpp
@@ -1157,6 +1158,7 @@ wasm/WasmFunctionIPIntMetadataGenerator.cpp
 wasm/WasmGlobal.cpp
 wasm/WasmHandlerInfo.cpp
 wasm/WasmIndexOrName.cpp
+wasm/WasmInliningDecision.cpp
 wasm/WasmInstanceAnchor.cpp
 wasm/WasmIPIntGenerator.cpp
 wasm/WasmIPIntPlan.cpp

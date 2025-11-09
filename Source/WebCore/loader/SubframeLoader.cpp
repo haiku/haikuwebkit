@@ -60,6 +60,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderEmbeddedObject.h"
 #include "RenderView.h"
+#include "ResourceLoader.h"
 #include "ScriptController.h"
 #include "SecurityOrigin.h"
 #include "SecurityPolicy.h"
@@ -309,7 +310,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
         return nullptr;
     }
 
-    if (!portAllowed(url) || isIPAddressDisallowed(url)) {
+    if (!ResourceLoader::isPortAllowed(url) || isIPAddressDisallowed(url)) {
         FrameLoader::reportBlockedLoadFailed(frame, url);
         return nullptr;
     }

@@ -113,6 +113,15 @@ void RemoteGraphicsContextProxy::didBecomeUnresponsive() const
     backend->didBecomeUnresponsive();
 }
 
+bool RemoteGraphicsContextProxy::knownToHaveFloatBasedBacking() const
+{
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+    return m_contentsFormat && *m_contentsFormat == ContentsFormat::RGBA16F;
+#else
+    return false;
+#endif
+}
+
 RenderingMode RemoteGraphicsContextProxy::renderingMode() const
 {
     return m_renderingMode;

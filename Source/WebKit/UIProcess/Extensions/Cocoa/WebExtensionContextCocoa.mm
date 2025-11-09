@@ -80,7 +80,6 @@
 #import "WebUserContentControllerProxy.h"
 #import "_WKWebExtensionDeclarativeNetRequestRule.h"
 #import "_WKWebExtensionDeclarativeNetRequestTranslator.h"
-#import "_WKWebExtensionRegisteredScriptsSQLiteStore.h"
 #import <UniformTypeIdentifiers/UTType.h>
 #import <WebCore/LocalizedStrings.h>
 #import <WebCore/TextResourceDecoder.h>
@@ -3292,13 +3291,6 @@ void WebExtensionContext::loadDeclarativeNetRequestRules(CompletionHandler<void(
 
         addDynamicAndStaticRules();
     });
-}
-
-_WKWebExtensionRegisteredScriptsSQLiteStore *WebExtensionContext::registeredContentScriptsStore()
-{
-    if (!m_registeredContentScriptsStorage)
-        m_registeredContentScriptsStorage = [[_WKWebExtensionRegisteredScriptsSQLiteStore alloc] initWithUniqueIdentifier:m_uniqueIdentifier.createNSString().get() directory:storageDirectory().createNSString().get() usesInMemoryDatabase:!storageIsPersistent()];
-    return m_registeredContentScriptsStorage.get();
 }
 
 void WebExtensionContext::setSessionStorageAllowedInContentScripts(bool allowed)

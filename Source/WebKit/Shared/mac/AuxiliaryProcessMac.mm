@@ -164,7 +164,7 @@ void AuxiliaryProcess::launchServicesCheckIn()
 #endif
 
     _LSSetApplicationLaunchServicesServerConnectionStatus(0, 0);
-    RetainPtr<CFDictionaryRef> unused = _LSApplicationCheckIn(kLSDefaultSessionID, CFBundleGetInfoDictionary(CFBundleGetMainBundle()));
+    RetainPtr<CFDictionaryRef> unused = _LSApplicationCheckIn(kLSDefaultSessionID, RetainPtr { CFBundleGetInfoDictionary(RetainPtr { CFBundleGetMainBundle() }.get()) }.get());
 }
 
 static OSStatus enableSandboxStyleFileQuarantine()
@@ -518,7 +518,7 @@ static bool tryApplyCachedSandbox(const SandboxInfo& info)
 }
 #endif // USE(CACHE_COMPILED_SANDBOX)
 
-static inline const NSBundle *webKit2Bundle()
+static inline const NSBundle *webKit2BundleSingleton()
 {
     const static NeverDestroyed<RetainPtr<NSBundle>> bundle = [NSBundle bundleForClass:NSClassFromString(@"WKWebView")];
     return bundle.get().get();
@@ -528,7 +528,7 @@ static void getSandboxProfileOrProfilePath(const SandboxInitializationParameters
 {
     switch (parameters.mode()) {
     case SandboxInitializationParameters::ProfileSelectionMode::UseDefaultSandboxProfilePath:
-        profileOrProfilePath = [webKit2Bundle() pathForResource:[[NSBundle mainBundle] bundleIdentifier] ofType:@"sb"];
+        profileOrProfilePath = [webKit2BundleSingleton() pathForResource:[[NSBundle mainBundle] bundleIdentifier] ofType:@"sb"];
         isProfilePath = true;
         return;
     case SandboxInitializationParameters::ProfileSelectionMode::UseOverrideSandboxProfilePath:
@@ -693,9 +693,9 @@ static void populateSandboxInitializationParameters(SandboxInitializationParamet
     }
     setenv("TMPDIR", temporaryDirectory, 1);
 
-    String bundlePath = webKit2Bundle().bundlePath;
+    String bundlePath = webKit2BundleSingleton().bundlePath;
     if (!bundlePath.startsWith("/System/Library/Frameworks"_s))
-        bundlePath = webKit2Bundle().bundlePath.stringByDeletingLastPathComponent;
+        bundlePath = webKit2BundleSingleton().bundlePath.stringByDeletingLastPathComponent;
 
     sandboxParameters.addPathParameter("WEBKIT2_FRAMEWORK_DIR"_s, bundlePath.utf8().data());
     sandboxParameters.addConfDirectoryParameter("DARWIN_USER_TEMP_DIR"_s, _CS_DARWIN_USER_TEMP_DIR);

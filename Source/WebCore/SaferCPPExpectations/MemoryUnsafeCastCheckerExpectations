@@ -5,32 +5,13 @@ Modules/Model/Implementation/ModelDowncastConvertToBackingContext.cpp
 Modules/WebGPU/Implementation/WebGPUBindGroupImpl.cpp
 Modules/WebGPU/Implementation/WebGPUDowncastConvertToBackingContext.cpp
 Modules/WebGPU/Implementation/WebGPUXRBindingImpl.cpp
-Modules/audiosession/NavigatorAudioSession.cpp
-Modules/beacon/NavigatorBeacon.cpp
-Modules/contact-picker/NavigatorContacts.cpp
-Modules/credentialmanagement/NavigatorCredentials.cpp
-Modules/encryptedmedia/MediaKeySystemController.cpp
-Modules/geolocation/NavigatorGeolocation.cpp
-Modules/mediacapabilities/NavigatorMediaCapabilities.cpp
-Modules/mediacapabilities/WorkerNavigatorMediaCapabilities.cpp
-Modules/mediasession/NavigatorMediaSession.cpp
-Modules/mediastream/NavigatorMediaDevices.cpp
 Modules/mediastream/PeerConnectionBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCPeerConnectionBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCRtpReceiverBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCRtpTransformBackend.cpp
 Modules/mediastream/libwebrtc/LibWebRTCStatsCollector.cpp
-Modules/notifications/NotificationController.h
-Modules/permissions/NavigatorPermissions.cpp
-Modules/permissions/WorkerNavigatorPermissions.cpp
-Modules/pictureinpicture/DocumentPictureInPicture.cpp
-Modules/pictureinpicture/HTMLVideoElementPictureInPicture.cpp
-Modules/push-api/ServiceWorkerRegistrationPushAPI.cpp
-Modules/screen-wake-lock/NavigatorScreenWakeLock.cpp
-Modules/speech/LocalDOMWindowSpeechSynthesis.cpp
 Modules/speech/SpeechSynthesis.cpp
 Modules/webaudio/WaveShaperProcessor.cpp
-Modules/webdriver/NavigatorWebDriver.cpp
 SVGNames.cpp
 TagName.cpp
 bindings/js/DOMGCOutputConstraint.cpp
@@ -61,23 +42,15 @@ bridge/runtime_array.cpp
 bridge/runtime_method.cpp
 bridge/runtime_object.cpp
 bridge/runtime_root.cpp
-css/DOMCSSPaintWorklet.cpp
-css/DOMCSSRegisterCustomProperty.cpp
-css/typedom/CSSNumericFactory.cpp
-dom/DeviceMotionController.cpp
-dom/DeviceOrientationController.cpp
-dom/DocumentStorageAccess.cpp
 dom/ElementRareData.h
 dom/Node.cpp
 dom/NodeRareData.h
 dom/UIEventWithKeyState.cpp
-dom/WindowOrWorkerGlobalScopeTrustedTypes.cpp
 domjit/DOMJITHelpers.h
 domjit/JSDocumentDOMJIT.cpp
 domjit/JSNodeDOMJIT.cpp
 editing/TypingCommand.cpp
 html/InputType.cpp
-html/NavigatorUserActivation.cpp
 html/track/TextTrackCueGeneric.cpp
 inspector/CommandLineAPIModule.cpp
 inspector/agents/InspectorCSSAgent.cpp
@@ -85,14 +58,16 @@ layout/layouttree/LayoutIterator.h
 layout/layouttree/LayoutTreeBuilder.cpp
 loader/cache/CachedResourceClientWalker.h
 mathml/MathMLRowElement.cpp
-page/NavigatorLoginStatus.cpp
 [ Mac ] page/mac/EventHandlerMac.mm
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
 platform/graphics/GraphicsLayer.cpp
-platform/graphics/avfoundation/objc/CDMSessionAVContentKeySession.h
-platform/graphics/avfoundation/objc/CDMSessionMediaSourceAVFObjC.h
 platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
 [ Mac ] platform/graphics/mac/controls/ControlMac.mm
+[ iOS ] platform/ios/VideoPresentationInterfaceAVKitLegacy.mm
+[ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
+[ iOS ] platform/ios/wak/WAKView.mm
+[ iOS ] platform/ios/wak/WAKWindow.mm
 rendering/BidiRun.cpp
 rendering/BidiRun.h
 rendering/RenderAncestorIterator.h
@@ -112,13 +87,4 @@ svg/properties/SVGAnimatedPropertyAccessorImpl.h
 svg/properties/SVGAnimatedPropertyList.h
 svg/properties/SVGAnimatedPropertyPairAccessorImpl.h
 svg/properties/SVGAnimatedValueProperty.h
-testing/InternalSettings.cpp
 testing/Internals.cpp
-testing/cocoa/WebArchiveDumpSupport.mm
-workers/WorkerGlobalScope.cpp
-workers/WorkerThread.cpp
-[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
-[ iOS ] platform/ios/VideoPresentationInterfaceAVKitLegacy.mm
-[ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
-[ iOS ] platform/ios/wak/WAKView.mm
-[ iOS ] platform/ios/wak/WAKWindow.mm

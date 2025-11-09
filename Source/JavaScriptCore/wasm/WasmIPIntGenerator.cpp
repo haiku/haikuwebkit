@@ -3010,6 +3010,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCall(unsigned callProfileInd
 {
     const FunctionSignature& signature = *type.as<FunctionSignature>();
     const CallInformation& callConvention = cachedCallInformationFor(signature);
+    m_metadata->addCallTarget(callProfileIndex, index);
 
     if (callType == CallType::TailCall) {
         // on a tail call, we need to:
@@ -3055,6 +3056,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallIndirect(unsigned callPr
 {
     const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
     const CallInformation& callConvention = cachedCallInformationFor(signature);
+    m_metadata->addCallTarget(callProfileIndex, { });
 
     if (callType == CallType::TailCall) {
         const unsigned callIndex = 1;
@@ -3105,6 +3107,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCallRef(unsigned callProfile
 {
     const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
     const CallInformation& callConvention = cachedCallInformationFor(signature);
+    m_metadata->addCallTarget(callProfileIndex, { });
 
     if (callType == CallType::TailCall) {
         const unsigned callIndex = 1;
@@ -3173,7 +3176,8 @@ std::unique_ptr<FunctionIPIntMetadataGenerator> IPIntGenerator::finalize()
     m_metadata->m_maxFrameSizeInV128 = roundUpToMultipleOf<2>(m_metadata->m_numLocals) / 2;
     m_metadata->m_maxFrameSizeInV128 += m_metadata->m_numAlignedRethrowSlots / 2;
     m_metadata->m_maxFrameSizeInV128 += m_maxStackSize;
-    m_metadata->m_numCallProfiles = m_parser->numCallProfiles();
+    if (m_metadata->m_callTargets.size() < m_parser->numCallProfiles())
+        m_metadata->m_callTargets.insertFill(m_metadata->m_callTargets.size(), FunctionSpaceIndex { }, m_parser->numCallProfiles() - m_metadata->m_callTargets.size());
 
     return WTFMove(m_metadata);
 }

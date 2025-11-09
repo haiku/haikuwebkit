@@ -54,6 +54,11 @@ enum class TrackInfoTrackType : uint8_t {
 
 String convertEnumerationToString(TrackInfoTrackType);
 
+enum class EncryptionBoxType : uint8_t {
+    CommonEncryptionTrackEncryptionBox,
+    TransportStreamEncryptionInitData
+};
+
 struct TrackInfo : public ThreadSafeRefCounted<TrackInfo> {
     using TrackType = TrackInfoTrackType;
 
@@ -66,12 +71,24 @@ struct TrackInfo : public ThreadSafeRefCounted<TrackInfo> {
     {
         if (type() != other.type() || codecName != other.codecName || trackID != other.trackID)
             return false;
+#if ENABLE(ENCRYPTED_MEDIA)
+        if (encryptionData != other.encryptionData || encryptionOriginalFormat != other.encryptionOriginalFormat || encryptionInitDatas != other.encryptionInitDatas)
+            return false;
+#endif
         return equalTo(other);
     }
 
     FourCC codecName;
     String codecString;
     TrackID trackID { 0 };
+
+#if ENABLE(ENCRYPTED_MEDIA)
+    using EncryptionData = std::pair<EncryptionBoxType, Ref<SharedBuffer>>;
+    std::optional<EncryptionData> encryptionData { };
+    std::optional<FourCC> encryptionOriginalFormat { };
+    using EncryptionInitData = std::pair<FourCC, Ref<SharedBuffer>>;
+    Vector<EncryptionInitData> encryptionInitDatas;
+#endif
 
     virtual ~TrackInfo() = default;
 
@@ -93,6 +110,18 @@ protected:
         , m_type(type)
     {
     }
+#if ENABLE(ENCRYPTED_MEDIA)
+    TrackInfo(TrackType type, FourCC codecName, const String& codecString, TrackID trackID, std::optional<EncryptionData>&& encryptionData, std::optional<FourCC> encryptionOriginalFormat, Vector<EncryptionInitData>&& encryptionInitDatas)
+        : codecName(codecName)
+        , codecString(codecString)
+        , trackID(trackID)
+        , encryptionData(WTFMove(encryptionData))
+        , encryptionOriginalFormat(encryptionOriginalFormat)
+        , encryptionInitDatas(WTFMove(encryptionInitDatas))
+        , m_type(type)
+    {
+    }
+#endif
 
 private:
     friend struct IPC::ArgumentCoder<TrackInfo, void>;
@@ -112,8 +141,12 @@ struct VideoInfo : public TrackInfo {
     uint8_t bitDepth { 8 };
     PlatformVideoColorSpace colorSpace;
 
-    String boxType;
+    FourCC boxType;
     RefPtr<SharedBuffer> atomData;
+
+#if PLATFORM(COCOA)
+    FourCC computeBoxType() const;
+#endif
 
 private:
     VideoInfo()
@@ -121,12 +154,12 @@ private:
 
     // Used by IPC generator
     friend struct IPC::ArgumentCoder<VideoInfo, void>;
-    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, const String& boxType, RefPtr<SharedBuffer>&& atomData)
+    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, FourCC boxType, RefPtr<SharedBuffer>&& atomData)
     {
         return adoptRef(*new VideoInfo(codecName, codecString, trackID, size, displaySize, bitDepth, colorSpace, boxType, WTFMove(atomData)));
     }
 
-    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, const String& boxType, RefPtr<SharedBuffer>&& atomData)
+    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, FourCC boxType, RefPtr<SharedBuffer>&& atomData)
         : TrackInfo(TrackType::Video, codecName, codecString, trackID)
         , size(size)
         , displaySize(displaySize)
@@ -136,6 +169,23 @@ private:
         , atomData(WTFMove(atomData))
     {
     }
+#if ENABLE(ENCRYPTED_MEDIA)
+    static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, std::optional<EncryptionData>&& encryptionData, std::optional<FourCC> encryptionOriginalFormat, Vector<EncryptionInitData>&& encryptionInitDatas, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, FourCC boxType, RefPtr<SharedBuffer>&& atomData)
+    {
+        return adoptRef(*new VideoInfo(codecName, codecString, trackID, WTFMove(encryptionData), encryptionOriginalFormat, WTFMove(encryptionInitDatas), size, displaySize, bitDepth, colorSpace, boxType, WTFMove(atomData)));
+    }
+
+    VideoInfo(FourCC codecName, const String& codecString, WebCore::TrackID trackID, std::optional<EncryptionData>&& encryptionData, std::optional<FourCC> encryptionOriginalFormat, Vector<EncryptionInitData>&& encryptionInitDatas, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, FourCC boxType, RefPtr<SharedBuffer>&& atomData)
+        : TrackInfo(TrackType::Video, codecName, codecString, trackID, WTFMove(encryptionData), encryptionOriginalFormat, WTFMove(encryptionInitDatas))
+        , size(size)
+        , displaySize(displaySize)
+        , bitDepth(bitDepth)
+        , colorSpace(colorSpace)
+        , boxType(boxType)
+        , atomData(WTFMove(atomData))
+    {
+    }
+#endif
 
     bool equalTo(const TrackInfo& otherVideoInfo) const final
     {
@@ -174,6 +224,23 @@ private:
         , cookieData(WTFMove(cookieData))
     {
     }
+
+#if ENABLE(ENCRYPTED_MEDIA)
+    static Ref<AudioInfo> create(FourCC codecName, const String& codecString, TrackID trackID, std::optional<EncryptionData>&& encryptionData, std::optional<FourCC> encryptionOriginalFormat, Vector<EncryptionInitData>&& encryptionInitDatas, uint32_t rate, uint32_t channels, uint32_t framesPerPacket, uint8_t bitDepth, RefPtr<SharedBuffer>&& cookieData)
+    {
+        return adoptRef(*new AudioInfo(codecName, codecString, trackID, WTFMove(encryptionData), encryptionOriginalFormat, WTFMove(encryptionInitDatas), rate, channels, framesPerPacket, bitDepth, WTFMove(cookieData)));
+    }
+
+    AudioInfo(FourCC codecName, const String& codecString, TrackID trackID, std::optional<EncryptionData>&& encryptionData, std::optional<FourCC> encryptionOriginalFormat, Vector<EncryptionInitData>&& encryptionInitDatas, uint32_t rate, uint32_t channels, uint32_t framesPerPacket, uint8_t bitDepth, RefPtr<SharedBuffer>&& cookieData)
+        : TrackInfo(TrackType::Audio, codecName, codecString, trackID, WTFMove(encryptionData), encryptionOriginalFormat, WTFMove(encryptionInitDatas))
+        , rate(rate)
+        , channels(channels)
+        , framesPerPacket(framesPerPacket)
+        , bitDepth(bitDepth)
+        , cookieData(WTFMove(cookieData))
+    {
+    }
+#endif
 
     bool equalTo(const TrackInfo& otherAudioInfo) const final
     {

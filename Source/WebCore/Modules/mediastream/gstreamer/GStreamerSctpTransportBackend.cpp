@@ -95,11 +95,9 @@ void GStreamerSctpTransportBackend::stateChanged()
     uint64_t maxMessageSize;
     g_object_get(m_backend.get(), "state", &transportState, "max-message-size", &maxMessageSize, "max-channels", &maxChannels, nullptr);
     GST_DEBUG("Notifying SCTP transport state, max-message-size: %" G_GUINT64_FORMAT " max-channels: %" G_GUINT16_FORMAT, maxMessageSize, maxChannels);
-    callOnMainThread([client = m_client, transportState, maxChannels, maxMessageSize] {
-        if (!client)
-            return;
-
-        client->onStateChanged(toRTCSctpTransportState(transportState), maxMessageSize, maxChannels);
+    callOnMainThread([weakClient = m_client, transportState, maxChannels, maxMessageSize] {
+        if (RefPtr client = weakClient.get())
+            client->onStateChanged(toRTCSctpTransportState(transportState), maxMessageSize, maxChannels);
     });
 }
 

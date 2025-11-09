@@ -42,8 +42,6 @@
 #include <wtf/RetainPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/Vector.h>
-#include <wtf/WTFSemaphore.h>
-#include <wtf/threads/BinarySemaphore.h>
 
 OBJC_CLASS AVStreamDataParser;
 OBJC_CLASS AVSampleBufferAudioRenderer;
@@ -78,13 +76,6 @@ class SharedBuffer;
 
 struct TrackInfo;
 
-class SourceBufferPrivateAVFObjCErrorClient {
-public:
-    virtual ~SourceBufferPrivateAVFObjCErrorClient() = default;
-    virtual void videoRendererDidReceiveError(NSError *, bool& shouldIgnore) = 0;
-    virtual void audioRendererDidReceiveError(NSError *, bool& shouldIgnore) = 0;
-};
-
 class SourceBufferPrivateAVFObjC final
     : public SourceBufferPrivate
 {
@@ -110,11 +101,10 @@ public:
     bool needsVideoLayer() const;
 
 #if (ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)) || ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    AVStreamDataParser* streamDataParser() const { return m_streamDataParser.get(); }
-    void setCDMSession(LegacyCDMSession*) final;
-    void setCDMInstance(CDMInstance*) final;
-    void attemptToDecrypt() final;
     bool waitingForKey() const final { return m_waitingForKey; }
+#endif
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+    RefPtr<SharedBuffer> initData() const { return m_initData; }
 #endif
 
     // Used by CDMSessionAVContentKeySession
@@ -123,14 +113,7 @@ public:
     using TrackIdentifier = TracksRendererManager::TrackIdentifier;
     std::optional<TrackIdentifier> trackIdentifierFor(TrackID) const;
 
-    void registerForErrorNotifications(SourceBufferPrivateAVFObjCErrorClient*);
-    void unregisterForErrorNotifications(SourceBufferPrivateAVFObjCErrorClient*);
-
     void setVideoRenderer(bool);
-
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    SharedBuffer* initData() { return m_initData.get(); }
-#endif
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger.get(); }
@@ -197,7 +180,6 @@ private:
     StdUnorderedMap<TrackID, RefPtr<VideoTrackPrivate>> m_videoTracks;
     StdUnorderedMap<TrackID, RefPtr<AudioTrackPrivate>> m_audioTracks;
     StdUnorderedMap<TrackID, RefPtr<InbandTextTrackPrivate>> m_textTracks;
-    Vector<SourceBufferPrivateAVFObjCErrorClient*> m_errorClients;
     StdUnorderedMap<TrackID, TrackIdentifier> m_trackIdentifiers;
 
     // Detachable MediaSource state records.
@@ -207,13 +189,10 @@ private:
 
     const Ref<SourceBufferParser> m_parser;
     Vector<Function<void()>> m_pendingTrackChangeTasks;
-    Deque<std::pair<TrackID, Ref<MediaSampleAVFObjC>>> m_blockedSamples;
-    Box<Semaphore> m_abortSemaphore;
     const Ref<WTF::WorkQueue> m_appendQueue;
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
     RefPtr<SharedBuffer> m_initData;
-    ThreadSafeWeakPtr<CDMSessionAVContentKeySession> m_session;
 #endif
 
     std::optional<FloatSize> m_cachedSize;
@@ -223,17 +202,6 @@ private:
     std::optional<TrackID> m_protectedTrackID;
     Ref<AudioVideoRenderer> m_renderer;
     bool m_isSelectedForVideo { false };
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    using KeyIDs = Vector<Ref<SharedBuffer>>;
-    using TrackKeyIDsMap = StdUnorderedMap<TrackID, KeyIDs>;
-    TrackKeyIDsMap m_currentTrackIDs;
-
-    RefPtr<CDMInstanceFairPlayStreamingAVFObjC> m_cdmInstance;
-    UniqueRef<Observer<void()>> m_keyStatusesChangedObserver;
-    KeyIDs m_keyIDs;
-    const RetainPtr<AVStreamDataParser> m_streamDataParser;
-#endif
 
 #if !RELEASE_LOG_DISABLED
     const Ref<const Logger> m_logger;

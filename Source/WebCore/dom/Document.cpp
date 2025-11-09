@@ -996,6 +996,8 @@ void Document::commonTeardown()
         highlightRegistry->clear();
     if (RefPtr fragmentHighlightRegistry = m_fragmentHighlightRegistry)
         fragmentHighlightRegistry->clear();
+    if (RefPtr textExtractionHighlightRegistry = m_textExtractionHighlightRegistry)
+        textExtractionHighlightRegistry->clear();
 #if ENABLE(APP_HIGHLIGHTS)
     if (RefPtr appHighlightRegistry = m_appHighlightRegistry)
         appHighlightRegistry->clear();
@@ -1367,6 +1369,7 @@ void Document::setCompatibilityMode(DocumentCompatibilityMode mode)
             extensionStyleSheets->clearPageUserSheet();
             extensionStyleSheets->invalidateInjectedStyleSheetCache();
         }
+        styleScope().didChangeStyleSheetEnvironment();
     }
 
     if (CheckedPtr view = renderView())
@@ -2639,7 +2642,7 @@ void Document::visibilityStateChanged()
     });
 
     m_visibilityStateCallbackClients.forEach([](auto& client) {
-        Ref { client }->visibilityStateChanged();
+        client.visibilityStateChanged();
     });
 
 #if ENABLE(MEDIA_STREAM) && PLATFORM(IOS_FAMILY)
@@ -2695,7 +2698,7 @@ void Document::forEachMediaElement(NOESCAPE const Function<void(HTMLMediaElement
 {
     ASSERT(!m_mediaElements.hasNullReferences());
     m_mediaElements.forEach([&](auto& element) {
-        function(Ref { element });
+        function(element);
     });
 }
 
@@ -3363,6 +3366,7 @@ void Document::pageSizeAndMarginsInPixels(int pageIndex, IntSize& pageSize, int&
 {
     updateStyleIfNeeded();
     auto style = styleScope().resolver().styleForPage(pageIndex);
+    const auto& zoomFactor = style->usedZoomForLength();
 
     pageSize = WTF::switchOn(style->pageSize(),
         [&](const CSS::Keyword::Auto&) {
@@ -3388,10 +3392,10 @@ void Document::pageSizeAndMarginsInPixels(int pageIndex, IntSize& pageSize, int&
 
     // The percentage is calculated with respect to the width even for margin top and bottom.
     // http://www.w3.org/TR/CSS2/box.html#margin-properties
-    marginTop = style->marginTop().isAuto() ? marginTop : Style::evaluate<int>(style->marginTop(), pageSize.width(), Style::ZoomNeeded { });
-    marginRight = style->marginRight().isAuto() ? marginRight : Style::evaluate<int>(style->marginRight(), pageSize.width(), Style::ZoomNeeded { });
-    marginBottom = style->marginBottom().isAuto() ? marginBottom : Style::evaluate<int>(style->marginBottom(), pageSize.width(), Style::ZoomNeeded { });
-    marginLeft = style->marginLeft().isAuto() ? marginLeft : Style::evaluate<int>(style->marginLeft(), pageSize.width(), Style::ZoomNeeded { });
+    marginTop = style->marginTop().isAuto() ? marginTop : Style::evaluate<int>(style->marginTop(), pageSize.width(), zoomFactor);
+    marginRight = style->marginRight().isAuto() ? marginRight : Style::evaluate<int>(style->marginRight(), pageSize.width(), zoomFactor);
+    marginBottom = style->marginBottom().isAuto() ? marginBottom : Style::evaluate<int>(style->marginBottom(), pageSize.width(), zoomFactor);
+    marginLeft = style->marginLeft().isAuto() ? marginLeft : Style::evaluate<int>(style->marginLeft(), pageSize.width(), zoomFactor);
 }
 
 void Document::fontsNeedUpdate(FontSelector&)
@@ -3736,11 +3740,10 @@ void Document::resumeDeviceMotionAndOrientationUpdates()
         return;
     m_areDeviceMotionAndOrientationUpdatesSuspended = false;
 #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
-    auto origin = securityOrigin().data();
     if (m_deviceMotionController)
-        m_deviceMotionController->resumeUpdates(origin);
+        m_deviceMotionController->resumeUpdates();
     if (m_deviceOrientationController)
-        m_deviceOrientationController->resumeUpdates(origin);
+        m_deviceOrientationController->resumeUpdates();
 #endif
 }
 
@@ -3862,6 +3865,11 @@ AXObjectCache* Document::axObjectCache() const
     return m_axObjectCache.get();
 }
 
+CheckedPtr<AXObjectCache> Document::checkedAXObjectCache() const
+{
+    return axObjectCache();
+}
+
 void Document::setVisuallyOrdered()
 {
     m_visuallyOrdered = true;
@@ -3879,6 +3887,7 @@ bool Document::hasHighlight() const
 {
     return (m_highlightRegistry && !m_highlightRegistry->isEmpty())
         || (m_fragmentHighlightRegistry && !m_fragmentHighlightRegistry->isEmpty())
+        || (m_textExtractionHighlightRegistry && !m_textExtractionHighlightRegistry->isEmpty())
 #if ENABLE(APP_HIGHLIGHTS)
         || (m_appHighlightRegistry && !m_appHighlightRegistry->isEmpty())
 #endif
@@ -3897,6 +3906,13 @@ HighlightRegistry& Document::fragmentHighlightRegistry()
     if (!m_fragmentHighlightRegistry)
         m_fragmentHighlightRegistry = HighlightRegistry::create();
     return *m_fragmentHighlightRegistry;
+}
+
+HighlightRegistry& Document::textExtractionHighlightRegistry()
+{
+    if (!m_textExtractionHighlightRegistry)
+        m_textExtractionHighlightRegistry = HighlightRegistry::create();
+    return *m_textExtractionHighlightRegistry;
 }
 
 #if ENABLE(APP_HIGHLIGHTS)
@@ -3955,6 +3971,8 @@ void Document::updateHighlightPositions()
         collectHighlightRangesFromRegister(highlightRanges, *m_highlightRegistry.get());
     if (m_fragmentHighlightRegistry)
         collectHighlightRangesFromRegister(highlightRanges, *m_fragmentHighlightRegistry.get());
+    if (m_textExtractionHighlightRegistry)
+        collectHighlightRangesFromRegister(highlightRanges, *m_textExtractionHighlightRegistry.get());
 #if ENABLE(APP_HIGHLIGHTS)
     if (m_appHighlightRegistry)
         collectHighlightRangesFromRegister(highlightRanges, *m_appHighlightRegistry.get());
@@ -4581,6 +4599,8 @@ Seconds Document::domTimerAlignmentInterval(bool hasReachedMaxNestingLevel) cons
         return alignmentInterval;
 
     // Apply Document-level DOMTimer throttling only if timers have reached their maximum nesting level as the Page may still be visible.
+    alignmentInterval = std::max(alignmentInterval, DOMTimer::minimumAlignmentForMaximallyNestedTimers());
+
     if (m_isTimerThrottlingEnabled)
         alignmentInterval = std::max(alignmentInterval, DOMTimer::hiddenPageAlignmentInterval());
 
@@ -7778,7 +7798,7 @@ void Document::captionPreferencesChanged()
 {
     ASSERT(!m_captionPreferencesChangedElements.hasNullReferences());
     m_captionPreferencesChangedElements.forEach([](HTMLMediaElement& element) {
-        Ref { element }->captionPreferencesChanged();
+        element.captionPreferencesChanged();
     });
 }
 
@@ -8576,7 +8596,7 @@ std::optional<RenderingContext> Document::getCSSCanvasContext(const String& type
     RefPtr element = getCSSCanvasElement(name);
     if (!element)
         return std::nullopt;
-    element->setSize({ width, height });
+    element->setCSSCanvasContextSize({ width, height });
     auto context = element->getContext(type);
     if (!context)
         return std::nullopt;
@@ -9149,12 +9169,12 @@ void Document::didPaintImage(Element& element, CachedImage* image, FloatRect loc
     largestContentfulPaintData().didPaintImage(element, image, localRect);
 }
 
-void Document::didPaintText(const RenderBlockFlow& formattingContextRoot, FloatRect localRect) const
+void Document::didPaintText(const RenderBlockFlow& formattingContextRoot, FloatRect localRect, bool isOnlyTextBoxForElement) const
 {
     if (!supportsLargestContentfulPaint())
         return;
 
-    largestContentfulPaintData().didPaintText(formattingContextRoot, localRect);
+    largestContentfulPaintData().didPaintText(formattingContextRoot, localRect, isOnlyTextBoxForElement);
 }
 
 int Document::requestAnimationFrame(Ref<RequestAnimationFrameCallback>&& callback)
@@ -9593,13 +9613,23 @@ Element* eventTargetElementForDocument(Document* document)
     return element;
 }
 
+// get(Bounding)ClientRect APIs now returns scaled (=zoomed) rect.
+// The zoom argument will be used to divide the rect, returning an unzoomed rect if passed.
+// https://drafts.csswg.org/css-viewport/#zoom-om
+std::optional<float> Document::zoomForClient(const RenderStyle& style) const
+{
+    if (!settings().getBoundingClientRectZoomedEnabled())
+        return style.usedZoom();
+    return { };
+}
+
 void Document::convertAbsoluteToClientQuads(Vector<FloatQuad>& quads, const RenderStyle& style)
 {
     RefPtr frameView = view();
     if (!frameView)
         return;
 
-    float inverseFrameScale = frameView->absoluteToDocumentScaleFactor(style.usedZoom());
+    float inverseFrameScale = frameView->absoluteToDocumentScaleFactor(zoomForClient(style));
     auto documentToClientOffset = frameView->documentToClientOffset();
 
     for (auto& quad : quads) {
@@ -9616,7 +9646,7 @@ void Document::convertAbsoluteToClientRects(Vector<FloatRect>& rects, const Rend
     if (!frameView)
         return;
 
-    float inverseFrameScale = frameView->absoluteToDocumentScaleFactor(style.usedZoom());
+    float inverseFrameScale = frameView->absoluteToDocumentScaleFactor(zoomForClient(style));
     auto documentToClientOffset = frameView->documentToClientOffset();
 
     for (auto& rect : rects) {
@@ -9633,7 +9663,7 @@ void Document::convertAbsoluteToClientRect(FloatRect& rect, const RenderStyle& s
     if (!frameView)
         return;
 
-    rect = frameView->absoluteToDocumentRect(rect, style.usedZoom());
+    rect = frameView->absoluteToDocumentRect(rect, zoomForClient(style));
     rect = frameView->documentToClientRect(rect);
 }
 
@@ -9855,6 +9885,11 @@ Document& Document::ensureTemplateDocument()
     templateDocument->setTemplateDocumentHost(this); // balanced in dtor.
 
     return *m_templateDocument;
+}
+
+Ref<Document> Document::ensureProtectedTemplateDocument()
+{
+    return ensureTemplateDocument();
 }
 
 Ref<DocumentFragment> Document::documentFragmentForInnerOuterHTML()
@@ -10895,8 +10930,8 @@ void Document::removeTopLayerElement(Element& element)
 HTMLDialogElement* Document::activeModalDialog() const
 {
     for (auto& element : makeReversedRange(m_topLayerElements)) {
-        if (RefPtr dialog = dynamicDowncast<HTMLDialogElement>(element.get()); dialog && dialog->isModal())
-            return dialog.unsafeGet();
+        if (auto* dialog = dynamicDowncast<HTMLDialogElement>(element.get()); dialog && dialog->isModal())
+            return dialog;
     }
 
     return nullptr;
@@ -11290,6 +11325,11 @@ DeviceOrientationAndMotionAccessController& Document::deviceOrientationAndMotion
     return *m_deviceOrientationAndMotionAccessController;
 }
 
+CheckedRef<DeviceOrientationAndMotionAccessController> Document::checkedDeviceOrientationAndMotionAccessController()
+{
+    return deviceOrientationAndMotionAccessController();
+}
+
 #endif
 
 PaintWorklet& Document::ensurePaintWorklet()
@@ -11409,6 +11449,11 @@ TextManipulationController& Document::textManipulationController()
     if (!m_textManipulationController)
         m_textManipulationController = makeUnique<TextManipulationController>(*this);
     return *m_textManipulationController;
+}
+
+CheckedRef<TextManipulationController> Document::checkedTextManipulationController()
+{
+    return textManipulationController();
 }
 
 LazyLoadImageObserver& Document::lazyLoadImageObserver()

@@ -31,11 +31,21 @@ template<typename R, typename... Args>
 class SoftLinkShim {
 public:
     using Pointer = R(*)(Args...);
+    using CanLoadPtr = bool(*)();
 
     SoftLinkShim(Pointer* originalFunctor, Pointer replacementFunctor)
         : m_originalFunctor { originalFunctor }
         , m_originalFunctorValue { *originalFunctor }
     {
+        *m_originalFunctor = replacementFunctor;
+    }
+
+    SoftLinkShim(Pointer* originalFunctor, Pointer replacementFunctor, CanLoadPtr canLoadPtr)
+        : m_originalFunctor { originalFunctor }
+    {
+        if (canLoadPtr)
+            canLoadPtr();
+        m_originalFunctorValue = *originalFunctor;
         *m_originalFunctor = replacementFunctor;
     }
 
@@ -48,5 +58,7 @@ private:
     Pointer* m_originalFunctor;
     Pointer m_originalFunctorValue;
 };
+
+
 
 }

@@ -36,6 +36,11 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RTCDataChannelRemoteSource);
 
+Ref<RTCDataChannelRemoteSource> RTCDataChannelRemoteSource::create(RTCDataChannelIdentifier identifier, UniqueRef<RTCDataChannelHandler>&& handler, Ref<RTCDataChannelRemoteSourceConnection>&& connection)
+{
+    return adoptRef(*new RTCDataChannelRemoteSource(identifier, WTFMove(handler), WTFMove(connection)));
+}
+
 RTCDataChannelRemoteSource::RTCDataChannelRemoteSource(RTCDataChannelIdentifier identifier, UniqueRef<RTCDataChannelHandler>&& handler, Ref<RTCDataChannelRemoteSourceConnection>&& connection)
     : m_identifier(identifier)
     , m_handler(WTFMove(handler))

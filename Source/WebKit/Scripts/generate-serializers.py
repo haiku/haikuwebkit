@@ -1871,14 +1871,14 @@ def generate_webkit_secure_coding_impl(serialized_types, headers):
             if member.has_container_contents():
                 if member.value_is_optional():
                     if member.dictionary_contents() is not None:
-                        result.append(f'    m_{member.type} = optionalVectorFromDictionary<{member.dictionary_contents()}>(({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"]);')
+                        result.append(f'    m_{member.type} = optionalVectorFromDictionary<{member.dictionary_contents()}>(({member.ns_type_pointer()})retainPtr([dictionary objectForKey:@"{member.type}"]).get());')
                     if member.array_contents() is not None:
-                        result.append(f'    m_{member.type} = optionalVectorFromArray<{member.array_contents()}>(({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"]);')
+                        result.append(f'    m_{member.type} = optionalVectorFromArray<{member.array_contents()}>(({member.ns_type_pointer()})retainPtr([dictionary objectForKey:@"{member.type}"]).get());')
                 else:
                     if member.dictionary_contents() is not None:
-                        result.append(f'    m_{member.type} = vectorFromDictionary<{member.dictionary_contents()}>(({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"]);')
+                        result.append(f'    m_{member.type} = vectorFromDictionary<{member.dictionary_contents()}>(({member.ns_type_pointer()})retainPtr([dictionary objectForKey:@"{member.type}"]).get());')
                     if member.array_contents() is not None:
-                        result.append(f'    m_{member.type} = vectorFromArray<{member.array_contents()}>(({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"]);')
+                        result.append(f'    m_{member.type} = vectorFromArray<{member.array_contents()}>(({member.ns_type_pointer()})retainPtr([dictionary objectForKey:@"{member.type}"]).get());')
             else:
                 result.append(f'    m_{member.type} = ({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"];')
                 # FIXME: isKindOfClass call from type_check() can cause a static analysis false positive (https://github.com/llvm/llvm-project/issues/162979).

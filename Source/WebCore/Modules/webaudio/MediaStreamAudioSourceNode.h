@@ -48,6 +48,9 @@ public:
 
     MediaStream& mediaStream() { return m_mediaStream; }
 
+    void ref() const final { AudioNode::ref(); }
+    void deref() const final { AudioNode::deref(); }
+
 private:
     MediaStreamAudioSourceNode(BaseAudioContext&, MediaStream&, Ref<WebAudioSourceProvider>&&);
 

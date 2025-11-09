@@ -39,6 +39,11 @@
 #include <JavaScriptCore/GenericTypedArrayViewInlines.h>
 #include <wtf/TZoneMallocInlines.h>
 
+#if ENABLE(WEBXR_HIT_TEST)
+#include "WebXRHitTestResult.h"
+#include "WebXRTransientInputHitTestResult.h"
+#endif
+
 namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRFrame);
@@ -380,6 +385,18 @@ ExceptionOr<bool> WebXRFrame::fillPoses(const Document& document, const Vector<R
     return allValid;
 }
 
+#endif
+
+#if ENABLE(WEBXR_HIT_TEST)
+Vector<RefPtr<WebXRHitTestResult>> WebXRFrame::getHitTestResults(const WebXRHitTestSource&)
+{
+    return { };
+}
+
+Vector<RefPtr<WebXRTransientInputHitTestResult>> WebXRFrame::getHitTestResultsForTransientInput(const WebXRTransientInputHitTestSource&)
+{
+    return { };
+}
 #endif
 
 } // namespace WebCore

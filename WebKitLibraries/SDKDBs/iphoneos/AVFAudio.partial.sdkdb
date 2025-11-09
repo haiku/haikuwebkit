@@ -2576,7 +2576,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "AVAudio3DAngularOrientation"},
     {"access": "public", "name": "AVAudio3DMixingPointSourceInHeadMode"},
@@ -7918,7 +7918,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo23AVAudioCompressedBufferC8AVFAudioE18packetDependenciesSaySo38AudioStreamPacketDependencyDescriptionVGSgvg"},
     {"access": "public", "linkage": "exported", "name": "_$sSo23AVAudioCompressedBufferC8AVFAudioE18packetDependenciesSaySo38AudioStreamPacketDependencyDescriptionVGSgvpMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

@@ -5285,17 +5285,13 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallRef(unsigned callProfileIndex, c
     Checked<int32_t> calleeStackSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(callInfo.headerAndArgumentStackSizeInBytes);
     m_maxCalleeStackSize = std::max<int>(calleeStackSize, m_maxCalleeStackSize);
 
-    GPRReg calleePtr;
-    GPRReg calleeInstance;
-    GPRReg calleeCode;
-    GPRReg boxedCallee;
+    GPRReg importableFunction = GPRInfo::nonPreservedNonArgumentGPR1;
     {
-        ScratchScope<1, 0> calleeCodeScratch(*this, RegisterSetBuilder::argumentGPRs());
-        calleeCode = calleeCodeScratch.gpr(0);
-        calleeCodeScratch.unbindPreserved();
-
+        clobber(importableFunction);
+        ScratchScope<0, 0> importableFunctionScope(*this, importableFunction);
+        static_assert(GPRInfo::nonPreservedNonArgumentGPR0 == wasmScratchGPR);
         {
-            ScratchScope<2, 0> otherScratch(*this);
+            ScratchScope<1, 0> otherScratch(*this);
 
             Location calleeLocation;
             if (callee.isConst()) {
@@ -5305,23 +5301,17 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCallRef(unsigned callProfileIndex, c
             } else
                 calleeLocation = loadIfNecessary(callee);
             consume(callee);
-            emitThrowOnNullReferenceBeforeAccess(calleeLocation, WebAssemblyFunctionBase::offsetOfBoxedCallee());
+            emitThrowOnNullReferenceBeforeAccess(calleeLocation, WebAssemblyFunctionBase::offsetOfTargetInstance());
 
-            calleePtr = calleeLocation.asGPR();
-            calleeInstance = otherScratch.gpr(0);
-            boxedCallee = otherScratch.gpr(1);
-
-            m_jit.loadPtr(Address(calleePtr, WebAssemblyFunctionBase::offsetOfBoxedCallee()), boxedCallee);
-            m_jit.storeWasmCalleeToCalleeCallFrame(boxedCallee);
-            m_jit.loadPtr(MacroAssembler::Address(calleePtr, WebAssemblyFunctionBase::offsetOfTargetInstance()), calleeInstance);
-            m_jit.loadPtr(MacroAssembler::Address(calleePtr, WebAssemblyFunctionBase::offsetOfEntrypointLoadLocation()), calleeCode);
+            GPRReg calleePtr = calleeLocation.asGPR();
+            m_jit.addPtr(TrustedImm32(WebAssemblyFunctionBase::offsetOfImportableFunction()), calleePtr, importableFunction);
         }
     }
 
     if (callType == CallType::Call)
-        emitIndirectCall("CallRef", callProfileIndex, callee, boxedCallee, calleeInstance, calleeCode, signature, args, results);
+        emitIndirectCall("CallRef", callProfileIndex, callee, importableFunction, signature, args, results);
     else
-        emitIndirectTailCall("ReturnCallRef", callee, calleeInstance, calleeCode, signature, args);
+        emitIndirectTailCall("ReturnCallRef", callee, importableFunction, signature, args);
     return { };
 }
 

@@ -114,19 +114,19 @@ bool DocumentFragment::parseXML(const String& source, Element* contextElement, O
     return XMLDocumentParser::parseDocumentFragment(source, *this, contextElement, parserContentPolicy);
 }
 
-Element* DocumentFragment::getElementById(const AtomString& id) const
+RefPtr<Element> DocumentFragment::getElementById(const AtomString& id) const
 {
     if (id.isEmpty())
         return nullptr;
 
     // Fast path for ShadowRoot, where we are both a DocumentFragment and a TreeScope.
     if (isTreeScope())
-        return protectedTreeScope()->getElementById(id).unsafeGet();
+        return protectedTreeScope()->getElementById(id);
 
     // Otherwise, fall back to iterating all of the element descendants.
-    for (Ref element : descendantsOfType<Element>(*this)) {
+    for (Ref element : descendantsOfType<Element>(*const_cast<DocumentFragment*>(this))) {
         if (element->getIdAttribute() == id)
-            return const_cast<Element*>(element.unsafePtr());
+            return element;
     }
 
     return nullptr;

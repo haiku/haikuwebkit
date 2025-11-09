@@ -22,7 +22,7 @@
      "name": "SPEulerAngleOrder"
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "16", "name": "SPAffineTransform3D"},
     {"access": "public", "introduced": "26", "name": "SPAffineTransform3DFloat"},
@@ -2082,7 +2082,7 @@
     {"access": "public", "linkage": "exported", "name": "_$ss5SIMD4V7SpatialSfRszrlEyABySfGSo21SPRotationAxis3DFloatacfC"},
     {"access": "public", "linkage": "exported", "name": "_$ss5SIMD4V7SpatialSfRszrlEyABySfGSo29SPSphericalCoordinates3DFloatacfC"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

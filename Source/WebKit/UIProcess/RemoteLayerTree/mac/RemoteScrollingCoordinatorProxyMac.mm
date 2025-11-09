@@ -319,14 +319,14 @@ void RemoteScrollingCoordinatorProxyMac::animationsWereRemovedFromNode(RemoteLay
     m_eventDispatcher->animationsWereRemovedFromNode(node);
 }
 
-void RemoteScrollingCoordinatorProxyMac::registerTimelineIfNecessary(WebCore::ProcessIdentifier processIdentifier, Seconds originTime, MonotonicTime now)
+void RemoteScrollingCoordinatorProxyMac::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
 {
-    m_eventDispatcher->registerTimelineIfNecessary(processIdentifier, originTime, now);
+    m_eventDispatcher->updateTimelineRegistration(processIdentifier, timelineRepresentations, now);
 }
 
-const RemoteAnimationTimeline* RemoteScrollingCoordinatorProxyMac::timeline(WebCore::ProcessIdentifier processIdentifier) const
+RefPtr<const RemoteAnimationTimeline> RemoteScrollingCoordinatorProxyMac::timeline(const TimelineID& timelineID) const
 {
-    return m_eventDispatcher->timeline(processIdentifier);
+    return m_eventDispatcher->timeline(timelineID);
 }
 #endif
 

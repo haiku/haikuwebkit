@@ -164,13 +164,15 @@ using JSInstruction = BaseInstruction<JSOpcodeTraits>;
     //
     //  Overloaded slots:
     //
-    //    - 'this': when executing wasm code, the slot contains the value of SP saved before the call.
-    //      Saving the value allows moving the SP freely in tail calls.
-    //    - 'codeBlock': when executing wasm code, the slot contains a pointer to the Wasm instance.
-    //      The pointer is determined by 'resolveWasmCall()' in WasmIPIntSlowPaths.cpp.
+    //    - 'this': when executing Wasm code, the slot contains the value of $sp relative to $fp, saved before the call.
+    //      Saving the value allows moving the $sp freely in tail calls.
+    //    - 'codeBlock': when executing Wasm code, the slot contains a pointer to the Wasm instance.
     //      A special case is calling a module import whose functionCallLinkInfo.targetInstance is
     //      null, which is the case when the imported function is a JS function.
     //      In that case, 'codeBlock' points at the functionCallLinkInfo object.
+    //
+    // Further, in Wasm execution not all slots shown above are used, and not all exist.
+    // Argument slots beyond 'this' typically do not exist and 'argumentCountIncludingThis' value is not meaningful.
 
     enum class CallFrameSlot {
         codeBlock = CallerFrameAndPC::sizeInRegisters,

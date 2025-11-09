@@ -382,9 +382,10 @@ template<Numeric T> struct ToCSSMapping<T> {
 
 // MARK: Utility Concepts
 
-template<typename T> concept IsPercentageOrCalc =
-       std::same_as<T, Percentage<T::range, typename T::ResolvedValueType>>
-    || std::same_as<T, UnevaluatedCalculation<typename T::CSS>>;
+template<typename T> concept IsPercentage = std::same_as<T, Percentage<T::range, typename T::ResolvedValueType>>;
+template<typename T> concept IsCalc = std::same_as<T, UnevaluatedCalculation<typename T::CSS>>;
+
+template<typename T> concept IsPercentageOrCalc = IsPercentage<T> || IsCalc<T>;
 
 } // namespace Style
 } // namespace WebCore

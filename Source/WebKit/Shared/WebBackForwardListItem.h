@@ -74,7 +74,7 @@ public:
     bool itemIsInSameDocument(const WebBackForwardListItem&) const;
     bool itemIsClone(const WebBackForwardListItem&);
 
-#if PLATFORM(COCOA) || PLATFORM(GTK)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || (PLATFORM(WPE) && USE(SKIA))
     ViewSnapshot* snapshot() const { return m_snapshot.get(); }
     void setSnapshot(RefPtr<ViewSnapshot>&& snapshot) { m_snapshot = WTFMove(snapshot); }
 #endif
@@ -121,7 +121,7 @@ private:
     WebCore::ProcessIdentifier m_lastProcessIdentifier;
     RefPtr<WebBackForwardCacheEntry> m_backForwardCacheEntry;
     const RefPtr<BrowsingContextGroup> m_browsingContextGroup;
-#if PLATFORM(COCOA) || PLATFORM(GTK)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || (PLATFORM(WPE) && USE(SKIA))
     RefPtr<ViewSnapshot> m_snapshot;
 #endif
     bool m_isRemoteFrameNavigation { false };

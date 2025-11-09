@@ -352,10 +352,11 @@ IntrinsicWidthConstraints TableFormattingContext::computedPreferredWidthForColum
             }
             auto cellPosition = cell->position();
             auto& cellStyle = cellBox.style();
+            auto usedZoom = cellStyle.usedZoomForLength();
             // Expand it with border and padding.
             auto horizontalBorderAndPaddingWidth = formattingGeometry.computedCellBorder(*cell).width()
-                + formattingGeometry.fixedValue(cellStyle.paddingLeft()).value_or(0)
-                + formattingGeometry.fixedValue(cellStyle.paddingRight()).value_or(0);
+                + formattingGeometry.fixedValue(cellStyle.paddingLeft(), usedZoom).value_or(0)
+                + formattingGeometry.fixedValue(cellStyle.paddingRight(), usedZoom).value_or(0);
             intrinsicWidth->expand(horizontalBorderAndPaddingWidth);
             // Spanner cells put their intrinsic widths on the initial slots.
             grid.slot(cellPosition)->setWidthConstraints(*intrinsicWidth);
@@ -363,7 +364,7 @@ IntrinsicWidthConstraints TableFormattingContext::computedPreferredWidthForColum
             auto columnIndex = cellPosition.column;
             WTF::switchOn(cellStyle.logicalWidth(),
                 [&](const Style::PreferredSize::Fixed& fixed) {
-                    auto fixedWidth = LayoutUnit { fixed.resolveZoom(Style::ZoomNeeded { }) } + horizontalBorderAndPaddingWidth;
+                    auto fixedWidth = LayoutUnit { fixed.resolveZoom(cellStyle.usedZoomForLength()) } + horizontalBorderAndPaddingWidth;
                     maximumFixedColumnWidths[columnIndex] = std::max(maximumFixedColumnWidths[columnIndex].value_or(0_lu), fixedWidth);
                     hasColumnWithFixedWidth = true;
                 },

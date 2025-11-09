@@ -934,30 +934,19 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSubstring, (JSGlobalObject* globalObject
     int len = jsString->length();
     RELEASE_ASSERT(len >= 0);
 
-    double start = a0.toNumber(globalObject);
+    double startDouble = a0.toIntegerOrInfinity(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
-    double end;
-    if (!(start >= 0)) // check for negative values or NaN
-        start = 0;
-    else if (start > len)
-        start = len;
+    unsigned start = std::clamp<double>(startDouble, 0.0, len);
+    unsigned end;
     if (a1.isUndefined())
         end = len;
     else {
-        end = a1.toNumber(globalObject);
+        double endDouble = a1.toIntegerOrInfinity(globalObject);
         RETURN_IF_EXCEPTION(scope, { });
-        if (!(end >= 0)) // check for negative values or NaN
-            end = 0;
-        else if (end > len)
-            end = len;
+        end = std::clamp<double>(endDouble, 0.0, len);
     }
-    if (start > end) {
-        double temp = end;
-        end = start;
-        start = temp;
-    }
-    unsigned substringStart = static_cast<unsigned>(start);
-    unsigned substringLength = static_cast<unsigned>(end) - substringStart;
+    auto [substringStart, substringEnd] = std::minmax(start, end);
+    unsigned substringLength = substringEnd - substringStart;
     RELEASE_AND_RETURN(scope, JSValue::encode(jsSubstring(globalObject, jsString, substringStart, substringLength)));
 }
 

@@ -48,12 +48,14 @@ static void applyUASheetBehaviorsToContext(CSSParserContext& context)
 {
     // FIXME: We should turn all of the features on from their WebCore Settings defaults.
     context.cssAppearanceBaseEnabled = true;
+    context.cssTextTransformMathAutoEnabled = true;
     context.cssTextUnderlinePositionLeftRightEnabled = true;
     context.popoverAttributeEnabled = true;
     context.propertySettings.cssInputSecurityEnabled = true;
     context.propertySettings.supportHDRDisplayEnabled = true;
     context.propertySettings.viewTransitionsEnabled = true;
     context.propertySettings.cssFieldSizingEnabled = true;
+    context.propertySettings.cssMathDepthEnabled = true;
 #if HAVE(CORE_MATERIAL)
     context.propertySettings.useSystemAppearance = true;
 #endif
@@ -114,6 +116,7 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , cssAxisRelativePositionKeywordsEnabled { document.settings().cssAxisRelativePositionKeywordsEnabled() }
     , cssDynamicRangeLimitMixEnabled { document.settings().cssDynamicRangeLimitMixEnabled() }
     , cssConstrainedDynamicRangeLimitEnabled { document.settings().cssConstrainedDynamicRangeLimitEnabled() }
+    , cssTextTransformMathAutoEnabled { document.settings().cssTextTransformMathAutoEnabled() }
     , webkitMediaTextTrackDisplayQuirkEnabled { document.quirks().needsWebKitMediaTextTrackDisplayQuirk() }
     , propertySettings { CSSPropertySettings { document.settings() } }
 {
@@ -155,7 +158,8 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.cssAxisRelativePositionKeywordsEnabled    << 27
         | context.cssDynamicRangeLimitMixEnabled            << 28
         | context.cssConstrainedDynamicRangeLimitEnabled    << 29
-        | context.cssTextDecorationLineErrorValues          << 30;
+        | context.cssTextDecorationLineErrorValues          << 30
+        | context.cssTextTransformMathAutoEnabled           << 31;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 

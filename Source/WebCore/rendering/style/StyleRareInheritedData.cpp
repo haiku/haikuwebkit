@@ -71,6 +71,7 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
 #endif
     Style::ListStyleType listStyleType;
     Style::BlockEllipsis blockEllipsis;
+    Style::MathDepth mathDepth;
 };
 
 static_assert(sizeof(StyleRareInheritedData) <= sizeof(GreaterThanOrSameSizeAsStyleRareInheritedData), "StyleRareInheritedData should bit pack");
@@ -116,7 +117,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , textEmphasisPosition(static_cast<unsigned>(RenderStyle::initialTextEmphasisPosition().toRaw()))
     , textUnderlinePosition(static_cast<unsigned>(RenderStyle::initialTextUnderlinePosition().toRaw()))
     , lineBoxContain(static_cast<unsigned>(RenderStyle::initialLineBoxContain().toRaw()))
-    , imageOrientation(RenderStyle::initialImageOrientation())
+    , imageOrientation(static_cast<unsigned>(RenderStyle::initialImageOrientation()))
     , imageRendering(static_cast<unsigned>(RenderStyle::initialImageRendering()))
     , lineSnap(static_cast<unsigned>(RenderStyle::initialLineSnap()))
     , lineAlign(static_cast<unsigned>(RenderStyle::initialLineAlign()))
@@ -136,7 +137,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , webkitTouchCallout(static_cast<unsigned>(RenderStyle::initialTouchCallout()))
 #endif
     , hangingPunctuation(RenderStyle::initialHangingPunctuation().toRaw())
-    , paintOrder(static_cast<unsigned>(RenderStyle::initialPaintOrder()))
+    , paintOrder(static_cast<unsigned>(RenderStyle::initialPaintOrder().type()))
     , capStyle(static_cast<unsigned>(RenderStyle::initialCapStyle()))
     , joinStyle(static_cast<unsigned>(RenderStyle::initialJoinStyle()))
     , hasSetStrokeWidth(false)
@@ -151,7 +152,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , autoRevealsWhenFound(false)
     , insideDefaultButton(false)
     , insideSubmitButton(false)
-    , enableEvaluationTimeZoom(false)
+    , evaluationTimeZoomEnabled(false)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(static_cast<unsigned>(AppleVisualEffect::None))
 #endif
@@ -177,6 +178,7 @@ StyleRareInheritedData::StyleRareInheritedData()
 #endif
     , listStyleType(RenderStyle::initialListStyleType())
     , blockEllipsis(RenderStyle::initialBlockEllipsis())
+    , mathDepth(RenderStyle::initialMathDepth())
 {
 }
 
@@ -256,7 +258,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , autoRevealsWhenFound(o.autoRevealsWhenFound)
     , insideDefaultButton(o.insideDefaultButton)
     , insideSubmitButton(o.insideSubmitButton)
-    , enableEvaluationTimeZoom(o.enableEvaluationTimeZoom)
+    , evaluationTimeZoomEnabled(o.evaluationTimeZoomEnabled)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(o.usedAppleVisualEffectForSubtree)
 #endif
@@ -284,6 +286,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
 #endif
     , listStyleType(o.listStyleType)
     , blockEllipsis(o.blockEllipsis)
+    , mathDepth(o.mathDepth)
 {
     ASSERT(o == *this, "StyleRareInheritedData should be properly copied.");
 }
@@ -397,8 +400,9 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && listStyleImage == o.listStyleImage
         && listStyleType == o.listStyleType
         && blockEllipsis == o.blockEllipsis
-        && enableEvaluationTimeZoom == o.enableEvaluationTimeZoom
-        && deviceScaleFactor == o.deviceScaleFactor;
+        && evaluationTimeZoomEnabled == o.evaluationTimeZoomEnabled
+        && deviceScaleFactor == o.deviceScaleFactor
+        && mathDepth == o.mathDepth;
 }
 
 bool StyleRareInheritedData::hasColorFilters() const
@@ -470,7 +474,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(Style::LineBoxContain, lineBoxContain);
 
-    LOG_IF_DIFFERENT_WITH_CAST(ImageOrientation, imageOrientation);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::ImageOrientation, imageOrientation);
     LOG_IF_DIFFERENT_WITH_CAST(ImageRendering, imageRendering);
     LOG_IF_DIFFERENT_WITH_CAST(LineSnap, lineSnap);
     LOG_IF_DIFFERENT_WITH_CAST(LineAlign, lineAlign);
@@ -495,7 +499,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(HangingPunctuation, hangingPunctuation);
 
-    LOG_IF_DIFFERENT_WITH_CAST(PaintOrder, paintOrder);
+    LOG_IF_DIFFERENT_WITH_CAST_AND_CONSTRUCTION(Style::SVGPaintOrder::Type, Style::SVGPaintOrder, paintOrder);
     LOG_IF_DIFFERENT_WITH_CAST(LineCap, capStyle);
     LOG_IF_DIFFERENT_WITH_CAST(LineJoin, joinStyle);
 
@@ -556,7 +560,9 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT(listStyleType);
     LOG_IF_DIFFERENT(blockEllipsis);
 
-    LOG_IF_DIFFERENT(enableEvaluationTimeZoom);
+    LOG_IF_DIFFERENT(evaluationTimeZoomEnabled);
+
+    LOG_IF_DIFFERENT(mathDepth);
 }
 #endif
 

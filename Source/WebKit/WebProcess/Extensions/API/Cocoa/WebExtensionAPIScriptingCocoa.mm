@@ -153,7 +153,7 @@ NSDictionary *toWebAPI(const WebExtensionRegisteredScriptParameters& parameters)
         result[matchOriginAsFallbackKey] = parameters.matchParentFrame.value() == WebCore::UserContentMatchParentFrame::ForOpaqueOrigins ? @YES : @NO;
 
     if (parameters.injectionTime)
-        result[runAtKey] = toWebAPI(parameters.injectionTime.value());
+        result[runAtKey] = toWebAPI(parameters.injectionTime.value()).createNSString().get();
 
     if (parameters.styleLevel)
         result[cssOriginKey] = parameters.styleLevel.value() == WebCore::UserStyleLevel::User ? userValue : authorValue;
@@ -164,7 +164,7 @@ NSDictionary *toWebAPI(const WebExtensionRegisteredScriptParameters& parameters)
     return [result copy];
 }
 
-NSString *toWebAPI(WebExtension::InjectionTime injectionTime)
+String toWebAPI(WebExtension::InjectionTime injectionTime)
 {
     switch (injectionTime) {
     case WebExtension::InjectionTime::DocumentEnd:
@@ -479,7 +479,7 @@ bool WebExtensionAPIScripting::parseScriptInjectionOptions(NSDictionary *script,
         parameters.world = worldType.value();
 
     if (JSValue *function = script[usedFunctionKey]) {
-        if (!function._isFunction) {
+        if (!isFunction(function.context.JSGlobalContextRef, function.JSValueRef)) {
             *outExceptionString = toErrorString(nullString(), usedFunctionKey, @"it is not a function").createNSString().autorelease();
             return false;
         }

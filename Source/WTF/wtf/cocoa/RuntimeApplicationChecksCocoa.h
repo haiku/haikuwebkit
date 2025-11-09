@@ -65,6 +65,7 @@ enum class SDKAlignedBehavior {
     HTMLDocumentSupportedPropertyNames,
     InitializeWebKit2MainThreadAssertion,
     InspectableDefaultsToDisabled,
+    JavaScriptEvaluationResultWithoutSerializedScriptValue,
     LazyGestureRecognizerInstallation,
     LinkPreviewEnabledByDefault,
     MainThreadReleaseAssertionInWebPageProxy,
@@ -128,6 +129,8 @@ enum class SDKAlignedBehavior {
     DidFailProvisionalNavigationWithErrorForFileURLNavigation,
     CrashWhenPreconnectingFromBackgroundThread,
     ExecutionTimingChangeOfModuleScripts,
+    GetBoundingClientRectZoomed,
+    CrashWhenMutatingProcessAssertionsFromBackgroundThread,
 
     NumberOfBehaviors
 };
@@ -169,6 +172,7 @@ WTF_EXPORT_PRIVATE bool isAppleMail();
 WTF_EXPORT_PRIVATE bool isMiniBrowser();
 WTF_EXPORT_PRIVATE bool isQuickenEssentials();
 WTF_EXPORT_PRIVATE bool isSafari();
+WTF_EXPORT_PRIVATE bool isSafariTechnologyPreview();
 WTF_EXPORT_PRIVATE bool isVersions();
 WTF_EXPORT_PRIVATE bool isHRBlock();
 WTF_EXPORT_PRIVATE bool isTurboTax();

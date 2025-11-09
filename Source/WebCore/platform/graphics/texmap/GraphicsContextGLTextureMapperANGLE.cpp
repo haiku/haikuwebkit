@@ -510,11 +510,13 @@ bool GraphicsContextGLTextureMapperANGLE::enableRequiredWebXRExtensions()
     if (!makeContextCurrent())
         return false;
 
-    return enableExtension("GL_ANGLE_framebuffer_multisample"_s)
-        && enableExtension("GL_ANGLE_framebuffer_blit"_s)
-        && enableExtension("GL_EXT_discard_framebuffer"_s)
-        && enableExtension("GL_OES_EGL_image"_s)
-        && enableExtension("GL_OES_rgb8_rgba8"_s);
+    return enableExtensionsImpl({
+        "GL_ANGLE_framebuffer_multisample"_s,
+        "GL_ANGLE_framebuffer_blit"_s,
+        "GL_EXT_discard_framebuffer"_s,
+        "GL_OES_EGL_image"_s,
+        "GL_OES_rgb8_rgba8"_s
+    });
 }
 #endif
 

@@ -36,7 +36,7 @@ class GraphicsContext;
 }
 
 namespace WebKit {
-
+struct RenderProcessInfo;
 struct UpdateInfo;
 
 class DrawingAreaCoordinatedGraphics final : public DrawingArea {
@@ -47,6 +47,10 @@ public:
     }
 
     virtual ~DrawingAreaCoordinatedGraphics();
+
+#if PLATFORM(GTK) || PLATFORM(WPE)
+    void fillGLInformation(RenderProcessInfo&&, CompletionHandler<void(RenderProcessInfo&&)>&&);
+#endif
 
 private:
     DrawingAreaCoordinatedGraphics(WebPage&, const WebPageCreationParameters&);

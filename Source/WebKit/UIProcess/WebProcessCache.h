@@ -32,6 +32,7 @@
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/HashMap.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/text/WTFString.h>
@@ -74,7 +75,7 @@ private:
     static Seconds clearingDelayAfterApplicationResignsActive;
     static int capacityOverride;
 
-    class CachedProcess : public RefCounted<CachedProcess> {
+    class CachedProcess : public RefCountedAndCanMakeWeakPtr<CachedProcess> {
         WTF_MAKE_TZONE_ALLOCATED(CachedProcess);
     public:
         static Ref<CachedProcess> create(Ref<WebProcessProxy>&&, Seconds);

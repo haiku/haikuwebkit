@@ -28,6 +28,7 @@
 
 #include "APIArray.h"
 #include "APIContentWorld.h"
+#include "APIStringMatcher.h"
 #include "APIUserScript.h"
 #include "APIUserStyleSheet.h"
 #include "InjectUserScriptImmediately.h"
@@ -41,6 +42,7 @@
 #include "WebUserContentControllerDataTypes.h"
 #include "WebUserContentControllerMessages.h"
 #include <WebCore/SerializedScriptValue.h>
+#include <WebCore/SharedMemory.h>
 #include <wtf/CheckedPtr.h>
 
 #if ENABLE(CONTENT_EXTENSIONS)
@@ -107,6 +109,12 @@ UserContentControllerParameters WebUserContentControllerProxy::parametersForProc
     for (RefPtr userStyleSheet : m_userStyleSheets->elementsOfType<API::UserStyleSheet>())
         userStyleSheets.append({ userStyleSheet->identifier(), Ref { userStyleSheet->contentWorld() }->worldDataForProcess(process), userStyleSheet->userStyleSheet() });
 
+    Vector<WebStringMatcherData> stringMatchers;
+    for (auto& [pair, matcher] : m_stringMatchers) {
+        if (RefPtr world = API::ContentWorld::worldForIdentifier(pair.first))
+            stringMatchers.append(WebStringMatcherData { Ref { matcher }->sharedMemory(), world->worldDataForProcess(process), pair.second });
+    }
+
     auto messageHandlers = WTF::map(m_scriptMessageHandlers, [&](auto entry) {
         return WebScriptMessageHandlerData { entry.value->identifier(), entry.value->world().worldDataForProcess(process), entry.value->name() };
     });
@@ -116,6 +124,7 @@ UserContentControllerParameters WebUserContentControllerProxy::parametersForProc
         , WTFMove(userScripts)
         , WTFMove(userStyleSheets)
         , WTFMove(messageHandlers)
+        , WTFMove(stringMatchers)
 #if ENABLE(CONTENT_EXTENSIONS)
         , contentRuleListData()
 #endif
@@ -393,5 +402,19 @@ void WebUserContentControllerProxy::removeAllContentRuleLists()
 #endif
 }
 #endif
+
+void WebUserContentControllerProxy::addStringMatcher(API::StringMatcher& matcher, API::ContentWorld& world, const String& name)
+{
+    m_stringMatchers.set({ world.identifier(), name }, matcher);
+    for (Ref process : m_processes)
+        process->send(Messages::WebUserContentController::AddStringMatcher(WebStringMatcherData { matcher.sharedMemory(), world.worldDataForProcess(process), name }), identifier());
+}
+
+void WebUserContentControllerProxy::removeStringMatcher(API::ContentWorld& world, const String& name)
+{
+    m_stringMatchers.remove({ world.identifier(), name });
+    for (Ref process : m_processes)
+        process->send(Messages::WebUserContentController::RemoveStringMatcher(world.identifier(), name), identifier());
+}
 
 } // namespace WebKit

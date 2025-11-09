@@ -35,6 +35,7 @@
 
 namespace WTF {
 class MediaTime;
+class URL;
 }
 
 namespace WebCore {
@@ -84,6 +85,7 @@ bool getVideoSizeAndFormatFromCaps(const GstCaps*, WebCore::IntSize&, GstVideoFo
 std::optional<FloatSize> getVideoResolutionFromCaps(const GstCaps*);
 bool getSampleVideoInfo(GstSample*, GstVideoInfo&);
 std::optional<WebCore::IntSize> getDisplaySize(WebCore::IntSize, int, int);
+bool isProtocolAllowed(const WTF::URL&);
 #endif
 CStringView capsMediaType(const GstCaps*);
 std::optional<TrackID> getStreamIdFromPad(const GRefPtr<GstPad>&);

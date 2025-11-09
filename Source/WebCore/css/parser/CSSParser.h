@@ -34,6 +34,7 @@
 #include <WebCore/CSSParserTokenRange.h>
 #include <WebCore/CSSProperty.h>
 #include <WebCore/CSSPropertyNames.h>
+#include <WebCore/StyleColor.h>
 #include <WebCore/StyleRule.h>
 #include <memory>
 #include <wtf/Vector.h>
@@ -123,6 +124,7 @@ public:
     static IsImportant consumeTrailingImportantAndWhitespace(CSSParserTokenRange&);
 
     static RefPtr<StyleRuleNestedDeclarations> parseNestedDeclarations(const CSSParserContext&, const String&);
+    static std::optional<Style::Color> parseColorOrCurrentColorWithoutContext(const String&);
 
     CSSTokenizer* tokenizer() const { return m_tokenizer.get(); }
 

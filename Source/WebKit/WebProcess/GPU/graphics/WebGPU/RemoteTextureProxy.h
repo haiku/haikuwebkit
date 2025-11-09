@@ -63,6 +63,8 @@ private:
     RemoteTextureProxy& operator=(const RemoteTextureProxy&) = delete;
     RemoteTextureProxy& operator=(RemoteTextureProxy&&) = delete;
 
+    bool isRemoteTextureProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -86,5 +88,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteTextureProxy)
+    static bool isType(const WebCore::WebGPU::Texture& texture) { return texture.isRemoteTextureProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

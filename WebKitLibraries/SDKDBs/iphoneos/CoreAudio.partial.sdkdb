@@ -2,7 +2,7 @@
 {
  "PublicSDKContentRoot": [
   {
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -139,7 +139,7 @@
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$sSo23AudioChannelDescriptionV04CoreA0E2eeoiySbAB_ABtFZ"},
     {"access": "public", "linkage": "exported", "name": "_$sSr9CoreAudioEySryxGSo0B6BufferVcfC"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

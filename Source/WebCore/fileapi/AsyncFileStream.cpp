@@ -54,7 +54,7 @@ struct AsyncFileStream::Internals {
     explicit Internals(FileStreamClient&);
 
     FileStream stream;
-    FileStreamClient& client;
+    WeakRef<FileStreamClient> client;
     std::atomic_bool destroyed { false };
 };
 
@@ -126,7 +126,7 @@ void AsyncFileStream::perform(Function<Function<void(FileStreamClient&)>(FileStr
         callOnMainThread([&internals, mainThreadWork = operation(internals.stream)] {
             if (internals.destroyed)
                 return;
-            mainThreadWork(internals.client);
+            mainThreadWork(Ref { internals.client.get() });
         });
     });
 }

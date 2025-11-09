@@ -53,6 +53,7 @@ public:
 #if PLATFORM(COCOA)
     virtual void updateExternalTexture(CVPixelBufferRef) = 0;
 #endif
+    virtual bool isRemoteExternalTextureProxy() const { return false; }
 
 protected:
     ExternalTexture() = default;

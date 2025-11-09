@@ -463,7 +463,7 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s9WiFiAware9WAServicePs23CustomStringConvertibleTb"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_$s9WiFiAware9WAServiceTL"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

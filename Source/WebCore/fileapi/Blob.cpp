@@ -345,13 +345,23 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
 {
     class BlobStreamSource : public FileReaderLoaderClient, public RefCountedReadableStreamSource {
     public:
+        static Ref<BlobStreamSource> create(ScriptExecutionContext& scriptExecutionContext, Blob& blob)
+        {
+            return adoptRef(*new BlobStreamSource(scriptExecutionContext, blob));
+        }
+
+        // FileReaderLoaderClient.
+        void ref() const final { RefCountedReadableStreamSource::ref(); }
+        void deref() const final { RefCountedReadableStreamSource::deref(); }
+
+    private:
         BlobStreamSource(ScriptExecutionContext& scriptExecutionContext, Blob& blob)
             : m_loader(makeUniqueRef<FileReaderLoader>(FileReaderLoader::ReadType::ReadAsBinaryChunks, this))
         {
+            relaxAdoptionRequirement();
             m_loader->start(&scriptExecutionContext, blob);
         }
 
-    private:
         // ReadableStreamSource
         void setActive() final { }
         void setInactive() final { }
@@ -454,7 +464,7 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
     auto* globalObject = context ? context->globalObject() : nullptr;
     if (!globalObject)
         return Exception { ExceptionCode::InvalidStateError };
-    return ReadableStream::create(*JSC::jsCast<JSDOMGlobalObject*>(globalObject), adoptRef(*new BlobStreamSource(*context, *this)));
+    return ReadableStream::create(*JSC::jsCast<JSDOMGlobalObject*>(globalObject), BlobStreamSource::create(*context, *this));
 }
 
 #if ASSERT_ENABLED

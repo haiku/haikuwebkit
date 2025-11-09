@@ -326,7 +326,7 @@ StyleDifference RenderElement::adjustStyleDifference(StyleDifference diff, Optio
     }
     
     if (contextSensitiveProperties & StyleDifferenceContextSensitiveProperty::WillChange) {
-        if (style().willChange() && style().willChange()->canTriggerCompositing())
+        if (style().willChange().canTriggerCompositing())
             diff = std::max(diff, StyleDifference::RecompositeLayer);
     }
     
@@ -460,10 +460,6 @@ void RenderElement::updateShapeImage(const Style::ShapeOutside* oldShapeValue, c
 
 bool RenderElement::repaintBeforeStyleChange(StyleDifference diff, const RenderStyle& oldStyle, const RenderStyle& newStyle)
 {
-    if (oldStyle.usedVisibility() == Visibility::Hidden) {
-        // Repaint on hidden renderer is a no-op.
-        return false;
-    }
     enum class RequiredRepaint { None, RendererOnly, RendererAndDescendantsRenderersWithLayers };
     auto shouldRepaintBeforeStyleChange = [&]() -> RequiredRepaint {
         if (!parent()) {
@@ -545,6 +541,10 @@ bool RenderElement::repaintBeforeStyleChange(StyleDifference diff, const RenderS
 
     if (shouldRepaintBeforeStyleChange == RequiredRepaint::RendererOnly) {
         if (isOutOfFlowPositioned() && downcast<RenderLayerModelObject>(*this).checkedLayer()->isSelfPaintingLayer()) {
+            if (oldStyle.usedVisibility() == Visibility::Hidden) {
+                // Repaint on hidden renderer is a no-op.
+                return false;
+            }
             if (auto cachedClippedOverflowRect = downcast<RenderLayerModelObject>(*this).checkedLayer()->cachedClippedOverflowRect()) {
                 repaintUsingContainer(containerForRepaint().renderer.get(), *cachedClippedOverflowRect);
                 return true;
@@ -2340,7 +2340,9 @@ bool RenderElement::checkForRepaintDuringLayout() const
 ImageOrientation RenderElement::imageOrientation() const
 {
     auto* imageElement = dynamicDowncast<HTMLImageElement>(element());
-    return (imageElement && !imageElement->allowsOrientationOverride()) ? ImageOrientation(ImageOrientation::Orientation::FromImage) : style().imageOrientation();
+    return (imageElement && !imageElement->allowsOrientationOverride())
+        ? ImageOrientation(ImageOrientation::Orientation::FromImage)
+        : Style::toPlatform(style().imageOrientation());
 }
 
 void RenderElement::adjustFragmentedFlowStateOnContainingBlockChangeIfNeeded(const RenderStyle& oldStyle, const RenderStyle& newStyle)
@@ -2520,7 +2522,7 @@ static RenderObject::BlockContentHeightType includeNonFixedHeight(const RenderOb
         if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
             // For fixed height styles, if the overflow size of the element spills out of the specified
             // height, assume we can apply text auto-sizing.
-            if (block->effectiveOverflowY() == Overflow::Visible && fixedHeight->resolveZoom(Style::ZoomNeeded { }) < block->layoutOverflowRect().maxY())
+            if (block->effectiveOverflowY() == Overflow::Visible && fixedHeight->resolveZoom(style.usedZoomForLength()) < block->layoutOverflowRect().maxY())
                 return RenderObject::OverflowHeight;
         }
         return RenderObject::FixedHeight;

@@ -192,6 +192,7 @@ MESSAGE_RECEIVERS = \
 	UIProcess/Extensions/WebExtensionController \
 	UIProcess/Media/AudioSessionRoutingArbitratorProxy \
 	UIProcess/Media/RemoteMediaSessionCoordinatorProxy \
+	UIProcess/Media/RemoteMediaSessionManagerProxy \
 	UIProcess/Model/ModelProcessProxy \
 	UIProcess/SpeechRecognitionRemoteRealtimeMediaSourceManager \
 	UIProcess/SpeechRecognitionServer \
@@ -201,6 +202,7 @@ MESSAGE_RECEIVERS = \
 	WebProcess/DigitalCredentials/DigitalCredentialsCoordinator \
 	WebProcess/Extensions/WebExtensionContextProxy \
 	WebProcess/Extensions/WebExtensionControllerProxy \
+	WebProcess/Media/RemoteMediaSessionManager \
 	WebProcess/GPU/GPUProcessConnection \
 	WebProcess/GPU/graphics/RemoteImageBufferProxy \
 	WebProcess/GPU/graphics/RemoteImageBufferSetProxy \
@@ -225,6 +227,7 @@ MESSAGE_RECEIVERS = \
 	WebProcess/GPU/webrtc/RemoteVideoFrameObjectHeapProxyProcessor \
 	WebProcess/WebStorage/StorageAreaMap \
 	WebProcess/UserContent/WebUserContentController \
+	WebProcess/Inspector/WasmDebuggerDispatcher \
 	WebProcess/Inspector/WebInspectorInterruptDispatcher \
 	WebProcess/Inspector/WebInspectorUI \
 	WebProcess/Inspector/WebInspectorUIExtensionController \
@@ -790,6 +793,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/WebFindOptions.serialization.in \
 	Shared/WebFoundTextRange.serialization.in \
 	Shared/WebFrameMetrics.serialization.in \
+	Shared/WebGL.serialization.in \
 	Shared/WebHitTestResultData.serialization.in \
 	Shared/WebImage.serialization.in \
 	Shared/WebNavigationDataStore.serialization.in \
@@ -918,6 +922,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	WebProcess/GPU/media/RemoteMediaPlayerState.serialization.in \
 	WebProcess/GPU/media/RemoteVideoFrameProxyProperties.serialization.in \
 	WebProcess/GPU/webrtc/SharedVideoFrame.serialization.in \
+	WebProcess/Media/RemoteMediaSessionState.serialization.in \
 	WebProcess/MediaStream/MediaDeviceSandboxExtensions.serialization.in \
 	WebProcess/Model/ModelProcessConnectionInfo.serialization.in \
 	WebProcess/Network/NetworkProcessConnectionInfo.serialization.in \

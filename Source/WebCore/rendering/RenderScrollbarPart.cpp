@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,24 +84,24 @@ void RenderScrollbarPart::layoutVerticalPart()
     } 
 }
 
-static int calcScrollbarThicknessUsing(const Style::PreferredSize& preferredSize)
+static int calcScrollbarThicknessUsing(const Style::PreferredSize& preferredSize, Style::ZoomFactor zoomFactor)
 {
     if (!preferredSize.isPercentOrCalculated() && !preferredSize.isIntrinsicOrLegacyIntrinsicOrAuto())
-        return Style::evaluateMinimum<LayoutUnit>(preferredSize, 0_lu, Style::ZoomNeeded { });
+        return Style::evaluateMinimum<LayoutUnit>(preferredSize, 0_lu, zoomFactor);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
-static int calcScrollbarThicknessUsing(const Style::MinimumSize& minimumSize)
+static int calcScrollbarThicknessUsing(const Style::MinimumSize& minimumSize, Style::ZoomFactor zoomFactor)
 {
     if ((!minimumSize.isPercentOrCalculated() && !minimumSize.isIntrinsicOrLegacyIntrinsicOrAuto()) || minimumSize.isAuto())
-        return Style::evaluateMinimum<LayoutUnit>(minimumSize, 0_lu, Style::ZoomNeeded { });
+        return Style::evaluateMinimum<LayoutUnit>(minimumSize, 0_lu, zoomFactor);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
-static int calcScrollbarThicknessUsing(const Style::MaximumSize& maximumSize)
+static int calcScrollbarThicknessUsing(const Style::MaximumSize& maximumSize, Style::ZoomFactor zoomFactor)
 {
     if (!maximumSize.isPercentOrCalculated() && !maximumSize.isIntrinsic() && !maximumSize.isLegacyIntrinsic())
-        return Style::evaluateMinimum<LayoutUnit>(maximumSize, 0_lu, Style::ZoomNeeded { });
+        return Style::evaluateMinimum<LayoutUnit>(maximumSize, 0_lu, zoomFactor);
     return ScrollbarTheme::theme().scrollbarThickness();
 }
 
@@ -109,28 +109,30 @@ void RenderScrollbarPart::computeScrollbarWidth()
 {
     if (!m_scrollbar->owningRenderer())
         return;
-    auto width = calcScrollbarThicknessUsing(style().width());
-    auto minWidth = calcScrollbarThicknessUsing(style().minWidth());
-    auto maxWidth = style().maxWidth().isNone() ? width : calcScrollbarThicknessUsing(style().maxWidth());
+    auto zoomFactor = style().usedZoomForLength();
+    auto width = calcScrollbarThicknessUsing(style().width(), zoomFactor);
+    auto minWidth = calcScrollbarThicknessUsing(style().minWidth(), zoomFactor);
+    auto maxWidth = style().maxWidth().isNone() ? width : calcScrollbarThicknessUsing(style().maxWidth(), zoomFactor);
     setWidth(std::max(minWidth, std::min(maxWidth, width)));
     
     // Buttons and track pieces can all have margins along the axis of the scrollbar. 
-    m_marginBox.setLeft(Style::evaluateMinimum<LayoutUnit>(style().marginLeft(), 0_lu, Style::ZoomNeeded { }));
-    m_marginBox.setRight(Style::evaluateMinimum<LayoutUnit>(style().marginRight(), 0_lu, Style::ZoomNeeded { }));
+    m_marginBox.setLeft(Style::evaluateMinimum<LayoutUnit>(style().marginLeft(), 0_lu, style().usedZoomForLength()));
+    m_marginBox.setRight(Style::evaluateMinimum<LayoutUnit>(style().marginRight(), 0_lu, style().usedZoomForLength()));
 }
 
 void RenderScrollbarPart::computeScrollbarHeight()
 {
     if (!m_scrollbar->owningRenderer())
         return;
-    auto height = calcScrollbarThicknessUsing(style().height());
-    auto minHeight = calcScrollbarThicknessUsing(style().minHeight());
-    auto maxHeight = style().maxHeight().isNone() ? height : calcScrollbarThicknessUsing(style().maxHeight());
+    auto zoomFactor = style().usedZoomForLength();
+    auto height = calcScrollbarThicknessUsing(style().height(), zoomFactor);
+    auto minHeight = calcScrollbarThicknessUsing(style().minHeight(), zoomFactor);
+    auto maxHeight = style().maxHeight().isNone() ? height : calcScrollbarThicknessUsing(style().maxHeight(), zoomFactor);
     setHeight(std::max(minHeight, std::min(maxHeight, height)));
 
     // Buttons and track pieces can all have margins along the axis of the scrollbar. 
-    m_marginBox.setTop(Style::evaluateMinimum<LayoutUnit>(style().marginTop(), 0_lu, Style::ZoomNeeded { }));
-    m_marginBox.setBottom(Style::evaluateMinimum<LayoutUnit>(style().marginBottom(), 0_lu, Style::ZoomNeeded { }));
+    m_marginBox.setTop(Style::evaluateMinimum<LayoutUnit>(style().marginTop(), 0_lu, style().usedZoomForLength()));
+    m_marginBox.setBottom(Style::evaluateMinimum<LayoutUnit>(style().marginBottom(), 0_lu, style().usedZoomForLength()));
 }
 
 void RenderScrollbarPart::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)

@@ -49,6 +49,10 @@
 
 OBJC_CLASS NSTextTab;
 
+#if PLATFORM(IOS_FAMILY)
+SPECIALIZE_OBJC_TYPE_TRAITS(UIImage, PAL::getUIImageClassSingleton())
+#endif
+
 namespace WebCore {
 
 using IdentifierToTableMap = HashMap<AttributedStringTextTableID, RetainPtr<NSTextTable>>;
@@ -469,7 +473,7 @@ static std::optional<AttributedString::AttributeValue> extractArray(NSArray *arr
 
 inline static Vector<AttributedString::TextListID> extractListIDs(NSParagraphStyle *style, ListToIdentifierMap& listIDs)
 {
-    return makeVector(style.textLists, [&](NSTextList *list) {
+    return makeVector(retainPtr(style.textLists).get(), [&](NSTextList *list) {
         return std::optional { listIDs.ensure(list, [] {
             return AttributedString::TextListID::generate();
         }).iterator->value };
@@ -578,8 +582,8 @@ inline static ParagraphStyle extractParagraphStyle(NSParagraphStyle *style, Tabl
 
         sentTextTableBlockIDs.append(tableBlockID);
 
-        auto nsTable = [tableBlock table];
-        auto tableEnsureResults = tableIDs.ensure(nsTable, [&] {
+        RetainPtr<NSTextTable> nsTable = [tableBlock table];
+        auto tableEnsureResults = tableIDs.ensure(nsTable.get(), [&] {
             return AttributedString::TextTableID::generate();
         });
         auto tableID = tableEnsureResults.iterator->value;
@@ -663,9 +667,9 @@ inline static ParagraphStyle extractParagraphStyle(NSParagraphStyle *style, Tabl
         }
     };
 
-    auto tabStops = [style tabStops];
+    RetainPtr<NSArray<NSTextTab *>> tabStops = [style tabStops];
     newTextTabs.reserveInitialCapacity([tabStops count]);
-    for (NSTextTab *textTab : tabStops) {
+    for (NSTextTab *textTab : tabStops.get()) {
         newTextTabs.append(TextTab {
             [textTab location],
             extractParagraphStyleAlignment([textTab alignment])
@@ -719,20 +723,20 @@ static std::optional<AttributedString::AttributeValue> extractValue(id value, Ta
         return { { toMultiRepresentationHEICAttachmentData(attachment) } };
     }
 #endif
-    if ([value isKindOfClass:PlatformNSTextAttachment]) {
-        if (isWebCoreTextAttachmentMissingPlatformImage(static_cast<CocoaImage *>([value image])))
+    if (auto* attachment = dynamic_objc_cast<NSTextAttachment>(value)) {
+        if (isWebCoreTextAttachmentMissingPlatformImage(static_cast<CocoaImage*>(retainPtr([attachment image]).get())))
             return { { TextAttachmentMissingImage() } };
         TextAttachmentFileWrapper textAttachment;
-        if (auto accessibilityLabel = [value accessibilityLabel])
-            textAttachment.accessibilityLabel = accessibilityLabel;
+        if (auto accessibilityLabel = retainPtr([value accessibilityLabel]))
+            textAttachment.accessibilityLabel = accessibilityLabel.get();
 #if !PLATFORM(IOS_FAMILY)
         textAttachment.ignoresOrientation = [value ignoresOrientation];
 #endif
-        if (auto fileWrapper = [value fileWrapper]) {
-            if (auto data = bridge_cast([fileWrapper regularFileContents]))
+        if (auto fileWrapper = retainPtr([value fileWrapper])) {
+            if (auto data = bridge_cast(retainPtr([fileWrapper regularFileContents])))
                 textAttachment.data = data;
-            if (auto preferredFilename = [fileWrapper preferredFilename])
-                textAttachment.preferredFilename = preferredFilename;
+            if (auto preferredFilename = retainPtr([fileWrapper preferredFilename]))
+                textAttachment.preferredFilename = preferredFilename.get();
         }
         return { { textAttachment } };
     }

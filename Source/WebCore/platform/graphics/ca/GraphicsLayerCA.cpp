@@ -605,7 +605,7 @@ void GraphicsLayerCA::setPosition(const FloatPoint& point)
 
 void GraphicsLayerCA::syncPosition(const FloatPoint& point)
 {
-    if (point == m_position)
+    if (point == m_position && !m_approximatePosition)
         return;
 
     GraphicsLayer::syncPosition(point);
@@ -700,6 +700,20 @@ void GraphicsLayerCA::moveOrCopyLayerAnimation(MoveOrCopy operation, const Strin
 
 void GraphicsLayerCA::moveOrCopyAnimations(MoveOrCopy operation, PlatformCALayer *fromLayer, PlatformCALayer *toLayer)
 {
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    if (RefPtr effectsStack = acceleratedEffectStack()) {
+        auto isBackdropLayer = [&] {
+            SUPPRESS_UNRETAINED_LOCAL if (auto* platformLayer = fromLayer->platformLayer())
+                SUPPRESS_UNRETAINED_ARG return PlatformCALayerCocoa::layerTypeForPlatformLayer(platformLayer) == PlatformCALayerLayerType::LayerTypeBackdropLayer;
+            return false;
+        };
+        auto& effects = isBackdropLayer() ? effectsStack->backdropLayerEffects() : effectsStack->primaryLayerEffects();
+        if (operation == Move)
+            fromLayer->clearAcceleratedEffectsAndBaseValues();
+        toLayer->setAcceleratedEffectsAndBaseValues(effects, effectsStack->baseValues());
+        return;
+    }
+#endif
     for (auto& animationGroup : m_animationGroups) {
         if ((animatedPropertyIsTransformOrRelated(animationGroup.m_property)
             || animationGroup.m_property == AnimatedProperty::Opacity
@@ -5331,12 +5345,12 @@ void GraphicsLayerCA::setAcceleratedEffectsAndBaseValues(AcceleratedEffects&& ef
     if (RefPtr effectsStack = acceleratedEffectStack()) {
         auto& primaryLayerEffects = effectsStack->primaryLayerEffects();
         hasEffectsTargetingPrimaryLayer = !primaryLayerEffects.isEmpty();
-        layer->setAcceleratedEffectsAndBaseValues(primaryLayerEffects, baseValues);
+        layer->setAcceleratedEffectsAndBaseValues(primaryLayerEffects, effectsStack->baseValues());
 
         auto& backdropLayerEffects = effectsStack->backdropLayerEffects();
         hasEffectsTargetingBackdropLayer = !backdropLayerEffects.isEmpty();
         if (RefPtr backdropLayer = m_backdropLayer)
-            backdropLayer->setAcceleratedEffectsAndBaseValues(backdropLayerEffects, baseValues);
+            backdropLayer->setAcceleratedEffectsAndBaseValues(backdropLayerEffects, effectsStack->baseValues());
     }
 
     if (!hasEffectsTargetingPrimaryLayer)

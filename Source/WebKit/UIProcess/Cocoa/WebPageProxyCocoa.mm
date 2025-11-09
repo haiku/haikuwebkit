@@ -58,6 +58,7 @@
 #import "WebContextMenuProxy.h"
 #import "WebFrameProxy.h"
 #import "WebPage.h"
+#import "WebPageLoadTiming.h"
 #import "WebPageMessages.h"
 #import "WebPageProxyInternals.h"
 #import "WebPasteboardProxy.h"
@@ -150,6 +151,23 @@ constexpr IntSize iconSize = IntSize(400, 400);
 
 void WebPageProxy::didGeneratePageLoadTiming(const WebPageLoadTiming& timing)
 {
+    // These times will not exactly match times reported by the PLT benchmark, since the benchmark
+    // uses loadRequestForNavigation as the start timestamp, while this object uses navigationStart
+    // (didStartProvisionalLoadForFrameShared) as the start timestamp.
+    auto url = m_mainFrame ? m_mainFrame->url() : URL();
+    auto startTime = timing.navigationStart();
+    auto firstVisualLayoutDuration = timing.firstVisualLayout() - startTime;
+    auto firstMeaningfulPaintDuration = timing.firstMeaningfulPaint() - startTime;
+    auto documentFinishedLoadingDuration = timing.documentFinishedLoading() - startTime;
+    auto finishedLoadingDuration = timing.finishedLoading() - startTime;
+    auto subresourcesFinishedLoadingDuration = timing.allSubresourcesFinishedLoading() - startTime;
+
+    WEBPAGEPROXY_RELEASE_LOG(Loading, "didGeneratePageLoadTiming: url=%" SENSITIVE_LOG_STRING " firstVisualLayout=%.3f firstMeaningfulPaint=%.3f domContentLoaded=%.3f loadEvent=%.3f subresourcesFinished=%.3f", url.string().ascii().data(), firstVisualLayoutDuration.seconds(), firstMeaningfulPaintDuration.seconds(), documentFinishedLoadingDuration.seconds(), finishedLoadingDuration.seconds(), subresourcesFinishedLoadingDuration.seconds());
+
+    static bool shouldLogFrameTree = CFPreferencesGetAppBooleanValue(CFSTR("WebKitDebugLogFrameTreesWithPageLoadTiming"), kCFPreferencesCurrentApplication, nullptr);
+    if (shouldLogFrameTree)
+        logFrameTree();
+
     if (RefPtr state = NavigationState::fromWebPage(*this))
         state->didGeneratePageLoadTiming(timing);
 }
@@ -279,21 +297,22 @@ void WebPageProxy::beginSafeBrowsingCheck(const URL& url, API::Navigation& navig
 #if ENABLE(CONTENT_FILTERING)
 void WebPageProxy::contentFilterDidBlockLoadForFrame(IPC::Connection& connection, const WebCore::ContentFilterUnblockHandler& unblockHandler, FrameIdentifier frameID)
 {
+    contentFilterDidBlockLoadForFrameShared(connection, unblockHandler, frameID);
+}
+
+void WebPageProxy::contentFilterDidBlockLoadForFrameShared(IPC::Connection& connection, const WebCore::ContentFilterUnblockHandler& unblockHandler, FrameIdentifier frameID)
+{
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     bool usesWebContentRestrictions = false;
 #if HAVE(WEBCONTENTRESTRICTIONS)
     usesWebContentRestrictions = protectedPreferences()->usesWebContentRestrictionsForFilter();
 #endif
     if (usesWebContentRestrictions)
-        MESSAGE_CHECK(unblockHandler.webFilterEvaluatorData().isEmpty(), connection);
+        MESSAGE_CHECK(!unblockHandler.webFilterEvaluator(), connection);
+#else
+    UNUSED_PARAM(connection);
 #endif
 
-    RefPtr process = dynamicDowncast<WebProcessProxy>(AuxiliaryProcessProxy::fromConnection(connection));
-    contentFilterDidBlockLoadForFrameShared(*process, unblockHandler, frameID);
-}
-
-void WebPageProxy::contentFilterDidBlockLoadForFrameShared(Ref<WebProcessProxy>&& process, const WebCore::ContentFilterUnblockHandler& unblockHandler, FrameIdentifier frameID)
-{
     if (RefPtr frame = WebFrameProxy::webFrame(frameID))
         frame->contentFilterDidBlockLoad(unblockHandler);
 }
@@ -931,7 +950,7 @@ void WebPageProxy::startApplePayAMSUISession(URL&& originatingURL, ApplePayAMSUI
         return;
     }
 
-    RetainPtr amsRequest = adoptNS([allocAMSEngagementRequestInstance() initWithRequestDictionary:dynamic_objc_cast<NSDictionary>([NSJSONSerialization JSONObjectWithData:[request.engagementRequest.createNSString() dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil])]);
+    RetainPtr amsRequest = adoptNS([allocAMSEngagementRequestInstance() initWithRequestDictionary:dynamic_objc_cast<NSDictionary>([NSJSONSerialization JSONObjectWithData:retainPtr([request.engagementRequest.createNSString() dataUsingEncoding:NSUTF8StringEncoding]).get() options:0 error:nil])]);
     [amsRequest setOriginatingURL:originatingURL.createNSURL().get()];
 
     auto amsBag = retainPtr([getAMSUIEngagementTaskClassSingleton() createBagForSubProfile]);
@@ -1046,7 +1065,7 @@ NSDictionary *WebPageProxy::contentsOfUserInterfaceItem(NSString *userInterfaceI
 bool WebPageProxy::isQuarantinedAndNotUserApproved(const String& fileURLString)
 {
     RetainPtr fileURL = adoptNS([[NSURL alloc] initWithString:fileURLString.createNSString().get()]);
-    if ([fileURL.get().pathExtension caseInsensitiveCompare:@"webarchive"] != NSOrderedSame)
+    if ([retainPtr(fileURL.get().pathExtension) caseInsensitiveCompare:@"webarchive"] != NSOrderedSame)
         return false;
 
     qtn_file_t qf = qtn_file_alloc();
@@ -1644,6 +1663,9 @@ bool WebPageProxy::tryToSendCommandToActiveControlledVideo(PlatformMediaSession:
 
 void WebPageProxy::getInformationFromImageData(Vector<uint8_t>&& data, CompletionHandler<void(Expected<std::pair<String, Vector<IntSize>>, WebCore::ImageDecodingError>&&)>&& completionHandler)
 {
+    if (isClosed())
+        return completionHandler(makeUnexpected(WebCore::ImageDecodingError::Internal));
+
     ensureProtectedRunningProcess()->sendWithAsyncReply(Messages::WebPage::GetInformationFromImageData(WTFMove(data)), [preventProcessShutdownScope = protectedLegacyMainFrameProcess()->shutdownPreventingScope(), completionHandler = WTFMove(completionHandler)] (auto result) mutable {
         completionHandler(WTFMove(result));
     }, webPageIDInMainFrameProcess());
@@ -1651,6 +1673,9 @@ void WebPageProxy::getInformationFromImageData(Vector<uint8_t>&& data, Completio
 
 void WebPageProxy::createIconDataFromImageData(Ref<WebCore::SharedBuffer>&& buffer, const Vector<unsigned>& lengths, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&& completionHandler)
 {
+    if (isClosed())
+        return completionHandler(nullptr);
+
     // Supported ICO image sizes by ImageIO.
     constexpr std::array<unsigned, 5> availableLengths { { 16, 32, 48, 128, 256 } };
     auto targetLengths = lengths.isEmpty() ? std::span { availableLengths } : lengths;
@@ -1665,6 +1690,9 @@ void WebPageProxy::createIconDataFromImageData(Ref<WebCore::SharedBuffer>&& buff
 
 void WebPageProxy::decodeImageData(Ref<WebCore::SharedBuffer>&& buffer, std::optional<WebCore::FloatSize> preferredSize, CompletionHandler<void(RefPtr<WebCore::ShareableBitmap>&&)>&& completionHandler)
 {
+    if (isClosed())
+        return completionHandler(nullptr);
+
     ensureProtectedRunningProcess()->sendWithAsyncReply(Messages::WebPage::DecodeImageData(WTFMove(buffer), preferredSize), [preventProcessShutdownScope = protectedLegacyMainFrameProcess()->shutdownPreventingScope(), completionHandler = WTFMove(completionHandler)] (auto result) mutable {
         completionHandler(WTFMove(result));
     }, webPageIDInMainFrameProcess());

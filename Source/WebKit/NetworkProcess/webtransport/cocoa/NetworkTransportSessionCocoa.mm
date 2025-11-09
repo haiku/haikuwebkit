@@ -74,7 +74,7 @@ NetworkTransportSession::NetworkTransportSession(NetworkConnectionToWebProcess& 
 static bool leafCertificateMatchesWebTransportHash(sec_trust_t trust, const Vector<WebCore::WebTransportHash>& hashes)
 {
     // https://www.w3.org/TR/webtransport/#verify-a-certificate-hash
-    RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
+    SUPPRESS_RETAINPTR_CTOR_ADOPT RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
     if (!secTrust)
         return false;
 
@@ -86,7 +86,7 @@ static bool leafCertificateMatchesWebTransportHash(sec_trust_t trust, const Vect
     if (!leafCertificate)
         return false;
 
-    RetainPtr x509Data = adoptNS(bridge_cast(SecCertificateCopyData(leafCertificate.get())));
+    SUPPRESS_RETAINPTR_CTOR_ADOPT RetainPtr x509Data = adoptNS(bridge_cast(SecCertificateCopyData(leafCertificate.get())));
     if (!x509Data)
         return false;
 
@@ -126,7 +126,7 @@ static void didReceiveServerTrustChallenge(NetworkConnectionToWebProcess& connec
         return completion(leafCertificateMatchesWebTransportHash(trust, hashes));
 
     uint16_t port = url.port() ? *url.port() : *defaultPortForProtocol(url.protocol());
-    RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
+    SUPPRESS_RETAINPTR_CTOR_ADOPT RetainPtr secTrust = adoptCF(sec_trust_copy_ref(trust));
     RetainPtr protectionSpace = adoptNS([[NSURLProtectionSpace alloc] initWithHost:url.host().createNSString().get() port:port protocol:NSURLProtectionSpaceHTTPS realm:nil authenticationMethod:NSURLAuthenticationMethodServerTrust]);
     [protectionSpace _setServerTrust:secTrust.get()];
 
@@ -158,7 +158,7 @@ static void didReceiveServerTrustChallenge(NetworkConnectionToWebProcess& connec
         RELEASE_ASSERT_NOT_REACHED();
     };
 
-    auto* sessionCocoa = static_cast<NetworkSessionCocoa*>(connectionToWebProcess.networkProcess().networkSession(connectionToWebProcess.sessionID()));
+    CheckedPtr sessionCocoa = downcast<NetworkSessionCocoa>(connectionToWebProcess.networkProcess().networkSession(connectionToWebProcess.sessionID()));
 
     if (sessionCocoa && sessionCocoa->fastServerTrustEvaluationEnabled()) {
         auto decisionHandler = makeBlockPtr([

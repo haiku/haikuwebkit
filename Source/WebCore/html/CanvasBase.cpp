@@ -67,6 +67,8 @@ static std::optional<uint64_t> canvasNoiseHashSaltIfNeeded(ScriptExecutionContex
     return { };
 }
 
+CanvasDisplayBufferObserver::~CanvasDisplayBufferObserver() = default;
+
 CanvasBase::CanvasBase(IntSize size, ScriptExecutionContext& context)
     : m_size { size }
     , m_canvasNoiseHashSalt { canvasNoiseHashSaltIfNeeded(context) }
@@ -208,8 +210,8 @@ void CanvasBase::removeDisplayBufferObserver(CanvasDisplayBufferObserver& observ
 
 void CanvasBase::notifyObserversCanvasDisplayBufferPrepared()
 {
-    for (auto& observer : m_displayBufferObservers)
-        observer.canvasDisplayBufferPrepared(*this);
+    for (Ref observer : m_displayBufferObservers)
+        observer->canvasDisplayBufferPrepared(*this);
 }
 
 HashSet<Element*> CanvasBase::cssCanvasClients() const

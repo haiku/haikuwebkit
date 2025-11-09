@@ -166,6 +166,8 @@ auto StreamingParser::parseFunctionSize(uint32_t functionSize) -> State
 {
     m_functionSize = functionSize;
     WASM_PARSER_FAIL_IF(functionSize > maxFunctionSize, "Code function's size "_s, functionSize, " is too big"_s);
+    if (functionSize < Options::wasmInliningSmallFunctionThreshold())
+        ++m_info->m_numSmallFunctions;
     return State::FunctionPayload;
 }
 

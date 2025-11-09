@@ -43,7 +43,9 @@ struct PositionTryFallback {
     enum class Tactic : uint8_t {
         FlipBlock,
         FlipInline,
-        FlipStart
+        FlipStart,
+        FlipX,
+        FlipY,
     };
     Vector<Tactic> tactics { };
 

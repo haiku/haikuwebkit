@@ -87,11 +87,12 @@ static void updateFromControlElementsAncestorDisabledStateUnder(HTMLElement& sta
     it.dropAssertions();
 
     while (it != range.end()) {
-        if (auto* listedElement = it->asValidatedFormListedElement())
+        Ref element = *it;
+        if (RefPtr listedElement = element->asValidatedFormListedElement())
             listedElement->setDisabledByAncestorFieldset(isDisabled);
 
         // Don't call setDisabledByAncestorFieldset() on form controls inside disabled fieldsets.
-        if (is<HTMLFieldSetElement>(*it) && it->hasAttributeWithoutSynchronization(disabledAttr))
+        if (is<HTMLFieldSetElement>(element) && element->hasAttributeWithoutSynchronization(disabledAttr))
             it.traverseNextSkippingChildren();
         else
             it.traverseNext();

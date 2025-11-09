@@ -24,6 +24,7 @@
  */
 
 #import "../../TestPDFDocument.h"
+#import "../WTF/cocoa/SwiftCxxInteropTestbed.h"
 #import "../WebKitCocoa/SmartListsSupport.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"

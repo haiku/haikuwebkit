@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 const TOTAL_WAITER_COUNT = 10;
 const WAIT_INDEX = TOTAL_WAITER_COUNT * 2 - 1;
 

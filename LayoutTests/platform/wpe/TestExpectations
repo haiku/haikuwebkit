@@ -538,6 +538,10 @@ webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/large-duration-
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/medium-duration-threshold.html [ Skip ]
 webkit.org/b/244186 imported/w3c/web-platform-tests/event-timing/retrievability.html [ Skip ]
 
+# Event timing: timing out for unclear reasons - perhaps scheduling. Events handlers are called but event timing entries aren't produced
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-keydown-keyup.html [ Skip ]
+webkit.org/b/301110 imported/w3c/web-platform-tests/event-timing/gap-pointerdown-pointerup.html [ Skip ]
+
 # notImplemented in WTR::UIScriptController::isShowingDateTimePicker
 fast/forms/datalist [ Skip ]
 fast/forms/date/date-show-hide-picker.html [ Skip ]
@@ -564,6 +568,8 @@ fast/forms/validation-message-on-checkbox.html [ Skip ]
 fast/forms/validation-message-on-listbox.html [ Skip ]
 fast/forms/validation-message-on-menulist.html [ Skip ]
 fast/forms/validation-message-on-radio.html [ Skip ]
+
+webkit.org/b/301555 transforms/2d/zoom-menulist.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # 5. FLAKY TESTS

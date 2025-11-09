@@ -37,14 +37,14 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(OESStandardDerivatives);
 OESStandardDerivatives::OESStandardDerivatives(WebGLRenderingContextBase& context)
     : WebGLExtension(context, WebGLExtensionName::OESStandardDerivatives)
 {
-    context.protectedGraphicsContextGL()->ensureExtensionEnabled("GL_OES_standard_derivatives"_s);
+    context.graphicsContextGL()->enableExtension(GCGLExtension::OES_standard_derivatives);
 }
 
 OESStandardDerivatives::~OESStandardDerivatives() = default;
 
 bool OESStandardDerivatives::supported(GraphicsContextGL& context)
 {
-    return context.supportsExtension("GL_OES_standard_derivatives"_s);
+    return context.supportsExtension(GCGLExtension::OES_standard_derivatives);
 }
 
 } // namespace WebCore

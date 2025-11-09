@@ -342,7 +342,12 @@ TEST(SmartLists, InsertingSpaceAfterInvalidNumberDoesNotGenerateOrderedList)
     runTest(@"+42. Hello", expectedPlusPrefixedHTML.createNSString().get(), @"//body/text()", @"+42. Hello".length);
 }
 
+// FIXME: rdar://163664100 ([ iOS26 iPhone ] 2X TestWebKitAPI.SmartLists (API-Tests) are constant failures (301651))
+#if PLATFORM(IOS)
+TEST(SmartLists, DISABLED_InsertingListMergesWithPreviousListIfPossible)
+#else
 TEST(SmartLists, InsertingListMergesWithPreviousListIfPossible)
+#endif
 {
     static constexpr auto expectedHTML = R"""(
     <body>
@@ -364,7 +369,12 @@ TEST(SmartLists, InsertingListMergesWithPreviousListIfPossible)
     runTest(input.get(), expectedHTML.createNSString().get(), @"//body/ol/li[3]/text()", 1);
 }
 
+// FIXME: rdar://163664100 ([ iOS26 iPhone ] 2X TestWebKitAPI.SmartLists (API-Tests) are constant failures (301651))
+#if PLATFORM(IOS)
+TEST(SmartLists, DISABLED_InsertingSpaceInsideListElementDoesNotActivateSmartLists)
+#else
 TEST(SmartLists, InsertingSpaceInsideListElementDoesNotActivateSmartLists)
+#endif
 {
     static constexpr auto expectedHTML = R"""(
     <body>

@@ -148,11 +148,11 @@ static FragmentAndResources createFragmentInternal(LocalFrame& frame, NSAttribut
 #endif
 
     NSArray *subresources = nil;
-    NSString *fragmentString = [string _htmlDocumentFragmentString:NSMakeRange(0, [string length]) documentAttributes:attributesForAttributedStringConversion(!fragmentCreationOptions.contains(FragmentCreationOptions::NoInterchangeNewlines)) subresources:&subresources];
+    RetainPtr<NSString> fragmentString = [string _htmlDocumentFragmentString:NSMakeRange(0, [string length]) documentAttributes:attributesForAttributedStringConversion(!fragmentCreationOptions.contains(FragmentCreationOptions::NoInterchangeNewlines)) subresources:&subresources];
 
     Ref fragment = DocumentFragment::create(document.get());
     Ref dummyBodyToForceInBodyInsertionMode = HTMLBodyElement::create(document.get());
-    auto markup = fragmentCreationOptions.contains(FragmentCreationOptions::SanitizeMarkup) ? sanitizeMarkup(fragmentString) : String(fragmentString);
+    auto markup = fragmentCreationOptions.contains(FragmentCreationOptions::SanitizeMarkup) ? sanitizeMarkup(fragmentString.get(), document.ptr()) : String(fragmentString.get());
     fragment->parseHTML(markup, dummyBodyToForceInBodyInsertionMode, { });
 
     result.fragment = WTFMove(fragment);
@@ -534,7 +534,7 @@ static std::optional<MarkupAndArchive> extractMarkupAndArchive(SharedBuffer& buf
 
 static String sanitizeMarkupWithArchive(LocalFrame& frame, Document& destinationDocument, MarkupAndArchive& markupAndArchive, MSOListQuirks msoListQuirks, const std::function<bool(const String)>& canShowMIMETypeAsHTML)
 {
-    Ref page = createPageForSanitizingWebContent();
+    Ref page = createPageForSanitizingWebContent(&destinationDocument);
     RefPtr stagingDocument = page->localTopDocument();
     if (!stagingDocument)
         return String();
@@ -671,7 +671,7 @@ bool WebContentReader::readHTML(const String& string)
 
     String markup;
     if (DeprecatedGlobalSettings::customPasteboardDataEnabled() && shouldSanitize()) {
-        markup = sanitizeMarkup(stringOmittingMicrosoftPrefix, msoListQuirksForMarkup(), WTF::Function<void (DocumentFragment&)> { [] (DocumentFragment& fragment) {
+        markup = sanitizeMarkup(stringOmittingMicrosoftPrefix, document.ptr(), msoListQuirksForMarkup(), WTF::Function<void (DocumentFragment&)> { [] (DocumentFragment& fragment) {
             removeSubresourceURLAttributes(fragment, [](auto& url) {
                 return url.protocolIsFile();
             });
@@ -690,7 +690,7 @@ bool WebContentMarkupReader::readHTML(const String& string)
 
     String rawHTML = stripMicrosoftPrefix(string);
     if (shouldSanitize()) {
-        m_markup = sanitizeMarkup(rawHTML, msoListQuirksForMarkup(), WTF::Function<void (DocumentFragment&)> { [] (DocumentFragment& fragment) {
+        m_markup = sanitizeMarkup(rawHTML, frame().document(), msoListQuirksForMarkup(), WTF::Function<void (DocumentFragment&)> { [] (DocumentFragment& fragment) {
             removeSubresourceURLAttributes(fragment, [](auto& url) {
                 return url.protocolIsFile();
             });

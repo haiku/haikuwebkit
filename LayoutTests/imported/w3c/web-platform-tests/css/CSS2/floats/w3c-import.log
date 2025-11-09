@@ -252,6 +252,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/hit-test-floats-003.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/hit-test-floats-004.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/hit-test-floats-005.html
+/LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/inheritance.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/intrinsic-size-float-and-line-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/intrinsic-size-float-and-line.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/line-pushed-by-floats-crash.html

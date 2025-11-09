@@ -51,6 +51,9 @@ public:
 
     ~RemoteAudioSessionProxyManager();
 
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     void addProxy(RemoteAudioSessionProxy&, std::optional<audit_token_t>);
     void removeProxy(RemoteAudioSessionProxy&);
 

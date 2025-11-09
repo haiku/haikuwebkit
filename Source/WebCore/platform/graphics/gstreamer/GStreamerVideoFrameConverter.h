@@ -21,7 +21,7 @@
 #if ENABLE(VIDEO) && USE(GSTREAMER)
 
 #include "GRefPtrGStreamer.h"
-#include <wtf/CheckedRef.h>
+#include <wtf/CanMakeWeakPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
@@ -29,13 +29,16 @@
 
 namespace WebCore {
 
-class GStreamerVideoFrameConverter final : public CanMakeCheckedPtr<GStreamerVideoFrameConverter> {
+class GStreamerVideoFrameConverter final : public CanMakeWeakPtr<GStreamerVideoFrameConverter> {
     WTF_MAKE_TZONE_ALLOCATED(GStreamerVideoFrameConverter);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(GStreamerVideoFrameConverter);
     friend NeverDestroyed<GStreamerVideoFrameConverter>;
 
 public:
     static GStreamerVideoFrameConverter& singleton();
+
+    // Do nothing since this is a singleton object.
+    void ref() const { }
+    void deref() const { }
 
     WARN_UNUSED_RETURN GRefPtr<GstSample> convert(const GRefPtr<GstSample>&, const GRefPtr<GstCaps>&);
 

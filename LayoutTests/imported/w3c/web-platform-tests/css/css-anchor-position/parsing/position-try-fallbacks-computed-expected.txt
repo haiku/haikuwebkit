@@ -17,6 +17,10 @@ PASS Property position-try-fallbacks value '--foo, left, --bar'
 PASS Property position-try-fallbacks value '--foo, flip-start, left'
 PASS Property position-try-fallbacks value '--foo flip-start, left'
 PASS Property position-try-fallbacks value 'left, --bar flip-start'
+PASS Property position-try-fallbacks value 'flip-y'
+PASS Property position-try-fallbacks value 'flip-x'
+PASS Property position-try-fallbacks value 'flip-y, flip-x'
+PASS Property position-try-fallbacks value 'flip-start flip-x flip-y'
 PASS Property position-try-fallbacks has initial value none
 PASS Property position-try-fallbacks does not inherit
 

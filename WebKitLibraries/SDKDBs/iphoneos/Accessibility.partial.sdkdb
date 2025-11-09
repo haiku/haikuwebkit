@@ -89,10 +89,14 @@
     {"access": "public", "introduced": "15", "kind": "variable", "linkage": "exported", "name": "_AXMFiHearingDeviceStreamingEarDidChangeNotification"},
     {"access": "public", "introduced": "14", "kind": "function", "linkage": "exported", "name": "_AXNameFromColor"},
     {"access": "public", "introduced": "18", "kind": "function", "linkage": "exported", "name": "_AXOpenSettingsFeature"},
+    {"access": "public", "introduced": "26.1", "kind": "function", "linkage": "exported", "name": "_AXPrefersActionSliderAlternative"},
+    {"access": "public", "introduced": "26.1", "kind": "variable", "linkage": "exported", "name": "_AXPrefersActionSliderAlternativeDidChangeNotification"},
     {"access": "public", "introduced": "17", "kind": "function", "linkage": "exported", "name": "_AXPrefersHorizontalTextLayout"},
     {"access": "public", "introduced": "17", "kind": "variable", "linkage": "exported", "name": "_AXPrefersHorizontalTextLayoutDidChangeNotification"},
     {"access": "public", "introduced": "18", "kind": "function", "linkage": "exported", "name": "_AXPrefersNonBlinkingTextInsertionIndicator"},
     {"access": "public", "introduced": "18", "kind": "variable", "linkage": "exported", "name": "_AXPrefersNonBlinkingTextInsertionIndicatorDidChangeNotification"},
+    {"access": "public", "introduced": "26.1", "kind": "function", "linkage": "exported", "name": "_AXShowBordersEnabled"},
+    {"access": "public", "introduced": "26.1", "kind": "variable", "linkage": "exported", "name": "_AXShowBordersEnabledStatusDidChangeNotification"},
     {"access": "public", "introduced": "15", "kind": "function", "linkage": "exported", "name": "_AXSupportsBidirectionalAXMFiHearingDeviceStreaming"},
     {"access": "public", "introduced": "18", "kind": "variable", "linkage": "exported", "name": "_AXTechnologyAutomation"},
     {"access": "public", "introduced": "18", "kind": "variable", "linkage": "exported", "name": "_AXTechnologyFullKeyboardAccess"},
@@ -692,7 +696,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "15", "name": "AXChartDescriptorContentDirection"},
     {"access": "public", "name": "AXCustomContentImportance"},
@@ -971,10 +975,14 @@
     {"access": "public", "introduced": "17", "linkage": "exported", "name": "_$sSo18NSNotificationNamea13AccessibilityE38AXPrefersHorizontalTextLayoutDidChangeABvpZMV"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E04openB03forySo17AXSettingsFeatureV_tYaKFZ"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E04openB03forySo17AXSettingsFeatureV_tYaKFZTu"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E18showBordersEnabledSbvgZ"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E18showBordersEnabledSbvpZMV"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E21animatedImagesEnabledSbvgZ"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E21animatedImagesEnabledSbvpZMV"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E27prefersHorizontalTextLayoutSbvgZ"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E27prefersHorizontalTextLayoutSbvpZMV"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E30prefersActionSliderAlternativeSbvgZ"},
+    {"access": "public", "introduced": "26.1", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E30prefersActionSliderAlternativeSbvpZMV"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E40prefersNonBlinkingTextInsertionIndicatorSbvgZ"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E40prefersNonBlinkingTextInsertionIndicatorSbvpZMV"},
     {"access": "public", "introduced": "18", "linkage": "exported", "name": "_$sSo21AccessibilitySettingsV0A0E42animatedImagesEnabledDidChangeNotificationSo18NSNotificationNameavgZ"},
@@ -995,7 +1003,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo27AXNumericDataAxisDescriptorC13AccessibilityE5title5range17gridlinePositions24valueDescriptionProviderABSS_SNySdGSaySdGSSSdctcfC"},
     {"access": "public", "linkage": "exported", "name": "_$sSo27AXNumericDataAxisDescriptorC13AccessibilityE5title5range17gridlinePositions24valueDescriptionProviderABSS_SNySdGSaySdGSSSdctcfc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

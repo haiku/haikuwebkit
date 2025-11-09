@@ -55,6 +55,25 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ImageBufferSkiaAcceleratedBackend);
 
+static inline bool shouldEnableDynamicMSAA()
+{
+    static std::once_flag onceFlag;
+    static bool enableDynamicMSAA = false;
+    std::call_once(onceFlag, [] {
+        if (const char* enableDynamicMSAAEnv = getenv("WEBKIT_SKIA_ENABLE_DYNAMIC_MSAA")) {
+            enableDynamicMSAA = *enableDynamicMSAAEnv != '0';
+            return;
+        }
+
+#if PLATFORM(GTK)
+        enableDynamicMSAA = true;
+#else
+        enableDynamicMSAA = false;
+#endif
+    });
+    return enableDynamicMSAA;
+}
+
 std::unique_ptr<ImageBufferSkiaAcceleratedBackend> ImageBufferSkiaAcceleratedBackend::create(const Parameters& parameters, const ImageBufferCreationContext& creationContext)
 {
     IntSize backendSize = calculateSafeBackendSize(parameters);
@@ -73,8 +92,14 @@ std::unique_ptr<ImageBufferSkiaAcceleratedBackend> ImageBufferSkiaAcceleratedBac
     RELEASE_ASSERT(grContext);
 
     auto imageInfo = SkImageInfo::Make(backendSize.width(), backendSize.height(), kRGBA_8888_SkColorType, kPremul_SkAlphaType, parameters.colorSpace.platformColorSpace());
-    SkSurfaceProps properties { 0, FontRenderOptions::singleton().subpixelOrder() };
-    auto surface = SkSurfaces::RenderTarget(grContext, skgpu::Budgeted::kNo, imageInfo, PlatformDisplay::sharedDisplay().msaaSampleCount(), kTopLeft_GrSurfaceOrigin, &properties);
+    auto msaaSampleCount = PlatformDisplay::sharedDisplay().msaaSampleCount();
+    uint32_t flags = 0;
+    if (parameters.purpose == RenderingPurpose::Canvas && msaaSampleCount && shouldEnableDynamicMSAA()) {
+        flags |= SkSurfaceProps::kDynamicMSAA_Flag;
+        msaaSampleCount = 1;
+    }
+    SkSurfaceProps properties { flags, FontRenderOptions::singleton().subpixelOrder() };
+    auto surface = SkSurfaces::RenderTarget(grContext, skgpu::Budgeted::kNo, imageInfo, msaaSampleCount, kTopLeft_GrSurfaceOrigin, &properties);
     if (!surface || !surface->getCanvas())
         return nullptr;
 

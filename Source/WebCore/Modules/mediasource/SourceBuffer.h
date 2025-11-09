@@ -236,7 +236,7 @@ private:
     WeakPtr<MediaSource> m_source;
     AppendMode m_mode { AppendMode::Segments };
 
-    WTF::Observer<WebCoreOpaqueRoot()> m_opaqueRootProvider;
+    const Ref<WTF::Observer<WebCoreOpaqueRoot()>> m_opaqueRootProvider;
 
     RefPtr<SharedBuffer> m_pendingAppendData;
 

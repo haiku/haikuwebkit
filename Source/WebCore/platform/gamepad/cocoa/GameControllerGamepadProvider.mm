@@ -148,8 +148,8 @@ void GameControllerGamepadProvider::controllerDidConnect(GCController *controlle
 
     makeInvisibleGamepadsVisible();
 
-    for (auto& client : m_clients)
-        client.platformGamepadConnected(*m_gamepadVector[index], EventMakesGamepadsVisible::Yes);
+    for (Ref client : m_clients)
+        client->platformGamepadConnected(*m_gamepadVector[index], EventMakesGamepadsVisible::Yes);
 }
 
 void GameControllerGamepadProvider::controllerDidDisconnect(GCController *controller)
@@ -172,8 +172,8 @@ void GameControllerGamepadProvider::controllerDidDisconnect(GCController *contro
 
     m_invisibleGamepads.remove(*removedGamepad.get());
 
-    for (auto& client : m_clients)
-        client.platformGamepadDisconnected(*removedGamepad);
+    for (Ref client : m_clients)
+        client->platformGamepadDisconnected(*removedGamepad);
 }
 
 void GameControllerGamepadProvider::prewarmGameControllerDevicesIfNecessary()
@@ -217,15 +217,17 @@ void GameControllerGamepadProvider::startMonitoringGamepads(GamepadProviderClien
 
     if (canLoad_GameController_GCControllerDidConnectNotification()) {
         m_connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:get_GameController_GCControllerDidConnectNotificationSingleton() object:nil queue:nil usingBlock:^(NSNotification *notification) {
-            LOG(Gamepad, "GameControllerGamepadProvider notified of new GCController %p", notification.object);
-            GameControllerGamepadProvider::singleton().controllerDidConnect(notification.object, ConnectionVisibility::Visible);
+            RetainPtr<id> object = notification.object;
+            LOG(Gamepad, "GameControllerGamepadProvider notified of new GCController %p", object.get());
+            GameControllerGamepadProvider::singleton().controllerDidConnect(object.get(), ConnectionVisibility::Visible);
         }];
     }
 
     if (canLoad_GameController_GCControllerDidDisconnectNotification()) {
         m_disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:get_GameController_GCControllerDidDisconnectNotificationSingleton() object:nil queue:nil usingBlock:^(NSNotification *notification) {
-            LOG(Gamepad, "GameControllerGamepadProvider notified of disconnected GCController %p", notification.object);
-            GameControllerGamepadProvider::singleton().controllerDidDisconnect(notification.object);
+            RetainPtr<id> object = notification.object;
+            LOG(Gamepad, "GameControllerGamepadProvider notified of disconnected GCController %p", object.get());
+            GameControllerGamepadProvider::singleton().controllerDidDisconnect(object.get());
         }];
     }
 
@@ -275,8 +277,8 @@ void GameControllerGamepadProvider::gamepadHadInput(GameControllerGamepad&, bool
 void GameControllerGamepadProvider::makeInvisibleGamepadsVisible()
 {
     for (auto& gamepad : m_invisibleGamepads) {
-        for (auto& client : m_clients)
-            client.platformGamepadConnected(gamepad, EventMakesGamepadsVisible::Yes);
+        for (Ref client : m_clients)
+            client->platformGamepadConnected(gamepad, EventMakesGamepadsVisible::Yes);
     }
 
     m_invisibleGamepads.clear();

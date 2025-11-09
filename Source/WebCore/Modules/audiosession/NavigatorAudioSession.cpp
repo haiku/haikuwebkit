@@ -51,7 +51,7 @@ RefPtr<DOMAudioSession> NavigatorAudioSession::audioSession(Navigator& navigator
 
 NavigatorAudioSession* NavigatorAudioSession::from(Navigator& navigator)
 {
-    auto* supplement = static_cast<NavigatorAudioSession*>(Supplement<Navigator>::from(&navigator, supplementName()));
+    auto* supplement = downcast<NavigatorAudioSession>(Supplement<Navigator>::from(&navigator, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorAudioSession>();
         supplement = newSupplement.get();
@@ -60,11 +60,6 @@ NavigatorAudioSession* NavigatorAudioSession::from(Navigator& navigator)
     return supplement;
 }
 
-ASCIILiteral NavigatorAudioSession::supplementName()
-{
-    return "NavigatorAudioSession"_s;
-}
-
-}
+} // namespace WebCore
 
 #endif // ENABLE(DOM_AUDIO_SESSION)

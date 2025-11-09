@@ -65,6 +65,10 @@ private:
 
         ~ClipboardItemTypeLoader();
 
+        // FileReaderLoaderClient.
+        void ref() const final { RefCounted::ref(); }
+        void deref() const final { RefCounted::deref(); }
+
         void didResolveToString(const String&);
         void didFailToResolve();
         void didResolveToBlob(ScriptExecutionContext&, Ref<Blob>&&);

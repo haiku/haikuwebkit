@@ -33,7 +33,9 @@
 #import "MessageSenderInlines.h"
 #import "WebPage.h"
 #import "WebPageProxyMessages.h"
+#import <WebCore/GraphicsLayer.h>
 #import <WebCore/Model.h>
+#import <WebCore/ModelPlayerGraphicsLayerConfiguration.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/spi/mac/SystemPreviewSPI.h>
 #import <wtf/FileHandle.h>
@@ -269,9 +271,9 @@ void ARKitInlinePreviewModelPlayerMac::sizeDidChange(WebCore::LayoutSize size)
     page->sendWithAsyncReply(Messages::WebPageProxy::ModelElementSizeDidChange(uuid, size), WTFMove(completionHandler));
 }
 
-PlatformLayer* ARKitInlinePreviewModelPlayerMac::layer()
+void ARKitInlinePreviewModelPlayerMac::configureGraphicsLayer(WebCore::GraphicsLayer& graphicsLayer, WebCore::ModelPlayerGraphicsLayerConfiguration&&)
 {
-    return [m_inlinePreview layer];
+    graphicsLayer.setContentsToPlatformLayer([m_inlinePreview layer], WebCore::GraphicsLayer::ContentsLayerPurpose::Model);
 }
 
 bool ARKitInlinePreviewModelPlayerMac::supportsMouseInteraction()

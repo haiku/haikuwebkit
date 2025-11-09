@@ -713,8 +713,8 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 @property (nonatomic, setter=_setAllowsViewportShrinkToFit:) BOOL _allowsViewportShrinkToFit;
 
-@property (nonatomic, readonly) NSData *_dataForDisplayedPDF WK_API_DEPRECATED_WITH_REPLACEMENT("-_getMainResourceDataWithCompletionHandler:", ios(8.0, WK_IOS_TBA), visionos(1.0, WK_XROS_TBA));
-@property (nonatomic, readonly) NSString *_suggestedFilenameForDisplayedPDF WK_API_DEPRECATED("No longer supported.", ios(8.0, WK_IOS_TBA), visionos(1.0, WK_XROS_TBA));
+@property (nonatomic, readonly) NSData *_dataForDisplayedPDF WK_API_DEPRECATED_WITH_REPLACEMENT("-_getMainResourceDataWithCompletionHandler:", ios(8.0, 26.0), visionos(1.0, 26.0));
+@property (nonatomic, readonly) NSString *_suggestedFilenameForDisplayedPDF WK_API_DEPRECATED("No longer supported.", ios(8.0, 26.0), visionos(1.0, 26.0));
 
 @property (nonatomic, readonly) _WKWebViewPrintFormatter *_webViewPrintFormatter;
 
@@ -766,11 +766,11 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 // Puts the view into a state where being taken out of the view hierarchy and resigning first responder
 // will not count as becoming inactive and unfocused. The returned block must be called to exit the state.
-- (void (^)(void))_retainActiveFocusedState WK_API_AVAILABLE(ios(9_0));
+- (void (^)(void))_retainActiveFocusedState WK_API_AVAILABLE(ios(9.0));
 
-- (void)_becomeFirstResponderWithSelectionMovingForward:(BOOL)selectingForward completionHandler:(void (^)(BOOL didBecomeFirstResponder))completionHandler WK_API_AVAILABLE(ios(9_0));
+- (void)_becomeFirstResponderWithSelectionMovingForward:(BOOL)selectingForward completionHandler:(void (^)(BOOL didBecomeFirstResponder))completionHandler WK_API_AVAILABLE(ios(9.0));
 
-- (id)_snapshotLayerContentsForBackForwardListItem:(WKBackForwardListItem *)item WK_API_AVAILABLE(ios(9_0));
+- (id)_snapshotLayerContentsForBackForwardListItem:(WKBackForwardListItem *)item WK_API_AVAILABLE(ios(9.0));
 
 - (NSArray *)_dataDetectionResults;
 

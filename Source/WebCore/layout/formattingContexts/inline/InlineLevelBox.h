@@ -206,7 +206,7 @@ inline InlineLayoutUnit InlineLevelBox::preferredLineHeight() const
             return WebCore::Style::evaluate<LayoutUnit>(percentage, LayoutUnit { fontSize() });
         },
         [&](const WebCore::Style::LineHeight::Calc& calc) -> InlineLayoutUnit {
-            return WebCore::Style::evaluate<LayoutUnit>(calc, LayoutUnit { fontSize() });
+            return WebCore::Style::evaluate<LayoutUnit>(calc, LayoutUnit { fontSize() }, m_style.zoomFactor);
         }
     );
 }

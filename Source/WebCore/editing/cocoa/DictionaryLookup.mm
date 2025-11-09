@@ -112,12 +112,12 @@ SOFT_LINK(UIKitMacHelper, UINSSharedRevealController, id<UINSRevealController>, 
         NSRect rect = rectVal.rectValue;
 
         // Get current font attributes from the attributed string above, and add paragraph style attribute in order to center text.
-        auto attributes = adoptNS([[NSMutableDictionary alloc] initWithDictionary:[self.attributedString fontAttributesInRange:NSMakeRange(0, [self.attributedString length])]]);
+        auto attributes = adoptNS([[NSMutableDictionary alloc] initWithDictionary:retainPtr([self.attributedString fontAttributesInRange:NSMakeRange(0, [self.attributedString length])]).get()]);
         auto paragraph = adoptNS([[NSMutableParagraphStyle alloc] init]);
         [paragraph setAlignment:NSTextAlignmentCenter];
         [attributes setObject:paragraph.get() forKey:NSParagraphStyleAttributeName];
     
-        auto string = adoptNS([[NSAttributedString alloc] initWithString:[self.attributedString string] attributes:attributes.get()]);
+        auto string = adoptNS([[NSAttributedString alloc] initWithString:retainPtr([self.attributedString string]).get() attributes:attributes.get()]);
         [string drawInRect:rect];
     }
 }
@@ -398,10 +398,10 @@ NSString *DictionaryLookup::stringForPDFSelection(PDFSelection *selection)
     NSInteger charactersAddedAfterEnd = 0;
     expandSelectionByCharacters(selectionForLookup.get(), 250, charactersAddedBeforeStart, charactersAddedAfterEnd);
 
-    auto fullPlainTextString = [selectionForLookup string];
+    RetainPtr fullPlainTextString = [selectionForLookup string];
     auto rangeToPass = NSMakeRange(charactersAddedBeforeStart, 0);
 
-    NSRange extractedRange = adoptNS([PAL::allocRVItemInstance() initWithText:fullPlainTextString selectedRange:rangeToPass]).get().highlightRange;
+    NSRange extractedRange = adoptNS([PAL::allocRVItemInstance() initWithText:fullPlainTextString.get() selectedRange:rangeToPass]).get().highlightRange;
     if (extractedRange.location == NSNotFound)
         return selection.string;
 
@@ -411,14 +411,14 @@ NSString *DictionaryLookup::stringForPDFSelection(PDFSelection *selection)
     [selection extendSelectionAtStart:lookupAddedBefore];
     [selection extendSelectionAtEnd:lookupAddedAfter];
 
-    NSString *selectionString = selection.string;
+    RetainPtr<NSString> selectionString = selection.string;
 
     auto extractedStringMatchesSelection = [](NSString *selection, NSString *extracted) -> bool {
         return selection ? [selection isEqualToString:extracted] : !extracted.length;
     };
-    ASSERT_UNUSED(extractedStringMatchesSelection, extractedStringMatchesSelection(selectionString, [fullPlainTextString substringWithRange:extractedRange]));
+    ASSERT_UNUSED(extractedStringMatchesSelection, extractedStringMatchesSelection(selectionString.get(), [fullPlainTextString substringWithRange:extractedRange]));
 
-    return selectionString;
+    return selectionString.autorelease();
 
     END_BLOCK_OBJC_EXCEPTIONS
 

@@ -126,7 +126,7 @@ public:
 
 
     SVGElement* correspondingElement() const;
-    RefPtr<SVGUseElement> correspondingUseElement() const;
+    SVGUseElement* correspondingUseElement() const;
 
     void setCorrespondingElement(SVGElement*);
 

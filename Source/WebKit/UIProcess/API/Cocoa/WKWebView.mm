@@ -612,15 +612,15 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
 #endif
 
     ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if (WKWebView *relatedWebView = [_configuration _relatedWebView]) {
-        WKProcessPool *processPool = [_configuration processPool];
-        WKProcessPool *relatedWebViewProcessPool = [relatedWebView->_configuration processPool];
+    if (RetainPtr relatedWebView = [_configuration _relatedWebView]) {
+        RetainPtr processPool = [_configuration processPool];
+        RetainPtr relatedWebViewProcessPool = [relatedWebView->_configuration processPool];
         if (processPool && processPool != relatedWebViewProcessPool)
-            [NSException raise:NSInvalidArgumentException format:@"Related web view %@ has process pool %@ but configuration specifies a different process pool %@", relatedWebView, relatedWebViewProcessPool, configuration.processPool];
+            [NSException raise:NSInvalidArgumentException format:@"Related web view %@ has process pool %@ but configuration specifies a different process pool %@", relatedWebView.get(), relatedWebViewProcessPool.get(), retainPtr(configuration.processPool).get()];
         if ([relatedWebView->_configuration websiteDataStore] != [_configuration websiteDataStore] && linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::ExceptionsForRelatedWebViewsUsingDifferentDataStores))
-            [NSException raise:NSInvalidArgumentException format:@"Related web view %@ has data store %@ but configuration specifies a different data store %@", relatedWebView, [relatedWebView->_configuration websiteDataStore], [_configuration websiteDataStore]];
+            [NSException raise:NSInvalidArgumentException format:@"Related web view %@ has data store %@ but configuration specifies a different data store %@", relatedWebView.get(), retainPtr([relatedWebView->_configuration websiteDataStore]).get(), retainPtr([_configuration websiteDataStore]).get()];
 
-        [_configuration setProcessPool:relatedWebViewProcessPool];
+        [_configuration setProcessPool:relatedWebViewProcessPool.get()];
     }
     ALLOW_DEPRECATED_DECLARATIONS_END
 
@@ -681,8 +681,8 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
 #endif
 #endif
 
-    if (NSString *applicationNameForUserAgent = configuration.applicationNameForUserAgent)
-        _page->setApplicationNameForUserAgent(applicationNameForUserAgent);
+    if (RetainPtr<NSString> applicationNameForUserAgent = configuration.applicationNameForUserAgent)
+        _page->setApplicationNameForUserAgent(applicationNameForUserAgent.get());
 
     _page->setApplicationNameForDesktopUserAgent(configuration._applicationNameForDesktopUserAgent);
 
@@ -702,7 +702,7 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
 
     _page->setCocoaView(self);
 
-    [WebViewVisualIdentificationOverlay installForWebViewIfNeeded:self kind:self._nameForVisualIdentificationOverlay deprecated:NO];
+    [WebViewVisualIdentificationOverlay installForWebViewIfNeeded:self kind:retainPtr(self._nameForVisualIdentificationOverlay).get() deprecated:NO];
 
 #if PLATFORM(IOS_FAMILY)
     auto timeNow = MonotonicTime::now();
@@ -730,10 +730,10 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
 {
     pageConfiguration->setPreferences([_configuration preferences]->_preferences.get());
     ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if (WKWebView *relatedWebView = [_configuration _relatedWebView])
+    if (RetainPtr relatedWebView = [_configuration _relatedWebView])
         pageConfiguration->setRelatedPage(relatedWebView->_page.get());
     ALLOW_DEPRECATED_DECLARATIONS_END
-    if (WKWebView *webViewToCloneSessionStorageFrom = [_configuration _webViewToCloneSessionStorageFrom])
+    if (RetainPtr webViewToCloneSessionStorageFrom = [_configuration _webViewToCloneSessionStorageFrom])
         pageConfiguration->setPageToCloneSessionStorageFrom(webViewToCloneSessionStorageFrom->_page.get());
 
     pageConfiguration->setUserContentController([_configuration userContentController]->_userContentControllerProxy.get());
@@ -742,18 +742,18 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
     pageConfiguration->setDefaultWebsitePolicies([_configuration defaultWebpagePreferences]->_websitePolicies.get());
 
 #if ENABLE(WK_WEB_EXTENSIONS)
-    if (auto *controller = _configuration.get()._strongWebExtensionController)
-        pageConfiguration->setWebExtensionController(&controller._webExtensionController);
+    if (RetainPtr<WKWebExtensionController> controller = _configuration.get()._strongWebExtensionController)
+        pageConfiguration->setWebExtensionController(&controller.get()._webExtensionController);
 
-    if (auto *controller = _configuration.get()._weakWebExtensionController)
-        pageConfiguration->setWeakWebExtensionController(Ref { controller._webExtensionController }.ptr());
+    if (RetainPtr<WKWebExtensionController> controller = _configuration.get()._weakWebExtensionController)
+        pageConfiguration->setWeakWebExtensionController(Ref { controller.get()._webExtensionController }.ptr());
 #endif
 
-    NSString *groupIdentifier = [_configuration _groupIdentifier];
-    if (groupIdentifier.length)
-        pageConfiguration->setPageGroup(WebKit::WebPageGroup::create(groupIdentifier).ptr());
+    RetainPtr groupIdentifier = [_configuration _groupIdentifier];
+    if (groupIdentifier.get().length)
+        pageConfiguration->setPageGroup(WebKit::WebPageGroup::create(groupIdentifier.get()).ptr());
 
-    pageConfiguration->setAdditionalSupportedImageTypes(makeVector<String>([_configuration _additionalSupportedImageTypes]));
+    pageConfiguration->setAdditionalSupportedImageTypes(makeVector<String>(retainPtr([_configuration _additionalSupportedImageTypes]).get()));
 
     pageConfiguration->setWaitsForPaintAfterViewDidMoveToWindow([_configuration _waitsForPaintAfterViewDidMoveToWindow]);
     pageConfiguration->setDrawsBackground([_configuration _drawsBackground]);
@@ -891,8 +891,8 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
     if (!(self = [super initWithCoder:coder]))
         return nil;
 
-    WKWebViewConfiguration *configuration = [coder decodeObjectOfClass:[WKWebViewConfiguration class] forKey:@"configuration"];
-    [self _initializeWithConfiguration:configuration];
+    RetainPtr configuration = [coder decodeObjectOfClass:[WKWebViewConfiguration class] forKey:@"configuration"];
+    [self _initializeWithConfiguration:configuration.get()];
 
     self.allowsBackForwardNavigationGestures = [coder decodeBoolForKey:@"allowsBackForwardNavigationGestures"];
     self.customUserAgent = [coder decodeObjectOfClass:[NSString class] forKey:@"customUserAgent"];
@@ -917,7 +917,7 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
     [coder encodeObject:_configuration.get() forKey:@"configuration"];
 
     [coder encodeBool:self.allowsBackForwardNavigationGestures forKey:@"allowsBackForwardNavigationGestures"];
-    [coder encodeObject:self.customUserAgent forKey:@"customUserAgent"];
+    [coder encodeObject:retainPtr(self.customUserAgent).get() forKey:@"customUserAgent"];
     [coder encodeBool:self.allowsLinkPreview forKey:@"allowsLinkPreview"];
 
 #if PLATFORM(MAC)
@@ -1086,9 +1086,9 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
 - (WKNavigation *)loadHTMLString:(NSString *)string baseURL:(NSURL *)baseURL
 {
     THROW_IF_SUSPENDED;
-    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+    RetainPtr data = [string dataUsingEncoding:NSUTF8StringEncoding];
 
-    return [self loadData:data MIMEType:@"text/html" characterEncodingName:@"UTF-8" baseURL:baseURL];
+    return [self loadData:data.get() MIMEType:@"text/html" characterEncodingName:@"UTF-8" baseURL:baseURL];
 }
 
 - (WKNavigation *)loadData:(NSData *)data MIMEType:(NSString *)MIMEType characterEncodingName:(NSString *)characterEncodingName baseURL:(NSURL *)baseURL
@@ -1116,14 +1116,14 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
     THROW_IF_SUSPENDED;
     auto unarchiver = adoptNS([[NSKeyedUnarchiver alloc] initForReadingFromData:resumeData error:nil]);
     [unarchiver setDecodingFailurePolicy:NSDecodingFailurePolicyRaiseException];
-    NSDictionary *dictionary = [unarchiver decodeObjectOfClasses:[NSSet setWithObjects:[NSDictionary class], [NSArray class], [NSString class], [NSNumber class], [NSData class], [NSURL class], [NSURLRequest class], nil] forKey:@"NSKeyedArchiveRootObjectKey"];
+    RetainPtr dictionary = [unarchiver decodeObjectOfClasses:[NSSet setWithObjects:[NSDictionary class], [NSArray class], [NSString class], [NSNumber class], [NSData class], [NSURL class], [NSURLRequest class], nil] forKey:@"NSKeyedArchiveRootObjectKey"];
     [unarchiver finishDecoding];
-    NSString *path = [dictionary objectForKey:@"NSURLSessionResumeInfoLocalPath"];
+    RetainPtr path = [dictionary objectForKey:@"NSURLSessionResumeInfoLocalPath"];
 
     if (!path)
         [NSException raise:NSInvalidArgumentException format:@"Invalid resume data"];
 
-    _page->resumeDownload(API::Data::createWithoutCopying(resumeData), path, [completionHandler = makeBlockPtr(completionHandler)] (auto* download) {
+    _page->resumeDownload(API::Data::createWithoutCopying(resumeData), path.get(), [completionHandler = makeBlockPtr(completionHandler)] (auto* download) {
         if (download)
             completionHandler(wrapper(download));
         else
@@ -1300,7 +1300,10 @@ static bool validateArgument(id argument)
 - (void)closeAllMediaPresentationsWithCompletionHandler:(void (^)(void))completionHandler
 {
     THROW_IF_SUSPENDED;
-    auto callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler ?: ^{ }));
+    auto callbackAggregator = CallbackAggregator::create([completionHandler = makeBlockPtr(completionHandler)] {
+        if (completionHandler)
+            completionHandler();
+    });
 
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr videoPresentationManager = _page->videoPresentationManager()) {
@@ -1468,8 +1471,8 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
             break;
         }
 
-        id value = [arguments objectForKey:keyString.get()];
-        auto serializedValue = WebKit::JavaScriptEvaluationResult::extract(value);
+        RetainPtr<id> value = [arguments objectForKey:keyString.get()];
+        auto serializedValue = WebKit::JavaScriptEvaluationResult::extract(value.get());
         if (!serializedValue) {
             errorMessage = @"Function argument values must be one of the following types, or contain only the following types: NSNumber, NSNull, NSDate, NSString, NSArray, and NSDictionary";
             break;
@@ -2093,21 +2096,21 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
 
 - (void)_didInsertAttachment:(API::Attachment&)attachment withSource:(NSString *)source
 {
-    id <WKUIDelegatePrivate> uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
+    RetainPtr uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
     if ([uiDelegate respondsToSelector:@selector(_webView:didInsertAttachment:withSource:)])
         [uiDelegate _webView:self didInsertAttachment:protectedWrapper(attachment).get() withSource:source];
 }
 
 - (void)_didRemoveAttachment:(API::Attachment&)attachment
 {
-    id <WKUIDelegatePrivate> uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
+    RetainPtr uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
     if ([uiDelegate respondsToSelector:@selector(_webView:didRemoveAttachment:)])
         [uiDelegate _webView:self didRemoveAttachment:protectedWrapper(attachment).get()];
 }
 
 - (void)_didInvalidateDataForAttachment:(API::Attachment&)attachment
 {
-    id <WKUIDelegatePrivate> uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
+    RetainPtr uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
     if ([uiDelegate respondsToSelector:@selector(_webView:didInvalidateDataForAttachment:)])
         [uiDelegate _webView:self didInvalidateDataForAttachment:protectedWrapper(attachment).get()];
 }
@@ -2133,7 +2136,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
 #if ENABLE(APP_HIGHLIGHTS)
 - (void)_storeAppHighlight:(const WebCore::AppHighlight&)highlight
 {
-    auto delegate = self._appHighlightDelegate;
+    RetainPtr<id <_WKAppHighlightDelegate>> delegate = self._appHighlightDelegate;
     if (!delegate)
         return;
 
@@ -2290,7 +2293,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     // FIXME: We should either rename -_webView:editorStateDidChange: to clarify that it's only intended for use when testing,
     // or remove it entirely and use -_webView:didChangeFontAttributes: instead once text alignment is supported in the set of
     // font attributes.
-    id <WKUIDelegatePrivate> uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
+    RetainPtr uiDelegate = (id <WKUIDelegatePrivate>)self.UIDelegate;
     if ([uiDelegate respondsToSelector:@selector(_webView:editorStateDidChange:)])
         [uiDelegate _webView:self editorStateDidChange:dictionaryRepresentationForEditorState(_page->editorState()).get()];
 }
@@ -2311,10 +2314,10 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 - (WKNavigation *)loadSimulatedRequest:(NSURLRequest *)request responseHTMLString:(NSString *)string
 {
     THROW_IF_SUSPENDED;
-    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-    auto response = adoptNS([[NSURLResponse alloc] initWithURL:request.URL MIMEType:@"text/html" expectedContentLength:string.length textEncodingName:@"UTF-8"]);
+    RetainPtr data = [string dataUsingEncoding:NSUTF8StringEncoding];
+    auto response = adoptNS([[NSURLResponse alloc] initWithURL:retainPtr(request.URL).get() MIMEType:@"text/html" expectedContentLength:string.length textEncodingName:@"UTF-8"]);
 
-    return [self loadSimulatedRequest:request response:response.get() responseData:data];
+    return [self loadSimulatedRequest:request response:response.get() responseData:data.get()];
 }
 
 // FIXME(223658): Remove this once adopters have moved to the final API.
@@ -2327,10 +2330,10 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 - (WKNavigation *)loadFileRequest:(NSURLRequest *)request allowingReadAccessToURL:(NSURL *)readAccessURL
 {
     THROW_IF_SUSPENDED;
-    auto URL = request.URL;
+    RetainPtr<NSURL> URL = request.URL;
 
     if (![URL isFileURL])
-        [NSException raise:NSInvalidArgumentException format:@"%@ is not a file URL", URL];
+        [NSException raise:NSInvalidArgumentException format:@"%@ is not a file URL", URL.get()];
 
     if (![readAccessURL isFileURL])
         [NSException raise:NSInvalidArgumentException format:@"%@ is not a file URL", readAccessURL];
@@ -2340,7 +2343,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     isAppInitiated = request.attribution == NSURLRequestAttributionDeveloper;
 #endif
 
-    return wrapper(_page->loadFile(URL.absoluteString, readAccessURL.absoluteString, isAppInitiated)).autorelease();
+    return wrapper(_page->loadFile(URL.get().absoluteString, readAccessURL.absoluteString, isAppInitiated)).autorelease();
 }
 
 - (WebCore::CocoaColor *)themeColor
@@ -2517,7 +2520,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
         replacementData.append(*replacementDataItem);
 
-        [_writingToolsTextSuggestions setObject:suggestion forKey:suggestion.uuid];
+        [_writingToolsTextSuggestions setObject:suggestion forKey:retainPtr(suggestion.uuid).get()];
     }
 
     NSInteger delta = [WebKit::getWKIntelligenceReplacementTextEffectCoordinatorClassSingleton() characterDeltaForReceivedSuggestions:suggestions];
@@ -2553,13 +2556,13 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
     auto webTextSuggestionState = WebKit::convertToWebTextSuggestionState(state);
 
-    WTTextSuggestion *suggestion = [_writingToolsTextSuggestions objectForKey:suggestionUUID];
+    RetainPtr suggestion = [_writingToolsTextSuggestions objectForKey:suggestionUUID];
     if (!suggestion) {
         ASSERT_NOT_REACHED();
         return;
     }
 
-    auto webTextSuggestion = WebKit::convertToWebTextSuggestion(suggestion);
+    auto webTextSuggestion = WebKit::convertToWebTextSuggestion(suggestion.get());
     if (!webTextSuggestion) {
         ASSERT_NOT_REACHED();
         return;
@@ -2862,7 +2865,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     if (!_activeWritingToolsSession)
         return;
 
-    auto textViewDelegate = (NSObject<WTTextViewDelegate> *)[_activeWritingToolsSession textViewDelegate];
+    RetainPtr textViewDelegate = (NSObject<WTTextViewDelegate> *)[_activeWritingToolsSession textViewDelegate];
 
     if (![textViewDelegate respondsToSelector:@selector(proofreadingSessionWithUUID:showDetailsForSuggestionWithUUID:relativeToRect:inView:)])
         return;
@@ -2873,7 +2876,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     RetainPtr view = _contentView;
 #endif
 
-    [textViewDelegate proofreadingSessionWithUUID:[_activeWritingToolsSession uuid] showDetailsForSuggestionWithUUID:replacementUUID relativeToRect:rect inView:view.get()];
+    [textViewDelegate proofreadingSessionWithUUID:retainPtr([_activeWritingToolsSession uuid]).get() showDetailsForSuggestionWithUUID:replacementUUID relativeToRect:rect inView:view.get()];
 }
 
 - (void)_proofreadingSessionUpdateState:(WebCore::WritingTools::TextSuggestion::State)state forSuggestionWithUUID:(NSUUID *)replacementUUID
@@ -2881,12 +2884,12 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     if (!_activeWritingToolsSession)
         return;
 
-    auto textViewDelegate = (NSObject<WTTextViewDelegate> *)[_activeWritingToolsSession textViewDelegate];
+    RetainPtr textViewDelegate = (NSObject<WTTextViewDelegate> *)[_activeWritingToolsSession textViewDelegate];
 
     if (![textViewDelegate respondsToSelector:@selector(proofreadingSessionWithUUID:updateState:forSuggestionWithUUID:)])
         return;
 
-    [textViewDelegate proofreadingSessionWithUUID:[_activeWritingToolsSession uuid] updateState:WebKit::convertToPlatformTextSuggestionState(state) forSuggestionWithUUID:replacementUUID];
+    [textViewDelegate proofreadingSessionWithUUID:retainPtr([_activeWritingToolsSession uuid]).get() updateState:WebKit::convertToPlatformTextSuggestionState(state) forSuggestionWithUUID:replacementUUID];
 }
 
 - (void)_didEndPartialIntelligenceTextAnimation
@@ -3970,8 +3973,8 @@ static RetainPtr<NSDictionary<NSString *, id>> createUserInfo(const std::optiona
         if (!weakSelf)
             return;
 
-        auto retainedSelf = weakSelf.get();
-        auto delegate = [retainedSelf _textManipulationDelegate];
+        RetainPtr retainedSelf = weakSelf.get();
+        RetainPtr delegate = [retainedSelf _textManipulationDelegate];
         if (!delegate)
             return;
 
@@ -4049,7 +4052,7 @@ static WebCore::TextManipulationTokenIdentifier coreTextManipulationTokenIdentif
         return;
     }
 
-    auto identifiers = coreTextManipulationItemIdentifierFromString(item.identifier);
+    auto identifiers = coreTextManipulationItemIdentifierFromString(retainPtr(item.identifier).get());
     if (!identifiers) {
         completionHandler(false);
         return;
@@ -4120,10 +4123,10 @@ static RetainPtr<NSArray> wkTextManipulationErrors(NSArray<_WKTextManipulationIt
     coreItems.reserveInitialCapacity(items.count);
     for (_WKTextManipulationItem *wkItem in items) {
         Vector<WebCore::TextManipulationToken> coreTokens(wkItem.tokens.count, [&](size_t i) {
-            _WKTextManipulationToken *wkToken = wkItem.tokens[i];
-            return WebCore::TextManipulationToken { coreTextManipulationTokenIdentifierFromString(wkToken.identifier), wkToken.content, std::nullopt };
+            RetainPtr<_WKTextManipulationToken> wkToken = wkItem.tokens[i];
+            return WebCore::TextManipulationToken { coreTextManipulationTokenIdentifierFromString(wkToken.get().identifier), wkToken.get().content, std::nullopt };
         });
-        auto identifiers = coreTextManipulationItemIdentifierFromString(wkItem.identifier);
+        auto identifiers = coreTextManipulationItemIdentifierFromString(retainPtr(wkItem.identifier).get());
         std::optional<WebCore::FrameIdentifier> frameID;
         std::optional<WebCore::TextManipulationItemIdentifier> itemID;
         if (identifiers) {
@@ -5354,10 +5357,10 @@ static inline OptionSet<WebCore::LayoutMilestone> layoutMilestones(_WKRenderingP
             continue;
         Vector<std::pair<AtomString, AtomString>> attibutes;
         for (unsigned index = 0; index < rule.attributeLocalNames.count; ++index) {
-            NSString *attributeLocalName = [rule.attributeLocalNames objectAtIndex:index];
-            NSString *attributeValue = [rule.attributeValues objectAtIndex:index];
-            if (attributeLocalName && !attributeLocalName.length)
-                attibutes.append({ AtomString { attributeLocalName }, attributeValue });
+            RetainPtr<NSString> attributeLocalName = [retainPtr(rule.attributeLocalNames) objectAtIndex:index];
+            RetainPtr<NSString> attributeValue = [retainPtr(rule.attributeValues) objectAtIndex:index];
+            if (attributeLocalName && !attributeLocalName.get().length)
+                attibutes.append({ AtomString { attributeLocalName.get() }, attributeValue.get() });
         }
         markupExclusionRules.append(WebCore::MarkupExclusionRule { AtomString { rule.elementLocalName }, WTFMove(attibutes) });
     }
@@ -5439,7 +5442,7 @@ static inline OptionSet<WebCore::LayoutMilestone> layoutMilestones(_WKRenderingP
         if (!frame)
             continue;
 
-        auto handle = frame._handle;
+        RetainPtr<_WKFrameHandle> handle = frame._handle;
         if (!handle)
             continue;
 
@@ -5508,7 +5511,7 @@ static inline OptionSet<WebCore::LayoutMilestone> layoutMilestones(_WKRenderingP
 {
     THROW_IF_SUSPENDED;
     _page->getTextFragmentMatch([completionHandler = makeBlockPtr(completionHandler)](const String& textFragmentMatch) {
-        completionHandler(RetainPtr { nsStringNilIfNull(textFragmentMatch) }.get());
+        completionHandler(nsStringNilIfNull(textFragmentMatch).get());
     });
 }
 
@@ -6726,6 +6729,8 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
             return WebCore::TextExtraction::Action::TextInput;
         case _WKTextExtractionActionKeyPress:
             return WebCore::TextExtraction::Action::KeyPress;
+        case _WKTextExtractionActionHighlightText:
+            return WebCore::TextExtraction::Action::HighlightText;
         default:
             ASSERT_NOT_REACHED();
             return WebCore::TextExtraction::Action::Click;
@@ -6742,6 +6747,7 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
     }
     interaction.text = wkInteraction.text;
     interaction.replaceAll = wkInteraction.replaceAll;
+    interaction.scrollToVisible = wkInteraction.scrollToVisible;
     return interaction;
 }
 
@@ -6764,7 +6770,7 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
         BOOL foundItem = [nativePopup indexOfItemWithTitle:title.get()] != -1;
         if (foundItem) {
             [nativePopup selectItemWithTitle:title.get()];
-            [[nativePopup menu] cancelTrackingWithoutAnimation];
+            [retainPtr([nativePopup menu]) cancelTrackingWithoutAnimation];
         }
         page->callAfterNextPresentationUpdate([title, foundItem, completionHandler = makeBlockPtr(WTFMove(completionHandler))] {
             RetainPtr<NSString> errorDescription = foundItem ? nil : [NSString stringWithFormat:@"No popup menu item with title '%@'", title.get()];

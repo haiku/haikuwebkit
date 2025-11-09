@@ -1463,7 +1463,7 @@ TEST(ProcessSwap, CrossSiteWindowOpenWithOpener)
 
 enum class ExpectSwap : bool { No, Yes };
 enum class WindowHasName : bool { No, Yes };
-static void runSameSiteWindowOpenNoOpenerTest(WindowHasName windowHasName, ExpectSwap expectSwap)
+static void runSameSiteWindowOpenNoOpenerTest(WindowHasName windowHasName)
 {
     auto processPoolConfiguration = psonProcessPoolConfiguration();
     auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
@@ -1504,10 +1504,7 @@ static void runSameSiteWindowOpenNoOpenerTest(WindowHasName windowHasName, Expec
     EXPECT_TRUE(!!pid2);
 
     // Since there is no opener, we process-swap, even though the navigation is same-site.
-    if (expectSwap == ExpectSwap::Yes)
-        EXPECT_NE(pid1, pid2);
-    else
-        EXPECT_EQ(pid1, pid2);
+    EXPECT_NE(pid1, pid2);
 
     done = false;
     request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.webkit.org/popup2.html"]];
@@ -1525,12 +1522,12 @@ static void runSameSiteWindowOpenNoOpenerTest(WindowHasName windowHasName, Expec
 TEST(ProcessSwap, SameSiteWindowOpenNoOpener)
 {
     // We process-swap even though the navigation is same-site, because the popup has no opener.
-    runSameSiteWindowOpenNoOpenerTest(WindowHasName::No, ExpectSwap::Yes);
+    runSameSiteWindowOpenNoOpenerTest(WindowHasName::No);
 }
 
 TEST(ProcessSwap, SameSiteWindowOpenWithNameNoOpener)
 {
-    runSameSiteWindowOpenNoOpenerTest(WindowHasName::Yes, ExpectSwap::No);
+    runSameSiteWindowOpenNoOpenerTest(WindowHasName::Yes);
 }
 
 TEST(ProcessSwap, CrossSiteBlankTargetWithOpener)
@@ -3500,6 +3497,11 @@ TEST(ProcessSwap, PageCache1)
     [[webViewConfiguration userContentController] addScriptMessageHandler:messageHandler.get() name:@"pson"];
 
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    // FIXME: Page cache is currently disabled under site isolation; see rdar://161762363.
+    // Once it is enabled, remove this early return.
+    if (isSiteIsolationEnabled(webView.get()))
+        return;
+
     auto delegate = adoptNS([[PSONNavigationDelegate alloc] init]);
     [webView setNavigationDelegate:delegate.get()];
 
@@ -3729,6 +3731,11 @@ TEST(ProcessSwap, PageCacheAfterProcessSwapByClient)
     [[webViewConfiguration userContentController] addScriptMessageHandler:messageHandler.get() name:@"pson"];
 
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    // FIXME: Page cache is currently disabled under site isolation; see rdar://161762363.
+    // Once it is enabled, remove this early return.
+    if (isSiteIsolationEnabled(webView.get()))
+        return;
+
     auto delegate = adoptNS([[PSONNavigationDelegate alloc] init]);
     [webView setNavigationDelegate:delegate.get()];
 
@@ -3805,6 +3812,11 @@ TEST(ProcessSwap, PageCacheWhenNavigatingFromJS)
     [[webViewConfiguration userContentController] addScriptMessageHandler:messageHandler.get() name:@"pson"];
 
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    // FIXME: Page cache is currently disabled under site isolation; see rdar://161762363.
+    // Once it is enabled, remove this early return.
+    if (isSiteIsolationEnabled(webView.get()))
+        return;
+
     auto delegate = adoptNS([[PSONNavigationDelegate alloc] init]);
     [webView setNavigationDelegate:delegate.get()];
 
@@ -6236,7 +6248,12 @@ static bool viewHasSwipeGestures(UIView *view)
 }
 #endif
 
+// rdar://163517689 (REGRESSION( iOS 26): 2X TestWebKitAPI.ProcessSwap (API-Tests) are constant failures (301536))
+#if PLATFORM(IOS)
+TEST(ProcessSwap, DISABLED_SwapWithGestureController)
+#else
 TEST(ProcessSwap, SwapWithGestureController)
+#endif
 {
     @autoreleasepool {
         auto processPoolConfiguration = psonProcessPoolConfiguration();
@@ -6276,7 +6293,12 @@ TEST(ProcessSwap, SwapWithGestureController)
     }
 }
 
+// rdar://163517689 (REGRESSION( iOS 26): 2X TestWebKitAPI.ProcessSwap (API-Tests) are constant failures (301536))
+#if PLATFORM(IOS)
+TEST(ProcessSwap, DISABLED_CrashWithGestureController)
+#else
 TEST(ProcessSwap, CrashWithGestureController)
+#endif
 {
     @autoreleasepool {
         auto processPoolConfiguration = psonProcessPoolConfiguration();

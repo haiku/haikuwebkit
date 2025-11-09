@@ -102,6 +102,16 @@ using namespace WebCore;
 
 namespace WebCore {
 
+static IntSize toIntSize(const CMVideoDimensions& dimensions)
+{
+    return { dimensions.width, dimensions.height };
+}
+
+static CMVideoDimensions toCMVideoDimensions(const IntSize& size)
+{
+    return { size.width(), size.height() };
+}
+
 static dispatch_queue_t globaVideoCaptureSerialQueue()
 {
     static dispatch_queue_t globalQueue;
@@ -643,27 +653,31 @@ IntSize AVVideoCaptureSource::maxPhotoSizeForCurrentPreset(IntSize requestedSize
 {
     ASSERT(isMainThread());
 
-    CMVideoDimensions bestMaxPhotoSize;
-
     auto *format = [m_device activeFormat];
-    if ([format respondsToSelector:@selector(supportedMaxPhotoDimensions)]) {
-        NSArray<NSValue*> *maxPhotoDimensions = format.supportedMaxPhotoDimensions;
-        if (!maxPhotoDimensions.count)
-            return { };
+    if ([format respondsToSelector:@selector(supportedMaxPhotoDimensions)])
+        return maxPhotoSizeForActiveFormat(format, requestedSize);
 
-        bestMaxPhotoSize = maxPhotoDimensions.firstObject.CMVideoDimensionsValue;
-        for (NSValue *value in maxPhotoDimensions) {
-            CMVideoDimensions dimensions = value.CMVideoDimensionsValue;
-            if (dimensions.width >= requestedSize.width() && dimensions.height >= requestedSize.height()) {
-                if (dimensions.width * dimensions.height < bestMaxPhotoSize.width * bestMaxPhotoSize.height)
-                    bestMaxPhotoSize = dimensions;
-            }
-        }
-    } else {
-        if (!m_currentPreset)
-            return { };
-
+    if (m_currentPreset)
         return m_currentPreset->size();
+
+    return { };
+}
+
+IntSize AVVideoCaptureSource::maxPhotoSizeForActiveFormat(AVCaptureDeviceFormat *format, IntSize requestedSize) const
+{
+    ASSERT([format respondsToSelector:@selector(supportedMaxPhotoDimensions)]);
+
+    NSArray<NSValue*> *maxPhotoDimensions = format.supportedMaxPhotoDimensions;
+    if (!maxPhotoDimensions.count)
+        return { };
+
+    auto bestMaxPhotoSize = maxPhotoDimensions.firstObject.CMVideoDimensionsValue;
+    for (NSValue *value in maxPhotoDimensions) {
+        CMVideoDimensions dimensions = value.CMVideoDimensionsValue;
+        if (dimensions.width >= requestedSize.width() && dimensions.height >= requestedSize.height()) {
+            if (dimensions.width * dimensions.height < bestMaxPhotoSize.width * bestMaxPhotoSize.height)
+                bestMaxPhotoSize = dimensions;
+        }
     }
 
     return { bestMaxPhotoSize.width, bestMaxPhotoSize.height };
@@ -731,16 +745,16 @@ auto AVVideoCaptureSource::takePhotoInternal(PhotoSettings&& photoSettings) -> R
         return TakePhotoNativePromise::createAndReject("Internal error"_s);
     }
 
-    photoQueueSingleton().dispatch([protectedThis = Ref { *this }, this, avPhotoSettings = WTFMove(avPhotoSettings), photoOutput = WTFMove(photoOutput)] {
+    photoQueueSingleton().dispatch([protectedThis = Ref { *this }, this, avPhotoSettings = WTFMove(avPhotoSettings), photoOutput = WTFMove(photoOutput), device = m_device] {
         ASSERT(!isMainThread());
 
         if ([avPhotoSettings respondsToSelector:@selector(setMaxPhotoDimensions:)]) {
-            auto requestedPhotoDimensions = [avPhotoSettings maxPhotoDimensions];
-            if (requestedPhotoDimensions.width && requestedPhotoDimensions.height) {
-                auto currentMaxPhotoDimensions = [photoOutput maxPhotoDimensions];
-                if (requestedPhotoDimensions.width > currentMaxPhotoDimensions.width || requestedPhotoDimensions.height > currentMaxPhotoDimensions.height)
-                    [photoOutput setMaxPhotoDimensions:requestedPhotoDimensions];
-            }
+            auto *format = [device activeFormat];
+            auto maxDimensions = [avPhotoSettings maxPhotoDimensions];
+
+            auto requestedPhotoDimensions = maxPhotoSizeForActiveFormat(format, toIntSize(maxDimensions));
+            if (!requestedPhotoDimensions.isEmpty())
+                [photoOutput setMaxPhotoDimensions:toCMVideoDimensions(requestedPhotoDimensions)];
         }
 
         [photoOutput capturePhotoWithSettings:avPhotoSettings.get() delegate:m_objcObserver.get()];

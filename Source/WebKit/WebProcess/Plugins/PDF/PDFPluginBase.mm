@@ -764,7 +764,7 @@ void PDFPluginBase::visibilityDidChange(bool)
 
 FloatSize PDFPluginBase::pdfDocumentSizeForPrinting() const
 {
-    return FloatSize { [[m_pdfDocument pageAtIndex:0] boundsForBox:kPDFDisplayBoxCropBox].size };
+    return FloatSize { [retainPtr([m_pdfDocument pageAtIndex:0]) boundsForBox:kPDFDisplayBoxCropBox].size };
 }
 
 void PDFPluginBase::invalidateRect(const IntRect& rect)

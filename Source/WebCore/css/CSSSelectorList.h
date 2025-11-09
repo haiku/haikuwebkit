@@ -114,10 +114,14 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     CSSSelectorList& operator=(CSSSelectorList&&) = default;
 
+    bool operator==(const CSSSelectorList&) const;
+
 private:
     // End of a multipart selector is indicated by m_isLastInComplexSelector bit in the last item.
     // End of the array is indicated by m_isLastInSelectorList bit in the last item.
     UniqueArray<CSSSelector> m_selectorArray;
 };
+
+void add(Hasher&, const CSSSelectorList&);
 
 } // namespace WebCore

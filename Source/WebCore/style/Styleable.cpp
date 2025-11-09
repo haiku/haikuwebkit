@@ -60,7 +60,6 @@
 #include "ViewTransition.h"
 #include "WebAnimation.h"
 #include "WebAnimationUtilities.h"
-#include "WillChangeData.h"
 #include <wtf/IndexedRange.h>
 
 namespace WebCore {
@@ -217,7 +216,7 @@ bool Styleable::mayHaveNonZeroOpacity() const
     if (!renderer->style().opacity().isZero())
         return true;
 
-    if (renderer->style().willChange() && renderer->style().willChange()->containsProperty(CSSPropertyOpacity))
+    if (renderer->style().willChange().containsProperty(CSSPropertyOpacity))
         return true;
 
     auto* effectStack = keyframeEffectStack();

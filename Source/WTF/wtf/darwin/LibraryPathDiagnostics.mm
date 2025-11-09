@@ -215,18 +215,18 @@ void LibraryPathDiagnosticsLogger::logDynamicLibraryInfo(void)
 
 void LibraryPathDiagnosticsLogger::logBundleInfo(const String& bundleIdentifier)
 {
-    auto bundle = CFBundleGetBundleWithIdentifier(bundleIdentifier.createCFString().get());
+    RetainPtr bundle = CFBundleGetBundleWithIdentifier(bundleIdentifier.createCFString().get());
     if (!bundle)
         return;
 
     auto bundleInfo = JSON::Object::create();
 
-    auto bundleCFURL = adoptCF(CFBundleCopyBundleURL(bundle));
+    auto bundleCFURL = adoptCF(CFBundleCopyBundleURL(bundle.get()));
     auto bundleURL = URL(bundleCFURL.get());
     bundleInfo->setString("Path"_s, FileSystem::realPath(bundleURL.fileSystemPath()));
 
-    if (auto version = dynamic_cf_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(bundle, kCFBundleVersionKey)))
-        bundleInfo->setString("Version"_s, String(version));
+    if (RetainPtr version = dynamic_cf_cast<CFStringRef>(CFBundleGetValueForInfoDictionaryKey(bundle.get(), kCFBundleVersionKey)))
+        bundleInfo->setString("Version"_s, String(version.get()));
     else
         bundleInfo->setValue("Version"_s, JSON::Value::null());
 

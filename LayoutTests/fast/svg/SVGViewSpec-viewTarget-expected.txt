@@ -1,0 +1,26 @@
+CONSOLE MESSAGE: === All Tests Complete ===
+CONSOLE MESSAGE: SVGViewSpec.viewTarget Tests:
+
+PASS - testClipPath
+  viewTargetString: "testClipPath"
+  viewTarget.id: testClipPath
+  viewTarget matches: true
+PASS - testCircle
+  viewTargetString: "testCircle"
+  viewTarget.id: testCircle
+  viewTarget matches: true
+PASS - testRect
+  viewTargetString: "testRect"
+  viewTarget.id: testRect
+  viewTarget matches: true
+PASS - testGroup
+  viewTargetString: "testGroup"
+  viewTarget.id: testGroup
+  viewTarget matches: true
+PASS - testForeignObject
+  viewTargetString: "testForeignObject"
+  viewTarget.id: testForeignObject
+  viewTarget matches: true
+
+Summary: 5/5 passed
+Foreign Content

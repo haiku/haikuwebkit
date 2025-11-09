@@ -55,7 +55,7 @@ static CompletionHandler<void(PCM::EncodedMessage&&)> replySender(PCM::MessageTy
     return [request = WTFMove(request)] (PCM::EncodedMessage&& message) {
         auto reply = adoptOSObject(xpc_dictionary_create_reply(request.get()));
         PCM::addVersionAndEncodedMessageToDictionary(WTFMove(message), reply.get());
-        xpc_connection_send_message(xpc_dictionary_get_remote_connection(request.get()), reply.get());
+        xpc_connection_send_message(OSObjectPtr { xpc_dictionary_get_remote_connection(request.get()) }.get(), reply.get());
     };
 }
 

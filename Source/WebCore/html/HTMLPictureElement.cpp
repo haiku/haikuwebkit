@@ -52,15 +52,15 @@ Ref<HTMLPictureElement> HTMLPictureElement::create(const QualifiedName& tagName,
 
 void HTMLPictureElement::sourcesChanged()
 {
-    for (auto& element : childrenOfType<HTMLImageElement>(*this))
-        element.selectImageSource(RelevantMutation::Yes);
+    for (Ref element : childrenOfType<HTMLImageElement>(*this))
+        element->selectImageSource(RelevantMutation::Yes);
 }
 
 void HTMLPictureElement::sourceDimensionAttributesChanged(const HTMLSourceElement& sourceElement)
 {
-    for (auto& element : childrenOfType<HTMLImageElement>(*this)) {
-        if (&sourceElement == element.sourceElement())
-            element.invalidateAttributeMapping();
+    for (Ref element : childrenOfType<HTMLImageElement>(*this)) {
+        if (&sourceElement == element->sourceElement())
+            element->invalidateAttributeMapping();
     }
 }
 

@@ -131,11 +131,15 @@ void RemoteGraphicsContextGL::workQueueInitialize(WebCore::GraphicsContextGLAttr
     m_connection->open(*this, m_workQueue);
     if (RefPtr context = m_context) {
         context->setClient(this);
-        CString extensions = context->getString(GraphicsContextGL::EXTENSIONS);
-        CString requestableExtensions = context->getString(GraphicsContextGL::REQUESTABLE_EXTENSIONS_ANGLE);
+        auto knownActiveExtensions = context->knownActiveExtensions();
+        auto requestableExtensions = context->requestableExtensions();
         auto [externalImageTarget, externalImageBindingQuery] = context->externalImageTextureBindingPoint();
-        RemoteGraphicsContextGLInitializationState initializationState { extensions, requestableExtensions, externalImageTarget, externalImageBindingQuery };
-
+        RemoteGraphicsContextGLInitializationState initializationState {
+            .knownActiveExtensions = knownActiveExtensions.toRaw(),
+            .requestableExtensions = requestableExtensions.toRaw(),
+            .externalImageTarget = externalImageTarget,
+            .externalImageBindingQuery = externalImageBindingQuery
+        };
         send(Messages::RemoteGraphicsContextGLProxy::WasCreated(workQueue().wakeUpSemaphore(), m_connection->clientWaitSemaphore(), { initializationState }));
         m_connection->startReceivingMessages(*this, Messages::RemoteGraphicsContextGL::messageReceiverName(), m_identifier.toUInt64());
     } else
@@ -199,18 +203,21 @@ void RemoteGraphicsContextGL::getErrors(CompletionHandler<void(GCGLErrorCodeSet)
     completionHandler(protectedContext()->getErrors());
 }
 
-void RemoteGraphicsContextGL::ensureExtensionEnabled(CString&& extension)
+void RemoteGraphicsContextGL::ensureExtensionEnabled(GCGLExtension extension)
 {
     assertIsCurrent(workQueue());
-    protectedContext()->ensureExtensionEnabled(extension);
+    bool success = protectedContext()->enableExtension(extension);
+    MESSAGE_CHECK(success);
 }
 
-void RemoteGraphicsContextGL::drawSurfaceBufferToImageBuffer(WebCore::GraphicsContextGL::SurfaceBuffer buffer, WebCore::RenderingResourceIdentifier imageBufferIdentifier, CompletionHandler<void()>&& completionHandler)
+void RemoteGraphicsContextGL::copyNativeImageYFlipped(WebCore::GraphicsContextGL::SurfaceBuffer buffer, WebCore::RenderingResourceIdentifier nativeImageIdentifier)
 {
     assertIsCurrent(workQueue());
-    if (RefPtr image = protectedContext()->bufferAsNativeImage(buffer))
-        paintNativeImageToImageBuffer(*image, imageBufferIdentifier);
-    completionHandler();
+    RefPtr image = protectedContext()->copyNativeImageYFlipped(buffer);
+    // FIXME: Handle OOM.
+    MESSAGE_CHECK(image);
+    bool success = m_sharedResourceCache->addNativeImage(nativeImageIdentifier, image.releaseNonNull());
+    MESSAGE_CHECK(success);
 }
 
 #if ENABLE(MEDIA_STREAM) || ENABLE(WEB_CODECS)
@@ -223,37 +230,6 @@ void RemoteGraphicsContextGL::surfaceBufferToVideoFrame(WebCore::GraphicsContext
     completionHandler(WTFMove(result));
 }
 #endif
-
-void RemoteGraphicsContextGL::paintNativeImageToImageBuffer(NativeImage& image, RenderingResourceIdentifier imageBufferIdentifier)
-{
-    assertIsCurrent(workQueue());
-    // FIXME: We do not have functioning read/write fences in RemoteRenderingBackend. Thus this is synchronous,
-    // as are the messages that call these.
-    Lock lock;
-    Condition conditionVariable;
-    bool isFinished = false;
-
-    Ref renderingBackend = m_renderingBackend;
-    renderingBackend->dispatch([renderingBackend, image = RefPtr { &image }, imageBufferIdentifier, &lock, &conditionVariable, &isFinished]() mutable {
-        if (auto imageBuffer = renderingBackend->imageBuffer(imageBufferIdentifier)) {
-            // Here we do not try to play back pending commands for imageBuffer. Currently this call is only made for empty
-            // image buffers and there's no good way to add display lists.
-            GraphicsContextGL::paintToCanvas(*image, imageBuffer->backendSize(), imageBuffer->context());
-
-
-            // We know that the image might be updated afterwards, so flush the drawing so that read back does not occur.
-            // Unfortunately "flush" implementation in RemoteRenderingBackend overloads ordering and effects.
-            imageBuffer->flushDrawingContext();
-        }
-        Locker locker { lock };
-        isFinished = true;
-        conditionVariable.notifyOne();
-    });
-    Locker locker { lock };
-    conditionVariable.wait(lock, [&] {
-        return isFinished;
-    });
-}
 
 bool RemoteGraphicsContextGL::webXREnabled() const
 {
@@ -483,6 +459,12 @@ void RemoteGraphicsContextGL::framebufferDiscard(uint32_t target, std::span<cons
 }
 
 #endif
+
+void RemoteGraphicsContextGL::setDrawingBufferColorSpace(WebCore::DestinationColorSpace&& colorSpace)
+{
+    assertIsCurrent(workQueue());
+    protectedContext()->setDrawingBufferColorSpace(colorSpace);
+}
 
 RefPtr<RemoteGraphicsContextGL::GCGLContext> RemoteGraphicsContextGL::protectedContext()
 {

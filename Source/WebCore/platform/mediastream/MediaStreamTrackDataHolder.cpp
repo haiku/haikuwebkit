@@ -24,6 +24,7 @@
 
 #include "config.h"
 #include "MediaStreamTrackDataHolder.h"
+#include <wtf/CheckedRef.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #if ENABLE(MEDIA_STREAM)
@@ -49,8 +50,9 @@ private:
         });
     }
 
-    class PreventSourceFromEndingObserver final : public RealtimeMediaSourceObserver {
+    class PreventSourceFromEndingObserver final : public RealtimeMediaSourceObserver, public CanMakeCheckedPtr<PreventSourceFromEndingObserver> {
         WTF_MAKE_TZONE_ALLOCATED_INLINE(PreventSourceFromEndingObserver);
+        WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(PreventSourceFromEndingObserver);
     public:
         explicit PreventSourceFromEndingObserver(Ref<RealtimeMediaSource>&& source)
             : m_source(WTFMove(source))
@@ -62,6 +64,13 @@ private:
         {
             m_source->removeObserver(*this);
         }
+
+        // RealtimeMediaSourceObserver.
+        uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
+        uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+        void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
+        void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+        void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     private:
         bool preventSourceFromEnding() final { return true; }

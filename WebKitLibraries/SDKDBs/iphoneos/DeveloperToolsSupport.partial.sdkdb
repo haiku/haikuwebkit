@@ -1001,7 +1001,7 @@
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$s7SwiftUI13PreviewLayoutOMn"},
     {"access": "public", "introduced": "13", "linkage": "exported", "name": "_$s7SwiftUI13PreviewLayoutON"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

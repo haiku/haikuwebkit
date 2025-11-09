@@ -5,7 +5,7 @@
    "globals": [
     {"access": "public", "kind": "variable", "linkage": "exported", "name": "_CoreTransferableVersionNumber"}
    ],
-   "target": "arm64e-apple-ios26"
+   "target": "arm64e-apple-ios26.1"
   },
   {
    "globals": [
@@ -465,7 +465,7 @@
     {"access": "public", "linkage": "exported", "name": "_$ss5NeverO7SwiftUIE4bodyABvg"},
     {"access": "public", "linkage": "exported", "name": "_$ss5NeverO7SwiftUIE4bodyABvpMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

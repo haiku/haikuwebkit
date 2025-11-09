@@ -73,14 +73,10 @@ class StyleInheritedData;
 class StyleNonInheritedData;
 class StyleRareInheritedData;
 class StyleSelfAlignmentData;
-class TextAutospace;
-class TextSpacingTrim;
 class TransformationMatrix;
 class ViewTimeline;
-class WillChangeData;
 
 enum CSSPropertyID : uint16_t;
-enum GridAutoFlow : uint8_t;
 
 enum class AlignmentBaseline : uint8_t;
 enum class ApplePayButtonStyle : uint8_t;
@@ -169,8 +165,6 @@ enum class OverflowWrap : uint8_t;
 enum class OverscrollBehavior : uint8_t;
 enum class PaginationMode : uint8_t;
 enum class PaintBehavior : uint32_t;
-enum class PaintOrder : uint8_t;
-enum class PaintType : uint8_t;
 enum class PointerEvents : uint8_t;
 enum class PositionType : uint8_t;
 enum class PositionVisibility : uint8_t;
@@ -182,7 +176,6 @@ enum class RubyAlign : uint8_t;
 enum class RubyOverhang : bool;
 enum class ScrollAxis : uint8_t;
 enum class ScrollSnapStop : bool;
-enum class ScrollbarWidth : uint8_t;
 enum class SpeakAs : uint8_t;
 enum class StyleAppearance : uint8_t;
 enum class StyleColorOptions : uint8_t;
@@ -225,7 +218,6 @@ enum class WordBreak : uint8_t;
 struct CSSPropertiesBitSet;
 struct CounterDirectiveMap;
 struct GridTrackList;
-struct ImageOrientation;
 struct NameScope;
 struct TransformOperationData;
 
@@ -284,6 +276,7 @@ struct FontVariationSettings;
 struct FontWeight;
 struct FontWidth;
 struct GapGutter;
+struct GridAutoFlow;
 struct GridPosition;
 struct GridTemplateAreas;
 struct GridTemplateList;
@@ -306,6 +299,7 @@ struct MaskBorderSlice;
 struct MaskBorderSource;
 struct MaskBorderWidth;
 struct MaskLayer;
+struct MathDepth;
 struct MaximumLines;
 struct MaximumSize;
 struct MinimumSize;
@@ -334,6 +328,7 @@ struct SVGCenterCoordinateComponent;
 struct SVGCoordinateComponent;
 struct SVGMarkerResource;
 struct SVGPaint;
+struct SVGPaintOrder;
 struct SVGPathData;
 struct SVGRadius;
 struct SVGRadiusComponent;
@@ -348,17 +343,20 @@ struct ScrollSnapType;
 struct ScrollTimelines;
 struct ScrollbarColor;
 struct ScrollbarGutter;
+struct ScrollbarWidth;
 struct ShapeMargin;
 struct ShapeOutside;
 struct StrokeMiterlimit;
 struct StrokeWidth;
 struct TabSize;
+struct TextAutospace;
 struct TextBoxEdge;
 struct TextDecorationThickness;
 struct TextEmphasisStyle;
 struct TextIndent;
 struct TextShadow;
 struct TextSizeAdjust;
+struct TextSpacingTrim;
 struct TextUnderlineOffset;
 struct Transform;
 struct TransformOrigin;
@@ -378,12 +376,14 @@ struct WebkitMarqueeRepetition;
 struct WebkitMarqueeSpeed;
 struct WebkitTextStrokeWidth;
 struct Widows;
+struct WillChange;
 struct WordSpacing;
 struct ZIndex;
 struct ZoomFactor;
 
 enum class Change : uint8_t;
 enum class GridTrackSizingDirection : bool;
+enum class ImageOrientation : bool;
 enum class LineBoxContain : uint8_t;
 enum class PositionTryOrder : uint8_t;
 enum class SVGGlyphOrientationHorizontal : uint8_t;
@@ -429,7 +429,7 @@ using WebkitBoxOrdinalGroup = Integer<CSS::Positive>;
 
 constexpr auto PublicPseudoIDBits = 17;
 constexpr auto TextDecorationLineBits = 5;
-constexpr auto TextTransformBits = 5;
+constexpr auto TextTransformBits = 6;
 constexpr auto PseudoElementTypeBits = 5;
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
@@ -439,7 +439,7 @@ struct PseudoStyleCache {
 };
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(RenderStyle);
-class RenderStyle final : public CanMakeCheckedPtr<RenderStyle> {
+class RenderStyle final : public CanMakeCheckedPtr<RenderStyle, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(RenderStyle, RenderStyle);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderStyle);
 private:
@@ -786,8 +786,8 @@ public:
     inline float usedLetterSpacing() const;
     inline float usedWordSpacing() const;
 
-    TextSpacingTrim textSpacingTrim() const;
-    TextAutospace textAutospace() const;
+    inline Style::TextSpacingTrim textSpacingTrim() const;
+    inline Style::TextAutospace textAutospace() const;
 
     inline float zoom() const;
     inline float usedZoom() const;
@@ -964,11 +964,7 @@ public:
     inline const StyleSelfAlignmentData& justifyItems() const;
     inline const StyleSelfAlignmentData& justifySelf() const;
 
-    inline GridAutoFlow gridAutoFlow() const;
-    inline bool isGridAutoFlowDirectionRow() const;
-    inline bool isGridAutoFlowDirectionColumn() const;
-    inline bool isGridAutoFlowAlgorithmSparse() const;
-    inline bool isGridAutoFlowAlgorithmDense() const;
+    inline Style::GridAutoFlow gridAutoFlow() const;
     inline const Style::GridTrackSizes& gridAutoColumns() const;
     inline const Style::GridTrackSizes& gridAutoRows() const;
     inline const Style::GridTrackSizes& gridAutoList(Style::GridTrackSizingDirection) const;
@@ -1204,7 +1200,7 @@ public:
     Color usedScrollbarTrackColor() const;
     inline const Style::ScrollbarColor& scrollbarColor() const;
     inline const Style::ScrollbarGutter& scrollbarGutter() const;
-    inline ScrollbarWidth scrollbarWidth() const;
+    inline Style::ScrollbarWidth scrollbarWidth() const;
 
 #if ENABLE(TOUCH_EVENTS)
     inline Style::Color tapHighlightColor() const;
@@ -1230,7 +1226,7 @@ public:
     inline TextSecurity textSecurity() const;
     inline InputSecurity inputSecurity() const;
 
-    inline ImageOrientation imageOrientation() const;
+    inline Style::ImageOrientation imageOrientation() const;
     inline ImageRendering imageRendering() const;
 
     inline OptionSet<SpeakAs> speakAs() const;
@@ -1279,6 +1275,7 @@ public:
     inline AppleVisualEffect usedAppleVisualEffectForSubtree() const;
 #endif
 
+    inline Style::MathDepth mathDepth() const;
     inline MathShift mathShift() const;
     inline MathStyle mathStyle() const;
 
@@ -1442,7 +1439,7 @@ public:
     void setSpecifiedLineHeight(Style::LineHeight&&);
 #endif
 
-    inline void setImageOrientation(ImageOrientation);
+    inline void setImageOrientation(Style::ImageOrientation);
     inline void setImageRendering(ImageRendering);
 
     void setWhiteSpaceCollapse(WhiteSpaceCollapse v) { m_inheritedFlags.whiteSpaceCollapse = static_cast<unsigned>(v); }
@@ -1576,7 +1573,7 @@ public:
 
     inline void setBoxDecorationBreak(BoxDecorationBreak);
 
-    inline void setGridAutoFlow(GridAutoFlow);
+    inline void setGridAutoFlow(Style::GridAutoFlow);
     inline void setGridAutoColumns(Style::GridTrackSizes&&);
     inline void setGridAutoRows(Style::GridTrackSizes&&);
     inline void setGridTemplateAreas(Style::GridTemplateAreas&&);
@@ -1723,7 +1720,7 @@ public:
 
     inline void setScrollbarColor(Style::ScrollbarColor&&);
     inline void setScrollbarGutter(Style::ScrollbarGutter&&);
-    inline void setScrollbarWidth(ScrollbarWidth);
+    inline void setScrollbarWidth(Style::ScrollbarWidth);
 
 #if ENABLE(TOUCH_EVENTS)
     inline void setTapHighlightColor(Style::Color&&);
@@ -1759,11 +1756,9 @@ public:
 
     void addCustomPaintWatchProperty(const AtomString&);
 
-    // Support for paint-order, stroke-linecap, stroke-linejoin, and stroke-miterlimit from https://drafts.fxtf.org/paint/.
-    inline void setPaintOrder(PaintOrder);
-    inline PaintOrder paintOrder() const;
-    static constexpr PaintOrder initialPaintOrder();
-    static std::span<const PaintType, 3> paintTypesForPaintOrder(PaintOrder);
+    inline void setPaintOrder(Style::SVGPaintOrder);
+    inline Style::SVGPaintOrder paintOrder() const;
+    static constexpr Style::SVGPaintOrder initialPaintOrder();
     
     inline void setCapStyle(LineCap);
     inline LineCap capStyle() const;
@@ -1803,8 +1798,8 @@ public:
     inline void setVisitedLinkFill(Style::SVGPaint&&);
     static inline Style::SVGPaint initialFill();
 
-    inline bool enableEvaluationTimeZoom() const;
-    void setEnableEvaluationTimeZoom(bool);
+    inline bool evaluationTimeZoomEnabled() const;
+    void setEvaluationTimeZoomEnabled(bool);
 
     inline float deviceScaleFactor() const;
     void setDeviceScaleFactor(float);
@@ -1913,10 +1908,8 @@ public:
     inline void setViewTransitionClasses(Style::ViewTransitionClasses&&);
     inline void setViewTransitionName(Style::ViewTransitionName&&);
 
-    inline WillChangeData* willChange() const;
-    void setWillChange(RefPtr<WillChangeData>&&);
-
-    bool willChangeCreatesStackingContext() const;
+    inline const Style::WillChange& willChange() const;
+    inline void setWillChange(Style::WillChange&&);
 
     const AtomString& hyphenString() const;
 
@@ -1987,11 +1980,12 @@ public:
     bool disallowsFastPathInheritance() const { return m_nonInheritedFlags.disallowsFastPathInheritance; }
     void setDisallowsFastPathInheritance() { m_nonInheritedFlags.disallowsFastPathInheritance = true; }
 
+    inline void setMathDepth(Style::MathDepth);
     inline void setMathShift(const MathShift&);
     inline void setMathStyle(const MathStyle&);
 
-    void setTextSpacingTrim(TextSpacingTrim v);
-    void setTextAutospace(TextAutospace v);
+    void setTextSpacingTrim(Style::TextSpacingTrim);
+    void setTextAutospace(Style::TextAutospace);
 
     static constexpr Overflow initialOverflowX();
     static constexpr Overflow initialOverflowY();
@@ -2028,9 +2022,9 @@ public:
     static constexpr Style::FontVariantNumeric initialFontVariantNumeric();
     static constexpr FontVariantPosition initialFontVariantPosition();
     static inline AtomString initialLocale();
-    static constexpr TextAutospace initialTextAutospace();
+    static constexpr Style::TextAutospace initialTextAutospace();
     static constexpr TextRenderingMode initialTextRendering();
-    static constexpr TextSpacingTrim initialTextSpacingTrim();
+    static constexpr Style::TextSpacingTrim initialTextSpacingTrim();
     static constexpr BreakBetween initialBreakBetween();
     static constexpr BreakInside initialBreakInside();
     static constexpr OptionSet<HangingPunctuation> initialHangingPunctuation();
@@ -2201,7 +2195,7 @@ public:
     static constexpr RubyAlign initialRubyAlign();
     static constexpr RubyOverhang initialRubyOverhang();
     static constexpr OptionSet<Style::LineBoxContain> initialLineBoxContain();
-    static constexpr ImageOrientation initialImageOrientation();
+    static constexpr Style::ImageOrientation initialImageOrientation();
     static constexpr ImageRendering initialImageRendering();
     static inline Style::BorderImageSource initialBorderImageSource();
     static inline Style::MaskBorderSource initialMaskBorderSource();
@@ -2230,7 +2224,7 @@ public:
     static constexpr Style::TextSizeAdjust initialTextSizeAdjust();
 #endif
 
-    static WillChangeData* initialWillChange() { return nullptr; }
+    static inline Style::WillChange initialWillChange();
 
     static constexpr TouchAction initialTouchActions();
 
@@ -2252,7 +2246,7 @@ public:
 
     static inline Style::ScrollbarColor initialScrollbarColor();
     static constexpr Style::ScrollbarGutter initialScrollbarGutter();
-    static constexpr ScrollbarWidth initialScrollbarWidth();
+    static constexpr Style::ScrollbarWidth initialScrollbarWidth();
 
 #if ENABLE(APPLE_PAY)
     static constexpr ApplePayButtonStyle initialApplePayButtonStyle();
@@ -2263,7 +2257,7 @@ public:
     static constexpr AppleVisualEffect initialAppleVisualEffect();
 #endif
 
-    static constexpr GridAutoFlow initialGridAutoFlow();
+    static constexpr Style::GridAutoFlow initialGridAutoFlow();
     static inline Style::GridTrackSizes initialGridAutoColumns();
     static inline Style::GridTrackSizes initialGridAutoRows();
     static inline Style::GridTemplateAreas initialGridTemplateAreas();
@@ -2310,6 +2304,7 @@ public:
     static constexpr BlendMode initialBlendMode();
     static constexpr Isolation initialIsolation();
 
+    static constexpr Style::MathDepth initialMathDepth();
     static constexpr MathShift initialMathShift();
     static constexpr MathStyle initialMathStyle();
 

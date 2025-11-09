@@ -283,7 +283,7 @@ void DataTransfer::setDataFromItemList(Document& document, const String& type, c
 
     String sanitizedData;
     if (type == "text/html"_s)
-        sanitizedData = sanitizeMarkup(data);
+        sanitizedData = sanitizeMarkup(data, &document);
     else if (type == "text/uri-list"_s) {
         auto url = URL({ }, data);
         if (url.isValid())

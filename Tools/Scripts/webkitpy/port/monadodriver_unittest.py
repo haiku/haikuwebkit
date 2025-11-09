@@ -66,7 +66,6 @@ class MonadoDriverTest(unittest.TestCase):
             ),
             None,
         )
-        self.assertEqual(driver._server_process.env['WITH_OPENXR_RUNTIME'], 'y')
         self.assertTrue(driver._server_process.started)
 
         driver._monado_service_process = None

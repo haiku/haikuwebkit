@@ -342,6 +342,30 @@ UNIFIED_PDF_TEST(PrintSize)
     TestWebKitAPI::Util::run(&receivedSize);
 }
 
+UNIFIED_PDF_TEST(TextAnnotationHoverEffect)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"textInput" withExtension:@"pdf"]];
+    [webView synchronouslyLoadRequest:request.get()];
+    [[webView window] makeFirstResponder:webView.get()];
+    [[webView window] makeKeyAndOrderFront:nil];
+    [[webView window] orderFrontRegardless];
+
+    auto colorsBeforeHover = [webView sampleColors];
+
+    [webView mouseMoveToPoint:NSMakePoint(200, 200) withFlags:0];
+    [webView waitForPendingMouseEvents];
+    [webView waitForNextPresentationUpdate];
+    auto colorsDuringHover = [webView sampleColors];
+    EXPECT_NE(colorsBeforeHover, colorsDuringHover);
+
+    [webView mouseMoveToPoint:NSMakePoint(50, 50) withFlags:0];
+    [webView waitForPendingMouseEvents];
+    [webView waitForNextPresentationUpdate];
+    auto colorsAfterHover = [webView sampleColors];
+    EXPECT_EQ(colorsBeforeHover, colorsAfterHover);
+}
+
 #endif // PLATFORM(MAC)
 
 #if ENABLE(PDF_HUD)

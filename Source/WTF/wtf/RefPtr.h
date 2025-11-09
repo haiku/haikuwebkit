@@ -26,6 +26,7 @@
 #include <utility>
 #include <wtf/RawPtrTraits.h>
 #include <wtf/Ref.h>
+#include <wtf/SwiftBridging.h>
 
 namespace WTF {
 
@@ -106,7 +107,7 @@ private:
     RefPtr(T* ptr, AdoptTag) : m_ptr(ptr) { }
 
     typename PtrTraits::StorageType m_ptr;
-};
+} SWIFT_ESCAPABLE;
 
 // Template deduction guide.
 template<typename X, typename Y> RefPtr(Ref<X, Y>&&) -> RefPtr<X, Y, DefaultRefDerefTraits<X>>;

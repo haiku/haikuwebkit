@@ -1749,7 +1749,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "NSAttributeType"},
     {"access": "public", "name": "NSBatchDeleteRequestResultType"},
@@ -2394,7 +2394,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo31NSCoreDataCoreSpotlightDelegateC0cB0E26indexDidUpdateNotificationSo18NSNotificationNameavgZ"},
     {"access": "public", "linkage": "exported", "name": "_$sSo31NSCoreDataCoreSpotlightDelegateC0cB0E26indexDidUpdateNotificationSo18NSNotificationNameavpZMV"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

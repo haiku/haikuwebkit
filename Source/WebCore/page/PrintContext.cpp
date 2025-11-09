@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Alp Toker <alp@atoker.com>
- * Copyright (C) 2007-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -109,12 +109,13 @@ FloatBoxExtent PrintContext::computedPageMargin(FloatBoxExtent printMargin)
     auto marginRight = style->marginRight().tryFixed();
     auto marginBottom = style->marginBottom().tryFixed();
     auto marginLeft = style->marginLeft().tryFixed();
+    const auto& zoomFactor = style->usedZoomForLength();
 
     return {
-        marginTop ? marginTop->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.top(),
-        marginRight ? marginRight->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.right(),
-        marginBottom ? marginBottom->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.bottom(),
-        marginLeft ? marginLeft->resolveZoom(Style::ZoomNeeded { }) * pixelToPointScaleFactor : printMargin.left(),
+        marginTop ? marginTop->resolveZoom(zoomFactor) * pixelToPointScaleFactor : printMargin.top(),
+        marginRight ? marginRight->resolveZoom(zoomFactor) * pixelToPointScaleFactor : printMargin.right(),
+        marginBottom ? marginBottom->resolveZoom(zoomFactor) * pixelToPointScaleFactor : printMargin.bottom(),
+        marginLeft ? marginLeft->resolveZoom(zoomFactor) * pixelToPointScaleFactor : printMargin.left(),
     };
 }
 
@@ -391,7 +392,7 @@ String PrintContext::pageProperty(LocalFrame* frame, const String& propertyName,
     // Implement formatters for properties we care about.
     if (propertyName == "margin-left"_s) {
         if (auto marginLeft = style->marginLeft().tryFixed())
-            return makeString(marginLeft->resolveZoom(Style::ZoomNeeded { }));
+            return makeString(marginLeft->resolveZoom(style->usedZoomForLength()));
         return autoAtom();
     }
     if (propertyName == "line-height"_s) {

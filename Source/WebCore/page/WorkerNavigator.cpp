@@ -103,7 +103,7 @@ void WorkerNavigator::setAppBadge(std::optional<unsigned long long> badge, Ref<D
         return;
     }
 
-    if (auto* workerBadgeProxy = scope->thread()->workerBadgeProxy())
+    if (CheckedPtr workerBadgeProxy = scope->thread()->workerBadgeProxy())
         workerBadgeProxy->setAppBadge(badge);
     promise->resolve();
 }

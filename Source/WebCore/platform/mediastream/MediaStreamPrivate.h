@@ -38,6 +38,7 @@
 
 #include <WebCore/FloatSize.h>
 #include <WebCore/MediaStreamTrackPrivate.h>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Function.h>
 #include <wtf/MediaTime.h>
 #include <wtf/RefPtr.h>
@@ -47,20 +48,11 @@
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
-class MediaStreamPrivateObserver;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::MediaStreamPrivateObserver> : std::true_type { };
-}
-
-namespace WebCore {
 
 class MediaStream;
 class OrientationNotifier;
 
-class MediaStreamPrivateObserver : public CanMakeWeakPtr<MediaStreamPrivateObserver> {
+class MediaStreamPrivateObserver : public AbstractRefCountedAndCanMakeWeakPtr<MediaStreamPrivateObserver> {
 public:
     virtual ~MediaStreamPrivateObserver() = default;
 
@@ -86,6 +78,9 @@ public:
 
     void addObserver(MediaStreamPrivateObserver&);
     void removeObserver(MediaStreamPrivateObserver&);
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     String id() const { return m_id; }
 

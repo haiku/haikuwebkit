@@ -248,7 +248,7 @@ typedef NS_ENUM(NSInteger, _WKPitchCorrectionAlgorithm) {
 @property (nonatomic, setter=_setRequestAnimationFrameEnabled:) BOOL _requestAnimationFrameEnabled WK_API_DEPRECATED("requestAnimationFrame is always enabled", macos(10.15.4, 13.0), ios(13.4, 16.0));
 @property (nonatomic, setter=_setSubpixelAntialiasedLayerTextEnabled:) BOOL _subpixelAntialiasedLayerTextEnabled WK_API_DEPRECATED("Subpixel antialiased text is no longer supported", macos(10.12, 13.3), ios(10.0, 16.4));
 #if !TARGET_OS_IPHONE
-@property (nonatomic, setter=_setDNSPrefetchingEnabled:) BOOL _dnsPrefetchingEnabled WK_API_DEPRECATED("DNS prefetching is no longer supported", macos(10.14, WK_MAC_TBA));
+@property (nonatomic, setter=_setDNSPrefetchingEnabled:) BOOL _dnsPrefetchingEnabled WK_API_DEPRECATED("DNS prefetching is no longer supported", macos(10.14, 26.0));
 @property (nonatomic, setter=_setPageCacheSupportsPlugins:) BOOL _pageCacheSupportsPlugins WK_API_DEPRECATED("NPAPI plugins are no longer supported", macos(10.13.4, 15.0));
 @property (nonatomic, setter=_setAsynchronousPluginInitializationEnabled:) BOOL _asynchronousPluginInitializationEnabled WK_API_DEPRECATED("NPAPI plugins are no longer supported", macos(10.13.4, 15.0));
 @property (nonatomic, setter=_setArtificialPluginInitializationDelayEnabled:) BOOL _artificialPluginInitializationDelayEnabled WK_API_DEPRECATED("NPAPI plugins are no longer supported", macos(10.13.4, 15.0));
@@ -260,5 +260,5 @@ typedef NS_ENUM(NSInteger, _WKPitchCorrectionAlgorithm) {
 // FIXME: We should remove this property.
 @property (nonatomic, setter=_setOfflineApplicationCacheIsEnabled:) BOOL _offlineApplicationCacheIsEnabled WK_API_DEPRECATED("OfflineApplicationCache is no longer supported", macos(10.10, WK_MAC_TBA), ios(8.0, WK_IOS_TBA));
 @property (nonatomic, setter=_setMediaStreamEnabled:) BOOL _mediaStreamEnabled WK_API_DEPRECATED("Media stream preference is no longer supported", macos(10.14, 15.4));
-@property (nonatomic, setter=_setClientBadgeEnabled:) BOOL _clientBadgeEnabled WK_API_DEPRECATED("Client badge is no longer supported", macos(13.3, WK_MAC_TBA), ios(16.4, WK_IOS_TBA));
+@property (nonatomic, setter=_setClientBadgeEnabled:) BOOL _clientBadgeEnabled WK_API_DEPRECATED("Client badge is no longer supported", macos(13.3, 26.0), ios(16.4, 26.0));
 @end

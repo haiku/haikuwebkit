@@ -63,7 +63,9 @@ public:
         virtual void deleteProperty(const String& name);
     };
 
-    WEBCORE_EXPORT InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings>);
+    enum class DispatchBackendTarget { Page, MainFrame };
+
+    WEBCORE_EXPORT InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings>, DispatchBackendTarget = DispatchBackendTarget::Page);
     WEBCORE_EXPORT ~InspectorFrontendClientLocal() override;
 
     WEBCORE_EXPORT void resetState() override;

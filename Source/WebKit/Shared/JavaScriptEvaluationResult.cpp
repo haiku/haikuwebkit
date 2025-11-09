@@ -43,6 +43,10 @@
 #include <WebCore/ScriptWrappableInlines.h>
 #include <WebCore/SerializedScriptValue.h>
 
+#if PLATFORM(COCOA)
+#include <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
+#endif
+
 namespace WebKit {
 
 class JavaScriptEvaluationResult::JSExtractor {
@@ -270,8 +274,14 @@ std::optional<JavaScriptEvaluationResult> JavaScriptEvaluationResult::extract(JS
     }
 
     JSExtractor extractor;
-    if (auto root = extractor.addObjectToMap(context, value))
+    if (auto root = extractor.addObjectToMap(context, value)) {
+#if PLATFORM(COCOA)
+        if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::JavaScriptEvaluationResultWithoutSerializedScriptValue)
+            && !WebCore::SerializedScriptValue::create(context, value, nullptr))
+            return std::nullopt;
+#endif
         return JavaScriptEvaluationResult { *root, extractor.takeMap() };
+    }
     return std::nullopt;
 }
 

@@ -823,7 +823,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "introduced": "15", "name": "CMAbsoluteAltitudeHandler"},
     {"access": "public", "name": "CMAcceleration"},
@@ -1606,7 +1606,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "CLAccuracyAuthorization"},
     {"access": "public", "name": "CLActivityType"},
@@ -1656,7 +1656,7 @@
     {"access": "public", "linkage": "exported", "name": "_$sSo22CMBatchedSensorManagerC10CoreMotionE20AccelerometerUpdatesVSciACMc"},
     {"access": "public", "linkage": "exported", "name": "_$sSo22CMBatchedSensorManagerC10CoreMotionE20accelerometerUpdatesAbCE013AccelerometerG0VyF"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

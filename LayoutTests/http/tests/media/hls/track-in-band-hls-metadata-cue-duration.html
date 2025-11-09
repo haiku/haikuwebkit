@@ -7,6 +7,7 @@
         <script src=../../../media-resources/media-file.js></script>
 
         <script>
+            const cueCount = 5;
             let cuechangeCount = 0;
 
             async function start()
@@ -23,14 +24,15 @@
                     run('track = video.textTracks[0]');
                     run('track.mode = "hidden"');
                     track.addEventListener('cuechange', evt => {
-                        if (++cuechangeCount != 6)
+                        if (++cuechangeCount != cueCount)
                             return;
 
-                        for (var i = 0; i < 6; i++) {
-                            cue = track.cues[i];
-                            consoleWrite(`<br>cue ${i + 1}`);
-                            testExpected('cue.startTime', Number.POSITIVE_INFINITY, "!=");
-                            testExpected('cue.endTime', Number.POSITIVE_INFINITY, "!=");
+                        for (var i = 0; i < cueCount; i++) {
+                            consoleWrite(``);
+                            testExpected(`track.cues[${i}].startTime`, Number.POSITIVE_INFINITY, '!=');
+                            testExpected(`track.cues[${i}].endTime`, Number.POSITIVE_INFINITY, '!=');
+                            if (i > 0)
+                                testExpected(`track.cues[${i}].endTime > track.cues[${i - 1}].endTime`, true);
                         }
 
                         consoleWrite('');

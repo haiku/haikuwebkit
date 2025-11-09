@@ -2905,6 +2905,11 @@ framework module WebKit_Private [system] {
     export *
   }
 
+  explicit module _WKStringMatcher {
+    header "_WKStringMatcher.h"
+    export *
+  }
+
   explicit module _WKSystemPreferences {
     header "_WKSystemPreferences.h"
     export *

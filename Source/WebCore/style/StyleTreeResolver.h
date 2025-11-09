@@ -107,6 +107,8 @@ private:
     std::optional<ResolvedStyle> resolveAncestorFirstLinePseudoElement(Element&, const ElementUpdate&);
     std::optional<ResolvedStyle> resolveAncestorFirstLetterPseudoElement(Element&, const ElementUpdate&, ResolutionContext&);
 
+    void resetStyleForNonRenderedDescendants(Element&);
+
     struct Scope : RefCounted<Scope> {
         WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(TreeResolverScope, TreeResolverScope);
         Ref<Resolver> resolver;

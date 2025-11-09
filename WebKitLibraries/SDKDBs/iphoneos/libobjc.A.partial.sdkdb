@@ -297,7 +297,7 @@
      ]
     }
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "BOOL"},
     {"access": "public", "name": "Category"},

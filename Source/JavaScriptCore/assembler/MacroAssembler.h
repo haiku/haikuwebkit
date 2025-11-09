@@ -734,6 +734,11 @@ public:
         or32(TrustedImm32(imm), dest);
     }
 
+    void orPtr(TrustedImm32 imm, RegisterID src, RegisterID dest)
+    {
+        or32(imm, src, dest);
+    }
+
     void orPtr(TrustedImm32 imm, RegisterID dest)
     {
         or32(imm, dest);

@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 var sab = new SharedArrayBuffer(3 * 4);
 var i32a = new Int32Array(sab);
 

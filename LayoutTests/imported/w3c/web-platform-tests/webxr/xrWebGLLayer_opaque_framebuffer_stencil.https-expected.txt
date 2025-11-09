@@ -1,3 +1,6 @@
 
-FAIL Ensure that the framebuffer given by the WebGL layer works with stencil for immersive assert_equals: Should not initially have any errors expected 0 but got 1282
+PASS Ensure that the framebuffer given by the WebGL layer works with stencil for non-immersive - webgl
+PASS Ensure that the framebuffer given by the WebGL layer works with stencil for non-immersive - webgl2
+PASS Ensure that the framebuffer given by the WebGL layer works with stencil for immersive - webgl
+PASS Ensure that the framebuffer given by the WebGL layer works with stencil for immersive - webgl2
 

@@ -238,8 +238,10 @@ static SDKAlignedBehaviors computeSDKAlignedBehaviors()
     if (linkedBefore(dyld_2024_SU_F_os_versions, DYLD_IOS_VERSION_18_5, DYLD_MACOSX_VERSION_15_5))
         disableBehavior(SDKAlignedBehavior::NavigationActionSourceFrameNonNull);
 
-    if (linkedBefore(dyld_2025_SU_B_os_versions, DYLD_IOS_VERSION_26_1, DYLD_MACOSX_VERSION_26_1))
+    if (linkedBefore(dyld_2025_SU_B_os_versions, DYLD_IOS_VERSION_26_1, DYLD_MACOSX_VERSION_26_1)) {
         disableBehavior(SDKAlignedBehavior::AllowBackgroundAudioPlayback);
+        disableBehavior(SDKAlignedBehavior::GetBoundingClientRectZoomed);
+    }
 
     disableAdditionalSDKAlignedBehaviors(behaviors);
 
@@ -424,8 +426,14 @@ bool CocoaApplication::shouldOSFaultLogForAppleApplicationUsingWebKit1()
 bool MacApplication::isSafari()
 {
     static bool isSafari = applicationBundleIsEqualTo("com.apple.Safari"_s)
-        || applicationBundleIsEqualTo("com.apple.SafariTechnologyPreview"_s)
+        || isSafariTechnologyPreview()
         || applicationBundleIdentifier().startsWith("com.apple.Safari."_s);
+    return isSafari;
+}
+
+bool MacApplication::isSafariTechnologyPreview()
+{
+    static bool isSafari = applicationBundleIsEqualTo("com.apple.SafariTechnologyPreview"_s);
     return isSafari;
 }
 

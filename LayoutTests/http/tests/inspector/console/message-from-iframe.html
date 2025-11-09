@@ -1,5 +1,13 @@
 <script src="/inspector/resources/inspector-test.js"></script>
 <script>
+    // Utilities for page code.
+    function addIFrame(url) {
+        const iframe = document.createElement("iframe");
+        iframe.src = url;
+        iframe.onload = () => console.log("iframe is loaded in " + location.href);
+        document.body.appendChild(iframe);
+    }
+
     function test() {
         // The purpose of these tests are to test that Web Inspector should receive console messages generated from various iframe tree correctly.
 
@@ -22,15 +30,6 @@
 
             InspectorTest.evaluateInPage(func);
         }
-        // Utilities for page code.
-        InspectorTest.evaluateInPage(`
-            function addIFrame(url) {
-                const iframe = document.createElement("iframe");
-                iframe.src = url;
-                iframe.onload = () => console.log("iframe is loaded in " + location.href);
-                document.body.appendChild(iframe);
-            }
-        `);
 
         suite.addTestCase({
             name: "MessageFromIFrame.SameOriginIFrame",

@@ -33,7 +33,7 @@
 
 namespace WebKit {
 
-WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(RemoteAnimationStack);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteAnimationStack);
 
 Ref<RemoteAnimationStack> RemoteAnimationStack::create(RemoteAnimations&& animations, WebCore::AcceleratedEffectValues&& baseValues, WebCore::FloatRect bounds)
 {

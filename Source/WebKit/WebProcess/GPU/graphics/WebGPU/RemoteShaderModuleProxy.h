@@ -59,6 +59,8 @@ private:
     RemoteShaderModuleProxy& operator=(const RemoteShaderModuleProxy&) = delete;
     RemoteShaderModuleProxy& operator=(RemoteShaderModuleProxy&&) = delete;
 
+    bool isRemoteShaderModuleProxy() const final { return true; }
+
     WebGPUIdentifier backing() const { return m_backing; }
     
     template<typename T>
@@ -82,5 +84,9 @@ private:
 };
 
 } // namespace WebKit::WebGPU
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebGPU::RemoteShaderModuleProxy)
+    static bool isType(const WebCore::WebGPU::ShaderModule& module) { return module.isRemoteShaderModuleProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(GPU_PROCESS)

@@ -108,6 +108,7 @@ Shared/wpe/WebKeyboardEventWPE.cpp
 
 UIProcess/DefaultUndoController.cpp
 UIProcess/LegacySessionStateCodingNone.cpp
+UIProcess/ViewSnapshotStore.cpp
 UIProcess/WebGrammarDetail.cpp
 UIProcess/WebMemoryPressureHandler.cpp @no-unify
 UIProcess/WebViewportAttributes.cpp
@@ -223,6 +224,10 @@ UIProcess/Automation/glib/BidiBrowserAgentGlib.cpp @no-unify
 
 UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 
+UIProcess/Extensions/glib/WebExtensionGLib.cpp
+
+UIProcess/Extensions/wpe/WebExtensionWPE.cpp
+
 UIProcess/Gamepad/libwpe/UIGamepadProviderLibWPE.cpp
 
 UIProcess/Gamepad/wpe/GamepadProviderWPE.cpp
@@ -264,6 +269,8 @@ UIProcess/WebsiteData/glib/WebsiteDataStoreGLib.cpp
 UIProcess/WebsiteData/soup/WebsiteDataStoreSoup.cpp
 
 UIProcess/linux/MemoryPressureMonitor.cpp
+
+UIProcess/skia/ViewSnapshotSkia.cpp
 
 UIProcess/soup/WebProcessPoolSoup.cpp
 

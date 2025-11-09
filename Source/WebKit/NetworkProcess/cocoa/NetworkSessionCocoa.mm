@@ -562,7 +562,7 @@ static RetainPtr<NSURLRequest> downgradeRequest(NSURLRequest *request)
 {
     auto nsMutableRequest = adoptNS([request mutableCopy]);
     if ([[nsMutableRequest URL].scheme isEqualToString:@"https"]) {
-        RetainPtr components = [NSURLComponents componentsWithURL:[nsMutableRequest URL] resolvingAgainstBaseURL:NO];
+        RetainPtr components = [NSURLComponents componentsWithURL:retainPtr([nsMutableRequest URL]).get() resolvingAgainstBaseURL:NO];
         components.get().scheme = @"http";
         [nsMutableRequest setURL:components.get().URL];
         ASSERT([[nsMutableRequest URL].scheme isEqualToString:@"http"]);
@@ -689,7 +689,7 @@ static void updateIgnoreStrictTransportSecuritySetting(RetainPtr<NSURLRequest>& 
         } else
             ASSERT_NOT_REACHED();
 
-        WebCore::ResourceResponse synthesizedResponse = WebCore::synthesizeRedirectResponseIfNecessary([task currentRequest], request, nil);
+        WebCore::ResourceResponse synthesizedResponse = WebCore::synthesizeRedirectResponseIfNecessary(retainPtr([task currentRequest]).get(), request, nil);
         RetainPtr origin = [request valueForHTTPHeaderField:@"Origin"] ?: @"*";
         synthesizedResponse.setHTTPHeaderField(WebCore::HTTPHeaderName::AccessControlAllowOrigin, origin.get());
         networkDataTask->willPerformHTTPRedirection(WTFMove(synthesizedResponse), request, [completionHandler = makeBlockPtr(completionHandler), taskIdentifier, shouldIgnoreHSTS](auto&& request) {
@@ -826,7 +826,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
                 }
                 processServerTrustEvaluation(*session, CheckedRef { *strongSelf->_sessionWrapper }, challenge, negotiatedLegacyTLS, taskIdentifier, task.get(), WTFMove(completionHandler));
             });
-            [NSURLSession _strictTrustEvaluate:challenge queue:[NSOperationQueue mainQueue].underlyingQueue completionHandler:decisionHandler.get()];
+            [NSURLSession _strictTrustEvaluate:challenge queue:retainPtr([NSOperationQueue mainQueue].underlyingQueue).get() completionHandler:decisionHandler.get()];
             return;
         }
     }
@@ -931,7 +931,7 @@ static NSDictionary<NSString *, id> *extractResolutionReport(NSError *error)
             }
 #endif
         }
-        updatedError = [NSError errorWithDomain:[updatedError domain] code:[updatedError code] userInfo:newUserInfo.get()];
+        updatedError = [NSError errorWithDomain:retainPtr([updatedError domain]).get() code:[updatedError code] userInfo:newUserInfo.get()];
     }
 
     if (auto networkDataTask = [self existingTask:task])
@@ -981,20 +981,20 @@ static NSDictionary<NSString *, id> *extractResolutionReport(NSError *error)
         };
 
         auto& networkLoadMetrics = networkDataTask->networkLoadMetrics();
-        networkLoadMetrics.redirectStart = dateToMonotonicTime(transactionMetrics.get().firstObject.fetchStartDate);
-        networkLoadMetrics.fetchStart = dateToMonotonicTime(m.get().fetchStartDate);
-        networkLoadMetrics.domainLookupStart = dateToMonotonicTime(m.get().domainLookupStartDate);
-        networkLoadMetrics.domainLookupEnd = dateToMonotonicTime(m.get().domainLookupEndDate);
-        networkLoadMetrics.connectStart = dateToMonotonicTime(m.get().connectStartDate);
+        networkLoadMetrics.redirectStart = dateToMonotonicTime(retainPtr(transactionMetrics.get().firstObject.fetchStartDate).get());
+        networkLoadMetrics.fetchStart = dateToMonotonicTime(retainPtr(m.get().fetchStartDate).get());
+        networkLoadMetrics.domainLookupStart = dateToMonotonicTime(retainPtr(m.get().domainLookupStartDate).get());
+        networkLoadMetrics.domainLookupEnd = dateToMonotonicTime(retainPtr(m.get().domainLookupEndDate).get());
+        networkLoadMetrics.connectStart = dateToMonotonicTime(retainPtr(m.get().connectStartDate).get());
         if (m.get().reusedConnection && [m.get().response.URL.scheme isEqualToString:@"https"])
             networkLoadMetrics.secureConnectionStart = WebCore::reusedTLSConnectionSentinel;
         else
-            networkLoadMetrics.secureConnectionStart = dateToMonotonicTime(m.get().secureConnectionStartDate);
-        networkLoadMetrics.connectEnd = dateToMonotonicTime(m.get().connectEndDate);
-        networkLoadMetrics.requestStart = dateToMonotonicTime(m.get().requestStartDate);
+            networkLoadMetrics.secureConnectionStart = dateToMonotonicTime(retainPtr(m.get().secureConnectionStartDate).get());
+        networkLoadMetrics.connectEnd = dateToMonotonicTime(retainPtr(m.get().connectEndDate).get());
+        networkLoadMetrics.requestStart = dateToMonotonicTime(retainPtr(m.get().requestStartDate).get());
         // Sometimes, likely because of <rdar://90997689>, responseStart is before requestStart. If this happens, use the later of the two.
-        networkLoadMetrics.responseStart = std::max(networkLoadMetrics.requestStart, dateToMonotonicTime(m.get().responseStartDate));
-        networkLoadMetrics.responseEnd = dateToMonotonicTime(m.get().responseEndDate);
+        networkLoadMetrics.responseStart = std::max(networkLoadMetrics.requestStart, dateToMonotonicTime(retainPtr(m.get().responseStartDate).get()));
+        networkLoadMetrics.responseEnd = dateToMonotonicTime(retainPtr(m.get().responseEndDate).get());
         networkLoadMetrics.markComplete();
         networkLoadMetrics.redirectCount = metrics.redirectCount;
         networkLoadMetrics.protocol = String(m.get().networkProtocolName);
@@ -1032,7 +1032,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
             __block WebCore::HTTPHeaderMap requestHeaders;
-            [m.get().request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString *name, NSString *value, BOOL *) {
+            [retainPtr(m.get().request.allHTTPHeaderFields) enumerateKeysAndObjectsUsingBlock:^(NSString *name, NSString *value, BOOL *) {
                 requestHeaders.set(String(name), String(value));
             }];
             additionalMetrics->requestHeaders = WTFMove(requestHeaders);
@@ -1109,7 +1109,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             ? PrivateRelayed::No : PrivateRelayed::Yes;
         String proxyName;
         if (metrics.get()._establishmentReport) {
-            if (RetainPtr endpoint = adoptNS(nw_establishment_report_copy_proxy_endpoint(metrics.get()._establishmentReport))) {
+            if (RetainPtr endpoint = adoptNS(nw_establishment_report_copy_proxy_endpoint(retainPtr(metrics.get()._establishmentReport).get()))) {
                 if (const char *hostname = nw_endpoint_get_hostname(endpoint.get()))
                     proxyName = String::fromUTF8(unsafeSpan(hostname));
             }
@@ -1475,9 +1475,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if HAVE(ALTERNATIVE_SERVICE)
     if (!parameters.alternativeServiceDirectory.isEmpty()) {
         SandboxExtension::consumePermanently(parameters.alternativeServiceDirectoryExtensionHandle);
-        configuration.get()._alternativeServicesStorage = adoptNS([[_NSHTTPAlternativeServicesStorage alloc] initPersistentStoreWithURL:[adoptNS([[NSURL alloc] initFileURLWithPath:parameters.alternativeServiceDirectory.createNSString().get() isDirectory:YES]) URLByAppendingPathComponent:@"AlternativeService.sqlite" isDirectory:NO]]).get();
-        if ([configuration.get()._alternativeServicesStorage respondsToSelector:@selector(setCanSuspendLocked:)])
-            [configuration.get()._alternativeServicesStorage setCanSuspendLocked:YES];
+        RetainPtr alternativeServicePath = adoptNS([[NSURL alloc] initFileURLWithPath:parameters.alternativeServiceDirectory.createNSString().get() isDirectory:YES]);
+        RetainPtr sqlitePath = [alternativeServicePath URLByAppendingPathComponent:@"AlternativeService.sqlite" isDirectory:NO];
+        RetainPtr alternativeServicesStorage = adoptNS([[_NSHTTPAlternativeServicesStorage alloc] initPersistentStoreWithURL:sqlitePath.get()]).get();
+        configuration.get()._alternativeServicesStorage = alternativeServicesStorage.get();
+        if ([alternativeServicesStorage respondsToSelector:@selector(setCanSuspendLocked:)])
+            [alternativeServicesStorage setCanSuspendLocked:YES];
     }
 #endif
 
@@ -1568,7 +1571,7 @@ void NetworkSessionCocoa::initializeNSURLSessionsInSet(SessionSet& sessionSet, N
 {
     sessionSet.checkedSessionWithCredentialStorage()->initialize(configuration, *this, WebCore::StoredCredentialsPolicy::Use, NavigatingToAppBoundDomain::No);
     auto cookieAcceptPolicy = configuration.HTTPCookieStorage.cookieAcceptPolicy;
-    LOG(NetworkSession, "Created NetworkSession with cookieAcceptPolicy %lu", cookieAcceptPolicy);
+    LOG(NetworkSession, "Created NetworkSession with cookieAcceptPolicy %lu", static_cast<unsigned long>(cookieAcceptPolicy));
     RELEASE_LOG_IF(cookieAcceptPolicy == NSHTTPCookieAcceptPolicyNever, NetworkSession, "Creating network session with ID %" PRIu64 " that will not accept cookies.", m_sessionID.toUInt64());
 }
 
@@ -1703,7 +1706,7 @@ SessionWrapper& SessionSet::isolatedSession(WebCore::StoredCredentialsPolicy sto
 {
     auto& entry = isolatedSessions.ensure(firstPartyDomain, [this, &session, isNavigatingToAppBoundDomain] {
         auto newEntry = makeUnique<IsolatedSession>();
-        newEntry->checkedSessionWithCredentialStorage()->initialize(sessionWithCredentialStorage.session.get().configuration, session, WebCore::StoredCredentialsPolicy::Use, isNavigatingToAppBoundDomain);
+        newEntry->checkedSessionWithCredentialStorage()->initialize(retainPtr(sessionWithCredentialStorage.session.get().configuration).get(), session, WebCore::StoredCredentialsPolicy::Use, isNavigatingToAppBoundDomain);
         return newEntry;
     }).iterator->value;
 
@@ -2336,7 +2339,7 @@ void NetworkSessionCocoa::clearProxyConfigData()
     forEachSessionWrapper([&contexts](SessionWrapper& sessionWrapper) {
         if (!sessionWrapper.session)
             return;
-        [contexts.get() addObject:sessionWrapper.session.get()._networkContext];
+        [contexts.get() addObject:retainPtr(sessionWrapper.session.get()._networkContext).get()];
     });
 
     for (nw_context_t context in contexts.get())
@@ -2386,7 +2389,7 @@ void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8
     forEachSessionWrapper([&contexts](SessionWrapper& sessionWrapper) {
         if (!sessionWrapper.session)
             return;
-        [contexts.get() addObject:sessionWrapper.session.get()._networkContext];
+        [contexts.get() addObject:retainPtr(sessionWrapper.session.get()._networkContext).get()];
     });
 
     for (nw_context_t context in contexts.get()) {

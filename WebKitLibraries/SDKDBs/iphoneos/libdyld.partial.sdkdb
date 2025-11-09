@@ -173,7 +173,7 @@
     {"access": "public", "introduced": "16", "kind": "function", "linkage": "exported", "name": "_macho_for_each_slice"},
     {"access": "public", "introduced": "16", "kind": "function", "linkage": "exported", "name": "_macho_for_each_slice_in_fd"}
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "Dl_info"},
     {"access": "public", "name": "NSLinkEditErrorHandlers"},

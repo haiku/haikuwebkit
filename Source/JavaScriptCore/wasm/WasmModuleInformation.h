@@ -219,6 +219,7 @@ struct ModuleInformation final : public ThreadSafeRefCounted<ModuleInformation> 
     mutable FixedBitVector m_referencedFunctions;
     mutable FixedBitVector m_clobberingTailCalls;
     size_t m_totalFunctionSize { 0 };
+    uint32_t m_numSmallFunctions { 0 };
 
 private:
     void populateImportShouldBeHidden();

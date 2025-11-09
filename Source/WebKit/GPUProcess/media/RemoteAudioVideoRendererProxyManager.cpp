@@ -34,6 +34,8 @@
 #include "LayerHostingContext.h"
 #include "Logging.h"
 #include "RemoteAudioVideoRendererProxyManagerMessages.h"
+#include "RemoteLegacyCDMFactoryProxy.h"
+#include "RemoteLegacyCDMSessionProxy.h"
 #include "RemoteVideoFrameObjectHeap.h"
 #if ENABLE(LINEAR_MEDIA_PLAYER)
 #include "VideoReceiverEndpointManager.h"
@@ -561,7 +563,7 @@ void RemoteAudioVideoRendererProxyManager::setVideoLayerSizeFenced(RemoteAudioVi
 
 void RemoteAudioVideoRendererProxyManager::requestHostingContext(RemoteAudioVideoRendererIdentifier identifier, LayerHostingContextCallback&& completionHandler)
 {
-    ALWAYS_LOG(LOGIDENTIFIER);
+    ALWAYS_LOG(LOGIDENTIFIER, identifier.loggingString());
 #if PLATFORM(COCOA)
     MESSAGE_CHECK_COMPLETION(m_renderers.contains(identifier), completionHandler({ }));
     contextFor(identifier).layerHostingContextManager.requestHostingContext(WTFMove(completionHandler));
@@ -569,6 +571,62 @@ void RemoteAudioVideoRendererProxyManager::requestHostingContext(RemoteAudioVide
     completionHandler({ });
 #endif
 }
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+void RemoteAudioVideoRendererProxyManager::setLegacyCDMSession(RemoteAudioVideoRendererIdentifier identifier, std::optional<RemoteLegacyCDMSessionIdentifier> instanceId)
+{
+    ALWAYS_LOG(LOGIDENTIFIER, identifier.loggingString());
+
+    RefPtr renderer = rendererFor(identifier);
+    if (!renderer)
+        return;
+
+    if (!instanceId) {
+        renderer->setCDMSession(nullptr);
+        return;
+    }
+    if (RefPtr cdmSession = m_gpuConnectionToWebProcess.get()->protectedLegacyCdmFactoryProxy()->getSession(*instanceId))
+        renderer->setCDMSession(cdmSession->protectedSession().get());
+    else
+        ALWAYS_LOG(LOGIDENTIFIER, "Unable to find LegacyCDMSession: ", instanceId->loggingString());
+}
+#endif
+
+#if ENABLE(ENCRYPTED_MEDIA)
+void RemoteAudioVideoRendererProxyManager::setCDMInstance(RemoteAudioVideoRendererIdentifier identifier, std::optional<RemoteCDMInstanceIdentifier> instanceId)
+{
+    ALWAYS_LOG(LOGIDENTIFIER, identifier.loggingString());
+
+    RefPtr renderer = rendererFor(identifier);
+    if (!renderer)
+        return;
+
+    if (!instanceId) {
+        renderer->setCDMInstance(nullptr);
+        return;
+    }
+    if (RefPtr instanceProxy = m_gpuConnectionToWebProcess.get()->protectedCdmFactoryProxy()->getInstance(*instanceId))
+        renderer->setCDMInstance(&instanceProxy->instance());
+    else
+        ALWAYS_LOG(LOGIDENTIFIER, "Unable to find CDMInstance: ", instanceId->loggingString());
+}
+
+void RemoteAudioVideoRendererProxyManager::setInitData(RemoteAudioVideoRendererIdentifier identifier, Ref<WebCore::SharedBuffer> initData, CompletionHandler<void(Expected<void, WebCore::PlatformMediaError>)>&& completionHandler)
+{
+    ALWAYS_LOG(LOGIDENTIFIER, identifier.loggingString());
+    if (RefPtr renderer = rendererFor(identifier))
+        renderer->setInitData(initData)->whenSettled(RunLoop::mainSingleton(), WTFMove(completionHandler));
+}
+
+void RemoteAudioVideoRendererProxyManager::attemptToDecrypt(RemoteAudioVideoRendererIdentifier identifier)
+{
+    ALWAYS_LOG(LOGIDENTIFIER, identifier.loggingString());
+    if (RefPtr renderer = rendererFor(identifier))
+        renderer->attemptToDecrypt();
+}
+
+#endif
+
 
 #if !RELEASE_LOG_DISABLED
 WTFLogChannel& RemoteAudioVideoRendererProxyManager::logChannel() const

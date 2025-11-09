@@ -262,7 +262,7 @@ TEST(PasteMixedContent, PasteOneOrMoreURLs)
     NSURL *webKitURL = [NSURL URLWithString:@"https://webkit.org/"];
 
     auto webView = setUpWebView();
-    auto runTest = [webView] (NSString *description, NSString *expectedURLString, Function<void(NSPasteboard *)>&& writeURLsToPasteboard) {
+    auto runTest = [webView] (NSString *description, NSString *expectedURLString, void(^writeURLsToPasteboard)(NSPasteboard *)) {
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 
         [pasteboard clearContents];
@@ -344,7 +344,12 @@ bool PasteboardAccessChecker::gDidAccessPasteboard = false;
 
 #endif // PLATFORM(IOS_FAMILY)
 
+// FIXME when rdar://162815356 is resolved.
+#if PLATFORM(MAC)
+TEST(PasteMixedContent, DISABLED_CopyAndPasteWithCustomPasteboardDataOnly)
+#else
 TEST(PasteMixedContent, CopyAndPasteWithCustomPasteboardDataOnly)
+#endif
 {
     NSString *markupForSource = @"<body oncopy=\"event.preventDefault(); event.clipboardData.setData('foo', 'bar')\">hello</body>";
     NSString *markupForDestination = @"<input autofocus onpaste=\"event.preventDefault(); this.value = event.clipboardData.getData('foo')\">";

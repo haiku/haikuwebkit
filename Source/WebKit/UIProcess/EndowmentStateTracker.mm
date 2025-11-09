@@ -146,9 +146,9 @@ void EndowmentStateTracker::setState(State&& state)
 
     m_clients.forEach([&](auto& client) {
         if (isUserFacingChanged)
-            Ref { client }->isUserFacingChanged(m_state->isUserFacing);
+            client.isUserFacingChanged(m_state->isUserFacing);
         if (isVisibleChanged)
-            Ref { client }->isVisibleChanged(m_state->isVisible);
+            client.isVisibleChanged(m_state->isVisible);
     });
 }
 

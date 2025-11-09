@@ -31,6 +31,9 @@ enum class PlatformXR::SessionFeature : uint8_t {
 #if ENABLE(WEBXR_HANDS)
     HandTracking,
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    HitTest,
+#endif
     WebGPU,
 };
 

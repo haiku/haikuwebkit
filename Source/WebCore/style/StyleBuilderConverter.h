@@ -103,7 +103,6 @@
 #include "TextSpacing.h"
 #include "TouchAction.h"
 #include "ViewTimeline.h"
-#include "WillChangeData.h"
 #include <ranges>
 #include <wtf/text/MakeString.h>
 
@@ -118,7 +117,6 @@ public:
     template<typename T, typename... Rest> static T convertStyleType(BuilderState&, const CSSValue&, Rest&&...);
 
     static OptionSet<TextTransform> convertTextTransform(BuilderState&, const CSSValue&);
-    static ImageOrientation convertImageOrientation(BuilderState&, const CSSValue&);
     template<CSSValueID> static AtomString convertCustomIdentAtomOrKeyword(BuilderState&, const CSSValue&);
 
     static OptionSet<TextEmphasisPosition> convertTextEmphasisPosition(BuilderState&, const CSSValue&);
@@ -127,12 +125,8 @@ public:
     static Resize convertResize(BuilderState&, const CSSValue&);
     static OptionSet<TextUnderlinePosition> convertTextUnderlinePosition(BuilderState&, const CSSValue&);
     static OptionSet<LineBoxContain> convertLineBoxContain(BuilderState&, const CSSValue&);
-    // scrollbar-width converter is only needed for quirking.
-    static ScrollbarWidth convertScrollbarWidth(BuilderState&, const CSSValue&);
-    static GridAutoFlow convertGridAutoFlow(BuilderState&, const CSSValue&);
     static OptionSet<TouchAction> convertTouchAction(BuilderState&, const CSSValue&);
 
-    static PaintOrder convertPaintOrder(BuilderState&, const CSSValue&);
     static StyleSelfAlignmentData convertSelfOrDefaultAlignmentData(BuilderState&, const CSSValue&);
     static StyleContentAlignmentData convertContentAlignmentData(BuilderState&, const CSSValue&);
 
@@ -143,11 +137,6 @@ public:
     static OptionSet<Containment> convertContain(BuilderState&, const CSSValue&);
 
     static OptionSet<MarginTrimType> convertMarginTrim(BuilderState&, const CSSValue&);
-
-    static TextSpacingTrim convertTextSpacingTrim(BuilderState&, const CSSValue&);
-    static TextAutospace convertTextAutospace(BuilderState&, const CSSValue&);
-
-    static RefPtr<WillChangeData> convertWillChange(BuilderState&, const CSSValue&);
 
     static std::optional<ScopedName> convertPositionAnchor(BuilderState&, const CSSValue&);
     static std::optional<PositionArea> convertPositionArea(BuilderState&, const CSSValue&);
@@ -171,18 +160,11 @@ inline OptionSet<TextTransform> BuilderConverter::convertTextTransform(BuilderSt
     if (auto* list = dynamicDowncast<CSSValueList>(value)) {
         for (auto& currentValue : *list)
             result.add(fromCSSValue<TextTransform>(currentValue));
+    } else if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
+        if (primitiveValue->valueID() == CSSValueMathAuto)
+            result.add(TextTransform::MathAuto);
     }
     return result;
-}
-
-inline ImageOrientation BuilderConverter::convertImageOrientation(BuilderState& builderState, const CSSValue& value)
-{
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return { };
-    if (primitiveValue->valueID() == CSSValueFromImage)
-        return ImageOrientation::Orientation::FromImage;
-    return ImageOrientation::Orientation::None;
 }
 
 template<CSSValueID keyword> inline AtomString BuilderConverter::convertCustomIdentAtomOrKeyword(BuilderState& builderState, const CSSValue& value)
@@ -399,62 +381,11 @@ inline OptionSet<LineBoxContain> BuilderConverter::convertLineBoxContain(Builder
     return result;
 }
 
-inline ScrollbarWidth BuilderConverter::convertScrollbarWidth(BuilderState& builderState, const CSSValue& value)
-{
-    auto scrollbarWidth = fromCSSValue<ScrollbarWidth>(value);
-    if (scrollbarWidth == ScrollbarWidth::Thin && builderState.document().quirks().needsScrollbarWidthThinDisabledQuirk())
-        return ScrollbarWidth::Auto;
-
-    return scrollbarWidth;
-}
-
-inline GridAutoFlow BuilderConverter::convertGridAutoFlow(BuilderState& builderState, const CSSValue& value)
-{
-    ASSERT(!is<CSSPrimitiveValue>(value) || downcast<CSSPrimitiveValue>(value).isValueID());
-
-    auto* list = dynamicDowncast<CSSValueList>(value);
-    if (list && !list->size())
-        return RenderStyle::initialGridAutoFlow();
-
-    auto* first = requiredDowncast<CSSPrimitiveValue>(builderState, list ? *(list->item(0)) : value);
-    if (!first)
-        return { };
-    auto* second = dynamicDowncast<CSSPrimitiveValue>(list && list->size() == 2 ? list->item(1) : nullptr);
-
-    GridAutoFlow autoFlow;
-    switch (first->valueID()) {
-    case CSSValueRow:
-        if (second && second->valueID() == CSSValueDense)
-            autoFlow = AutoFlowRowDense;
-        else
-            autoFlow = AutoFlowRow;
-        break;
-    case CSSValueColumn:
-        if (second && second->valueID() == CSSValueDense)
-            autoFlow = AutoFlowColumnDense;
-        else
-            autoFlow = AutoFlowColumn;
-        break;
-    case CSSValueDense:
-        if (second && second->valueID() == CSSValueColumn)
-            autoFlow = AutoFlowColumnDense;
-        else
-            autoFlow = AutoFlowRowDense;
-        break;
-    default:
-        ASSERT_NOT_REACHED();
-        autoFlow = RenderStyle::initialGridAutoFlow();
-        break;
-    }
-
-    return autoFlow;
-}
-
 inline float zoomWithTextZoomFactor(BuilderState& builderState)
 {
     if (auto* frame = builderState.document().frame()) {
         float textZoomFactor = builderState.style().textZoom() != TextZoom::Reset ? frame->textZoomFactor() : 1.0f;
-        auto usedZoom = shouldUseEvaluationTimeZoom(builderState) ? 1.0f : builderState.style().usedZoom();
+        auto usedZoom = evaluationTimeZoomEnabled(builderState) ? 1.0f : builderState.style().usedZoom();
         return usedZoom * textZoomFactor;
     }
     return builderState.cssToLengthConversionData().zoom();
@@ -477,30 +408,6 @@ inline OptionSet<TouchAction> BuilderConverter::convertTouchAction(BuilderState&
     }
 
     return RenderStyle::initialTouchActions();
-}
-
-inline PaintOrder BuilderConverter::convertPaintOrder(BuilderState& builderState, const CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNormal);
-        return PaintOrder::Normal;
-    }
-
-    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, value);
-    if (!list)
-        return { };
-
-    switch (list->item(0).valueID()) {
-    case CSSValueFill:
-        return list->size() > 1 ? PaintOrder::FillMarkers : PaintOrder::Fill;
-    case CSSValueStroke:
-        return list->size() > 1 ? PaintOrder::StrokeMarkers : PaintOrder::Stroke;
-    case CSSValueMarkers:
-        return list->size() > 1 ? PaintOrder::MarkersStroke : PaintOrder::Markers;
-    default:
-        ASSERT_NOT_REACHED();
-        return PaintOrder::Normal;
-    }
 }
 
 // Get the "opposite" ItemPosition to the provided ItemPosition.
@@ -565,26 +472,31 @@ inline StyleSelfAlignmentData BuilderConverter::convertSelfOrDefaultAlignmentDat
 
     // Flip the position according to position-try fallback, if specified.
     if (auto positionTryFallback = builderState.positionTryFallback()) {
+        auto writingMode = builderState.style().writingMode();
         for (auto tactic : positionTryFallback->tactics) {
             switch (tactic) {
             case PositionTryFallback::Tactic::FlipBlock:
                 if (builderState.cssPropertyID() == CSSPropertyAlignSelf)
                     alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
                 break;
-
             case PositionTryFallback::Tactic::FlipInline:
                 if (builderState.cssPropertyID() == CSSPropertyJustifySelf)
                     alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
                 break;
-
+            case PositionTryFallback::Tactic::FlipX:
+                if (builderState.cssPropertyID() == (writingMode.isHorizontal() ? CSSPropertyJustifySelf : CSSPropertyAlignSelf))
+                    alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
+                break;
+            case PositionTryFallback::Tactic::FlipY:
+                if (builderState.cssPropertyID() == (writingMode.isHorizontal() ? CSSPropertyAlignSelf : CSSPropertyJustifySelf))
+                    alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
+                break;
             case PositionTryFallback::Tactic::FlipStart:
                 // justify-self additionally takes left/right, align-self doesn't. When
                 // applying flip-start, justify-self gets swapped with align-self. So if
                 // we're resolving justify-self (which later gets swapped with align-self),
                 // and the position is 'left' or 'right', resolve it to self-start/self-end.
                 if (builderState.cssPropertyID() == CSSPropertyJustifySelf) {
-                    auto writingMode = builderState.style().writingMode();
-
                     switch (alignmentData.position()) {
                     case ItemPosition::Left:
                         alignmentData.setPosition(writingMode.bidiDirection() == TextDirection::LTR ? ItemPosition::SelfStart : ItemPosition::SelfEnd);
@@ -677,57 +589,6 @@ inline OptionSet<MarginTrimType> BuilderConverter::convertMarginTrim(BuilderStat
     return marginTrim;
 }
 
-inline TextSpacingTrim BuilderConverter::convertTextSpacingTrim(BuilderState&, const CSSValue& value)
-{
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueSpaceAll:
-            return TextSpacingTrim::TrimType::SpaceAll;
-        case CSSValueTrimAll:
-            return TextSpacingTrim::TrimType::TrimAll;
-        case CSSValueAuto:
-            return TextSpacingTrim::TrimType::Auto;
-        default:
-            ASSERT_NOT_REACHED();
-            break;
-        }
-    }
-    return { };
-}
-
-inline TextAutospace BuilderConverter::convertTextAutospace(BuilderState& builderState, const CSSValue& value)
-{
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        if (primitiveValue->valueID() == CSSValueNoAutospace)
-            return { };
-        if (primitiveValue->valueID() == CSSValueAuto)
-            return { TextAutospace::Type::Auto };
-        if (primitiveValue->valueID() == CSSValueNormal)
-            return { TextAutospace::Type::Normal };
-    }
-
-    TextAutospace::Options options;
-
-    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, value);
-    if (!list)
-        return { };
-
-    for (auto& value : *list) {
-        switch (value.valueID()) {
-        case CSSValueIdeographAlpha:
-            options.add(TextAutospace::Type::IdeographAlpha);
-            break;
-        case CSSValueIdeographNumeric:
-            options.add(TextAutospace::Type::IdeographNumeric);
-            break;
-        default:
-            ASSERT_NOT_REACHED();
-            break;
-        }
-    }
-    return options;
-}
-
 inline OptionSet<Containment> BuilderConverter::convertContain(BuilderState& builderState, const CSSValue& value)
 {
     if (is<CSSPrimitiveValue>(value)) {
@@ -767,40 +628,6 @@ inline OptionSet<Containment> BuilderConverter::convertContain(BuilderState& bui
         };
     }
     return containment;
-}
-
-inline RefPtr<WillChangeData> BuilderConverter::convertWillChange(BuilderState& builderState, const CSSValue& value)
-{
-    if (value.valueID() == CSSValueAuto)
-        return nullptr;
-
-    auto willChange = WillChangeData::create();
-    auto processSingleValue = [&](const CSSValue& item) {
-        auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(item);
-        if (!primitiveValue)
-            return;
-        switch (primitiveValue->valueID()) {
-        case CSSValueScrollPosition:
-            willChange->addFeature(WillChangeData::Feature::ScrollPosition);
-            break;
-        case CSSValueContents:
-            willChange->addFeature(WillChangeData::Feature::Contents);
-            break;
-        default:
-            if (primitiveValue->isPropertyID()) {
-                if (!isExposed(primitiveValue->propertyID(), &builderState.document().settings()))
-                    break;
-                willChange->addFeature(WillChangeData::Feature::Property, primitiveValue->propertyID());
-            }
-            break;
-        }
-    };
-    if (auto* list = dynamicDowncast<CSSValueList>(value)) {
-        for (auto& item : *list)
-            processSingleValue(item);
-    } else
-        processSingleValue(value);
-    return willChange;
 }
 
 inline std::optional<ScopedName> BuilderConverter::convertPositionAnchor(BuilderState& builderState, const CSSValue& value)
@@ -1059,6 +886,29 @@ inline PositionArea flipPositionAreaByLogicalAxis(LogicalBoxAxis flipAxis, Posit
     };
 }
 
+// Flip a PositionArea across a physical axis (x or y), given the current writing mode.
+inline PositionArea flipPositionAreaByPhysicalAxis(BoxAxis flipAxis, PositionArea area, WritingMode writingMode)
+{
+    auto blockOrXSpan = area.blockOrXAxis();
+    auto inlineOrYSpan = area.inlineOrYAxis();
+
+    // blockOrXSpan is on the flip axis, so flip its track and keep inlineOrYSpan intact.
+    if (mapPositionAreaAxisToPhysicalAxis(blockOrXSpan.axis(), writingMode) == flipAxis) {
+        return {
+            { blockOrXSpan.axis(), flipPositionAreaTrack(blockOrXSpan.track()), blockOrXSpan.self() },
+            inlineOrYSpan
+        };
+    }
+
+    // The two spans are orthogonal in axis, so if blockOrXSpan isn't on the flip axis,
+    // inlineOrYSpan must be. In this case, flip the track of inlineOrYSpan, and
+    // keep blockOrXSpan intact.
+    return {
+        blockOrXSpan,
+        { inlineOrYSpan.axis(), flipPositionAreaTrack(inlineOrYSpan.track()), inlineOrYSpan.self() }
+    };
+}
+
 // Flip a PositionArea as specified by flip-start tactic.
 // Intuitively, this mirrors the PositionArea across a diagonal line drawn from the
 // block-start/inline-start corner to the block-end/inline-end corner. This is done
@@ -1129,6 +979,12 @@ inline std::optional<PositionArea> BuilderConverter::convertPositionArea(Builder
                 break;
             case PositionTryFallback::Tactic::FlipInline:
                 area = flipPositionAreaByLogicalAxis(LogicalBoxAxis::Inline, area, builderState.style().writingMode());
+                break;
+            case PositionTryFallback::Tactic::FlipX:
+                area = flipPositionAreaByPhysicalAxis(BoxAxis::Horizontal, area, builderState.style().writingMode());
+                break;
+            case PositionTryFallback::Tactic::FlipY:
+                area = flipPositionAreaByPhysicalAxis(BoxAxis::Vertical, area, builderState.style().writingMode());
                 break;
             case PositionTryFallback::Tactic::FlipStart:
                 area = mirrorPositionAreaAcrossDiagonal(area);

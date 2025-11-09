@@ -111,7 +111,7 @@ public:
             value = nextKey;
             break;
         case IterationKind::Entries:
-            value = createTuple(globalObject, nextKey, nextKey);
+            value = constructArrayPair(globalObject, nextKey, nextKey);
             break;
         }
         return true;

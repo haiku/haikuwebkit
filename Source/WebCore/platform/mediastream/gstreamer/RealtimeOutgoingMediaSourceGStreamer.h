@@ -41,6 +41,9 @@ public:
     using StoppedCallback = Function<void()>;
     void stop(StoppedCallback&&);
 
+    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
+    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
+
     const RefPtr<MediaStreamTrackPrivate>& track() const { return m_track; }
 
     void setMediaStreamID(const String& mediaStreamId) { m_mediaStreamId = mediaStreamId; }

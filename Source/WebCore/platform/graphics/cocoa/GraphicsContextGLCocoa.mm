@@ -300,7 +300,7 @@ bool GraphicsContextGLCocoa::platformInitializeExtensions()
 {
 #if PLATFORM(MAC)
     // For creating the EGL surface from an IOSurface.
-    if (!enableExtension("GL_EXT_texture_format_BGRA8888"_s))
+    if (!enableExtensionsImpl({ "GL_EXT_texture_format_BGRA8888"_s }))
         return false;
 #endif
 #if ENABLE(WEBXR)
@@ -685,19 +685,21 @@ bool GraphicsContextGLCocoa::enableRequiredWebXRExtensions()
 
 bool GraphicsContextGLCocoa::enableRequiredWebXRExtensionsImpl()
 {
-    return enableExtension("GL_ANGLE_framebuffer_multisample"_s)
-        && enableExtension("GL_ANGLE_framebuffer_blit"_s)
-        && enableExtension("GL_EXT_discard_framebuffer"_s)
-        && enableExtension("GL_EXT_sRGB"_s)
-        && enableExtension("GL_OES_EGL_image"_s)
-        && enableExtension("GL_OES_rgb8_rgba8"_s)
+    return enableExtensionsImpl({
+        "GL_ANGLE_framebuffer_multisample"_s,
+        "GL_ANGLE_framebuffer_blit"_s,
+        "GL_EXT_discard_framebuffer"_s,
+        "GL_EXT_sRGB"_s,
+        "GL_OES_EGL_image"_s,
+        "GL_OES_rgb8_rgba8"_s,
 #if !PLATFORM(IOS_FAMILY_SIMULATOR)
-        && enableExtension("GL_ANGLE_variable_rasterization_rate_metal"_s)
+        "GL_ANGLE_variable_rasterization_rate_metal"_s,
 #endif
 #if PLATFORM(VISION)
-        && enableExtension("GL_WEBKIT_explicit_resolve_target"_s)
+        "GL_WEBKIT_explicit_resolve_target"_s,
 #endif
-        && enableExtension("GL_NV_framebuffer_blit"_s);
+        "GL_NV_framebuffer_blit"_s,
+    });
 }
 #endif
 
@@ -833,7 +835,7 @@ void GraphicsContextGLCocoa::invalidateKnownTextureContent(GCGLuint texture)
         m_cv->invalidateKnownTextureContent(texture);
 }
 
-RefPtr<NativeImage> GraphicsContextGLCocoa::bufferAsNativeImage(SurfaceBuffer buffer)
+RefPtr<NativeImage> GraphicsContextGLCocoa::copyNativeImageYFlipped(SurfaceBuffer buffer)
 {
     RetainPtr<CGContextRef> cgContext;
     RefPtr<NativeImage> image;

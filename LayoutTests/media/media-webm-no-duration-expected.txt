@@ -1,5 +1,5 @@
 
-RUN(audio.src = "../../../media/content/test-no-duration.webm")
+RUN(audio.src = "content/test-no-duration.webm")
 EVENT(canplay)
 RUN(promise = audio.play())
 Promise resolved OK

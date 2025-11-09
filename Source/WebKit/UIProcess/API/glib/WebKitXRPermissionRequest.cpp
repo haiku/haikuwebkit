@@ -51,6 +51,10 @@ static PlatformXR::Device::FeatureList toFeatureList(WebKitXRSessionFeatures fea
     if (features & WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING)
         result.append(PlatformXR::SessionFeature::HandTracking);
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    if (features & WEBKIT_XR_SESSION_FEATURES_HIT_TEST)
+        result.append(PlatformXR::SessionFeature::HitTest);
+#endif
     return result;
 }
 #endif // ENABLE(WEBXR)
@@ -364,6 +368,11 @@ static WebKitXRSessionFeatures toWebKitXRSessionFeatures(const PlatformXR::Devic
 #if ENABLE(WEBXR_HANDS)
         case PlatformXR::SessionFeature::HandTracking:
             result |= WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING;
+            break;
+#endif
+#if ENABLE(WEBXR_HIT_TEST)
+        case PlatformXR::SessionFeature::HitTest:
+            result |= WEBKIT_XR_SESSION_FEATURES_HIT_TEST;
             break;
 #endif
         default:

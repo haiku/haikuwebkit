@@ -1079,7 +1079,7 @@
     {"access": "public", "introduced": "18", "kind": "variable", "linkage": "exported", "name": "_kCGUseBT1886ForCoreVideoGamma"},
     {"access": "public", "introduced": "18.1", "kind": "variable", "linkage": "exported", "name": "_kCGUseLegacyHDREcosystem"}
    ],
-   "target": "arm64e-apple-ios26",
+   "target": "arm64e-apple-ios26.1",
    "typedefs": [
     {"access": "public", "name": "CGBitmapContextReleaseDataCallback"},
     {"access": "public", "name": "CGBitmapInfo"},
@@ -1698,7 +1698,7 @@
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_CGVectorNearlyEqualToVector"},
     {"access": "public", "introduced": "26", "linkage": "exported", "name": "_CGVectorNearlyEqualToVectorWithTolerance"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

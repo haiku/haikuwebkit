@@ -122,13 +122,13 @@ static Vector<Cookie> nsCookiesToCookieVector(NSArray<NSHTTPCookie *> *nsCookies
 Vector<Cookie> NetworkStorageSession::getAllCookies()
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
-    return nsCookiesToCookieVector([nsCookieStorage() cookies]);
+    return nsCookiesToCookieVector(retainPtr([nsCookieStorage() cookies]).get());
 }
 
 Vector<Cookie> NetworkStorageSession::getCookies(const URL& url)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
-    return nsCookiesToCookieVector([nsCookieStorage() cookiesForURL:url.createNSURL().get()]);
+    return nsCookiesToCookieVector(retainPtr([nsCookieStorage() cookiesForURL:url.createNSURL().get()]).get());
 }
 
 void NetworkStorageSession::hasCookies(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler) const
@@ -521,7 +521,7 @@ static RetainPtr<NSHTTPCookie> parseDOMCookie(String cookieString, NSURL* cookie
     // cookiesWithResponseHeaderFields doesn't parse cookies without a value
     cookieString = cookieString.contains('=') ? cookieString : makeString(cookieString, '=');
 
-    return adjustScriptWrittenCookie([NSHTTPCookie _cookieForSetCookieString:cookieString.createNSString().get() forURL:cookieURL partition:RetainPtr { nsStringNilIfEmpty(partition) }.get()], cappedLifetime);
+    return adjustScriptWrittenCookie([NSHTTPCookie _cookieForSetCookieString:cookieString.createNSString().get() forURL:cookieURL partition:nsStringNilIfEmpty(partition).get()], cappedLifetime);
 }
 
 void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, RequiresScriptTrackingPrivacy requiresScriptTrackingPrivacy, const String& cookieString, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking, IsKnownCrossSiteTracker isKnownCrossSiteTracker) const
@@ -548,7 +548,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
     if (!cookie)
         return;
 
-    setHTTPCookiesForURL(cookieStorage().get(), @[cookie.get()], cookieURL.get(), firstParty.createNSURL().get(), RetainPtr { nsStringNilIfEmpty(partitionKey) }.get(), sameSiteInfo, thirdPartyCookieBlockingDecision);
+    setHTTPCookiesForURL(cookieStorage().get(), @[cookie.get()], cookieURL.get(), firstParty.createNSURL().get(), nsStringNilIfEmpty(partitionKey).get(), sameSiteInfo, thirdPartyCookieBlockingDecision);
 
     END_BLOCK_OBJC_EXCEPTIONS
 }
@@ -569,12 +569,12 @@ bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSi
         return false;
 
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES) && defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) && CFN_COOKIE_ACCEPTS_POLICY_PARTITION
-    NSString *partition = isOptInCookiePartitioningEnabled() ? nsStringNilIfEmpty(cookiePartitionIdentifier(firstParty)) : nil;
+    RetainPtr partition = isOptInCookiePartitioningEnabled() ? nsStringNilIfEmpty(cookiePartitionIdentifier(firstParty)) : nil;
 #else
-    NSString *partition = nil;
+    RetainPtr<NSString> partition;
 #endif
 
-    setHTTPCookiesForURL(cookieStorage().get(), @[ nshttpCookie.get() ], url.createNSURL().get(), firstParty.createNSURL().get(), partition, sameSiteInfo, thirdPartyCookieBlockingDecision);
+    setHTTPCookiesForURL(cookieStorage().get(), @[ nshttpCookie.get() ], url.createNSURL().get(), firstParty.createNSURL().get(), partition.get(), sameSiteInfo, thirdPartyCookieBlockingDecision);
     return true;
 
     END_BLOCK_OBJC_EXCEPTIONS
@@ -726,7 +726,7 @@ void NetworkStorageSession::deleteCookiesForHostnames(const Vector<String>& host
         if (!cookie.domain || (includeHttpOnlyCookies == IncludeHttpOnlyCookies::No && cookie.isHTTPOnly))
             return false;
 #if ENABLE(JS_COOKIE_CHECKING)
-        bool setInJS = [[cookie properties] valueForKey:@"SetInJavaScript"];
+        bool setInJS = [retainPtr([cookie properties]) valueForKey:@"SetInJavaScript"];
         if (scriptWrittenCookiesOnly == ScriptWrittenCookiesOnly::Yes && !setInJS)
             return false;
 #else

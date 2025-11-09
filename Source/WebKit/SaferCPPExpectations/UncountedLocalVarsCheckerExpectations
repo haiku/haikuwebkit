@@ -1,5 +1,3 @@
-WebProcess/InjectedBundle/API/c/WKBundlePage.cpp
-WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] GPUProcess/media/RemoteAudioSessionProxyManager.cpp
 [ iOS ] NetworkProcess/cocoa/NetworkSessionCocoa.mm
 [ iOS ] Shared/ApplePay/ios/WebPaymentCoordinatorProxyIOS.mm
@@ -27,6 +25,7 @@ WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
 [ iOS ] WebProcess/GPU/graphics/RemoteGraphicsContextProxy.cpp
+WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] WebProcess/Network/NetworkProcessConnection.cpp
 [ iOS ] WebProcess/Plugins/PDF/WKAccessibilityPDFDocumentObject.mm
 [ iOS ] WebProcess/WebCoreSupport/WebLocalFrameLoaderClient.cpp

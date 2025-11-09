@@ -649,17 +649,6 @@ TextStream& operator<<(TextStream& ts, UsedFloat floating)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, GridAutoFlow gridAutoFlow)
-{
-    switch (gridAutoFlow) {
-    case AutoFlowRow: ts << "row"_s; break;
-    case AutoFlowColumn: ts << "column"_s; break;
-    case AutoFlowRowDense: ts << "row-dense"_s; break;
-    case AutoFlowColumnDense: ts << "column-dense"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, HangingPunctuation punctuation)
 {
     switch (punctuation) {
@@ -920,20 +909,6 @@ TextStream& operator<<(TextStream& ts, OverflowWrap overflowWrap)
     case OverflowWrap::Normal: ts << "normal"_s; break;
     case OverflowWrap::BreakWord: ts << "break-word"_s; break;
     case OverflowWrap::Anywhere: ts << "anywhere"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, PaintOrder paintOrder)
-{
-    switch (paintOrder) {
-    case PaintOrder::Normal: ts << "normal"_s; break;
-    case PaintOrder::Fill: ts << "fill"_s; break;
-    case PaintOrder::FillMarkers: ts << "fill markers"_s; break;
-    case PaintOrder::Stroke: ts << "stroke"_s; break;
-    case PaintOrder::StrokeMarkers: ts << "stroke markers"_s; break;
-    case PaintOrder::Markers: ts << "markers"_s; break;
-    case PaintOrder::MarkersStroke: ts << "markers stroke"_s; break;
     }
     return ts;
 }
@@ -1313,6 +1288,7 @@ TextStream& operator<<(TextStream& ts, TextTransform textTransform)
     case TextTransform::Lowercase: ts << "lowercase"_s; break;
     case TextTransform::FullSizeKana: ts << "full-size-kana"_s; break;
     case TextTransform::FullWidth: ts << "full-width"_s; break;
+    case TextTransform::MathAuto: ts << "math-auto"_s; break;
     }
     return ts;
 }

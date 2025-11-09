@@ -293,6 +293,8 @@ public:
     void getPaymentCoordinatorEmbeddingUserAgent(WebPageProxyIdentifier, CompletionHandler<void(const String&)>&&);
 #endif
 
+    void isStorageSuspendedForTesting(PAL::SessionID, CompletionHandler<void(bool)>&&);
+
     // ProcessThrottlerClient
     void sendPrepareToSuspend(IsSuspensionImminent, double remainingRunTime, CompletionHandler<void()>&&) final;
     void updateBundleIdentifier(const String&, CompletionHandler<void()>&&);

@@ -521,6 +521,7 @@ public:
 
     void setStorageAccessPermissionForTesting(bool, WebPageProxyIdentifier, const String& topFrameDomain, const String& subFrameDomain, CompletionHandler<void()>&&);
     void clearStorageAccessForTesting(CompletionHandler<void()>&&);
+    void isStorageSuspendedForTesting(CompletionHandler<void(bool)>&&) const;
 
 private:
     enum class ForceReinitialization : bool { No, Yes };
@@ -581,6 +582,8 @@ private:
 
     HashSet<WebCore::ProcessIdentifier> activeWebProcesses() const;
     void removeDataInNetworkProcess(WebsiteDataStore::ProcessAccessType, OptionSet<WebsiteDataType>, WallTime, CompletionHandler<void()>&&);
+
+    HashSet<WebCore::RegistrableDomain> platformAdditionalDomainsWithUserInteraction() const;
 
     const PAL::SessionID m_sessionID;
 

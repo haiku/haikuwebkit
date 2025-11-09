@@ -102,6 +102,7 @@ extern "C" {
     M(DragAndDrop) \
     M(EME) \
     M(Extensions) \
+    M(FrameTree) \
     M(Fullscreen) \
     M(Gamepad) \
     M(IPC) \

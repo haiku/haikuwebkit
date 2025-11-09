@@ -95,11 +95,12 @@ Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context)
 {
 }
 
-Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context, const String& pasteboardName, const Vector<String>& promisedFilePaths)
+Pasteboard::Pasteboard(std::unique_ptr<PasteboardContext>&& context, const String& pasteboardName, const Vector<String>& promisedFilePaths, const Vector<String>& promisedFileMIMETypes)
     : m_context(WTFMove(context))
     , m_pasteboardName(pasteboardName)
     , m_changeCount(platformStrategies()->pasteboardStrategy()->changeCount(m_pasteboardName, m_context.get()))
     , m_promisedFilePaths(promisedFilePaths)
+    , m_promisedFileMIMETypes(promisedFileMIMETypes)
 {
     ASSERT(pasteboardName);
 }
@@ -122,7 +123,7 @@ std::unique_ptr<Pasteboard> Pasteboard::createForDragAndDrop(std::unique_ptr<Pas
 
 std::unique_ptr<Pasteboard> Pasteboard::create(const DragData& dragData)
 {
-    return makeUnique<Pasteboard>(dragData.createPasteboardContext(), dragData.pasteboardName(), dragData.fileNames());
+    return makeUnique<Pasteboard>(dragData.createPasteboardContext(), dragData.pasteboardName(), dragData.fileNames(), dragData.promisedFileMIMETypes());
 }
 #endif
 
@@ -268,11 +269,11 @@ static void writeFileWrapperAsRTFDAttachment(NSFileWrapper *wrapper, const Strin
 {
     RetainPtr string = [NSAttributedString attributedStringWithAttachment:adoptNS([[NSTextAttachment alloc] initWithFileWrapper:wrapper]).get()];
 
-    NSData *RTFDData = [string RTFDFromRange:NSMakeRange(0, [string length]) documentAttributes:@{ }];
+    RetainPtr<NSData> RTFDData = [string RTFDFromRange:NSMakeRange(0, [string length]) documentAttributes:@{ }];
     if (!RTFDData)
         return;
 
-    newChangeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(SharedBuffer::create(RTFDData).ptr(), legacyRTFDPasteboardTypeSingleton(), pasteboardName, context);
+    newChangeCount = platformStrategies()->pasteboardStrategy()->setBufferForType(SharedBuffer::create(RTFDData.get()).ptr(), legacyRTFDPasteboardTypeSingleton(), pasteboardName, context);
 }
 
 void Pasteboard::write(const PasteboardImage& pasteboardImage)
@@ -754,9 +755,9 @@ static void setDragImageImpl(NSImage *image, NSPoint offset)
     NSSize imageSize = image.size;
     CGRect imageRect = CGRectMake(0, 0, imageSize.width, imageSize.height);
     NSRect convertedRect = NSRectFromCGRect(imageRect);
-    NSImageRep *imageRep = [image bestRepresentationForRect:convertedRect context:nil hints:nil];
+    RetainPtr<NSImageRep> imageRep = [image bestRepresentationForRect:convertedRect context:nil hints:nil];
     RetainPtr<NSBitmapImageRep> bitmapImage;
-    if (!imageRep || ![imageRep isKindOfClass:[NSBitmapImageRep class]] || !NSEqualSizes(imageRep.size, imageSize)) {
+    if (!imageRep || ![imageRep isKindOfClass:[NSBitmapImageRep class]] || !NSEqualSizes(imageRep.get().size, imageSize)) {
         [image lockFocus];
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         bitmapImage = adoptNS([[NSBitmapImageRep alloc] initWithFocusedViewRect:convertedRect]);
@@ -770,7 +771,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 ALLOW_DEPRECATED_DECLARATIONS_END
     } else {
         flipImage = false;
-        bitmapImage = checked_objc_cast<NSBitmapImageRep>(imageRep);
+        bitmapImage = checked_objc_cast<NSBitmapImageRep>(imageRep.get());
     }
     ASSERT(bitmapImage);
 

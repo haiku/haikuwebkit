@@ -146,8 +146,8 @@ SOFT_LINK_CONSTANT(CoreLocation, kCLLocationAccuracyHundredMeters, double)
         return;
     }
 
-    NSString *errorMessage = [error localizedDescription];
-    _client->errorOccurred(_websiteIdentifier, errorMessage);
+    RetainPtr<NSString> errorMessage = [error localizedDescription];
+    _client->errorOccurred(_websiteIdentifier, errorMessage.get());
 }
 
 @end

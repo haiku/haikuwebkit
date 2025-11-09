@@ -149,7 +149,7 @@ private:
     HashSet<RefPtr<CSSFontFace>> m_cssConnectionsPossiblyToRemove;
     HashSet<RefPtr<StyleRuleFontFace>> m_cssConnectionsEncounteredDuringBuild;
 
-    CSSFontFaceSet::FontModifiedObserver m_fontModifiedObserver;
+    const Ref<CSSFontFaceSet::FontModifiedObserver> m_fontModifiedObserver;
 
     unsigned m_uniqueId;
     unsigned m_version;

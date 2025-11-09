@@ -111,7 +111,7 @@ static RetainPtr<NSString> nameForFileURLWithTypeIdentifier(NSURL *url, NSString
         return localizedName;
     }
 
-    return [[NSFileManager defaultManager] displayNameAtPath:url.path];
+    return [[NSFileManager defaultManager] displayNameAtPath:retainPtr(url.path).get()];
 }
 
 static RetainPtr<LPLinkMetadata> placeholderMetadataWithFileURL(NSURL *url)
@@ -368,7 +368,7 @@ static void appendFilesAsShareableURLs(RetainPtr<NSMutableArray>&& shareDataArra
     else {
         NSPoint location = [NSEvent mouseLocation];
         NSRect mouseLocationRect = NSMakeRect(location.x, location.y, 1.0, 1.0);
-        NSRect mouseLocationInWindow = [webView.get().window convertRectFromScreen:mouseLocationRect];
+        NSRect mouseLocationInWindow = [retainPtr(webView.get().window) convertRectFromScreen:mouseLocationRect];
         presentationRect = [webView convertRect:mouseLocationInWindow fromView:nil];
     }
 

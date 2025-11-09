@@ -244,7 +244,7 @@ void ResourceUsageOverlay::platformInitialize()
         // FIXME: It shouldn't be necessary to update the bounds on every single thread loop iteration,
         // but something is causing them to become 0x0.
         [CATransaction begin];
-        CALayer *containerLayer = [m_layer superlayer];
+        RetainPtr<CALayer> containerLayer = [m_layer superlayer];
         CGRect rect = CGRectMake(0, 0, ResourceUsageOverlay::normalWidth, ResourceUsageOverlay::normalHeight);
         [m_layer setBounds:rect];
         [containerLayer setBounds:rect];

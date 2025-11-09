@@ -96,7 +96,7 @@ void WebPopupMenuProxyMac::populate(const Vector<WebPopupItem>& items, NSFont *f
             [menuItem setAttributedTitle:string.get()];
             // We set the title as well as the attributed title here. The attributed title will be displayed in the menu,
             // but typeahead will use the non-attributed string that doesn't contain any leading or trailing whitespace.
-            [menuItem setTitle:[[string string] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
+            [menuItem setTitle:[retainPtr([string string]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
             [menuItem setEnabled:items[i].m_isEnabled];
             [menuItem setToolTip:items[i].m_toolTip.createNSString().get()];
         }
@@ -214,7 +214,7 @@ void WebPopupMenuProxyMac::showPopupMenu(const IntRect& rect, TextDirection text
 
     [NSApp postEvent:fakeEvent.get() atStart:YES];
     fakeEvent = [NSEvent mouseEventWithType:NSEventTypeMouseMoved
-                                   location:[[m_webView.get() window] convertPointFromScreen:[NSEvent mouseLocation]]
+                                   location:[retainPtr([m_webView.get() window]) convertPointFromScreen:[NSEvent mouseLocation]]
                               modifierFlags:[initiatingNSEvent modifierFlags]
                                   timestamp:[initiatingNSEvent timestamp]
                                windowNumber:[initiatingNSEvent windowNumber]

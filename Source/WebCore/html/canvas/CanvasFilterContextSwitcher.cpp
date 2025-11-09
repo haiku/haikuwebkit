@@ -65,7 +65,7 @@ CanvasFilterContextSwitcher::CanvasFilterContextSwitcher(CanvasRenderingContext2
 
 CanvasFilterContextSwitcher::~CanvasFilterContextSwitcher()
 {
-    protectedContext()->restore();
+    context()->restore();
 }
 
 FloatRect CanvasFilterContextSwitcher::expandedBounds() const

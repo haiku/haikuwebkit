@@ -250,7 +250,7 @@ using JSC::Yarr::RegularExpression;
 
 - (NSString *)title
 {
-    return nsStringNilIfEmpty([_private->dataSource _documentLoader]->title().string);
+    return nsStringNilIfEmpty([_private->dataSource _documentLoader]->title().string).autorelease();
 }
 
 - (DOMDocument *)DOMDocument

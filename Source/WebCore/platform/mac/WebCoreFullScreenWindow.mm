@@ -78,26 +78,26 @@
 
 - (void)cancelOperation:(id)sender
 {
-    [[self windowController] cancelOperation:sender];
+    [retainPtr([self windowController]) cancelOperation:sender];
 }
 
 - (void)performClose:(id)sender
 {
-    [[self windowController] performClose:sender];
+    [retainPtr([self windowController]) performClose:sender];
 }
 
 - (void)setStyleMask:(NSUInteger)styleMask
 {
     // Changing the styleMask of a NSWindow can reset the firstResponder if the frame view changes,
     // so save off the existing one, and restore it if necessary after the call to -setStyleMask:.
-    NSResponder* savedFirstResponder = [self firstResponder];
+    RetainPtr<NSResponder> savedFirstResponder = [self firstResponder];
 
     [super setStyleMask:styleMask];
 
     if ([self firstResponder] != savedFirstResponder
         && [savedFirstResponder isKindOfClass:[NSView class]]
-        && [checked_objc_cast<NSView>(savedFirstResponder) isDescendantOf:[self contentView]])
-        [self makeFirstResponder:savedFirstResponder];
+        && [checked_objc_cast<NSView>(savedFirstResponder.get()) isDescendantOf:retainPtr([self contentView]).get()])
+        [self makeFirstResponder:savedFirstResponder.get()];
 }
 @end
 

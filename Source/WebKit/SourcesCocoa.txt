@@ -166,11 +166,7 @@ Shared/Authentication/cocoa/ClientCertificateAuthenticationXPCConstants.cpp
 Shared/EntryPointUtilities/Cocoa/Daemon/PCMDaemonConnectionSet.mm @nonARC
 Shared/EntryPointUtilities/Cocoa/Daemon/PCMDaemonEntryPoint.mm @nonARC
 
-Shared/Extensions/_WKWebExtensionRegisteredScriptsSQLiteStore.mm
-Shared/Extensions/_WKWebExtensionSQLiteDatabase.mm
-Shared/Extensions/_WKWebExtensionSQLiteRow.mm
-Shared/Extensions/_WKWebExtensionSQLiteStatement.mm
-Shared/Extensions/_WKWebExtensionSQLiteStore.mm
+Shared/Extensions/WebExtensionRegisteredScriptsSQLiteStoreCocoa.mm
 Shared/Extensions/WebExtensionUtilities.mm
 
 Shared/Extensions/Cocoa/WebExtensionFrameIdentifierCocoa.mm @nonARC
@@ -310,6 +306,7 @@ UIProcess/API/Cocoa/_WKResourceLoadInfo.mm @nonARC
 UIProcess/API/Cocoa/_WKSerializedNode.mm @nonARC
 UIProcess/API/Cocoa/_WKSessionState.mm @nonARC
 UIProcess/API/Cocoa/_WKSpatialBackdropSource.mm @nonARC
+UIProcess/API/Cocoa/_WKStringMatcher.mm @nonARC
 UIProcess/API/Cocoa/_WKSystemPreferences.mm @nonARC
 UIProcess/API/Cocoa/_WKTargetedElementInfo.mm @nonARC
 UIProcess/API/Cocoa/_WKTargetedElementRequest.mm @nonARC
@@ -677,6 +674,8 @@ UIProcess/RemoteLayerTree/ios/ScrollingTreeScrollingNodeDelegateIOS.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteAnimation.cpp
 UIProcess/RemoteLayerTree/RemoteAnimationStack.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteAnimationTimeline.cpp
+UIProcess/RemoteLayerTree/RemoteMonotonicTimeline.cpp
+UIProcess/RemoteLayerTree/RemoteMonotonicTimelineRegistry.cpp
 UIProcess/RemoteLayerTree/RemoteLayerTreeDrawingAreaProxy.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteLayerTreeHost.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteLayerTreeInteractionRegionLayers.mm @nonARC
@@ -684,6 +683,8 @@ UIProcess/RemoteLayerTree/RemoteLayerTreeNode.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteLayerTreeScrollingPerformanceData.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteScrollingCoordinatorProxy.cpp
 UIProcess/RemoteLayerTree/RemoteScrollingTree.cpp
+UIProcess/RemoteLayerTree/RemoteProgressBasedTimeline.cpp
+UIProcess/RemoteLayerTree/RemoteProgressBasedTimelineRegistry.cpp
 
 UIProcess/WebAuthentication/Cocoa/AuthenticationServicesCoreSoftLink.mm @nonARC @no-unify
 UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.mm @nonARC
@@ -849,6 +850,9 @@ WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm @nonARC
 WebProcess/WebCoreSupport/WebCaptionPreferencesDelegate.cpp
 WebProcess/WebCoreSupport/WebValidationMessageClient.cpp
 
+WebProcess/WebCoreSupport/cocoa/WebChromeClientCocoa.mm @nonARC
+WebProcess/WebCoreSupport/cocoa/WebLocalFrameLoaderClientCocoa.mm @nonARC
+
 WebProcess/WebCoreSupport/ios/WebChromeClientIOS.mm @nonARC
 WebProcess/WebCoreSupport/ios/WebEditorClientIOS.mm @nonARC
 WebProcess/WebCoreSupport/ios/WebLocalFrameLoaderClientIOS.mm @nonARC
@@ -967,6 +971,8 @@ RemoteMediaSessionCoordinatorMessageReceiver.cpp
 RemoteMediaSessionCoordinatorProxyMessageReceiver.cpp
 RemoteMediaSessionHelperMessageReceiver.cpp
 RemoteMediaSessionHelperProxyMessageReceiver.cpp
+RemoteMediaSessionManagerMessageReceiver.cpp
+RemoteMediaSessionManagerProxyMessageReceiver.cpp
 RemoteMediaSourceProxyMessageReceiver.cpp
 RemoteObjectRegistryMessageReceiver.cpp
 RemoteRemoteCommandListenerMessageReceiver.cpp
@@ -1016,6 +1022,7 @@ WebFullScreenManagerProxyMessageReceiver.cpp
 WebGeolocationManagerMessageReceiver.cpp
 WebGeolocationManagerProxyMessageReceiver.cpp
 WebIDBConnectionToServerMessageReceiver.cpp
+WasmDebuggerDispatcherMessageReceiver.cpp
 WebInspectorInterruptDispatcherMessageReceiver.cpp
 WebInspectorMessageReceiver.cpp
 WebInspectorUIExtensionControllerMessageReceiver.cpp

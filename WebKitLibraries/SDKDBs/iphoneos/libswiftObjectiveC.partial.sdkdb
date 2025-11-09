@@ -83,7 +83,7 @@
     {"access": "public", "introduced": "1", "linkage": "exported", "name": "_$sSo8NSObjectCSQ10ObjectiveCMc"},
     {"access": "public", "introduced": "1", "linkage": "exported", "name": "_$sSo8NSObjectCs7CVarArg10ObjectiveCMc"}
    ],
-   "target": "arm64e-apple-ios26.0"
+   "target": "arm64e-apple-ios26.1"
   }
  ],
  "version": "1.0"

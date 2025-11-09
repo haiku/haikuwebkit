@@ -77,7 +77,8 @@ LibWebRTCSctpTransportBackendObserver::LibWebRTCSctpTransportBackendObserver(RTC
 
 void LibWebRTCSctpTransportBackendObserver::updateState(webrtc::SctpTransportInformation&& info)
 {
-    if (!m_client)
+    RefPtr client = m_client.get();
+    if (!client)
         return;
 
     std::optional<unsigned short> maxChannels;
@@ -86,7 +87,7 @@ void LibWebRTCSctpTransportBackendObserver::updateState(webrtc::SctpTransportInf
     std::optional<double> maxMessageSize;
     if (info.MaxMessageSize())
         maxMessageSize = *info.MaxMessageSize();
-    m_client->onStateChanged(toRTCSctpTransportState(info.state()), maxMessageSize, maxChannels);
+    client->onStateChanged(toRTCSctpTransportState(info.state()), maxMessageSize, maxChannels);
 }
 
 void LibWebRTCSctpTransportBackendObserver::start()

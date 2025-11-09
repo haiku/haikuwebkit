@@ -794,9 +794,6 @@ public:
         return InvalidGPRReg;
     }
 
-    template<auto operation>
-    static constexpr GPRReg operationExceptionRegister() { return operationExceptionRegister<OperationReturnType<typename FunctionTraits<decltype(operation)>::ResultType>>(); }
-
     void prepareForTailCallSlow(RegisterSet preserved = { })
     {
         GPRReg temp1 = selectScratchGPR(preserved);

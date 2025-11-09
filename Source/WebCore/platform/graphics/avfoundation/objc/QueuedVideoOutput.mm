@@ -103,9 +103,8 @@ SPECIALIZE_TYPE_TRAITS_END()
     if (![keyPath isEqualToString:@"rate"])
         return;
 
-    auto rateValue = (NSNumber*)[change valueForKey:NSKeyValueChangeNewKey];
-    ASSERT([rateValue isKindOfClass:NSNumber.class]);
-    auto rate = rateValue.floatValue;
+    RetainPtr rateValue = checked_objc_cast<NSNumber>([change valueForKey:NSKeyValueChangeNewKey]);
+    auto rate = rateValue.get().floatValue;
 
     ensureOnMainRunLoop([parent = _parent, rate] {
         if (parent)

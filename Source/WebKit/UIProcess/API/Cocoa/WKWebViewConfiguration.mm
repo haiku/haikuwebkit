@@ -329,9 +329,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    WKWebViewConfiguration *configuration = [(WKWebViewConfiguration *)[[self class] allocWithZone:zone] init];
+    RetainPtr configuration = adoptNS([(WKWebViewConfiguration *)[[self class] allocWithZone:zone] init]);
     [configuration _protectedPageConfiguration]->copyDataFrom(self._protectedPageConfiguration);
-    return configuration;
+    return configuration.leakRef();
 }
 
 - (void)setValue:(id)value forKey:(NSString *)key
@@ -539,12 +539,12 @@ static NSString *defaultApplicationNameForUserAgent()
 
 - (NSString *)_applicationNameForDesktopUserAgent
 {
-    return nsStringNilIfNull(_pageConfiguration->applicationNameForUserAgent().value_or(String()));
+    return nsStringNilIfNull(_pageConfiguration->applicationNameForUserAgent().value_or(String())).autorelease();
 }
 
 - (NSString *)applicationNameForUserAgent
 {
-    return nsStringNilIfNull(_pageConfiguration->applicationNameForUserAgent().value_or(defaultApplicationNameForUserAgent()));
+    return nsStringNilIfNull(_pageConfiguration->applicationNameForUserAgent().value_or(defaultApplicationNameForUserAgent())).autorelease();
 }
 
 - (void)setApplicationNameForUserAgent:(NSString *)applicationNameForUserAgent
@@ -667,7 +667,7 @@ static NSString *defaultApplicationNameForUserAgent()
 
 - (void)_setAllowPostingLegacySynchronousMessages:(BOOL)allow
 {
-    RetainPtr bundleID = (__bridge NSString *)CFBundleGetIdentifier(CFBundleGetMainBundle());
+    RetainPtr bundleID = (__bridge NSString *)CFBundleGetIdentifier(RetainPtr { CFBundleGetMainBundle() }.get());
     RELEASE_ASSERT([bundleID isEqualToString:@"com.apple.WebKit.TestWebKitAPI"]
 #if PLATFORM(MAC)
         || [bundleID isEqualToString:@"com.apple.TV"]
@@ -714,7 +714,7 @@ static NSString *defaultApplicationNameForUserAgent()
 
 - (NSString *)_groupIdentifier
 {
-    return nsStringNilIfNull(_pageConfiguration->groupIdentifier());
+    return nsStringNilIfNull(_pageConfiguration->groupIdentifier()).autorelease();
 }
 
 - (void)_setGroupIdentifier:(NSString *)groupIdentifier

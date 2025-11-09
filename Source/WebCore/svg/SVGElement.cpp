@@ -319,7 +319,7 @@ SVGElement* SVGElement::correspondingElement() const
     return m_svgRareData ? m_svgRareData->correspondingElement() : nullptr;
 }
 
-RefPtr<SVGUseElement> SVGElement::correspondingUseElement() const
+SVGUseElement* SVGElement::correspondingUseElement() const
 {
     SUPPRESS_UNCOUNTED_LOCAL auto* root = containingShadowRoot();
     if (!root)

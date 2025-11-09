@@ -1,4 +1,4 @@
-//@ runDefault("--useDollarVM=1", "--jitPolicyScale=0.1")
+//@ runDefaultWasm("--useDollarVM=1", "--jitPolicyScale=0.1")
 function instantiate(moduleBase64, importObject) {
  bytes = Uint8Array.fromBase64(moduleBase64);
  return WebAssembly.instantiate(bytes, importObject);
@@ -32,4 +32,3 @@ try {
 }
 })().then(() => {
 })
-

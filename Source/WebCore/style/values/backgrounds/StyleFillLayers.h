@@ -93,6 +93,8 @@ template<typename T> struct FillLayers {
         return *this;
     }
 
+    bool isNone() const { return isEmpty() || (size() == 1 && first().image().isNone()); }
+
     void computeClipMax() const;
 
     bool imagesAreLoaded(const RenderElement*) const;

@@ -34,9 +34,9 @@ const zoomFactor = 2;
 
 function drag(startX, startY, destX, destY) {
     const actions = new test_driver.Actions()
-        .pointerMove((startX - 1) * 2, (startY - 1) * 2)
+        .pointerMove((startX - 1) * zoomFactor, (startY - 1) * zoomFactor)
         .pointerDown()
-        .pointerMove((destX - 1) * 2, (destY - 1) * 2)
+        .pointerMove((destX - 1) * zoomFactor, (destY - 1) * zoomFactor)
         .pointerUp();
     return actions.send();
 }
@@ -46,8 +46,8 @@ promise_test(async () => {
     const startX = box.getBoundingClientRect().right;
     const startY = box.getBoundingClientRect().bottom;
     await drag(startX, startY, startX - 150, startY - 150);
-    assert_equals(box.style.width, "100px");
-    assert_equals(box.style.height, "100px");
+    assert_equals(box.getBoundingClientRect().width, 100 * zoomFactor * zoomFactor);
+    assert_equals(box.getBoundingClientRect().height, 100 * zoomFactor * zoomFactor);
 }, "Test for resizing the box below the minimum size set in zoomed environment.");
 </script>
 </body>

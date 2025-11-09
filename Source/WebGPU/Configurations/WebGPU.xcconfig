@@ -143,3 +143,8 @@ EXCLUDED_SOURCE_FILE_NAMES_ = *.swift;
 
 BUILD_LIBRARY_FOR_DISTRIBUTION = YES; // This is required for all frameworks in the OS.
 RUN_SWIFT_ABI_CHECKER_TOOL = NO
+
+// When back-deploying for STP and downlevel builds, force Xcode to embed any
+// compatibility runtimes alongside WebKit.framework.
+ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = $(WK_USE_OVERRIDE_FRAMEWORKS_DIR);
+SWIFT_STDLIB_TOOL_DESTINATION_DIR = $(DSTROOT)$(WK_OVERRIDE_FRAMEWORKS_DIR);

@@ -114,8 +114,8 @@ void MultiGamepadProvider::platformGamepadConnected(PlatformGamepad& gamepad, Ev
     ASSERT(addResult.isNewEntry);
     m_gamepadVector[index] = addResult.iterator->value.get();
 
-    for (auto& client : m_clients)
-        client.platformGamepadConnected(*m_gamepadVector[index], eventVisibility);
+    for (Ref client : m_clients)
+        client->platformGamepadConnected(*m_gamepadVector[index], eventVisibility);
 }
 
 void MultiGamepadProvider::platformGamepadDisconnected(PlatformGamepad& gamepad)
@@ -130,8 +130,8 @@ void MultiGamepadProvider::platformGamepadDisconnected(PlatformGamepad& gamepad)
 
     m_gamepadVector[gamepadWrapper->index()] = nullptr;
 
-    for (auto& client : m_clients)
-        client.platformGamepadDisconnected(*gamepadWrapper);
+    for (Ref client : m_clients)
+        client->platformGamepadDisconnected(*gamepadWrapper);
 }
 
 void MultiGamepadProvider::platformGamepadInputActivity(EventMakesGamepadsVisible eventVisibility)
@@ -139,8 +139,8 @@ void MultiGamepadProvider::platformGamepadInputActivity(EventMakesGamepadsVisibl
     if (eventVisibility == EventMakesGamepadsVisible::Yes)
         GameControllerGamepadProvider::singleton().makeInvisibleGamepadsVisible();
 
-    for (auto& client : m_clients)
-        client.platformGamepadInputActivity(eventVisibility);
+    for (Ref client : m_clients)
+        client->platformGamepadInputActivity(eventVisibility);
 }
 
 } // namespace WebCore

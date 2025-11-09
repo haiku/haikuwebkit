@@ -28,7 +28,6 @@
 #include <wtf/CompletionHandler.h>
 #include <wtf/HashMap.h>
 #include <wtf/Platform.h>
-#include <wtf/Ref.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/UniqueRef.h>
@@ -133,6 +132,9 @@ enum class SessionFeature : uint8_t {
 #if ENABLE(WEBXR_HANDS)
     HandTracking,
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    HitTest,
+#endif
     WebGPU,
 };
 
@@ -175,6 +177,10 @@ inline std::optional<SessionFeature> parseSessionFeatureDescriptor(StringView st
     if (feature == "hand-tracking"_s)
         return SessionFeature::HandTracking;
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    if (feature == "hit-test"_s)
+        return SessionFeature::HitTest;
+#endif
     if (feature == "webgpu"_s)
         return SessionFeature::WebGPU;
 
@@ -197,6 +203,10 @@ inline String sessionFeatureDescriptor(SessionFeature sessionFeature)
 #if ENABLE(WEBXR_HANDS)
     case SessionFeature::HandTracking:
         return "hand-tracking"_s;
+#endif
+#if ENABLE(WEBXR_HIT_TEST)
+    case SessionFeature::HitTest:
+        return "hit-test"_s;
 #endif
     case SessionFeature::WebGPU:
         return "webgpu"_s;
@@ -312,6 +322,8 @@ struct FrameData {
 #if PLATFORM(COCOA)
         MachSendRight handle;
         bool isSharedTexture { false };
+
+        explicit operator bool() const { return !!handle; }
 #else
         Vector<WTF::UnixFileDescriptor> fds;
         Vector<uint32_t> strides;
@@ -468,6 +480,8 @@ protected:
     WeakPtr<TrackingAndRenderingClient> m_trackingAndRenderingClient;
 };
 
+using DeviceList = Vector<Ref<Device>>;
+
 class TrackingAndRenderingClient : public CanMakeWeakPtr<TrackingAndRenderingClient> {
 public:
     virtual ~TrackingAndRenderingClient() = default;
@@ -479,24 +493,6 @@ public:
     virtual void sessionDidEnd() = 0;
     virtual void updateSessionVisibilityState(VisibilityState) = 0;
     // FIXME: handle frame update
-};
-
-class Instance {
-public:
-    WEBCORE_EXPORT static Instance& singleton();
-
-    using DeviceList = Vector<Ref<Device>>;
-    WEBCORE_EXPORT void enumerateImmersiveXRDevices(CompletionHandler<void(const DeviceList&)>&&);
-
-private:
-    friend LazyNeverDestroyed<Instance>;
-    Instance();
-    ~Instance() = default;
-
-    struct Impl;
-    UniqueRef<Impl> m_impl;
-
-    DeviceList m_immersiveXRDevices;
 };
 
 inline FrameData FrameData::copy() const

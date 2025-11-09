@@ -334,7 +334,10 @@ static std::pair<WebCore::Color, WebCore::Color> leftCornerColorsForThumbnailVie
     });
     Util::run(&done);
     CGImagePixelReader pixelReader { snapshot.get() };
-    return std::pair { pixelReader.at(10, 10), pixelReader.at(10, pixelReader.height() - 10) };
+    return std::pair {
+        pixelReader.at(10, 210), // This top-left point in the flipped image actually corresponds to a point near the bottom left of the document.
+        pixelReader.at(10, pixelReader.height() - 10) // This bottom-left point in the flipped image corresponds to the fixed top header.
+    };
 }
 
 void checkThumbnailViewSnapshotConsistency(TestWKWebView *webView)

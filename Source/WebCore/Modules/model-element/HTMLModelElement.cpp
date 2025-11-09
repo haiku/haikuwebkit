@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,6 +63,7 @@
 #include "Model.h"
 #include "ModelPlayer.h"
 #include "ModelPlayerAnimationState.h"
+#include "ModelPlayerGraphicsLayerConfiguration.h"
 #include "ModelPlayerProvider.h"
 #include "ModelPlayerTransformState.h"
 #include "MouseEvent.h"
@@ -188,22 +190,6 @@ URL HTMLModelElement::selectModelSource() const
     return { };
 }
 
-void HTMLModelElement::visibilityStateChanged()
-{
-    if (m_modelPlayer)
-        m_modelPlayer->visibilityStateDidChange();
-
-    if (!isVisible()) {
-        m_loadModelTimer = nullptr;
-        return;
-    }
-
-    if (m_modelPlayer && !m_modelPlayer->isPlaceholder())
-        return;
-
-    startLoadModelTimer();
-}
-
 void HTMLModelElement::sourcesChanged()
 {
     setSourceURL(selectModelSource());
@@ -278,6 +264,24 @@ HTMLModelElement& HTMLModelElement::readyPromiseResolve()
     return *this;
 }
 
+// MARK: - VisibilityChangeClient overrides.
+
+void HTMLModelElement::visibilityStateChanged()
+{
+    if (m_modelPlayer)
+        m_modelPlayer->visibilityStateDidChange();
+
+    if (!isVisible()) {
+        m_loadModelTimer = nullptr;
+        return;
+    }
+
+    if (m_modelPlayer && !m_modelPlayer->isPlaceholder())
+        return;
+
+    startLoadModelTimer();
+}
+
 // MARK: - DOM overrides.
 
 void HTMLModelElement::didMoveToNewDocument(Document& oldDocument, Document& newDocument)
@@ -303,7 +307,7 @@ void HTMLModelElement::didAttachRenderers()
     createModelPlayer();
 }
 
-// MARK: - CachedRawResourceClient
+// MARK: - CachedRawResourceClient overrides.
 
 void HTMLModelElement::dataReceived(CachedResource& resource, const SharedBuffer& buffer)
 {
@@ -325,6 +329,118 @@ void HTMLModelElement::notifyFinished(CachedResource& resource, const NetworkLoa
     else if (&resource == m_environmentMapResource)
         environmentMapResourceFinished();
 #endif
+}
+
+// MARK: - ModelPlayerClient overrides.
+
+void HTMLModelElement::didFinishLoading(ModelPlayer& modelPlayer)
+{
+    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+
+    reportExtraMemoryCost();
+
+    if (CheckedPtr renderer = this->renderer())
+        renderer->updateFromElement();
+    if (!m_readyPromise->isFulfilled())
+        m_readyPromise->resolve(*this);
+}
+
+void HTMLModelElement::didFailLoading(ModelPlayer& modelPlayer, const ResourceError&)
+{
+    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+    if (!m_readyPromise->isFulfilled())
+        m_readyPromise->reject(Exception { ExceptionCode::AbortError });
+
+    deleteModelPlayer();
+
+    m_dataMemoryCost.store(0, std::memory_order_relaxed);
+    reportExtraMemoryCost();
+}
+
+#if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
+
+void HTMLModelElement::didFinishEnvironmentMapLoading(ModelPlayer&, bool succeeded)
+{
+    if (!m_environmentMapURL.isEmpty() && !m_environmentMapReadyPromise->isFulfilled()) {
+        if (succeeded)
+            m_environmentMapReadyPromise->resolve();
+        else {
+            m_environmentMapReadyPromise->reject(Exception { ExceptionCode::AbortError });
+            m_environmentMapDataMemoryCost.store(0, std::memory_order_relaxed);
+        }
+        reportExtraMemoryCost();
+    }
+}
+
+#endif
+
+void HTMLModelElement::didUnload(ModelPlayer& modelPlayer)
+{
+    if (m_modelPlayer != &modelPlayer)
+        return;
+
+    unloadModelPlayer(false);
+
+    if (!isVisible())
+        return;
+
+    // FIXME: rdar://148027600 Prevent infinite reloading of model.
+    startLoadModelTimer();
+}
+
+void HTMLModelElement::didUpdate(ModelPlayer& modelPlayer)
+{
+    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+
+    if (CheckedPtr renderer = this->renderer())
+        renderer->updateFromElement();
+}
+
+#if ENABLE(MODEL_ELEMENT_ENTITY_TRANSFORM)
+
+void HTMLModelElement::didUpdateEntityTransform(ModelPlayer&, const TransformationMatrix& transform)
+{
+    m_entityTransform = DOMMatrixReadOnly::create(transform, DOMMatrixReadOnly::Is2D::No);
+}
+
+#endif
+
+#if ENABLE(MODEL_ELEMENT_BOUNDING_BOX)
+
+void HTMLModelElement::didUpdateBoundingBox(ModelPlayer&, const FloatPoint3D& center, const FloatPoint3D& extents)
+{
+    m_boundingBoxCenter = DOMPointReadOnly::fromFloatPoint(center);
+    m_boundingBoxExtents = DOMPointReadOnly::fromFloatPoint(extents);
+}
+
+#endif
+
+RefPtr<GraphicsLayer> HTMLModelElement::graphicsLayer() const
+{
+    auto* page = document().page();
+    if (!page)
+        return nullptr;
+
+    auto* renderLayerModelObject = dynamicDowncast<RenderLayerModelObject>(this->renderer());
+    if (!renderLayerModelObject)
+        return nullptr;
+
+    if (!renderLayerModelObject->isComposited())
+        return nullptr;
+
+    return renderLayerModelObject->layer()->backing()->graphicsLayer();
+}
+
+bool HTMLModelElement::isVisible() const
+{
+    return !document().hidden() && m_isIntersectingViewport;
+}
+
+void HTMLModelElement::logWarning(ModelPlayer& modelPlayer, const String& warningMessage)
+{
+    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+
+    protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Warning, warningMessage);
 }
 
 // MARK: - ModelPlayer support
@@ -513,40 +629,6 @@ void HTMLModelElement::loadModelTimerFired()
     reloadModelPlayer();
 }
 
-bool HTMLModelElement::usesPlatformLayer() const
-{
-    return m_modelPlayer && m_modelPlayer->layer();
-}
-
-#if ENABLE(GPU_PROCESS_MODEL)
-
-// FIXME: It is a layering violation for WebCore to be concerned with MachSendRights like this.
-const MachSendRight* HTMLModelElement::displayBuffer() const
-{
-    return m_modelPlayer ? m_modelPlayer->displayBuffer() : nullptr;
-}
-
-GraphicsLayerContentsDisplayDelegate* HTMLModelElement::contentsDisplayDelegate()
-{
-    return m_modelPlayer ? m_modelPlayer->contentsDisplayDelegate() : nullptr;
-}
-
-#endif
-
-PlatformLayer* HTMLModelElement::platformLayer() const
-{
-    if (m_modelPlayer)
-        return m_modelPlayer->layer();
-    return nullptr;
-}
-
-std::optional<LayerHostingContextIdentifier> HTMLModelElement::layerHostingContextIdentifier() const
-{
-    if (m_modelPlayer)
-        return m_modelPlayer->layerHostingContextIdentifier();
-    return std::nullopt;
-}
-
 void HTMLModelElement::sizeMayHaveChanged()
 {
     if (m_modelPlayer)
@@ -555,133 +637,22 @@ void HTMLModelElement::sizeMayHaveChanged()
         createModelPlayer();
 }
 
-void HTMLModelElement::didUpdateLayerHostingContextIdentifier(ModelPlayer& modelPlayer, LayerHostingContextIdentifier identifier)
+void HTMLModelElement::configureGraphicsLayer(GraphicsLayer& graphicsLayer, Color backgroundColor)
 {
-    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
-    ASSERT_UNUSED(identifier, identifier.toUInt64() > 0);
-
-    if (CheckedPtr renderer = this->renderer())
-        renderer->updateFromElement();
-}
-
-#if ENABLE(GPU_PROCESS_MODEL)
-
-void HTMLModelElement::didUpdateDisplayDelegate(ModelPlayer& modelPlayer) const
-{
-    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
-
-    if (CheckedPtr renderer = this->renderer())
-        renderer->updateFromElement();
-}
-
-#endif
-
-void HTMLModelElement::logWarning(ModelPlayer& modelPlayer, const String& warningMessage)
-{
-    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
-
-    protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Warning, warningMessage);
-}
-
-void HTMLModelElement::didFinishLoading(ModelPlayer& modelPlayer)
-{
-    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
-
-    reportExtraMemoryCost();
-
-    if (CheckedPtr renderer = this->renderer())
-        renderer->updateFromElement();
-    if (!m_readyPromise->isFulfilled())
-        m_readyPromise->resolve(*this);
-}
-
-void HTMLModelElement::didFailLoading(ModelPlayer& modelPlayer, const ResourceError&)
-{
-    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
-    if (!m_readyPromise->isFulfilled())
-        m_readyPromise->reject(Exception { ExceptionCode::AbortError });
-
-    deleteModelPlayer();
-
-    m_dataMemoryCost.store(0, std::memory_order_relaxed);
-    reportExtraMemoryCost();
-}
-
-void HTMLModelElement::didUnload(ModelPlayer& modelPlayer)
-{
-    if (m_modelPlayer != &modelPlayer)
+    RefPtr modelPlayer = m_modelPlayer;
+    if (!modelPlayer)
         return;
 
-    unloadModelPlayer(false);
-
-    if (!isVisible())
-        return;
-
-    // FIXME: rdar://148027600 Prevent infinite reloading of model.
-    startLoadModelTimer();
-}
-
-RefPtr<GraphicsLayer> HTMLModelElement::graphicsLayer() const
-{
-    auto* page = document().page();
-    if (!page)
-        return nullptr;
-
-    auto* renderLayerModelObject = dynamicDowncast<RenderLayerModelObject>(this->renderer());
-    if (!renderLayerModelObject)
-        return nullptr;
-
-    if (!renderLayerModelObject->isComposited())
-        return nullptr;
-
-    return renderLayerModelObject->layer()->backing()->graphicsLayer();
-}
-
-std::optional<PlatformLayerIdentifier> HTMLModelElement::layerID() const
-{
-    auto graphicsLayer = this->graphicsLayer();
-    if (!graphicsLayer)
-        return std::nullopt;
-
-    return graphicsLayer->primaryLayerID();
-}
-
-std::optional<PlatformLayerIdentifier> HTMLModelElement::modelContentsLayerID() const
-{
-    auto graphicsLayer = this->graphicsLayer();
-    if (!graphicsLayer)
-        return std::nullopt;
-
-    return graphicsLayer->contentsLayerIDForModel();
-}
-
-bool HTMLModelElement::isVisible() const
-{
-    return !document().hidden() && m_isIntersectingViewport;
-}
-
-#if ENABLE(MODEL_CONTEXT)
-
-RefPtr<ModelContext> HTMLModelElement::modelContext() const
-{
-    auto modelLayerIdentifier = layerID();
-    if (!modelLayerIdentifier)
-        return nullptr;
-
-    auto modelContentsLayerHostingContextIdentifier = layerHostingContextIdentifier();
-    if (!modelContentsLayerHostingContextIdentifier)
-        return nullptr;
-
+    modelPlayer->configureGraphicsLayer(graphicsLayer, {
+        .model = model(),
+        .contentSize = contentSize(),
+        .backgroundColor = backgroundColor,
+        .isInteractive = isInteractive(),
 #if ENABLE(MODEL_ELEMENT_PORTAL)
-    auto shouldEnablePortal = hasPortal() ? ModelContextDisablePortal::No : ModelContextDisablePortal::Yes;
-#else
-    auto shouldEnablePortal = ModelContextDisablePortal::Yes;
+        .hasPortal = hasPortal(),
 #endif
-
-    return ModelContext::create(*modelLayerIdentifier, *modelContentsLayerHostingContextIdentifier, contentSize(), shouldEnablePortal, std::nullopt).ptr();
+    });
 }
-
-#endif
 
 #if ENABLE(MODEL_ELEMENT_ENTITY_TRANSFORM)
 
@@ -714,11 +685,6 @@ ExceptionOr<void> HTMLModelElement::setEntityTransform(const DOMMatrixReadOnly& 
     return { };
 }
 
-void HTMLModelElement::didUpdateEntityTransform(ModelPlayer&, const TransformationMatrix& transform)
-{
-    m_entityTransform = DOMMatrixReadOnly::create(transform, DOMMatrixReadOnly::Is2D::No);
-}
-
 #endif
 
 #if ENABLE(MODEL_ELEMENT_BOUNDING_BOX)
@@ -731,29 +697,6 @@ const DOMPointReadOnly& HTMLModelElement::boundingBoxCenter() const
 const DOMPointReadOnly& HTMLModelElement::boundingBoxExtents() const
 {
     return m_boundingBoxExtents;
-}
-
-void HTMLModelElement::didUpdateBoundingBox(ModelPlayer&, const FloatPoint3D& center, const FloatPoint3D& extents)
-{
-    m_boundingBoxCenter = DOMPointReadOnly::fromFloatPoint(center);
-    m_boundingBoxExtents = DOMPointReadOnly::fromFloatPoint(extents);
-}
-
-#endif
-
-#if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
-
-void HTMLModelElement::didFinishEnvironmentMapLoading(ModelPlayer&, bool succeeded)
-{
-    if (!m_environmentMapURL.isEmpty() && !m_environmentMapReadyPromise->isFulfilled()) {
-        if (succeeded)
-            m_environmentMapReadyPromise->resolve();
-        else {
-            m_environmentMapReadyPromise->reject(Exception { ExceptionCode::AbortError });
-            m_environmentMapDataMemoryCost.store(0, std::memory_order_relaxed);
-        }
-        reportExtraMemoryCost();
-    }
 }
 
 #endif
@@ -929,6 +872,15 @@ void HTMLModelElement::dragDidEnd(MouseEvent& event)
 
     if (m_modelPlayer)
         m_modelPlayer->handleMouseUp(flippedLocationInElementForMouseEvent(event), event.timeStamp());
+}
+
+std::optional<PlatformLayerIdentifier> HTMLModelElement::layerID() const
+{
+    auto graphicsLayer = this->graphicsLayer();
+    if (!graphicsLayer)
+        return std::nullopt;
+
+    return graphicsLayer->primaryLayerID();
 }
 
 // MARK: - Camera support.
@@ -1611,6 +1563,6 @@ String HTMLModelElement::modelElementStateForTesting() const
     return "Unknown"_s;
 }
 
-}
+} // namespace WebCore
 
 #endif // ENABLE(MODEL_ELEMENT)

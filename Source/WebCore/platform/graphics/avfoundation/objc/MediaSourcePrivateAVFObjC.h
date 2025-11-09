@@ -90,13 +90,7 @@ public:
     void flushAndReenqueueActiveVideoSourceBuffers();
 
 #if ENABLE(ENCRYPTED_MEDIA)
-    void cdmInstanceAttached(CDMInstance&);
-    void cdmInstanceDetached(CDMInstance&);
-    void attemptToDecryptWithInstance(CDMInstance&);
     bool waitingForKey() const;
-
-    CDMInstance* cdmInstance() const { return m_cdmInstance.get(); }
-    void outputObscuredDueToInsufficientExternalProtectionChanged(bool);
 #endif
 
 #if !RELEASE_LOG_DISABLED
@@ -114,10 +108,6 @@ public:
 
     void setResourceOwner(const ProcessIdentity& resourceOwner) { m_resourceOwner = resourceOwner; }
 
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    void keyAdded();
-#endif
-
 private:
     friend class SourceBufferPrivateAVFObjC;
 
@@ -125,9 +115,6 @@ private:
     MediaPlayerPrivateMediaSourceAVFObjC* platformPlayer() const { return m_player.get(); }
 
     void notifyActiveSourceBuffersChanged() final;
-#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    void sourceBufferKeyNeeded(SourceBufferPrivateAVFObjC*, const SharedBuffer&);
-#endif
     void removeSourceBuffer(SourceBufferPrivate&) final;
 
     void setSourceBufferWithSelectedVideo(SourceBufferPrivateAVFObjC*);
@@ -136,11 +123,7 @@ private:
     void trackBufferedChanged(SourceBufferPrivate&, Vector<PlatformTimeRanges>&&) final;
 
     WeakPtr<MediaPlayerPrivateMediaSourceAVFObjC> m_player;
-    Deque<SourceBufferPrivateAVFObjC*> m_sourceBuffersNeedingSessions;
     SourceBufferPrivateAVFObjC* m_sourceBufferWithSelectedVideo { nullptr };
-#if ENABLE(ENCRYPTED_MEDIA)
-    RefPtr<CDMInstance> m_cdmInstance;
-#endif
 #if !RELEASE_LOG_DISABLED
     const Ref<const Logger> m_logger;
     const uint64_t m_logIdentifier;

@@ -1035,7 +1035,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     bool isZoomed = !WebKit::scalesAreEssentiallyEqual(pageScaleFactor, layerTreeTransaction.initialScaleFactor()) && (pageScaleFactor > layerTreeTransaction.initialScaleFactor());
 
     bool scrollingNeededToRevealUI = false;
-    if (_overriddenLayoutParameters) {
+    if (_overriddenLayoutParameters && _page->preferences().automaticallyForceEnableScrollingIfNeededToRevealUI()) {
         auto unobscuredContentRect = _page->unobscuredContentRect();
         auto maxUnobscuredSize = _page->maximumUnobscuredSize();
         auto minUnobscuredSize = _page->minimumUnobscuredSize();
@@ -5278,7 +5278,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 @implementation WKWebView(WKPrivateVision)
 - (NSString *)_defaultSTSLabel
 {
-    return nsStringNilIfNull(_page->defaultSpatialTrackingLabel());
+    return nsStringNilIfNull(_page->defaultSpatialTrackingLabel()).autorelease();
 }
 
 - (void)_setDefaultSTSLabel:(NSString *)defaultSTSLabel

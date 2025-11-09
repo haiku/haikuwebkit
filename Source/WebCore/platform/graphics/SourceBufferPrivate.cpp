@@ -61,11 +61,11 @@ static const unsigned evictionAlgorithmInitialTimeChunk = 30000;
 static const unsigned evictionAlgorithmTimeChunkLowThreshold = 3000;
 
 SourceBufferPrivate::SourceBufferPrivate(MediaSourcePrivate& parent)
-    : SourceBufferPrivate(parent, RunLoop::currentSingleton())
+    : SourceBufferPrivate(parent, WorkQueue::mainSingleton())
 {
 }
 
-SourceBufferPrivate::SourceBufferPrivate(MediaSourcePrivate& parent, GuaranteedSerialFunctionDispatcher& dispatcher)
+SourceBufferPrivate::SourceBufferPrivate(MediaSourcePrivate& parent, WorkQueue& dispatcher)
     : m_mediaSource(&parent)
     , m_dispatcher(dispatcher)
 {
@@ -1370,6 +1370,14 @@ void SourceBufferPrivate::ensureOnDispatcher(Function<void()>&& function) const
         return;
     }
     m_dispatcher->dispatch(WTFMove(function));
+}
+
+void SourceBufferPrivate::ensureOnDispatcherSync(NOESCAPE Function<void()>&& function)
+{
+    if (m_dispatcher->isCurrent())
+        function();
+    else
+        m_dispatcher->dispatchSync(WTFMove(function));
 }
 
 void SourceBufferPrivate::attach()

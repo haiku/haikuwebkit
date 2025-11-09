@@ -69,30 +69,19 @@ public:
     // MARK: Shared serializations
 
     static void serializeMarginTrim(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<MarginTrimType>);
-    static void serializeWebkitTextCombine(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, TextCombine);
-    static void serializeImageOrientation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, ImageOrientation);
     static void serializeContain(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<Containment>);
     static void serializeSmoothScrolling(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, bool);
-    static void serializeTextSpacingTrim(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, TextSpacingTrim);
-    static void serializeTextAutospace(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, TextAutospace);
     static void serializePositionTryFallbacks(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FixedVector<PositionTryFallback>&);
-    static void serializeWillChange(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const WillChangeData*);
     static void serializeTabSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const TabSize&);
     static void serializeLineBoxContain(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<Style::LineBoxContain>);
-    static void serializeWebkitRubyPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, RubyPosition);
     static void serializeTouchAction(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TouchAction>);
     static void serializeTextTransform(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextTransform>);
     static void serializeTextUnderlinePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextUnderlinePosition>);
     static void serializeTextEmphasisPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextEmphasisPosition>);
     static void serializeSpeakAs(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<SpeakAs>);
     static void serializeHangingPunctuation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<HangingPunctuation>);
-    static void serializePageBreak(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BreakBetween);
-    static void serializePageBreak(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BreakInside);
-    static void serializeWebkitColumnBreak(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BreakBetween);
-    static void serializeWebkitColumnBreak(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BreakInside);
     static void serializeSelfOrDefaultAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleSelfAlignmentData&);
     static void serializeContentAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleContentAlignmentData&);
-    static void serializePaintOrder(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, PaintOrder);
     static void serializePositionAnchor(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const std::optional<ScopedName>&);
     static void serializePositionArea(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const std::optional<PositionArea>&);
     static void serializeNameScope(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NameScope&);
@@ -109,9 +98,6 @@ public:
 
     static void serializeFontFamily(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const AtomString&);
 
-    // MARK: Grid serializations
-
-    static void serializeGridAutoFlow(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, GridAutoFlow);
 };
 
 // MARK: - Strong value serializations
@@ -256,21 +242,6 @@ inline void ExtractorSerializer::serializeMarginTrim(ExtractorState& state, Stri
     appendOption(MarginTrimType::InlineEnd, CSSValueInlineEnd);
 }
 
-
-inline void ExtractorSerializer::serializeWebkitTextCombine(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, TextCombine textCombine)
-{
-    if (textCombine == TextCombine::All) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Horizontal { });
-        return;
-    }
-    serialize(state, builder, context, textCombine);
-}
-
-inline void ExtractorSerializer::serializeImageOrientation(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, ImageOrientation imageOrientation)
-{
-    builder.append(nameLiteralForSerialization(imageOrientation == ImageOrientation::Orientation::FromImage ? CSSValueFromImage : CSSValueNone));
-}
-
 inline void ExtractorSerializer::serializeContain(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<Containment> containment)
 {
     if (!containment) {
@@ -302,58 +273,6 @@ inline void ExtractorSerializer::serializeContain(ExtractorState& state, StringB
     appendOption(Containment::Paint, CSSValuePaint);
 }
 
-inline void ExtractorSerializer::serializeTextSpacingTrim(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, TextSpacingTrim textSpacingTrim)
-{
-    switch (textSpacingTrim.type()) {
-    case TextSpacingTrim::TrimType::SpaceAll:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::SpaceAll { });
-        return;
-    case TextSpacingTrim::TrimType::Auto:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    case TextSpacingTrim::TrimType::TrimAll:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::TrimAll { });
-        return;
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline void ExtractorSerializer::serializeTextAutospace(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, TextAutospace textAutospace)
-{
-    if (textAutospace.isAuto()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    }
-
-    if (textAutospace.isNoAutospace()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::NoAutospace { });
-        return;
-    }
-
-    if (textAutospace.isNormal()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    }
-
-    if (textAutospace.hasIdeographAlpha() && textAutospace.hasIdeographNumeric()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::IdeographAlpha { });
-        builder.append(' ');
-        serializationForCSS(builder, context, state.style, CSS::Keyword::IdeographNumeric { });
-        return;
-    }
-
-    if (textAutospace.hasIdeographAlpha()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::IdeographAlpha { });
-        return;
-    }
-
-    if (textAutospace.hasIdeographNumeric()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::IdeographNumeric { });
-        return;
-    }
-}
-
 inline void ExtractorSerializer::serializePositionTryFallbacks(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FixedVector<PositionTryFallback>& fallbacks)
 {
     if (fallbacks.isEmpty()) {
@@ -381,34 +300,6 @@ inline void ExtractorSerializer::serializePositionTryFallbacks(ExtractorState& s
     builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
 }
 
-inline void ExtractorSerializer::serializeWillChange(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const WillChangeData* willChangeData)
-{
-    if (!willChangeData || !willChangeData->numFeatures()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    }
-
-    CSSValueListBuilder list;
-    for (size_t i = 0; i < willChangeData->numFeatures(); ++i) {
-        auto feature = willChangeData->featureAt(i);
-        switch (feature.first) {
-        case WillChangeData::Feature::ScrollPosition:
-            list.append(CSSPrimitiveValue::create(CSSValueScrollPosition));
-            break;
-        case WillChangeData::Feature::Contents:
-            list.append(CSSPrimitiveValue::create(CSSValueContents));
-            break;
-        case WillChangeData::Feature::Property:
-            list.append(CSSPrimitiveValue::create(feature.second));
-            break;
-        case WillChangeData::Feature::Invalid:
-            ASSERT_NOT_REACHED();
-            break;
-        }
-    }
-    builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
-}
-
 inline void ExtractorSerializer::serializeLineBoxContain(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<Style::LineBoxContain> lineBoxContain)
 {
     if (!lineBoxContain) {
@@ -432,24 +323,6 @@ inline void ExtractorSerializer::serializeLineBoxContain(ExtractorState& state, 
     appendOption(LineBoxContain::Replaced, CSSValueReplaced);
     appendOption(LineBoxContain::InlineBox, CSSValueInlineBox);
     appendOption(LineBoxContain::InitialLetter, CSSValueInitialLetter);
-}
-
-inline void ExtractorSerializer::serializeWebkitRubyPosition(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, RubyPosition position)
-{
-    switch (position) {
-    case RubyPosition::Over:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Before { });
-        return;
-    case RubyPosition::Under:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::After { });
-        return;
-    case RubyPosition::InterCharacter:
-    case RubyPosition::LegacyInterCharacter:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::InterCharacter { });
-        return;
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
 }
 
 inline void ExtractorSerializer::serializeTouchAction(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<TouchAction> touchActions)
@@ -509,6 +382,13 @@ inline void ExtractorSerializer::serializeTextTransform(ExtractorState& state, S
     };
     appendOption(TextTransform::FullWidth, CSSValueFullWidth);
     appendOption(TextTransform::FullSizeKana, CSSValueFullSizeKana);
+
+    if (textTransform.contains(TextTransform::MathAuto)) {
+        // math-auto can't be used in combination with other values, the parser already makes sure that is the case.
+        ASSERT(listEmpty);
+        serializationForCSS(builder, context, state.style, CSS::Keyword::MathAuto { });
+        listEmpty = false;
+    }
 
     if (listEmpty)
         serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
@@ -603,51 +483,6 @@ inline void ExtractorSerializer::serializeHangingPunctuation(ExtractorState& sta
         serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
 }
 
-inline void ExtractorSerializer::serializePageBreak(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, BreakBetween value)
-{
-    if (value == BreakBetween::Page || value == BreakBetween::LeftPage || value == BreakBetween::RightPage
-        || value == BreakBetween::RectoPage || value == BreakBetween::VersoPage) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Always { }); // CSS 2.1 allows us to map these to always.
-        return;
-    }
-    if (value == BreakBetween::Avoid || value == BreakBetween::AvoidPage) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Avoid { });
-        return;
-    }
-    serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-}
-
-inline void ExtractorSerializer::serializePageBreak(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, BreakInside value)
-{
-    if (value == BreakInside::Avoid || value == BreakInside::AvoidPage) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Avoid { });
-        return;
-    }
-    serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-}
-
-inline void ExtractorSerializer::serializeWebkitColumnBreak(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, BreakBetween value)
-{
-    if (value == BreakBetween::Column) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Always { });
-        return;
-    }
-    if (value == BreakBetween::Avoid || value == BreakBetween::AvoidColumn) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Avoid { });
-        return;
-    }
-    serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-}
-
-inline void ExtractorSerializer::serializeWebkitColumnBreak(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, BreakInside value)
-{
-    if (value == BreakInside::Avoid || value == BreakInside::AvoidColumn) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Avoid { });
-        return;
-    }
-    serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-}
-
 inline void ExtractorSerializer::serializeSelfOrDefaultAlignmentData(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StyleSelfAlignmentData& data)
 {
     CSSValueListBuilder list;
@@ -698,48 +533,6 @@ inline void ExtractorSerializer::serializeContentAlignmentData(ExtractorState& s
     ASSERT(list.size() > 0);
     ASSERT(list.size() <= 3);
     builder.append(CSSValueList::createSpaceSeparated(WTFMove(list))->cssText(context));
-}
-
-inline void ExtractorSerializer::serializePaintOrder(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, PaintOrder paintOrder)
-{
-    if (paintOrder == PaintOrder::Normal) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    }
-
-    auto appendOne = [&](auto a) {
-        builder.append(nameLiteralForSerialization(a));
-    };
-
-    auto appendTwo = [&](auto a, auto b) {
-        builder.append(nameLiteralForSerialization(a), ' ', nameLiteralForSerialization(b));
-    };
-
-    switch (paintOrder) {
-    case PaintOrder::Normal:
-        ASSERT_NOT_REACHED();
-        return;
-    case PaintOrder::Fill:
-        appendOne(CSSValueFill);
-        return;
-    case PaintOrder::FillMarkers:
-        appendTwo(CSSValueFill, CSSValueMarkers);
-        return;
-    case PaintOrder::Stroke:
-        appendOne(CSSValueStroke);
-        return;
-    case PaintOrder::StrokeMarkers:
-        appendTwo(CSSValueStroke, CSSValueMarkers);
-        return;
-    case PaintOrder::Markers:
-        appendOne(CSSValueMarkers);
-        return;
-    case PaintOrder::MarkersStroke:
-        appendTwo(CSSValueMarkers, CSSValueStroke);
-        return;
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
 }
 
 inline void ExtractorSerializer::serializePositionAnchor(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const std::optional<ScopedName>& positionAnchor)
@@ -879,29 +672,6 @@ inline void ExtractorSerializer::serializeFontFamily(ExtractorState&, StringBuil
         builder.append(nameLiteralForSerialization(familyIdentifier));
     else
         builder.append(WebCore::serializeFontFamily(family));
-}
-
-// MARK: - Grid serializations
-
-inline void ExtractorSerializer::serializeGridAutoFlow(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, GridAutoFlow gridAutoFlow)
-{
-    ASSERT(gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionRow) || gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionColumn));
-
-    bool needsSpace = false;
-
-    if (gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowDirectionColumn)) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Column { });
-        needsSpace = true;
-    } else if (!(gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowAlgorithmDense))) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Row { });
-        needsSpace = true;
-    }
-
-    if (gridAutoFlow & static_cast<GridAutoFlow>(InternalAutoFlowAlgorithmDense)) {
-        if (needsSpace)
-            builder.append(' ');
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Dense { });
-    }
 }
 
 } // namespace Style

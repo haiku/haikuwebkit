@@ -1,4 +1,4 @@
-<!DOCTYPE html> <!-- webkit-test-runner [ UseGPUProcessForMediaEnabled=false ] -->
+<!DOCTYPE html> <!-- webkit-test-runner -->
 <html>
 <head>
     <title>media-webm-no-duration</title>
@@ -7,7 +7,7 @@
     window.addEventListener('load', async event => {
         try {
             window.audio = document.querySelector('audio');
-            run('audio.src = "../../../media/content/test-no-duration.webm"');
+            run('audio.src = "content/test-no-duration.webm"');
             waitFor(audio, 'error').then(e => { failTest('Failed to load media'); });
 
             await waitFor(audio, 'canplay');

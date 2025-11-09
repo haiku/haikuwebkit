@@ -69,6 +69,7 @@ public:
 
 #if PLATFORM(COCOA)
     NSURLRequest *nsRequest() const;
+    RetainPtr<NSURLRequest> protectedNSRequest() const;
 #endif
 
     enum class ExceptionType {

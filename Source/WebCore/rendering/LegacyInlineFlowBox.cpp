@@ -276,7 +276,7 @@ void LegacyInlineFlowBox::setVisualOverflow(const LayoutRect& rect, LayoutUnit l
         return;
 
     if (!m_overflow)
-        m_overflow = makeUnique<RenderOverflow>(frameBox, frameBox);
+        m_overflow = makeUnique<RenderOverflow>(frameBox, frameBox, frameBox);
 
     m_overflow->setVisualOverflow(rect);
 }

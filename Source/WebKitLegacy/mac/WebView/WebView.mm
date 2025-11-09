@@ -6110,7 +6110,7 @@ static bool needsWebViewInitThreadWorkaround()
         dataSource = [[self mainFrame] _dataSource];
     if (dataSource == nil)
         return nil;
-    return nsStringNilIfEmpty([dataSource _documentLoader]->overrideEncoding());
+    return nsStringNilIfEmpty([dataSource _documentLoader]->overrideEncoding()).autorelease();
 }
 
 - (NSString *)customTextEncodingName

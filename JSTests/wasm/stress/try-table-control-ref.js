@@ -1,4 +1,4 @@
-//@ runDefault()
+//@ runDefaultWasm()
 $262.agent.start(`
 let byte_view = new Uint8Array(8);
 let data_view = new DataView(byte_view.buffer);

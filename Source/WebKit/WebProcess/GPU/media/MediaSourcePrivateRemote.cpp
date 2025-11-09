@@ -68,14 +68,6 @@ Ref<MediaSourcePrivateRemote> MediaSourcePrivateRemote::create(GPUProcessConnect
     return mediaSourcePrivate;
 }
 
-void MediaSourcePrivateRemote::ensureOnDispatcherSync(Function<void()>&& function) const
-{
-    if (queueSingleton().isCurrent())
-        function();
-    else
-        queueSingleton().dispatchSync(WTFMove(function));
-}
-
 MediaSourcePrivateRemote::MediaSourcePrivateRemote(GPUProcessConnection& gpuProcessConnection, RemoteMediaSourceIdentifier identifier, RemoteMediaPlayerMIMETypeCache& mimeTypeCache, const MediaPlayerPrivateRemote& mediaPlayerPrivate, MediaSourcePrivateClient& client)
     : MediaSourcePrivate(client, queueSingleton())
     , m_gpuProcessConnection(gpuProcessConnection)

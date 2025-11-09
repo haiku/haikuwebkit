@@ -26,7 +26,6 @@
 #include <WebCore/RenderStyleInlines.h>
 #include <WebCore/StyleOpacity.h>
 #include <WebCore/StyleShapeOutside.h>
-#include <WebCore/WillChangeData.h>
 
 namespace WebCore {
 

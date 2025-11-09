@@ -620,6 +620,7 @@ enum class TextTransform : uint8_t {
     Lowercase     = 1 << 2,
     FullSizeKana  = 1 << 3,
     FullWidth     = 1 << 4,
+    MathAuto      = 1 << 5,
 };
 constexpr auto maxTextTransformValue = TextTransform::FullWidth;
 
@@ -991,21 +992,6 @@ enum class ColorScheme : uint8_t {
 
 constexpr size_t ColorSchemeBits = 2;
 
-constexpr size_t GridAutoFlowBits = 4;
-enum InternalGridAutoFlow : uint8_t {
-    InternalAutoFlowAlgorithmSparse = 1 << 0,
-    InternalAutoFlowAlgorithmDense  = 1 << 1,
-    InternalAutoFlowDirectionRow    = 1 << 2,
-    InternalAutoFlowDirectionColumn = 1 << 3
-};
-
-enum GridAutoFlow : uint8_t {
-    AutoFlowRow = InternalAutoFlowAlgorithmSparse | InternalAutoFlowDirectionRow,
-    AutoFlowColumn = InternalAutoFlowAlgorithmSparse | InternalAutoFlowDirectionColumn,
-    AutoFlowRowDense = InternalAutoFlowAlgorithmDense | InternalAutoFlowDirectionRow,
-    AutoFlowColumnDense = InternalAutoFlowAlgorithmDense | InternalAutoFlowDirectionColumn
-};
-
 enum class AutoRepeatType : uint8_t {
     None,
     Fill,
@@ -1061,23 +1047,6 @@ enum class ScrollSnapAxisAlignType : uint8_t {
 enum class ScrollSnapStop : bool {
     Normal,
     Always,
-};
-
-// These are all minimized combinations of paint-order.
-enum class PaintOrder : uint8_t {
-    Normal,
-    Fill,
-    FillMarkers,
-    Stroke,
-    StrokeMarkers,
-    Markers,
-    MarkersStroke
-};
-
-enum class PaintType : uint8_t {
-    Fill,
-    Stroke,
-    Markers
 };
 
 enum class FontLoadingBehavior : uint8_t {
@@ -1342,7 +1311,6 @@ WTF::TextStream& operator<<(WTF::TextStream&, FlexDirection);
 WTF::TextStream& operator<<(WTF::TextStream&, FlexWrap);
 WTF::TextStream& operator<<(WTF::TextStream&, Float);
 WTF::TextStream& operator<<(WTF::TextStream&, UsedFloat);
-WTF::TextStream& operator<<(WTF::TextStream&, GridAutoFlow);
 WTF::TextStream& operator<<(WTF::TextStream&, HangingPunctuation);
 WTF::TextStream& operator<<(WTF::TextStream&, Hyphens);
 WTF::TextStream& operator<<(WTF::TextStream&, ImageRendering);
@@ -1366,7 +1334,6 @@ WTF::TextStream& operator<<(WTF::TextStream&, OutlineStyle);
 WTF::TextStream& operator<<(WTF::TextStream&, WebCore::Overflow);
 WTF::TextStream& operator<<(WTF::TextStream&, OverflowAlignment);
 WTF::TextStream& operator<<(WTF::TextStream&, OverflowWrap);
-WTF::TextStream& operator<<(WTF::TextStream&, PaintOrder);
 WTF::TextStream& operator<<(WTF::TextStream&, PointerEvents);
 WTF::TextStream& operator<<(WTF::TextStream&, PositionType);
 WTF::TextStream& operator<<(WTF::TextStream&, PositionVisibility);

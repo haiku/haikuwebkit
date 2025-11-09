@@ -2,7 +2,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2007 David Smith (catfish.man@gmail.com)
- * Copyright (C) 2003-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2014-2016 Google Inc. All rights reserved.
  * Copyright (C) Research In Motion Limited 2010. All rights reserved.
  *
@@ -332,7 +332,7 @@ void RenderBlockFlow::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth,
     }
 
     if (auto* cell = dynamicDowncast<RenderTableCell>(*this)) {
-        auto tableCellWidth = cell->styleOrColLogicalWidth();
+        auto [ tableCellWidth, usedZoom ] = cell->styleOrColLogicalWidth();
         if (auto fixedTableCellWidth = tableCellWidth.tryFixed(); fixedTableCellWidth && fixedTableCellWidth->isPositive())
             maxLogicalWidth = std::max(minLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedTableCellWidth));
     }
@@ -574,12 +574,12 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
 
     // Calculate our new height.
     LayoutUnit oldHeight = logicalHeight();
-    LayoutUnit oldClientAfterEdge = clientLogicalBottom();
+    auto afterPaddingEdge = clientLogicalBottom();
 
     // Before updating the final size of the flow thread make sure a forced break is applied after the content.
     // This ensures the size information is correctly computed for the last auto-height fragment receiving content.
     if (CheckedPtr fragmentedFlow = dynamicDowncast<RenderFragmentedFlow>(*this))
-        fragmentedFlow->applyBreakAfterContent(oldClientAfterEdge);
+        fragmentedFlow->applyBreakAfterContent(afterPaddingEdge);
 
     updateLogicalHeight();
     LayoutUnit newHeight = logicalHeight();
@@ -596,7 +596,7 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
     };
     if (shouldApplyAlignContent()) {
         alignContentShift = shiftForAlignContent(oldHeight, repaintLogicalTop, repaintLogicalBottom);
-        oldClientAfterEdge += alignContentShift;
+        afterPaddingEdge += alignContentShift;
         if (alignContentShift < 0)
             ensureRareBlockFlowData().m_alignContentShift = alignContentShift;
     } else if (hasRareBlockFlowData())
@@ -631,7 +631,12 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
     updateDescendantTransformsAfterLayout();
 
     // Add overflow from children (unless we're multi-column, since in that case all our child overflow is clipped anyway).
-    computeOverflow(oldClientAfterEdge);
+    auto contentArea = flippedContentBoxRect();
+    if (writingMode().isHorizontal())
+        contentArea.shiftMaxYEdgeTo(afterPaddingEdge - paddingAfter());
+    else
+        contentArea.shiftMaxXEdgeTo(afterPaddingEdge - paddingAfter());
+    computeOverflow(contentArea);
 
     auto* state = view().frameView().layoutContext().layoutState();
     if (state && state->pageLogicalHeight())
@@ -2469,9 +2474,9 @@ void RenderBlockFlow::addFloatsToNewParent(RenderBlockFlow& toBlockFlow) const
     }
 }
 
-void RenderBlockFlow::computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> options)
+void RenderBlockFlow::computeOverflow(LayoutRect contentArea, OptionSet<ComputeOverflowOptions> options)
 {
-    RenderBlock::computeOverflow(oldClientAfterEdge, options);
+    RenderBlock::computeOverflow(contentArea, options);
 
     auto addOverflowFromFloatsIfApplicable = [&] {
 
@@ -4469,30 +4474,29 @@ RenderObject* InlineMinMaxIterator::next()
     return result;
 }
 
+template <typename SizeType>
+auto borderMarginOrPaddingWidth(LayoutUnit childValue, const SizeType& marginOrPadding, const Style::ZoomFactor& zoomFactor) -> LayoutUnit {
+    if (auto fixed = marginOrPadding.tryFixed())
+        return LayoutUnit(fixed->resolveZoom(zoomFactor));
+    if constexpr (std::same_as<SizeType, Style::MarginEdge>) {
+        if (marginOrPadding.isAuto())
+            return { };
+    }
+    return childValue;
+};
+
 static LayoutUnit getBorderPaddingMargin(const RenderBoxModelObject& child, bool endOfInline)
 {
-    auto borderMarginWidth = [](LayoutUnit childValue, const Style::MarginEdge& margin) -> LayoutUnit {
-        if (auto fixed = margin.tryFixed())
-            return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
-        if (margin.isAuto())
-            return { };
-        return childValue;
-    };
-
-    auto borderPaddingWidth = [](LayoutUnit childValue, const Style::PaddingEdge& padding) -> LayoutUnit {
-        if (auto fixed = padding.tryFixed())
-            return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
-        return childValue;
-    };
-
     auto& childStyle = child.style();
+    const auto& childZoomFactor = childStyle.usedZoomForLength();
+
     if (endOfInline) {
-        return borderMarginWidth(child.marginEnd(), childStyle.marginEnd()) +
-            borderPaddingWidth(child.paddingEnd(), childStyle.paddingEnd()) +
+        return borderMarginOrPaddingWidth(child.marginEnd(), childStyle.marginEnd(), childZoomFactor) +
+            borderMarginOrPaddingWidth(child.paddingEnd(), childStyle.paddingEnd(), childZoomFactor) +
             child.borderEnd();
     }
-    return borderMarginWidth(child.marginStart(), childStyle.marginStart()) +
-        borderPaddingWidth(child.paddingStart(), childStyle.paddingStart()) +
+    return borderMarginOrPaddingWidth(child.marginStart(), childStyle.marginStart(), childZoomFactor) +
+        borderMarginOrPaddingWidth(child.paddingStart(), childStyle.paddingStart(), childZoomFactor) +
         child.borderStart();
 }
 
@@ -4583,7 +4587,7 @@ static inline std::optional<LayoutUnit> textIndentForBlockContainer(const Render
     auto indentValue = LayoutUnit { };
     if (auto* containingBlock = renderer.containingBlock()) {
         if (auto containingBlockFixedLogicalWidth = containingBlock->style().logicalWidth().tryFixed()) {
-            auto containingBlockFixedLogicalWidthValue = Style::evaluate<LayoutUnit>(*containingBlockFixedLogicalWidth, Style::ZoomNeeded { });
+            auto containingBlockFixedLogicalWidthValue = Style::evaluate<LayoutUnit>(*containingBlockFixedLogicalWidth, containingBlock->style().usedZoomForLength());
             // At this point of the shrink-to-fit computation, we don't have a used value for the containing block width
             // (that's exactly to what we try to contribute here) unless the computed value is fixed.
             indentValue = Style::evaluate<LayoutUnit>(style.textIndent().length, containingBlockFixedLogicalWidthValue, containingBlock->style().usedZoomForLength());
@@ -4741,14 +4745,16 @@ void RenderBlockFlow::computeInlinePreferredLogicalWidths(LayoutUnit& minLogical
 
                     child->clearNeedsPreferredWidthsUpdate();
                 } else {
+                    const auto& childZoomFactor = childStyle.usedZoomForLength();
+
                     // Inline replaced boxes add in their margins to their min/max values.
                     if (!child->isFloating())
                         lastText = nullptr;
                     LayoutUnit margins;
                     if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
-                        margins += LayoutUnit::fromFloatCeil(fixedMarginStart->resolveZoom(Style::ZoomNeeded { }));
+                        margins += LayoutUnit::fromFloatCeil(fixedMarginStart->resolveZoom(childZoomFactor));
                     if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
-                        margins += LayoutUnit::fromFloatCeil(fixedMarginEnd->resolveZoom(Style::ZoomNeeded { }));
+                        margins += LayoutUnit::fromFloatCeil(fixedMarginEnd->resolveZoom(childZoomFactor));
                     childMin += margins.ceilToFloat();
                     childMax += margins.ceilToFloat();
                 }

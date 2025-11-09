@@ -92,8 +92,12 @@ MediaStreamTrack::MediaStreamTrack(ScriptExecutionContext& context, Ref<MediaStr
 
     m_private->addObserver(*this);
 
-    if (!isCaptureTrack())
+    if (!isCaptureTrack()) {
+        RefPtr document = dynamicDowncast<Document>(context);
+        if (document && document->quirks().shouldEnableRemoteTrackLabelQuirk())
+            m_private->updateLabelIfRemoteTrack();
         return;
+    }
 
     ASSERT(isMainThread());
     ASSERT(is<Document>(context));

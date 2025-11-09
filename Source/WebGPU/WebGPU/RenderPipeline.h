@@ -44,6 +44,7 @@ namespace WebGPU {
 class BindGroupLayout;
 class Device;
 class PipelineLayout;
+class TextureOrTextureView;
 class TextureView;
 
 // https://gpuweb.github.io/gpuweb/#gpurenderpipeline
@@ -92,7 +93,7 @@ public:
 
     Device& device() const { return m_device; }
     PipelineLayout& pipelineLayout() const { return m_pipelineLayout; }
-    NSString* errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor&, const Vector<RefPtr<TextureView>>&, const RefPtr<TextureView>&) const;
+    NSString* errorValidatingColorDepthStencilTargets(const WGPURenderPassDescriptor&, const Vector<TextureOrTextureView>&, const std::optional<TextureOrTextureView>&) const;
     bool validateRenderBundle(const WGPURenderBundleEncoderDescriptor&) const;
     bool writesDepth() const;
     bool writesStencil() const;

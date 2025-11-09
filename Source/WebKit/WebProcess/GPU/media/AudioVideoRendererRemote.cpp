@@ -32,10 +32,15 @@
 #include "Logging.h"
 #include "RemoteAudioVideoRendererIdentifier.h"
 #include "RemoteAudioVideoRendererProxyManagerMessages.h"
+#include "RemoteCDMInstance.h"
+#include "RemoteLegacyCDMFactory.h"
+#include "RemoteLegacyCDMSession.h"
 #include "RemoteVideoFrameProxy.h"
 #include "RemoteVideoFrameProxyProperties.h"
+#include "WebProcess.h"
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/HostingContext.h>
+#include <WebCore/LegacyCDM.h>
 #include <WebCore/MediaPlayer.h>
 #include <WebCore/MediaSamplesBlock.h>
 #include <WebCore/NotImplemented.h>
@@ -687,6 +692,53 @@ bool AudioVideoRendererRemote::inVideoFullscreenOrPictureInPicture() const
 #endif
 }
 
+#if ENABLE(ENCRYPTED_MEDIA)
+void AudioVideoRendererRemote::setCDMInstance(CDMInstance* instance)
+{
+    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
+    if (!isGPURunning() || !gpuProcessConnection)
+        return;
+
+    if (RefPtr remoteInstance = dynamicDowncast<RemoteCDMInstance>(instance))
+        gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetCDMInstance(m_identifier, remoteInstance->identifier()), 0);
+    else
+        gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetCDMInstance(m_identifier, std::nullopt), 0);
+}
+
+Ref<MediaPromise> AudioVideoRendererRemote::setInitData(Ref<SharedBuffer> initData)
+{
+    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
+    if (!isGPURunning() || !gpuProcessConnection)
+        return MediaPromise::createAndReject(PlatformMediaError::IPCError);
+
+    return gpuProcessConnection->connection().sendWithPromisedReply<MediaPromiseConverter>(Messages::RemoteAudioVideoRendererProxyManager::SetInitData(m_identifier, WTFMove(initData)), 0);
+}
+
+void AudioVideoRendererRemote::attemptToDecrypt()
+{
+    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
+    if (!isGPURunning() || !gpuProcessConnection)
+        return;
+
+    gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::AttemptToDecrypt(m_identifier), 0);
+}
+#endif
+
+#if ENABLE(LEGACY_ENCRYPTED_MEDIA)
+void AudioVideoRendererRemote::setCDMSession(LegacyCDMSession* session)
+{
+    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
+    if (!isGPURunning() || !gpuProcessConnection)
+        return;
+
+    if (RefPtr remoteSession = dynamicDowncast<RemoteLegacyCDMSession>(session))
+        gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetLegacyCDMSession(m_identifier, remoteSession->identifier()), 0);
+    else
+        gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetLegacyCDMSession(m_identifier, std::nullopt), 0);
+}
+#endif
+
+
 #if PLATFORM(COCOA)
 void AudioVideoRendererRemote::setVideoLayerSizeFenced(const WebCore::FloatSize& size, WTF::MachSendRightAnnotated&& sendRightAnnotated)
 {
@@ -695,7 +747,7 @@ void AudioVideoRendererRemote::setVideoLayerSizeFenced(const WebCore::FloatSize&
         return;
 
     m_videoLayerSize = size;
-    gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetVideoLayerSizeFenced(m_identifier, size, WTFMove(sendRightAnnotated)), m_identifier);
+    gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetVideoLayerSizeFenced(m_identifier, size, WTFMove(sendRightAnnotated)), 0);
 }
 #endif
 

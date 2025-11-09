@@ -270,7 +270,15 @@ void TextBoxPainter::paint()
             paintCompositionUnderlines();
 
         m_renderer.page().addRelevantRepaintedObject(m_renderer, enclosingLayoutRect(m_paintRect));
-        m_document.didPaintText(textBox().formattingContextRoot(), textBox().visualRectIgnoringBlockDirection());
+
+        bool isOnlyTextBoxForElement = [&]() {
+            if (m_textBox.boxIndex() != 1)
+                return false;
+            auto& content = m_textBox.inlineContent().displayContent();
+            return content.lines.size() == 1 && content.boxes.size() == 2;
+        }();
+
+        m_document.didPaintText(textBox().formattingContextRoot(), textBox().visualRectIgnoringBlockDirection(), isOnlyTextBoxForElement);
     }
 
     if (glyphRotation) {
@@ -787,8 +795,8 @@ void TextBoxPainter::collectDecoratingBoxesForBackgroundPainting(DecoratingBoxLi
         return;
     }
 
-    if (!textBox->isHorizontal()) {
-        // FIXME: Vertical writing mode needs some coordinate space transformation for parent inline boxes as we rotate the content with m_paintRect (see ::paint)
+    if (writingMode().isLineInverted()) {
+        // FIXME: underlineOffsetForTextBoxPainting returns incorrect value for vertical-lr.
         decoratingBoxList.append({ ancestorInlineBox, m_style, overrideDecorationStyle, textBoxLocation });
         return;
     }
@@ -806,13 +814,15 @@ void TextBoxPainter::collectDecoratingBoxesForBackgroundPainting(DecoratingBoxLi
                 return;
         }
 
-        auto borderAndPaddingBefore = !inlineBox->isRootInlineBox() ? inlineBox->renderer().borderAndPaddingBefore() : LayoutUnit(0_lu);
-        decoratingBoxList.append({
-            inlineBox,
-            style,
-            useOverriderDecorationStyle == UseOverriderDecorationStyle::Yes ? overrideDecorationStyle : computedDecorationStyle(),
-            { textBoxLocation.x(), m_paintOffset.y() + inlineBox->logicalTop() + borderAndPaddingBefore }
-        });
+        auto decoratingBoxLocation = textBoxLocation;
+        auto parentInlineBox = textBox->parentInlineBox();
+        if (&inlineBox->renderer() != &parentInlineBox->renderer()) {
+            auto decoratingBoxContentBoxTop = inlineBox->logicalTop() + (!inlineBox->isRootInlineBox() ? inlineBox->renderer().borderAndPaddingBefore() : LayoutUnit(0_lu));
+            auto parentInlineBoxContentBoxTop = parentInlineBox->logicalTop() + (!parentInlineBox->isRootInlineBox() ? parentInlineBox->renderer().borderAndPaddingBefore() : LayoutUnit(0_lu));
+            decoratingBoxLocation.moveBy(FloatPoint { 0.f, decoratingBoxContentBoxTop - parentInlineBoxContentBoxTop });
+        }
+        auto& decorationStyleToUse = useOverriderDecorationStyle == UseOverriderDecorationStyle::Yes ? overrideDecorationStyle : computedDecorationStyle();
+        decoratingBoxList.append({ inlineBox, style, decorationStyleToUse, decoratingBoxLocation });
     };
 
     // FIXME: Figure out if the decoration styles coming from the styled marked text should be used only on the closest inline box (direct parent).

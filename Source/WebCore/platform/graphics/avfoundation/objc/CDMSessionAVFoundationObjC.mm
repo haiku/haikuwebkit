@@ -124,7 +124,7 @@ void CDMSessionAVFoundationObjC::releaseKeys()
 bool CDMSessionAVFoundationObjC::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, uint32_t& systemCode)
 {
     RetainPtr keyData = toNSData(key->span());
-    [[m_request dataRequest] respondWithData:keyData.get()];
+    [retainPtr([m_request dataRequest]) respondWithData:keyData.get()];
     [m_request finishLoading];
     errorCode = MediaPlayer::NoError;
     systemCode = 0;

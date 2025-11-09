@@ -22,3 +22,4 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/crashtests/float-rewind-parallel-flow-1-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/crashtests/float-rewind-parallel-flow-2-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/crashtests/float-rewind-parallel-flow-3-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/css/CSS2/floats/crashtests/huge-width-after-float.html

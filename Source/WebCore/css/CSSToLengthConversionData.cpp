@@ -144,4 +144,10 @@ CheckedPtr<Style::BuilderState> CSSToLengthConversionData::protectedStyleBuilder
     return m_styleBuilderState;
 }
 
+bool CSSToLengthConversionData::evaluationTimeZoomEnabled() const
+{
+    ASSERT(m_style);
+    return CheckedPtr { m_style }->evaluationTimeZoomEnabled();
+}
+
 } // namespace WebCore

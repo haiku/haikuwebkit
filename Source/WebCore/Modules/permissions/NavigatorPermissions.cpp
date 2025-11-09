@@ -54,7 +54,7 @@ Permissions& NavigatorPermissions::permissions()
 
 NavigatorPermissions& NavigatorPermissions::from(Navigator& navigator)
 {
-    auto* supplement = static_cast<NavigatorPermissions*>(Supplement<Navigator>::from(&navigator, supplementName()));
+    auto* supplement = downcast<NavigatorPermissions>(Supplement<Navigator>::from(&navigator, supplementName()));
     if (!supplement) {
         auto newSupplement = makeUnique<NavigatorPermissions>(navigator);
         supplement = newSupplement.get();
@@ -62,11 +62,6 @@ NavigatorPermissions& NavigatorPermissions::from(Navigator& navigator)
     }
 
     return *supplement;
-}
-
-ASCIILiteral NavigatorPermissions::supplementName()
-{
-    return "NavigatorPermissions"_s;
 }
 
 } // namespace WebCore

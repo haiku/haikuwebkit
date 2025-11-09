@@ -88,6 +88,14 @@ namespace WebKit {
 
 static const Seconds unexpectedActivityDuration = 10_s;
 
+void WebProcessProxy::registerNotifyObservers()
+{
+    PAL::registerNotifyCallback("com.apple.WebKit.logFrameTrees"_s, [] {
+        for (Ref page : WebProcessProxy::globalPages())
+            page->logFrameTree();
+    });
+}
+
 const MemoryCompactLookupOnlyRobinHoodHashSet<String>& WebProcessProxy::platformPathsWithAssumedReadAccess()
 {
     static NeverDestroyed<MemoryCompactLookupOnlyRobinHoodHashSet<String>> platformPathsWithAssumedReadAccess(std::initializer_list<String> {

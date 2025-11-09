@@ -77,6 +77,9 @@ public:
     ComputedVerticalMargin computedVerticalMargin(const Box&, const HorizontalConstraints&) const;
 
     std::optional<LayoutUnit> computedValue(const auto&, LayoutUnit containingBlockWidth) const;
+    std::optional<LayoutUnit> computedValue(const auto&, LayoutUnit containingBlockWidth, const Style::ZoomFactor&) const;
+
+    std::optional<LayoutUnit> fixedValue(const auto&, const Style::ZoomFactor&) const;
     std::optional<LayoutUnit> fixedValue(const auto&) const;
 
     std::optional<LayoutUnit> computedMinHeight(const Box&, std::optional<LayoutUnit> containingBlockHeight = std::nullopt) const;
@@ -134,10 +137,25 @@ std::optional<LayoutUnit> FormattingGeometry::computedValue(const auto& geometry
     return { };
 }
 
+std::optional<LayoutUnit> FormattingGeometry::computedValue(const auto& geometryProperty, LayoutUnit containingBlockWidth, const Style::ZoomFactor& zoomFactor) const
+{
+    // In general, the computed value resolves the specified value as far as possible without laying out the content.
+    if (geometryProperty.isSpecified())
+        return Style::evaluate<LayoutUnit>(geometryProperty, containingBlockWidth, zoomFactor);
+    return { };
+}
+
 std::optional<LayoutUnit> FormattingGeometry::fixedValue(const auto& geometryProperty) const
 {
     if (auto fixed = geometryProperty.tryFixed())
         return LayoutUnit(fixed->resolveZoom(Style::ZoomNeeded { }));
+    return { };
+}
+
+std::optional<LayoutUnit> FormattingGeometry::fixedValue(const auto& geometryProperty, const Style::ZoomFactor& zoomFactor) const
+{
+    if (auto fixed = geometryProperty.tryFixed())
+        return LayoutUnit(fixed->resolveZoom(zoomFactor));
     return { };
 }
 

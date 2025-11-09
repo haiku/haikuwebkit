@@ -123,7 +123,7 @@ bool HTMLPlugInElement::willRespondToMouseClickEventsWithEditability(Editability
 {
     if (isDisabledFormControl())
         return false;
-    auto renderer = this->renderer();
+    CheckedPtr renderer = this->renderer();
     return renderer && renderer->isRenderWidget();
 }
 
@@ -164,14 +164,14 @@ JSC::Bindings::Instance* HTMLPlugInElement::bindingsInstance()
 
 PluginViewBase* HTMLPlugInElement::pluginWidget(PluginLoadingPolicy loadPolicy) const
 {
-    RenderWidget* renderWidget = loadPolicy == PluginLoadingPolicy::Load ? renderWidgetLoadingPlugin() : this->renderWidget();
+    CheckedPtr renderWidget = loadPolicy == PluginLoadingPolicy::Load ? renderWidgetLoadingPlugin() : this->renderWidget();
     if (!renderWidget)
         return nullptr;
 
     return dynamicDowncast<PluginViewBase>(renderWidget->widget());
 }
 
-RenderWidget* HTMLPlugInElement::renderWidgetLoadingPlugin() const
+CheckedPtr<RenderWidget> HTMLPlugInElement::renderWidgetLoadingPlugin() const
 {
     RefPtr view = document().view();
     if (!view || (!view->inUpdateEmbeddedObjects() && !view->layoutContext().isInLayout() && !view->isPainting())) {
@@ -247,7 +247,7 @@ void HTMLPlugInElement::defaultEventHandler(Event& event)
 
     // FIXME: Mouse down and scroll events are passed down to plug-in via custom code in EventHandler; these code paths should be united.
 
-    auto* renderer = dynamicDowncast<RenderWidget>(this->renderer());
+    CheckedPtr renderer = dynamicDowncast<RenderWidget>(this->renderer());
     if (!renderer)
         return;
 
@@ -282,7 +282,7 @@ bool HTMLPlugInElement::supportsFocus() const
     if (useFallbackContent())
         return false;
 
-    auto* renderer = dynamicDowncast<RenderEmbeddedObject>(this->renderer());
+    CheckedPtr renderer = dynamicDowncast<RenderEmbeddedObject>(this->renderer());
     return renderer && !renderer->isPluginUnavailable();
 }
 
@@ -648,10 +648,10 @@ void HTMLPlugInElement::didAttachRenderers()
 
     // Update the RenderImageResource of the associated RenderImage.
     if (m_imageLoader) {
-        if (auto* renderImage = dynamicDowncast<RenderImage>(renderer())) {
-            auto& renderImageResource = renderImage->imageResource();
-            if (!renderImageResource.cachedImage())
-                renderImageResource.setCachedImage(m_imageLoader->protectedImage());
+        if (CheckedPtr renderImage = dynamicDowncast<RenderImage>(renderer())) {
+            CheckedRef renderImageResource = renderImage->imageResource();
+            if (!renderImageResource->cachedImage())
+                renderImageResource->setCachedImage(m_imageLoader->protectedImage());
         }
     }
 

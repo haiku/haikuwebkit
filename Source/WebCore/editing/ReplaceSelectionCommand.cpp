@@ -198,7 +198,7 @@ ReplacementFragment::ReplacementFragment(RefPtr<DocumentFragment>&& inputFragmen
         return;
     }
 
-    Ref page = createPageForSanitizingWebContent();
+    Ref page = createPageForSanitizingWebContent(&editableRoot->document());
     RefPtr stagingDocument = page->localTopDocument();
     if (!stagingDocument)
         return;
@@ -1427,12 +1427,17 @@ void ReplaceSelectionCommand::doApply()
     if (!insertedNodes.firstNodeInserted()->isConnected())
         return;
 
-    if (needsColorTransformed)
-        inverseTransformColor(insertedNodes);
-
     removeRedundantStylesAndKeepStyleSpanInline(insertedNodes);
     if (insertedNodes.isEmpty())
         return;
+
+    if (needsColorTransformed) {
+        inverseTransformColor(insertedNodes);
+
+        removeRedundantStylesAndKeepStyleSpanInline(insertedNodes);
+        if (insertedNodes.isEmpty())
+            return;
+    }
 
     if (m_sanitizeFragment)
         applyCommandToComposite(SimplifyMarkupCommand::create(document(), insertedNodes.firstNodeInserted(), insertedNodes.pastLastLeaf()));

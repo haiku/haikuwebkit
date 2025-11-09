@@ -163,8 +163,8 @@ WebSocket::~WebSocket()
         allActiveWebSockets().remove(this);
     }
 
-    if (m_channel)
-        m_channel->disconnect();
+    if (RefPtr channel = m_channel)
+        channel->disconnect();
 }
 
 ExceptionOr<Ref<WebSocket>> WebSocket::create(ScriptExecutionContext& context, const String& url)
@@ -328,7 +328,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     if (!protocols.isEmpty())
         protocolString = joinStrings(protocols, subprotocolSeparator());
 
-    if (m_channel->connect(m_url, protocolString) == ThreadableWebSocketChannel::ConnectStatus::KO) {
+    if (channel()->connect(m_url, protocolString) == ThreadableWebSocketChannel::ConnectStatus::KO) {
         failAsynchronously();
         return { };
     }
@@ -339,7 +339,7 @@ ExceptionOr<void> WebSocket::connect(const String& url, const Vector<String>& pr
     };
     if (is<Document>(context))
         reportRegistrableDomain(context.get());
-    else if (auto* workerLoaderProxy = downcast<WorkerGlobalScope>(context)->thread()->workerLoaderProxy())
+    else if (CheckedPtr workerLoaderProxy = downcast<WorkerGlobalScope>(context)->thread()->workerLoaderProxy())
         workerLoaderProxy->postTaskToLoader(WTFMove(reportRegistrableDomain));
 
     m_pendingActivity = makePendingActivity(*this);
@@ -362,8 +362,7 @@ ExceptionOr<void> WebSocket::send(const String& message)
     }
     // FIXME: WebSocketChannel also has a m_bufferedAmount. Remove that one. This one is the correct one accessed by JS.
     m_bufferedAmount = saturateAdd(m_bufferedAmount, utf8.length());
-    ASSERT(m_channel);
-    m_channel->send(WTFMove(utf8));
+    channel()->send(WTFMove(utf8));
     return { };
 }
 
@@ -379,8 +378,7 @@ ExceptionOr<void> WebSocket::send(ArrayBuffer& binaryData)
         return { };
     }
     m_bufferedAmount = saturateAdd(m_bufferedAmount, binaryData.byteLength());
-    ASSERT(m_channel);
-    m_channel->send(binaryData, 0, binaryData.byteLength());
+    channel()->send(binaryData, 0, binaryData.byteLength());
     return { };
 }
 
@@ -397,8 +395,7 @@ ExceptionOr<void> WebSocket::send(ArrayBufferView& arrayBufferView)
         return { };
     }
     m_bufferedAmount = saturateAdd(m_bufferedAmount, arrayBufferView.byteLength());
-    ASSERT(m_channel);
-    m_channel->send(*arrayBufferView.unsharedBuffer(), arrayBufferView.byteOffset(), arrayBufferView.byteLength());
+    channel()->send(*arrayBufferView.unsharedBuffer(), arrayBufferView.byteOffset(), arrayBufferView.byteLength());
     return { };
 }
 
@@ -414,8 +411,7 @@ ExceptionOr<void> WebSocket::send(Blob& binaryData)
         return { };
     }
     m_bufferedAmount = saturateAdd(m_bufferedAmount, binaryData.size());
-    ASSERT(m_channel);
-    m_channel->send(binaryData);
+    channel()->send(binaryData);
     return { };
 }
 
@@ -439,13 +435,13 @@ ExceptionOr<void> WebSocket::close(std::optional<unsigned short> optionalCode, c
         return { };
     if (m_state == CONNECTING) {
         m_state = CLOSING;
-        if (m_channel)
-            m_channel->fail("WebSocket is closed before the connection is established."_s);
+        if (RefPtr channel = m_channel)
+            channel->fail("WebSocket is closed before the connection is established."_s);
         return { };
     }
     m_state = CLOSING;
-    if (m_channel)
-        m_channel->close(code, reason);
+    if (RefPtr channel = m_channel)
+        channel->close(code, reason);
     return { };
 }
 
@@ -504,28 +500,29 @@ void WebSocket::contextDestroyed()
 
 void WebSocket::suspend(ReasonForSuspension reason)
 {
-    if (!m_channel)
+    RefPtr channel = m_channel;
+    if (!channel)
         return;
 
     if (reason == ReasonForSuspension::BackForwardCache) {
         // This will cause didClose() to be called.
-        m_channel->fail("WebSocket is closed due to suspension."_s);
+        channel->fail("WebSocket is closed due to suspension."_s);
         return;
     }
 
-    m_channel->suspend();
+    channel->suspend();
 }
 
 void WebSocket::resume()
 {
-    if (m_channel)
-        m_channel->resume();
+    if (RefPtr channel = m_channel)
+        channel->resume();
 }
 
 void WebSocket::stop()
 {
-    if (m_channel)
-        m_channel->disconnect();
+    if (RefPtr channel = m_channel)
+        channel->disconnect();
     m_channel = nullptr;
     m_state = CLOSED;
     ActiveDOMObject::stop();

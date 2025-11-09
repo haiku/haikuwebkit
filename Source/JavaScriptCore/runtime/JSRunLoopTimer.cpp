@@ -29,6 +29,7 @@
 #include "IncrementalSweeper.h"
 #include "VM.h"
 #include <mutex>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/NoTailCalls.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -110,12 +111,13 @@ void JSRunLoopTimer::Manager::timerDidFire()
 
 JSRunLoopTimer::Manager& JSRunLoopTimer::Manager::singleton()
 {
-    static Manager* manager;
+    static LazyNeverDestroyed<std::unique_ptr<Manager>> manager;
     static std::once_flag once;
     std::call_once(once, [&] {
-        manager = new Manager;
+        auto newManager = std::unique_ptr<Manager> { new Manager };
+        manager.construct(WTFMove(newManager));
     });
-    return *manager;
+    return *manager.get();
 }
 
 void JSRunLoopTimer::Manager::registerVM(VM& vm)

@@ -1,5 +1,5 @@
 //@ skip if $memoryLimited
-//@ runDefault("--watchdog=1000", "--watchdog-exception-ok")
+//@ runDefaultWasm("--watchdog=1000", "--watchdog-exception-ok")
 
 function func_1_() {
     var var_3_ = new WebAssembly.Memory({initial: 4096});

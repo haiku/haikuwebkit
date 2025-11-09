@@ -37,6 +37,7 @@
 
 namespace WebKit {
 class AcceleratedBackingStore;
+class ViewSnapshot;
 class WebPlatformTouchPoint;
 }
 
@@ -60,6 +61,10 @@ public:
 
 #if ENABLE(GAMEPAD)
     static WebKit::WebPageProxy* platformWebPageProxyForGamepadInput();
+#endif
+
+#if USE(SKIA)
+    Expected<Ref<WebKit::ViewSnapshot>, String> takeViewSnapshot(std::optional<WebCore::IntRect>&&);
 #endif
 
     void updateAcceleratedSurface(uint64_t);

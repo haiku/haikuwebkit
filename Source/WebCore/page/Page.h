@@ -131,6 +131,7 @@ class Element;
 class FocusController;
 class FormData;
 class Frame;
+class GraphicsContext;
 class HTMLElement;
 class HTMLImageElement;
 class HTMLMediaElement;
@@ -462,6 +463,7 @@ public:
     WEBCORE_EXPORT const String& groupName() const;
 
     WEBCORE_EXPORT PageGroup& group();
+    WEBCORE_EXPORT CheckedRef<PageGroup> checkedGroup();
 
     BroadcastChannelRegistry& broadcastChannelRegistry() { return m_broadcastChannelRegistry; }
     WEBCORE_EXPORT Ref<BroadcastChannelRegistry> protectedBroadcastChannelRegistry() const;
@@ -696,7 +698,7 @@ public:
     WEBCORE_EXPORT void recomputeTextAutoSizingInAllFrames();
 #endif
 
-    OptionSet<FilterRenderingMode> preferredFilterRenderingModes() const;
+    OptionSet<FilterRenderingMode> preferredFilterRenderingModes(const GraphicsContext&) const;
 
     const FloatBoxExtent& fullscreenInsets() const { return m_fullscreenInsets; }
     WEBCORE_EXPORT void setFullscreenInsets(const FloatBoxExtent&);

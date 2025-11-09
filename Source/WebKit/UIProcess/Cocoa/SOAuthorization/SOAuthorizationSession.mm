@@ -241,7 +241,8 @@ void SOAuthorizationSession::continueStartAfterDecidePolicy(const SOAuthorizatio
     RetainPtr<NSDictionary> authorizationOptions = @{
         SOAuthorizationOptionUserActionInitiated: @(m_navigationAction->isProcessingUserGesture()),
         SOAuthorizationOptionInitiatorOrigin: initiatorOrigin.createNSString().get(),
-        SOAuthorizationOptionInitiatingAction: @(static_cast<NSInteger>(m_action))
+        SOAuthorizationOptionInitiatingAction: @(static_cast<NSInteger>(m_action)),
+        kSOAuthorizationOptionInitiatingPath: m_page->mainFrame()->url().path().createNSString().get()
     };
 #if PLATFORM(IOS_FAMILY)
     RetainPtr<WKWebView> webView = m_page->cocoaView();
@@ -265,7 +266,7 @@ void SOAuthorizationSession::continueStartAfterDecidePolicy(const SOAuthorizatio
 
     RetainPtr nsRequest = m_navigationAction->request().nsURLRequest(WebCore::HTTPBodyUpdatePolicy::UpdateHTTPBody);
     AUTHORIZATIONSESSION_RELEASE_LOG("continueStartAfterGetAuthorizationHints: Beginning authorization with AppSSO.");
-    [m_soAuthorization beginAuthorizationWithURL:nsRequest.get().URL httpHeaders:nsRequest.get().allHTTPHeaderFields httpBody:nsRequest.get().HTTPBody];
+    [m_soAuthorization beginAuthorizationWithURL:retainPtr(nsRequest.get().URL).get() httpHeaders:retainPtr(nsRequest.get().allHTTPHeaderFields).get() httpBody:retainPtr(nsRequest.get().HTTPBody).get()];
 }
 
 void SOAuthorizationSession::fallBackToWebPath()
@@ -330,7 +331,7 @@ void SOAuthorizationSession::complete(NSHTTPURLResponse *httpResponse, NSData *d
     }
 
     // Set cookies.
-    auto cookies = toCookieVector([NSHTTPCookie cookiesWithResponseHeaderFields:httpResponse.allHeaderFields forURL:response.url().createNSURL().get()]);
+    auto cookies = toCookieVector([NSHTTPCookie cookiesWithResponseHeaderFields:retainPtr(httpResponse.allHeaderFields).get() forURL:response.url().createNSURL().get()]);
 
     AUTHORIZATIONSESSION_RELEASE_LOG("complete: (httpStatusCode=%d, hasCookies=%d, hasData=%d)", response.httpStatusCode(), !cookies.isEmpty(), !!data.length);
 

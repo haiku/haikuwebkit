@@ -808,16 +808,6 @@ MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterEntryThunk()
     return codeRef;
 }
 
-MacroAssemblerCodeRef<JITThunkPtrTag> inPlaceInterpreterSIMDEntryThunk()
-{
-    static LazyNeverDestroyed<MacroAssemblerCodeRef<JITThunkPtrTag>> codeRef;
-    static std::once_flag onceKey;
-    std::call_once(onceKey, [&] {
-        codeRef.construct(generateThunkWithJumpToPrologue<JITThunkPtrTag>(ipint_simd_entry, "function for IPInt SIMD call"));
-    });
-    return codeRef;
-}
-
 #define DEFINE_IPINT_THUNK_FOR_CATCH(funcName, target) \
     MacroAssemblerCodeRef<JITThunkPtrTag> funcName() \
     { \

@@ -31,6 +31,7 @@
 
 #include "RemoteLayerTreeHost.h"
 #include "RemoteScrollingCoordinatorProxy.h"
+#include <WebCore/AcceleratedTimeline.h>
 #include <WebCore/ScrollingTreeFixedNodeCocoa.h>
 #include <WebCore/ScrollingTreeFrameHostingNode.h>
 #include <WebCore/ScrollingTreeFrameScrollingNode.h>
@@ -297,6 +298,23 @@ void RemoteScrollingTree::tryToApplyLayerPositions()
     applyLayerPositionsInternal();
 }
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+void RemoteScrollingTree::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations)
+{
+    if (!m_progressBasedTimelineRegistry)
+        m_progressBasedTimelineRegistry = makeUnique<RemoteProgressBasedTimelineRegistry>();
+    m_progressBasedTimelineRegistry->update(processIdentifier, timelineRepresentations);
+    if (m_progressBasedTimelineRegistry->isEmpty())
+        m_progressBasedTimelineRegistry = nullptr;
+}
+
+RefPtr<const RemoteAnimationTimeline> RemoteScrollingTree::timeline(const TimelineID& timelineID) const
+{
+    if (m_progressBasedTimelineRegistry)
+        return m_progressBasedTimelineRegistry->get(timelineID);
+    return nullptr;
+}
+#endif
 
 } // namespace WebKit
 

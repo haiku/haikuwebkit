@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 //@ runDefault("--watchdog=1000", "--watchdog-exception-ok")
 
 $262.agent.waitUntil = function(typedArray, index, expected) {

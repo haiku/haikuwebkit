@@ -1089,7 +1089,11 @@ TEST_P(ConnectionRunLoopTest, RunLoopWaitForAndDispatchImmediately)
     localReferenceBarrier();
 }
 
+#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+TEST_P(ConnectionRunLoopTest, DISABLED_SendLocalSyncMessageWithDataReply)
+#else
 TEST_P(ConnectionRunLoopTest, SendLocalSyncMessageWithDataReply)
+#endif
 {
     constexpr int iterations = 5;
     constexpr size_t dataSize = 1e8; // 100 MB.

@@ -32,6 +32,8 @@
 #include <wtf/NeverDestroyed.h>
 #include <wtf/WTFConfig.h>
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace WTF {
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorHandle);
@@ -496,4 +498,4 @@ void MetaAllocator::dumpProfile()
 
 } // namespace WTF
 
-
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

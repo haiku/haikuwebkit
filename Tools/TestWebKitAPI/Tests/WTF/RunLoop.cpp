@@ -120,7 +120,7 @@ TEST(WTF_RunLoop, CallOnMainCrossThreadWhileNested)
     Util::run(&done);
 }
 
-class DerivedOneShotTimer : public RunLoop::Timer, public CanMakeCheckedPtr<DerivedOneShotTimer> {
+class DerivedOneShotTimer : public CanMakeWeakPtr<DerivedOneShotTimer>, public CanMakeCheckedPtr<DerivedOneShotTimer>, public RunLoop::Timer {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DerivedOneShotTimer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DerivedOneShotTimer);
 public:
@@ -149,12 +149,12 @@ TEST(WTF_RunLoop, OneShotTimer)
     WTF::initializeMainThread();
 
     bool testFinished = false;
-    DerivedOneShotTimer timer(testFinished);
-    timer.startOneShot(100_ms);
+    auto timer = makeUniqueRef<DerivedOneShotTimer>(testFinished);
+    timer->startOneShot(100_ms);
     Util::run(&testFinished);
 }
 
-class DerivedRepeatingTimer : public RunLoop::Timer, public CanMakeCheckedPtr<DerivedRepeatingTimer> {
+class DerivedRepeatingTimer : public CanMakeWeakPtr<DerivedRepeatingTimer>, public CanMakeCheckedPtr<DerivedRepeatingTimer>, public RunLoop::Timer {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DerivedRepeatingTimer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DerivedRepeatingTimer);
 public:
@@ -188,10 +188,10 @@ TEST(WTF_RunLoop, RepeatingTimer)
     WTF::initializeMainThread();
 
     bool testFinished = false;
-    DerivedRepeatingTimer timer(testFinished);
-    timer.startRepeating(10_ms);
+    auto timer = makeUniqueRef<DerivedRepeatingTimer>(testFinished);
+    timer->startRepeating(10_ms);
     Util::run(&testFinished);
-    ASSERT_FALSE(timer.isActive());
+    ASSERT_FALSE(timer->isActive());
 }
 
 TEST(WTF_RunLoop, ManyTimes)

@@ -2,7 +2,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2004-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,6 +70,9 @@ public:
 private:
     HTMLOptionElement(const QualifiedName&, Document&);
 
+    InsertedIntoAncestorResult insertedIntoAncestor(InsertionType, ContainerNode&) final;
+    void removedFromAncestor(RemovalType, ContainerNode& oldParentOfRemovedTree) final;
+
     bool isFocusable() const final;
     bool rendererIsNeeded(const RenderStyle&) final { return false; }
     bool matchesDefaultPseudoClass() const final;
@@ -88,6 +91,7 @@ private:
     bool m_disabled { false };
     bool m_isSelected { false };
     bool m_isDefault { false };
+    WeakPtr<HTMLSelectElement, WeakPtrImplWithEventTargetData> m_ownerSelect;
 };
 
 } // namespace

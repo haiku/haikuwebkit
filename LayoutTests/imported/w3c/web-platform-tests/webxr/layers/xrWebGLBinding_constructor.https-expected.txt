@@ -1,4 +1,4 @@
 
-FAIL Ensure that XRWebGLBinding's constructor throws appropriate errors using webgl assert_equals: Should get InvalidStateError for creating with inline session. expected "InvalidStateError" but got "ReferenceError"
-FAIL Ensure that XRWebGLBinding's constructor throws appropriate errors using webgl2 assert_equals: Should get InvalidStateError for creating with inline session. expected "InvalidStateError" but got "ReferenceError"
+PASS Ensure that XRWebGLBinding's constructor throws appropriate errors using webgl
+PASS Ensure that XRWebGLBinding's constructor throws appropriate errors using webgl2
 

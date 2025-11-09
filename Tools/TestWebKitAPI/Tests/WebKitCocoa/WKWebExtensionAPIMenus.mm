@@ -2378,7 +2378,7 @@ TEST(WKWebExtensionAPIMenus, MacEditableContextMenuItems)
     [manager runUntilTestMessage:@"Menus Created"];
 
     TestWebKitAPI::HTTPServer server({
-        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<textarea style='font-size: 100px; width: 400px; height: 400px'>Editable Text Area</textarea>"_s } },
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<textarea style='font-size: 50px; width: 400px; height: 400px; white-space: nowrap;'>Editable Text Area</textarea>"_s } },
     }, TestWebKitAPI::HTTPServer::Protocol::Http);
 
     auto *urlRequest = server.requestWithLocalhost();

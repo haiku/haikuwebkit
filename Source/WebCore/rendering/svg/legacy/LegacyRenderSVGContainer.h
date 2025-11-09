@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2004, 2005, 2007 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2004, 2005, 2007 Rob Buis <buis@kde.org>
- * Copyright (C) 2009 Google, Inc. All rights reserved.
- * Copyright (C) 2009 Apple Inc. All rights reserved.
+ * Copyright (C) 2009-2015 Google, Inc. All rights reserved.
+ * Copyright (C) 2009-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -40,6 +40,8 @@ public:
     bool isObjectBoundingBoxValid() const { return static_cast<bool>(m_objectBoundingBox); }
     bool isRepaintSuspendedForChildren() const { return m_repaintIsSuspendedForChildrenDuringLayout; }
 
+    FloatRect objectBoundingBox() const final { return m_objectBoundingBox.value_or(FloatRect()); }
+
 protected:
     LegacyRenderSVGContainer(Type, SVGElement&, RenderStyle&&, OptionSet<SVGModelObjectFlag> = { });
 
@@ -51,7 +53,6 @@ protected:
 
     void addFocusRingRects(Vector<LayoutRect>&, const LayoutPoint& additionalOffset, const RenderLayerModelObject* paintContainer = 0) const final;
 
-    FloatRect objectBoundingBox() const final { return m_objectBoundingBox.value_or(FloatRect()); }
     FloatRect strokeBoundingBox() const final;
     FloatRect repaintRectInLocalCoordinates(RepaintRectCalculation = RepaintRectCalculation::Fast) const final;
 

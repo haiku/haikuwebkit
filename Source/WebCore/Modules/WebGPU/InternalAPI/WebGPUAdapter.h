@@ -48,6 +48,7 @@ public:
     SupportedLimits& limits() const { return m_limits; }
     bool isFallbackAdapter() const { return m_isFallbackAdapter; }
     virtual bool xrCompatible() = 0;
+    virtual bool isRemoteAdapterProxy() const { return false; }
 
     virtual void requestDevice(const DeviceDescriptor&, CompletionHandler<void(RefPtr<Device>&&)>&&) = 0;
 

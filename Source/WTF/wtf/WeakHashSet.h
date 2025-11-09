@@ -26,6 +26,7 @@
 #pragma once
 
 #include <algorithm>
+#include <wtf/CheckedPtr.h>
 #include <wtf/HashSet.h>
 #include <wtf/WeakPtr.h>
 
@@ -193,18 +194,22 @@ public:
         return m_set.size();
     }
 
-    void forEach(NOESCAPE const Function<void(T&)>& callback)
+    void forEach(NOESCAPE const Function<void(T&)>& callback) requires WTF::HasRefPtrMemberFunctions<T>::value
     {
-        auto items = map(m_set, [](const Ref<WeakPtrImpl>& item) {
-            auto* pointer = static_cast<T*>(item->template get<T>());
-            return WeakPtr<T, WeakPtrImpl> { pointer };
+        auto items = compactMap(m_set, [](const Ref<WeakPtrImpl>& item) -> RefPtr<T> {
+            return RefPtr { static_cast<T*>(item->template get<T>()) };
         });
-        for (auto& item : items) {
-            // FIXME: This contains check is only necessary if the set is being mutated during iteration.
-            // Change it to an assertion, or make this function use begin() and end().
-            if (item && m_set.contains(*item.m_impl))
-                callback(*item);
-        }
+        for (auto& item : items)
+            callback(item.get());
+    }
+
+    void forEach(NOESCAPE const Function<void(T&)>& callback) requires (WTF::HasCheckedPtrMemberFunctions<T>::value && !WTF::HasRefPtrMemberFunctions<T>::value)
+    {
+        auto items = compactMap(m_set, [](const Ref<WeakPtrImpl>& item) -> CheckedPtr<T> {
+            return CheckedPtr { static_cast<T*>(item->template get<T>()) };
+        });
+        for (auto& item : items)
+            callback(item.get());
     }
 
 #if ASSERT_ENABLED

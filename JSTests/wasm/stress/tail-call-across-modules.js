@@ -1,4 +1,4 @@
-//@ requireOptions("--useWasmTailCalls=true", "--maximumWasmCalleeSizeForInlining=0")
+//@ requireOptions("--useWasmTailCalls=true", "--wasmInliningMaximumWasmCalleeSize=0")
 import { instantiate } from "../wabt-wrapper.js"
 import * as assert from "../assert.js"
 

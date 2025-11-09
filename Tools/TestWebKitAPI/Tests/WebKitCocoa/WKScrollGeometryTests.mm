@@ -108,8 +108,8 @@ TEST(WKScrollGeometry, ContentSizeTallerThanWebView)
 {
     CGFloat expectedWidth = 800;
 #if PLATFORM(MAC)
-    RetainPtr scroller = [NSScrollerImp scrollerImpWithStyle:NSScroller.preferredScrollerStyle controlSize:NSControlSizeRegular horizontal:NO replacingScrollerImp:nil];
-    expectedWidth -= [scroller trackBoxWidth];
+    auto scrollbarWidth = [[NSScrollerImp self] scrollerWidthForControlSize:NSControlSizeRegular scrollerStyle:NSScroller.preferredScrollerStyle];
+    expectedWidth -= scrollbarWidth;
 #endif
 
     runContentSizeTest(@""

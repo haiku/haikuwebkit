@@ -545,6 +545,11 @@ bool GraphicsContextGL::extractTextureData(unsigned width, unsigned height, GCGL
     return true;
 }
 
+bool GraphicsContextGL::supportsExtension(GCGLExtension extension)
+{
+    return m_knownActiveExtensions.contains(extension) || m_requestableExtensions.contains(extension);
+}
+
 GCGLfloat GraphicsContextGL::getFloat(GCGLenum pname)
 {
     GCGLfloat value { };

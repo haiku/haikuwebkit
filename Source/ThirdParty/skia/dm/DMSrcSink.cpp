@@ -134,8 +134,14 @@
     #include "client_utils/android/BitmapRegionDecoder.h"
 #endif
 
-#if !defined(SK_DISABLE_LEGACY_TESTS)
-    #include "tests/TestUtils.h"
+#if defined(SK_CODEC_ENCODES_PNG_WITH_LIBPNG)
+#include "include/docs/SkXPSLibpngHelpers.h"
+#include "include/encode/SkPngEncoder.h"
+#endif
+
+#if defined(SK_CODEC_ENCODES_PNG_WITH_RUST)
+#include "include/docs/SkXPSRustPngHelpers.h"
+#include "include/encode/SkPngRustEncoder.h"
 #endif
 
 #include <cmath>
@@ -146,7 +152,7 @@ using namespace skia_private;
 static DEFINE_bool(RAW_threading, true, "Allow RAW decodes to run on multiple threads?");
 static DEFINE_int(mskpFrame, 0, "Which MSKP frame to draw?");
 
-DECLARE_int(gpuThreads);
+DECLARE_int(gpuThreads)
 
 using sk_gpu_test::GrContextFactory;
 using sk_gpu_test::ContextInfo;
@@ -192,6 +198,11 @@ SkISize GMSrc::size() const {
 Name GMSrc::name() const {
     std::unique_ptr<skiagm::GM> gm(fFactory());
     return gm->getName();
+}
+
+void GMSrc::modifySurfaceProps(SkSurfaceProps* props) const {
+    std::unique_ptr<skiagm::GM> gm(fFactory());
+    gm->modifySurfaceProps(props);
 }
 
 void GMSrc::modifyGrContextOptions(GrContextOptions* options) const {
@@ -1551,11 +1562,12 @@ Result GPUSink::draw(const Src& src, SkBitmap* dst, SkWStream* dstStream, SkStri
     return this->onDraw(src, dst, dstStream, log, fBaseContextOptions);
 }
 
-sk_sp<SkSurface> GPUSink::createDstSurface(GrDirectContext* context, SkISize size) const {
+sk_sp<SkSurface> GPUSink::createDstSurface(GrDirectContext* context, const Src& src) const {
     sk_sp<SkSurface> surface;
 
-    SkImageInfo info = SkImageInfo::Make(size, this->colorInfo());
+    SkImageInfo info = SkImageInfo::Make(src.size(), this->colorInfo());
     SkSurfaceProps props(fSurfaceFlags, kRGB_H_SkPixelGeometry);
+    src.modifySurfaceProps(&props);
 
     switch (fSurfType) {
         case SkCommandLineConfigGpu::SurfType::kDefault:
@@ -1617,7 +1629,7 @@ Result GPUSink::onDraw(const Src& src, SkBitmap* dst, SkWStream*, SkString* log,
         return Result::Skip("Src too large to create a texture.\n");
     }
 
-    sk_sp<SkSurface> surface = this->createDstSurface(direct, src.size());
+    sk_sp<SkSurface> surface = this->createDstSurface(direct, src);
     if (!surface) {
         return Result::Fatal("Could not create a surface.");
     }
@@ -1947,7 +1959,7 @@ Result GPUDDLSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString* log
     // Make sure 'mainCtx' is current
     mainTestCtx->makeCurrent();
 
-    sk_sp<SkSurface> surface = this->createDstSurface(mainCtx, src.size());
+    sk_sp<SkSurface> surface = this->createDstSurface(mainCtx, src);
     if (!surface) {
         return Result::Fatal("Could not create a surface.");
     }
@@ -2049,7 +2061,15 @@ Result XPSSink::draw(const Src& src, SkBitmap*, SkWStream* dst, SkString*) const
     if (!factory) {
         return Result::Fatal("Failed to create XPS Factory.");
     }
-    auto doc = SkXPS::MakeDocument(dst, factory.get());
+    SkXPS::Options xpsOpts;
+#if defined(SK_CODEC_ENCODES_PNG_WITH_LIBPNG)
+    xpsOpts.pngEncoder = SkXPS::EncodePngUsingLibpng;
+#elif defined(SK_CODEC_ENCODES_PNG_WITH_RUST)
+    xpsOpts.pngEncoder = SkXPS::EncodePngUsingRust;
+#else
+#error "PNG encoder is required"
+#endif
+    auto doc = SkXPS::MakeDocument(dst, factory.get(), xpsOpts);
     if (!doc) {
         return Result::Fatal("SkXPS::MakeDocument() returned nullptr");
     }
@@ -2064,7 +2084,14 @@ Result XPSSink::draw(const Src& src, SkBitmap*, SkWStream* dst, SkString*) const
 static SkSerialProcs serial_procs_using_png() {
     static SkSerialProcs procs;
     procs.fImageProc = [](SkImage* img, void*) -> sk_sp<SkData> {
-        return SkPngEncoder::Encode(as_IB(img)->directContext(), img, SkPngEncoder::Options{});
+#if defined(SK_CODEC_ENCODES_PNG_WITH_LIBPNG)
+        return SkPngEncoder::Encode(as_IB(img)->directContext(), img, {});
+#elif defined(SK_CODEC_ENCODES_PNG_WITH_RUST)
+        return SkPngRustEncoder::Encode(as_IB(img)->directContext(), img, {});
+#else
+        // TODO: This catches SkImageEncoder_NDK (or other).
+        return SkPngEncoder::Encode(as_IB(img)->directContext(), img, {});
+#endif
     };
     return procs;
 }
@@ -2145,6 +2172,7 @@ Result RasterSink::draw(const Src& src, SkBitmap* dst, SkWStream*, SkString*) co
                           SkBitmap::kZeroPixels_AllocFlag);
 
     SkSurfaceProps props(/*flags=*/0, kRGB_H_SkPixelGeometry);
+    src.modifySurfaceProps(&props);
     auto surface = SkSurfaces::WrapPixels(dst->pixmap(), &props);
     return src.draw(surface->getCanvas(), /*GraphiteTestContext=*/nullptr);
 }
@@ -2171,7 +2199,12 @@ Result GraphiteSink::draw(const Src& src,
     skgpu::graphite::ContextOptionsPriv optionsPriv;
     options.fContextOptions.fOptionsPriv = &optionsPriv;
 
+    // We don't expect the src to mess with the persistent storage or the executor.
+    SkDEBUGCODE(auto cache = options.fContextOptions.fPersistentPipelineStorage);
+    SkDEBUGCODE(auto exec = options.fContextOptions.fExecutor);
     src.modifyGraphiteContextOptions(&options.fContextOptions);
+    SkASSERT(cache == options.fContextOptions.fPersistentPipelineStorage);
+    SkASSERT(exec == options.fContextOptions.fExecutor);
 
     skiatest::graphite::ContextFactory factory(options);
     skiatest::graphite::ContextInfo ctxInfo = factory.getContextInfo(fContextType);
@@ -2187,7 +2220,7 @@ Result GraphiteSink::draw(const Src& src,
     }
 
     {
-        sk_sp<SkSurface> surface = this->makeSurface(recorder.get(), src.size());
+        sk_sp<SkSurface> surface = this->makeSurface(recorder.get(), src);
         if (!surface) {
             return Result::Fatal("Could not create a surface.");
         }
@@ -2216,13 +2249,18 @@ Result GraphiteSink::draw(const Src& src,
     }
     ctxInfo.fTestContext->syncedSubmit(context);
 
+    if (options.fContextOptions.fPersistentPipelineStorage) {
+        context->syncPipelineData();
+    }
+
     return Result::Ok();
 }
 
 sk_sp<SkSurface> GraphiteSink::makeSurface(skgpu::graphite::Recorder* recorder,
-                                           SkISize dimensions) const {
+                                           const Src& src) const {
     SkSurfaceProps props(0, kRGB_H_SkPixelGeometry);
-    auto ii = SkImageInfo::Make(dimensions, this->colorInfo());
+    src.modifySurfaceProps(&props);
+    auto ii = SkImageInfo::Make(src.size(), this->colorInfo());
 
 #if defined(SK_DAWN)
     if (fOptions.fUseWGPUTextureView) {
@@ -2238,9 +2276,50 @@ sk_sp<SkSurface> GraphiteSink::makeSurface(skgpu::graphite::Recorder* recorder,
 }
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+GraphitePersistentPipelineStorageTestingSink::GraphitePersistentPipelineStorageTestingSink(
+            const SkCommandLineConfigGraphite* config,
+            const skiatest::graphite::TestOptions& options)
+        : GraphiteSink(config, options) {
+    fOptions.fContextOptions.fPersistentPipelineStorage = &fMemoryPipelineStorage;
+    SkASSERT(config->getTestPersistentStorage());
+}
 
+Result GraphitePersistentPipelineStorageTestingSink::draw(const Src& src,
+                                                          SkBitmap* dst,
+                                                          SkWStream* wStream,
+                                                          SkString* log) const {
+    // Draw twice, once with a cold start, and again with a warm start.
+    fMemoryPipelineStorage.reset();
+
+    Result result = this->GraphiteSink::draw(src, dst, wStream, log);
+    if (!result.isOk() || !dst) {
+        return result;
+    }
+
+    // With the cold start there shouldn't anything to load but we should store the new pipelines.
+    SkAssertResult(fMemoryPipelineStorage.numLoads() == 0);
+    SkAssertResult(fMemoryPipelineStorage.numStores() == 1);
+
+    fMemoryPipelineStorage.resetCacheStats();
+
+    SkBitmap reference;
+    SkString refLog;
+    SkDynamicMemoryWStream refStream;
+    Result refResult = this->GraphiteSink::draw(src, &reference, &refStream, &refLog);
+    if (!refResult.isOk()) {
+        return refResult;
+    }
+
+    // With the warm start we should be able to load the prior pipelines and, thus, not need
+    // to store any new ones.
+    SkAssertResult(fMemoryPipelineStorage.numLoads() == 1);
+    SkAssertResult(fMemoryPipelineStorage.numStores() == 0);
+
+    return compare_bitmaps(reference, *dst);
+}
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 #if defined(SK_ENABLE_PRECOMPILE)
-
 GraphitePrecompileTestingSink::GraphitePrecompileTestingSink(
         const SkCommandLineConfigGraphite* config,
         const skiatest::graphite::TestOptions& options) : GraphiteSink(config, options) {}
@@ -2253,7 +2332,7 @@ Result GraphitePrecompileTestingSink::drawSrc(
         skiatest::graphite::GraphiteTestContext* testContext,
         skgpu::graphite::Recorder* recorder) const {
 
-    sk_sp<SkSurface> surface = this->makeSurface(recorder, src.size());
+    sk_sp<SkSurface> surface = this->makeSurface(recorder, src);
     if (!surface) {
         return Result::Fatal("Could not create a surface.");
     }

@@ -45,6 +45,7 @@
 #include "LineSelection.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
+#include "MathVariant.h"
 #include "Range.h"
 #include "RenderBlock.h"
 #include "RenderCombineText.h"
@@ -1668,6 +1669,20 @@ static String convertToFullSizeKana(const String& string)
     return result.toString();
 }
 
+// https://w3c.github.io/mathml-core/#math-auto-transform
+static String convertToMathAuto(const String& string)
+{
+#if ENABLE(MATHML)
+    StringView view = string;
+    if (auto codePoint = view.convertToSingleCodePoint()) {
+        char32_t transformedCodePoint = mathVariantMapCodePoint(codePoint.value(), MathVariant::Italic);
+        if (transformedCodePoint != codePoint.value())
+            return String::fromCodePoint(transformedCodePoint);
+    }
+#endif
+    return string;
+}
+
 String applyTextTransform(const RenderStyle& style, const String& text)
 {
     Vector<char16_t> previousCharacter(1, ' ');
@@ -1695,6 +1710,9 @@ String applyTextTransform(const RenderStyle& style, const String& text, Vector<c
 
     if (transform.contains(TextTransform::FullSizeKana))
         modified = convertToFullSizeKana(modified);
+
+    if (transform.contains(TextTransform::MathAuto))
+        modified = convertToMathAuto(modified);
 
     return modified;
 }

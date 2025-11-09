@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
- * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2014 Google Inc. All rights reserved.
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
@@ -57,7 +57,6 @@
 #include "StyleInheritedData.h"
 #include "TransformState.h"
 #include "VisiblePosition.h"
-#include "WillChangeData.h"
 #include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -348,51 +347,51 @@ LayoutPoint RenderInline::firstInlineBoxTopLeft() const
     return { };
 }
 
-static LayoutUnit computeMargin(const RenderInline* renderer, const Style::MarginEdge& margin)
+static LayoutUnit computeMargin(const RenderInline* renderer, const Style::MarginEdge& margin, const Style::ZoomFactor& zoomFactor)
 {
     return Style::evaluateMinimum<LayoutUnit>(margin, [&] ALWAYS_INLINE_LAMBDA {
         return std::max<LayoutUnit>(0, renderer->containingBlock()->contentBoxLogicalWidth());
-    }, Style::ZoomNeeded { });
+    }, zoomFactor);
 }
 
 LayoutUnit RenderInline::marginLeft() const
 {
-    return computeMargin(this, style().marginLeft());
+    return computeMargin(this, style().marginLeft(), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginRight() const
 {
-    return computeMargin(this, style().marginRight());
+    return computeMargin(this, style().marginRight(), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginTop() const
 {
-    return computeMargin(this, style().marginTop());
+    return computeMargin(this, style().marginTop(), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginBottom() const
 {
-    return computeMargin(this, style().marginBottom());
+    return computeMargin(this, style().marginBottom(), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginStart(const WritingMode writingMode) const
 {
-    return computeMargin(this, style().marginStart(writingMode));
+    return computeMargin(this, style().marginStart(writingMode), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginEnd(const WritingMode writingMode) const
 {
-    return computeMargin(this, style().marginEnd(writingMode));
+    return computeMargin(this, style().marginEnd(writingMode), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginBefore(const WritingMode writingMode) const
 {
-    return computeMargin(this, style().marginBefore(writingMode));
+    return computeMargin(this, style().marginBefore(writingMode), style().usedZoomForLength());
 }
 
 LayoutUnit RenderInline::marginAfter(const WritingMode writingMode) const
 {
-    return computeMargin(this, style().marginAfter(writingMode));
+    return computeMargin(this, style().marginAfter(writingMode), style().usedZoomForLength());
 }
 
 ASCIILiteral RenderInline::renderName() const
@@ -995,14 +994,14 @@ bool isEmptyInline(const RenderInline& renderer)
     return true;
 }
 
-inline bool RenderInline::willChangeCreatesStackingContext() const
-{
-    return style().willChange() && style().willChange()->canCreateStackingContext();
-}
-
 bool RenderInline::requiresLayer() const
 {
-    return isInFlowPositioned() || createsGroup() || hasClipPath() || willChangeCreatesStackingContext() || hasRunningAcceleratedAnimations() || requiresRenderingConsolidationForViewTransition();
+    return isInFlowPositioned()
+        || createsGroup()
+        || hasClipPath()
+        || style().willChange().canCreateStackingContext()
+        || hasRunningAcceleratedAnimations()
+        || requiresRenderingConsolidationForViewTransition();
 }
 
 } // namespace WebCore

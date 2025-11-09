@@ -31,22 +31,27 @@
 #include <WebCore/RTCDataChannelIdentifier.h>
 #include <WebCore/RTCDataChannelRemoteSourceConnection.h>
 #include <WebCore/RTCError.h>
+#include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
 
 namespace WebCore {
 
-class RTCDataChannelRemoteSource : public RTCDataChannelHandlerClient {
+class RTCDataChannelRemoteSource : public RTCDataChannelHandlerClient, public RefCounted<RTCDataChannelRemoteSource> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(RTCDataChannelRemoteSource, WEBCORE_EXPORT);
 public:
-    WEBCORE_EXPORT RTCDataChannelRemoteSource(RTCDataChannelIdentifier, UniqueRef<RTCDataChannelHandler>&&, Ref<RTCDataChannelRemoteSourceConnection>&&);
+    WEBCORE_EXPORT static Ref<RTCDataChannelRemoteSource> create(RTCDataChannelIdentifier, UniqueRef<RTCDataChannelHandler>&&, Ref<RTCDataChannelRemoteSourceConnection>&&);
     ~RTCDataChannelRemoteSource();
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void sendStringData(const CString& text) { m_handler->sendStringData(text); }
     void sendRawData(std::span<const uint8_t> data) { m_handler->sendRawData(data); }
     void close() { m_handler->close(); }
 
 private:
+    WEBCORE_EXPORT RTCDataChannelRemoteSource(RTCDataChannelIdentifier, UniqueRef<RTCDataChannelHandler>&&, Ref<RTCDataChannelRemoteSourceConnection>&&);
 
     // RTCDataChannelHandlerClient
     void didChangeReadyState(RTCDataChannelState state) final { m_connection->didChangeReadyState(m_identifier, state); }

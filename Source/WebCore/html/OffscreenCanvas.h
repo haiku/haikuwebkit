@@ -164,11 +164,9 @@ private:
     void refEventTarget() final { RefCounted::ref(); }
     void derefEventTarget() final { RefCounted::deref(); }
 
-    void setSize(const IntSize&) final;
-
+    void didUpdateSizeProperties();
     void createImageBuffer() const final;
 
-    void reset();
     void scheduleCommitToPlaceholderCanvas();
 
     std::unique_ptr<CanvasRenderingContext> m_context;

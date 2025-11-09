@@ -503,6 +503,7 @@ public:
 
     // Use these two methods with caution.
     inline RenderBox* renderBox() const; // Defined in NodeInlines.h
+    inline CheckedPtr<RenderBox> checkedRenderBox() const; // Defined in NodeInlines.h
     inline RenderBoxModelObject* renderBoxModelObject() const; // Defined in NodeInlines.h
 
     // Wrapper for nodes that don't have a renderer, but still cache the style (like HTMLOptionElement).

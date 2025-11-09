@@ -442,11 +442,15 @@ public:
     unsigned localSizeToAlloc() const { return m_localSizeToAlloc; }
     unsigned rethrowSlots() const { return m_numRethrowSlotsToAlloc; }
 
-    unsigned numCallProfiles() const { return m_numCallProfiles; }
+    const Vector<FunctionSpaceIndex>& callTargets() const { return m_callTargets; }
+    unsigned numCallProfiles() const { return m_callTargets.size(); }
 
     bool needsProfiling() const;
 
     IPIntTierUpCounter& tierUpCounter() { return m_tierUpCounter; }
+    const IPIntTierUpCounter& tierUpCounter() const { return m_tierUpCounter; }
+
+    FunctionSpaceIndex callTarget(unsigned callProfileIndex) const { return m_callTargets[callProfileIndex]; }
 
     using OutOfLineJumpTargets = UncheckedKeyHashMap<unsigned, int>;
 
@@ -465,6 +469,7 @@ private:
     Vector<uint8_t> m_metadata;
     Vector<uint8_t> m_argumINTBytecode;
     Vector<uint8_t> m_uINTBytecode;
+    Vector<FunctionSpaceIndex> m_callTargets;
 
     unsigned m_topOfReturnStackFPOffset;
 
@@ -473,7 +478,6 @@ private:
     unsigned m_numLocals;
     unsigned m_numArgumentsOnStack;
     unsigned m_maxFrameSizeInV128;
-    unsigned m_numCallProfiles;
 
     IPIntTierUpCounter m_tierUpCounter;
 };

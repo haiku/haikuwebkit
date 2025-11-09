@@ -3,7 +3,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *           (C) 2006 Alexey Proskuryakov (ap@nypop.com)
  * Copyright (C) 2010-2022 Google Inc. All rights reserved.
  * Copyright (C) 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
@@ -42,6 +42,7 @@
 #include "FrameDestructionObserverInlines.h"
 #include "FormController.h"
 #include "GenericCachedHTMLCollection.h"
+#include "HTMLDataListElement.h"
 #include "HTMLFormElement.h"
 #include "HTMLHRElement.h"
 #include "HTMLNames.h"
@@ -99,6 +100,22 @@ Ref<HTMLSelectElement> HTMLSelectElement::create(const QualifiedName& tagName, D
 Ref<HTMLSelectElement> HTMLSelectElement::create(Document& document)
 {
     return adoptRef(*new HTMLSelectElement(selectTag, document, nullptr));
+}
+
+HTMLSelectElement* HTMLSelectElement::findOwnerSelect(ContainerNode* startNode, ExcludeOptGroup excludeOptGroup)
+{
+    if (!startNode)
+        return nullptr;
+    if (auto* select = dynamicDowncast<HTMLSelectElement>(*startNode))
+        return select;
+    if (is<HTMLOptGroupElement>(*startNode)) {
+        if (excludeOptGroup == ExcludeOptGroup::Yes)
+            return nullptr;
+        return findOwnerSelect(startNode->parentNode(), ExcludeOptGroup::Yes);
+    }
+    if (is<HTMLDataListElement>(*startNode) || is<HTMLHRElement>(*startNode) || is<HTMLOptionElement>(*startNode))
+        return nullptr;
+    return findOwnerSelect(startNode->parentNode(), excludeOptGroup);
 }
 
 void HTMLSelectElement::didRecalcStyle(OptionSet<Style::Change> styleChange)
@@ -415,6 +432,10 @@ CompletionHandlerCallingScope HTMLSelectElement::optionToSelectFromChildChangeSc
     } };
 }
 
+// FIXME: we should really make this disappear when
+// document().settings().htmlEnhancedSelectParsingEnabled() is true, but
+// https://github.com/whatwg/html/issues/11825 needs to be resolved. It might not be possible
+// without a risky behavioral change.
 void HTMLSelectElement::childrenChanged(const ChildChange& change)
 {
     ASSERT(change.affectsElements != ChildChange::AffectsElements::Unknown);
@@ -842,15 +863,57 @@ void HTMLSelectElement::recalcListItems(bool updateSelectedStates, AllowStyleInv
         }
     };
 
-    for (Ref child : childrenOfType<HTMLElement>(*const_cast<HTMLSelectElement*>(this))) {
-        if (is<HTMLOptGroupElement>(child.get())) {
-            m_listItems.append(&child.get());
-            for (Ref option : childrenOfType<HTMLOptionElement>(child.get()))
-                handleOptionElement(option);
-        } else if (RefPtr option = dynamicDowncast<HTMLOptionElement>(child.get()))
-            handleOptionElement(*option);
-        else if (is<HTMLHRElement>(child.get()))
-            m_listItems.append(&child.get());
+    if (document().settings().htmlEnhancedSelectParsingEnabled()) {
+        for (auto it = descendantsOfType<HTMLElement>(*const_cast<HTMLSelectElement*>(this)).begin(); it;) {
+            Ref descendant = *it;
+            if (RefPtr option = dynamicDowncast<HTMLOptionElement>(descendant)) {
+                handleOptionElement(*option);
+                it.traverseNextSkippingChildren();
+                continue;
+            }
+            if (is<HTMLOptGroupElement>(descendant)) {
+                m_listItems.append(descendant.ptr());
+                for (auto optGroupIt = descendantsOfType<HTMLElement>(descendant).begin(); optGroupIt;) {
+                    Ref optGroupDescendant = *optGroupIt;
+                    if (RefPtr option = dynamicDowncast<HTMLOptionElement>(optGroupDescendant)) {
+                        handleOptionElement(*option);
+                        optGroupIt.traverseNextSkippingChildren();
+                        continue;
+                    }
+                    if (is<HTMLOptGroupElement>(optGroupDescendant)
+                        || is<HTMLDataListElement>(optGroupDescendant)
+                        || is<HTMLSelectElement>(optGroupDescendant)
+                        || is<HTMLHRElement>(optGroupDescendant)) {
+                        optGroupIt.traverseNextSkippingChildren();
+                        continue;
+                    }
+                    optGroupIt.traverseNext();
+                }
+                it.traverseNextSkippingChildren();
+                continue;
+            }
+            if (is<HTMLHRElement>(descendant)) {
+                m_listItems.append(descendant.ptr());
+                it.traverseNextSkippingChildren();
+                continue;
+            }
+            if (is<HTMLDataListElement>(descendant) || is<HTMLSelectElement>(descendant)) {
+                it.traverseNextSkippingChildren();
+                continue;
+            }
+            it.traverseNext();
+        }
+    } else {
+        for (Ref child : childrenOfType<HTMLElement>(*const_cast<HTMLSelectElement*>(this))) {
+            if (is<HTMLOptGroupElement>(child)) {
+                m_listItems.append(child.ptr());
+                for (Ref option : childrenOfType<HTMLOptionElement>(child))
+                    handleOptionElement(option);
+            } else if (RefPtr option = dynamicDowncast<HTMLOptionElement>(child))
+                handleOptionElement(*option);
+            else if (is<HTMLHRElement>(child))
+                m_listItems.append(child.ptr());
+        }
     }
 
     if (!foundSelected && m_size <= 1 && firstOption && !firstOption->selected())

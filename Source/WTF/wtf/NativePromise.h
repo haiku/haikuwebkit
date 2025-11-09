@@ -43,6 +43,7 @@
 #include <wtf/Locker.h>
 #include <wtf/Logger.h>
 #include <wtf/Ref.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RefPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/ThreadSafeRefCounted.h>
@@ -51,15 +52,6 @@
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/MakeString.h>
-
-namespace WTF {
-class NativePromiseRequest;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WTF::NativePromiseRequest> : std::true_type { };
-}
 
 namespace WTF {
 
@@ -285,12 +277,14 @@ public:
 
 class ConvertibleToNativePromise { };
 
-class NativePromiseRequest :  public CanMakeWeakPtr<NativePromiseRequest> {
+class NativePromiseRequest final : public RefCountedAndCanMakeWeakPtr<NativePromiseRequest> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(NativePromiseRequest);
 public:
-    NativePromiseRequest() = default;
-    NativePromiseRequest(NativePromiseRequest&& other) = default;
-    NativePromiseRequest& operator=(NativePromiseRequest&& other) = default;
+    static Ref<NativePromiseRequest> create()
+    {
+        return adoptRef(*new NativePromiseRequest);
+    }
+
     ~NativePromiseRequest()
     {
         ASSERT(!m_callback, "complete() or disconnect() wasn't called");
@@ -309,7 +303,7 @@ public:
         m_callback = WTFMove(callback);
     }
 
-    explicit operator bool() const { return !!m_callback; }
+    bool hasCallback() const { return !!m_callback; }
 
     void complete()
     {
@@ -328,6 +322,8 @@ public:
     }
 
 private:
+    NativePromiseRequest() = default;
+
     RefPtr<Callback> m_callback;
 };
 

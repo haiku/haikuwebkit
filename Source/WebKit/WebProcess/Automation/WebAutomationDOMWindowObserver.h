@@ -43,6 +43,10 @@ public:
 
     ~WebAutomationDOMWindowObserver();
 
+    // LocalDOMWindowObserver.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     // All of these observer callbacks are interpreted as a signal that a frame has been detached and
     // can no longer accept new commands nor finish pending commands (eg, evaluating JavaScript).
     void willDestroyGlobalObjectInCachedFrame() final;

@@ -1441,6 +1441,17 @@ bool GraphicsContextCG::isCALayerContext() const
     return m_isLayerCGContext;
 }
 
+bool GraphicsContextCG::knownToHaveFloatBasedBacking() const
+{
+    auto context = platformContext();
+
+    if (CGContextGetType(context) == kCGContextTypeIOSurface)
+        return CGIOSurfaceContextGetBitmapInfo(context) & kCGBitmapFloatComponents;
+    if (CGContextGetType(context) == kCGContextTypeBitmap)
+        return CGBitmapContextGetBitmapInfo(context) & kCGBitmapFloatComponents;
+    return false;
+}
+
 RenderingMode GraphicsContextCG::renderingMode() const
 {
     return m_renderingMode;

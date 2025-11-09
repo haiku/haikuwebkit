@@ -39,7 +39,6 @@ css/CSSToLengthConversionData.h
 css/MediaList.h
 css/StyleSheetContents.cpp
 css/StyleSheetContents.h
-css/values/primitives/CSSPrimitiveData.h
 dom/CustomElementReactionQueue.h
 dom/Element.h
 dom/FragmentDirectiveRangeFinder.cpp
@@ -96,6 +95,7 @@ rendering/style/StyleCachedImage.cpp
 rendering/svg/SVGRenderingContext.h
 style/StyleExtractorState.h
 style/StyleScope.h
+style/values/will-change/StyleWillChange.cpp
 testing/Internals.cpp
 xml/XSLStyleSheetLibxslt.cpp
 xml/parser/XMLDocumentParserLibxml2.cpp

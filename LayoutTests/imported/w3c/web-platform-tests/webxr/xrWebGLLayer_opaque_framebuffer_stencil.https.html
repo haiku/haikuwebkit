@@ -183,24 +183,24 @@ let testFunction =
 
     // check that the main color is used correctly (green)
     pixels[0] = pixels[1] = pixels[2] = pixels[3] = 30;
-    gl.readPixels(xrViewport.x + xrViewport.width / 2, xrViewport.y + xrViewport.height/4, 1, 1, gl.RGB, gl.UNSIGNED_BYTE, pixels);
-    if (pixels[0] == 0x0 && pixels[1] == 0xFF && pixels[2] == 0x0) { // green?
+    gl.readPixels(xrViewport.x + xrViewport.width / 2, xrViewport.y + xrViewport.height/4, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    if (pixels[0] == 0x0 && pixels[1] == 0xFF && pixels[2] == 0x0 && pixels[3] == 0xFF) { // green?
       // PASSED.
-    } else if (pixels[0] == 0xFF && pixels[1] == 0xFF && pixels[2] == 0xFF) { // white?
+    } else if (pixels[0] == 0xFF && pixels[1] == 0xFF && pixels[2] == 0xFF && pixels[3] == 0xFF) { // white?
       reject("Failed, white detected, must be green");
     } else {
-      reject("Failed, readPixels (1) didn't work, gl error = " + gl.getError() + ", pixel = " +pixels[0] + " " +pixels[1] + " " +pixels[2]);
+      reject("Failed, readPixels (1) didn't work, gl error = " + gl.getError() + ", pixel = " +pixels[0] + " " +pixels[1] + " " +pixels[2] + " " +pixels[3]);
     }
 
     // check if stencil worked, i.e. white pixels in the center
     pixels[0] = pixels[1] = pixels[2] = pixels[3] = 20;
-    gl.readPixels(xrViewport.x + xrViewport.width / 2, xrViewport.y + xrViewport.height/2, 1, 1, gl.RGB, gl.UNSIGNED_BYTE, pixels);
-    if (pixels[0] == 0xFF && pixels[1] == 0xFF && pixels[2] == 0xFF) { // white?
+    gl.readPixels(xrViewport.x + xrViewport.width / 2, xrViewport.y + xrViewport.height/2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    if (pixels[0] == 0xFF && pixels[1] == 0xFF && pixels[2] == 0xFF && pixels[3] == 0xFF) { // white?
       // PASSED.
-    } else if (pixels[0] == 0x0 && pixels[1] == 0xFF && pixels[2] == 0x0) { // green?
+    } else if (pixels[0] == 0x0 && pixels[1] == 0xFF && pixels[2] == 0x0 && pixels[3] == 0xFF) { // green?
       reject("Failed, green detected, must be white");
     } else {
-      reject("Failed, readPixels (2) didn't work, gl error = " + gl.getError() + ", pixel = " +pixels[0] + " " +pixels[1] + " " +pixels[2]);
+      reject("Failed, readPixels (2) didn't work, gl error = " + gl.getError() + ", pixel = " +pixels[0] + " " +pixels[1] + " " +pixels[2] + " " +pixels[3]);
     }
 
     // Finished.
@@ -210,12 +210,8 @@ let testFunction =
 
 const gl_props = { antialias: false, alpha: false, stencil: true, depth: true };
 
-// mac has issues with readPixels from the default fbo.
-// skipping this test for Mac.
-if (navigator.platform.indexOf("Mac") == -1) {
-  xr_session_promise_test(
-    nonImmersiveTestName, testFunction, fakeDeviceInitParams, 'inline', {}, {}, gl_props, gl_props);
-}
+xr_session_promise_test(
+  nonImmersiveTestName, testFunction, fakeDeviceInitParams, 'inline', {}, {}, gl_props, gl_props);
 
 xr_session_promise_test(
   immersiveTestName, testFunction, fakeDeviceInitParams, 'immersive-vr', {}, {}, gl_props, gl_props);

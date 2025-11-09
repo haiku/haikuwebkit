@@ -31,6 +31,7 @@
 #include <wtf/CompactRefPtrTuple.h>
 #include <wtf/GetPtr.h>
 #include <wtf/Packed.h>
+#include <wtf/SwiftBridging.h>
 #include <wtf/TypeTraits.h>
 #include <wtf/WeakPtrFactory.h>
 #include <wtf/WeakRef.h>
@@ -188,7 +189,7 @@ private:
 #if ASSERT_ENABLED
     bool m_shouldEnableAssertions { true };
 #endif
-};
+} SWIFT_ESCAPABLE;
 
 template<typename T, typename U, typename WeakPtrImpl> inline WeakPtrImpl* weak_ptr_impl_cast(WeakPtrImpl* impl)
 {

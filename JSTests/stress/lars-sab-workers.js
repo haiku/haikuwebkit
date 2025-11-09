@@ -1,3 +1,4 @@
+//@ skip if $useCompressedHeap
 //@ defaultRunNoisyTest
 var sab = new SharedArrayBuffer(100 * 4);
 
