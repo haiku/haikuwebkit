@@ -65,7 +65,7 @@ ScrollbarThemeHaiku::~ScrollbarThemeHaiku()
 {
 }
 
-int ScrollbarThemeHaiku::scrollbarThickness(ScrollbarWidth, ScrollbarExpansionState, OverlayScrollbarSizeRelevancy)
+int ScrollbarThemeHaiku::scrollbarThickness(ScrollbarWidth scrollbarWidth, OverlayScrollbarSizeRelevancy overlayRelavancy)
 {
     // FIXME: Should we make a distinction between a Small and a Regular Scrollbar?
 

@@ -45,10 +45,9 @@
 #include <wtf/StdLibExtras.h>
 
 // For methods that are meant to support API from the main thread - should not be called internally
-#define ASSERT_NOT_SYNC_THREAD() ASSERT(!m_syncThreadRunning || !IS_ICON_SYNC_THREAD())
+#define ASSERT_NOT_SYNC_THREAD() ASSERT(!IS_ICON_SYNC_THREAD())
 
 // For methods that are meant to support the sync thread ONLY
-#define IS_ICON_SYNC_THREAD() (m_syncThread == &Thread::currentSingleton())
 #define ASSERT_ICON_SYNC_THREAD() ASSERT(IS_ICON_SYNC_THREAD())
 
 using namespace WebCore;
@@ -195,8 +194,7 @@ void IconDatabase::setClient(std::unique_ptr<IconDatabaseClient>&& client)
 {
     // Don't allow a client change after the thread has already began
     // (setting the client should occur before the database is opened)
-    ASSERT(!m_syncThreadRunning);
-    if (!client || m_syncThreadRunning)
+    if (!client)
         return;
 
     m_client = WTFMove(client);
@@ -214,21 +212,11 @@ bool IconDatabase::open(const String& directory, const String& filename)
         return false;
     }
 
-    m_mainThreadNotifier.setActive(true);
-
     m_databaseDirectory = directory.isolatedCopy();
 
     // Formulate the full path for the database file
     m_completeDatabasePath = FileSystem::pathByAppendingComponent(m_databaseDirectory, filename);
 
-    // Lock here as well as first thing in the thread so the thread doesn't actually commence until the createThread() call
-    // completes and m_syncThreadRunning is properly set
-    m_syncLock.lock();
-    m_syncThread = Thread::create("WebCore: IconDatabase"_s, [this] {
-        iconDatabaseSyncThread();
-    });
-    m_syncThreadRunning = true;
-    m_syncLock.unlock();
     return true;
 }
 
@@ -236,20 +224,6 @@ void IconDatabase::close()
 {
     ASSERT_NOT_SYNC_THREAD();
 
-    m_mainThreadNotifier.stop();
-
-    if (m_syncThreadRunning) {
-        // Set the flag to tell the sync thread to wrap it up
-        m_threadTerminationRequested = true;
-
-        // Wake up the sync thread if it's waiting
-        wakeSyncThread();
-
-        // Wait for the sync thread to terminate
-        m_syncThread->waitForCompletion();
-    }
-
-    m_syncThreadRunning = false;
     m_threadTerminationRequested = false;
     m_removeIconsRequested = false;
 
@@ -296,7 +270,6 @@ void IconDatabase::removeAllIcons()
     }
 
     m_removeIconsRequested = true;
-    wakeSyncThread();
 }
 
 static bool documentCanHaveIcon(const String& documentURL)
@@ -366,7 +339,6 @@ std::pair<PlatformImagePtr, IconDatabase::IsKnownIcon> IconDatabase::synchronous
         Locker locker(m_pendingReadingLock);
         m_pageURLsInterestedInIcons.add(pageURLCopy);
         m_iconsPendingReading.add(iconRecord);
-        wakeSyncThread();
         return { nullptr, IsKnownIcon::No };
     }
 
@@ -416,8 +388,6 @@ void IconDatabase::retainIconForPageURL(const String& pageURL)
         m_urlsToRetain.add(pageURL.isolatedCopy());
         m_retainOrReleaseIconRequested = true;
     }
-
-    scheduleOrDeferSyncTimer();
 }
 
 void IconDatabase::performRetainIconForPageURL(const String& pageURLOriginal, int retainCount)
@@ -469,7 +439,6 @@ void IconDatabase::releaseIconForPageURL(const String& pageURL)
         m_urlsToRelease.add(pageURL.isolatedCopy());
         m_retainOrReleaseIconRequested = true;
     }
-    scheduleOrDeferSyncTimer();
 }
 
 void IconDatabase::performReleaseIconForPageURL(const String& pageURLOriginal, int releaseCount)
@@ -571,10 +540,6 @@ void IconDatabase::setIconDataForIconURL(RefPtr<SharedBuffer>&& data, const Stri
         }
     }
 
-    // Send notification out regarding all PageURLs that retain this icon
-    // Start the timer to commit this change - or further delay the timer if it was already started
-    scheduleOrDeferSyncTimer();
-
     for (auto& pageURL : pageURLs) {
         LOG(IconDatabase, "Dispatching notification that retaining pageURL %s has a new icon", urlForLogging(pageURL).ascii().data());
         if (m_client)
@@ -640,14 +605,10 @@ void IconDatabase::setIconURLForPageURL(const String& iconURLOriginal, const Str
 
     // Since this mapping is new, send the notification out - but not if we're on the sync thread because that implies this mapping
     // comes from the initial import which we don't want notifications for
-    if (!IS_ICON_SYNC_THREAD()) {
-        // Start the timer to commit this change - or further delay the timer if it was already started
-        scheduleOrDeferSyncTimer();
-
-        LOG(IconDatabase, "Dispatching notification that we changed an icon mapping for url %s", urlForLogging(pageURL).ascii().data());
-        if (m_client)
-            m_client->didChangeIconForPageURL(pageURL);
-    }
+    // Start the timer to commit this change - or further delay the timer if it was already started
+    LOG(IconDatabase, "Dispatching notification that we changed an icon mapping for url %s", urlForLogging(pageURL).ascii().data());
+    if (m_client)
+        m_client->didChangeIconForPageURL(pageURL);
 }
 
 IconDatabase::IconLoadDecision IconDatabase::synchronousLoadDecisionForIconURL(const String& iconURL)
@@ -736,8 +697,7 @@ void IconDatabase::checkIntegrityBeforeOpening()
 }
 
 IconDatabase::IconDatabase()
-    : m_syncTimer(RunLoop::mainSingleton(), "IconDB Sync", this, &IconDatabase::syncTimerFired)
-    , m_client(defaultClient())
+    : m_client(defaultClient())
 {
     LOG(IconDatabase, "Creating IconDatabase %p", this);
     ASSERT(isMainThread());
@@ -748,34 +708,6 @@ IconDatabase::~IconDatabase()
     ASSERT(!isOpen());
 }
 
-void IconDatabase::wakeSyncThread()
-{
-    Locker locker(m_syncLock);
-
-    m_syncThreadHasWorkToDo = true;
-    m_syncCondition.notifyOne();
-}
-
-void IconDatabase::scheduleOrDeferSyncTimer()
-{
-    ASSERT_NOT_SYNC_THREAD();
-
-    if (m_scheduleOrDeferSyncTimerRequested)
-        return;
-
-    m_scheduleOrDeferSyncTimerRequested = true;
-    callOnMainThread([this] {
-        m_syncTimer.startOneShot(updateTimerDelay);
-        m_scheduleOrDeferSyncTimerRequested = false;
-    });
-}
-
-void IconDatabase::syncTimerFired()
-{
-    ASSERT_NOT_SYNC_THREAD();
-    wakeSyncThread();
-}
-
 // ******************
 // *** Any Thread ***
 // ******************
@@ -783,7 +715,7 @@ void IconDatabase::syncTimerFired()
 bool IconDatabase::isOpen() const
 {
     Locker locker(m_syncLock);
-    return m_syncThreadRunning || m_syncDB.isOpen();
+    return m_syncDB.isOpen();
 }
 
 String IconDatabase::databasePath() const
@@ -1230,10 +1162,6 @@ void IconDatabase::syncThreadMainLoop()
 
     m_syncLock.lock();
 
-    // We'll either do any pending work on our first pass through the loop, or we'll terminate
-    // without doing any work. Either way we're dealing with any currently-pending work.
-    m_syncThreadHasWorkToDo = false;
-
     // It's possible thread termination is requested before the main loop even starts - in that case, just skip straight to cleanup
     while (!m_threadTerminationRequested) {
         m_syncLock.unlock();
@@ -1313,11 +1241,6 @@ void IconDatabase::syncThreadMainLoop()
         // We handle those at the top of this main loop so continue to jump back up there
         if (shouldStopThreadActivity())
             continue;
-
-        while (!m_syncThreadHasWorkToDo)
-            m_syncCondition.wait(m_syncLock);
-
-        m_syncThreadHasWorkToDo = false;
     }
 
     m_syncLock.unlock();
@@ -1683,7 +1606,6 @@ void* IconDatabase::cleanupSyncThread()
     LOG(IconDatabase, "(THREAD) Final closure took %.4f seconds", delta.value());
 #endif
 
-    m_syncThreadRunning = false;
     return nullptr;
 }
 
@@ -1946,7 +1868,7 @@ void IconDatabase::dispatchDidImportIconURLForPageURLOnMainThread(const String& 
 {
     ASSERT_ICON_SYNC_THREAD();
 
-    m_mainThreadNotifier.notify([this, pageURL = pageURL.isolatedCopy()] {
+    callOnMainThread([this, pageURL = pageURL.isolatedCopy()] {
         if (m_client)
             m_client->didImportIconURLForPageURL(pageURL);
     });
@@ -1956,7 +1878,7 @@ void IconDatabase::dispatchDidImportIconDataForPageURLOnMainThread(const String&
 {
     ASSERT_ICON_SYNC_THREAD();
 
-    m_mainThreadNotifier.notify([this, pageURL = pageURL.isolatedCopy()] {
+    callOnMainThread([this, pageURL = pageURL.isolatedCopy()] {
         if (m_client)
             m_client->didImportIconDataForPageURL(pageURL);
     });
@@ -1966,7 +1888,7 @@ void IconDatabase::dispatchDidFinishURLImportOnMainThread()
 {
     ASSERT_ICON_SYNC_THREAD();
 
-    m_mainThreadNotifier.notify([this] {
+    callOnMainThread([this] {
         if (m_client)
             m_client->didFinishURLImport();
     });

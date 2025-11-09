@@ -41,6 +41,15 @@
 #include <wtf/text/StringHash.h>
 #include <wtf/text/WTFString.h>
 
+
+// FIXME this is completely broken.
+// A long time ago it was part of WebCore
+// Upstream WebKit moved one version to GTKWebKit, and we kep a copy of the old code in
+// WebKitLegacy. Then we removed a few non-compiling bits from our version. I'm not even sure
+// if any of this is being called at all anymore. In any case it should probably be re-synced with
+// the GTKWebKit implementation.
+
+
 namespace WebCore {
 class SharedBuffer;
 }
@@ -175,65 +184,6 @@ private:
         int m_retainCount { 0 };
     };
 
-    class MainThreadNotifier: public RefCounted<MainThreadNotifier> {
-    public:
-        MainThreadNotifier()
-            : m_timer(RunLoop::mainSingleton(), "IconDB Notifier", this, &MainThreadNotifier::timerFired)
-        {
-            //m_timer.setPriority(RunLoopSourcePriority::MainThreadDispatcherTimer);
-        }
-
-        void setActive(bool active)
-        {
-            m_isActive.store(active);
-        }
-
-        void notify(Function<void()>&& notification)
-        {
-            if (!m_isActive.load())
-                return;
-
-            {
-                Locker locker(m_notificationQueueLock);
-                m_notificationQueue.append(WTFMove(notification));
-            }
-
-            if (!m_timer.isActive())
-                m_timer.startOneShot(0_s);
-        }
-
-        void stop()
-        {
-            setActive(false);
-            m_timer.stop();
-            Locker locker(m_notificationQueueLock);
-            m_notificationQueue.clear();
-        }
-
-    private:
-        void timerFired()
-        {
-            Deque<Function<void()>> notificationQueue;
-            {
-                Locker locker(m_notificationQueueLock);
-                notificationQueue = WTFMove(m_notificationQueue);
-            }
-
-            if (!m_isActive.load())
-                return;
-
-            while (!notificationQueue.isEmpty()) {
-                auto function = notificationQueue.takeFirst();
-                function();
-            }
-        }
-
-        Deque<Function<void()>> m_notificationQueue;
-        Lock m_notificationQueueLock;
-        Atomic<bool> m_isActive;
-        RunLoop::Timer m_timer;
-    };
-
 // *** Main Thread Only ***
 public:
     IconDatabase();
@@ -269,16 +219,6 @@ public:
     static void allowDatabaseCleanup();
     static void checkIntegrityBeforeOpening();
 
-private:
-    void wakeSyncThread();
-    void scheduleOrDeferSyncTimer();
-    void syncTimerFired();
-
-    RunLoop::Timer m_syncTimer;
-    RefPtr<Thread> m_syncThread;
-    bool m_syncThreadRunning { false };
-    bool m_scheduleOrDeferSyncTimerRequested { false };
-
 // *** Any Thread ***
 public:
     bool isOpen() const;
@@ -301,7 +241,6 @@ private:
     bool m_threadTerminationRequested { false };
     bool m_removeIconsRequested { false };
     bool m_iconURLImportComplete { false };
-    bool m_syncThreadHasWorkToDo { false };
 
     Lock m_urlAndIconLock;
     // Holding m_urlAndIconLock is required when accessing any of the following data structures or the objects they contain
@@ -387,8 +326,6 @@ private:
     std::unique_ptr<WebCore::SQLiteStatement> m_updateIconDataStatement;
     std::unique_ptr<WebCore::SQLiteStatement> m_setIconInfoStatement;
     std::unique_ptr<WebCore::SQLiteStatement> m_setIconDataStatement;
-
-    MainThreadNotifier m_mainThreadNotifier;
 };
 
 IconDatabase& iconDatabase();

@@ -44,7 +44,7 @@ public:
     IntRect forwardButtonRect(Scrollbar&, ScrollbarPart, bool painting) override;
     IntRect trackRect(Scrollbar&, bool painting) override;
 
-    int scrollbarThickness(ScrollbarWidth = ScrollbarWidth::Auto, ScrollbarExpansionState = ScrollbarExpansionState::Expanded, OverlayScrollbarSizeRelevancy = OverlayScrollbarSizeRelevancy::IncludeOverlayScrollbarSize) override;
+    int scrollbarThickness(ScrollbarWidth scrollbarWidth = ScrollbarWidth::Auto, OverlayScrollbarSizeRelevancy overlayRelavancy = OverlayScrollbarSizeRelevancy::IncludeOverlayScrollbarSize) override;
 
 
     void paintScrollbarBackground(GraphicsContext&, Scrollbar&) override;
