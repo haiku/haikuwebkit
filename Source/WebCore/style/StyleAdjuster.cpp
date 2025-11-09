@@ -468,9 +468,11 @@ void Adjuster::adjustFromBuilder(RenderStyle& style)
     } else if (style.position() != PositionType::Static)
         style.setUsedZIndex(style.specifiedZIndex());
 
-    // Cull out any useless animations and transitions.
+    // Adjust any coordinated value lists.
     style.adjustAnimations();
     style.adjustTransitions();
+    style.adjustBackgroundLayers();
+    style.adjustMaskLayers();
 
     // Do the same for scroll-timeline and view-timeline longhands.
     style.adjustScrollTimelines();

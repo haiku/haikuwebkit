@@ -35,7 +35,7 @@
 namespace WebCore {
 namespace Style {
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 auto OffsetAnchor::convert(const AcceleratedEffectOffsetAnchor& value) -> Variant<CSS::Keyword::Auto, Position>
 {
@@ -85,7 +85,7 @@ auto Blending<OffsetAnchor>::blend(const OffsetAnchor& a, const OffsetAnchor& b,
 
 // MARK: - Evaluation
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 auto Evaluation<OffsetAnchor, AcceleratedEffectOffsetAnchor>::operator()(const OffsetAnchor& value, FloatSize referenceBox, ZoomNeeded token) -> AcceleratedEffectOffsetAnchor
 {

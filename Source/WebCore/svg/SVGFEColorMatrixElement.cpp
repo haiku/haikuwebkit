@@ -64,7 +64,7 @@ void SVGFEColorMatrixElement::attributeChanged(const QualifiedName& name, const 
 {
     switch (name.nodeName()) {
     case AttributeNames::typeAttr: {
-        auto propertyValue = SVGPropertyTraits<ColorMatrixType>::fromString(newValue);
+        auto propertyValue = SVGPropertyTraits<ColorMatrixType>::fromString(*this, newValue);
         if (enumToUnderlyingType(propertyValue))
             Ref { m_type }->setBaseValInternal<ColorMatrixType>(propertyValue);
         break;

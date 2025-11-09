@@ -110,17 +110,13 @@
         "   (https://drafts.csswg.org/css-logical-1/#mapping-logic).",
         "   Examples: \"top-left\", \"block-start\", \"horizontal\".",
         "",
-        "* animation-property:",
-        "Indicates that this CSS property is an animation / transition property.",
-        "It must have corresponding methods on the Animation class.",
+        "* coordinated-value-list-property:",
+        "Indicates that this CSS property is a CoordinatedValueList property. It must have",
+        "corresponding methods on the CoordinatedValueList value type's class.",
         "",
         "* font-property:",
         "Indicates that this CSS property is font-related. It must have corresponding",
         "methods on the FontDescription class.",
-        "",
-        "* fill-layer-property:",
-        "Indicates that this CSS property is a FillLayer property. It must have",
-        "corresponding methods on the FillLayer class.",
         "",
         "* separator:",
         "Indicates separator for list-valued CSS property (populates",
@@ -1678,8 +1674,8 @@
                 "replace"
             ],
             "codegen-properties": {
-                "animation-property": true,
-                "animation-name-for-methods": "CompositeOperation",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "CompositeOperation",
                 "parser-grammar": "<single-animation-composition>#"
             },
             "specification": {
@@ -1694,8 +1690,8 @@
                 "aliases": [
                     "-webkit-animation-delay"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Delay",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Delay",
                 "style-converter": "StyleType<SingleAnimationDelay>",
                 "separator": ",",
                 "parser-grammar": "<time>#"
@@ -1718,8 +1714,8 @@
                 "aliases": [
                     "-webkit-animation-direction"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Direction",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Direction",
                 "separator": ",",
                 "parser-grammar": "<single-animation-direction>#"
             },
@@ -1735,8 +1731,8 @@
                 "aliases": [
                     "-webkit-animation-duration"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Duration",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Duration",
                 "style-converter": "StyleType<SingleAnimationDuration>",
                 "style-extractor-custom": true,
                 "separator": ",",
@@ -1761,8 +1757,8 @@
                 "aliases": [
                     "-webkit-animation-fill-mode"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "FillMode",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "FillMode",
                 "separator": ",",
                 "parser-grammar": "<single-animation-fill-mode>#"
             },
@@ -1778,8 +1774,8 @@
                 "aliases": [
                     "-webkit-animation-iteration-count"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "IterationCount",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "IterationCount",
                 "style-converter": "StyleType<SingleAnimationIterationCount>",
                 "separator": ",",
                 "parser-grammar": "<single-animation-iteration-count>#"
@@ -1799,8 +1795,8 @@
                 "aliases": [
                     "-webkit-animation-name"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Name",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Name",
                 "style-converter": "StyleType<SingleAnimationName>",
                 "separator": ",",
                 "parser-grammar": "<single-animation-name>#"
@@ -1821,8 +1817,8 @@
                 "aliases": [
                     "-webkit-animation-play-state"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "PlayState",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "PlayState",
                 "separator": ",",
                 "parser-grammar": "<single-animation-play-state>#"
             },
@@ -1837,7 +1833,7 @@
                     "animation-range-start",
                     "animation-range-end"
                 ],
-                "animation-property": true,
+                "coordinated-value-list-property": true,
                 "separator": ",",
                 "settings-flag": "scrollDrivenAnimationsEnabled",
                 "parser-function": "consumeAnimationRangeShorthand",
@@ -1862,8 +1858,8 @@
                 "exit-crossing"
             ],
             "codegen-properties": {
-                "animation-property": true,
-                "animation-name-for-methods": "RangeStart",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "RangeStart",
                 "style-converter": "StyleType<SingleAnimationRangeStart>",
                 "separator": ",",
                 "parser-grammar": "<single-animation-range-start>#",
@@ -1887,8 +1883,8 @@
                 "exit-crossing"
             ],
             "codegen-properties": {
-                "animation-property": true,
-                "animation-name-for-methods": "RangeEnd",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "RangeEnd",
                 "style-converter": "StyleType<SingleAnimationRangeEnd>",
                 "separator": ",",
                 "parser-grammar": "<single-animation-range-end>#",
@@ -1908,8 +1904,8 @@
             ],
             "codegen-properties": {
                 "settings-flag": "scrollDrivenAnimationsEnabled",
-                "animation-property": true,
-                "animation-name-for-methods": "Timeline",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Timeline",
                 "style-converter": "StyleType<SingleAnimationTimeline>",
                 "parser-grammar": "<single-animation-timeline>#"
             },
@@ -1934,8 +1930,8 @@
                 "aliases": [
                     "-webkit-animation-timing-function"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "TimingFunction",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "TimingFunction",
                 "style-converter": "StyleType<EasingFunction>",
                 "separator": ",",
                 "parser-grammar": "<easing-function>#"
@@ -1976,9 +1972,9 @@
                 "local"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Attachment",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Attachment",
+                "coordinated-value-list-property": true,
                 "disables-native-appearance": true,
                 "separator": ",",
                 "parser-grammar": "<single-background-attachment>#"
@@ -2018,9 +2014,9 @@
                 }
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "BlendMode",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "BlendMode",
+                "coordinated-value-list-property": true,
                 "separator": ",",
                 "parser-grammar": "<single-background-blend-mode>#"
             },
@@ -2057,9 +2053,9 @@
                 }
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Clip",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Clip",
+                "coordinated-value-list-property": true,
                 "separator": " ",
                 "disables-native-appearance": true,
                 "parser-grammar": "<single-background-clip>#"
@@ -2092,10 +2088,9 @@
                 "none"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "Image",
-                "fill-layer-property": true,
-                "fill-layer-primary": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "Image",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<ImageOrNone>",
                 "disables-native-appearance": true,
                 "medium-priority": true,
@@ -2117,9 +2112,9 @@
                 "content-box"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Origin",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Origin",
+                "coordinated-value-list-property": true,
                 "disables-native-appearance": true,
                 "separator": " ",
                 "parser-grammar": "<single-background-origin>#"
@@ -2151,9 +2146,9 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "XPosition",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "PositionX",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<PositionX>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<single-background-position-x>#"
@@ -2167,9 +2162,9 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "YPosition",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "PositionY",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<PositionY>",
                 "disables-native-appearance": true,
                 "parser-grammar": "<single-background-position-y>#"
@@ -2191,9 +2186,9 @@
                 "no-repeat"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Repeat",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Repeat",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<RepeatStyle>",
                 "parser-grammar": "<single-background-repeat>#"
             },
@@ -2211,9 +2206,9 @@
                 "contain"
             ],
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "Size",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "Size",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<BackgroundSize>",
                 "disables-native-appearance": true,
                 "separator": " ",
@@ -5588,9 +5583,9 @@
                 "no-clip"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Clip",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Clip",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<single-mask-clip>#"
             },
             "specification": {
@@ -5608,10 +5603,10 @@
                 "exclude"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Composite",
-                "fill-layer-property": true,
-                "style-extractor-converter": "FillLayerMaskComposite",
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Composite",
+                "coordinated-value-list-property": true,
+                "style-extractor-converter": "SingleMaskComposite",
                 "parser-grammar": "<single-mask-composite>#"
             },
             "specification": {
@@ -5629,10 +5624,9 @@
                 "aliases": [
                     "-webkit-mask-image"
                 ],
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Image",
-                "fill-layer-property": true,
-                "fill-layer-primary": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Image",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<ImageOrNone>",
                 "medium-priority": true,
                 "parser-grammar": "<single-mask-image>#"
@@ -5651,10 +5645,10 @@
                 "match-source"
             ],
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "MaskMode",
-                "fill-layer-property": true,
-                "style-converter": "FillLayerMaskMode",
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "MaskMode",
+                "coordinated-value-list-property": true,
+                "style-converter": "SingleMaskMode",
                 "parser-grammar": "<single-mask-mode>#"
             },
             "specification": {
@@ -5702,9 +5696,9 @@
                 "aliases": [
                     "-webkit-mask-origin"
                 ],
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Origin",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Origin",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<single-mask-origin>#"
             },
             "specification": {
@@ -5747,9 +5741,9 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "XPosition",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "PositionX",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<PositionX>",
                 "parser-grammar": "<single-webkit-mask-position-x>#"
             },
@@ -5766,9 +5760,9 @@
             "animation-type": "repeatable list",
             "initial": "0%",
             "codegen-properties": {
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "YPosition",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "PositionY",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<PositionY>",
                 "parser-grammar": "<single-webkit-mask-position-y>#"
             },
@@ -5796,9 +5790,9 @@
                 "aliases":[
                     "-webkit-mask-repeat"
                 ],
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "fill-layer-name-for-methods": "Repeat",
-                "fill-layer-property": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property-name-for-methods": "Repeat",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<RepeatStyle>",
                 "parser-grammar": "<single-mask-repeat>#"
             },
@@ -5819,9 +5813,9 @@
                 "aliases":[
                     "-webkit-mask-size"
                 ],
-                "animation-wrapper": "FillLayerStyleTypeWrapper",
-                "fill-layer-name-for-methods": "Size",
-                "fill-layer-property": true,
+                "animation-wrapper": "CoordinatedValueListPropertyStyleTypeWrapper",
+                "coordinated-value-list-property-name-for-methods": "Size",
+                "coordinated-value-list-property": true,
                 "style-converter": "StyleType<BackgroundSize>",
                 "parser-grammar": "<single-mask-size>#"
             },
@@ -8006,8 +8000,8 @@
                 "allow-discrete"
             ],
             "codegen-properties": {
-                "animation-property": true,
-                "animation-name-for-methods": "Behavior",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Behavior",
                 "separator": ",",
                 "parser-grammar": "<transition-behavior-value>#"
             },
@@ -8023,8 +8017,8 @@
                 "aliases": [
                     "-webkit-transition-delay"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Delay",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Delay",
                 "style-converter": "StyleType<SingleTransitionDelay>",
                 "separator": ",",
                 "parser-grammar": "<time>#"
@@ -8041,8 +8035,8 @@
                 "aliases": [
                     "-webkit-transition-duration"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Duration",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Duration",
                 "style-converter": "StyleType<SingleTransitionDuration>",
                 "separator": ",",
                 "parser-grammar": "<time [0,inf]>#"
@@ -8063,8 +8057,8 @@
                 "aliases": [
                     "-webkit-transition-property"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "Property",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "Property",
                 "style-converter": "StyleType<SingleTransitionProperty>",
                 "parser-grammar": "none  | <single-transition-property>#"
             },
@@ -8089,8 +8083,8 @@
                 "aliases": [
                     "-webkit-transition-timing-function"
                 ],
-                "animation-property": true,
-                "animation-name-for-methods": "TimingFunction",
+                "coordinated-value-list-property": true,
+                "coordinated-value-list-property-name-for-methods": "TimingFunction",
                 "style-converter": "StyleType<EasingFunction>",
                 "parser-grammar": "<easing-function>#"
             },
@@ -8720,8 +8714,8 @@
             "codegen-properties": {
                 "cascade-alias": "background-clip",
                 "skip-style-builder": true,
-                "fill-layer-name-for-methods": "Clip",
-                "fill-layer-property": true,
+                "coordinated-value-list-property-name-for-methods": "Clip",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<single-webkit-background-clip>#"
             }
         },
@@ -8730,8 +8724,8 @@
             "codegen-properties": {
                 "cascade-alias": "background-origin",
                 "skip-style-builder": true,
-                "fill-layer-name-for-methods": "Origin",
-                "fill-layer-property": true,
+                "coordinated-value-list-property-name-for-methods": "Origin",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<single-webkit-background-origin>#"
             }
         },
@@ -10419,8 +10413,8 @@
             "codegen-properties": {
                 "cascade-alias": "mask-clip",
                 "skip-style-builder": true,
-                "fill-layer-name-for-methods": "Clip",
-                "fill-layer-property": true,
+                "coordinated-value-list-property-name-for-methods": "Clip",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<single-webkit-mask-clip>#"
             },
             "status": {
@@ -10436,9 +10430,9 @@
             "codegen-properties": {
                 "cascade-alias": "mask-composite",
                 "skip-style-builder": true,
-                "fill-layer-name-for-methods": "Composite",
-                "fill-layer-property": true,
-                "style-extractor-converter": "FillLayerWebkitMaskComposite",
+                "coordinated-value-list-property-name-for-methods": "Composite",
+                "coordinated-value-list-property": true,
+                "style-extractor-converter": "SingleWebkitMaskComposite",
                 "parser-grammar": "<single-webkit-mask-composite>#"
             },
             "status": {
@@ -10454,9 +10448,9 @@
             "codegen-properties": {
                 "cascade-alias": "mask-mode",
                 "skip-style-builder": true,
-                "fill-layer-name-for-methods": "MaskMode",
-                "fill-layer-property": true,
-                "style-converter": "FillLayerWebkitMaskSourceType",
+                "coordinated-value-list-property-name-for-methods": "MaskMode",
+                "coordinated-value-list-property": true,
+                "style-converter": "SingleWebkitMaskSourceType",
                 "parser-grammar": "<single-webkit-mask-source-type>#"
             },
             "status": {

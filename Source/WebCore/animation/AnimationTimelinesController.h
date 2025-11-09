@@ -43,7 +43,7 @@ class ScrollTimeline;
 class WeakPtrImplWithEventTargetData;
 class WebAnimation;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class AcceleratedEffectStackUpdater;
 #endif
 
@@ -70,7 +70,7 @@ public:
     WEBCORE_EXPORT void resumeAnimations();
     bool animationsAreSuspended() const { return m_isSuspended; }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     AcceleratedEffectStackUpdater& acceleratedEffectStackUpdater();
     AcceleratedEffectStackUpdater* existingAcceleratedEffectStackUpdater() const { return m_acceleratedEffectStackUpdater.get(); }
     void updateAcceleratedEffectStacks();
@@ -86,7 +86,7 @@ private:
 
     Ref<Document> protectedDocument() const { return m_document.get(); }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     std::unique_ptr<AcceleratedEffectStackUpdater> m_acceleratedEffectStackUpdater;
 #endif
 

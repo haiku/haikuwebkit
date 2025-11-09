@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteProgressBasedTimelineRegistry.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <WebCore/AcceleratedTimeline.h>
 #import <wtf/TZoneMallocInlines.h>
@@ -126,4 +126,4 @@ RemoteProgressBasedTimeline* RemoteProgressBasedTimelineRegistry::get(const Time
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

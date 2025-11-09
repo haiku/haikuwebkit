@@ -143,7 +143,6 @@ set(WTF_PUBLIC_HEADERS
     IsoMalloc.h
     IsoMallocInlines.h
     IterationStatus.h
-    IteratorAdaptors.h
     IteratorRange.h
     JSONValues.h
     JSValueMalloc.h

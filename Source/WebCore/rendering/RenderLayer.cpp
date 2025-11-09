@@ -6017,7 +6017,7 @@ static bool rendererHasHDRContent(const RenderElement& renderer)
 
     auto styleHasHDRContent = [](const auto& style) {
         if (style.hasBackgroundImage()) {
-            if (style.backgroundLayers().hasHDRContent())
+            if (Style::hasHDRContent(style.backgroundLayers()))
                 return true;
         }
 

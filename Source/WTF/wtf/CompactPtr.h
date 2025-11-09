@@ -153,7 +153,8 @@ public:
 
     void swap(CompactPtr& other) { std::swap(m_ptr, other.m_ptr); }
 
-    template <typename Other, typename = std::enable_if_t<Other::isCompactedType>>
+    template<typename Other>
+        requires Other::isCompactedType
     void swap(Other& other)
     {
         T* t1 = get();

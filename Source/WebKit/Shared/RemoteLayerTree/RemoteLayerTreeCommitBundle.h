@@ -25,21 +25,44 @@
 
 #pragma once
 
+#include "Connection.h"
+#include "EditorState.h"
 #include "RemoteLayerTreeTransaction.h"
 #include "RemoteScrollingCoordinatorTransaction.h"
+#include <WebCore/Color.h>
+#include <WebCore/LayoutMilestone.h>
 #include <optional>
 #include <wtf/Vector.h>
 
 namespace WebKit {
 
+struct PageData {
+    using TransactionCallbackID = IPC::AsyncReplyID;
+
+    Vector<TransactionCallbackID> callbackIDs;
+};
+
+struct MainFrameData {
+    ActivityStateChangeID activityStateChangeID { ActivityStateChangeAsynchronous };
+    WebCore::Color themeColor;
+    WebCore::Color pageExtendedBackgroundColor;
+    WebCore::Color sampledPageTopColor;
+    std::optional<EditorState> editorState;
+    OptionSet<WebCore::LayoutMilestone> newlyReachedPaintingMilestones;
+    std::optional<WebCore::FixedContainerEdges> fixedContainerEdges;
+    bool isInStableState { false };
+#if PLATFORM(MAC)
+    Markable<WebCore::PlatformLayerIdentifier> pageScalingLayerID;
+    Markable<WebCore::PlatformLayerIdentifier> scrolledContentsLayerID;
+    Markable<WebCore::PlatformLayerIdentifier> mainFrameClipLayerID;
+#endif
+};
+
 struct RemoteLayerTreeCommitBundle {
     using RootFrameData = std::pair<RemoteLayerTreeTransaction, RemoteScrollingCoordinatorTransaction>;
+
     Vector<RootFrameData> transactions;
-
-    struct MainFrameData {
-        ActivityStateChangeID activityStateChangeID { ActivityStateChangeAsynchronous };
-    };
-
+    PageData pageData;
     std::optional<MainFrameData> mainFrameData;
 };
 

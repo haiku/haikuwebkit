@@ -62,7 +62,7 @@ public:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<Signal, void>;
+    friend struct IPC::ArgumentCoder<Signal>;
 
     friend std::optional<EventSignalPair> createEventSignalPair();
 

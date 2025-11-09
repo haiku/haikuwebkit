@@ -42,7 +42,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCPersonNameComponents, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCPersonNameComponents>;
 
     CoreIPCPersonNameComponents(const String& namePrefix, const String& givenName, const String& middleName, const String& familyName, const String& nickname, std::unique_ptr<CoreIPCPersonNameComponents>&& phoneticRepresentation)
         : m_namePrefix(namePrefix)

@@ -88,6 +88,11 @@ private:
 
 enum class ShouldCopyStateObjectFromCurrentEntry : bool { No, Yes };
 
+// Controls whether updateForNavigation should fulfill the committed promise immediately.
+// For intercepted traversals, timing depends on handler presence (see spec).
+// https://html.spec.whatwg.org/multipage/nav-history-apis.html#notify-about-the-committed-to-entry
+enum class ShouldNotifyCommitted : bool { No, Yes };
+
 class Navigation final : public RefCounted<Navigation>, public EventTarget, public LocalDOMWindowProperty {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(Navigation);
 public:
@@ -148,7 +153,7 @@ public:
     bool dispatchPushReplaceReloadNavigateEvent(const URL&, NavigationNavigationType, bool isSameDocument, FormState*, SerializedScriptValue* classicHistoryAPIState = nullptr, Element* sourceElement = nullptr);
     bool dispatchDownloadNavigateEvent(const URL&, const String& downloadFilename, Element* sourceElement = nullptr);
 
-    void updateForNavigation(Ref<HistoryItem>&&, NavigationNavigationType, ShouldCopyStateObjectFromCurrentEntry = ShouldCopyStateObjectFromCurrentEntry::No);
+    void updateForNavigation(Ref<HistoryItem>&&, NavigationNavigationType, ShouldCopyStateObjectFromCurrentEntry = ShouldCopyStateObjectFromCurrentEntry::No, ShouldNotifyCommitted = ShouldNotifyCommitted::Yes);
     void updateForReactivation(Vector<Ref<HistoryItem>>&& newHistoryItems, HistoryItem& reactivatedItem, HistoryItem* previousItem);
 
     RefPtr<NavigationActivation> createForPageswapEvent(HistoryItem* newItem, DocumentLoader*, bool fromBackForwardCache);
@@ -182,6 +187,7 @@ public:
     Ref<AbortHandler> registerAbortHandler();
 
     RefPtr<NavigateEvent> protectedOngoingNavigateEvent() { return m_ongoingNavigateEvent; }
+    bool hasInterceptedOngoingNavigateEvent() const { return m_ongoingNavigateEvent && m_ongoingNavigateEvent->wasIntercepted(); }
 
     void updateNavigationEntry(Ref<HistoryItem>&&, ShouldCopyStateObjectFromCurrentEntry);
 

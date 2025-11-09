@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include "RemoteAnimation.h"
 #include <WebCore/AcceleratedEffectValues.h>
@@ -89,4 +89,4 @@ private:
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

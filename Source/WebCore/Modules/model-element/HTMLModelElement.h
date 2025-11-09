@@ -163,6 +163,9 @@ public:
     void setCurrentTime(double);
 #endif
 
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE)
+    bool canSetEntityTransform() const;
+#endif
 #if ENABLE(MODEL_ELEMENT_STAGE_MODE_INTERACTION)
     WEBCORE_EXPORT bool supportsStageModeInteraction() const;
     WEBCORE_EXPORT void beginStageModeTransform(const TransformationMatrix&);

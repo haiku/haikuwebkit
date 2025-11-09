@@ -740,7 +740,6 @@ svg/SVGUseElement.cpp
 svg/animation/SVGSMILElement.cpp
 svg/graphics/SVGImage.cpp
 svg/properties/SVGAnimatedString.cpp
-svg/properties/SVGAnimationAdditiveValueFunctionImpl.cpp
 testing/Internals.cpp
 [ Mac ] testing/Internals.mm
 workers/WorkerGlobalScope.cpp

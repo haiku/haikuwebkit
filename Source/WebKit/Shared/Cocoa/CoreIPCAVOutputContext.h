@@ -55,7 +55,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCAVOutputContext, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCAVOutputContext>;
 
     CoreIPCAVOutputContextData m_data;
 };

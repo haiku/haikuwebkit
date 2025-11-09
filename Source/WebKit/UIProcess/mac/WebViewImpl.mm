@@ -6314,6 +6314,12 @@ bool WebViewImpl::completeBackSwipeForTesting()
     return gestureController && gestureController->completeSimulatedSwipeInDirectionForTesting(ViewGestureController::SwipeDirection::Back);
 }
 
+bool WebViewImpl::didCallEndSwipeGestureForTesting() const
+{
+    RefPtr gestureController = m_gestureController;
+    return gestureController && gestureController->didCallEndSwipeGesture();
+}
+
 void WebViewImpl::effectiveAppearanceDidChange()
 {
     m_page->effectiveAppearanceDidChange();

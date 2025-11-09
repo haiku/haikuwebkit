@@ -543,6 +543,8 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-092.xht
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-093.xht
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-094.xht
+/LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-095-expected.xht
+/LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-095.html
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-applies-to-001.xht
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-applies-to-002.xht
 /LayoutTests/imported/w3c/web-platform-tests/css/CSS2/tables/border-spacing-applies-to-003.xht

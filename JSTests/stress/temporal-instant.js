@@ -246,6 +246,11 @@ shouldThrow(() => new Temporal.Instant('abc123'), SyntaxError);
         shouldBe(i5.toString({ fractionalSecondDigits: 8, roundingMode: 'halfExpand' }), '2000-01-01T00:00:00.00000000Z');
     }
     {
+        // should round towards negative infinity when taking epoch milliseconds
+        const i6 = new Temporal.Instant(-1000000000000001000n);
+        shouldBe(i6.toString(), '1938-04-24T22:13:19.999999Z');
+    }
+    {
         // round to nearest hour with halfCeil
         const i7 = new Temporal.Instant(-1000000000000000000n);
         shouldBe(i7.round({smallestUnit: 'hour', roundingIncrement: 1, roundingMode: 'halfCeil' }).toString(), "1938-04-24T22:00:00Z");

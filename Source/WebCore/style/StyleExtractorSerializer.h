@@ -87,12 +87,12 @@ public:
     static void serializeNameScope(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NameScope&);
     static void serializePositionVisibility(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<PositionVisibility>);
 
-    // MARK: FillLayer serializations
+    // MARK: MaskLayer property serializations
 
-    static void serializeFillLayerMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
-    static void serializeFillLayerWebkitMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
-    static void serializeFillLayerMaskMode(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
-    static void serializeFillLayerWebkitMaskSourceType(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
+    static void serializeSingleMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
+    static void serializeSingleWebkitMaskComposite(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, CompositeOperator);
+    static void serializeSingleMaskMode(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
+    static void serializeSingleWebkitMaskSourceType(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, MaskMode);
 
     // MARK: Font serializations
 
@@ -599,19 +599,19 @@ inline void ExtractorSerializer::serializePositionVisibility(ExtractorState& sta
         serializationForCSS(builder, context, state.style, CSS::Keyword::Always { });
 }
 
-// MARK: - FillLayer serializations
+// MARK: - MaskLayer property serializations
 
-inline void ExtractorSerializer::serializeFillLayerMaskComposite(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, CompositeOperator composite)
+inline void ExtractorSerializer::serializeSingleMaskComposite(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, CompositeOperator composite)
 {
     builder.append(nameLiteralForSerialization(toCSSValueID(composite, CSSPropertyMaskComposite)));
 }
 
-inline void ExtractorSerializer::serializeFillLayerWebkitMaskComposite(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, CompositeOperator composite)
+inline void ExtractorSerializer::serializeSingleWebkitMaskComposite(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext&, CompositeOperator composite)
 {
     builder.append(nameLiteralForSerialization(toCSSValueID(composite, CSSPropertyWebkitMaskComposite)));
 }
 
-inline void ExtractorSerializer::serializeFillLayerMaskMode(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, MaskMode maskMode)
+inline void ExtractorSerializer::serializeSingleMaskMode(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, MaskMode maskMode)
 {
     switch (maskMode) {
     case MaskMode::Alpha:
@@ -627,7 +627,7 @@ inline void ExtractorSerializer::serializeFillLayerMaskMode(ExtractorState& stat
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-inline void ExtractorSerializer::serializeFillLayerWebkitMaskSourceType(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, MaskMode maskMode)
+inline void ExtractorSerializer::serializeSingleWebkitMaskSourceType(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, MaskMode maskMode)
 {
     switch (maskMode) {
     case MaskMode::Alpha:

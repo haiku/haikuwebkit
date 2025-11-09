@@ -51,6 +51,7 @@ struct WebFoundTextRange {
 
         bool operator==(const PDFData& other) const = default;
         unsigned hash() const;
+        static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
     };
 
     Variant<DOMData, PDFData> data { DOMData { } };
@@ -69,12 +70,6 @@ TextStream& operator<<(TextStream&, const WebFoundTextRange::PDFData&);
 } // namespace WebKit
 
 namespace WTF {
-
-struct WebFoundTextRangePDFDataHash {
-    static unsigned hash(const WebKit::WebFoundTextRange::PDFData& data) { return data.hash(); }
-    static bool equal(const WebKit::WebFoundTextRange::PDFData& a, const WebKit::WebFoundTextRange::PDFData& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = true;
-};
 
 template<> struct HashTraits<WebKit::WebFoundTextRange::PDFData> : GenericHashTraits<WebKit::WebFoundTextRange::PDFData> {
     static constexpr bool emptyValueIsZero = false;
@@ -104,12 +99,7 @@ public:
     {
         return data == deletedSentinel;
     }
-};
-
-struct WebFoundTextRangeHash {
-    static unsigned hash(const WebKit::WebFoundTextRange& range) { return range.hash(); }
-    static bool equal(const WebKit::WebFoundTextRange& a, const WebKit::WebFoundTextRange& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = true;
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 };
 
 template<> struct HashTraits<WebKit::WebFoundTextRange> : GenericHashTraits<WebKit::WebFoundTextRange> {
@@ -118,8 +108,5 @@ template<> struct HashTraits<WebKit::WebFoundTextRange> : GenericHashTraits<WebK
     static void constructDeletedValue(WebKit::WebFoundTextRange& slot) { new (NotNull, &slot.frameIdentifier) AtomString { HashTableDeletedValue }; }
     static bool isDeletedValue(const WebKit::WebFoundTextRange& range) { return range.frameIdentifier.isHashTableDeletedValue(); }
 };
-
-template<> struct DefaultHash<WebKit::WebFoundTextRange::PDFData> : WebFoundTextRangePDFDataHash { };
-template<> struct DefaultHash<WebKit::WebFoundTextRange> : WebFoundTextRangeHash { };
 
 }

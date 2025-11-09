@@ -53,7 +53,7 @@ class GraphicsLayerAnimation;
 class MutableStyleProperties;
 class RenderStyle;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class AcceleratedEffect;
 #endif
 
@@ -195,7 +195,7 @@ public:
 
     WebAnimationType animationType() const { return m_animationType; }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     const AcceleratedEffect* acceleratedRepresentation() const { return m_acceleratedRepresentation.get(); }
     void setAcceleratedRepresentation(const AcceleratedEffect* acceleratedRepresentation) { m_acceleratedRepresentation = acceleratedRepresentation; }
 #endif
@@ -216,7 +216,7 @@ private:
     private:
         RefPtr<KeyframeEffect> m_effect;
         bool m_couldOriginallyPreventAcceleration;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
         bool m_couldOriginallyBeAccelerated;
 #endif
     };
@@ -253,7 +253,7 @@ private:
     void abilityToBeAcceleratedDidChange();
     void updateAcceleratedAnimationIfNecessary();
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     class StackMembershipMutationScope {
         WTF_MAKE_NONCOPYABLE(StackMembershipMutationScope);
     public:
@@ -266,7 +266,7 @@ private:
         std::optional<Style::PseudoElementIdentifier> m_originalPseudoElementIdentifier;
     };
 
-    bool threadedAnimationResolutionEnabled() const;
+    bool threadedAnimationsEnabled() const;
     void updateAssociatedThreadedEffectStack(const std::optional<const Styleable>& = std::nullopt);
 #endif
 
@@ -308,7 +308,7 @@ private:
     RefPtr<Element> m_target;
     std::optional<Style::PseudoElementIdentifier> m_pseudoElementIdentifier { };
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     WeakPtr<AcceleratedEffect> m_acceleratedRepresentation;
 #endif
 

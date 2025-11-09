@@ -49,7 +49,7 @@ struct SVGPropertyTraits<ChannelSelectorType> {
         return emptyString();
     }
 
-    static ChannelSelectorType fromString(const String& value)
+    static ChannelSelectorType fromString(SVGElement&, const String& value)
     {
         if (value == "R"_s)
             return ChannelSelectorType::CHANNEL_R;

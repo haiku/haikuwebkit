@@ -33,22 +33,6 @@ public:
     {
         ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testHighPriority());
     }
-    static RefPtr<CSSValue> extractBackgroundFillLayerTestPrimary(ExtractorState& extractorState)
-    {
-        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
-            return ExtractorConverter::convert(extractorState, layer.backgroundFillLayerTestPrimary());
-        };
-        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
-    }
-    static void extractBackgroundFillLayerTestPrimarySerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
-    {
-        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
-            if (includeComma)
-                builder.append(", "_s);
-            ExtractorSerializer::serialize(extractorState, builder, context, layer.backgroundFillLayerTestPrimary());
-        };
-        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
-    }
     static RefPtr<CSSValue> extractTestMediumPriority(ExtractorState& extractorState)
     {
         return ExtractorConverter::convert(extractorState, extractorState.style.testMediumPriority());
@@ -57,37 +41,47 @@ public:
     {
         ExtractorSerializer::serialize(extractorState, builder, context, extractorState.style.testMediumPriority());
     }
-    static RefPtr<CSSValue> extractBackgroundFillLayerTestSecondary(ExtractorState& extractorState)
+    static RefPtr<CSSValue> extractBackgroundCoordinatedValueListPropertyTestDiscrete(ExtractorState& extractorState)
     {
-        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
-            return ExtractorConverter::convert(extractorState, layer.backgroundFillLayerTestSecondary());
+        auto mapper = [](auto& extractorState, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) -> Ref<CSSValue> {
+            return ExtractorConverter::convert(extractorState, value);
         };
-        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
+        return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete>(extractorState, extractorState.style.backgroundLayers(), mapper);
     }
-    static void extractBackgroundFillLayerTestSecondarySerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    static void extractBackgroundCoordinatedValueListPropertyTestDiscreteSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
     {
-        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
-            if (includeComma)
-                builder.append(", "_s);
-            ExtractorSerializer::serialize(extractorState, builder, context, layer.backgroundFillLayerTestSecondary());
+        auto mapper = [](auto& extractorState, auto& builder, const auto& context, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) {
+            ExtractorSerializer::serialize(extractorState, builder, context, value);
         };
-        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+        extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete>(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
     }
-    static RefPtr<CSSValue> extractBackgroundFillLayerTestSecondaryWithConverter(ExtractorState& extractorState)
+    static RefPtr<CSSValue> extractBackgroundCoordinatedValueListPropertyTestThreeWithConverter(ExtractorState& extractorState)
     {
-        auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {
-            return ExtractorConverter::convertFillTestConverter(extractorState, layer.backgroundFillLayerTestSecondaryWithConverter());
+        auto mapper = [](auto& extractorState, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) -> Ref<CSSValue> {
+            return ExtractorConverter::convertFillTestConverter(extractorState, value);
         };
-        return extractFillLayerValue(extractorState, extractorState.style.backgroundLayers(), mapper);
+        return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter>(extractorState, extractorState.style.backgroundLayers(), mapper);
     }
-    static void extractBackgroundFillLayerTestSecondaryWithConverterSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    static void extractBackgroundCoordinatedValueListPropertyTestThreeWithConverterSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
     {
-        auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {
-            if (includeComma)
-                builder.append(", "_s);
-            ExtractorSerializer::serializeFillTestConverter(extractorState, builder, context, layer.backgroundFillLayerTestSecondaryWithConverter());
+        auto mapper = [](auto& extractorState, auto& builder, const auto& context, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) {
+            ExtractorSerializer::serializeFillTestConverter(extractorState, builder, context, value);
         };
-        extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+        extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter>(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
+    }
+    static RefPtr<CSSValue> extractBackgroundCoordinatedValueListPropertyTestTwo(ExtractorState& extractorState)
+    {
+        auto mapper = [](auto& extractorState, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) -> Ref<CSSValue> {
+            return ExtractorConverter::convert(extractorState, value);
+        };
+        return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo>(extractorState, extractorState.style.backgroundLayers(), mapper);
+    }
+    static void extractBackgroundCoordinatedValueListPropertyTestTwoSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+    {
+        auto mapper = [](auto& extractorState, auto& builder, const auto& context, const auto& value, const std::optional<BackgroundLayers::value_type>&, const auto&) {
+            ExtractorSerializer::serialize(extractorState, builder, context, value);
+        };
+        extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo>(extractorState, builder, context, extractorState.style.backgroundLayers(), mapper);
     }
     static RefPtr<CSSValue> extractTestAnimationWrapper(ExtractorState& extractorState)
     {
@@ -886,14 +880,14 @@ RefPtr<CSSValue> ExtractorGenerated::extractValue(ExtractorState& extractorState
         return ExtractorFunctions::extractTestTopPriority(extractorState);
     case CSSPropertyID::CSSPropertyTestHighPriority:
         return ExtractorFunctions::extractTestHighPriority(extractorState);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
-        return ExtractorFunctions::extractBackgroundFillLayerTestPrimary(extractorState);
     case CSSPropertyID::CSSPropertyTestMediumPriority:
         return ExtractorFunctions::extractTestMediumPriority(extractorState);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
-        return ExtractorFunctions::extractBackgroundFillLayerTestSecondary(extractorState);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
-        return ExtractorFunctions::extractBackgroundFillLayerTestSecondaryWithConverter(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
+        return ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestDiscrete(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
+        return ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestThreeWithConverter(extractorState);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
+        return ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestTwo(extractorState);
     case CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor:
         // Skipped - Descriptor-only property
         return nullptr;
@@ -1132,17 +1126,17 @@ void ExtractorGenerated::extractValueSerialization(ExtractorState& extractorStat
     case CSSPropertyID::CSSPropertyTestHighPriority:
         ExtractorFunctions::extractTestHighPrioritySerialization(extractorState, builder, context);
         return;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
-        ExtractorFunctions::extractBackgroundFillLayerTestPrimarySerialization(extractorState, builder, context);
-        return;
     case CSSPropertyID::CSSPropertyTestMediumPriority:
         ExtractorFunctions::extractTestMediumPrioritySerialization(extractorState, builder, context);
         return;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
-        ExtractorFunctions::extractBackgroundFillLayerTestSecondarySerialization(extractorState, builder, context);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
+        ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestDiscreteSerialization(extractorState, builder, context);
         return;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
-        ExtractorFunctions::extractBackgroundFillLayerTestSecondaryWithConverterSerialization(extractorState, builder, context);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
+        ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestThreeWithConverterSerialization(extractorState, builder, context);
+        return;
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
+        ExtractorFunctions::extractBackgroundCoordinatedValueListPropertyTestTwoSerialization(extractorState, builder, context);
         return;
     case CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor:
         // Skipped - Descriptor-only property

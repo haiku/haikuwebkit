@@ -421,45 +421,51 @@ private:
     }
 
 public:
-
-    template <typename V = T>
-    std::enable_if_t<std::is_same_v<bool, V> || std::is_same_v<Value, V>> addItem(bool value)
+    template<typename V = T>
+        requires (std::same_as<bool, V> || std::same_as<Value, V>)
+    void addItem(bool value)
     {
         castedArray().pushBoolean(value);
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_same_v<int, V> || std::is_same_v<Value, V>> addItem(int value)
+    template<typename V = T>
+        requires (std::same_as<int, V> || std::same_as<Value, V>)
+    void addItem(int value)
     {
         castedArray().pushInteger(value);
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_same_v<double, V> || std::is_same_v<Value, V>> addItem(double value)
+    template<typename V = T>
+        requires (std::same_as<double, V> || std::same_as<Value, V>)
+    void addItem(double value)
     {
         castedArray().pushDouble(value);
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_same_v<String, V> || std::is_same_v<Value, V>> addItem(const String& value)
+    template<typename V = T>
+        requires (std::same_as<String, V> || std::same_as<Value, V>)
+    void addItem(const String& value)
     {
         castedArray().pushString(value);
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_base_of_v<Value, V> && !std::is_base_of_v<ObjectBase, V> && !std::is_base_of_v<ArrayBase, V>> addItem(Ref<Value>&& value)
+    template<typename V = T>
+        requires (std::is_base_of_v<Value, V> && !std::is_base_of_v<ObjectBase, V> && !std::is_base_of_v<ArrayBase, V>)
+    void addItem(Ref<Value>&& value)
     {
         castedArray().pushValue(WTFMove(value));
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_base_of_v<ObjectBase, V>> addItem(Ref<ObjectBase>&& value)
+    template<typename V = T>
+        requires (std::is_base_of_v<ObjectBase, V>)
+    void addItem(Ref<ObjectBase>&& value)
     {
         castedArray().pushObject(WTFMove(value));
     }
 
-    template <typename V = T>
-    std::enable_if_t<std::is_base_of_v<ArrayBase, V>> addItem(Ref<ArrayBase>&& value)
+    template<typename V = T>
+        requires (std::is_base_of_v<ArrayBase, V>)
+    void addItem(Ref<ArrayBase>&& value)
     {
         castedArray().pushArray(WTFMove(value));
     }

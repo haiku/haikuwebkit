@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AcceleratedEffectStackUpdater.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include "RenderElement.h"
 #include "RenderLayer.h"
@@ -65,4 +65,4 @@ void AcceleratedEffectStackUpdater::updateEffectStackForTarget(const Styleable& 
 
 } // namespace WebCore
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

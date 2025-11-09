@@ -84,13 +84,13 @@
 #import "_WKInspectorConfigurationInternal.h"
 #import "_WKInspectorDebuggableInfoInternal.h"
 #import "_WKInspectorInternal.h"
+#import "_WKJSBufferInternal.h"
 #import "_WKJSHandleInternal.h"
 #import "_WKProcessPoolConfigurationInternal.h"
 #import "_WKResourceLoadInfoInternal.h"
 #import "_WKResourceLoadStatisticsFirstPartyInternal.h"
 #import "_WKResourceLoadStatisticsThirdPartyInternal.h"
 #import "_WKSerializedNodeInternal.h"
-#import "_WKStringMatcherInternal.h"
 #import "_WKTargetedElementInfoInternal.h"
 #import "_WKTargetedElementRequestInternal.h"
 #import "_WKTextRunInternal.h"
@@ -535,8 +535,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         SUPPRESS_RETAINPTR_CTOR_ADOPT wrapper = [_WKJSHandle alloc];
         break;
 
-    case Type::StringMatcher:
-        SUPPRESS_RETAINPTR_CTOR_ADOPT wrapper = [_WKStringMatcher alloc];
+    case Type::JSBuffer:
+        SUPPRESS_RETAINPTR_CTOR_ADOPT wrapper = [_WKJSBuffer alloc];
         break;
 
     default:

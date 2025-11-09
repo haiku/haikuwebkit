@@ -593,8 +593,8 @@ class EmptyUserContentProvider final : public UserContentProvider {
 #if ENABLE(USER_MESSAGE_HANDLERS)
     void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const final { }
 #endif
-    bool hasStringMatchersForWorld(const DOMWrapperWorld&) const final { return false; }
-    WebKitStringMatcher* stringMatcher(const DOMWrapperWorld&, const String&) const final { return nullptr; }
+    bool hasBuffersForWorld(const DOMWrapperWorld&) const final { return false; }
+    WebKitBuffer* buffer(const DOMWrapperWorld&, const String&) const final { return nullptr; }
 #if ENABLE(CONTENT_EXTENSIONS)
     const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const final { static NeverDestroyed<ContentExtensions::ContentExtensionsBackend> backend; return backend.get(); };
 #endif

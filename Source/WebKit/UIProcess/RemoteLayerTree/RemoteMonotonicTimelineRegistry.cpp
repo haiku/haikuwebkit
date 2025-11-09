@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteMonotonicTimelineRegistry.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <WebCore/AcceleratedTimeline.h>
 #import <wtf/MonotonicTime.h>
@@ -89,4 +89,4 @@ void RemoteMonotonicTimelineRegistry::advanceCurrentTime(MonotonicTime now)
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

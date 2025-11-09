@@ -44,18 +44,6 @@ public:
         }
         builderState.style().setTestHighPriority(fromCSSValueDeducingType(builderState, value));
     }
-    static void applyInitialBackgroundFillLayerTestPrimary(BuilderState& builderState)
-    {
-        applyInitialPrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &RenderStyle::initialBackgroundLayers>(builderState);
-    }
-    static void applyInheritBackgroundFillLayerTestPrimary(BuilderState& builderState)
-    {
-        applyInheritPrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::backgroundFillLayerTestPrimary, BackgroundLayers>(builderState);
-    }
-    static void applyValueBackgroundFillLayerTestPrimary(BuilderState& builderState, CSSValue& value)
-    {
-        applyValuePrimaryFillLayerProperty<&RenderStyle::setBackgroundLayers, &fromCSSValueDeducingType, BackgroundLayers>(builderState, value);
-    }
     static void applyInitialTestMediumPriority(BuilderState& builderState)
     {
         builderState.style().setTestMediumPriority(RenderStyle::initialTestMediumPriority());
@@ -68,29 +56,41 @@ public:
     {
         builderState.style().setTestMediumPriority(fromCSSValueDeducingType(builderState, value));
     }
-    static void applyInitialBackgroundFillLayerTestSecondary(BuilderState& builderState)
+    static void applyInitialBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState)
     {
-        applyInitialSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondary>(builderState);
+        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
     }
-    static void applyInheritBackgroundFillLayerTestSecondary(BuilderState& builderState)
+    static void applyInheritBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState)
     {
-        applyInheritSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::backgroundFillLayerTestSecondary>(builderState);
+        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, BackgroundLayers>(builderState);
     }
-    static void applyValueBackgroundFillLayerTestSecondary(BuilderState& builderState, CSSValue& value)
+    static void applyValueBackgroundCoordinatedValueListPropertyTestDiscrete(BuilderState& builderState, CSSValue& value)
     {
-        applyValueSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondary, &BackgroundLayers::Layer::backgroundFillLayerTestSecondary, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondary, &fromCSSValueDeducingType>(builderState, value);
+        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete, &RenderStyle::ensureBackgroundLayers, &fromCSSValueDeducingType, BackgroundLayers>(builderState, value);
     }
-    static void applyInitialBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState)
+    static void applyInitialBackgroundCoordinatedValueListPropertyTestThreeWithConverter(BuilderState& builderState)
     {
-        applyInitialSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondaryWithConverter>(builderState);
+        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter, &RenderStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
     }
-    static void applyInheritBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState)
+    static void applyInheritBackgroundCoordinatedValueListPropertyTestThreeWithConverter(BuilderState& builderState)
     {
-        applyInheritSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::backgroundFillLayerTestSecondaryWithConverter>(builderState);
+        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter, &RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, BackgroundLayers>(builderState);
     }
-    static void applyValueBackgroundFillLayerTestSecondaryWithConverter(BuilderState& builderState, CSSValue& value)
+    static void applyValueBackgroundCoordinatedValueListPropertyTestThreeWithConverter(BuilderState& builderState, CSSValue& value)
     {
-        applyValueSecondaryFillLayerProperty<&RenderStyle::ensureBackgroundLayers, &BackgroundLayers::Layer::setBackgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::backgroundFillLayerTestSecondaryWithConverter, &BackgroundLayers::Layer::initialFillBackgroundFillLayerTestSecondaryWithConverter, &BuilderConverter::convertFillTestConverter>(builderState, value);
+        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter, &RenderStyle::ensureBackgroundLayers, &BuilderConverter::convertFillTestConverter, BackgroundLayers>(builderState, value);
+    }
+    static void applyInitialBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState)
+    {
+        applyInitialCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, BackgroundLayers>(builderState);
+    }
+    static void applyInheritBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState)
+    {
+        applyInheritCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, &RenderStyle::backgroundLayers, BackgroundLayers>(builderState);
+    }
+    static void applyValueBackgroundCoordinatedValueListPropertyTestTwo(BuilderState& builderState, CSSValue& value)
+    {
+        applyValueCoordinatedValueListProperty<CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo, &RenderStyle::ensureBackgroundLayers, &fromCSSValueDeducingType, BackgroundLayers>(builderState, value);
     }
     static void applyInitialTestAnimationWrapper(BuilderState& builderState)
     {
@@ -1305,19 +1305,6 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
             break;
         }
         break;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
-        switch (valueType) {
-        case ApplyValueType::Initial:
-            BuilderFunctions::applyInitialBackgroundFillLayerTestPrimary(builderState);
-            break;
-        case ApplyValueType::Inherit:
-            BuilderFunctions::applyInheritBackgroundFillLayerTestPrimary(builderState);
-            break;
-        case ApplyValueType::Value:
-            BuilderFunctions::applyValueBackgroundFillLayerTestPrimary(builderState, value);
-            break;
-        }
-        break;
     case CSSPropertyID::CSSPropertyTestMediumPriority:
         switch (valueType) {
         case ApplyValueType::Initial:
@@ -1331,29 +1318,42 @@ void BuilderGenerated::applyProperty(CSSPropertyID id, BuilderState& builderStat
             break;
         }
         break;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
         switch (valueType) {
         case ApplyValueType::Initial:
-            BuilderFunctions::applyInitialBackgroundFillLayerTestSecondary(builderState);
+            BuilderFunctions::applyInitialBackgroundCoordinatedValueListPropertyTestDiscrete(builderState);
             break;
         case ApplyValueType::Inherit:
-            BuilderFunctions::applyInheritBackgroundFillLayerTestSecondary(builderState);
+            BuilderFunctions::applyInheritBackgroundCoordinatedValueListPropertyTestDiscrete(builderState);
             break;
         case ApplyValueType::Value:
-            BuilderFunctions::applyValueBackgroundFillLayerTestSecondary(builderState, value);
+            BuilderFunctions::applyValueBackgroundCoordinatedValueListPropertyTestDiscrete(builderState, value);
             break;
         }
         break;
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
         switch (valueType) {
         case ApplyValueType::Initial:
-            BuilderFunctions::applyInitialBackgroundFillLayerTestSecondaryWithConverter(builderState);
+            BuilderFunctions::applyInitialBackgroundCoordinatedValueListPropertyTestThreeWithConverter(builderState);
             break;
         case ApplyValueType::Inherit:
-            BuilderFunctions::applyInheritBackgroundFillLayerTestSecondaryWithConverter(builderState);
+            BuilderFunctions::applyInheritBackgroundCoordinatedValueListPropertyTestThreeWithConverter(builderState);
             break;
         case ApplyValueType::Value:
-            BuilderFunctions::applyValueBackgroundFillLayerTestSecondaryWithConverter(builderState, value);
+            BuilderFunctions::applyValueBackgroundCoordinatedValueListPropertyTestThreeWithConverter(builderState, value);
+            break;
+        }
+        break;
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
+        switch (valueType) {
+        case ApplyValueType::Initial:
+            BuilderFunctions::applyInitialBackgroundCoordinatedValueListPropertyTestTwo(builderState);
+            break;
+        case ApplyValueType::Inherit:
+            BuilderFunctions::applyInheritBackgroundCoordinatedValueListPropertyTestTwo(builderState);
+            break;
+        case ApplyValueType::Value:
+            BuilderFunctions::applyValueBackgroundCoordinatedValueListPropertyTestTwo(builderState, value);
             break;
         }
         break;

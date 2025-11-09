@@ -686,7 +686,7 @@ def conditions_for_header(header):
         '<WebCore/PlaybackTargetClientContextIdentifier.h>': ["ENABLE(WIRELESS_PLAYBACK_TARGET)"],
         '<WebCore/SoupNetworkProxySettings.h>': ["USE(SOUP)"],
         '<WebCore/SelectionData.h>': ["PLATFORM(GTK)", "PLATFORM(WPE)"],
-        '<WebCore/TimelineIdentifier.h>': ["ENABLE(THREADED_ANIMATION_RESOLUTION)"],
+        '<WebCore/TimelineIdentifier.h>': ["ENABLE(THREADED_ANIMATIONS)"],
         '<WebCore/VideoFrameCV.h>': ["PLATFORM(COCOA)", ],
     }
     if not header in conditions:
@@ -1483,10 +1483,10 @@ def headers_for_type(type, for_implementation_file=False):
         'WebKit::WebGPU::VertexBufferLayout': ['"WebGPUVertexBufferLayout.h"'],
         'WebKit::WebGPU::VertexState': ['"WebGPUVertexState.h"'],
         'WebKit::WebGPU::XREye': ['"WebGPUXREye.h"'],
+        'WebKit::WebJSBufferData': ['"WebUserContentControllerDataTypes.h"'],
         'WebKit::WebPushD::PushMessageForTesting': ['"PushMessageForTesting.h"'],
         'WebKit::WebPushD::WebPushDaemonConnectionConfiguration': ['"WebPushDaemonConnectionConfiguration.h"'],
         'WebKit::WebScriptMessageHandlerData': ['"WebUserContentControllerDataTypes.h"'],
-        'WebKit::WebStringMatcherData': ['"WebUserContentControllerDataTypes.h"'],
         'WebKit::WebTransportSessionIdentifier': ['"WebTransportSession.h"'],
         'WebKit::WebUserScriptData': ['"WebUserContentControllerDataTypes.h"'],
         'WebKit::WebUserStyleSheetData': ['"WebUserContentControllerDataTypes.h"'],

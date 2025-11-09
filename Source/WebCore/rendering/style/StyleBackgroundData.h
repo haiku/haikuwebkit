@@ -26,7 +26,7 @@
 #pragma once
 
 #include <WebCore/OutlineValue.h>
-#include <WebCore/StyleBackgroundLayer.h>
+#include <WebCore/StyleBackgroundLayers.h>
 #include <WebCore/StyleColor.h>
 #include <wtf/DataRef.h>
 #include <wtf/RefCounted.h>

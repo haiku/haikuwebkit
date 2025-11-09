@@ -72,10 +72,10 @@ SPECIALIZE_TYPE_TRAITS_WGSL_AST(Identifier);
 
 namespace WTF {
 
-template<> class StringTypeAdapter<WGSL::AST::Identifier, void> : public StringTypeAdapter<StringImpl*, void> {
+template<> class StringTypeAdapter<WGSL::AST::Identifier> : public StringTypeAdapter<StringImpl*> {
 public:
     StringTypeAdapter(const WGSL::AST::Identifier& id)
-        : StringTypeAdapter<StringImpl*, void> { id.id().impl() }
+        : StringTypeAdapter<StringImpl*> { id.id().impl() }
     { }
 };
 

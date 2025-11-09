@@ -455,11 +455,11 @@ class StylePropertyCodeGenProperties:
         Schema.Entry("accepts-quirky-color", allowed_types=[bool], default_value=False),
         Schema.Entry("accepts-quirky-length", allowed_types=[bool], default_value=False),
         Schema.Entry("aliases", allowed_types=[list], default_value=[]),
-        Schema.Entry("animation-getter", allowed_types=[str]),
-        Schema.Entry("animation-initial", allowed_types=[str]),
-        Schema.Entry("animation-name-for-methods", allowed_types=[str]),
-        Schema.Entry("animation-setter", allowed_types=[str]),
-        Schema.Entry("animation-property", allowed_types=[bool], default_value=False),
+        Schema.Entry("coordinated-value-list-property-getter", allowed_types=[str]),
+        Schema.Entry("coordinated-value-list-property-initial", allowed_types=[str]),
+        Schema.Entry("coordinated-value-list-property-name-for-methods", allowed_types=[str]),
+        Schema.Entry("coordinated-value-list-property-setter", allowed_types=[str]),
+        Schema.Entry("coordinated-value-list-property", allowed_types=[bool], default_value=False),
         Schema.Entry("animation-wrapper", allowed_types=[str]),
         Schema.Entry("animation-wrapper-acceleration", allowed_types=[str]),
         Schema.Entry("animation-wrapper-requires-additional-parameters", allowed_types=[list], default_value=[]),
@@ -473,12 +473,6 @@ class StylePropertyCodeGenProperties:
         Schema.Entry("disables-native-appearance", allowed_types=[bool], default_value=False),
         Schema.Entry("enable-if", allowed_types=[str]),
         Schema.Entry("fast-path-inherited", allowed_types=[bool], default_value=False),
-        Schema.Entry("fill-layer-getter", allowed_types=[str]),
-        Schema.Entry("fill-layer-initial", allowed_types=[str]),
-        Schema.Entry("fill-layer-name-for-methods", allowed_types=[str]),
-        Schema.Entry("fill-layer-setter", allowed_types=[str]),
-        Schema.Entry("fill-layer-primary", allowed_types=[bool], default_value=False),
-        Schema.Entry("fill-layer-property", allowed_types=[bool], default_value=False),
         Schema.Entry("font-description-getter", allowed_types=[str]),
         Schema.Entry("font-description-initial", allowed_types=[str]),
         Schema.Entry("font-description-name-for-methods", allowed_types=[str]),
@@ -544,10 +538,7 @@ class StylePropertyCodeGenProperties:
             json_value[f"{family_name}-setter"] = "set" + json_value[f"{family_name}-name-for-methods"]
 
         if f"{family_name}-initial" not in json_value:
-            if family_name == "fill-layer":
-                json_value[f"{family_name}-initial"] = f"initialFill" + json_value[f"{family_name}-name-for-methods"]
-            else:
-                json_value[f"{family_name}-initial"] = f"initial" + json_value[f"{family_name}-name-for-methods"]
+            json_value[f"{family_name}-initial"] = f"initial" + json_value[f"{family_name}-name-for-methods"]
 
     @staticmethod
     def from_json(parsing_context, key_path, name, json_value):
@@ -561,19 +552,16 @@ class StylePropertyCodeGenProperties:
 
         StylePropertyCodeGenProperties._complete_name_family(json_value, "render-style", property_name)
 
-        if "fill-layer-property" in json_value:
-            StylePropertyCodeGenProperties._complete_name_family(json_value, "fill-layer", property_name)
-
         if "font-property" in json_value:
             StylePropertyCodeGenProperties._complete_name_family(json_value, "font-description", property_name)
 
-        if "animation-property" in json_value:
-            StylePropertyCodeGenProperties._complete_name_family(json_value, "animation", property_name)
+        if "coordinated-value-list-property" in json_value:
+            StylePropertyCodeGenProperties._complete_name_family(json_value, "coordinated-value-list-property", property_name)
 
         if "animation-wrapper-acceleration" in json_value:
             if json_value["animation-wrapper-acceleration"] not in ['always', 'threaded-only']:
                 raise Exception(f"{key_path} must be either 'always' or 'threaded-only'.")
-            if json_value["animation-wrapper-acceleration"] == 'threaded-only' and not parsing_context.is_enabled(conditional="ENABLE_THREADED_ANIMATION_RESOLUTION"):
+            if json_value["animation-wrapper-acceleration"] == 'threaded-only' and not parsing_context.is_enabled(conditional="ENABLE_THREADED_ANIMATIONS"):
                 json_value["animation-wrapper-acceleration"] = None
 
         if "style-builder-custom" not in json_value:
@@ -821,6 +809,12 @@ class StyleProperty:
     def id(self):
         return self.property_name.id
 
+    @property
+    def id_or_cascade_alias_id(self):
+        if self.codegen_properties.cascade_alias:
+            return self.codegen_properties.cascade_alias.id
+        return self.id
+
     # Used for parsing and consume methods. It is prefixed with a 'kind' for descriptors, and left un-prefixed for style properties.
     # Examples:
     #       style property 'column-width' would generate a consume method called `consumeColumnWidth`
@@ -855,87 +849,67 @@ class StyleProperty:
 
         return False
 
-    # Specialized properties to compute method names.
+    # Specialized accessors for coordinated list value properties.
 
     @property
-    def method_name_for_ensure_animations_or_transitions(self):
+    def method_name_for_ensure_coordinated_value_list(self):
         if "animation-" in self.name:
             return "ensureAnimations"
         if "transition-" in self.name:
             return "ensureTransitions"
-        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
-
-    @property
-    def method_name_for_animations_or_transitions(self):
-        if "animation-" in self.name:
-            return "animations"
-        if "transition-" in self.name:
-            return "transitions"
-        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
-
-    @property
-    def method_name_for_set_animations_or_transitions(self):
-        if "animation-" in self.name:
-            return "setAnimations"
-        if "transition-" in self.name:
-            return "setTransitions"
-        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
-
-    @property
-    def method_name_for_initial_animations_or_transitions(self):
-        if "animation-" in self.name:
-            return "initialAnimations"
-        if "transition-" in self.name:
-            return "initialTransitions"
-        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
-
-    @property
-    def type_name_for_animations_or_transitions(self):
-        if "animation-" in self.name:
-            return "Animations"
-        if "transition-" in self.name:
-            return "Transitions"
-        raise Exception(f"Unrecognized animation or transition property name: '{self.name}")
-
-    @property
-    def method_name_for_ensure_layers(self):
         if "background-" in self.name:
             return "ensureBackgroundLayers"
         if "mask-" in self.name:
             return "ensureMaskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
+        raise Exception(f"Unrecognized coordinated list value property name: '{self.name}")
 
     @property
-    def method_name_for_layers(self):
+    def method_name_for_get_coordinated_value_list(self):
+        if "animation-" in self.name:
+            return "animations"
+        if "transition-" in self.name:
+            return "transitions"
         if "background-" in self.name:
             return "backgroundLayers"
         if "mask-" in self.name:
             return "maskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
+        raise Exception(f"Unrecognized coordinated list value property name: '{self.name}")
 
     @property
-    def method_name_for_set_layers(self):
+    def method_name_for_set_coordinated_value_list(self):
+        if "animation-" in self.name:
+            return "setAnimations"
+        if "transition-" in self.name:
+            return "setTransitions"
         if "background-" in self.name:
             return "setBackgroundLayers"
         if "mask-" in self.name:
             return "setMaskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
+        raise Exception(f"Unrecognized coordinated list value property name: '{self.name}")
 
     @property
-    def method_name_for_initial_layers(self):
+    def method_name_for_initial_coordinated_value_list(self):
+        if "animation-" in self.name:
+            return "initialAnimations"
+        if "transition-" in self.name:
+            return "initialTransitions"
         if "background-" in self.name:
             return "initialBackgroundLayers"
         if "mask-" in self.name:
             return "initialMaskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
+        raise Exception(f"Unrecognized coordinated list value property name: '{self.name}")
 
     @property
-    def type_name_for_layers(self):
+    def type_name_for_coordinated_value_list(self):
+        if "animation-" in self.name:
+            return "Animations"
+        if "transition-" in self.name:
+            return "Transitions"
         if "background-" in self.name:
             return "BackgroundLayers"
         if "mask-" in self.name:
             return "MaskLayers"
-        raise Exception(f"Unrecognized FillLayer property name: '{self.name}")
+        raise Exception(f"Unrecognized coordinated list value property name: '{self.name}")
 
 
 class StyleProperties:
@@ -3286,7 +3260,7 @@ class GenerateCSSPropertyNames:
 
                 to.write(f"}};")
 
-                to.write(f"if (settings.threadedAnimationResolutionEnabled())")
+                to.write(f"if (settings.threadedScrollDrivenAnimationsEnabled() || settings.threadedTimeBasedAnimationsEnabled())")
                 with to.indent():
                     to.write(f"return std::span<const CSSPropertyID> {{ propertiesIncludingThreadedOnly }};")
 
@@ -3391,7 +3365,7 @@ class GenerateCSSPropertyNames:
 
     def _property_is_accelerated_return_clause(self, p):
         if p.codegen_properties.animation_wrapper_acceleration == 'threaded-only':
-            return "settings.threadedAnimationResolutionEnabled()"
+            return "settings.threadedScrollDrivenAnimationsEnabled() || settings.threadedTimeBasedAnimationsEnabled()"
         return "true"
 
     def generate_css_property_names_gperf(self):
@@ -3671,8 +3645,17 @@ class GenerateCSSPropertyNames:
         to.write(f"constexpr auto firstShorthandProperty = {first_shorthand_property.id};")
         to.write(f"constexpr auto lastShorthandProperty = {last_shorthand_property.id};")
         to.write(f"constexpr uint16_t numCSSPropertyLonghands = firstShorthandProperty - firstCSSProperty;")
+        to.newline()
 
         to.write(f"extern const std::array<CSSPropertyID, {count_iterable(self.properties_and_descriptors.style_properties.all_computed)}> computedPropertyIDs;")
+        to.newline()
+
+        to.write(f"template<CSSPropertyID C> struct PropertyNameConstant {{")
+        with to.indent():
+            to.write(f"static constexpr auto value = C;")
+            to.write(f"constexpr bool operator==(const PropertyNameConstant&) const = default;")
+            to.write(f"constexpr bool operator==(CSSPropertyID other) const {{ return value == other; }}")
+        to.write(f"}};")
         to.newline()
 
     def _generate_css_property_names_h_property_settings(self, *, to):
@@ -4026,22 +4009,22 @@ class GenerateStyleBuilderGenerated:
         to.write(f"if (builderState.applyPropertyToVisitedLinkStyle())")
         to.write(f"    builderState.style().setVisitedLink{property.codegen_properties.render_style_name_for_methods}({self._converted_value(property, ['ForVisitedLink::Yes'])});")
 
-    # Animation property setters.
+    # CoordinatedValueList property setters.
 
-    def _generate_animation_property_initial_value_setter(self, to, property):
-        to.write(f"applyInitialAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, {property.type_name_for_animations_or_transitions}>(builderState);")
+    def _generate_coordinated_value_list_property_initial_value_setter(self, to, property):
+        to.write(f"applyInitialCoordinatedValueListProperty<{property.id_or_cascade_alias_id}, &RenderStyle::{property.method_name_for_ensure_coordinated_value_list}, {property.type_name_for_coordinated_value_list}>(builderState);")
 
-    def _generate_animation_property_inherit_value_setter(self, to, property):
-        to.write(f"applyInheritAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &RenderStyle::{property.method_name_for_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_getter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, &{property.type_name_for_animations_or_transitions}::value_type::is{property.codegen_properties.animation_name_for_methods}Set, {property.type_name_for_animations_or_transitions}>(builderState);")
+    def _generate_coordinated_value_list_property_inherit_value_setter(self, to, property):
+        to.write(f"applyInheritCoordinatedValueListProperty<{property.id_or_cascade_alias_id}, &RenderStyle::{property.method_name_for_ensure_coordinated_value_list}, &RenderStyle::{property.method_name_for_get_coordinated_value_list}, {property.type_name_for_coordinated_value_list}>(builderState);")
 
-    def _generate_animation_property_value_setter(self, to, property):
+    def _generate_coordinated_value_list_property_value_setter(self, to, property):
         def converter(property):
             if property.codegen_properties.style_builder_converter:
                 return f"&BuilderConverter::convert{property.codegen_properties.style_builder_converter}"
             else:
                 return "&fromCSSValueDeducingType"
 
-        to.write(f"applyValuePrimaryAnimationOrTransitionProperty<&RenderStyle::{property.method_name_for_ensure_animations_or_transitions}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_setter}, &{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}, &{property.type_name_for_animations_or_transitions}::value_type::clear{property.codegen_properties.animation_name_for_methods}, {converter(property)}, {property.type_name_for_animations_or_transitions}>(builderState, value);")
+        to.write(f"applyValueCoordinatedValueListProperty<{property.id_or_cascade_alias_id}, &RenderStyle::{property.method_name_for_ensure_coordinated_value_list}, {converter(property)}, {property.type_name_for_coordinated_value_list}>(builderState, value);")
 
     # Font property setters.
 
@@ -4054,32 +4037,6 @@ class GenerateStyleBuilderGenerated:
 
     def _generate_font_property_value_setter(self, to, property, value):
         to.write(f"builderState.{property.codegen_properties.font_description_setter.replace('set', 'setFontDescription', 1)}({value});")
-
-    # Fill Layer property setters.
-
-    def _generate_fill_layer_property_initial_value_setter(self, to, property):
-        if property.codegen_properties.fill_layer_primary:
-            to.write(f"applyInitialPrimaryFillLayerProperty<&RenderStyle::{property.method_name_for_set_layers}, &RenderStyle::{property.method_name_for_initial_layers}>(builderState);")
-        else:
-            to.write(f"applyInitialSecondaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_initial}>(builderState);")
-
-    def _generate_fill_layer_property_inherit_value_setter(self, to, property):
-        if property.codegen_properties.fill_layer_primary:
-            to.write(f"applyInheritPrimaryFillLayerProperty<&RenderStyle::{property.method_name_for_set_layers}, &RenderStyle::{property.method_name_for_layers}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, {property.type_name_for_layers}>(builderState);")
-        else:
-            to.write(f"applyInheritSecondaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &RenderStyle::{property.method_name_for_layers}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}>(builderState);")
-
-    def _generate_fill_layer_property_value_setter(self, to, property):
-        def converter(property):
-            if property.codegen_properties.style_builder_converter:
-                return f"&BuilderConverter::convert{property.codegen_properties.style_builder_converter}"
-            else:
-                return "&fromCSSValueDeducingType"
-
-        if property.codegen_properties.fill_layer_primary:
-            to.write(f"applyValuePrimaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &RenderStyle::{property.method_name_for_set_layers},  &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_initial}, {converter(property)}, {property.type_name_for_layers}>(builderState, value);")
-        else:
-            to.write(f"applyValueSecondaryFillLayerProperty<&RenderStyle::{property.method_name_for_ensure_layers}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_initial}, {converter(property)}>(builderState, value);")
 
     # All other property setters.
 
@@ -4101,12 +4058,10 @@ class GenerateStyleBuilderGenerated:
         with to.indent():
             if property.codegen_properties.visited_link_color_support:
                 self._generate_visited_link_color_supporting_property_initial_value_setter(to, property)
-            elif property.codegen_properties.animation_property:
-                self._generate_animation_property_initial_value_setter(to, property)
+            elif property.codegen_properties.coordinated_value_list_property:
+                self._generate_coordinated_value_list_property_initial_value_setter(to, property)
             elif property.codegen_properties.font_property:
                 self._generate_font_property_initial_value_setter(to, property)
-            elif property.codegen_properties.fill_layer_property:
-                self._generate_fill_layer_property_initial_value_setter(to, property)
             else:
                 self._generate_property_initial_value_setter(to, property)
 
@@ -4122,12 +4077,10 @@ class GenerateStyleBuilderGenerated:
         with to.indent():
             if property.codegen_properties.visited_link_color_support:
                 self._generate_visited_link_color_supporting_property_inherit_value_setter(to, property)
-            elif property.codegen_properties.animation_property:
-                self._generate_animation_property_inherit_value_setter(to, property)
+            elif property.codegen_properties.coordinated_value_list_property:
+                self._generate_coordinated_value_list_property_inherit_value_setter(to, property)
             elif property.codegen_properties.font_property:
                 self._generate_font_property_inherit_value_setter(to, property)
-            elif property.codegen_properties.fill_layer_property:
-                self._generate_fill_layer_property_inherit_value_setter(to, property)
             else:
                 self._generate_property_inherit_value_setter(to, property)
 
@@ -4150,12 +4103,10 @@ class GenerateStyleBuilderGenerated:
 
             if property.codegen_properties.visited_link_color_support:
                 self._generate_visited_link_color_supporting_property_value_setter(to, property)
-            elif property.codegen_properties.animation_property:
-                self._generate_animation_property_value_setter(to, property)
+            elif property.codegen_properties.coordinated_value_list_property:
+                self._generate_coordinated_value_list_property_value_setter(to, property)
             elif property.codegen_properties.font_property:
                 self._generate_font_property_value_setter(to, property, self._converted_value(property))
-            elif property.codegen_properties.fill_layer_property:
-                self._generate_fill_layer_property_value_setter(to, property)
             else:
                 self._generate_property_value_setter(to, property, self._converted_value(property))
 
@@ -4334,61 +4285,19 @@ class GenerateStyleExtractorGenerated:
 
     # Animation property getters.
 
-    def _generate_animation_property_value_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, const std::optional<{property.type_name_for_animations_or_transitions}::value_type>& animation, const auto&) -> RefPtr<CSSValue> {{")
+    def _generate_coordinated_value_list_property_value_getter(self, to, property):
+        to.write(f"auto mapper = [](auto& extractorState, const auto& value, const std::optional<{property.type_name_for_coordinated_value_list}::value_type>&, const auto&) -> Ref<CSSValue> {{")
         with to.indent():
-            to.write(f"if (!animation) {{")
-            with to.indent():
-                to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, f'{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}()')};")
-            to.write(f"}}")
-            to.write(f"if (!animation->is{property.codegen_properties.animation_name_for_methods}Filled()) {{")
-            with to.indent():
-                to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, f'animation->{property.codegen_properties.animation_getter}()')};")
-            to.write(f"}}")
-            to.write(f"return nullptr;")
+            to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, 'value')};")
         to.write(f"}};")
-        to.write(f"return extractAnimationOrTransitionValue(extractorState, extractorState.style.{property.method_name_for_animations_or_transitions}(), mapper);")
+        to.write(f"return extractCoordinatedValueListValue<{property.id_or_cascade_alias_id}>(extractorState, extractorState.style.{property.method_name_for_get_coordinated_value_list}(), mapper);")
 
-    def _generate_animation_property_value_serialization_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, auto& builder, const auto& context, bool includeComma, const std::optional<{property.type_name_for_animations_or_transitions}::value_type>& animation, const auto&) {{")
+    def _generate_coordinated_value_list_property_value_serialization_getter(self, to, property):
+        to.write(f"auto mapper = [](auto& extractorState, auto& builder, const auto& context, const auto& value, const std::optional<{property.type_name_for_coordinated_value_list}::value_type>&, const auto&) {{")
         with to.indent():
-            to.write(f"if (!animation) {{")
-            with to.indent():
-                to.write(f"if (includeComma)")
-                with to.indent():
-                    to.write(f"builder.append(\", \"_s);")
-                to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, f'{property.type_name_for_animations_or_transitions}::value_type::{property.codegen_properties.animation_initial}()')};")
-                to.write(f"return;")
-            to.write(f"}}")
-            to.write(f"if (!animation->is{property.codegen_properties.animation_name_for_methods}Filled()) {{")
-            with to.indent():
-                to.write(f"if (includeComma)")
-                with to.indent():
-                    to.write(f"builder.append(\", \"_s);")
-                to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, f'animation->{property.codegen_properties.animation_getter}()')};")
-                to.write(f"return;")
-            to.write(f"}}")
+            to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, 'value')};")
         to.write(f"}};")
-        to.write(f"extractAnimationOrTransitionValueSerialization(extractorState, builder, context, extractorState.style.{property.method_name_for_animations_or_transitions}(), mapper);")
-
-    # Fill Layer property getters.
-
-    def _generate_fill_layer_property_value_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, auto& layer) -> Ref<CSSValue> {{")
-        with to.indent():
-            to.write(f"return {GenerateStyleExtractorGenerated.wrap_in_converter(property, f'layer.{property.codegen_properties.fill_layer_getter}()')};")
-        to.write(f"}};")
-        to.write(f"return extractFillLayerValue(extractorState, extractorState.style.{property.method_name_for_layers}(), mapper);")
-
-    def _generate_fill_layer_property_value_serialization_getter(self, to, property):
-        to.write(f"auto mapper = [](auto& extractorState, StringBuilder& builder, const CSS::SerializationContext& context, bool includeComma, auto& layer) {{")
-        with to.indent():
-            to.write(f"if (includeComma)")
-            with to.indent():
-                to.write(f"builder.append(\", \"_s);")
-            to.write(f"{GenerateStyleExtractorGenerated.wrap_in_serializer(property, f'layer.{property.codegen_properties.fill_layer_getter}()')};")
-        to.write(f"}};")
-        to.write(f"extractFillLayerValueSerialization(extractorState, builder, context, extractorState.style.{property.method_name_for_layers}(), mapper);")
+        to.write(f"extractCoordinatedValueListSerialization<{property.id_or_cascade_alias_id}>(extractorState, builder, context, extractorState.style.{property.method_name_for_get_coordinated_value_list}(), mapper);")
 
     # All other property value getters.
 
@@ -4423,10 +4332,8 @@ class GenerateStyleExtractorGenerated:
         with to.indent():
             if property.codegen_properties.visited_link_color_support:
                 self._generate_visited_link_color_supporting_property_value_getter(to, property)
-            elif property.codegen_properties.animation_property:
-                self._generate_animation_property_value_getter(to, property)
-            elif property.codegen_properties.fill_layer_property:
-                self._generate_fill_layer_property_value_getter(to, property)
+            elif property.codegen_properties.coordinated_value_list_property:
+                self._generate_coordinated_value_list_property_value_getter(to, property)
             else:
                 self._generate_property_value_getter(to, property)
 
@@ -4439,10 +4346,8 @@ class GenerateStyleExtractorGenerated:
         with to.indent():
             if property.codegen_properties.visited_link_color_support:
                 self._generate_visited_link_color_supporting_property_value_serialization_getter(to, property)
-            elif property.codegen_properties.animation_property:
-                self._generate_animation_property_value_serialization_getter(to, property)
-            elif property.codegen_properties.fill_layer_property:
-                self._generate_fill_layer_property_value_serialization_getter(to, property)
+            elif property.codegen_properties.coordinated_value_list_property:
+                self._generate_coordinated_value_list_property_value_serialization_getter(to, property)
             else:
                 self._generate_property_value_serialization_getter(to, property)
 
@@ -5236,9 +5141,9 @@ class GenerateStyleInterpolationWrapperMap:
             getter = property.codegen_properties.render_style_getter
             setter = property.codegen_properties.render_style_setter
 
-            if property.codegen_properties.fill_layer_property and property.codegen_properties.animation_wrapper is not None:
-                property_wrapper_parameters += [f"&{style_type}::{property.method_name_for_layers}", f"&{style_type}::{property.method_name_for_ensure_layers}", f"&{style_type}::{property.method_name_for_set_layers}", f"{property_wrapper_type}({property.id}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_getter}, &{property.type_name_for_layers}::Layer::{property.codegen_properties.fill_layer_setter})"]
-                property_wrapper_type = "FillLayersWrapper"
+            if property.codegen_properties.coordinated_value_list_property and property.codegen_properties.animation_wrapper is not None:
+                property_wrapper_parameters += [f"&{style_type}::{property.method_name_for_get_coordinated_value_list}", f"&{style_type}::{property.method_name_for_ensure_coordinated_value_list}", f"&{style_type}::{property.method_name_for_set_coordinated_value_list}", f"{property_wrapper_type}({property.id}, &{property.type_name_for_coordinated_value_list}::value_type::{property.codegen_properties.coordinated_value_list_property_getter}, &{property.type_name_for_coordinated_value_list}::value_type::{property.codegen_properties.coordinated_value_list_property_setter})"]
+                property_wrapper_type = "CoordinatedValueListPropertyWrapper"
             else:
                 # Add getter
                 if property.codegen_properties.animation_wrapper_requires_getter is not None:

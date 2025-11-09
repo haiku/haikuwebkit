@@ -307,7 +307,7 @@ const Type* shaderTypeForTexelFormat(TexelFormat, const TypeStore&);
 
 namespace WTF {
 
-template<> class StringTypeAdapter<WGSL::Type, void> {
+template<> class StringTypeAdapter<WGSL::Type> {
 public:
     StringTypeAdapter(const WGSL::Type& type)
         : m_string { type.toString() }

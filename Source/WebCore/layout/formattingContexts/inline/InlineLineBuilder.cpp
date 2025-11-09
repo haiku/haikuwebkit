@@ -135,6 +135,10 @@ static bool hasTrailingSoftWrapOpportunity(size_t softWrapOpportunityIndex, size
         // For Web-compatibility there is a soft wrap opportunity before and after each replaced element or other atomic inline.
         return true;
     }
+    if (trailingInlineItem.isBlock()) {
+        // FIXME: Blocks in inline.
+        return true;
+    }
     if (auto* inlineTextItem = dynamicDowncast<InlineTextItem>(trailingInlineItem)) {
         if (inlineTextItem->isWhitespace())
             return true;
@@ -234,6 +238,11 @@ inline void LineCandidate::InlineContent::appendInlineItem(const InlineItem& inl
 {
     if (inlineItem.isAtomicInlineBox() || inlineItem.isOpaque())
         return m_continuousContent.append(inlineItem, style, logicalWidth, textSpacingAdjustment);
+
+    if (inlineItem.isBlock()) {
+        // FIXME: Blocks in inline.
+        return m_continuousContent.append(inlineItem, style, logicalWidth, textSpacingAdjustment);
+    }
 
     if (inlineItem.isInlineBoxStartOrEnd()) {
         auto numberOfRuns = m_continuousContent.runs().size();
@@ -757,6 +766,7 @@ Vector<std::pair<size_t, size_t>> LineBuilder::collectShapeRanges(const LineCand
         case InlineItem::Type::WordBreakOpportunity:
         case InlineItem::Type::Float:
         case InlineItem::Type::Opaque:
+        case InlineItem::Type::Block:
             break;
         default:
             ASSERT_NOT_REACHED();
@@ -984,7 +994,7 @@ void LineBuilder::candidateContentForLine(LineCandidate& lineCandidate, std::pai
                 textSpacingAdjustment = inlineBoxBoundaryTextSpacing->value;
         }
 
-        auto needsLayout = inlineItem.isFloat() || inlineItem.isAtomicInlineBox() || (inlineItem.isOpaque() && inlineItem.layoutBox().isRubyAnnotationBox());
+        auto needsLayout = inlineItem.isFloat() || inlineItem.isBlock() || inlineItem.isAtomicInlineBox() || (inlineItem.isOpaque() && inlineItem.layoutBox().isRubyAnnotationBox());
         if (needsLayout) {
             // FIXME: Intrinsic width mode should call into the intrinsic width codepath. Currently we only get here when box has fixed width (meaning no need to run intrinsic width on the box).
             if (!isInIntrinsicWidthMode())
@@ -1049,6 +1059,12 @@ void LineBuilder::candidateContentForLine(LineCandidate& lineCandidate, std::pai
         }
         if (inlineItem.isOpaque()) {
             lineCandidate.inlineContent.appendInlineItem(inlineItem, style, { });
+            continue;
+        }
+        if (inlineItem.isBlock()) {
+            auto logicalWidth = formattingContext().formattingUtils().inlineItemWidth(inlineItem, currentLogicalRight, false);
+            lineCandidate.inlineContent.appendInlineItem(inlineItem, style, logicalWidth);
+            currentLogicalRight += logicalWidth;
             continue;
         }
         ASSERT_NOT_REACHED();
@@ -1568,6 +1584,12 @@ void LineBuilder::commitCandidateContent(LineCandidate& lineCandidate, std::opti
         if (inlineItem.isOpaque()) {
             ASSERT(!run.contentWidth());
             m_line.appendOpaqueBox(inlineItem, run.style);
+            return;
+        }
+
+        if (inlineItem.isBlock()) {
+            // FIXME: Blocks in inline.
+            m_line.appendAtomicInlineBox(inlineItem, run.style, run.contentWidth());
             return;
         }
 

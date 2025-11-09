@@ -54,7 +54,8 @@ class CompactUniquePtrTuple final {
 public:
     CompactUniquePtrTuple() = default;
 
-    template <typename U, typename UDeleter, typename = std::enable_if_t<std::is_same<UDeleter, Deleter>::value || std::is_same<UDeleter, std::default_delete<U>>::value>>
+    template<typename U, typename UDeleter>
+        requires (std::same_as<UDeleter, Deleter> || std::same_as<UDeleter, std::default_delete<U>>)
     CompactUniquePtrTuple(CompactUniquePtrTuple<U, Type, UDeleter>&& other)
         : m_data { std::exchange(other.m_data, { }) }
     {
@@ -65,7 +66,8 @@ public:
         setPointer(nullptr);
     }
 
-    template <typename U, typename UDeleter, typename = std::enable_if_t<std::is_same<UDeleter, Deleter>::value || std::is_same<UDeleter, std::default_delete<U>>::value>>
+    template<typename U, typename UDeleter>
+        requires (std::same_as<UDeleter, Deleter> || std::same_as<UDeleter, std::default_delete<U>>)
     CompactUniquePtrTuple<T, Type, Deleter>& operator=(CompactUniquePtrTuple<U, Type, UDeleter>&& other)
     {
         CompactUniquePtrTuple moved { WTFMove(other) };
@@ -88,7 +90,8 @@ public:
         m_data.setPointer(nullptr);
     }
 
-    template <typename U, typename UDeleter, typename = std::enable_if_t<std::is_same<UDeleter, Deleter>::value || std::is_same<UDeleter, std::default_delete<U>>::value>>
+    template<typename U, typename UDeleter>
+        requires (std::same_as<UDeleter, Deleter> || std::same_as<UDeleter, std::default_delete<U>>)
     void setPointer(std::unique_ptr<U, UDeleter>&& pointer)
     {
         deletePointer();
@@ -117,7 +120,7 @@ private:
     template<typename U, typename E, typename... Args> friend CompactUniquePtrTuple<U, E> makeCompactUniquePtr(Args&&... args);
     template<typename U, typename E, typename D, typename... Args> friend CompactUniquePtrTuple<U, E, D> makeCompactUniquePtr(Args&&... args);
 
-    template <typename, typename, typename> friend class CompactUniquePtrTuple;
+    template<typename, typename, typename> friend class CompactUniquePtrTuple;
 
     CompactPointerTuple<T*, Type> m_data;
 };

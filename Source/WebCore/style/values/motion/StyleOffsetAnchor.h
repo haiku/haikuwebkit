@@ -38,7 +38,7 @@ struct OffsetAnchor {
     OffsetAnchor(Position&& position) : m_value { WTFMove(position) } { }
     OffsetAnchor(const Position& position) : m_value { position } { }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     explicit OffsetAnchor(AcceleratedEffectOffsetAnchor&& point) : m_value { convert(point) } { }
     explicit OffsetAnchor(const AcceleratedEffectOffsetAnchor& point) : m_value { convert(point) } { }
 #endif
@@ -53,7 +53,7 @@ struct OffsetAnchor {
     bool operator==(const OffsetAnchor&) const = default;
 
 private:
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     static auto convert(const AcceleratedEffectOffsetAnchor&) -> Variant<CSS::Keyword::Auto, Position>;
 #endif
 
@@ -84,7 +84,7 @@ template<> struct Blending<OffsetAnchor> {
 
 // MARK: - Evaluation
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 template<> struct Evaluation<OffsetAnchor, AcceleratedEffectOffsetAnchor> {
     auto operator()(const OffsetAnchor&, FloatSize, ZoomNeeded) -> AcceleratedEffectOffsetAnchor;

@@ -133,7 +133,7 @@ template: struct WebCore::ProcessIdentifierType
 template: struct WebCore::ScrollingNodeIDType
 template: struct WebCore::SharedWorkerObjectIdentifierType
 template: struct WebCore::SleepDisablerIdentifierType
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 template: struct WebCore::TimelineIdentifierType
 #endif
 template: struct WebCore::UserGestureTokenIdentifierType

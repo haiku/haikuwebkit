@@ -32,7 +32,7 @@
 #include <WebCore/StyleBoxShadow.h>
 #include <WebCore/StyleContent.h>
 #include <WebCore/StyleContentAlignmentData.h>
-#include <WebCore/StyleMaskLayer.h>
+#include <WebCore/StyleMaskLayers.h>
 #include <WebCore/StyleObjectPosition.h>
 #include <WebCore/StyleOpacity.h>
 #include <WebCore/StyleOrder.h>

@@ -584,8 +584,10 @@ void Navigation::rejectFinishedPromise(NavigationAPIMethodTracker* apiMethodTrac
 {
     RELEASE_LOG(Navigation, "rejectFinishedPromise: rejecting promises for tracker=%p with exception='%s'", apiMethodTracker, exception.message().utf8().data());
 
-    // Reject committed first, then finished (matching Navigation API spec order)
-    Ref { apiMethodTracker->committedPromise }->reject(exception, RejectAsHandled::No, exceptionObject);
+    // Only reject committed promise if it hasn't been fulfilled yet (committedToEntry is null). If the navigation was "committed" (state updated)
+    // before being aborted, the committed promise should remain fulfilled while only the finished promise gets rejected.
+    if (!apiMethodTracker->committedToEntry)
+        Ref { apiMethodTracker->committedPromise }->reject(exception, RejectAsHandled::No, exceptionObject);
     Ref { apiMethodTracker->finishedPromise }->reject(exception, RejectAsHandled::Yes, exceptionObject);
     cleanupAPIMethodTracker(apiMethodTracker);
 }
@@ -697,7 +699,7 @@ void Navigation::recursivelyDisposeOfForwardEntriesInParents(BackForwardItemIden
 }
 
 // https://html.spec.whatwg.org/multipage/nav-history-apis.html#update-the-navigation-api-entries-for-a-same-document-navigation
-void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigationType navigationType, ShouldCopyStateObjectFromCurrentEntry shouldCopyStateObjectFromCurrentEntry)
+void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigationType navigationType, ShouldCopyStateObjectFromCurrentEntry shouldCopyStateObjectFromCurrentEntry, ShouldNotifyCommitted shouldNotifyCommitted)
 {
     if (hasEntriesAndEventsDisabled())
         return;
@@ -734,7 +736,7 @@ void Navigation::updateForNavigation(Ref<HistoryItem>&& item, NavigationNavigati
             Ref { m_entries[*m_currentEntryIndex] }->setState(oldCurrentEntry->state());
     }
 
-    if (m_ongoingAPIMethodTracker)
+    if (m_ongoingAPIMethodTracker && shouldNotifyCommitted == ShouldNotifyCommitted::Yes)
         notifyCommittedToEntry(m_ongoingAPIMethodTracker.get(), protectedCurrentEntry().get(), navigationType);
 
     auto currentEntryChangeEvent = NavigationCurrentEntryChangeEvent::create(eventNames().currententrychangeEvent, {
@@ -1068,9 +1070,21 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
 
         if (navigationType == NavigationNavigationType::Traverse) {
             m_suppressNormalScrollRestorationDuringOngoingNavigation = true;
-            // For intercepted traverse navigations, we need to update the URL before handlers run.
-            if (destination->sameDocument() && hasEntryWithKey(destination->key()))
-                document->updateURLForPushOrReplaceState(destination->url());
+            // For intercepted traverse navigations, update the Navigation API state and fire currententrychange.
+            // This must happen AFTER the navigate event but BEFORE intercept handlers run.
+            // For committed promise timing:
+            // - If there are NO handlers (just intercept() called), fulfill committed now (before currententrychange)
+            // - If there ARE handlers (intercept({ handler() {...} })), fulfill committed after handlers are invoked
+            if (destination->sameDocument()) {
+                RefPtr entry = findEntryByKey(destination->key());
+                if (entry) {
+                    document->updateURLForPushOrReplaceState(destination->url());
+
+                    // Only notify committed now if there are no handlers to wait for
+                    auto shouldNotifyCommited = event->handlers().isEmpty() ? ShouldNotifyCommitted::Yes : ShouldNotifyCommitted::No;
+                    updateForNavigation(entry->associatedHistoryItem(), navigationType, ShouldCopyStateObjectFromCurrentEntry::No, shouldNotifyCommited);
+                }
+            }
         } else if (navigationType == NavigationNavigationType::Reload) {
             // Not in specification but matches chromium implementation and tests.
             updateForNavigation(currentEntry()->associatedHistoryItem(), navigationType);
@@ -1093,6 +1107,11 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
                 promiseList.append(WTFMove(promise));
             }
         }
+
+        // For intercepted traverse navigations, notify committed after handlers have been invoked but before
+        // they complete. This ensures the correct event ordering.
+        if (navigationType == NavigationNavigationType::Traverse && event->wasIntercepted() && apiMethodTracker && !apiMethodTracker->committedToEntry)
+            notifyCommittedToEntry(apiMethodTracker.get(), protectedCurrentEntry().get(), navigationType);
 
         // FIXME: this emulates the behavior of a Promise wrapped around waitForAll, but we may want the real
         // thing if the ordering-and-transition tests show timing related issues related to this.

@@ -1,0 +1,15 @@
+
+FAIL .masonry 1 assert_equals:
+<div class="masonry" data-expected-width="300" data-expected-height="200">
+      <div class="item" data-expected-width="75">Cell 1</div>
+      <div class="item" data-expected-width="75">Cell 2</div>
+      <div class="item" data-expected-width="75">Cell 3</div>
+      <div class="item" data-expected-width="75">Cell 4</div>
+      <div class="item" data-expected-width="75">Cell 5</div>
+    </div>
+width expected 75 but got 300
+Cell 1
+Cell 2
+Cell 3
+Cell 4
+Cell 5

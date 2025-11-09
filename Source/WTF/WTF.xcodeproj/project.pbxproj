@@ -421,7 +421,6 @@
 		DD3DC8FD27A4BF8E007E5B61 /* PlatformRegisters.h in Headers */ = {isa = PBXBuildFile; fileRef = E3200AB41E9A536D003B59D2 /* PlatformRegisters.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8FE27A4BF8E007E5B61 /* StackShot.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F9DAA041FD1C37B0079C5B2 /* StackShot.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8FF27A4BF8E007E5B61 /* WTFConfig.h in Headers */ = {isa = PBXBuildFile; fileRef = FE032AD12463E43B0012D7C7 /* WTFConfig.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		DD3DC90027A4BF8E007E5B61 /* IteratorAdaptors.h in Headers */ = {isa = PBXBuildFile; fileRef = 7CDD7FF7186D291E007433CD /* IteratorAdaptors.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC90127A4BF8E007E5B61 /* HashTable.h in Headers */ = {isa = PBXBuildFile; fileRef = A8A472B9151A825A004123FF /* HashTable.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC90227A4BF8E007E5B61 /* UniqueRef.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C7C88D31D0A3A0A009D2F6D /* UniqueRef.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC90327A4BF8E007E5B61 /* URL.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CC0EE7121629F1800A1A842 /* URL.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -1436,7 +1435,6 @@
 		7C98CDC723E7A9B80012F232 /* PlatformEnableCocoa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformEnableCocoa.h; sourceTree = "<group>"; };
 		7CBBA07319BB7FDC00BBF025 /* OSObjectPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OSObjectPtr.h; sourceTree = "<group>"; };
 		7CD4C26F1E2C82B900929470 /* StringConcatenateNumbers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringConcatenateNumbers.h; sourceTree = "<group>"; };
-		7CDD7FF7186D291E007433CD /* IteratorAdaptors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IteratorAdaptors.h; sourceTree = "<group>"; };
 		7CDD7FF9186D2A54007433CD /* IteratorRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IteratorRange.h; sourceTree = "<group>"; };
 		7CEAE5AC1EA6E10F00DB6890 /* NotFound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NotFound.h; sourceTree = "<group>"; };
 		7CEF23EB23D1257900F8B904 /* PlatformCallingConventions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformCallingConventions.h; sourceTree = "<group>"; };
@@ -2459,7 +2457,6 @@
 				0F7EB85B1FA8FF4100F1ABCB /* IsoMalloc.h */,
 				0F7EB85C1FA8FF4200F1ABCB /* IsoMallocInlines.h */,
 				5295B00427920C54006D746A /* IterationStatus.h */,
-				7CDD7FF7186D291E007433CD /* IteratorAdaptors.h */,
 				7CDD7FF9186D2A54007433CD /* IteratorRange.h */,
 				7A05093E1FB9DCC500B33FB8 /* JSONValues.cpp */,
 				7A05093D1FB9DCC500B33FB8 /* JSONValues.h */,
@@ -3607,7 +3604,6 @@
 				DD3DC8BA27A4BF8E007E5B61 /* IsoMalloc.h in Headers */,
 				DD3DC89827A4BF8E007E5B61 /* IsoMallocInlines.h in Headers */,
 				DD3DC8B227A4BF8E007E5B61 /* IterationStatus.h in Headers */,
-				DD3DC90027A4BF8E007E5B61 /* IteratorAdaptors.h in Headers */,
 				DD3DC86B27A4BF8E007E5B61 /* IteratorRange.h in Headers */,
 				DD3DC92D27A4BF8E007E5B61 /* JSONValues.h in Headers */,
 				DD3DC86F27A4BF8E007E5B61 /* JSValueMalloc.h in Headers */,

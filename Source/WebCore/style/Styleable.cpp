@@ -60,6 +60,7 @@
 #include "ViewTransition.h"
 #include "WebAnimation.h"
 #include "WebAnimationUtilities.h"
+#include <ranges>
 #include <wtf/IndexedRange.h>
 
 namespace WebCore {
@@ -366,7 +367,7 @@ bool Styleable::animationListContainsNewlyValidAnimation(const Style::Animations
     if (!keyframeEffectStack.hasInvalidCSSAnimationNames())
         return false;
 
-    for (auto& currentAnimation : animations) {
+    for (auto& currentAnimation : animations.usedValues()) {
         if (auto keyframesName = currentAnimation.name().tryKeyframesName(); keyframesName && !keyframesName->name.isEmpty() && keyframeEffectStack.containsInvalidCSSAnimationName(keyframesName->name) && keyframesRuleExistsForAnimation(element, *keyframesName))
             return true;
     }
@@ -389,7 +390,7 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
 
     auto& currentAnimationList = newStyle.animations();
     auto& previousAnimationList = keyframeEffectStack.cssAnimationList();
-    if (!element.hasPendingKeyframesUpdate(pseudoElementIdentifier) && previousAnimationList && !previousAnimationList->isNone() && newStyle.hasAnimations() && *previousAnimationList == newStyle.animations() && !animationListContainsNewlyValidAnimation(newStyle.animations()))
+    if (!element.hasPendingKeyframesUpdate(pseudoElementIdentifier) && previousAnimationList && !previousAnimationList->isInitial() && newStyle.hasAnimations() && *previousAnimationList == newStyle.animations() && !animationListContainsNewlyValidAnimation(newStyle.animations()))
         return;
 
     CSSAnimationCollection newAnimations;
@@ -406,8 +407,8 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
     // twice. If a match is not found, a new animation is created. As a result, updating animation-name from ‘a’ to ‘a, a’ will
     // cause the existing animation for ‘a’ to become the second animation in the list and a new animation will be created for the
     // first item in the list.
-    if (!currentAnimationList.isNone()) {
-        for (auto& currentAnimation : makeReversedRange(currentAnimationList)) {
+    if (!currentAnimationList.isInitial()) {
+        for (auto& currentAnimation : std::ranges::reverse_view(currentAnimationList.usedValues())) {
             auto keyframesName = currentAnimation.name().tryKeyframesName();
             if (!keyframesName || keyframesName->name.isEmpty())
                 continue;
@@ -526,13 +527,13 @@ static bool transitionMatchesProperty(const Style::Transition& transition, const
 static void compileTransitionPropertiesInStyle(const RenderStyle& style, CSSPropertiesBitSet& transitionProperties, HashSet<AtomString>& transitionCustomProperties, bool& transitionPropertiesContainAll)
 {
     auto& transitions = style.transitions();
-    if (transitions.isNone()) {
+    if (transitions.isInitial()) {
         // If we don't have any transitions in the map, this means that the initial value "all 0s" was set.
         transitionPropertiesContainAll = true;
         return;
     }
 
-    for (const auto& transition : transitions) {
+    for (const auto& transition : transitions.usedValues()) {
         WTF::switchOn(transition.property(),
             [&](const CSS::Keyword::All&) {
                 transitionPropertiesContainAll = true;
@@ -581,8 +582,8 @@ static void updateCSSTransitionsForStyleableAndProperty(const Styleable& styleab
     auto hasMatchingTransitionProperty = false;
     auto matchingTransitionDuration = 0.0;
     std::optional<Style::Transition> matchingTransition;
-    if (auto& transitions = newStyle.transitions(); !transitions.isNone()) {
-        for (auto& transition : transitions) {
+    if (auto& transitions = newStyle.transitions(); !transitions.isInitial()) {
+        for (auto& transition : transitions.usedValues()) {
             if (transitionMatchesProperty(transition, property, newStyle)) {
                 hasMatchingTransitionProperty = true;
                 matchingTransition = transition;
@@ -759,42 +760,9 @@ void Styleable::updateCSSTransitions(const RenderStyle& currentStyle, const Rend
     if (currentStyle.display() == DisplayType::None)
         return;
 
-    auto transitionsDisplay = [](const RenderStyle& style) {
-        if (!style.hasTransitions())
-            return false;
-
-        for (auto& transition : style.transitions()) {
-            auto result = WTF::switchOn(transition.property(),
-                [&](const CSS::Keyword::All&) {
-                    if (transition.behavior() == TransitionBehavior::AllowDiscrete)
-                        return true;
-                    return false;
-                },
-                [&](const CSS::Keyword::None&) {
-                    return false;
-                },
-                [&](const Style::SingleTransitionProperty::UnknownProperty&) {
-                    return false;
-                },
-                [&](const Style::SingleTransitionProperty::SingleProperty& property) {
-                    if (std::holds_alternative<CSSPropertyID>(property.value)) {
-                        if (std::get<CSSPropertyID>(property.value) == CSSPropertyDisplay) {
-                            if (transition.behavior() == TransitionBehavior::AllowDiscrete)
-                                return true;
-                        }
-                    }
-                    return false;
-                }
-            );
-            if (result)
-                return true;
-        }
-        return false;
-    };
-
     // In case this element is newly getting a "display: none" we need to cancel all of its transitions and disregard new ones,
     // unless it will transition the "display" property itself.
-    if (currentStyle.hasTransitions() && currentStyle.display() != DisplayType::None && newStyle.display() == DisplayType::None && !transitionsDisplay(newStyle)) {
+    if (currentStyle.hasTransitions() && currentStyle.display() != DisplayType::None && newStyle.display() == DisplayType::None && !styleHasDisplayTransition(newStyle)) {
         if (hasRunningTransitions()) {
             auto runningTransitions = ensureRunningTransitionsByProperty();
             for (const auto& cssTransitionsByAnimatableCSSPropertyMapItem : runningTransitions)

@@ -88,10 +88,20 @@ void BaseAudioSharedUnit::forEachClient(NOESCAPE const Function<void(CoreAudioCa
 
 const static OSStatus lowPriorityError1 = 560557684;
 const static OSStatus lowPriorityError2 = 561017449;
+
+#if ASSERT_ENABLED
+static bool s_isBaseAudioSharedUnitAllowedToStart = false;
+
+void BaseAudioSharedUnit::allowStarting()
+{
+    s_isBaseAudioSharedUnitAllowedToStart = true;
+}
+#endif
+
 void BaseAudioSharedUnit::startProducingData()
 {
     ASSERT(isMainThread());
-    ASSERT(m_isAllowedToStart);
+    ASSERT(s_isBaseAudioSharedUnitAllowedToStart);
 
     if (m_suspended)
         resume();

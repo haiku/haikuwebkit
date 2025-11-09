@@ -917,7 +917,7 @@ void InlineContentBreaker::ContinuousContent::resetTrailingTrimmableContent()
 
 void InlineContentBreaker::ContinuousContent::append(const InlineItem& inlineItem, const RenderStyle& style, InlineLayoutUnit logicalWidth, InlineLayoutUnit textSpacingAdjustment)
 {
-    ASSERT(inlineItem.isAtomicInlineBox() || inlineItem.isInlineBoxStartOrEnd() || inlineItem.isOpaque());
+    ASSERT(inlineItem.isAtomicInlineBox() || inlineItem.isInlineBoxStartOrEnd() || inlineItem.isOpaque() || inlineItem.isBlock());
     m_isTextOnlyContent = false;
     m_hasTrailingWordSeparator = m_hasTrailingWordSeparator && !inlineItem.isAtomicInlineBox();
     appendToRunList(inlineItem, style, { }, logicalWidth, textSpacingAdjustment);

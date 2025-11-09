@@ -44,7 +44,7 @@
 #include <wtf/text/TextStream.h>
 #include <wtf/text/WTFString.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedEffectStack.h"
 #endif
 
@@ -65,7 +65,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(FilterAnimationValue);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(KeyframeValueList);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(GraphicsLayer);
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 String acceleratedEffectPropertyIDAsString(AcceleratedEffectProperty property)
 {
     switch (property) {
@@ -869,7 +869,7 @@ int GraphicsLayer::validateFilterOperations(const KeyframeValueList& valueList)
     return firstIndex;
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void GraphicsLayer::setAcceleratedEffectsAndBaseValues(AcceleratedEffects&& effects, AcceleratedEffectValues&& baseValues)
 {
     if (effects.isEmpty()) {

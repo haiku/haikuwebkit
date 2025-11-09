@@ -79,8 +79,8 @@ public:
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     // We need the template here so that the type of U is deduced at usage time rather than class time. U should always be T.
     template<typename U = T>
-    WTF_UNSAFE_BUFFER_USAGE typename std::enable_if<!std::is_same<void, U>::value, T>::type&
-    /* T& */ at(size_t index) const { return get()[index]; }
+        requires (!std::same_as<void, U>)
+    WTF_UNSAFE_BUFFER_USAGE U& at(size_t index) const { return get()[index]; }
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     CagedPtr(CagedPtr& other)

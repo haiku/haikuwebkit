@@ -63,6 +63,7 @@ public:
     unsigned hash() const { return intHash(m_packedBits); }
     static BytecodeIndex deletedValue() { return fromBits(invalidOffset - 1); }
     bool isHashTableDeletedValue() const { return *this == deletedValue(); }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     static BytecodeIndex fromBits(uint32_t bits);
     BytecodeIndex withCheckpoint(Checkpoint checkpoint) const { return BytecodeIndex(offset(), checkpoint); }
@@ -101,18 +102,9 @@ inline BytecodeIndex BytecodeIndex::fromBits(uint32_t bits)
     return result;
 }
 
-struct BytecodeIndexHash {
-    static unsigned hash(const BytecodeIndex& key) { return key.hash(); }
-    static bool equal(const BytecodeIndex& a, const BytecodeIndex& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
-
 } // namespace JSC
 
 namespace WTF {
-
-template<typename T> struct DefaultHash;
-template<> struct DefaultHash<JSC::BytecodeIndex> : JSC::BytecodeIndexHash { };
 
 template<typename T> struct HashTraits;
 template<> struct HashTraits<JSC::BytecodeIndex> : SimpleClassHashTraits<JSC::BytecodeIndex> {

@@ -31,6 +31,7 @@
 #import "TestInputDelegate.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
+#import "UIKitTestingHelpers.h"
 #import "UserInterfaceSwizzler.h"
 #import <WebKit/WKUIDelegatePrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
@@ -121,33 +122,29 @@ TEST(UIWKInteractionViewProtocol, SelectTextWithCharacterGranularity)
     EXPECT_WK_STREQ("Hello world", [webView stringByEvaluatingJavaScript:@"getSelection().toString()"]);
 }
 
-// FIXME: rdar://163667371 (REGRESSION(iOS26): TestWebKitAPI.UIWKInteractionViewProtocol.UpdateSelectionWithExtentPoint is a constant failure (301654))
-TEST(UIWKInteractionViewProtocol, DISABLED_UpdateSelectionWithExtentPoint)
+TEST(UIWKInteractionViewProtocol, UpdateSelectionWithExtentPoint)
 {
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 400, 400)]);
     [webView synchronouslyLoadHTMLString:@"<body contenteditable style='font-size: 20px;'>Hello world</body>"];
 
-    auto setMouseTouchGestureState = ^(UIGestureRecognizerState state) {
+    RetainPtr mouseTouchGesture = [&] -> UIGestureRecognizer * {
         for (UIGestureRecognizer *gestureRecognizer in [webView textInputContentView].gestureRecognizers) {
-            if ([gestureRecognizer.name isEqualToString:@"WKMouseTouch"]) {
-                gestureRecognizer.state = state;
-                break;
-            }
+            if ([gestureRecognizer.name isEqualToString:@"WKMouseTouch"])
+                return gestureRecognizer;
         }
-    };
+        return nil;
+    }();
 
     [webView evaluateJavaScript:@"getSelection().setPosition(document.body, 1)" completionHandler:nil];
-    setMouseTouchGestureState(UIGestureRecognizerStateBegan);
-    setMouseTouchGestureState(UIGestureRecognizerStateEnded);
+    [mouseTouchGesture _setStateForTesting:UIGestureRecognizerStateEnded];
     [webView updateSelectionWithExtentPoint:CGPointMake(5, 20)];
-    setMouseTouchGestureState(UIGestureRecognizerStatePossible);
+    [mouseTouchGesture _clearOverriddenStateForTesting];
     EXPECT_WK_STREQ("Hello world", [webView stringByEvaluatingJavaScript:@"getSelection().toString()"]);
 
     [webView evaluateJavaScript:@"getSelection().setPosition(document.body, 0)" completionHandler:nil];
-    setMouseTouchGestureState(UIGestureRecognizerStateBegan);
-    setMouseTouchGestureState(UIGestureRecognizerStateEnded);
+    [mouseTouchGesture _setStateForTesting:UIGestureRecognizerStateEnded];
     [webView updateSelectionWithExtentPoint:CGPointMake(300, 20)];
-    setMouseTouchGestureState(UIGestureRecognizerStatePossible);
+    [mouseTouchGesture _clearOverriddenStateForTesting];
     EXPECT_WK_STREQ("Hello world", [webView stringByEvaluatingJavaScript:@"getSelection().toString()"]);
 }
 

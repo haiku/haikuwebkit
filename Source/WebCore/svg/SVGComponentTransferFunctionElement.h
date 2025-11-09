@@ -56,7 +56,7 @@ struct SVGPropertyTraits<ComponentTransferType> {
         return emptyString();
     }
 
-    static ComponentTransferType fromString(const String& value)
+    static ComponentTransferType fromString(SVGElement&, const String& value)
     {
         static constexpr std::pair<PackedASCIILiteral<uint64_t>, ComponentTransferType> mappings[] = {
             { "discrete"_s, ComponentTransferType::FECOMPONENTTRANSFER_TYPE_DISCRETE },

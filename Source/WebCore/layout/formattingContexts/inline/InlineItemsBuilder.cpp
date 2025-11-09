@@ -28,7 +28,9 @@
 
 #include "FontCascade.h"
 #include "InlineSoftLineBreakItem.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
+#include "Settings.h"
 #include "StyleResolver.h"
 #include "TextBreakingPositionCache.h"
 #include "TextUtil.h"
@@ -325,7 +327,10 @@ void InlineItemsBuilder::collectInlineItems(InlineItemList& inlineItemList, Inli
                 handleInlineBoxEnd(layoutBox, inlineItemList);
             else if (layoutBox->isFloatingPositioned())
                 inlineItemList.append({ layoutBox, InlineItem::Type::Float });
-            else
+            else if (layoutBox->isBlockLevelBox()) {
+                ASSERT(m_root.rendererForIntegration()->settings().blocksInInlineLayoutEnabled());
+                inlineItemList.append({ layoutBox, InlineItem::Type::Block });
+            } else
                 ASSERT_NOT_REACHED();
 
             if (auto* nextSibling = layoutBox->nextSibling()) {

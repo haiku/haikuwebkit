@@ -570,6 +570,7 @@ struct InteractionInformationRequest;
 struct JSHandleInfo;
 struct KeyEventInterpretationContext;
 struct LoadParameters;
+struct MainFrameData;
 struct ModelIdentifier;
 struct NavigationActionData;
 struct NetworkResourceLoadIdentifierType;
@@ -1267,7 +1268,8 @@ public:
     void setDataDetectionResult(DataDetectionResult&&);
     void handleClickForDataDetectionResult(const WebCore::DataDetectorElementInfo&, const WebCore::IntPoint&);
 #endif
-    void didCommitLayerTree(const RemoteLayerTreeTransaction&);
+    void didCommitLayerTree(const RemoteLayerTreeTransaction&, const std::optional<MainFrameData>&);
+    void didCommitMainFrameData(const MainFrameData&);
     void layerTreeCommitComplete();
 
     bool updateLayoutViewportParameters(const RemoteLayerTreeTransaction&);

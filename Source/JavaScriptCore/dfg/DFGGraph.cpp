@@ -1900,16 +1900,16 @@ MethodOfGettingAValueProfile Graph::methodOfGettingAValueProfileFor(Node* curren
     return { };
 }
 
-bool Graph::getRegExpPrototypeProperty(JSObject* regExpPrototype, Structure* regExpPrototypeStructure, UniquedStringImpl* uid, JSValue& returnJSValue)
+bool Graph::getPrototypeProperty(JSObject* prototype, Structure* prototypeStructure, UniquedStringImpl* uid, JSValue& returnJSValue)
 {
     if (m_plan.isUnlinked())
         return false;
 
-    PropertyOffset offset = regExpPrototypeStructure->getConcurrently(uid);
+    PropertyOffset offset = prototypeStructure->getConcurrently(uid);
     if (!isValidOffset(offset))
         return false;
 
-    JSValue value = tryGetConstantProperty(regExpPrototype, regExpPrototypeStructure, offset);
+    JSValue value = tryGetConstantProperty(prototype, prototypeStructure, offset);
     if (!value)
         return false;
 

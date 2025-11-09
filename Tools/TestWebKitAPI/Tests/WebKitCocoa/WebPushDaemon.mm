@@ -317,7 +317,7 @@ public:
     Vector<uint8_t> takeBytes() { return std::exchange(m_bytes, { }); }
     template<typename T> TestEncoder& operator<<(T&& t)
     {
-        TestArgumentCoder<std::remove_cvref_t<T>, void>::encode(*this, std::forward<T>(t));
+        TestArgumentCoder<std::remove_cvref_t<T>>::encode(*this, std::forward<T>(t));
         return *this;
     }
     template<typename T, size_t Extent> void encodeSpan(std::span<T, Extent> span)
@@ -347,7 +347,7 @@ public:
         RELEASE_ASSERT(decode<IPC::MessageName>() == T::asyncMessageReplyName());
         decode<uint64_t>();
     }
-    template<typename T> std::optional<T> decode() { return TestArgumentCoder<std::remove_cvref_t<T>, void>::decode(*this); }
+    template<typename T> std::optional<T> decode() { return TestArgumentCoder<std::remove_cvref_t<T>>::decode(*this); }
     template<typename T> std::optional<T> decodeInteger()
     {
         while (m_bufferPosition != m_buffer.end() && bufferOffset() % alignof(T))

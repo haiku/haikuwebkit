@@ -113,6 +113,7 @@ public:
     constexpr explicit operator bool() const { return isSet(); }
 
     constexpr bool isHashTableDeletedValue() const { return m_index == deleted(); }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     constexpr bool isGPR() const
     {
@@ -189,12 +190,6 @@ private:
 };
 static_assert(sizeof(Reg) == 1);
 
-struct RegHash {
-    static unsigned hash(const Reg& key) { return key.hash(); }
-    static bool equal(const Reg& a, const Reg& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
-
 ALWAYS_INLINE constexpr Width conservativeWidthWithoutVectors(const Reg reg)
 {
     return reg.isFPR() ? Width64 : widthForBytes(sizeof(CPURegister));
@@ -218,9 +213,6 @@ ALWAYS_INLINE constexpr unsigned conservativeRegisterBytesWithoutVectors(const R
 } // namespace JSC
 
 namespace WTF {
-
-template<typename T> struct DefaultHash;
-template<> struct DefaultHash<JSC::Reg> : JSC::RegHash { };
 
 template<typename T> struct HashTraits;
 template<> struct HashTraits<JSC::Reg> : SimpleClassHashTraits<JSC::Reg> {

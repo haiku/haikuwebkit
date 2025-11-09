@@ -47,6 +47,9 @@ dictionary TextExtractionTestOptions {
     boolean clipToBounds = false;
     boolean includeRects = false;
     boolean includeURLs = false;
+    boolean includeNodeIdentifiers = false;
+    boolean includeEventListeners = false;
+    boolean includeAccessibilityAttributes = false;
     boolean mergeParagraphs = false;
     boolean skipNearlyTransparentContent = false;
 };

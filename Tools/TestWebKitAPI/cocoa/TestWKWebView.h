@@ -33,6 +33,7 @@
 #endif
 
 @class _WKFrameTreeNode;
+@class _WKJSHandle;
 @class _WKProcessPoolConfiguration;
 
 #if PLATFORM(IOS_FAMILY)
@@ -152,6 +153,7 @@ class Color;
 - (unsigned)waitUntilClientWidthIs:(unsigned)expectedClientWidth;
 - (CGRect)elementRectFromSelector:(NSString *)selector;
 - (CGPoint)elementMidpointFromSelector:(NSString *)selector;
+- (_WKJSHandle *)querySelector:(NSString *)selector frame:(WKFrameInfo *)frame world:(WKContentWorld *)world;
 @end
 
 #endif // __cplusplus

@@ -58,7 +58,7 @@ struct SVGPropertyTraits<SVGSpreadMethodType> {
         return emptyString();
     }
 
-    static SVGSpreadMethodType fromString(const String& value)
+    static SVGSpreadMethodType fromString(SVGElement&, const String& value)
     {
         if (value == "pad"_s)
             return SVGSpreadMethodPad;

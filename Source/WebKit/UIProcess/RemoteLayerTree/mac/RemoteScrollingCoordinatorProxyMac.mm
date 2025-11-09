@@ -129,7 +129,7 @@ void RemoteScrollingCoordinatorProxyMac::setRubberBandingInProgressForNode(Scrol
 {
     if (isRubberBanding) {
         if (scrollingTree().scrollingPerformanceTestingEnabled()) {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
             m_eventDispatcher->didStartRubberbanding();
 #endif
             protectedWebPageProxy()->logScrollingEvent(static_cast<uint32_t>(PerformanceLoggingClient::ScrollingEvent::StartedRubberbanding), MonotonicTime::now(), 0);
@@ -289,7 +289,7 @@ void RemoteScrollingCoordinatorProxyMac::windowScreenWillChange()
 void RemoteScrollingCoordinatorProxyMac::willCommitLayerAndScrollingTrees()
 {
     scrollingTree().lockLayersForHitTesting();
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     m_eventDispatcher->lockForAnimationChanges();
 #endif
 }
@@ -297,7 +297,7 @@ void RemoteScrollingCoordinatorProxyMac::willCommitLayerAndScrollingTrees()
 void RemoteScrollingCoordinatorProxyMac::didCommitLayerAndScrollingTrees()
 {
     scrollingTree().unlockLayersForHitTesting();
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     m_eventDispatcher->unlockForAnimationChanges();
 #endif
 }
@@ -308,7 +308,7 @@ void RemoteScrollingCoordinatorProxyMac::applyScrollingTreeLayerPositionsAfterCo
     m_eventDispatcher->renderingUpdateComplete();
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void RemoteScrollingCoordinatorProxyMac::animationsWereAddedToNode(RemoteLayerTreeNode& node)
 {
     m_eventDispatcher->animationsWereAddedToNode(node);

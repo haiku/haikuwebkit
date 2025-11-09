@@ -104,11 +104,11 @@ ExceptionOr<void> Attr::setValue(const AtomString& value)
 {
     if (RefPtr element = m_element.get()) {
         auto verifiedValue = value;
-        if (document().requiresTrustedTypes()) {
+        if (document().contextDocument().requiresTrustedTypes()) {
             auto type = trustedTypeForAttribute(element->nodeName(), qualifiedName().localName(),
                 element->namespaceURI(), qualifiedName().namespaceURI());
             if (!type.attributeType.isNull()) {
-                auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value,
+                auto compliantValue = trustedTypesCompliantAttributeValue(document().contextDocument(), type.attributeType, value,
                     type.sink);
                 if (compliantValue.hasException())
                     return compliantValue.releaseException();

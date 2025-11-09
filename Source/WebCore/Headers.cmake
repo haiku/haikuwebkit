@@ -1690,6 +1690,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     html/HTMLQuoteElement.h
     html/HTMLScriptElement.h
     html/HTMLSelectElement.h
+    html/HTMLSelectedContentElement.h
     html/HTMLStyleElement.h
     html/HTMLSummaryElement.h
     html/HTMLTableCaptionElement.h
@@ -2192,10 +2193,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/ViewportConfiguration.h
     page/VisitedLinkStore.h
     page/WebCoreKeyboardUIMode.h
+    page/WebKitBuffer.h
     page/WebKitJSHandle.h
     page/WebKitNamespace.h
     page/WebKitSerializedNode.h
-    page/WebKitStringMatcher.h
     page/WheelEventDeltaFilter.h
     page/WheelEventTestMonitor.h
     page/WindowFeatures.h
@@ -3259,6 +3260,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/animations/StyleSingleAnimationTimeline.h
 
     style/values/backgrounds/StyleBackgroundLayer.h
+    style/values/backgrounds/StyleBackgroundLayers.h
     style/values/backgrounds/StyleBackgroundSize.h
     style/values/backgrounds/StyleBorderImage.h
     style/values/backgrounds/StyleBorderImageOutset.h
@@ -3370,6 +3372,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/masking/StyleMaskBorderSource.h
     style/values/masking/StyleMaskBorderWidth.h
     style/values/masking/StyleMaskLayer.h
+    style/values/masking/StyleMaskLayers.h
 
     style/values/math/StyleMathDepth.h
 
@@ -3403,6 +3406,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/position/StyleInset.h
 
     style/values/primitives/StyleCoordinatedValueList.h
+    style/values/primitives/StyleCoordinatedValueListValue.h
     style/values/primitives/StyleLengthWrapper+Blending.h
     style/values/primitives/StyleLengthWrapper.h
     style/values/primitives/StyleLengthWrapperData.h

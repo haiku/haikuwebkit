@@ -36,6 +36,8 @@
 #include <WebCore/DDTextureDescriptor.h>
 #include <WebCore/DDUpdateMeshDescriptor.h>
 #include <WebCore/DDUpdateTextureDescriptor.h>
+#include <WebCore/StageModeOperations.h>
+#include <WebCore/TransformationMatrix.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit::DDModel {
@@ -43,7 +45,32 @@ namespace WebKit::DDModel {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteDDMeshProxy);
 
 #if ENABLE(GPU_PROCESS_MODEL)
-static std::pair<simd_float4, simd_float4> computeCenterAndExtents(const Vector<KeyValuePair<int32_t, WebCore::DDModel::DDMeshPart>>& parts, const Vector<WebCore::DDModel::DDFloat4x4>& instanceTransforms)
+constexpr float tolerance = 1e-5f;
+static bool areSameSignAndAlmostEqual(float a, float b)
+{
+    if (a * b < 0)
+        return false;
+
+    float absA = std::abs(a);
+    float absB = std::abs(b);
+    return std::abs(absA - absB) < tolerance * std::min(absA, absB);
+}
+
+static WebCore::DDModel::DDFloat4x4 makeTransformMatrix(
+    const simd_float3& translation,
+    const simd_float3& scale,
+    const WebCore::DDModel::DDFloat3x3& rotation)
+{
+    WebCore::DDModel::DDFloat4x4 result;
+    result.column0 = simd_make_float4(rotation.column0 * scale[0], 0.f);
+    result.column1 = simd_make_float4(rotation.column1 * scale[1], 0.f);
+    result.column2 = simd_make_float4(rotation.column2 * scale[2], 0.f);
+    result.column3 = simd_make_float4(translation, 1.f);
+
+    return result;
+}
+
+static std::pair<simd_float4, simd_float4> computeMinAndMaxCorners(const Vector<KeyValuePair<int32_t, WebCore::DDModel::DDMeshPart>>& parts, const Vector<WebCore::DDModel::DDFloat4x4>& instanceTransforms)
 {
     simd_float3 minCorner = simd_make_float3(FLT_MAX, FLT_MAX, FLT_MAX);
     simd_float3 maxCorner = simd_make_float3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -52,11 +79,11 @@ static std::pair<simd_float4, simd_float4> computeCenterAndExtents(const Vector<
         maxCorner = simd_max(part.value.boundsMax, maxCorner);
     }
 
-    simd_float3 simdCenter = 0.5f * (minCorner + maxCorner);
-    simd_float3 simdExtent = maxCorner - simdCenter;
-
     if (!instanceTransforms.size())
-        return std::make_pair(simd_make_float4(simdCenter), simd_make_float4(2.f * simdExtent));
+        return std::make_pair(simd_make_float4(minCorner), simd_make_float4(maxCorner));
+
+    simd_float3 simdCenter = .5f * (minCorner + maxCorner);
+    simd_float3 simdExtent = 2.f * (maxCorner - simdCenter);
 
     simd_float4 simdCenter4 = simd::make_float4(simdCenter.x, simdCenter.y, simdCenter.z, 1.f);
     simd_float4 simdExtent4 = simd::make_float4(simdExtent.x, simdExtent.y, simdExtent.z, 0.f);
@@ -72,10 +99,7 @@ static std::pair<simd_float4, simd_float4> computeCenterAndExtents(const Vector<
         maxCorner4 = simd_max(transformedCenter + transformedExtent, maxCorner4);
     }
 
-    simdCenter4 = 0.5f * (minCorner4 + maxCorner4);
-    simdExtent4 = maxCorner4 - simdCenter4;
-
-    return std::make_pair(simdCenter4, 2.f * simdExtent4.x);
+    return std::make_pair(minCorner4, maxCorner4);
 }
 #endif
 
@@ -83,6 +107,10 @@ RemoteDDMeshProxy::RemoteDDMeshProxy(Ref<RemoteGPUProxy>&& root, ConvertToBackin
     : m_backing(identifier)
     , m_convertToBackingContext(convertToBackingContext)
     , m_root(WTFMove(root))
+#if PLATFORM(COCOA)
+    , m_minCorner(simd_make_float4(FLT_MAX, FLT_MAX, FLT_MAX, 1.f))
+    , m_maxCorner(simd_make_float4(-FLT_MAX, -FLT_MAX, -FLT_MAX, 1.f))
+#endif
 {
 }
 
@@ -104,14 +132,33 @@ void RemoteDDMeshProxy::addMesh(const WebCore::DDModel::DDMeshDescriptor& descri
 #endif
 }
 
+#if ENABLE(GPU_PROCESS_MODEL)
+static WebCore::DDModel::DDFloat4x4 buildTranslation(simd_float4 translation)
+{
+    WebCore::DDModel::DDFloat4x4 result = matrix_identity_float4x4;
+    result.column3 = translation;
+    return result;
+}
+
+static simd_float4x4 buildTranslation(float x, float y, float z)
+{
+    return buildTranslation(simd_make_float4(x, y, z, 1.f));
+}
+#endif
+
 void RemoteDDMeshProxy::update(const WebCore::DDModel::DDUpdateMeshDescriptor& descriptor)
 {
 #if ENABLE(GPU_PROCESS_MODEL)
-    auto [center, extents] = computeCenterAndExtents(descriptor.parts, descriptor.instanceTransforms4x4);
-    m_center = center;
-    m_extents = extents;
+    auto [minCorner, maxCorner] = computeMinAndMaxCorners(descriptor.parts, descriptor.instanceTransforms4x4);
+    m_minCorner = simd_min(minCorner, m_minCorner);
+    m_maxCorner = simd_max(maxCorner, m_maxCorner);
+
+    auto [center, extents] = getCenterAndExtents();
+    setCameraDistance(std::max(extents.x, extents.y) * .5f);
+
     auto sendResult = send(Messages::RemoteDDMesh::Update(descriptor));
     UNUSED_PARAM(sendResult);
+    setEntityTransform(buildTranslation(-center.x, -center.y, -center.z));
 #else
     UNUSED_PARAM(descriptor);
 #endif
@@ -178,9 +225,112 @@ void RemoteDDMeshProxy::updateMaterial(const WebCore::DDModel::DDUpdateMaterialD
 #if PLATFORM(COCOA)
 std::pair<simd_float4, simd_float4> RemoteDDMeshProxy::getCenterAndExtents() const
 {
-    return std::make_pair(m_center, m_extents);
+    auto center = .5f * (m_minCorner + m_maxCorner);
+    auto extents = 2.f * (m_maxCorner - center);
+    return std::make_pair(center, extents);
 }
 #endif
+
+void RemoteDDMeshProxy::setEntityTransform(const WebCore::DDModel::DDFloat4x4& transform)
+{
+    m_transform = transform;
+#if ENABLE(GPU_PROCESS_MODEL)
+    auto sendResult = send(Messages::RemoteDDMesh::UpdateTransform(transform));
+    UNUSED_PARAM(sendResult);
+#endif
+}
+
+std::optional<WebCore::DDModel::DDFloat4x4> RemoteDDMeshProxy::entityTransform() const
+{
+    return m_transform;
+}
+
+void RemoteDDMeshProxy::setCameraDistance(float distance)
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    if (areSameSignAndAlmostEqual(distance, m_cameraDistance))
+        return;
+
+    auto sendResult = send(Messages::RemoteDDMesh::SetCameraDistance(distance));
+    UNUSED_PARAM(sendResult);
+    m_cameraDistance = distance;
+#else
+    UNUSED_PARAM(distance);
+#endif
+}
+
+bool RemoteDDMeshProxy::supportsTransform(const WebCore::TransformationMatrix& transformationMatrix) const
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    const WebCore::DDModel::DDFloat4x4 matrix = static_cast<simd_float4x4>(transformationMatrix);
+
+    WebCore::DDModel::DDFloat3x3 upperLeft;
+    upperLeft.column0 = simd_make_float3(matrix.column0);
+    upperLeft.column1 = simd_make_float3(matrix.column1);
+    upperLeft.column2 = simd_make_float3(matrix.column2);
+
+    simd_float3 scale = simd_make_float3(simd_length(upperLeft.column0), simd_length(upperLeft.column1), simd_length(upperLeft.column2));
+
+    if (!areSameSignAndAlmostEqual(simd_reduce_max(scale), simd_reduce_min(scale)))
+        return false;
+
+    WebCore::DDModel::DDFloat3x3 rotation;
+    rotation.column0 = upperLeft.column0 / scale[0];
+    rotation.column1 = upperLeft.column1 / scale[1];
+    rotation.column2 = upperLeft.column2 / scale[2];
+
+    simd_float3 translation = simd_make_float3(matrix.column3);
+    WebCore::DDModel::DDFloat4x4 noShearMatrix = makeTransformMatrix(translation, scale, rotation);
+    if (!simd_almost_equal_elements(matrix, noShearMatrix, tolerance))
+        return false;
+
+    return true;
+#else
+    UNUSED_PARAM(transformationMatrix);
+    return false;
+#endif
+}
+
+void RemoteDDMeshProxy::setScale(float scale)
+{
+    if (!m_transform)
+        return;
+#if ENABLE(GPU_PROCESS_MODEL)
+    WebCore::DDModel::DDFloat4x4 transform = *m_transform;
+    transform.column0 = simd_normalize(transform.column0) * scale;
+    transform.column1 = simd_normalize(transform.column1) * scale;
+    transform.column2 = simd_normalize(transform.column2) * scale;
+
+    if (!simd_almost_equal_elements(transform, *m_transform, tolerance))
+        setEntityTransform(transform);
+#else
+    UNUSED_PARAM(scale);
+#endif
+}
+
+void RemoteDDMeshProxy::setStageMode(WebCore::StageModeOperation stageMode)
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    if (m_stageMode == stageMode || stageMode == WebCore::StageModeOperation::None)
+        return;
+
+    m_stageMode = stageMode;
+    auto [center, extents] = getCenterAndExtents();
+    WebCore::DDModel::DDFloat4x4 result = matrix_identity_float4x4;
+    if (auto existingTransform = entityTransform())
+        result = *existingTransform;
+
+    float scale = m_cameraDistance / (simd_length(extents) * .5f);
+    result.column0 = scale * simd_normalize(result.column0);
+    result.column1 = scale * simd_normalize(result.column1);
+    result.column2 = scale * simd_normalize(result.column2);
+    result.column3 = simd_make_float4(-scale * center.xyz, 1.f);
+
+    setEntityTransform(result);
+#else
+    UNUSED_PARAM(stageMode);
+#endif
+}
 
 }
 

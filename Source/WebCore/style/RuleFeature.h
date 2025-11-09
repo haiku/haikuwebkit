@@ -113,16 +113,10 @@ struct RuleFeatureDeduplicationKey {
 
     unsigned hash() const;
     bool operator==(const RuleFeatureDeduplicationKey&) const;
-
-    struct Hash {
-        static unsigned hash(const RuleFeatureDeduplicationKey& key) { return key.hash(); }
-        static bool equal(const RuleFeatureDeduplicationKey& a, const RuleFeatureDeduplicationKey& b) { return a == b; }
-        static constexpr bool safeToCompareToEmptyOrDeleted = false;
-    };
 };
 
 template<typename FeatureType>
-using RuleFeatureDeduplicationSetForFeatureType = HashSet<GenericHashKey<RuleFeatureDeduplicationKey<FeatureType>, typename RuleFeatureDeduplicationKey<FeatureType>::Hash>>;
+using RuleFeatureDeduplicationSetForFeatureType = HashSet<GenericHashKey<RuleFeatureDeduplicationKey<FeatureType>>>;
 using RuleFeatureDeduplicationSet = RuleFeatureDeduplicationSetForFeatureType<RuleFeature>;
 using RuleFeatureWithInvalidationSelectorDeduplicationSet = RuleFeatureDeduplicationSetForFeatureType<RuleFeatureWithInvalidationSelector>;
 

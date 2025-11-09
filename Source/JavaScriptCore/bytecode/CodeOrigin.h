@@ -144,7 +144,9 @@ public:
         return m_bytecodeIndex.isHashTableDeletedValue() && !!m_inlineCallFrame;
 #endif
     }
-    
+
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
+
     // The inline depth is the depth of the inline stack, so 1 = not inlined,
     // 2 = inlined one deep, etc.
     unsigned inlineDepth() const;
@@ -286,12 +288,6 @@ inline bool CodeOrigin::operator==(const CodeOrigin& other) const
         && inlineCallFrame() == other.inlineCallFrame();
 }
 
-struct CodeOriginHash {
-    static unsigned hash(const CodeOrigin& key) { return key.hash(); }
-    static bool equal(const CodeOrigin& a, const CodeOrigin& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
-
 struct CodeOriginApproximateHash {
     static unsigned hash(const CodeOrigin& key) { return key.approximateHash(); }
     static bool equal(const CodeOrigin& a, const CodeOrigin& b) { return a.isApproximatelyEqualTo(b); }
@@ -301,9 +297,6 @@ struct CodeOriginApproximateHash {
 } // namespace JSC
 
 namespace WTF {
-
-template<typename T> struct DefaultHash;
-template<> struct DefaultHash<JSC::CodeOrigin> : JSC::CodeOriginHash { };
 
 template<typename T> struct HashTraits;
 template<> struct HashTraits<JSC::CodeOrigin> : SimpleClassHashTraits<JSC::CodeOrigin> {

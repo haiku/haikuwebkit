@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include <wtf/ObjectIdentifier.h>
 
@@ -36,4 +36,4 @@ using TimelineIdentifier = ObjectIdentifier<TimelineIdentifierType>;
 
 }
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

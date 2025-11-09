@@ -42,6 +42,8 @@ public:
     // FIXME: Remove.
     static RenderTreeBuilder* current() { return s_current; }
 
+    const RenderView& view() const { return m_view; }
+
     static bool isRebuildRootForChildren(const RenderElement&);
 
     void attach(RenderElement& parent, RenderPtr<RenderObject>, RenderObject* beforeChild = nullptr);

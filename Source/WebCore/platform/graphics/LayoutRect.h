@@ -221,7 +221,7 @@ public:
     friend bool operator==(const LayoutRect&, const LayoutRect&) = default;
 
 private:
-    friend struct IPC::ArgumentCoder<WebCore::LayoutRect, void>;
+    friend struct IPC::ArgumentCoder<WebCore::LayoutRect>;
 
     LayoutPoint m_location;
     LayoutSize m_size;

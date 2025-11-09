@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteMonotonicTimeline.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <wtf/MonotonicTime.h>
 #import <wtf/TZoneMallocInlines.h>
@@ -55,5 +55,5 @@ void RemoteMonotonicTimeline::updateCurrentTime(MonotonicTime monotonicTime)
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)
 

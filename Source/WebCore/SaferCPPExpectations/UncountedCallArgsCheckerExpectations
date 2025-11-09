@@ -883,7 +883,6 @@ style/StyleUpdate.cpp
 style/Styleable.cpp
 style/Styleable.h
 style/UserAgentStyle.cpp
-style/values/backgrounds/StyleFillLayers.h
 style/values/primitives/StyleLengthWrapperData.cpp
 style/values/transforms/StyleRotate.cpp
 style/values/transforms/StyleScale.cpp

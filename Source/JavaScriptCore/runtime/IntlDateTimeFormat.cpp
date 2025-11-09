@@ -121,7 +121,7 @@ static String availableNamedTimeZoneIdentifier(StringView timeZoneName)
             break;
 
         StringView ianaTimeZoneView(std::span(ianaTimeZone, ianaTimeZoneLength));
-        if (!equalIgnoringASCIICase(timeZoneName, ianaTimeZoneView))
+        if (!equalIgnoringASCIICase(timeZoneName, ianaTimeZoneView) || isNonIANA(ianaTimeZoneView))
             continue;
         return ianaTimeZoneView.toString();
     } while (true);

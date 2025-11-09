@@ -29,8 +29,10 @@
 #import "Test.h"
 #import "TestWKWebView.h"
 #import "Utilities.h"
+#import <WebKit/WKContentWorldPrivate.h>
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
+#import <WebKit/_WKContentWorldConfiguration.h>
 #import <WebKit/_WKTextExtraction.h>
 
 @interface WKWebView (TextExtractionTests)
@@ -221,6 +223,38 @@ TEST(TextExtractionTests, InteractionDebugDescription)
         EXPECT_WK_STREQ(expectedString.get(), description);
         EXPECT_NULL(error);
     }
+}
+
+TEST(TextExtractionTests, TargetNode)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:^{
+        RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+        [[configuration preferences] _setTextExtractionEnabled:YES];
+        return configuration.autorelease();
+    }()]);
+
+    [webView synchronouslyLoadTestPageNamed:@"debug-text-extraction"];
+    [webView evaluateJavaScript:@"getSelection().selectAllChildren(document.querySelector('h3[aria-label=\"Heading\"]'))" completionHandler:nil];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:^{
+        RetainPtr configuration = adoptNS([_WKContentWorldConfiguration new]);
+        [configuration setAllowJSHandleCreation:YES];
+        return configuration.autorelease();
+    }()];
+
+    RetainPtr debugText = [webView synchronouslyGetDebugText:^{
+        RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+        [configuration setTargetNode:[webView querySelector:@"div[contenteditable]" frame:nil world:world.get()]];
+        return configuration.autorelease();
+    }()];
+
+    EXPECT_TRUE([debugText containsString:@"Compose a new message"]);
+    EXPECT_TRUE([debugText containsString:@"Heading"]);
+    EXPECT_TRUE([debugText containsString:@"Subject"]);
+    EXPECT_TRUE([debugText containsString:@"The quick brown fox jumped over the lazy dog"]);
+    EXPECT_FALSE([debugText containsString:@"select,"]);
+    EXPECT_FALSE([debugText containsString:@"Click Me"]);
+    EXPECT_FALSE([debugText containsString:@"Recipient address"]);
 }
 
 } // namespace TestWebKitAPI

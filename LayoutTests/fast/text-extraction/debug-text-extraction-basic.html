@@ -131,7 +131,10 @@ addEventListener("load", async () => {
     document.body.textContent = await UIHelper.requestDebugText({
         normalize: true,
         includeRects: true,
-        includeURLs: true
+        includeURLs: true,
+        includeNodeIdentifiers: true,
+        includeEventListeners: true,
+        includeAccessibilityAttributes: true,
     });
 
     testRunner.notifyDone();

@@ -83,6 +83,7 @@ struct WKAppPrivacyReportTestingData {
 - (BOOL)_beginBackSwipeForTesting;
 - (BOOL)_completeBackSwipeForTesting;
 - (void)_resetNavigationGestureStateForTesting;
+@property (nonatomic, readonly) BOOL _didCallEndSwipeGestureForTesting;
 
 - (void)_setShareSheetCompletesImmediatelyWithResolutionForTesting:(BOOL)resolved;
 

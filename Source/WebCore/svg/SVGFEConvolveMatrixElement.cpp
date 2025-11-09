@@ -83,7 +83,7 @@ void SVGFEConvolveMatrixElement::attributeChanged(const QualifiedName& name, con
         break;
     }
     case AttributeNames::edgeModeAttr: {
-        EdgeModeType propertyValue = SVGPropertyTraits<EdgeModeType>::fromString(newValue);
+        EdgeModeType propertyValue = SVGPropertyTraits<EdgeModeType>::fromString(*this, newValue);
         if (propertyValue != EdgeModeType::Unknown)
             Ref { m_edgeMode }->setBaseValInternal<EdgeModeType>(propertyValue);
         else

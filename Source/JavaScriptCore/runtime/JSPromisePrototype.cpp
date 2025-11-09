@@ -73,7 +73,7 @@ void JSPromisePrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
 {
     Base::finishCreation(vm);
     putDirectWithoutTransition(vm, vm.propertyNames->builtinNames().thenPublicName(), globalObject->promiseProtoThenFunction(), static_cast<unsigned>(PropertyAttribute::DontEnum));
-    JSC_NATIVE_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->catchKeyword, promiseProtoFuncCatch, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public);
+    JSC_NATIVE_INTRINSIC_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->catchKeyword, promiseProtoFuncCatch, static_cast<unsigned>(PropertyAttribute::DontEnum), 1, ImplementationVisibility::Public, PromisePrototypeCatchIntrinsic);
     JSC_TO_STRING_TAG_WITHOUT_TRANSITION();
 }
 

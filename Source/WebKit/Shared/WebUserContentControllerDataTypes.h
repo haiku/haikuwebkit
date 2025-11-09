@@ -58,10 +58,10 @@ struct WebScriptMessageHandlerData {
     String name;
 };
 
-struct WebStringMatcherData {
-    WebStringMatcherData(const RefPtr<WebCore::SharedMemory>&, ContentWorldData&&, const String&);
-    WebStringMatcherData(std::optional<WebCore::SharedMemoryHandle>&&, ContentWorldData&&, String&&);
-    ~WebStringMatcherData();
+struct WebJSBufferData {
+    WebJSBufferData(const RefPtr<WebCore::SharedMemory>&, ContentWorldData&&, const String&);
+    WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&&, ContentWorldData&&, String&&);
+    ~WebJSBufferData();
     std::optional<WebCore::SharedMemoryHandle> sharedMemoryHandle() const;
 
     RefPtr<WebCore::SharedMemory> data;

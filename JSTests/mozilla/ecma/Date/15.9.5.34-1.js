@@ -43,7 +43,10 @@
 
     writeHeaderToLog( SECTION + " Date.prototype.setMonth(mon [, date ] )");
 
-    var now =  (new Date()).valueOf();
+    // get the current time
+    // This test does not work well with DST, so using a fixed date. See https://github.com/WebKit/WebKit/pull/53239
+    // var now = (new Date()).valueOf();
+    var now = 1764524660000;
 
     getFunctionCases();
     getTestCases();

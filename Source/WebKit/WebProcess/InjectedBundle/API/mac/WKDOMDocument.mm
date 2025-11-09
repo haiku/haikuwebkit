@@ -45,7 +45,7 @@
 - (instancetype)initWithDocument:(std::reference_wrapper<WebCore::Document>)document
 {
     if (self = [super init])
-        _token = document.get().createParserYieldToken();
+        _token = Ref { document.get() }->createParserYieldToken();
     return self;
 }
 

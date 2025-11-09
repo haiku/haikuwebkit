@@ -22,6 +22,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/chrome-bug-1371700.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/chrome-bug-1474157.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/chrome-bug-333487749.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/chrome-bug-452651700.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/firefox-bug-1688293.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/firefox-bug-1703592.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/crashtests/firefox-bug-1719483.html

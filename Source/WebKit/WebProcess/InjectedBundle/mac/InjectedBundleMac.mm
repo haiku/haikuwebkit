@@ -95,7 +95,7 @@ bool InjectedBundle::decodeBundleParameters(API::Data* bundleParameterDataPtr)
 
     RetainPtr<NSDictionary> dictionary;
     @try {
-        dictionary = [unarchiver.get() decodeObjectOfClasses:classesForCoder() forKey:@"parameters"];
+        dictionary = [unarchiver.get() decodeObjectOfClasses:classesForCoder().get() forKey:@"parameters"];
         if (![dictionary isKindOfClass:[NSDictionary class]]) {
             WTFLogAlways("InjectedBundle::decodeBundleParameters failed - Resulting object was not an NSDictionary.\n");
             return false;
@@ -148,11 +148,11 @@ bool InjectedBundle::initialize(const WebProcessCreationParameters& parameters, 
             NSLog(@"InjectedBundle::load failed - loadAndReturnError failed, error: %@", error);
             return false;
         }
-        initializeFunction = std::bit_cast<WKBundleInitializeFunctionPtr>(CFBundleGetFunctionPointerForName([m_platformBundle _cfBundle], CFSTR("WKBundleInitialize")));
+        initializeFunction = std::bit_cast<WKBundleInitializeFunctionPtr>(CFBundleGetFunctionPointerForName(RetainPtr { [m_platformBundle _cfBundle] }.get(), CFSTR("WKBundleInitialize")));
     }
 
     if (!additionalClassesForParameterCoderFunction)
-        additionalClassesForParameterCoderFunction = std::bit_cast<WKBundleAdditionalClassesForParameterCoderFunctionPtr>(CFBundleGetFunctionPointerForName([m_platformBundle _cfBundle], CFSTR("WKBundleAdditionalClassesForParameterCoder")));
+        additionalClassesForParameterCoderFunction = std::bit_cast<WKBundleAdditionalClassesForParameterCoderFunctionPtr>(CFBundleGetFunctionPointerForName(RetainPtr { [m_platformBundle _cfBundle] }.get(), CFSTR("WKBundleAdditionalClassesForParameterCoder")));
 
     // Update list of valid classes for the parameter coder
     if (additionalClassesForParameterCoderFunction)
@@ -241,12 +241,12 @@ void InjectedBundle::extendClassesForParameterCoder(API::Array& classes)
     m_classesForCoder = mutableSet;
 }
 
-NSSet* InjectedBundle::classesForCoder()
+RetainPtr<NSSet> InjectedBundle::classesForCoder()
 {
     if (!m_classesForCoder)
         m_classesForCoder = [NSSet setWithObjects:[NSArray class], [NSData class], [NSDate class], [NSDictionary class], [NSNull class], [NSNumber class], [NSSet class], [NSString class], [NSTimeZone class], [NSURL class], [NSUUID class], [WKBrowsingContextHandle class], nil];
 
-    return m_classesForCoder.get();
+    return m_classesForCoder;
 }
 
 void InjectedBundle::setBundleParameter(const String& key, std::span<const uint8_t> value)
@@ -254,7 +254,7 @@ void InjectedBundle::setBundleParameter(const String& key, std::span<const uint8
     RetainPtr<id> parameter;
     auto unarchiver = createUnarchiver(value);
     @try {
-        parameter = [unarchiver decodeObjectOfClasses:classesForCoder() forKey:@"parameter"];
+        parameter = [unarchiver decodeObjectOfClasses:classesForCoder().get() forKey:@"parameter"];
     } @catch (NSException *exception) {
         LOG_ERROR("Failed to decode bundle parameter: %@", exception);
         return;
@@ -271,7 +271,7 @@ void InjectedBundle::setBundleParameters(std::span<const uint8_t> value)
     RetainPtr<NSDictionary> parameters;
     auto unarchiver = createUnarchiver(value);
     @try {
-        parameters = [unarchiver decodeObjectOfClasses:classesForCoder() forKey:@"parameters"];
+        parameters = [unarchiver decodeObjectOfClasses:classesForCoder().get() forKey:@"parameters"];
     } @catch (NSException *exception) {
         LOG_ERROR("Failed to decode bundle parameter: %@", exception);
     }

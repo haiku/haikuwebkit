@@ -59,7 +59,7 @@ struct SVGPropertyTraits<SVGTextPathMethodType> {
         return emptyString();
     }
 
-    static SVGTextPathMethodType fromString(const String& value)
+    static SVGTextPathMethodType fromString(SVGElement&, const String& value)
     {
         if (value == "align"_s)
             return SVGTextPathMethodAlign;
@@ -88,7 +88,7 @@ struct SVGPropertyTraits<SVGTextPathSpacingType> {
         return emptyString();
     }
 
-    static SVGTextPathSpacingType fromString(const String& value)
+    static SVGTextPathSpacingType fromString(SVGElement&, const String& value)
     {
         if (value == autoAtom())
             return SVGTextPathSpacingAuto;

@@ -65,30 +65,28 @@
                 "parser-grammar": "<number>"
             }
         },
-        "background-fill-layer-test-primary": {
+        "background-coordinated-value-list-property-test-discrete": {
             "animation-type": "discrete",
             "initial": "0",
             "codegen-properties": {
-                "animation-wrapper": "DiscreteFillLayerWrapper",
-                "medium-priority": true,
-                "fill-layer-property": true,
-                "fill-layer-primary": true,
+                "animation-wrapper": "DiscreteCoordinatedValueListPropertyWrapper",
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<number>#"
             }
         },
-        "background-fill-layer-test-secondary": {
+        "background-coordinated-value-list-property-test-two": {
             "animation-type": "discrete",
             "initial": "0",
             "codegen-properties": {
-                "fill-layer-property": true,
+                "coordinated-value-list-property": true,
                 "parser-grammar": "<number>#"
             }
         },
-        "background-fill-layer-test-secondary-with-converter": {
+        "background-coordinated-value-list-property-test-three-with-converter": {
             "animation-type": "discrete",
             "initial": "0",
             "codegen-properties": {
-                "fill-layer-property": true,
+                "coordinated-value-list-property": true,
                 "style-converter": "FillTestConverter",
                 "parser-grammar": "<number>#"
             }

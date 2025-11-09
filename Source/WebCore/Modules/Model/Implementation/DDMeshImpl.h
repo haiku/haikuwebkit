@@ -78,6 +78,9 @@ private:
     void updateTexture(const DDUpdateTextureDescriptor&) final;
     void addMaterial(const DDMaterialDescriptor&) final;
     void updateMaterial(const DDUpdateMaterialDescriptor&) final;
+    void setEntityTransform(const DDFloat4x4&) final;
+    std::optional<DDFloat4x4> entityTransform() const final;
+    void setCameraDistance(float) final;
 
     void render() final;
 #endif

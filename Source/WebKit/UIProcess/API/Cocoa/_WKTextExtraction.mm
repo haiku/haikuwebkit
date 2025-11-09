@@ -30,20 +30,34 @@
 #import <WebKit/WKError.h>
 #import <wtf/RetainPtr.h>
 
-@implementation _WKTextExtractionConfiguration
+@implementation _WKTextExtractionConfiguration {
+    RetainPtr<_WKJSHandle> _targetNode;
+}
 
 - (instancetype)init
 {
     if (!(self = [super init]))
         return nil;
 
-    _canIncludeIdentifiers = YES;
     _shouldFilterText = YES;
     _includeURLs = YES;
     _includeRects = YES;
+    _includeNodeIdentifiers = YES;
+    _includeEventListeners = YES;
+    _includeAccessibilityAttributes = YES;
     _targetRect = CGRectNull;
     _maxWordsPerParagraph = NSUIntegerMax;
     return self;
+}
+
+- (_WKJSHandle *)targetNode
+{
+    return _targetNode.get();
+}
+
+- (void)setTargetNode:(_WKJSHandle *)targetNode
+{
+    _targetNode = adoptNS([targetNode copy]);
 }
 
 @end

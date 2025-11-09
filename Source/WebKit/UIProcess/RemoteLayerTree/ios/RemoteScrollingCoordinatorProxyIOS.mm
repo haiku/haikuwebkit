@@ -433,7 +433,7 @@ CGPoint RemoteScrollingCoordinatorProxyIOS::nearestActiveContentInsetAdjustedSna
 
 void RemoteScrollingCoordinatorProxyIOS::displayDidRefresh(PlatformDisplayID displayID)
 {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     updateAnimations();
 #endif
 }
@@ -443,7 +443,7 @@ RemoteLayerTreeDrawingAreaProxyIOS& RemoteScrollingCoordinatorProxyIOS::drawingA
     return *downcast<RemoteLayerTreeDrawingAreaProxyIOS>(webPageProxy().drawingArea());
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void RemoteScrollingCoordinatorProxyIOS::animationsWereAddedToNode(RemoteLayerTreeNode& node)
 {
     m_animatedNodeLayerIDs.add(node.layerID());

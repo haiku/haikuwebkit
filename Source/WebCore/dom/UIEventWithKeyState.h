@@ -73,11 +73,15 @@ protected:
     void setModifierKeys(bool ctrlKey, bool altKey, bool shiftKey, bool metaKey);
 
 private:
-    OptionSet<Modifier> m_modifiers;
-
     static OptionSet<Modifier> modifiersFromInitializer(const EventModifierInit& initializer);
+
+    bool isUIEventWithKeyState() const final { return true; }
+
+    OptionSet<Modifier> m_modifiers;
 };
 
 UIEventWithKeyState* findEventWithKeyState(Event*);
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENT(UIEventWithKeyState)

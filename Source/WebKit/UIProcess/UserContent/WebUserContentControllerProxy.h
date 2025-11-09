@@ -45,7 +45,7 @@ namespace API {
 class Array;
 class ContentRuleList;
 class ContentWorld;
-class StringMatcher;
+class JSBuffer;
 class UserScript;
 class UserStyleSheet;
 }
@@ -106,8 +106,8 @@ public:
     void removeAllUserStyleSheets();
 #endif
 
-    void addStringMatcher(API::StringMatcher&, API::ContentWorld&, const String&);
-    void removeStringMatcher(API::ContentWorld&, const String&);
+    void addJSBuffer(API::JSBuffer&, API::ContentWorld&, const String&);
+    void removeJSBuffer(API::ContentWorld&, const String&);
 
     // Returns false if there was a name conflict.
     bool addUserScriptMessageHandler(WebScriptMessageHandler&);
@@ -140,7 +140,7 @@ private:
     const Ref<API::Array> m_userScripts;
     const Ref<API::Array> m_userStyleSheets;
     HashMap<ScriptMessageHandlerIdentifier, Ref<WebScriptMessageHandler>> m_scriptMessageHandlers;
-    HashMap<std::pair<WebKit::ContentWorldIdentifier, String>, Ref<API::StringMatcher>> m_stringMatchers;
+    HashMap<std::pair<WebKit::ContentWorldIdentifier, String>, Ref<API::JSBuffer>> m_buffers;
 
 #if ENABLE(CONTENT_EXTENSIONS)
     WeakHashSet<NetworkProcessProxy> m_networkProcesses;

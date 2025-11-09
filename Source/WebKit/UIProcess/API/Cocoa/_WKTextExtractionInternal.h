@@ -45,12 +45,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL skipNearlyTransparentContent;
 
 /*!
- Whether to include unique identifiers, for each interactive element.
- Defaults to `YES`.
- */
-@property (nonatomic) BOOL canIncludeIdentifiers;
-
-/*!
  Defaults to `YES`.
  */
 @property (nonatomic) BOOL shouldFilterText;

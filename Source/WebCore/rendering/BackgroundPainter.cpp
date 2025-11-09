@@ -137,9 +137,9 @@ template<typename Layers> void BackgroundPainter::paintFillLayersImpl(const Colo
 {
     bool shouldDrawBackgroundInSeparateBuffer = false;
 
-    fillLayers.computeClipMax();
+    Style::computeClipMax(fillLayers);
 
-    for (auto& layer : fillLayers) {
+    for (auto& layer : fillLayers.usedValues()) {
         if (layer.blendMode() != BlendMode::Normal)
             shouldDrawBackgroundInSeparateBuffer = true;
 
@@ -163,13 +163,13 @@ template<typename Layers> void BackgroundPainter::paintFillLayersImpl(const Colo
     auto baseBgColorUsage = BaseBackgroundColorUse;
 
     if (shouldDrawBackgroundInSeparateBuffer) {
-        paintFillLayerImpl(color, FillLayerToPaint<typename Layers::Layer> { .layer = fillLayers.last(), .isLast = true }, rect, bleedAvoidance, { }, { }, op, backgroundObject, BaseBackgroundColorOnly);
+        paintFillLayerImpl(color, FillLayerToPaint<typename Layers::value_type> { .layer = fillLayers.usedLast(), .isLast = true }, rect, bleedAvoidance, { }, { }, op, backgroundObject, BaseBackgroundColorOnly);
         baseBgColorUsage = BaseBackgroundColorSkip;
         context.beginTransparencyLayer(1);
     }
 
-    for (auto& layer : makeReversedRange(fillLayers))
-        paintFillLayerImpl(color, FillLayerToPaint<typename Layers::Layer> { .layer = layer, .isLast = &layer == &fillLayers.last() }, rect, bleedAvoidance, { }, { }, op, backgroundObject, baseBgColorUsage);
+    for (auto& layer : std::ranges::reverse_view(fillLayers.usedValues()))
+        paintFillLayerImpl(color, FillLayerToPaint<typename Layers::value_type> { .layer = layer, .isLast = &layer == &fillLayers.usedLast() }, rect, bleedAvoidance, { }, { }, op, backgroundObject, baseBgColorUsage);
 
     if (shouldDrawBackgroundInSeparateBuffer)
         context.endTransparencyLayer();
@@ -224,7 +224,7 @@ template<typename Layer> void BackgroundPainter::paintFillLayerImpl(const Color&
 
     if (context.detectingContentfulPaint()) {
         if (!context.contentfulPaintDetected() && shouldPaintBackgroundImage && bgImage->cachedImage()) {
-            if (style.backgroundLayers().first().isEmpty())
+            if (style.backgroundLayers().usedFirst().size().isEmpty())
                 context.setContentfulPaintDetected();
             return;
         }
@@ -464,7 +464,7 @@ template<typename Layer> void BackgroundPainter::paintFillLayerImpl(const Color&
     if (layer.isLast) {
         LayoutRect backgroundRect(scrolledPaintRect);
         bool applyBoxShadowToBackground = boxShadowShouldBeAppliedToBackground(m_renderer, rect.location(), bleedAvoidance, inlineBoxIterator);
-        if (applyBoxShadowToBackground || !shouldPaintBackgroundImage || !layer.layer.hasOpaqueImage(m_renderer) || !layer.layer.hasRepeatXY() || layer.layer.isEmpty()) {
+        if (applyBoxShadowToBackground || !shouldPaintBackgroundImage || !layer.layer.hasOpaqueImage(m_renderer) || !layer.layer.hasRepeatXY() || layer.layer.size().isEmpty()) {
             if (!applyBoxShadowToBackground)
                 backgroundRect.intersect(m_paintInfo.rect);
 
@@ -689,7 +689,7 @@ template<typename Layer> BackgroundImageGeometry BackgroundPainter::calculateFil
 
     LayoutSize spaceSize;
     LayoutSize phase;
-    auto computedXPosition = Style::evaluate<LayoutUnit>(fillLayer.xPosition(), availableWidth, Style::ZoomNeeded { });
+    auto computedXPosition = Style::evaluate<LayoutUnit>(fillLayer.positionX(), availableWidth, Style::ZoomNeeded { });
     if (backgroundRepeatX == FillRepeat::Round && positioningAreaSize.width() > 0 && tileSize.width() > 0) {
         int numTiles = std::max(1, roundToInt(positioningAreaSize.width() / tileSize.width()));
         if (!fillLayer.size().specifiedHeight() && backgroundRepeatY != FillRepeat::Round)
@@ -699,7 +699,7 @@ template<typename Layer> BackgroundImageGeometry BackgroundPainter::calculateFil
         phase.setWidth(tileSize.width() ? tileSize.width() - fmodf((computedXPosition + left), tileSize.width()) : 0);
     }
 
-    auto computedYPosition = Style::evaluate<LayoutUnit>(fillLayer.yPosition(), availableHeight, Style::ZoomNeeded { });
+    auto computedYPosition = Style::evaluate<LayoutUnit>(fillLayer.positionY(), availableHeight, Style::ZoomNeeded { });
     if (backgroundRepeatY == FillRepeat::Round && positioningAreaSize.height() > 0 && tileSize.height() > 0) {
         int numTiles = std::max(1, roundToInt(positioningAreaSize.height() / tileSize.height()));
         if (!fillLayer.size().specifiedWidth() && backgroundRepeatX != FillRepeat::Round)
@@ -1048,7 +1048,7 @@ bool BackgroundPainter::boxShadowShouldBeAppliedToBackground(const RenderBoxMode
     if (!backgroundColor.isOpaque())
         return false;
 
-    auto& lastBackgroundLayer = style.backgroundLayers().last();
+    auto& lastBackgroundLayer = style.backgroundLayers().usedLast();
 
     if (lastBackgroundLayer.clip() != FillBox::BorderBox)
         return false;

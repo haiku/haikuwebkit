@@ -39,7 +39,7 @@ header: "WebUserContentControllerDataTypes.h"
     String name;
 }
 
-[CustomHeader] struct WebKit::WebStringMatcherData {
+[CustomHeader] struct WebKit::WebJSBufferData {
     std::optional<WebCore::SharedMemoryHandle> sharedMemoryHandle();
     WebKit::ContentWorldData worldData;
     String name;

@@ -247,7 +247,7 @@ void Node::dumpStatistics()
                     ++elementsWithNamedNodeMap;
             }
             auto* rareData = node.rareData();
-            auto useTypes = is<Element>(node) ? static_cast<ElementRareData*>(rareData)->useTypes() : rareData->useTypes();
+            auto useTypes = is<Element>(node) ? downcast<ElementRareData>(rareData)->useTypes() : rareData->useTypes();
             unsigned useTypeCount = 0;
             for (auto type : useTypes) {
                 UNUSED_PARAM(type);
@@ -367,8 +367,8 @@ inline void NodeRareData::operator delete(NodeRareData* nodeRareData, std::destr
         RareDataType::freeAfterDestruction(&value);
     };
 
-    if (nodeRareData->m_isElementRareData)
-        destroyAndFree(static_cast<ElementRareData&>(*nodeRareData));
+    if (auto* elementRareData = dynamicDowncast<ElementRareData>(*nodeRareData))
+        destroyAndFree(*elementRareData);
     else
         destroyAndFree(*nodeRareData);
 }

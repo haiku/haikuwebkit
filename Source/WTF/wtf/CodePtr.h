@@ -202,7 +202,8 @@ public:
 
     // Disallow any casting operations (except for booleans). Instead, the client
     // should be asking taggedPtr() explicitly.
-    template<typename T, typename = std::enable_if_t<!std::is_same<T, bool>::value>>
+    template<typename T>
+        requires (!std::same_as<T, bool>)
     operator T() = delete;
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN

@@ -45,7 +45,7 @@ class FetchBodySource;
 class FormData;
 class ReadableStream;
 
-class FetchBodyConsumer final : public CanMakeWeakPtr<FetchBodyConsumer>, public CanMakeCheckedPtr<FetchBodyConsumer, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
+class FetchBodyConsumer final : public CanMakeWeakPtr<FetchBodyConsumer>, public CanMakeCheckedPtr<FetchBodyConsumer> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(FetchBodyConsumer);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FetchBodyConsumer);
 public:
@@ -56,7 +56,7 @@ public:
     ~FetchBodyConsumer();
     FetchBodyConsumer& operator=(FetchBodyConsumer&&);
 
-    FetchBodyConsumer clone();
+    UniqueRef<FetchBodyConsumer> clone();
 
     void append(const SharedBuffer&);
 

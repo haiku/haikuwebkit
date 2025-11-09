@@ -26,13 +26,62 @@
 #include "config.h"
 #include "SVGPropertyTraits.h"
 
+#include "ContainerNodeInlines.h"
+#include "CSSPropertyParserConsumer+ColorInlines.h"
+#include "RenderElement.h"
+#include "RenderObjectStyle.h"
+#include "SVGElement.h"
 #include <wtf/text/StringToIntegerConversion.h>
 
 namespace WebCore {
 
-int SVGPropertyTraits<int>::fromString(const String& string)
+namespace {
+
+class SVGStyleColorResolutionDelegate final : public CSS::PlatformColorResolutionDelegate {
+public:
+    explicit SVGStyleColorResolutionDelegate(Ref<SVGElement> element)
+        : m_element { WTFMove(element) }
+    {
+    }
+
+    Color currentColor() const override;
+
+    const Ref<SVGElement> m_element;
+};
+
+Color SVGStyleColorResolutionDelegate::currentColor() const
+{
+    if (CheckedPtr renderer = m_element->renderer())
+        return renderer->checkedStyle()->visitedDependentColor(CSSPropertyColor);
+    return { };
+}
+
+} // anonymous namespace
+
+Color SVGPropertyTraits<Color>::fromString(SVGElement& targetElement, const String& string)
+{
+    using namespace CSSPropertyParserHelpers;
+
+    Ref document = targetElement.document();
+    auto& cssParserContext = document->cssParserContext();
+
+    auto trimmedString = string.trim(deprecatedIsSpaceOrNewline);
+
+    auto color = parseColorRawSimple(trimmedString, cssParserContext);
+    if (color.isValid())
+        return color;
+
+    SVGStyleColorResolutionDelegate delegate(targetElement);
+    CSSColorParsingOptions options;
+    CSS::PlatformColorResolutionState state {
+        .delegate = &delegate
+    };
+    return parseColorRawGeneral(trimmedString, cssParserContext, document, options, state);
+}
+
+int SVGPropertyTraits<int>::fromString(SVGElement&, const String& string)
 {
     return parseInteger<int>(string).value_or(0);
 }
 
-}
+} // namespace WebCore

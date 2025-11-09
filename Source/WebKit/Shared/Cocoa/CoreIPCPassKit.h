@@ -44,7 +44,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCPKContact, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCPKContact>;
 
     CoreIPCPKContact(std::optional<CoreIPCPersonNameComponents>&& name, String&& emailAddress, std::optional<CoreIPCCNPhoneNumber>&& phoneNumber, std::optional<CoreIPCCNPostalAddress>&& postalAddress, String&& supplementarySublocality)
         : m_name(WTFMove(name))

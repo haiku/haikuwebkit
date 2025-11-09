@@ -29,6 +29,7 @@
 #include <WebCore/FloatRect.h>
 #include <WebCore/FloatSize.h>
 #include <WebCore/NodeIdentifier.h>
+#include <WebCore/WebKitJSHandle.h>
 #include <wtf/Forward.h>
 #include <wtf/URL.h>
 
@@ -72,10 +73,13 @@ enum class EventListenerCategory : uint8_t {
 };
 
 struct Request {
-    std::optional<WebCore::FloatRect> collectionRectInRootView;
+    std::optional<FloatRect> collectionRectInRootView;
+    std::optional<JSHandleIdentifier> targetNodeHandleIdentifier;
     bool mergeParagraphs { false };
     bool skipNearlyTransparentContent { false };
-    bool canIncludeIdentifiers { false };
+    bool includeNodeIdentifiers { false };
+    bool includeEventListeners { false };
+    bool includeAccessibilityAttributes { false };
 };
 
 struct Editable {

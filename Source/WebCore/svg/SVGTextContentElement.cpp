@@ -172,7 +172,7 @@ void SVGTextContentElement::attributeChanged(const QualifiedName& name, const At
     auto parseError = SVGParsingError::None;
 
     if (name == SVGNames::lengthAdjustAttr) {
-        auto propertyValue = SVGPropertyTraits<SVGLengthAdjustType>::fromString(newValue);
+        auto propertyValue = SVGPropertyTraits<SVGLengthAdjustType>::fromString(*this, newValue);
         if (propertyValue > 0)
             m_lengthAdjust->setBaseValInternal<SVGLengthAdjustType>(propertyValue);
     } else if (name == SVGNames::textLengthAttr)

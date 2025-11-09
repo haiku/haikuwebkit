@@ -52,7 +52,8 @@ public:
 
     CompletionHandler() = default;
 
-    template<typename CallableType, class = typename std::enable_if<std::is_rvalue_reference<CallableType&&>::value>::type>
+    template<typename CallableType>
+        requires (std::is_rvalue_reference_v<CallableType&&>)
     CompletionHandler(CallableType&& callable, ThreadLikeAssertion callThread = CompletionHandlerCallThread::ConstructionThread)
         : m_function(std::forward<CallableType>(callable))
         , m_callThread(WTFMove(callThread))
@@ -109,7 +110,8 @@ public:
     using OutType = Out;
     using InTypes = std::tuple<In...>;
 
-    template<typename CallableType, class = typename std::enable_if<std::is_rvalue_reference<CallableType&&>::value>::type>
+    template<typename CallableType>
+        requires (std::is_rvalue_reference_v<CallableType&&>)
     CompletionHandlerWithFinalizer(CallableType&& callable, Function<void(Function<Out(In...)>&)>&& finalizer, ThreadLikeAssertion callThread = CompletionHandlerCallThread::ConstructionThread)
         : m_function(std::forward<CallableType>(callable))
         , m_finalizer(WTFMove(finalizer))

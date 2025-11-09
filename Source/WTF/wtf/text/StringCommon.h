@@ -27,6 +27,7 @@
 #pragma once
 
 #include <algorithm>
+#include <concepts>
 #include <unicode/uchar.h>
 #include <wtf/ASCIICType.h>
 #include <wtf/Float16.h>
@@ -689,7 +690,8 @@ ALWAYS_INLINE const char16_t* find16NonASCII(std::span<const char16_t> data)
 }
 #endif
 
-template<typename CharacterType1, typename CharacterType2, std::enable_if_t<std::is_integral_v<CharacterType1> && std::is_integral_v<CharacterType2> && sizeof(CharacterType1) == sizeof(CharacterType2)>* = nullptr>
+template<std::integral CharacterType1, std::integral CharacterType2>
+    requires (sizeof(CharacterType1) == sizeof(CharacterType2))
 inline size_t find(std::span<const CharacterType1> characters, CharacterType2 matchCharacter, size_t index = 0)
 {
     if constexpr (sizeof(CharacterType1) == 1) {
@@ -732,7 +734,7 @@ inline size_t find(std::span<const Latin1Character> characters, char16_t matchCh
     return find(characters, static_cast<Latin1Character>(matchCharacter), index);
 }
 
-template<typename CharacterType1, typename CharacterType2, std::enable_if_t<std::is_integral_v<CharacterType1> && std::is_integral_v<CharacterType2>>* = nullptr>
+template<std::integral CharacterType1, std::integral CharacterType2>
 inline bool contains(std::span<const CharacterType1> characters, CharacterType2 matchCharacter, size_t index = 0)
 {
     return find(characters, matchCharacter, index) != notFound;

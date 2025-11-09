@@ -40,7 +40,7 @@ class Document;
 
 @interface WKDOMNode () {
 @package
-    RefPtr<WebCore::Node> _impl;
+    const RefPtr<WebCore::Node> _impl;
 }
 
 - (id)_initWithImpl:(WebCore::Node*)impl;
@@ -48,7 +48,7 @@ class Document;
 
 @interface WKDOMRange () {
 @package
-    RefPtr<WebCore::Range> _impl;
+    const RefPtr<WebCore::Range> _impl;
 }
 
 - (id)_initWithImpl:(WebCore::Range*)impl;

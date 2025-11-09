@@ -1258,8 +1258,7 @@ extension DDBridgeReceiver {
         commandQueue = device.makeCommandQueue()
         captureManager = MTLCaptureManager.shared()
         camera = context.makeCamera()
-        context.setCameraDistance(50.0)
-        context.setEnableModelRotation(true)
+        context.setCameraDistance(1.0)
         nodeDefinitionStore = NodeStore()
         #endif
     }
@@ -1539,6 +1538,30 @@ extension DDBridgeReceiver {
         self.dispatchSerialQueue.async {
             self.updateMeshAsync(request, identifier: identifier)
         }
+        #endif
+    }
+
+    fileprivate func setTransformAsync(_ transform: simd_float4x4) {
+        #if canImport(DirectDrawBackend)
+        for meshArray in meshInstances.values {
+            for mesh in meshArray {
+                mesh.transform = transform
+            }
+        }
+        #endif
+    }
+
+    @objc(setTransform:)
+    func setTransform(_ transform: simd_float4x4) {
+        self.dispatchSerialQueue.async {
+            self.setTransformAsync(transform)
+        }
+    }
+
+    @objc(setCameraDistance:)
+    func setCameraDistance(_ distance: Float) {
+        #if canImport(DirectDrawBackend)
+        context.setCameraDistance(distance)
         #endif
     }
 }

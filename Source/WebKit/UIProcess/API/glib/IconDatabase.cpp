@@ -602,7 +602,8 @@ void IconDatabase::loadIconsForPageURL(const String& pageURL, AllowDatabaseWrite
                     startClearLoadedIconsTimer();
                     return icon;
                 }();
-                icons.append(WTFMove(icon));
+                if (icon)
+                    icons.append(WTFMove(icon));
             }
             completionHandler(WTFMove(icons));
         });

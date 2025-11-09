@@ -29,6 +29,7 @@
 #import "AuxiliaryProcessProxy.h"
 #import "LayerProperties.h"
 #import "Logging.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeDrawingAreaProxy.h"
 #import "RemoteLayerTreePropertyApplier.h"
 #import "RemoteLayerTreeTransaction.h"
@@ -102,10 +103,13 @@ bool RemoteLayerTreeHost::replayDynamicContentScalingDisplayListsIntoBackingStor
 #endif
 }
 
-bool RemoteLayerTreeHost::threadedAnimationResolutionEnabled() const
+bool RemoteLayerTreeHost::threadedAnimationsEnabled() const
 {
-    RefPtr page = protectedDrawingArea()->page();
-    return page && page->protectedPreferences()->threadedAnimationResolutionEnabled();
+    if (RefPtr page = protectedDrawingArea()->page()) {
+        Ref preferences = page->preferences();
+        return preferences->threadedScrollDrivenAnimationsEnabled() || preferences->threadedTimeBasedAnimationsEnabled();
+    }
+    return false;
 }
 
 bool RemoteLayerTreeHost::cssUnprefixedBackdropFilterEnabled() const
@@ -115,9 +119,12 @@ bool RemoteLayerTreeHost::cssUnprefixedBackdropFilterEnabled() const
 }
 
 #if PLATFORM(MAC)
-bool RemoteLayerTreeHost::updateBannerLayers(const RemoteLayerTreeTransaction& transaction)
+bool RemoteLayerTreeHost::updateBannerLayers(const std::optional<MainFrameData>& mainFrameData)
 {
-    RetainPtr scrolledContentsLayer = layerForID(transaction.scrolledContentsLayerID());
+    if (!mainFrameData)
+        return false;
+
+    RetainPtr scrolledContentsLayer = layerForID(mainFrameData->scrolledContentsLayerID);
     if (!scrolledContentsLayer)
         return false;
 
@@ -142,7 +149,7 @@ bool RemoteLayerTreeHost::updateBannerLayers(const RemoteLayerTreeTransaction& t
 }
 #endif
 
-bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, const RemoteLayerTreeTransaction& transaction, float indicatorScaleFactor)
+bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, const RemoteLayerTreeTransaction& transaction, const std::optional<MainFrameData>& mainFrameData, float indicatorScaleFactor)
 {
     if (!m_drawingArea)
         return false;
@@ -197,10 +204,10 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
             rootNode->addToHostingNode(*remoteRootNode);
     }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     // FIXME: with site isolation, a single process can send multiple transactions.
     // https://bugs.webkit.org/show_bug.cgi?id=301261
-    if (threadedAnimationResolutionEnabled())
+    if (threadedAnimationsEnabled())
         Ref { *m_drawingArea }->updateTimelineRegistration(processIdentifier, transaction.timelines(), MonotonicTime::now());
 #endif
 
@@ -248,7 +255,7 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
     }
 
 #if PLATFORM(MAC)
-    if (updateBannerLayers(transaction))
+    if (updateBannerLayers(mainFrameData))
         rootLayerChanged = true;
 #endif
 
@@ -281,7 +288,7 @@ void RemoteLayerTreeHost::layerWillBeRemoved(WebCore::ProcessIdentifier processI
     }
 
     if (auto node = m_nodes.take(layerID)) {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
         animationsWereRemovedFromNode(*node);
 #endif
         if (auto hostingIdentifier = node->remoteContextHostingIdentifier())
@@ -509,7 +516,7 @@ void RemoteLayerTreeHost::detachRootLayer()
         rootNode->detachFromParent();
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void RemoteLayerTreeHost::animationsWereAddedToNode(RemoteLayerTreeNode& node)
 {
     protectedDrawingArea()->animationsWereAddedToNode(node);

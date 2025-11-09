@@ -79,7 +79,7 @@ public:
     bool isRelatedToOrigin(const SecurityOriginData& other) const { return m_origin.isRelated(other); }
 
 private:
-    friend struct IPC::ArgumentCoder<IDBDatabaseIdentifier, void>;
+    friend struct IPC::ArgumentCoder<IDBDatabaseIdentifier>;
 
     String m_databaseName;
     ClientOrigin m_origin;

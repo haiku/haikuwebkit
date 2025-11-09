@@ -30,19 +30,19 @@
 
 namespace WebKit {
 
-WebStringMatcherData::WebStringMatcherData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
+WebJSBufferData::WebJSBufferData(const RefPtr<WebCore::SharedMemory>& data, ContentWorldData&& worldData, const String& name)
     : data(data)
     , worldData(WTFMove(worldData))
     , name(name) { }
 
-WebStringMatcherData::WebStringMatcherData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
+WebJSBufferData::WebJSBufferData(std::optional<WebCore::SharedMemoryHandle>&& handle, ContentWorldData&& worldData, String&& name)
     : data(handle ? WebCore::SharedMemory::map(WTFMove(*handle), WebCore::SharedMemory::Protection::ReadOnly) : nullptr)
     , worldData(WTFMove(worldData))
     , name(WTFMove(name)) { }
 
-WebStringMatcherData::~WebStringMatcherData() = default;
+WebJSBufferData::~WebJSBufferData() = default;
 
-std::optional<WebCore::SharedMemoryHandle> WebStringMatcherData::sharedMemoryHandle() const
+std::optional<WebCore::SharedMemoryHandle> WebJSBufferData::sharedMemoryHandle() const
 {
     RefPtr sharedMemory = data;
     if (!sharedMemory)

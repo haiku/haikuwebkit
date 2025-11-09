@@ -72,6 +72,11 @@ struct SingleTransitionProperty {
     {
     }
 
+    bool isAll() const { return WTF::holdsAlternative<CSS::Keyword::All>(m_value); }
+    bool isNone() const { return WTF::holdsAlternative<CSS::Keyword::None>(m_value); }
+    bool isUnknownProperty() const { return WTF::holdsAlternative<UnknownProperty>(m_value); }
+    bool isSingleProperty() const { return WTF::holdsAlternative<SingleProperty>(m_value); }
+
     template<typename... F> decltype(auto) switchOn(F&&... f) const
     {
         return WTF::switchOn(m_value, std::forward<F>(f)...);

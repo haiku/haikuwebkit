@@ -142,6 +142,7 @@ public:
 #if ENABLE(INSPECTOR_EXTENSIONS)
         InspectorExtension,
 #endif
+        JSBuffer,
         KeyValueStorageManager,
         MediaCacheManager,
         MessageListener,
@@ -173,7 +174,6 @@ public:
         ScriptMessage,
         SerializedNode,
         SpeechRecognitionPermissionCallback,
-        StringMatcher,
         TextChecker,
         TextRun,
         URLSchemeTask,

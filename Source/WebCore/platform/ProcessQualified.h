@@ -192,7 +192,7 @@ private:
 };
 
 template<typename T>
-class StringTypeAdapter<WebCore::ProcessQualified<T>, void> : public ProcessQualifiedStringTypeAdapter {
+class StringTypeAdapter<WebCore::ProcessQualified<T>> : public ProcessQualifiedStringTypeAdapter {
 public:
     explicit StringTypeAdapter(const WebCore::ProcessQualified<T>& processQualified)
         : ProcessQualifiedStringTypeAdapter(processQualified.processIdentifier().toUInt64(), processQualified.object().toUInt64()) { }

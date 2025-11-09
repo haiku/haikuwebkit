@@ -68,7 +68,7 @@ public:
 
     WEBCORE_EXPORT IDBResourceIdentifier();
 private:
-    friend struct IPC::ArgumentCoder<IDBResourceIdentifier, void>;
+    friend struct IPC::ArgumentCoder<IDBResourceIdentifier>;
     friend struct IDBResourceIdentifierHashTraits;
     friend void add(Hasher&, const IDBResourceIdentifier&);
 

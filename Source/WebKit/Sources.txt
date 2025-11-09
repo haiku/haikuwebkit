@@ -499,6 +499,7 @@ UIProcess/API/APIHTTPCookieStore.cpp
 UIProcess/API/APIHitTestResult.cpp
 UIProcess/API/APIInspectorConfiguration.cpp
 UIProcess/API/APIInspectorExtension.cpp
+UIProcess/API/APIJSBuffer.cpp
 UIProcess/API/APIJSHandle.cpp
 UIProcess/API/APINavigation.cpp
 UIProcess/API/APINavigationData.cpp
@@ -509,7 +510,6 @@ UIProcess/API/APIOpenPanelParameters.cpp
 UIProcess/API/APIScriptMessage.cpp
 UIProcess/API/APISerializedNode.cpp
 UIProcess/API/APISessionState.cpp
-UIProcess/API/APIStringMatcher.cpp
 UIProcess/API/APITargetedElementInfo.cpp
 UIProcess/API/APITargetedElementRequest.cpp
 UIProcess/API/APITextRun.cpp
@@ -880,7 +880,7 @@ WebProcess/Storage/WebSharedWorkerContextManagerConnection.cpp
 WebProcess/Storage/WebSharedWorkerObjectConnection.cpp
 WebProcess/Storage/WebSharedWorkerProvider.cpp
 
-WebProcess/UserContent/SharedMemoryStringMatcher.cpp
+WebProcess/UserContent/SharedMemoryJSBuffer.cpp
 WebProcess/UserContent/WebUserContentController.cpp
 
 WebProcess/WebAuthentication/WebAuthenticatorCoordinator.cpp

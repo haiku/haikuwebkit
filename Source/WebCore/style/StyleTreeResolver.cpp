@@ -808,8 +808,21 @@ ElementUpdate TreeResolver::createAnimatedElementUpdate(ResolvedStyle&& resolved
     };
 
     auto applyAnimations = [&]() -> std::pair<std::unique_ptr<RenderStyle>, OptionSet<AnimationImpact>> {
-        if (hasUnresolvedAnchorPosition)
-            return { WTFMove(resolvedStyle.style), OptionSet<AnimationImpact> { } };
+        if (hasUnresolvedAnchorPosition) {
+            auto newStyle = WTFMove(resolvedStyle.style);
+            ASSERT(newStyle);
+
+            // When display transitions to none, it keeps its old value throughout the transition,
+            // and only switches to none after the transition ends. CSS transition machinery normally
+            // handles this, except we skip applying transitions when anchor position hasn't been resolved.
+            // This results in display: none until its anchor position is resolved, when it switches back
+            // to the old value. To remedy this, we manually patch display to be the old value if:
+            // 1. the old style's display is not none, and
+            // 2. the new style has display: none and specifies a transition on display.
+            if (oldStyle && oldStyle->hasTransitions() && oldStyle->display() != DisplayType::None && styleHasDisplayTransition(*newStyle) && newStyle->display() == DisplayType::None)
+                newStyle->setDisplay(oldStyle->display());
+            return { WTFMove(newStyle), OptionSet<AnimationImpact> { } };
+        }
 
         if (!styleable.hasKeyframeEffects()) {
             // FIXME: Push after-change style into parent stack instead.

@@ -506,7 +506,7 @@ RenderSVGResourceMasker* RenderLayerModelObject::svgMaskerResourceFromStyle() co
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    RefPtr maskImage = style().maskLayers().first().image().tryStyleImage();
+    RefPtr maskImage = style().maskLayers().usedFirst().image().tryStyleImage();
     if (!maskImage)
         return nullptr;
 

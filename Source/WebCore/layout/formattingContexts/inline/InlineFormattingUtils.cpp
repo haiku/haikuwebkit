@@ -303,7 +303,7 @@ InlineItemPosition InlineFormattingUtils::leadingInlineItemPositionForNextLine(I
 
 InlineLayoutUnit InlineFormattingUtils::inlineItemWidth(const InlineItem& inlineItem, InlineLayoutUnit contentLogicalLeft, bool useFirstLineStyle) const
 {
-    ASSERT(inlineItem.layoutBox().isInlineLevelBox());
+    ASSERT(inlineItem.layoutBox().isInlineLevelBox() || inlineItem.isBlock());
     if (auto* inlineTextItem = dynamicDowncast<InlineTextItem>(inlineItem)) {
         if (auto contentWidth = inlineTextItem->width())
             return *contentWidth;
@@ -330,6 +330,9 @@ InlineLayoutUnit InlineFormattingUtils::inlineItemWidth(const InlineItem& inline
 
     if (inlineItem.isOpaque())
         return { };
+
+    if (inlineItem.isBlock())
+        return boxGeometry.marginBoxWidth();
 
     // Non-replaced inline box (e.g. inline-block)
     return boxGeometry.marginBoxWidth();
@@ -483,6 +486,11 @@ size_t InlineFormattingUtils::nextWrapOpportunity(size_t startIndex, const Inlin
         if (currentItem.isOpaque()) {
             // This item is invisible to line breaking. Need to pretend it's not here.
             continue;
+        }
+        if (currentItem.isBlock()) {
+            // FIXME: Blocks in inline.
+            auto wrappingPosition = index == startIndex ? std::min(index + 1, layoutRange.endIndex()) : index;
+            return wrappingPosition;
         }
         ASSERT(currentItem.isText() || currentItem.isAtomicInlineBox() || currentItem.isFloat() || currentItem.layoutBox().isRubyInlineBox());
         if (currentItem.isFloat()) {

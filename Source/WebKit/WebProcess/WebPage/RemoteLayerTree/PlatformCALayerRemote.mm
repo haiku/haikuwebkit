@@ -44,7 +44,7 @@
 #import <WebCore/TiledBacking.h>
 #import <wtf/PointerComparison.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #import <WebCore/AcceleratedEffect.h>
 #import <WebCore/AcceleratedEffectValues.h>
 #endif
@@ -1189,7 +1189,7 @@ LayerPool* PlatformCALayerRemote::layerPool()
     return m_context ? &m_context->layerPool() : nullptr;
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void PlatformCALayerRemote::clearAcceleratedEffectsAndBaseValues()
 {
     m_properties.animationChanges.effects = { };

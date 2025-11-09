@@ -60,14 +60,16 @@ public:
     WTF_EXPORT_PRIVATE Decoder& operator>>(std::optional<float>&);
     WTF_EXPORT_PRIVATE Decoder& operator>>(std::optional<double>&);
 
-    template<typename T, std::enable_if_t<!std::is_arithmetic<typename std::remove_const<T>>::value && !std::is_enum<T>::value>* = nullptr>
+    template<typename T>
+        requires (!std::is_arithmetic_v<typename std::remove_const<T>> && !std::is_enum_v<T>)
     Decoder& operator>>(std::optional<T>& result)
     {
         result = Coder<T>::decodeForPersistence(*this);
         return *this;
     }
 
-    template<typename E, std::enable_if_t<std::is_enum<E>::value>* = nullptr>
+    template<typename E>
+        requires (std::is_enum_v<E>)
     Decoder& operator>>(std::optional<E>& result)
     {
         static_assert(sizeof(E) <= 8, "Enum type T must not be larger than 64 bits!");

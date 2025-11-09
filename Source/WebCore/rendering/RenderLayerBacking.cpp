@@ -108,7 +108,7 @@
 #include "LocalDefaultSystemAppearance.h"
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedEffect.h"
 #include "AcceleratedEffectStack.h"
 #include "AcceleratedEffectValues.h"
@@ -2440,7 +2440,7 @@ bool RenderLayerBacking::needsRepaintOnCompositedScroll() const
     if (!hasScrollingLayer())
         return false;
 
-    if (renderer().style().backgroundLayers().hasImageWithAttachment(FillAttachment::LocalBackground))
+    if (Style::hasImageWithAttachment(renderer().style().backgroundLayers(), FillAttachment::LocalBackground))
         return true;
 
     if (auto scrollingCoordinator = m_owningLayer.page().scrollingCoordinator())
@@ -2933,13 +2933,13 @@ static bool canDirectlyCompositeBackgroundBackgroundImage(const RenderElement& r
         return false;
 
     auto& backgroundLayers = style.backgroundLayers();
-    if (backgroundLayers.size() > 1)
+    if (backgroundLayers.usedLength() > 1)
         return false;
 
-    if (!backgroundLayers.imagesAreLoaded(&renderer))
+    if (!Style::imagesAreLoaded(backgroundLayers, renderer))
         return false;
 
-    auto& layer = backgroundLayers.first();
+    auto& layer = backgroundLayers.usedFirst();
 
     if (layer.attachment() != FillAttachment::ScrollBackground)
         return false;
@@ -3035,7 +3035,7 @@ void RenderLayerBacking::updateDirectlyCompositedBackgroundImage(PaintedContents
         return;
     }
 
-    auto& backgroundLayer = style.backgroundLayers().first();
+    auto& backgroundLayer = style.backgroundLayers().usedFirst();
     auto backgroundBox = LayoutRect { backgroundBoxForSimpleContainerPainting() };
     // FIXME: Absolute paint location is required here.
     auto geometry = BackgroundPainter::calculateFillLayerImageGeometry(*renderBox(), renderBox(), backgroundLayer, { }, backgroundBox);
@@ -3195,7 +3195,7 @@ bool RenderLayerBacking::isSimpleContainerCompositingLayer(PaintedContentsInfo& 
     if (contentsInfo.paintsBoxDecorations() || contentsInfo.paintsContent())
         return false;
 
-    if (renderer().style().backgroundLayers().first().clip() == FillBox::Text)
+    if (renderer().style().backgroundLayers().usedFirst().clip() == FillBox::Text)
         return false;
     
     if (renderer().isDocumentElementRenderer() && m_owningLayer.isolatesCompositedBlending())
@@ -3563,7 +3563,7 @@ LayoutRect RenderLayerBacking::contentsBox() const
 
 static LayoutRect backgroundRectForBox(const RenderBox& box)
 {
-    switch (box.style().backgroundLayers().first().clip()) {
+    switch (box.style().backgroundLayers().usedFirst().clip()) {
     case FillBox::BorderBox:
         return box.borderBoxRect();
     case FillBox::PaddingBox:
@@ -4423,7 +4423,7 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const GraphicsLayerAn
     return didAnimate;
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 bool RenderLayerBacking::updateAcceleratedEffectsAndBaseValues(HashSet<Ref<AcceleratedTimeline>>& timelines)
 {
     auto& renderer = this->renderer();

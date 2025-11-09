@@ -74,7 +74,7 @@ public:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<IDBDatabaseInfo, void>;
+    friend struct IPC::ArgumentCoder<IDBDatabaseInfo>;
     IDBObjectStoreInfo* getInfoForExistingObjectStore(const String& objectStoreName);
     IDBObjectStoreInfo* getInfoForExistingObjectStore(IDBObjectStoreIdentifier);
 

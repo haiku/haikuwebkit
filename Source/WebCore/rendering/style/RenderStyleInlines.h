@@ -40,6 +40,7 @@
 #include <WebCore/StyleBackgroundData.h>
 #include <WebCore/StyleBoxData.h>
 #include <WebCore/StyleDeprecatedFlexibleBoxData.h>
+#include <WebCore/StyleFillLayers.h>
 #include <WebCore/StyleFilterData.h>
 #include <WebCore/StyleFlexibleBoxData.h>
 #include <WebCore/StyleFontData.h>
@@ -268,7 +269,7 @@ inline const Style::GridTemplateList& RenderStyle::gridTemplateRows() const { re
 inline const Style::GridTemplateList& RenderStyle::gridTemplateList(Style::GridTrackSizingDirection direction) const { return direction == Style::GridTrackSizingDirection::Columns ? gridTemplateColumns() : gridTemplateRows(); }
 inline const Style::GridTemplateAreas& RenderStyle::gridTemplateAreas() const { return m_nonInheritedData->rareData->grid->m_gridTemplateAreas; }
 inline OptionSet<HangingPunctuation> RenderStyle::hangingPunctuation() const { return OptionSet<HangingPunctuation>::fromRaw(m_rareInheritedData->hangingPunctuation); }
-inline bool RenderStyle::hasAnimations() const { return !animations().isNone(); }
+inline bool RenderStyle::hasAnimations() const { return !animations().isInitial(); }
 inline bool RenderStyle::hasAnimationsOrTransitions() const { return hasAnimations() || hasTransitions(); }
 inline bool RenderStyle::hasAnyPublicPseudoStyles() const { return m_nonInheritedFlags.hasAnyPublicPseudoStyles(); }
 // FIXME: Rename this function.
@@ -285,7 +286,7 @@ inline bool RenderStyle::hasAutoLeftAndRight() const { return left().isAuto() &&
 inline bool RenderStyle::hasAutoLengthContainIntrinsicSize() const { return containIntrinsicWidth().hasAuto() || containIntrinsicHeight().hasAuto(); }
 inline bool RenderStyle::hasAutoTopAndBottom() const { return top().isAuto() && bottom().isAuto(); }
 inline bool RenderStyle::hasBackground() const { return visitedDependentColor(CSSPropertyBackgroundColor).isVisible() || hasBackgroundImage(); }
-inline bool RenderStyle::hasBackgroundImage() const { return backgroundLayers().hasImageInAnyLayer(); }
+inline bool RenderStyle::hasBackgroundImage() const { return Style::hasImageInAnyLayer(backgroundLayers()); }
 inline bool RenderStyle::hasBlendMode() const { return blendMode() != BlendMode::Normal; }
 inline bool RenderStyle::hasBorder() const { return border().hasBorder(); }
 inline bool RenderStyle::hasBorderImage() const { return border().hasBorderImage(); }
@@ -312,14 +313,14 @@ inline bool RenderStyle::hasExplicitlySetStrokeColor() const { return m_rareInhe
 inline bool RenderStyle::hasFilter() const { return !filter().isNone(); }
 inline bool RenderStyle::hasInFlowPosition() const { return position() == PositionType::Relative || position() == PositionType::Sticky; }
 inline bool RenderStyle::hasIsolation() const { return isolation() != Isolation::Auto; }
-inline bool RenderStyle::hasMask() const { return maskLayers().hasImage() || maskBorder().hasSource(); }
+inline bool RenderStyle::hasMask() const { return Style::hasImageInAnyLayer(maskLayers()) || maskBorder().hasSource(); }
 inline bool RenderStyle::hasOffsetPath() const { return !WTF::holdsAlternative<CSS::Keyword::None>(m_nonInheritedData->rareData->offsetPath); }
 inline bool RenderStyle::hasOpacity() const { return !opacity().isOpaque(); }
 inline bool RenderStyle::hasOutOfFlowPosition() const { return position() == PositionType::Absolute || position() == PositionType::Fixed; }
 inline bool RenderStyle::hasOutline() const { return outlineStyle() != OutlineStyle::None && outlineWidth().isPositive(); }
 inline bool RenderStyle::hasOutlineInVisualOverflow() const { return hasOutline() && outlineSize() > 0; }
 inline bool RenderStyle::hasPerspective() const { return !perspective().isNone(); }
-inline bool RenderStyle::hasPositionedMask() const { return maskLayers().hasImage(); }
+inline bool RenderStyle::hasPositionedMask() const { return Style::hasImageInAnyLayer(maskLayers()); }
 inline bool RenderStyle::hasPseudoStyle(PseudoElementType pseudo) const { return m_nonInheritedFlags.hasPseudoStyle(pseudo); }
 inline bool RenderStyle::hasRotate() const { return !rotate().isNone(); }
 inline bool RenderStyle::hasScale() const { return !scale().isNone(); }
@@ -329,7 +330,7 @@ inline bool RenderStyle::hasTextCombine() const { return textCombine() != TextCo
 inline bool RenderStyle::hasTransform() const { return !transform().isNone() || hasOffsetPath(); }
 inline bool RenderStyle::hasTransformRelatedProperty() const { return hasTransform() || hasRotate() || hasScale() || hasTranslate() || transformStyle3D() == TransformStyle3D::Preserve3D || hasPerspective(); }
 inline bool RenderStyle::hasTranslate() const { return !translate().isNone(); }
-inline bool RenderStyle::hasTransitions() const { return !transitions().isNone(); }
+inline bool RenderStyle::hasTransitions() const { return !transitions().isInitial(); }
 inline bool RenderStyle::hasViewportConstrainedPosition() const { return position() == PositionType::Fixed || position() == PositionType::Sticky; }
 inline bool RenderStyle::hasVisibleBorder() const { return border().hasVisibleBorder(); }
 inline bool RenderStyle::hasVisibleBorderDecoration() const { return hasVisibleBorder() || hasBorderImage(); }
@@ -355,7 +356,7 @@ inline Style::AppleColorFilter RenderStyle::initialAppleColorFilter() { return C
 inline Style::AspectRatio RenderStyle::initialAspectRatio() { return CSS::Keyword::Auto { }; }
 constexpr BackfaceVisibility RenderStyle::initialBackfaceVisibility() { return BackfaceVisibility::Visible; }
 inline Style::Color RenderStyle::initialBackgroundColor() { return Color::transparentBlack; }
-inline Style::BackgroundLayers RenderStyle::initialBackgroundLayers() { return { }; }
+inline Style::BackgroundLayers RenderStyle::initialBackgroundLayers() { return CSS::Keyword::None { }; }
 inline Style::BlockEllipsis RenderStyle::initialBlockEllipsis() { return CSS::Keyword::None { }; }
 constexpr BlockStepAlign RenderStyle::initialBlockStepAlign() { return BlockStepAlign::Auto; }
 constexpr BlockStepInsert RenderStyle::initialBlockStepInsert() { return BlockStepInsert::MarginBox; }
@@ -488,7 +489,7 @@ constexpr Style::WebkitMarqueeRepetition RenderStyle::initialMarqueeRepetition()
 constexpr Style::WebkitMarqueeSpeed RenderStyle::initialMarqueeSpeed() { return 85_css_ms; }
 inline Style::MaskBorder RenderStyle::initialMaskBorder() { return Style::MaskBorder { }; }
 inline Style::MaskBorderSource RenderStyle::initialMaskBorderSource() { return CSS::Keyword::None { }; }
-inline Style::MaskLayers RenderStyle::initialMaskLayers() { return { }; }
+inline Style::MaskLayers RenderStyle::initialMaskLayers() { return CSS::Keyword::None { }; }
 constexpr Style::MathDepth RenderStyle::initialMathDepth() { return 0_css_integer; }
 constexpr MathShift RenderStyle::initialMathShift() { return MathShift::Normal; }
 constexpr MathStyle RenderStyle::initialMathStyle() { return MathStyle::Normal; }
@@ -596,7 +597,7 @@ constexpr TextZoom RenderStyle::initialTextZoom() { return TextZoom::Normal; }
 constexpr TouchAction RenderStyle::initialTouchActions() { return TouchAction::Auto; }
 inline Style::Transform RenderStyle::initialTransform() { return CSS::Keyword::None { }; }
 constexpr TransformBox RenderStyle::initialTransformBox() { return TransformBox::ViewBox; }
-inline Style::Transitions RenderStyle::initialTransitions() { return CSS::Keyword::None { }; }
+inline Style::Transitions RenderStyle::initialTransitions() { return CSS::Keyword::All { }; }
 inline Style::Rotate RenderStyle::initialRotate() { return CSS::Keyword::None { }; }
 inline Style::Scale RenderStyle::initialScale() { return CSS::Keyword::None { }; }
 inline Style::Translate RenderStyle::initialTranslate() { return CSS::Keyword::None { }; }

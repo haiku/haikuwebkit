@@ -60,7 +60,7 @@ public:
     WEBCORE_EXPORT Vector<String> allBlobFilePaths() const;
 
 private:
-    friend struct IPC::ArgumentCoder<IDBGetAllResult, void>;
+    friend struct IPC::ArgumentCoder<IDBGetAllResult>;
     IDBGetAllResult(IndexedDB::GetAllType type, Vector<IDBKeyData>&& keys, Vector<IDBValue>&& values, std::optional<IDBKeyPath>&& keyPath)
         : m_type(type)
         , m_keys(WTFMove(keys))

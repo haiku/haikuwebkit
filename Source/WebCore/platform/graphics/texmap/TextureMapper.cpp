@@ -100,7 +100,7 @@ private:
 
         ~SharedGLData()
         {
-            ASSERT(std::any_of(contextDataMap().begin(), contextDataMap().end(),
+            ASSERT(std::ranges::any_of(contextDataMap(),
                 [this](auto& entry) { return entry.value == this; }));
             contextDataMap().removeIf([this](auto& entry) { return entry.value == this; });
         }

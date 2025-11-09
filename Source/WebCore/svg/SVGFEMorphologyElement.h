@@ -46,7 +46,7 @@ struct SVGPropertyTraits<MorphologyOperatorType> {
         return emptyString();
     }
 
-    static MorphologyOperatorType fromString(const String& value)
+    static MorphologyOperatorType fromString(SVGElement&, const String& value)
     {
         if (value == "erode"_s)
             return MorphologyOperatorType::Erode;

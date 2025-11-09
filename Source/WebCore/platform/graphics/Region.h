@@ -127,14 +127,14 @@ public:
 
         Vector<int, 32> m_segments;
         Vector<Span, 16> m_spans;
-        friend struct IPC::ArgumentCoder<WebCore::Region::Shape, void>;
+        friend struct IPC::ArgumentCoder<WebCore::Region::Shape>;
         friend bool operator==(const Shape&, const Shape&) = default;
         WEBCORE_EXPORT friend WTF::TextStream& operator<<(WTF::TextStream&, const Shape&);
     };
     static Region createForTesting(Shape&& shape) { return Region { WTFMove(shape) }; }
     Shape dataForTesting() const { return data(); }
 private:
-    friend struct IPC::ArgumentCoder<WebCore::Region, void>;
+    friend struct IPC::ArgumentCoder<WebCore::Region>;
     explicit Region(Shape&& shape) { setShape(WTFMove(shape)); }
     Shape data() const;
 

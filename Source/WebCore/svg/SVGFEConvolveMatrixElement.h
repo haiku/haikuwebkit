@@ -49,7 +49,7 @@ struct SVGPropertyTraits<EdgeModeType> {
         return emptyString();
     }
 
-    static EdgeModeType fromString(const String& value)
+    static EdgeModeType fromString(SVGElement&, const String& value)
     {
         if (value == "duplicate"_s)
             return EdgeModeType::Duplicate;

@@ -40,7 +40,7 @@
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #import "RemoteAnimation.h"
 #import "RemoteAnimationStack.h"
 #endif
@@ -88,7 +88,7 @@ RemoteLayerTreeNode::RemoteLayerTreeNode(WebCore::PlatformLayerIdentifier layerI
 RemoteLayerTreeNode::~RemoteLayerTreeNode()
 {
     RetainPtr layer = this->layer();
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     if (RefPtr animationStack = m_animationStack)
         animationStack->clear(layer.get());
 #endif
@@ -303,7 +303,7 @@ void RemoteLayerTreeNode::removeFromHostingNode()
 #endif
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void RemoteLayerTreeNode::setAcceleratedEffectsAndBaseValues(const WebCore::AcceleratedEffects& effects, const WebCore::AcceleratedEffectValues& baseValues, RemoteLayerTreeHost& host)
 {
     ASSERT(isUIThread());

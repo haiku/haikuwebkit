@@ -42,7 +42,7 @@ public:
     WebCore::ShareableBitmap* bitmap() const { return m_bitmap.get(); }
 
 private:
-    friend struct IPC::ArgumentCoder<WCBackingStore, void>;
+    friend struct IPC::ArgumentCoder<WCBackingStore>;
 
     WCBackingStore(std::optional<ImageBufferBackendHandle>&&);
     std::optional<ImageBufferBackendHandle> handle() const;

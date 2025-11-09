@@ -79,7 +79,7 @@ static inline SharedWorkerObjectConnection* mainThreadConnection()
 
 ExceptionOr<Ref<SharedWorker>> SharedWorker::create(Document& document, Variant<RefPtr<TrustedScriptURL>, String>&& scriptURLString, std::optional<Variant<String, WorkerOptions>>&& maybeOptions)
 {
-    auto compliantScriptURLString = trustedTypeCompliantString(document, WTFMove(scriptURLString), "SharedWorker constructor"_s);
+    auto compliantScriptURLString = trustedTypeCompliantString(document.protectedContextDocument(), WTFMove(scriptURLString), "SharedWorker constructor"_s);
     if (compliantScriptURLString.hasException())
         return compliantScriptURLString.releaseException();
 

@@ -235,7 +235,7 @@ void SVGSVGElement::attributeChanged(const QualifiedName& name, const AtomString
     reportAttributeParsingError(parseError, name, newValue);
 
     SVGFitToViewBox::parseAttribute(name, newValue);
-    SVGZoomAndPan::parseAttribute(name, newValue);
+    SVGZoomAndPan::parseAttribute(*this, name, newValue);
     SVGGraphicsElement::attributeChanged(name, oldValue, newValue, attributeModificationReason);
 }
 

@@ -99,7 +99,7 @@ public:
     uint32_t captureDeviceID() const { return m_capturingDevice ? m_capturingDevice->second : 0; }
 
 #if ASSERT_ENABLED
-    void allowStarting() { m_isAllowedToStart = true; }
+    WEBCORE_EXPORT static void allowStarting();
 #endif
 
 protected:
@@ -173,9 +173,6 @@ private:
     bool m_isProducingMicrophoneSamples { true };
     Function<void()> m_voiceActivityCallback;
     std::unique_ptr<Timer> m_voiceActivityThrottleTimer;
-#if ASSERT_ENABLED
-    bool m_isAllowedToStart { false };
-#endif
 };
 
 } // namespace WebCore

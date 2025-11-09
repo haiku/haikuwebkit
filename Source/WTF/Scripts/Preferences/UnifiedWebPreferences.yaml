@@ -943,6 +943,19 @@ BlockWebInspectorInWebContentSandbox:
     WebKit:
       default: false
 
+BlocksInInlineLayoutEnabled:
+  type: bool
+  status: unstable
+  humanReadableName: "Blocks in inline layout (disable continuations)"
+  humanReadableDescription: "Enable blocks in inline layout (disable continuations)"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 # We would have to partition BroadcastChannel based on PageGroups if we wanted to enable this for WebKitLegacy.
 BroadcastChannelEnabled:
   type: bool
@@ -2929,8 +2942,7 @@ FacebookLiveRecordingQuirkEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      PLATFORM(MAC): true
-      default: false
+      default: WebKit::defaultFacebookLiveRecordingQuirkEnabled()
     WebCore:
       default: false
 
@@ -3407,10 +3419,24 @@ GridFormattingContextIntegrationEnabled:
 
 HTMLEnhancedSelectParsingEnabled:
    type: bool
-   status: testable
+   status: stable
    category: dom
    humanReadableName: "Enhanced HTML select element parsing"
    humanReadableDescription: "Enable enhanced HTML select element parsing"
+   defaultValue:
+     WebKitLegacy:
+       default: true
+     WebKit:
+       default: true
+     WebCore:
+       default: true
+
+HTMLEnhancedSelectSelectedContentEnabled:
+   type: bool
+   status: unstable
+   category: dom
+   humanReadableName: "Enhanced HTML select: selectedcontent element"
+   humanReadableDescription: "Enable enhanced HTML select: selectedcontent element"
    defaultValue:
      WebKitLegacy:
        default: false
@@ -8049,13 +8075,13 @@ TextTracksInMSEEnabled:
     WebKit:
       default: false
 
-ThreadedAnimationResolutionEnabled:
+ThreadedScrollDrivenAnimationsEnabled:
   type: bool
   status: unstable
   category: animation
-  humanReadableName: "Threaded animation resolution"
-  humanReadableDescription: "Run accelerated animations on a separate thread"
-  condition: ENABLE(THREADED_ANIMATION_RESOLUTION)
+  humanReadableName: "Threaded Scroll-driven Animations"
+  humanReadableDescription: "Run qualifying scroll-driven animations on a separate thread"
+  condition: ENABLE(THREADED_ANIMATIONS)
   defaultValue:
     WebKitLegacy:
       default: false
@@ -8072,6 +8098,21 @@ ThreadedScrollingEnabled:
   defaultValue:
     WebKit:
       default: true
+
+ThreadedTimeBasedAnimationsEnabled:
+  type: bool
+  status: unstable
+  category: animation
+  humanReadableName: "Threaded Time-based Animations"
+  humanReadableDescription: "Run qualifying time-based animations on a separate thread"
+  condition: ENABLE(THREADED_ANIMATIONS)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 ThumbAndTrackPseudoElementsEnabled:
   type: bool

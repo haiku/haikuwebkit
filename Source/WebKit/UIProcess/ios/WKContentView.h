@@ -48,6 +48,7 @@ class WebFrameProxy;
 class WebPageProxy;
 class WebProcessProxy;
 class WebProcessPool;
+struct MainFrameData;
 enum class ViewStabilityFlag : uint8_t;
 }
 
@@ -124,7 +125,7 @@ enum class ViewStabilityFlag : uint8_t;
 - (void)_showInspectorHighlight:(const WebCore::InspectorOverlay::Highlight&)highlight;
 - (void)_hideInspectorHighlight;
 
-- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction;
+- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction mainFrameData:(const std::optional<WebKit::MainFrameData>&)mainFrameData;
 - (void)_layerTreeCommitComplete;
 
 - (void)_setAccessibilityWebProcessToken:(NSData *)data;

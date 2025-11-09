@@ -47,7 +47,7 @@
 #include <wtf/HashSet.h>
 #include <wtf/text/TextStream.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedEffectStackUpdater.h"
 #endif
 

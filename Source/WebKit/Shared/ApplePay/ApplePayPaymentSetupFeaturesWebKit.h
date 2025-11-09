@@ -54,7 +54,7 @@ public:
     operator Vector<Ref<WebCore::ApplePaySetupFeature>>() const;
 
 private:
-    friend struct IPC::ArgumentCoder<PaymentSetupFeatures, void>;
+    friend struct IPC::ArgumentCoder<PaymentSetupFeatures>;
     RetainPtr<NSArray> m_platformFeatures;
 };
 

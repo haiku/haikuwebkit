@@ -490,7 +490,7 @@ public:
 
     bool canOptimizeStringObjectAccess(const CodeOrigin&);
 
-    bool getRegExpPrototypeProperty(JSObject* regExpPrototype, Structure* regExpPrototypeStructure, UniquedStringImpl* uid, JSValue& returnJSValue);
+    bool getPrototypeProperty(JSObject* prototype, Structure* prototypeStructure, UniquedStringImpl* uid, JSValue& returnJSValue);
 
     bool roundShouldSpeculateInt32(Node* arithRound, PredictionPass pass)
     {
@@ -945,6 +945,13 @@ public:
         JSGlobalObject* globalObject = globalObjectFor(node->origin.semantic);
         InlineWatchpointSet& set = globalObject->regExpPrimordialPropertiesWatchpointSet();
         return isWatchingGlobalObjectWatchpoint(globalObject, set, LinkerIR::Type::RegExpPrimordialPropertiesWatchpointSet);
+    }
+
+    bool isWatchingPromiseThenWatchpoint(Node* node)
+    {
+        JSGlobalObject* globalObject = globalObjectFor(node->origin.semantic);
+        InlineWatchpointSet& set = globalObject->promiseThenWatchpointSet();
+        return isWatchingGlobalObjectWatchpoint(globalObject, set, LinkerIR::Type::PromiseThenWatchpointSet);
     }
 
     bool isWatchingArraySpeciesWatchpoint(Node* node)

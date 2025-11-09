@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteAnimationTimeline.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <wtf/TZoneMallocInlines.h>
 
@@ -42,5 +42,5 @@ RemoteAnimationTimeline::RemoteAnimationTimeline(TimelineID identifier, std::opt
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)
 

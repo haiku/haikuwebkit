@@ -953,6 +953,16 @@ void HitTestResult::toggleEnhancedFullscreenForVideo() const
 #endif
 }
 
+RefPtr<Node> HitTestResult::protectedInnerNonSharedNode() const
+{
+    return innerNonSharedNode();
+}
+
+RefPtr<Element> HitTestResult::protectedURLElement() const
+{
+    return URLElement();
+}
+
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
 HTMLImageElement* HitTestResult::imageElement() const
 {

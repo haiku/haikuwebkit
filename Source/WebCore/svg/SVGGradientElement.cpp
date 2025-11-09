@@ -57,7 +57,7 @@ void SVGGradientElement::attributeChanged(const QualifiedName& name, const AtomS
 {
     switch (name.nodeName()) {
     case AttributeNames::gradientUnitsAttr: {
-        auto propertyValue = SVGPropertyTraits<SVGUnitTypes::SVGUnitType>::fromString(newValue);
+        auto propertyValue = SVGPropertyTraits<SVGUnitTypes::SVGUnitType>::fromString(*this, newValue);
         if (propertyValue > 0)
             Ref { m_gradientUnits }->setBaseValInternal<SVGUnitTypes::SVGUnitType>(propertyValue);
         break;
@@ -66,7 +66,7 @@ void SVGGradientElement::attributeChanged(const QualifiedName& name, const AtomS
         Ref { m_gradientTransform }->baseVal()->parse(newValue);
         break;
     case AttributeNames::spreadMethodAttr: {
-        auto propertyValue = SVGPropertyTraits<SVGSpreadMethodType>::fromString(newValue);
+        auto propertyValue = SVGPropertyTraits<SVGSpreadMethodType>::fromString(*this, newValue);
         if (propertyValue > 0)
             Ref { m_spreadMethod }->setBaseValInternal<SVGSpreadMethodType>(propertyValue);
         break;

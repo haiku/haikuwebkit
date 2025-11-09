@@ -47,7 +47,7 @@ namespace IPC {
 enum class MessageFlags : uint8_t;
 enum class ShouldDispatchWhenWaitingForSyncReply : uint8_t;
 
-template<typename, typename> struct ArgumentCoder;
+template<typename> struct ArgumentCoder;
 
 class Encoder final {
     WTF_MAKE_TZONE_ALLOCATED(Encoder);
@@ -82,7 +82,7 @@ public:
     template<typename T>
     Encoder& operator<<(T&& t)
     {
-        SUPPRESS_FORWARD_DECL_ARG ArgumentCoder<std::remove_cvref_t<T>, void>::encode(*this, std::forward<T>(t));
+        SUPPRESS_FORWARD_DECL_ARG ArgumentCoder<std::remove_cvref_t<T>>::encode(*this, std::forward<T>(t));
         return *this;
     }
 

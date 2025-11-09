@@ -25,7 +25,6 @@
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
 [ iOS ] WebProcess/GPU/graphics/RemoteGraphicsContextProxy.cpp
-WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] WebProcess/Network/NetworkProcessConnection.cpp
 [ iOS ] WebProcess/Plugins/PDF/WKAccessibilityPDFDocumentObject.mm
 [ iOS ] WebProcess/WebCoreSupport/WebLocalFrameLoaderClient.cpp

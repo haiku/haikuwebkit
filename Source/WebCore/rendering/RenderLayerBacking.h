@@ -47,7 +47,7 @@ class RenderLayerCompositor;
 class TiledBacking;
 class TransformationMatrix;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class AcceleratedTimeline;
 #endif
 
@@ -195,7 +195,7 @@ public:
     void suspendAnimations(MonotonicTime = MonotonicTime());
     void resumeAnimations();
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     bool updateAcceleratedEffectsAndBaseValues(HashSet<Ref<AcceleratedTimeline>>&);
 #endif
 

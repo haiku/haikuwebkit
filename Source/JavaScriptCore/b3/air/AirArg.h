@@ -1739,6 +1739,8 @@ public:
         return *this == Arg(WTF::HashTableDeletedValue);
     }
 
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
+
     unsigned hash() const
     {
         // This really doesn't have to be that great.
@@ -1761,12 +1763,6 @@ private:
     JSC::SIMDInfo m_simdInfo;
 };
 
-struct ArgHash {
-    static unsigned hash(const Arg& key) { return key.hash(); }
-    static bool equal(const Arg& a, const Arg& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
-
 } } } // namespace JSC::B3::Air
 
 namespace WTF {
@@ -1777,9 +1773,6 @@ JS_EXPORT_PRIVATE void printInternal(PrintStream&, JSC::B3::Air::Arg::Phase);
 JS_EXPORT_PRIVATE void printInternal(PrintStream&, JSC::B3::Air::Arg::Timing);
 JS_EXPORT_PRIVATE void printInternal(PrintStream&, JSC::B3::Air::Arg::Role);
 JS_EXPORT_PRIVATE void printInternal(PrintStream&, JSC::B3::Air::Arg::Signedness);
-
-template<typename T> struct DefaultHash;
-template<> struct DefaultHash<JSC::B3::Air::Arg> : JSC::B3::Air::ArgHash { };
 
 template<typename T> struct HashTraits;
 template<> struct HashTraits<JSC::B3::Air::Arg> : SimpleClassHashTraits<JSC::B3::Air::Arg> {

@@ -51,7 +51,7 @@
 #include "StyleOriginatedAnimation.h"
 #include "WebAnimationTypes.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedEffectStackUpdater.h"
 #include "LocalDOMWindow.h"
 #include "Performance.h"
@@ -415,12 +415,15 @@ void DocumentTimeline::animationAcceleratedRunningStateDidChange(WebAnimation& a
 
 void DocumentTimeline::applyPendingAcceleratedAnimations()
 {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    if (m_document && m_document->settings().threadedAnimationResolutionEnabled()) {
-        m_acceleratedAnimationsPendingRunningStateChange.clear();
-        if (CheckedPtr timelinesController = m_document->timelinesController())
-            timelinesController->updateAcceleratedEffectStacks();
-        return;
+#if ENABLE(THREADED_ANIMATIONS)
+    if (m_document) {
+        Ref settings = m_document->settings();
+        if (settings->threadedScrollDrivenAnimationsEnabled() || settings->threadedTimeBasedAnimationsEnabled()) {
+            m_acceleratedAnimationsPendingRunningStateChange.clear();
+            if (CheckedPtr timelinesController = m_document->timelinesController())
+                timelinesController->updateAcceleratedEffectStacks();
+            return;
+        }
     }
 #endif
 
@@ -541,7 +544,7 @@ Seconds DocumentTimeline::convertTimelineTimeToOriginRelativeTime(Seconds timeli
     return timelineTime + m_originTime;
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 Ref<AcceleratedTimeline> DocumentTimeline::createAcceleratedRepresentation()
 {
     // The origin time of a document timeline is relative to the time origin

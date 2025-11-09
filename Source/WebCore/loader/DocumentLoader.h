@@ -303,6 +303,7 @@ public:
     const Vector<ResourceResponse>& responses() const { return m_responses; }
 
     const NavigationAction& triggeringAction() const { return m_triggeringAction; }
+    NavigationAction& triggeringAction() { return m_triggeringAction; }
     void setTriggeringAction(NavigationAction&&);
     void setTriggeringNavigationAPIType(NavigationNavigationType type) { m_triggeringAction.setNavigationAPIType(type); };
 

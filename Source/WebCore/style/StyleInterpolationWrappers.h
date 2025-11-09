@@ -538,149 +538,149 @@ public:
     }
 };
 
-// MARK: - FillLayer Wrappers
+// MARK: - CoordinatedValueList Wrappers
 
-// Wrapper base class for an animatable property in a FillLayer
-template<typename FillLayerType>
-class FillLayerWrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerWrapperBase, Animation);
+// Wrapper base class for an animatable property in a CoordinatedValueList
+template<typename CoordinatedValueListValueType>
+class CoordinatedValueListPropertyWrapperBase {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CoordinatedValueListPropertyWrapperBase, Animation);
 public:
-    FillLayerWrapperBase(CSSPropertyID property)
+    CoordinatedValueListPropertyWrapperBase(CSSPropertyID property)
         : m_property(property)
     {
     }
-    virtual ~FillLayerWrapperBase() = default;
+    virtual ~CoordinatedValueListPropertyWrapperBase() = default;
 
     CSSPropertyID property() const { return m_property; }
 
-    virtual bool equals(const FillLayerType&, const FillLayerType&) const = 0;
-    virtual void interpolate(FillLayerType&, const FillLayerType&, const FillLayerType&, const Context&) const = 0;
-    virtual bool canInterpolate(const FillLayerType&, const FillLayerType&) const { return true; }
+    virtual bool equals(const CoordinatedValueListValueType&, const CoordinatedValueListValueType&) const = 0;
+    virtual void interpolate(CoordinatedValueListValueType&, const CoordinatedValueListValueType&, const CoordinatedValueListValueType&, const Context&) const = 0;
+    virtual bool canInterpolate(const CoordinatedValueListValueType&, const CoordinatedValueListValueType&) const { return true; }
 #if !LOG_DISABLED
-    virtual void log(const FillLayerType& destination, const FillLayerType&, const FillLayerType&, double) const = 0;
+    virtual void log(const CoordinatedValueListValueType& destination, const CoordinatedValueListValueType&, const CoordinatedValueListValueType&, double) const = 0;
 #endif
 
 private:
     CSSPropertyID m_property;
 };
 
-template<typename StyleType, typename FillLayerType>
-class FillLayerStyleTypeWrapper final : public FillLayerWrapperBase<FillLayerType> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayerStyleTypeWrapper, Animation);
+template<typename StyleType, typename CoordinatedValueListValueType>
+class CoordinatedValueListPropertyStyleTypeWrapper final : public CoordinatedValueListPropertyWrapperBase<CoordinatedValueListValueType> {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CoordinatedValueListPropertyStyleTypeWrapper, Animation);
 public:
-    FillLayerStyleTypeWrapper(CSSPropertyID property, const StyleType& (FillLayerType::*getter)() const, void (FillLayerType::*setter)(StyleType&&))
-        : FillLayerWrapperBase<FillLayerType>(property)
+    CoordinatedValueListPropertyStyleTypeWrapper(CSSPropertyID property, const StyleType& (CoordinatedValueListValueType::*getter)() const, void (CoordinatedValueListValueType::*setter)(StyleType&&))
+        : CoordinatedValueListPropertyWrapperBase<CoordinatedValueListValueType>(property)
         , m_getter(getter)
         , m_setter(setter)
     {
     }
 
-    bool equals(const FillLayerType& from, const FillLayerType& to) const override
+    bool equals(const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to) const override
     {
         if (&from == &to)
             return true;
         return Style::equalsForBlending(value(from), value(to));
     }
 
-    bool canInterpolate(const FillLayerType& from, const FillLayerType& to) const override final
+    bool canInterpolate(const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to) const override final
     {
         return Style::canBlend(value(from), value(to));
     }
 
-    void interpolate(FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, const Context& context) const override final
+    void interpolate(CoordinatedValueListValueType& destination, const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to, const Context& context) const override final
     {
         (destination.*m_setter)(Style::blend(value(from), value(to), context));
     }
 
 #if !LOG_DISABLED
-    void log(const FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, double progress) const override final
+    void log(const CoordinatedValueListValueType& destination, const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to, double progress) const override final
     {
         LOG_WITH_STREAM(Animations, stream << "  blending " << this->property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
     }
 #endif
 
 private:
-    const StyleType& value(const FillLayerType& layer) const
+    const StyleType& value(const CoordinatedValueListValueType& value) const
     {
-        return (layer.*m_getter)();
+        return (value.*m_getter)();
     }
 
-    const StyleType& (FillLayerType::*m_getter)() const;
-    void (FillLayerType::*m_setter)(StyleType&&);
+    const StyleType& (CoordinatedValueListValueType::*m_getter)() const;
+    void (CoordinatedValueListValueType::*m_setter)(StyleType&&);
 };
 
-template<typename T, typename FillLayerType, typename GetterType = T, typename SetterType = T>
-class DiscreteFillLayerWrapper final : public FillLayerWrapperBase<FillLayerType> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteFillLayerWrapper, Animation);
+template<typename T, typename CoordinatedValueListValueType, typename GetterType = T, typename SetterType = T>
+class DiscreteCoordinatedValueListPropertyWrapper final : public CoordinatedValueListPropertyWrapperBase<CoordinatedValueListValueType> {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteCoordinatedValueListPropertyWrapper, Animation);
 public:
-    DiscreteFillLayerWrapper(CSSPropertyID property, GetterType (FillLayerType::*getter)() const, void (FillLayerType::*setter)(SetterType))
-        : FillLayerWrapperBase<FillLayerType>(property)
+    DiscreteCoordinatedValueListPropertyWrapper(CSSPropertyID property, GetterType (CoordinatedValueListValueType::*getter)() const, void (CoordinatedValueListValueType::*setter)(SetterType))
+        : CoordinatedValueListPropertyWrapperBase<CoordinatedValueListValueType>(property)
         , m_getter(getter)
         , m_setter(setter)
     {
     }
 
-    bool equals(const FillLayerType& a, const FillLayerType& b) const final
+    bool equals(const CoordinatedValueListValueType& a, const CoordinatedValueListValueType& b) const final
     {
         return value(a) == value(b);
     }
 
-    bool canInterpolate(const FillLayerType&, const FillLayerType&) const final
+    bool canInterpolate(const CoordinatedValueListValueType&, const CoordinatedValueListValueType&) const final
     {
         return false;
     }
 
-    void interpolate(FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, const Context& context) const final
+    void interpolate(CoordinatedValueListValueType& destination, const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to, const Context& context) const final
     {
         ASSERT(!context.progress || context.progress == 1.0);
         (destination.*m_setter)(T { context.progress ? value(to) : value(from) });
     }
 
 #if !LOG_DISABLED
-    void log(const FillLayerType& destination, const FillLayerType& from, const FillLayerType& to, double progress) const final
+    void log(const CoordinatedValueListValueType& destination, const CoordinatedValueListValueType& from, const CoordinatedValueListValueType& to, double progress) const final
     {
         LOG_WITH_STREAM(Animations, stream << "  blending " << this->property() << " from " << value(from) << " to " << value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << value(destination));
     }
 #endif
 
 private:
-    GetterType value(const FillLayerType& fillLayer) const
+    GetterType value(const CoordinatedValueListValueType& list) const
     {
-        return (fillLayer.*m_getter)();
+        return (list.*m_getter)();
     }
 
-    GetterType (FillLayerType::*m_getter)() const;
-    void (FillLayerType::*m_setter)(SetterType);
+    GetterType (CoordinatedValueListValueType::*m_getter)() const;
+    void (CoordinatedValueListValueType::*m_setter)(SetterType);
 };
 
 // Deduction guide for getter/setters that return and take values.
-template<typename T, typename FillLayerType>
-DiscreteFillLayerWrapper(CSSPropertyID, T (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T)) -> DiscreteFillLayerWrapper<T, FillLayerType, T, T>;
+template<typename T, typename CoordinatedValueListValueType>
+DiscreteCoordinatedValueListPropertyWrapper(CSSPropertyID, T (CoordinatedValueListValueType::*getter)() const, void (CoordinatedValueListValueType::*setter)(T)) -> DiscreteCoordinatedValueListPropertyWrapper<T, CoordinatedValueListValueType, T, T>;
 
 // Deduction guide for getter/setters that return const references and take r-value references.
-template<typename T, typename FillLayerType>
-DiscreteFillLayerWrapper(CSSPropertyID, const T& (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T&&)) -> DiscreteFillLayerWrapper<T, FillLayerType, const T&, T&&>;
+template<typename T, typename CoordinatedValueListValueType>
+DiscreteCoordinatedValueListPropertyWrapper(CSSPropertyID, const T& (CoordinatedValueListValueType::*getter)() const, void (CoordinatedValueListValueType::*setter)(T&&)) -> DiscreteCoordinatedValueListPropertyWrapper<T, CoordinatedValueListValueType, const T&, T&&>;
 
 // Deduction guide for getter/setters that return values and take r-value references.
-template<typename T, typename FillLayerType>
-DiscreteFillLayerWrapper(CSSPropertyID, T (FillLayerType::*getter)() const, void (FillLayerType::*setter)(T&&)) -> DiscreteFillLayerWrapper<T, FillLayerType, T, T&&>;
+template<typename T, typename CoordinatedValueListValueType>
+DiscreteCoordinatedValueListPropertyWrapper(CSSPropertyID, T (CoordinatedValueListValueType::*getter)() const, void (CoordinatedValueListValueType::*setter)(T&&)) -> DiscreteCoordinatedValueListPropertyWrapper<T, CoordinatedValueListValueType, T, T&&>;
 
 template<typename T, typename RepeatedValueWrapper>
-class FillLayersWrapper final : public WrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FillLayersWrapper, Animation);
+class CoordinatedValueListPropertyWrapper final : public WrapperBase {
+    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(CoordinatedValueListPropertyWrapper, Animation);
 public:
-    using Layers = T;
-    using Layer = typename Layers::Layer;
+    using List = T;
+    using CoordinatedValueListValueType = typename List::value_type;
 
-    using LayersGetter = const Layers& (RenderStyle::*)() const;
-    using LayersAccessor = Layers& (RenderStyle::*)();
-    using LayersSetter = void (RenderStyle::*)(Layers&&);
+    using ListGetter = const List& (RenderStyle::*)() const;
+    using ListAccessor = List& (RenderStyle::*)();
+    using ListSetter = void (RenderStyle::*)(List&&);
 
-    FillLayersWrapper(CSSPropertyID property, LayersGetter getter, LayersAccessor accessor, LayersSetter setter, RepeatedValueWrapper repeatedValueWrapper)
+    CoordinatedValueListPropertyWrapper(CSSPropertyID property, ListGetter getter, ListAccessor accessor, ListSetter setter, RepeatedValueWrapper repeatedValueWrapper)
         : WrapperBase(property)
-        , m_layersGetter(getter)
-        , m_layersAccessor(accessor)
-        , m_layersSetter(setter)
+        , m_listGetter(getter)
+        , m_listAccessor(accessor)
+        , m_listSetter(setter)
         , m_repeatedValueWrapper(repeatedValueWrapper)
     {
     }
@@ -690,18 +690,18 @@ public:
         if (&from == &to)
             return true;
 
-        auto& fromLayers = (from.*m_layersGetter)();
-        auto& toLayers = (to.*m_layersGetter)();
+        auto& fromList = (from.*m_listGetter)();
+        auto& toList = (to.*m_listGetter)();
 
-        auto numberOfFromLayers = fromLayers.size();
-        auto numberOfToLayers = toLayers.size();
-        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
+        auto numberOfFromValues = fromList.computedLength();
+        auto numberOfToValues = toList.computedLength();
+        auto numberOfValues = std::min(numberOfFromValues, numberOfToValues);
 
-        for (size_t i = 0; i < numberOfLayers; ++i) {
-            auto& fromLayer = fromLayers[i];
-            auto& toLayer = toLayers[i];
+        for (size_t i = 0; i < numberOfValues; ++i) {
+            auto& fromValue = fromList[i];
+            auto& toValue = toList[i];
 
-            if (!m_repeatedValueWrapper.equals(fromLayer, toLayer))
+            if (!m_repeatedValueWrapper.equals(fromValue, toValue))
                 return false;
         }
 
@@ -710,21 +710,23 @@ public:
 
     bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
     {
-        auto& fromLayers = (from.*m_layersGetter)();
-        auto& toLayers = (to.*m_layersGetter)();
+        auto& fromList = (from.*m_listGetter)();
+        auto& toList = (to.*m_listGetter)();
 
-        auto numberOfFromLayers = fromLayers.size();
-        auto numberOfToLayers = toLayers.size();
-        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
+        auto numberOfFromValues = fromList.computedLength();
+        auto numberOfToValues = toList.computedLength();
+        auto numberOfValues = std::min(numberOfFromValues, numberOfToValues);
 
-        for (size_t i = 0; i < numberOfLayers; ++i) {
-            auto& fromLayer = fromLayers[i];
-            auto& toLayer = toLayers[i];
+        for (size_t i = 0; i < numberOfValues; ++i) {
+            auto& fromValue = fromList[i];
+            auto& toValue = toList[i];
 
-            if (!fromLayer.size().hasSameType(toLayer.size()))
+            // First check if the owner values allow interpolation.
+            if (!Style::canBlend(fromValue, toValue))
                 return false;
 
-            if (!m_repeatedValueWrapper.canInterpolate(fromLayer, toLayer))
+            // Then check if the individual property values allow interpolation.
+            if (!m_repeatedValueWrapper.canInterpolate(fromValue, toValue))
                 return false;
         }
 
@@ -733,59 +735,53 @@ public:
 
     void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
     {
-        auto* fromLayers = &(from.*m_layersGetter)();
-        auto* toLayers = &(to.*m_layersGetter)();
-        auto& destinationLayers = (destination.*m_layersAccessor)();
+        auto* fromList = &(from.*m_listGetter)();
+        auto* toList = &(to.*m_listGetter)();
+        auto& destinationList = (destination.*m_listAccessor)();
 
         if (context.isDiscrete) {
             ASSERT(!context.progress || context.progress == 1.0);
-            auto* layers = context.progress ? toLayers : fromLayers;
-            fromLayers = layers;
-            toLayers = layers;
+            auto* list = context.progress ? toList : fromList;
+            fromList = list;
+            toList = list;
         }
 
-        auto numberOfFromLayers = fromLayers->size();
-        auto numberOfToLayers = toLayers->size();
-        auto numberOfDestinationLayers = destinationLayers.size();
-        auto numberOfLayers = std::min(numberOfFromLayers, numberOfToLayers);
+        auto numberOfFromValues = fromList->computedLength();
+        auto numberOfToValues = toList->computedLength();
+        auto numberOfDestinationValues = destinationList.computedLength();
+        auto numberOfValues = std::min(numberOfFromValues, numberOfToValues);
 
-        if (numberOfLayers > numberOfDestinationLayers) {
-            (destination.*m_layersSetter)(
-                Layers {
-                    Layers::Container::createWithSizeFromGenerator(numberOfLayers, [&](const auto& i) {
-                        auto destinationLayer = destinationLayers[i % numberOfDestinationLayers];
-                        m_repeatedValueWrapper.interpolate(destinationLayer, (*fromLayers)[i], (*toLayers)[i], context);
-                        return destinationLayer;
-                    })
-                }
-            );
-        } else {
-            for (size_t i = 0; i < numberOfLayers; ++i)
-                m_repeatedValueWrapper.interpolate(destinationLayers[i], (*fromLayers)[i], (*toLayers)[i], context);
+        for (size_t i = 0; i < numberOfValues; ++i) {
+            if (i >= numberOfDestinationValues)
+                destinationList.append(typename List::value_type { });
+
+            m_repeatedValueWrapper.interpolate(destinationList[i], (*fromList)[i], (*toList)[i], context);
         }
+
+        destinationList.prepareForUse();
     }
 
 #if !LOG_DISABLED
     void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
     {
-        auto& fromLayers = (from.*m_layersGetter)();
-        auto& toLayers = (to.*m_layersGetter)();
-        auto& destinationLayers = (destination.*m_layersGetter)();
+        auto& fromList = (from.*m_listGetter)();
+        auto& toList = (to.*m_listGetter)();
+        auto& destinationList = (destination.*m_listGetter)();
 
-        auto numberOfFromLayers = fromLayers.size();
-        auto numberOfToLayers = toLayers.size();
-        auto numberOfDestinationLayers = destinationLayers.size();
-        auto numberOfLayers = std::min({numberOfFromLayers, numberOfToLayers, numberOfDestinationLayers});
+        auto numberOfFromValues = fromList.computedLength();
+        auto numberOfToValues = toList.computedLength();
+        auto numberOfDestinationValues = destinationList.computedLength();
+        auto numberOfValues = std::min({numberOfFromValues, numberOfToValues, numberOfDestinationValues});
 
-        for (size_t i = 0; i < numberOfLayers; ++i)
-            m_repeatedValueWrapper.log(destinationLayers[i], fromLayers[i], toLayers[i], progress);
+        for (size_t i = 0; i < numberOfValues; ++i)
+            m_repeatedValueWrapper.log(destinationList[i], fromList[i], toList[i], progress);
     }
 #endif
 
 private:
-    LayersGetter m_layersGetter;
-    LayersAccessor m_layersAccessor;
-    LayersSetter m_layersSetter;
+    ListGetter m_listGetter;
+    ListAccessor m_listAccessor;
+    ListSetter m_listSetter;
     RepeatedValueWrapper m_repeatedValueWrapper;
 };
 

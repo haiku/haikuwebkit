@@ -196,20 +196,23 @@ function sleep(ms) {
 function waitFor(condition)
 {
     return new Promise((resolve, reject) => {
-        let interval = setInterval(() => {
-            // Trigger timeout after 3 seconds if promise could not be resolved.
-            let timeoutInterval = setInterval(() => {
-                resolve(false);
-            }, 3000);
+        // Schedule a timeout after 3 seconds if condition is never met.
+        let timeoutID = setTimeout(() => {
+            clearInterval(intervalID);
+            resolve(false);
+        }, 3000);
+
+	// Repeatedly poll for the condition to be true.
+        let intervalID = setInterval(() => {
             try {
                 if (condition()) {
-                    clearInterval(timeoutInterval);
-                    clearInterval(interval);
+                    clearTimeout(timeoutID);
+                    clearInterval(intervalID);
                     resolve(true);
                 }
             } catch (error) {
-                clearInterval(timeoutInterval);
-                clearInterval(interval);
+                clearTimeout(timeoutID);
+                clearInterval(intervalID);
                 reject(error);
             }
         }, 0);

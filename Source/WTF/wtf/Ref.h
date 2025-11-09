@@ -247,7 +247,8 @@ inline void Ref<X, _PtrTraits, RefDerefTraits>::swap(Ref<Y, _OtherPtrTraits, Oth
     _PtrTraits::swap(m_ptr, other.m_ptr);
 }
 
-template<typename X, typename APtrTraits, typename ARefDerefTraits, typename Y, typename BPtrTraits, typename BRefDerefTraits, typename = std::enable_if_t<!std::is_same<APtrTraits, RawPtrTraits<X>>::value || !std::is_same<BPtrTraits, RawPtrTraits<Y>>::value>>
+template<typename X, typename APtrTraits, typename ARefDerefTraits, typename Y, typename BPtrTraits, typename BRefDerefTraits>
+    requires (!std::is_same_v<APtrTraits, RawPtrTraits<X>> || !std::is_same_v<BPtrTraits, RawPtrTraits<Y>>)
 inline void swap(Ref<X, APtrTraits, ARefDerefTraits>& a, Ref<Y, BPtrTraits, BRefDerefTraits>& b)
 {
     a.swap(b);

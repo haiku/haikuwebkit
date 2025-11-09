@@ -31,6 +31,7 @@
 #include <WebCore/Model.h>
 #include <WebCore/ModelPlayer.h>
 #include <WebCore/ModelPlayerClient.h>
+#include <WebCore/StageModeOperations.h>
 #include <wtf/Forward.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/URL.h>
@@ -82,10 +83,15 @@ private:
     void isMuted(CompletionHandler<void(std::optional<bool>&&)>&&) override;
     void setIsMuted(bool, CompletionHandler<void(bool success)>&&) override;
     ModelPlayerAccessibilityChildren accessibilityChildren() override;
+    std::optional<TransformationMatrix> entityTransform() const final;
+    void setEntityTransform(TransformationMatrix) final;
+    bool supportsTransform(TransformationMatrix) override;
 
     const MachSendRight* displayBuffer() const;
     GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate();
     void ensureOnMainThreadWithProtectedThis(Function<void(Ref<DDModelPlayer>)>&& task);
+    void setStageMode(WebCore::StageModeOperation) final;
+    void notifyEntityTransformUpdated();
 
     WeakPtr<ModelPlayerClient> m_client;
 
@@ -96,6 +102,8 @@ private:
     WeakRef<Page> m_page;
     mutable RefPtr<ModelDisplayBufferDisplayDelegate> m_contentsDisplayDelegate;
     uint32_t m_currentTexture { 0 };
+    StageModeOperation m_stageMode { StageModeOperation::None };
+    float m_currentScale { 1.f };
     bool m_didFinishLoading { false };
 };
 

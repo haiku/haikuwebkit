@@ -1311,8 +1311,12 @@ void FrameLoader::loadInSameDocument(URL url, RefPtr<SerializedScriptValue> stat
     history().updateForSameDocumentNavigation();
 
     auto navigationType = determineNavigationType(m_loadType, historyHandling);
-    if (document->settings().navigationAPIEnabled() && document->window() && history().currentItem())
-        document->protectedWindow()->protectedNavigation()->updateForNavigation(*history().currentItem(), navigationType, ShouldCopyStateObjectFromCurrentEntry::Yes);
+    if (document->settings().navigationAPIEnabled() && document->window() && history().currentItem()) {
+        Ref navigation = document->protectedWindow()->navigation();
+        // Skip updateForNavigation() for intercepted traverse navigations, as it was already called after intercept detection in innerDispatchNavigateEvent().
+        if (navigationType != NavigationNavigationType::Traverse || !navigation->hasInterceptedOngoingNavigateEvent())
+            navigation->updateForNavigation(*history().currentItem(), navigationType, ShouldCopyStateObjectFromCurrentEntry::Yes);
+    }
 
     // If we were in the autoscroll/panScroll mode we want to stop it before following the link to the anchor
     if (hashChange)
@@ -1664,9 +1668,13 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
         return;
     }
 
-    if (isSameOrigin && newLoadType != FrameLoadType::Reload) {
-        if (!dispatchNavigateEvent(newLoadType, frameLoadRequest, false, formState.get(), event))
-            return;
+    if (isSameOrigin && newLoadType != FrameLoadType::Reload && !frameLoadRequest.isInitialFrameSrcLoad()) {
+        // FIXME: Ideally, we'd call dispatchNavigateEvent() directly from continueLoadAfterNavigationPolicy()
+        // instead of storing a lambda on the NavigationAction.
+        action.setPendingDispatchNavigateEvent([weakThis = WeakPtr { *this }, newLoadType, frameLoadRequest, formState, event = RefPtr { event }] {
+            RefPtr protectedThis = weakThis.get();
+            return protectedThis && protectedThis->dispatchNavigateEvent(newLoadType, frameLoadRequest, false, formState.get(), event.get());
+        });
     }
 
     // Must grab this now, since this load may stop the previous load and clear this flag.
@@ -4114,6 +4122,11 @@ void FrameLoader::continueLoadAfterNavigationPolicy(const ResourceRequest& reque
         setPolicyDocumentLoader(nullptr);
         executeJavaScriptURL(request.url(), action);
         return;
+    }
+
+    if (auto pendingDispatchNavigateEvent = m_policyDocumentLoader->triggeringAction().takePendingDispatchNavigateEvent()) {
+        if (!pendingDispatchNavigateEvent())
+            return;
     }
 
     FrameLoadType type = policyChecker().loadType();

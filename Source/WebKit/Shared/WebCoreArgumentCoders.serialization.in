@@ -6382,7 +6382,7 @@ enum class WebCore::StorageType : uint8_t {
     TransientLocal,
 };
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 [OptionSet] enum class WebCore::AcceleratedEffectProperty : uint16_t {
     Opacity,
@@ -6545,7 +6545,7 @@ header: <WebCore/AcceleratedEffect.h>
     std::optional<WebCore::WebAnimationTime> holdTime();
 };
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)
 
 #if PLATFORM(MAC)
 header: <WebCore/CaretAnimator.h>
@@ -6733,9 +6733,12 @@ header: <WebCore/TextExtractionTypes.h>
 header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::Request {
     std::optional<WebCore::FloatRect> collectionRectInRootView;
+    std::optional<WebCore::JSHandleIdentifier> targetNodeHandleIdentifier;
     bool mergeParagraphs;
     bool skipNearlyTransparentContent;
-    bool canIncludeIdentifiers;
+    bool includeNodeIdentifiers;
+    bool includeEventListeners;
+    bool includeAccessibilityAttributes;
 };
 
 header: <WebCore/TextExtractionTypes.h>

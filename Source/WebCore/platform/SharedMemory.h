@@ -98,7 +98,7 @@ public:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<SharedMemoryHandle, void>;
+    friend struct IPC::ArgumentCoder<SharedMemoryHandle>;
     friend class SharedMemory;
 
     Type m_handle;

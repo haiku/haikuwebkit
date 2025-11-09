@@ -64,7 +64,7 @@ template<typename T> class DropLockForScope;
 using AdoptLockTag = std::adopt_lock_t;
 constexpr AdoptLockTag AdoptLock;
 
-template<typename T, typename = void>
+template<typename T>
 class [[nodiscard]] Locker : public AbstractLocker { // NOLINT
 public:
     explicit Locker(T& lockable) : m_lockable(&lockable) { lock(); }

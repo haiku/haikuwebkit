@@ -318,6 +318,8 @@ WGPU_EXPORT void wgpuDDTextureUpdate(WGPUDDMesh mesh, WGPUDDUpdateTextureDescrip
 WGPU_EXPORT void wgpuDDMaterialAdd(WGPUDDMesh mesh, WGPUDDMaterialDescriptor*);
 WGPU_EXPORT void wgpuDDMaterialUpdate(WGPUDDMesh mesh, WGPUDDUpdateMaterialDescriptor*);
 WGPU_EXPORT void wgpuDDMeshRender(WGPUDDMesh mesh);
+WGPU_EXPORT void wgpuDDMeshSetTransform(WGPUDDMesh mesh, const simd_float4x4& transform);
+WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance);
 
 WGPU_EXPORT void wgpuRenderBundleSetLabel(WGPURenderBundle renderBundle, char const * label);
 

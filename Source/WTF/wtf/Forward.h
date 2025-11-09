@@ -146,7 +146,7 @@ template<typename> class RetainPtr;
 template<typename> class ScopedLambda;
 template<typename> class StringBuffer;
 template<typename> class StringParsingBuffer;
-template<typename, typename = void> class StringTypeAdapter;
+template<typename> class StringTypeAdapter;
 template<typename> class UniqueRef;
 template<typename T, class... Args> UniqueRef<T> makeUniqueRef(Args&&...);
 template<typename, size_t = 0> class VariantList;

@@ -364,42 +364,15 @@ void HistoryItem::clearChildren()
     m_client->clearChildren(*this);
 }
 
-// We do same-document navigation if going to a different item and if either of the following is true:
+// We do same-document navigation if going to a different item and the following is true:
 // - The other item corresponds to the same document (for history entries created via pushState or fragment changes).
-// - The other item corresponds to the same set of documents, including frames (for history entries created via regular navigation)
 bool HistoryItem::shouldDoSameDocumentNavigationTo(HistoryItem& otherItem) const
 {
-    // The following logic must be kept in sync with WebKit::WebBackForwardListItem::itemIsInSameDocument().
     if (m_itemID == otherItem.itemID())
         return false;
 
-    if (stateObject() || otherItem.stateObject())
-        return documentSequenceNumber() == otherItem.documentSequenceNumber();
-    
-    if ((url().hasFragmentIdentifier() || otherItem.url().hasFragmentIdentifier()) && equalIgnoringFragmentIdentifier(url(), otherItem.url()))
-        return documentSequenceNumber() == otherItem.documentSequenceNumber();
-    
-    return hasSameDocumentTree(otherItem);
-}
-
-// Does a recursive check that this item and its descendants have the same
-// document sequence numbers as the other item.
-bool HistoryItem::hasSameDocumentTree(HistoryItem& otherItem) const
-{
-    if (documentSequenceNumber() != otherItem.documentSequenceNumber())
-        return false;
-        
-    if (children().size() != otherItem.children().size())
-        return false;
-
-    for (size_t i = 0; i < children().size(); i++) {
-        Ref child = children()[i].get();
-        RefPtr otherChild = otherItem.childItemWithDocumentSequenceNumber(child->documentSequenceNumber());
-        if (!otherChild || !child->hasSameDocumentTree(*otherChild))
-            return false;
-    }
-
-    return true;
+    // The following logic must be kept in sync with WebKit::WebBackForwardListItem::itemIsInSameDocument().
+    return documentSequenceNumber() == otherItem.documentSequenceNumber();
 }
 
 String HistoryItem::formContentType() const

@@ -393,11 +393,10 @@ enum class WebkitOverflowScrolling : bool;
 enum class WebkitTouchCallout : bool;
 
 template<typename> struct CoordinatedValueList;
-template<typename> struct FillLayers;
 template<typename> struct Shadows;
 
 using Animations = CoordinatedValueList<Animation>;
-using BackgroundLayers = FillLayers<BackgroundLayer>;
+using BackgroundLayers = CoordinatedValueList<BackgroundLayer>;
 using BorderRadiusValue = MinimallySerializingSpaceSeparatedSize<LengthPercentage<CSS::Nonnegative>>;
 using BoxShadows = Shadows<BoxShadow>;
 using FlexGrow = Number<CSS::Nonnegative, float>;
@@ -405,7 +404,7 @@ using FlexShrink = Number<CSS::Nonnegative, float>;
 using InsetBox = MinimallySerializingSpaceSeparatedRectEdges<InsetEdge>;
 using LineWidthBox = MinimallySerializingSpaceSeparatedRectEdges<LineWidth>;
 using MarginBox = MinimallySerializingSpaceSeparatedRectEdges<MarginEdge>;
-using MaskLayers = FillLayers<MaskLayer>;
+using MaskLayers = CoordinatedValueList<MaskLayer>;
 using ObjectPosition = Position;
 using Order = Integer<>;
 using PaddingBox = MinimallySerializingSpaceSeparatedRectEdges<PaddingEdge>;
@@ -1673,6 +1672,8 @@ public:
 
     void adjustAnimations();
     void adjustTransitions();
+    void adjustBackgroundLayers();
+    void adjustMaskLayers();
 
     void adjustScrollTimelines();
     void adjustViewTimelines();

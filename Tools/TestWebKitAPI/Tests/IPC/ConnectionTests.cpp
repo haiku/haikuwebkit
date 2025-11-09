@@ -582,6 +582,190 @@ TEST_P(ConnectionRunLoopTest, RunLoopSendAsync)
     localReferenceBarrier();
 }
 
+// Test for ensuring that async messages are not reordered when sync message is sent with SendSyncOption::MaintainOrderingWithAsyncMessages.
+// At the time message sequence of "A, Sync, B" would see "B, A, Sync" because A would be moved to sync message specific list, but
+// then the scheduled async message dispatch would dispatch B.
+// The order is tested by increasing the destination id.
+TEST_P(ConnectionRunLoopTest, SendSyncMaintainOrderingWithAsyncMessagesOrder)
+{
+    ASSERT_TRUE(openA());
+
+    auto runLoop = createRunLoop(RUN_LOOP_NAME);
+    runLoop->dispatch([&] {
+        // Sync message handler only to respond with "message was handled".
+        bClient().setSyncMessageHandler([&](IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& encoder) -> bool {
+            bClient().addMessage(decoder);
+            connection.sendSyncReply(WTFMove(encoder));
+            return true;
+        });
+        ASSERT_TRUE(openB());
+    });
+    for (uint64_t i = 0u; i < 300u; i += 3) {
+        a()->send(MockTestMessage1 { }, i);
+        auto result = a()->sendSync(MockTestSyncMessage(), i + 1, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+        EXPECT_TRUE(result.succeeded());
+        a()->send(MockTestMessage1 { }, i + 2);
+    }
+    auto result = a()->sendSync(MockTestSyncMessage(), 300, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+    // The last message sent is sync, so when we are here we know all messages have been added to the message list.
+    runLoop->dispatch([&] {
+        b()->invalidate();
+    });
+    auto messages = bClient().takeMessages();
+    ASSERT_EQ(messages.size(), 301u);
+    for (uint64_t i = 0u; i < 300u; i += 3) {
+        EXPECT_EQ(messages[i].messageName, MockTestMessage1::name()) << i;
+        EXPECT_EQ(messages[i].destinationID, i);
+        EXPECT_EQ(messages[i + 1].messageName, MockTestSyncMessage::name()) << (i + 1);
+        EXPECT_EQ(messages[i + 1].destinationID, i + 1u);
+        EXPECT_EQ(messages[i + 2].messageName, MockTestMessage1::name()) << (i + 2);
+        EXPECT_EQ(messages[i + 2].destinationID, i + 2u);
+    }
+    EXPECT_EQ(messages[300].messageName, MockTestSyncMessage::name());
+    EXPECT_EQ(messages[300].destinationID, 300u);
+    localReferenceBarrier();
+}
+
+TEST_P(ConnectionRunLoopTest, SendSyncMaintainOrderingWithAsyncMessagesOrderMultipleSendingThreads)
+{
+    ASSERT_TRUE(openA());
+
+    auto runLoop = createRunLoop(RUN_LOOP_NAME);
+    runLoop->dispatch([&] {
+        // Sync message handler only to respond with "message was handled".
+        bClient().setSyncMessageHandler([&](IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& encoder) -> bool {
+            bClient().addMessage(decoder);
+            connection.sendSyncReply(WTFMove(encoder));
+            sleep(0.1_s);
+            return true;
+        });
+        bClient().setAsyncMessageHandler([](IPC::Connection&, IPC::Decoder&) -> bool {
+            sleep(0.1_s);
+            return false;
+        });
+        ASSERT_TRUE(openB());
+        sleep(0.1_s);
+    });
+
+    auto sendingRunLoop = createRunLoop(RUN_LOOP_NAME);
+    sendingRunLoop->dispatch([&] {
+        for (uint64_t i = 0u; i < 30u; i++) {
+            a()->send(MockTestMessage1 { }, i);
+            sleep(0.1_s);
+        }
+    });
+
+    for (uint64_t i = 0u; i < 30u; i++) {
+        auto result = a()->sendSync(MockTestSyncMessage(), i, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+        EXPECT_TRUE(result.succeeded());
+        sleep(0.1_s);
+    }
+
+    dispatchAndWait(sendingRunLoop, [] {
+    });
+
+    auto result = a()->sendSync(MockTestSyncMessage(), 60, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+    // The last message sent is sync, so when we are here we know all messages have been added to the message list.
+    runLoop->dispatch([&] {
+        b()->invalidate();
+    });
+    auto messages = bClient().takeMessages();
+    ASSERT_EQ(messages.size(), 61u);
+    std::optional<uint64_t> seenAsyncMessage;
+    std::optional<uint64_t> seenSyncMessage;
+    for (uint64_t i = 0u; i < 60; i++) {
+        if (messages[i].messageName == MockTestMessage1::name()) {
+            if (seenAsyncMessage)
+                EXPECT_EQ(messages[i].destinationID, *seenAsyncMessage + 1);
+            else
+                EXPECT_EQ(messages[i].destinationID, 0u);
+            seenAsyncMessage = messages[i].destinationID;
+        } else {
+            EXPECT_EQ(messages[i].messageName, MockTestSyncMessage::name());
+            if (seenSyncMessage)
+                EXPECT_EQ(messages[i].destinationID, *seenSyncMessage + 1);
+            else
+                EXPECT_EQ(messages[i].destinationID, 0u);
+            seenSyncMessage = messages[i].destinationID;
+        }
+    }
+    EXPECT_EQ(messages[60].messageName, MockTestSyncMessage::name());
+    EXPECT_EQ(messages[60].destinationID, 60u);
+    localReferenceBarrier();
+}
+
+// Test for ensuring that async messages are not reordered when sync message is sent with SendSyncOption::MaintainOrderingWithAsyncMessages
+// and the async messages are waited with waitForAndDispatchImmediately.
+TEST_P(ConnectionRunLoopTest, SendSyncMaintainOrderingWithAsyncMessagesWaitForOrderMultipleSendingThreads)
+{
+    ASSERT_TRUE(openA());
+
+    auto runLoop = createRunLoop(RUN_LOOP_NAME);
+    runLoop->dispatch([&] {
+        // Sync message handler only to respond with "message was handled".
+        bClient().setSyncMessageHandler([&](IPC::Connection& connection, IPC::Decoder& decoder, UniqueRef<IPC::Encoder>& encoder) -> bool {
+            bClient().addMessage(decoder);
+            connection.sendSyncReply(WTFMove(encoder));
+            sleep(0.1_s);
+            return true;
+        });
+        ASSERT_TRUE(openB());
+
+        // The messages the test sends are never dispatched from run loop, rather from this wait.
+        // Since we never drop to run loop after open, we catch even the first message.
+        for (uint64_t i = 0u; i < 30u; i += 3) {
+            auto result = b()->waitForAndDispatchImmediately<MockTestMessage1>(i, kDefaultWaitForTimeout);
+            EXPECT_TRUE(result == IPC::Error::NoError);
+        }
+    });
+
+    auto sendingRunLoop = createRunLoop(RUN_LOOP_NAME);
+    sendingRunLoop->dispatch([&] {
+        for (uint64_t i = 0u; i < 30u; i++) {
+            a()->send(MockTestMessage1 { }, i);
+            sleep(0.1_s);
+        }
+    });
+
+    for (uint64_t i = 0u; i < 30u; i++) {
+        auto result = a()->sendSync(MockTestSyncMessage(), i, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+        EXPECT_TRUE(result.succeeded());
+        sleep(0.1_s);
+    }
+
+    dispatchAndWait(sendingRunLoop, [] {
+    });
+
+    auto result = a()->sendSync(MockTestSyncMessage(), 60, kDefaultWaitForTimeout, { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
+    // The last message sent is sync, so when we are here we know all messages have been added to the message list.
+    runLoop->dispatch([&] {
+        b()->invalidate();
+    });
+    auto messages = bClient().takeMessages();
+    ASSERT_EQ(messages.size(), 61u);
+    std::optional<uint64_t> seenAsyncMessage;
+    std::optional<uint64_t> seenSyncMessage;
+    for (uint64_t i = 0u; i < 60; i++) {
+        if (messages[i].messageName == MockTestMessage1::name()) {
+            if (seenAsyncMessage)
+                EXPECT_EQ(messages[i].destinationID, *seenAsyncMessage + 1);
+            else
+                EXPECT_EQ(messages[i].destinationID, 0u);
+            seenAsyncMessage = messages[i].destinationID;
+        } else {
+            EXPECT_EQ(messages[i].messageName, MockTestSyncMessage::name());
+            if (seenSyncMessage)
+                EXPECT_EQ(messages[i].destinationID, *seenSyncMessage + 1);
+            else
+                EXPECT_EQ(messages[i].destinationID, 0u);
+            seenSyncMessage = messages[i].destinationID;
+        }
+    }
+    EXPECT_EQ(messages[60].messageName, MockTestSyncMessage::name());
+    EXPECT_EQ(messages[60].destinationID, 60u);
+    localReferenceBarrier();
+}
+
 class AutoWorkQueue {
 public:
     class WorkQueueWithShutdown : public WorkQueue {

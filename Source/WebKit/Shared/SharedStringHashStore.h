@@ -33,7 +33,7 @@
 
 namespace WebKit {
 
-class SharedStringHashStore : public CanMakeCheckedPtr<SharedStringHashStore, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
+class SharedStringHashStore : public CanMakeCheckedPtr<SharedStringHashStore> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(SharedStringHashStore);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(SharedStringHashStore);
 public:

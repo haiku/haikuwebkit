@@ -25,9 +25,9 @@ namespace WebCore {
 static_assert(cssPropertyIDEnumValueCount <= (std::numeric_limits<uint16_t>::max() + 1), "CSSPropertyID should fit into uint16_t.");
 
 const std::array<CSSPropertyID, 105> computedPropertyIDs {
-    CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary,
-    CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary,
-    CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter,
+    CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete,
+    CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter,
+    CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo,
     CSSPropertyID::CSSPropertyTestAnimationWrapper,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
@@ -135,10 +135,10 @@ const std::array<CSSPropertyID, 105> computedPropertyIDs {
 constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-top-priority"_s,
     "test-high-priority"_s,
-    "background-fill-layer-test-primary"_s,
     "test-medium-priority"_s,
-    "background-fill-layer-test-secondary"_s,
-    "background-fill-layer-test-secondary-with-converter"_s,
+    "background-coordinated-value-list-property-test-discrete"_s,
+    "background-coordinated-value-list-property-test-three-with-converter"_s,
+    "background-coordinated-value-list-property-test-two"_s,
     "first-test-descriptor-for-first-descriptor"_s,
     "first-test-descriptor-for-second-descriptor"_s,
     "test-animation-wrapper"_s,
@@ -262,9 +262,9 @@ struct CSSPropertyHashTableEntry {
 
 %%
 all, CSSPropertyID::CSSPropertyAll
-background-fill-layer-test-primary, CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary
-background-fill-layer-test-secondary, CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary
-background-fill-layer-test-secondary-with-converter, CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter
+background-coordinated-value-list-property-test-discrete, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete
+background-coordinated-value-list-property-test-three-with-converter, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter
+background-coordinated-value-list-property-test-two, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo
 first-test-descriptor-for-first-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
 first-test-descriptor-for-second-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
 font, CSSPropertyID::CSSPropertyFont
@@ -501,10 +501,10 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     true , // CSSPropertyID::CSSPropertyCustom
     false, // CSSPropertyID::CSSPropertyTestTopPriority
     false, // CSSPropertyID::CSSPropertyTestHighPriority
-    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary
     false, // CSSPropertyID::CSSPropertyTestMediumPriority
-    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary
-    false, // CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter
+    false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete
+    false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter
+    false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
     false, // CSSPropertyID::CSSPropertyTestAnimationWrapper
@@ -665,10 +665,10 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     switch (id) {
     case CSSPropertyID::CSSPropertyTestTopPriority:
     case CSSPropertyID::CSSPropertyTestHighPriority:
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
     case CSSPropertyID::CSSPropertyTestMediumPriority:
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:

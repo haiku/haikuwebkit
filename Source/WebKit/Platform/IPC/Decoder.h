@@ -61,7 +61,7 @@ namespace IPC {
 enum class MessageFlags : uint8_t;
 enum class ShouldDispatchWhenWaitingForSyncReply : uint8_t;
 
-template<typename, typename> struct ArgumentCoder;
+template<typename> struct ArgumentCoder;
 
 #ifdef __OBJC__
 template<typename T> using IsObjCObject = std::enable_if_t<std::is_convertible<T *, id>::value, T *>;
@@ -142,7 +142,7 @@ public:
     template<typename T>
     std::optional<T> decode()
     {
-        std::optional<T> t { ArgumentCoder<std::remove_cvref_t<T>, void>::decode(*this) };
+        std::optional<T> t { ArgumentCoder<std::remove_cvref_t<T>>::decode(*this) };
         if (!t) [[unlikely]]
             markInvalid();
         return t;

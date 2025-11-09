@@ -38,6 +38,7 @@ enum class PseudoId : uint8_t;
 class AnimationEventBase;
 class Document;
 class Element;
+class RenderStyle;
 class WebAnimation;
 
 namespace Style {
@@ -65,6 +66,9 @@ bool compareAnimationEventsByCompositeOrder(const AnimationEventBase&, const Ani
 String pseudoElementIdentifierAsString(const std::optional<Style::PseudoElementIdentifier>&);
 std::pair<bool, std::optional<Style::PseudoElementIdentifier>> pseudoElementIdentifierFromString(const String&, Document*);
 AtomString animatablePropertyAsString(AnimatableCSSProperty);
+
+// Determines whether a RenderStyle specifies a transition on `display` property.
+bool styleHasDisplayTransition(const RenderStyle&);
 
 } // namespace WebCore
 

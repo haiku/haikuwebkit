@@ -94,7 +94,7 @@ private:
     bool isDocumentTimeline() const final { return true; }
 
     AnimationTimelinesController* controller() const override;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     Ref<AcceleratedTimeline> createAcceleratedRepresentation() override;
 #endif
 

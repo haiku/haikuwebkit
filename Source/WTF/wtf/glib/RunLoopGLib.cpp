@@ -209,7 +209,7 @@ void RunLoop::notifyActivity(Activity activity)
     // to the activity observers are allowed.
     ActivityObservers observersToBeInvalidated;
     for (Ref observer : observersToBeNotified) {
-        if (observer->notify() == ActivityObserver::ContinueObservation::No)
+        if (observer->notify() == ActivityObserver::NotifyResult::Stop)
             observersToBeInvalidated.append(observer);
     }
 

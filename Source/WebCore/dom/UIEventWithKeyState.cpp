@@ -79,7 +79,7 @@ UIEventWithKeyState* findEventWithKeyState(Event* event)
 {
     for (Event* e = event; e; e = e->underlyingEvent())
         if (e->isKeyboardEvent() || e->isMouseEvent())
-            return static_cast<UIEventWithKeyState*>(e);
+            return downcast<UIEventWithKeyState>(e);
     return 0;
 }
 

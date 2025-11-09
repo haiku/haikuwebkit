@@ -468,16 +468,18 @@ void VideoMediaSampleRenderer::decodeNextSampleIfNeeded()
     if (m_gotDecodingError || !decompressionSession)
         return;
 
-    while (!m_compressedSampleQueue.isEmpty() && !m_isDecodingSample) {
-        RetainPtr timebase = this->timebase();
-        MediaTime currentTime = timebase ? PAL::toMediaTime(PAL::CMTimebaseGetTime(timebase.get())) : MediaTime::invalidTime();
-        double playbackRate = timebase ? PAL::CMTimebaseGetRate(timebase.get()) : 0;
+    RetainPtr timebase = this->timebase();
+    MediaTime currentTime = timebase ? PAL::toMediaTime(PAL::CMTimebaseGetTime(timebase.get())) : MediaTime::invalidTime();
+    double playbackRate = timebase ? PAL::CMTimebaseGetRate(timebase.get()) : 0;
+    RefPtr nextDecodedSample = this->nextDecodedSample();
+    auto nextDecodedSampleTime = nextDecodedSample ? nextDecodedSample->presentationTime() : MediaTime::zeroTime();
+    auto lowWaterMarkTime = currentTime.isValid() ? std::max(currentTime, nextDecodedSampleTime) + DecodeLowWaterMark : MediaTime::invalidTime();
+    auto highWaterMarkTime = currentTime.isValid() ? std::max(currentTime, nextDecodedSampleTime) + DecodeHighWaterMark : MediaTime::invalidTime();
 
+    while (!m_compressedSampleQueue.isEmpty() && !m_isDecodingSample) {
         WebCoreDecompressionSession::DecodingFlags decodingFlags;
 
         if (currentTime.isValid() && !m_wasProtected && !m_decompressionSessionWasBlocked) {
-            auto lowWaterMarkTime = currentTime + DecodeLowWaterMark;
-            auto highWaterMarkTime = currentTime + DecodeHighWaterMark;
             auto endTime = lastDecodedSampleTime();
             if (endTime.isValid() && endTime > highWaterMarkTime) {
                 auto [sample, upcomingMinimum, flushId, blocked] = m_compressedSampleQueue.first();
@@ -766,10 +768,10 @@ void VideoMediaSampleRenderer::purgeDecodedSampleQueue(FlushId flushId)
 #endif
         }
     }
-    if (samplesPurged) {
+    if (samplesPurged)
         maybeBecomeReadyForMoreMediaData();
+    if (samplesPurged || decodedSamplesCount() == 1)
         decodeNextSampleIfNeeded();
-    }
 }
 
 bool VideoMediaSampleRenderer::purgeDecodedSampleQueueUntilTime(const MediaTime& currentTime)

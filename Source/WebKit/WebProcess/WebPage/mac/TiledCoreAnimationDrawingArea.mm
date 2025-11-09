@@ -236,13 +236,14 @@ void TiledCoreAnimationDrawingArea::triggerRenderingUpdate()
 
 void TiledCoreAnimationDrawingArea::updatePreferences(const WebPreferencesStore& store)
 {
-    Ref settings = m_webPage->corePage()->settings();
+    Ref webPage = m_webPage.get();
+    Ref settings = webPage->corePage()->settings();
 
     // Fixed position elements need to be composited and create stacking contexts
     // in order to be scrolled by the ScrollingCoordinator.
     settings->setAcceleratedCompositingForFixedPositionEnabled(true);
 
-    DebugPageOverlays::settingsChanged(*m_webPage->protectedCorePage());
+    DebugPageOverlays::settingsChanged(*webPage->protectedCorePage());
 
     bool showTiledScrollingIndicator = settings->showTiledScrollingIndicator();
     if (showTiledScrollingIndicator == !!m_debugInfoLayer)

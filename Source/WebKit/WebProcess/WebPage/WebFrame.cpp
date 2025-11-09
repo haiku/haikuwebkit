@@ -865,7 +865,7 @@ String WebFrame::layerTreeAsText() const
     if (!localFrame)
         return emptyString();
 
-    return localFrame->contentRenderer()->checkedCompositor()->layerTreeAsText();
+    return localFrame->checkedContentRenderer()->checkedCompositor()->layerTreeAsText();
 }
 
 unsigned WebFrame::pendingUnloadCount() const

@@ -71,7 +71,7 @@ private:
 template<typename T>
 class FontTaggedSetting {
 private:
-    friend struct IPC::ArgumentCoder<FontTaggedSetting, void>;
+    friend struct IPC::ArgumentCoder<FontTaggedSetting>;
 public:
     FontTaggedSetting() = delete;
     FontTaggedSetting(FontTag, T value);
@@ -103,7 +103,7 @@ template<typename T> void add(Hasher& hasher, const FontTaggedSetting<T>& settin
 template<typename T>
 class FontTaggedSettings {
 private:
-    friend struct IPC::ArgumentCoder<FontTaggedSettings, void>;
+    friend struct IPC::ArgumentCoder<FontTaggedSettings>;
 public:
     using Setting = FontTaggedSetting<T>;
 

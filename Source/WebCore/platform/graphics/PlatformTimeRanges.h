@@ -134,7 +134,7 @@ public:
     friend bool operator==(const PlatformTimeRanges&, const PlatformTimeRanges&) = default;
 
 private:
-    friend struct IPC::ArgumentCoder<PlatformTimeRanges, void>;
+    friend struct IPC::ArgumentCoder<PlatformTimeRanges>;
 
     PlatformTimeRanges(Vector<Range>&&);
     PlatformTimeRanges& operator-=(const Range&);

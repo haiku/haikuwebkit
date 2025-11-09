@@ -146,7 +146,7 @@ public:
 
     static FixedVector<PositionTryFallback> convertPositionTryFallbacks(BuilderState&, const CSSValue&);
 
-    static MaskMode convertFillLayerMaskMode(BuilderState&, const CSSValue&);
+    static MaskMode convertSingleMaskMode(BuilderState&, const CSSValue&);
 };
 
 template<typename T, typename... Rest> inline T BuilderConverter::convertStyleType(BuilderState& builderState, const CSSValue& value, Rest&&... rest)
@@ -1087,7 +1087,7 @@ inline FixedVector<PositionTryFallback> BuilderConverter::convertPositionTryFall
     });
 }
 
-inline MaskMode BuilderConverter::convertFillLayerMaskMode(BuilderState& builderState, const CSSValue& value)
+inline MaskMode BuilderConverter::convertSingleMaskMode(BuilderState& builderState, const CSSValue& value)
 {
     switch (value.valueID()) {
     case CSSValueAlpha:

@@ -102,13 +102,15 @@ struct EnumValueChecker<T, EnumValues<E>> {
 
 template<typename E> bool isValidEnum(std::underlying_type_t<E>);
 
-template<typename E, typename = std::enable_if_t<!std::is_same_v<std::underlying_type_t<E>, bool>>>
+template<typename E>
+    requires (!std::same_as<std::underlying_type_t<E>, bool>)
 bool isValidEnumForPersistence(std::underlying_type_t<E> t)
 {
     return EnumValueChecker<std::underlying_type_t<E>, typename EnumTraitsForPersistence<E>::values>::isValidEnumForPersistence(t);
 }
 
-template<typename E, typename = std::enable_if_t<std::is_same_v<std::underlying_type_t<E>, bool>>>
+template<typename E>
+    requires (std::same_as<std::underlying_type_t<E>, bool>)
 constexpr bool isValidEnumForPersistence(bool t)
 {
     return !t || t == 1;
@@ -140,7 +142,8 @@ struct ZeroBasedContiguousEnumChecker<T, EnumValues<E>> {
     }
 };
 
-template<typename E, typename = std::enable_if_t<!std::is_same_v<std::underlying_type_t<E>, bool>>>
+template<typename E>
+    requires (!std::is_same_v<std::underlying_type_t<E>, bool>)
 constexpr bool isZeroBasedContiguousEnum()
 {
     return ZeroBasedContiguousEnumChecker<std::underlying_type_t<E>, typename EnumTraits<E>::values>::isZeroBasedContiguousEnum();

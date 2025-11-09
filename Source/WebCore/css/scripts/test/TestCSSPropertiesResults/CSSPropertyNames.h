@@ -15,10 +15,10 @@ enum CSSPropertyID : uint16_t {
     CSSPropertyCustom = 1,
     CSSPropertyTestTopPriority = 2,
     CSSPropertyTestHighPriority = 3,
-    CSSPropertyBackgroundFillLayerTestPrimary = 4,
-    CSSPropertyTestMediumPriority = 5,
-    CSSPropertyBackgroundFillLayerTestSecondary = 6,
-    CSSPropertyBackgroundFillLayerTestSecondaryWithConverter = 7,
+    CSSPropertyTestMediumPriority = 4,
+    CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete = 5,
+    CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter = 6,
+    CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo = 7,
     CSSPropertyFirstTestDescriptorForFirstDescriptor = 8,
     CSSPropertyFirstTestDescriptorForSecondDescriptor = 9,
     CSSPropertyTestAnimationWrapper = 10,
@@ -140,9 +140,9 @@ constexpr auto firstTopPriorityProperty = CSSPropertyID::CSSPropertyTestTopPrior
 constexpr auto lastTopPriorityProperty = CSSPropertyID::CSSPropertyTestTopPriority;
 constexpr auto firstHighPriorityProperty = CSSPropertyID::CSSPropertyTestHighPriority;
 constexpr auto lastHighPriorityProperty = CSSPropertyID::CSSPropertyTestHighPriority;
-constexpr auto firstMediumPriorityProperty = CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary;
+constexpr auto firstMediumPriorityProperty = CSSPropertyID::CSSPropertyTestMediumPriority;
 constexpr auto lastMediumPriorityProperty = CSSPropertyID::CSSPropertyTestMediumPriority;
-constexpr auto firstLowPriorityProperty = CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary;
+constexpr auto firstLowPriorityProperty = CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete;
 constexpr auto lastLowPriorityProperty = CSSPropertyID::CSSPropertyTestSinkPriority;
 constexpr auto firstLogicalGroupPhysicalProperty = CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalHorizontal;
 constexpr auto lastLogicalGroupPhysicalProperty = CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalVertical;
@@ -153,7 +153,14 @@ constexpr auto lastLogicalGroupProperty = lastLogicalGroupLogicalProperty;
 constexpr auto firstShorthandProperty = CSSPropertyID::CSSPropertyAll;
 constexpr auto lastShorthandProperty = CSSPropertyID::CSSPropertyTestShorthandTwo;
 constexpr uint16_t numCSSPropertyLonghands = firstShorthandProperty - firstCSSProperty;
+
 extern const std::array<CSSPropertyID, 105> computedPropertyIDs;
+
+template<CSSPropertyID C> struct PropertyNameConstant {
+    static constexpr auto value = C;
+    constexpr bool operator==(const PropertyNameConstant&) const = default;
+    constexpr bool operator==(CSSPropertyID other) const { return value == other; }
+};
 
 struct CSSPropertySettings {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(CSSPropertySettings);

@@ -2142,9 +2142,9 @@ ExceptionOr<void> Element::setAttribute(const AtomString& qualifiedName, const T
         setAttributeInternal(index, name, std::get<AtomString>(value), InSynchronizationOfLazyAttribute::No);
     else {
         AttributeTypeAndSink type;
-        if (document().requiresTrustedTypes())
+        if (document().contextDocument().requiresTrustedTypes())
             type = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
-        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value, type.sink);
+        auto compliantValue = trustedTypesCompliantAttributeValue(document().contextDocument(), type.attributeType, value, type.sink);
 
         if (compliantValue.hasException())
             return compliantValue.releaseException();
@@ -3747,10 +3747,10 @@ ExceptionOr<RefPtr<Attr>> Element::setAttributeNode(Attr& attrNode)
     // before making changes to attrNode's Element connections.
     auto attrNodeValue = attrNode.value();
 
-    if (document().requiresTrustedTypes()) {
+    if (document().contextDocument().requiresTrustedTypes()) {
         auto& name = attrNode.qualifiedName();
         auto type = trustedTypeForAttribute(nodeName(), name.localName().convertToASCIILowercase(), this->namespaceURI(), name.namespaceURI());
-        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, attrNodeValue, type.sink);
+        auto compliantValue = trustedTypesCompliantAttributeValue(document().contextDocument(), type.attributeType, attrNodeValue, type.sink);
 
         if (compliantValue.hasException())
             return compliantValue.releaseException();
@@ -3804,10 +3804,10 @@ ExceptionOr<RefPtr<Attr>> Element::setAttributeNodeNS(Attr& attrNode)
     // before making changes to attrNode's Element connections.
     auto attrNodeValue = attrNode.value();
 
-    if (document().requiresTrustedTypes()) {
+    if (document().contextDocument().requiresTrustedTypes()) {
         auto& name = attrNode.qualifiedName();
         auto type = trustedTypeForAttribute(nodeName(), name.localName(), this->namespaceURI(), name.namespaceURI());
-        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, attrNodeValue, type.sink);
+        auto compliantValue = trustedTypesCompliantAttributeValue(document().contextDocument(), type.attributeType, attrNodeValue, type.sink);
 
         if (compliantValue.hasException())
             return compliantValue.releaseException();
@@ -3899,9 +3899,9 @@ ExceptionOr<void> Element::setAttributeNS(const AtomString& namespaceURI, const 
     else {
         QualifiedName parsedAttributeName = result.returnValue();
         AttributeTypeAndSink type;
-        if (document().requiresTrustedTypes())
+        if (document().contextDocument().requiresTrustedTypes())
             type = trustedTypeForAttribute(nodeName(), parsedAttributeName.localName(), this->namespaceURI(), parsedAttributeName.namespaceURI());
-        auto compliantValue = trustedTypesCompliantAttributeValue(document(), type.attributeType, value, type.sink);
+        auto compliantValue = trustedTypesCompliantAttributeValue(document().contextDocument(), type.attributeType, value, type.sink);
 
         if (compliantValue.hasException())
             return compliantValue.releaseException();
@@ -4353,7 +4353,7 @@ ExceptionOr<void> Element::replaceChildrenWithMarkup(const String& markup, Optio
 
 ExceptionOr<void> Element::setHTMLUnsafe(Variant<RefPtr<TrustedHTML>, String>&& html)
 {
-    auto stringValueHolder = trustedTypeCompliantString(*document().scriptExecutionContext(), WTFMove(html), "Element setHTMLUnsafe"_s);
+    auto stringValueHolder = trustedTypeCompliantString(document().contextDocument(), WTFMove(html), "Element setHTMLUnsafe"_s);
 
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();
@@ -4387,7 +4387,7 @@ String Element::outerHTML() const
 
 ExceptionOr<void> Element::setOuterHTML(Variant<RefPtr<TrustedHTML>, String>&& html)
 {
-    auto stringValueHolder = trustedTypeCompliantString(*document().scriptExecutionContext(), WTFMove(html), "Element outerHTML"_s);
+    auto stringValueHolder = trustedTypeCompliantString(document().contextDocument(), WTFMove(html), "Element outerHTML"_s);
 
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();
@@ -4428,7 +4428,7 @@ ExceptionOr<void> Element::setOuterHTML(Variant<RefPtr<TrustedHTML>, String>&& h
 
 ExceptionOr<void> Element::setInnerHTML(Variant<RefPtr<TrustedHTML>, String>&& html)
 {
-    auto stringValueHolder = trustedTypeCompliantString(*document().scriptExecutionContext(), WTFMove(html), "Element innerHTML"_s);
+    auto stringValueHolder = trustedTypeCompliantString(document().contextDocument(), WTFMove(html), "Element innerHTML"_s);
 
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();
@@ -6013,7 +6013,7 @@ ExceptionOr<void> Element::insertAdjacentHTML(const String& where, const String&
 
 ExceptionOr<void> Element::insertAdjacentHTML(const String& where, Variant<RefPtr<TrustedHTML>, String>&& markup)
 {
-    auto stringValueHolder = trustedTypeCompliantString(*document().scriptExecutionContext(), WTFMove(markup), "Element insertAdjacentHTML"_s);
+    auto stringValueHolder = trustedTypeCompliantString(document().contextDocument(), WTFMove(markup), "Element insertAdjacentHTML"_s);
 
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();

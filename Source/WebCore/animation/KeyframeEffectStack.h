@@ -32,7 +32,7 @@
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include <wtf/WeakListHashSet.h>
 #endif
 
@@ -43,7 +43,7 @@ class KeyframeEffect;
 class RenderStyle;
 class Settings;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class AcceleratedEffect;
 #endif
 
@@ -85,7 +85,7 @@ public:
     void applyPendingAcceleratedActions() const;
 
     bool hasAcceleratedEffects(const Settings&) const;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     void setAcceleratedEffects(WeakListHashSet<AcceleratedEffect>&& acceleratedEffects) { m_acceleratedEffects = WTFMove(acceleratedEffects); }
 #endif
 
@@ -96,7 +96,7 @@ private:
     void stopAcceleratedAnimations();
 
     Vector<WeakPtr<KeyframeEffect>> m_effects;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     WeakListHashSet<AcceleratedEffect> m_acceleratedEffects;
 #endif
     HashSet<String> m_invalidCSSAnimationNames;

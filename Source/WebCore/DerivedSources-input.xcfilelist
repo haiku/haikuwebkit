@@ -1676,6 +1676,7 @@ $(PROJECT_DIR)/html/HTMLProgressElement.idl
 $(PROJECT_DIR)/html/HTMLQuoteElement.idl
 $(PROJECT_DIR)/html/HTMLScriptElement.idl
 $(PROJECT_DIR)/html/HTMLSelectElement.idl
+$(PROJECT_DIR)/html/HTMLSelectedContentElement.idl
 $(PROJECT_DIR)/html/HTMLSlotElement.idl
 $(PROJECT_DIR)/html/HTMLSourceElement.idl
 $(PROJECT_DIR)/html/HTMLSpanElement.idl
@@ -1962,13 +1963,12 @@ $(PROJECT_DIR)/page/UndoManager.idl
 $(PROJECT_DIR)/page/UserMessageHandler.idl
 $(PROJECT_DIR)/page/UserMessageHandlersNamespace.idl
 $(PROJECT_DIR)/page/VisualViewport.idl
+$(PROJECT_DIR)/page/WebKitBuffer.idl
+$(PROJECT_DIR)/page/WebKitBufferNamespace.idl
 $(PROJECT_DIR)/page/WebKitJSHandle.idl
 $(PROJECT_DIR)/page/WebKitNamespace.idl
 $(PROJECT_DIR)/page/WebKitPoint.idl
 $(PROJECT_DIR)/page/WebKitSerializedNode.idl
-$(PROJECT_DIR)/page/WebKitStringMatcher.idl
-$(PROJECT_DIR)/page/WebKitStringMatcherOptions.idl
-$(PROJECT_DIR)/page/WebKitStringMatchersNamespace.idl
 $(PROJECT_DIR)/page/WindowEventHandlers.idl
 $(PROJECT_DIR)/page/WindowLocalStorage.idl
 $(PROJECT_DIR)/page/WindowOrWorkerGlobalScope+Crypto.idl

@@ -150,7 +150,7 @@ public:
     WEBCORE_EXPORT static DeserializationBehavior deserializationBehavior(JSC::JSObject&);
 
 private:
-    friend struct IPC::ArgumentCoder<SerializedScriptValue, void>;
+    friend struct IPC::ArgumentCoder<SerializedScriptValue>;
 
     static ExceptionOr<Ref<SerializedScriptValue>> create(JSC::JSGlobalObject&, JSC::JSValue, Vector<JSC::Strong<JSC::JSObject>>&& transfer, Vector<Ref<MessagePort>>&, SerializationForStorage, SerializationErrorMode, SerializationContext);
     WEBCORE_EXPORT SerializedScriptValue(Vector<unsigned char>&&, std::unique_ptr<ArrayBufferContentsArray>&& = nullptr
@@ -240,7 +240,7 @@ private:
         Vector<URLKeepingBlobAlive> blobHandles { };
         uint64_t memoryCost { 0 };
     };
-    friend struct IPC::ArgumentCoder<Internals, void>;
+    friend struct IPC::ArgumentCoder<Internals>;
 
     static Ref<SerializedScriptValue> create(Internals&& internals)
     {

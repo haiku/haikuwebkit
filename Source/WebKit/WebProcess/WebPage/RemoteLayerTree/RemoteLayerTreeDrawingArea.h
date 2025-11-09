@@ -47,6 +47,7 @@ class TiledBacking;
 namespace WebKit {
 
 class RemoteLayerTreeContext;
+struct MainFrameData;
 
 class RemoteLayerTreeDrawingArea : public DrawingArea, public WebCore::GraphicsLayerClient {
     WTF_MAKE_TZONE_ALLOCATED(RemoteLayerTreeDrawingArea);
@@ -91,7 +92,7 @@ private:
     void attachViewOverlayGraphicsLayer(WebCore::FrameIdentifier, WebCore::GraphicsLayer*) final;
 
     void dispatchAfterEnsuringDrawing(IPC::AsyncReplyID) final;
-    virtual void willCommitLayerTree(RemoteLayerTreeTransaction&) { }
+    virtual void willCommitLayerTree(MainFrameData&) { }
 
     RefPtr<WebCore::DisplayRefreshMonitor> createDisplayRefreshMonitor(WebCore::PlatformDisplayID) final;
     void setPreferredFramesPerSecond(WebCore::FramesPerSecond);

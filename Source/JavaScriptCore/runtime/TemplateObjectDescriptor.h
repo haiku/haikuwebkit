@@ -56,12 +56,6 @@ public:
 
     bool operator==(const TemplateObjectDescriptor& other) const { return m_hash == other.m_hash && m_rawStrings == other.m_rawStrings; }
 
-    struct Hasher {
-        static unsigned hash(const TemplateObjectDescriptor& key) { return key.hash(); }
-        static bool equal(const TemplateObjectDescriptor& a, const TemplateObjectDescriptor& b) { return a == b; }
-        static constexpr bool safeToCompareToEmptyOrDeleted = false;
-    };
-
     static unsigned calculateHash(const StringVector& rawStrings);
     ~TemplateObjectDescriptor();
 
@@ -110,10 +104,6 @@ inline unsigned TemplateObjectDescriptor::calculateHash(const StringVector& rawS
 } // namespace JSC
 
 namespace WTF {
-template<typename> struct DefaultHash;
-
-template<> struct DefaultHash<JSC::TemplateObjectDescriptor> : JSC::TemplateObjectDescriptor::Hasher { };
-
 template<> struct HashTraits<JSC::TemplateObjectDescriptor> : CustomHashTraits<JSC::TemplateObjectDescriptor> {
 };
 

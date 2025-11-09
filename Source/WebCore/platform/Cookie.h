@@ -123,19 +123,6 @@ struct Cookie {
     Cookie isolatedCopy() && { return { WTFMove(name).isolatedCopy(), WTFMove(value).isolatedCopy(), WTFMove(domain).isolatedCopy(), WTFMove(path).isolatedCopy(), WTFMove(partitionKey).isolatedCopy(), created, expires, httpOnly, secure, session, WTFMove(comment).isolatedCopy(), WTFMove(commentURL).isolatedCopy(), WTFMove(ports), sameSite }; }
 };
 
-struct CookieHash {
-    static unsigned hash(const Cookie& key)
-    {
-        return key.hash();
-    }
-
-    static bool equal(const Cookie& a, const Cookie& b)
-    {
-        return a == b;
-    }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 namespace CookieUtil {
 
 WEBCORE_EXPORT String defaultPathForURL(const URL&);
@@ -145,8 +132,6 @@ WEBCORE_EXPORT String defaultPathForURL(const URL&);
 } // namespace WebCore
 
 namespace WTF {
-    template<typename T> struct DefaultHash;
-    template<> struct DefaultHash<WebCore::Cookie> : WebCore::CookieHash { };
     template<> struct HashTraits<WebCore::Cookie> : GenericHashTraits<WebCore::Cookie> {
         static WebCore::Cookie emptyValue() { return { }; }
         static void constructDeletedValue(WebCore::Cookie& slot) { new (NotNull, &slot.name) String(WTF::HashTableDeletedValue); }

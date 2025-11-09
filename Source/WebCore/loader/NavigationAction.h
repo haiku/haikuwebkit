@@ -128,6 +128,8 @@ public:
     std::optional<NavigationNavigationType> navigationAPIType() const { return m_navigationAPIType; }
     void setNavigationAPIType(NavigationNavigationType navigationAPIType) { m_navigationAPIType = navigationAPIType; }
 
+    void setPendingDispatchNavigateEvent(std::function<bool()>&& function) { m_pendingDispatchNavigateEvent = WTFMove(function); }
+    std::function<bool()> takePendingDispatchNavigateEvent() { return std::exchange(m_pendingDispatchNavigateEvent, nullptr); }
 
 private:
     // Do not add a strong reference to the originating document or a subobject that holds the
@@ -140,6 +142,7 @@ private:
     std::optional<BackForwardItemIdentifier> m_targetBackForwardItemIdentifier;
     std::optional<BackForwardItemIdentifier> m_sourceBackForwardItemIdentifier;
     std::optional<PrivateClickMeasurement> m_privateClickMeasurement;
+    std::function<bool()> m_pendingDispatchNavigateEvent;
 
     NavigationType m_type;
     std::optional<NavigationNavigationType> m_navigationAPIType;

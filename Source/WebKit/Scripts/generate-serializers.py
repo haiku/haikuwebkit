@@ -1965,7 +1965,7 @@ def generate_webkit_secure_coding_header(serialized_types):
         result.append('    RetainPtr<id> toID() const;')
         result.append('')
         result.append('private:')
-        result.append(f'    friend struct IPC::ArgumentCoder<{type.cpp_struct_or_class_name()}, void>;')
+        result.append(f'    friend struct IPC::ArgumentCoder<{type.cpp_struct_or_class_name()}>;')
         result.append('')
         result.append(f'    {type.cpp_struct_or_class_name()}(')
         for i in range(len(type.dictionary_members)):

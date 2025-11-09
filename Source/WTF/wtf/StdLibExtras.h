@@ -1214,10 +1214,11 @@ bool spansOverlap(std::span<T, TExtent> a, std::span<U, UExtent> b)
 /* SAFE_PRINTF */
 
 // https://gist.github.com/sehe/3374327
-template <class T> inline typename std::enable_if<std::is_integral<T>::value, T>::type safePrintfType(T arg) { return arg; }
-template <class T> inline typename std::enable_if<std::is_floating_point<T>::value, T>::type safePrintfType(T arg) { return arg; }
-template <class T> inline typename std::enable_if<std::is_pointer<T>::value, T>::type safePrintfType(T arg) {
-    static_assert(!std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, char>, "char* is not bounds safe; please use a null terminated string type");
+template<std::integral T> inline T safePrintfType(T arg) { return arg; }
+template<std::floating_point T> inline T safePrintfType(T arg) { return arg; }
+template<typename T> requires (std::is_pointer_v<T>) inline T safePrintfType(T arg)
+{
+    static_assert(!std::same_as<std::remove_cv_t<std::remove_pointer_t<T>>, char>, "char* is not bounds safe; please use a null terminated string type");
     return arg;
 }
 

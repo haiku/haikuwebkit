@@ -33,6 +33,7 @@
 #include <wtf/NumberOfCores.h>
 #include <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #if PLATFORM(IOS_FAMILY)
+#import <pal/system/ios/Device.h>
 #import <pal/system/ios/UserInterfaceIdiom.h>
 #endif
 #endif
@@ -435,6 +436,17 @@ bool defaultGetBoundingClientRectZoomedEnabled()
     return linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::GetBoundingClientRectZoomed);
 #else
     return true;
+#endif
+}
+
+bool defaultFacebookLiveRecordingQuirkEnabled()
+{
+#if PLATFORM(MAC)
+    return true;
+#elif PLATFORM(IOS)
+    return !PAL::deviceClassIsSmallScreen();
+#else
+    return false;
 #endif
 }
 

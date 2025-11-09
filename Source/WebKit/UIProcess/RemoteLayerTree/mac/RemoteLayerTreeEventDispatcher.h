@@ -42,13 +42,13 @@
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/threads/BinarySemaphore.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "RemoteAnimationStack.h"
 #include "RemoteMonotonicTimelineRegistry.h"
 #endif
 
 namespace WebCore {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class AcceleratedTimeline;
 #endif
 class PlatformWheelEvent;
@@ -64,7 +64,7 @@ namespace WebKit {
 
 class DisplayLink;
 class NativeWebWheelEvent;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 class RemoteAnimationTimeline;
 #endif
 class RemoteScrollingCoordinatorProxyMac;
@@ -106,7 +106,7 @@ public:
 
     void renderingUpdateComplete();
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     void lockForAnimationChanges() WTF_ACQUIRES_LOCK(m_animationLock);
     void unlockForAnimationChanges() WTF_RELEASES_LOCK(m_animationLock);
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
@@ -199,7 +199,7 @@ private:
 
     std::unique_ptr<RunLoop::Timer> m_delayedRenderingUpdateDetectionTimer;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     // For WTF_ACQUIRES_LOCK
     friend class RemoteScrollingCoordinatorProxyMac;
     Lock m_animationLock;

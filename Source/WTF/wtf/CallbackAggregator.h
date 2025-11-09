@@ -72,7 +72,8 @@ template<typename> class EagerCallbackAggregator;
 template <typename Out, typename... In>
 class EagerCallbackAggregator<Out(In...)> : public ThreadSafeRefCounted<EagerCallbackAggregator<Out(In...)>> {
 public:
-    template<typename CallableType, class = typename std::enable_if<std::is_rvalue_reference<CallableType&&>::value>::type>
+    template<typename CallableType>
+        requires (std::is_rvalue_reference_v<CallableType&&>)
     static Ref<EagerCallbackAggregator> create(CallableType&& callback, In... defaultArgs)
     {
         return adoptRef(*new EagerCallbackAggregator(std::forward<CallableType>(callback), std::forward<In>(defaultArgs)...));

@@ -138,7 +138,7 @@ public:
         m_asyncContentsIdentifier = identifier;
     }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     void setAcceleratedEffectsAndBaseValues(const WebCore::AcceleratedEffects&, const WebCore::AcceleratedEffectValues&, RemoteLayerTreeHost&);
     const RemoteAnimationStack* animationStack() const { return m_animationStack.get(); }
     RefPtr<RemoteAnimationStack> takeAnimationStack() { return std::exchange(m_animationStack, nullptr); }
@@ -198,7 +198,7 @@ private:
     Vector<CachedContentsBuffer> m_cachedContentsBuffers;
     std::optional<WebCore::RenderingResourceIdentifier> m_asyncContentsIdentifier;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     RefPtr<RemoteAnimationStack> m_animationStack;
 #endif
     bool m_backdropRootIsOpaque { false };

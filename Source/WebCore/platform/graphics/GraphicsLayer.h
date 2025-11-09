@@ -55,7 +55,7 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/TypeCasts.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include <WebCore/AcceleratedEffectStack.h>
 #endif
 
@@ -89,7 +89,7 @@ typedef unsigned TileCoverage;
 class ModelContext;
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 struct AcceleratedEffectValues;
 String acceleratedEffectPropertyIDAsString(AcceleratedEffectProperty);
 #endif
@@ -704,7 +704,7 @@ public:
 
     virtual void markFrontBufferVolatileForTesting() { }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     AcceleratedEffectStack* acceleratedEffectStack() const { return m_effectStack.get(); }
     WEBCORE_EXPORT virtual void setAcceleratedEffectsAndBaseValues(AcceleratedEffects&&, AcceleratedEffectValues&&);
 #endif
@@ -750,7 +750,7 @@ protected:
 
     WEBCORE_EXPORT virtual void getDebugBorderInfo(Color&, float& width) const;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     RefPtr<AcceleratedEffectStack> m_effectStack;
 #endif
 

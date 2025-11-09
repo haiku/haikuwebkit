@@ -128,6 +128,7 @@ public:
     virtual bool isToggleEvent() const { return false; }
     virtual bool isTouchEvent() const { return false; }
     virtual bool isUIEvent() const { return false; }
+    virtual bool isUIEventWithKeyState() const { return false; }
     virtual bool isVersionChangeEvent() const { return false; }
     virtual bool isWheelEvent() const { return false; }
     virtual bool isXMLHttpRequestProgressEvent() const { return false; }

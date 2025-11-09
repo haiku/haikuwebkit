@@ -137,7 +137,9 @@ template<typename T, typename U> inline T *checked_objc_cast(U *object)
 
 // See RetainPtr.h for: template<typename T> T* dynamic_objc_cast(id object).
 
-template<typename T, typename U, typename = std::enable_if_t<std::is_base_of_v<U, T>>> RetainPtr<T> dynamic_objc_cast(RetainPtr<U>&& object)
+template<typename T, typename U>
+    requires (std::is_base_of_v<U, T>)
+RetainPtr<T> dynamic_objc_cast(RetainPtr<U>&& object)
 {
     static_assert(std::is_base_of_v<U, T>);
     static_assert(!std::is_same_v<U, T>);
@@ -153,7 +155,9 @@ template<typename T> RetainPtr<T> dynamic_objc_cast(RetainPtr<id>&& object)
     return adoptNS(reinterpret_cast<T*>(object.leakRef()));
 }
 
-template<typename T, typename U, typename = std::enable_if_t<std::is_base_of_v<U, T>>> RetainPtr<T> dynamic_objc_cast(const RetainPtr<U>& object)
+template<typename T, typename U>
+    requires (std::is_base_of_v<U, T>)
+RetainPtr<T> dynamic_objc_cast(const RetainPtr<U>& object)
 {
     static_assert(std::is_base_of_v<U, T>);
     static_assert(!std::is_same_v<U, T>);

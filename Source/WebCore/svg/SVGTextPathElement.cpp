@@ -79,13 +79,13 @@ void SVGTextPathElement::attributeChanged(const QualifiedName& name, const AtomS
         Ref { m_startOffset }->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Other, newValue, parseError));
         break;
     case AttributeNames::methodAttr: {
-        SVGTextPathMethodType propertyValue = SVGPropertyTraits<SVGTextPathMethodType>::fromString(newValue);
+        SVGTextPathMethodType propertyValue = SVGPropertyTraits<SVGTextPathMethodType>::fromString(*this, newValue);
         if (propertyValue > 0)
             Ref { m_method }->setBaseValInternal<SVGTextPathMethodType>(propertyValue);
         break;
     }
     case AttributeNames::spacingAttr: {
-        SVGTextPathSpacingType propertyValue = SVGPropertyTraits<SVGTextPathSpacingType>::fromString(newValue);
+        SVGTextPathSpacingType propertyValue = SVGPropertyTraits<SVGTextPathSpacingType>::fromString(*this, newValue);
         if (propertyValue > 0)
             Ref { m_spacing }->setBaseValInternal<SVGTextPathSpacingType>(propertyValue);
         break;

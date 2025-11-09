@@ -28,6 +28,7 @@
 #include "HTMLDocumentParser.h"
 
 #include "CustomElementReactionQueue.h"
+#include "CustomElementRegistry.h"
 #include "DocumentFragment.h"
 #include "DocumentLoader.h"
 #include "EventLoop.h"
@@ -47,7 +48,7 @@
 #include "ScriptElement.h"
 #include "TaskSource.h"
 #include "ThrowOnDynamicMarkupInsertionCountIncrementer.h"
-
+#include <JavaScriptCore/JSGlobalObject.h>
 #include <wtf/SystemTracing.h>
 
 #if PLATFORM(COCOA)

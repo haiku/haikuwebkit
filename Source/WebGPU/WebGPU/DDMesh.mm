@@ -484,6 +484,7 @@ void DDMesh::update(WGPUDDUpdateMeshDescriptor* desc)
 #if ENABLE(WEBGPU_SWIFT)
     if (desc) {
         auto& descriptor = *desc;
+        descriptor.transform = m_transform;
         NSString *identifierString = descriptor.identifier.createNSString().get();
         [m_ddReceiver updateMesh:convertDescriptor(*desc) identifier:[[NSUUID alloc] initWithUUIDString:identifierString]];
         render();
@@ -554,6 +555,25 @@ void DDMesh::updateMaterial(WGPUDDUpdateMaterialDescriptor* desc)
 #endif
 }
 
+void DDMesh::setTransform(const simd_float4x4& transform)
+{
+#if ENABLE(WEBGPU_SWIFT)
+    m_transform = transform;
+    [m_ddReceiver setTransform:transform];
+#else
+    UNUSED_PARAM(transform);
+#endif
+}
+
+void DDMesh::setCameraDistance(float distance)
+{
+#if ENABLE(WEBGPU_SWIFT)
+    [m_ddReceiver setCameraDistance:distance];
+#else
+    UNUSED_PARAM(distance);
+#endif
+}
+
 }
 
 #pragma mark WGPU Stubs
@@ -583,6 +603,11 @@ WGPU_EXPORT void wgpuDDMeshRender(WGPUDDMesh mesh)
     WebGPU::protectedFromAPI(mesh)->render();
 }
 
+WGPU_EXPORT void wgpuDDMeshSetTransform(WGPUDDMesh mesh, const simd_float4x4& transform)
+{
+    WebGPU::protectedFromAPI(mesh)->setTransform(transform);
+}
+
 WGPU_EXPORT void wgpuDDTextureUpdate(WGPUDDMesh mesh, WGPUDDUpdateTextureDescriptor* desc)
 {
     WebGPU::protectedFromAPI(mesh)->updateTexture(desc);
@@ -601,4 +626,9 @@ WGPU_EXPORT void wgpuDDMaterialUpdate(WGPUDDMesh mesh, WGPUDDUpdateMaterialDescr
 WGPU_EXPORT void wgpuDDMaterialAdd(WGPUDDMesh mesh, WGPUDDMaterialDescriptor* desc)
 {
     WebGPU::protectedFromAPI(mesh)->addMaterial(desc);
+}
+
+WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance)
+{
+    WebGPU::protectedFromAPI(mesh)->setCameraDistance(distance);
 }

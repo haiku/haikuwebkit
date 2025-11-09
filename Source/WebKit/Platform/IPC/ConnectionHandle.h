@@ -71,7 +71,7 @@ public:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<ConnectionHandle, void>;
+    friend struct IPC::ArgumentCoder<ConnectionHandle>;
 
 #if USE(UNIX_DOMAIN_SOCKETS)
     UnixFileDescriptor m_handle;

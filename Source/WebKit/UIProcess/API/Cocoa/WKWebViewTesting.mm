@@ -369,6 +369,15 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
 #endif
 }
 
+- (BOOL)_didCallEndSwipeGestureForTesting
+{
+#if PLATFORM(MAC)
+    return _impl->didCallEndSwipeGestureForTesting();
+#else
+    return _gestureController && _gestureController->didCallEndSwipeGesture();
+#endif
+}
+
 - (void)_resetNavigationGestureStateForTesting
 {
 #if PLATFORM(MAC)

@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AcceleratedEffect.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include "AnimationEffect.h"
 #include "AnimationUtilities.h"
@@ -546,4 +546,4 @@ bool AcceleratedEffect::isPropertyAdditiveOrCumulative(KeyframeInterpolation::Pr
 
 } // namespace WebCore
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

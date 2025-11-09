@@ -1496,7 +1496,7 @@ void RenderTableCell::paintBackgroundsBehindCell(PaintInfo& paintInfo, LayoutPoi
     auto& bgLayers = style.backgroundLayers();
 
     auto color = style.visitedDependentColor(CSSPropertyBackgroundColor);
-    if (!bgLayers.hasImage() && !color.isVisible())
+    if (!Style::hasImageInAnyLayer(bgLayers) && !color.isVisible())
         return;
 
     color = style.colorByApplyingColorFilter(color);
@@ -1509,7 +1509,7 @@ void RenderTableCell::paintBackgroundsBehindCell(PaintInfo& paintInfo, LayoutPoi
     // or row group. Draw them at the backgroundObject's dimensions, but
     // clipped to this cell.
     // FIXME: This should also apply to columns and column groups.
-    bool paintBackgroundObject = backgroundObject != this && bgLayers.hasImage() && !is<RenderTableCol>(backgroundObject);
+    bool paintBackgroundObject = backgroundObject != this && Style::hasImageInAnyLayer(bgLayers) && !is<RenderTableCol>(backgroundObject);
     // We have to clip here because the background would paint
     // on top of the borders otherwise. This only matters for cells and rows.
     bool shouldClip = paintBackgroundObject || (backgroundObject->hasLayer() && (backgroundObject == this || backgroundObject == parent()) && tableElt->collapseBorders());

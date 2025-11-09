@@ -1163,58 +1163,54 @@ template<CSSPropertyID propertyID> void extractSerialization(ExtractorState& sta
 
 // MARK: - Utilities
 
-template<typename Layers, typename MappingFunctor> Ref<CSSValue> extractFillLayerValue(ExtractorState& state, const Layers& layers, MappingFunctor&& mapper)
+template<CSSPropertyID propertyID, typename List, typename Mapper> Ref<CSSValue> extractCoordinatedValueListValue(ExtractorState& state, const List& list, Mapper&& mapper)
 {
-    if (layers.size() == 1)
-        return mapper(state, layers.first());
-    CSSValueListBuilder list;
-    for (auto& layer : layers)
-        list.append(mapper(state, layer));
-    return CSSValueList::createCommaSeparated(WTFMove(list));
+    using PropertyAccessor = CoordinatedValueListPropertyConstAccessor<propertyID>;
+
+    CSSValueListBuilder resultListBuilder;
+
+    if constexpr (List::value_type::computedValueUsesUsedValues) {
+        for (auto& value : list.usedValues())
+            resultListBuilder.append(mapper(state, PropertyAccessor { value }.get(), value, list));
+    } else {
+        if (!list.isInitial()) {
+            for (auto& value : list.computedValues()) {
+                if (!PropertyAccessor { value }.isFilled())
+                    resultListBuilder.append(mapper(state, PropertyAccessor { value }.get(), value, list));
+            }
+        } else
+            resultListBuilder.append(mapper(state, PropertyAccessor::initial(), std::nullopt, list));
+    }
+
+    return CSSValueList::createCommaSeparated(WTFMove(resultListBuilder));
 }
 
-template<typename Layers, typename MappingFunctor> void extractFillLayerValueSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const Layers& layers, MappingFunctor&& mapper)
+template<CSSPropertyID propertyID, typename List, typename Mapper> void extractCoordinatedValueListSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const List& list, Mapper&& mapper)
 {
+    using PropertyAccessor = CoordinatedValueListPropertyConstAccessor<propertyID>;
+
     bool includeComma = false;
 
-    if (layers.size() == 1) {
-        mapper(state, builder, context, includeComma, layers.first());
-        return;
-    }
-
-    for (auto& layer : layers) {
-        mapper(state, builder, context, includeComma, layer);
-        includeComma = true;
-    }
-}
-
-template<typename AnimationListType, typename MappingFunctor> Ref<CSSValue> extractAnimationOrTransitionValue(ExtractorState& state, const AnimationListType& animationList, MappingFunctor&& mapper)
-{
-    CSSValueListBuilder list;
-    if (!animationList.isNone()) {
-        for (auto& animation : animationList) {
-            if (auto mappedValue = mapper(state, animation, animationList))
-                list.append(mappedValue.releaseNonNull());
+    if constexpr (List::value_type::computedValueUsesUsedValues) {
+        for (auto& value : list.usedValues()) {
+            if (includeComma)
+                builder.append(", "_s);
+            mapper(state, builder, context, PropertyAccessor { value }.get(), value, list);
+            includeComma = true;
         }
     } else {
-        if (auto mappedValue = mapper(state, std::nullopt, animationList))
-            list.append(mappedValue.releaseNonNull());
+        if (!list.isInitial()) {
+            for (auto& value : list.computedValues()) {
+                if (!PropertyAccessor { value }.isFilled()) {
+                    if (includeComma)
+                        builder.append(", "_s);
+                    mapper(state, builder, context, PropertyAccessor { value }.get(), value, list);
+                    includeComma = true;
+                }
+            }
+        } else
+            mapper(state, builder, context, PropertyAccessor::initial(), std::nullopt, list);
     }
-    return CSSValueList::createCommaSeparated(WTFMove(list));
-}
-
-template<typename AnimationListType, typename MappingFunctor> void extractAnimationOrTransitionValueSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const AnimationListType& animationList, MappingFunctor&& mapper)
-{
-    bool includeComma = false;
-    if (!animationList.isNone()) {
-        for (auto& animation : animationList) {
-            auto lengthBefore = builder.length();
-            mapper(state, builder, context, includeComma, animation, animationList);
-            if (builder.length() != lengthBefore)
-                includeComma = true;
-        }
-    } else
-        mapper(state, builder, context, includeComma, std::nullopt, animationList);
 }
 
 template<CSSPropertyID propertyID> Ref<CSSValue> extractCounterValue(ExtractorState& state)
@@ -1706,9 +1702,12 @@ template<CSSPropertyID property> inline Ref<CSSValue> extractFillLayerPropertySh
                 return style->backgroundLayers();
         }();
 
-        if (layers.size() == 1 && property == CSSPropertyMask && !layers.first().hasImage())
-            return 0;
-        return layers.size();
+        if constexpr (property == CSSPropertyMask) {
+            if (layers.usedLength() == 1 && !layers.usedFirst().hasImage())
+                return 0;
+        }
+
+        return layers.usedLength();
     }();
     if (!layerCount) {
         ASSERT(property == CSSPropertyMask);
@@ -2174,10 +2173,10 @@ inline void ExtractorCustom::extractGridTemplateRowsSerialization(ExtractorState
 inline Ref<CSSValue> convertSingleAnimationDuration(ExtractorState& state, const Style::SingleAnimationDuration& duration, const std::optional<Style::Animation>& animation, const Style::Animations& animationList)
 {
     auto animationListHasMultipleExplicitTimelines = [&] {
-        if (animationList.size() <= 1)
+        if (animationList.computedLength() <= 1)
             return false;
         auto explicitTimelines = 0;
-        for (auto& animation : animationList) {
+        for (auto& animation : animationList.computedValues()) {
             if (animation.isTimelineSet())
                 ++explicitTimelines;
             if (explicitTimelines > 1)
@@ -2203,38 +2202,19 @@ inline Ref<CSSValue> convertSingleAnimationDuration(ExtractorState& state, const
 
 inline Ref<CSSValue> ExtractorCustom::extractAnimationDuration(ExtractorState& state)
 {
-    auto mapper = [](auto& state, const std::optional<Style::Animation>& animation, const Style::Animations& animations) -> RefPtr<CSSValue> {
-        if (!animation)
-            return convertSingleAnimationDuration(state, Animation::initialDuration(), animation, animations);
-        if (!animation->isDurationFilled())
-            return convertSingleAnimationDuration(state, animation->duration(), animation, animations);
-        return nullptr;
+    auto mapper = [](auto& state, const auto& value, const std::optional<Animation>& animation, const auto& animations) -> Ref<CSSValue> {
+        return convertSingleAnimationDuration(state, value, animation, animations);
     };
-    return extractAnimationOrTransitionValue(state, state.style.animations(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyAnimationDuration>(state, state.style.animations(), mapper);
 }
 
 inline void ExtractorCustom::extractAnimationDurationSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    auto serializeSingleAnimationDuration = [](auto& state, auto& builder, const auto& context, const auto& duration, const std::optional<Style::Animation>& animation, const Style::Animations& animations) {
+    auto mapper = [&](auto& state, auto& builder, const auto& context, const auto& value, const std::optional<Animation>& animation, const auto& animations) {
         // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-        builder.append(convertSingleAnimationDuration(state, duration, animation, animations)->cssText(context));
+        builder.append(convertSingleAnimationDuration(state, value, animation, animations)->cssText(context));
     };
-
-    auto mapper = [&](auto& state, auto& builder, const auto& context, bool includeComma, const std::optional<Style::Animation>& animation, const Style::Animations& animations) {
-        if (!animation) {
-            if (includeComma)
-                builder.append(", "_s);
-            serializeSingleAnimationDuration(state, builder, context, Animation::initialDuration(), animation, animations);
-            return;
-        }
-        if (!animation->isDurationFilled()) {
-            if (includeComma)
-                builder.append(", "_s);
-            serializeSingleAnimationDuration(state, builder, context, animation->duration(), animation, animations);
-            return;
-        }
-    };
-    return extractAnimationOrTransitionValueSerialization(state, builder, context, state.style.animations(), mapper);
+    return extractCoordinatedValueListSerialization<CSSPropertyAnimationDuration>(state, builder, context, state.style.animations(), mapper);
 }
 
 inline Ref<CSSValue> ExtractorCustom::extractWidows(ExtractorState& state)
@@ -2371,11 +2351,11 @@ inline Ref<CSSValue> convertSingleAnimation(ExtractorState& state, const Animati
 inline RefPtr<CSSValue> ExtractorCustom::extractAnimationShorthand(ExtractorState& state)
 {
     auto& animations = state.style.animations();
-    if (animations.isNone())
+    if (animations.isInitial())
         return createCSSValue(state.pool, state.style, CSS::Keyword::None { });
 
     CSSValueListBuilder list;
-    for (auto& animation : animations) {
+    for (auto& animation : animations.computedValues()) {
         // If any of the reset-only longhands are set, we cannot serialize this value.
         if (animation.isTimelineSet() || animation.isRangeStartSet() || animation.isRangeEndSet()) {
             list.clear();
@@ -2389,18 +2369,18 @@ inline RefPtr<CSSValue> ExtractorCustom::extractAnimationShorthand(ExtractorStat
 inline void ExtractorCustom::extractAnimationShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     auto& animations = state.style.animations();
-    if (animations.isNone()) {
+    if (animations.isInitial()) {
         serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
         return;
     }
 
-    for (auto& animation : animations) {
+    for (auto& animation : animations.computedValues()) {
         // If any of the reset-only longhands are set, we cannot serialize this value.
         if (animation.isTimelineSet() || animation.isRangeStartSet() || animation.isRangeEndSet())
             return;
     }
 
-    builder.append(interleave(animations, [&](auto& builder, const auto& animation) {
+    builder.append(interleave(animations.computedValues(), [&](auto& builder, const auto& animation) {
         // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
         builder.append(convertSingleAnimation(state, animation, animations)->cssText(context));
     }, ", "_s));
@@ -2434,38 +2414,19 @@ static Ref<CSSValueList> convertAnimationRange(ExtractorState& state, const Sing
 
 inline RefPtr<CSSValue> ExtractorCustom::extractAnimationRangeShorthand(ExtractorState& state)
 {
-    auto mapper = [](auto& state, const std::optional<Style::Animation>& animation, const Style::Animations&) -> RefPtr<CSSValue> {
-        if (!animation)
-            return convertAnimationRange(state, Animation::initialRange());
-        if (!animation->isRangeFilled())
-            return convertAnimationRange(state, animation->range());
-        return nullptr;
+    auto mapper = [](auto& state, const auto& value, const std::optional<Animation>&, const auto&) -> Ref<CSSValue> {
+        return convertAnimationRange(state, value);
     };
-    return extractAnimationOrTransitionValue(state, state.style.animations(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyAnimationRange>(state, state.style.animations(), mapper);
 }
 
 inline void ExtractorCustom::extractAnimationRangeShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    auto serializeAnimationRange = [](auto& state, auto& builder, const auto& context, const auto& range) {
+    auto mapper = [&](auto& state, auto& builder, const auto& context, const auto& value, const std::optional<Animation>&, const auto&) {
         // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-        builder.append(convertAnimationRange(state, range)->cssText(context));
+        builder.append(convertAnimationRange(state, value)->cssText(context));
     };
-
-    auto mapper = [&](auto& state, auto& builder, const auto& context, bool includeComma, const std::optional<Style::Animation>& animation, const Style::Animations&) {
-        if (!animation) {
-            if (includeComma)
-                builder.append(", "_s);
-            serializeAnimationRange(state, builder, context, Animation::initialRange());
-            return;
-        }
-        if (!animation->isRangeFilled()) {
-            if (includeComma)
-                builder.append(", "_s);
-            serializeAnimationRange(state, builder, context, animation->range());
-            return;
-        }
-    };
-    return extractAnimationOrTransitionValueSerialization(state, builder, context, state.style.animations(), mapper);
+    return extractCoordinatedValueListSerialization<CSSPropertyAnimationRange>(state, builder, context, state.style.animations(), mapper);
 }
 
 inline RefPtr<CSSValue> ExtractorCustom::extractBackgroundShorthand(ExtractorState& state)
@@ -2498,20 +2459,18 @@ inline void ExtractorCustom::extractBackgroundShorthandSerialization(ExtractorSt
 
 inline RefPtr<CSSValue> ExtractorCustom::extractBackgroundPositionShorthand(ExtractorState& state)
 {
-    auto mapper = [](auto& state, auto& layer) -> Ref<CSSValue> {
-        return createCSSValue(state.pool, state.style, layer.position());
+    auto mapper = [](auto& state, const auto& value, const std::optional<BackgroundLayer>&, const auto&) -> Ref<CSSValue> {
+        return createCSSValue(state.pool, state.style, value);
     };
-    return extractFillLayerValue(state, state.style.backgroundLayers(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyBackgroundPosition>(state, state.style.backgroundLayers(), mapper);
 }
 
 inline void ExtractorCustom::extractBackgroundPositionShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    auto mapper = [](auto& state, auto& builder, const auto& context, bool includeComma, auto& layer) {
-        if (includeComma)
-            builder.append(", "_s);
-        serializationForCSS(builder, context, state.style, layer.position());
+    auto mapper = [](auto& state, auto& builder, const auto& context, const auto& value, const std::optional<BackgroundLayer>&, const auto&) {
+        serializationForCSS(builder, context, state.style, value);
     };
-    extractFillLayerValueSerialization(state, builder, context, state.style.backgroundLayers(), mapper);
+    extractCoordinatedValueListSerialization<CSSPropertyBackgroundPosition>(state, builder, context, state.style.backgroundLayers(), mapper);
 }
 
 inline RefPtr<CSSValue> ExtractorCustom::extractBlockStepShorthand(ExtractorState& state)
@@ -2806,20 +2765,18 @@ inline void ExtractorCustom::extractMaskBorderShorthandSerialization(ExtractorSt
 
 inline RefPtr<CSSValue> ExtractorCustom::extractMaskPositionShorthand(ExtractorState& state)
 {
-    auto mapper = [](auto& state, auto& layer) -> Ref<CSSValue> {
-        return createCSSValue(state.pool, state.style, layer.position());
+    auto mapper = [](auto& state, const auto& value, const std::optional<MaskLayer>&, const auto&) -> Ref<CSSValue> {
+        return createCSSValue(state.pool, state.style, value);
     };
-    return extractFillLayerValue(state, state.style.maskLayers(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyMaskPosition>(state, state.style.maskLayers(), mapper);
 }
 
 inline void ExtractorCustom::extractMaskPositionShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    auto mapper = [](auto& state, auto& builder, const auto& context, bool includeComma, auto& layer) {
-        if (includeComma)
-            builder.append(", "_s);
-        serializationForCSS(builder, context, state.style, layer.position());
+    auto mapper = [](auto& state, auto& builder, const auto& context, const auto& value, const std::optional<MaskLayer>&, const auto&) {
+        serializationForCSS(builder, context, state.style, value);
     };
-    extractFillLayerValueSerialization(state, builder, context, state.style.maskLayers(), mapper);
+    extractCoordinatedValueListSerialization<CSSPropertyMaskPosition>(state, builder, context, state.style.maskLayers(), mapper);
 }
 
 inline RefPtr<CSSValue> ExtractorCustom::extractOffsetShorthand(ExtractorState& state)
@@ -3077,11 +3034,11 @@ inline Ref<CSSValue> convertSingleTransition(ExtractorState& state, const Transi
 inline RefPtr<CSSValue> ExtractorCustom::extractTransitionShorthand(ExtractorState& state)
 {
     auto& transitions = state.style.transitions();
-    if (transitions.isNone())
+    if (transitions.isInitial())
         return createCSSValue(state.pool, state.style, CSS::Keyword::All { });
 
     CSSValueListBuilder list;
-    for (auto& transition : transitions)
+    for (auto& transition : transitions.computedValues())
         list.append(convertSingleTransition(state, transition));
     ASSERT(!list.isEmpty());
     return CSSValueList::createCommaSeparated(WTFMove(list));
@@ -3090,12 +3047,12 @@ inline RefPtr<CSSValue> ExtractorCustom::extractTransitionShorthand(ExtractorSta
 inline void ExtractorCustom::extractTransitionShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     auto& transitions = state.style.transitions();
-    if (transitions.isNone()) {
+    if (transitions.isInitial()) {
         serializationForCSS(builder, context, state.style, CSS::Keyword::All { });
         return;
     }
 
-    builder.append(interleave(transitions, [&](auto& builder, auto& transition) {
+    builder.append(interleave(transitions.computedValues(), [&](auto& builder, auto& transition) {
         // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
         builder.append(convertSingleTransition(state, transition)->cssText(context));
     }, ", "_s));

@@ -58,6 +58,8 @@ FrameLoadRequest::FrameLoadRequest(LocalFrame& frame, ResourceRequest&& resource
 
 FrameLoadRequest::~FrameLoadRequest() = default;
 
+FrameLoadRequest::FrameLoadRequest(const FrameLoadRequest&) = default;
+FrameLoadRequest& FrameLoadRequest::operator=(const FrameLoadRequest&) = default;
 FrameLoadRequest::FrameLoadRequest(FrameLoadRequest&&) = default;
 FrameLoadRequest& FrameLoadRequest::operator=(FrameLoadRequest&&) = default;
 

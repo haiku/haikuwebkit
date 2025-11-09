@@ -102,6 +102,7 @@ public:
         StringSymbolReplaceWatchpointSet,
         StringSymbolToPrimitiveWatchpointSet,
         RegExpPrimordialPropertiesWatchpointSet,
+        PromiseThenWatchpointSet,
         ArraySpeciesWatchpointSet,
         ArrayPrototypeChainIsSaneWatchpointSet,
         StringPrototypeChainIsSaneWatchpointSet,

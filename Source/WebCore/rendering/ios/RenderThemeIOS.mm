@@ -159,7 +159,7 @@ bool RenderThemeIOS::isControlStyled(const RenderStyle& style) const
 {
     // Buttons and MenulistButtons are styled if they contain a background image.
     if (style.usedAppearance() == StyleAppearance::PushButton || style.usedAppearance() == StyleAppearance::MenulistButton)
-        return !style.visitedDependentColor(CSSPropertyBackgroundColor).isVisible() || style.backgroundLayers().hasImage();
+        return !style.visitedDependentColor(CSSPropertyBackgroundColor).isVisible() || Style::hasImageInAnyLayer(style.backgroundLayers());
 
     if (style.usedAppearance() == StyleAppearance::TextField || style.usedAppearance() == StyleAppearance::TextArea || style.usedAppearance() == StyleAppearance::SearchField)
         return style.nativeAppearanceDisabled();
@@ -412,7 +412,7 @@ static inline bool canAdjustBorderRadiusForAppearance(StyleAppearance appearance
 
 void RenderThemeIOS::adjustRoundBorderRadius(RenderStyle& style, RenderBox& box)
 {
-    if (!canAdjustBorderRadiusForAppearance(style.usedAppearance(), box) || style.backgroundLayers().hasImage())
+    if (!canAdjustBorderRadiusForAppearance(style.usedAppearance(), box) || Style::hasImageInAnyLayer(style.backgroundLayers()))
         return;
 
     auto boxLogicalHeight = box.logicalHeight();
@@ -454,7 +454,6 @@ static void adjustSelectListButtonStyle(RenderStyle& style, const Element& eleme
     // Enforce "padding: 0 0.5em".
     applyCommonButtonPaddingToStyle(style, element);
 
-    // Enforce "line-height: normal".
     style.setLineHeight(CSS::Keyword::Normal { });
 }
 

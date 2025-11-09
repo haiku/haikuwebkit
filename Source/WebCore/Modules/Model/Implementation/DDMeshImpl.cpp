@@ -449,6 +449,22 @@ void DDMeshImpl::render()
 {
     wgpuDDMeshRender(m_backing.get());
 }
+
+void DDMeshImpl::setEntityTransform(const DDFloat4x4& transform)
+{
+    wgpuDDMeshSetTransform(m_backing.get(), transform);
+}
+
+std::optional<DDFloat4x4> DDMeshImpl::entityTransform() const
+{
+    return std::nullopt;
+}
+
+void DDMeshImpl::setCameraDistance(float distance)
+{
+    wgpuDDMeshSetCameraDistance(m_backing.get(), distance);
+}
+
 #endif
 
 Vector<MachSendRight> DDMeshImpl::ioSurfaceHandles()

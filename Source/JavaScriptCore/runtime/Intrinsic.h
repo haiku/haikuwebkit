@@ -210,6 +210,7 @@ namespace JSC {
     macro(PromiseConstructorRejectIntrinsic) \
     macro(PromiseRejectIntrinsic) \
     macro(PromisePrototypeThenIntrinsic) \
+    macro(PromisePrototypeCatchIntrinsic) \
     \
     /* Getter intrinsics. */ \
     macro(TypedArrayLengthIntrinsic) \

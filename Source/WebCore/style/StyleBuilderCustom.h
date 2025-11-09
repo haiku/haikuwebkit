@@ -127,6 +127,7 @@ inline OffsetRotate forwardInheritedValue(const OffsetRotate& value) { auto copy
 inline Position forwardInheritedValue(const Position& value) { auto copy = value; return copy; }
 inline PositionX forwardInheritedValue(const PositionX& value) { auto copy = value; return copy; }
 inline PositionY forwardInheritedValue(const PositionY& value) { auto copy = value; return copy; }
+inline RepeatStyle forwardInheritedValue(const RepeatStyle& value) { auto copy = value; return copy; }
 inline SVGBaselineShift forwardInheritedValue(const SVGBaselineShift& value) { auto copy = value; return copy; }
 inline SVGCenterCoordinateComponent forwardInheritedValue(const SVGCenterCoordinateComponent& value) { auto copy = value; return copy; }
 inline SVGCoordinateComponent forwardInheritedValue(const SVGCoordinateComponent& value) { auto copy = value; return copy; }
@@ -245,241 +246,75 @@ private:
     static float determineRubyTextSizeMultiplier(BuilderState&);
 };
 
-// MARK: - List Utilities
+// MARK: - CoordinatedValueList Utilities
 
-template<auto setter, auto getter>
-void fillRemainingViaRepetition(auto& list, size_t indexToStartAt)
+template<auto propertyID, auto listMutableGetter, typename ListType>
+void applyInitialCoordinatedValueListProperty(BuilderState& builderState)
 {
-    for (size_t i = indexToStartAt, patternIndex = 0; i < list.size(); ++i, ++patternIndex)
-        (list[i].*setter)(forwardInheritedValue((list[patternIndex % indexToStartAt].*getter)()));
+    using PropertyAccessor = CoordinatedValueListPropertyAccessor<propertyID>;
+
+    auto& list = (builderState.style().*listMutableGetter)();
+    ASSERT(list.computedLength() > 0);
+
+    PropertyAccessor { list[0] }.set(PropertyAccessor::initial());
+
+    for (size_t i = 0; i < list.computedLength(); ++i)
+        PropertyAccessor { list[i] }.clear();
 }
 
-// MARK: - FillLayer List Utilities
-
-template<auto layersSetter, auto layersInitial>
-void applyInitialPrimaryFillLayerProperty(BuilderState& builderState)
+template<auto propertyID, auto listMutableGetter, auto listGetter, typename ListType>
+void applyInheritCoordinatedValueListProperty(BuilderState& builderState)
 {
-    (builderState.style().*layersSetter)(layersInitial());
-}
+    using PropertyAccessor = CoordinatedValueListPropertyAccessor<propertyID>;
+    using ConstPropertyAccessor = CoordinatedValueListPropertyConstAccessor<propertyID>;
 
-template<auto layersSetter, auto layersGetter, auto getter, typename Layers>
-void applyInheritPrimaryFillLayerProperty(BuilderState& builderState)
-{
-    // Check for no-op before copying anything.
-    auto& layers = (builderState.style().*layersGetter)();
-    auto& parentLayers = (builderState.parentStyle().*layersGetter)();
-
-    if (layers == parentLayers)
-        return;
-
-    (builderState.style().*layersSetter)(
-        Layers {
-            Layers::Container::map(parentLayers.size(), parentLayers, [&](const typename Layers::Layer& parentLayer) {
-                return typename Layers::Layer { forwardInheritedValue((parentLayer.*getter)()) };
-            })
-        }
-    );
-}
-
-template<auto layersMutableGetter, auto layersSetter, auto setter, auto getter, auto initial, auto converter, typename Layers>
-void applyValuePrimaryFillLayerProperty(BuilderState& builderState, CSSValue& value)
-{
-    auto& layers = (builderState.style().*layersMutableGetter)();
-
-    if (layers.isNone()) {
-        if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
-            (builderState.style().*layersSetter)(
-                Layers {
-                    Layers::Container::map(valueList->size(), *valueList, [&](const CSSValue& item) {
-                        return typename Layers::Layer { converter(builderState, item) };
-                    })
-                }
-            );
-        } else {
-            (builderState.style().*layersSetter)(
-                Layers {
-                    Layers::Container::create({ typename Layers::Layer { converter(builderState, value) } })
-                }
-            );
-        }
-    } else {
-        auto set = [&](auto& layer, auto& item) {
-            // When the `background` or `mask` shorthands are used, implicit `initial` values may be inserted
-            // by the parser and must be handled explicitly here.
-            if (item.valueID() == CSSValueInitial)
-                (layer.*setter)(initial());
-            else
-                (layer.*setter)(converter(builderState, item));
-        };
-
-        size_t maxIndexSet = 0;
-        if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
-            auto numberOfOldLayers = layers.size();
-            auto numberOfNewLayers = valueList->size();
-
-            if (numberOfNewLayers > numberOfOldLayers) {
-                (builderState.style().*layersSetter)(
-                    Layers {
-                        Layers::Container::createWithSizeFromGenerator(numberOfNewLayers, [&](auto i) {
-                            auto newLayer = layers[i % numberOfOldLayers];
-                            set(newLayer, (*valueList)[i]);
-                            return newLayer;
-                        })
-                    }
-                );
-                maxIndexSet = numberOfNewLayers - 1;
-            } else {
-                for (auto [index, item] : indexedRange(*valueList)) {
-                    if (index >= numberOfOldLayers)
-                        break;
-
-                    set(layers[index], item);
-                    maxIndexSet = index;
-                }
-            }
-        } else
-            set(layers[0], value);
-
-        // We need to fill in any remaining values with the pattern specified.
-        fillRemainingViaRepetition<setter, getter>(layers, maxIndexSet + 1);
-    }
-}
-
-template<auto layersMutableGetter, auto setter, auto initial>
-void applyInitialSecondaryFillLayerProperty(BuilderState& builderState)
-{
-    auto& layers = (builderState.style().*layersMutableGetter)();
-
-    for (auto& layer : layers)
-        (layer.*setter)(initial());
-}
-
-template<auto layersMutableGetter, auto layersGetter, auto setter, auto getter>
-void applyInheritSecondaryFillLayerProperty(BuilderState& builderState)
-{
-    // Check for no-op before copying anything.
-    auto& layers = (builderState.style().*layersMutableGetter)();
-    auto& parentLayers = (builderState.parentStyle().*layersGetter)();
-
-    if (layers == parentLayers)
-        return;
-
-    auto numberOfLayers = layers.size();
-    auto numberOfParentLayers = parentLayers.size();
-
-    if (numberOfLayers > numberOfParentLayers) {
-        // Pattern repetition is needed.
-        for (size_t i = 0; i < numberOfParentLayers; ++i)
-            (layers[i].*setter)(forwardInheritedValue((parentLayers[i].*getter)()));
-
-        fillRemainingViaRepetition<setter, getter>(layers, numberOfParentLayers);
-    } else {
-        // Otherwise, no pattern repetition is needed.
-        for (size_t i = 0; i < numberOfLayers; ++i)
-            (layers[i].*setter)(forwardInheritedValue((parentLayers[i].*getter)()));
-    }
-}
-
-template<auto layersMutableGetter, auto setter, auto getter, auto initial, auto converter>
-void applyValueSecondaryFillLayerProperty(BuilderState& builderState, CSSValue& value)
-{
-    auto& layers = (builderState.style().*layersMutableGetter)();
-
-    auto set = [&](auto index, auto& item) {
-        // When the `background` or `mask` shorthands are used, implicit `initial` values may be inserted
-        // by the parser and must be handled explicitly here.
-        if (item.valueID() == CSSValueInitial)
-            (layers[index].*setter)(initial());
-        else
-            (layers[index].*setter)(converter(builderState, item));
-    };
-
-    size_t maxIndexSet = 0;
-    if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
-        for (auto [index, item] : indexedRange(*valueList)) {
-            if (index >= layers.size())
-                break;
-
-            set(index, item);
-            maxIndexSet = index;
-        }
-    } else {
-        set(0, value);
-    }
-
-    // We need to fill in any remaining values with the pattern specified.
-    fillRemainingViaRepetition<setter, getter>(layers, maxIndexSet + 1);
-}
-
-// MARK: - Animation or Transition List Utilities
-
-template<auto animationListMutableGetter, auto setter, auto initial, auto clear, typename ListType>
-void applyInitialAnimationOrTransitionProperty(BuilderState& builderState)
-{
-    auto& list = (builderState.style().*animationListMutableGetter)();
-    if (list.isEmpty())
-        list.append(typename ListType::value_type { });
-
-    (list[0].*setter)(initial());
-
-    // Reset any remaining animations to not have the property set.
-    for (size_t i = 0; i < list.size(); ++i)
-        (list[i].*clear)();
-}
-
-template<auto animationListMutableGetter, auto animationListGetter, auto getter, auto setter, auto clear, auto isSet, typename ListType>
-void applyInheritAnimationOrTransitionProperty(BuilderState& builderState)
-{
-    auto& list = (builderState.style().*animationListMutableGetter)();
-    auto& parentList = (builderState.parentStyle().*animationListGetter)();
+    auto& list = (builderState.style().*listMutableGetter)();
+    auto& parentList = (builderState.parentStyle().*listGetter)();
 
     size_t i = 0;
-    size_t parentSize = parentList.isNone() ? 0 : parentList.size();
+    size_t parentSize = parentList.isInitial() ? 0 : parentList.computedLength();
 
-    for (; i < parentSize && (parentList[i].*isSet)(); ++i) {
-        if (list.size() <= i)
+    for (; i < parentSize && ConstPropertyAccessor { parentList[i] }.isSet(); ++i) {
+        if (list.computedLength() <= i)
             list.append(typename ListType::value_type { });
-        (list[i].*setter)(forwardInheritedValue((parentList[i].*getter)()));
+        PropertyAccessor { list[i] }.set(forwardInheritedValue(ConstPropertyAccessor { parentList[i] }.get()));
     }
 
-    // Reset any remaining animations to not have the property set.
-    for (; i < list.size(); ++i)
-        (list[i].*clear)();
+    for (; i < list.computedLength(); ++i)
+        PropertyAccessor { list[i] }.clear();
 }
 
-template<auto animationListMutableGetter, auto setter, auto initial, auto clear, auto converter, typename ListType>
-void applyValuePrimaryAnimationOrTransitionProperty(BuilderState& builderState, CSSValue& value)
+template<auto propertyID, auto listMutableGetter, auto converter, typename ListType>
+void applyValueCoordinatedValueListProperty(BuilderState& builderState, CSSValue& value)
 {
-    auto& list = (builderState.style().*animationListMutableGetter)();
+    using PropertyAccessor = CoordinatedValueListPropertyAccessor<propertyID>;
+
+    auto& list = (builderState.style().*listMutableGetter)();
 
     auto set = [&](auto i, auto& item) {
         if (item.valueID() == CSSValueInitial)
-            (list[i].*setter)(initial());
+            PropertyAccessor { list[i] }.set(PropertyAccessor::initial());
         else
-            (list[i].*setter)(converter(builderState, item));
+            PropertyAccessor { list[i] }.set(converter(builderState, item));
     };
 
     size_t i = 0;
     if (RefPtr valueList = dynamicDowncast<CSSValueList>(value)) {
-        // Walk each value and put it into an animation, creating new animations as needed.
         for (Ref item : *valueList) {
-            if (i >= list.size())
+            if (i >= list.computedLength())
                 list.append(typename ListType::value_type { });
 
             set(i, item.get());
             ++i;
         }
     } else {
-        if (list.isEmpty())
-            list.append(typename ListType::value_type { });
-
+        ASSERT(list.computedLength() > 0);
         set(0, value);
         i = 1;
     }
 
-    // Reset any remaining animations to not have the property set.
-    for (; i < list.size(); ++i)
-        (list[i].*clear)();
+    for (; i < list.computedLength(); ++i)
+        PropertyAccessor { list[i] }.clear();
 }
 
 // MARK: - Custom conversions

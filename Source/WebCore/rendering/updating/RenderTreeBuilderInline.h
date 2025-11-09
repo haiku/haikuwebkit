@@ -50,6 +50,7 @@ private:
     void splitFlow(RenderInline& parent, RenderObject* beforeChild, RenderPtr<RenderBlock> newBlockBox, RenderPtr<RenderObject> child, RenderBoxModelObject* oldCont);
 
     RenderTreeBuilder& m_builder;
+    const bool m_buildsContinuations;
 };
 
 }

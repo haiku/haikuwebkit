@@ -206,6 +206,39 @@ ALWAYS_INLINE bool isUTCEquivalent(StringView timeZone)
     return timeZone == "Etc/UTC"_s || timeZone == "Etc/GMT"_s || timeZone == "GMT"_s;
 }
 
+// non-IANA timezones
+// https://github.com/unicode-org/icu/blob/main/icu4c/source/tools/tzcode/icuzones
+ALWAYS_INLINE bool isNonIANA(StringView timeZone)
+{
+    return (
+        timeZone == "ACT"_s
+        || timeZone == "AET"_s
+        || timeZone == "AGT"_s
+        || timeZone == "ART"_s
+        || timeZone == "AST"_s
+        || timeZone == "BET"_s
+        || timeZone == "BST"_s
+        || timeZone == "CAT"_s
+        || timeZone == "CNT"_s
+        || timeZone == "CST"_s
+        || timeZone == "CTT"_s
+        || timeZone == "EAT"_s
+        || timeZone == "ECT"_s
+        || timeZone == "IET"_s
+        || timeZone == "IST"_s
+        || timeZone == "JST"_s
+        || timeZone == "MIT"_s
+        || timeZone == "NET"_s
+        || timeZone == "NST"_s
+        || timeZone == "PLT"_s
+        || timeZone == "PNT"_s
+        || timeZone == "PRT"_s
+        || timeZone == "PST"_s
+        || timeZone == "SST"_s
+        || timeZone == "VST"_s
+    );
+}
+
 } // namespace JSC
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

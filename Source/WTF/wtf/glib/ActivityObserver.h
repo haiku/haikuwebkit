@@ -22,29 +22,61 @@
 #if USE(GLIB_EVENT_LOOP)
 
 #include <wtf/RunLoop.h>
+#include <wtf/ThreadSafeWeakPtr.h>
 
 namespace WTF {
 
 // Activity observers (used to implement WebCore::RunLoopObserver)
-class ActivityObserver : public RefCounted<ActivityObserver> {
+class ActivityObserver : public ThreadSafeRefCounted<ActivityObserver> {
     WTF_MAKE_TZONE_ALLOCATED(ActivityObserver);
 public:
-    enum class ContinueObservation { Yes, No };
-    using Callback = Function<ContinueObservation()>;
+    enum class NotifyResult {
+        Continue,
+        Stop,
+        Destroyed
+    };
 
-    static Ref<ActivityObserver> create(uint8_t order, OptionSet<RunLoop::Activity> activities, Callback&& callback)
+    using Callback = Function<NotifyResult()>;
+
+    static Ref<ActivityObserver> create(Ref<RunLoop>&& runLoop, uint8_t order, OptionSet<RunLoop::Activity> activities, Callback&& callback)
     {
-        return adoptRef(*new ActivityObserver(order, activities, WTFMove(callback)));
+        return adoptRef(*new ActivityObserver(WTFMove(runLoop), order, activities, WTFMove(callback)));
+    }
+
+    ~ActivityObserver()
+    {
+        ASSERT(!m_callback);
+    }
+
+    void start()
+    {
+        ASSERT(m_callback);
+        if (auto runLoop = m_runLoop.get())
+            runLoop->observeActivity(*this);
+    }
+
+    void stop()
+    {
+        ASSERT(m_callback);
+        if (auto runLoop = m_runLoop.get())
+            runLoop->unobserveActivity(*this);
+        m_callback = nullptr;
     }
 
     uint8_t order() const { return m_order; }
     OptionSet<RunLoop::Activity> activities() const { return m_activities; }
 
-    ContinueObservation notify() const { return m_callback(); }
+    NotifyResult notify() const
+    {
+        if (m_callback)
+            return m_callback();
+        return NotifyResult::Destroyed;
+    }
 
 private:
-    ActivityObserver(uint8_t order, OptionSet<RunLoop::Activity> activities, Callback&& callback)
-        : m_order(order)
+    ActivityObserver(Ref<RunLoop>&& runLoop, uint8_t order, OptionSet<RunLoop::Activity> activities, Callback&& callback)
+        : m_runLoop(WTFMove(runLoop))
+        , m_order(order)
         , m_activities(activities)
         , m_callback(WTFMove(callback))
     {
@@ -52,6 +84,7 @@ private:
     }
 
 private:
+    ThreadSafeWeakPtr<RunLoop> m_runLoop;
     uint8_t m_order { 0 };
     OptionSet<RunLoop::Activity> m_activities;
     Callback m_callback;

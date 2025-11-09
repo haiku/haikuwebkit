@@ -1453,6 +1453,7 @@
 		F472874727816BCE003EBE7F /* NSResponderTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F43C3823278133190099ABCE /* NSResponderTests.mm */; };
 		F4729F472D49895C003C602A /* test-rotated-cw-90.pdf in Copy Resources */ = {isa = PBXBuildFile; fileRef = F4729F462D49895C003C602A /* test-rotated-cw-90.pdf */; };
 		F472E00327D966F200F3A172 /* TextAlternatives.mm in Sources */ = {isa = PBXBuildFile; fileRef = F472E00227D966F200F3A172 /* TextAlternatives.mm */; };
+		F480A45E2EB508C2005DDAB6 /* UIKitTestingHelpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = F480A45D2EB508C2005DDAB6 /* UIKitTestingHelpers.mm */; };
 		F48D6C10224B377000E3E2FB /* PreferredContentMode.mm in Sources */ = {isa = PBXBuildFile; fileRef = F48D6C0F224B377000E3E2FB /* PreferredContentMode.mm */; };
 		F48E516E2D2E0591006F6A84 /* element-targeting-12.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = F48E51662D2E0570006F6A84 /* element-targeting-12.html */; };
 		F49153762901CEED004E2E97 /* CustomContentViewGestures.mm in Sources */ = {isa = PBXBuildFile; fileRef = F491536E2901CEED004E2E97 /* CustomContentViewGestures.mm */; };
@@ -4277,6 +4278,8 @@
 		F47D30ED1ED28A6C000482E1 /* gif-and-file-input.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "gif-and-file-input.html"; sourceTree = "<group>"; };
 		F47DFB2421A8704A00021FB6 /* data-detectors.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "data-detectors.html"; sourceTree = "<group>"; };
 		F47DFB2721A885E700021FB6 /* DataDetectorsCoreSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DataDetectorsCoreSPI.h; sourceTree = "<group>"; };
+		F480A45C2EB508C2005DDAB6 /* UIKitTestingHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UIKitTestingHelpers.h; sourceTree = "<group>"; };
+		F480A45D2EB508C2005DDAB6 /* UIKitTestingHelpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = UIKitTestingHelpers.mm; sourceTree = "<group>"; };
 		F4811E5821940B4400A5E0FD /* WKWebViewEditActions.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewEditActions.mm; sourceTree = "<group>"; };
 		F4856CA21E6498A8009D7EE7 /* attachment-element.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "attachment-element.html"; sourceTree = "<group>"; };
 		F486B1CF1F6794FF00F34BDD /* DataTransfer-setDragImage.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "DataTransfer-setDragImage.html"; sourceTree = "<group>"; };
@@ -4389,7 +4392,7 @@
 		F6FDDDD214241AD4004F1729 /* PrivateBrowsingPushStateNoHistoryCallback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PrivateBrowsingPushStateNoHistoryCallback.cpp; sourceTree = "<group>"; };
 		F6FDDDD514241C48004F1729 /* push-state.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "push-state.html"; sourceTree = "<group>"; };
 		FA049D0F2BCF22210099C221 /* LoadAndDecodeImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LoadAndDecodeImage.mm; sourceTree = "<group>"; };
-		FA4F24EB2E99923700B2247F /* StringMatcher.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = StringMatcher.mm; sourceTree = "<group>"; };
+		FA4F24EB2E99923700B2247F /* JSBuffer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = JSBuffer.mm; sourceTree = "<group>"; };
 		FA58F4572E1E062B0098E1C8 /* JSHandle.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = JSHandle.mm; sourceTree = "<group>"; };
 		FA65EFFC2C87F43C00A0A123 /* CoroutineUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoroutineUtilities.h; sourceTree = "<group>"; };
 		FA65F0042C87F4CF00A0A123 /* NetworkConnection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NetworkConnection.h; sourceTree = "<group>"; };
@@ -4897,6 +4900,7 @@
 				9B6D9FF8252EFDE500A51640 /* IPCTestingAPI.mm */,
 				5C69BDD41F82A7EB000F4F4B /* JavaScriptDuringNavigation.mm */,
 				5C0160C021A132320077FA32 /* JITEnabled.mm */,
+				FA4F24EB2E99923700B2247F /* JSBuffer.mm */,
 				FA58F4572E1E062B0098E1C8 /* JSHandle.mm */,
 				335406B42E3BEA96008B3349 /* LegacyPDFPluginTests.mm */,
 				C25CCA051E51380B0026CB8A /* LineBreaking.mm */,
@@ -5031,7 +5035,6 @@
 				CDC0932D21C993440030C4B0 /* StopSuspendResumeAllMedia.mm */,
 				414AD6852285D1B000777F2D /* StorageQuota.mm */,
 				515BE1701D428BD100DD7C68 /* StoreBlobThenDelete.mm */,
-				FA4F24EB2E99923700B2247F /* StringMatcher.mm */,
 				E5194E5F2D1C67AA0006B52F /* SwitchInputTests.mm */,
 				1C734B5220788C4800F430EA /* SystemColors.mm */,
 				31B76E4223298E2B007FED2C /* SystemPreview.mm */,
@@ -5187,6 +5190,8 @@
 				F4517B652054C49500C26721 /* TestWKWebViewController.h */,
 				F4517B662054C49500C26721 /* TestWKWebViewController.mm */,
 				2D2171C3262F8B8200C209DC /* UIKitMacHelperSPI.h */,
+				F480A45C2EB508C2005DDAB6 /* UIKitTestingHelpers.h */,
+				F480A45D2EB508C2005DDAB6 /* UIKitTestingHelpers.mm */,
 				F4CDAB3322489FE10057A2D9 /* UserInterfaceSwizzler.h */,
 			);
 			path = ios;
@@ -8074,6 +8079,7 @@
 				7CCE7ED31A411A7E00447C4C /* TypingStyleCrash.mm in Sources */,
 				57152B7821DD4E8D000C37CA /* U2fCommandConstructorTest.cpp in Sources */,
 				F460F6752614DE2F0064F2B6 /* UIFocusTests.mm in Sources */,
+				F480A45E2EB508C2005DDAB6 /* UIKitTestingHelpers.mm in Sources */,
 				F46849BE1EEF58E400B937FE /* UIPasteboardTests.mm in Sources */,
 				F402F56C23ECC2FB00865549 /* UIWKInteractionViewProtocol.mm in Sources */,
 				5C9D922C22D7DE12008E9266 /* UnifiedSource1-nonARC.mm in Sources */,

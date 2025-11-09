@@ -150,7 +150,7 @@ public:
     WTF::TextStream& dump(WTF::TextStream&) const;
 
 private:
-    friend struct IPC::ArgumentCoder<GraphicsContextState, void>;
+    friend struct IPC::ArgumentCoder<GraphicsContextState>;
 
     template<typename T>
     void setProperty(Change change, T GraphicsContextState::*property, const T& value)

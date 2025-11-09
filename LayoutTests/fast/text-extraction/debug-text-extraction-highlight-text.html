@@ -32,7 +32,11 @@
         if (!window.testRunner)
             return;
 
-        const debugText = await UIHelper.requestDebugText();
+        const debugText = await UIHelper.requestDebugText({
+            includeNodeIdentifiers: true,
+            includeEventListeners: true,
+            includeAccessibilityAttributes: true,
+        });
 
         error1 = await UIHelper.performTextExtractionInteraction("highlightText", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "Document title"),

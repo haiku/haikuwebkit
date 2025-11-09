@@ -323,7 +323,7 @@ void RTCDataChannel::fireOpenEventIfNeeded()
 
 Ref<RTCDataChannel> RTCDataChannel::create(ScriptExecutionContext& context, RTCDataChannelIdentifier identifier, String&& label, RTCDataChannelInit&& options, RTCDataChannelState state)
 {
-    RTCDataChannelRemoteHandler* remoteHandlerPtr = nullptr;
+    CheckedPtr<RTCDataChannelRemoteHandler> remoteHandlerPtr;
     std::unique_ptr<RTCDataChannelHandler> handler;
     if (identifier.processIdentifier() == Process::identifier())
         handler = RTCDataChannel::handlerFromIdentifier(identifier.object());

@@ -134,7 +134,7 @@ static bool isKeywordValidForTestUsingSharedRuleWithOverrideFunction(CSSValueID 
     }
 }
 
-static RefPtr<CSSValue> consumeBackgroundFillLayerTestPrimary(CSSParserTokenRange& range, CSS::PropertyParserState& state)
+static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestDiscrete(CSSParserTokenRange& range, CSS::PropertyParserState& state)
 {
     // <number>#
     auto consumeUnboundedRepetition = [](CSSParserTokenRange& range, CSS::PropertyParserState& state) -> RefPtr<CSSValue> {
@@ -147,7 +147,7 @@ static RefPtr<CSSValue> consumeBackgroundFillLayerTestPrimary(CSSParserTokenRang
     return consumeUnboundedRepetition(range, state);
 }
 
-static RefPtr<CSSValue> consumeBackgroundFillLayerTestSecondary(CSSParserTokenRange& range, CSS::PropertyParserState& state)
+static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestThreeWithConverter(CSSParserTokenRange& range, CSS::PropertyParserState& state)
 {
     // <number>#
     auto consumeUnboundedRepetition = [](CSSParserTokenRange& range, CSS::PropertyParserState& state) -> RefPtr<CSSValue> {
@@ -160,7 +160,7 @@ static RefPtr<CSSValue> consumeBackgroundFillLayerTestSecondary(CSSParserTokenRa
     return consumeUnboundedRepetition(range, state);
 }
 
-static RefPtr<CSSValue> consumeBackgroundFillLayerTestSecondaryWithConverter(CSSParserTokenRange& range, CSS::PropertyParserState& state)
+static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestTwo(CSSParserTokenRange& range, CSS::PropertyParserState& state)
 {
     // <number>#
     auto consumeUnboundedRepetition = [](CSSParserTokenRange& range, CSS::PropertyParserState& state) -> RefPtr<CSSValue> {
@@ -3194,12 +3194,12 @@ RefPtr<CSSValue> CSSPropertyParsing::parseStylePropertyLonghand(CSSParserTokenRa
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalBlock:
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline:
         return CSSPrimitiveValueResolver<CSS::Number<>>::consumeAndResolve(range, state);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestPrimary:
-        return consumeBackgroundFillLayerTestPrimary(range, state);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondary:
-        return consumeBackgroundFillLayerTestSecondary(range, state);
-    case CSSPropertyID::CSSPropertyBackgroundFillLayerTestSecondaryWithConverter:
-        return consumeBackgroundFillLayerTestSecondaryWithConverter(range, state);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
+        return consumeBackgroundCoordinatedValueListPropertyTestDiscrete(range, state);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
+        return consumeBackgroundCoordinatedValueListPropertyTestThreeWithConverter(range, state);
+    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
+        return consumeBackgroundCoordinatedValueListPropertyTestTwo(range, state);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:
         return consumeTestBoundedRepetitionWithCommas(range, state);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed:

@@ -79,7 +79,7 @@ public:
     MockContentFilterSettings(const MockContentFilterSettings&) = default;
     MockContentFilterSettings& operator=(const MockContentFilterSettings&) = default;
 private:
-    friend struct IPC::ArgumentCoder<MockContentFilterSettings, void>;
+    friend struct IPC::ArgumentCoder<MockContentFilterSettings>;
 
     bool m_enabled { false };
     DecisionPoint m_decisionPoint { DecisionPoint::AfterResponse };

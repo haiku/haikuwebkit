@@ -323,11 +323,6 @@ enum class FillRepeat : uint8_t {
     Space
 };
 
-enum class FillLayerType : bool {
-    Background,
-    Mask
-};
-
 // CSS3 Background Values
 enum class FillSizeType : uint8_t {
     Contain,

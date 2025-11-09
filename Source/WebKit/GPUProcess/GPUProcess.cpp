@@ -94,7 +94,7 @@ GPUProcess::GPUProcess()
 {
     RELEASE_LOG(Process, "%p - GPUProcess::GPUProcess:", this);
 #if ASSERT_ENABLED && PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-    CoreAudioSharedUnit::singleton().allowStarting();
+    CoreAudioSharedUnit::allowStarting();
 #endif
 }
 

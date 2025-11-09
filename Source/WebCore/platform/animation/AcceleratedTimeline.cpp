@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AcceleratedTimeline.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include <wtf/TZoneMallocInlines.h>
 
@@ -83,4 +83,4 @@ std::optional<ProgressResolutionData> AcceleratedTimeline::progressResolutionDat
 
 } // namespace WebCore
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

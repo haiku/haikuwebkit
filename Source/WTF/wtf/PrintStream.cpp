@@ -121,6 +121,11 @@ void printInternal(PrintStream& out, const StringImpl* string)
     printExpectedCStringHelper(out, "StringImpl*", string->tryGetUTF8());
 }
 
+void printInternal(PrintStream& stream, std::span<const char8_t> codeUnits)
+{
+    printInternal(stream, byteCast<char>(codeUnits));
+}
+
 void printInternal(PrintStream& out, bool value)
 {
     out.print(boolForPrinting(value));

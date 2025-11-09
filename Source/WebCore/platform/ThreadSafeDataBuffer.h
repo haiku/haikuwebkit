@@ -37,7 +37,7 @@ class ThreadSafeDataBuffer;
 class ThreadSafeDataBufferImpl : public ThreadSafeRefCounted<ThreadSafeDataBufferImpl> {
 private:
     friend class ThreadSafeDataBuffer;
-    friend struct IPC::ArgumentCoder<ThreadSafeDataBufferImpl, void>;
+    friend struct IPC::ArgumentCoder<ThreadSafeDataBufferImpl>;
 
     static Ref<ThreadSafeDataBufferImpl> create(Vector<uint8_t>&& data)
     {
@@ -59,7 +59,7 @@ private:
 
 class ThreadSafeDataBuffer {
 private:
-    friend struct IPC::ArgumentCoder<ThreadSafeDataBuffer, void>;
+    friend struct IPC::ArgumentCoder<ThreadSafeDataBuffer>;
 public:
     static ThreadSafeDataBuffer create(Vector<uint8_t>&& data)
     {

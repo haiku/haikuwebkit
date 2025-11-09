@@ -74,11 +74,13 @@ public:
     Function() = default;
     Function(std::nullptr_t) { }
 
-    template<typename CallableType, class = typename std::enable_if<!(std::is_pointer<CallableType>::value && std::is_function<typename std::remove_pointer<CallableType>::type>::value) && std::is_rvalue_reference<CallableType&&>::value>::type>
+    template<typename CallableType>
+        requires (!(std::is_pointer_v<CallableType> && std::is_function_v<typename std::remove_pointer_t<CallableType>>) && std::is_rvalue_reference_v<CallableType&&>)
     Function(CallableType&& callable)
         : m_callableWrapper(makeUnique<Detail::CallableWrapper<CallableType, Out, In...>>(std::forward<CallableType>(callable))) { }
 
-    template<typename FunctionType, class = typename std::enable_if<std::is_pointer<FunctionType>::value && std::is_function<typename std::remove_pointer<FunctionType>::type>::value>::type>
+    template<typename FunctionType>
+        requires (std::is_pointer_v<FunctionType> && std::is_function_v<typename std::remove_pointer_t<FunctionType>>)
     Function(FunctionType f)
         : m_callableWrapper(makeUnique<Detail::CallableWrapper<FunctionType, Out, In...>>(std::forward<FunctionType>(f))) { }
 
@@ -103,14 +105,16 @@ public:
 
     explicit operator bool() const { return !!m_callableWrapper; }
 
-    template<typename CallableType, class = typename std::enable_if<!(std::is_pointer<CallableType>::value && std::is_function<typename std::remove_pointer<CallableType>::type>::value) && std::is_rvalue_reference<CallableType&&>::value>::type>
+    template<typename CallableType>
+        requires (!(std::is_pointer_v<CallableType> && std::is_function_v<typename std::remove_pointer_t<CallableType>>) && std::is_rvalue_reference_v<CallableType&&>)
     Function& operator=(CallableType&& callable)
     {
         m_callableWrapper = makeUnique<Detail::CallableWrapper<CallableType, Out, In...>>(std::forward<CallableType>(callable));
         return *this;
     }
 
-    template<typename FunctionType, class = typename std::enable_if<std::is_pointer<FunctionType>::value && std::is_function<typename std::remove_pointer<FunctionType>::type>::value>::type>
+    template<typename FunctionType>
+        requires (std::is_pointer_v<FunctionType> && std::is_function_v<typename std::remove_pointer_t<FunctionType>>)
     Function& operator=(FunctionType f)
     {
         m_callableWrapper = makeUnique<Detail::CallableWrapper<FunctionType, Out, In...>>(std::forward<FunctionType>(f));

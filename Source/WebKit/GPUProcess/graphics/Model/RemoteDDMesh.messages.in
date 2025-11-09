@@ -38,5 +38,7 @@ messages -> RemoteDDMesh Stream {
     void UpdateTexture(WebCore::DDModel::DDUpdateTextureDescriptor descriptor)
     void AddMaterial(WebCore::DDModel::DDMaterialDescriptor descriptor)
     void UpdateMaterial(WebCore::DDModel::DDUpdateMaterialDescriptor descriptor)
+    void UpdateTransform(WebCore::DDModel::DDFloat4x4 transform)
+    void SetCameraDistance(float distance)
 }
 #endif

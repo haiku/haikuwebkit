@@ -265,9 +265,6 @@ static NSNumber *_currentBadge;
     if (targetURLIndex != NSNotFound && targetURLIndex + 1 < [args count])
         sTargetURL = [args objectAtIndex:targetURLIndex + 1];
 
-    if (!sTargetURL || [sTargetURL isEqualToString:@""])
-        sTargetURL = _settingsController.defaultURL;
-
     const NSUInteger siteIsolationIndex = [args indexOfObject:kSiteIsolationArgumentString];
     sForceSiteIsolationSetting = (siteIsolationIndex != NSNotFound && siteIsolationIndex + 1 < [args count]);
     if (sForceSiteIsolationSetting) {
@@ -375,6 +372,17 @@ static NSNumber *_currentBadge;
     return controller;
 }
 
+- (NSString *)targetURL
+{
+    NSString *url = sTargetURL;
+    sTargetURL = nil;
+
+    if (!url || [url isEqualToString:@""])
+        url = _settingsController.defaultURL;
+
+    return url;
+}
+
 - (IBAction)newWindow:(id)sender
 {
     BrowserWindowController *controller = [self createBrowserWindowController:sender];
@@ -382,7 +390,7 @@ static NSNumber *_currentBadge;
         return;
 
     [[controller window] makeKeyAndOrderFront:sender];
-    [controller loadURLString:sTargetURL];
+    [controller loadURLString:[self targetURL]];
 
     if (sOpenWebInspector)
         [controller showHideWebInspector:sender];
@@ -398,7 +406,7 @@ static NSNumber *_currentBadge;
     [[controller window] makeKeyAndOrderFront:sender];
     [_browserWindowControllers addObject:controller];
 
-    [controller loadURLString:sTargetURL];
+    [controller loadURLString:[self targetURL]];
 
     if (sOpenWebInspector)
         [controller showHideWebInspector:sender];

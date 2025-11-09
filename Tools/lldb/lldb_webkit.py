@@ -465,7 +465,7 @@ def btjs(debugger, command, result, internal_dict):
     thread = process.GetSelectedThread()
     jscModule = target.module["JavaScriptCore"] or target.module["libJavaScriptCore.so.1"]
 
-    if jscModule.FindSymbol("JSC::CallFrame::describeFrame").GetSize() or jscModule.FindSymbol("_ZN3JSC9CallFrame13describeFrameEv").GetSize():
+    if jscModule.FindSymbol("CallFrame::describeFrame").GetSize() or jscModule.FindSymbol("_ZN3JSC9CallFrame13describeFrameEv").GetSize():
         annotateJSFrames = True
     else:
         annotateJSFrames = False
@@ -1460,6 +1460,8 @@ class WTFMediaTimeProvider:
 
 
 def SummarizeJSValue(valobj, dict):
+    if "*" in valobj.GetTypeName():
+        valobj = valobj.Dereference()
     mirror = JSValueMirror(valobj)
     return mirror.summary()
 
@@ -1525,10 +1527,24 @@ class JSValueMirror:
         return self.bits == self.VALUE_TRUE
 
     def isInt32(self):
-        return self.bits & self.NUMBER_TAG == self.NUMBER_TAG
+        return self.bits & self.NUMBER_TAG == self.NUMBER_TAG or self.isHeapInt32()
+
+    def isHeapInt32(self):
+        if not self.isCell():
+            return False
+        cell = castSBValueToPointerType("JSCell", self.valobj)
+        mirror = JSCellMirror(cell, self.bits)
+        return mirror.m_type == JSCellMirror.Type.HEAP_INT32
+
+    def isHeapDouble(self):
+        if not self.isCell():
+            return False
+        cell = castSBValueToPointerType("JSCell", self.valobj)
+        mirror = JSCellMirror(cell, self.bits)
+        return mirror.m_type == JSCellMirror.Type.HEAP_DOUBLE
 
     def isNumber(self):
-        return self.bits & self.NUMBER_TAG != 0
+        return self.bits & self.NUMBER_TAG != 0 or self.isHeapDouble() or self.isHeapInt32()
 
     def isDouble(self):
         return self.isNumber() and not self.isInt32()
@@ -1538,20 +1554,34 @@ class JSValueMirror:
 
     def toInt32(self):
         assert self.isInt32()
+        if self.isHeapInt32():
+            return self.toHeapInt32()
         masked = self.bits & 0xFFFFFFFF
         if masked > 0x80000000:
             return masked - 0x100000000  # => -1
         else:
             return masked
 
+    def toHeapInt32(self):
+        assert self.isHeapInt32()
+        cell = castSBValueToPointerType("JSInt32", self.valobj)
+        return cell.GetChildMemberWithName("m_value").GetValueAsSigned()
+
+    def toHeapDouble(self):
+        assert self.isHeapDouble()
+        cell = castSBValueToPointerType("JSDouble", self.valobj)
+        return cell.GetChildMemberWithName("m_value").GetValueAsDouble()
+
     def toDouble(self):
         assert self.isDouble()
+        if self.isHeapDouble():
+            return self.toHeapDouble()
         corrected = self.bits - (1 << 49)
         return struct.unpack('<d', corrected.to_bytes(8, 'little'))[0]
 
     def summary(self):
         if self.isCell():
-            cell = castSBValueToPointerType("JSC::JSCell", self.valobj)
+            cell = castSBValueToPointerType("JSCell", self.valobj)
             mirror = JSCellMirror(cell, self.bits)
             return mirror.summary()
         if self.isNull():
@@ -1577,7 +1607,7 @@ class JSCellMirror:
         self.valobj = valobj
         self.bits = bits
         self.type = valobj.GetChildMemberWithName("m_type").GetValueAsUnsigned(0)
-        typeEnum = valobj.GetTarget().FindFirstType("JSC::JSType")
+        typeEnum = valobj.GetTarget().FindFirstType("enum JSType")
         self.enumMembers = typeEnum.GetEnumMembers()
 
     def enumMemberValue(self, enumMemberName):
@@ -1605,12 +1635,12 @@ class JSCellMirror:
 
     def summary(self):
         if self.isString():
-            string = castSBValueToPointerType("JSC::JSString", self.valobj)
+            string = castSBValueToPointerType("JSString", self.valobj)
             mirror = JSStringMirror(string)
             return mirror.summary(verbose=False)
         if self.isObject():
-            return "{JS object %s}" % (self.enumMemberName(self.type))
-        return "{{JS cell %s}}}" % (self.enumMemberName(self.type))
+            return "{JS object %s %010x}" % (self.enumMemberName(self.type), self.bits)
+        return "{JS cell %s %010x}" % (self.enumMemberName(self.type), self.bits)
 
 
 class JSStringMirror:

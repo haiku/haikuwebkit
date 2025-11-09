@@ -504,6 +504,14 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
             lineBox.addInlineLevelBox(InlineLevelBox::createGenericInlineLevelBox(layoutBox, style, logicalLeft));
             continue;
         }
+        if (run.isBlock()) {
+            auto& inlineLevelBoxGeometry = formattingContext.geometryForBox(layoutBox);
+            logicalLeft += inlineLevelBoxGeometry.marginStart();
+            auto atomicInlineBox = InlineLevelBox::createAtomicInlineBox(layoutBox, style, logicalLeft, inlineLevelBoxGeometry.borderBoxWidth());
+            setVerticalPropertiesForInlineLevelBox(lineBox, atomicInlineBox);
+            lineBox.addInlineLevelBox(WTFMove(atomicInlineBox));
+            continue;
+        }
         ASSERT(run.isOpaque());
     }
     lineBox.setHasContent(lineHasContent);

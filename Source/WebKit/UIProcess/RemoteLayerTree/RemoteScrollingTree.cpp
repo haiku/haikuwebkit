@@ -298,7 +298,7 @@ void RemoteScrollingTree::tryToApplyLayerPositions()
     applyLayerPositionsInternal();
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void RemoteScrollingTree::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations)
 {
     if (!m_progressBasedTimelineRegistry)

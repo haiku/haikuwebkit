@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <WebCore/DDFloat4x4.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
@@ -36,8 +37,14 @@
 #include <wtf/MachSendRight.h>
 #endif
 
+namespace WebCore {
+class TransformationMatrix;
+enum class StageModeOperation : bool;
+}
+
 namespace WebCore::DDModel {
 
+struct DDFloat4x4;
 struct DDMaterialDescriptor;
 struct DDMeshDescriptor;
 struct DDTextureDescriptor;
@@ -64,6 +71,12 @@ public:
     virtual void addMaterial(const DDMaterialDescriptor&) = 0;
     virtual void updateMaterial(const DDUpdateMaterialDescriptor&) = 0;
     virtual bool isRemoteDDMeshProxy() const { return false; }
+    virtual void setEntityTransform(const DDFloat4x4&) = 0;
+    virtual std::optional<DDFloat4x4> entityTransform() const = 0;
+    virtual bool supportsTransform(const WebCore::TransformationMatrix&) const { return false; }
+    virtual void setScale(float) { }
+    virtual void setCameraDistance(float) = 0;
+    virtual void setStageMode(WebCore::StageModeOperation) { }
 
     virtual void render() = 0;
 #if PLATFORM(COCOA)

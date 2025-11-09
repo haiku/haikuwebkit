@@ -553,6 +553,10 @@
 #define ENABLE_TEXT_SELECTION 1
 #endif
 
+#if !defined(ENABLE_THREADED_ANIMATIONS)
+#define ENABLE_THREADED_ANIMATIONS 0
+#endif
+
 #if !defined(ENABLE_THUNDER)
 #define ENABLE_THUNDER 0
 #endif

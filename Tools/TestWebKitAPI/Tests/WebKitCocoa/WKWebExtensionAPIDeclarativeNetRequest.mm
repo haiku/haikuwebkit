@@ -35,8 +35,7 @@
 
 namespace TestWebKitAPI {
 
-// FIXME: rdar://163669919 (REGRESSION(iOS26, Tahoe) [ iOS26 Tahoe Debug ]: TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.BlockedLoadInPrivateBrowsingTest is a constant timeout (301660))
-TEST(WKWebExtensionAPIDeclarativeNetRequest, DISABLED_BlockedLoadTest)
+TEST(WKWebExtensionAPIDeclarativeNetRequest, BlockedLoadTest)
 {
     TestWebKitAPI::HTTPServer server({
         { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },
@@ -86,8 +85,7 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, DISABLED_BlockedLoadTest)
     Util::run(&receivedActionNotification);
 }
 
-// FIXME: rdar://163669919 (REGRESSION(iOS26, Tahoe) [ iOS26 Tahoe Debug ]: TestWebKitAPI.WKWebExtensionAPIDeclarativeNetRequest.BlockedLoadInPrivateBrowsingTest is a constant timeout (301660))
-TEST(WKWebExtensionAPIDeclarativeNetRequest, DISABLED_BlockedLoadInPrivateBrowsingTest)
+TEST(WKWebExtensionAPIDeclarativeNetRequest, BlockedLoadInPrivateBrowsingTest)
 {
     TestWebKitAPI::HTTPServer server({
         { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },

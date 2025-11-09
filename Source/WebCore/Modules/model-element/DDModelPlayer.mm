@@ -171,16 +171,20 @@ void DDModelPlayer::load(Model& modelSource, LayoutSize size)
         });
     } modelUpdatedCallback:^(WebUpdateMeshRequest *updateRequest) {
         ensureOnMainThreadWithProtectedThis([updateRequest] (Ref<DDModelPlayer> protectedThis) {
-            if (protectedThis->m_currentModel)
-                protectedThis->m_currentModel->update(toCpp(updateRequest));
+            RefPtr model = protectedThis->m_currentModel;
+            if (model) {
+                model->update(toCpp(updateRequest));
+                protectedThis->setStageMode(protectedThis->m_stageMode);
+            }
 
             [protectedThis->m_modelLoader requestCompleted:updateRequest];
 
             if (RefPtr client = protectedThis->m_client.get(); client && !protectedThis->m_didFinishLoading) {
                 protectedThis->m_didFinishLoading = true;
                 client->didFinishLoading(protectedThis.get());
-                auto [simdCenter, simdExtents] = protectedThis->m_currentModel->getCenterAndExtents();
+                auto [simdCenter, simdExtents] = model->getCenterAndExtents();
                 client->didUpdateBoundingBox(protectedThis.get(), FloatPoint3D(simdCenter.x, simdCenter.y, simdCenter.z), FloatPoint3D(simdExtents.x, simdExtents.y, simdExtents.z));
+                protectedThis->notifyEntityTransformUpdated();
             }
         });
     } textureAddedCallback:^(WebDDAddTextureRequest *addTexture) {
@@ -215,8 +219,24 @@ void DDModelPlayer::load(Model& modelSource, LayoutSize size)
     [m_modelLoader loadModelFrom:nsURL.get()];
 }
 
-void DDModelPlayer::sizeDidChange(LayoutSize)
+void DDModelPlayer::notifyEntityTransformUpdated()
 {
+    RefPtr model = m_currentModel;
+    RefPtr client = m_client.get();
+    if (!model || !client || !model->entityTransform())
+        return;
+
+    auto scaledTransform = *model->entityTransform();
+    auto scale = m_currentScale;
+    scaledTransform.column0 *= scale;
+    scaledTransform.column1 *= scale;
+    scaledTransform.column2 *= scale;
+    client->didUpdateEntityTransform(*this, TransformationMatrix(static_cast<simd_float4x4>(scaledTransform)));
+}
+
+void DDModelPlayer::sizeDidChange(LayoutSize layoutSize)
+{
+    m_currentScale = static_cast<float>(layoutSize.minDimension());
 }
 
 void DDModelPlayer::enterFullscreen()
@@ -334,6 +354,45 @@ void DDModelPlayer::update()
 
     if (RefPtr client = m_client.get())
         client->didUpdate(*this);
+}
+
+bool DDModelPlayer::supportsTransform(TransformationMatrix transformationMatrix)
+{
+    if (m_stageMode != StageModeOperation::None)
+        return false;
+
+    if (RefPtr currentModel = m_currentModel)
+        return currentModel->supportsTransform(transformationMatrix);
+
+    return false;
+}
+
+std::optional<TransformationMatrix> DDModelPlayer::entityTransform() const
+{
+    if (RefPtr model = m_currentModel) {
+        if (auto transform = model->entityTransform())
+            return static_cast<simd_float4x4>(*transform);
+    }
+
+    return std::nullopt;
+}
+
+void DDModelPlayer::setStageMode(StageModeOperation stageMode)
+{
+    m_stageMode = stageMode;
+    if (m_stageMode == StageModeOperation::None)
+        return;
+
+    if (RefPtr model = m_currentModel) {
+        model->setStageMode(m_stageMode);
+        notifyEntityTransformUpdated();
+    }
+}
+
+void DDModelPlayer::setEntityTransform(TransformationMatrix matrix)
+{
+    if (RefPtr model = m_currentModel)
+        model->setEntityTransform(static_cast<simd_float4x4>(matrix));
 }
 
 } // namespace WebCore

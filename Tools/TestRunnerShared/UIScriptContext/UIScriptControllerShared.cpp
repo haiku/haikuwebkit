@@ -74,10 +74,12 @@ TextExtractionTestOptions* toTextExtractionTestOptions(JSContextRef context, JSV
     options.clipToBounds = booleanProperty(context, (JSObjectRef)argument, "clipToBounds", false);
     options.includeRects = booleanProperty(context, (JSObjectRef)argument, "includeRects", false);
     options.includeURLs = booleanProperty(context, (JSObjectRef)argument, "includeURLs", false);
+    options.includeEventListeners = booleanProperty(context, (JSObjectRef)argument, "includeEventListeners", false);
+    options.includeAccessibilityAttributes = booleanProperty(context, (JSObjectRef)argument, "includeAccessibilityAttributes", false);
     options.wordLimit = static_cast<unsigned>(numericProperty(context, (JSObjectRef)argument, "wordLimit"));
     options.mergeParagraphs = booleanProperty(context, (JSObjectRef)argument, "mergeParagraphs", false);
     options.skipNearlyTransparentContent = booleanProperty(context, (JSObjectRef)argument, "skipNearlyTransparentContent", false);
-    options.canIncludeIdentifiers = booleanProperty(context, (JSObjectRef)argument, "canIncludeIdentifiers", false);
+    options.includeNodeIdentifiers = booleanProperty(context, (JSObjectRef)argument, "includeNodeIdentifiers", false);
     return &options;
 }
 

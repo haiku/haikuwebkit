@@ -54,7 +54,7 @@ class UserContentProvider;
 class UserMessageHandlerDescriptor;
 class UserScript;
 class UserStyleSheet;
-class WebKitStringMatcher;
+class WebKitBuffer;
 
 class UserContentProviderInvalidationClient : public CanMakeWeakPtr<UserContentProviderInvalidationClient> {
 public:
@@ -75,8 +75,8 @@ public:
 #if ENABLE(USER_MESSAGE_HANDLERS)
     virtual void forEachUserMessageHandler(NOESCAPE const Function<void(const UserMessageHandlerDescriptor&)>&) const = 0;
 #endif
-    virtual bool hasStringMatchersForWorld(const DOMWrapperWorld&) const = 0;
-    virtual WebKitStringMatcher* stringMatcher(const DOMWrapperWorld&, const String&) const = 0;
+    virtual bool hasBuffersForWorld(const DOMWrapperWorld&) const = 0;
+    virtual WebKitBuffer* buffer(const DOMWrapperWorld&, const String&) const = 0;
 #if ENABLE(CONTENT_EXTENSIONS)
     virtual const ContentExtensions::ContentExtensionsBackend& userContentExtensionBackend() const = 0;
 #endif

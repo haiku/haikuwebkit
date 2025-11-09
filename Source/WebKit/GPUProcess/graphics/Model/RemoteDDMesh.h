@@ -97,6 +97,8 @@ private:
     void updateTexture(const WebCore::DDModel::DDUpdateTextureDescriptor&);
     void addMaterial(const WebCore::DDModel::DDMaterialDescriptor&);
     void updateMaterial(const WebCore::DDModel::DDUpdateMaterialDescriptor&);
+    void updateTransform(const WebCore::DDModel::DDFloat4x4& transform);
+    void setCameraDistance(float);
 
     void render();
 

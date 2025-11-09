@@ -44,7 +44,8 @@ public:
     {
     }
 
-    template<typename T, typename = std::enable_if_t<std::is_function_v<T>, T>>
+    template<typename T>
+        requires (std::is_function_v<T>)
     explicit RawPointer(T* value)
         : m_value(reinterpret_cast<const void*>(value))
     {

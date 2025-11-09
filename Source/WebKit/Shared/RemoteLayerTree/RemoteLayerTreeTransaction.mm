@@ -282,12 +282,6 @@ String RemoteLayerTreeTransaction::description() const
     if (m_pageScaleFactor != 1)
         ts.dumpProperty("pageScaleFactor"_s, m_pageScaleFactor);
 
-#if PLATFORM(MAC)
-    ts.dumpProperty("pageScalingLayer"_s, m_pageScalingLayerID);
-    ts.dumpProperty("scrolledContentsLayerID"_s, m_scrolledContentsLayerID);
-    ts.dumpProperty("mainFrameClipLayerID"_s, m_mainFrameClipLayerID);
-#endif
-
     ts.dumpProperty("minimumScaleFactor"_s, m_minimumScaleFactor);
     ts.dumpProperty("maximumScaleFactor"_s, m_maximumScaleFactor);
     ts.dumpProperty("initialScaleFactor"_s, m_initialScaleFactor);
@@ -296,7 +290,6 @@ String RemoteLayerTreeTransaction::description() const
     ts.dumpProperty("viewportMetaTagCameFromImageDocument"_s, m_viewportMetaTagCameFromImageDocument);
     ts.dumpProperty("allowsUserScaling"_s, m_allowsUserScaling);
     ts.dumpProperty("avoidsUnsafeArea"_s, m_avoidsUnsafeArea);
-    ts.dumpProperty("isInStableState"_s, m_isInStableState);
     ts.dumpProperty("renderTreeSize"_s, m_renderTreeSize);
     ts.dumpProperty("root-layer"_s, m_rootLayerID);
 
@@ -334,12 +327,6 @@ String RemoteLayerTreeTransaction::description() const
 
     if (!m_destroyedLayerIDs.isEmpty())
         ts.dumpProperty<Vector<WebCore::PlatformLayerIdentifier>>("destroyed-layers", m_destroyedLayerIDs);
-
-    if (m_editorState) {
-        TextStream::GroupScope scope(ts);
-        ts << "EditorState"_s;
-        ts << *m_editorState;
-    }
 
     ts.endGroup();
 

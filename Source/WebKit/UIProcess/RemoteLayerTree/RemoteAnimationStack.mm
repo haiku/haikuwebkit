@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteAnimationStack.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <wtf/TZoneMallocInlines.h>
@@ -216,4 +216,4 @@ void RemoteAnimationStack::clear(PlatformLayer *layer)
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

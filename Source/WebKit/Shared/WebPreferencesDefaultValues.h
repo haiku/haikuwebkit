@@ -192,6 +192,7 @@ bool defaultMutationEventsEnabled();
 bool defaultTrustedTypesEnabled();
 
 bool defaultGetBoundingClientRectZoomedEnabled();
+bool defaultFacebookLiveRecordingQuirkEnabled();
 
 #if HAVE(MATERIAL_HOSTING)
 bool defaultHostedBlurMaterialInMediaControlsEnabled();

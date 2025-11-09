@@ -52,7 +52,6 @@ selectors = [
     { name = "rectValue", class = "?" },
     { name = "rtfData", class = "?" },
     { name = "sendResponse:", class = "?" },
-    { name = "setAllowsGroupBlending:", class = "?" },
     { name = "setDefaultActionBundleIdentifier:", class = "?" },
     { name = "setHasHighLatencyDataProvider:", class = "?" },
     { name = "setRecipe:", class = "?" },

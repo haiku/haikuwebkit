@@ -53,7 +53,7 @@ namespace WebKit {
 class DisplayLink {
     WTF_MAKE_TZONE_ALLOCATED(DisplayLink);
 public:
-    class Client : public CanMakeThreadSafeCheckedPtr<Client, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
+    class Client : public CanMakeThreadSafeCheckedPtr<Client> {
         WTF_MAKE_TZONE_ALLOCATED(Client);
         WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Client);
     friend class DisplayLink;

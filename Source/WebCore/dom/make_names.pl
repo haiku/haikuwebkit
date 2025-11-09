@@ -512,7 +512,13 @@ END
     my $settingsConditional = $allElements{$elementKey}{settingsConditional};
     my $deprecatedGlobalSettingsConditional = $allElements{$elementKey}{deprecatedGlobalSettingsConditional};
     if ($settingsConditional) {
-        $runtimeCondition = "document.settings().${settingsConditional}()";
+        if ($settingsConditional =~ /&/) {
+            my @conditions = split(/&/, $settingsConditional);
+            my @runtime_parts = map { "document.settings().$_()" } @conditions;
+            $runtimeCondition = join(' && ', @runtime_parts);
+        } else {
+            $runtimeCondition = "document.settings().${settingsConditional}()";
+        }
     } elsif ($deprecatedGlobalSettingsConditional) {
         $runtimeCondition = "DeprecatedGlobalSettings::${deprecatedGlobalSettingsConditional}Enabled()";
     }

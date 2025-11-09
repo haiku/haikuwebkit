@@ -585,10 +585,18 @@ void LineLayout::updateRenderTreePositions(const Vector<LineAdjustment>& lineAdj
                 continue;
 
             auto& layoutBox = box.layoutBox();
+
+            if (layoutBox.isBlockLevelBox() && layoutBox.isInFlow()) {
+                auto& renderer = downcast<RenderBox>(*box.layoutBox().rendererForIntegration());
+                renderer.setLocation(Layout::toLayoutPoint(box.visualRectIgnoringBlockDirection().location()));
+                continue;
+            }
+
             if (!layoutBox.isAtomicInlineBox())
                 continue;
 
             auto& renderer = downcast<RenderBox>(*box.layoutBox().rendererForIntegration());
+
             if (auto* layer = renderer.layer())
                 layer->setIsHiddenByOverflowTruncation(box.isFullyTruncated());
 

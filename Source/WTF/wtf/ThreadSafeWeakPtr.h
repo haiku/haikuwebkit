@@ -341,7 +341,8 @@ public:
         , m_controlBlock(std::exchange(other.m_controlBlock, nullptr))
     { }
 
-    template<typename U, std::enable_if_t<!std::is_pointer_v<U>>* = nullptr>
+    template<typename U>
+        requires (!std::is_pointer_v<U>)
     ThreadSafeWeakPtr(const U& retainedReference)
         : m_objectOfCorrectType(static_cast<const T*>(&retainedReference))
         , m_controlBlock(controlBlock(retainedReference))
@@ -384,7 +385,8 @@ public:
         return *this;
     }
 
-    template<typename U, std::enable_if_t<!std::is_pointer_v<U>>* = nullptr>
+    template<typename U>
+        requires (!std::is_pointer_v<U>)
     ThreadSafeWeakPtr& operator=(const U& retainedReference)
     {
         m_controlBlock = controlBlock(retainedReference);

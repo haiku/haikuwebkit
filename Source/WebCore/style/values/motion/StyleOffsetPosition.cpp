@@ -37,7 +37,7 @@
 namespace WebCore {
 namespace Style {
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 auto OffsetPosition::convert(const AcceleratedEffectOffsetPosition& value) -> Variant<CSS::Keyword::Auto, CSS::Keyword::Normal, Position>
 {
@@ -96,7 +96,7 @@ auto Blending<OffsetPosition>::blend(const OffsetPosition& a, const OffsetPositi
 
 // MARK: - Evaluation
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 auto Evaluation<OffsetPosition, AcceleratedEffectOffsetPosition>::operator()(const OffsetPosition& value, FloatSize referenceBox, ZoomNeeded token) -> AcceleratedEffectOffsetPosition
 {

@@ -14,16 +14,11 @@ Platform/IPC/ArgumentCoders.h
 [ iOS ] UIProcess/ios/WKContentViewInteraction.mm
 [ iOS ] UIProcess/ios/WebPageProxyIOS.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
-WebProcess/InjectedBundle/API/Cocoa/WKWebProcessPlugInFrame.mm
 WebProcess/InjectedBundle/API/mac/WKDOMDocument.mm
-WebProcess/InjectedBundle/API/mac/WKDOMElement.mm
 WebProcess/InjectedBundle/API/mac/WKDOMNode.mm
 WebProcess/InjectedBundle/API/mac/WKDOMRange.mm
-WebProcess/InjectedBundle/API/mac/WKDOMText.mm
 WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
-WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm
 [ iOS ] WebProcess/WebPage/WebFoundTextRangeController.cpp
-WebProcess/WebPage/WebFrame.cpp
 [ iOS ] WebProcess/WebPage/ios/FindControllerIOS.mm
 [ iOS ] WebProcess/WebPage/ios/WebPageIOS.mm

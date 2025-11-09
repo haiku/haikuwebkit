@@ -34,7 +34,11 @@
         if (!window.testRunner)
             return;
 
-        const debugText = await UIHelper.requestDebugText();
+        const debugText = await UIHelper.requestDebugText({
+            includeNodeIdentifiers: true,
+            includeEventListeners: true,
+            includeAccessibilityAttributes: true,
+        });
 
         clickError = await UIHelper.performTextExtractionInteraction("click", {
             nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "Click Me")

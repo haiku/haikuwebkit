@@ -170,7 +170,7 @@ public:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<EventRegion, void>;
+    friend struct IPC::ArgumentCoder<EventRegion>;
 #if ENABLE(TOUCH_ACTION_REGIONS)
     void uniteTouchActions(const Region&, OptionSet<TouchAction>);
 #endif

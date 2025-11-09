@@ -365,7 +365,7 @@ inline bool ElementRareData::hasRandomCachingKeyMap() const
 inline ElementRareData* Element::elementRareData() const
 {
     ASSERT_WITH_SECURITY_IMPLICATION(hasRareData());
-    return static_cast<ElementRareData*>(rareData());
+    return downcast<ElementRareData>(rareData());
 }
 
 inline ShadowRoot* Node::shadowRoot() const
@@ -394,3 +394,7 @@ inline void Element::removeShadowRoot()
 }
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ElementRareData)
+    static bool isType(const WebCore::NodeRareData& rareData) { return rareData.isElementRareData(); }
+SPECIALIZE_TYPE_TRAITS_END()

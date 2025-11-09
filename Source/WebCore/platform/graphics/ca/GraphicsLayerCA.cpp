@@ -75,7 +75,7 @@
 #include "WebCoreThread.h"
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedEffect.h"
 #include "AcceleratedEffectStack.h"
 #endif
@@ -700,7 +700,7 @@ void GraphicsLayerCA::moveOrCopyLayerAnimation(MoveOrCopy operation, const Strin
 
 void GraphicsLayerCA::moveOrCopyAnimations(MoveOrCopy operation, PlatformCALayer *fromLayer, PlatformCALayer *toLayer)
 {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     if (RefPtr effectsStack = acceleratedEffectStack()) {
         auto isBackdropLayer = [&] {
             SUPPRESS_UNRETAINED_LOCAL if (auto* platformLayer = fromLayer->platformLayer())
@@ -3635,7 +3635,7 @@ void GraphicsLayerCA::updateAnimations()
 
 bool GraphicsLayerCA::isRunningTransformAnimation() const
 {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     if (RefPtr effectStack = acceleratedEffectStack()) {
         return effectStack->primaryLayerEffects().findIf([](auto& effect) {
             return effect->animatesTransformRelatedProperty();
@@ -5284,13 +5284,13 @@ Vector<std::pair<String, double>> GraphicsLayerCA::acceleratedAnimationsForTesti
 {
     Vector<std::pair<String, double>> animations;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     auto addAcceleratedEffect = [&](const AcceleratedEffect& effect) {
         for (auto property : effect.animatedProperties())
             animations.append({ acceleratedEffectPropertyIDAsString(property), effect.playbackRate() });
     };
 
-    if (settings.threadedAnimationResolutionEnabled()) {
+    if (settings.threadedScrollDrivenAnimationsEnabled() || settings.threadedTimeBasedAnimationsEnabled()) {
         if (RefPtr effectsStack = acceleratedEffectStack()) {
             for (auto& effect : effectsStack->primaryLayerEffects())
                 addAcceleratedEffect(effect.get());
@@ -5325,7 +5325,7 @@ RefPtr<GraphicsLayerAsyncContentsDisplayDelegate> GraphicsLayerCA::createAsyncCo
     return adoptRef(new GraphicsLayerAsyncContentsDisplayDelegateCocoa(*this));
 }
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 void GraphicsLayerCA::setAcceleratedEffectsAndBaseValues(AcceleratedEffects&& effects, AcceleratedEffectValues&& baseValues)
 {
     auto hadEffectStack = !!acceleratedEffectStack();

@@ -26,7 +26,7 @@
 #include "config.h"
 #include "AcceleratedEffectValues.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #include "IntSize.h"
 #include "MotionPath.h"
@@ -190,4 +190,4 @@ TransformationMatrix AcceleratedEffectValues::computedTransformationMatrix(const
 
 } // namespace WebCore
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

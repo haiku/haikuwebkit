@@ -255,7 +255,7 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
 
         if (style.hasPositionedMask()) {
             // FIXME: We should support all the values in the CSS mask property, but for now just use the first mask-image if it's a reference.
-            if (RefPtr maskImage = style.maskLayers().first().image().tryStyleImage()) {
+            if (RefPtr maskImage = style.maskLayers().usedFirst().image().tryStyleImage()) {
                 auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(maskImage->url(), document);
                 if (auto* masker = getRenderSVGResourceById<LegacyRenderSVGResourceMasker>(treeScope, resourceID))
                     ensureResources(foundResources).setMasker(masker);

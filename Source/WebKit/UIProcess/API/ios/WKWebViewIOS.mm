@@ -34,6 +34,7 @@
 #import "NativeWebWheelEvent.h"
 #import "NavigationState.h"
 #import "PointerTouchCompatibilitySimulator.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeDrawingAreaProxy.h"
 #import "RemoteLayerTreeScrollingPerformanceData.h"
 #import "RemoteLayerTreeViews.h"
@@ -1131,7 +1132,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     return needUpdateVisibleContentRects;
 }
 
-- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction
+- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction mainFrameData:(const std::optional<WebKit::MainFrameData>&)mainFrameData
 {
     if (layerTreeTransaction.isMainFrameProcessTransaction()) {
         [self _trackTransactionCommit:layerTreeTransaction];
@@ -1139,7 +1140,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
         _perProcessState.lastTransactionID = layerTreeTransaction.transactionID();
 
 #if HAVE(LIQUID_GLASS)
-        bool isEnteringStableState = !std::exchange(_perProcessState.lastTransactionWasInStableState, layerTreeTransaction.isInStableState());
+        bool isEnteringStableState = !std::exchange(_perProcessState.lastTransactionWasInStableState, mainFrameData->isInStableState);
 #endif
 
         if (![self usesStandardContentView])
@@ -1202,7 +1203,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
         _perProcessState.viewportMetaTagCameFromImageDocument = layerTreeTransaction.viewportMetaTagCameFromImageDocument();
         _perProcessState.initialScaleFactor = layerTreeTransaction.initialScaleFactor();
 
-        if (_page->inStableState() && layerTreeTransaction.isInStableState() && [_stableStatePresentationUpdateCallbacks count]) {
+        if (_page->inStableState() && mainFrameData->isInStableState && [_stableStatePresentationUpdateCallbacks count]) {
             for (dispatch_block_t action in _stableStatePresentationUpdateCallbacks.get())
                 action();
 

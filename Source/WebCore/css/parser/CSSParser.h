@@ -124,7 +124,6 @@ public:
     static IsImportant consumeTrailingImportantAndWhitespace(CSSParserTokenRange&);
 
     static RefPtr<StyleRuleNestedDeclarations> parseNestedDeclarations(const CSSParserContext&, const String&);
-    static std::optional<Style::Color> parseColorOrCurrentColorWithoutContext(const String&);
 
     CSSTokenizer* tokenizer() const { return m_tokenizer.get(); }
 

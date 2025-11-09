@@ -46,6 +46,7 @@
 #import <WebKit/WebKitPrivate.h>
 #import <WebKit/_WKActivatedElementInfo.h>
 #import <WebKit/_WKFrameTreeNode.h>
+#import <WebKit/_WKJSHandle.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <WebKit/_WKTextInputContext.h>
 #import <objc/runtime.h>
@@ -804,6 +805,12 @@ static IterationStatus forEachCALayer(CALayer *layer, IterationStatus(^visitor)(
     }];
     TestWebKitAPI::Util::run(&done);
     return result.autorelease();
+}
+
+- (_WKJSHandle *)querySelector:(NSString *)selector frame:(WKFrameInfo *)frame world:(WKContentWorld *)world
+{
+    RetainPtr script = [NSString stringWithFormat:@"window.webkit.createJSHandle(document.querySelector('%@'))", selector];
+    return dynamic_objc_cast<_WKJSHandle>([self objectByEvaluatingJavaScript:script.get() inFrame:frame inContentWorld:world]);
 }
 
 @end

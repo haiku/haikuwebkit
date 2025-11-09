@@ -7,7 +7,6 @@
 [ iOS ] UIProcess/ios/WKContentView.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
-WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 [ iOS ] WebProcess/WebCoreSupport/WebLocalFrameLoaderClient.cpp
 [ iOS ] WebProcess/WebPage/Cocoa/WebPageCocoa.mm
 [ iOS ] WebProcess/WebPage/ViewGestureGeometryCollector.cpp

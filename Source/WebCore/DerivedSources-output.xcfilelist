@@ -1642,6 +1642,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLScriptElement.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLScriptElement.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSelectElement.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSelectElement.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSelectedContentElement.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSelectedContentElement.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSlotElement.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSlotElement.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSHTMLSourceElement.cpp
@@ -3384,6 +3386,10 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObject.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObject.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObjectOES.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebGLVertexArrayObjectOES.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitBuffer.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitBuffer.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitBufferNamespace.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitBufferNamespace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitJSHandle.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitJSHandle.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitMediaKeyError.cpp
@@ -3404,12 +3410,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPoint.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitPoint.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitSerializedNode.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitSerializedNode.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatcher.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatcher.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatcherOptions.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatcherOptions.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatchersNamespace.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebKitStringMatchersNamespace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLock.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLock.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSWebLockGrantedCallback.cpp
@@ -3768,8 +3768,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebCore_BUILTINS_DEPENDENCIES_LIST
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebCore_BUILTINS_SOURCES_LIST
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebKitFontFamilyNames.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebKitFontFamilyNames.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebKitStringMatchersNamespace.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebKitStringMatchersNamespace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WorkerGlobalScopeConstructors.idl
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WorkletGlobalScopeConstructors.idl
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WritableStreamDefaultControllerBuiltins.cpp

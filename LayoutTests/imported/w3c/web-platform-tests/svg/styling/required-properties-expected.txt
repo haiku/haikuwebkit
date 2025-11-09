@@ -70,7 +70,6 @@ PASS Property "text-indent" is supported
 PASS Property "text-orientation" is supported
 PASS Property "text-overflow" is supported
 PASS Property "text-rendering" is supported
-FAIL Property "text-space-collapse" is supported assert_true: expected true got false
 PASS Property "transform" is supported
 PASS Property "transform-box" is supported
 PASS Property "transform-origin" is supported
@@ -79,6 +78,7 @@ PASS Property "vector-effect" is supported
 PASS Property "vertical-align" is supported
 PASS Property "visibility" is supported
 PASS Property "white-space" is supported
+PASS Property "white-space-collapse" is supported
 PASS Property "word-spacing" is supported
 PASS Property "writing-mode" is supported
 

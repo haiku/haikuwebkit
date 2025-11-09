@@ -192,12 +192,13 @@ inline void assertIsHeld(const UnfairLock& lock) WTF_ASSERTS_ACQUIRED_LOCK(lock)
 // Locker specialization to use with Lock and UnfairLock that integrates with thread safety analysis.
 // Non-movable simple scoped lock holder.
 // Example: Locker locker { m_lock };
-template <typename T>
+template<typename T>
 #if ENABLE(UNFAIR_LOCK)
-class WTF_CAPABILITY_SCOPED_LOCK Locker<T, std::enable_if_t<std::is_same_v<T, Lock> || std::is_same_v<T, UnfairLock>>> : public AbstractLocker {
+    requires (std::same_as<T, Lock> || std::same_as<T, UnfairLock>)
 #else
-class WTF_CAPABILITY_SCOPED_LOCK Locker<T, std::enable_if_t<std::is_same_v<T, Lock>>> : public AbstractLocker {
+    requires (std::same_as<T, Lock>)
 #endif
+class WTF_CAPABILITY_SCOPED_LOCK Locker<T> : public AbstractLocker {
 public:
     explicit Locker(T& lock) WTF_ACQUIRES_LOCK(lock)
         : m_lock(lock)

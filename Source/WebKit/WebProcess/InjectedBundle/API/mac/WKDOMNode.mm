@@ -44,7 +44,8 @@
     if (!self)
         return nil;
 
-    _impl = impl;
+    RELEASE_ASSERT(impl);
+    lazyInitialize(_impl, Ref { *impl });
     WebKit::WKDOMNodeCache().add(impl, self);
 
     return self;

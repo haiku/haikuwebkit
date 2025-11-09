@@ -206,8 +206,12 @@ static Color colorWithTargetLuminance(Color color, float targetLuminance)
 
 namespace WebCore {
 
-static constexpr auto logicalSwitchHeight = 31.f;
 static constexpr auto logicalSwitchWidth = 51.f;
+#if PLATFORM(IOS_FAMILY)
+static constexpr auto logicalSwitchHeight = 31.f;
+#else
+static constexpr auto logicalSwitchHeight = 18.f;
+#endif
 
 static constexpr FloatSize idealRefreshedSwitchSize = { 64, 28 };
 static constexpr auto logicalRefreshedSwitchWidth = logicalSwitchHeight * (idealRefreshedSwitchSize.width() / idealRefreshedSwitchSize.height());
@@ -1939,7 +1943,7 @@ static FloatRect spinButtonRectForContentRect(const RenderElement& box, const Fl
 
 #endif
 
-bool RenderThemeCocoa::paintInnerSpinButtonStyleForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintInnerSpinButtonForVectorBasedControls(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(box);
@@ -2439,16 +2443,6 @@ static void applyCommonButtonPaddingToStyleForVectorBasedControls(RenderStyle& s
     applyPaddingIfNotExplicitlySet(style, paddingBox);
 }
 
-static void adjustSelectListButtonStyleForVectorBasedControls(RenderStyle& style, const Element& element)
-{
-    // FIXME: This is a copy of adjustSelectListButtonStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
-
-    applyCommonButtonPaddingToStyleForVectorBasedControls(style, element);
-
-    // Enforce "line-height: normal".
-    style.setLineHeight(CSS::Keyword::Normal { });
-}
-
 // FIXME: This is a copy of RenderThemeMeasureTextClient from RenderThemeIOS. Refactor to remove duplicate code.
 class RenderThemeMeasureTextClientForVectorBasedControls : public MeasureTextClient {
 public:
@@ -2502,6 +2496,17 @@ static void adjustInputElementButtonStyleForVectorBasedControls(RenderStyle& sty
 
 #endif
 
+static void adjustSelectListButtonStyleForVectorBasedControls(RenderStyle& style, const Element& element)
+{
+    // FIXME: This is a copy of adjustSelectListButtonStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
+#if PLATFORM(IOS_FAMILY)
+    applyCommonButtonPaddingToStyleForVectorBasedControls(style, element);
+#else
+    UNUSED_PARAM(element);
+#endif
+    style.setLineHeight(CSS::Keyword::Normal { });
+}
+
 bool RenderThemeCocoa::adjustMenuListStyleForVectorBasedControls(RenderStyle& style, const Element* element) const
 {
     if (!formControlRefreshEnabled(element))
@@ -2517,6 +2522,10 @@ bool RenderThemeCocoa::adjustMenuListStyleForVectorBasedControls(RenderStyle& st
     style.setWhiteSpaceCollapse(WhiteSpaceCollapse::Preserve);
     style.setTextWrapMode(TextWrapMode::NoWrap);
     style.setBoxShadow(CSS::Keyword::None  { });
+
+    // Enforce "line-height: normal" as long as this element isn't a non-select element using `-webkit-appearance: menulist`.
+    if (element && is<HTMLSelectElement>(*element))
+        style.setLineHeight(CSS::Keyword::Normal { });
 
     return true;
 }
@@ -2647,6 +2656,10 @@ bool RenderThemeCocoa::adjustMenuListButtonStyleForVectorBasedControls(RenderSty
         style.setColor(buttonTextColor(styleColorOptions, !element->isDisabledFormControl()));
     }
 
+    const auto isNonMultipleSelectElement = is<HTMLSelectElement>(*element) && !element->hasAttributeWithoutSynchronization(HTMLNames::multipleAttr);
+    if (isNonMultipleSelectElement)
+        adjustSelectListButtonStyleForVectorBasedControls(style, *element);
+
 #if PLATFORM(IOS_FAMILY)
     const int menuListMinHeight = 15;
     const float menuListBaseHeight = 20;
@@ -2657,12 +2670,10 @@ bool RenderThemeCocoa::adjustMenuListButtonStyleForVectorBasedControls(RenderSty
     else
         style.setLogicalMinHeight(Style::MinimumSize::Fixed { static_cast<float>(menuListMinHeight) });
 
-    // Enforce some default styles in the case that this is a non-multiple <select> element,
-    // or a date input. We don't force these if this is just an element with
-    // "-webkit-appearance: menulist-button".
-    if (is<HTMLSelectElement>(*element) && !element->hasAttributeWithoutSynchronization(HTMLNames::multipleAttr))
-        adjustSelectListButtonStyleForVectorBasedControls(style, *element);
-    else if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element))
+    if (isNonMultipleSelectElement)
+        return true;
+
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element))
         adjustInputElementButtonStyleForVectorBasedControls(style, *input);
 #endif
 
@@ -4218,7 +4229,7 @@ void RenderThemeCocoa::adjustInnerSpinButtonStyle(RenderStyle& style, const Elem
 bool RenderThemeCocoa::paintInnerSpinButton(const RenderElement& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
-    if (paintInnerSpinButtonStyleForVectorBasedControls(box, paintInfo, rect))
+    if (paintInnerSpinButtonForVectorBasedControls(box, paintInfo, rect))
         return false;
 #endif
 

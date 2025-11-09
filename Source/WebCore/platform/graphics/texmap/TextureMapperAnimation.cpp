@@ -413,21 +413,21 @@ void TextureMapperAnimations::apply(TextureMapperAnimation::ApplicationResult& a
 
 bool TextureMapperAnimations::hasActiveAnimationsOfType(AnimatedProperty type) const
 {
-    return std::any_of(m_animations.begin(), m_animations.end(), [&type](const auto& animation) {
+    return std::ranges::any_of(m_animations, [&type](const auto& animation) {
         return animation.keyframes().property() == type;
     });
 }
 
 bool TextureMapperAnimations::hasRunningAnimations() const
 {
-    return std::any_of(m_animations.begin(), m_animations.end(), [](const auto& animation) {
+    return std::ranges::any_of(m_animations, [](const auto& animation) {
         return animation.state() == TextureMapperAnimation::State::Playing;
     });
 }
 
 bool TextureMapperAnimations::hasRunningTransformAnimations() const
 {
-    return std::any_of(m_animations.begin(), m_animations.end(), [](const auto& animation) {
+    return std::ranges::any_of(m_animations, [](const auto& animation) {
         switch (animation.keyframes().property()) {
         case AnimatedProperty::Translate:
         case AnimatedProperty::Rotate:

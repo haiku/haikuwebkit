@@ -260,13 +260,15 @@ RefPtr<Image> RemoteGraphicsContextGLProxy::videoFrameToImage(WebCore::VideoFram
     if (isContextLost())
         return { };
 
-    RefPtr<NativeImage> nativeImage;
 #if PLATFORM(COCOA)
+    RefPtr<NativeImage> nativeImage;
     callOnMainRunLoopAndWait([&] {
         nativeImage = protectedVideoFrameObjectHeapProxy()->getNativeImage(frame);
     });
-#endif
     return BitmapImage::create(WTFMove(nativeImage));
+#else
+    return GraphicsContextGL::videoFrameToImage(frame);
+#endif
 }
 #endif
 

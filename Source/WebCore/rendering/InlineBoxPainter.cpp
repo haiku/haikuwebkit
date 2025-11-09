@@ -169,7 +169,7 @@ void InlineBoxPainter::paintMask()
     bool flattenCompositingLayers = renderer().view().frameView().paintBehavior().contains(PaintBehavior::FlattenCompositingLayers);
     CompositeOperator compositeOp = CompositeOperator::SourceOver;
     if (!compositedMask || flattenCompositingLayers) {
-        if ((maskBorderSource && renderer().style().maskLayers().hasImage()) || renderer().style().maskLayers().size() > 1)
+        if ((maskBorderSource && Style::hasImageInAnyLayer(renderer().style().maskLayers())) || renderer().style().maskLayers().usedLength() > 1)
             pushTransparencyLayer = true;
 
         compositeOp = CompositeOperator::DestinationIn;
@@ -297,8 +297,8 @@ void InlineBoxPainter::paintDecorations()
 
 template<typename Layers> void InlineBoxPainter::paintFillLayers(const Color& color, const Layers& fillLayers, const LayoutRect& rect, CompositeOperator op)
 {
-    for (auto& layer : makeReversedRange(fillLayers))
-        paintFillLayer(color, FillLayerToPaint<typename Layers::Layer> { .layer = layer, .isLast = &layer == &fillLayers.last() }, rect, op);
+    for (auto& layer : std::ranges::reverse_view(fillLayers.usedValues()))
+        paintFillLayer(color, FillLayerToPaint<typename Layers::value_type> { .layer = layer, .isLast = &layer == &fillLayers.usedLast() }, rect, op);
 }
 
 template<typename Layer> void InlineBoxPainter::paintFillLayer(const Color& color, const FillLayerToPaint<Layer>& fillLayer, const LayoutRect& rect, CompositeOperator op)

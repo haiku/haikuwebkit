@@ -386,7 +386,7 @@ public:
     void logAsInt(MediaConstraintType) const;
     
 private:
-    friend struct IPC::ArgumentCoder<IntConstraint, void>;
+    friend struct IPC::ArgumentCoder<IntConstraint>;
     
     IntConstraint(MediaConstraint&& mediaConstraint, std::optional<int>&& min, std::optional<int>&& max,                   std::optional<int>&& exact, std::optional<int>&& ideal)
         : NumericConstraint<int>(WTFMove(mediaConstraint), WTFMove(min), WTFMove(max), WTFMove(exact), WTFMove(ideal))
@@ -409,7 +409,7 @@ public:
     void logAsDouble(MediaConstraintType) const;
     
 private:
-    friend struct IPC::ArgumentCoder<DoubleConstraint, void>;
+    friend struct IPC::ArgumentCoder<DoubleConstraint>;
     
     DoubleConstraint(MediaConstraint&& mediaConstraint, std::optional<double>&& min, std::optional<double>&& max,                   std::optional<double>&& exact, std::optional<double>&& ideal)
         : NumericConstraint<double>(WTFMove(mediaConstraint), WTFMove(min), WTFMove(max), WTFMove(exact), WTFMove(ideal))
@@ -489,7 +489,7 @@ public:
     void logAsBoolean(MediaConstraintType) const;
 
 private:
-    friend struct IPC::ArgumentCoder<BooleanConstraint, void>;
+    friend struct IPC::ArgumentCoder<BooleanConstraint>;
     
     BooleanConstraint(MediaConstraint&& mediaConstraint, std::optional<bool>&& exact, std::optional<bool>&& ideal)
         : MediaConstraint(WTFMove(mediaConstraint))
@@ -573,7 +573,7 @@ public:
     StringConstraint isolatedCopy() const;
 
 private:
-    friend struct IPC::ArgumentCoder<StringConstraint, void>;
+    friend struct IPC::ArgumentCoder<StringConstraint>;
     
     StringConstraint(MediaConstraint&& mediaConstraint, Vector<String>&& exact, Vector<String>&& ideal)
         : MediaConstraint(WTFMove(mediaConstraint))
@@ -659,7 +659,7 @@ public:
     MediaTrackConstraintSetMap isolatedCopy() const;
 
 private:
-    friend struct IPC::ArgumentCoder<MediaTrackConstraintSetMap, void>;
+    friend struct IPC::ArgumentCoder<MediaTrackConstraintSetMap>;
     std::optional<IntConstraint> m_width;
     std::optional<IntConstraint> m_height;
     std::optional<IntConstraint> m_sampleRate;

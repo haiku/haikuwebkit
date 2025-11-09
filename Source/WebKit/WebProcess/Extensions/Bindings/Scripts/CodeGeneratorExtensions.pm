@@ -730,7 +730,7 @@ EOF
             if ($callbackHandlerArgument && !$returnsPromiseIfNoCallback) {
                 push(@contents, <<EOF);
     if (!${callbackHandlerArgument})
-        ${callbackHandlerArgument} = toJSErrorCallbackHandler(context, impl->runtime());
+        ${callbackHandlerArgument} = toJSErrorCallbackHandler(context, impl->protectedRuntime());
 
 EOF
             }
@@ -798,7 +798,9 @@ EOF
                 push(@contents, "    ${functionCall};\n\n");
                 push(@contents, "    return ${defaultReturnValue};\n}\n");
             } else {
-                push(@contents, "    return " . $returnExpression . ";\n}\n");
+                # The safer cpp static analysis wants us to protect the value passed to toJS() but it is not
+                # necessary for safety.
+                push(@contents, "    SUPPRESS_UNCOUNTED_ARG return " . $returnExpression . ";\n}\n");
             }
 
             if ($isPropertyFunction) {
@@ -1471,7 +1473,7 @@ sub _platformTypeConstructor
         return "toJSValue(context, $argumentName)";
     }
 
-    return "toJSCallbackHandler(context, $argumentName, impl->runtime())" if $idlTypeName eq "function" && $signature->extendedAttributes->{"CallbackHandler"};
+    return "toJSCallbackHandler(context, $argumentName, impl->protectedRuntime())" if $idlTypeName eq "function" && $signature->extendedAttributes->{"CallbackHandler"};
     return "toNSArray(context, $argumentName, $arrayType.class)" if $idlTypeName eq "array" && $arrayType;
     return "toNSArray(context, $argumentName)" if $idlTypeName eq "array";
     return "JSValueToBoolean(context, $argumentName)" if $idlTypeName eq "boolean";

@@ -232,8 +232,6 @@ private:
 
     static int64_t generateSequenceNumber();
 
-    bool hasSameDocumentTree(HistoryItem& otherItem) const;
-
     String m_urlString;
     String m_originalURLString;
     String m_referrer;

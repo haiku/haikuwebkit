@@ -30,6 +30,7 @@
 NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
 @class WKWebView;
+@class _WKJSHandle;
 
 WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
 @interface _WKTextExtractionConfiguration : NSObject
@@ -54,10 +55,34 @@ WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
 @property (nonatomic) BOOL includeRects;
 
 /*!
+ Include node IDs for interactive nodes.
+ The default value is `YES`.
+ */
+@property (nonatomic) BOOL includeNodeIdentifiers;
+
+/*!
+ Include information about event listeners.
+ The default value is `YES`.
+ */
+@property (nonatomic) BOOL includeEventListeners;
+
+/*!
+ Include accessibility attributes (e.g. `role`, `aria-label`).
+ The default value is `YES`.
+ */
+@property (nonatomic) BOOL includeAccessibilityAttributes;
+
+/*!
  Max number of words to include per paragraph; remaining text is truncated with an ellipsis (…).
  The default value is `NSUIntegerMax`.
  */
 @property (nonatomic) NSUInteger maxWordsPerParagraph;
+
+/*!
+ If specified, text extraction is limited to the subtree of this node.
+ The default value is `nil`.
+ */
+@property (nonatomic, copy, nullable) _WKJSHandle *targetNode;
 
 @end
 

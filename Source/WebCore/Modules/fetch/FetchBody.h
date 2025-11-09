@@ -78,12 +78,19 @@ public:
     TakenData take();
 
     void setAsFormData(Ref<FormData>&& data) { m_data = WTFMove(data); }
-    FetchBodyConsumer& consumer() { return m_consumer; }
+    FetchBodyConsumer& consumer();
     CheckedRef<FetchBodyConsumer> checkedConsumer() { return consumer(); }
 
     void consumeOnceLoadingFinished(FetchBodyConsumer::Type, Ref<DeferredPromise>&&);
-    void cleanConsumer() { m_consumer.clean(); }
-    bool hasConsumerPendingActivity() const { return m_consumer.hasPendingActivity(); }
+
+    void cleanConsumer()
+    {
+        if (CheckedPtr consumer = m_consumer.get())
+            consumer->clean();
+    }
+
+    // Can't create a CheckedPtr since this function can be called in a GC thread.
+    bool hasConsumerPendingActivity() const { SUPPRESS_UNCHECKED_ARG return m_consumer && m_consumer->hasPendingActivity(); }
 
     FetchBody clone(JSDOMGlobalObject&);
 
@@ -111,7 +118,7 @@ private:
     explicit FetchBody(Ref<FormData>&& data) : m_data(WTFMove(data)) { }
     explicit FetchBody(Ref<const URLSearchParams>&& data) : m_data(WTFMove(data)) { }
     explicit FetchBody(Ref<ReadableStream>&& stream) : m_data(stream), m_readableStream(WTFMove(stream)) { }
-    explicit FetchBody(FetchBodyConsumer&& consumer) : m_consumer(WTFMove(consumer)) { }
+    explicit FetchBody(UniqueRef<FetchBodyConsumer>&& consumer) : m_consumer(consumer.moveToUniquePtr()) { }
 
     void consume(FetchBodyOwner&, Ref<DeferredPromise>&&);
 
@@ -144,7 +151,7 @@ private:
     using Data = Variant<std::nullptr_t, Ref<const Blob>, Ref<FormData>, Ref<const ArrayBuffer>, Ref<const ArrayBufferView>, Ref<const URLSearchParams>, String, Ref<ReadableStream>>;
     Data m_data { nullptr };
 
-    FetchBodyConsumer m_consumer { FetchBodyConsumer::Type::None };
+    std::unique_ptr<FetchBodyConsumer> m_consumer;
     RefPtr<ReadableStream> m_readableStream;
 };
 

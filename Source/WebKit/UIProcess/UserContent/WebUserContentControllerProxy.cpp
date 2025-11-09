@@ -28,7 +28,7 @@
 
 #include "APIArray.h"
 #include "APIContentWorld.h"
-#include "APIStringMatcher.h"
+#include "APIJSBuffer.h"
 #include "APIUserScript.h"
 #include "APIUserStyleSheet.h"
 #include "InjectUserScriptImmediately.h"
@@ -109,10 +109,10 @@ UserContentControllerParameters WebUserContentControllerProxy::parametersForProc
     for (RefPtr userStyleSheet : m_userStyleSheets->elementsOfType<API::UserStyleSheet>())
         userStyleSheets.append({ userStyleSheet->identifier(), Ref { userStyleSheet->contentWorld() }->worldDataForProcess(process), userStyleSheet->userStyleSheet() });
 
-    Vector<WebStringMatcherData> stringMatchers;
-    for (auto& [pair, matcher] : m_stringMatchers) {
+    Vector<WebJSBufferData> buffers;
+    for (auto& [pair, buffer] : m_buffers) {
         if (RefPtr world = API::ContentWorld::worldForIdentifier(pair.first))
-            stringMatchers.append(WebStringMatcherData { Ref { matcher }->sharedMemory(), world->worldDataForProcess(process), pair.second });
+            buffers.append(WebJSBufferData { Ref { buffer }->sharedMemory(), world->worldDataForProcess(process), pair.second });
     }
 
     auto messageHandlers = WTF::map(m_scriptMessageHandlers, [&](auto entry) {
@@ -124,7 +124,7 @@ UserContentControllerParameters WebUserContentControllerProxy::parametersForProc
         , WTFMove(userScripts)
         , WTFMove(userStyleSheets)
         , WTFMove(messageHandlers)
-        , WTFMove(stringMatchers)
+        , WTFMove(buffers)
 #if ENABLE(CONTENT_EXTENSIONS)
         , contentRuleListData()
 #endif
@@ -403,18 +403,18 @@ void WebUserContentControllerProxy::removeAllContentRuleLists()
 }
 #endif
 
-void WebUserContentControllerProxy::addStringMatcher(API::StringMatcher& matcher, API::ContentWorld& world, const String& name)
+void WebUserContentControllerProxy::addJSBuffer(API::JSBuffer& buffer, API::ContentWorld& world, const String& name)
 {
-    m_stringMatchers.set({ world.identifier(), name }, matcher);
+    m_buffers.set({ world.identifier(), name }, buffer);
     for (Ref process : m_processes)
-        process->send(Messages::WebUserContentController::AddStringMatcher(WebStringMatcherData { matcher.sharedMemory(), world.worldDataForProcess(process), name }), identifier());
+        process->send(Messages::WebUserContentController::AddJSBuffer(WebJSBufferData { buffer.sharedMemory(), world.worldDataForProcess(process), name }), identifier());
 }
 
-void WebUserContentControllerProxy::removeStringMatcher(API::ContentWorld& world, const String& name)
+void WebUserContentControllerProxy::removeJSBuffer(API::ContentWorld& world, const String& name)
 {
-    m_stringMatchers.remove({ world.identifier(), name });
+    m_buffers.remove({ world.identifier(), name });
     for (Ref process : m_processes)
-        process->send(Messages::WebUserContentController::RemoveStringMatcher(world.identifier(), name), identifier());
+        process->send(Messages::WebUserContentController::RemoveJSBuffer(world.identifier(), name), identifier());
 }
 
 } // namespace WebKit

@@ -155,7 +155,8 @@ public:
     size_t find(char16_t, unsigned start = 0) const;
     size_t find(Latin1Character, unsigned start = 0) const;
     ALWAYS_INLINE size_t find(char c, unsigned start = 0) const { return find(byteCast<Latin1Character>(c), start); }
-    template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>* = nullptr>
+    template<typename CodeUnitMatchFunction>
+        requires (std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>)
     size_t find(CodeUnitMatchFunction&&, unsigned start = 0) const;
     ALWAYS_INLINE size_t find(ASCIILiteral literal, unsigned start = 0) const { return find(literal.span8(), start); }
     WTF_EXPORT_PRIVATE size_t find(StringView, unsigned start = 0) const;
@@ -175,7 +176,8 @@ public:
     WTF_EXPORT_PRIVATE std::optional<char32_t> convertToSingleCodePoint() const;
 
     bool contains(char16_t) const;
-    template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>* = nullptr>
+    template<typename CodeUnitMatchFunction>
+        requires (std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>)
     bool contains(CodeUnitMatchFunction&&) const;
     bool contains(ASCIILiteral literal) const { return find(literal) != notFound; }
     bool contains(StringView string) const { return find(string) != notFound; }
@@ -598,7 +600,8 @@ inline bool StringView::contains(char16_t character) const
     return find(character) != notFound;
 }
 
-template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>*>
+template<typename CodeUnitMatchFunction>
+    requires (std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>)
 inline bool StringView::contains(CodeUnitMatchFunction&& function) const
 {
     return find(std::forward<CodeUnitMatchFunction>(function)) != notFound;
@@ -697,7 +700,8 @@ inline size_t StringView::find(Latin1Character character, unsigned start) const
     return WTF::find(span16(), character, start);
 }
 
-template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>*>
+template<typename CodeUnitMatchFunction>
+    requires (std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>)
 inline size_t StringView::find(CodeUnitMatchFunction&& matchFunction, unsigned start) const
 {
     if (is8Bit())
@@ -720,7 +724,7 @@ inline void StringView::invalidate(const StringImpl&)
 
 #endif
 
-template<> class StringTypeAdapter<StringView, void> {
+template<> class StringTypeAdapter<StringView> {
 public:
     StringTypeAdapter(StringView string)
         : m_string { string }

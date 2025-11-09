@@ -50,7 +50,7 @@ struct SVGPropertyTraits<ColorMatrixType> {
         return emptyString();
     }
 
-    static ColorMatrixType fromString(const String& value)
+    static ColorMatrixType fromString(SVGElement&, const String& value)
     {
         if (value == "matrix"_s)
             return ColorMatrixType::FECOLORMATRIX_TYPE_MATRIX;

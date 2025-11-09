@@ -397,7 +397,7 @@ static inline bool rendererObscuresBackground(const RenderElement& rootElement)
     if (!rendererForBackground)
         return false;
 
-    if (rendererForBackground->style().backgroundLayers().first().clip() == FillBox::Text)
+    if (rendererForBackground->style().backgroundLayers().usedFirst().clip() == FillBox::Text)
         return false;
 
     return true;
@@ -699,7 +699,7 @@ IntRect RenderView::unscaledDocumentRect() const
 bool RenderView::rootBackgroundIsEntirelyFixed() const
 {
     if (auto* rootBackgroundRenderer = rendererForRootBackground())
-        return rootBackgroundRenderer->style().backgroundLayers().hasEntirelyFixedBackground();
+        return Style::hasEntirelyFixedBackground(rootBackgroundRenderer->style().backgroundLayers());
     return false;
 }
 
@@ -1058,7 +1058,7 @@ void RenderView::updatePlayStateForAllAnimations(const IntRect& visibleRect)
             }
         };
 
-        for (auto& layer : renderElement.style().backgroundLayers()) {
+        for (auto& layer : renderElement.style().backgroundLayers().usedValues()) {
             RefPtr image = layer.image().tryStyleImage();
             updateAnimation(image ? image->cachedImage() : nullptr);
         }

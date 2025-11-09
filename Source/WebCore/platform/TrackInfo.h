@@ -36,7 +36,7 @@
 #include <wtf/Variant.h>
 
 namespace IPC {
-template<typename T, typename> struct ArgumentCoder;
+template<typename> struct ArgumentCoder;
 }
 
 namespace WebCore {
@@ -124,9 +124,9 @@ protected:
 #endif
 
 private:
-    friend struct IPC::ArgumentCoder<TrackInfo, void>;
-    friend struct IPC::ArgumentCoder<AudioInfo, void>;
-    friend struct IPC::ArgumentCoder<VideoInfo, void>;
+    friend struct IPC::ArgumentCoder<TrackInfo>;
+    friend struct IPC::ArgumentCoder<AudioInfo>;
+    friend struct IPC::ArgumentCoder<VideoInfo>;
     WEBCORE_EXPORT static Ref<TrackInfo> fromVariant(Variant<Ref<AudioInfo>, Ref<VideoInfo>>);
     const TrackType m_type { TrackType::Unknown };
 };
@@ -153,7 +153,7 @@ private:
         : TrackInfo(TrackType::Video) { }
 
     // Used by IPC generator
-    friend struct IPC::ArgumentCoder<VideoInfo, void>;
+    friend struct IPC::ArgumentCoder<VideoInfo>;
     static Ref<VideoInfo> create(FourCC codecName, const String& codecString, WebCore::TrackID trackID, FloatSize size, FloatSize displaySize, uint8_t bitDepth, PlatformVideoColorSpace colorSpace, FourCC boxType, RefPtr<SharedBuffer>&& atomData)
     {
         return adoptRef(*new VideoInfo(codecName, codecString, trackID, size, displaySize, bitDepth, colorSpace, boxType, WTFMove(atomData)));
@@ -209,7 +209,7 @@ private:
         : TrackInfo(TrackType::Audio) { }
 
     // Used by IPC generator
-    friend struct IPC::ArgumentCoder<AudioInfo, void>;
+    friend struct IPC::ArgumentCoder<AudioInfo>;
     static Ref<AudioInfo> create(FourCC codecName, const String& codecString, TrackID trackID, uint32_t rate, uint32_t channels, uint32_t framesPerPacket, uint8_t bitDepth, RefPtr<SharedBuffer>&& cookieData)
     {
         return adoptRef(*new AudioInfo(codecName, codecString, trackID, rate, channels, framesPerPacket, bitDepth, WTFMove(cookieData)));

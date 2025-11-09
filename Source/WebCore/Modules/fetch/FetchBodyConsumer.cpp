@@ -554,10 +554,10 @@ void FetchBodyConsumer::loadingSucceeded(const String& contentType)
     }
 }
 
-FetchBodyConsumer FetchBodyConsumer::clone()
+UniqueRef<FetchBodyConsumer> FetchBodyConsumer::clone()
 {
-    FetchBodyConsumer clone { m_type };
-    clone.m_buffer = m_buffer;
+    auto clone = makeUniqueRef<FetchBodyConsumer>(m_type);
+    clone->m_buffer = m_buffer;
     return clone;
 }
 

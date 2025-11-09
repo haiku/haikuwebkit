@@ -1886,7 +1886,8 @@ struct CompactMapper {
 };
 
 template<typename MapFunction, typename DestinationVectorType, typename SourceType>
-struct CompactMapper<MapFunction, DestinationVectorType, SourceType, typename std::enable_if<std::is_rvalue_reference<SourceType&&>::value>::type> {
+    requires (std::is_rvalue_reference_v<SourceType&&>)
+struct CompactMapper<MapFunction, DestinationVectorType, SourceType> {
     using SourceItemType = typename CollectionInspector<SourceType>::SourceItemType;
     using ResultItemType = typename std::invoke_result<MapFunction, SourceItemType&&>::type;
 
@@ -1944,7 +1945,8 @@ struct FlatMapper {
     }
 };
 
-template<typename MapFunction, typename SourceType> requires std::is_rvalue_reference<SourceType&&>::value
+template<typename MapFunction, typename SourceType>
+    requires (std::is_rvalue_reference_v<SourceType&&>)
 struct FlatMapper<MapFunction, SourceType> {
     using SourceItemType = typename CollectionInspector<SourceType>::SourceItemType;
     using DestinationItemType = typename CollectionInspector<typename std::invoke_result<MapFunction, SourceItemType&&>::type>::SourceItemType;

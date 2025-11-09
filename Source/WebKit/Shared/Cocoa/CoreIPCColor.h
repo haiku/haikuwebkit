@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCColor, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCColor>;
 
     WebCore::Color m_color;
 };

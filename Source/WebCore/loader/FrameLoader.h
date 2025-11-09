@@ -557,6 +557,8 @@ private:
     uint64_t m_requiredCookiesVersion { 0 };
 
     const Ref<DocumentPrefetcher> m_documentPrefetcher;
+
+    Function<bool()> m_pendingDispatchNavigateEvent;
 };
 
 // This function is called by createWindow() in JSDOMWindowBase.cpp, for example, for

@@ -46,7 +46,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCCNPostalAddress, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCCNPostalAddress>;
 
     CoreIPCCNPostalAddress(String&& street, String&& subLocality, String&& city, String&& subAdministrativeArea, String&& state, String&& postalCode, String&& country, String&& isoCountryCode, String&& formattedAddress)
         : m_street(WTFMove(street))
@@ -79,7 +79,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCCNPhoneNumber, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCCNPhoneNumber>;
 
     CoreIPCCNPhoneNumber(String&& digits, String&& countryCode)
         : m_digits(WTFMove(digits))
@@ -112,7 +112,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCCNContact, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCCNContact>;
     CoreIPCCNContact() = default;
 
     String m_identifier;

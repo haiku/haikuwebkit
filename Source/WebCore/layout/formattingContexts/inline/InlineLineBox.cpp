@@ -100,7 +100,8 @@ InlineLayoutUnit LineBox::inlineLevelBoxAbsoluteTop(const InlineLevelBox& inline
 
 InlineRect LineBox::logicalRectForInlineLevelBox(const Box& layoutBox) const
 {
-    ASSERT(layoutBox.isInlineLevelBox() || layoutBox.isLineBreakBox());
+    // FIXME: Blocks in inline. Refactor and remove the block test.
+    ASSERT(layoutBox.isInlineLevelBox() || layoutBox.isLineBreakBox() || (layoutBox.isBlockLevelBox() && layoutBox.isInFlow()));
     auto* inlineBox = inlineLevelBoxFor(layoutBox);
     if (!inlineBox) {
         ASSERT_NOT_REACHED();
@@ -112,7 +113,8 @@ InlineRect LineBox::logicalRectForInlineLevelBox(const Box& layoutBox) const
 
 InlineRect LineBox::logicalBorderBoxForAtomicInlineBox(const Box& layoutBox, const BoxGeometry& boxGeometry) const
 {
-    ASSERT(layoutBox.isAtomicInlineBox());
+    // FIXME: Blocks in inline. Refactor and remove the block test.
+    ASSERT(layoutBox.isAtomicInlineBox() || (layoutBox.isBlockLevelBox() && layoutBox.isInFlow()));
     auto logicalRect = logicalRectForInlineLevelBox(layoutBox);
     // Inline level boxes use their margin box for vertical alignment. Let's covert them to border boxes.
     logicalRect.moveVertically(boxGeometry.marginBefore());

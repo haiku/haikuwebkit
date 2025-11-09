@@ -35,7 +35,7 @@
 #include <WebCore/AppleVisualEffect.h>
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include <WebCore/AcceleratedEffectValues.h>
 #endif
 
@@ -165,7 +165,7 @@ struct LayerProperties {
     struct AnimationChanges {
         Vector<std::pair<String, PlatformCAAnimationRemote::Properties>> addedAnimations;
         HashSet<String> keysOfAnimationsToRemove;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
         Vector<Ref<WebCore::AcceleratedEffect>> effects;
         WebCore::AcceleratedEffectValues baseValues;
 #endif

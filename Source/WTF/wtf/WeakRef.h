@@ -45,8 +45,7 @@ enum class EnableWeakPtrThreadingAssertions : bool { No, Yes };
 template<typename T, typename WeakPtrImpl>
 class WeakRef {
 public:
-    template<typename = std::enable_if_t<!IsSmartPtr<T>::value && !std::is_pointer_v<T>>>
-    WeakRef(const T& object, EnableWeakPtrThreadingAssertions shouldEnableAssertions = EnableWeakPtrThreadingAssertions::Yes)
+    WeakRef(const T& object, EnableWeakPtrThreadingAssertions shouldEnableAssertions = EnableWeakPtrThreadingAssertions::Yes) requires (!IsSmartPtr<T>::value && !std::is_pointer_v<T>)
         : m_impl(object.weakImpl())
 #if ASSERT_ENABLED
         , m_shouldEnableAssertions(shouldEnableAssertions == EnableWeakPtrThreadingAssertions::Yes)
@@ -139,7 +138,8 @@ private:
 #endif
 };
 
-template<class T, typename = std::enable_if_t<!IsSmartPtr<T>::value && !std::is_pointer_v<T>>>
+template<class T>
+    requires (!IsSmartPtr<T>::value && !std::is_pointer_v<T>)
 WeakRef(const T& value, EnableWeakPtrThreadingAssertions = EnableWeakPtrThreadingAssertions::Yes) -> WeakRef<T, typename T::WeakPtrImplType>;
 
 template <typename T, typename WeakPtrImpl>

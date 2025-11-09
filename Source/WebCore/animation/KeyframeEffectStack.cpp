@@ -313,8 +313,8 @@ void KeyframeEffectStack::applyPendingAcceleratedActions() const
 
 bool KeyframeEffectStack::hasAcceleratedEffects(const Settings& settings) const
 {
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    if (settings.threadedAnimationResolutionEnabled())
+#if ENABLE(THREADED_ANIMATIONS)
+    if (settings.threadedScrollDrivenAnimationsEnabled() || settings.threadedTimeBasedAnimationsEnabled())
         return !m_acceleratedEffects.isEmptyIgnoringNullReferences();
 #else
     UNUSED_PARAM(settings);

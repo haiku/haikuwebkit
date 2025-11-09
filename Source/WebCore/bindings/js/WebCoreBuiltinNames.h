@@ -273,6 +273,7 @@ namespace WebCore {
     macro(HTMLDataListElement) \
     macro(HTMLEmbedElement) \
     macro(HTMLModelElement) \
+    macro(HTMLSelectedContentElement) \
     macro(Headers) \
     macro(IDBCursor) \
     macro(IDBCursorWithValue) \

@@ -182,7 +182,7 @@ public:
     WEBCORE_EXPORT URL asBlobURL() const;
 
 private:
-    friend struct IPC::ArgumentCoder<FormData, void>;
+    friend struct IPC::ArgumentCoder<FormData>;
     FormData() = default;
     FormData(const FormData&);
 

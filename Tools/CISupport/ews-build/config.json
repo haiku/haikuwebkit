@@ -47,6 +47,9 @@
     { "name": "playstation-ews-004", "platform": "playstation" },
     { "name": "playstation-ews-005", "platform": "playstation" },
     { "name": "playstation-ews-006", "platform": "playstation" },
+    { "name": "playstation-ews-007", "platform": "playstation" },
+    { "name": "playstation-ews-008", "platform": "playstation" },
+    { "name": "playstation-ews-009", "platform": "playstation" },
     { "name": "win-bot-001", "platform": "win" },
     { "name": "win-bot-002", "platform": "win" },
     { "name": "win-bot-003", "platform": "win" },
@@ -366,7 +369,7 @@
       "name": "PlayStation-Build-EWS", "shortname": "playstation", "icon": "buildOnly",
       "factory": "PlayStationBuildFactory", "configuration": "release",
       "architectures": ["x86_64"], "platform": "playstation",
-      "workernames": ["playstation-ews-001", "playstation-ews-002", "playstation-ews-003", "playstation-ews-004", "playstation-ews-005", "playstation-ews-006"]
+      "workernames": ["playstation-ews-001", "playstation-ews-002", "playstation-ews-003", "playstation-ews-004", "playstation-ews-005", "playstation-ews-006", "playstation-ews-007", "playstation-ews-008", "playstation-ews-009"]
     },
     {
       "name": "Win-Build-EWS", "shortname": "win", "icon": "buildOnly",

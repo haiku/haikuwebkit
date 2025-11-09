@@ -55,6 +55,7 @@ JITData::JITData(unsigned stubInfoSize, unsigned poolSize, const JITCode& jitCod
         case LinkerIR::Type::StringSymbolReplaceWatchpointSet:
         case LinkerIR::Type::StringSymbolToPrimitiveWatchpointSet:
         case LinkerIR::Type::RegExpPrimordialPropertiesWatchpointSet:
+        case LinkerIR::Type::PromiseThenWatchpointSet:
         case LinkerIR::Type::ArraySpeciesWatchpointSet:
         case LinkerIR::Type::ArrayPrototypeChainIsSaneWatchpointSet:
         case LinkerIR::Type::StringPrototypeChainIsSaneWatchpointSet:
@@ -179,6 +180,11 @@ bool JITData::tryInitialize(VM& vm, CodeBlock* codeBlock, const JITCode& jitCode
         case LinkerIR::Type::RegExpPrimordialPropertiesWatchpointSet: {
             auto& watchpoint = m_watchpoints[indexOfWatchpoints++];
             success &= attemptToWatch(codeBlock, m_globalObject->regExpPrimordialPropertiesWatchpointSet(), watchpoint);
+            break;
+        }
+        case LinkerIR::Type::PromiseThenWatchpointSet: {
+            auto& watchpoint = m_watchpoints[indexOfWatchpoints++];
+            success &= attemptToWatch(codeBlock, m_globalObject->promiseThenWatchpointSet(), watchpoint);
             break;
         }
         case LinkerIR::Type::ArraySpeciesWatchpointSet: {

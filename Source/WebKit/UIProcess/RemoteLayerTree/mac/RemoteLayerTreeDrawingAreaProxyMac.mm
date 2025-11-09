@@ -32,6 +32,7 @@
 #import "DrawingArea.h"
 #import "DrawingAreaMessages.h"
 #import "MessageSenderInlines.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeScrollingPerformanceData.h"
 #import "RemoteScrollingCoordinatorProxyMac.h"
 #import "WebPageProxy.h"
@@ -196,17 +197,19 @@ void RemoteLayerTreeDrawingAreaProxyMac::layoutBannerLayers(const RemoteLayerTre
     }
 }
 
-void RemoteLayerTreeDrawingAreaProxyMac::didCommitLayerTree(IPC::Connection&, const RemoteLayerTreeTransaction& transaction, const RemoteScrollingCoordinatorTransaction&)
+void RemoteLayerTreeDrawingAreaProxyMac::didCommitLayerTree(IPC::Connection&, const RemoteLayerTreeTransaction& transaction, const RemoteScrollingCoordinatorTransaction&, const std::optional<MainFrameData>& mainFrameData)
 {
+    if (mainFrameData) {
+        m_pageScalingLayerID = mainFrameData->pageScalingLayerID;
+        m_pageScrollingLayerID = mainFrameData->scrolledContentsLayerID;
+        m_scrolledContentsLayerID = mainFrameData->scrolledContentsLayerID;
+        m_mainFrameClipLayerID = mainFrameData->mainFrameClipLayerID;
+    }
+
     if (!transaction.isMainFrameProcessTransaction())
         return;
 
     RefPtr page = this->page();
-
-    m_pageScalingLayerID = transaction.pageScalingLayerID();
-    m_pageScrollingLayerID = transaction.scrolledContentsLayerID();
-    m_scrolledContentsLayerID = transaction.scrolledContentsLayerID();
-    m_mainFrameClipLayerID = transaction.mainFrameClipLayerID();
 
     if (m_transientZoomScale)
         applyTransientZoomToLayer();

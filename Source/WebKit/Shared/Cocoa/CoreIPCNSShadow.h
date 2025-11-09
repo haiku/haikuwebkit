@@ -54,7 +54,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCNSShadow, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCNSShadow>;
 
     WebCore::DoubleSize m_shadowOffset;
     double m_shadowBlurRadius;

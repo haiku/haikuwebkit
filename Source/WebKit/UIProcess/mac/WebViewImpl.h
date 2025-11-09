@@ -743,6 +743,7 @@ public:
 
     bool beginBackSwipeForTesting();
     bool completeBackSwipeForTesting();
+    bool didCallEndSwipeGestureForTesting() const;
 
     bool useFormSemanticContext() const;
     void semanticContextDidChange();

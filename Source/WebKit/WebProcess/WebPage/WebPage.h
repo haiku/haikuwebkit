@@ -505,6 +505,7 @@ struct InsertTextOptions;
 struct InteractionInformationAtPosition;
 struct InteractionInformationRequest;
 struct LoadParameters;
+struct MainFrameData;
 struct NodeHitTestResult;
 struct PDFPluginIdentifierType;
 struct PlatformFontInfo;
@@ -635,6 +636,7 @@ public:
 
 #if PLATFORM(COCOA)
     void willCommitLayerTree(RemoteLayerTreeTransaction&, WebCore::FrameIdentifier);
+    void willCommitMainFrameData(MainFrameData&);
     void didFlushLayerTreeAtTime(MonotonicTime, bool flushSucceeded);
 #endif
 

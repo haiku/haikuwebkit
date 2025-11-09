@@ -32,7 +32,7 @@ template<>
 struct SVGPropertyTraits<BlendMode> {
     static unsigned highestEnumValue() { return static_cast<unsigned>(BlendMode::Luminosity); }
 
-    static BlendMode fromString(const String& string)
+    static BlendMode fromString(SVGElement&, const String& string)
     {
         BlendMode mode = BlendMode::Normal;
         parseBlendMode(string, mode);

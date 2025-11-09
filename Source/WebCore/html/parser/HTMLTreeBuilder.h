@@ -27,6 +27,7 @@
 #pragma once
 
 #include "HTMLConstructionSite.h"
+#include "HTMLDocumentParser.h"
 #include "HTMLParserOptions.h"
 #include <wtf/TZoneMalloc.h>
 #include <wtf/text/StringBuilder.h>

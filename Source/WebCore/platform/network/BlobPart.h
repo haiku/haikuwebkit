@@ -29,14 +29,14 @@
 #include <wtf/URL.h>
 
 namespace IPC {
-template<typename T, typename> struct ArgumentCoder;
+template<typename> struct ArgumentCoder;
 }
 
 namespace WebCore {
 
 class BlobPart {
 private:
-    friend struct IPC::ArgumentCoder<BlobPart, void>;
+    friend struct IPC::ArgumentCoder<BlobPart>;
 public:
     using VariantType = Variant<Vector<uint8_t>, Ref<SharedBuffer>, URL>;
 

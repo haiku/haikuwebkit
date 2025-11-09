@@ -149,10 +149,10 @@ namespace WTF {
 template<> struct DefaultHash<WebCore::RegistrableDomain> : WebCore::RegistrableDomain::RegistrableDomainHash { };
 template<> struct HashTraits<WebCore::RegistrableDomain> : SimpleClassHashTraits<WebCore::RegistrableDomain> { };
 
-template<> class StringTypeAdapter<WebCore::RegistrableDomain, void> : public StringTypeAdapter<String, void> {
+template<> class StringTypeAdapter<WebCore::RegistrableDomain> : public StringTypeAdapter<String> {
 public:
     StringTypeAdapter(const WebCore::RegistrableDomain& domain)
-        : StringTypeAdapter<String, void>(domain.string())
+        : StringTypeAdapter<String>(domain.string())
     { }
 };
 

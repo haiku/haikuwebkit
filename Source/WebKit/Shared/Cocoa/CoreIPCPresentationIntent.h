@@ -44,7 +44,7 @@ public:
     RetainPtr<id> toID() const;
 
 private:
-    friend struct IPC::ArgumentCoder<CoreIPCPresentationIntent, void>;
+    friend struct IPC::ArgumentCoder<CoreIPCPresentationIntent>;
 
     CoreIPCPresentationIntent(int64_t intentKind, int64_t identity, std::unique_ptr<CoreIPCPresentationIntent>&& parentIntent, int64_t column, Vector<int64_t>&& columnAlignments, int64_t columnCount, int64_t headerLevel, const String& languageHint, int64_t ordinal, int64_t row)
         : m_intentKind(intentKind)

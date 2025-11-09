@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,28 +27,13 @@
 #pragma once
 
 #include "APIObject.h"
+#include <ranges>
 #include <wtf/Forward.h>
-#include <wtf/IteratorAdaptors.h>
-#include <wtf/IteratorRange.h>
 #include <wtf/Vector.h>
 
 namespace API {
 
 class Array final : public ObjectImpl<Object::Type::Array> {
-private:
-    template <class T>
-    struct IsTypePredicate {
-        bool operator()(const RefPtr<Object>& object) const { return object->type() == T::APIType; }
-    };
-
-    template <class T>
-    struct GetObjectTransform {
-        const T* operator()(const RefPtr<Object>& object) const { return downcast<T>(object.get()); }
-    };
-
-    template <typename T>
-    using ElementsOfTypeRange = WTF::IteratorRange<WTF::TransformIterator<GetObjectTransform<T>, WTF::FilterIterator<IsTypePredicate<T>, Vector<RefPtr<Object>>::const_iterator>>>;
-
 public:
     static Ref<Array> create();
     static Ref<Array> createWithCapacity(size_t);
@@ -72,12 +58,11 @@ public:
     Vector<RefPtr<Object>>& elements() { return m_elements; }
 
     template<typename T>
-    ElementsOfTypeRange<T> elementsOfType() const
+    decltype(auto) elementsOfType() const
     {
-        return WTF::makeIteratorRange(
-            WTF::makeTransformIterator(GetObjectTransform<T>(), WTF::makeFilterIterator(IsTypePredicate<T>(), m_elements.begin(), m_elements.end())),
-            WTF::makeTransformIterator(GetObjectTransform<T>(), WTF::makeFilterIterator(IsTypePredicate<T>(), m_elements.end(), m_elements.end()))
-        );
+        return m_elements
+            | std::views::filter([](const auto& element) { return element->type() == T::APIType; })
+            | std::views::transform([](const auto& element) { return downcast<T>(element); });
     }
 
     template<typename MatchFunction>

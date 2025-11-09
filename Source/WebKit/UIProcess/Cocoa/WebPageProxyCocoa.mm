@@ -48,6 +48,7 @@
 #import "PageClient.h"
 #import "PlatformXRSystem.h"
 #import "PlaybackSessionManagerProxy.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeTransaction.h"
 #import "SafeBrowsingSPI.h"
 #import "SharedBufferReference.h"
@@ -178,13 +179,9 @@ static bool exceedsRenderTreeSizeSizeThreshold(uint64_t thresholdSize, uint64_t 
     return committedSize > thresholdSize * thesholdSizeFraction;
 }
 
-void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTreeTransaction)
+void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTreeTransaction, const std::optional<MainFrameData>& mainFrameData)
 {
     if (layerTreeTransaction.isMainFrameProcessTransaction()) {
-        themeColorChanged(layerTreeTransaction.themeColor());
-        pageExtendedBackgroundColorDidChange(layerTreeTransaction.pageExtendedBackgroundColor());
-        sampledPageTopColorChanged(layerTreeTransaction.sampledPageTopColor());
-
         if (!m_hasUpdatedRenderingAfterDidCommitLoad
             && (internals().firstLayerTreeTransactionIdAfterDidCommitLoad && layerTreeTransaction.transactionID().greaterThanOrEqualSameProcess(*internals().firstLayerTreeTransactionIdAfterDidCommitLoad))) {
             m_hasUpdatedRenderingAfterDidCommitLoad = true;
@@ -201,7 +198,7 @@ void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTre
     }
 
     if (RefPtr pageClient = this->pageClient())
-        pageClient->didCommitLayerTree(layerTreeTransaction);
+        pageClient->didCommitLayerTree(layerTreeTransaction, mainFrameData);
 
     // FIXME: Remove this special mechanism and fold it into the transaction's layout milestones.
     if (internals().observedLayoutMilestones.contains(WebCore::LayoutMilestone::ReachedSessionRestorationRenderTreeSizeThreshold) && !m_hitRenderTreeSizeThreshold
@@ -209,6 +206,13 @@ void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTre
         m_hitRenderTreeSizeThreshold = true;
         didReachLayoutMilestone(WebCore::LayoutMilestone::ReachedSessionRestorationRenderTreeSizeThreshold, WallTime::now());
     }
+}
+
+void WebPageProxy::didCommitMainFrameData(const MainFrameData& mainFrameData)
+{
+    themeColorChanged(mainFrameData.themeColor);
+    pageExtendedBackgroundColorDidChange(mainFrameData.pageExtendedBackgroundColor);
+    sampledPageTopColorChanged(mainFrameData.sampledPageTopColor);
 }
 
 void WebPageProxy::layerTreeCommitComplete()

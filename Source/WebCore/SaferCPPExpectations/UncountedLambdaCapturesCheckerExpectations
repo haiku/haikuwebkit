@@ -82,7 +82,6 @@ rendering/svg/RenderSVGText.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceGradient.cpp
 rendering/svg/legacy/SVGResourcesCycleSolver.cpp
 rendering/updating/RenderTreeUpdater.cpp
-style/StyleBuilderCustom.h
 style/StyleCustomProperty.cpp
 style/Styleable.cpp
 style/values/StyleValueTypes.h

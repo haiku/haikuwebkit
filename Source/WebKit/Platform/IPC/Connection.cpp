@@ -131,6 +131,8 @@ private:
 
     // The set of connections for which we've scheduled a call to dispatchMessageAndResetDidScheduleDispatchMessagesForConnection.
     HashSet<RefPtr<Connection>> m_didScheduleDispatchMessagesWorkSet WTF_GUARDED_BY_LOCK(m_lock);
+    HashSet<RefPtr<Connection>> m_allMessagesShouldBeDispatchedWhileWaitingForSyncReplySet WTF_GUARDED_BY_LOCK(m_lock);
+
 
     struct ConnectionAndIncomingMessage {
         Ref<Connection> connection;
@@ -196,23 +198,26 @@ void Connection::SyncMessageState::enqueueMatchingMessages(Connection& connectio
 
 bool Connection::SyncMessageState::processIncomingMessage(Connection& connection, UniqueRef<Decoder>& message)
 {
-    switch (message->shouldDispatchMessageWhenWaitingForSyncReply()) {
-    case ShouldDispatchWhenWaitingForSyncReply::No:
-        return false;
-    case ShouldDispatchWhenWaitingForSyncReply::YesDuringUnboundedIPC:
-        if (!UnboundedSynchronousIPCScope::hasOngoingUnboundedSyncIPC())
-            return false;
-        break;
-    case ShouldDispatchWhenWaitingForSyncReply::Yes:
-        break;
-    }
-
     bool shouldDispatch;
     {
         Locker locker { m_lock };
+        if (!m_allMessagesShouldBeDispatchedWhileWaitingForSyncReplySet.contains(&connection)) {
+            switch (message->shouldDispatchMessageWhenWaitingForSyncReply()) {
+            case ShouldDispatchWhenWaitingForSyncReply::No:
+                return false;
+            case ShouldDispatchWhenWaitingForSyncReply::YesDuringUnboundedIPC:
+                if (!UnboundedSynchronousIPCScope::hasOngoingUnboundedSyncIPC())
+                    return false;
+                break;
+            case ShouldDispatchWhenWaitingForSyncReply::Yes:
+                break;
+            }
+        }
+
         shouldDispatch = m_didScheduleDispatchMessagesWorkSet.add(&connection).isNewEntry;
         connection.m_incomingMessagesLock.assertIsOwner();
         if (message->shouldMaintainOrderingWithAsyncMessages()) {
+            m_allMessagesShouldBeDispatchedWhileWaitingForSyncReplySet.add(&connection);
             // This sync message should maintain ordering with async messages so we need to process the pending async messages first.
             while (!connection.m_incomingMessages.isEmpty())
                 m_messagesToDispatchWhileWaitingForSyncReply.append(ConnectionAndIncomingMessage { connection, connection.m_incomingMessages.takeFirst() });
@@ -288,6 +293,7 @@ void Connection::SyncMessageState::dispatchMessagesAndResetDidScheduleDispatchMe
         Locker locker { m_lock };
         ASSERT(m_didScheduleDispatchMessagesWorkSet.contains(&connection));
         m_didScheduleDispatchMessagesWorkSet.remove(&connection);
+        m_allMessagesShouldBeDispatchedWhileWaitingForSyncReplySet.remove(&connection);
         Deque<ConnectionAndIncomingMessage> messagesToPutBack;
         for (auto& connectionAndIncomingMessage : m_messagesToDispatchWhileWaitingForSyncReply) {
             if (&connection == connectionAndIncomingMessage.connection.ptr())

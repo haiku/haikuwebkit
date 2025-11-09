@@ -121,8 +121,6 @@ header: "RemoteLayerBackingStore.h"
     Vector<WebCore::PlatformLayerIdentifier> m_videoLayerIDsPendingFullscreen;
     Vector<WebCore::PlatformLayerIdentifier> m_layerIDsWithNewlyUnreachableBackingStore;
 
-    Vector<IPC::AsyncReplyID> m_callbackIDs;
-
     WebCore::IntSize m_contentsSize;
     WebCore::IntSize m_scrollGeometryContentSize;
     WebCore::IntPoint m_scrollOrigin;
@@ -130,16 +128,6 @@ header: "RemoteLayerBackingStore.h"
     WebCore::LayoutPoint m_minStableLayoutViewportOrigin;
     WebCore::LayoutPoint m_maxStableLayoutViewportOrigin;
     WebCore::IntPoint m_scrollPosition;
-    WebCore::Color m_themeColor;
-    WebCore::Color m_pageExtendedBackgroundColor;
-    WebCore::Color m_sampledPageTopColor;
-    std::optional<WebCore::FixedContainerEdges> m_fixedContainerEdges;
-
-#if PLATFORM(MAC)
-    Markable<WebCore::PlatformLayerIdentifier> m_pageScalingLayerID;
-    Markable<WebCore::PlatformLayerIdentifier> m_scrolledContentsLayerID;
-    Markable<WebCore::PlatformLayerIdentifier> m_mainFrameClipLayerID;
-#endif
 
     double m_pageScaleFactor;
     double m_minimumScaleFactor;
@@ -149,20 +137,17 @@ header: "RemoteLayerBackingStore.h"
     WebCore::InteractiveWidget m_viewportMetaTagInteractiveWidget;
     uint64_t m_renderTreeSize;
     WebKit::TransactionID m_transactionID;
-    OptionSet<WebCore::LayoutMilestone> m_newlyReachedPaintingMilestones;
     bool m_scaleWasSetByUIProcess;
     bool m_allowsUserScaling;
     bool m_avoidsUnsafeArea;
     bool m_viewportMetaTagWidthWasExplicit;
     bool m_viewportMetaTagCameFromImageDocument;
-    bool m_isInStableState;
 
-    std::optional<WebKit::EditorState> m_editorState;
 #if PLATFORM(IOS_FAMILY)
     std::optional<uint64_t> m_dynamicViewportSizeUpdateID;
 #endif
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     HashSet<Ref<WebCore::AcceleratedTimeline>> m_timelines;
 #endif
 }
@@ -209,7 +194,7 @@ headers: "LayerProperties.h" "PlatformCALayerRemote.h"
 [Nested] struct WebKit::LayerProperties::AnimationChanges {
     Vector<std::pair<String, WebKit::PlatformCAAnimationRemoteProperties>> addedAnimations;
     HashSet<String> keysOfAnimationsToRemove;
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     Vector<Ref<WebCore::AcceleratedEffect>> effects;
     WebCore::AcceleratedEffectValues baseValues;
 #endif
@@ -290,14 +275,34 @@ headers: "LayerProperties.h" "PlatformCALayerRemote.h"
 
 using WebKit::LayerHostingContextID = uint32_t;
 
-using WebKit::RemoteLayerTreeCommitBundle::RootFrameData = std::pair<WebKit::RemoteLayerTreeTransaction, WebKit::RemoteScrollingCoordinatorTransaction>;
+header: "RemoteLayerTreeCommitBundle.h"
 
-headers: "RemoteLayerTreeCommitBundle.h"
-struct WebKit::RemoteLayerTreeCommitBundle {
-    Vector<WebKit::RemoteLayerTreeCommitBundle::RootFrameData> transactions;
-    std::optional<WebKit::RemoteLayerTreeCommitBundle::MainFrameData> mainFrameData;
+using WebKit::PageData::TransactionCallbackID = IPC::AsyncReplyID;
+
+[CustomHeader] struct WebKit::PageData {
+    Vector<WebKit::PageData::TransactionCallbackID> callbackIDs;
 };
 
-[Nested] struct WebKit::RemoteLayerTreeCommitBundle::MainFrameData {
+[CustomHeader] struct WebKit::MainFrameData {
     WebKit::ActivityStateChangeID activityStateChangeID;
+    WebCore::Color themeColor;
+    WebCore::Color pageExtendedBackgroundColor;
+    WebCore::Color sampledPageTopColor;
+    std::optional<WebKit::EditorState> editorState;
+    OptionSet<WebCore::LayoutMilestone> newlyReachedPaintingMilestones;
+    std::optional<WebCore::FixedContainerEdges> fixedContainerEdges;
+    bool isInStableState;
+#if PLATFORM(MAC)
+    Markable<WebCore::PlatformLayerIdentifier> pageScalingLayerID;
+    Markable<WebCore::PlatformLayerIdentifier> scrolledContentsLayerID;
+    Markable<WebCore::PlatformLayerIdentifier> mainFrameClipLayerID;
+#endif
+};
+
+using WebKit::RemoteLayerTreeCommitBundle::RootFrameData = std::pair<WebKit::RemoteLayerTreeTransaction, WebKit::RemoteScrollingCoordinatorTransaction>;
+
+struct WebKit::RemoteLayerTreeCommitBundle {
+    Vector<WebKit::RemoteLayerTreeCommitBundle::RootFrameData> transactions;
+    WebKit::PageData pageData;
+    std::optional<WebKit::MainFrameData> mainFrameData;
 };

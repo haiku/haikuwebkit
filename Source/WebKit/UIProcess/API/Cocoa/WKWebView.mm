@@ -6828,6 +6828,24 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
 
 @implementation WKWebView (WKTextExtraction)
 
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
+
+static std::optional<WebCore::JSHandleIdentifier> mainFrameJSHandleIdentifier(_WKJSHandle *nodeHandle)
+{
+    if (!nodeHandle)
+        return std::nullopt;
+
+    auto info = nodeHandle->_ref->info();
+    if (!info.frameInfo.isMainFrame) {
+        // FIXME: Blocked on support for text extraction in subframes.
+        return std::nullopt;
+    }
+
+    return info.identifier;
+}
+
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
+
 - (void)_requestTextExtractionInternal:(_WKTextExtractionConfiguration *)configuration completion:(CompletionHandler<void(std::optional<WebCore::TextExtraction::Item>&&)>&&)completion
 {
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
@@ -6837,9 +6855,9 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
 
     auto rectInWebView = configuration.targetRect;
     bool mergeParagraphs = configuration.mergeParagraphs;
-    bool canIncludeIdentifiers = configuration.canIncludeIdentifiers;
+    bool includeNodeIdentifiers = configuration.includeNodeIdentifiers;
     bool skipNearlyTransparentContent = configuration.skipNearlyTransparentContent;
-    auto rectInRootView = [&]() -> std::optional<WebCore::FloatRect> {
+    auto rectInRootView = [&] -> std::optional<WebCore::FloatRect> {
         if (CGRectIsNull(rectInWebView))
             return std::nullopt;
 
@@ -6852,9 +6870,12 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
 
     WebCore::TextExtraction::Request request {
         .collectionRectInRootView = WTFMove(rectInRootView),
+        .targetNodeHandleIdentifier = mainFrameJSHandleIdentifier(configuration.targetNode),
         .mergeParagraphs = mergeParagraphs,
         .skipNearlyTransparentContent = skipNearlyTransparentContent,
-        .canIncludeIdentifiers = canIncludeIdentifiers,
+        .includeNodeIdentifiers = includeNodeIdentifiers,
+        .includeEventListeners = !!configuration.includeEventListeners,
+        .includeAccessibilityAttributes = !!configuration.includeAccessibilityAttributes,
     };
 
     _page->requestTextExtraction(WTFMove(request), WTFMove(completion));

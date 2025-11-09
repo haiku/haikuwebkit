@@ -354,7 +354,7 @@ void Line::appendText(const InlineTextItem& inlineTextItem, const RenderStyle& s
             // provided both spaces are within the same inline formatting context—is collapsed to have zero advance width.
             if (run.isText())
                 return run.hasCollapsibleTrailingWhitespace();
-            ASSERT(run.isListMarker() || run.isLineSpanningInlineBoxStart() || run.isInlineBoxStart() || run.isInlineBoxEnd() || run.isWordBreakOpportunity() || run.isOpaque());
+            ASSERT(run.isListMarker() || run.isLineSpanningInlineBoxStart() || run.isInlineBoxStart() || run.isInlineBoxEnd() || run.isWordBreakOpportunity() || run.isOpaque() || run.isBlock());
         }
         // Leading whitespace.
         return true;
@@ -762,6 +762,8 @@ inline static Line::Run::Type toLineRunType(const InlineItem& inlineItem)
         return Line::Run::Type::InlineBoxEnd;
     case InlineItem::Type::Opaque:
         return Line::Run::Type::Opaque;
+    case InlineItem::Type::Block:
+        return Line::Run::Type::Block;
     default:
         ASSERT_NOT_REACHED();
         return { };

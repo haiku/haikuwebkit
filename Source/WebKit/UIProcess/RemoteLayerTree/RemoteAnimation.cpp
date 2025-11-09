@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteAnimation.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <wtf/TZoneMallocInlines.h>
 
@@ -52,4 +52,4 @@ void RemoteAnimation::apply(WebCore::AcceleratedEffectValues& values)
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)

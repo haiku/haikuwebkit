@@ -31,7 +31,7 @@
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakPtr.h>
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 #include "AcceleratedTimeline.h"
 #include "TimelineIdentifier.h"
 #endif
@@ -79,7 +79,7 @@ public:
 
     static void updateGlobalPosition(WebAnimation&);
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     void clearAcceleratedRepresentation() { m_acceleratedRepresentation = nullptr; }
     AcceleratedTimeline& acceleratedRepresentation();
 #endif
@@ -87,18 +87,18 @@ public:
 protected:
     AnimationTimeline(std::optional<WebAnimationTime> = std::nullopt);
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     virtual Ref<AcceleratedTimeline> createAcceleratedRepresentation();
 #endif
 
     AnimationCollection m_animations;
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     TimelineIdentifier m_acceleratedTimelineIdentifier;
 #endif
 
 private:
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
     RefPtr<AcceleratedTimeline> m_acceleratedRepresentation;
 #endif
     std::optional<WebAnimationTime> m_currentTime;

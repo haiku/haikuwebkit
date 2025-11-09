@@ -43,7 +43,7 @@ public:
     const String& blockedURL() const { return m_blockedURL.string(); }
 
 private:
-    friend struct IPC::ArgumentCoder<COEPInheritenceViolationReportBody, void>;
+    friend struct IPC::ArgumentCoder<COEPInheritenceViolationReportBody>;
     COEPInheritenceViolationReportBody(COEPDisposition, const URL& blockedURL, const String& type);
 
     ViolationReportType reportBodyType() const final { return ViolationReportType::COEPInheritenceViolation; }

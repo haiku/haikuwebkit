@@ -61,7 +61,7 @@ struct SVGPropertyTraits<CompositeOperationType> {
         return emptyString();
     }
 
-    static CompositeOperationType fromString(const String& value)
+    static CompositeOperationType fromString(SVGElement&, const String& value)
     {
         static constexpr std::pair<ComparableASCIILiteral, CompositeOperationType> mappings[] = {
             { "arithmetic"_s, CompositeOperationType::FECOMPOSITE_OPERATOR_ARITHMETIC },

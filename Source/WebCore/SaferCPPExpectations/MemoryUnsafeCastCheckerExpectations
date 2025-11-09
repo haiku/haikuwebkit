@@ -42,10 +42,7 @@ bridge/runtime_array.cpp
 bridge/runtime_method.cpp
 bridge/runtime_object.cpp
 bridge/runtime_root.cpp
-dom/ElementRareData.h
-dom/Node.cpp
 dom/NodeRareData.h
-dom/UIEventWithKeyState.cpp
 domjit/DOMJITHelpers.h
 domjit/JSDocumentDOMJIT.cpp
 domjit/JSNodeDOMJIT.cpp
@@ -58,7 +55,6 @@ layout/layouttree/LayoutIterator.h
 layout/layouttree/LayoutTreeBuilder.cpp
 loader/cache/CachedResourceClientWalker.h
 mathml/MathMLRowElement.cpp
-[ Mac ] page/mac/EventHandlerMac.mm
 [ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
 platform/graphics/GraphicsLayer.cpp
 platform/graphics/ca/GraphicsLayerCA.cpp

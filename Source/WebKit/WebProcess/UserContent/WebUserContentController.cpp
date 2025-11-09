@@ -33,7 +33,7 @@
 #include "JavaScriptEvaluationResult.h"
 #include "Logging.h"
 #include "ScriptMessageHandlerIdentifier.h"
-#include "SharedMemoryStringMatcher.h"
+#include "SharedMemoryJSBuffer.h"
 #include "UserContentControllerParameters.h"
 #include "WebCompiledContentRuleList.h"
 #include "WebFrame.h"
@@ -90,8 +90,8 @@ Ref<WebUserContentController> WebUserContentController::getOrCreate(UserContentC
     userContentController->addUserScripts(WTFMove(parameters.userScripts), InjectUserScriptImmediately::No);
     userContentController->addUserStyleSheets(WTFMove(parameters.userStyleSheets));
     userContentController->addUserScriptMessageHandlers(WTFMove(parameters.messageHandlers));
-    for (auto&& stringMatcher : WTFMove(parameters.stringMatchers))
-        userContentController->addStringMatcher(WTFMove(stringMatcher));
+    for (auto&& buffer : WTFMove(parameters.buffers))
+        userContentController->addJSBuffer(WTFMove(buffer));
 #if ENABLE(CONTENT_EXTENSIONS)
     userContentController->addContentRuleLists(WTFMove(parameters.contentRuleLists));
 #endif
@@ -171,7 +171,7 @@ void WebUserContentController::removeContentWorld(ContentWorldIdentifier worldId
 
     for (auto weakController : userContentControllers().values()) {
         if (RefPtr controller = weakController.get())
-            controller->m_stringMatchers.remove(worldIdentifier);
+            controller->m_buffers.remove(worldIdentifier);
     }
 
     auto it = worldMap().find(worldIdentifier);
@@ -661,39 +661,43 @@ void WebUserContentController::forEachUserMessageHandler(NOESCAPE const Function
 }
 #endif
 
-void WebUserContentController::addStringMatcher(WebStringMatcherData&& data)
+void WebUserContentController::addJSBuffer(WebJSBufferData&& data)
 {
+    if (!data.data) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
     addContentWorldIfNecessary(data.worldData);
-    m_stringMatchers.ensure(data.worldData.identifier, [] {
-        return HashMap<String, RefPtr<WebCore::WebKitStringMatcher>>();
-    }).iterator->value.set(data.name, SharedMemoryStringMatcher::create(WTFMove(data.data)));
+    m_buffers.ensure(data.worldData.identifier, [] {
+        return HashMap<String, RefPtr<WebCore::WebKitBuffer>>();
+    }).iterator->value.set(data.name, SharedMemoryJSBuffer::create(data.data.releaseNonNull()));
 }
 
-void WebUserContentController::removeStringMatcher(ContentWorldIdentifier identifier, const String& name)
+void WebUserContentController::removeJSBuffer(ContentWorldIdentifier identifier, const String& name)
 {
-    auto it = m_stringMatchers.find(identifier);
-    if (it == m_stringMatchers.end())
+    auto it = m_buffers.find(identifier);
+    if (it == m_buffers.end())
         return;
     it->value.remove(name);
     if (it->value.isEmpty())
-        m_stringMatchers.remove(it);
+        m_buffers.remove(it);
 }
 
-bool WebUserContentController::hasStringMatchersForWorld(const WebCore::DOMWrapperWorld& coreWorld) const
+bool WebUserContentController::hasBuffersForWorld(const WebCore::DOMWrapperWorld& coreWorld) const
 {
     RefPtr world = InjectedBundleScriptWorld::get(coreWorld);
     if (!world)
         return false;
-    return m_stringMatchers.contains(world->identifier());
+    return m_buffers.contains(world->identifier());
 }
 
-WebCore::WebKitStringMatcher* WebUserContentController::stringMatcher(const WebCore::DOMWrapperWorld& coreWorld, const String& name) const
+WebCore::WebKitBuffer* WebUserContentController::buffer(const WebCore::DOMWrapperWorld& coreWorld, const String& name) const
 {
     RefPtr world = InjectedBundleScriptWorld::get(coreWorld);
     if (!world)
         return nullptr;
-    auto it = m_stringMatchers.find(world->identifier());
-    if (it == m_stringMatchers.end())
+    auto it = m_buffers.find(world->identifier());
+    if (it == m_buffers.end())
         return nullptr;
     return it->value.get(name);
 }

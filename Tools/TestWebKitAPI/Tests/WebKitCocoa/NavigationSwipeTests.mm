@@ -52,8 +52,20 @@ namespace TestWebKitAPI {
 
 #if PLATFORM(IOS_FAMILY)
 
-// FIXME: rdar://163668275 (REGRESSION(iOS26): TestWebKitAPI.NavigationSwipeTests.RestoreFirstResponderAfterNavigationSwipe is a constant failure (301656))
-TEST(NavigationSwipeTests, DISABLED_RestoreFirstResponderAfterNavigationSwipe)
+void simulateBackSwipeAndWaitForGestureToEnd(WKWebView *webView, Function<void()>&& runBeforeCompletion = { })
+{
+    [webView _beginBackSwipeForTesting];
+    if (runBeforeCompletion)
+        runBeforeCompletion();
+
+    [webView _completeBackSwipeForTesting];
+
+    Util::waitForConditionWithLogging([webView] -> bool {
+        return [webView _didCallEndSwipeGestureForTesting];
+    }, 3, @"Timed out waiting for endSwipeGesture to be called");
+}
+
+TEST(NavigationSwipeTests, RestoreFirstResponderAfterNavigationSwipe)
 {
     poseAsClass("TestNavigationInteractiveTransition", "_UINavigationInteractiveTransitionBase");
 
@@ -64,8 +76,7 @@ TEST(NavigationSwipeTests, DISABLED_RestoreFirstResponderAfterNavigationSwipe)
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView synchronouslyLoadTestPageNamed:@"simple2"];
 
-    [webView _beginBackSwipeForTesting];
-    [webView _completeBackSwipeForTesting];
+    simulateBackSwipeAndWaitForGestureToEnd(webView.get());
     EXPECT_TRUE([webView _contentViewIsFirstResponder]);
 }
 
@@ -80,9 +91,10 @@ TEST(NavigationSwipeTests, DoNotBecomeFirstResponderAfterNavigationSwipeIfWebVie
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView synchronouslyLoadTestPageNamed:@"simple2"];
 
-    [webView _beginBackSwipeForTesting];
-    [webView removeFromSuperview];
-    [webView _completeBackSwipeForTesting];
+    simulateBackSwipeAndWaitForGestureToEnd(webView.get(), [webView] {
+        [webView removeFromSuperview];
+    });
+
     EXPECT_FALSE([webView _contentViewIsFirstResponder]);
 }
 
@@ -97,8 +109,7 @@ TEST(NavigationSwipeTests, DoNotAssertWhenSnapshottingZeroSizeView)
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView synchronouslyLoadTestPageNamed:@"simple2"];
 
-    [webView _beginBackSwipeForTesting];
-    [webView _completeBackSwipeForTesting];
+    simulateBackSwipeAndWaitForGestureToEnd(webView.get());
 }
 
 #endif // PLATFORM(IOS_FAMILY)

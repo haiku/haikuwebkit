@@ -75,7 +75,7 @@ void SVGFEGaussianBlurElement::attributeChanged(const QualifiedName& name, const
         Ref { m_in1 }->setBaseValInternal(newValue);
         break;
     case AttributeNames::edgeModeAttr: {
-        auto propertyValue = SVGPropertyTraits<EdgeModeType>::fromString(newValue);
+        auto propertyValue = SVGPropertyTraits<EdgeModeType>::fromString(*this, newValue);
         if (propertyValue != EdgeModeType::Unknown)
             Ref { m_edgeMode }->setBaseValInternal<EdgeModeType>(propertyValue);
         else

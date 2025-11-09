@@ -452,6 +452,9 @@ bool GraphicsContextSkia::drawPathAsSingleElement(const Path& path, SkPaint& pai
                 m_canvas.drawLine(line.start().x(), line.start().y(), line.end().x(), line.end().y(), paint);
             handled = true;
         },
+        [&](const PathMoveTo&) {
+            handled = true;
+        },
         [&](const auto&) {
             handled = false;
         }
@@ -475,16 +478,14 @@ void GraphicsContextSkia::fillPath(const Path& path)
         return;
 
     auto fillRule = toSkiaFillType(state().fillRule());
-    bool isVolatile = m_renderingPurpose == RenderingPurpose::Canvas;
-    auto& skiaPath = *path.platformPath();
-    if (skiaPath.getFillType() == fillRule && skiaPath.isVolatile() == isVolatile) {
+    auto& skiaPath= *path.platformPath();
+    if (skiaPath.getFillType() == fillRule) {
         drawSkiaPath(skiaPath, paint);
         return;
     }
 
     auto skiaPathCopy = skiaPath;
     skiaPathCopy.setFillType(fillRule);
-    skiaPathCopy.setIsVolatile(isVolatile);
     drawSkiaPath(skiaPathCopy, paint);
 }
 
@@ -502,16 +503,7 @@ void GraphicsContextSkia::strokePath(const Path& path)
     if (drawPathAsSingleElement(path, strokePaint))
         return;
 
-    bool isVolatile = m_renderingPurpose == RenderingPurpose::Canvas;
-    auto& skiaPath = *path.platformPath();
-    if (skiaPath.isVolatile() == isVolatile) {
-        drawSkiaPath(skiaPath, strokePaint);
-        return;
-    }
-
-    auto skiaPathCopy = skiaPath;
-    skiaPathCopy.setIsVolatile(isVolatile);
-    drawSkiaPath(skiaPathCopy, strokePaint);
+    drawSkiaPath(*path.platformPath(), strokePaint);
 }
 
 sk_sp<SkImageFilter> GraphicsContextSkia::createDropShadowFilterIfNeeded(ShadowStyle shadowStyle) const

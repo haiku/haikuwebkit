@@ -60,13 +60,13 @@ void SVGFETurbulenceElement::attributeChanged(const QualifiedName& name, const A
 {
     switch (name.nodeName()) {
     case AttributeNames::typeAttr: {
-        TurbulenceType propertyValue = SVGPropertyTraits<TurbulenceType>::fromString(newValue);
+        TurbulenceType propertyValue = SVGPropertyTraits<TurbulenceType>::fromString(*this, newValue);
         if (propertyValue != TurbulenceType::Unknown)
             Ref { m_type }->setBaseValInternal<TurbulenceType>(propertyValue);
         break;
     }
     case AttributeNames::stitchTilesAttr: {
-        SVGStitchOptions propertyValue = SVGPropertyTraits<SVGStitchOptions>::fromString(newValue);
+        SVGStitchOptions propertyValue = SVGPropertyTraits<SVGStitchOptions>::fromString(*this, newValue);
         if (propertyValue > 0)
             Ref { m_stitchTiles }->setBaseValInternal<SVGStitchOptions>(propertyValue);
         break;

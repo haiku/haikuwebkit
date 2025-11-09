@@ -993,7 +993,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 #endif // USE(EXTENSIONKIT)
 #endif // HAVE(VISIBILITY_PROPAGATION_VIEW)
 
-- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction
+- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction mainFrameData:(const std::optional<WebKit::MainFrameData>&)mainFrameData
 {
     BOOL transactionMayChangeBounds = layerTreeTransaction.isMainFrameProcessTransaction();
     CGSize contentsSize = layerTreeTransaction.contentsSize();
@@ -1006,7 +1006,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
     if (boundsChanged)
         [self setBounds:contentBounds];
 
-    [_webView _didCommitLayerTree:layerTreeTransaction];
+    [_webView _didCommitLayerTree:layerTreeTransaction mainFrameData:mainFrameData];
 
     if (_interactionViewsContainerView) {
         WebCore::FloatPoint scaledOrigin = layerTreeTransaction.scrollOrigin();

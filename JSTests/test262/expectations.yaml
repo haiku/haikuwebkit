@@ -526,9 +526,6 @@ test/intl402/DateTimeFormat/prototype/formatToParts/temporal-objects-not-overlap
 test/intl402/DateTimeFormat/prototype/formatToParts/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
-test/intl402/DateTimeFormat/timezone-legacy-non-iana.js:
-  default: 'Test262Error: Time zone: ACT Expected a RangeError to be thrown but no exception was thrown at all'
-  strict mode: 'Test262Error: Time zone: ACT Expected a RangeError to be thrown but no exception was thrown at all'
 test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DateTimeFormat.js:
   default: 'RangeError: calendar is not a well-formed calendar value'
   strict mode: 'RangeError: calendar is not a well-formed calendar value'

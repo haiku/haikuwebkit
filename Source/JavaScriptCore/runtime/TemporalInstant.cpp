@@ -381,7 +381,10 @@ String TemporalInstant::toString(JSGlobalObject* globalObject, JSValue optionsVa
 // https://tc39.es/proposal-temporal/#sec-temporal-temporalinstanttostring
 String TemporalInstant::toString(ISO8601::ExactTime exactTime, JSObject* timeZone, PrecisionData precision)
 {
-    GregorianDateTime gregorianDateTime { static_cast<double>(exactTime.epochMilliseconds()), LocalTimeOffset { } };
+    // We want to round down the epoch milliseconds so that we can add
+    // the microseconds and nanoseconds back in -- hence the call to
+    // floorEpochMilliseconds().
+    GregorianDateTime gregorianDateTime { static_cast<double>(exactTime.floorEpochMilliseconds()), LocalTimeOffset { } };
     StringBuilder builder;
 
     // If the year is outside the bounds of 0 and 9999 inclusive we want to

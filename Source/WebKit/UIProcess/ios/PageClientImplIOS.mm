@@ -668,11 +668,11 @@ void PageClientImpl::didGetTapHighlightGeometries(WebKit::TapIdentifier requestI
     [contentView() _didGetTapHighlightForRequest:requestID color:color quads:highlightedQuads topLeftRadius:topLeftRadius topRightRadius:topRightRadius bottomLeftRadius:bottomLeftRadius bottomRightRadius:bottomRightRadius nodeHasBuiltInClickHandling:nodeHasBuiltInClickHandling];
 }
 
-void PageClientImpl::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTreeTransaction)
+void PageClientImpl::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTreeTransaction, const std::optional<MainFrameData>& mainFrameData)
 {
-    PageClientImplCocoa::didCommitLayerTree(layerTreeTransaction);
+    PageClientImplCocoa::didCommitLayerTree(layerTreeTransaction, mainFrameData);
 
-    [contentView() _didCommitLayerTree:layerTreeTransaction];
+    [contentView() _didCommitLayerTree:layerTreeTransaction mainFrameData:mainFrameData];
 }
 
 void PageClientImpl::layerTreeCommitComplete()

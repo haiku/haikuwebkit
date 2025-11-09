@@ -1596,6 +1596,7 @@ html/HTMLProgressElement.cpp
 html/HTMLQuoteElement.cpp
 html/HTMLScriptElement.cpp
 html/HTMLSelectElement.cpp
+html/HTMLSelectedContentElement.cpp
 html/HTMLSlotElement.cpp
 html/HTMLSourceElement.cpp
 html/HTMLSpanElement.cpp
@@ -2233,8 +2234,8 @@ page/VisitedLinkStore.cpp
 page/VisualViewport.cpp
 page/WebKitJSHandle.cpp
 page/WebKitSerializedNode.cpp
-page/WebKitStringMatchersNamespace.cpp
-page/WebKitStringMatcher.cpp
+page/WebKitBuffer.cpp
+page/WebKitBufferNamespace.cpp
 page/WheelEventDeltaFilter.cpp
 page/WheelEventTestMonitor.cpp
 page/WindowFeatures.cpp
@@ -4289,6 +4290,7 @@ JSHTMLProgressElement.cpp
 JSHTMLQuoteElement.cpp
 JSHTMLScriptElement.cpp
 JSHTMLSelectElement.cpp
+JSHTMLSelectedContentElement.cpp
 JSHTMLSlotElement.cpp
 JSHTMLSourceElement.cpp
 JSHTMLSpanElement.cpp
@@ -4900,9 +4902,8 @@ JSStorage.cpp
 JSStorageEvent.cpp
 JSStorageManager.cpp
 JSStreamPipeOptions.cpp
-JSWebKitStringMatcher.cpp
-JSWebKitStringMatchersNamespace.cpp
-JSWebKitStringMatcherOptions.cpp
+JSWebKitBuffer.cpp
+JSWebKitBufferNamespace.cpp
 JSStringCallback.cpp
 JSStructuredSerializeOptions.cpp
 JSStyleMedia.cpp

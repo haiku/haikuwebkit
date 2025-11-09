@@ -414,19 +414,17 @@ public: \
 using __thisIsAlsoHereToForceASemicolonAfterThisMacro UNUSED_TYPE_ALIAS = int
 
 template<typename T>
-inline constexpr std::enable_if_t<WTF::IsTypeComplete<std::remove_pointer_t<T>>, bool> allowCompactPointers()
+inline constexpr bool allowCompactPointers()
 {
-    return std::remove_pointer_t<T>::allowCompactPointers;
-}
-
-template<typename T>
-inline constexpr std::enable_if_t<!WTF::IsTypeComplete<std::remove_pointer_t<T>>, bool> allowCompactPointers()
-{
-    // We want to support compact pointers to incomplete types too, so we have this fallback:
-    // if a type is incomplete, AllowCompactPointers can be specialized on its pointer type,
-    // in which case we'll return its value. This is mostly accomplished using the below
-    // WTF_ALLOW_COMPACT_POINTERS_TO_INCOMPLETE_TYPE macro.
-    return AllowCompactPointers<std::remove_const_t<std::remove_pointer_t<T>>*>::value;
+    if constexpr (WTF::IsTypeComplete<std::remove_pointer_t<T>>)
+        return std::remove_pointer_t<T>::allowCompactPointers;
+    else {
+        // We want to support compact pointers to incomplete types too, so we have this fallback:
+        // if a type is incomplete, AllowCompactPointers can be specialized on its pointer type,
+        // in which case we'll return its value. This is mostly accomplished using the below
+        // WTF_ALLOW_COMPACT_POINTERS_TO_INCOMPLETE_TYPE macro.
+        return AllowCompactPointers<std::remove_const_t<std::remove_pointer_t<T>>*>::value;
+    }
 }
 
 using WTF::FastAlignedMalloc;

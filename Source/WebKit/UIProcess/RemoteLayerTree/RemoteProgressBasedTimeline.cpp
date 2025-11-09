@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteProgressBasedTimeline.h"
 
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#if ENABLE(THREADED_ANIMATIONS)
 
 #import <WebCore/AcceleratedTimeline.h>
 #import <WebCore/ScrollingTreeScrollingNode.h>
@@ -68,5 +68,5 @@ void RemoteProgressBasedTimeline::updateCurrentTime()
 
 } // namespace WebKit
 
-#endif // ENABLE(THREADED_ANIMATION_RESOLUTION)
+#endif // ENABLE(THREADED_ANIMATIONS)
 

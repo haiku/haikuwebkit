@@ -663,8 +663,8 @@ const DOMMatrixReadOnly& HTMLModelElement::entityTransform() const
 
 ExceptionOr<void> HTMLModelElement::setEntityTransform(const DOMMatrixReadOnly& transform)
 {
-#if ENABLE(MODEL_ELEMENT_STAGE_MODE_INTERACTION)
-    if (supportsStageModeInteraction())
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE)
+    if (canSetEntityTransform())
         return Exception { ExceptionCode::InvalidStateError,  "Transform is read-only unless StageMode is set to 'none'"_s };
 #endif
 
@@ -701,11 +701,18 @@ const DOMPointReadOnly& HTMLModelElement::boundingBoxExtents() const
 
 #endif
 
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE)
+bool HTMLModelElement::canSetEntityTransform() const
+{
+    return stageMode() != StageModeOperation::None;
+}
+#endif
+
 #if ENABLE(MODEL_ELEMENT_STAGE_MODE_INTERACTION)
 
 bool HTMLModelElement::supportsStageModeInteraction() const
 {
-    return stageMode() != StageModeOperation::None;
+    return canSetEntityTransform();
 }
 
 void HTMLModelElement::beginStageModeTransform(const TransformationMatrix& transform)

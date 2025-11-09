@@ -67,7 +67,6 @@
 WebProcess/InjectedBundle/API/mac/WKDOMInternals.mm
 WebProcess/InjectedBundle/API/mac/WKWebProcessPlugIn.mm
 WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
-WebProcess/InjectedBundle/mac/InjectedBundleMac.mm
 WebProcess/Plugins/PDF/PDFIncrementalLoader.mm
 WebProcess/Plugins/PDF/PDFPluginChoiceAnnotation.mm
 WebProcess/Plugins/PDF/PDFPluginTextAnnotation.mm

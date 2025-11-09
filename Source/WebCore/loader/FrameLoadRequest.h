@@ -111,6 +111,8 @@ public:
 
     WEBCORE_EXPORT ~FrameLoadRequest();
 
+    WEBCORE_EXPORT FrameLoadRequest(const FrameLoadRequest&);
+    WEBCORE_EXPORT FrameLoadRequest& operator=(const FrameLoadRequest&);
     WEBCORE_EXPORT FrameLoadRequest(FrameLoadRequest&&);
     WEBCORE_EXPORT FrameLoadRequest& operator=(FrameLoadRequest&&);
 
