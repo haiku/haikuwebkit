@@ -135,6 +135,12 @@ FontPlatformData::FontPlatformData(const BFont& font, const FontDescription& fon
 void FontPlatformData::updateSize(float size)
 {
 	m_size = size;
+	// The default copy constructor does not create a copy of the underlying font!
+	// Here is a weird time to do it, bu that's what FreeType and Core Text do, so let's follow
+	// them. Some kind of copy-on-write optimization.
+	// Otherwise, all objects that share the same BFont because they are copies of each other would
+	// all be affected by the size update.
+	m_font = std::make_shared<BFont>(font());
 	m_font->SetSize(size);
 }
 
