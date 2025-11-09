@@ -102,11 +102,11 @@ void RenderThemeHaiku::adjustSliderThumbSize(RenderStyle& style, const Element*)
 {
     const StyleAppearance& appearance = style.appearance();
     if (appearance == StyleAppearance::SliderVertical) {
-        style.setWidth(WebCore::Style::PreferredSize(Length(sliderThumbHeight, LengthType::Fixed)));
-        style.setHeight(WebCore::Style::PreferredSize(Length(sliderThumbWidth, LengthType::Fixed)));
+        style.setWidth(WebCore::Style::PreferredSize::Fixed { sliderThumbHeight });
+        style.setHeight(WebCore::Style::PreferredSize::Fixed { sliderThumbWidth });
     } else if (appearance == StyleAppearance::SliderHorizontal) {
-        style.setWidth(WebCore::Style::PreferredSize(Length(sliderThumbWidth, LengthType::Fixed)));
-        style.setHeight(WebCore::Style::PreferredSize(Length(sliderThumbHeight, LengthType::Fixed)));
+        style.setWidth(WebCore::Style::PreferredSize::Fixed {sliderThumbWidth });
+        style.setHeight(WebCore::Style::PreferredSize::Fixed { sliderThumbHeight });
     }
 }
 
@@ -201,20 +201,20 @@ void RenderThemeHaiku::adjustMenuListButtonStyle(RenderStyle& style, const Eleme
 
     int labelSpacing = be_control_look ? static_cast<int>(be_control_look->DefaultLabelSpacing()) : 3;
     // Position the text correctly within the select box and make the box wide enough to fit the dropdown button
-    style.setPaddingTop(WebCore::Style::PaddingEdge(Length(3, LengthType::Fixed)));
-    style.setPaddingLeft(WebCore::Style::PaddingEdge(Length(3 + labelSpacing, LengthType::Fixed)));
-    style.setPaddingRight(WebCore::Style::PaddingEdge(Length(22, LengthType::Fixed)));
-    style.setPaddingBottom(WebCore::Style::PaddingEdge(Length(3, LengthType::Fixed)));
+    style.setPaddingTop(WebCore::Style::PaddingEdge::Fixed { 3 } );
+    style.setPaddingLeft(WebCore::Style::PaddingEdge::Fixed { 3 + labelSpacing });
+    style.setPaddingRight(WebCore::Style::PaddingEdge::Fixed { 22 });
+    style.setPaddingBottom(WebCore::Style::PaddingEdge::Fixed {3 });
 
     // Height is locked to auto
-    style.setHeight(WebCore::Style::PreferredSize(Length(LengthType::Auto)));
+    style.setHeight(CSS::Keyword::Auto { });
 
     // Calculate our min-height
     const int menuListButtonMinHeight = 20;
     int minHeight = style.computedFontSize();
     minHeight = std::max(minHeight, menuListButtonMinHeight);
 
-    style.setMinHeight(WebCore::Style::MinimumSize(Length(minHeight, LengthType::Fixed)));
+    style.setMinHeight(WebCore::Style::MinimumSize::Fixed { minHeight });
 }
 
 void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, const PaintInfo& info, const FloatRect& floatRect)

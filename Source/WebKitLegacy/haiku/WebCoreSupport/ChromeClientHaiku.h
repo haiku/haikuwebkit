@@ -88,7 +88,7 @@ namespace WebCore {
 
         void setResizable(bool) override;
 
-        void addMessageToConsole(MessageSource, MessageLevel,
+        void addMessageToConsole(JSC::MessageSource, JSC::MessageLevel,
                                          const String& message, unsigned int lineNumber, unsigned columnNumber, const String& sourceID) override;
 
         bool canRunBeforeUnloadConfirmPanel() override;

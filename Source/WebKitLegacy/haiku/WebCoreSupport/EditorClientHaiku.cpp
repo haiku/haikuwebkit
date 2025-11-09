@@ -34,6 +34,7 @@
 #include "EditorClientHaiku.h"
 
 #include <WebCore/Document.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/Editor.h>
 #include <WebCore/FocusController.h>
 #include <WebCore/Frame.h>

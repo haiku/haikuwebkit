@@ -43,6 +43,8 @@
 #include "WebCore/Credential.h"
 #include "WebCore/CachedFrame.h"
 #include "WebCore/DocumentLoader.h"
+#include "WebCore/DocumentPage.h"
+#include "WebCore/DocumentView.h"
 #include "WebCore/DOMWrapperWorld.h"
 #include "WebCore/FormState.h"
 #include "WebCore/Frame.h"

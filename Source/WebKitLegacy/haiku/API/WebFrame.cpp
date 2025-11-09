@@ -37,6 +37,8 @@
 
 #include "WebCore/Document.h"
 #include "WebCore/DocumentLoader.h"
+#include "WebCore/DocumentPage.h"
+#include "WebCore/DocumentView.h"
 #include "WebCore/DOMWrapperWorld.h"
 #include "WebCore/Editor.h"
 #include "WebCore/Element.h"

@@ -29,6 +29,7 @@
 #include <config.h>
 #include "WebView.h"
 
+#include "WebCore/DocumentView.h"
 #include "WebCore/Frame.h"
 #include "WebCore/GraphicsContextHaiku.h"
 #include "WebCore/LocalFrameInlines.h"

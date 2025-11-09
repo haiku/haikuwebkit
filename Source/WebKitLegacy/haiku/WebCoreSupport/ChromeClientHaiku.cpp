@@ -33,6 +33,7 @@
 #include <WebCore/CookieConsentDecisionResult.h>
 #include <WebCore/Cursor.h>
 #include <WebCore/DataListSuggestionPicker.h>
+#include <WebCore/DocumentView.h>
 #include "WebCore/FileChooser.h"
 #include <WebCore/FileIconLoader.h>
 #include "WebCore/Frame.h"

@@ -54,6 +54,8 @@
 #include "WebCore/CookieJar.h"
 #include "WebCore/DeviceOrientationClientMock.h"
 #include "WebCore/DiagnosticLoggingClient.h"
+#include "WebCore/DocumentSyncClient.h"
+#include "WebCore/DocumentView.h"
 #include "WebCore/DOMTimer.h"
 #include <WebCore/DummyModelPlayerProvider.h>
 #include <WebCore/DummyStorageProvider.h>
@@ -87,7 +89,6 @@
 #include "WebCore/PlatformWheelEvent.h"
 #include "WebCore/PluginInfoProvider.h"
 #include "WebCore/PointerLockController.h"
-#include "WebCore/ProcessSyncClient.h"
 #include "WebCore/ProgressTracker.h"
 #include "WebCore/ProgressTrackerClient.h"
 #include "WebCore/RemoteFrameClient.h"
@@ -322,7 +323,7 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
         makeUniqueRef<ContextMenuClientHaiku>(this),
         makeUniqueRef<ChromeClientHaiku>(this, webView),
         makeUniqueRef<WebCryptoClient>(),
-        makeUniqueRef<WebCore::ProcessSyncClient>()
+        makeUniqueRef<WebCore::DocumentSyncClient>()
     );
 
     // alternativeText

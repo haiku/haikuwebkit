@@ -28,6 +28,7 @@
 
 #include "WebCore/BackForwardController.h"
 #include "WebCore/Document.h"
+#include "WebCore/DocumentPage.h"
 #include "WebCore/Frame.h"
 #include "WebCore/FrameInlines.h"
 #include "WebCore/FrameLoader.h"

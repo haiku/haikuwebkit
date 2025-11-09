@@ -29,6 +29,7 @@
 
 #include "WebCore/ContextMenu.h"
 #include "WebCore/Document.h"
+#include "WebCore/DocumentPage.h"
 #include "WebCore/Editor.h"
 #include "WebCore/Event.h"
 #include "WebCore/Frame.h"
