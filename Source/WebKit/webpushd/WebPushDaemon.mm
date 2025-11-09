@@ -644,9 +644,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
     NSDictionary *settingsInfo = @{
-        pushActionVersionKey(): currentPushActionVersion(),
-        pushActionPartitionKey(): subscriptionSetIdentifier.pushPartition.createNSString().get(),
-        pushActionTypeKey(): _WKWebPushActionTypePushEvent
+        pushActionVersionKeySingleton(): currentPushActionVersionSingleton(),
+        pushActionPartitionKeySingleton(): subscriptionSetIdentifier.pushPartition.createNSString().get(),
+        pushActionTypeKeySingleton(): _WKWebPushActionTypePushEvent
     };
     RetainPtr<BSMutableSettings> bsSettings = adoptNS([[BSMutableSettings alloc] init]);
     [bsSettings setObject:settingsInfo forSetting:WebKit::WebPushD::pushActionSetting];
@@ -1237,9 +1237,9 @@ void WebPushDaemon::setAppBadge(PushClientConnection& connection, WebCore::Secur
     if (!center)
         return;
 
-    UNMutableNotificationContent *content = [UNMutableNotificationContent new];
-    content.badge = appBadge ? [NSNumber numberWithLongLong:*appBadge] : nil;
-    RetainPtr request = [UNNotificationRequest requestWithIdentifier:NSUUID.UUID.UUIDString content:content trigger:nil];
+    RetainPtr content = adoptNS([UNMutableNotificationContent new]);
+    content.get().badge = appBadge ? [NSNumber numberWithLongLong:*appBadge] : nil;
+    RetainPtr request = [UNNotificationRequest requestWithIdentifier:NSUUID.UUID.UUIDString content:content.get() trigger:nil];
     RetainPtr debugDescription = identifier.debugDescription().createNSString().get();
     [center addNotificationRequest:request.get() withCompletionHandler:^(NSError *error) {
         if (error) {

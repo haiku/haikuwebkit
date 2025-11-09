@@ -29,7 +29,7 @@
 
 namespace JSC {
 
-const static uint8_t JSPromiseAllContextNumberOfInternalFields = 4;
+const static uint8_t JSPromiseAllContextNumberOfInternalFields = 2;
 
 class JSPromiseAllContext final : public JSInternalFieldObjectImpl<JSPromiseAllContextNumberOfInternalFields> {
 public:
@@ -39,9 +39,7 @@ public:
     DECLARE_VISIT_CHILDREN;
 
     enum class Field : uint8_t {
-        Promise = 0,
-        Values,
-        RemainingElementsCount,
+        GlobalContext = 0,
         Index,
     };
     static_assert(numberOfInternalFields == JSPromiseAllContextNumberOfInternalFields);
@@ -49,8 +47,6 @@ public:
     static std::array<JSValue, numberOfInternalFields> initialValues()
     {
         return { {
-            jsNull(),
-            jsNull(),
             jsNull(),
             jsNumber(0),
         } };
@@ -68,16 +64,12 @@ public:
     inline static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
 
     static JSPromiseAllContext* createWithInitialValues(VM&, Structure*);
-    static JSPromiseAllContext* create(VM&, Structure*, JSValue promise, JSValue values, JSValue remainingElementsCount, JSValue index);
+    static JSPromiseAllContext* create(VM&, Structure*, JSValue globalContext, JSValue index);
 
-    JSValue promise() const { return internalField(Field::Promise).get(); }
-    JSValue values() const { return internalField(Field::Values).get(); }
-    JSValue remainingElementsCount() const { return internalField(Field::RemainingElementsCount).get(); }
+    JSValue globalContext() const { return internalField(Field::GlobalContext).get(); }
     JSValue index() const { return internalField(Field::Index).get(); }
 
-    void setPromise(VM& vm, JSValue promise) { internalField(Field::Promise).set(vm, this, promise); }
-    void setValues(VM& vm, JSValue values) { internalField(Field::Values).set(vm, this, values); }
-    void setRemainingElementsCount(VM& vm, JSValue remainingElementsCount) { internalField(Field::RemainingElementsCount).set(vm, this, remainingElementsCount); }
+    void setGlobalContext(VM& vm, JSValue globalContext) { internalField(Field::GlobalContext).set(vm, this, globalContext); }
     void setIndex(VM& vm, JSValue index) { internalField(Field::Index).set(vm, this, index); }
 
 private:
@@ -86,7 +78,7 @@ private:
     {
     }
 
-    void finishCreation(VM&, JSValue promise, JSValue values, JSValue remainingElementsCount, JSValue index);
+    void finishCreation(VM&, JSValue globalContext, JSValue index);
 };
 
 STATIC_ASSERT_IS_TRIVIALLY_DESTRUCTIBLE(JSPromiseAllContext);

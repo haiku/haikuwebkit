@@ -36,7 +36,6 @@
 #include "Document.h"
 #include "ElementChildIteratorInlines.h"
 #include "Frame.h"
-#include "FrameInlines.h"
 #include "FrameSnapshotting.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLImageElement.h"

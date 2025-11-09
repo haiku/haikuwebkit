@@ -284,9 +284,6 @@ public:
     virtual void simulateAudioInterruption() { }
 #endif
 
-    virtual void beginSimulatedHDCPError() { }
-    virtual void endSimulatedHDCPError() { }
-
     virtual String languageOfPrimaryAudioTrack() const { return emptyString(); }
 
     virtual size_t extraMemoryCost() const

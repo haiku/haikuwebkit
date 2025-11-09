@@ -37,6 +37,8 @@
 #import <wtf/Vector.h>
 #import <wtf/WeakPtr.h>
 
+IGNORE_CLANG_WARNINGS_BEGIN("nullability-completeness")
+
 struct WGPUQueueImpl {
 };
 
@@ -81,11 +83,11 @@ public:
 
     const Device& device() const SWIFT_RETURNS_INDEPENDENT_VALUE;
     void clearTextureIfNeeded(const WGPUImageCopyTexture&, NSUInteger);
-    id<MTLCommandBuffer> commandBufferWithDescriptor(MTLCommandBufferDescriptor*);
+    id<MTLCommandBuffer> _Nullable commandBufferWithDescriptor(MTLCommandBufferDescriptor*);
     void commitMTLCommandBuffer(id<MTLCommandBuffer>);
     void removeMTLCommandBuffer(id<MTLCommandBuffer>);
     void setEncoderForBuffer(id<MTLCommandBuffer>, id<MTLCommandEncoder>);
-    id<MTLCommandEncoder> encoderForBuffer(id<MTLCommandBuffer>) const;
+    id<MTLCommandEncoder> _Nullable encoderForBuffer(id<MTLCommandBuffer>) const;
     void clearTextureViewIfNeeded(TextureView&);
     void clearTextureViewIfNeeded(Texture&);
     static bool writeWillCompletelyClear(WGPUTextureDimension, uint32_t widthForMetal, uint32_t logicalSizeWidth, uint32_t heightForMetal, uint32_t logicalSizeHeight, uint32_t depthForMetal, uint32_t logicalSizeDepthOrArrayLayers);
@@ -102,13 +104,13 @@ public:
     void waitForAllCommitedWorkToComplete();
     void synchronizeResourceAndWait(id<MTLBuffer>);
     id<MTLIndirectCommandBuffer> trimICB(id<MTLIndirectCommandBuffer> dest, id<MTLIndirectCommandBuffer> src, NSUInteger newSize);
-    id<MTLDevice> metalDevice() const;
+    id<MTLDevice> _Nullable metalDevice() const;
 
 private:
     Queue(id<MTLCommandQueue>, Adapter&, Device&);
     Queue(Adapter&, Device&);
 
-    NSString* errorValidatingSubmit(const Vector<Ref<WebGPU::CommandBuffer>>&) const;
+    NSString * _Nullable errorValidatingSubmit(const Vector<Ref<WebGPU::CommandBuffer>>&) const;
     bool validateWriteBuffer(const Buffer&, uint64_t bufferOffset, size_t) const;
 
 
@@ -117,13 +119,13 @@ private:
     void removeMTLCommandBufferInternal(id<MTLCommandBuffer>);
     void clearTextureIfNeeded(Texture&, uint32_t mipLevelCount, uint32_t arrayLayerCount, uint32_t baseMipLevel, uint32_t baseArrayLayer);
 
-    NSString* errorValidatingWriteTexture(const WGPUImageCopyTexture&, const WGPUTextureDataLayout&, const WGPUExtent3D&, size_t, const Texture&) const;
+    NSString * _Nullable errorValidatingWriteTexture(const WGPUImageCopyTexture&, const WGPUTextureDataLayout&, const WGPUExtent3D&, size_t, const Texture&) const;
 
     std::pair<id<MTLBuffer>, uint64_t> newTemporaryBufferWithBytes(std::span<uint8_t> data, bool noCopy);
 
-    id<MTLCommandQueue> m_commandQueue { nil };
-    id<MTLCommandBuffer> m_commandBuffer { nil };
-    id<MTLBlitCommandEncoder> m_blitCommandEncoder { nil };
+    id<MTLCommandQueue> _Nullable m_commandQueue { nil };
+    id<MTLCommandBuffer> _Nullable m_commandBuffer { nil };
+    id<MTLBlitCommandEncoder> _Nullable m_blitCommandEncoder { nil };
     ThreadSafeWeakPtr<Device> m_device; // The only kind of queues that exist right now are default queues, which are owned by Devices.
     uint64_t m_submittedCommandBufferCount { 0 };
     uint64_t m_completedCommandBufferCount { 0 };
@@ -132,13 +134,13 @@ private:
     HashMap<uint64_t, OnSubmittedWorkScheduledCallbacks, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_onSubmittedWorkScheduledCallbacks;
     using OnSubmittedWorkDoneCallbacks = Vector<WTF::Function<void(WGPUQueueWorkDoneStatus)>>;
     HashMap<uint64_t, OnSubmittedWorkDoneCallbacks, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_onSubmittedWorkDoneCallbacks;
-    NSMutableDictionary<NSNumber*, NSMutableSet<id<MTLCounterSampleBuffer>>*>* m_retainedCounterSampleBuffers;
-    NSMutableOrderedSet<id<MTLCommandBuffer>> *m_createdNotCommittedBuffers { nil };
-    NSMutableOrderedSet<id<MTLCommandBuffer>> *m_committedNotCompletedBuffers WTF_GUARDED_BY_LOCK(m_committedNotCompletedBuffersLock) { nil };
+    NSMutableDictionary<NSNumber*, NSMutableSet<id<MTLCounterSampleBuffer>>*> * _Nullable m_retainedCounterSampleBuffers;
+    NSMutableOrderedSet<id<MTLCommandBuffer>> * _Nullable m_createdNotCommittedBuffers { nil };
+    NSMutableOrderedSet<id<MTLCommandBuffer>> * _Nullable m_committedNotCompletedBuffers WTF_GUARDED_BY_LOCK(m_committedNotCompletedBuffersLock) { nil };
     Lock m_committedNotCompletedBuffersLock;
-    NSMapTable<id<MTLCommandBuffer>, id<MTLCommandEncoder>> *m_openCommandEncoders;
+    NSMapTable<id<MTLCommandBuffer>, id<MTLCommandEncoder>> * _Nullable m_openCommandEncoders;
     const ThreadSafeWeakPtr<Instance> m_instance;
-    id<MTLBuffer> m_temporaryBuffer;
+    id<MTLBuffer> _Nullable m_temporaryBuffer;
     uint64_t m_temporaryBufferOffset;
 } SWIFT_SHARED_REFERENCE(refQueue, derefQueue) SWIFT_PRIVATE_FILEID("WebGPU/Queue.swift");
 
@@ -154,3 +156,4 @@ inline void derefQueue(WebGPU::Queue* obj)
     WTF::deref(obj);
 }
 
+IGNORE_CLANG_WARNINGS_END

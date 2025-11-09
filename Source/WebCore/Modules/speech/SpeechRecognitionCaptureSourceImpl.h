@@ -37,15 +37,6 @@
 #include <WebCore/AudioSampleDataSource.h>
 #endif
 
-namespace WebCore {
-class SpeechRecognitionCaptureSourceImpl;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::SpeechRecognitionCaptureSourceImpl> : std::true_type { };
-}
-
 namespace WTF {
 class MediaTime;
 }

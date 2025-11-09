@@ -336,6 +336,14 @@ void BidiBrowsingContextAgent::reload(const BrowsingContext& browsingContext, st
     });
 }
 
+void BidiBrowsingContextAgent::traverseHistory(const BrowsingContext& browsingContext, int delta, CommandCallback<void>&& callback)
+{
+    RefPtr session = m_session.get();
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!session, InternalError);
+
+    session->traverseHistoryInBrowsingContext(browsingContext, delta, WTFMove(callback));
+}
+
 } // namespace WebKit
 
 #endif // ENABLE(WEBDRIVER_BIDI)

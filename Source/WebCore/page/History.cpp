@@ -28,7 +28,9 @@
 
 #include "BackForwardController.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
+#include "DocumentWindow.h"
 #include "FrameLoader.h"
 #include "HistoryController.h"
 #include "HistoryItem.h"
@@ -39,10 +41,10 @@
 #include "NavigationScheduler.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
-#include "Quirks.h"
 #include "ScriptController.h"
 #include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"
+#include "Settings.h"
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/MainThread.h>
 #include <wtf/StdLibExtras.h>

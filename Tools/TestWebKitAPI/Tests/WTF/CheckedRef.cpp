@@ -43,8 +43,6 @@ public:
     CheckedObject(int value = -7)
         : m_value(value)
     { }
-    
-    ~CheckedObject() = default;
 
     int someFunction() const { return m_value; }
 

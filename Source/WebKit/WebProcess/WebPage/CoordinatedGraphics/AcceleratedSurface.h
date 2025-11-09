@@ -183,7 +183,6 @@ private:
 #if USE(GBM)
     struct BufferFormat {
         BufferFormat() = default;
-        ~BufferFormat() = default;
         BufferFormat(const BufferFormat&) = delete;
         BufferFormat& operator=(const BufferFormat&) = delete;
         BufferFormat(BufferFormat&& other)
@@ -275,7 +274,6 @@ private:
         WTF_MAKE_NONCOPYABLE(SwapChain);
     public:
         explicit SwapChain(uint64_t);
-        ~SwapChain() = default;
 
         enum class Type {
             Invalid,

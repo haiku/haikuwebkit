@@ -28,9 +28,10 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "DOMPromiseProxy.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "EventLoop.h"
+#include "EventNames.h"
 #include "FontFace.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
@@ -38,7 +39,6 @@
 #include "JSDOMPromiseDeferred.h"
 #include "JSFontFace.h"
 #include "JSFontFaceSet.h"
-#include "Quirks.h"
 #include "ScriptExecutionContext.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -262,7 +262,9 @@ void FontFaceSet::faceFinished(CSSFontFace& face, CSSFontFace::Status newStatus)
 
 void FontFaceSet::startedLoading()
 {
-    // FIXME: Fire a "loading" event asynchronously.
+    if (m_readyPromise->isFulfilled())
+        m_readyPromise = makeUniqueRef<ReadyPromise>(*this, &FontFaceSet::readyPromiseResolve);
+    queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().loadingEvent, Event::CanBubble::No, Event::IsCancelable::No));
 }
 
 void FontFaceSet::documentDidFinishLoading()

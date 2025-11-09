@@ -5257,6 +5257,15 @@ public:
         m_formatter.immediate8(shift);
     }
 
+    void vpsllq_i8rr(uint8_t shift, XMMRegisterID src, XMMRegisterID dst)
+    {
+        // https://www.felixcloutier.com/x86/psrlw:psrld:psrlq
+        // VEX.128.66.0F.WIG 73 /6 ib VPSLLQ xmm1, xmm2, imm8
+        // D    NA    VEX.vvvv (w)    ModRM:r/m (r)    imm8    NA
+        m_formatter.vexNdsLigWigTwoByteOp(PRE_SSE_66, OP2_PSLLQ_UdqIb, (RegisterID)GROUP14_OP_PSLLQ, (RegisterID)dst, (RegisterID)src);
+        m_formatter.immediate8(shift);
+    }
+
     void vpsrlw_i8rr(uint8_t shift, XMMRegisterID src, XMMRegisterID dst)
     {
         // https://www.felixcloutier.com/x86/psrlw:psrld:psrlq

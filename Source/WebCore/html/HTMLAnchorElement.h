@@ -85,7 +85,7 @@ public:
 
     AtomString target() const override;
 
-    void setShouldBePrefetched(bool conservative, Vector<String>&& tags, String&& referrerPolicy);
+    void setShouldBePrefetched(bool conservative, Vector<String>&& tags, std::optional<ReferrerPolicy>&&);
 
 protected:
     HTMLAnchorElement(const QualifiedName&, Document&);
@@ -141,7 +141,7 @@ private:
 
     PrefetchEagerness m_prefetchEagerness { PrefetchEagerness::None };
     Vector<String> m_speculationRulesTags;
-    String m_prefetchReferrerPolicy;
+    std::optional<ReferrerPolicy> m_prefetchReferrerPolicy;
 
     bool m_hasRootEditableElementForSelectionOnMouseDown { false };
     bool m_wasShiftKeyDownOnMouseDown { false };

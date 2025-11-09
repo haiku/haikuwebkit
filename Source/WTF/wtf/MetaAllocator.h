@@ -141,8 +141,6 @@ private:
     
     class FreeSpaceNode : public RedBlackTree<FreeSpaceNode, size_t>::Node {
     public:
-        FreeSpaceNode() = default;
-
         size_t sizeInBytes()
         {
             return m_end.untaggedPtr<size_t>() - m_start.untaggedPtr<size_t>();

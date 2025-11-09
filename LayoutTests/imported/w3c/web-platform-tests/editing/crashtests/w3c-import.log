@@ -20,6 +20,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/caret-display-list-002.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/caret-display-list.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/change-input-type-of-focused-text-control-and-make-it-editing-host.html
+/LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/collapse-selection-into-textarea-and-createLink.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/contenteditable-will-be-blurred-by-focus-event-listener.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/crash-test.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-after-empty-script-element.html
@@ -37,7 +38,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-dd-editing-host-after-selectall-with-focus.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-dd-editing-host-after-selectall-without-focus.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-designMode-without-explicitly-setting-focus.html
+/LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-empty-editable-document-element.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-empty-editable-list-followed-by-non-editable-listitem.html
+/LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-in-xml-space-preserve.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-selection-with-null-range.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/delete-to-join-inline-blocks.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/design-mode-textarea.html
@@ -68,6 +71,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insert-nodes-into-meta-element.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insertAdjacentElement-beforeBegin-first-br-in-video.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insertAdjacentElement-with-DOMSubtreeModified.html
+/LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insertHTML-before-comment-at-end-of-editing-host.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insertText-at-end-of-text-in-body.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/insertText-nested-by-DOMSubtreeModified.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/inserthorizontalrule-in-fieldset-and-everything-styled-white-space-pre.html
@@ -116,6 +120,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/outdent-in-empty-body-editing-host.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/outdent-in-meter-indented-by-legend-in-css-mode.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/outdent-indent-inserthorizontalrule-on-selectionchange.html
+/LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/outdent-with-concurrent-dom-modification.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/queryCommandIndeterm-backcolor-and-hilitecolor-in-empty-iframe-in-designMode.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/queryCommandIndeterm-backcolor-in-empty-iframe-in-designMode-from-load.html
 /LayoutTests/imported/w3c/web-platform-tests/editing/crashtests/queryCommandState-backcolor-after-removing-html-element-in-designMode-from-load.html

@@ -27,8 +27,8 @@
 
 #include <WebCore/FloatPoint.h>
 #include <WebCore/FloatPoint3D.h>
-#include <WebCore/GraphicsLayer.h>
 #include <WebCore/GraphicsLayerClient.h>
+#include <WebCore/GraphicsLayerEnums.h>
 #include <WebCore/RenderLayer.h>
 #include <WebCore/RenderLayerCompositor.h>
 #include <WebCore/ScrollingCoordinator.h>
@@ -39,6 +39,7 @@
 namespace WebCore {
 
 class BlendingKeyframes;
+class GraphicsLayer;
 class GraphicsLayerAnimation;
 class PaintedContentsInfo;
 class RegionContext;
@@ -52,6 +53,10 @@ enum CompositingLayerType {
     MediaCompositingLayer, // layer that contains an image, video, WebGL or plugin
     ContainerCompositingLayer // layer with no backing store
 };
+
+namespace DisplayList {
+enum class AsTextFlag : uint8_t;
+}
 
 // RenderLayerBacking controls the compositing behavior for a single RenderLayer.
 // It holds the various GraphicsLayers, and makes decisions about intra-layer rendering
@@ -171,9 +176,9 @@ public:
 
     void setRequiresOwnBackingStore(bool);
 
-    void setContentsNeedDisplay(GraphicsLayer::ShouldClipToLayer = GraphicsLayer::ClipToLayer);
+    void setContentsNeedDisplay(GraphicsLayerShouldClipToLayer = GraphicsLayerShouldClipToLayer::Clip);
     // r is in the coordinate space of the layer's render object
-    void setContentsNeedDisplayInRect(const LayoutRect&, GraphicsLayer::ShouldClipToLayer = GraphicsLayer::ClipToLayer);
+    void setContentsNeedDisplayInRect(const LayoutRect&, GraphicsLayerShouldClipToLayer = GraphicsLayerShouldClipToLayer::Clip);
 
     // Notification from the renderer that its content changed.
     void contentChanged(ContentChangeType, const std::optional<FloatRect>&);
@@ -322,7 +327,7 @@ private:
 
     LayoutRect compositedBoundsIncludingMargin() const;
     
-    Ref<GraphicsLayer> createGraphicsLayer(const String&, GraphicsLayer::Type = GraphicsLayer::Type::Normal);
+    Ref<GraphicsLayer> createGraphicsLayer(const String&, GraphicsLayerType = GraphicsLayerType::Normal);
 
     RenderLayerModelObject& renderer() const { return m_owningLayer.renderer(); }
     RenderBox* renderBox() const { return m_owningLayer.renderBox(); }

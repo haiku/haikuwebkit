@@ -28,6 +28,7 @@
 #include "RenderStyleInlines.h"
 #include "SVGLengthContext.h"
 #include "SVGTextMetrics.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
 
@@ -140,34 +141,36 @@ float SVGTextLayoutEngineBaseline::calculateAlignmentBaselineShift(bool isVertic
 
 float SVGTextLayoutEngineBaseline::calculateGlyphOrientationAngle(bool isVerticalText, const RenderStyle& style, const char16_t& character) const
 {
-    switch (isVerticalText ? style.glyphOrientationVertical() : style.glyphOrientationHorizontal()) {
-    case GlyphOrientation::Auto:
-        // Spec: Fullwidth ideographic and fullwidth Latin text will be set with a glyph-orientation of 0-degrees.
-        // Text which is not fullwidth will be set with a glyph-orientation of 90-degrees.
-        // FIXME: There's not an accurate way to tell if text is fullwidth by looking at a single character.
-        switch (static_cast<UEastAsianWidth>(u_getIntPropertyValue(character, UCHAR_EAST_ASIAN_WIDTH))) {
-        case U_EA_NEUTRAL:
-        case U_EA_HALFWIDTH:
-        case U_EA_NARROW:
-            return 90;
-        case U_EA_AMBIGUOUS:
-        case U_EA_FULLWIDTH:
-        case U_EA_WIDE:
-            return 0;
-        }
-        ASSERT_NOT_REACHED();
-        break;
-    case GlyphOrientation::Degrees90:
-        return 90;
-    case GlyphOrientation::Degrees180:
-        return 180;
-    case GlyphOrientation::Degrees270:
-        return 270;
-    case GlyphOrientation::Degrees0:
-        return 0;
+    if (isVerticalText) {
+        return Style::valueRepresentation(style.glyphOrientationVertical(),
+            [&](const CSS::Keyword::Auto&) {
+                // Spec: Fullwidth ideographic and fullwidth Latin text will be set with a glyph-orientation of 0-degrees.
+                // Text which is not fullwidth will be set with a glyph-orientation of 90-degrees.
+                // FIXME: There's not an accurate way to tell if text is fullwidth by looking at a single character.
+                switch (static_cast<UEastAsianWidth>(u_getIntPropertyValue(character, UCHAR_EAST_ASIAN_WIDTH))) {
+                case U_EA_NEUTRAL:
+                case U_EA_HALFWIDTH:
+                case U_EA_NARROW:
+                    return 90.0f;
+                case U_EA_AMBIGUOUS:
+                case U_EA_FULLWIDTH:
+                case U_EA_WIDE:
+                    return 0.0f;
+                }
+                ASSERT_NOT_REACHED();
+                return 0.0f;
+            },
+            [](const Style::Angle<>& angle) {
+                return Style::evaluate<float>(angle);
+            }
+        );
+    } else {
+        return Style::valueRepresentation(style.glyphOrientationHorizontal(),
+            [](const Style::Angle<>& angle) {
+                return Style::evaluate<float>(angle);
+            }
+        );
     }
-    ASSERT_NOT_REACHED();
-    return 0;
 }
 
 static inline bool glyphOrientationIsMultiplyOf180Degrees(float orientationAngle)

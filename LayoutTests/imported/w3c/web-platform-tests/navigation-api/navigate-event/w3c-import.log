@@ -89,6 +89,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/navigation-traverseTo-navigates-top-and-same-doc-child-and-cross-doc-child.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/navigation-traverseTo-same-document-preventDefault-multiple-windows.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/navigation-traverseTo-top-cancels-cross-document-child.html
+/LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/replaceState-inside-back-handler-infinite.optional.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/replaceState-inside-back-handler.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/same-url-replace-cross-document.html
 /LayoutTests/imported/w3c/web-platform-tests/navigation-api/navigate-event/same-url-replace-same-document.html

@@ -36,7 +36,6 @@
 #include "CSSSelectorList.h"
 #include "CSSViewTransitionRule.h"
 #include "CommonAtomStrings.h"
-#include "DocumentInlines.h"
 #include "HTMLNames.h"
 #include "MediaQueryEvaluator.h"
 #include "MutableCSSSelector.h"

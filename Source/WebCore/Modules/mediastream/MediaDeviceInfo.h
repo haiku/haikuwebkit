@@ -47,6 +47,8 @@ public:
     const String& groupId() const { return m_groupId; }
     Kind kind() const { return m_kind; }
 
+    virtual bool isInputDeviceInfo() const { return false; }
+
 protected:
     MediaDeviceInfo(const String&, const String&, const String&, Kind);
 

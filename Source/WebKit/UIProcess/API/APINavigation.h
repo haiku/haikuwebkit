@@ -49,8 +49,9 @@ class ResourceResponse;
 }
 
 namespace WebKit {
-class WebBackForwardListFrameItem;
 class BrowsingWarning;
+class FrameProcess;
+class WebBackForwardListFrameItem;
 }
 
 namespace API {
@@ -196,6 +197,8 @@ public:
     WebCore::ProcessIdentifier processID() const { return m_processID; }
     void setProcessID(WebCore::ProcessIdentifier processID) { m_processID = processID; }
 
+    void setPendingSharedProcess(WebKit::FrameProcess&);
+
 private:
     Navigation(WebCore::ProcessIdentifier);
     Navigation(WebCore::ProcessIdentifier, RefPtr<WebKit::WebBackForwardListItem>&&);
@@ -231,6 +234,7 @@ private:
     MonotonicTime m_requestStart { MonotonicTime::now() };
     RefPtr<WebKit::BrowsingWarning> m_safeBrowsingWarning;
     ListHashSet<size_t> m_ongoingSafeBrowsingChecks;
+    RefPtr<WebKit::FrameProcess> m_pendingSharedProcess;
 };
 
 } // namespace API

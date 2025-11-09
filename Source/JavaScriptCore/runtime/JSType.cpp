@@ -62,6 +62,7 @@ void printInternal(PrintStream& out, JSC::JSType type)
     CASE(JSSourceCodeType)
     CASE(JSScriptFetcherType)
     CASE(JSScriptFetchParametersType)
+    CASE(JSPromiseReactionType)
     CASE(ObjectType)
     CASE(FinalObjectType)
     CASE(JSCalleeType)
@@ -128,7 +129,7 @@ void printInternal(PrintStream& out, JSC::JSType type)
     CASE(DisposableStackType)
     CASE(AsyncDisposableStackType)
     CASE(JSPromiseAllContextType)
-    CASE(JSPromiseReactionType)
+    CASE(JSPromiseAllGlobalContextType)
     }
 }
 

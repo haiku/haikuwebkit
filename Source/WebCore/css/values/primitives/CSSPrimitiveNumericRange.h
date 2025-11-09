@@ -56,7 +56,7 @@ enum class RangeClampOptions {
 // Options to indicate how the primitive should consider its value with regards to zoom.
 // NOTE: This option is only meaningful for Style::Length`.
 // FIXME: These options are temporary while `zoom` is moving from style building time to use time.
-enum class RangeZoomOptions {
+enum class RangeZoomOptions : bool {
     // `Default` indicates the value held in the primitive has had zoom applied to it.
     Default,
 

@@ -114,7 +114,12 @@ static RetainPtr<TestWKWebView> createWebViewWithIPCTestingAPI()
     return adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 300, 300) configuration:configuration.get()]);
 }
 
+// FIX ME: Re-enable this test once https://bugs.webkit.org/show_bug.cgi?id=300930 is resolved
+#if PLATFORM(MAC) && CPU(X86_64) && !defined(NDEBUG)
+TEST(IPCTestingAPI, DISABLED_CanDetectNilReplyBlocks)
+#else
 TEST(IPCTestingAPI, CanDetectNilReplyBlocks)
+#endif
 {
     auto webView = createWebViewWithIPCTestingAPI();
 

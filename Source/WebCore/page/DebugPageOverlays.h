@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/DebugOverlayRegions.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/LocalFrame.h>
 #include <wtf/HashMap.h>
 #include <wtf/OptionSet.h>

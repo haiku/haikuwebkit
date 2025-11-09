@@ -767,12 +767,24 @@ static NSSet<NSString *> *UTIsForMIMETypes(NSArray *mimeTypes)
     return [UIContextMenuConfiguration configurationWithIdentifier:nil previewProvider:nil actionProvider:actionMenuProvider];
 }
 
+- (void)contextMenuInteraction:(UIContextMenuInteraction *)interaction willDisplayMenuForConfiguration:(UIContextMenuConfiguration *)configuration animator:(id<UIContextMenuInteractionAnimating>)animator
+{
+    [animator addCompletion:^{
+        [[_view webView] _didShowContextMenu];
+
+        if ([_view isFirstResponder])
+            [_view resignFirstResponder];
+    }];
+}
+
 - (void)contextMenuInteraction:(UIContextMenuInteraction *)interaction willEndForConfiguration:(UIContextMenuConfiguration *)configuration animator:(id<UIContextMenuInteractionAnimating>)animator
 {
     if (_isRepositioningContextMenu)
         return;
 
     [animator addCompletion:^{
+        [[_view webView] _didDismissContextMenu];
+
         [self resetContextMenuPresenter];
         if (!self->_isPresentingSubMenu)
             [self _cancel];
@@ -947,7 +959,10 @@ static NSSet<NSString *> *UTIsForMIMETypes(NSArray *mimeTypes)
     [self _dismissDisplayAnimated:animated];
 
     _presentationViewController = [_view _wk_viewControllerForFullScreenPresentation];
-    [_presentationViewController presentViewController:viewController animated:animated completion:nil];
+    [_presentationViewController presentViewController:viewController animated:animated completion:^{
+        if (!_isPresentingSubMenu && [_view isFirstResponder])
+            [_view resignFirstResponder];
+    }];
 }
 
 #pragma mark - UIAdaptivePresentationControllerDelegate

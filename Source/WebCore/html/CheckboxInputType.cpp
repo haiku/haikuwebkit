@@ -35,7 +35,7 @@
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EventHandler.h"
 #include "EventNames.h"
 #include "FrameDestructionObserverInlines.h"
@@ -49,7 +49,6 @@
 #include "LocalizedStrings.h"
 #include "MouseEvent.h"
 #include "NodeDocument.h"
-#include "Page.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"
 #include "RenderTheme.h"
@@ -154,7 +153,7 @@ static Touch* findTouchWithIdentifier(TouchList& list, unsigned identifier)
     for (unsigned i = 0; i < length; ++i) {
         RefPtr touch = list.item(i);
         if (touch->identifier() == identifier)
-            return touch.get();
+            return touch.unsafeGet();
     }
     return nullptr;
 }

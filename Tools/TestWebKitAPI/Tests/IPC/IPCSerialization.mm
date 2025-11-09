@@ -38,7 +38,6 @@
 #import <WebCore/AttributedString.h>
 #import <WebCore/CVUtilities.h>
 #import <WebCore/ColorCocoa.h>
-#import <WebCore/FontCocoa.h>
 #import <WebCore/IOSurface.h>
 #import <limits.h>
 #import <pal/spi/cf/CFNetworkSPI.h>
@@ -440,7 +439,6 @@ struct ObjCHolderForTesting {
         RetainPtr<NSNumber>,
         RetainPtr<NSArray>,
         RetainPtr<NSDictionary>,
-        RetainPtr<WebCore::CocoaFont>,
         RetainPtr<NSError>,
         RetainPtr<NSNull>,
         RetainPtr<NSLocale>,
@@ -1061,9 +1059,6 @@ TEST(IPCSerialization, Basic)
     CFDictionaryAddValue(cfDictionary.get(), CFSTR("MyKey"), cgColor.get());
     runTestCF({ cfDictionary.get() });
     runTestNS({ bridge_cast(cfDictionary.get()) });
-
-    // NSFont/UIFont
-    runTestNS({ [WebCore::CocoaFont systemFontOfSize:[WebCore::CocoaFont systemFontSize]] });
 
     // NSError
     RetainPtr<SecCertificateRef> cert = createCertificate();

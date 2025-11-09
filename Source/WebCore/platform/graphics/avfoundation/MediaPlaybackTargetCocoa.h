@@ -60,7 +60,7 @@ public:
     TargetType targetType() const final { return TargetType::AVFoundation; }
     const MediaPlaybackTargetContext& targetContext() const final { return m_context; }
 
-    AVOutputContext* outputContext() { return m_context.outputContext().get(); }
+    AVOutputContext* outputContext() { return m_context.outputContext().unsafeGet(); }
 
 private:
     explicit MediaPlaybackTargetCocoa(MediaPlaybackTargetContextCocoa&&);

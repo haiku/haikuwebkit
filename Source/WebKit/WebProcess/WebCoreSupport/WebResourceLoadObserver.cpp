@@ -31,13 +31,13 @@
 #include "NetworkProcessConnection.h"
 #include "WebPage.h"
 #include "WebProcess.h"
-#include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/HTMLFrameOwnerElement.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameLoaderClient.h>
-#include <WebCore/Page.h>
+#include <WebCore/Settings.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebKit {

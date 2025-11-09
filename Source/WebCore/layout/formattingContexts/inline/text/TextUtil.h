@@ -111,7 +111,6 @@ public:
     static bool canUseSimplifiedTextMeasuring(StringView, const FontCascade&, bool whitespaceIsCollapsed, const RenderStyle* firstLineStyle);
     static bool hasPositionDependentContentWidth(StringView);
 
-
     static char32_t baseCharacterFromGraphemeCluster(StringView graphemeCluster);
     static char32_t lastBaseCharacterFromText(StringView);
 };

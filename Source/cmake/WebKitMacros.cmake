@@ -522,7 +522,7 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
         # Right now this macro is used only once; if it's used more often then
         # we should abstract this so it's executed only once.
         execute_process(
-            COMMAND ${CMAKE_Swift_COMPILER} -print-target-info
+            COMMAND ${ORIGINAL_Swift_COMPILER} -print-target-info
             OUTPUT_VARIABLE _swift_target_info
         )
         string(JSON _swift_target_paths GET ${_swift_target_info} "paths")
@@ -572,7 +572,7 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
             DEPENDS ${_swift_sources}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND
-                ${CMAKE_Swift_COMPILER} -typecheck
+                ${ORIGINAL_Swift_COMPILER} -typecheck
                 ${_swift_options}
                 $<LIST:TRANSFORM,$<TARGET_PROPERTY:${_target},INCLUDE_DIRECTORIES>,PREPEND,-I>
                 ${_swift_sources}

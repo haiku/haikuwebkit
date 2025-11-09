@@ -42,11 +42,11 @@ ExceptionOr<Ref<WebTransportReceiveStream>> WebTransportReceiveStream::create(We
     if (result.hasException())
         return result.releaseException();
 
-    return adoptRef(*new WebTransportReceiveStream(identifier, session, result.releaseReturnValue()));
+    return adoptRef(*new WebTransportReceiveStream(globalObject.protectedScriptExecutionContext().get(), identifier, session, result.releaseReturnValue()));
 }
 
-WebTransportReceiveStream::WebTransportReceiveStream(WebTransportStreamIdentifier identifier, WebTransportSession& session, Ref<InternalReadableStream>&& stream)
-    : ReadableStream(WTFMove(stream))
+WebTransportReceiveStream::WebTransportReceiveStream(ScriptExecutionContext* context, WebTransportStreamIdentifier identifier, WebTransportSession& session, Ref<InternalReadableStream>&& stream)
+    : ReadableStream(context, WTFMove(stream))
     , m_identifier(identifier)
     , m_session(session) { }
 

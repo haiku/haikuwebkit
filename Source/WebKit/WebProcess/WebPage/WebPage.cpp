@@ -105,6 +105,7 @@
 #include "WebDatabaseProvider.h"
 #include "WebDateTimeChooser.h"
 #include "WebDiagnosticLoggingClient.h"
+#include "WebDocumentSyncClient.h"
 #include "WebDragClient.h"
 #include "WebEditorClient.h"
 #include "WebErrors.h"
@@ -156,7 +157,6 @@
 #include "WebProcess.h"
 #include "WebProcessPoolMessages.h"
 #include "WebProcessProxyMessages.h"
-#include "WebProcessSyncClient.h"
 #include "WebProgressTrackerClient.h"
 #include "WebRemoteFrameClient.h"
 #include "WebScreenOrientationManager.h"
@@ -207,7 +207,11 @@
 #include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentLoader.h>
 #include <WebCore/DocumentMarkerController.h>
+#include <WebCore/DocumentMarkers.h>
+#include <WebCore/DocumentPage.h>
+#include <WebCore/DocumentQuirks.h>
 #include <WebCore/DocumentStorageAccess.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/DragController.h>
 #include <WebCore/DragData.h>
 #include <WebCore/Editing.h>
@@ -257,7 +261,7 @@
 #include <WebCore/JSNode.h>
 #include <WebCore/KeyboardEvent.h>
 #include <WebCore/LegacySchemeRegistry.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/LocalizedStrings.h>
 #include <WebCore/LoginStatus.h>
@@ -808,7 +812,7 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #endif
         makeUniqueRef<WebChromeClient>(*this),
         makeUniqueRef<WebCryptoClient>(this->identifier()),
-        makeUniqueRef<WebProcessSyncClient>(*this)
+        makeUniqueRef<WebDocumentSyncClient>(*this)
 #if HAVE(DIGITAL_CREDENTIALS_UI)
         , DigitalCredentialsCoordinator::create(*this)
 #endif
@@ -1261,13 +1265,13 @@ void WebPage::updateFrameTreeSyncData(WebCore::FrameIdentifier frameID, Ref<WebC
         coreFrame->updateFrameTreeSyncData(WTFMove(data));
 }
 
-void WebPage::processSyncDataChangedInAnotherProcess(const WebCore::ProcessSyncData& data)
+void WebPage::topDocumentSyncDataChangedInAnotherProcess(const WebCore::DocumentSyncSerializationData& data)
 {
     if (RefPtr page = corePage())
-        page->updateProcessSyncData(data);
+        page->updateTopDocumentSyncData(data);
 }
 
-void WebPage::topDocumentSyncDataChangedInAnotherProcess(Ref<WebCore::DocumentSyncData>&& data)
+void WebPage::allTopDocumentSyncDataChangedInAnotherProcess(Ref<WebCore::DocumentSyncData>&& data)
 {
     if (RefPtr page = corePage())
         page->updateTopDocumentSyncData(WTFMove(data));
@@ -1411,7 +1415,7 @@ void WebPage::reinitializeWebPage(WebPageCreationParameters&& parameters)
         createProvisionalFrame(WTFMove(*provisionalFrameCreationParameters));
     }
 
-    platformReinitialize();
+    platformReinitializeAccessibilityToken();
 }
 
 void WebPage::updateThrottleState()
@@ -3681,6 +3685,16 @@ void WebPage::flushDeferredScrollEvents()
     protectedCorePage()->flushDeferredScrollEvents();
 }
 
+void WebPage::startDeferringIntersectionObservations()
+{
+    protectedCorePage()->startDeferringIntersectionObservations();
+}
+
+void WebPage::flushDeferredIntersectionObservations()
+{
+    protectedCorePage()->flushDeferredIntersectionObservations();
+}
+
 void WebPage::flushDeferredDidReceiveMouseEvent()
 {
     if (auto info = std::exchange(m_deferredDidReceiveMouseEvent, std::nullopt))
@@ -4841,6 +4855,7 @@ void WebPage::updatePreferences(const WebPreferencesStore& store)
     WebProcess::singleton().protectedRemoteMediaPlayerManager()->setUseGPUProcess(m_shouldPlayMediaInGPUProcess);
 #if PLATFORM(COCOA)
     platformStrategies()->mediaStrategy()->enableRemoteRenderer(MediaPlayerMediaEngineIdentifier::CocoaWebM, settings.webMUseRemoteAudioVideoRenderer());
+    platformStrategies()->mediaStrategy()->enableRemoteRenderer(MediaPlayerMediaEngineIdentifier::AVFoundationMSE, settings.mediaSourceUseRemoteAudioVideoRenderer());
 #endif
 #endif
 #if HAVE(AVASSETREADER)
@@ -5030,6 +5045,8 @@ void WebPage::willCommitLayerTree(RemoteLayerTreeTransaction& layerTransaction, 
         m_lastTransactionPageScaleFactor = layerTransaction.pageScaleFactor();
         m_internals->lastTransactionIDWithScaleChange = layerTransaction.transactionID();
     }
+
+    m_pendingLocalChangeTransactionID = std::nullopt;
 #endif
 
     layerTransaction.setScrollPosition(frameView->scrollPosition());
@@ -5198,11 +5215,6 @@ void WebPage::releaseMemory(Critical)
 
 void WebPage::willDestroyDecodedDataForAllImages()
 {
-#if ENABLE(GPU_PROCESS)
-    if (RefPtr renderingBackend = m_remoteRenderingBackendProxy)
-        renderingBackend->releaseNativeImages();
-#endif
-
     if (RefPtr drawingArea = m_drawingArea)
         drawingArea->setNextRenderingUpdateRequiresSynchronousImageDecoding();
 }
@@ -5213,7 +5225,7 @@ unsigned WebPage::remoteImagesCountForTesting() const
     if (RefPtr renderingBackend = m_remoteRenderingBackendProxy)
         return renderingBackend->nativeImageCountForTesting();
 #endif
-return 0;
+    return 0;
 }
 
 WebInspector* WebPage::inspector(LazyCreationPolicy behavior)
@@ -5813,11 +5825,6 @@ void WebPage::findStringIncludingImages(const String& string, OptionSet<FindOpti
 void WebPage::findStringMatches(const String& string, OptionSet<FindOptions> options, uint32_t maxMatchCount, CompletionHandler<void(Vector<Vector<WebCore::IntRect>>, int32_t)>&& completionHandler)
 {
     findController().findStringMatches(string, options, maxMatchCount, WTFMove(completionHandler));
-}
-
-void WebPage::findRectsForStringMatches(const String& string, OptionSet<FindOptions> options, uint32_t maxMatchCount, CompletionHandler<void(Vector<FloatRect>&&)>&& completionHandler)
-{
-    findController().findRectsForStringMatches(string, options, maxMatchCount, WTFMove(completionHandler));
 }
 
 void WebPage::findTextRangesForStringMatches(const String& string, OptionSet<FindOptions> options, uint32_t maxMatchCount, CompletionHandler<void(Vector<WebFoundTextRange>&&)>&& completionHandler)
@@ -9350,6 +9357,13 @@ void WebPage::didFinishLoadingImageForElement(WebCore::HTMLImageElement&)
 
 #endif
 
+#if ENABLE(MODEL_PROCESS)
+void WebPage::setHasModelElement(bool hasModelElement)
+{
+    send(Messages::WebPageProxy::SetHasModelElement(hasModelElement));
+}
+#endif
+
 #if ENABLE(TEXT_AUTOSIZING)
 void WebPage::textAutoSizingAdjustmentTimerFired()
 {
@@ -10124,12 +10138,11 @@ void WebPage::elementWasFocusedInAnotherProcess(WebCore::FrameIdentifier frameID
     protectedCorePage()->focusController().setFocusedElement(nullptr, frame->protectedCoreFrame().get(), options, WebCore::BroadcastFocusedElement::No);
 }
 
-void WebPage::frameWasFocusedInAnotherProcess(WebCore::FrameIdentifier frameID)
+void WebPage::frameWasFocusedInAnotherProcess(std::optional<WebCore::FrameIdentifier>&& frameID)
 {
-    RefPtr frame = WebProcess::singleton().webFrame(frameID);
-    if (!frame)
-        return;
-    protectedCorePage()->focusController().setFocusedFrame(frame->protectedCoreFrame().get(), WebCore::BroadcastFocusedFrame::No);
+    RefPtr frame = frameID ? WebProcess::singleton().webFrame(*frameID) : nullptr;
+    RefPtr coreFrame = frame ? frame->coreFrame() : nullptr;
+    protectedCorePage()->focusController().setFocusedFrame(coreFrame.get(), WebCore::BroadcastFocusedFrame::No);
 }
 
 void WebPage::remotePostMessage(WebCore::FrameIdentifier source, const String& sourceOrigin, WebCore::FrameIdentifier target, std::optional<WebCore::SecurityOriginData>&& targetOrigin, const WebCore::MessageWithMessagePorts& message)
@@ -10836,6 +10849,17 @@ std::unique_ptr<FrameInfoData> WebPage::takeMainFrameNavigationInitiator()
 bool WebPage::hasAccessoryMousePointingDevice() const
 {
     return true;
+}
+#endif
+
+#if ENABLE(ASYNC_SCROLLING) && !PLATFORM(IOS_FAMILY)
+bool WebPage::shouldIgnoreScrollPositionUpdate(TransactionID) const
+{
+    return false;
+}
+
+void WebPage::markPendingLocalScrollPositionChange()
+{
 }
 #endif
 

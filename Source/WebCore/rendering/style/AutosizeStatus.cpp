@@ -36,7 +36,9 @@ namespace WebCore {
 bool AutosizeStatus::probablyContainsASmallFixedNumberOfLines(const RenderStyle& style)
 {
     auto& lineHeightAsLength = style.specifiedLineHeight();
-    if (!lineHeightAsLength.isFixed() && !lineHeightAsLength.isPercent())
+    auto lineHeightAsFixed = lineHeightAsLength.tryFixed();
+    auto lineHeightAsPercentage = lineHeightAsLength.tryPercentage();
+    if (!lineHeightAsFixed && !lineHeightAsPercentage)
         return false;
 
     auto& maxHeight = style.maxHeight();
@@ -53,7 +55,7 @@ bool AutosizeStatus::probablyContainsASmallFixedNumberOfLines(const RenderStyle&
     if (heightOrMaxHeight <= 0)
         return false;
 
-    float approximateLineHeight = lineHeightAsLength.isPercent() ? lineHeightAsLength.percent() * style.specifiedFontSize() / 100 : lineHeightAsLength.value();
+    float approximateLineHeight = lineHeightAsPercentage ? lineHeightAsPercentage->value * style.specifiedFontSize() / 100 : lineHeightAsFixed->resolveZoom(style.usedZoomForLength());
     if (approximateLineHeight <= 0)
         return false;
 
@@ -77,7 +79,7 @@ auto AutosizeStatus::computeStatus(const RenderStyle& style) -> AutosizeStatus
 
         const float maximumDifferenceBetweenFixedLineHeightAndFontSize = 5;
         auto& lineHeight = style.specifiedLineHeight();
-        if (lineHeight.isFixed() && lineHeight.value() - style.specifiedFontSize() > maximumDifferenceBetweenFixedLineHeightAndFontSize)
+        if (auto fixedLineHeight = lineHeight.tryFixed(); fixedLineHeight && fixedLineHeight->resolveZoom(style.usedZoomForLength()) - style.specifiedFontSize() > maximumDifferenceBetweenFixedLineHeightAndFontSize)
             return false;
 
         if (style.whiteSpaceCollapse() == WhiteSpaceCollapse::Collapse && style.textWrapMode() == TextWrapMode::NoWrap)

@@ -41,8 +41,10 @@
 #import <wtf/Vector.h>
 #import <wtf/WeakPtr.h>
 
+IGNORE_CLANG_WARNINGS_BEGIN("nullability-completeness")
+
 @interface TextureAndClearColor : NSObject
-- (instancetype)initWithTexture:(id<MTLTexture>)texture NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithTexture:(id<MTLTexture> _Nonnull)texture NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 @property (nonatomic) id<MTLTexture> texture;
 @property (nonatomic) MTLClearColor clearColor;
@@ -113,7 +115,6 @@ public:
 #if ENABLE(WEBGPU_SWIFT)
     void setEncoderState(EncoderState state) { m_state = state; }
     EncoderState getEncoderState() { return m_state; }
-    NSString * encoderStateNameWrapper() { return encoderStateName(); }
 #endif
 
     id<MTLBlitCommandEncoder> ensureBlitCommandEncoder();
@@ -136,7 +137,7 @@ public:
     void addTexture(id<MTLTexture>);
     void addTexture(const Texture&);
     void addSampler(const Sampler&);
-    id<MTLCommandBuffer> commandBuffer() const;
+    id<MTLCommandBuffer> _Nullable commandBuffer() const;
     void setExistingEncoder(id<MTLCommandEncoder>);
     void generateInvalidEncoderStateError();
     bool validateClearBuffer(const Buffer&, uint64_t offset, uint64_t size);
@@ -144,7 +145,7 @@ public:
     static void trackEncoder(CommandEncoder&, HashSet<uint64_t, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>>&);
     static size_t computeSize(Vector<uint64_t>&, const Device&);
     uint64_t uniqueId() const { return m_uniqueId; }
-    NSMutableSet<id<MTLCounterSampleBuffer>> *timestampBuffers() const { return m_retainedTimestampBuffers; };
+    NSMutableSet<id<MTLCounterSampleBuffer>> * _Nullable timestampBuffers() const { return m_retainedTimestampBuffers; };
     void addOnCommitHandler(Function<bool(CommandBuffer&, CommandEncoder&)>&&);
 #if ENABLE(WEBGPU_BY_DEFAULT)
     bool useResidencySet(id<MTLResidencySet>);
@@ -158,41 +159,41 @@ private:
 
     bool validatePopDebugGroup() const;
 
-    NSString* validateFinishError() const;
-    NSString* errorValidatingCopyBufferToBuffer(const Buffer& source, uint64_t sourceOffset, const Buffer& destination, uint64_t destinationOffset, uint64_t size);
-    NSString* errorValidatingComputePassDescriptor(const WGPUComputePassDescriptor&) const;
-    NSString* errorValidatingRenderPassDescriptor(const WGPURenderPassDescriptor&) const;
-    NSString* errorValidatingImageCopyBuffer(const WGPUImageCopyBuffer&) const;
-    NSString* errorValidatingCopyBufferToTexture(const WGPUImageCopyBuffer&, const WGPUImageCopyTexture&, const WGPUExtent3D&) const;
-    NSString* errorValidatingCopyTextureToBuffer(const WGPUImageCopyTexture&, const WGPUImageCopyBuffer&, const WGPUExtent3D&) const;
-    NSString* errorValidatingCopyTextureToTexture(const WGPUImageCopyTexture& source, const WGPUImageCopyTexture& destination, const WGPUExtent3D& copySize) const;
+    NSString * _Nullable validateFinishError() const;
+    NSString * _Nullable errorValidatingCopyBufferToBuffer(const Buffer& source, uint64_t sourceOffset, const Buffer& destination, uint64_t destinationOffset, uint64_t size);
+    NSString * _Nullable errorValidatingComputePassDescriptor(const WGPUComputePassDescriptor&) const;
+    NSString * _Nullable errorValidatingRenderPassDescriptor(const WGPURenderPassDescriptor&) const;
+    NSString * _Nullable errorValidatingImageCopyBuffer(const WGPUImageCopyBuffer&) const;
+    NSString * _Nullable errorValidatingCopyBufferToTexture(const WGPUImageCopyBuffer&, const WGPUImageCopyTexture&, const WGPUExtent3D&) const;
+    NSString * _Nullable errorValidatingCopyTextureToBuffer(const WGPUImageCopyTexture&, const WGPUImageCopyBuffer&, const WGPUExtent3D&) const;
+    NSString * _Nullable errorValidatingCopyTextureToTexture(const WGPUImageCopyTexture& source, const WGPUImageCopyTexture& destination, const WGPUExtent3D& copySize) const;
 
     void discardCommandBuffer();
     RefPtr<CommandBuffer> protectedCachedCommandBuffer() const { return m_cachedCommandBuffer.get(); }
     void retainTimestampsForOneUpdateLoop();
 
-    id<MTLCommandBuffer> m_commandBuffer { nil };
-    id<MTLCommandEncoder> m_existingCommandEncoder { nil };
-    id<MTLBlitCommandEncoder> m_blitCommandEncoder { nil };
-    NSString* m_lastErrorString { nil };
+    id<MTLCommandBuffer> _Nullable m_commandBuffer { nil };
+    id<MTLCommandEncoder> _Nullable m_existingCommandEncoder { nil };
+    id<MTLBlitCommandEncoder> _Nullable m_blitCommandEncoder { nil };
+    NSString* _Nullable m_lastErrorString { nil };
     uint64_t m_debugGroupStackSize { 0 };
     ThreadSafeWeakPtr<CommandBuffer> m_cachedCommandBuffer;
 #if CPU(X86_64) && (PLATFORM(MAC) || PLATFORM(MACCATALYST))
-    NSMutableSet<id<MTLTexture>> *m_managedTextures { nil };
-    NSMutableSet<id<MTLBuffer>> *m_managedBuffers { nil };
+    NSMutableSet<id<MTLTexture>> * _Nullable m_managedTextures { nil };
+    NSMutableSet<id<MTLBuffer>> * _Nullable m_managedBuffers { nil };
 #endif
 private:
-    NSMutableSet<id<MTLIndirectCommandBuffer>> *m_retainedICBs { nil };
-    NSMutableSet<id<MTLTexture>> *m_retainedTextures { nil };
-    NSMutableSet<id<MTLBuffer>> *m_retainedBuffers { nil };
+    NSMutableSet<id<MTLIndirectCommandBuffer>> * _Nullable m_retainedICBs { nil };
+    NSMutableSet<id<MTLTexture>> * _Nullable m_retainedTextures { nil };
+    NSMutableSet<id<MTLBuffer>> * _Nullable m_retainedBuffers { nil };
     HashSet<RefPtr<const Sampler>> m_retainedSamplers;
-    NSMutableSet<id<MTLCounterSampleBuffer>> *m_retainedTimestampBuffers { nil };
+    NSMutableSet<id<MTLCounterSampleBuffer>> * _Nullable m_retainedTimestampBuffers { nil };
     Vector<Function<bool(CommandBuffer&, CommandEncoder&)>> m_onCommitHandlers;
     HashMap<uint64_t, Vector<DrawIndexCacheContainerValue>, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_skippedDrawIndexedValidationKeys;
     Vector<RefPtr<const BindGroup>> m_bindGroups;
     int m_bufferMapCount { 0 };
     bool m_makeSubmitInvalid { false };
-    id<MTLSharedEvent> m_sharedEvent { nil };
+    id<MTLSharedEvent> _Nullable m_sharedEvent { nil };
     uint64_t m_sharedEventSignalValue { 0 };
     const Ref<Device> m_device;
     uint64_t m_uniqueId;
@@ -212,3 +213,5 @@ inline void derefCommandEncoder(WebGPU::CommandEncoder* obj)
 {
     WTF::deref(obj);
 }
+
+IGNORE_CLANG_WARNINGS_END

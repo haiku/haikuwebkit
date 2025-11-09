@@ -240,14 +240,14 @@ inline static RetainPtr<NSParagraphStyle> reconstructStyle(const ParagraphStyle&
 
     if (!style.textTableBlockIDs.isEmpty()) {
         RetainPtr blocks = createNSArray(style.textTableBlockIDs, [&] (auto& object) -> id {
-            return tableBlocks.get(object).get();
+            return tableBlocks.get(object).unsafeGet();
         });
         [mutableStyle setTextBlocks:blocks.get()];
     }
 
     if (!style.textListIDs.isEmpty()) {
         RetainPtr textLists = createNSArray(style.textListIDs, [&] (auto& object) -> id {
-            return lists.get(object).get();
+            return lists.get(object).unsafeGet();
         });
         [mutableStyle setTextLists:textLists.get()];
     }
@@ -789,21 +789,28 @@ AttributedString AttributedString::fromNSAttributedStringAndDocumentAttributes(R
 
 std::optional<AttributedString::FontWrapper> AttributedString::FontWrapper::createFromIPCData(const String& postScriptName, double pointSize, const CTFontDescriptorOptions& fontDescriptorOptions, const std::optional<WebCore::FontPlatformSerializedAttributes>& fontSerializedAttributes)
 {
-    RetainPtr<CTFontDescriptorRef> fontDescriptor;
-    if (fontSerializedAttributes)
-        fontDescriptor = adoptCF(CTFontDescriptorCreateWithAttributesAndOptions(fontSerializedAttributes->toCFDictionary().get(), fontDescriptorOptions));
-    else
-        fontDescriptor = adoptCF(CTFontDescriptorCreateWithNameAndSize(postScriptName.createCFString().get(), pointSize));
-    RetainPtr<CFArrayRef> matched = adoptCF(CTFontDescriptorCreateMatchingFontDescriptorsWithOptions(fontDescriptor.get(), NULL, kCTFontDescriptorMatchingOptionIncludeHiddenFonts));
+    RetainPtr font = [&] -> RetainPtr<CTFontRef> {
+        RetainPtr<CTFontDescriptorRef> fontDescriptor;
+        if (fontSerializedAttributes)
+            fontDescriptor = adoptCF(CTFontDescriptorCreateWithAttributesAndOptions(fontSerializedAttributes->toCFDictionary().get(), fontDescriptorOptions));
+        else
+            fontDescriptor = adoptCF(CTFontDescriptorCreateWithNameAndSize(postScriptName.createCFString().get(), pointSize));
 
-    if (!matched || !CFArrayGetCount(matched.get()))
-        return std::nullopt;
+        RetainPtr matched = adoptCF(CTFontDescriptorCreateMatchingFontDescriptorsWithOptions(fontDescriptor.get(), NULL, kCTFontDescriptorMatchingOptionIncludeHiddenFonts));
+        if (!matched || !CFArrayGetCount(matched.get()))
+            return { };
 
-    RetainPtr<CTFontDescriptorRef> matchedDescriptor = dynamic_cf_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(matched.get(), 0));
-    RetainPtr<CTFontRef> font = adoptCF(CTFontCreateWithFontDescriptor(matchedDescriptor.get(), pointSize, NULL));
+        RetainPtr matchedDescriptor = dynamic_cf_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(matched.get(), 0));
+        RetainPtr matchedFont = adoptCF(CTFontCreateWithFontDescriptor(matchedDescriptor.get(), pointSize, NULL));
 
-    if (String(adoptCF(CTFontCopyPostScriptName(font.get())).get()) != postScriptName)
-        return std::nullopt;
+        if (String(adoptCF(CTFontCopyPostScriptName(matchedFont.get())).get()) != postScriptName)
+            return { };
+
+        return matchedFont;
+    }();
+
+    if (!font)
+        font = adoptCF(CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, pointSize, nil));
 
     return { { Font::create(FontPlatformData(font.get(), pointSize)) } };
 }

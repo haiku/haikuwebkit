@@ -25,11 +25,9 @@
 
 #pragma once
 
-#include <WebCore/ModelObjectDescriptorBase.h>
-
 namespace WebCore::DDModel {
 
-struct DDVertexLayout : public ObjectDescriptorBase {
+struct DDVertexLayout {
     int32_t bufferIndex;
     int32_t bufferOffset;
     int32_t bufferStride;

@@ -77,11 +77,11 @@ OpenXRCoordinator::~OpenXRCoordinator()
         xrDestroyInstance(m_instance);
 }
 
-void OpenXRCoordinator::getPrimaryDeviceInfo(WebPageProxy&, DeviceInfoCallback&& callback)
+void OpenXRCoordinator::getPrimaryDeviceInfo(WebPageProxy& page, DeviceInfoCallback&& callback)
 {
     ASSERT(RunLoop::isMain());
 
-    initializeDevice();
+    initializeDevice(page.protectedPreferences()->openXRDMABufRelaxedForTesting());
     if (m_instance == XR_NULL_HANDLE || m_systemId == XR_NULL_SYSTEM_ID) {
         LOG(XR, "Failed to initialize OpenXR system");
         callback(std::nullopt);
@@ -234,7 +234,6 @@ void OpenXRCoordinator::startSession(WebPageProxy& page, WeakPtr<PlatformXRCoord
                 .renderState = renderState,
                 .renderQueue = renderQueue.get()
             };
-            page.uiClient().didStartXRSession(page);
             renderQueue->dispatch([this, renderState] {
                 createSessionIfNeeded();
                 if (m_session == XR_NULL_HANDLE) {
@@ -290,8 +289,8 @@ void OpenXRCoordinator::endSessionIfExists(WebPageProxy& page)
                 sessionEventClient->sessionDidEnd(m_deviceIdentifier);
             }
 
-            page.uiClient().didEndXRSession(page);
-
+            if (active.didStart)
+                page.uiClient().didEndXRSession(page);
             m_state = Idle { };
         });
 }
@@ -402,7 +401,7 @@ void OpenXRCoordinator::createInstance()
     CHECK_XRCMD(xrCreateInstance(&createInfo, &m_instance));
 }
 
-RefPtr<WebCore::GLDisplay> OpenXRCoordinator::createGLDisplay() const
+RefPtr<WebCore::GLDisplay> OpenXRCoordinator::createGLDisplay(bool isForTesting) const
 {
     ASSERT(RunLoop::isMain());
     ASSERT(!m_glDisplay);
@@ -430,7 +429,7 @@ RefPtr<WebCore::GLDisplay> OpenXRCoordinator::createGLDisplay() const
 
     if (WebCore::GLContext::isExtensionSupported(extensions, "EGL_MESA_platform_surfaceless")) {
         glDisplay = tryCreateDisplay(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY);
-        if (glDisplay && !glDisplay->extensions().MESA_image_dma_buf_export)
+        if (glDisplay && !isForTesting && !glDisplay->extensions().MESA_image_dma_buf_export)
             glDisplay = nullptr;
     }
 
@@ -488,14 +487,14 @@ void OpenXRCoordinator::initializeSystem()
     CHECK_XRCMD(xrGetSystem(m_instance, &systemInfo, &m_systemId));
 }
 
-void OpenXRCoordinator::initializeDevice()
+void OpenXRCoordinator::initializeDevice(bool isForTesting)
 {
     ASSERT(RunLoop::isMain());
 
     if (m_instance != XR_NULL_HANDLE)
         return;
 
-    auto display = createGLDisplay();
+    auto display = createGLDisplay(isForTesting);
     if (!display) {
         LOG(XR, "Failed to create a display for OpenXR.");
         return;
@@ -645,6 +644,16 @@ void OpenXRCoordinator::handleSessionStateChange()
         sessionBeginInfo.primaryViewConfigurationType = m_currentViewConfiguration;
         CHECK_XRCMD(xrBeginSession(m_session, &sessionBeginInfo));
         m_isSessionRunning = true;
+        callOnMainRunLoop([this] {
+            WTF::switchOn(m_state,
+                [&](Idle&) { },
+                [&](Active& active) {
+                    if (RefPtr page = WebProcessProxy::webPage(active.pageIdentifier)) {
+                        active.didStart = true;
+                        page->uiClient().didStartXRSession(*page);
+                    }
+                });
+        });
         break;
     }
     case XR_SESSION_STATE_STOPPING:

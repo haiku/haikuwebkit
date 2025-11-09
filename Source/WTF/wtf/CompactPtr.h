@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,14 +40,6 @@
 #endif
 
 namespace WTF {
-
-#if CPU(ADDRESS64)
-#if CPU(ARM64) && OS(DARWIN) && !PLATFORM(IOS_FAMILY_SIMULATOR)
-#if MACH_VM_MAX_ADDRESS_RAW < (1ULL << 36)
-#define HAVE_36BIT_ADDRESS 1
-#endif
-#endif
-#endif // CPU(ADDRESS64)
 
 template <typename T>
 class CompactPtr {

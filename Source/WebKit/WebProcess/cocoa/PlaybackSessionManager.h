@@ -30,6 +30,7 @@
 #include "MessageReceiver.h"
 #include <WebCore/EventListener.h>
 #include <WebCore/HTMLMediaElementEnums.h>
+#include <WebCore/HTMLMediaElementIdentifier.h>
 #include <WebCore/MediaPlayerClientIdentifier.h>
 #if HAVE(PIP_SKIP_PREROLL)
 #include <WebCore/MediaSession.h>

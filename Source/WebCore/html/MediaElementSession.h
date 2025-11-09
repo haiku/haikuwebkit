@@ -39,15 +39,6 @@
 #include <wtf/TypeCasts.h>
 
 namespace WebCore {
-class MediaElementSession;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::MediaElementSession> : std::true_type { };
-}
-
-namespace WebCore {
 
 enum class MediaSessionMainContentPurpose { MediaControls, Autoplay };
 enum class MediaPlaybackState { Playing, Paused };

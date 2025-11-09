@@ -330,6 +330,16 @@ AtomString StringView::convertToASCIILowercaseAtom() const
     return convertASCIILowercaseAtom(span16());
 }
 
+std::optional<char32_t> StringView::convertToSingleCodePoint() const
+{
+    auto points = codePoints();
+    auto iterator = points.begin();
+    if (iterator == points.end())
+        return std::nullopt;
+    std::optional<char32_t> character { *iterator };
+    ++iterator;
+    return iterator == points.end() ? character : std::nullopt;
+}
 
 template<typename DestinationCharacterType, typename SourceCharacterType>
 void getCharactersWithASCIICaseInternal(StringView::CaseConvertType type, std::span<DestinationCharacterType> destination, std::span<const SourceCharacterType> source)

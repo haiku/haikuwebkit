@@ -219,7 +219,7 @@ MediaPlayerPrivateRemote::~MediaPlayerPrivateRemote()
 
     // Shutdown any stale MediaResources.
     // This condition can happen if the MediaPlayer gets reloaded half-way.
-    ensureOnMainThread([resources = WTFMove(m_mediaResources)] {
+    ensureOnMainThread([resources = std::exchange(m_mediaResources, { })] {
         for (auto&& resource : resources)
             resource.value->shutdown();
     });
@@ -1047,7 +1047,7 @@ void MediaPlayerPrivateRemote::load(const URL& url, const LoadOptions& options, 
             // MediaSource can only be re-opened after RemoteMediaPlayerProxy::LoadMediaSource has been called.
             client.reOpen();
         } else
-            m_mediaSourcePrivate = MediaSourcePrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), identifier, protectedManager()->typeCache(m_remoteEngineIdentifier), *this, client);
+            m_mediaSourcePrivate = MediaSourcePrivateRemote::create(protectedManager()->protectedGPUProcessConnection(), identifier, protectedManager()->checkedTypeCache(m_remoteEngineIdentifier), *this, client);
         return;
     }
 
@@ -1510,16 +1510,6 @@ void MediaPlayerPrivateRemote::tracksChanged()
     connection().send(Messages::RemoteMediaPlayerProxy::TracksChanged(), m_id);
 }
 
-void MediaPlayerPrivateRemote::beginSimulatedHDCPError()
-{
-    connection().send(Messages::RemoteMediaPlayerProxy::BeginSimulatedHDCPError(), m_id);
-}
-
-void MediaPlayerPrivateRemote::endSimulatedHDCPError()
-{
-    connection().send(Messages::RemoteMediaPlayerProxy::EndSimulatedHDCPError(), m_id);
-}
-
 String MediaPlayerPrivateRemote::languageOfPrimaryAudioTrack() const
 {
     return m_cachedState.languageOfPrimaryAudioTrack;
@@ -1910,6 +1900,13 @@ void MediaPlayerPrivateRemote::sendInternalMessage(const WebCore::MessageForTest
     connection().send(Messages::RemoteMediaPlayerProxy::SetHasMessageClientForTesting(false), m_id);
 }
 
+void MediaPlayerPrivateRemote::gpuProcessConnectionDidClose()
+{
+    assertIsMainRunLoop();
+
+    for (auto&& resource : std::exchange(m_mediaResources, { }))
+        resource.value->shutdown();
+}
 
 } // namespace WebKit
 

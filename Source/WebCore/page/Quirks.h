@@ -149,7 +149,7 @@ public:
 
 #if ENABLE(MEDIA_STREAM)
     bool shouldEnableFacebookFlagQuirk() const;
-    Ref<NodeList> applyFacebookFlagQuirk(Document&, const NodeList&);
+    Ref<NodeList> applyFacebookFlagQuirk(Document&, NodeList&);
     bool shouldEnableLegacyGetUserMediaQuirk() const;
     bool shouldDisableImageCaptureQuirk() const;
     bool shouldEnableSpeakerSelectionPermissionsPolicyQuirk() const;
@@ -163,8 +163,6 @@ public:
     bool shouldUnloadHeavyFrame() const;
 
     bool needsCanPlayAfterSeekedQuirk() const;
-
-    bool shouldAvoidPastingImagesAsWebContent() const;
 
     bool shouldNotAutoUpgradeToHTTPSNavigation(const URL&);
 
@@ -277,6 +275,10 @@ public:
     bool needsNavigatorUserAgentDataQuirk() const;
 
     WEBCORE_EXPORT bool needsNowPlayingFullscreenSwapQuirk() const;
+
+
+    enum class TikTokOverflowingContentQuirkType : bool { VideoSectionQuirk, CommentsSectionQuirk };
+    std::optional<TikTokOverflowingContentQuirkType> needsTikTokOverflowingContentQuirk(const Element&, const RenderStyle& parentStyle) const;
 
     bool needsWebKitMediaTextTrackDisplayQuirk() const;
 

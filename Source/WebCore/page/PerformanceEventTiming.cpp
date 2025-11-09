@@ -27,7 +27,6 @@
 #include "PerformanceEventTiming.h"
 
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
 #include "NodeDocument.h"
@@ -66,7 +65,7 @@ Node* PerformanceEventTiming::target() const
     if (!node->isConnected() || !document->isFullyActive())
         return nullptr;
 
-    return node.get();
+    return node.unsafeGet();
 }
 
 PerformanceEntry::Type PerformanceEventTiming::performanceEntryType() const

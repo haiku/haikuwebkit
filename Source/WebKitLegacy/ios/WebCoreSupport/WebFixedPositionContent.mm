@@ -77,9 +77,7 @@ WebFixedPositionContentData::WebFixedPositionContentData(WebView *webView)
 {
 }
 
-WebFixedPositionContentData::~WebFixedPositionContentData()
-{
-}
+WebFixedPositionContentData::~WebFixedPositionContentData() = default;
 
 @implementation WebFixedPositionContent {
     struct WebFixedPositionContentData* _private;

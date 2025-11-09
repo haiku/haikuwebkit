@@ -40,7 +40,6 @@ class MediaControlsUtils
     , public ContextDestructionObserver {
 public:
     static Ref<MediaControlsUtils> create(Document& document) { return adoptRef(*new MediaControlsUtils(document)); }
-    ~MediaControlsUtils() = default;
 
     String formattedStringForDuration(double);
     RefPtr<HTMLImageElement> createImageForIconNameAndType(const String& iconName, const String& iconType);

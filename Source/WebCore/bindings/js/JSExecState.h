@@ -115,6 +115,7 @@ public:
     }
 
     static void runTask(JSC::JSGlobalObject*, JSC::QueuedTask&);
+    static void runTaskWithDebugger(JSC::JSGlobalObject*, JSC::QueuedTask&);
 
     static JSC::JSInternalPromise* loadModule(JSC::JSGlobalObject& lexicalGlobalObject, const URL& topLevelModuleURL, JSC::JSValue parameters, JSC::JSValue scriptFetcher)
     {

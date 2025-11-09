@@ -47,8 +47,6 @@ class ReadableStreamDefaultReader : public ScriptWrappable, public RefCountedAnd
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(ReadableStreamDefaultReader);
 public:
     static ExceptionOr<Ref<ReadableStreamDefaultReader>> create(JSDOMGlobalObject&, ReadableStream&);
-    static ExceptionOr<Ref<ReadableStreamDefaultReader>> create(JSDOMGlobalObject&, InternalReadableStream&);
-    static Ref<ReadableStreamDefaultReader> create(Ref<InternalReadableStreamDefaultReader>&&, Ref<DOMPromise>&&, Ref<DeferredPromise>&&);
 
     ~ReadableStreamDefaultReader();
 
@@ -63,7 +61,8 @@ public:
     void addReadRequest(Ref<ReadableStreamReadRequest>&&);
     Ref<ReadableStreamReadRequest> takeFirstReadRequest();
 
-    void genericCancel(JSDOMGlobalObject&, JSC::JSValue, Ref<DeferredPromise>&&);
+    Ref<DOMPromise> cancel(JSDOMGlobalObject&, JSC::JSValue);
+    Ref<DOMPromise> genericCancel(JSDOMGlobalObject&, JSC::JSValue);
 
     void resolveClosedPromise();
     void rejectClosedPromise(JSC::JSValue);
@@ -76,12 +75,11 @@ public:
     template<typename Visitor> void visitAdditionalChildren(Visitor&);
 
 private:
-    ReadableStreamDefaultReader(Ref<InternalReadableStreamDefaultReader>&&, Ref<DOMPromise>&&, Ref<DeferredPromise>&&);
-    ReadableStreamDefaultReader(Ref<ReadableStream>&&, Ref<DOMPromise>&&, Ref<DeferredPromise>&&);
+    ReadableStreamDefaultReader(Ref<ReadableStream>&&, RefPtr<InternalReadableStreamDefaultReader>&&, Ref<DOMPromise>&&, Ref<DeferredPromise>&&);
 
     ExceptionOr<void> setup(JSDOMGlobalObject&);
     void genericRelease(JSDOMGlobalObject&);
-    void errorReadRequests(JSDOMGlobalObject&, const Exception&);
+    void errorReadRequests(const Exception&);
 
     Ref<DOMPromise> m_closedPromise;
     Ref<DeferredPromise> m_closedDeferred;

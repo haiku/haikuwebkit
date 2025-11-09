@@ -67,10 +67,17 @@ private:
         return root().protectedStreamClientConnection()->send(WTFMove(message), backing());
     }
 
+    void addMesh(const WebCore::DDModel::DDMeshDescriptor&) final;
     void update(const WebCore::DDModel::DDUpdateMeshDescriptor&) final;
+    void addTexture(const WebCore::DDModel::DDTextureDescriptor&) final;
+    void updateTexture(const WebCore::DDModel::DDUpdateTextureDescriptor&) final;
+    void addMaterial(const WebCore::DDModel::DDMaterialDescriptor&) final;
+    void updateMaterial(const WebCore::DDModel::DDUpdateMaterialDescriptor&) final;
+
+    void render() final;
     void setLabelInternal(const String&) final;
 
-    DDModelIdentifier m_backing;
+    const DDModelIdentifier m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;
     const Ref<RemoteGPUProxy> m_root;
 };

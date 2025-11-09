@@ -169,6 +169,7 @@ void RemoteAudioSession::configurationChanged(RemoteAudioSessionConfiguration&& 
     bool bufferSizeChanged = !m_configuration || configuration.bufferSize != (*m_configuration).bufferSize;
     bool sampleRateChanged = !m_configuration || configuration.sampleRate != (*m_configuration).sampleRate;
     bool isActiveChanged = !m_configuration || configuration.isActive != (*m_configuration).isActive;
+    bool routingContextUIDChanged = !m_configuration || configuration.routingContextUID != (*m_configuration).routingContextUID;
 
     m_configuration = WTFMove(configuration);
 
@@ -181,6 +182,9 @@ void RemoteAudioSession::configurationChanged(RemoteAudioSessionConfiguration&& 
 
         if (sampleRateChanged)
             observer.sampleRateDidChange(*this);
+
+        if (routingContextUIDChanged)
+            observer.routingContextUIDDidChange(*this);
     });
     if (isActiveChanged)
         activeStateChanged();

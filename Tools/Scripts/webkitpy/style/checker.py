@@ -241,6 +241,7 @@ _PATH_RULES_SPECIFIER = [
      ["-readability/naming/underscores",
       "-safercpp/atoi",
       "-safercpp/printf",
+      "-security/printf",
       "-runtime/lock_guard",
       "-runtime/wtf_make_unique",
       "-runtime/wtf_move"]),
@@ -373,10 +374,17 @@ _PATH_RULES_SPECIFIER = [
     ([
       # Source/bmalloc/libpas/src/ is first-party code, but largely operates
       # as an separate codebase, with a few different style rules.
+      # It also does not have access to any of WTF's safe-cpp wrappers,
+      # e.g. memsetSpan.
       os.path.join('Source', 'bmalloc', 'libpas', 'src')],
      ["-readability/naming/underscores",
+      "-readability/parameter_name",
       "-whitespace/declaration",
-      "-whitespace/indent"]),
+      "-whitespace/indent",
+      "-safercpp/printf",
+      "-safercpp/memset",
+      "-safercpp/memcpy",
+      "-safercpp/strncmp",]),
 
     ([
       # There is no way to avoid the symbols __jit_debug_register_code
@@ -435,6 +443,9 @@ _PATH_RULES_SPECIFIER = [
       "-runtime/wtf_move",
       "-whitespace"]),
 
+    ([  # Ignore whitespace issues in third party library esprima.js
+     os.path.join('Source', 'WebInspectorUI', 'UserInterface', 'External', 'Esprima', 'esprima.js')],
+     ["-whitespace/tab"]),
 ]
 
 
@@ -538,11 +549,11 @@ _SKIPPED_FILES_WITH_WARNING = [
     os.path.join('Source', 'WebKit', 'WebProcess', 'InjectedBundle', 'API', 'gtk', 'DOM'),
 
     os.path.join('Source', 'JavaScriptCore', 'API', 'glib', 'jsc.h'),
-    os.path.join('Source', 'WebCore', 'platform', 'gtk', 'GtkVersioning.h'),
     os.path.join('Source', 'WebCore', 'platform', 'graphics', 'gbm', 'GBMVersioning.h'),
     os.path.join('Source', 'WebKit', 'UIProcess', 'API', 'gtk', 'webkit2.h'),
     os.path.join('Source', 'WebKit', 'UIProcess', 'API', 'gtk', 'webkit.h'),
     os.path.join('Source', 'WebKit', 'UIProcess', 'API', 'wpe', 'webkit.h'),
+    os.path.join('Source', 'WebKit', 'UIProcess', 'gtk', 'GtkVersioning.h'),
     os.path.join('Source', 'WebKit', 'WPEPlatform', 'wpe', 'wpe-platform.h'),
     os.path.join('Source', 'WebKit', 'WPEPlatform', 'wpe', 'drm', 'wpe-drm.h'),
     os.path.join('Source', 'WebKit', 'WPEPlatform', 'wpe', 'headless', 'wpe-headless.h'),

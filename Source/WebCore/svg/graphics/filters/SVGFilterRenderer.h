@@ -33,11 +33,12 @@ namespace WebCore {
 
 class FilterImage;
 class GraphicsContext;
+class SVGElement;
 class SVGFilterElement;
 
 class SVGFilterRenderer final : public Filter {
 public:
-    static RefPtr<SVGFilterRenderer> create(SVGFilterElement&, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatSize& filterScale, const FloatRect& filterRegion, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext, std::optional<RenderingResourceIdentifier> = std::nullopt);
+    static RefPtr<SVGFilterRenderer> create(SVGElement* contextElement, SVGFilterElement&, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatSize& filterScale, const FloatRect& filterRegion, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext, std::optional<RenderingResourceIdentifier> = std::nullopt);
     WEBCORE_EXPORT static Ref<SVGFilterRenderer> create(const FloatRect& targetBoundingBox, SVGUnitTypes::SVGUnitType primitiveUnits, SVGFilterExpression&&, FilterEffectVector&&, std::optional<RenderingResourceIdentifier>, OptionSet<FilterRenderingMode>, const FloatSize& filterScale, const FloatRect& filterRegion);
 
     static bool isIdentity(SVGFilterElement&);
@@ -67,7 +68,7 @@ private:
     SVGFilterRenderer(const FloatSize& filterScale, const FloatRect& filterRegion, const FloatRect& targetBoundingBox, SVGUnitTypes::SVGUnitType primitiveUnits, std::optional<RenderingResourceIdentifier>);
     SVGFilterRenderer(const FloatRect& targetBoundingBox, SVGUnitTypes::SVGUnitType primitiveUnits, SVGFilterExpression&&, FilterEffectVector&&, std::optional<RenderingResourceIdentifier>, const FloatSize& filterScale, const FloatRect& filterRegion);
 
-    static std::optional<std::tuple<SVGFilterExpression, FilterEffectVector>> buildExpression(SVGFilterElement&, const SVGFilterRenderer&, const GraphicsContext& destinationContext);
+    static std::optional<std::tuple<SVGFilterExpression, FilterEffectVector>> buildExpression(SVGElement* contextElement, SVGFilterElement&, const SVGFilterRenderer&, const GraphicsContext& destinationContext);
     void setExpression(SVGFilterExpression&& expression) { m_expression = WTFMove(expression); }
     void setEffects(FilterEffectVector&& effects) { m_effects = WTFMove(effects); }
 

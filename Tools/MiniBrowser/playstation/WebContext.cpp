@@ -90,9 +90,7 @@ WebContext::WebContext()
     WKPreferencesSetNeedsSiteSpecificQuirks(m_preferencesMaster.get(), false);
 }
 
-WebContext::~WebContext()
-{
-}
+WebContext::~WebContext() = default;
 
 void WebContext::addWindow(WebViewWindow* window)
 {

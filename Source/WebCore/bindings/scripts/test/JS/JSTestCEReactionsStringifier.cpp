@@ -299,7 +299,7 @@ extern "C" { extern void (*const __identifier("??_7TestCEReactionsStringifier@We
 extern "C" { extern void* _ZTVN7WebCore26TestCEReactionsStringifierE[]; }
 #endif
 template<std::same_as<TestCEReactionsStringifier> T>
-static inline void verifyVTable(TestCEReactionsStringifier* ptr) 
+static inline void verifyVTable(TestCEReactionsStringifier* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -319,8 +319,9 @@ static inline void verifyVTable(TestCEReactionsStringifier* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestCEReactionsStringifier>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestCEReactionsStringifier>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestCEReactionsStringifier>(impl.ptr());
 #endif

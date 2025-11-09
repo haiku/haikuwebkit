@@ -99,7 +99,7 @@ public:
 
 private:
     friend class MessageReceiver;
-    AudioVideoRendererRemote(LoggerHelper*, GPUProcessConnection&, RemoteAudioVideoRendererIdentifier);
+    AudioVideoRendererRemote(LoggerHelper*, GPUProcessConnection&, WebCore::HTMLMediaElementIdentifier, WebCore::MediaPlayerIdentifier, RemoteAudioVideoRendererIdentifier);
 
     void gpuProcessConnectionDidClose(GPUProcessConnection&) final;
 
@@ -113,7 +113,7 @@ private:
     void setIsVisible(bool) final;
     void setPresentationSize(const WebCore::IntSize&) final;
     void setShouldMaintainAspectRatio(bool) final;
-    void acceleratedRenderingStateChanged(bool) final;
+    void renderingCanBeAcceleratedChanged(bool) final;
     void contentBoxRectChanged(const WebCore::LayoutRect&) final;
     void notifyFirstFrameAvailable(Function<void()>&&) final;
     void notifyWhenHasAvailableVideoFrame(Function<void(const MediaTime&, double)>&&) final;

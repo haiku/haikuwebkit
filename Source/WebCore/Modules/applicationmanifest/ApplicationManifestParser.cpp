@@ -30,7 +30,7 @@
 
 #include "CSSPropertyParserConsumer+Color.h"
 #include "Color.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "SecurityOrigin.h"
 #include <JavaScriptCore/ConsoleMessage.h>
 #include <optional>

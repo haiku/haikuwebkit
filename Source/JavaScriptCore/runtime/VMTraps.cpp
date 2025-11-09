@@ -37,6 +37,7 @@
 #include "MachineContext.h"
 #include "MacroAssemblerCodeRef.h"
 #include "VMEntryScopeInlines.h"
+#include "VMManager.h"
 #include "VMTrapsInlines.h"
 #include "WaiterListManager.h"
 #include "Watchdog.h"
@@ -506,6 +507,11 @@ bool VMTraps::handleTraps(VMTraps::BitField mask)
             if (!isDeferringTermination())
                 vm.throwTerminationException();
             return true;
+
+        case NeedStopTheWorld:
+            VMManager::singleton().notifyVMStop(vm, StopTheWorldEvent::VMStopped);
+            didHandleTrap = true;
+            break;
 
         case NeedExceptionHandling:
         default:

@@ -30,15 +30,18 @@
 #include <WebCore/ExceptionData.h>
 #include <WebCore/ExceptionOr.h>
 #include <WebCore/FocusDirection.h>
+#include <WebCore/FrameIdentifier.h>
 #include <WebCore/HTMLMediaElementEnums.h>
 #include <WebCore/HighlightVisibility.h>
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/ImageBufferResourceLimits.h>
 #include <WebCore/InputMode.h>
 #include <WebCore/MediaControlsContextMenuItem.h>
+#include <WebCore/PlaybackTargetClientContextIdentifier.h>
 #include <WebCore/PointerCharacteristics.h>
 #include <WebCore/SyntheticClickResult.h>
 #include <WebCore/WebCoreKeyboardUIMode.h>
+#include <WebCore/Widget.h>
 #include <wtf/Assertions.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
@@ -69,10 +72,6 @@ OBJC_CLASS NSData;
 #include <WebCore/MediaUsageInfo.h>
 #endif
 
-#if ENABLE(ARKIT_INLINE_PREVIEW)
-class HTMLModelElement;
-#endif
-
 #if ENABLE(WEBXR)
 #include <WebCore/PlatformXR.h>
 #endif
@@ -86,6 +85,11 @@ class HTMLModelElement;
 #endif
 
 OBJC_CLASS NSResponder;
+
+namespace JSC {
+enum class MessageSource : uint8_t;
+enum class MessageLevel : uint8_t;
+}
 
 namespace WebCore {
 
@@ -102,10 +106,13 @@ class Element;
 class FileChooser;
 class FileIconLoader;
 class FloatRect;
+class Frame;
 class FrameDamageHistory;
+class FrameSelection;
 class Geolocation;
 class GraphicsLayer;
 class GraphicsLayerFactory;
+class HTMLAttachmentElement;
 class HTMLImageElement;
 class HTMLInputElement;
 class HTMLMediaElement;
@@ -116,6 +123,7 @@ class HitTestResult;
 class Icon;
 class IntRect;
 class LocalFrame;
+class LocalFrameView;
 class NavigationAction;
 class Node;
 class Page;
@@ -123,9 +131,10 @@ class PopupMenu;
 class PopupMenuClient;
 class Region;
 class RegistrableDomain;
-class SearchPopupMenu;
 class SVGImageElement;
+class ScrollableArea;
 class ScrollingCoordinator;
+class SearchPopupMenu;
 class SecurityOrigin;
 class SecurityOriginData;
 class ViewportConstraints;
@@ -154,6 +163,8 @@ struct FocusOptions;
 struct GraphicsDeviceAdapter;
 struct MockWebAuthenticationConfiguration;
 struct ShareDataWithParsedURL;
+struct SimpleRange;
+struct StringWithDirection;
 struct SystemPreviewInfo;
 struct TextIndicatorData;
 struct TextRecognitionOptions;
@@ -176,10 +187,14 @@ enum class PluginUnavailabilityReason : uint8_t;
 enum class PointerLockRequestResult : uint8_t;
 enum class RouteSharingPolicy : uint8_t;
 enum class ScriptTrackingPrivacyCategory : uint8_t;
+enum class ScrollbarOverlayStyle : uint8_t;
+enum class ScrollbarStyle : uint8_t;
 enum class TextAnimationRunMode : uint8_t;
 
 enum class MediaProducerMediaState : uint32_t;
 using MediaProducerMediaStateFlags = OptionSet<MediaProducerMediaState>;
+
+typedef int32_t IntDegrees;
 
 namespace ShapeDetection {
 class BarcodeDetector;
@@ -238,7 +253,7 @@ public:
 
     virtual void setResizable(bool) = 0;
 
-    virtual void addMessageToConsole(MessageSource, MessageLevel, const String& message, unsigned lineNumber, unsigned columnNumber, const String& sourceID) = 0;
+    virtual void addMessageToConsole(JSC::MessageSource, JSC::MessageLevel, const String& message, unsigned lineNumber, unsigned columnNumber, const String& sourceID) = 0;
 
     virtual bool canRunBeforeUnloadConfirmPanel() = 0;
     virtual bool runBeforeUnloadConfirmPanel(String&& message, LocalFrame&) = 0;
@@ -273,8 +288,14 @@ public:
     virtual void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const = 0;
 #endif
 
+    virtual void mainFrameDidChange() { };
+
     virtual void didFinishLoadingImageForElement(HTMLImageElement&) = 0;
     virtual void didFinishLoadingImageForSVGImage(SVGImageElement&) { }
+
+#if ENABLE(MODEL_PROCESS)
+    virtual void setHasModelElement(bool) { }
+#endif
 
     virtual PlatformPageClient platformPageClient() const = 0;
 
@@ -669,11 +690,7 @@ public:
 #endif
 
 #if ENABLE(IMAGE_ANALYSIS)
-    virtual void requestTextRecognition(Element&, TextRecognitionOptions&&, CompletionHandler<void(RefPtr<Element>&&)>&& completion = { })
-    {
-        if (completion)
-            completion({ });
-    }
+    WEBCORE_EXPORT virtual void requestTextRecognition(Element&, TextRecognitionOptions&&, CompletionHandler<void(RefPtr<Element>&&)>&& completion = { });
 #endif
     virtual bool needsImageOverlayControllerForSelectionPainting() const { return false; }
 

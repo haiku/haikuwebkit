@@ -78,21 +78,6 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AudioVideoRendererAVFObjC);
 
-static inline bool supportsAttachContentKey()
-{
-    static bool supportsAttachContentKey;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        supportsAttachContentKey = WTF::processHasEntitlement("com.apple.developer.web-browser-engine.rendering"_s) || WTF::processHasEntitlement("com.apple.private.coremedia.allow-fps-attachment"_s);
-    });
-    return supportsAttachContentKey;
-}
-
-static inline bool shouldAddContentKeyRecipients()
-{
-    return !supportsAttachContentKey();
-}
-
 AudioVideoRendererAVFObjC::AudioVideoRendererAVFObjC(const Logger& originalLogger, uint64_t logSiteIdentifier)
     : m_logger(originalLogger)
     , m_logIdentifier(logSiteIdentifier)
@@ -690,8 +675,9 @@ void AudioVideoRendererAVFObjC::setIsVisible(bool visible)
 
 void AudioVideoRendererAVFObjC::setPresentationSize(const IntSize& newSize)
 {
-    m_presentationSize = newSize;
-    updateDisplayLayerIfNeeded();
+    if (std::exchange(m_presentationSize, newSize) == newSize || !m_sampleBufferDisplayLayer)
+        return;
+    m_videoLayerManager->setPresentationSize(newSize);
 }
 
 void AudioVideoRendererAVFObjC::setShouldMaintainAspectRatio(bool shouldMaintainAspectRatio)
@@ -713,7 +699,7 @@ void AudioVideoRendererAVFObjC::setShouldMaintainAspectRatio(bool shouldMaintain
     [CATransaction commit];
 }
 
-void AudioVideoRendererAVFObjC::acceleratedRenderingStateChanged(bool isAccelerated)
+void AudioVideoRendererAVFObjC::renderingCanBeAcceleratedChanged(bool isAccelerated)
 {
     m_renderingCanBeAccelerated = isAccelerated;
     if (isAccelerated)
@@ -835,6 +821,13 @@ void AudioVideoRendererAVFObjC::setVideoLayerSizeFenced(const FloatSize& newSize
         updateDisplayLayerIfNeeded();
 }
 
+#if ENABLE(ENCRYPTED_MEDIA)
+void AudioVideoRendererAVFObjC::notifyInsufficientExternalProtectionChanged(Function<void(bool)>&& callback)
+{
+    m_insufficientExternalProtectionChangedCallback = WTFMove(callback);
+}
+#endif
+
 void AudioVideoRendererAVFObjC::setVideoFullscreenLayer(PlatformLayer *videoFullscreenLayer, WTF::Function<void()>&& completionHandler)
 {
     RefPtr currentImage = currentNativeImage();
@@ -934,13 +927,6 @@ void AudioVideoRendererAVFObjC::addAudioRenderer(TrackIdentifier trackId)
 
     m_audioRenderers.set(trackId, renderer);
     m_listener->beginObservingAudioRenderer(renderer.get());
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && shouldAddContentKeyRecipients()) {
-        // False positive webkit.org/b/298037
-        SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() addContentKeyRecipient:renderer.get()];
-    }
-#endif
 }
 
 void AudioVideoRendererAVFObjC::removeAudioRenderer(TrackIdentifier trackId)
@@ -962,13 +948,6 @@ void AudioVideoRendererAVFObjC::destroyAudioRenderer(RetainPtr<AVSampleBufferAud
     m_listener->stopObservingAudioRenderer(renderer.get());
     [renderer flush];
     [renderer stopRequestingMediaData];
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && shouldAddContentKeyRecipients()) {
-        // False positive webkit.org/b/298037
-        SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() removeContentKeyRecipient:renderer.get()];
-    }
-#endif
 }
 
 void AudioVideoRendererAVFObjC::destroyAudioRenderers()
@@ -1105,7 +1084,7 @@ bool AudioVideoRendererAVFObjC::shouldEnsureLayerOrVideoRenderer() const
     if (!canUseDecompressionSession())
         return true;
 
-    return ((m_sampleBufferDisplayLayer && !CGRectIsEmpty([m_sampleBufferDisplayLayer bounds])) || (!m_presentationSize.isEmpty() && m_renderingCanBeAccelerated));
+    return m_renderingCanBeAccelerated;
 }
 
 WebSampleBufferVideoRendering *AudioVideoRendererAVFObjC::layerOrVideoRenderer() const
@@ -1176,13 +1155,6 @@ void AudioVideoRendererAVFObjC::ensureLayer()
     setLayerDynamicRangeLimit(m_sampleBufferDisplayLayer.get(), m_dynamicRangeLimit);
 
     m_videoLayerManager->setVideoLayer(m_sampleBufferDisplayLayer.get(), m_presentationSize);
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && shouldAddContentKeyRecipients()) {
-        // False positive webkit.org/b/298037
-        SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() addContentKeyRecipient:m_sampleBufferDisplayLayer.get()];
-    }
-#endif
 }
 
 void AudioVideoRendererAVFObjC::destroyLayer()
@@ -1197,13 +1169,6 @@ void AudioVideoRendererAVFObjC::destroyLayer()
     [m_synchronizer removeRenderer:m_sampleBufferDisplayLayer.get() atTime:currentTime completionHandler:nil];
 
     m_videoLayerManager->didDestroyVideoLayer();
-
-#if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)
-    if (RefPtr cdmInstance = m_cdmInstance; cdmInstance && shouldAddContentKeyRecipients()) {
-        // False positive webkit.org/b/298037
-        SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() removeContentKeyRecipient:m_sampleBufferDisplayLayer.get()];
-    }
-#endif
 
     m_sampleBufferDisplayLayer = nullptr;
     m_needsDestroyVideoLayer = false;
@@ -1273,9 +1238,18 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::setVideoRenderer(WebSampleBufferV
     videoRenderer->setPreferences(m_preferences);
     // False positive see webkit.org/b/298024
     SUPPRESS_UNRETAINED_ARG videoRenderer->setTimebase([m_synchronizer timebase]);
-    videoRenderer->notifyWhenDecodingErrorOccurred([weakThis = WeakPtr { *this }](NSError *) {
-        if (RefPtr protectedThis = weakThis.get())
+    videoRenderer->notifyWhenDecodingErrorOccurred([weakThis = WeakPtr { *this }](NSError *error) {
+        if (RefPtr protectedThis = weakThis.get()) {
+#if ENABLE(ENCRYPTED_MEDIA)
+            if ([error code] == 'HDCP') {
+                bool obscured = [[[error userInfo] valueForKey:@"obscured"] boolValue];
+                if (protectedThis->m_insufficientExternalProtectionChangedCallback)
+                    protectedThis->m_insufficientExternalProtectionChangedCallback(obscured);
+                return;
+            }
+#endif
             protectedThis->notifyError(PlatformMediaError::VideoDecodingError);
+        }
     });
     videoRenderer->notifyFirstFrameAvailable([weakThis = WeakPtr { *this }](const MediaTime&, double) {
         if (RefPtr protectedThis = weakThis.get())
@@ -1313,8 +1287,10 @@ void AudioVideoRendererAVFObjC::configureHasAvailableVideoFrameCallbackIfNeeded(
     if (videoRenderer)
         videoRenderer->setPreferences(m_preferences);
 
-    // Activating AvailableVideoFrame callback may force the use of decompression session.
-    updateDisplayLayerIfNeeded();
+    if (m_previousRendererConfiguration.hasVideoTrack) {
+        // Activating AvailableVideoFrame callback may force the use of decompression session.
+        updateDisplayLayerIfNeeded();
+    }
 
     if (willUseDecompressionSessionIfNeeded())
         return;
@@ -1417,7 +1393,8 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::stageVideoRenderer(WebSampleBuffe
     RefPtr videoRenderer = m_videoRenderer;
     RendererConfiguration newConfiguration {
         .canUseDecompressionSession = willUseDecompressionSessionIfNeeded(),
-        .isProtected = m_hasProtectedVideoContent
+        .isProtected = m_hasProtectedVideoContent,
+        .hasVideoTrack = m_enabledVideoTrackId.has_value()
     };
     if (renderer == videoRenderer->renderer()) {
         if (std::exchange(m_previousRendererConfiguration, newConfiguration) != newConfiguration && renderer)
@@ -1442,9 +1419,10 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::stageVideoRenderer(WebSampleBuffe
         destroyVideoRenderer();
     }
 
-    bool flushRequired = std::exchange(m_previousRendererConfiguration, newConfiguration) != newConfiguration;
+    bool videoTrackChangeOnly = !m_previousRendererConfiguration.hasVideoTrack && newConfiguration.hasVideoTrack;
+    bool flushRequired = std::exchange(m_previousRendererConfiguration, newConfiguration) != newConfiguration && !videoTrackChangeOnly;
     m_readyToRequestVideoData = !flushRequired;
-    ALWAYS_LOG(LOGIDENTIFIER, "renderer: ", !!renderer, " flushRequired: ", flushRequired);
+    ALWAYS_LOG(LOGIDENTIFIER, "renderer: ", !!renderer, " videoTrackChangeOnly: ", videoTrackChangeOnly, " flushRequired: ", flushRequired);
 
     return videoRenderer->changeRenderer(renderer)->whenSettled(RunLoop::mainSingleton(), [weakThis = WeakPtr { *this }, renderersToExpire = WTFMove(renderersToExpire), flushRequired]() mutable {
         RefPtr protectedThis = weakThis.get();
@@ -1591,31 +1569,6 @@ void AudioVideoRendererAVFObjC::setCDMInstance(CDMInstance* instance)
     if (fpsInstance == m_cdmInstance)
         return;
 
-    if (shouldAddContentKeyRecipients()) {
-        RetainPtr layer =  m_sampleBufferDisplayLayer;
-
-        if (RefPtr cdmInstance = m_cdmInstance) {
-            if (layer) {
-                // False positive webkit.org/b/298037
-                SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() removeContentKeyRecipient:layer.get()];
-            }
-            for (auto& renderer : m_audioRenderers.values()) {
-                // False positive webkit.org/b/298037
-                SUPPRESS_UNRETAINED_ARG [cdmInstance->contentKeySession() removeContentKeyRecipient:renderer.get()];
-            }
-        }
-
-        if (fpsInstance) {
-            if (layer) {
-                // False positive webkit.org/b/298037
-                SUPPRESS_UNRETAINED_ARG [fpsInstance->contentKeySession() addContentKeyRecipient:layer.get()];
-            }
-            for (auto& renderer : m_audioRenderers.values()) {
-                // False positive webkit.org/b/298037
-                SUPPRESS_UNRETAINED_ARG [fpsInstance->contentKeySession() addContentKeyRecipient:renderer.get()];
-            }
-        }
-    }
     m_cdmInstance = fpsInstance;
 }
 #endif

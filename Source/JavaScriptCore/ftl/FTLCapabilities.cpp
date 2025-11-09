@@ -494,6 +494,12 @@ inline CapabilityLevel canCompile(Node* node)
     case DateGetInt32OrNaN:
     case DateGetTime:
     case DateSetTime:
+    case ResolvePromiseFirstResolving:
+    case RejectPromiseFirstResolving:
+    case FulfillPromiseFirstResolving:
+    case PromiseResolve:
+    case PromiseReject:
+    case PromiseThen:
         // These are OK.
         break;
 

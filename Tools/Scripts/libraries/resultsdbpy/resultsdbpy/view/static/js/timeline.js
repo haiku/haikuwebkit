@@ -70,7 +70,7 @@ function minimumUuidForResults(results, limit) {
 }
 
 function commitsForResults(results, limit, allCommits = true) {
-    const minDisplayedUuid = minimumUuidForResults(limit);
+    const minDisplayedUuid = minimumUuidForResults(results, limit);
     let commits = [];
     let repositories = new Set();
     let currentCommitIndex = CommitBank.commits.length - 1;
@@ -368,6 +368,10 @@ class TimelineFromEndpoint {
 
         this.configurations = Configuration.fromQuery();
         this.results = {};
+        this.regressions = {
+            points: [],
+            analysisWindow: 10,
+        };
         this.selectedDots = new Map();
 
         // Suite and test can often be implied by the endpoint, but doing so is more confusing then helpful
@@ -503,6 +507,10 @@ class TimelineFromEndpoint {
                     if (oldestUuid < newestUuid)
                         CommitBank.add(oldestUuid, newestUuid);
 
+                    if (Object.keys(self.results).length > 0 && self.regressions.points.length === 0) {
+                        self.computeAndStoreRegressions();
+                    }
+
                     self.ref.setState(params.limit ? parseInt(params.limit[params.limit.length - 1]) : DEFAULT_LIMIT);
                 }).catch(error => {
                     const bugsLink = '<a href="https://bugs.webkit.org/enter_bug.cgi?product=WebKit&component=Tools%20%2F%20Tests&version=Other">file a bug</a>';
@@ -570,6 +578,91 @@ class TimelineFromEndpoint {
         return {failureType, failureNumber};
     }
 
+    countSuccessfulTests(results) {
+        let successCount = 0;
+        results.forEach(result => {
+            const status = this.getTestResultStatus(result, willFilterExpected);
+            if (!status.failureType || status.failureType === 'success') {
+                successCount++;
+            }
+        });
+        return successCount;
+    }
+
+    detectRegression(pastResults, newerResults, currentResult) {
+        const pastSuccessRate = this.countSuccessfulTests(pastResults) / pastResults.length;
+        const newSuccessRate = this.countSuccessfulTests(newerResults) / newerResults.length;
+        const rateChange = pastSuccessRate - newSuccessRate;
+        const description = `Success rate has dropped ${(rateChange * 100).toFixed(1)}% (from ${(pastSuccessRate * 100).toFixed(1)}% to ${(newSuccessRate * 100).toFixed(1)}%)`;
+
+        if (pastSuccessRate === 1.0 && newSuccessRate <= 0.2) {
+                return {
+                    uuid: currentResult.uuid,
+                    rateChange,
+                    patternDescription: description,
+                    affectedConfigs: [currentResult.configuration?.toKey() || 'unknown']
+                };
+        }
+
+        else if (pastSuccessRate >= 0.9 && newSuccessRate > 0.2 && newSuccessRate < 0.7) {
+            return {
+                uuid: currentResult.uuid,
+                rateChange,
+                patternDescription: description,
+                affectedConfigs: [currentResult.configuration?.toKey() || 'unknown']
+
+            };
+        }
+        else if (pastSuccessRate === 0 && newSuccessRate === 0 && rateChange === 0) {
+        return null;
+        }
+    }
+
+    computedRegressionPoints(allConfigResults) {
+        const regressions = [];
+        const windowSize = this.regressions.analysisWindow;
+        const duplicates = new Set();
+
+        for (let i = windowSize; i < allConfigResults.length - windowSize; i++) {
+            const currentResult = allConfigResults[i];
+
+            const currentStatus = this.getTestResultStatus(currentResult, willFilterExpected);
+            if (!currentStatus.failureType || currentStatus.failureType === 'success') {
+                continue;
+            }
+
+            if (duplicates.has(currentResult.uuid)) {
+                continue;
+            }
+
+            const olderWindow = allConfigResults.slice(i - windowSize, i);
+            const newerWindow = allConfigResults.slice(i, i + windowSize);
+            const regression = this.detectRegression(olderWindow, newerWindow, currentResult);
+
+            if (regression) {
+                regressions.push(regression);
+                duplicates.add(currentResult.uuid);
+            }
+            }
+
+        return regressions;
+    }
+
+    computeAndStoreRegressions() {
+        let allConfigResults = [];
+        this.configurations.forEach(configuration => {
+            if (this.results[configuration.toKey()]) {
+                this.results[configuration.toKey()].forEach(pair => {
+                    allConfigResults = combineResults(allConfigResults, pair.results);
+                });
+            }
+        });
+
+        if (allConfigResults.length > 0) {
+            this.regressions.points = this.computedRegressionPoints(allConfigResults);
+        }
+    }
+
     getTestResultUrl(config, data) {
         const buildParams = config.toParams();
         buildParams['suite'] = [this.suite];
@@ -595,7 +688,7 @@ class TimelineFromEndpoint {
                                 element.innerText = buttonText;
                         }
                     });
-        
+
                     buttonRef.fromEvent('click').action(e => {
                         const requestPayload = {
                             selectedRows: [],
@@ -943,7 +1036,7 @@ class TimelineFromEndpoint {
             });
             childrenConfigs.sort(function(a, b) {return a.compare(b);});
 
-            // Create the collapsed timelines, cobine results
+            // Create the collapsed timelines, combine results
             let allResults = [];
             let collapsedTimelines = [];
             childrenConfigs.forEach(config => {
@@ -1075,39 +1168,75 @@ class TimelineFromEndpoint {
             searchDot = exportedSearchDot;
         }));
 
-        let currentResultIndex = 0;
-        let regressPoints = [];
         let currentRegressPointIndex = -1;
-        const jumpNextRegressPoint = () => {
-            if (currentRegressPointIndex === regressPoints.length - 1) {
-                const lastResultStatus = this.getTestResultStatus(allConfigResults[currentResultIndex], InvestigateDrawer.willFilterExpected);
-                for(let i = currentResultIndex + 1; i < allConfigResults.length; i++) {
-                    const currentTestStatus = this.getTestResultStatus(allConfigResults[i], InvestigateDrawer.willFilterExpected);
-                    if (currentTestStatus.failureType !== lastResultStatus.failureType || currentTestStatus.failureNumber !== lastResultStatus.failureNumber) {
-                        currentResultIndex = i;
-                        regressPoints.push(allConfigResults[i]);
-                        currentRegressPointIndex = regressPoints.length - 1;
-                        searchDot(allConfigResults[i]);
-                        if (currentRegressPointIndex > 0)
-                            previousRegressButtonRef.setState({disabled: false});
-                        break;
-                    }
-                }
-            } else if (currentRegressPointIndex < regressPoints.length - 1) {
-                currentRegressPointIndex += 1;
-                if (currentRegressPointIndex > 0)
-                    previousRegressButtonRef.setState({disabled: false});
-                searchDot(regressPoints[currentRegressPointIndex]);
+        let sortedRegressions = [];
+
+        const updateNavigationButtons = () => {
+            if (sortedRegressions.length === 0) {
+                previousRegressButtonRef.setState({disabled: true });
+                nextRegressButtonRef.setState({disabled: true });
+                return;
             }
+            previousRegressButtonRef.setState({disabled: currentRegressPointIndex <= 0 });
+            nextRegressButtonRef.setState({disabled: currentRegressPointIndex >= sortedRegressions.length - 1 });
+        };
+
+        const navigateToRegression = (index) => {
+            if (index < 0 || index >= sortedRegressions.length) return;
+
+            const regression = sortedRegressions[index];
+            currentRegressPointIndex = index;
+
+            const targetResult = allConfigResults.find(r => r.uuid === regression.uuid);
+            searchDot(targetResult);
+
+            updateNavigationButtons();
+        };
+
+
+        const jumpNextRegressPoint = () => {
+            if (this.regressions.points.length === 0) {
+                this.computeAndStoreRegressions();
+            }
+
+            sortedRegressions = [...this.regressions.points].sort((a, b) => b.uuid - a.uuid);
+            if (sortedRegressions.length === 0) return;
+
+            let nextIndex = currentRegressPointIndex === -1 ? 0 : currentRegressPointIndex + 1;
+            while (nextIndex < sortedRegressions.length) {
+                const nextRegression = sortedRegressions[nextIndex];
+                const currentUuid = currentRegressPointIndex >= 0 && currentRegressPointIndex < sortedRegressions.length
+                    ? sortedRegressions[currentRegressPointIndex].uuid
+                    : null;
+
+                // Skip if same UUID as current position
+                if (nextRegression.uuid === currentUuid) {
+                    nextIndex++;
+                    continue;
+                }
+
+                // Find the actual result data for this regression point
+                const targetResult = allConfigResults.find(r => r.uuid === nextRegression.uuid);
+                if (targetResult) {
+                    const status = this.getTestResultStatus(targetResult, willFilterExpected);
+                }
+                break;
+            }
+
+            if (nextIndex >= sortedRegressions.length) return;
+
+            navigateToRegression(nextIndex);
         };
 
         const jumpPreviousRegressPoint = () => {
-            if (0 < currentRegressPointIndex && currentRegressPointIndex < regressPoints.length) {
-                currentRegressPointIndex -= 1;
-                searchDot(regressPoints[currentRegressPointIndex]);
-                if (currentRegressPointIndex === 0)
-                    previousRegressButtonRef.setState({disabled: true});
-            }
+            sortedRegressions = [...this.regressions.points].sort((a, b) => b.uuid - a.uuid);
+
+            if (currentRegressPointIndex === -1) return;
+
+            let previousIndex = currentRegressPointIndex - 1;
+            if (previousIndex < 0) return;
+
+            navigateToRegression(previousIndex);
         };
 
         const hideableRefOptionFactory = (initShow) => {
@@ -1128,7 +1257,11 @@ class TimelineFromEndpoint {
         }
 
         const findRegressButtonRef = REF.createRef(hideableRefOptionFactory(true));
-        findRegressButtonRef.fromEvent("click").action(e => {
+        findRegressButtonRef.fromEvent("click").action(e => { 
+            if (this.regressions.analysisWindow > 1) {
+                this.regressions.analysisWindow--;
+                this.regressions.points = [];
+            }
             findRegressPannelRef.setState({show: true});
             findRegressButtonRef.setState({show: false});
             jumpNextRegressPoint();
@@ -1140,16 +1273,33 @@ class TimelineFromEndpoint {
         closeRegressButtonRef.fromEvent("click").action(e => {
             findRegressPannelRef.setState({show: false});
             findRegressButtonRef.setState({show: true});
+
             currentRegressPointIndex = -1;
+            sortedRegressions = [];
+            this.regressions.analysisWindow = 10;
+            this.regressions.points = [];
+
             previousRegressButtonRef.setState({disabled: true});
+            nextRegressButtonRef.setState({disabled: true});
             searchDot(null);
         });
 
-        const nextRegressButtonRef = REF.createRef({});
-        const nextRegressButtonClickEventStream = nextRegressButtonRef.fromEvent("click");
-        nextRegressButtonClickEventStream.action((e) => {
-            jumpNextRegressPoint();
+        const nextRegressButtonRef = REF.createRef({
+            state: {
+                disabled: true,
+            },
+            onStateUpdate: (element, stateDiff) => {
+                if ("disabled" in stateDiff) {
+                    if (stateDiff.disabled) {
+                        element.setAttribute('disabled', true);
+                    } else {
+                        element.removeAttribute('disabled');
+                    }
+                }
+            }
         });
+
+        nextRegressButtonRef.fromEvent("click").action(e => jumpNextRegressPoint());
 
         const previousRegressButtonRef = REF.createRef({
             state: {
@@ -1420,4 +1570,3 @@ function Legend(callback=null, plural=false, defaultWillFilterExpected=false, fl
 }
 
 export {Legend, TimelineFromEndpoint, Expectations};
-

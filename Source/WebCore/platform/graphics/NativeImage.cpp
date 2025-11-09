@@ -53,6 +53,7 @@ RefPtr<NativeImage> NativeImage::createTransient(PlatformImagePtr&& image)
 NativeImage::NativeImage(PlatformImagePtr&& platformImage)
     : m_platformImage(WTFMove(platformImage))
 {
+    computeHeadroom();
 }
 
 NativeImage::~NativeImage()
@@ -75,6 +76,13 @@ void NativeImage::replacePlatformImage(PlatformImagePtr&& platformImage)
 {
     ASSERT(platformImage);
     m_platformImage = WTFMove(platformImage);
+    computeHeadroom();
 }
+
+#if !USE(CG)
+void NativeImage::computeHeadroom()
+{
+}
+#endif
 
 } // namespace WebCore

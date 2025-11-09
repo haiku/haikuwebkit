@@ -127,6 +127,7 @@ enum class SDKAlignedBehavior {
     SupportGameControllerEventInteractionAPI,
     DidFailProvisionalNavigationWithErrorForFileURLNavigation,
     CrashWhenPreconnectingFromBackgroundThread,
+    ExecutionTimingChangeOfModuleScripts,
 
     NumberOfBehaviors
 };

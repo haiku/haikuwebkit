@@ -28,18 +28,21 @@
 
 #if PLATFORM(IOS_FAMILY)
 
-#import "AXObjectCache.h"
 #import "AutoscrollController.h"
+#import "AXObjectCache.h"
 #import "Chrome.h"
 #import "ChromeClient.h"
 #import "ContainerNodeInlines.h"
 #import "DataTransfer.h"
-#import "DocumentInlines.h"
+#import "DocumentView.h"
+#import "DOMMatrixReadOnly.h"
+#import "DOMPointReadOnly.h"
 #import "DragState.h"
 #import "EventNames.h"
 #import "FocusController.h"
 #import "FrameLoader.h"
 #import "HandleUserInputEventResult.h"
+#import "HTMLModelElement.h"
 #import "KeyboardEvent.h"
 #import "LocalFrame.h"
 #import "LocalFrameView.h"
@@ -53,8 +56,8 @@
 #import "RemoteFrame.h"
 #import "RemoteFrameGeometryTransformer.h"
 #import "RemoteFrameView.h"
-#import "RenderWidgetInlines.h"
 #import "RenderObjectInlines.h"
+#import "RenderWidgetInlines.h"
 #import "ScrollingCoordinatorTypes.h"
 #import "WAKView.h"
 #import "WAKWindow.h"
@@ -70,12 +73,6 @@
 
 #if ENABLE(IOS_TOUCH_EVENTS)
 #import <WebKitAdditions/EventHandlerIOSTouch.cpp>
-#endif
-
-#if ENABLE(MODEL_PROCESS)
-#import "DOMMatrixReadOnly.h"
-#import "DOMPointReadOnly.h"
-#import "HTMLModelElement.h"
 #endif
 
 namespace WebCore {
@@ -709,7 +706,7 @@ bool EventHandler::shouldUpdateAutoscroll()
     return m_isAutoscrolling;
 }
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE_INTERACTION)
 std::optional<NodeIdentifier> EventHandler::requestInteractiveModelElementAtPoint(const IntPoint& clientPosition)
 {
     Ref frame = m_frame.get();
@@ -845,7 +842,7 @@ void EventHandler::tryToBeginDragAtPoint(const IntPoint& clientPosition, const I
     // when we would process the next tap after a drag interaction.
     m_mousePressed = false;
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE_INTERACTION)
     RefPtr targetElement = hitTestedMouseEvent.hitTestResult().targetElement();
     if (RefPtr modelElement = dynamicDowncast<HTMLModelElement>(targetElement))
         return modelElement->tryAnimateModelToFitPortal(handledDrag, WTFMove(completionHandler));

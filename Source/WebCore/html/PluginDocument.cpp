@@ -26,8 +26,9 @@
 #include "PluginDocument.h"
 
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentSettingsValues.h"
+#include "DocumentView.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "HTMLBodyElement.h"

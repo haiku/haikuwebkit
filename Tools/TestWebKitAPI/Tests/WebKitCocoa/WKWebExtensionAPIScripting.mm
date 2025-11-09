@@ -141,7 +141,7 @@ TEST(WKWebExtensionAPIScripting, ErrorsRegisteredContentScript)
         @"browser.test.assertThrows(() => browser.scripting.unregisterContentScripts({ ids: 0 }), /'ids' is expected to be an array of strings, but a number was provided/i)",
         @"browser.test.assertThrows(() => browser.scripting.unregisterContentScripts({ ids: [ 0 ] }), /'ids' is expected to be an array of strings, but a number was provided/i)",
 
-        @"browser.test.assertRejects(() => browser.scripting.registerContentScripts([{ id: '1', matches: ['*://*/*'], js: ['invalidFile.js'] }]), /Invalid resource 'invalidFile.js'/i)",
+        @"await browser.test.assertRejects(browser.scripting.registerContentScripts([{ id: '1', matches: ['*://*/*'], js: ['invalidFile.js'] }]), /Invalid resource 'invalidFile.js'/i)",
 
         @"browser.test.notifyPass()"
     ]);
@@ -1127,7 +1127,7 @@ TEST(WKWebExtensionAPIScripting, UnregisterContentScripts)
         // Unrecognized ids should return an error and result in a no-op.
 
         @"    await browser.scripting.registerContentScripts([{ id: '1', matches: ['*://localhost/*'], js: ['changeBackgroundColorScript.js'] }])",
-        @"    browser.test.assertRejects(browser.scripting.unregisterContentScripts({ 'ids': ['1', '2'] }))",
+        @"    await browser.test.assertRejects(browser.scripting.unregisterContentScripts({ 'ids': ['1', '2'] }))",
 
         @"    results = await browser.scripting.executeScript({ target: { tabId: tabId }, func: getBackgroundColor })",
         @"    browser.test.assertEq(results[0].result, pinkValue)",

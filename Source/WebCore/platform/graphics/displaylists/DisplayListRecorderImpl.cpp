@@ -199,6 +199,14 @@ void RecorderImpl::drawGlyphs(const Font& font, std::span<const GlyphBufferGlyph
 {
     if (decomposeDrawGlyphsIfNeeded(font, glyphs, advances, localAnchor, smoothingMode))
         return;
+
+#if USE(SKIA)
+    if (drawGlyphsMode() == Recorder::DrawGlyphsMode::TextBlob) {
+        m_items.append(DrawTextBlob(Ref { font }, Vector(glyphs), Vector(advances), localAnchor, smoothingMode));
+        return;
+    }
+#endif
+
     drawGlyphsImmediate(font, glyphs, advances, localAnchor, smoothingMode);
 }
 

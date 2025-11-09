@@ -636,7 +636,7 @@ void GraphicsLayer::setOffsetFromRenderer(const FloatSize& offset, ShouldSetNeed
     m_offsetFromRenderer = offset;
 
     // If the compositing layer offset changes, we need to repaint.
-    if (shouldSetNeedsDisplay == SetNeedsDisplay)
+    if (shouldSetNeedsDisplay == ShouldSetNeedsDisplay::Set)
         setNeedsDisplay();
 }
 
@@ -648,7 +648,7 @@ void GraphicsLayer::setScrollOffset(const ScrollOffset& offset, ShouldSetNeedsDi
     m_scrollOffset = offset;
 
     // If the compositing layer offset changes, we need to repaint.
-    if (shouldSetNeedsDisplay == SetNeedsDisplay)
+    if (shouldSetNeedsDisplay == ShouldSetNeedsDisplay::Set)
         setNeedsDisplay();
 }
 

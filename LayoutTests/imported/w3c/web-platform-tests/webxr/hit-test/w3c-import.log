@@ -21,6 +21,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_states_regular.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_states_transient.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_transientInputSources.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_unlocalizable.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/idlharness.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/xrRay_constructor.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/xrRay_matrix.https.html

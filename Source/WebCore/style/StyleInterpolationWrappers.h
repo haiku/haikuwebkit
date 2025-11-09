@@ -37,6 +37,7 @@
 #include "AnimationMalloc.h"
 #include "StyleInterpolationFunctions.h"
 #include "StyleInterpolationWrapperBase.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/TextStream.h>
@@ -207,41 +208,6 @@ public:
     StyleTypeWrapper<T, const T&, T&&> m_visitedWrapper;
 };
 
-class LengthWrapper : public WrapperWithGetter<const WebCore::Length&> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LengthWrapper, Animation);
-public:
-    enum class Flags {
-        IsLengthPercentage          = 1 << 0,
-        NegativeLengthsAreInvalid   = 1 << 1,
-    };
-    LengthWrapper(CSSPropertyID property, const WebCore::Length& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(WebCore::Length&&), OptionSet<Flags> flags = { })
-        : WrapperWithGetter(property, getter)
-        , m_setter(setter)
-        , m_flags(flags)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const override
-    {
-        return canInterpolateLengths(value(from), value(to), m_flags.contains(Flags::IsLengthPercentage));
-    }
-
-    bool requiresInterpolationForAccumulativeIteration(const RenderStyle& from, const RenderStyle& to) const final
-    {
-        return lengthsRequireInterpolationForAccumulativeIteration(value(from), value(to));
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
-    {
-        auto valueRange = m_flags.contains(Flags::NegativeLengthsAreInvalid) ? ValueRange::NonNegative : ValueRange::All;
-        (destination.*m_setter)(blendFunc(value(from), value(to), context, valueRange));
-    }
-
-private:
-    void (RenderStyle::*m_setter)(WebCore::Length&&);
-    OptionSet<Flags> m_flags;
-};
-
 // MARK: - Discrete Wrappers
 
 template<typename T, typename GetterType = T, typename SetterType = T> class DiscreteWrapper : public WrapperWithGetter<T, GetterType> {
@@ -349,107 +315,6 @@ protected:
     virtual void setPropertiesInFontDescription(const FontCascadeDescription&, FontCascadeDescription&) const { }
 };
 
-template<typename T>
-class DiscreteFontDescriptionTypedWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteFontDescriptionTypedWrapper, Animation);
-public:
-    DiscreteFontDescriptionTypedWrapper(CSSPropertyID property, T (FontCascadeDescription::*getter)() const, void (FontCascadeDescription::*setter)(T))
-        : DiscreteFontDescriptionWrapper(property)
-        , m_getter(getter)
-        , m_setter(setter)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return this->value(a) == this->value(b);
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        (destination.*this->m_setter)(this->value(source));
-    }
-
-    T value(const FontCascadeDescription& description) const
-    {
-        return (description.*this->m_getter)();
-    }
-
-    T (FontCascadeDescription::*m_getter)() const;
-    void (FontCascadeDescription::*m_setter)(T);
-};
-
-class FontFeatureSettingsWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontFeatureSettingsWrapper, Animation);
-public:
-    FontFeatureSettingsWrapper()
-        : DiscreteFontDescriptionWrapper(CSSPropertyFontFeatureSettings)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return a.featureSettings() == b.featureSettings();
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        destination.setFeatureSettings(FontFeatureSettings(source.featureSettings()));
-    }
-};
-
-class FontVariantEastAsianWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontVariantEastAsianWrapper, Animation);
-public:
-    FontVariantEastAsianWrapper()
-        : DiscreteFontDescriptionWrapper(CSSPropertyFontVariantEastAsian)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return a.variantEastAsianVariant() == b.variantEastAsianVariant()
-            && a.variantEastAsianWidth() == b.variantEastAsianWidth()
-            && a.variantEastAsianRuby() == b.variantEastAsianRuby();
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        destination.setVariantEastAsianVariant(source.variantEastAsianVariant());
-        destination.setVariantEastAsianWidth(source.variantEastAsianWidth());
-        destination.setVariantEastAsianRuby(source.variantEastAsianRuby());
-    }
-};
-
-class FontVariantLigaturesWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontVariantLigaturesWrapper, Animation);
-public:
-    FontVariantLigaturesWrapper()
-        : DiscreteFontDescriptionWrapper(CSSPropertyFontVariantLigatures)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return a.variantCommonLigatures() == b.variantCommonLigatures()
-            && a.variantDiscretionaryLigatures() == b.variantDiscretionaryLigatures()
-            && a.variantHistoricalLigatures() == b.variantHistoricalLigatures()
-            && a.variantContextualAlternates() == b.variantContextualAlternates();
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        destination.setVariantCommonLigatures(source.variantCommonLigatures());
-        destination.setVariantDiscretionaryLigatures(source.variantDiscretionaryLigatures());
-        destination.setVariantHistoricalLigatures(source.variantHistoricalLigatures());
-        destination.setVariantContextualAlternates(source.variantContextualAlternates());
-    }
-};
-
 class FontFamilyWrapper final : public DiscreteFontDescriptionWrapper {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontFamilyWrapper, Animation);
 public:
@@ -467,99 +332,6 @@ private:
     void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
     {
         destination.setFamilies(source.families());
-    }
-};
-
-class FontVariantNumericWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontVariantNumericWrapper, Animation);
-public:
-    FontVariantNumericWrapper()
-        : DiscreteFontDescriptionWrapper(CSSPropertyFontVariantNumeric)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return a.variantNumericFigure() == b.variantNumericFigure()
-            && a.variantNumericSpacing() == b.variantNumericSpacing()
-            && a.variantNumericFraction() == b.variantNumericFraction()
-            && a.variantNumericOrdinal() == b.variantNumericOrdinal()
-            && a.variantNumericSlashedZero() == b.variantNumericSlashedZero();
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        destination.setVariantNumericFigure(source.variantNumericFigure());
-        destination.setVariantNumericSpacing(source.variantNumericSpacing());
-        destination.setVariantNumericFraction(source.variantNumericFraction());
-        destination.setVariantNumericOrdinal(source.variantNumericOrdinal());
-        destination.setVariantNumericSlashedZero(source.variantNumericSlashedZero());
-    }
-};
-
-#if ENABLE(VARIATION_FONTS)
-
-class FontVariationSettingsWrapper final : public Wrapper<FontVariationSettings> {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontVariationSettingsWrapper, Animation);
-public:
-    FontVariationSettingsWrapper()
-        : Wrapper(CSSPropertyFontVariationSettings, &RenderStyle::fontVariationSettings, &RenderStyle::setFontVariationSettings)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        // If the style pointers are the same, don't bother doing the test.
-        if (&a == &b)
-            return true;
-        return value(a) == value(b);
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        auto fromVariationSettings = value(from);
-        auto toVariationSettings = value(to);
-
-        if (fromVariationSettings.size() != toVariationSettings.size())
-            return false;
-
-        auto size = fromVariationSettings.size();
-        for (unsigned i = 0; i < size; ++i) {
-            if (fromVariationSettings.at(i).tag() != toVariationSettings.at(i).tag())
-                return false;
-        }
-
-        return true;
-    }
-};
-
-#endif
-
-class LineHeightWrapper final : public LengthWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(LineHeightWrapper, Animation);
-public:
-    LineHeightWrapper()
-        : LengthWrapper(CSSPropertyLineHeight, &RenderStyle::specifiedLineHeight, &RenderStyle::setLineHeight)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation compositeOperation) const final
-    {
-        // We must account for how BuilderConverter::convertLineHeight() deals with line-height values:
-        // - "normal" is converted to LengthType::Percent with a -100 value
-        // - <number> values are converted to LengthType::Percent
-        // - <length-percentage> values are converted to LengthType::Fixed
-        // This means that animating between "normal" and a "<number>" would work with LengthWrapper::canInterpolate()
-        // since it would see two LengthType::Percent values. So if either value is "normal" we cannot interpolate since those
-        // values are either equal or of incompatible types.
-        auto normalLineHeight = RenderStyle::initialLineHeight();
-        if (value(from) == normalLineHeight || value(to) == normalLineHeight)
-            return false;
-
-        // The default logic will now apply since <number> and <length-percentage> values
-        // are converted to different LengthType values.
-        return LengthWrapper::canInterpolate(from, to, compositeOperation);
     }
 };
 

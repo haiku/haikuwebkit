@@ -34,7 +34,8 @@
 
 #include "AddEventListenerOptionsInlines.h"
 #include "DOMStringList.h"
-#include "DocumentInlines.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "Event.h"
 #include "EventListener.h"
 #include "EventNames.h"
@@ -52,7 +53,7 @@
 #include "IDBOpenDBRequest.h"
 #include "IDBRequest.h"
 #include "IDBTransaction.h"
-#include "InspectorPageAgent.h"
+#include "InspectorResourceUtilities.h"
 #include "InstrumentingAgents.h"
 #include "JSDOMWindowCustom.h"
 #include "LocalDOMWindow.h"
@@ -581,7 +582,7 @@ static bool getDocumentAndIDBFactoryFromFrameOrSendFailure(LocalFrame* frame, Do
     
 void InspectorIndexedDBAgent::requestDatabaseNames(const String& securityOrigin, Ref<RequestDatabaseNamesCallback>&& callback)
 {
-    RefPtr frame = InspectorPageAgent::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
+    RefPtr frame = ResourceUtilities::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
     Document* document;
     IDBFactory* idbFactory;
     if (!getDocumentAndIDBFactoryFromFrameOrSendFailure(frame.get(), document, idbFactory, callback))
@@ -601,7 +602,7 @@ void InspectorIndexedDBAgent::requestDatabaseNames(const String& securityOrigin,
 
 void InspectorIndexedDBAgent::requestDatabase(const String& securityOrigin, const String& databaseName, Ref<RequestDatabaseCallback>&& callback)
 {
-    RefPtr frame = InspectorPageAgent::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
+    RefPtr frame = ResourceUtilities::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
     Document* document;
     IDBFactory* idbFactory;
     if (!getDocumentAndIDBFactoryFromFrameOrSendFailure(frame.get(), document, idbFactory, callback))
@@ -613,7 +614,7 @@ void InspectorIndexedDBAgent::requestDatabase(const String& securityOrigin, cons
 
 void InspectorIndexedDBAgent::requestData(const String& securityOrigin, const String& databaseName, const String& objectStoreName, const String& indexName, int skipCount, int pageSize, RefPtr<JSON::Object>&& keyRange, Ref<RequestDataCallback>&& callback)
 {
-    RefPtr frame = InspectorPageAgent::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
+    RefPtr frame = ResourceUtilities::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
     Document* document;
     IDBFactory* idbFactory;
     if (!getDocumentAndIDBFactoryFromFrameOrSendFailure(frame.get(), document, idbFactory, callback))
@@ -718,7 +719,7 @@ private:
 
 void InspectorIndexedDBAgent::clearObjectStore(const String& securityOrigin, const String& databaseName, const String& objectStoreName, Ref<ClearObjectStoreCallback>&& callback)
 {
-    RefPtr frame = InspectorPageAgent::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
+    RefPtr frame = ResourceUtilities::findFrameWithSecurityOrigin(protectedInspectedPage(), securityOrigin);
     Document* document;
     IDBFactory* idbFactory;
     if (!getDocumentAndIDBFactoryFromFrameOrSendFailure(frame.get(), document, idbFactory, callback))

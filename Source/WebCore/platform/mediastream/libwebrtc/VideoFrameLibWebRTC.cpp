@@ -30,6 +30,7 @@
 
 #include <pal/cf/CoreMediaSoftLink.h>
 #include "CoreVideoSoftLink.h"
+#include "LibWebRTCRefWrappers.h"
 
 namespace WebCore {
 

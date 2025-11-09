@@ -123,7 +123,7 @@ public:
     explicit StringParsingBufferSource(StringParsingBuffer<CharacterType>&);
 
     static bool isEmpty() { return false; }
-    char16_t currentCharacter() const { return m_source.atEnd() ? 0 : *m_source; }
+    char16_t currentCharacter() const { return m_source.atEnd() ? 0 : char16_t { *m_source }; }
     void advance() { m_source.advance(); }
     void pushEverythingBack() { m_source.setPosition(m_startPosition); }
     void pushBackButKeep(unsigned keepCount) { m_source.setPosition(m_startPosition.subspan(keepCount)); }

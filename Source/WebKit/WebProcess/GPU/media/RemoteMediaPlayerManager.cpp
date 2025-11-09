@@ -133,6 +133,11 @@ RemoteMediaPlayerMIMETypeCache& RemoteMediaPlayerManager::typeCache(MediaPlayerE
     return *cachePtr;
 }
 
+CheckedRef<RemoteMediaPlayerMIMETypeCache> RemoteMediaPlayerManager::checkedTypeCache(MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier)
+{
+    return typeCache(remoteEngineIdentifier);
+}
+
 void RemoteMediaPlayerManager::initialize(const WebProcessCreationParameters& parameters)
 {
 #if PLATFORM(COCOA)
@@ -219,7 +224,7 @@ std::optional<MediaPlayerIdentifier> RemoteMediaPlayerManager::findRemotePlayerI
 
 void RemoteMediaPlayerManager::getSupportedTypes(MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier, HashSet<String>& result)
 {
-    result = typeCache(remoteEngineIdentifier).supportedTypes();
+    result = checkedTypeCache(remoteEngineIdentifier)->supportedTypes();
 }
 
 MediaPlayer::SupportsType RemoteMediaPlayerManager::supportsTypeAndCodecs(MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier, const MediaEngineSupportParameters& parameters)
@@ -232,7 +237,7 @@ MediaPlayer::SupportsType RemoteMediaPlayerManager::supportsTypeAndCodecs(MediaP
     if (!contentTypeMeetsContainerAndCodecTypeRequirements(parameters.type, parameters.allowedMediaContainerTypes, parameters.allowedMediaCodecTypes))
         return MediaPlayer::SupportsType::IsNotSupported;
 
-    return typeCache(remoteEngineIdentifier).supportsTypeAndCodecs(parameters);
+    return checkedTypeCache(remoteEngineIdentifier)->supportsTypeAndCodecs(parameters);
 }
 
 bool RemoteMediaPlayerManager::supportsKeySystem(MediaPlayerEnums::MediaEngineIdentifier, const String& keySystem, const String& mimeType)
@@ -278,7 +283,7 @@ GPUProcessConnection& RemoteMediaPlayerManager::gpuProcessConnection()
         gpuProcessConnection->addClient(*this);
     }
 
-    return *gpuProcessConnection;
+    return *gpuProcessConnection.unsafeGet();
 }
 
 Ref<GPUProcessConnection> RemoteMediaPlayerManager::protectedGPUProcessConnection()
@@ -293,8 +298,10 @@ void RemoteMediaPlayerManager::gpuProcessConnectionDidClose(GPUProcessConnection
     m_gpuProcessConnection = nullptr;
 
     for (auto& player : copyToVector(m_players.values())) {
-        if (RefPtr protectedPlayer = player.get())
+        if (RefPtr protectedPlayer = player.get()) {
+            protectedPlayer->gpuProcessConnectionDidClose();
             protectedPlayer->player()->reloadAndResumePlaybackIfNeeded();
+        }
         ASSERT_WITH_MESSAGE(!player.get(), "reloadAndResumePlaybackIfNeeded should destroy this player and construct a new one");
     }
 }

@@ -68,7 +68,7 @@ public:
 #endif
 
 #if PLATFORM(GTK)
-    WEBCORE_EXPORT static RefPtr<Icon> create(GIcon*);
+    WEBCORE_EXPORT static RefPtr<Icon> create(GRefPtr<GIcon>&&);
 
     GIcon* icon() const { return m_icon.get(); };
 #endif
@@ -93,7 +93,7 @@ private:
     Icon(HICON);
     HICON m_hIcon;
 #elif PLATFORM(GTK)
-    explicit Icon(GIcon*);
+    explicit Icon(GRefPtr<GIcon>&&);
     GRefPtr<GIcon> m_icon;
 #endif
 };

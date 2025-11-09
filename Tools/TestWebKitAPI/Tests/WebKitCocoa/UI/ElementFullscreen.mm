@@ -26,60 +26,16 @@
 #import "config.h"
 
 #import "PlatformUtilities.h"
+#import "TestElementFullscreenDelegate.h"
 #import "TestWKWebView.h"
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WebKit.h>
-#import <WebKit/_WKFullscreenDelegate.h>
 
 #if PLATFORM(IOS_FAMILY)
 @interface UIScrollView ()
 @property (nonatomic, getter=isZoomEnabled) BOOL zoomEnabled;
 @end
 #endif
-
-@interface TestElementFullscreenDelegate : NSObject <_WKFullscreenDelegate>
-- (void)waitForDidEnterElementFullscreen;
-- (void)waitForWillEnterElementFullscreen;
-@end
-
-@implementation TestElementFullscreenDelegate {
-    bool _didEnterElementFullscreen;
-    bool _willEnterElementFullscreen;
-}
-
-- (void)waitForDidEnterElementFullscreen
-{
-    _didEnterElementFullscreen = false;
-    TestWebKitAPI::Util::run(&_didEnterElementFullscreen);
-}
-
-- (void)waitForWillEnterElementFullscreen
-{
-    _willEnterElementFullscreen = false;
-    TestWebKitAPI::Util::run(&_willEnterElementFullscreen);
-}
-
-#pragma mark WKUIDelegate
-
-#if PLATFORM(IOS)
-- (void)_webViewWillEnterElementFullscreen:(WKWebView *)webView
-#else
-- (void)_webViewWillEnterFullscreen:(NSView *)webView
-#endif
-{
-    _willEnterElementFullscreen = true;
-}
-
-#if PLATFORM(IOS_FAMILY)
-- (void)_webViewDidEnterElementFullscreen:(WKWebView *)webView
-#else
-- (void)_webViewDidEnterFullscreen:(NSView *)webView
-#endif
-{
-    _didEnterElementFullscreen = true;
-}
-
-@end
 
 #if PLATFORM(IOS_FAMILY)
 TEST(ElementFullscreen, ScrollViewSetToInitialScale)

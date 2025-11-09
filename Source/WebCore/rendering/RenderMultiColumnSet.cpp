@@ -632,7 +632,7 @@ void RenderMultiColumnSet::paintColumnRules(PaintInfo& paintInfo, const LayoutPo
     const Color& ruleColor = blockStyle.visitedDependentColorWithColorFilter(CSSPropertyColumnRuleColor);
     bool ruleTransparent = blockStyle.columnRuleIsTransparent();
     auto ruleStyle = collapsedBorderStyle(blockStyle.columnRuleStyle());
-    auto ruleThickness = Style::evaluate<LayoutUnit>(blockStyle.columnRuleWidth(), Style::ZoomNeeded { });
+    auto ruleThickness = Style::evaluate<LayoutUnit>(blockStyle.columnRuleWidth(), blockStyle.usedZoomForLength());
     auto colGap = columnGap();
     bool renderRule = ruleStyle > BorderStyle::Hidden && !ruleTransparent;
     if (!renderRule)
@@ -959,8 +959,10 @@ LayoutPoint RenderMultiColumnSet::columnTranslationForOffset(const LayoutUnit& o
     return translationOffset;
 }
 
-void RenderMultiColumnSet::addOverflowFromChildren()
+void RenderMultiColumnSet::addOverflowFromInFlowChildren(OptionSet<ComputeOverflowOptions> options)
 {
+    UNUSED_PARAM(options);
+
     // FIXME: Need to do much better here.
     unsigned colCount = columnCount();
     if (!colCount)

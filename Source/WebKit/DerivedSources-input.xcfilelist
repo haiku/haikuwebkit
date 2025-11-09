@@ -133,7 +133,6 @@ $(PROJECT_DIR)/ModelProcess/cocoa/ModelProcessModelPlayerProxy.messages.in
 $(PROJECT_DIR)/NetworkProcess/Authentication/AuthenticationManager.messages.in
 $(PROJECT_DIR)/NetworkProcess/Classifier/ITPThirdPartyData.serialization.in
 $(PROJECT_DIR)/NetworkProcess/Classifier/ITPThirdPartyDataForSpecificFirstParty.serialization.in
-$(PROJECT_DIR)/NetworkProcess/Classifier/StorageAccessStatus.serialization.in
 $(PROJECT_DIR)/NetworkProcess/Cookies/WebCookieManager.messages.in
 $(PROJECT_DIR)/NetworkProcess/CustomProtocols/LegacyCustomProtocolManager.messages.in
 $(PROJECT_DIR)/NetworkProcess/NetworkBroadcastChannelRegistry.messages.in
@@ -253,7 +252,6 @@ $(PROJECT_DIR)/Shared/Cocoa/CoreIPCDate.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCDateComponents.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCDictionary.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCError.serialization.in
-$(PROJECT_DIR)/Shared/Cocoa/CoreIPCFont.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCLocale.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNSCFObject.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNSShadow.serialization.in
@@ -262,6 +260,7 @@ $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNSURLProtectionSpace.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNSURLRequest.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNSValue.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCNull.serialization.in
+$(PROJECT_DIR)/Shared/Cocoa/CoreIPCPKDateComponentsRange.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCPassKit.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCPersonNameComponents.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCPlist.serialization.in
@@ -334,12 +333,6 @@ $(PROJECT_DIR)/Shared/LayerTreeContext.serialization.in
 $(PROJECT_DIR)/Shared/LoadParameters.serialization.in
 $(PROJECT_DIR)/Shared/MediaPlaybackState.serialization.in
 $(PROJECT_DIR)/Shared/Model.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDMeshDescriptor.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDMeshPart.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDReplaceVertices.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDUpdateMeshDescriptor.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDVertexAttributeFormat.serialization.in
-$(PROJECT_DIR)/Shared/Model/DDVertexLayout.serialization.in
 $(PROJECT_DIR)/Shared/Model/ModelObjectDescriptorBase.serialization.in
 $(PROJECT_DIR)/Shared/ModelProcessConnectionParameters.serialization.in
 $(PROJECT_DIR)/Shared/MonotonicObjectIdentifier.serialization.in
@@ -350,7 +343,6 @@ $(PROJECT_DIR)/Shared/Notifications/NotificationManagerMessageHandler.messages.i
 $(PROJECT_DIR)/Shared/Notifications/NotificationManagerProxy.messages.in
 $(PROJECT_DIR)/Shared/PALArgumentCoders.serialization.in
 $(PROJECT_DIR)/Shared/Pasteboard.serialization.in
-$(PROJECT_DIR)/Shared/PlatformFontInfo.serialization.in
 $(PROJECT_DIR)/Shared/PlatformPopupMenuData.serialization.in
 $(PROJECT_DIR)/Shared/PolicyDecision.serialization.in
 $(PROJECT_DIR)/Shared/PrintInfo.serialization.in
@@ -727,7 +719,9 @@ $(PROJECT_DIR)/webpushd/mac/com.apple.WebKit.webpushd.relocatable.mac.sb.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/ActivityState.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/CodeGenerator.pm
 $(WEBCORE_PRIVATE_HEADERS_DIR)/DDModel.serialization.in
+$(WEBCORE_PRIVATE_HEADERS_DIR)/DocumentSyncData.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/DragActions.serialization.in
+$(WEBCORE_PRIVATE_HEADERS_DIR)/FrameTreeSyncData.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/HTTPHeaderNames.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/HTTPHeaderNames.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/IDLParser.pm
@@ -742,7 +736,6 @@ $(WEBCORE_PRIVATE_HEADERS_DIR)/PlatformMediaSession.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/PlatformScreen.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/PlatformWheelEvent.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/PlaybackSessionModel.serialization.in
-$(WEBCORE_PRIVATE_HEADERS_DIR)/ProcessSyncData.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/ProtectionSpaceBase.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/ScrollTypes.serialization.in
 $(WEBCORE_PRIVATE_HEADERS_DIR)/WebGPU.serialization.in

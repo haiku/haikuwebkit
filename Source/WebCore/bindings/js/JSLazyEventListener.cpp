@@ -24,6 +24,7 @@
 #include "ContentSecurityPolicy.h"
 #include "DocumentInlines.h"
 #include "Element.h"
+#include "FrameDestructionObserverInlines.h"
 #include "JSDOMWindow.h"
 #include "JSDOMWindowBase.h"
 #include "JSHTMLElement.h"
@@ -31,6 +32,7 @@
 #include "QualifiedName.h"
 #include "SVGElement.h"
 #include "ScriptController.h"
+#include "Settings.h"
 #include <JavaScriptCore/CatchScope.h>
 #include <JavaScriptCore/FunctionConstructor.h>
 #include <JavaScriptCore/IdentifierInlines.h>

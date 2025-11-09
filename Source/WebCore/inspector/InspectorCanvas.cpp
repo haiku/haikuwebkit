@@ -68,6 +68,7 @@
 #include "SVGPathUtilities.h"
 #include "StringAdaptors.h"
 #include <JavaScriptCore/IdentifiersFactory.h>
+#include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/ScriptCallStackFactory.h>
 #include <wtf/Function.h>
 #include <wtf/RefPtr.h>

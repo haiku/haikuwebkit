@@ -63,9 +63,6 @@ imported/w3c/web-platform-tests/pointerevents [ Pass ]
 
 imported/w3c/web-platform-tests/speech-api [ Pass ]
 
-http/tests/media/fairplay [ Pass ]
-http/tests/media/fairplay/fps-mse-attach-cdm-after-key-exchange.html [ Skip ] # Requires SampleBufferContentKeySessionSupportEnabled
-
 media/track/track-description-cue.html [ Pass ]
 media/track/track-extended-descriptions.html [ Pass ]
 media/media-source/remoteplayback-from-source-element.html [ Pass ]
@@ -623,6 +620,9 @@ webkit.org/b/91611 media/media-higher-prio-audio-stream.html [ Skip ]
 
 webkit.org/b/158836 imported/w3c/web-platform-tests/encrypted-media [ Skip ]
 ## --- End unimplemeted media tests ---
+
+## --- This tests fails, the values for width and the height of the video are zero
+webkit.org/b/299529 media/video-large-pixel-aspect-ratio.html [ Skip ]
 
 # HTML sandboxing produces two or three messages flakily.
 webkit.org/b/137368 media/video-controls-no-scripting.html [ Pass Failure ]
@@ -1260,8 +1260,6 @@ webkit.org/b/173946 [ Debug ] media/modern-media-controls/fullscreen-support/ful
 
 webkit.org/b/183490 media/modern-media-controls/start-support/start-support-fullscreen.html [ Failure ]
 
-webkit.org/b/183764 fast/css/apple-system-control-colors.html [ Pass ]
-
 webkit.org/b/177616 http/tests/media/video-buffered-range-contains-currentTime.html [ Pass Timeout ]
 
 webkit.org/b/184612 media/audio-concurrent-supported.html [ Pass Failure ]
@@ -1725,7 +1723,8 @@ webkit.org/b/221152 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-a
 
 webkit.org/b/221491 animations/keyframe-pseudo-shadow.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/221973 media/media-webm-no-duration.html [ Failure ]
+# webkit.org/b/221973 for failure, webkit.org/b/300940 for crash
+media/media-webm-no-duration.html [ Crash Failure ]
 
 webkit.org/b/221100 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioworklet-interface/audioworkletnode-channel-count.https.html [ Pass Failure ]
 
@@ -1734,10 +1733,6 @@ webkit.org/b/222205 css3/calc/transforms-translate.html [ Pass ImageOnlyFailure 
 webkit.org/b/222422 imported/w3c/web-platform-tests/media-source/mediasource-duration.html [ Pass Failure Slow ]
 
 webkit.org/b/222573 media/media-fullscreen-pause-inline.html [ Pass Failure ]
-
-# webkit.org/b/255294  2 http/tests/media/FairPlay tests are flakey.
-http/tests/media/fairplay/legacy-fairplay-mse-v2.html [ Pass Failure ]
-http/tests/media/fairplay/legacy-fairplay-mse-v3.html [ Pass Failure ]
 
 webkit.org/b/222692 inspector/page/empty-or-missing-resources.html [ Pass Timeout ]
 
@@ -1778,8 +1773,6 @@ webkit.org/b/223973 [ Debug ] imported/w3c/web-platform-tests/xhr/xhr-timeout-lo
 webkit.org/b/223975 inspector/protocol/condition.html [ Pass Timeout ]
 
 webkit.org/b/223976 [ Debug ] imported/w3c/web-platform-tests/cors/redirect-preflight.htm [ Pass Failure ]
-
-webkit.org/b/224123 media/modern-media-controls/macos-inline-media-controls/macos-inline-media-dropping-controls.html [ Pass Failure ]
 
 webkit.org/b/224212 [ arm64 ] compositing/background-color/no-composited-background-color-when-perspective.html [ Pass ImageOnlyFailure ]
 
@@ -1853,7 +1846,6 @@ webkit.org/b/228642 imported/w3c/web-platform-tests/html/cross-origin-opener-pol
 fast/css/accent-color/checkbox.html [ Pass ]
 fast/css/accent-color/progress.html [ Pass ]
 fast/css/accent-color/radio.html [ Pass ]
-fast/css/accent-color/select.html [ Pass ]
 fast/css/accent-color/text.html [ Pass ]
 
 # The following controls are not tintable on macOS
@@ -1996,7 +1988,6 @@ imported/w3c/web-platform-tests/websockets/cookies/007.html?wss&wpt_flags=https 
 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/autoplay-disabled-by-feature-policy.https.sub.html [ Pass Failure ]
 animations/stop-animation-on-suspend.html [ Pass Failure ]
 fast/images/animated-avif.html [ ImageOnlyFailure ]
-http/tests/media/fairplay/fps-mse-unmuxed-key-rotation.html [ Failure ]
 [ x86_64 ] imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-video.html [ Pass Failure Timeout ]
 [ Debug ] imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/javascript-url-security-check-failure.sub.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/autoplay-allowed-by-feature-policy-attribute-redirect-on-load.https.sub.html [ Pass Failure ]
@@ -2188,9 +2179,6 @@ fast/gradients/conic-stop-with-offset-zero-in-middle.html [ ImageOnlyFailure ]
 # Requires (ACCESSIBILITY_NON_BLINKING_CURSOR)
 accessibility/mac/prefers-non-blinking-cursor.html [ Skip ]
 
-# Enable after rdar://120859525 is available on bots
-http/tests/media/fairplay/fps-mse-unmuxed-mpts.html [ Skip ]
-
 # web-platform-tests/svg/painting/reftests failures
 imported/w3c/web-platform-tests/svg/painting/reftests/marker-path-021.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/painting/reftests/marker-path-022.svg [ ImageOnlyFailure ]
@@ -2317,20 +2305,6 @@ imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/
 # webkit.org/b/280193 [ Sequoia ] fast/inline/justify-emphasi s-inline-box.html is a constant failure. 
 [ Sequoia ] fast/inline/justify-emphasis-inline-box.html [ Failure ]
 
-# webkit.org/b/280378 [ Sequoia arm64 ] 14x http/tests/media/fairplay/* are constant failures
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-hls-key-rotation.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-hls-update-reject.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-hls.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-init-data-cenc.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-init-data-sinf.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-init-data-skd.html [ Failure ]
-http/tests/media/fairplay/fps-mse-play-while-not-in-dom.html [ Pass Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-mse-unmuxed-audio-only.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-mse-unmuxed-key-renewal.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-mse-unmuxed-multiple-keys.html [ Failure ]
-[ Sequoia arm64 ] http/tests/media/fairplay/fps-mse-unmuxed-same-key.html [ Failure ]
-http/tests/media/fairplay/fps-mse-multi-key-renewal.html [ Pass Failure ] 
-
 webkit.org/b/257011 imported/w3c/web-platform-tests/css/css-text/hyphens/hyphenate-character-002.html [ ImageOnlyFailure ]
 
 # webkit.org/b/280646 [macOS Debug EWS] media/video-webkit-playsinline.html is a flaky crash
@@ -2351,9 +2325,6 @@ webanimations/scroll-timeline-clamped-current-time-while-rubber-banding-mac.html
 # macOS-only test.
 media/webkit-media-controls-not-visible-after-exiting-fullscreen.html [ Pass ]
 
-# Modern AVContentKeySession is only available on Sonoma
-[ Sonoma ] http/tests/media/fairplay/legacy-fairplay-mse-muxed-nowait.html [ Skip ]
-
 # webkit.org/b/280304 [ Sequoia ] fast/ruby/ruby-expansion-cjk-4.html is a constant image only failure.
 [ Sequoia ] fast/ruby/ruby-expansion-cjk-4.html [ ImageOnlyFailure ]
 
@@ -2363,8 +2334,6 @@ media/modern-media-controls/scrubber-support/scrubber-support-seek-back.html [ S
 # webkit.org/b/280792 [macOS] ASSERTION FAILED: Unsafe to ref/deref from different threads (flaky in EWS)
 inspector/worker/debugger-pause-subworker.html [ Skip ]
 inspector/worker/console-basic-subworker.html [ Skip ]
-
-webkit.org/b/284082 [ Sequoia+ ] http/tests/media/fairplay/legacy-fairplay-mse-muxed-nowait.html [ Timeout Failure ]
 
 webkit.org/b/284597 http/tests/misc/repeat-open-cancel.html [ Slow ]
 
@@ -2396,7 +2365,7 @@ webkit.org/b/288546 imported/w3c/web-platform-tests/fullscreen/api/element-ready
 
 webkit.org/b/260320 imported/w3c/web-platform-tests/css/selectors/invalidation/nth-child-in-shadow-root.html [ ImageOnlyFailure ]
 
-webkit.org/b/289275 [ Release ] media/media-garbage-collection.html [ Pass Failure Timeout ]
+webkit.org/b/289275 media/media-garbage-collection.html [ Pass Failure Timeout ]
 
 # webkit.org/b/289392 REGRESSION(291726@main): 7x imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-*.svg are constant failures. 
 imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-001.svg [ Failure ]
@@ -2522,6 +2491,87 @@ webkit.org/b/299131 [ Release ] inspector/unit-tests/target-manager.html [ Pass 
 
 webkit.org/b/299322 imported/w3c/web-platform-tests/uievents/mouse/mouse_boundary_events_after_reappending_last_over_target.tentative.html [ Pass Failure ]
 
-# webkit.org/b/299996 REGRESSION(299875@main?) [iOS macOS] ASSERTION FAILED: it != m_trackIdentifiers.end() in media/media-video-videorange.html
-media/media-video-videorange.html [ Pass Crash ]
-media/media-video-fullrange.html [ Pass Crash ]
+[ x86_64 ] imported/w3c/web-platform-tests/svg/fonts/font-size-adjust-scale-text.svg [ Failure Pass ]
+
+webkit.org/b/300137 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/json-module/repeated-imports.any.sharedworker.html [ Pass Failure ]
+
+webkit.org/b/300337 fast/images/imagebitmap-memory.html [ Pass ImageOnlyFailure ]
+
+# webkit.org/b/300715
+media/media-source/media-managedmse-video-with-poster.html [ Pass ImageOnlyFailure ]
+media/media-hevc-video-as-img.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/widgets/input-checkbox-switch-rtl.tentative.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-viewport-offscreen-old.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-scrollbars/textarea-scrollbar-width-none.html [ Pass ImageOnlyFailure ]
+fast/scrolling/mac/scrollbars/scrollbar-width-dynamic-none-to-auto.html [ Pass ImageOnlyFailure ]
+webgl/1.0.x/conformance/glsl/bugs/sampler-array-using-loop-index.html [ Pass Failure ]
+imported/w3c/web-platform-tests/html/canvas/element/manual/drawing-images-to-the-canvas/drawimage_canvas.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/fetch/h1-parsing/lone-cr.window.html [ Pass Failure ]
+imported/w3c/web-platform-tests/digital-credentials/allow-attribute-with-get.https.html [ Pass Failure ]
+imported/w3c/web-platform-tests/digital-credentials/get.tentative.https.html [ Pass Failure ]
+imported/w3c/web-platform-tests/digital-credentials/user-activation.https.html [ Pass Failure ]
+imported/w3c/web-platform-tests/cookies/name/name-ctl.html [ Pass Failure ]
+imported/w3c/web-platform-tests/cookies/value/value-ctl.html [ Pass Failure ]
+http/tests/inspector/network/xhr-response-body.html [ Pass Failure ]
+accessibility/checkbox-radio-element-rect.html [ Pass Failure ]
+fast/forms/select/mac-wk2/inactive-appearance.html [ Pass Failure ]
+workers/btoa-oom.html [ Pass Timeout ]
+fast/canvas/offscreen-giant.html [ Pass ImageOnlyFailure ]
+fast/images/pagewide-play-pause-offscreen-animations.html [ Pass Failure ]
+imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/cross-origin-top-navigation-with-user-activation-in-parent.window.html [ Pass Failure ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-horizontal-far.html [ Pass Failure ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/track/track-element/track-cues-enter-exit.html [ Pass Failure ]
+fast/forms/number/number-min-max-spinbutton-appearance-none-percentage-width.html [ Pass Failure ]
+fast/multicol/flexbox-rows.html [ Pass ImageOnlyFailure ]
+fast/forms/hidpi-textarea-on-subpixel-position.html [ Pass ImageOnlyFailure ]
+fast/forms/select-non-native-rendering-direction.html [ Pass Failure ]
+fast/forms/select-background-none.html [ Pass Failure ]
+fast/forms/menulist-separator-painting.html [ Pass Failure ]
+fast/forms/menulist-restrict-line-height.html [ Pass Failure ]
+platform/mac/fast/forms/switch-repaint-size-vertical.html [ Pass Failure ]
+fast/forms/color/color-input-set-attribute-value.html [ Pass ImageOnlyFailure ]
+fast/css/accent-color/select.html [ Pass ImageOnlyFailure ]
+media/modern-media-controls/css/visibility-hidden.html [ Pass ImageOnlyFailure ]
+pdf/images/jpeg2000-embed-pdf.html [ Pass ImageOnlyFailure ]
+media/track/track-css-visible-stroke.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-ui/transparent-accent-color-002.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-1-line-height.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-ui/compute-kind-widget-no-fallback-props-001.html [ Pass ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-contain/contain-layout-suppress-baseline-002.html [ Pass ImageOnlyFailure ]
+media/modern-media-controls/volume-support/volume-support-drag-to-mute.html [ Pass Timeout ]
+fast/forms/input-appearance-spinbutton-up.html [ Pass Failure ]
+fast/forms/001.html [ Pass Failure ]
+fast/forms/basic-textareas.html [ Pass Failure ]
+fast/forms/basic-textareas-quirks.html [ Pass Failure ]
+fast/forms/basic-selects.html  [ Pass Failure ]
+fast/forms/input-appearance-spinbutton.html [ Pass Failure ]
+fast/forms/input-number-click.html [ Pass Failure ]
+fast/forms/menulist-narrow-width.html [ Pass Failure ]
+fast/forms/menulist-style-color.html [ Pass Failure ]
+fast/forms/number/number-appearance-rtl.html [ Pass Failure ]
+fast/forms/number/number-appearance-spinbutton-disabled-readonly.html [ Pass Failure ]
+fast/forms/number/number-appearance-spinbutton-layer.html [ Pass Failure ]
+fast/forms/select-style.html [ Pass Failure ]
+fast/forms/textarea-metrics.html [ Pass Failure ]
+fast/forms/time/time-editable-components/time-editable-components-mouse-events.html [ Pass Failure ]
+
+webkit.org/b/300994 fast/animation/request-animation-frame-throttling-aggressiveThermalMitigation.html [ Pass Failure ]
+
+webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=300996 [ macOS Tahoe ] 4 fast/forms tests (layout-tests) are constant image failures
+[ Tahoe Debug ] fast/forms/switch/pointer-tracking.html [ ImageOnlyFailure ]
+[ Tahoe Debug ] fast/forms/switch/click-animation.html [ ImageOnlyFailure ]
+[ Tahoe Debug ] fast/forms/switch/click-animation-redundant-disabled.html [ ImageOnlyFailure ]
+[ Tahoe Debug ] fast/forms/switch/click-animation-redundant-checked.html  [ ImageOnlyFailure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301000 [ macOS Tahoe ] 3x fast/ tests (layout-tests) are constant text failures
+[ Tahoe Debug ] fast/forms/month/month-editable-components/month-editable-components-mouse-events.html [ Failure ]
+[ Tahoe Debug ] fast/html/text-field-input-types.html [ Failure ]
+[ Tahoe Debug ] fast/repaint/block-inputrange-repaint.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301002 [ macOS Tahoe ] fast/css/apple-system-control-colors.html is a constant text failure
+[ Tahoe Debug ] fast/css/apple-system-control-colors.html [ Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301013 [ macOS Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html is a flaky text failure
+[ Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html [ Pass Failure ]

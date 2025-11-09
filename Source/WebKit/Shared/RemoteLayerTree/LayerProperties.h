@@ -26,7 +26,18 @@
 #pragma once
 
 #include "PlatformCAAnimationRemote.h"
+#include <WebCore/EventRegion.h>
+#include <WebCore/GraphicsLayerEnums.h>
+#include <WebCore/MediaPlayerEnums.h>
 #include <WebCore/PlatformCALayer.h>
+
+#if HAVE(CORE_MATERIAL)
+#include <WebCore/AppleVisualEffect.h>
+#endif
+
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+#include <WebCore/AcceleratedEffectValues.h>
+#endif
 
 namespace WebKit {
 
@@ -122,6 +133,7 @@ struct RemoteLayerBackingStoreOrProperties {
 
     // Used in the WebContent process.
     std::unique_ptr<RemoteLayerBackingStore> store;
+    CheckedPtr<RemoteLayerBackingStore> checkedStore() { return store.get(); }
     // Used in the UI process.
     std::unique_ptr<RemoteLayerBackingStoreProperties> properties;
 };
@@ -176,7 +188,7 @@ struct LayerProperties {
     float opacity { 1 };
     WebCore::Color backgroundColor { WebCore::Color::transparentBlack };
     WebCore::Color borderColor { WebCore::Color::black };
-    WebCore::GraphicsLayer::CustomAppearance customAppearance { WebCore::GraphicsLayer::CustomAppearance::None };
+    WebCore::GraphicsLayerCustomAppearance customAppearance { WebCore::GraphicsLayerCustomAppearance::None };
     WebCore::PlatformCALayer::FilterType minificationFilter { WebCore::PlatformCALayer::FilterType::Linear };
     WebCore::PlatformCALayer::FilterType magnificationFilter { WebCore::PlatformCALayer::FilterType::Linear };
     WebCore::BlendMode blendMode { WebCore::BlendMode::Normal };

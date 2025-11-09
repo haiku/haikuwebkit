@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024-2025 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,8 +35,8 @@ namespace Style {
 
 struct TextShadow {
     Color color;
-    SpaceSeparatedPoint<Length<>> location;
-    Length<CSS::Nonnegative> blur;
+    SpaceSeparatedPoint<Length<CSS::AllUnzoomed>> location;
+    Length<CSS::NonnegativeUnzoomed> blur;
 
     bool operator==(const TextShadow&) const = default;
 };
@@ -94,7 +95,7 @@ constexpr bool isInset(const TextShadow&)
     return false;
 }
 
-constexpr LayoutUnit paintingSpread(const TextShadow&)
+constexpr LayoutUnit paintingSpread(const TextShadow&, const Style::ZoomFactor&)
 {
     return LayoutUnit();
 }

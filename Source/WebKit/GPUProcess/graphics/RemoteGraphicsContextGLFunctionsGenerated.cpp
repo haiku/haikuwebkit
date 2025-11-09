@@ -54,7 +54,7 @@ void RemoteGraphicsContextGL::attachShader(uint32_t program, uint32_t shader)
     protectedContext()->attachShader(program, shader);
 }
 
-void RemoteGraphicsContextGL::bindAttribLocation(uint32_t arg0, uint32_t index, String&& name)
+void RemoteGraphicsContextGL::bindAttribLocation(uint32_t arg0, uint32_t index, CString&& name)
 {
     assertIsCurrent(workQueue());
     MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
@@ -416,31 +416,29 @@ void RemoteGraphicsContextGL::generateMipmap(uint32_t target)
     protectedContext()->generateMipmap(target);
 }
 
-void RemoteGraphicsContextGL::getActiveAttrib(uint32_t program, uint32_t index, CompletionHandler<void(bool, struct WebCore::GraphicsContextGLActiveInfo&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getActiveAttrib(uint32_t program, uint32_t index, CompletionHandler<void(std::optional<WebCore::GraphicsContextGLActiveInfo>&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    bool returnValue = { };
+    std::optional<WebCore::GraphicsContextGLActiveInfo> returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(program));
     if (program)
         program = m_objectNames.get(program);
-    struct WebCore::GraphicsContextGLActiveInfo arg2 { };
-    returnValue = protectedContext()->getActiveAttrib(program, index, arg2);
-    completionHandler(returnValue, WTFMove(arg2));
+    returnValue = protectedContext()->getActiveAttrib(program, index);
+    completionHandler(WTFMove(returnValue));
 }
 
-void RemoteGraphicsContextGL::getActiveUniform(uint32_t program, uint32_t index, CompletionHandler<void(bool, struct WebCore::GraphicsContextGLActiveInfo&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getActiveUniform(uint32_t program, uint32_t index, CompletionHandler<void(std::optional<WebCore::GraphicsContextGLActiveInfo>&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    bool returnValue = { };
+    std::optional<WebCore::GraphicsContextGLActiveInfo> returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(program));
     if (program)
         program = m_objectNames.get(program);
-    struct WebCore::GraphicsContextGLActiveInfo arg2 { };
-    returnValue = protectedContext()->getActiveUniform(program, index, arg2);
-    completionHandler(returnValue, WTFMove(arg2));
+    returnValue = protectedContext()->getActiveUniform(program, index);
+    completionHandler(WTFMove(returnValue));
 }
 
-void RemoteGraphicsContextGL::getAttribLocation(uint32_t arg0, String&& name, CompletionHandler<void(int32_t)>&& completionHandler)
+void RemoteGraphicsContextGL::getAttribLocation(uint32_t arg0, CString&& name, CompletionHandler<void(int32_t)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
     GCGLint returnValue = { };
@@ -459,10 +457,10 @@ void RemoteGraphicsContextGL::getBufferParameteri(uint32_t target, uint32_t pnam
     completionHandler(returnValue);
 }
 
-void RemoteGraphicsContextGL::getString(uint32_t name, CompletionHandler<void(String&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getString(uint32_t name, CompletionHandler<void(CString&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    String returnValue = { };
+    CString returnValue = { };
     returnValue = protectedContext()->getString(name);
     completionHandler(WTFMove(returnValue));
 }
@@ -540,10 +538,10 @@ void RemoteGraphicsContextGL::getFramebufferAttachmentParameteri(uint32_t target
     completionHandler(returnValue);
 }
 
-void RemoteGraphicsContextGL::getProgramInfoLog(uint32_t arg0, CompletionHandler<void(String&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getProgramInfoLog(uint32_t arg0, CompletionHandler<void(CString&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    String returnValue = { };
+    CString returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
     if (arg0)
         arg0 = m_objectNames.get(arg0);
@@ -570,10 +568,10 @@ void RemoteGraphicsContextGL::getShaderi(uint32_t arg0, uint32_t pname, Completi
     completionHandler(returnValue);
 }
 
-void RemoteGraphicsContextGL::getShaderInfoLog(uint32_t arg0, CompletionHandler<void(String&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getShaderInfoLog(uint32_t arg0, CompletionHandler<void(CString&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    String returnValue = { };
+    CString returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
     if (arg0)
         arg0 = m_objectNames.get(arg0);
@@ -588,17 +586,6 @@ void RemoteGraphicsContextGL::getShaderPrecisionFormat(uint32_t shaderType, uint
     GCGLint precision = { };
     protectedContext()->getShaderPrecisionFormat(shaderType, precisionType, range, &precision);
     completionHandler(spanReinterpretCast<const int32_t, 2>(std::span<const GCGLint, 2>(range)), precision);
-}
-
-void RemoteGraphicsContextGL::getShaderSource(uint32_t arg0, CompletionHandler<void(String&&)>&& completionHandler)
-{
-    assertIsCurrent(workQueue());
-    String returnValue = { };
-    MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
-    if (arg0)
-        arg0 = m_objectNames.get(arg0);
-    returnValue = protectedContext()->getShaderSource(arg0);
-    completionHandler(WTFMove(returnValue));
 }
 
 void RemoteGraphicsContextGL::getTexParameterf(uint32_t target, uint32_t pname, CompletionHandler<void(float)>&& completionHandler)
@@ -656,7 +643,7 @@ void RemoteGraphicsContextGL::getUniformuiv(uint32_t program, int32_t location, 
     completionHandler(spanReinterpretCast<const uint32_t>(value.span()));
 }
 
-void RemoteGraphicsContextGL::getUniformLocation(uint32_t arg0, String&& name, CompletionHandler<void(int32_t)>&& completionHandler)
+void RemoteGraphicsContextGL::getUniformLocation(uint32_t arg0, CString&& name, CompletionHandler<void(int32_t)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
     GCGLint returnValue = { };
@@ -800,7 +787,7 @@ void RemoteGraphicsContextGL::scissor(int32_t x, int32_t y, int32_t width, int32
     protectedContext()->scissor(x, y, width, height);
 }
 
-void RemoteGraphicsContextGL::shaderSource(uint32_t arg0, String&& arg1)
+void RemoteGraphicsContextGL::shaderSource(uint32_t arg0, CString&& arg1)
 {
     assertIsCurrent(workQueue());
     MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
@@ -1277,7 +1264,7 @@ void RemoteGraphicsContextGL::compressedTexSubImage3D1(uint32_t target, int32_t 
     protectedContext()->compressedTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, static_cast<GCGLintptr>(offset));
 }
 
-void RemoteGraphicsContextGL::getFragDataLocation(uint32_t program, String&& name, CompletionHandler<void(int32_t)>&& completionHandler)
+void RemoteGraphicsContextGL::getFragDataLocation(uint32_t program, CString&& name, CompletionHandler<void(int32_t)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
     GCGLint returnValue = { };
@@ -1670,7 +1657,7 @@ void RemoteGraphicsContextGL::endTransformFeedback()
     protectedContext()->endTransformFeedback();
 }
 
-void RemoteGraphicsContextGL::transformFeedbackVaryings(uint32_t program, Vector<String>&& varyings, uint32_t bufferMode)
+void RemoteGraphicsContextGL::transformFeedbackVaryings(uint32_t program, Vector<CString>&& varyings, uint32_t bufferMode)
 {
     assertIsCurrent(workQueue());
     MESSAGE_CHECK(m_objectNames.isValidKey(program));
@@ -1679,15 +1666,15 @@ void RemoteGraphicsContextGL::transformFeedbackVaryings(uint32_t program, Vector
     protectedContext()->transformFeedbackVaryings(program, varyings, bufferMode);
 }
 
-void RemoteGraphicsContextGL::getTransformFeedbackVarying(uint32_t program, uint32_t index, CompletionHandler<void(struct WebCore::GraphicsContextGLActiveInfo&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getTransformFeedbackVarying(uint32_t program, uint32_t index, CompletionHandler<void(std::optional<WebCore::GraphicsContextGLActiveInfo>&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
+    std::optional<WebCore::GraphicsContextGLActiveInfo> returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(program));
     if (program)
         program = m_objectNames.get(program);
-    struct WebCore::GraphicsContextGLActiveInfo arg2 { };
-    protectedContext()->getTransformFeedbackVarying(program, index, arg2);
-    completionHandler(WTFMove(arg2));
+    returnValue = protectedContext()->getTransformFeedbackVarying(program, index);
+    completionHandler(WTFMove(returnValue));
 }
 
 void RemoteGraphicsContextGL::pauseTransformFeedback()
@@ -1720,7 +1707,7 @@ void RemoteGraphicsContextGL::bindBufferRange(uint32_t target, uint32_t index, u
     protectedContext()->bindBufferRange(target, index, buffer, static_cast<GCGLintptr>(offset), static_cast<GCGLsizeiptr>(arg4));
 }
 
-void RemoteGraphicsContextGL::getUniformIndices(uint32_t program, Vector<String>&& uniformNames, CompletionHandler<void(Vector<uint32_t>&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getUniformIndices(uint32_t program, Vector<CString>&& uniformNames, CompletionHandler<void(Vector<uint32_t>&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
     Vector<GCGLuint> returnValue = { };
@@ -1742,7 +1729,7 @@ void RemoteGraphicsContextGL::getActiveUniforms(uint32_t program, Vector<uint32_
     completionHandler(WTFMove(returnValue));
 }
 
-void RemoteGraphicsContextGL::getUniformBlockIndex(uint32_t program, String&& uniformBlockName, CompletionHandler<void(uint32_t)>&& completionHandler)
+void RemoteGraphicsContextGL::getUniformBlockIndex(uint32_t program, CString&& uniformBlockName, CompletionHandler<void(uint32_t)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
     GCGLuint returnValue = { };
@@ -1753,10 +1740,10 @@ void RemoteGraphicsContextGL::getUniformBlockIndex(uint32_t program, String&& un
     completionHandler(returnValue);
 }
 
-void RemoteGraphicsContextGL::getActiveUniformBlockName(uint32_t program, uint32_t uniformBlockIndex, CompletionHandler<void(String&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getActiveUniformBlockName(uint32_t program, uint32_t uniformBlockIndex, CompletionHandler<void(CString&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    String returnValue = { };
+    CString returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(program));
     if (program)
         program = m_objectNames.get(program);
@@ -1786,10 +1773,10 @@ void RemoteGraphicsContextGL::getActiveUniformBlockiv(uint32_t program, uint32_t
     completionHandler(spanReinterpretCast<const int32_t>(params.span()));
 }
 
-void RemoteGraphicsContextGL::getTranslatedShaderSourceANGLE(uint32_t arg0, CompletionHandler<void(String&&)>&& completionHandler)
+void RemoteGraphicsContextGL::getTranslatedShaderSourceANGLE(uint32_t arg0, CompletionHandler<void(CString&&)>&& completionHandler)
 {
     assertIsCurrent(workQueue());
-    String returnValue = { };
+    CString returnValue = { };
     MESSAGE_CHECK(m_objectNames.isValidKey(arg0));
     if (arg0)
         arg0 = m_objectNames.get(arg0);

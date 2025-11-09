@@ -32,17 +32,6 @@
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
-namespace Layout {
-class LayoutState;
-}
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::Layout::LayoutState> : std::true_type { };
-}
-
-namespace WebCore {
 
 class Document;
 

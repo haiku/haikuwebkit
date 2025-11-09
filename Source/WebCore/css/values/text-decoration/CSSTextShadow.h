@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,8 +35,8 @@ namespace CSS {
 // https://drafts.csswg.org/css-text-decor-3/#propdef-text-shadow
 struct TextShadow {
     Markable<Color> color;
-    SpaceSeparatedPoint<Length<>> location;
-    Markable<Length<Nonnegative>> blur;
+    SpaceSeparatedPoint<Length<CSS::AllUnzoomed>> location;
+    Markable<Length<CSS::NonnegativeUnzoomed>> blur;
 
     bool operator==(const TextShadow&) const = default;
 };

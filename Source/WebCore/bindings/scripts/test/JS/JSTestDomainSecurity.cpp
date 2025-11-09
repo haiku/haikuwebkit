@@ -355,7 +355,7 @@ extern "C" { extern void (*const __identifier("??_7TestDomainSecurity@WebCore@@6
 extern "C" { extern void* _ZTVN7WebCore18TestDomainSecurityE[]; }
 #endif
 template<std::same_as<TestDomainSecurity> T>
-static inline void verifyVTable(TestDomainSecurity* ptr) 
+static inline void verifyVTable(TestDomainSecurity* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -375,8 +375,9 @@ static inline void verifyVTable(TestDomainSecurity* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestDomainSecurity>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestDomainSecurity>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestDomainSecurity>(impl.ptr());
 #endif

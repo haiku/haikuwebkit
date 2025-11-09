@@ -9,12 +9,12 @@ Do NOT modify or remove this file.
 
 ------------------------------------------------------------------------
 Properties requiring vendor prefixes:
-mask-position-x
-box-decoration-break
 mask-position-y
-text-size-adjust
 user-select
+mask-position-x
+text-size-adjust
 initial-letter
+box-decoration-break
 Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------

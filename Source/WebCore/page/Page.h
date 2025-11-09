@@ -164,7 +164,7 @@ class PluginData;
 class PluginInfoProvider;
 class PointerCaptureController;
 class PointerLockController;
-class ProcessSyncClient;
+class DocumentSyncClient;
 class ProgressTracker;
 class RTCController;
 class RenderObject;
@@ -227,9 +227,9 @@ struct ApplePayAMSUIRequest;
 struct AttributedString;
 struct CharacterRange;
 struct ClientOrigin;
+struct DocumentSyncSerializationData;
 struct FixedContainerEdges;
 struct NavigationAPIMethodTracker;
-struct ProcessSyncData;
 struct SpatialBackdropSource;
 struct SystemPreviewInfo;
 struct TextRecognitionResult;
@@ -242,7 +242,6 @@ using SharedStringHash = uint32_t;
 enum class ActivityState : uint16_t;
 enum class AdvancedPrivacyProtections : uint16_t;
 enum class BoxSide : uint8_t;
-enum class BoxSideFlag : uint8_t;
 enum class CanWrap : bool;
 enum class ContentSecurityPolicyModeForExtension : uint8_t;
 enum class DidWrap : bool;
@@ -441,7 +440,7 @@ public:
     bool hasInjectedUserScript();
     WEBCORE_EXPORT void setHasInjectedUserScript();
 
-    WEBCORE_EXPORT void updateProcessSyncData(const ProcessSyncData&);
+    WEBCORE_EXPORT void updateTopDocumentSyncData(const DocumentSyncSerializationData&);
     WEBCORE_EXPORT void updateTopDocumentSyncData(Ref<DocumentSyncData>&&);
 
     WEBCORE_EXPORT void setMainFrameURLFragment(String&&);
@@ -493,8 +492,8 @@ public:
     const Chrome& chrome() const { return m_chrome.get(); }
     CryptoClient& cryptoClient() { return m_cryptoClient.get(); }
     const CryptoClient& cryptoClient() const { return m_cryptoClient.get(); }
-    ProcessSyncClient& processSyncClient() { return m_processSyncClient.get(); }
-    const ProcessSyncClient& processSyncClient() const { return m_processSyncClient.get(); }
+    DocumentSyncClient& documentSyncClient() { return m_documentSyncClient.get(); }
+    const DocumentSyncClient& documentSyncClient() const { return m_documentSyncClient.get(); }
     DragCaretController& dragCaretController() { return m_dragCaretController.get(); }
     const DragCaretController& dragCaretController() const { return m_dragCaretController.get(); }
 #if ENABLE(DRAG_SUPPORT)
@@ -934,7 +933,7 @@ public:
     WEBCORE_EXPORT Color pageExtendedBackgroundColor() const;
     WEBCORE_EXPORT Color sampledPageTopColor() const;
 
-    WEBCORE_EXPORT void updateFixedContainerEdges(OptionSet<BoxSideFlag>);
+    WEBCORE_EXPORT void updateFixedContainerEdges(EnumSet<BoxSide>);
     const FixedContainerEdges& fixedContainerEdges() const { return m_fixedContainerEdgesAndElements.first; }
     Element* lastFixedContainer(BoxSide) const;
 
@@ -1045,6 +1044,11 @@ public:
 #if ENABLE(MEDIA_STREAM)
     WEBCORE_EXPORT void updateCaptureState(bool isActive, MediaProducerMediaCaptureKind);
     WEBCORE_EXPORT void voiceActivityDetected();
+#endif
+
+#if ENABLE(MODEL_PROCESS)
+    void incrementModelElementCount();
+    void decrementModelElementCount(unsigned);
 #endif
 
     std::optional<MediaSessionGroupIdentifier> mediaSessionGroupIdentifier() const;
@@ -1340,6 +1344,10 @@ public:
     WEBCORE_EXPORT void startDeferringScrollEvents();
     WEBCORE_EXPORT void flushDeferredScrollEvents();
 
+    bool shouldDeferIntersectionObservations() const { return m_shouldDeferIntersectionObservations; }
+    WEBCORE_EXPORT void startDeferringIntersectionObservations();
+    WEBCORE_EXPORT void flushDeferredIntersectionObservations();
+
     bool reportScriptTrackingPrivacy(const URL&, ScriptTrackingPrivacyCategory);
     bool shouldAllowScriptAccess(const URL&, const SecurityOrigin& topOrigin, ScriptTrackingPrivacyCategory) const;
     bool requiresScriptTrackingPrivacyProtections(const URL&) const;
@@ -1384,6 +1392,9 @@ public:
     void setHardwareKeyboardAttached(bool attached) { m_hardwareKeyboardAttached = attached; }
     bool hardwareKeyboardAttached() const { return m_hardwareKeyboardAttached; }
 
+#if PLATFORM(IOS_FAMILY)
+    WEBCORE_EXPORT void clearIsShowingInputView();
+#endif
 private:
     explicit Page(PageConfiguration&&);
 
@@ -1486,7 +1497,7 @@ private:
     const RefPtr<Settings> m_settings;
     const UniqueRef<CryptoClient> m_cryptoClient;
     const UniqueRef<ProgressTracker> m_progress;
-    const UniqueRef<ProcessSyncClient> m_processSyncClient;
+    const UniqueRef<DocumentSyncClient> m_documentSyncClient;
 
     const UniqueRef<BackForwardController> m_backForwardController;
     HashSet<WeakRef<LocalFrame>> m_rootFrames;
@@ -1649,6 +1660,10 @@ private:
 
 #if ENABLE(VIDEO)
     Timer m_playbackControlsManagerUpdateTimer;
+#endif
+
+#if ENABLE(MODEL_PROCESS)
+    unsigned m_modelElementCount { 0 };
 #endif
 
     bool m_allowsMediaDocumentInlinePlayback { false };
@@ -1831,6 +1846,7 @@ private:
 
     bool m_shouldDeferResizeEvents { false };
     bool m_shouldDeferScrollEvents { false };
+    bool m_shouldDeferIntersectionObservations { false };
 
     Ref<DocumentSyncData> m_topDocumentSyncData;
 

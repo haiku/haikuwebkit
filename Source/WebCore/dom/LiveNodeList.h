@@ -48,6 +48,7 @@ public:
 
     NodeListInvalidationType invalidationType() const { return m_invalidationType; }
     ContainerNode& ownerNode() const { return m_ownerNode; }
+    ContainerNode& rootNode() const;
     void invalidateCacheForAttribute(const QualifiedName& attributeName) const;
     virtual void invalidateCacheForDocument(Document&) const = 0;
     inline void invalidateCache() const;
@@ -60,7 +61,6 @@ protected:
 
     inline Document& document() const;
     inline Ref<Document> protectedDocument() const;
-    ContainerNode& rootNode() const;
 
 private:
     bool isLiveNodeList() const final { return true; }
@@ -71,7 +71,7 @@ private:
     bool m_isRegisteredForInvalidationAtDocument { false };
 };
 
-template <class NodeListType>
+template <class NodeListType, CollectionTraversalType traversalType = CollectionTraversalType::Descendants>
 class CachedLiveNodeList : public LiveNodeList {
     WTF_MAKE_TZONE_OR_ISO_NON_HEAP_ALLOCATABLE(CachedLiveNodeList);
 public:
@@ -81,7 +81,7 @@ public:
     inline Node* item(unsigned offset) const final;
 
     // For CollectionIndexCache
-    using Traversal = CollectionTraversal<CollectionTraversalType::Descendants>;
+    using Traversal = CollectionTraversal<traversalType>;
     using Iterator = Traversal::Iterator;
     inline Iterator collectionBegin() const;
     inline Iterator collectionLast() const;

@@ -298,7 +298,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIntersection, (JSGlobalObject* globalObject
 
         auto* storage = jsCast<JSSet::Storage*>(storageCell);
         JSSet::Helper::Entry entry = 0;
-        CallData hasCallData = JSC::getCallData(has);
+        CallData hasCallData = JSC::getCallDataInline(has);
 
         std::optional<CachedCall> cachedHasCall;
         if (hasCallData.type == CallData::Type::JS) [[likely]] {
@@ -335,7 +335,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIntersection, (JSGlobalObject* globalObject
             }
         }
     } else {
-        CallData keysCallData = JSC::getCallData(keys);
+        CallData keysCallData = JSC::getCallDataInline(keys);
         MarkedArgumentBuffer args;
         ASSERT(!args.hasOverflowed());
         JSValue iterator = call(globalObject, keys, keysCallData, otherValue, args);
@@ -422,7 +422,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncUnion, (JSGlobalObject* globalObject, CallF
     if (!keys.isCallable()) [[unlikely]]
         return throwVMTypeError(globalObject, scope, "Set.prototype.union expects other.keys to be callable"_s);
 
-    CallData keysCallData = JSC::getCallData(keys);
+    CallData keysCallData = JSC::getCallDataInline(keys);
     MarkedArgumentBuffer args;
     ASSERT(!args.hasOverflowed());
     JSValue iterator = call(globalObject, keys, keysCallData, otherValue, args);
@@ -557,7 +557,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncDifference, (JSGlobalObject* globalObject, 
         if (resultStorageCell == vm.orderedHashTableSentinel())
             return JSValue::encode(result);
 
-        CallData hasCallData = JSC::getCallData(has);
+        CallData hasCallData = JSC::getCallDataInline(has);
         std::optional<CachedCall> cachedHasCall;
         if (hasCallData.type == CallData::Type::JS) [[likely]] {
             cachedHasCall.emplace(globalObject, jsCast<JSFunction*>(has), 1);
@@ -598,7 +598,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncDifference, (JSGlobalObject* globalObject, 
             resultStorage = currentStorage;
         }
     } else {
-        CallData keysCallData = JSC::getCallData(keys);
+        CallData keysCallData = JSC::getCallDataInline(keys);
         MarkedArgumentBuffer keysArgs;
         ASSERT(!keysArgs.hasOverflowed());
         JSValue keysResult = call(globalObject, keys, keysCallData, otherValue, keysArgs);
@@ -609,7 +609,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncDifference, (JSGlobalObject* globalObject, 
         if (!nextMethod.isCallable()) [[unlikely]]
             return throwVMTypeError(globalObject, scope, "Set.prototype.difference expects other.keys().next to be callable"_s);
 
-        CallData nextCallData = JSC::getCallData(nextMethod);
+        CallData nextCallData = JSC::getCallDataInline(nextMethod);
 
         std::optional<CachedCall> cachedNextCall;
         if (nextCallData.type == CallData::Type::JS) [[likely]] {
@@ -727,7 +727,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncSymmetricDifference, (JSGlobalObject* globa
     if (!keys.isCallable()) [[unlikely]]
         return throwVMTypeError(globalObject, scope, "Set.prototype.symmetricDifference expects other.keys to be callable"_s);
 
-    CallData keysCallData = JSC::getCallData(keys);
+    CallData keysCallData = JSC::getCallDataInline(keys);
     MarkedArgumentBuffer keysArgs;
     ASSERT(!keysArgs.hasOverflowed());
     JSValue keysResult = call(globalObject, keys, keysCallData, otherValue, keysArgs);
@@ -741,7 +741,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncSymmetricDifference, (JSGlobalObject* globa
     JSSet* result = thisSet->clone(globalObject, vm, globalObject->setStructure());
     RETURN_IF_EXCEPTION(scope, { });
 
-    CallData nextCallData = JSC::getCallData(nextMethod);
+    CallData nextCallData = JSC::getCallDataInline(nextMethod);
 
     std::optional<CachedCall> cachedNextCall;
     if (nextCallData.type == CallData::Type::JS) [[likely]] {
@@ -825,7 +825,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsSubsetOf, (JSGlobalObject* globalObject, 
     if (thisSet->size() > otherSize)
         return JSValue::encode(jsBoolean(false));
 
-    CallData hasCallData = JSC::getCallData(has);
+    CallData hasCallData = JSC::getCallDataInline(has);
     JSCell* thisStorageCell = thisSet->storageOrSentinel(vm);
     if (thisStorageCell == vm.orderedHashTableSentinel())
         return JSValue::encode(jsBoolean(true));
@@ -944,7 +944,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsSupersetOf, (JSGlobalObject* globalObject
     if (thisSet->size() < otherSize)
         return JSValue::encode(jsBoolean(false));
 
-    CallData keysCallData = JSC::getCallData(keys);
+    CallData keysCallData = JSC::getCallDataInline(keys);
     MarkedArgumentBuffer keysArgs;
     ASSERT(!keysArgs.hasOverflowed());
     JSValue keysResult = call(globalObject, keys, keysCallData, otherValue, keysArgs);
@@ -955,7 +955,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsSupersetOf, (JSGlobalObject* globalObject
     if (!nextMethod.isCallable()) [[unlikely]]
         return throwVMTypeError(globalObject, scope, "Set.prototype.isSupersetOf expects other.keys().next to be callable"_s);
 
-    CallData nextCallData = JSC::getCallData(nextMethod);
+    CallData nextCallData = JSC::getCallDataInline(nextMethod);
 
     std::optional<CachedCall> cachedNextCall;
     if (nextCallData.type == CallData::Type::JS) [[likely]] {
@@ -1080,7 +1080,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsDisjointFrom, (JSGlobalObject* globalObje
         auto* thisStorage = jsCast<JSSet::Storage*>(thisStorageCell);
         JSSet::Helper::Entry entry = 0;
 
-        CallData hasCallData = JSC::getCallData(has);
+        CallData hasCallData = JSC::getCallDataInline(has);
         std::optional<CachedCall> cachedHasCall;
         if (hasCallData.type == CallData::Type::JS) [[likely]] {
             cachedHasCall.emplace(globalObject, jsCast<JSFunction*>(has), 1);
@@ -1116,7 +1116,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsDisjointFrom, (JSGlobalObject* globalObje
             thisStorage = currentStorage;
         }
     } else {
-        CallData keysCallData = JSC::getCallData(keys);
+        CallData keysCallData = JSC::getCallDataInline(keys);
         MarkedArgumentBuffer keysArgs;
         ASSERT(!keysArgs.hasOverflowed());
         JSValue keysResult = call(globalObject, keys, keysCallData, otherValue, keysArgs);
@@ -1127,7 +1127,7 @@ JSC_DEFINE_HOST_FUNCTION(setProtoFuncIsDisjointFrom, (JSGlobalObject* globalObje
         if (!nextMethod.isCallable()) [[unlikely]]
             return throwVMTypeError(globalObject, scope, "Set.prototype.isDisjointFrom expects other.keys().next to be callable"_s);
 
-        CallData nextCallData = JSC::getCallData(nextMethod);
+        CallData nextCallData = JSC::getCallDataInline(nextMethod);
 
         std::optional<CachedCall> cachedNextCall;
         if (nextCallData.type == CallData::Type::JS) [[likely]] {

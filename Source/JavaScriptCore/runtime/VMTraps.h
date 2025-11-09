@@ -152,6 +152,7 @@ public:
     v(NeedTermination) \
     v(NeedWatchdogCheck) \
     v(NeedDebuggerBreak) \
+    v(NeedStopTheWorld) \
     v(NeedExceptionHandling)
 
 #define DECLARE_VMTRAPS_EVENT_BIT_SHIFT(event__)  event__##BitShift,
@@ -322,6 +323,10 @@ private:
     bool m_threadStopRequested { false };
     bool m_trapsDeferred { false };
 
+    // Protects against a race between VMManager::requestResumeAll() and VMManager::notifyVMActivation()
+    // to increment their m_numberOfActiveVMs.
+    bool m_hasBeenCountedAsActive { false };
+
     Box<Lock> m_trapSignalingLock;
     Box<Condition> m_condition;
 
@@ -332,6 +337,7 @@ private:
     friend class LLIntOffsetsExtractor;
     friend class SignalSender;
     friend class DeferTraps;
+    friend class VMManager;
 };
 
 class DeferTraps {

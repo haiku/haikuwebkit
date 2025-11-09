@@ -28,11 +28,15 @@
 #if ENABLE(WEBXR_LAYERS)
 
 #include "PlatformXR.h"
+#if ENABLE(WEBGPU)
 #include "WebGPUXRProjectionLayer.h"
+#endif
 #include "WebXRRigidTransform.h"
 #include "XRCompositionLayer.h"
 
+#if PLATFORM(COCOA)
 #include <wtf/MachSendRight.h>
+#endif
 
 namespace WebCore {
 
@@ -45,10 +49,12 @@ class GPUTexture;
 class XRProjectionLayer : public XRCompositionLayer {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(XRProjectionLayer);
 public:
+#if ENABLE(WEBGPU)
     static Ref<XRProjectionLayer> create(ScriptExecutionContext& scriptExecutionContext, Ref<WebCore::WebGPU::XRProjectionLayer>&& backing)
     {
         return adoptRef(*new XRProjectionLayer(scriptExecutionContext, WTFMove(backing)));
     }
+#endif
     virtual ~XRProjectionLayer();
 
     uint32_t textureWidth() const;
@@ -64,18 +70,27 @@ public:
     // WebXRLayer
     void startFrame(PlatformXR::FrameData&) final;
     PlatformXR::Device::Layer endFrame() final;
-
+#if ENABLE(WEBGPU)
     WebCore::WebGPU::XRProjectionLayer& backing();
     std::optional<PlatformXR::FrameData::LayerData> layerData() const;
+#endif
 
 private:
+#if ENABLE(WEBGPU)
     XRProjectionLayer(ScriptExecutionContext&, Ref<WebCore::WebGPU::XRProjectionLayer>&&);
 
+    bool isXRProjectionLayer() const final { return true; }
+
     const Ref<WebCore::WebGPU::XRProjectionLayer> m_backing;
+#endif
     std::optional<PlatformXR::FrameData::LayerData> m_layerData;
     RefPtr<WebXRRigidTransform> m_transform;
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::XRProjectionLayer)
+    static bool isType(const WebCore::WebXRLayer& layer) { return layer.isXRProjectionLayer(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif

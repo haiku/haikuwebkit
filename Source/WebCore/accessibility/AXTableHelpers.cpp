@@ -196,8 +196,8 @@ bool isDataTableWithTraversal(HTMLTableElement& tableElement, AXObjectCache& cac
     CheckedPtr<const RenderStyle> tableStyle = safeStyleFrom(tableElement);
     // Store the background color of the table to check against cell's background colors.
     Color tableBackgroundColor = tableStyle ? tableStyle->visitedDependentColor(CSSPropertyBackgroundColor) : Color::white;
-    unsigned tableHorizontalBorderSpacing = tableStyle ? tableStyle->borderHorizontalSpacing().resolveZoom(Style::ZoomNeeded { }) : 0;
-    unsigned tableVerticalBorderSpacing = tableStyle ? tableStyle->borderVerticalSpacing().resolveZoom(Style::ZoomNeeded { }) : 0;
+    unsigned tableHorizontalBorderSpacing = tableStyle ? tableStyle->borderHorizontalSpacing().resolveZoom(tableStyle->usedZoomForLength()) : 0;
+    unsigned tableVerticalBorderSpacing = tableStyle ? tableStyle->borderVerticalSpacing().resolveZoom(tableStyle->usedZoomForLength()) : 0;
 
     unsigned cellCount = 0;
     unsigned borderedCellCount = 0;

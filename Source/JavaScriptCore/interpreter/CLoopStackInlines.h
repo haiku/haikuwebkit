@@ -27,11 +27,11 @@
 
 #if ENABLE(C_LOOP)
 
-#include "CLoopStack.h"
-#include "CallFrame.h"
-#include "CodeBlock.h"
-#include "StackManagerInlines.h"
-#include "VM.h"
+#include <JavaScriptCore/CLoopStack.h>
+#include <JavaScriptCore/CallFrame.h>
+#include <JavaScriptCore/CodeBlock.h>
+#include <JavaScriptCore/StackManagerInlines.h>
+#include <JavaScriptCore/VM.h>
 
 namespace JSC {
 

@@ -42,8 +42,8 @@ PowerSourceNotifier::PowerSourceNotifier(PowerSourceNotifierCallback&& callback)
 {
     int token = 0;
     auto status = notify_register_dispatch(kIOPSNotifyPowerSource, &token, mainDispatchQueueSingleton(), [weakThis = WeakPtr { *this }] (int) {
-        if (weakThis)
-            weakThis->notifyPowerSourceChanged();
+        if (CheckedPtr checkedThis = weakThis.get())
+            checkedThis->notifyPowerSourceChanged();
     });
     if (status == NOTIFY_STATUS_OK)
         m_tokenID = token;
@@ -51,8 +51,8 @@ PowerSourceNotifier::PowerSourceNotifier(PowerSourceNotifierCallback&& callback)
     // If the current value of systemHasAC() is uncached, force a notification.
     if (!cachedSystemHasAC()) {
         RunLoop::mainSingleton().dispatch([weakThis = WeakPtr { *this }] {
-            if (weakThis)
-                weakThis->notifyPowerSourceChanged();
+            if (CheckedPtr checkedThis = weakThis.get())
+                checkedThis->notifyPowerSourceChanged();
         });
     }
 }

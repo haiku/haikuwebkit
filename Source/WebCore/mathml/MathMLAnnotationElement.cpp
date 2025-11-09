@@ -37,6 +37,7 @@
 #include "RenderMathMLBlock.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGSVGElement.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

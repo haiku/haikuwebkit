@@ -2696,7 +2696,7 @@ EnumeratingVisibleNetworkInterfacesEnabled:
 EvaluationTimeZoomEnabled:
   category: css
   type: bool
-  status: unstable
+  status: testable
   humanReadableName: "Evaluation time zoom enabled"
   humanReadableDescription: "Enables used zoom value to be applied during layout and avoid applying at style-build time"
   defaultValue:
@@ -2724,17 +2724,17 @@ EventHandlerDrivenSmoothKeyboardScrollingEnabled:
 
 EventTimingEnabled:
   type: bool
-  status: preview
+  status: stable
   category: dom
   humanReadableName: "Event Timing API"
   humanReadableDescription: "Enable the Event Timing API and supporting instrumentation"
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 ExperimentalSandboxEnabled:
   type: bool
@@ -2868,6 +2868,20 @@ FTPEnabled:
     WebKit:
       default: false
     WebKitLegacy:
+      default: false
+
+FacebookLiveRecordingQuirkEnabled:
+  type: bool
+  status: internal
+  humanReadableName: "Facebook Live Recording Quirk"
+  humanReadableDescription: "Enable Facebook Live Recording Quirk"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      PLATFORM(MAC): true
+      default: false
+    WebCore:
       default: false
 
 FantasyFontFamily:
@@ -3325,6 +3339,20 @@ GridFormattingContextIntegrationEnabled:
       default: false
     WebCore:
       default: false
+
+HTMLEnhancedSelectParsingEnabled:
+   type: bool
+   status: testable
+   category: dom
+   humanReadableName: "Enhanced HTML select element parsing"
+   humanReadableDescription: "Enable enhanced HTML select element parsing"
+   defaultValue:
+     WebKitLegacy:
+       default: false
+     WebKit:
+       default: false
+     WebCore:
+       default: false
 
 HTMLLegacyAttributeValueSerializationEnabled:
    type: bool
@@ -4905,14 +4933,15 @@ MediaControlsContextMenusEnabled:
 
 MediaControlsMacInlineSizeSpecsEnabled:
   type: bool
-  status: testable
+  status: preview
   category: media
-  humanReadableName: "Media Controls Rounded Corners"
+  humanReadableName: "Mac Inline Media Controls Specs"
   humanReadableDescription: "Adopt new size specs for media controls"
+  condition: HAVE(MATERIAL_HOSTING)
   defaultValue:
-    WebKitLegacy:
-      default: false
     WebKit:
+      default: defaultHostedBlurMaterialInMediaControlsEnabled()
+    WebKitLegacy:
       default: false
     WebCore:
       default: false
@@ -5166,6 +5195,22 @@ MediaSourcePrefersDecompressionSession:
       default: WebKit::defaultMediaSourcePrefersDecompressionSession()
     WebCore:
       default: true
+  sharedPreferenceForWebProcess: true
+
+MediaSourceUseRemoteAudioVideoRenderer:
+  type: bool
+  status: unstable
+  category: media
+  humanReadableName: "MSE player uses GPU renderer"
+  humanReadableDescription: "MSE player uses GPU renderer"
+  condition: PLATFORM(COCOA) && ENABLE(VIDEO)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
   sharedPreferenceForWebProcess: true
 
 MediaStreamTrackProcessingEnabled:
@@ -5629,6 +5674,18 @@ OffscreenCanvasInWorkersEnabled:
       default: false
     WebCore:
       "PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)": true
+      default: false
+
+OpenXRDMABufRelaxedForTesting:
+  type: bool
+  status: internal
+  humanReadableName: "OpenXR DMA-BUF requirement relaxed for testing"
+  humanReadableDescription: "During testing, allows relaxing the requirement that the GL display used by the OpenXR coordinator has MESA_image_dma_buf_export"
+  webcoreBinding: none
+  condition: ENABLE(DEVELOPER_MODE) && USE(OPENXR)
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
       default: false
 
 # FIXME: Reenable this on iOS once we can mitigate impact on memory use.
@@ -6189,6 +6246,20 @@ PushAPIEnabled:
   disableInLockdownMode: true
   sharedPreferenceForWebProcess: true
   richJavaScript: true
+
+RTCEncodedStreamsQuirkEnabled:
+  type: bool
+  status: internal
+  humanReadableName: "RTC Encoded Streams Quirk"
+  humanReadableDescription: "Enable RTC Encoded Streams Quirk"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      PLATFORM(MAC): true
+      default: false
+    WebCore:
+      default: false
 
 ReadableByteStreamAPIEnabled:
   type: bool
@@ -7887,17 +7958,17 @@ TextRecognitionInVideosEnabled:
 
 TextShapingAcrossInlineBoxes:
   type: bool
-  status: preview
+  status: stable
   category: css
   humanReadableName: "Text Shaping Across Inline Boxes"
   humanReadableDescription: "Enable Text Shaping Across Inline Boxes"
   defaultValue:
     WebCore:
-      default: false
+      default: true
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
 
 TextTracksInMSEEnabled:
   type: bool
@@ -9149,7 +9220,7 @@ WebLocksAPIEnabled:
 
 WebMUseRemoteAudioVideoRenderer:
   type: bool
-  status: unstable
+  status: testable
   category: media
   humanReadableName: "WebM player uses GPU renderer"
   humanReadableDescription: "WebM player uses GPU renderer"
@@ -9383,6 +9454,21 @@ WebRTCSocketsProxyingEnabled:
       default: false
     WebKit:
       default: true
+    WebCore:
+      default: false
+
+WebRTCSocketsServiceClassEnabled:
+  type: bool
+  status: internal
+  category: media
+  humanReadableName: "WebRTC Sockets Service Class"
+  humanReadableDescription: "Enable setting WebRTC Sockets Service Class"
+  condition: ENABLE(WEB_RTC)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
     WebCore:
       default: false
 

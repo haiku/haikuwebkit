@@ -247,7 +247,7 @@ class _Worker(object):
     def _run_single_test(self, binary_name, test):
         server_process = ServerProcess(
             self._port, binary_name,
-            Runner.command_for_port(self._port, [self._port._build_path(binary_name), '--gtest_filter={}'.format(test)]),
+            Runner.command_for_port(self._port, [self._port.path_to_api_test(binary_name), '--gtest_filter={}'.format(test)]),
             env=self._port.environment_for_api_tests())
 
         status = Runner.STATUS_RUNNING
@@ -338,7 +338,7 @@ class _Worker(object):
             server_process = ServerProcess(
                 self._port, binary_name,
                 Runner.command_for_port(self._port, [
-                    self._port._build_path(binary_name), '--gtest_filter={}'.format(':'.join(remaining_tests))
+                    self._port.path_to_api_test(binary_name), '--gtest_filter={}'.format(':'.join(remaining_tests))
                 ]), env=self._port.environment_for_api_tests())
 
             try:

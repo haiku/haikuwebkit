@@ -41,10 +41,6 @@
 #include "SystemSettings.h"
 #endif
 
-#if PLATFORM(GTK)
-#include "GtkUtilities.h"
-#endif
-
 namespace WebCore {
 
 static const unsigned scrollbarSize = 21;

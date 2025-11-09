@@ -28,10 +28,10 @@
 
 #if ENABLE(DRAG_SUPPORT) && USE(GTK4)
 
+#include "GtkUtilities.h"
 #include "SandboxExtension.h"
 #include "WebKitWebViewBasePrivate.h"
 #include <WebCore/DragData.h>
-#include <WebCore/GtkUtilities.h>
 #include <WebCore/PasteboardCustomData.h>
 #include <gtk/gtk.h>
 #include <wtf/glib/GSpanExtras.h>

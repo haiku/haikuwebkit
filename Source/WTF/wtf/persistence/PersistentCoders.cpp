@@ -100,7 +100,7 @@ void Coder<String>::encodeForPersistence(Encoder& encoder, const String& string)
     encoder << string.length() << is8Bit;
 
     if (is8Bit)
-        encoder.encodeFixedLengthData(string.span8());
+        encoder.encodeFixedLengthData(asBytes(string.span8()));
     else
         encoder.encodeFixedLengthData(asBytes(string.span16()));
 }

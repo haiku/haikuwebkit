@@ -261,7 +261,7 @@ protected:
     LayoutRect overflowClipRect(const LayoutPoint& location, OverlayScrollbarSizeRelevancy = OverlayScrollbarSizeRelevancy::IgnoreOverlayScrollbarSize, PaintPhase = PaintPhase::BlockBackground) const final;
     LayoutRect overflowClipRectForChildLayers(const LayoutPoint& location, OverlayScrollbarSizeRelevancy relevancy) const override { return RenderBox::overflowClipRect(location, relevancy); }
 
-    void addOverflowFromChildren() final;
+    void addOverflowFromInFlowChildren(OptionSet<ComputeOverflowOptions> = { }) final;
 
     void adjustBorderBoxRectForPainting(LayoutRect&) override;
 

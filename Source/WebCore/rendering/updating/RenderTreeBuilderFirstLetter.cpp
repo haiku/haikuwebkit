@@ -46,7 +46,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderTreeBuilder::FirstLetter);
 static std::optional<RenderStyle> styleForFirstLetter(const RenderElement& firstLetterContainer)
 {
     auto& styleContainer = firstLetterContainer.isAnonymous() ? *firstLetterContainer.firstNonAnonymousAncestor() : firstLetterContainer;
-    auto style = styleContainer.style().getCachedPseudoStyle({ PseudoId::FirstLetter });
+    auto style = styleContainer.style().getCachedPseudoStyle({ PseudoElementType::FirstLetter });
     if (!style)
         return { };
 
@@ -87,7 +87,7 @@ static std::optional<RenderStyle> styleForFirstLetter(const RenderElement& first
         }
     }
 
-    firstLetterStyle.setPseudoElementType(PseudoId::FirstLetter);
+    firstLetterStyle.setPseudoElementIdentifier({ { PseudoElementType::FirstLetter } });
     // Force inline display (except for floating first-letters).
     firstLetterStyle.setDisplay(firstLetterStyle.isFloating() ? DisplayType::Block : DisplayType::Inline);
     // CSS2 says first-letter can't be positioned.
@@ -127,7 +127,7 @@ RenderTreeBuilder::FirstLetter::FirstLetter(RenderTreeBuilder& builder)
 
 void RenderTreeBuilder::FirstLetter::updateAfterDescendants(RenderBlock& block)
 {
-    if (!block.style().hasPseudoStyle(PseudoId::FirstLetter))
+    if (!block.style().hasPseudoStyle(PseudoElementType::FirstLetter))
         return;
 
     if (!supportsFirstLetter(block))
@@ -144,7 +144,7 @@ void RenderTreeBuilder::FirstLetter::updateAfterDescendants(RenderBlock& block)
 
     // If the child already has style, then it has already been created, so we just want
     // to update it.
-    if (firstLetter->parent()->style().pseudoElementType() == PseudoId::FirstLetter) {
+    if (firstLetter->parent()->style().pseudoElementType() == PseudoElementType::FirstLetter) {
         updateStyle(block, *firstLetter);
         return;
     }

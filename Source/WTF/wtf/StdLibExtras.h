@@ -45,7 +45,6 @@
 #include <wtf/GetPtr.h>
 #include <wtf/IterationStatus.h>
 #include <wtf/NotFound.h>
-#include <wtf/StringExtras.h>
 #include <wtf/TypeCasts.h>
 #include <wtf/TypeTraits.h>
 #include <wtf/Variant.h>
@@ -1018,6 +1017,32 @@ bool equalSpans(std::span<T, TExtent> a, std::span<U, UExtent> b)
     return !memcmp(a.data(), b.data(), a.size_bytes()); // NOLINT
 }
 
+#if !HAVE(MEMMEM)
+
+inline const void* memmem(const void* haystack, size_t haystackLength, const void* needle, size_t needleLength)
+{
+    if (!needleLength)
+        return haystack;
+
+    if (haystackLength < needleLength)
+        return nullptr;
+
+    auto haystackSpan = unsafeMakeSpan(static_cast<const uint8_t*>(haystack), haystackLength);
+    auto needleSpan = unsafeMakeSpan(static_cast<const uint8_t*>(needle), needleLength);
+
+    size_t lastPossiblePosition = haystackLength - needleLength;
+
+    for (size_t i = 0; i <= lastPossiblePosition; ++i) {
+        auto candidateSpan = haystackSpan.subspan(i, needleLength);
+        if (equalSpans(candidateSpan, needleSpan))
+            return candidateSpan.data();
+    }
+
+    return nullptr;
+}
+
+#endif
+
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
 bool spanHasPrefix(std::span<T, TExtent> span, std::span<U, UExtent> prefix)
 {
@@ -1511,6 +1536,26 @@ ALWAYS_INLINE std::weak_ordering weakOrderingCast(std::partial_ordering ordering
     return is_lt(ordering) ? std::weak_ordering::less : std::weak_ordering::greater;
 }
 
+template<size_t> struct SizedUnsignedTrait;
+template<>
+struct SizedUnsignedTrait<1> {
+    using Type = uint8_t;
+};
+template<>
+struct SizedUnsignedTrait<2> {
+    using Type = uint16_t;
+};
+template<>
+struct SizedUnsignedTrait<4> {
+    using Type = uint32_t;
+};
+template<>
+struct SizedUnsignedTrait<8> {
+    using Type = uint64_t;
+};
+template<typename T>
+using SameSizeUnsignedInteger = SizedUnsignedTrait<sizeof(T)>::Type;
+
 } // namespace WTF
 
 #define WTFMove(value) std::move<WTF::CheckMoveParameter>(value)
@@ -1560,6 +1605,9 @@ using WTF::makeUnique;
 using WTF::makeUniqueWithoutFastMallocCheck;
 using WTF::makeUniqueWithoutRefCountedCheck;
 using WTF::memcpySpan;
+#if !HAVE(MEMMEM)
+using WTF::memmem;
+#endif
 using WTF::memmoveSpan;
 using WTF::memsetSpan;
 using WTF::mergeDeduplicatedSorted;
@@ -1583,6 +1631,8 @@ using WTF::weakOrderingCast;
 using WTF::zeroBytes;
 using WTF::zeroSpan;
 using WTF::Invocable;
+using WTF::SameSizeUnsignedInteger;
+using WTF::SizedUnsignedTrait;
 using WTF::VariantWrapper;
 using WTF::VariantOrSingle;
 

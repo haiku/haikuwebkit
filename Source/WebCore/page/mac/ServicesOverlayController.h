@@ -28,7 +28,6 @@
 #if (ENABLE(SERVICE_CONTROLS) || ENABLE(TELEPHONE_NUMBER_DETECTION)) && PLATFORM(MAC)
 
 #include "DataDetectorHighlight.h"
-#include "GraphicsLayer.h"
 #include "GraphicsLayerClient.h"
 #include "PageOverlay.h"
 #include "Timer.h"
@@ -38,7 +37,8 @@
 #include <wtf/WeakHashSet.h>
 
 namespace WebCore {
-    
+
+class GraphicsLayer;
 class LayoutRect;
 class Page;
 

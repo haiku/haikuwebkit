@@ -533,14 +533,32 @@ BytecodeGenerator::BytecodeGenerator(VM& vm, FunctionNode* functionNode, Unlinke
         break;
     case ConstructorKind::Naked:
         if (!isConstructor()) {
-            emitThrowTypeError("Cannot call a constructor without |new|"_s);
+            String constructorName = functionNode->ident().string();
+            if (!constructorName || constructorName.isEmpty())
+                emitThrowTypeError("Cannot call a constructor without |new|"_s);
+            else {
+                auto errorMessageStr = tryMakeString("Cannot call a constructor "_s, constructorName, " without |new|"_s);
+                if (!errorMessageStr)
+                    emitThrowTypeError("Cannot call a constructor without |new|"_s);
+                else
+                    emitThrowTypeError(Identifier::fromString(m_vm, errorMessageStr));
+            }
             return;
         }
         break;
     case ConstructorKind::Base:
     case ConstructorKind::Extends:
         if (!isConstructor()) {
-            emitThrowTypeError("Cannot call a class constructor without |new|"_s);
+            String constructorName = functionNode->ident().string();
+            if (!constructorName || constructorName.isEmpty())
+                emitThrowTypeError("Cannot call a class constructor without |new|"_s);
+            else {
+                auto errorMessageStr = tryMakeString("Cannot call a class constructor "_s, constructorName, " without |new|"_s);
+                if (!errorMessageStr)
+                    emitThrowTypeError("Cannot call a class constructor without |new|"_s);
+                else
+                    emitThrowTypeError(Identifier::fromString(m_vm, errorMessageStr));
+            }
             return;
         }
         break;
@@ -2353,7 +2371,7 @@ RegisterID* BytecodeGenerator::emitResolveScopeForHoistingFuncDeclInEval(Registe
     else
         OpGetScope::emit(this, scope.get());
     OpResolveScopeForHoistingFuncDeclInEval::emit(this, kill(result.get()), scope.get(), addConstant(property));
-    return result.get();
+    return result.unsafeGet();
 }
 
 void BytecodeGenerator::popLexicalScope(VariableEnvironmentNode* node)
@@ -3905,7 +3923,19 @@ RegisterID* BytecodeGenerator::emitReturn(RegisterID* src)
             if (isDerived) {
                 Ref<Label> isUndefinedLabel = newLabel();
                 emitJumpIfTrue(emitIsUndefined(newTemporary(), src), isUndefinedLabel.get());
-                emitThrowTypeError("Cannot return a non-object type in the constructor of a derived class."_s);
+
+                ASSERT(m_scopeNode->isFunctionNode());
+                String className = static_cast<FunctionNode*>(m_scopeNode)->ident().string();
+                if (!className || className.isEmpty())
+                    emitThrowTypeError("Cannot return a non-object type in the constructor of a derived class."_s);
+                else {
+                    auto errorMessageStr = tryMakeString("Cannot return a non-object type in the constructor of a derived class "_s, className, "."_s);
+                    if (!errorMessageStr) [[unlikely]]
+                        emitThrowTypeError("Cannot return a non-object type in the constructor of a derived class."_s);
+                    else
+                        emitThrowTypeError(Identifier::fromString(m_vm, errorMessageStr));
+                }
+
                 emitLabel(isUndefinedLabel.get());
             }
 
@@ -4757,7 +4787,7 @@ RegisterID* BytecodeGenerator::emitGetTemplateObject(RegisterID* dst, TaggedTemp
     }
     RefPtr<RegisterID> constant = addTemplateObjectConstant(TemplateObjectDescriptor::create(WTFMove(rawStrings), WTFMove(cookedStrings)), taggedTemplate->endOffset());
     if (!dst)
-        return constant.get();
+        return constant.unsafeGet();
     return move(dst, constant.get());
 }
 
@@ -4976,9 +5006,13 @@ void BytecodeGenerator::emitRequireObjectCoercibleForDestructuring(RegisterID* v
     Ref<Label> target = newLabel();
     OpJnundefinedOrNull::emit(this, value, target->bind(this));
 
-    if (propertyName && !propertyName->isNull())
-        emitThrowTypeError(Identifier::fromString(m_vm, makeString("Cannot destructure property '"_s, propertyName->string(), "' from null or undefined value"_s)));
-    else
+    if (propertyName && !propertyName->isNull()) {
+        auto errorMessageStr = tryMakeString("Cannot destructure property '"_s, propertyName->string(), "' from null or undefined value"_s);
+        if (!errorMessageStr) [[unlikely]]
+            emitThrowTypeError("Cannot destructure null or undefined value"_s);
+        else
+            emitThrowTypeError(Identifier::fromString(m_vm, errorMessageStr));
+    } else
         emitThrowTypeError("Cannot destructure null or undefined value"_s);
 
     emitLabel(target.get());
@@ -5111,7 +5145,7 @@ RegisterID* BytecodeGenerator::emitGetGenericIterator(RegisterID* argument, Thro
     RefPtr<RegisterID> iterator = emitGetById(newTemporary(), argument, propertyNames().iteratorSymbol);
     emitCallIterator(iterator.get(), argument, node);
 
-    return iterator.get();
+    return iterator.unsafeGet();
 }
 
 RegisterID* BytecodeGenerator::emitIteratorGenericNext(RegisterID* dst, RegisterID* nextMethod, RegisterID* iterator, const ThrowableExpressionData* node, EmitAwait doEmitAwait)
@@ -5199,7 +5233,7 @@ RegisterID* BytecodeGenerator::emitGetAsyncIterator(RegisterID* argument, Throwa
     emitCallIterator(iterator.get(), argument, node);
     emitLabel(iteratorReceived.get());
 
-    return iterator.get();
+    return iterator.unsafeGet();
 }
 
 RegisterID* BytecodeGenerator::emitDelegateYield(RegisterID* argument, ThrowableExpressionData* node)
@@ -5320,7 +5354,7 @@ RegisterID* BytecodeGenerator::emitDelegateYield(RegisterID* argument, Throwable
     }
 
     emitGetById(value.get(), value.get(), propertyNames().value);
-    return value.get();
+    return value.unsafeGet();
 }
 
 

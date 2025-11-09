@@ -28,7 +28,6 @@
 
 #include "Chrome.h"
 #include "DetectedFace.h"
-#include "DocumentInlines.h"
 #include "FaceDetectorOptions.h"
 #include "ImageBitmap.h"
 #include "ImageBitmapOptions.h"

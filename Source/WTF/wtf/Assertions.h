@@ -978,10 +978,10 @@ NO_RETURN_DUE_TO_CRASH ALWAYS_INLINE void WTFCrashWithInfo(int line, const char*
     uint64_t x1Value = reinterpret_cast<uintptr_t>(file);
     uint64_t x2Value = reinterpret_cast<uintptr_t>(function);
     uint64_t x3Value = static_cast<uint64_t>(static_cast<int64_t>(counter));
-    register uint64_t x0GPR asm(CRASH_ARG_GPR0) = x0Value;
-    register uint64_t x1GPR asm(CRASH_ARG_GPR1) = x1Value;
-    register uint64_t x2GPR asm(CRASH_ARG_GPR2) = x2Value;
-    register uint64_t x3GPR asm(CRASH_ARG_GPR3) = x3Value;
+    register uint64_t x0GPR __asm__(CRASH_ARG_GPR0) = x0Value;
+    register uint64_t x1GPR __asm__(CRASH_ARG_GPR1) = x1Value;
+    register uint64_t x2GPR __asm__(CRASH_ARG_GPR2) = x2Value;
+    register uint64_t x3GPR __asm__(CRASH_ARG_GPR3) = x3Value;
     __asm__ volatile (WTF_FATAL_CRASH_INST : : "r"(x0GPR), "r"(x1GPR), "r"(x2GPR), "r"(x3GPR));
     __builtin_unreachable();
 }

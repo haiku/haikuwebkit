@@ -23,6 +23,7 @@
 
 #include "AXObjectCache.h"
 #include "ContainerNodeInlines.h"
+#include "DocumentView.h"
 #include "HTMLNames.h"
 #include "HTMLParserIdioms.h"
 #include "ProgressShadowElement.h"

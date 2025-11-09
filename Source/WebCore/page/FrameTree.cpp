@@ -22,7 +22,6 @@
 #include "FrameTree.h"
 
 #include "Document.h"
-#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "HTMLFrameOwnerElement.h"
 #include "LocalFrame.h"
@@ -159,7 +158,7 @@ Frame* FrameTree::scopedChild(unsigned index, TreeScope* scope) const
     for (RefPtr result = firstChild(); result; result = result->tree().nextSibling()) {
         if (inScope(*result, *scope)) {
             if (scopedIndex == index)
-                return result.get();
+                return result.unsafeGet();
             scopedIndex++;
         }
     }
@@ -174,7 +173,7 @@ inline Frame* FrameTree::scopedChild(NOESCAPE const Function<bool(const FrameTre
 
     for (RefPtr child = firstChild(); child; child = child->tree().nextSibling()) {
         if (isMatch(child->tree()) && inScope(*child, *scope))
-            return child.get();
+            return child.unsafeGet();
     }
     return nullptr;
 }
@@ -306,13 +305,13 @@ inline Frame* FrameTree::find(const AtomString& name, F&& nameGetter, Frame& act
     Ref thisFrame = m_thisFrame.get();
     for (RefPtr frame = thisFrame.ptr(); frame; frame = frame->tree().traverseNext(thisFrame.ptr())) {
         if (nameGetter(frame->tree()) == name)
-            return frame.get();
+            return frame.unsafeGet();
     }
 
     // Then the rest of the tree.
     for (RefPtr frame = &thisFrame->mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (nameGetter(frame->tree()) == name)
-            return frame.get();
+            return frame.unsafeGet();
     }
 
     // Search the entire tree of each of the other pages in this namespace.
@@ -326,7 +325,7 @@ inline Frame* FrameTree::find(const AtomString& name, F&& nameGetter, Frame& act
             continue;
         for (RefPtr frame = &otherPage->mainFrame(); frame; frame = frame->tree().traverseNext()) {
             if (nameGetter(frame->tree()) == name && isFrameFamiliarWith(activeFrame, *frame))
-                return frame.get();
+                return frame.unsafeGet();
         }
     }
 

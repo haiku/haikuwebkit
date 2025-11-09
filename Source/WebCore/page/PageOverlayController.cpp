@@ -28,6 +28,7 @@
 
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "DocumentView.h"
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
 #include "LocalFrameInlines.h"
@@ -445,6 +446,11 @@ void PageOverlayController::didChangeOverlayBackgroundColor(PageOverlay& overlay
     ASSERT(m_pageOverlays.contains(&overlay));
     if (RefPtr layer = m_overlayGraphicsLayers.get(overlay))
         layer->setBackgroundColor(overlay.backgroundColor());
+}
+
+int PageOverlayController::overlayCount() const
+{
+    return m_overlayGraphicsLayers.computeSize();
 }
 
 bool PageOverlayController::shouldSkipLayerInDump(const GraphicsLayer*, OptionSet<LayerTreeAsTextOptions> options) const

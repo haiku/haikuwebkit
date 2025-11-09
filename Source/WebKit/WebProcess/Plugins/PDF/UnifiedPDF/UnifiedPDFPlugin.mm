@@ -74,6 +74,7 @@
 #include <WebCore/DataDetectorElementInfo.h>
 #include <WebCore/DictionaryLookup.h>
 #include <WebCore/DictionaryPopupInfo.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/Editor.h>
 #include <WebCore/EditorClient.h>
 #include <WebCore/EventHandler.h>
@@ -4847,6 +4848,16 @@ bool UnifiedPDFPlugin::delegatesScrollingToMainFrame() const
 RefPtr<PDFPresentationController> UnifiedPDFPlugin::protectedPresentationController() const
 {
     return m_presentationController;
+}
+
+RefPtr<WebCore::GraphicsLayer> UnifiedPDFPlugin::protectedScrollContainerLayer() const
+{
+    return m_scrollContainerLayer;
+}
+
+RefPtr<WebCore::GraphicsLayer> UnifiedPDFPlugin::protectedOverflowControlsContainer() const
+{
+    return m_overflowControlsContainer;
 }
 
 ViewportConfiguration::Parameters UnifiedPDFPlugin::viewportParameters()

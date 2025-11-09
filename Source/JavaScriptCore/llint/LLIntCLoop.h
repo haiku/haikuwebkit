@@ -29,7 +29,7 @@
 
 #include <JavaScriptCore/JSCJSValue.h>
 #include <JavaScriptCore/Opcode.h>
-#include "ProtoCallFrame.h"
+#include <JavaScriptCore/ProtoCallFrame.h>
 
 namespace JSC {
 namespace LLInt {

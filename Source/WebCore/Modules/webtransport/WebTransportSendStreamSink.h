@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WritableStreamSink.h"
+#include <WebCore/WritableStreamSink.h>
 
 namespace WebCore {
 

@@ -303,7 +303,7 @@ static ContainerNode& filterRootById(ContainerNode& rootNode, const CSSSelector&
                     if (inAdjacentChain)
                         searchRoot = searchRoot->parentNode();
                     if (searchRoot && (rootNode.isTreeScope() || searchRoot->isInclusiveDescendantOf(rootNode)))
-                        return *searchRoot;
+                        return *searchRoot.unsafeGet();
                 }
             }
         }

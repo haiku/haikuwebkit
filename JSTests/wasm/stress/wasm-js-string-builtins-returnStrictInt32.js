@@ -1,3 +1,4 @@
+//@ skip if $addressBits <= 32
 /*
 (module
     (import "env" "memory" (memory 1))

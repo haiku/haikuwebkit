@@ -30,8 +30,6 @@ class CSSToLengthConversionData;
 class SVGElement;
 class WeakPtrImplWithEventTargetData;
 
-struct Length;
-
 template<typename> class ExceptionOr;
 
 namespace Style {
@@ -47,13 +45,19 @@ struct StrokeWidth;
 
 class SVGLengthContext {
 public:
-    explicit SVGLengthContext(const SVGElement*);
+    explicit SVGLengthContext(const SVGElement*, const std::optional<FloatSize>& viewportSize = std::nullopt);
     ~SVGLengthContext();
 
     template<typename T>
-    static FloatRect resolveRectangle(const T* context, SVGUnitTypes::SVGUnitType type, const FloatRect& viewport)
+    static FloatRect resolveRectangle(const SVGElement* context, T& element, SVGUnitTypes::SVGUnitType type, const FloatRect& viewport)
     {
-        return resolveRectangle(context, type, viewport, context->x(), context->y(), context->width(), context->height());
+        return resolveRectangle(context, type, viewport, element.x(), element.y(), element.width(), element.height());
+    }
+
+    template<typename T>
+    static FloatRect resolveRectangle(const T& element, SVGUnitTypes::SVGUnitType type, const FloatRect& viewport)
+    {
+        return resolveRectangle(&element, element, type, viewport);
     }
 
     static FloatRect resolveRectangle(const SVGElement*, SVGUnitTypes::SVGUnitType, const FloatRect& viewport, const SVGLengthValue& x, const SVGLengthValue& y, const SVGLengthValue& width, const SVGLengthValue& height);

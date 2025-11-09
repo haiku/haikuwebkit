@@ -207,6 +207,9 @@ void VulkanCaps::init(const ContextOptions& contextOptions,
 
     fSupportsYcbcrConversion = enabledFeatures.fSamplerYcbcrConversion;
     fSupportsDeviceFaultInfo = enabledFeatures.fDeviceFault;
+    fSupportsFrameBoundary = enabledFeatures.fFrameBoundary;
+
+    fSupportsPipelineCreationCacheControl = enabledFeatures.fPipelineCreationCacheControl;
 
     if (enabledFeatures.fAdvancedBlendModes) {
         fBlendEqSupport = enabledFeatures.fCoherentAdvancedBlendModes
@@ -231,16 +234,7 @@ void VulkanCaps::init(const ContextOptions& contextOptions,
     fIsInputAttachmentReadCoherent = fSupportsRasterizationOrderColorAttachmentAccess ||
                                      vendorID == kARM_VkVendor || vendorID == kImagination_VkVendor;
 
-    // TODO(skbug.com/40045541): We must force std430 array stride when using SSBOs since SPIR-V generation
-    // cannot handle mixed array strides being passed into functions.
-    fShaderCaps->fForceStd430ArrayLayout =
-            fStorageBufferSupport && fResourceBindingReqs.fStorageBufferLayout == Layout::kStd430;
-
-    // Avoid RelaxedPrecision with OpImageSampleImplicitLod due to driver bug with YCbCr sampling.
-    // (skbug.com/421927604)
-    fShaderCaps->fCannotUseRelaxedPrecisionOnImageSample = vendorID == kNvidia_VkVendor;
-
-    fShaderCaps->fDualSourceBlendingSupport = enabledFeatures.fDualSrcBlend;
+    this->initShaderCaps(enabledFeatures, vendorID);
 
     // Vulkan 1.0 dynamic state is always supported.  Dynamic state based on features of
     // VK_EXT_extended_dynamic_state and VK_EXT_extended_dynamic_state2 are also considered basic
@@ -260,6 +254,9 @@ void VulkanCaps::init(const ContextOptions& contextOptions,
     fUsePipelineLibraries =
             enabledFeatures.fGraphicsPipelineLibrary &&
             (deviceProperties.fGpl.graphicsPipelineLibraryFastLinking || vendorID == kARM_VkVendor);
+
+
+    fSupportsFrameBoundary = enabledFeatures.fFrameBoundary;
 
     // Multisampled render to single-sampled usage depends on the mandatory feature of
     // VK_EXT_multisampled_render_to_single_sampled.  Per format queries are needed to determine if
@@ -319,10 +316,23 @@ VulkanCaps::EnabledFeatures VulkanCaps::getEnabledFeatures(
                     enabled.fSamplerYcbcrConversion = feature->samplerYcbcrConversion;
                     break;
                 }
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES: {
+                    const auto* feature =
+                            reinterpret_cast<const VkPhysicalDeviceVulkan13Features*>(pNext);
+                    enabled.fPipelineCreationCacheControl = feature->pipelineCreationCacheControl;
+                    break;
+                }
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES: {
                     const auto* feature =
                             reinterpret_cast<const VkPhysicalDeviceVulkan14Features*>(pNext);
                     enabled.fHostImageCopy = feature->hostImageCopy;
+                    break;
+                }
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES: {
+                    const auto* feature =
+                            reinterpret_cast<
+                                const VkPhysicalDevicePipelineCreationCacheControlFeatures*>(pNext);
+                    enabled.fPipelineCreationCacheControl = feature->pipelineCreationCacheControl;
                     break;
                 }
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES: {
@@ -393,6 +403,13 @@ VulkanCaps::EnabledFeatures VulkanCaps::getEnabledFeatures(
                     const auto* feature =
                             reinterpret_cast<const VkPhysicalDeviceHostImageCopyFeatures*>(pNext);
                     enabled.fHostImageCopy = feature->hostImageCopy;
+                    break;
+                }
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAME_BOUNDARY_FEATURES_EXT: {
+                    const auto *feature = reinterpret_cast<
+                            const VkPhysicalDeviceFrameBoundaryFeaturesEXT*>(
+                            pNext);
+                    enabled.fFrameBoundary = feature->frameBoundary;
                     break;
                 }
                 default:
@@ -849,6 +866,19 @@ TextureInfo VulkanCaps::getDefaultStorageTextureInfo(SkColorType colorType) cons
     info.fAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
     return TextureInfos::MakeVulkan(info);
+}
+
+void VulkanCaps::initShaderCaps(const EnabledFeatures enabledFeatures, const uint32_t vendorID) {
+    // TODO(skbug.com/40045541): We must force std430 array stride when using SSBOs since SPIR-V
+    // generation cannot handle mixed array strides being passed into functions.
+    fShaderCaps->fForceStd430ArrayLayout =
+            fStorageBufferSupport && fResourceBindingReqs.fStorageBufferLayout == Layout::kStd430;
+
+    // Avoid RelaxedPrecision with OpImageSampleImplicitLod due to driver bug with YCbCr sampling.
+    // (skbug.com/421927604)
+    fShaderCaps->fCannotUseRelaxedPrecisionOnImageSample = vendorID == kNvidia_VkVendor;
+
+    fShaderCaps->fDualSourceBlendingSupport = enabledFeatures.fDualSrcBlend;
 }
 
 void VulkanCaps::initFormatTable(const skgpu::VulkanInterface* interface,

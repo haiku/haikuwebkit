@@ -31,7 +31,7 @@ import flatpakutils
 from api_test_runner import TestRunner, create_option_parser, get_runner_args
 
 class WPETestRunner(TestRunner):
-    TestRunner.TEST_TARGETS = [ "WPE", "WPEPlatform", "WPEQt", "TestWebKit", "TestJSC", "TestWTF", "TestWebCore" ]
+    TestRunner.TEST_TARGETS = [ "WPE", "WPEPlatform", "WPEQt", "TestWebKit", "TestJSC", "TestWTF", "TestWebCore", "TestJavaScriptCore" ]
 
     def __init__(self, options, tests=[]):
         super(WPETestRunner, self).__init__("wpe", options, tests)
@@ -40,7 +40,7 @@ class WPETestRunner(TestRunner):
         return os.path.basename(os.path.dirname(test_program)) in ["WPE", "WPEPlatform"] or os.path.basename(test_program) in ["TestJSC"]
 
     def is_google_test(self, test_program):
-        return os.path.basename(test_program) in ["TestWebKit", "TestWTF", "TestWebCore"]
+        return os.path.basename(test_program) in ["TestWebKit", "TestWTF", "TestWebCore", "TestJavaScriptCore"]
 
     def is_qt_test(self, test_program):
         return os.path.basename(os.path.dirname(test_program)) == "WPEQt"

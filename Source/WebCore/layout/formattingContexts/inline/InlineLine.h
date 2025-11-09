@@ -27,6 +27,7 @@
 
 #include <WebCore/InlineDisplayBox.h>
 #include <WebCore/InlineItem.h>
+#include <WebCore/InlineLineTypes.h>
 #include <WebCore/InlineTextItem.h>
 #include <WebCore/RenderStyle.h>
 #include <unicode/ubidi.h>
@@ -44,7 +45,6 @@ enum class IntrinsicWidthMode;
 class Line {
 public:
     Line(const InlineFormattingContext&);
-    ~Line() = default;
 
     void initialize(const Vector<InlineItem, 1>& lineSpanningInlineBoxes, bool isFirstFormattedLine);
 
@@ -232,7 +232,7 @@ public:
     };
     Result close();
 
-    static bool restoreTrimmedTrailingWhitespace(InlineLayoutUnit trimmedTrailingWhitespaceWidth, RunList&);
+    static bool restoreTrimmedTrailingWhitespace(InlineLayoutUnit trimmedTrailingWhitespaceWidth, RunList&, InlineItemRange, const InlineItemList&);
 
 private:
     InlineLayoutUnit lastRunLogicalRight() const { return m_runs.isEmpty() ? 0.0f : m_runs.last().logicalRight(); }
@@ -243,6 +243,8 @@ private:
 
     bool isFirstFormattedLine() const { return m_isFirstFormattedLine; }
     const InlineFormattingContext& formattingContext() const;
+
+    static bool appendTrailingInlineItemAsTrailingRun(RunList&, InlineLayoutUnit trimmedTrailingWhitespaceWidth, InlineItemRange, const InlineItemList&);
 
     struct TrimmableTrailingContent {
         TrimmableTrailingContent(RunList&);

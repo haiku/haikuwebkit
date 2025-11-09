@@ -185,6 +185,8 @@ public:
 
     void updateNavigationEntry(Ref<HistoryItem>&&, ShouldCopyStateObjectFromCurrentEntry);
 
+    static Vector<Ref<HistoryItem>> filterHistoryItemsForNavigationAPI(Vector<Ref<HistoryItem>>&&, HistoryItem&);
+
 private:
     explicit Navigation(LocalDOMWindow&);
 

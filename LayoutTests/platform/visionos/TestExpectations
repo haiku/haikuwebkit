@@ -82,7 +82,7 @@ interaction-region [ Pass ]
 media/media-css-volume-locked.html [ Pass ]
 overlay-region [ Pass ]
 platform/visionos/transforms [ Pass ]
-fast/images/spatial-image-controls.html [ Pass ]
+fast/images/spatial-image-controls-rtl.html [ Pass ]
 
 imported/w3c/web-platform-tests/webxr [ Pass ]
 http/wpt/webxr [ Pass ]
@@ -161,18 +161,29 @@ platform/visionos/transforms/separated-update.html [ Failure ]
 platform/visionos/transforms/separated-video.html [ Failure ]
 platform/visionos/transforms/separated.html [ Failure ]
 
-# Passing as of visionOS 26
-http/wpt/model-element [ Pass ]
-http/tests/security/model-element [ Pass ]
-
 # Tests which pass only with form control refresh enabled (visionOS 26)
 fast/forms/form-control-refresh [ Pass ]
+
+# webkit.org/b/300918 REGRESSION(298517@main, 299088@main): Added tests broken on visionOS 26
+fast/forms/form-control-refresh/accent-color-contrast-does-not-affect-inactive-window-dark-mode.html [ Failure ]
+fast/forms/form-control-refresh/accent-color-contrast-does-not-affect-inactive-window-light-mode.html [ Failure ]
+fast/forms/form-control-refresh/autofilled-and-obscured-text-input-dark-mode.html [ Failure ]
+fast/forms/form-control-refresh/autofilled-and-obscured-text-input-light-mode.html [ Failure ]
+fast/forms/form-control-refresh/autofilled-text-input-dark-mode.html [ Failure ]
+fast/forms/form-control-refresh/autofilled-text-input-light-mode.html [ Failure ]
+fast/forms/form-control-refresh/submit-button-appearance-matches-button-window-inactive.html [ Failure ]
 
 # Window inactive appearance is only used on macOS.
 fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-dark-bg-light-color-scheme.html [ Skip ]
 fast/forms/form-control-refresh/checkbox-radio-inactive-appearance-light-bg-dark-color-scheme.html [ Skip ]
 fast/forms/form-control-refresh/progress-window-inactive-state-dark-mode.html [ Skip ]
 fast/forms/form-control-refresh/progress-window-inactive-state-light-mode.html [ Skip ]
+
+# webkit.org/b/300929 REGRESSION(297559@main): interaction-region/form-control-refresh/date-native-interaction-region.html does not pass on visionOS
+interaction-region/form-control-refresh/date-native-interaction-region.html [ Failure ]
+
+# webkit.org/b/300933 REGRESSION(visionOS 26): interaction-region/overlay.html started failing
+interaction-region/overlay.html [ Failure ]
 
 ### END OF Triaged failures
 ###################################################################################################

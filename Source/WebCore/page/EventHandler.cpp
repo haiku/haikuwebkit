@@ -42,6 +42,10 @@
 #include "DocumentFullscreen.h"
 #include "DocumentInlines.h"
 #include "DocumentMarkerController.h"
+#include "DocumentMarkers.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "DragController.h"
 #include "DragEvent.h"
 #include "DragState.h"
@@ -56,6 +60,7 @@
 #include "FloatRect.h"
 #include "FocusController.h"
 #include "FocusOptions.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "FrameTree.h"
@@ -79,7 +84,7 @@
 #include "InspectorInstrumentation.h"
 #include "KeyboardEvent.h"
 #include "KeyboardScrollingAnimator.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "MouseEvent.h"
@@ -97,7 +102,6 @@
 #include "PointerCaptureController.h"
 #include "PointerEventTypeNames.h"
 #include "PseudoClassChangeInvalidation.h"
-#include "Quirks.h"
 #include "Range.h"
 #include "RemoteFrame.h"
 #include "RemoteFrameGeometryTransformer.h"
@@ -558,7 +562,7 @@ static Node* nodeToSelectOnMouseDownForNode(Node& targetNode)
         return nullptr;
 
     if (RefPtr rootUserSelectAll = Position::rootUserSelectAllForNode(&targetNode))
-        return rootUserSelectAll.get();
+        return rootUserSelectAll.unsafeGet();
 
     if (targetNode.shouldSelectOnMouseDown())
         return &targetNode;
@@ -4773,7 +4777,7 @@ bool EventHandler::handleDrag(const MouseEventWithHitTestResults& event, CheckDr
     
     if (m_mouseDownMayStartDrag) {
         RefPtr page = frame->page();
-        m_didStartDrag = page && page->dragController().startDrag(frame, dragState(), sourceOperationMask, event.event(), m_mouseDownContentsPosition, hasNonDefaultPasteboardData);
+        m_didStartDrag = page && page->dragController().startDrag(frame, dragState(), sourceOperationMask, event.event(), m_mouseDownContentsPosition, hasNonDefaultPasteboardData, frame->rootFrame().frameID());
         // In WebKit2 we could re-enter this code and start another drag.
         // On macOS this causes problems with the ownership of the pasteboard and the promised types.
         if (m_didStartDrag) {

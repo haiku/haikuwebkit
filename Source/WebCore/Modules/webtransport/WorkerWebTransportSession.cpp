@@ -68,14 +68,14 @@ void WorkerWebTransportSession::receiveDatagram(std::span<const uint8_t> span, b
     });
 }
 
-void WorkerWebTransportSession::networkProcessCrashed()
+void WorkerWebTransportSession::didFail()
 {
     ASSERT(RunLoop::isMain());
     ScriptExecutionContext::postTaskTo(m_contextID, [weakClient = m_client] (auto&) mutable {
         RefPtr client = weakClient.get();
         if (!client)
             return;
-        client->networkProcessCrashed();
+        client->didFail();
     });
 }
 

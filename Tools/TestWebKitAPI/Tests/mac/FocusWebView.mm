@@ -29,12 +29,15 @@
 
 #import "HTTPServer.h"
 #import "PlatformUtilities.h"
+#import "Test.h"
 #import "TestNavigationDelegate.h"
 #import "TestProtocol.h"
 #import "TestUIDelegate.h"
 #import "TestWKWebView.h"
 #import "WKWebViewConfigurationExtras.h"
 #import <QuartzCore/QuartzCore.h>
+#import <WebKit/WKPreferencesPrivate.h>
+#import <WebKit/_WKFrameTreeNode.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/darwin/DispatchExtras.h>
 
@@ -79,6 +82,20 @@
     return NO;
 }
 
+@end
+
+static bool didFocusMainFrameInput = false;
+static bool didFocusInnerFrameInput = false;
+
+@interface FocusEventMessageHandler : NSObject <WKScriptMessageHandler>
+@end
+
+@implementation FocusEventMessageHandler
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message
+{
+    didFocusMainFrameInput = [[message body] isEqualToString:@"input-focused"];
+    didFocusInnerFrameInput = [[message body] isEqualToString:@"iframeInput-focused"];
+}
 @end
 
 namespace TestWebKitAPI {
@@ -195,6 +212,120 @@ TEST(FocusWebView, DoNotFocusWebViewWhenUnparented)
     [webView objectByEvaluatingJavaScript:@"openNewTab()"];
     EXPECT_FALSE(calledFocusWebView);
 }
+
+class CrossOriginIframeRelinquishToChromeTests : public ::testing::TestWithParam<bool> {
+public:
+    bool siteIsolationEnabled() const { return GetParam(); }
+    static std::string testNameGenerator(testing::TestParamInfo<bool> info)
+    {
+        return std::string { "siteIsolation_is_" } + (info.param ? "enabled" : "disabled");
+    }
+    void runTest();
+};
+
+void CrossOriginIframeRelinquishToChromeTests::runTest()
+{
+    auto exampleHTML = "<script>"
+        "window.addEventListener('load', () => {"
+        "    document.getElementById('input').addEventListener('focus', () => {"
+        "        window.webkit.messageHandlers.focusEvent.postMessage('input-focused');"
+        "    });"
+        "});"
+        "</script>"
+        "<body id=mainFrameBody>"
+        "<div id='input' contenteditable='true' tabindex='1'>Main Frame</div>"
+        "<iframe id='iframe' src='https://webkit.org/iframe'></iframe>"
+        "</body>"_s;
+
+    auto iframeHTML = "<script>"
+        "window.addEventListener('load', () => {"
+        "    document.getElementById('iframeInput').addEventListener('focus', () => {"
+        "        window.webkit.messageHandlers.focusEvent.postMessage('iframeInput-focused');"
+        "    });"
+        "});"
+        "</script>"
+        "<body id=iframeBody>"
+        "<input id='iframeInput' type='text' value='Iframe Input'>"
+        "</body>"_s;
+
+    HTTPServer server { {
+        { "/example"_s, { exampleHTML } },
+        { "/iframe"_s, { iframeHTML } }
+    }, HTTPServer::Protocol::HttpsProxy };
+
+    RetainPtr configuration = server.httpsProxyConfiguration();
+    [[configuration preferences] _setSiteIsolationEnabled:siteIsolationEnabled()];
+
+    RetainPtr focusHandler = adoptNS([[FocusEventMessageHandler alloc] init]);
+    [[configuration userContentController] addScriptMessageHandler:focusHandler.get() name:@"focusEvent"];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400) configuration:configuration.get()]);
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+    [webView setNavigationDelegate:navigationDelegate.get()];
+
+    NSRect newWindowFrame = NSMakeRect(0, 0, 400, 500);
+    NSRect textFieldFrame = NSMakeRect(0, 400, 400, 100);
+    RetainPtr textField = [[TestNSTextView alloc] initWithFrame:textFieldFrame];
+    [textField setEditable:YES];
+    [textField setSelectable:YES];
+
+    [[[webView window] contentView] addSubview:textField.get()];
+    [[webView window] setFrame:newWindowFrame display:YES];
+    [[webView window] makeKeyWindow];
+    [NSApp _setKeyWindow:[webView window]];
+    [[webView window] makeFirstResponder:webView.get()];
+
+    RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
+    bool takeFocusCalled = false;
+    [uiDelegate setTakeFocus:[&takeFocusCalled, textField](WKWebView *view, _WKFocusDirection) {
+        takeFocusCalled = true;
+        [view.window makeFirstResponder:textField.get()];
+    }];
+    [webView setUIDelegate:uiDelegate.get()];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    struct FrameFocusState {
+        const char* activeElementID;
+        bool hasFocus;
+    };
+    auto checkFocusState = [webView](FrameFocusState mainFrame, FrameFocusState innerFrame) {
+        // FIXME: <rdar://161283373> This IPC round trip should not be necessary.
+        [webView waitForNextPresentationUpdate];
+
+        EXPECT_WK_STREQ([webView stringByEvaluatingJavaScript:@"document.activeElement.id"], mainFrame.activeElementID);
+        EXPECT_EQ([[webView objectByEvaluatingJavaScript:@"document.hasFocus()"] boolValue], mainFrame.hasFocus);
+
+        EXPECT_WK_STREQ([webView stringByEvaluatingJavaScript:@"document.activeElement.id" inFrame:[webView firstChildFrame]], innerFrame.activeElementID);
+        EXPECT_EQ([[webView objectByEvaluatingJavaScript:@"document.hasFocus()" inFrame:[webView firstChildFrame]] boolValue], innerFrame.hasFocus);
+    };
+
+    checkFocusState({ "mainFrameBody", true }, { "iframeBody", false });
+
+    [webView typeCharacter:'\t'];
+    Util::run(&didFocusMainFrameInput);
+    checkFocusState({ "input", true }, { "iframeBody", false });
+
+    [webView typeCharacter:'\t'];
+    Util::run(&didFocusInnerFrameInput);
+    checkFocusState({ "iframe", true }, { "iframeInput", true });
+
+    [webView typeCharacter:'\t'];
+    Util::run(&takeFocusCalled);
+    checkFocusState({ "mainFrameBody", false }, { "iframeBody", false });
+    EXPECT_TRUE([textField didBecomeFirstResponder]);
+    EXPECT_FALSE([textField didSeeKeyDownEvent]);
+}
+
+TEST_P(CrossOriginIframeRelinquishToChromeTests, Test)
+{
+    runTest();
+}
+
+INSTANTIATE_TEST_SUITE_P(FocusWebView, CrossOriginIframeRelinquishToChromeTests, testing::Bool(), &TestWebKitAPI::CrossOriginIframeRelinquishToChromeTests::testNameGenerator);
 
 } // namespace TestWebKitAPI
 

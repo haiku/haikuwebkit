@@ -60,7 +60,11 @@ private:
         EventTarget* relatedTarget, double force, SyntheticClickType, DataTransfer*, IsSimulated, IsTrusted);
     DragEvent();
 
+    bool isDragEvent() const final { return true; }
+
     RefPtr<DataTransfer> m_dataTransfer;
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_EVENT(DragEvent)

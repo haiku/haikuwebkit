@@ -1058,19 +1058,15 @@ void RemoteMediaPlayerProxy::setLegacyCDMSession(std::optional<RemoteLegacyCDMSe
     RefPtr player = m_player;
 
     if (m_legacySession) {
-        if (RefPtr cdmSession = manager->gpuConnectionToWebProcess()->protectedLegacyCdmFactoryProxy()->getSession(*m_legacySession)) {
+        if (RefPtr cdmSession = manager->gpuConnectionToWebProcess()->protectedLegacyCdmFactoryProxy()->getSession(*m_legacySession))
             player->setCDMSession(nullptr);
-            cdmSession->setPlayer(nullptr);
-        }
     }
 
     m_legacySession = instanceId;
 
     if (m_legacySession) {
-        if (RefPtr cdmSession = manager->gpuConnectionToWebProcess()->protectedLegacyCdmFactoryProxy()->getSession(*m_legacySession)) {
+        if (RefPtr cdmSession = manager->gpuConnectionToWebProcess()->protectedLegacyCdmFactoryProxy()->getSession(*m_legacySession))
             player->setCDMSession(cdmSession->protectedSession().get());
-            cdmSession->setPlayer(*this);
-        }
     }
 }
 
@@ -1122,16 +1118,6 @@ void RemoteMediaPlayerProxy::setShouldContinueAfterKeyNeeded(bool should)
     protectedPlayer()->setShouldContinueAfterKeyNeeded(should);
 }
 #endif
-
-void RemoteMediaPlayerProxy::beginSimulatedHDCPError()
-{
-    protectedPlayer()->beginSimulatedHDCPError();
-}
-
-void RemoteMediaPlayerProxy::endSimulatedHDCPError()
-{
-    protectedPlayer()->endSimulatedHDCPError();
-}
 
 void RemoteMediaPlayerProxy::notifyActiveSourceBuffersChanged()
 {

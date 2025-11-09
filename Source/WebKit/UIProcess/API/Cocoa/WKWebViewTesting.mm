@@ -1080,6 +1080,15 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
 #endif
 }
 
+- (bool)_receivedLogsDuringLaunchForTesting
+{
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    if (RefPtr mainFrame = _page->mainFrame())
+        return mainFrame->process().receivedLogsDuringLaunchForTesting();
+#endif
+    return 0;
+}
+
 - (void)_modelProcessModelPlayerCountForTesting:(void(^)(NSUInteger))completionHandler
 {
 #if ENABLE(MODEL_PROCESS)
@@ -1183,4 +1192,15 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
 #endif
 
 @implementation _WKNowPlayingMetadata : NSObject
+- (void)dealloc
+{
+IGNORE_NULL_CHECK_WARNINGS_BEGIN
+    self.title = nil;
+    self.artist = nil;
+    self.album = nil;
+    self.sourceApplicationIdentifier = nil;
+IGNORE_NULL_CHECK_WARNINGS_END
+
+    [super dealloc];
+}
 @end

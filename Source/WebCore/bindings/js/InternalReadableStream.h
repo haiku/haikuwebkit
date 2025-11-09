@@ -48,12 +48,10 @@ public:
     void pipeTo(ReadableStreamSink&);
     ExceptionOr<std::pair<Ref<InternalReadableStream>, Ref<InternalReadableStream>>> tee(bool shouldClone);
 
-    JSC::JSValue cancelForBindings(JSC::JSGlobalObject& globalObject, JSC::JSValue value) { return cancel(globalObject, value, Use::Bindings); }
     JSC::JSValue pipeTo(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
     JSC::JSValue pipeThrough(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
 
-    enum class Use : bool { Bindings, Private };
-    JSC::JSValue cancel(JSC::JSGlobalObject&, JSC::JSValue, Use);
+    JSC::JSValue cancel(JSC::JSGlobalObject&, JSC::JSValue);
 
     enum class State : uint8_t { Readable, Closed, Errored };
     State state() const;

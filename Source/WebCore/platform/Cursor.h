@@ -38,8 +38,6 @@ typedef HICON HCURSOR;
 #include <wtf/RefCounted.h>
 #elif PLATFORM(COCOA)
 #include <wtf/RetainPtr.h>
-#elif PLATFORM(GTK)
-#include "GRefPtrGtk.h"
 #elif PLATFORM(HAIKU)
 #include <app/Cursor.h>
 #endif
@@ -76,8 +74,6 @@ private:
 using PlatformCursor = RefPtr<SharedCursor>;
 #elif HAVE(NSCURSOR)
 using PlatformCursor = NSCursor *;
-#elif PLATFORM(GTK)
-using PlatformCursor = GRefPtr<GdkCursor>;
 #elif PLATFORM(HAIKU)
 using PlatformCursor = BCursor*;
 #else

@@ -320,9 +320,9 @@ inline FloatPoint toFloatPoint(const FloatSize& a)
     return FloatPoint(a.width(), a.height());
 }
 
-inline bool areEssentiallyEqual(const FloatPoint& a, const FloatPoint& b, float epsilon = std::numeric_limits<float>::epsilon())
+inline bool areEssentiallyEqual(const FloatPoint& a, const FloatPoint& b)
 {
-    return WTF::areEssentiallyEqual(a.x(), b.x(), epsilon) && WTF::areEssentiallyEqual(a.y(), b.y(), epsilon);
+    return WTF::areEssentiallyEqual(a.x(), b.x()) && WTF::areEssentiallyEqual(a.y(), b.y());
 }
 
 inline void add(Hasher& hasher, const FloatPoint& point)

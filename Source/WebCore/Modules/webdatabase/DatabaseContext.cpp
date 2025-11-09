@@ -35,7 +35,7 @@
 #include "DatabaseManager.h"
 #include "DatabaseTask.h"
 #include "DatabaseThread.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "FrameDestructionObserverInlines.h"
 #include "LegacySchemeRegistry.h"
 #include "Page.h"

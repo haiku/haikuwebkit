@@ -42,9 +42,7 @@ AccessibilityTextMarker::AccessibilityTextMarker(const AccessibilityTextMarker& 
 {
 }
 
-AccessibilityTextMarker::~AccessibilityTextMarker()
-{
-}
+AccessibilityTextMarker::~AccessibilityTextMarker() = default;
 
 bool AccessibilityTextMarker::isEqual(AccessibilityTextMarker* other)
 {
@@ -68,9 +66,7 @@ AccessibilityTextMarkerRange::AccessibilityTextMarkerRange(const AccessibilityTe
 {
 }
 
-AccessibilityTextMarkerRange::~AccessibilityTextMarkerRange()
-{
-}
+AccessibilityTextMarkerRange::~AccessibilityTextMarkerRange() = default;
 
 bool AccessibilityTextMarkerRange::isEqual(AccessibilityTextMarkerRange* other)
 {

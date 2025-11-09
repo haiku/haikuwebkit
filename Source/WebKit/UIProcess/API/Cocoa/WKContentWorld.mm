@@ -67,7 +67,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(WKContentWorld.class, self))
         return;
 
-    _contentWorld->~ContentWorld();
+    SUPPRESS_UNCOUNTED_ARG _contentWorld->~ContentWorld();
 
     [super dealloc];
 }

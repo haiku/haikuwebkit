@@ -87,6 +87,7 @@
     macro(bytecodes) \
     macro(bytecodesID) \
     macro(calendar) \
+    macro(calendarName) \
     macro(callee) \
     macro(caller) \
     macro(captureStackTrace) \
@@ -252,6 +253,7 @@
     macro(resizable) \
     macro(resize) \
     macro(resolve) \
+    macro(reject) \
     macro(roundingIncrement) \
     macro(roundingMode) \
     macro(roundingPriority) \

@@ -31,19 +31,36 @@
  * JavaScriptCore. Upon crashing of a process, on Apple platforms, ReportCrash will call
  * into libpas (through JSC) to inspect whether it was a PGM crash in libpas or not. We will report
  * back results from libpas with any information about the PGM crash. This will be logged in
- * the local crash report logs generated on the device. */
+ * the local crash report logs generated on the device.
+ *
+ * Because this is a SPI header, never include any other pas headers. This file must be self-contained.
+ */
 
+#include <stddef.h>
 #ifdef __APPLE__
-
-#include "pas_backtrace_metadata.h"
 #include <mach/mach_types.h>
 #include <mach/vm_types.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Read memory from crashed process. */
+#define PAS_PGM_BACKTRACE_MAX_FRAMES 31
+
+/* structure for holding the allocation and deallocation backtraces */
+typedef struct pas_backtrace_metadata pas_backtrace_metadata;
+struct pas_backtrace_metadata {
+    int frame_size;
+    void* backtrace_buffer[PAS_PGM_BACKTRACE_MAX_FRAMES];
+};
+
+#ifdef __APPLE__
+
+/* Read memory from crashed process.
+ * This must be an exact same definition to what malloc_private.h defines. We are redeclararing it here
+ * just not to include malloc_private.h for random cases.
+ */
 typedef void *(*crash_reporter_memory_reader_t)(task_t task, vm_address_t address, size_t size);
 
 /* This must be in sync between ReportCrash and libpas to generate a report. 

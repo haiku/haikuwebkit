@@ -62,7 +62,7 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
 
     // FIXME: Replace with support for CSS Values 5 attr() substitution function.
     auto processAttrContent = [&](const CSSAttrValue& value) -> AtomString {
-        if (state.style().pseudoElementType() == PseudoId::None)
+        if (!state.style().pseudoElementType())
             state.style().setHasAttrContent();
         else
             const_cast<RenderStyle&>(state.parentStyle()).setHasAttrContent();

@@ -150,8 +150,10 @@ function fulfillFetch(entry, source)
 
     "use strict";
 
-    if (!entry.fetch)
-        entry.fetch = @newPromiseCapability(@InternalPromise).promise;
+    if (!entry.fetch) {
+        var promiseConstructor = @InternalPromise;
+        entry.fetch = @createPromise(promiseConstructor, /* isInternalPromise */ true);
+    }
     @forceFulfillPromise(entry.fetch, source);
     @setStateToMax(entry, @ModuleInstantiate);
 }

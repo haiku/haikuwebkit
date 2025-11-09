@@ -74,7 +74,7 @@ public:
 
     struct LocalCaretRect {
         LayoutRect rect;
-        RenderObject* renderer { nullptr };
+        CheckedPtr<RenderObject> renderer;
     };
     WEBCORE_EXPORT LocalCaretRect localCaretRect() const;
 

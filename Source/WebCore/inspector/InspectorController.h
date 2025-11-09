@@ -118,6 +118,8 @@ public:
     InspectorBackendClient* inspectorBackendClient() const { return m_inspectorBackendClient.get(); }
     InspectorFrontendClient* inspectorFrontendClient() const { return m_inspectorFrontendClient; }
 
+    InstrumentingAgents& instrumentingAgents() const { return m_instrumentingAgents.get(); }
+
     Inspector::InspectorAgent& ensureInspectorAgent();
     InspectorDOMAgent& ensureDOMAgent();
     WEBCORE_EXPORT InspectorPageAgent& ensurePageAgent();
@@ -153,7 +155,7 @@ private:
 
     // Lazy, but also on-demand agents.
     Inspector::InspectorAgent* m_inspectorAgent { nullptr };
-    InspectorDOMAgent* m_domAgent { nullptr };
+    CheckedPtr<InspectorDOMAgent> m_domAgent;
     InspectorPageAgent* m_pageAgent { nullptr };
 
     bool m_isUnderTest { false };

@@ -61,6 +61,7 @@
 #include "src/core/SkMask.h"
 #include "src/core/SkMaskFilterBase.h"
 #include "src/core/SkPaintPriv.h"
+#include "src/core/SkPathPriv.h"
 #include "src/core/SkRasterClip.h"
 #include "src/core/SkSpecialImage.h"
 #include "src/core/SkStrikeSpec.h"
@@ -291,7 +292,11 @@ static void set_style(SkTCopyOnFirstWrite<SkPaint>* paint, SkPaint::Style style)
 static bool calculate_inverse_path(const SkRect& bounds, const SkPath& invPath,
                                    SkPath* outPath) {
     SkASSERT(invPath.isInverseFillType());
-    return Op(SkPath::Rect(bounds), invPath, kIntersect_SkPathOp, outPath);
+    if (auto result = Op(SkPath::Rect(bounds), invPath, kIntersect_SkPathOp)) {
+        *outPath = *result;
+        return true;
+    }
+    return false;
 }
 
 sk_sp<SkDevice> SkPDFDevice::createDevice(const CreateInfo& cinfo, const SkPaint* layerPaint) {
@@ -438,9 +443,10 @@ void SkPDFDevice::drawAnnotation(const SkRect& rect, const char key[], SkData* v
     }
     // Convert to path to handle non-90-degree rotations.
     SkPath path = SkPath::Rect(rect).makeTransform(this->localToDevice());
-    SkPath clip;
-    SkClipStack_AsPath(this->cs(), &clip);
-    Op(clip, path, kIntersect_SkPathOp, &path);
+    SkPath clip = SkClipStack_AsPath(this->cs());
+    if (auto result = Op(clip, path, kIntersect_SkPathOp)) {
+        path = *result;
+    }
     // PDF wants a rectangle only.
     SkRect transformedRect = pageXform.mapRect(path.getBounds());
     if (transformedRect.isEmpty()) {
@@ -582,8 +588,8 @@ void SkPDFDevice::drawOval(const SkRect& oval, const SkPaint& paint) {
     this->internalDrawPath(this->cs(), this->localToDevice(), SkPath::Oval(oval), paint, true);
 }
 
-void SkPDFDevice::drawPath(const SkPath& path, const SkPaint& paint, bool pathIsMutable) {
-    this->internalDrawPath(this->cs(), this->localToDevice(), path, paint, pathIsMutable);
+void SkPDFDevice::drawPath(const SkPath& path, const SkPaint& paint) {
+    this->internalDrawPath(this->cs(), this->localToDevice(), path, paint, false);
 }
 
 void SkPDFDevice::internalDrawPathWithFilter(const SkClipStack& clipStack,
@@ -598,11 +604,14 @@ void SkPDFDevice::internalDrawPathWithFilter(const SkClipStack& clipStack,
                                      ? SkStrokeRec::kFill_InitStyle
                                      : SkStrokeRec::kHairline_InitStyle;
     builder.transform(ctm);
-    SkPath path = builder.detach();
+    const auto pathRaw = SkPathPriv::Raw(builder);
+    if (!pathRaw) {
+        return;
+    }
 
     SkIRect bounds = clipStack.bounds(this->bounds()).roundOut();
     SkMaskBuilder sourceMask;
-    if (!skcpu::DrawToMask(path,
+    if (!skcpu::DrawToMask(*pathRaw,
                            bounds,
                            paint->getMaskFilter(),
                            &SkMatrix::I(),
@@ -637,7 +646,7 @@ void SkPDFDevice::internalDrawPathWithFilter(const SkClipStack& clipStack,
             maskDevice->makeFormXObjectFromDevice(dstMaskBounds, true), false,
             SkPDFGraphicState::kLuminosity_SMaskMode, fDocument), content.stream());
     SkPDFUtils::AppendRectangle(SkRect::Make(dstMaskBounds), content.stream());
-    SkPDFUtils::PaintPath(SkPaint::kFill_Style, path.getFillType(), content.stream());
+    SkPDFUtils::PaintPath(SkPaint::kFill_Style, pathRaw->fillType(), content.stream());
     this->clearMaskOnGraphicState(content.stream());
 }
 
@@ -703,7 +712,7 @@ void SkPDFDevice::internalDrawPath(const SkClipStack& clipStack,
             pathPtr = &modifiedPath;
             pathIsMutable = true;
         }
-        pathPtr->transform(matrix);
+        *pathPtr = pathPtr->makeTransform(matrix);
         if (paint->getShader()) {
             transform_shader(paint.writable(), matrix);
         }
@@ -864,13 +873,12 @@ static bool contains(const SkRect& r, SkPoint p) {
 void SkPDFDevice::drawGlyphRunAsPath(
         const sktext::GlyphRun& glyphRun, SkPoint offset, const SkPaint& runPaint) {
     const SkFont& font = glyphRun.font();
-    SkPath path;
 
     struct Rec {
-        SkPath* fPath;
+        SkPathBuilder fBuilder;
         SkPoint fOffset;
         const SkPoint* fPos;
-    } rec = {&path, offset, glyphRun.positions().data()};
+    } rec = {{}, offset, glyphRun.positions().data()};
 
     font.getPaths(glyphRun.glyphsIDs(),
                   [](const SkPath* path, const SkMatrix& mx, void* ctx) {
@@ -879,11 +887,12 @@ void SkPDFDevice::drawGlyphRunAsPath(
                           SkMatrix total = mx;
                           total.postTranslate(rec->fPos->fX + rec->fOffset.fX,
                                               rec->fPos->fY + rec->fOffset.fY);
-                          rec->fPath->addPath(*path, total);
+                          rec->fBuilder.addPath(*path, total);
                       }
                       rec->fPos += 1; // move to the next glyph's position
                   }, &rec);
-    this->internalDrawPath(this->cs(), this->localToDevice(), path, runPaint, true);
+    this->internalDrawPath(this->cs(), this->localToDevice(),
+                           rec.fBuilder.detach(), runPaint, true);
 
     SkFont transparentFont = glyphRun.font();
     transparentFont.setEmbolden(false); // Stop Recursion
@@ -1235,7 +1244,7 @@ bool SkPDFDevice::handleInversePath(const SkPath& origPath,
 
     // Clip is in device space. Transform path and shader into device space.
     SkRect bounds = this->cs().bounds(this->bounds());
-    pathPtr->transform(this->localToDevice(), &modifiedPath);
+    modifiedPath = pathPtr->makeTransform(this->localToDevice());
     if (!calculate_inverse_path(bounds, modifiedPath, &modifiedPath)) {
         return false;
     }
@@ -1878,8 +1887,8 @@ void SkPDFDevice::drawDevice(SkDevice* device, const SkSamplingOptions& sampling
     if (!content) {
         return;
     }
-    SkPath shape = SkPath::Rect(SkRect::Make(device->imageInfo().dimensions()));
-    shape.transform(matrix);
+    SkPath shape = SkPath::Rect(SkRect::Make(device->imageInfo().dimensions()))
+                   .makeTransform(matrix);
     if (content.needShape()) {
         content.setShape(shape);
     }

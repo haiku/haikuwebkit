@@ -26,7 +26,6 @@
 #include "config.h"
 #include "PageNetworkAgent.h"
 
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "FrameConsoleClient.h"
 #include "FrameDestructionObserverInlines.h"
@@ -62,7 +61,7 @@ PageNetworkAgent::~PageNetworkAgent() = default;
 Inspector::Protocol::Network::LoaderId PageNetworkAgent::loaderIdentifier(DocumentLoader* loader)
 {
     if (loader) {
-        if (auto* pageAgent = m_instrumentingAgents.enabledPageAgent())
+        if (auto* pageAgent = Ref { m_instrumentingAgents.get() }->enabledPageAgent())
             return pageAgent->loaderId(loader);
     }
     return { };
@@ -71,7 +70,7 @@ Inspector::Protocol::Network::LoaderId PageNetworkAgent::loaderIdentifier(Docume
 Inspector::Protocol::Network::FrameId PageNetworkAgent::frameIdentifier(DocumentLoader* loader)
 {
     if (loader) {
-        if (auto* pageAgent = m_instrumentingAgents.enabledPageAgent())
+        if (auto* pageAgent = Ref { m_instrumentingAgents.get() }->enabledPageAgent())
             return pageAgent->frameId(loader->frame());
     }
     return { };
@@ -119,7 +118,7 @@ bool PageNetworkAgent::setEmulatedConditionsInternal(std::optional<int>&& bytesP
 
 ScriptExecutionContext* PageNetworkAgent::scriptExecutionContext(Inspector::Protocol::ErrorString& errorString, const Inspector::Protocol::Network::FrameId& frameId)
 {
-    auto* pageAgent = m_instrumentingAgents.enabledPageAgent();
+    auto* pageAgent = Ref { m_instrumentingAgents.get() }->enabledPageAgent();
     if (!pageAgent) {
         errorString = "Page domain must be enabled"_s;
         return nullptr;

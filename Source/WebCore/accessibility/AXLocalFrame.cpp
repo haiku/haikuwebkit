@@ -27,6 +27,7 @@
 #include "AXLocalFrame.h"
 
 #include "AccessibilityObjectInlines.h"
+#include "LocalFrameInlines.h"
 
 namespace WebCore {
 

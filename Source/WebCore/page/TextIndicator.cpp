@@ -39,6 +39,7 @@
 #include "FrameSnapshotting.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"
+#include "GraphicsLayer.h"
 #include "ImageBuffer.h"
 #include "IntRect.h"
 #include "LocalFrame.h"
@@ -96,7 +97,13 @@ RefPtr<TextIndicator> TextIndicator::createWithRange(const SimpleRange& range, O
     if (!document)
         return nullptr;
 
-    bool indicatesCurrentSelection = rangeToUse == document->selection().selection().toNormalizedRange();
+    auto rangeIndicatesCurrentSelection = [document](const SimpleRange& range) {
+        auto selectionRange = document->selection().selection().toNormalizedRange();
+        auto normalizedRange = VisibleSelection(range).toNormalizedRange();
+        return selectionRange && selectionRange == normalizedRange;
+    };
+
+    bool indicatesCurrentSelection = rangeIndicatesCurrentSelection(rangeToUse);
 
     OptionSet<TemporarySelectionOption> temporarySelectionOptions;
     temporarySelectionOptions.add(TemporarySelectionOption::DoNotSetFocus);
@@ -107,7 +114,7 @@ RefPtr<TextIndicator> TextIndicator::createWithRange(const SimpleRange& range, O
     TemporarySelectionChange selectionChange(*document, { rangeToUse }, temporarySelectionOptions);
 
     // If the selection couldn't be set (usually due to user-select), we can't do a selection-only paint, so changed to painting everything.
-    if (rangeToUse != document->selection().selection().toNormalizedRange())
+    if (!rangeIndicatesCurrentSelection(rangeToUse))
         options |= TextIndicatorOption::PaintAllContent;
 
     TextIndicatorData data;

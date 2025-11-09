@@ -63,6 +63,7 @@ private:
     void updateOpener(const WebCore::Frame&) final;
     void setPrinting(bool printing, WebCore::FloatSize pageSize, WebCore::FloatSize originalPageSize, float maximumShrinkRatio, WebCore::AdjustViewSize) final;
     void updateScrollingMode(WebCore::ScrollbarMode scrollingMode) final;
+    void reportMixedContentViolation(bool blocked, const URL& target) final;
     void findFocusableElementDescendingIntoRemoteFrame(WebCore::FocusDirection, const WebCore::FocusEventData&, CompletionHandler<void(WebCore::FoundElementInRemoteFrame)>&&) final;
 };
 

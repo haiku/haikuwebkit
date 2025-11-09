@@ -59,6 +59,7 @@
 #include "SVGGeometryElement.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
+#include "Settings.h"
 #include "TransformOperationData.h"
 #include "TransformState.h"
 #include "VisibleRectContext.h"
@@ -86,7 +87,7 @@ std::optional<FloatRect> SVGRenderSupport::computeFloatVisibleRectInContainer(co
         return FloatRect();
 
     FloatRect adjustedRect = rect;
-    adjustedRect.inflate(Style::evaluate<float>(renderer.style().outlineWidth(), Style::ZoomNeeded { }));
+    adjustedRect.inflate(Style::evaluate<float>(renderer.style().outlineWidth(), renderer.style().usedZoomForLength()));
 
     // Translate to coords in our parent renderer, and then call computeFloatVisibleRectInContainer() on our parent.
     adjustedRect = renderer.localToParentTransform().mapRect(adjustedRect);

@@ -294,7 +294,7 @@ bool FTPDirectoryDocumentParser::loadDocumentTemplate()
         return false;
     }
 
-    HTMLDocumentParser::insert(String(templateDocumentData.get()->span()));
+    HTMLDocumentParser::insert(String(byteCast<Latin1Character>(templateDocumentData.get()->span())));
 
     Ref document = *this->document();
 

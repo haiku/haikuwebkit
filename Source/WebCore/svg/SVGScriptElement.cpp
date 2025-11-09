@@ -23,7 +23,6 @@
 #include "SVGScriptElement.h"
 
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "ElementInlines.h"
 #include "Event.h"
 #include "NodeInlines.h"

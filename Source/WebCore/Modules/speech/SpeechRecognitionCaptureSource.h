@@ -44,7 +44,6 @@ class SpeechRecognitionCaptureSource {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(SpeechRecognitionCaptureSource, WEBCORE_EXPORT);
 public:
     SpeechRecognitionCaptureSource() = delete;
-    ~SpeechRecognitionCaptureSource() = default;
     WEBCORE_EXPORT void mute();
 
 #if ENABLE(MEDIA_STREAM)

@@ -85,3 +85,5 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_PERFORMANCE_ENTRY(LargestContentfulPaint, LargestContentfulPaint);

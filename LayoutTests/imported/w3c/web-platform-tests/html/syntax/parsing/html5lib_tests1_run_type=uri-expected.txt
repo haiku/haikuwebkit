@@ -30,7 +30,7 @@ PASS html5lib_tests1.html e85dc012a49630206e6163cd1e0fd6c706865106
 PASS html5lib_tests1.html c440d1f0223d6b3ce85955d8246fdd47ecdfb034
 PASS html5lib_tests1.html 9a2ce05a0b342b377ef054385131ad4d1b5ae84b
 PASS html5lib_tests1.html daa9d8440e2bc4d560536b52123b01e52aa81692
-FAIL html5lib_tests1.html 0b27e026dd03a356bbd78690fff7fb40cd63b606 assert_equals: expected "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>\n|     \"X\"" but got "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|     <option>\n|       \"X\""
+PASS html5lib_tests1.html 0b27e026dd03a356bbd78690fff7fb40cd63b606
 PASS html5lib_tests1.html a2d3321d1ea23b55d9117e5c2014e4ab0fa5e224
 PASS html5lib_tests1.html cc9c12dd44b43fa78ad340a91d20432e3f119c19
 PASS html5lib_tests1.html 3d0cb9632b521a3fb334f567b3cdec985e85abd7
@@ -100,7 +100,7 @@ PASS html5lib_tests1.html ce31a583a3921e306aaa558b1ea798b34d2bb0dc
 PASS html5lib_tests1.html 04ba864e740f7ef104570ddc6af834e6336031ed
 PASS html5lib_tests1.html ea6ab4a56efd19cc04b5656583ea6d5c9cfd2752
 PASS html5lib_tests1.html 1bb5dfba014f63c0a18b12097ed9a28d64552e07
-FAIL html5lib_tests1.html a2dd4d5a28a61ec99ce9dae35e9d4ffe92812e2f assert_equals: expected "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <b>\n|         <option>\n|     <b>\n|       <option>" but got "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|     <option>"
+PASS html5lib_tests1.html a2dd4d5a28a61ec99ce9dae35e9d4ffe92812e2f
 PASS html5lib_tests1.html e26f001557952154c308e3e6f6d1789cf711ef27
 PASS html5lib_tests1.html 34c1f9c212198edd7baf56e658db21d98c59f74c
 PASS html5lib_tests1.html e1c47adbde197e3eaa9504f3582fd9deac1cbbff
@@ -113,56 +113,4 @@ PASS html5lib_tests1.html f66797fd63c8b0254b4ef28e9c38c3d4e512c93c
 PASS html5lib_tests1.html f10a41faca4cf01e39ed92c4eefff0631d1195dc
 PASS html5lib_tests1.html 5d14e20ae19e0b3e14dcb997e3ccad5f0e1956e1
 PASS html5lib_tests1.html 1949f8c612e660985fb5eb28235b6f9386ed4ffc
-0b27e026dd03a356bbd78690fff7fb40cd63b606
-
-Input
-
-<select><b><option><select><option></b></select>X
-Expected
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <b>
-|         <option>
-|     <b>
-|       <option>
-|     "X"
-Actual
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-|     <option>
-|       "X"
-a2dd4d5a28a61ec99ce9dae35e9d4ffe92812e2f
-
-Input
-
-<select><b><option><select><option></b></select>
-Expected
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <b>
-|         <option>
-|     <b>
-|       <option>
-Actual
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-|     <option>
 

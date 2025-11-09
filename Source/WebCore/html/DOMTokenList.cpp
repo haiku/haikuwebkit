@@ -211,7 +211,7 @@ ExceptionOr<bool> DOMTokenList::supports(StringView token)
 {
     if (!m_isSupportedToken)
         return Exception { ExceptionCode::TypeError };
-    return m_isSupportedToken(m_element->document(), token);
+    return m_isSupportedToken(m_element->protectedDocument(), token);
 }
 
 // https://dom.spec.whatwg.org/#dom-domtokenlist-value

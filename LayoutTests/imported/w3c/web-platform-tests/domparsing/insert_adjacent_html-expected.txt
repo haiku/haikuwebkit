@@ -29,4 +29,5 @@ PASS Afterbegin content2 test again, now that there's a next sibling
 PASS BeforeEnd content2 test again, now that there's a next sibling
 PASS afterend content2 test again, now that there's a next sibling
 PASS Inserting kids of the <html> element should not do weird things with implied <body>/<head> tags
+PASS A text node inserted via insertAdjacentHTML should not be merged with a sibling text node.
 

@@ -28,7 +28,6 @@
 
 #include "Chrome.h"
 #include "DetectedText.h"
-#include "DocumentInlines.h"
 #include "Document.h"
 #include "ImageBitmap.h"
 #include "ImageBitmapOptions.h"

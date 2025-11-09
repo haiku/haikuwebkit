@@ -42,10 +42,6 @@ public:
         g_main_loop_run(m_mainLoop.get());
     }
 
-    ~AutomationTest()
-    {
-    }
-
     struct Target {
         Target() = default;
         Target(guint64 id, CString name, bool isPaired)

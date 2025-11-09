@@ -36,9 +36,13 @@ struct SettingsValues;
 namespace Style {
 
 enum class MinimumFontSizeRule : uint8_t { None, Absolute, AbsoluteAndRelative };
+struct ComputedFontSize {
+    float size { 0.0f };
+    float usedZoomFactor { 1.0f };
+};
 
 float computedFontSizeFromSpecifiedSize(float specifiedSize, bool isAbsoluteSize, float zoomFactor, MinimumFontSizeRule, const SettingsValues&);
-float computedFontSizeFromSpecifiedSize(float specifiedSize, bool isAbsoluteSize, bool useSVGZoomRules, const RenderStyle*, const Document&);
+ComputedFontSize computedFontSizeFromSpecifiedSize(float specifiedSize, bool isAbsoluteSize, bool useSVGZoomRules, const RenderStyle*, const Document&);
 float computedFontSizeFromSpecifiedSizeForSVGInlineText(float specifiedSize, bool isAbsoluteSize, float zoomFactor, const Document&);
 float adjustedFontSize(float size, const WebCore::FontSizeAdjust&, const FontMetrics&);
 

@@ -49,14 +49,11 @@ Recorder::Recorder(IsDeferred isDeferred, const GraphicsContextState& state, con
     : GraphicsContext(isDeferred, state)
     , m_colorSpace(colorSpace)
     , m_initialClip(initialClip)
+    , m_drawGlyphsMode(drawGlyphsMode)
 #if USE(CORE_TEXT)
     , m_initialScale(initialCTM.xScale())
-    , m_drawGlyphsMode(drawGlyphsMode)
 #endif
 {
-#if !USE(CORE_TEXT)
-    UNUSED_PARAM(drawGlyphsMode);
-#endif
     ASSERT(!state.changes());
     m_stateStack.append({ state, initialCTM, initialCTM.mapRect(initialClip) });
 }

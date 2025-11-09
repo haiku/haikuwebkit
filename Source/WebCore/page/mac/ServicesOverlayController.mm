@@ -41,7 +41,7 @@
 #import "GraphicsContext.h"
 #import "GraphicsLayer.h"
 #import "GraphicsLayerCA.h"
-#import "LocalFrame.h"
+#import "LocalFrameInlines.h"
 #import "LocalFrameView.h"
 #import "Logging.h"
 #import "MouseEventTypes.h"

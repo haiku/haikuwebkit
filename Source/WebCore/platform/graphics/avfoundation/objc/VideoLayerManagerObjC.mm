@@ -90,6 +90,11 @@ void VideoLayerManagerObjC::setVideoLayer(PlatformLayer *videoLayer, FloatSize c
     }
 }
 
+void VideoLayerManagerObjC::setPresentationSize(FloatSize contentSize)
+{
+    [m_videoInlineLayer setFrame:CGRectMake(0, 0, contentSize.width(), contentSize.height())];
+}
+
 void VideoLayerManagerObjC::didDestroyVideoLayer()
 {
     ALWAYS_LOG(LOGIDENTIFIER);

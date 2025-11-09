@@ -1180,12 +1180,12 @@ public:
 
     _WKNotificationData *mostRecentNotification()
     {
-        return m_delegate.get().mostRecentNotification.get();
+        return m_delegate.get().mostRecentNotification.unsafeGet();
     }
 
     NSURL *mostRecentActionURL()
     {
-        return m_delegate.get().mostRecentActionURL.get();
+        return m_delegate.get().mostRecentActionURL.unsafeGet();
     }
 
     std::optional<uint64_t> mostRecentAppBadge()
@@ -1207,7 +1207,7 @@ public:
             @"userInfo": apsUserInfo
         };
 
-        String message { span([NSJSONSerialization dataWithJSONObject:obj options:0 error:nullptr]) };
+        String message { byteCast<Latin1Character>(span([NSJSONSerialization dataWithJSONObject:obj options:0 error:nullptr])) };
 
         auto utilityConnection = createAndConfigureConnectionToService("org.webkit.webpushtestdaemon.service");
         auto sender = WebPushXPCConnectionMessageSender { utilityConnection.get() };

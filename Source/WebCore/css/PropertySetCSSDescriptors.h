@@ -78,7 +78,7 @@ protected:
 
     // CSSPropertyID versions of the CSSOM functions to support bindings.
     String getPropertyValueInternal(CSSPropertyID) const;
-    ExceptionOr<void> setPropertyInternal(CSSPropertyID, const String& value, IsImportant);
+    virtual ExceptionOr<void> setPropertyInternal(CSSPropertyID, const String& value, IsImportant);
 
     CSSParserContext cssParserContext() const;
     Ref<MutableStyleProperties> protectedPropertySet() const;

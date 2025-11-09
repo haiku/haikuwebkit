@@ -14,6 +14,7 @@ PASS LargestContentfulPaint interface: existence and properties of interface pro
 PASS LargestContentfulPaint interface: existence and properties of interface prototype object's "constructor" property
 PASS LargestContentfulPaint interface: existence and properties of interface prototype object's @@unscopables property
 PASS LargestContentfulPaint interface: attribute loadTime
+PASS LargestContentfulPaint interface: attribute renderTime
 PASS LargestContentfulPaint interface: attribute size
 PASS LargestContentfulPaint interface: attribute id
 PASS LargestContentfulPaint interface: attribute url
@@ -22,6 +23,7 @@ PASS LargestContentfulPaint interface: operation toJSON()
 PASS LargestContentfulPaint must be primary interface of lcp
 PASS Stringification of lcp
 PASS LargestContentfulPaint interface: lcp must inherit property "loadTime" with the proper type
+PASS LargestContentfulPaint interface: lcp must inherit property "renderTime" with the proper type
 PASS LargestContentfulPaint interface: lcp must inherit property "size" with the proper type
 PASS LargestContentfulPaint interface: lcp must inherit property "id" with the proper type
 PASS LargestContentfulPaint interface: lcp must inherit property "url" with the proper type

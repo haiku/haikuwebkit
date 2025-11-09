@@ -47,6 +47,7 @@
 #include "DisplayRefreshMonitorFactory.h"
 #include "DocumentFragment.h"
 #include "DocumentLoader.h"
+#include "DocumentSyncClient.h"
 #include "DragClient.h"
 #include "DummyModelPlayerProvider.h"
 #include "DummySpeechRecognitionProvider.h"
@@ -73,7 +74,6 @@
 #include "PaymentCoordinatorClient.h"
 #include "PluginInfoProvider.h"
 #include "PopupMenu.h"
-#include "ProcessSyncClient.h"
 #include "ProgressTrackerClient.h"
 #include "RemoteFrameClient.h"
 #include "SearchPopupMenu.h"
@@ -203,7 +203,12 @@ private:
 };
 
 class EmptyDatabaseProvider final : public DatabaseProvider {
-    struct EmptyIDBConnectionToServerDeletegate final : public IDBClient::IDBConnectionToServerDelegate {
+    struct EmptyIDBConnectionToServerDeletegate final : public IDBClient::IDBConnectionToServerDelegate, public RefCounted<EmptyIDBConnectionToServerDeletegate> {
+        static Ref<EmptyIDBConnectionToServerDeletegate> create() { return adoptRef(*new EmptyIDBConnectionToServerDeletegate); }
+
+        void ref() const final { RefCounted::ref(); }
+        void deref() const final { RefCounted::deref(); }
+
         std::optional<IDBConnectionIdentifier> identifier() const final { return std::nullopt; }
         void deleteDatabase(const IDBOpenRequestData&) final { }
         void openDatabase(const IDBOpenRequestData&) final { }
@@ -232,12 +237,13 @@ class EmptyDatabaseProvider final : public DatabaseProvider {
         void openDBRequestCancelled(const IDBOpenRequestData&) final { }
         void getAllDatabaseNamesAndVersions(const IDBResourceIdentifier&, const ClientOrigin&) final { }
         void didGenerateIndexKeyForRecord(const IDBResourceIdentifier&, const IDBResourceIdentifier&, const IDBIndexInfo&, const IDBKeyData&, const IndexKey&, std::optional<int64_t>) { }
-        ~EmptyIDBConnectionToServerDeletegate() { }
+    private:
+        EmptyIDBConnectionToServerDeletegate() = default;
     };
 
     IDBClient::IDBConnectionToServer& idbConnectionToServerForSession(PAL::SessionID sessionID) final
     {
-        static NeverDestroyed<EmptyIDBConnectionToServerDeletegate> emptyDelegate;
+        static NeverDestroyed<Ref<EmptyIDBConnectionToServerDeletegate>> emptyDelegate = EmptyIDBConnectionToServerDeletegate::create();
         static auto& emptyConnection = IDBClient::IDBConnectionToServer::create(emptyDelegate.get(), sessionID).leakRef();
         return emptyConnection;
     }
@@ -270,9 +276,6 @@ class EmptyDragClient final : public DragClient {
 
 class EmptyEditorClient final : public EditorClient {
     WTF_MAKE_TZONE_ALLOCATED(EmptyEditorClient);
-public:
-    EmptyEditorClient() = default;
-
 private:
     bool shouldDeleteRange(const std::optional<SimpleRange>&) final { return false; }
     bool smartInsertDeleteEnabled() final { return false; }
@@ -480,8 +483,6 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(EmptyPaymentCoordinatorClient);
 class EmptyCredentialRequestCoordinatorClient final : public CredentialRequestCoordinatorClient {
     WTF_MAKE_TZONE_ALLOCATED(EmptyCredentialRequestCoordinatorClient);
 public:
-    EmptyCredentialRequestCoordinatorClient() = default;
-
     static Ref<EmptyCredentialRequestCoordinatorClient> create()
     {
         return adoptRef(*new EmptyCredentialRequestCoordinatorClient);
@@ -505,6 +506,9 @@ public:
     {
         return Exception { ExceptionCode::InvalidStateError };
     }
+
+private:
+    EmptyCredentialRequestCoordinatorClient() = default;
 };
 WTF_MAKE_TZONE_ALLOCATED_IMPL(EmptyCredentialRequestCoordinatorClient);
 #endif
@@ -516,8 +520,6 @@ class EmptyPluginInfoProvider final : public PluginInfoProvider {
 };
 
 class EmptyPopupMenu : public PopupMenu {
-public:
-    EmptyPopupMenu() = default;
 private:
     void show(const IntRect&, LocalFrameView&, int) final { }
     void hide() final { }
@@ -1250,7 +1252,7 @@ PageConfiguration pageConfigurationWithEmptyClients(std::optional<PageIdentifier
 #endif
         makeUniqueRef<EmptyChromeClient>(),
         makeUniqueRef<EmptyCryptoClient>(),
-        makeUniqueRef<ProcessSyncClient>()
+        makeUniqueRef<DocumentSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
         , EmptyCredentialRequestCoordinatorClient::create()
 #endif

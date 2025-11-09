@@ -106,6 +106,7 @@ public:
         ArrayPrototypeChainIsSaneWatchpointSet,
         StringPrototypeChainIsSaneWatchpointSet,
         ObjectPrototypeChainIsSaneWatchpointSet,
+        PromiseSpeciesWatchpointSet,
     };
 
     using Value = JITConstant<Type>;

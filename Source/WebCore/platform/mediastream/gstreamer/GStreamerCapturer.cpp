@@ -176,6 +176,7 @@ GstElement* GStreamerCapturer::createSource()
         g_object_set(m_src.get(), "path", path.string().ascii().data(), "fd", m_pipewireDevice->fd(), nullptr);
     } else {
         ASSERT(m_device);
+        ASSERT(gst_device_has_classes(m_device->device(), GST_ELEMENT_FACTORY_KLASS_SRC));
         auto sourceName = makeString(unsafeSpan(name()), hex(reinterpret_cast<uintptr_t>(this)));
         m_src = gst_device_create_element(m_device->device(), sourceName.ascii().data());
         ASSERT(m_src);

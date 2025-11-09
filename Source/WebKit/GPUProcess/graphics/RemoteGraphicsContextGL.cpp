@@ -131,8 +131,8 @@ void RemoteGraphicsContextGL::workQueueInitialize(WebCore::GraphicsContextGLAttr
     m_connection->open(*this, m_workQueue);
     if (RefPtr context = m_context) {
         context->setClient(this);
-        String extensions = context->getString(GraphicsContextGL::EXTENSIONS);
-        String requestableExtensions = context->getString(GraphicsContextGL::REQUESTABLE_EXTENSIONS_ANGLE);
+        CString extensions = context->getString(GraphicsContextGL::EXTENSIONS);
+        CString requestableExtensions = context->getString(GraphicsContextGL::REQUESTABLE_EXTENSIONS_ANGLE);
         auto [externalImageTarget, externalImageBindingQuery] = context->externalImageTextureBindingPoint();
         RemoteGraphicsContextGLInitializationState initializationState { extensions, requestableExtensions, externalImageTarget, externalImageBindingQuery };
 
@@ -169,7 +169,7 @@ void RemoteGraphicsContextGL::forceContextLost()
     send(Messages::RemoteGraphicsContextGLProxy::WasLost());
 }
 
-void RemoteGraphicsContextGL::addDebugMessage(GCGLenum type, GCGLenum id, GCGLenum severity, const String& message)
+void RemoteGraphicsContextGL::addDebugMessage(GCGLenum type, GCGLenum id, GCGLenum severity, const CString& message)
 {
     assertIsCurrent(workQueue());
     send(Messages::RemoteGraphicsContextGLProxy::addDebugMessage(type, id, severity, message));
@@ -199,7 +199,7 @@ void RemoteGraphicsContextGL::getErrors(CompletionHandler<void(GCGLErrorCodeSet)
     completionHandler(protectedContext()->getErrors());
 }
 
-void RemoteGraphicsContextGL::ensureExtensionEnabled(String&& extension)
+void RemoteGraphicsContextGL::ensureExtensionEnabled(CString&& extension)
 {
     assertIsCurrent(workQueue());
     protectedContext()->ensureExtensionEnabled(extension);

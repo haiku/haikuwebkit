@@ -36,14 +36,13 @@
 #include <WebCore/CookieRequestHeaderFieldProxy.h>
 #include <WebCore/CookieStoreGetOptions.h>
 #include <WebCore/DeprecatedGlobalSettings.h>
-#include <WebCore/Document.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/EmptyFrameLoaderClient.h>
 #include <WebCore/Frame.h>
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/LocalFrameLoaderClient.h>
-#include <WebCore/Page.h>
 #include <WebCore/ScriptTrackingPrivacyCategory.h>
 #include <WebCore/Settings.h>
 #include <WebCore/StorageSessionProvider.h>

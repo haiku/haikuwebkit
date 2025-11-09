@@ -44,8 +44,8 @@
 #include "CSSImageValue.h"
 #include "CSSNamedImageValue.h"
 #include "CSSPaintImageValue.h"
-#include "Document.h"
 #include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "ElementTraversal.h"
 #include "FontCache.h"
@@ -72,6 +72,8 @@
 
 namespace WebCore {
 namespace Style {
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(BuilderState);
 
 BuilderState::BuilderState(RenderStyle& style)
     : m_style(style)
@@ -128,7 +130,7 @@ RefPtr<StyleImage> BuilderState::createStyleImage(const CSSValue& value) const
 
 void BuilderState::registerContentAttribute(const AtomString& attributeLocalName)
 {
-    if (style().pseudoElementType() == PseudoId::Before || style().pseudoElementType() == PseudoId::After)
+    if (style().pseudoElementType() == PseudoElementType::Before || style().pseudoElementType() == PseudoElementType::After)
         m_registeredContentAttributes.append(attributeLocalName);
 }
 
@@ -243,8 +245,8 @@ void BuilderState::updateFontForSizeChange()
     auto& fontCascade = m_style.mutableFontCascadeWithoutUpdate();
     auto fontSize = fontCascade.size();
 
-    auto newWordSpacing = evaluate<float>(m_style.computedWordSpacing(), fontSize, ZoomNeeded { });
-    auto newLetterSpacing = evaluate<float>(m_style.computedLetterSpacing(), fontSize, ZoomNeeded { });
+    auto newWordSpacing = evaluate<float>(m_style.computedWordSpacing(), fontSize, m_style.usedZoomForLength());
+    auto newLetterSpacing = evaluate<float>(m_style.computedLetterSpacing(), fontSize, m_style.usedZoomForLength());
 
     if (newWordSpacing != fontCascade.wordSpacing())
         fontCascade.setWordSpacing(newWordSpacing);
@@ -269,7 +271,8 @@ void BuilderState::updateFontForSizeChange()
 void BuilderState::setFontSize(FontCascadeDescription& fontDescription, float size)
 {
     fontDescription.setSpecifiedSize(size);
-    fontDescription.setComputedSize(Style::computedFontSizeFromSpecifiedSize(size, fontDescription.isAbsoluteSize(), useSVGZoomRules(), &style(), document()));
+    auto computedFontSize = Style::computedFontSizeFromSpecifiedSize(size, fontDescription.isAbsoluteSize(), useSVGZoomRules(), &style(), document());
+    fontDescription.setComputedSize(computedFontSize.size, computedFontSize.usedZoomFactor);
 }
 
 CSSPropertyID BuilderState::cssPropertyID() const

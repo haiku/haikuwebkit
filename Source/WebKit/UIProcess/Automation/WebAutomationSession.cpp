@@ -38,6 +38,7 @@
 #include "WebAutomationSessionMacros.h"
 #include "WebAutomationSessionMessages.h"
 #include "WebAutomationSessionProxyMessages.h"
+#include "WebBackForwardList.h"
 #include "WebDriverBidiFrontendDispatchers.h"
 #include "WebFrameProxy.h"
 #include "WebFullScreenManagerProxy.h"
@@ -857,6 +858,34 @@ void WebAutomationSession::goForwardInBrowsingContext(const Inspector::Protocol:
 
     page->goForward();
     waitForNavigationToCompleteOnPage(*page, pageLoadStrategy, pageLoadTimeout, WTFMove(callback));
+}
+
+void WebAutomationSession::traverseHistoryInBrowsingContext(const Inspector::Protocol::Automation::BrowsingContextHandle& handle, int delta, CommandCallback<void>&& callback)
+{
+    auto page = webPageProxyForHandle(handle);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
+
+    RefPtr mainFrame = page->mainFrame();
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!mainFrame, InvalidParameter);
+
+    if (!delta) {
+        callback({ });
+        return;
+    }
+
+    Ref backForwardList = page->backForwardList();
+    unsigned backCount = backForwardList->backListCount();
+    unsigned forwardCount = backForwardList->forwardListCount();
+    int currentIndex = static_cast<int>(backCount);
+    int targetIndex = currentIndex + delta;
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(targetIndex < 0, InvalidParameter);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(targetIndex >= static_cast<int>(backCount + forwardCount + 1), InvalidParameter);
+
+    RefPtr targetItem = backForwardList->itemAtIndex(targetIndex);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!targetItem, InternalError);
+
+    page->goToBackForwardItem(*targetItem);
+    waitForNavigationToCompleteOnPage(*page, defaultPageLoadStrategy, defaultPageLoadTimeout, WTFMove(callback));
 }
 
 void WebAutomationSession::reloadBrowsingContext(const Inspector::Protocol::Automation::BrowsingContextHandle& handle, std::optional<Inspector::Protocol::Automation::PageLoadStrategy>&& optionalPageLoadStrategy, std::optional<double>&& optionalPageLoadTimeout, CommandCallback<void>&& callback)
@@ -1973,6 +2002,12 @@ void WebAutomationSession::resetMouseState()
 {
     m_clickCount = 1;
     m_lastPosition.reset();
+    m_lastClickPosition.reset();
+}
+
+void WebAutomationSession::clearDoubleClicks()
+{
+    m_clickCount = 1;
     m_lastClickPosition.reset();
 }
 

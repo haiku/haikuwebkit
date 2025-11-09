@@ -69,7 +69,7 @@ public:
         char key;
         unsigned value;
         
-        Pair() { }
+        Pair() = default;
         
         Pair(char key, unsigned value)
             : key(key)

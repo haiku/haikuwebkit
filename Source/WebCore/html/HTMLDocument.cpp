@@ -56,8 +56,9 @@
 #include "CSSPropertyNames.h"
 #include "CommonVM.h"
 #include "CookieJar.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentQuirks.h"
+#include "DocumentSettingsValues.h"
 #include "DocumentType.h"
 #include "ElementChildIteratorInlines.h"
 #include "FocusController.h"
@@ -75,7 +76,6 @@
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
-#include "Quirks.h"
 #include "ScriptController.h"
 #include "StyleResolver.h"
 #include <ranges>

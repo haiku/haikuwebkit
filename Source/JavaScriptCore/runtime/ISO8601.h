@@ -34,6 +34,10 @@
 namespace JSC {
 namespace ISO8601 {
 
+static constexpr int32_t maxYear = 275760;
+static constexpr int32_t minYear = -271821;
+static constexpr int32_t outOfRangeYear = minYear - 1;
+
 class Duration {
     WTF_MAKE_TZONE_ALLOCATED(Duration);
 public:
@@ -243,6 +247,12 @@ private:
 };
 static_assert(sizeof(PlainTime) <= sizeof(uint64_t));
 
+// More effective for our purposes than isInBounds<int32_t>.
+constexpr bool isYearWithinLimits(double year)
+{
+    return year >= minYear && year <= maxYear;
+}
+
 // Note that PlainDate does not include week unit.
 // year can be negative. And month and day starts with 1.
 class PlainDate {
@@ -260,6 +270,7 @@ public:
         , m_month(month)
         , m_day(day)
     {
+        ASSERT(isYearWithinLimits(year) || year == outOfRangeYear);
     }
 
     friend bool operator==(const PlainDate&, const PlainDate&) = default;
@@ -269,7 +280,15 @@ public:
     uint8_t day() const { return m_day; }
 
 private:
-    int32_t m_year : 21; // ECMAScript max / min date's year can be represented <= 20 bits.
+    // ECMAScript max / min date's year can be represented <= 20 bits.
+    // However, PlainDate must be able to represent out-of-range years,
+    // since the validity checking is separate from date parsing.
+    // For example, see the test262 test
+    // Temporal/PlainDate/prototype/until/throws-if-rounded-date-outside-valid-iso-range.js
+    // The solution to this is to use a sentinel value (outOfRangeYear) to represent
+    // all out-of-range years. The PlainDate constructor checks the invariant
+    // that either the year is within limits, or it's equal to this sentinel value.
+    int32_t m_year : 21;
     int32_t m_month : 5; // Starts with 1.
     int32_t m_day : 6; // Starts with 1.
 };
@@ -279,10 +298,43 @@ using TimeZone = Variant<TimeZoneID, int64_t>;
 
 class PlainYearMonth final {
 public:
-    double year;
-    double month;
-    PlainYearMonth(double y, double m)
-        : year(y), month(m) { }
+    // Out-of-range years represented by outOfRangeYear, as with PlainDate
+    int32_t year : 21;
+    int32_t month : 5;
+    PlainYearMonth(int32_t y, int32_t m)
+        : year(y), month(m)
+    {
+        ASSERT(isYearWithinLimits(year) || year == outOfRangeYear);
+    }
+};
+static_assert(sizeof(PlainYearMonth) <= sizeof(int32_t));
+
+class PlainMonthDay {
+    WTF_MAKE_TZONE_ALLOCATED(PlainMonthDay);
+public:
+    constexpr PlainMonthDay()
+        : m_isoPlainDate(0, 1, 1)
+    {
+    }
+
+    constexpr PlainMonthDay(unsigned month, int32_t day)
+        : m_isoPlainDate(2, month, day)
+    {
+    }
+
+    constexpr PlainMonthDay(PlainDate&& d)
+        : m_isoPlainDate(d)
+    {
+    }
+
+    friend bool operator==(const PlainMonthDay&, const PlainMonthDay&) = default;
+
+    uint8_t month() const { return m_isoPlainDate.month(); }
+    uint32_t day() const { return m_isoPlainDate.day(); }
+
+    const PlainDate& isoPlainDate() const { return m_isoPlainDate; }
+private:
+    PlainDate m_isoPlainDate;
 };
 
 // https://tc39.es/proposal-temporal/#sec-temporal-parsetemporaltimezonestring
@@ -325,6 +377,7 @@ String formatTimeZoneOffsetString(int64_t);
 String temporalTimeToString(PlainTime, std::tuple<Precision, unsigned>);
 String temporalDateToString(PlainDate);
 String temporalDateTimeToString(PlainDate, PlainTime, std::tuple<Precision, unsigned>);
+String temporalMonthDayToString(PlainMonthDay, StringView);
 String monthCode(uint32_t);
 uint8_t monthFromCode(StringView);
 
@@ -335,7 +388,6 @@ PlainDate createISODateRecord(double, double, double);
 std::optional<ExactTime> parseInstant(StringView);
 
 bool isDateTimeWithinLimits(int32_t year, uint8_t month, uint8_t day, unsigned hour, unsigned minute, unsigned second, unsigned millisecond, unsigned microsecond, unsigned nanosecond);
-bool isYearWithinLimits(double year);
 
 Int128 roundTimeDuration(JSGlobalObject*, Int128, unsigned, TemporalUnit, RoundingMode);
 

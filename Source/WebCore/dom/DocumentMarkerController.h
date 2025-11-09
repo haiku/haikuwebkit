@@ -63,9 +63,9 @@ public:
 
     void detach();
 
-    WEBCORE_EXPORT void addMarker(const SimpleRange&, DocumentMarkerType, const DocumentMarker::Data& = { });
-    void addMarker(Node&, unsigned startOffset, unsigned length, DocumentMarkerType, DocumentMarker::Data&& = { });
-    WEBCORE_EXPORT void addMarker(Node&, DocumentMarker&&);
+    WEBCORE_EXPORT bool addMarker(const SimpleRange&, DocumentMarkerType, const DocumentMarker::Data& = { });
+    bool addMarker(Node&, unsigned startOffset, unsigned length, DocumentMarkerType, DocumentMarker::Data&& = { });
+    WEBCORE_EXPORT bool addMarker(Node&, DocumentMarker&&);
     void addDraggedContentMarker(const SimpleRange&);
     WEBCORE_EXPORT void addTransparentContentMarker(const SimpleRange&, WTF::UUID);
 

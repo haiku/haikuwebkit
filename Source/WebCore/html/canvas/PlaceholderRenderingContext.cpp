@@ -29,6 +29,7 @@
 #if ENABLE(OFFSCREEN_CANVAS)
 
 #include "ContextDestructionObserverInlines.h"
+#include "GraphicsLayer.h"
 #include "GraphicsLayerContentsDisplayDelegate.h"
 #include "HTMLCanvasElement.h"
 #include "NodeInlines.h"

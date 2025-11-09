@@ -336,18 +336,28 @@ void UIScriptControllerCocoa::setSpellCheckerResults(JSValueRef results)
     [[LayoutTestSpellChecker checker] setResultsFromJSValue:results inContext:m_context->jsContext()];
 }
 
-void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExtractionOptions* options)
+RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWebView *webView, TextExtractionTestOptions* options)
 {
     auto extractionRect = CGRectNull;
     if (options && options->clipToBounds)
-        extractionRect = webView().bounds;
+        extractionRect = webView.bounds;
 
-    auto includeRects = options && options->includeRects ? IncludeRects::Yes : IncludeRects::No;
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
     RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+    [configuration setIncludeRects:options && options->includeRects];
+    [configuration setIncludeURLs:options && options->includeURLs];
+    if (auto wordLimit = options ? options->wordLimit : 0)
+        [configuration setMaxWordsPerParagraph:static_cast<NSUInteger>(wordLimit)];
     [configuration setTargetRect:extractionRect];
     [configuration setMergeParagraphs:options && options->mergeParagraphs];
     [configuration setSkipNearlyTransparentContent:options && options->skipNearlyTransparentContent];
+    return configuration;
+}
+
+void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExtractionTestOptions* options)
+{
+    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
+    RetainPtr configuration = createTextExtractionConfiguration(webView(), options);
+    auto includeRects = [configuration includeRects] ? IncludeRects::Yes : IncludeRects::No;
     [webView() _requestTextExtraction:configuration.get() completionHandler:^(WKTextExtractionResult *result) {
         if (!m_context)
             return;
@@ -357,10 +367,10 @@ void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExt
     }];
 }
 
-void UIScriptControllerCocoa::requestDebugText(JSValueRef callback)
+void UIScriptControllerCocoa::requestDebugText(JSValueRef callback, TextExtractionTestOptions* options)
 {
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-    RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+    RetainPtr configuration = createTextExtractionConfiguration(webView(), options);
     [webView() _debugTextWithConfiguration:configuration.get() completionHandler:^(NSString *text) {
         if (!m_context)
             return;

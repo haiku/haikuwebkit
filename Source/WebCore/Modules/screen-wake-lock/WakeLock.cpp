@@ -26,8 +26,12 @@
 #include "config.h"
 #include "WakeLock.h"
 
+#include "ClientOrigin.h"
 #include "ContextDestructionObserverInlines.h"
+#include "DocumentEventLoop.h"
 #include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentWindow.h"
 #include "EventLoop.h"
 #include "Exception.h"
 #include "JSDOMPromiseDeferred.h"

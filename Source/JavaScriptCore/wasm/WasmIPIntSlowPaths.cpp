@@ -670,14 +670,7 @@ WASM_IPINT_EXTERN_CPP_DECL(table_size, int32_t tableIndex)
 WASM_IPINT_EXTERN_CPP_DECL(struct_new, uint32_t type, IPIntStackEntry* sp)
 {
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(type);
-    ASSERT(structure->typeDefinition().is<Wasm::StructType>());
-    const auto& structTypeDefinition = *structure->typeDefinition().as<Wasm::StructType>();
-    Vector<uint64_t, 8> arguments(structTypeDefinition.fieldCount());
-
-    for (unsigned i = 0; i < structTypeDefinition.fieldCount(); ++i)
-        arguments[i] = sp[i].i64;
-
-    JSValue result = Wasm::structNew(instance, structure, false, arguments.mutableSpan().data());
+    JSValue result = Wasm::structNew(instance, structure, false, sp);
     if (result.isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadStructNew);
     IPINT_RETURN(JSValue::encode(result));
@@ -692,21 +685,23 @@ WASM_IPINT_EXTERN_CPP_DECL(struct_new_default, uint32_t type)
     IPINT_RETURN(JSValue::encode(result));
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(struct_get, EncodedJSValue object, uint32_t fieldIndex)
+WASM_IPINT_EXTERN_CPP_DECL(struct_get, EncodedJSValue object, uint32_t fieldIndex, IPIntStackEntry* result)
 {
     UNUSED_PARAM(instance);
     if (JSValue::decode(object).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullAccess);
-    IPINT_RETURN(Wasm::structGet(object, fieldIndex));
+
+    Wasm::structGet(object, fieldIndex, result);
+    IPINT_END();
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(struct_get_s, EncodedJSValue object, uint32_t fieldIndex)
+WASM_IPINT_EXTERN_CPP_DECL(struct_get_s, EncodedJSValue object, uint32_t fieldIndex, IPIntStackEntry* result)
 {
     UNUSED_PARAM(instance);
     if (JSValue::decode(object).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullAccess);
 
-    EncodedJSValue value = Wasm::structGet(object, fieldIndex);
+    Wasm::structGet(object, fieldIndex, result);
 
     // sign extension
     JSWebAssemblyStruct* structObject = jsCast<JSWebAssemblyStruct*>(JSValue::decode(object).getObject());
@@ -714,10 +709,11 @@ WASM_IPINT_EXTERN_CPP_DECL(struct_get_s, EncodedJSValue object, uint32_t fieldIn
     ASSERT(type.is<Wasm::PackedType>());
     size_t elementSize = type.as<Wasm::PackedType>() == Wasm::PackedType::I8 ? sizeof(uint8_t) : sizeof(uint16_t);
     uint8_t bitShift = (sizeof(uint32_t) - elementSize) * 8;
-    int32_t result = static_cast<int32_t>(value);
-    result = result << bitShift;
+    int32_t value = static_cast<int32_t>(result->i64);
+    value = value << bitShift;
 
-    IPINT_RETURN(static_cast<EncodedJSValue>(result >> bitShift));
+    result->i64 = static_cast<EncodedJSValue>(value >> bitShift);
+    IPINT_END();
 }
 
 WASM_IPINT_EXTERN_CPP_DECL(struct_set, EncodedJSValue object, uint32_t fieldIndex, IPIntStackEntry* sp)
@@ -725,14 +721,21 @@ WASM_IPINT_EXTERN_CPP_DECL(struct_set, EncodedJSValue object, uint32_t fieldInde
     UNUSED_PARAM(instance);
     if (JSValue::decode(object).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullAccess);
-    Wasm::structSet(object, fieldIndex, sp->i64);
+    Wasm::structSet(object, fieldIndex, sp);
     IPINT_END();
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(array_new, uint32_t type, EncodedJSValue defaultValue, uint32_t size)
+WASM_IPINT_EXTERN_CPP_DECL(array_new, uint32_t type, uint32_t size, IPIntStackEntry* defaultValue)
 {
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(type);
-    JSValue result = Wasm::arrayNew(instance, structure, size, defaultValue);
+    const Wasm::TypeDefinition& arraySignature = structure->typeDefinition();
+    Wasm::StorageType elementType = arraySignature.as<Wasm::ArrayType>()->elementType().type;
+
+    JSValue result;
+    if (elementType.unpacked().isV128())
+        result = Wasm::arrayNew(instance, structure, size, defaultValue->v128);
+    else
+        result = Wasm::arrayNew(instance, structure, size, defaultValue->i64);
     if (result.isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadArrayNew);
     IPINT_RETURN(JSValue::encode(result));
@@ -761,15 +764,11 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_default, uint32_t type, uint32_t size)
     IPINT_RETURN(JSValue::encode(result));
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(array_new_fixed, uint32_t type, uint32_t size, IPIntStackEntry* sp)
+WASM_IPINT_EXTERN_CPP_DECL(array_new_fixed, uint32_t type, uint32_t size, IPIntStackEntry* arguments)
 {
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(type);
-    Vector<uint64_t, 8> arguments(size);
 
-    for (unsigned i = 0; i < size; ++i)
-        arguments[i] = sp[i].i64;
-
-    JSValue result = Wasm::arrayNewFixed(instance, structure, size, arguments.mutableSpan().data());
+    JSValue result = Wasm::arrayNewFixed(instance, structure, size, arguments);
     if (result.isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadArrayNew);
 
@@ -794,8 +793,15 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_elem, IPInt::ArrayNewElemMetadata* metadata
     IPINT_RETURN(result);
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(array_get, uint32_t type, EncodedJSValue array, uint32_t index)
+WASM_IPINT_EXTERN_CPP_DECL(array_get, uint32_t type, IPIntStackEntry* sp)
 {
+    // sp[1] = array / result
+    // sp[0] = index (i32)
+
+    EncodedJSValue array = sp[1].ref;
+    uint32_t index = sp[0].i32;
+    IPIntStackEntry* result = &sp[1];
+
     if (JSValue::decode(array).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullAccess);
     JSValue arrayValue = JSValue::decode(array);
@@ -803,11 +809,19 @@ WASM_IPINT_EXTERN_CPP_DECL(array_get, uint32_t type, EncodedJSValue array, uint3
     JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(arrayValue.getObject());
     if (index >= arrayObject->size()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsArrayGet);
-    IPINT_RETURN(Wasm::arrayGet(instance, type, array, index));
+    Wasm::arrayGet(instance, type, array, index, result);
+    IPINT_END();
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(array_get_s, uint32_t type, EncodedJSValue array, uint32_t index)
+WASM_IPINT_EXTERN_CPP_DECL(array_get_s, uint32_t type, IPIntStackEntry* sp)
 {
+    // sp[1] = array / result
+    // sp[0] = index (i32)
+
+    EncodedJSValue array = sp[1].ref;
+    uint32_t index = sp[0].i32;
+    IPIntStackEntry* result = &sp[1];
+
     if (JSValue::decode(array).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullAccess);
     JSValue arrayValue = JSValue::decode(array);
@@ -815,17 +829,19 @@ WASM_IPINT_EXTERN_CPP_DECL(array_get_s, uint32_t type, EncodedJSValue array, uin
     JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(arrayValue.getObject());
     if (index >= arrayObject->size()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsArrayGet);
-    EncodedJSValue value = Wasm::arrayGet(instance, type, array, index);
+
+    Wasm::arrayGet(instance, type, array, index, result);
 
     // sign extension
     Wasm::StorageType elementType = arrayObject->elementType().type;
     ASSERT(elementType.is<Wasm::PackedType>());
     size_t elementSize = elementType.as<Wasm::PackedType>() == Wasm::PackedType::I8 ? sizeof(uint8_t) : sizeof(uint16_t);
     uint8_t bitShift = (sizeof(uint32_t) - elementSize) * 8;
-    int32_t result = static_cast<int32_t>(value);
-    result = result << bitShift;
+    int32_t value = static_cast<int32_t>(result->i64);
+    value = value << bitShift;
 
-    IPINT_RETURN(static_cast<EncodedJSValue>(result >> bitShift));
+    result->i64 = static_cast<EncodedJSValue>(value >> bitShift);
+    IPINT_END();
 }
 
 WASM_IPINT_EXTERN_CPP_DECL(array_set, uint32_t type, IPIntStackEntry* sp)
@@ -844,7 +860,7 @@ WASM_IPINT_EXTERN_CPP_DECL(array_set, uint32_t type, IPIntStackEntry* sp)
     if (index >= arrayObject->size()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsArraySet);
 
-    Wasm::arraySet(instance, type, sp[2].ref, index, sp[0].i64);
+    Wasm::arraySet(instance, type, sp[2].ref, index, &sp[0]);
     IPINT_END();
 }
 
@@ -856,13 +872,24 @@ WASM_IPINT_EXTERN_CPP_DECL(array_fill, IPIntStackEntry* sp)
     // sp[3] = array
 
     EncodedJSValue arrayref = sp[3].ref;
-    if (JSValue::decode(arrayref).isNull()) [[unlikely]]
+    JSValue arrayValue = JSValue::decode(arrayref);
+    if (arrayValue.isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::NullArrayFill);
+
+    ASSERT(arrayValue.isObject());
+    JSWebAssemblyArray* arrayObject = jsCast<JSWebAssemblyArray*>(arrayValue.getObject());
+
     uint32_t offset = sp[2].i32;
-    EncodedJSValue value = sp[1].ref;
+    IPIntStackEntry* value = &sp[1];
     uint32_t size = sp[0].i32;
 
-    if (!Wasm::arrayFill(instance->vm(), arrayref, offset, value, size)) [[unlikely]]
+    bool success;
+    if (arrayObject->elementType().type.unpacked().isV128())
+        success = Wasm::arrayFill(instance->vm(), arrayref, offset, value->v128, size);
+    else
+        success = Wasm::arrayFill(instance->vm(), arrayref, offset, value->i64, size);
+
+    if (!success) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsArrayFill);
 
     IPINT_END();

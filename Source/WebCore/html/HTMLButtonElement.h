@@ -53,7 +53,7 @@ public:
 private:
     HTMLButtonElement(const QualifiedName& tagName, Document&, HTMLFormElement*);
 
-    enum Type { SUBMIT, RESET, BUTTON };
+    enum class Type : uint8_t { Submit, Reset, Button };
 
     const AtomString& formControlType() const final;
 

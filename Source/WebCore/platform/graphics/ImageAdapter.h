@@ -38,14 +38,6 @@ OBJC_CLASS NSAdaptiveImageGlyph;
 struct CGContext;
 #endif
 
-#if PLATFORM(GTK)
-#include <wtf/glib/GRefPtr.h>
-typedef struct _GdkPixbuf GdkPixbuf;
-#if USE(GTK4)
-typedef struct _GdkTexture GdkTexture;
-#endif
-#endif
-
 #if PLATFORM(WIN)
 typedef struct tagSIZE SIZE;
 typedef SIZE* LPSIZE;
@@ -92,13 +84,6 @@ public:
 
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
     NSAdaptiveImageGlyph *multiRepresentationHEIC();
-#endif
-
-#if PLATFORM(GTK)
-    GRefPtr<GdkPixbuf> gdkPixbuf();
-#if USE(GTK4)
-    GRefPtr<GdkTexture> gdkTexture();
-#endif
 #endif
 
 #if PLATFORM(WIN)

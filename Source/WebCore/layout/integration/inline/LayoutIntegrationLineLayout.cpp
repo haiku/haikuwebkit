@@ -125,10 +125,10 @@ static bool shouldInvalidateLineLayoutAfterChangeFor(const RenderBlockFlow& root
     }
     auto hasFirstLetter = [&] {
         // FIXME: RenderTreeUpdater::updateTextRenderer produces odd values for offset/length when first-letter is present webkit.org/b/263343
-        if (rootBlockContainer.style().hasPseudoStyle(PseudoId::FirstLetter))
+        if (rootBlockContainer.style().hasPseudoStyle(PseudoElementType::FirstLetter))
             return true;
         if (rootBlockContainer.isAnonymous())
-            return rootBlockContainer.containingBlock() && rootBlockContainer.containingBlock()->style().hasPseudoStyle(PseudoId::FirstLetter);
+            return rootBlockContainer.containingBlock() && rootBlockContainer.containingBlock()->style().hasPseudoStyle(PseudoElementType::FirstLetter);
         return false;
     };
     if (hasFirstLetter())
@@ -619,7 +619,7 @@ void LineLayout::updateRenderTreePositions(const Vector<LineAdjustment>& lineAdj
 
         if (layoutBox.isFloatingPositioned()) {
             // FIXME: Find out what to do with discarded (see line-clamp) floats in render tree.
-            auto isInitialLetter = layoutBox.style().pseudoElementType() == PseudoId::FirstLetter;
+            auto isInitialLetter = layoutBox.style().pseudoElementType() == PseudoElementType::FirstLetter;
             auto& floatingObject = flow().insertFloatingBox(renderer);
             auto [marginBoxVisualRect, borderBoxVisualRect] = toMarginAndBorderBoxVisualRect(logicalGeometry, m_inlineContentConstraints->containerRenderSize(), placedFloatsWritingMode);
 
@@ -1125,7 +1125,7 @@ void LineLayout::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, con
         return;
 
     if (isContentConsideredStale()) {
-        ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION();
+        ASSERT_NOT_REACHED();
         return;
     }
 
@@ -1160,7 +1160,7 @@ bool LineLayout::hitTest(const HitTestRequest& request, HitTestResult& result, c
         return false;
 
     if (isContentConsideredStale()) {
-        ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION();
+        ASSERT_NOT_REACHED();
         return false;
     }
 

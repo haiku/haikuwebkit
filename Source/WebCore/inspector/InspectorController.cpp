@@ -134,7 +134,7 @@ PageAgentContext InspectorController::pageAgentContext()
     AgentContext baseContext = {
         *this,
         m_injectedScriptManager,
-        m_frontendRouter,
+        m_frontendRouter.get(),
         m_backendDispatcher
     };
 

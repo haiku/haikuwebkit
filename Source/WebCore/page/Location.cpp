@@ -29,7 +29,6 @@
 #include "config.h"
 #include "Location.h"
 
-#include "DocumentInlines.h"
 #include "FrameLoader.h"
 #include "LocalDOMWindow.h"
 #include "LocalDOMWindowProperty.h"

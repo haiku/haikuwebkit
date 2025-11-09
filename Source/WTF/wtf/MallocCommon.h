@@ -71,7 +71,7 @@ public:
     WTF_EXPORT_PRIVATE ~ForbidMallocUseForCurrentThreadScope();
 #else
     ForbidMallocUseForCurrentThreadScope() = default;
-    ~ForbidMallocUseForCurrentThreadScope() { }
+    ALWAYS_INLINE ~ForbidMallocUseForCurrentThreadScope() { }
 #endif
 
     ForbidMallocUseForCurrentThreadScope(const ForbidMallocUseForCurrentThreadScope&) = delete;

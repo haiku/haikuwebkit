@@ -113,10 +113,10 @@ protected:
 
     // GraphicsContextGL::Client overrides.
     void forceContextLost() final;
-    void addDebugMessage(GCGLenum, GCGLenum, GCGLenum, const String&) final;
+    void addDebugMessage(GCGLenum, GCGLenum, GCGLenum, const CString&) final;
 
     // Messages to be received.
-    void ensureExtensionEnabled(String&&);
+    void ensureExtensionEnabled(CString&&);
     void reshape(int32_t width, int32_t height);
 #if PLATFORM(COCOA)
     virtual void prepareForDisplay(IPC::Semaphore&&, CompletionHandler<void(WTF::MachSendRight&&)>&&) = 0;

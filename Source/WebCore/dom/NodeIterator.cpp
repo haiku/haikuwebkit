@@ -26,7 +26,6 @@
 #include "NodeIterator.h"
 
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "NodeDocument.h"
 #include "NodeTraversal.h"
 #include "ScriptWrappableInlines.h"

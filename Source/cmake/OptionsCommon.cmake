@@ -20,7 +20,7 @@ if (WTF_CPU_ARM)
     int main() {}
     ")
 
-    if (COMPILER_IS_CLANG AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
+    if (COMPILER_IS_GCC_OR_CLANG AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
         set(CLANG_EXTRA_ARM_ARGS " -mthumb")
     endif ()
 
@@ -217,6 +217,10 @@ endif ()
 option(GCC_OFFLINEASM_SOURCE_MAP
   "Produce debug line information for offlineasm-generated code"
   ${GCC_OFFLINEASM_SOURCE_MAP_DEFAULT})
+
+# Record references to files using relative paths instead of absolute.
+# This helps both with reproducible builds and ccache hits.
+WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
 
 option(USE_APPLE_ICU "Use Apple's internal ICU" ${APPLE})
 

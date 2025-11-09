@@ -30,7 +30,6 @@
 
 #include "DOMWrapperWorld.h"
 #include "FrameDestructionObserverInlines.h"
-#include "FrameInlines.h"
 #include "LocalFrame.h"
 #include "Page.h"
 #include "UserContentController.h"
@@ -91,7 +90,7 @@ UserMessageHandler* UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& wor
 
     RefPtr handler = m_messageHandlers.get({ name, &world });
     if (handler)
-        return handler.get();
+        return handler.unsafeGet();
 
     userContentProvider->forEachUserMessageHandler([&](const UserMessageHandlerDescriptor& descriptor) {
         if (descriptor.name() != name || &descriptor.world() != &world)
@@ -103,7 +102,7 @@ UserMessageHandler* UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& wor
         handler = addResult.iterator->value.get();
     });
 
-    return handler.get();
+    return handler.unsafeGet();
 }
 
 } // namespace WebCore

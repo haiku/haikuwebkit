@@ -27,9 +27,9 @@
 #include "ScreenOrientation.h"
 
 #include "ContextDestructionObserverInlines.h"
-#include "Document.h"
 #include "DocumentFullscreen.h"
-#include "DocumentInlines.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "Event.h"
 #include "EventNames.h"
@@ -38,6 +38,7 @@
 #include "JSDOMPromiseDeferred.h"
 #include "LocalDOMWindow.h"
 #include "Page.h"
+#include "Settings.h"
 #include "VisibilityState.h"
 #include <wtf/TZoneMallocInlines.h>
 

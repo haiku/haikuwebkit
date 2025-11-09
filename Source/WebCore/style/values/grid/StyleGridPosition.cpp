@@ -35,6 +35,7 @@
 #include "CSSGridLineValue.h"
 #include "CSSPrimitiveValue.h"
 #include "StyleBuilderChecking.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/text/TextStream.h>
 

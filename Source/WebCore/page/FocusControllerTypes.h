@@ -28,6 +28,10 @@
 #include <WebCore/Element.h>
 #include <wtf/Forward.h>
 
+namespace WTF {
+class TextStream;
+}
+
 namespace WebCore {
 
 enum class BroadcastFocusedFrame : bool { No, Yes };
@@ -41,5 +45,7 @@ struct FocusableElementSearchResult {
     ContinuedSearchInRemoteFrame continuedSearchInRemoteFrame { ContinuedSearchInRemoteFrame::No };
     RelinquishedFocusToChrome relinquishedFocusToChrome { RelinquishedFocusToChrome::No };
 };
+
+WTF::TextStream& operator<<(WTF::TextStream&, const FocusableElementSearchResult&);
 
 } // namespace WebCore

@@ -26,7 +26,7 @@
 #include "config.h"
 
 #include "TestController.h"
-#include <WebCore/GtkVersioning.h>
+#include <WebKit/GtkVersioning.h>
 #include <WebKit/WKTextCheckerGLib.h>
 #include <wtf/glib/GRefPtr.h>
 

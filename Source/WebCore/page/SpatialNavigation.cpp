@@ -30,7 +30,8 @@
 #include "SpatialNavigation.h"
 
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
+#include "FrameInlines.h"
 #include "FrameTree.h"
 #include "HTMLAreaElement.h"
 #include "HTMLImageElement.h"
@@ -523,9 +524,9 @@ LayoutRect nodeRectInAbsoluteCoordinates(const ContainerNode& containerNode, boo
         // the rect of the focused element.
         if (ignoreBorder) {
             auto& style = renderer->style();
-            rect.move(Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { }), Style::evaluate<LayoutUnit>(style.borderTopWidth(), Style::ZoomNeeded { }));
-            rect.setWidth(rect.width() - Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { }) - Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { }));
-            rect.setHeight(rect.height() - Style::evaluate<LayoutUnit>(style.borderTopWidth(), Style::ZoomNeeded { }) - Style::evaluate<LayoutUnit>(style.borderBottomWidth(), Style::ZoomNeeded { }));
+            rect.move(Style::evaluate<LayoutUnit>(style.borderLeftWidth(), style.usedZoomForLength()), Style::evaluate<LayoutUnit>(style.borderTopWidth(), style.usedZoomForLength()));
+            rect.setWidth(rect.width() - Style::evaluate<LayoutUnit>(style.borderLeftWidth(), style.usedZoomForLength()) - Style::evaluate<LayoutUnit>(style.borderRightWidth(), style.usedZoomForLength()));
+            rect.setHeight(rect.height() - Style::evaluate<LayoutUnit>(style.borderTopWidth(), style.usedZoomForLength()) - Style::evaluate<LayoutUnit>(style.borderBottomWidth(), style.usedZoomForLength()));
         }
         return rect;
     }

@@ -622,6 +622,9 @@ NO_RETURN_DUE_TO_CRASH NEVER_INLINE void MarkedBlock::dumpInfoAndCrashForInvalid
     if (!foundInBlockVM) {
         // Search all VMs to see if this block belongs to any VM.
         VMManager::forEachVM([&](VM& vm) {
+            if (!vm.isInService())
+                return IterationStatus::Continue;
+
             MarkedSpace& objectSpace = vm.heap.objectSpace();
             isBlockInSet = objectSpace.blocks().set().contains(this);
             handle = objectSpace.findMarkedBlockHandleDebug(this);

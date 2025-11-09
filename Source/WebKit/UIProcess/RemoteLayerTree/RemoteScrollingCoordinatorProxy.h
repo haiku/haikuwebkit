@@ -57,6 +57,10 @@ class RemoteScrollingTree;
 class WebPageProxy;
 class WebWheelEvent;
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class RemoteAnimationTimeline;
+#endif
+
 class RemoteScrollingCoordinatorProxy : public CanMakeWeakPtr<RemoteScrollingCoordinatorProxy>, public CanMakeCheckedPtr<RemoteScrollingCoordinatorProxy> {
     WTF_MAKE_TZONE_ALLOCATED(RemoteScrollingCoordinatorProxy);
     WTF_MAKE_NONCOPYABLE(RemoteScrollingCoordinatorProxy);
@@ -141,6 +145,8 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     virtual void animationsWereAddedToNode(RemoteLayerTreeNode&) { }
     virtual void animationsWereRemovedFromNode(RemoteLayerTreeNode&) { }
+    virtual void registerTimelineIfNecessary(WebCore::ProcessIdentifier, Seconds, MonotonicTime) { }
+    virtual const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const { return nullptr; }
 #endif
 
     String scrollingTreeAsText() const;

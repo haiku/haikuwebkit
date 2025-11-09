@@ -44,6 +44,10 @@
 #include "RenderObject.h"
 #include <wtf/text/MakeString.h>
 
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+#include "ModelPlayerAccessibilityChildren.h"
+#endif
+
 #if PLATFORM(MAC)
 #import <pal/spi/mac/HIServicesSPI.h>
 #endif
@@ -1369,15 +1373,17 @@ void AXIsolatedObject::setSelectedVisiblePositionRange(const VisiblePositionRang
         object->setSelectedVisiblePositionRange(visiblePositionRange);
 }
 
-#if PLATFORM(COCOA) && ENABLE(MODEL_ELEMENT)
-Vector<RetainPtr<id>> AXIsolatedObject::modelElementChildren()
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+
+ModelPlayerAccessibilityChildren AXIsolatedObject::modelElementChildren()
 {
-    return Accessibility::retrieveValueFromMainThread<Vector<RetainPtr<id>>>([this] () -> Vector<RetainPtr<id>> {
+    return Accessibility::retrieveValueFromMainThread<ModelPlayerAccessibilityChildren>([this] -> ModelPlayerAccessibilityChildren {
         if (RefPtr object = associatedAXObject())
             return object->modelElementChildren();
         return { };
     });
 }
+
 #endif
 
 std::optional<SimpleRange> AXIsolatedObject::simpleRange() const
@@ -1811,7 +1817,7 @@ Widget* AXIsolatedObject::widget() const
 PlatformWidget AXIsolatedObject::platformWidget() const
 {
 #if PLATFORM(COCOA)
-    return propertyValue<RetainPtr<NSView>>(AXProperty::PlatformWidget).get();
+    return propertyValue<RetainPtr<NSView>>(AXProperty::PlatformWidget).unsafeGet();
 #else
     return m_platformWidget;
 #endif

@@ -24,10 +24,10 @@
 
 #pragma once
 
-#include "AXObjectCache.h"
-#include "Element.h"
-#include "Node.h"
-#include "RenderImage.h"
+#include <WebCore/AXObjectCache.h>
+#include <WebCore/Element.h>
+#include <WebCore/Node.h>
+#include <WebCore/RenderImage.h>
 
 namespace WebCore {
 

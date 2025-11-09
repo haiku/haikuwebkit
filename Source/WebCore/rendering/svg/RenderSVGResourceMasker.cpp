@@ -167,7 +167,7 @@ FloatRect RenderSVGResourceMasker::resourceBoundingBox(const RenderObject& objec
         maskRect = contentTransform.mapRect(maskRect);
     }
 
-    auto maskBoundaries = SVGLengthContext::resolveRectangle<SVGMaskElement>(maskElement.ptr(), maskElement->maskUnits(), targetBoundingBox);
+    auto maskBoundaries = SVGLengthContext::resolveRectangle(maskElement.get(), maskElement->maskUnits(), targetBoundingBox);
     maskRect.intersect(maskBoundaries);
     if (maskRect.isEmpty())
         return targetBoundingBox;

@@ -25,6 +25,7 @@
 #include "AXObjectCacheInlines.h"
 #include "CommonAtomStrings.h"
 #include "ContainerNodeInlines.h"
+#include "DocumentView.h"
 #include "ElementTraversal.h"
 #include "FrameDestructionObserverInlines.h"
 #include "GraphicsContext.h"
@@ -390,13 +391,27 @@ String PrintContext::pageProperty(LocalFrame* frame, const String& propertyName,
     // Implement formatters for properties we care about.
     if (propertyName == "margin-left"_s) {
         if (auto marginLeft = style->marginLeft().tryFixed())
-            return String::number(marginLeft->resolveZoom(Style::ZoomNeeded { }));
+            return makeString(marginLeft->resolveZoom(Style::ZoomNeeded { }));
         return autoAtom();
     }
-    if (propertyName == "line-height"_s)
-        return String::number(style->lineHeight().value());
+    if (propertyName == "line-height"_s) {
+        return WTF::switchOn(style->lineHeight(),
+            [&](const CSS::Keyword::Normal&) -> String {
+                return "0"_s;
+            },
+            [&](const Style::LineHeight::Fixed& fixed) -> String {
+                return makeString(fixed.resolveZoom(style->usedZoomForLength()));
+            },
+            [&](const Style::LineHeight::Percentage& percentage) -> String {
+                return makeString(percentage.value);
+            },
+            [&](const Style::LineHeight::Calc&) -> String {
+                return "0"_s;
+            }
+        );
+    }
     if (propertyName == "font-size"_s)
-        return String::number(style->fontDescription().computedSize());
+        return makeString(style->fontDescription().computedSize());
     if (propertyName == "font-family"_s)
         return style->fontDescription().firstFamily();
     if (propertyName == "size"_s) {

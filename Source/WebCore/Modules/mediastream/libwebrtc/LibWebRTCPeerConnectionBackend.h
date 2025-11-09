@@ -30,17 +30,8 @@
 #include "RealtimeMediaSource.h"
 #include <wtf/TZoneMalloc.h>
 
-namespace WebCore {
-class LibWebRTCPeerConnectionBackend;
-}
-
 namespace webrtc {
 class IceCandidate;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::LibWebRTCPeerConnectionBackend> : std::true_type { };
 }
 
 namespace WebCore {

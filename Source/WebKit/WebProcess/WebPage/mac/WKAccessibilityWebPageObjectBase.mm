@@ -132,7 +132,7 @@ namespace ax = WebCore::Accessibility;
         }
 
         RefPtr frame = protectedFrame ? WTFMove(protectedFrame) : [protectedSelf focusedLocalFrame];
-        if (RefPtr document = frame->document()) {
+        if (RefPtr document = frame ? frame->document() : nullptr) {
             if (CheckedPtr cache = document->axObjectCache()) {
                 if (RefPtr root = cache->rootObjectForFrame(*frame))
                     return root->wrapper();
@@ -197,6 +197,24 @@ namespace ax = WebCore::Accessibility;
         // of the plugin accessiblity tree.
         return;
     }
+
+    CheckedPtr cache = tree->axObjectCache();
+    if (!cache)
+        return;
+
+    std::optional isolatedTreeFrameID = cache->frameID();
+    if (!isolatedTreeFrameID)
+        return;
+
+    RefPtr mainFrame = m_page ? m_page->mainFrame() : nullptr;
+    if (!mainFrame)
+        return;
+
+    // Ignore an isolated tree that's not the main frame, otherwise VoiceOver might jump directly to an iframe
+    // when interacting with a page.
+    if (*isolatedTreeFrameID != mainFrame->frameID())
+        return;
+
     m_isolatedTree = tree.get();
 }
 

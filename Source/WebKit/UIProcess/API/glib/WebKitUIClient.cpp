@@ -48,8 +48,8 @@
 
 #if PLATFORM(GTK)
 #include "Display.h"
-#include <WebCore/GtkUtilities.h>
-#include <WebCore/GtkVersioning.h>
+#include "GtkUtilities.h"
+#include "GtkVersioning.h"
 #endif
 
 using namespace WebKit;
@@ -180,7 +180,7 @@ private:
 #if PLATFORM(GTK)
         GdkRectangle geometry = WebCore::IntRect(frame);
         GtkWidget* window = gtk_widget_get_toplevel(GTK_WIDGET(m_webView));
-        if (webkit_web_view_is_controlled_by_automation(m_webView) && WebCore::widgetIsOnscreenToplevelWindow(window) && gtk_widget_get_visible(window)) {
+        if (webkit_web_view_is_controlled_by_automation(m_webView) && widgetIsOnscreenToplevelWindow(window) && gtk_widget_get_visible(window)) {
             bool needsMove = false;
             // Querying and setting window positions is not supported in GTK4.
 #if !USE(GTK4)
@@ -240,13 +240,13 @@ private:
 #if PLATFORM(GTK)
         GdkRectangle geometry = { 0, 0, 0, 0 };
         GtkWidget* window = gtk_widget_get_toplevel(GTK_WIDGET(m_webView));
-        if (WebCore::widgetIsOnscreenToplevelWindow(window) && gtk_widget_get_visible(window)) {
+        if (widgetIsOnscreenToplevelWindow(window) && gtk_widget_get_visible(window)) {
             gtk_window_get_position(GTK_WINDOW(window), &geometry.x, &geometry.y);
             gtk_window_get_size(GTK_WINDOW(window), &geometry.width, &geometry.height);
         } else {
             GdkRectangle defaultGeometry;
             webkit_window_properties_get_geometry(webkit_web_view_get_window_properties(m_webView), &defaultGeometry);
-            if ((!defaultGeometry.width || !defaultGeometry.height) && WebCore::widgetIsOnscreenToplevelWindow(window)) {
+            if ((!defaultGeometry.width || !defaultGeometry.height) && widgetIsOnscreenToplevelWindow(window)) {
                 int defaultWidth, defaultHeight;
                 gtk_window_get_default_size(GTK_WINDOW(window), &defaultWidth, &defaultHeight);
                 if (!defaultGeometry.width && defaultWidth != -1)

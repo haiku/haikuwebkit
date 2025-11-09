@@ -145,10 +145,8 @@ CDMSessionAVContentKeySession::~CDMSessionAVContentKeySession()
     [m_contentKeySessionDelegate invalidate];
 
     if (hasContentKeySession()) {
-        for (auto& sourceBuffer : m_sourceBuffers) {
+        for (auto& sourceBuffer : m_sourceBuffers)
             sourceBuffer->flush();
-            removeParser(sourceBuffer->streamDataParser());
-        }
 
         [contentKeySession() expire];
     }
@@ -375,15 +373,6 @@ RefPtr<ArrayBuffer> CDMSessionAVContentKeySession::cachedKeyForKeyID(const Strin
     return nullptr;
 }
 
-void CDMSessionAVContentKeySession::addParser(AVStreamDataParser* parser)
-{
-    INFO_LOG(LOGIDENTIFIER);
-    if ([contentKeySession() respondsToSelector:@selector(addContentKeyRecipient:)])
-        [contentKeySession() addContentKeyRecipient:parser];
-    else
-        [contentKeySession() addStreamDataParser:parser];
-}
-
 bool CDMSessionAVContentKeySession::isAnyKeyUsable(const Keys& keys) const
 {
     auto requestKeys = CDMPrivateFairPlayStreaming::keyIDsForRequest(contentKeyRequest().get());
@@ -402,15 +391,6 @@ void CDMSessionAVContentKeySession::attachContentKeyToSample(const MediaSampleAV
     NSError *error = nil;
     if (!AVSampleBufferAttachContentKey(sample.platformSample().cmSampleBuffer(), contentKey, &error))
         ERROR_LOG(LOGIDENTIFIER, "Failed to attach content key with error: %{public}@", error);
-}
-
-void CDMSessionAVContentKeySession::removeParser(AVStreamDataParser* parser)
-{
-    INFO_LOG(LOGIDENTIFIER);
-    if ([contentKeySession() respondsToSelector:@selector(removeContentKeyRecipient:)])
-        [contentKeySession() removeContentKeyRecipient:parser];
-    else
-        [contentKeySession() removeStreamDataParser:parser];
 }
 
 RefPtr<Uint8Array> CDMSessionAVContentKeySession::generateKeyReleaseMessage(unsigned short& errorCode, uint32_t& systemCode)

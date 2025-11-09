@@ -35,6 +35,10 @@
 #include <WebGPU/WebGPUExt.h>
 #include <wtf/TZoneMalloc.h>
 
+namespace WebCore {
+class IOSurface;
+}
+
 namespace WebCore::DDModel {
 
 class ConvertToBackingContext;
@@ -44,19 +48,22 @@ struct DDMeshDescriptor;
 class DDMeshImpl final : public DDMesh {
     WTF_MAKE_TZONE_ALLOCATED(DDMeshImpl);
 public:
-    static Ref<DDMeshImpl> create(WebGPU::WebGPUPtr<WGPUDDMesh>&& ddMesh, ConvertToBackingContext& convertToBackingContext)
+    static Ref<DDMeshImpl> create(WebGPU::WebGPUPtr<WGPUDDMesh>&& ddMesh, Vector<UniqueRef<WebCore::IOSurface>>&& renderBuffers, ConvertToBackingContext& convertToBackingContext)
     {
-        return adoptRef(*new DDMeshImpl(WTFMove(ddMesh), convertToBackingContext));
+        return adoptRef(*new DDMeshImpl(WTFMove(ddMesh), WTFMove(renderBuffers), convertToBackingContext));
     }
 
     virtual ~DDMeshImpl();
 
     WGPUDDMesh backing() const { return m_backing.get(); };
+#if PLATFORM(COCOA)
+    Vector<MachSendRight> ioSurfaceHandles() final;
+#endif
 
 private:
     friend class DowncastConvertToBackingContext;
 
-    DDMeshImpl(WebGPU::WebGPUPtr<WGPUDDMesh>&&, ConvertToBackingContext&);
+    DDMeshImpl(WebGPU::WebGPUPtr<WGPUDDMesh>&&, Vector<UniqueRef<WebCore::IOSurface>>&&, ConvertToBackingContext&);
 
     DDMeshImpl(const DDMeshImpl&) = delete;
     DDMeshImpl(DDMeshImpl&&) = delete;
@@ -65,12 +72,22 @@ private:
 
     void setLabelInternal(const String&) final;
 #if PLATFORM(COCOA)
+    void addMesh(const DDMeshDescriptor&) final;
     void update(const DDUpdateMeshDescriptor&) final;
+    void addTexture(const DDTextureDescriptor&) final;
+    void updateTexture(const DDUpdateTextureDescriptor&) final;
+    void addMaterial(const DDMaterialDescriptor&) final;
+    void updateMaterial(const DDUpdateMaterialDescriptor&) final;
+
+    void render() final;
 #endif
 
     const Ref<ConvertToBackingContext> m_convertToBackingContext;
 
     WebGPU::WebGPUPtr<WGPUDDMesh> m_backing;
+#if PLATFORM(COCOA)
+    Vector<UniqueRef<WebCore::IOSurface>> m_renderBuffers;
+#endif
 };
 
 }

@@ -41,7 +41,8 @@
 #include "ContainerNodeInlines.h"
 #include "DateComponents.h"
 #include "DateTimeChooser.h"
-#include "DocumentInlines.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "Editor.h"
 #include "ElementInlines.h"
 #include "EventLoop.h"
@@ -952,7 +953,7 @@ RenderPtr<RenderElement> HTMLInputElement::createElementRenderer(RenderStyle&& s
     return m_inputType->createInputRenderer(WTFMove(style));
 }
 
-bool HTMLInputElement::isReplaced(const RenderStyle&) const
+bool HTMLInputElement::isReplaced(const RenderStyle*) const
 {
     return m_inputType && m_inputType->isImageButton();
 }

@@ -29,8 +29,8 @@ dfg/DFGByteCodeParser.cpp
 dfg/DFGConstantFoldingPhase.cpp
 dfg/DFGOSRExitCompilerCommon.cpp
 dfg/DFGOperations.cpp
-disassembler/ARM64/A64DOpcode.cpp
-disassembler/ARM64/A64DOpcode.h
+[ Mac ] disassembler/ARM64/A64DOpcode.cpp
+[ Mac ] disassembler/ARM64/A64DOpcode.h
 ftl/FTLState.cpp
 heap/ConservativeRoots.cpp
 heap/Heap.cpp
@@ -86,6 +86,7 @@ runtime/IntlSegmenter.h
 runtime/IntlSegments.h
 runtime/JSArrayBufferView.cpp
 runtime/JSCJSValueInlines.h
+[ iOS ] runtime/JSCell.cpp
 runtime/JSCell.h
 runtime/JSCustomGetterFunction.cpp
 runtime/JSCustomSetterFunction.cpp

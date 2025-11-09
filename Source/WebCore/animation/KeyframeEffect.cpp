@@ -43,7 +43,8 @@
 #include "CSSValue.h"
 #include "CSSValueKeywords.h"
 #include "CSSValuePool.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "EventTargetInlines.h"
 #include "FontCascade.h"
@@ -59,7 +60,6 @@
 #include "Logging.h"
 #include "MutableStyleProperties.h"
 #include "PropertyAllowlist.h"
-#include "Quirks.h"
 #include "RenderBox.h"
 #include "RenderBoxModelObject.h"
 #include "RenderElement.h"
@@ -1088,9 +1088,8 @@ ExceptionOr<void> KeyframeEffect::setKeyframes(JSGlobalObject& lexicalGlobalObje
     return processKeyframesResult;
 }
 
-void KeyframeEffect::keyframesRuleDidChange()
+void KeyframeEffect::recomputeKeyframesAtNextOpportunity()
 {
-    ASSERT(is<CSSAnimation>(animation()));
     clearBlendingKeyframes();
     invalidate();
 }
@@ -1154,7 +1153,7 @@ ExceptionOr<void> KeyframeEffect::processKeyframes(JSGlobalObject& lexicalGlobal
 
     // We take a slight detour from the spec text and compute the missing keyframe offsets right away
     // since they can be computed up-front.
-    computeMissingKeyframeOffsets(parsedKeyframes, activeViewTimeline(), animation());
+    computeMissingKeyframeOffsets(parsedKeyframes, activeViewTimeline().get(), animation());
 
     CSSParserContext parserContext(document);
 
@@ -1663,7 +1662,7 @@ bool KeyframeEffect::isCurrentlyAffectingProperty(CSSPropertyID property, Accele
     if (!m_blendingKeyframes.properties().contains(property))
         return false;
 
-    if (m_pseudoElementIdentifier && m_pseudoElementIdentifier->pseudoId == PseudoId::Marker && !Style::isValidMarkerStyleProperty(property))
+    if (m_pseudoElementIdentifier && m_pseudoElementIdentifier->type == PseudoElementType::Marker && !Style::isValidMarkerStyleProperty(property))
         return false;
 
     return m_phaseAtLastApplication == AnimationEffectPhase::Active;
@@ -1914,7 +1913,7 @@ const TimingFunction* KeyframeEffect::timingFunctionForBlendingKeyframe(const Bl
         }
 
         // Failing that, or for a CSS Transition, the timing function is inherited from the backing Animation object.
-        return styleOriginatedAnimation->backingAnimationTimingFunction().get();
+        return styleOriginatedAnimation->backingAnimationTimingFunction();
     }
 
     return keyframe.timingFunction();
@@ -2907,7 +2906,7 @@ void KeyframeEffect::computeHasSizeDependentTransform()
     // the position at the same time as the size animates, even slight desynchronizations look
     // stuttery.
     if (auto target = targetStyleable()) {
-        if (target->pseudoElementIdentifier && target->pseudoElementIdentifier->pseudoId == PseudoId::ViewTransitionGroup)
+        if (target->pseudoElementIdentifier && target->pseudoElementIdentifier->type == PseudoElementType::ViewTransitionGroup)
             m_animatesSizeAndSizeDependentTransform |= ((m_blendingKeyframes.containsProperty(CSSPropertyWidth) || m_blendingKeyframes.containsProperty(CSSPropertyHeight)) && m_blendingKeyframes.containsProperty(CSSPropertyTransform));
     }
 }
@@ -3155,7 +3154,7 @@ bool KeyframeEffect::isPropertyAdditiveOrCumulative(KeyframeInterpolation::Prope
     });
 }
 
-const ViewTimeline* KeyframeEffect::activeViewTimeline()
+RefPtr<const ViewTimeline> KeyframeEffect::activeViewTimeline() const
 {
     RefPtr animation = this->animation();
     if (!animation)
@@ -3163,7 +3162,7 @@ const ViewTimeline* KeyframeEffect::activeViewTimeline()
 
     RefPtr viewTimeline = dynamicDowncast<ViewTimeline>(animation->timeline());
     if (viewTimeline && viewTimeline->currentTime())
-        return viewTimeline.get();
+        return viewTimeline;
 
     return nullptr;
 }

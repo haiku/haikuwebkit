@@ -40,7 +40,6 @@ struct DMABufFormat {
     {
     }
 
-    ~DMABufFormat() = default;
     DMABufFormat(const DMABufFormat&) = delete;
     DMABufFormat& operator=(const DMABufFormat&) = delete;
     DMABufFormat(DMABufFormat&& other)

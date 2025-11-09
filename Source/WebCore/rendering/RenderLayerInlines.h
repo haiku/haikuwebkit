@@ -26,6 +26,7 @@
 #include "RenderSVGResourceClipper.h"
 #include "RenderView.h"
 #include "SVGGraphicsElement.h"
+#include "Settings.h"
 #include <wtf/CheckedPtr.h>
 
 namespace WebCore {

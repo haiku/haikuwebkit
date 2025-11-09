@@ -27,6 +27,7 @@
 #include "ContainerNodeInlines.h"
 #include "DOMMatrix2DInit.h"
 #include "DOMWrapperWorld.h"
+#include "DocumentPage.h"
 #include "ElementIterator.h"
 #include "EventNames.h"
 #include "FrameSelection.h"
@@ -55,6 +56,7 @@
 #include "SVGTransform.h"
 #include "SVGViewElement.h"
 #include "SVGViewSpec.h"
+#include "Settings.h"
 #include "StaticNodeList.h"
 #include "TreeScopeInlines.h"
 #include "TypedElementDescendantIteratorInlines.h"
@@ -488,7 +490,7 @@ RenderPtr<RenderElement> SVGSVGElement::createElementRenderer(RenderStyle&& styl
     return createRenderer<LegacyRenderSVGViewportContainer>(*this, WTFMove(style));
 }
 
-bool SVGSVGElement::isReplaced(const RenderStyle&) const
+bool SVGSVGElement::isReplaced(const RenderStyle*) const
 {
     return isOutermostSVGSVGElement();
 }
@@ -858,7 +860,7 @@ Element* SVGSVGElement::getElementById(const AtomString& id)
 
     RefPtr element = treeScope().getElementById(id);
     if (element && element->isDescendantOf(*this))
-        return element.get();
+        return element.unsafeGet();
     if (treeScope().containsMultipleElementsWithId(id)) {
         for (auto& element : *treeScope().getAllElementsById(id)) {
             if (element->isDescendantOf(*this))

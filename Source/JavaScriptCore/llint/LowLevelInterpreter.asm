@@ -275,9 +275,9 @@ const NoPtrTag = constexpr NoPtrTag
 const VMTrapsAsyncEvents = constexpr VMTraps::AsyncEvents
 
 # VM offsets
-const VMTrapAwareSoftStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackManager::m_trapAwareSoftStackLimit
-const VMCLoopStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackManager::m_cloopStackLimit
-const VMSoftStackLimitOffset = VM::m_traps + VMTraps::m_stack + StackManager::m_softStackLimit
+const VMTrapAwareSoftStackLimitOffset = VM::m_threadContext + VMThreadContext::m_traps + VMTraps::m_stack + StackManager::m_trapAwareSoftStackLimit
+const VMCLoopStackLimitOffset = VM::m_threadContext + VMThreadContext::m_traps + VMTraps::m_stack + StackManager::m_cloopStackLimit
+const VMSoftStackLimitOffset = VM::m_threadContext + VMThreadContext::m_traps + VMTraps::m_stack + StackManager::m_softStackLimit
 
 # Registers
 
@@ -1861,7 +1861,8 @@ if (ARM64E or ARM64) and ADDRESS64
         functionPrologue()
         pushCalleeSaves()
         vmEntryRecord(cfr, sp)
-        storep a1, VMEntryRecord::m_vm[sp]
+        move 0, t9
+        storepairq a1, t9, VMEntryRecord::m_vm[sp]
         loadpairq VM::topCallFrame[a1], t8, t9 # topCallFrame and topEntryFrame
         storepairq t8, t9, VMEntryRecord::m_prevTopCallFrame[sp]
     end
@@ -2511,7 +2512,7 @@ end)
 macro checkTraps(dispatch)
     loadp CodeBlock[cfr], t1
     loadp CodeBlock::m_vm[t1], t1
-    loadi VM::m_traps+VMTraps::m_trapBits[t1], t0
+    loadi VM::m_threadContext+VMThreadContext::m_traps+VMTraps::m_trapBits[t1], t0
     andi VMTrapsAsyncEvents, t0
     btpnz t0, .handleTraps
 .afterHandlingTraps:

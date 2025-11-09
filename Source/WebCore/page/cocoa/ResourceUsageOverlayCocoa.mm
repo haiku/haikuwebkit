@@ -30,6 +30,7 @@
 
 #import "ColorSpaceCG.h"
 #import "CommonVM.h"
+#import "GraphicsLayer.h"
 #import "JSDOMWindow.h"
 #import "PlatformCALayer.h"
 #import "ResourceUsageThread.h"

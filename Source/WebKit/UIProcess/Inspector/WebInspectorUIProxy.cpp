@@ -748,6 +748,15 @@ void WebInspectorUIProxy::setInspectorPageDeveloperExtrasEnabled(bool enabled)
     inspectorPage->protectedPreferences()->setDeveloperExtrasEnabled(enabled);
 }
 
+void WebInspectorUIProxy::setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor)
+{
+    RefPtr inspectorPage = m_inspectorPage.get();
+    if (!inspectorPage)
+        return;
+
+    inspectorPage->setPageAndTextZoomFactors(pageZoomFactor, textZoomFactor);
+}
+
 void WebInspectorUIProxy::elementSelectionChanged(bool active)
 {
     m_elementSelectionActive = active;

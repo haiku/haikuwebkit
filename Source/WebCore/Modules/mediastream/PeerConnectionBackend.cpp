@@ -34,8 +34,7 @@
 
 #if ENABLE(WEB_RTC)
 
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EventNames.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSRTCCertificate.h"
@@ -228,7 +227,7 @@ void PeerConnectionBackend::handleLogMessage(const WTFLogChannel& channel, WTFLo
 
     // Check if the third message is a multi-lines string, concatenating such message would look ugly in log events.
     if (values.size() >= 3 && values[2].value.find("\r\n"_s) != notFound)
-        event = generateJSONLogEvent(MessageLogEvent { values[1].value, { values[2].value.span8() } }, false);
+        event = generateJSONLogEvent(MessageLogEvent { values[1].value, { byteCast<uint8_t>(values[2].value.span8()) } }, false);
     else {
         StringBuilder builder;
         for (auto& value : values.subvector(1))

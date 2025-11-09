@@ -56,9 +56,6 @@ public:
     static void serialize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, short);
     static void serialize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ScopedName&);
 
-    static void serializeLength(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const WebCore::Length&);
-    static void serializeLength(const RenderStyle&, StringBuilder&, const CSS::SerializationContext&, const WebCore::Length&);
-
     template<typename T> static void serializeNumber(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, T);
     template<typename T> static void serializeNumberAsPixels(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, T);
 
@@ -71,8 +68,6 @@ public:
 
     // MARK: Shared serializations
 
-    static void serializeGlyphOrientation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, GlyphOrientation);
-    static void serializeGlyphOrientationOrAuto(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, GlyphOrientation);
     static void serializeMarginTrim(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<MarginTrimType>);
     static void serializeWebkitTextCombine(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, TextCombine);
     static void serializeImageOrientation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, ImageOrientation);
@@ -113,8 +108,6 @@ public:
     // MARK: Font serializations
 
     static void serializeFontFamily(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const AtomString&);
-    static void serializeFontFeatureSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontFeatureSettings&);
-    static void serializeFontVariationSettings(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FontVariationSettings&);
 
     // MARK: Grid serializations
 
@@ -174,57 +167,6 @@ inline void ExtractorSerializer::serialize(ExtractorState& state, StringBuilder&
         serializationForCSS(builder, context, state.style, scopedName.name);
 }
 
-inline void ExtractorSerializer::serializeLength(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const WebCore::Length& length)
-{
-    serializeLength(state.style, builder, context, length);
-}
-
-inline void ExtractorSerializer::serializeLength(const RenderStyle& style, StringBuilder& builder, const CSS::SerializationContext& context, const WebCore::Length& length)
-{
-    switch (length.type()) {
-    case LengthType::Auto:
-        serializationForCSS(builder, context, style, CSS::Keyword::Auto { });
-        return;
-    case LengthType::Content:
-        serializationForCSS(builder, context, style, CSS::Keyword::Content { });
-        return;
-    case LengthType::FillAvailable:
-        serializationForCSS(builder, context, style, CSS::Keyword::WebkitFillAvailable { });
-        return;
-    case LengthType::FitContent:
-        serializationForCSS(builder, context, style, CSS::Keyword::FitContent { });
-        return;
-    case LengthType::Intrinsic:
-        serializationForCSS(builder, context, style, CSS::Keyword::Intrinsic { });
-        return;
-    case LengthType::MinIntrinsic:
-        serializationForCSS(builder, context, style, CSS::Keyword::MinIntrinsic { });
-        return;
-    case LengthType::MinContent:
-        serializationForCSS(builder, context, style, CSS::Keyword::MinContent { });
-        return;
-    case LengthType::MaxContent:
-        serializationForCSS(builder, context, style, CSS::Keyword::MaxContent { });
-        return;
-    case LengthType::Normal:
-        serializationForCSS(builder, context, style, CSS::Keyword::Normal { });
-        return;
-    case LengthType::Fixed:
-        CSS::serializationForCSS(builder, context, CSS::LengthRaw<> { CSS::LengthUnit::Px, adjustFloatForAbsoluteZoom(length.value(), style) });
-        return;
-    case LengthType::Percent:
-        CSS::serializationForCSS(builder, context, CSS::PercentageRaw<> { length.value() });
-        return;
-    case LengthType::Calculated:
-        builder.append(CSSCalcValue::create(length.protectedCalculationValue(), style)->customCSSText(context));
-        return;
-    case LengthType::Relative:
-    case LengthType::Undefined:
-        break;
-    }
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
 template<typename T> void ExtractorSerializer::serializeNumber(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, T number)
 {
     serialize(state, builder, context, number);
@@ -275,53 +217,6 @@ inline void ExtractorSerializer::serializeTransformationMatrix(const RenderStyle
 }
 
 // MARK: - Shared serializations
-
-inline void ExtractorSerializer::serializeGlyphOrientation(ExtractorState&, StringBuilder& builder, const CSS::SerializationContext& context, GlyphOrientation orientation)
-{
-    switch (orientation) {
-    case GlyphOrientation::Degrees0:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 0_css_deg });
-        return;
-    case GlyphOrientation::Degrees90:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 90_css_deg });
-        return;
-    case GlyphOrientation::Degrees180:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 180_css_deg });
-        return;
-    case GlyphOrientation::Degrees270:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 270_css_deg });
-        return;
-    case GlyphOrientation::Auto:
-        ASSERT_NOT_REACHED();
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 0_css_deg });
-        return;
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline void ExtractorSerializer::serializeGlyphOrientationOrAuto(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, GlyphOrientation orientation)
-{
-    switch (orientation) {
-    case GlyphOrientation::Degrees0:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 0_css_deg });
-        return;
-    case GlyphOrientation::Degrees90:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 90_css_deg });
-        return;
-    case GlyphOrientation::Degrees180:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 180_css_deg });
-        return;
-    case GlyphOrientation::Degrees270:
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { 270_css_deg });
-        return;
-    case GlyphOrientation::Auto:
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
 
 inline void ExtractorSerializer::serializeMarginTrim(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, OptionSet<MarginTrimType> marginTrim)
 {
@@ -984,36 +879,6 @@ inline void ExtractorSerializer::serializeFontFamily(ExtractorState&, StringBuil
         builder.append(nameLiteralForSerialization(familyIdentifier));
     else
         builder.append(WebCore::serializeFontFamily(family));
-}
-
-inline void ExtractorSerializer::serializeFontFeatureSettings(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FontFeatureSettings& fontFeatureSettings)
-{
-    if (!fontFeatureSettings.size()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    }
-
-    // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-
-    CSSValueListBuilder list;
-    for (auto& feature : fontFeatureSettings)
-        list.append(CSSFontFeatureValue::create(FontTag(feature.tag()), ExtractorConverter::convert(state, feature.value())));
-    builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
-}
-
-inline void ExtractorSerializer::serializeFontVariationSettings(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const FontVariationSettings& fontVariationSettings)
-{
-    if (fontVariationSettings.isEmpty()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    }
-
-    // FIXME: Do this more efficiently without creating and destroying a CSSValue object.
-
-    CSSValueListBuilder list;
-    for (auto& feature : fontVariationSettings)
-        list.append(CSSFontVariationValue::create(feature.tag(), ExtractorConverter::convert(state, feature.value())));
-    builder.append(CSSValueList::createCommaSeparated(WTFMove(list))->cssText(context));
 }
 
 // MARK: - Grid serializations

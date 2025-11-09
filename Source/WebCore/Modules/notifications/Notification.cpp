@@ -38,7 +38,7 @@
 #include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentEventLoop.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"

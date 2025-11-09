@@ -1278,12 +1278,14 @@ public:
 
     void absDouble(FPRegisterID src, FPRegisterID dst)
     {
-        ASSERT(src != dst);
-        move64ToDouble(TrustedImm64(std::bit_cast<int64_t>(-0.0)), dst);
-        if (supportsAVX())
-            m_assembler.vandnpd_rrr(src, dst, dst);
-        else
-            m_assembler.andnpd_rr(src, dst);
+        if (supportsAVX()) {
+            m_assembler.vpsllq_i8rr(1, src, dst);
+            m_assembler.vpsrlq_i8rr(1, dst, dst);
+        } else {
+            moveDouble(src, dst);
+            m_assembler.psllq_i8r(1, dst);
+            m_assembler.psrlq_i8r(1, dst);
+        }
     }
 
     void absFloat(FPRegisterID src, FPRegisterID dst)

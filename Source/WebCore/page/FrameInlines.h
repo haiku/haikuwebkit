@@ -41,21 +41,4 @@ inline RefPtr<HTMLFrameOwnerElement> Frame::protectedOwnerElement() const
     return m_ownerElement.get();
 }
 
-inline Page* Frame::page() const
-{
-    return m_page.get();
-}
-
-inline RefPtr<Page> Frame::protectedPage() const
-{
-    return m_page.get();
-}
-
-inline std::optional<PageIdentifier> Frame::pageID() const
-{
-    if (auto* page = this->page())
-        return page->identifier();
-    return std::nullopt;
-}
-
 } // namespace WebCore

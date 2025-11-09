@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CachedResource.h"
+#include <WebCore/CachedResource.h>
 #include <wtf/Forward.h>
 #include <wtf/WeakPtr.h>
 

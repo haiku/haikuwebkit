@@ -27,12 +27,12 @@
 #import <WebCore/AXObjectCache.h>
 #import <WebCore/Chrome.h>
 #import <WebCore/ChromeClient.h>
+#import <WebCore/DocumentPage.h>
 #import <WebCore/EventHandler.h>
 #import <WebCore/Font.h>
 #import <WebCore/FrameInlines.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameView.h>
-#import <WebCore/Page.h>
 #import <WebCore/PopupMenuClient.h>
 #import <pal/spi/mac/NSCellSPI.h>
 #import <pal/system/mac/PopupMenu.h>

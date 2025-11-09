@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-#include <WebCore/GtkVersioning.h>
+#include <WebKit/GtkVersioning.h>
 #include <string.h>
 #include <sys/eventfd.h>
 #include <wtf/glib/GRefPtr.h>

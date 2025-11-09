@@ -95,6 +95,7 @@ private:
     RefPtr<WebExtensionSQLiteDatabase> m_database;
     const Ref<WorkQueue> m_queue;
     bool m_useInMemoryDatabase;
+    bool m_savepointsAreValid { true };
 };
 
 } // namespace WebKit

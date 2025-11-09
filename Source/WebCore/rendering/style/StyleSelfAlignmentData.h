@@ -67,7 +67,7 @@ public:
     friend bool operator==(const StyleSelfAlignmentData&, const StyleSelfAlignmentData&) = default;
 
 private:
-    PREFERRED_TYPE(ItemPosition) uint8_t m_position : 5 { 0 };
+    PREFERRED_TYPE(ItemPosition) uint8_t m_position : 4 { 0 };
     PREFERRED_TYPE(ItemPositionType) uint8_t m_positionType: 1 { 0 }; // Whether or not alignment uses the 'legacy' keyword.
     PREFERRED_TYPE(OverflowAlignment) uint8_t m_overflow : 2 { 0 };
 };

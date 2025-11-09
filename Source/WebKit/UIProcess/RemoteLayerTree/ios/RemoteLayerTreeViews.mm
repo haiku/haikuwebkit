@@ -313,14 +313,14 @@ static Class scrollViewScrollIndicatorClassSingleton()
         if ([view isKindOfClass:[WKChildScrollView class]]) {
             if (WebKit::isScrolledBy((WKChildScrollView *)view.get(), viewsAtPoint.last().get())) {
                 LOG_WITH_STREAM(UIHitTesting, stream << " " << (void*)view.get() << " is child scroll view and scrolled by " << (void*)viewsAtPoint.last().get());
-                return view.get();
+                return view.unsafeGet();
             }
         }
 
         if ([view isKindOfClass:WebKit::scrollViewScrollIndicatorClassSingleton()] && [[view superview] isKindOfClass:WKChildScrollView.class]) {
             if (WebKit::isScrolledBy((WKChildScrollView *)[view superview], viewsAtPoint.last().get())) {
                 LOG_WITH_STREAM(UIHitTesting, stream << " " << (void*)view.get() << " is the scroll indicator of child scroll view, which is scrolled by " << (void*)viewsAtPoint.last().get());
-                return view.get();
+                return view.unsafeGet();
             }
         }
 

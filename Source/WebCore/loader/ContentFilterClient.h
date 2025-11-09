@@ -31,15 +31,6 @@
 #include <wtf/Forward.h>
 
 namespace WebCore {
-class ContentFilterClient;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::ContentFilterClient> : std::true_type { };
-}
-
-namespace WebCore {
 
 class ContentFilterUnblockHandler;
 class ResourceError;

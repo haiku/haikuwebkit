@@ -29,9 +29,8 @@
 
 #include "DeprecatedGlobalSettings.h"
 #include "DocumentFragment.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "FrameDestructionObserverInlines.h"
-#include "FrameInlines.h"
 #include "InternalSettings.h"
 #include "Internals.h"
 #include "JSDocument.h"
@@ -42,7 +41,6 @@
 #include "LogInitialization.h"
 #include "Logging.h"
 #include "MockGamepadProvider.h"
-#include "Page.h"
 #include "ProcessWarming.h"
 #include "SWContextManager.h"
 #include "ServiceWorkerGlobalScope.h"
@@ -257,8 +255,8 @@ void setAdditionalSupportedImageTypesForTesting(const String& imageTypes)
 
 #if ENABLE(JIT_OPERATION_VALIDATION) || ENABLE(JIT_OPERATION_DISASSEMBLY)
 
-extern const JSC::JITOperationAnnotation startOfJITOperationsInWebCoreTestSupport __asm("section$start$__DATA_CONST$__jsc_ops");
-extern const JSC::JITOperationAnnotation endOfJITOperationsInWebCoreTestSupport __asm("section$end$__DATA_CONST$__jsc_ops");
+extern const JSC::JITOperationAnnotation startOfJITOperationsInWebCoreTestSupport __asm__("section$start$__DATA_CONST$__jsc_ops");
+extern const JSC::JITOperationAnnotation endOfJITOperationsInWebCoreTestSupport __asm__("section$end$__DATA_CONST$__jsc_ops");
 
 #if ENABLE(JIT_OPERATION_VALIDATION)
 

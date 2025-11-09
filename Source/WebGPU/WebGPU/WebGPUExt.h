@@ -91,6 +91,7 @@ typedef struct WGPUDDUpdateMeshDescriptor {
     simd_float4x4 transform;
     Vector<simd_float4x4> instanceTransforms4x4;
     Vector<String> materialIds;
+    String identifier;
 } WGPUDDUpdateMeshDescriptor;
 
 typedef struct WGPUDDVertexAttributeFormat {
@@ -113,7 +114,177 @@ typedef struct WGPUDDMeshDescriptor {
     int32_t vertexCapacity;
     Vector<WGPUDDVertexAttributeFormat> vertexAttributes;
     Vector<WGPUDDVertexLayout> vertexLayouts;
+    String identifier;
 } WGPUDDMeshDescriptor;
+
+typedef struct WGPUDDCreateMeshDescriptor {
+    unsigned width;
+    unsigned height;
+    Vector<RetainPtr<IOSurfaceRef>> ioSurfaces;
+} WGPUDDCreateMeshDescriptor;
+
+enum class WGPUDDSemantic {
+    Color,
+    Vector,
+    Scalar,
+    Unknown
+};
+
+typedef struct WGPUDDImageAsset {
+    Vector<uint8_t> data;
+    uint32_t width { 0 };
+    uint32_t height { 0 };
+    uint32_t bytesPerPixel { 0 };
+    WGPUDDSemantic semantic;
+    String path;
+    String identifier;
+} WGPUDDImageAsset;
+
+struct WGPUDDEdge {
+    long upstreamNodeIndex;
+    long downstreamNodeIndex;
+    String upstreamOutputName;
+    String downstreamInputName;
+};
+
+enum class WGPUDDDataType {
+    kBool,
+    kInt,
+    kInt2,
+    kInt3,
+    kInt4,
+    kFloat,
+    kColor3f,
+    kColor3h,
+    kColor4f,
+    kColor4h,
+    kFloat2,
+    kFloat3,
+    kFloat4,
+    kHalf,
+    kHalf2,
+    kHalf3,
+    kHalf4,
+    kMatrix2f,
+    kMatrix3f,
+    kMatrix4f,
+    kSurfaceShader,
+    kGeometryModifier,
+    kString,
+    kToken,
+    kAsset
+};
+
+struct WGPUDDPrimvar {
+    String name;
+    String referencedGeomPropName;
+    uint64_t attributeFormat;
+};
+
+struct WGPUDDInputOutput {
+    WGPUDDDataType type;
+    String name;
+};
+
+enum class WGPUDDConstant {
+    kBool,
+    kUchar,
+    kInt,
+    kUint,
+    kHalf,
+    kFloat,
+    kTimecode,
+    kString,
+    kToken,
+    kAsset,
+    kMatrix2f,
+    kMatrix3f,
+    kMatrix4f,
+    kQuatf,
+    kQuath,
+    kFloat2,
+    kHalf2,
+    kInt2,
+    kFloat3,
+    kHalf3,
+    kInt3,
+    kFloat4,
+    kHalf4,
+    kInt4,
+
+    // semantic types
+    kPoint3f,
+    kPoint3h,
+    kNormal3f,
+    kNormal3h,
+    kVector3f,
+    kVector3h,
+    kColor3f,
+    kColor3h,
+    kColor4f,
+    kColor4h,
+    kTexCoord2h,
+    kTexCoord2f,
+    kTexCoord3h,
+    kTexCoord3f
+};
+
+enum class WGPUDDNodeType {
+    Builtin,
+    Constant,
+    Arguments,
+    Results
+};
+
+struct WGPUDDConstantContainer {
+    WGPUDDConstant constant;
+    Vector<Variant<String, double>> constantValues;
+    String name;
+};
+
+struct WGPUDDBuiltin {
+    String definition;
+    String name;
+};
+
+struct WGPUDDNode {
+    WGPUDDNodeType bridgeNodeType;
+    WGPUDDBuiltin builtin;
+    WGPUDDConstantContainer constant;
+};
+
+struct WGPUDDMaterialGraph {
+    Vector<WGPUDDNode> nodes;
+    Vector<WGPUDDEdge> edges;
+    Vector<WGPUDDInputOutput> inputs;
+    Vector<WGPUDDInputOutput> outputs;
+    Vector<WGPUDDPrimvar> primvars;
+    String identifier;
+};
+
+typedef struct WGPUDDTextureDescriptor {
+
+    WGPUDDImageAsset imageAsset;
+
+} WGPUDDTextureDescriptor;
+
+typedef struct WGPUDDUpdateTextureDescriptor {
+
+    WGPUDDImageAsset imageAsset;
+
+} WGPUDDUpdateTextureDescriptor;
+
+typedef struct WGPUDDMaterialDescriptor {
+
+    WGPUDDMaterialGraph materialGraph;
+
+} WGPUDDMaterialDescriptor;
+
+typedef struct WGPUDDUpdateMaterialDescriptor {
+
+    WGPUDDMaterialGraph materialGraph;
+
+} WGPUDDUpdateMaterialDescriptor;
 
 const int WGPUTextureSampleType_ExternalTexture = WGPUTextureSampleType_Force32 - 1;
 
@@ -139,8 +310,14 @@ typedef WGPUTexture (*WGPUProcSwapChainGetCurrentTexture)(WGPUSwapChain swapChai
 
 #if !defined(WGPU_SKIP_DECLARATIONS)
 
-WGPU_EXPORT WGPUDDMesh wgpuDDMeshCreate(WGPUInstance instance, const WGPUDDMeshDescriptor* descriptor);
+WGPU_EXPORT WGPUDDMesh wgpuDDMeshCreate(WGPUInstance instance, const WGPUDDCreateMeshDescriptor* descriptor);
+WGPU_EXPORT void wgpuDDMeshAdd(WGPUDDMesh mesh, WGPUDDMeshDescriptor*);
 WGPU_EXPORT void wgpuDDMeshUpdate(WGPUDDMesh mesh, WGPUDDUpdateMeshDescriptor*);
+WGPU_EXPORT void wgpuDDTextureAdd(WGPUDDMesh mesh, WGPUDDTextureDescriptor*);
+WGPU_EXPORT void wgpuDDTextureUpdate(WGPUDDMesh mesh, WGPUDDUpdateTextureDescriptor*);
+WGPU_EXPORT void wgpuDDMaterialAdd(WGPUDDMesh mesh, WGPUDDMaterialDescriptor*);
+WGPU_EXPORT void wgpuDDMaterialUpdate(WGPUDDMesh mesh, WGPUDDUpdateMaterialDescriptor*);
+WGPU_EXPORT void wgpuDDMeshRender(WGPUDDMesh mesh);
 
 WGPU_EXPORT void wgpuRenderBundleSetLabel(WGPURenderBundle renderBundle, char const * label);
 

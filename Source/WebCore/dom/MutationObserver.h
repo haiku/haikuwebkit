@@ -91,6 +91,7 @@ public:
     MutationCallback& callback() const { return m_callback.get(); }
 
     static void enqueueSlotChangeEvent(HTMLSlotElement&);
+    static void enqueueShadowRootAttachedEvent(Element&);
 
     static void notifyMutationObservers(WindowEventLoop&);
 

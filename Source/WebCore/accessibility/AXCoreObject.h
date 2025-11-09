@@ -108,6 +108,10 @@ struct AccessibilityText;
 struct CharacterRange;
 struct ScrollRectToVisibleOptions;
 
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+struct ModelPlayerAccessibilityChildren;
+#endif
+
 enum class ClickHandlerFilter : bool {
     ExcludeBody,
     IncludeBody,
@@ -1250,8 +1254,8 @@ public:
     virtual String innerHTML() const = 0;
     virtual String outerHTML() const = 0;
 
-#if PLATFORM(COCOA) && ENABLE(MODEL_ELEMENT)
-    virtual Vector<RetainPtr<id>> modelElementChildren() = 0;
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+    virtual ModelPlayerAccessibilityChildren modelElementChildren() = 0;
 #endif
 
     String infoStringForTesting();
@@ -1439,7 +1443,7 @@ T* crossFrameFindAncestor(const T& object, bool includeSelf, const MatchFunction
             return nullptr;
 
         if (matches(*current))
-            return current.get();
+            return current.unsafeGet();
     }
     return nullptr;
 }
@@ -1458,7 +1462,7 @@ T* findAncestor(const T& object, bool includeSelf, const MatchFunctionT& matches
             return nullptr;
 
         if (matches(*current))
-            return current.get();
+            return current.unsafeGet();
     }
     return nullptr;
 }
@@ -1512,7 +1516,7 @@ T* clickableSelfOrAncestor(const T& startObject, const F& shouldStop)
     // Presentational objects should not be allowed to be clicked.
     if (ancestor && ancestor->role() == AccessibilityRole::Presentational)
         return nullptr;
-    return ancestor.get();
+    return ancestor.unsafeGet();
 }
 
 template<typename T>
@@ -1539,7 +1543,7 @@ T* highestEditableAncestor(T& startObject)
         previousEditableAncestor = editableAncestor;
         editableAncestor = editableAncestor->editableAncestor();
     }
-    return previousEditableAncestor.get();
+    return previousEditableAncestor.unsafeGet();
 }
 
 template<typename T>
@@ -1551,7 +1555,7 @@ T* findRelatedObjectInAncestry(const T& object, AXRelation relation, const T& de
             return relatedObject.get() == &ancestor;
         });
         if (ancestor)
-            return ancestor.get();
+            return ancestor.unsafeGet();
     }
     return nullptr;
 }
@@ -1580,7 +1584,7 @@ AXCoreObject* findUnignoredDescendant(T& object, bool includeSelf, const F& matc
 
     for (Ref child : object.childrenIncludingIgnored()) {
         if (RefPtr descendant = findUnignoredDescendant(child.get(), /* includeSelf */ true, matches))
-            return descendant.get();
+            return descendant.unsafeGet();
     }
     return nullptr;
 }

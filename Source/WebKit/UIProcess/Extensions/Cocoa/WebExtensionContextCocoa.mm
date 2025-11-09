@@ -2381,7 +2381,7 @@ WebsiteDataStore* WebExtensionContext::websiteDataStore(std::optional<PAL::Sessi
     if (result && !result->isPersistent() && !hasAccessToPrivateData())
         return nullptr;
 
-    return result.get();
+    return result.unsafeGet();
 }
 
 void WebExtensionContext::cookiesDidChange(API::HTTPCookieStore&)

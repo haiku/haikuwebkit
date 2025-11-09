@@ -35,8 +35,6 @@
 
 class LeakChecker {
 public:
-    LeakChecker() = default;
-
     ~LeakChecker()
     {
         if (m_watchedObjects.isEmpty())

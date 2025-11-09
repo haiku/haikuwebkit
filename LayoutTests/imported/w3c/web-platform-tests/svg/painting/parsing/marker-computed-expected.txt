@@ -1,5 +1,7 @@
 
-FAIL Property marker value 'none' assert_equals: expected "none" but got ""
-FAIL Property marker value 'url("https://example.com/")' assert_equals: expected "url(\"https://example.com/\")" but got ""
-FAIL url values are made absolute assert_equals: expected "url(\"http://web-platform.test:8800/svg/painting/parsing/a.b#c\")" but got ""
+PASS Property marker value 'none'
+PASS Property marker value 'url("https://example.com/")'
+PASS url values are made absolute
+PASS Setting a single marker value results in empty marker computed value
+PASS Setting a single marker value to "none" results in empty marker computed value
 

@@ -33,9 +33,8 @@
 
 #include "ColorBlending.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "FloatRect.h"
-#include "FrameInlines.h"
 #include "FrameSelection.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"

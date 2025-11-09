@@ -28,12 +28,13 @@
 #if ENABLE(WEBGL)
 
 #include <WebCore/GraphicsTypesGL.h>
-#include <wtf/text/WTFString.h>
+#include <wtf/text/CString.h>
 
 namespace WebCore {
 
-struct GraphicsContextGLActiveInfo {
-    String name;
+class GraphicsContextGLActiveInfo {
+public:
+    CString name;
     GCGLenum type;
     GCGLint size;
 };

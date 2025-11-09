@@ -31,7 +31,8 @@
 #include <JavaScriptCore/APICast.h>
 #include <JavaScriptCore/HeapInlines.h>
 #include <WebCore/BoundaryPointInlines.h>
-#include <WebCore/Document.h>
+#include <WebCore/DocumentPage.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/FloatRect.h>
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameInlines.h>
@@ -43,7 +44,6 @@
 #include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/NodeInlines.h>
-#include <WebCore/Page.h>
 #include <WebCore/Range.h>
 #include <WebCore/RenderView.h>
 #include <WebCore/ShareableBitmap.h>

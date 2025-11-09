@@ -158,6 +158,9 @@ public:
 
     void setInspectorPageDeveloperExtrasEnabled(bool) override;
 
+    void setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor) override;
+    double pageZoomFactor() const override;
+
 #if ENABLE(INSPECTOR_TELEMETRY)
     bool supportsDiagnosticLogging() override;
     bool diagnosticLoggingAvailable() override { return m_diagnosticLoggingAvailable; }
@@ -223,6 +226,7 @@ private:
 
     DockSide m_dockSide { DockSide::Undocked };
     unsigned m_inspectionLevel { 1 };
+    double m_pageZoomFactor { 1.0 };
 };
 
 } // namespace WebKit

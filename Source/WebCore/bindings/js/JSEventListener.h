@@ -42,6 +42,9 @@ public:
 
     virtual ~JSEventListener();
 
+    void ref() const final { EventListener::ref(); }
+    void deref() const final { EventListener::deref(); }
+
     bool operator==(const EventListener&) const final;
 
     // Returns true if this event listener was created for an event handler attribute, like "onload" or "onclick".

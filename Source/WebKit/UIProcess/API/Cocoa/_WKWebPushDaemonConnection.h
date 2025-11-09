@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,9 +44,9 @@ WK_EXTERN
 
 - (instancetype)init;
 @property (nonatomic, copy) NSString *machServiceName;
-@property (nonatomic, copy) NSString *partition;
+@property (nonatomic, copy, nullable) NSString *partition;
 @property (nonatomic, assign) audit_token_t hostApplicationAuditToken;
-@property (nonatomic, copy) NSString *bundleIdentifierOverrideForTesting;
+@property (nonatomic, copy, nullable) NSString *bundleIdentifierOverrideForTesting;
 @end
 
 WK_EXTERN

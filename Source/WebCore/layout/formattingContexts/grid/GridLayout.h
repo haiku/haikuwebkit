@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "GridFormattingContext.h"
-#include "GridTypeAliases.h"
-#include "StyleGridTrackBreadth.h"
+#include <WebCore/GridFormattingContext.h>
+#include <WebCore/GridTypeAliases.h>
+#include <WebCore/StyleGridTrackBreadth.h>
 
 namespace WebCore {
 class RenderStyle;
@@ -62,7 +62,7 @@ class GridLayout {
 public:
     GridLayout(const GridFormattingContext&);
 
-    void layout(GridFormattingContext::GridLayoutConstraints, const UnplacedGridItems&);
+    std::pair<UsedTrackSizes, GridItemRects> layout(GridFormattingContext::GridLayoutConstraints, const UnplacedGridItems&);
 
 private:
 
@@ -78,6 +78,10 @@ private:
 
     static Vector<UsedMargins> computeInlineMargins(const PlacedGridItems&);
     static Vector<UsedMargins> computeBlockMargins(const PlacedGridItems&);
+
+    using BorderBoxPositions = Vector<LayoutUnit>;
+    static BorderBoxPositions performInlineAxisSelfAlignment(const PlacedGridItems&, const Vector<UsedMargins>&);
+    static BorderBoxPositions performBlockAxisSelfAlignment(const PlacedGridItems&, const Vector<UsedMargins>&);
 
     const GridFormattingContext& formattingContext() const { return m_gridFormattingContext.get(); }
 

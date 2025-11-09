@@ -36,15 +36,6 @@
 
 OBJC_CLASS WebCoreAudioInputMuteChangeListener;
 
-namespace WebCore {
-class CoreAudioSharedUnit;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::CoreAudioSharedUnit> : std::true_type { };
-}
-
 typedef UInt32 AudioUnitPropertyID;
 typedef UInt32 AudioUnitScope;
 typedef UInt32 AudioUnitElement;

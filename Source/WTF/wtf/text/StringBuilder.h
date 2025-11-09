@@ -296,7 +296,7 @@ inline unsigned StringBuilder::capacity() const
 
 inline char16_t StringBuilder::operator[](unsigned i) const
 {
-    return is8Bit() ? span8()[i] : span16()[i];
+    return is8Bit() ? char16_t { span8()[i] } : span16()[i];
 }
 
 inline bool StringBuilder::is8Bit() const

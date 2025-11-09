@@ -33,6 +33,7 @@
 #import "SmartMagnificationControllerMessages.h"
 #import "WebPage.h"
 #import "WebPageProxyMessages.h"
+#import <WebCore/DocumentPage.h>
 #import <WebCore/Editor.h>
 #import <WebCore/FindRevealAlgorithms.h>
 #import <WebCore/FocusController.h>

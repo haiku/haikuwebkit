@@ -30,13 +30,12 @@
 
 #include "AudioSession.h"
 #include "ContextDestructionObserverInlines.h"
-#include "Document.h"
+#include "DocumentPage.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
 #include "EventTargetInterfaces.h"
 #include "ExceptionOr.h"
-#include "Page.h"
 #include "PermissionsPolicy.h"
 #include "PlatformMediaSessionManager.h"
 #include <wtf/TZoneMallocInlines.h>

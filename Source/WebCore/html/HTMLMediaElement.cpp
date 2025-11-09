@@ -53,11 +53,15 @@
 #include "DiagnosticLoggingClient.h"
 #include "DiagnosticLoggingKeys.h"
 #include "DiagnosticLoggingResultType.h"
-#include "Document.h"
+#include "DocumentEventLoop.h"
 #include "DocumentFullscreen.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "DocumentMediaElement.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
+#include "DocumentResourceLoader.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "ElementChildIteratorInlines.h"
 #include "EventLoop.h"
 #include "EventNames.h"
@@ -113,7 +117,6 @@
 #include "PlatformTextTrack.h"
 #include "ProgressTracker.h"
 #include "PseudoClassChangeInvalidation.h"
-#include "Quirks.h"
 #include "RegistrableDomain.h"
 #include "RenderBoxInlines.h"
 #include "RenderTheme.h"
@@ -613,6 +616,8 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document& docum
     , m_explicitlyMuted(false)
     , m_paused(true)
     , m_seeking(false)
+    , m_buffering(false)
+    , m_stalled(false)
     , m_seekRequested(false)
     , m_wasPlayingBeforeSeeking(false)
     , m_sentStalledEvent(false)
@@ -736,7 +741,7 @@ void HTMLMediaElement::initializeMediaSession()
 
     registerWithDocument(document);
 
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
+#if USE(AUDIO_SESSION)
     AudioSession::singleton().addConfigurationChangeObserver(*this);
 #endif
 
@@ -777,7 +782,7 @@ HTMLMediaElement::~HTMLMediaElement()
 
     setShouldDelayLoadEvent(false);
 
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
+#if USE(AUDIO_SESSION)
     AudioSession::singleton().removeConfigurationChangeObserver(*this);
 #endif
 
@@ -4309,6 +4314,13 @@ void HTMLMediaElement::setPreservesPitch(bool preservesPitch)
     RefPtr { m_player }->setPreservesPitch(preservesPitch);
 }
 
+double HTMLMediaElement::mediaPlayerCurrentTime() const
+{
+    if (RefPtr player = m_player)
+        return player->currentTime().toDouble();
+    return 0;
+}
+
 bool HTMLMediaElement::ended() const
 {
 #if ENABLE(MEDIA_STREAM)
@@ -4794,7 +4806,9 @@ void HTMLMediaElement::updateStalledState()
     }
 }
 
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
+#if USE(AUDIO_SESSION)
+
+#if PLATFORM(MAC)
 void HTMLMediaElement::hardwareMutedStateDidChange(const AudioSession& session)
 {
     if (!session.isMuted())
@@ -4810,6 +4824,15 @@ void HTMLMediaElement::hardwareMutedStateDidChange(const AudioSession& session)
     userDidInterfereWithAutoplay();
 }
 #endif
+
+void HTMLMediaElement::routingContextUIDDidChange(const AudioSession& session)
+{
+    m_clients.forEach([routingContextUID = session.routingContextUID()] (auto& client) {
+        client.routingContextUIDChanged(routingContextUID);
+    });
+}
+
+#endif // USE(AUDIO_SESSION)
 
 void HTMLMediaElement::togglePlayState()
 {

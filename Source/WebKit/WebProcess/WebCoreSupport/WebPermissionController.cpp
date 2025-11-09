@@ -118,15 +118,16 @@ void WebPermissionController::notifyObserversIfNeeded(WebCore::PermissionName pe
 {
     ASSERT(isMainRunLoop());
 
-    for (auto& observer : m_observers) {
+    for (CheckedRef observer : m_observers) {
         if (!filter(observer))
             continue;
 
-        auto source = observer.source();
-        if (!observer.page() && (source == WebCore::PermissionQuerySource::Window || source == WebCore::PermissionQuerySource::DedicatedWorker))
+        auto source = observer->source();
+        if (!observer->page() && (source == WebCore::PermissionQuerySource::Window || source == WebCore::PermissionQuerySource::DedicatedWorker))
             continue;
 
-        query(WebCore::ClientOrigin { observer.origin() }, WebCore::PermissionDescriptor { permissionName }, observer.page(), source, [observer = WeakPtr { observer }](auto newState) {
+        query(WebCore::ClientOrigin { observer->origin() }, WebCore::PermissionDescriptor { permissionName }, observer->page(), source, [weakObserver = WeakPtr { observer.get() }](auto newState) {
+            CheckedPtr observer = weakObserver.get();
             if (observer && newState != observer->currentState())
                 observer->stateChanged(*newState);
         });

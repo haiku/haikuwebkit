@@ -1235,9 +1235,8 @@ void SubtleCrypto::unwrapKey(JSC::JSGlobalObject& state, KeyFormat format, Buffe
             auto& vm = state.vm();
             auto scope = DECLARE_THROW_SCOPE(vm);
 
-            String jwkString(bytes.span());
             JSLockHolder locker(vm);
-            auto jwkObject = JSONParse(&state, jwkString);
+            auto jwkObject = JSONParse(&state, byteCast<Latin1Character>(bytes.span()));
             if (!jwkObject) {
                 promise->reject(ExceptionCode::DataError, "WrappedKey cannot be converted to a JSON object"_s);
                 return;

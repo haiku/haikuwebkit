@@ -57,8 +57,8 @@ class FontDescription;
 class FontCreationContext;
 enum class FontTechnology : uint8_t;
 
-template <typename T> class FontTaggedSettings;
-typedef FontTaggedSettings<int> FontFeatureSettings;
+template<typename> class FontTaggedSettings;
+using FontFeatureSettings = FontTaggedSettings<int>;
 
 struct FontCustomPlatformSerializedData {
     Ref<SharedBuffer> fontFaceData;

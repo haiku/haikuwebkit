@@ -38,7 +38,7 @@ namespace WebKit {
 
 void startListeningForMachServiceConnections(const char* serviceName, ASCIILiteral entitlement, void(*connectionAdded)(xpc_connection_t), void(*connectionRemoved)(xpc_connection_t), void(*eventHandler)(xpc_object_t))
 {
-    static NeverDestroyed<RetainPtr<xpc_connection_t>> listener = xpc_connection_create_mach_service(serviceName, mainDispatchQueueSingleton(), XPC_CONNECTION_MACH_SERVICE_LISTENER);
+    static NeverDestroyed<RetainPtr<xpc_connection_t>> listener = adoptNS(xpc_connection_create_mach_service(serviceName, mainDispatchQueueSingleton(), XPC_CONNECTION_MACH_SERVICE_LISTENER));
     xpc_connection_set_event_handler(listener.get().get(), ^(xpc_object_t peer) {
         if (xpc_get_type(peer) != XPC_TYPE_CONNECTION)
             return;

@@ -25,11 +25,9 @@
 
 #pragma once
 
-#include <WebCore/ModelObjectDescriptorBase.h>
-
 namespace WebCore::DDModel {
 
-struct DDReplaceVertices : public ObjectDescriptorBase {
+struct DDReplaceVertices {
     int32_t bufferIndex;
     Vector<uint8_t> buffer;
 };

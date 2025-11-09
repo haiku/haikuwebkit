@@ -31,7 +31,6 @@
 #include "FEGaussianBlur.h"
 #include "ImageBuffer.h"
 #include "IntSize.h"
-#include "LengthFunctions.h"
 #include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>

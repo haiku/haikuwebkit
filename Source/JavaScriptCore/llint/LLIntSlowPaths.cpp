@@ -543,7 +543,7 @@ LLINT_SLOW_PATH_DECL(replace)
 UGPRPair SYSV_ABI llint_check_stack_and_vm_traps(CallFrame* callFrame, const JSInstruction* pc, void* newTopOfStack)
 {
     // It's ok to create the SlowPathFrameTracer here before we
-    // convertToStackOverflowFrame() because this function is always called
+    // convertToZombieFrame() because this function is always called
     // after the frame has been propulated with a proper CodeBlock and callee.
     LLINT_BEGIN();
 
@@ -563,6 +563,7 @@ UGPRPair SYSV_ABI llint_check_stack_and_vm_traps(CallFrame* callFrame, const JSI
     if (vm.traps().handleTrapsIfNeeded()) {
         if (vm.hasPendingTerminationException()) {
             throwScope.release();
+            callFrame->convertToZombieFrame(vm, codeBlock);
             pc = returnToThrow(vm);
             LLINT_RETURN_TWO(pc, callFrame);
         }
@@ -602,7 +603,7 @@ UGPRPair SYSV_ABI llint_check_stack_and_vm_traps(CallFrame* callFrame, const JSI
 
     // Hence, if we get here, then we know a stack overflow is imminent. So, just
     // throw the StackOverflowError unconditionally.
-    callFrame->convertToStackOverflowFrame(vm, codeBlock);
+    callFrame->convertToZombieFrame(vm, codeBlock);
     ErrorHandlingScope errorScope(vm);
     throwStackOverflowError(globalObject, throwScope);
     pc = returnToThrow(vm);
@@ -2063,7 +2064,7 @@ static UGPRPair handleHostCall(CallFrame* calleeFrame, JSValue callee, CodeSpeci
     calleeFrame->clearReturnPC();
 
     if (kind == CodeSpecializationKind::CodeForCall) {
-        auto callData = JSC::getCallData(callee);
+        auto callData = JSC::getCallDataInline(callee);
         ASSERT(callData.type != CallData::Type::JS);
 
         if (callData.type == CallData::Type::Native) {
@@ -2569,7 +2570,7 @@ LLINT_SLOW_PATH_DECL(slow_path_arityCheck)
     LLINT_BEGIN();
     int slotsToAdd = arityCheckFor(vm, callFrame, codeBlock);
     if (slotsToAdd < 0) [[unlikely]] {
-        callFrame->convertToStackOverflowFrame(vm, codeBlock);
+        callFrame->convertToZombieFrame(vm, codeBlock);
         SlowPathFrameTracer tracer(vm, callFrame);
         ErrorHandlingScope errorScope(vm);
         throwScope.release();
@@ -2759,37 +2760,21 @@ extern "C" UGPRPair SYSV_ABI llint_slow_path_checkpoint_osr_exit_from_inlined_ca
     }
 
     case op_instanceof: {
-        auto& dst = callFrame->uncheckedR(destinationFor(pc->as<OpInstanceof>(), bytecodeIndex.checkpoint()).virtualRegister());
         const auto& bytecode = pc->as<OpInstanceof>();
-        auto value = getOperand(callFrame, bytecode.m_value);
-        auto hasInstanceOrPrototype = JSValue::decode(result);
-
         switch (bytecodeIndex.checkpoint()) {
-        case OpInstanceof::getHasInstance: {
+        case OpInstanceof::getHasInstance: // First one is not handled by checkpoint.
+        case OpInstanceof::instanceof: // No inlined calls exist at the last checkpoint.
             RELEASE_ASSERT_NOT_REACHED();
             break;
-        }
         case OpInstanceof::getPrototype: {
-            auto constructor = getOperand(callFrame, bytecode.m_constructor);
-            ASSERT(constructor.isObject());
-            if (hasInstanceOrPrototype != globalObject->functionProtoHasInstanceSymbolFunction() || !constructor.getObject()->structure()->typeInfo().implementsDefaultHasInstance()) {
-                dst = jsBoolean(constructor.getObject()->hasInstance(globalObject, value, hasInstanceOrPrototype));
-                RETURN_IF_EXCEPTION(throwScope, { });
-                break;
-            }
-            if (!value.isObject()) {
-                dst = jsBoolean(false);
-                break;
-            }
-            hasInstanceOrPrototype = constructor.get(globalObject, vm.propertyNames->prototype);
-            RETURN_IF_EXCEPTION(throwScope, { });
-            [[fallthrough]];
-        }
-        case OpInstanceof::instanceof:
-            bool result = JSObject::defaultHasInstance(globalObject, value, hasInstanceOrPrototype);
+            auto& dst = callFrame->uncheckedR(bytecode.m_dst);
+            auto value = getOperand(callFrame, bytecode.m_value);
+            auto prototype = JSValue::decode(result);
+            bool result = JSObject::defaultHasInstance(globalObject, value, prototype);
             RETURN_IF_EXCEPTION(throwScope, { });
             dst = jsBoolean(result);
             break;
+        }
         }
         break;
     }

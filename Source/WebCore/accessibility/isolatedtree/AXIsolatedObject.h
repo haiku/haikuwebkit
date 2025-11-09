@@ -339,11 +339,11 @@ private:
     AXIsolatedObject* accessibilityHitTest(const IntPoint&) const final;
     AXIsolatedObject* focusedUIElement() const final
     {
-        return tree()->focusedNode().get();
+        return tree()->focusedNode().unsafeGet();
     }
     AXIsolatedObject* focusedUIElementInAnyLocalFrame() const final
     {
-        return tree()->focusedNode().get();
+        return tree()->focusedNode().unsafeGet();
     }
     AXIsolatedObject* internalLinkElement() const final { return objectAttributeValue(AXProperty::InternalLinkElement); }
     AccessibilityChildrenVector radioButtonGroup() const final { return tree()->objectsForIDs(vectorAttributeValue<AXID>(AXProperty::RadioButtonGroupMembers)); }
@@ -601,8 +601,8 @@ private:
 #endif
     bool hasRemoteFrameChild() const final { return boolAttributeValue(AXProperty::HasRemoteFrameChild); }
 
-#if PLATFORM(COCOA) && ENABLE(MODEL_ELEMENT)
-    Vector<RetainPtr<id>> modelElementChildren() final;
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+    ModelPlayerAccessibilityChildren modelElementChildren() final;
 #endif
 
     void updateBackingStore() final;

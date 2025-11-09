@@ -52,6 +52,9 @@ struct SerializationContext;
 }
 
 DECLARE_COMPACT_ALLOCATOR_WITH_HEAP_IDENTIFIER(CSSValue);
+
+// NOTE: This class is non-virtual for memory and performance reasons.
+// Don't go making it virtual again unless you know exactly what you're doing!
 class CSSValue : public NoVirtualDestructorBase {
     WTF_MAKE_NONCOPYABLE(CSSValue);
     WTF_DEPRECATED_MAKE_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSValue, CSSValue);
@@ -73,7 +76,6 @@ public:
     bool isBorderImageSliceValue() const { return m_classType == ClassType::BorderImageSlice; }
     bool isBorderImageWidthValue() const { return m_classType == ClassType::BorderImageWidth; }
     bool isBoxShadowPropertyValue() const { return m_classType == ClassType::BoxShadowProperty; }
-    bool isCalcValue() const { return m_classType == ClassType::Calculation; }
     bool isCanvasValue() const { return m_classType == ClassType::Canvas; }
     bool isColor() const { return m_classType == ClassType::Color; }
 #if ENABLE(DARK_MODE_CSS)
@@ -220,7 +222,6 @@ protected:
         BorderImageSlice,
         BorderImageWidth,
         BoxShadowProperty,
-        Calculation,
         Color,
 #if ENABLE(DARK_MODE_CSS)
         ColorScheme,
@@ -283,9 +284,6 @@ protected:
         m_refCount |= refCountFlagIsStatic;
     }
 
-    // NOTE: This class is non-virtual for memory and performance reasons.
-    // Don't go making it virtual again unless you know exactly what you're doing!
-    ~CSSValue() = default;
     WEBCORE_EXPORT void operator delete(CSSValue*, std::destroying_delete_t);
 
     ValueSeparator separator() const { return static_cast<ValueSeparator>(m_valueSeparator); }

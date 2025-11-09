@@ -38,7 +38,7 @@
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(WKScriptMessage.class, self))
         return;
 
-    _scriptMessage->~ScriptMessage();
+    SUPPRESS_UNCOUNTED_ARG _scriptMessage->~ScriptMessage();
 
     [super dealloc];
 }
@@ -50,7 +50,7 @@
 
 - (WKWebView *)webView
 {
-    if (RefPtr page = _scriptMessage->page())
+    if (RefPtr page = Ref { *_scriptMessage }->page())
         return page->cocoaView().autorelease();
     return nil;
 }
@@ -62,7 +62,7 @@
 
 - (NSString *)name
 {
-    return _scriptMessage->cocoaName().get();
+    return Ref { *_scriptMessage }->cocoaName().unsafeGet();
 }
 
 - (WKContentWorld *)world

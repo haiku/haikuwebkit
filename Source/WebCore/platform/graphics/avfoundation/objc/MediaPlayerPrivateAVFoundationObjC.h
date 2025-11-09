@@ -159,9 +159,6 @@ private:
 
     void cancelLoad() final;
 
-    void beginSimulatedHDCPError() final { outputObscuredDueToInsufficientExternalProtectionChanged(true); }
-    void endSimulatedHDCPError() final { outputObscuredDueToInsufficientExternalProtectionChanged(false); }
-
     void notifyTrackModeChanged() final;
     void synchronizeTextTrackState() final;
 

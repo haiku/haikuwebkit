@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/DragImage.h>
+#include <WebCore/FrameIdentifier.h>
 #include <WebCore/PasteboardContext.h>
 #include <WebCore/PasteboardCustomData.h>
 #include <WebCore/PasteboardItemInfo.h>
@@ -45,6 +46,7 @@ OBJC_CLASS NSString;
 
 #if PLATFORM(COCOA)
 #include <WebCore/AttributedString.h>
+#include <WebCore/LegacyWebArchive.h>
 OBJC_CLASS NSArray;
 #endif
 
@@ -87,12 +89,18 @@ struct PasteboardWebContent {
     String contentOrigin;
     bool canSmartCopyOrDelete;
     RefPtr<SharedBuffer> dataInWebArchiveFormat;
+    RefPtr<LegacyWebArchive> webArchive;
     RefPtr<SharedBuffer> dataInRTFDFormat;
     RefPtr<SharedBuffer> dataInRTFFormat;
     std::optional<WebCore::AttributedString> dataInAttributedStringFormat;
     String dataInHTMLFormat;
     String dataInStringFormat;
     Vector<std::pair<String, RefPtr<WebCore::SharedBuffer>>> clientTypesAndData;
+#endif
+#if PLATFORM(IOS_FAMILY)
+    // WebArchive-only parameters.
+    HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>> localFrameArchives;
+    Vector<WebCore::FrameIdentifier> remoteFrameIdentifiers;
 #endif
 #if PLATFORM(GTK) || PLATFORM(WPE)
     String contentOrigin;
@@ -387,13 +395,13 @@ private:
 };
 
 #if PLATFORM(IOS_FAMILY)
-extern NSString *WebArchivePboardType;
+WEBCORE_EXPORT extern NSString *WebArchivePboardType;
 extern NSString *UIColorPboardType;
 extern NSString *UIImagePboardType;
 #endif
 
 #if PLATFORM(MAC)
-extern const ASCIILiteral WebArchivePboardType;
+WEBCORE_EXPORT extern const ASCIILiteral WebArchivePboardType;
 extern const ASCIILiteral WebURLNamePboardType;
 extern const ASCIILiteral WebURLsWithTitlesPboardType;
 #endif

@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "CachedResourceClient.h"
-#include "CachedResourceHandle.h"
+#include <WebCore/CachedResourceClient.h>
+#include <WebCore/CachedResourceHandle.h>
+#include <optional>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/HashMap.h>
-#include <wtf/HashSet.h>
 #include <wtf/URLHash.h>
 
 
@@ -41,24 +41,31 @@ class DocumentLoader;
 class FrameLoader;
 class ResourceRequest;
 
+enum class ReferrerPolicy : uint8_t;
+
 class DocumentPrefetcher : public RefCounted<DocumentPrefetcher>, public CachedRawResourceClient {
 public:
+    struct PrefetchedResourceData {
+        // The resource needs to be here in order to be kept alive.
+        CachedResourceHandle<CachedRawResource> resource;
+        Box<NetworkLoadMetrics> metrics;
+    };
     static Ref<DocumentPrefetcher> create(FrameLoader& frameLoader) { return adoptRef(*new DocumentPrefetcher(frameLoader)); }
     explicit DocumentPrefetcher(FrameLoader&);
     ~DocumentPrefetcher();
 
-    void prefetch(const URL&, const Vector<String>& tags, const String& referrerPolicyString, bool lowPriority = false);
+    void prefetch(const URL&, const Vector<String>& tags, std::optional<ReferrerPolicy>, bool lowPriority = false);
+    Box<NetworkLoadMetrics> takePrefetchedNetworkLoadMetrics(const URL&);
 
     // CachedRawResourceClient
     void responseReceived(const CachedResource&, const ResourceResponse&, CompletionHandler<void()>&&) override;
-    void redirectReceived(CachedResource&, ResourceRequest&&, const ResourceResponse&, CompletionHandler<void(ResourceRequest&&)>&&) override;
     void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess = LoadWillContinueInAnotherProcess::No) override;
     CachedResourceClientType resourceClientType() const override { return RawResourceType; }
 
 
 private:
     WeakRef<FrameLoader> m_frameLoader;
-    HashMap<URL, CachedResourceHandle<CachedRawResource>> m_prefetchedResources;
+    HashMap<URL, PrefetchedResourceData> m_prefetchedData;
 };
 
 } // namespace WebCore

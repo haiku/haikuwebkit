@@ -36,7 +36,7 @@
 #include "BufferSource.h"
 #include "CurrentUserDetailsOptions.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "JSAuthenticatorAttachment.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSPublicKeyCredentialCreationOptions.h"

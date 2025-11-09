@@ -35,6 +35,7 @@
 #import "WebProcess.h"
 #import <WebCore/CVUtilities.h>
 #import <WebCore/GraphicsLayerContentsDisplayDelegate.h>
+#import <WebCore/GraphicsLayerEnums.h>
 #import <WebCore/IOSurface.h>
 #import <WebCore/PlatformCALayer.h>
 #import <WebCore/PlatformCALayerDelegatedContents.h>
@@ -100,9 +101,9 @@ public:
             layer.clearContents();
     }
 
-    WebCore::GraphicsLayer::CompositingCoordinatesOrientation orientation() const final
+    WebCore::GraphicsLayerCompositingCoordinatesOrientation orientation() const final
     {
-        return WebCore::GraphicsLayer::CompositingCoordinatesOrientation::BottomUp;
+        return WebCore::GraphicsLayerCompositingCoordinatesOrientation::BottomUp;
     }
 
     void setDisplayBuffer(MachSendRight&& displayBuffer, RefPtr<DisplayBufferFence> finishedFence)

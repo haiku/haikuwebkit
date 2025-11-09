@@ -381,6 +381,12 @@ WI.DebuggerManager = class DebuggerManager extends WI.Object
 
     dataForTarget(target)
     {
+        console.assert(target.hasDomain("Debugger"), `Target of type "${target.type}" does not have "Debugger" domain.`);
+
+        // FIXME <https://webkit.org/b/298909> Add Debugger support for frame targets.
+        if (!target.hasDomain("Debugger"))
+            return null;
+
         let targetData = this._targetDebuggerDataMap.get(target);
         if (targetData)
             return targetData;

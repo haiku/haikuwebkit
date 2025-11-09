@@ -63,7 +63,9 @@ static NSString * const titleKey = @"title";
 static NSString * const visibleKey = @"visible";
 
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
-static NSString * const iconVariantsKey = @"icon_variants";
+static NSString * const iconVariantsKey = @"iconVariants";
+// FIXME: <https://webkit.org/b/300927> Deprecate `icon_variants` key.
+static NSString * const deprecatedIconVariantsKey = @"icon_variants";
 #endif
 
 static NSString * const normalKey = @"normal";
@@ -115,6 +117,7 @@ bool WebExtensionAPIMenus::parseCreateAndUpdateProperties(ForUpdate forUpdate, N
         iconsKey: [NSOrderedSet orderedSetWithObjects:NSString.class, NSDictionary.class, NSNull.class, nil],
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
         iconVariantsKey: [NSOrderedSet orderedSetWithObjects:@[ NSDictionary.class ], NSNull.class, nil],
+        deprecatedIconVariantsKey: [NSOrderedSet orderedSetWithObjects:@[ NSDictionary.class ], NSNull.class, nil],
 #endif
         idKey: [NSOrderedSet orderedSetWithObjects:NSString.class, NSNumber.class, nil],
         onclickKey: JSValue.class,
@@ -265,9 +268,10 @@ bool WebExtensionAPIMenus::parseCreateAndUpdateProperties(ForUpdate forUpdate, N
     }
 
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
+    auto *usedIconVariantsKey = properties[iconVariantsKey] ? iconVariantsKey : deprecatedIconVariantsKey;
     NSArray *iconVariants;
-    if (auto *variants = objectForKey<NSArray>(properties, iconVariantsKey, false)) {
-        iconVariants = WebExtensionAPIAction::parseIconVariants(variants, baseURL, iconVariantsKey, outExceptionString);
+    if (auto *variants = objectForKey<NSArray>(properties, usedIconVariantsKey, false)) {
+        iconVariants = WebExtensionAPIAction::parseIconVariants(variants, baseURL, usedIconVariantsKey, outExceptionString);
         if (!iconVariants)
             return false;
     }
@@ -282,7 +286,7 @@ bool WebExtensionAPIMenus::parseCreateAndUpdateProperties(ForUpdate forUpdate, N
 
     // An explicit null icon variants or icons will clear the current icon.
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
-    if (properties[iconVariantsKey] && objectForKey<NSNull>(properties, iconVariantsKey))
+    if (properties[usedIconVariantsKey] && objectForKey<NSNull>(properties, usedIconVariantsKey))
         parameters.iconsJSON = emptyString();
     else
 #endif

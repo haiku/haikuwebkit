@@ -33,7 +33,6 @@
 #include "DocumentThreadableLoader.h"
 
 #include "CachedRawResource.h"
-#include "CachedResourceLoader.h"
 #include "CachedResourceRequest.h"
 #include "CachedResourceRequestInitiatorTypes.h"
 #include "CrossOriginAccessControl.h"
@@ -41,6 +40,8 @@
 #include "CrossOriginPreflightResultCache.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentResourceLoader.h"
+#include "DocumentView.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "InspectorInstrumentation.h"

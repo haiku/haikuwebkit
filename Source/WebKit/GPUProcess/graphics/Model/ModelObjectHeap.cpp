@@ -46,8 +46,13 @@ ObjectHeap::~ObjectHeap() = default;
 
 void ObjectHeap::addObject(DDModelIdentifier identifier, RemoteDDMesh& mesh)
 {
+#if ENABLE(GPU_PROCESS_MODEL)
     auto result = m_objects.add(identifier, Object { IPC::ScopedActiveMessageReceiveQueue<RemoteDDMesh> { Ref { mesh } } });
     ASSERT_UNUSED(result, result.isNewEntry);
+#else
+    UNUSED_PARAM(identifier);
+    UNUSED_PARAM(mesh);
+#endif
 }
 
 void ObjectHeap::removeObject(DDModelIdentifier identifier)
@@ -63,10 +68,15 @@ void ObjectHeap::clear()
 
 WeakPtr<WebCore::DDModel::DDMesh> ObjectHeap::convertDDMeshFromBacking(DDModelIdentifier identifier)
 {
+#if ENABLE(GPU_PROCESS_MODEL)
     auto iterator = m_objects.find(identifier);
     if (iterator == m_objects.end() || !std::holds_alternative<IPC::ScopedActiveMessageReceiveQueue<RemoteDDMesh>>(iterator->value))
         return nullptr;
     return &std::get<IPC::ScopedActiveMessageReceiveQueue<RemoteDDMesh>>(iterator->value)->backing();
+#else
+    UNUSED_PARAM(identifier);
+    return nullptr;
+#endif
 }
 
 ObjectHeap::ExistsAndValid ObjectHeap::objectExistsAndValid(const WebCore::WebGPU::GPU& gpu, DDModelIdentifier identifier) const

@@ -38,7 +38,7 @@ bool SecKeyProxyStore::initialize(const WebCore::Credential& credential)
     if (!credential.isEmpty()) {
         RetainPtr nsCredential = credential.nsCredential();
         if (RetainPtr identity = [nsCredential.get() identity])
-            m_secKeyProxy = adoptNS([[SecKeyProxy alloc] initWithIdentity:identity.get()]);
+            lazyInitialize(m_secKeyProxy, adoptNS([[SecKeyProxy alloc] initWithIdentity:identity.get()]));
     }
     return isInitialized();
 }

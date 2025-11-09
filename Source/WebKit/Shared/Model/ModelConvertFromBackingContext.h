@@ -33,24 +33,12 @@
 namespace WebCore::DDModel {
 
 class DDMesh;
-struct DDMeshDescriptor;
-struct DDUpdateMeshDescriptor;
-struct DDMeshPart;
-struct DDReplaceVertices;
-struct DDVertexAttributeFormat;
-struct DDVertexLayout;
 struct ObjectDescriptorBase;
 
 }
 
 namespace WebKit::DDModel {
 
-struct DDMeshDescriptor;
-struct DDUpdateMeshDescriptor;
-struct DDMeshPart;
-struct DDReplaceVertices;
-struct DDVertexAttributeFormat;
-struct DDVertexLayout;
 struct ObjectDescriptorBase;
 
 class ConvertFromBackingContext {
@@ -58,13 +46,6 @@ public:
     virtual ~ConvertFromBackingContext() = default;
 
     std::optional<WebCore::DDModel::ObjectDescriptorBase> convertFromBacking(const ObjectDescriptorBase&);
-    std::optional<WebCore::DDModel::DDMeshDescriptor> convertFromBacking(const DDMeshDescriptor&);
-    std::optional<WebCore::DDModel::DDUpdateMeshDescriptor> convertFromBacking(const DDUpdateMeshDescriptor&);
-    std::optional<WebCore::DDModel::DDMeshPart> convertFromBacking(const DDMeshPart&);
-    std::optional<WebCore::DDModel::DDReplaceVertices> convertFromBacking(const DDReplaceVertices&);
-    std::optional<WebCore::DDModel::DDVertexAttributeFormat> convertFromBacking(const DDVertexAttributeFormat&);
-    std::optional<WebCore::DDModel::DDVertexLayout> convertFromBacking(const DDVertexLayout&);
-
     virtual WeakPtr<WebCore::DDModel::DDMesh> convertDDMeshFromBacking(DDModelIdentifier) = 0;
 };
 

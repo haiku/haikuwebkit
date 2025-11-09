@@ -280,12 +280,7 @@ void DrawFilteredImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) 
 
 void DrawGlyphs::apply(GraphicsContext& context) const
 {
-#if USE(SKIA)
-    if (m_textBlob)
-        static_cast<GraphicsContextSkia*>(&context)->drawSkiaText(m_textBlob, SkFloatToScalar(m_localAnchor.x()), SkFloatToScalar(m_localAnchor.y()), m_enableAntialiasing, m_isVertical);
-#else
     context.drawGlyphs(m_font, m_glyphs.span(), m_advances.span(), m_localAnchor, m_fontSmoothingMode);
-#endif
 }
 
 void DrawGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag>) const
@@ -295,6 +290,21 @@ void DrawGlyphs::dump(TextStream& ts, OptionSet<AsTextFlag>) const
     ts.dumpProperty("font-smoothing-mode"_s, fontSmoothingMode());
     ts.dumpProperty("length"_s, length());
 }
+
+#if USE(SKIA)
+void DrawTextBlob::apply(GraphicsContext& context) const
+{
+    if (m_textBlob)
+        static_cast<GraphicsContextSkia*>(&context)->drawSkiaText(m_textBlob, SkFloatToScalar(m_localAnchor.x()), SkFloatToScalar(m_localAnchor.y()), m_enableAntialiasing, m_isVertical);
+}
+
+void DrawTextBlob::dump(TextStream& ts, OptionSet<AsTextFlag>) const
+{
+    ts.dumpProperty("local-anchor"_s, localAnchor());
+    ts.dumpProperty("font-smoothing-mode"_s, fontSmoothingMode());
+    ts.dumpProperty("length"_s, length());
+}
+#endif // USE(SKIA)
 
 DrawDisplayList::DrawDisplayList(Ref<const DisplayList>&& displayList)
     : m_displayList(WTFMove(displayList))

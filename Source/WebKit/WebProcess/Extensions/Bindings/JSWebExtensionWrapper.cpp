@@ -81,7 +81,8 @@ JSValueRef JSWebExtensionWrapper::wrap(JSContextRef context, JSWebExtensionWrapp
     if (!object)
         return JSValueMakeNull(context);
 
-    auto wrappers = wrapperCacheMap(context);
+    // JSWeakObjectMapRef is an opaque type that isn't refcounted. Static analysis can see internal refcounting APIs via internal headers, but clients aren't supposed to use those internal APIs.
+    SUPPRESS_UNCOUNTED_LOCAL auto wrappers = wrapperCacheMap(context);
     if (auto result = getCachedWrapper(context, wrappers, object))
         return result;
 

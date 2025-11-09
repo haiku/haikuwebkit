@@ -49,11 +49,7 @@ public:
     // This group of methods takes paint-time geometry and uses it directly.
     void takeBounds(const RenderBox&, LayoutPoint /* paintOffset */);
     void takeBounds(const RenderBox&, FloatRect /* paintRect */);
-    void takeBounds(const RenderInline* renderInline, LayoutRect&& paintRect)
-    {
-        if (renderInline)
-            takeBounds(*renderInline, WTFMove(paintRect));
-    };
+    void takeBounds(const RenderInline*, LayoutRect&&);
     void takeBounds(const RenderInline&, LayoutRect&& /* paintRect */);
     void takeBounds(const RenderText&, FloatRect /* paintRect */, size_t /* lineIndex */);
     void takeBounds(const RenderView&, LayoutPoint&& /* paintOffset */);

@@ -268,9 +268,7 @@ public:
         return adoptRef(*new WebUserMessageHandlerDescriptorProxy(controller, name, world, identifier));
     }
 
-    virtual ~WebUserMessageHandlerDescriptorProxy()
-    {
-    }
+    virtual ~WebUserMessageHandlerDescriptorProxy() = default;
 
     ScriptMessageHandlerIdentifier identifier() { return m_identifier; }
 

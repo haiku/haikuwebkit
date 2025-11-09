@@ -53,7 +53,7 @@
 #include <JavaScriptCore/JSLock.h>
 #include <WebCore/CommonVM.h>
 #include <WebCore/DeprecatedGlobalSettings.h>
-#include <WebCore/Document.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/GarbageCollectionController.h>
 #include <WebCore/GeolocationClient.h>
@@ -106,9 +106,7 @@ InjectedBundle::InjectedBundle(const WebProcessCreationParameters& parameters)
 {
 }
 
-InjectedBundle::~InjectedBundle()
-{
-}
+InjectedBundle::~InjectedBundle() = default;
 
 void InjectedBundle::setClient(std::unique_ptr<API::InjectedBundle::Client>&& client)
 {

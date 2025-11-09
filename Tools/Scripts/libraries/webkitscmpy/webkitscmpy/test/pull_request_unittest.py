@@ -70,6 +70,38 @@ Reviewed by Tim Contributor.
 </pre>''',
         )
 
+    def test_create_body_commit_identifiers(self):
+        self.assertEqual(
+            PullRequest.create_body(None, [Commit(
+                hash='11aa76f9fc380e9fe06157154f32b304e8dc4749',
+                message='[scoping] Bug to fix\nCherry-picked from 301069@main.\nAlso related to 297297.521@safari-7622-branch.\n\nReviewed by Tim Contributor.\n',
+            )]), '''#### 11aa76f9fc380e9fe06157154f32b304e8dc4749
+<pre>
+[scoping] Bug to fix
+Cherry-picked from <a href="https://commits.webkit.org/301069@main">301069@main</a>.
+Also related to <a href="https://commits.webkit.org/297297.521@safari-7622-branch">297297.521@safari-7622-branch</a>.
+
+Reviewed by Tim Contributor.
+</pre>''',
+        )
+
+    def test_create_body_commit_identifiers_in_urls(self):
+        self.assertEqual(
+            PullRequest.create_body(None, [Commit(
+                hash='11aa76f9fc380e9fe06157154f32b304e8dc4749',
+                message='[scoping] Bug to fix\n291838@main did not fix the issue.\n\nReviewed by Tim Contributor.\n\n    Canonical link: https://commits.webkit.org/296933@main\nCanonical link: https://commits.webkit.org/289651.600@safari-7621-branch\n',
+            )]), '''#### 11aa76f9fc380e9fe06157154f32b304e8dc4749
+<pre>
+[scoping] Bug to fix
+<a href="https://commits.webkit.org/291838@main">291838@main</a> did not fix the issue.
+
+Reviewed by Tim Contributor.
+
+    Canonical link: <a href="https://commits.webkit.org/296933@main">https://commits.webkit.org/296933@main</a>
+Canonical link: <a href="https://commits.webkit.org/289651.600@safari-7621-branch">https://commits.webkit.org/289651.600@safari-7621-branch</a>
+</pre>''',
+        )
+
     def test_create_body_single_no_link(self):
         self.assertEqual(
             PullRequest.create_body(None, [Commit(

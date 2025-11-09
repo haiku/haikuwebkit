@@ -39,6 +39,7 @@
 #include "Queue.h"
 #include "RenderPassEncoder.h"
 #include "Texture.h"
+#include "TextureOrTextureView.h"
 #include "TextureView.h"
 #include "WebGPU.h"
 #include <algorithm>
@@ -107,6 +108,11 @@ inline bool isValidToUseWithBufferCommandEncoder(const WebGPU::Buffer& buffer, c
 }
 
 inline bool isValidToUseWithTextureCommandEncoder(const WebGPU::Texture& texture, const WebGPU::CommandEncoder& commandEncoder)
+{
+    return WebGPU::isValidToUseWith(texture, commandEncoder);
+}
+
+inline bool isValidToUseWith(const WebGPU::TextureOrTextureView& texture, const WebGPU::CommandEncoder& commandEncoder)
 {
     return WebGPU::isValidToUseWith(texture, commandEncoder);
 }

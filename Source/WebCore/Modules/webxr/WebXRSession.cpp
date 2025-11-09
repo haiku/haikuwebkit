@@ -30,7 +30,6 @@
 #if ENABLE(WEBXR)
 
 #include "ContextDestructionObserverInlines.h"
-#include "DocumentInlines.h"
 #include "EventNames.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSWebXRReferenceSpace.h"

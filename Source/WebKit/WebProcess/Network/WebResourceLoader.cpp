@@ -83,9 +83,7 @@ WebResourceLoader::WebResourceLoader(Ref<WebCore::ResourceLoader>&& coreLoader, 
     WEBRESOURCELOADER_RELEASE_LOG(WEBRESOURCELOADER_CONSTRUCTOR);
 }
 
-WebResourceLoader::~WebResourceLoader()
-{
-}
+WebResourceLoader::~WebResourceLoader() = default;
 
 IPC::Connection* WebResourceLoader::messageSenderConnection() const
 {

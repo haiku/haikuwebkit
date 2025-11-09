@@ -182,7 +182,7 @@ AccessibilityObject* AccessibilityNodeObject::firstChild() const
         currentChild = currentChild->nextSibling();
         axCurrentChild = cache->getOrCreate(currentChild.get());
     }
-    return axCurrentChild.get();
+    return axCurrentChild.unsafeGet();
 }
 
 AccessibilityObject* AccessibilityNodeObject::lastChild() const
@@ -247,7 +247,7 @@ AccessibilityObject* AccessibilityNodeObject::parentObject() const
     }
 
     if (RefPtr ownerParent = ownerParentObject()) [[unlikely]]
-        return ownerParent.get();
+        return ownerParent.unsafeGet();
 
 #if USE(ATSPI)
     // FIXME: Consider removing this ATSPI-only branch with https://bugs.webkit.org/show_bug.cgi?id=282117.
@@ -738,17 +738,13 @@ void AccessibilityNodeObject::updateChildrenIfNecessary()
 void AccessibilityNodeObject::clearChildren()
 {
     AccessibilityObject::clearChildren();
+
     m_childrenDirty = false;
+    m_containsOnlyStaticText = false;
+    m_containsOnlyStaticTextDirty = false;
 
-    if (isNativeLabel()) {
-        m_containsOnlyStaticText = false;
-        m_containsOnlyStaticTextDirty = false;
-    }
-
-    CheckedPtr rareData = isTable() ? this->rareData() : nullptr;
-    if (!rareData)
-        return;
-    rareData->resetChildrenDependentTableFields();
+    if (CheckedPtr rareData = this->rareData())
+        rareData->resetChildrenDependentTableFields();
 }
 
 void AccessibilityNodeObject::updateOwnedChildrenIfNecessary()
@@ -1428,7 +1424,7 @@ Element* AccessibilityNodeObject::anchorElement() const
         return nullptr;
 
     if (RefPtr areaElement = dynamicDowncast<HTMLAreaElement>(*node))
-        return areaElement.get();
+        return areaElement.unsafeGet();
 
     AXObjectCache* cache = axObjectCache();
     if (!cache)
@@ -1438,7 +1434,7 @@ Element* AccessibilityNodeObject::anchorElement() const
     // NOTE: this assumes that any non-image with an anchor is an HTMLAnchorElement
     for ( ; node; node = node->parentNode()) {
         if (is<HTMLAnchorElement>(*node) || (node->renderer() && cache->getOrCreate(*node)->isLink()))
-            return downcast<Element>(node).get();
+            return downcast<Element>(node).unsafeGet();
     }
 
     return nullptr;
@@ -1513,7 +1509,7 @@ static RefPtr<Element> nodeActionElement(Node& node)
 {
     auto elementName = WebCore::elementName(node);
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(node)) {
-        if (!input->isDisabledFormControl() && (input->isRadioButton() || input->isCheckbox() || input->isTextButton() || input->isFileUpload() || input->isImageButton() || input->isTextField()))
+        if (!input->isDisabledFormControl() && (input->isRadioButton() || input->isCheckbox() || input->isTextButton() || input->isFileUpload() || input->isImageButton() || input->isTextField() || input->isDateField() || input->isDateTimeLocalField()))
             return input;
     } else if (elementName == ElementName::HTML_button || elementName == ElementName::HTML_select)
         return &downcast<Element>(node);
@@ -1538,10 +1534,10 @@ static Element* nativeActionElement(Node* start)
 
     for (RefPtr child = start->firstChild(); child; child = child->nextSibling()) {
         if (RefPtr element = nodeActionElement(*child))
-            return element.get();
+            return element.unsafeGet();
 
         if (RefPtr subChild = nativeActionElement(child.get()))
-            return subChild.get();
+            return subChild.unsafeGet();
     }
     return nullptr;
 }
@@ -1553,10 +1549,10 @@ Element* AccessibilityNodeObject::actionElement() const
         return nullptr;
 
     if (RefPtr element = nodeActionElement(*node))
-        return element.get();
+        return element.unsafeGet();
 
     if (AccessibilityObject::isARIAInput(ariaRoleAttribute()))
-        return downcast<Element>(node).get();
+        return downcast<Element>(node).unsafeGet();
 
     switch (role()) {
     case AccessibilityRole::Button:
@@ -1569,14 +1565,14 @@ Element* AccessibilityNodeObject::actionElement() const
     case AccessibilityRole::ListItem:
         // Check if the author is hiding the real control element inside the ARIA element.
         if (RefPtr nativeElement = nativeActionElement(node.get()))
-            return nativeElement.get();
-        return downcast<Element>(node).get();
+            return nativeElement.unsafeGet();
+        return downcast<Element>(node).unsafeGet();
     default:
         break;
     }
 
     if (RefPtr element = anchorElement())
-        return element.get();
+        return element.unsafeGet();
 
     if (RefPtr clickableObject = this->clickableSelfOrAncestor())
         return clickableObject->element();
@@ -1692,6 +1688,19 @@ void AccessibilityNodeObject::alterRangeValue(StepAction stepAction)
     RefPtr element = this->element();
     if (!element || element->isDisabledFormControl())
         return;
+
+#if PLATFORM(COCOA)
+    if (role() == AccessibilityRole::SpinButton) {
+        // First try a keyboard event to see if that affects the value of the spinbutton, since authors are supposed to handle up/down keys.
+        // We can't check the event listeners directly here since those may be on an ancestor or the document.
+        float beforeValue = valueForRange();
+        postKeyboardKeysForValueChange(stepAction);
+        if (beforeValue != valueForRange()) {
+            // Performing a keyboard action (up/down arrow) resulted in a value change, so return early to avoid doubly-modifing the value.
+            return;
+        }
+    }
+#endif
 
     if (!getAttribute(stepAttr).isEmpty())
         changeValueByStep(stepAction);
@@ -2114,7 +2123,7 @@ AccessibilityObject* AccessibilityNodeObject::tableHeaderContainer()
     tableHeader->setParent(this);
     rareData->setTableHeaderContainer(tableHeader.get());
 
-    return tableHeader.ptr();
+    return tableHeader.unsafePtr();
 }
 
 AXCoreObject::AccessibilityChildrenVector AccessibilityNodeObject::columns()
@@ -2624,7 +2633,7 @@ AccessibilityObject* AccessibilityNodeObject::parentTable() const
                 // we don't want to choose another ancestor table as this cell's table.
                 if (ancestor->isTable()) {
                     if (ancestor->isExposableTable())
-                        return ancestor.get();
+                        return ancestor.unsafeGet();
                     if (ancestor->node())
                         break;
                 }
@@ -2632,7 +2641,7 @@ AccessibilityObject* AccessibilityNodeObject::parentTable() const
             return nullptr;
         }
 
-        return tableFromRenderTree.get();
+        return tableFromRenderTree.unsafeGet();
     }
 
     if (isTableRow()) {
@@ -2642,7 +2651,7 @@ AccessibilityObject* AccessibilityNodeObject::parentTable() const
             if (ancestor->isTable()) {
                 bool isNonGridRowOrValidAriaTable = !isARIAGridRow() || ancestor->isAriaTable() || elementName() == ElementName::HTML_tr;
                 if (ancestor->isExposableTable() && isNonGridRowOrValidAriaTable)
-                    return ancestor.get();
+                    return ancestor.unsafeGet();
 
                 // If this is a non-anonymous table object, but not an accessibility table, we should stop because we don't want to
                 // choose another ancestor table as this row's table.
@@ -2772,7 +2781,7 @@ AccessibilityObject* AccessibilityNodeObject::disclosedByRow() const
 
     for (int k = index - 1; k >= 0; --k) {
         if (allRows[k]->hierarchicalLevel() == level - 1)
-            return downcast<AccessibilityObject>(allRows[k]).ptr();
+            return downcast<AccessibilityObject>(allRows[k]).unsafePtr();
     }
     return nullptr;
 }
@@ -2805,7 +2814,7 @@ AXCoreObject* AccessibilityNodeObject::parentTableIfExposedTableRow() const
         return nullptr;
 
     RefPtr table = parentTable();
-    return table && table->isExposableTable() ? table.get() : nullptr;
+    return table && table->isExposableTable() ? table.unsafeGet() : nullptr;
 }
 
 bool AccessibilityNodeObject::isTableCell() const

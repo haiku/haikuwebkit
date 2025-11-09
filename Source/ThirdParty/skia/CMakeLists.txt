@@ -49,6 +49,7 @@ add_library(Skia STATIC
     src/codec/SkEncodedInfo.cpp
     src/codec/SkExif.cpp
     src/codec/SkGainmapInfo.cpp
+    src/codec/SkHdrMetadata.cpp
     src/codec/SkImageGenerator_FromEncoded.cpp
     src/codec/SkJpegCodec.cpp
     src/codec/SkJpegDecoderMgr.cpp

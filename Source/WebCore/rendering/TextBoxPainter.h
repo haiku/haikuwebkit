@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,7 +53,7 @@ public:
 
     void paint();
 
-    static inline FloatSize rotateShadowOffset(const SpaceSeparatedPoint<Style::Length<>>& offset, WritingMode);
+    static inline FloatSize rotateShadowOffset(const SpaceSeparatedPoint<Style::Length<CSS::AllUnzoomed>>& offset, WritingMode, const Style::ZoomFactor&);
 
 protected:
     auto& textBox() const { return m_textBox; }
@@ -116,25 +116,25 @@ protected:
     bool m_compositionWithCustomUnderlines { false };
 };
 
-inline FloatSize TextBoxPainter::rotateShadowOffset(const SpaceSeparatedPoint<Style::Length<>>& offset, WritingMode writingMode)
+inline FloatSize TextBoxPainter::rotateShadowOffset(const SpaceSeparatedPoint<Style::Length<CSS::AllUnzoomed>>& offset, WritingMode writingMode, const Style::ZoomFactor& zoomFactor)
 {
     if (writingMode.isHorizontal()) {
         return {
-            offset.x().resolveZoom(Style::ZoomNeeded { }),
-            offset.y().resolveZoom(Style::ZoomNeeded { }),
+            offset.x().resolveZoom(zoomFactor),
+            offset.y().resolveZoom(zoomFactor),
         };
     }
 
     if (writingMode.isLineOverLeft()) { // sideways-lr
         return {
-            -offset.y().resolveZoom(Style::ZoomNeeded { }),
-             offset.x().resolveZoom(Style::ZoomNeeded { }),
+            -offset.y().resolveZoom(zoomFactor),
+             offset.x().resolveZoom(zoomFactor),
         };
     }
 
     return {
-         offset.y().resolveZoom(Style::ZoomNeeded { }),
-        -offset.x().resolveZoom(Style::ZoomNeeded { }),
+         offset.y().resolveZoom(zoomFactor),
+        -offset.x().resolveZoom(zoomFactor),
     };
 }
 

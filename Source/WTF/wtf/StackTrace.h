@@ -110,7 +110,7 @@ public:
         { }
 
         const char* m_mangledName { nullptr };
-        std::unique_ptr<const char[], SystemFree<const char[]>> m_demangledName;
+        std::unique_ptr<const char, SystemFree<const char>> m_demangledName;
     };
 
     WTF_EXPORT_PRIVATE static std::optional<DemangleEntry> demangle(void*);

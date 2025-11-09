@@ -26,18 +26,14 @@ Modules/mediastream/RTCPeerConnection.h
 Modules/notifications/NotificationController.h
 Modules/webdatabase/DatabaseManager.h
 Modules/webdatabase/DatabaseThread.h
-accessibility/AXTextMarker.cpp
+[ Mac ] accessibility/AXTextMarker.cpp
 accessibility/AccessibilityObject.cpp
 bindings/js/GarbageCollectionController.cpp
-bindings/js/JSDOMAsyncIterator.h
-bindings/js/JSDOMConvertBase.h
 bindings/js/JSLocationCustom.cpp
 bindings/js/JSPaintRenderingContext2DCustom.cpp
-bindings/js/WebCoreOpaqueRootInlines.h
 bridge/objc/objc_runtime.h
 crypto/cocoa/CryptoAlgorithmEd25519Cocoa.cpp
 crypto/cocoa/CryptoKeyOKPCocoa.cpp
-css/CSSImageValue.cpp
 css/CSSStyleProperties.h
 css/CSSToLengthConversionData.h
 css/MediaList.h
@@ -55,15 +51,11 @@ html/HTMLMediaElement.cpp
 html/canvas/PlaceholderRenderingContext.cpp
 html/parser/HTMLConstructionSite.cpp
 html/shadow/DateTimeEditElement.h
-html/track/InbandGenericTextTrack.cpp
-html/track/InbandWebVTTTextTrack.cpp
 html/track/TrackBase.h
 inspector/InspectorController.h
-inspector/InspectorFrontendHost.h
+[ Mac ] inspector/InspectorFrontendHost.h
 inspector/InspectorInstrumentation.h
-inspector/InspectorOverlay.h
 inspector/InspectorStyleSheet.h
-inspector/InspectorWebAgentBase.h
 inspector/InstrumentingAgents.h
 inspector/UserGestureEmulationScope.h
 inspector/agents/InspectorNetworkAgent.h
@@ -74,16 +66,16 @@ layout/formattingContexts/inline/InlineLine.h
 layout/formattingContexts/inline/text/TextUtil.cpp
 layout/integration/inline/LayoutIntegrationLineLayout.h
 layout/layouttree/LayoutElementBox.h
-loader/cache/CachedImageClient.h
 page/DOMWindow.cpp
 page/EventHandler.h
 page/Page.h
 page/PageOverlayController.cpp
 page/WheelEventTestMonitor.h
-page/mac/ImageOverlayControllerMac.mm
-page/mac/ServicesOverlayController.mm
+[ Mac ] page/mac/ImageOverlayControllerMac.mm
+[ Mac ] page/mac/ServicesOverlayController.mm
+page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingStateNode.h
-page/scrolling/ScrollingStateScrollingNode.cpp
+[ Mac ] page/scrolling/ScrollingStateScrollingNode.cpp
 platform/PODRedBlackTree.h
 platform/Scrollbar.h
 platform/cocoa/TelephoneNumberDetectorCocoa.cpp
@@ -92,7 +84,6 @@ platform/graphics/StringTruncator.cpp
 platform/graphics/ca/PlatformCALayer.h
 platform/graphics/ca/TileController.cpp
 platform/mediastream/libwebrtc/LibWebRTCDav1dDecoder.cpp
-rendering/AccessibilityRegionContext.h
 rendering/BreakablePositions.h
 rendering/RenderLayerBacking.cpp
 rendering/RenderLayerCompositor.cpp
@@ -108,3 +99,8 @@ style/StyleScope.h
 testing/Internals.cpp
 xml/XSLStyleSheetLibxslt.cpp
 xml/parser/XMLDocumentParserLibxml2.cpp
+[ iOS ] page/ios/ContentChangeObserver.h
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
+[ iOS ] platform/ios/DeviceMotionClientIOS.h
+[ iOS ] platform/ios/LegacyTileCache.h
+[ iOS ] platform/text/TextBoundaries.cpp

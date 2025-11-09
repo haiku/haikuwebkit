@@ -327,7 +327,7 @@ SQLiteStatementAutoResetScope PushDatabase::cachedStatementOnQueue(ASCIILiteral 
     if (it != m_statements.end())
         return SQLiteStatementAutoResetScope(it->value.ptr());
 
-    auto statement = m_db->prepareHeapStatement(query);
+    auto statement = m_db->prepareStatement(query);
     if (!statement) {
         PUSHDB_RELEASE_LOG_ERROR("Failed with '%" PUBLIC_LOG_STRING "' preparing statement: %" PUBLIC_LOG_STRING, m_db->lastErrorMsg(), query.characters());
         return SQLiteStatementAutoResetScope(nullptr);

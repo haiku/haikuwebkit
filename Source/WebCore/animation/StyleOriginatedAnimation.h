@@ -70,7 +70,7 @@ public:
     void flushPendingStyleChanges() const;
 
     virtual AnimationPlayState backingAnimationPlayState() const = 0;
-    virtual RefPtr<TimingFunction> backingAnimationTimingFunction() const = 0;
+    virtual TimingFunction* backingAnimationTimingFunction() const = 0;
 
 protected:
     StyleOriginatedAnimation(const Styleable&);

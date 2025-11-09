@@ -35,6 +35,7 @@
 namespace WebCore {
 
 class LocalFrame;
+class Frame;
 class SecurityOrigin;
 enum class Initiator : uint8_t;
 
@@ -44,7 +45,7 @@ enum class IsUpgradable : bool { No, Yes, };
 
 bool shouldUpgradeInsecureContent(LocalFrame&, IsUpgradable, const URL&, FetchOptions::Destination, Initiator);
 
-bool shouldBlockRequest(LocalFrame&, const URL&, IsUpgradable = IsUpgradable::No);
+bool shouldBlockRequest(Frame&, const URL&, IsUpgradable = IsUpgradable::No);
 
 WEBCORE_EXPORT bool canModifyRequest(const URL&, FetchOptions::Destination, Initiator);
 

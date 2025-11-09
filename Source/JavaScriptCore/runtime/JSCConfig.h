@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,8 @@
 #include <JavaScriptCore/Opcode.h>
 #include <JavaScriptCore/OptionsList.h>
 #include <JavaScriptCore/SecureARM64EHashPins.h>
+#include <JavaScriptCore/StopTheWorldCallback.h>
+#include <wtf/PtrTag.h>
 #include <wtf/WTFConfig.h>
 
 namespace JSC {
@@ -40,6 +42,9 @@ class VM;
 #if ENABLE(SEPARATED_WX_HEAP)
 using JITWriteSeparateHeapsFunction = void (*)(off_t, const void*, size_t);
 #endif
+
+#define JSC_CONFIG_METHOD(method) \
+    WTF_FUNCPTR_PTRAUTH_STR("JSCConfig." #method) method
 
 struct Config {
     static Config& singleton();
@@ -98,7 +103,11 @@ struct Config {
 
     OptionsStorage options;
 
-    void (*shellTimeoutCheckCallback)(VM&);
+    using ShellTimeoutCheckCallback = void (*)(VM&);
+    ShellTimeoutCheckCallback JSC_CONFIG_METHOD(shellTimeoutCheckCallback);
+
+    StopTheWorldCallback JSC_CONFIG_METHOD(wasmDebuggerStopTheWorld);
+    StopTheWorldCallback JSC_CONFIG_METHOD(memoryDebuggerStopTheWorld);
 
     struct {
         uint8_t exceptionInstructions[maxBytecodeStructLength + 1];

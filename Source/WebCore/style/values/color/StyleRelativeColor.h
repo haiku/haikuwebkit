@@ -33,6 +33,7 @@
 #include "Color.h"
 #include "ColorSerialization.h"
 #include "StyleColor.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleResolvedColor.h"
 #include <wtf/text/TextStream.h>

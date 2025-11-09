@@ -1,10 +1,8 @@
 target
 doc
 
-Harness Error (FAIL), message = Unhandled rejection: assert_true: no scroll, so no scrollend expected expected true got false
-
 PASS No scroll via wheel on div shouldn't fire scrollend.
 PASS No scroll via keys on div shouldn't fire scrollend.
-FAIL No scroll via wheel on document shouldn't fire scrollend. assert_true: no scroll, so no scrollend expected expected true got false
+FAIL No scroll via wheel on document shouldn't fire scrollend. assert_unreached: no scroll, so no scrollend expected Reached unreachable code
 PASS No scroll via keys on document shouldn't fire scrollend.
 

@@ -29,37 +29,12 @@
 
 namespace JSC {
 
-const static uint8_t JSPromiseReactionNumberOfInternalFields = 5;
-
-class JSPromiseReaction final : public JSInternalFieldObjectImpl<JSPromiseReactionNumberOfInternalFields> {
+class JSPromiseReaction final : public JSCell {
 public:
-    using Base = JSInternalFieldObjectImpl<JSPromiseReactionNumberOfInternalFields>;
+    using Base = JSCell;
 
     DECLARE_EXPORT_INFO;
     DECLARE_VISIT_CHILDREN;
-
-    enum class Field : uint8_t {
-        Promise = 0,
-        OnFulfilled,
-        OnRejected,
-        Context,
-        Next,
-    };
-    static_assert(numberOfInternalFields == JSPromiseReactionNumberOfInternalFields);
-
-    static std::array<JSValue, numberOfInternalFields> initialValues()
-    {
-        return { {
-            jsUndefined(),
-            jsUndefined(),
-            jsUndefined(),
-            jsUndefined(),
-            jsUndefined(),
-        } };
-    }
-
-    const WriteBarrier<Unknown>& internalField(Field field) const { return Base::internalField(static_cast<uint32_t>(field)); }
-    WriteBarrier<Unknown>& internalField(Field field) { return Base::internalField(static_cast<uint32_t>(field)); }
 
     template<typename CellType, SubspaceAccess mode>
     static GCClient::IsoSubspace* subspaceFor(VM& vm)
@@ -69,35 +44,38 @@ public:
 
     static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
 
-    static JSPromiseReaction* createWithInitialValues(VM&, Structure*);
-    static JSPromiseReaction* create(VM&, Structure*, JSValue promise, JSValue onFulfilled, JSValue onRejected, JSValue context, JSValue next);
+    static JSPromiseReaction* create(VM&, JSValue promise, JSValue onFulfilled, JSValue onRejected, JSValue context, JSPromiseReaction* next);
 
-    JSValue promise() const { return internalField(Field::Promise).get(); }
-    JSValue onFulfilled() const { return internalField(Field::OnFulfilled).get(); }
-    JSValue onRejected() const { return internalField(Field::OnRejected).get(); }
-    JSValue context() const { return internalField(Field::Context).get(); }
-    JSValue next() const { return internalField(Field::Next).get(); }
+    JSValue promise() const { return m_promise.get(); }
+    JSValue onFulfilled() const { return m_onFulfilled.get(); }
+    JSValue onRejected() const { return m_onRejected.get(); }
+    JSValue context() const { return m_context.get(); }
+    JSPromiseReaction* next() const { return m_next.get(); }
 
-    void setPromise(VM& vm, JSValue value) { internalField(Field::Promise).set(vm, this, value); }
-    void setOnFulfilled(VM& vm, JSValue value) { internalField(Field::OnFulfilled).set(vm, this, value); }
-    void setOnRejected(VM& vm, JSValue value) { internalField(Field::OnRejected).set(vm, this, value); }
-    void setContext(VM& vm, JSValue value) { internalField(Field::Context).set(vm, this, value); }
-    void setNext(VM& vm, JSValue value) { internalField(Field::Next).set(vm, this, value); }
+    void setPromise(VM& vm, JSValue value) { m_promise.set(vm, this, value); }
+    void setOnFulfilled(VM& vm, JSValue value) { m_onFulfilled.set(vm, this, value); }
+    void setOnRejected(VM& vm, JSValue value) { m_onRejected.set(vm, this, value); }
+    void setContext(VM& vm, JSValue value) { m_context.set(vm, this, value); }
+    void setNext(VM& vm, JSPromiseReaction* value) { m_next.setMayBeNull(vm, this, value); }
 
 private:
-    JSPromiseReaction(VM& vm, Structure* structure, JSValue promise, JSValue onFulfilled, JSValue onRejected, JSValue context, JSValue next)
+    JSPromiseReaction(VM& vm, Structure* structure, JSValue promise, JSValue onFulfilled, JSValue onRejected, JSValue context, JSPromiseReaction* next)
         : Base(vm, structure)
+        , m_promise(promise, WriteBarrierEarlyInit)
+        , m_onFulfilled(onFulfilled, WriteBarrierEarlyInit)
+        , m_onRejected(onRejected, WriteBarrierEarlyInit)
+        , m_context(context, WriteBarrierEarlyInit)
+        , m_next(next, WriteBarrierEarlyInit)
     {
-        internalField(Field::Promise).setWithoutWriteBarrier(promise);
-        internalField(Field::OnFulfilled).setWithoutWriteBarrier(onFulfilled);
-        internalField(Field::OnRejected).setWithoutWriteBarrier(onRejected);
-        internalField(Field::Context).setWithoutWriteBarrier(context);
-        internalField(Field::Next).setWithoutWriteBarrier(next);
     }
+
+    WriteBarrier<Unknown> m_promise;
+    WriteBarrier<Unknown> m_onFulfilled;
+    WriteBarrier<Unknown> m_onRejected;
+    WriteBarrier<Unknown> m_context;
+    WriteBarrier<JSPromiseReaction> m_next;
 };
 
 STATIC_ASSERT_IS_TRIVIALLY_DESTRUCTIBLE(JSPromiseReaction);
-
-JSC_DECLARE_HOST_FUNCTION(promiseReactionPrivateFuncCreate);
 
 } // namespace JSC

@@ -48,8 +48,6 @@ public:
         return adoptRef(*new ApplePayError(code, contactField, message, domain));
     }
 
-    ~ApplePayError() = default;
-
     ApplePayErrorCode code() const { return m_code; }
     void setCode(ApplePayErrorCode code) { m_code = code; }
 

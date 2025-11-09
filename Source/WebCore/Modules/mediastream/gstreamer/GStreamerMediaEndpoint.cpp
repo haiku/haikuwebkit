@@ -60,6 +60,7 @@
 #include <wtf/Scope.h>
 #include <wtf/SetForScope.h>
 #include <wtf/UniqueRef.h>
+#include <wtf/glib/GThreadSafeWeakPtr.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
 #include <wtf/text/StringToIntegerConversion.h>
 
@@ -166,7 +167,7 @@ bool GStreamerMediaEndpoint::initializePipeline()
 
     connectSimpleBusMessageCallback(m_pipeline.get(), [this](GstMessage* message) {
         handleMessage(message);
-    });
+    }, AsynchronousPipelineDumping::Yes);
 
     auto binName = makeString("webkit-webrtcbin-"_s, nPipeline++);
     m_webrtcBin = makeGStreamerElement("webrtcbin"_s, binName);
@@ -1479,7 +1480,7 @@ void GStreamerMediaEndpoint::connectIncomingTrack(WebRTCTrackData& data)
             return;
         }
         const auto& trackId = data.trackId;
-        transceiver = &peerConnectionBackend->newRemoteTransceiver(makeUnique<GStreamerRtpTransceiverBackend>(WTFMove(rtcTransceiver)), data.type, trackId.isolatedCopy());
+        transceiver = peerConnectionBackend->newRemoteTransceiver(makeUnique<GStreamerRtpTransceiverBackend>(WTFMove(rtcTransceiver)), data.type, trackId.isolatedCopy());
         GST_DEBUG_OBJECT(m_pipeline.get(), "New remote transceiver created for track");
     }
 
@@ -1928,8 +1929,11 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
                 return;
             }
 
-            callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTFMove(data->callback)), descriptions = descriptionsFromWebRTCBin(data->webrtcBin.get())]() mutable {
-                task->run(WTFMove(descriptions));
+            callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTFMove(data->callback)), weakWebrtcBin = GThreadSafeWeakPtr { data->webrtcBin.get() }]() mutable {
+                auto webrtcBin = weakWebrtcBin.get();
+                if (!webrtcBin)
+                    return;
+                task->run(descriptionsFromWebRTCBin(webrtcBin.get()));
             });
         }, data, reinterpret_cast<GDestroyNotify>(destroyAddIceCandidateCallData)));
         return;
@@ -1946,8 +1950,11 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
 
     // This is racy but nothing we can do about it when we are on older GStreamer runtimes.
     g_signal_emit_by_name(m_webrtcBin.get(), "add-ice-candidate", candidate.sdpMLineIndex, candidate.candidate.utf8().data());
-    callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTFMove(callback)), descriptions = descriptionsFromWebRTCBin(m_webrtcBin.get())]() mutable {
-        task->run(WTFMove(descriptions));
+    callOnMainThread([task = createSharedTask<PeerConnectionBackend::AddIceCandidateCallbackFunction>(WTFMove(callback)), weakWebrtcBin = GThreadSafeWeakPtr { m_webrtcBin.get() }]() mutable {
+        auto webrtcBin = weakWebrtcBin.get();
+        if (!webrtcBin)
+            return;
+        task->run(descriptionsFromWebRTCBin(webrtcBin.get()));
     });
 }
 
@@ -2052,8 +2059,11 @@ GstElement* GStreamerMediaEndpoint::requestAuxiliarySender(GRefPtr<GstWebRTCDTLS
 
 void GStreamerMediaEndpoint::prepareForClose()
 {
-    if (m_pipeline && GST_STATE(m_pipeline.get()) > GST_STATE_READY)
-        gst_element_set_state(m_pipeline.get(), GST_STATE_READY);
+    if (!m_pipeline || GST_STATE(m_pipeline.get()) <= GST_STATE_READY)
+        return;
+    gst_element_call_async(m_pipeline.get(), reinterpret_cast<GstElementCallAsyncFunc>(+[](GstElement* element, gpointer) {
+        gst_element_set_state(element, GST_STATE_READY);
+    }), nullptr, nullptr);
 }
 
 void GStreamerMediaEndpoint::close()
@@ -2062,27 +2072,47 @@ void GStreamerMediaEndpoint::close()
 
     // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/9379
 #if GST_CHECK_VERSION(1, 27, 0)
-    auto promise = adoptGRef(gst_promise_new());
-    g_signal_emit_by_name(m_webrtcBin.get(), "close", promise.get());
-    auto result = gst_promise_wait(promise.get());
-    const auto reply = gst_promise_get_reply(promise.get());
-    if (result != GST_PROMISE_RESULT_REPLIED || (reply && gst_structure_has_field(reply, "error"))) {
-        if (reply) {
+    g_signal_emit_by_name(m_webrtcBin.get(), "close", gst_promise_new_with_change_func([](GstPromise* rawPromise, gpointer userData) {
+        auto promise = adoptGRef(rawPromise);
+        auto result = gst_promise_wait(promise.get());
+        if (result != GST_PROMISE_RESULT_REPLIED)
+            return;
+
+        auto weakSelf = static_cast<ThreadSafeWeakPtr<GStreamerMediaEndpoint>*>(userData);
+        auto self = weakSelf->get();
+        if (!self)
+            return;
+
+        const auto* reply = gst_promise_get_reply(promise.get());
+        if (reply && gst_structure_has_field_typed(reply, "error", G_TYPE_ERROR)) {
             GUniqueOutPtr<GError> error;
             gst_structure_get(reply, "error", G_TYPE_ERROR, &error.outPtr(), nullptr);
             auto errorMessage = makeString("Unable to close connection, error: "_s, unsafeSpan(error->message));
-            GST_ERROR_OBJECT(m_webrtcBin.get(), "%s", errorMessage.utf8().data());
+            GST_ERROR_OBJECT(self->pipeline(), "%s", errorMessage.utf8().data());
         }
-        return;
-    }
+
+        callOnMainThread([weakSelf = ThreadSafeWeakPtr { *self.get() }] {
+            auto self = weakSelf.get();
+            if (!self)
+                return;
+
+            if (self->pipeline())
+                self->teardownPipeline();
+        });
+
+    }, new ThreadSafeWeakPtr<GStreamerMediaEndpoint> { *this }, reinterpret_cast<GDestroyNotify>(+[](gpointer data) {
+        delete static_cast<ThreadSafeWeakPtr<GStreamerMediaEndpoint>*>(data);
+    })));
 #endif
 
 #if !RELEASE_LOG_DISABLED
     stopLoggingStats();
 #endif
 
+#if !GST_CHECK_VERSION(1, 27, 0)
     if (m_pipeline)
         teardownPipeline();
+#endif
 }
 
 void GStreamerMediaEndpoint::stop()

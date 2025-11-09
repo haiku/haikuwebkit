@@ -124,7 +124,7 @@ static NSArray<NSHTTPCookie *> *cookiesBySettingPartition(NSArray<NSHTTPCookie *
         if (partitionedCookie)
             [partitionedCookies addObject:partitionedCookie.get()];
     }
-    return partitionedCookies.get();
+    return partitionedCookies.unsafeGet();
 }
 #endif
 

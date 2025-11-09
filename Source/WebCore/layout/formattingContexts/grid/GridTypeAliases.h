@@ -35,11 +35,13 @@ class PlacedGridItem;
 class UnplacedGridItem;
 
 struct GridAreaLines;
+struct GridItemRect;
 struct TrackSizingFunctions;
 struct UnsizedTrack;
 
 using GridAreas = HashMap<UnplacedGridItem, GridAreaLines>;
 using GridCell = Vector<UnplacedGridItem, 1>;
+using GridItemRects = Vector<GridItemRect>;
 using GridMatrix = Vector<Vector<GridCell>>;
 using PlacedGridItems = Vector<PlacedGridItem>;
 using TrackSizes = Vector<LayoutUnit>;

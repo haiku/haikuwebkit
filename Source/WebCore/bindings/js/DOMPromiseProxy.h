@@ -39,9 +39,6 @@ class DOMPromiseProxy {
 public:
     using Value = typename IDLType::StorageType;
 
-    DOMPromiseProxy() = default;
-    ~DOMPromiseProxy() = default;
-
     JSC::JSValue promise(JSC::JSGlobalObject&, JSDOMGlobalObject&);
 
     void clear();
@@ -65,9 +62,6 @@ template<>
 class DOMPromiseProxy<IDLUndefined> {
     WTF_MAKE_TZONE_ALLOCATED_TEMPLATE(DOMPromiseProxy);
 public:
-    DOMPromiseProxy() = default;
-    ~DOMPromiseProxy() = default;
-
     JSC::JSValue promise(JSC::JSGlobalObject&, JSDOMGlobalObject&);
 
     void clear();

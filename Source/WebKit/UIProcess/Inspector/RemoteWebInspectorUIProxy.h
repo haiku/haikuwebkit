@@ -106,6 +106,7 @@ public:
 
 #if ENABLE(INSPECTOR_EXTENSIONS)
     WebInspectorUIExtensionControllerProxy* extensionController() const { return m_extensionController.get(); }
+    RefPtr<WebInspectorUIExtensionControllerProxy> protectedExtensionController() const;
 #endif
     
 #if PLATFORM(MAC)
@@ -135,10 +136,6 @@ private:
     RemoteWebInspectorUIProxy();
     RefPtr<WebPageProxy> protectedInspectorPage();
 
-#if ENABLE(INSPECTOR_EXTENSIONS)
-    RefPtr<WebInspectorUIExtensionControllerProxy> protectedExtensionController();
-#endif
-
     // IPC::MessageReceiver
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
 
@@ -158,6 +155,7 @@ private:
     void revealFileExternally(const String& path);
     void showCertificate(const WebCore::CertificateInfo&);
     void setInspectorPageDeveloperExtrasEnabled(bool);
+    void setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor);
     void sendMessageToBackend(const String& message);
 
     void createFrontendPageAndWindow();

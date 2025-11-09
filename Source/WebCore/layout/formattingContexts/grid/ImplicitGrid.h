@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "GridTypeAliases.h"
+#include <WebCore/GridTypeAliases.h>
 #include <wtf/Forward.h>
 #include <wtf/Vector.h>
 

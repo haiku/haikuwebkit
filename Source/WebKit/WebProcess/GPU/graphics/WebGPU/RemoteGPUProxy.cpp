@@ -222,24 +222,27 @@ void RemoteGPUProxy::requestAdapter(const WebCore::WebGPU::RequestAdapterOptions
 }
 
 
-RefPtr<WebCore::DDModel::DDMesh> RemoteGPUProxy::addMeshRequest(const WebCore::DDModel::DDMeshDescriptor& descriptor)
+RefPtr<WebCore::DDModel::DDMesh> RemoteGPUProxy::createModelBacking(unsigned width, unsigned height, CompletionHandler<void(Vector<MachSendRight>&&)>&& callback)
 {
-#if ENABLE(GPUP_MODEL)
-    auto convertedDescriptor = m_modelConvertToBackingContext->convertToBacking(descriptor);
-    if (!convertedDescriptor)
-        return nullptr;
-
+#if ENABLE(GPU_PROCESS_MODEL)
     auto identifier = DDModelIdentifier::generate();
 
-    auto sendResult = send(Messages::RemoteGPU::AddMeshRequest(*convertedDescriptor, identifier));
-    if (sendResult != IPC::Error::NoError)
-        return nullptr;
+    auto sendResult = sendSync(Messages::RemoteGPU::CreateModelBacking(width, height, identifier));
+    if (!sendResult.succeeded())
+        callback({ });
+
+    auto [response] = sendResult.takeReply();
+    callback(WTFMove(response));
+
+    UNUSED_PARAM(sendResult);
 
     auto result = DDModel::RemoteDDMeshProxy::create(root(), m_modelConvertToBackingContext, identifier);
-    result->setLabel(WTFMove(convertedDescriptor->label));
+    result->setLabel("Placeholder model label"_s);
     return result;
 #else
-    UNUSED_PARAM(descriptor);
+    UNUSED_PARAM(width);
+    UNUSED_PARAM(height);
+    UNUSED_PARAM(callback);
     return nullptr;
 #endif
 }

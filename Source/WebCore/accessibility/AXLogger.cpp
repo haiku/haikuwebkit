@@ -37,7 +37,7 @@
 #include "AXSearchManager.h"
 #include "AXTextRun.h"
 #include "AXUtilities.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "LocalFrameView.h"
 #include "LogInitialization.h"
 #include "Logging.h"

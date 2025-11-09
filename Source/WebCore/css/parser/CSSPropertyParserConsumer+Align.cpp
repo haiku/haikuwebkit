@@ -83,7 +83,7 @@ enum class AdditionalSelfPositionKeywords {
 
 static bool isSelfPositionKeyword(CSSValueID id, OptionSet<AdditionalSelfPositionKeywords> additionalKeywords)
 {
-    bool matches = identMatches<CSSValueStart, CSSValueEnd, CSSValueCenter, CSSValueSelfStart, CSSValueSelfEnd, CSSValueFlexStart, CSSValueFlexEnd, CSSValueDialog>(id);
+    bool matches = identMatches<CSSValueStart, CSSValueEnd, CSSValueCenter, CSSValueSelfStart, CSSValueSelfEnd, CSSValueFlexStart, CSSValueFlexEnd>(id);
 
     if (additionalKeywords.contains(AdditionalSelfPositionKeywords::LeftRight))
         matches |= isLeftOrRightKeyword(id);

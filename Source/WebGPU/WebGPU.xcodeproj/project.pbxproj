@@ -10,6 +10,7 @@
 		0D078E922E737C0500A9B266 /* DDMesh.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D078E8F2E737C0500A9B266 /* DDMesh.h */; };
 		0D078E932E737C0500A9B266 /* DDMesh.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D078E902E737C0500A9B266 /* DDMesh.mm */; };
 		0D078E942E737C0500A9B266 /* UsdModelRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D078E912E737C0500A9B266 /* UsdModelRenderer.swift */; };
+		0D164A3A2E8EE14700864EA1 /* TextureOrTextureView.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D164A392E8EE14700864EA1 /* TextureOrTextureView.h */; };
 		0D212A652BC26336001160BF /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D212A642BC26336001160BF /* CoreGraphics.framework */; };
 		0D30F93729F1F94A0055D9F1 /* ExternalTexture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0D30F93629F1F94A0055D9F1 /* ExternalTexture.mm */; };
 		0D30F93929F1FAC50055D9F1 /* ExternalTexture.h in Headers */ = {isa = PBXBuildFile; fileRef = 0D30F93829F1FAC50055D9F1 /* ExternalTexture.h */; };
@@ -298,6 +299,7 @@
 		0D078E8F2E737C0500A9B266 /* DDMesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DDMesh.h; sourceTree = "<group>"; };
 		0D078E902E737C0500A9B266 /* DDMesh.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = DDMesh.mm; sourceTree = "<group>"; };
 		0D078E912E737C0500A9B266 /* UsdModelRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsdModelRenderer.swift; sourceTree = "<group>"; };
+		0D164A392E8EE14700864EA1 /* TextureOrTextureView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureOrTextureView.h; sourceTree = "<group>"; };
 		0D212A642BC26336001160BF /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		0D30F93629F1F94A0055D9F1 /* ExternalTexture.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ExternalTexture.mm; sourceTree = "<group>"; };
 		0D30F93829F1FAC50055D9F1 /* ExternalTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExternalTexture.h; sourceTree = "<group>"; };
@@ -700,6 +702,7 @@
 				0DE2BFAC2C150DF700D04AEB /* ShaderStage.h */,
 				1C5ACA99273A426D0095F8D5 /* Texture.h */,
 				1C5ACAB1273A426D0095F8D5 /* Texture.mm */,
+				0D164A392E8EE14700864EA1 /* TextureOrTextureView.h */,
 				1C5ACADD273A4F3D0095F8D5 /* TextureView.h */,
 				1C5ACAEA273A560D0095F8D5 /* TextureView.mm */,
 				0D078E912E737C0500A9B266 /* UsdModelRenderer.swift */,
@@ -987,6 +990,7 @@
 				941C2CF32CBDB0E700B5DB48 /* QuerySet.h in Headers */,
 				941C1EE62CA33255004D4220 /* Queue.h in Headers */,
 				0DE2BFAD2C150DF700D04AEB /* ShaderStage.h in Headers */,
+				0D164A3A2E8EE14700864EA1 /* TextureOrTextureView.h in Headers */,
 				1C5ACAD3273A4C860095F8D5 /* WebGPUExt.h in Headers */,
 				94CC0FE62CA203B300CB3264 /* WebGPUSwiftInternal.h in Headers */,
 				0D943C0F2C6571BC00D33BA5 /* XRBinding.h in Headers */,

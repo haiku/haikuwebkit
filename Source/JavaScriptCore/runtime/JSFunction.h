@@ -124,6 +124,7 @@ public:
 
     JS_EXPORT_PRIVATE static CallData getConstructData(JSCell*);
     JS_EXPORT_PRIVATE static CallData getCallData(JSCell*);
+    static CallData getCallDataInline(JSCell*);
 
     static constexpr ptrdiff_t offsetOfExecutableOrRareData()
     {

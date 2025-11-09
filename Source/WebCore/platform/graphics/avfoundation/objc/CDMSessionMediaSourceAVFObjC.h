@@ -46,9 +46,6 @@ class CDMSessionMediaSourceAVFObjC : public LegacyCDMSession, public SourceBuffe
 public:
     virtual ~CDMSessionMediaSourceAVFObjC();
 
-    virtual void addParser(AVStreamDataParser*) = 0;
-    virtual void removeParser(AVStreamDataParser*) = 0;
-
     // LegacyCDMSession
     const String& sessionId() const override { return m_sessionId; }
 

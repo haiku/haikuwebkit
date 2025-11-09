@@ -52,7 +52,7 @@ static const char* dataAsString(NSData *data)
     if ([data length] > buffer.size() - 1)
         return "ERROR";
     auto dataSpan = span(data);
-    if (contains(dataSpan, 0))
+    if (contains(dataSpan, '\0'))
         return "ERROR";
     memcpySpan(std::span { buffer }, dataSpan);
     buffer[[data length]] = '\0';

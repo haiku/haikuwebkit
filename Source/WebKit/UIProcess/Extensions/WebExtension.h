@@ -73,6 +73,9 @@ public:
 #if PLATFORM(COCOA)
     explicit WebExtension(NSBundle *appExtensionBundle, NSURL *resourceURL, RefPtr<API::Error>&);
     explicit WebExtension(NSDictionary *manifest, Resources&& = { });
+#else
+    explicit WebExtension(GFile *resourcesFile, RefPtr<API::Error>&);
+    explicit WebExtension(const JSON::Value& manifest, Resources&& = { });
 #endif
 
     explicit WebExtension(Resources&& = { });

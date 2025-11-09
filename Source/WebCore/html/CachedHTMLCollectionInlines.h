@@ -130,7 +130,7 @@ Element* CachedHTMLCollection<HTMLCollectionClass, traversalType>::namedItem(con
 
         if (candidate && collection().elementMatches(*candidate)) {
             if (traversalType == CollectionTraversalType::ChildrenOnly ? candidate->parentNode() == &root : candidate->isDescendantOf(root))
-                return candidate.get();
+                return candidate.unsafeGet();
         }
     }
 

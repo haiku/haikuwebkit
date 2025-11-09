@@ -92,7 +92,6 @@ private:
 #endif
 
     bool m_isMonitoringWirelessRoutes { false };
-    bool m_havePresentedApplicationPID { false };
 };
 
 } // namespace WebCore

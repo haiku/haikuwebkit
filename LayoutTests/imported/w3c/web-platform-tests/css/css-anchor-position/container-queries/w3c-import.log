@@ -19,8 +19,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-color-change-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-color-change.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-display-change.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-implicit-any.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-name.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-position-area-any.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-position-area-any.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-position-area-wm.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-position-area.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-scroll.html
@@ -28,7 +29,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-style-containment-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-style-containment.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/anchored-fallback-try-tactic.html
-/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/at-container-anchored-parsing-any.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/at-container-anchored-parsing-any.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/at-container-anchored-parsing.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/at-container-anchored-serialization.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-anchor-position/container-queries/container-type-anchored-computed.html

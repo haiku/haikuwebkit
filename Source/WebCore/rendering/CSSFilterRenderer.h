@@ -31,6 +31,7 @@
 
 namespace WebCore {
 
+class FilterOperation;
 class FilterOperations;
 class GraphicsContext;
 class RenderElement;

@@ -30,19 +30,16 @@
 
 #include "Chrome.h"
 #include "ChromeClient.h"
-#include "Document.h"
-#include "DocumentInlines.h"
-#include "FrameInlines.h"
+#include "DocumentPage.h"
+#include "DocumentSettingsValues.h"
 #include "Gamepad.h"
 #include "GamepadManager.h"
 #include "GamepadProvider.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "Navigator.h"
-#include "Page.h"
 #include "PermissionsPolicy.h"
 #include "PlatformGamepad.h"
-#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

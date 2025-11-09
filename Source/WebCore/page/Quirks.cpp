@@ -29,12 +29,12 @@
 #include "AccessibilityObject.h"
 #include "Attr.h"
 #include "ContainerNodeInlines.h"
-#include "DeprecatedGlobalSettings.h"
 #include "DatasetDOMStringMap.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DeprecatedGlobalSettings.h"
 #include "DocumentLoader.h"
+#include "DocumentQuirks.h"
 #include "DocumentStorageAccess.h"
+#include "DocumentView.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementInlines.h"
 #include "ElementTargetingTypes.h"
@@ -939,9 +939,12 @@ static Vector<Ref<Element>> copyElements(const NodeList& nodeList)
     return elements;
 }
 
-Ref<NodeList> Quirks::applyFacebookFlagQuirk(Document& document, const NodeList& nodeList)
+Ref<NodeList> Quirks::applyFacebookFlagQuirk(Document& document, NodeList& nodeList)
 {
     m_quirksData.shouldEnableFacebookFlagQuirk = false;
+
+    if (!document.settings().facebookLiveRecordingQuirkEnabled())
+        return nodeList;
 
     auto elements = copyElements(nodeList);
     // Live Streaming flag activation
@@ -983,7 +986,7 @@ bool Quirks::shouldEnableEnumerateDeviceQuirk() const
 #if ENABLE(WEB_RTC)
 bool Quirks::shouldEnableRTCEncodedStreamsQuirk() const
 {
-    return needsQuirks() && m_quirksData.shouldEnableRTCEncodedStreamsQuirk;
+    return needsQuirks() && m_quirksData.shouldEnableRTCEncodedStreamsQuirk && protectedDocument() && protectedDocument()->settings().rtcEncodedStreamsQuirkEnabled();
 }
 #endif
 
@@ -1004,16 +1007,6 @@ bool Quirks::shouldLayOutAtMinimumWindowWidthWhenIgnoringScalingConstraints() co
     // FIXME: We should consider replacing this with a heuristic to determine whether
     // or not the edges of the page mostly lack content after shrinking to fit.
     return needsQuirks() && m_quirksData.shouldLayOutAtMinimumWindowWidthWhenIgnoringScalingConstraintsQuirk;
-}
-
-// mail.yahoo.com rdar://63511613
-bool Quirks::shouldAvoidPastingImagesAsWebContent() const
-{
-#if PLATFORM(IOS_FAMILY)
-    return needsQuirks() && m_quirksData.shouldAvoidPastingImagesAsWebContent;
-#else
-    return false;
-#endif
 }
 
 bool Quirks::shouldNotAutoUpgradeToHTTPSNavigation(const URL& url)
@@ -1888,7 +1881,7 @@ bool Quirks::needsPointerTouchCompatibility(const Element& target) const
         RefPtr pageContainer = [&target] -> const HTMLElement* {
             for (Ref ancestor : lineageOfType<HTMLElement>(target)) {
                 if (ancestor->hasClassName("PageContainer"_s))
-                    return ancestor.ptr();
+                    return ancestor.unsafePtr();
             }
             return nullptr;
         }();
@@ -1995,6 +1988,65 @@ bool Quirks::needsNavigatorUserAgentDataQuirk() const
 bool Quirks::needsNowPlayingFullscreenSwapQuirk() const
 {
     return needsQuirks() && m_quirksData.needsNowPlayingFullscreenSwapQuirk;
+}
+
+// tiktok.com rdar://149712691
+std::optional<Quirks::TikTokOverflowingContentQuirkType> Quirks::needsTikTokOverflowingContentQuirk(const Element& element, const RenderStyle& parentStyle) const
+{
+    if (!needsQuirks())
+        return { };
+
+    if (parentStyle.display() != DisplayType::Flex)
+        return { };
+
+    if (parentStyle.position() != PositionType::Fixed)
+        return { };
+
+    if (!element.elementData() || !element.hasClass())
+        return { };
+
+    static LazyNeverDestroyed<AtomString> contentContainerSubstring;
+    static std::once_flag contentContainerSubstringOnceKey;
+    std::call_once(contentContainerSubstringOnceKey, [&] {
+        contentContainerSubstring.construct("DivContentContainer"_s);
+    });
+
+    static LazyNeverDestroyed<AtomString> videoContainerSubstring;
+    static std::once_flag videoContainerSubstringOnceKey;
+    std::call_once(videoContainerSubstringOnceKey, [&] {
+        videoContainerSubstring.construct("DivVideoContainer"_s);
+    });
+
+    static LazyNeverDestroyed<AtomString> browserModeContainerSubstring;
+    static std::once_flag browserModeContainerSubstringOnceKey;
+    std::call_once(browserModeContainerSubstringOnceKey, [&] {
+        browserModeContainerSubstring.construct("DivBrowserModeContainer"_s);
+    });
+
+    auto parentElementClassNamesContainsBrowserModeContainerSubstring = [&] {
+        RefPtr parentElement = element.parentElement();
+        if (!parentElement || !parentElement->elementData() || !parentElement->hasClass())
+            return false;
+
+        for (auto& className : parentElement->classNames()) {
+            if (className.contains(browserModeContainerSubstring.get()))
+                return true;
+        }
+        return false;
+    };
+
+    if (!parentElementClassNamesContainsBrowserModeContainerSubstring())
+        return { };
+
+    for (auto& className : element.classNames()) {
+        if (className.contains(contentContainerSubstring.get()))
+            return TikTokOverflowingContentQuirkType::CommentsSectionQuirk;
+
+        if (className.contains(videoContainerSubstring.get()))
+            return TikTokOverflowingContentQuirkType::VideoSectionQuirk;
+    }
+
+    return { };
 }
 
 bool Quirks::needsWebKitMediaTextTrackDisplayQuirk() const
@@ -2216,18 +2268,6 @@ static void handleWalmartQuirks(QuirksData& quirksData, const URL& quirksURL, co
     quirksData.isWalmart = true;
 }
 
-static void handleYahooQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
-{
-    UNUSED_PARAM(documentURL);
-    UNUSED_PARAM(quirksDomainString);
-
-    auto topDocumentHost = quirksURL.host();
-    if (topDocumentHost.startsWith("mail."_s)) {
-        // mail.yahoo.com rdar://63511613
-        quirksData.shouldAvoidPastingImagesAsWebContent = true;
-    }
-}
-
 static void handleScriptToEvaluateBeforeRunningScriptFromURLQuirk(QuirksData& quirksData, const URL& quirksURL, const String& topDomain, const URL& documentURL)
 {
     UNUSED_PARAM(quirksURL);
@@ -2311,6 +2351,16 @@ static void handleWeatherQuirks(QuirksData& quirksData, const URL& quirksURL, co
     quirksData.needsFormControlToBeMouseFocusableQuirk = true;
 }
 #endif
+
+static void handleTikTokQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    UNUSED_VARIABLE(quirksURL);
+    UNUSED_VARIABLE(documentURL);
+    if (quirksDomainString != "tiktok.com"_s)
+        return;
+
+    quirksData.needsTikTokOverflowingContentQuirk = true;
+}
 
 #if PLATFORM(IOS_FAMILY)
 static void handleDisneyPlusQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -3175,6 +3225,7 @@ void Quirks::determineRelevantQuirks()
         { "theguardian"_s, &handleGuardianQuirks },
         { "thesaurus"_s, &handleScriptToEvaluateBeforeRunningScriptFromURLQuirk },
 #endif
+        { "tiktok"_s, &handleTikTokQuirks },
 #if PLATFORM(MAC)
         { "trix-editor"_s, &handleTrixEditorQuirks },
 #endif
@@ -3196,9 +3247,6 @@ void Quirks::determineRelevantQuirks()
 #endif
         { "weebly"_s, &handleWeeblyQuirks },
         { "x"_s, &handleTwitterXQuirks },
-#if PLATFORM(IOS_FAMILY)
-        { "yahoo"_s, &handleYahooQuirks },
-#endif
 #if ENABLE(TEXT_AUTOSIZING)
         { "ycombinator"_s, &handleYCombinatorQuirks },
 #endif

@@ -107,9 +107,20 @@ GraphicsContextGLANGLE::~GraphicsContextGLANGLE()
             bool result = EGL_DestroySync(m_displayObj, sync);
             ASSERT_UNUSED(result, !!result);
         }
+#if PLATFORM(WIN)
         EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+#endif
         EGL_DestroyContext(m_displayObj, m_contextObj);
     }
+
+#if !PLATFORM(WIN)
+    if (m_angleSharingContextObj)
+        EGL_DestroyContext(m_displayObj, m_angleSharingContextObj);
+
+    // Ideally this should go before the m_contextObj destruction, but there are platforms where it breaks
+    // the destruction m_contextObj. Putting it here works for all the platforms that I've tested.
+    EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+#endif
 
     if (m_surfaceObj)
         EGL_DestroySurface(m_displayObj, m_surfaceObj);
@@ -304,7 +315,17 @@ bool GraphicsContextGLTextureMapperANGLE::platformInitializeContext()
     }
     eglContextAttributes.append(EGL_NONE);
 
+#if PLATFORM(WIN)
     m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, sharedDisplay.angleSharingGLContext(), eglContextAttributes.span().data());
+#else
+    m_angleSharingContextObj = sharedDisplay.angleSharingGLContext();
+    if (m_angleSharingContextObj == EGL_NO_CONTEXT) {
+        LOG(WebGL, "ANGLE sharing EGLContext Initialization failed.");
+        return false;
+    }
+
+    m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, m_angleSharingContextObj, eglContextAttributes.span().data());
+#endif
     if (m_contextObj == EGL_NO_CONTEXT) {
         LOG(WebGL, "EGLContext Initialization failed.");
         return false;
@@ -482,6 +503,18 @@ void GraphicsContextGLTextureMapperANGLE::enableFoveation(GCGLuint)
 
 void GraphicsContextGLTextureMapperANGLE::disableFoveation()
 {
+}
+
+bool GraphicsContextGLTextureMapperANGLE::enableRequiredWebXRExtensions()
+{
+    if (!makeContextCurrent())
+        return false;
+
+    return enableExtension("GL_ANGLE_framebuffer_multisample"_s)
+        && enableExtension("GL_ANGLE_framebuffer_blit"_s)
+        && enableExtension("GL_EXT_discard_framebuffer"_s)
+        && enableExtension("GL_OES_EGL_image"_s)
+        && enableExtension("GL_OES_rgb8_rgba8"_s);
 }
 #endif
 

@@ -57,8 +57,8 @@ PASS flip-block flip-inline flip-start, position-area:x-start y-end, ltr horizon
 PASS flip-block flip-inline flip-start, position-area:x-end y-end, ltr horizontal-tb
 PASS flip-block flip-inline flip-start, position-area:x-end y-start, ltr horizontal-tb
 PASS flip-block flip-inline, position-area:span-x-start span-y-start, ltr horizontal-tb
-PASS flip-block flip-inline, position-area:x-self-start y-self-start, ltr horizontal-tb
-PASS flip-block flip-inline, position-area:span-x-self-start span-y-self-start, ltr horizontal-tb
+PASS flip-block flip-inline, position-area:self-x-start self-y-start, ltr horizontal-tb
+PASS flip-block flip-inline, position-area:span-self-x-start span-self-y-start, ltr horizontal-tb
 PASS flip-inline, position-area:block-start inline-start, ltr horizontal-tb
 PASS flip-inline, position-area:block-end inline-start, ltr horizontal-tb
 PASS flip-inline, position-area:block-end inline-end, ltr horizontal-tb

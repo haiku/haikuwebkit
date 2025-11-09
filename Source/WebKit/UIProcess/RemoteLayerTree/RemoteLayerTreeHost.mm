@@ -197,6 +197,10 @@ bool RemoteLayerTreeHost::updateLayerTree(const IPC::Connection& connection, con
             rootNode->addToHostingNode(*remoteRootNode);
     }
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+    Ref { *m_drawingArea }->registerTimelineIfNecessary(processIdentifier, transaction.acceleratedTimelineTimeOrigin(), MonotonicTime::now());
+#endif
+
     for (auto& changedLayer : transaction.changedLayerProperties()) {
         auto layerID = changedLayer.key;
         const auto& properties = changedLayer.value.get();
@@ -513,14 +517,9 @@ void RemoteLayerTreeHost::animationsWereRemovedFromNode(RemoteLayerTreeNode& nod
     protectedDrawingArea()->animationsWereRemovedFromNode(node);
 }
 
-Seconds RemoteLayerTreeHost::acceleratedTimelineTimeOrigin(WebCore::ProcessIdentifier processIdentifier) const
+const RemoteAnimationTimeline* RemoteLayerTreeHost::timeline(WebCore::ProcessIdentifier processIdentifier) const
 {
-    return protectedDrawingArea()->acceleratedTimelineTimeOrigin(processIdentifier);
-}
-
-MonotonicTime RemoteLayerTreeHost::animationCurrentTime(WebCore::ProcessIdentifier processIdentifier) const
-{
-    return protectedDrawingArea()->animationCurrentTime(processIdentifier);
+    return protectedDrawingArea()->timeline(processIdentifier);
 }
 #endif
 

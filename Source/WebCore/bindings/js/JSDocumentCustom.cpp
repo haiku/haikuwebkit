@@ -35,22 +35,6 @@
 namespace WebCore {
 using namespace JSC;
 
-static inline JSValue createNewDocumentWrapper(JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, Ref<Document>&& passedDocument)
-{
-    auto& document = passedDocument.get();
-    JSObject* wrapper;
-    if (document.isHTMLDocument())
-        wrapper = createWrapper<HTMLDocument>(&globalObject, WTFMove(passedDocument));
-    else if (document.isXMLDocument())
-        wrapper = createWrapper<XMLDocument>(&globalObject, WTFMove(passedDocument));
-    else
-        wrapper = createWrapper<Document>(&globalObject, WTFMove(passedDocument));
-
-    reportMemoryForDocumentIfFrameless(lexicalGlobalObject, document);
-
-    return wrapper;
-}
-
 JSObject* cachedDocumentWrapper(JSGlobalObject& lexicalGlobalObject, JSDOMGlobalObject& globalObject, Document& document)
 {
     if (auto* wrapper = getCachedWrapper(globalObject.world(), document))
@@ -82,18 +66,6 @@ void reportMemoryForDocumentIfFrameless(JSGlobalObject& lexicalGlobalObject, Doc
     // FIXME: Adopt reportExtraMemoryVisited, and switch to reportExtraMemoryAllocated.
     // https://bugs.webkit.org/show_bug.cgi?id=142595
     vm.heap.deprecatedReportExtraMemory(memoryCost);
-}
-
-JSValue toJSNewlyCreated(JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<Document>&& document)
-{
-    return createNewDocumentWrapper(*lexicalGlobalObject, *globalObject, WTFMove(document));
-}
-
-JSValue toJS(JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Document& document)
-{
-    if (auto* wrapper = cachedDocumentWrapper(*lexicalGlobalObject, *globalObject, document))
-        return wrapper;
-    return toJSNewlyCreated(lexicalGlobalObject, globalObject, Ref<Document>(document));
 }
 
 void setAdoptedStyleSheetsOnTreeScope(TreeScope& treeScope, JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value)

@@ -3623,7 +3623,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         }
 
         clobberWorld();
-        makeHeapTopForNode(node);
+        setTypeForNode(node, SpecObject);
         break;
     }
 
@@ -5722,7 +5722,99 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
     case DataViewSet: {
         break;
     }
-        
+
+    case ResolvePromiseFirstResolving:
+    case RejectPromiseFirstResolving:
+    case FulfillPromiseFirstResolving: {
+        clobberWorld();
+        break;
+    }
+
+    case PromiseResolve: {
+        JSGlobalObject* globalObject = m_graph.globalObjectFor(node->origin.semantic);
+        if (JSValue constructor = forNode(node->child1()).m_value) {
+            if (constructor == globalObject->promiseConstructor()) {
+                auto& argument = forNode(node->child2());
+                if (argument.isType(~SpecObject)) {
+                    didFoldClobberWorld();
+                    setForNode(node, globalObject->promiseStructure());
+                    break;
+                }
+
+                if (argument.isType(SpecPromiseObject)) {
+                    if (m_graph.isWatchingPromiseSpeciesWatchpoint(node)) {
+                        didFoldClobberWorld();
+                        forNode(node) = argument;
+                        break;
+                    }
+                }
+
+                if (argument.isType(~SpecPromiseObject)) {
+                    // SpecObject | something.
+                    // Only for types having structures, we check "then" existence.
+                    auto& structureSet = argument.m_structure;
+                    if (structureSet.isFinite() && structureSet.size() == 1) {
+                        JSGlobalObject* globalObject = m_graph.globalObjectFor(node->origin.semantic);
+                        auto conditionSet = m_graph.tryEnsureAbsence(globalObject, structureSet.toStructureSet(), CacheableIdentifier::createFromImmortalIdentifier(m_graph.m_vm.propertyNames->then.impl()));
+                        if (conditionSet.isValid()) {
+                            if (m_graph.watchConditions(conditionSet)) {
+                                didFoldClobberWorld();
+                                setForNode(node, globalObject->promiseStructure());
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                clobberWorld();
+                setTypeForNode(node, SpecPromiseObject);
+                break;
+            }
+        }
+
+        clobberWorld();
+        setTypeForNode(node, SpecObject);
+        break;
+    }
+
+    case PromiseReject: {
+        JSGlobalObject* globalObject = m_graph.globalObjectFor(node->origin.semantic);
+        if (JSValue constructor = forNode(node->child1()).m_value) {
+            if (constructor == globalObject->promiseConstructor()) {
+                clobberWorld();
+                setForNode(node, globalObject->promiseStructure());
+                break;
+            }
+        }
+
+        clobberWorld();
+        setTypeForNode(node, SpecObject);
+        break;
+    }
+
+    case PromiseThen: {
+        JSGlobalObject* globalObject = m_graph.globalObjectFor(node->origin.semantic);
+        auto& promise = forNode(node->child1());
+        if (promise.isType(SpecPromiseObject)) {
+            auto& structureSet = promise.m_structure;
+            if (structureSet.isFinite()) {
+                if (auto structure = structureSet.onlyStructure()) {
+                    if (structure.get() == globalObject->promiseStructure()) {
+                        if (m_graph.isWatchingPromiseSpeciesWatchpoint(node)) {
+                            clobberWorld();
+                            setForNode(node, globalObject->promiseStructure());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        clobberWorld();
+        setTypeForNode(node, SpecObject);
+        break;
+    }
+
     case Unreachable:
         // It may be that during a previous run of AI we proved that something was unreachable, but
         // during this run of AI we forget that it's unreachable. AI's proofs don't have to get

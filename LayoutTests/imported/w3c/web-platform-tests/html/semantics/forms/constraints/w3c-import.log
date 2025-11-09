@@ -14,6 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-checkValidity.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-reportValidity.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validate.html
@@ -25,6 +26,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-rangeUnderflow-weekmonth.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-rangeUnderflow.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-stepMismatch.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-textarea-defaultValue.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-tooLong.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-tooShort.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-typeMismatch.html
@@ -34,11 +36,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-validity-valueMissing.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-willValidate-datalist.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/form-validation-willValidate.html
-/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/infinite_backtracking.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/infinite_backtracking.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/input-maxlength-emoji.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/input-number-validity-dynamic-value-no-change.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/input-pattern-dynamic-value.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/inputwillvalidate.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/number-input-lang-validationMessage-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/radio-group-valueMissing.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/radio-valueMissing.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/constraints/reportValidity-crash.html

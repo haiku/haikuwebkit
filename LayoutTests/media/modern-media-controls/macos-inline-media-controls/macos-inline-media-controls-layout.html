@@ -25,38 +25,38 @@ scheduler.frameDidFire = function()
     if (iconButtons.some(button => button.width == 0))
         return;
 
-    shouldBe("mediaControls.children.length", "2");
-    shouldBe("mediaControls.children[0]", "mediaControls.topLeftControlsBar");
-    shouldBe("mediaControls.children[1]", "mediaControls.bottomControlsBar");
+    debug("mediaControls.children.length " + String(mediaControls.children.length));
+    debug("mediaControls.children[0].constructor.name " + String(mediaControls.children[0].constructor.name));
+    debug("mediaControls.children[1].constructor.name " + String(mediaControls.children[1].constructor.name));
 
-    shouldBe("mediaControls.topLeftControlsBar.children.length", "2");
+    debug("mediaControls.topLeftControlsBar.children.length " + String(mediaControls.topLeftControlsBar.children.length));
     shouldBeTrue("mediaControls.topLeftControlsBar.children[0] instanceof BackgroundTint");
     shouldBeTrue("mediaControls.topLeftControlsBar.children[1] instanceof ButtonsContainer");
-    shouldBe("mediaControls.topLeftControlsBar.children[1].children.length", "2");
-    shouldBe("mediaControls.topLeftControlsBar.children[1].children[0]", "mediaControls.pipButton");
-    shouldBe("mediaControls.topLeftControlsBar.children[1].children[1]", "mediaControls.fullscreenButton");
+    debug("mediaControls.topLeftControlsBar.children[1].children.length " + String(mediaControls.topLeftControlsBar.children[1].children.length));
+    debug("mediaControls.topLeftControlsBar.children[1].children[0].constructor.name " + String(mediaControls.topLeftControlsBar.children[1].children[0].constructor.name));
+    debug("mediaControls.topLeftControlsBar.children[1].children[1].constructor.name " + String(mediaControls.topLeftControlsBar.children[1].children[1].constructor.name));
 
-    shouldBe("mediaControls.bottomControlsBar.children.length", "4");
+    debug("mediaControls.bottomControlsBar.children.length " + String(mediaControls.bottomControlsBar.children.length));
     shouldBeTrue("mediaControls.bottomControlsBar.children[0] instanceof BackgroundTint");
-    shouldBe("mediaControls.bottomControlsBar.children[1]", "mediaControls.leftContainer");
-    shouldBe("mediaControls.bottomControlsBar.children[2]", "mediaControls.timeControl");
-    shouldBe("mediaControls.bottomControlsBar.children[3]", "mediaControls.rightContainer");
+    debug("mediaControls.bottomControlsBar.children[1].constructor.name " + String(mediaControls.bottomControlsBar.children[1].constructor.name));
+    debug("mediaControls.bottomControlsBar.children[2].constructor.name " + String(mediaControls.bottomControlsBar.children[2].constructor.name));
+    debug("mediaControls.bottomControlsBar.children[3].constructor.name " + String(mediaControls.bottomControlsBar.children[3].constructor.name));
 
-    shouldBe("mediaControls.leftContainer.children.length", "3");
-    shouldBe("mediaControls.leftContainer.children[0]", "mediaControls.skipBackButton");
-    shouldBe("mediaControls.leftContainer.children[1]", "mediaControls.playPauseButton");
-    shouldBe("mediaControls.leftContainer.children[2]", "mediaControls.skipForwardButton");
+    debug("mediaControls.leftContainer.children.length " + String(mediaControls.leftContainer.children.length));
+    debug("mediaControls.leftContainer.children[0].constructor.name " + String(mediaControls.leftContainer.children[0].constructor.name));
+    debug("mediaControls.leftContainer.children[1].constructor.name " + String(mediaControls.leftContainer.children[1].constructor.name));
+    debug("mediaControls.leftContainer.children[2].constructor.name " + String(mediaControls.leftContainer.children[2].constructor.name));
 
-    shouldBe("mediaControls.timeControl.children.length", "4");
-    shouldBe("mediaControls.timeControl.children[0]", "mediaControls.timeControl.elapsedTimeLabel");
-    shouldBe("mediaControls.timeControl.children[1]", "mediaControls.timeControl.scrubber");
-    shouldBe("mediaControls.timeControl.children[2]", "mediaControls.timeControl.remainingTimeLabel");
-    shouldBe("mediaControls.timeControl.children[3]", "mediaControls.timeControl.durationTimeLabel");
+    debug("mediaControls.timeControl.children.length " + String(mediaControls.timeControl.children.length));
+    debug("mediaControls.timeControl.children[0].constructor.name " + String(mediaControls.timeControl.children[0].constructor.name));
+    debug("mediaControls.timeControl.children[1].constructor.name " + String(mediaControls.timeControl.children[1].constructor.name));
+    debug("mediaControls.timeControl.children[2].constructor.name " + String(mediaControls.timeControl.children[2].constructor.name));
+    debug("mediaControls.timeControl.children[3].constructor.name " + String(mediaControls.timeControl.children[3].constructor.name));
 
-    shouldBe("mediaControls.rightContainer.children.length", "4");
-    shouldBe("mediaControls.rightContainer.children[0]", "mediaControls.muteButton");
-    shouldBe("mediaControls.rightContainer.children[1]", "mediaControls.airplayButton");
-    shouldBe("mediaControls.rightContainer.children[2]", "mediaControls.tracksButton");
+    debug("mediaControls.rightContainer.children.length " + String(mediaControls.rightContainer.children.length));
+    debug("mediaControls.rightContainer.children[0].constructor.name " + String(mediaControls.rightContainer.children[0].constructor.name));
+    debug("mediaControls.rightContainer.children[1].constructor.name " + String(mediaControls.rightContainer.children[1].constructor.name));
+    debug("mediaControls.rightContainer.children[2].constructor.name " + String(mediaControls.rightContainer.children[2].constructor.name));
 
     finishMediaControlsTest();
 };

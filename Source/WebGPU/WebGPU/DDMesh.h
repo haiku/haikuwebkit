@@ -36,14 +36,16 @@ typedef struct CF_BRIDGED_TYPE(id) __CVBuffer* CVPixelBufferRef;
 struct WGPUDDMeshImpl {
 };
 
+@class DDBridgeReceiver;
+
 namespace WebGPU {
 
 class Instance;
 
-class DDMesh : public RefCountedAndCanMakeWeakPtr<DDMesh>, public WGPUDDMeshImpl {
+class DDMesh : public ThreadSafeRefCounted<DDMesh>, public WGPUDDMeshImpl {
     WTF_MAKE_TZONE_ALLOCATED(DDMesh);
 public:
-    static Ref<DDMesh> create(const WGPUDDMeshDescriptor& descriptor, Instance& instance)
+    static Ref<DDMesh> create(const WGPUDDCreateMeshDescriptor& descriptor, Instance& instance)
     {
         return adoptRef(*new DDMesh(descriptor, instance));
     }
@@ -55,14 +57,29 @@ public:
     ~DDMesh();
 
     bool isValid() const;
+    void addMesh(WGPUDDMeshDescriptor*);
     void update(WGPUDDUpdateMeshDescriptor*);
+    void addTexture(WGPUDDTextureDescriptor*);
+    void updateTexture(WGPUDDUpdateTextureDescriptor*);
+    void addMaterial(WGPUDDMaterialDescriptor*);
+    void updateMaterial(WGPUDDUpdateMaterialDescriptor*);
+
+    id<MTLTexture> texture() const;
+    void render() const;
 
 private:
-    DDMesh(const WGPUDDMeshDescriptor&, Instance&);
+    DDMesh(const WGPUDDCreateMeshDescriptor&, Instance&);
     DDMesh(Instance&);
 
     const Ref<Instance> m_instance;
-    WGPUDDMeshDescriptor m_descriptor;
+    WGPUDDCreateMeshDescriptor m_descriptor;
+    NSMutableArray<id<MTLTexture>>* m_textures { nil };
+
+#if ENABLE(WEBGPU_SWIFT)
+    DDBridgeReceiver* m_ddReceiver;
+#endif
+    NSUUID* m_ddMeshIdentifier;
+    mutable uint32_t m_currentTexture { 0 };
 };
 
 } // namespace WebGPU

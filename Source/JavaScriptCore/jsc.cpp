@@ -202,8 +202,6 @@ namespace {
 
 [[noreturn]] static void jscExit(int status)
 {
-    waitForAsynchronousDisassembly();
-    
 #if ENABLE(DFG_JIT)
     if (DFG::isCrashing()) {
         for (;;) {
@@ -959,18 +957,14 @@ const GlobalObjectMethodTable GlobalObject::s_globalObjectMethodTable = {
     &shellSupportsRichSourceInfo,
     &shouldInterruptScript,
     &javaScriptRuntimeFlags,
-    nullptr, // queueMicrotaskToEventLoop
+    &queueMicrotaskToEventLoop,
     &shouldInterruptScriptBeforeTimeout,
     &moduleLoaderImportModule,
     &moduleLoaderResolve,
     &moduleLoaderFetch,
     &moduleLoaderCreateImportMetaProperties,
     nullptr, // moduleLoaderEvaluate
-#if ENABLE(FUZZILLI)
     &promiseRejectionTracker,
-#else
-    nullptr,
-#endif
     &reportUncaughtExceptionAtEventLoop,
     &currentScriptExecutionOwner,
     &scriptExecutionStatus,
@@ -1107,7 +1101,7 @@ JSInternalPromise* GlobalObject::moduleLoaderImportModule(JSGlobalObject* global
     auto* promise = JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
 
     auto rejectWithError = [&](JSValue error) {
-        promise->reject(globalObject, error);
+        promise->reject(vm, globalObject, error);
         return promise;
     };
 
@@ -1472,7 +1466,7 @@ JSInternalPromise* GlobalObject::moduleLoaderFetch(JSGlobalObject* globalObject,
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     auto rejectWithError = [&](JSValue error) {
-        promise->reject(globalObject, error);
+        promise->reject(vm, globalObject, error);
         return promise;
     };
 
@@ -3917,18 +3911,15 @@ static void runInteractive(GlobalObject* globalObject)
         String source;
         do {
             error = ParserError();
-            char* line = readline(source.isEmpty() ? interactivePrompt : "... ");
+            auto line = adoptSystemMalloc(readline(source.isEmpty() ? interactivePrompt : "... "));
             shouldQuit = !line;
             if (!line)
                 break;
-            source = makeString(source, String::fromUTF8(line), '\n');
+            source = makeString(source, byteCast<char8_t>(unsafeSpan(line.get())), '\n');
             checkSyntax(vm, jscSource(source, sourceOrigin), error);
-            if (!line[0]) {
-                free(line);
+            if (!*line)
                 break;
-            }
-            add_history(line);
-            free(line);
+            add_history(line.get());
         } while (error.syntaxErrorType() == ParserError::SyntaxErrorRecoverable);
         
         if (error.isValid()) {
@@ -4509,8 +4500,8 @@ int runJSC(const CommandLine& options, bool isWorker, const Func& func)
 }
 
 #if ENABLE(JIT_OPERATION_VALIDATION) || ENABLE(JIT_OPERATION_DISASSEMBLY)
-extern const JITOperationAnnotation startOfJITOperationsInShell __asm("section$start$__DATA_CONST$__jsc_ops");
-extern const JITOperationAnnotation endOfJITOperationsInShell __asm("section$end$__DATA_CONST$__jsc_ops");
+extern const JITOperationAnnotation startOfJITOperationsInShell __asm__("section$start$__DATA_CONST$__jsc_ops");
+extern const JITOperationAnnotation endOfJITOperationsInShell __asm__("section$end$__DATA_CONST$__jsc_ops");
 #endif
 
 int jscmain(int argc, char** argv)

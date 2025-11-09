@@ -58,7 +58,7 @@ void WebPage::platformInitialize(const WebPageCreationParameters&)
 {
 }
 
-void WebPage::platformReinitialize()
+void WebPage::platformReinitializeAccessibilityToken()
 {
 }
 

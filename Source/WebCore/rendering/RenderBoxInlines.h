@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/RenderBox.h>
 #include <WebCore/RenderBoxModelObjectInlines.h>
 #include <WebCore/RenderElementInlines.h>

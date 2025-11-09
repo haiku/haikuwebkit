@@ -27,6 +27,7 @@
 #include "JSArrayInlines.h"
 #include "JSCInlines.h"
 #include "PropertyNameArray.h"
+#include "ResourceExhaustion.h"
 #include "TypeError.h"
 #include <wtf/Assertions.h>
 
@@ -2020,7 +2021,7 @@ inline JSArray* constructArray(ObjectInitializationScope& scope, Structure* arra
     // function will correctly handle an exception being thrown from here.
     // https://bugs.webkit.org/show_bug.cgi?id=169786
     if constexpr (failureMode == AllocationFailureMode::Assert)
-        RELEASE_ASSERT(array);
+        RELEASE_ASSERT_RESOURCE_AVAILABLE(array, MemoryExhaustion, "Crash intentionally because memory is exhausted.");
     else if (!array)
         return nullptr;
 

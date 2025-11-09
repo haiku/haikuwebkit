@@ -30,6 +30,7 @@
 #import "IOSurface.h"
 #import "Logging.h"
 #import "RealtimeVideoUtilities.h"
+#import <wtf/CheckedArithmetic.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/cf/TypeCastsCF.h>
 
@@ -179,6 +180,12 @@ RetainPtr<CVPixelBufferRef> createBlackPixelBuffer(size_t width, size_t height, 
     ASSERT(format == kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange || format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange);
 
     NSDictionary *pixelAttributes = @{ (__bridge NSString *)kCVPixelBufferIOSurfacePropertiesKey : @{ } };
+
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=300264 - Creating very large CVPixelBuffers should terminate the IPC connection
+    size_t widthTimesHeight;
+    constexpr size_t maxIOSurfaceWidth = 1 << 15;
+    if (!WTF::safeMultiply(width, height, widthTimesHeight) || widthTimesHeight > maxIOSurfaceWidth * maxIOSurfaceWidth)
+        return nullptr;
 
     CVPixelBufferRef pixelBuffer = nullptr;
     auto status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, format, shouldUseIOSurface ? (__bridge CFDictionaryRef)pixelAttributes : nullptr, &pixelBuffer);

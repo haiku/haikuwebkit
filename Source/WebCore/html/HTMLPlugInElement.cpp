@@ -31,13 +31,16 @@
 #include "CommonVM.h"
 #include "ContainerNodeInlines.h"
 #include "ContentSecurityPolicy.h"
-#include "Document.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "Event.h"
 #include "EventHandler.h"
 #include "EventLoop.h"
 #include "EventNames.h"
+#include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "FrameTree.h"
 #include "GCReachableRef.h"
@@ -318,7 +321,7 @@ RenderPtr<RenderElement> HTMLPlugInElement::createElementRenderer(RenderStyle&& 
     return createPluginRenderer(WTFMove(style), insertionPosition);
 }
 
-bool HTMLPlugInElement::isReplaced(const RenderStyle&) const
+bool HTMLPlugInElement::isReplaced(const RenderStyle*) const
 {
     return !m_pluginReplacement || !m_pluginReplacement->willCreateRenderer();
 }

@@ -65,12 +65,12 @@
 
 - (NSString *)lastStateChange
 {
-    return std::exchange(_lastStateChange, @"").get();
+    return std::exchange(_lastStateChange, @"").unsafeGet();
 }
 
 - (NSString *)lastMethodCalled
 {
-    return std::exchange(_lastMethodCalled, @"").get();
+    return std::exchange(_lastMethodCalled, @"").unsafeGet();
 }
 
 - (NSString *)identifier

@@ -88,9 +88,7 @@ RemoteResourceCacheProxy::RemoteResourceCacheProxy(RemoteRenderingBackendProxy& 
 {
 }
 
-RemoteResourceCacheProxy::~RemoteResourceCacheProxy()
-{
-}
+RemoteResourceCacheProxy::~RemoteResourceCacheProxy() = default;
 
 Ref<RemoteNativeImageProxy> RemoteResourceCacheProxy::createNativeImage(const IntSize& size, PlatformColorSpace&& colorSpace, bool hasAlpha)
 {
@@ -267,12 +265,6 @@ void RemoteResourceCacheProxy::willDestroyDisplayList(const DisplayList::Display
     m_remoteRenderingBackendProxy->releaseDisplayList(*identifier);
 }
 
-void RemoteResourceCacheProxy::releaseNativeImages()
-{
-    m_nativeImageResourceObserverWeakFactory.revokeAll();
-    m_nativeImages.clear();
-}
-
 void RemoteResourceCacheProxy::prepareForNextRenderingUpdate()
 {
     m_numberOfFontsUsedInCurrentRenderingUpdate = 0;
@@ -339,11 +331,12 @@ void RemoteResourceCacheProxy::didPaintLayers()
 
 void RemoteResourceCacheProxy::releaseMemory()
 {
+    // Release all resources that consume memory in GPUP.
+    // Other resources should be released by releasing the resource object references.
     m_resourceObserverWeakFactory.revokeAll();
     m_filters.clear();
     m_gradients.clear();
     m_displayLists.clear();
-    releaseNativeImages();
     releaseFonts();
     releaseFontCustomPlatformDatas();
 }

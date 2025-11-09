@@ -41,9 +41,7 @@ PlatformWebViewClientLibWPE::PlatformWebViewClientLibWPE(WKPageConfigurationRef 
 #endif
 }
 
-PlatformWebViewClientLibWPE::~PlatformWebViewClientLibWPE()
-{
-}
+PlatformWebViewClientLibWPE::~PlatformWebViewClientLibWPE() = default;
 
 void PlatformWebViewClientLibWPE::addToWindow()
 {

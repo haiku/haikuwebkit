@@ -81,6 +81,7 @@ public:
     ALWAYS_INLINE auto visitSpanNonVector(auto functor);
 
     inline uint64_t get(uint32_t index);
+    inline v128_t getVector(uint32_t index);
     inline void set(VM&, uint32_t index, uint64_t value);
     inline void set(VM&, uint32_t index, v128_t value);
 

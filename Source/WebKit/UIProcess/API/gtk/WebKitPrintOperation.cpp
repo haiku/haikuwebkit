@@ -20,14 +20,14 @@
 #include "config.h"
 #include "WebKitPrintOperation.h"
 
+#include "GtkUtilities.h"
+#include "GtkVersioning.h"
 #include "WebKitError.h"
 #include "WebKitPrintCustomWidgetPrivate.h"
 #include "WebKitPrintOperationPrivate.h"
 #include "WebKitPrivate.h"
 #include "WebKitWebViewPrivate.h"
 #include "WebPageProxy.h"
-#include <WebCore/GtkUtilities.h>
-#include <WebCore/GtkVersioning.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/SharedMemory.h>
@@ -687,7 +687,7 @@ WebKitPrintOperationResponse webkitPrintOperationRunDialogForFrame(WebKitPrintOp
     WebKitPrintOperationPrivate* priv = printOperation->priv;
     if (!parent) {
         GtkWidget* toplevel = gtk_widget_get_toplevel(GTK_WIDGET(priv->webView.get()));
-        if (WebCore::widgetIsOnscreenToplevelWindow(toplevel))
+        if (widgetIsOnscreenToplevelWindow(toplevel))
             parent = GTK_WINDOW(toplevel);
     }
 

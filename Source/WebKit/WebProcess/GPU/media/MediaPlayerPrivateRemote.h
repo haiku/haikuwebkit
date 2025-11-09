@@ -220,6 +220,8 @@ public:
     MediaTime currentTime() const final;
     MediaTime currentOrPendingSeekTime() const final;
 
+    void gpuProcessConnectionDidClose();
+
 private:
     class TimeProgressEstimator final {
     public:
@@ -431,9 +433,6 @@ private:
     void syncTextTrackBounds() final;
 
     void tracksChanged() final;
-
-    void beginSimulatedHDCPError() final;
-    void endSimulatedHDCPError() final;
 
     String languageOfPrimaryAudioTrack() const final;
 

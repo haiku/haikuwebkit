@@ -4,7 +4,7 @@ PASS Match container in walking flat tree ancestors
 PASS Match container in ::slotted selector's originating element tree
 PASS Match container in outer tree for :host
 PASS Match container in ::part selector's originating element tree
-FAIL Match container for ::before in ::slotted selector's originating element tree assert_equals: expected "rgb(0, 128, 0)" but got "rgb(0, 0, 0)"
+PASS Match container for ::before in ::slotted selector's originating element tree
 PASS Match container in outer tree for :host::before
 PASS Match container for ::before in ::part selector's originating element tree
 PASS Match container for ::part selector's originating element tree for exportparts
@@ -18,4 +18,6 @@ PASS Container name set inside a shadow tree should match query for host child o
 PASS Container name set on :host from inside a shadow tree matching query inside the shadow tree
 PASS Container name set on :host from inside a shadow tree matching query for ::slotted inside the shadow tree
 PASS Container name set on :host from inside a shadow tree should match query for slotted from the outside of the shadow tree
+PASS The originating element should be the first container candidate of ::before
+PASS Search flat tree anchestors of the originating element of ::before
 

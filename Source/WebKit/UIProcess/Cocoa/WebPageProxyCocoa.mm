@@ -38,6 +38,7 @@
 #import "DataDetectionResult.h"
 #import "ExtensionCapabilityGranter.h"
 #import "InsertTextOptions.h"
+#import "LegacyWebArchiveCallbackAggregator.h"
 #import "LoadParameters.h"
 #import "MessageSenderInlines.h"
 #import "NativeWebGestureEvent.h"
@@ -1694,56 +1695,10 @@ void WebPageProxy::getWebArchiveDataWithFrame(WebFrameProxy& frame, CompletionHa
 
 void WebPageProxy::getWebArchiveDataWithSelectedFrames(WebFrameProxy& rootFrame, const std::optional<HashSet<WebCore::FrameIdentifier>>& selectedFrameIdentifiers, CompletionHandler<void(API::Data*)>&& completionHandler)
 {
-    class WebArchvieCallbackAggregator final : public ThreadSafeRefCounted<WebArchvieCallbackAggregator, WTF::DestructionThread::MainRunLoop> {
-    public:
-        using Callback = CompletionHandler<void(RefPtr<LegacyWebArchive>&&)>;
-        static Ref<WebArchvieCallbackAggregator> create(WebCore::FrameIdentifier rootFrameIdentifier, Callback&& callback)
-        {
-            return adoptRef(*new WebArchvieCallbackAggregator(rootFrameIdentifier, WTFMove(callback)));
-        }
-
-        RefPtr<WebCore::LegacyWebArchive> completeFrameArchive(FrameIdentifier identifier)
-        {
-            RefPtr archive = m_frameArchives.take(identifier);
-            if (!archive)
-                return archive;
-
-            for (auto subframeIdentifier : archive->subframeIdentifiers()) {
-                if (auto subframeArchive = completeFrameArchive(subframeIdentifier))
-                    archive->appendSubframeArchive(subframeArchive.releaseNonNull());
-            }
-
-            return archive;
-        }
-
-        ~WebArchvieCallbackAggregator()
-        {
-            if (m_callback)
-                m_callback(completeFrameArchive(m_rootFrameIdentifier));
-        }
-
-        void addResult(HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>>&& frameArchives)
-        {
-            for (auto&& [frameIdentifier, archive] : frameArchives)
-                m_frameArchives.set(frameIdentifier, WTFMove(archive));
-        }
-
-    private:
-        WebArchvieCallbackAggregator(WebCore::FrameIdentifier rootFrameIdentifier, Callback&& callback)
-            : m_rootFrameIdentifier(rootFrameIdentifier)
-            , m_callback(WTFMove(callback))
-        {
-        }
-
-        WebCore::FrameIdentifier m_rootFrameIdentifier;
-        Callback m_callback;
-        HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>> m_frameArchives;
-    };
-
     if (selectedFrameIdentifiers && !selectedFrameIdentifiers->contains(rootFrame.frameID()))
         return completionHandler(nullptr);
 
-    auto callbackAggregator = WebArchvieCallbackAggregator::create(rootFrame.frameID(), [completionHandler = WTFMove(completionHandler)](auto webArchive) mutable {
+    auto callbackAggregator = LegacyWebArchiveCallbackAggregator::create(rootFrame.frameID(), { }, [completionHandler = WTFMove(completionHandler)](auto webArchive) mutable {
         if (!webArchive)
             return completionHandler(nullptr);
 

@@ -1,4 +1,4 @@
-PAL/pal/mac/DataDetectorsSoftLink.h
+[ Mac ] PAL/pal/mac/DataDetectorsSoftLink.h
 platform/audio/cocoa/AudioSampleBufferConverter.mm
 platform/graphics/avfoundation/AVTrackPrivateAVFObjCImpl.mm
 platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
@@ -9,3 +9,10 @@ platform/graphics/cg/ImageDecoderCG.cpp
 platform/graphics/cg/PatternCG.cpp
 platform/mediastream/mac/AVVideoCaptureSource.mm
 platform/network/cf/DNSResolveQueueCFNet.cpp
+[ iOS ] PAL/pal/spi/ios/DataDetectorsUISoftLink.h
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
+[ iOS ] platform/ios/QuickLook.mm
+[ iOS ] platform/ios/ValidationBubbleIOS.mm
+[ iOS ] platform/ios/WebCoreMotionManager.mm
+[ iOS ] platform/ios/wak/WKView.mm
+[ iOS ] platform/ios/wak/WebCoreThread.mm

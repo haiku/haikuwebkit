@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <WebCore/ImageTypes.h>
 #include <WebCore/PlatformExportMacros.h>
 #include <WebCore/PlatformImage.h>
 #include <WebCore/RenderingResource.h>
@@ -41,7 +42,6 @@ class FloatRect;
 class GraphicsContext;
 class IntSize;
 class NativeImageBackend;
-struct Headroom;
 struct ImagePaintingOptions;
 
 class NativeImage : public ThreadSafeRefCounted<NativeImage> {
@@ -82,7 +82,10 @@ public:
 protected:
     WEBCORE_EXPORT NativeImage(PlatformImagePtr&&);
 
+    void computeHeadroom();
+
     mutable PlatformImagePtr m_platformImage;
+    mutable Headroom m_headroom { Headroom::None };
     mutable WeakHashSet<RenderingResourceObserver> m_observers;
     RenderingResourceIdentifier m_renderingResourceIdentifier { RenderingResourceIdentifier::generate() };
 };

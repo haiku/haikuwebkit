@@ -39,9 +39,29 @@ static const char indexHTML[] =
 "});"
 "</script></body></html>";
 
+static WebKitFeature* findFeature(WebKitFeatureList *featureList, const char *identifier)
+{
+    for (gsize i = 0; i < webkit_feature_list_get_length(featureList); i++) {
+        WebKitFeature* feature = webkit_feature_list_get(featureList, i);
+        if (!g_ascii_strcasecmp(identifier, webkit_feature_get_identifier(feature)))
+            return feature;
+    }
+    return nullptr;
+}
+
+static void relaxDMABufRequirement(WebKitSettings* settings)
+{
+    g_autoptr(WebKitFeatureList) featureList = webkit_settings_get_development_features();
+    WebKitFeature* feature = findFeature(featureList, "OpenXRDMABufRelaxedForTesting");
+    g_assert_nonnull(feature);
+    webkit_settings_set_feature_enabled(settings, feature, true);
+}
+
 class WebXRTest : public WebViewTest {
 public:
     MAKE_GLIB_TEST_FIXTURE(WebXRTest);
+    WebXRTest();
+    virtual ~WebXRTest() = default;
 
     static void isImmersiveModeEnabledChanged(GObject*, GParamSpec*, WebXRTest* test)
     {
@@ -91,11 +111,13 @@ public:
     bool m_isExpectingPermissionRequest { false };
 };
 
-#if USE(SOUP2)
-static void serverCallback(SoupServer*, SoupMessage* message, const char* path, GHashTable*, SoupClientContext*, gpointer)
-#else
+WebXRTest::WebXRTest()
+{
+    WebKitSettings* defaultSettings = webkit_web_view_get_settings(m_webView.get());
+    relaxDMABufRequirement(defaultSettings);
+}
+
 static void serverCallback(SoupServer*, SoupServerMessage* message, const char* path, GHashTable*, gpointer)
-#endif
 {
     g_assert(soup_server_message_get_method(message) == SOUP_METHOD_GET);
 

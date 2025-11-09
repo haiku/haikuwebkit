@@ -48,7 +48,6 @@ public:
 
     static std::unique_ptr<Crtc> create(int, drmModeCrtc*, unsigned);
     Crtc(drmModeCrtc*, unsigned, Properties&&);
-    ~Crtc() = default;
 
     uint32_t id() const { return m_id; }
     unsigned index() const { return m_index; }
@@ -86,7 +85,6 @@ public:
 
     static std::unique_ptr<Connector> create(int, drmModeConnector*);
     Connector(drmModeConnector*, Properties&&);
-    ~Connector() = default;
 
     uint32_t id() const { return m_id; }
     uint32_t encoderID() const { return m_encoderID; }
@@ -136,7 +134,6 @@ public:
 
     static std::unique_ptr<Plane> create(int, Type, drmModePlane*, bool);
     Plane(drmModePlane*, Vector<Format>&&, Properties&&);
-    ~Plane() = default;
 
     uint32_t id() const { return m_id; }
     const Properties& properties() const { return m_properties; }

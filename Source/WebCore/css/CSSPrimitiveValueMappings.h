@@ -32,38 +32,36 @@
 
 #include "CSSFontFaceSrcValue.h"
 #include "StyleBuilderState.h"
-#include <WebCore/AnchorPositionEvaluator.h>
-#include <WebCore/CSSCalcSymbolTable.h>
-#include <WebCore/CSSCalcValue.h>
-#include <WebCore/CSSPrimitiveValue.h>
-#include <WebCore/CSSToLengthConversionData.h>
-#include <WebCore/CSSValueKeywords.h>
-#include <WebCore/CompositeOperation.h>
-#include <WebCore/FontSizeAdjust.h>
-#include <WebCore/GraphicsTypes.h>
-#include <WebCore/Length.h>
-#include <WebCore/PositionTryFallback.h>
-#include <WebCore/RenderStyleConstants.h>
-#include <WebCore/SVGRenderStyleDefs.h>
-#include <WebCore/ScrollAxis.h>
-#include <WebCore/ScrollTypes.h>
-#include <WebCore/StyleScrollBehavior.h>
-#include <WebCore/StyleTextDecorationLine.h>
-#include <WebCore/StyleWebKitOverflowScrolling.h>
-#include <WebCore/StyleWebKitTouchCallout.h>
-#include <WebCore/TextFlags.h>
-#include <WebCore/ThemeTypes.h>
-#include <WebCore/TouchAction.h>
-#include <WebCore/UnicodeBidi.h>
-#include <WebCore/WritingMode.h>
+#include "AnchorPositionEvaluator.h"
+#include "CSSCalcSymbolTable.h"
+#include "CSSPrimitiveValue.h"
+#include "CSSToLengthConversionData.h"
+#include "CSSValueKeywords.h"
+#include "CompositeOperation.h"
+#include "FontSizeAdjust.h"
+#include "GraphicsTypes.h"
+#include "PositionTryFallback.h"
+#include "RenderStyleConstants.h"
+#include "SVGRenderStyleDefs.h"
+#include "ScrollAxis.h"
+#include "ScrollTypes.h"
+#include "StyleScrollBehavior.h"
+#include "StyleTextDecorationLine.h"
+#include "StyleWebKitOverflowScrolling.h"
+#include "StyleWebKitTouchCallout.h"
+#include "TextFlags.h"
+#include "ThemeTypes.h"
+#include "TouchAction.h"
+#include "UnicodeBidi.h"
+#include "WritingMode.h"
 #include <wtf/MathExtras.h>
 
 #if ENABLE(APPLE_PAY)
-#include <WebCore/ApplePayButtonPart.h>
+#include "ApplePayButtonPart.h"
 #endif
 
 #if HAVE(CORE_MATERIAL)
-#include <WebCore/AppleVisualEffect.h>
+#include "AppleVisualEffect.h"
 #endif
 
 namespace WebCore {
@@ -88,7 +86,7 @@ public:
 
     operator const CSSPrimitiveValue&() const
     {
-        return downcast<CSSPrimitiveValue>(m_value);
+        return downcast<CSSPrimitiveValue>(m_value).unsafeGet();
     }
 
     operator const CSSValue&() const
@@ -98,27 +96,27 @@ public:
 
     operator unsigned short() const
     {
-        return protectedNumericValue()->resolveAsNumber<unsigned short>(m_builderState.cssToLengthConversionData());
+        return protectedNumericValue()->resolveAsNumber<unsigned short>(m_builderState->cssToLengthConversionData());
     }
 
     operator int() const
     {
-        return protectedNumericValue()->resolveAsNumber<int>(m_builderState.cssToLengthConversionData());
+        return protectedNumericValue()->resolveAsNumber<int>(m_builderState->cssToLengthConversionData());
     }
 
     operator unsigned() const
     {
-        return protectedNumericValue()->resolveAsNumber<unsigned>(m_builderState.cssToLengthConversionData());
+        return protectedNumericValue()->resolveAsNumber<unsigned>(m_builderState->cssToLengthConversionData());
     }
 
     operator float() const
     {
-        return protectedNumericValue()->resolveAsNumber<float>(m_builderState.cssToLengthConversionData());
+        return protectedNumericValue()->resolveAsNumber<float>(m_builderState->cssToLengthConversionData());
     }
 
     operator double() const
     {
-        return protectedNumericValue()->resolveAsNumber<double>(m_builderState.cssToLengthConversionData());
+        return protectedNumericValue()->resolveAsNumber<double>(m_builderState->cssToLengthConversionData());
     }
 
 private:
@@ -129,7 +127,7 @@ private:
         return value;
     }
 
-    const Style::BuilderState& m_builderState;
+    const CheckedRef<const Style::BuilderState> m_builderState;
     Ref<const CSSValue> m_value;
 };
 
@@ -1720,32 +1718,6 @@ template<> constexpr FontSmoothingMode fromCSSValueID(CSSValueID valueID)
     return FontSmoothingMode::AutoSmoothing;
 }
 
-constexpr CSSValueID toCSSValueID(FontSmallCaps smallCaps)
-{
-    switch (smallCaps) {
-    case FontSmallCaps::Off:
-        return CSSValueNormal;
-    case FontSmallCaps::On:
-        return CSSValueSmallCaps;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return CSSValueInvalid;
-}
-
-template<> constexpr FontSmallCaps fromCSSValueID(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueSmallCaps:
-        return FontSmallCaps::On;
-    case CSSValueNormal:
-        return FontSmallCaps::Off;
-    default:
-        break;
-    }
-    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
-    return FontSmallCaps::Off;
-}
-
 constexpr CSSValueID toCSSValueID(TextRenderingMode e)
 {
     switch (e) {
@@ -2202,7 +2174,7 @@ template<> constexpr CSSBoxType fromCSSValueID(CSSValueID valueID)
 #define TYPE ItemPosition
 #define FOR_EACH(CASE) CASE(Legacy) CASE(Auto) CASE(Normal) CASE(Stretch) CASE(Baseline) \
     CASE(LastBaseline) CASE(Center) CASE(Start) CASE(End) CASE(SelfStart) CASE(SelfEnd) \
-    CASE(FlexStart) CASE(FlexEnd) CASE(Left) CASE(Right) CASE(AnchorCenter) CASE(Dialog)
+    CASE(FlexStart) CASE(FlexEnd) CASE(Left) CASE(Right) CASE(AnchorCenter)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH

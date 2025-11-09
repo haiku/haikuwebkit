@@ -50,6 +50,7 @@ struct DateTimeChooserParameters {
     bool useDarkAppearance { false };
     bool hasSecondField { false };
     bool hasMillisecondField { false };
+    bool wasActivatedByKeyboard { false };
 };
 
 } // namespace WebCore

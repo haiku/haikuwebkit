@@ -43,7 +43,7 @@ JSValue iteratorNext(JSGlobalObject* globalObject, IterationRecord iterationReco
     JSValue iterator = iterationRecord.iterator;
     JSValue nextFunction = iterationRecord.nextMethod;
 
-    auto nextFunctionCallData = JSC::getCallData(nextFunction);
+    auto nextFunctionCallData = JSC::getCallDataInline(nextFunction);
     if (nextFunctionCallData.type == CallData::Type::None)
         return throwTypeError(globalObject, scope);
 
@@ -67,7 +67,7 @@ JSValue iteratorNextWithCachedCall(JSGlobalObject* globalObject, IterationRecord
 
     JSValue iterator = iterationRecord.iterator;
 
-    ASSERT(JSC::getCallData(iterationRecord.nextMethod).type == CallData::Type::JS);
+    ASSERT(JSC::getCallDataInline(iterationRecord.nextMethod).type == CallData::Type::JS);
 
     JSValue result;
     if (argument)
@@ -149,7 +149,7 @@ void iteratorClose(JSGlobalObject* globalObject, JSValue iterator)
         return;
     }
 
-    auto returnFunctionCallData = JSC::getCallData(returnFunction);
+    auto returnFunctionCallData = JSC::getCallDataInline(returnFunction);
     if (returnFunctionCallData.type == CallData::Type::None) {
         if (exception)
             throwException(globalObject, throwScope, exception);
@@ -231,7 +231,7 @@ IterationRecord iteratorForIterable(JSGlobalObject* globalObject, JSObject* obje
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    auto iteratorMethodCallData = JSC::getCallData(iteratorMethod);
+    auto iteratorMethodCallData = JSC::getCallDataInline(iteratorMethod);
     if (iteratorMethodCallData.type == CallData::Type::None) {
         throwTypeError(globalObject, scope);
         return { };
@@ -260,7 +260,7 @@ IterationRecord iteratorForIterable(JSGlobalObject* globalObject, JSValue iterab
     JSValue iteratorFunction = iterable.get(globalObject, vm.propertyNames->iteratorSymbol);
     RETURN_IF_EXCEPTION(scope, { });
     
-    auto iteratorFunctionCallData = JSC::getCallData(iteratorFunction);
+    auto iteratorFunctionCallData = JSC::getCallDataInline(iteratorFunction);
     if (iteratorFunctionCallData.type == CallData::Type::None) {
         throwTypeError(globalObject, scope);
         return { };

@@ -678,7 +678,7 @@ inline uint32_t reverseBits32(uint32_t value)
 {
 #if CPU(ARM64)
     uint32_t result;
-    asm ("rbit %w0, %w1"
+    __asm__("rbit %w0, %w1"
         : "=r"(result)
         : "r"(value));
     return result;

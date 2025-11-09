@@ -33,6 +33,7 @@
 #include "GPUPresentationContextDescriptor.h"
 #include "GPUTextureDescriptor.h"
 #include "GraphicsLayerContentsDisplayDelegate.h"
+#include "GraphicsLayerEnums.h"
 #include "ImageBitmap.h"
 #include "PlatformCALayerDelegatedContents.h"
 #include "PlatformScreen.h"
@@ -66,9 +67,9 @@ public:
         } else
             layer.clearContents();
     }
-    GraphicsLayer::CompositingCoordinatesOrientation orientation() const final
+    GraphicsLayerCompositingCoordinatesOrientation orientation() const final
     {
-        return GraphicsLayer::CompositingCoordinatesOrientation::TopDown;
+        return GraphicsLayerCompositingCoordinatesOrientation::TopDown;
     }
     void setDisplayBuffer(WTF::MachSendRight& displayBuffer)
     {

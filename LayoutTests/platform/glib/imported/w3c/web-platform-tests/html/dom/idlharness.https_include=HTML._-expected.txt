@@ -73,8 +73,8 @@ PASS HTMLStyleElement includes LinkStyle: member names are unique
 PASS HTMLBodyElement includes WindowEventHandlers: member names are unique
 PASS HTMLAnchorElement includes HTMLHyperlinkElementUtils: member names are unique
 PASS HTMLAreaElement includes HTMLHyperlinkElementUtils: member names are unique
-PASS HTMLInputElement includes PopoverInvokerElement: member names are unique
-PASS HTMLButtonElement includes PopoverInvokerElement: member names are unique
+PASS HTMLInputElement includes PopoverTargetAttributes: member names are unique
+PASS HTMLButtonElement includes PopoverTargetAttributes: member names are unique
 PASS HTMLFrameSetElement includes WindowEventHandlers: member names are unique
 PASS HTMLElement includes ElementCSSInlineStyle: member names are unique
 PASS HTMLAllCollection interface: existence and properties of interface object
@@ -149,6 +149,8 @@ PASS HTMLElement interface: operation showPopover(optional ShowPopoverOptions)
 PASS HTMLElement interface: operation hidePopover()
 PASS HTMLElement interface: operation togglePopover(optional (TogglePopoverOptions or boolean))
 PASS HTMLElement interface: attribute popover
+FAIL HTMLElement interface: attribute headingOffset assert_true: The prototype object must have a property "headingOffset" expected true got false
+FAIL HTMLElement interface: attribute headingReset assert_true: The prototype object must have a property "headingReset" expected true got false
 PASS HTMLElement interface: attribute onabort
 PASS HTMLElement interface: attribute onauxclick
 PASS HTMLElement interface: attribute onbeforeinput
@@ -260,6 +262,8 @@ PASS HTMLElement interface: document.createElement("noscript") must inherit prop
 PASS HTMLElement interface: document.createElement("noscript") must inherit property "togglePopover(optional (TogglePopoverOptions or boolean))" with the proper type
 PASS HTMLElement interface: calling togglePopover(optional (TogglePopoverOptions or boolean)) on document.createElement("noscript") with too few arguments must throw TypeError
 PASS HTMLElement interface: document.createElement("noscript") must inherit property "popover" with the proper type
+FAIL HTMLElement interface: document.createElement("noscript") must inherit property "headingOffset" with the proper type assert_inherits: property "headingOffset" not found in prototype chain
+FAIL HTMLElement interface: document.createElement("noscript") must inherit property "headingReset" with the proper type assert_inherits: property "headingReset" not found in prototype chain
 PASS HTMLElement interface: document.createElement("noscript") must inherit property "onabort" with the proper type
 PASS HTMLElement interface: document.createElement("noscript") must inherit property "onauxclick" with the proper type
 PASS HTMLElement interface: document.createElement("noscript") must inherit property "onbeforeinput" with the proper type
@@ -3597,6 +3601,12 @@ PASS HTMLLegendElement must be primary interface of document.createElement("lege
 PASS Stringification of document.createElement("legend")
 PASS HTMLLegendElement interface: document.createElement("legend") must inherit property "form" with the proper type
 PASS HTMLLegendElement interface: document.createElement("legend") must inherit property "align" with the proper type
+FAIL HTMLSelectedContentElement interface: existence and properties of interface object assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
+FAIL HTMLSelectedContentElement interface object length assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
+FAIL HTMLSelectedContentElement interface object name assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
+FAIL HTMLSelectedContentElement interface: existence and properties of interface prototype object assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
+FAIL HTMLSelectedContentElement interface: existence and properties of interface prototype object's "constructor" property assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
+FAIL HTMLSelectedContentElement interface: existence and properties of interface prototype object's @@unscopables property assert_own_property: self does not have own property "HTMLSelectedContentElement" expected property "HTMLSelectedContentElement" missing
 PASS HTMLDetailsElement interface: existence and properties of interface object
 PASS HTMLDetailsElement interface object length
 PASS HTMLDetailsElement interface object name

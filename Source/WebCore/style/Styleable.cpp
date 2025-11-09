@@ -33,13 +33,12 @@
 #include "CSSTransition.h"
 #include "CommonAtomStrings.h"
 #include "ContainerNodeInlines.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
 #include "DocumentTimeline.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "KeyframeEffect.h"
 #include "KeyframeEffectStack.h"
-#include "Quirks.h"
 #include "RenderChildIterator.h"
 #include "RenderDescendantIterator.h"
 #include "RenderElement.h"
@@ -68,37 +67,42 @@ namespace WebCore {
 
 const std::optional<const Styleable> Styleable::fromRenderer(const RenderElement& renderer)
 {
-    switch (renderer.style().pseudoElementType()) {
-    case PseudoId::Backdrop:
+    if (!renderer.style().pseudoElementType()) {
+        if (auto* element = renderer.element())
+            return fromElement(*element);
+        return { };
+    }
+
+    switch (*renderer.style().pseudoElementType()) {
+    case PseudoElementType::Backdrop:
         for (auto& topLayerElement : renderer.document().topLayerElements()) {
             if (topLayerElement->renderer() && topLayerElement->renderer()->backdropRenderer() == &renderer)
-                return Styleable(topLayerElement.get(), Style::PseudoElementIdentifier { PseudoId::Backdrop });
+                return Styleable(topLayerElement.get(), Style::PseudoElementIdentifier { PseudoElementType::Backdrop });
         }
         break;
-    case PseudoId::Marker: {
+    case PseudoElementType::Marker: {
         auto* ancestor = renderer.parent();
         while (ancestor) {
             auto* renderListItem = dynamicDowncast<RenderListItem>(ancestor);
             if (renderListItem && ancestor->element() && renderListItem->markerRenderer() == &renderer)
-                return Styleable(*ancestor->element(), Style::PseudoElementIdentifier { PseudoId::Marker });
+                return Styleable(*ancestor->element(), Style::PseudoElementIdentifier { PseudoElementType::Marker });
             ancestor = ancestor->parent();
         }
         break;
     }
-    case PseudoId::ViewTransitionGroup:
-    case PseudoId::ViewTransitionImagePair:
-    case PseudoId::ViewTransitionNew:
-    case PseudoId::ViewTransitionOld:
+    case PseudoElementType::ViewTransitionGroup:
+    case PseudoElementType::ViewTransitionImagePair:
+    case PseudoElementType::ViewTransitionNew:
+    case PseudoElementType::ViewTransitionOld:
         if (auto* documentElement = renderer.document().documentElement())
             return Styleable(*documentElement, renderer.style().pseudoElementIdentifier());
         break;
-    case PseudoId::ViewTransition:
+    case PseudoElementType::ViewTransition:
         if (auto* documentElement = renderer.document().documentElement())
-            return Styleable(*documentElement, Style::PseudoElementIdentifier { PseudoId::ViewTransition });
+            return Styleable(*documentElement, Style::PseudoElementIdentifier { PseudoElementType::ViewTransition });
         break;
-    case PseudoId::After:
-    case PseudoId::Before:
-    case PseudoId::None:
+    case PseudoElementType::After:
+    case PseudoElementType::Before:
         if (auto* element = renderer.element())
             return fromElement(*element);
         break;
@@ -114,36 +118,36 @@ RenderElement* Styleable::renderer() const
     if (!pseudoElementIdentifier)
         return element.renderer();
 
-    switch (pseudoElementIdentifier->pseudoId) {
-    case PseudoId::After:
+    switch (pseudoElementIdentifier->type) {
+    case PseudoElementType::After:
         if (auto* afterPseudoElement = element.afterPseudoElement())
             return afterPseudoElement->renderer();
         break;
-    case PseudoId::Backdrop:
+    case PseudoElementType::Backdrop:
         if (auto* hostRenderer = element.renderer())
             return hostRenderer->backdropRenderer().get();
         break;
-    case PseudoId::Before:
+    case PseudoElementType::Before:
         if (auto* beforePseudoElement = element.beforePseudoElement())
             return beforePseudoElement->renderer();
         break;
-    case PseudoId::Marker:
+    case PseudoElementType::Marker:
         if (auto* renderListItem = dynamicDowncast<RenderListItem>(element.renderer())) {
             auto* markerRenderer = renderListItem->markerRenderer();
             if (markerRenderer && !markerRenderer->style().hasUsedContentNone())
                 return markerRenderer;
         }
         break;
-    case PseudoId::ViewTransition:
+    case PseudoElementType::ViewTransition:
         if (element.renderer() && element.renderer()->isDocumentElementRenderer()) {
             if (WeakPtr containingBlock = element.renderer()->view().viewTransitionContainingBlock())
                 return containingBlock->firstChildBox();
         }
         break;
-    case PseudoId::ViewTransitionGroup:
-    case PseudoId::ViewTransitionImagePair:
-    case PseudoId::ViewTransitionNew:
-    case PseudoId::ViewTransitionOld: {
+    case PseudoElementType::ViewTransitionGroup:
+    case PseudoElementType::ViewTransitionImagePair:
+    case PseudoElementType::ViewTransitionNew:
+    case PseudoElementType::ViewTransitionOld: {
         if (!element.renderer() || !element.renderer()->isDocumentElementRenderer())
             return nullptr;
 
@@ -153,12 +157,12 @@ RenderElement* Styleable::renderer() const
             return nullptr;
 
         // Return early if we're looking for ::view-transition-group().
-        if (pseudoElementIdentifier->pseudoId == PseudoId::ViewTransitionGroup)
-            return correctGroup.get();
+        if (pseudoElementIdentifier->type == PseudoElementType::ViewTransitionGroup)
+            return correctGroup.unsafeGet();
 
         // Go through all descendants until we find the relevant pseudo element otherwise.
         for (auto& descendant : descendantsOfType<RenderBox>(*correctGroup)) {
-            if (descendant.style().pseudoElementType() == pseudoElementIdentifier->pseudoId)
+            if (descendant.style().pseudoElementType() == pseudoElementIdentifier->type)
                 return &descendant;
         }
         break;
@@ -190,9 +194,9 @@ bool Styleable::computeAnimationExtent(LayoutRect& bounds) const
     if (!animations)
         return false;
 
-    KeyframeEffect* matchingEffect = nullptr;
+    RefPtr<KeyframeEffect> matchingEffect = nullptr;
     for (const auto& animation : *animations) {
-        if (auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
+        if (RefPtr keyframeEffect = animation->keyframeEffect()) {
             if (keyframeEffect->blendingKeyframes().containsProperty(CSSPropertyTransform))
                 matchingEffect = keyframeEffect;
         }
@@ -251,7 +255,7 @@ bool Styleable::hasRunningAcceleratedAnimations() const
 
     if (auto* animations = this->animations()) {
         for (const auto& animation : *animations) {
-            if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
+            if (RefPtr keyframeEffect = animation->keyframeEffect()) {
                 if (keyframeEffect->isRunningAccelerated())
                     return true;
             }
@@ -973,13 +977,14 @@ void Styleable::queryContainerDidChange() const
     auto* animations = this->animations();
     if (!animations)
         return;
-    for (auto animation : *animations) {
-        auto* cssAnimation = dynamicDowncast<CSSAnimation>(animation.get());
-        if (!cssAnimation)
-            continue;
-        auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(cssAnimation->effect());
-        if (keyframeEffect && keyframeEffect->blendingKeyframes().usesContainerUnits())
-            cssAnimation->keyframesRuleDidChange();
+    for (auto& animation : *animations) {
+        RefPtr keyframeEffect = animation->keyframeEffect();
+        if (keyframeEffect && keyframeEffect->blendingKeyframes().usesContainerUnits()) {
+            if (RefPtr cssAnimation = dynamicDowncast<CSSAnimation>(animation))
+                cssAnimation->keyframesRuleDidChange();
+            else
+                keyframeEffect->recomputeKeyframesAtNextOpportunity();
+        }
     }
 }
 

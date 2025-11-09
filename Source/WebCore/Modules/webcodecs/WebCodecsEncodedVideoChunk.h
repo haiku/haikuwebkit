@@ -51,8 +51,6 @@ private:
 
 class WebCodecsEncodedVideoChunk : public RefCounted<WebCodecsEncodedVideoChunk> {
 public:
-    ~WebCodecsEncodedVideoChunk() = default;
-
     struct Init {
         WebCodecsEncodedVideoChunkType type { WebCodecsEncodedVideoChunkType::Key };
         int64_t timestamp { 0 };

@@ -14,7 +14,6 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
-/LayoutTests/imported/w3c/web-platform-tests/html/editing/editing-0/contenteditable/contentEditable-invalidvalue.html
 /LayoutTests/imported/w3c/web-platform-tests/html/editing/editing-0/contenteditable/contentEditable-slotted-inherit.html
 /LayoutTests/imported/w3c/web-platform-tests/html/editing/editing-0/contenteditable/contenteditable-enumerated-ascii-case-insensitive.html
 /LayoutTests/imported/w3c/web-platform-tests/html/editing/editing-0/contenteditable/contenteditable-overflow-height-expected.html

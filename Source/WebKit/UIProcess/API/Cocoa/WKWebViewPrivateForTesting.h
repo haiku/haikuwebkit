@@ -173,6 +173,7 @@ struct WKAppPrivacyReportTestingData {
 - (void)_cancelFixedColorExtensionFadeAnimationsForTesting;
 
 - (unsigned)_forwardedLogsCountForTesting;
+- (bool)_receivedLogsDuringLaunchForTesting;
 
 - (void)_modelProcessModelPlayerCountForTesting:(void(^)(NSUInteger))completionHandler;
 

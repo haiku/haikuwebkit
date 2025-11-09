@@ -38,6 +38,7 @@ if (DEVELOPER_MODE)
         ../API/tests/MultithreadedMultiVMExecutionTest.cpp
         ../API/tests/PingPongStackOverflowTest.cpp
         ../API/tests/TypedArrayCTest.cpp
+        ../API/tests/VMManagerStopTheWorldTest.cpp
         ../API/tests/testapi.cpp
     )
     set(testapi_C_SOURCES

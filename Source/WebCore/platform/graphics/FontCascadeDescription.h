@@ -126,25 +126,6 @@ public:
 
     WEBCORE_EXPORT void resolveFontSizeAdjustFromFontIfNeeded(const Font&);
 
-    // Initial values for font properties.
-    static FontSmallCaps initialSmallCaps() { return FontSmallCaps::Off; }
-    static Kerning initialKerning() { return Kerning::Auto; }
-    static FontSmoothingMode initialFontSmoothing() { return FontSmoothingMode::AutoSmoothing; }
-    static TextRenderingMode initialTextRenderingMode() { return TextRenderingMode::AutoTextRendering; }
-    static FontSynthesisLonghandValue initialFontSynthesisWeight() { return FontSynthesisLonghandValue::Auto; }
-    static FontSynthesisLonghandValue initialFontSynthesisStyle() { return FontSynthesisLonghandValue::Auto; }
-    static FontSynthesisLonghandValue initialFontSynthesisSmallCaps() { return FontSynthesisLonghandValue::Auto; }
-    static FontVariantPosition initialVariantPosition() { return FontVariantPosition::Normal; }
-    static FontVariantCaps initialVariantCaps() { return FontVariantCaps::Normal; }
-    static FontVariantAlternates initialVariantAlternates() { return FontVariantAlternates::Normal(); }
-    static FontVariantEmoji initialVariantEmoji() { return FontVariantEmoji::Normal; }
-    static FontOpticalSizing initialOpticalSizing() { return FontOpticalSizing::Enabled; }
-    static const AtomString& initialSpecifiedLocale() { return nullAtom(); }
-    static TextSpacingTrim initialTextSpacingTrim() { return { }; }
-    static TextAutospace initialTextAutospace() { return { }; }
-    static FontFeatureSettings initialFeatureSettings() { return { }; }
-    static FontVariationSettings initialVariationSettings() { return { }; }
-
 private:
     Ref<RefCountedFixedVector<AtomString>> m_families;
 

@@ -443,7 +443,7 @@ RenderOverflow* RenderFragmentContainer::overflowForBox(const RenderBox& box) co
         return { };
 
     if (CheckedPtr overflow = boxInfo->overflow())
-        return overflow.get();
+        return overflow.unsafeGet();
 
     boxInfo->createOverflow(computedLayoutOverflowRectForBox(box), computedVisualOverflowRectForBox(box));
     return boxInfo->overflow();

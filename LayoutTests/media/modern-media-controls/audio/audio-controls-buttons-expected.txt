@@ -5,9 +5,9 @@ On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE
 
 Making AirPlay routes available.
 AirPlay routes became available.
-PASS mediaController.controls.rightContainer.children.length is 4
-PASS mediaController.controls.rightContainer.children[0] is mediaController.controls.muteButton
-PASS mediaController.controls.rightContainer.children[1] is mediaController.controls.airplayButton
+mediaController.controls.rightContainer.children.length: 3
+mediaController.controls.rightContainer.children[0].constructor.name: AirplayButton
+mediaController.controls.rightContainer.children[1].constructor.name: TracksButton
 PASS accessibilityController.accessibleElementById('audio-controls').description is "AXDescription: Audio Controls"
 
 PASS successfullyParsed is true

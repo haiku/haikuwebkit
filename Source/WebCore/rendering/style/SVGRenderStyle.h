@@ -27,6 +27,8 @@
 #include <WebCore/RenderStyle.h>
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/SVGRenderStyleDefs.h>
+#include <WebCore/StyleSVGGlyphOrientationHorizontal.h>
+#include <WebCore/StyleSVGGlyphOrientationVertical.h>
 #include <WebCore/WindRule.h>
 
 namespace WTF {
@@ -74,8 +76,8 @@ public:
         PREFERRED_TYPE(TextAnchor) unsigned textAnchor : 2;
         PREFERRED_TYPE(ColorInterpolation) unsigned colorInterpolation : 2;
         PREFERRED_TYPE(ColorInterpolation) unsigned colorInterpolationFilters : 2;
-        PREFERRED_TYPE(GlyphOrientation) unsigned glyphOrientationHorizontal : 3;
-        PREFERRED_TYPE(GlyphOrientation) unsigned glyphOrientationVertical : 3;
+        PREFERRED_TYPE(Style::SVGGlyphOrientationHorizontal) unsigned glyphOrientationHorizontal : 2;
+        PREFERRED_TYPE(Style::SVGGlyphOrientationVertical) unsigned glyphOrientationVertical : 3;
     };
 
     struct NonInheritedFlags {

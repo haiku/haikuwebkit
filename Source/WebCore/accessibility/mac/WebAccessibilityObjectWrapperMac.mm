@@ -52,7 +52,7 @@
 #import "ChromeClient.h"
 #import "ContextMenuController.h"
 #import "DateComponents.h"
-#import "DocumentInlines.h"
+#import "DocumentView.h"
 #import "ElementInlines.h"
 #import "Font.h"
 #import "FontCascade.h"
@@ -88,6 +88,10 @@
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/WTFString.h>
+
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+#import "ModelPlayerAccessibilityChildren.h"
+#endif
 
 using namespace WebCore;
 
@@ -964,14 +968,14 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
     if ([additionalAttributes count])
         objectAttributes = [objectAttributes arrayByAddingObjectsFromArray:additionalAttributes];
 
-    return objectAttributes.get();
+    return objectAttributes.unsafeGet();
 }
 ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 - (id)remoteAccessibilityParentObject
 {
     RefPtr<AXCoreObject> backingObject = self.axBackingObject;
-    return backingObject ? backingObject->remoteParent().get() : nil;
+    return backingObject ? backingObject->remoteParent().unsafeGet() : nil;
 }
 
 static void convertToVector(NSArray* array, AccessibilityObject::AccessibilityChildrenVector& vector)
@@ -1070,11 +1074,11 @@ static void WebTransformCGPathToNSBezierPath(void* info, const CGPathElement *el
 // `unignoredChildren` must be the children of `backingObject`.
 static NSArray *transformSpecialChildrenCases(AXCoreObject& backingObject, const Vector<Ref<AXCoreObject>>& unignoredChildren)
 {
-#if ENABLE(MODEL_ELEMENT)
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
     if (backingObject.isModel()) {
         auto modelChildren = backingObject.modelElementChildren();
-        if (modelChildren.size()) {
-            return createNSArray(WTFMove(modelChildren), [] (auto&& child) -> id {
+        if (modelChildren.children.size()) {
+            return createNSArray(WTFMove(modelChildren.children), [](auto&& child) -> id {
                 return child.get();
             }).autorelease();
         }
@@ -1083,7 +1087,7 @@ static NSArray *transformSpecialChildrenCases(AXCoreObject& backingObject, const
 
     if (!unignoredChildren.size()) {
         if (RetainPtr widgetChildren = renderWidgetChildren(backingObject))
-            return widgetChildren.get();
+            return widgetChildren.unsafeGet();
     }
     return nil;
 }
@@ -1093,7 +1097,7 @@ static NSArray *children(AXCoreObject& backingObject)
     const auto& unignoredChildren = backingObject.unignoredChildren();
     RetainPtr<NSArray> specialChildren = transformSpecialChildrenCases(backingObject, unignoredChildren);
     if ([specialChildren count])
-        return specialChildren.get();
+        return specialChildren.unsafeGet();
 
     // The tree's (AXOutline) children are supposed to be its rows and columns.
     // The ARIA spec doesn't have columns, so we just need rows.
@@ -1160,7 +1164,7 @@ static id scrollViewParent(AXCoreObject& axObject)
     if (RetainPtr platformWidget = axObject.platformWidget())
         return NSAccessibilityUnignoredAncestor(platformWidget.get());
 
-    return axObject.remoteParent().get();
+    return axObject.remoteParent().unsafeGet();
 }
 
 - (id)windowElement:(NSString *)attributeName
@@ -1202,7 +1206,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
     if ([attributeName isEqualToString: NSAccessibilityParentAttribute]) {
         // This will return the parent of the AXScrollArea, if this is a AccessibilityScrollView.
         if (RetainPtr scrollView = scrollViewParent(*backingObject))
-            return scrollView.get();
+            return scrollView.unsafeGet();
 
         // Tree item (changed to AXRows) can only report the tree (AXOutline) as its parent.
         if (backingObject->isTreeItem()) {
@@ -2105,7 +2109,7 @@ id attributeValueForTesting(const RefPtr<AXCoreObject>& backingObject, NSString 
                 return attachmentView;
         } else if (axObject->isRemoteFrame()) {
             if (returnPlatformElements)
-                return axObject->remoteFramePlatformElement().get();
+                return axObject->remoteFramePlatformElement().unsafeGet();
         } else if (axObject->isWidget()) {
             // Only call out to the main-thread if this object has a backing widget to query.
             hit = Accessibility::retrieveAutoreleasedValueFromMainThread<id>([axObject, &point] () -> RetainPtr<id> {
@@ -3096,7 +3100,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
                 NSUInteger includedChildrenCount = std::min([remoteFrameChildren count], NSUInteger(criteria.resultsLimit));
                 widgetChildren = [remoteFrameChildren subarrayWithRange:NSMakeRange(0, includedChildrenCount)];
                 if ([widgetChildren count] >= criteria.resultsLimit)
-                    return remoteFrameChildren.get();
+                    return remoteFrameChildren.unsafeGet();
                 criteria.resultsLimit -= [widgetChildren count];
             }
         }
@@ -3210,7 +3214,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
             if (id attachmentView = [wrapper attachmentView])
                 return attachmentView;
         }
-        return wrapper.get();
+        return wrapper.unsafeGet();
     }
 
     if ([attribute isEqualToString:NSAccessibilityTextMarkerRangeForUIElementAttribute]) {
@@ -3626,9 +3630,9 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     if (!children.size()) {
         if (RetainPtr widgetChildren = renderWidgetChildren(*backingObject))
             return [widgetChildren.get() indexOfObject:targetChild];
-#if ENABLE(MODEL_ELEMENT)
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
         if (backingObject->isModel())
-            return backingObject->modelElementChildren().find(targetChild);
+            return backingObject->modelElementChildren().children.find(targetChild);
 #endif
     }
 
@@ -3662,9 +3666,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         // FIXME: this is duplicating the logic in children(AXCoreObject&) so it should be reworked.
         size_t childrenSize = backingObject->unignoredChildren().size();
         if (!childrenSize) {
-#if ENABLE(MODEL_ELEMENT)
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
             if (backingObject->isModel())
-                return backingObject->modelElementChildren().size();
+                return backingObject->modelElementChildren().children.size();
 #endif
             if (RetainPtr widgetChildren = renderWidgetChildren(*backingObject))
                 return [widgetChildren.get() count];

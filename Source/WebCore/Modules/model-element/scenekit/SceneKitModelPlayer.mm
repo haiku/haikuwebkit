@@ -49,6 +49,7 @@ Ref<SceneKitModelPlayer> SceneKitModelPlayer::create(ModelPlayerClient& client)
 SceneKitModelPlayer::SceneKitModelPlayer(ModelPlayerClient& client)
     : m_client { client }
     , m_layer { adoptNS([[SCNMetalLayer alloc] init]) }
+    , m_id { ModelPlayerIdentifier::generate() }
 {
     m_layer.get().autoenablesDefaultLighting = YES;
 
@@ -64,6 +65,11 @@ SceneKitModelPlayer::~SceneKitModelPlayer()
 }
 
 // MARK: - ModelPlayer overrides.
+
+ModelPlayerIdentifier SceneKitModelPlayer::identifier() const
+{
+    return m_id;
+}
 
 void SceneKitModelPlayer::load(Model& modelSource, LayoutSize)
 {
@@ -151,6 +157,18 @@ void SceneKitModelPlayer::setIsMuted(bool, CompletionHandler<void(bool success)>
 {
 }
 
+ModelPlayerAccessibilityChildren SceneKitModelPlayer::accessibilityChildren()
+{
+#if PLATFORM(IOS_FAMILY)
+    NSArray *children = [m_model->defaultScene() accessibilityElements];
+#else
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+    NSArray *children = [m_model->defaultScene() accessibilityAttributeValue:NSAccessibilityChildrenAttribute];
+ALLOW_DEPRECATED_DECLARATIONS_END
+#endif
+    return { makeVector<RetainPtr<id>>(children) };
+}
+
 // MARK: - SceneKitModelLoaderClient overrides.
 
 void SceneKitModelPlayer::didFinishLoading(SceneKitModelLoader& loader, Ref<SceneKitModel> model)
@@ -163,8 +181,8 @@ void SceneKitModelPlayer::didFinishLoading(SceneKitModelLoader& loader, Ref<Scen
 
     updateScene();
 
-    if (m_client)
-        m_client->didFinishLoading(*this);
+    if (RefPtr client = m_client.get())
+        client->didFinishLoading(*this);
 }
 
 void SceneKitModelPlayer::didFailLoading(SceneKitModelLoader& loader, const ResourceError& error)
@@ -174,8 +192,8 @@ void SceneKitModelPlayer::didFailLoading(SceneKitModelLoader& loader, const Reso
 
     m_loader = nullptr;
 
-    if (!m_client)
-        m_client->didFailLoading(*this, error);
+    if (RefPtr client = m_client.get())
+        client->didFailLoading(*this, error);
 }
 
 void SceneKitModelPlayer::updateScene()
@@ -185,25 +203,6 @@ void SceneKitModelPlayer::updateScene()
     m_layer.get().scene = m_model->defaultScene();
 }
 
-Vector<RetainPtr<id>> SceneKitModelPlayer::accessibilityChildren()
-{
-#if PLATFORM(IOS_FAMILY)
-    NSArray *children = [m_model->defaultScene() accessibilityElements];
-#else
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    NSArray *children = [m_model->defaultScene() accessibilityAttributeValue:NSAccessibilityChildrenAttribute];
-ALLOW_DEPRECATED_DECLARATIONS_END
-#endif
-    return makeVector<RetainPtr<id>>(children);
-}
-
-#if ENABLE(MODEL_PROCESS)
-WebCore::ModelPlayerIdentifier SceneKitModelPlayer::identifier() const
-{
-    return m_id;
-}
-#endif
-
-}
+} // namespace WebCore
 
 #endif

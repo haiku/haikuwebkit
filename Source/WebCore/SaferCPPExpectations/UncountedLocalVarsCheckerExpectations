@@ -2,7 +2,6 @@ Modules/applicationmanifest/ApplicationManifestParser.cpp
 Modules/mediacapabilities/MediaCapabilities.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
 Modules/mediarecorder/MediaRecorder.cpp
-Modules/mediasession/MediaSession.cpp
 Modules/mediasource/SourceBuffer.cpp
 Modules/mediastream/PeerConnectionBackend.cpp
 Modules/mediastream/RTCController.cpp
@@ -36,6 +35,35 @@ Modules/webauthn/AuthenticatorCoordinator.cpp
 Modules/webauthn/PublicKeyCredential.cpp
 Modules/webdatabase/Database.cpp
 Modules/webdatabase/DatabaseManager.cpp
+[ Mac ] Modules/mediasession/MediaSession.cpp
+[ Mac ] editing/mac/EditorMac.mm
+[ Mac ] editing/mac/FrameSelectionMac.mm
+[ Mac ] page/ContextMenuController.cpp
+[ Mac ] page/mac/EventHandlerMac.mm
+[ Mac ] page/mac/ImageOverlayControllerMac.mm
+[ Mac ] page/mac/ServicesOverlayController.mm
+[ Mac ] platform/graphics/mac/controls/MeterMac.mm
+[ Mac ] platform/graphics/mac/controls/ProgressBarMac.mm
+[ Mac ] platform/graphics/mac/controls/SliderTrackMac.mm
+[ Mac ] testing/Internals.mm
+[ iOS ] accessibility/AccessibilityNodeObject.cpp
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
+[ iOS ] editing/ios/DictationCommandIOS.cpp
+[ iOS ] editing/ios/EditorIOS.mm
+[ iOS ] html/HTMLAnchorElement.cpp
+[ iOS ] html/HTMLImageLoader.cpp
+[ iOS ] page/Chrome.cpp
+[ iOS ] page/Quirks.cpp
+[ iOS ] page/ios/ContentChangeObserver.cpp
+[ iOS ] page/ios/EventHandlerIOS.mm
+[ iOS ] page/ios/FrameIOS.mm
+[ iOS ] platform/audio/ios/AudioSessionIOS.mm
+[ iOS ] platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
+[ iOS ] platform/ios/DragImageIOS.mm
+[ iOS ] platform/ios/LegacyTileGrid.mm
+[ iOS ] platform/ios/WebVideoFullscreenControllerAVKit.mm
+[ iOS ] rendering/ios/RenderThemeIOS.mm
 accessibility/AXObjectCache.cpp
 animation/KeyframeEffect.cpp
 bindings/js/CommonVM.cpp
@@ -112,7 +140,6 @@ css/CSSValueList.h
 css/CSSVariableReferenceValue.cpp
 css/DeprecatedCSSOMPrimitiveValue.cpp
 css/FontFaceSet.cpp
-css/FontVariantBuilder.cpp
 css/ImmutableStyleProperties.cpp
 css/MediaList.cpp
 css/MediaQueryMatcher.cpp
@@ -181,29 +208,16 @@ editing/ChangeListTypeCommand.cpp
 editing/Editing.cpp
 editing/Editor.cpp
 editing/EditorCommand.cpp
-editing/FormatBlockCommand.cpp
 editing/FrameSelection.cpp
-editing/IndentOutdentCommand.cpp
-editing/InsertParagraphSeparatorCommand.cpp
 editing/MarkupAccumulator.cpp
-editing/MergeIdenticalElementsCommand.cpp
-editing/RemoveNodePreservingChildrenCommand.cpp
-editing/ReplaceSelectionCommand.cpp
-editing/SplitElementCommand.cpp
-editing/TextManipulationController.cpp
-editing/VisibleSelection.cpp
-editing/VisibleUnits.cpp
 editing/cocoa/DataDetection.mm
 editing/cocoa/DictionaryLookup.mm
 editing/cocoa/EditorCocoa.mm
 editing/cocoa/NodeHTMLConverter.mm
-editing/mac/EditorMac.mm
-editing/mac/FrameSelectionMac.mm
 history/CachedFrame.cpp
 history/CachedPage.cpp
 html/Autofill.cpp
 html/CachedHTMLCollectionInlines.h
-html/CanvasBase.cpp
 html/CollectionTraversalInlines.h
 html/FormAssociatedCustomElement.cpp
 html/FormListedElement.cpp
@@ -246,6 +260,7 @@ inspector/InspectorInstrumentation.cpp
 inspector/InspectorInstrumentation.h
 inspector/InspectorNodeFinder.cpp
 inspector/InspectorOverlay.cpp
+inspector/InspectorResourceUtilities.cpp
 inspector/InspectorShaderProgram.cpp
 inspector/InspectorStyleSheet.cpp
 inspector/PageDebugger.cpp
@@ -270,7 +285,6 @@ loader/EmptyClients.cpp
 mathml/MathMLSelectElement.cpp
 page/BarProp.cpp
 page/CaptionUserPreferences.cpp
-page/ContextMenuController.cpp
 page/DebugPageOverlays.cpp
 page/DeviceController.cpp
 page/DragController.cpp
@@ -314,9 +328,6 @@ page/TextIndicator.cpp
 page/UserContentController.cpp
 page/UserContentProvider.cpp
 page/cocoa/ResourceUsageThreadCocoa.mm
-page/mac/EventHandlerMac.mm
-page/mac/ImageOverlayControllerMac.mm
-page/mac/ServicesOverlayController.mm
 page/scrolling/AsyncScrollingCoordinator.cpp
 page/scrolling/ScrollAnchoringController.cpp
 page/scrolling/ScrollingCoordinator.cpp
@@ -364,9 +375,6 @@ platform/graphics/filters/software/FETileSoftwareApplier.cpp
 platform/graphics/filters/software/FETurbulenceSoftwareApplier.cpp
 platform/graphics/filters/software/SourceAlphaSoftwareApplier.cpp
 platform/graphics/filters/software/SourceGraphicSoftwareApplier.cpp
-platform/graphics/mac/controls/MeterMac.mm
-platform/graphics/mac/controls/ProgressBarMac.mm
-platform/graphics/mac/controls/SliderTrackMac.mm
 platform/graphics/transforms/RotateTransformOperation.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/mock/MockRealtimeVideoSource.cpp
@@ -486,7 +494,6 @@ svg/properties/SVGAnimatedString.cpp
 svg/properties/SVGPropertyOwnerRegistry.h
 testing/InternalSettings.cpp
 testing/Internals.cpp
-testing/Internals.mm
 testing/LegacyMockCDM.cpp
 testing/MockCDMFactory.cpp
 testing/MockPageOverlayClient.cpp

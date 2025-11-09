@@ -34,7 +34,6 @@
 namespace WebCore {
 
 class LayoutSize;
-struct Length;
 
 namespace Layout {
 

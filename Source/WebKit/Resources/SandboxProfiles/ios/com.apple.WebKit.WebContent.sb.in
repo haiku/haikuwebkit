@@ -44,6 +44,9 @@
 
 (deny file-write-mount file-write-unmount)
 
+(deny process-iopolicy-get (with telemetry))
+(deny process-iopolicy-set (with telemetry))
+
 (allow file-read-metadata
     (vnode-type DIRECTORY))
 
@@ -466,6 +469,9 @@
     (kernel-mig-routine-in-use-watchos))
 #endif
 
+(allow syscall-mig (with telemetry)
+    (kernel-mig-routine mach_vm_remap_external))
+
 (with-filter (require-not (webcontent-process-launched))
     (allow syscall-mig
         (kernel-mig-routine-only-in-use-during-launch)))
@@ -537,8 +543,4 @@
         (extension-class "com.apple.mediaserverd.read")
         (require-any
             (apply subpath issue-extension-secondary-paths))))
-#endif
-
-#if __has_include(<WebKitAdditions/WebContentSandbox-ios.defs>)
-#include <WebKitAdditions/WebContentSandbox-ios.defs>
 #endif

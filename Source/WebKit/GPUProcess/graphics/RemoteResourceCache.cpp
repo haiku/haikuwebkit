@@ -138,22 +138,17 @@ bool RemoteResourceCache::releaseDisplayList(RemoteDisplayListIdentifier identif
 void RemoteResourceCache::releaseAllResources()
 {
     m_imageBuffers.clear();
+    m_nativeImages.clear();
     releaseMemory();
 }
 
 void RemoteResourceCache::releaseMemory()
 {
-    m_nativeImages.clear();
     m_gradients.clear();
     m_filters.clear();
     m_fonts.clear();
     m_fontCustomPlatformDatas.clear();
     m_displayLists.clear();
-}
-
-void RemoteResourceCache::releaseNativeImages()
-{
-    m_nativeImages.clear();
 }
 
 } // namespace WebKit

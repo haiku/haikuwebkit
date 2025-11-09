@@ -14,6 +14,15 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/WEB_FEATURES.yml
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-even-less-good-value-rendering-expected-mismatch.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-even-less-good-value-rendering.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-optimum-value-rendering-expected-mismatch.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-optimum-value-rendering.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-rendering-expected-mismatch.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-rendering.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-suboptimum-value-rendering-expected-mismatch.html
+/LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-appearance-none-suboptimum-value-rendering.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-min-rendering-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-min-rendering-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/semantics/forms/the-meter-element/meter-min-rendering.html

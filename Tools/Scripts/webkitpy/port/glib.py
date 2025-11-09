@@ -200,3 +200,14 @@ class GLibPort(Port):
         if self._should_use_jhbuild():
             command = self._jhbuild_wrapper + command
         return self._executive.run_command(command + args, cwd=self.webkit_base(), stdout=None, return_stderr=False, decode_output=False, env=env)
+
+    API_TEST_BINARY_NAMES = ['TestWTF', 'TestJavaScriptCore', 'TestWebCore', 'TestWebKit']
+
+    def path_to_api_test(self, program_name):
+        return self._built_executables_path('TestWebKitAPI', program_name)
+
+    def environment_for_api_tests(self):
+        environment = super(GLibPort, self).environment_for_api_tests()
+        environment['TEST_WEBKIT_API_WEBKIT2_RESOURCES_PATH'] = self.path_from_webkit_base('Tools', 'TestWebKitAPI', 'Tests', 'WebKit')
+        environment['TEST_WEBKIT_API_WEBKIT2_INJECTED_BUNDLE_PATH'] = self._build_path('lib')
+        return environment

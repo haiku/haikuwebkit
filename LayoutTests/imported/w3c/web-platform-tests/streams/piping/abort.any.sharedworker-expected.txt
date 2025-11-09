@@ -22,7 +22,7 @@ FAIL (reason: 'undefined') underlyingSource.cancel() should called when abort, e
 FAIL (reason: 'error1: error1') underlyingSource.cancel() should called when abort, even with pending pull assert_equals: cancel should have been called expected 2 but got 0
 PASS a rejection from underlyingSource.cancel() should be returned by pipeTo()
 PASS a rejection from underlyingSink.abort() should be returned by pipeTo()
-PASS a rejection from underlyingSink.abort() should be preferred to one from underlyingSource.cancel()
+FAIL a rejection from underlyingSink.abort() should be preferred to one from underlyingSource.cancel() promise_rejects_exactly: pipeTo should reject function "function() { throw e; }" threw object "error1: error1" but we expected it to throw object "error2: error2"
 PASS abort signal takes priority over closed readable
 PASS abort signal takes priority over errored readable
 PASS abort signal takes priority over closed writable
@@ -31,5 +31,5 @@ PASS abort should do nothing after the readable is closed
 PASS abort should do nothing after the readable is errored
 PASS abort should do nothing after the readable is errored, even with pending writes
 PASS abort should do nothing after the writable is errored
-FAIL pipeTo on a teed readable byte stream should only be aborted when both branches are aborted assert_true: pipeTo should not resolve yet expected true got false
+PASS pipeTo on a teed readable byte stream should only be aborted when both branches are aborted
 

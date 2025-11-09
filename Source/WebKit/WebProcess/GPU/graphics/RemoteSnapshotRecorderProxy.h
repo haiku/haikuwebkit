@@ -29,6 +29,7 @@
 
 #include "RemoteGraphicsContextProxy.h"
 #include "RemoteSnapshotRecorderIdentifier.h"
+#include <WebCore/FrameIdentifier.h>
 
 namespace WebKit {
 

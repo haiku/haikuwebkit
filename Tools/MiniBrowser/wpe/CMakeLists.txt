@@ -10,11 +10,6 @@ set(MiniBrowser_PRIVATE_INCLUDE_DIRECTORIES
     ${JavaScriptCoreGLib_FRAMEWORK_HEADERS_DIR}
 )
 
-set(MiniBrowser_SYSTEM_INCLUDE_DIRECTORIES
-    ${GLIB_INCLUDE_DIRS}
-    ${LIBSOUP_INCLUDE_DIRS}
-)
-
 set(MiniBrowser_PRIVATE_LIBRARIES
     ${JavaScriptCore_LIBRARY_NAME}
     WebKit::WPEToolingBackends

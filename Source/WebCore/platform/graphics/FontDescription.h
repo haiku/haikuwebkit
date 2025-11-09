@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <WebCore/CSSPrimitiveNumericRange.h>
 #include <WebCore/FontPalette.h>
 #include <WebCore/FontSelectionAlgorithm.h>
 #include <WebCore/FontSizeAdjust.h>
@@ -46,6 +47,9 @@ public:
     bool operator==(const FontDescription&) const = default;
 
     float computedSize() const { return m_computedSize; }
+    float usedZoomFactor() const { return m_usedZoomFactor; }
+    float computedSizeForRangeZoomOption(CSS::RangeZoomOptions option) const { return (enableEvaluationTimeZoom() && option == CSS::RangeZoomOptions::Unzoomed) ? unzoomedComputedSize() : computedSize(); }
+    float unzoomedComputedSize() const { return m_computedSize / m_usedZoomFactor; }
     // Adjusted size regarding @font-face size-adjust but not regarding font-size-adjust. The latter adjustment is done with updateSizeWithFontSizeAdjust() after the font's creation.
     float adjustedSizeForFontFace(float) const;
     std::optional<FontSelectionValue> fontStyleSlope() const { return m_fontSelectionRequest.slope; }
@@ -58,6 +62,7 @@ public:
     UScriptCode script() const { return static_cast<UScriptCode>(m_script); }
     const AtomString& computedLocale() const { return m_locale; } // This is what you should be using for things like text shaping and font fallback
     const AtomString& specifiedLocale() const { return m_specifiedLocale; } // This is what you should be using for web-exposed things like -webkit-locale
+    bool enableEvaluationTimeZoom() const { return m_enableEvaluationTimeZoom; }
 
     FontOrientation orientation() const { return static_cast<FontOrientation>(m_orientation); }
     NonCJKGlyphOrientation nonCJKGlyphOrientation() const { return static_cast<NonCJKGlyphOrientation>(m_nonCJKGlyphOrientation); }
@@ -86,27 +91,10 @@ public:
     FontVariantEastAsianWidth variantEastAsianWidth() const { return static_cast<FontVariantEastAsianWidth>(m_variantEastAsianWidth); }
     FontVariantEastAsianRuby variantEastAsianRuby() const { return static_cast<FontVariantEastAsianRuby>(m_variantEastAsianRuby); }
     FontVariantEmoji variantEmoji() const { return static_cast<FontVariantEmoji>(m_variantEmoji); }
-    FontVariantSettings variantSettings() const
-    {
-        return {
-            variantCommonLigatures(),
-            variantDiscretionaryLigatures(),
-            variantHistoricalLigatures(),
-            variantContextualAlternates(),
-            variantPosition(),
-            variantCaps(),
-            variantNumericFigure(),
-            variantNumericSpacing(),
-            variantNumericFraction(),
-            variantNumericOrdinal(),
-            variantNumericSlashedZero(),
-            variantAlternates(),
-            variantEastAsianVariant(),
-            variantEastAsianWidth(),
-            variantEastAsianRuby(),
-            variantEmoji()
-        };
-    }
+    FontVariantEastAsianValues variantEastAsian() const;
+    FontVariantNumericValues variantNumeric() const;
+    FontVariantLigaturesValues variantLigatures() const;
+    FontVariantSettings variantSettings() const;
     FontOpticalSizing opticalSizing() const { return static_cast<FontOpticalSizing>(m_opticalSizing); }
     FontStyleAxis fontStyleAxis() const { return static_cast<FontStyleAxis>(m_fontStyleAxis); }
     AllowUserInstalledFonts shouldAllowUserInstalledFonts() const { return static_cast<AllowUserInstalledFonts>(m_shouldAllowUserInstalledFonts); }
@@ -114,7 +102,7 @@ public:
     const FontPalette& fontPalette() const { return m_fontPalette; }
     FontSizeAdjust fontSizeAdjust() const { return m_sizeAdjust; }
 
-    void setComputedSize(float s) { m_computedSize = clampToFloat(s); }
+    void setComputedSize(float s, float zoom = 1.0f) { m_computedSize = clampToFloat(s); m_usedZoomFactor = zoom; }
     void setTextSpacingTrim(TextSpacingTrim v) { m_textSpacingTrim = v; }
     void setTextAutospace(TextAutospace v) { m_textAutospace = v; }
     void setFontStyleAxis(FontStyleAxis axis) { m_fontStyleAxis = enumToUnderlyingType(axis); }
@@ -149,11 +137,16 @@ public:
     void setVariantEastAsianWidth(FontVariantEastAsianWidth variant) { m_variantEastAsianWidth = enumToUnderlyingType(variant); }
     void setVariantEastAsianRuby(FontVariantEastAsianRuby variant) { m_variantEastAsianRuby = enumToUnderlyingType(variant); }
     void setVariantEmoji(FontVariantEmoji variant) { m_variantEmoji = enumToUnderlyingType(variant); }
+    void setVariantEastAsian(FontVariantEastAsianValues);
+    void setVariantNumeric(FontVariantNumericValues);
+    void setVariantLigatures(FontVariantLigaturesValues);
     void setOpticalSizing(FontOpticalSizing sizing) { m_opticalSizing = enumToUnderlyingType(sizing); }
     void setShouldAllowUserInstalledFonts(AllowUserInstalledFonts shouldAllowUserInstalledFonts) { m_shouldAllowUserInstalledFonts = enumToUnderlyingType(shouldAllowUserInstalledFonts); }
     void setShouldDisableLigaturesForSpacing(bool shouldDisableLigaturesForSpacing) { m_shouldDisableLigaturesForSpacing = shouldDisableLigaturesForSpacing; }
     void setFontPalette(const FontPalette& fontPalette) { m_fontPalette = fontPalette; }
     void setFontSizeAdjust(FontSizeAdjust fontSizeAdjust) { m_sizeAdjust = fontSizeAdjust; }
+    void setEnableEvaluationTimeZoom(bool enableEvaluationTimeZoom) { m_enableEvaluationTimeZoom = enableEvaluationTimeZoom; }
+
 
     static AtomString platformResolveGenericFamily(UScriptCode, const AtomString& locale, const AtomString& familyName);
 
@@ -171,6 +164,8 @@ private:
     TextSpacingTrim m_textSpacingTrim;
     TextAutospace m_textAutospace;
     float m_computedSize { 0 }; // Computed size adjusted for the minimum font size and the zoom factor.
+    float m_usedZoomFactor { 1.0 };
+
     PREFERRED_TYPE(FontOrientation) unsigned m_orientation : 1; // Whether the font is rendering on a horizontal line or a vertical line.
     PREFERRED_TYPE(NonCJKGlyphOrientation) unsigned m_nonCJKGlyphOrientation : 1; // Only used by vertical text. Determines the default orientation for non-ideograph glyphs.
     PREFERRED_TYPE(FontWidthVariant) unsigned m_widthVariant : 2;
@@ -198,6 +193,7 @@ private:
     PREFERRED_TYPE(FontStyleAxis) unsigned m_fontStyleAxis : 1;
     PREFERRED_TYPE(AllowUserInstalledFonts) unsigned m_shouldAllowUserInstalledFonts : 1; // If this description is allowed to match a user-installed font
     PREFERRED_TYPE(bool) unsigned m_shouldDisableLigaturesForSpacing : 1; // If letter-spacing is nonzero, we need to disable ligatures, which affects font preparation
+    PREFERRED_TYPE(bool) unsigned m_enableEvaluationTimeZoom : 1;
 };
 
 } // namespace WebCore

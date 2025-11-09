@@ -247,6 +247,37 @@ bool getSampleVideoInfo(GstSample* sample, GstVideoInfo& videoInfo)
 
     return true;
 }
+
+std::optional<WebCore::IntSize> getDisplaySize(WebCore::IntSize originalSize, int pixelAspectRatioNumerator, int pixelAspectRatioDenominator)
+{
+    WebCore::IntSize computedSize { 0, 0 };
+    unsigned width = 0, height = 0;
+
+    // Calculate DAR based on PAR and video size.
+    // Assume regular display (1:1).
+    if (!gst_video_calculate_display_ratio(&width, &height, originalSize.width(), originalSize.height(), pixelAspectRatioNumerator, pixelAspectRatioDenominator, 1, 1))
+        return std::nullopt;
+
+    // Apply DAR to original video size. This is the same behavior as in xvimagesink's setcaps function.
+    if (!(originalSize.height() % height)) {
+        GST_DEBUG("Keeping video original height");
+        width = gst_util_uint64_scale_int(originalSize.height(), width, height);
+        height = originalSize.height();
+    } else if (!(originalSize.width() % width)) {
+        GST_DEBUG("Keeping video original width");
+        height = gst_util_uint64_scale_int(originalSize.width(), height, width);
+        width = originalSize.width();
+    } else {
+        GST_DEBUG("Approximating while keeping original video height");
+        width = gst_util_uint64_scale_int(originalSize.height(), width, height);
+        height = originalSize.height();
+    }
+
+    computedSize.setWidth(width);
+    computedSize.setHeight(height);
+
+    return computedSize;
+}
 #endif
 
 std::optional<TrackID> getStreamIdFromPad(const GRefPtr<GstPad>& pad)
@@ -921,10 +952,31 @@ void disconnectSimpleBusMessageCallback(GstElement* pipeline)
 struct MessageBusData {
     GThreadSafeWeakPtr<GstElement> pipeline;
     Function<void(GstMessage*)> handler;
+    AsynchronousPipelineDumping asynchronousPipelineDumping;
 };
 WEBKIT_DEFINE_ASYNC_DATA_STRUCT(MessageBusData)
 
-void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMessage*)>&& customHandler)
+struct AsyncPipelineDumpData {
+    String dotFileName;
+};
+WEBKIT_DEFINE_ASYNC_DATA_STRUCT(AsyncPipelineDumpData)
+
+static void dumpPipeline(const GRefPtr<GstElement>& pipeline, String&& dotFileName, AsynchronousPipelineDumping asynchronousPipelineDumping)
+{
+    if (asynchronousPipelineDumping == AsynchronousPipelineDumping::No) {
+        GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN_CAST(pipeline.get()), GST_DEBUG_GRAPH_SHOW_ALL, dotFileName.utf8().data());
+        return;
+    }
+
+    auto data = createAsyncPipelineDumpData();
+    data->dotFileName = WTFMove(dotFileName);
+    gst_element_call_async(pipeline.get(), reinterpret_cast<GstElementCallAsyncFunc>(+[](GstElement* pipeline, gpointer userData) {
+        auto data = reinterpret_cast<AsyncPipelineDumpData*>(userData);
+        GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN_CAST(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, data->dotFileName.utf8().data());
+    }), data, reinterpret_cast<GDestroyNotify>(destroyAsyncPipelineDumpData));
+}
+
+void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMessage*)>&& customHandler, AsynchronousPipelineDumping asynchronousPipelineDumping)
 {
     auto bus = adoptGRef(gst_pipeline_get_bus(GST_PIPELINE(pipeline)));
     gst_bus_add_signal_watch_full(bus.get(), RunLoopSourcePriority::RunLoopDispatcher);
@@ -932,6 +984,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
     auto data = createMessageBusData();
     data->pipeline.reset(pipeline);
     data->handler = WTFMove(customHandler);
+    data->asynchronousPipelineDumping = asynchronousPipelineDumping;
     auto handler = g_signal_connect_data(bus.get(), "message", G_CALLBACK(+[](GstBus*, GstMessage* message, gpointer userData) {
         auto data = reinterpret_cast<MessageBusData*>(userData);
         auto pipeline = data->pipeline.get();
@@ -942,7 +995,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
         case GST_MESSAGE_ERROR: {
             GST_ERROR_OBJECT(pipeline.get(), "Got message: %" GST_PTR_FORMAT, message);
             auto dotFileName = makeString(unsafeSpan(GST_OBJECT_NAME(pipeline.get())), "_error"_s);
-            GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN_CAST(pipeline.get()), GST_DEBUG_GRAPH_SHOW_ALL, dotFileName.utf8().data());
+            dumpPipeline(pipeline, WTFMove(dotFileName), data->asynchronousPipelineDumping);
             break;
         }
         case GST_MESSAGE_STATE_CHANGED: {
@@ -958,7 +1011,7 @@ void connectSimpleBusMessageCallback(GstElement* pipeline, Function<void(GstMess
                 gst_element_state_get_name(newState), gst_element_state_get_name(pending));
 
             auto dotFileName = makeString(unsafeSpan(GST_OBJECT_NAME(pipeline.get())), '_', unsafeSpan(gst_element_state_get_name(oldState)), '_', unsafeSpan(gst_element_state_get_name(newState)));
-            GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN_CAST(pipeline.get()), GST_DEBUG_GRAPH_SHOW_ALL, dotFileName.utf8().data());
+            dumpPipeline(pipeline, WTFMove(dotFileName), data->asynchronousPipelineDumping);
             break;
         }
         case GST_MESSAGE_LATENCY:
@@ -2052,6 +2105,14 @@ void gst_pad_probe_info_set_buffer(GstPadProbeInfo* info, GstBuffer* buffer)
 
     gst_clear_mini_object(&info->data);
     info->data = buffer;
+}
+
+void gst_pad_probe_info_set_event(GstPadProbeInfo* info, GstEvent* event)
+{
+    g_return_if_fail(info->type & (GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM | GST_PAD_PROBE_TYPE_EVENT_UPSTREAM));
+
+    gst_clear_mini_object(&info->data);
+    info->data = event;
 }
 #endif
 

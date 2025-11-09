@@ -79,17 +79,6 @@ bool MathMLTokenElement::childShouldCreateRenderer(const Node& child) const
     return StyledElement::childShouldCreateRenderer(child);
 }
 
-std::optional<char32_t> MathMLTokenElement::convertToSingleCodePoint(StringView string)
-{
-    auto codePoints = string.trim(isASCIIWhitespaceWithoutFF<char16_t>).codePoints();
-    auto iterator = codePoints.begin();
-    if (iterator == codePoints.end())
-        return std::nullopt;
-    std::optional<char32_t> character = *iterator;
-    ++iterator;
-    return iterator == codePoints.end() ? character : std::nullopt;
-}
-
 }
 
 #endif // ENABLE(MATHML)

@@ -44,7 +44,6 @@ public:
     static std::unique_ptr<WebPageInspectorTargetProxy> create(WebPageProxy&, const String& targetId, Inspector::InspectorTargetType);
     static std::unique_ptr<WebPageInspectorTargetProxy> create(ProvisionalPageProxy&, const String& targetId, Inspector::InspectorTargetType);
     WebPageInspectorTargetProxy(WebPageProxy&, const String& targetId, Inspector::InspectorTargetType);
-    ~WebPageInspectorTargetProxy() = default;
 
     void didCommitProvisionalTarget() override;
     bool isProvisional() const override;

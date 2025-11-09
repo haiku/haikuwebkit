@@ -32,7 +32,7 @@
 #include "DrawingArea.h"
 #include "WebPage.h"
 #include <GLES2/gl2.h>
-#include <WebCore/Document.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/GraphicsLayerTextureMapper.h>
 #include <WebCore/LocalFrameInlines.h>

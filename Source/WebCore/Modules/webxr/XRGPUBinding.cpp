@@ -26,7 +26,7 @@
 #include "config.h"
 #include "XRGPUBinding.h"
 
-#if ENABLE(WEBXR_LAYERS)
+#if ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)
 
 #include "GPUDevice.h"
 #include "WebGPUXRBinding.h"
@@ -140,5 +140,5 @@ GPUTextureFormat XRGPUBinding::getPreferredColorFormat()
 
 } // namespace WebCore
 
-#endif // ENABLE(WEBXR_LAYERS)
+#endif // ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)
 

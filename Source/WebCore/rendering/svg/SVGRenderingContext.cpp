@@ -43,6 +43,7 @@
 #include "SVGLengthContext.h"
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
+#include "Settings.h"
 #include <numbers>
 #include <wtf/MathExtras.h>
 

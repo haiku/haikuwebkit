@@ -187,8 +187,6 @@ public:
         return adoptRef(*new MockConnectionClient);
     }
 
-    ~MockConnectionClient() = default;
-
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 

@@ -43,7 +43,7 @@
 #include "HitTestResult.h"
 #include "Image.h"
 #include "ImageAdapter.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "NotImplemented.h"
 #include "Range.h"
 #include "RenderImage.h"

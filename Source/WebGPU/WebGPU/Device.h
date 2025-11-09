@@ -51,6 +51,8 @@
 #import <wtf/Vector.h>
 #import <wtf/text/WTFString.h>
 
+IGNORE_CLANG_WARNINGS_BEGIN("nullability-completeness")
+
 struct WGPUDeviceImpl {
 };
 
@@ -153,7 +155,7 @@ public:
     const Vector<WGPUFeatureName>& features() const { return m_capabilities.features; }
     const HardwareCapabilities::BaseCapabilities& baseCapabilities() const { return m_capabilities.baseCapabilities; }
 
-    id<MTLDevice> device() const { return m_device; }
+    id<MTLDevice> _Nullable device() const { return m_device; }
     void generateAValidationError(NSString * message);
     void generateAValidationError(String&& message);
     void generateAnOutOfMemoryError(String&& message);
@@ -194,14 +196,13 @@ public:
     id<MTLTexture> placeholderTexture(WGPUTextureFormat) const;
     bool isDestroyed() const;
     NSString *errorValidatingTextureCreation(const WGPUTextureDescriptor&, const Vector<WGPUTextureFormat>& viewFormats);
-    id<MTLBuffer> dispatchCallBuffer();
-    id<MTLComputePipelineState> dispatchCallPipelineState(id<MTLFunction>);
-    id<MTLRenderPipelineState> indexBufferClampPipeline(MTLIndexType, NSUInteger rasterSampleCount);
-    id<MTLRenderPipelineState> indexedIndirectBufferClampPipeline(NSUInteger rasterSampleCount);
-    id<MTLRenderPipelineState> indirectBufferClampPipeline(NSUInteger rasterSampleCount);
-    id<MTLRenderPipelineState> icbCommandClampPipeline(MTLIndexType, NSUInteger rasterSampleCount);
+    id<MTLBuffer> _Nullable dispatchCallBuffer();
+    id<MTLComputePipelineState> _Nullable dispatchCallPipelineState(id<MTLFunction>);
+    id<MTLRenderPipelineState> _Nullable indexBufferClampPipeline(MTLIndexType, NSUInteger rasterSampleCount);
+    id<MTLRenderPipelineState> _Nullable indexedIndirectBufferClampPipeline(NSUInteger rasterSampleCount);
+    id<MTLRenderPipelineState> _Nullable indirectBufferClampPipeline(NSUInteger rasterSampleCount);
+    id<MTLRenderPipelineState> _Nullable icbCommandClampPipeline(MTLIndexType, NSUInteger rasterSampleCount);
     id<MTLFunction> icbCommandClampFunction(MTLIndexType);
-    id<MTLRenderPipelineState> copyIndexIndirectArgsPipeline(NSUInteger rasterSampleCount);
     id<MTLBuffer> safeCreateBuffer(NSUInteger length, MTLStorageMode, bool skipMemoryAttribution = false, MTLCPUCacheMode = MTLCPUCacheModeDefaultCache, MTLHazardTrackingMode = MTLHazardTrackingModeDefault) const;
     id<MTLBuffer> safeCreateBuffer(NSUInteger, bool skipMemoryAttribution = false) const;
     template<typename T>
@@ -215,15 +216,15 @@ public:
     int bufferIndexForICBContainer() const;
     void setOwnerWithIdentity(id<MTLResource>) const;
     struct ExternalTextureData {
-        id<MTLTexture> texture0 { nil };
-        id<MTLTexture> texture1 { nil };
+        id<MTLTexture> _Nullable texture0 { nil };
+        id<MTLTexture> _Nullable texture1 { nil };
         simd::float3x2 uvRemappingMatrix;
         simd::float4x3 colorSpaceConversionMatrix;
     };
     ExternalTextureData createExternalTextureFromPixelBuffer(CVPixelBufferRef, WGPUColorSpace) const;
     RefPtr<XRSubImage> getXRViewSubImage(XRProjectionLayer&);
     RefPtr<XRSubImage> getXRViewSubImage() const;
-    id<MTLTexture> getXRViewSubImageDepthTexture() const;
+    id<MTLTexture> _Nullable getXRViewSubImageDepthTexture() const;
     const std::optional<const MachSendRight> webProcessID() const;
 #if CPU(X86_64)
     bool isIntel() const { return [m_device.name localizedCaseInsensitiveContainsString:@"intel"]; }
@@ -264,7 +265,6 @@ public:
     }
     void removeBufferFromCache(uint64_t address) { m_bufferMap.remove(address); }
     uint32_t appleGPUFamily() const { return m_appleGPUFamily; }
-    id<MTLRasterizationRateMap> rasterizationMapForTexture(MTLResourceID, uint32_t) const;
     void setRasterizationMapsForTexture(MTLResourceID, id<MTLRasterizationRateMap> left, id<MTLRasterizationRateMap> right);
     static id<MTLFunction> nopVertexFunction(id<MTLDevice>);
 
@@ -280,7 +280,7 @@ private:
     bool validateRenderPipeline(const WGPURenderPipelineDescriptor&);
 
     void makeInvalid();
-    NSString* addPipelineLayouts(Vector<Vector<WGPUBindGroupLayoutEntry>>&, const std::optional<WGSL::PipelineLayout>&);
+    NSString * _Nullable addPipelineLayouts(Vector<Vector<WGPUBindGroupLayoutEntry>>&, const std::optional<WGSL::PipelineLayout>&);
     Ref<PipelineLayout> generatePipelineLayout(const Vector<Vector<WGPUBindGroupLayoutEntry>> &bindGroupEntries);
 
     void captureFrameIfNeeded() const;
@@ -294,7 +294,7 @@ private:
         std::optional<Error> error;
         const WGPUErrorFilter filter;
     };
-    id<MTLDevice> m_device { nil };
+    id<MTLDevice> _Nullable m_device { nil };
     const Ref<Queue> m_defaultQueue;
 
     Function<void(WGPUErrorType, String&&)> m_uncapturedErrorCallback;
@@ -311,24 +311,24 @@ private:
     id<MTLBuffer> m_placeholderBuffer { };
     id<MTLTexture> m_placeholderTexture { nil };
     id<MTLTexture> m_placeholderDepthStencilTexture { nil };
-    id<MTLBuffer> m_dispatchCallBuffer { nil };
-    id<MTLComputePipelineState> m_dispatchCallPipelineState { nil };
+    id<MTLBuffer> _Nullable m_dispatchCallBuffer { nil };
+    id<MTLComputePipelineState> _Nullable m_dispatchCallPipelineState { nil };
 
-    id<MTLRenderPipelineState> m_indexBufferClampUintPSO { nil };
-    id<MTLRenderPipelineState> m_indexBufferClampUshortPSO { nil };
-    id<MTLRenderPipelineState> m_indexBufferClampUintPSOMS { nil };
-    id<MTLRenderPipelineState> m_indexBufferClampUshortPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexBufferClampUintPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexBufferClampUshortPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexBufferClampUintPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexBufferClampUshortPSOMS { nil };
 
-    id<MTLRenderPipelineState> m_indexedIndirectBufferClampPSO { nil };
-    id<MTLRenderPipelineState> m_indexedIndirectBufferClampPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexedIndirectBufferClampPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_indexedIndirectBufferClampPSOMS { nil };
 
-    id<MTLRenderPipelineState> m_indirectBufferClampPSO { nil };
-    id<MTLRenderPipelineState> m_indirectBufferClampPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_indirectBufferClampPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_indirectBufferClampPSOMS { nil };
 
-    id<MTLRenderPipelineState> m_icbCommandClampUintPSO { nil };
-    id<MTLRenderPipelineState> m_icbCommandClampUshortPSO { nil };
-    id<MTLRenderPipelineState> m_icbCommandClampUintPSOMS { nil };
-    id<MTLRenderPipelineState> m_icbCommandClampUshortPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_icbCommandClampUintPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_icbCommandClampUshortPSO { nil };
+    id<MTLRenderPipelineState> _Nullable m_icbCommandClampUintPSOMS { nil };
+    id<MTLRenderPipelineState> _Nullable m_icbCommandClampUshortPSOMS { nil };
 
     const Ref<Adapter> m_adapter;
     const ThreadSafeWeakPtr<Instance> m_instance;
@@ -337,7 +337,7 @@ private:
 #endif
     NSMapTable<id<MTLCommandBuffer>, NSMutableArray<id<MTLCounterSampleBuffer>>*>* m_sampleCounterBuffers;
     NSMapTable<id<MTLCommandBuffer>, NSMutableArray<id<MTLBuffer>>*>* m_resolvedSampleCounterBuffers;
-    id<MTLSharedEvent> m_resolveTimestampsSharedEvent { nil };
+    id<MTLSharedEvent> _Nullable m_resolveTimestampsSharedEvent { nil };
     HashMap<uint64_t, CommandEncoder*, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_commandEncoderMap;
     HashMap<uint64_t, Buffer*, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_bufferMap;
     mutable HashSet<uint64_t, DefaultHash<uint64_t>, WTF::UnsignedWithZeroKeyHashTraits<uint64_t>> m_bindGroupCompatibilityCache;
@@ -364,3 +364,5 @@ inline void derefDevice(WebGPU::Device* obj)
 {
     WTF::deref(obj);
 }
+
+IGNORE_CLANG_WARNINGS_END

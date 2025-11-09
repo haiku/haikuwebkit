@@ -213,9 +213,6 @@ public:
     void setShouldContinueAfterKeyNeeded(bool);
 #endif
 
-    void beginSimulatedHDCPError();
-    void endSimulatedHDCPError();
-
     void notifyActiveSourceBuffersChanged();
 
     void applicationWillResignActive();

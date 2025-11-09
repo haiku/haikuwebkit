@@ -36,23 +36,23 @@
 #include "ContentRuleListMatchedRule.h"
 #include "ContentRuleListResults.h"
 #include "DFABytecodeInterpreter.h"
-#include "Document.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
 #include "ExtensionStyleSheets.h"
-#include "LocalFrame.h"
+#include "FrameDestructionObserverInlines.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameLoaderClient.h"
-#include "Page.h"
 #include "RegistrableDomain.h"
 #include "ResourceLoadInfo.h"
 #include "ScriptController.h"
 #include "ScriptSourceCode.h"
 #include "Settings.h"
-#include <wtf/URL.h>
 #include "UserContentController.h"
 #include <ranges>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/URL.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
 

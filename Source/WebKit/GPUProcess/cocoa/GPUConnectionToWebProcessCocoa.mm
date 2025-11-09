@@ -66,7 +66,7 @@ bool GPUConnectionToWebProcess::setCaptureAttributionString()
     if ([PAL::getSTDynamicActivityAttributionPublisherClassSingleton() respondsToSelector:@selector(setCurrentAttributionWebsiteString:auditToken:)])
         [PAL::getSTDynamicActivityAttributionPublisherClassSingleton() setCurrentAttributionWebsiteString:visibleName.get() auditToken:auditToken.value()];
     else {
-        RetainPtr formatString = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ in %%@", "The domain and application using the camera and/or microphone. The first argument is domain, the second is the application name (iOS only)."), visibleName.get()]);
+        SUPPRESS_UNRETAINED_ARG RetainPtr formatString = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ in %%@", "The domain and application using the camera and/or microphone. The first argument is domain, the second is the application name (iOS only)."), visibleName.get()]);
         [PAL::getSTDynamicActivityAttributionPublisherClassSingleton() setCurrentAttributionStringWithFormat:formatString.get() auditToken:auditToken.value()];
     }
 #endif

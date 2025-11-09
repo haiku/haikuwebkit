@@ -52,9 +52,7 @@ AccessibilityTextMarkerRange::AccessibilityTextMarkerRange(const AccessibilityTe
 {
 }
 
-AccessibilityTextMarkerRange::~AccessibilityTextMarkerRange()
-{
-}
+AccessibilityTextMarkerRange::~AccessibilityTextMarkerRange() = default;
 
 JSClassRef AccessibilityTextMarkerRange::wrapperClass()
 {

@@ -82,8 +82,7 @@ WebFullScreenManagerProxy::~WebFullScreenManagerProxy()
 {
     if (RefPtr page = m_page.get())
         page->protectedLegacyMainFrameProcess()->removeMessageReceiver(Messages::WebFullScreenManagerProxy::messageReceiverName(), page->webPageIDInMainFrameProcess());
-    if (CheckedPtr client = m_client)
-        client->closeFullScreenManager();
+    detachFromClient();
     callCloseCompletionHandlers();
 }
 
@@ -194,7 +193,7 @@ bool WebFullScreenManagerProxy::blocksReturnToFullscreenFromPictureInPicture() c
     return m_blocksReturnToFullscreenFromPictureInPicture;
 }
 
-Awaitable<bool> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& connection, FrameIdentifier frameID, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails mediaDetails)
+Awaitable<std::optional<WebCore::IntRect>> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& connection, FrameIdentifier frameID, bool blocksReturnToFullscreenFromPictureInPicture, FullScreenMediaDetails mediaDetails, FrameIdentifier rootFrameID, WebCore::IntRect initialFrameInRootFrameCoordinates)
 {
     m_fullScreenProcess = dynamicDowncast<WebProcessProxy>(AuxiliaryProcessProxy::fromConnection(connection));
     m_blocksReturnToFullscreenFromPictureInPicture = blocksReturnToFullscreenFromPictureInPicture;
@@ -214,7 +213,16 @@ Awaitable<bool> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& conn
 
     CheckedPtr client = m_client;
     if (!client)
-        co_return false;
+        co_return std::nullopt;
+
+    RefPtr page = m_page.get();
+    if (!page)
+        co_return std::nullopt;
+
+    IntRect initialFrameInScreenCoordinates { initialFrameInRootFrameCoordinates };
+    std::optional<FloatRect> mainFrameCoordinates = co_await page->convertRectToMainFrameCoordinates(WebCore::FloatRect(initialFrameInRootFrameCoordinates), rootFrameID);
+    if (mainFrameCoordinates)
+        initialFrameInScreenCoordinates = page->syncRootViewToScreen(IntRect(*mainFrameCoordinates));
 
     bool success = co_await AwaitableFromCompletionHandler<bool> { [=] (auto completionHandler) {
         client->enterFullScreen(mediaDetails.mediaDimensions, WTFMove(completionHandler));
@@ -222,7 +230,7 @@ Awaitable<bool> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& conn
 
     ALWAYS_LOG(LOGIDENTIFIER);
     if (!success)
-        co_return false;
+        co_return std::nullopt;
     m_fullscreenState = FullscreenState::EnteringFullscreen;
     if (RefPtr page = m_page.get())
         page->fullscreenClient().willEnterFullscreen(page.get());
@@ -234,7 +242,7 @@ Awaitable<bool> WebFullScreenManagerProxy::enterFullScreen(IPC::Connection& conn
     if (RefPtr page = m_page.get(); page && page->protectedPreferences()->siteIsolationEnabled())
         co_await page->nextPresentationUpdate();
 
-    co_return true;
+    co_return initialFrameInScreenCoordinates;
 }
 
 void WebFullScreenManagerProxy::enterFullScreenForOwnerElementsInOtherProcesses(FrameIdentifier frameID, CompletionHandler<void()>&& completionHandler)

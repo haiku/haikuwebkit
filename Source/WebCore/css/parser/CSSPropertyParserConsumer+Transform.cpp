@@ -431,12 +431,12 @@ std::optional<Style::Transform> parseTransformRaw(const String& string, const CS
         return { };
 
     auto dummyStyle = RenderStyle::create();
-    auto dummyState = Style::BuilderState { dummyStyle };
+    auto dummyState = Style::BuilderState::create(dummyStyle);
 
-    if (!parsedValue->canResolveDependenciesWithConversionData(dummyState.cssToLengthConversionData()))
+    if (!parsedValue->canResolveDependenciesWithConversionData(dummyState->cssToLengthConversionData()))
         return { };
 
-    return Style::toStyleFromCSSValue<Style::Transform>(dummyState, *parsedValue);
+    return Style::toStyleFromCSSValue<Style::Transform>(*CheckedPtr { dummyState.ptr() }, *parsedValue);
 }
 
 } // namespace CSSPropertyParserHelpers

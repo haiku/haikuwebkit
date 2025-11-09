@@ -29,7 +29,7 @@
 #include "ClientOrigin.h"
 #include "ContextDestructionObserverInlines.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "Event.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
 #include "MainThreadPermissionObserver.h"
@@ -130,8 +130,8 @@ void PermissionStatus::eventListenersDidChange()
     if (hasChangeEventListener != m_hasChangeEventListener) {
         auto changeListenerAction = hasChangeEventListener ? &MainThreadPermissionObserver::addChangeListener : &MainThreadPermissionObserver::removeChangeListener;
         callOnMainThread([identifier = m_mainThreadPermissionObserverIdentifier, topFrameDomain = RegistrableDomain { context->topOrigin().data() }.isolatedCopy(), subFrameDomain = RegistrableDomain { context->url() }.isolatedCopy(), changeListenerAction] {
-            if (auto* mainThreadPermissionObserver = allMainThreadPermissionObservers().get(identifier))
-                (mainThreadPermissionObserver->*changeListenerAction)(topFrameDomain, subFrameDomain);
+            if (CheckedPtr mainThreadPermissionObserver = allMainThreadPermissionObservers().get(identifier))
+                (mainThreadPermissionObserver.get()->*changeListenerAction)(topFrameDomain, subFrameDomain);
         });
     }
     m_hasChangeEventListener = hasChangeEventListener;

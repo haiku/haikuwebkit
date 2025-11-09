@@ -50,9 +50,6 @@ static constexpr int64_t nsPerSecond = 1000LL * 1000 * 1000;
 static constexpr int64_t nsPerMillisecond = 1000LL * 1000;
 static constexpr int64_t nsPerMicrosecond = 1000LL;
 
-static constexpr int32_t maxYear = 275760;
-static constexpr int32_t minYear = -271821;
-
 std::optional<TimeZoneID> parseTimeZoneName(StringView string)
 {
     const auto& timeZones = intlAvailableTimeZones();
@@ -1093,6 +1090,10 @@ static std::optional<PlainDate> parseDate(StringParsingBuffer<CharacterType>& bu
     } else
         return std::nullopt;
 
+    // PlainDate represents out-of-range years using outOfRangeYear
+    if (!isYearWithinLimits(year)) [[unlikely]]
+        year = outOfRangeYear;
+
     return PlainDate(year, month, day);
 }
 
@@ -1469,9 +1470,10 @@ String temporalTimeToString(PlainTime plainTime, std::tuple<Precision, unsigned>
     return makeString(pad('0', 2, plainTime.hour()), ':', pad('0', 2, plainTime.minute()), ':', pad('0', 2, plainTime.second()), '.', pad('0', paddingLength, emptyString()), fraction);
 }
 
-String temporalDateToString(PlainDate plainDate)
+static String temporalDateToString(int32_t year, int32_t month)
 {
-    auto year = plainDate.year();
+    // If we're printing a date, it should be within range
+    ASSERT(isYearWithinLimits(year));
 
     String prefix;
     auto yearDigits = 4;
@@ -1481,12 +1483,34 @@ String temporalDateToString(PlainDate plainDate)
         year = std::abs(year);
     }
 
-    return makeString(prefix, pad('0', yearDigits, year), '-', pad('0', 2, plainDate.month()), '-', pad('0', 2, plainDate.day()));
+    return makeString(prefix, pad('0', yearDigits, year), '-', pad('0', 2, month));
+}
+
+static String temporalDateToString(int32_t year, int32_t month, int32_t day)
+{
+    auto first = temporalDateToString(year, month);
+    return makeString(first, '-', pad('0', 2, day));
 }
 
 String temporalDateTimeToString(PlainDate plainDate, PlainTime plainTime, std::tuple<Precision, unsigned> precision)
 {
     return makeString(temporalDateToString(plainDate), 'T', temporalTimeToString(plainTime, precision));
+}
+
+String temporalDateToString(PlainDate plainDate)
+{
+    return temporalDateToString(plainDate.year(), plainDate.month(), plainDate.day());
+}
+
+String temporalMonthDayToString(PlainMonthDay plainMonthDay, StringView calendarName)
+{
+    if (calendarName == "always"_s) {
+        // FIXME: print the correct calendar ID when calendars are fully implemented
+        auto first = temporalDateToString(plainMonthDay.isoPlainDate());
+        return makeString(first, "[u-ca=iso8601]"_s);
+    }
+
+    return makeString(pad('0', 2, plainMonthDay.month()), '-', pad('0', 2, plainMonthDay.day()));
 }
 
 String monthCode(uint32_t month)
@@ -1821,12 +1845,6 @@ bool isDateTimeWithinLimits(int32_t year, uint8_t month, uint8_t day, unsigned h
     if (nanoseconds >= (ExactTime::maxValue + ExactTime::nsPerDay))
         return false;
     return true;
-}
-
-// More effective for our purposes than isInBounds<int32_t>.
-bool isYearWithinLimits(double year)
-{
-    return year >= minYear && year <= maxYear;
 }
 
 // https://tc39.es/proposal-temporal/#sec-temporal-isvalidisodate

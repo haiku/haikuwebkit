@@ -47,8 +47,8 @@ namespace JSC {
 
 LazyNeverDestroyed<JITOperationList> jitOperationList;
 
-extern const JITOperationAnnotation startOfJITOperationsInJSC __asm("section$start$__DATA_CONST$__jsc_ops");
-extern const JITOperationAnnotation endOfJITOperationsInJSC __asm("section$end$__DATA_CONST$__jsc_ops");
+extern const JITOperationAnnotation startOfJITOperationsInJSC __asm__("section$start$__DATA_CONST$__jsc_ops");
+extern const JITOperationAnnotation endOfJITOperationsInJSC __asm__("section$end$__DATA_CONST$__jsc_ops");
 
 void JITOperationList::initialize()
 {

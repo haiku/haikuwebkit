@@ -30,6 +30,7 @@
 #include "Touch.h"
 
 #include "EventTargetInlines.h"
+#include "DocumentView.h"
 #include "DoublePoint.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrameInlines.h"

@@ -31,7 +31,6 @@
 #include "PDFPageCoverage.h"
 #include "PDFPluginBase.h"
 #include <WebCore/ContextMenuItem.h>
-#include <WebCore/GraphicsLayer.h>
 #include <WebCore/GraphicsLayerClient.h>
 #include <WebCore/NodeIdentifier.h>
 #include <WebCore/Page.h>
@@ -52,6 +51,8 @@ class TextStream;
 
 namespace WebCore {
 class FrameView;
+class GraphicsLayer;
+class GraphicsLayerFactory;
 class LocalFrameView;
 class PageOverlay;
 class PlatformWheelEvent;
@@ -59,6 +60,7 @@ class ShadowRoot;
 class AXCoreObject;
 
 enum class DelegatedScrollingMode : uint8_t;
+enum class GraphicsLayerType : uint8_t;
 
 struct DataDetectorElementInfo;
 }
@@ -573,8 +575,8 @@ private:
     void revealAnnotation(PDFAnnotation *);
 
     WebCore::GraphicsLayerFactory* graphicsLayerFactory() const;
-    RefPtr<WebCore::GraphicsLayer> createGraphicsLayer(GraphicsLayerClient&, WebCore::GraphicsLayer::Type);
-    RefPtr<WebCore::GraphicsLayer> createGraphicsLayer(const String& name, WebCore::GraphicsLayer::Type);
+    RefPtr<WebCore::GraphicsLayer> createGraphicsLayer(GraphicsLayerClient&, WebCore::GraphicsLayerType);
+    RefPtr<WebCore::GraphicsLayer> createGraphicsLayer(const String& name, WebCore::GraphicsLayerType);
 
     void setNeedsRepaintForIncrementalLoad();
     void setNeedsRepaintForAnnotation(PDFAnnotation *, RepaintRequirements);
@@ -653,8 +655,8 @@ private:
 
     RefPtr<PDFPresentationController> protectedPresentationController() const;
 
-    RefPtr<WebCore::GraphicsLayer> protectedScrollContainerLayer() const { return m_scrollContainerLayer; }
-    RefPtr<WebCore::GraphicsLayer> protectedOverflowControlsContainer() const { return m_overflowControlsContainer; }
+    RefPtr<WebCore::GraphicsLayer> protectedScrollContainerLayer() const;
+    RefPtr<WebCore::GraphicsLayer> protectedOverflowControlsContainer() const;
 
     RefPtr<PDFPresentationController> m_presentationController;
 

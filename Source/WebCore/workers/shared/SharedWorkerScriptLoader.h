@@ -43,10 +43,13 @@ class WorkerScriptLoader;
 struct WorkerFetchResult;
 struct WorkerInitializationData;
 
-class SharedWorkerScriptLoader : private WorkerScriptLoaderClient {
+class SharedWorkerScriptLoader final : public RefCounted<SharedWorkerScriptLoader>, private WorkerScriptLoaderClient {
     WTF_MAKE_TZONE_ALLOCATED(SharedWorkerScriptLoader);
 public:
-    SharedWorkerScriptLoader(URL&&, SharedWorker&, WorkerOptions&&);
+    static Ref<SharedWorkerScriptLoader> create(URL&&, SharedWorker&, WorkerOptions&&);
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void load(CompletionHandler<void(WorkerFetchResult&&, WorkerInitializationData&&)>&&);
 
@@ -55,6 +58,8 @@ public:
     const WorkerOptions& options() const { return m_options; }
 
 private:
+    SharedWorkerScriptLoader(URL&&, SharedWorker&, WorkerOptions&&);
+
     void didReceiveResponse(ScriptExecutionContextIdentifier, std::optional<ResourceLoaderIdentifier>, const ResourceResponse&) final;
     void notifyFinished(std::optional<ScriptExecutionContextIdentifier>) final;
 

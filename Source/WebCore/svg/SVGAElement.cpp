@@ -44,6 +44,7 @@
 #include "SVGElementTypeHelpers.h"
 #include "SVGNames.h"
 #include "SVGSMILElement.h"
+#include "Settings.h"
 #include "XLinkNames.h"
 #include <wtf/TZoneMallocInlines.h>
 

@@ -31,8 +31,10 @@
 #include <WebCore/BoundaryPointInlines.h>
 #include <WebCore/CharacterRange.h>
 #include <WebCore/Document.h>
-#include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentMarkerController.h>
+#include <WebCore/DocumentMarkers.h>
+#include <WebCore/DocumentQuirks.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/Editor.h>
 #include <WebCore/FindRevealAlgorithms.h>
 #include <WebCore/FocusController.h>
@@ -42,7 +44,7 @@
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/ImageOverlay.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/Page.h>
 #include <WebCore/PageOverlayController.h>
@@ -156,19 +158,34 @@ void WebFoundTextRangeController::decorateTextRangeWithStyle(const WebFoundTextR
         case FindDecorationStyle::Normal:
             simpleRange->start.protectedDocument()->checkedMarkers()->removeMarkers(*simpleRange, WebCore::DocumentMarkerType::TextMatch);
             break;
-        case FindDecorationStyle::Found:
-            simpleRange->start.protectedDocument()->checkedMarkers()->addMarker(*simpleRange, WebCore::DocumentMarkerType::TextMatch);
+        case FindDecorationStyle::Found: {
+            auto addedMarker = simpleRange->start.protectedDocument()->checkedMarkers()->addMarker(*simpleRange, WebCore::DocumentMarkerType::TextMatch);
+            if (!addedMarker)
+                m_unhighlightedFoundRanges.add(range);
             break;
+        }
         case FindDecorationStyle::Highlighted: {
             m_highlightedRange = range;
 
-            revealClosedDetailsAndHiddenUntilFoundAncestors(simpleRange->protectedStartContainer());
+            auto ancestorsRevealed = revealClosedDetailsAndHiddenUntilFoundAncestors(simpleRange->protectedStartContainer());
 
             if (m_findPageOverlay)
                 setTextIndicatorWithRange(*simpleRange);
             else
                 flashTextIndicatorAndUpdateSelectionWithRange(*simpleRange);
 
+            if (ancestorsRevealed) {
+                HashSet<WebFoundTextRange> rangesToRemove;
+                for (auto unhighlightedRange : m_unhighlightedFoundRanges) {
+                    if (auto unhighlightedSimpleRange = simpleRangeFromFoundTextRange(unhighlightedRange)) {
+                        auto addedMarker = unhighlightedSimpleRange->start.protectedDocument()->checkedMarkers()->addMarker(*unhighlightedSimpleRange, WebCore::DocumentMarkerType::TextMatch);
+                        if (addedMarker)
+                            rangesToRemove.add(unhighlightedRange);
+                    }
+                }
+                for (auto rangeToRemove : rangesToRemove)
+                    m_unhighlightedFoundRanges.remove(rangeToRemove);
+            }
             break;
         }
         }
@@ -230,6 +247,7 @@ void WebFoundTextRangeController::clearAllDecoratedFoundText()
 {
     clearCachedRanges();
     m_decoratedRanges.clear();
+    m_unhighlightedFoundRanges.clear();
     protectedWebPage()->protectedCorePage()->unmarkAllTextMatches();
 
     m_highlightedRange = { };
@@ -514,7 +532,7 @@ WebCore::LocalFrame* WebFoundTextRangeController::frameForFoundTextRange(const W
         return nullptr;
 
     if (range.frameIdentifier.isEmpty())
-        return mainFrame.get();
+        return mainFrame.unsafeGet();
 
     return dynamicDowncast<WebCore::LocalFrame>(mainFrame->tree().findByUniqueName(AtomString { range.frameIdentifier }, *mainFrame));
 }

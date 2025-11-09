@@ -175,7 +175,6 @@ selectors = [
     { name = "_adoptEffectiveConfiguration:", class = "?" },
     { name = "_allowsHSTSWithUntrustedRootCertificate", class = "?" },
     { name = "_alternativeServicesStorage", class = "?" },
-    { name = "_appAdoptsUISceneLifecycle", class = "?" },
     { name = "_backlightLevel", class = "?" },
     { name = "_beginPinningInputViews", class = "?" },
     { name = "_cancelAllTouches", class = "?" },

@@ -818,8 +818,8 @@ public:
     String innerHTML() const final;
     String outerHTML() const final;
 
-#if PLATFORM(COCOA) && ENABLE(MODEL_ELEMENT)
-    Vector<RetainPtr<id>> modelElementChildren() final;
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+    ModelPlayerAccessibilityChildren modelElementChildren() final;
 #endif
 
 #if PLATFORM(IOS_FAMILY)

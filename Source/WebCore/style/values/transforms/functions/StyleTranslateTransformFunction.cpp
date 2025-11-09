@@ -25,6 +25,7 @@
 
 #include "AnimationUtilities.h"
 #include "StyleLengthWrapper+Blending.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Logging.h"

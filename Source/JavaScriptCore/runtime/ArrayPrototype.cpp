@@ -267,7 +267,7 @@ JSC_DEFINE_HOST_FUNCTION(arrayProtoFuncToString, (JSGlobalObject* globalObject, 
         RETURN_IF_EXCEPTION(scope, { });
 
         // 3. If IsCallable(func) is false, then let func be the standard built-in method Object.prototype.toString (15.2.4.2).
-        auto callData = JSC::getCallData(function);
+        auto callData = JSC::getCallDataInline(function);
         if (callData.type == CallData::Type::None) [[unlikely]]
             RELEASE_AND_RETURN(scope, JSValue::encode(objectPrototypeToString(globalObject, thisObject)));
 
@@ -288,7 +288,7 @@ static JSString* toLocaleString(JSGlobalObject* globalObject, JSValue value, JSV
     JSValue toLocaleStringMethod = value.get(globalObject, vm.propertyNames->toLocaleString);
     RETURN_IF_EXCEPTION(scope, { });
 
-    auto callData = JSC::getCallData(toLocaleStringMethod);
+    auto callData = JSC::getCallDataInline(toLocaleStringMethod);
     if (callData.type == CallData::Type::None) {
         throwTypeError(globalObject, scope, "toLocaleString is not callable"_s);
         return { };
@@ -903,7 +903,7 @@ static ALWAYS_INLINE std::span<EncodedJSValue> sortStableSort(JSGlobalObject* gl
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    auto callData = JSC::getCallData(comparator);
+    auto callData = JSC::getCallDataInline(comparator);
     ASSERT(callData.type != CallData::Type::None);
 
     if (callData.type == CallData::Type::JS) [[likely]] {

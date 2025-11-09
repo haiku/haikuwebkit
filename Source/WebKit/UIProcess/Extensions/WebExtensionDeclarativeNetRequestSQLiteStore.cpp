@@ -247,8 +247,7 @@ Ref<JSON::Array> WebExtensionDeclarativeNetRequestSQLiteStore::getKeysAndValuesF
         if (!rule)
             continue;
 
-        auto ruleObject = JSON::Value::optionalParseJSON(StringView(rule->span()));
-
+        auto ruleObject = JSON::Value::optionalParseJSON(byteCast<Latin1Character>(rule->span()));
         if (ruleObject)
             results->pushValue(ruleObject->get());
 

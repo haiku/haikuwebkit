@@ -29,8 +29,8 @@
 
 #import "DOMNodeInternal.h"
 #import "DOMRangeInternal.h"
-#import <WebCore/DocumentInlines.h>
 #import <WebCore/DocumentMarkerController.h>
+#import <WebCore/DocumentMarkers.h>
 #import <WebCore/Editing.h>
 #import <WebCore/FrameSelection.h>
 #import <WebCore/HTMLTextFormControlElement.h>

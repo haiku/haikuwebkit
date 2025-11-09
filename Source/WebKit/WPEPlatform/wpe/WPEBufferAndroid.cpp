@@ -121,7 +121,7 @@ static gpointer wpeBufferAndroidImportToEGLImage(WPEBuffer* buffer, GError** err
             if (s_eglCreateImageKHR && s_eglDestroyImage)
                 s_createImage = createImageKHRImageBase;
         }
-        if (!s_eglCreateImage) {
+        if (!s_createImage) {
             g_set_error_literal(error, WPE_BUFFER_ERROR, WPE_BUFFER_ERROR_IMPORT_FAILED, "No EGLImage support, EGL 1.5 or EGL_KHR_image needed");
             return nullptr;
         }

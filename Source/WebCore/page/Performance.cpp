@@ -380,7 +380,7 @@ void Performance::reportFirstContentfulPaint(DOMHighResTimeStamp timestamp)
     queueEntry(*m_firstContentfulPaint);
 }
 
-void Performance::reportLargestContentfulPaint(Ref<LargestContentfulPaint>&& paintEntry)
+void Performance::enqueueLargestContentfulPaint(Ref<LargestContentfulPaint>&& paintEntry)
 {
     m_largestContentfulPaint = RefPtr { WTFMove(paintEntry) };
     queueEntry(*m_largestContentfulPaint);

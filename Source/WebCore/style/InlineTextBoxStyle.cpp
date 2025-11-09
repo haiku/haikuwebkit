@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -161,18 +161,18 @@ static float computedUnderlineOffset(const UnderlineOffsetArguments& context)
         if (textUnderlinePosition.contains(TextUnderlinePosition::Right)) {
             ASSERT(!textUnderlinePosition.contains(TextUnderlinePosition::Left));
             // In vertical typographic modes, the underline is aligned as for under, except it is always aligned to the right edge of the text.
-            underlineOffset = 0.f - (styleToUse.textUnderlineOffset().resolve(styleToUse.computedFontSize()) + defaultGap(styleToUse));
+            underlineOffset = 0.f - (styleToUse.textUnderlineOffset().resolve(styleToUse) + defaultGap(styleToUse));
         } else {
             // Position underline relative to the bottom edge of the lowest element's content box.
             auto desiredOffset = context.textUnderlinePositionUnder->textRunLogicalHeight + std::max(context.textUnderlinePositionUnder->textRunOffsetFromBottomMost, 0.f);
-            desiredOffset += styleToUse.textUnderlineOffset().resolve(styleToUse.computedFontSize()) + defaultGap(styleToUse);
+            desiredOffset += styleToUse.textUnderlineOffset().resolve(styleToUse) + defaultGap(styleToUse);
             underlineOffset = std::max<float>(desiredOffset, fontMetrics.intAscent());
         }
     } else if (textUnderlinePosition.contains(TextUnderlinePosition::FromFont)) {
         ASSERT(!textUnderlinePosition.contains(TextUnderlinePosition::Under));
-        underlineOffset = fontMetrics.intAscent() + fontMetrics.underlinePosition().value_or(0) + styleToUse.textUnderlineOffset().resolve(styleToUse.computedFontSize());
+        underlineOffset = fontMetrics.intAscent() + fontMetrics.underlinePosition().value_or(0) + styleToUse.textUnderlineOffset().resolve(styleToUse);
     } else
-        underlineOffset = fontMetrics.intAscent() + styleToUse.textUnderlineOffset().resolve(styleToUse.computedFontSize(), defaultGap(styleToUse));
+        underlineOffset = fontMetrics.intAscent() + styleToUse.textUnderlineOffset().resolve(styleToUse, defaultGap(styleToUse));
     return underlineOffset;
 }
 
@@ -195,7 +195,7 @@ static GlyphOverflow computedInkOverflowForDecorations(const RenderStyle& lineSt
     if (decoration.isNone())
         return GlyphOverflow();
 
-    float strokeThickness = lineStyle.textDecorationThickness().resolve(lineStyle.computedFontSize(), lineStyle.metricsOfPrimaryFont());
+    float strokeThickness = lineStyle.textDecorationThickness().resolve(lineStyle);
     WavyStrokeParameters wavyStrokeParameters;
     float wavyOffset = 0;
 
@@ -224,7 +224,7 @@ static GlyphOverflow computedInkOverflowForDecorations(const RenderStyle& lineSt
     }
     if (decoration.hasOverline()) {
         FloatRect rect(FloatPoint(), FloatSize(1, strokeThickness));
-        float autoTextDecorationThickness = Style::TextDecorationThickness { CSS::Keyword::Auto { } }.resolve(lineStyle.computedFontSize(), lineStyle.metricsOfPrimaryFont());
+        float autoTextDecorationThickness = Style::TextDecorationThickness { CSS::Keyword::Auto { } }.resolve(lineStyle);
         rect.move(0, autoTextDecorationThickness - strokeThickness - wavyOffset);
         if (decorationStyle == TextDecorationStyle::Wavy) {
             FloatBoxExtent wavyExpansion;
@@ -237,7 +237,7 @@ static GlyphOverflow computedInkOverflowForDecorations(const RenderStyle& lineSt
     }
     if (decoration.hasLineThrough()) {
         FloatRect rect(FloatPoint(), FloatSize(1, strokeThickness));
-        float autoTextDecorationThickness = Style::TextDecorationThickness { CSS::Keyword::Auto { } }.resolve(lineStyle.computedFontSize(), lineStyle.metricsOfPrimaryFont());
+        float autoTextDecorationThickness = Style::TextDecorationThickness { CSS::Keyword::Auto { } }.resolve(lineStyle);
         auto center = 2 * lineStyle.metricsOfPrimaryFont().ascent() / 3 + autoTextDecorationThickness / 2;
         rect.move(0, center - strokeThickness / 2);
         if (decorationStyle == TextDecorationStyle::Wavy) {

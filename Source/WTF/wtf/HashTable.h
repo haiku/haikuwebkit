@@ -1216,7 +1216,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     constexpr unsigned HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::computeBestTableSize(unsigned keyCount)
     {
         unsigned bestTableSize = roundUpToPowerOfTwo(keyCount);
-        static constexpr double minLoadRatio = 1.0 / minLoad;
+        constexpr double minLoadRatio = 1.0 / minLoad;
 
         if (HashTableSizePolicy::shouldExpand(keyCount, bestTableSize))
             bestTableSize *= 2;

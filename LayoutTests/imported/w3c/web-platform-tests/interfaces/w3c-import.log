@@ -76,6 +76,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/badging.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/battery-status.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/beacon.idl
+/LayoutTests/imported/w3c/web-platform-tests/interfaces/body-tracking.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/capture-handle-identity.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/captured-mouse-events.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/captured-mouse-events.tentative.idl
@@ -122,7 +123,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/css-transitions-2.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/css-transitions.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/css-typed-om.idl
-/LayoutTests/imported/w3c/web-platform-tests/interfaces/css-view-transitions-2.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/css-view-transitions.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/css-viewport.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/cssom-view.idl
@@ -182,6 +182,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/largest-contentful-paint.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/layout-instability.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/local-font-access.idl
+/LayoutTests/imported/w3c/web-platform-tests/interfaces/local-network-access.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/login-status.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/long-animation-frames.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/longtasks.idl
@@ -236,7 +237,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/privacy-preserving-attribution.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/private-aggregation-api.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/private-click-measurement.idl
-/LayoutTests/imported/w3c/web-platform-tests/interfaces/private-network-access.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/proximity.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/push-api.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/raw-camera-access.idl
@@ -310,6 +310,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webcodecs-opus-codec-registration.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webcodecs-vp9-codec-registration.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webcodecs.idl
+/LayoutTests/imported/w3c/web-platform-tests/interfaces/webcrypto-modern-algos.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webcrypto-secure-curves.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webcrypto.idl
 /LayoutTests/imported/w3c/web-platform-tests/interfaces/webdriver.idl

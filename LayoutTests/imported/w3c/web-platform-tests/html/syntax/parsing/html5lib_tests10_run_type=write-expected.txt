@@ -4,8 +4,8 @@ html5lib Parser Test
 PASS html5lib_tests10.html 33cab27b810c8329105a4447f7767307577cb52f
 PASS html5lib_tests10.html b833b22c2ce59749e320b26fbc4d277bc015f261
 PASS html5lib_tests10.html 5159857bc8326870c92e525f000abe74b51f9104
-FAIL html5lib_tests10.html fee2541ab7080ca5b363bb4b7b0c18ee1d3699ba assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <svg svg>" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>"
-FAIL html5lib_tests10.html 679fbaa80e9d15416f17eb041a8fe04c373f0e12 assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         <svg svg>" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>"
+PASS html5lib_tests10.html fee2541ab7080ca5b363bb4b7b0c18ee1d3699ba
+PASS html5lib_tests10.html 679fbaa80e9d15416f17eb041a8fe04c373f0e12
 PASS html5lib_tests10.html 0fe5609efd1436590d64aa7f47643fcaf1decc9c
 PASS html5lib_tests10.html 7900ad087a3da10cbd7eb3eae57181ca7e417f0e
 PASS html5lib_tests10.html 52f78e3d4b60a998fe249f7c026078f13ef65fe3
@@ -17,8 +17,8 @@ PASS html5lib_tests10.html ae19484ce5b8e2087e3df7f13183622d2cf059a7
 PASS html5lib_tests10.html 7f9c4aeecce3bbf1483104213487a506cfdc6650
 PASS html5lib_tests10.html 219f8f9866ad87d2e98f0cbbf35e0d7070848f81
 PASS html5lib_tests10.html a1e3a3515da712da9fa9bae0ab874a0a31207e6b
-FAIL html5lib_tests10.html badaa2069df3f2bb2d2da79f8ae2598f66ab2d0f assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <svg svg>\n|                 <svg g>\n|                   \"foo\"\n|                 <svg g>\n|                   \"bar\"\n|               <p>\n|                 \"baz\"\n|     <p>\n|       \"quux\"" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               \"foobarbaz\"\n|     <p>\n|       \"quux\""
-FAIL html5lib_tests10.html 64e72bd5af825a0b014a78c77d6d0be8c330892b assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <svg svg>\n|         <svg g>\n|           \"foo\"\n|         <svg g>\n|           \"bar\"\n|       <p>\n|         \"baz\"\n|     <table>\n|     <p>\n|       \"quux\"" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"foobarbaz\"\n|     <table>\n|     <p>\n|       \"quux\""
+PASS html5lib_tests10.html badaa2069df3f2bb2d2da79f8ae2598f66ab2d0f
+PASS html5lib_tests10.html 64e72bd5af825a0b014a78c77d6d0be8c330892b
 PASS html5lib_tests10.html 6b6728b11b3f67a6b67e0dec03222222783e2c40
 PASS html5lib_tests10.html c16f6e833fafc8e96c4d888aace5e7df190f8bb5
 PASS html5lib_tests10.html 8b5cc06ce9513c4b0b2be26adad3357c79a10241
@@ -55,126 +55,4 @@ PASS html5lib_tests10.html bfd98674d75ff3291d377f2a7cec3321844a0701
 PASS html5lib_tests10.html 7fc99b729a6d57d28b2ad1edc33bb15167e051bb
 PASS html5lib_tests10.html 8e87f0d5ca606ca162384d1bf3bb8de62bd6f398
 PASS html5lib_tests10.html 6476f80f3d2a04e9c1323ffe78686188c579e9ac
-fee2541ab7080ca5b363bb4b7b0c18ee1d3699ba
-
-Input
-
-<!DOCTYPE html><body><select><svg></svg></select>
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <svg svg>
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-679fbaa80e9d15416f17eb041a8fe04c373f0e12
-
-Input
-
-<!DOCTYPE html><body><select><option><svg></svg></option></select>
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-|         <svg svg>
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-badaa2069df3f2bb2d2da79f8ae2598f66ab2d0f
-
-Input
-
-<!DOCTYPE html><body><table><tr><td><select><svg><g>foo</g><g>bar</g><p>baz</table><p>quux
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <table>
-|       <tbody>
-|         <tr>
-|           <td>
-|             <select>
-|               <svg svg>
-|                 <svg g>
-|                   "foo"
-|                 <svg g>
-|                   "bar"
-|               <p>
-|                 "baz"
-|     <p>
-|       "quux"
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <table>
-|       <tbody>
-|         <tr>
-|           <td>
-|             <select>
-|               "foobarbaz"
-|     <p>
-|       "quux"
-64e72bd5af825a0b014a78c77d6d0be8c330892b
-
-Input
-
-<!DOCTYPE html><body><table><select><svg><g>foo</g><g>bar</g><p>baz</table><p>quux
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <svg svg>
-|         <svg g>
-|           "foo"
-|         <svg g>
-|           "bar"
-|       <p>
-|         "baz"
-|     <table>
-|     <p>
-|       "quux"
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       "foobarbaz"
-|     <table>
-|     <p>
-|       "quux"
 

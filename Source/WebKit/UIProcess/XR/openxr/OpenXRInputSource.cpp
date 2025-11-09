@@ -143,7 +143,21 @@ XrResult OpenXRInputSource::suggestBindings(SuggestedBindings& bindings) const
         }
     };
 
+    auto isInteractionPathSupported = [](const ASCIILiteral& path) {
+        if (path == handInteractionProfilePath) {
+#if defined(XR_EXT_hand_interaction)
+            return OpenXRExtensions::singleton().isExtensionSupported(XR_EXT_HAND_INTERACTION_EXTENSION_NAME ""_span);
+#else
+            return false;
+#endif
+        }
+        return true;
+    };
+
     for (const auto& profile : openXRInteractionProfiles) {
+        if (!isInteractionPathSupported(profile.path))
+            continue;
+
         CHECK_XRCMD(createBinding(profile.path, m_gripAction, makeString(m_subactionPathName, s_inputGripPath), bindings));
         CHECK_XRCMD(createBinding(profile.path, m_pointerAction, makeString(m_subactionPathName, s_inputAimPath), bindings));
 

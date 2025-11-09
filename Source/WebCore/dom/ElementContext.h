@@ -41,8 +41,6 @@ struct ElementContext {
     Markable<ScriptExecutionContextIdentifier> documentIdentifier;
     Markable<NodeIdentifier> nodeIdentifier;
 
-    ~ElementContext() = default;
-
     bool isSameElement(const ElementContext& other) const
     {
         return webPageIdentifier == other.webPageIdentifier && documentIdentifier == other.documentIdentifier && nodeIdentifier == other.nodeIdentifier;

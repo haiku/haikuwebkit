@@ -122,7 +122,8 @@
 #include <@API_INCLUDE_PREFIX@/WebKitUserMessage.h>
 #include <@API_INCLUDE_PREFIX@/WebKitVersion.h>
 #include <@API_INCLUDE_PREFIX@/WebKitWebContext.h>
-#if PLATFORM(GTK)
+#if ENABLE(2022_GLIB_API)
+#include <@API_INCLUDE_PREFIX@/WebKitWebExtension.h>
 #include <@API_INCLUDE_PREFIX@/WebKitWebExtensionMatchPattern.h>
 #endif
 #if PLATFORM(GTK)

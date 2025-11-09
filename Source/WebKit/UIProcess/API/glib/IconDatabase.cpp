@@ -220,7 +220,7 @@ void IconDatabase::pruneTimerFired()
     ASSERT(m_db.isOpen());
 
     if (!m_pruneIconsStatement) {
-        m_pruneIconsStatement = m_db.prepareHeapStatement("DELETE FROM IconInfo WHERE stamp <= (?);"_s);
+        m_pruneIconsStatement = m_db.prepareStatement("DELETE FROM IconInfo WHERE stamp <= (?);"_s);
         if (m_pruneIconsStatement) {
             LOG_ERROR("Preparing statement pruneIcons failed");
             return;
@@ -290,7 +290,7 @@ std::optional<int64_t> IconDatabase::iconIDForIconURL(const String& iconURL, boo
     ASSERT(m_db.isOpen());
 
     if (!m_iconIDForIconURLStatement) {
-        m_iconIDForIconURLStatement = m_db.prepareHeapStatement("SELECT IconInfo.iconID, IconInfo.stamp FROM IconInfo WHERE IconInfo.url = (?);"_s);
+        m_iconIDForIconURLStatement = m_db.prepareStatement("SELECT IconInfo.iconID, IconInfo.stamp FROM IconInfo WHERE IconInfo.url = (?);"_s);
         if (!m_iconIDForIconURLStatement) {
             LOG_ERROR("Preparing statement iconIDForIconURL failed");
             return std::nullopt;
@@ -319,7 +319,7 @@ bool IconDatabase::setIconIDForPageURL(int64_t iconID, const String& pageURL)
     ASSERT(m_allowDatabaseWrite == AllowDatabaseWrite::Yes);
 
     if (!m_setIconIDForPageURLStatement) {
-        m_setIconIDForPageURLStatement = m_db.prepareHeapStatement("INSERT INTO PageURL (url, iconID) VALUES ((?), ?);"_s);
+        m_setIconIDForPageURLStatement = m_db.prepareStatement("INSERT INTO PageURL (url, iconID) VALUES ((?), ?);"_s);
         if (!m_setIconIDForPageURLStatement) {
             LOG_ERROR("Preparing statement setIconIDForPageURL failed");
             return false;
@@ -345,7 +345,7 @@ Vector<uint8_t> IconDatabase::iconData(int64_t iconID)
     ASSERT(m_db.isOpen());
 
     if (!m_iconDataStatement) {
-        m_iconDataStatement = m_db.prepareHeapStatement("SELECT IconData.data FROM IconData WHERE IconData.iconID = (?);"_s);
+        m_iconDataStatement = m_db.prepareStatement("SELECT IconData.data FROM IconData WHERE IconData.iconID = (?);"_s);
         if (!m_iconDataStatement) {
             LOG_ERROR("Preparing statement iconData failed");
             return { };
@@ -369,14 +369,14 @@ std::optional<int64_t> IconDatabase::addIcon(const String& iconURL, const Vector
     ASSERT(m_allowDatabaseWrite == AllowDatabaseWrite::Yes);
 
     if (!m_addIconStatement) {
-        m_addIconStatement = m_db.prepareHeapStatement("INSERT INTO IconInfo (url, stamp) VALUES (?, 0);"_s);
+        m_addIconStatement = m_db.prepareStatement("INSERT INTO IconInfo (url, stamp) VALUES (?, 0);"_s);
         if (!m_addIconStatement) {
             LOG_ERROR("Preparing statement addIcon failed");
             return std::nullopt;
         }
     }
     if (!m_addIconDataStatement) {
-        m_addIconDataStatement = m_db.prepareHeapStatement("INSERT INTO IconData (iconID, data) VALUES (?, ?);"_s);
+        m_addIconDataStatement = m_db.prepareStatement("INSERT INTO IconData (iconID, data) VALUES (?, ?);"_s);
         if (!m_addIconDataStatement) {
             LOG_ERROR("Preparing statement addIconData failed");
             return std::nullopt;
@@ -410,7 +410,7 @@ void IconDatabase::updateIconTimestamp(int64_t iconID, int64_t timestamp)
     ASSERT(m_allowDatabaseWrite == AllowDatabaseWrite::Yes);
 
     if (!m_updateIconTimestampStatement) {
-        m_updateIconTimestampStatement = m_db.prepareHeapStatement("UPDATE IconInfo SET stamp = ? WHERE iconID = ?;"_s);
+        m_updateIconTimestampStatement = m_db.prepareStatement("UPDATE IconInfo SET stamp = ? WHERE iconID = ?;"_s);
         if (!m_updateIconTimestampStatement) {
             LOG_ERROR("Preparing statement updateIconTimestamp failed");
             return;
@@ -433,21 +433,21 @@ void IconDatabase::deleteIcon(int64_t iconID)
     ASSERT(m_allowDatabaseWrite == AllowDatabaseWrite::Yes);
 
     if (!m_deletePageURLsForIconStatement) {
-        m_deletePageURLsForIconStatement = m_db.prepareHeapStatement("DELETE FROM PageURL WHERE PageURL.iconID = (?);"_s);
+        m_deletePageURLsForIconStatement = m_db.prepareStatement("DELETE FROM PageURL WHERE PageURL.iconID = (?);"_s);
         if (!m_deletePageURLsForIconStatement) {
             LOG_ERROR("Preparing statement deletePageURLsForIcon failed");
             return;
         }
     }
     if (!m_deleteIconDataStatement) {
-        m_deleteIconDataStatement = m_db.prepareHeapStatement("DELETE FROM IconData WHERE IconData.iconID = (?);"_s);
+        m_deleteIconDataStatement = m_db.prepareStatement("DELETE FROM IconData WHERE IconData.iconID = (?);"_s);
         if (!m_deleteIconDataStatement) {
             LOG_ERROR("Preparing statement deleteIcon failed");
             return;
         }
     }
     if (!m_deleteIconStatement) {
-        m_deleteIconStatement = m_db.prepareHeapStatement("DELETE FROM IconInfo WHERE IconInfo.iconID = (?);"_s);
+        m_deleteIconStatement = m_db.prepareStatement("DELETE FROM IconInfo WHERE IconInfo.iconID = (?);"_s);
         if (!m_deleteIconStatement) {
             LOG_ERROR("Preparing statement deleteIcon failed");
             return;

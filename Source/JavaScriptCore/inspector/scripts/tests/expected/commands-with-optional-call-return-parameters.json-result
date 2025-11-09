@@ -436,7 +436,10 @@ void DatabaseBackendDispatcher::executeNoOptionalParameters(long protocol_reques
 #pragma once
 
 #include "TestProtocolObjects.h"
+#include <wtf/CheckedRef.h>
 #include <wtf/JSONValues.h>
+#include <wtf/Noncopyable.h>
+#include <wtf/Nonmovable.h>
 #include <wtf/text/WTFString.h>
 
 namespace Inspector {
@@ -597,14 +600,14 @@ public:
         Builder<STATE | MessageSet>& setMessage(const String& in_message)
         {
             static_assert(!(STATE & MessageSet), "property message already set");
-            m_result->setString("message"_s, in_message);
+            Ref { *m_result }->setString("message"_s, in_message);
             return castState<MessageSet>();
         }
 
         Builder<STATE | CodeSet>& setCode(int in_code)
         {
             static_assert(!(STATE & CodeSet), "property code already set");
-            m_result->setInteger("code"_s, in_code);
+            Ref { *m_result }->setInteger("code"_s, in_code);
             return castState<CodeSet>();
         }
 

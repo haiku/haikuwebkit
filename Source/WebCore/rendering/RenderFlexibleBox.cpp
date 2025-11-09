@@ -532,7 +532,6 @@ void RenderFlexibleBox::paintChildren(PaintInfo& paintInfo, const LayoutPoint& p
 
 void RenderFlexibleBox::repositionLogicalHeightDependentFlexItems(FlexLineStates& lineStates, LayoutUnit gapBetweenLines)
 {
-    auto flexLayoutScope = SetForScope(m_inCrossAxisLayout, true);
     LayoutUnit crossAxisStartEdge = lineStates.isEmpty() ? 0_lu : lineStates[0].crossAxisOffset;
     // If we have a single line flexbox, the line height is all the available space. For flex-direction: row,
     // this means we need to use the height, so we do this after calling updateLogicalHeight.
@@ -1772,30 +1771,37 @@ bool RenderFlexibleBox::canUseFlexItemForPercentageResolution(const RenderBox& f
     ASSERT(flexItem.isFlexItem());
 
     auto canUseByLayoutPhase = [&] {
-        if (m_inSimplifiedLayout) {
-            // While in simplified layout, we should only re-compute overflow and/or re-position out-of-flow boxes, some renderers (e.g. RenderReplaced and subclasses)
-            // currently ignore this optimization and run regular layout.
+        if (m_inFlexItemIntrinsicWidthComputation)
+            return flexItemCrossSizeShouldUseContainerCrossSize(flexItem) && !isFlexItem();
+
+        if (m_afterMainAxisItemSizing) {
+            // Final sizes for flex items are available only along the main axis.
+            // Percentages can be resolved only against those items when they are orthogonal to the flex container (i.e., their logical height is computed and final)
+            return !mainAxisIsFlexItemInlineAxis(flexItem);
+        }
+
+        if (m_afterCrossAxisItemSizing) {
+            // Final sizes for flex items are known in both the main and cross directions, so it's fine to resolve percentage heights using those final values.
             return true;
         }
 
         if (m_inPostFlexUpdateScrollbarLayout) {
-            // Unfortunately we run layout on flex content _after_ performing flex layout to ensure scrollbars are up to date (see endAndCommitUpdateScrollInfoAfterLayoutTransaction/updateScrollInfoAfterLayout).
-            // We need to let this content run percent resolution as if we were still in flex item layout.
+            // We run layout on flex content _after_ performing flex layout (see endAndCommitUpdateScrollInfoAfterLayoutTransaction/updateScrollInfoAfterLayout).
+            // Final sizes for flex items are known in both the main and cross directions.
             return true;
         }
 
-        if (m_inFlexItemLayout || &flexItem == view().frameView().layoutContext().subtreeLayoutRoot()) {
-            // While running flex _item_ layout, we may only resolve percentage against the flex item when it is orthogonal to the flex container.
+        if (m_inSimplifiedLayout) {
+            // While in simplified layout, we should only re-compute overflow and/or re-position out-of-flow boxes, some renderers (e.g. RenderReplaced and subclasses)
+            // currently ignore this optimization and run regular layout.
+            // Final sizes for flex items are known in both the main and cross directions, computed during previous layout(s).
+            return true;
+        }
+
+        if (&flexItem == view().frameView().layoutContext().subtreeLayoutRoot())
             return !mainAxisIsFlexItemInlineAxis(flexItem);
-        }
 
-        if (m_inFlexItemIntrinsicWidthComputation)
-            return flexItemCrossSizeShouldUseContainerCrossSize(flexItem) && !isFlexItem();
-
-        if (m_inCrossAxisLayout)
-            return true;
-
-        // Let's decide based on style when we are outside of layout (i.e. relative percent position).
+        // Outside of layout (i.e. when using relative percentage positioning), base the decision on style.
         return !m_inLayout;
     };
     if (!canUseByLayoutPhase())
@@ -2067,7 +2073,6 @@ static LayoutUnit alignmentOffset(LayoutUnit availableFreeSpace, ItemPosition po
         return availableFreeSpace;
     case ItemPosition::Center:
     case ItemPosition::AnchorCenter:
-    case ItemPosition::Dialog:
         return availableFreeSpace / 2;
     case ItemPosition::Baseline:
     case ItemPosition::LastBaseline: 
@@ -2398,7 +2403,6 @@ void RenderFlexibleBox::layoutAndPlaceFlexItems(LayoutUnit& crossAxisOffset, Fle
 
     ContentDistribution distribution = style().resolvedJustifyContentDistribution(contentAlignmentNormalBehavior());
     bool shouldFlipMainAxis = !isColumnFlow() && !isLeftToRightFlow();
-    auto flexLayoutScope = SetForScope(m_inFlexItemLayout, true);
     for (size_t i = 0; i < flexLayoutItems.size(); ++i) {
         auto& flexLayoutItem = flexLayoutItems[i];
         auto& flexItem = flexLayoutItem.renderer.get();
@@ -2431,7 +2435,10 @@ void RenderFlexibleBox::layoutAndPlaceFlexItems(LayoutUnit& crossAxisOffset, Fle
             flexItem.markForPaginationRelayoutIfNeeded();
         if (flexItem.needsLayout())
             m_relaidOutFlexItems.add(flexItem);
-        flexItem.layoutIfNeeded();
+        {
+            auto flexLayoutScope = SetForScope(m_afterMainAxisItemSizing, true);
+            flexItem.layoutIfNeeded();
+        }
         if (!flexLayoutItem.everHadLayout && flexItem.checkForRepaintDuringLayout()) {
             flexItem.repaint();
             flexItem.repaintOverhangingFloats(true);
@@ -2694,6 +2701,7 @@ void RenderFlexibleBox::performBaselineAlignment(LineState& lineState)
 
 void RenderFlexibleBox::applyStretchAlignmentToFlexItem(RenderBox& flexItem, LayoutUnit lineCrossAxisExtent)
 {
+    auto flexLayoutScope = SetForScope(m_afterCrossAxisItemSizing, true);
     if (mainAxisIsFlexItemInlineAxis(flexItem) && flexItem.style().logicalHeight().isAuto()) {
         LayoutUnit stretchedLogicalHeight = std::max(flexItem.borderAndPaddingLogicalHeight(),
         lineCrossAxisExtent - crossAxisMarginExtentForFlexItem(flexItem));

@@ -1642,33 +1642,19 @@ label.required, .required_explanation {
     font-weight: 400;
 }
 
-#copy-commitlog + #copy-commitlog-label:after {
-    display: inline-block;
-    overflow: visible;
-    background-image: var(--copy-commitlog-glyph);
-    background-color: transparent;
-    background-repeat: no-repeat;
-    background-size: 1.6rem;
-    background-position: 0.7rem 0.1rem;
-
-    content: "Copy bug for commit log";
-    
-    text-wrap: nowrap;
-
-    font-weight: 400;
-    color: var(--text-color-coolgray);
-    opacity: 0;
-    width: 0;
-    padding-left: 3rem;
-    transition: width 0ms, opacity 500ms ease-in-out;
+#copy-commitlog {
+   padding: 0.2rem 1rem;
+   font-size: var(--font-size-xsmall);
+   margin-inline-start: 1rem;
+   opacity: 0;
+   transition: opacity 500ms ease-in-out;
 }
 
-#copy-commitlog:hover + #copy-commitlog-label:after {
-    width: auto;
+.bz_short_desc_container:hover #copy-commitlog {
     opacity: 1;
 }
 
-#copy-commitlog.clicked + #copy-commitlog-label:after {
+#copy-commitlog.clicked {
     color: green;
     content: "Copied!";
 }

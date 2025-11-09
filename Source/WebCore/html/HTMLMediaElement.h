@@ -167,6 +167,7 @@ public:
     virtual ~HTMLMediaElementClient() = default;
 
     virtual void audioSessionCategoryChanged(AudioSessionCategory, AudioSessionMode, RouteSharingPolicy) { }
+    virtual void routingContextUIDChanged(const String&) { }
 };
 
 class HTMLMediaElement
@@ -183,7 +184,7 @@ class HTMLMediaElement
     , private AudioTrackClient
     , private TextTrackClient
     , private VideoTrackClient
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
+#if USE(AUDIO_SESSION)
     , private AudioSessionConfigurationChangeObserver
 #endif
 #if ENABLE(ENCRYPTED_MEDIA)
@@ -305,6 +306,7 @@ public:
     WEBCORE_EXPORT bool preservesPitch() const;
     WEBCORE_EXPORT void setPreservesPitch(bool);
 
+    WEBCORE_EXPORT double mediaPlayerCurrentTime() const;
 
 // MediaTime versions of playback state
     MediaTime currentMediaTime() const;
@@ -756,7 +758,7 @@ protected:
     bool isMediaElement() const final { return true; }
 
     RenderPtr<RenderElement> createElementRenderer(RenderStyle&&, const RenderTreePosition&) override;
-    bool isReplaced(const RenderStyle&) const override { return true; }
+    bool isReplaced(const RenderStyle* = nullptr) const override { return true; }
 
     SecurityOriginData documentSecurityOrigin() const final;
 
@@ -1073,8 +1075,11 @@ private:
     void sceneIdentifierDidChange() final;
 #endif
 
-#if USE(AUDIO_SESSION) && PLATFORM(MAC)
+#if USE(AUDIO_SESSION)
+#if PLATFORM(MAC)
     void hardwareMutedStateDidChange(const AudioSession&) final;
+#endif
+    void routingContextUIDDidChange(const AudioSession&) final;
 #endif
 
     bool hasMediaSource() const;

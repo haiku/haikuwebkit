@@ -28,10 +28,8 @@
 
 #include "ContentSecurityPolicy.h"
 #include "ContextDestructionObserverInlines.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "JSDOMPromiseDeferred.h"
-#include "Page.h"
 #include "ScriptSourceCode.h"
 #include "ScriptWrappableInlines.h"
 #include "SecurityOrigin.h"

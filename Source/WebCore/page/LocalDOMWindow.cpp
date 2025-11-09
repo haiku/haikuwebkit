@@ -40,6 +40,7 @@
 #include "ContentExtensionActions.h"
 #include "ContentExtensionRule.h"
 #include "ContentRuleListResults.h"
+#include "ContentSecurityPolicy.h"
 #include "ContextDestructionObserverInlines.h"
 #include "CookieStore.h"
 #include "CrossOriginMode.h"
@@ -56,8 +57,13 @@
 #include "DeviceOrientationAndMotionAccessController.h"
 #include "DeviceOrientationController.h"
 #include "Document.h"
+#include "DocumentEventLoop.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentQuirks.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
+#include "DocumentWindow.h"
 #include "Editor.h"
 #include "Element.h"
 #include "EventCounts.h"
@@ -70,6 +76,7 @@
 #include "FloatRect.h"
 #include "FocusController.h"
 #include "FrameConsoleClient.h"
+#include "FrameInlines.h"
 #include "FrameLoadRequest.h"
 #include "FrameLoader.h"
 #include "FrameTree.h"
@@ -108,7 +115,6 @@
 #include "PlatformStrategies.h"
 #include "PushManager.h"
 #include "PushStrategy.h"
-#include "Quirks.h"
 #include "RemoteFrame.h"
 #include "RequestAnimationFrameCallback.h"
 #include "ResourceLoadInfo.h"
@@ -1671,7 +1677,6 @@ Ref<CSSStyleDeclaration> LocalDOMWindow::getComputedStyle(Element& element, cons
     auto [pseudoElementIsParsable, pseudoElementIdentifier] = CSSSelectorParser::parsePseudoElement(pseudoElt, CSSSelectorParserContext { element.protectedDocument() });
     if (!pseudoElementIsParsable)
         return CSSComputedStyleDeclaration::createEmpty(element);
-    // FIXME: CSSSelectorParser::parsePseudoElement should never return PseudoId::None.
     return CSSComputedStyleDeclaration::create(element, pseudoElementIdentifier);
 }
 
@@ -2499,8 +2504,11 @@ EventTimingInteractionID LocalDOMWindow::computeInteractionID(Event& event, Even
 
     switch (type) {
     case EventType::keyup: {
-        ASSERT(event.isKeyboardEvent());
-        auto keyboardEvent = downcast<KeyboardEvent>(&event);
+        RefPtr keyboardEvent = dynamicDowncast<KeyboardEvent>(&event);
+        // Simulated keyboard inputs such as dictation are not KeyboardEvent:
+        if (!keyboardEvent) [[unlikely]]
+            return { };
+
         if (keyboardEvent->isComposing())
             return { };
 
@@ -2529,11 +2537,11 @@ EventTimingInteractionID LocalDOMWindow::computeInteractionID(Event& event, Even
         return { };
     }
     case EventType::input: {
-        // Return early for events not related to text, such as checkbox toggling:
-        if (!event.isInputEvent())
+        // Fails for events not related to text, such as checkbox toggling:
+        RefPtr inputEvent = dynamicDowncast<InputEvent>(&event);
+        if (!inputEvent)
             return { };
 
-        auto inputEvent = downcast<InputEvent>(&event);
         if (!inputEvent->isInputMethodComposing())
             return { };
 
@@ -2653,7 +2661,12 @@ void LocalDOMWindow::finalizeEventTimingEntry(PerformanceEventTimingCandidate& e
         return;
     }
     case EventType::keydown: {
-        auto keyboardEvent = downcast<KeyboardEvent>(&event);
+        RefPtr keyboardEvent = dynamicDowncast<KeyboardEvent>(&event);
+        // Simulated keyboard inputs such as dictation are not KeyboardEvent:
+        if (!keyboardEvent) [[unlikely]] {
+            m_performanceEventTimingCandidates.append(entry);
+            return;
+        }
         entry.interactionID = keyboardEvent->interactionID();
         auto keyCode = keyboardEvent->keyCode();
         // FIXME: checking for keyCode 229 (IME) is against the spec, but it's
@@ -2679,7 +2692,11 @@ void LocalDOMWindow::finalizeEventTimingEntry(PerformanceEventTimingCandidate& e
         return;
     }
     case EventType::keypress: {
-        auto keyboardEvent = downcast<KeyboardEvent>(&event);
+        RefPtr keyboardEvent = dynamicDowncast<KeyboardEvent>(&event);
+        if (!keyboardEvent) [[unlikely]] {
+            m_performanceEventTimingCandidates.append(entry);
+            return;
+        }
         auto keyCode = keyboardEvent->keyCodeForKeyDown();
         auto it = m_pendingKeyDowns.find(keyCode);
         if (it == m_pendingKeyDowns.end()) {

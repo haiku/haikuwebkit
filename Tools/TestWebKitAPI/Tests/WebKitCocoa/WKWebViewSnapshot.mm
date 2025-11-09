@@ -252,7 +252,7 @@ TEST(WKWebView, SnapshotImageEmptyWithOutOfScopeCompletionHandler)
 
     EXPECT_NULL([snapshotWrapper error]);
 
-    auto image = [snapshotWrapper image].get();
+    auto image = [snapshotWrapper image].unsafeGet();
     EXPECT_EQ(0UL, CGImageGetWidth(image));
     EXPECT_EQ(0UL, CGImageGetHeight(image));
 

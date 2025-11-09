@@ -724,7 +724,6 @@ space-evenly
 first-baseline
 last-baseline
 // stretch
-dialog
 
 // justify-content
 // start
@@ -1881,20 +1880,20 @@ span-self-start
 span-start
 span-top
 span-x-end
-span-x-self-end
-span-x-self-start
+span-self-x-end
+span-self-x-start
 span-x-start
 span-y-end
-span-y-self-end
-span-y-self-start
+span-self-y-end
+span-self-y-start
 span-y-start
 x-end
-x-self-end
-x-self-start
+self-x-end
+self-x-start
 x-start
 y-end
-y-self-end
-y-self-start
+self-y-end
+self-y-start
 y-start
 span-inline-start
 span-inline-end

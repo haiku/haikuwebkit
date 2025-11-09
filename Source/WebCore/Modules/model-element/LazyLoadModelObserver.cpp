@@ -28,7 +28,6 @@
 
 #if ENABLE(MODEL_ELEMENT)
 
-#include "DocumentInlines.h"
 #include "HTMLModelElement.h"
 #include "IntersectionObserverCallback.h"
 #include "IntersectionObserverEntry.h"

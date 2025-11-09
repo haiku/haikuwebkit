@@ -195,6 +195,11 @@ CookieStorageObserver& NetworkStorageSession::cookieStorageObserver() const
     return *m_cookieStorageObserver;
 }
 
+CheckedRef<CookieStorageObserver> NetworkStorageSession::checkedCookieStorageObserver() const
+{
+    return cookieStorageObserver();
+}
+
 RetainPtr<CFURLStorageSessionRef> createPrivateStorageSession(CFStringRef identifier, std::optional<HTTPCookieAcceptPolicy> cookieAcceptPolicy, NetworkStorageSession::ShouldDisableCFURLCache shouldDisableCFURLCache)
 {
     const void* sessionPropertyKeys[] = { _kCFURLStorageSessionIsPrivate };

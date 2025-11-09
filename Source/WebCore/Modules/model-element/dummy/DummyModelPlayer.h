@@ -27,6 +27,7 @@
 
 #include <WebCore/ModelPlayer.h>
 #include <WebCore/ModelPlayerClient.h>
+#include <WebCore/ModelPlayerIdentifier.h>
 #include <wtf/Forward.h>
 #include <wtf/Platform.h>
 #include <wtf/WeakPtr.h>
@@ -42,9 +43,7 @@ private:
     DummyModelPlayer(ModelPlayerClient&);
 
     // ModelPlayer overrides.
-#if ENABLE(MODEL_PROCESS)
     ModelPlayerIdentifier identifier() const final { return m_id; }
-#endif
     void load(Model&, LayoutSize) override;
     void sizeDidChange(LayoutSize) override;
     PlatformLayer* layer() override;
@@ -65,14 +64,20 @@ private:
     void hasAudio(CompletionHandler<void(std::optional<bool>&&)>&&) override;
     void isMuted(CompletionHandler<void(std::optional<bool>&&)>&&) override;
     void setIsMuted(bool, CompletionHandler<void(bool success)>&&) override;
-#if PLATFORM(COCOA)
-    Vector<RetainPtr<id>> accessibilityChildren() override;
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+    ModelPlayerAccessibilityChildren accessibilityChildren() override;
+#endif
+#if ENABLE(GPU_PROCESS_MODEL)
+    const MachSendRight* displayBuffer() const override;
+    GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate() override;
 #endif
 
+#if ENABLE(GPU_PROCESS_MODEL)
+    ThreadSafeWeakPtr<ModelPlayerClient> m_client;
+#else
     WeakPtr<ModelPlayerClient> m_client;
-#if ENABLE(MODEL_PROCESS)
-    ModelPlayerIdentifier m_id;
 #endif
+    ModelPlayerIdentifier m_id;
 };
 
 }

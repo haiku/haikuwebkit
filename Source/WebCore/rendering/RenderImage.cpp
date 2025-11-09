@@ -31,7 +31,7 @@
 #include "AXObjectCache.h"
 #include "BitmapImage.h"
 #include "CachedImage.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "FocusController.h"
 #include "FontCache.h"
 #include "FontCascade.h"
@@ -702,7 +702,7 @@ void RenderImage::paintAreaElementFocusRing(PaintInfo& paintInfo, const LayoutPo
     if (!areaElementStyle)
         return;
 
-    auto outlineWidth = Style::evaluate<float>(areaElementStyle->outlineWidth(), Style::ZoomNeeded { });
+    auto outlineWidth = Style::evaluate<float>(areaElementStyle->outlineWidth(), areaElementStyle->usedZoomForLength());
     if (!outlineWidth)
         return;
 
@@ -749,7 +749,7 @@ ImageDrawResult RenderImage::paintIntoRect(PaintInfo& paintInfo, const FloatRect
         return ImageDrawResult::DidNothing;
 
     // FIXME: Document when image != img.get().
-    auto* image = imageResource().image().get();
+    auto* image = imageResource().image().unsafeGet();
 
     ImagePaintingOptions options = {
         CompositeOperator::SourceOver,

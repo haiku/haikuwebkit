@@ -43,7 +43,7 @@ auto DOMPromise::whenSettled(Function<void()>&& callback) -> IsCallbackRegistere
     return whenPromiseIsSettled(globalObject(), promise(), WTFMove(callback));
 }
 
-auto DOMPromise::whenPromiseIsSettled(JSDOMGlobalObject* globalObject, JSC::JSObject* promise, Function<void()>&& callback) -> IsCallbackRegistered
+auto DOMPromise::whenPromiseIsSettled(JSDOMGlobalObject* globalObject, JSC::JSPromise* promise, Function<void()>&& callback) -> IsCallbackRegistered
 {
     auto& lexicalGlobalObject = *globalObject;
     auto& vm = lexicalGlobalObject.vm();
@@ -53,37 +53,18 @@ auto DOMPromise::whenPromiseIsSettled(JSDOMGlobalObject* globalObject, JSC::JSOb
         return JSC::JSValue::encode(JSC::jsUndefined());
     });
 
-    auto scope = DECLARE_THROW_SCOPE(vm);
-    const JSC::Identifier& privateName = vm.propertyNames->builtinNames().thenPrivateName();
-    auto thenFunction = promise->get(&lexicalGlobalObject, privateName);
-
-    EXCEPTION_ASSERT(!scope.exception() || vm.hasPendingTerminationException());
-    if (scope.exception())
-        return IsCallbackRegistered::No;
-
-    ASSERT(thenFunction.isCallable());
-
-    JSC::MarkedArgumentBuffer arguments;
-    arguments.append(handler);
-    arguments.append(handler);
-    ASSERT(!arguments.hasOverflowed());
-
-    auto callData = JSC::getCallData(thenFunction);
-    ASSERT(callData.type != JSC::CallData::Type::None);
-    call(&lexicalGlobalObject, thenFunction, callData, promise, arguments);
-
-    EXCEPTION_ASSERT(!scope.exception() || vm.hasPendingTerminationException());
-    return scope.exception() ? IsCallbackRegistered::No : IsCallbackRegistered::Yes;
+    promise->performPromiseThenExported(vm, &lexicalGlobalObject, handler, handler, JSC::jsUndefined());
+    return IsCallbackRegistered::Yes;
 }
 
 JSC::JSValue DOMPromise::result() const
 {
-    return promise()->result(m_globalObject->vm());
+    return promise()->result();
 }
 
 DOMPromise::Status DOMPromise::status() const
 {
-    switch (promise()->status(m_globalObject->vm())) {
+    switch (promise()->status()) {
     case JSC::JSPromise::Status::Pending:
         return Status::Pending;
     case JSC::JSPromise::Status::Fulfilled:
@@ -97,7 +78,7 @@ DOMPromise::Status DOMPromise::status() const
 
 void DOMPromise::markAsHandled()
 {
-    promise()->markAsHandled(m_globalObject.get());
+    promise()->markAsHandled();
 }
 
 }

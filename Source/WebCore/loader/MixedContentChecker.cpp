@@ -30,72 +30,54 @@
 #include "config.h"
 #include "MixedContentChecker.h"
 
-#include "DocumentInlines.h"
 #include "Document.h"
+#include "FrameLoader.h"
 #include "LegacySchemeRegistry.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
+#include "LocalFrameLoaderClient.h"
 #include "SecurityOrigin.h"
-#include <JavaScriptCore/ConsoleTypes.h>
-#include <wtf/text/MakeString.h>
 
 namespace WebCore {
 
-static bool isDocumentSecure(const Document& document)
+static bool isDocumentSecure(const Frame& frame)
 {
     // FIXME: Use document.isDocumentSecure(), instead of comparing against "https" scheme, when all ports stop using loopback in LayoutTests
     // sandboxed iframes have an opaque origin so we should perform the mixed content check considering the origin
     // the iframe would have had if it were not sandboxed.
-    return document.securityOrigin().protocol() == "https"_s || (document.securityOrigin().isOpaque() && document.url().protocolIs("https"_s));
+    if (RefPtr origin = frame.frameDocumentSecurityOrigin())
+        return origin->protocol() == "https"_s || (origin->isOpaque() && frame.frameURLProtocol() == "https"_s);
+
+    return false;
 }
 
-static bool isDataContextSecure(const LocalFrame& frame)
+static bool isDataContextSecure(const Frame& frame)
 {
-    RefPtr document = frame.document();
+    RefPtr currentFrame = frame;
 
-    while (document) {
-        if (isDocumentSecure(*document))
+    while (currentFrame) {
+        RefPtr localFrame = dynamicDowncast<const LocalFrame>(currentFrame);
+        RefPtr<Document> document;
+        if (localFrame)
+            document = localFrame->document();
+
+        if (isDocumentSecure(*currentFrame))
             return true;
 
-        RefPtr frame = document->frame();
-        if (!frame || frame->isMainFrame())
-            break;
-
-        RefPtr parentFrame = frame->tree().parent();
-        if (!parentFrame)
-            break;
-
-        if (RefPtr localParentFrame = dynamicDowncast<LocalFrame>(parentFrame.get()))
-            document = localParentFrame->document();
-        else {
-            // FIXME: <rdar://116259764> Make mixed content checks work correctly with site isolated iframes.
-            break;
-        }
+        RefPtr parentFrame = currentFrame->tree().parent();
+        if (!parentFrame && localFrame)
+            parentFrame = localFrame->loader().client().provisionalParentFrame();
+        currentFrame = parentFrame;
     }
 
     return false;
 }
 
-static bool isMixedContent(const Document& document, const URL& url)
+static bool isMixedContent(const Frame& frame, const URL& url)
 {
-    if (isDocumentSecure(document) || (document.url().protocolIs("data"_s) && isDataContextSecure(*document.frame())))
+    if (isDocumentSecure(frame) || (frame.frameURLProtocol() == "data"_s && isDataContextSecure(frame)))
         return !SecurityOrigin::isSecure(url);
 
     return false;
-}
-
-static void logConsoleWarning(const LocalFrame& frame, bool blocked, const URL& target, bool isUpgradingIPAddressAndLocalhostEnabled)
-{
-    auto isUpgradingLocalhostDisabled = !isUpgradingIPAddressAndLocalhostEnabled && shouldTreatAsPotentiallyTrustworthy(target);
-    ASCIILiteral errorString = [&] {
-    if (blocked)
-        return "blocked and must"_s;
-    if (isUpgradingLocalhostDisabled)
-        return "not upgraded to HTTPS and must be served from the local host."_s;
-    return "automatically upgraded and should"_s;
-    }();
-
-    auto message = makeString((!blocked ? ""_s : "[blocked] "_s), "The page at "_s, frame.document()->url().stringCenterEllipsizedToLength(), " requested insecure content from "_s, target.stringCenterEllipsizedToLength(), ". This content was "_s, errorString, !isUpgradingLocalhostDisabled ? " be served over HTTPS.\n"_s : "\n"_s);
-    frame.protectedDocument()->addConsoleMessage(MessageSource::Security, MessageLevel::Warning, message);
 }
 
 static bool destinationIsImageAudioOrVideo(FetchOptions::Destination destination)
@@ -117,16 +99,14 @@ bool MixedContentChecker::shouldUpgradeInsecureContent(LocalFrame& frame, IsUpgr
     // https://www.w3.org/TR/mixed-content/#upgrade-algorithm
     // Editor’s Draft, 23 February 2023
     // 4.1. Upgrade a mixed content request to a potentially trustworthy URL, if appropriate
-    if (!isMixedContent(*frame.document(), url))
+    if (!isMixedContent(frame, url))
         return false;
-
-    auto shouldUpgradeIPAddressAndLocalhostForTesting = document->settings().iPAddressAndLocalhostMixedContentUpgradeTestingEnabled();
 
     // 4.1 The request's URL is not upgraded in the following cases.
     if (!canModifyRequest(url, destination, initiator))
         return false;
 
-    logConsoleWarning(frame, /* blocked */ false, url, shouldUpgradeIPAddressAndLocalhostForTesting);
+    frame.reportMixedContentViolation(false, url);
     return true;
 }
 
@@ -148,16 +128,17 @@ bool MixedContentChecker::canModifyRequest(const URL& url, FetchOptions::Destina
     return true;
 }
 
-bool MixedContentChecker::shouldBlockRequest(LocalFrame& frame, const URL& url, IsUpgradable isUpgradable)
+bool MixedContentChecker::shouldBlockRequest(Frame& frame, const URL& url, IsUpgradable isUpgradable)
 {
-    RefPtr document = frame.document();
-    if (!document)
-        return false;
-    if (!isMixedContent(*frame.document(), url))
+    RefPtr<Document> document;
+    if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame))
+        document = localFrame->document();
+
+    if (!isMixedContent(frame, url))
         return false;
     if ((LegacySchemeRegistry::schemeIsHandledBySchemeHandler(url.protocol()) || shouldTreatAsPotentiallyTrustworthy(url)) && isUpgradable == IsUpgradable::Yes)
         return false;
-    logConsoleWarning(frame, /* blocked */ true, url, document->settings().iPAddressAndLocalhostMixedContentUpgradeTestingEnabled());
+    frame.reportMixedContentViolation(true, url);
     return true;
 }
 

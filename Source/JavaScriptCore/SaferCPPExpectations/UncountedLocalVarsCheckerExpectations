@@ -110,14 +110,12 @@ runtime/TypeSet.cpp
 runtime/VMTraps.cpp
 runtime/WaiterListManager.h
 tools/JSDollarVM.cpp
-tools/VMInspector.cpp
 wasm/WasmBBQJIT.cpp
 wasm/WasmBBQJIT64.cpp
 wasm/WasmBBQPlan.cpp
 wasm/WasmCallee.cpp
 wasm/WasmConstExprGenerator.cpp
 wasm/WasmFaultSignalHandler.cpp
-wasm/WasmFormat.h
 wasm/WasmFunctionParser.h
 wasm/WasmIPIntGenerator.cpp
 wasm/WasmIPIntPlan.cpp

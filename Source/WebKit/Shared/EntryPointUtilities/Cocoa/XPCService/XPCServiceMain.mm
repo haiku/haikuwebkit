@@ -25,6 +25,7 @@
 
 #import "config.h"
 
+#import "LaunchLogHook.h"
 #import "Logging.h"
 #import "WKCrashReporter.h"
 #import "WebKitServiceNames.h"
@@ -85,11 +86,12 @@ static void initializeCFPrefs()
 #endif // ENABLE(CFPREFS_DIRECT_MODE)
 }
 
-static void initializeLogd(bool disableLogging)
+static void initializeLogd(bool disableLogging, xpc_connection_t connection)
 {
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
     if (disableLogging) {
         os_trace_set_mode(OS_TRACE_MODE_OFF);
+        LaunchLogHook::singleton().initialize(connection);
         return;
     }
 #else
@@ -177,7 +179,7 @@ void XPCServiceEventHandler(xpc_connection_t peer)
             WTF::initialize();
 
             bool disableLogging = xpc_dictionary_get_bool(event, "disable-logging");
-            initializeLogd(disableLogging);
+            initializeLogd(disableLogging, retainedPeerConnection.get());
 
             if (RetainPtr languages = xpc_dictionary_get_value(event, "OverrideLanguages")) {
                 Vector<String> newLanguages;

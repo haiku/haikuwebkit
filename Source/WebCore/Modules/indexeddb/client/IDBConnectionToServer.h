@@ -159,7 +159,9 @@ private:
     typedef void (IDBConnectionToServer::*ResultFunction)(const IDBResultData&);
     void callResultFunctionWithErrorLater(ResultFunction, const IDBResourceIdentifier& requestIdentifier);
 
-    WeakPtr<IDBConnectionToServerDelegate> m_delegate;
+    Ref<IDBConnectionToServerDelegate> protectedDelegate() const { return m_delegate.get(); }
+
+    WeakRef<IDBConnectionToServerDelegate> m_delegate;
     bool m_serverConnectionIsValid { true };
 
     const UniqueRef<IDBConnectionProxy> m_proxy;

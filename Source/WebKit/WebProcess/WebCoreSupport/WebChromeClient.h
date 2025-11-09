@@ -139,7 +139,13 @@ private:
     WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint&) const final;
     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) const final;
 
+    void mainFrameDidChange() final;
+
     void didFinishLoadingImageForElement(WebCore::HTMLImageElement&) final;
+
+#if ENABLE(MODEL_PROCESS)
+    void setHasModelElement(bool) final;
+#endif
 
     PlatformPageClient platformPageClient() const final;
     void contentsSizeChanged(WebCore::LocalFrame&, const WebCore::IntSize&) const final;

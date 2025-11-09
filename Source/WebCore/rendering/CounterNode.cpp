@@ -109,7 +109,7 @@ CounterNode* CounterNode::nextInPreOrderAfterChildren(const CounterNode* stayWit
         if (!current || current == stayWithin)
             return nullptr;
     }
-    return next.get();
+    return next.unsafeGet();
 }
 
 CounterNode* CounterNode::nextInPreOrder(const CounterNode* stayWithin) const

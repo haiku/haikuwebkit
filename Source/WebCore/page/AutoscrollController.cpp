@@ -170,7 +170,7 @@ void AutoscrollController::updateDragAndDrop(Node* dropTargetNode, const IntPoin
         if (offset.isZero())
             return nullptr;
 
-        return scrollable.get();
+        return scrollable.unsafeGet();
     };
     
     CheckedPtr scrollable = findDragAndDropScroller();

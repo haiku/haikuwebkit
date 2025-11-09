@@ -40,25 +40,10 @@ float TextUnderlineOffset::resolve(const RenderStyle& style, float autoValue) co
             return autoValue;
         },
         [&](const Fixed& fixed) -> float {
-            return Style::evaluate<float>(fixed, Style::ZoomNeeded { });
+            return Style::evaluate<float>(fixed, style.usedZoomForLength());
         },
         [&](const auto& percentage) -> float {
             return Style::evaluate<float>(percentage, style.computedFontSize());
-        }
-    );
-}
-
-float TextUnderlineOffset::resolve(float fontSize, float autoValue) const
-{
-    return WTF::switchOn(*this,
-        [&](const CSS::Keyword::Auto&) -> float {
-            return autoValue;
-        },
-        [&](const Fixed& fixed) -> float {
-            return Style::evaluate<float>(fixed, Style::ZoomNeeded { });
-        },
-        [&](const auto& percentage) -> float {
-            return Style::evaluate<float>(percentage, fontSize);
         }
     );
 }

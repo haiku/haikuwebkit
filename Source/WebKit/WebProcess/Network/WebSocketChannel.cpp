@@ -34,13 +34,12 @@
 #include <WebCore/AdvancedPrivacyProtections.h>
 #include <WebCore/Blob.h>
 #include <WebCore/ClientOrigin.h>
-#include <WebCore/Document.h>
 #include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentLoader.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/ExceptionCode.h>
 #include <WebCore/FrameDestructionObserverInlines.h>
-#include <WebCore/LocalFrame.h>
-#include <WebCore/Page.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/ThreadableWebSocketChannel.h>
 #include <WebCore/WebSocketChannelClient.h>
 #include <wtf/CheckedArithmetic.h>

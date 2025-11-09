@@ -342,7 +342,7 @@ class CppProtocolTypesHeaderGenerator(CppGenerator):
         lines.append('        Builder<STATE | %(camelName)sSet>& set%(camelName)s(%(memberType)s %(memberName)s)' % setter_args)
         lines.append('        {')
         lines.append('            static_assert(!(STATE & %(camelName)sSet), "property %(memberKey)s already set");' % setter_args)
-        lines.append('            m_result->%(setter)s("%(memberKey)s"_s, %(memberValue)s);' % setter_args)
+        lines.append('            Ref { *m_result }->%(setter)s("%(memberKey)s"_s, %(memberValue)s);' % setter_args)
         lines.append('            return castState<%(camelName)sSet>();' % setter_args)
         lines.append('        }')
         if type_member.is_nullable:
@@ -350,7 +350,7 @@ class CppProtocolTypesHeaderGenerator(CppGenerator):
             lines.append('        Builder<STATE | %(camelName)sSet>& set%(camelName)sIsNull()' % setter_args)
             lines.append('        {')
             lines.append('            static_assert(!(STATE & %(camelName)sSet), "property %(memberKey)s already set");' % setter_args)
-            lines.append('            m_result->setValue("%(memberKey)s"_s, JSON::Value::null());' % setter_args)
+            lines.append('            Ref { *m_result }->setValue("%(memberKey)s"_s, JSON::Value::null());' % setter_args)
             lines.append('            return castState<%(camelName)sSet>();' % setter_args)
             lines.append('        }')
         return '\n'.join(lines)

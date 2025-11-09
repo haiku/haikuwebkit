@@ -322,7 +322,6 @@ public:
     int32_t toInt32(JSGlobalObject*) const;
     uint32_t toUInt32(JSGlobalObject*) const;
     uint64_t toIndex(JSGlobalObject*, ASCIILiteral errorName) const;
-    size_t toTypedArrayIndex(JSGlobalObject*, ASCIILiteral) const;
     uint64_t toLength(JSGlobalObject*) const;
 
     JS_EXPORT_PRIVATE JSValue toBigInt(JSGlobalObject*) const;

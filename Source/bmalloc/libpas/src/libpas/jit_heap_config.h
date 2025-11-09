@@ -131,6 +131,7 @@ PAS_HEAP_CONFIG_SPECIALIZATION_DECLARATIONS(jit_heap_config);
         .base = { \
             .is_enabled = true, \
             .allow_profiling = false, \
+            .allow_mte_tagging = false, \
             .heap_config_ptr = &jit_heap_config, \
             .page_config_ptr = &jit_heap_config.variant_lowercase ## _bitfit_config.base, \
             .page_config_kind = pas_page_config_kind_bitfit, \
@@ -166,6 +167,7 @@ PAS_HEAP_CONFIG_SPECIALIZATION_DECLARATIONS(jit_heap_config);
             .base = { \
                 .is_enabled = true, \
                 .allow_profiling = false, \
+                .allow_mte_tagging = false, \
                 .heap_config_ptr = &jit_heap_config, \
                 .page_config_ptr = &jit_heap_config.small_segregated_config.base, \
                 .page_config_kind = pas_page_config_kind_segregated, \

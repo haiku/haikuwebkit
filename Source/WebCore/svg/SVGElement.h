@@ -85,6 +85,7 @@ public:
     void clearHasPendingResources() { setEventTargetFlag(EventTargetFlag::HasPendingResources, false); }
     virtual void buildPendingResource() { }
 
+    virtual bool isSVGAnimationElement() const { return false; }
     virtual bool isSVGTextPositioningElement() const { return false; }
     virtual bool isSVGGraphicsElement() const { return false; }
     virtual bool isSVGGeometryElement() const { return false; }

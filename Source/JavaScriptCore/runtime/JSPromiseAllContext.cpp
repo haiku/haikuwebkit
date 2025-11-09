@@ -37,23 +37,21 @@ JSPromiseAllContext* JSPromiseAllContext::createWithInitialValues(VM& vm, Struct
 {
     auto values = initialValues();
     JSPromiseAllContext* context = new (NotNull, allocateCell<JSPromiseAllContext>(vm)) JSPromiseAllContext(vm, structure);
-    context->finishCreation(vm, values[0], values[1], values[2], values[3]);
+    context->finishCreation(vm, values[0], values[1]);
     return context;
 }
 
-JSPromiseAllContext* JSPromiseAllContext::create(VM& vm, Structure* structure, JSValue promise, JSValue values, JSValue remainingElementsCount, JSValue index)
+JSPromiseAllContext* JSPromiseAllContext::create(VM& vm, Structure* structure, JSValue globalContext, JSValue index)
 {
     JSPromiseAllContext* result = new (NotNull, allocateCell<JSPromiseAllContext>(vm)) JSPromiseAllContext(vm, structure);
-    result->finishCreation(vm, promise, values, remainingElementsCount, index);
+    result->finishCreation(vm, globalContext, index);
     return result;
 }
 
-void JSPromiseAllContext::finishCreation(VM& vm, JSValue promise, JSValue values, JSValue remainingElementsCount, JSValue index)
+void JSPromiseAllContext::finishCreation(VM& vm, JSValue globalContext, JSValue index)
 {
     Base::finishCreation(vm);
-    this->setPromise(vm, promise);
-    this->setValues(vm, values);
-    this->setRemainingElementsCount(vm, remainingElementsCount);
+    this->setGlobalContext(vm, globalContext);
     this->setIndex(vm, index);
 }
 
@@ -69,7 +67,7 @@ DEFINE_VISIT_CHILDREN(JSPromiseAllContext);
 
 JSC_DEFINE_HOST_FUNCTION(promiseAllContextPrivateFuncCreate, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
-    return JSValue::encode(JSPromiseAllContext::create(globalObject->vm(), globalObject->promiseAllContextStructure(), callFrame->uncheckedArgument(0), callFrame->uncheckedArgument(1), callFrame->uncheckedArgument(2), callFrame->uncheckedArgument(3)));
+    return JSValue::encode(JSPromiseAllContext::create(globalObject->vm(), globalObject->promiseAllContextStructure(), callFrame->uncheckedArgument(0), callFrame->uncheckedArgument(1)));
 }
 
 } // namespace JSC

@@ -61,7 +61,7 @@ CFStringRef WKStringCopyCFString(CFAllocatorRef allocatorRef, WKStringRef string
     // expects to be called on the thread running WebCore.
     if (string.is8Bit()) {
         auto characters = string.span8();
-        return CFStringCreateWithBytes(allocatorRef, characters.data(), characters.size(), kCFStringEncodingISOLatin1, true);
+        return CFStringCreateWithBytes(allocatorRef, byteCast<UInt8>(characters.data()), characters.size(), kCFStringEncodingISOLatin1, true);
     }
     auto characters = string.span16();
     return CFStringCreateWithCharacters(allocatorRef, reinterpret_cast<const UniChar*>(characters.data()), characters.size());

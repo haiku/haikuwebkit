@@ -29,6 +29,8 @@
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
 #include "DOMTokenList.h"
+#include "DocumentPage.h"
+#include "DocumentSecurityOrigin.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "EventHandler.h"
 #include "EventNames.h"
@@ -41,7 +43,7 @@
 #include "HTMLPictureElement.h"
 #include "KeyboardEvent.h"
 #include "LoaderStrategy.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameLoaderClient.h"
 #include "MouseEvent.h"
 #include "OriginAccessPatterns.h"
@@ -161,7 +163,7 @@ static void appendServerMapMousePosition(StringBuilder& url, Event& event)
 void HTMLAnchorElement::defaultEventHandler(Event& event)
 {
     if (m_prefetchEagerness == PrefetchEagerness::Conservative && (event.type() == eventNames().keydownEvent || event.type() == eventNames().mousedownEvent || event.type() == eventNames().pointerdownEvent))
-        document().prefetch(href(), m_speculationRulesTags, m_prefetchReferrerPolicy);
+        protectedDocument()->prefetch(href(), m_speculationRulesTags, m_prefetchReferrerPolicy);
 
     if (isLink()) {
         if (focused() && isEnterKeyKeydownEvent(event) && treatLinkAsLiveForEventType(NonMouseEvent)) {
@@ -180,7 +182,7 @@ void HTMLAnchorElement::defaultEventHandler(Event& event)
             // for the LiveWhenNotFocused editable link behavior
             auto& eventNames = WebCore::eventNames();
             if (auto* mouseEvent = dynamicDowncast<MouseEvent>(event); event.type() == eventNames.mousedownEvent && mouseEvent && mouseEvent->button() != MouseButton::Right && document().frame()) {
-                setRootEditableElementForSelectionOnMouseDown(document().frame()->selection().selection().rootEditableElement());
+                setRootEditableElementForSelectionOnMouseDown(document().frame()->selection().selection().protectedRootEditableElement().get());
                 m_wasShiftKeyDownOnMouseDown = mouseEvent->shiftKey();
             } else if (event.type() == eventNames.mouseoverEvent) {
                 // These are cleared on mouseover and not mouseout because their values are needed for drag events,
@@ -348,9 +350,10 @@ void HTMLAnchorElement::sendPings(const URL& destinationURL)
     if (pingValue.isNull())
         return;
 
+    Ref document = this->document();
     SpaceSplitString pingURLs(pingValue, SpaceSplitString::ShouldFoldCase::No);
     for (auto& pingURL : pingURLs)
-        PingLoader::sendPing(*document().frame(), document().completeURL(pingURL), destinationURL);
+        PingLoader::sendPing(*document->protectedFrame(), document->completeURL(pingURL), destinationURL);
 }
 
 #if USE(SYSTEM_PREVIEW)
@@ -714,7 +717,7 @@ ReferrerPolicy HTMLAnchorElement::referrerPolicy() const
 Node::InsertedIntoAncestorResult HTMLAnchorElement::insertedIntoAncestor(InsertionType insertionType, ContainerNode& parentOfInsertedTree)
 {
     auto result = HTMLElement::insertedIntoAncestor(insertionType, parentOfInsertedTree);
-    document().processInternalResourceLinks(this);
+    protectedDocument()->processInternalResourceLinks(this);
     checkForSpeculationRules();
     return result;
 }
@@ -725,25 +728,25 @@ void HTMLAnchorElement::setFullURL(const URL& fullURL)
     checkForSpeculationRules();
 }
 
-void HTMLAnchorElement::setShouldBePrefetched(bool conservative, Vector<String>&& tags, String&& referrerPolicy)
+void HTMLAnchorElement::setShouldBePrefetched(bool conservative, Vector<String>&& tags, std::optional<ReferrerPolicy>&& referrerPolicy)
 {
     m_prefetchEagerness = conservative ? PrefetchEagerness::Conservative : PrefetchEagerness::Immediate;
     m_speculationRulesTags = WTFMove(tags);
     m_prefetchReferrerPolicy = WTFMove(referrerPolicy);
     if (m_prefetchEagerness == PrefetchEagerness::Immediate)
-        document().prefetch(href(), m_speculationRulesTags, m_prefetchReferrerPolicy, true);
+        protectedDocument()->prefetch(href(), m_speculationRulesTags, m_prefetchReferrerPolicy, true);
 }
 
 void HTMLAnchorElement::checkForSpeculationRules()
 {
     if (!document().settings().speculationRulesPrefetchEnabled())
         return;
-    if (auto prefetchRule = SpeculationRulesMatcher::hasMatchingRule(document(), *this))
+    if (auto prefetchRule = SpeculationRulesMatcher::hasMatchingRule(protectedDocument(), *this))
         setShouldBePrefetched(prefetchRule->conservative, WTFMove(prefetchRule->tags), WTFMove(prefetchRule->referrerPolicy));
     else {
         m_prefetchEagerness = PrefetchEagerness::None;
         m_speculationRulesTags.clear();
-        m_prefetchReferrerPolicy = String();
+        m_prefetchReferrerPolicy = std::nullopt;
     }
 }
 

@@ -25,14 +25,11 @@
 
 #pragma once
 
-#include "DDVertexAttributeFormat.h"
-#include "DDVertexLayout.h"
 #include <WebCore/DDFloat3.h>
-#include <WebCore/ModelObjectDescriptorBase.h>
 
 namespace WebCore::DDModel {
 
-struct DDMeshPart : public ObjectDescriptorBase {
+struct DDMeshPart {
     uint32_t indexOffset;
     uint32_t indexCount;
     uint32_t topology;

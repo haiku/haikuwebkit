@@ -39,8 +39,6 @@
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/WeakPtr.h>
 
-@class DDBridgeReceiver;
-
 struct WGPUInstanceImpl {
 };
 
@@ -79,9 +77,8 @@ public:
     using WorkItem = Function<void()>;
     void scheduleWork(WorkItem&&);
     const std::optional<const MachSendRight>& webProcessID() const;
-    Ref<DDMesh> createMesh(const WGPUDDMeshDescriptor&);
-    void updateMesh(DDMesh&, WGPUDDUpdateMeshDescriptor&);
-    void updateModel(Texture&);
+    Ref<DDMesh> createModelBacking(const WGPUDDCreateMeshDescriptor&);
+    id<MTLDevice> device() const;
 
 private:
     Instance(WGPUScheduleWorkBlock, const WTF::MachSendRight* webProcessResourceOwner);
@@ -98,10 +95,6 @@ private:
     const WGPUScheduleWorkBlock m_scheduleWorkBlock;
     Lock m_lock;
     bool m_isValid { true };
-
-    DDBridgeReceiver* m_ddReceiver;
-    NSUUID* m_ddMeshIdentifier;
-    id<MTLTexture> m_lastMeshTexture;
 };
 
 } // namespace WebGPU

@@ -85,7 +85,7 @@ TEST_F(FragmentedSharedBufferTest, createNSDataForDataSegment)
         NSUInteger expectedSize = helloData.length + worldData.length;
 
         NSUInteger segmentCount = 0;
-        for (auto& segment : *builder.get())
+        for (auto& segment : *builder.get().unsafeGet())
             EXPECT_TRUE([segment.segment->createNSData() isEqualToData:expectedData[segmentCount++]]);
         EXPECT_EQ(expectedData.count, segmentCount);
 

@@ -304,7 +304,7 @@ void WebPasteboardProxy::readURLFromPasteboard(IPC::Connection& connection, uint
         auto* clipboard = wpe_display_get_clipboard(wpe_display_get_primary());
         if (GRefPtr<GBytes> bytes = adoptGRef(wpe_clipboard_read_bytes(clipboard, "text/uri-list"))) {
             auto buffer = SharedBuffer::create(bytes.get());
-            completionHandler(String(buffer->span()), { });
+            completionHandler(String(byteCast<Latin1Character>(buffer->span())), { });
             return;
         }
     }

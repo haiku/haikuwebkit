@@ -150,7 +150,7 @@ static WebAVPictureInPicturePlayerLayerView *WebAVPlayerLayerView_pictureInPictu
 
     auto pipView = adoptNS([allocWebAVPictureInPicturePlayerLayerViewInstance() initWithFrame:CGRectZero]);
     [playerLayerView setValue:pipView.get() forKey:pictureInPicturePlayerLayerViewKey];
-    return pipView.get();
+    return pipView.unsafeGet();
 }
 #endif // HAVE(PICTUREINPICTUREPLAYERLAYERVIEW)
 

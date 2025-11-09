@@ -28,7 +28,6 @@
 
 #include "AnimationTimelinesController.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "Element.h"
 #include "KeyframeEffect.h"
 #include "RenderElementInlines.h"
@@ -130,12 +129,12 @@ Element* ScrollTimeline::source() const
                     Ref document = nearestSource->document();
                     RefPtr documentElement = document->documentElement();
                     if (nearestSource != documentElement)
-                        return nearestSource.get();
+                        return nearestSource.unsafeGet();
                     // RenderObject::enclosingScrollableContainer() will return the document element even in
                     // quirks mode, but the scrolling element in that case is the <body> element, so we must
                     // make sure to return Document::scrollingElement() in case the document element is
                     // returned by enclosingScrollableContainer() but it was not explicitly set as the source.
-                    return &source->element == documentElement ? nearestSource.get() : document->scrollingElement();
+                    return &source->element == documentElement ? nearestSource.unsafeGet() : document->scrollingElement();
                 }
             }
         }
@@ -292,7 +291,7 @@ void ScrollTimeline::updateCurrentTimeIfStale()
 
     bool needsStyleUpdate = false;
     for (auto& animation : m_animations) {
-        if (RefPtr effect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
+        if (RefPtr effect = animation->keyframeEffect()) {
             effect->invalidate();
             needsStyleUpdate = true;
         }

@@ -41,7 +41,6 @@ class ServiceWorkerDebuggable final : public Inspector::RemoteInspectionTarget {
     WTF_MAKE_NONCOPYABLE(ServiceWorkerDebuggable);
 public:
     static Ref<ServiceWorkerDebuggable> create(ServiceWorkerThreadProxy&, const ServiceWorkerContextData&);
-    ~ServiceWorkerDebuggable() = default;
 
     Inspector::RemoteControllableTarget::Type type() const final { return Inspector::RemoteControllableTarget::Type::ServiceWorker; }
 

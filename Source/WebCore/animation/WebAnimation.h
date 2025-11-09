@@ -51,6 +51,7 @@ class AnimationEffect;
 class AnimationEventBase;
 class AnimationTimeline;
 class Document;
+class KeyframeEffect;
 class RenderStyle;
 
 template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
@@ -84,6 +85,7 @@ public:
     virtual void setBindingsEffect(RefPtr<AnimationEffect>&&);
     AnimationEffect* effect() const { return m_effect.get(); }
     void setEffect(RefPtr<AnimationEffect>&&);
+    KeyframeEffect* keyframeEffect() const;
 
     virtual AnimationTimeline* bindingsTimeline() const { return timeline(); }
     virtual void setBindingsTimeline(RefPtr<AnimationTimeline>&&);
@@ -138,7 +140,7 @@ public:
     virtual ExceptionOr<void> bindingsPause() { return pause(); }
     std::optional<WebAnimationTime> holdTime() const { return m_holdTime; }
 
-    void setPendingStartTime(WebAnimationTime pendingStartTime) { m_pendingStartTime = pendingStartTime; }
+    void setPendingStartTime(WebAnimationTime);
 
     virtual Variant<FramesPerSecond, AnimationFrameRatePreset> bindingsFrameRate() const { return m_bindingsFrameRate; }
     virtual void setBindingsFrameRate(Variant<FramesPerSecond, AnimationFrameRatePreset>&&);

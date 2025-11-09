@@ -47,22 +47,3 @@ function forEach(callback /*, thisArg */)
         callback.@call(thisArg, key, key, this);
     } while (true);
 }
-
-// https://tc39.es/proposal-set-methods/#sec-getsetrecord (steps 1-7)
-@linkTimeConstant
-@alwaysInline
-function getSetSizeAsInt(other)
-{
-    if (!@isObject(other))
-        @throwTypeError("Set operation expects first argument to be an object");
-
-    var size = @toNumber(other.size);
-    if (size !== size) // is NaN?
-        @throwTypeError("Set operation expects first argument to have non-NaN 'size' property");
-
-    var sizeInt = @toIntegerOrInfinity(size);
-    if (sizeInt < 0)
-        @throwRangeError("Set operation expects first argument to have non-negative 'size' property");
-
-    return sizeInt;
-}

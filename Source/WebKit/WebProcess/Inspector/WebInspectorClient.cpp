@@ -53,7 +53,7 @@ public:
         : m_inspectorBackendClient(inspectorBackendClient)
     {
     }
-    virtual ~RepaintIndicatorLayerClient() { }
+    virtual ~RepaintIndicatorLayerClient() = default;
 private:
     void notifyAnimationEnded(const GraphicsLayer* layer, const String&) override
     {

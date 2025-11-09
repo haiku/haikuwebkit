@@ -210,6 +210,8 @@ String WebExtensionSQLiteStore::deleteDatabase()
 {
     assertIsCurrent(queue());
 
+    m_savepointsAreValid = false;
+
     String databaseCloseErrorMessage;
     if (isDatabaseOpen()) {
         if (RefPtr db = database(); db->close() != SQLITE_OK) {
@@ -337,6 +339,8 @@ void WebExtensionSQLiteStore::createSavepoint(CompletionHandler<void(Markable<WT
             errorMessage = "Failed to create savepoint."_s;
         }
 
+        protectedThis->m_savepointsAreValid = true;
+
         WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(!errorMessage.length() ? savepointIdentifier : WTF::UUID { UInt128 { 0 } }, errorMessage);
         });
@@ -347,6 +351,13 @@ void WebExtensionSQLiteStore::commitSavepoint(WTF::UUID& savepointIdentifier, Co
 {
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
+        if (!protectedThis->m_savepointsAreValid) {
+            WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
+                completionHandler(errorMessage);
+            });
+            return;
+        }
+
         if (!protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
             WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
                 completionHandler(errorMessage);
@@ -374,6 +385,13 @@ void WebExtensionSQLiteStore::rollbackToSavepoint(WTF::UUID& savepointIdentifier
 {
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
+        if (!protectedThis->m_savepointsAreValid) {
+            WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
+                completionHandler(errorMessage);
+            });
+            return;
+        }
+
         if (!protectedThis->openDatabaseIfNecessary(errorMessage, false)) {
             WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), completionHandler = WTFMove(completionHandler)]() mutable {
                 completionHandler(errorMessage);

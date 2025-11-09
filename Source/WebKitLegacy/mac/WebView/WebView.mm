@@ -151,6 +151,8 @@
 #import <WebCore/Document.h>
 #import <WebCore/DocumentFullscreen.h>
 #import <WebCore/DocumentLoader.h>
+#import <WebCore/DocumentSyncClient.h>
+#import <WebCore/DocumentView.h>
 #import <WebCore/DragController.h>
 #import <WebCore/DragData.h>
 #import <WebCore/DragItem.h>
@@ -210,7 +212,6 @@
 #import <WebCore/PlatformEventFactoryMac.h>
 #import <WebCore/PlatformScreen.h>
 #import <WebCore/PlatformTextAlternatives.h>
-#import <WebCore/ProcessSyncClient.h>
 #import <WebCore/ProgressTracker.h>
 #import <WebCore/Range.h>
 #import <WebCore/RemoteFrameClient.h>
@@ -1489,7 +1490,7 @@ static void WebKitInitializeGamepadProviderIfNecessary()
         makeUniqueRef<WebChromeClientIOS>(self),
 #endif
         makeUniqueRef<WebCryptoClient>(self),
-        makeUniqueRef<WebCore::ProcessSyncClient>()
+        makeUniqueRef<WebCore::DocumentSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
         , WebCore::DummyCredentialRequestCoordinatorClient::create()
 #endif
@@ -1744,7 +1745,7 @@ static void WebKitInitializeGamepadProviderIfNecessary()
 #endif
         makeUniqueRef<WebChromeClientIOS>(self),
         makeUniqueRef<WebCryptoClient>(self),
-        makeUniqueRef<WebCore::ProcessSyncClient>()
+        makeUniqueRef<WebCore::DocumentSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
         , WebCore::DummyCredentialRequestCoordinatorClient::create()
 #endif
@@ -1878,7 +1879,7 @@ static void WebKitInitializeGamepadProviderIfNecessary()
 - (void)_startDrag:(const WebCore::DragItem&)dragItem
 {
     auto& dragImage = dragItem.image;
-    auto image = dragImage.get().get();
+    auto image = dragImage.get().unsafeGet();
     RefPtr<WebCore::TextIndicator> textIndicator = dragImage.textIndicator();
 
     if (textIndicator)
@@ -8633,7 +8634,7 @@ FORWARD(toggleUnderline)
 
 - (id)_objectForIdentifier:(unsigned long)identifier
 {
-    return _private->identifierMap.get(identifier).get();
+    return _private->identifierMap.get(identifier).unsafeGet();
 }
 
 - (void)_removeObjectForIdentifier:(unsigned long)identifier

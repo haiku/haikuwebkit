@@ -7,6 +7,13 @@ Modules/push-api/ServiceWorkerRegistrationPushAPI.h
 Modules/storage/StorageManager.cpp
 Modules/webdatabase/DatabaseTask.h
 Modules/webdatabase/SQLTransactionBackend.h
+[ Mac ] inspector/InspectorFrontendHost.cpp
+[ Mac ] inspector/InspectorFrontendHost.h
+[ Mac ] page/scrolling/ScrollLatchingController.h
+[ iOS ] page/ios/ContentChangeObserver.h
+[ iOS ] platform/audio/ios/AudioSessionIOS.mm
+[ iOS ] platform/graphics/ios/DisplayRefreshMonitorIOS.mm
+[ iOS ] platform/ios/wak/WAKWindow.h
 accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
@@ -28,15 +35,10 @@ dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
 dom/TreeScope.h
-editing/cocoa/NodeHTMLConverter.mm
 html/FormListedElement.cpp
 html/parser/HTMLTreeBuilder.h
 html/track/TrackBase.h
-inspector/DOMPatchSupport.cpp
-inspector/InspectorFrontendHost.cpp
-inspector/InspectorFrontendHost.h
 inspector/InspectorShaderProgram.h
-inspector/InspectorStyleSheet.cpp
 inspector/InspectorStyleSheet.h
 inspector/InspectorWebAgentBase.h
 layout/formattingContexts/inline/InlineItemsBuilder.h
@@ -46,7 +48,6 @@ page/PointerLockController.h
 page/RenderingUpdateScheduler.h
 page/UndoManager.h
 page/WheelEventTestMonitor.h
-page/scrolling/ScrollLatchingController.h
 page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingTreeGestureState.h
 platform/PODInterval.h

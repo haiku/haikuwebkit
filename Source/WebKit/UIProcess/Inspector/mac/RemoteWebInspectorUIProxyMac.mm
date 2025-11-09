@@ -118,7 +118,7 @@ WebPageProxy* RemoteWebInspectorUIProxy::platformCreateFrontendPageAndWindow()
     m_objCAdapter = adoptNS([[WKRemoteWebInspectorUIProxyObjCAdapter alloc] initWithRemoteWebInspectorUIProxy:this]);
 
     Ref<API::InspectorConfiguration> configuration = checkedClient()->configurationForRemoteInspector(*this);
-    m_inspectorView = adoptNS([[WKInspectorViewController alloc] initWithConfiguration: WebKit::protectedWrapper(configuration.get()).get() inspectedPage:nullptr]);
+    m_inspectorView = adoptNS([[WKInspectorViewController alloc] initWithConfiguration:protectedWrapper(configuration.get()).get() inspectedPage:nullptr]);
     [m_inspectorView.get() setDelegate:m_objCAdapter.get()];
 
     m_window = WebInspectorUIProxy::createFrontendWindow(NSZeroRect, WebInspectorUIProxy::InspectionTargetType::Remote);
@@ -188,7 +188,7 @@ void RemoteWebInspectorUIProxy::platformSave(Vector<InspectorFrontendClient::Sav
 void RemoteWebInspectorUIProxy::platformLoad(const String& path, CompletionHandler<void(const String&)>&& completionHandler)
 {
     if (auto contents = FileSystem::readEntireFile(path))
-        completionHandler(String::adopt(WTFMove(*contents)));
+        completionHandler(String { byteCast<Latin1Character>(contents->span()) });
     else
         completionHandler(nullString());
 }

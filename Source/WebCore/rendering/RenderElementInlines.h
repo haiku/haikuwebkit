@@ -53,7 +53,7 @@ inline bool RenderElement::isAnonymousBlock() const
 {
     return isAnonymous()
         && (style().display() == DisplayType::Block || style().display() == DisplayType::Box)
-        && style().pseudoElementType() == PseudoId::None
+        && !style().pseudoElementType()
         && isRenderBlock()
 #if ENABLE(MATHML)
         && !isRenderMathMLBlock()
@@ -94,7 +94,7 @@ inline bool RenderElement::isBeforeContent() const
     // Text nodes don't have their own styles, so ignore the style on a text node.
     // if (isRenderText())
     //     return false;
-    if (style().pseudoElementType() != PseudoId::Before)
+    if (style().pseudoElementType() != PseudoElementType::Before)
         return false;
     return true;
 }
@@ -104,7 +104,7 @@ inline bool RenderElement::isAfterContent() const
     // Text nodes don't have their own styles, so ignore the style on a text node.
     // if (isRenderText())
     //     return false;
-    if (style().pseudoElementType() != PseudoId::After)
+    if (style().pseudoElementType() != PseudoElementType::After)
         return false;
     return true;
 }

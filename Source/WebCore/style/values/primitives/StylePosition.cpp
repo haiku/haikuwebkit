@@ -26,14 +26,11 @@
 #include "StylePosition.h"
 
 #include "CSSPositionValue.h"
-#include "CalculationCategory.h"
-#include "CalculationTree.h"
 #include "RenderStyle.h"
 #include "StyleBuilderChecking.h"
-#include "StyleLengthWrapper+Platform.h"
+#include "StyleCalculationTree.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
-#include "StylePrimitiveNumericTypes+Platform.h"
 
 namespace WebCore {
 namespace Style {

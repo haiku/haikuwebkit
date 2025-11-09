@@ -31,28 +31,13 @@
 #include <wtf/RefCounted.h>
 
 namespace WebCore::DDModel {
-
 class DDMesh;
-
 struct ObjectDescriptorBase;
-struct DDMeshDescriptor;
-struct DDUpdateMeshDescriptor;
-struct DDMeshPart;
-struct DDReplaceVertices;
-struct DDVertexAttributeFormat;
-struct DDVertexLayout;
-
 }
 
 namespace WebKit::DDModel {
 
 struct ObjectDescriptorBase;
-struct DDMeshDescriptor;
-struct DDUpdateMeshDescriptor;
-struct DDMeshPart;
-struct DDReplaceVertices;
-struct DDVertexAttributeFormat;
-struct DDVertexLayout;
 
 class ConvertToBackingContext : public RefCounted<ConvertToBackingContext> {
 public:
@@ -61,12 +46,6 @@ public:
     virtual DDModelIdentifier convertToBacking(const WebCore::DDModel::DDMesh&) = 0;
 
     std::optional<ObjectDescriptorBase> convertToBacking(const WebCore::DDModel::ObjectDescriptorBase&);
-    std::optional<DDMeshDescriptor> convertToBacking(const WebCore::DDModel::DDMeshDescriptor&);
-    std::optional<DDUpdateMeshDescriptor> convertToBacking(const WebCore::DDModel::DDUpdateMeshDescriptor&);
-    std::optional<DDReplaceVertices> convertToBacking(const WebCore::DDModel::DDReplaceVertices&);
-    std::optional<DDMeshPart> convertToBacking(const WebCore::DDModel::DDMeshPart&);
-    std::optional<DDVertexAttributeFormat> convertToBacking(const WebCore::DDModel::DDVertexAttributeFormat&);
-    std::optional<DDVertexLayout> convertToBacking(const WebCore::DDModel::DDVertexLayout&);
 };
 
 }

@@ -28,6 +28,7 @@
 
 #import "AXObjectCacheInlines.h"
 #import "AXRemoteFrame.h"
+#import "BufferSource.h"
 #import "ColorCocoa.h"
 #import "CompositionHighlight.h"
 #import "CompositionUnderline.h"

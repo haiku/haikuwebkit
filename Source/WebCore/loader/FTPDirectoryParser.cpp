@@ -830,7 +830,7 @@ FTPEntryType parseOneFTPLine(std::span<Latin1Character> line, ListState& state, 
                         }
                     }
                 } else if ((toklen[0] == 10 || toklen[0] == 11)
-                    && WTF::contains("-bcdlpsw?DFam"_span, tokens[0][0])) {
+                    && WTF::contains(byteCast<Latin1Character>("-bcdlpsw?DFam"_span), tokens[0][0])) {
                     p = tokens[0].subspan(1);
                     if ((p[0] == 'r' || p[0] == '-') && (p[1] == 'w' || p[1] == '-') && (p[3] == 'r' || p[3] == '-') && (p[4] == 'w' || p[4] == '-') && (p[6] == 'r' || p[6] == '-') && (p[7] == 'w' || p[7] == '-')) {
                     /* 'x'/p[9] can be S|s|x|-|T|t or implementation specific */

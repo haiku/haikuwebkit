@@ -209,6 +209,15 @@ class Git(mocks.Subprocess):
 
         super(Git, self).__init__(
             mocks.Subprocess.Route(
+                self.executable, 'symbolic-ref', '-q', 'HEAD',
+                cwd=self.path,
+                generator=lambda *args, **kwargs:
+                    mocks.ProcessCompletion(
+                        returncode=1 if self.detached else 0,
+                        stdout='' if self.detached else 'refs/heads/{}\n'.format(self.branch)
+                    ),
+            ),
+            mocks.Subprocess.Route(
                 self.executable, 'status',
                 cwd=self.path,
                 generator=lambda *args, **kwargs:
@@ -762,6 +771,10 @@ nothing to commit, working tree clean
                 self.executable, 'merge-base', re.compile(r'.+'), re.compile(r'.+'),
                 cwd=self.path,
                 generator=lambda *args, **kwargs: self.merge_base(args[2], *args[3:]),
+            ), mocks.Subprocess.Route(
+                self.executable, 'update-ref', re.compile(r'.+'), re.compile(r'.+'),
+                cwd=self.path,
+                generator=lambda *args, **kwargs: self.update_ref(args[2], args[3]),
             ), mocks.Subprocess.Route(
                 self.executable,
                 cwd=self.path,
@@ -1489,7 +1502,25 @@ nothing to commit, working tree clean
                     stderr='fatal: Not a valid object name {}\n'.format(ref),
                 )
 
-        return mocks.ProcessCompletion(returncode=0 if ancestor in self.rev_list(descendent)else 1)
+        return mocks.ProcessCompletion(returncode=0 if any(commit.hash == ancestor_commit.hash for commit in self.rev_list(descendent)) else 1)
+
+    def update_ref(self, ref, value):
+        commit = self.find(value)
+        if not commit:
+            return mocks.ProcessCompletion(
+                returncode=128,
+                stderr=f'fatal: Not a valid object name {value}\n',
+            )
+        remote_ref = ref[len('refs/remotes/'):]
+        if remote_ref not in self.remotes:
+            return mocks.ProcessCompletion(
+                returncode=128,
+                stderr=f'fatal: Unable to find remote reference {ref}\n',
+            )
+        if commit not in self.remotes[remote_ref]:
+            self.remotes[remote_ref] = list(reversed(self.rev_list(value)))
+        return mocks.ProcessCompletion(returncode=0)
+
 
     def add_remote(self, name):
         for existing in list(self.remotes.keys()):

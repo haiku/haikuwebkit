@@ -166,7 +166,7 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
 
 FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
 {
-    return Ref { m_router }->hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
+    return m_router->hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
 }
 
 void InspectorTargetAgent::connectToTargets()

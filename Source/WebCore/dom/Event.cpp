@@ -60,6 +60,7 @@ ALWAYS_INLINE Event::Event(MonotonicTime createTime, enum EventInterfaceType eve
     , m_isExecutingPassiveEventListener { false }
     , m_currentTargetIsInShadowTree { false }
     , m_isAutofillEvent { false }
+    , m_isShadowRootAttachedEvent { false }
     , m_eventPhase { NONE }
     , m_eventInterface(enumToUnderlyingType(eventInterface))
     , m_type { type }

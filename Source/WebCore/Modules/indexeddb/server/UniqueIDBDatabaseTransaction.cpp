@@ -50,12 +50,12 @@ UniqueIDBDatabaseTransaction::UniqueIDBDatabaseTransaction(UniqueIDBDatabaseConn
     ASSERT(database());
 
     if (m_transactionInfo.mode() == IDBTransactionMode::Versionchange)
-        m_originalDatabaseInfo = makeUnique<IDBDatabaseInfo>(database()->info());
+        m_originalDatabaseInfo = makeUnique<IDBDatabaseInfo>(checkedDatabase()->info());
 
     if (!m_databaseConnection)
         return;
 
-    if (auto* manager = m_databaseConnection->manager())
+    if (CheckedPtr manager = m_databaseConnection->manager())
         manager->registerTransaction(*this);
 }
 
@@ -64,7 +64,7 @@ UniqueIDBDatabaseTransaction::~UniqueIDBDatabaseTransaction()
     if (!m_databaseConnection)
         return;
 
-    if (auto* manager = m_databaseConnection->manager())
+    if (CheckedPtr manager = m_databaseConnection->manager())
         manager->unregisterTransaction(*this);
 }
 
@@ -83,7 +83,7 @@ void UniqueIDBDatabaseTransaction::abort()
 {
     LOG(IndexedDB, "UniqueIDBDatabaseTransaction::abort");
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -109,6 +109,11 @@ void UniqueIDBDatabaseTransaction::abortWithoutCallback()
 UniqueIDBDatabase* UniqueIDBDatabaseTransaction::database() const
 {
     return m_databaseConnection ? m_databaseConnection->database() : nullptr;
+}
+
+CheckedPtr<UniqueIDBDatabase> UniqueIDBDatabaseTransaction::checkedDatabase() const
+{
+    return database();
 }
 
 bool UniqueIDBDatabaseTransaction::isVersionChange() const
@@ -138,7 +143,7 @@ void UniqueIDBDatabaseTransaction::commit(uint64_t handledRequestResultsCount)
 {
     LOG(IndexedDB, "UniqueIDBDatabaseTransaction::commit");
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -161,7 +166,7 @@ void UniqueIDBDatabaseTransaction::createObjectStore(const IDBRequestData& reque
     RELEASE_ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -190,7 +195,7 @@ void UniqueIDBDatabaseTransaction::deleteObjectStore(const IDBRequestData& reque
     RELEASE_ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -221,7 +226,7 @@ void UniqueIDBDatabaseTransaction::renameObjectStore(const IDBRequestData& reque
     RELEASE_ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -249,7 +254,7 @@ void UniqueIDBDatabaseTransaction::clearObjectStore(const IDBRequestData& reques
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -280,7 +285,7 @@ void UniqueIDBDatabaseTransaction::deleteIndex(const IDBRequestData& requestData
     RELEASE_ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -309,7 +314,7 @@ void UniqueIDBDatabaseTransaction::renameIndex(const IDBRequestData& requestData
     RELEASE_ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -339,7 +344,7 @@ void UniqueIDBDatabaseTransaction::putOrAdd(const IDBRequestData& requestData, c
     ASSERT(!isReadOnly());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -369,7 +374,7 @@ void UniqueIDBDatabaseTransaction::getRecord(const IDBRequestData& requestData, 
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -399,7 +404,7 @@ void UniqueIDBDatabaseTransaction::getAllRecords(const IDBRequestData& requestDa
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -429,7 +434,7 @@ void UniqueIDBDatabaseTransaction::getCount(const IDBRequestData& requestData, c
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -459,7 +464,7 @@ void UniqueIDBDatabaseTransaction::deleteRecord(const IDBRequestData& requestDat
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -489,7 +494,7 @@ void UniqueIDBDatabaseTransaction::openCursor(const IDBRequestData& requestData,
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
     
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -519,7 +524,7 @@ void UniqueIDBDatabaseTransaction::iterateCursor(const IDBRequestData& requestDa
 
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
     
@@ -551,7 +556,7 @@ const Vector<IDBObjectStoreIdentifier>& UniqueIDBDatabaseTransaction::objectStor
     if (!m_objectStoreIdentifiers.isEmpty())
         return m_objectStoreIdentifiers;
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return m_objectStoreIdentifiers;
 
@@ -584,7 +589,7 @@ void UniqueIDBDatabaseTransaction::createIndex(const IDBRequestData& requestData
     ASSERT(isVersionChange());
     ASSERT(m_transactionInfo.identifier() == requestData.transactionIdentifier());
 
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 
@@ -631,7 +636,7 @@ void UniqueIDBDatabaseTransaction::didGenerateIndexKeyForRecord(IDBResourceIdent
         return;
 
     --m_pendingGenerateIndexKeyRequests;
-    auto* database = this->database();
+    CheckedPtr database = this->database();
     if (!database)
         return;
 

@@ -32,6 +32,7 @@
 #include "Document.h"
 #include "ElementInlines.h"
 #include "FrameSelection.h"
+#include "GraphicsLayer.h"
 #include "HTMLElement.h"
 #include "HTMLNames.h"
 #include "HTMLSpanElement.h"
@@ -79,6 +80,7 @@
 #include "ScriptDisallowedScope.h"
 #include "ShadowRoot.h"
 #include "StylePropertiesInlines.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/HexNumber.h>
 #include <wtf/Vector.h>
@@ -275,7 +277,7 @@ void RenderTreeAsText::writeRenderObject(TextStream& ts, const RenderObject& o, 
                 ts << " [textStrokeColor="_s << serializationForRenderTreeAsText(textStrokeColor) << ']';
 
             if (renderElement->parent()->style().textStrokeWidth() != renderElement->style().textStrokeWidth() && renderElement->style().textStrokeWidth().isPositive())
-                ts << " [textStrokeWidth="_s << Style::evaluate<float>(renderElement->style().textStrokeWidth(), Style::ZoomNeeded { }) << ']';
+                ts << " [textStrokeWidth="_s << Style::evaluate<float>(renderElement->style().textStrokeWidth(), renderElement->style().usedZoomForLength()) << ']';
         }
 
         auto* box = dynamicDowncast<RenderBoxModelObject>(o);

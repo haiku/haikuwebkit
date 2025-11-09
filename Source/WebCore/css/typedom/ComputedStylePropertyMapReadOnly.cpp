@@ -30,7 +30,6 @@
 #include "CSSPropertyParser.h"
 #include "CSSSerializationContext.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "Element.h"
 #include "NodeDocument.h"
 #include "RenderStyleInlines.h"

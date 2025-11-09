@@ -57,7 +57,7 @@ IGNORE_WARNINGS_END
 {
     if (!(self = [super init]))
         return nil;
-    _download = download;
+    lazyInitialize(_download, retainPtr(download));
     return self;
 }
 
@@ -72,14 +72,14 @@ IGNORE_WARNINGS_END
 
 - (void)cancel
 {
-    _download->_download->cancel([download = Ref { *_download->_download }] (auto*) {
-        download->client().legacyDidCancel(download.get());
+    Ref { *_download->_download }->cancel([download = Ref { *_download->_download }] (auto*) {
+        download->protectedClient()->legacyDidCancel(download.get());
     });
 }
 
 - (void)publishProgressAtURL:(NSURL *)URL
 {
-    _download->_download->publishProgress(URL);
+    Ref { *_download->_download }->publishProgress(URL);
 }
 
 - (NSURLRequest *)request
@@ -89,7 +89,7 @@ IGNORE_WARNINGS_END
 
 - (WKWebView *)originatingWebView
 {
-    RefPtr page = _download->_download->originatingPage();
+    RefPtr page = Ref { *_download->_download }->originatingPage();
     return page ? page->cocoaView().autorelease() : nil;
 }
 

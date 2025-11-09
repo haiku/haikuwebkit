@@ -129,6 +129,10 @@ add_custom_command(
     VERBATIM
 )
 
+list(APPEND WebKit_PUBLIC_FRAMEWORK_HEADERS
+    UIProcess/gtk/GtkVersioning.h
+)
+
 if (USE_GTK4)
     set(GTK_API_VERSION 4)
     set(GTK_PKGCONFIG_PACKAGE gtk4)
@@ -194,7 +198,6 @@ set(WebKitGTK_HEADER_TEMPLATES
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMediaPermissionRequest.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMessage.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebContext.h.in
-    ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtensionMatchPattern.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebResource.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebView.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebViewSessionState.h.in
@@ -215,6 +218,17 @@ set(WebKitGTK_HEADER_TEMPLATES
 if (ENABLE_2022_GLIB_API)
     list(APPEND WebKitGTK_HEADER_TEMPLATES
         ${WEBKIT_DIR}/UIProcess/API/glib/WebKitNetworkSession.h.in
+    )
+endif ()
+
+if (ENABLE_2022_GLIB_API)
+    list(APPEND WebKitGTK_HEADER_TEMPLATES
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtensionMatchPattern.h.in
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtension.h.in
+    )
+    list(APPEND WebKit_SOURCES
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtensionMatchPattern.cpp
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtension.cpp
     )
 endif ()
 
@@ -324,7 +338,6 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
     ${ENCHANT_INCLUDE_DIRS}
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_PBUTILS_INCLUDE_DIRS}
-    ${LIBSOUP_INCLUDE_DIRS}
 )
 
 list(APPEND WebKit_INTERFACE_INCLUDE_DIRECTORIES
@@ -596,7 +609,7 @@ GI_INTROSPECT(WebKit${WEBKITGTK_API_INFIX} ${WEBKITGTK_API_VERSION} webkit${WEBK
     DEPENDENCIES
         JavaScriptCore
         Gtk-${GTK_API_VERSION}.0:${GTK_PKGCONFIG_PACKAGE}
-        Soup-${SOUP_API_VERSION}:libsoup-${SOUP_API_VERSION}
+        Soup-3.0:libsoup-3.0
     SOURCES
         ${WebKitGTK_INSTALLED_HEADERS}
         ${WEBKITGTK_SOURCES_FOR_INTROSPECTION}
@@ -632,7 +645,7 @@ GI_INTROSPECT(${WEBKITGTK_WEB_PROCESS_EXTENSION_API_NAME} ${WEBKITGTK_API_VERSIO
     DEPENDENCIES
         JavaScriptCore
         Gtk-${GTK_API_VERSION}.0:${GTK_PKGCONFIG_PACKAGE}
-        Soup-${SOUP_API_VERSION}:libsoup-${SOUP_API_VERSION}
+        Soup-3.0:libsoup-3.0
     SOURCES
         ${WebKitDOM_SOURCES_FOR_INTROSPECTION}
         ${WebKitWebProcessExtension_INSTALLED_HEADERS}

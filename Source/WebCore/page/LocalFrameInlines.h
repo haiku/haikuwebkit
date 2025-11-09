@@ -29,11 +29,8 @@
 
 #include <WebCore/Document.h>
 #include <WebCore/Editor.h>
-#include <WebCore/EventHandler.h>
-#include <WebCore/FrameLoader.h>
 #include <WebCore/FrameSelection.h>
 #include <WebCore/LocalFrame.h>
-#include <WebCore/LocalFrameView.h>
 
 namespace WebCore {
 
@@ -45,16 +42,6 @@ inline Document* LocalFrame::document() const
 inline RefPtr<Document> LocalFrame::protectedDocument() const
 {
     return document();
-}
-
-inline LocalFrameView* LocalFrame::view() const
-{
-    return m_view.get();
-}
-
-inline RefPtr<LocalFrameView> LocalFrame::protectedView() const
-{
-    return m_view;
 }
 
 inline Editor& LocalFrame::editor()

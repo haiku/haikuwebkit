@@ -49,7 +49,7 @@
 #include <wtf/glib/GRefPtr.h>
 
 #if USE(GTK4)
-#include <WebCore/GRefPtrGtk.h>
+#include "GRefPtrGtk.h"
 #endif
 #endif
 

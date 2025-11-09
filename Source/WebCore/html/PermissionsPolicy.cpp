@@ -28,7 +28,6 @@
 
 #include "Allowlist.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "ElementInlines.h"
 #include "HTMLIFrameElement.h"
 #include "HTMLNames.h"

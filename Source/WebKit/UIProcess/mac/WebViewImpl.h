@@ -229,10 +229,12 @@ public:
     ~WebViewImpl();
 
     NSWindow *window();
+    RetainPtr<NSWindow> protectedWindow();
 
     WebPageProxy& page() { return m_page.get(); }
 
     WKWebView *view() const { return m_view.getAutoreleased(); }
+    RetainPtr<WKWebView> protectedView() const { return m_view.get(); };
 
     void processWillSwap();
     void processDidExit();
@@ -401,6 +403,7 @@ public:
 #if ENABLE(FULLSCREEN_API)
     bool hasFullScreenWindowController() const;
     WKFullScreenWindowController *fullScreenWindowController();
+    RetainPtr<WKFullScreenWindowController> protectedFullScreenWindowController();
     void closeFullScreenWindowController();
 #endif
     NSView *fullScreenPlaceholderView();
@@ -907,7 +910,8 @@ private:
 #endif
 
 #if ENABLE(IMAGE_ANALYSIS)
-    CocoaImageAnalyzer *ensureImageAnalyzer();
+    CocoaImageAnalyzer* ensureImageAnalyzer();
+    RetainPtr<CocoaImageAnalyzer> ensureProtectedImageAnalyzer();
     int32_t processImageAnalyzerRequest(CocoaImageAnalyzerRequest *, CompletionHandler<void(RetainPtr<CocoaImageAnalysis>&&, NSError *)>&&);
 #endif
 
@@ -1070,8 +1074,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
 #if ENABLE(IMAGE_ANALYSIS)
-    RefPtr<WorkQueue> m_imageAnalyzerQueue;
-    RetainPtr<CocoaImageAnalyzer> m_imageAnalyzer;
+    const RefPtr<WorkQueue> m_imageAnalyzerQueue;
+    const RetainPtr<CocoaImageAnalyzer> m_imageAnalyzer;
 #endif
 
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)

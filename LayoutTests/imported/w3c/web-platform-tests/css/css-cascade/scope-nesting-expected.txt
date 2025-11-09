@@ -21,4 +21,6 @@ PASS Insert a nested style rule within @scope, &
 PASS Insert a nested style rule within @scope, :scope
 PASS Insert a CSSNestedDeclarations rule directly in top-level @scope
 PASS Mutating selectorText on outer style rule causes correct inner specificity
+PASS Modifying selectorText invalidates inner scoped rules
+PASS Modifying selectorText invalidates inner scoped rules (nested declarations)
 

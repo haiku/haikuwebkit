@@ -244,10 +244,10 @@ private:
     MemoryCompactRobinHoodHashMap<URL, WeakHashSet<ScriptBufferSourceProvider>> m_importedScriptsSourceProviders;
 
     const RefPtr<CacheStorageConnection> m_cacheStorageConnection;
-    const std::unique_ptr<WorkerMessagePortChannelProvider> m_messagePortChannelProvider;
+    const RefPtr<WorkerMessagePortChannelProvider> m_messagePortChannelProvider;
     const RefPtr<WorkerSWClientConnection> m_swClientConnection;
-    std::unique_ptr<CSSValuePool> m_cssValuePool;
-    std::unique_ptr<WorkerClient> m_workerClient;
+    const std::unique_ptr<CSSValuePool> m_cssValuePool;
+    const std::unique_ptr<WorkerClient> m_workerClient;
     const RefPtr<CSSFontSelector> m_cssFontSelector;
     SettingsValues m_settingsValues;
     WorkerType m_workerType;

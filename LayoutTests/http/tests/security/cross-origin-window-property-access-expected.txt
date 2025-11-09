@@ -16,6 +16,7 @@ PASS Object.getOwnPropertyDescriptor(window.__proto__, "constructor").get.call(c
 PASS crossOriginWindow.constructor threw exception SecurityError: Blocked a frame with origin "http://127.0.0.1:8000" from accessing a cross-origin frame. Protocols, domains, and ports must match..
 PASS Object.getOwnPropertyDescriptor(crossOriginWindow.__proto__, "constructor").value threw exception SecurityError: Blocked a frame with origin "http://127.0.0.1:8000" from accessing a cross-origin frame. Protocols, domains, and ports must match..
 PASS Object.getOwnPropertyDescriptor(window, "location").get.call(crossOriginWindow) === crossOriginWindow.location is true
+PASS crossOriginWindow.$vm threw exception SecurityError: Blocked a frame with origin "http://127.0.0.1:8000" from accessing a cross-origin frame. Protocols, domains, and ports must match..
 PASS successfullyParsed is true
 
 TEST COMPLETE

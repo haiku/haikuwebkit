@@ -326,6 +326,36 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 			skip(ALL, "test", ALL, "MultisampleRetainTest")
 			skip(ALL, "test", ALL, "MultisampleClearThenLoad")
 			skip(ALL, "test", ALL, "MutableImagesTest")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerClear")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerColor")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerColorBurn")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerColorDodge")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDarken")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDifference")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDst")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDstATop")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDstIn")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDstOut")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerDstOver")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerExclusion")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerHardLight")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerHue")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerLighten")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerLuminosity")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerModulate")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerMultiply")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerOverlay")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerPlus")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSaturation")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerScreen")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSoftLight")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSrc")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSrcATop")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSrcIn")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSrcOut")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerSrcOver")
+			skip(ALL, "test", ALL, "NotifyInUseTestLayerXor")
+			skip(ALL, "test", ALL, "NotifyInUseTestSnapshot")
 			skip(ALL, "test", ALL, "OpsTaskFlushCount")
 			skip(ALL, "test", ALL, "OverdrawSurface_Gpu")
 			skip(ALL, "test", ALL, "PinnedImageTest")
@@ -344,7 +374,8 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 			skip(ALL, "test", ALL, "SkipOpsTaskTest")
 			skip(ALL, "test", ALL, "SkColorSpaceXform_Ganesh")
 			skip(ALL, "test", ALL, "SkColorSpaceXform_Graphite")
-			skip(ALL, "test", ALL, "SkRuntimeBlender_GPU")
+			skip(ALL, "test", ALL, "SkRuntimeBlender_Ganesh")
+			skip(ALL, "test", ALL, "SkRuntimeBlender_Graphite")
 			skip(ALL, "test", ALL, "SkRuntimeEffect") // knocks out a bunch
 			skip(ALL, "test", ALL, "SkRuntimeShaderImageFilter_GPU")
 			skip(ALL, "test", ALL, "SkRuntimeShader_TransformedCoords_Ganesh")
@@ -991,18 +1022,6 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 	skip("r8", "image", ALL, ALL)
 	skip("r8", "colorImage", ALL, ALL)
 
-	if b.ExtraConfig("Valgrind") {
-		// These take 18+ hours to run.
-		skip("pdf", "gm", ALL, "fontmgr_iter")
-		skip("pdf", ALL, ALL, "PANO_20121023_214540.jpg")
-		skip("pdf", "skp", ALL, "worldjournal")
-		skip("pdf", "skp", ALL, "desk_baidu.skp")
-		skip("pdf", "skp", ALL, "desk_wikipedia.skp")
-		skip(ALL, "svg", ALL, ALL)
-		// skbug.com/40040468 and skbug.com/40040128
-		skip(ALL, "test", ALL, "InitialTextureClear")
-	}
-
 	if b.Model("TecnoSpark3Pro", "Wembley") {
 		// skbug.com/40040743
 		skip(ALL, "test", ALL, "InitialTextureClear")
@@ -1420,15 +1439,6 @@ func (b *TaskBuilder) dmFlags(internalHardwareLabel string) {
 		match = append(match, "~^fast_constraint_red_is_allowed$")
 		match = append(match, "~^strict_constraint_batch_no_red_allowed$")
 		match = append(match, "~^strict_constraint_no_red_allowed$")
-	}
-
-	if b.ExtraConfig("Valgrind") { // skbug.com/40034131
-		match = append(match, "~Threaded")
-	}
-
-	if b.ExtraConfig("Valgrind") && b.ExtraConfig("PreAbandonGpuContext") {
-		// skbug.com/40037788
-		match = append(match, "~multipicturedraw_")
 	}
 
 	if b.Model("AndroidOne") {

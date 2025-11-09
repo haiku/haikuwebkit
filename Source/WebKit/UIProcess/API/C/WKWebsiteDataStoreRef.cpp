@@ -443,7 +443,7 @@ void WKWebsiteDataStoreStatisticsHasIsolatedSession(WKWebsiteDataStoreRef dataSt
 void WKWebsiteDataStoreHasAppBoundSession(WKWebsiteDataStoreRef dataStoreRef, void* context, WKWebsiteDataStoreHasAppBoundSessionFunction callback)
 {
 #if ENABLE(APP_BOUND_DOMAINS)
-    WebKit::toImpl(dataStoreRef)->hasAppBoundSession([context, callback](bool hasAppBoundSession) {
+    WebKit::toProtectedImpl(dataStoreRef)->hasAppBoundSession([context, callback](bool hasAppBoundSession) {
         callback(hasAppBoundSession, context);
     });
 #else
@@ -520,11 +520,8 @@ void WKWebsiteDataStoreSetAppBoundDomainsForTesting(WKArrayRef originURLsRef, vo
     HashSet<WebCore::RegistrableDomain> domains;
     domains.reserveInitialCapacity(newSize);
     for (size_t i = 0; i < newSize; ++i) {
-        auto* originURL = originURLsArray->at<API::URL>(i);
-        if (!originURL)
-            continue;
-        
-        domains.add(WebCore::RegistrableDomain { URL { originURL->string() } });
+        if (RefPtr originURL = originURLsArray->at<API::URL>(i))
+            domains.add(WebCore::RegistrableDomain { URL { originURL->string() } });
     }
 
     WebKit::WebsiteDataStore::setAppBoundDomainsForTesting(WTFMove(domains), [context, completionHandler] {
@@ -740,7 +737,7 @@ void WKWebsiteDataStoreSetOriginQuotaRatioEnabled(WKWebsiteDataStoreRef dataStor
 void WKWebsiteDataStoreClearAppBoundSession(WKWebsiteDataStoreRef dataStoreRef, void* context, WKWebsiteDataStoreClearAppBoundSessionFunction completionHandler)
 {
 #if ENABLE(APP_BOUND_DOMAINS)
-    WebKit::toImpl(dataStoreRef)->clearAppBoundSession([context, completionHandler] {
+    WebKit::toProtectedImpl(dataStoreRef)->clearAppBoundSession([context, completionHandler] {
         completionHandler(context);
     });
 #else
@@ -752,7 +749,7 @@ void WKWebsiteDataStoreClearAppBoundSession(WKWebsiteDataStoreRef dataStoreRef, 
 void WKWebsiteDataStoreReinitializeAppBoundDomains(WKWebsiteDataStoreRef dataStoreRef)
 {
 #if ENABLE(APP_BOUND_DOMAINS)
-    WebKit::toImpl(dataStoreRef)->reinitializeAppBoundDomains();
+    WebKit::toProtectedImpl(dataStoreRef)->reinitializeAppBoundDomains();
 #else
     UNUSED_PARAM(dataStoreRef);
 #endif

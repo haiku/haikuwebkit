@@ -67,6 +67,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
 #include "JSPromiseAllContext.h"
+#include "JSPromiseAllGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "JSPropertyNameEnumerator.h"
 #include "JSRegExpStringIterator.h"
@@ -121,7 +122,7 @@ SpeculativeJIT::SpeculativeJIT(Graph& dfg)
     , m_compileOkay(true)
     , m_state(m_graph)
     , m_interpreter(m_graph, m_state)
-    , m_minifiedGraph(&jitCode()->minifiedDFG)
+    , m_minifiedGraph(&jitCode().unsafeGet()->minifiedDFG)
 {
 }
 
@@ -2383,7 +2384,8 @@ void SpeculativeJIT::linkOSREntries(LinkBuffer& linkBuffer)
         WTF::dataFile().atomically([&](auto& out) {
             DumpContext dumpContext;
             dataLogLn("OSR Entries:");
-            for (OSREntryData& entryData : jitCode()->m_osrEntry)
+            RefPtr jitCode = this->jitCode();
+            for (OSREntryData& entryData : jitCode->m_osrEntry)
                 dataLogLn("    ", inContext(entryData, &dumpContext));
             if (!dumpContext.isEmpty())
                 dumpContext.dump(out);
@@ -15561,8 +15563,8 @@ void SpeculativeJIT::compileNewInternalFieldObject(Node* node)
     case JSPromiseAllContextType:
         compileNewInternalFieldObjectImpl<JSPromiseAllContext>(node, operationNewPromiseAllContext);
         break;
-    case JSPromiseReactionType:
-        compileNewInternalFieldObjectImpl<JSPromiseReaction>(node, operationNewPromiseReaction);
+    case JSPromiseAllGlobalContextType:
+        compileNewInternalFieldObjectImpl<JSPromiseAllGlobalContext>(node, operationNewPromiseAllGlobalContext);
         break;
     case JSRegExpStringIteratorType:
         compileNewInternalFieldObjectImpl<JSRegExpStringIterator>(node, operationNewRegExpStringIterator);
@@ -17458,6 +17460,98 @@ void SpeculativeJIT::compileToLength(Node* node)
         DFG_CRASH(m_graph, node, "Bad use kind");
         break;
     }
+}
+
+void SpeculativeJIT::compileResolvePromiseFirstResolving(Node* node)
+{
+    SpeculateCellOperand promise(this, node->child1());
+    JSValueOperand argument(this, node->child2());
+
+    GPRReg promiseGPR = promise.gpr();
+    JSValueRegs argumentRegs = argument.jsValueRegs();
+
+    flushRegisters();
+    callOperation(operationResolvePromiseFirstResolving, LinkableConstant::globalObject(*this, node), promiseGPR, argumentRegs);
+    noResult(node);
+}
+
+void SpeculativeJIT::compileRejectPromiseFirstResolving(Node* node)
+{
+    SpeculateCellOperand promise(this, node->child1());
+    JSValueOperand argument(this, node->child2());
+
+    GPRReg promiseGPR = promise.gpr();
+    JSValueRegs argumentRegs = argument.jsValueRegs();
+
+    flushRegisters();
+    callOperation(operationRejectPromiseFirstResolving, LinkableConstant::globalObject(*this, node), promiseGPR, argumentRegs);
+    noResult(node);
+}
+
+void SpeculativeJIT::compileFulfillPromiseFirstResolving(Node* node)
+{
+    SpeculateCellOperand promise(this, node->child1());
+    JSValueOperand argument(this, node->child2());
+
+    GPRReg promiseGPR = promise.gpr();
+    JSValueRegs argumentRegs = argument.jsValueRegs();
+
+    flushRegisters();
+    callOperation(operationFulfillPromiseFirstResolving, LinkableConstant::globalObject(*this, node), promiseGPR, argumentRegs);
+    noResult(node);
+}
+
+void SpeculativeJIT::compilePromiseResolve(Node* node)
+{
+    SpeculateCellOperand constructor(this, node->child1());
+    JSValueOperand argument(this, node->child2());
+
+    GPRReg constructorGPR = constructor.gpr();
+    JSValueRegs argumentRegs = argument.jsValueRegs();
+
+    speculateObject(node->child1(), constructorGPR);
+
+    flushRegisters();
+    GPRFlushedCallResult result(this);
+    GPRReg resultGPR = result.gpr();
+    callOperation(operationPromiseResolve, resultGPR, LinkableConstant::globalObject(*this, node), constructorGPR, argumentRegs);
+    cellResult(resultGPR, node);
+}
+
+void SpeculativeJIT::compilePromiseReject(Node* node)
+{
+    SpeculateCellOperand constructor(this, node->child1());
+    JSValueOperand argument(this, node->child2());
+
+    GPRReg constructorGPR = constructor.gpr();
+    JSValueRegs argumentRegs = argument.jsValueRegs();
+
+    speculateObject(node->child1(), constructorGPR);
+
+    flushRegisters();
+    GPRFlushedCallResult result(this);
+    GPRReg resultGPR = result.gpr();
+    callOperation(operationPromiseReject, resultGPR, LinkableConstant::globalObject(*this, node), constructorGPR, argumentRegs);
+    cellResult(resultGPR, node);
+}
+
+void SpeculativeJIT::compilePromiseThen(Node* node)
+{
+    SpeculateCellOperand promise(this, node->child1());
+    JSValueOperand onFulfilled(this, node->child2());
+    JSValueOperand onRejected(this, node->child3());
+
+    GPRReg promiseGPR = promise.gpr();
+    JSValueRegs onFulfilledRegs = onFulfilled.jsValueRegs();
+    JSValueRegs onRejectedRegs = onRejected.jsValueRegs();
+
+    speculatePromiseObject(node->child1(), promiseGPR);
+
+    flushRegisters();
+    GPRFlushedCallResult result(this);
+    GPRReg resultGPR = result.gpr();
+    callOperation(operationPromiseThen, resultGPR, LinkableConstant::globalObject(*this, node), promiseGPR, onFulfilledRegs, onRejectedRegs);
+    cellResult(resultGPR, node);
 }
 
 unsigned SpeculativeJIT::appendExceptionHandlingOSRExit(ExitKind kind, unsigned eventStreamIndex, CodeOrigin opCatchOrigin, HandlerInfo* exceptionHandler, CallSiteIndex callSite, MacroAssembler::JumpList jumpsToFail)

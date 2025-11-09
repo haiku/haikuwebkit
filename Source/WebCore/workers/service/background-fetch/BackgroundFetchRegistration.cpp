@@ -43,15 +43,6 @@
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
-class BackgroundFetchResponseBodyLoader;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::BackgroundFetchResponseBodyLoader> : std::true_type { };
-}
-
-namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(BackgroundFetchRegistration);
 
@@ -102,7 +93,9 @@ static ExceptionOr<ResourceRequest> requestFromInfo(ScriptExecutionContext& cont
     return request->resourceRequest();
 }
 
-class BackgroundFetchResponseBodyLoader : public FetchResponseBodyLoader, public CanMakeWeakPtr<BackgroundFetchResponseBodyLoader> {
+class BackgroundFetchResponseBodyLoader final : public FetchResponseBodyLoader, public CanMakeWeakPtr<BackgroundFetchResponseBodyLoader>, public CanMakeCheckedPtr<BackgroundFetchResponseBodyLoader> {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(BackgroundFetchResponseBodyLoader);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(BackgroundFetchResponseBodyLoader);
 public:
     BackgroundFetchResponseBodyLoader(ScriptExecutionContext& context, FetchResponse& response, BackgroundFetchRecordIdentifier recordIdentifier)
         : FetchResponseBodyLoader(response)
@@ -115,20 +108,21 @@ private:
     void start() final
     {
         m_connection->retrieveRecordResponseBody(m_recordIdentifier, [weakThis = WeakPtr { *this }](auto&& result) {
-            if (!weakThis || !weakThis->m_response)
+            CheckedPtr checkedThis = weakThis.get();
+            if (!checkedThis || !checkedThis->m_response)
                 return;
 
-            Ref protectedResponse = *weakThis->m_response;
+            Ref protectedResponse = *checkedThis->m_response;
 
             if (!result.has_value()) {
-                weakThis->m_response = nullptr;
+                checkedThis->m_response = nullptr;
                 protectedResponse->receivedError(WTFMove(result.error()));
                 return;
             }
 
             auto buffer = WTFMove(result.value());
             if (!buffer) {
-                weakThis->m_response = nullptr;
+                checkedThis->m_response = nullptr;
                 protectedResponse->didSucceed({ });
                 return;
             }

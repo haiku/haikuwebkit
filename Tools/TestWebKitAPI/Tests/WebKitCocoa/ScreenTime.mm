@@ -27,6 +27,7 @@
 
 #if ENABLE(SCREEN_TIME)
 
+#import "AppKitSPI.h"
 #import "HTTPServer.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
@@ -855,6 +856,7 @@ TEST(ScreenTime, OffscreenBlurredScreenTimeBlockingView)
 }
 
 #if PLATFORM(MAC)
+
 TEST(ScreenTime, DoNotDonateURLsInOccludedWebView)
 {
     // FIXME: This test will fail if running on a full screen terminal window. It passes otherwise.
@@ -906,6 +908,68 @@ TEST(ScreenTime, DoNotDonateURLsInOccludedWebView)
 
     EXPECT_FALSE(suppressUsageRecording);
 }
+
+TEST(ScreenTime, FullscreenWithSystemBlockingViewInHierarchy)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [configuration preferences].elementFullscreenEnabled = YES;
+
+    RetainPtr webView = webViewForScreenTimeTests(configuration.get());
+
+    __block bool childRestrictionsDone = false;
+    auto swizzle = swizzleEnforcesChildRestrictions(childRestrictionsDone);
+    RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://webkit.org"]];
+    [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:@"<div id=\"target\" style=\"width:150px;height:150px;background-color:red\"></div>"];
+    TestWebKitAPI::Util::run(&childRestrictionsDone);
+
+    [webView waitForNextPresentationUpdate];
+
+    EXPECT_TRUE(systemScreenTimeBlockingViewIsPresent(webView.get()));
+
+    RetainPtr controller = [webView _screenTimeWebpageController];
+    Class remoteViewClass = NSClassFromString(@"NSRemoteView");
+
+    TestWebKitAPI::Util::waitFor([&] {
+        return [[[controller view] subviews] indexOfObjectPassingTest:^BOOL(NSView *subview, NSUInteger, BOOL *) {
+            return [subview isKindOfClass:remoteViewClass];
+        }] != NSNotFound;
+    });
+
+    if ([webView _wantsConstraintBasedLayout]) {
+        [webView setTranslatesAutoresizingMaskIntoConstraints:NO];
+
+        RetainPtr superview = [webView superview];
+        [NSLayoutConstraint activateConstraints:@[
+            [[webView topAnchor] constraintEqualToAnchor:[superview topAnchor]],
+            [[webView leadingAnchor] constraintEqualToAnchor:[superview leadingAnchor]],
+            [[webView bottomAnchor] constraintEqualToAnchor:[superview bottomAnchor]],
+            [[webView trailingAnchor] constraintEqualToAnchor:[superview trailingAnchor]]
+        ]];
+    }
+
+    [webView objectByEvaluatingJavaScript:@"document.querySelector('#target').addEventListener('fullscreenchange', event => { window.webkit.messageHandlers.testHandler.postMessage('fullscreenchange'); });"];
+
+    bool receivedFullscreenChangeMessage = false;
+    [webView performAfterReceivingMessage:@"fullscreenchange" action:[&] {
+        receivedFullscreenChangeMessage = true;
+    }];
+
+    RetainPtr originalWindow = [webView window];
+
+    [webView objectByEvaluatingJavaScriptWithUserGesture:@"document.querySelector('#target').webkitRequestFullscreen()"];
+
+    TestWebKitAPI::Util::run(&receivedFullscreenChangeMessage);
+    receivedFullscreenChangeMessage = false;
+
+    TestWebKitAPI::Util::waitFor([&] {
+        RetainPtr window = [webView window];
+        return [window isVisible] && (window != originalWindow);
+    });
+
+    NSSize fullscreenWindowSize = [[webView window] frame].size;
+    EXPECT_EQ([webView frame], NSMakeRect(0, 0, fullscreenWindowSize.width, fullscreenWindowSize.height));
+}
+
 #endif
 
 TEST(ScreenTime, CreateControllerAfterOffscreenWebViewBecomesInWindow)

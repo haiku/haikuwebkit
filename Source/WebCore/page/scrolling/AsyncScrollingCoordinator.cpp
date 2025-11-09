@@ -31,9 +31,8 @@
 #include "ContainerNodeInlines.h"
 #include "DebugPageOverlays.h"
 #include "DeprecatedGlobalSettings.h"
-#include "Document.h"
+#include "DocumentView.h"
 #include "EditorClient.h"
-#include "FrameInlines.h"
 #include "GraphicsLayer.h"
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
@@ -619,7 +618,7 @@ LocalFrameView* AsyncScrollingCoordinator::frameViewForScrollingNode(std::option
         return nullptr;
     for (const auto& rootFrame : page()->rootFrames()) {
         if (RefPtr frameView = frameViewForScrollingNode(rootFrame.get(), scrollingNodeID))
-            return frameView.get();
+            return frameView.unsafeGet();
     }
     return nullptr;
 }

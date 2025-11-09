@@ -39,9 +39,7 @@
 - (id)accessibilityFocusedUIElement;
 @end
 
-AccessibilityController::AccessibilityController()
-{
-}
+AccessibilityController::AccessibilityController() = default;
 
 AccessibilityController::~AccessibilityController()
 {

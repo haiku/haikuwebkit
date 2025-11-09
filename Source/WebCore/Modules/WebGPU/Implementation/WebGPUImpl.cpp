@@ -89,47 +89,40 @@ void GPUImpl::requestAdapter(const RequestAdapterOptions& options, CompletionHan
     wgpuInstanceRequestAdapter(m_backing.get(), &backingOptions, &requestAdapterCallback, Block_copy(blockPtr.get())); // Block_copy is matched with Block_release above in requestAdapterCallback().
 }
 
-static Vector<WGPUDDVertexAttributeFormat> convertToBacking(const Vector<DDModel::DDVertexAttributeFormat>& descriptor)
+static Vector<UniqueRef<WebCore::IOSurface>> createIOSurfaces(unsigned width, unsigned height)
 {
-    Vector<WGPUDDVertexAttributeFormat> result;
-    for (auto& d : descriptor) {
-        result.append(WGPUDDVertexAttributeFormat {
-            .semantic = d.semantic,
-            .format = d.format,
-            .layoutIndex = d.layoutIndex,
-            .offset = d.offset
-        });
-    }
-    return result;
+    const auto colorFormat = IOSurface::Format::BGRA;
+    const auto colorSpace = DestinationColorSpace::SRGB();
+
+    Vector<UniqueRef<WebCore::IOSurface>> ioSurfaces;
+
+    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
+        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTFMove(buffer)));
+    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
+        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTFMove(buffer)));
+    if (auto buffer = WebCore::IOSurface::create(nullptr, WebCore::IntSize(width, height), colorSpace, IOSurface::Name::WebGPU, colorFormat))
+        ioSurfaces.append(makeUniqueRefFromNonNullUniquePtr(WTFMove(buffer)));
+
+    return ioSurfaces;
 }
 
-static Vector<WGPUDDVertexLayout> convertToBacking(const Vector<DDModel::DDVertexLayout>& descriptor)
+RefPtr<DDModel::DDMesh> GPUImpl::createModelBacking(unsigned width, unsigned height, CompletionHandler<void(Vector<MachSendRight>&&)>&& callback)
 {
-    Vector<WGPUDDVertexLayout> result;
-    for (auto& d : descriptor) {
-        result.append(WGPUDDVertexLayout {
-            .bufferIndex = d.bufferIndex,
-            .bufferOffset = d.bufferOffset,
-            .bufferStride = d.bufferStride,
-        });
-    }
-    return result;
-}
+    auto ioSurfaceVector = createIOSurfaces(width, height);
+    Vector<RetainPtr<IOSurfaceRef>> ioSurfaces;
+    for (UniqueRef<WebCore::IOSurface>& ioSurface : ioSurfaceVector)
+        ioSurfaces.append(ioSurface->surface());
 
-RefPtr<DDModel::DDMesh> GPUImpl::addMeshRequest(const DDModel::DDMeshDescriptor& descriptor)
-{
-    Ref convertToBackingContext = m_modelConvertToBackingContext;
-
-    WGPUDDMeshDescriptor backingDescriptor {
-        .indexCapacity = descriptor.indexCapacity,
-        .indexType = descriptor.indexType,
-        .vertexBufferCount = descriptor.vertexBufferCount,
-        .vertexCapacity = descriptor.vertexCapacity,
-        .vertexAttributes = convertToBacking(descriptor.vertexAttributes),
-        .vertexLayouts = convertToBacking(descriptor.vertexLayouts)
+    WGPUDDCreateMeshDescriptor backingDescriptor {
+        .width = width,
+        .height = height,
+        .ioSurfaces = WTFMove(ioSurfaces)
     };
 
-    return DDModel::DDMeshImpl::create(adoptWebGPU(wgpuDDMeshCreate(m_backing.get(), &backingDescriptor)), convertToBackingContext);
+    Ref convertToBackingContext = m_modelConvertToBackingContext;
+    auto mesh = DDModel::DDMeshImpl::create(adoptWebGPU(wgpuDDMeshCreate(m_backing.get(), &backingDescriptor)), WTFMove(ioSurfaceVector), convertToBackingContext);
+    callback(mesh->ioSurfaceHandles());
+    return mesh;
 }
 
 static WTF::Function<void(CompletionHandler<void()>&&)> convert(WGPUOnSubmittedWorkScheduledCallback&& onSubmittedWorkScheduledCallback)

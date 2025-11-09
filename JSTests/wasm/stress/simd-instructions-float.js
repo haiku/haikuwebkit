@@ -438,7 +438,11 @@ const floatTests = [
         [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NaN, 5000000000.0],
         [0xFFFFFFFF, 0x00000000, 0x00000000, 0xFFFFFFFF] // 4294967295, 0, 0, 4294967295
     ],
-
+    [
+        "i32x4.trunc_sat_f32x4_u",
+        [2147483648.0, 2147483648.0, 2147483648.0, 2147483648.0],
+        [0x80000000, 0x80000000, 0x80000000, 0x80000000]
+    ],
     [
         "f32x4.convert_i32x4_s",
         [1, -2, 2147483647, -2147483648],

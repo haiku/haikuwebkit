@@ -44,6 +44,15 @@ headers = ['AutodrainedPool.h']
 requirements = ['cplusplus20']
 headers = ['spi/mac/MetadataSPI.h']
 
+# Require objc.
+[module.NSLocaleSPI]
+requirements = ['objc']
+headers = ['spi/cocoa/NSLocaleSPI.h']
+
+[module.NSObjCRuntimeSPI]
+requirements = ['objc']
+headers = ['spi/cocoa/NSObjCRuntimeSPI.h']
+
 # Swiftc cannot currently parse various bits of WTF so we have to
 # exile them outside the main WTF module.
 

@@ -30,7 +30,6 @@
 #include "ChromeClient.h"
 #include "CookieConsentDecisionResult.h"
 #include "ExceptionCode.h"
-#include "FrameInlines.h"
 #include "JSDOMPromiseDeferred.h"
 #include "LocalFrame.h"
 #include "Navigator.h"

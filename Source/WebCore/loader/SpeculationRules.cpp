@@ -26,11 +26,13 @@
 #include "config.h"
 #include "SpeculationRules.h"
 
+#include "ReferrerPolicy.h"
 #include <wtf/HashSet.h>
 #include <wtf/JSONValues.h>
 #include <wtf/URL.h>
 #include <wtf/URLHash.h>
 #include <wtf/Vector.h>
+#include <wtf/text/StringBuilder.h>
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
@@ -168,7 +170,7 @@ static std::optional<SpeculationRules::DocumentPredicate> parseDocumentPredicate
     return std::nullopt;
 }
 
-// https://wicg.github.io/nav-speculation/speculation-rules.html#parse-a-speculation-rule
+// https://html.spec.whatwg.org/multipage/speculative-loading.html#parse-a-speculation-rule
 static std::optional<SpeculationRules::Rule> parseSingleRule(const JSON::Object& input, const String& rulesetLevelTag, const URL& rulesetBaseURL, const URL& documentBaseURL)
 {
     const HashSet<String> allowedKeys = {
@@ -265,8 +267,15 @@ static std::optional<SpeculationRules::Rule> parseSingleRule(const JSON::Object&
     }
 
     auto referrerPolicyValue = input.getValue("referrer_policy"_s);
-    if (referrerPolicyValue && referrerPolicyValue->type() == JSON::Value::Type::String)
-        rule.referrerPolicy = referrerPolicyValue->asString();
+    if (referrerPolicyValue && referrerPolicyValue->type() == JSON::Value::Type::String) {
+        String referrerPolicyString = referrerPolicyValue->asString();
+        if (!referrerPolicyString.isEmpty()) {
+            rule.referrerPolicy = parseReferrerPolicy(referrerPolicyString, ReferrerPolicySource::SpeculationRules);
+            // 15.1. If input["referrer_policy"] is not a referrer policy... Return null.
+            if (!rule.referrerPolicy)
+                return std::nullopt;
+        }
+    }
 
     auto eagernessValue = input.getValue("eagerness"_s);
     if (eagernessValue && eagernessValue->type() == JSON::Value::Type::String) {
@@ -290,16 +299,22 @@ static std::optional<SpeculationRules::Rule> parseSingleRule(const JSON::Object&
     if (!rulesetLevelTag.isNull())
         rule.tags.append(rulesetLevelTag);
 
+    // 18. If input["tag"] exists:
     auto tagValue = input.getValue("tag"_s);
     if (tagValue && tagValue->type() == JSON::Value::Type::String) {
         String ruleTag = tagValue->asString();
+        // 18.1. If input["tag"] is not a speculation rule tag... return null.
         if (!ruleTag.containsOnlyASCII() || !ruleTag.containsOnly<isASCIIPrintable>())
             return std::nullopt;
-        rule.tags.append(ruleTag);
+        StringBuilder ruleTagBuilder;
+        ruleTagBuilder.appendQuotedJSONString(ruleTag);
+        // 18.2 Append input["tag"] to tags.
+        rule.tags.append(ruleTagBuilder.toString());
     }
 
+    // 19. If tags is empty, then append null to tags.
     if (rule.tags.isEmpty())
-        rule.tags.append(String()); // Append null string
+        rule.tags.append("null"_s);
 
     return rule;
 }
@@ -326,30 +341,33 @@ static std::optional<Vector<SpeculationRules::Rule>> parseRules(const JSON::Obje
     return rules;
 }
 
-// https://wicg.github.io/nav-speculation/speculation-rules.html#parse-speculation-rules
-void SpeculationRules::parseSpeculationRules(const StringView& text, const URL& rulesetBaseURL, const URL& documentBaseURL)
+// https://html.spec.whatwg.org/multipage/speculative-loading.html#parse-a-speculation-rule-set-string
+bool SpeculationRules::parseSpeculationRules(const StringView& text, const URL& rulesetBaseURL, const URL& documentBaseURL)
 {
     auto jsonValue = JSON::Value::parseJSON(text);
     if (!jsonValue)
-        return;
+        return false;
 
     auto jsonObject = jsonValue->asObject();
     if (!jsonObject)
-        return;
+        return false;
 
     String rulesetLevelTag;
     auto tagValue = jsonObject->getValue("tag"_s);
     if (tagValue && tagValue->type() == JSON::Value::Type::String) {
         String candidateTag = tagValue->asString();
         if (!candidateTag.containsOnlyASCII() || !candidateTag.containsOnly<isASCIIPrintable>())
-            return;
-        rulesetLevelTag = candidateTag;
+            return false;
+        StringBuilder ruleTagBuilder;
+        ruleTagBuilder.appendQuotedJSONString(candidateTag);
+        rulesetLevelTag = ruleTagBuilder.toString();
     }
 
     auto prefetch = parseRules(*jsonObject, "prefetch"_s, rulesetLevelTag, rulesetBaseURL, documentBaseURL);
     if (!prefetch)
-        return;
+        return false;
     m_prefetchRules.appendVector(WTFMove(*prefetch));
+    return true;
 }
 
 } // namespace WebCore

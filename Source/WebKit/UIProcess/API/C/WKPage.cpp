@@ -280,8 +280,8 @@ static String encodingOf(const String& string)
 static std::span<const uint8_t> dataFrom(const String& string)
 {
     if (string.isNull() || !string.is8Bit())
-        return asBytes(string.span16());
-    return string.span8();
+        return asBytes(string.span<char16_t>());
+    return asBytes(string.span<Latin1Character>());
 }
 
 static Ref<WebCore::DataSegment> dataReferenceFrom(const String& string)

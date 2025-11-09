@@ -167,17 +167,74 @@ bool isShaderValidationEnabled(id<MTLDevice> device)
     return result;
 }
 
+#if ENABLE(WEBGPU_SWIFT)
+static std::optional<std::array<int, 4>> extractClangVersion()
+{
+    NSString* input = @(__clang_version__);
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression
+        regularExpressionWithPattern:@"clang-([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)"
+        options:0
+        error:&error];
+
+    if (error)
+        return std::nullopt;
+
+    NSTextCheckingResult *match = [regex firstMatchInString:input options:0 range:NSMakeRange(0, input.length)];
+
+    if (match && match.numberOfRanges > 1) {
+        std::array<int, 4> result;
+        for (int i = 0; i < 4; ++i) {
+            NSRange clangRange = [match rangeAtIndex:i + 1];
+            NSString* substring = [input substringWithRange:clangRange];
+            result[i] = substring.intValue;
+        }
+        return result;
+    }
+
+    return std::nullopt;
+}
+
+static bool swiftCompilerSupportsWebGPU()
+{
+    auto maybeClangVersion = extractClangVersion();
+    if (!maybeClangVersion)
+        return false;
+
+    auto clangVersion = *maybeClangVersion;
+    if (clangVersion[0] == 1700 && clangVersion[1] >= 6 && clangVersion[2] >= 1 && clangVersion[3] >= 1)
+        return true;
+
+    if (clangVersion[0] == 2100 && clangVersion[1] >= 0 && clangVersion[2] >= 101 && clangVersion[3] >= 15)
+        return true;
+
+    if (clangVersion[0] > 2100)
+        return true;
+
+    return false;
+}
+#endif
+
 bool isWebGPUSwiftEnabled()
 {
 #if defined(ENABLE_LIBFUZZER) && ENABLE_LIBFUZZER && defined(ASAN_ENABLED) && ASAN_ENABLED
     return true;
+#elif !ENABLE(WEBGPU_SWIFT)
+    return false;
 #else
     static std::once_flag onceFlag;
     static bool isWebGPUSwiftEnabled;
     std::call_once(onceFlag, [&] {
-        isWebGPUSwiftEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"WebKitWebGPUSwiftEnabled"];
+        NSNumber* object = [[NSUserDefaults standardUserDefaults] objectForKey:@"WebKitWebGPUSwiftEnabled"];
+        if (object)
+            isWebGPUSwiftEnabled = object.boolValue;
+        else
+            isWebGPUSwiftEnabled = swiftCompilerSupportsWebGPU();
+
         if (isWebGPUSwiftEnabled)
             WTFLogAlways("WebGPU: using SWIFT backend"); // NOLINT
+        else
+            WTFLogAlways("WebGPU: using C++ backend"); // NOLINT
     });
     return isWebGPUSwiftEnabled;
 #endif

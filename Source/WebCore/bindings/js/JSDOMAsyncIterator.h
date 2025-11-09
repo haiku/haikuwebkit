@@ -28,6 +28,7 @@
 #include <JavaScriptCore/AsyncIteratorPrototype.h>
 #include <JavaScriptCore/IteratorOperations.h>
 #include <JavaScriptCore/JSBoundFunction.h>
+#include <JavaScriptCore/JSPromiseConstructor.h>
 #include <JavaScriptCore/PropertySlot.h>
 #include <WebCore/JSDOMConvert.h>
 #include <WebCore/JSDOMIterator.h>
@@ -190,18 +191,17 @@ JSC::JSValue JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>::next(JSC::JSGlob
 
     auto afterOngoingPromiseCapability = JSC::JSPromise::createNewPromiseCapability(&lexicalGlobalObject, lexicalGlobalObject.promiseConstructor());
     RETURN_IF_EXCEPTION(scope, { });
-    
-    auto data = JSC::JSPromise::convertCapabilityToDeferredData(&lexicalGlobalObject, afterOngoingPromiseCapability);
+
+    auto* promise = jsDynamicCast<JSC::JSPromise*>(afterOngoingPromiseCapability.get(&lexicalGlobalObject, vm.propertyNames->promise));
     RETURN_IF_EXCEPTION(scope, { });
 
     auto onSettled = createOnSettledFunction(&lexicalGlobalObject);
     RETURN_IF_EXCEPTION(scope, { });
 
     auto* ongoingPromise = m_ongoingPromise->promise();
-    ongoingPromise->performPromiseThen(&lexicalGlobalObject, onSettled, onSettled, afterOngoingPromiseCapability);
-    RETURN_IF_EXCEPTION(scope, { });
+    ongoingPromise->performPromiseThenExported(vm, &lexicalGlobalObject, onSettled, onSettled, afterOngoingPromiseCapability);
 
-    m_ongoingPromise = DOMPromise::create(*this->globalObject(), *data.promise);
+    m_ongoingPromise = DOMPromise::create(*this->globalObject(), *promise);
     return m_ongoingPromise->promise();
 }
 
@@ -214,14 +214,14 @@ JSC::JSPromise* JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>::runNextSteps(
     auto nextPromiseCapability = JSC::JSPromise::createNewPromiseCapability(&globalObject, globalObject.promiseConstructor());
     RETURN_IF_EXCEPTION(scope, nullptr);
 
-    auto data = JSC::JSPromise::convertCapabilityToDeferredData(&globalObject, nextPromiseCapability);
-    RETURN_IF_EXCEPTION(scope, nullptr);
+    auto* promise = jsDynamicCast<JSC::JSPromise*>(nextPromiseCapability.get(&globalObject, vm.propertyNames->promise));
+    RETURN_IF_EXCEPTION(scope, { });
 
     if (!m_iterator) {
-        data.promise->resolve(&globalObject, JSC::createIteratorResultObject(&globalObject, JSC::jsUndefined(), true));
+        promise->resolve(&globalObject, JSC::createIteratorResultObject(&globalObject, JSC::jsUndefined(), true));
         RETURN_IF_EXCEPTION(scope, nullptr);
 
-        return data.promise;
+        return promise;
     }
 
     auto nextPromise = getNextIterationResult(globalObject);
@@ -231,10 +231,9 @@ JSC::JSPromise* JSDOMAsyncIteratorBase<JSWrapper, IteratorTraits>::runNextSteps(
     auto onRejected = createOnRejectedFunction(&globalObject);
     RETURN_IF_EXCEPTION(scope, nullptr);
 
-    nextPromise->performPromiseThen(&globalObject, onFulfilled, onRejected, nextPromiseCapability);
-    RETURN_IF_EXCEPTION(scope, nullptr);
+    nextPromise->performPromiseThenExported(vm, &globalObject, onFulfilled, onRejected, nextPromiseCapability);
 
-    return data.promise;
+    return promise;
 }
 
 template<typename JSWrapper, typename IteratorTraits>

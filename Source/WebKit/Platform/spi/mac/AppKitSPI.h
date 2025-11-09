@@ -40,6 +40,7 @@ DECLARE_SYSTEM_HEADER
 #import <AppKit/NSMenu_Private.h>
 #import <AppKit/NSPreviewRepresentingActivityItem_Private.h>
 #import <AppKit/NSTextInputClient_Private.h>
+#import <AppKit/NSView_Layout.h>
 #import <AppKit/NSWindow_Private.h>
 #import <AppKit/NSScrollViewSeparatorTrackingAdapter_Private.h>
 
@@ -89,6 +90,8 @@ static const NSWindowStyleMask NSWindowStyleMaskAlertWindow = (NSWindowStyleMask
 - (BOOL)registerScrollViewSeparatorTrackingAdapter:(NSObject<NSScrollViewSeparatorTrackingAdapter> *)adapter;
 - (void)unregisterScrollViewSeparatorTrackingAdapter:(NSObject<NSScrollViewSeparatorTrackingAdapter> *)adapter;
 
+- (void)_setSharesParentFirstResponder:(BOOL)sharesParentFirstResponder;
+
 @end
 
 @class LPLinkMetadata;
@@ -118,6 +121,10 @@ typedef NS_ENUM(NSInteger, NSScrollPocketEdge) {
 @property NSScrollPocketStyle style;
 @property (copy, nullable) NSColor *captureColor;
 @property (readonly, strong) NSView *captureView;
+@end
+
+@interface NSView (NSConstraintBasedLayout)
+- (void)_setHostsAutolayoutEngine:(BOOL)flag;
 @end
 
 #endif

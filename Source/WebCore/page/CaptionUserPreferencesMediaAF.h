@@ -43,7 +43,7 @@ namespace WebCore {
 class CaptionUserPreferencesMediaAF : public CaptionUserPreferences {
     WTF_MAKE_TZONE_ALLOCATED(CaptionUserPreferencesMediaAF);
 public:
-    static Ref<CaptionUserPreferencesMediaAF> create(PageGroup&);
+    WEBCORE_EXPORT static Ref<CaptionUserPreferencesMediaAF> create(PageGroup&);
     virtual ~CaptionUserPreferencesMediaAF();
 
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
@@ -88,11 +88,23 @@ public:
     static RefPtr<CaptionUserPreferencesMediaAF> extractCaptionUserPreferencesMediaAF(void* observer);
 #endif
 
-    String captionsStyleSheetOverride() const override;
+    WEBCORE_EXPORT String captionsStyleSheetOverride() const override;
     Vector<RefPtr<AudioTrack>> sortedTrackListForMenu(AudioTrackList*) override;
     Vector<RefPtr<TextTrack>> sortedTrackListForMenu(TextTrackList*, HashSet<TextTrack::Kind>) override;
     String displayNameForTrack(AudioTrack*) const override;
     String displayNameForTrack(TextTrack*) const override;
+
+#if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
+    WEBCORE_EXPORT String captionsWindowCSS() const;
+    WEBCORE_EXPORT String captionsBackgroundCSS() const;
+    WEBCORE_EXPORT String captionsTextColorCSS() const;
+    WEBCORE_EXPORT Color captionsTextColor(bool&) const;
+    WEBCORE_EXPORT String captionsDefaultFontCSS() const;
+    WEBCORE_EXPORT String captionsFontSizeCSS() const;
+    WEBCORE_EXPORT String windowRoundedCornerRadiusCSS() const;
+    WEBCORE_EXPORT String captionsTextEdgeCSS() const;
+    WEBCORE_EXPORT String colorPropertyCSS(CSSPropertyID, const Color&, bool) const;
+#endif
 
 private:
     CaptionUserPreferencesMediaAF(PageGroup&);
@@ -100,15 +112,6 @@ private:
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
     void updateTimerFired();
     bool hasNullCaptionProfile() const;
-
-    String captionsWindowCSS() const;
-    String captionsBackgroundCSS() const;
-    String captionsTextColorCSS() const;
-    Color captionsTextColor(bool&) const;
-    String captionsDefaultFontCSS() const;
-    String windowRoundedCornerRadiusCSS() const;
-    String captionsTextEdgeCSS() const;
-    String colorPropertyCSS(CSSPropertyID, const Color&, bool) const;
 #endif
 
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK) && PLATFORM(COCOA)

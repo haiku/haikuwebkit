@@ -37,10 +37,7 @@
 #import "Logging.h"
 #import "MessageNames.h"
 #import "WebPreferencesKeys.h"
-#import <CoreText/CTFont.h>
-#import <CoreText/CTFontDescriptor.h>
 #import <WebCore/ColorCocoa.h>
-#import <WebCore/FontCocoa.h>
 #import <pal/spi/cocoa/NSKeyedUnarchiverSPI.h>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/HashSet.h>
@@ -52,8 +49,6 @@
 
 #if PLATFORM(IOS_FAMILY)
 #import <UIKit/UIColor.h>
-#import <UIKit/UIFont.h>
-#import <UIKit/UIFontDescriptor.h>
 #import <UIKit/UIKit.h>
 #import <pal/ios/UIKitSoftLink.h>
 #endif
@@ -365,8 +360,6 @@ NSType typeFromObject(id object)
         return NSType::Error;
     if ([object isKindOfClass:[NSDictionary class]])
         return NSType::Dictionary;
-    if ([object isKindOfClass:[CocoaFont class]])
-        return NSType::Font;
     if ([object isKindOfClass:[NSLocale class]])
         return NSType::Locale;
     if ([object isKindOfClass:[NSNumber class]])
@@ -433,15 +426,8 @@ NSType typeFromObject(id object)
     return NSType::Unknown;
 }
 
-static inline bool isSerializableFont(CTFontRef font)
-{
-    return !!adoptCF(CTFontCopyAttribute(font, kCTFontURLAttribute));
-}
-
 bool isSerializableValue(id value)
 {
-    if ([value isKindOfClass:[CocoaFont class]])
-        return isSerializableFont((__bridge CTFontRef)value);
     return typeFromObject(value) != NSType::Unknown;
 }
 

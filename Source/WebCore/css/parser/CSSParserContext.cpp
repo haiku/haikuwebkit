@@ -28,11 +28,11 @@
 
 #include "CSSPropertyNames.h"
 #include "CSSValuePool.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentQuirks.h"
+#include "DocumentSecurityOrigin.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
-#include "Quirks.h"
 #include "Settings.h"
 #include <wtf/NeverDestroyed.h>
 

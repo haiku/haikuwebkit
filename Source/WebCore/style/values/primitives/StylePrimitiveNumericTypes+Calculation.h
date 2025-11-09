@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <WebCore/CalculationValue.h>
+#include <WebCore/StyleCalculationValue.h>
 #include <WebCore/StylePrimitiveNumericTypes.h>
 #include <wtf/Forward.h>
 
@@ -33,7 +33,7 @@ namespace Style {
 
 // MARK: - Conversion to `Calculation::Child`.
 
-inline Calculation::Child copyCalculation(Ref<CalculationValue> value)
+inline Calculation::Child copyCalculation(Ref<Calculation::Value> value)
 {
     return value->copyRoot();
 }

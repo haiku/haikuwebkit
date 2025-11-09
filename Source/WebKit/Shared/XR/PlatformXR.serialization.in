@@ -22,11 +22,6 @@
 
 #if ENABLE(WEBXR)
 
-enum class PlatformXR::Layout : uint8_t {
-    Shared,
-    Layered,
-};
-
 enum class PlatformXR::SessionFeature : uint8_t {
     ReferenceSpaceTypeViewer,
     ReferenceSpaceTypeLocal,
@@ -43,14 +38,6 @@ enum class PlatformXR::SessionMode : uint8_t {
     Inline,
     ImmersiveVr,
     ImmersiveAr,
-};
-
-enum class PlatformXR::ReferenceSpaceType : uint8_t {
-    Viewer,
-    Local,
-    LocalFloor,
-    BoundedFloor,
-    Unbounded
 };
 
 enum class PlatformXR::VisibilityState : uint8_t {

@@ -27,6 +27,7 @@
 
 #if USE(COORDINATED_GRAPHICS)
 #include "GraphicsLayerContentsDisplayDelegate.h"
+#include <wtf/Ref.h>
 
 namespace WebCore {
 

@@ -90,13 +90,13 @@ MutableStyleProperties& StyledElement::ensureMutableInlineStyle()
     if (!inlineStyle) {
         Ref mutableProperties = MutableStyleProperties::create(strictToCSSParserMode(isHTMLElement() && !document().inQuirksMode()));
         inlineStyle = mutableProperties.copyRef();
-        return mutableProperties.get();
+        return mutableProperties.unsafeGet();
     }
     if (RefPtr mutableProperties = dynamicDowncast<MutableStyleProperties>(*inlineStyle))
-        return *mutableProperties;
+        return *mutableProperties.unsafeGet();
     Ref mutableProperties = inlineStyle->mutableCopy();
     inlineStyle = mutableProperties.copyRef();
-    return mutableProperties.get();
+    return mutableProperties.unsafeGet();
 }
 
 void StyledElement::attributeChanged(const QualifiedName& name, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason reason)

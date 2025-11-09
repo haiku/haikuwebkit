@@ -170,6 +170,8 @@ public:
     // happen on the main thread.
     virtual bool requiresTailProcessing() const = 0;
 
+    virtual bool isAudioScheduledSourceNode() const { return false; }
+
     // propagatesSilence() should return true if the node will generate silent output when given silent input. By default, AudioNode
     // will take tailTime() and latencyTime() into account when determining whether the node will propagate silence.
     virtual bool propagatesSilence() const;
@@ -312,3 +314,8 @@ template<> struct LogArgument<WebCore::AudioNode::NodeType> {
 };
 
 } // namespace WTF
+
+#define SPECIALIZE_TYPE_TRAITS_AUDIONODE(ToValueTypeName, NodeTypeName) \
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ToValueTypeName) \
+static bool isType(const WebCore::AudioNode& node) { return node.nodeType() == WebCore::AudioNode::NodeTypeName; } \
+SPECIALIZE_TYPE_TRAITS_END()

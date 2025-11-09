@@ -26,6 +26,7 @@
 #include "config.h"
 #include "StyleAnimation.h"
 
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/NeverDestroyed.h>
 

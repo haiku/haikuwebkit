@@ -27,8 +27,8 @@
 
 #include "ScrollingCoordinator.h"
 
-#include "Document.h"
 #include "DocumentClasses.h"
+#include "DocumentView.h"
 #include "EventNames.h"
 #include "GraphicsLayer.h"
 #include "LocalFrame.h"

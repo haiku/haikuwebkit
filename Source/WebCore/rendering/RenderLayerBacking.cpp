@@ -38,6 +38,7 @@
 #include "ContainerNodeInlines.h"
 #include "DebugOverlayRegions.h"
 #include "DebugPageOverlays.h"
+#include "DocumentPage.h"
 #include "DropShadowFilterOperationWithStyleColor.h"
 #include "EventRegion.h"
 #include "GraphicsContext.h"
@@ -116,7 +117,7 @@
 #include <wtf/WeakListHashSet.h>
 #endif
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_CONTEXT)
 #include "ModelContext.h"
 #endif
 
@@ -298,7 +299,7 @@ RenderLayerBacking::RenderLayerBacking(RenderLayer& layer)
 #if ENABLE(FULLSCREEN_API)
     auto isFullsizeBackdrop = [](const RenderElement& renderer) -> bool {
         auto& style = renderer.style();
-        if (style.pseudoElementType() != PseudoId::Backdrop || style.position() != PositionType::Fixed)
+        if (style.pseudoElementType() != PseudoElementType::Backdrop || style.position() != PositionType::Fixed)
             return false;
 
         if (style.hasTransform() || style.hasClip() || style.hasMask())
@@ -999,7 +1000,7 @@ bool RenderLayerBacking::shouldClipCompositedBounds() const
 
     if (renderer().effectiveCapturedInViewTransition())
         return false;
-    if (renderer().style().pseudoElementType() == PseudoId::ViewTransitionNew)
+    if (renderer().style().pseudoElementType() == PseudoElementType::ViewTransitionNew)
         return false;
 
     if (m_isFrameLayerWithTiledBacking)
@@ -1320,14 +1321,19 @@ bool RenderLayerBacking::updateConfiguration(const RenderLayer* compositingAnces
         // but this is a runtime decision.
         if (element->usesPlatformLayer())
             m_graphicsLayer->setContentsToPlatformLayer(element->platformLayer(), GraphicsLayer::ContentsLayerPurpose::Model);
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_CONTEXT) && !ENABLE(GPU_PROCESS_MODEL)
         else if (auto modelContext = element->modelContext(); modelContext && element->document().settings().modelProcessEnabled()) {
             modelContext->setBackgroundColor(rendererBackgroundColor());
             m_graphicsLayer->setContentsToModelContext(*modelContext, GraphicsLayer::ContentsLayerPurpose::HostedModel);
         }
 #endif
-        else if (auto model = element->model())
+        else if (auto model = element->model()) {
+#if ENABLE(GPU_PROCESS_MODEL)
+            m_graphicsLayer->setContentsDisplayDelegate(element->contentsDisplayDelegate(), GraphicsLayer::ContentsLayerPurpose::Canvas);
+#else
             m_graphicsLayer->setContentsToModel(WTFMove(model), element->isInteractive() ? GraphicsLayer::ModelInteraction::Enabled : GraphicsLayer::ModelInteraction::Disabled);
+#endif
+        }
 
         element->sizeMayHaveChanged();
 
@@ -1697,8 +1703,8 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
             m_scrolledContentsLayer->setNeedsDisplay();
 
         m_scrolledContentsLayer->setSize(scrollSize);
-        m_scrolledContentsLayer->setScrollOffset(scrollOffset, GraphicsLayer::DontSetNeedsDisplay);
-        m_scrolledContentsLayer->setOffsetFromRenderer(toLayoutSize(scrollContainerBox.location()), GraphicsLayer::DontSetNeedsDisplay);
+        m_scrolledContentsLayer->setScrollOffset(scrollOffset, GraphicsLayer::ShouldSetNeedsDisplay::DoNotSet);
+        m_scrolledContentsLayer->setOffsetFromRenderer(toLayoutSize(scrollContainerBox.location()), GraphicsLayer::ShouldSetNeedsDisplay::DoNotSet);
         
         adjustTiledBackingCoverage();
     }
@@ -1716,11 +1722,11 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
     if (m_foregroundLayer) {
         FloatSize foregroundSize;
         FloatSize foregroundOffset;
-        GraphicsLayer::ShouldSetNeedsDisplay needsDisplayOnOffsetChange = GraphicsLayer::SetNeedsDisplay;
+        auto needsDisplayOnOffsetChange = GraphicsLayer::ShouldSetNeedsDisplay::Set;
         if (m_scrolledContentsLayer) {
             foregroundSize = m_scrolledContentsLayer->size();
             foregroundOffset = m_scrolledContentsLayer->offsetFromRenderer() - toLayoutSize(m_scrolledContentsLayer->scrollOffset());
-            needsDisplayOnOffsetChange = GraphicsLayer::DontSetNeedsDisplay;
+            needsDisplayOnOffsetChange = GraphicsLayer::ShouldSetNeedsDisplay::DoNotSet;
         } else if (hasClippingLayer()) {
             // If we have a clipping layer (which clips descendants), then the foreground layer is a child of it,
             // so that it gets correctly sorted with children. In that case, position relative to the clipping layer.
@@ -3465,6 +3471,10 @@ void RenderLayerBacking::contentChanged(ContentChangeType changeType, const std:
 
 #if ENABLE(MODEL_ELEMENT)
     if (changeType == ContentChangeType::Model) {
+#if ENABLE(GPU_PROCESS_MODEL)
+        if (m_graphicsLayer && m_graphicsLayer->drawsContent())
+            m_graphicsLayer->setNeedsDisplay();
+#endif
         compositor().scheduleCompositingLayerUpdate();
         return;
     }
@@ -3613,7 +3623,7 @@ GraphicsLayer* RenderLayerBacking::childForSuperlayersExcludingViewTransitions()
         return m_ancestorClippingStack->firstLayer();
 
     if (RefPtr viewportConstrainedLayer = viewportClippingOrAnchorLayer())
-        return viewportConstrainedLayer.get();
+        return viewportConstrainedLayer.unsafeGet();
 
     if (m_contentsContainmentLayer)
         return m_contentsContainmentLayer.get();

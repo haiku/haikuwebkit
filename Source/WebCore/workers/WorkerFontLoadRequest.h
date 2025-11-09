@@ -47,7 +47,6 @@ class WorkerFontLoadRequest final : public FontLoadRequest, public ThreadableLoa
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WorkerFontLoadRequest);
 public:
     WorkerFontLoadRequest(URL&&, LoadedFromOpaqueSource);
-    ~WorkerFontLoadRequest() = default;
 
     void load(WorkerGlobalScope&);
 

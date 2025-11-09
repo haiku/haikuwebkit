@@ -70,7 +70,7 @@ public:
     void setMaximumBufferPoolSize(size_t maxBufferPoolSize) { m_maxBufferPoolSize = maxBufferPoolSize; }
 
     RetainPtr<CMSampleBufferRef> convertCMSampleBuffer(CMSampleBufferRef, const IntSize&, const WTF::MediaTime* = nullptr);
-    void setCroppingRectangle(std::optional<FloatRect>);
+    void setCroppingRectangle(std::optional<FloatRect>, FloatSize = { });
 
 private:
     WEBCORE_EXPORT ImageTransferSessionVT(uint32_t pixelFormat, bool shouldUseIOSurface);

@@ -56,10 +56,6 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 typedef struct CGColor* CGColorRef;
 #endif
 
-#if PLATFORM(GTK)
-typedef struct _GdkRGBA GdkRGBA;
-#endif
-
 #if PLATFORM(HAIKU)
 struct rgb_color;
 #endif
@@ -169,11 +165,6 @@ public:
     // Returns the underlying color if its type is inline.
     std::optional<PackedColor::RGBA> tryGetAsPackedInline() const;
     std::optional<SRGBA<uint8_t>> tryGetAsSRGBABytes() const;
-
-#if PLATFORM(GTK)
-    Color(const GdkRGBA&);
-    operator GdkRGBA() const;
-#endif
 
 #if USE(SKIA)
     Color(const SkColor&);

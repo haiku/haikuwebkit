@@ -5,3 +5,4 @@ API/JSWrapperMap.mm
 API/ObjCCallbackFunction.mm
 API/ObjcRuntimeExtras.h
 API/tests/testapi.c
+[ iOS ] runtime/ObjectPrototype.cpp

@@ -57,9 +57,7 @@ EventSenderProxy::EventSenderProxy(TestController* testController)
 #endif
 }
 
-EventSenderProxy::~EventSenderProxy()
-{
-}
+EventSenderProxy::~EventSenderProxy() = default;
 
 void EventSenderProxy::updateClickCountForButton(int button)
 {

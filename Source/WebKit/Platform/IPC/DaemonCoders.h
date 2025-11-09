@@ -146,7 +146,7 @@ template<> struct Coder<WTF::String> {
         encoder << string.length() << is8Bit;
 
         if (is8Bit)
-            encoder.encodeFixedLengthData(string.span8());
+            encoder.encodeFixedLengthData(byteCast<uint8_t>(string.span8()));
         else
             encoder.encodeFixedLengthData(asBytes(string.span16()));
     }

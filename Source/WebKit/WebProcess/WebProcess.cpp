@@ -1451,7 +1451,7 @@ void WebProcess::networkProcessConnectionClosed(NetworkProcessConnection* connec
     }
     for (auto& weakSession : sessions) {
         if (RefPtr webtransportSession = weakSession.get())
-            webtransportSession->networkProcessCrashed();
+            webtransportSession->didFail();
     }
 }
 

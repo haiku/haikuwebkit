@@ -753,12 +753,12 @@ TEST(WTF, StaticPrivateSymbolImpl)
 
 TEST(WTF, ExternalStringImplCreate8bit)
 {
-    constexpr Latin1Character buffer[] = "hello";
+    constexpr char buffer[] = "hello";
     constexpr size_t bufferStringLength = sizeof(buffer) - 1;
     bool freeFunctionCalled = false;
 
     {
-        auto external = ExternalStringImpl::create({ buffer, bufferStringLength }, [&freeFunctionCalled](ExternalStringImpl* externalStringImpl, void* buffer, unsigned bufferSize) mutable {
+        auto external = ExternalStringImpl::create({ byteCast<Latin1Character>(&buffer[0]), bufferStringLength }, [&freeFunctionCalled](ExternalStringImpl* externalStringImpl, void* buffer, unsigned bufferSize) mutable {
             freeFunctionCalled = true;
         });
 
@@ -767,7 +767,7 @@ TEST(WTF, ExternalStringImplCreate8bit)
         ASSERT_FALSE(external->isSymbol());
         ASSERT_FALSE(external->isAtom());
         ASSERT_EQ(external->length(), bufferStringLength);
-        ASSERT_EQ(external->span8().data(), buffer);
+        ASSERT_EQ(byteCast<char>(external->span8().data()), buffer);
     }
 
     ASSERT_TRUE(freeFunctionCalled);
@@ -804,12 +804,12 @@ TEST(WTF, StringImplNotExternal)
 
 TEST(WTF, ExternalStringAtom)
 {
-    constexpr Latin1Character buffer[] = "hello";
+    constexpr char buffer[] = "hello";
     constexpr size_t bufferStringLength = sizeof(buffer) - 1;
     bool freeFunctionCalled = false;
 
     {
-        auto external = ExternalStringImpl::create({ buffer, bufferStringLength }, [&freeFunctionCalled](ExternalStringImpl* externalStringImpl, void* buffer, unsigned bufferSize) mutable {
+        auto external = ExternalStringImpl::create(byteCast<Latin1Character>(std::span { buffer, bufferStringLength }), [&freeFunctionCalled](ExternalStringImpl* externalStringImpl, void* buffer, unsigned bufferSize) mutable {
             freeFunctionCalled = true;
         });    
 
@@ -818,7 +818,7 @@ TEST(WTF, ExternalStringAtom)
         ASSERT_FALSE(external->isSymbol());
         ASSERT_TRUE(external->is8Bit());
         ASSERT_EQ(external->length(), bufferStringLength);
-        ASSERT_EQ(external->span8().data(), buffer);
+        ASSERT_EQ(byteCast<char>(external->span8().data()), buffer);
 
         auto result = AtomStringImpl::lookUp(external.ptr());
         ASSERT_FALSE(result);

@@ -46,8 +46,6 @@ public:
         connect(webView, SIGNAL(loadingChanged(WPEQtViewLoadRequest*)), SLOT(onLoadingChanged(WPEQtViewLoadRequest*)));
     }
 
-    ~LoadSpy() { }
-
 Q_SIGNALS:
     void loadSucceeded();
     void loadFailed();
@@ -72,7 +70,7 @@ public:
         connect(m_webView, SIGNAL(loadingChanged(WPEQtViewLoadRequest*)), this, SLOT(onLoadingChanged(WPEQtViewLoadRequest*)));
     }
 
-    virtual ~LoadStartedCatcher() { }
+    virtual ~LoadStartedCatcher() = default;
 
 public Q_SLOTS:
     void onLoadingChanged(WPEQtViewLoadRequest *loadRequest)

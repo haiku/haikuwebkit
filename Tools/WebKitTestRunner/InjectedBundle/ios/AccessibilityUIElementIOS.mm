@@ -188,9 +188,7 @@ AccessibilityUIElement::AccessibilityUIElement(const AccessibilityUIElement& oth
 {
 }
 
-AccessibilityUIElement::~AccessibilityUIElement()
-{
-}
+AccessibilityUIElement::~AccessibilityUIElement() = default;
 
 bool AccessibilityUIElement::isEqual(AccessibilityUIElement* otherElement)
 {

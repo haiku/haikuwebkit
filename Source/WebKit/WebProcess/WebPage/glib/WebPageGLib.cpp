@@ -35,6 +35,7 @@
 #include "WebPageProxyMessages.h"
 #include "WebProcess.h"
 #include "WebProcessExtensionManager.h"
+#include <WebCore/DocumentView.h>
 #include <WebCore/Editor.h>
 #include <WebCore/HTMLInputElement.h>
 #include <WebCore/HTMLTextAreaElement.h>

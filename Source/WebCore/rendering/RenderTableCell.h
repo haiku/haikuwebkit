@@ -195,6 +195,8 @@ private:
 
     Style::PreferredSize logicalWidthFromColumns(RenderTableCol* firstColForThisCell, const Style::PreferredSize& widthFromStyle) const;
 
+    CollapsedBorderValue emptyBorder() const;
+
     void updateColAndRowSpanFlags();
 
     unsigned parseRowSpanFromDOM() const;

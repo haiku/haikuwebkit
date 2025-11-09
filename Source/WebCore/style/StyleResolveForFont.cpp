@@ -42,7 +42,6 @@
 #include "CSSValueList.h"
 #include "CSSValuePair.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "FontCascade.h"
 #include "FontCascadeDescription.h"
 #include "FontSelectionValueInlines.h"
@@ -272,7 +271,7 @@ static ResolvedFontSize fontSizeFromUnresolvedFontSize(const CSSPropertyParserHe
 
                             RefPtr document = dynamicDowncast<Document>(context);
                             return {
-                                .size = static_cast<float>(Style::computeUnzoomedNonCalcLengthDouble(lengthPercentage.value, lengthUnit, CSSPropertyFontSize, &fontCascade, document ? document->renderView() : nullptr)),
+                                .size = static_cast<float>(Style::computeUnzoomedNonCalcLengthDouble(lengthPercentage.value, lengthUnit, CSSPropertyFontSize, &fontCascade, CSS::RangeZoomOptions::Default, document ? document->renderView() : nullptr)),
                                 .keyword = CSSValueInvalid
                             };
                         }
@@ -342,44 +341,6 @@ static ResolvedFontFamily fontFamilyFromUnresolvedFontFamily(const CSSPropertyPa
         .family = WTFMove(family),
         .isSpecifiedFont = isSpecifiedFont
     };
-}
-
-// MARK: 'font-feature-settings'
-
-FontFeatureSettings fontFeatureSettingsFromCSSValue(BuilderState& builderState, const CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNormal || CSSPropertyParserHelpers::isSystemFontShorthand(value.valueID()));
-        return { };
-    }
-
-    auto list = requiredListDowncast<CSSValueList, CSSFontFeatureValue>(builderState, value);
-    if (!list)
-        return { };
-
-    FontFeatureSettings settings;
-    for (Ref feature : *list)
-        settings.insert(FontFeature(feature->tag(), feature->value().resolveAsNumber<int>(builderState.cssToLengthConversionData())));
-    return settings;
-}
-
-// MARK: 'font-variation-settings'
-
-FontVariationSettings fontVariationSettingsFromCSSValue(BuilderState& builderState, const CSSValue& value)
-{
-    if (is<CSSPrimitiveValue>(value)) {
-        ASSERT(value.valueID() == CSSValueNormal || CSSPropertyParserHelpers::isSystemFontShorthand(value.valueID()));
-        return { };
-    }
-
-    auto list = requiredListDowncast<CSSValueList, CSSFontVariationValue>(builderState, value);
-    if (!list)
-        return { };
-
-    FontVariationSettings settings;
-    for (Ref feature : *list)
-        settings.insert({ feature->tag(), feature->value().resolveAsNumber<float>(builderState.cssToLengthConversionData()) });
-    return settings;
 }
 
 // MARK: - Unresolved Font Shorthand Resolution

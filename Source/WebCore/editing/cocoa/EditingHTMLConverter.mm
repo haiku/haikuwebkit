@@ -46,6 +46,7 @@
 #import "ElementTraversal.h"
 #import "FontAttributes.h"
 #import "FontCascade.h"
+#import "FrameDestructionObserverInlines.h"
 #import "FrameLoader.h"
 #import "HTMLAttachmentElement.h"
 #import "HTMLConverter.h"
@@ -99,11 +100,12 @@ static String preferredFilenameForElement(const HTMLImageElement& element)
     auto urlString = element.imageSourceURL();
 
     auto suggestedName = [&] -> String {
-        RetainPtr url = element.document().completeURL(urlString).createNSURL();
+        Ref document = element.document();
+        RetainPtr url = document->completeURL(urlString).createNSURL();
         if (!url)
             url = [NSURL _web_URLWithString:[urlString.createNSString() stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] relativeToURL:nil];
 
-        RefPtr frame = element.document().frame();
+        RefPtr frame = document->frame();
         if (frame->loader().frameHasLoaded()) {
             RefPtr dataSource = frame->loader().documentLoader();
             if (RefPtr resource = dataSource->subresource(url.get())) {
@@ -234,7 +236,7 @@ static bool hasAncestorQualifyingForWritingToolsPreservation(Element* ancestor, 
 
     auto entry = cache.find(*ancestor);
     if (entry == cache.end()) {
-        auto result = elementQualifiesForWritingToolsPreservation(ancestor) || hasAncestorQualifyingForWritingToolsPreservation(ancestor->parentElement(), cache);
+        auto result = elementQualifiesForWritingToolsPreservation(ancestor) || hasAncestorQualifyingForWritingToolsPreservation(ancestor->protectedParentElement().get(), cache);
 
         cache.set(*ancestor, result);
         return result;
@@ -334,7 +336,7 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
 {
 #if ENABLE(WRITING_TOOLS)
     if (includedElements.contains(IncludedElement::PreservedContent)) {
-        if (hasAncestorQualifyingForWritingToolsPreservation(node->parentElement(), elementQualifiesForWritingToolsPreservationCache))
+        if (hasAncestorQualifyingForWritingToolsPreservation(node->protectedParentElement().get(), elementQualifiesForWritingToolsPreservationCache))
             [attributes setObject:@(1) forKey:WTWritingToolsPreservedAttributeName];
         else
             [attributes removeObjectForKey:WTWritingToolsPreservedAttributeName];
@@ -355,10 +357,11 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
     else
         [attributes removeObjectForKey:NSStrikethroughStyleAttributeName];
 
-    if (auto ctFont = style.fontCascade().primaryFont()->ctFont())
+    CheckedRef fontCascade = style.fontCascade();
+    if (auto ctFont = fontCascade->primaryFont()->ctFont())
         [attributes setObject:(__bridge PlatformFont *)ctFont forKey:NSFontAttributeName];
     else {
-        auto size = style.fontCascade().primaryFont()->platformData().size();
+        auto size = fontCascade->primaryFont()->platformData().size();
 #if PLATFORM(IOS_FAMILY)
         PlatformFont *platformFont = [PlatformFontClass systemFontOfSize:size];
 #else
@@ -481,7 +484,7 @@ static AttributedString editingAttributedStringInternal(const SimpleRange& range
         auto renderer = node->renderer();
 
         if (renderer)
-            updateAttributes(node.get(), renderer->style(), includedElements, elementQualifiesForWritingToolsPreservationCache, enclosingLinkCache, enclosingListCache, attributes.get(), textListsForListElements);
+            updateAttributes(node.get(), renderer->checkedStyle(), includedElements, elementQualifiesForWritingToolsPreservationCache, enclosingLinkCache, enclosingListCache, attributes.get(), textListsForListElements);
         else if (!includedElements.contains(IncludedElement::NonRenderedContent))
             continue;
 

@@ -356,8 +356,8 @@ void PositionedLayoutConstraints::resolvePosition(RenderBox::LogicalExtentComput
 
     bool hasAutoBeforeInset = m_insetBefore.isAuto();
     bool hasAutoAfterInset = m_insetAfter.isAuto();
-    bool hasAutoBeforeMargin = m_marginBefore.isAuto();
-    bool hasAutoAfterMargin = m_marginAfter.isAuto();
+    bool hasAutoBeforeMargin = m_marginBefore.isAuto() && !m_defaultAnchorBox;
+    bool hasAutoAfterMargin = m_marginAfter.isAuto() && !m_defaultAnchorBox;
 
     auto distributeSpaceToAutoMargins = [&] {
         ASSERT(!hasAutoBeforeInset && !hasAutoAfterInset && (hasAutoBeforeMargin || hasAutoAfterMargin));
@@ -450,6 +450,15 @@ LayoutUnit PositionedLayoutConstraints::resolveAlignmentShift(LayoutUnit unusedS
     if (ItemPosition::AnchorCenter == resolvedAlignment) {
         auto anchorCenterPosition = m_anchorArea.min() + (m_anchorArea.size() - itemSize) / 2;
         shift = anchorCenterPosition - m_insetModifiedContainingRange.min();
+        if (m_alignment.overflow() == OverflowAlignment::Safe) {
+            if (startIsBefore) {
+                if (shift < 0)
+                    shift = 0;
+            } else {
+                if (shift > unusedSpace)
+                    shift = unusedSpace;
+            }
+        }
         if (!isOverflowing && OverflowAlignment::Default == m_alignment.overflow()) {
             // Avoid introducing overflow of the IMCB.
             if (shift < 0)
@@ -497,21 +506,19 @@ ItemPosition PositionedLayoutConstraints::resolveAlignmentValue() const
 {
     auto alignmentPosition = [&] {
         auto itemPosition = m_alignment.position();
-        if (ItemPosition::Auto == itemPosition) {
-
-            if (m_useStaticPosition) {
+        if (m_useStaticPosition) {
 #if ASSERT_ENABLED
-                ASSERT(m_isEligibleForStaticRangeAlignment);
+            ASSERT(m_isEligibleForStaticRangeAlignment);
 #endif
-                auto* parentStyle = m_renderer->parentStyle();
-                return m_style.resolvedAlignSelf(parentStyle, ItemPosition::Start).position();
-            }
-            return ItemPosition::Normal;
+            auto* parentStyle = m_renderer->parentStyle();
+            return m_style.resolvedAlignSelf(parentStyle, ItemPosition::Start).position();
         }
+        if (ItemPosition::Auto == itemPosition)
+            return ItemPosition::Normal;
         return itemPosition;
     }();
 
-    if (m_style.positionArea() && (ItemPosition::Normal == alignmentPosition || ItemPosition::Dialog == alignmentPosition))
+    if (m_style.positionArea() && ItemPosition::Normal == alignmentPosition)
         alignmentPosition = m_style.positionArea()->defaultAlignmentForAxis(m_physicalAxis, m_containingWritingMode, m_writingMode);
 
     if (!m_defaultAnchorBox && alignmentPosition == ItemPosition::AnchorCenter)

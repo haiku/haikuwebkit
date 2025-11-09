@@ -1067,13 +1067,13 @@ RefPtr<JSON::Object> Session::createShadowRoot(RefPtr<JSON::Value>&& value)
     return elementObject;
 }
 
-RefPtr<JSON::Object> Session::extractElement(JSON::Value& value)
+RefPtr<JSON::Object> Session::extractElement(const JSON::Value& value)
 {
     String elementID = extractElementID(value);
     return !elementID.isEmpty() ? createElement(elementID).ptr() : nullptr;
 }
 
-String Session::extractElementID(JSON::Value& value)
+String Session::extractElementID(const JSON::Value& value)
 {
     auto valueObject = value.asObject();
     if (!valueObject)
@@ -1084,6 +1084,54 @@ String Session::extractElementID(JSON::Value& value)
         return emptyString();
 
     return elementID;
+}
+
+Expected<Ref<JSON::Value>, CommandResult> Session::replaceReferences(Ref<JSON::Value>&& value)
+{
+    HashSet<Ref<JSON::Value>> seen;
+    return replaceReferences(WTFMove(value), seen);
+}
+
+Expected<Ref<JSON::Value>, CommandResult> Session::replaceReferences(Ref<JSON::Value>&& value, HashSet<Ref<JSON::Value>>& seen)
+{
+    if (seen.contains(value))
+        return makeUnexpected(CommandResult::fail(CommandResult::ErrorCode::JavascriptError, "Cyclic object reference found while resolving references"_s));
+
+    if (value->type() != JSON::Value::Type::Object && value->type() != JSON::Value::Type::Array)
+        return value;
+
+    // FIXME Check for stale references here
+    if (auto element = extractElement(value))
+        return { element.releaseNonNull() };
+
+    seen.add(value);
+    if (value->type() == JSON::Value::Type::Array) {
+        auto array = value->asArray();
+        auto clone = JSON::Array::create();
+        for (size_t i = 0; i < array->length(); i++) {
+            auto child = array->get(i);
+            auto result = replaceReferences(WTFMove(child), seen);
+            if (!result)
+                return result;
+            clone->pushValue(WTFMove(result.value()));
+        }
+        seen.remove(value);
+        return { clone };
+    }
+
+    auto object = value->asObject();
+    auto clone = JSON::Object::create();
+    for (auto key : object->keys()) {
+        auto member = object->getValue(key);
+        if (!member)
+            return makeUnexpected(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Failed to traverse object while translating element references"_s));
+        auto result = replaceReferences(member.releaseNonNull(), seen);
+        if (!result)
+            return result;
+        clone->setValue(key, WTFMove(result.value()));
+    }
+    seen.remove(value);
+    return { clone };
 }
 
 void Session::computeElementLayout(const String& elementID, OptionSet<ElementLayoutOption> options, Function<void(std::optional<Rect>&&, std::optional<Point>&&, bool, RefPtr<JSON::Object>&&)>&& completionHandler)
@@ -2454,11 +2502,13 @@ void Session::executeScript(const String& script, RefPtr<JSON::Array>&& argument
         auto arguments = JSON::Array::create();
         unsigned argumentsLength = argumentsArray->length();
         for (unsigned i = 0; i < argumentsLength; ++i) {
-            auto argument = argumentsArray->get(i);
-            if (auto element = extractElement(argument))
-                arguments->pushString(element->toJSONString());
-            else
-                arguments->pushString(argument->toJSONString());
+            auto argument = replaceReferences(argumentsArray->get(i));
+            if (argument) [[likely]]
+                arguments->pushString(argument.value()->toJSONString());
+            else {
+                completionHandler(WTFMove(argument.error()));
+                return;
+            }
         }
 
         auto parameters = JSON::Object::create();

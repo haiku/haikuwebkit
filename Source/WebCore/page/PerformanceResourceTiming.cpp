@@ -47,7 +47,7 @@ namespace WebCore {
 static double networkLoadTimeToDOMHighResTimeStamp(MonotonicTime timeOrigin, MonotonicTime timeStamp)
 {
     ASSERT(timeOrigin);
-    if (!timeStamp)
+    if (timeStamp <= timeOrigin)
         return 0.0;
     return Performance::reduceTimeResolution(timeStamp - timeOrigin).milliseconds();
 }

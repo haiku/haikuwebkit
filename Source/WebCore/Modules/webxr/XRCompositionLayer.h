@@ -61,8 +61,15 @@ public:
     void destroy() { }
 protected:
     explicit XRCompositionLayer(ScriptExecutionContext*);
+
+private:
+    bool isXRCompositionLayer() const final { return true; }
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::XRCompositionLayer)
+    static bool isType(const WebCore::WebXRLayer& layer) { return layer.isXRCompositionLayer(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(WEBXR_LAYERS)

@@ -26,7 +26,8 @@
 
 #include "ContainerNodeInlines.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "EventLoop.h"
 #include "FocusController.h"
@@ -36,7 +37,6 @@
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
 #include "Page.h"
-#include "Quirks.h"
 #include "RenderWidget.h"
 #include "ScriptController.h"
 #include "Settings.h"

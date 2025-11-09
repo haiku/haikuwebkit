@@ -69,11 +69,13 @@
 #include "FloatRect.h"
 #include "FloatRoundedRect.h"
 #include "FocusController.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "FrameTree.h"
 #include "Gradient.h"
 #include "GraphicsContext.h"
+#include "GraphicsLayer.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLFormControlElement.h"
 #include "HTMLFrameElement.h"
@@ -145,7 +147,6 @@
 #include "ShadowRoot.h"
 #include "SourceGraphic.h"
 #include "StyleAttributeMutationScope.h"
-#include "StyleLengthWrapper+Platform.h"
 #include "StyleProperties.h"
 #include "StyleResolver.h"
 #include "StyleScaleTransformFunction.h"
@@ -3083,7 +3084,7 @@ RenderLayer::OverflowControlRects RenderLayer::overflowControlsRects() const
     auto overflowControlsPositioningRect = snappedIntRect(renderBox.paddingBoxRectIncludingScrollbar());
 
     bool placeVerticalScrollbarOnTheLeft = renderBox.shouldPlaceVerticalScrollbarOnLeft();
-    bool haveResizer = renderer().style().resize() != Resize::None && renderer().style().pseudoElementType() == PseudoId::None;
+    bool haveResizer = renderer().style().resize() != Resize::None && !renderer().style().pseudoElementType();
 
     OverflowControlRects result;
     auto cornerRect = [&](IntSize cornerSize) {
@@ -4665,9 +4666,11 @@ bool RenderLayer::ancestorLayerIsDOMParent(const RenderLayer* ancestor) const
     auto parent = flattenedParent(renderer().element());
     if (parent && ancestor->renderer().element() == parent)
         return true;
-
-    std::optional<PseudoId> parentPseudoId = parentPseudoElement(renderer().style().pseudoElementType());
-    return parentPseudoId && *parentPseudoId == ancestor->renderer().style().pseudoElementType();
+    if (renderer().style().pseudoElementType()) {
+        auto parentPseudoId = parentPseudoElement(*renderer().style().pseudoElementType());
+        return parentPseudoId && *parentPseudoId == ancestor->renderer().style().pseudoElementType();
+    }
+    return false;
 }
 
 bool RenderLayer::participatesInPreserve3D() const
@@ -5925,7 +5928,7 @@ void RenderLayer::setBackingNeedsRepaint(GraphicsLayer::ShouldClipToLayer should
         backing()->setContentsNeedDisplay(shouldClip);
 }
 
-void RenderLayer::setBackingNeedsRepaintInRect(const LayoutRect& r, GraphicsLayer::ShouldClipToLayer shouldClip)
+void RenderLayer::setBackingNeedsRepaintInRect(const LayoutRect& r, GraphicsLayerShouldClipToLayer shouldClip)
 {
     // https://bugs.webkit.org/show_bug.cgi?id=61159 describes an unreproducible crash here,
     // so assert but check that the layer is composited.

@@ -255,7 +255,8 @@ public:
     bool isPseudoElement() const { return isElementNode() && hasTypeFlag(TypeFlag::IsPseudoElementOrSpecialInternalNode); }
     inline bool isBeforePseudoElement() const;
     inline bool isAfterPseudoElement() const;
-    inline PseudoId pseudoId() const;
+    inline std::optional<PseudoElementType> pseudoElementType() const;
+    inline std::optional<Style::PseudoElementIdentifier> pseudoElementIdentifier() const;
 
 #if ENABLE(VIDEO)
     virtual bool isWebVTTElement() const { return false; }
@@ -671,7 +672,9 @@ protected:
 #if ENABLE(FULLSCREEN_API)
         IsFullscreen = 1 << 19,
 #endif
-        // 12 bits free.
+        IsShadowRootAttachedEventPending = 1 << 20,
+        InLargestContentfulPaintTextContentSet = 1 << 21,
+        // 11 bits free.
     };
 
     enum class TabIndexState : uint8_t {

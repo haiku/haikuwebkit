@@ -41,10 +41,10 @@
 #include "CSSStyleRule.h"
 #include "CSSStyleSheet.h"
 #include "CSSViewTransitionRule.h"
-#include "CachedResourceLoader.h"
 #include "CompositeOperation.h"
-#include "Document.h"
 #include "DocumentInlines.h"
+#include "DocumentResourceLoader.h"
+#include "DocumentView.h"
 #include "ElementRuleCollector.h"
 #include "FrameSelection.h"
 #include "InspectorInstrumentation.h"
@@ -333,8 +333,8 @@ UnadjustedStyle Resolver::unadjustedStyleForElement(Element& element, const Reso
     else
         collector.matchAllRules(m_matchAuthorAndUserStyles, matchingBehavior != RuleMatchingBehavior::MatchAllRulesExcludingSMIL);
 
-    if (collector.matchedPseudoElementIds())
-        style.setHasPseudoStyles(collector.matchedPseudoElementIds());
+    if (collector.matchedPseudoElements())
+        style.setHasPseudoStyles(collector.matchedPseudoElements());
 
     auto elementStyleRelations = commitRelationsToRenderStyle(style, element, collector.styleRelations());
 
@@ -421,8 +421,9 @@ std::unique_ptr<RenderStyle> Resolver::styleForKeyframe(Element& element, const 
 
     ElementRuleCollector collector(element, m_ruleSets, context.selectorMatchingState);
 
-    if (elementStyle.pseudoElementType() != PseudoId::None)
-        collector.setPseudoElementRequest(elementStyle.pseudoElementIdentifier());
+    auto pseudoElementIdentifier = elementStyle.pseudoElementIdentifier();
+    if (pseudoElementIdentifier)
+        collector.setPseudoElementRequest(*pseudoElementIdentifier);
 
     if (hasRevert) {
         // In the animation origin, 'revert' rolls back the cascaded value to the user level.
@@ -436,7 +437,7 @@ std::unique_ptr<RenderStyle> Resolver::styleForKeyframe(Element& element, const 
     builder.state().setIsBuildingKeyframeStyle();
     builder.applyAllProperties();
 
-    Adjuster adjuster(document(), *state.parentStyle(), nullptr, elementStyle.pseudoElementType() == PseudoId::None ? &element : nullptr);
+    Adjuster adjuster(document(), *state.parentStyle(), nullptr, !pseudoElementIdentifier ? &element : nullptr);
     adjuster.adjust(*state.style());
 
     return state.takeStyle();
@@ -583,8 +584,7 @@ std::optional<ResolvedStyle> Resolver::styleForPseudoElement(Element& element, c
     }
 
     ElementRuleCollector collector(element, m_ruleSets, context.selectorMatchingState);
-    if (pseudoElementRequest.pseudoId() != PseudoId::None)
-        collector.setPseudoElementRequest(pseudoElementRequest);
+    collector.setPseudoElementRequest(pseudoElementRequest);
     collector.setMedium(m_mediaQueryEvaluator);
     collector.matchUARules();
 
@@ -593,14 +593,12 @@ std::optional<ResolvedStyle> Resolver::styleForPseudoElement(Element& element, c
         collector.matchAuthorRules();
     }
 
-    ASSERT(!collector.matchedPseudoElementIds());
+    ASSERT(!collector.matchedPseudoElements());
 
     if (collector.matchResult().isEmpty())
         return { };
 
-    state.style()->setPseudoElementType(pseudoElementRequest.pseudoId());
-    if (!pseudoElementRequest.nameArgument().isNull())
-        state.style()->setPseudoElementNameArgument(pseudoElementRequest.nameArgument());
+    state.style()->setPseudoElementIdentifier(pseudoElementRequest.identifier());
 
     applyMatchedProperties(state, collector.matchResult(), PropertyCascade::normalProperties());
 
@@ -645,7 +643,8 @@ std::unique_ptr<RenderStyle> Resolver::defaultStyleForElement(const Element* ele
 
     auto size = fontSizeForKeyword(CSSValueMedium, false, document());
     fontDescription.setSpecifiedSize(size);
-    fontDescription.setComputedSize(computedFontSizeFromSpecifiedSize(size, fontDescription.isAbsoluteSize(), is<SVGElement>(element), style.get(), document()));
+    auto computedFontSize = computedFontSizeFromSpecifiedSize(size, fontDescription.isAbsoluteSize(), is<SVGElement>(element), style.get(), document());
+    fontDescription.setComputedSize(computedFontSize.size, computedFontSize.usedZoomFactor);
 
     fontDescription.setShouldAllowUserInstalledFonts(settings().shouldAllowUserInstalledFonts() ? AllowUserInstalledFonts::Yes : AllowUserInstalledFonts::No);
     style->setFontDescription(WTFMove(fontDescription));

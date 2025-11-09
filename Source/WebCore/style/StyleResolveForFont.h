@@ -34,24 +34,17 @@
 namespace WebCore {
 
 class CSSFontStyleWithAngleValue;
-class CSSToLengthConversionData;
 class CSSValue;
 class FontCascade;
 class FontCascadeDescription;
 class FontSelectionValue;
 class ScriptExecutionContext;
 
-template<typename> class FontTaggedSettings;
-using FontFeatureSettings = FontTaggedSettings<int>;
-using FontVariationSettings = FontTaggedSettings<float>;
-
 namespace CSSPropertyParserHelpers {
 struct UnresolvedFont;
 }
 
 namespace Style {
-
-class BuilderState;
 
 FontSelectionValue fontWeightFromCSSValueDeprecated(const CSSValue&);
 
@@ -60,9 +53,6 @@ FontSelectionValue fontStretchFromCSSValueDeprecated(const CSSValue&);
 FontSelectionValue fontStyleAngleFromCSSValueDeprecated(const CSSValue&);
 std::optional<FontSelectionValue> fontStyleAngleFromCSSFontStyleWithAngleValueDeprecated(const CSSFontStyleWithAngleValue&);
 std::optional<FontSelectionValue> fontStyleFromCSSValueDeprecated(const CSSValue&);
-
-FontFeatureSettings fontFeatureSettingsFromCSSValue(BuilderState&, const CSSValue&);
-FontVariationSettings fontVariationSettingsFromCSSValue(BuilderState&, const CSSValue&);
 
 std::optional<FontCascade> resolveForUnresolvedFont(const CSSPropertyParserHelpers::UnresolvedFont&, FontCascadeDescription&&, ScriptExecutionContext&);
 

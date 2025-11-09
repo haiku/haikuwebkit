@@ -25,7 +25,7 @@
 #pragma once
 
 #include <WebCore/CSSPrimitiveKeywordList.h>
-#include <WebCore/CalculationValue.h>
+#include <WebCore/LayoutUnit.h>
 #include <WebCore/StyleLengthWrapperData.h>
 #include <WebCore/StylePrimitiveNumericTypes.h>
 #include <wtf/StdLibExtras.h>
@@ -78,9 +78,6 @@ template<typename Numeric, CSS::PrimitiveKeyword... Ks> struct LengthWrapperBase
 
     LengthWrapperBase(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : LengthWrapperBase(Fixed { literal }) { }
     LengthWrapperBase(CSS::ValueLiteral<CSS::PercentageUnit::Percentage> literal) : LengthWrapperBase(Percentage { literal }) { }
-
-    explicit LengthWrapperBase(WebCore::Length&& other) : m_value(toData(other)) { }
-    explicit LengthWrapperBase(const WebCore::Length& other) : m_value(toData(other)) { }
 
     explicit LengthWrapperBase(WTF::HashTableEmptyValueType token) : m_value(token) { }
 
@@ -160,6 +157,7 @@ private:
     template<typename, typename> friend struct Evaluation;
     template<typename, typename> friend struct MinimumEvaluation;
     template<typename> friend struct Blending;
+    template<typename> friend struct LengthWrapperBlendingSupport;
 
     static LengthWrapperData toData(const Specified& specified)
     {
@@ -189,81 +187,6 @@ private:
         }
 
         return LengthWrapperData { WTFMove(ipcData) };
-    }
-
-    static LengthWrapperData toData(const WebCore::Length& length)
-    {
-        switch (length.type()) {
-        case WebCore::LengthType::Fixed:
-            return LengthWrapperData(indexForFixed, CSS::clampToRange<Fixed::range, float>(length.value()), length.hasQuirk());
-        case WebCore::LengthType::Percent:
-            return LengthWrapperData(indexForPercentage, CSS::clampToRange<Percentage::range, float>(length.value()));
-        case WebCore::LengthType::Calculated:
-            return LengthWrapperData(indexForCalc, LengthWrapperData::LengthCalculation { length });
-        case WebCore::LengthType::Auto:
-            if constexpr (SupportsAuto) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::Auto { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::Content:
-            if constexpr (SupportsContent) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::Content { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::FillAvailable:
-            if constexpr (SupportsWebkitFillAvailable) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::WebkitFillAvailable { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::FitContent:
-            if constexpr (SupportsFitContent) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::FitContent { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::Intrinsic:
-            if constexpr (SupportsIntrinsic) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::Intrinsic { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::MinIntrinsic:
-            if constexpr (SupportsMinIntrinsic) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::MinIntrinsic { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::MinContent:
-            if constexpr (SupportsMinContent) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::MinContent { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::MaxContent:
-            if constexpr (SupportsMaxContent) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::MaxContent { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::Normal:
-            if constexpr (SupportsNormal) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::Normal { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::Undefined:
-            if constexpr (SupportsNone) {
-                return { Keywords::offsetForKeyword(CSS::Keyword::None { }) };
-            } else {
-                RELEASE_ASSERT_NOT_REACHED();
-            }
-        case WebCore::LengthType::Relative:
-            RELEASE_ASSERT_NOT_REACHED();
-        }
-        RELEASE_ASSERT_NOT_REACHED();
     }
 
     LengthWrapperDataEvaluationKind evaluationKind() const

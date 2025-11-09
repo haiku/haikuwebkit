@@ -65,17 +65,21 @@ CAAudioStreamDescription audioStreamDescriptionFromAudioInfo(const AudioInfo& in
     asbd.mFormatID = info.codecName.value;
     std::span<const uint8_t> cookieDataSpan { };
     RefPtr cookieData = info.cookieData;
-    if (cookieData)
+    bool filled = false;
+    if (cookieData && cookieData->size()) {
         cookieDataSpan = cookieData->span();
-    UInt32 size = sizeof(asbd);
-    if (auto error = PAL::AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, cookieDataSpan.size(), cookieDataSpan.data(), &size, &asbd)) {
-        RELEASE_LOG_DEBUG(Media, "kAudioFormatProperty_FormatInfo failed with error %d (%.4s)", static_cast<int>(error), (char *)&error);
+        UInt32 size = sizeof(asbd);
+        if (auto error = PAL::AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, cookieDataSpan.size(), cookieDataSpan.data(), &size, &asbd))
+            RELEASE_LOG_DEBUG(Media, "kAudioFormatProperty_FormatInfo failed with error %d (%.4s)", static_cast<int>(error), (char *)&error);
+        else
+            filled = true;
+    }
+    if (!filled) {
         asbd.mSampleRate = info.rate;
         asbd.mFramesPerPacket = info.framesPerPacket;
         asbd.mChannelsPerFrame = info.channels;
         asbd.mBitsPerChannel = info.bitDepth;
     }
-
     return asbd;
 }
 
@@ -158,19 +162,16 @@ RetainPtr<CMFormatDescriptionRef> createFormatDescriptionFromTrackInfo(const Tra
     ASSERT(info.isVideo() || info.isAudio());
 
     if (auto* audioInfo = dynamicDowncast<AudioInfo>(info)) {
-        if (audioInfo->codecName.value != kAudioFormatLinearPCM && (!audioInfo->cookieData || !audioInfo->cookieData->size()))
-            return nullptr;
-
         switch (audioInfo->codecName.value) {
 #if ENABLE(OPUS)
         case kAudioFormatOpus:
-            if (!isOpusDecoderAvailable())
+            if (!isOpusDecoderAvailable() || (!audioInfo->cookieData || !audioInfo->cookieData->size()))
                 return nullptr;
             return createAudioFormatDescription(*audioInfo);
 #endif
 #if ENABLE(VORBIS)
         case kAudioFormatVorbis:
-            if (!isVorbisDecoderAvailable())
+            if (!isVorbisDecoderAvailable() || (!audioInfo->cookieData || !audioInfo->cookieData->size()))
                 return nullptr;
             return createAudioFormatDescription(*audioInfo);
 #endif

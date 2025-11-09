@@ -48,7 +48,7 @@ template<Numeric StyleType> struct Blending<StyleType> {
         // primitive, we clamp the value back down to the allowed range. The spec states that
         // in some cases, an accumulated intermediate value should be allowed to be out of the
         // allowed range until after interpolation has completed, but we currently don't have
-        // that concept, and the `WebCore::Length` code path did clamping in the same fashion.
+        // that concept.
         // https://drafts.csswg.org/css-values/#combining-range
 
         return StyleType { CSS::clampToRange<StyleType::range, typename StyleType::ResolvedValueType>(WebCore::blend(from.value, to.value, context)) };
@@ -70,7 +70,7 @@ template<auto R, typename V> struct Blending<Length<R, V>> {
         // primitive, we clamp the value back down to the allowed range. The spec states that
         // in some cases, an accumulated intermediate value should be allowed to be out of the
         // allowed range until after interpolation has completed, but we currently don't have
-        // that concept, and the `WebCore::Length` code path did clamping in the same fashion.
+        // that concept.
         // https://drafts.csswg.org/css-values/#combining-range
 
         return StyleType { CSS::clampToRange<StyleType::range, typename StyleType::ResolvedValueType>(WebCore::blend(from.unresolvedValue(), to.unresolvedValue(), context)) };

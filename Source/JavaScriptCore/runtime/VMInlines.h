@@ -34,7 +34,7 @@
 #include <JavaScriptCore/Watchdog.h>
 
 #if ENABLE(C_LOOP)
-#include "CLoopStackInlines.h"
+#include <JavaScriptCore/CLoopStackInlines.h>
 #endif
 
 namespace JSC {
@@ -87,12 +87,12 @@ inline CallFrame* VM::topJSCallFrame() const
     CallFrame* frame = topCallFrame;
     if (!frame) [[unlikely]]
         return frame;
-    if (!frame->isNativeCalleeFrame() && !frame->isPartiallyInitializedFrame()) [[likely]]
+    if (!frame->isNativeCalleeFrame() && !frame->isZombieFrame()) [[likely]]
         return frame;
     EntryFrame* entryFrame = topEntryFrame;
     do {
         frame = frame->callerFrame(entryFrame);
-        ASSERT(!frame || !frame->isPartiallyInitializedFrame());
+        ASSERT(!frame || !frame->isZombieFrame());
     } while (frame && frame->isNativeCalleeFrame());
     return frame;
 }

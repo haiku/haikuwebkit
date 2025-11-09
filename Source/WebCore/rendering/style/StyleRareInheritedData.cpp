@@ -28,6 +28,7 @@
 #include "RenderStyleDifference.h"
 #include "StyleAppleColorFilterData.h"
 #include "StyleImage.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 
@@ -35,7 +36,9 @@ namespace WebCore {
 
 struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<GreaterThanOrSameSizeAsStyleRareInheritedData> {
     float firstFloat;
-    void* styleImage;
+    float secondFloat;
+    Style::ImageOrNone styleImage;
+    Style::WebkitTextStrokeWidth textStrokeWidth;
     Style::Color firstColor;
     Style::Color colors[10];
     Style::ScrollbarColor scrollbarColor;
@@ -43,7 +46,7 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     void* ownPtrs[1];
     AtomString atomStrings[5];
     void* refPtrs[3];
-    float secondFloat;
+    float thirdFloat;
     Style::TextEmphasisStyle textEmphasisStyle;
     Style::TextIndent textIndent;
     Style::TextUnderlineOffset offset;
@@ -76,6 +79,7 @@ DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
 
 StyleRareInheritedData::StyleRareInheritedData()
     : usedZoom(RenderStyle::initialZoom())
+    , deviceScaleFactor(1.0f)
     , listStyleImage(RenderStyle::initialListStyleImage())
     , textStrokeWidth(RenderStyle::initialTextStrokeWidth())
     , textStrokeColor(RenderStyle::initialTextStrokeColor())
@@ -179,6 +183,7 @@ StyleRareInheritedData::StyleRareInheritedData()
 inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedData& o)
     : RefCounted<StyleRareInheritedData>()
     , usedZoom(o.usedZoom)
+    , deviceScaleFactor(o.deviceScaleFactor)
     , listStyleImage(o.listStyleImage)
     , textStrokeWidth(o.textStrokeWidth)
     , textStrokeColor(o.textStrokeColor)
@@ -392,7 +397,8 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && listStyleImage == o.listStyleImage
         && listStyleType == o.listStyleType
         && blockEllipsis == o.blockEllipsis
-        && enableEvaluationTimeZoom == o.enableEvaluationTimeZoom;
+        && enableEvaluationTimeZoom == o.enableEvaluationTimeZoom
+        && deviceScaleFactor == o.deviceScaleFactor;
 }
 
 bool StyleRareInheritedData::hasColorFilters() const
@@ -406,6 +412,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     customProperties->dumpDifferences(ts, other.customProperties);
 
     LOG_IF_DIFFERENT(usedZoom);
+    LOG_IF_DIFFERENT(deviceScaleFactor);
 
     LOG_IF_DIFFERENT(listStyleImage);
 

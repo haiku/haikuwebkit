@@ -34,7 +34,6 @@
 #include "CSSSelector.h"
 #include "CSSSelectorList.h"
 #include "CommonAtomStrings.h"
-#include "DocumentInlines.h"
 #include "HTMLNames.h"
 #include "ScriptExecutionContext.h"
 #include "SecurityOrigin.h"
@@ -101,7 +100,7 @@ static inline PropertyAllowlist determinePropertyAllowlist(const CSSSelector* se
             return PropertyAllowlist::CueBackground;
 #endif
         if (component->match() == CSSSelector::Match::PseudoElement && component->pseudoElement() == CSSSelector::PseudoElement::Marker)
-            return propertyAllowlistForPseudoId(PseudoId::Marker);
+            return propertyAllowlistForPseudoElement(PseudoElementType::Marker);
 
         if (const auto* selectorList = selector->selectorList()) {
             for (auto& subSelector : *selectorList) {

@@ -72,7 +72,7 @@ void RealtimeMediaSourceCenter::createMediaStream(Ref<const Logger>&& logger, Ne
     Vector<Ref<RealtimeMediaSource>> videoSources;
 
     RefPtr<RealtimeMediaSource> audioSource;
-    if (audioDevice) {
+    if (audioDevice && !audioDevice.isSpeakerDevice()) {
         auto source = audioCaptureFactory().createAudioCaptureSource(WTFMove(audioDevice), MediaDeviceHashSalts { hashSalts }, &request.audioConstraints, request.pageIdentifier);
         if (!source) {
             completionHandler(makeUnexpected(WTFMove(source.error)));
@@ -245,7 +245,7 @@ void RealtimeMediaSourceCenter::getUserMediaDevices(const MediaStreamRequest& re
         bool sameFitnessScore = true;
         std::optional<double> fitnessScore;
         for (auto& device : audioCaptureFactory().audioCaptureDeviceManager().captureDevices()) {
-            if (!device.enabled())
+            if (!device.enabled() || device.isSpeakerDevice())
                 continue;
 
             auto sourceOrError = audioCaptureFactory().createAudioCaptureSource(device, MediaDeviceHashSalts { hashSalts }, { }, request.pageIdentifier);

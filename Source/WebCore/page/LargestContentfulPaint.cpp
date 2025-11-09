@@ -115,7 +115,7 @@ Element* LargestContentfulPaint::element() const
     if (!LargestContentfulPaintData::isExposedForPaintTiming(*element))
         return nullptr;
 
-    return element.get();
+    return element.unsafeGet();
 }
 
 void LargestContentfulPaint::setElement(Element* element)

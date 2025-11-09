@@ -42,6 +42,7 @@
 #include "ScrollingConstraints.h"
 #include "StylableInlines.h"
 #include "StyleLengthWrapper+DeprecatedCSSValueConversion.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleScrollPadding.h"
@@ -388,7 +389,7 @@ void ViewTimeline::cacheCurrentTime()
             insetEnd = Style::evaluate<float>(m_insets.end(), scrollContainerSize, Style::ZoomNeeded { });
 
         StickinessAdjustmentData stickyData;
-        if (auto stickyContainer = dynamicDowncast<RenderBoxModelObject>(this->stickyContainer())) {
+        if (auto stickyContainer = dynamicDowncast<RenderBoxModelObject>(this->stickyContainer().get())) {
             FloatRect constrainingRect = stickyContainer->constrainingRectForStickyPosition();
             StickyPositionViewportConstraints constraints;
             stickyContainer->computeStickyPositionConstraints(constraints, constrainingRect);
@@ -461,7 +462,7 @@ const RenderBox* ViewTimeline::sourceScrollerRenderer() const
     return subjectRenderer->enclosingScrollableContainer();
 }
 
-const RenderElement* ViewTimeline::stickyContainer() const
+CheckedPtr<const RenderElement> ViewTimeline::stickyContainer() const
 {
     auto subject = m_subject.styleable();
     if (!subject)
@@ -470,9 +471,9 @@ const RenderElement* ViewTimeline::stickyContainer() const
     CheckedPtr renderer = subject->renderer();
 
     auto scrollerRenderer = sourceScrollerRenderer();
-    while (renderer && renderer != scrollerRenderer) {
+    while (renderer && renderer.get() != scrollerRenderer) {
         if (renderer->isStickilyPositioned())
-            return renderer.get();
+            return renderer;
         renderer = renderer->containingBlock();
     }
     return nullptr;

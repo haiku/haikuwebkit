@@ -26,8 +26,8 @@
 #include "config.h"
 #include "StorageNamespaceProvider.h"
 
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentSecurityOrigin.h"
 #include "Page.h"
 #include "SecurityOriginData.h"
 #include "StorageArea.h"

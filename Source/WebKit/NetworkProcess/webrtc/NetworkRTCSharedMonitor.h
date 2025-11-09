@@ -37,6 +37,7 @@
 #endif
 
 namespace WebKit {
+class NetworkRTCMonitor;
 
 class NetworkRTCSharedMonitor {
 public:

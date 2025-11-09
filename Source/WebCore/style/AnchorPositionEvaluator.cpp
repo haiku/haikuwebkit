@@ -30,7 +30,6 @@
 #include "CSSValueKeywords.h"
 #include "ContainerNodeInlines.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "Element.h"
 #include "Node.h"
 #include "NodeRenderStyle.h"
@@ -83,8 +82,8 @@ AnchorScrollAdjuster::AnchorScrollAdjuster(RenderBox& anchored, const RenderBoxM
     auto& style = anchored.style();
 
     auto compensatedAxes = style.anchorFunctionScrollCompensatedAxes();
-    m_needsXAdjustment = compensatedAxes.contains(BoxAxisFlag::Horizontal);
-    m_needsYAdjustment = compensatedAxes.contains(BoxAxisFlag::Vertical);
+    m_needsXAdjustment = compensatedAxes.contains(BoxAxis::Horizontal);
+    m_needsYAdjustment = compensatedAxes.contains(BoxAxis::Vertical);
 
     auto containingWritingMode = anchored.container()->style().writingMode();
     if (auto positionArea = style.positionArea()) {
@@ -272,7 +271,8 @@ void AnchorPositionEvaluator::captureScrollSnapshots(RenderBox& anchored, bool i
     if (adjuster.isEmpty())
         return clearAnchorScrollSnapshots(anchored);
 
-    if (!anchored.style().positionTryFallbacks().isEmpty())
+    if (!anchored.style().positionTryFallbacks().isEmpty()
+        || anchored.style().positionVisibility().contains(PositionVisibility::NoOverflow))
         adjuster.setFallbackLimits(anchored);
 
     auto captureDiff = anchored.layoutContext().registerAnchorScrollAdjuster(WTFMove(adjuster));
@@ -301,19 +301,21 @@ void AnchorPositionEvaluator::updateScrollAdjustments(RenderView& renderView)
         if (!anchored->layer()->setAnchorScrollAdjustment(scrollOffset))
             continue;
 
+        bool shouldBeHidden = false;
         bool needsInvalidation = false;
-        if (adjuster.hasFallbackLimits() && adjuster.exceedsFallbackLimits(scrollOffset)) {
-            anchored->setNeedsLayout();
-            needsInvalidation = true;
+        if (adjuster.hasFallbackLimits()) {
+            if (adjuster.exceedsFallbackLimits(scrollOffset)) {
+                if (!anchored->style().positionTryFallbacks().isEmpty()) {
+                    anchored->setNeedsLayout();
+                    needsInvalidation = true;
+                } else
+                    shouldBeHidden = anchored->style().positionVisibility().contains(PositionVisibility::NoOverflow);
+            }
         }
+        if (!shouldBeHidden && anchored->style().positionVisibility().contains(PositionVisibility::AnchorsVisible))
+            shouldBeHidden = AnchorPositionEvaluator::isDefaultAnchorInvisibleOrClippedByInterveningBoxes(*anchored);
 
-        if (anchored->style().positionVisibility().contains(PositionVisibility::AnchorsVisible)) {
-            bool shouldBeHidden = AnchorPositionEvaluator::isDefaultAnchorInvisibleOrClippedByInterveningBoxes(*anchored); // FIXME: Optimize this.
-            if (adjuster.isHidden() != shouldBeHidden)
-                needsInvalidation = true;
-        }
-
-        if (needsInvalidation) {
+        if (needsInvalidation || shouldBeHidden != adjuster.isHidden()) {
             ASSERT(anchored->element());
             if (CheckedPtr element = anchored->element())
                 element->invalidateForAnchorRectChange(); // FIXME: Optimize this.
@@ -460,7 +462,7 @@ void AnchorPositionEvaluator::addAnchorFunctionScrollCompensatedAxis(RenderStyle
         return;
 
     auto axes = style.anchorFunctionScrollCompensatedAxes();
-    axes.add(boxAxisToFlag(axis));
+    axes.add(axis);
     style.setAnchorFunctionScrollCompensatedAxes(axes);
 }
 
@@ -726,7 +728,7 @@ CheckedPtr<RenderBoxModelObject> AnchorPositionEvaluator::findAnchorForAnchorFun
 
         // FIXME: Support remaining box generating pseudo-elements (like ::marker).
         auto pseudoElement = style.pseudoElementType();
-        if (pseudoElement != PseudoId::None && pseudoElement != PseudoId::Before && pseudoElement != PseudoId::After)
+        if (pseudoElement && pseudoElement != PseudoElementType::Before && pseudoElement != PseudoElementType::After)
             return false;
 
         return true;
@@ -1532,7 +1534,7 @@ RefPtr<const Element> AnchorPositionEvaluator::anchorPositionedElementOrPseudoEl
 AnchorPositionedKey AnchorPositionEvaluator::keyForElementOrPseudoElement(const Element& element)
 {
     if (auto* pseudoElement = dynamicDowncast<PseudoElement>(element))
-        return { pseudoElement->hostElement(), PseudoElementIdentifier { pseudoElement->pseudoId() } };
+        return { pseudoElement->hostElement(), PseudoElementIdentifier { pseudoElement->pseudoElementType() } };
     return { &element, { } };
 }
 
@@ -1553,8 +1555,8 @@ bool AnchorPositionEvaluator::isImplicitAnchor(const RenderStyle& style)
 
     // "The implicit anchor element of a pseudo-element is its originating element, unless otherwise specified."
     // https://drafts.csswg.org/css-anchor-position-1/#implicit
-    auto isImplicitAnchorForPseudoElement = [&](PseudoId pseudoId) {
-        const RenderStyle* pseudoElementStyle = style.getCachedPseudoStyle({ pseudoId });
+    auto isImplicitAnchorForPseudoElement = [&](PseudoElementType pseudoElementType) {
+        const RenderStyle* pseudoElementStyle = style.getCachedPseudoStyle({ pseudoElementType });
         if (!pseudoElementStyle)
             return false;
         // If we have an explicit anchor name then there is no need for an implicit anchor.
@@ -1563,7 +1565,7 @@ bool AnchorPositionEvaluator::isImplicitAnchor(const RenderStyle& style)
 
         return pseudoElementStyle->usesAnchorFunctions() || isLayoutTimeAnchorPositioned(*pseudoElementStyle);
     };
-    return isImplicitAnchorForPseudoElement(PseudoId::Before) || isImplicitAnchorForPseudoElement(PseudoId::After);
+    return isImplicitAnchorForPseudoElement(PseudoElementType::Before) || isImplicitAnchorForPseudoElement(PseudoElementType::After);
 }
 
 ScopedName AnchorPositionEvaluator::defaultAnchorName(const RenderStyle& style)

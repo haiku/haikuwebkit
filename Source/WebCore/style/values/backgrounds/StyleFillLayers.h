@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "GraphicsTypes.h"
-#include "RenderStyleConstants.h"
-#include "StyleImage.h"
-#include "StyleValueTypes.h"
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleImage.h>
+#include <WebCore/StyleValueTypes.h>
 #include <wtf/RefCountedFixedVector.h>
 
 namespace WebCore {

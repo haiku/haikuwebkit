@@ -154,7 +154,7 @@ void JSWorkerGlobalScopeBase::queueMicrotaskToEventLoop(JSGlobalObject& object, 
 {
     JSWorkerGlobalScopeBase& thisObject = static_cast<JSWorkerGlobalScopeBase&>(object);
     auto& context = thisObject.wrapped();
-    task.setDispatcher(context.eventLoop().jsMicrotaskDispatcher());
+    task.setDispatcher(context.eventLoop().jsMicrotaskDispatcher(task));
     context.eventLoop().queueMicrotask(WTFMove(task));
 }
 

@@ -66,6 +66,7 @@ enum DeviceType {
     readonly attribute boolean inWindowFullscreen;
     readonly attribute boolean supportsRewind;
     readonly attribute boolean needsChromeMediaControlsPseudoElement;
+    readonly attribute boolean isMediaControlsMacInlineSizeSpecsEnabled;
 
     readonly attribute DOMString externalDeviceDisplayName;
     readonly attribute DeviceType externalDeviceType;

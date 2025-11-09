@@ -290,6 +290,7 @@ private:
     void inspectedURLChanged(const String&);
     void showCertificate(const WebCore::CertificateInfo&);
     void setInspectorPageDeveloperExtrasEnabled(bool);
+    void setPageAndTextZoomFactors(double pageZoomFactor, double textZoomFactor);
     void elementSelectionChanged(bool);
     void timelineRecordingChanged(bool);
 

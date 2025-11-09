@@ -88,6 +88,13 @@ public:
     static int32_t windowsKeyCodeForWPEKeyval(unsigned);
     static String singleCharacterStringForWPEKeyval(unsigned);
 #endif
+#if PLATFORM(GTK)
+    static String keyValueStringForGdkKeyval(unsigned);
+    static String keyCodeStringForGdkKeycode(unsigned);
+    static String keyIdentifierForGdkKeyval(unsigned);
+    static int windowsKeyCodeForGdkKeyval(unsigned);
+    static String singleCharacterStringForGdkKeyval(unsigned);
+#endif
 
 private:
     String m_text;

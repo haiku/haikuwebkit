@@ -25,10 +25,10 @@
 
 #pragma once
 
-#include "GridTypeAliases.h"
-#include "LayoutIntegrationUtils.h"
-#include "LayoutState.h"
-#include "LayoutUnit.h"
+#include <WebCore/GridTypeAliases.h>
+#include <WebCore/LayoutIntegrationUtils.h>
+#include <WebCore/LayoutState.h>
+#include <WebCore/LayoutUnit.h>
 #include <wtf/CheckedRef.h>
 
 namespace WebCore {
@@ -62,12 +62,14 @@ public:
 
     const IntegrationUtils& integrationUtils() const { return m_integrationUtils; }
 
-    const BoxGeometry geometryForGridItem(const ElementBox& gridItem) const;
+    const BoxGeometry& geometryForGridItem(const ElementBox&) const;
 
 private:
     UnplacedGridItems constructUnplacedGridItems() const;
 
     const LayoutState& layoutState() const { return m_globalLayoutState; }
+    BoxGeometry& geometryForGridItem(const ElementBox&);
+    void setGridItemGeometries(const GridItemRects&);
 
     const CheckedRef<const ElementBox> m_gridBox;
     const CheckedRef<LayoutState> m_globalLayoutState;

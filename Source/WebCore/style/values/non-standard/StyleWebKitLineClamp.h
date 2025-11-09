@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/StylePrimitiveNumericTypes.h>
+#include <wtf/Hasher.h>
 
 namespace WebCore {
 namespace Style {
@@ -68,11 +69,11 @@ struct WebkitLineClamp {
         return WTF::switchOn(m_value, std::forward<F>(f)...);
     }
 
-    unsigned valueForTextAutosizingHash() const
+    unsigned valueForHash() const
     {
         return WTF::switchOn(m_value,
-            [](const CSS::Keyword::None&) { return std::numeric_limits<unsigned>::max(); },
-            [](const auto& numeric) { return static_cast<unsigned>(numeric.value); }
+            [&](const CSS::Keyword::None&) { return computeHash(m_value.index()); },
+            [&](const auto& numeric) { return computeHash(m_value.index(), numeric.value); }
         );
     }
 

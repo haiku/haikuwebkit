@@ -32,6 +32,7 @@
 #include "StyleFilterData.h"
 #include "StyleFlexibleBoxData.h"
 #include "StyleMultiColData.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleTransformData.h"
 #include "StyleVisitedLinkColorData.h"

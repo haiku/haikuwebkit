@@ -2224,8 +2224,6 @@ private:
 
     void compareI64Helper(RelationalCondition condition, Location lhsLocation, Location rhsLocation, Location resultLocation);
 
-    void F64CopysignHelper(Location lhsLocation, Location rhsLocation, Location resultLocation);
-
     bool canTierUpToOMG() const;
 
     void emitIncrementCallProfileCount(unsigned callProfileIndex);

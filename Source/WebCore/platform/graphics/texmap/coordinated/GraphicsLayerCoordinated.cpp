@@ -105,7 +105,7 @@ void GraphicsLayerCoordinated::setNeedsDisplayInRect(const FloatRect& initialRec
         return;
 
     auto rect = initialRect;
-    if (shouldClip == ClipToLayer)
+    if (shouldClip == ShouldClipToLayer::Clip)
         rect.intersect({ { }, m_size });
 
     if (rect.isEmpty())

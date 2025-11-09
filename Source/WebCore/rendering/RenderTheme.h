@@ -196,7 +196,6 @@ public:
     virtual void adjustSliderThumbSize(RenderStyle&, const Element*) const { }
 
     virtual Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const;
-    virtual bool popupOptionSupportsTextIndent() const { return false; }
     virtual PopupMenuStyle::Size popupMenuSize(const RenderStyle&, IntRect&) const { return PopupMenuStyle::Size::Normal; }
 
     virtual ScrollbarWidth scrollbarWidthStyleForPart(StyleAppearance) { return ScrollbarWidth::Auto; }

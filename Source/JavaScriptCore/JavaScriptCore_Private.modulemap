@@ -12,6 +12,11 @@ framework module JavaScriptCore_Private [system] {
         export *
     }
 
+    explicit module JSContextPrivate {
+        header "JSContextPrivate.h"
+        export *
+    }
+
     explicit module JSContextRefPrivate {
         header "JSContextRefPrivate.h"
         export *
@@ -42,6 +47,11 @@ framework module JavaScriptCore_Private [system] {
         export *
     }
 
+    explicit module JSScript {
+        header "JSScript.h"
+        export *
+    }
+
     explicit module JSScriptRefPrivate {
         header "JSScriptRefPrivate.h"
         export *
@@ -49,6 +59,21 @@ framework module JavaScriptCore_Private [system] {
 
     explicit module JSStringRefPrivate {
         header "JSStringRefPrivate.h"
+        export *
+    }
+
+    explicit module JSValuePrivate {
+        header "JSValuePrivate.h"
+        export *
+    }
+
+    explicit module JSVirtualMachinePrivate {
+        header "JSVirtualMachinePrivate.h"
+        export *
+    }
+
+    explicit module JSWeakObjectMapRefPrivate {
+        header "JSWeakObjectMapRefPrivate.h"
         export *
     }
 
@@ -75,15 +100,20 @@ framework module JavaScriptCore_Private [system] {
         // These headers are already included via their dedicated separate modules above.
         exclude header "APIIntegrityPrivate.h"
         exclude header "JSBasePrivate.h"
+        exclude header "JSContextPrivate.h"
         exclude header "JSContextRefPrivate.h"
         exclude header "JSHeapFinalizerPrivate.h"
         exclude header "JSLockRefPrivate.h"
         exclude header "JSMarkingConstraintPrivate.h"
         exclude header "JSObjectRefPrivate.h"
         exclude header "JSRemoteInspector.h"
+        exclude header "JSScript.h"
         exclude header "JSScriptRefPrivate.h"
         exclude header "JSStringRefPrivate.h"
+        exclude header "JSValuePrivate.h"
+        exclude header "JSVirtualMachinePrivate.h"
         exclude header "JSWeakPrivate.h"
+        exclude header "JSWeakObjectMapRefPrivate.h"
         exclude header "PASReportCrashPrivate.h"
 
         explicit module * {

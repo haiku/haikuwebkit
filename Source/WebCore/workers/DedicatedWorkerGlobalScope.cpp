@@ -118,7 +118,7 @@ Ref<DedicatedWorkerThread> DedicatedWorkerGlobalScope::thread()
 CallbackId DedicatedWorkerGlobalScope::requestAnimationFrame(Ref<RequestAnimationFrameCallback>&& callback)
 {
     if (!m_workerAnimationController)
-        m_workerAnimationController = WorkerAnimationController::create(*this);
+        lazyInitialize(m_workerAnimationController, WorkerAnimationController::create(*this));
     return m_workerAnimationController->requestAnimationFrame(WTFMove(callback));
 }
 
@@ -145,7 +145,7 @@ RefPtr<RTCRtpScriptTransformer> DedicatedWorkerGlobalScope::createRTCRtpScriptTr
 NotificationClient* DedicatedWorkerGlobalScope::notificationClient()
 {
     if (!m_notificationClient)
-        m_notificationClient = WorkerNotificationClient::create(*this);
+        lazyInitialize(m_notificationClient, WorkerNotificationClient::create(*this));
     return m_notificationClient.get();
 }
 #endif

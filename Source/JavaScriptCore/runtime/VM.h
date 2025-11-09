@@ -61,13 +61,12 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <JavaScriptCore/Strong.h>
 #include <JavaScriptCore/SubspaceAccess.h>
 #include <JavaScriptCore/ThunkGenerator.h>
-#include <JavaScriptCore/VMTraps.h>
+#include <JavaScriptCore/VMThreadContext.h>
 #include <JavaScriptCore/WasmContext.h>
 #include <JavaScriptCore/WeakGCMap.h>
 #include <JavaScriptCore/WriteBarrier.h>
 #include <wtf/BumpPointerAllocator.h>
 #include <wtf/CheckedArithmetic.h>
-#include <wtf/DoublyLinkedList.h>
 #include <wtf/Forward.h>
 #include <wtf/Gigacage.h>
 #include <wtf/HashMap.h>
@@ -224,7 +223,7 @@ private:
 enum VMIdentifierType { };
 using VMIdentifier = AtomicObjectIdentifier<VMIdentifierType>;
 
-class VM : public ThreadSafeRefCountedWithSuppressingSaferCPPChecking<VM>, public DoublyLinkedListNode<VM> {
+class VM : public ThreadSafeRefCountedWithSuppressingSaferCPPChecking<VM> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(VM, VM);
 public:
     // WebCore has a one-to-one mapping of threads to VMs;
@@ -342,9 +341,15 @@ public:
         PopListeners = 1 << 5,
     };
 
+    // FIXME rdar://161576886
+    // It is evident that code can be made simpler and more efficient by combining the bits of
+    // ConcurrentEntryScopeServices and VMTraps. Some of them (e.g. NeedStopTheWorld) overlap.
+    // However, combining them will require some filtering so that only the right bits are
+    // checked at the right place. We'll fix this in a later patch.
     enum class ConcurrentEntryScopeService : uint8_t {
         // Transient services i.e. these will be cleared after they are serviced once, and can be set again later.
         ResetTerminationRequest = 1 << 0,
+        NeedStopTheWorld = 1 << 1, // FIXME rdar://161576886
     };
 
     bool hasAnyEntryScopeServiceRequest() { return m_entryScopeServicesRawBits; }
@@ -407,10 +412,9 @@ private:
 public:
     bool didEnterVM { false };
 private:
-    VMTraps m_traps;
-
     VMIdentifier m_identifier;
     const Ref<JSLock> m_apiLock;
+    VMThreadContext m_threadContext;
     const Ref<WTF::RunLoop> m_runLoop;
 
     WeakRandom m_random;
@@ -420,6 +424,11 @@ private:
     bool hasEntryScopeServiceRequest(EntryScopeService service)
     {
         return entryScopeServices().contains(service);
+    }
+
+    bool hasEntryScopeServiceRequest(ConcurrentEntryScopeService service)
+    {
+        return concurrentEntryScopeServices().contains(service);
     }
 
     void clearEntryScopeService(EntryScopeService service)
@@ -508,6 +517,7 @@ public:
     WriteBarrier<Structure> webAssemblyCalleeGroupStructure;
 #endif
     WriteBarrier<Structure> moduleProgramExecutableStructure;
+    WriteBarrier<Structure> promiseReactionStructure;
     WriteBarrier<Structure> regExpStructure;
     WriteBarrier<Structure> symbolStructure;
     WriteBarrier<Structure> symbolTableStructure;
@@ -536,6 +546,13 @@ public:
     WriteBarrier<Structure> bigIntStructure;
 
     WriteBarrier<JSPropertyNameEnumerator> m_emptyPropertyNameEnumerator;
+    WriteBarrier<NativeExecutable> m_promiseResolvingFunctionResolveExecutable;
+    WriteBarrier<NativeExecutable> m_promiseResolvingFunctionRejectExecutable;
+    WriteBarrier<NativeExecutable> m_promiseFirstResolvingFunctionResolveExecutable;
+    WriteBarrier<NativeExecutable> m_promiseFirstResolvingFunctionRejectExecutable;
+    WriteBarrier<NativeExecutable> m_promiseResolvingFunctionResolveWithoutPromiseExecutable;
+    WriteBarrier<NativeExecutable> m_promiseResolvingFunctionRejectWithoutPromiseExecutable;
+    WriteBarrier<NativeExecutable> m_promiseCapabilityExecutorExecutable;
 
     WriteBarrier<JSCell> m_orderedHashTableDeletedValue;
     WriteBarrier<JSCell> m_orderedHashTableSentinel;
@@ -597,6 +614,55 @@ public:
         if (m_emptyPropertyNameEnumerator) [[likely]]
             return m_emptyPropertyNameEnumerator.get();
         return emptyPropertyNameEnumeratorSlow();
+    }
+
+    NativeExecutable* promiseResolvingFunctionResolveExecutable()
+    {
+        if (m_promiseResolvingFunctionResolveExecutable) [[likely]]
+            return m_promiseResolvingFunctionResolveExecutable.get();
+        return promiseResolvingFunctionResolveExecutableSlow();
+    }
+
+    NativeExecutable* promiseResolvingFunctionRejectExecutable()
+    {
+        if (m_promiseResolvingFunctionRejectExecutable) [[likely]]
+            return m_promiseResolvingFunctionRejectExecutable.get();
+        return promiseResolvingFunctionRejectExecutableSlow();
+    }
+
+    NativeExecutable* promiseFirstResolvingFunctionResolveExecutable()
+    {
+        if (m_promiseFirstResolvingFunctionResolveExecutable) [[likely]]
+            return m_promiseFirstResolvingFunctionResolveExecutable.get();
+        return promiseFirstResolvingFunctionResolveExecutableSlow();
+    }
+
+    NativeExecutable* promiseFirstResolvingFunctionRejectExecutable()
+    {
+        if (m_promiseFirstResolvingFunctionRejectExecutable) [[likely]]
+            return m_promiseFirstResolvingFunctionRejectExecutable.get();
+        return promiseFirstResolvingFunctionRejectExecutableSlow();
+    }
+
+    NativeExecutable* promiseResolvingFunctionResolveWithoutPromiseExecutable()
+    {
+        if (m_promiseResolvingFunctionResolveWithoutPromiseExecutable) [[likely]]
+            return m_promiseResolvingFunctionResolveWithoutPromiseExecutable.get();
+        return promiseResolvingFunctionResolveWithoutPromiseExecutableSlow();
+    }
+
+    NativeExecutable* promiseResolvingFunctionRejectWithoutPromiseExecutable()
+    {
+        if (m_promiseResolvingFunctionRejectWithoutPromiseExecutable) [[likely]]
+            return m_promiseResolvingFunctionRejectWithoutPromiseExecutable.get();
+        return promiseResolvingFunctionRejectWithoutPromiseExecutableSlow();
+    }
+
+    NativeExecutable* promiseCapabilityExecutorExecutable()
+    {
+        if (m_promiseCapabilityExecutorExecutable) [[likely]]
+            return m_promiseCapabilityExecutorExecutable.get();
+        return promiseCapabilityExecutorExecutableSlow();
     }
 
     WeakGCMap<SymbolImpl*, Symbol, PtrHash<SymbolImpl*>> symbolImplToSymbolMap;
@@ -709,7 +775,7 @@ public:
 
     static constexpr ptrdiff_t offsetOfTraps()
     {
-        return OBJECT_OFFSETOF(VM, m_traps);
+        return OBJECT_OFFSETOF(VM, m_threadContext) + VMThreadContext::offsetOfTraps();
     }
 
     static constexpr ptrdiff_t offsetOfTrapsBits()
@@ -721,6 +787,13 @@ public:
     {
         return offsetOfTraps() + VMTraps::offsetOfSoftStackLimit();
     }
+
+    ALWAYS_INLINE static VM* fromThreadContext(VMThreadContext* context)
+    {
+        return std::bit_cast<VM*>(std::bit_cast<uint8_t*>(context) - OBJECT_OFFSETOF(VM, m_threadContext));
+    }
+
+    ALWAYS_INLINE VMThreadContext* threadContext() { return &m_threadContext; }
 
     void clearLastException() { m_lastException = nullptr; }
 
@@ -753,8 +826,8 @@ public:
     inline bool ensureJSStackCapacityFor(Register* newTopOfStack);
 
     void* stackLimit() { return m_stackLimit; }
-    ALWAYS_INLINE void* softStackLimit() const { return m_traps.softStackLimit(); }
-    ALWAYS_INLINE void** addressOfSoftStackLimit() { return m_traps.addressOfSoftStackLimit(); }
+    ALWAYS_INLINE void* softStackLimit() const { return traps().softStackLimit(); }
+    ALWAYS_INLINE void** addressOfSoftStackLimit() { return traps().addressOfSoftStackLimit(); }
 
     inline bool isSafeToRecurseSoft() const;
     bool isSafeToRecurse() const
@@ -766,10 +839,10 @@ public:
     void setLastStackTop(const Thread&);
     
 #if ENABLE(C_LOOP)
-    ALWAYS_INLINE CLoopStack& cloopStack() { return m_traps.cloopStack(); }
-    ALWAYS_INLINE const CLoopStack& cloopStack() const { return m_traps.cloopStack(); }
-    ALWAYS_INLINE void* cloopStackLimit() { return m_traps.cloopStackLimit(); }
-    ALWAYS_INLINE void* currentCLoopStackPointer() const { return m_traps.currentCLoopStackPointer(); }
+    ALWAYS_INLINE CLoopStack& cloopStack() { return traps().cloopStack(); }
+    ALWAYS_INLINE const CLoopStack& cloopStack() const { return traps().cloopStack(); }
+    ALWAYS_INLINE void* cloopStackLimit() { return traps().cloopStackLimit(); }
+    ALWAYS_INLINE void* currentCLoopStackPointer() const { return traps().currentCLoopStackPointer(); }
 #endif
 
     EncodedJSValue encodedHostCallReturnValue { };
@@ -955,18 +1028,30 @@ public:
 
     std::optional<RefPtr<Thread>> ownerThread() const { return m_apiLock->ownerThread(); }
 
-    VMTraps& traps() { return m_traps; }
+    ALWAYS_INLINE VMTraps& traps() { return m_threadContext.traps(); }
+    ALWAYS_INLINE const VMTraps& traps() const { return m_threadContext.traps(); }
 
     JS_EXPORT_PRIVATE bool hasExceptionsAfterHandlingTraps();
 
-    CONCURRENT_SAFE void notifyNeedDebuggerBreak() { m_traps.fireTrap(VMTraps::NeedDebuggerBreak); }
-    CONCURRENT_SAFE void notifyNeedShellTimeoutCheck() { m_traps.fireTrap(VMTraps::NeedShellTimeoutCheck); }
+    CONCURRENT_SAFE void notifyNeedDebuggerBreak() { traps().fireTrap(VMTraps::NeedDebuggerBreak); }
+    CONCURRENT_SAFE void notifyNeedShellTimeoutCheck() { traps().fireTrap(VMTraps::NeedShellTimeoutCheck); }
     CONCURRENT_SAFE void notifyNeedTermination()
     {
         setHasTerminationRequest();
-        m_traps.fireTrap(VMTraps::NeedTermination);
+        traps().fireTrap(VMTraps::NeedTermination);
     }
-    CONCURRENT_SAFE void notifyNeedWatchdogCheck() { m_traps.fireTrap(VMTraps::NeedWatchdogCheck); }
+    CONCURRENT_SAFE void notifyNeedWatchdogCheck() { traps().fireTrap(VMTraps::NeedWatchdogCheck); }
+
+    CONCURRENT_SAFE void requestStop()
+    {
+        requestEntryScopeService(ConcurrentEntryScopeService::NeedStopTheWorld); // FIXME rdar://161576886
+        traps().fireTrap(VMTraps::NeedStopTheWorld);
+    }
+    CONCURRENT_SAFE void cancelStop()
+    {
+        traps().clearTrap(VMTraps::NeedStopTheWorld);
+        clearEntryScopeService(ConcurrentEntryScopeService::NeedStopTheWorld); // FIXME rdar://161576886
+    }
 
     void promiseRejected(JSPromise*);
 
@@ -1034,6 +1119,13 @@ private:
     JS_EXPORT_PRIVATE JSCell* orderedHashTableDeletedValueSlow();
     JS_EXPORT_PRIVATE JSCell* orderedHashTableSentinelSlow();
     JSPropertyNameEnumerator* emptyPropertyNameEnumeratorSlow();
+    NativeExecutable* promiseResolvingFunctionResolveExecutableSlow();
+    NativeExecutable* promiseResolvingFunctionRejectExecutableSlow();
+    NativeExecutable* promiseFirstResolvingFunctionResolveExecutableSlow();
+    NativeExecutable* promiseFirstResolvingFunctionRejectExecutableSlow();
+    NativeExecutable* promiseResolvingFunctionResolveWithoutPromiseExecutableSlow();
+    NativeExecutable* promiseResolvingFunctionRejectWithoutPromiseExecutableSlow();
+    NativeExecutable* promiseCapabilityExecutorExecutableSlow();
 
     void updateStackLimits();
 
@@ -1162,8 +1254,7 @@ private:
 
     DoublyLinkedList<Debugger> m_debuggers;
 
-    VM* m_prev; // Required by DoublyLinkedListNode.
-    VM* m_next; // Required by DoublyLinkedListNode.
+    void checkStaticAsserts(); // Not for calling.
 
     friend class Heap;
     friend class CatchScope; // Friend for exception checking purpose only.
@@ -1173,7 +1264,6 @@ private:
     friend class SuspendExceptionScope;
     friend class ThrowScope; // Friend for exception checking purpose only.
     friend class VMTraps;
-    friend class WTF::DoublyLinkedListNode<VM>;
 };
 
 static_assert(OBJECT_OFFSETOF(VM, topEntryFrame) == OBJECT_OFFSETOF(VM, topCallFrame) + sizeof(void*), "We load/store these using a pair instruction");

@@ -31,8 +31,7 @@ symbols = [
 
 [[legacy]]
 symbols = ["dyld_get_program_sdk_version"]
-requires = ["!USE_APPLE_INTERNAL_SDK"]
+# In internal builds, usage may be dead-stripped depending on WebKitAdditions
+# code in RuntimeApplicationChecks.
+allow-unused = true
 
-[[legacy]]
-symbols = ["dyld_get_program_sdk_version"]
-requires = ["!NDEBUG"]

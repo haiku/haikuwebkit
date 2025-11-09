@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include <WebCore/GraphicsLayer.h>
 #include <wtf/RefCounted.h>
 
 #if !USE(CA) && !USE(COORDINATED_GRAPHICS)
@@ -42,6 +41,8 @@ class CoordinatedPlatformLayerBuffer;
 class Damage;
 #endif
 
+enum class GraphicsLayerCompositingCoordinatesOrientation : uint8_t;
+
 // Platform specific interface for attaching contents to GraphicsLayer.
 // Responsible for creating compositor resources to show the particular contents
 // in the platform specific GraphicsLayer.
@@ -53,7 +54,7 @@ public:
     virtual void prepareToDelegateDisplay(PlatformCALayer&);
     // Must not detach the platform layer backing store.
     virtual void display(PlatformCALayer&) = 0;
-    virtual GraphicsLayer::CompositingCoordinatesOrientation orientation() const;
+    virtual GraphicsLayerCompositingCoordinatesOrientation orientation() const;
 #elif USE(COORDINATED_GRAPHICS)
     virtual void setDisplayBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&&) = 0;
     virtual bool display(CoordinatedPlatformLayer&, std::optional<Damage>&&) = 0;

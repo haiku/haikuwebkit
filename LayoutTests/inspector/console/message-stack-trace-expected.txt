@@ -54,9 +54,8 @@ ASYNC CALL STACK:
 CALL STACK:
 0: [F] (anonymous function)
 ASYNC CALL STACK:
-0: --- enqueueJob ---
-1: [N] then
-2: [F] triggerUnhandledRejectionImplicitWithException
+0: --- then ---
+1: [F] triggerUnhandledRejectionImplicitWithException
 
 -- Running test case: Console.StackTrace.UnhandledPromiseRejection.Module
 CALL STACK:

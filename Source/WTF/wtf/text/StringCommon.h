@@ -946,7 +946,8 @@ inline void copyElements(std::span<uint8_t> destinationSpan, std::span<const uin
         const uintptr_t lengthLeft = end - destination;
         const uint8_t* const simdEnd = destination + (lengthLeft & ~memoryAccessMask);
         do {
-            asm("ld2   { v0.16B, v1.16B }, [%[SOURCE]], #32\n\t"
+            __asm__(
+                "ld2   { v0.16B, v1.16B }, [%[SOURCE]], #32\n\t"
                 "st1   { v0.16B }, [%[DESTINATION]], #16\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
                 :
@@ -970,7 +971,8 @@ inline void copyElements(std::span<uint8_t> destinationSpan, std::span<const uin
         const uintptr_t lengthLeft = end - destination;
         const uint8_t* const simdEnd = end - (lengthLeft % memoryAccessSize);
         do {
-            asm("vld2.8   { d0-d1 }, [%[SOURCE]] !\n\t"
+            __asm__(
+                "vld2.8   { d0-d1 }, [%[SOURCE]] !\n\t"
                 "vst1.8   { d0 }, [%[DESTINATION],:64] !\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
                 :
@@ -1003,7 +1005,8 @@ inline void copyElements(std::span<uint16_t> destinationSpan, std::span<const ui
         const auto* const simdEnd = destination + (lengthLeft & ~memoryAccessMask);
         // Use ld2 to load lower 16bit of 8 uint32_t.
         do {
-            asm("ld2   { v0.8H, v1.8H }, [%[SOURCE]], #32\n\t"
+            __asm__(
+                "ld2   { v0.8H, v1.8H }, [%[SOURCE]], #32\n\t"
                 "st1   { v0.8H }, [%[DESTINATION]], #16\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
                 :
@@ -1032,7 +1035,8 @@ inline void copyElements(std::span<uint32_t> destinationSpan, std::span<const ui
         const auto* const simdEnd = destination + (lengthLeft & ~memoryAccessMask);
         // Use ld2 to load lower 32bit of 4 uint64_t.
         do {
-            asm("ld2   { v0.4S, v1.4S }, [%[SOURCE]], #32\n\t"
+            __asm__(
+                "ld2   { v0.4S, v1.4S }, [%[SOURCE]], #32\n\t"
                 "st1   { v0.4S }, [%[DESTINATION]], #16\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
                 :
@@ -1061,7 +1065,8 @@ inline void copyElements(std::span<uint16_t> destinationSpan, std::span<const ui
         const auto* const simdEnd = destination + (lengthLeft & ~memoryAccessMask);
         // Use ld4 to load lower 16bit of 8 uint64_t.
         do {
-            asm("ld4   { v0.8H, v1.8H, v2.8H, v3.8H }, [%[SOURCE]], #64\n\t"
+            __asm__(
+                "ld4   { v0.8H, v1.8H, v2.8H, v3.8H }, [%[SOURCE]], #64\n\t"
                 "st1   { v0.8H }, [%[DESTINATION]], #16\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
                 :
@@ -1091,7 +1096,8 @@ inline void copyElements(std::span<uint8_t> destinationSpan, std::span<const uin
         // Since ARM64 does not ld8, we use ld4 to load lower 16bit of 8 uint64_t.
         // And then narrow 8 16bit lanes into 8 8bit lanes and store it to the destination.
         do {
-            asm("ld4   { v0.8H, v1.8H, v2.8H, v3.8H }, [%[SOURCE]], #64\n\t"
+            __asm__(
+                "ld4   { v0.8H, v1.8H, v2.8H, v3.8H }, [%[SOURCE]], #64\n\t"
                 "xtn   v0.8B, v0.8H\n\t"
                 "st1   { v0.8B }, [%[DESTINATION]], #8\n\t"
                 : [SOURCE]"+r" (source), [DESTINATION]"+r" (destination)
@@ -1158,7 +1164,7 @@ ALWAYS_INLINE bool charactersContain(std::span<const CharacterType> span)
 
 #if CPU(ARM64) || CPU(X86_64)
     constexpr size_t stride = SIMD::stride<CharacterType>;
-    using UnsignedType = SIMD::SameSizeUnsignedInteger<CharacterType>;
+    using UnsignedType = SameSizeUnsignedInteger<CharacterType>;
     using BulkType = decltype(SIMD::load(static_cast<const UnsignedType*>(nullptr)));
     if (length >= stride) {
         size_t index = 0;
@@ -1183,7 +1189,7 @@ ALWAYS_INLINE bool charactersContain(std::span<const CharacterType> span)
 template<typename CharacterType>
 inline size_t countMatchedCharacters(std::span<const CharacterType> span, CharacterType character)
 {
-    using UnsignedType = SIMD::SameSizeUnsignedInteger<CharacterType>;
+    using UnsignedType = SameSizeUnsignedInteger<CharacterType>;
     auto mask = SIMD::splat<UnsignedType>(character);
     auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
         return SIMD::equal(input, mask);

@@ -42,5 +42,5 @@ dictionary ReadableStreamBYOBReaderReadOptions {
 
     // ReadableStreamGenericReader
     [ImplementedAs=closedPromise] readonly attribute Promise<undefined> closed;
-    [CallWith=CurrentGlobalObject] Promise<undefined> cancel(optional any reason);
+    [CallWith=CurrentGlobalObject, ReturnsOwnPromise] Promise<undefined> cancel(optional any reason);
 };

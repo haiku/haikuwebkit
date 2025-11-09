@@ -23,8 +23,7 @@
 #include "config.h"
 #include "MouseRelatedEvent.h"
 
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "EventNames.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"

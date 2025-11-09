@@ -20,7 +20,6 @@
 #include "DOMParser.h"
 
 #include "CommonAtomStrings.h"
-#include "DocumentInlines.h"
 #include "ExceptionOr.h"
 #include "HTMLDocument.h"
 #include "NodeInlines.h"

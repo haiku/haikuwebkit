@@ -347,6 +347,8 @@ public:
     virtual void didLoadFromRegistrableDomain(RegistrableDomain&&) { }
     virtual Vector<RegistrableDomain> loadedSubresourceDomains() const { return { }; }
 
+    virtual RefPtr<Frame> provisionalParentFrame() const;
+
     virtual AllowsContentJavaScript allowsContentJavaScriptFromMostRecentNavigation() const { return AllowsContentJavaScript::Yes; }
 
 #if ENABLE(APP_BOUND_DOMAINS)

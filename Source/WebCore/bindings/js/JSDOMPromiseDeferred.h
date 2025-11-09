@@ -205,7 +205,7 @@ public:
 
     void markAsHandled() const
     {
-        deferred()->markAsHandled(globalObject());
+        deferred()->markAsHandled();
     }
 
 private:

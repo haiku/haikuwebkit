@@ -53,7 +53,7 @@ WebCore::SQLiteStatementAutoResetScope DatabaseUtilities::scopedStatement(std::u
 {
     ASSERT(!RunLoop::isMain());
     if (!statement) {
-        statement = m_database.prepareHeapStatement(query);
+        statement = m_database.prepareStatement(query);
         if (!statement) {
             RELEASE_LOG_ERROR(PrivateClickMeasurement, "%p - DatabaseUtilities::%s failed to prepare statement, error message: %" PUBLIC_LOG_STRING, this, logString.characters(), m_database.lastErrorMsg());
             return WebCore::SQLiteStatementAutoResetScope { };
@@ -75,11 +75,10 @@ ScopeExit<Function<void()>> DatabaseUtilities::beginTransactionIfNecessary()
     } });
 }
 
-static bool evaluateStatementAndExpect(Expected<WebCore::SQLiteStatement, int> preparedStatement, int expectedResultCode)
+static bool evaluateStatementAndExpect(std::unique_ptr<WebCore::SQLiteStatement> statement, int expectedResultCode)
 {
-    if (!preparedStatement)
+    if (!statement)
         return false;
-    CheckedRef statement = *preparedStatement;
     return statement->step() != expectedResultCode;
 }
 
@@ -210,7 +209,7 @@ String DatabaseUtilities::stripIndexQueryToMatchStoredValue(const char* original
 
 TableAndIndexPair DatabaseUtilities::currentTableAndIndexQueries(const String& tableName)
 {
-    auto getTableStatement = m_database.prepareHeapStatement("SELECT sql FROM sqlite_master WHERE tbl_name=? AND type = 'table'"_s);
+    auto getTableStatement = m_database.prepareStatement("SELECT sql FROM sqlite_master WHERE tbl_name=? AND type = 'table'"_s);
     if (!getTableStatement) {
         RELEASE_LOG_ERROR(PrivateClickMeasurement, "%p - DatabaseUtilities::currentTableAndIndexQueries Unable to prepare statement to fetch schema for the table, error message: %" PRIVATE_LOG_STRING, this, m_database.lastErrorMsg());
         return { };
@@ -250,7 +249,7 @@ TableAndIndexPair DatabaseUtilities::currentTableAndIndexQueries(const String& t
     return std::make_pair<String, std::optional<String>>(WTFMove(createTableQuery), WTFMove(index));
 }
 
-static Expected<WebCore::SQLiteStatement, int> insertDistinctValuesInTableStatement(WebCore::SQLiteDatabase& database, const String& table)
+static std::unique_ptr<WebCore::SQLiteStatement> insertDistinctValuesInTableStatement(WebCore::SQLiteDatabase& database, const String& table)
 {
     if (table == "SubframeUnderTopFrameDomains"_s)
         return database.prepareStatement("INSERT INTO SubframeUnderTopFrameDomains SELECT subFrameDomainID, MAX(lastUpdated), topFrameDomainID FROM _SubframeUnderTopFrameDomains GROUP BY subFrameDomainID, topFrameDomainID"_s);

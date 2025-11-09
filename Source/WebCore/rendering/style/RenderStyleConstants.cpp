@@ -731,7 +731,6 @@ TextStream& operator<<(TextStream& ts, ItemPosition position)
     case ItemPosition::Left: ts << "left"_s; break;
     case ItemPosition::Right: ts << "right"_s; break;
     case ItemPosition::AnchorCenter: ts << "anchor-center"_s; break;
-    case ItemPosition::Dialog: ts << "dialog"_s; break;
     }
     return ts;
 }
@@ -978,34 +977,33 @@ TextStream& operator<<(TextStream& ts, PrintColorAdjust colorAdjust)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, PseudoId pseudoId)
+TextStream& operator<<(TextStream& ts, PseudoElementType pseudoElementType)
 {
-    switch (pseudoId) {
-    case PseudoId::None: ts << "none"_s; break;
-    case PseudoId::FirstLine: ts << "first-line"_s; break;
-    case PseudoId::FirstLetter: ts << "first-letter"_s; break;
-    case PseudoId::GrammarError: ts << "grammar-error"_s; break;
-    case PseudoId::Highlight: ts << "highlight"_s; break;
-    case PseudoId::InternalWritingSuggestions: ts << "-internal-writing-suggestions"_s; break;
-    case PseudoId::Marker: ts << "marker"_s; break;
-    case PseudoId::Backdrop: ts << "backdrop"_s; break;
-    case PseudoId::Before: ts << "before"_s; break;
-    case PseudoId::After: ts << "after"_s; break;
-    case PseudoId::Selection: ts << "selection"_s; break;
-    case PseudoId::SpellingError: ts << "spelling-error"_s; break;
-    case PseudoId::TargetText: ts << "target-text"_s; break;
-    case PseudoId::ViewTransition: ts << "view-transition"_s; break;
-    case PseudoId::ViewTransitionGroup: ts << "view-transition-group"_s; break;
-    case PseudoId::ViewTransitionImagePair: ts << "view-transition-image-pair"_s; break;
-    case PseudoId::ViewTransitionOld: ts << "view-transition-old"_s; break;
-    case PseudoId::ViewTransitionNew: ts << "view-transition-new"_s; break;
-    case PseudoId::WebKitResizer: ts << "-webkit-resizer"_s; break;
-    case PseudoId::WebKitScrollbar: ts << "-webkit-scrollbar"_s; break;
-    case PseudoId::WebKitScrollbarThumb: ts << "-webkit-scrollbar-thumb"_s; break;
-    case PseudoId::WebKitScrollbarButton: ts << "-webkit-scrollbar-button"_s; break;
-    case PseudoId::WebKitScrollbarTrack: ts << "-webkit-scrollbar-track"_s; break;
-    case PseudoId::WebKitScrollbarTrackPiece: ts << "-webkit-scrollbar-trackpiece"_s; break;
-    case PseudoId::WebKitScrollbarCorner: ts << "-webkit-scrollbar-corner"_s; break;
+    switch (pseudoElementType) {
+    case PseudoElementType::FirstLine: ts << "first-line"_s; break;
+    case PseudoElementType::FirstLetter: ts << "first-letter"_s; break;
+    case PseudoElementType::GrammarError: ts << "grammar-error"_s; break;
+    case PseudoElementType::Highlight: ts << "highlight"_s; break;
+    case PseudoElementType::InternalWritingSuggestions: ts << "-internal-writing-suggestions"_s; break;
+    case PseudoElementType::Marker: ts << "marker"_s; break;
+    case PseudoElementType::Backdrop: ts << "backdrop"_s; break;
+    case PseudoElementType::Before: ts << "before"_s; break;
+    case PseudoElementType::After: ts << "after"_s; break;
+    case PseudoElementType::Selection: ts << "selection"_s; break;
+    case PseudoElementType::SpellingError: ts << "spelling-error"_s; break;
+    case PseudoElementType::TargetText: ts << "target-text"_s; break;
+    case PseudoElementType::ViewTransition: ts << "view-transition"_s; break;
+    case PseudoElementType::ViewTransitionGroup: ts << "view-transition-group"_s; break;
+    case PseudoElementType::ViewTransitionImagePair: ts << "view-transition-image-pair"_s; break;
+    case PseudoElementType::ViewTransitionOld: ts << "view-transition-old"_s; break;
+    case PseudoElementType::ViewTransitionNew: ts << "view-transition-new"_s; break;
+    case PseudoElementType::WebKitResizer: ts << "-webkit-resizer"_s; break;
+    case PseudoElementType::WebKitScrollbar: ts << "-webkit-scrollbar"_s; break;
+    case PseudoElementType::WebKitScrollbarThumb: ts << "-webkit-scrollbar-thumb"_s; break;
+    case PseudoElementType::WebKitScrollbarButton: ts << "-webkit-scrollbar-button"_s; break;
+    case PseudoElementType::WebKitScrollbarTrack: ts << "-webkit-scrollbar-track"_s; break;
+    case PseudoElementType::WebKitScrollbarTrackPiece: ts << "-webkit-scrollbar-trackpiece"_s; break;
+    case PseudoElementType::WebKitScrollbarCorner: ts << "-webkit-scrollbar-corner"_s; break;
     default:
         ts << "other"_s;
         break;

@@ -41,13 +41,13 @@
 #include "ContextMenuItem.h"
 #include "ContextMenuProvider.h"
 #include "DOMWrapperWorld.h"
-#include "Document.h"
+#include "DocumentPage.h"
+#include "DocumentView.h"
 #include "Editor.h"
 #include "Event.h"
 #include "File.h"
 #include "FloatRect.h"
 #include "FocusController.h"
-#include "FrameInlines.h"
 #include "FrameDestructionObserverInlines.h"
 #include "HTMLIFrameElement.h"
 #include "HitTestResult.h"
@@ -276,20 +276,13 @@ void InspectorFrontendHost::inspectedURLChanged(const String& newURL)
 
 void InspectorFrontendHost::setZoomFactor(float zoom)
 {
-    if (m_frontendPage) {
-        if (RefPtr localMainFrame = m_frontendPage->localMainFrame())
-            localMainFrame->setPageAndTextZoomFactors(zoom, 1);
-    }
+    if (m_client)
+        m_client->setPageAndTextZoomFactors(zoom, 1);
 }
 
 float InspectorFrontendHost::zoomFactor()
 {
-    if (m_frontendPage) {
-        if (RefPtr localMainFrame = m_frontendPage->localMainFrame())
-            return localMainFrame->pageZoomFactor();
-    }
-
-    return 1.0;
+    return m_client ? m_client->pageZoomFactor() : 1.0;
 }
 
 void InspectorFrontendHost::setForcedAppearance(String appearance)

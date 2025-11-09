@@ -21,6 +21,7 @@
 #include "src/gpu/graphite/RendererProvider.h"
 #include "src/gpu/graphite/ShaderInfo.h"
 #include "src/gpu/graphite/TextureInfoPriv.h"
+#include "src/gpu/graphite/ThreadSafeResourceProvider.h"
 #include "src/gpu/graphite/UniformManager.h"
 #include "src/gpu/graphite/dawn/DawnCaps.h"
 #include "src/gpu/graphite/dawn/DawnErrorChecker.h"
@@ -324,7 +325,6 @@ struct DawnGraphicsPipeline::AsyncPipelineCreation : public AsyncPipelineCreatio
 // static
 sk_sp<DawnGraphicsPipeline> DawnGraphicsPipeline::Make(
         const DawnSharedContext* sharedContext,
-        DawnResourceProvider* resourceProvider,
         const RuntimeEffectDictionary* runtimeDict,
         const UniqueKey& pipelineKey,
         const GraphicsPipelineDesc& pipelineDesc,
@@ -491,8 +491,7 @@ sk_sp<DawnGraphicsPipeline> DawnGraphicsPipeline::Make(
     // layout and passed in to the pipline constructor for lifetime management.
     skia_private::TArray<sk_sp<DawnSampler>> immutableSamplers;
     {
-        SkASSERT(resourceProvider);
-        groupLayouts[0] = resourceProvider->getOrCreateUniformBuffersBindGroupLayout();
+        groupLayouts[0] = sharedContext->getUniformBuffersBindGroupLayout();
         if (!groupLayouts[0]) {
             return {};
         }
@@ -502,8 +501,7 @@ sk_sp<DawnGraphicsPipeline> DawnGraphicsPipeline::Make(
             // Check if we can optimize for the common case of a single texture + 1 dynamic sampler
             if (numTexturesAndSamplers == 2 &&
                 !(samplerDescArrPtr && samplerDescArrPtr->at(0).isImmutable())) {
-                groupLayouts[1] =
-                        resourceProvider->getOrCreateSingleTextureSamplerBindGroupLayout();
+                groupLayouts[1] = sharedContext->getSingleTextureSamplerBindGroupLayout();
             } else {
                 std::vector<wgpu::BindGroupLayoutEntry> entries(numTexturesAndSamplers);
 #if !defined(__EMSCRIPTEN__)
@@ -531,6 +529,8 @@ sk_sp<DawnGraphicsPipeline> DawnGraphicsPipeline::Make(
                     // pipeline layout.
                     const SamplerDesc& samplerDesc = samplerDescArr.at(i/2);
                     if (samplerDesc.isImmutable()) {
+                        DawnThreadSafeResourceProvider* resourceProvider =
+                                sharedContext->threadSafeResourceProvider();
                         sk_sp<Sampler> immutableSampler =
                                 resourceProvider->findOrCreateCompatibleSampler(samplerDesc);
                         if (!immutableSampler) {

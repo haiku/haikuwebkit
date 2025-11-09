@@ -28,7 +28,7 @@
 
 #include "ContainerNodeInlines.h"
 #include "CSSSelector.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "FocusOptions.h"
@@ -134,7 +134,7 @@ ExceptionOr<void> HTMLDialogElement::showModal()
 
     setIsModal(true);
 
-    auto containingBlockBeforeStyleResolution = SingleThreadWeakPtr<RenderBlock> { };
+    CheckedPtr<RenderBlock> containingBlockBeforeStyleResolution;
     if (auto* renderer = this->renderer())
         containingBlockBeforeStyleResolution = renderer->containingBlock();
 

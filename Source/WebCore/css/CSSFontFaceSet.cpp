@@ -35,7 +35,6 @@
 #include "CSSSegmentedFontFace.h"
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
-#include "DocumentInlines.h"
 #include "FontCache.h"
 #include "FontSelectionValueInlines.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"

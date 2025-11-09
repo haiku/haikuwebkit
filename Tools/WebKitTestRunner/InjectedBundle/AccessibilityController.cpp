@@ -51,9 +51,7 @@ AccessibilityController::AccessibilityController()
     platformInitialize();
 }
 
-AccessibilityController::~AccessibilityController()
-{
-}
+AccessibilityController::~AccessibilityController() = default;
 
 void AccessibilityController::setRetainedElement(AccessibilityUIElement* uiElement)
 {
@@ -188,9 +186,7 @@ void AccessibilityController::platformInitialize()
 
 // AXThread implementation
 
-AXThread::AXThread()
-{
-}
+AXThread::AXThread() = default;
 
 bool AXThread::isCurrentThread()
 {

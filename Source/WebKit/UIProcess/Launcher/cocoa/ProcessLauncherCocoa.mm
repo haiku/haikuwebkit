@@ -64,7 +64,6 @@
 #import <BrowserEngineKit/BENetworkingProcess.h>
 #import <BrowserEngineKit/BERenderingProcess.h>
 #import <BrowserEngineKit/BEWebContentProcess.h>
-
 #endif // USE(EXTENSIONKIT)
 
 namespace WebKit {

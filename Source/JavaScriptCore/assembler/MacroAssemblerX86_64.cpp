@@ -181,7 +181,7 @@ static_assert(sizeof(Probe::State) == PROBE_SIZE, "Probe::State::size's matches 
 #undef PROBE_OFFSETOF
 
 #if CPU(X86_64)
-asm (
+__asm__(
     ".text" "\n"
     ".globl " SYMBOL_STRING(ctiMasmProbeTrampoline) "\n"
     HIDE_SYMBOL(ctiMasmProbeTrampoline) "\n"
@@ -381,7 +381,7 @@ asm (
 
 // And now, the slower version that saves the full width of vectors in xmm registers.
 
-asm (
+__asm__(
     ".text" "\n"
     ".globl " SYMBOL_STRING(ctiMasmProbeTrampolineSIMD) "\n"
     HIDE_SYMBOL(ctiMasmProbeTrampolineSIMD) "\n"

@@ -51,6 +51,7 @@ class AllowedSPI:
     selectors: list[Selector]
     classes: list[str]
     requires: list[str] = field(default_factory=list)
+    allow_unused: bool = False
 
     class Selector(NamedTuple):
         name: str
@@ -108,8 +109,10 @@ class AllowList:
 
                 bugs = AllowedSPI.Bugs(entry.pop('request', None),
                                        entry.pop('cleanup', None))
+                allow_unused = bool(entry.pop('allow-unused', False))
                 allow = AllowedSPI(reason=reason, bugs=bugs, symbols=syms,
-                                   selectors=sels, classes=clss, requires=reqs)
+                                   selectors=sels, classes=clss, requires=reqs,
+                                   allow_unused=allow_unused)
 
                 if reason == AllowedReason.TEMPORARY_USAGE:
                     if not bugs.cleanup:

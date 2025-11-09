@@ -143,7 +143,7 @@ void RenderLayerModelObject::styleDidChange(StyleDifference diff, const RenderSt
     // LayoutPositionedObjects, which skips laying out the element's parent.
     // The element's parent needs to relayout so that it calls
     // RenderBlockFlow::setStaticInlinePositionForChild with the out-of-flow-positioned child, so
-    // that when it's laid out, its RenderBox::computePositionedLogicalWidth/Height takes into
+    // that when it's laid out, its RenderBox::computeOutOfFlowPositionedLogicalWidth/Height takes into
     // account its new inline/block position rather than its old block/inline position.
     // Position changes and other types of display changes are handled elsewhere.
     if ((oldStyle && isOutOfFlowPositioned() && parent() && (parent() != containingBlock()))

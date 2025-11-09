@@ -34,6 +34,7 @@
 #include "InspectorWebAgentBase.h"
 #include "Timer.h"
 #include <JavaScriptCore/Breakpoint.h>
+#include <JavaScriptCore/InjectedScriptManager.h>
 #include <JavaScriptCore/InspectorBackendDispatchers.h>
 #include <JavaScriptCore/InspectorFrontendDispatchers.h>
 #include <wtf/CheckedPtr.h>

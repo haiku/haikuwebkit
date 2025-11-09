@@ -182,6 +182,9 @@ bool GlyphDisplayListCache::canShareDisplayList(const DisplayList::DisplayList& 
             || std::holds_alternative<DisplayList::DrawGlyphs>(item)
             || std::holds_alternative<DisplayList::DrawImageBuffer>(item)
             || std::holds_alternative<DisplayList::DrawNativeImage>(item)
+#if USE(SKIA)
+            || std::holds_alternative<DisplayList::DrawTextBlob>(item)
+#endif
             || std::holds_alternative<DisplayList::BeginTransparencyLayer>(item)
             || std::holds_alternative<DisplayList::BeginTransparencyLayerWithCompositeMode>(item)
             || std::holds_alternative<DisplayList::EndTransparencyLayer>(item)))

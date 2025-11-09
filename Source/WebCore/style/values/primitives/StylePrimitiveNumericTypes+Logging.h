@@ -26,7 +26,7 @@
 
 #include "CSSPrimitiveNumericTypes+Serialization.h"
 #include "CSSSerializationContext.h"
-#include "CalculationValue.h"
+#include "StyleCalculationValue.h"
 #include "StylePrimitiveNumericTypes.h"
 #include <wtf/text/TextStream.h>
 

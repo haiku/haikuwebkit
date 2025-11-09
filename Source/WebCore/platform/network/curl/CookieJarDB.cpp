@@ -638,7 +638,7 @@ bool CookieJarDB::deleteAllCookies()
 
 void CookieJarDB::createPrepareStatement(ASCIILiteral sql)
 {
-    auto statement = m_database.prepareHeapStatement(sql);
+    auto statement = m_database.prepareStatement(sql);
     ASSERT(statement);
     m_statements.add(sql, WTFMove(statement));
 }
@@ -651,9 +651,9 @@ SQLiteStatement& CookieJarDB::preparedStatement(const String& sql)
     return *statement;
 }
 
-bool CookieJarDB::executeSQLStatement(Expected<SQLiteStatement, int>&& statement)
+bool CookieJarDB::executeSQLStatement(std::unique_ptr<SQLiteStatement>&& statement)
 {
-    if (!statement && !checkSQLiteReturnCode(statement.error())) {
+    if (!statement && !checkSQLiteReturnCode(m_database.lastError())) {
         LOG_ERROR("Failed to prepare sql statement with error: %s", m_database.lastErrorMsg());
         return false;
     }

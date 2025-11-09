@@ -93,8 +93,8 @@ template<NonCompositeNumeric StyleType, typename Result> struct Evaluation<Style
 
 // MARK: - Calculation
 
-template<typename Result> struct Evaluation<Ref<CalculationValue>, Result> {
-    auto operator()(Ref<CalculationValue> calculation, Result referenceLength) -> Result
+template<typename Result> struct Evaluation<Ref<Calculation::Value>, Result> {
+    auto operator()(Ref<Calculation::Value> calculation, Result referenceLength) -> Result
     {
         return Result(calculation->evaluate(referenceLength));
     }

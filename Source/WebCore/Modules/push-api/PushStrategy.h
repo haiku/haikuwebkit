@@ -29,6 +29,7 @@
 #include <WebCore/PushPermissionState.h>
 #include <WebCore/PushSubscriptionData.h>
 #include <WebCore/PushSubscriptionIdentifier.h>
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -36,7 +37,7 @@ namespace WebCore {
 
 template<typename> class ExceptionOr;
 
-class WEBCORE_EXPORT PushStrategy {
+class WEBCORE_EXPORT PushStrategy : public AbstractCanMakeCheckedPtr {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(PushStrategy);
 public:
     virtual ~PushStrategy() = default;
@@ -52,12 +53,6 @@ public:
 
     using GetPushPermissionStateCallback = CompletionHandler<void(ExceptionOr<PushPermissionState>&&)>;
     virtual void windowGetPushPermissionState(const URL& scope, GetPushPermissionStateCallback&&) = 0;
-
-    // CheckedPtr interface.
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 };
 
 } // namespace WebCore

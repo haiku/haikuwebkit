@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
@@ -37,7 +38,7 @@ enum class PermissionQuerySource : uint8_t;
 struct ClientOrigin;
 struct PermissionDescriptor;
 
-class PermissionObserver : public CanMakeWeakPtr<PermissionObserver> {
+class PermissionObserver : public CanMakeWeakPtr<PermissionObserver>, public AbstractCanMakeCheckedPtr {
 public:
     virtual ~PermissionObserver() = default;
 
@@ -52,8 +53,3 @@ public:
 };
 
 } // namespace WebCore
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::PermissionObserver> : std::true_type { };
-}

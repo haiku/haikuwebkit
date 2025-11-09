@@ -133,10 +133,6 @@ std::tuple<SkPoint*, SkScalar*> SkPathBuilder::growForVerbsInPath(const SkPathRe
     return {pts, weights};
 }
 
-SkRect SkPathBuilder::computeBounds() const {
-    return SkRect::BoundsOrEmpty(fPts);
-}
-
 /*
  *  Some old behavior in SkPath -- should we keep it?
  *
@@ -309,18 +305,20 @@ SkPath SkPathBuilder::make(sk_sp<SkPathRef> pr) const {
     return path;
 }
 
-SkPath SkPathBuilder::snapshot() const {
+SkPath SkPathBuilder::snapshot(const SkMatrix* mx) const {
     return this->make(sk_sp<SkPathRef>(new SkPathRef(fPts,
                                                      fVerbs,
                                                      fConicWeights,
-                                                     fSegmentMask)));
+                                                     fSegmentMask,
+                                                     mx)));
 }
 
-SkPath SkPathBuilder::detach() {
+SkPath SkPathBuilder::detach(const SkMatrix* mx) {
     auto path = this->make(sk_sp<SkPathRef>(new SkPathRef(std::move(fPts),
                                                           std::move(fVerbs),
                                                           std::move(fConicWeights),
-                                                          fSegmentMask)));
+                                                          fSegmentMask,
+                                                          mx)));
     this->reset();
     return path;
 }
@@ -699,7 +697,7 @@ SkPathBuilder& SkPathBuilder::addRaw(const SkPathRaw& raw) {
 }
 
 SkPathBuilder& SkPathBuilder::addRect(const SkRect& rect, SkPathDirection dir, unsigned index) {
-    const bool wasEmpty = this->isEmpty();
+    const bool wasEmpty = (fSegmentMask == 0);
 
     this->addRaw(SkPathRawShapes::Rect(rect, dir, index));
 
@@ -711,7 +709,7 @@ SkPathBuilder& SkPathBuilder::addRect(const SkRect& rect, SkPathDirection dir, u
 }
 
 SkPathBuilder& SkPathBuilder::addOval(const SkRect& oval, SkPathDirection dir, unsigned index) {
-    const bool wasEmpty = this->isEmpty();
+    const bool wasEmpty = (fSegmentMask == 0);
 
     this->addRaw(SkPathRawShapes::Oval(oval, dir, index));
 
@@ -737,7 +735,7 @@ SkPathBuilder& SkPathBuilder::addRRect(const SkRRect& rrect, SkPathDirection dir
         return this->addOval(bounds, dir, index / 2);
     }
 
-    const bool wasEmpty = this->isEmpty();
+    const bool wasEmpty = (fSegmentMask == 0);
 
     this->addRaw(SkPathRawShapes::RRect(rrect, dir, index));
 
@@ -814,6 +812,9 @@ SkPathBuilder& SkPathBuilder::addPath(const SkPath& src, const SkMatrix& matrix,
         return *this;
     }
 
+    // We're about to append - clear convexity.
+    fConvexity = SkPathConvexity::kUnknown;
+
     if (SkPath::AddPathMode::kAppend_AddPathMode == mode && !matrix.hasPerspective()) {
         if (src.fLastMoveToIndex >= 0) {
             fLastMoveIndex = src.fLastMoveToIndex + this->countPoints();
@@ -830,7 +831,7 @@ SkPathBuilder& SkPathBuilder::addPath(const SkPath& src, const SkMatrix& matrix,
             memcpy(newWeights, src.fPathRef->conicWeights(), numWeights * sizeof(newWeights[0]));
         }
         fLastMovePoint = fPts.at(fLastMoveIndex);
-        return *this;  // TODO(borenet): dirtyAfterEdit sets convexity and firstDirection.
+        return *this;
     }
 
     SkMatrixPriv::MapPtsProc mapPtsProc = SkMatrixPriv::GetMapPtsProc(matrix);
@@ -974,6 +975,7 @@ void SkPathBuilder::setLastPt(SkScalar x, SkScalar y) {
         this->moveTo(x, y);
     } else {
         fPts.at(count-1).set(x, y);
+        fType = SkPathIsAType::kGeneral;
     }
 }
 

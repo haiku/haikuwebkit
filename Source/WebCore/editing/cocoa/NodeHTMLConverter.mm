@@ -39,8 +39,8 @@
 #import "CommonAtomStrings.h"
 #import "ComposedTreeIterator.h"
 #import "ContainerNodeInlines.h"
-#import "Document.h"
 #import "DocumentLoader.h"
+#import "DocumentQuirks.h"
 #import "Editing.h"
 #import "ElementChildIteratorInlines.h"
 #import "ElementInlines.h"
@@ -49,6 +49,7 @@
 #import "File.h"
 #import "FontAttributes.h"
 #import "FontCascade.h"
+#import "FrameDestructionObserverInlines.h"
 #import "FrameLoader.h"
 #import "HTMLAttachmentElement.h"
 #import "HTMLConverter.h"
@@ -67,7 +68,6 @@
 #import "LocalFrame.h"
 #import "LocalizedStrings.h"
 #import "NodeName.h"
-#import "Quirks.h"
 #import "RenderImage.h"
 #import "RenderStyleInlines.h"
 #import "RenderText.h"
@@ -177,7 +177,7 @@ public:
 private:
     Position m_start;
     Position m_end;
-    DocumentLoader* m_dataSource { nullptr };
+    SingleThreadWeakPtr<DocumentLoader> m_dataSource;
 
     HashMap<RefPtr<Element>, RetainPtr<NSDictionary>> m_attributesForElements;
     HashMap<RetainPtr<CFTypeRef>, RefPtr<Element>> m_textTableFooters;
@@ -795,7 +795,7 @@ Element* HTMLConverter::_blockLevelElementForNode(Node* node)
         element = node->parentElement();
     if (element && !_caches->isBlockElement(*element))
         element = _blockLevelElementForNode(element->parentInComposedTree());
-    return element.get();
+    return element.unsafeGet();
 }
 
 static Color normalizedColor(Color color, bool ignoreDefaultColor, Element& element)
@@ -1140,7 +1140,7 @@ NSDictionary* HTMLConverter::aggregatedAttributesForElementAndItsAncestors(Eleme
     [attributesForAncestors addEntriesFromDictionary:attributesForCurrentElement];
     m_aggregatedAttributesForElements.set(&element, attributesForAncestors);
 
-    return attributesForAncestors.get();
+    return attributesForAncestors.unsafeGet();
 }
 
 void HTMLConverter::_newParagraphForElement(Element& element, NSString *tag, BOOL flag, BOOL suppressTrailingSpace)
@@ -1275,7 +1275,7 @@ BOOL HTMLConverter::_addAttachmentForElement(Element& element, NSURL *url, BOOL 
             fileWrapper = nil;
     }
     if (!fileWrapper && !notFound) {
-        fileWrapper = fileWrapperForURL(m_dataSource, url);
+        fileWrapper = fileWrapperForURL(m_dataSource.get(), url);
         if (usePlaceholder && fileWrapper && [[[[fileWrapper preferredFilename] pathExtension] lowercaseString] hasPrefix:@"htm"])
             notFound = YES;
         if (notFound)

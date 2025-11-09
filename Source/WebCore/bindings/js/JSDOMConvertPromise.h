@@ -76,12 +76,17 @@ template<typename T> struct JSConverter<IDLPromise<T>> {
 
     static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, DOMPromise& promise)
     {
-        return promise.promise();
+        return promise.guardedObject();
     }
 
     static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const RefPtr<DOMPromise>& promise)
     {
-        return promise->promise();
+        return promise->guardedObject();
+    }
+
+    static JSC::JSValue convert(JSC::JSGlobalObject&, JSDOMGlobalObject&, const Ref<DOMPromise>& promise)
+    {
+        return promise->guardedObject();
     }
 
     template<template<typename> class U>

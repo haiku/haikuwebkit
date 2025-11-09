@@ -115,7 +115,7 @@ const RenderElement* RenderSVGModelObject::pushMappingToContainer(const RenderLa
     ASSERT_UNUSED(ancestorSkipped, !ancestorSkipped);
 
     pushOntoGeometryMap(geometryMap, ancestorToStopAt, container.get(), ancestorSkipped);
-    return container.get();
+    return container.unsafeGet();
 }
 
 LayoutRect RenderSVGModelObject::outlineBoundsForRepaint(const RenderLayerModelObject* repaintContainer, const RenderGeometryMap* geometryMap) const

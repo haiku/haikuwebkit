@@ -317,8 +317,8 @@ private:
     // This is SizeIsUnknown outside of layoutBlock()
     SizeDefiniteness m_hasDefiniteHeight { SizeDefiniteness::Unknown };
     bool m_inLayout { false };
-    bool m_inCrossAxisLayout { false };
-    bool m_inFlexItemLayout { false };
+    bool m_afterMainAxisItemSizing { false };
+    bool m_afterCrossAxisItemSizing { false };
     bool m_inSimplifiedLayout { false };
     bool m_inPostFlexUpdateScrollbarLayout { false };
     mutable bool m_inFlexItemIntrinsicWidthComputation { false };

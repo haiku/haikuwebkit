@@ -52,8 +52,6 @@ private:
 
 class WebCodecsEncodedAudioChunk : public RefCounted<WebCodecsEncodedAudioChunk> {
 public:
-    ~WebCodecsEncodedAudioChunk() = default;
-
     struct Init {
         WebCodecsEncodedAudioChunkType type { WebCodecsEncodedAudioChunkType::Key };
         int64_t timestamp { 0 };

@@ -25,15 +25,23 @@
 #pragma once
 
 #include <WebCore/CSSValuePool.h>
+#include <WebCore/StylePrimitiveKeyword+ValueRepresentationNeeded.h>
 #include <WebCore/StyleValueTypes.h>
 
 namespace WebCore {
 namespace Style {
 
-template<typename T> requires std::is_enum_v<T> struct CSSValueCreation<T> {
+template<EnumWithoutValueRepresentation T> struct CSSValueCreation<T> {
     Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, T value)
     {
         return CSSPrimitiveValue::create(toCSSValueID(value));
+    }
+};
+
+template<EnumWithValueRepresentation T> struct CSSValueCreation<T> {
+    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, T value)
+    {
+        return valueRepresentation(value, [&](const auto& alternative) -> Ref<CSSValue> { return createCSSValue(pool, style, alternative); });
     }
 };
 

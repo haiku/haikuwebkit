@@ -78,6 +78,7 @@ struct CustomMenuActionInfo {
     RetainPtr<UITapGestureRecognizer> _windowTapGestureRecognizer;
     BlockPtr<void()> _windowTapRecognizedCallback;
     UIInterfaceOrientationMask _supportedInterfaceOrientations;
+    BOOL _didCallEnsurePositionInformationIsUpToDate;
 #endif
 }
 
@@ -225,6 +226,7 @@ IGNORE_WARNINGS_END
     self.willStartInputSessionCallback = nil;
     self.willPresentPopoverCallback = nil;
     self.didDismissPopoverCallback = nil;
+    self.didPresentViewControllerCallback = nil;
     self.didEndScrollingCallback = nil;
     self.rotationDidEndCallback = nil;
     self.windowTapRecognizedCallback = nil;
@@ -257,6 +259,11 @@ IGNORE_WARNINGS_END
 
     if (self.didEndFormControlInteractionCallback)
         self.didEndFormControlInteractionCallback();
+}
+
+- (void)didEnsurePositionInformationIsUpToDate
+{
+    _didCallEnsurePositionInformationIsUpToDate = YES;
 }
 
 - (BOOL)isInteractingWithFormControl
@@ -559,6 +566,9 @@ static bool isQuickboardViewController(UIViewController *viewController)
 
 - (void)_didPresentViewController:(UIViewController *)viewController
 {
+    if (self.didPresentViewControllerCallback)
+        self.didPresentViewControllerCallback();
+
     if (isQuickboardViewController(viewController))
         [self _invokeShowKeyboardCallbackIfNecessary];
 }
@@ -666,5 +676,21 @@ static bool isQuickboardViewController(UIViewController *viewController)
 }
 
 #endif // HAVE(UI_EDIT_MENU_INTERACTION)
+
+#if PLATFORM(IOS_FAMILY)
+
+- (BOOL)didCallEnsurePositionInformationIsUpToDateSinceLastCheck
+{
+    const auto hasUpdated = _didCallEnsurePositionInformationIsUpToDate;
+    _didCallEnsurePositionInformationIsUpToDate = NO;
+    return hasUpdated;
+}
+
+- (void)clearEnsurePositionInformationIsUpToDateTracking
+{
+    _didCallEnsurePositionInformationIsUpToDate = NO;
+}
+
+#endif // PLATFORM(IOS_FAMILY)
 
 @end

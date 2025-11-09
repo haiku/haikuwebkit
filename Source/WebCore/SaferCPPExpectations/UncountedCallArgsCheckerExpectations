@@ -9,8 +9,6 @@ Modules/identity/CredentialRequestCoordinator.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
 Modules/mediasession/MediaMetadata.cpp
 Modules/mediasession/MediaSession.cpp
-Modules/mediasession/MediaSessionCoordinator.cpp
-Modules/mediasession/MediaSessionCoordinator.h
 Modules/mediasource/MediaSourceHandle.cpp
 Modules/mediastream/MediaStreamTrack.cpp
 Modules/mediastream/MediaStreamTrackProcessor.cpp
@@ -28,7 +26,6 @@ Modules/mediastream/RTCRtpTransform.cpp
 Modules/mediastream/UserMediaRequest.cpp
 Modules/mediastream/libwebrtc/LibWebRTCObservers.h
 Modules/model-element/HTMLModelElement.cpp
-Modules/model-element/scenekit/SceneKitModelPlayer.mm
 Modules/pictureinpicture/HTMLVideoElementPictureInPicture.cpp
 Modules/push-api/PushManager.cpp
 Modules/push-api/PushSubscription.cpp
@@ -89,6 +86,66 @@ Modules/websockets/WebSocketChannelInspector.cpp
 Modules/websockets/WorkerThreadableWebSocketChannel.cpp
 Modules/webtransport/WebTransport.cpp
 StyleExtractorGenerated.cpp
+[ Mac ] Modules/mediasession/MediaSessionCoordinator.cpp
+[ Mac ] Modules/mediasession/MediaSessionCoordinator.h
+[ Mac ] Modules/model-element/scenekit/SceneKitModelPlayer.mm
+[ Mac ] accessibility/isolatedtree/AXIsolatedTree.cpp
+[ Mac ] accessibility/mac/AXObjectCacheMac.mm
+[ Mac ] accessibility/mac/AccessibilityObjectMac.mm
+[ Mac ] dom/mac/ImageControlsMac.cpp
+[ Mac ] editing/mac/EditorMac.mm
+[ Mac ] page/ContextMenuController.cpp
+[ Mac ] page/mac/EventHandlerMac.mm
+[ Mac ] page/mac/ImageOverlayControllerMac.mm
+[ Mac ] page/mac/ServicesOverlayController.mm
+[ Mac ] page/scrolling/AsyncScrollingCoordinator.h
+[ Mac ] page/scrolling/ScrollingTreeGestureState.cpp
+[ Mac ] page/scrolling/ThreadedScrollingCoordinator.cpp
+[ Mac ] page/scrolling/mac/ScrollingCoordinatorMac.mm
+[ Mac ] page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
+[ Mac ] platform/cocoa/DragImageCocoa.mm
+[ Mac ] platform/graphics/cocoa/ImageAdapterCocoa.mm
+[ Mac ] platform/graphics/controls/ImageControlsButtonPart.h
+[ Mac ] platform/graphics/mac/PDFDocumentImageMac.mm
+[ Mac ] testing/Internals.mm
+[ Mac ] testing/MockMediaSessionCoordinator.cpp
+[ iOS ] Modules/system-preview/ARKitBadgeSystemImage.mm
+[ iOS ] Modules/webaudio/ChannelMergerNode.cpp
+[ iOS ] accessibility/ios/AXObjectCacheIOS.mm
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
+[ iOS ] accessibility/mac/WebAccessibilityObjectWrapperBase.mm
+[ iOS ] editing/EditCommand.cpp
+[ iOS ] editing/cocoa/DataDetection.mm
+[ iOS ] editing/ios/EditorIOS.mm
+[ iOS ] html/ColorInputType.cpp
+[ iOS ] html/HTMLAnchorElement.cpp
+[ iOS ] html/TextFieldInputType.cpp
+[ iOS ] loader/FrameLoader.cpp
+[ iOS ] loader/cache/CachedRawResource.cpp
+[ iOS ] loader/ios/LegacyPreviewLoader.mm
+[ iOS ] page/Quirks.cpp
+[ iOS ] page/ios/ContentChangeObserver.cpp
+[ iOS ] page/ios/EventHandlerIOS.mm
+[ iOS ] page/ios/FrameIOS.mm
+[ iOS ] platform/audio/ios/MediaSessionManagerIOS.mm
+[ iOS ] platform/graphics/avfoundation/SampleBufferDisplayLayer.h
+[ iOS ] platform/graphics/cg/PDFDocumentImage.cpp
+[ iOS ] platform/graphics/cocoa/MediaPlayerPrivateWebM.mm
+[ iOS ] platform/graphics/ios/DisplayRefreshMonitorIOS.mm
+[ iOS ] platform/ios/DeviceMotionClientIOS.mm
+[ iOS ] platform/ios/DeviceOrientationClientIOS.mm
+[ iOS ] platform/ios/LegacyTileGrid.mm
+[ iOS ] platform/ios/PlatformPasteboardIOS.mm
+[ iOS ] platform/ios/PlatformScreenIOS.mm
+[ iOS ] platform/ios/VideoPresentationInterfaceIOS.h
+[ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
+[ iOS ] platform/ios/WebVideoFullscreenControllerAVKit.mm
+[ iOS ] platform/ios/wak/WAKWindow.mm
+[ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
+[ iOS ] rendering/RenderBlock.cpp
+[ iOS ] rendering/RenderLineBreak.cpp
+[ iOS ] rendering/ios/RenderThemeIOS.mm
 accessibility/AXLogger.cpp
 accessibility/AXObjectCache.cpp
 accessibility/AXObjectCache.h
@@ -105,9 +162,6 @@ accessibility/AccessibilityScrollView.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/AccessibilitySpinButton.cpp
 accessibility/AccessibilityTableHeaderContainer.cpp
-accessibility/isolatedtree/AXIsolatedTree.cpp
-accessibility/mac/AXObjectCacheMac.mm
-accessibility/mac/AccessibilityObjectMac.mm
 animation/AcceleratedEffectStackUpdater.cpp
 animation/AnimationEffectTiming.cpp
 animation/AnimationTimeline.cpp
@@ -363,14 +417,11 @@ dom/TreeScopeOrderedMap.cpp
 dom/TypedElementDescendantIteratorInlines.h
 dom/VisitedLinkState.cpp
 dom/WindowOrWorkerGlobalScopeTrustedTypes.cpp
-dom/mac/ImageControlsMac.cpp
 editing/AlternativeTextController.cpp
 editing/ApplyBlockElementCommand.cpp
 editing/ApplyStyleCommand.cpp
 editing/BreakBlockquoteCommand.cpp
-editing/ChangeListTypeCommand.cpp
 editing/CompositeEditCommand.cpp
-editing/CustomUndoStep.cpp
 editing/DeleteSelectionCommand.cpp
 editing/Editing.cpp
 editing/Editor.cpp
@@ -385,13 +436,9 @@ editing/InsertParagraphSeparatorCommand.cpp
 editing/InsertTextCommand.cpp
 editing/ModifySelectionListLevel.cpp
 editing/RemoveFormatCommand.cpp
-editing/ReplaceNodeWithSpanCommand.cpp
 editing/ReplaceSelectionCommand.cpp
 editing/ReplaceSelectionCommand.h
-editing/SelectionGeometryGatherer.cpp
 editing/SpellChecker.cpp
-editing/SplitTextNodeCommand.cpp
-editing/SplitTextNodeContainingElementCommand.cpp
 editing/TextIterator.cpp
 editing/TextManipulationController.cpp
 editing/TypingCommand.cpp
@@ -399,31 +446,25 @@ editing/VisiblePosition.cpp
 editing/VisiblePosition.h
 editing/VisibleSelection.cpp
 editing/VisibleUnits.cpp
-editing/cocoa/AutofillElements.cpp
 editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/EditorCocoa.mm
 editing/cocoa/NodeHTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
-editing/mac/EditorMac.mm
 editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
 history/BackForwardCache.cpp
 history/CachedFrame.cpp
 history/CachedPage.cpp
-html/AttachmentAssociatedElement.cpp
 html/CachedHTMLCollection.h
 html/CachedHTMLCollectionInlines.h
 html/CollectionTraversalInlines.h
 html/CustomPaintCanvas.cpp
-html/DOMTokenList.cpp
 html/DirectoryFileListCreator.cpp
 html/FTPDirectoryDocument.cpp
 html/FormAssociatedCustomElement.cpp
 html/FormAssociatedElement.cpp
 html/FormListedElement.cpp
-html/HTMLAnchorElement.cpp
 html/HTMLAttachmentElement.cpp
-html/HTMLBaseElement.cpp
 html/HTMLBodyElement.cpp
 html/HTMLButtonElement.cpp
 html/HTMLCanvasElement.cpp
@@ -432,7 +473,6 @@ html/HTMLFormControlElement.cpp
 html/HTMLFormControlsCollection.cpp
 html/HTMLFormElement.cpp
 html/HTMLFrameElementBase.cpp
-html/HTMLIFrameElement.cpp
 html/HTMLImageElement.cpp
 html/HTMLInputElement.cpp
 html/HTMLLinkElement.cpp
@@ -510,8 +550,10 @@ inspector/InspectorInstrumentation.cpp
 inspector/InspectorInstrumentation.h
 inspector/InspectorNodeFinder.cpp
 inspector/InspectorOverlay.cpp
+inspector/InspectorResourceUtilities.cpp
 inspector/InspectorShaderProgram.cpp
 inspector/InspectorStyleSheet.cpp
+inspector/InspectorThreadableLoaderClient.cpp
 inspector/NetworkResourcesData.cpp
 inspector/PageDebugger.cpp
 inspector/WebInjectedScriptManager.cpp
@@ -546,7 +588,6 @@ loader/DocumentThreadableLoader.cpp
 loader/DocumentWriter.cpp
 loader/FrameLoadRequest.cpp
 loader/MediaResourceLoader.cpp
-loader/MixedContentChecker.cpp
 loader/NavigationScheduler.cpp
 loader/PolicyChecker.cpp
 loader/ResourceLoadNotifier.cpp
@@ -556,12 +597,10 @@ loader/cache/CachedImage.cpp
 loader/cache/CachedImage.h
 loader/cache/CachedResourceRequest.cpp
 loader/cache/CachedSVGFont.cpp
-loader/cocoa/BundleResourceLoader.mm
 mathml/MathMLElement.cpp
 mathml/MathMLSelectElement.cpp
 page/AutoscrollController.cpp
 page/Chrome.cpp
-page/ContextMenuController.cpp
 page/DOMSelection.cpp
 page/DOMTimer.cpp
 page/DOMWindowExtension.cpp
@@ -622,22 +661,13 @@ page/cocoa/ResourceUsageOverlayCocoa.mm
 page/cocoa/ResourceUsageThreadCocoa.mm
 page/cocoa/WebTextIndicatorLayer.mm
 page/mac/DragControllerMac.mm
-page/mac/EventHandlerMac.mm
-page/mac/ImageOverlayControllerMac.mm
-page/mac/ServicesOverlayController.mm
 page/scrolling/AsyncScrollingCoordinator.cpp
-page/scrolling/AsyncScrollingCoordinator.h
 page/scrolling/ScrollAnchoringController.cpp
 page/scrolling/ScrollSnapOffsetsInfo.cpp
 page/scrolling/ScrollingCoordinator.cpp
-page/scrolling/ScrollingTreeGestureState.cpp
-page/scrolling/ThreadedScrollingCoordinator.cpp
-page/scrolling/mac/ScrollingCoordinatorMac.mm
-page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
 page/text-extraction/TextExtraction.cpp
 page/writing-tools/WritingToolsController.mm
 platform/DragImage.cpp
-platform/Length.cpp
 platform/ScrollAnimationSmooth.cpp
 platform/ScrollAnimator.cpp
 platform/ScrollView.cpp
@@ -645,7 +675,6 @@ platform/ScrollableArea.cpp
 platform/Widget.cpp
 platform/animation/AcceleratedEffectValues.cpp
 platform/audio/cocoa/AudioFileReaderCocoa.cpp
-platform/cocoa/DragImageCocoa.mm
 platform/cocoa/PlaybackSessionModelMediaElement.mm
 platform/cocoa/VideoPresentationModelVideoElement.mm
 platform/encryptedmedia/CDMProxy.cpp
@@ -680,10 +709,8 @@ platform/graphics/ca/TileGrid.cpp
 platform/graphics/ca/cocoa/GraphicsLayerAsyncContentsDisplayDelegateCocoa.mm
 platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
-platform/graphics/cocoa/ImageAdapterCocoa.mm
 platform/graphics/controls/ButtonPart.h
 platform/graphics/controls/ColorWellPart.h
-platform/graphics/controls/ImageControlsButtonPart.h
 platform/graphics/controls/InnerSpinButtonPart.h
 platform/graphics/controls/MenuListButtonPart.h
 platform/graphics/controls/MenuListPart.h
@@ -705,7 +732,6 @@ platform/graphics/filters/software/FELightingSoftwareApplier.cpp
 platform/graphics/filters/software/FELightingSoftwareApplierInlines.h
 platform/graphics/filters/software/FELightingSoftwareParallelApplier.cpp
 platform/graphics/filters/software/FETurbulenceSoftwareApplier.cpp
-platform/graphics/mac/PDFDocumentImageMac.mm
 platform/graphics/opentype/OpenTypeMathData.cpp
 platform/graphics/transforms/TransformOperations.cpp
 platform/graphics/transforms/TransformOperationsSharedPrimitivesPrefix.h
@@ -993,17 +1019,12 @@ svg/properties/SVGValuePropertyListAnimator.h
 svg/properties/SVGValuePropertyListAnimatorImpl.h
 testing/InternalSettings.cpp
 testing/Internals.cpp
-testing/Internals.mm
 testing/LegacyMockCDM.cpp
-testing/MockMediaSessionCoordinator.cpp
 testing/MockPageOverlay.cpp
 testing/MockPageOverlayClient.cpp
 testing/ServiceWorkerInternals.cpp
 testing/js/WebCoreTestSupport.cpp
-workers/DedicatedWorkerGlobalScope.cpp
 workers/Worker.cpp
-workers/WorkerAnimationController.cpp
-workers/WorkerGlobalScope.cpp
 workers/WorkerMessagingProxy.cpp
 workers/shared/SharedWorker.cpp
 worklets/PaintWorkletGlobalScope.cpp

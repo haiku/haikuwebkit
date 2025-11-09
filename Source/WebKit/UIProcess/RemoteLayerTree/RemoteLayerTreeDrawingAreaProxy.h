@@ -44,6 +44,10 @@ class RemotePageDrawingAreaProxy;
 class RemoteScrollingCoordinatorProxy;
 class RemoteScrollingCoordinatorTransaction;
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class RemoteAnimationTimeline;
+#endif
+
 class RemoteLayerTreeDrawingAreaProxy : public DrawingAreaProxy, public RefCounted<RemoteLayerTreeDrawingAreaProxy> {
     WTF_MAKE_TZONE_ALLOCATED(RemoteLayerTreeDrawingAreaProxy);
     WTF_MAKE_NONCOPYABLE(RemoteLayerTreeDrawingAreaProxy);
@@ -78,8 +82,8 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
-    Seconds acceleratedTimelineTimeOrigin(WebCore::ProcessIdentifier) const;
-    MonotonicTime animationCurrentTime(WebCore::ProcessIdentifier) const;
+    void registerTimelineIfNecessary(WebCore::ProcessIdentifier, Seconds originTime, MonotonicTime now);
+    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const;
 #endif
 
     // For testing.
@@ -113,11 +117,6 @@ protected:
         std::optional<MonotonicTime> transactionStartTime;
         std::optional<TransactionID> lastLayerTreeTransactionID;
         std::optional<TransactionID> pendingLayerTreeTransactionID;
-
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-        Seconds acceleratedTimelineTimeOrigin;
-        MonotonicTime animationCurrentTime;
-#endif
     };
 
     ProcessState& processStateForConnection(IPC::Connection&);
@@ -154,6 +153,7 @@ private:
     void waitForDidUpdateActivityState(ActivityStateChangeID) final;
     void hideContentUntilPendingUpdate() final;
     void hideContentUntilAnyUpdate() final;
+    void hideContentUntilDidUpdateActivityState(ActivityStateChangeID) final;
     bool hasVisibleContent() const final;
 
     WebCore::FloatPoint indicatorLocation() const;
@@ -207,6 +207,8 @@ private:
     Deque<Seconds> m_frameDurations;
 
     Markable<IPC::AsyncReplyID> m_replyForUnhidingContent;
+    std::optional<ActivityStateChangeID> m_activityStateChangeForUnhidingContent;
+    bool m_hasDetachedRootLayer { false };
 
 #if ASSERT_ENABLED
     TransactionID m_lastVisibleTransactionID;

@@ -26,6 +26,7 @@
 #include "config.h"
 #include "WebBackForwardListItem.h"
 
+#include "BrowsingContextGroup.h"
 #include "SuspendedPageProxy.h"
 #include "WebBackForwardCache.h"
 #include "WebBackForwardCacheEntry.h"
@@ -40,18 +41,19 @@
 namespace WebKit {
 using namespace WebCore;
 
-Ref<WebBackForwardListItem> WebBackForwardListItem::create(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID)
+Ref<WebBackForwardListItem> WebBackForwardListItem::create(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID, BrowsingContextGroup* browsingContextGroup)
 {
     RELEASE_ASSERT(RunLoop::isMain());
-    return adoptRef(*new WebBackForwardListItem(WTFMove(mainFrameState), pageID, navigatedFrameID));
+    return adoptRef(*new WebBackForwardListItem(WTFMove(mainFrameState), pageID, navigatedFrameID, browsingContextGroup));
 }
 
-WebBackForwardListItem::WebBackForwardListItem(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID)
+WebBackForwardListItem::WebBackForwardListItem(Ref<FrameState>&& mainFrameState, WebPageProxyIdentifier pageID, std::optional<FrameIdentifier> navigatedFrameID, BrowsingContextGroup* browsingContextGroup)
     : m_identifier(*mainFrameState->itemID)
     , m_mainFrameItem(WebBackForwardListFrameItem::create(*this, nullptr, WTFMove(mainFrameState)))
     , m_navigatedFrameID(navigatedFrameID)
     , m_pageID(pageID)
     , m_lastProcessIdentifier(navigatedFrameItem().identifier().processIdentifier())
+    , m_browsingContextGroup(browsingContextGroup)
 {
     auto result = allItems().add(m_identifier, *this);
     ASSERT_UNUSED(result, result.isNewEntry);
@@ -241,7 +243,7 @@ void WebBackForwardListItem::setWasRestoredFromSession()
 WebBackForwardListFrameItem& WebBackForwardListItem::navigatedFrameItem() const
 {
     if (RefPtr childItem = m_navigatedFrameID ? m_mainFrameItem->childItemForFrameID(*m_navigatedFrameID) : nullptr)
-        return childItem.releaseNonNull();
+        return childItem.releaseNonNull().unsafeGet();
     return m_mainFrameItem;
 }
 

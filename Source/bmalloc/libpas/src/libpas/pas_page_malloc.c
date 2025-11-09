@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2022 Apple Inc. All rights reserved.
+ * Copyright (c) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,6 +44,7 @@
 
 #include "pas_internal_config.h"
 #include "pas_log.h"
+#include "pas_mte.h"
 #include "pas_utils.h"
 #include "pas_zero_memory.h"
 
@@ -146,12 +147,14 @@ pas_page_malloc_try_map_pages(size_t size, bool may_contain_small_or_medium)
 {
 #if PAS_OS(WINDOWS)
     PAS_PROFILE(PAGE_ALLOCATION, size, may_contain_small_or_medium, PAS_VM_TAG);
+    PAS_MTE_HANDLE(PAGE_ALLOCATION, size, may_contain_small_or_medium, PAS_VM_TAG);
 
     return virtual_alloc_with_retry(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 #else
     void* mmap_result = NULL;
 
     PAS_PROFILE(PAGE_ALLOCATION, size, may_contain_small_or_medium, PAS_VM_TAG);
+    PAS_MTE_HANDLE(PAGE_ALLOCATION, size, may_contain_small_or_medium, PAS_VM_TAG);
 
     mmap_result = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | PAS_NORESERVE, PAS_VM_TAG, 0);
     if (mmap_result == MAP_FAILED) {
@@ -162,6 +165,7 @@ pas_page_malloc_try_map_pages(size_t size, bool may_contain_small_or_medium)
         return NULL;
     }
 
+    PAS_ASSERT_DATA_ADDRESS_IS_SANE(mmap_result);
     return mmap_result;
 #endif
 }
@@ -265,6 +269,7 @@ static void pas_page_malloc_zero_fill_latch_if_madv_zero_is_supported(void)
     size = PAS_SMALL_PAGE_DEFAULT_SIZE;
     base = mmap(NULL, PAS_SMALL_PAGE_DEFAULT_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON | PAS_NORESERVE, PAS_VM_TAG, 0);
     PAS_ASSERT(base);
+    PAS_ASSERT_DATA_ADDRESS_IS_SANE(base);
 
     int rc = madvise(base, size, MADV_ZERO);
     if (rc)
@@ -308,8 +313,10 @@ void pas_page_malloc_zero_fill(void* base, size_t size)
 #endif /* PAS_USE_MADV_ZERO */
 
     PAS_PROFILE(ZERO_FILL_PAGE, base, size, flags, tag);
+    PAS_MTE_HANDLE(ZERO_FILL_PAGE, base, size, flags, tag);
     result_ptr = mmap(base, size, PROT_READ | PROT_WRITE, flags, tag, 0);
     PAS_ASSERT(result_ptr == base);
+    PAS_ASSERT_DATA_ADDRESS_IS_SANE(result_ptr);
 #endif /* PAS_OS(WINDOWS) */
 }
 

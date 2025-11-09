@@ -44,10 +44,6 @@ public:
         g_assert_true(wpe_view_get_display(m_view.get()) == display());
     }
 
-    ~WPEMockViewTest()
-    {
-    }
-
     WPEView* view() const { return m_view.get(); }
 
 private:

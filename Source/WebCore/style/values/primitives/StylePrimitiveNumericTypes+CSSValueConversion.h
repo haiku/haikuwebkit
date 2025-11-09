@@ -105,10 +105,10 @@ template<auto R, typename V> struct CSSValueConversion<Length<R, V>> {
                 : builderState.cssToLengthConversionData();
         } else if constexpr (R.zoomOptions == CSS::RangeZoomOptions::Unzoomed) {
             if (shouldUseEvaluationTimeZoom(builderState))
-                return builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f);
+                return builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f, R.zoomOptions);
 
             return builderState.useSVGZoomRulesForLength()
-                ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
+                ? builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f, R.zoomOptions)
                 : builderState.cssToLengthConversionData();
         }
     }

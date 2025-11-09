@@ -391,7 +391,6 @@
     (syscall-number
         SYS_fgetxattr
         SYS_getxattr
-        SYS_iopolicysys
         SYS_psynch_rw_wrlock
 #if ASAN_ENABLED
         SYS_sigaltstack
@@ -508,7 +507,6 @@
         mach_port_set_attributes
         mach_vm_copy
         mach_vm_map_external
-        mach_vm_remap_external
         mach_voucher_attr_command
         semaphore_create
         semaphore_destroy

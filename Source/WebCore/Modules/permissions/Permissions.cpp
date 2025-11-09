@@ -28,7 +28,8 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "DedicatedWorkerGlobalScope.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
 #include "Exception.h"
 #include "Geolocation.h"
 #include "JSDOMPromiseDeferred.h"
@@ -44,7 +45,6 @@
 #include "PermissionName.h"
 #include "PermissionQuerySource.h"
 #include "PermissionsPolicy.h"
-#include "Quirks.h"
 #include "ScriptExecutionContext.h"
 #include "SecurityOrigin.h"
 #include "ServiceWorkerGlobalScope.h"

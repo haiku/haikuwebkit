@@ -68,38 +68,38 @@ static bool compareStyleOriginatedAnimationOwningElementPositionsInDocumentTreeO
         if (!pseudoElementIdentifier)
             return NotPseudo;
 
-        switch (pseudoElementIdentifier->pseudoId) {
-        case PseudoId::Marker:
+        switch (pseudoElementIdentifier->type) {
+        case PseudoElementType::Marker:
             return Marker;
-        case PseudoId::Before:
+        case PseudoElementType::Before:
             return Before;
-        case PseudoId::FirstLetter:
+        case PseudoElementType::FirstLetter:
             return FirstLetter;
-        case PseudoId::FirstLine:
+        case PseudoElementType::FirstLine:
             return FirstLine;
-        case PseudoId::GrammarError:
+        case PseudoElementType::GrammarError:
             return GrammarError;
-        case PseudoId::Highlight:
+        case PseudoElementType::Highlight:
             return Highlight;
-        case PseudoId::WebKitScrollbar:
+        case PseudoElementType::WebKitScrollbar:
             return WebKitScrollbar;
-        case PseudoId::Selection:
+        case PseudoElementType::Selection:
             return Selection;
-        case PseudoId::SpellingError:
+        case PseudoElementType::SpellingError:
             return SpellingError;
-        case PseudoId::TargetText:
+        case PseudoElementType::TargetText:
             return TargetText;
-        case PseudoId::After:
+        case PseudoElementType::After:
             return After;
-        case PseudoId::ViewTransition:
+        case PseudoElementType::ViewTransition:
             return ViewTransition;
-        case PseudoId::ViewTransitionGroup:
+        case PseudoElementType::ViewTransitionGroup:
             return ViewTransitionGroup;
-        case PseudoId::ViewTransitionImagePair:
+        case PseudoElementType::ViewTransitionImagePair:
             return ViewTransitionImagePair;
-        case PseudoId::ViewTransitionOld:
+        case PseudoElementType::ViewTransitionOld:
             return ViewTransitionOld;
-        case PseudoId::ViewTransitionNew:
+        case PseudoElementType::ViewTransitionNew:
             return ViewTransitionNew;
         default:
             ASSERT_NOT_REACHED();
@@ -328,38 +328,38 @@ String pseudoElementIdentifierAsString(const std::optional<Style::PseudoElementI
     static NeverDestroyed<const String> targetText(MAKE_STATIC_STRING_IMPL("::target-text"));
     static NeverDestroyed<const String> viewTransition(MAKE_STATIC_STRING_IMPL("::view-transition"));
     static NeverDestroyed<const String> webkitScrollbar(MAKE_STATIC_STRING_IMPL("::-webkit-scrollbar"));
-    switch (pseudoElementIdentifier->pseudoId) {
-    case PseudoId::After:
+    switch (pseudoElementIdentifier->type) {
+    case PseudoElementType::After:
         return after;
-    case PseudoId::Before:
+    case PseudoElementType::Before:
         return before;
-    case PseudoId::FirstLetter:
+    case PseudoElementType::FirstLetter:
         return firstLetter;
-    case PseudoId::FirstLine:
+    case PseudoElementType::FirstLine:
         return firstLine;
-    case PseudoId::GrammarError:
+    case PseudoElementType::GrammarError:
         return grammarError;
-    case PseudoId::Highlight:
+    case PseudoElementType::Highlight:
         return makeString("::highlight"_s, '(', pseudoElementIdentifier->nameArgument, ')');
-    case PseudoId::Marker:
+    case PseudoElementType::Marker:
         return marker;
-    case PseudoId::Selection:
+    case PseudoElementType::Selection:
         return selection;
-    case PseudoId::SpellingError:
+    case PseudoElementType::SpellingError:
         return spellingError;
-    case PseudoId::TargetText:
+    case PseudoElementType::TargetText:
         return targetText;
-    case PseudoId::ViewTransition:
+    case PseudoElementType::ViewTransition:
         return viewTransition;
-    case PseudoId::ViewTransitionGroup:
+    case PseudoElementType::ViewTransitionGroup:
         return makeString("::view-transition-group"_s, '(', pseudoElementIdentifier->nameArgument, ')');
-    case PseudoId::ViewTransitionImagePair:
+    case PseudoElementType::ViewTransitionImagePair:
         return makeString("::view-transition-image-pair"_s, '(', pseudoElementIdentifier->nameArgument, ')');
-    case PseudoId::ViewTransitionOld:
+    case PseudoElementType::ViewTransitionOld:
         return makeString("::view-transition-old"_s, '(', pseudoElementIdentifier->nameArgument, ')');
-    case PseudoId::ViewTransitionNew:
+    case PseudoElementType::ViewTransitionNew:
         return makeString("::view-transition-new"_s, '(', pseudoElementIdentifier->nameArgument, ')');
-    case PseudoId::WebKitScrollbar:
+    case PseudoElementType::WebKitScrollbar:
         return webkitScrollbar;
     default:
         return emptyString();

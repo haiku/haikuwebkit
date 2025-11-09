@@ -106,13 +106,16 @@ void ReadableStreamBYOBReader::releaseLock(JSDOMGlobalObject& globalObject)
     errorReadIntoRequests(Exception { ExceptionCode::TypeError, "releasing stream"_s });
 }
 
-void ReadableStreamBYOBReader::cancel(JSDOMGlobalObject& globalObject, JSC::JSValue value, Ref<DeferredPromise>&& promise)
+// https://streams.spec.whatwg.org/#generic-reader-cancel
+Ref<DOMPromise> ReadableStreamBYOBReader::cancel(JSDOMGlobalObject& globalObject, JSC::JSValue value)
 {
     if (!m_stream) {
-        promise->reject(Exception { ExceptionCode::TypeError, "no stream"_s });
-        return;
+        auto [promise, deferred] = createPromiseAndWrapper(globalObject);
+        deferred->reject(Exception { ExceptionCode::TypeError, "no stream"_s });
+        return promise;
     }
-    genericCancel(globalObject, value, WTFMove(promise));
+
+    return genericCancel(globalObject, value);
 }
 
 // https://streams.spec.whatwg.org/#set-up-readable-stream-byob-reader
@@ -213,11 +216,14 @@ void ReadableStreamBYOBReader::rejectClosedPromise(JSC::JSValue reason)
 }
 
 // https://streams.spec.whatwg.org/#readable-stream-reader-generic-cancel
-void ReadableStreamBYOBReader::genericCancel(JSDOMGlobalObject& globalObject, JSC::JSValue value, Ref<DeferredPromise>&& promise)
+Ref<DOMPromise> ReadableStreamBYOBReader::genericCancel(JSDOMGlobalObject& globalObject, JSC::JSValue value)
 {
-    ASSERT(m_stream);
-    Ref stream = *m_stream;
-    stream->cancel(globalObject, value, WTFMove(promise));
+    RefPtr stream = m_stream;
+
+    ASSERT(stream);
+    ASSERT(stream->byobReader() == this);
+
+    return stream->cancel(globalObject, value);
 }
 
 Ref<ReadableStreamReadIntoRequest> ReadableStreamBYOBReader::takeFirstReadIntoRequest()

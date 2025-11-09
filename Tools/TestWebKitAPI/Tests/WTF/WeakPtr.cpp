@@ -3183,8 +3183,6 @@ class DidUpdateRefCountWeakPtrImpl final {
     WTF_MAKE_NONCOPYABLE(DidUpdateRefCountWeakPtrImpl);
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DidUpdateRefCountWeakPtrImpl, DidUpdateRefCountWeakPtrImpl);
 public:
-    ~DidUpdateRefCountWeakPtrImpl() = default;
-
     template<typename T> typename T::WeakValueType* get()
     {
         return static_cast<typename T::WeakValueType*>(m_ptr);

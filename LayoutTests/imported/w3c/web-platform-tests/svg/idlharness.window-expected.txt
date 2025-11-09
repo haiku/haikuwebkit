@@ -665,11 +665,13 @@ PASS SVGStyleElement interface: existence and properties of interface prototype 
 PASS SVGStyleElement interface: attribute type
 PASS SVGStyleElement interface: attribute media
 PASS SVGStyleElement interface: attribute title
+PASS SVGStyleElement interface: attribute disabled
 PASS SVGStyleElement must be primary interface of objects.style
 PASS Stringification of objects.style
 PASS SVGStyleElement interface: objects.style must inherit property "type" with the proper type
 PASS SVGStyleElement interface: objects.style must inherit property "media" with the proper type
 PASS SVGStyleElement interface: objects.style must inherit property "title" with the proper type
+PASS SVGStyleElement interface: objects.style must inherit property "disabled" with the proper type
 PASS SVGElement interface: objects.style must inherit property "className" with the proper type
 PASS SVGElement interface: objects.style must inherit property "ownerSVGElement" with the proper type
 PASS SVGElement interface: objects.style must inherit property "viewportElement" with the proper type
@@ -1358,6 +1360,8 @@ PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_AUTO on interface ob
 PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_AUTO on interface prototype object
 PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_ANGLE on interface object
 PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_ANGLE on interface prototype object
+PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_AUTO_START_REVERSE on interface object
+PASS SVGMarkerElement interface: constant SVG_MARKER_ORIENT_AUTO_START_REVERSE on interface prototype object
 PASS SVGMarkerElement interface: attribute refX
 PASS SVGMarkerElement interface: attribute refY
 PASS SVGMarkerElement interface: attribute markerUnits
@@ -1378,6 +1382,7 @@ PASS SVGMarkerElement interface: objects.marker must inherit property "SVG_MARKE
 PASS SVGMarkerElement interface: objects.marker must inherit property "SVG_MARKER_ORIENT_UNKNOWN" with the proper type
 PASS SVGMarkerElement interface: objects.marker must inherit property "SVG_MARKER_ORIENT_AUTO" with the proper type
 PASS SVGMarkerElement interface: objects.marker must inherit property "SVG_MARKER_ORIENT_ANGLE" with the proper type
+PASS SVGMarkerElement interface: objects.marker must inherit property "SVG_MARKER_ORIENT_AUTO_START_REVERSE" with the proper type
 PASS SVGMarkerElement interface: objects.marker must inherit property "refX" with the proper type
 PASS SVGMarkerElement interface: objects.marker must inherit property "refY" with the proper type
 PASS SVGMarkerElement interface: objects.marker must inherit property "markerUnits" with the proper type
@@ -1556,7 +1561,6 @@ PASS SVGAElement interface: attribute rel
 PASS SVGAElement interface: attribute relList
 PASS SVGAElement interface: attribute hreflang
 PASS SVGAElement interface: attribute type
-FAIL SVGAElement interface: attribute text assert_true: The prototype object must have a property "text" expected true got false
 FAIL SVGAElement interface: attribute referrerPolicy assert_true: The prototype object must have a property "referrerPolicy" expected true got false
 FAIL SVGAElement interface: attribute origin assert_true: The prototype object must have a property "origin" expected true got false
 FAIL SVGAElement interface: attribute protocol assert_true: The prototype object must have a property "protocol" expected true got false
@@ -1578,7 +1582,6 @@ PASS SVGAElement interface: objects.a must inherit property "rel" with the prope
 PASS SVGAElement interface: objects.a must inherit property "relList" with the proper type
 PASS SVGAElement interface: objects.a must inherit property "hreflang" with the proper type
 PASS SVGAElement interface: objects.a must inherit property "type" with the proper type
-FAIL SVGAElement interface: objects.a must inherit property "text" with the proper type assert_inherits: property "text" not found in prototype chain
 FAIL SVGAElement interface: objects.a must inherit property "referrerPolicy" with the proper type assert_inherits: property "referrerPolicy" not found in prototype chain
 FAIL SVGAElement interface: objects.a must inherit property "origin" with the proper type assert_inherits: property "origin" not found in prototype chain
 FAIL SVGAElement interface: objects.a must inherit property "protocol" with the proper type assert_inherits: property "protocol" not found in prototype chain
@@ -1628,7 +1631,7 @@ FAIL TimeEvent interface: existence and properties of interface prototype object
 FAIL TimeEvent interface: existence and properties of interface prototype object's @@unscopables property assert_own_property: self does not have own property "TimeEvent" expected property "TimeEvent" missing
 FAIL TimeEvent interface: attribute view assert_own_property: self does not have own property "TimeEvent" expected property "TimeEvent" missing
 FAIL TimeEvent interface: attribute detail assert_own_property: self does not have own property "TimeEvent" expected property "TimeEvent" missing
-FAIL TimeEvent interface: operation initTimeEvent(DOMString, Window?, long) assert_own_property: self does not have own property "TimeEvent" expected property "TimeEvent" missing
+FAIL TimeEvent interface: operation initTimeEvent(DOMString, optional Window?, optional long) assert_own_property: self does not have own property "TimeEvent" expected property "TimeEvent" missing
 PASS SVGAnimationElement interface: existence and properties of interface object
 PASS SVGAnimationElement interface object length
 PASS SVGAnimationElement interface object name
@@ -1775,11 +1778,5 @@ PASS SVGElement interface: objects.animateTransform must inherit property "owner
 PASS SVGElement interface: objects.animateTransform must inherit property "viewportElement" with the proper type
 FAIL SVGElement interface: objects.animateTransform must inherit property "correspondingElement" with the proper type assert_inherits: property "correspondingElement" not found in prototype chain
 FAIL SVGElement interface: objects.animateTransform must inherit property "correspondingUseElement" with the proper type assert_inherits: property "correspondingUseElement" not found in prototype chain
-FAIL SVGDiscardElement interface: existence and properties of interface object assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
-FAIL SVGDiscardElement interface object length assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
-FAIL SVGDiscardElement interface object name assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
-FAIL SVGDiscardElement interface: existence and properties of interface prototype object assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
-FAIL SVGDiscardElement interface: existence and properties of interface prototype object's "constructor" property assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
-FAIL SVGDiscardElement interface: existence and properties of interface prototype object's @@unscopables property assert_own_property: self does not have own property "SVGDiscardElement" expected property "SVGDiscardElement" missing
 PASS Document interface: attribute rootElement
 

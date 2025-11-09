@@ -3598,9 +3598,9 @@ private:
             if (span.size() < length)
                 return false;
             if (shouldAtomize == ShouldAtomize::Yes)
-                str = AtomString(consumeSpan(span, length));
+                str = AtomString(byteCast<Latin1Character>(consumeSpan(span, length)));
             else
-                str = String(consumeSpan(span, length));
+                str = String(byteCast<Latin1Character>(consumeSpan(span, length)));
             return true;
         }
 

@@ -41,7 +41,8 @@
 #endif
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-#import <WebCore/AcceleratedEffectStack.h>
+#import "RemoteAnimation.h"
+#import "RemoteAnimationStack.h"
 #endif
 
 namespace WebKit {
@@ -88,8 +89,8 @@ RemoteLayerTreeNode::~RemoteLayerTreeNode()
 {
     RetainPtr layer = this->layer();
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    if (RefPtr effectStack = m_effectStack)
-        effectStack->clear(layer.get());
+    if (RefPtr animationStack = m_animationStack)
+        animationStack->clear(layer.get());
 #endif
     [layer setValue:nil forKey:WKRemoteLayerTreeNodePropertyKey];
 #if ENABLE(GAZE_GLOW_FOR_INTERACTION_REGIONS)
@@ -307,26 +308,24 @@ void RemoteLayerTreeNode::setAcceleratedEffectsAndBaseValues(const WebCore::Acce
     ASSERT(isUIThread());
 
     RetainPtr layer = this->layer();
-    if (RefPtr effectStack = m_effectStack)
-        effectStack->clear(layer.get());
+    if (RefPtr animationStack = m_animationStack)
+        animationStack->clear(layer.get());
     host.animationsWereRemovedFromNode(*this);
 
     if (effects.isEmpty())
         return;
 
-    Ref effectStack = RemoteAcceleratedEffectStack::create(layer.get().bounds, host.acceleratedTimelineTimeOrigin(m_layerID.processIdentifier()));
-    m_effectStack = effectStack.copyRef();
-
-    auto clonedEffects = effects;
-    auto clonedBaseValues = baseValues.clone();
-
-    effectStack->setEffects(WTFMove(clonedEffects));
-    effectStack->setBaseValues(WTFMove(clonedBaseValues));
+    Ref animationStack = RemoteAnimationStack::create(effects.map([&](const Ref<AcceleratedEffect>& effect) {
+        RefPtr timeline = host.timeline(m_layerID.processIdentifier());
+        ASSERT(timeline);
+        return RemoteAnimation::create(Ref { effect }.get(), *timeline);
+    }), baseValues.clone(), layer.get().bounds);
+    m_animationStack = animationStack.copyRef();
 
 #if PLATFORM(IOS_FAMILY)
-    effectStack->applyEffectsFromMainThread(layer.get(), host.animationCurrentTime(m_layerID.processIdentifier()), backdropRootIsOpaque());
+    animationStack->applyEffectsFromMainThread(layer.get(), backdropRootIsOpaque());
 #else
-    effectStack->initEffectsFromMainThread(layer.get(), host.animationCurrentTime(m_layerID.processIdentifier()));
+    animationStack->initEffectsFromMainThread(layer.get());
 #endif
 
     host.animationsWereAddedToNode(*this);

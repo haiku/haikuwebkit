@@ -34,7 +34,6 @@
 
 #include "ContainerNodeInlines.h"
 #include "Decimal.h"
-#include "DocumentInlines.h"
 #include "ElementInlines.h"
 #include "ElementRareData.h"
 #include "EventNames.h"
@@ -52,6 +51,7 @@
 #include "RenderSlider.h"
 #include "ScopedEventQueue.h"
 #include "ScriptDisallowedScope.h"
+#include "Settings.h"
 #include "ShadowRoot.h"
 #include "SliderThumbElement.h"
 #include "StepRange.h"

@@ -314,7 +314,7 @@ MutableStyleProperties& StyleRule::mutableProperties()
     if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
         return *mutableProperties;
     Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.get();
+    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
     m_properties = WTFMove(mutableProperties);
     return mutablePropertiesRef;
 }
@@ -465,7 +465,7 @@ MutableStyleProperties& StyleRulePage::mutableProperties()
     if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
         return *mutableProperties;
     Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.get();
+    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
     m_properties = WTFMove(mutableProperties);
     return mutablePropertiesRef;
 }
@@ -489,7 +489,7 @@ MutableStyleProperties& StyleRuleFontFace::mutableProperties()
     if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
         return *mutableProperties;
     Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.get();
+    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
     m_properties = WTFMove(mutableProperties);
     return mutablePropertiesRef;
 }

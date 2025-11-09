@@ -36,6 +36,9 @@
 namespace WebCore {
 struct NodeIdentifierType;
 using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
+
+struct FrameIdentifierType;
+using FrameIdentifier = ObjectIdentifier<FrameIdentifierType>;
     
 class DataTransfer;
 class Element;

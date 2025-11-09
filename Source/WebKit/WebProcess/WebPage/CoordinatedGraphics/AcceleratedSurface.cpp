@@ -110,9 +110,7 @@ AcceleratedSurface::AcceleratedSurface(WebPage& webPage, Function<void()>&& fram
 #endif
 }
 
-AcceleratedSurface::~AcceleratedSurface()
-{
-}
+AcceleratedSurface::~AcceleratedSurface() = default;
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AcceleratedSurface::RenderTarget);
 

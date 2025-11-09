@@ -306,7 +306,7 @@ extern "C" { extern void (*const __identifier("??_7TestAsyncKeyValueIterable@Web
 extern "C" { extern void* _ZTVN7WebCore25TestAsyncKeyValueIterableE[]; }
 #endif
 template<std::same_as<TestAsyncKeyValueIterable> T>
-static inline void verifyVTable(TestAsyncKeyValueIterable* ptr) 
+static inline void verifyVTable(TestAsyncKeyValueIterable* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -326,8 +326,9 @@ static inline void verifyVTable(TestAsyncKeyValueIterable* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestAsyncKeyValueIterable>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestAsyncKeyValueIterable>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestAsyncKeyValueIterable>(impl.ptr());
 #endif

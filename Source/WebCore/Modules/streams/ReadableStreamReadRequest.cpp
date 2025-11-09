@@ -37,7 +37,6 @@ namespace WebCore {
 class ReadableStreamDefaultReadRequest : public ReadableStreamReadRequest {
 public:
     static Ref<ReadableStreamDefaultReadRequest> create(Ref<DeferredPromise>&& promise) { return adoptRef(*new ReadableStreamDefaultReadRequest(WTFMove(promise))); }
-    ~ReadableStreamDefaultReadRequest() = default;
 
 private:
     explicit ReadableStreamDefaultReadRequest(Ref<DeferredPromise>&& promise)
@@ -78,7 +77,6 @@ private:
 class ReadableStreamDefaultReadIntoRequest : public ReadableStreamReadIntoRequest {
 public:
     static Ref<ReadableStreamDefaultReadIntoRequest> create(Ref<DeferredPromise>&& promise) { return adoptRef(*new ReadableStreamDefaultReadIntoRequest(WTFMove(promise))); }
-    ~ReadableStreamDefaultReadIntoRequest() = default;
 
 private:
     explicit ReadableStreamDefaultReadIntoRequest(Ref<DeferredPromise>&& promise)

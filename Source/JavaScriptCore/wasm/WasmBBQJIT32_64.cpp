@@ -2213,6 +2213,7 @@ void BBQJIT::shiftI64Helper(ShiftI64HelperOp op, Location lhsLocation, Location 
     m_jit.and32(TrustedImm32(63), rhsLocation.asGPRlo(), shift);
     auto zero = m_jit.branch32(RelationalCondition::Equal, shift, TrustedImm32(0));
     auto aboveOrEqual32 = m_jit.branch32(RelationalCondition::AboveOrEqual, shift, TrustedImm32(32));
+
     // shift < 32
     auto carry = scratches.gpr(0);
     m_jit.move(TrustedImm32(32), carry);
@@ -2239,7 +2240,10 @@ void BBQJIT::shiftI64Helper(ShiftI64HelperOp op, Location lhsLocation, Location 
         m_jit.urshift32(lhsLocation.asGPRlo(), shift, resultLocation.asGPRlo());
         m_jit.or32(carry, resultLocation.asGPRlo());
     }
-    auto done = m_jit.jump();
+
+    JumpList done;
+    done.append(m_jit.jump());
+
     // shift >= 32
     aboveOrEqual32.link(&m_jit);
     m_jit.sub32(shift, TrustedImm32(32), shift);
@@ -2254,8 +2258,15 @@ void BBQJIT::shiftI64Helper(ShiftI64HelperOp op, Location lhsLocation, Location 
         m_jit.rshift32(lhsLocation.asGPRhi(), shift, resultLocation.asGPRlo());
         m_jit.rshift32(lhsLocation.asGPRhi(), TrustedImm32(31), resultLocation.asGPRhi());
     }
+    // The following move is only emitted if the lhs != res, so when they are the same, we
+    // can just fallthrough
+    if (lhsLocation != resultLocation)
+        done.append(m_jit.jump());
+
     // shift == 0
     zero.link(&m_jit);
+    emitMove(TypeKind::I64, lhsLocation, resultLocation);
+
     done.link(&m_jit);
 }
 
@@ -2598,44 +2609,6 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addF64ConvertUI64(Value operand, Value&
             emitCCall(Math::f64_convert_u_i64, Vector<Value, 8> { arg }, result);
         )
     )
-}
-
-PartialResult WARN_UNUSED_RETURN BBQJIT::addF64Copysign(Value lhs, Value rhs, Value& result)
-{
-    if constexpr (isX86())
-        clobber(shiftRCX);
-
-    EMIT_BINARY(
-        "F64Copysign", TypeKind::F64,
-        BLOCK(Value::fromF64(doubleCopySign(lhs.asF64(), rhs.asF64()))),
-        BLOCK(
-            F64CopysignHelper(lhsLocation, rhsLocation, resultLocation);
-        ),
-        BLOCK(
-            ImmHelpers::immLocation(lhsLocation, rhsLocation) = Location::fromFPR(wasmScratchFPR);
-            emitMoveConst(ImmHelpers::imm(lhs, rhs), Location::fromFPR(wasmScratchFPR));
-            F64CopysignHelper(lhsLocation, rhsLocation, resultLocation);
-        )
-    )
-}
-
-void BBQJIT::F64CopysignHelper(Location lhsLocation, Location rhsLocation, Location resultLocation)
-{
-    ScratchScope<2, 0> scratches(*this);
-    auto hi = scratches.gpr(1);
-    auto lo = scratches.gpr(0);
-    auto sign = wasmScratchGPR2;
-
-    m_jit.moveDoubleHiTo32(rhsLocation.asFPR(), sign);
-    m_jit.move(TrustedImm32(0x80000000), wasmScratchGPR);
-    m_jit.and32(wasmScratchGPR, sign);
-
-    m_jit.moveDoubleTo64(lhsLocation.asFPR(), hi, lo);
-    m_jit.move(TrustedImm32(0x7fffffff), wasmScratchGPR);
-    m_jit.and32(wasmScratchGPR, hi);
-
-    m_jit.or32(sign, hi);
-    m_jit.move64ToDouble(hi, lo, resultLocation.asFPR());
 }
 
 PartialResult WARN_UNUSED_RETURN BBQJIT::addF32Floor(Value operand, Value& result)

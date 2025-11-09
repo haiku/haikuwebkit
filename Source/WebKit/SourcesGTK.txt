@@ -40,6 +40,7 @@ NetworkProcess/cache/NetworkCacheDataGLib.cpp
 NetworkProcess/cache/NetworkCacheIOChannelGLib.cpp
 
 NetworkProcess/glib/DNSCache.cpp
+NetworkProcess/glib/NetworkMDNSRegisterGLib.cpp
 NetworkProcess/glib/WebKitCachedResolver.cpp
 NetworkProcess/glib/WebKitOverridingResolver.cpp
 
@@ -79,6 +80,8 @@ Shared/API/glib/WebKitURIRequest.cpp @no-unify
 Shared/API/glib/WebKitURIResponse.cpp @no-unify
 Shared/API/glib/WebKitUserMessage.cpp @no-unify
 
+Shared/Extensions/gtk/WebExtensionUtilitiesGtk.cpp
+
 Shared/glib/ArgumentCodersGLib.cpp
 Shared/glib/InputMethodState.cpp
 Shared/glib/JavaScriptEvaluationResultGLib.cpp
@@ -94,6 +97,7 @@ Shared/gtk/NativeWebWheelEventGtk.cpp
 Shared/gtk/PrintInfoGtk.cpp
 Shared/gtk/WebErrorsGtk.cpp
 Shared/gtk/WebEventFactory.cpp
+Shared/gtk/WebKeyboardEventGtk.cpp
 
 Shared/linux/WebMemorySamplerLinux.cpp
 
@@ -181,7 +185,6 @@ UIProcess/API/glib/WebKitUserContentManager.cpp @no-unify
 UIProcess/API/glib/WebKitUserMediaPermissionRequest.cpp @no-unify
 UIProcess/API/glib/WebKitVersion.cpp @no-unify
 UIProcess/API/glib/WebKitWebContext.cpp @no-unify
-UIProcess/API/glib/WebKitWebExtensionMatchPattern.cpp @no-unify
 UIProcess/API/glib/WebKitWebResource.cpp @no-unify
 UIProcess/API/glib/WebKitWebResourceLoadManager.cpp @no-unify
 UIProcess/API/glib/WebKitWebView.cpp @no-unify
@@ -226,6 +229,8 @@ UIProcess/Automation/glib/BidiBrowserAgentGlib.cpp @no-unify
 UIProcess/Automation/gtk/WebAutomationSessionGtk.cpp @no-unify
 
 UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+
+UIProcess/Extensions/gtk/WebExtensionGtk.cpp
 
 UIProcess/Gamepad/gtk/UIGamepadProviderGtk.cpp
 UIProcess/Gamepad/manette/UIGamepadProviderManette.cpp
@@ -275,6 +280,8 @@ UIProcess/gtk/ClipboardGtk4.cpp @no-unify
 UIProcess/gtk/Display.cpp @no-unify
 UIProcess/gtk/DisplayX11.cpp @no-unify
 UIProcess/gtk/DisplayWayland.cpp @no-unify
+UIProcess/gtk/GRefPtrGtk.cpp @no-unify
+UIProcess/gtk/GtkUtilities.cpp @no-unify
 UIProcess/gtk/WebDateTimePickerGtk.cpp
 UIProcess/gtk/HardwareAccelerationManager.cpp
 UIProcess/gtk/KeyBindingTranslator.cpp
@@ -284,6 +291,7 @@ UIProcess/gtk/PointerLockManagerX11.cpp @no-unify
 UIProcess/gtk/ScreenManagerGtk.cpp @no-unify
 UIProcess/gtk/SystemSettingsManagerProxyGtk.cpp
 UIProcess/gtk/TextCheckerGtk.cpp @no-unify
+UIProcess/gtk/ValidationBubbleGtk.cpp
 UIProcess/gtk/ViewSnapshotStoreGtk3.cpp @no-unify
 UIProcess/gtk/ViewSnapshotStoreGtk4.cpp @no-unify
 UIProcess/gtk/ViewGestureControllerGtk.cpp

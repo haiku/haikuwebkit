@@ -64,7 +64,6 @@ class LayoutSize;
 class LayoutUnit;
 class OutlineValue;
 class PositionArea;
-class PseudoIdSet;
 class RenderElement;
 class RenderStyle;
 class SVGRenderStyle;
@@ -96,7 +95,6 @@ enum class BlockStepRound : uint8_t;
 enum class BorderCollapse : bool;
 enum class BorderStyle : uint8_t;
 enum class BoxAlignment : uint8_t;
-enum class BoxAxisFlag : uint8_t;
 enum class BoxDecorationBreak : bool;
 enum class BoxDirection : bool;
 enum class BoxLines : bool;
@@ -131,8 +129,13 @@ enum class FillSizeType : uint8_t;
 enum class FlexDirection : uint8_t;
 enum class FlexWrap : uint8_t;
 enum class Float : uint8_t;
-enum class FontOrientation : bool;
 enum class FontOpticalSizing : bool;
+enum class FontOrientation : bool;
+enum class FontSmoothingMode : uint8_t;
+enum class FontSynthesisLonghandValue : bool;
+enum class FontVariantCaps : uint8_t;
+enum class FontVariantEmoji : uint8_t;
+enum class FontVariantPosition : uint8_t;
 enum class HangingPunctuation : uint8_t;
 enum class Hyphens : uint8_t;
 enum class ImageRendering : uint8_t;
@@ -140,7 +143,7 @@ enum class InputSecurity : bool;
 enum class InsideLink : uint8_t;
 enum class Isolation : bool;
 enum class ItemPosition : uint8_t;
-enum class LengthType : uint8_t;
+enum class Kerning : uint8_t;
 enum class LineAlign : bool;
 enum class LineBreak : uint8_t;
 enum class LineCap : uint8_t;
@@ -172,7 +175,7 @@ enum class PointerEvents : uint8_t;
 enum class PositionType : uint8_t;
 enum class PositionVisibility : uint8_t;
 enum class PrintColorAdjust : bool;
-enum class PseudoId : uint32_t;
+enum class PseudoId : uint8_t;
 enum class Resize : uint8_t;
 enum class RubyPosition : uint8_t;
 enum class RubyAlign : uint8_t;
@@ -196,6 +199,7 @@ enum class TextEmphasisPosition : uint8_t;
 enum class TextGroupAlign : uint8_t;
 enum class TextJustify : uint8_t;
 enum class TextOverflow : bool;
+enum class TextRenderingMode : uint8_t;
 enum class TextSecurity : uint8_t;
 enum class TextTransform : uint8_t;
 enum class TextUnderlinePosition : uint8_t;
@@ -222,17 +226,14 @@ struct CSSPropertiesBitSet;
 struct CounterDirectiveMap;
 struct GridTrackList;
 struct ImageOrientation;
-struct Length;
 struct NameScope;
 struct TransformOperationData;
 
-template<typename> class FontTaggedSettings;
 template<typename> class RectEdges;
 template<typename> class RectCorners;
 template<typename> struct MinimallySerializingSpaceSeparatedRectEdges;
 template<typename> struct MinimallySerializingSpaceSeparatedSize;
 
-using FontVariationSettings = FontTaggedSettings<float>;
 using IntOutsets = RectEdges<int>;
 
 namespace Style {
@@ -271,9 +272,15 @@ struct Cursor;
 struct DynamicRangeLimit;
 struct Filter;
 struct FlexBasis;
+struct FontFeatureSettings;
 struct FontPalette;
 struct FontSizeAdjust;
 struct FontStyle;
+struct FontVariantAlternates;
+struct FontVariantEastAsian;
+struct FontVariantLigatures;
+struct FontVariantNumeric;
+struct FontVariationSettings;
 struct FontWeight;
 struct FontWidth;
 struct GapGutter;
@@ -287,6 +294,7 @@ struct HyphenateLimitLines;
 struct ImageOrNone;
 struct InsetEdge;
 struct LetterSpacing;
+struct LineHeight;
 struct LineWidth;
 struct LineFitEdge;
 struct ListStyleType;
@@ -378,6 +386,8 @@ enum class Change : uint8_t;
 enum class GridTrackSizingDirection : bool;
 enum class LineBoxContain : uint8_t;
 enum class PositionTryOrder : uint8_t;
+enum class SVGGlyphOrientationHorizontal : uint8_t;
+enum class SVGGlyphOrientationVertical : uint8_t;
 enum class ScrollBehavior : bool;
 enum class WebkitOverflowScrolling : bool;
 enum class WebkitTouchCallout : bool;
@@ -411,7 +421,7 @@ using TransformOriginXY = Position;
 using TransformOriginY = PositionY;
 using TransformOriginZ = Length<>;
 using Transitions = CoordinatedValueList<Transition>;
-using WebkitBorderSpacing = Length<CSS::Nonnegative>;
+using WebkitBorderSpacing = Length<CSS::NonnegativeUnzoomed>;
 using WebkitBoxFlex = Number<CSS::All, float>;
 using WebkitBoxFlexGroup = Integer<CSS::Nonnegative>;
 using WebkitBoxOrdinalGroup = Integer<CSS::Positive>;
@@ -489,12 +499,11 @@ public:
     StyleSelfAlignmentData resolvedJustifySelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const;
     StyleContentAlignmentData resolvedJustifyContent(const StyleContentAlignmentData& normalValueBehavior) const;
 
-    PseudoId pseudoElementType() const { return static_cast<PseudoId>(m_nonInheritedFlags.pseudoElementType); }
-    void setPseudoElementType(PseudoId pseudoElementType) { m_nonInheritedFlags.pseudoElementType = static_cast<unsigned>(pseudoElementType); }
+    std::optional<PseudoElementType> pseudoElementType() const;
     const AtomString& pseudoElementNameArgument() const;
-    void setPseudoElementNameArgument(const AtomString&);
 
     std::optional<Style::PseudoElementIdentifier> pseudoElementIdentifier() const;
+    void setPseudoElementIdentifier(std::optional<Style::PseudoElementIdentifier>&&);
 
     RenderStyle* getCachedPseudoStyle(const Style::PseudoElementIdentifier&) const;
     RenderStyle* addCachedPseudoStyle(std::unique_ptr<RenderStyle>);
@@ -519,8 +528,8 @@ public:
     bool useTreeCountingFunctions() const { return m_nonInheritedFlags.useTreeCountingFunctions; }
     void setUsesAnchorFunctions();
     bool usesAnchorFunctions() const;
-    void setAnchorFunctionScrollCompensatedAxes(OptionSet<BoxAxisFlag>);
-    OptionSet<BoxAxisFlag> anchorFunctionScrollCompensatedAxes() const;
+    void setAnchorFunctionScrollCompensatedAxes(EnumSet<BoxAxis>);
+    EnumSet<BoxAxis> anchorFunctionScrollCompensatedAxes() const;
 
     void setIsPopoverInvoker();
     bool isPopoverInvoker() const;
@@ -557,8 +566,8 @@ public:
     bool isStyleAvailable() const;
 
     inline bool hasAnyPublicPseudoStyles() const;
-    inline bool hasPseudoStyle(PseudoId) const;
-    inline void setHasPseudoStyles(PseudoIdSet);
+    inline bool hasPseudoStyle(PseudoElementType) const;
+    inline void setHasPseudoStyles(EnumSet<PseudoElementType>);
 
     inline bool hasDisplayAffectedByAnimations() const;
     inline void setHasDisplayAffectedByAnimations();
@@ -728,12 +737,28 @@ public:
     std::pair<FontOrientation, NonCJKGlyphOrientation> fontAndGlyphOrientation();
 
     inline FontOpticalSizing fontOpticalSizing() const;
-    inline FontVariationSettings fontVariationSettings() const;
+    inline Style::FontFeatureSettings fontFeatureSettings() const;
+    inline Style::FontVariationSettings fontVariationSettings() const;
     inline Style::FontPalette fontPalette() const;
     inline Style::FontSizeAdjust fontSizeAdjust() const;
     inline Style::FontStyle fontStyle() const;
     inline Style::FontWeight fontWeight() const;
     inline Style::FontWidth fontWidth() const;
+    inline Kerning fontKerning() const;
+    inline FontSmoothingMode fontSmoothing() const;
+    inline FontSynthesisLonghandValue fontSynthesisSmallCaps() const;
+    inline FontSynthesisLonghandValue fontSynthesisStyle() const;
+    inline FontSynthesisLonghandValue fontSynthesisWeight() const;
+    inline Style::FontVariantAlternates fontVariantAlternates() const;
+    inline FontVariantCaps fontVariantCaps() const;
+    inline Style::FontVariantEastAsian fontVariantEastAsian() const;
+    inline FontVariantEmoji fontVariantEmoji() const;
+    inline Style::FontVariantLigatures fontVariantLigatures() const;
+    inline Style::FontVariantNumeric fontVariantNumeric() const;
+    inline FontVariantPosition fontVariantPosition() const;
+    inline const AtomString& locale() const;
+    inline const AtomString& computedLocale() const;
+    inline TextRenderingMode textRendering() const;
 
     inline const Style::TextIndent& textIndent() const;
     inline TextAlignMode textAlign() const { return static_cast<TextAlignMode>(m_inheritedFlags.textAlign); }
@@ -770,10 +795,10 @@ public:
 
     inline TextZoom textZoom() const;
 
-    const Length& specifiedLineHeight() const;
-    WEBCORE_EXPORT const Length& lineHeight() const;
+    const Style::LineHeight& specifiedLineHeight() const;
+    WEBCORE_EXPORT const Style::LineHeight& lineHeight() const;
     WEBCORE_EXPORT float computedLineHeight() const;
-    float computeLineHeight(const Length&) const;
+    float computeLineHeight(const Style::LineHeight&) const;
 
     inline bool autoWrap() const;
     static constexpr bool preserveNewline(WhiteSpaceCollapse);
@@ -992,8 +1017,6 @@ public:
     inline Style::HyphenateLimitEdge hyphenateLimitAfter() const;
     inline Style::HyphenateLimitLines hyphenateLimitLines() const;
     inline const Style::HyphenateCharacter& hyphenateCharacter() const;
-    inline const AtomString& computedLocale() const;
-    inline const AtomString& specifiedLocale() const;
     inline Resize resize() const;
     inline ColumnAxis columnAxis() const;
     inline bool hasInlineColumnAxis() const;
@@ -1365,12 +1388,27 @@ public:
     // Only used for blending font sizes when animating, for MathML anonymous blocks, and for text autosizing.
     void setFontSize(float);
     void setFontOpticalSizing(FontOpticalSizing);
-    void setFontVariationSettings(FontVariationSettings);
+    void setFontFeatureSettings(Style::FontFeatureSettings&&);
+    void setFontVariationSettings(Style::FontVariationSettings&&);
     void setFontPalette(Style::FontPalette&&);
     void setFontSizeAdjust(Style::FontSizeAdjust);
     void setFontStyle(Style::FontStyle);
     void setFontWeight(Style::FontWeight);
     void setFontWidth(Style::FontWidth);
+    void setFontKerning(Kerning);
+    void setFontSmoothing(FontSmoothingMode);
+    void setFontSynthesisSmallCaps(FontSynthesisLonghandValue);
+    void setFontSynthesisStyle(FontSynthesisLonghandValue);
+    void setFontSynthesisWeight(FontSynthesisLonghandValue);
+    void setFontVariantAlternates(Style::FontVariantAlternates&&);
+    void setFontVariantCaps(FontVariantCaps);
+    void setFontVariantEastAsian(Style::FontVariantEastAsian);
+    void setFontVariantEmoji(FontVariantEmoji);
+    void setFontVariantLigatures(Style::FontVariantLigatures);
+    void setFontVariantNumeric(Style::FontVariantNumeric);
+    void setFontVariantPosition(FontVariantPosition);
+    void setLocale(AtomString&&);
+    void setTextRendering(TextRenderingMode);
 
     void setColor(Color&&);
 
@@ -1387,7 +1425,6 @@ public:
     inline void setTextUnderlinePosition(OptionSet<TextUnderlinePosition>);
     inline void setTextUnderlineOffset(Style::TextUnderlineOffset&&);
     inline void setTextTransform(OptionSet<TextTransform>);
-    void setLineHeight(Length&&);
     bool setZoom(float);
     inline bool setUsedZoom(float);
     inline void setTextZoom(TextZoom);
@@ -1400,8 +1437,9 @@ public:
 
     inline void setMarginTrim(OptionSet<MarginTrimType>);
 
+    void setLineHeight(Style::LineHeight&&);
 #if ENABLE(TEXT_AUTOSIZING)
-    void setSpecifiedLineHeight(Length&&);
+    void setSpecifiedLineHeight(Style::LineHeight&&);
 #endif
 
     inline void setImageOrientation(ImageOrientation);
@@ -1768,6 +1806,9 @@ public:
     inline bool enableEvaluationTimeZoom() const;
     void setEnableEvaluationTimeZoom(bool);
 
+    inline float deviceScaleFactor() const;
+    void setDeviceScaleFactor(float);
+
     inline bool useSVGZoomRulesForLength() const;
     void setUseSVGZoomRulesForLength(bool);
 
@@ -1966,11 +2007,30 @@ public:
     static constexpr PositionType initialPosition();
     static inline Style::VerticalAlign initialVerticalAlign();
     static constexpr Float initialFloating();
+    static constexpr FontOpticalSizing initialFontOpticalSizing();
+    static inline Style::FontFeatureSettings initialFontFeatureSettings();
+    static inline Style::FontVariationSettings initialFontVariationSettings();
     static inline Style::FontPalette initialFontPalette();
     static inline Style::FontSizeAdjust initialFontSizeAdjust();
     static inline Style::FontStyle initialFontStyle();
     static inline Style::FontWeight initialFontWeight();
     static inline Style::FontWidth initialFontWidth();
+    static constexpr Kerning initialFontKerning();
+    static constexpr FontSmoothingMode initialFontSmoothing();
+    static constexpr FontSynthesisLonghandValue initialFontSynthesisSmallCaps();
+    static constexpr FontSynthesisLonghandValue initialFontSynthesisStyle();
+    static constexpr FontSynthesisLonghandValue initialFontSynthesisWeight();
+    static inline Style::FontVariantAlternates initialFontVariantAlternates();
+    static constexpr FontVariantCaps initialFontVariantCaps();
+    static constexpr Style::FontVariantEastAsian initialFontVariantEastAsian();
+    static constexpr FontVariantEmoji initialFontVariantEmoji();
+    static constexpr Style::FontVariantLigatures initialFontVariantLigatures();
+    static constexpr Style::FontVariantNumeric initialFontVariantNumeric();
+    static constexpr FontVariantPosition initialFontVariantPosition();
+    static inline AtomString initialLocale();
+    static constexpr TextAutospace initialTextAutospace();
+    static constexpr TextRenderingMode initialTextRendering();
+    static constexpr TextSpacingTrim initialTextSpacingTrim();
     static constexpr BreakBetween initialBreakBetween();
     static constexpr BreakInside initialBreakInside();
     static constexpr OptionSet<HangingPunctuation> initialHangingPunctuation();
@@ -2033,8 +2093,7 @@ public:
     static constexpr Style::LineFitEdge initialLineFitEdge();
     static constexpr Style::Widows initialWidows();
     static constexpr Style::Orphans initialOrphans();
-    // Returning -100% percent here means the line-height is not set.
-    static inline Length initialLineHeight();
+    static inline Style::LineHeight initialLineHeight();
     static constexpr TextAlignMode initialTextAlign();
     static constexpr TextAlignLast initialTextAlignLast();
     static constexpr TextGroupAlign initialTextGroupAlign();
@@ -2167,7 +2226,7 @@ public:
 #endif
 
 #if ENABLE(TEXT_AUTOSIZING)
-    static inline Length initialSpecifiedLineHeight();
+    static inline Style::LineHeight initialSpecifiedLineHeight();
     static constexpr Style::TextSizeAdjust initialTextSizeAdjust();
 #endif
 
@@ -2417,13 +2476,13 @@ public:
     inline void setTextAnchor(TextAnchor);
     static constexpr TextAnchor initialTextAnchor();
 
-    inline GlyphOrientation glyphOrientationHorizontal() const;
-    inline void setGlyphOrientationHorizontal(GlyphOrientation);
-    static constexpr GlyphOrientation initialGlyphOrientationHorizontal();
+    inline Style::SVGGlyphOrientationHorizontal glyphOrientationHorizontal() const;
+    inline void setGlyphOrientationHorizontal(Style::SVGGlyphOrientationHorizontal);
+    static constexpr Style::SVGGlyphOrientationHorizontal initialGlyphOrientationHorizontal();
 
-    inline GlyphOrientation glyphOrientationVertical() const;
-    inline void setGlyphOrientationVertical(GlyphOrientation);
-    static constexpr GlyphOrientation initialGlyphOrientationVertical();
+    inline Style::SVGGlyphOrientationVertical glyphOrientationVertical() const;
+    inline void setGlyphOrientationVertical(Style::SVGGlyphOrientationVertical);
+    static constexpr Style::SVGGlyphOrientationVertical initialGlyphOrientationVertical();
 
     inline MaskType maskType() const;
     inline void setMaskType(MaskType);
@@ -2453,8 +2512,8 @@ private:
         inline void copyNonInheritedFrom(const NonInheritedFlags&);
 
         inline bool hasAnyPublicPseudoStyles() const;
-        bool hasPseudoStyle(PseudoId) const;
-        void setHasPseudoStyles(PseudoIdSet);
+        bool hasPseudoStyle(PseudoElementType) const;
+        void setHasPseudoStyles(EnumSet<PseudoElementType>);
 
 #if !LOG_DISABLED
         void dumpDifferences(TextStream&, const NonInheritedFlags&) const;
@@ -2480,7 +2539,7 @@ private:
         PREFERRED_TYPE(bool) unsigned firstChildState : 1;
         PREFERRED_TYPE(bool) unsigned lastChildState : 1;
         PREFERRED_TYPE(bool) unsigned isLink : 1;
-        PREFERRED_TYPE(PseudoId) unsigned pseudoElementType : PseudoElementTypeBits;
+        PREFERRED_TYPE(PseudoElementType) unsigned pseudoElementType : PseudoElementTypeBits;
         unsigned pseudoBits : PublicPseudoIDBits;
         PREFERRED_TYPE(Style::TextDecorationLine) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
 

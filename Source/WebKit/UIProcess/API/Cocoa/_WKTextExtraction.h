@@ -41,6 +41,24 @@ WK_CLASS_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
  */
 @property (nonatomic) CGRect targetRect;
 
+/*!
+ Include URL attribute values, such as `href` or `src` on links or images.
+ The default value is `YES`.
+ */
+@property (nonatomic) BOOL includeURLs;
+
+/*!
+ Automatically include bounding rects for all text nodes.
+ The default value is `YES`.
+ */
+@property (nonatomic) BOOL includeRects;
+
+/*!
+ Max number of words to include per paragraph; remaining text is truncated with an ellipsis (…).
+ The default value is `NSUIntegerMax`.
+ */
+@property (nonatomic) NSUInteger maxWordsPerParagraph;
+
 @end
 
 typedef NS_ENUM(NSInteger, _WKTextExtractionAction) {

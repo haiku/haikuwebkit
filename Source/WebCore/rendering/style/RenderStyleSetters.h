@@ -177,7 +177,7 @@ inline void RenderStyle::setHasExplicitlySetPaddingRight(bool value) { SET_NESTE
 inline void RenderStyle::setHasExplicitlySetPaddingTop(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingTop, value); }
 inline void RenderStyle::setHasExplicitlySetStrokeColor(bool value) { SET(m_rareInheritedData, hasSetStrokeColor, static_cast<unsigned>(value)); }
 inline void RenderStyle::setHasExplicitlySetStrokeWidth(bool value) { SET(m_rareInheritedData, hasSetStrokeWidth, static_cast<unsigned>(value)); }
-inline void RenderStyle::setHasPseudoStyles(PseudoIdSet set) { m_nonInheritedFlags.setHasPseudoStyles(set); }
+inline void RenderStyle::setHasPseudoStyles(EnumSet<PseudoElementType> set) { m_nonInheritedFlags.setHasPseudoStyles(set); }
 inline void RenderStyle::setHasVisitedLinkAutoCaretColor() { SET_PAIR(m_rareInheritedData, hasVisitedLinkAutoCaretColor, true, visitedLinkCaretColor, Style::Color::currentColor()); }
 inline void RenderStyle::setHeight(Style::PreferredSize&& length) { SET_NESTED(m_nonInheritedData, boxData, m_height, WTFMove(length)); }
 inline void RenderStyle::setHyphenateLimitAfter(Style::HyphenateLimitEdge limit) { SET(m_rareInheritedData, hyphenateLimitAfter, limit); }
@@ -334,7 +334,7 @@ inline void RenderStyle::setTransformStyle3D(TransformStyle3D b) { SET_NESTED(m_
 inline void RenderStyle::setTransformStyleForcedToFlat(bool b) { SET_NESTED(m_nonInheritedData, rareData, transformStyleForcedToFlat, static_cast<unsigned>(b)); }
 inline void RenderStyle::setTranslate(Style::Translate&& translate) { SET_NESTED(m_nonInheritedData, rareData, translate, WTFMove(translate)); }
 inline void RenderStyle::setUsesAnchorFunctions() { SET_NESTED(m_nonInheritedData, rareData, usesAnchorFunctions, true); }
-inline void RenderStyle::setAnchorFunctionScrollCompensatedAxes(OptionSet<BoxAxisFlag> axes) { SET_NESTED(m_nonInheritedData, rareData, anchorFunctionScrollCompensatedAxes, axes.toRaw()); }
+inline void RenderStyle::setAnchorFunctionScrollCompensatedAxes(EnumSet<BoxAxis> axes) { SET_NESTED(m_nonInheritedData, rareData, anchorFunctionScrollCompensatedAxes, axes.toRaw()); }
 inline void RenderStyle::setIsPopoverInvoker() { SET_NESTED(m_nonInheritedData, rareData, isPopoverInvoker, true); }
 inline void RenderStyle::setUsedZIndex(Style::ZIndex index) { SET_NESTED_PAIR(m_nonInheritedData, boxData, m_hasAutoUsedZIndex, static_cast<uint8_t>(index.m_isAuto), m_usedZIndexValue, index.m_value); }
 inline void RenderStyle::setUserDrag(UserDrag value) { SET_NESTED(m_nonInheritedData, miscData, userDrag, static_cast<unsigned>(value)); }
@@ -413,9 +413,8 @@ inline void RenderStyle::setColorInterpolationFilters(ColorInterpolation val) { 
 inline void RenderStyle::setFillRule(WindRule val) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, fillRule, static_cast<unsigned>(val)); }
 inline void RenderStyle::setShapeRendering(ShapeRendering val) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, shapeRendering, static_cast<unsigned>(val)); }
 inline void RenderStyle::setTextAnchor(TextAnchor val) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, textAnchor, static_cast<unsigned>(val)); }
-inline void RenderStyle::setGlyphOrientationHorizontal(GlyphOrientation val) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, glyphOrientationHorizontal, static_cast<unsigned>(val)); }
-inline void RenderStyle::setGlyphOrientationVertical(GlyphOrientation val) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, glyphOrientationVertical, static_cast<unsigned>(val)); }
-
+inline void RenderStyle::setGlyphOrientationHorizontal(Style::SVGGlyphOrientationHorizontal value) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, glyphOrientationHorizontal, static_cast<unsigned>(value)); }
+inline void RenderStyle::setGlyphOrientationVertical(Style::SVGGlyphOrientationVertical value) { SET_NESTED_STRUCT(m_svgStyle, inheritedFlags, glyphOrientationVertical, static_cast<unsigned>(value)); }
 inline void RenderStyle::setBaselineShift(Style::SVGBaselineShift&& baselineShift) { SET_NESTED(m_svgStyle, miscData, baselineShift, WTFMove(baselineShift)); }
 inline void RenderStyle::setCx(Style::SVGCenterCoordinateComponent&& cx) { SET_NESTED(m_svgStyle, layoutData, cx, WTFMove(cx)); }
 inline void RenderStyle::setCy(Style::SVGCenterCoordinateComponent&& cy) { SET_NESTED(m_svgStyle, layoutData, cy, WTFMove(cy)); }
@@ -443,11 +442,11 @@ inline void RenderStyle::setMarkerStart(Style::SVGMarkerResource&& marker) { SET
 inline void RenderStyle::setMarkerMid(Style::SVGMarkerResource&& marker) { SET_NESTED(m_svgStyle, inheritedResourceData, markerMid, WTFMove(marker)); }
 inline void RenderStyle::setMarkerEnd(Style::SVGMarkerResource&& marker) { SET_NESTED(m_svgStyle, inheritedResourceData, markerEnd, WTFMove(marker)); }
 
-inline void RenderStyle::NonInheritedFlags::setHasPseudoStyles(PseudoIdSet pseudoIdSet)
+inline void RenderStyle::NonInheritedFlags::setHasPseudoStyles(EnumSet<PseudoElementType> pseudoElementSet)
 {
-    ASSERT(pseudoIdSet);
-    ASSERT((pseudoIdSet.data() & PublicPseudoIdMask) == pseudoIdSet.data());
-    pseudoBits |= pseudoIdSet.data() >> 1; // Shift down as we do not store a bit for PseudoId::None.
+    ASSERT(pseudoElementSet);
+    ASSERT(pseudoElementSet.containsOnly(allPublicPseudoElementTypes));
+    pseudoBits = pseudoElementSet.toRaw();
 }
 
 inline void RenderStyle::resetBorder()
@@ -509,15 +508,15 @@ inline bool RenderStyle::setUsedZoom(float zoomLevel)
     return true;
 }
 
-inline void RenderStyle::setPseudoElementNameArgument(const AtomString& identifier)
+inline void RenderStyle::setPseudoElementIdentifier(std::optional<Style::PseudoElementIdentifier>&& identifier)
 {
-    ASSERT(pseudoElementType() == PseudoId::ViewTransitionGroup
-        || pseudoElementType() == PseudoId::ViewTransitionImagePair
-        || pseudoElementType() == PseudoId::ViewTransitionNew
-        || pseudoElementType() == PseudoId::ViewTransitionOld
-        || pseudoElementType() == PseudoId::Highlight
-        || identifier.isNull());
-    SET_NESTED(m_nonInheritedData, rareData, pseudoElementNameArgument, identifier);
+    if (identifier) {
+        m_nonInheritedFlags.pseudoElementType = enumToUnderlyingType(identifier->type) + 1;
+        SET_NESTED(m_nonInheritedData, rareData, pseudoElementNameArgument, WTFMove(identifier->nameArgument));
+    } else {
+        m_nonInheritedFlags.pseudoElementType = 0;
+        SET_NESTED(m_nonInheritedData, rareData, pseudoElementNameArgument, nullAtom());
+    }
 }
 
 inline void RenderStyle::setGridTemplateColumns(Style::GridTemplateList&& list)

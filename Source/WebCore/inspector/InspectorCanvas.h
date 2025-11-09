@@ -37,6 +37,11 @@
 #include <wtf/HashSet.h>
 #include <wtf/WeakRef.h>
 
+namespace JSC {
+class JSValue;
+class JSGlobalObject;
+}
+
 namespace WebCore {
 
 class CanvasGradient;

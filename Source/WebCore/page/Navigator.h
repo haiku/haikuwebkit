@@ -69,7 +69,7 @@ public:
 
     int maxTouchPoints() const;
 
-    GPU* gpu();
+    WEBCORE_EXPORT GPU* gpu();
 
     Page* page();
     RefPtr<Page> protectedPage();

@@ -30,9 +30,7 @@
 #include "CSSCustomPropertyValue.h"
 #include "CSSParserTokenRange.h"
 #include "CSSVariableData.h"
-#include "Document.h"
-#include "DocumentInlines.h"
-#include "Page.h"
+#include "DocumentPage.h"
 #include "StyleCustomProperty.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>

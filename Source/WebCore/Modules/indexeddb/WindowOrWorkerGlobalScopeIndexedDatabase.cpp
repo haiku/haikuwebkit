@@ -28,12 +28,11 @@
 #include "config.h"
 #include "WindowOrWorkerGlobalScopeIndexedDatabase.h"
 
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "IDBConnectionProxy.h"
 #include "IDBFactory.h"
 #include "LocalDOMWindow.h"
 #include "LocalDOMWindowProperty.h"
-#include "Page.h"
 #include "Supplementable.h"
 #include "WorkerGlobalScope.h"
 #include <wtf/TZoneMallocInlines.h>

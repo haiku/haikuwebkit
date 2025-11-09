@@ -1649,7 +1649,7 @@ AXIsolatedObject* findObjectWithRuns(AXIsolatedObject& start, AXDirection direct
             exitObject(*current);
             current = nextInPreOrder(*current);
         }
-        return current.get();
+        return current.unsafeGet();
     }
     ASSERT(direction == AXDirection::Previous);
 
@@ -1675,7 +1675,7 @@ AXIsolatedObject* findObjectWithRuns(AXIsolatedObject& start, AXDirection direct
         exitObject(*current);
         current = previousInPreOrder(*current);
     }
-    return current.get();
+    return current.unsafeGet();
 }
 
 } // namespace Accessibility

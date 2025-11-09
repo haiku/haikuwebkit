@@ -33,7 +33,7 @@ namespace Style {
 // <'word-spacing'> = normal | <length-percentage>
 // NOTE: Computed value resolves `normal` to 0px.
 // https://drafts.csswg.org/css-text-4/#propdef-word-spacing
-struct WordSpacing : LengthWrapperBase<LengthPercentage<>> {
+struct WordSpacing : LengthWrapperBase<LengthPercentage<CSS::AllUnzoomed>> {
     using Base::Base;
 
     WordSpacing(CSS::Keyword::Normal)

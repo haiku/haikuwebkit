@@ -56,9 +56,7 @@ void WebPlatformStrategies::initializeIfNecessary()
     });
 }
 
-WebPlatformStrategies::WebPlatformStrategies()
-{
-}
+WebPlatformStrategies::WebPlatformStrategies() = default;
 
 LoaderStrategy* WebPlatformStrategies::createLoaderStrategy()
 {

@@ -27,7 +27,6 @@
 #include "config.h"
 #include "ScriptedAnimationController.h"
 
-#include "DocumentInlines.h"
 #include "InspectorInstrumentation.h"
 #include "Logging.h"
 #include "OpportunisticTaskScheduler.h"

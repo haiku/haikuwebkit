@@ -1800,6 +1800,12 @@ public:
     void compileNumberIsSafeInteger(Node*);
     void compileToIntegerOrInfinity(Node*);
     void compileToLength(Node*);
+    void compileResolvePromiseFirstResolving(Node*);
+    void compileRejectPromiseFirstResolving(Node*);
+    void compileFulfillPromiseFirstResolving(Node*);
+    void compilePromiseResolve(Node*);
+    void compilePromiseReject(Node*);
+    void compilePromiseThen(Node*);
 
     template<typename JSClass, typename Operation>
     void compileCreateInternalFieldObject(Node*, Operation);

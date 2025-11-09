@@ -122,7 +122,7 @@ void CtapAuthenticator::makeCredential()
     auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
     if (options.excludeCredentials.size() > 1) {
         uint32_t maxBatchSize = 1;
-        if (m_info.maxCredentialIDLength() && m_info.maxCredentialCountInList())
+        if (m_info.maxCredentialCountInList())
             maxBatchSize = *m_info.maxCredentialCountInList();
         m_batches = batchesForCredentials(options.excludeCredentials, maxBatchSize, m_info.maxCredentialIDLength());
         ASSERT(m_batches.size());
@@ -289,7 +289,7 @@ void CtapAuthenticator::getAssertion()
     auto& options = std::get<PublicKeyCredentialRequestOptions>(requestData().options);
     if (options.allowCredentials.size() > 1) {
         uint32_t maxBatchSize = 1;
-        if (m_info.maxCredentialIDLength() && m_info.maxCredentialCountInList())
+        if (m_info.maxCredentialCountInList())
             maxBatchSize = *m_info.maxCredentialCountInList();
         m_batches = batchesForCredentials(options.allowCredentials, maxBatchSize, m_info.maxCredentialIDLength());
         ASSERT(m_batches.size());
@@ -304,11 +304,27 @@ void CtapAuthenticator::getAssertion()
             ASSERT(RunLoop::isMain());
             if (!weakThis)
                 return;
-            weakThis->continueSilentlyCheckCredentials(WTFMove(data), [weakThis = WTFMove(weakThis)] (bool) mutable {
+            weakThis->continueSilentlyCheckCredentials(WTFMove(data), [weakThis = WTFMove(weakThis)] (bool foundCredentials) mutable {
                 if (!weakThis)
+                    return;
+                if (!foundCredentials && weakThis->tryDowngrade())
                     return;
                 weakThis->continueGetAssertionAfterCheckAllowCredentials();
             });
+        });
+    } else if (options.allowCredentials.size() == 1 && canDowngradeToU2f()) {
+        std::optional<PinParameters> pinParameters;
+        if (!m_pinAuth.isEmpty())
+            pinParameters = PinParameters { pin::kProtocolVersion, m_pinAuth };
+        Vector<uint8_t> cborCmd = encodeSilentGetAssertion(options.rpId, requestData().hash, options.allowCredentials, pinParameters);
+        protectedDriver()->transact(WTFMove(cborCmd), [weakThis = WeakPtr { *this }](Vector<uint8_t>&& data) {
+            ASSERT(RunLoop::isMain());
+            if (!weakThis)
+                return;
+            auto error = getResponseCode(data);
+            if (error == CtapDeviceResponseCode::kCtap2ErrNoCredentials && weakThis->tryDowngrade())
+                return;
+            weakThis->continueGetAssertionAfterCheckAllowCredentials();
         });
     } else
         continueGetAssertionAfterCheckAllowCredentials();
@@ -583,13 +599,12 @@ bool CtapAuthenticator::tryRestartPin(const CtapDeviceResponseCode& error)
     }
 }
 
-bool CtapAuthenticator::tryDowngrade()
+bool CtapAuthenticator::canDowngradeToU2f() const
 {
-    CTAP_RELEASE_LOG("tryDowngrade");
+    CTAP_RELEASE_LOG("canDowngradeToU2f");
     if (m_info.versions().find(ProtocolVersion::kU2f) == m_info.versions().end())
         return false;
-    RefPtr observer = this->observer();
-    if (!observer)
+    if (!observer())
         return false;
 
     bool isConvertible = false;
@@ -598,13 +613,19 @@ bool CtapAuthenticator::tryDowngrade()
     }, [&](const PublicKeyCredentialRequestOptions& options) {
         isConvertible = isConvertibleToU2fSignCommand(options);
     });
-    if (!isConvertible)
+    return isConvertible;
+}
+
+bool CtapAuthenticator::tryDowngrade()
+{
+    CTAP_RELEASE_LOG("tryDowngrade");
+    if (!canDowngradeToU2f())
         return false;
 
     CTAP_RELEASE_LOG("tryDowngrade: Downgrading to U2F.");
     m_isDowngraded = true;
     driver().setProtocol(ProtocolVersion::kU2f);
-    observer->downgrade(*this, U2fAuthenticator::create(releaseDriver()));
+    protectedObserver()->downgrade(*this, U2fAuthenticator::create(releaseDriver()));
     return true;
 }
 

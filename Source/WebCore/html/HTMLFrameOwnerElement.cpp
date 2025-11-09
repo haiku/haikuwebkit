@@ -23,6 +23,7 @@
 #include "HTMLFrameOwnerElement.h"
 
 #include "ContainerNodeInlines.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"

@@ -25,11 +25,12 @@
 
 #pragma once
 
+#include "LayoutUnit.h"
+
 #include <WebCore/StylePrimitiveNumeric.h>
+#include <WebCore/StyleZoomPrimitives.h>
 
 namespace WebCore {
-
-class LayoutUnit;
 
 using FloatBoxExtent = RectEdges<float>;
 using LayoutBoxExtent = RectEdges<LayoutUnit>;
@@ -39,16 +40,17 @@ namespace Style {
 // <line-width> = <length [0,∞]> | thin | medium | thick
 // https://drafts.csswg.org/css-backgrounds/#typedef-line-width
 struct LineWidth {
-    using Length = Style::Length<CSS::Nonnegative>;
+    using Length = Style::Length<CSS::NonnegativeUnzoomed>;
 
     Length value;
+    bool isKeyword { false };
 
-    constexpr LineWidth(Length length) : value { length } { }
+    constexpr LineWidth(Length length) : value { length }, isKeyword { false } { }
     constexpr LineWidth(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : value { literal } { }
 
-    constexpr LineWidth(CSS::Keyword::Thin) : value { 1 } { }
-    constexpr LineWidth(CSS::Keyword::Medium) : value { 3 } { }
-    constexpr LineWidth(CSS::Keyword::Thick) : value { 5 } { }
+    constexpr LineWidth(CSS::Keyword::Thin) : value { 1 }, isKeyword { true } { }
+    constexpr LineWidth(CSS::Keyword::Medium) : value { 3 }, isKeyword { true } { }
+    constexpr LineWidth(CSS::Keyword::Thick) : value { 5 }, isKeyword { true } { }
 
     constexpr bool isZero() const { return value.isZero(); }
     constexpr bool isPositive() const { return value.isPositive(); }
@@ -69,17 +71,36 @@ template<> struct CSSValueConversion<LineWidth> { auto operator()(BuilderState&,
 // MARK: - Evaluate
 
 template<typename Result> struct Evaluation<LineWidth, Result> {
-    constexpr auto operator()(const LineWidth& value, ZoomNeeded token) -> Result
+    constexpr auto operator()(const LineWidth& value, ZoomFactor zoom) -> Result
     {
-        return Result(value.value.resolveZoom(token));
+        if (value.isKeyword)
+            return Result(value.value.unresolvedValue());
+
+        float result = value.value.resolveZoom(zoom);
+        float snappedResult = floorToDevicePixel(result, zoom.deviceScaleFactor);
+
+        // Any original result that was >= 1 should not be allowed to fall below 1. This keeps border lines from vanishing.
+        if (zoom.value < 1.0f && result < 1.0f && value.value.unresolvedValue() >= 1.0f)
+            return Result(1.0f); // CSS::Keyword::Thin equivalent
+
+        if (auto minimumLineWidth = 1.0f / zoom.deviceScaleFactor; result > 0.0f && result < minimumLineWidth)
+            return Result(minimumLineWidth);
+
+        return Result(snappedResult);
     }
 };
 
 template<> struct Evaluation<LineWidthBox, FloatBoxExtent> {
-    auto operator()(const LineWidthBox&, ZoomNeeded) -> FloatBoxExtent;
+    auto operator()(const LineWidthBox&, ZoomFactor) -> FloatBoxExtent;
 };
 template<> struct Evaluation<LineWidthBox, LayoutBoxExtent> {
-    auto operator()(const LineWidthBox&, ZoomNeeded) -> LayoutBoxExtent;
+    auto operator()(const LineWidthBox&, ZoomFactor) -> LayoutBoxExtent;
+};
+
+// MARK: - Serialize
+
+template<> struct Serialize<LineWidth> {
+    void operator()(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&, const LineWidth&);
 };
 
 } // namespace Style

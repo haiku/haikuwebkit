@@ -87,7 +87,9 @@
 #include <WebCore/DatabaseTracker.h>
 #include <WebCore/DocumentFullscreen.h>
 #include <WebCore/DocumentLoader.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/DocumentStorageAccess.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/ElementInlines.h>
 #include <WebCore/FaceDetectorInterface.h>
 #include <WebCore/FileChooser.h>
@@ -96,6 +98,7 @@
 #include <WebCore/FocusControllerTypes.h>
 #include <WebCore/FocusOptions.h>
 #include <WebCore/Frame.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/HTMLInputElement.h>
 #include <WebCore/HTMLNames.h>
@@ -103,7 +106,7 @@
 #include <WebCore/HTMLPlugInElement.h>
 #include <WebCore/Icon.h>
 #include <WebCore/ImageBuffer.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/PointerLockController.h>
@@ -178,7 +181,6 @@
 #endif
 
 #if ENABLE(DAMAGE_TRACKING)
-#include "LayerTreeHost.h"
 #include <WebCore/Damage.h>
 #endif
 
@@ -806,11 +808,25 @@ IntRect WebChromeClient::rootViewToAccessibilityScreen(const IntRect& rect) cons
     return page ? page->rootViewToAccessibilityScreen(rect) : IntRect();
 }
 
+void WebChromeClient::mainFrameDidChange()
+{
+    if (RefPtr page = m_page.get())
+        page->platformReinitializeAccessibilityToken();
+}
+
 void WebChromeClient::didFinishLoadingImageForElement(HTMLImageElement& element)
 {
     if (RefPtr page = m_page.get())
         page->didFinishLoadingImageForElement(element);
 }
+
+#if ENABLE(MODEL_PROCESS)
+void WebChromeClient::setHasModelElement(bool hasModelElement)
+{
+    if (RefPtr page = m_page.get())
+        page->setHasModelElement(hasModelElement);
+}
+#endif
 
 PlatformPageClient WebChromeClient::platformPageClient() const
 {
@@ -1843,14 +1859,14 @@ RefPtr<API::Object> userDataFromJSONData(JSON::Value& value)
         return API::String::create(value.asString());
     case JSON::Value::Type::Object: {
         auto result = API::Dictionary::create();
-        for (auto [key, value] : *value.asObject())
+        for (auto [key, value] : *value.asObject().unsafeGet())
             result->add(key, userDataFromJSONData(value));
         return result;
     }
     case JSON::Value::Type::Array: {
         auto array = value.asArray();
         Vector<RefPtr<API::Object>> result;
-        for (auto& item : *value.asArray())
+        for (auto& item : *value.asArray().unsafeGet())
             result.append(userDataFromJSONData(item));
         return API::Array::create(WTFMove(result));
     }

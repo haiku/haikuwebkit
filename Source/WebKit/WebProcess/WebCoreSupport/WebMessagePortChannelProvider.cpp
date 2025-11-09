@@ -45,9 +45,7 @@ WebMessagePortChannelProvider& WebMessagePortChannelProvider::singleton()
     return *provider;
 }
 
-WebMessagePortChannelProvider::WebMessagePortChannelProvider()
-{
-}
+WebMessagePortChannelProvider::WebMessagePortChannelProvider() = default;
 
 WebMessagePortChannelProvider::~WebMessagePortChannelProvider()
 {

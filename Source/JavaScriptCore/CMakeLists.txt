@@ -125,6 +125,8 @@ set(JavaScriptCore_OBJECT_LUT_SOURCES
     runtime/TemporalPlainDatePrototype.cpp
     runtime/TemporalPlainDateTimeConstructor.cpp
     runtime/TemporalPlainDateTimePrototype.cpp
+    runtime/TemporalPlainMonthDayConstructor.cpp
+    runtime/TemporalPlainMonthDayPrototype.cpp
     runtime/TemporalPlainTimeConstructor.cpp
     runtime/TemporalPlainTimePrototype.cpp
     runtime/TemporalTimeZoneConstructor.cpp
@@ -725,6 +727,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     debugger/DebuggerCallFrame.h
     debugger/DebuggerParseData.h
     debugger/DebuggerPrimitives.h
+    debugger/ScriptProfilingScope.h
 
     dfg/DFGCPSRethreadingPhase.h
     dfg/DFGCodeOriginPool.h
@@ -1336,6 +1339,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/StackFrame.h
     runtime/StackManager.h
     runtime/StackManagerInlines.h
+    runtime/StopTheWorldCallback.h
     runtime/StringIteratorPrototype.h
     runtime/StringObject.h
     runtime/StringPrototype.h
@@ -1385,6 +1389,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/VMEntryScopeInlines.h
     runtime/VMInlines.h
     runtime/VMManager.h
+    runtime/VMThreadContext.h
     runtime/VMTraps.h
     runtime/VMTrapsInlines.h
     runtime/WaiterListManager.h

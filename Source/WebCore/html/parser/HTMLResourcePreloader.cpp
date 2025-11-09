@@ -26,10 +26,10 @@
 #include "config.h"
 #include "HTMLResourcePreloader.h"
 
-#include "CachedResourceLoader.h"
 #include "CrossOriginAccessControl.h"
 #include "DefaultResourceLoadPriority.h"
-#include "DocumentInlines.h"
+#include "DocumentResourceLoader.h"
+#include "DocumentView.h"
 #include "MediaQueryEvaluator.h"
 #include "MediaQueryParser.h"
 #include "NodeRenderStyle.h"

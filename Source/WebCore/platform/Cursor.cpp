@@ -442,7 +442,7 @@ const Cursor& grabbingCursor()
     return c;
 }
 
-#if !HAVE(NSCURSOR) && !PLATFORM(GTK) && !PLATFORM(WIN) && !PLATFORM(HAIKU)
+#if !HAVE(NSCURSOR) && !PLATFORM(WIN) && !PLATFORM(HAIKU)
 void Cursor::ensurePlatformCursor() const
 {
     notImplemented();

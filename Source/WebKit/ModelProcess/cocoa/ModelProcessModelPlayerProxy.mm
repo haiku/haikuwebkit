@@ -805,7 +805,7 @@ void ModelProcessModelPlayerProxy::setIsMuted(bool isMuted, CompletionHandler<vo
     completionHandler(false);
 }
 
-Vector<RetainPtr<id>> ModelProcessModelPlayerProxy::accessibilityChildren()
+WebCore::ModelPlayerAccessibilityChildren ModelProcessModelPlayerProxy::accessibilityChildren()
 {
     return { };
 }

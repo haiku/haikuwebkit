@@ -26,14 +26,12 @@
 #include "config.h"
 #include "UserGestureIndicator.h"
 
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "FrameDestructionObserverInlines.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "LocalFrameInlines.h"
 #include "Logging.h"
-#include "Page.h"
 #include "ResourceLoadObserver.h"
 #include "SecurityOrigin.h"
 #include <wtf/MainThread.h>
@@ -181,6 +179,11 @@ UserGestureIndicator::~UserGestureIndicator()
     }
 
     currentToken() = m_previousToken;
+}
+
+RefPtr<UserGestureToken> UserGestureIndicator::currentUserGestureForMainThread()
+{
+    return currentToken();
 }
 
 RefPtr<UserGestureToken> UserGestureIndicator::currentUserGesture()

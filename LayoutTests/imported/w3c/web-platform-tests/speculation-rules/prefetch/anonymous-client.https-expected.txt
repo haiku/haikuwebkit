@@ -1,3 +1,0 @@
-
-FAIL test anonymous-client url prefetch for cross origin pages assert_equals: expected (string) "prefetch;anonymous-client-ip" but got (undefined) undefined
-

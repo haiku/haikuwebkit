@@ -37,7 +37,6 @@
 #include "ChromeClient.h"
 #include "Document.h"
 #include "DocumentFullscreen.h"
-#include "DocumentInlines.h"
 #include "ElementInlines.h"
 #include "HTMLAnchorElement.h"
 #include "HTMLAttachmentElement.h"

@@ -107,7 +107,7 @@ RenderBlock* RenderTextFragment::blockForAccompanyingFirstLetter()
     for (auto& block : ancestorsOfType<RenderBlock>(*m_firstLetter)) {
         if (is<RenderMultiColumnFlow>(block))
             break;
-        if (block.style().hasPseudoStyle(PseudoId::FirstLetter) && block.canHaveChildren())
+        if (block.style().hasPseudoStyle(PseudoElementType::FirstLetter) && block.canHaveChildren())
             return &block;
     }
     return nullptr;

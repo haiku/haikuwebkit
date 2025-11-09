@@ -373,64 +373,6 @@
 
         }
     },
-    "imported/selenium/py/test/selenium/webdriver/support/relative_by_tests.py": {
-        "subtests": {
-            "test_should_be_able_to_find_elements_above_another": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_combine_filters": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_find_first_one": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_find_first_one_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_find_elements_above_another_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_combine_filters_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_use_css_selectors": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_use_css_selectors_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_use_xpath": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_should_be_able_to_use_xpath_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_no_such_element_is_raised_rather_than_index_error": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_no_such_element_is_raised_rather_than_index_error_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_find_near_elements": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_find_near_elements_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_not_find_far_elements": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_not_find_far_elements_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_find_far_elements": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            },
-            "test_near_locator_should_find_far_elements_by_locator": {
-                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/213451"}}
-            }
-        }
-    },
 
     "imported/w3c/webdriver/tests/classic/add_cookie/add.py": {
         "subtests": {

@@ -25,34 +25,27 @@
 #include "config.h"
 #include "StyleLengthWrapperData.h"
 
-#include "CalculationValue.h"
-#include "CalculationValueMap.h"
+#include "StyleCalculationValue.h"
+#include "StyleCalculationValueMap.h"
 #include <cmath>
 
 namespace WebCore {
 namespace Style {
 
-LengthWrapperData::LengthWrapperData(uint8_t opaqueType, LengthCalculation&& value)
+LengthWrapperData::LengthWrapperData(uint8_t opaqueType, Ref<Calculation::Value>&& value)
     : m_opaqueType { opaqueType }
     , m_kind { LengthWrapperDataKind::Calculation }
 {
-    m_calculationValueHandle = CalculationValueMap::calculationValues().insert(value.length.protectedCalculationValue());
+    m_calculationValueHandle = Calculation::ValueMap::calculationValues().insert(WTFMove(value));
 }
 
-LengthWrapperData::LengthWrapperData(uint8_t opaqueType, Ref<CalculationValue>&& value)
-    : m_opaqueType { opaqueType }
-    , m_kind { LengthWrapperDataKind::Calculation }
-{
-    m_calculationValueHandle = CalculationValueMap::calculationValues().insert(WTFMove(value));
-}
-
-CalculationValue& LengthWrapperData::calculationValue() const
+Calculation::Value& LengthWrapperData::calculationValue() const
 {
     ASSERT(m_kind == LengthWrapperDataKind::Calculation);
-    return CalculationValueMap::calculationValues().get(m_calculationValueHandle);
+    return Calculation::ValueMap::calculationValues().get(m_calculationValueHandle);
 }
 
-Ref<CalculationValue> LengthWrapperData::protectedCalculationValue() const
+Ref<Calculation::Value> LengthWrapperData::protectedCalculationValue() const
 {
     return calculationValue();
 }
@@ -60,13 +53,13 @@ Ref<CalculationValue> LengthWrapperData::protectedCalculationValue() const
 void LengthWrapperData::ref() const
 {
     ASSERT(m_kind == LengthWrapperDataKind::Calculation);
-    CalculationValueMap::calculationValues().ref(m_calculationValueHandle);
+    Calculation::ValueMap::calculationValues().ref(m_calculationValueHandle);
 }
 
 void LengthWrapperData::deref() const
 {
     ASSERT(m_kind == LengthWrapperDataKind::Calculation);
-    CalculationValueMap::calculationValues().deref(m_calculationValueHandle);
+    Calculation::ValueMap::calculationValues().deref(m_calculationValueHandle);
 }
 
 LengthWrapperData::LengthWrapperData(IPCData&& data)

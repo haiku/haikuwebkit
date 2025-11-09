@@ -373,7 +373,7 @@ extern "C" { extern void (*const __identifier("??_7TestLegacyNoInterfaceObject@W
 extern "C" { extern void* _ZTVN7WebCore27TestLegacyNoInterfaceObjectE[]; }
 #endif
 template<std::same_as<TestLegacyNoInterfaceObject> T>
-static inline void verifyVTable(TestLegacyNoInterfaceObject* ptr) 
+static inline void verifyVTable(TestLegacyNoInterfaceObject* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -393,8 +393,9 @@ static inline void verifyVTable(TestLegacyNoInterfaceObject* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestLegacyNoInterfaceObject>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestLegacyNoInterfaceObject>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestLegacyNoInterfaceObject>(impl.ptr());
 #endif

@@ -343,7 +343,7 @@ static void printToFileForPsoRepro()
     }
 
     outputURL = [outputURL URLByAppendingPathComponent:@"psoRepro.mm"];
-    if (FileSystem::overwriteEntireFile(outputURL.path, psoReproStringBuilder().span<uint8_t>()))
+    if (FileSystem::overwriteEntireFile(outputURL.path, byteCast<uint8_t>(psoReproStringBuilder().span<Latin1Character>())))
         WTFLogAlways("Sucessfully saved repro to %@", outputURL); // NOLINT
     else
         WTFLogAlways("Error saving repro to %@ - %@", outputURL, error); // NOLINT

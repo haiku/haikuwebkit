@@ -28,6 +28,7 @@
 #include "BorderData.h"
 
 #include "RenderStyle.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 #include <wtf/text/TextStream.h>

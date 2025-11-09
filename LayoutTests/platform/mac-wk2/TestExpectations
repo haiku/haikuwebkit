@@ -830,7 +830,6 @@ http/tests/resourceLoadStatistics/user-interaction-reported-after-website-data-r
 http/tests/storageAccess/ [ Pass ]
 imported/w3c/web-platform-tests/storage-access-api/ [ Pass ]
 imported/w3c/web-platform-tests/storage-access-api/hasStorageAccess.sub.https.window.html [ Skip ]
-imported/w3c/web-platform-tests/storage-access-api/requestStorageAccess-cross-origin-fetch.sub.https.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLDedicatedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.BlobURLSharedWorker.sub.https.tentative.window.html [ Skip ]
 imported/w3c/web-platform-tests/storage-access-api/storage-access-beyond-cookies.thirdPartyBlobStorage.sub.https.window.html [ Skip ]
@@ -1084,8 +1083,6 @@ webkit.org/b/214683 [ Debug ] imported/w3c/web-platform-tests/media-source/media
 
 webkit.org/b/214824 [ Debug ] js/throw-large-string-oom.html [ Skip ]
 
-webkit.org/b/215245 [ Release ] imported/w3c/web-platform-tests/content-security-policy/worker-src/service-worker-src-child-fallback.https.sub.html [ Pass Failure ]
-
 webkit.org/b/215304 fast/forms/auto-fill-button/caps-lock-indicator-should-be-visible-after-hiding-auto-fill-strong-password-button.html [ Pass Failure ]
 
 # Some WPT encoding tests run too slowly under ASan (and too slowly in debug builds).
@@ -1313,8 +1310,6 @@ webkit.org/b/229561 http/tests/navigation/page-cache-video.html [ Pass Failure ]
 
 webkit.org/b/231088 [ Release ] http/tests/loading/preload-slow-loading.py [ Pass Failure ]
 
-webkit.org/b/228127 imported/w3c/web-platform-tests/html/cross-origin-opener-policy/resource-popup.https.html [ Pass Crash Failure ]
-
 webkit.org/b/229585 imported/w3c/web-platform-tests/navigation-timing/test_performance_attributes.sub.html [ Pass Failure ]
 
 webkit.org/b/229595 imported/w3c/web-platform-tests/fetch/http-cache/invalidate.any.worker.html [ Pass Failure ]
@@ -1447,9 +1442,6 @@ media/video-source-load.html [ Pass Crash ]
 media/track/video-track.html [ Pass Crash ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/interfaces/TextTrack/activeCues.html [ Pass Crash ]
 http/tests/media/media-stream/audio-capture-and-category.https.html [ Pass Crash ]
-
-# Lack of support for WPT custom domains.
-imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox-top-navigation-escalate-privileges.tentative.sub.window.html [ Failure ]
 
 webkit.org/b/259160 http/tests/privateClickMeasurement/attribution-conversion-through-fetch-keepalive.html [ Pass Failure ] # related: https://webkit.org/b/227555
 webkit.org/b/259160 http/tests/privateClickMeasurement/attribution-conversion-through-image-redirect-ephemeral.html [ Pass Failure ]
@@ -1897,10 +1889,6 @@ imported/w3c/web-platform-tests/css/cssom-view/scroll-behavior-smooth-positions.
 # webkit.org/b/278365 REGRESSION (279617@main): [ macOS wk2 ] imported/w3c/web-platform-tests/webrtc/simulcast/setParameters-active.https.html is a flaky faliure
 imported/w3c/web-platform-tests/webrtc/simulcast/setParameters-active.https.html [ Pass Failure ]
 
-# rdar://134449564
-# add test expectation as flaky because we have no VM modifier for VM only failures
-[ Sequoia+ ] http/tests/media/fairplay/fps-mse-unmuxed-key-rotation.html [ Pass Timeout Failure ]
-
 # webkit.org/b/278738 [ Sonoma wk2 x86_64]: fast/canvas/image-buffer-backend-variants.html is a flaky crash.
 [ Sonoma x86_64 ] fast/canvas/image-buffer-backend-variants.html [ Pass Crash ]
 
@@ -1950,8 +1938,6 @@ webkit.org/b/289347 http/tests/site-isolation/fullscreen-escape-key.html [ Pass 
 # webkit.org/b/282063 REGRESSION (285464@main?) : [ macOS iOS wk2 ] media/remote-control-comman d-is-user-gesture.html is a constant timeout.
 media/remote-control-command-is-user-gesture.html [ Timeout ]
 
-webkit.org/b/282726 http/tests/media/fairplay/legacy-fairplay-hls.html [ Failure ]
-
 # webkit.org/b/281923  [ Sequoia+ ] 3 tests in http/tests/cookies/same-site are constant failure (failure in EWS)
 [ Sequoia+ ] http/tests/cookies/same-site/fetch-after-navigating-iframe-in-cross-origin-page.html [ Failure ]
 [ Sequoia+ ] http/tests/cookies/same-site/fetch-in-cross-origin-service-worker.html [ Failure ]
@@ -1994,8 +1980,6 @@ webkit.org/b/287865 pdf/two-pages-continuous-to-discrete.html [ Pass ImageOnlyFa
 # webkit.org/b/287875 [ macOS Release wk2 x86_64 ] 2x fast/borders/border-painting-*.html are consistently failing.
 [ Sonoma x86_64 Release ] fast/borders/border-painting-inset.html [ Pass ImageOnlyFailure  ]
 [ Sonoma x86_64 Release ] fast/borders/border-painting-outset.html [ Pass ImageOnlyFailure ]
-
-webkit.org/b/287877 pdf/pdf-plugin-printing.html [ Pass Timeout ]
 
 webkit.org/b/287967 media/modern-media-controls/overflow-support/playback-speed.html [ Pass Timeout ]
 
@@ -2158,8 +2142,6 @@ webkit.org/b/283410 media/media-vp8-webm-with-poster.html [ Pass ImageOnlyFailur
 
 webkit.org/b/293761 http/tests/navigation/keyboard-events-during-provisional-navigation.html [ Failure ]
 
-webkit.org/b/293804 [ Debug ] pdf/annotations/checkbox-set-active.html [ Pass Timeout ]
-
 # webkit.org/b/294272 REGRESSION(295925@main?) [macOS Debug]: 2x tests in fast/scrolling/Mac/scrollbars are flaky crash
 [ Debug ] fast/scrolling/mac/scrollbars/overflow-overlay-scrollbar-reveal.html [ Pass Crash ]
 [ Debug ] fast/scrolling/mac/scrollbars/overlay-scrollbar-reveal.html [ Pass Crash ]
@@ -2224,11 +2206,7 @@ webkit.org/b/296017 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/s
 
 webkit.org/b/296066 [ Sequoia Debug arm64 ] accessibility/mac/scrolling-in-pdf-crash.html [ Pass Timeout ]
 
-webkit.org/b/296070 [ Debug arm64 ] pdf/pdf-in-styled-embed.html [ Pass Timeout Failure ]
-
 webkit.org/b/295929 [ Release ] imported/w3c/web-platform-tests/css/css-conditional/container-queries/canvas-as-container-002.html [ Pass ImageOnlyFailure ]
-
-webkit.org/b/296096 [ Debug arm64 ] pdf/annotations/radio-buttons-select-second.html [ Pass Timeout ]
 
 webkit.org/b/296130 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested-4.html [ Pass Failure ]
 
@@ -2311,13 +2289,6 @@ webgl/2.0.y/conformance2/sync/sync-webgl-specific.html [ Slow ]
 
 webkit.org/b/296647 [ arm64 ] http/wpt/background-fetch/background-fetch-pause-resume.window.html [ Pass Failure ]
 
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-after-long-deletion.html [ Failure ]
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-after-short-deletion.html [ Failure Slow ]
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-filtered-link-decoration-before-short-deletion.html [ Failure ]
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-link-decoration-js-cookie-checking.html [ Failure ]
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-unfiltered-link-decoration-after-short-deletion.html [ Failure ]
-webkit.org/b/296655 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-without-link-decoration.html [ Failure ]
-
 webkit.org/b/294152 http/tests/misc/timer-vs-loading.html [ Pass Timeout ]
 
 webkit.org/b/296755 [ Debug ] imported/w3c/web-platform-tests/content-security-policy/worker-src/service-worker-src-child-fallback.https.sub.html [ Pass Failure ]
@@ -2341,9 +2312,6 @@ webkit.org/b/296893 imported/w3c/web-platform-tests/css/css-view-transitions/col
 webkit.org/b/296898 [ Debug arm64 ] fast/block/transparent-outline-with-and-without-border-radius.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/296901 [ Sonoma x86_64 ] imported/w3c/web-platform-tests/css/filter-effects/filters-drop-shadow-002.html [ ImageOnlyFailure ]
-
-webkit.org/b/296911 [ Sequoia Debug arm64 ] http/tests/security/referrer-policy-header.html [ Timeout ]
-webkit.org/b/296911 [ Sequoia Debug arm64 ] http/tests/security/referrer-policy-header-multipart.html [ Timeout ]
 
 # webkit.org/b/296941 REGRESSION(298070@main): [macOS]: Multiple tests in imported/w3c/web-platform-tests/content-security-policy are failing
 imported/w3c/web-platform-tests/content-security-policy/gen/top.http-rp/script-src-self/sharedworker-import.http.html [ Failure ]
@@ -2426,3 +2394,8 @@ webkit.org/b/299561 imported/w3c/web-platform-tests/css/css-anchor-position/anch
 webkit.org/b/299830 imported/w3c/web-platform-tests/storage-access-api/hasStorageAccess-insecure.sub.window.html [ Pass Failure ]
 
 webkit.org/b/299826 [ Release x86_64 ] media/modern-media-controls/media-controller/media-controller-click-on-video-background-should-pause.html [ Crash ]
+
+webkit.org/b/300864 imported/w3c/web-platform-tests/css/css-viewport/zoom/filters-drop-shadow.html [ Pass Failure ]
+
+# https://bugs.webkit.org/show_bug.cgi?id=301021 [ macOS Tahoe wk2 Debug x86_64 ] ipc/serialized-type-info.html is a constant text failure
+[ Tahoe Debug x86_64 ] ipc/serialized-type-info.html [ Failure ]

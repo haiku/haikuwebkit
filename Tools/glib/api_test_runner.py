@@ -41,22 +41,25 @@ import subprocess
 UNKNOWN_CRASH_STR = "CRASH_OR_PROBLEM_IN_TEST_EXECUTABLE"
 
 
+def port_options(options):
+    port_options = optparse.Values()
+    if options.debug:
+        setattr(port_options, 'configuration', 'Debug')
+    elif options.release:
+        setattr(port_options, 'configuration', 'Release')
+    return port_options
+
 class TestRunner(object):
     TEST_TARGETS = []
 
     def __init__(self, port, options, tests=[]):
         self._options = options
-        self._port = Host().port_factory.get(port)
+        self._port = Host().port_factory.get(port, port_options(options))
         self._driver = self._create_driver()
         self._weston = None
         self._monado = None
 
-        if self._options.debug:
-            self._build_type = "Debug"
-        elif self._options.release:
-            self._build_type = "Release"
-        else:
-            self._build_type = self._port.default_configuration()
+        self._build_type = self._port.get_option('configuration')
         common.set_build_types((self._build_type,))
 
         self._programs_path = common.binary_build_path(self._port)
@@ -124,10 +127,7 @@ class TestRunner(object):
         return driver
 
     def _setup_testing_environment_for_driver(self, driver):
-        test_env = driver._setup_environ_for_test()
-        test_env["TEST_WEBKIT_API_WEBKIT2_RESOURCES_PATH"] = common.top_level_path("Tools", "TestWebKitAPI", "Tests", "WebKit")
-        test_env["TEST_WEBKIT_API_WEBKIT2_INJECTED_BUNDLE_PATH"] = common.library_build_path(self._port)
-        test_env["WEBKIT_EXEC_PATH"] = self._programs_path
+        test_env = driver._setup_environ_for_test() | self._port.environment_for_api_tests()
         # The python display-server driver may set WPE_DISPLAY, but we unset it here because it causes issues with
         # some WPE API tests like WPEPlatform/TestDisplayDefault that check the default behaviour of the APIs.
         test_env.pop("WPE_DISPLAY", None)
@@ -194,8 +194,6 @@ class TestRunner(object):
         wpe_legacy_api = self._use_wpe_legacy_api()
         if self.is_webxr_test(test_program):
             env = self._monado_env | self._test_env
-            # WebXR tests use a null compositor
-            env.pop('LIBGL_ALWAYS_SOFTWARE', None)
         else:
             env = self._weston_env if self.is_wpe_platform_wayland_test(test_program) else self._test_env
             if self.is_wpe_platform_test(test_program):

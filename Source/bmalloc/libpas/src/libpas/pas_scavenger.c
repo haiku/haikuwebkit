@@ -38,6 +38,7 @@
 #include "pas_immortal_heap.h"
 #include "pas_large_expendable_memory.h"
 #include "pas_lock.h"
+#include "pas_mte.h"
 #include "pas_page_sharing_pool.h"
 #include "pas_status_reporter.h"
 #include "pas_thread_local_cache.h"
@@ -214,6 +215,7 @@ static void* scavenger_thread_main(void* arg)
 #endif
 
     PAS_PROFILE(SCAVENGER_THREAD_MAIN, data);
+    PAS_MTE_HANDLE(SCAVENGER_THREAD_MAIN, data);
 
     for (;;) {
         pas_page_sharing_pool_scavenge_result scavenge_result;

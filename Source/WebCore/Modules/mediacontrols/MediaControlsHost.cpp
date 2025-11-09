@@ -38,12 +38,14 @@
 #include "ContextMenuController.h"
 #include "ContextMenuItem.h"
 #include "ContextMenuProvider.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
 #include "Event.h"
 #include "EventListener.h"
 #include "EventNames.h"
 #include "EventTarget.h"
 #include "FloatRect.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLElement.h"
 #include "HTMLMediaElement.h"
 #include "HTMLVideoElement.h"
@@ -59,9 +61,9 @@
 #include "NodeDocument.h"
 #include "Page.h"
 #include "PageGroup.h"
-#include "Quirks.h"
 #include "RenderTheme.h"
 #include "ShadowRoot.h"
+#include "Settings.h"
 #include "TextTrack.h"
 #include "TextTrackCueList.h"
 #include "TextTrackList.h"
@@ -350,6 +352,15 @@ bool MediaControlsHost::needsChromeMediaControlsPseudoElement() const
 {
     if (RefPtr mediaElement = m_mediaElement.ptr())
         return mediaElement->document().quirks().needsChromeMediaControlsPseudoElement();
+    return false;
+}
+
+bool MediaControlsHost::isMediaControlsMacInlineSizeSpecsEnabled() const
+{
+#if HAVE(MATERIAL_HOSTING)
+    if (RefPtr mediaElement = m_mediaElement.ptr())
+        return mediaElement->document().settings().mediaControlsMacInlineSizeSpecsEnabled();
+#endif
     return false;
 }
 

@@ -785,12 +785,12 @@ class CheckOutSource(git.Git):
             return super()._dovccmd(*args, **kwargs)
 
     @defer.inlineCallbacks
-    def _fetch(self, _):
+    def _fetch(self, _, shallowClone, abandonOnFailure=True):
         project = self.getProperty('project', '') or CANONICAL_GITHUB_PROJECT
         self.repourl = f'{GITHUB_URL}{project}.git'
 
         try:
-            rc = yield super()._fetch(_)
+            rc = yield super()._fetch(_, shallowClone, abandonOnFailure=True)
         finally:
             self.repourl = self.default_repourl
         defer.returnValue(rc)
@@ -811,7 +811,7 @@ class CheckOutSource(git.Git):
         defer.returnValue(rc)
 
 
-class CleanUpGitIndexLock(shell.ShellCommandNewStyle, ShellMixin):
+class CleanUpGitIndexLock(shell.ShellCommand, ShellMixin):
     name = 'clean-git-index-lock'
     command = ['rm', '-f', '.git/index.lock']
     descriptionDone = ['Deleted .git/index.lock']
@@ -843,7 +843,7 @@ class CleanUpGitIndexLock(shell.ShellCommandNewStyle, ShellMixin):
             print('Error in sending email for git issue: {}'.format(e))
 
 
-class CheckOutSpecificRevision(shell.ShellCommandNewStyle):
+class CheckOutSpecificRevision(shell.ShellCommand):
     name = 'checkout-specific-revision'
     descriptionDone = ['Checked out required revision']
     flunkOnFailure = False
@@ -930,7 +930,7 @@ class FetchBranches(steps.ShellSequence, ShellMixin):
         return results == SUCCESS
 
 
-class ShowIdentifier(shell.ShellCommandNewStyle):
+class ShowIdentifier(shell.ShellCommand):
     name = 'show-identifier'
     identifier_re = r'^Identifier: (.*)$'
     flunkOnFailure = False
@@ -1030,7 +1030,7 @@ class InstallHooks(steps.ShellSequence):
         return {'step': 'Failed to install hooks to checkout'}
 
 
-class CleanWorkingDirectory(shell.ShellCommandNewStyle):
+class CleanWorkingDirectory(shell.ShellCommand):
     name = 'clean-working-directory'
     description = ['clean-working-directory running']
     descriptionDone = ['Cleaned working directory']
@@ -1048,7 +1048,7 @@ class CleanWorkingDirectory(shell.ShellCommandNewStyle):
         return super().run()
 
 
-class CleanDerivedSources(shell.ShellCommandNewStyle):
+class CleanDerivedSources(shell.ShellCommand):
     name = 'clean-derived-sources'
     description = ['clean-derived-sources running']
     descriptionDone = ['Cleaned derived sources directories']
@@ -1375,7 +1375,7 @@ class CheckChangeRelevance(AnalyzeChange):
         defer.returnValue(FAILURE)
 
 
-class GetTestExpectationsBaseline(shell.ShellCommandNewStyle, ShellMixin):
+class GetTestExpectationsBaseline(shell.ShellCommand, ShellMixin):
     name = 'get-test-expectations-baseline'
     description = 'get-test-expectations-baseline running'
     descriptionDone = 'Found baseline expectations for layout tests'
@@ -1448,7 +1448,7 @@ class GetUpdatedTestExpectations(steps.ShellSequence, ShellMixin):
         defer.returnValue(rc)
 
 
-class FindModifiedLayoutTests(shell.ShellCommandNewStyle, AnalyzeChange):
+class FindModifiedLayoutTests(shell.ShellCommand, AnalyzeChange):
     name = 'find-modified-layout-tests'
     description = 'find-modified-layout tests running'
     descriptionDone = 'Found modified layout tests'
@@ -2940,7 +2940,7 @@ class Trigger(trigger.Trigger):
         return properties_to_pass
 
 
-class TestWithFailureCount(shell.TestNewStyle):
+class TestWithFailureCount(shell.Test):
     failedTestsFormatString = '%d test%s failed'
     failedTestCount = 0
 
@@ -2994,7 +2994,7 @@ class CheckStyle(TestWithFailureCount):
         return int(match.group('errors'))
 
 
-class RunBindingsTests(shell.ShellCommandNewStyle, AddToLogMixin):
+class RunBindingsTests(shell.ShellCommand, AddToLogMixin):
     name = 'bindings-tests'
     description = ['bindings-tests running']
     descriptionDone = ['bindings-tests']
@@ -3035,7 +3035,7 @@ class RunBindingsTests(shell.ShellCommandNewStyle, AddToLogMixin):
         return {'step': message}
 
 
-class RunWebKitPerlTests(shell.ShellCommandNewStyle):
+class RunWebKitPerlTests(shell.ShellCommand):
     name = 'webkitperl-tests'
     description = ['webkitperl-tests running']
     descriptionDone = ['webkitperl-tests']
@@ -3066,10 +3066,10 @@ class ReRunWebKitPerlTests(RunWebKitPerlTests):
     haltOnFailure = True
 
     def evaluateCommand(self, cmd):
-        return shell.ShellCommandNewStyle.evaluateCommand(self, cmd)
+        return shell.ShellCommand.evaluateCommand(self, cmd)
 
 
-class RunBuildWebKitOrgUnitTests(shell.ShellCommandNewStyle):
+class RunBuildWebKitOrgUnitTests(shell.ShellCommand):
     name = 'build-webkit-org-unit-tests'
     description = ['build-webkit-unit-tests running']
     command = ['python3', 'runUnittests.py', 'build-webkit-org', '--autoinstall']
@@ -3083,7 +3083,7 @@ class RunBuildWebKitOrgUnitTests(shell.ShellCommandNewStyle):
         return {'step': 'Failed build.webkit.org unit tests'}
 
 
-class RunEWSUnitTests(shell.ShellCommandNewStyle):
+class RunEWSUnitTests(shell.ShellCommand):
     name = 'ews-unit-tests'
     description = ['ews-unit-tests running']
     command = ['python3', 'runUnittests.py', 'ews-build', '--autoinstall']
@@ -3097,7 +3097,7 @@ class RunEWSUnitTests(shell.ShellCommandNewStyle):
         return {'step': 'Failed EWS unit tests'}
 
 
-class RunBuildbotCheckConfig(shell.ShellCommandNewStyle):
+class RunBuildbotCheckConfig(shell.ShellCommand):
     name = 'buildbot-check-config'
     description = ['buildbot-checkconfig running']
     command = ['python3', '../buildbot-cmd', 'checkconfig']
@@ -3127,7 +3127,7 @@ class RunBuildbotCheckConfigForBuildWebKit(RunBuildbotCheckConfig):
     directory = 'build/Tools/CISupport/build-webkit-org'
 
 
-class RunResultsdbpyTests(shell.ShellCommandNewStyle):
+class RunResultsdbpyTests(shell.ShellCommand):
     name = 'resultsdbpy-unit-tests'
     description = ['resultsdbpy-unit-tests running']
     command = [
@@ -3147,7 +3147,7 @@ class RunResultsdbpyTests(shell.ShellCommandNewStyle):
         return {'step': 'Failed resultsdbpy unit tests'}
 
 
-class RunWebKitPyTests(shell.ShellCommandNewStyle, AddToLogMixin):
+class RunWebKitPyTests(shell.ShellCommand, AddToLogMixin):
     name = 'webkitpy-tests'
     descriptionDone = ['webkitpy-tests']
     description = ['webkitpy-tests']
@@ -3205,7 +3205,7 @@ class RunWebKitPyTests(shell.ShellCommandNewStyle, AddToLogMixin):
         return {'step': message}
 
 
-class InstallGtkDependencies(shell.ShellCommandNewStyle):
+class InstallGtkDependencies(shell.ShellCommand):
     name = 'jhbuild'
     description = ['updating gtk dependencies']
     descriptionDone = ['Updated gtk dependencies']
@@ -3216,7 +3216,7 @@ class InstallGtkDependencies(shell.ShellCommandNewStyle):
         super().__init__(logEnviron=False, **kwargs)
 
 
-class InstallWpeDependencies(shell.ShellCommandNewStyle):
+class InstallWpeDependencies(shell.ShellCommand):
     name = 'jhbuild'
     description = ['updating wpe dependencies']
     descriptionDone = ['Updated wpe dependencies']
@@ -3275,7 +3275,7 @@ class BuildLogLineObserver(ParseByLineLogObserver):
             self.error_context_buffer = []
 
 
-class CompileWebKit(shell.CompileNewStyle, AddToLogMixin, ShellMixin):
+class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
     name = 'compile-webkit'
     description = ['compiling']
     descriptionDone = ['Compiled WebKit']
@@ -3436,7 +3436,7 @@ class CompileWebKitWithoutChange(CompileWebKit):
         super().__init__(**kwargs)
 
     def evaluateCommand(self, cmd):
-        rc = shell.CompileNewStyle.evaluateCommand(self, cmd)
+        rc = shell.Compile.evaluateCommand(self, cmd)
 
         self.build.addStepsAfterCurrentStep(self.follow_up_steps())
 
@@ -3672,17 +3672,17 @@ class CompileJSC(CompileWebKit):
     def getResultSummary(self):
         if self.results == FAILURE:
             return {'step': 'Failed to compile JSC'}
-        return shell.CompileNewStyle.getResultSummary(self)
+        return shell.Compile.getResultSummary(self)
 
 
 class CompileJSCWithoutChange(CompileJSC):
     name = 'compile-jsc-without-change'
 
     def evaluateCommand(self, cmd):
-        return shell.CompileNewStyle.evaluateCommand(self, cmd)
+        return shell.Compile.evaluateCommand(self, cmd)
 
 
-class RunJavaScriptCoreTests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
+class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
     name = 'jscore-test'
     description = ['jscore-tests running']
     descriptionDone = ['jscore-tests']
@@ -3906,7 +3906,7 @@ class RunJSCTestsWithoutChange(RunJavaScriptCoreTests):
     prefix = 'jsc_clean_tree_'
 
     def evaluateCommand(self, cmd):
-        rc = shell.TestNewStyle.evaluateCommand(self, cmd)
+        rc = shell.Test.evaluateCommand(self, cmd)
         self.setProperty('clean_tree_run_status', rc)
         return rc
 
@@ -4025,14 +4025,14 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep, AddToLogMixin):
             print('Error in sending email for pre-existing failure: {}'.format(e))
 
 
-class CleanBuild(shell.CompileNewStyle):
+class CleanBuild(shell.Compile):
     name = 'delete-WebKitBuild-directory'
     description = ['deleting WebKitBuild directory']
     descriptionDone = ['Deleted WebKitBuild directory']
     command = ['python3', 'Tools/CISupport/clean-build', WithProperties('--platform=%(fullPlatform)s'), WithProperties('--%(configuration)s')]
 
 
-class KillOldProcesses(shell.CompileNewStyle):
+class KillOldProcesses(shell.Compile):
     name = 'kill-old-processes'
     description = ['killing old processes']
     descriptionDone = ['Killed old processes']
@@ -4053,7 +4053,7 @@ class KillOldProcesses(shell.CompileNewStyle):
         return super().getResultSummary()
 
 
-class TriggerCrashLogSubmission(shell.CompileNewStyle):
+class TriggerCrashLogSubmission(shell.Compile):
     name = 'trigger-crash-log-submission'
     description = ['triggering crash log submission']
     descriptionDone = ['Triggered crash log submission']
@@ -4070,7 +4070,7 @@ class TriggerCrashLogSubmission(shell.CompileNewStyle):
         return super().getResultSummary()
 
 
-class WaitForCrashCollection(shell.CompileNewStyle):
+class WaitForCrashCollection(shell.Compile):
     name = 'wait-for-crash-collection'
     description = ['waiting-for-crash-collection-to-quiesce']
     descriptionDone = ['Crash collection has quiesced']
@@ -4087,7 +4087,7 @@ class WaitForCrashCollection(shell.CompileNewStyle):
         return super().getResultSummary()
 
 
-class RunWebKitTests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
+class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
     name = 'layout-tests'
     description = ['layout-tests running']
     descriptionDone = ['layout-tests']
@@ -4524,7 +4524,7 @@ class ReRunWebKitTests(RunWebKitTests):
 
     @defer.inlineCallbacks
     def runCommand(self, command):
-        yield shell.TestNewStyle.runCommand(self, command)
+        yield shell.Test.runCommand(self, command)
 
         yield self._addToLog('json', '\n')
         logText = self.log_observer.getStdout() + self.log_observer.getStderr()
@@ -4600,7 +4600,7 @@ class RunWebKitTestsWithoutChange(RunWebKitTests):
 
     @defer.inlineCallbacks
     def runCommand(self, command):
-        yield shell.TestNewStyle.runCommand(self, command)
+        yield shell.Test.runCommand(self, command)
 
         yield self._addToLog('json', '\n')
         logText = self.log_observer.getStdout() + self.log_observer.getStderr()
@@ -5059,7 +5059,7 @@ class RunWebKitTestsRepeatFailuresRedTree(RunWebKitTestsRedTree):
 
     @defer.inlineCallbacks
     def runCommand(self, command):
-        yield shell.TestNewStyle.runCommand(self, command)
+        yield shell.Test.runCommand(self, command)
         yield self._addToLog('json', '\n')
         logText = self.log_observer.getStdout() + self.log_observer.getStderr()
         logTextJson = self.log_observer_json.getStdout().rstrip()
@@ -5128,7 +5128,7 @@ class RunWebKitTestsRepeatFailuresWithoutChangeRedTree(RunWebKitTestsRedTree):
 
     @defer.inlineCallbacks
     def runCommand(self, command):
-        yield shell.TestNewStyle.runCommand(self, command)
+        yield shell.Test.runCommand(self, command)
         yield self._addToLog('json', '\n')
         logText = self.log_observer.getStdout() + self.log_observer.getStderr()
         logTextJson = self.log_observer_json.getStdout().rstrip()
@@ -5344,7 +5344,7 @@ class AnalyzeLayoutTestsResultsRedTree(AnalyzeLayoutTestsResults):
         return defer.returnValue(self.report_success())
 
 
-class ArchiveBuiltProduct(shell.ShellCommandNewStyle):
+class ArchiveBuiltProduct(shell.ShellCommand):
     command = ['python3', 'Tools/CISupport/built-product-archive',
                WithProperties('--platform=%(fullPlatform)s'), WithProperties('--%(configuration)s'), 'archive']
     name = 'archive-built-product'
@@ -5376,7 +5376,7 @@ class UploadBuiltProduct(transfer.FileUpload):
         return super().getResultSummary()
 
 
-class UploadFileToS3(shell.ShellCommandNewStyle, AddToLogMixin):
+class UploadFileToS3(shell.ShellCommand, AddToLogMixin):
     name = 'upload-file-to-s3'
     descriptionDone = name
     haltOnFailure = True
@@ -5435,7 +5435,7 @@ class UploadFileToS3(shell.ShellCommandNewStyle, AddToLogMixin):
         return super().getResultSummary()
 
 
-class GenerateS3URL(master.MasterShellCommandNewStyle):
+class GenerateS3URL(master.MasterShellCommand):
     name = 'generate-s3-url'
     descriptionDone = ['Generated S3 URL']
     haltOnFailure = False
@@ -5494,7 +5494,7 @@ class GenerateS3URL(master.MasterShellCommandNewStyle):
         return super().getResultSummary()
 
 
-class TransferToS3(master.MasterShellCommandNewStyle):
+class TransferToS3(master.MasterShellCommand):
     name = 'transfer-to-s3'
     description = ['transferring to s3']
     descriptionDone = ['Transferred archive to S3']
@@ -5536,7 +5536,7 @@ class TransferToS3(master.MasterShellCommandNewStyle):
         return super().getResultSummary()
 
 
-class DownloadBuiltProduct(shell.ShellCommandNewStyle):
+class DownloadBuiltProduct(shell.ShellCommand):
     command = [
         'python3', 'Tools/CISupport/download-built-product',
         WithProperties('--%(configuration)s'),
@@ -5593,7 +5593,7 @@ class DownloadBuiltProductFromMaster(transfer.FileDownload):
         return super().getResultSummary()
 
 
-class ExtractBuiltProduct(shell.ShellCommandNewStyle):
+class ExtractBuiltProduct(shell.ShellCommand):
     command = ['python3', 'Tools/CISupport/built-product-archive',
                WithProperties('--platform=%(fullPlatform)s'), WithProperties('--%(configuration)s'), 'extract']
     name = 'extract-built-product'
@@ -5606,7 +5606,7 @@ class ExtractBuiltProduct(shell.ShellCommandNewStyle):
         super().__init__(logEnviron=False, **kwargs)
 
 
-class RunAPITests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
+class RunAPITests(shell.Test, AddToLogMixin, ShellMixin):
     name = 'run-api-tests'
     description = ['api tests running']
     descriptionDone = ['api-tests']
@@ -5992,7 +5992,7 @@ class AnalyzeAPITestsResults(buildstep.BuildStep, AddToLogMixin):
             print('Error in sending email for pre-existing failure: {}'.format(e))
 
 
-class ArchiveTestResults(shell.ShellCommandNewStyle):
+class ArchiveTestResults(shell.ShellCommand):
     command = ['python3', 'Tools/CISupport/test-result-archive',
                Interpolate('--platform=%(prop:platform)s'), Interpolate('--%(prop:configuration)s'), 'archive']
     name = 'archive-test-results'
@@ -6020,7 +6020,7 @@ class UploadTestResults(transfer.FileUpload):
         super().__init__(**kwargs)
 
 
-class ExtractTestResults(master.MasterShellCommandNewStyle):
+class ExtractTestResults(master.MasterShellCommand):
     name = 'extract-test-results'
     descriptionDone = ['Extracted test results']
     renderables = ['resultDirectory', 'zipFile']
@@ -6209,7 +6209,7 @@ class CleanGitRepo(steps.ShellSequence, ShellMixin):
         return {'step': 'Cleaned up git repository'}
 
 
-class PushCommitToWebKitRepo(shell.ShellCommandNewStyle):
+class PushCommitToWebKitRepo(shell.ShellCommand):
     name = 'push-commit-to-webkit-repo'
     descriptionDone = ['Pushed commit to WebKit repository']
     haltOnFailure = False
@@ -6308,7 +6308,7 @@ class PushCommitToWebKitRepo(shell.ShellCommandNewStyle):
         return None
 
 
-class DetermineLandedIdentifier(shell.ShellCommandNewStyle):
+class DetermineLandedIdentifier(shell.ShellCommand):
     name = 'determine-landed-identifier'
     descriptionDone = ['Determined landed identifier']
     command = ['/bin/bash', '--posix', '-o', 'pipefail', '-c', "git log -1 --no-decorate | grep 'Canonical link: https://commits\\.webkit\\.org/'"]
@@ -6441,7 +6441,7 @@ class CheckStatusOnEWSQueues(buildstep.BuildStep, BugzillaMixin):
         return {'step': "mac-wk2 tests haven't completed"}
 
 
-class ValidateRemote(shell.ShellCommandNewStyle):
+class ValidateRemote(shell.ShellCommand):
     name = 'validate-remote'
     haltOnFailure = False
     flunkOnFailure = True
@@ -6500,7 +6500,7 @@ class ValidateRemote(shell.ShellCommandNewStyle):
 # There are cases where we have a branch alias tracking a more traditional static branch.
 # We want contributors to be able to land changes on the branch alias instead of the possibly
 # changing branch.
-class MapBranchAlias(shell.ShellCommandNewStyle):
+class MapBranchAlias(shell.ShellCommand):
     name = 'map-branch-alias'
     haltOnFailure = False
     flunkOnFailure = True
@@ -6568,7 +6568,7 @@ class MapBranchAlias(shell.ShellCommandNewStyle):
         return not self.doStepIf(step)
 
 
-class ValidateSquashed(shell.ShellCommandNewStyle, AddToLogMixin):
+class ValidateSquashed(shell.ShellCommand, AddToLogMixin):
     name = 'validate-squashed'
     haltOnFailure = False
     flunkOnFailure = True
@@ -6680,7 +6680,7 @@ class AddReviewerMixin(object):
         return 'NOBODY (OOPS!)'
 
 
-class AddReviewerToCommitMessage(shell.ShellCommandNewStyle, AddReviewerMixin):
+class AddReviewerToCommitMessage(shell.ShellCommand, AddReviewerMixin):
     name = 'add-reviewer-to-commit-message'
     haltOnFailure = True
 
@@ -6938,7 +6938,7 @@ class Canonicalize(steps.ShellSequence, ShellMixin, AddToLogMixin):
         return super().getResultSummary()
 
 
-class PushPullRequestBranch(shell.ShellCommandNewStyle):
+class PushPullRequestBranch(shell.ShellCommand):
     name = 'push-pull-request-branch'
     haltOnFailure = True
 
@@ -6973,7 +6973,7 @@ class PushPullRequestBranch(shell.ShellCommandNewStyle):
         return not self.doStepIf(step)
 
 
-class UpdatePullRequest(shell.ShellCommandNewStyle, GitHubMixin, AddToLogMixin):
+class UpdatePullRequest(shell.ShellCommand, GitHubMixin, AddToLogMixin):
     name = 'update-pull-request'
     haltOnFailure = False
     command = ['git', 'log', '--no-decorate']
@@ -7220,7 +7220,7 @@ class ScanBuildWithoutChange(ScanBuild):
             print(f'Error in sending email for unexpected build failure: {e}')
 
 
-class ParseStaticAnalyzerResults(shell.ShellCommandNewStyle):
+class ParseStaticAnalyzerResults(shell.ShellCommand):
     name = 'parse-static-analyzer-results'
     description = ['parsing static analyzer results']
     descriptionDone = ['parsed static analyzer results']
@@ -7275,7 +7275,7 @@ class ParseStaticAnalyzerResultsWithoutChange(ParseStaticAnalyzerResults):
     scan_build_output = SCAN_BUILD_OUTPUT_DIR + '-baseline'
 
 
-class FindModifiedSaferCPPExpectations(shell.ShellCommandNewStyle, AddToLogMixin):
+class FindModifiedSaferCPPExpectations(shell.ShellCommand, AddToLogMixin):
     name = 'find-modified-safer-cpp-expectations'
     RE_FILE = r'^(\+|-)(?P<file>[^/+/-].+(?:\.cpp|\.mm|\.h|\.m|\.c))$'
     RE_EXPECTATIONS = r'^(\+\+\+).+(Source/(?P<project>.+)/SaferCPPExpectations/(?P<checker>.+)Expectations)$'
@@ -7331,7 +7331,7 @@ class FindModifiedSaferCPPExpectations(shell.ShellCommandNewStyle, AddToLogMixin
             return {'step': f'Unable to find modified expectations'}
 
 
-class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle, AnalyzeChange, AddToLogMixin):
+class FindUnexpectedStaticAnalyzerResults(shell.ShellCommand, AnalyzeChange, AddToLogMixin):
     name = 'find-unexpected-static-analyzer-results'
     description = ['finding unexpected static analyzer results']
     descriptionDone = ['found unexpected static analyzer results']
@@ -7619,7 +7619,7 @@ class FindUnexpectedStaticAnalyzerResultsWithoutChange(FindUnexpectedStaticAnaly
         self.log_observer_json = logobserver.BufferLogObserver()
         self.addLogObserver('json', self.log_observer_json)
 
-        rc = yield shell.ShellCommandNewStyle.run(self)
+        rc = yield shell.ShellCommand.run(self)
         if rc != SUCCESS:
             return defer.returnValue(rc)
 
@@ -7720,7 +7720,7 @@ class DownloadUnexpectedResultsFromMaster(transfer.FileDownload):
         return super().getResultSummary()
 
 
-class DeleteStaticAnalyzerResults(shell.ShellCommandNewStyle, AddToLogMixin):
+class DeleteStaticAnalyzerResults(shell.ShellCommand, AddToLogMixin):
     name = 'delete-static-analyzer-results'
     description = ['deleting static analyzer results']
     descriptionDone = ['deleted static analyzer results']
@@ -7739,7 +7739,7 @@ class DeleteStaticAnalyzerResults(shell.ShellCommandNewStyle, AddToLogMixin):
         return defer.returnValue(rc)
 
 
-class GenerateSaferCPPResultsIndex(shell.ShellCommandNewStyle):
+class GenerateSaferCPPResultsIndex(shell.ShellCommand):
     name = 'generate-safer-cpp-results'
     description = ['generating safer cpp results']
     descriptionDone = ['generated safer cpp results']
@@ -7911,7 +7911,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
         return {'step': results_summary}
 
 
-class ArchiveStaticAnalyzerResults(shell.ShellCommandNewStyle):
+class ArchiveStaticAnalyzerResults(shell.ShellCommand):
     command = ["Tools/Scripts/generate-static-analysis-archive", "--id-string", WithProperties("Build #%(buildnumber)s"), "--output-root", SCAN_BUILD_OUTPUT_DIR, "--destination", STATIC_ANALYSIS_ARCHIVE_PATH]
     name = "archive-static-analyzer-results"
     description = ["archiving static analyzer results"]

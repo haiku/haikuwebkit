@@ -29,6 +29,7 @@
 
 #import "AttachmentLayout.h"
 #import "BorderPainter.h"
+#import "CSSToLengthConversionData.h"
 #import "CaretRectComputation.h"
 #import "ColorBlending.h"
 #import "DateComponents.h"
@@ -55,6 +56,7 @@
 #import "RenderProgress.h"
 #import "RenderSlider.h"
 #import "RenderText.h"
+#import "Settings.h"
 #import "StylePrimitiveNumericTypes+Evaluation.h"
 #import "Theme.h"
 #import "TypedElementDescendantIteratorInlines.h"
@@ -345,7 +347,7 @@ static const String& glassMaterialMediaControlsStyleSheet()
         "        --primary-glyph-color: white;"
         "        --secondary-glyph-color: white;"
         "    }"
-        "    .media-controls.inline.mac:not(.audio) {"
+        "    .media-controls.inline.mac:not(.audio, .narrowviewer) {"
         "        background-color: rgba(0, 0, 0, 0.4);"
         "    }"
         "    .media-controls.inline.mac:not(.audio):is(:empty, .faded) {"
@@ -375,6 +377,170 @@ static const String& glassMaterialMediaControlsStyleSheet()
     return glassMaterialMediaControlsStyleSheet;
 }
 
+static const String& macOSInlineMediaControlsStyleSheet()
+{
+    static NeverDestroyed<String> macOSInlineMediaControlsStyleSheet {
+        ".media-controls-container.mac.inline {"
+        "    display: flex;"
+        "    flex-direction: column;"
+        "    position: relative;"
+        "}"
+        "/* Volume slider */"
+        ".media-controls.mac.inline .volume-slider-container {"
+        "    position: absolute;"
+        "    top: var(--inline-controls-inside-margin);"
+        "    right: calc(var(--inline-controls-inside-margin) * 1);"
+        "    width: 180px;"
+        "    height: 46px;"
+        "    display: flex;"
+        "    align-items: center;"
+        "    justify-content: center;"
+        "    border-radius: var(--inline-controls-border-radius);"
+        "    transform: translateY(calc(var(--inline-controls-inside-margin) + 2));"
+        "}"
+        ".media-controls.mac.inline.audio .volume-slider-container {"
+        "    transform: var(--volume-slider-transform) translateY(-8px);"
+        "}"
+        ".media-controls.mac.inline .volume-slider-container > .background-tint {"
+        "    top: 0;"
+        "    left: var(--inline-controls-inside-margin);"
+        "    right: 0;"
+        "    bottom: 0;"
+        "    width: auto;"
+        "}"
+        ".media-controls.mac.inline:focus-within .volume-slider-container,"
+        ".media-controls.mac.inline.show-controls .volume-slider-container {"
+        "    opacity: 1;"
+        "    pointer-events: auto;"
+        "    transform: none;"
+        "}"
+        ".media-controls.mac.inline .volume-slider-container > .background-tint > div {"
+        "    border-radius: var(--inline-controls-border-radius);"
+        "    overflow: hidden;"
+        "}"
+        ".media-controls.mac.inline .volume-slider-container > .slider {"
+        "    width: 135px;"
+        "}"
+        ".media-controls.mac.inline .volume-slider-container button[class*=\"mute\"],"
+        ".media-controls.mac.inline .volume-slider-container .button.mute {"
+        "    position: relative !important;"
+        "    transform: scale(0.8);"
+        "    margin-left: 2px"
+        "}"
+        ":host(audio) .media-controls.mac.inline,"
+        ":host(video.media-document.audio)"
+        ".media-controls.mac.inline,"
+        ".media-controls.mac.inline * {"
+        "    --inline-controls-bar-height: 46px;"
+        "}"
+        ".media-controls.mac.inline .controls-bar.bottom,"
+        ".media-controls.mac.inline .controls-bar.top-left {"
+        "    border-radius: var(--inline-controls-border-radius);"
+        "}"
+        ".media-controls.mac.inline {"
+        "    display: flex;"
+        "    flex-direction: column;"
+        "    justify-content: flex-end;"
+        "    height: 100%;"
+        "    position: relative;"
+        "}"
+        ".media-controls-container.mac.inline > .media-controls.mac.inline {"
+        "        position: relative;"
+        "}"
+        ".media-controls.mac.inline .controls-bar.bottom {"
+        "    position: relative !important;"
+        "    bottom: auto !important;"
+        "    left: auto !important;"
+        "    right: auto !important;"
+        "    top: auto !important;"
+        "    display: flex !important;"
+        "    align-items: center;"
+        "    justify-content: space-between;"
+        "    max-width: 750px;"
+        "    margin: 0 auto;"
+        "    width: 100%;"
+        "    box-sizing: border-box;"
+        "    padding-inline: var(--inline-controls-inside-margin);"
+        "    margin-bottom: var(--inline-controls-inside-margin);"
+        "}"
+        ".media-controls.mac.inline > .controls-bar.bottom > .left-cluster,"
+        ".media-controls.mac.inline > .controls-bar.bottom > .time-control,"
+        ".media-controls.mac.inline > .controls-bar.bottom > .right-cluster {"
+        "    display: flex;"
+        "    align-items: center;"
+        "    position: relative;"
+        "}"
+        ".media-controls.mac.inline > .controls-bar.bottom > .left-cluster {"
+        "    flex: 0 0 auto;"
+        "    justify-content: flex-start;"
+        "    min-width: fit-content;"
+        "}"
+        ".media-controls.mac.inline > .controls-bar.bottom > .time-control {"
+        "    flex: 1 1 0;"
+        "    justify-content: center;"
+        "    min-width: 0;"
+        "    max-width: calc(100% - 200px);"
+        "    margin-inline: 12px;"
+        "}"
+        ".media-controls.mac.inline > .controls-bar.bottom > .right-cluster {"
+        "    flex: 0 0 auto;"
+        "    justify-content: flex-end;"
+        "    min-width: fit-content;"
+        "}"
+        ".media-controls.mac.inline .buttons-container.right {"
+        "    position: relative !important;"
+        "    right: auto !important;"
+        "    left: 35px !important;"
+        "    top: auto !important;"
+        "    bottom: auto !important;"
+        "    display: flex !important;"
+        "    align-items: center;"
+        "    gap: 8px;"
+        "}"
+        ".media-controls.mac.inline .controls-bar.bottom .time-control .slider,"
+        ".media-controls.mac.inline .controls-bar.bottom .time-control .scrubber{"
+        "  display: flex;"
+        "  flex: 1 1 auto;"
+        "  max-width: 452px;"
+        "  min-width: 0px;"
+        "  position: relative;"
+        "}"
+        ".media-controls.mac.inline .controls-bar.bottom .background-tint,"
+        ".media-controls.mac.inline .controls-bar.top-left .background-tint {"
+        "    border-radius: var(--inline-controls-border-radius);"
+        "    overflow: hidden;"
+        "}"
+        ".media-controls.mac.inline .slider.default > .appearance {"
+        "    top: 50%;"
+        "    transform: translateY(-50%);"
+        "    height: 7.5px;"
+        "}"
+        ".media-controls.mac.inline .buttons-container.right > * {"
+        "    display: flex;"
+        "    position: relative !important;"
+        "    left: -8px !important;"
+        "}"
+        ".media-controls.mac.inline .slider.default > .appearance > .fill > .primary {"
+        "    left: 0;"
+        "    background-color: white;"
+        "}"
+        ".media-controls.mac.inline .slider.default.allows-relative-scrubbing > .appearance > .fill > .primary {"
+        "    background-color: white;"
+        "}"
+        ".slider.default > .appearance > .fill > .knob.pill,"
+        ".media-controls.mac.inline .volume-slider-container .slider.default > .appearance > .fill > .knob,"
+        ".media-controls.mac.inline .time-control .slider.default > .appearance > .fill > .knob {"
+        "    top: -5px;"
+        "    width: 21px;"
+        "    height: 17px;"
+        "    border-radius: 8.5px;"
+        "    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);"
+        "    margin: -2px;"
+        "}"_s
+    };
+
+    return macOSInlineMediaControlsStyleSheet;
+}
 #endif // HAVE(MATERIAL_HOSTING)
 
 Vector<String, 2> RenderThemeCocoa::mediaControlsStyleSheets(const HTMLMediaElement& mediaElement)
@@ -389,6 +555,9 @@ Vector<String, 2> RenderThemeCocoa::mediaControlsStyleSheets(const HTMLMediaElem
     // once `@supports (-apple-visual-effect: -apple-system-glass-material)` behaves correctly in WebKitLegacy.
     if (mediaElement.document().settings().hostedBlurMaterialInMediaControlsEnabled())
         mediaControlsStyleSheets.append(glassMaterialMediaControlsStyleSheet());
+
+    if (mediaElement.document().settings().mediaControlsMacInlineSizeSpecsEnabled())
+        mediaControlsStyleSheets.append(macOSInlineMediaControlsStyleSheet());
 #else
     UNUSED_PARAM(mediaElement);
 #endif
@@ -2274,7 +2443,7 @@ static void adjustSelectListButtonStyleForVectorBasedControls(RenderStyle& style
     applyCommonButtonPaddingToStyleForVectorBasedControls(style, element);
 
     // Enforce "line-height: normal".
-    style.setLineHeight(Length(LengthType::Normal));
+    style.setLineHeight(CSS::Keyword::Normal { });
 }
 
 // FIXME: This is a copy of RenderThemeMeasureTextClient from RenderThemeIOS. Refactor to remove duplicate code.
@@ -2583,9 +2752,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) - glyphPaddingEnd);
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) + glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) + glyphPaddingEnd);
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();

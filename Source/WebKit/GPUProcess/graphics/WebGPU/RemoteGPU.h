@@ -126,7 +126,7 @@ private:
 
 
     void requestAdapter(const WebGPU::RequestAdapterOptions&, WebGPUIdentifier, CompletionHandler<void(std::optional<RemoteGPURequestAdapterResponse>&&)>&&);
-    void addMeshRequest(const DDModel::DDMeshDescriptor&, WebKit::DDModelIdentifier);
+    void createModelBacking(unsigned width, unsigned height, WebKit::DDModelIdentifier, CompletionHandler<void(Vector<MachSendRight>&&)>&&);
 
     void createPresentationContext(const WebGPU::PresentationContextDescriptor&, WebGPUIdentifier);
 

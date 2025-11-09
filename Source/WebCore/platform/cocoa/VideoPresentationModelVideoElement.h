@@ -137,6 +137,7 @@ private:
 
     // HTMLMediaElementClient
     void audioSessionCategoryChanged(AudioSessionCategory, AudioSessionMode, RouteSharingPolicy) final;
+    void routingContextUIDChanged(const String&) final;
 
     const Ref<VideoListener> m_videoListener;
     RefPtr<HTMLVideoElement> m_videoElement;

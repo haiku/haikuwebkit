@@ -58,17 +58,25 @@ class PopenBase(object):
         self.returncode = None
 
         self.stdin = string_utils.BytesIO() if stdin is None or stdin == subprocess.PIPE else stdin
-        self.stdout = string_utils.BytesIO() if stdout == subprocess.PIPE else stdout
+        self.stdout = string_utils.BytesIO() if stdout == subprocess.PIPE else (None if stdout == subprocess.DEVNULL else stdout)
         self._stdout_type = bytes if stdout == subprocess.PIPE else str
+        self._stdout_devnull = (stdout == subprocess.DEVNULL)
         if stderr == subprocess.STDOUT:
             self.stderr = self.stdout
             self._stderr_type = self._stdout_type
+            self._stderr_devnull = self._stdout_devnull
         elif stderr == subprocess.PIPE:
             self.stderr = string_utils.BytesIO()
             self._stderr_type = bytes
+            self._stderr_devnull = False
+        elif stderr == subprocess.DEVNULL:
+            self.stderr = None
+            self._stderr_type = str
+            self._stderr_devnull = True
         else:
             self.stderr = stderr
             self._stderr_type = str
+            self._stderr_devnull = False
 
         Subprocess.completion_generator_for(args[0])
 
@@ -90,13 +98,15 @@ class PopenBase(object):
             self.stdin.seek(0)
             self._completion = Subprocess.completion_for(*self._args, cwd=self._cwd, env=self._env, input=self.stdin.read())
 
-            (self.stdout or sys.stdout).write(
-                string_utils.decode(self._completion.stdout, target_type=self._stdout_type))
-            (self.stdout or sys.stdout).flush()
+            if not self._stdout_devnull:
+                (self.stdout or sys.stdout).write(
+                    string_utils.decode(self._completion.stdout, target_type=self._stdout_type))
+                (self.stdout or sys.stdout).flush()
 
-            (self.stderr or sys.stderr).write(
-                string_utils.decode(self._completion.stderr, target_type=self._stderr_type))
-            (self.stderr or sys.stderr).flush()
+            if not self._stderr_devnull:
+                (self.stderr or sys.stderr).write(
+                    string_utils.decode(self._completion.stderr, target_type=self._stderr_type))
+                (self.stderr or sys.stderr).flush()
 
             if self.stdout:
                 self.stdout.seek(0)

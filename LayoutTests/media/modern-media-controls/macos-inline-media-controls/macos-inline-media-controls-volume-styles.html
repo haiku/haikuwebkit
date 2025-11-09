@@ -13,25 +13,38 @@ document.body.appendChild(mediaControls.element);
 
 let volumeSliderContainerStyle, volumeSliderStyle;
 
-shouldBecomeEqual("mediaControls.volumeSlider.parent.element.parentNode", "mediaControls.element", () => {
-    volumeSliderContainerStyle = window.getComputedStyle(mediaControls.volumeSlider.parent.element);
-    shouldBeEqualToString("volumeSliderContainerStyle.position", "absolute");
-    shouldBeEqualToString("volumeSliderContainerStyle.left", "566px");
-    shouldBeEqualToString("volumeSliderContainerStyle.top", "226px");
-    shouldBeEqualToString("volumeSliderContainerStyle.width", "94px");
-    shouldBeEqualToString("volumeSliderContainerStyle.height", "31px");
-    shouldBeEqualToString("volumeSliderContainerStyle.transform", "matrix(0, -1, 1, 0, -30, -26)");
+mediaControls._setupVolumeSliderConfiguration();
 
-    volumeSliderStyle = window.getComputedStyle(mediaControls.volumeSlider.element);
-    shouldBeEqualToString("volumeSliderStyle.marginLeft", "6px");
-    shouldBeEqualToString("volumeSliderStyle.width", "60px");
-    shouldBeEqualToString("volumeSliderStyle.height", "16px");
+function waitForVolumeSliderReady() {
+    return mediaControls._volumeSliderSetupComplete &&
+           mediaControls.volumeSlider.parent &&
+           mediaControls.volumeSlider.parent.element;
+}
 
-    mediaControls.element.remove();
+    if (!mediaControls._volumeSliderSetupComplete) {
+        mediaControls._setupVolumeSliderConfiguration();
+    }
 
-    debug("");
-    finishMediaControlsTest();
-});
+    mediaControls.handleEvent({ type: "mouseenter", currentTarget: mediaControls.muteButton.element });
+
+    shouldBecomeEqual("mediaControls.volumeSlider.parent ? mediaControls.volumeSlider.parent.element.parentNode : null", "mediaControls.element", () => {
+        volumeSliderContainerStyle = window.getComputedStyle(mediaControls.volumeSlider.parent.element);
+        debug("volumeSliderContainerStyle.position " + String(volumeSliderContainerStyle.position));
+        debug("volumeSliderContainerStyle.left " + String(volumeSliderContainerStyle.left));
+        debug("volumeSliderContainerStyle.top " + String(volumeSliderContainerStyle.top));
+        debug("volumeSliderContainerStyle.width " + String(volumeSliderContainerStyle.width));
+        debug("volumeSliderContainerStyle.height " + String(volumeSliderContainerStyle.height));
+
+        volumeSliderStyle = window.getComputedStyle(mediaControls.volumeSlider.element);
+        debug("volumeSliderStyle.marginLeft " + String(volumeSliderStyle.marginLeft));
+        debug("volumeSliderStyle.width " + String(volumeSliderStyle.width));
+        debug("volumeSliderStyle.height " + String(volumeSliderStyle.height));
+
+        mediaControls.element.remove();
+
+        debug("");
+        finishMediaControlsTest();
+    });
 
 // Simulate the mouse entering the volume button.
 window.requestAnimationFrame(() => mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter")));

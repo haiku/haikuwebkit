@@ -265,8 +265,6 @@ AcceleratedEffect::AcceleratedEffect(AnimationEffectTiming timing, Vector<Keyfra
     , m_startTime(startTime)
     , m_holdTime(holdTime)
 {
-    // FIXME: pass in the timeline duration for scroll timelines.
-    m_timing.updateComputedProperties(std::nullopt, m_playbackRate);
 }
 
 AcceleratedEffect::AcceleratedEffect(const AcceleratedEffect& source, OptionSet<AcceleratedEffectProperty>& propertyFilter)
@@ -352,7 +350,7 @@ static void blend(AcceleratedEffectProperty property, AcceleratedEffectValues& o
     }
 }
 
-void AcceleratedEffect::apply(WebAnimationTime currentTime, AcceleratedEffectValues& values)
+void AcceleratedEffect::apply(WebAnimationTime currentTime, AcceleratedEffectValues& values) const
 {
     auto localTime = [&]() -> WebAnimationTime {
         ASSERT(m_holdTime || m_startTime);

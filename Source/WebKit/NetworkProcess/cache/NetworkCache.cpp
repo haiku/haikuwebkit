@@ -670,8 +670,8 @@ void Cache::dumpContentsToFile()
     if (!fileHandle)
         return;
 
-    constexpr auto prologue = "{\n\"entries\": [\n"_s;
-    fileHandle.write(prologue.span8());
+    constexpr auto prologue = "{\n\"entries\": [\n"_span;
+    fileHandle.write(byteCast<uint8_t>(prologue));
 
     struct Totals {
         unsigned count { 0 };

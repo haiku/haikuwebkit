@@ -499,12 +499,6 @@ void RemoteRenderingBackend::releaseMemory()
     m_remoteResourceCache.releaseMemory();
 }
 
-void RemoteRenderingBackend::releaseNativeImages()
-{
-    ASSERT(!RunLoop::isMain());
-    m_remoteResourceCache.releaseNativeImages();
-}
-
 #if USE(GRAPHICS_LAYER_WC)
 void RemoteRenderingBackend::flush(IPC::Semaphore&& semaphore)
 {

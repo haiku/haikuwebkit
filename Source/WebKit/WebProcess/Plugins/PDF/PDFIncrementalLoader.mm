@@ -157,8 +157,6 @@ public:
     {
     }
 
-    ~PDFPluginStreamLoaderClient() = default;
-
     void willSendRequest(NetscapePlugInStreamLoader*, ResourceRequest&&, const ResourceResponse& redirectResponse, CompletionHandler<void(ResourceRequest&&)>&&) final;
     void didReceiveResponse(NetscapePlugInStreamLoader*, const ResourceResponse&) final;
     void didReceiveData(NetscapePlugInStreamLoader*, const SharedBuffer&) final;

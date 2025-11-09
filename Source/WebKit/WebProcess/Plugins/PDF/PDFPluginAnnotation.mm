@@ -37,6 +37,8 @@
 #import <WebCore/AddEventListenerOptionsInlines.h>
 #import <WebCore/CSSPrimitiveValue.h>
 #import <WebCore/CSSPropertyNames.h>
+#import <WebCore/DocumentEventLoop.h>
+#import <WebCore/DocumentView.h>
 #import <WebCore/Event.h>
 #import <WebCore/EventLoop.h>
 #import <WebCore/EventNames.h>

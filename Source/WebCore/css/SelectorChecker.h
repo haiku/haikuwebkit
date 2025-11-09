@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include "PseudoElementIdentifier.h"
 #include "SelectorMatchingState.h"
 #include "StyleRelations.h"
 #include "StyleScrollbarState.h"
@@ -41,6 +42,10 @@ class Element;
 class RenderScrollbar;
 class RenderStyle;
 class StyleRuleScope;
+
+namespace SelectorCompiler {
+class SelectorCodeGenerator;
+}
 
 class SelectorChecker {
     WTF_MAKE_NONCOPYABLE(SelectorChecker);
@@ -87,9 +92,19 @@ public:
         { }
 
         const SelectorChecker::Mode resolvingMode;
-        // FIXME: Switch to PseudoElementIdentifier.
-        PseudoId pseudoId { PseudoId::None };
+
+        void setRequestedPseudoElement(Style::PseudoElementIdentifier);
+        std::optional<Style::PseudoElementIdentifier> requestedPseudoElement() const;
+
+    private:
+        friend class SelectorCompiler::SelectorCodeGenerator;
+
+        // These are simple fields so they are easier for SelectorCompiler to generate code against.
+        bool hasRequestedPseudoElement { false };
+        PseudoElementType pseudoElementType { };
         AtomString pseudoElementNameArgument;
+
+    public:
         std::optional<StyleScrollbarState> scrollbarState;
         Vector<AtomString> classList;
         RefPtr<const ContainerNode> scope;
@@ -101,7 +116,7 @@ public:
 
         // FIXME: It would be nicer to have a separate object for return values. This requires some more work in the selector compiler.
         Style::Relations styleRelations;
-        PseudoIdSet pseudoIDSet;
+        EnumSet<PseudoElementType> publicPseudoElements;
         bool matchedInsideScope { false };
         bool disallowHasPseudoClass { false };
         bool scopingRootMatchesVisited { false };
@@ -120,7 +135,7 @@ public:
     struct LocalContext;
     
 private:
-    MatchResult matchRecursively(CheckingContext&, LocalContext&, PseudoIdSet&) const;
+    MatchResult matchRecursively(CheckingContext&, LocalContext&, EnumSet<PseudoElementType>&) const;
     bool checkOne(CheckingContext&, LocalContext&, MatchType&) const;
     bool matchSelectorList(CheckingContext&, const LocalContext&, const Element&, const CSSSelectorList&) const;
     bool matchHasPseudoClass(CheckingContext&, const Element&, const CSSSelector&) const;

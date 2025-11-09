@@ -560,7 +560,7 @@ const TypeDefinition& TypeDefinition::unrollSlow() const
         Ref unrolled = underlyingType.replacePlaceholders(projectee.index());
         TypeInformation::addCachedUnrolling(index(), unrolled);
         RELEASE_ASSERT(unrolled->refCount() > 2); // TypeInformation registry + Ref + owner (unrolling cache).
-        return unrolled; // TypeInformation unrolling cache now owns, with lifetime tied to 'this'.
+        return unrolled.unsafeGet(); // TypeInformation unrolling cache now owns, with lifetime tied to 'this'.
     }
     RELEASE_ASSERT(underlyingType.refCount() > 1); // TypeInformation registry + owner(s).
     return underlyingType;

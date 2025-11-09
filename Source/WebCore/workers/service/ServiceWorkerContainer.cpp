@@ -32,8 +32,7 @@
 #include "CookieStoreGetOptions.h"
 #include "DOMPromiseProxy.h"
 #include "DedicatedWorkerGlobalScope.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "Event.h"
 #include "EventLoop.h"
 #include "EventNames.h"
@@ -51,7 +50,6 @@
 #include "LocalFrameLoaderClient.h"
 #include "Logging.h"
 #include "NavigatorBase.h"
-#include "Page.h"
 #include "PushSubscriptionOptions.h"
 #include "ResourceError.h"
 #include "ScriptExecutionContext.h"
@@ -243,7 +241,7 @@ void ServiceWorkerContainer::addRegistration(Variant<RefPtr<TrustedScriptURL>, S
     jobData.domainForCachePartition = context->domainForCachePartition();
     jobData.registrationOptions = options;
 
-    scheduleJob(makeUnique<ServiceWorkerJob>(*this, WTFMove(promise), WTFMove(jobData)));
+    scheduleJob(ServiceWorkerJob::create(*this, WTFMove(promise), WTFMove(jobData)));
 }
 
 void ServiceWorkerContainer::willSettleRegistrationPromise(bool success)
@@ -301,10 +299,10 @@ void ServiceWorkerContainer::updateRegistration(const URL& scopeURL, const URL& 
 
     CONTAINER_RELEASE_LOG("removeRegistration: Updating service worker. jobID=%" PRIu64, jobData.identifier().jobIdentifier.toUInt64());
 
-    scheduleJob(makeUnique<ServiceWorkerJob>(*this, WTFMove(promise), WTFMove(jobData)));
+    scheduleJob(ServiceWorkerJob::create(*this, WTFMove(promise), WTFMove(jobData)));
 }
 
-void ServiceWorkerContainer::scheduleJob(std::unique_ptr<ServiceWorkerJob>&& job)
+void ServiceWorkerContainer::scheduleJob(Ref<ServiceWorkerJob>&& job)
 {
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
     RefPtr swConnection = m_swConnection;
@@ -409,7 +407,7 @@ void ServiceWorkerContainer::jobFailedWithException(ServiceWorkerJob& job, const
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
     ASSERT_WITH_MESSAGE(job.hasPromise() || job.data().type == ServiceWorkerJobType::Update, "Only soft updates have no promise");
 
-    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, &job] {
+    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, job = Ref { job }] {
         destroyJob(job);
     });
 
@@ -448,7 +446,7 @@ void ServiceWorkerContainer::jobResolvedWithRegistration(ServiceWorkerJob& job, 
         CONTAINER_RELEASE_LOG("jobResolvedWithRegistration: Update job %" PRIu64 " succeeded", job.identifier().toUInt64());
     }
 
-    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, &job] {
+    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, job = Ref { job }] {
         destroyJob(job);
     });
 
@@ -530,7 +528,7 @@ void ServiceWorkerContainer::jobResolvedWithUnregistrationResult(ServiceWorkerJo
     ASSERT(m_creationThread.ptr() == &Thread::currentSingleton());
     ASSERT(job.hasPromise());
 
-    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, &job] {
+    auto guard = makeScopeExit([this, protectedThis = Ref { *this }, job = Ref { job }] {
         destroyJob(job);
     });
 
@@ -728,7 +726,7 @@ void ServiceWorkerContainer::stop()
     m_readyPromise = nullptr;
     auto jobMap = WTFMove(m_jobMap);
     for (auto& ongoingJob : jobMap.values()) {
-        if (ongoingJob.job->cancelPendingLoad())
+        if (Ref { *ongoingJob.job }->cancelPendingLoad())
             notifyFailedFetchingScript(*ongoingJob.job.get(), ResourceError { errorDomainWebKitInternal, 0, ongoingJob.job->data().scriptURL, "Job cancelled"_s, ResourceError::Type::Cancellation });
     }
 

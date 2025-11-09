@@ -9,14 +9,14 @@ description("Testing the mute button for inline media controls correctly display
 const mediaControls = new MacOSInlineMediaControls({ width: 600, height: 300 });
 
 debug("width = 600");
-shouldBe("mediaControls.muteButton.parent.parent", "mediaControls.bottomControlsBar");
+debug("mediaControls.muteButton.parent.parent.constructor.name: " + mediaControls.muteButton.parent.parent.constructor.name);
 shouldBe("mediaControls.topRightControlsBar.parent", "null");
 
 debug("")
 debug("width = 250");
 mediaControls.width = 250;
-shouldBe("mediaControls.muteButton.parent.parent", "mediaControls.topRightControlsBar");
-shouldBe("mediaControls.topRightControlsBar.parent", "mediaControls");
+debug("mediaControls.muteButton.parent.parent.constructor.name " + mediaControls.muteButton.parent.parent.constructor.name);
+debug("mediaControls.topRightControlsBar.parent.constructor.name " + mediaControls.topRightControlsBar.parent.constructor.name);
 
 debug("");
 

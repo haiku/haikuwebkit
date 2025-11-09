@@ -520,7 +520,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 // the jsc_llint_begin and jsc_llint_end labels help lldb_webkit.py find the
 // start and end of the llint instruction range quickly.
 
-#define OFFLINE_ASM_BEGIN   asm ( \
+#define OFFLINE_ASM_BEGIN   __asm__( \
     OFFLINE_ASM_GLOBAL_LABEL_IMPL(jsc_llint_begin, OFFLINE_ASM_NO_ALT_ENTRY_DIRECTIVE, OFFLINE_ASM_ALIGN4B, HIDE_SYMBOL) \
     OFFLINE_ASM_BEGIN_SPACER
 
@@ -651,7 +651,7 @@ DEBUGGER_ANNOTATION_MARKER(before_llint_asm)
 // See GdbJIT.cpp for a detailed explanation of how these DWARF directives work.
 #if !OS(DARWIN) && COMPILER(CLANG)
 #if CPU(ARM64)
-asm (
+__asm__(
     ".cfi_startproc\n"
     ".cfi_def_cfa fp, 16\n"
     ".cfi_offset lr, -8\n"
@@ -667,7 +667,7 @@ asm (
     OFFLINE_ASM_BEGIN_SPACER
 );
 #elif CPU(ARM_THUMB2)
-asm (
+__asm__(
     ".cfi_startproc\n"
     OFFLINE_ASM_BEGIN_SPACER
     ".cfi_def_cfa r7, 8\n"
@@ -689,7 +689,7 @@ asm (
 // See GdbJIT.cpp for a detailed explanation.
 #if !OS(DARWIN) && COMPILER(CLANG)
 #if CPU(ARM64) || CPU(ARM_THUMB2)
-asm (
+__asm__(
     ".cfi_endproc\n"
 );
 #endif

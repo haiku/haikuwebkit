@@ -469,7 +469,7 @@ private:
     public:
         XPCEventHandler(const NetworkProcessProxy&);
 
-        bool handleXPCEvent(xpc_object_t) const override;
+        bool handleXPCEvent(xpc_object_t) override;
 
     private:
         WeakPtr<NetworkProcessProxy> m_networkProcess;

@@ -349,7 +349,7 @@ void RenderTreeUpdater::popParentsToDepth(unsigned depth)
 void RenderTreeUpdater::updateBeforeDescendants(Element& element, const Style::ElementUpdate* update)
 {
     if (update)
-        generatedContent().updateBeforeOrAfterPseudoElement(element, *update, PseudoId::Before);
+        generatedContent().updateBeforeOrAfterPseudoElement(element, *update, PseudoElementType::Before);
 
     if (auto* before = element.beforePseudoElement())
         storePreviousRenderer(*before);
@@ -358,7 +358,7 @@ void RenderTreeUpdater::updateBeforeDescendants(Element& element, const Style::E
 void RenderTreeUpdater::updateAfterDescendants(Element& element, const Style::ElementUpdate* update)
 {
     if (update)
-        generatedContent().updateBeforeOrAfterPseudoElement(element, *update, PseudoId::After);
+        generatedContent().updateBeforeOrAfterPseudoElement(element, *update, PseudoElementType::After);
 
     auto* renderer = element.renderer();
     if (!renderer) {
@@ -752,18 +752,23 @@ static std::optional<DidRepaintAndMarkContainingBlock> repaintAndMarkContainingB
             backdropRenderer->repaint(RenderObject::ForceRepaint::Yes);
     };
 
-    auto repaintRoot = [&](auto& renderer) {
-        if (renderer.isBody()) {
-            renderer.view().repaintRootContents();
+    auto repaintRoot = [&](auto& destroyRoot) {
+        if (destroyRoot.isBody()) {
+            destroyRoot.view().repaintRootContents();
             return;
         }
-        // When repaint is propagated to our layer, we have to force it here on destroy as this layer will no be around to issue it _affter_ layout.
-        auto* rendererLayerObject = dynamicDowncast<RenderLayerModelObject>(renderer);
-        if (!rendererLayerObject || !rendererLayerObject->layer() || !rendererLayerObject->layer()->needsFullRepaint()) {
-            renderer.repaint();
-            return;
-        }
-        renderer.repaint(RenderObject::ForceRepaint::Yes);
+        auto shouldForceRepaint = [&] {
+            CheckedPtr destroyRootWithLayer = dynamicDowncast<RenderLayerModelObject>(destroyRoot);
+            if (!destroyRootWithLayer || !destroyRootWithLayer->hasLayer())
+                return false;
+
+            // When any subtree repaint is propagated to this destroy root layer, we have to force it here
+            // as this layer will not be around to issue it _after_ layout.
+            // We also need to force repaint on a non-inflow box as the parent layer with full-repaint status would not
+            // necessarily enclose this box.
+            return destroyRootWithLayer->layer()->needsFullRepaint() || destroyRootWithLayer->isOutOfFlowPositioned();
+        };
+        destroyRoot.repaint(shouldForceRepaint() ? RenderObject::ForceRepaint::Yes : RenderObject::ForceRepaint::No);
     };
 
     if (destroyRootRenderer) {
@@ -858,7 +863,7 @@ void RenderTreeUpdater::tearDownRenderers(Element& root, TeardownType teardownTy
                 // we cannot create a Styleable with a PseudoElement.
                 if (auto* renderListItem = dynamicDowncast<RenderListItem>(element.renderer())) {
                     if (renderListItem->markerRenderer())
-                        Styleable(element, Style::PseudoElementIdentifier { PseudoId::Marker }).cancelStyleOriginatedAnimations();
+                        Styleable(element, Style::PseudoElementIdentifier { PseudoElementType::Marker }).cancelStyleOriginatedAnimations();
                 }
             }
 

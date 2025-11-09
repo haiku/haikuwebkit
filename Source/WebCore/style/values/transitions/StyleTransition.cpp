@@ -26,6 +26,7 @@
 #include "config.h"
 #include "StyleTransition.h"
 
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {

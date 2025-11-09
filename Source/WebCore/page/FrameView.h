@@ -41,6 +41,7 @@ public:
     virtual Type viewType() const = 0;
     virtual void writeRenderTreeAsText(TextStream&, OptionSet<RenderAsTextFlag>) = 0;
     virtual Frame& frame() const = 0;
+    Ref<Frame> protectedFrame() const;
 
     WEBCORE_EXPORT int headerHeight() const final;
     WEBCORE_EXPORT int footerHeight() const final;

@@ -52,7 +52,6 @@
 #import <wtf/spi/cocoa/NSObjCRuntimeSPI.h>
 
 #if ENABLE(SCREEN_TIME)
-#import <ScreenTime/STScreenTimeConfiguration.h>
 #import <ScreenTime/STWebpageController.h>
 #endif
 
@@ -126,6 +125,9 @@ struct DigitalCredentialsResponseData;
 struct MobileDocumentRequest;
 struct OpenID4VPRequest;
 #endif
+
+struct NodeIdentifierType;
+using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
 } // namespace WebCore
 
 namespace WebKit {
@@ -150,6 +152,11 @@ enum class HideScrollPocketReason : uint8_t {
     ScrolledToTop       = 1 << 1,
     SiteSpecificQuirk   = 1 << 2,
 };
+
+enum class PreferSolidColorHardPocketReason : uint8_t {
+    AttachedInspector   = 1 << 0,
+    RequestedByClient   = 1 << 1,
+};
 }
 
 @class NSScrollPocket;
@@ -165,6 +172,10 @@ enum class HideScrollPocketReason : uint8_t {
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 @class WKDigitalCredentialsPicker;
+#endif
+
+#if ENABLE(SCREEN_TIME)
+@class WKScreenTimeConfigurationObserver;
 #endif
 
 #if ENABLE(WRITING_TOOLS)
@@ -294,7 +305,7 @@ struct PerWebProcessState {
     BOOL _usesAutomaticContentInsetBackgroundFill;
     BOOL _shouldSuppressTopColorExtensionView;
 #if PLATFORM(MAC)
-    BOOL _alwaysPrefersSolidColorHardPocket;
+    OptionSet<WebKit::PreferSolidColorHardPocketReason> _preferSolidColorHardPocketReasons;
     BOOL _isGettingAdjustedColorForTopContentInsetColorFromDelegate;
     RetainPtr<NSColor> _overrideTopScrollEdgeEffectColor;
 #endif
@@ -314,7 +325,7 @@ struct PerWebProcessState {
 
 #if ENABLE(SCREEN_TIME)
     RetainPtr<STWebpageController> _screenTimeWebpageController;
-    RetainPtr<STScreenTimeConfigurationObserver> _screenTimeConfigurationObserver;
+    RetainPtr<WKScreenTimeConfigurationObserver> _screenTimeConfigurationObserver;
 #if PLATFORM(MAC)
     RetainPtr<NSVisualEffectView> _screenTimeBlurredSnapshot;
 #else
@@ -574,7 +585,8 @@ struct PerWebProcessState {
 #if PLATFORM(MAC) && ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 - (NSColor *)_adjustedColorForTopContentInsetColorFromUIDelegate:(NSColor *)proposedColor;
 @property (nonatomic, readonly) RetainPtr<NSScrollPocket> _copyTopScrollPocket;
-@property (nonatomic, setter=_setAlwaysPrefersSolidColorHardPocket:) BOOL _alwaysPrefersSolidColorHardPocket;
+- (void)_addReasonToPreferSolidColorHardPocket:(WebKit::PreferSolidColorHardPocketReason)reason;
+- (void)_removeReasonToPreferSolidColorHardPocket:(WebKit::PreferSolidColorHardPocketReason)reason;
 #endif
 
 #if ENABLE(GAMEPAD)
@@ -642,7 +654,6 @@ WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::FixedContai
 #if ENABLE(TEXT_EXTRACTION_FILTER)
 
 @interface WKWebView (TextExtractionFilter)
-- (void)_validateText:(NSString *)text inNode:(NSString *)nodeIdentifier completionHandler:(void(^)(NSString *))completionHandler;
 - (void)_clearTextExtractionFilterCache;
 @end
 

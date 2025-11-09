@@ -141,7 +141,7 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
 
         JSValue executeProgram(const SourceCode&, JSGlobalObject*, JSObject* thisObj);
         JSValue executeModuleProgram(JSModuleRecord*, ModuleProgramExecutable*, JSGlobalObject*, JSModuleEnvironment*, JSValue sentValue, JSValue resumeMode);
-        JSValue executeCall(JSObject* function, const CallData&, JSValue thisValue, const ArgList&);
+        JSValue executeCall(JSObject* function, const CallData&, JSValue thisValue, JSCell* context, const ArgList&);
         JSObject* executeConstruct(JSObject* function, const CallData&, const ArgList&, JSValue newTarget);
         JSValue executeEval(EvalExecutable*, JSValue thisValue, JSScope*);
 
@@ -163,8 +163,8 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
         CodeBlock* prepareForCachedCall(CachedCall&, JSFunction*);
 
         JSValue executeCachedCall(CachedCall&);
-        JSValue executeBoundCall(VM&, JSBoundFunction*, const ArgList&);
-        JSValue executeCallImpl(VM&, JSObject*, const CallData&, JSValue, const ArgList&);
+        JSValue executeBoundCall(VM&, JSBoundFunction*, JSCell*, const ArgList&);
+        JSValue executeCallImpl(VM&, JSObject*, const CallData&, JSValue, JSCell*, const ArgList&);
 
 #if CPU(ARM64) && CPU(ADDRESS64) && !ENABLE(C_LOOP)
         template<typename... Args> requires (std::is_convertible_v<Args, JSValue> && ...)

@@ -762,7 +762,7 @@ TEST_F(WKContentRuleListStoreTest, ModifyHeaders)
     [[configuration userContentController] addContentRuleList:list.get()];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urls;
@@ -848,7 +848,7 @@ TEST_F(WKContentRuleListStoreTest, ModifyHeadersWithCompetingRulesWhereAppendWin
     [[configuration userContentController] addContentRuleList:list.get()];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urls;
@@ -937,7 +937,7 @@ TEST_F(WKContentRuleListStoreTest, ModifyHeadersWithCompetingRulesWhereSetWins)
     [[configuration userContentController] addContentRuleList:list.get()];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urls;
@@ -1003,7 +1003,7 @@ TEST_F(WKContentRuleListStoreTest, ModifyHeadersWithCompetingRulesWhereRemoveWin
     [[configuration userContentController] addContentRuleList:list.get()];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urls;
@@ -1075,7 +1075,7 @@ TEST_F(WKContentRuleListStoreTest, ModifyHeadersWithMultipleRuleLists)
     [[configuration userContentController] addContentRuleList:secondList.get()];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urls;
@@ -1195,7 +1195,7 @@ TEST_F(WKContentRuleListStoreTest, Redirect)
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"testscheme"];
     [configuration setURLSchemeHandler:handler.get() forURLScheme:@"othertestscheme"];
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSZeroRect configuration:configuration.get()]);
-    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().get();
+    auto delegate = navigationDelegateAllowingActiveActionsOnTestHost().unsafeGet();
     webView.get().navigationDelegate = delegate;
     __block bool receivedActionNotification { false };
     __block Vector<String> urlsFromCallback;

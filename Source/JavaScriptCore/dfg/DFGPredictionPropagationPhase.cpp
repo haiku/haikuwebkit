@@ -1735,6 +1735,12 @@ private:
         case DataViewSet:
         case InvalidationPoint:
         case ObjectAssign:
+        case ResolvePromiseFirstResolving:
+        case RejectPromiseFirstResolving:
+        case FulfillPromiseFirstResolving:
+        case PromiseResolve:
+        case PromiseReject:
+        case PromiseThen:
             break;
             
         // This gets ignored because it only pretends to produce a value.

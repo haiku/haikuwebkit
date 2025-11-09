@@ -156,6 +156,9 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
     };
 
     auto findOriginatingElement = [&]() -> const Element* {
+        if (selectionMode == SelectionMode::PseudoElement)
+            return &element;
+
         // ::part() selectors query the composed tree
         if (selectionMode == SelectionMode::PartPseudoElement)
             return element.assignedSlot();
@@ -171,17 +174,15 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
     };
 
     if (RefPtr originatingElement = findOriginatingElement()) {
-        // For selectors with pseudo elements, query containers can be established by the shadow-including inclusive ancestors of the ultimate originating element.
-        for (RefPtr ancestor = originatingElement; ancestor; ancestor = ancestor->parentOrShadowHostElement()) {
+        // For the ::part() and ::slotted() pseudo-element selectors, which represent real elements in the DOM tree,
+        // query containers can be established by flat tree ancestors of those elements.
+        // For other pseudo-elements, query containers can be established by inclusive flat tree ancestors of their originating element.
+        // https://drafts.csswg.org/css-conditional-5/#container-queries
+        for (RefPtr ancestor = originatingElement; ancestor; ancestor = ancestor->parentElementInComposedTree()) {
             if (isContainerForQuery(*ancestor.get(), originatingElement.get()))
-                return ancestor.get();
+                return ancestor.unsafeGet();
         }
         return nullptr;
-    }
-
-    if (selectionMode == SelectionMode::PseudoElement) {
-        if (isContainerForQuery(element))
-            return &element;
     }
 
     if (evaluationState && !requiredAxes.isEmpty()) {
@@ -192,9 +193,9 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
         return { };
     }
 
-    for (RefPtr ancestor = element.parentOrShadowHostElement(); ancestor; ancestor = ancestor->parentOrShadowHostElement()) {
+    for (RefPtr ancestor = element.parentElementInComposedTree(); ancestor; ancestor = ancestor->parentElementInComposedTree()) {
         if (isContainerForQuery(*ancestor.get()))
-            return ancestor.get();
+            return ancestor.unsafeGet();
     }
     return { };
 }

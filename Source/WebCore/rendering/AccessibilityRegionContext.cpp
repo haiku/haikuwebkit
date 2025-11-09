@@ -27,7 +27,8 @@
 #include "AccessibilityRegionContext.h"
 
 #include "AXObjectCache.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
+#include "FrameInlines.h"
 #include "RenderBox.h"
 #include "RenderBoxModelObject.h"
 #include "RenderInline.h"
@@ -105,6 +106,12 @@ void AccessibilityRegionContext::takeBounds(const RenderLineBreak* renderLineBre
         mappedPaintRect.setHeight(2);
     takeBoundsInternal(*renderLineBreak, WTFMove(mappedPaintRect));
 }
+
+void AccessibilityRegionContext::takeBounds(const RenderInline* renderInline, LayoutRect&& paintRect)
+{
+    if (renderInline)
+        takeBounds(*renderInline, WTFMove(paintRect));
+};
 
 void AccessibilityRegionContext::takeBoundsInternal(const RenderBoxModelObject& renderObject, IntRect&& paintRect)
 {

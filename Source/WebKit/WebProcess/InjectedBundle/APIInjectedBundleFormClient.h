@@ -50,7 +50,7 @@ namespace InjectedBundle {
 class FormClient {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(FormClient);
 public:
-    virtual ~FormClient() { }
+    virtual ~FormClient() = default;
 
     virtual void didFocusTextField(WebKit::WebPage*, WebCore::HTMLInputElement&, WebKit::WebFrame*) { }
     virtual void textFieldDidBeginEditing(WebKit::WebPage*, WebCore::HTMLInputElement&, WebKit::WebFrame*) { }

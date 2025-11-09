@@ -28,6 +28,7 @@
 #include "SharedBuffer.h"
 #include <CoreText/CoreText.h>
 #include <pal/spi/cf/CoreTextSPI.h>
+#include <wtf/cf/TypeCastsCF.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/WTFString.h>
 

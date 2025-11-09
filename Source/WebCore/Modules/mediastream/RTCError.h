@@ -61,4 +61,8 @@ private:
 
 } // namespace WebCore
 
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::RTCError)
+    static bool isType(const WebCore::DOMException& exception) { return exception.type() == WebCore::DOMException::Type::RTCError; }
+SPECIALIZE_TYPE_TRAITS_END()
+
 #endif // ENABLE(WEB_RTC)

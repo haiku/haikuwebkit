@@ -75,7 +75,7 @@ JSC_DEFINE_HOST_FUNCTION(callWebAssemblyFunction, (JSGlobalObject* globalObject,
     // For wasm, we setup |codeBlock| and |this| differently.
     //     |codeBlock| : JS entry wrapper expects a JSWebAssemblyInstance* as the |codeBlock| value argument.
     ProtoCallFrame protoCallFrame;
-    protoCallFrame.init(nullptr, globalObject, wasmFunction, JSValue(), callFrame->argumentCountIncludingThis(), std::bit_cast<EncodedJSValue*>(callFrame->addressOfArgumentsStart()));
+    protoCallFrame.init(nullptr, globalObject, wasmFunction, JSValue(), nullptr, callFrame->argumentCountIncludingThis(), std::bit_cast<EncodedJSValue*>(callFrame->addressOfArgumentsStart()));
     protoCallFrame.setWasmInstance(wasmFunction->instance());
 
     return vmEntryToWasm(wasmFunction->jsToWasm(ArityCheckMode::MustCheckArity).taggedPtr(), &vm, &protoCallFrame);

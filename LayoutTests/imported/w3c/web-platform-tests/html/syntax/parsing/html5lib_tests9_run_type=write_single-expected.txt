@@ -5,8 +5,8 @@ PASS html5lib_tests9.html cb005f4b2a248cc98dc153d7391715b8d113cd0d
 PASS html5lib_tests9.html 6b687e562bd878d3a6098f0a1b1c05b04dc8c02c
 PASS html5lib_tests9.html a28615629ac367bd8127ff3049e81b349e7ec7f6
 PASS html5lib_tests9.html d70e711bf9b7582d9b83488ab14f99b53a0f3a26
-FAIL html5lib_tests9.html b2a8131e72e53265479c08cd18d4f4663278a021 assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <math math>" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>"
-FAIL html5lib_tests9.html a45a8948b799dadc321a86ff0bebf13167b5f076 assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>\n|         <math math>" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <option>"
+PASS html5lib_tests9.html b2a8131e72e53265479c08cd18d4f4663278a021
+PASS html5lib_tests9.html a45a8948b799dadc321a86ff0bebf13167b5f076
 PASS html5lib_tests9.html 9d6809ff0d5796525b655f44e8abe4267cfd84e1
 PASS html5lib_tests9.html 2243c76da49f512eddbdf3f63965a70b8f3f5563
 PASS html5lib_tests9.html 64ccbdfede00715ff2b6c0818d78774e0ea49fd4
@@ -18,8 +18,8 @@ PASS html5lib_tests9.html 2f18900946d7a7f7922c929b72537e5ce8aacb70
 PASS html5lib_tests9.html 2d4f10eec8e9623ef881edd20a639d3572134fd5
 PASS html5lib_tests9.html 18485b14fd6568a096121ce8b8683a47945326d3
 PASS html5lib_tests9.html 1d7a80644fe4b5f580c39adee71d5432cb186285
-FAIL html5lib_tests9.html 224e1bcb8030f0972c17d0fc68d912be17905e1c assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               <math math>\n|                 <math mi>\n|                   \"foo\"\n|                 <math mi>\n|                   \"bar\"\n|               <p>\n|                 \"baz\"\n|     <p>\n|       \"quux\"" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <table>\n|       <tbody>\n|         <tr>\n|           <td>\n|             <select>\n|               \"foobarbaz\"\n|     <p>\n|       \"quux\""
-FAIL html5lib_tests9.html e84d33cef974e49b69bdbc0c663c018a4dd010c0 assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <math math>\n|         <math mi>\n|           \"foo\"\n|         <math mi>\n|           \"bar\"\n|       <p>\n|         \"baz\"\n|     <table>\n|     <p>\n|       \"quux\"" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"foobarbaz\"\n|     <table>\n|     <p>\n|       \"quux\""
+PASS html5lib_tests9.html 224e1bcb8030f0972c17d0fc68d912be17905e1c
+PASS html5lib_tests9.html e84d33cef974e49b69bdbc0c663c018a4dd010c0
 PASS html5lib_tests9.html 5f4d3b90e4d99fae5ff97ebb9968185c77ffc591
 PASS html5lib_tests9.html 00a77c689b7b8bb6440604f4273de3bfbcbcbe8b
 PASS html5lib_tests9.html 15d4afd62caf2fcb27bb4aff89ba4fcb0e58c0b9
@@ -28,126 +28,4 @@ PASS html5lib_tests9.html 0705988884bc08d8133e5d8a8eb693db5c86688e
 PASS html5lib_tests9.html 093c0dbf464f9745c3730de57afebd9da308d34c
 PASS html5lib_tests9.html 35aec8963beaced8149a74366eb9b1eb13be6717
 PASS html5lib_tests9.html 931baaac96aab65ad0449b70c374ba56dcdbab9d
-b2a8131e72e53265479c08cd18d4f4663278a021
-
-Input
-
-<!DOCTYPE html><body><select><math></math></select>
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <math math>
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-a45a8948b799dadc321a86ff0bebf13167b5f076
-
-Input
-
-<!DOCTYPE html><body><select><option><math></math></option></select>
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-|         <math math>
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <option>
-224e1bcb8030f0972c17d0fc68d912be17905e1c
-
-Input
-
-<!DOCTYPE html><body><table><tr><td><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <table>
-|       <tbody>
-|         <tr>
-|           <td>
-|             <select>
-|               <math math>
-|                 <math mi>
-|                   "foo"
-|                 <math mi>
-|                   "bar"
-|               <p>
-|                 "baz"
-|     <p>
-|       "quux"
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <table>
-|       <tbody>
-|         <tr>
-|           <td>
-|             <select>
-|               "foobarbaz"
-|     <p>
-|       "quux"
-e84d33cef974e49b69bdbc0c663c018a4dd010c0
-
-Input
-
-<!DOCTYPE html><body><table><select><math><mi>foo</mi><mi>bar</mi><p>baz</table><p>quux
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <math math>
-|         <math mi>
-|           "foo"
-|         <math mi>
-|           "bar"
-|       <p>
-|         "baz"
-|     <table>
-|     <p>
-|       "quux"
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       "foobarbaz"
-|     <table>
-|     <p>
-|       "quux"
 

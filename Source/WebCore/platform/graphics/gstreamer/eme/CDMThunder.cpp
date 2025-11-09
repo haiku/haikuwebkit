@@ -330,7 +330,7 @@ public:
         unsigned offset = 0u;
         if (buffer->size() >= 7) {
             auto data = buffer->read(0, 7);
-            StringView dataString(data.span());
+            StringView dataString(byteCast<Latin1Character>(data.span()));
             if (dataString.endsWith(":Type:"_s)) {
                 m_type.emplace(static_cast<WebCore::MediaKeyMessageType>(dataString.characterAt(0) - '0'));
                 offset = 7;
@@ -631,7 +631,7 @@ void CDMInstanceSessionThunder::loadSession(LicenseType, const String& sessionID
                 callback(std::nullopt, std::nullopt, std::nullopt, SuccessValue::Failed, sessionLoadFailureFromThunder({ }));
             else {
                 auto responseData = responseMessage->extractData();
-                StringView response(responseData.span());
+                StringView response(byteCast<Latin1Character>(responseData.span()));
                 GST_DEBUG("Error message: %s", response.utf8().data());
                 callback(std::nullopt, std::nullopt, std::nullopt, SuccessValue::Failed, sessionLoadFailureFromThunder(response));
             }

@@ -43,6 +43,7 @@ pas_heap* pas_ensure_heap_slow(pas_heap_ref* heap_ref,
 
     PAS_ASSERT(heap_ref_kind != pas_fake_heap_ref_kind);
     PAS_PROFILE(ENSURE_HEAP_SLOW, heap, heap_ref, heap_ref_kind, config, runtime_config);
+    PAS_MTE_HANDLE(ENSURE_HEAP_SLOW, heap, heap_ref, heap_ref_kind, config, runtime_config);
 
     pas_heap_lock_lock();
     heap = heap_ref->heap;

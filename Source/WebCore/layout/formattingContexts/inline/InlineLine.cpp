@@ -607,12 +607,45 @@ bool Line::lineHasVisuallyNonEmptyContent() const
     return false;
 }
 
-bool Line::restoreTrimmedTrailingWhitespace(InlineLayoutUnit trimmedTrailingWhitespaceWidth, RunList& runs)
+bool Line::appendTrailingInlineItemAsTrailingRun(RunList& runs, InlineLayoutUnit trimmedTrailingWhitespaceWidth, InlineItemRange inlineItemRange, const InlineItemList& inlineItems)
+{
+    auto candidateInlineItemIndex = [&]() -> std::optional<size_t> {
+        if (inlineItemRange.endIndex() > inlineItems.size())
+            return { };
+        auto& lastRunLayoutBox = runs.last().layoutBox();
+        for (auto index = inlineItemRange.endIndex(); index--;) {
+            if (&inlineItems[index].layoutBox() == &lastRunLayoutBox)
+                return ++index;
+        }
+        return { };
+    };
+
+    auto trailingInlineItemIndex = candidateInlineItemIndex();
+    if (!trailingInlineItemIndex || *trailingInlineItemIndex >= inlineItems.size()) {
+        ASSERT_NOT_REACHED();
+        return false;
+    }
+
+    auto* trailingInlineTextItem = dynamicDowncast<InlineTextItem>(inlineItems[*trailingInlineItemIndex]);
+    if (!trailingInlineTextItem || !trailingInlineTextItem->isFullyTrimmable()) {
+        ASSERT_NOT_REACHED();
+        return false;
+    }
+
+    runs.append({ *trailingInlineTextItem, trailingInlineTextItem->style(), runs.last().logicalRight(), trimmedTrailingWhitespaceWidth });
+    return true;
+}
+
+bool Line::restoreTrimmedTrailingWhitespace(InlineLayoutUnit trimmedTrailingWhitespaceWidth, RunList& runs, InlineItemRange inlineItemRange, const InlineItemList& inlineItems)
 {
     auto restore = [&](auto& trailingRun) {
         ASSERT(trailingRun.isText());
         auto& layoutBox = downcast<InlineTextBox>(trailingRun.layoutBox());
         if (trailingRun.m_textContent->start + trailingRun.m_textContent->length == layoutBox.content().length()) {
+            // It looks like we didn't _trim_ this trailing run but removed the lat run instead (happens with dedicated layout box).
+            // Let's put that content back as trailing run.
+            if (appendTrailingInlineItemAsTrailingRun(runs, trimmedTrailingWhitespaceWidth, inlineItemRange, inlineItems))
+                return true;
             ASSERT_NOT_REACHED();
             return false;
         }

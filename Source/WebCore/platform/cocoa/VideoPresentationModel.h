@@ -35,6 +35,7 @@
 #include <WebCore/MediaPlayerEnums.h>
 #include <WebCore/MediaPlayerIdentifier.h>
 #include <WebCore/PlaybackSessionModel.h>
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/WeakPtr.h>
@@ -43,15 +44,6 @@
 OBJC_CLASS AVPlayerViewController;
 OBJC_CLASS UIViewController;
 #endif
-
-namespace WebCore {
-class VideoPresentationModelClient;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::VideoPresentationModelClient> : std::true_type { };
-}
 
 namespace WTF {
 class MachSendRight;
@@ -116,15 +108,9 @@ public:
 #endif
 };
 
-class VideoPresentationModelClient : public CanMakeWeakPtr<VideoPresentationModelClient> {
+class VideoPresentationModelClient : public CanMakeWeakPtr<VideoPresentationModelClient>, public AbstractCanMakeCheckedPtr {
 public:
     virtual ~VideoPresentationModelClient() = default;
-
-    // CheckedPtr interface
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 
     virtual void hasVideoChanged(bool) { }
     virtual void videoDimensionsChanged(const FloatSize&) { }
@@ -137,6 +123,7 @@ public:
     virtual void documentVisibilityChanged(bool) { }
     virtual void isChildOfElementFullscreenChanged(bool) { }
     virtual void audioSessionCategoryChanged(AudioSessionCategory, AudioSessionMode, RouteSharingPolicy) { }
+    virtual void routingContextUIDChanged(const String&) { }
     virtual void hasBeenInteractedWith() { }
 };
 

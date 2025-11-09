@@ -232,7 +232,7 @@ extern "C" { extern void (*const __identifier("??_7TestScheduledAction@WebCore@@
 extern "C" { extern void* _ZTVN7WebCore19TestScheduledActionE[]; }
 #endif
 template<std::same_as<TestScheduledAction> T>
-static inline void verifyVTable(TestScheduledAction* ptr) 
+static inline void verifyVTable(TestScheduledAction* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -252,8 +252,9 @@ static inline void verifyVTable(TestScheduledAction* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestScheduledAction>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestScheduledAction>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestScheduledAction>(impl.ptr());
 #endif

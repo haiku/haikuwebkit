@@ -27,6 +27,7 @@
 #include "StyleFontData.h"
 
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {

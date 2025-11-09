@@ -36,6 +36,7 @@
 #include "ElementInlines.h"
 #include "ElementTraversal.h"
 #include "ExceptionCode.h"
+#include "FrameDestructionObserverInlines.h"
 #include "GetHTMLOptions.h"
 #include "HTMLSlotElement.h"
 #if ENABLE(PICTURE_IN_PICTURE_API)
@@ -43,6 +44,7 @@
 #endif
 #include "RenderElement.h"
 #include "SerializedNode.h"
+#include "Settings.h"
 #include "SlotAssignment.h"
 #include "StyleResolver.h"
 #include "StyleScope.h"

@@ -142,6 +142,7 @@ template<> struct EnumTraitsForPersistence<WebCore::FetchOptions::Destination> {
         WebCore::FetchOptions::Destination::Script,
         WebCore::FetchOptions::Destination::Serviceworker,
         WebCore::FetchOptions::Destination::Sharedworker,
+        WebCore::FetchOptions::Destination::Speculationrules,
         WebCore::FetchOptions::Destination::Style,
         WebCore::FetchOptions::Destination::Track,
         WebCore::FetchOptions::Destination::Video,

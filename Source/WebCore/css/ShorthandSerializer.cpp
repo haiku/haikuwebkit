@@ -1217,7 +1217,7 @@ String ShorthandSerializer::serializeGridTemplate() const
 
     StringBuilder result;
     unsigned row = 0;
-    for (auto& currentValue : downcast<CSSValueList>(rowTrackSizes).get()) {
+    for (auto& currentValue : downcast<CSSValueList>(rowTrackSizes).unsafeGet()) {
         if (!result.isEmpty())
             result.append(' ');
         if (auto lineNames = dynamicDowncast<CSSGridLineNamesValue>(currentValue))

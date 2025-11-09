@@ -60,11 +60,12 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 @property (nonatomic, readonly) int32_t indexType;
 @property (nonatomic, readonly) int32_t vertexBufferCount;
 @property (nonatomic, readonly) int32_t vertexCapacity;
-@property (nonatomic, readonly) NSArray<WebDDVertexAttributeFormat*> *vertexAttributes;
-@property (nonatomic, readonly) NSArray<WebDDVertexLayout*> *vertexLayouts;
+@property (nonatomic, readonly, strong) NSArray<WebDDVertexAttributeFormat*> *vertexAttributes;
+@property (nonatomic, readonly, strong) NSArray<WebDDVertexLayout*> *vertexLayouts;
+@property (nonatomic, readonly, strong) NSString *identifier;
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithIndexCapacity:(int32_t)indexCapacity indexType:(int32_t)indexType vertexBufferCount:(int32_t)vertexBufferCount vertexCapacity:(int32_t)vertexCapacity vertexAttributes:(NSArray<WebDDVertexAttributeFormat*> *)vertexAttributes vertexLayouts:(NSArray<WebDDVertexLayout*> *)vertexLayouts NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithIndexCapacity:(int32_t)indexCapacity indexType:(int32_t)indexType vertexBufferCount:(int32_t)vertexBufferCount vertexCapacity:(int32_t)vertexCapacity vertexAttributes:(NSArray<WebDDVertexAttributeFormat*> *)vertexAttributes vertexLayouts:(NSArray<WebDDVertexLayout*> *)vertexLayouts identifier:(NSUUID *)identifier NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -86,7 +87,7 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 @interface WebSetPart : NSObject
 
 @property (nonatomic, readonly) long partIndex;
-@property (nonatomic, readonly) WebDDMeshPart *part;
+@property (nonatomic, strong, readonly) WebDDMeshPart *part;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -109,7 +110,7 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
 @property (nonatomic, readonly) long bufferIndex;
 
-@property (nonatomic, readonly) NSData* buffer;
+@property (nonatomic, strong, readonly) NSData* buffer;
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -120,7 +121,7 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 @interface WebChainedFloat4x4 : NSObject
 
 @property (nonatomic, readonly) simd_float4x4 transform;
-@property (nonatomic, nullable) WebChainedFloat4x4 *next;
+@property (nonatomic, nullable, strong) WebChainedFloat4x4 *next;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithTransform:(simd_float4x4)transform NS_DESIGNATED_INITIALIZER;
@@ -130,13 +131,14 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 @interface WebUpdateMeshRequest : NSObject
 
 @property (nonatomic, readonly) long partCount;
-@property (nonatomic, nullable, readonly) NSArray<WebSetPart *> *parts;
-@property (nonatomic, nullable, readonly) NSArray<WebSetRenderFlags *> *renderFlags;
-@property (nonatomic, nullable, readonly) NSArray<WebReplaceVertices *> *vertices;
-@property (nonatomic, nullable, readonly) NSData *indices;
+@property (nonatomic, nullable, strong, readonly) NSArray<WebSetPart *> *parts;
+@property (nonatomic, nullable, strong, readonly) NSArray<WebSetRenderFlags *> *renderFlags;
+@property (nonatomic, nullable, strong, readonly) NSArray<WebReplaceVertices *> *vertices;
+@property (nonatomic, nullable, strong, readonly) NSData *indices;
 @property (nonatomic, readonly) simd_float4x4 transform;
-@property (nonatomic, nullable) WebChainedFloat4x4 *instanceTransforms;
-@property (nonatomic, nullable, readonly) NSArray<NSUUID *> *materialIds;
+@property (nonatomic, nullable, strong) WebChainedFloat4x4 *instanceTransforms;
+@property (nonatomic, nullable, strong, readonly) NSArray<NSUUID *> *materialIds;
+@property (nonatomic, readonly, strong) NSString *identifier;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithPartCount:(long)partCount
@@ -146,7 +148,225 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
     indices:(nullable NSData *)indices
     transform:(simd_float4x4)transform
     instanceTransforms:(nullable WebChainedFloat4x4 *)instanceTransforms
-    materialIds:(nullable NSArray<NSUUID *> *)materialIds NS_DESIGNATED_INITIALIZER;
+    materialIds:(nullable NSArray<NSUUID *> *)materialIds identifier:(NSUUID *)identifier NS_DESIGNATED_INITIALIZER;
+
+@end
+
+enum class WebDDSemantic {
+    kColor,
+    kVector,
+    kScalar,
+    kUnknown
+};
+
+@interface WebDDImageAsset : NSObject
+
+@property (nonatomic, strong, readonly) NSString *path;
+@property (nonatomic, strong, readonly) NSString *utType;
+@property (nonatomic, nullable, strong, readonly) NSData *data;
+@property (nonatomic, readonly) WebDDSemantic semantic;
+@property (nonatomic, strong, readonly) NSString *identifier;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithPath:(NSString *)path utType:(NSString *)utType data:(nullable NSData *)data semantic:(WebDDSemantic)semantic identifier:(NSUUID *)identifier NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDUpdateTextureRequest : NSObject
+
+@property (nonatomic, readonly, strong) WebDDImageAsset *imageAsset;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithImageAsset:(WebDDImageAsset *)imageAsset NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDAddTextureRequest : NSObject
+
+@property (nonatomic, readonly, strong) WebDDImageAsset *imageAsset;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithImageAsset:(WebDDImageAsset *)imageAsset NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDEdge : NSObject
+
+@property (nonatomic, readonly) long upstreamNodeIndex;
+@property (nonatomic, readonly) long downstreamNodeIndex;
+@property (nonatomic, readonly) NSString *upstreamOutputName;
+@property (nonatomic, readonly) NSString *downstreamInputName;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithUpstreamNodeIndex:(long)upstreamNodeIndex
+    downstreamNodeIndex:(long)downstreamNodeIndex
+    upstreamOutputName:(NSString *)upstreamOutputName
+    downstreamInputName:(NSString *)downstreamInputName NS_DESIGNATED_INITIALIZER;
+
+@end
+
+enum class WebDDDataType {
+    kBool,
+    kInt,
+    kInt2,
+    kInt3,
+    kInt4,
+    kFloat,
+    kColor3f,
+    kColor3h,
+    kColor4f,
+    kColor4h,
+    kFloat2,
+    kFloat3,
+    kFloat4,
+    kHalf,
+    kHalf2,
+    kHalf3,
+    kHalf4,
+    kMatrix2f,
+    kMatrix3f,
+    kMatrix4f,
+    kSurfaceShader,
+    kGeometryModifier,
+    kString,
+    kToken,
+    kAsset
+};
+
+@interface WebDDPrimvar : NSObject
+
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *referencedGeomPropName;
+@property (nonatomic, readonly) NSUInteger attributeFormat;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithName:(NSString *)name referencedGeomPropName:(NSString *)referencedGeomPropName attributeFormat:(NSUInteger)attributeFormat NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDInputOutput : NSObject
+
+@property (nonatomic, readonly) WebDDDataType type;
+@property (nonatomic, readonly) NSString *name;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithType:(WebDDDataType)dataType name:(NSString *)name NS_DESIGNATED_INITIALIZER;
+
+@end
+
+enum class WebDDConstant {
+    kBool,
+    kUchar,
+    kInt,
+    kUint,
+    kHalf,
+    kFloat,
+    kTimecode,
+    kString,
+    kToken,
+    kAsset,
+    kMatrix2f,
+    kMatrix3f,
+    kMatrix4f,
+    kQuatf,
+    kQuath,
+    kFloat2,
+    kHalf2,
+    kInt2,
+    kFloat3,
+    kHalf3,
+    kInt3,
+    kFloat4,
+    kHalf4,
+    kInt4,
+
+    // semantic types
+    kPoint3f,
+    kPoint3h,
+    kNormal3f,
+    kNormal3h,
+    kVector3f,
+    kVector3h,
+    kColor3f,
+    kColor3h,
+    kColor4f,
+    kColor4h,
+    kTexCoord2h,
+    kTexCoord2f,
+    kTexCoord3h,
+    kTexCoord3f
+};
+
+enum class WebDDNodeType {
+    kBuiltin,
+    kConstant,
+    kArguments,
+    kResults
+};
+
+@interface WebDDConstantContainer : NSObject
+
+@property (nonatomic, readonly) WebDDConstant constant;
+@property (nonatomic, readonly, strong) NSArray<NSValue *> *constantValues;
+@property (nonatomic, readonly) NSString *name;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithConstant:(WebDDConstant)constant constantValues:(NSArray<NSValue *> *)constantValues name:(NSString *)name NS_DESIGNATED_INITIALIZER;
+
+@end
+
+
+@interface WebDDBuiltin : NSObject
+
+@property (nonatomic, readonly) NSString *definition;
+@property (nonatomic, readonly) NSString *name;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithDefinition:(NSString *)definition name:(NSString *)name NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDNode : NSObject
+
+@property (nonatomic, readonly) WebDDNodeType bridgeNodeType;
+@property (nonatomic, nullable, readonly, strong) WebDDBuiltin *builtin;
+@property (nonatomic, nullable, readonly) WebDDConstantContainer *constant;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithBridgeNodeType:(WebDDNodeType)bridgeNodeType builtin:(nullable WebDDBuiltin *)builtin constant:(nullable WebDDConstantContainer *)constant NS_DESIGNATED_INITIALIZER;
+
+@end
+
+
+@interface WebDDMaterialGraph : NSObject
+
+@property (nonatomic, strong, readonly) NSArray<WebDDNode *> *nodes;
+@property (nonatomic, strong, readonly) NSArray<WebDDEdge *> *edges;
+@property (nonatomic, strong, readonly) NSArray<WebDDInputOutput *> *inputs;
+@property (nonatomic, strong, readonly) NSArray<WebDDInputOutput *> *outputs;
+@property (nonatomic, strong, readonly) NSArray<WebDDPrimvar *> *primvars;
+@property (nonatomic, strong, readonly) NSString *identifier;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithNodes:(NSArray<WebDDNode *> *)nodes edges:(NSArray<WebDDEdge *> *)edges inputs:(NSArray<WebDDInputOutput *> *)inputs outputs:(NSArray<WebDDInputOutput *> *)outputs primvars:(NSArray<WebDDPrimvar *> *)primvars identifier:(NSUUID *)identifier NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDAddMaterialRequest : NSObject
+
+@property (nonatomic, strong, readonly) WebDDMaterialGraph *material;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithMaterial:(WebDDMaterialGraph *)material NS_DESIGNATED_INITIALIZER;
+
+@end
+
+@interface WebDDUpdateMaterialRequest : NSObject
+
+@property (nonatomic, strong, readonly) WebDDMaterialGraph *material;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithMaterial:(WebDDMaterialGraph *)material NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -155,7 +375,9 @@ NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 - (instancetype)init NS_DESIGNATED_INITIALIZER;
 
 - (void)loadModelFrom:(NSURL *)url;
-- (void)setCallbacksWithModelAddedCallback:(void (^)(WebAddMeshRequest *))addRequest modelUpdatedCallback:(void (^)(WebUpdateMeshRequest *))modelUpdatedCallback;
+- (void)update:(double)deltaTime;
+- (void)requestCompleted:(NSObject *)request;
+- (void)setCallbacksWithModelAddedCallback:(void (^)(WebAddMeshRequest *))addRequest modelUpdatedCallback:(void (^)(WebUpdateMeshRequest *))modelUpdatedCallback textureAddedCallback:(void (^)(WebDDAddTextureRequest *))textureAddedCallback textureUpdatedCallback:(void (^)(WebDDUpdateTextureRequest *))textureUpdatedCallback materialAddedCallback:(void (^)(WebDDAddMaterialRequest *))materialAddedCallback materialUpdatedCallback:(void (^)(WebDDUpdateMaterialRequest *))materialUpdatedCallback;
 
 @end
 

@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "HostingContext.h"
-#include "MediaPlayerEnums.h"
-#include "MediaPromiseTypes.h"
-#include "PlatformLayer.h"
-#include "TrackInfo.h"
-#include "VideoPlaybackQualityMetrics.h"
-#include "VideoTarget.h"
+#include <WebCore/HostingContext.h>
+#include <WebCore/MediaPlayerEnums.h>
+#include <WebCore/MediaPromiseTypes.h>
+#include <WebCore/PlatformLayer.h>
+#include <WebCore/TrackInfo.h>
+#include <WebCore/VideoPlaybackQualityMetrics.h>
+#include <WebCore/VideoTarget.h>
 #include <optional>
 #include <wtf/AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
@@ -70,7 +70,7 @@ public:
     virtual void setIsVisible(bool) = 0;
     virtual void setPresentationSize(const IntSize&) = 0;
     virtual void setShouldMaintainAspectRatio(bool) { }
-    virtual void acceleratedRenderingStateChanged(bool) { }
+    virtual void renderingCanBeAcceleratedChanged(bool) { }
     virtual void contentBoxRectChanged(const LayoutRect&) { }
     virtual void notifyFirstFrameAvailable(Function<void()>&&) { }
     virtual void notifyWhenHasAvailableVideoFrame(Function<void(const MediaTime&, double)>&&) { }
@@ -94,6 +94,9 @@ public:
     virtual WebCore::FloatSize videoLayerSize() const { return { }; }
     virtual void notifyVideoLayerSizeChanged(Function<void(const MediaTime&, FloatSize)>&&) { }
     virtual void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) { }
+#if ENABLE(ENCRYPTED_MEDIA)
+    virtual void notifyInsufficientExternalProtectionChanged(Function<void(bool)>&&) { }
+#endif
 };
 
 class VideoFullscreenInterface {

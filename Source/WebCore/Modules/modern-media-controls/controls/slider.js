@@ -81,4 +81,5 @@ Slider.KnobStyle = {
     Circle: "circle",
     Bar: "bar",
     None: "none",
+    Pill: "pill",
 };

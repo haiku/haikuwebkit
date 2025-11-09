@@ -26,7 +26,13 @@ const media = document.querySelector("video");
 const mediaController = createControls(container, media, null);
 
 const muteButton = mediaController.controls.muteButton.element;
-const volumeSlider = mediaController.controls.volumeSlider.children[1].element;
+
+// Ensure volume slider setup is complete before accessing its children
+if (!mediaController.controls._volumeSliderSetupComplete) {
+    mediaController.controls._setupVolumeSliderConfiguration();
+}
+
+const volumeSlider = mediaController.controls.volumeSlider.element;
 
 function runTest()
 {
@@ -78,7 +84,7 @@ function dragVolumeSlider(fromVolume, toVolume)
     eventSender.mouseMoveTo(centerX, dragStartY);
     eventSender.mouseDown();
     for (let i = 1; i <= iterations; ++i)
-        eventSender.mouseMoveTo(dragVolumeSlider, dragStartY + i * Math.sign(delta));
+        eventSender.mouseMoveTo(centerX, dragStartY + i * Math.sign(delta)); // Fixed: was dragVolumeSlider, should be centerX
     eventSender.mouseUp();
 }
 

@@ -117,7 +117,7 @@ AnimationPlayState CSSTransition::backingAnimationPlayState() const
     return AnimationPlayState::Running;
 }
 
-RefPtr<TimingFunction> CSSTransition::backingAnimationTimingFunction() const
+TimingFunction* CSSTransition::backingAnimationTimingFunction() const
 {
     return m_backingStyleTransition.timingFunction().value.ptr();
 }

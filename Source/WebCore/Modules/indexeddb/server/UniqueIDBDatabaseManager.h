@@ -34,11 +34,6 @@ class UniqueIDBDatabaseManager;
 }
 }
 
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::IDBServer::UniqueIDBDatabaseManager> : std::true_type { };
-}
-
 namespace WebCore {
 
 struct ClientOrigin;
@@ -49,8 +44,9 @@ class IDBBackingStore;
 class UniqueIDBDatabaseConnection;
 class UniqueIDBDatabaseTransaction;
 
-class UniqueIDBDatabaseManager : public CanMakeWeakPtr<UniqueIDBDatabaseManager> {
-    WTF_MAKE_TZONE_NON_HEAP_ALLOCATABLE(UniqueIDBDatabaseManager);
+class UniqueIDBDatabaseManager : public CanMakeWeakPtr<UniqueIDBDatabaseManager>, public CanMakeThreadSafeCheckedPtr<UniqueIDBDatabaseManager> {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(UniqueIDBDatabaseManager);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(UniqueIDBDatabaseManager);
 public:
     virtual ~UniqueIDBDatabaseManager() { }
     virtual void registerConnection(UniqueIDBDatabaseConnection&) = 0;

@@ -65,7 +65,7 @@ private:
     bool isCSSTransition() const final { return true; }
 
     AnimationPlayState backingAnimationPlayState() const final;
-    RefPtr<TimingFunction> backingAnimationTimingFunction() const final;
+    TimingFunction* backingAnimationTimingFunction() const final;
 
     AnimatableCSSProperty m_property;
     MonotonicTime m_generationTime;

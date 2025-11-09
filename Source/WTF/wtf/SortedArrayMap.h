@@ -147,7 +147,7 @@ template<ASCIISubset subset> constexpr bool isInSubset(char character)
     }
 }
 
-template<ASCIISubset subset, typename CharacterType> constexpr SIMD::SameSizeUnsignedInteger<CharacterType> foldForComparison(CharacterType character)
+template<ASCIISubset subset, typename CharacterType> constexpr SameSizeUnsignedInteger<CharacterType> foldForComparison(CharacterType character)
 {
     switch (subset) {
     case ASCIISubset::All:

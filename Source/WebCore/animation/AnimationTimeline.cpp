@@ -58,7 +58,7 @@ void AnimationTimeline::animationTimingDidChange(WebAnimation& animation)
         if (timeline && timeline.get() != this)
             timeline->removeAnimation(animation);
         else if (timeline.get() == this) {
-            if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation.effect())) {
+            if (RefPtr keyframeEffect = animation.keyframeEffect()) {
                 if (auto styleable = keyframeEffect->targetStyleable())
                     styleable->animationWasAdded(animation);
             }
@@ -77,7 +77,7 @@ void AnimationTimeline::removeAnimation(WebAnimation& animation)
 {
     ASSERT(!animation.timeline() || animation.timeline() == this);
     m_animations.remove(animation);
-    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation.effect())) {
+    if (RefPtr keyframeEffect = animation.keyframeEffect()) {
         if (auto styleable = keyframeEffect->targetStyleable()) {
             styleable->animationWasRemoved(animation);
             if (auto* effectStack = styleable->keyframeEffectStack())

@@ -33,7 +33,7 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/Chrome.h>
-#include <WebCore/Document.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/FrameLoadRequest.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/InspectorController.h>

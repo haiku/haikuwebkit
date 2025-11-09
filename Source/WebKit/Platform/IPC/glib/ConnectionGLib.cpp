@@ -368,8 +368,9 @@ bool Connection::sendOutputMessage(UnixMessage&& outputMessage)
 
     outputVector[outputVectorLength++] = { reinterpret_cast<void*>(&messageInfo), sizeof(messageInfo) };
     GRefPtr<GSocketControlMessage> controlMessage;
+    Vector<AttachmentInfo> attachmentInfo;
     if (!attachments.isEmpty()) {
-        Vector<AttachmentInfo> attachmentInfo(attachments.size());
+        attachmentInfo.resize(attachments.size());
         Vector<int> fds;
         fds.reserveInitialCapacity(attachments.size());
         for (size_t i = 0; i < attachments.size(); ++i) {

@@ -28,8 +28,8 @@
 #include "ExceptionOr.h"
 #include "JSValueInWrappedObject.h"
 #include "ReadableStreamReadRequest.h"
-#include <wtf/RefCounted.h>
 #include <wtf/Deque.h>
+#include <wtf/RefCounted.h>
 #include <wtf/WeakPtr.h>
 
 namespace JSC {

@@ -35,10 +35,10 @@
 #include "ContextDestructionObserverInlines.h"
 #include "CrossOriginMode.h"
 #include "CrossOriginOpenerPolicy.h"
-#include "DocumentInlines.h"
 #include "DOMTimer.h"
 #include "DatabaseContext.h"
 #include "Document.h"
+#include "DocumentPage.h"
 #include "EmptyScriptExecutionContext.h"
 #include "ErrorEvent.h"
 #include "FontLoadRequest.h"
@@ -515,7 +515,7 @@ void ScriptExecutionContext::reportUnhandledPromiseRejection(JSC::JSGlobalObject
 
     Ref vm = state.vm();
     auto scope = DECLARE_CATCH_SCOPE(vm);
-    JSC::JSValue result = promise.result(vm);
+    JSC::JSValue result = promise.result();
     String resultMessage = retrieveErrorMessage(state, vm, result, scope);
     String errorMessage;
 

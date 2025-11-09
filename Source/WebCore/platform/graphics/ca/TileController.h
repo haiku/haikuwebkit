@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/BoxExtents.h>
+#include <WebCore/ContentsFormat.h>
 #include <WebCore/FloatRect.h>
 #include <WebCore/IntRect.h>
 #include <WebCore/PlatformCALayer.h>

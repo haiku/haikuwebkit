@@ -27,7 +27,6 @@
  */
 
 [
-    CustomToJSObject,
     DoNotCheckConstants,
     Exposed=(Window,Worker),
     Exception

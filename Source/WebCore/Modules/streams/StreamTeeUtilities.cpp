@@ -233,8 +233,7 @@ ExceptionOr<Vector<Ref<ReadableStream>>> byteStreamTee(JSDOMGlobalObject& global
             list.append(state->takeReason2().get());
             JSC::JSValue reason = JSC::constructArray(&globalObject, static_cast<JSC::ArrayAllocationProfile*>(nullptr), list);
 
-            auto [promise, deferred] = createPromiseAndWrapper(globalObject);
-            state->stream().cancel(globalObject, reason, WTFMove(deferred));
+            Ref promise = state->stream().cancel(globalObject, reason);
             promise->whenSettled([state, promise] {
                 if (promise->status() == DOMPromise::Status::Rejected) {
                     state->rejectCancelPromise(promise->result());
@@ -258,8 +257,7 @@ ExceptionOr<Vector<Ref<ReadableStream>>> byteStreamTee(JSDOMGlobalObject& global
             list.append(state->takeReason2().get());
             JSC::JSValue reason = JSC::constructArray(&globalObject, static_cast<JSC::ArrayAllocationProfile*>(nullptr), list);
 
-            auto [promise, deferred] = createPromiseAndWrapper(globalObject);
-            state->stream().cancel(globalObject, reason, WTFMove(deferred));
+            Ref promise = state->stream().cancel(globalObject, reason);
             promise->whenSettled([state, promise] {
                 if (promise->status() == DOMPromise::Status::Rejected) {
                     state->rejectCancelPromise(promise->result());
@@ -346,7 +344,6 @@ static Ref<DOMPromise> pull2Steps(JSDOMGlobalObject& globalObject, StreamTeeStat
 class TeeDefaultReadRequest : public ReadableStreamReadRequest {
 public:
     static Ref<TeeDefaultReadRequest> create(Ref<StreamTeeState>&& state) { return adoptRef(*new TeeDefaultReadRequest(WTFMove(state))); }
-    ~TeeDefaultReadRequest() = default;
 
 private:
     explicit TeeDefaultReadRequest(Ref<StreamTeeState>&& state)
@@ -458,7 +455,6 @@ private:
 class TeeBYOBReadRequest : public ReadableStreamReadIntoRequest {
 public:
     static Ref<TeeBYOBReadRequest> create(Ref<StreamTeeState>&& state, bool forBranch2) { return adoptRef(*new TeeBYOBReadRequest(WTFMove(state), forBranch2)); }
-    ~TeeBYOBReadRequest() = default;
 
 private:
     explicit TeeBYOBReadRequest(Ref<StreamTeeState>&& state, bool forBranch2)

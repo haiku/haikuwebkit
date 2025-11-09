@@ -33,26 +33,5 @@ PASS html5lib_tests7.html 17dcea170bb74d18ed4776dbb98f0bac6a11364d
 PASS html5lib_tests7.html 9457c10c9f987bbc95937b34763fe956d61d237b
 PASS html5lib_tests7.html 0fa23bb5d8b2a591afb1842b8f4c00c490c127b4
 PASS html5lib_tests7.html f6d60b3ae48e2b69b4c25125f9b5a3ab4867521b
-FAIL html5lib_tests7.html 5b0b3edcc3ce9fdc9f58eb62d326865ca0aab8c8 assert_equals: expected "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <keygen>" but got "#document\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|     <keygen>"
-5b0b3edcc3ce9fdc9f58eb62d326865ca0aab8c8
-
-Input
-
-<select><keygen>
-Expected
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <keygen>
-Actual
-
-#document
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|     <keygen>
+PASS html5lib_tests7.html 5b0b3edcc3ce9fdc9f58eb62d326865ca0aab8c8
 

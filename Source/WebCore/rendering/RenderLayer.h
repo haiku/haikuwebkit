@@ -45,7 +45,7 @@
 #pragma once
 
 #include <WebCore/ClipRect.h>
-#include <WebCore/GraphicsLayer.h>
+#include <WebCore/GraphicsLayerEnums.h>
 #include <WebCore/LayerFragment.h>
 #include <WebCore/LayoutRect.h>
 #include <WebCore/PaintFrequencyTracker.h>
@@ -54,6 +54,7 @@
 #include <WebCore/RenderPtr.h>
 #include <WebCore/RenderSVGModelObject.h>
 #include <WebCore/ScrollBehavior.h>
+#include <WebCore/TransformationMatrix.h>
 #include <memory>
 #include <wtf/CheckedRef.h>
 #include <wtf/Markable.h>
@@ -452,10 +453,10 @@ public:
 
     // Indicate that the layer contents need to be repainted. Only has an effect
     // if layer compositing is being used.
-    void setBackingNeedsRepaint(GraphicsLayer::ShouldClipToLayer = GraphicsLayer::ClipToLayer);
+    void setBackingNeedsRepaint(GraphicsLayerShouldClipToLayer = GraphicsLayerShouldClipToLayer::Clip);
 
     // The rect is in the coordinate space of the layer's render object.
-    void setBackingNeedsRepaintInRect(const LayoutRect&, GraphicsLayer::ShouldClipToLayer = GraphicsLayer::ClipToLayer);
+    void setBackingNeedsRepaintInRect(const LayoutRect&, GraphicsLayerShouldClipToLayer = GraphicsLayerShouldClipToLayer::Clip);
     void repaintIncludingNonCompositingDescendants(const RenderLayerModelObject* repaintContainer);
 
     void styleChanged(StyleDifference, const RenderStyle* oldStyle);

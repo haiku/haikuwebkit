@@ -24,6 +24,7 @@
 #include "StyleMaskLayer.h"
 
 #include "CachedImage.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 #include <wtf/text/TextStream.h>

@@ -37,7 +37,6 @@
 #include "CSSSelectorParser.h"
 #include "CSSViewTransitionRule.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "MediaQueryEvaluator.h"
 #include "MutableCSSSelector.h"
 #include "StyleCustomPropertyRegistry.h"

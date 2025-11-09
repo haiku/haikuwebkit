@@ -52,7 +52,7 @@ protected:
 
     void reset();
 
-    std::optional<InlineLayoutUnit> eligibleOverflowWidthAsLeading(const InlineContentBreaker::ContinuousContent::RunList&, const InlineContentBreaker::Result&, bool) const;
+    std::optional<InlineLayoutUnit> overflowWidthAsLeadingForNextLine(const InlineContentBreaker::ContinuousContent::RunList&, const InlineContentBreaker::Result&) const;
 
     std::optional<IntrinsicWidthMode> intrinsicWidthMode() const { return m_intrinsicWidthMode; }
     bool isInIntrinsicWidthMode() const { return !!intrinsicWidthMode(); }

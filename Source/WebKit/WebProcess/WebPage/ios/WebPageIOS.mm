@@ -85,10 +85,10 @@
 #import <WebCore/DataDetectionResultsStorage.h>
 #import <WebCore/DiagnosticLoggingClient.h>
 #import <WebCore/DiagnosticLoggingKeys.h>
-#import <WebCore/Document.h>
-#import <WebCore/DocumentInlines.h>
 #import <WebCore/DocumentLoader.h>
 #import <WebCore/DocumentMarkerController.h>
+#import <WebCore/DocumentMarkers.h>
+#import <WebCore/DocumentQuirks.h>
 #import <WebCore/DragController.h>
 #import <WebCore/EditingHTMLConverter.h>
 #import <WebCore/EditingInlines.h>
@@ -281,7 +281,7 @@ void WebPage::platformInitializeAccessibility(ShouldInitializeNSAccessibility)
         accessibilityTransferRemoteToken(accessibilityRemoteTokenData());
 }
 
-void WebPage::platformReinitialize()
+void WebPage::platformReinitializeAccessibilityToken()
 {
     RefPtr frame = m_page->focusController().focusedOrMainFrame();
     if (!frame)
@@ -1307,7 +1307,7 @@ void WebPage::sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier requestID
     }
 
     if (RefPtr area = dynamicDowncast<HTMLAreaElement>(*node)) {
-        node = area->imageElement().get();
+        node = area->imageElement().unsafeGet();
         if (!node)
             return;
     }
@@ -1647,6 +1647,13 @@ void WebPage::setFocusedElementSelectedIndex(const WebCore::ElementContext& cont
 {
     if (RefPtr select = dynamicDowncast<HTMLSelectElement>(elementForContext(context)))
         select->optionSelectedByUser(index, true, allowMultipleSelection);
+}
+
+void WebPage::setIsShowingInputViewForFocusedElement(bool showingInputView)
+{
+    m_isShowingInputViewForFocusedElement = showingInputView;
+    if (!showingInputView)
+        m_page->clearIsShowingInputView();
 }
 
 void WebPage::showInspectorHighlight(const WebCore::InspectorOverlay::Highlight& highlight)
@@ -2078,9 +2085,9 @@ IntRect WebPage::absoluteInteractionBounds(const Node& node)
     auto& style = renderer->style();
     FloatRect boundingBox = renderer->absoluteBoundingBoxRect(true /* use transforms*/);
     // This is wrong. It's subtracting borders after converting to absolute coords on something that probably doesn't represent a rectangular element.
-    boundingBox.move(WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }), WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
-    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderRightWidth(), WebCore::Style::ZoomNeeded { }));
-    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate<float>(style.borderBottomWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
+    boundingBox.move(WebCore::Style::evaluate<float>(style.borderLeftWidth(), style.usedZoomForLength()), WebCore::Style::evaluate<float>(style.borderTopWidth(), style.usedZoomForLength()));
+    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate<float>(style.borderLeftWidth(), style.usedZoomForLength()) - WebCore::Style::evaluate<float>(style.borderRightWidth(), style.usedZoomForLength()));
+    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate<float>(style.borderBottomWidth(), style.usedZoomForLength()) - WebCore::Style::evaluate<float>(style.borderTopWidth(), style.usedZoomForLength()));
     return enclosingIntRect(boundingBox);
 }
 
@@ -5052,6 +5059,23 @@ static bool selectionIsInsideFixedPositionContainer(LocalFrame& frame)
     return isInsideFixedPosition;
 }
 
+void WebPage::markPendingLocalScrollPositionChange()
+{
+    if (m_pendingLocalChangeTransactionID)
+        return;
+
+    if (auto* drawingArea = dynamicDowncast<RemoteLayerTreeDrawingArea>(this->drawingArea()))
+        m_pendingLocalChangeTransactionID = drawingArea->nextTransactionID();
+}
+
+bool WebPage::shouldIgnoreScrollPositionUpdate(TransactionID receivedTransactionID) const
+{
+    if (m_pendingLocalChangeTransactionID)
+        return receivedTransactionID.lessThanSameProcess(*m_pendingLocalChangeTransactionID);
+
+    return false;
+}
+
 void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visibleContentRectUpdateInfo, MonotonicTime oldestTimestamp)
 {
     LOG_WITH_STREAM(VisibleRects, stream << "\nWebPage " << m_identifier << " updateVisibleContentRects " << visibleContentRectUpdateInfo);
@@ -5097,11 +5121,21 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
 
     auto layoutViewportRect = visibleContentRectUpdateInfo.layoutViewportRect();
     auto unobscuredContentRect = visibleContentRectUpdateInfo.unobscuredContentRect();
-    auto scrollPosition = roundedIntPoint(unobscuredContentRect.location());
+    auto scrollPosition = shouldIgnoreScrollPositionUpdate(visibleContentRectUpdateInfo.lastLayerTreeTransactionID()) ? frameView.scrollPosition() : roundedIntPoint(unobscuredContentRect.location());
 
     // Computation of layoutViewportRect is done in LayoutUnits which loses some precision, so test with an epsilon.
-    constexpr auto epsilon = 2.0f / kFixedPointDenominator;
-    if (areEssentiallyEqual(unobscuredContentRect.location(), layoutViewportRect.location(), epsilon))
+    // FIXME: The loss of precision when converting floating point values to LayoutUnit does not, by itself, explain
+    // the differences between the `layoutViewportRect` and `unobscuredContentRect`'s locations. While scrolling on iOS,
+    // the absolute differences can sometimes exceed 3px, which is well over this fractional error threshold.
+    // For now, we maintain behavior shipped in iOS 26 by snapping to the unobscured content rect location as long as
+    // the difference is fairly small (~5 px).
+    static constexpr auto maxEpsilon = 5.0;
+    static constexpr auto epsilonRatio = 1.0 / (2 * kFixedPointDenominator);
+    auto unobscuredContentRectLocation = unobscuredContentRect.location();
+    auto epsilonX = std::min(maxEpsilon, epsilonRatio * std::abs(unobscuredContentRectLocation.x()));
+    auto epsilonY = std::min(maxEpsilon, epsilonRatio * std::abs(unobscuredContentRectLocation.y()));
+    auto layoutViewportRectLocation = layoutViewportRect.location();
+    if (std::abs(unobscuredContentRectLocation.x() - layoutViewportRectLocation.x()) <= epsilonX && std::abs(unobscuredContentRectLocation.y() - layoutViewportRectLocation.y()) <= epsilonY)
         layoutViewportRect.setLocation(scrollPosition);
 
     bool pageHasBeenScaledSinceLastLayerTreeCommitThatChangedPageScale = ([&] {

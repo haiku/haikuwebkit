@@ -27,7 +27,7 @@
 #include "MediaCapabilities.h"
 
 #include "ContentType.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EventLoop.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSMediaCapabilitiesDecodingInfo.h"
@@ -39,7 +39,6 @@
 #include "MediaDecodingConfiguration.h"
 #include "MediaEncodingConfiguration.h"
 #include "MediaEngineConfigurationFactory.h"
-#include "Page.h"
 #include "Settings.h"
 #include "WebRTCProvider.h"
 #include <wtf/Logger.h>

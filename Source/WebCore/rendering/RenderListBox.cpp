@@ -34,6 +34,7 @@
 #include "AXObjectCache.h"
 #include "CSSFontSelector.h"
 #include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "EventHandler.h"
 #include "FocusController.h"
 #include "FrameSelection.h"

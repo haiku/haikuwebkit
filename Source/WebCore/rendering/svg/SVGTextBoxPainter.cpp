@@ -195,7 +195,7 @@ void SVGTextBoxPainter<TextBoxPath>::paint()
 
     const RenderStyle* selectionStyle = &style;
     if (hasSelection && shouldPaintSelectionHighlight) {
-        selectionStyle = parentRenderer.getCachedPseudoStyle({ PseudoId::Selection });
+        selectionStyle = parentRenderer.getCachedPseudoStyle({ PseudoElementType::Selection });
         if (selectionStyle) {
             if (!hasFill)
                 hasFill = selectionStyle->hasFill();

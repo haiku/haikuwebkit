@@ -655,7 +655,7 @@ auto VisiblePosition::localCaretRect() const -> LocalCaretRect
     if (!renderer)
         return { };
 
-    return { computeLocalCaretRect(*renderer, boxAndOffset), const_cast<RenderObject*>(renderer.get()) };
+    return { computeLocalCaretRect(*renderer, boxAndOffset), const_cast<RenderObject*>(renderer.unsafeGet()) };
 }
 
 IntRect VisiblePosition::absoluteCaretBounds(bool* insideFixed) const

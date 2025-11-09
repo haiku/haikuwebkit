@@ -41,7 +41,6 @@ class UIScriptController;
 
 class UIScriptContextDelegate {
 public:
-    UIScriptContextDelegate() = default;
     virtual ~UIScriptContextDelegate() = default;
 
     virtual void uiScriptDidComplete(const String& result, unsigned callbackID) = 0;
@@ -69,6 +68,7 @@ typedef enum  {
     CallbackTypeDidShowContactPicker,
     CallbackTypeDidHideContactPicker,
     CallbackTypeWillStartInputSession,
+    CallbackTypeDidPresentViewController,
     CallbackTypeNonPersistent = firstNonPersistentCallbackID
 } CallbackType;
 

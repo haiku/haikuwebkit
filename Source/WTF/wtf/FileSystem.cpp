@@ -784,7 +784,7 @@ String pathByAppendingComponents(StringView path, std::span<const StringView> co
 
 #endif
 
-#if !OS(WINDOWS) && !PLATFORM(COCOA) && !PLATFORM(PLAYSTATION)
+#if !OS(WINDOWS) && !PLATFORM(COCOA) && !PLATFORM(PLAYSTATION) && !PLATFORM(GLIB)
 
 String createTemporaryDirectory()
 {

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "RemoteAcceleratedEffectStack.h"
+#include "RemoteAnimationStack.h"
 #include "RemoteLayerBackingStore.h"
 #include <WebCore/EventRegion.h>
 #include <WebCore/IOSurface.h>
@@ -140,8 +140,8 @@ public:
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void setAcceleratedEffectsAndBaseValues(const WebCore::AcceleratedEffects&, const WebCore::AcceleratedEffectValues&, RemoteLayerTreeHost&);
-    const RemoteAcceleratedEffectStack* effectStack() const { return m_effectStack.get(); }
-    RefPtr<RemoteAcceleratedEffectStack> takeEffectStack() { return std::exchange(m_effectStack, nullptr); }
+    const RemoteAnimationStack* animationStack() const { return m_animationStack.get(); }
+    RefPtr<RemoteAnimationStack> takeAnimationStack() { return std::exchange(m_animationStack, nullptr); }
 #endif
 
     bool backdropRootIsOpaque() const { return m_backdropRootIsOpaque; }
@@ -199,7 +199,7 @@ private:
     std::optional<WebCore::RenderingResourceIdentifier> m_asyncContentsIdentifier;
 
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    RefPtr<RemoteAcceleratedEffectStack> m_effectStack;
+    RefPtr<RemoteAnimationStack> m_animationStack;
 #endif
     bool m_backdropRootIsOpaque { false };
 };

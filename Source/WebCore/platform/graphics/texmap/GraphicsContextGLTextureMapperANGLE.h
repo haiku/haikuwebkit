@@ -65,6 +65,8 @@ public:
     bool addFoveation(IntSize, IntSize, IntSize, std::span<const GCGLfloat>, std::span<const GCGLfloat>, std::span<const GCGLfloat>) final;
     void enableFoveation(GCGLuint) final;
     void disableFoveation() final;
+
+    bool enableRequiredWebXRExtensions() override;
 #endif
 
 protected:

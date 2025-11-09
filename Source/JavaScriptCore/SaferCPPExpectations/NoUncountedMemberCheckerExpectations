@@ -20,9 +20,7 @@ heap/Heap.h
 heap/HeapSnapshotBuilder.h
 heap/JITStubRoutineSet.h
 inspector/InspectorAgentBase.h
-inspector/InspectorFrontendDispatchers.h
 inspector/JSJavaScriptCallFrame.h
-inspector/agents/InspectorTargetAgent.h
 jit/JIT.h
 jit/JITPlan.h
 jit/JITSafepoint.h

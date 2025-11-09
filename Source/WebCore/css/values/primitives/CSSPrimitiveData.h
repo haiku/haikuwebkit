@@ -219,14 +219,14 @@ template<Numeric N, PrimitiveKeyword... Ks> struct PrimitiveDataIndex {
 
 union PrimitiveDataPayload {
     double number;
-    CSSCalcValue* calc;
+    CSSCalc::Value* calc;
 
     PrimitiveDataPayload(double number)
         : number { number }
     {
     }
 
-    PrimitiveDataPayload(CSSCalcValue* calc)
+    PrimitiveDataPayload(CSSCalc::Value* calc)
         : calc { calc }
     {
     }

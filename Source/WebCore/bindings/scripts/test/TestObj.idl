@@ -99,6 +99,8 @@ enum TestConfidence { "high", "kinda-low" };
     attribute TestDictionary? nullableDictionaryAttr;
     attribute (DOMString or [Clamp] long or undefined) annotatedTypeInUnionAttr;
     attribute sequence<[Clamp] long> annotatedTypeInSequenceAttr;
+    attribute (long or Node) unionAttr;
+    [OptimizedUnionSetterUsingOverloads] attribute (long or Node) optimizedSetterUnionAttr;
 
     attribute TestEnumTypeWithAlternateImplementationName implementationEnumAttr;
 

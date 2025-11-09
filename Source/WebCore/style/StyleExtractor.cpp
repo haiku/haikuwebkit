@@ -32,7 +32,6 @@
 #include "CSSValuePool.h"
 #include "ComposedTreeAncestorIterator.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "FontCascade.h"
 #include "HTMLFrameOwnerElement.h"
 #include "NodeRenderStyle.h"

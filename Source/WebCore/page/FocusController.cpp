@@ -31,7 +31,8 @@
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentView.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "EditorClient.h"
@@ -42,6 +43,8 @@
 #include "EventHandler.h"
 #include "EventNames.h"
 #include "FocusOptions.h"
+#include "FrameDestructionObserverInlines.h"
+#include "FrameInlines.h"
 #include "FrameSelection.h"
 #include "FrameTree.h"
 #include "HTMLAreaElement.h"
@@ -70,6 +73,7 @@
 #include <limits>
 #include <wtf/Ref.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 
@@ -92,7 +96,7 @@ static Element* openPopoverForInvoker(const Node* candidateInvoker)
         return nullptr;
     RefPtr popover = invoker->invokedPopover();
     if (popover && popover->isPopoverShowing() && popover->popoverData()->invoker() == invoker)
-        return popover.get();
+        return popover.unsafeGet();
     return nullptr;
 }
 
@@ -409,8 +413,18 @@ static inline void dispatchEventsOnWindowAndFocusedElement(Document* document, b
             return;
     }
 
-    if (!focused && document->focusedElement())
+    if (!focused && document->focusedElement()) {
+        if (document->focusedElement()->transferredFocusToPicker()) {
+            // The webpage lost focus because the focused element transferred focus to
+            // a non-web-content picker when it was activated. We don't want to post any
+            // web-exposed events (e.g. blur) in these cases, so return.
+            document->focusedElement()->didSuppressBlurDueToPickerFocusTransfer();
+            return;
+        }
+
         document->focusedElement()->dispatchBlurEvent(nullptr);
+    }
+
     document->dispatchWindowEvent(Event::create(focused ? eventNames().focusEvent : eventNames().blurEvent, Event::CanBubble::No, Event::IsCancelable::No));
     if (focused && document->focusedElement())
         document->focusedElement()->dispatchFocusEvent(nullptr, { });
@@ -503,7 +517,7 @@ LocalFrame* FocusController::focusedOrMainFrame() const
     if (auto* frame = focusedLocalFrame())
         return frame;
     if (RefPtr localMainFrame = m_page->localMainFrame())
-        return localMainFrame.get();
+        return localMainFrame.unsafeGet();
     ASSERT(m_page->settings().siteIsolationEnabled());
     return nullptr;
 }
@@ -1379,6 +1393,15 @@ void FocusController::focusRepaintTimerFired()
 Seconds FocusController::timeSinceFocusWasSet() const
 {
     return MonotonicTime::now() - m_focusSetTime;
+}
+
+TextStream& operator<<(TextStream& ts, const FocusableElementSearchResult& result)
+{
+    TextStream::GroupScope group(ts);
+    ts.dumpProperty("element"_s, result.element);
+    ts.dumpProperty("continuedSearchInRemoteFrame"_s, result.continuedSearchInRemoteFrame == ContinuedSearchInRemoteFrame::Yes);
+    ts.dumpProperty("relinquishedFocusToChrome"_s, result.relinquishedFocusToChrome == RelinquishedFocusToChrome::Yes);
+    return ts;
 }
 
 } // namespace WebCore

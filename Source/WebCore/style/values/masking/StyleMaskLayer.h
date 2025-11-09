@@ -25,13 +25,13 @@
 
 #pragma once
 
-#include "GraphicsTypes.h"
-#include "RenderStyleConstants.h"
-#include "StyleBackgroundSize.h"
-#include "StyleFillLayers.h"
-#include "StyleImageOrNone.h"
-#include "StylePosition.h"
-#include "StyleRepeatStyle.h"
+#include <WebCore/GraphicsTypes.h>
+#include <WebCore/RenderStyleConstants.h>
+#include <WebCore/StyleBackgroundSize.h>
+#include <WebCore/StyleFillLayers.h>
+#include <WebCore/StyleImageOrNone.h>
+#include <WebCore/StylePosition.h>
+#include <WebCore/StyleRepeatStyle.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
 

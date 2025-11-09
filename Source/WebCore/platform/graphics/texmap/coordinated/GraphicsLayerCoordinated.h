@@ -117,7 +117,7 @@ private:
     Vector<std::pair<String, double>> acceleratedAnimationsForTesting(const Settings&) const override;
 
     void setNeedsDisplay() override;
-    void setNeedsDisplayInRect(const FloatRect&, ShouldClipToLayer = ClipToLayer) override;
+    void setNeedsDisplayInRect(const FloatRect&, ShouldClipToLayer = ShouldClipToLayer::Clip) override;
 
     FloatSize pixelAlignmentOffset() const override { return m_pixelAlignmentOffset; }
 

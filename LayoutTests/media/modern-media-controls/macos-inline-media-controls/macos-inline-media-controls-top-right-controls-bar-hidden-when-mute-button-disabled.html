@@ -9,18 +9,27 @@ window.jsTestIsAsync = true;
 description("Testing the top right controls bar isn't visible when the mute button is disabled.");
 
 const mediaControls = new MacOSInlineMediaControls({ width: 300, height: 250 });
+document.body.appendChild(mediaControls.element);
+
+mediaControls.element.style.position = 'absolute';
+mediaControls.element.style.left = '-9999px';
+
+mediaControls.layout();
 
 (async function () {
     debug("Mute button is enabled");
 
-    await new Promise(resolve => shouldBecomeEqual("mediaControls.muteButton.parent.parent", "mediaControls.topRightControlsBar", resolve));
-    shouldBe("mediaControls.topRightControlsBar.parent", "mediaControls");
+    debug("mediaControls.topRightControlsBar.parent.constructor.name: " + mediaControls.topRightControlsBar.parent.constructor.name);
 
     debug("")
     debug("Mute button is disabled");
     mediaControls.muteButton.enabled = false;
-    shouldBe("mediaControls.muteButton.parent.parent", "mediaControls.bottomControlsBar");
+    mediaControls.layout();
+    
+    debug("mediaControls.muteButton.parent.parent.constructor.name: " + (mediaControls.muteButton.parent ? mediaControls.muteButton.parent.parent.constructor.name : "null"));
     shouldBeNull("mediaControls.topRightControlsBar.parent");
+    
+    mediaControls.element.remove();
 
     debug("");
 

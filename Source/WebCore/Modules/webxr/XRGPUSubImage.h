@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(WEBXR_LAYERS)
+#if ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)
 
 #include "GPUTexture.h"
 #include "GPUTextureViewDescriptor.h"
@@ -34,6 +34,8 @@
 #include "XRSubImage.h"
 
 #include <wtf/TZoneMalloc.h>
+
+
 
 namespace WebCore {
 
@@ -58,6 +60,8 @@ public:
 private:
     XRGPUSubImage(Ref<WebGPU::XRSubImage>&&, WebGPU::XREye, std::array<uint16_t, 2>&&, WebCore::IntRect&&, GPUDevice&);
 
+    bool isXRGPUSubImage() const final { return true; }
+
     const Ref<WebGPU::XRSubImage> m_backing;
     const Ref<GPUDevice> m_device;
     const GPUTextureViewDescriptor m_descriptor;
@@ -68,4 +72,8 @@ private:
 
 } // namespace WebCore
 
-#endif // ENABLE(WEBXR_LAYERS)
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::XRGPUSubImage)
+    static bool isType(const WebCore::XRSubImage& image) { return image.isXRGPUSubImage(); }
+SPECIALIZE_TYPE_TRAITS_END()
+
+#endif // ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)

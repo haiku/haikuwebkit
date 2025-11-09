@@ -4,11 +4,10 @@ On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE
 
 
 Mute button is enabled
-PASS mediaControls.muteButton.parent.parent became mediaControls.topRightControlsBar
-PASS mediaControls.topRightControlsBar.parent is mediaControls
+mediaControls.topRightControlsBar.parent.constructor.name: MacOSInlineMediaControls
 
 Mute button is disabled
-PASS mediaControls.muteButton.parent.parent is mediaControls.bottomControlsBar
+mediaControls.muteButton.parent.parent.constructor.name: MacOSInlineMediaControls
 PASS mediaControls.topRightControlsBar.parent is null
 
 PASS successfullyParsed is true

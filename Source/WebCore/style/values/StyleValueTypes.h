@@ -48,6 +48,25 @@ struct Context;
 
 class BuilderState;
 
+// MARK: - ValueRepresentation
+
+// All leaf types that want to conform to ValueRepresentation must implement
+// the following:
+//
+//    template<> struct WebCore::Style::ValueRepresentation<StyleType> {
+//        template<typename... F> bool operator()(const StyleType&, F&&... f);
+//    };
+
+template<typename> struct ValueRepresentation;
+
+struct ValueRepresentationInvoker {
+    template<typename StyleType, typename... F> decltype(auto) operator()(const StyleType& value, F&&... f) const
+    {
+        return ValueRepresentation<StyleType>{}(value, std::forward<F>(f)...);
+    }
+};
+inline constexpr ValueRepresentationInvoker valueRepresentation{};
+
 // Types can specialize this and set the value to true to be treated as "non-converting"
 // for css to style / style to css conversion algorithms. This means the type is identical
 // for both CSS and Style systems (e.g. a constant value or an enum).

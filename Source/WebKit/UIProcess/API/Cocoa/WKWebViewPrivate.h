@@ -742,6 +742,8 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 - (void)didStartFormControlInteraction WK_API_AVAILABLE(ios(10.3));
 - (void)didEndFormControlInteraction WK_API_AVAILABLE(ios(10.3));
 
+- (void)didEnsurePositionInformationIsUpToDate WK_API_AVAILABLE(ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+
 - (void)_beginInteractiveObscuredInsetsChange;
 - (void)_endInteractiveObscuredInsetsChange;
 - (void)_hideContentUntilNextUpdate;
@@ -925,6 +927,7 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
 @property (nonatomic, readonly) NSScrollPocket *_topScrollPocket WK_API_AVAILABLE(macos(26.0));
+@property (nonatomic, setter=_setPrefersSolidColorHardScrollPocket:) BOOL _prefersSolidColorHardScrollPocket WK_API_AVAILABLE(macos(WK_MAC_TBA));
 #endif
 
 - (void)_showWritingTools WK_API_AVAILABLE(macos(15.2));

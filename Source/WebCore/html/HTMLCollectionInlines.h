@@ -91,11 +91,6 @@ inline NodeListInvalidationType HTMLCollection::invalidationType() const
     return static_cast<NodeListInvalidationType>(m_invalidationType);
 }
 
-inline CollectionType HTMLCollection::type() const
-{
-    return static_cast<CollectionType>(m_collectionType);
-}
-
 inline Document& HTMLCollection::document() const
 {
     return m_ownerNode->document();

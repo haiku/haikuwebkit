@@ -716,7 +716,7 @@ WebExtensionAction* WebExtensionAction::fallbackAction() const
 
     // Tab actions whose tab references have not dropped fallback to the window action.
     if (RefPtr tab = this->tab())
-        return extensionContext->getAction(tab->window().get()).ptr();
+        return extensionContext->getAction(tab->window().get()).unsafePtr();
 
     // Window actions and tab actions whose tab references have dropped fallback to the default action.
     if (m_window.has_value() || m_tab.has_value())
@@ -786,7 +786,7 @@ void WebExtensionAction::setIcons(RefPtr<JSON::Object> icons)
     if (m_customIcons == icons)
         return;
 
-    m_customIcons = icons->size() ? icons : nullptr;
+    m_customIcons = icons && icons->size() ? icons : nullptr;
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
     m_customIconVariants = nullptr;
 #endif
@@ -801,7 +801,7 @@ void WebExtensionAction::setIconVariants(RefPtr<JSON::Array> iconVariants)
     if (m_customIconVariants == iconVariants)
         return;
 
-    m_customIconVariants = iconVariants->length() ? iconVariants : nullptr;
+    m_customIconVariants = iconVariants && iconVariants->length() ? iconVariants : nullptr;
     m_customIcons = nullptr;
 
     clearIconCache();

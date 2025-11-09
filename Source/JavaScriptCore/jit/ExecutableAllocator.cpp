@@ -172,6 +172,10 @@ void ExecutableAllocator::disableJIT()
     bool shouldDisableJITMemory = processHasEntitlement("com.apple.security.cs.allow-jit"_s) && !isKernOpenSource();
 #endif
     if (shouldDisableJITMemory) {
+#if PLATFORM(MAC)
+        RELEASE_ASSERT(processHasEntitlement("com.apple.private.verified-jit"));
+        RELEASE_ASSERT(processHasEntitlement("com.apple.security.cs.single-jit"));
+#endif
         // Because of an OS quirk, even after the JIT region has been unmapped,
         // the OS thinks that region is reserved, and as such, can cause Gigacage
         // allocation to fail. We work around this by initializing the Gigacage
@@ -267,11 +271,9 @@ static ALWAYS_INLINE MacroAssemblerCodeRef<JITThunkPtrTag> jitWriteThunkGenerato
 
     auto stubBaseCodePtr = CodePtr<LinkBufferPtrTag>(tagCodePtr<LinkBufferPtrTag>(stubBase));
     LinkBuffer linkBuffer(jit, stubBaseCodePtr, stubSize, LinkBuffer::Profile::Thunk);
-    // We don't use FINALIZE_CODE() for two reasons.
-    // The first is that we don't want the writeable address, as disassembled instructions,
-    // to appear in the console or anywhere in memory, via the PrintStream buffer.
-    // The second is we can't guarantee that the code is readable when using the
-    // asyncDisassembly option as our caller will set our pages execute only.
+    // We don't use FINALIZE_CODE() because we don't want the writeable address, as
+    // disassembled instructions, to appear in the console or anywhere in memory, via
+    // the PrintStream buffer.
     return linkBuffer.finalizeCodeWithoutDisassembly<JITThunkPtrTag>(nullptr);
 }
 #else // not USE(EXECUTE_ONLY_JIT_WRITE_FUNCTION)

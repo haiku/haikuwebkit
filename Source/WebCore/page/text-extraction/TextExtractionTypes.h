@@ -95,7 +95,7 @@ struct ScrollableItemData {
 };
 
 struct ImageItemData {
-    String name;
+    URL completedSource;
     String altText;
 };
 

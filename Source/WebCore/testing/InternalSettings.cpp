@@ -29,7 +29,7 @@
 
 #include "CaptionUserPreferences.h"
 #include "DeprecatedGlobalSettings.h"
-#include "Document.h"
+#include "DocumentView.h"
 #include "FontCache.h"
 #include "LocalFrameInlines.h"
 #include "LocalFrameView.h"

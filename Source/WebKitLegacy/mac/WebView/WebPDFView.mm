@@ -69,6 +69,7 @@
 #import <wtf/FileHandle.h>
 #import <wtf/FileSystem.h>
 #import <wtf/RuntimeApplicationChecks.h>
+#import <wtf/SystemFree.h>
 #import <wtf/URL.h>
 #import <wtf/text/cf/StringConcatenateCF.h>
 
@@ -1371,18 +1372,16 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     
     if (!_temporaryPDFDirectoryPath) {
         NSString *temporaryDirectoryTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"WebKitPDFs-XXXXXX"];
-        char *cTemplate = strdup([temporaryDirectoryTemplate fileSystemRepresentation]);
+        auto cTemplate = adoptSystemMalloc(strdup([temporaryDirectoryTemplate fileSystemRepresentation]));
         
-        if (!mkdtemp(cTemplate)) {
+        if (!mkdtemp(cTemplate.get())) {
             // This should never happen; if it does we'll fail silently on non-debug builds.
             ASSERT_NOT_REACHED();
         } else {
             // cTemplate has now been modified to be the just-created directory name. This directory has 700 permissions,
             // so only the current user can add to it or view its contents.
-            _temporaryPDFDirectoryPath = [[[NSFileManager defaultManager] stringWithFileSystemRepresentation:cTemplate length:strlen(cTemplate)] retain];
+            _temporaryPDFDirectoryPath = [[[NSFileManager defaultManager] stringWithFileSystemRepresentation:cTemplate.get() length:strlen(cTemplate.get())] retain];
         }
-        
-        free(cTemplate);
     }
     
     return _temporaryPDFDirectoryPath;

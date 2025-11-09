@@ -36,6 +36,9 @@
 #include "CachedPage.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
+#include "DocumentView.h"
+#include "DocumentWindow.h"
 #include "FrameLoader.h"
 #include "FrameLoaderStateMachine.h"
 #include "FrameTree.h"
@@ -50,6 +53,7 @@
 #include "ProcessSwapDisposition.h"
 #include "ScrollingCoordinator.h"
 #include "SerializedScriptValue.h"
+#include "Settings.h"
 #include "SharedStringHash.h"
 #include "ShouldTreatAsContinuingLoad.h"
 #include "VisitedLinkStore.h"
@@ -760,11 +764,6 @@ void HistoryController::recursiveUpdateForSameDocumentNavigation()
     // The frame that navigated will now have a null provisional item.
     // Ignore it and its children.
     if (!m_provisionalItem)
-        return;
-
-    // The provisional item may represent a different pending navigation.
-    // Don't commit it if it isn't a same document navigation.
-    if (m_currentItem && !protectedCurrentItem()->shouldDoSameDocumentNavigationTo(*protectedProvisionalItem()))
         return;
 
     // Commit the provisional item.

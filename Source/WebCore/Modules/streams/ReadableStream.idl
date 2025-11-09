@@ -42,7 +42,6 @@ dictionary ReadableWritablePair {
 typedef (ReadableStreamDefaultReader or ReadableStreamBYOBReader) ReadableStreamReader;
 
 [
-    CustomToJSObject,
     ExportMacro=WEBCORE_EXPORT,
     Exposed=*,
     JSCustomMarkFunction,
@@ -51,10 +50,10 @@ typedef (ReadableStreamDefaultReader or ReadableStreamBYOBReader) ReadableStream
 ] interface ReadableStream {
     [CallWith=CurrentGlobalObject] constructor(optional object underlyingSource, optional object options);
 
-    [Custom, ReturnsOwnPromise] Promise<any> cancel(optional any reason);
+    [CallWith=CurrentGlobalObject, ReturnsOwnPromise, ImplementedAs=cancelForBindings] Promise<undefined> cancel(optional any reason);
     [CallWith=CurrentGlobalObject] ReadableStreamReader getReader(optional ReadableStreamGetReaderOptions options = { });
-    [Custom, ReturnsOwnPromise] Promise<undefined> pipeTo(WritableStream destination, optional StreamPipeOptions options = {});
-    [Custom] ReadableStream pipeThrough(ReadableWritablePair transform, optional StreamPipeOptions options = {});
+    [CallWith=CurrentGlobalObject] Promise<undefined> pipeTo(WritableStream destination, optional StreamPipeOptions options = {});
+    [CallWith=CurrentGlobalObject] ReadableStream pipeThrough(ReadableWritablePair transform, optional StreamPipeOptions options = {});
     [CallWith=CurrentGlobalObject] sequence<ReadableStream> tee();
 
     [ImplementedAs=isLocked] readonly attribute boolean locked;

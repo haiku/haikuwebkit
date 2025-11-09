@@ -231,7 +231,7 @@ protected:
     CString m_codeName;
 
     MarkingConstraint* m_currentConstraint { nullptr };
-    MarkingConstraintSolver* m_currentSolver { nullptr };
+    SUPPRESS_FORWARD_DECL_MEMBER MarkingConstraintSolver* m_currentSolver { nullptr }; // MarkingConstraintSolver is not refcounted
     ConcurrentPtrHashSet& m_opaqueRoots;
 
     RootMarkReason m_rootMarkReason { RootMarkReason::None };

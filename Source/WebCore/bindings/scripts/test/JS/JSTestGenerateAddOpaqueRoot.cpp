@@ -230,7 +230,7 @@ extern "C" { extern void (*const __identifier("??_7TestGenerateAddOpaqueRoot@Web
 extern "C" { extern void* _ZTVN7WebCore25TestGenerateAddOpaqueRootE[]; }
 #endif
 template<std::same_as<TestGenerateAddOpaqueRoot> T>
-static inline void verifyVTable(TestGenerateAddOpaqueRoot* ptr) 
+static inline void verifyVTable(TestGenerateAddOpaqueRoot* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -250,8 +250,9 @@ static inline void verifyVTable(TestGenerateAddOpaqueRoot* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestGenerateAddOpaqueRoot>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestGenerateAddOpaqueRoot>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestGenerateAddOpaqueRoot>(impl.ptr());
 #endif

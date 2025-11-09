@@ -121,6 +121,7 @@ Modules/async-clipboard/mac/ClipboardImageReaderMac.mm @nonARC
 Modules/compression/cocoa/CompressionStreamEncoderCocoa.mm @nonARC
 Modules/compression/cocoa/DecompressionStreamDecoderCocoa.mm @nonARC
 Modules/mediastream/RTCRtpSFrameTransformerCocoa.cpp
+Modules/model-element/DDModelPlayer.mm @nonARC
 Modules/model-element/scenekit/SceneKitModel.mm @nonARC
 Modules/model-element/scenekit/SceneKitModelLoader.mm @nonARC
 Modules/model-element/scenekit/SceneKitModelLoaderClient.mm @nonARC
@@ -219,7 +220,6 @@ inspector/LegacyWebSocketInspectorInstrumentation.cpp
 inspector/mac/PageDebuggerMac.mm @nonARC
 loader/archive/cf/LegacyWebArchive.cpp
 loader/archive/cf/LegacyWebArchiveMac.mm @nonARC
-loader/cocoa/BundleResourceLoader.mm @nonARC
 loader/cocoa/DiskCacheMonitorCocoa.mm @nonARC
 loader/cocoa/PrivateClickMeasurementCocoa.mm @nonARC
 loader/cocoa/SubresourceLoaderCocoa.mm @nonARC
@@ -265,7 +265,6 @@ page/scrolling/mac/ScrollingTreePluginScrollingNodeMac.mm @nonARC
 page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm @nonARC
 page/writing-tools/WritingToolsController.mm @nonARC
 platform/VideoFrame.mm @nonARC
-platform/animation/AcceleratedEffectStack.mm @nonARC @no-unify
 platform/audio/AudioSession.cpp
 platform/audio/cocoa/AudioDecoderCocoa.cpp
 platform/audio/cocoa/AudioDestinationCocoa.cpp

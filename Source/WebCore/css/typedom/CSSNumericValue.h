@@ -97,5 +97,5 @@ protected:
 } // namespace WebCore
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::CSSNumericValue)
-    static bool isType(const WebCore::CSSStyleValue& styleValue) { return isCSSNumericValue(styleValue.getType()); }
+    static bool isType(const WebCore::CSSStyleValue& styleValue) { return isCSSNumericValue(styleValue.styleValueType()); }
 SPECIALIZE_TYPE_TRAITS_END()

@@ -78,7 +78,6 @@ public:
 
     void releaseAllResources();
     void releaseMemory();
-    void releaseNativeImages();
 
 private:
     HashMap<WebCore::RenderingResourceIdentifier, Ref<WebCore::ImageBuffer>> m_imageBuffers;

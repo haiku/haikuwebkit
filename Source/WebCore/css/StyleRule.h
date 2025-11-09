@@ -201,7 +201,6 @@ class StyleRuleNestedDeclarations final : public StyleRule {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleRuleNestedDeclarations, StyleRuleNestedDeclarations);
 public:
     static Ref<StyleRuleNestedDeclarations> create(Ref<StyleProperties>&& properties) { return adoptRef(*new StyleRuleNestedDeclarations(WTFMove(properties))); }
-    ~StyleRuleNestedDeclarations() = default;
     Ref<StyleRuleNestedDeclarations> copy() const { return adoptRef(*new StyleRuleNestedDeclarations(*this)); }
 
     String debugDescription() const;
@@ -254,8 +253,6 @@ public:
     {
         return adoptRef(*new StyleRuleFontFeatureValuesBlock(type, tags));
     }
-    
-    ~StyleRuleFontFeatureValuesBlock() = default;
 
     FontFeatureValuesType fontFeatureValuesType() const { return m_type; }
 
@@ -273,8 +270,6 @@ private:
 class StyleRuleFontFeatureValues final : public StyleRuleBase {
 public:
     static Ref<StyleRuleFontFeatureValues> create(const Vector<AtomString>& fontFamilies, Ref<FontFeatureValues>&&);
-    
-    ~StyleRuleFontFeatureValues() = default;
 
     const Vector<AtomString>& fontFamilies() const { return m_fontFamilies; }
 

@@ -59,7 +59,7 @@ public:
 
     DOMPromise& closedPromise();
 
-    void cancel(JSDOMGlobalObject&, JSC::JSValue, Ref<DeferredPromise>&&);
+    Ref<DOMPromise> cancel(JSDOMGlobalObject&, JSC::JSValue);
 
     Ref<ReadableStreamReadIntoRequest> takeFirstReadIntoRequest();
     size_t readIntoRequestsSize() const { return m_readIntoRequests.size(); }
@@ -84,7 +84,7 @@ private:
     void genericRelease(JSDOMGlobalObject&);
     void errorReadIntoRequests(Exception&&);
 
-    void genericCancel(JSDOMGlobalObject&, JSC::JSValue, Ref<DeferredPromise>&&);
+    Ref<DOMPromise> genericCancel(JSDOMGlobalObject&, JSC::JSValue);
 
     Ref<DOMPromise> m_closedPromise;
     Ref<DeferredPromise> m_closedDeferred;

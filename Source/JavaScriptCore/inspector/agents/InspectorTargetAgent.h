@@ -68,7 +68,7 @@ private:
     void connectToTargets();
     void disconnectFromTargets();
 
-    Inspector::FrontendRouter& m_router;
+    const CheckedRef<Inspector::FrontendRouter> m_router;
     const UniqueRef<TargetFrontendDispatcher> m_frontendDispatcher;
     const Ref<TargetBackendDispatcher> m_backendDispatcher;
     UncheckedKeyHashMap<String, InspectorTarget*> m_targets;

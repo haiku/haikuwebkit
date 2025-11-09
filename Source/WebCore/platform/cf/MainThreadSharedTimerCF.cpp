@@ -31,6 +31,7 @@
 
 #if PLATFORM(MAC)
 #import "PowerObserverMac.h"
+#import <wtf/NeverDestroyed.h>
 #elif PLATFORM(IOS_FAMILY)
 #import "WebCoreThreadInternal.h"
 #import "WebCoreThreadRun.h"
@@ -67,9 +68,9 @@ static void setupPowerObserver()
     if (!MainThreadSharedTimer::shouldSetupPowerObserver())
         return;
 #if PLATFORM(MAC)
-    static PowerObserver* powerObserver;
-    if (!powerObserver)
-        powerObserver = makeUnique<PowerObserver>(MainThreadSharedTimer::restartSharedTimer).release();
+    static NeverDestroyed<std::unique_ptr<PowerObserver>> powerObserver;
+    if (!powerObserver.get())
+        powerObserver.get() = makeUnique<PowerObserver>(MainThreadSharedTimer::restartSharedTimer);
 #elif PLATFORM(IOS_FAMILY)
     static bool registeredForApplicationNotification = false;
     if (!registeredForApplicationNotification) {

@@ -30,19 +30,19 @@
 #include "config.h"
 #include "Screen.h"
 
-#include "Document.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "FloatRect.h"
 #include "LocalDOMWindow.h"
-#include "LocalFrame.h"
+#include "LocalFrameInlines.h"
 #include "LocalFrameView.h"
-#include "Page.h"
 #include "PlatformScreen.h"
-#include "Quirks.h"
 #include "ResourceLoadObserver.h"
 #include "ScreenOrientation.h"
 #include "ScriptWrappableInlines.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

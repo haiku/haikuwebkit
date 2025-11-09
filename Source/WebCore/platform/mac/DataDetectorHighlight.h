@@ -29,7 +29,6 @@
 
 #if ENABLE(DATA_DETECTION) && PLATFORM(MAC)
 
-#import <WebCore/GraphicsLayer.h>
 #import <WebCore/GraphicsLayerClient.h>
 #import <WebCore/SimpleRange.h>
 #import <WebCore/Timer.h>

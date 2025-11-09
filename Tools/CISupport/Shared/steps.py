@@ -44,12 +44,6 @@ GITHUB_URL = 'https://github.com/'
 SCAN_BUILD_OUTPUT_DIR = 'scan-build-output'
 LLVM_DIR = 'llvm-project'
 
-try:
-    # For Buildbot < 3.0
-    shellCommand = shell.ShellCommandNewStyle
-except AttributeError:
-    shellCommand = shell.ShellCommand
-
 
 class ShellMixin(object):
     WINDOWS_SHELL_PLATFORMS = ['win', 'playstation']
@@ -119,7 +113,7 @@ class SetBuildSummary(buildstep.BuildStep, AddToLogMixin):
         return defer.returnValue(SUCCESS)
 
 
-class InstallCMake(shellCommand):
+class InstallCMake(shell.ShellCommand):
     name = 'install-cmake'
     haltOnFailure = True
     summary = 'Successfully installed CMake'
@@ -157,7 +151,7 @@ class InstallCMake(shellCommand):
         return {u'step': self.summary}
 
 
-class InstallNinja(shellCommand, ShellMixin):
+class InstallNinja(shell.ShellCommand, ShellMixin):
     name = 'install-ninja'
     haltOnFailure = True
     summary = 'Successfully installed Ninja'
@@ -195,7 +189,7 @@ class InstallNinja(shellCommand, ShellMixin):
         return {u'step': self.summary}
 
 
-class GetLLVMVersion(shellCommand, ShellMixin):
+class GetLLVMVersion(shell.ShellCommand, ShellMixin):
     name = 'get-llvm-version'
     summary = 'Found LLVM version'
 
@@ -322,7 +316,7 @@ class UpdateClang(steps.ShellSequence, ShellMixin):
         return {'step': self.summary}
 
 
-class PrintClangVersion(shellCommand):
+class PrintClangVersion(shell.ShellCommand):
     name = 'print-clang-version'
     haltOnFailure = False
     flunkOnFailure = False
@@ -345,7 +339,7 @@ class PrintClangVersion(shellCommand):
             return {'step': match.group(0)}
 
 
-class PrintClangVersion(shellCommand):
+class PrintClangVersion(shell.ShellCommand):
     name = 'print-clang-version'
     haltOnFailure = False
     flunkOnFailure = False
@@ -395,7 +389,7 @@ class PrintClangVersionAfterUpdate(PrintClangVersion, ShellMixin):
         return super().getResultSummary()
 
 
-class PruneCoreSymbolicationdCacheIfTooLarge(shellCommand):
+class PruneCoreSymbolicationdCacheIfTooLarge(shell.ShellCommand):
     name = "prune-coresymbolicationd-cache-if-too-large"
     description = ["pruning coresymbolicationd cache to < 10GB"]
     descriptionDone = ["pruned coresymbolicationd cache"]

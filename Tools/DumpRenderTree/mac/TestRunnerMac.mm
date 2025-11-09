@@ -195,6 +195,9 @@ void TestRunner::clearBackForwardList()
     WebBackForwardList *backForwardList = [[mainFrame webView] backForwardList];
     auto item = retainPtr([backForwardList currentItem]);
 
+    if (!item)
+        return;
+
     // We clear the history by setting the back/forward list's capacity to 0
     // then restoring it back and adding back the current item.
     int capacity = [backForwardList capacity];

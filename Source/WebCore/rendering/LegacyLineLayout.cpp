@@ -28,7 +28,7 @@
 #include "AXObjectCache.h"
 #include "BidiResolver.h"
 #include "BreakingContext.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "FloatingObjects.h"
 #include "InlineIteratorBoxInlines.h"
 #include "InlineIteratorTextBox.h"

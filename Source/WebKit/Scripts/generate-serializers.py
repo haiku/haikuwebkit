@@ -1829,7 +1829,8 @@ def generate_webkit_secure_coding_impl(serialized_types, headers):
     result.append('        return { };')
     result.append('    Vector<RetainPtr<T>> result;')
     result.append('    for (id element in array) {')
-    result.append('        if ([element isKindOfClass:IPC::getClass<T>()])')
+    # FIXME: isKindOfClass call can cause a static analysis false positive (https://github.com/llvm/llvm-project/issues/162979).
+    result.append('        SUPPRESS_UNRETAINED_ARG if ([element isKindOfClass:retainPtr(IPC::getClass<T>()).get()])')
     result.append('            result.append((T *)element);')
     result.append('    }')
     result.append('    return result;')
@@ -1880,7 +1881,8 @@ def generate_webkit_secure_coding_impl(serialized_types, headers):
                         result.append(f'    m_{member.type} = vectorFromArray<{member.array_contents()}>(({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"]);')
             else:
                 result.append(f'    m_{member.type} = ({member.ns_type_pointer()})[dictionary objectForKey:@"{member.type}"];')
-                result.append(f'    if (!{member.type_check()})')
+                # FIXME: isKindOfClass call from type_check() can cause a static analysis false positive (https://github.com/llvm/llvm-project/issues/162979).
+                result.append(f'    SUPPRESS_UNRETAINED_ARG if (!{member.type_check()})')
                 result.append(f'        m_{member.type} = nullptr;')
                 # FIXME: We ought to be able to ASSERT_NOT_REACHED() here once all the question marks are in the right places.
                 result.append('')

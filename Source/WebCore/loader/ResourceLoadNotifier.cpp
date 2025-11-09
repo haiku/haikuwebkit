@@ -32,12 +32,12 @@
 #include "ResourceLoadNotifier.h"
 
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
 #include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "InspectorInstrumentation.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
-#include "Page.h"
 #include "ProgressTracker.h"
 #include "ResourceLoader.h"
 #include "SharedBuffer.h"

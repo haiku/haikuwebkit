@@ -43,10 +43,6 @@
 #include <wtf/RunLoop.h>
 #include <wtf/TZoneMalloc.h>
 
-#if !HAVE(DISPLAY_LINK)
-#include "ThreadedDisplayRefreshMonitor.h"
-#endif
-
 #if ENABLE(DAMAGE_TRACKING)
 #include <WebCore/Region.h>
 #endif
@@ -75,18 +71,11 @@ class CoordinatedSceneState;
 class WebPage;
 
 class LayerTreeHost final : public CanMakeCheckedPtr<LayerTreeHost>, public WebCore::GraphicsLayerFactory, public WebCore::CoordinatedPlatformLayer::Client
-#if !HAVE(DISPLAY_LINK)
-    , public ThreadedDisplayRefreshMonitor::Client
-#endif
 {
     WTF_MAKE_TZONE_ALLOCATED(LayerTreeHost);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(LayerTreeHost);
 public:
-#if HAVE(DISPLAY_LINK)
     explicit LayerTreeHost(WebPage&);
-#else
-    LayerTreeHost(WebPage&, WebCore::PlatformDisplayID);
-#endif
     ~LayerTreeHost();
 
     WebPage& webPage() const { return m_webPage; }
@@ -113,23 +102,14 @@ public:
 
     void willRenderFrame();
     void didRenderFrame();
-#if HAVE(DISPLAY_LINK)
     void didComposite(uint32_t);
-#endif
-
-#if !HAVE(DISPLAY_LINK)
-    RefPtr<WebCore::DisplayRefreshMonitor> createDisplayRefreshMonitor(WebCore::PlatformDisplayID);
-    WebCore::PlatformDisplayID displayID() const { return m_displayID; }
-#endif
 
 #if PLATFORM(GTK)
     void adjustTransientZoom(double, WebCore::FloatPoint);
     void commitTransientZoom(double, WebCore::FloatPoint);
 #endif
 
-#if PLATFORM(GTK) || PLATFORM(WPE)
     void ensureDrawing();
-#endif
 
 #if ENABLE(DAMAGE_TRACKING)
     void notifyFrameDamageForTesting(WebCore::Region&&);
@@ -146,9 +126,6 @@ private:
     void layerFlushTimerFired();
     void flushLayers();
     void commitSceneState();
-#if !HAVE(DISPLAY_LINK)
-    void renderNextFrame(bool);
-#endif
 
     // CoordinatedPlatformLayer::Client
 #if USE(CAIRO)
@@ -164,15 +141,10 @@ private:
     bool isCompositionRequiredOrOngoing() const override;
     void requestComposition() override;
     RunLoop* compositingRunLoop() const override;
+    int maxTextureSize() const override;
 
     // GraphicsLayerFactory
     Ref<WebCore::GraphicsLayer> createGraphicsLayer(WebCore::GraphicsLayer::Type, WebCore::GraphicsLayerClient&) override;
-
-#if !HAVE(DISPLAY_LINK)
-    // ThreadedDisplayRefreshMonitor::Client
-    void requestDisplayRefreshMonitorUpdate() override;
-    void handleDisplayRefreshMonitorUpdate(bool hasBeenRescheduled) override;
-#endif
 
 #if PLATFORM(GTK)
     WebCore::FloatPoint constrainTransientZoomOrigin(double, WebCore::FloatPoint) const;
@@ -188,9 +160,7 @@ private:
     HashSet<Ref<WebCore::CoordinatedPlatformLayer>> m_layers;
     bool m_layerTreeStateIsFrozen { false };
     bool m_pendingResize { false };
-#if HAVE(DISPLAY_LINK)
     bool m_pendingForceRepaint { false };
-#endif
     bool m_isFlushingLayers { false };
     bool m_waitUntilPaintingComplete { false };
     bool m_isSuspended { false };
@@ -204,16 +174,9 @@ private:
     RefPtr<ThreadedCompositor> m_compositor;
     struct {
         CompletionHandler<void()> callback;
-#if HAVE(DISPLAY_LINK)
         std::optional<uint32_t> compositionRequestID;
-#else
-        bool needsFreshFlush { false };
-#endif
     } m_forceRepaintAsync;
     RunLoop::Timer m_layerFlushTimer;
-#if !HAVE(DISPLAY_LINK)
-    WebCore::PlatformDisplayID m_displayID;
-#endif
 #if USE(CAIRO)
     std::unique_ptr<WebCore::Cairo::PaintingEngine> m_paintingEngine;
 #elif USE(SKIA)

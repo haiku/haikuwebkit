@@ -609,7 +609,6 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	NetworkProcess/NetworkSessionCreationParameters.serialization.in \
 	NetworkProcess/Classifier/ITPThirdPartyData.serialization.in \
 	NetworkProcess/Classifier/ITPThirdPartyDataForSpecificFirstParty.serialization.in \
-	NetworkProcess/Classifier/StorageAccessStatus.serialization.in \
 	NetworkProcess/PrivateClickMeasurement/PrivateClickMeasurementManagerInterface.serialization.in \
 	NetworkProcess/storage/FileSystemStorageError.serialization.in \
 	NetworkProcess/webtransport/WebTransport.serialization.in \
@@ -663,7 +662,6 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/Cocoa/CoreIPCDictionary.serialization.in \
 	Shared/Cocoa/CoreIPCError.serialization.in \
 	Shared/Cocoa/CoreIPCCVPixelBufferRef.serialization.in \
-	Shared/Cocoa/CoreIPCFont.serialization.in \
 	Shared/Cocoa/CoreIPCLocale.serialization.in \
 	Shared/Cocoa/CoreIPCNSCFObject.serialization.in \
 	Shared/Cocoa/CoreIPCNSShadow.serialization.in \
@@ -674,6 +672,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/Cocoa/CoreIPCNull.serialization.in \
 	Shared/Cocoa/CoreIPCPassKit.serialization.in \
 	Shared/Cocoa/CoreIPCPersonNameComponents.serialization.in \
+	Shared/Cocoa/CoreIPCPKDateComponentsRange.serialization.in \
 	Shared/Cocoa/CoreIPCPlist.serialization.in \
 	Shared/Cocoa/CoreIPCPresentationIntent.serialization.in \
 	Shared/Cocoa/CoreIPCSecureCoding.serialization.in \
@@ -730,7 +729,6 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/GoToBackForwardItemParameters.serialization.in \
 	Shared/ImageOptions.serialization.in \
 	Shared/InspectorExtensionTypes.serialization.in \
-	Shared/PlatformFontInfo.serialization.in \
 	Shared/ios/CursorContext.serialization.in \
 	Shared/ios/DynamicViewportSizeUpdate.serialization.in \
 	Shared/ios/GestureTypes.serialization.in \
@@ -831,18 +829,6 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/mac/SecItemRequestData.serialization.in \
 	Shared/mac/SecItemResponseData.serialization.in \
 	Shared/mac/WebHitTestResultPlatformData.serialization.in \
-	Shared/Model/DDMeshDescriptor.serialization.in \
-	Shared/Model/DDMeshPart.serialization.in \
-	Shared/Model/DDReplaceVertices.serialization.in \
-	Shared/Model/DDUpdateMeshDescriptor.serialization.in \
-	Shared/Model/DDVertexAttributeFormat.serialization.in \
-	Shared/Model/DDVertexLayout.serialization.in \
-	Shared/Model/DDMeshDescriptor.serialization.in \
-	Shared/Model/DDMeshPart.serialization.in \
-	Shared/Model/DDReplaceVertices.serialization.in \
-	Shared/Model/DDUpdateMeshDescriptor.serialization.in \
-	Shared/Model/DDVertexAttributeFormat.serialization.in \
-	Shared/Model/DDVertexLayout.serialization.in \
 	Shared/Model/ModelObjectDescriptorBase.serialization.in \
 	Shared/WebsiteDataStoreParameters.serialization.in \
 	Shared/WebsiteData/UnifiedOriginStorageLevel.serialization.in \
@@ -945,7 +931,9 @@ WEBCORE_SERIALIZATION_DESCRIPTION_FILES = \
 	HTTPHeaderNames.serialization.in \
 	ActivityState.serialization.in \
 	DDModel.serialization.in \
+	DocumentSyncData.serialization.in \
 	DragActions.serialization.in \
+	FrameTreeSyncData.serialization.in \
 	InbandTextTrackPrivate.serialization.in \
 	IndexedDB.serialization.in \
 	LayoutMilestones.serialization.in \
@@ -956,7 +944,6 @@ WEBCORE_SERIALIZATION_DESCRIPTION_FILES = \
 	PlatformScreen.serialization.in \
 	PlatformWheelEvent.serialization.in \
 	PlaybackSessionModel.serialization.in \
-	ProcessSyncData.serialization.in \
 	ProtectionSpaceBase.serialization.in \
 	ScrollTypes.serialization.in \
 	WebGPU.serialization.in \

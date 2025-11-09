@@ -38,7 +38,7 @@
 namespace WebCore {
 
 FontDescription::FontDescription()
-    : m_variantAlternates(FontCascadeDescription::initialVariantAlternates())
+    : m_variantAlternates(FontVariantAlternates::Normal())
     , m_fontPalette({ FontPalette::Type::Normal, nullAtom() })
     , m_fontSelectionRequest { normalWeightValue(), normalWidthValue(), std::nullopt }
     , m_orientation(enumToUnderlyingType(FontOrientation::Horizontal))
@@ -68,6 +68,7 @@ FontDescription::FontDescription()
     , m_fontStyleAxis(enumToUnderlyingType(FontStyleAxis::slnt))
     , m_shouldAllowUserInstalledFonts(enumToUnderlyingType(AllowUserInstalledFonts::No))
     , m_shouldDisableLigaturesForSpacing(false)
+    , m_enableEvaluationTimeZoom(false)
 {
 }
 
@@ -123,6 +124,82 @@ float FontDescription::adjustedSizeForFontFace(float fontFaceSizeAdjust) const
 {
     // It is not worth modifying the used size with @font-face size-adjust if we are to re-adjust it later with font-size-adjust. This is because font-size-adjust will overrule this change, since size-adjust also modifies the font's metric values and thus, keeps the aspect-value unchanged.
     return fontSizeAdjust().value ? computedSize() : fontFaceSizeAdjust * computedSize();
-
 }
+
+FontVariantEastAsianValues FontDescription::variantEastAsian() const
+{
+    return {
+        variantEastAsianVariant(),
+        variantEastAsianWidth(),
+        variantEastAsianRuby(),
+    };
+}
+
+FontVariantNumericValues FontDescription::variantNumeric() const
+{
+    return {
+        variantNumericFigure(),
+        variantNumericSpacing(),
+        variantNumericFraction(),
+        variantNumericOrdinal(),
+        variantNumericSlashedZero(),
+    };
+}
+
+FontVariantLigaturesValues FontDescription::variantLigatures() const
+{
+    return {
+        variantCommonLigatures(),
+        variantDiscretionaryLigatures(),
+        variantHistoricalLigatures(),
+        variantContextualAlternates(),
+    };
+}
+
+FontVariantSettings FontDescription::variantSettings() const
+{
+    return {
+        variantCommonLigatures(),
+        variantDiscretionaryLigatures(),
+        variantHistoricalLigatures(),
+        variantContextualAlternates(),
+        variantPosition(),
+        variantCaps(),
+        variantNumericFigure(),
+        variantNumericSpacing(),
+        variantNumericFraction(),
+        variantNumericOrdinal(),
+        variantNumericSlashedZero(),
+        variantAlternates(),
+        variantEastAsianVariant(),
+        variantEastAsianWidth(),
+        variantEastAsianRuby(),
+        variantEmoji()
+    };
+}
+
+void FontDescription::setVariantEastAsian(FontVariantEastAsianValues values)
+{
+    setVariantEastAsianVariant(values.variant);
+    setVariantEastAsianWidth(values.width);
+    setVariantEastAsianRuby(values.ruby);
+}
+
+void FontDescription::setVariantNumeric(FontVariantNumericValues values)
+{
+    setVariantNumericFigure(values.figure);
+    setVariantNumericSpacing(values.spacing);
+    setVariantNumericFraction(values.fraction);
+    setVariantNumericOrdinal(values.ordinal);
+    setVariantNumericSlashedZero(values.slashedZero);
+}
+
+void FontDescription::setVariantLigatures(FontVariantLigaturesValues values)
+{
+    setVariantCommonLigatures(values.common);
+    setVariantDiscretionaryLigatures(values.discretionary);
+    setVariantHistoricalLigatures(values.historical);
+    setVariantContextualAlternates(values.contextual);
+}
+
 } // namespace WebCore

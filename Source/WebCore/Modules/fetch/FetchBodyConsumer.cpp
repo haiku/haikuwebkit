@@ -41,7 +41,6 @@
 #include "JSDOMPromiseDeferred.h"
 #include "TextResourceDecoder.h"
 #include <wtf/StdLibExtras.h>
-#include <wtf/StringExtras.h>
 #include <wtf/URLParser.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/ParsingUtilities.h>

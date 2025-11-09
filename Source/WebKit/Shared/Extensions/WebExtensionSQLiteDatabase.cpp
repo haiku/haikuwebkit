@@ -97,7 +97,7 @@ void WebExtensionSQLiteDatabase::reportErrorWithCode(int errorCode, sqlite3_stmt
         }
     }
 
-    reportErrorWithCode(errorCode, { }, outError);
+    reportErrorWithCode(errorCode, emptyString(), outError);
 }
 
 RefPtr<API::Error> WebExtensionSQLiteDatabase::errorWithSQLiteErrorCode(int errorCode)

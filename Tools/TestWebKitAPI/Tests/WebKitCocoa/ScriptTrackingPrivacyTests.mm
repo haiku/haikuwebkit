@@ -47,16 +47,16 @@
 #import <pal/cocoa/WebPrivacySoftLink.h>
 
 @interface WKWebsiteDataStore (ScriptTrackingPrivacyTests)
-- (void)deleteAllCookies;
+- (void)deleteAllCookiesAndLocalStorage;
 @property (nonatomic, readonly) NSArray<NSHTTPCookie *> *allCookies;
 @end
 
 @implementation WKWebsiteDataStore (ScriptTrackingPrivacyTests)
 
-- (void)deleteAllCookies
+- (void)deleteAllCookiesAndLocalStorage
 {
     __block bool done = false;
-    [self removeDataOfTypes:[NSSet setWithObject:WKWebsiteDataTypeCookies] modifiedSince:NSDate.distantPast completionHandler:^{
+    [self removeDataOfTypes:[NSSet setWithObjects:WKWebsiteDataTypeCookies, WKWebsiteDataTypeLocalStorage, nil] modifiedSince:NSDate.distantPast completionHandler:^{
         done = true;
     }];
     TestWebKitAPI::Util::run(&done);
@@ -426,10 +426,10 @@ TEST(ScriptTrackingPrivacyTests, ScriptWrittenCookies)
     RetainPtr webView = setUpWebViewForFingerprintingTests(nil, @{
         @"test://pure.com/script.js" : makeScriptSource(@"pure"),
         @"test://tainted.net/script.js" : makeScriptSource(@"tainted"),
-    });
+    }, nil, _WKWebsiteNetworkConnectionIntegrityPolicyEnabled);
 
     RetainPtr dataStore = [[webView configuration] websiteDataStore];
-    [dataStore deleteAllCookies];
+    [dataStore deleteAllCookiesAndLocalStorage];
 
     RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://webkit.org"]];
     [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:simpleIndexHTML.createNSString().autorelease()];
@@ -476,7 +476,11 @@ TEST(ScriptTrackingPrivacyTests, LocalStorage)
     RetainPtr webView = setUpWebViewForFingerprintingTests(nil, @{
         @"test://pure.com/script.js" : makeScriptSource(@"pure"),
         @"test://tainted.net/script.js" : makeScriptSource(@"tainted"),
-    });
+    }, nil, _WKWebsiteNetworkConnectionIntegrityPolicyEnabled);
+
+    RetainPtr dataStore = [[webView configuration] websiteDataStore];
+    [dataStore deleteAllCookiesAndLocalStorage];
+
     RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://webkit.org"]];
     [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:simpleIndexHTML.createNSString().autorelease()];
 

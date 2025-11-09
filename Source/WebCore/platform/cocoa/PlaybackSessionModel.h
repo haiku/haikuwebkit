@@ -31,7 +31,7 @@
 #include <WebCore/NowPlayingMetadataObserver.h>
 #include <WebCore/PlatformMediaSession.h>
 #include <WebCore/VideoReceiverEndpoint.h>
-#include <wtf/CheckedRef.h>
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
 #include <wtf/Vector.h>
@@ -63,17 +63,11 @@ enum class PlaybackSessionModelPlaybackState : uint8_t {
     Stalled = 1 << 1,
 };
 
-class PlaybackSessionModel : public CanMakeWeakPtr<PlaybackSessionModel> {
+class PlaybackSessionModel : public CanMakeWeakPtr<PlaybackSessionModel>, public AbstractCanMakeCheckedPtr {
 public:
     virtual ~PlaybackSessionModel() { };
     virtual void addClient(PlaybackSessionModelClient&) = 0;
     virtual void removeClient(PlaybackSessionModelClient&) = 0;
-
-    // CheckedPtr interface
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 
     virtual void play() = 0;
     virtual void pause() = 0;
@@ -160,15 +154,9 @@ public:
 #endif
 };
 
-class PlaybackSessionModelClient : public CanMakeWeakPtr<PlaybackSessionModelClient> {
+class PlaybackSessionModelClient : public CanMakeWeakPtr<PlaybackSessionModelClient>, public AbstractCanMakeCheckedPtr {
 public:
     virtual ~PlaybackSessionModelClient() { };
-
-    // CheckedPtr interface
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 
     virtual void durationChanged(double) { }
     virtual void currentTimeChanged(double /* currentTime */, double /* anchorTime */) { }

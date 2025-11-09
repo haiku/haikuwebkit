@@ -221,7 +221,7 @@ void StreamingCompiler::fail(JSGlobalObject* globalObject, JSValue error)
     // scannable by the GC.
     WTF::compilerFence();
     m_vm.deferredWorkTimer->cancelPendingWork(ticket);
-    promise->reject(globalObject, error);
+    promise->reject(m_vm, globalObject, error);
 }
 
 void StreamingCompiler::cancel()

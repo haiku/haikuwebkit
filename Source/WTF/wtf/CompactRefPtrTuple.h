@@ -45,6 +45,12 @@ public:
         setType(type);
     }
 
+    CompactRefPtrTuple(RefPtr<T>&& pointer, Type type)
+    {
+        setPointer(WTFMove(pointer));
+        setType(type);
+    }
+
     CompactRefPtrTuple(const CompactRefPtrTuple& other)
     {
         setPointer(other.pointer());

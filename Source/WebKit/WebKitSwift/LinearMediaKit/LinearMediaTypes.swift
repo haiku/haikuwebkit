@@ -24,7 +24,11 @@
 #if os(visionOS)
 
 #if canImport(AVKit, _version: 1270)
+#if USE_APPLE_INTERNAL_SDK
 @_spi(LinearMediaKit) @_spi(LinearMediaKit_WebKitOnly) import AVKit
+#else
+import AVKit_SPI
+#endif
 #else
 @_spi(WebKitOnly) import LinearMediaKit
 #endif

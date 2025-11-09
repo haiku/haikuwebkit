@@ -44,7 +44,6 @@
 #import "ContextMenuController.h"
 #import "Editing.h"
 #import "FrameDestructionObserverInlines.h"
-#import "FrameInlines.h"
 #import "FrameSelection.h"
 #import "LayoutRect.h"
 #import "LocalFrameInlines.h"
@@ -265,9 +264,9 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
         // otherwise, we get palindrome errors in the AX hierarchy.
         if (child->isAttachment()) {
             if (RetainPtr<id> attachmentView = wrapper.attachmentView)
-                return attachmentView.get();
+                return attachmentView.unsafeGet();
         } else if (child->isRemoteFrame() && returnPlatformElements)
-            return child->remoteFramePlatformElement().get();
+            return child->remoteFramePlatformElement().unsafeGet();
 
         return wrapper;
     }).autorelease();
@@ -607,7 +606,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
         return nullptr;
     RefPtr<AXCoreObject> backingObject = self.axBackingObject;
 #endif
-    return backingObject.get();
+    return backingObject.unsafeGet();
 }
 
 - (NSArray<NSDictionary *> *)lineRectsAndText
@@ -959,7 +958,7 @@ AccessibilitySearchCriteria accessibilitySearchCriteriaForSearchPredicate(AXCore
             criteria.startRange = *nsRange;
 
         if (!criteria.startObject)
-            criteria.startObject = markerRange.start().object().get();
+            criteria.startObject = markerRange.start().object().unsafeGet();
     }
 #endif
 

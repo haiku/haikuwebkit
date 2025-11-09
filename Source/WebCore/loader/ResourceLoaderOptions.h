@@ -96,7 +96,7 @@ static constexpr unsigned bitWidthOfDefersLoadingPolicy = 1;
 enum class CachingPolicy : uint8_t {
     AllowCaching,
     DisallowCaching,
-    AllowCachingPrefetch
+    AllowCachingMainResourcePrefetch
 };
 static constexpr unsigned bitWidthOfCachingPolicy = 2;
 

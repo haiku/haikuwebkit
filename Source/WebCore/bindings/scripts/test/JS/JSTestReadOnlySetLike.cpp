@@ -317,7 +317,7 @@ extern "C" { extern void (*const __identifier("??_7TestReadOnlySetLike@WebCore@@
 extern "C" { extern void* _ZTVN7WebCore19TestReadOnlySetLikeE[]; }
 #endif
 template<std::same_as<TestReadOnlySetLike> T>
-static inline void verifyVTable(TestReadOnlySetLike* ptr) 
+static inline void verifyVTable(TestReadOnlySetLike* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -337,8 +337,9 @@ static inline void verifyVTable(TestReadOnlySetLike* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestReadOnlySetLike>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestReadOnlySetLike>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestReadOnlySetLike>(impl.ptr());
 #endif

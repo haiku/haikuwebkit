@@ -13,8 +13,8 @@ PASS html5lib_tests18.html 61eb7572a2490ac82423953eefe8fcef8dbc78ee
 PASS html5lib_tests18.html df407b3f102bc2504539136b46afbb895763dc27
 PASS html5lib_tests18.html 9ac591f40aae947707f7d5e83947712bbeca9574
 PASS html5lib_tests18.html d44cf9a5fcf0759fce78497c7f10e3019c361274
-FAIL html5lib_tests18.html e4eb33f77ae641718853d2cfddbdb2eece6b266b assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"</plaintext>X\"" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"X\""
-FAIL html5lib_tests18.html 53ce5b102579af9830bf561b634af681bbdb5dfd assert_equals: expected "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       <plaintext>\n|         \"a<caption>b\"\n|     <table>" but got "#document\n| <!DOCTYPE html>\n| <html>\n|   <head>\n|   <body>\n|     <select>\n|       \"a\"\n|     <table>\n|       <caption>\n|         \"b\""
+PASS html5lib_tests18.html e4eb33f77ae641718853d2cfddbdb2eece6b266b
+PASS html5lib_tests18.html 53ce5b102579af9830bf561b634af681bbdb5dfd
 PASS html5lib_tests18.html cd24d93d1235e4aabbdcfab1d3acdbe488325666
 PASS html5lib_tests18.html abae66ad61e145e32fb4fc4946b839f56b16bb3d
 PASS html5lib_tests18.html 9d38e0731d08aec061003c7783c70e682221378b
@@ -36,56 +36,4 @@ PASS html5lib_tests18.html 13eb2279a1e58eb281541564ae945b87880ae7c2
 PASS html5lib_tests18.html 3c7d4e068461b340966e07dff93d93503fcfa46c
 PASS html5lib_tests18.html d38ed6488066d3e0d4d74b29888c5d000c2f4808
 PASS html5lib_tests18.html 43180045ad714b405e6fe110a27011f2644f16c2
-e4eb33f77ae641718853d2cfddbdb2eece6b266b
-
-Input
-
-<!doctype html><select><plaintext></plaintext>X
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <plaintext>
-|         "</plaintext>X"
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       "X"
-53ce5b102579af9830bf561b634af681bbdb5dfd
-
-Input
-
-<!doctype html><table><select><plaintext>a<caption>b
-Expected
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       <plaintext>
-|         "a<caption>b"
-|     <table>
-Actual
-
-#document
-| <!DOCTYPE html>
-| <html>
-|   <head>
-|   <body>
-|     <select>
-|       "a"
-|     <table>
-|       <caption>
-|         "b"
 

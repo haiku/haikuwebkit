@@ -65,6 +65,7 @@ private:
 
     WebPage* page() { return m_page.get(); }
     WebCore::ModelPlayerClient* client() { return m_client.get(); }
+    RefPtr<WebCore::ModelPlayerClient> protectedClient() { return m_client.get(); }
 
     template<typename T> void send(T&& message);
     template<typename T, typename C> void sendWithAsyncReply(T&& message, C&& completionHandler);
@@ -109,7 +110,7 @@ private:
     void hasAudio(CompletionHandler<void(std::optional<bool>&&)>&&) final;
     void isMuted(CompletionHandler<void(std::optional<bool>&&)>&&) final;
     void setIsMuted(bool, CompletionHandler<void(bool success)>&&) final;
-    Vector<RetainPtr<id>> accessibilityChildren() final;
+    WebCore::ModelPlayerAccessibilityChildren accessibilityChildren() final;
     void setAutoplay(bool) final;
     void setLoop(bool) final;
     void setPlaybackRate(double, CompletionHandler<void(double effectivePlaybackRate)>&&) final;

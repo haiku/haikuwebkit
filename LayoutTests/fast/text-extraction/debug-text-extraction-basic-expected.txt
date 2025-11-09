@@ -31,4 +31,3 @@ root
         '    \nFooter content with ',[…]
         role='img',aria-label='copyright symbol','©',[…]
         ' 2024',[…]
-

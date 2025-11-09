@@ -37,6 +37,7 @@ async function runTest()
     shouldThrowErrorName('crossOriginWindow.constructor', 'SecurityError');
     shouldThrowErrorName('Object.getOwnPropertyDescriptor(crossOriginWindow.__proto__, "constructor").value', 'SecurityError');
     shouldBeTrue('Object.getOwnPropertyDescriptor(window, "location").get.call(crossOriginWindow) === crossOriginWindow.location');
+    shouldThrowErrorName('crossOriginWindow.$vm', 'SecurityError');
     finishJSTest();
 }
 </script>

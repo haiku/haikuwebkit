@@ -62,7 +62,7 @@
 #include "ContainerNodeInlines.h"
 #include "CustomElementDefaultARIA.h"
 #include "DeprecatedGlobalSettings.h"
-#include "Document.h"
+#include "DocumentPage.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "ElementAncestorIteratorInlines.h"
@@ -122,6 +122,7 @@
 #include "SVGElement.h"
 #include "ScriptDisallowedScope.h"
 #include "ScrollView.h"
+#include "Settings.h"
 #include "ShadowRoot.h"
 #include "TextBoundaries.h"
 #include "TextControlInnerElements.h"
@@ -404,7 +405,7 @@ void AXObjectCache::updateCurrentModalNode()
         // Pick the document active modal <dialog> element if it exists.
         if (RefPtr activeModalDialog = document->activeModalDialog()) {
             ASSERT(m_modalElements.contains(activeModalDialog.get()));
-            return activeModalDialog.get();
+            return activeModalDialog.unsafeGet();
         }
 
         SetForScope retrievingCurrentModalNode(m_isRetrievingCurrentModalNode, true);
@@ -445,7 +446,7 @@ void AXObjectCache::updateCurrentModalNode()
         RefPtr object = getOrCreate(modalElementToReturn.get());
         if (!object || object->isAXHidden())
             return nullptr;
-        return modalElementToReturn.get();
+        return modalElementToReturn.unsafeGet();
     };
 
     RefPtr previousModal = m_currentModalElement.get();
@@ -586,7 +587,7 @@ AccessibilityObject* AXObjectCache::focusedObjectForNode(Node* focusedNode)
 
     if (focus->isIgnored())
         return focus->parentObjectUnignored();
-    return focus.get();
+    return focus.unsafeGet();
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -698,7 +699,7 @@ AccessibilityObject* AXObjectCache::exportedGetOrCreate(Node& node)
 AccessibilityObject* AXObjectCache::getOrCreate(Widget& widget)
 {
     if (RefPtr object = get(widget))
-        return object.get();
+        return object.unsafeGet();
 
     RefPtr<AccessibilityObject> newObject;
     if (auto* scrollView = dynamicDowncast<ScrollView>(widget))
@@ -715,7 +716,7 @@ AccessibilityObject* AXObjectCache::getOrCreate(Widget& widget)
         return nullptr;
 
     cacheAndInitializeWrapper(*newObject, &widget);
-    return newObject.get();
+    return newObject.unsafeGet();
 }
 
 AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation isPartOfRelation)
@@ -727,10 +728,11 @@ AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation
     ASSERT(&node.document() == document());
 #endif
 
-    CheckedPtr renderer = node.renderer();
-    if (renderer) {
+    bool isYouTubeReplacement = false;
+    if (CheckedPtr renderer = node.renderer()) {
         if (!renderer->isYouTubeReplacement()) [[likely]]
             return getOrCreate(*renderer);
+        isYouTubeReplacement = true;
     }
 
     if (CheckedPtr document = dynamicDowncast<Document>(node)) [[unlikely]]
@@ -758,7 +760,7 @@ AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation
         } else
             object = AccessibilityListBoxOption::create(AXID::generate(), downcast<HTMLElement>(node), *this);
         cacheAndInitializeWrapper(*object, &node);
-        return object.get();
+        return object.unsafeGet();
     }
 
     bool inCanvasSubtree = lineageOfType<HTMLCanvasElement>(*composedParent).first();
@@ -780,14 +782,14 @@ AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation
         bool isAreaElement = is<HTMLAreaElement>(element);
         // YouTube embeds specifically create a render hierarchy with two elements that share a renderer.
         // In this instance, we want the <embed> element to associate its node with an AX element, so we need to create one here.
-        bool replacementWillCreateRenderer = renderer && renderer->isYouTubeReplacement();
+        bool replacementWillCreateRenderer = isYouTubeReplacement;
         if (!inCanvasSubtree && !insideMeterElement && !hasDisplayContents && !isPopover && !isNodeFocused(node) && !isAreaElement && !replacementWillCreateRenderer)
             return nullptr;
     }
 
     // The object may have already been created during relations update.
     if (RefPtr object = get(node))
-        return object.get();
+        return object.unsafeGet();
 
     // Fallback content is only focusable as long as the canvas is displayed and visible.
     // Update the style before Element::isFocusable() gets called.
@@ -805,7 +807,7 @@ AccessibilityObject* AXObjectCache::getOrCreateSlow(Node& node, IsPartOfRelation
     // it will disappear when this function is finished, leading to a use-after-free.
     if (newObject->isDetached())
         return nullptr;
-    return newObject.get();
+    return newObject.unsafeGet();
 }
 
 AccessibilityObject* AXObjectCache::getOrCreate(RenderObject& renderer)
@@ -814,7 +816,7 @@ AccessibilityObject* AXObjectCache::getOrCreate(RenderObject& renderer)
         return getOrCreate(renderer.node());
 
     if (RefPtr object = get(renderer))
-        return object.get();
+        return object.unsafeGet();
 
     // Don't create an object for this renderer if it's being destroyed.
     if (renderer.beingDestroyed())
@@ -833,7 +835,7 @@ AccessibilityObject* AXObjectCache::getOrCreate(RenderObject& renderer)
     if (object->isDetached())
         return nullptr;
 
-    return object.ptr();
+    return object.unsafePtr();
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -957,7 +959,7 @@ AccessibilityObject* AXObjectCache::create(AccessibilityRole role)
         return nullptr;
 
     cacheAndInitializeWrapper(*object);
-    return object.get();
+    return object.unsafeGet();
 }
 
 void AXObjectCache::remove(AXID axID)
@@ -1460,7 +1462,7 @@ AccessibilityObject* AXObjectCache::getIncludingAncestors(RenderObject& renderer
 {
     for (CheckedPtr current = &renderer; current; current = current->parent()) {
         if (RefPtr object = get(*current))
-            return object.get();
+            return object.unsafeGet();
     }
     return nullptr;
 }
@@ -1753,6 +1755,16 @@ static bool shouldDeferFocusChange(Element* element)
     if (renderer && rendererNeedsDeferredUpdate(*renderer))
         return true;
 
+#if PLATFORM(IOS_FAMILY)
+    // Date/DateTimeLocal input fields present popovers in the UI process synchronously.
+    // The web process can infer that this will happen via a DOMActivateEvent, but this may be dispatched after the focused change event.
+    // Defer the focus until after BaseDateAndTimeInputType::showPicker is called and has set the appropriate state (willPresentDatePopover) on AXObjectCache.
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(element)) {
+        if (input->isDateField() || input->isDateTimeLocalField())
+            return true;
+    }
+#endif // PLATFORM(IOS_FAMILY)
+
     // We also want to defer handling focus changes for nodes that haven't yet attached their renderer.
     if (const auto* style = element->existingComputedStyle())
         return !renderer && element->rendererIsNeeded(*style);
@@ -1839,6 +1851,16 @@ void AXObjectCache::deferModalChange(Element& element)
 
 void AXObjectCache::handleFocusedUIElementChanged(Element* oldElement, Element* newElement, UpdateModal updateModal)
 {
+#if PLATFORM(IOS_FAMILY)
+    if (willPresentDatePopover()) {
+        setWillPresentDatePopover(false);
+        if (RefPtr inputElement = dynamicDowncast<HTMLInputElement>(newElement)) {
+            if (inputElement->isDateField() || inputElement->isDateTimeLocalField())
+                return;
+        }
+    }
+#endif
+
     if (updateModal == UpdateModal::Yes)
         updateCurrentModalNode();
     handleMenuItemSelected(newElement);
@@ -4077,7 +4099,7 @@ static Node* parentEditingBoundary(Node* node)
     while (boundary != documentElement && boundary->nonShadowBoundaryParentNode() && node->hasEditableStyle() == boundary->parentNode()->hasEditableStyle())
         boundary = boundary->nonShadowBoundaryParentNode();
 
-    return boundary.get();
+    return boundary.unsafeGet();
 }
 
 CharacterOffset AXObjectCache::nextBoundary(const CharacterOffset& characterOffset, BoundarySearchFunction searchFunction)

@@ -128,7 +128,7 @@ private:
     void setIsVisible(RemoteAudioVideoRendererIdentifier, bool);
     void setPresentationSize(RemoteAudioVideoRendererIdentifier, const WebCore::IntSize&);
     void setShouldMaintainAspectRatio(RemoteAudioVideoRendererIdentifier, bool);
-    void acceleratedRenderingStateChanged(RemoteAudioVideoRendererIdentifier, bool);
+    void renderingCanBeAcceleratedChanged(RemoteAudioVideoRendererIdentifier, bool);
     void contentBoxRectChanged(RemoteAudioVideoRendererIdentifier, const WebCore::LayoutRect&);
     void notifyWhenHasAvailableVideoFrame(RemoteAudioVideoRendererIdentifier, bool);
     void expectMinimumUpcomingPresentationTime(RemoteAudioVideoRendererIdentifier, const MediaTime&);

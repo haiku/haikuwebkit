@@ -28,7 +28,6 @@
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
 #include "ImageBuffer.h"
-#include "LengthFunctions.h"
 #include "NativeImage.h"
 #include "PlatformDisplay.h"
 #include "TextureMapper.h"

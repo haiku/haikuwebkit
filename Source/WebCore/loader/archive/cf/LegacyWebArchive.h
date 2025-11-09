@@ -45,10 +45,10 @@ class LegacyWebArchive final : public Archive {
 public:
     // Archive is created directly from data or members so ArchiveOptions is not needed.
     WEBCORE_EXPORT static Ref<LegacyWebArchive> create();
-    WEBCORE_EXPORT static Ref<LegacyWebArchive> create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<FrameIdentifier>&& subframeIdentifiers);
+    WEBCORE_EXPORT static Ref<LegacyWebArchive> create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<FrameIdentifier>&& subframeIdentifiers, std::optional<FrameIdentifier> mainFrameIdentifier);
     WEBCORE_EXPORT static RefPtr<LegacyWebArchive> create(FragmentedSharedBuffer&);
     WEBCORE_EXPORT static RefPtr<LegacyWebArchive> create(const URL&, FragmentedSharedBuffer&);
-    WEBCORE_EXPORT static Ref<LegacyWebArchive> create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<Ref<LegacyWebArchive>>&& subframeArchives);
+    WEBCORE_EXPORT static Ref<LegacyWebArchive> create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<Ref<LegacyWebArchive>>&& subframeArchives, std::optional<FrameIdentifier> mainFrameIdentifier);
 
     enum class ShouldSaveScriptsFromMemoryCache : bool { No, Yes };
     enum class ShouldArchiveSubframes : bool { No, Yes };
@@ -70,12 +70,13 @@ public:
     WEBCORE_EXPORT RetainPtr<CFDataRef> rawDataRepresentation();
 
     Ref<ArchiveResource> protectedMainResource() const { return *mainResource(); }
+    std::optional<FrameIdentifier> frameIdentifier() const { return m_frameIdentifier; }
     Vector<FrameIdentifier> subframeIdentifiers() const { return m_subframeIdentifiers; }
     void appendSubframeArchive(Ref<Archive>&& subframeArchive) { addSubframeArchive(WTFMove(subframeArchive)); }
 
 private:
     LegacyWebArchive() = default;
-    LegacyWebArchive(Vector<FrameIdentifier>&&);
+    LegacyWebArchive(std::optional<FrameIdentifier>, Vector<FrameIdentifier>&& subFrameIdentifiers);
 
     bool shouldLoadFromArchiveOnly() const final { return false; }
     bool shouldOverrideBaseURL() const final { return false; }
@@ -96,6 +97,7 @@ private:
 
     bool extract(CFDictionaryRef);
 
+    std::optional<FrameIdentifier> m_frameIdentifier;
     Vector<FrameIdentifier> m_subframeIdentifiers;
 };
 

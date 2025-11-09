@@ -52,9 +52,7 @@ AccessibilityTextMarker::AccessibilityTextMarker(const AccessibilityTextMarker& 
 {
 }
 
-AccessibilityTextMarker::~AccessibilityTextMarker()
-{
-}
+AccessibilityTextMarker::~AccessibilityTextMarker() = default;
 
 JSClassRef AccessibilityTextMarker::wrapperClass()
 {

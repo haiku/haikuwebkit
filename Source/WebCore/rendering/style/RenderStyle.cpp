@@ -35,7 +35,6 @@
 #include "FontSelector.h"
 #include "InlineIteratorTextBox.h"
 #include "InlineTextBoxStyle.h"
-#include "LengthFunctions.h"
 #include "Logging.h"
 #include "MotionPath.h"
 #include "Pagination.h"
@@ -52,7 +51,6 @@
 #include "StyleExtractor.h"
 #include "StyleImage.h"
 #include "StyleInheritedData.h"
-#include "StyleLengthWrapper+Platform.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StyleResolver.h"
 #include "StyleScaleTransformFunction.h"
@@ -84,6 +82,7 @@ namespace WebCore {
 struct SameSizeAsBorderValue {
     Style::Color m_color;
     float m_width;
+    bool m_isKeyword;
     int m_restBits;
 };
 
@@ -108,11 +107,12 @@ struct SameSizeAsRenderStyle : CanMakeCheckedPtr<SameSizeAsRenderStyle> {
 
 static_assert(sizeof(RenderStyle) == sizeof(SameSizeAsRenderStyle), "RenderStyle should stay small");
 
-static_assert(PublicPseudoIDBits == enumToUnderlyingType(PseudoId::FirstInternalPseudoId) - enumToUnderlyingType(PseudoId::FirstPublicPseudoId));
+static_assert(PublicPseudoIDBits == allPublicPseudoElementTypes.size());
 
 static_assert(!(static_cast<unsigned>(maxTextTransformValue) >> TextTransformBits));
 
-static_assert(!((enumToUnderlyingType(PseudoId::AfterLastInternalPseudoId) - 1) >> PseudoElementTypeBits));
+// Value zero is used to indicate no pseudo-element.
+static_assert(!((enumToUnderlyingType(PseudoElementType::HighestEnumValue) + 1) >> PseudoElementTypeBits));
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(RenderStyle);
@@ -166,7 +166,7 @@ RenderStyle RenderStyle::createAnonymousStyleWithDisplay(const RenderStyle& pare
 
 RenderStyle RenderStyle::createStyleInheritingFromPseudoStyle(const RenderStyle& pseudoStyle)
 {
-    ASSERT(pseudoStyle.pseudoElementType() == PseudoId::Before || pseudoStyle.pseudoElementType() == PseudoId::After);
+    ASSERT(pseudoStyle.pseudoElementType() == PseudoElementType::Before || pseudoStyle.pseudoElementType() == PseudoElementType::After);
 
     auto style = create();
     style.inheritFrom(pseudoStyle);
@@ -225,8 +225,8 @@ RenderStyle::RenderStyle(CreateDefaultStyleTag)
     m_nonInheritedFlags.firstChildState = false;
     m_nonInheritedFlags.lastChildState = false;
     m_nonInheritedFlags.isLink = false;
-    m_nonInheritedFlags.pseudoElementType = static_cast<unsigned>(PseudoId::None);
-    m_nonInheritedFlags.pseudoBits = static_cast<unsigned>(PseudoId::None);
+    m_nonInheritedFlags.pseudoElementType = 0;
+    m_nonInheritedFlags.pseudoBits = 0;
 
     static_assert((sizeof(InheritedFlags) <= 8), "InheritedFlags does not grow");
     static_assert((sizeof(NonInheritedFlags) <= 8), "NonInheritedFlags does not grow");
@@ -425,6 +425,11 @@ void RenderStyle::setEnableEvaluationTimeZoom(bool value)
     SET_VAR(m_rareInheritedData, enableEvaluationTimeZoom, value);
 }
 
+void RenderStyle::setDeviceScaleFactor(float value)
+{
+    SET_VAR(m_rareInheritedData, deviceScaleFactor, value);
+}
+
 void RenderStyle::setUseSVGZoomRulesForLength(bool value)
 {
     SET_NESTED_VAR(m_nonInheritedData, rareData, useSVGZoomRulesForLength, value);
@@ -473,7 +478,7 @@ RenderStyle* RenderStyle::addCachedPseudoStyle(std::unique_ptr<RenderStyle> pseu
     if (!pseudo)
         return nullptr;
 
-    ASSERT(pseudo->pseudoElementType() > PseudoId::None);
+    ASSERT(pseudo->pseudoElementType());
 
     RenderStyle* result = pseudo.get();
 
@@ -566,11 +571,11 @@ unsigned RenderStyle::hashForTextAutosizing() const
 {
     // FIXME: Not a very smart hash. Could be improved upon. See <https://bugs.webkit.org/show_bug.cgi?id=121131>.
     unsigned hash = m_nonInheritedData->miscData->usedAppearance;
-    hash ^= m_nonInheritedData->rareData->lineClamp.valueForTextAutosizingHash();
+    hash ^= m_nonInheritedData->rareData->lineClamp.valueForHash();
     hash ^= m_rareInheritedData->overflowWrap;
     hash ^= m_rareInheritedData->nbspMode;
     hash ^= m_rareInheritedData->lineBreak;
-    hash ^= WTF::FloatHash<float>::hash(m_inheritedData->specifiedLineHeight.value());
+    hash ^= m_inheritedData->specifiedLineHeight.valueForHash();
     hash ^= computeFontHash(m_inheritedData->fontData->fontCascade);
     hash ^= WTF::FloatHash<float>::hash(m_inheritedData->borderHorizontalSpacing.unresolvedValue());
     hash ^= WTF::FloatHash<float>::hash(m_inheritedData->borderVerticalSpacing.unresolvedValue());
@@ -625,18 +630,21 @@ bool RenderStyle::isIdempotentTextAutosizingCandidate(AutosizeStatus status) con
                 if (width().isFixed())
                     return false;
                 if (auto fixedHeight = height().tryFixed(); fixedHeight && specifiedLineHeight().isFixed()) {
-                    float specifiedSize = specifiedFontSize();
-                    if (fixedHeight->resolveZoom(Style::ZoomNeeded { }) == specifiedSize && specifiedLineHeight().value() == specifiedSize)
-                        return false;
+                    if (auto fixedSpecifiedLineHeight = specifiedLineHeight().tryFixed()) {
+                        float specifiedSize = specifiedFontSize();
+                        if (fixedHeight->resolveZoom(Style::ZoomNeeded { }) == specifiedSize && fixedSpecifiedLineHeight->resolveZoom(usedZoomForLength()) == specifiedSize)
+                            return false;
+                    }
                 }
                 return true;
             }
             if (fields.contains(AutosizeStatus::Fields::Floating)) {
                 if (auto fixedHeight = height().tryFixed(); specifiedLineHeight().isFixed() && fixedHeight) {
-                    float specifiedSize = specifiedFontSize();
-                    if (specifiedLineHeight().value() - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText
-                        && fixedHeight->resolveZoom(Style::ZoomNeeded { }) - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText) {
-                        return true;
+                    if (auto fixedSpecifiedLineHeight = specifiedLineHeight().tryFixed()) {
+                        float specifiedSize = specifiedFontSize();
+                        if (fixedSpecifiedLineHeight->resolveZoom(Style::ZoomFactor { 1.0f, deviceScaleFactor() }) - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText
+                                && fixedHeight->resolveZoom(Style::ZoomNeeded { }) - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText)
+                            return true;
                     }
                 }
                 return false;
@@ -664,7 +672,7 @@ bool RenderStyle::isIdempotentTextAutosizingCandidate(AutosizeStatus status) con
             return true;
         if (fields.contains(AutosizeStatus::Fields::FixedWidth))
             return true;
-        if (specifiedLineHeight().isFixed() && specifiedLineHeight().value() - specifiedFontSize() > largeMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText)
+        if (auto fixedSpecifiedLineHeight = specifiedLineHeight().tryFixed(); fixedSpecifiedLineHeight && fixedSpecifiedLineHeight->resolveZoom(usedZoomForLength()) - specifiedFontSize() > largeMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText)
             return true;
         return false;
     }
@@ -1131,15 +1139,15 @@ bool RenderStyle::changeRequiresLayout(const RenderStyle& other, OptionSet<Style
     if ((usedVisibility() == Visibility::Collapse) != (other.usedVisibility() == Visibility::Collapse))
         return true;
 
-    bool hasFirstLineStyle = hasPseudoStyle(PseudoId::FirstLine);
-    if (hasFirstLineStyle != other.hasPseudoStyle(PseudoId::FirstLine))
+    bool hasFirstLineStyle = hasPseudoStyle(PseudoElementType::FirstLine);
+    if (hasFirstLineStyle != other.hasPseudoStyle(PseudoElementType::FirstLine))
         return true;
 
     if (hasFirstLineStyle) {
-        auto* firstLineStyle = getCachedPseudoStyle({ PseudoId::FirstLine });
+        auto* firstLineStyle = getCachedPseudoStyle({ PseudoElementType::FirstLine });
         if (!firstLineStyle)
             return true;
-        auto* otherFirstLineStyle = other.getCachedPseudoStyle({ PseudoId::FirstLine });
+        auto* otherFirstLineStyle = other.getCachedPseudoStyle({ PseudoElementType::FirstLine });
         if (!otherFirstLineStyle)
             return true;
         // FIXME: Not all first line style changes actually need layout.
@@ -2550,7 +2558,7 @@ bool RenderStyle::setFontDescriptionWithoutUpdate(FontCascadeDescription&& descr
     return true;
 }
 
-const Length& RenderStyle::specifiedLineHeight() const
+const Style::LineHeight& RenderStyle::specifiedLineHeight() const
 {
 #if ENABLE(TEXT_AUTOSIZING)
     return m_inheritedData->specifiedLineHeight;
@@ -2561,21 +2569,21 @@ const Length& RenderStyle::specifiedLineHeight() const
 
 #if ENABLE(TEXT_AUTOSIZING)
 
-void RenderStyle::setSpecifiedLineHeight(Length&& height)
+void RenderStyle::setSpecifiedLineHeight(Style::LineHeight&& lineHeight)
 {
-    SET_VAR(m_inheritedData, specifiedLineHeight, WTFMove(height));
+    SET_VAR(m_inheritedData, specifiedLineHeight, WTFMove(lineHeight));
 }
 
 #endif
 
-const Length& RenderStyle::lineHeight() const
+const Style::LineHeight& RenderStyle::lineHeight() const
 {
     return m_inheritedData->lineHeight;
 }
 
-void RenderStyle::setLineHeight(Length&& height)
+void RenderStyle::setLineHeight(Style::LineHeight&& lineHeight)
 {
-    SET_VAR(m_inheritedData, lineHeight, WTFMove(height));
+    SET_VAR(m_inheritedData, lineHeight, WTFMove(lineHeight));
 }
 
 float RenderStyle::computedLineHeight() const
@@ -2583,15 +2591,22 @@ float RenderStyle::computedLineHeight() const
     return computeLineHeight(lineHeight());
 }
 
-float RenderStyle::computeLineHeight(const Length& lineHeightLength) const
+float RenderStyle::computeLineHeight(const Style::LineHeight& lineHeight) const
 {
-    if (lineHeightLength.isNormal())
-        return metricsOfPrimaryFont().lineSpacing();
-
-    if (lineHeightLength.isPercentOrCalculated())
-        return minimumValueForLength(lineHeightLength, computedFontSize(), 1.0f /* FIXME FIND ZOOM */).toFloat();
-
-    return lineHeightLength.value();
+    return WTF::switchOn(lineHeight,
+        [&](const CSS::Keyword::Normal&) -> float {
+            return metricsOfPrimaryFont().lineSpacing();
+        },
+        [&](const Style::LineHeight::Fixed& fixed) -> float {
+            return Style::evaluate<LayoutUnit>(fixed, usedZoomForLength()).toFloat();
+        },
+        [&](const Style::LineHeight::Percentage& percentage) -> float {
+            return Style::evaluate<LayoutUnit>(percentage, LayoutUnit { computedFontSize() }).toFloat();
+        },
+        [&](const Style::LineHeight::Calc& calc) -> float {
+            return Style::evaluate<LayoutUnit>(calc, LayoutUnit { computedFontSize() }).toFloat();
+        }
+    );
 }
 
 void RenderStyle::setTextSpacingTrim(TextSpacingTrim value)
@@ -2639,10 +2654,17 @@ void RenderStyle::setFontOpticalSizing(FontOpticalSizing opticalSizing)
     setFontDescription(WTFMove(description));
 }
 
-void RenderStyle::setFontVariationSettings(FontVariationSettings settings)
+void RenderStyle::setFontFeatureSettings(Style::FontFeatureSettings&& settings)
 {
     auto description = fontDescription();
-    description.setVariationSettings(WTFMove(settings));
+    description.setFeatureSettings(settings.takePlatform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariationSettings(Style::FontVariationSettings&& settings)
+{
+    auto description = fontDescription();
+    description.setVariationSettings(settings.takePlatform());
     setFontDescription(WTFMove(description));
 }
 
@@ -2672,6 +2694,104 @@ void RenderStyle::setFontPalette(Style::FontPalette&& value)
 {
     auto description = fontDescription();
     description.setFontPalette(value.platform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontKerning(Kerning value)
+{
+    auto description = fontDescription();
+    description.setKerning(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontSmoothing(FontSmoothingMode value)
+{
+    auto description = fontDescription();
+    description.setFontSmoothing(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontSynthesisSmallCaps(FontSynthesisLonghandValue value)
+{
+    auto description = fontDescription();
+    description.setFontSynthesisSmallCaps(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontSynthesisStyle(FontSynthesisLonghandValue value)
+{
+    auto description = fontDescription();
+    description.setFontSynthesisStyle(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontSynthesisWeight(FontSynthesisLonghandValue value)
+{
+    auto description = fontDescription();
+    description.setFontSynthesisWeight(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantAlternates(Style::FontVariantAlternates&& value)
+{
+    auto description = fontDescription();
+    description.setVariantAlternates(value.takePlatform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantCaps(FontVariantCaps value)
+{
+    auto description = fontDescription();
+    description.setVariantCaps(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantEastAsian(Style::FontVariantEastAsian value)
+{
+    auto description = fontDescription();
+    description.setVariantEastAsian(value.platform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantEmoji(FontVariantEmoji value)
+{
+    auto description = fontDescription();
+    description.setVariantEmoji(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantLigatures(Style::FontVariantLigatures value)
+{
+    auto description = fontDescription();
+    description.setVariantLigatures(value.platform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantNumeric(Style::FontVariantNumeric value)
+{
+    auto description = fontDescription();
+    description.setVariantNumeric(value.platform());
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setFontVariantPosition(FontVariantPosition value)
+{
+    auto description = fontDescription();
+    description.setVariantPosition(value);
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setLocale(AtomString&& value)
+{
+    auto description = fontDescription();
+    description.setSpecifiedLocale(WTFMove(value));
+    setFontDescription(WTFMove(description));
+}
+
+void RenderStyle::setTextRendering(TextRenderingMode value)
+{
+    auto description = fontDescription();
+    description.setTextRenderingMode(value);
     setFontDescription(WTFMove(description));
 }
 
@@ -3095,20 +3215,20 @@ static LayoutUnit computeOutset(const OutsetValue& outsetValue, LayoutUnit borde
 LayoutBoxExtent RenderStyle::imageOutsets(const Style::BorderImage& image) const
 {
     return {
-        computeOutset(image.outset().values.top(), Style::evaluate<LayoutUnit>(borderTopWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.right(), Style::evaluate<LayoutUnit>(borderRightWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.bottom(), Style::evaluate<LayoutUnit>(borderBottomWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.left(), Style::evaluate<LayoutUnit>(borderLeftWidth(), Style::ZoomNeeded { })),
+        computeOutset(image.outset().values.top(), Style::evaluate<LayoutUnit>(borderTopWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.right(), Style::evaluate<LayoutUnit>(borderRightWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.bottom(), Style::evaluate<LayoutUnit>(borderBottomWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.left(), Style::evaluate<LayoutUnit>(borderLeftWidth(), usedZoomForLength())),
     };
 }
 
 LayoutBoxExtent RenderStyle::imageOutsets(const Style::MaskBorder& image) const
 {
     return {
-        computeOutset(image.outset().values.top(), Style::evaluate<LayoutUnit>(borderTopWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.right(), Style::evaluate<LayoutUnit>(borderRightWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.bottom(), Style::evaluate<LayoutUnit>(borderBottomWidth(), Style::ZoomNeeded { })),
-        computeOutset(image.outset().values.left(), Style::evaluate<LayoutUnit>(borderLeftWidth(), Style::ZoomNeeded { })),
+        computeOutset(image.outset().values.top(), Style::evaluate<LayoutUnit>(borderTopWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.right(), Style::evaluate<LayoutUnit>(borderRightWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.bottom(), Style::evaluate<LayoutUnit>(borderBottomWidth(), usedZoomForLength())),
+        computeOutset(image.outset().values.left(), Style::evaluate<LayoutUnit>(borderLeftWidth(), usedZoomForLength())),
     };
 }
 
@@ -3405,7 +3525,7 @@ Style::LineWidth RenderStyle::outlineWidth() const
     if (outline.style() == OutlineStyle::None)
         return 0_css_px;
     if (outlineStyle() == OutlineStyle::Auto)
-        return Style::LineWidth { std::max(Style::evaluate<float>(outline.width(), Style::ZoomNeeded { }), RenderTheme::platformFocusRingWidth()) };
+        return Style::LineWidth { std::max(Style::evaluate<float>(outline.width(), usedZoomForLength()), RenderTheme::platformFocusRingWidth()) };
     return outline.width();
 }
 
@@ -3413,13 +3533,13 @@ Style::Length<> RenderStyle::outlineOffset() const
 {
     auto& outline = m_nonInheritedData->backgroundData->outline;
     if (outlineStyle() == OutlineStyle::Auto)
-        return Style::Length<> { Style::evaluate<float>(outline.offset(), Style::ZoomNeeded { }) + RenderTheme::platformFocusRingOffset(Style::evaluate<float>(outline.width(), Style::ZoomNeeded { })) };
+        return Style::Length<> { Style::evaluate<float>(outline.offset(), Style::ZoomNeeded { }) + RenderTheme::platformFocusRingOffset(Style::evaluate<float>(outline.width(), usedZoomForLength())) };
     return outline.offset();
 }
 
 float RenderStyle::outlineSize() const
 {
-    return std::max(0.0f, Style::evaluate<float>(outlineWidth(), Style::ZoomNeeded { }) + Style::evaluate<float>(outlineOffset(), Style::ZoomNeeded { }));
+    return std::max(0.0f, Style::evaluate<float>(outlineWidth(), usedZoomForLength()) + Style::evaluate<float>(outlineOffset(), Style::ZoomNeeded { }));
 }
 
 CheckedRef<const FontCascade> RenderStyle::checkedFontCascade() const
@@ -3465,7 +3585,7 @@ float RenderStyle::computedStrokeWidth(const IntSize& viewportSize) const
     // Since there will be no visible stroke when stroke-color is not specified (transparent by default), we fall
     // back to the legacy Webkit text stroke combination in that case.
     if (!hasExplicitlySetStrokeColor())
-        return Style::evaluate<float>(textStrokeWidth(), Style::ZoomNeeded { });
+        return Style::evaluate<float>(textStrokeWidth(), usedZoomForLength());
 
     return WTF::switchOn(strokeWidth(),
         [&](const Style::StrokeWidth::Fixed& fixedStrokeWidth) -> float {
@@ -3571,9 +3691,9 @@ void RenderStyle::setUsedPositionOptionIndex(std::optional<size_t> index)
 
 std::optional<Style::PseudoElementIdentifier> RenderStyle::pseudoElementIdentifier() const
 {
-    if (pseudoElementType() == PseudoId::None)
+    if (!pseudoElementType())
         return { };
-    return Style::PseudoElementIdentifier { pseudoElementType(), pseudoElementNameArgument() };
+    return Style::PseudoElementIdentifier { *pseudoElementType(), pseudoElementNameArgument() };
 }
 
 void RenderStyle::adjustScrollTimelines()

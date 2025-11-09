@@ -2113,10 +2113,9 @@ void URLParser::appendNumberToASCIIBuffer(UnsignedIntegerType number)
     std::array<Latin1Character, bufferSize> buffer;
     size_t index = bufferSize;
     do {
-        buffer[--index] = (number % 10) + '0';
+        buffer[--index] = static_cast<char>((number % 10) + '0');
         number /= 10;
     } while (number);
-
     appendToASCIIBuffer(std::span { buffer }.subspan(index));
 }
 

@@ -124,7 +124,7 @@ void RTCDataChannelRemoteManager::sendData(WebCore::RTCDataChannelIdentifier sou
         if (isRaw)
             source->sendRawData(data);
         else
-            source->sendStringData(CString(data));
+            source->sendStringData(CString(byteCast<Latin1Character>(data)));
     }
 }
 

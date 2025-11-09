@@ -265,8 +265,12 @@ public:
         WASM_COMPILE_FAIL_IF(index >= m_info.globals.size(), "get_global's index ", index, " exceeds the number of globals ", m_info.globals.size());
         WASM_COMPILE_FAIL_IF(m_info.globals[index].mutability != Mutability::Immutable, "get_global import kind index ", index, " is mutable ");
 
-        if (m_mode == Mode::Evaluate)
-            result = ConstExprValue(m_instance->loadI64Global(index));
+        if (m_mode == Mode::Evaluate) {
+            if (m_info.globals[index].type.kind == TypeKind::V128)
+                result = ConstExprValue(m_instance->loadV128Global(index));
+            else
+                result = ConstExprValue(m_instance->loadI64Global(index));
+        }
 
         return { };
     }

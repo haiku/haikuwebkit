@@ -46,6 +46,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-dispatch-single-activation-behavior.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-dispatch-target-moved.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-dispatch-target-removed.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-dispatch-throwing-multiple-globals.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-dispatch-throwing.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-init-while-dispatching.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/Event-initEvent.html
@@ -88,6 +89,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/event-global.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/event-global.worker.js
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/focus-event-document-move.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/handler-count.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/keypress-dispatch-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/legacy-pre-activation-behavior.window.js
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/mouse-event-retarget.html
@@ -103,3 +105,4 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/webkit-animation-iteration-event.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/webkit-animation-start-event.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/webkit-transition-end-event.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/window-composed-path.html

@@ -81,10 +81,10 @@ public:
     WEBCORE_EXPORT Ref<AcceleratedEffect> clone() const;
     WEBCORE_EXPORT Ref<AcceleratedEffect> copyWithProperties(OptionSet<AcceleratedEffectProperty>&) const;
 
-    WEBCORE_EXPORT void apply(WebAnimationTime, AcceleratedEffectValues&);
+    WEBCORE_EXPORT void apply(WebAnimationTime, AcceleratedEffectValues&) const;
 
     // Encoding and decoding support
-    AnimationEffectTiming timing() const { return m_timing; }
+    const AnimationEffectTiming& timing() const { return m_timing; }
     const Vector<Keyframe>& keyframes() const { return m_keyframes; }
     WebAnimationType animationType() const { return m_animationType; }
     CompositeOperation compositeOperation() const final { return m_compositeOperation; }

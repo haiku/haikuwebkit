@@ -1517,7 +1517,7 @@ SerialFunctionDispatcher& Connection::dispatcher()
     // Our syncState is specific to the SerialFunctionDispatcher we have been
     // bound to during open(), so we can retrieve the SerialFunctionDispatcher
     // from it (rather than storing another pointer on this class).
-    return *dispatcher; // FIXME: This is unsafe. This function should return RefPtr instead.
+    return *dispatcher.unsafeGet(); // FIXME: This is unsafe. This function should return RefPtr instead.
 }
 
 void Connection::dispatchOneIncomingMessage()

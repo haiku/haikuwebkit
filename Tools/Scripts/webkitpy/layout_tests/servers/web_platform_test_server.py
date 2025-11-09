@@ -120,6 +120,9 @@ def is_wpt_server_running(port_obj):
     return http_server_base.HttpServerBase._is_running_on_port(config["ports"]["http"][0])
 
 
+def suppress_dns_resolver_logs(log_string):
+    return
+
 class WebPlatformTestServer(http_server_base.HttpServerBase):
     def __init__(self, port_obj, name, pidfile=None):
         http_server_base.HttpServerBase.__init__(self, port_obj)
@@ -150,7 +153,7 @@ class WebPlatformTestServer(http_server_base.HttpServerBase):
             print("Not Using local DNS resolver for", port_obj.port_name)
 
         if use_local_dns_resolver:
-            logger = DNSLogger(logf=_log.debug)
+            logger = DNSLogger(logf=suppress_dns_resolver_logs)
             self._dns_server = DNSServer(Resolver(
                 allowed_hosts=port_obj.localhost_aliases()), port=8053, address="127.0.0.1", logger=logger)
 

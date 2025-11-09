@@ -34,7 +34,7 @@ namespace JSC {
 ALWAYS_INLINE uint64_t SecureARM64EHashPins::keyForCurrentThread()
 {
     uint64_t result;
-    asm (
+    __asm__(
         "mrs %x[result], TPIDRRO_EL0"
         : [result] "=r" (result)
         :

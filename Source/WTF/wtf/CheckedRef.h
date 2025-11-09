@@ -284,8 +284,6 @@ public:
     CanMakeCheckedPtrBase(const CanMakeCheckedPtrBase&) { }
     CanMakeCheckedPtrBase& operator=(const CanMakeCheckedPtrBase&) { return *this; }
 
-    ~CanMakeCheckedPtrBase() = default;
-
     PtrCounterType checkedPtrCount() const { return m_checkedPtrCount; }
     void incrementCheckedPtrCount() const { ++m_checkedPtrCount; }
     ALWAYS_INLINE void decrementCheckedPtrCount() const

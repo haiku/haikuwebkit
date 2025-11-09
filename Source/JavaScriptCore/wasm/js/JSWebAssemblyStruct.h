@@ -60,6 +60,7 @@ public:
     DECLARE_VISIT_CHILDREN;
 
     uint64_t get(uint32_t) const;
+    v128_t getVector(uint32_t) const;
     void set(uint32_t, uint64_t);
     void set(uint32_t, v128_t);
     const Wasm::TypeDefinition& typeDefinition() const { return gcStructure()->typeDefinition(); }

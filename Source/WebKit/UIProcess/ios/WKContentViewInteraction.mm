@@ -1524,8 +1524,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _selectionInteractionType = SelectionInteractionType::None;
 
-    _editingEndedByUser = YES;
-
     _hasSetUpInteractions = YES;
 }
 
@@ -2061,8 +2059,6 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
 
 - (void)endEditingAndUpdateFocusAppearanceWithReason:(EndEditingReason)reason
 {
-    _editingEndedByUser = YES;
-
     if (!self.webView._retainingActiveFocusedState) {
         // We need to complete the editing operation before we blur the element.
         [self _endEditing];
@@ -3283,6 +3279,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (BOOL)ensurePositionInformationIsUpToDate:(WebKit::InteractionInformationRequest)request
 {
+    [_webView didEnsurePositionInformationIsUpToDate];
     if ([self _currentPositionInformationIsValidForRequest:request])
         return YES;
 
@@ -3472,6 +3469,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 #if ENABLE(MODEL_PROCESS)
     if (gestureRecognizer == _modelInteractionPanGestureRecognizer) {
+        if (!_page->hasModelElement())
+            return NO;
+
         WebKit::InteractionInformationRequest request(WebCore::roundedIntPoint(point));
         if (![self ensurePositionInformationIsUpToDate:request])
             return NO;
@@ -6158,9 +6158,6 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 #endif
 
     [_textInteractionWrapper reset];
-
-    _keyboardDismissedInCurrentPresentationUpdate = NO;
-    _editingEndedByUser = YES;
 }
 
 - (void)_nextAccessoryTabForWebView:(id)sender
@@ -8175,12 +8172,6 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
 {
     SetForScope isHidingKeyboardScope { _isHidingKeyboard, YES };
 
-    _keyboardDismissedInCurrentPresentationUpdate = YES;
-    _page->callAfterNextPresentationUpdate([weakSelf = WeakObjCPtr<WKContentView>(self)] {
-        if (RetainPtr strongSelf = weakSelf.get())
-            strongSelf->_keyboardDismissedInCurrentPresentationUpdate = NO;
-    });
-
     self.inputDelegate = nil;
     [self setUpTextSelectionAssistant];
     
@@ -8378,9 +8369,6 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
             if (userIsInteracting)
                 return YES;
 
-            if (_keyboardDismissedInCurrentPresentationUpdate && !_editingEndedByUser)
-                return YES;
-
             if (self.isFirstResponder || _becomingFirstResponder) {
                 // When the software keyboard is being used to enter an url, only the focus activity state is changing.
                 // In this case, auto focus on the page being navigated to should be disabled, unless a hardware
@@ -8420,9 +8408,6 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
         [self startDeferringInputViewUpdates:WebKit::InputViewUpdateDeferralSource::ChangingFocusedElement];
         [self _elementDidBlur];
     }
-
-    if (shouldShowInputView)
-        _editingEndedByUser = NO;
 
     if (!shouldShowInputView || information.elementType == WebKit::InputType::None) {
         _page->setIsShowingInputViewForFocusedElement(false);
@@ -8517,6 +8502,37 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
     _legacyTextInputTraits = nil;
     _extendedTextInputTraits = nil;
 
+    // For elements that have selectable content (e.g. text field) we need to wait for the web process to send an up-to-date
+    // selection rect before we can zoom and reveal the selection. Non-selectable elements (e.g. <select>) can be zoomed
+    // immediately because they have no selection to reveal.
+    // We create RevealFocusedElementDeferrer before callin becomeFirstResponder as the latter can result in _keyboardWillShow.
+    if (requiresKeyboard) {
+        bool ignorePreviousKeyboardWillShowNotification = [] {
+            // In the case where out-of-process keyboard is enabled and the software keyboard is shown,
+            // we end up getting two sets of "KeyboardWillShow" -> "KeyboardDidShow" notifications when
+            // the keyboard animates up, after reloading input views. When the first set of notifications
+            // is dispatched underneath the call to -reloadInputViews above, the keyboard hasn't yet
+            // become full height, so attempts to reveal the focused element using the current height will
+            // fail. The second set of keyboard notifications contains the final keyboard height, and is the
+            // one we should use for revealing the focused element.
+            // See also: <rdar://111704216>.
+            if (!UIKeyboard.usesInputSystemUI)
+                return false;
+
+            auto keyboard = UIKeyboard.activeKeyboard;
+            return keyboard && !keyboard.isMinimized;
+        }();
+        _revealFocusedElementDeferrer = WebKit::RevealFocusedElementDeferrer::create(self, [&] {
+            OptionSet reasons { WebKit::RevealFocusedElementDeferralReason::EditorState };
+            if (!self._scroller.firstResponderKeyboardAvoidanceEnabled)
+                reasons.add(WebKit::RevealFocusedElementDeferralReason::KeyboardDidShow);
+            else if (_waitingForKeyboardAppearanceAnimationToStart || ignorePreviousKeyboardWillShowNotification)
+                reasons.add(WebKit::RevealFocusedElementDeferralReason::KeyboardWillShow);
+            return reasons;
+        }());
+        _page->setWaitingForPostLayoutEditorStateUpdateAfterFocusingElement(true);
+    }
+
     if (![self isFirstResponder])
         [self becomeFirstResponder];
 
@@ -8561,35 +8577,7 @@ static RetainPtr<NSObject <WKFormPeripheral>> createInputPeripheralWithView(WebK
     if (editableChanged)
         [_webView _scheduleVisibleContentRectUpdate];
 
-    // For elements that have selectable content (e.g. text field) we need to wait for the web process to send an up-to-date
-    // selection rect before we can zoom and reveal the selection. Non-selectable elements (e.g. <select>) can be zoomed
-    // immediately because they have no selection to reveal.
-    if (requiresKeyboard) {
-        bool ignorePreviousKeyboardWillShowNotification = [] {
-            // In the case where out-of-process keyboard is enabled and the software keyboard is shown,
-            // we end up getting two sets of "KeyboardWillShow" -> "KeyboardDidShow" notifications when
-            // the keyboard animates up, after reloading input views. When the first set of notifications
-            // is dispatched underneath the call to -reloadInputViews above, the keyboard hasn't yet
-            // become full height, so attempts to reveal the focused element using the current height will
-            // fail. The second set of keyboard notifications contains the final keyboard height, and is the
-            // one we should use for revealing the focused element.
-            // See also: <rdar://111704216>.
-            if (!UIKeyboard.usesInputSystemUI)
-                return false;
-
-            auto keyboard = UIKeyboard.activeKeyboard;
-            return keyboard && !keyboard.isMinimized;
-        }();
-        _revealFocusedElementDeferrer = WebKit::RevealFocusedElementDeferrer::create(self, [&] {
-            OptionSet reasons { WebKit::RevealFocusedElementDeferralReason::EditorState };
-            if (!self._scroller.firstResponderKeyboardAvoidanceEnabled)
-                reasons.add(WebKit::RevealFocusedElementDeferralReason::KeyboardDidShow);
-            else if (_waitingForKeyboardAppearanceAnimationToStart || ignorePreviousKeyboardWillShowNotification)
-                reasons.add(WebKit::RevealFocusedElementDeferralReason::KeyboardWillShow);
-            return reasons;
-        }());
-        _page->setWaitingForPostLayoutEditorStateUpdateAfterFocusingElement(true);
-    } else
+    if (!requiresKeyboard)
         [self _zoomToRevealFocusedElement];
 
     [self _updateAccessory];
@@ -9683,7 +9671,10 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 - (void)fileUploadPanelDidDismiss:(WKFileUploadPanel *)fileUploadPanel
 {
     ASSERT(_fileUploadPanel.get() == fileUploadPanel);
-    
+
+    if ([self window] && ![[self window] firstResponder])
+        [self becomeFirstResponder];
+
     [_fileUploadPanel setDelegate:nil];
     _fileUploadPanel = nil;
 }
@@ -11772,17 +11763,21 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
 
 - (UITargetedPreview *)_createTargetedContextMenuHintPreviewIfPossible
 {
+    RetainPtr<UIView> containerForContextMenuHintPreviews = self.containerForContextMenuHintPreviews;
+    if (![containerForContextMenuHintPreviews window])
+        return nil;
+
     RetainPtr<UITargetedPreview> targetedPreview;
 
     if (_positionInformation.isLink && _positionInformation.textIndicator && _positionInformation.textIndicator->contentImage()) {
         RefPtr textIndicator = _positionInformation.textIndicator;
         _positionInformationLinkIndicator = textIndicator;
 
-        targetedPreview = [self _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:self.containerForContextMenuHintPreviews];
+        targetedPreview = [self _createTargetedPreviewFromTextIndicator:WTFMove(textIndicator) previewContainer:containerForContextMenuHintPreviews.get()];
     } else if ((_positionInformation.isAttachment || _positionInformation.isImage) && _positionInformation.image) {
         RetainPtr cgImage = _positionInformation.image->createPlatformImage();
         auto image = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
-        targetedPreview = createTargetedPreview(image.get(), self, self.containerForContextMenuHintPreviews, _positionInformation.bounds, { }, nil);
+        targetedPreview = createTargetedPreview(image.get(), self, containerForContextMenuHintPreviews.get(), _positionInformation.bounds, { }, nil);
     }
 
     if (!targetedPreview) {
@@ -11794,7 +11789,7 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
             return _positionInformation.bounds;
         }();
 
-        targetedPreview = createFallbackTargetedPreview(self, self.containerForContextMenuHintPreviews, boundsForFallbackPreview, nil);
+        targetedPreview = createFallbackTargetedPreview(self, containerForContextMenuHintPreviews.get(), boundsForFallbackPreview, nil);
     }
 
     [self _updateTargetedPreviewScrollViewUsingContainerScrollingNodeID:_positionInformation.containerScrollingNodeID];
@@ -12796,12 +12791,12 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
 
 - (CGImageRef)copySubjectResultForImageContextMenu
 {
-    return valueOrDefault(_imageAnalysisContextMenuActionData).copySubjectResult.get();
+    return valueOrDefault(_imageAnalysisContextMenuActionData).copySubjectResult.unsafeGet();
 }
 
 - (UIMenu *)machineReadableCodeSubMenuForImageContextMenu
 {
-    return valueOrDefault(_imageAnalysisContextMenuActionData).machineReadableCodeMenu.get();
+    return valueOrDefault(_imageAnalysisContextMenuActionData).machineReadableCodeMenu.unsafeGet();
 }
 
 #if USE(QUICK_LOOK)
@@ -14231,7 +14226,7 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
             if (enclosingView != selectedView && ![enclosingView _wk_isAncestorOf:selectedView])
                 return self;
         }
-        return enclosingView.get();
+        return enclosingView.unsafeGet();
     }();
 
     ASSERT(_cachedSelectionContainerView);

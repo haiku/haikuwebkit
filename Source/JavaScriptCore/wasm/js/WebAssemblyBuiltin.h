@@ -47,7 +47,7 @@ struct WebAssemblyBuiltinTypeExpectation {
     virtual ~WebAssemblyBuiltinTypeExpectation() = default;
 
     // Check whether the type meets this expectation.
-    virtual bool check(const Wasm::Type&) const = 0;
+    virtual bool isValid(const Wasm::Type&) const = 0;
 };
 
 class WebAssemblyBuiltinValueTypeExpectation : public WebAssemblyBuiltinTypeExpectation {
@@ -57,7 +57,7 @@ public:
         : m_expectedType(type)
     { }
 
-    bool check(const Wasm::Type& type) const { return type == m_expectedType; }
+    bool isValid(const Wasm::Type& type) const { return type == m_expectedType; }
 
 private:
     Wasm::Type m_expectedType;
@@ -66,13 +66,13 @@ private:
 class WebAssemblyBuiltinExternrefTypeExpectation : public WebAssemblyBuiltinTypeExpectation {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WebAssemblyBuiltinExternrefTypeExpectation);
 public:
-    bool check(const Wasm::Type& type) const { return Wasm::isExternref(type); }
+    bool isValid(const Wasm::Type& type) const { return Wasm::isExternref(type); }
 };
 
 class WebAssemblyArrayMutI16TypeExpectation : public WebAssemblyBuiltinTypeExpectation {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WebAssemblyArrayMutI16TypeExpectation);
 public:
-    bool check(const Wasm::Type&) const;
+    bool isValid(const Wasm::Type&) const;
 };
 
 inline std::unique_ptr<WebAssemblyBuiltinTypeExpectation> WebAssemblyBuiltinTypeExpectation::i32()
@@ -101,7 +101,7 @@ public:
     size_t numParams() const { return m_params.size(); }
     size_t numResults() const { return m_results.size(); }
 
-    bool check(const Wasm::FunctionSignature&) const;
+    bool isValid(const Wasm::FunctionSignature&) const;
 
 private:
     Expectations m_results;
@@ -144,8 +144,8 @@ public:
 
     CodePtr<CFunctionPtrTag> wasmEntrypoint() const { return m_wasmEntrypoint; }
     CodePtr<WasmEntryPtrTag> wasmTrampoline() const { return m_wasmTrampoline; }
-    // Return a JSFunction wrapping m_jsHostFunction.
-    JSObject* jsWrapper(JSGlobalObject*) const;
+    // A function acting as a JS entrypoint into the builtin implementation.
+    JSFunction* jsWrapper(JSGlobalObject*) const;
 
     Wasm::WasmBuiltinCallee* callee() const { return m_callee.get(); }
     const Wasm::Name* wasmName() const { return m_wasmName; }

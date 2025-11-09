@@ -40,6 +40,7 @@
 #include "CSSPropertyParserConsumer+Font.h"
 #include "ContainerNodeInlines.h"
 #include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "Gradient.h"
 #include "ImageBuffer.h"
 #include "ImageData.h"

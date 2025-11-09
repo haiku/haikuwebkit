@@ -44,9 +44,15 @@
 #include <WebCore/StyleFilterData.h>
 #include <WebCore/StyleFlexibleBoxData.h>
 #include <WebCore/StyleFontData.h>
+#include <WebCore/StyleFontFeatureSettings.h>
 #include <WebCore/StyleFontPalette.h>
 #include <WebCore/StyleFontSizeAdjust.h>
 #include <WebCore/StyleFontStyle.h>
+#include <WebCore/StyleFontVariantAlternates.h>
+#include <WebCore/StyleFontVariantEastAsian.h>
+#include <WebCore/StyleFontVariantLigatures.h>
+#include <WebCore/StyleFontVariantNumeric.h>
+#include <WebCore/StyleFontVariationSettings.h>
 #include <WebCore/StyleFontWeight.h>
 #include <WebCore/StyleFontWidth.h>
 #include <WebCore/StyleGridData.h>
@@ -228,9 +234,24 @@ inline Style::FontPalette RenderStyle::fontPalette() const { return fontDescript
 inline Style::FontSizeAdjust RenderStyle::fontSizeAdjust() const { return fontDescription().fontSizeAdjust(); }
 inline Style::FontStyle RenderStyle::fontStyle() const { return { fontDescription().fontStyleSlope(), fontDescription().fontStyleAxis() }; }
 inline FontOpticalSizing RenderStyle::fontOpticalSizing() const { return fontDescription().opticalSizing(); }
-inline FontVariationSettings RenderStyle::fontVariationSettings() const { return fontDescription().variationSettings(); }
+inline Style::FontFeatureSettings RenderStyle::fontFeatureSettings() const { return fontDescription().featureSettings(); }
+inline Style::FontVariationSettings RenderStyle::fontVariationSettings() const { return fontDescription().variationSettings(); }
 inline Style::FontWeight RenderStyle::fontWeight() const { return fontDescription().weight(); }
 inline Style::FontWidth RenderStyle::fontWidth() const { return fontDescription().width(); }
+inline Kerning RenderStyle::fontKerning() const { return fontDescription().kerning(); }
+inline FontSmoothingMode RenderStyle::fontSmoothing() const { return fontDescription().fontSmoothing(); }
+inline FontSynthesisLonghandValue RenderStyle::fontSynthesisSmallCaps() const { return fontDescription().fontSynthesisSmallCaps(); }
+inline FontSynthesisLonghandValue RenderStyle::fontSynthesisStyle() const { return fontDescription().fontSynthesisStyle(); }
+inline FontSynthesisLonghandValue RenderStyle::fontSynthesisWeight() const { return fontDescription().fontSynthesisWeight(); }
+inline Style::FontVariantAlternates RenderStyle::fontVariantAlternates() const { return fontDescription().variantAlternates(); }
+inline FontVariantCaps RenderStyle::fontVariantCaps() const { return fontDescription().variantCaps(); }
+inline Style::FontVariantEastAsian RenderStyle::fontVariantEastAsian() const { return fontDescription().variantEastAsian(); }
+inline FontVariantEmoji RenderStyle::fontVariantEmoji() const { return fontDescription().variantEmoji(); }
+inline Style::FontVariantLigatures RenderStyle::fontVariantLigatures() const { return fontDescription().variantLigatures(); }
+inline Style::FontVariantNumeric RenderStyle::fontVariantNumeric() const { return fontDescription().variantNumeric(); }
+inline FontVariantPosition RenderStyle::fontVariantPosition() const { return fontDescription().variantPosition(); }
+inline const AtomString& RenderStyle::locale() const { return fontDescription().specifiedLocale(); }
+inline TextRenderingMode RenderStyle::textRendering() const { return fontDescription().textRenderingMode(); }
 inline const Style::GapGutter& RenderStyle::gap(Style::GridTrackSizingDirection direction) const { return direction == Style::GridTrackSizingDirection::Columns ? columnGap() : rowGap(); }
 inline const Style::GridTrackSizes& RenderStyle::gridAutoColumns() const { return m_nonInheritedData->rareData->grid->m_gridAutoColumns; }
 inline GridAutoFlow RenderStyle::gridAutoFlow() const { return static_cast<GridAutoFlow>(m_nonInheritedData->rareData->grid->m_gridAutoFlow); }
@@ -276,7 +297,7 @@ inline bool RenderStyle::hasContent() const { return content().isData(); }
 inline bool RenderStyle::hasDisplayAffectedByAnimations() const { return m_nonInheritedData->miscData->hasDisplayAffectedByAnimations; }
 // FIXME: Rename this function.
 inline bool RenderStyle::hasUsedAppearance() const { return usedAppearance() != StyleAppearance::None && usedAppearance() != StyleAppearance::Base; }
-inline bool RenderStyle::hasUsedContentNone() const { return content().isNone() || (content().isNormal() && (pseudoElementType() == PseudoId::Before || pseudoElementType() == PseudoId::After)); }
+inline bool RenderStyle::hasUsedContentNone() const { return content().isNone() || (content().isNormal() && (pseudoElementType() == PseudoElementType::Before || pseudoElementType() == PseudoElementType::After)); }
 inline bool RenderStyle::hasExplicitlySetBorderBottomLeftRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderBottomLeftRadius; }
 inline bool RenderStyle::hasExplicitlySetBorderBottomRightRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderBottomRightRadius; }
 inline bool RenderStyle::hasExplicitlySetBorderRadius() const { return hasExplicitlySetBorderBottomLeftRadius() || hasExplicitlySetBorderBottomRightRadius() || hasExplicitlySetBorderTopLeftRadius() || hasExplicitlySetBorderTopRightRadius(); }
@@ -299,7 +320,7 @@ inline bool RenderStyle::hasOutline() const { return outlineStyle() != OutlineSt
 inline bool RenderStyle::hasOutlineInVisualOverflow() const { return hasOutline() && outlineSize() > 0; }
 inline bool RenderStyle::hasPerspective() const { return !perspective().isNone(); }
 inline bool RenderStyle::hasPositionedMask() const { return maskLayers().hasImage(); }
-inline bool RenderStyle::hasPseudoStyle(PseudoId pseudo) const { return m_nonInheritedFlags.hasPseudoStyle(pseudo); }
+inline bool RenderStyle::hasPseudoStyle(PseudoElementType pseudo) const { return m_nonInheritedFlags.hasPseudoStyle(pseudo); }
 inline bool RenderStyle::hasRotate() const { return !rotate().isNone(); }
 inline bool RenderStyle::hasScale() const { return !scale().isNone(); }
 inline bool RenderStyle::hasStaticBlockPosition(bool horizontal) const { return horizontal ? hasAutoTopAndBottom() : hasAutoLeftAndRight(); }
@@ -398,11 +419,30 @@ constexpr Style::FlexGrow RenderStyle::initialFlexGrow() { return 0_css_number; 
 constexpr Style::FlexShrink RenderStyle::initialFlexShrink() { return 1_css_number; }
 constexpr FlexWrap RenderStyle::initialFlexWrap() { return FlexWrap::NoWrap; }
 constexpr Float RenderStyle::initialFloating() { return Float::None; }
+constexpr FontOpticalSizing RenderStyle::initialFontOpticalSizing() { return FontOpticalSizing::Enabled; }
+inline Style::FontFeatureSettings RenderStyle::initialFontFeatureSettings() { return CSS::Keyword::Normal { }; }
+inline Style::FontVariationSettings RenderStyle::initialFontVariationSettings() { return CSS::Keyword::Normal { }; }
 inline Style::FontPalette RenderStyle::initialFontPalette() { return CSS::Keyword::Normal { }; }
 inline Style::FontSizeAdjust RenderStyle::initialFontSizeAdjust() { return CSS::Keyword::None { }; }
 inline Style::FontStyle RenderStyle::initialFontStyle() { return CSS::Keyword::Normal { }; }
 inline Style::FontWeight RenderStyle::initialFontWeight() { return CSS::Keyword::Normal { }; }
 inline Style::FontWidth RenderStyle::initialFontWidth() { return CSS::Keyword::Normal { }; }
+constexpr Kerning RenderStyle::initialFontKerning() { return Kerning::Auto; }
+constexpr FontSmoothingMode RenderStyle::initialFontSmoothing() { return FontSmoothingMode::AutoSmoothing; }
+constexpr FontSynthesisLonghandValue RenderStyle::initialFontSynthesisSmallCaps() { return FontSynthesisLonghandValue::Auto; }
+constexpr FontSynthesisLonghandValue RenderStyle::initialFontSynthesisStyle() { return FontSynthesisLonghandValue::Auto; }
+constexpr FontSynthesisLonghandValue RenderStyle::initialFontSynthesisWeight() { return FontSynthesisLonghandValue::Auto; }
+inline Style::FontVariantAlternates RenderStyle::initialFontVariantAlternates() { return CSS::Keyword::Normal { }; }
+constexpr FontVariantCaps RenderStyle::initialFontVariantCaps() { return FontVariantCaps::Normal; }
+constexpr Style::FontVariantEastAsian RenderStyle::initialFontVariantEastAsian() { return CSS::Keyword::Normal { }; }
+constexpr FontVariantEmoji RenderStyle::initialFontVariantEmoji() { return FontVariantEmoji::Normal; }
+constexpr Style::FontVariantLigatures RenderStyle::initialFontVariantLigatures() { return CSS::Keyword::Normal { }; }
+constexpr Style::FontVariantNumeric RenderStyle::initialFontVariantNumeric() { return CSS::Keyword::Normal { }; }
+constexpr FontVariantPosition RenderStyle::initialFontVariantPosition() { return FontVariantPosition::Normal; }
+inline AtomString RenderStyle::initialLocale() { return nullAtom(); }
+constexpr TextAutospace RenderStyle::initialTextAutospace() { return { }; }
+constexpr TextRenderingMode RenderStyle::initialTextRendering() { return TextRenderingMode::AutoTextRendering; }
+constexpr TextSpacingTrim RenderStyle::initialTextSpacingTrim() { return { }; }
 inline Style::GridTrackSizes RenderStyle::initialGridAutoColumns() { return CSS::Keyword::Auto { }; }
 constexpr GridAutoFlow RenderStyle::initialGridAutoFlow() { return AutoFlowRow; }
 inline Style::GridTrackSizes RenderStyle::initialGridAutoRows() { return CSS::Keyword::Auto { }; }
@@ -434,6 +474,7 @@ constexpr OptionSet<Style::LineBoxContain> RenderStyle::initialLineBoxContain() 
 constexpr LineBreak RenderStyle::initialLineBreak() { return LineBreak::Auto; }
 constexpr Style::WebkitLineClamp RenderStyle::initialLineClamp() { return CSS::Keyword::None { }; }
 inline Style::WebkitLineGrid RenderStyle::initialLineGrid() { return CSS::Keyword::None { }; }
+inline Style::LineHeight RenderStyle::initialLineHeight() { return CSS::Keyword::Normal { }; }
 constexpr LineSnap RenderStyle::initialLineSnap() { return LineSnap::None; }
 inline Style::ImageOrNone RenderStyle::initialListStyleImage() { return CSS::Keyword::None { }; }
 constexpr ListStylePosition RenderStyle::initialListStylePosition() { return ListStylePosition::Outside; }
@@ -752,12 +793,17 @@ inline const Style::ShapeOutside& RenderStyle::shapeOutside() const { return m_n
 inline ContentVisibility RenderStyle::usedContentVisibility() const { return static_cast<ContentVisibility>(m_rareInheritedData->usedContentVisibility); }
 inline bool RenderStyle::isSkippedRootOrSkippedContent() const { return usedContentVisibility() != ContentVisibility::Visible; }
 inline OptionSet<SpeakAs> RenderStyle::speakAs() const { return OptionSet<SpeakAs>::fromRaw(m_rareInheritedData->speakAs); }
-inline const AtomString& RenderStyle::specifiedLocale() const { return fontDescription().specifiedLocale(); }
 inline Style::ZIndex RenderStyle::specifiedZIndex() const { return m_nonInheritedData->boxData->specifiedZIndex(); }
 inline bool RenderStyle::specifiesColumns() const { return !columnCount().isAuto() || !columnWidth().isAuto() || !hasInlineColumnAxis(); }
 constexpr OptionSet<Containment> RenderStyle::strictContainment() { return { Containment::Size, Containment::Layout, Containment::Paint, Containment::Style }; }
 inline const Style::Color& RenderStyle::strokeColor() const { return m_rareInheritedData->strokeColor; }
 inline Style::StrokeMiterlimit RenderStyle::strokeMiterLimit() const { return m_rareInheritedData->miterLimit; }
+inline std::optional<PseudoElementType> RenderStyle::pseudoElementType() const
+{
+    if (!m_nonInheritedFlags.pseudoElementType)
+        return { };
+    return static_cast<PseudoElementType>(m_nonInheritedFlags.pseudoElementType - 1);
+}
 inline const AtomString& RenderStyle::pseudoElementNameArgument() const { return m_nonInheritedData->rareData->pseudoElementNameArgument; }
 inline const Style::TabSize& RenderStyle::tabSize() const { return m_rareInheritedData->tabSize; }
 inline TableLayoutType RenderStyle::tableLayout() const { return static_cast<TableLayoutType>(m_nonInheritedData->miscData->tableLayout); }
@@ -840,7 +886,7 @@ inline const Style::CornerShapeValue& RenderStyle::cornerTopRightShape() const {
 
 // ignore non-standard ::-webkit-scrollbar when standard properties are in use
 inline bool RenderStyle::usesStandardScrollbarStyle() const { return scrollbarWidth() != ScrollbarWidth::Auto || !scrollbarColor().isAuto(); }
-inline bool RenderStyle::usesLegacyScrollbarStyle() const { return hasPseudoStyle(PseudoId::WebKitScrollbar) && !usesStandardScrollbarStyle(); }
+inline bool RenderStyle::usesLegacyScrollbarStyle() const { return hasPseudoStyle(PseudoElementType::WebKitScrollbar) && !usesStandardScrollbarStyle(); }
 
 #if ENABLE(APPLE_PAY)
 inline ApplePayButtonStyle RenderStyle::applePayButtonStyle() const { return static_cast<ApplePayButtonStyle>(m_nonInheritedData->rareData->applePayButtonStyle); }
@@ -858,7 +904,7 @@ inline bool RenderStyle::isInSubtreeWithBlendMode() const { return m_rareInherit
 inline bool RenderStyle::isForceHidden() const { return m_rareInheritedData->isForceHidden; }
 inline Isolation RenderStyle::isolation() const { return static_cast<Isolation>(m_nonInheritedData->rareData->isolation); }
 inline bool RenderStyle::usesAnchorFunctions() const { return m_nonInheritedData->rareData->usesAnchorFunctions; }
-inline OptionSet<BoxAxisFlag> RenderStyle::anchorFunctionScrollCompensatedAxes() const { return OptionSet<BoxAxisFlag>::fromRaw(m_nonInheritedData->rareData->anchorFunctionScrollCompensatedAxes); }
+inline EnumSet<BoxAxis> RenderStyle::anchorFunctionScrollCompensatedAxes() const { return EnumSet<BoxAxis>::fromRaw(m_nonInheritedData->rareData->anchorFunctionScrollCompensatedAxes); }
 
 inline bool RenderStyle::isPopoverInvoker() const { return m_nonInheritedData->rareData->isPopoverInvoker; }
 
@@ -902,7 +948,7 @@ constexpr Style::WebkitTouchCallout RenderStyle::initialTouchCallout() { return 
 #endif
 
 #if ENABLE(TEXT_AUTOSIZING)
-inline Length RenderStyle::initialSpecifiedLineHeight() { return LengthType::Normal; }
+inline Style::LineHeight RenderStyle::initialSpecifiedLineHeight() { return CSS::Keyword::Normal { }; }
 constexpr Style::TextSizeAdjust RenderStyle::initialTextSizeAdjust() { return CSS::Keyword::Auto { }; }
 inline Style::TextSizeAdjust RenderStyle::textSizeAdjust() const { return m_rareInheritedData->textSizeAdjust; }
 #endif
@@ -930,8 +976,8 @@ inline ColorInterpolation RenderStyle::colorInterpolationFilters() const { retur
 inline WindRule RenderStyle::fillRule() const { return static_cast<WindRule>(m_svgStyle->inheritedFlags.fillRule); }
 inline ShapeRendering RenderStyle::shapeRendering() const { return static_cast<ShapeRendering>(m_svgStyle->inheritedFlags.shapeRendering); }
 inline TextAnchor RenderStyle::textAnchor() const { return static_cast<TextAnchor>(m_svgStyle->inheritedFlags.textAnchor); }
-inline GlyphOrientation RenderStyle::glyphOrientationHorizontal() const { return static_cast<GlyphOrientation>(m_svgStyle->inheritedFlags.glyphOrientationHorizontal); }
-inline GlyphOrientation RenderStyle::glyphOrientationVertical() const { return static_cast<GlyphOrientation>(m_svgStyle->inheritedFlags.glyphOrientationVertical); }
+inline Style::SVGGlyphOrientationHorizontal RenderStyle::glyphOrientationHorizontal() const { return static_cast<Style::SVGGlyphOrientationHorizontal>(m_svgStyle->inheritedFlags.glyphOrientationHorizontal); }
+inline Style::SVGGlyphOrientationVertical RenderStyle::glyphOrientationVertical() const { return static_cast<Style::SVGGlyphOrientationVertical>(m_svgStyle->inheritedFlags.glyphOrientationVertical); }
 inline const Style::SVGPaint& RenderStyle::fill() const { return m_svgStyle->fillData->paint; }
 inline Style::Opacity RenderStyle::fillOpacity() const { return m_svgStyle->fillData->opacity; }
 inline const Style::SVGPaint& RenderStyle::stroke() const { return m_svgStyle->strokeData->paint; }
@@ -990,8 +1036,8 @@ constexpr ColorInterpolation RenderStyle::initialColorInterpolationFilters() { r
 constexpr WindRule RenderStyle::initialFillRule() { return WindRule::NonZero; }
 constexpr ShapeRendering RenderStyle::initialShapeRendering() { return ShapeRendering::Auto; }
 constexpr TextAnchor RenderStyle::initialTextAnchor() { return TextAnchor::Start; }
-constexpr GlyphOrientation RenderStyle::initialGlyphOrientationHorizontal() { return GlyphOrientation::Degrees0; }
-constexpr GlyphOrientation RenderStyle::initialGlyphOrientationVertical() { return GlyphOrientation::Auto; }
+constexpr Style::SVGGlyphOrientationHorizontal RenderStyle::initialGlyphOrientationHorizontal() { return Style::SVGGlyphOrientationHorizontal::Degrees0; }
+constexpr Style::SVGGlyphOrientationVertical RenderStyle::initialGlyphOrientationVertical() { return Style::SVGGlyphOrientationVertical::Auto; }
 inline Style::SVGPaint RenderStyle::initialFill() { return Style::Color { Color::black }; }
 inline Style::SVGPaint RenderStyle::initialStroke() { return CSS::Keyword::None { }; }
 inline Style::Color RenderStyle::initialStopColor() { return Color::black; }
@@ -1003,16 +1049,15 @@ inline Style::SVGMarkerResource RenderStyle::initialMarkerEnd() { return CSS::Ke
 constexpr MaskType RenderStyle::initialMaskType() { return MaskType::Luminance; }
 inline Style::SVGBaselineShift RenderStyle::initialBaselineShift() { return CSS::Keyword::Baseline { }; }
 
-inline bool RenderStyle::NonInheritedFlags::hasPseudoStyle(PseudoId pseudo) const
+inline bool RenderStyle::NonInheritedFlags::hasPseudoStyle(PseudoElementType pseudo) const
 {
-    ASSERT(pseudo > PseudoId::None);
-    ASSERT(pseudo < PseudoId::FirstInternalPseudoId);
-    return pseudoBits & (1 << (static_cast<unsigned>(pseudo) - 1 /* PseudoId::None */));
+    ASSERT(allPublicPseudoElementTypes.contains(pseudo));
+    return EnumSet<PseudoElementType>::fromRaw(pseudoBits).contains(pseudo);
 }
 
 inline bool RenderStyle::NonInheritedFlags::hasAnyPublicPseudoStyles() const
 {
-    return PublicPseudoIdMask & pseudoBits;
+    return !!pseudoBits;
 }
 
 inline bool RenderStyle::breakOnlyAfterWhiteSpace() const
@@ -1034,11 +1079,6 @@ inline bool RenderStyle::hasInlineColumnAxis() const
 {
     auto axis = columnAxis();
     return axis == ColumnAxis::Auto || writingMode().isHorizontal() == (axis == ColumnAxis::Horizontal);
-}
-
-inline Length RenderStyle::initialLineHeight()
-{
-    return LengthType::Normal;
 }
 
 inline bool RenderStyle::isCollapsibleWhiteSpace(char16_t character) const
@@ -1274,7 +1314,7 @@ inline bool shouldApplyLayoutContainment(const RenderStyle& style, const Element
         return false;
     if (style.isInternalTableBox() && style.display() != DisplayType::TableCell)
         return false;
-    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(style)))
+    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(&style)))
         return false;
     return true;
 }
@@ -1295,7 +1335,7 @@ inline bool shouldApplySizeContainment(const RenderStyle& style, const Element& 
         return false;
     if (style.isInternalTableBox())
         return false;
-    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(style)))
+    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(&style)))
         return false;
     return true;
 }
@@ -1315,7 +1355,7 @@ inline bool shouldApplyInlineSizeContainment(const RenderStyle& style, const Ele
         return false;
     if (style.isInternalTableBox())
         return false;
-    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(style)))
+    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(&style)))
         return false;
     return true;
 }
@@ -1340,7 +1380,7 @@ inline bool shouldApplyPaintContainment(const RenderStyle& style, const Element&
         return false;
     if (style.isInternalTableBox() && style.display() != DisplayType::TableCell)
         return false;
-    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(style)))
+    if (style.isRubyContainerOrInternalRubyBox() || (style.display() == DisplayType::Inline && !element.isReplaced(&style)))
         return false;
     return true;
 }
@@ -1375,6 +1415,11 @@ inline bool RenderStyle::enableEvaluationTimeZoom() const
     return m_rareInheritedData->enableEvaluationTimeZoom;
 }
 
+inline float RenderStyle::deviceScaleFactor() const
+{
+    return m_rareInheritedData->deviceScaleFactor;
+}
+
 inline bool RenderStyle::useSVGZoomRulesForLength() const
 {
     return m_nonInheritedData->rareData->useSVGZoomRulesForLength;
@@ -1383,12 +1428,12 @@ inline bool RenderStyle::useSVGZoomRulesForLength() const
 inline Style::ZoomFactor RenderStyle::usedZoomForLength() const
 {
     if (useSVGZoomRulesForLength())
-        return Style::ZoomFactor(1.0f);
+        return Style::ZoomFactor(1.0f, deviceScaleFactor());
 
     if (enableEvaluationTimeZoom())
-        return Style::ZoomFactor(usedZoom());
+        return Style::ZoomFactor(usedZoom(), deviceScaleFactor());
 
-    return Style::ZoomFactor(1.0f);
+    return Style::ZoomFactor(1.0f, deviceScaleFactor());
 }
 
 } // namespace WebCore

@@ -30,7 +30,6 @@ heap/SlotVisitor.h
 heap/WeakSet.h
 inspector/InspectorAgentBase.h
 inspector/InspectorBackendDispatchers.h
-inspector/InspectorFrontendDispatchers.h
 inspector/JSGlobalObjectConsoleClient.h
 inspector/JSGlobalObjectInspectorController.h
 inspector/agents/InspectorDebuggerAgent.h

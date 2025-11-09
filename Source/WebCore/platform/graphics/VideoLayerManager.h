@@ -40,6 +40,7 @@ public:
 
     virtual PlatformLayer* videoInlineLayer() const = 0;
     virtual void setVideoLayer(PlatformLayer*, FloatSize) = 0;
+    virtual void setPresentationSize(FloatSize) = 0;
     virtual void didDestroyVideoLayer() = 0;
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)

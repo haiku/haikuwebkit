@@ -20,7 +20,7 @@
 #include "config.h"
 #include "WebEditorClient.h"
 
-#include <WebCore/Document.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/Editor.h>
 #include <WebCore/EventNames.h>
 #include <WebCore/FrameDestructionObserverInlines.h>

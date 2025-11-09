@@ -22,8 +22,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/overscroll-event-fired-to-element-with-overscroll-behavior.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/overscroll-event-fired-to-scrolled-element.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/overscroll-event-fired-to-window.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/save-iframe-scroll-offset-when-display-none.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/save-iframe-scroll-offset-when-display-none.sub.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scroll-cross-origin-iframes.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scroll-cross-origin-iframes.sub.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scroll-event-fired-to-element.html
+/LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scroll-event-fired-to-iframe.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scroll_support.js
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-sequence-of-scrolls.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html

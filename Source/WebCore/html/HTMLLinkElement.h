@@ -150,7 +150,7 @@ private:
     void removePendingSheet();
 
     LinkLoader m_linkLoader;
-    Style::Scope* m_styleScope { nullptr };
+    CheckedPtr<Style::Scope> m_styleScope;
     CachedResourceHandle<CachedCSSStyleSheet> m_cachedSheet;
     RefPtr<CSSStyleSheet> m_sheet;
     enum DisabledState : uint8_t {

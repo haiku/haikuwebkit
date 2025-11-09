@@ -235,9 +235,13 @@ static RefPtr<SVGFilterRenderer> createReferenceFilter(CSSFilterRenderer& filter
     if (!filterElement)
         return nullptr;
 
-    auto filterRegion = SVGLengthContext::resolveRectangle<SVGFilterElement>(filterElement.get(), filterElement->filterUnits(), targetBoundingBox);
+    RefPtr contextElement = dynamicDowncast<SVGElement>(renderer.element());
 
-    return SVGFilterRenderer::create(*filterElement, preferredFilterRenderingModes, filter.filterScale(), filterRegion, targetBoundingBox, destinationContext);
+    auto filterRegion = SVGLengthContext::resolveRectangle(contextElement.get(), *filterElement, filterElement->filterUnits(), targetBoundingBox);
+    if (filterRegion.isEmpty())
+        return nullptr;
+
+    return SVGFilterRenderer::create(contextElement.get(), *filterElement, preferredFilterRenderingModes, filter.filterScale(), filterRegion, targetBoundingBox, destinationContext);
 }
 
 RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& renderer, const FilterOperation& operation, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)

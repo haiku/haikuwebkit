@@ -309,7 +309,7 @@ void BorderPainter::paintOutline(const LayoutRect& paintRect) const
     if (!borderStyle || *borderStyle == BorderStyle::None)
         return;
 
-    auto outlineWidth = Style::evaluate<LayoutUnit>(styleToUse.outlineWidth(), Style::ZoomNeeded { });
+    auto outlineWidth = Style::evaluate<LayoutUnit>(styleToUse.outlineWidth(), styleToUse.usedZoomForLength());
     auto outlineOffset = Style::evaluate<LayoutUnit>(styleToUse.outlineOffset(), Style::ZoomNeeded { });
 
     auto outerRect = paintRect;
@@ -352,7 +352,7 @@ void BorderPainter::paintOutline(const LayoutPoint& paintOffset, const Vector<La
 
     auto& styleToUse = m_renderer->style();
     auto outlineOffset = Style::evaluate<float>(styleToUse.outlineOffset(), Style::ZoomNeeded { });
-    auto outlineWidth = Style::evaluate<float>(styleToUse.outlineWidth(), Style::ZoomNeeded { });
+    auto outlineWidth = Style::evaluate<float>(styleToUse.outlineWidth(), styleToUse.usedZoomForLength());
     auto deviceScaleFactor = document().deviceScaleFactor();
 
     Vector<FloatRect> pixelSnappedRects;
@@ -412,7 +412,7 @@ void BorderPainter::paintSides(const BorderShape& borderShape, const Sides& side
         auto& currEdge = sides.edges.at(boxSide);
 
         if (currEdge.shouldRender())
-            edgesToDraw.add(edgeFlagForSide(boxSide));
+            edgesToDraw.add(boxSide);
 
         if (currEdge.presentButInvisible()) {
             --numEdgesVisible;
@@ -592,7 +592,7 @@ void BorderPainter::paintTranslucentBorderSides(const BorderShape& borderShape, 
 
         BoxSideSet commonColorEdgeSet;
         for (auto side : paintOrderSides) {
-            if (!edgesToDraw.contains(edgeFlagForSide(side)))
+            if (!edgesToDraw.contains(side))
                 continue;
 
             auto& edge = sides.edges.at(side);
@@ -604,7 +604,7 @@ void BorderPainter::paintTranslucentBorderSides(const BorderShape& borderShape, 
                 includeEdge = equalIgnoringSemanticColor(edge.color(), commonColor);
 
             if (includeEdge)
-                commonColorEdgeSet.add(edgeFlagForSide(side));
+                commonColorEdgeSet.add(side);
         }
 
         bool useTransparencyLayer = includesAdjacentEdges(commonColorEdgeSet) && !commonColor.isOpaque();
@@ -628,10 +628,10 @@ static inline bool borderStyleHasUnmatchedColorsAtCorner(BorderStyle style, BoxS
 {
     // These styles match at the top/left and bottom/right.
     if (style == BorderStyle::Inset || style == BorderStyle::Groove || style == BorderStyle::Ridge || style == BorderStyle::Outset) {
-        BoxSideSet topRightSides = { BoxSideFlag::Top, BoxSideFlag::Right };
-        BoxSideSet bottomLeftSides = { BoxSideFlag::Bottom, BoxSideFlag::Left };
+        BoxSideSet topRightSides = { BoxSide::Top, BoxSide::Right };
+        BoxSideSet bottomLeftSides = { BoxSide::Bottom, BoxSide::Left };
 
-        BoxSideSet usedSides { edgeFlagForSide(side), edgeFlagForSide(adjacentSide) };
+        BoxSideSet usedSides { side, adjacentSide };
         return usedSides == topRightSides || usedSides == bottomLeftSides;
     }
     return false;
@@ -748,7 +748,7 @@ void BorderPainter::paintBorderSides(const BorderShape& borderShape, const Sides
 
     auto paintOneSide = [&](BoxSide side, BoxSide adjacentSide1, BoxSide adjacentSide2) {
         auto& edge = sides.edges.at(side);
-        if (!edge.shouldRender() || !edgeSet.contains(edgeFlagForSide(side)))
+        if (!edge.shouldRender() || !edgeSet.contains(side))
             return;
 
         LayoutRect sideRect = borderShape.borderRect();

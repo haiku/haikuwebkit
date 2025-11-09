@@ -27,12 +27,13 @@
 
 #include "Chrome.h"
 #include "ChromeClient.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "Element.h"
 #include "EventHandler.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
 #include "EventTarget.h"
+#include "FrameInlines.h"
 #include "HitTestResult.h"
 #include "MouseEventTypes.h"
 #include "NodeDocument.h"
@@ -62,7 +63,7 @@ Element* PointerCaptureController::pointerCaptureElement(Document* document, Poi
     if (auto capturingData = m_activePointerIdsToCapturingData.get(pointerId)) {
         auto pointerCaptureElement = capturingData->targetOverride;
         if (pointerCaptureElement && &pointerCaptureElement->document() == document)
-            return pointerCaptureElement.get();
+            return pointerCaptureElement.unsafeGet();
     }
     return nullptr;
 }

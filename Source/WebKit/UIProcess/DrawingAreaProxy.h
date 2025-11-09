@@ -121,6 +121,8 @@ public:
     // Hide the content until any update arrives.
     virtual void hideContentUntilAnyUpdate() { }
 
+    virtual void hideContentUntilDidUpdateActivityState(ActivityStateChangeID) { hideContentUntilAnyUpdate(); }
+
     virtual bool hasVisibleContent() const { return true; }
 
 #if PLATFORM(COCOA)

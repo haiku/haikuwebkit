@@ -172,6 +172,8 @@ public:
     WTF_EXPORT_PRIVATE String convertToASCIIUppercase() const;
     WTF_EXPORT_PRIVATE AtomString convertToASCIILowercaseAtom() const;
 
+    WTF_EXPORT_PRIVATE std::optional<char32_t> convertToSingleCodePoint() const;
+
     bool contains(char16_t) const;
     template<typename CodeUnitMatchFunction, std::enable_if_t<std::is_invocable_r_v<bool, CodeUnitMatchFunction, char16_t>>* = nullptr>
     bool contains(CodeUnitMatchFunction&&) const;

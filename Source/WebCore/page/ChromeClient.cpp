@@ -119,4 +119,12 @@ void ChromeClient::requestPointerLock(CompletionHandler<void(PointerLockRequestR
 }
 #endif
 
+#if ENABLE(IMAGE_ANALYSIS)
+void ChromeClient::requestTextRecognition(Element&, TextRecognitionOptions&&, CompletionHandler<void(RefPtr<Element>&&)>&& completion)
+{
+    if (completion)
+        completion({ });
+}
+#endif
+
 } // namespace WebCore

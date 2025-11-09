@@ -37,6 +37,7 @@
 #include "SVGLayerTransformComputation.h"
 #include "SVGNames.h"
 #include "SVGUseElement.h"
+#include "Settings.h"
 #include "StyleResolver.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>

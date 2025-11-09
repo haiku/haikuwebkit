@@ -31,8 +31,7 @@
 #if ENABLE(GEOLOCATION)
 
 #include "ContextDestructionObserverInlines.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EventLoop.h"
 #include "GeoNotifier.h"
 #include "GeolocationController.h"
@@ -42,7 +41,6 @@
 #include "GeolocationPositionData.h"
 #include "LocalFrame.h"
 #include "Navigator.h"
-#include "Page.h"
 #include "PermissionsPolicy.h"
 #include "ScriptExecutionContextInlines.h"
 #include "ScriptWrappableInlines.h"

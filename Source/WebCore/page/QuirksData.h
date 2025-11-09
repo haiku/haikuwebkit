@@ -63,6 +63,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsResettingTransitionCancelsRunningTransitionQuirk : 1 { false };
     bool needsScrollbarWidthThinDisabledQuirk : 1 { false };
     bool needsSeekingSupportDisabledQuirk : 1 { false };
+    bool needsTikTokOverflowingContentQuirk : 1 { false };
     bool needsVP9FullRangeFlagQuirk : 1 { false };
     bool needsVideoShouldMaintainAspectRatioQuirk : 1 { false };
     bool returnNullPictureInPictureElementDuringFullscreenChangeQuirk : 1 { false };
@@ -106,7 +107,6 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsScriptToEvaluateBeforeRunningScriptFromURLQuirk : 1 { false };
     bool needsYouTubeMouseOutQuirk : 1 { false };
     bool needsYouTubeOverflowScrollQuirk : 1 { false };
-    bool shouldAvoidPastingImagesAsWebContent : 1 { false };
     bool shouldDisablePointerEventsQuirk : 1 { false };
     bool shouldIgnoreAriaForFastPathContentObservationCheckQuirk : 1 { false };
     bool shouldNavigatorPluginsBeEmpty : 1 { false };

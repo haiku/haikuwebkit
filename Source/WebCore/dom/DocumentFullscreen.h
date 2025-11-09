@@ -46,7 +46,6 @@ class DocumentFullscreen final : public CanMakeWeakPtr<DocumentFullscreen> {
     WTF_MAKE_TZONE_ALLOCATED(DocumentFullscreen);
 public:
     DocumentFullscreen(Document&);
-    ~DocumentFullscreen() = default;
 
     void ref() const { m_document->ref(); }
     void deref() const { m_document->deref(); }

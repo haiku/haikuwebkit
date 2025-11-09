@@ -64,6 +64,7 @@
 #include "RenderObjectStyle.h"
 #include "RenderVideo.h"
 #include "SVGSVGElement.h"
+#include "Settings.h"
 #include "SimpleRange.h"
 #include "SliderThumbElement.h"
 #include "StyleResolver.h"

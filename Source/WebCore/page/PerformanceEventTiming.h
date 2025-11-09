@@ -68,3 +68,11 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::PerformanceEventTiming)
+static bool isType(const WebCore::PerformanceEntry& entry)
+{
+    auto type = entry.performanceEntryType();
+    return type == WebCore::PerformanceEntry::Type::FirstInput || type == WebCore::PerformanceEntry::Type::Event;
+}
+SPECIALIZE_TYPE_TRAITS_END()

@@ -76,6 +76,7 @@ public:
         virtual bool isCompositionRequiredOrOngoing() const = 0;
         virtual void requestComposition() = 0;
         virtual RunLoop* compositingRunLoop() const = 0;
+        virtual int maxTextureSize() const = 0;
     };
 
     static Ref<CoordinatedPlatformLayer> create();
@@ -123,6 +124,7 @@ public:
     void didUpdateLayerTransform();
 
     void setVisibleRect(const FloatRect&);
+    const FloatRect& visibleRect() const;
     void setTransformedVisibleRect(IntRect&& visibleRect, IntRect&& visibleRectIncludingFuture);
 
 #if ENABLE(SCROLLING_THREAD)
@@ -181,6 +183,7 @@ public:
     bool isCompositionRequiredOrOngoing() const;
     void requestComposition();
     RunLoop* compositingRunLoop() const;
+    int maxTextureSize() const;
 
     Ref<CoordinatedTileBuffer> paint(const IntRect&);
 #if USE(SKIA)

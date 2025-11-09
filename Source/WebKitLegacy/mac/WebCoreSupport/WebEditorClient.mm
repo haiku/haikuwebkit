@@ -57,8 +57,9 @@
 #import <WebCore/ArchiveResource.h>
 #import <WebCore/CSSStyleProperties.h>
 #import <WebCore/DeprecatedGlobalSettings.h>
-#import <WebCore/Document.h>
 #import <WebCore/DocumentFragment.h>
+#import <WebCore/DocumentPage.h>
+#import <WebCore/DocumentView.h>
 #import <WebCore/Editor.h>
 #import <WebCore/Event.h>
 #import <WebCore/FloatQuad.h>
@@ -73,7 +74,6 @@
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MutableStyleProperties.h>
 #import <WebCore/NodeDocument.h>
-#import <WebCore/Page.h>
 #import <WebCore/PlatformKeyboardEvent.h>
 #import <WebCore/Settings.h>
 #import <WebCore/SpellChecker.h>
@@ -202,9 +202,7 @@ WebEditorClient::WebEditorClient(WebView *webView)
 {
 }
 
-WebEditorClient::~WebEditorClient()
-{
-}
+WebEditorClient::~WebEditorClient() = default;
 
 bool WebEditorClient::isContinuousSpellCheckingEnabled()
 {

@@ -528,6 +528,8 @@ ResourceLoadInfo NetworkResourceLoader::resourceLoadInfo()
             return ResourceLoadInfo::Type::Other;
         case WebCore::FetchOptions::Destination::Sharedworker:
             return ResourceLoadInfo::Type::Other;
+        case WebCore::FetchOptions::Destination::Speculationrules:
+            return ResourceLoadInfo::Type::Other;
         case WebCore::FetchOptions::Destination::Style:
             return ResourceLoadInfo::Type::Stylesheet;
         case WebCore::FetchOptions::Destination::Track:

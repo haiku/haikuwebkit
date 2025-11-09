@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/RenderingResourceIdentifier.h>
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/WeakHashSet.h>
 
@@ -36,16 +37,10 @@ class DisplayList;
 class Gradient;
 class NativeImage;
 
-class RenderingResourceObserver {
+class RenderingResourceObserver : public AbstractCanMakeCheckedPtr {
 public:
     using WeakValueType = RenderingResourceObserver;
     virtual ~RenderingResourceObserver() = default;
-
-    // CheckedPtr interface.
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 
     virtual void willDestroyNativeImage(const NativeImage&) = 0;
     virtual void willDestroyGradient(const Gradient&) = 0;

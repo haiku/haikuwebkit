@@ -25,9 +25,9 @@
 #pragma once
 
 #include <WebCore/FontCascade.h>
-#include <WebCore/Length.h>
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleFontData.h>
+#include <WebCore/StyleLineHeight.h>
 #include <WebCore/StyleWebKitBorderSpacing.h>
 #include <wtf/DataRef.h>
 
@@ -57,9 +57,9 @@ public:
     Style::WebkitBorderSpacing borderHorizontalSpacing;
     Style::WebkitBorderSpacing borderVerticalSpacing;
 
-    Length lineHeight;
+    Style::LineHeight lineHeight;
 #if ENABLE(TEXT_AUTOSIZING)
-    Length specifiedLineHeight;
+    Style::LineHeight specifiedLineHeight;
 #endif
 
     DataRef<StyleFontData> fontData;

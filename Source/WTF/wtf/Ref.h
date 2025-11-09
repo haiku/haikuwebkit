@@ -129,13 +129,15 @@ public:
     bool isHashTableEmptyValue() const { return m_ptr == hashTableEmptyValue(); }
     static T* hashTableEmptyValue() { return nullptr; }
 
-    const T* ptrAllowingHashTableEmptyValue() const { ASSERT(m_ptr || isHashTableEmptyValue()); return PtrTraits::unwrap(m_ptr); }
-    T* ptrAllowingHashTableEmptyValue() { ASSERT(m_ptr || isHashTableEmptyValue()); return PtrTraits::unwrap(m_ptr); }
+    const T* ptrAllowingHashTableEmptyValue() const LIFETIME_BOUND { ASSERT(m_ptr || isHashTableEmptyValue()); return PtrTraits::unwrap(m_ptr); }
+    T* ptrAllowingHashTableEmptyValue() LIFETIME_BOUND { ASSERT(m_ptr || isHashTableEmptyValue()); return PtrTraits::unwrap(m_ptr); }
 
-    T* operator->() const { ASSERT(m_ptr); return PtrTraits::unwrap(m_ptr); }
-    T* ptr() const RETURNS_NONNULL { ASSERT(m_ptr); return PtrTraits::unwrap(m_ptr); }
-    T& get() const { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); }
-    operator T&() const { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); }
+    T* operator->() const LIFETIME_BOUND { ASSERT(m_ptr); return PtrTraits::unwrap(m_ptr); }
+    T* ptr() const LIFETIME_BOUND RETURNS_NONNULL { ASSERT(m_ptr); return PtrTraits::unwrap(m_ptr); }
+    T* unsafePtr() const RETURNS_NONNULL { ASSERT(m_ptr); return PtrTraits::unwrap(m_ptr); } // FIXME: Replace with ptr() then remove.
+    T& get() const LIFETIME_BOUND { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); }
+    T& unsafeGet() const { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); } // FIXME: Replace with get() then remove.
+    operator T&() const LIFETIME_BOUND { ASSERT(m_ptr); return *PtrTraits::unwrap(m_ptr); }
     bool operator!() const { ASSERT(m_ptr); return !*m_ptr; }
 
     template<typename X, typename Y, typename Z> Ref<T, PtrTraits, RefDerefTraits> replace(Ref<X, Y, Z>&&) WARN_UNUSED_RETURN;

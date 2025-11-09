@@ -316,14 +316,14 @@ class MockRealtimeAudioSourceFactory final
 public:
     CaptureSourceOrError createAudioCaptureSource(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier) final
     {
-        ASSERT(device.type() == CaptureDevice::DeviceType::Microphone || device.type() == CaptureDevice::DeviceType::Speaker);
+        ASSERT(device.type() == CaptureDevice::DeviceType::Microphone);
         if (!MockRealtimeMediaSourceCenter::captureDeviceWithPersistentID(device.type(), device.persistentId()))
-            return CaptureSourceOrError({ "Unable to find mock microphone or speaker device with given persistentID"_s, MediaAccessDenialReason::PermissionDenied });
+            return CaptureSourceOrError({ "Unable to find mock microphone device with given persistentID"_s, MediaAccessDenialReason::PermissionDenied });
 
         auto mock = MockRealtimeMediaSourceCenter::mockDeviceWithPersistentID(device.persistentId());
         ASSERT(mock);
         if (mock->flags.contains(MockMediaDevice::Flag::Invalid))
-            return CaptureSourceOrError({ "Invalid mock microphone or speaker device"_s, MediaAccessDenialReason::PermissionDenied });
+            return CaptureSourceOrError({ "Invalid mock microphone device"_s, MediaAccessDenialReason::PermissionDenied });
 
         return MockRealtimeAudioSource::create(String { device.persistentId() }, AtomString { device.label() }, WTFMove(hashSalts), constraints, pageIdentifier);
     }

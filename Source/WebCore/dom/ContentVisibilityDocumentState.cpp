@@ -28,7 +28,6 @@
 
 #include "ContainerNodeInlines.h"
 #include "ContentVisibilityAutoStateChangeEvent.h"
-#include "DocumentInlines.h"
 #include "DocumentTimeline.h"
 #include "EventNames.h"
 #include "FrameSelection.h"
@@ -39,6 +38,7 @@
 #include "NodeRenderStyle.h"
 #include "RenderElement.h"
 #include "RenderStyleInlines.h"
+#include "Settings.h"
 #include "SimpleRange.h"
 #include "StyleOriginatedAnimation.h"
 #include "VisibleSelection.h"

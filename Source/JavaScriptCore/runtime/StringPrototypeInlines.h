@@ -397,7 +397,7 @@ inline JSString* replaceUsingStringSearch(VM& vm, JSGlobalObject* globalObject, 
         replaceString = asString(replaceValue)->value(globalObject);
         RETURN_IF_EXCEPTION(scope, nullptr);
     } else {
-        callData = JSC::getCallData(replaceValue);
+        callData = JSC::getCallDataInline(replaceValue);
         if (callData.type == CallData::Type::None) {
             replaceString = replaceValue.toWTFString(globalObject);
             RETURN_IF_EXCEPTION(scope, nullptr);
@@ -1514,7 +1514,7 @@ ALWAYS_INLINE JSString* replaceUsingRegExpSearch(VM& vm, JSGlobalObject* globalO
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     String replacementString;
-    auto callData = JSC::getCallData(replaceValue);
+    auto callData = JSC::getCallDataInline(replaceValue);
     if (callData.type == CallData::Type::None) {
         replacementString = replaceValue.toWTFString(globalObject);
         RETURN_IF_EXCEPTION(scope, nullptr);

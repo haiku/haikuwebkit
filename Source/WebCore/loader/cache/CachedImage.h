@@ -52,8 +52,6 @@ class RenderElement;
 class RenderObject;
 class SecurityOrigin;
 
-struct Length;
-
 class CachedImage final : public CachedResource {
     friend class MemoryCache;
 

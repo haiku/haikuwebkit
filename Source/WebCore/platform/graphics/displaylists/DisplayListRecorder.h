@@ -60,7 +60,10 @@ public:
         Normal,
         // Deconstruct different text layers into separate DrawGlyphs commands. Allows for doing the deconstruct work once during recording instead of
         // multiple times during multiple playbacks.
-        Deconstruct
+        Deconstruct,
+#if USE(SKIA)
+        TextBlob
+#endif
     };
 
     Recorder(const GraphicsContextState& state, const FloatRect& initialClip, const AffineTransform& transform, const DestinationColorSpace& colorSpace, DrawGlyphsMode drawGlyphsMode = DrawGlyphsMode::Normal)
@@ -123,6 +126,7 @@ protected:
     WEBCORE_EXPORT void updateStateForApplyDeviceScaleFactor(float);
     WEBCORE_EXPORT bool decomposeDrawGlyphsIfNeeded(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint& anchorPoint, FontSmoothingMode);
     FloatRect initialClip() const { return m_initialClip; }
+    DrawGlyphsMode drawGlyphsMode() const { return m_drawGlyphsMode; }
 
     const DestinationColorSpace& colorSpace() const final { return m_colorSpace; }
 
@@ -151,10 +155,10 @@ private:
     Vector<ContextState, 4> m_stateStack;
     DestinationColorSpace m_colorSpace;
     const FloatRect m_initialClip;
+    const DrawGlyphsMode m_drawGlyphsMode { DrawGlyphsMode::Normal };
 #if USE(CORE_TEXT)
     std::unique_ptr<DrawGlyphsRecorder> m_drawGlyphsRecorder;
     float m_initialScale { 1 };
-    const DrawGlyphsMode m_drawGlyphsMode { DrawGlyphsMode::Normal };
 #endif
 };
 

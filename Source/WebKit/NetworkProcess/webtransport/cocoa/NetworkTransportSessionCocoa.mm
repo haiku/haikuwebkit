@@ -28,10 +28,12 @@
 
 #import "AuthenticationChallengeDisposition.h"
 #import "AuthenticationManager.h"
+#import "MessageSenderInlines.h"
 #import "NetworkConnectionToWebProcess.h"
 #import "NetworkProcess.h"
 #import "NetworkSessionCocoa.h"
 #import "NetworkTransportStream.h"
+#import "WebTransportSessionMessages.h"
 #import <Security/Security.h>
 #import <WebCore/AuthenticationChallenge.h>
 #import <WebCore/ClientOrigin.h>
@@ -271,7 +273,7 @@ void NetworkTransportSession::initialize(CompletionHandler<void(bool)>&& complet
         protectedThis->setupDatagramConnection(WTFMove(completionHandler));
     };
 
-    nw_connection_group_set_state_changed_handler(m_connectionGroup.get(), makeBlockPtr([creationCompletionHandler = WTFMove(creationCompletionHandler)] (nw_connection_group_state_t state, nw_error_t error) mutable {
+    nw_connection_group_set_state_changed_handler(m_connectionGroup.get(), makeBlockPtr([creationCompletionHandler = WTFMove(creationCompletionHandler), weakThis = WeakPtr { *this }] (nw_connection_group_state_t state, nw_error_t error) mutable {
         switch (state) {
         case nw_connection_group_state_invalid:
         case nw_connection_group_state_waiting:
@@ -279,8 +281,10 @@ void NetworkTransportSession::initialize(CompletionHandler<void(bool)>&& complet
         case nw_connection_group_state_ready:
             return creationCompletionHandler(true);
         case nw_connection_group_state_failed:
-            // FIXME: Send error to JS if this is not a clean session termination.
-            return creationCompletionHandler(false);
+            creationCompletionHandler(false);
+            if (RefPtr protectedThis = weakThis.get())
+                protectedThis->send(Messages::WebTransportSession::DidFail());
+            return;
         case nw_connection_group_state_cancelled:
             return;
         }

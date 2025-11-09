@@ -64,6 +64,35 @@
 #include <wtf/text/ParsingUtilities.h>
 #include <wtf/text/StringParsingBuffer.h>
 
+class NewlineThenWhitespaceStringsTable {
+public:
+    static constexpr unsigned maxSpaceCount = 32;
+
+    ALWAYS_INLINE static String getCachedWhitespace(unsigned spaceCount)
+    {
+        ASSERT(spaceCount <= maxSpaceCount);
+        auto& cache = whitespaceStringCache();
+        return cache[spaceCount];
+    }
+
+private:
+    using WhitespaceStringCache = std::array<String, maxSpaceCount + 1>;
+
+    static WhitespaceStringCache& whitespaceStringCache()
+    {
+        static MainThreadNeverDestroyed<WhitespaceStringCache> cache { []() {
+            WhitespaceStringCache stringsCache;
+            Latin1Character chars[maxSpaceCount + 1] = { '\n' };
+            std::ranges::fill(std::span(chars).subspan<1u>(), ' ');
+            // Pre-populate the cache with \n + (' ' * spaceCount) strings
+            for (unsigned spaceCount = 0; spaceCount <= maxSpaceCount; ++spaceCount)
+                stringsCache[spaceCount] = String(std::span(chars).first(spaceCount + 1));
+            return stringsCache;
+        }() };
+        return cache.get();
+    }
+};
+
 namespace WebCore {
 
 // Captures the potential outcomes for fast path html parser.
@@ -239,6 +268,20 @@ private:
     Vector<Attribute, 10> m_attributeBuffer;
     Vector<AtomStringImpl*> m_attributeNames;
 
+    struct ScanTextResult {
+        std::span<const CharacterType> text;
+        String escapedText;
+        bool isWhitespacePattern = false;
+
+        ALWAYS_INLINE String tryUseWhitespaceCache() const {
+            // subtract 1 to exclude the starting '\n' char from the space count
+            if (isWhitespacePattern && text.size() - 1 <= NewlineThenWhitespaceStringsTable::maxSpaceCount)
+                return NewlineThenWhitespaceStringsTable::getCachedWhitespace(text.size() - 1);
+
+            return String(text);
+        }
+
+    };
 
     enum class PermittedParents : uint8_t {
         PhrasingOrFlowContent, // allowed in phrasing content or flow content
@@ -465,9 +508,21 @@ private:
     // However, if there are escape sequences, we have to copy the text to a
     // separate buffer and we might go outside of `Char` range if we are in an
     // `Latin1Character` parser.
-    String scanText()
+    ScanTextResult scanText()
     {
         auto start = m_parsingBuffer.span();
+        // Check if the text is a cached whitespace string.
+        if (m_parsingBuffer.hasCharactersRemaining() && *m_parsingBuffer == '\n') {
+            m_parsingBuffer.advance();
+            while (m_parsingBuffer.hasCharactersRemaining() && *m_parsingBuffer == ' ')
+                m_parsingBuffer.advance();
+
+            if (!m_parsingBuffer.hasCharactersRemaining() || *m_parsingBuffer == '<') {
+                unsigned length = m_parsingBuffer.position() - start.data();
+                return { start.first(length), String(), true };
+            }
+            // SIMD scan does not rely on the current m_parsingBuffer's position. No need to reset position here.
+        }
 
         auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
             return character == '<' || character == '&' || character == '\r' || character == '\0';
@@ -505,20 +560,23 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         m_parsingBuffer.setPosition(cursor);
 
         if (!cursor.empty()) {
-            if (cursor[0] == '\0') [[unlikely]]
-                return didFail(HTMLFastPathResult::FailedContainsNull, String());
-
+            if (cursor[0] == '\0') [[unlikely]] {
+                didFail(HTMLFastPathResult::FailedContainsNull);
+                return { std::span<const CharacterType>(), String() };
+            }
             if (cursor[0] == '&' || cursor[0] == '\r') {
                 m_parsingBuffer.setPosition(start);
-                return scanEscapedText();
+                return { std::span<const CharacterType>(), scanEscapedText() };
             }
         }
 
         unsigned length = cursor.data() - start.data();
-        if (length >= Text::defaultLengthLimit) [[unlikely]]
-            return didFail(HTMLFastPathResult::FailedBigText, String());
+        if (length >= Text::defaultLengthLimit) [[unlikely]] {
+            didFail(HTMLFastPathResult::FailedBigText);
+            return { std::span<const CharacterType>(), String() };
+        }
 
-        return length ? String(start.first(length)) : String();
+        return { start.first(length), String() };
     }
 
     // Slow-path of `scanText()`, which supports escape sequences by copying to a
@@ -752,15 +810,20 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     template<typename ParentTag> void parseChildren(ContainerNode& parent)
     {
         while (true) {
-            auto text = scanText();
+            auto result = scanText();
             if (parsingFailed())
                 return;
 
-            if (!text.isNull()) {
+            if (!result.text.empty()) {
                 if (!parent.isConnected())
-                    parent.parserAppendChildIntoIsolatedTree(Text::create(m_document, WTFMove(text)));
+                    parent.parserAppendChildIntoIsolatedTree(Text::create(m_document, result.tryUseWhitespaceCache()));
                 else
-                    parent.parserAppendChild(Text::create(m_document, WTFMove(text)));
+                    parent.parserAppendChild(Text::create(m_document, result.tryUseWhitespaceCache()));
+            } else if (!result.escapedText.isEmpty()) {
+                if (!parent.isConnected())
+                    parent.parserAppendChildIntoIsolatedTree(Text::create(m_document, WTFMove(result.escapedText)));
+                else
+                    parent.parserAppendChild(Text::create(m_document, WTFMove(result.escapedText)));
             }
 
             if (m_parsingBuffer.atEnd())

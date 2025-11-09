@@ -56,33 +56,6 @@ namespace WebKit {
 
 #define RTC_RELEASE_LOG(fmt, ...) RELEASE_LOG(Network, "%p - NetworkRTCMonitor::" fmt, this, ##__VA_ARGS__)
 
-class CallbackAggregator final : public ThreadSafeRefCounted<CallbackAggregator, WTF::DestructionThread::MainRunLoop> {
-public:
-    using Callback = CompletionHandler<void(RTCNetwork::IPAddress&&, RTCNetwork::IPAddress&&, HashMap<String, RTCNetwork>&&)>;
-    static Ref<CallbackAggregator> create(Callback&& callback) { return adoptRef(*new CallbackAggregator(WTFMove(callback))); }
-
-    ~CallbackAggregator()
-    {
-        m_callback(WTFMove(m_ipv4), WTFMove(m_ipv6), WTFMove(m_networkMap));
-    }
-
-    void setIPv4(RTCNetwork::IPAddress&& ipv4) { m_ipv4 = WTFMove(ipv4); }
-    void setIPv6(RTCNetwork::IPAddress&& ipv6) { m_ipv6 = WTFMove(ipv6); }
-    void setNetworkMap(HashMap<String, RTCNetwork>&& networkMap) { m_networkMap = crossThreadCopy(WTFMove(networkMap)); }
-
-private:
-    explicit CallbackAggregator(Callback&& callback)
-        : m_callback(WTFMove(callback))
-    {
-    }
-
-    Callback m_callback;
-
-    HashMap<String, RTCNetwork> m_networkMap;
-    RTCNetwork::IPAddress m_ipv4;
-    RTCNetwork::IPAddress m_ipv6;
-};
-
 static std::optional<std::pair<RTCNetwork::InterfaceAddress, RTCNetwork::IPAddress>> addressFromInterface(const struct ifaddrs& interface)
 {
     RTCNetwork::IPAddress address { *interface.ifa_addr };
@@ -90,7 +63,7 @@ static std::optional<std::pair<RTCNetwork::InterfaceAddress, RTCNetwork::IPAddre
     return std::make_pair(RTCNetwork::InterfaceAddress { address, webrtc::IPV6_ADDRESS_FLAG_NONE }, mask);
 }
 
-static HashMap<String, RTCNetwork> gatherNetworkMap()
+HashMap<String, RTCNetwork> NetworkRTCMonitor::gatherNetworkMap()
 {
     struct ifaddrs* interfaces;
     int error = getifaddrs(&interfaces);
@@ -194,7 +167,7 @@ static std::optional<RTCNetwork::IPAddress> getSocketLocalAddress(int socket, bo
     return RTCNetwork::IPAddress { localAddress };
 }
 
-static std::optional<RTCNetwork::IPAddress> getDefaultIPAddress(bool useIPv4)
+std::optional<RTCNetwork::IPAddress> NetworkRTCMonitor::getDefaultIPAddress(bool useIPv4)
 {
     // FIXME: Use nw API for Cocoa platforms.
     int socket = ::socket(useIPv4 ? AF_INET : AF_INET6, SOCK_DGRAM, 0);
@@ -213,17 +186,17 @@ static std::optional<RTCNetwork::IPAddress> getDefaultIPAddress(bool useIPv4)
     return getSocketLocalAddress(socket, useIPv4);
 }
 
-static bool isEqual(const RTCNetwork::InterfaceAddress& a, const RTCNetwork::InterfaceAddress& b)
+bool NetworkRTCMonitor::isEqual(const RTCNetwork::InterfaceAddress& a, const RTCNetwork::InterfaceAddress& b)
 {
     return a.rtcAddress() == b.rtcAddress();
 }
 
-static bool isEqual(const RTCNetwork::IPAddress& a, const RTCNetwork::IPAddress& b)
+bool NetworkRTCMonitor::isEqual(const RTCNetwork::IPAddress& a, const RTCNetwork::IPAddress& b)
 {
     return a.rtcAddress() == b.rtcAddress();
 }
 
-static bool isEqual(const Vector<RTCNetwork::InterfaceAddress>& a, const Vector<RTCNetwork::InterfaceAddress>& b)
+bool NetworkRTCMonitor::isEqual(const Vector<RTCNetwork::InterfaceAddress>& a, const Vector<RTCNetwork::InterfaceAddress>& b)
 {
     if (a.size() != b.size())
         return false;
@@ -235,12 +208,12 @@ static bool isEqual(const Vector<RTCNetwork::InterfaceAddress>& a, const Vector<
     return true;
 }
 
-static bool hasNetworkChanged(const RTCNetwork& a, const RTCNetwork& b)
+bool NetworkRTCMonitor::hasNetworkChanged(const RTCNetwork& a, const RTCNetwork& b)
 {
     return !isEqual(a.prefix, b.prefix) || a.prefixLength != b.prefixLength || a.type != b.type || a.scopeID != b.scopeID || !isEqual(a.ips, b.ips);
 }
 
-static bool sortNetworks(const RTCNetwork& a, const RTCNetwork& b)
+bool NetworkRTCMonitor::sortNetworks(const RTCNetwork& a, const RTCNetwork& b)
 {
     if (a.type != b.type)
         return a.type < b.type;

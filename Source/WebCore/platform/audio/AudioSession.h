@@ -99,9 +99,10 @@ class AudioSessionConfigurationChangeObserver : public CanMakeWeakPtr<AudioSessi
 public:
     virtual ~AudioSessionConfigurationChangeObserver() = default;
 
-    virtual void hardwareMutedStateDidChange(const AudioSession&) = 0;
+    virtual void hardwareMutedStateDidChange(const AudioSession&) { }
     virtual void bufferSizeDidChange(const AudioSession&) { }
     virtual void sampleRateDidChange(const AudioSession&) { }
+    virtual void routingContextUIDDidChange(const AudioSession&) { }
 };
 
 class WEBCORE_EXPORT AudioSession : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<AudioSession> {

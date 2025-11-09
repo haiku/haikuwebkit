@@ -23,7 +23,7 @@
 
 #include "ActiveDOMObject.h"
 #include "ContextDestructionObserverInlines.h"
-#include "DocumentInlines.h"
+#include "DocumentSettingsValues.h"
 #include "ExtendedDOMClientIsoSubspaces.h"
 #include "ExtendedDOMIsoSubspaces.h"
 #include "JSDOMAttribute.h"
@@ -828,7 +828,7 @@ extern "C" { extern void (*const __identifier("??_7TestConditionalIncludes@WebCo
 extern "C" { extern void* _ZTVN7WebCore23TestConditionalIncludesE[]; }
 #endif
 template<std::same_as<TestConditionalIncludes> T>
-static inline void verifyVTable(TestConditionalIncludes* ptr) 
+static inline void verifyVTable(TestConditionalIncludes* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -848,8 +848,9 @@ static inline void verifyVTable(TestConditionalIncludes* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestConditionalIncludes>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestConditionalIncludes>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestConditionalIncludes>(impl.ptr());
 #endif

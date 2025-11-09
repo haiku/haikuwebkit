@@ -795,7 +795,7 @@ template<typename CharacterType1, typename CharacterType2> inline std::strong_or
                 if constexpr (sizeof(CharacterType1) == 2) {
                     auto rev16 = [](uint64_t value) ALWAYS_INLINE_LAMBDA {
                         uint64_t result;
-                        asm ("rev16 %x0, %x1" : "=r"(result) : "r"(value));
+                        __asm__("rev16 %x0, %x1" : "=r"(result) : "r"(value));
                         return result;
                     };
                     return (rev16(flipBytes(lhs)) > rev16(flipBytes(rhs))) ? std::strong_ordering::greater : std::strong_ordering::less;

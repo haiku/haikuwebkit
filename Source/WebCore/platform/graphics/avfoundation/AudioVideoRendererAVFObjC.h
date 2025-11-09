@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "AudioVideoRenderer.h"
-#include "PlatformDynamicRangeLimit.h"
-#include "ProcessIdentity.h"
-#include "TrackInfo.h"
-#include "WebAVSampleBufferListener.h"
+#include <WebCore/AudioVideoRenderer.h>
+#include <WebCore/PlatformDynamicRangeLimit.h>
+#include <WebCore/ProcessIdentity.h>
+#include <WebCore/TrackInfo.h>
+#include <WebCore/WebAVSampleBufferListener.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/HashMap.h>
@@ -121,7 +121,7 @@ public:
     void setIsVisible(bool);
     void setPresentationSize(const IntSize&) final;
     void setShouldMaintainAspectRatio(bool) final;
-    void acceleratedRenderingStateChanged(bool) final;
+    void renderingCanBeAcceleratedChanged(bool) final;
     void contentBoxRectChanged(const LayoutRect&) final;
     void notifyFirstFrameAvailable(Function<void()>&&) final;
     void notifyWhenHasAvailableVideoFrame(Function<void(const MediaTime&, double)>&&) final;
@@ -138,6 +138,9 @@ public:
     std::optional<VideoPlaybackQualityMetrics> videoPlaybackQualityMetrics() final;
     PlatformLayer* platformVideoLayer() const final;
     void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) final;
+#if ENABLE(ENCRYPTED_MEDIA)
+    void notifyInsufficientExternalProtectionChanged(Function<void(bool)>&&) final;
+#endif
 
     // VideoFullscreenInterface
     void setVideoFullscreenLayer(PlatformLayer*, Function<void()>&&) final;
@@ -254,6 +257,9 @@ private:
     Function<void()> m_notifyWhenRequiresFlushToResume;
     Function<void()> m_renderingModeChangedCallback;
     Function<void(const MediaTime&, FloatSize)> m_sizeChangedCallback;
+#if ENABLE(ENCRYPTED_MEDIA)
+    Function<void(bool)> m_insufficientExternalProtectionChangedCallback;
+#endif
 
     RetainPtr<id> m_currentTimeObserver;
     RetainPtr<id> m_performTaskObserver;
@@ -308,8 +314,9 @@ private:
     VideoRendererPreferences m_preferences;
     bool m_hasProtectedVideoContent { false };
     struct RendererConfiguration {
-        bool canUseDecompressionSession = { false };
-        bool isProtected = { false };
+        bool canUseDecompressionSession { false };
+        bool isProtected { false };
+        bool hasVideoTrack { false };
         bool operator==(const RendererConfiguration&) const = default;
     };
     RendererConfiguration m_previousRendererConfiguration;

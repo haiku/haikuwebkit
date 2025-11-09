@@ -66,7 +66,7 @@ void CharacterData::setData(const String& data)
         Ref document = this->document();
         document->textRemoved(*this, 0, oldLength);
         if (RefPtr frame = document->frame())
-            frame->selection().textWasReplaced(*this, 0, oldLength, oldLength);
+            frame->checkedSelection()->textWasReplaced(*this, 0, oldLength, oldLength);
         return;
     }
 
@@ -87,8 +87,8 @@ static ContainerNode::ChildChange makeChildChange(CharacterData& characterData, 
     return {
         ContainerNode::ChildChange::Type::TextChanged,
         nullptr,
-        RefPtr { ElementTraversal::previousSibling(characterData) }.get(),
-        RefPtr { ElementTraversal::nextSibling(characterData) }.get(),
+        RefPtr { ElementTraversal::previousSibling(characterData) }.unsafeGet(),
+        RefPtr { ElementTraversal::nextSibling(characterData) }.unsafeGet(),
         source,
         ContainerNode::ChildChange::AffectsElements::No
     };
@@ -206,7 +206,7 @@ void CharacterData::setDataAndUpdate(const String& newData, unsigned offsetOfRep
         processingIntruction->checkStyleSheet();
 
     if (RefPtr frame = document->frame())
-        frame->selection().textWasReplaced(*this, offsetOfReplacedData, oldLength, newLength);
+        frame->checkedSelection()->textWasReplaced(*this, offsetOfReplacedData, oldLength, newLength);
 
     notifyParentAfterChange(childChange);
 

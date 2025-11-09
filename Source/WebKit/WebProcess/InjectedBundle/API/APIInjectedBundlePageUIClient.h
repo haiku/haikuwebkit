@@ -49,7 +49,7 @@ namespace InjectedBundle {
 class PageUIClient {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(PageUIClient);
 public:
-    virtual ~PageUIClient() { }
+    virtual ~PageUIClient() = default;
 
 #if !PLATFORM(COCOA)
     virtual void willAddMessageToConsole(WebKit::WebPage*, JSC::MessageSource, JSC::MessageLevel, const WTF::String& message, unsigned lineNumber, unsigned columnNumber, const WTF::String& sourceID) { UNUSED_PARAM(message); UNUSED_PARAM(lineNumber); UNUSED_PARAM(columnNumber); UNUSED_PARAM(sourceID); }

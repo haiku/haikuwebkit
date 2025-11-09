@@ -32,6 +32,7 @@
 
 #include "pas_heap.h"
 #include "pas_large_utility_free_heap.h"
+#include "pas_mte.h"
 #include "pas_random.h"
 #include "pas_utility_heap.h"
 #include <stdbool.h>
@@ -42,8 +43,8 @@
 #include <unistd.h>
 #endif
 
-/* PlayStation does not currently support the backtrace API. Android API versions < 33 don't, either. Windows does not either. */
-#if !PAS_PLATFORM(PLAYSTATION) && (!PAS_OS(ANDROID) || __ANDROID_API__ >= 33) && !PAS_OS(WINDOWS)
+/* PlayStation does not currently support the backtrace API. Android API versions < 33 don't, either. Windows does not either. Linux only with GLibc and not uCLibc/Musl. */
+#if (PAS_OS(ANDROID) && __ANDROID_API__ >= 33) || PAS_OS(DARWIN) || (PAS_OS(LINUX) && defined(__GLIBC__) && !defined(__UCLIBC__))
 #include <execinfo.h>
 #else
 size_t backtrace(void** buffer, size_t size)
@@ -211,13 +212,14 @@ pas_allocation_result pas_probabilistic_guard_malloc_allocate(pas_large_heap* la
 #endif
 
     PAS_PROFILE(PGM_ALLOCATE, heap_config, key);
+    PAS_MTE_HANDLE(PGM_ALLOCATE, heap_config, key);
 
     /* create struct to hold hash map value */
     pas_pgm_storage* value = pas_utility_heap_try_allocate(sizeof(pas_pgm_storage), "pas_pgm_hash_map_VALUE");
     PAS_ASSERT(value);
 
     value->alloc_backtrace              = pas_utility_heap_allocate(sizeof(pas_backtrace_metadata), "pas_alloc_backtrace_metadata");
-    value->alloc_backtrace->frame_size  = backtrace(value->alloc_backtrace->backtrace_buffer, PGM_BACKTRACE_MAX_FRAMES);
+    value->alloc_backtrace->frame_size  = backtrace(value->alloc_backtrace->backtrace_buffer, PAS_PGM_BACKTRACE_MAX_FRAMES);
     value->dealloc_backtrace            = NULL;
     value->mem_to_waste                 = mem_to_waste;
     value->size_of_data_pages           = mem_to_alloc - (lower_guard_size + upper_guard_size);
@@ -260,6 +262,7 @@ void pas_probabilistic_guard_malloc_deallocate(void* mem)
 
     uintptr_t key = (uintptr_t)mem;
     PAS_PROFILE(PGM_DEALLOCATE, key);
+    PAS_MTE_HANDLE(PGM_DEALLOCATE, key);
 
     pas_ptr_hash_map_entry* entry = pas_ptr_hash_map_find(&pas_pgm_hash_map, (void*)key);
     if (!entry || !entry->value)
@@ -294,7 +297,7 @@ void pas_probabilistic_guard_malloc_deallocate(void* mem)
 
     /* grab some memory for dealloc backtrace and capture deallocation backtrace */
     value->dealloc_backtrace = pas_utility_heap_allocate(sizeof(pas_backtrace_metadata), "pas_dealloc_backtrace_metadata");
-    value->dealloc_backtrace->frame_size = backtrace(value->dealloc_backtrace->backtrace_buffer, PGM_BACKTRACE_MAX_FRAMES);
+    value->dealloc_backtrace->frame_size = backtrace(value->dealloc_backtrace->backtrace_buffer, PAS_PGM_BACKTRACE_MAX_FRAMES);
 
     /*
      * ensure physical addresses are released

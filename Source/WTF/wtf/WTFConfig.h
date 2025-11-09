@@ -39,8 +39,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #if USE(SYSTEM_MALLOC)
 namespace Gigacage {
-// The first 4 slots are reserved for the use of the ExecutableAllocator and additionalReservedSlots.
-constexpr size_t reservedSlotsForGigacageConfig = 4;
+// The first 6 slots are reserved for use by system allocators
+constexpr size_t reservedSlotsForGigacageConfig = 6;
 constexpr size_t reservedBytesForGigacageConfig = reservedSlotsForGigacageConfig * sizeof(uint64_t);
 }
 #else
@@ -53,15 +53,21 @@ using Slot = uint64_t;
 extern "C" WTF_EXPORT_PRIVATE Slot g_config[];
 
 constexpr size_t reservedSlotsForExecutableAllocator = 2;
-constexpr size_t additionalReservedSlots = 2;
+constexpr size_t reservedSlotsForMTEConfiguration = 2;
+constexpr size_t reservedSlotsForAllocationProfiling = 2;
 
 enum ReservedConfigByteOffset {
+    ReservedByteForExecutableAllocator0 = 0,
+    ReservedByteForExecutableAllocator1,
+    // The MTE offsets must be kept in sync with pas_mte_config.h
+    ReservedByteForMTEEnablement,
+    ReservedByteForMTEExtendedConfiguration,
     ReservedByteForAllocationProfiling,
     ReservedByteForAllocationProfilingMode,
     NumberOfReservedConfigBytes
 };
 
-static_assert(NumberOfReservedConfigBytes <= sizeof(Slot) * additionalReservedSlots);
+static_assert(NumberOfReservedConfigBytes <= sizeof(Slot) * (reservedSlotsForExecutableAllocator + reservedSlotsForMTEConfiguration + reservedSlotsForAllocationProfiling));
 
 } // namespace WebConfig
 

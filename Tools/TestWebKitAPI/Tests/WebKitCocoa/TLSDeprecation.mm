@@ -138,9 +138,15 @@
 
 namespace TestWebKitAPI {
 
+// TLSVersion broke on iOS 26 https://bugs.webkit.org/show_bug.cgi?id=301010
+#define BUG_301010 (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 260000 && !USE(APPLE_INTERNAL_SDK))
 const uint16_t tls1_1 = 0x0302;
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_DefaultBehavior)
+#else
 TEST(TLSVersion, DefaultBehavior)
+#endif
 {
     HTTPServer server(HTTPServer::respondWithOK, HTTPServer::Protocol::HttpsWithLegacyTLS);
     auto delegate = adoptNS([TestNavigationDelegate new]);
@@ -173,7 +179,11 @@ RetainPtr<WKWebView> makeWebViewWith(WKWebsiteDataStore *store, RetainPtr<TestNa
 
 #if HAVE(TLS_VERSION_DURING_CHALLENGE)
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_NetworkSession)
+#else
 TEST(TLSVersion, NetworkSession)
+#endif
 {
     HTTPServer server(HTTPServer::respondWithOK, HTTPServer::Protocol::HttpsWithLegacyTLS);
     auto delegate = adoptNS([TestNavigationDelegate new]);
@@ -213,7 +223,11 @@ TEST(TLSVersion, NetworkSession)
     }
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_ShouldAllowDeprecatedTLS)
+#else
 TEST(TLSVersion, ShouldAllowDeprecatedTLS)
+#endif
 {
     HTTPServer server(HTTPServer::respondWithOK, HTTPServer::Protocol::HttpsWithLegacyTLS);
     {
@@ -247,7 +261,11 @@ TEST(TLSVersion, ShouldAllowDeprecatedTLS)
     }
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_Preconnect)
+#else
 TEST(TLSVersion, Preconnect)
+#endif
 {
     bool connectionAttempted = false;
     HTTPServer server([&](const Connection&) {
@@ -294,7 +312,11 @@ static std::pair<RetainPtr<WKWebView>, RetainPtr<TestNavigationDelegate>> webVie
     return { webView, delegate };
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_NegotiatedLegacyTLS)
+#else
 TEST(TLSVersion, NegotiatedLegacyTLS)
+#endif
 {
     HTTPServer server({
         { "/"_s, { "hello"_s } }
@@ -322,7 +344,11 @@ TEST(TLSVersion, NegotiatedLegacyTLS)
     [webView removeObserver:observer.get() forKeyPath:@"_negotiatedLegacyTLS"];
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_NavigateBack)
+#else
 TEST(TLSVersion, NavigateBack)
+#endif
 {
     HTTPServer legacyTLSServer({
         { "/"_s, { "hello"_s } }
@@ -352,7 +378,11 @@ TEST(TLSVersion, NavigateBack)
     [webView removeObserver:observer.get() forKeyPath:@"_negotiatedLegacyTLS"];
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_BackForwardNegotiatedLegacyTLS)
+#else
 TEST(TLSVersion, BackForwardNegotiatedLegacyTLS)
+#endif
 {
     HTTPServer secureServer({
         { "/"_s, { "hello"_s }}
@@ -388,7 +418,11 @@ TEST(TLSVersion, BackForwardNegotiatedLegacyTLS)
     EXPECT_TRUE([webView _negotiatedLegacyTLS]);
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_Subresource)
+#else
 TEST(TLSVersion, Subresource)
+#endif
 {
     HTTPServer legacyTLSServer({
         { "/"_s, { "hello"_s } }
@@ -420,7 +454,11 @@ TEST(TLSVersion, Subresource)
     [webView removeObserver:observer.get() forKeyPath:@"_negotiatedLegacyTLS"];
 }
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_DidNegotiateModernTLS)
+#else
 TEST(TLSVersion, DidNegotiateModernTLS)
+#endif
 {
     HTTPServer server({
         { "/"_s, { "hello"_s }}
@@ -441,7 +479,11 @@ TEST(TLSVersion, DidNegotiateModernTLS)
 
 #if HAVE(TLS_VERSION_DURING_CHALLENGE)
 
+#if BUG_301010
+TEST(TLSVersion, DISABLED_LegacySubresources)
+#else
 TEST(TLSVersion, LegacySubresources)
+#endif
 {
     HTTPServer legacyServer({
         { "/frame"_s, { "shouldn't load with fastServerTrustEvaluationEnabled"_s }}

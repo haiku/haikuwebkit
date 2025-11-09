@@ -71,6 +71,7 @@
 #include "SVGRectElement.h"
 #include "SVGRootInlineBox.h"
 #include "SVGStopElement.h"
+#include "Settings.h"
 #include "StyleCachedImage.h"
 #include <math.h>
 
@@ -456,9 +457,10 @@ void writeSVGResourceContainer(TextStream& ts, const LegacyRenderSVGResourceCont
         writeNameValuePair(ts, "primitiveUnits"_s, filter.primitiveUnits());
         ts << '\n';
         // Creating a placeholder filter which is passed to the builder.
+        Ref filterElement = filter.filterElement();
         FloatRect dummyRect;
         FloatSize dummyScale(1, 1);
-        auto dummyFilter = SVGFilterRenderer::create(filter.protectedFilterElement(), FilterRenderingMode::Software, dummyScale, dummyRect, dummyRect, NullGraphicsContext());
+        auto dummyFilter = SVGFilterRenderer::create(filterElement.ptr(), filterElement, FilterRenderingMode::Software, dummyScale, dummyRect, dummyRect, NullGraphicsContext());
         if (dummyFilter) {
             TextStream::IndentScope indentScope(ts);
             dummyFilter->externalRepresentation(ts, FilterRepresentation::TestOutput);

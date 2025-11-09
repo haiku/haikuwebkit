@@ -211,7 +211,7 @@ inline void DFABytecodeInterpreter::interpretJumpTable(std::span<const Latin1Cha
 {
     DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
 
-    char c = urlIndex < url.size() ? url[urlIndex] : 0;
+    char c = urlIndex < url.size() ? byteCast<char>(url[urlIndex]) : 0;
     char character = caseSensitive ? c : toASCIILower(c);
     uint8_t firstCharacter = getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction));
     uint8_t lastCharacter = getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction) + sizeof(uint8_t));
@@ -304,7 +304,7 @@ auto DFABytecodeInterpreter::interpret(const String& urlString, ResourceFlags fl
                     goto nextDFA;
 
                 // Check to see if the next character in the url is the value stored with the bytecode.
-                char character = urlIndex < url.size() ? url[urlIndex] : 0;
+                char character = urlIndex < url.size() ? byteCast<char>(url[urlIndex]) : 0;
                 DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
                 if (character == getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction))) {
                     uint32_t jumpLocation = programCounter + sizeof(DFABytecodeInstruction) + sizeof(uint8_t);
@@ -320,7 +320,7 @@ auto DFABytecodeInterpreter::interpret(const String& urlString, ResourceFlags fl
                     goto nextDFA;
 
                 // Check to see if the next character in the url is the value stored with the bytecode.
-                char character = urlIndex < url.size() ? toASCIILower(url[urlIndex]) : 0;
+                char character = urlIndex < url.size() ? byteCast<char>(toASCIILower(url[urlIndex])) : 0;
                 DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
                 if (character == getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction))) {
                     uint32_t jumpLocation = programCounter + sizeof(DFABytecodeInstruction) + sizeof(uint8_t);
@@ -348,7 +348,7 @@ auto DFABytecodeInterpreter::interpret(const String& urlString, ResourceFlags fl
                 if (urlIndex > url.size())
                     goto nextDFA;
                 
-                char character = urlIndex < url.size() ? url[urlIndex] : 0;
+                char character = urlIndex < url.size() ? byteCast<char>(url[urlIndex]) : 0;
                 DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
                 if (character >= getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction))
                     && character <= getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction) + sizeof(uint8_t))) {
@@ -364,7 +364,7 @@ auto DFABytecodeInterpreter::interpret(const String& urlString, ResourceFlags fl
                 if (urlIndex > url.size())
                     goto nextDFA;
                 
-                char character = urlIndex < url.size() ? toASCIILower(url[urlIndex]) : 0;
+                char character = urlIndex < url.size() ? byteCast<char>(toASCIILower(url[urlIndex])) : 0;
                 DFABytecodeJumpSize jumpSize = getJumpSize(m_bytecode, programCounter);
                 if (character >= getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction))
                     && character <= getBits<uint8_t>(m_bytecode, programCounter + sizeof(DFABytecodeInstruction) + sizeof(uint8_t))) {

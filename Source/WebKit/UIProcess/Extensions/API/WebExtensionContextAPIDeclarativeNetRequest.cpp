@@ -171,7 +171,13 @@ void WebExtensionContext::declarativeNetRequestUpdateDynamicRules(String&& rules
         return ruleID;
     });
 
-    auto rulesToAdd = JSON::Value::parseJSON(rulesToAddJSON)->asArray();
+    Ref rulesToAdd = JSON::Array::create();
+    if (!rulesToAddJSON.isEmpty()) {
+        if (RefPtr parsedJSON = JSON::Value::parseJSON(rulesToAddJSON)) {
+            if (RefPtr rulesArray = parsedJSON->asArray())
+                rulesToAdd = *rulesArray;
+        }
+    }
 
     if (!ruleIDsToDelete.size() && !rulesToAdd->length()) {
         completionHandler({ });
@@ -184,7 +190,7 @@ void WebExtensionContext::declarativeNetRequestUpdateDynamicRules(String&& rules
         return;
     }
 
-    updateDeclarativeNetRequestRulesInStorage(declarativeNetRequestDynamicRulesStore(), "dynamic"_s, apiName, *rulesToAdd, ruleIDsToDelete, WTFMove(completionHandler));
+    updateDeclarativeNetRequestRulesInStorage(declarativeNetRequestDynamicRulesStore(), "dynamic"_s, apiName, rulesToAdd, ruleIDsToDelete, WTFMove(completionHandler));
 }
 
 void WebExtensionContext::declarativeNetRequestGetSessionRules(Vector<double>&& filter, CompletionHandler<void(Expected<String, WebExtensionError>&&)>&& completionHandler)
@@ -216,7 +222,13 @@ void WebExtensionContext::declarativeNetRequestUpdateSessionRules(String&& rules
         return ruleID;
     });
 
-    auto rulesToAdd = JSON::Value::parseJSON(rulesToAddJSON)->asArray();
+    Ref rulesToAdd = JSON::Array::create();
+    if (!rulesToAddJSON.isEmpty()) {
+        if (RefPtr parsedJSON = JSON::Value::parseJSON(rulesToAddJSON)) {
+            if (RefPtr rulesArray = parsedJSON->asArray())
+                rulesToAdd = *rulesArray;
+        }
+    }
 
     if (!ruleIDsToDelete.size() && !rulesToAdd->length()) {
         completionHandler({ });
@@ -229,7 +241,7 @@ void WebExtensionContext::declarativeNetRequestUpdateSessionRules(String&& rules
         return;
     }
 
-    updateDeclarativeNetRequestRulesInStorage(declarativeNetRequestSessionRulesStore(), "session"_s, apiName, *rulesToAdd, ruleIDsToDelete, WTFMove(completionHandler));
+    updateDeclarativeNetRequestRulesInStorage(declarativeNetRequestSessionRulesStore(), "session"_s, apiName, rulesToAdd, ruleIDsToDelete, WTFMove(completionHandler));
 }
 
 } // namespace WebKit

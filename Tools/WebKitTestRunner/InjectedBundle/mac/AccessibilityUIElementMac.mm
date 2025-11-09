@@ -126,9 +126,7 @@ AccessibilityUIElement::AccessibilityUIElement(const AccessibilityUIElement& oth
 {
 }
 
-AccessibilityUIElement::~AccessibilityUIElement()
-{
-}
+AccessibilityUIElement::~AccessibilityUIElement() = default;
 
 bool AccessibilityUIElement::isEqual(AccessibilityUIElement* otherElement)
 {
@@ -793,7 +791,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::allAttributes()
             continue;
 
         if ([attribute isEqualToString:@"AXVisibleCharacterRange"]) {
-            id value = attributeValue(NSAccessibilityRoleAttribute).get();
+            id value = attributeValue(NSAccessibilityRoleAttribute).unsafeGet();
             NSString *role = [value isKindOfClass:[NSString class]] ? (NSString *)value : nil;
             if (role == nil || [role isEqualToString:@"AXList"] || [role isEqualToString:@"AXLink"] || [role isEqualToString:@"AXGroup"] || [role isEqualToString:@"AXRow"] || [role isEqualToString:@"AXColumn"] || [role isEqualToString:@"AXTable"] || [role isEqualToString:@"AXWebArea"]) {
                 // For some roles, behavior with ITM on and ITM off differ for this API in ways
@@ -1768,7 +1766,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::horizontalScrollbar() con
         return nullptr;
 
     BEGIN_AX_OBJC_EXCEPTIONS
-    if (id scrollbar = attributeValue(NSAccessibilityHorizontalScrollBarAttribute).get())
+    if (id scrollbar = attributeValue(NSAccessibilityHorizontalScrollBarAttribute).unsafeGet())
         return AccessibilityUIElement::create(scrollbar);
     END_AX_OBJC_EXCEPTIONS
 
@@ -1781,7 +1779,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::verticalScrollbar() const
         return nullptr;
 
     BEGIN_AX_OBJC_EXCEPTIONS
-    if (id scrollbar = attributeValue(NSAccessibilityVerticalScrollBarAttribute).get())
+    if (id scrollbar = attributeValue(NSAccessibilityVerticalScrollBarAttribute).unsafeGet())
         return AccessibilityUIElement::create(scrollbar);
     END_AX_OBJC_EXCEPTIONS
 
@@ -2103,7 +2101,7 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::popupValue() const
 RefPtr<AccessibilityUIElement> AccessibilityUIElement::focusableAncestor()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
-    if (id ancestor = attributeValue(@"AXFocusableAncestor").get())
+    if (id ancestor = attributeValue(@"AXFocusableAncestor").unsafeGet())
         return AccessibilityUIElement::create(ancestor);
     END_AX_OBJC_EXCEPTIONS
 
@@ -2113,7 +2111,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::focusableAncestor()
 RefPtr<AccessibilityUIElement> AccessibilityUIElement::editableAncestor()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
-    if (id ancestor = attributeValue(@"AXEditableAncestor").get())
+    if (id ancestor = attributeValue(@"AXEditableAncestor").unsafeGet())
         return AccessibilityUIElement::create(ancestor);
     END_AX_OBJC_EXCEPTIONS
 
@@ -2123,7 +2121,7 @@ RefPtr<AccessibilityUIElement> AccessibilityUIElement::editableAncestor()
 RefPtr<AccessibilityUIElement> AccessibilityUIElement::highestEditableAncestor()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
-    if (id ancestor = attributeValue(@"AXHighestEditableAncestor").get())
+    if (id ancestor = attributeValue(@"AXHighestEditableAncestor").unsafeGet())
         return AccessibilityUIElement::create(ancestor);
     END_AX_OBJC_EXCEPTIONS
 

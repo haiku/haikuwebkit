@@ -34,8 +34,9 @@
 #include "CheckVisibilityOptions.h"
 #include "ContainerNodeInlines.h"
 #include "ContextDestructionObserverInlines.h"
-#include "Document.h"
+#include "DocumentEventLoop.h"
 #include "DocumentTimeline.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "FrameSnapshotting.h"
 #include "HostWindow.h"
@@ -819,15 +820,15 @@ void ViewTransition::handleTransitionFrame()
         return false;
     };
 
-    bool hasActiveAnimations = checkForActiveAnimations({ PseudoId::ViewTransition });
+    bool hasActiveAnimations = checkForActiveAnimations({ PseudoElementType::ViewTransition });
 
     for (auto& name : namedElements().keys()) {
         if (hasActiveAnimations)
             break;
-        hasActiveAnimations = checkForActiveAnimations({ PseudoId::ViewTransitionGroup, name })
-            || checkForActiveAnimations({ PseudoId::ViewTransitionImagePair, name })
-            || checkForActiveAnimations({ PseudoId::ViewTransitionNew, name })
-            || checkForActiveAnimations({ PseudoId::ViewTransitionOld, name });
+        hasActiveAnimations = checkForActiveAnimations({ PseudoElementType::ViewTransitionGroup, name })
+            || checkForActiveAnimations({ PseudoElementType::ViewTransitionImagePair, name })
+            || checkForActiveAnimations({ PseudoElementType::ViewTransitionNew, name })
+            || checkForActiveAnimations({ PseudoElementType::ViewTransitionOld, name });
     }
 
     if (!hasActiveAnimations) {
@@ -1035,7 +1036,7 @@ ExceptionOr<void> ViewTransition::updatePseudoElementRenderers()
             if (!renderer || renderer->isSkippedContent())
                 return Exception { ExceptionCode::InvalidStateError, "One of the transitioned elements has become hidden."_s };
 
-            Styleable styleable(*documentElement, Style::PseudoElementIdentifier { PseudoId::ViewTransitionNew, name });
+            Styleable styleable(*documentElement, Style::PseudoElementIdentifier { PseudoElementType::ViewTransitionNew, name });
             if (CheckedPtr viewTransitionCapture = dynamicDowncast<RenderViewTransitionCapture>(styleable.renderer())) {
                 if (viewTransitionCapture->setCapturedSize(capturedElement->newState.size, capturedElement->newState.overflowRect, capturedElement->newState.layerToLayoutOffset))
                     viewTransitionCapture->setNeedsLayout();
@@ -1068,7 +1069,7 @@ RenderViewTransitionCapture* ViewTransition::viewTransitionNewPseudoForCapturedE
     if (capturedName.isNull())
         return nullptr;
 
-    Styleable pseudoStyleable(*renderer.document().documentElement(), Style::PseudoElementIdentifier { PseudoId::ViewTransitionNew, capturedName });
+    Styleable pseudoStyleable(*renderer.document().documentElement(), Style::PseudoElementIdentifier { PseudoElementType::ViewTransitionNew, capturedName });
     return dynamicDowncast<RenderViewTransitionCapture>(pseudoStyleable.renderer());
 }
 

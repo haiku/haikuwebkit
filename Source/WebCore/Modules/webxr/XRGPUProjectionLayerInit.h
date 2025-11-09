@@ -30,6 +30,8 @@
 #include <WebCore/WebGPUXRProjectionLayer.h>
 #include <WebCore/XRCanvasConfiguration.h>
 
+#if ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)
+
 namespace WebCore {
 
 // https://immersive-web.github.io/layers/#xrprojectionlayerinittype
@@ -54,3 +56,5 @@ struct XRGPUProjectionLayerInit {
 };
 
 } // namespace WebCore
+
+#endif // ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)

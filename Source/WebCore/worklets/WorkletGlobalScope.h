@@ -120,7 +120,7 @@ private:
     JSC::RuntimeFlags m_jsRuntimeFlags;
     std::optional<ScriptSourceCode> m_code;
 
-    std::unique_ptr<WorkerMessagePortChannelProvider> m_messagePortChannelProvider;
+    const RefPtr<WorkerMessagePortChannelProvider> m_messagePortChannelProvider;
 
     SettingsValues m_settingsValues;
 };

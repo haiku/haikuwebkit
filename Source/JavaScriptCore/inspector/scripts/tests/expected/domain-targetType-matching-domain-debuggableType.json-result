@@ -337,7 +337,10 @@ void DomainBackendDispatcher::Command(long protocol_requestId, RefPtr<JSON::Obje
 #pragma once
 
 #include "TestProtocolObjects.h"
+#include <wtf/CheckedRef.h>
 #include <wtf/JSONValues.h>
+#include <wtf/Noncopyable.h>
+#include <wtf/Nonmovable.h>
 #include <wtf/text/WTFString.h>
 
 namespace Inspector {
@@ -347,10 +350,13 @@ class FrontendRouter;
 class DomainFrontendDispatcher {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(DomainFrontendDispatcher);
 public:
-    DomainFrontendDispatcher(FrontendRouter& frontendRouter) : m_frontendRouter(frontendRouter) { }
+    DomainFrontendDispatcher(FrontendRouter&);
+    ~DomainFrontendDispatcher();
+    WTF_MAKE_NONCOPYABLE(DomainFrontendDispatcher);
+    WTF_MAKE_NONMOVABLE(DomainFrontendDispatcher);
     void Event();
 private:
-    FrontendRouter& m_frontendRouter;
+    const CheckedRef<FrontendRouter> m_frontendRouter;
 };
 
 } // namespace Inspector
@@ -393,12 +399,16 @@ private:
 
 namespace Inspector {
 
+DomainFrontendDispatcher::DomainFrontendDispatcher(FrontendRouter& frontendRouter) : m_frontendRouter(frontendRouter) { }
+
+DomainFrontendDispatcher::~DomainFrontendDispatcher() = default;
+
 void DomainFrontendDispatcher::Event()
 {
     auto protocol_jsonMessage = JSON::Object::create();
     protocol_jsonMessage->setString("method"_s, "Domain.Event"_s);
 
-    m_frontendRouter.sendEvent(protocol_jsonMessage->toJSONString());
+    m_frontendRouter->sendEvent(protocol_jsonMessage->toJSONString());
 }
 
 } // namespace Inspector

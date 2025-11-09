@@ -40,6 +40,7 @@ public:
     WEBCORE_EXPORT ExceptionOr<void> deleteRule(unsigned index);
     unsigned length() const;
     CSSRule* item(unsigned index) const;
+    virtual bool isCSSConditionRule() const { return false; }
 
 protected:
     CSSGroupingRule(StyleRuleGroup&, CSSStyleSheet* parent);

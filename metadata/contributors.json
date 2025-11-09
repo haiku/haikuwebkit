@@ -1085,7 +1085,8 @@
       "name" : "Arno Renevier",
       "nicks" : [
          "arno"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -1976,6 +1977,16 @@
       "name" : "Cris Neckar",
       "nicks" : [
          "cneckar"
+      ]
+   },
+   {
+      "emails" : [
+         "cmurillo@igalia.com"
+      ],
+      "github" : "crmurillo",
+      "name" : "Cristina Murillo",
+      "nicks" : [
+         "cmurillo"
       ]
    },
    {
@@ -2979,7 +2990,7 @@
       ],
       "github" : "etiennesegonzac",
       "name" : "Etienne Segonzac",
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -3135,7 +3146,8 @@
          "franco_vieira@apple.com"
       ],
       "github" : "francovs",
-      "name" : "Franco Vieira de Souza"
+      "name" : "Franco Vieira de Souza",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -4004,6 +4016,14 @@
       "nicks" : [
          "simonjam"
       ]
+   },
+   {
+      "emails" : [
+         "jmurphy@igalia.com",
+         "hello@itsjamie.dev"
+      ],
+      "github" : "ItsJamie9494",
+      "name" : "Jamie Murphy"
    },
    {
       "emails" : [
@@ -6416,12 +6436,14 @@
    },
    {
       "emails" : [
-         "nipun_shukla@apple.com"
+         "nipun_shukla@apple.com",
+         "nipunshukla002@gmail.com"
       ],
       "name" : "Nipun Shukla",
       "nicks" : [
          "nipunshukla21"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -6740,7 +6762,8 @@
       "nicks" : [
          "pchimento",
          "ptomato"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [

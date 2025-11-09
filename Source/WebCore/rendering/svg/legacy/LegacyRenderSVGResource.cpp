@@ -43,6 +43,7 @@
 #include "SVGResources.h"
 #include "SVGResourcesCache.h"
 #include "SVGURIReference.h"
+#include "Settings.h"
 
 namespace WebCore {
 

@@ -97,11 +97,19 @@ uint64_t JSWebAssemblyStruct::get(uint32_t fieldIndex) const
     case TypeKind::RefNull:
         return JSValue::encode(std::bit_cast<WriteBarrierBase<Unknown>*>(targetPointer)->get());
     case TypeKind::V128:
-        // V128 is not supported in IPInt.
+        ASSERT_NOT_REACHED("V128 values should use getVector() method");
+        return 0;
     default:
         ASSERT_NOT_REACHED();
         return 0;
     }
+}
+
+v128_t JSWebAssemblyStruct::getVector(uint32_t fieldIndex) const
+{
+    const uint8_t* targetPointer = fieldPointer(fieldIndex);
+    ASSERT(fieldType(fieldIndex).type.unpacked().isV128());
+    return *std::bit_cast<const v128_t*>(targetPointer);
 }
 
 void JSWebAssemblyStruct::set(uint32_t fieldIndex, uint64_t argument)

@@ -40,7 +40,6 @@ class ReadableByteStreamController;
 class ReadableStreamBYOBRequest : public RefCounted<ReadableStreamBYOBRequest> {
 public:
     static Ref<ReadableStreamBYOBRequest> create();
-    ~ReadableStreamBYOBRequest() = default;
 
     JSC::ArrayBufferView* view() const;
     ExceptionOr<void> respond(JSDOMGlobalObject&, size_t);

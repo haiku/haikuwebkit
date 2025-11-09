@@ -59,6 +59,7 @@ static constexpr auto iconsManifestKey = "icons"_s;
 #if ENABLE(WK_WEB_EXTENSIONS_ICON_VARIANTS)
 static constexpr auto iconVariantsManifestKey = "icon_variants"_s;
 static constexpr auto colorSchemesManifestKey = "color_schemes"_s;
+static constexpr auto colorSchemesAPIKey = "colorSchemes"_s;
 static constexpr auto lightManifestKey = "light"_s;
 static constexpr auto darkManifestKey = "dark"_s;
 static constexpr auto anyManifestKey = "any"_s;
@@ -2095,7 +2096,7 @@ RefPtr<JSON::Object> WebExtension::bestIconVariantJSONObject(RefPtr<JSON::Array>
             continue;
 
         RefPtr variantObject = variant->asObject();
-        auto colorSchemes = toColorSchemes(variantObject ? variantObject->getValue(colorSchemesManifestKey) : nullptr);
+        auto colorSchemes = toColorSchemes(variantObject ? variantObject->getValue(colorSchemesManifestKey) ?: variantObject->getValue(colorSchemesAPIKey) : nullptr);
         auto currentBestSize = bestIconSize(*variantObject, idealPixelSize);
 
         if (colorSchemes.contains(idealColorScheme)) {

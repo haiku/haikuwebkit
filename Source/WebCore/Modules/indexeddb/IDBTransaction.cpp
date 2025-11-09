@@ -29,6 +29,7 @@
 #include "ContextDestructionObserverInlines.h"
 #include "DOMException.h"
 #include "DOMStringList.h"
+#include "DocumentPage.h"
 #include "Event.h"
 #include "EventDispatcher.h"
 #include "EventLoop.h"

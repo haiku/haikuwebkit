@@ -29,6 +29,7 @@
 
 #include "CSSOffsetRotateValue.h"
 #include "StyleBuilderState.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/text/TextStream.h>

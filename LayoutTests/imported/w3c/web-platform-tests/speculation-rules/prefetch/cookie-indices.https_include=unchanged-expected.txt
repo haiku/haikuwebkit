@@ -1,3 +1,0 @@
-
-PASS Cookie-Indices should not prevent a prefetch from succeeding if the cookie has not changed.
-

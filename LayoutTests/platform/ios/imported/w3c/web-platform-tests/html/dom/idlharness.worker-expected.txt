@@ -94,8 +94,8 @@ PASS HTMLStyleElement includes LinkStyle: member names are unique
 PASS HTMLBodyElement includes WindowEventHandlers: member names are unique
 PASS HTMLAnchorElement includes HTMLHyperlinkElementUtils: member names are unique
 PASS HTMLAreaElement includes HTMLHyperlinkElementUtils: member names are unique
-PASS HTMLInputElement includes PopoverInvokerElement: member names are unique
-PASS HTMLButtonElement includes PopoverInvokerElement: member names are unique
+PASS HTMLInputElement includes PopoverTargetAttributes: member names are unique
+PASS HTMLButtonElement includes PopoverTargetAttributes: member names are unique
 PASS CanvasRenderingContext2D includes CanvasSettings: member names are unique
 PASS CanvasRenderingContext2D includes CanvasState: member names are unique
 PASS CanvasRenderingContext2D includes CanvasTransform: member names are unique
@@ -253,6 +253,7 @@ PASS HTMLProgressElement interface: existence and properties of interface object
 PASS HTMLMeterElement interface: existence and properties of interface object
 PASS HTMLFieldSetElement interface: existence and properties of interface object
 PASS HTMLLegendElement interface: existence and properties of interface object
+PASS HTMLSelectedContentElement interface: existence and properties of interface object
 PASS ValidityState interface: existence and properties of interface object
 PASS SubmitEvent interface: existence and properties of interface object
 PASS FormDataEvent interface: existence and properties of interface object
@@ -442,6 +443,7 @@ PASS NavigationHistoryEntry interface: existence and properties of interface obj
 PASS NavigationTransition interface: existence and properties of interface object
 PASS NavigationActivation interface: existence and properties of interface object
 PASS NavigateEvent interface: existence and properties of interface object
+PASS NavigationPrecommitController interface: existence and properties of interface object
 PASS NavigationDestination interface: existence and properties of interface object
 PASS NavigationCurrentEntryChangeEvent interface: existence and properties of interface object
 PASS PopStateEvent interface: existence and properties of interface object

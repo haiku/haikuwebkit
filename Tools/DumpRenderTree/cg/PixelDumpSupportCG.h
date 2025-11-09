@@ -44,8 +44,6 @@ public:
         return adoptRef(*new BitmapContext(WTFMove(buffer), WTFMove(context)));
     }
 
-    ~BitmapContext() = default;
-
     CGContextRef cgContext() const { return m_context.get(); }
     
     double scaleFactor() const { return m_scaleFactor; }

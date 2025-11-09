@@ -1636,4 +1636,16 @@ String fullscreenControllerViewImmersive()
 }
 #endif
 
+#if ENABLE(SPATIAL_IMAGE_CONTROLS)
+String imageControlsLabelSpatial()
+{
+    return WEB_UI_STRING("SPATIAL", "Label for Spatial Photos with image controls next to spatial glyph");
+}
+
+String imageControlsLabelPanorama()
+{
+    return WEB_UI_STRING("PANORAMA", "Label for panorama photos with image controls next to pano glyph");
+}
+#endif
+
 } // namespace WebCore

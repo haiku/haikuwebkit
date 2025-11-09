@@ -80,7 +80,7 @@
 #include "AcceleratedEffectStack.h"
 #endif
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_CONTEXT)
 #include "ModelContext.h"
 #endif
 
@@ -351,7 +351,7 @@ Ref<PlatformCALayer> GraphicsLayerCA::createPlatformCALayer(PlatformLayer* platf
     return PlatformCALayerCocoa::create(platformLayer, owner);
 }
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_CONTEXT) && !ENABLE(GPU_PROCESS_MODEL)
 Ref<PlatformCALayer> GraphicsLayerCA::createPlatformCALayer(Ref<ModelContext>, PlatformCALayerClient* owner)
 {
     ASSERT_NOT_REACHED_WITH_MESSAGE("GraphicsLayerCARemote::createPlatformCALayer should always be called instead of this, but this symbol is needed to compile WebKitLegacy.");
@@ -1000,7 +1000,7 @@ void GraphicsLayerCA::setNeedsDisplayInRect(const FloatRect& r, ShouldClipToLaye
         return;
 
     FloatRect rect(r);
-    if (shouldClip == ClipToLayer) {
+    if (shouldClip == ShouldClipToLayer::Clip) {
         FloatRect layerBounds(FloatPoint(), m_size);
         rect.intersect(layerBounds);
     }
@@ -1423,7 +1423,7 @@ void GraphicsLayerCA::setContentsToPlatformLayerHost(LayerHostingContextIdentifi
     noteLayerPropertyChanged(ContentsPlatformLayerChanged);
 }
 
-#if ENABLE(MODEL_PROCESS)
+#if ENABLE(MODEL_CONTEXT) && !ENABLE(GPU_PROCESS_MODEL)
 void GraphicsLayerCA::setContentsToModelContext(Ref<ModelContext> modelContext, ContentsLayerPurpose purpose)
 {
     if (m_contentsLayer && m_contentsLayer->hostingContextIdentifier() == modelContext->modelContentsLayerHostingContextIdentifier())
@@ -4007,12 +4007,12 @@ const TimingFunction& GraphicsLayerCA::timingFunctionForAnimationValue(const Ani
         // its mode set to SingleProperty. In this case, we chose not to set set the
         // animation-wide timing function, so we set it on the single keyframe interval
         // to work around a Core Animation limitation.
-        return *anim.timingFunction();
+        return *anim.timingFunction().unsafeGet();
     }
     if (animValue.timingFunction())
         return *animValue.timingFunction();
     if (anim.defaultTimingFunctionForKeyframes())
-        return *anim.defaultTimingFunctionForKeyframes();
+        return *anim.defaultTimingFunctionForKeyframes().unsafeGet();
     return LinearTimingFunction::identity();
 }
 

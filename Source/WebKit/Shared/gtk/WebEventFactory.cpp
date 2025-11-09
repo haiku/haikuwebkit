@@ -28,10 +28,9 @@
 #include "config.h"
 #include "WebEventFactory.h"
 
+#include "GtkUtilities.h"
+#include "GtkVersioning.h"
 #include "WebEventConversion.h"
-#include <WebCore/GtkUtilities.h>
-#include <WebCore/GtkVersioning.h>
-#include <WebCore/PlatformKeyboardEvent.h>
 #include <WebCore/Scrollbar.h>
 #include <WebCore/WindowsKeyboardCodes.h>
 #include <gdk/gdk.h>
@@ -191,19 +190,20 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, int cu
 {
     double x, y;
     gdk_event_get_coords(event, &x, &y);
-    double xRoot, yRoot;
-    gdk_event_get_root_coords(event, &xRoot, &yRoot);
 
-    return createWebMouseEvent(event, DoublePoint(x, y), DoublePoint(xRoot, yRoot), currentClickCount, delta);
+    return createWebMouseEvent(event, DoublePoint(x, y), currentClickCount, delta);
 }
 
-WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, const DoublePoint& position, const DoublePoint& globalPosition, int currentClickCount, std::optional<FloatSize> delta)
+WebMouseEvent WebEventFactory::createWebMouseEvent(const GdkEvent* event, const DoublePoint& position, int currentClickCount, std::optional<FloatSize> delta)
 {
 #if USE(GTK4)
     // This can happen when a NativeWebMouseEvent representing a crossing event is copied.
     if (!event)
         return createWebMouseEvent(position);
 #endif
+    double xRoot, yRoot;
+    gdk_event_get_root_coords(event, &xRoot, &yRoot);
+    DoublePoint globalPosition { xRoot, yRoot };
 
     GdkModifierType state = static_cast<GdkModifierType>(0);
     gdk_event_get_state(event, &state);
@@ -271,11 +271,11 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const GdkEvent* event, 
 
     return WebKeyboardEvent(
         { type == GDK_KEY_RELEASE ? WebEventType::KeyUp : WebEventType::KeyDown, modifiersForEvent(event), monotonicTimeForEvent(event) },
-        text.isNull() ? PlatformKeyboardEvent::singleCharacterString(keyval) : text,
-        PlatformKeyboardEvent::keyValueForGdkKeyCode(keyval),
-        PlatformKeyboardEvent::keyCodeForHardwareKeyCode(keycode),
-        PlatformKeyboardEvent::keyIdentifierForGdkKeyCode(keyval),
-        PlatformKeyboardEvent::windowsKeyCodeForGdkKeyCode(keyval),
+        text.isNull() ? WebKeyboardEvent::singleCharacterStringForGdkKeyval(keyval) : text,
+        WebKeyboardEvent::keyValueStringForGdkKeyval(keyval),
+        WebKeyboardEvent::keyCodeStringForGdkKeycode(keycode),
+        WebKeyboardEvent::keyIdentifierForGdkKeyval(keyval),
+        WebKeyboardEvent::windowsKeyCodeForGdkKeyval(keyval),
         static_cast<int>(keyval),
         handledByInputMethod,
         WTFMove(preeditUnderlines),

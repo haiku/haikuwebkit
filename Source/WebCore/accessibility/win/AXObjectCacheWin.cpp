@@ -32,7 +32,7 @@
 #include "AccessibilityObject.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "NodeDocument.h"
 #include "Page.h"
 #include "RenderObject.h"

@@ -166,6 +166,8 @@ void RemoteAudioVideoRendererProxyManager::create(RemoteAudioVideoRendererIdenti
 #endif
 
     m_renderers.set(identifier, WTFMove(context));
+
+    m_gpuConnectionToWebProcess.get()->connection().send(Messages::AudioVideoRendererRemoteMessageReceiver::StateUpdate(stateFor(identifier)), identifier);
 }
 
 void RemoteAudioVideoRendererProxyManager::shutdown(RemoteAudioVideoRendererIdentifier identifier)
@@ -408,10 +410,10 @@ void RemoteAudioVideoRendererProxyManager::setShouldMaintainAspectRatio(RemoteAu
         renderer->setShouldMaintainAspectRatio(maintain);
 }
 
-void RemoteAudioVideoRendererProxyManager::acceleratedRenderingStateChanged(RemoteAudioVideoRendererIdentifier identifier, bool renderingIsAccelerated)
+void RemoteAudioVideoRendererProxyManager::renderingCanBeAcceleratedChanged(RemoteAudioVideoRendererIdentifier identifier, bool renderingIsAccelerated)
 {
     if (RefPtr renderer = rendererFor(identifier))
-        renderer->acceleratedRenderingStateChanged(renderingIsAccelerated);
+        renderer->renderingCanBeAcceleratedChanged(renderingIsAccelerated);
 }
 
 void RemoteAudioVideoRendererProxyManager::contentBoxRectChanged(RemoteAudioVideoRendererIdentifier identifier, const WebCore::LayoutRect& rect)

@@ -31,6 +31,7 @@
 #import "CMUtilities.h"
 #import "Logging.h"
 #import "MediaSampleAVFObjC.h"
+#import "MediaSamplesBlock.h"
 #import "MediaUtilities.h"
 #import "WebMAudioUtilitiesCocoa.h"
 #import <webm/mkvmuxer/mkvmuxer.h>

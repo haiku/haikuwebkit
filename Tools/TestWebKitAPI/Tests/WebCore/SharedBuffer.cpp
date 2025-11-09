@@ -35,7 +35,6 @@
 #include <WebCore/SharedBufferChunkReader.h>
 #endif
 #include <wtf/MainThread.h>
-#include <wtf/StringExtras.h>
 #include <wtf/text/StringCommon.h>
 
 using namespace WebCore;
@@ -53,7 +52,7 @@ TEST_F(FragmentedSharedBufferTest, createWithContentsOfExistingFile)
     auto buffer = SharedBuffer::createWithContentsOfFile(tempFilePath());
     ASSERT_NOT_NULL(buffer);
     EXPECT_TRUE(buffer->size() == strlen(FragmentedSharedBufferTest::testData()));
-    EXPECT_TRUE(String::fromLatin1(FragmentedSharedBufferTest::testData()) == String(buffer->makeContiguous()->span()));
+    EXPECT_TRUE(String::fromLatin1(FragmentedSharedBufferTest::testData()) == String(byteCast<Latin1Character>(buffer->makeContiguous()->span())));
 }
 
 TEST_F(FragmentedSharedBufferTest, createWithContentsOfExistingEmptyFile)
@@ -370,12 +369,12 @@ TEST_F(FragmentedSharedBufferTest, read)
     auto check = [](FragmentedSharedBuffer& sharedBuffer) {
         Vector<uint8_t> data = sharedBuffer.read(4, 3);
         EXPECT_EQ(data.size(), 3u);
-        EXPECT_EQ(StringView(data.subspan(0, 3)), " is"_s);
+        EXPECT_EQ(" is"_s, StringView(byteCast<Latin1Character>(data.subspan(0, 3))));
 
         data = sharedBuffer.read(4, 1000);
         EXPECT_EQ(data.size(), 18u);
 
-        EXPECT_EQ(StringView(data.subspan(0, 18)), " is a simple test."_s);
+        EXPECT_EQ(" is a simple test."_s, StringView(byteCast<Latin1Character>(data.subspan(0, 18))));
     };
     auto sharedBuffer = SharedBuffer::create(simpleText);
     check(sharedBuffer);
@@ -503,8 +502,8 @@ TEST_F(SharedBufferChunkReaderTest, includeSeparator)
     check(builder.take());
 
     for (size_t i = 0; i < 256; ++i) {
-        Latin1Character c = i;
-        builder.append(std::span<const uint8_t> { &c, 1 });
+        const uint8_t byte = i;
+        builder.append(std::span { &byte, 1 });
     }
     check(builder.take());
 }
@@ -523,12 +522,12 @@ TEST_F(SharedBufferChunkReaderTest, peekData)
         size_t read = chunkReader.peek(data, 3);
         EXPECT_EQ(read, 3u);
 
-        EXPECT_EQ(String(data.span().first(3)), " is"_s);
+        EXPECT_EQ(" is"_s, StringView(byteCast<Latin1Character>(data.span().first(3))));
 
         read = chunkReader.peek(data, 1000);
         EXPECT_EQ(read, 18u);
 
-        EXPECT_EQ(String(data.span().first(18)), " is a simple test."_s);
+        EXPECT_EQ(" is a simple test."_s, StringView(byteCast<Latin1Character>(data.span().first(18))));
 
         // Ensure the cursor has not changed.
         chunk = chunkReader.nextChunkAsUTF8StringWithLatin1Fallback();

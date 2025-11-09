@@ -1,0 +1,4 @@
+
+PASS getBoundingClientRect() should not account for CSS zoom
+PASS getClientRects() should not account for CSS zoom
+

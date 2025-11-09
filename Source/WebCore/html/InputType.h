@@ -279,6 +279,7 @@ public:
     virtual void willDispatchClick(InputElementClickState&) { }
     virtual void didDispatchClick(Event&, const InputElementClickState&) { }
     virtual void handleDOMActivateEvent(Event&) { }
+    virtual void handleAccessibilityActivation() { }
 
     virtual bool allowsShowPickerAcrossFrames();
     virtual void showPicker();

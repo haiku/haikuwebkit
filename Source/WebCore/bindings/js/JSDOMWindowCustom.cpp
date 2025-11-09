@@ -198,10 +198,6 @@ bool JSDOMWindow::getOwnPropertySlot(JSObject* object, JSGlobalObject* lexicalGl
 
     ASSERT(lexicalGlobalObject->vm().currentThreadIsHoldingAPILock());
 
-    // FIXME (rdar://115751655): This should be replaced with a same-origin check between the active and target document.
-    if (!is<LocalDOMWindow>(thisObject->wrapped()) && propertyName == "$vm"_s) [[unlikely]]
-        return true;
-
     // Hand off all cross-domain access to jsDOMWindowGetOwnPropertySlotRestrictedAccess.
     String errorMessage;
     if (!BindingSecurity::shouldAllowAccessToDOMWindow(*lexicalGlobalObject, thisObject->wrapped(), errorMessage))
@@ -604,8 +600,10 @@ JSValue JSDOMWindow::queueMicrotask(JSGlobalObject& lexicalGlobalObject, CallFra
     if (!functionValue.isCallable()) [[unlikely]]
         return JSValue::decode(throwArgumentMustBeFunctionError(lexicalGlobalObject, scope, 0, "callback"_s, "Window"_s, "queueMicrotask"_s));
 
+    auto* globalObject = asObject(functionValue)->globalObject();
+
     scope.release();
-    globalObjectMethodTable()->queueMicrotaskToEventLoop(*this, JSC::QueuedTask { nullptr, this, functionValue, { }, { }, { }, { } });
+    globalObjectMethodTable()->queueMicrotaskToEventLoop(*this, JSC::QueuedTask { nullptr, JSC::InternalMicrotask::InvokeFunctionJob, globalObject, functionValue });
     return jsUndefined();
 }
 

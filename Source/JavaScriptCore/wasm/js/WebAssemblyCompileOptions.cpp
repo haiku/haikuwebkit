@@ -142,7 +142,7 @@ bool WebAssemblyCompileOptions::validateImportForBuiltinSetNames(const Wasm::Imp
         return false;
     SUPPRESS_UNCOUNTED_LOCAL auto* importSig = type->as<Wasm::FunctionSignature>();
 
-    return builtinSig.check(*importSig);
+    return builtinSig.isValid(*importSig);
 }
 
 /**

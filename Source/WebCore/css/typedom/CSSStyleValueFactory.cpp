@@ -187,9 +187,8 @@ static bool mayConvertCSSValueListToSingleValue(std::optional<CSSPropertyID> pro
 
 ExceptionOr<Ref<CSSStyleValue>> CSSStyleValueFactory::reifyValue(Document& document, const CSSValue& cssValue, std::optional<CSSPropertyID> propertyID)
 {
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(cssValue)) {
-        if (primitiveValue->isCalculated()) {
-            auto* calcValue = primitiveValue->cssCalcValue();
+    if (RefPtr primitiveValue = dynamicDowncast<CSSPrimitiveValue>(cssValue)) {
+        if (RefPtr calcValue = primitiveValue->cssCalcValue()) {
             auto result = CSSNumericValue::reifyMathExpression(calcValue->tree());
             if (result.hasException())
                 return result.releaseException();

@@ -117,6 +117,7 @@ public:
     WEBCORE_EXPORT std::optional<SimpleRange> toNormalizedRange() const;
 
     WEBCORE_EXPORT Element* rootEditableElement() const;
+    WEBCORE_EXPORT RefPtr<Element> protectedRootEditableElement() const;
     WEBCORE_EXPORT bool isContentEditable() const;
     WEBCORE_EXPORT bool hasEditableStyle() const;
     WEBCORE_EXPORT bool isContentRichlyEditable() const;

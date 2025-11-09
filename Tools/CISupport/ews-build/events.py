@@ -216,7 +216,6 @@ class Events(service.BuildbotService):
             "state_string": build.get('state_string'),
             "builder_name": self.getBuilderName(build),
             "builder_display_name": builder.get('description', '') if isinstance(builder, dict) else builder.description,
-            "steps": build.get('steps'),
         }
 
         self.sendDataToEWS(data)

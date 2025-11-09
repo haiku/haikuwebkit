@@ -306,7 +306,3 @@
         (require-any
             (apply subpath issue-extension-secondary-paths))))
 #endif
-
-#if __has_include(<WebKitAdditions/WebContentSandbox-ios.defs>)
-#include <WebKitAdditions/WebContentSandbox-ios.defs>
-#endif

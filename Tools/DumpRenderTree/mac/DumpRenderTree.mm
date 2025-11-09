@@ -1833,6 +1833,8 @@ static void resetWebViewToConsistentState(const WTR::TestOptions& options, Reset
 
     WebCoreTestSupport::clearAllLogChannelsToAccumulate();
     WebCoreTestSupport::initializeLogChannelsIfNecessary();
+
+    gTestRunner->clearBackForwardList();
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -2062,8 +2064,6 @@ static void runTest(const std::string& inputLine)
         }
 
         resetWebViewToConsistentState(options, ResetTime::AfterTest);
-
-        gTestRunner->clearBackForwardList();
 
         // Loading an empty request synchronously replaces the document with a blank one, which is necessary
         // to stop timers, WebSockets and other activity that could otherwise spill output into next test's results.

@@ -71,7 +71,7 @@ messages -> RemoteAudioVideoRendererProxyManager {
     SetIsVisible(WebKit::RemoteAudioVideoRendererIdentifier identifier, bool isVisible)
     SetPresentationSize(WebKit::RemoteAudioVideoRendererIdentifier identifier, WebCore::IntSize size)
     SetShouldMaintainAspectRatio(WebKit::RemoteAudioVideoRendererIdentifier identifier, bool maintain)
-    AcceleratedRenderingStateChanged(WebKit::RemoteAudioVideoRendererIdentifier identifier, bool accelerated)
+    RenderingCanBeAcceleratedChanged(WebKit::RemoteAudioVideoRendererIdentifier identifier, bool accelerated)
     ContentBoxRectChanged(WebKit::RemoteAudioVideoRendererIdentifier identifier, WebCore::LayoutRect boxRect)
     NotifyWhenHasAvailableVideoFrame(WebKit::RemoteAudioVideoRendererIdentifier identifier, bool notify)
     ExpectMinimumUpcomingPresentationTime(WebKit::RemoteAudioVideoRendererIdentifier identifier, MediaTime expected)

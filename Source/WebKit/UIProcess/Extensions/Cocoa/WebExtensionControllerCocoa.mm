@@ -485,7 +485,7 @@ WebsiteDataStore* WebExtensionController::websiteDataStore(std::optional<PAL::Se
 
     for (Ref dataStore : allWebsiteDataStores()) {
         if (dataStore->sessionID() == sessionID.value())
-            return dataStore.ptr();
+            return dataStore.unsafePtr();
     }
 
     return nullptr;

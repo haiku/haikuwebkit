@@ -607,7 +607,7 @@ final public class WebPage {
     ///   frame is no longer valid when script evaluation begins, this function throws an error with the
     ///   `WKError.Code.javaScriptInvalidFrameTarget` code.
     ///
-    ///   - contentWorld: The namespace in which to evaluate the JavaScript code. THis parameter doesn't apply to changes
+    ///   - contentWorld: The namespace in which to evaluate the JavaScript code. This parameter doesn't apply to changes
     ///   you make in the underlying web content, such as the document's DOM structure. Those changes remain visible to
     ///   all scripts, regardless of which content world you specify. For more information about content worlds, see `WKContentWorld`.
     ///

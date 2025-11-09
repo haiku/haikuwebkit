@@ -61,8 +61,6 @@ public:
     WebCore::LegacyCDMSession* session() const { return m_session.get(); }
     RefPtr<WebCore::LegacyCDMSession> protectedSession() const;
 
-    void setPlayer(WeakPtr<RemoteMediaPlayerProxy>);
-
     RefPtr<ArrayBuffer> getCachedKeyForKeyId(const String&);
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
 
@@ -106,7 +104,6 @@ private:
 
     RemoteLegacyCDMSessionIdentifier m_identifier;
     RefPtr<WebCore::LegacyCDMSession> m_session;
-    WeakPtr<RemoteMediaPlayerProxy> m_player;
     String m_mediaKeysHashSalt;
 };
 

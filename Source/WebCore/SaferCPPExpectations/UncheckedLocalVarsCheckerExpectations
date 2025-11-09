@@ -8,6 +8,35 @@ Modules/storage/WorkerStorageConnection.cpp
 Modules/webaudio/AudioWorkletGlobalScope.cpp
 Modules/webdatabase/SQLStatement.cpp
 Modules/websockets/WebSocket.cpp
+[ Mac ]  testing/Internals.mm
+[ Mac ] accessibility/isolatedtree/AXIsolatedObject.cpp
+[ Mac ] accessibility/isolatedtree/AXIsolatedTree.cpp
+[ Mac ] accessibility/mac/AccessibilityObjectMac.mm
+[ Mac ] dom/mac/ImageControlsMac.cpp
+[ Mac ] editing/AlternativeTextController.cpp
+[ Mac ] editing/mac/EditorMac.mm
+[ Mac ] editing/mac/FrameSelectionMac.mm
+[ Mac ] page/ContextMenuController.cpp
+[ Mac ] page/mac/EventHandlerMac.mm
+[ Mac ] page/mac/ImageOverlayControllerMac.mm
+[ Mac ] page/mac/ServicesOverlayController.mm
+[ iOS ] accessibility/cocoa/AXTextMarkerCocoa.mm
+[ iOS ] accessibility/ios/AccessibilityObjectIOS.mm
+[ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.mm
+[ iOS ] editing/cocoa/EditorCocoa.mm
+[ iOS ] editing/ios/DictationCommandIOS.cpp
+[ iOS ] html/HTMLAnchorElement.cpp
+[ iOS ] html/HTMLImageLoader.cpp
+[ iOS ] page/Chrome.cpp
+[ iOS ] page/DOMTimer.cpp
+[ iOS ] page/ios/ContentChangeObserver.cpp
+[ iOS ] page/ios/EventHandlerIOS.mm
+[ iOS ] page/ios/FrameIOS.mm
+[ iOS ] platform/ios/DragImageIOS.mm
+[ iOS ] platform/ios/PasteboardIOS.mm
+[ iOS ] platform/ios/WebVideoFullscreenControllerAVKit.mm
+[ iOS ] rendering/RenderLineBreak.cpp
+[ iOS ] rendering/ios/RenderThemeIOS.mm
 accessibility/AXObjectCache.cpp
 accessibility/AccessibilityListBoxOption.cpp
 accessibility/AccessibilityMathMLElement.cpp
@@ -17,9 +46,6 @@ accessibility/AccessibilityRenderObject.cpp
 accessibility/AccessibilityScrollView.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/cocoa/AccessibilityObjectCocoa.mm
-accessibility/isolatedtree/AXIsolatedObject.cpp
-accessibility/isolatedtree/AXIsolatedTree.cpp
-accessibility/mac/AccessibilityObjectMac.mm
 animation/AcceleratedEffectStackUpdater.cpp
 animation/BlendingKeyframes.cpp
 animation/DocumentTimeline.cpp
@@ -100,8 +126,6 @@ dom/StaticRange.cpp
 dom/TreeScope.cpp
 dom/TypedElementDescendantIteratorInlines.h
 dom/ViewTransition.cpp
-dom/mac/ImageControlsMac.cpp
-editing/AlternativeTextController.cpp
 editing/ApplyBlockElementCommand.cpp
 editing/ApplyStyleCommand.cpp
 editing/BreakBlockquoteCommand.cpp
@@ -110,18 +134,9 @@ editing/DictationCommand.cpp
 editing/Editing.cpp
 editing/Editor.cpp
 editing/EditorCommand.cpp
-editing/FormatBlockCommand.cpp
 editing/FrameSelection.cpp
-editing/IndentOutdentCommand.cpp
-editing/InsertParagraphSeparatorCommand.cpp
-editing/MarkupAccumulator.cpp
-editing/MergeIdenticalElementsCommand.cpp
-editing/ModifySelectionListLevel.cpp
-editing/RemoveNodePreservingChildrenCommand.cpp
 editing/RenderedPosition.cpp
-editing/ReplaceSelectionCommand.cpp
 editing/SimplifyMarkupCommand.cpp
-editing/SplitElementCommand.cpp
 editing/TextIterator.cpp
 editing/TextManipulationController.cpp
 editing/VisibleUnits.cpp
@@ -130,13 +145,10 @@ editing/cocoa/DictionaryLookup.mm
 editing/cocoa/EditingHTMLConverter.mm
 editing/cocoa/NodeHTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
-editing/mac/EditorMac.mm
-editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
 history/CachedFrame.cpp
 html/Autofill.cpp
 html/CachedHTMLCollectionInlines.h
-html/CanvasBase.cpp
 html/CollectionTraversalInlines.h
 html/FormAssociatedCustomElement.cpp
 html/FormListedElement.cpp
@@ -259,7 +271,6 @@ loader/cache/CachedImage.cpp
 loader/cache/MemoryCache.cpp
 mathml/MathMLSelectElement.cpp
 page/AutoscrollController.cpp
-page/ContextMenuController.cpp
 page/DeviceController.cpp
 page/DragController.cpp
 page/ElementTargetingController.cpp
@@ -291,9 +302,6 @@ page/ScrollBehavior.cpp
 page/SpatialNavigation.cpp
 page/TextIndicator.cpp
 page/WorkerNavigator.cpp
-page/mac/EventHandlerMac.mm
-page/mac/ImageOverlayControllerMac.mm
-page/mac/ServicesOverlayController.mm
 page/scrolling/AsyncScrollingCoordinator.cpp
 page/scrolling/ScrollAnchoringController.cpp
 page/scrolling/ScrollSnapOffsetsInfo.cpp
@@ -547,9 +555,7 @@ svg/graphics/SVGImage.cpp
 svg/properties/SVGAnimatedString.cpp
 svg/properties/SVGAnimationAdditiveValueFunctionImpl.cpp
 testing/Internals.cpp
-testing/Internals.mm
 testing/ServiceWorkerInternals.cpp
 testing/js/WebCoreTestSupport.cpp
 workers/WorkerGlobalScope.cpp
 workers/WorkerOrWorkletThread.cpp
-workers/WorkerRunLoop.cpp

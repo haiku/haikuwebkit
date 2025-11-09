@@ -436,6 +436,11 @@ namespace WebCore {
     WEBCORE_EXPORT String fullscreenControllerViewImmersive();
 #endif
 
+#if ENABLE(SPATIAL_IMAGE_CONTROLS)
+    WEBCORE_EXPORT String imageControlsLabelSpatial();
+    WEBCORE_EXPORT String imageControlsLabelPanorama();
+#endif
+
 #if PLATFORM(COCOA)
 #define WEB_UI_STRING(string, description) WebCore::localizedString(CFSTR(string))
 #define WEB_UI_STRING_KEY(string, key, description) WebCore::localizedString(CFSTR(key))

@@ -29,7 +29,6 @@
 
 #include "CSSStyleImageValue.h"
 #include "ContextDestructionObserverInlines.h"
-#include "DocumentInlines.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLImageElement.h"
 #include "HTMLVideoElement.h"

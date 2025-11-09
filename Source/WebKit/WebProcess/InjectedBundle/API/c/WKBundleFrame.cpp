@@ -40,13 +40,13 @@
 #include "WebPage.h"
 #include <WebCore/AXIsolatedObject.h>
 #include <WebCore/AXObjectCache.h>
-#include <WebCore/Document.h>
 #include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentPage.h>
+#include <WebCore/DocumentSecurityOrigin.h>
 #include <WebCore/FocusController.h>
 #include <WebCore/FrameLoader.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
-#include <WebCore/Page.h>
 #include <WebCore/ReportingScope.h>
 
 WKTypeID WKBundleFrameGetTypeID()

@@ -39,8 +39,8 @@ NSString * const PasteboardTypes::WebURLsWithTitlesPboardType = @"WebURLsWithTit
 NSString * const PasteboardTypes::WebURLPboardType = @"public.url";
 NSString * const PasteboardTypes::WebURLNamePboardType = @"public.url-name";
 NSString * const PasteboardTypes::WebDummyPboardType = @"Apple WebKit dummy pasteboard type";
-    
-NSArray* PasteboardTypes::forEditing()
+
+NSArray* PasteboardTypes::forEditingSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> types = @[
         WebArchivePboardType,
@@ -59,7 +59,7 @@ NSArray* PasteboardTypes::forEditing()
     return types.get().get();
 }
 
-NSArray* PasteboardTypes::forURL()
+NSArray* PasteboardTypes::forURLSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> types = @[
         WebURLsWithTitlesPboardType,
@@ -73,7 +73,7 @@ NSArray* PasteboardTypes::forURL()
     return types.get().get();
 }
 
-NSArray* PasteboardTypes::forImages()
+NSArray* PasteboardTypes::forImagesSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> types = @[
         WebCore::legacyTIFFPasteboardTypeSingleton(),
@@ -86,7 +86,7 @@ NSArray* PasteboardTypes::forImages()
     return types.get().get();
 }
 
-NSArray* PasteboardTypes::forImagesWithArchive()
+NSArray* PasteboardTypes::forImagesWithArchiveSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> types = @[
         WebCore::legacyTIFFPasteboardTypeSingleton(),
@@ -101,7 +101,7 @@ NSArray* PasteboardTypes::forImagesWithArchive()
     return types.get().get();
 }
 
-NSArray* PasteboardTypes::forSelection()
+NSArray* PasteboardTypes::forSelectionSingleton()
 {
     static NeverDestroyed<RetainPtr<NSArray>> types = @[
         WebArchivePboardType,
@@ -113,7 +113,7 @@ NSArray* PasteboardTypes::forSelection()
     ];
     return types.get().get();
 }
-    
+
 } // namespace WebKit
 
 #endif // PLATFORM(MAC)

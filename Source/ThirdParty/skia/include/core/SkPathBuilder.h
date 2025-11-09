@@ -73,29 +73,42 @@ public:
     SkPathFillType fillType() const { return fFillType; }
 
     /** Returns minimum and maximum axes values of SkPoint array.
-        Returns (0, 0, 0, 0) if SkPathBuilder contains no points. Returned bounds width and height
-        may be larger or smaller than area affected when SkPath is drawn.
+        Returns (0, 0, 0, 0) if SkPathBuilder contains no points.
 
         SkRect returned includes all SkPoint added to SkPathBuilder, including SkPoint associated
         with kMove_Verb that define empty contours.
 
-        @return  bounds of all SkPoint in SkPoint array
+        If any of the points are non-finite, returns {}.
+
+        @return  bounds of all SkPoint in SkPoint array, or {}.
     */
-    SkRect computeBounds() const;
+    std::optional<SkRect> computeFiniteBounds() const {
+        return SkRect::Bounds(fPts);
+    }
+
+    // DEPRECATED -- returns "empty" if the bounds are non-finite
+    SkRect computeBounds() const {
+        if (auto bounds = this->computeFiniteBounds()) {
+            return *bounds;
+        }
+        return SkRect::MakeEmpty();
+    }
 
     /** Returns an SkPath representing the current state of the SkPathBuilder. The builder is
         unchanged after returning the path.
 
+        @param mx if present, applied to the points after they are copied into the resulting path.
         @return  SkPath representing the current state of the builder.
      */
-    SkPath snapshot() const;
+    SkPath snapshot(const SkMatrix* mx = nullptr) const;
 
     /** Returns an SkPath representing the current state of the SkPathBuilder. The builder is
         reset to empty after returning the path.
 
+        @param mx if present, applied to the points after they are copied into the resulting path.
         @return  SkPath representing the current state of the builder.
      */
-    SkPath detach();
+    SkPath detach(const SkMatrix* mx = nullptr);
 
     /** Sets SkPathFillType, the rule used to fill SkPath. While there is no
         check that ft is legal, values outside of SkPathFillType are not supported.
@@ -646,6 +659,10 @@ public:
     */
     SkPathBuilder& addArc(const SkRect& oval, SkScalar startAngleDeg, SkScalar sweepAngleDeg);
 
+    SkPathBuilder& addLine(SkPoint a, SkPoint b) {
+        return this->moveTo(a).lineTo(b);
+    }
+
     /** Adds a new contour to the SkPathBuilder, defined by the rect, and wound in the
         specified direction. The verbs added to the path will be:
 
@@ -799,9 +816,7 @@ public:
     */
     SkPathBuilder& addPath(const SkPath& src,
                            SkPath::AddPathMode mode = SkPath::kAppend_AddPathMode) {
-        SkMatrix m;
-        m.reset();
-        return this->addPath(src, m, mode);
+        return this->addPath(src, SkMatrix::I(), mode);
     }
 
     /** Appends src to SkPathBuilder, transformed by matrix. Transformed curves may have different

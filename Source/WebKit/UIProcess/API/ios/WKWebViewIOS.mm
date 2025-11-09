@@ -254,13 +254,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     auto sidesWithInsets = [](UIEdgeInsets insets) {
         WebCore::BoxSideSet sides;
         if (insets.top > 0)
-            sides.add(WebCore::BoxSideFlag::Top);
+            sides.add(WebCore::BoxSide::Top);
         if (insets.left > 0)
-            sides.add(WebCore::BoxSideFlag::Left);
+            sides.add(WebCore::BoxSide::Left);
         if (insets.bottom > 0)
-            sides.add(WebCore::BoxSideFlag::Bottom);
+            sides.add(WebCore::BoxSide::Bottom);
         if (insets.right > 0)
-            sides.add(WebCore::BoxSideFlag::Right);
+            sides.add(WebCore::BoxSide::Right);
         return sides;
     };
     BOOL updateFixedColorExtensionViews = sidesWithInsets(_obscuredInsets) != sidesWithInsets(obscuredInsets);
@@ -354,15 +354,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (WebCore::IntDegrees)_deviceOrientationIgnoringOverrides
 {
-    auto orientation = UIInterfaceOrientationUnknown;
-    auto application = UIApplication.sharedApplication;
+    return deviceOrientationForUIInterfaceOrientation([&] {
+        if (auto windowScene = self.window.windowScene)
+            return windowScene.effectiveGeometry.interfaceOrientation;
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if (!application._appAdoptsUISceneLifecycle)
-        orientation = application.statusBarOrientation;
+        return UIApplication.sharedApplication.statusBarOrientation;
 ALLOW_DEPRECATED_DECLARATIONS_END
-    else if (auto windowScene = self.window.windowScene)
-        orientation = windowScene.effectiveGeometry.interfaceOrientation;
-    return deviceOrientationForUIInterfaceOrientation(orientation);
+    }());
 }
 
 - (void)_dynamicUserInterfaceTraitDidChange
@@ -826,6 +824,12 @@ static WebCore::Color scrollViewBackgroundColor(WKWebView *webView, AllowPageBac
 #if PLATFORM(WATCHOS)
         safeAreaInsets = UIEdgeInsetsAdd(safeAreaInsets, self._contentInsetsFromSystemMinimumLayoutMargins, self._effectiveObscuredInsetEdgesAffectedBySafeArea);
 #endif
+        if (_haveSetObscuredInsets) {
+            safeAreaInsets.top = std::max<CGFloat>(0., safeAreaInsets.top - _obscuredInsets.top);
+            safeAreaInsets.left = std::max<CGFloat>(0., safeAreaInsets.left - _obscuredInsets.left);
+            safeAreaInsets.bottom = std::max<CGFloat>(0., safeAreaInsets.bottom - _obscuredInsets.bottom);
+            safeAreaInsets.right = std::max<CGFloat>(0., safeAreaInsets.right - _obscuredInsets.right);
+        }
         return safeAreaInsets;
     }
 
@@ -3994,7 +3998,8 @@ static bool isLockdownModeWarningNeeded()
             if (!appDisplayName)
                 appDisplayName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(__bridge NSString *)kCFBundleNameKey];
 
-            auto alert = WebKit::createUIAlertController(adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Lockdown Mode is Turned On For “%@“", "Lockdown Mode alert title"), appDisplayName]).get(), message.get());
+            SUPPRESS_UNRETAINED_ARG RetainPtr title = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Lockdown Mode is Turned On For “%@“", "Lockdown Mode alert title"), appDisplayName]);
+            auto alert = WebKit::createUIAlertController(title.get(), message.get());
 
             [alert addAction:[UIAlertAction actionWithTitle:WEB_UI_NSSTRING(@"OK", "Lockdown Mode alert OK button") style:UIAlertActionStyleDefault handler:nil]];
 
@@ -4545,6 +4550,11 @@ static bool isLockdownModeWarningNeeded()
 }
 
 - (void)didEndFormControlInteraction
+{
+    // For subclasses to override.
+}
+
+- (void)didEnsurePositionInformationIsUpToDate
 {
     // For subclasses to override.
 }

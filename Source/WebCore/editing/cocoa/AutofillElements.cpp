@@ -26,6 +26,7 @@
 #include "config.h"
 #include "AutofillElements.h"
 
+#include "DocumentPage.h"
 #include "FocusController.h"
 #include "FocusControllerTypes.h"
 #include "Logging.h"

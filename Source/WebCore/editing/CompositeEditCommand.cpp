@@ -36,13 +36,14 @@
 #include "DeleteFromTextNodeCommand.h"
 #include "DeleteSelectionCommand.h"
 #include "DocumentFragment.h"
-#include "DocumentInlines.h"
 #include "DocumentMarkerController.h"
+#include "DocumentView.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "EditorInsertAction.h"
 #include "ElementTraversal.h"
 #include "Event.h"
+#include "FrameDestructionObserverInlines.h"
 #include "HTMLBRElement.h"
 #include "HTMLDivElement.h"
 #include "HTMLLIElement.h"
@@ -454,7 +455,7 @@ EditCommandComposition* CompositeEditCommand::composition() const
     for (RefPtr command = this; command; command = command->parent()) {
         if (auto composition = command->m_composition) {
             ASSERT(!command->parent());
-            return composition.get();
+            return composition.unsafeGet();
         }
     }
     return nullptr;
@@ -467,7 +468,7 @@ EditCommandComposition& CompositeEditCommand::ensureComposition()
         command = WTFMove(parent);
     if (!command->m_composition)
         command->m_composition = EditCommandComposition::create(document(), startingSelection(), endingSelection(), editingAction());
-    return *command->m_composition;
+    return *command->m_composition.unsafeGet();
 }
 
 bool CompositeEditCommand::preservesTypingStyle() const

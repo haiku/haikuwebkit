@@ -219,6 +219,11 @@ public:
     enum class SiteState : uint8_t { NotYetSpecified, MultipleSites, SharedProcess };
     const Expected<WebCore::Site, SiteState>& site() const { return m_site; }
 
+    bool isSharedProcess() const { return !m_site && m_site.error() == SiteState::SharedProcess; }
+    const std::optional<WebCore::Site>& sharedProcessMainFrameSite() const { return m_sharedProcessMainFrameSite; }
+    void addSharedProcessDomain(const WebCore::RegistrableDomain&);
+    const HashSet<WebCore::RegistrableDomain>& sharedProcessDomains() const { return m_sharedProcessDomains; }
+
     enum class WillShutDown : bool { No, Yes };
     void setIsInProcessCache(bool, WillShutDown = WillShutDown::No);
     bool isInProcessCache() const { return m_isInProcessCache; }
@@ -398,7 +403,7 @@ public:
     ShutdownPreventingScopeCounter::Token shutdownPreventingScope() { return m_shutdownPreventingScopeCounter.count(); }
 
     void didStartProvisionalLoadForMainFrame(const URL&);
-    void didStartUsingProcessForSiteIsolation(const std::optional<WebCore::Site>&);
+    void didStartUsingProcessForSiteIsolation(const std::optional<WebCore::Site>&, const WebCore::Site& mainFrameSite);
 
     // ProcessThrottlerClient
     void sendPrepareToSuspend(IsSuspensionImminent, double remainingRunTime, CompletionHandler<void()>&&) final;
@@ -569,6 +574,10 @@ public:
     void addSandboxExtensionForFile(const String& fileName, SandboxExtension::Handle);
     void clearSandboxExtensions();
 
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    bool receivedLogsDuringLaunchForTesting() const { return m_didReceiveLogsDuringLaunchForTesting; }
+#endif
+
 private:
     Type type() const final { return Type::WebContent; }
 
@@ -595,6 +604,9 @@ private:
     bool shouldEnableLockdownMode() const final { return m_lockdownMode == LockdownMode::Enabled; }
     bool shouldEnableEnhancedSecurity() const final { return m_enhancedSecurity == EnhancedSecurity::Enabled; }
     bool shouldDisableJITCage() const final;
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    RefPtr<XPCEventHandler> xpcEventHandler() const final;
+#endif
 
     void validateFreezerStatus();
 
@@ -769,6 +781,8 @@ private:
     HashMap<String, uint64_t> m_pageURLRetainCountMap;
 
     Expected<WebCore::Site, SiteState> m_site { Unexpected<SiteState> { SiteState::NotYetSpecified } };
+    std::optional<WebCore::Site> m_sharedProcessMainFrameSite;
+    HashSet<WebCore::RegistrableDomain> m_sharedProcessDomains;
     bool m_isInProcessCache { false };
 
     enum class NoOrMaybe { No, Maybe } m_isResponsive;
@@ -878,6 +892,22 @@ private:
 #endif
 
     HashMap<String, SandboxExtension::Handle> m_fileSandboxExtensions;
+
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    class WebProcessXPCEventHandler final : public XPCEventHandler {
+    public:
+        explicit WebProcessXPCEventHandler(const WebProcessProxy&);
+
+        bool handleXPCEvent(xpc_object_t) final;
+
+    private:
+        WeakPtr<WebProcessProxy> m_webProcess;
+
+        bool m_logEndpointEnabled { true };
+    };
+
+    bool m_didReceiveLogsDuringLaunchForTesting { false };
+#endif // ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, const WebProcessProxy&);

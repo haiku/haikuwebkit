@@ -116,7 +116,7 @@ private:
 
     const Ref<CSSFontFaceSet> m_backing;
     HashMap<RefPtr<FontFace>, Vector<Ref<PendingPromise>>> m_pendingPromises;
-    const UniqueRef<ReadyPromise> m_readyPromise;
+    UniqueRef<ReadyPromise> m_readyPromise;
 
     bool m_isDocumentLoaded { true };
 };

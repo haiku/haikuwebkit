@@ -66,6 +66,10 @@
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+#import "ModelPlayerAccessibilityChildren.h"
+#endif
+
 @interface NSObject (AccessibilityPrivate)
 - (void)_accessibilityUnregister;
 - (NSString *)accessibilityLabel;
@@ -357,7 +361,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
         return nil;
 
     if (RetainPtr remoteElement = axObject->remoteFramePlatformElement())
-        return remoteElement.get();
+        return remoteElement.unsafeGet();
 
     // If this is a good accessible object to return, no extra work is required.
     if ([axObject->wrapper() accessibilityCanFuzzyHitTest])
@@ -398,7 +402,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     for (const auto& child : self.axBackingObject->unignoredChildren()) {
         auto* wrapper = child->wrapper();
         if (child->isRemoteFrame()) {
-            if (id platformRemoteFrame = child->remoteFramePlatformElement().get())
+            if (id platformRemoteFrame = child->remoteFramePlatformElement().unsafeGet())
                 [array addObject:platformRemoteFrame];
         } else if (child->isAttachment()) {
             if (id attachmentView = [wrapper attachmentView])
@@ -407,9 +411,9 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
             [array addObject:wrapper];
     }
 
-#if ENABLE(MODEL_ELEMENT)
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
     if (self.axBackingObject->isModel()) {
-        for (auto child : self.axBackingObject->modelElementChildren())
+        for (auto child : self.axBackingObject->modelElementChildren().children)
             [array addObject:child.get()];
     }
 #endif
@@ -450,7 +454,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
         if (id attachmentView = [wrapper attachmentView])
             return attachmentView;
     } else if (children[elementIndex]->isRemoteFrame()) {
-        if (id remoteFramePlatformElement = children[elementIndex]->remoteFramePlatformElement().get())
+        if (id remoteFramePlatformElement = children[elementIndex]->remoteFramePlatformElement().unsafeGet())
             return remoteFramePlatformElement;
     }
 

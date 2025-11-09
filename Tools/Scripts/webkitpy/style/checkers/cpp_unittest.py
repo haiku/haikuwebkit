@@ -6105,6 +6105,36 @@ class WebKitStyleTest(CppStyleTestBase):
             "  [runtime/wtf_move] [4]",
             'foo.mm')
 
+    def test_unsafe_get(self):
+        self.assert_lint(
+            'auto ptr = obj.get();',
+            '',
+            'foo.cpp')
+
+        self.assert_lint(
+            'auto ptr = obj.unsafeGet();',
+            "Avoid using 'unsafeGet()' by extending the lifetime of the RefPtr."
+            "  [runtime/unsafe_get_ptr] [5]",
+            'foo.cpp')
+
+        self.assert_lint(
+            'auto ptr = obj.unsafeGet();',
+            "Avoid using 'unsafeGet()' by extending the lifetime of the RefPtr."
+            "  [runtime/unsafe_get_ptr] [5]",
+            'foo.mm')
+
+        self.assert_lint(
+            'auto ptr = obj.unsafePtr();',
+            "Avoid using 'unsafePtr()' by extending the lifetime of the Ref."
+            "  [runtime/unsafe_get_ptr] [5]",
+            'foo.cpp')
+
+        self.assert_lint(
+            'auto ptr = obj.unsafePtr();',
+            "Avoid using 'unsafePtr()' by extending the lifetime of the Ref."
+            "  [runtime/unsafe_get_ptr] [5]",
+            'foo.mm')
+
     def test_wtf_never_destroyed(self):
         self.assert_lint(
              'static NeverDestroyed<Foo> foo;',
@@ -6526,6 +6556,8 @@ class WebKitStyleTest(CppStyleTestBase):
         self.assert_lint('postTask([foo = protectedFoo(), bar]() {', '')
         self.assert_lint('postTask([foo = protectedFoo(), bar](ScriptExecutionContext& context) {', '')
         self.assert_lint('postTask([foo = bar().protectedFoo(), bar](ScriptExecutionContext& context) {', '')
+        self.assert_lint('bool ancestorsRevealed = revealClosedDetailsAndHiddenUntilFoundAncestors(simpleRange->protectedStartContainer());', '')
+        self.assert_lint('bool ancestorsRevealed = revealClosedDetailsAndHiddenUntilFoundAncestors(simpleRange-checkedStartContainer());', '')
 
         self.assert_lint('auto foo = checkedFoo()->bar();', '')
         self.assert_lint('postTask([foo = checkedFoo()] {', '')

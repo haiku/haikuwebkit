@@ -47,7 +47,6 @@ messages -> RemoteRenderingBackend Stream {
     CacheFilter(Ref<WebCore::Filter> filter) NotStreamEncodable
     ReleaseFilter(WebCore::RenderingResourceIdentifier identifier)
     ReleaseMemory()
-    ReleaseNativeImages()
     CreateImageBufferSet(WebKit::ImageBufferSetIdentifier identifier, WebKit::RemoteGraphicsContextIdentifier contextIdentifier)
     ReleaseImageBufferSet(WebKit::ImageBufferSetIdentifier identifier)
 

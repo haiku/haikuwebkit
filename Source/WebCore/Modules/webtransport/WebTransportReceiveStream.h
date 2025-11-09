@@ -44,7 +44,7 @@ public:
 
     void getStats(ScriptExecutionContext&, Ref<DeferredPromise>&&);
 private:
-    WebTransportReceiveStream(WebTransportStreamIdentifier, WebTransportSession&, Ref<InternalReadableStream>&&);
+    WebTransportReceiveStream(ScriptExecutionContext*, WebTransportStreamIdentifier, WebTransportSession&, Ref<InternalReadableStream>&&);
 
     virtual Type type() const { return Type::WebTransport; }
 

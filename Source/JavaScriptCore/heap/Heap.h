@@ -235,6 +235,7 @@ class Heap;
     v(float32ArraySpace, cellHeapCellType, JSFloat32Array) \
     v(float64ArraySpace, cellHeapCellType, JSFloat64Array) \
     v(functionRareDataSpace, destructibleCellHeapCellType, FunctionRareData) \
+    v(functionWithFieldsSpace, cellHeapCellType, JSFunctionWithFields) \
     v(generatorSpace, cellHeapCellType, JSGenerator) \
     v(globalObjectSpace, globalObjectHeapCellType, JSGlobalObject) \
     v(injectedScriptHostSpace, injectedScriptHostSpaceHeapCellType, Inspector::JSInjectedScriptHost) \
@@ -298,6 +299,7 @@ class Heap;
     v(withScopeSpace, cellHeapCellType, JSWithScope) \
     v(wrapForValidIteratorSpace, cellHeapCellType, JSWrapForValidIterator) \
     v(promiseAllContextSpace, cellHeapCellType, JSPromiseAllContext) \
+    v(promiseAllGlobalContextSpace, cellHeapCellType, JSPromiseAllGlobalContext) \
     v(promiseReactionSpace, cellHeapCellType, JSPromiseReaction) \
     v(asyncFromSyncIteratorSpace, cellHeapCellType, JSAsyncFromSyncIterator) \
     v(regExpStringIteratorSpace, cellHeapCellType, JSRegExpStringIterator) \

@@ -436,7 +436,7 @@ ReadableStream& WebTransport::incomingUnidirectionalStreams()
     return m_incomingUnidirectionalStreams.get();
 }
 
-void WebTransport::networkProcessCrashed()
+void WebTransport::didFail()
 {
     cleanup(DOMException::create(ExceptionCode::AbortError), std::nullopt);
 }

@@ -661,7 +661,7 @@ static inline void disableAllWasmJITOptions()
     Options::useBBQJIT() = false;
     Options::useOMGJIT() = false;
 
-    Options::useWasmSIMD() = false;
+    Options::useWasmSIMD() = Options::useWasmSIMD() && Options::useWasmIPIntSIMD();
 
     Options::dumpWasmDisassembly() = false;
     Options::dumpBBQDisassembly() = false;
@@ -674,13 +674,14 @@ static inline void disableAllWasmOptions()
 
     Options::useWasm() = false;
     Options::useWasmIPInt() = false;
+    Options::useWasmIPIntSIMD() = false;
     Options::failToCompileWasmCode() = true;
 
     Options::useWasmFastMemory() = false;
     Options::useWasmFaultSignalHandler() = false;
     Options::numberOfWasmCompilerThreads() = 0;
 
-    // SIMD is already disabled by JITOptions
+    Options::useWasmSIMD() = false;
     Options::useWasmRelaxedSIMD() = false;
     Options::useWasmTailCalls() = false;
 }
@@ -702,7 +703,6 @@ static inline void disableAllJITOptions()
     Options::usePollingTraps() = true;
 
     Options::dumpDisassembly() = false;
-    Options::asyncDisassembly() = false;
     Options::dumpBaselineDisassembly() = false;
     Options::dumpDFGDisassembly() = false;
     Options::dumpFTLDisassembly() = false;
@@ -845,7 +845,6 @@ void Options::notifyOptionsChanged()
         }
 
         if (Options::dumpDisassembly()
-            || Options::asyncDisassembly()
             || Options::dumpBaselineDisassembly()
             || Options::dumpDFGDisassembly()
             || Options::dumpFTLDisassembly()
@@ -1366,6 +1365,10 @@ void Options::assertOptionsAreCoherent()
     if (useWasm() && !(useWasmIPInt() || useBBQJIT())) {
         coherent = false;
         dataLog("INCOHERENT OPTIONS: at least one of useWasmIPInt, or useBBQJIT must be true\n");
+    }
+    if (useWasmIPIntSIMD() && useWasmRelaxedSIMD()) {
+        coherent = false;
+        dataLog("INCOHERENT OPTIONS: useWasmIPIntSIMD and useWasmRelaxedSIMD cannot both be enabled (relaxed SIMD opcodes 0x100-0x10c are not yet supported in IPInt)\n");
     }
     if (useProfiler() && useConcurrentJIT()) {
         coherent = false;

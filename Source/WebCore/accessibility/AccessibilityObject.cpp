@@ -50,7 +50,7 @@
 #include "ContainerNodeInlines.h"
 #include "CustomElementDefaultARIA.h"
 #include "DOMTokenList.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "EditingInlines.h"
 #include "Editor.h"
 #include "ElementInlines.h"
@@ -119,6 +119,10 @@
 #include <wtf/text/StringView.h>
 #include <wtf/text/WTFString.h>
 #include <wtf/unicode/CharacterNames.h>
+
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+#include "ModelPlayerAccessibilityChildren.h"
+#endif
 
 namespace WebCore {
 
@@ -591,7 +595,7 @@ AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, NOESCAPE co
         accessibleObject = cache->getOrCreate(const_cast<Node&>(*axNode));
     }
 
-    return accessibleObject.get();
+    return accessibleObject.unsafeGet();
 }
 
 // FIXME: Usages of this function should be replaced by a new flag in AccessibilityObject::m_ancestorFlags.
@@ -1372,10 +1376,10 @@ IntRect AccessibilityObject::boundingBoxForQuads(RenderObject* obj, const Vector
 bool AccessibilityObject::press()
 {
     // The presence of the actionElement will confirm whether we should even attempt a press.
-    RefPtr actionElem = actionElement();
-    if (!actionElem)
+    RefPtr actionElement = this->actionElement();
+    if (!actionElement)
         return false;
-    if (RefPtr frame = actionElem->document().frame())
+    if (RefPtr frame = actionElement->document().frame())
         frame->loader().resetMultipleFormSubmissionProtection();
 
     // Hit test at this location to determine if there is a sub-node element that should act
@@ -1398,8 +1402,8 @@ bool AccessibilityObject::press()
 
     // Prefer the actionElement instead of this node, if the actionElement is inside this node.
     RefPtr pressElement = this->element();
-    if (!pressElement || actionElem->isDescendantOf(*pressElement))
-        pressElement = WTFMove(actionElem);
+    if (!pressElement || actionElement->isDescendantOf(*pressElement))
+        pressElement = actionElement;
 
     ASSERT(pressElement);
     // Prefer the hit test element, if it is inside the target element.
@@ -1414,7 +1418,17 @@ bool AccessibilityObject::press()
         dispatchedEvent = dispatchTouchEvent();
 #endif
 
-    return dispatchedEvent || pressElement->accessKeyAction(true) || pressElement->dispatchSimulatedClick(nullptr, SendMouseUpDownEvents);
+    if (dispatchedEvent)
+        return true;
+
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(*actionElement)) {
+        if (RefPtr inputType = input->isDateField() || input->isDateTimeLocalField() ? input->inputType() : nullptr) {
+            inputType->handleAccessibilityActivation();
+            return true;
+        }
+    }
+
+    return pressElement->accessKeyAction(true) || pressElement->dispatchSimulatedClick(nullptr, SendMouseUpDownEvents);
 }
 
 bool AccessibilityObject::dispatchTouchEvent()
@@ -1770,8 +1784,9 @@ bool AccessibilityObject::replacedNodeNeedsCharacter(Node& replacedNode)
     return true;
 }
 
-#if PLATFORM(COCOA) && ENABLE(MODEL_ELEMENT)
-Vector<RetainPtr<id>> AccessibilityObject::modelElementChildren()
+#if ENABLE(MODEL_ELEMENT_ACCESSIBILITY)
+
+ModelPlayerAccessibilityChildren AccessibilityObject::modelElementChildren()
 {
     RefPtr model = dynamicDowncast<HTMLModelElement>(node());
     if (!model)
@@ -1779,6 +1794,7 @@ Vector<RetainPtr<id>> AccessibilityObject::modelElementChildren()
 
     return model->accessibilityChildren();
 }
+
 #endif
 
 // Finds a RenderListItem parent given a node.
@@ -1863,11 +1879,11 @@ bool AccessibilityObject::shouldCacheStringValue() const
     if (CheckedPtr containingBlock = renderer->containingBlock()) {
         // Check for ::first-letter, which would require some special handling to serve off the main-thread
         // that we don't have right now.
-        if (containingBlock->style().hasPseudoStyle(PseudoId::FirstLetter))
+        if (containingBlock->style().hasPseudoStyle(PseudoElementType::FirstLetter))
             return true;
         if (containingBlock->isAnonymous()) {
             containingBlock = containingBlock->containingBlock();
-            return containingBlock && containingBlock->style().hasPseudoStyle(PseudoId::FirstLetter);
+            return containingBlock && containingBlock->style().hasPseudoStyle(PseudoElementType::FirstLetter);
         }
     }
     // Getting to the end means we can avoid caching string value.
@@ -2436,7 +2452,7 @@ static RenderObject* nearestRendererFromNode(Node& node)
     for (RefPtr ancestor = &node; ancestor && !renderer; ancestor = composedParentIgnoringDocumentFragments(*ancestor))
         renderer = ancestor->renderer();
 
-    return renderer.get();
+    return renderer.unsafeGet();
 }
 
 static int zIndexFromRenderer(RenderObject* renderer)
@@ -3045,7 +3061,7 @@ AccessibilityObject* AccessibilityObject::elementAccessibilityHitTest(const IntP
                 if (RefPtr remoteHostWidget = cache->getOrCreate(*widget)) {
                     remoteHostWidget->updateChildrenIfNecessary();
                     RefPtr scrollView = dynamicDowncast<AccessibilityScrollView>(*remoteHostWidget);
-                    return scrollView ? scrollView->remoteFrame().get() : nullptr;
+                    return scrollView ? scrollView->remoteFrame().unsafeGet() : nullptr;
                 }
             }
         }

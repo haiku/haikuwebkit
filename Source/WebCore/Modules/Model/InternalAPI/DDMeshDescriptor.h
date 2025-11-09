@@ -25,19 +25,19 @@
 
 #pragma once
 
-#include "DDVertexAttributeFormat.h"
-#include "DDVertexLayout.h"
-#include <WebCore/ModelObjectDescriptorBase.h>
+#include <WebCore/DDVertexAttributeFormat.h>
+#include <WebCore/DDVertexLayout.h>
 
 namespace WebCore::DDModel {
 
-struct DDMeshDescriptor : public ObjectDescriptorBase {
+struct DDMeshDescriptor {
     int32_t indexCapacity { 0 };
     int32_t indexType { 0 };
     int32_t vertexBufferCount { 0 };
     int32_t vertexCapacity { 0 };
     Vector<DDVertexAttributeFormat> vertexAttributes;
     Vector<DDVertexLayout> vertexLayouts;
+    String identifier;
 };
 
 }

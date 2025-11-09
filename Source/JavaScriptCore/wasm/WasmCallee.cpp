@@ -82,7 +82,8 @@ void Callee::reportToVMsForDestruction()
 {
     // We don't know which VMs a Module has ever run on so we just report to all of them.
     VMManager::forEachVM([&] (VM& vm) {
-        vm.heap.reportWasmCalleePendingDestruction(Ref(*this));
+        if (vm.isInService())
+            vm.heap.reportWasmCalleePendingDestruction(Ref(*this));
         return IterationStatus::Continue;
     });
 }

@@ -55,7 +55,7 @@
 namespace WebKit {
 using namespace WebCore;
 
-void WebPage::platformReinitialize()
+void WebPage::platformReinitializeAccessibilityToken()
 {
 }
 

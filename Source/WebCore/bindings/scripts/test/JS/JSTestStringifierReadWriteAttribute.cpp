@@ -260,7 +260,7 @@ extern "C" { extern void (*const __identifier("??_7TestStringifierReadWriteAttri
 extern "C" { extern void* _ZTVN7WebCore33TestStringifierReadWriteAttributeE[]; }
 #endif
 template<std::same_as<TestStringifierReadWriteAttribute> T>
-static inline void verifyVTable(TestStringifierReadWriteAttribute* ptr) 
+static inline void verifyVTable(TestStringifierReadWriteAttribute* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -280,8 +280,9 @@ static inline void verifyVTable(TestStringifierReadWriteAttribute* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestStringifierReadWriteAttribute>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestStringifierReadWriteAttribute>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestStringifierReadWriteAttribute>(impl.ptr());
 #endif

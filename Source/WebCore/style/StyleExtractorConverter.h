@@ -62,7 +62,6 @@
 #include "FontCascade.h"
 #include "FontSelectionValueInlines.h"
 #include "HTMLFrameOwnerElement.h"
-#include "Length.h"
 #include "PathOperation.h"
 #include "PerspectiveTransformOperation.h"
 #include "RenderBlock.h"
@@ -124,9 +123,6 @@ public:
     static Ref<CSSPrimitiveValue> convert(ExtractorState&, short);
     static Ref<CSSPrimitiveValue> convert(ExtractorState&, const ScopedName&);
 
-    static Ref<CSSPrimitiveValue> convertLength(ExtractorState&, const WebCore::Length&);
-    static Ref<CSSPrimitiveValue> convertLength(const RenderStyle&, const WebCore::Length&);
-
     template<typename T> static Ref<CSSPrimitiveValue> convertNumberAsPixels(ExtractorState&, T);
 
     template<CSSValueID> static Ref<CSSPrimitiveValue> convertCustomIdentAtomOrKeyword(ExtractorState&, const AtomString&);
@@ -138,8 +134,6 @@ public:
 
     // MARK: Shared conversions
 
-    static Ref<CSSValue> convertGlyphOrientation(ExtractorState&, GlyphOrientation);
-    static Ref<CSSValue> convertGlyphOrientationOrAuto(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType>);
     static Ref<CSSValue> convertWebkitTextCombine(ExtractorState&, TextCombine);
     static Ref<CSSValue> convertImageOrientation(ExtractorState&, ImageOrientation);
@@ -179,8 +173,6 @@ public:
     // MARK: Font conversions
 
     static Ref<CSSValue> convertFontFamily(ExtractorState&, const AtomString&);
-    static Ref<CSSValue> convertFontFeatureSettings(ExtractorState&, const FontFeatureSettings&);
-    static Ref<CSSValue> convertFontVariationSettings(ExtractorState&, const FontVariationSettings&);
 
     // MARK: Grid conversions
 
@@ -239,18 +231,6 @@ inline Ref<CSSPrimitiveValue> ExtractorConverter::convert(ExtractorState&, const
     return CSSPrimitiveValue::create(scopedName.name);
 }
 
-inline Ref<CSSPrimitiveValue> ExtractorConverter::convertLength(ExtractorState& state, const WebCore::Length& length)
-{
-    return convertLength(state.style, length);
-}
-
-inline Ref<CSSPrimitiveValue> ExtractorConverter::convertLength(const RenderStyle& style, const WebCore::Length& length)
-{
-    if (length.isFixed())
-        return CSSPrimitiveValue::create(adjustFloatForAbsoluteZoom(length.value(), style), CSSUnitType::CSS_PX);
-    return CSSPrimitiveValue::create(length, style);
-}
-
 template<typename T> Ref<CSSPrimitiveValue> ExtractorConverter::convertNumberAsPixels(ExtractorState& state, T number)
 {
     return CSSPrimitiveValue::create(adjustFloatForAbsoluteZoom(number, state.style), CSSUnitType::CSS_PX);
@@ -294,43 +274,6 @@ inline Ref<CSSValue> ExtractorConverter::convertTransformationMatrix(const Rende
 }
 
 // MARK: - Shared conversions
-
-inline Ref<CSSValue> ExtractorConverter::convertGlyphOrientation(ExtractorState&, GlyphOrientation orientation)
-{
-    switch (orientation) {
-    case GlyphOrientation::Degrees0:
-        return CSSPrimitiveValue::create(0.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees90:
-        return CSSPrimitiveValue::create(90.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees180:
-        return CSSPrimitiveValue::create(180.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees270:
-        return CSSPrimitiveValue::create(270.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Auto:
-        ASSERT_NOT_REACHED();
-        return CSSPrimitiveValue::create(0.0f, CSSUnitType::CSS_DEG);
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertGlyphOrientationOrAuto(ExtractorState&, GlyphOrientation orientation)
-{
-    switch (orientation) {
-    case GlyphOrientation::Degrees0:
-        return CSSPrimitiveValue::create(0.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees90:
-        return CSSPrimitiveValue::create(90.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees180:
-        return CSSPrimitiveValue::create(180.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Degrees270:
-        return CSSPrimitiveValue::create(270.0f, CSSUnitType::CSS_DEG);
-    case GlyphOrientation::Auto:
-        return CSSPrimitiveValue::create(CSSValueAuto);
-    }
-
-    RELEASE_ASSERT_NOT_REACHED();
-}
 
 inline Ref<CSSValue> ExtractorConverter::convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType> marginTrim)
 {
@@ -807,13 +750,13 @@ inline Ref<CSSValue> ExtractorConverter::convertPositionArea(ExtractorState&, co
         case PositionAreaAxis::X:
             switch (track) {
             case PositionAreaTrack::Start:
-                return self == PositionAreaSelf::No ? CSSValueXStart : CSSValueXSelfStart;
+                return self == PositionAreaSelf::No ? CSSValueXStart : CSSValueSelfXStart;
             case PositionAreaTrack::SpanStart:
-                return self == PositionAreaSelf::No ? CSSValueSpanXStart : CSSValueSpanXSelfStart;
+                return self == PositionAreaSelf::No ? CSSValueSpanXStart : CSSValueSpanSelfXStart;
             case PositionAreaTrack::End:
-                return self == PositionAreaSelf::No ? CSSValueXEnd : CSSValueXSelfEnd;
+                return self == PositionAreaSelf::No ? CSSValueXEnd : CSSValueSelfXEnd;
             case PositionAreaTrack::SpanEnd:
-                return self == PositionAreaSelf::No ? CSSValueSpanXEnd : CSSValueSpanXSelfEnd;
+                return self == PositionAreaSelf::No ? CSSValueSpanXEnd : CSSValueSpanSelfXEnd;
             case PositionAreaTrack::Center:
                 return CSSValueCenter;
             case PositionAreaTrack::SpanAll:
@@ -826,13 +769,13 @@ inline Ref<CSSValue> ExtractorConverter::convertPositionArea(ExtractorState&, co
         case PositionAreaAxis::Y:
             switch (track) {
             case PositionAreaTrack::Start:
-                return self == PositionAreaSelf::No ? CSSValueYStart : CSSValueYSelfStart;
+                return self == PositionAreaSelf::No ? CSSValueYStart : CSSValueSelfYStart;
             case PositionAreaTrack::SpanStart:
-                return self == PositionAreaSelf::No ? CSSValueSpanYStart : CSSValueSpanYSelfStart;
+                return self == PositionAreaSelf::No ? CSSValueSpanYStart : CSSValueSpanSelfYStart;
             case PositionAreaTrack::End:
-                return self == PositionAreaSelf::No ? CSSValueYEnd : CSSValueYSelfEnd;
+                return self == PositionAreaSelf::No ? CSSValueYEnd : CSSValueSelfYEnd;
             case PositionAreaTrack::SpanEnd:
-                return self == PositionAreaSelf::No ? CSSValueSpanYEnd : CSSValueSpanYSelfEnd;
+                return self == PositionAreaSelf::No ? CSSValueSpanYEnd : CSSValueSpanSelfYEnd;
             case PositionAreaTrack::Center:
                 return CSSValueCenter;
             case PositionAreaTrack::SpanAll:
@@ -1008,26 +951,6 @@ inline Ref<CSSValue> ExtractorConverter::convertFontFamily(ExtractorState& state
     if (auto familyIdentifier = identifierForFamily(family))
         return CSSPrimitiveValue::create(familyIdentifier);
     return state.pool.createFontFamilyValue(family);
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFontFeatureSettings(ExtractorState& state, const FontFeatureSettings& fontFeatureSettings)
-{
-    if (!fontFeatureSettings.size())
-        return CSSPrimitiveValue::create(CSSValueNormal);
-    CSSValueListBuilder list;
-    for (auto& feature : fontFeatureSettings)
-        list.append(CSSFontFeatureValue::create(FontTag(feature.tag()), convert(state, feature.value())));
-    return CSSValueList::createCommaSeparated(WTFMove(list));
-}
-
-inline Ref<CSSValue> ExtractorConverter::convertFontVariationSettings(ExtractorState& state, const FontVariationSettings& fontVariationSettings)
-{
-    if (fontVariationSettings.isEmpty())
-        return CSSPrimitiveValue::create(CSSValueNormal);
-    CSSValueListBuilder list;
-    for (auto& feature : fontVariationSettings)
-        list.append(CSSFontVariationValue::create(feature.tag(), convert(state, feature.value())));
-    return CSSValueList::createCommaSeparated(WTFMove(list));
 }
 
 // MARK: - Grid conversions

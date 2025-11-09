@@ -1018,10 +1018,6 @@ bool GPUConnectionToWebProcess::dispatchMessage(IPC::Connection& connection, IPC
         protectedRemoteMediaPlayerManagerProxy()->didReceivePlayerMessage(connection, decoder);
         return true;
     }
-    if (decoder.messageReceiverName() == Messages::RemoteMediaResourceManager::messageReceiverName()) {
-        protectedRemoteMediaResourceManager()->didReceiveMessage(connection, decoder);
-        return true;
-    }
 #endif
 
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)

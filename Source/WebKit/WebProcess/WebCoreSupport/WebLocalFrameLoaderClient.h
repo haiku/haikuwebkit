@@ -321,6 +321,8 @@ private:
     void frameNameChanged(const String&) final;
 
     RefPtr<WebCore::HistoryItem> createHistoryItemTree(bool clipAtTarget, WebCore::BackForwardItemIdentifier) const final;
+
+    RefPtr<WebCore::Frame> provisionalParentFrame() const final;
 };
 
 } // namespace WebKit

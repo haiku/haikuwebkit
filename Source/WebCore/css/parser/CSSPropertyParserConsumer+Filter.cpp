@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,9 +137,9 @@ static std::optional<CSS::DropShadowFunction> consumeFilterDropShadow(CSSParserT
     auto args = consumeFunction(range);
 
     std::optional<CSS::Color> color;
-    std::optional<CSS::Length<>> x;
-    std::optional<CSS::Length<>> y;
-    std::optional<CSS::Length<CSS::Nonnegative>> stdDeviation;
+    std::optional<CSS::Length<CSS::AllUnzoomed>> x;
+    std::optional<CSS::Length<CSS::AllUnzoomed>> y;
+    std::optional<CSS::Length<CSS::NonnegativeUnzoomed>> stdDeviation;
 
     auto consumeOptionalColor = [&] -> bool {
         if (color)
@@ -154,14 +154,14 @@ static std::optional<CSS::DropShadowFunction> consumeFilterDropShadow(CSSParserT
     auto consumeLengths = [&] -> bool {
         if (x)
             return false;
-        x = MetaConsumer<CSS::Length<>>::consume(args, state);
+        x = MetaConsumer<CSS::Length<CSS::AllUnzoomed>>::consume(args, state);
         if (!x)
             return false;
-        y = MetaConsumer<CSS::Length<>>::consume(args, state);
+        y = MetaConsumer<CSS::Length<CSS::AllUnzoomed>>::consume(args, state);
         if (!y)
             return false;
 
-        stdDeviation = MetaConsumer<CSS::Length<CSS::Nonnegative>>::consume(args, state);
+        stdDeviation = MetaConsumer<CSS::Length<CSS::NonnegativeUnzoomed>>::consume(args, state);
         return true;
     };
 
@@ -474,8 +474,8 @@ std::optional<Style::Filter> parseFilterValueListOrNoneRaw(const String& string,
     if (!range.atEnd())
         return { };
 
-    auto builderState = Style::BuilderState { style, Style::BuilderContext { document } };
-    return Style::toStyle(*filter, builderState);
+    auto builderState = Style::BuilderState::create(style, Style::BuilderContext { document });
+    return Style::toStyle(*filter, *CheckedPtr { builderState.ptr() });
 }
 
 } // namespace CSSPropertyParserHelpers

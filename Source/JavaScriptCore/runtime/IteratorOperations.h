@@ -172,7 +172,7 @@ ALWAYS_INLINE void forEachInIterationRecord(JSGlobalObject* globalObject, Iterat
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue nextMethod = iterationRecord.nextMethod;
-    auto callData = getCallData(nextMethod);
+    auto callData = getCallDataInline(nextMethod);
 
     std::optional<CachedCall> cachedCallHolder;
     CachedCall* cachedCall = nullptr;
@@ -278,7 +278,7 @@ void forEachInIterable(JSGlobalObject& globalObject, JSObject* iterable, JSValue
     RETURN_IF_EXCEPTION(scope, void());
 
     JSValue nextMethod = iterationRecord.nextMethod;
-    auto callData = getCallData(nextMethod);
+    auto callData = getCallDataInline(nextMethod);
 
     std::optional<CachedCall> cachedCallHolder;
     CachedCall* cachedCall = nullptr;

@@ -322,6 +322,14 @@ void VideoPresentationModelContext::audioSessionCategoryChanged(WebCore::AudioSe
     });
 }
 
+void VideoPresentationModelContext::routingContextUIDChanged(const String& routingContextUID)
+{
+    ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, routingContextUID);
+    m_clients.forEach([&](auto& client) {
+        client.routingContextUIDChanged(routingContextUID);
+    });
+}
+
 void VideoPresentationModelContext::requestCloseAllMediaPresentations(bool finishedWithMedia, CompletionHandler<void()>&& completionHandler)
 {
     RefPtr manager = m_manager.get();
@@ -677,11 +685,13 @@ void VideoPresentationManagerProxy::applicationDidBecomeActive()
 
 void VideoPresentationManagerProxy::requestRouteSharingPolicyAndContextUID(PlaybackSessionContextIdentifier contextId, CompletionHandler<void(WebCore::RouteSharingPolicy, String)>&& callback)
 {
-    // FIXME: This needs to be implemented for site isolation in a way that doesn't re-introduce rdar://155266545
-    if (RefPtr page = m_page.get())
-        page->protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::VideoPresentationManager::RequestRouteSharingPolicyAndContextUID(contextId.object()), WTFMove(callback), page->webPageIDInMainFrameProcess());
-    else
-        callback({ }, { });
+    RefPtr page = m_page.get();
+    if (!page)
+        return callback({ }, { });
+    RefPtr process = WebProcessProxy::processForIdentifier(contextId.processIdentifier());
+    if (!process)
+        return callback({ }, { });
+    process->sendWithAsyncReply(Messages::VideoPresentationManager::RequestRouteSharingPolicyAndContextUID(contextId.object()), WTFMove(callback), page->webPageIDInProcess(*process));
 }
 
 static Ref<PlatformVideoPresentationInterface> videoPresentationInterface(WebPageProxy& page, PlatformPlaybackSessionInterface& playbackSessionInterface)
@@ -1115,6 +1125,11 @@ void VideoPresentationManagerProxy::setPlayerIdentifier(PlaybackSessionContextId
 void VideoPresentationManagerProxy::audioSessionCategoryChanged(PlaybackSessionContextIdentifier contextId, WebCore::AudioSessionCategory category, WebCore::AudioSessionMode mode, WebCore::RouteSharingPolicy policy)
 {
     Ref { ensureModel(contextId) }->audioSessionCategoryChanged(category, mode, policy);
+}
+
+void VideoPresentationManagerProxy::routingContextUIDChanged(PlaybackSessionContextIdentifier contextId, const String& routingContextUID)
+{
+    Ref { ensureModel(contextId) }->routingContextUIDChanged(routingContextUID);
 }
 
 void VideoPresentationManagerProxy::setHasVideo(PlaybackSessionContextIdentifier contextId, bool hasVideo)

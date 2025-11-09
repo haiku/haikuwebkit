@@ -182,6 +182,79 @@ TEST(WKWebExtensionAPIMenus, MenuCreateWithVariousIds)
     Util::loadAndRunExtension(menusManifest, @{ @"background.js": backgroundScript });
 }
 
+TEST(WKWebExtensionAPIMenus, CreateMenuWithDeprecatedKeys)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"const createImageData = (size, color) => {",
+        @"  const context = new OffscreenCanvas(size, size).getContext('2d')",
+        @"  context.fillStyle = color",
+        @"  context.fillRect(0, 0, size, size)",
+
+        @"  return context.getImageData(0, 0, size, size)",
+        @"}",
+
+        @"const lightImageData = createImageData(16, 'black')",
+        @"const darkImageData = createImageData(16, 'white')",
+
+        @"browser.test.assertSafe(() => browser.menus.create({",
+        @"  id: 'menu-item-with-deprecated-color-schemes-key',",
+        @"  title: 'Menu Item Duplicate Color Schemes',",
+        @"  iconVariants: [",
+        @"    { 16: darkImageData, 'colorSchemes': [ 'dark' ], 'color_schemes': [ 'light' ] },",
+        @"    { 16: lightImageData, 'colorSchemes': [ 'light' ], 'color_schemes': [ 'dark' ] }",
+        @"  ],",
+        @"  contexts: [ 'action' ]",
+        @"}))",
+
+        @"browser.test.assertSafe(() => browser.menus.create({",
+        @"  id: 'menu-item-with-deprecated-icon-variants-key',",
+        @"  title: 'Menu Item Duplicate Icon Variants',",
+        @"  iconVariants: [",
+        @"    { 16: darkImageData, 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: lightImageData, 'colorSchemes': [ 'light' ] }",
+        @"  ],",
+        @"  icon_variants: [",
+        @"    { 16: darkImageData, 'colorSchemes': [ 'light' ] },",
+        @"    { 16: lightImageData, 'colorSchemes': [ 'dark' ] }",
+        @"  ],",
+        @"  contexts: [ 'action' ]",
+        @"}))",
+
+        @"browser.test.sendMessage('Menus Created')",
+    ]);
+
+    auto *resources = @{
+        @"background.js": backgroundScript,
+    };
+
+    auto manager = Util::loadExtension(menusManifest, resources);
+
+    [manager runUntilTestMessage:@"Menus Created"];
+
+    auto *action = [manager.get().context actionForTab:manager.get().defaultTab];
+    auto *menuItems = action.menuItems;
+
+    EXPECT_EQ(menuItems.count, 2lu);
+
+    auto *firstMenuItem = dynamic_objc_cast<CocoaMenuAction>(menuItems.firstObject);
+    EXPECT_TRUE([firstMenuItem isKindOfClass:[CocoaMenuItem class]]);
+    EXPECT_NS_EQUAL(firstMenuItem.title, @"Menu Item Duplicate Color Schemes");
+
+    auto *secondMenuItem = dynamic_objc_cast<CocoaMenuAction>(menuItems.lastObject);
+    EXPECT_TRUE([secondMenuItem isKindOfClass:[CocoaMenuItem class]]);
+    EXPECT_NS_EQUAL(secondMenuItem.title, @"Menu Item Duplicate Icon Variants");
+
+    Util::performWithAppearance(Util::Appearance::Dark, ^{
+        EXPECT_TRUE(Util::compareColors(Util::pixelColor(firstMenuItem.image), [CocoaColor whiteColor]));
+        EXPECT_TRUE(Util::compareColors(Util::pixelColor(secondMenuItem.image), [CocoaColor whiteColor]));
+    });
+
+    Util::performWithAppearance(Util::Appearance::Light, ^{
+        EXPECT_TRUE(Util::compareColors(Util::pixelColor(firstMenuItem.image), [CocoaColor blackColor]));
+        EXPECT_TRUE(Util::compareColors(Util::pixelColor(secondMenuItem.image), [CocoaColor blackColor]));
+    });
+}
+
 TEST(WKWebExtensionAPIMenus, ActionMenus)
 {
     TestWebKitAPI::HTTPServer server({
@@ -765,9 +838,9 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithIconVariants)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-icon-variants',",
         @"  title: 'Menu Item with Icon Variants',",
-        @"  icon_variants: [",
-        @"    { 16: 'icon-dark-16.png', 'color_schemes': [ 'dark' ] },",
-        @"    { 16: 'icon-light-16.png', 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 16: 'icon-dark-16.png', 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: 'icon-light-16.png', 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'action' ]",
         @"}))",
@@ -829,9 +902,9 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithImageDataVariants)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-image-data-variants',",
         @"  title: 'Menu Item with ImageData Variants',",
-        @"  icon_variants: [",
-        @"    { 16: darkImageData, 'color_schemes': [ 'dark' ] },",
-        @"    { 16: lightImageData, 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 16: darkImageData, 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: lightImageData, 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'action' ]",
         @"}))",
@@ -888,21 +961,21 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithWithNoValidVariants)
         @"    id: 'submenu-item-invalid-dimension',",
         @"    parentId: 'top-level-item',",
         @"    title: 'Submenu with Invalid Dimension Key',",
-        @"    icon_variants: [",
-        @"      { 'sixteen': validImageData, 'color_schemes': [ 'light' ] }",
+        @"    iconVariants: [",
+        @"      { 'sixteen': validImageData, 'colorSchemes': [ 'light' ] }",
         @"    ],",
         @"    contexts: [ 'action' ]",
-        @"}), /'icon_variants\\[0\\]' value is invalid, because 'sixteen' is not a valid dimension/)",
+        @"}), /'iconVariants\\[0\\]' value is invalid, because 'sixteen' is not a valid dimension/)",
 
         @"await browser.test.assertThrows(() => browser.menus.create({",
         @"    id: 'submenu-item-invalid-color-scheme',",
         @"    parentId: 'top-level-item',",
         @"    title: 'Submenu with Invalid Color Scheme',",
-        @"    icon_variants: [",
-        @"      { '16': validImageData, 'color_schemes': [ 'bad' ] }",
+        @"    iconVariants: [",
+        @"      { '16': validImageData, 'colorSchemes': [ 'bad' ] }",
         @"    ],",
         @"    contexts: [ 'action' ]",
-        @"}), /'icon_variants\\[0\\]\\['color_schemes'\\]' value is invalid, because it must specify either 'light' or 'dark'/)",
+        @"}), /'iconVariants\\[0\\]\\['colorSchemes'\\]' value is invalid, because it must specify either 'light' or 'dark'/)",
 
         @"browser.test.notifyPass()"
     ]);
@@ -931,9 +1004,9 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithMixedValidAndInvalidIconVariants)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-mixed',",
         @"  title: 'Menu Item with Mixed Variants',",
-        @"  icon_variants: [",
-        @"    { 'sixteen': invalidImageData, 'color_schemes': [ 'dark' ] },",
-        @"    { '16': validImageData, 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 'sixteen': invalidImageData, 'colorSchemes': [ 'dark' ] },",
+        @"    { '16': validImageData, 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'action' ]",
         @"}))",
@@ -990,9 +1063,9 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithAnySizeVariantAndSVGDataURL)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-svg-variants',",
         @"  title: 'Menu Item with SVG Icon Variants',",
-        @"  icon_variants: [",
-        @"    { any: whiteSVGData, 'color_schemes': [ 'dark' ] },",
-        @"    { any: blackSVGData, 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { any: whiteSVGData, 'colorSchemes': [ 'dark' ] },",
+        @"    { any: blackSVGData, 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'all' ]",
         @"}))",
@@ -1043,9 +1116,9 @@ TEST(WKWebExtensionAPIMenus, UpdateMenuItemWithIconVariants)
 
         @"browser.test.assertSafe(() => browser.menus.update('menu-item-without-icon-variants', {",
         @"  title: 'Menu Item with Icon Variants',",
-        @"  icon_variants: [",
-        @"    { 16: 'icon-dark-16.png', 'color_schemes': [ 'dark' ] },",
-        @"    { 16: 'icon-light-16.png', 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 16: 'icon-dark-16.png', 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: 'icon-light-16.png', 'colorSchemes': [ 'light' ] }",
         @"  ]",
         @"}))",
 
@@ -1095,15 +1168,15 @@ TEST(WKWebExtensionAPIMenus, ClearMenuItemIconVariantsWithNull)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-icon-variants',",
         @"  title: 'Menu Item with Icon Variants',",
-        @"  icon_variants: [",
-        @"    { 16: 'icon-dark-16.png', 'color_schemes': [ 'dark' ] },",
-        @"    { 16: 'icon-light-16.png', 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 16: 'icon-dark-16.png', 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: 'icon-light-16.png', 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'action' ]",
         @"}))",
 
         @"browser.test.assertSafe(() => browser.menus.update('menu-item-with-icon-variants', {",
-        @"  icon_variants: null,",
+        @"  iconVariants: null,",
         @"  title: 'Menu Item without Icon Variants'",
         @"}))",
 
@@ -1142,15 +1215,15 @@ TEST(WKWebExtensionAPIMenus, ClearMenuItemIconVariantsWithEmpty)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-icon-variants',",
         @"  title: 'Menu Item with Icon Variants',",
-        @"  icon_variants: [",
-        @"    { 16: 'icon-dark-16.png', 'color_schemes': [ 'dark' ] },",
-        @"    { 16: 'icon-light-16.png', 'color_schemes': [ 'light' ] }",
+        @"  iconVariants: [",
+        @"    { 16: 'icon-dark-16.png', 'colorSchemes': [ 'dark' ] },",
+        @"    { 16: 'icon-light-16.png', 'colorSchemes': [ 'light' ] }",
         @"  ],",
         @"  contexts: [ 'action' ]",
         @"}))",
 
         @"browser.test.assertSafe(() => browser.menus.update('menu-item-with-icon-variants', {",
-        @"  icon_variants: [ ],",
+        @"  iconVariants: [ ],",
         @"  title: 'Menu Item without Icon Variants'",
         @"}))",
 
@@ -1189,7 +1262,7 @@ TEST(WKWebExtensionAPIMenus, MenuItemWithSymbolImageIconVariants)
         @"browser.test.assertSafe(() => browser.menus.create({",
         @"  id: 'menu-item-with-symbol-variants',",
         @"  title: 'Menu Item with Symbol Variants',",
-        @"  icon_variants: [",
+        @"  iconVariants: [",
         @"    { any: 'symbol:star' }",
         @"  ],",
         @"  contexts: [ 'action' ]",

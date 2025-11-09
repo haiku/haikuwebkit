@@ -749,9 +749,25 @@ ALWAYS_INLINE CallData getCallData(JSCell* cell)
 
 inline CallData getCallData(JSValue value)
 {
-    if (!value.isCell()) 
+    if (!value.isCell())
         return { };
     return getCallData(value.asCell());
+}
+
+ALWAYS_INLINE CallData getCallDataInline(JSCell* cell)
+{
+    if (cell->type() == JSFunctionType)
+        return JSFunction::getCallDataInline(cell);
+    CallData result = cell->methodTable()->getCallData(cell);
+    ASSERT(result.type == CallData::Type::None || cell->isValidCallee());
+    return result;
+}
+
+ALWAYS_INLINE CallData getCallDataInline(JSValue value)
+{
+    if (!value.isCell())
+        return { };
+    return getCallDataInline(value.asCell());
 }
 
 inline CallData getConstructData(JSValue value)

@@ -1064,8 +1064,8 @@ end
     btpnz r1, .oom
 
     bineq r0, 0, .safe
-    move wasmInstance, r0
-    move (constexpr Wasm::ExceptionType::TypeErrorInvalidValueUse), r1
+    move wasmInstance, a0
+    move (constexpr Wasm::ExceptionType::TypeErrorInvalidValueUse), a1
     cCall2(_operationWasmToJSException)
     jumpToException()
     break

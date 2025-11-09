@@ -32,7 +32,6 @@
 #include "AccessibilityObjectInlines.h"
 #include "AccessibilityScrollbar.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "FrameInlines.h"
 #include "HTMLFrameOwnerElement.h"
 #include "LocalFrameInlines.h"
@@ -255,7 +254,7 @@ AccessibilityScrollbar* AccessibilityScrollView::addChildScrollbar(Scrollbar* sc
     Ref scrollBarObject = uncheckedDowncast<AccessibilityScrollbar>(*cache->getOrCreate(*scrollbar));
     scrollBarObject->setParent(this);
     addChild(scrollBarObject.get());
-    return scrollBarObject.ptr();
+    return scrollBarObject.unsafePtr();
 }
 
 void AccessibilityScrollView::clearChildren()
@@ -325,7 +324,9 @@ void AccessibilityScrollView::addLocalFrameChild()
         if (!frameAXObjectCache)
             return;
 
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
         frameAXObjectCache->buildIsolatedTreeIfNeeded();
+#endif
 
         RefPtr frameRoot = frameAXObjectCache->rootObjectForFrame(*localFrame);
         if (!frameRoot)
@@ -447,7 +448,7 @@ Document* AccessibilityScrollView::document() const
 LocalFrameView* AccessibilityScrollView::documentFrameView() const
 {
     if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
-        return localFrameView.get();
+        return localFrameView.unsafeGet();
 
     if (m_frameOwnerElement && m_frameOwnerElement->contentDocument())
         return m_frameOwnerElement->contentDocument()->view();
@@ -481,7 +482,7 @@ AccessibilityObject* AccessibilityScrollView::parentObject() const
             break;
         ancestorElement = ancestorElement->parentElementInComposedTree();
     }
-    return ancestorAccessibilityObject.get();
+    return ancestorAccessibilityObject.unsafeGet();
 }
 
 #if ENABLE_ACCESSIBILITY_LOCAL_FRAME

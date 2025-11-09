@@ -31,8 +31,11 @@
 #include "BoundaryPointInlines.h"
 #include "ComposedTreeIterator.h"
 #include "ContainerNodeInlines.h"
+#include "DocumentPage.h"
+#include "DocumentView.h"
 #include "Editor.h"
 #include "ElementInlines.h"
+#include "EventHandler.h"
 #include "EventListenerMap.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
@@ -360,7 +363,7 @@ static inline Variant<SkipExtraction, ItemData, URL, Editable> extractItemData(N
     }
 
     if (RefPtr image = dynamicDowncast<HTMLImageElement>(element))
-        return { ImageItemData { image->getURLAttribute(HTMLNames::srcAttr).lastPathComponent().toString(), image->altText() } };
+        return { ImageItemData { image->getURLAttribute(HTMLNames::srcAttr), image->altText() } };
 
     if (RefPtr control = dynamicDowncast<HTMLTextFormControlElement>(element)) {
         RefPtr input = dynamicDowncast<HTMLInputElement>(control);
@@ -1272,8 +1275,8 @@ static constexpr auto maxDescriptionLength = 512;
 static String normalizeText(const String& string)
 {
     auto result = foldQuoteMarks(string);
-    for (auto character : { '"', '\'', '\r' })
-        result = makeStringByReplacingAll(result, character, ""_s);
+    result = makeStringByReplacingAll(result, '"', "'"_s);
+    result = makeStringByReplacingAll(result, '\r', ""_s);
     result = makeStringByReplacingAll(result, '\n', " "_s);
     result = result.trim(isASCIIWhitespace<char16_t>);
     if (result.length() <= maxDescriptionLength)
@@ -1293,6 +1296,11 @@ static String normalizedLabelText(const Element& element)
     return { };
 }
 
+static String wrapWithDoubleQuotes(String&& text)
+{
+    return makeString(u"“", WTFMove(text), u"”");
+}
+
 static String textDescription(const Element& element, Vector<String>& stringsToValidate, bool isTargetElement = true)
 {
     StringBuilder description;
@@ -1310,25 +1318,25 @@ static String textDescription(const Element& element, Vector<String>& stringsToV
 
     if (element.isLink()) {
         if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::hrefAttr)); !text.isEmpty()) {
-            description.append(makeString(" with href '"_s, text, '\''));
+            description.append(makeString(" with href "_s, wrapWithDoubleQuotes(WTFMove(text))));
             stringsToValidate.append(WTFMove(text));
             needsParentContext = false;
         }
     }
 
     if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::roleAttr)); !text.isEmpty() && text != tagName) {
-        description.append(makeString(" with role "_s, text));
+        description.append(makeString(" with role "_s, wrapWithDoubleQuotes(WTFMove(text))));
         needsParentContext = false;
     }
 
     if (auto text = normalizedLabelText(element); !text.isEmpty()) {
-        description.append(makeString(" labeled '"_s, text, '\''));
+        description.append(makeString(" labeled "_s, wrapWithDoubleQuotes(WTFMove(text))));
         stringsToValidate.append(WTFMove(text));
         needsParentContext = false;
     }
 
     if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::titleAttr)); !text.isEmpty()) {
-        description.append(makeString(" titled '"_s, text, '\''));
+        description.append(makeString(" titled "_s, wrapWithDoubleQuotes(WTFMove(text))));
         stringsToValidate.append(WTFMove(text));
         needsParentContext = false;
     }
@@ -1337,7 +1345,7 @@ static String textDescription(const Element& element, Vector<String>& stringsToV
         description.append(makeString(" of type "_s, text));
 
     if (auto text = normalizeText(element.attributeWithoutSynchronization(HTMLNames::placeholderAttr)); !text.isEmpty()) {
-        description.append(makeString(" with placeholder '"_s, text, '\''));
+        description.append(makeString(" with placeholder "_s, wrapWithDoubleQuotes(WTFMove(text))));
         stringsToValidate.append(WTFMove(text));
         needsParentContext = false;
     }
@@ -1377,7 +1385,7 @@ static String textDescription(std::optional<NodeIdentifier> identifier, Vector<S
         auto range = makeRangeSelectingNodeContents(*node);
         if (auto text = normalizeText(plainText(range, TextIteratorBehavior::EntersTextControls)); !text.isEmpty()) {
             stringsToValidate.append(text);
-            extendedDescription.append(makeString(", with rendered text '"_s, WTFMove(text), '\''));
+            extendedDescription.append(makeString(", with rendered text "_s, wrapWithDoubleQuotes(WTFMove(text))));
         }
 
         String labeledChildSuffix;
@@ -1388,7 +1396,7 @@ static String textDescription(std::optional<NodeIdentifier> identifier, Vector<S
                     continue;
 
                 stringsToValidate.append(label);
-                extendedDescription.append(makeString(", containing child labeled '"_s, WTFMove(label), '\''));
+                extendedDescription.append(makeString(", containing child labeled "_s, wrapWithDoubleQuotes(WTFMove(label))));
                 break;
             }
         }
@@ -1435,7 +1443,7 @@ InteractionDescription interactionDescription(const Interaction& interaction)
         if (auto escapedString = normalizeText(interaction.text); !escapedString.isEmpty()) {
             if (action == Action::Click)
                 description.append(" over text"_s);
-            description.append(makeString(" '"_s, escapedString, '\''));
+            description.append(makeString(" "_s, wrapWithDoubleQuotes(String { escapedString })));
             stringsToValidate.append(WTFMove(escapedString));
         }
     }

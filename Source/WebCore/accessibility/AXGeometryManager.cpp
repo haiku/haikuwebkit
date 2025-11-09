@@ -27,6 +27,7 @@
 #include "AXGeometryManager.h"
 
 #include "AXLoggerBase.h"
+#include "DocumentPage.h"
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 #include "AXIsolatedTree.h"

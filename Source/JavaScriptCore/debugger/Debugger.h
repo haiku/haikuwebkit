@@ -232,8 +232,8 @@ public:
     void setProfilingClient(ProfilingClient*);
     bool hasProfilingClient() const { return m_profilingClient != nullptr; }
     bool isAlreadyProfiling() const { return m_profilingClient && m_profilingClient->isAlreadyProfiling(); }
-    Seconds willEvaluateScript();
-    void didEvaluateScript(Seconds startTime, ProfilingReason);
+    JS_EXPORT_PRIVATE Seconds willEvaluateScript();
+    JS_EXPORT_PRIVATE void didEvaluateScript(Seconds startTime, ProfilingReason);
 
 protected:
     JS_EXPORT_PRIVATE JSC::DebuggerCallFrame& currentDebuggerCallFrame();

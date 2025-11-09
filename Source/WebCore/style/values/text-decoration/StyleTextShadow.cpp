@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,7 +56,7 @@ auto ToStyle<CSS::TextShadow>::operator()(const CSS::TextShadow& value, const Bu
     return {
         .color = value.color ? toStyle(*value.color, state) : Color::currentColor(),
         .location = toStyle(value.location, state),
-        .blur = value.blur ? toStyle(*value.blur, state) : Length<CSS::Nonnegative> { 0 },
+        .blur = value.blur ? toStyle(*value.blur, state) : Length<CSS::NonnegativeUnzoomed> { 0 },
     };
 }
 

@@ -24,6 +24,7 @@
 
 #include "RenderStyleInlines.h"
 #include "RenderStyleDifference.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {

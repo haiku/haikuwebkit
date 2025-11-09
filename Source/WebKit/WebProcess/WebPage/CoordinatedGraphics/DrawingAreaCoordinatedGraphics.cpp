@@ -29,7 +29,6 @@
 #include "DrawingAreaCoordinatedGraphics.h"
 
 #include "DrawingAreaProxyMessages.h"
-#include "LayerTreeHost.h"
 #include "MessageSenderInlines.h"
 #include "UpdateInfo.h"
 #include "WebDisplayRefreshMonitor.h"
@@ -47,6 +46,12 @@
 #include <WebCore/Settings.h>
 #include <WebCore/ShareableBitmap.h>
 #include <wtf/SetForScope.h>
+
+#if PLATFORM(PLAYSTATION)
+#include "LayerTreeHostPlayStation.h"
+#else
+#include "LayerTreeHost.h"
+#endif
 
 #if USE(GLIB_EVENT_LOOP)
 #include <wtf/glib/RunLoopSourcePriority.h>
@@ -528,14 +533,6 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
     m_exitCompositingTimer.stop();
     m_wantsToExitAcceleratedCompositingMode = false;
 
-#if !HAVE(DISPLAY_LINK)
-    auto changeWindowScreen = [&] {
-        // In order to ensure that we get a unique DisplayRefreshMonitor per-DrawingArea (necessary because ThreadedDisplayRefreshMonitor
-        // is driven by the ThreadedCompositor of the drawing area), give each page a unique DisplayID derived from DrawingArea's unique ID.
-        Ref { m_webPage.get() }->windowScreenDidChange(m_layerTreeHost->displayID(), std::nullopt);
-    };
-#endif
-
     ASSERT(!m_layerTreeHost);
 #if USE(GRAPHICS_LAYER_TEXTURE_MAPPER) || HAVE(DISPLAY_LINK)
     m_layerTreeHost = makeUnique<LayerTreeHost>(m_webPage);
@@ -547,7 +544,9 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
 #endif
 
 #if !HAVE(DISPLAY_LINK)
-    changeWindowScreen();
+    // In order to ensure that we get a unique DisplayRefreshMonitor per-DrawingArea (necessary because ThreadedDisplayRefreshMonitor
+    // is driven by the ThreadedCompositor of the drawing area), give each page a unique DisplayID derived from DrawingArea's unique ID.
+    Ref { m_webPage.get() }->windowScreenDidChange(m_layerTreeHost->displayID(), std::nullopt);
 #endif
     if (m_layerTreeStateIsFrozen)
         m_layerTreeHost->setLayerTreeStateIsFrozen(true);

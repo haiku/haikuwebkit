@@ -28,6 +28,7 @@
 
 #include "AbortController.h"
 #include "CommonVM.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "FrameDestructionObserverInlines.h"
 #include "ExceptionCode.h"

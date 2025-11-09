@@ -60,14 +60,14 @@ platform/generic/ScrollbarsControllerGeneric.cpp
 
 platform/glib/DragDataGLib.cpp
 platform/glib/PasteboardGLib.cpp
+platform/glib/RunLoopObserverGLib.cpp
 
 platform/graphics/PlatformDisplay.cpp @no-unify
 
 platform/graphics/angle/PlatformDisplayANGLE.cpp @no-unify
 
 platform/graphics/glib/ImageAdapterGLib.cpp
-
-platform/graphics/wpe/SystemFontDatabaseWPE.cpp
+platform/graphics/glib/SystemFontDatabaseGLib.cpp
 
 platform/graphics/android/GraphicsContextGLTextureMapperAndroid.h @no-unify
 platform/graphics/android/GraphicsContextGLTextureMapperAndroid.cpp @no-unify

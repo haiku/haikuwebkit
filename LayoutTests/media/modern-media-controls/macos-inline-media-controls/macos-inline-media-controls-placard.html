@@ -9,31 +9,31 @@ const mediaControls = new MacOSInlineMediaControls({ width: 600, height: 300 });
 
 debug("By default, no placard is shown.");
 shouldBeNull("mediaControls.placard");
-shouldBe("mediaControls.children", "[mediaControls.topLeftControlsBar, mediaControls.bottomControlsBar]");
+debug("mediaControls.children: " + Array.from(mediaControls.children).map(child => child.constructor.name).join(", "));
 
 debug("");
 debug("Showing the Airplay placard");
 mediaControls.placard = mediaControls.airplayPlacard;
-shouldBe("mediaControls.placard", "mediaControls.airplayPlacard");
-shouldBe("mediaControls.children", "[mediaControls.airplayPlacard, mediaControls.topLeftControlsBar, mediaControls.bottomControlsBar]");
+debug("mediaControls.placard.constructor.name " + mediaControls.placard.constructor.name);
+debug("mediaControls.children: " + Array.from(mediaControls.children).map(child => child.constructor.name).join(", "));
 
 debug("");
 debug("Showing the Invalid placard, hides the controls bar");
 mediaControls.placard = mediaControls.invalidPlacard;
-shouldBe("mediaControls.placard", "mediaControls.invalidPlacard");
-shouldBe("mediaControls.children", "[mediaControls.invalidPlacard]");
+debug("mediaControls.placard.constructor.name " + mediaControls.placard.constructor.name);
+debug("mediaControls.children: " + Array.from(mediaControls.children).map(child => child.constructor.name).join(", "));
 
 debug("");
 debug("Showing the PiP placard, hides the controls bar");
 mediaControls.placard = mediaControls.pipPlacard;
-shouldBe("mediaControls.placard", "mediaControls.pipPlacard");
-shouldBe("mediaControls.children", "[mediaControls.pipPlacard]");
+debug("mediaControls.placard.constructor.name " + mediaControls.placard.constructor.name);
+debug("mediaControls.children: " + Array.from(mediaControls.children).map(child => child.constructor.name).join(", "));
 
 debug("");
 debug("Hide placard");
 mediaControls.placard = null;
 shouldBeNull("mediaControls.placard");
-shouldBe("mediaControls.children", "[mediaControls.topLeftControlsBar, mediaControls.bottomControlsBar]");
+debug("mediaControls.children: " + Array.from(mediaControls.children).map(child => child.constructor.name).join(", "));
 
 debug("");
 

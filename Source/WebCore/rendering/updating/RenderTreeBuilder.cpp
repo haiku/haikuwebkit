@@ -28,7 +28,7 @@
 #include "RenderTreeBuilder.h"
 
 #include "AXObjectCache.h"
-#include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "FrameSelection.h"
 #include "LayoutIntegrationLineLayout.h"
 #include "LegacyRenderSVGContainer.h"

@@ -34,8 +34,8 @@
 #include "DefaultResourceLoadPriority.h"
 #include "DiagnosticLoggingClient.h"
 #include "DiagnosticLoggingKeys.h"
-#include "Document.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
 #include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "HTTPHeaderNames.h"
@@ -101,7 +101,7 @@ CachedResource::CachedResource(CachedResourceRequest&& request, Type type, PAL::
     setLoadPriority(request.priority(), request.fetchPriority());
 
     // FIXME: We should have a better way of checking for Navigation loads, maybe FetchMode::Options::Navigate.
-    ASSERT(m_origin || m_type == Type::MainResource || m_options.cachingPolicy == CachingPolicy::AllowCachingPrefetch);
+    ASSERT(m_origin || m_type == Type::MainResource || m_options.cachingPolicy == CachingPolicy::AllowCachingMainResourcePrefetch);
 
     if (isRequestCrossOrigin(m_origin.get(), m_resourceRequest.url(), m_options))
         setCrossOrigin();
@@ -538,7 +538,7 @@ bool CachedResource::addClientToSet(CachedResourceClient& client)
     if (allowsCaching() && !hasClients() && inCache())
         MemoryCache::singleton().addToLiveResourcesSize(*this);
 
-    if ((m_type == Type::RawResource || m_type == Type::MainResource) && !response().isNull() && !m_proxyResource && m_options.cachingPolicy != CachingPolicy::AllowCachingPrefetch) {
+    if ((m_type == Type::RawResource || m_type == Type::MainResource) && !response().isNull() && !m_proxyResource && m_options.cachingPolicy != CachingPolicy::AllowCachingMainResourcePrefetch) {
         // Certain resources (especially XHRs and main resources) do crazy things if an asynchronous load returns
         // synchronously (e.g., scripts may not have set all the state they need to handle the load).
         // Therefore, rather than immediately sending callbacks on a cache hit like other CachedResources,

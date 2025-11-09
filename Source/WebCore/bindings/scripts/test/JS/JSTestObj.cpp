@@ -27,7 +27,7 @@
 #include "DOMWrapperWorld.h"
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
 #include "ElementInlines.h"
 #include "EventNames.h"
 #include "ExtendedDOMClientIsoSubspaces.h"
@@ -88,7 +88,6 @@
 #include "JSWorkerGlobalScopeBase.h"
 #include "JSXPathNSResolver.h"
 #include "LocalDOMWindow.h"
-#include "Quirks.h"
 #include "ScriptExecutionContext.h"
 #include "SerializedScriptValue.h"
 #include "WebCoreJSClientData.h"
@@ -2244,6 +2243,10 @@ static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_annotatedTypeInUnionAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_annotatedTypeInUnionAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_annotatedTypeInSequenceAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_annotatedTypeInSequenceAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_unionAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_unionAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_optimizedSetterUnionAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_optimizedSetterUnionAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_implementationEnumAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_implementationEnumAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_mediaDevices);
@@ -2648,7 +2651,7 @@ template<> void JSTestObjDOMConstructor::initializeProperties(VM& vm, JSDOMGloba
 
 /* Hash table for prototype */
 
-static const std::array<HashTableValue, 298> JSTestObjPrototypeTableValues {
+static const std::array<HashTableValue, 300> JSTestObjPrototypeTableValues {
     HashTableValue { "constructor"_s, static_cast<unsigned>(PropertyAttribute::DontEnum), NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObjConstructor, 0 } },
     HashTableValue { "readOnlyLongAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyLongAttr, 0 } },
     HashTableValue { "readOnlyStringAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyStringAttr, 0 } },
@@ -2683,6 +2686,8 @@ static const std::array<HashTableValue, 298> JSTestObjPrototypeTableValues {
     HashTableValue { "nullableDictionaryAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_nullableDictionaryAttr, setJSTestObj_nullableDictionaryAttr } },
     HashTableValue { "annotatedTypeInUnionAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_annotatedTypeInUnionAttr, setJSTestObj_annotatedTypeInUnionAttr } },
     HashTableValue { "annotatedTypeInSequenceAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_annotatedTypeInSequenceAttr, setJSTestObj_annotatedTypeInSequenceAttr } },
+    HashTableValue { "unionAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_unionAttr, setJSTestObj_unionAttr } },
+    HashTableValue { "optimizedSetterUnionAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_optimizedSetterUnionAttr, setJSTestObj_optimizedSetterUnionAttr } },
     HashTableValue { "implementationEnumAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_implementationEnumAttr, setJSTestObj_implementationEnumAttr } },
     HashTableValue { "mediaDevices"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_mediaDevices, 0 } },
     HashTableValue { "XMLObjAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_XMLObjAttr, setJSTestObj_XMLObjAttr } },
@@ -4428,6 +4433,78 @@ static inline bool setJSTestObj_annotatedTypeInSequenceAttrSetter(JSGlobalObject
 JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_annotatedTypeInSequenceAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
 {
     return IDLAttribute<JSTestObj>::set<setJSTestObj_annotatedTypeInSequenceAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_unionAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUnion<IDLLong, IDLInterface<Node>>>(lexicalGlobalObject, *thisObject.globalObject(), throwScope, impl.unionAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_unionAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_unionAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_unionAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLUnion<IDLLong, IDLInterface<Node>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setUnionAttr(nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_unionAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_unionAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_optimizedSetterUnionAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUnion<IDLLong, IDLInterface<Node>>>(lexicalGlobalObject, *thisObject.globalObject(), throwScope, impl.optimizedSetterUnionAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_optimizedSetterUnionAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_optimizedSetterUnionAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_optimizedSetterUnionAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto valueFunctor = [&]<typename T>(T&& nativeValueConversionResult) -> bool {
+        if constexpr (std::same_as<T, ConversionResultException>) {
+            return false;
+        } else {
+            if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+                return false;
+            invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+                return impl.setOptimizedSetterUnionAttr(nativeValueConversionResult.releaseReturnValue());
+            });
+            return true;
+        }
+    };
+    return convert<IDLUnion<IDLLong, IDLInterface<Node>>>(lexicalGlobalObject, value, valueFunctor);
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_optimizedSetterUnionAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_optimizedSetterUnionAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
 static inline JSValue jsTestObj_implementationEnumAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
@@ -11363,7 +11440,7 @@ extern "C" { extern void (*const __identifier("??_7TestObj@WebCore@@6B@")[])(); 
 extern "C" { extern void* _ZTVN7WebCore7TestObjE[]; }
 #endif
 template<std::same_as<TestObj> T>
-static inline void verifyVTable(TestObj* ptr) 
+static inline void verifyVTable(TestObj* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -11383,8 +11460,9 @@ static inline void verifyVTable(TestObj* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestObj>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestObj>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestObj>(impl.ptr());
 #endif

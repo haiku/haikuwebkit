@@ -75,23 +75,34 @@ ImageTransferSessionVT::ImageTransferSessionVT(uint32_t pixelFormat, bool should
     m_pixelFormat = pixelFormat;
 }
 
-void ImageTransferSessionVT::setCroppingRectangle(std::optional<FloatRect> rectangle)
+void ImageTransferSessionVT::setCroppingRectangle(std::optional<FloatRect> rectangle, FloatSize size)
 {
-    if (m_croppingRectangle == rectangle)
-        return;
-
-    m_croppingRectangle = rectangle;
-
-    if (!m_croppingRectangle) {
+    if (!rectangle) {
         m_sourceCroppingDictionary = { };
         return;
     }
 
+    auto width = rectangle->width();
+    auto height = rectangle->height();
+    // Offsets are relative from center of image buffer
+    auto horizontalOffset = rectangle->x() - size.width() / 2 + width / 2;
+    auto verticalOffset = rectangle->y() - size.height() / 2 + height / 2;
+
+    FloatRect apertureRectangle {
+        FloatPoint { horizontalOffset, verticalOffset },
+        FloatSize { width, height }
+    };
+
+    if (m_croppingRectangle == apertureRectangle)
+        return;
+
+    m_croppingRectangle = apertureRectangle;
+
     m_sourceCroppingDictionary = @{
-        (__bridge NSString *)kCVImageBufferCleanApertureWidthKey: @(rectangle->width()),
-        (__bridge NSString *)kCVImageBufferCleanApertureHeightKey: @(rectangle->height()),
-        (__bridge NSString *)kCVImageBufferCleanApertureVerticalOffsetKey: @(rectangle->x()),
-        (__bridge NSString *)kCVImageBufferCleanApertureHorizontalOffsetKey: @(rectangle->y()),
+        (__bridge NSString *)kCVImageBufferCleanApertureWidthKey: @(apertureRectangle.width()),
+        (__bridge NSString *)kCVImageBufferCleanApertureHeightKey: @(apertureRectangle.height()),
+        (__bridge NSString *)kCVImageBufferCleanApertureVerticalOffsetKey: @(apertureRectangle.y()),
+        (__bridge NSString *)kCVImageBufferCleanApertureHorizontalOffsetKey: @(apertureRectangle.x()),
     };
 }
 

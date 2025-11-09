@@ -23,7 +23,6 @@
 #include "AddEventListenerOptionsInlines.h"
 #include "ContextDestructionObserverInlines.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
 #include "HTMLFrameOwnerElement.h"

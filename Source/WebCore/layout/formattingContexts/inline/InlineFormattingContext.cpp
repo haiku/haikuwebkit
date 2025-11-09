@@ -479,7 +479,7 @@ bool InlineFormattingContext::createDisplayContentForLineFromCachedContent(const
             return { };
         if (ceiledLayoutUnit(lineContent.contentGeometry.logicalWidth) + LayoutUnit::epsilon() <= horizontalAvailableSpace)
             return { };
-        if (!Line::restoreTrimmedTrailingWhitespace(lineContent.trimmedTrailingWhitespaceWidth, lineContent.inlineAndOpaqueContent)) {
+        if (!Line::restoreTrimmedTrailingWhitespace(lineContent.trimmedTrailingWhitespaceWidth, lineContent.inlineAndOpaqueContent, lineContent.inlineItemRange, inlineContentCache.inlineItems().content())) {
             ASSERT_NOT_REACHED();
             return false;
         }

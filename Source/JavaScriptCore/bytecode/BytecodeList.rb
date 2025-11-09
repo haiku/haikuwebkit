@@ -51,7 +51,7 @@ types [
     :PropertyOffset,
     :PutByIdFlags,
     :ResolveType,
-    :Structure,
+    # FIXME: We should use WriteBarrierStructureID instead.
     :StructureID,
     :StructureChain,
     :SymbolTable,
@@ -60,6 +60,7 @@ types [
     :TypeLocation,
     :WasmBoundLabel,
     :WatchpointSet,
+    :WriteBarrierStructureID,
 
     :ValueProfileAndVirtualRegisterBuffer,
     :ArrayProfile,
@@ -504,22 +505,21 @@ op :resolve_scope,
 
 op :get_from_scope,
     args: {
-        dst: VirtualRegister, # offset  1
-        scope: VirtualRegister, # offset 2
-        var: unsigned, # offset 3
-        # $begin: :private,
+        dst: VirtualRegister,
+        scope: VirtualRegister,
+        var: unsigned,
         getPutInfo: GetPutInfo,
         localScopeDepth: unsigned,
         offset: unsigned,
-        valueProfile: unsigned, # offset 7
+        valueProfile: unsigned,
     },
     metadata: {
-        getPutInfo: GetPutInfo, # offset 4
-        _: { #previously offset 5
+        getPutInfo: GetPutInfo,
+        _: {
             watchpointSet: WatchpointSet.*,
-            structure: WriteBarrierBase[Structure],
+            structureID: WriteBarrierStructureID,
         },
-        operand: uintptr_t, #offset 6
+        operand: uintptr_t,
     },
     metadata_initializers: {
         getPutInfo: :getPutInfo,
@@ -528,21 +528,20 @@ op :get_from_scope,
 
 op :put_to_scope,
     args: {
-        scope: VirtualRegister, # offset 1
-        var: unsigned, # offset 2
-        value: VirtualRegister, # offset 3
-        # $begin: :private,
+        scope: VirtualRegister,
+        var: unsigned,
+        value: VirtualRegister,
         getPutInfo: GetPutInfo,
         symbolTableOrScopeDepth: SymbolTableOrScopeDepth,
         offset: unsigned,
     },
     metadata: {
-        getPutInfo: GetPutInfo, # offset 4
-        _: { # offset 5
-            structure: WriteBarrierBase[Structure],
+        getPutInfo: GetPutInfo,
+        _: {
+            structureID: WriteBarrierStructureID,
             watchpointSet: WatchpointSet.*,
         },
-        operand: uintptr_t, # offset 6
+        operand: uintptr_t,
     },
     metadata_initializers: {
         getPutInfo: :getPutInfo,
@@ -1478,6 +1477,7 @@ op :op_put_by_val_return_location
 op :op_put_by_val_direct_return_location
 op :op_in_by_id_return_location
 op :op_in_by_val_return_location
+op :op_instanceof_return_location
 op :op_enumerator_get_by_val_return_location
 op :op_enumerator_put_by_val_return_location
 op :op_enumerator_in_by_val_return_location

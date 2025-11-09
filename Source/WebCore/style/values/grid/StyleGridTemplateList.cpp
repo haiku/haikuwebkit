@@ -31,6 +31,7 @@
 #include "CSSSubgridValue.h"
 #include "CSSValueList.h"
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+CSSValueConversion.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"

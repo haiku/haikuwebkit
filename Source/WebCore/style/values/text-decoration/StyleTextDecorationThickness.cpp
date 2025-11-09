@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,22 +50,7 @@ float TextDecorationThickness::resolve(const RenderStyle& style) const
             return style.metricsOfPrimaryFont().underlineThickness().value_or(0);
         },
         [&](const TextDecorationThicknessLength& length) {
-            return Style::evaluate<float>(length, style.computedFontSize(), Style::ZoomNeeded { });
-        }
-    );
-}
-
-float TextDecorationThickness::resolve(float fontSize, const FontMetrics& metrics) const
-{
-    return WTF::switchOn(m_value,
-        [&](const CSS::Keyword::Auto&) {
-            return fontSize / textDecorationBaseFontSize;
-        },
-        [&](const CSS::Keyword::FromFont&) {
-            return metrics.underlineThickness().value_or(0);
-        },
-        [&](const TextDecorationThicknessLength& length) {
-            return Style::evaluate<float>(length, fontSize, Style::ZoomNeeded { });
+            return Style::evaluate<float>(length, style.computedFontSize(), style.usedZoomForLength());
         }
     );
 }

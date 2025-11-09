@@ -145,6 +145,7 @@ private:
     void activateDataListSuggestion(unsigned, JSValueRef) override;
     void setSelectedColorForColorPicker(double, double, double) override;
     void setKeyboardInputModeIdentifier(JSStringRef) override;
+    void setFocusStartsInputSessionPolicy(JSStringRef) override;
     void toggleCapsLock(JSValueRef) override;
     unsigned keyboardWillHideCount() const override;
     bool keyboardIsAutomaticallyShifted() const override;
@@ -174,6 +175,7 @@ private:
     void setWillStartInputSessionCallback(JSValueRef) override;
     void setWillPresentPopoverCallback(JSValueRef) override;
     void setDidDismissPopoverCallback(JSValueRef) override;
+    void setDidPresentViewControllerCallback(JSValueRef) override;
     void setDidEndScrollingCallback(JSValueRef) override;
     void clearAllCallbacks() override;
 
@@ -209,6 +211,9 @@ private:
     CGRect selectionViewBoundsClippedToContentView(UIView *, std::optional<CGRect>&& = std::nullopt) const;
 
     JSRetainPtr<JSStringRef> scrollbarStateForScrollingNodeID(unsigned long long scrollingNodeID, unsigned long long processID, bool) const override;
+
+    bool didCallEnsurePositionInformationIsUpToDateSinceLastCheck() const final;
+    void clearEnsurePositionInformationIsUpToDateTracking() final;
 
 #if USE(BROWSERENGINEKIT)
     id<BETextInput> asyncTextInput() const;

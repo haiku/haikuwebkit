@@ -133,7 +133,7 @@ public:
 
     static bool canSkipNameAndLengthMaterialization(JSGlobalObject*, Structure*);
 
-    DECLARE_INFO;
+    DECLARE_EXPORT_INFO;
 
     DECLARE_VISIT_CHILDREN;
 

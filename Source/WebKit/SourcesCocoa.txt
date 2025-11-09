@@ -477,6 +477,7 @@ UIProcess/Cocoa/WKContactPicker.mm @nonARC
 UIProcess/Cocoa/WKEditCommand.mm @nonARC
 UIProcess/Cocoa/WKFullKeyboardAccessWatcher.mm @nonARC
 UIProcess/Cocoa/WKReloadFrameErrorRecoveryAttempter.mm @nonARC
+UIProcess/Cocoa/WKScreenTimeConfigurationObserver.mm @nonARC
 UIProcess/Cocoa/WKTextPlaceholder.mm @nonARC
 UIProcess/Cocoa/WKTextSelectionRect.mm @nonARC
 UIProcess/Cocoa/WKWebViewContentProviderRegistry.mm @nonARC
@@ -673,7 +674,9 @@ UIProcess/RemoteLayerTree/ios/ScrollingTreeOverflowScrollingNodeIOS.mm @nonARC
 UIProcess/RemoteLayerTree/ios/ScrollingTreePluginScrollingNodeIOS.mm @nonARC
 UIProcess/RemoteLayerTree/ios/ScrollingTreeScrollingNodeDelegateIOS.mm @nonARC
 
-UIProcess/RemoteLayerTree/RemoteAcceleratedEffectStack.mm @nonARC
+UIProcess/RemoteLayerTree/RemoteAnimation.cpp
+UIProcess/RemoteLayerTree/RemoteAnimationStack.mm @nonARC
+UIProcess/RemoteLayerTree/RemoteAnimationTimeline.cpp
 UIProcess/RemoteLayerTree/RemoteLayerTreeDrawingAreaProxy.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteLayerTreeHost.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteLayerTreeInteractionRegionLayers.mm @nonARC

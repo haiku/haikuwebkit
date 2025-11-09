@@ -1757,7 +1757,8 @@ class TestExpectedBuildSteps(unittest.TestCase):
         for builder in self.config['builders']:
             buildSteps = []
             for step in builder['factory'].steps:
-                buildSteps.append(step.factory.name)
+                step_name = step.kwargs.get('name', step.step_class.name)
+                buildSteps.append(step_name)
             self.assertTrue(builder['name'] in self.expected_steps, 'Missing expected steps for builder: %s\n Actual result is %s' % (builder['name'], buildSteps))
             self.assertListEqual(self.expected_steps[builder['name']], buildSteps, msg="Expected steps don't match for builder %s" % builder['name'])
 

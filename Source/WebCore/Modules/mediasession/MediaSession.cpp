@@ -29,8 +29,9 @@
 #if ENABLE(MEDIA_SESSION)
 
 #include "ContextDestructionObserverInlines.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentPage.h"
+#include "EventLoop.h"
 #include "EventNames.h"
 #include "HTMLMediaElement.h"
 #include "JSDOMPromiseDeferred.h"
@@ -43,8 +44,8 @@
 #include "MediaSessionCoordinator.h"
 #include "Navigator.h"
 #include "NowPlayingInfo.h"
-#include "Page.h"
 #include "PlatformMediaSessionManager.h"
+#include "Settings.h"
 #include "UserMediaController.h"
 #include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/JSONValues.h>

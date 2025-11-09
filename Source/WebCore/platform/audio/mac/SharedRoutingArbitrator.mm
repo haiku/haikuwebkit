@@ -29,9 +29,10 @@
 #if ENABLE(ROUTING_ARBITRATION) && HAVE(AVAUDIO_ROUTING_ARBITER)
 
 #import "Logging.h"
+#import <wtf/CheckedPtr.h>
 #import <wtf/LoggerHelper.h>
 #import <wtf/NeverDestroyed.h>
-#include <wtf/TZoneMallocInlines.h>
+#import <wtf/TZoneMallocInlines.h>
 
 #import <pal/cocoa/AVFoundationSoftLink.h>
 
@@ -75,8 +76,9 @@ void SharedRoutingArbitrator::beginRoutingArbitrationForToken(const SharedRoutin
     if (m_setupArbitrationOngoing) {
         ALWAYS_LOG_IF(m_logger, identifier, "enqueing callback, arbitration ongoing");
         m_enqueuedCallbacks.append([this, weakToken = WeakPtr { token }, callback = WTFMove(callback), identifier = WTFMove(identifier)] (RoutingArbitrationError error, DefaultRouteChanged routeChanged) mutable {
-            if (error == RoutingArbitrationError::None && weakToken)
-                m_tokens.add(*weakToken);
+            CheckedPtr token = weakToken.get();
+            if (error == RoutingArbitrationError::None && token)
+                m_tokens.add(*token);
 
             ALWAYS_LOG_IF(m_logger, identifier, "pending arbitration finished, error = ", error, ", routeChanged = ", routeChanged);
             callback(error, routeChanged);
@@ -116,8 +118,9 @@ void SharedRoutingArbitrator::beginRoutingArbitrationForToken(const SharedRoutin
 
     m_setupArbitrationOngoing = true;
     m_enqueuedCallbacks.append([this, weakToken = WeakPtr { token }, callback = WTFMove(callback)] (RoutingArbitrationError error, DefaultRouteChanged routeChanged) mutable {
-        if (error == RoutingArbitrationError::None && weakToken)
-            m_tokens.add(*weakToken);
+        CheckedPtr token = weakToken.get();
+        if (error == RoutingArbitrationError::None && token)
+            m_tokens.add(*token);
 
         callback(error, routeChanged);
     });

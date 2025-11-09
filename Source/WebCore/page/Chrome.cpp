@@ -35,9 +35,9 @@
 #include "DigitalCredentialsRequestData.h"
 #include "DigitalCredentialsResponseData.h"
 #endif
-#include "Document.h"
-#include "DocumentInlines.h"
 #include "DocumentType.h"
+#include "DocumentView.h"
+#include "DocumentWindow.h"
 #include "ExceptionData.h"
 #include "FaceDetectorInterface.h"
 #include "FileList.h"

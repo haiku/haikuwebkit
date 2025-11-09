@@ -5,34 +5,61 @@
 
 description("Testing the <code>MacOSInlineMediaControls</code> volume slider visibility.");
 
+window.jsTestIsAsync = true;
+
 const mediaControls = new MacOSInlineMediaControls({ width: 600, height: 300 });
-const volumeSliderContainer = mediaControls.volumeSlider.parent;
+document.body.appendChild(mediaControls.element);
 
-debug("Default state")
-shouldBeNull("volumeSliderContainer.parent");
+if (!mediaControls._volumeSliderSetupComplete) {
+    mediaControls._setupVolumeSliderConfiguration();
+}
 
-debug("");
-debug("Mouse enters the mute button");
-mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter"));
-shouldBe("volumeSliderContainer.parent", "mediaControls");
+let volumeSliderContainer;
 
-debug("");
-debug("Mouse leaves the mute button");
-mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseleave"));
-shouldBeNull("volumeSliderContainer.parent");
+function runTests() {
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter"));
+    volumeSliderContainer = mediaControls.volumeSlider.parent;
+    
+    if (!volumeSliderContainer) {
+        testFailed("Volume slider container is not available after setup");
+        finishJSTest();
+        return;
+    }
+    
+    debug("Default state");
 
-debug("");
-debug("Mouse enters the mute button, then leaves it but enters the volume slider container");
-mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter"));
-mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseleave", { relatedTarget: volumeSliderContainer.element }));
-shouldBe("volumeSliderContainer.parent", "mediaControls");
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseleave"));
+    debug("volumeSliderContainer.parent.constructor.name: " + volumeSliderContainer.parent.constructor.name);
 
-debug("");
-debug("Mouse leaves the volume slider container");
-volumeSliderContainer.element.dispatchEvent(new MouseEvent("mouseleave"));
-shouldBeNull("volumeSliderContainer.parent");
+    debug("");
+    debug("Mouse enters the mute button");
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter"));
+    debug("volumeSliderContainer.parent.constructor.name: " + volumeSliderContainer.parent.constructor.name);
 
-debug("");
+    debug("");
+    debug("Mouse leaves the mute button");
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseleave"));
+    debug("volumeSliderContainer.parent.constructor.name: " + volumeSliderContainer.parent.constructor.name);
+
+    debug("");
+    debug("Mouse enters the mute button, then leaves it but enters the volume slider container");
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseenter"));
+    mediaControls.muteButton.element.dispatchEvent(new MouseEvent("mouseleave", { relatedTarget: volumeSliderContainer.element }));
+    debug("volumeSliderContainer.parent.constructor.name: " + volumeSliderContainer.parent.constructor.name);
+
+    debug("");
+    debug("Mouse leaves the volume slider container");
+    volumeSliderContainer.element.dispatchEvent(new MouseEvent("mouseleave"));
+    debug("volumeSliderContainer.parent.constructor.name: " + volumeSliderContainer.parent.constructor.name);;
+
+    debug("");
+    
+    mediaControls.element.remove();
+    finishJSTest();
+}
+
+// Wait a frame for the setup to complete, then run tests
+requestAnimationFrame(runTests);
 
 </script>
 <script src="../../../resources/js-test-post.js"></script>

@@ -33,6 +33,7 @@
 #include "RemoteImageBufferSetConfiguration.h"
 #include "RenderingUpdateID.h"
 #include "WorkQueueMessageReceiver.h"
+#include <wtf/AbstractCanMakeCheckedPtr.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Identified.h>
 #include <wtf/Lock.h>
@@ -69,15 +70,9 @@ public:
     virtual bool flushAndCollectHandles(HashMap<ImageBufferSetIdentifier, std::unique_ptr<BufferSetBackendHandle>>&) = 0;
 };
 
-class ImageBufferSetClient {
+class ImageBufferSetClient : public AbstractCanMakeCheckedPtr {
 public:
     virtual ~ImageBufferSetClient() = default;
-
-    // CheckedPtr interface
-    virtual uint32_t checkedPtrCount() const = 0;
-    virtual uint32_t checkedPtrCountWithoutThreadCheck() const = 0;
-    virtual void incrementCheckedPtrCount() const = 0;
-    virtual void decrementCheckedPtrCount() const = 0;
 
     virtual void setNeedsDisplay() = 0;
 };

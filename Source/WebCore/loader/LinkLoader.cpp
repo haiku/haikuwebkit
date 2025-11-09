@@ -41,9 +41,9 @@
 #include "CrossOriginAccessControl.h"
 #include "DefaultResourceLoadPriority.h"
 #include "DocumentLoader.h"
-#include "DocumentInlines.h"
-#include "DocumentLoader.h"
+#include "DocumentPage.h"
 #include "FetchRequestDestination.h"
+#include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "HTMLSrcsetParser.h"
 #include <JavaScriptCore/ConsoleTypes.h>
@@ -186,6 +186,8 @@ std::optional<CachedResource::Type> LinkLoader::resourceTypeFromAsAttribute(cons
     case FetchRequestDestination::Serviceworker:
         return CachedResource::Type::Script;
     case FetchRequestDestination::Sharedworker:
+        return CachedResource::Type::Script;
+    case FetchRequestDestination::Speculationrules:
         return CachedResource::Type::Script;
     case FetchRequestDestination::Style:
         return CachedResource::Type::CSSStyleSheet;

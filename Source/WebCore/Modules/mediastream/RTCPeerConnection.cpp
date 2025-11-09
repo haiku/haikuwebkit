@@ -38,7 +38,7 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "DNS.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "FrameDestructionObserverInlines.h"

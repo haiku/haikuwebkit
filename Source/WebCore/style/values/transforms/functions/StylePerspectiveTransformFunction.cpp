@@ -29,6 +29,7 @@
 
 #include "AnimationUtilities.h"
 #include "PerspectiveTransformOperation.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/MathExtras.h>

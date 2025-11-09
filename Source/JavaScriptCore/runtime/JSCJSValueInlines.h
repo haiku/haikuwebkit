@@ -95,37 +95,6 @@ inline uint64_t JSValue::toIndex(JSGlobalObject* globalObject, ASCIILiteral erro
     RELEASE_AND_RETURN(scope, d);
 }
 
-inline size_t JSValue::toTypedArrayIndex(JSGlobalObject* globalObject, ASCIILiteral errorName) const
-{
-    VM& vm = getVM(globalObject);
-    auto scope = DECLARE_THROW_SCOPE(vm);
-
-    double d = toNumber(globalObject);
-    RETURN_IF_EXCEPTION(scope, 0);
-    if (d <= -1) {
-        throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " cannot be negative"_s)));
-        return 0;
-    }
-
-    if (isInt32())
-        return asInt32();
-
-    if (d > static_cast<double>(MAX_ARRAY_BUFFER_SIZE)) {
-        throwException(globalObject, scope, createRangeError(globalObject, makeString(errorName, " too large"_s)));
-        return 0;
-    }
-
-    // All of this monstrosity is just to give the correct result on 1<<32.
-    size_t outputOffset = 0;
-    double inputOffset = 0;
-    size_t int32Max = std::numeric_limits<int32_t>::max();
-    if (d > static_cast<double>(int32Max)) {
-        outputOffset = int32Max;
-        inputOffset = int32Max;
-    }
-    RELEASE_AND_RETURN(scope, outputOffset + static_cast<size_t>(static_cast<uint32_t>(JSC::toInt32(d - inputOffset))));
-}
-
 // https://tc39.es/proposal-temporal/#sec-tointegerwithtruncation
 inline double JSValue::toIntegerWithTruncation(JSGlobalObject* globalObject) const
 {

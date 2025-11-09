@@ -33,7 +33,7 @@
 
 namespace WebCore {
 
-enum class PseudoId : uint32_t;
+enum class PseudoId : uint8_t;
 
 class AnimationEventBase;
 class Document;

@@ -83,12 +83,15 @@
 #import <WebCore/Chrome.h>
 #import <WebCore/ContainerNodeInlines.h>
 #import <WebCore/DNS.h>
-#import <WebCore/Document.h>
 #import <WebCore/DocumentLoader.h>
+#import <WebCore/DocumentPage.h>
+#import <WebCore/DocumentView.h>
 #import <WebCore/EventHandler.h>
 #import <WebCore/EventNames.h>
 #import <WebCore/FocusController.h>
 #import <WebCore/FormState.h>
+#import <WebCore/FrameDestructionObserverInlines.h>
+#import <WebCore/FrameInlines.h>
 #import <WebCore/FrameLoader.h>
 #import <WebCore/FrameLoaderStateMachine.h>
 #import <WebCore/FrameLoaderTypes.h>
@@ -107,7 +110,6 @@
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MIMETypeRegistry.h>
 #import <WebCore/MouseEvent.h>
-#import <WebCore/Page.h>
 #import <WebCore/PluginViewBase.h>
 #import <WebCore/ProtectionSpace.h>
 #import <WebCore/ResourceError.h>

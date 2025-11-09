@@ -34,12 +34,11 @@
 #include "config.h"
 #include "PingLoader.h"
 
-#include "CachedResourceLoader.h"
 #include "CachedResourceRequest.h"
 #include "ContentRuleListResults.h"
 #include "ContentSecurityPolicy.h"
-#include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentResourceLoader.h"
 #include "FrameLoader.h"
 #include "HTTPHeaderValues.h"
 #include "InspectorInstrumentation.h"

@@ -47,11 +47,6 @@ class UniqueIDBDatabase;
 }
 }
 
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::IDBServer::UniqueIDBDatabase> : std::true_type { };
-}
-
 namespace WebCore {
 
 struct ClientOrigin;
@@ -79,8 +74,9 @@ using GetResultCallback = Function<void(const IDBError&, const IDBGetResult&)>;
 using GetAllResultsCallback = Function<void(const IDBError&, const IDBGetAllResult&)>;
 using CountCallback = Function<void(const IDBError&, uint64_t)>;
 
-class UniqueIDBDatabase : public CanMakeWeakPtr<UniqueIDBDatabase> {
+class UniqueIDBDatabase final : public CanMakeWeakPtr<UniqueIDBDatabase>, public CanMakeThreadSafeCheckedPtr<UniqueIDBDatabase> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(UniqueIDBDatabase, WEBCORE_EXPORT);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(UniqueIDBDatabase);
 public:
     WEBCORE_EXPORT UniqueIDBDatabase(UniqueIDBDatabaseManager&, const IDBDatabaseIdentifier&);
     UniqueIDBDatabase(UniqueIDBDatabase&) = delete;

@@ -37,6 +37,7 @@
 #include "SVGNames.h"
 #include "SVGParsingError.h"
 #include "SVGUnitTypes.h"
+#include "Settings.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>
 

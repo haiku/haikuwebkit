@@ -31,6 +31,7 @@
 #include <WebCore/ChromeClient.h>
 #include <WebCore/CryptoClient.h>
 #include <WebCore/ExceptionOr.h>
+#include <WebCore/PageIdentifier.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
@@ -40,6 +41,10 @@
 //
 // First created for SVGImage as it had no way to access the current Page (nor should it, since Images are not tied to a page).
 // See http://bugs.webkit.org/show_bug.cgi?id=5971 for the original discussion about this file.
+
+namespace PAL {
+class SessionID;
+}
 
 namespace WebCore {
 
@@ -82,7 +87,7 @@ class EmptyChromeClient : public ChromeClient {
 
     void setResizable(bool) final { }
 
-    void addMessageToConsole(MessageSource, MessageLevel, const String&, unsigned, unsigned, const String&) final { }
+    void addMessageToConsole(JSC::MessageSource, JSC::MessageLevel, const String&, unsigned, unsigned, const String&) final { }
 
     bool canRunBeforeUnloadConfirmPanel() final { return false; }
     bool runBeforeUnloadConfirmPanel(String&&, LocalFrame&) final { return true; }
@@ -228,9 +233,6 @@ WEBCORE_EXPORT PageConfiguration pageConfigurationWithEmptyClients(std::optional
 
 class EmptyCryptoClient: public CryptoClient {
     WTF_MAKE_TZONE_ALLOCATED(EmptyCryptoClient);
-public:
-    EmptyCryptoClient() = default;
-    ~EmptyCryptoClient() = default;
 };
 
 }

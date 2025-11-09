@@ -2817,6 +2817,32 @@ def check_wtf_move(clean_lines, line_number, file_state, error):
     error(line_number, 'runtime/wtf_move', 4, "Use 'WTFMove()' instead of 'std::move()'.")
 
 
+def check_unsafe_get(clean_lines, line_number, file_state, error):
+    """Looks for use of 'unsafeGet()' or 'unsafePtr()' which should be avoided.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      line_number: The number of the line to check.
+      file_state: A _FileState instance which maintains information about
+                  the state of things in the file.
+      error: The function to call with any errors found.
+    """
+
+    # This check doesn't apply to C implementation files.
+    if file_state.is_c():
+        return
+
+    line = clean_lines.elided[line_number]  # Get rid of comments and strings.
+
+    using_unsafe_get = search(r'\bunsafeGet\s*\(\s*\)', line)
+    if using_unsafe_get:
+        error(line_number, 'runtime/unsafe_get_ptr', 5, "Avoid using 'unsafeGet()' by extending the lifetime of the RefPtr.")
+
+    using_unsafe_ptr = search(r'\bunsafePtr\s*\(\s*\)', line)
+    if using_unsafe_ptr:
+        error(line_number, 'runtime/unsafe_get_ptr', 5, "Avoid using 'unsafePtr()' by extending the lifetime of the Ref.")
+
+
 def check_callonmainthread(filename, clean_lines, line_number, file_state, error):
     """Looks for use of 'callOnMainThread()' which should be replaced with 'callOnMainRunLoop()'.
 
@@ -3662,10 +3688,10 @@ def check_safer_cpp(clean_lines, line_number, error):
     if search(r'sqlite3_column_blob\(', line):
         error(line_number, 'safercpp/sqlite3_column_blob', 4, "Use sqliteColumnBlob() instead of sqlite3_column_blob().")
 
-    if search(r'= [a-zA-Z0-9_.(),\s\->]*protected[a-zA-Z0-9]+\(\)[;\)]', line):
+    if search(r'= [a-zA-Z0-9_.(),\s\->]*protected[a-zA-Z0-9]+\(\)(;|\))(?!;)', line):
         error(line_number, 'safercpp/protected_getter_for_init', 4, "Use m_foo or foo() instead of protectedFoo() for variable initialization.")
 
-    if search(r'= [a-zA-Z0-9_.(),\s\->]*checked[a-zA-Z0-9]+\(\)[;\)]', line):
+    if search(r'= [a-zA-Z0-9_.(),\s\->]*checked[a-zA-Z0-9]+\(\)(;|\))(?!;)', line):
         error(line_number, 'safercpp/checked_getter_for_init', 4, "Use m_foo or foo() instead of checkedFoo() for variable initialization.")
 
 def check_style(clean_lines, line_number, file_extension, class_state, file_state, enum_state, error):
@@ -3732,6 +3758,7 @@ def check_style(clean_lines, line_number, file_extension, class_state, file_stat
     check_max_min_macros(clean_lines, line_number, file_state, error)
     check_wtf_checked_size(clean_lines, line_number, file_state, error)
     check_wtf_move(clean_lines, line_number, file_state, error)
+    check_unsafe_get(clean_lines, line_number, file_state, error)
     check_wtf_make_unique(clean_lines, line_number, file_state, error)
     check_wtf_never_destroyed(clean_lines, line_number, file_state, error)
     check_lock_guard(clean_lines, line_number, file_state, error)
@@ -5007,6 +5034,7 @@ class CppChecker(object):
         'runtime/soft-linked-alloc',
         'runtime/string',
         'runtime/threadsafe_fn',
+        'runtime/unsafe_get_ptr',
         'runtime/unsigned',
         'runtime/virtual',
         'runtime/wtf_checked_size',

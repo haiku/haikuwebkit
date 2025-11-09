@@ -118,7 +118,12 @@ macro dispatchAfterRegularCallIgnoreResult(size, opcodeStruct, valueProfileName,
 end
 
 macro cCall2(function)
-    checkStackPointerAlignment(t4, 0xbad0c002)
+    if ARM64 or ARM64E
+        const scratch = t9
+    else
+        const scratch = t5
+    end
+    checkStackPointerAlignment(scratch, 0xbad0c002)
     if C_LOOP
         cloopCallSlowPath function, a0, a1
     elsif X86_64 or ARM64 or ARM64E or RISCV64
@@ -137,7 +142,12 @@ macro cCall2Void(function)
 end
 
 macro cCall3(function)
-    checkStackPointerAlignment(t4, 0xbad0c004)
+    if ARM64 or ARM64E
+        const scratch = t9
+    else
+        const scratch = t5
+    end
+    checkStackPointerAlignment(scratch, 0xbad0c004)
     if C_LOOP
         cloopCallSlowPath3 function, a0, a1, a2
     elsif X86_64 or ARM64 or ARM64E or RISCV64
@@ -149,7 +159,12 @@ end
 
 # This barely works. arg3 and arg4 should probably be immediates.
 macro cCall4(function)
-    checkStackPointerAlignment(t4, 0xbad0c004)
+    if ARM64 or ARM64E
+        const scratch = t9
+    else
+        const scratch = t5
+    end
+    checkStackPointerAlignment(scratch, 0xbad0c004)
     if C_LOOP
         cloopCallSlowPath4 function, a0, a1, a2, a3
     elsif X86_64 or ARM64 or ARM64E or RISCV64
@@ -171,11 +186,15 @@ macro doVMEntry(makeCall)
 
     checkStackPointerAlignment(t4, 0xbad0dc01)
 
-    storep vm, VMEntryRecord::m_vm[sp]
     if (ARM64 or ARM64E) and ADDRESS64
+        loadp ProtoCallFrame::context[protoCallFrame], t3
+        storepairq vm, t3, VMEntryRecord::m_vm[sp]
         loadpairq VM::topCallFrame[vm], t4, t3
         storepairq t4, t3, VMEntryRecord::m_prevTopCallFrame[sp]
     else
+        loadp ProtoCallFrame::context[protoCallFrame], t4
+        storep vm, VMEntryRecord::m_vm[sp]
+        storep t4, VMEntryRecord::m_context[sp]
         loadp VM::topCallFrame[vm], t4
         storep t4, VMEntryRecord::m_prevTopCallFrame[sp]
         loadp VM::topEntryFrame[vm], t4
@@ -2900,12 +2919,11 @@ llintOpWithMetadata(op_resolve_scope, OpResolveScope, macro (size, get, dispatch
 end)
 
 
-macro loadWithStructureCheck(opcodeStruct, get, slowPath)
-    get(m_scope, t0)
-    loadq [cfr, t0, 8], t0
-    loadStructureWithScratch(t0, t2, t1)
-    loadp %opcodeStruct%::Metadata::m_structure[t5], t1
-    bpneq t2, t1, slowPath
+macro loadScopeWithStructureCheck(opcodeStruct, get, metadata, scope, scratch, slowPath)
+    get(m_scope, scope)
+    loadq [cfr, scope, 8], scope
+    loadi JSCell::m_structureID[scope], scratch
+    bineq scratch, %opcodeStruct%::Metadata::m_structureID[metadata], slowPath
 end
 
 llintOpWithMetadata(op_get_from_scope, OpGetFromScope, macro (size, get, dispatch, metadata, return)
@@ -2938,7 +2956,7 @@ llintOpWithMetadata(op_get_from_scope, OpGetFromScope, macro (size, get, dispatc
 
 #gGlobalProperty:
     bineq t0, GlobalProperty, .gGlobalVar
-    loadWithStructureCheck(OpGetFromScope, get, .gDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
+    loadScopeWithStructureCheck(OpGetFromScope, get, t5, t0, t1, .gDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
     getProperty()
 
 .gGlobalVar:
@@ -2959,7 +2977,7 @@ llintOpWithMetadata(op_get_from_scope, OpGetFromScope, macro (size, get, dispatc
 
 .gGlobalPropertyWithVarInjectionChecks:
     bineq t0, GlobalPropertyWithVarInjectionChecks, .gGlobalVarWithVarInjectionChecks
-    loadWithStructureCheck(OpGetFromScope, get, .gDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
+    loadScopeWithStructureCheck(OpGetFromScope, get, t5, t0, t1, .gDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
     getProperty()
 
 .gGlobalVarWithVarInjectionChecks:
@@ -3048,7 +3066,7 @@ llintOpWithMetadata(op_put_to_scope, OpPutToScope, macro (size, get, dispatch, m
 
 .pGlobalProperty:
     bineq t0, GlobalProperty, .pGlobalVar
-    loadWithStructureCheck(OpPutToScope, get, .pDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
+    loadScopeWithStructureCheck(OpPutToScope, get, t5, t0, t1, .pDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
     putProperty()
     writeBarrierOnOperands(size, get, m_scope, m_value)
     dispatch()
@@ -3076,7 +3094,7 @@ llintOpWithMetadata(op_put_to_scope, OpPutToScope, macro (size, get, dispatch, m
 
 .pGlobalPropertyWithVarInjectionChecks:
     bineq t0, GlobalPropertyWithVarInjectionChecks, .pGlobalVarWithVarInjectionChecks
-    loadWithStructureCheck(OpPutToScope, get, .pDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
+    loadScopeWithStructureCheck(OpPutToScope, get, t5, t0, t1, .pDynamic) # This structure check includes lexical binding epoch check since when the epoch is changed, scope will be changed too.
     putProperty()
     writeBarrierOnOperands(size, get, m_scope, m_value)
     dispatch()
@@ -3267,6 +3285,15 @@ llintOpWithMetadata(op_instanceof, OpInstanceof, macro (size, get, dispatch, met
         store(result, m_hasInstanceOrPrototype)
         jmp .getPrototype
     end)
+    jmp .getPrototype
+
+.getHasInstanceInlinedGetterOSRReturnPoint:
+    # This can only be reached if we're exiting to the LLInt and we're exiting 
+    # from an inlined getter for Symbol.hasInstance. Other exits e.g. for a "prototype" 
+    # getter will exit directly to op_checkpoint_osr_exit_from_inlined_call_trampoline.
+    getterSetterOSRExitReturnPoint(op_instanceof, size)
+    valueProfile(size, OpInstanceof, m_hasInstanceValueProfile, r0, t2)
+    store(r0, m_hasInstanceOrPrototype)
 
 .getPrototype:
     overridesHasInstance(m_hasInstanceOrPrototype, m_constructor, .instanceofCustom)

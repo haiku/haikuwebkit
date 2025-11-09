@@ -367,6 +367,11 @@ void EventTarget::innerInvokeEventListeners(Event& event, EventListenerVector li
                 continue; // webkitrequestautofill only fires in a world with autofill capability.
         }
 
+        if (event.isShadowRootAttachedEvent()) [[unlikely]] {
+            if (!worldForDOMObject(*callback->jsFunction()).canAccessAnyShadowRoot())
+                continue; // webkitshadowrootattached only fires in a world with access to all shadow roots.
+        }
+
         // Do this before invocation to avoid reentrancy issues.
         if (registeredListener->isOnce())
             removeEventListener(event.type(), callback, registeredListener->useCapture());

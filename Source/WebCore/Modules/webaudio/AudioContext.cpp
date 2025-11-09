@@ -31,8 +31,8 @@
 #include "AudioContextOptions.h"
 #include "AudioTimestamp.h"
 #include "DOMAudioSession.h"
-#include "DocumentInlines.h"
-#include "FrameInlines.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
 #include "JSDOMPromiseDeferred.h"
 #include "LocalDOMWindow.h"
 #include "Logging.h"
@@ -44,7 +44,7 @@
 #include "PageInlines.h"
 #include "Performance.h"
 #include "PlatformMediaSessionManager.h"
-#include "Quirks.h"
+#include "Settings.h"
 #include <wtf/MediaTime.h>
 #include <wtf/TZoneMallocInlines.h>
 

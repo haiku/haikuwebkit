@@ -32,12 +32,14 @@
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
 #include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentQuirks.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "ElementInlines.h"
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "FrameDestructionObserverInlines.h"
+#include "FrameInlines.h"
 #include "HTMLDialogElement.h"
 #include "HTMLIFrameElement.h"
 #include "HTMLVideoElement.h"
@@ -50,7 +52,6 @@
 #include "Page.h"
 #include "PseudoClassChangeInvalidation.h"
 #include "QualifiedName.h"
-#include "Quirks.h"
 #include "RenderBlock.h"
 #include "RenderVideo.h"
 #include "SVGElementTypeHelpers.h"
@@ -102,7 +103,7 @@ Element* DocumentFullscreen::fullscreenElement() const
 {
     for (Ref element : makeReversedRange(document().topLayerElements())) {
         if (element->hasFullscreenFlag())
-            return element.ptr();
+            return element.unsafePtr();
     }
 
     return nullptr;

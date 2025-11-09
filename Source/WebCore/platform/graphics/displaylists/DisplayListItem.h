@@ -103,6 +103,9 @@ class ApplyStrokePattern;
 class BeginPage;
 class EndPage;
 class SetURLForRect;
+#if USE(SKIA)
+class DrawTextBlob;
+#endif
 
 using Item = Variant
     < ApplyDeviceScaleFactor
@@ -169,6 +172,9 @@ using Item = Variant
     , BeginPage
     , EndPage
     , SetURLForRect
+#if USE(SKIA)
+    , DrawTextBlob
+#endif
 >;
 
 enum class AsTextFlag : uint8_t {

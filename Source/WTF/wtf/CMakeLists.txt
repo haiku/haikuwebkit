@@ -3,6 +3,7 @@ if (ENABLE_MALLOC_HEAP_BREAKDOWN AND NOT APPLE)
 endif ()
 
 set(WTF_PUBLIC_HEADERS
+    AbstractCanMakeCheckedPtr.h
     AbstractRefCounted.h
     AbstractRefCountedAndCanMakeWeakPtr.h
     AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h
@@ -81,6 +82,7 @@ set(WTF_PUBLIC_HEADERS
     DoublyLinkedList.h
     EmbeddedFixedVector.h
     EnumClassOperatorOverloads.h
+    EnumSet.h
     EnumTraits.h
     EnumeratedArray.h
     Expected.h
@@ -323,7 +325,6 @@ set(WTF_PUBLIC_HEADERS
     StdUnorderedSet.h
     Stopwatch.h
     StreamBuffer.h
-    StringExtras.h
     StringHashDumpContext.h
     StringPrintStream.h
     StructDump.h

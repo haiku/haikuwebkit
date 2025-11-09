@@ -97,6 +97,7 @@ public:
     bool inWindowFullscreen() const;
     bool supportsRewind() const;
     bool needsChromeMediaControlsPseudoElement() const;
+    bool isMediaControlsMacInlineSizeSpecsEnabled() const;
 
     enum class ForceUpdate : bool { No, Yes };
     void updateCaptionDisplaySizes(ForceUpdate = ForceUpdate::No);

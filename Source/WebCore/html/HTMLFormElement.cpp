@@ -29,7 +29,7 @@
 #include "DOMFormData.h"
 #include "DOMTokenList.h"
 #include "DiagnosticLoggingClient.h"
-#include "Document.h"
+#include "DocumentView.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "Event.h"
 #include "EventNames.h"
@@ -114,6 +114,9 @@ HTMLFormElement::~HTMLFormElement()
     document().formController().willDeleteForm(*this);
     if (!shouldAutocomplete())
         document().unregisterForDocumentSuspensionCallbacks(*this);
+
+    // formWillBeDestroyed below will try to update the validity of all radio buttons in a given group.
+    m_radioButtonGroups.clear();
 
     m_defaultButton = nullptr;
     for (auto& weakElement : m_listedElements) {

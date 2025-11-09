@@ -1288,7 +1288,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (id)_web_immediateActionAnimationControllerForHitTestResultInternal:(API::HitTestResult*)hitTestResult withType:(uint32_t)type userData:(API::Object*)userData
 {
     RetainPtr data = userData ? static_cast<id<NSSecureCoding>>(userData->wrapper()) : nil;
-    return [self _immediateActionAnimationControllerForHitTestResult:wrapper(*hitTestResult) withType:(_WKImmediateActionType)type userData:data.get()];
+    return [self _immediateActionAnimationControllerForHitTestResult:protectedWrapper(*hitTestResult).get() withType:(_WKImmediateActionType)type userData:data.get()];
 }
 
 - (void)_web_prepareForImmediateActionAnimation
@@ -1665,7 +1665,20 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     return _impl->topScrollPocket();
 }
 
-#endif
+- (BOOL)_prefersSolidColorHardScrollPocket
+{
+    return _preferSolidColorHardPocketReasons.contains(WebKit::PreferSolidColorHardPocketReason::RequestedByClient);
+}
+
+- (void)_setPrefersSolidColorHardScrollPocket:(BOOL)value
+{
+    if (value)
+        [self _addReasonToPreferSolidColorHardPocket:WebKit::PreferSolidColorHardPocketReason::RequestedByClient];
+    else
+        [self _removeReasonToPreferSolidColorHardPocket:WebKit::PreferSolidColorHardPocketReason::RequestedByClient];
+}
+
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
 - (void)_setUsesAutomaticContentInsetBackgroundFill:(BOOL)value
 {
@@ -2068,7 +2081,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!snapshot)
         return nil;
 
-    return [[NSImage alloc] initWithCGImage:snapshot.get() size:NSZeroSize];
+    SUPPRESS_RETAINPTR_CTOR_ADOPT return [[NSImage alloc] initWithCGImage:snapshot.get() size:NSZeroSize];
 }
 @end
 

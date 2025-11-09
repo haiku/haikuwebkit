@@ -30,7 +30,6 @@
 #include "ColorSerialization.h"
 #include "ContentfulPaintChecker.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "Element.h"
 #include "FixedContainerEdges.h"
 #include "FrameSnapshotting.h"

@@ -57,6 +57,7 @@ namespace JSC {
     macro(JSSourceCodeType, SpecCellOther) \
     macro(JSScriptFetcherType, SpecCellOther) \
     macro(JSScriptFetchParametersType, SpecCellOther) \
+    macro(JSPromiseReactionType, SpecCellOther) \
     \
     /* The ObjectType value must come before any JSType that is a subclass of JSObject. */ \
     macro(ObjectType, SpecObjectOther) \
@@ -132,7 +133,7 @@ namespace JSC {
     macro(JSAsyncFromSyncIteratorType, SpecObjectOther) \
     macro(JSPromiseType, SpecPromiseObject) \
     macro(JSPromiseAllContextType, SpecObjectOther) \
-    macro(JSPromiseReactionType, SpecObjectOther) \
+    macro(JSPromiseAllGlobalContextType, SpecObjectOther) \
     macro(JSMapType, SpecMapObject) \
     macro(JSSetType, SpecSetObject) \
     macro(JSWeakMapType, SpecWeakMapObject) \

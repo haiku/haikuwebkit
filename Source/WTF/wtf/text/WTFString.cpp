@@ -51,8 +51,9 @@ String::String(std::span<const Latin1Character> characters)
 {
 }
 
+// Construct a string with Latin-1 data.
 String::String(std::span<const char> characters)
-    : m_impl(characters.data() ? RefPtr { StringImpl::create(byteCast<uint8_t>(characters)) } : nullptr)
+    : m_impl(characters.data() ? RefPtr { StringImpl::create(byteCast<Latin1Character>(characters)) } : nullptr)
 {
 }
 
@@ -393,7 +394,7 @@ CString String::ascii() const
 
         size_t characterBufferIndex = 0;
         for (auto character : characters)
-            characterBuffer[characterBufferIndex++] = character && (character < 0x20 || character > 0x7f) ? '?' : character;
+            characterBuffer[characterBufferIndex++] = character && (character < 0x20 || character > 0x7f) ? '?' : byteCast<char>(character);
 
         return result;        
     }

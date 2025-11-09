@@ -240,7 +240,7 @@ inline void VTTScanner::seekTo(Position position)
 
 inline char16_t VTTScanner::currentChar() const
 {
-    return m_is8Bit ? m_data.characters8.front() : m_data.characters16.front();
+    return m_is8Bit ? char16_t { m_data.characters8.front() } : m_data.characters16.front();
 }
 
 inline void VTTScanner::advance(size_t amount)

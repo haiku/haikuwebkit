@@ -131,7 +131,7 @@ void IPIntPlan::compileFunction(FunctionCodeIndex functionIndex)
         auto callee = IPIntCallee::create(*m_wasmInternalFunctions[functionIndex], functionIndexSpace, m_moduleInformation->nameSection->get(functionIndexSpace));
         ASSERT(!callee->entrypoint());
         bool usesSIMD = m_moduleInformation->usesSIMD(functionIndex);
-        if (usesSIMD && !Options::useBBQJIT()) {
+        if (usesSIMD && !Options::useBBQJIT() && !Options::useWasmIPIntSIMD()) {
             Locker locker { m_lock };
             Base::fail(makeString("JIT is disabled, but the entrypoint for "_s, functionIndex.rawIndex(), " requires JIT"_s));
             return;

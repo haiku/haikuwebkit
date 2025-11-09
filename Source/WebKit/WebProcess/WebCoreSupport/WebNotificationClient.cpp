@@ -33,9 +33,8 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/DeprecatedGlobalSettings.h>
-#include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/NotificationData.h>
-#include <WebCore/Page.h>
 #include <WebCore/ScriptExecutionContext.h>
 #include <wtf/TZoneMallocInlines.h>
 

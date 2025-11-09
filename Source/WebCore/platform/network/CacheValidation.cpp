@@ -152,7 +152,7 @@ void updateRedirectChainStatus(RedirectChainCacheStatus& redirectChainCacheStatu
 {
     if (redirectChainCacheStatus.status == RedirectChainCacheStatus::Status::NotCachedRedirection)
         return;
-    if (options.cachingPolicy != CachingPolicy::AllowCachingPrefetch && (response.cacheControlContainsNoStore() || response.cacheControlContainsNoCache() || response.cacheControlContainsMustRevalidate())) {
+    if (options.cachingPolicy != CachingPolicy::AllowCachingMainResourcePrefetch && (response.cacheControlContainsNoStore() || response.cacheControlContainsNoCache() || response.cacheControlContainsMustRevalidate())) {
         redirectChainCacheStatus.status = RedirectChainCacheStatus::Status::NotCachedRedirection;
         return;
     }

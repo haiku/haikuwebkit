@@ -181,7 +181,7 @@ AnimationPlayState CSSAnimation::backingAnimationPlayState() const
     return m_backingStyleAnimation.playState();
 }
 
-RefPtr<TimingFunction> CSSAnimation::backingAnimationTimingFunction() const
+TimingFunction* CSSAnimation::backingAnimationTimingFunction() const
 {
     return m_backingStyleAnimation.timingFunction().value.ptr();
 }
@@ -387,7 +387,7 @@ void CSSAnimation::keyframesRuleDidChange()
     if (m_overriddenProperties.contains(Property::Keyframes))
         return;
 
-    RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(effect());
+    RefPtr keyframeEffect = this->keyframeEffect();
     if (!keyframeEffect)
         return;
 
@@ -395,7 +395,7 @@ void CSSAnimation::keyframesRuleDidChange()
     if (!owningElement)
         return;
 
-    keyframeEffect->keyframesRuleDidChange();
+    keyframeEffect->recomputeKeyframesAtNextOpportunity();
     owningElement->keyframesRuleDidChange();
 }
 
@@ -404,7 +404,7 @@ void CSSAnimation::updateKeyframesIfNeeded(const RenderStyle* oldStyle, const Re
     if (m_overriddenProperties.contains(Property::Keyframes))
         return;
 
-    RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(effect());
+    RefPtr keyframeEffect = this->keyframeEffect();
     if (!keyframeEffect)
         return;
 

@@ -1,7 +1,7 @@
 /*
  * (C) 1999 Lars Knoll (knoll@kde.org)
  * (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2004-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
@@ -54,8 +54,9 @@ ShadowApplier::ShadowApplier(const RenderStyle& style, GraphicsContext& context,
         return;
     }
 
-    auto shadowOffset = TextBoxPainter::rotateShadowOffset(shadow->location, ignoreWritingMode ? WritingMode() : style.writingMode());
-    auto shadowRadius = shadow->blur.resolveZoom(Style::ZoomNeeded { });
+    const auto& zoomFactor = style.usedZoomForLength();
+    auto shadowOffset = TextBoxPainter::rotateShadowOffset(shadow->location, ignoreWritingMode ? WritingMode() : style.writingMode(), zoomFactor);
+    auto shadowRadius = shadow->blur.resolveZoom(zoomFactor);
     auto shadowColor = style.colorResolvingCurrentColor(shadow->color);
 
     colorFilter.transformColor(shadowColor);
@@ -65,7 +66,7 @@ ShadowApplier::ShadowApplier(const RenderStyle& style, GraphicsContext& context,
     // often draw the *last* shadow and the text itself in a single call.
     if (m_onlyDrawsShadow) {
         FloatRect shadowRect(textRect);
-        shadowRect.inflate(Style::paintingExtent(*shadow) + 3 * textRect.height());
+        shadowRect.inflate(Style::paintingExtent(*shadow, zoomFactor) + 3 * textRect.height());
         shadowRect.move(shadowOffset);
         context.save();
         context.clip(shadowRect);

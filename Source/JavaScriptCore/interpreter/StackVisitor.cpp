@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,7 +50,7 @@ StackVisitor::StackVisitor(CallFrame* startFrame, VM& vm, bool skipFirstFrame)
         topFrame = vm.topCallFrame;
         if (topFrame) {
             m_previousReturnPC = vm.maybeReturnPC;
-            if (skipFirstFrame || topFrame->isPartiallyInitializedFrame()) {
+            if (skipFirstFrame || topFrame->isZombieFrame()) {
                 m_previousReturnPC = topFrame->rawReturnPC();
                 topFrame = topFrame->callerFrame(m_frame.m_entryFrame);
                 m_topEntryFrameIsEmpty = (m_frame.m_entryFrame != vm.topEntryFrame);
@@ -639,8 +639,8 @@ void StackVisitor::Frame::dump(PrintStream& out, Indenter indent, WTF::Function<
 
                     JITType jitType = codeBlock->jitType();
                     if (jitType != JITType::FTLJIT) {
-                        JITCode* jitCode = codeBlock->jitCode().get();
-                        out.print(indent, "jitCode: ", RawPointer(jitCode),
+                        RefPtr jitCode = codeBlock->jitCode();
+                        out.print(indent, "jitCode: ", RawPointer(jitCode.get()),
                             " start ", RawPointer(jitCode->start()),
                             " end ", RawPointer(jitCode->end()), "\n");
                     }

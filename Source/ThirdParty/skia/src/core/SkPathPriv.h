@@ -47,6 +47,10 @@ struct SkPathVerbAnalysis {
 
 class SkPathPriv {
 public:
+    static SkPathConvexity ComputeConvexity(SkSpan<const SkPoint> pts,
+                                            SkSpan<const SkPathVerb> verbs,
+                                            SkSpan<const float> conicWeights);
+
     static uint8_t ComputeSegmentMask(SkSpan<const SkPathVerb>);
 
     static SkPathVerbAnalysis AnalyzeVerbs(SkSpan<const SkPathVerb> verbs);
@@ -248,9 +252,6 @@ public:
         return !(bounds.fLeft >= -max && bounds.fTop >= -max &&
                  bounds.fRight <= max && bounds.fBottom <= max);
     }
-    static bool TooBigForMath(const SkPath& path) {
-        return TooBigForMath(path.getBounds());
-    }
 
     // Returns number of valid points for each SkPath::Iter verb
     static int PtsInIter(unsigned verb) {
@@ -330,7 +331,8 @@ public:
 
     static bool IsNestedFillRects(const SkPath& path, SkRect rect[2],
                                   SkPathDirection dirs[2] = nullptr) {
-        return IsNestedFillRects(Raw(path), rect, dirs);
+        auto raw = Raw(path);
+        return raw.has_value() && IsNestedFillRects(*raw, rect, dirs);
     }
 
 
@@ -404,6 +406,16 @@ public:
         builder->privateReverseAddPath(reverseMe);
     }
 
+    static void ReversePathTo(SkPathBuilder* builder, const SkPath& reverseMe) {
+        builder->privateReversePathTo(reverseMe);
+    }
+
+    static SkPath ReversePath(const SkPath& reverseMe) {
+        SkPathBuilder bu;
+        bu.privateReverseAddPath(reverseMe);
+        return bu.detach();
+    }
+
     static std::optional<SkPoint> GetPoint(const SkPathBuilder& builder, int index) {
         if ((unsigned)index < (unsigned)builder.fPts.size()) {
             return builder.fPts.at(index);
@@ -428,9 +440,14 @@ public:
         return SkPath::MakeInternal(analysis, points, verbs, conics, fillType, isVolatile);
     }
 
-    static SkPathRaw Raw(const SkPath& path) {
+    static std::optional<SkPathRaw> Raw(const SkPath& path) {
         const SkPathRef* ref = path.fPathRef.get();
-        return {
+        SkASSERT(ref);
+        if (!ref->isFinite()) {
+            return {};
+        }
+
+        return SkPathRaw{
             ref->pointSpan(),
             ref->verbs(),
             ref->conicSpan(),
@@ -441,14 +458,27 @@ public:
         };
     }
 
-    static SkPathRaw Raw(const SkPathBuilder& builder) {
-        return {
+    static std::optional<SkPathRaw> Raw(const SkPathBuilder& builder) {
+        const auto bounds = builder.computeFiniteBounds();
+        if (!bounds) {
+            return {};
+        }
+
+        SkPathConvexity convexity = builder.fConvexity;
+        if (convexity == SkPathConvexity::kUnknown) {
+            convexity = SkPathPriv::ComputeConvexity(builder.fPts,
+                                                     builder.fVerbs,
+                                                     builder.fConicWeights);
+        }
+        const bool isConvex = SkPathConvexity_IsConvex(convexity);
+
+        return SkPathRaw{
             builder.points(),
             builder.verbs(),
             builder.conicWeights(),
-            builder.computeBounds(),
+            *bounds,
             builder.fillType(),
-            SkPathConvexity_IsConvex(builder.fConvexity),
+            isConvex,
             SkTo<uint8_t>(builder.fSegmentMask),
         };
     }

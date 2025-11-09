@@ -556,6 +556,9 @@ public:
 
 #if PLATFORM(IOS_FAMILY)
     void relayNotification(String&&, RetainPtr<NSData>&&);
+
+    void setWillPresentDatePopover(bool willPresent) { m_willPresentDatePopover = willPresent; }
+    bool willPresentDatePopover() const { return m_willPresentDatePopover; }
 #endif
 
 #if PLATFORM(MAC)
@@ -856,6 +859,10 @@ private:
     double m_loadingProgress { 0 };
 
     unsigned m_cacheUpdateDeferredCount { 0 };
+
+#if PLATFORM(IOS_FAMILY)
+    bool m_willPresentDatePopover;
+#endif
 
     // Relationships between objects.
     HashMap<AXID, AXRelations> m_relations;

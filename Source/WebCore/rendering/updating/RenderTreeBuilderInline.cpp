@@ -70,15 +70,15 @@ RenderBoxModelObject& RenderTreeBuilder::Inline::parentCandidateInContinuation(R
     CheckedPtr current = nextContinuation(&parent);
     while (current) {
         if (beforeChild && beforeChild->parent() == current)
-            return current->firstChild() == beforeChild ? *previous : *current;
+            return current->firstChild() == beforeChild ? *previous.unsafeGet() : *current.unsafeGet();
         auto next = nextContinuation(current.get());
         if (!next)
-            return !beforeChild && !current->firstChild() ? *previous : *current;
+            return !beforeChild && !current->firstChild() ? *previous.unsafeGet() : *current.unsafeGet();
         previous = current;
         current = next;
     }
     ASSERT_NOT_REACHED();
-    return *previous;
+    return *previous.unsafeGet();
 }
 
 static RenderPtr<RenderInline> cloneAsContinuation(RenderInline& renderer)

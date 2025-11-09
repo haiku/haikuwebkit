@@ -179,33 +179,8 @@ void CachedPage::restore(Page& page)
     firePageShowEvent(page);
 
     // Update Navigation API after pageshow events to ensure correct event ordering.
-    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && focusedDocument->window() && backForwardController->currentItem()) {
-        auto allItems = backForwardController->allItems();
-        Ref currentItem = *backForwardController->currentItem();
-        RefPtr previousItem = backForwardController->forwardItem();
-        focusedDocument->window()->navigation().updateForReactivation(WTFMove(allItems), currentItem, previousItem.get());
-
-        // Update Navigation API for all child frames.
-        Vector<Ref<LocalFrame>> childFrames;
-        for (RefPtr child = localMainFrame->tree().traverseNext(localMainFrame.get()); child; child = child->tree().traverseNext(localMainFrame.get())) {
-            if (RefPtr localChild = dynamicDowncast<LocalFrame>(child))
-                childFrames.append(localChild.releaseNonNull());
-        }
-
-        for (Ref child : childFrames) {
-            RefPtr document = child->document();
-            if (!document || !document->window())
-                continue;
-            // For iframes, get only the reachable history items from the current session.
-            auto reachableFrameItems = backForwardController->reachableItemsForFrame(child->frameID());
-
-            if (!reachableFrameItems.isEmpty() && child->loader().history().currentItem()) {
-                Ref currentItem = *child->loader().history().currentItem();
-                RefPtr previousItem = backForwardController->forwardItem();
-                document->window()->navigation().updateForReactivation(WTFMove(reachableFrameItems), currentItem, previousItem.get());
-            }
-        }
-    }
+    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && localMainFrame)
+        restoreNavigationAPIHistoryItems(*localMainFrame, backForwardController.ptr());
 
     for (auto& domain : m_loadedSubresourceDomains) {
         if (localMainFrame)
@@ -213,6 +188,30 @@ void CachedPage::restore(Page& page)
     }
 
     clear();
+}
+
+void CachedPage::restoreNavigationAPIHistoryItems(LocalFrame& frame, BackForwardController* backForwardController)
+{
+    RefPtr document = frame.document();
+    if (!document || !document->window())
+        return;
+
+    CheckedPtr checkedBackForwardController = backForwardController;
+    if (!checkedBackForwardController)
+        return;
+
+    if (RefPtr currentItem = frame.loader().history().currentItem()) {
+        RefPtr previousItem = checkedBackForwardController->forwardItem();
+        auto allItems = checkedBackForwardController->allItems(frame.frameID());
+        auto filteredItems = Navigation::filterHistoryItemsForNavigationAPI(WTFMove(allItems), *currentItem);
+
+        document->window()->navigation().updateForReactivation(WTFMove(filteredItems), *currentItem, previousItem.get());
+    }
+
+    for (RefPtr child = frame.tree().firstChild(); child; child = child->tree().nextSibling()) {
+        if (RefPtr localChild = dynamicDowncast<LocalFrame>(*child))
+            restoreNavigationAPIHistoryItems(*localChild, checkedBackForwardController.get());
+    }
 }
 
 void CachedPage::clear()

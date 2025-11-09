@@ -26,9 +26,8 @@
 #include "config.h"
 #include "NativeWebMouseEvent.h"
 
+#include "GtkVersioning.h"
 #include "WebEventFactory.h"
-#include <WebCore/GtkVersioning.h>
-#include <gdk/gdk.h>
 
 namespace WebKit {
 
@@ -45,7 +44,7 @@ NativeWebMouseEvent::NativeWebMouseEvent(GdkEvent* event, int eventClickCount, s
 }
 
 NativeWebMouseEvent::NativeWebMouseEvent(GdkEvent* event, const WebCore::DoublePoint& position, int eventClickCount, std::optional<WebCore::FloatSize> delta)
-    : WebMouseEvent(WebEventFactory::createWebMouseEvent(event, position, position, eventClickCount, delta))
+    : WebMouseEvent(WebEventFactory::createWebMouseEvent(event, position, eventClickCount, delta))
     , m_nativeEvent(constructNativeEvent(event))
 {
 }

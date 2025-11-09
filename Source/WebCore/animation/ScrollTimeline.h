@@ -42,7 +42,6 @@ class Document;
 class Element;
 class RenderStyle;
 class ScrollableArea;
-struct Length;
 
 class ScrollTimeline : public AnimationTimeline {
 public:

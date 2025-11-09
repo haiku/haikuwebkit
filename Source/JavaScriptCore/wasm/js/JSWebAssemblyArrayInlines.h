@@ -136,6 +136,12 @@ uint64_t JSWebAssemblyArray::get(uint32_t index)
     });
 }
 
+v128_t JSWebAssemblyArray::getVector(uint32_t index)
+{
+    ASSERT(elementType().type.unpacked().isV128());
+    return span<v128_t>()[index];
+}
+
 void JSWebAssemblyArray::set(VM& vm, uint32_t index, uint64_t value)
 {
     visitSpanNonVector([&]<typename T>(std::span<T> span) ALWAYS_INLINE_LAMBDA {

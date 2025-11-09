@@ -332,6 +332,31 @@ TEST(ObscuredContentInsets, NonObscuredTopContentInset)
     EXPECT_NOT_NULL([webView _topScrollPocket]);
 }
 
+TEST(ObscuredContentInsets, PreferSolidColorHardPocket)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);
+    EXPECT_NULL([webView _topScrollPocket]);
+
+    [webView setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0)];
+    [webView waitForNextPresentationUpdate];
+    [webView synchronouslyLoadTestPageNamed:@"lots-of-text"];
+
+    RetainPtr topScrollPocket = [webView _topScrollPocket];
+    EXPECT_NOT_NULL(topScrollPocket);
+    EXPECT_TRUE([topScrollPocket prefersSolidColorHardPocket]); // Solid color is preferred when the page is not scrolled.
+
+    [webView objectByEvaluatingJavaScript:@"scrollTo(0, 100)"];
+    Util::waitForConditionWithLogging([topScrollPocket] {
+        return ![topScrollPocket prefersSolidColorHardPocket];
+    }, 3, @"Expected non-solid color hard pocket");
+
+    [webView _setPrefersSolidColorHardScrollPocket:YES];
+    EXPECT_TRUE([topScrollPocket prefersSolidColorHardPocket]);
+
+    [webView _setPrefersSolidColorHardScrollPocket:NO];
+    EXPECT_FALSE([topScrollPocket prefersSolidColorHardPocket]);
+}
+
 TEST(ObscuredContentInsets, AdjustedColorForTopContentInsetColor)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);

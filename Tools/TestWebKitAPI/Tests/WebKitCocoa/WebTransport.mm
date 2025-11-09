@@ -730,6 +730,39 @@ TEST(WebTransport, ServerCertificateHashes)
     // FIXME: Add negative tests once rdar://161855525 is fixed.
 }
 
+TEST(WebTransport, ServerConnectionTermination)
+{
+    WebTransportServer echoServer([](ConnectionGroup group) -> ConnectionTask {
+        auto connection = co_await group.receiveIncomingConnection();
+        auto request = co_await connection.awaitableReceiveBytes();
+        EXPECT_EQ(request.size(), 3u);
+        group.cancel();
+    });
+
+    auto configuration = adoptNS([WKWebViewConfiguration new]);
+    enableWebTransport(configuration.get());
+    auto webView = adoptNS([[WKWebView alloc] initWithFrame:CGRectZero configuration:configuration.get()]);
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    [delegate allowAnyTLSCertificate];
+    [webView setNavigationDelegate:delegate.get()];
+
+    NSString *html = [NSString stringWithFormat:@""
+        "<script>async function test() {"
+        "  try {"
+        "    let t = new WebTransport('https://127.0.0.1:%d/');"
+        "    await t.ready;"
+        "    let c = await t.createUnidirectionalStream();"
+        "    let w = c.getWriter();"
+        "    await w.write(new TextEncoder().encode('abc'));"
+        "    await t.closed;"
+        "    alert('closed should have thrown');"
+        "  } catch (e) { alert('caught ' + e); }"
+        "}; test();"
+        "</script>", echoServer.port()];
+    [webView loadHTMLString:html baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "caught AbortError: The operation was aborted.");
+}
+
 } // namespace TestWebKitAPI
 
 #endif // HAVE(WEB_TRANSPORT)

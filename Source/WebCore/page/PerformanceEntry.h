@@ -77,3 +77,8 @@ private:
 };
 
 } // namespace WebCore
+
+#define SPECIALIZE_TYPE_TRAITS_PERFORMANCE_ENTRY(ToValueTypeName, EntryTypeName) \
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::ToValueTypeName) \
+static bool isType(const WebCore::PerformanceEntry& entry) { return entry.performanceEntryType() == WebCore::PerformanceEntry::Type::EntryTypeName; } \
+SPECIALIZE_TYPE_TRAITS_END()

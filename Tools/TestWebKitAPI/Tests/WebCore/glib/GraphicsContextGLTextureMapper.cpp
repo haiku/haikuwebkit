@@ -67,7 +67,7 @@ static RefPtr<TestedGraphicsContextGLTextureMapper> createTestedGraphicsContextG
 class MockGraphicsContextGLClient final : public GraphicsContextGL::Client {
 public:
     void forceContextLost() final { ++m_contextLostCalls; }
-    void addDebugMessage(GCGLenum, GCGLenum, GCGLenum, const String&) final { }
+    void addDebugMessage(GCGLenum, GCGLenum, GCGLenum, const CString&) final { }
     int contextLostCalls() { return m_contextLostCalls; }
 private:
     int m_contextLostCalls { 0 };
@@ -92,8 +92,10 @@ protected:
     bool antialias() const { return std::get<0>(GetParam()); }
     bool preserveDrawingBuffer() const { return std::get<1>(GetParam()); }
     bool isWebGL2() const { return std::get<2>(GetParam()); }
+#if ENABLE(WEBXR)
     GraphicsContextGLAttributes attributes();
     RefPtr<TestedGraphicsContextGLTextureMapper> createTestContext(IntSize contextSize);
+#endif
 
     void SetUp() override // NOLINT
     {
@@ -108,6 +110,7 @@ private:
     std::optional<ScopedSetAuxiliaryProcessTypeForTesting> m_scopedProcessType;
 };
 
+#if ENABLE(WEBXR)
 GraphicsContextGLAttributes AnyContextAttributeTest::attributes()
 {
     GraphicsContextGLAttributes attributes;
@@ -128,6 +131,7 @@ RefPtr<TestedGraphicsContextGLTextureMapper> AnyContextAttributeTest::createTest
     context->reshape(contextSize.width(), contextSize.height());
     return context;
 }
+#endif
 
 } // namespace
 
@@ -393,7 +397,7 @@ TEST_P(AnyContextAttributeTest, WebXRBlitTest)
         PlatformGLObject color = gl->createRenderbuffer();
         ASSERT_NE(color, 0u);
         gl->bindRenderbuffer(GL::RENDERBUFFER, color);
-        gl->renderbufferStorageMultisampleANGLE(GL::RENDERBUFFER, 0, GL::BGRA_EXT, 2, 2);
+        gl->renderbufferStorageMultisampleANGLE(GL::RENDERBUFFER, 0, GL::RGBA8, 2, 2);
         gl->framebufferRenderbuffer(GL::DRAW_FRAMEBUFFER, GL::COLOR_ATTACHMENT0, GL::RENDERBUFFER, color);
     }
     {

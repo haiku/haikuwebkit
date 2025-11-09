@@ -29,8 +29,9 @@
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "ContainerNodeInlines.h"
+#include "DocumentPage.h"
 #include "FocusController.h"
-#include "Frame.h"
+#include "FrameInlines.h"
 #include "HTMLFrameOwnerElement.h"
 #include "Page.h"
 #include "RenderElement.h"
@@ -38,6 +39,7 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderWidget.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -149,7 +151,7 @@ bool FrameView::forceUpdateScrollbarsOnMainThreadForPerformanceTesting() const
 
 IntRect FrameView::scrollableAreaBoundingBox(bool*) const
 {
-    RefPtr ownerRenderer = frame().ownerRenderer();
+    RefPtr ownerRenderer = protectedFrame()->ownerRenderer();
     if (!ownerRenderer)
         return frameRect();
 
@@ -275,7 +277,7 @@ IntPoint FrameView::convertToContainingView(IntPoint localPoint) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return localPoint;
 
@@ -293,7 +295,7 @@ FloatPoint FrameView::convertToContainingView(FloatPoint localPoint) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return localPoint;
 
@@ -306,12 +308,17 @@ FloatPoint FrameView::convertToContainingView(FloatPoint localPoint) const
     return localPoint;
 }
 
+Ref<Frame> FrameView::protectedFrame() const
+{
+    return frame();
+}
+
 IntRect FrameView::convertToContainingView(const IntRect& localRect) const
 {
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return localRect;
 
@@ -329,7 +336,7 @@ FloatRect FrameView::convertToContainingView(const FloatRect& localRect) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return localRect;
 
@@ -349,7 +356,7 @@ IntPoint FrameView::convertFromContainingView(IntPoint parentPoint) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return parentPoint;
 
@@ -367,7 +374,7 @@ FloatPoint FrameView::convertFromContainingView(FloatPoint parentPoint) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return parentPoint;
 
@@ -385,7 +392,7 @@ DoublePoint FrameView::convertFromContainingView(DoublePoint parentPoint) const
     if (RefPtr parentScrollView = parent()) {
         if (RefPtr parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RefPtr renderer = frame().ownerRenderer();
+            RefPtr renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return parentPoint;
 
@@ -404,7 +411,7 @@ IntRect FrameView::convertFromContainingView(const IntRect& parentRect) const
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return parentRect;
 
@@ -422,7 +429,7 @@ FloatRect FrameView::convertFromContainingView(const FloatRect& parentRect) cons
     if (auto* parentScrollView = parent()) {
         if (auto* parentView = dynamicDowncast<FrameView>(*parentScrollView)) {
             // Get our renderer in the parent view
-            RenderWidget* renderer = frame().ownerRenderer();
+            RenderWidget* renderer = protectedFrame()->ownerRenderer();
             if (!renderer)
                 return parentRect;
 

@@ -28,6 +28,7 @@
 
 #if PLATFORM(IOS_FAMILY)
 
+#import "DocumentView.h"
 #import "HTMLVideoElement.h"
 #import "LocalFrameView.h"
 #import "Logging.h"

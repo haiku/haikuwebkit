@@ -28,9 +28,9 @@
 
 #if ENABLE(DRAG_SUPPORT) && USE(GTK4)
 
+#include "GtkUtilities.h"
 #include "WebKitWebViewBasePrivate.h"
-#include <WebCore/GtkUtilities.h>
-#include <WebCore/ImageAdapter.h>
+#include <WebCore/Image.h>
 #include <WebCore/NativeImage.h>
 #include <WebCore/PasteboardCustomData.h>
 #include <gtk/gtk.h>
@@ -45,6 +45,27 @@ DragSource::DragSource(GtkWidget* webView)
 
 DragSource::~DragSource()
 {
+}
+
+static GRefPtr<GdkTexture> dragIconTexture(RefPtr<ShareableBitmap>&& iconImage)
+{
+    if (!iconImage)
+        return nullptr;
+
+    RefPtr image = iconImage->createImage();
+    if (!image)
+        return nullptr;
+
+    RefPtr nativeImage = image->currentNativeImage();
+    if (!nativeImage)
+        return nullptr;
+
+    auto& platformImage = nativeImage->platformImage();
+#if USE(CAIRO)
+    return cairoSurfaceToGdkTexture(platformImage.get());
+#elif USE(SKIA)
+    return skiaImageToGdkTexture(*platformImage.get());
+#endif
 }
 
 void DragSource::begin(SelectionData&& selectionData, OptionSet<DragOperation> operationMask, RefPtr<ShareableBitmap>&& image, IntPoint&& imageHotspot)
@@ -79,7 +100,7 @@ void DragSource::begin(SelectionData&& selectionData, OptionSet<DragOperation> o
     }
 
     if (m_selectionData->hasImage()) {
-        auto pixbuf = m_selectionData->image()->adapter().gdkPixbuf();
+        auto pixbuf = selectionDataImageAsGdkPixbuf(*m_selectionData);
         providers.append(gdk_content_provider_new_typed(GDK_TYPE_PIXBUF, pixbuf.get()));
     }
 
@@ -130,14 +151,11 @@ void DragSource::begin(SelectionData&& selectionData, OptionSet<DragOperation> o
     }), this);
 
     auto* dragIcon = gtk_drag_icon_get_for_drag(m_drag.get());
-    RefPtr<Image> iconImage = image ? image->createImage() : nullptr;
-    if (iconImage) {
-        if (auto texture = iconImage->adapter().gdkTexture()) {
-            gdk_drag_set_hotspot(m_drag.get(), -imageHotspot.x(), -imageHotspot.y());
-            auto* picture = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture.get()));
-            gtk_drag_icon_set_child(GTK_DRAG_ICON(dragIcon), picture);
-            return;
-        }
+    if (auto texture = dragIconTexture(WTFMove(image))) {
+        gdk_drag_set_hotspot(m_drag.get(), -imageHotspot.x(), -imageHotspot.y());
+        auto* picture = gtk_picture_new_for_paintable(GDK_PAINTABLE(texture.get()));
+        gtk_drag_icon_set_child(GTK_DRAG_ICON(dragIcon), picture);
+        return;
     }
 
     gdk_drag_set_hotspot(m_drag.get(), -2, -2);

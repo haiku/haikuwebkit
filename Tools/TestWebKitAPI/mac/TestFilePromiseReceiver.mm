@@ -73,7 +73,7 @@
 
 - (id)draggingSource
 {
-    return _draggingSource.get().get();
+    return _draggingSource.get().unsafeGet();
 }
 
 - (void)setDraggingSource:(id)draggingSource

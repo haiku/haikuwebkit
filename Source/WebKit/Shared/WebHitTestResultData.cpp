@@ -23,9 +23,10 @@
 
 #include "ShareableBitmapUtilities.h"
 #include "WebFrame.h"
-#include <WebCore/Document.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/ElementInlines.h>
 #include <WebCore/EventHandler.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/HitTestResult.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/LocalFrameView.h>

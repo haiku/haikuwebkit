@@ -67,15 +67,22 @@ struct DefaultExceptionThrower {
 };
 
 template<typename IDL> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue);
+template<typename IDL, typename F> decltype(auto) convert(JSC::JSGlobalObject&, JSC::JSValue, F&&);
 template<typename IDL> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSObject&);
 template<typename IDL> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSDOMGlobalObject&);
-template<typename IDL, typename ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, ExceptionThrower&&);
-template<typename IDL, typename ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSObject&, ExceptionThrower&&);
-template<typename IDL, typename ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSDOMGlobalObject&, ExceptionThrower&&);
+template<typename IDL> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSDOMGlobalObject&, const String&);
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, ExceptionThrower&&);
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSObject&, ExceptionThrower&&);
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> ConversionResult<IDL> convert(JSC::JSGlobalObject&, JSC::JSValue, JSDOMGlobalObject&, ExceptionThrower&&);
 
 template<typename IDL> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value)
 {
     return Converter<IDL>::convert(lexicalGlobalObject, value);
+}
+
+template<typename IDL, typename ResultFunctor> inline decltype(auto) convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ResultFunctor&& resultFunctor)
+{
+    return Converter<IDL>::convert(lexicalGlobalObject, value, std::forward<ResultFunctor>(resultFunctor));
 }
 
 template<typename IDL> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSC::JSObject& thisObject)
@@ -88,17 +95,22 @@ template<typename IDL> inline ConversionResult<IDL> convert(JSC::JSGlobalObject&
     return Converter<IDL>::convert(lexicalGlobalObject, value, globalObject);
 }
 
-template<typename IDL, typename ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ExceptionThrower&& exceptionThrower)
+template<typename IDL> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSDOMGlobalObject& globalObject, const String& sink)
+{
+    return Converter<IDL>::convert(lexicalGlobalObject, value, globalObject, sink);
+}
+
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, ExceptionThrower&& exceptionThrower)
 {
     return Converter<IDL>::convert(lexicalGlobalObject, value, std::forward<ExceptionThrower>(exceptionThrower));
 }
 
-template<typename IDL, typename ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSC::JSObject& thisObject, ExceptionThrower&& exceptionThrower)
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSC::JSObject& thisObject, ExceptionThrower&& exceptionThrower)
 {
     return Converter<IDL>::convert(lexicalGlobalObject, value, thisObject, std::forward<ExceptionThrower>(exceptionThrower));
 }
 
-template<typename IDL, typename ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSDOMGlobalObject& globalObject, ExceptionThrower&& exceptionThrower)
+template<typename IDL, ExceptionThrowerFunctor ExceptionThrower> inline ConversionResult<IDL> convert(JSC::JSGlobalObject& lexicalGlobalObject, JSC::JSValue value, JSDOMGlobalObject& globalObject, ExceptionThrower&& exceptionThrower)
 {
     return Converter<IDL>::convert(lexicalGlobalObject, value, globalObject, std::forward<ExceptionThrower>(exceptionThrower));
 }

@@ -18,9 +18,9 @@ Modules/webcodecs/WebCodecsBase.cpp
 Modules/webcodecs/WebCodecsVideoDecoder.cpp
 Modules/webcodecs/WebCodecsVideoEncoder.cpp
 Modules/webdatabase/DatabaseThread.cpp
-accessibility/isolatedtree/AXIsolatedObject.cpp
-accessibility/isolatedtree/AXIsolatedObject.h
-accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm
+[ Mac ] accessibility/isolatedtree/AXIsolatedObject.cpp
+[ Mac ] accessibility/isolatedtree/AXIsolatedObject.h
+[ Mac ] accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm
 animation/KeyframeEffect.cpp
 bindings/js/JSDOMPromiseDeferred.cpp
 contentextensions/ContentExtensionsBackend.cpp
@@ -32,7 +32,7 @@ css/StyleRule.cpp
 dom/ContentVisibilityDocumentState.cpp
 dom/CustomElementDefaultARIA.cpp
 dom/RejectedPromiseTracker.cpp
-editing/Editor.cpp
+[ Mac ] editing/Editor.cpp
 html/FormAssociatedCustomElement.cpp
 html/track/TrackBase.cpp
 inspector/InspectorOverlay.cpp
@@ -69,6 +69,7 @@ rendering/RenderGrid.cpp
 rendering/RenderLayer.cpp
 rendering/RenderLayerCompositor.cpp
 rendering/RenderListBox.cpp
+rendering/RenderReplaced.cpp
 rendering/RenderText.cpp
 rendering/style/StyleCustomPropertyData.cpp
 rendering/svg/RenderSVGResourceGradient.cpp
@@ -80,9 +81,19 @@ style/StyleCustomProperty.cpp
 style/Styleable.cpp
 style/values/StyleValueTypes.h
 style/values/backgrounds/StyleFillLayers.h
+style/values/fonts/StyleFontFeatureSettings.cpp
+style/values/fonts/StyleFontVariationSettings.cpp
 style/values/images/StyleGradient.cpp
-testing/MockMediaSessionCoordinator.cpp
+style/values/primitives/StylePrimitiveKeyword+CSSValueCreation.h
+style/values/primitives/StylePrimitiveKeyword+Serialization.h
+[ Mac ] testing/MockMediaSessionCoordinator.cpp
 workers/Worker.cpp
 workers/WorkerMessagingProxy.cpp
 workers/WorkerOrWorkletThread.cpp
 workers/shared/SharedWorkerObjectConnection.cpp
+[ iOS ] page/ios/FrameIOS.mm
+[ iOS ] platform/PreviewConverter.cpp
+[ iOS ] platform/graphics/avfoundation/objc/MediaPlayerPrivateAVFoundationObjC.mm
+[ iOS ] platform/ios/DragImageIOS.mm
+[ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
+[ iOS ] platform/mediastream/mac/CoreAudioSharedUnit.cpp

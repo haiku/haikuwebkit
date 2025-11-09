@@ -78,14 +78,17 @@ DestinationColorSpace NativeImage::colorSpace() const
     return DestinationColorSpace(CGImageGetColorSpace(m_platformImage.get()));
 }
 
-Headroom NativeImage::headroom() const
+void NativeImage::computeHeadroom()
 {
 #if HAVE(SUPPORT_HDR_DISPLAY)
     float headroom = CGImageGetContentHeadroom(m_platformImage.get());
-    return Headroom(std::max<float>(headroom, Headroom::None));
-#else
-    return Headroom::None;
+    m_headroom = Headroom(std::max<float>(headroom, Headroom::None));
 #endif
+}
+
+Headroom NativeImage::headroom() const
+{
+    return m_headroom;
 }
 
 std::optional<Color> NativeImage::singlePixelSolidColor() const

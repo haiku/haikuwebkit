@@ -61,7 +61,7 @@ shouldThrow(() => {
 
 shouldThrow(() => {
     new DataView(buffer, Infinity);
-}, "RangeError: byteOffset too large");
+}, "RangeError: byteOffset larger than (2 ** 53) - 1");
 
 shouldThrow(() => {
     new DataView(buffer, 0, 256);
@@ -73,4 +73,4 @@ shouldThrow(() => {
 
 shouldThrow(() => {
     new DataView(buffer, 0, Infinity);
-}, "RangeError: byteLength too large");
+}, "RangeError: byteLength larger than (2 ** 53) - 1");

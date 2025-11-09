@@ -586,26 +586,6 @@ ALWAYS_INLINE simde_uint64x2_t greaterThanOrEqual(simde_uint64x2_t lhs, simde_ui
     return simde_vcgeq_u64(lhs, rhs);
 }
 
-template<size_t> struct SizedUnsignedTrait;
-template<>
-struct SizedUnsignedTrait<1> {
-    using Type = uint8_t;
-};
-template<>
-struct SizedUnsignedTrait<2> {
-    using Type = uint16_t;
-};
-template<>
-struct SizedUnsignedTrait<4> {
-    using Type = uint32_t;
-};
-template<>
-struct SizedUnsignedTrait<8> {
-    using Type = uint64_t;
-};
-template<typename T>
-using SameSizeUnsignedInteger = SizedUnsignedTrait<sizeof(T)>::Type;
-
 template<typename CharacterType, size_t threshold = SIMD::stride<CharacterType>>
 ALWAYS_INLINE const CharacterType* find(std::span<const CharacterType> span, const auto& vectorMatch, const auto& scalarMatch)
 {

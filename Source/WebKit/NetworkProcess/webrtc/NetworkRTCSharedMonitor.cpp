@@ -28,7 +28,10 @@
 #if USE(LIBWEBRTC)
 #include "NetworkRTCSharedMonitor.h"
 
+#include "Logging.h"
+#include "NetworkRTCMonitor.h"
 #include <wtf/NeverDestroyed.h>
+#include <wtf/WorkQueue.h>
 
 namespace WebKit {
 
@@ -101,22 +104,22 @@ webrtc::AdapterType NetworkRTCSharedMonitor::adapterTypeFromInterfaceName(const 
 
 void NetworkRTCSharedMonitor::updateNetworks()
 {
-    auto aggregator = CallbackAggregator::create([] (auto&& ipv4, auto&& ipv6, auto&& networkList) mutable {
+    auto aggregator = IPAddressCallbackAggregator::create([] (auto&& ipv4, auto&& ipv6, auto&& networkList) mutable {
         NetworkRTCSharedMonitor::singleton().onGatheredNetworks(WTFMove(ipv4), WTFMove(ipv6), WTFMove(networkList));
     });
     Ref protectedQueue = m_queue;
     protectedQueue->dispatch([aggregator] {
         bool useIPv4 = true;
-        if (auto address = getDefaultIPAddress(useIPv4))
+        if (auto address = NetworkRTCMonitor::getDefaultIPAddress(useIPv4))
             aggregator->setIPv4(WTFMove(*address));
     });
     protectedQueue->dispatch([aggregator] {
         bool useIPv4 = false;
-        if (auto address = getDefaultIPAddress(useIPv4))
+        if (auto address = NetworkRTCMonitor::getDefaultIPAddress(useIPv4))
             aggregator->setIPv6(WTFMove(*address));
     });
     protectedQueue->dispatch([aggregator] {
-        aggregator->setNetworkMap(gatherNetworkMap());
+        aggregator->setNetworkMap(NetworkRTCMonitor::gatherNetworkMap());
     });
 }
 
@@ -136,7 +139,7 @@ void NetworkRTCSharedMonitor::onGatheredNetworks(RTCNetwork::IPAddress&& ipv4, R
             auto iterator = m_networkMap.find(keyValue.key);
             bool isFound = iterator != m_networkMap.end();
             keyValue.value.id = isFound ? iterator->value.id : ++m_networkLastIndex;
-            didChange |= !isFound || hasNetworkChanged(keyValue.value, iterator->value);
+            didChange |= !isFound || NetworkRTCMonitor::hasNetworkChanged(keyValue.value, iterator->value);
         }
         if (!didChange) {
             for (auto& keyValue : m_networkMap) {
@@ -146,7 +149,7 @@ void NetworkRTCSharedMonitor::onGatheredNetworks(RTCNetwork::IPAddress&& ipv4, R
                 }
             }
         }
-        if (!didChange && (ipv4.isUnspecified() || isEqual(ipv4, m_ipv4)) && (ipv6.isUnspecified() || isEqual(ipv6, m_ipv6)))
+        if (!didChange && (ipv4.isUnspecified() || NetworkRTCMonitor::isEqual(ipv4, m_ipv4)) && (ipv6.isUnspecified() || NetworkRTCMonitor::isEqual(ipv6, m_ipv6)))
             return;
 
         m_networkMap = WTFMove(networkMap);
@@ -158,7 +161,7 @@ void NetworkRTCSharedMonitor::onGatheredNetworks(RTCNetwork::IPAddress&& ipv4, R
     RELEASE_LOG(WebRTC, "NetworkRTCSharedMonitor::onGatheredNetworks - networks changed");
 
     auto networkList = copyToVector(m_networkMap.values());
-    std::ranges::sort(networkList, sortNetworks);
+    std::ranges::sort(networkList, NetworkRTCMonitor::sortNetworks);
 
     int preference = std::max(127zu, networkList.size());
     for (auto& network : networkList)

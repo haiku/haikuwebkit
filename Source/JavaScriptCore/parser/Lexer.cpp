@@ -1208,7 +1208,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE typename Lexer<T>::StringParseR
 
     const T* stringStart = currentSourcePtr();
 
-    using UnsignedType = SIMD::SameSizeUnsignedInteger<T>;
+    using UnsignedType = SameSizeUnsignedInteger<T>;
     auto quoteMask = SIMD::splat<UnsignedType>(stringQuoteCharacter);
     constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
     constexpr auto controlMask = SIMD::splat<UnsignedType>(0xE);
@@ -2968,7 +2968,7 @@ inSingleLineComment:
     {
         auto endPosition = currentPosition();
 
-        using UnsignedType = SIMD::SameSizeUnsignedInteger<T>;
+        using UnsignedType = SameSizeUnsignedInteger<T>;
         constexpr auto lineFeedMask = SIMD::splat<UnsignedType>('\n');
         constexpr auto carriageReturnMask = SIMD::splat<UnsignedType>('\r');
         constexpr auto u2028Mask = SIMD::splat<UnsignedType>(static_cast<UnsignedType>(0x2028));

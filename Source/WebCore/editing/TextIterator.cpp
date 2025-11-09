@@ -358,7 +358,7 @@ static Node* firstNode(const BoundaryPoint& point)
     if (point.container->isCharacterDataNode())
         return point.container.ptr();
     if (RefPtr child = point.container->traverseToChildAt(point.offset))
-        return child.get();
+        return child.unsafeGet();
     if (!point.offset)
         return point.container.ptr();
     return NodeTraversal::nextSkippingChildren(point.container);
@@ -1240,7 +1240,7 @@ Node* TextIterator::node() const
 {
     auto start = this->range().start;
     if (start.container->isCharacterDataNode())
-        return start.container.ptr();
+        return start.container.unsafePtr();
     return start.container->traverseToChildAt(start.offset);
 }
 
@@ -1440,7 +1440,7 @@ RenderText* SimplifiedBackwardsTextIterator::handleFirstLetter(int& startOffset,
     m_offset = firstLetterRenderer->caretMaxOffset();
     m_offset += collapsedSpaceLength(*firstLetterRenderer, m_offset);
 
-    return firstLetterRenderer.get();
+    return firstLetterRenderer.unsafeGet();
 }
 
 bool SimplifiedBackwardsTextIterator::handleReplacedElement()

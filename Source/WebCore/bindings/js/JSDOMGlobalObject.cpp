@@ -29,9 +29,9 @@
 
 #include "DOMConstructors.h"
 #include "DeprecatedGlobalSettings.h"
-#include "Document.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
+#include "DocumentSecurityOrigin.h"
 #include "FetchResponse.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
@@ -703,7 +703,7 @@ JSC::JSInternalPromise* JSDOMGlobalObject::moduleLoaderFetch(JSC::JSGlobalObject
         RELEASE_AND_RETURN(scope, loader->fetch(globalObject, moduleLoader, moduleKey, parameters, scriptFetcher));
     JSC::JSInternalPromise* promise = JSC::JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
     scope.release();
-    promise->reject(globalObject, jsUndefined());
+    promise->reject(vm, globalObject, jsUndefined());
     return promise;
 }
 
@@ -724,7 +724,7 @@ JSC::JSInternalPromise* JSDOMGlobalObject::moduleLoaderImportModule(JSC::JSGloba
         RELEASE_AND_RETURN(scope, loader->importModule(globalObject, moduleLoader, moduleName, parameters, sourceOrigin));
     JSC::JSInternalPromise* promise = JSC::JSInternalPromise::create(vm, globalObject->internalPromiseStructure());
     scope.release();
-    promise->reject(globalObject, jsUndefined());
+    promise->reject(vm, globalObject, jsUndefined());
     return promise;
 }
 

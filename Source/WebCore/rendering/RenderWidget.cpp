@@ -25,7 +25,8 @@
 
 #include "AXObjectCache.h"
 #include "BackgroundPainter.h"
-#include "DocumentInlines.h"
+#include "DocumentSecurityOrigin.h"
+#include "DocumentView.h"
 #include "FloatRoundedRect.h"
 #include "HTMLFrameOwnerElement.h"
 #include "HitTestResult.h"

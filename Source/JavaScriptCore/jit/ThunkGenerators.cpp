@@ -860,7 +860,7 @@ typedef MathThunkCallingConvention(*MathThunk)(MathThunkCallingConvention);
 #if CPU(X86_64) && COMPILER(GCC_COMPATIBLE) && (OS(DARWIN) || OS(LINUX))
 
 #define defineUnaryDoubleOpWrapper(function) \
-    asm( \
+    __asm__( \
         ".text\n" \
         ".globl " SYMBOL_STRING(function##Thunk) "\n" \
         HIDE_SYMBOL(function##Thunk) "\n" \
@@ -880,7 +880,7 @@ typedef MathThunkCallingConvention(*MathThunk)(MathThunkCallingConvention);
 #elif CPU(ARM_THUMB2) && COMPILER(GCC_COMPATIBLE) && OS(DARWIN)
 
 #define defineUnaryDoubleOpWrapper(function) \
-    asm( \
+    __asm__( \
         ".text\n" \
         ".align 2\n" \
         ".globl " SYMBOL_STRING(function##Thunk) "\n" \
@@ -905,7 +905,7 @@ typedef MathThunkCallingConvention(*MathThunk)(MathThunkCallingConvention);
 #elif CPU(ARM64)
 
 #define defineUnaryDoubleOpWrapper(function) \
-    asm( \
+    __asm__( \
         ".text\n" \
         ".align 2\n" \
         ".globl " SYMBOL_STRING(function##Thunk) "\n" \

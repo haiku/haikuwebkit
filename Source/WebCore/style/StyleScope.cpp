@@ -33,6 +33,7 @@
 #include "CSSStyleSheet.h"
 #include "ContainerNodeInlines.h"
 #include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "Element.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementChildIteratorInlines.h"

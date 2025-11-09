@@ -29,6 +29,7 @@
 #include "CSSValueKeywords.h"
 #include "Chrome.h"
 #include "DocumentInlines.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "Font.h"
 #include "FrameSelection.h"
@@ -48,7 +49,6 @@
 #include "RenderScrollbar.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
-#include "StyleLengthWrapper+Platform.h"
 #include "StyleResolver.h"
 #include "TextControlInnerElements.h"
 #include "UnicodeBidi.h"
@@ -295,7 +295,6 @@ PopupMenuStyle RenderSearchField::menuStyle() const
         style().usedVisibility() == Visibility::Visible,
         style().display() == DisplayType::None,
         true,
-        Style::toPlatform(style().textIndent().length),
         writingMode().bidiDirection(),
         isOverride(style().unicodeBidi()),
         PopupMenuStyle::CustomBackgroundColor

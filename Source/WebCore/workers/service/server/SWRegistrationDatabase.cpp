@@ -199,7 +199,7 @@ SQLiteStatementAutoResetScope SWRegistrationDatabase::cachedStatement(StatementT
 
     auto index = enumToUnderlyingType(type);
     if (!m_cachedStatements[index]) {
-        if (auto statement = CheckedRef { *m_database }->prepareHeapStatement(statementString(type)))
+        if (auto statement = CheckedRef { *m_database }->prepareStatement(statementString(type)))
             m_cachedStatements[index] = WTFMove(statement);
     }
 

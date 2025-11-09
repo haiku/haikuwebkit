@@ -367,10 +367,22 @@ class RunTest(unittest.TestCase, StreamTestingMixin):
         self.assertEqual(get_tests_run(['--no-retry-failures',  '--skip-failing-tests', '--skipped=always'] + list_of_tests_failing), [])
 
     def test_ews_corner_case_skipped_test(self):
-        # When we specify on the command line the name of a test skipped this test should run
+        # When we specify on the command line the name of a test skipped this test should run.
         self.assertEqual(get_tests_run(['passes/skipped/skip.html']), ['passes/skipped/skip.html'])
-        # Unless we specify also '--skipped=always', then it should be skipped even when we list it on the command line
+        # With '--skipped=always', it should be skipped even when we list it on the command line.
         self.assertEqual(get_tests_run(['--skipped=always', 'passes/skipped/skip.html']), [])
+
+    def test_ews_corner_case_skipped_test_with_layouttests_prefix(self):
+        # When we specify a skipped test with LayoutTests/ prefix, it should run.
+        self.assertEqual(get_tests_run(['LayoutTests/passes/skipped/skip.html']), ['passes/skipped/skip.html'])
+        # With '--skipped=always', it should be skipped even when we list it on the command line.
+        self.assertEqual(get_tests_run(['--skipped=always', 'LayoutTests/passes/skipped/skip.html']), [])
+
+    def test_ews_corner_case_skipped_test_with_relative_path(self):
+        # When we specify a skipped test with a relative path, it should run.
+        self.assertEqual(get_tests_run(['../LayoutTests/passes/skipped/skip.html']), ['passes/skipped/skip.html'])
+        # With '--skipped=always', it should be skipped even when we list it on the command line.
+        self.assertEqual(get_tests_run(['--skipped=always', '../LayoutTests/passes/skipped/skip.html']), [])
 
     def test_ews_corner_case_skipped_directory(self):
         # When a whole directory is skipped, then the tests inside should not run if we specify the name of the directory

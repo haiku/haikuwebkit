@@ -22,7 +22,6 @@
 #include "config.h"
 #include "SVGFEGaussianBlurElement.h"
 
-#include "DocumentInlines.h"
 #include "FEGaussianBlur.h"
 #include "NodeDocument.h"
 #include "NodeName.h"

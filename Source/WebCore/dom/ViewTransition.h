@@ -30,6 +30,7 @@
 #include "Element.h"
 #include "EventLoop.h"
 #include "ImageBuffer.h"
+#include "LayoutRect.h"
 #include "MutableStyleProperties.h"
 #include "Styleable.h"
 #include "ViewTransitionUpdateCallback.h"

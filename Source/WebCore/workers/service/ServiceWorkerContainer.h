@@ -125,7 +125,7 @@ private:
 
     bool addEventListener(const AtomString& eventType, Ref<EventListener>&&, const AddEventListenerOptions& = { }) final;
 
-    void scheduleJob(std::unique_ptr<ServiceWorkerJob>&&);
+    void scheduleJob(Ref<ServiceWorkerJob>&&);
 
     void jobFailedWithException(ServiceWorkerJob&, const Exception&) final;
     void jobResolvedWithRegistration(ServiceWorkerJob&, ServiceWorkerRegistrationData&&, ShouldNotifyWhenResolved) final;
@@ -162,7 +162,7 @@ private:
     RefPtr<SWClientConnection> m_swConnection;
 
     struct OngoingJob {
-        std::unique_ptr<ServiceWorkerJob> job;
+        RefPtr<ServiceWorkerJob> job;
         RefPtr<PendingActivity<ServiceWorkerContainer>> pendingActivity;
     };
     HashMap<ServiceWorkerJobIdentifier, OngoingJob> m_jobMap;

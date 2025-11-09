@@ -33,8 +33,8 @@ namespace WebCore {
 inline const Styleable Styleable::fromElement(Element& element)
 {
     if (auto* pseudoElement = dynamicDowncast<PseudoElement>(element))
-        return Styleable(*pseudoElement->hostElement(), Style::PseudoElementIdentifier { element.pseudoId() });
-    ASSERT(element.pseudoId() == PseudoId::None);
+        return Styleable(*pseudoElement->hostElement(), *element.pseudoElementIdentifier());
+    ASSERT(!element.pseudoElementType());
     return Styleable(element, std::nullopt);
 }
 

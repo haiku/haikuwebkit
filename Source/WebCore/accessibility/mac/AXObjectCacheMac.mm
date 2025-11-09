@@ -35,6 +35,7 @@
 #import "AccessibilityObject.h"
 #import "CocoaAccessibilityConstants.h"
 #import "DeprecatedGlobalSettings.h"
+#import "DocumentView.h"
 #import "LocalFrameView.h"
 #import "RenderObject.h"
 #import "RenderView.h"

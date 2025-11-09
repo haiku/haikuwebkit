@@ -22,6 +22,12 @@ include(WebKitCommon)
 #------------------------------------------------------------------------------
 if (SWIFT_REQUIRED)
     enable_language(Swift)
+
+    # Override Swift compiler to a wrapper script to work around the
+    # fact pkg-config feeds CFLAGS even to swiftc
+    set(ORIGINAL_Swift_COMPILER "${CMAKE_Swift_COMPILER}" CACHE FILEPATH "Original Swift compiler" FORCE)
+    set(CMAKE_Swift_COMPILER "${CMAKE_SOURCE_DIR}/Tools/Scripts/swift/swiftc-wrapper.sh" CACHE FILEPATH "Swift compiler wrapper" FORCE)
+    add_compile_options($<$<COMPILE_LANGUAGE:Swift>:--original-swift-compiler=${ORIGINAL_Swift_COMPILER}>)
 endif ()
 
 # -----------------------------------------------------------------------------

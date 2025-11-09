@@ -34,6 +34,8 @@
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
 #include "SVGElement.h"
+#include "StylePrimitiveKeyword+Logging.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include "WebAnimationTypes.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/TextStream.h>
@@ -381,8 +383,8 @@ void SVGRenderStyle::InheritedFlags::dumpDifferences(TextStream& ts, const SVGRe
     LOG_IF_DIFFERENT_WITH_CAST(TextAnchor, textAnchor);
     LOG_IF_DIFFERENT_WITH_CAST(ColorInterpolation, colorInterpolation);
     LOG_IF_DIFFERENT_WITH_CAST(ColorInterpolation, colorInterpolationFilters);
-    LOG_IF_DIFFERENT_WITH_CAST(GlyphOrientation, glyphOrientationHorizontal);
-    LOG_IF_DIFFERENT_WITH_CAST(GlyphOrientation, glyphOrientationVertical);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::SVGGlyphOrientationHorizontal, glyphOrientationHorizontal);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::SVGGlyphOrientationVertical, glyphOrientationVertical);
 }
 
 void SVGRenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const SVGRenderStyle::NonInheritedFlags& other) const

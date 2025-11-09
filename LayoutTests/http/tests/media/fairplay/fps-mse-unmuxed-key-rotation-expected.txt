@@ -23,10 +23,10 @@ EVENT(updateend)
 Appending Encrypted Video Buffer 2
 FETCH: content/elementary-stream-video-header-keyid-4.m4v OK
 EVENT(encrypted)
-EVENT(updateend)
 EVENT(message)
 PROMISE: licenseResponse resolved
 PROMISE: session.update() resolved
+EVENT(updateend)
 Setting timestampOffset = buffered.end()
 -
 Appending Encrypted Video Payload

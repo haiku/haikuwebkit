@@ -1676,7 +1676,7 @@ void RenderLayerCompositor::traverseUnchangedSubtree(RenderLayer* ancestorLayer,
 
 void RenderLayerCompositor::collectViewTransitionNewContentLayers(RenderLayer& layer, Vector<Ref<GraphicsLayer>>& childList)
 {
-    if (layer.renderer().style().pseudoElementType() != PseudoId::ViewTransitionNew || !layer.hasVisibleContent())
+    if (layer.renderer().style().pseudoElementType() != PseudoElementType::ViewTransitionNew || !layer.hasVisibleContent())
         return;
 
     if (!downcast<RenderViewTransitionCapture>(layer.renderer()).canUseExistingLayers())
@@ -3791,7 +3791,7 @@ bool RenderLayerCompositor::clipsCompositingDescendants(const RenderLayer& layer
 {
     // View transition new always has composited descendants in the graphics layer
     // tree due to hosting (but not in the RenderLayer tree).
-    if (layer.renderer().style().pseudoElementType() == PseudoId::ViewTransitionNew && layer.renderer().hasClipOrNonVisibleOverflow())
+    if (layer.renderer().style().pseudoElementType() == PseudoElementType::ViewTransitionNew && layer.renderer().hasClipOrNonVisibleOverflow())
         return true;
 
     if (!(layer.hasCompositingDescendant() && layer.renderer().hasClipOrNonVisibleOverflow()))

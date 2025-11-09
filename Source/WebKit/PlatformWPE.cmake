@@ -214,6 +214,7 @@ set(WPE_API_HEADER_TEMPLATES
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMediaPermissionRequest.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMessage.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebContext.h.in
+    ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtensionMatchPattern.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebResource.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebView.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebViewSessionState.h.in
@@ -229,6 +230,15 @@ set(WPE_API_HEADER_TEMPLATES
 if (ENABLE_2022_GLIB_API)
     list(APPEND WPE_API_HEADER_TEMPLATES
         ${WEBKIT_DIR}/UIProcess/API/glib/WebKitNetworkSession.h.in
+    )
+endif ()
+
+if (ENABLE_2022_GLIB_API)
+    list(APPEND WPE_API_HEADER_TEMPLATES
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtension.h.in
+    )
+    list(APPEND WebKit_SOURCES
+        ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtension.cpp
     )
 endif ()
 
@@ -439,14 +449,10 @@ list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
     "${JavaScriptCoreGLib_DERIVED_SOURCES_DIR}/jsc"
 )
 
-list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
-    ${LIBSOUP_INCLUDE_DIRS}
-)
-
 list(APPEND WebKit_LIBRARIES
     GLib::Module
+    Soup3::Soup3
     WPE::libwpe
-    ${LIBSOUP_LIBRARIES}
 )
 
 if (ANDROID)
@@ -610,13 +616,14 @@ if (ENABLE_WPE_QT_API)
                 Qt::Quick
             PRIVATE
                 Epoxy::Epoxy
+                GLib::GLib
+                GLib::Object
                 WebKit
         )
         target_include_directories(qtwpe PRIVATE
             $<TARGET_PROPERTY:WebKit,INCLUDE_DIRECTORIES>
             ${JavaScriptCoreGLib_FRAMEWORK_HEADERS_DIR}
             ${CMAKE_BINARY_DIR}
-            ${LIBSOUP_INCLUDE_DIRS}
             ${WPE_INCLUDE_DIRS}
             ${WEBKIT_DIR}/UIProcess/API/wpe/qt6
         )
@@ -661,7 +668,6 @@ if (ENABLE_WPE_QT_API)
             ${CMAKE_BINARY_DIR}
             ${Qt5_INCLUDE_DIRS}
             ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-            ${LIBSOUP_INCLUDE_DIRS}
             ${WPE_INCLUDE_DIRS}
         )
 
@@ -756,8 +762,8 @@ else ()
 endif ()
 
 set(WPE_LIBRARIES_FOR_INTROSPECTION
+    Soup-3.0:libsoup-3.0
     WPEJavaScriptCore
-    Soup-${SOUP_API_VERSION}:libsoup-${SOUP_API_VERSION}
 )
 
 set(WPE_INCLUDE_DIRS_FOR_INTROSPECTION
@@ -814,7 +820,7 @@ GI_INTROSPECT(${WPE_WEB_PROCESS_EXTENSION_API_NAME} ${WPE_API_VERSION} wpe/${WPE
     SYMBOL_PREFIX webkit
     DEPENDENCIES
         WPEJavaScriptCore
-        Soup-${SOUP_API_VERSION}:libsoup-${SOUP_API_VERSION}
+        Soup-3.0:libsoup-3.0
     OPTIONS
         -I${JavaScriptCoreGLib_FRAMEWORK_HEADERS_DIR}
         -I${JavaScriptCoreGLib_DERIVED_SOURCES_DIR}

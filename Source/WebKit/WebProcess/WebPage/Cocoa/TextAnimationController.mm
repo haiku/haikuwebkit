@@ -31,10 +31,12 @@
 #include "WebPage.h"
 #include <WebCore/Chrome.h>
 #include <WebCore/ChromeClient.h>
-#include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentMarkerController.h>
+#include <WebCore/DocumentMarkers.h>
+#include <WebCore/DocumentQuirks.h>
 #include <WebCore/Editing.h>
 #include <WebCore/FocusController.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/Range.h>
 #include <WebCore/RenderedDocumentMarker.h>
 #include <WebCore/SimpleRange.h>

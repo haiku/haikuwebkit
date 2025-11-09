@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "StackManager.h"
-#include "VM.h"
-#include "VMTrapsInlines.h"
+#include <JavaScriptCore/StackManager.h>
+#include <JavaScriptCore/VM.h>
+#include <JavaScriptCore/VMTrapsInlines.h>
 
 namespace JSC {
 

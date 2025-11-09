@@ -49,6 +49,16 @@ public:
 
     WEBCORE_EXPORT void whenAllExtendLifetimePromisesAreSettled(Function<void(HashSet<Ref<DOMPromise>>&&)>&&);
 
+    virtual bool isBackgroundFetchEvent() const { return false; }
+    virtual bool isBackgroundFetchUpdateUIEvent() const { return false; }
+    virtual bool isExtendableCookieChangeEvent() const { return false; }
+    virtual bool isExtendableMessageEvent() const { return false; }
+    virtual bool isFetchEvent() const { return false; }
+    virtual bool isInstallEvent() const { return false; }
+    virtual bool isNotificationEvent() const { return false; }
+    virtual bool isPushEvent() const { return false; }
+    virtual bool isPushSubscriptionChangeEvent() const { return false; }
+
 protected:
     WEBCORE_EXPORT ExtendableEvent(enum EventInterfaceType, const AtomString&, const ExtendableEventInit&, IsTrusted);
     ExtendableEvent(enum EventInterfaceType, const AtomString&, CanBubble, IsCancelable);

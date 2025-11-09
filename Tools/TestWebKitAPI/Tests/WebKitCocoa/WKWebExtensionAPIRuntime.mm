@@ -308,6 +308,29 @@ TEST(WKWebExtensionAPIRuntime, GetManifest)
     Util::loadAndRunExtension(testManifest, @{ @"background.js": backgroundScript });
 }
 
+TEST(WKWebExtensionAPIRuntime, GetVersion)
+{
+    auto *testManifest = @{
+        @"manifest_version": @3,
+
+        @"version": @"1.0",
+
+        @"background": @{
+            @"scripts": @[ @"background.js" ],
+            @"type": @"module",
+            @"persistent": @NO,
+        }
+    };
+
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.test.assertEq(browser.runtime.getVersion(), '1.0')",
+
+        @"browser.test.notifyPass()"
+    ]);
+
+    Util::loadAndRunExtension(testManifest, @{ @"background.js": backgroundScript });
+}
+
 TEST(WKWebExtensionAPIRuntime, GetPlatformInfo)
 {
 #if PLATFORM(MAC) && (CPU(ARM) || CPU(ARM64))

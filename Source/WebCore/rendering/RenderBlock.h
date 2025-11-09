@@ -241,7 +241,6 @@ public:
     LayoutUnit offsetFromLogicalTopOfFirstPage() const override;
     RenderFragmentContainer* fragmentAtBlockOffset(LayoutUnit) const;
 
-    virtual void computeOverflow(LayoutUnit oldClientAfterEdge, bool recomputeFloats = false);
     void clearLayoutOverflow();
 
     // Adjust from painting offsets to the local coords of this renderer
@@ -309,10 +308,7 @@ protected:
 
     virtual bool isPointInOverflowControl(HitTestResult&, const LayoutPoint& locationInContainer, const LayoutPoint& accumulatedOffset);
 
-    virtual void addOverflowFromChildren();
-    // FIXME-BLOCKFLOW: Remove virtualization when all callers have moved to RenderBlockFlow
-    virtual void addOverflowFromInlineChildren() { }
-    void addOverflowFromBlockChildren();
+    virtual void computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> = { });
     void addOverflowFromOutOfFlowBoxes();
     void addVisualOverflowFromTheme();
 

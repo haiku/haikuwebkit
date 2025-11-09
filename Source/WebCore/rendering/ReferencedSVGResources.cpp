@@ -41,6 +41,7 @@
 #include "SVGMarkerElement.h"
 #include "SVGMaskElement.h"
 #include "SVGResourceElementClient.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

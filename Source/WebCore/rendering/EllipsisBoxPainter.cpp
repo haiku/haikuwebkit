@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +72,8 @@ void EllipsisBoxPainter::paint()
             return false;
         },
         [&](const auto& shadows) {
-            context.setDropShadow({ LayoutSize(shadows[0].location.x().resolveZoom(Style::ZoomNeeded { }), shadows[0].location.y().resolveZoom(Style::ZoomNeeded { })), shadows[0].blur.resolveZoom(Style::ZoomNeeded { }), style.colorWithColorFilter(shadows[0].color), ShadowRadiusMode::Default });
+            const auto& zoomFactor = style.usedZoomForLength();
+            context.setDropShadow({ LayoutSize(shadows[0].location.x().resolveZoom(zoomFactor), shadows[0].location.y().resolveZoom(zoomFactor)), shadows[0].blur.resolveZoom(zoomFactor), style.colorWithColorFilter(shadows[0].color), ShadowRadiusMode::Default });
             return true;
         }
     );

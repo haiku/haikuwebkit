@@ -28,6 +28,7 @@
 
 #include "Document.h"
 #include "ElementInlines.h"
+#include "Event.h"
 #include "EventNames.h"
 #include "HTMLDetailsElement.h"
 #include "HTMLSlotElement.h"
@@ -44,20 +45,20 @@ enum class RevealType : bool {
 };
 
 // https://html.spec.whatwg.org/#ancestor-revealing-algorithm
-void revealClosedDetailsAndHiddenUntilFoundAncestors(Node& node)
+bool revealClosedDetailsAndHiddenUntilFoundAncestors(Node& node)
 {
     node.protectedDocument()->updateStyleIfNeeded();
 
     // Bail out if there is neither a hidden=until-found or details ancestor.
     if (node.renderStyle() && !node.renderStyle()->autoRevealsWhenFound())
-        return;
+        return false;
 
     auto closedDetailsElementAncestor = [](Node& node) -> HTMLDetailsElement* {
         RefPtr slot = node.assignedSlot();
         if (slot && slot->userAgentPart() == UserAgentParts::detailsContent() && slot->shadowHost()) {
             Ref details = downcast<HTMLDetailsElement>(*slot->shadowHost());
             if (!details->hasAttributeWithoutSynchronization(HTMLNames::openAttr))
-                return details.ptr();
+                return details.unsafePtr();
         }
         return nullptr;
     };
@@ -70,25 +71,29 @@ void revealClosedDetailsAndHiddenUntilFoundAncestors(Node& node)
             ancestors.append({ details.releaseNonNull(), RevealType::ClosedDetails });
     }
 
+    auto revealed = false;
     for (auto [element, revealType] : ancestors) {
         if (!element->isConnected())
-            return;
+            return revealed;
         switch (revealType) {
         case RevealType::ClosedDetails:
             if (element->hasAttributeWithoutSynchronization(HTMLNames::openAttr))
-                return;
+                return revealed;
             element->setBooleanAttribute(HTMLNames::openAttr, true);
+            revealed = true;
             break;
         case RevealType::HiddenUntilFound:
             if (!element->isHiddenUntilFound())
-                return;
+                return revealed;
             element->dispatchEvent(Event::create(eventNames().beforematchEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
             if (!element->isConnected() || !element->isHiddenUntilFound())
-                return;
+                return revealed;
             element->setHidden({ });
+            revealed = true;
             break;
         }
     }
+    return revealed;
 }
 
 } // namespace WebCore

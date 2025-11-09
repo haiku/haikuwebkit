@@ -944,7 +944,7 @@ FloatRect RenderSVGText::repaintRectInLocalCoordinates(RepaintRectCalculation re
         auto repaintRect = SVGBoundingBoxComputation::computeRepaintBoundingBox(*this);
 
         if (auto& textShadow = style().textShadow(); !textShadow.isNone())
-            Style::adjustRectForShadow(repaintRect, textShadow);
+            Style::adjustRectForShadow(repaintRect, textShadow, style().usedZoomForLength());
 
         return repaintRect;
     }
@@ -953,7 +953,7 @@ FloatRect RenderSVGText::repaintRectInLocalCoordinates(RepaintRectCalculation re
     SVGRenderSupport::intersectRepaintRectWithResources(*this, repaintRect, repaintRectCalculation);
 
     if (auto& textShadow = style().textShadow(); !textShadow.isNone())
-        Style::adjustRectForShadow(repaintRect, textShadow);
+        Style::adjustRectForShadow(repaintRect, textShadow, style().usedZoomForLength());
 
     return repaintRect;
 }
@@ -971,7 +971,7 @@ void RenderSVGText::updatePositionAndOverflow(const FloatRect& boundaries)
 
         auto overflowRect = visualOverflowRectEquivalent();
         if (auto& textShadow = style().textShadow(); !textShadow.isNone())
-            Style::adjustRectForShadow(overflowRect, textShadow);
+            Style::adjustRectForShadow(overflowRect, textShadow, style().usedZoomForLength());
 
         addVisualOverflow(overflowRect);
         return;

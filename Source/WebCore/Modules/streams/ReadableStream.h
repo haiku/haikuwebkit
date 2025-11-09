@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "ContextDestructionObserver.h"
 #include "InternalReadableStream.h"
 #include "JSValueInWrappedObject.h"
 #include "ReadableByteStreamController.h"
@@ -38,6 +39,7 @@ class AbstractSlotVisitor;
 
 namespace WebCore {
 
+class DOMPromise;
 class DeferredPromise;
 class InternalReadableStream;
 class JSDOMGlobalObject;
@@ -52,7 +54,7 @@ struct UnderlyingSource;
 
 using ReadableStreamReader = Variant<RefPtr<ReadableStreamDefaultReader>, RefPtr<ReadableStreamBYOBReader>>;
 
-class ReadableStream : public RefCountedAndCanMakeWeakPtr<ReadableStream> {
+class ReadableStream : public RefCountedAndCanMakeWeakPtr<ReadableStream>, public ContextDestructionObserver {
 public:
     enum class ReaderMode { Byob };
     struct GetReaderOptions {
@@ -70,7 +72,7 @@ public:
 
     virtual ~ReadableStream();
 
-    void cancel(JSDOMGlobalObject&, JSC::JSValue, Ref<DeferredPromise>&&);
+    Ref<DOMPromise> cancelForBindings(JSDOMGlobalObject&, JSC::JSValue);
     ExceptionOr<ReadableStreamReader> getReader(JSDOMGlobalObject&, const GetReaderOptions&);
     ExceptionOr<Vector<Ref<ReadableStream>>> tee(JSDOMGlobalObject&, bool shouldClone = false);
 
@@ -81,6 +83,7 @@ public:
     bool isLocked() const;
     WEBCORE_EXPORT bool isDisturbed() const;
 
+    Ref<DOMPromise> cancel(JSDOMGlobalObject&, JSC::JSValue);
     void cancel(Exception&&);
 
     InternalReadableStream* internalReadableStream() { return m_internalReadableStream.get(); }
@@ -128,7 +131,7 @@ public:
 protected:
     static ExceptionOr<Ref<ReadableStream>> createFromJSValues(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
     static ExceptionOr<Ref<InternalReadableStream>> createInternalReadableStream(JSDOMGlobalObject&, Ref<ReadableStreamSource>&&);
-    explicit ReadableStream(RefPtr<InternalReadableStream>&& = { }, RefPtr<ReadableStream>&& = { });
+    explicit ReadableStream(ScriptExecutionContext*, RefPtr<InternalReadableStream>&& = { }, RefPtr<ReadableStream>&& = { });
 
 private:
     ExceptionOr<void> setupReadableByteStreamControllerFromUnderlyingSource(JSDOMGlobalObject&, JSC::JSValue, UnderlyingSource&&, double);

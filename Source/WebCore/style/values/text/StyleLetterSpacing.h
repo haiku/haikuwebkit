@@ -33,7 +33,7 @@ namespace Style {
 // <'letter-spacing'> = normal | <length-percentage>
 // NOTE: Computed value resolves `normal` to 0px.
 // https://drafts.csswg.org/css-text-4/#propdef-letter-spacing
-struct LetterSpacing : LengthWrapperBase<LengthPercentage<>> {
+struct LetterSpacing : LengthWrapperBase<LengthPercentage<CSS::AllUnzoomed>> {
     using Base::Base;
 
     LetterSpacing(CSS::Keyword::Normal)

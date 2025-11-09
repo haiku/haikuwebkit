@@ -72,8 +72,6 @@ public:
         return adoptRef(*new ListDataObserver(WTFMove(callback)));
     }
 
-    ~ListDataObserver() = default;
-
     void invokeCallback() { m_callback(); }
 
 private:

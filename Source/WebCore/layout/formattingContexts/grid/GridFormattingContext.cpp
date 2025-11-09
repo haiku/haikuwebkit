@@ -26,13 +26,16 @@
 #include "config.h"
 #include "GridFormattingContext.h"
 
+#include "GridItemRect.h"
 #include "GridLayout.h"
+#include "GridLayoutUtils.h"
 #include "LayoutBoxGeometry.h"
 #include "LayoutChildIterator.h"
 #include "PlacedGridItem.h"
 #include "RenderStyleInlines.h"
 #include "StylePrimitiveNumeric.h"
 #include "UnplacedGridItem.h"
+#include "UsedTrackSizes.h"
 
 #include <wtf/Vector.h>
 
@@ -104,7 +107,21 @@ UnplacedGridItems GridFormattingContext::constructUnplacedGridItems() const
 void GridFormattingContext::layout(GridLayoutConstraints layoutConstraints)
 {
     auto unplacedGridItems = constructUnplacedGridItems();
-    GridLayout { *this }.layout(layoutConstraints, unplacedGridItems);
+    auto [ usedTrackSizes, gridItemRects ] = GridLayout { *this }.layout(layoutConstraints, unplacedGridItems);
+
+    // Grid layout positions each item within its containing block which is the grid area.
+    // Here we translate it to the coordinate space of the grid.
+    auto mapGridItemLocationsToGrid = [&] {
+        for (auto& gridItemRect : gridItemRects) {
+            auto& lineNumbersForGridArea = gridItemRect.lineNumbersForGridArea;
+            auto columnLocation = GridLayoutUtils::computeTrackSizesBefore(lineNumbersForGridArea.columnStartLine, usedTrackSizes.columnSizes);
+            auto rowLocation = GridLayoutUtils::computeTrackSizesBefore(lineNumbersForGridArea.rowStartLine, usedTrackSizes.rowSizes);
+
+            gridItemRect.borderBoxRect.moveBy({ columnLocation, rowLocation });
+        }
+    };
+    mapGridItemLocationsToGrid();
+    setGridItemGeometries(gridItemRects);
 }
 
 PlacedGridItems GridFormattingContext::constructPlacedGridItems(const GridAreas& gridAreas) const
@@ -114,6 +131,21 @@ PlacedGridItems GridFormattingContext::constructPlacedGridItems(const GridAreas&
     for (auto [ unplacedGridItem, gridAreaLines ] : gridAreas) {
 
         CheckedRef gridItemStyle = unplacedGridItem.m_layoutBox->style();
+
+        auto usedJustifySelf = [&] {
+            if (auto gridItemJustifySelf = gridItemStyle->justifySelf(); gridItemJustifySelf.position() != ItemPosition::Auto)
+                return gridItemJustifySelf;
+            auto& formattingContextRootStyle = root().style();
+            return formattingContextRootStyle.justifyItems();
+        };
+
+        auto usedAlignSelf = [&] {
+            if (auto gridItemAlignSelf = gridItemStyle->alignSelf(); gridItemAlignSelf.position() != ItemPosition::Auto)
+                return gridItemAlignSelf;
+            auto& formattingContextRootStyle = root().style();
+            return formattingContextRootStyle.alignItems();
+        };
+
         PlacedGridItem::ComputedSizes inlineAxisSizes {
             gridItemStyle->width(),
             gridItemStyle->minWidth(),
@@ -130,15 +162,39 @@ PlacedGridItems GridFormattingContext::constructPlacedGridItems(const GridAreas&
             gridItemStyle->marginBottom()
         };
 
-        placedGridItems.constructAndAppend(unplacedGridItem, gridAreaLines, inlineAxisSizes, blockAxisSizes);
+        placedGridItems.constructAndAppend(unplacedGridItem, gridAreaLines, inlineAxisSizes, blockAxisSizes, usedJustifySelf(), usedAlignSelf());
     }
     return placedGridItems;
 }
 
-const BoxGeometry GridFormattingContext::geometryForGridItem(const ElementBox& gridItem) const
+const BoxGeometry& GridFormattingContext::geometryForGridItem(const ElementBox& layoutBox) const
 {
-    ASSERT(gridItem.isGridItem());
-    return layoutState().geometryForBox(gridItem);
+    ASSERT(layoutBox.isGridItem());
+    return layoutState().geometryForBox(layoutBox);
+}
+
+BoxGeometry& GridFormattingContext::geometryForGridItem(const ElementBox& layoutBox)
+{
+    ASSERT(layoutBox.isGridItem());
+    return m_globalLayoutState->ensureGeometryForBox(layoutBox);
+}
+
+void GridFormattingContext::setGridItemGeometries(const GridItemRects& gridItemRects)
+{
+    for (auto& gridItemRect : gridItemRects) {
+        auto& boxGeometry = geometryForGridItem(gridItemRect.layoutBox);
+        auto& gridItemBorderBox = gridItemRect.borderBoxRect;
+
+        auto& margins = gridItemRect.margins;
+        boxGeometry.setHorizontalMargin({ margins.left(), margins.right() });
+        boxGeometry.setVerticalMargin({ margins.top(), margins.bottom() });
+
+        boxGeometry.setTopLeft(gridItemBorderBox.location());
+        auto contentBoxInlineSize = gridItemBorderBox.width() - boxGeometry.horizontalBorderAndPadding();
+        auto contentBoxBlockSize = gridItemBorderBox.height() - boxGeometry.verticalBorderAndPadding();
+
+        boxGeometry.setContentBoxSize({ contentBoxInlineSize, contentBoxBlockSize });
+    }
 }
 
 } // namespace Layout

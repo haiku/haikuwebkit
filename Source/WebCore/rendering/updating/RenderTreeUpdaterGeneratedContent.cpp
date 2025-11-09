@@ -92,17 +92,17 @@ void RenderTreeUpdater::GeneratedContent::updateCounters()
     update();
 }
 
-static KeyframeEffectStack* keyframeEffectStackForElementAndPseudoId(const Element& element, PseudoId pseudoId)
+static KeyframeEffectStack* keyframeEffectStackForPseudoElement(const Element& element, PseudoElementType pseudoElementType)
 {
     if (!element.mayHaveKeyframeEffects())
         return nullptr;
 
-    return element.keyframeEffectStack(pseudoId == PseudoId::None ? std::nullopt : std::optional(Style::PseudoElementIdentifier { pseudoId }));
+    return element.keyframeEffectStack(std::optional(Style::PseudoElementIdentifier { pseudoElementType }));
 }
 
-static bool needsPseudoElementForAnimation(const Element& element, PseudoId pseudoId)
+static bool needsPseudoElementForAnimation(const Element& element, PseudoElementType pseudoElementType)
 {
-    auto* stack = keyframeEffectStackForElementAndPseudoId(element, pseudoId);
+    auto* stack = keyframeEffectStackForPseudoElement(element, pseudoElementType);
     if (!stack)
         return false;
 
@@ -139,7 +139,7 @@ static RenderPtr<RenderObject> createContentRenderer(const Style::Content::Quote
     return contentRenderer;
 }
 
-static void createContentRenderers(RenderTreeBuilder& builder, RenderElement& pseudoRenderer, const RenderStyle& style, PseudoId pseudoId)
+static void createContentRenderers(RenderTreeBuilder& builder, RenderElement& pseudoRenderer, const RenderStyle& style, PseudoElementType pseudoElementType)
 {
     if (auto* contentData = style.content().tryData()) {
         auto altText = contentData->altText.value_or(String { });
@@ -154,8 +154,8 @@ static void createContentRenderers(RenderTreeBuilder& builder, RenderElement& ps
     }
 #if ASSERT_ENABLED
     else {
-        auto elementIsTargetedByKeyframeEffectRequiringPseudoElement = [](const Element& element, PseudoId pseudoId) {
-            if (auto* stack = keyframeEffectStackForElementAndPseudoId(element, pseudoId))
+        auto elementIsTargetedByKeyframeEffectRequiringPseudoElement = [](const Element& element, PseudoElementType pseudoElementType) {
+            if (auto* stack = keyframeEffectStackForPseudoElement(element, pseudoElementType))
                 return stack->requiresPseudoElement();
 
             return false;
@@ -166,11 +166,11 @@ static void createContentRenderers(RenderTreeBuilder& builder, RenderElement& ps
         if (RefPtr pseudoElement = dynamicDowncast<PseudoElement>(pseudoRenderer.element())) {
             RefPtr hostElement = pseudoElement->hostElement();
             ASSERT(!is<PseudoElement>(hostElement));
-            ASSERT(elementIsTargetedByKeyframeEffectRequiringPseudoElement(*hostElement, pseudoId));
+            ASSERT(elementIsTargetedByKeyframeEffectRequiringPseudoElement(*hostElement, pseudoElementType));
         }
     }
 #else
-    UNUSED_PARAM(pseudoId);
+    UNUSED_PARAM(pseudoElementType);
 #endif
 }
 
@@ -184,21 +184,21 @@ static void updateStyleForContentRenderers(RenderElement& pseudoRenderer, const 
     }
 }
 
-void RenderTreeUpdater::GeneratedContent::updateBeforeOrAfterPseudoElement(Element& current, const Style::ElementUpdate& elementUpdate, PseudoId pseudoId)
+void RenderTreeUpdater::GeneratedContent::updateBeforeOrAfterPseudoElement(Element& current, const Style::ElementUpdate& elementUpdate, PseudoElementType pseudoElementType)
 {
-    ASSERT(pseudoId == PseudoId::Before || pseudoId == PseudoId::After);
+    ASSERT(pseudoElementType == PseudoElementType::Before || pseudoElementType == PseudoElementType::After);
 
-    PseudoElement* pseudoElement = pseudoId == PseudoId::Before ? current.beforePseudoElement() : current.afterPseudoElement();
+    PseudoElement* pseudoElement = pseudoElementType == PseudoElementType::Before ? current.beforePseudoElement() : current.afterPseudoElement();
 
     if (auto* renderer = pseudoElement ? pseudoElement->renderer() : nullptr)
         m_updater.renderTreePosition().invalidateNextSibling(*renderer);
 
-    auto* updateStyle = (elementUpdate.style && elementUpdate.style->hasCachedPseudoStyles()) ? elementUpdate.style->getCachedPseudoStyle({ pseudoId }) : nullptr;
+    auto* updateStyle = (elementUpdate.style && elementUpdate.style->hasCachedPseudoStyles()) ? elementUpdate.style->getCachedPseudoStyle({ pseudoElementType }) : nullptr;
 
     ASSERT(!is<PseudoElement>(current));
-    if (!needsPseudoElement(updateStyle) && !needsPseudoElementForAnimation(current, pseudoId)) {
+    if (!needsPseudoElement(updateStyle) && !needsPseudoElementForAnimation(current, pseudoElementType)) {
         if (pseudoElement) {
-            if (pseudoId == PseudoId::Before)
+            if (pseudoElementType == PseudoElementType::Before)
                 removeBeforePseudoElement(current, m_updater.m_builder);
             else
                 removeAfterPseudoElement(current, m_updater.m_builder);
@@ -215,13 +215,13 @@ void RenderTreeUpdater::GeneratedContent::updateBeforeOrAfterPseudoElement(Eleme
     if (!styleChanges)
         return;
 
-    pseudoElement = &current.ensurePseudoElement(pseudoId);
+    pseudoElement = &current.ensurePseudoElement(pseudoElementType);
 
     if (updateStyle->display() == DisplayType::Contents) {
         // For display:contents we create an inline wrapper that inherits its
         // style from the display:contents style.
         auto contentsStyle = RenderStyle::createPtr();
-        contentsStyle->setPseudoElementType(pseudoId);
+        contentsStyle->setPseudoElementIdentifier({ { pseudoElementType } });
         contentsStyle->inheritFrom(*updateStyle);
         contentsStyle->copyContentFrom(*updateStyle);
         contentsStyle->copyPseudoElementsFrom(*updateStyle);
@@ -246,7 +246,7 @@ void RenderTreeUpdater::GeneratedContent::updateBeforeOrAfterPseudoElement(Eleme
         return;
 
     if (styleChanges.contains(Style::Change::Renderer))
-        createContentRenderers(m_updater.m_builder, *pseudoElementRenderer, *updateStyle, pseudoId);
+        createContentRenderers(m_updater.m_builder, *pseudoElementRenderer, *updateStyle, pseudoElementType);
     else
         updateStyleForContentRenderers(*pseudoElementRenderer, *updateStyle);
 
@@ -270,7 +270,7 @@ void RenderTreeUpdater::GeneratedContent::updateBackdropRenderer(RenderElement& 
         return;
     }
 
-    auto style = renderer.getCachedPseudoStyle({ PseudoId::Backdrop }, &renderer.style());
+    auto style = renderer.getCachedPseudoStyle({ PseudoElementType::Backdrop }, &renderer.style());
     if (!style || style->display() == DisplayType::None) {
         destroyBackdropIfNeeded();
         return;
@@ -348,7 +348,7 @@ void RenderTreeUpdater::GeneratedContent::updateWritingSuggestionsRenderer(Rende
         return;
     }
 
-    auto style = renderer.getCachedPseudoStyle({ PseudoId::InternalWritingSuggestions }, &renderer.style());
+    auto style = renderer.getCachedPseudoStyle({ PseudoElementType::InternalWritingSuggestions }, &renderer.style());
     if (!style || style->display() == DisplayType::None) {
         destroyWritingSuggestionsIfNeeded();
         return;

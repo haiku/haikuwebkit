@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "StyleGridTrackBreadth.h"
+#include <WebCore/StyleGridTrackBreadth.h>
 
 namespace WebCore {
 namespace Layout {

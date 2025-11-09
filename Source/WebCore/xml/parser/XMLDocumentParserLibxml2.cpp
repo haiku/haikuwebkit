@@ -30,13 +30,13 @@
 
 #include "CDATASection.h"
 #include "Comment.h"
-#include "CachedResourceLoader.h"
 #include "CommonAtomStrings.h"
 #include "CustomElementReactionQueue.h"
 #include "CustomElementRegistry.h"
 #include "Document.h"
 #include "DocumentFragment.h"
-#include "DocumentInlines.h"
+#include "DocumentResourceLoader.h"
+#include "DocumentSecurityOrigin.h"
 #include "DocumentType.h"
 #include "EventLoop.h"
 #include "FrameConsoleClient.h"
@@ -67,8 +67,8 @@
 #include "ThrowOnDynamicMarkupInsertionCountIncrementer.h"
 #include "TransformSource.h"
 #include "UserScriptTypes.h"
-#include "XMLNSNames.h"
 #include "XMLDocumentParserScope.h"
+#include "XMLNSNames.h"
 #include <libxml/parser.h>
 #include <libxml/parserInternals.h>
 #include <wtf/MallocSpan.h>

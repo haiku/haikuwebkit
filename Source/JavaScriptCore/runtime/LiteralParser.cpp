@@ -932,10 +932,10 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
     if (m_mode == StrictJSON) {
         ASSERT(terminator == '"');
         if constexpr (hint == JSONIdentifierHint::MaybeIdentifier) {
-            while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Strict>(*m_ptr, '"'))
+            while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Strict>(*m_ptr, terminator))
                 ++m_ptr;
         } else {
-            using UnsignedType = SIMD::SameSizeUnsignedInteger<CharType>;
+            using UnsignedType = SameSizeUnsignedInteger<CharType>;
             constexpr auto quoteMask = SIMD::splat<UnsignedType>('"');
             constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
             constexpr auto controlMask = SIMD::splat<UnsignedType>(' ');
@@ -947,8 +947,8 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
                 return SIMD::findFirstNonZeroIndex(mask);
             };
 
-            auto scalarMatch = [&](auto character) ALWAYS_INLINE_LAMBDA {
-                return !isSafeStringCharacter<SafeStringCharacterSet::Strict>(character, '"');
+            auto scalarMatch = [&](CharType character) ALWAYS_INLINE_LAMBDA {
+                return !isSafeStringCharacter<SafeStringCharacterSet::Strict>(character, terminator);
             };
 
             m_ptr = SIMD::find(std::span { m_ptr, m_end }, vectorMatch, scalarMatch);
@@ -958,7 +958,7 @@ ALWAYS_INLINE TokenType LiteralParser<CharType, reviverMode>::Lexer::lexString(L
             while (m_ptr < m_end && isSafeStringCharacterForIdentifier<SafeStringCharacterSet::Sloppy>(*m_ptr, terminator))
                 ++m_ptr;
         } else {
-            using UnsignedType = SIMD::SameSizeUnsignedInteger<CharType>;
+            using UnsignedType = SameSizeUnsignedInteger<CharType>;
             auto quoteMask = SIMD::splat<UnsignedType>(terminator);
             constexpr auto escapeMask = SIMD::splat<UnsignedType>('\\');
             constexpr auto controlMask = SIMD::splat<UnsignedType>(' ');
@@ -1529,6 +1529,8 @@ JSValue LiteralParser<CharType, reviverMode>::parseRecursively(VM& vm, uint8_t* 
     return object;
 }
 
+constexpr unsigned maximumRangesStackRecursion = 4500;
+
 template <typename CharType, JSONReviverMode reviverMode>
 JSValue LiteralParser<CharType, reviverMode>::parse(VM& vm, ParserState initialState, JSONRanges* sourceRanges)
 {
@@ -1546,6 +1548,9 @@ JSValue LiteralParser<CharType, reviverMode>::parse(VM& vm, ParserState initialS
             m_objectStack.appendWithCrashOnOverflow(array);
             if constexpr (reviverMode == JSONReviverMode::Enabled) {
                 if (sourceRanges) {
+                    if (m_rangesStack.size() >= maximumRangesStackRecursion) [[unlikely]]
+                        return throwStackOverflowError(m_globalObject, scope);
+
                     unsigned startOffset = static_cast<unsigned>(m_lexer.currentTokenStart() - m_lexer.start());
                     m_rangesStack.append({
                         sourceRanges->record(array),
@@ -1612,6 +1617,9 @@ JSValue LiteralParser<CharType, reviverMode>::parse(VM& vm, ParserState initialS
             JSObject* object = constructEmptyObject(m_globalObject);
             if constexpr (reviverMode == JSONReviverMode::Enabled) {
                 if (sourceRanges) {
+                    if (m_rangesStack.size() >= maximumRangesStackRecursion) [[unlikely]]
+                        return throwStackOverflowError(m_globalObject, scope);
+
                     unsigned startOffset = static_cast<unsigned>(m_lexer.currentTokenStart() - m_lexer.start());
                     m_rangesStack.append({
                         sourceRanges->record(object),

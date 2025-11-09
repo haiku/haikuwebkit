@@ -52,7 +52,7 @@
 #ifndef PAS_PROBABILISTIC_GUARD_MALLOC_ALLOCATOR
 #define PAS_PROBABILISTIC_GUARD_MALLOC_ALLOCATOR
 
-#include "pas_backtrace_metadata.h"
+#include "pas_report_crash_pgm_report.h"
 #include "pas_utils.h"
 #include "pas_large_heap.h"
 #include "pas_large_map_entry.h"

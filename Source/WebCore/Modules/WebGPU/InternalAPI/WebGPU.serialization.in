@@ -54,7 +54,6 @@ using WebCore::WebGPU::StencilValue = uint32_t;
 using WebCore::WebGPU::SampleMask = uint32_t;
 using WebCore::WebGPU::DepthBias = int32_t;
 using WebCore::WebGPU::SignedOffset32 = int32_t;
-using WebCore::WebGPU::FlagsConstant = uint32_t;
 
 header: <WebCore/WebGPUBlendFactor.h>
 enum class WebCore::WebGPU::BlendFactor : uint8_t {
@@ -313,13 +312,6 @@ header: <WebCore/WebGPUVertexStepMode.h>
 enum class WebCore::WebGPU::VertexStepMode : uint8_t {
     Vertex,
     Instance,
-};
-
-header: <WebCore/WebGPUXREye.h>
-enum class WebCore::WebGPU::XREye : uint8_t {
-    None,
-    Left,
-    Right,
 };
 
 header: <WebCore/WebGPUBufferUsage.h>

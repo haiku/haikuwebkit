@@ -71,16 +71,15 @@ WorkQueue& AudioVideoRendererRemote::queueSingleton()
     return workQueue.get();
 }
 
-Ref<AudioVideoRendererRemote> AudioVideoRendererRemote::create(LoggerHelper* loggerHelper, WebCore::HTMLMediaElementIdentifier mediaElementIdentifier, WebCore::MediaPlayerIdentifier playerIdentifier, GPUProcessConnection& connection)
+Ref<AudioVideoRendererRemote> AudioVideoRendererRemote::create(LoggerHelper* loggerHelper, HTMLMediaElementIdentifier mediaElementIdentifier, MediaPlayerIdentifier playerIdentifier, GPUProcessConnection& connection)
 {
     assertIsMainThread();
 
     auto identifier = RemoteAudioVideoRendererIdentifier::generate();
-    connection.connection().send(Messages::RemoteAudioVideoRendererProxyManager::Create(identifier, mediaElementIdentifier, playerIdentifier), 0);
-    return adoptRef(*new AudioVideoRendererRemote(loggerHelper, connection, identifier));
+    return adoptRef(*new AudioVideoRendererRemote(loggerHelper, connection, mediaElementIdentifier, playerIdentifier, identifier));
 }
 
-AudioVideoRendererRemote::AudioVideoRendererRemote(LoggerHelper* loggerHelper, GPUProcessConnection& connection, RemoteAudioVideoRendererIdentifier identifier)
+AudioVideoRendererRemote::AudioVideoRendererRemote(LoggerHelper* loggerHelper, GPUProcessConnection& connection, HTMLMediaElementIdentifier mediaElementIdentifier, MediaPlayerIdentifier playerIdentifier, RemoteAudioVideoRendererIdentifier identifier)
     : m_gpuProcessConnection(connection)
     , m_receiver(MessageReceiver::create(*this))
     , m_identifier(identifier)
@@ -100,6 +99,8 @@ AudioVideoRendererRemote::AudioVideoRendererRemote(LoggerHelper* loggerHelper, G
 
     connection.connection().addWorkQueueMessageReceiver(Messages::AudioVideoRendererRemoteMessageReceiver::messageReceiverName(), queueSingleton(), m_receiver, m_identifier.toUInt64());
     connection.addClient(*this);
+
+    connection.connection().send(Messages::RemoteAudioVideoRendererProxyManager::Create(identifier, mediaElementIdentifier, playerIdentifier), 0);
 }
 
 AudioVideoRendererRemote::~AudioVideoRendererRemote()
@@ -184,13 +185,13 @@ void AudioVideoRendererRemote::setShouldMaintainAspectRatio(bool maintain)
     gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::SetShouldMaintainAspectRatio(m_identifier, maintain), 0);
 }
 
-void AudioVideoRendererRemote::acceleratedRenderingStateChanged(bool acceleratedRendering)
+void AudioVideoRendererRemote::renderingCanBeAcceleratedChanged(bool acceleratedRendering)
 {
     RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
     if (!isGPURunning() || !gpuProcessConnection)
         return;
 
-    gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::AcceleratedRenderingStateChanged(m_identifier, acceleratedRendering), 0);
+    gpuProcessConnection->connection().send(Messages::RemoteAudioVideoRendererProxyManager::RenderingCanBeAcceleratedChanged(m_identifier, acceleratedRendering), 0);
 }
 
 void AudioVideoRendererRemote::contentBoxRectChanged(const LayoutRect& rect)

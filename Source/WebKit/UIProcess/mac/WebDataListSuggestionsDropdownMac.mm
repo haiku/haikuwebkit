@@ -195,7 +195,7 @@ void WebDataListSuggestionsDropdownMac::close()
     _bottomDivider = adoptNS([[NSView alloc] init]);
     [_bottomDivider setWantsLayer:YES];
     [_bottomDivider setHidden:YES];
-    [_bottomDivider layer].backgroundColor = NSColor.separatorColor.CGColor;
+    [_bottomDivider layer].backgroundColor = RetainPtr { NSColor.separatorColor.CGColor }.get();
     [self addSubview:_bottomDivider.get()];
 
     auto setUpTextField = [strongSelf = retainPtr(self)](NSTextField *textField) {
@@ -485,7 +485,7 @@ static BOOL shouldShowDividersBetweenCells(const Vector<WebCore::DataListSuggest
 
     // Notify accessibility clients of datalist becoming visible.
     RetainPtr currentSelectedString = [self currentSelectedString].createNSString();
-    RetainPtr info = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Suggestions list visible, %@", "Accessibility announcement that the suggestions list became visible. The format argument is for the first option in the list."), currentSelectedString.get()]);
+    SUPPRESS_UNRETAINED_ARG RetainPtr info = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Suggestions list visible, %@", "Accessibility announcement that the suggestions list became visible. The format argument is for the first option in the list."), currentSelectedString.get()]);
     [self notifyAccessibilityClients:info.get()];
 }
 

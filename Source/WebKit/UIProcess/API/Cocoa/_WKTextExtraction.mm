@@ -39,7 +39,10 @@
 
     _canIncludeIdentifiers = YES;
     _shouldFilterText = YES;
+    _includeURLs = YES;
+    _includeRects = YES;
     _targetRect = CGRectNull;
+    _maxWordsPerParagraph = NSUIntegerMax;
     return self;
 }
 

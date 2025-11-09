@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <WebCore/DocumentSettingsValues.h>
 #include <WebCore/HTMLDocument.h>
 #include <wtf/Platform.h>
 

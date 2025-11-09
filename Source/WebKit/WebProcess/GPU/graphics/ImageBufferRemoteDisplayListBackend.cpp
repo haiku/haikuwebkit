@@ -44,9 +44,7 @@ ImageBufferRemoteDisplayListBackend::ImageBufferRemoteDisplayListBackend(const P
 {
 }
 
-ImageBufferRemoteDisplayListBackend::~ImageBufferRemoteDisplayListBackend()
-{
-}
+ImageBufferRemoteDisplayListBackend::~ImageBufferRemoteDisplayListBackend() = default;
 
 RefPtr<NativeImage> ImageBufferRemoteDisplayListBackend::createNativeImageReference()
 {

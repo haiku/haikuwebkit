@@ -28,7 +28,6 @@
 
 #if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
-#import "TextExtractionFilter.h"
 #import "WKWebViewInternal.h"
 #import "_WKTextExtractionInternal.h"
 #import <WebCore/TextExtraction.h>
@@ -161,8 +160,9 @@ inline static RetainPtr<WKTextExtractionItem> createItemWithChildren(const TextE
                 accessibilityRole:accessibilityRole.get()
                 nodeIdentifier:nodeIdentifier.get()]);
         }, [&](const TextExtraction::ImageItemData& data) -> RetainPtr<WKTextExtractionItem> {
+            RetainPtr name = [data.completedSource.createNSURL() lastPathComponent] ?: @"";
             return adoptNS([[WKTextExtractionImageItem alloc]
-                initWithName:data.name.createNSString().get()
+                initWithName:name.get()
                 altText:data.altText.createNSString().get()
                 rectInWebView:rectInWebView
                 children:children
@@ -238,62 +238,6 @@ RetainPtr<WKTextExtractionItem> createItem(const TextExtraction::Item& item, Roo
 
     return createItemRecursive(item, WTFMove(converter));
 }
-
-#if ENABLE(TEXT_EXTRACTION_FILTER)
-
-static void filterTextRecursive(WKWebView *view, WKTextExtractionItem *item, NSString *enclosingNodeIdentifier, MainRunLoopCallbackAggregator& aggregator)
-{
-    if (RetainPtr textItem = dynamic_objc_cast<WKTextExtractionTextItem>(item)) {
-        TextExtractionFilter::singleton().shouldFilter([textItem content], [
-            enclosingNodeIdentifier = retainPtr(enclosingNodeIdentifier),
-            view = retainPtr(view),
-            textItem,
-            aggregator = Ref { aggregator }
-        ](bool shouldFilter) mutable {
-            if (shouldFilter) {
-                [textItem setContent:@""];
-                [textItem setSelectedRange:NSMakeRange(NSNotFound, 0)];
-                return;
-            }
-
-            RetainPtr nodeIdentifier = [textItem nodeIdentifier] ?: enclosingNodeIdentifier.get();
-            RetainPtr lines = [[textItem content] componentsSeparatedByString:@"\n"];
-
-            auto components = Box<Vector<RetainPtr<NSString>>>::create();
-            components->resizeToFit([lines count]);
-
-            Ref innerAggregator = MainRunLoopCallbackAggregator::create([textItem, aggregator, components] {
-                RetainPtr componentsArray = createNSArray(WTFMove(*components), [](auto component) {
-                    return component.get();
-                });
-                [textItem setContent:[componentsArray componentsJoinedByString:@"\n"]];
-            });
-
-            [lines enumerateObjectsUsingBlock:[&](NSString *substring, NSUInteger index, BOOL*) mutable {
-                static constexpr auto minimumLengthForTextDetection = 100;
-                if (substring.length < minimumLengthForTextDetection) {
-                    components->at(index) = substring;
-                    return;
-                }
-
-                [view _validateText:substring inNode:nodeIdentifier.get() completionHandler:makeBlockPtr([innerAggregator = innerAggregator.copyRef(), components, index](NSString *string) {
-                    components->at(index) = string;
-                }).get()];
-            }];
-        });
-    }
-
-    for (WKTextExtractionItem *child in item.children)
-        filterTextRecursive(view, child, item.nodeIdentifier ?: enclosingNodeIdentifier, aggregator);
-}
-
-void filterText(WKWebView *view, WKTextExtractionItem *item, CompletionHandler<void()>&& completion)
-{
-    Ref aggregator = MainRunLoopCallbackAggregator::create(WTFMove(completion));
-    filterTextRecursive(view, item, nil, aggregator.get());
-}
-
-#endif // ENABLE(TEXT_EXTRACTION_FILTER)
 
 std::optional<double> computeSimilarity(NSString *stringA, NSString *stringB, unsigned minimumLength)
 {

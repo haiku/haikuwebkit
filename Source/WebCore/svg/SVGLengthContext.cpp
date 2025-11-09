@@ -50,8 +50,9 @@
 
 namespace WebCore {
 
-SVGLengthContext::SVGLengthContext(const SVGElement* context)
+SVGLengthContext::SVGLengthContext(const SVGElement* context, const std::optional<FloatSize>& viewportSize)
     : m_context(context)
+    , m_viewportSize(!m_context ? viewportSize : std::nullopt)
 {
 }
 
@@ -69,7 +70,7 @@ FloatRect SVGLengthContext::resolveRectangle(const SVGElement* context, SVGUnitT
             convertValueFromPercentageToUserUnits(height.valueAsPercentage(), height.lengthMode(), viewportSize));
     }
 
-    SVGLengthContext lengthContext(context);
+    SVGLengthContext lengthContext(context, viewport.size());
     return FloatRect(x.value(lengthContext), y.value(lengthContext), width.value(lengthContext), height.value(lengthContext));
 }
 
@@ -385,7 +386,7 @@ ExceptionOr<float> SVGLengthContext::convertValueFromEXSToUserUnits(float value)
 std::optional<FloatSize> SVGLengthContext::viewportSize() const
 {
     if (!m_context)
-        return std::nullopt;
+        return m_viewportSize;
 
     if (!m_viewportSize)
         m_viewportSize = computeViewportSize();

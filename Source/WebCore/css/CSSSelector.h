@@ -121,7 +121,8 @@ public:
 
     enum AttributeMatchType { CaseSensitive, CaseInsensitive };
 
-    static PseudoId pseudoId(PseudoElement);
+    // Maps from the selector pseudo-element type to the style type. Only pseudo-elements that are not element-backed have a type in style.
+    static std::optional<PseudoElementType> stylePseudoElementTypeFor(PseudoElement);
     static bool isPseudoClassEnabled(PseudoClass, const CSSSelectorParserContext&);
     static bool isPseudoElementEnabled(PseudoElement, StringView, const CSSSelectorParserContext&);
     static std::optional<PseudoElement> parsePseudoElementName(StringView, const CSSSelectorParserContext&);
@@ -141,6 +142,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     const CSSSelector* firstInCompound() const;
     const CSSSelector* lastInCompound() const;
+    const CSSSelector* precedingInCompound() const;
 
     const QualifiedName& tagQName() const;
     const AtomString& tagLowercaseLocalName() const;
@@ -274,6 +276,7 @@ private:
 };
 
 bool complexSelectorCanMatchPseudoElement(const CSSSelector&);
+bool complexSelectorMatchesElementBackedPseudoElement(const CSSSelector&);
 
 inline bool operator==(const PossiblyQuotedIdentifier& a, const AtomString& b) { return a.identifier == b; }
 

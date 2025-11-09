@@ -136,5 +136,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/small-nested-viewbox.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/symbol-in-mask-expected.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/symbol-in-mask.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-01-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-01.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-02-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-02.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-03-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-03.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/text-shadow-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/zero-scale-svg-transform-inside-g-tag-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/painting/reftests/zero-scale-svg-transform-inside-g-tag.html

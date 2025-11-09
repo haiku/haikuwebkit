@@ -139,8 +139,8 @@ constexpr NSUInteger maximumReadOnlyAccessPaths = 2;
 
 + (NSMutableArray<WKWebView *> *)cache
 {
-    static auto* cache = [[NSMutableArray alloc] initWithCapacity:maximumWebViewCacheSize];
-    return cache;
+    static NeverDestroyed<RetainPtr<NSMutableArray>> s_cache = adoptNS([[NSMutableArray alloc] initWithCapacity:maximumWebViewCacheSize]);
+    return s_cache.get().get();
 }
 
 static RetainPtr<WKWebViewConfiguration>& globalConfiguration()

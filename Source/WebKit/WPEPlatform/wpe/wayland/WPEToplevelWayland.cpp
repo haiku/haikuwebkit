@@ -172,7 +172,6 @@ struct DMABufFeedback {
             memset(&targetDevice, 0, sizeof(dev_t));
 #endif
         }
-        ~Tranche() = default;
         Tranche(const Tranche&) = delete;
         Tranche& operator=(const Tranche&) = delete;
         Tranche(Tranche&& other)

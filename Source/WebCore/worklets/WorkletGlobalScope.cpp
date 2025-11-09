@@ -28,13 +28,12 @@
 #include "WorkletGlobalScope.h"
 
 #include "ContentSecurityPolicy.h"
-#include "DocumentInlines.h"
+#include "DocumentSettingsValues.h"
 #include "FrameConsoleClient.h"
 #include "InspectorInstrumentation.h"
 #include "JSWorkletGlobalScope.h"
 #include "LocalFrame.h"
 #include "SecurityOriginPolicy.h"
-#include "Settings.h"
 #include "WorkerMessagePortChannelProvider.h"
 #include "WorkerOrWorkletThread.h"
 #include "WorkerScriptLoader.h"
@@ -176,7 +175,7 @@ void WorkletGlobalScope::fetchAndInvokeScript(const URL& moduleURL, FetchRequest
 MessagePortChannelProvider& WorkletGlobalScope::messagePortChannelProvider()
 {
     if (!m_messagePortChannelProvider)
-        m_messagePortChannelProvider = makeUnique<WorkerMessagePortChannelProvider>(*this);
+        lazyInitialize(m_messagePortChannelProvider, WorkerMessagePortChannelProvider::create(*this));
     return *m_messagePortChannelProvider;
 }
 

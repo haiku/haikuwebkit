@@ -91,6 +91,8 @@ public:
 private:
     WebXRWebGLLayer(Ref<WebXRSession>&&, WebXRRenderingContext&&, std::unique_ptr<WebXROpaqueFramebuffer>&&, bool antialias, bool ignoreDepthValues, bool isCompositionEnabled);
 
+    bool isWebXRWebGLLayer() const final { return true; }
+
     void computeViewports();
     static IntSize computeNativeWebGLFramebufferResolution();
     static IntSize computeRecommendedWebGLFramebufferResolution();
@@ -118,5 +120,9 @@ private:
 };
 
 } // namespace WebCore
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::WebXRWebGLLayer)
+    static bool isType(const WebCore::WebXRLayer& layer) { return layer.isWebXRWebGLLayer(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(WEBXR)

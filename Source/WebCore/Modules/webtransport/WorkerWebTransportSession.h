@@ -25,9 +25,9 @@
 
 #pragma once
 
-#include "ScriptExecutionContextIdentifier.h"
-#include "WebTransportSession.h"
-#include "WebTransportSessionClient.h"
+#include <WebCore/ScriptExecutionContextIdentifier.h>
+#include <WebCore/WebTransportSession.h>
+#include <WebCore/WebTransportSessionClient.h>
 
 namespace WebCore {
 
@@ -50,7 +50,7 @@ private:
     void receiveIncomingUnidirectionalStream(WebTransportStreamIdentifier) final;
     void receiveBidirectionalStream(Ref<WebTransportSendStreamSink>&&) final;
     void streamReceiveBytes(WebTransportStreamIdentifier, std::span<const uint8_t>, bool, std::optional<Exception>&&) final;
-    void networkProcessCrashed() final;
+    void didFail() final;
 
     Ref<WebTransportSendPromise> sendDatagram(std::span<const uint8_t>) final;
     Ref<WritableStreamPromise> createOutgoingUnidirectionalStream() final;

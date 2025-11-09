@@ -37,7 +37,7 @@ namespace WebKit {
 
 #if PLATFORM(MAC)
 
-static NSPasteboard *findPasteboard()
+static RetainPtr<NSPasteboard> findPasteboard()
 {
     return [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
 }

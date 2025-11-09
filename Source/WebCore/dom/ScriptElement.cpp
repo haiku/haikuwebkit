@@ -31,11 +31,14 @@
 #include "ContentSecurityPolicy.h"
 #include "CrossOriginAccessControl.h"
 #include "CurrentScriptIncrementer.h"
+#include "DocumentEventLoop.h"
 #include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "ElementInlines.h"
 #include "Event.h"
 #include "EventLoop.h"
 #include "EventNames.h"
+#include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
 #include "HTMLAnchorElement.h"
 #include "HTMLCollection.h"
@@ -48,7 +51,6 @@
 #include "LocalFrame.h"
 #include "MIMETypeRegistry.h"
 #include "ModuleFetchParameters.h"
-#include "Page.h"
 #include "PendingScript.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGScriptElement.h"
@@ -665,8 +667,8 @@ void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
     if (!frame)
         return;
 
-    frame->checkedScript()->registerSpeculationRules(sourceCode, document->baseURL());
-    document->considerSpeculationRules();
+    if (frame->checkedScript()->registerSpeculationRules(sourceCode, document->baseURL()))
+        document->considerSpeculationRules();
 }
 
 // TODO: Also implement unregister/update speculation rules

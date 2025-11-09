@@ -27,7 +27,6 @@
 #include "AXObjectCache.h"
 #include "BorderShape.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "Editor.h"
 #include "Element.h"
 #include "ElementInlines.h"
@@ -420,9 +419,16 @@ bool RenderBlock::isSelfCollapsingBlock() const
             [](const CSS::Keyword::Auto&) {
                 return true;
             },
+// FIXME(GCC): Can be removed on Aug 9th, 2026 or later.
+#if COMPILER(GCC) && (__GNUC__ < 13)
+            [](auto const&) {
+                return false;
+            }
+#else
             [](CSS::PrimitiveKeyword auto const&) {
                 return false;
             }
+#endif
         );
     };
 
@@ -552,27 +558,12 @@ void RenderBlock::layoutBlock(RelayoutChildren, LayoutUnit)
     ASSERT_NOT_REACHED();
 }
 
-void RenderBlock::addOverflowFromChildren()
-{
-    if (childrenInline()) {
-        addOverflowFromInlineChildren();
-    
-        // If this block is flowed inside a flow thread, make sure its overflow is propagated to the containing fragments.
-        if (m_overflow) {
-            if (CheckedPtr flow = enclosingFragmentedFlow())
-                flow->addFragmentsVisualOverflow(*this, m_overflow->visualOverflowRect());
-        }
-    } else
-        addOverflowFromBlockChildren();
-}
-
 // Overflow is always relative to the border-box of the element in question.
 // Therefore, if the element has a vertical scrollbar placed on the left, an overflow rect at x=2px would conceptually intersect the scrollbar.
-void RenderBlock::computeOverflow(LayoutUnit oldClientAfterEdge, bool)
+void RenderBlock::computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions> options)
 {
     clearOverflow();
-    addOverflowFromChildren();
-
+    addOverflowFromInFlowChildren(options);
     addOverflowFromOutOfFlowBoxes();
 
     if (hasNonVisibleOverflow()) {
@@ -616,14 +607,6 @@ void RenderBlock::clearLayoutOverflow()
     m_overflow->setLayoutOverflow(borderBoxRect());
 }
 
-void RenderBlock::addOverflowFromBlockChildren()
-{
-    for (auto& child : childrenOfType<RenderBox>(*this)) {
-        if (!child.isFloatingOrOutOfFlowPositioned())
-            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(child);
-    }
-}
-
 void RenderBlock::addOverflowFromOutOfFlowBoxes()
 {
     TrackedRendererListHashSet* outOfFlowDescendants = outOfFlowBoxes();
@@ -633,7 +616,7 @@ void RenderBlock::addOverflowFromOutOfFlowBoxes()
     for (auto& outOfFlowBox : *outOfFlowDescendants) {
         // Fixed positioned elements don't contribute to layout overflow, since they don't scroll with the content.
         if (outOfFlowBox.isAbsolutelyPositioned())
-            addOverflowFromInFlowChildOrAbsolutePositionedDescendant(outOfFlowBox);
+            addOverflowFromContainedBox(outOfFlowBox);
     }
 }
 
@@ -751,7 +734,7 @@ bool RenderBlock::simplifiedLayout()
     // computeOverflow expects the bottom edge before we clamp our height. Since this information isn't available during
     // simplifiedLayout, we cache the value in m_overflow.
     LayoutUnit oldClientAfterEdge = hasRenderOverflow() ? m_overflow->layoutClientAfterEdge() : clientLogicalBottom();
-    computeOverflow(oldClientAfterEdge, true);
+    computeOverflow(oldClientAfterEdge, ComputeOverflowOptions::RecomputeFloats);
 
     updateLayerTransform();
 
@@ -1870,7 +1853,7 @@ LayoutUnit RenderBlock::textIndentOffset() const
     LayoutUnit cw;
     if (style().textIndent().length.isPercentOrCalculated())
         cw = contentBoxLogicalWidth();
-    return Style::evaluate<LayoutUnit>(style().textIndent().length, cw, Style::ZoomNeeded { });
+    return Style::evaluate<LayoutUnit>(style().textIndent().length, cw, style().usedZoomForLength());
 }
 
 LayoutUnit RenderBlock::logicalLeftOffsetForContent() const
@@ -1975,28 +1958,30 @@ bool RenderBlock::isPointInOverflowControl(HitTestResult& result, const LayoutPo
 
 Node* RenderBlock::nodeForHitTest() const
 {
-    switch (style().pseudoElementType()) {
-    // If we're a ::backdrop pseudo-element, we should hit-test to the element that generated it.
-    // This matches the behavior that other browsers have.
-    case PseudoId::Backdrop:
-        for (auto& element : document().topLayerElements()) {
-            if (!element->renderer())
-                continue;
-            ASSERT(element->renderer()->backdropRenderer());
-            if (element->renderer()->backdropRenderer() == this)
-                return element.ptr();
+    if (auto type = style().pseudoElementType()) {
+        switch (*type) {
+        case PseudoElementType::Backdrop:
+            // If we're a ::backdrop pseudo-element, we should hit-test to the element that generated it.
+            // This matches the behavior that other browsers have.
+            for (auto& element : document().topLayerElements()) {
+                if (!element->renderer())
+                    continue;
+                ASSERT(element->renderer()->backdropRenderer());
+                if (element->renderer()->backdropRenderer() == this)
+                    return element.ptr();
+            }
+            ASSERT_NOT_REACHED();
+            break;
+
+        case PseudoElementType::ViewTransition:
+        case PseudoElementType::ViewTransitionGroup:
+        case PseudoElementType::ViewTransitionImagePair:
+            // The view transition pseudo-elements should hit-test to their originating element (the document element).
+            return document().documentElement();
+
+        default:
+            break;
         }
-        ASSERT_NOT_REACHED();
-        break;
-
-    // The view transition pseudo-elements should hit-test to their originating element (the document element).
-    case PseudoId::ViewTransition:
-    case PseudoId::ViewTransitionGroup:
-    case PseudoId::ViewTransitionImagePair:
-        return document().documentElement();
-
-    default:
-        break;
     }
 
     // If we are in the margins of block elements that are part of a
@@ -2072,8 +2057,11 @@ bool RenderBlock::nodeAtPoint(const HitTestRequest& request, HitTestResult& resu
 
 bool RenderBlock::hitTestContents(const HitTestRequest& request, HitTestResult& result, const HitTestLocation& locationInContainer, const LayoutPoint& accumulatedOffset, HitTestAction hitTestAction)
 {
-    if (childrenInline() && !isRenderTable())
+    if (childrenInline() && !isRenderTable()) {
+        if (style().isSkippedRootOrSkippedContent())
+            return false;
         return hitTestInlineChildren(request, result, locationInContainer, accumulatedOffset, hitTestAction);
+    }
 
     // Hit test our children.
     HitTestAction childHitTest = hitTestAction;
@@ -2478,7 +2466,7 @@ static inline RenderBlock* findFirstLetterBlock(RenderBlock* start)
 {
     RenderBlock* firstLetterBlock = start;
     while (true) {
-        bool canHaveFirstLetterRenderer = firstLetterBlock->style().hasPseudoStyle(PseudoId::FirstLetter)
+        bool canHaveFirstLetterRenderer = firstLetterBlock->style().hasPseudoStyle(PseudoElementType::FirstLetter)
             && firstLetterBlock->canHaveGeneratedChildren()
             && isRenderBlockFlowOrRenderButton(*firstLetterBlock);
         if (canHaveFirstLetterRenderer)
@@ -2497,7 +2485,7 @@ static inline RenderBlock* findFirstLetterBlock(RenderBlock* start)
 std::pair<RenderObject*, RenderElement*> RenderBlock::firstLetterAndContainer(RenderObject* skipThisAsFirstLetter)
 {
     // Don't recur
-    if (style().pseudoElementType() == PseudoId::FirstLetter)
+    if (style().pseudoElementType() == PseudoElementType::FirstLetter)
         return { };
     
     // FIXME: We need to destroy the first-letter object if it is no longer the first child. Need to find
@@ -2521,7 +2509,7 @@ std::pair<RenderObject*, RenderElement*> RenderBlock::firstLetterAndContainer(Re
         if (is<RenderListMarker>(current))
             firstLetter = current.nextSibling();
         else if (current.isFloatingOrOutOfFlowPositioned()) {
-            if (current.style().pseudoElementType() == PseudoId::FirstLetter) {
+            if (current.style().pseudoElementType() == PseudoElementType::FirstLetter) {
                 firstLetter = current.firstChild();
                 break;
             }
@@ -2530,7 +2518,7 @@ std::pair<RenderObject*, RenderElement*> RenderBlock::firstLetterAndContainer(Re
             break;
         else if (current.isFlexibleBoxIncludingDeprecated() || current.isRenderGrid())
             return { };
-        else if (current.style().hasPseudoStyle(PseudoId::FirstLetter) && current.canHaveGeneratedChildren())  {
+        else if (current.style().hasPseudoStyle(PseudoElementType::FirstLetter) && current.canHaveGeneratedChildren())  {
             // We found a lower-level node with first-letter, which supersedes the higher-level style
             firstLetterContainer = &current;
             firstLetter = current.firstChild();
@@ -2997,8 +2985,8 @@ String RenderBlock::debugDescription() const
         builder.append(renderName(), " 0x"_s, hex(reinterpret_cast<uintptr_t>(this), Lowercase));
 
         builder.append(" ::view-transition"_s);
-        if (style().pseudoElementType() != PseudoId::ViewTransition) {
-            builder.append("-"_s, style().pseudoElementType() == PseudoId::ViewTransitionGroup ? "group("_s : "image-pair("_s);
+        if (style().pseudoElementType() != PseudoElementType::ViewTransition) {
+            builder.append("-"_s, style().pseudoElementType() == PseudoElementType::ViewTransitionGroup ? "group("_s : "image-pair("_s);
             builder.append(style().pseudoElementNameArgument(), ')');
         }
         return builder.toString();

@@ -32,6 +32,7 @@
 #import "Logging.h"
 #import "TransactionID.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import <WebCore/AttributedString.h>
 #import <WebCore/TextRecognitionResult.h>
 #import <pal/cocoa/VisionKitCoreSoftLink.h>
 #import <pal/cocoa/VisionSoftLink.h>
@@ -135,7 +136,7 @@ TextRecognitionResult makeTextRecognitionResult(CocoaImageAnalysis *analysis)
 
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
     if ([analysis isKindOfClass:PAL::getVKCImageAnalysisClassSingleton()])
-        result.imageAnalysisData = TextRecognitionResult::encodeVKCImageAnalysis(analysis);
+        result.imageAnalysisData = TextRecognitionResult::extractAttributedString(analysis);
 #endif
 
     return result;

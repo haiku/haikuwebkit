@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "WebTransportDatagramStats.h"
+#include <WebCore/WebTransportDatagramStats.h>
 
 namespace WebCore {
 

@@ -50,6 +50,10 @@ namespace WebKit {
 class RemoteLayerTreeDrawingAreaProxy;
 class WebPageProxy;
 
+#if ENABLE(THREADED_ANIMATION_RESOLUTION)
+class RemoteAnimationTimeline;
+#endif
+
 class RemoteLayerTreeHost {
     WTF_MAKE_TZONE_ALLOCATED(RemoteLayerTreeHost);
 public:
@@ -83,6 +87,7 @@ public:
 #if ENABLE(THREADED_ANIMATION_RESOLUTION)
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
+    const RemoteAnimationTimeline* timeline(WebCore::ProcessIdentifier) const;
 #endif
 
     void detachFromDrawingArea();
@@ -97,11 +102,6 @@ public:
     bool threadedAnimationResolutionEnabled() const;
 
     bool cssUnprefixedBackdropFilterEnabled() const;
-
-#if ENABLE(THREADED_ANIMATION_RESOLUTION)
-    Seconds acceleratedTimelineTimeOrigin(WebCore::ProcessIdentifier) const;
-    MonotonicTime animationCurrentTime(WebCore::ProcessIdentifier) const;
-#endif
 
     void remotePageProcessDidTerminate(WebCore::ProcessIdentifier);
 

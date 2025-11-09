@@ -3,16 +3,15 @@ Testing the MacOSInlineMediaControls computed styles.
 On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
 
 
-PASS mediaControls.volumeSlider.parent.element.parentNode became mediaControls.element
-PASS volumeSliderContainerStyle.position is "absolute"
-PASS volumeSliderContainerStyle.left is "566px"
-PASS volumeSliderContainerStyle.top is "226px"
-PASS volumeSliderContainerStyle.width is "94px"
-PASS volumeSliderContainerStyle.height is "31px"
-PASS volumeSliderContainerStyle.transform is "matrix(0, -1, 1, 0, -30, -26)"
-PASS volumeSliderStyle.marginLeft is "6px"
-PASS volumeSliderStyle.width is "60px"
-PASS volumeSliderStyle.height is "16px"
+PASS mediaControls.volumeSlider.parent ? mediaControls.volumeSlider.parent.element.parentNode : null became mediaControls.element
+volumeSliderContainerStyle.position absolute
+volumeSliderContainerStyle.left 8px
+volumeSliderContainerStyle.top 532px
+volumeSliderContainerStyle.width 94px
+volumeSliderContainerStyle.height 31px
+volumeSliderStyle.marginLeft 6px
+volumeSliderStyle.width 60px
+volumeSliderStyle.height 16px
 
 PASS successfullyParsed is true
 

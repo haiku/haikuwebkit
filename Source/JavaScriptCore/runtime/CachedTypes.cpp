@@ -765,7 +765,7 @@ public:
                 symbol = vm.propertyNames->builtinNames().lookUpPrivateName(buffer);
             RELEASE_ASSERT(symbol);
             String str = symbol;
-            StringImpl* impl = str.releaseImpl().get();
+            StringImpl* impl = str.releaseImpl().unsafeGet();
             ASSERT(impl->isSymbol());
             if (m_isWellKnownSymbol)
                 ASSERT(!static_cast<SymbolImpl*>(impl)->isPrivate());

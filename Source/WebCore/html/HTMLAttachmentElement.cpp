@@ -54,6 +54,7 @@
 #include "NodeName.h"
 #include "RenderAttachment.h"
 #include "RenderObjectInlines.h"
+#include "Settings.h"
 #include "ShadowRoot.h"
 #include "SharedBuffer.h"
 #include "UserAgentStyleSheets.h"

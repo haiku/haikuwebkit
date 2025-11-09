@@ -22,10 +22,11 @@
 #include "RenderView.h"
 
 #include "ContainerNodeInlines.h"
-#include "Document.h"
+#include "DocumentPage.h"
 #include "Element.h"
 #include "FloatQuad.h"
 #include "GraphicsContext.h"
+#include "GraphicsLayerEnums.h"
 #include "HTMLBodyElement.h"
 #include "HTMLFrameOwnerElement.h"
 #include "HTMLFrameSetElement.h"
@@ -485,7 +486,7 @@ bool RenderView::shouldRepaint(const LayoutRect& rect) const
 void RenderView::repaintRootContents()
 {
     if (layer()->isComposited()) {
-        layer()->setBackingNeedsRepaint(GraphicsLayer::DoNotClipToLayer);
+        layer()->setBackingNeedsRepaint(GraphicsLayerShouldClipToLayer::DoNotClip);
         return;
     }
 

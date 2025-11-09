@@ -499,7 +499,7 @@ extern "C" { extern void (*const __identifier("??_7TestConditionallyReadWrite@We
 extern "C" { extern void* _ZTVN7WebCore26TestConditionallyReadWriteE[]; }
 #endif
 template<std::same_as<TestConditionallyReadWrite> T>
-static inline void verifyVTable(TestConditionallyReadWrite* ptr) 
+static inline void verifyVTable(TestConditionallyReadWrite* ptr)
 {
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
@@ -519,8 +519,9 @@ static inline void verifyVTable(TestConditionallyReadWrite* ptr)
 #endif
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject*, JSDOMGlobalObject* globalObject, Ref<TestConditionallyReadWrite>&& impl)
+JSC::JSValue toJSNewlyCreated(JSC::JSGlobalObject* lexicalGlobalObject, JSDOMGlobalObject* globalObject, Ref<TestConditionallyReadWrite>&& impl)
 {
+    UNUSED_PARAM(lexicalGlobalObject);
 #if ENABLE(BINDING_INTEGRITY)
     verifyVTable<TestConditionallyReadWrite>(impl.ptr());
 #endif

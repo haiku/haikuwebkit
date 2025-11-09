@@ -86,13 +86,13 @@ layout/layouttree/LayoutTreeBuilder.cpp
 loader/cache/CachedResourceClientWalker.h
 mathml/MathMLRowElement.cpp
 page/NavigatorLoginStatus.cpp
-page/mac/EventHandlerMac.mm
+[ Mac ] page/mac/EventHandlerMac.mm
 platform/graphics/GraphicsLayer.cpp
 platform/graphics/avfoundation/objc/CDMSessionAVContentKeySession.h
 platform/graphics/avfoundation/objc/CDMSessionMediaSourceAVFObjC.h
 platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
-platform/graphics/mac/controls/ControlMac.mm
+[ Mac ] platform/graphics/mac/controls/ControlMac.mm
 rendering/BidiRun.cpp
 rendering/BidiRun.h
 rendering/RenderAncestorIterator.h
@@ -117,3 +117,8 @@ testing/Internals.cpp
 testing/cocoa/WebArchiveDumpSupport.mm
 workers/WorkerGlobalScope.cpp
 workers/WorkerThread.cpp
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
+[ iOS ] platform/ios/VideoPresentationInterfaceAVKitLegacy.mm
+[ iOS ] platform/ios/VideoPresentationInterfaceIOS.mm
+[ iOS ] platform/ios/wak/WAKView.mm
+[ iOS ] platform/ios/wak/WAKWindow.mm

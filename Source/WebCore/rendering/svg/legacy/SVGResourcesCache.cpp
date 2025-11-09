@@ -25,6 +25,7 @@
 #include "RenderElementInlines.h"
 #include "SVGResources.h"
 #include "SVGResourcesCycleSolver.h"
+#include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

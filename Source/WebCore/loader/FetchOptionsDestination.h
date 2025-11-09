@@ -47,6 +47,7 @@ enum class FetchOptionsDestination : uint8_t {
     Script,
     Serviceworker,
     Sharedworker,
+    Speculationrules,
     Style,
     Track,
     Video,

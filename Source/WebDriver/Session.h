@@ -208,8 +208,10 @@ private:
     RefPtr<JSON::Object> createElement(RefPtr<JSON::Value>&&);
     Ref<JSON::Object> createElement(const String& elementID);
     RefPtr<JSON::Object> createShadowRoot(RefPtr<JSON::Value>&&);
-    RefPtr<JSON::Object> extractElement(JSON::Value&);
-    String extractElementID(JSON::Value&);
+    RefPtr<JSON::Object> extractElement(const JSON::Value&);
+    String extractElementID(const JSON::Value&);
+    Expected<Ref<JSON::Value>, CommandResult> replaceReferences(Ref<JSON::Value>&&);
+    Expected<Ref<JSON::Value>, CommandResult> replaceReferences(Ref<JSON::Value>&&, HashSet<Ref<JSON::Value>>&);
     Ref<JSON::Value> handleScriptResult(Ref<JSON::Value>&&);
     void elementIsEditable(const String& elementID, Function<void(CommandResult&&)>&&);
 

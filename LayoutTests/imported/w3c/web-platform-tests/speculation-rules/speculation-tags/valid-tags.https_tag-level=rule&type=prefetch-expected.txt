@@ -1,10 +1,10 @@
 
-FAIL Sec-Speculation-Tags [rule-based]: string tag assert_equals: expected "\"my-rules\"" but got "my-rules"
-FAIL Sec-Speculation-Tags [rule-based]: 'null' string tag assert_equals: expected "\"null\"" but got "null"
-FAIL Sec-Speculation-Tags [rule-based]: empty string tag assert_equals: expected "\"\"" but got ""
-FAIL Sec-Speculation-Tags [rule-based]: single space tag assert_equals: expected "\" \"" but got ""
-FAIL Sec-Speculation-Tags [rule-based]: double quote tag assert_equals: expected "\"\\\"\"" but got "\""
-FAIL Sec-Speculation-Tags [rule-based]: double quotes tag assert_equals: expected "\"\\\"\\\"\\\"\"" but got "\"\"\""
-FAIL Sec-Speculation-Tags [rule-based]: backslash tag assert_equals: expected "\"\\\\\"" but got "\\"
-FAIL Sec-Speculation-Tags [rule-based]: backslashes tag assert_equals: expected "\"\\\\\\\\\\\\\"" but got "\\\\\\"
+PASS Sec-Speculation-Tags [rule-based]: string tag
+PASS Sec-Speculation-Tags [rule-based]: 'null' string tag
+PASS Sec-Speculation-Tags [rule-based]: empty string tag
+PASS Sec-Speculation-Tags [rule-based]: single space tag
+PASS Sec-Speculation-Tags [rule-based]: double quote tag
+PASS Sec-Speculation-Tags [rule-based]: double quotes tag
+PASS Sec-Speculation-Tags [rule-based]: backslash tag
+PASS Sec-Speculation-Tags [rule-based]: backslashes tag
 

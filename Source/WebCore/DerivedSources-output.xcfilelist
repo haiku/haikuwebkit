@@ -30,6 +30,9 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DOMWindowConstructors.idl
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DecompressionStreamBuiltins.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DecompressionStreamBuiltins.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DedicatedWorkerGlobalScopeConstructors.idl
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DocumentSyncClient.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DocumentSyncClient.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DocumentSyncData.serialization.in
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DocumentSyncData.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/DocumentSyncData.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ElementName.cpp
@@ -42,6 +45,9 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/EventNames.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/EventTargetFactory.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/EventTargetHeaders.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/EventTargetInterfaces.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/FrameTreeSyncClient.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/FrameTreeSyncClient.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/FrameTreeSyncData.serialization.in
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/FrameTreeSyncData.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/FrameTreeSyncData.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/HTMLElementFactory.cpp
@@ -3020,6 +3026,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStorageManager+FileSystem.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStorageManager+FileSystem.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStorageManager.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStorageManager.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStreamPipeOptions.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStreamPipeOptions.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStringCallback.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStringCallback.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSStructuredSerializeOptions.cpp
@@ -3673,10 +3681,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/Namespace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/NodeName.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/NodeName.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/PaintWorkletGlobalScopeConstructors.idl
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncClient.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncClient.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncData.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ProcessSyncData.serialization.in
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamControllerBuiltins.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableByteStreamControllerBuiltins.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamBuiltins.cpp

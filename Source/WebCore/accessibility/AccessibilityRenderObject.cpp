@@ -46,8 +46,8 @@
 #include "ComplexTextController.h"
 #include "ComposedTreeIterator.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "DocumentSVG.h"
+#include "DocumentView.h"
 #include "Editing.h"
 #include "Editor.h"
 #include "EditorClient.h"
@@ -471,7 +471,7 @@ AccessibilityObject* AccessibilityRenderObject::nextSibling() const
     RefPtr nextRenderParent = nextAXRenderObject ? cache->getOrCreate(nextAXRenderObject->renderParentObject()) : nullptr;
 
     // Make sure the next sibling has the same render parent.
-    return !nextRenderParent || nextRenderParent == cache->getOrCreate(renderParentObject()) ? nextObject.get() : nullptr;
+    return !nextRenderParent || nextRenderParent == cache->getOrCreate(renderParentObject()) ? nextObject.unsafeGet() : nullptr;
 }
 
 static RenderBoxModelObject* nextContinuation(RenderObject& renderer)
@@ -531,7 +531,7 @@ RenderObject* AccessibilityRenderObject::renderParentObject() const
 AccessibilityObject* AccessibilityRenderObject::parentObject() const
 {
     if (RefPtr ownerParent = ownerParentObject()) [[unlikely]]
-        return ownerParent.get();
+        return ownerParent.unsafeGet();
 
 #if USE(ATSPI)
     // FIXME: Consider removing this ATSPI-only branch with https://bugs.webkit.org/show_bug.cgi?id=282117.
@@ -551,7 +551,7 @@ AccessibilityObject* AccessibilityRenderObject::parentObject() const
     RefPtr node = this->node();
     if (RefPtr parentNode = composedParentIgnoringDocumentFragments(node.get())) {
         if (RefPtr parent = cache->getOrCreate(*parentNode))
-            return parent.get();
+            return parent.unsafeGet();
     }
 
     if (CheckedPtr renderElement = dynamicDowncast<RenderElement>(m_renderer.get()); renderElement && renderElement->isBeforeOrAfterContent()) {
@@ -560,7 +560,7 @@ AccessibilityObject* AccessibilityRenderObject::parentObject() const
         // generating element as their parent rather than their "natural" render tree parent. This avoids
         // a parent-child mismatch which can cause issues for ATs.
         if (RefPtr parent = cache->getOrCreate(renderElement->generatingElement()))
-            return parent.get();
+            return parent.unsafeGet();
     }
 #endif // !USE(ATSPI)
 
@@ -569,7 +569,7 @@ AccessibilityObject* AccessibilityRenderObject::parentObject() const
         for (auto& listItemAncestor : ancestorsOfType<RenderListItem>(*m_renderer)) {
             RefPtr parent = dynamicDowncast<AccessibilityRenderObject>(axObjectCache()->getOrCreate(listItemAncestor));
             if (parent && parent->markerRenderer() == m_renderer)
-                return parent.get();
+                return parent.unsafeGet();
         }
     }
 
@@ -1569,7 +1569,7 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     if (!renderText)
         return { };
 
-    // FIXME: Need to handle PseudoId::FirstLetter. Right now, it will be chopped off from the other
+    // FIXME: Need to handle PseudoElementType::FirstLetter. Right now, it will be chopped off from the other
     // other text in the line, and AccessibilityRenderObject::computeIsIgnored ignores the
     // first-letter RenderText, meaning we can't recover it later by combining text across AX objects.
 
@@ -2272,7 +2272,7 @@ AccessibilityObject* AccessibilityRenderObject::elementAccessibilityHitTest(cons
             }
 
             if (listBoxOption && !listBoxOption->isIgnored())
-                return listBoxOption.get();
+                return listBoxOption.unsafeGet();
 
             CheckedPtr cache = axObjectCache();
             return cache ? cache->getOrCreate(*renderListBox) : nullptr;
@@ -2323,11 +2323,11 @@ AccessibilityObject* AccessibilityRenderObject::accessibilityHitTest(const IntPo
         // If this element is the label of a control, a hit test should return the control.
         RefPtr controlObject = result->controlForLabelElement();
         if (controlObject && !controlObject->titleUIElement())
-            return controlObject.get();
+            return controlObject.unsafeGet();
 
         result = result->parentObjectUnignored();
     }
-    return result.get();
+    return result.unsafeGet();
 }
 
 bool AccessibilityRenderObject::renderObjectIsObservable(RenderObject& renderer) const
@@ -2682,7 +2682,7 @@ AccessibilitySVGObject* AccessibilityRenderObject::remoteSVGRootElement(CreateIf
 
     RefPtr rootSVGObject = createIfNecessary == CreateIfNecessary::Yes ? cache->getOrCreate(*rendererRoot) : cache->get(rendererRoot);
     ASSERT(createIfNecessary == CreateIfNecessary::No || rootSVGObject);
-    return dynamicDowncast<AccessibilitySVGObject>(rootSVGObject).get();
+    return dynamicDowncast<AccessibilitySVGObject>(rootSVGObject).unsafeGet();
 }
 
 void AccessibilityRenderObject::addRemoteSVGChildren()

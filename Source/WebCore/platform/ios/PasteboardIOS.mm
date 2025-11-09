@@ -170,7 +170,7 @@ void Pasteboard::read(PasteboardPlainText& text, PlainTextURLReadingPolicy allow
 {
     auto itemIndexToQuery = itemIndex.value_or(0);
 
-    PasteboardStrategy& strategy = *platformStrategies()->pasteboardStrategy();
+    PasteboardStrategy& strategy = *platformStrategies()->pasteboardStrategy().unsafeGet();
 
     if (allowURL == PlainTextURLReadingPolicy::AllowURL) {
         text.text = strategy.readStringFromPasteboard(itemIndexToQuery, UTTypeURL.identifier, m_pasteboardName, context());
@@ -345,7 +345,7 @@ void Pasteboard::read(PasteboardWebContentReader& reader, WebContentReadingPolic
         return;
     }
 
-    PasteboardStrategy& strategy = *platformStrategies()->pasteboardStrategy();
+    PasteboardStrategy& strategy = *platformStrategies()->pasteboardStrategy().unsafeGet();
 
     size_t numberOfItems = strategy.getPasteboardItemsCount(m_pasteboardName, context());
 
@@ -410,7 +410,7 @@ bool Pasteboard::respectsUTIFidelities() const
 void Pasteboard::readRespectingUTIFidelities(PasteboardWebContentReader& reader, WebContentReadingPolicy policy, std::optional<size_t> itemIndex)
 {
     ASSERT(respectsUTIFidelities());
-    auto& strategy = *platformStrategies()->pasteboardStrategy();
+    auto& strategy = *platformStrategies()->pasteboardStrategy().unsafeGet();
     for (NSUInteger index = 0, numberOfItems = strategy.getPasteboardItemsCount(m_pasteboardName, context()); index < numberOfItems; ++index) {
         if (itemIndex && index != *itemIndex)
             continue;
@@ -526,7 +526,7 @@ void Pasteboard::clear()
 
 Vector<String> Pasteboard::readPlatformValuesAsStrings(const String& domType, int64_t changeCount, const String& pasteboardName)
 {
-    auto& strategy = *platformStrategies()->pasteboardStrategy();
+    auto& strategy = *platformStrategies()->pasteboardStrategy().unsafeGet();
 
     // Grab the value off the pasteboard corresponding to the cocoaType.
     auto cocoaType = cocoaTypeFromHTMLClipboardType(domType);
@@ -590,7 +590,7 @@ void Pasteboard::writeString(const String& type, const String& data)
 Vector<String> Pasteboard::readFilePaths()
 {
     Vector<String> filePaths;
-    auto& strategy = *platformStrategies()->pasteboardStrategy();
+    auto& strategy = *platformStrategies()->pasteboardStrategy().unsafeGet();
     for (NSUInteger index = 0, numberOfItems = strategy.getPasteboardItemsCount(m_pasteboardName, context()); index < numberOfItems; ++index) {
         // Currently, drag and drop is the only case on iOS where the "pasteboard" may contain file paths.
         auto info = strategy.informationForItemAtIndex(index, m_pasteboardName, m_changeCount, context());

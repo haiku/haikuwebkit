@@ -125,6 +125,11 @@ inline ContainerNode& HTMLCollection::ownerNode() const
     return m_ownerNode;
 }
 
+inline CollectionType HTMLCollection::type() const
+{
+    return static_cast<CollectionType>(m_collectionType);
+}
+
 } // namespace WebCore
 
 #define SPECIALIZE_TYPE_TRAITS_HTMLCOLLECTION(ClassName, Type) \

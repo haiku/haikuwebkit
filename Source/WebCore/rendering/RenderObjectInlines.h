@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/FloatQuad.h>
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/LocalFrameInlines.h>

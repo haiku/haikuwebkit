@@ -69,10 +69,13 @@
 #include <WebCore/CertificateInfo.h>
 #include <WebCore/Chrome.h>
 #include <WebCore/DOMWrapperWorld.h>
-#include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentLoader.h>
+#include <WebCore/DocumentPage.h>
+#include <WebCore/DocumentQuirks.h>
+#include <WebCore/DocumentView.h>
 #include <WebCore/EventHandler.h>
 #include <WebCore/FormState.h>
+#include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/HTMLFormElement.h>
 #include <WebCore/HistoryController.h>
@@ -85,13 +88,11 @@
 #include <WebCore/MouseEvent.h>
 #include <WebCore/NodeDocument.h>
 #include <WebCore/NotImplemented.h>
-#include <WebCore/Page.h>
 #include <WebCore/PluginData.h>
 #include <WebCore/PluginDocument.h>
 #include <WebCore/PolicyChecker.h>
 #include <WebCore/ProcessSwapDisposition.h>
 #include <WebCore/ProgressTracker.h>
-#include <WebCore/Quirks.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceRequest.h>
 #include <WebCore/ScriptController.h>
@@ -926,7 +927,7 @@ LocalFrame* WebLocalFrameLoaderClient::dispatchCreatePage(const NavigationAction
     if (!newPage)
         return nullptr;
     
-    return newPage->localMainFrame().get();
+    return newPage->localMainFrame().unsafeGet();
 }
 
 void WebLocalFrameLoaderClient::dispatchShow()
@@ -2049,6 +2050,13 @@ RefPtr<WebCore::HistoryItem> WebLocalFrameLoaderClient::createHistoryItemTree(bo
 {
     Ref frame = m_localFrame.get();
     return frame->loader().history().createItemTree(frame, clipAtTarget, itemID);
+}
+
+RefPtr<WebCore::Frame> WebLocalFrameLoaderClient::provisionalParentFrame() const
+{
+    if (RefPtr parentWebFrame = webFrame().parentFrame())
+        return parentWebFrame->coreFrame();
+    return nullptr;
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

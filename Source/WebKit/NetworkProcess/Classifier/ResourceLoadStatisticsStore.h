@@ -113,7 +113,7 @@ public:
     bool isEmpty() const;
     Vector<ITPThirdPartyData> aggregatedThirdPartyData() const;
     void updateCookieBlocking(CompletionHandler<void()>&&);
-    void processStatisticsAndDataRecords();
+    void processStatisticsAndDataRecords(CompletionHandler<void()>&&);
     void cancelPendingStatisticsProcessingRequest();
     void mergeStatistics(Vector<ResourceLoadStatistics>&&);
     void runIncrementalVacuumCommand();

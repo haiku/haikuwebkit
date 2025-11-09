@@ -30,7 +30,7 @@
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSProperty.h"
 #include "CSSValueList.h"
-#include "Document.h"
+#include "DocumentView.h"
 #include "ElementInlines.h"
 #include "HTMLImageElement.h"
 #include "HTMLMapElement.h"
@@ -53,7 +53,7 @@ ContainerNode* composedParentIgnoringDocumentFragments(const Node& node)
     RefPtr ancestor = node.parentInComposedTree();
     while (is<DocumentFragment>(ancestor.get()))
         ancestor = ancestor->parentInComposedTree();
-    return ancestor.get();
+    return ancestor.unsafeGet();
 }
 
 ContainerNode* composedParentIgnoringDocumentFragments(const Node* node)
@@ -124,7 +124,7 @@ RenderImage* toSimpleImage(RenderObject& renderer)
         return nullptr;
 #endif // ENABLE(VIDEO)
 
-    return renderImage.get();
+    return renderImage.unsafeGet();
 }
 
 // FIXME: This probably belongs on Element.

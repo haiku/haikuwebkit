@@ -87,7 +87,7 @@ ScrollTimeline& StyleOriginatedTimelinesController::inactiveNamedTimeline(const 
 {
     auto inactiveTimeline = ScrollTimeline::createInactiveStyleOriginatedTimeline(name);
     timelinesForName(name).append(inactiveTimeline);
-    return inactiveTimeline.get();
+    return inactiveTimeline.unsafeGet();
 }
 
 static bool containsElement(const Vector<WeakStyleable>& timelineScopeElements, Element* matchElement)
@@ -109,11 +109,11 @@ ScrollTimeline* StyleOriginatedTimelinesController::determineTreeOrder(const Vec
         if (!matchedTimelines.isEmpty()) {
             if (containsElement(timelineScopeElements, element.get())) {
                 if (matchedTimelines.size() == 1)
-                    return matchedTimelines.first().ptr();
+                    return matchedTimelines.first().unsafePtr();
                 // Naming conflict due to timeline-scope, see if the element declares a non-deferred timeline.
                 for (auto& matchedTimeline : matchedTimelines) {
                     if (element == originatingElement(matchedTimeline).element().get())
-                        return matchedTimeline.ptr();
+                        return matchedTimeline.unsafePtr();
                 }
                 // If we only have deferred timelines, then the timeline is the inactive timeline.
                 return &inactiveNamedTimeline(matchedTimelines.first()->name());
@@ -121,8 +121,8 @@ ScrollTimeline* StyleOriginatedTimelinesController::determineTreeOrder(const Vec
             ASSERT(matchedTimelines.size() <= 2);
             // Favor scroll timelines in case of conflict
             if (!is<ViewTimeline>(matchedTimelines.first()))
-                return matchedTimelines.first().ptr();
-            return matchedTimelines.last().ptr();
+                return matchedTimelines.first().unsafePtr();
+            return matchedTimelines.last().unsafePtr();
         }
         // Has blocking timeline scope element
         if (containsElement(timelineScopeElements, element.get()))

@@ -28,10 +28,11 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "CloseWatcherManager.h"
-#include "DocumentInlines.h"
+#include "DocumentWindow.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "EventTargetInlines.h"
+#include "ExceptionOr.h"
 #include "KeyboardEvent.h"
 #include "LocalDOMWindow.h"
 #include "ScriptExecutionContext.h"

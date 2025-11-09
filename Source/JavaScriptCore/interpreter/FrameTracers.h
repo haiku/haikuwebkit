@@ -81,7 +81,7 @@ ALWAYS_INLINE static void assertStackPointerIsAligned()
 #if CPU(X86) && !OS(WINDOWS)
     uintptr_t stackPointer;
 
-    asm("movl %%esp,%0" : "=r"(stackPointer));
+    __asm__("movl %%esp,%0" : "=r"(stackPointer));
     ASSERT(!(stackPointer % stackAlignmentBytes()));
 #endif
 #endif

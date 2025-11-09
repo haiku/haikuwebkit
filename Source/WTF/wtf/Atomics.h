@@ -368,11 +368,11 @@ public:
         // ordering. This forces weak memory order CPUs to observe `location` and
         // dependent loads in their store order without the reader using a barrier
         // or an acquire load.
-        asm("eor %w[out], %w[in], %w[in]"
+        __asm__("eor %w[out], %w[in], %w[in]"
             : [out] "=r"(output)
             : [in] "r"(input));
 #elif CPU(ARM)
-        asm("eor %[out], %[in], %[in]"
+        __asm__("eor %[out], %[in], %[in]"
             : [out] "=r"(output)
             : [in] "r"(input));
 #else

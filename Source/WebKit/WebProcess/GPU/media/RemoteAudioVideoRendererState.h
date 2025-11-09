@@ -32,7 +32,7 @@
 namespace WebKit {
 
 struct RemoteAudioVideoRendererState {
-    MediaTime currentTime { MediaTime::invalidTime() };
+    MediaTime currentTime { MediaTime::zeroTime() };
     bool paused { false };
     bool seeking { false };
     bool timeIsProgressing { false };

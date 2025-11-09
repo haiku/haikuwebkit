@@ -28,8 +28,8 @@
 #include "config.h"
 #include "NativeWebKeyboardEvent.h"
 
+#include "GtkVersioning.h"
 #include "WebEventFactory.h"
-#include <WebCore/GtkVersioning.h>
 
 namespace WebKit {
 

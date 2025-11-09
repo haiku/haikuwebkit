@@ -101,10 +101,6 @@ public:
 
     ConcurrentVector() = default;
 
-    ~ConcurrentVector()
-    {
-    }
-
     // This may return a size that is bigger than the underlying storage, since this does not fence
     // manipulations of size. So if you access at size()-1, you may crash because this hasn't
     // allocated storage for that index yet.

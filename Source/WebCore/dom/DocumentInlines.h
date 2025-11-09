@@ -25,31 +25,18 @@
 
 #pragma once
 
-#include <WebCore/CachedResourceLoader.h>
 #include <WebCore/ClientOrigin.h>
 #include <WebCore/Document.h>
-#include <WebCore/DocumentMarkerController.h>
 #include <WebCore/DocumentParser.h>
 #include <WebCore/DocumentSyncData.h>
 #include <WebCore/Element.h>
-#include <WebCore/EventLoop.h>
 #include <WebCore/ExtensionStyleSheets.h>
-#include <WebCore/FocusOptions.h>
-#include <WebCore/FrameDestructionObserverInlines.h>
-#include <WebCore/FrameInlines.h>
 #include <WebCore/FrameSelection.h>
-#include <WebCore/LocalDOMWindow.h>
-#include <WebCore/LocalFrameInlines.h>
-#include <WebCore/LocalFrameView.h>
-#include <WebCore/NodeInlines.h>
 #include <WebCore/NodeIterator.h>
-#include <WebCore/PageInlines.h>
 #include <WebCore/ReportingScope.h>
 #include <WebCore/SecurityOrigin.h>
-#include <WebCore/Settings.h>
 #include <WebCore/TextResourceDecoder.h>
 #include <WebCore/UndoManager.h>
-#include <WebCore/WebCoreOpaqueRoot.h>
 
 namespace WebCore {
 
@@ -68,20 +55,6 @@ inline ASCIILiteral Document::encoding() const
 inline ASCIILiteral Document::charset() const
 {
     return Document::encoding();
-}
-
-inline Quirks& Document::quirks()
-{
-    if (!m_quirks)
-        return ensureQuirks();
-    return *m_quirks;
-}
-
-inline const Quirks& Document::quirks() const
-{
-    if (!m_quirks)
-        return const_cast<Document&>(*this).ensureQuirks();
-    return *m_quirks;
 }
 
 inline ExtensionStyleSheets& Document::extensionStyleSheets()
@@ -117,11 +90,6 @@ inline ScriptModuleLoader& Document::moduleLoader()
     return *m_moduleLoader;
 }
 
-inline CheckedRef<EventLoopTaskGroup> Document::checkedEventLoop()
-{
-    return eventLoop();
-}
-
 inline CSSFontSelector& Document::fontSelector()
 {
     if (!m_fontSelector)
@@ -139,13 +107,6 @@ inline const CSSFontSelector& Document::fontSelector() const
 inline const Document* Document::templateDocument() const
 {
     return m_templateDocumentHost ? this : m_templateDocument.get();
-}
-
-inline AXObjectCache* Document::existingAXObjectCache() const
-{
-    if (!hasEverCreatedAnAXObjectCache)
-        return nullptr;
-    return existingAXObjectCacheSlow();
 }
 
 inline Ref<Document> Document::create(const Settings& settings, const URL& url)
@@ -168,50 +129,8 @@ inline void Document::invalidateAccessKeyCache()
 
 inline ClientOrigin Document::clientOrigin() const { return { topOrigin().data(), securityOrigin().data() }; }
 
-inline bool Document::isSameOriginAsTopDocument() const { return protectedSecurityOrigin()->isSameOriginAs(protectedTopOrigin()); }
-
-inline bool Document::shouldMaskURLForBindings(const URL& urlToMask) const
-{
-    if (urlToMask.protocolIsInHTTPFamily()) [[likely]]
-        return false;
-    return shouldMaskURLForBindingsInternal(urlToMask);
-}
-
-inline const URL& Document::maskedURLForBindingsIfNeeded(const URL& url) const
-{
-    if (shouldMaskURLForBindings(url)) [[unlikely]]
-        return maskedURLForBindings();
-    return url;
-}
-
-inline bool Document::hasBrowsingContext() const
-{
-    return !!frame();
-}
 
 inline bool Document::wasLastFocusByClick() const { return m_latestFocusTrigger == FocusTrigger::Click; }
-
-inline RefPtr<LocalDOMWindow> Document::protectedWindow() const
-{
-    return m_domWindow;
-}
-
-inline CachedResourceLoader& Document::cachedResourceLoader()
-{
-    if (!m_cachedResourceLoader)
-        return ensureCachedResourceLoader();
-    return *m_cachedResourceLoader;
-}
-
-inline Ref<CachedResourceLoader> Document::protectedCachedResourceLoader() const
-{
-    return const_cast<Document&>(*this).cachedResourceLoader();
-}
-
-inline const SettingsValues& Document::settingsValues() const
-{
-    return settings().values();
-}
 
 inline RefPtr<DocumentParser> Document::protectedParser() const
 {
@@ -257,58 +176,9 @@ inline RefPtr<Element> Document::protectedFocusedElement() const
     return m_focusedElement;
 }
 
-inline DocumentMarkerController& Document::markers()
-{
-    if (!m_markers)
-        return ensureMarkers();
-    return *m_markers;
-}
-
-inline const DocumentMarkerController& Document::markers() const
-{
-    if (!m_markers)
-        return const_cast<Document&>(*this).ensureMarkers();
-    return *m_markers;
-}
-
-inline CheckedRef<DocumentMarkerController> Document::checkedMarkers()
-{
-    return markers();
-}
-
-inline CheckedRef<const DocumentMarkerController> Document::checkedMarkers() const
-{
-    return markers();
-}
-
-inline Ref<SecurityOrigin> Document::protectedSecurityOrigin() const
-{
-    return SecurityContext::protectedSecurityOrigin().releaseNonNull();
-}
-
 inline Ref<DocumentSyncData> Document::syncData()
 {
     return m_syncData.get();
-}
-
-inline LocalFrameView* Document::view() const
-{
-    return m_frame ? m_frame->view() : nullptr;
-}
-
-inline RefPtr<LocalFrameView> Document::protectedView() const
-{
-    return view();
-}
-
-inline Page* Document::page() const
-{
-    return m_frame ? m_frame->page() : nullptr;
-}
-
-inline RefPtr<Page> Document::protectedPage() const
-{
-    return page();
 }
 
 // FIXME: Move to FrameSelectionInlines.h

@@ -667,9 +667,6 @@ private:
     inline uint32_t nextPC() { return m_parser->offset() - m_metadata->m_bytecodeOffset; }
     inline uint32_t curMC() { return m_metadata->m_metadata.size(); }
 
-    // FIXME: If rethrow is not used in practice we should consider just reparsing the function to update the SP offsets.
-    Vector<uint32_t> m_catchSPMetadataOffsets;
-
     CallInformation m_cachedCallInformation { };
     const FunctionSignature* m_cachedSignature { nullptr };
     Vector<uint8_t, 16> m_cachedCallBytecode;
@@ -932,7 +929,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addArguments(const TypeDefiniti
 
     ASSERT(callCC.headerAndArgumentStackSizeInBytes >= callCC.headerIncludingThisSizeInBytes);
     m_argumentAndResultsStackSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(callCC.headerAndArgumentStackSizeInBytes) - callCC.headerIncludingThisSizeInBytes;
-    ASSERT(!(m_argumentAndResultsStackSize % 16)); // mINT requires this
+    ASSERT(!Options::useWasmIPInt() || !(m_argumentAndResultsStackSize % 16)); // mINT requires this
 
     auto numArgs = sig->argumentCount();
     m_metadata->m_numLocals += numArgs;
@@ -2462,7 +2459,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCatchToUnreachable(unsigned 
     m_metadata->m_exceptionHandlers.append({
         HandlerType::Catch,
         static_cast<uint32_t>(block.m_pc),
-        static_cast<uint32_t>(block.m_pcEnd),
+        static_cast<uint32_t>(block.m_pcEnd + 1), // + 1 since m_pcEnd is the PC of the catch bytecode, which should be included in the range
         static_cast<uint32_t>(m_parser->offset() - m_metadata->m_bytecodeOffset),
         static_cast<uint32_t>(m_metadata->m_metadata.size()),
         m_tryDepth,
@@ -2501,7 +2498,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCatchAllToUnreachable(Contro
     m_metadata->m_exceptionHandlers.append({
         HandlerType::CatchAll,
         static_cast<uint32_t>(block.m_pc),
-        static_cast<uint32_t>(block.m_pcEnd),
+        static_cast<uint32_t>(block.m_pcEnd + 1), // + 1 since m_pcEnd is the PC of the catch bytecode, which should be included in the range
         static_cast<uint32_t>(m_parser->offset() - m_metadata->m_bytecodeOffset),
         static_cast<uint32_t>(m_metadata->m_metadata.size()),
         m_tryDepth,
@@ -2539,7 +2536,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addDelegateToUnreachable(Contro
     m_metadata->m_exceptionHandlers.append({
         HandlerType::Delegate,
         static_cast<uint32_t>(data.m_pc),
-        static_cast<uint32_t>(data.m_pcEnd),
+        static_cast<uint32_t>(data.m_pcEnd + 1), // + 1 since m_pcEnd is the PC of the delegate bytecode, which should be included in the range
         static_cast<uint32_t>(curPC()),
         static_cast<uint32_t>(curMC()),
         m_tryDepth,
@@ -2722,7 +2719,7 @@ void IPIntGenerator::endTryTable(ControlType& data)
         m_metadata->m_exceptionHandlers.append({
             targetType,
             data.m_pc,
-            curPC(),
+            curPC() + 1, // + 1 since the end bytecode should be included
 
             // index into the array of try_table targets
             data.m_pc, // PC will be fixed up relative to the try_table's PC
@@ -3166,11 +3163,8 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCrash()
 
 std::unique_ptr<FunctionIPIntMetadataGenerator> IPIntGenerator::finalize()
 {
-    if (m_usesRethrow) {
+    if (m_usesRethrow)
         m_metadata->m_numAlignedRethrowSlots = roundUpToMultipleOf<2>(m_maxTryDepth);
-        for (uint32_t catchSPOffset : m_catchSPMetadataOffsets)
-            *reinterpret_cast_ptr<uint32_t*>(m_metadata->m_metadata.mutableSpan().data() + catchSPOffset) += m_metadata->m_numAlignedRethrowSlots;
-    }
 
     // Pad the metadata to an even number since we will allocate the rounded up size
     if (m_metadata->m_numLocals % 2)

@@ -34,7 +34,7 @@ class IntRect;
 
 enum class VisibleInViewportState { Unknown, Yes, No };
 
-class CachedImageClient : public CachedResourceClient, public CanMakeCheckedPtr<CachedImageClient> {
+class WEBCORE_EXPORT CachedImageClient : public CachedResourceClient, public CanMakeCheckedPtr<CachedImageClient> {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(CachedImageClient);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(CachedImageClient);
 public:
@@ -49,7 +49,7 @@ public:
     virtual bool canDestroyDecodedData() const { return true; }
 
     // Called when a new decoded frame for a large image is available or when an animated image is ready to advance to the next frame.
-    virtual VisibleInViewportState imageFrameAvailable(CachedImage& image, ImageAnimatingState, const IntRect* changeRect) { imageChanged(&image, changeRect); return VisibleInViewportState::No; }
+    virtual VisibleInViewportState imageFrameAvailable(CachedImage&, ImageAnimatingState, const IntRect*);
     virtual VisibleInViewportState imageVisibleInViewport(const Document&) const { return VisibleInViewportState::No; }
 
     virtual void didRemoveCachedImageClient(CachedImage&) { }

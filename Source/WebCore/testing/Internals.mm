@@ -29,7 +29,7 @@
 #import "DOMURL.h"
 #import "DeprecatedGlobalSettings.h"
 #import "DictionaryLookup.h"
-#import "Document.h"
+#import "DocumentView.h"
 #import "EventHandler.h"
 #import "FrameDestructionObserverInlines.h"
 #import "HTMLMediaElement.h"
@@ -74,6 +74,31 @@
 - (instancetype)initWithString:(NSString *)fullText;
 @end
 
+static NSRange clampRange(NSRange rangeToClamp, NSRange extentRange)
+{
+    NSUInteger minRange1 = rangeToClamp.location;
+    NSUInteger maxRange1 = NSMaxRange(rangeToClamp);
+
+    NSUInteger minRange2 = extentRange.location;
+    NSUInteger maxRange2 = NSMaxRange(extentRange);
+
+    NSUInteger minCommon = clampTo(minRange1, minRange2, maxRange2);
+    NSUInteger maxCommon = clampTo(maxRange1, minRange2, maxRange2);
+
+    if (rangeToClamp.location == NSNotFound) {
+        minCommon = maxRange2;
+        maxCommon = maxRange2;
+    } else if (minCommon > maxCommon)
+        std::swap(minCommon, maxCommon);
+
+    NSRange result = NSMakeRange(minCommon, maxCommon - minCommon);
+
+    if (extentRange.location == NSNotFound)
+        result = NSMakeRange(NSNotFound, 0);
+
+    return result;
+}
+
 @implementation FakeImageAnalysisResult {
     RetainPtr<NSAttributedString> _string;
 }
@@ -89,7 +114,9 @@
 
 - (NSAttributedString *)_attributedStringForRange:(NSRange)range
 {
-    return [_string attributedSubstringFromRange:range];
+    NSRange validRange = NSMakeRange(0, [_string length]);
+    NSRange safeRange = clampRange(range, validRange);
+    return [_string attributedSubstringFromRange:safeRange];
 }
 
 @end

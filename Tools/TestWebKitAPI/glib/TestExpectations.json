@@ -282,30 +282,6 @@
             },
             "ImageBufferTests/AnyTwoImageBufferOptionsTest.PutPixelBufferAffectsDrawOutput/1byteobject011byteobject01": {
                 "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truetruetrue": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truetruefalse": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truefalsetrue": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/truefalsefalse": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsetruetrue": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsetruefalse": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsefalsetrue": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
-            },
-            "GraphicsContextGLTextureMapperTest/AnyContextAttributeTest.WebXRBlitTest/falsefalsefalse": {
-                "expected": {"all": {"status": ["FAIL"], "bug":"webkit.org/b/299730"}}
             }
         }
     },
@@ -591,16 +567,6 @@
             },
            "/webkit/WebKitFrame/javascript-values": {
                 "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/284812"}}
-            }
-        }
-    },
-    "TestWebKitWebXR": {
-        "subtests": {
-            "/webkit/WebKitWebXR/leave-immersive-mode": {
-                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/299080"}}
-            },
-            "/webkit/WebKitWebXR/permission-request": {
-                "expected": {"all" : {"status": ["SKIP"], "bug": "webkit.org/b/299080"}}
             }
         }
     }

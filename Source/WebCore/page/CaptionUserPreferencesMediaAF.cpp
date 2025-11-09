@@ -431,7 +431,7 @@ bool CaptionUserPreferencesMediaAF::captionStrokeWidthForFont(float fontSize, co
 
 bool CaptionUserPreferencesMediaAF::testingMode() const
 {
-    return CaptionUserPreferences::testingMode() || hasNullCaptionProfile();
+    return CaptionUserPreferences::testingMode();
 }
 
 String CaptionUserPreferencesMediaAF::captionsTextEdgeCSS() const
@@ -474,9 +474,9 @@ String CaptionUserPreferencesMediaAF::captionsDefaultFontCSS() const
         return emptyString();
 
     if (fontNameIsSystemFont(name.get())) {
-        if (CFStringHasPrefix(CFSTR(".AppleSystemUIFontMonospaced"), name.get()))
-            name = CFSTR("system-ui-monospaced");
-        else if (CFStringHasPrefix(CFSTR(".AppleSystemUIFont"), name.get()))
+        if (CFStringHasPrefix(name.get(), CFSTR(".AppleSystemUIFontMonospaced")))
+            name = CFSTR("ui-monospace");
+        else if (CFStringHasPrefix(name.get(), CFSTR(".AppleSystemUIFont")))
             name = CFSTR("system-ui");
         else {
             // FIXME: Add more fallbacks for system font names
@@ -500,6 +500,19 @@ String CaptionUserPreferencesMediaAF::captionsDefaultFontCSS() const
     }
     builder.append(behaviorShouldNotBeOverriden(behavior) ? " !important;"_s : ";"_s);
     return builder.toString();
+}
+
+String CaptionUserPreferencesMediaAF::captionsFontSizeCSS() const
+{
+    bool important = false;
+    float fontScale = captionFontSizeScaleAndImportance(important);
+
+    // Caption fonts are defined as |size vh| units, so there's no need to
+    // scale by display size. Since |vh| is a decimal percentage, multiply
+    // the scale factor by 100 to achive the final font size.
+    long fontSize = lroundf(100 * fontScale);
+
+    return makeString("font-size: "_s, fontSize, "cqmin"_s, important ? "!important;"_s : ";"_s);
 }
 
 float CaptionUserPreferencesMediaAF::captionFontSizeScaleAndImportance(bool& important) const
@@ -611,7 +624,7 @@ bool CaptionUserPreferencesMediaAF::hasNullCaptionProfile() const
 
 String CaptionUserPreferencesMediaAF::captionsStyleSheetOverride() const
 {
-    if (testingMode())
+    if (testingMode() || hasNullCaptionProfile())
         return CaptionUserPreferences::captionsStyleSheetOverride();
     
     StringBuilder captionsOverrideStyleSheet;
@@ -623,10 +636,11 @@ String CaptionUserPreferencesMediaAF::captionsStyleSheetOverride() const
     String captionsColor = captionsTextColorCSS();
     String edgeStyle = captionsTextEdgeCSS();
     String fontName = captionsDefaultFontCSS();
+    String fontSize = captionsFontSizeCSS();
     String background = captionsBackgroundCSS();
-    if (!background.isEmpty() || !captionsColor.isEmpty() || !edgeStyle.isEmpty() || !fontName.isEmpty()) {
-        captionsOverrideStyleSheet.append(" ::"_s, UserAgentParts::cue(), '{', background, captionsColor, edgeStyle, fontName, '}');
-        captionsOverrideStyleSheet.append(" ::"_s, UserAgentParts::cue(), "(rt) {"_s, background, captionsColor, edgeStyle, fontName, '}');
+    if (!background.isEmpty() || !captionsColor.isEmpty() || !edgeStyle.isEmpty() || !fontName.isEmpty() || !fontSize.isEmpty()) {
+        captionsOverrideStyleSheet.append(" ::"_s, UserAgentParts::cue(), '{', background, captionsColor, edgeStyle, fontName, fontSize, '}');
+        captionsOverrideStyleSheet.append(" ::"_s, UserAgentParts::cue(), "(rt) {"_s, background, captionsColor, edgeStyle, fontName, fontSize, '}');
     }
     String windowColor = captionsWindowCSS();
     String windowCornerRadius = windowRoundedCornerRadiusCSS();

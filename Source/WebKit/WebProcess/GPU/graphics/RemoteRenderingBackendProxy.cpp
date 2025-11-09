@@ -492,14 +492,6 @@ void RemoteRenderingBackendProxy::releaseMemory()
     send(Messages::RemoteRenderingBackend::ReleaseMemory());
 }
 
-void RemoteRenderingBackendProxy::releaseNativeImages()
-{
-    m_remoteResourceCacheProxy->releaseNativeImages();
-    if (!m_connection)
-        return;
-    send(Messages::RemoteRenderingBackend::ReleaseNativeImages());
-}
-
 #if PLATFORM(COCOA)
 void RemoteRenderingBackendProxy::startPreparingImageBufferSetsForDisplay()
 {

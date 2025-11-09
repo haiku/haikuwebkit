@@ -317,6 +317,12 @@ void CoordinatedPlatformLayer::setVisibleRect(const FloatRect& visibleRect)
     m_visibleRect = visibleRect;
 }
 
+const FloatRect& CoordinatedPlatformLayer::visibleRect() const
+{
+    ASSERT(m_lock.isHeld());
+    return m_visibleRect;
+}
+
 void CoordinatedPlatformLayer::setTransformedVisibleRect(IntRect&& transformedVisibleRect, IntRect&& transformedVisibleRectIncludingFuture)
 {
     ASSERT(m_lock.isHeld());
@@ -471,6 +477,7 @@ void CoordinatedPlatformLayer::setContentsScale(float contentsScale)
         return;
 
     m_contentsScale = contentsScale;
+    m_needsTilesUpdate = true;
     notifyCompositionRequired();
 }
 
@@ -729,7 +736,7 @@ void CoordinatedPlatformLayer::updateBackingStore()
         return;
 
     IntRect contentsRect(IntPoint::zero(), IntSize(m_size));
-    auto updateResult = m_backingStoreProxy->updateIfNeeded(m_transformedVisibleRectIncludingFuture, contentsRect, m_pendingTilesCreation || m_needsTilesUpdate, m_dirtyRegion, *this);
+    auto updateResult = m_backingStoreProxy->updateIfNeeded(m_transformedVisibleRectIncludingFuture, contentsRect, m_contentsScale, m_pendingTilesCreation || m_needsTilesUpdate, m_dirtyRegion, *this);
     m_needsTilesUpdate = false;
     m_dirtyRegion.clear();
     if (m_animatedBackingStoreClient)
@@ -752,12 +759,9 @@ void CoordinatedPlatformLayer::updateContents(bool affectedByTransformAnimation)
 
     if (needsBackingStore()) {
         if (!m_backingStoreProxy) {
-            m_backingStoreProxy = CoordinatedBackingStoreProxy::create(m_contentsScale);
+            m_backingStoreProxy = CoordinatedBackingStoreProxy::create();
             m_needsTilesUpdate = true;
             m_pendingChanges.add(Change::BackingStore);
-        } else {
-            if (m_backingStoreProxy->setContentsScale(m_contentsScale))
-                m_needsTilesUpdate = true;
         }
 
         if (affectedByTransformAnimation) {
@@ -815,6 +819,11 @@ void CoordinatedPlatformLayer::requestComposition()
 RunLoop* CoordinatedPlatformLayer::compositingRunLoop() const
 {
     return m_client ? m_client->compositingRunLoop() : nullptr;
+}
+
+int CoordinatedPlatformLayer::maxTextureSize() const
+{
+    return m_client ? m_client->maxTextureSize() : 0;
 }
 
 Ref<CoordinatedTileBuffer> CoordinatedPlatformLayer::paint(const IntRect& dirtyRect)

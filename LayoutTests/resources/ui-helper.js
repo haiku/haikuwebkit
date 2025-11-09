@@ -859,6 +859,19 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static waitForViewControllerToShow()
+    {
+        if (!this.isWebKit2() || !this.isIOSFamily())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                (function() {
+                    uiController.didPresentViewControllerCallback = () => uiController.uiScriptComplete();
+                })()`, resolve);
+        });
+    }
+
     static waitForContextMenuToShow()
     {
         if (!this.isWebKit2() || !this.isIOSFamily())
@@ -963,6 +976,33 @@ window.UIHelper = class UIHelper {
     static horizontalScrollbarState(scroller)
     {
         return UIHelper.scrollbarState(scroller, false);
+    }
+
+    static didCallEnsurePositionInformationIsUpToDateSinceLastCheck()
+    {
+        if (!this.isWebKit2() || !this.isIOSFamily())
+            return Promise.resolve(false);
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(function() {
+                uiController.uiScriptComplete(uiController.didCallEnsurePositionInformationIsUpToDateSinceLastCheck);
+            })()`, result => {
+                resolve(result === "true");
+            });
+        });
+    }
+
+    static clearEnsurePositionInformationIsUpToDateTracking()
+    {
+        if (!this.isWebKit2() || !this.isIOSFamily())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`(function() {
+                uiController.clearEnsurePositionInformationIsUpToDateTracking();
+                uiController.uiScriptComplete();
+            })()`, resolve);
+        });
     }
 
     static getUICaretViewRect()
@@ -1630,6 +1670,14 @@ window.UIHelper = class UIHelper {
 
         const escapedIdentifier = identifier.replace(/`/g, "\\`");
         return new Promise(resolve => testRunner.runUIScript(`uiController.setKeyboardInputModeIdentifier(\`${escapedIdentifier}\`)`, resolve));
+    }
+
+    static setFocusStartsInputSessionPolicy(policy)
+    {
+        if (!this.isWebKit2() || !this.isIOSFamily())
+            return Promise.resolve();
+
+        return new Promise(resolve => testRunner.runUIScript(`uiController.setFocusStartsInputSessionPolicy("${policy}")`, resolve));
     }
 
     static contentOffset()
@@ -2451,7 +2499,9 @@ window.UIHelper = class UIHelper {
 
         return new Promise(resolve => {
             testRunner.runUIScript(`(() => {
-                uiController.requestDebugText(result => uiController.uiScriptComplete(result));
+                uiController.requestDebugText(result => {
+                    uiController.uiScriptComplete(result);
+                }, ${JSON.stringify(options)});
             })()`, debugText => {
                 if (options.normalize) {
                     debugText = debugText

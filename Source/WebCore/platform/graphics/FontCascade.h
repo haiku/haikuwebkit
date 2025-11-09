@@ -28,7 +28,6 @@
 #include <WebCore/Font.h>
 #include <WebCore/FontCascadeDescription.h>
 #include <WebCore/FontCascadeFonts.h>
-#include <WebCore/Length.h>
 #include <WebCore/Path.h>
 #include <WebCore/TextSpacing.h>
 #include <optional>

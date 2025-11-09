@@ -143,7 +143,7 @@ public:
     LayoutUnit columnGap() const;
 
 private:
-    void addOverflowFromChildren() override;
+    void addOverflowFromInFlowChildren(OptionSet<ComputeOverflowOptions> = { }) override;
 
     void layout() override;
 

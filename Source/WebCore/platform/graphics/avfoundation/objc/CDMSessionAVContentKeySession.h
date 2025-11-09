@@ -70,18 +70,10 @@ public:
     RefPtr<ArrayBuffer> cachedKeyForKeyID(const String&) const override;
 
     // CDMSessionMediaSourceAVFObjC
-    void addParser(AVStreamDataParser *) override;
-    void removeParser(AVStreamDataParser *) override;
     bool isAnyKeyUsable(const Keys&) const override;
     void attachContentKeyToSample(const MediaSampleAVFObjC&) override;
 
     void didProvideContentKeyRequest(AVContentKeyRequest *);
-
-    bool hasContentKeySession() const { return !!m_contentKeySession; }
-    AVContentKeySession* contentKeySession();
-
-    bool hasContentKeyRequest() const;
-    RetainPtr<AVContentKeyRequest> contentKeyRequest() const;
 
 protected:
     CDMSessionAVContentKeySession(Vector<int>&& protocolVersions, int cdmVersion, CDMPrivateMediaSourceAVFObjC&, LegacyCDMSessionClient&);
@@ -94,6 +86,11 @@ protected:
 
 private:
     static RetainPtr<AVContentKeySession> createContentKeySession(NSURL *);
+    bool hasContentKeySession() const { return !!m_contentKeySession; }
+    AVContentKeySession* contentKeySession();
+
+    bool hasContentKeyRequest() const;
+    RetainPtr<AVContentKeyRequest> contentKeyRequest() const;
 
     const RetainPtr<AVContentKeySession> m_contentKeySession;
     const RetainPtr<WebCDMSessionAVContentKeySessionDelegate> m_contentKeySessionDelegate;

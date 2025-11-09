@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -361,7 +361,7 @@ const char* CallFrame::describeFrame()
     return buffer;
 }
 
-void CallFrame::convertToStackOverflowFrame(VM& vm, CodeBlock* codeBlockToKeepAliveUntilFrameIsUnwound)
+void CallFrame::convertToZombieFrame(VM& vm, CodeBlock* codeBlockToKeepAliveUntilFrameIsUnwound)
 {
     ASSERT(!isEmptyTopLevelCallFrameForDebugger());
     ASSERT(codeBlockToKeepAliveUntilFrameIsUnwound->inherits<CodeBlock>());
@@ -377,10 +377,10 @@ void CallFrame::convertToStackOverflowFrame(VM& vm, CodeBlock* codeBlockToKeepAl
         globalObject = throwOriginFrame->jsCallee()->globalObject();
     else
         globalObject = vm.entryScope->globalObject();
-    JSObject* partiallyInitializedFrameCallee = globalObject->partiallyInitializedFrameCallee();
+    JSObject* zombieFrameCallee = globalObject->zombieFrameCallee();
 
     setCodeBlock(codeBlockToKeepAliveUntilFrameIsUnwound);
-    setCallee(partiallyInitializedFrameCallee);
+    setCallee(zombieFrameCallee);
     setArgumentCountIncludingThis(0);
 }
 

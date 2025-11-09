@@ -11,11 +11,13 @@
 #include "include/core/SkCPURecorder.h"
 #include "include/core/SkRecorder.h"
 #include "include/core/SkRefCnt.h"
+#include "include/core/SkSurface.h"
 #include "include/gpu/graphite/GraphiteTypes.h"
 #include "include/gpu/graphite/Recording.h"
 #include "include/private/base/SingleOwner.h"
 #include "include/private/base/SkAPI.h"
 #include "include/private/base/SkTArray.h"
+#include "include/private/base/SkTDArray.h"
 
 #include <chrono>
 #include <cstddef>
@@ -273,6 +275,7 @@ private:
     void deregisterDevice(const Device*);
 
     SkCanvas* makeCaptureCanvas(SkCanvas*) override;
+    void createCaptureBreakpoint(SkSurface*) override;
 
     sk_sp<SharedContext> fSharedContext;
     ResourceProvider* fResourceProvider; // May point to the Context's resource provider
@@ -321,6 +324,14 @@ private:
 #if defined(GPU_TEST_UTILS)
     // For testing use only -- the Context used to create this Recorder
     Context* fContext = nullptr;
+#endif
+
+#if defined(SK_DUMP_TASKS)
+    // Traverses and dumps the task list at Recorder::snap()
+    void dumpTasks(TaskList*) const;
+
+    // Log of all callers of RecorderPriv::flushTrackedDevices
+    SkTDArray<const char*> fFlushSources;
 #endif
 };
 

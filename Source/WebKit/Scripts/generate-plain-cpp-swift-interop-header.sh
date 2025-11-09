@@ -25,4 +25,5 @@ set -e
 
 xcrun swiftc -typecheck -emit-clang-header-path "${SCRIPT_OUTPUT_FILE_0}" "${SCRIPT_INPUT_FILE_1}" -DENABLE_SWIFT_DEMO_URI_SCHEME \
     -I${SRCROOT}/Modules/Internal -I${SRCROOT} -cxx-interoperability-mode=default -Xcc -std=c++2b -module-name WebKit \
-    -sdk ${SDKROOT}
+    -sdk ${SDKROOT} \
+    -F ${SDKROOT}/System/Library/PrivateFrameworks

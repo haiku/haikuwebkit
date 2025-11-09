@@ -120,6 +120,7 @@ my %svgAttributesInHTMLHash = (
 
 # Cache of IDL file pathnames.
 my $idlFiles;
+my %childrenMap;
 my $cachedInterfaces = {};
 my $cachedExtendedAttributes = {};
 my $cachedExternalDictionaries = {};
@@ -580,6 +581,39 @@ sub IDLFileForInterface
     }
 
     return $idlFiles->{$interfaceName};
+}
+
+sub BuildInheritanceMap
+{
+    my ($object, $currentInterface) = @_;
+    return if %childrenMap;
+
+    $object->IDLFileForInterface($currentInterface) unless $idlFiles;
+    foreach my $interfaceName (keys %{$idlFiles}) {
+        my $filename = $object->IDLFileForInterface($interfaceName);
+        my $fileContents = slurp($filename);
+
+        # Extract parent interface name.
+        if ($fileContents =~ /interface\s+\Q$interfaceName\E\s*:\s*(\w+)\s*\{/) {
+            my $parent = $1;
+            push @{$childrenMap{$parent}}, $interfaceName;
+        }
+    }
+}
+
+sub ForEachChildInterface
+{
+    my ($object, $currentInterface, $apply) = @_;
+
+    $object->BuildInheritanceMap($currentInterface);
+
+    my $parentInterfaceName = $currentInterface->type->name;
+    my $children = $childrenMap{$parentInterfaceName};
+    return unless $children;
+    foreach my $childInterfaceName (sort @$children) {
+        my $childInterface = $object->ParseInterface($currentInterface, $childInterfaceName);
+        &$apply($childInterface);
+    }
 }
 
 sub GetInterfaceForType

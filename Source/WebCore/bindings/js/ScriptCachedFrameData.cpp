@@ -33,14 +33,11 @@
 #include "ScriptCachedFrameData.h"
 
 #include "CommonVM.h"
-#include "Document.h"
+#include "DocumentPage.h"
 #include "FrameConsoleClient.h"
-#include "FrameInlines.h"
 #include "GarbageCollectionController.h"
 #include "JSDOMWindow.h"
-#include "LocalFrame.h"
 #include "LocalFrameInlines.h"
-#include "Page.h"
 #include "PageGroup.h"
 #include "ScriptController.h"
 #include <JavaScriptCore/JSLock.h>

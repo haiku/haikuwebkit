@@ -30,11 +30,11 @@
 #include "AXObjectCache.h"
 #include "CachedImage.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "EditingInlines.h"
 #include "Editor.h"
 #include "ElementChildIteratorInlines.h"
 #include "ElementInlines.h"
+#include "FrameDestructionObserverInlines.h"
 #include "GraphicsLayer.h"
 #include "HTMLBodyElement.h"
 #include "HTMLDListElement.h"
@@ -203,7 +203,7 @@ Element* unsplittableElementForPosition(const Position& position)
     // Since enclosingNodeOfType won't search beyond the highest root editable node,
     // this code works even if the closest table cell was outside of the root editable node.
     if (auto enclosingCell = downcast<Element>(enclosingNodeOfType(position, &isTableCell)))
-        return enclosingCell.get();
+        return enclosingCell.unsafeGet();
     return editableRootForPosition(position);
 }
 
@@ -1177,7 +1177,7 @@ LayoutRect localCaretRectInRendererForCaretPainting(const VisiblePosition& caret
         return LayoutRect();
     ASSERT(caretPosition.deepEquivalent().deprecatedNode()->renderer());
     auto [localRect, renderer] = caretPosition.localCaretRect();
-    return localCaretRectInRendererForRect(localRect, caretPosition.deepEquivalent().deprecatedNode(), renderer, caretPainter);
+    return localCaretRectInRendererForRect(localRect, caretPosition.deepEquivalent().deprecatedNode(), renderer.get(), caretPainter);
 }
 
 LayoutRect localCaretRectInRendererForRect(LayoutRect& localRect, Node* node, RenderObject* renderer, RenderBlock*& caretPainter)

@@ -27,12 +27,10 @@
 #include "config.h"
 #include "CachedScriptFetcher.h"
 
-#include "CachedResourceLoader.h"
 #include "CachedScript.h"
 #include "ContentSecurityPolicy.h"
 #include "CrossOriginAccessControl.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentResourceLoader.h"
 #include "Settings.h"
 #include "WorkerOrWorkletGlobalScope.h"
 

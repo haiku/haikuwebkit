@@ -32,12 +32,11 @@
 #include "Logging.h"
 #include "NetworkProcessConnection.h"
 #include "NetworkRTCProviderMessages.h"
+#include "RTCSocketCreationFlags.h"
 #include "WebPage.h"
 #include "WebProcess.h"
-#include <WebCore/Document.h>
-#include <WebCore/DocumentInlines.h>
+#include <WebCore/DocumentPage.h>
 #include <WebCore/LibWebRTCUtils.h>
-#include <WebCore/Page.h>
 #include <WebCore/Settings.h>
 #include <algorithm>
 #include <wtf/EnumTraits.h>
@@ -139,11 +138,7 @@ void LibWebRTCNetworkManager::StopUpdating()
 
 webrtc::MdnsResponderInterface* LibWebRTCNetworkManager::GetMdnsResponder() const
 {
-#if PLATFORM(GTK) || PLATFORM(WPE)
-    return nullptr;
-#else
     return m_useMDNSCandidates ? const_cast<LibWebRTCNetworkManager*>(this) : nullptr;
-#endif
 }
 
 void LibWebRTCNetworkManager::networksChanged(const Vector<RTCNetwork>& networks, const RTCNetwork::IPAddress& ipv4, const RTCNetwork::IPAddress& ipv6)
@@ -170,9 +165,12 @@ void LibWebRTCNetworkManager::networksChanged(const Vector<RTCNetwork>& networks
                 m_hasQueriedInterface = true;
 
                 RegistrableDomain domain { document->url() };
-                bool isFirstParty = domain == RegistrableDomain(document->firstPartyForCookies());
-                bool isRelayDisabled = true;
-                WebProcess::singleton().ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkRTCProvider::GetInterfaceName { document->url(), webPage->webPageProxyIdentifier(), isFirstParty, isRelayDisabled, WTFMove(domain) }, [weakThis = WeakPtr { *this }] (auto&& interfaceName) {
+                RTCSocketCreationFlags flags {
+                    .isFirstParty = domain == RegistrableDomain(document->firstPartyForCookies()),
+                    .isRelayDisabled = true,
+                    .enableServiceClass = false
+                };
+                WebProcess::singleton().ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkRTCProvider::GetInterfaceName { document->url(), webPage->webPageProxyIdentifier(), flags, WTFMove(domain) }, [weakThis = WeakPtr { *this }] (auto&& interfaceName) {
                     RefPtr protectedThis = weakThis.get();
                     if (protectedThis && !interfaceName.isNull())
                         protectedThis->signalUsedInterface(WTFMove(interfaceName));

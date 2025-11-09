@@ -24,6 +24,7 @@
 #include "StyleBackgroundLayer.h"
 
 #include "CachedImage.h"
+#include "StylePrimitiveKeyword+Logging.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 #include <wtf/TZoneMallocInlines.h>

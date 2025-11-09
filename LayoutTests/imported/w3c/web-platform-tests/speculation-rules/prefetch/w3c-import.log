@@ -14,10 +14,7 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
-/LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/anonymous-client.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/clear-prefetch-cache-after-clear-site-data-cache.https.html
-/LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/cookie-indices.https.html
-/LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/cross-origin-cookies-anonymous-client-ip-duplicate.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/cross-origin-cookies.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/different-initiators-2.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/different-initiators.sub.https.html
@@ -29,6 +26,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-iframe-location-href.sub.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/initiators-window-open.sub.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/multiple-url.https.html
+/LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/mutate-rules.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/navigation-timing-delivery-type.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/navigation-timing-requestStart-responseStart.https.html
 /LayoutTests/imported/w3c/web-platform-tests/speculation-rules/prefetch/navigation-timing-sizes.https.html

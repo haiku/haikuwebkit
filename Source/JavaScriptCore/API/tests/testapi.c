@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +70,7 @@
 #include "MultithreadedMultiVMExecutionTest.h"
 #include "PingPongStackOverflowTest.h"
 #include "TypedArrayCTest.h"
+#include "VMManagerStopTheWorldTest.h"
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
@@ -2400,6 +2401,7 @@ int main(int argc, char* argv[])
     // For now, we'll just run them here at the end as a workaround.
     failed |= testPingPongStackOverflow();
     failed |= testExecutionTimeLimit();
+    failed |= testVMManagerStopTheWorld();
 
     if (failed) {
         printf("FAIL: Some tests failed.\n");

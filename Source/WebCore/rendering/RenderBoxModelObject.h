@@ -66,11 +66,11 @@ namespace InlineIterator {
 class InlineBoxIterator;
 };
 
-enum class BoxSideFlag : uint8_t;
+enum class BoxSide : uint8_t;
 enum class DecodingMode : uint8_t;
 enum class InterpolationQuality : uint8_t;
 
-using BoxSideSet = OptionSet<BoxSideFlag>;
+using BoxSideSet = EnumSet<BoxSide>;
 using BorderEdges = RectEdges<BorderEdge>;
 
 // This class is the base for all objects that adhere to the CSS box model as described
@@ -83,13 +83,11 @@ public:
     virtual ~RenderBoxModelObject();
     
     LayoutSize relativePositionOffset() const;
-    inline LayoutSize relativePositionLogicalOffset() const;
 
     FloatRect constrainingRectForStickyPosition() const;
     std::pair<const RenderBox&, const RenderLayer*> enclosingClippingBoxForStickyPosition() const;
     void computeStickyPositionConstraints(StickyPositionViewportConstraints&, const FloatRect& constrainingRect) const;
     LayoutSize stickyPositionOffset() const;
-    inline LayoutSize stickyPositionLogicalOffset() const;
 
     LayoutSize offsetForInFlowPosition() const;
 
@@ -236,7 +234,7 @@ public:
 
     void paintMaskForTextFillBox(GraphicsContext&, const FloatRect&, const InlineIterator::InlineBoxIterator&, const LayoutRect&);
 
-    // For RenderBlocks and RenderInlines with m_style->pseudoElementType() == PseudoId::FirstLetter, this tracks their remaining text fragments
+    // For RenderBlocks and RenderInlines with m_style->pseudoElementType() == PseudoElementType::FirstLetter, this tracks their remaining text fragments
     RenderTextFragment* firstLetterRemainingText() const;
     void setFirstLetterRemainingText(RenderTextFragment&);
     void clearFirstLetterRemainingText();

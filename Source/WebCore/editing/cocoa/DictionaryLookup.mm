@@ -32,15 +32,15 @@
 
 #if ENABLE(REVEAL)
 
-#import "Document.h"
+#import "DocumentPage.h"
 #import "Editing.h"
 #import "FocusController.h"
+#import "FrameDestructionObserverInlines.h"
 #import "FrameSelection.h"
 #import "GraphicsContextCG.h"
 #import "HitTestResult.h"
-#import "LocalFrame.h"
+#import "LocalFrameInlines.h"
 #import "NotImplemented.h"
-#import "Page.h"
 #import "Range.h"
 #import "RenderObject.h"
 #import "RevealUtilities.h"

@@ -30,6 +30,7 @@ list(APPEND WTF_SOURCES
 )
 
 list(APPEND WTF_PUBLIC_HEADERS
+    glib/ActivityObserver.h
     glib/Application.h
     glib/ChassisType.h
     glib/GMutexLocker.h

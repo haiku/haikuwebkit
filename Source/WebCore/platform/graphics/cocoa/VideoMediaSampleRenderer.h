@@ -226,6 +226,7 @@ private:
     unsigned m_droppedVideoFramesOffset WTF_GUARDED_BY_CAPABILITY(mainThread) { 0 };
     std::atomic<unsigned> m_corruptedVideoFrames { 0 };
     std::atomic<unsigned> m_presentedVideoFrames { 0 };
+    mutable unsigned m_sampleCount WTF_GUARDED_BY_CAPABILITY(mainThread) { 0 };
     MediaTime m_totalFrameDelay { MediaTime::zeroTime() };
 
     // Protected samples

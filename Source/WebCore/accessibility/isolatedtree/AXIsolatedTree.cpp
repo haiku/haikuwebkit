@@ -39,11 +39,11 @@
 #include "AXTreeStoreInlines.h"
 #include "AXUtilities.h"
 #include "AccessibilityObjectInlines.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentView.h"
 #include "FrameSelection.h"
 #include "HTMLNames.h"
 #include "LocalFrameView.h"
-#include "Page.h"
 #include <wtf/MonotonicTime.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/SetForScope.h>
@@ -1369,6 +1369,9 @@ void AXIsolatedTree::applyPendingChangesLocked()
     ASSERT(!isMainThread());
     ASSERT(m_changeLogLock.isLocked());
 
+    if (AXObjectCache::isAppleInternalInstall()) [[unlikely]]
+        WTFBeginSignpostAlways(this, AccessibilityIsolatedTreeApplyPendingChanges, "tree ID: %" PRIVATE_LOG_STRING "", treeID().loggingString().utf8().data());
+
     if (m_queuedForDestruction) [[unlikely]] {
         for (const auto& object : m_readerThreadNodeMap.values())
             object->detach(AccessibilityDetachmentType::CacheDestroyed);
@@ -1383,6 +1386,9 @@ void AXIsolatedTree::applyPendingChangesLocked()
 
         ASSERT(AXTreeStore::contains(treeID()));
         AXTreeStore::remove(treeID());
+
+        if (AXObjectCache::isAppleInternalInstall()) [[unlikely]]
+            WTFEndSignpostAlways(this, AccessibilityIsolatedTreeApplyPendingChanges, "tree ID: %" PRIVATE_LOG_STRING "", treeID().loggingString().utf8().data());
         return;
     }
 
@@ -1503,6 +1509,9 @@ void AXIsolatedTree::applyPendingChangesLocked()
     // Do this at the end because it requires looking up the root node by ID, so doing it at the end
     // ensures all additions to m_readerThreadNodeMap have been made by now.
     applyPendingRootNodeLocked();
+
+    if (AXObjectCache::isAppleInternalInstall()) [[unlikely]]
+        WTFEndSignpostAlways(this, AccessibilityIsolatedTreeApplyPendingChanges, "tree ID: %" PRIVATE_LOG_STRING "", treeID().loggingString().utf8().data());
 }
 
 void AXIsolatedTree::sortedLiveRegionsDidChange(Vector<AXID> liveRegionIDs)

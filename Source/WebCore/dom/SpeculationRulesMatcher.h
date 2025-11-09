@@ -32,10 +32,11 @@ namespace WebCore {
 
 class Document;
 class HTMLAnchorElement;
+enum class ReferrerPolicy : uint8_t;
 
 struct PrefetchRule {
     Vector<String> tags;
-    String referrerPolicy;
+    std::optional<ReferrerPolicy> referrerPolicy;
     bool conservative;
 };
 

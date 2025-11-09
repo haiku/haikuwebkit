@@ -445,7 +445,6 @@ set(WebKit_SERIALIZATION_IN_FILES
 
     NetworkProcess/Classifier/ITPThirdPartyData.serialization.in
     NetworkProcess/Classifier/ITPThirdPartyDataForSpecificFirstParty.serialization.in
-    NetworkProcess/Classifier/StorageAccessStatus.serialization.in
 
     NetworkProcess/PrivateClickMeasurement/PrivateClickMeasurementManagerInterface.serialization.in
 
@@ -501,7 +500,6 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/NetworkProcessConnectionParameters.serialization.in
     Shared/NodeHitTestResult.serialization.in
     Shared/Pasteboard.serialization.in
-    Shared/PlatformFontInfo.serialization.in
     Shared/PlatformPopupMenuData.serialization.in
     Shared/PolicyDecision.serialization.in
     Shared/PrintInfo.serialization.in
@@ -602,12 +600,6 @@ set(WebKit_SERIALIZATION_IN_FILES
 
     Shared/Gamepad/GamepadData.serialization.in
 
-    Shared/Model/DDMeshDescriptor.serialization.in
-    Shared/Model/DDMeshPart.serialization.in
-    Shared/Model/DDReplaceVertices.serialization.in
-    Shared/Model/DDUpdateMeshDescriptor.serialization.in
-    Shared/Model/DDVertexAttributeFormat.serialization.in
-    Shared/Model/DDVertexLayout.serialization.in
     Shared/Model/ModelObjectDescriptorBase.serialization.in
 
     Shared/WebGPU/WebGPUBindGroupDescriptor.serialization.in
@@ -724,7 +716,9 @@ set(WebCore_GENERATED_SERIALIZATION_IN_FILES
 set(WebCore_SERIALIZATION_IN_FILES
     ActivityState.serialization.in
     DDModel.serialization.in
+    DocumentSyncData.serialization.in
     DragActions.serialization.in
+    FrameTreeSyncData.serialization.in
     InbandTextTrackPrivate.serialization.in
     IndexedDB.serialization.in
     LayoutMilestones.serialization.in
@@ -734,7 +728,6 @@ set(WebCore_SERIALIZATION_IN_FILES
     PlatformMediaSession.serialization.in
     PlatformScreen.serialization.in
     PlatformWheelEvent.serialization.in
-    ProcessSyncData.serialization.in
     ProtectionSpaceBase.serialization.in
     ScrollTypes.serialization.in
     WebGPU.serialization.in

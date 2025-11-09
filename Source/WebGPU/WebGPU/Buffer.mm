@@ -185,7 +185,7 @@ Buffer::Buffer(id<MTLBuffer> buffer, uint64_t initialSize, WGPUBufferUsageFlags 
     , m_state(initialState)
     , m_mappingRange(initialMappingRange)
     , m_device(device)
-#if CPU(X86_64)
+#if CPU(X86_64) && (PLATFORM(MAC) || PLATFORM(MACCATALYST))
     , m_mappedAtCreation(m_state == State::MappedAtCreation)
 #endif
 {
@@ -322,7 +322,7 @@ std::span<uint8_t> Buffer::getBufferContents()
     return span<uint8_t>(m_buffer);
 }
 
-NSString* Buffer::errorValidatingMapAsync(WGPUMapModeFlags mode, size_t offset, size_t rangeSize) const
+NSString *Buffer::errorValidatingMapAsync(WGPUMapModeFlags mode, size_t offset, size_t rangeSize) const
 {
 #define ERROR_STRING(x) (@"GPUBuffer.mapAsync: " x)
     if (!isValid())
@@ -853,9 +853,14 @@ WGPUBufferUsageFlags wgpuBufferGetUsage(WGPUBuffer buffer)
     return WebGPU::protectedFromAPI(buffer)->usage();
 }
 
-#if ENABLE(WEBGPU_SWIFT)
 void wgpuBufferCopy(WGPUBuffer buffer, std::span<const uint8_t> data, size_t offset)
 {
+#if ENABLE(WEBGPU_SWIFT)
     WebGPU::protectedFromAPI(buffer)->copyFrom(data, offset);
-}
+#else
+    UNUSED_PARAM(buffer);
+    UNUSED_PARAM(data);
+    UNUSED_PARAM(offset);
+
 #endif
+}

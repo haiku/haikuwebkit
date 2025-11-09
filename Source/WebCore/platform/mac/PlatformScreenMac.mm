@@ -104,7 +104,7 @@ static NSScreen *screen(Widget* widget)
     // If the widget is in a window, use that, otherwise use the display ID from the host window.
     // First case is for when the NSWindow is in the same process, second case for when it's not.
     if (RetainPtr<NSScreen> screenFromWindow = [protectedWindow(widget) screen])
-        return screenFromWindow.get();
+        return screenFromWindow.unsafeGet();
     return screen(displayID(widget));
 }
 

@@ -25,7 +25,7 @@
 #pragma once
 
 #include <WebCore/AnimationUtilities.h>
-#include <WebCore/CalculationValue.h>
+#include <WebCore/StyleCalculationValue.h>
 #include <WebCore/StyleLengthWrapper.h>
 
 namespace WebCore {
@@ -33,28 +33,20 @@ namespace Style {
 
 // MARK: - Blending
 
-template<LengthWrapperBaseDerived T> struct Blending<T> {
-    auto canBlend(const T& a, const T& b) -> bool
-    {
-        return a.hasSameType(b) || (a.isSpecified() && b.isSpecified());
-    }
-    auto requiresInterpolationForAccumulativeIteration(const T& a, const T& b) -> bool
-    {
-        return !a.hasSameType(b) || a.isCalculated() || b.isCalculated();
-    }
-    static Calculation::Child copyCalculation(const T& value)
-    {
-        if (value.isPercent())
-            return Calculation::percentage(value.m_value.value());
-        if (value.isCalculated())
-            return value.m_value.protectedCalculationValue()->copyRoot();
-        ASSERT(value.isFixed());
-        return Calculation::dimension(value.m_value.value());
-    }
-    T blendMixedSpecifiedTypes(const T& a, const T& b, const BlendingContext& context)
+template<typename T> struct LengthWrapperBlendingSupport {
+    static auto blendMixedSpecifiedTypes(const T& a, const T& b, const BlendingContext& context) -> T
     {
         ASSERT(a.isSpecified());
         ASSERT(b.isSpecified());
+
+        auto copyCalculation = [](const T& value) -> Calculation::Child {
+            if (value.isPercent())
+                return Calculation::percentage(value.m_value.value());
+            if (value.isCalculated())
+                return value.m_value.protectedCalculationValue()->copyRoot();
+            ASSERT(value.isFixed());
+            return Calculation::dimension(value.m_value.value());
+        };
 
         if (context.compositeOperation != CompositeOperation::Replace)
             return typename T::Calc { Calculation::add(copyCalculation(a), copyCalculation(b)) };
@@ -80,13 +72,24 @@ template<LengthWrapperBaseDerived T> struct Blending<T> {
 
         return typename T::Calc { Calculation::blend(copyCalculation(a), copyCalculation(b), context.progress) };
     }
+};
+
+template<LengthWrapperBaseDerived T> struct Blending<T> {
+    auto canBlend(const T& a, const T& b) -> bool
+    {
+        return a.hasSameType(b) || (a.isSpecified() && b.isSpecified());
+    }
+    auto requiresInterpolationForAccumulativeIteration(const T& a, const T& b) -> bool
+    {
+        return !a.hasSameType(b) || a.isCalculated() || b.isCalculated();
+    }
     auto blend(const T& a, const T& b, const BlendingContext& context) -> T
     {
         if (!a.isSpecified() || !b.isSpecified())
             return context.progress < 0.5 ? a : b;
 
         if (a.isCalculated() || b.isCalculated() || !a.hasSameType(b))
-            return blendMixedSpecifiedTypes(a, b, context);
+            return LengthWrapperBlendingSupport<T>::blendMixedSpecifiedTypes(a, b, context);
 
         if (!context.progress && context.isReplace())
             return a;

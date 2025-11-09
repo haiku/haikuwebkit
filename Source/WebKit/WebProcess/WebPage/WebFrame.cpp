@@ -67,7 +67,13 @@
 #include <WebCore/CertificateInfo.h>
 #include <WebCore/Chrome.h>
 #include <WebCore/ContextMenuController.h>
+#include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentLoader.h>
+#include <WebCore/DocumentPage.h>
+#include <WebCore/DocumentQuirks.h>
+#include <WebCore/DocumentSecurityOrigin.h>
+#include <WebCore/DocumentView.h>
+#include <WebCore/DocumentWindow.h>
 #include <WebCore/Editor.h>
 #include <WebCore/ElementChildIteratorInlines.h>
 #include <WebCore/EventHandler.h>
@@ -92,11 +98,10 @@
 #include <WebCore/JSFile.h>
 #include <WebCore/JSNode.h>
 #include <WebCore/JSRange.h>
-#include <WebCore/LocalFrame.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/LocalFrameView.h>
 #include <WebCore/MouseEventTypes.h>
 #include <WebCore/OriginAccessPatterns.h>
-#include <WebCore/Page.h>
 #include <WebCore/PluginDocument.h>
 #include <WebCore/PointerCaptureController.h>
 #include <WebCore/ReferrerPolicy.h>
@@ -1338,7 +1343,7 @@ inline DocumentLoader* WebFrame::policySourceDocumentLoader() const
     if (!policySourceDocumentLoader->request().url().hasSpecialScheme() && document->url().protocolIsInHTTPFamily())
         policySourceDocumentLoader = document->loader();
 
-    return policySourceDocumentLoader.get();
+    return policySourceDocumentLoader.unsafeGet();
 }
 
 OptionSet<WebCore::AdvancedPrivacyProtections> WebFrame::advancedPrivacyProtections() const

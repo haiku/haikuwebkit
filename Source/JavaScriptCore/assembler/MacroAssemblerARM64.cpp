@@ -331,7 +331,7 @@ static_assert(JIT_PROBE_STACK_INITIALIZATION_FUNCTION_PTR_TAG == JITProbeStackIn
 
 // We use x29 and x30 instead of fp and lr because GCC's inline assembler does not recognize fp and lr.
 // See https://bugs.webkit.org/show_bug.cgi?id=175512 for details.
-asm (
+__asm__(
     ".text" "\n"
     ".balign 16" "\n"
     ".globl " SYMBOL_STRING(ctiMasmProbeTrampoline) "\n"
@@ -584,7 +584,7 @@ asm (
 );
 
 // And now, the slower version that saves the full width of FP registers:
-asm (
+__asm__(
     ".text" "\n"
     ".balign 16" "\n"
     ".globl " SYMBOL_STRING(ctiMasmProbeTrampolineSIMD) "\n"

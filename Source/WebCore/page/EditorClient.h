@@ -64,11 +64,11 @@ struct GapRects;
 struct GrammarDetail;
 struct SimpleRange;
 
-class EditorClient : public CanMakeWeakPtr<EditorClient>, public CanMakeCheckedPtr<EditorClient> {
+class WEBCORE_EXPORT EditorClient : public CanMakeWeakPtr<EditorClient>, public CanMakeCheckedPtr<EditorClient> {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(EditorClient);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(EditorClient);
 public:
-    virtual ~EditorClient() = default;
+    virtual ~EditorClient();
 
     virtual bool shouldDeleteRange(const std::optional<SimpleRange>&) = 0;
     virtual bool smartInsertDeleteEnabled() = 0; 

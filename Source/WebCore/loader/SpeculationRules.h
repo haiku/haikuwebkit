@@ -35,6 +35,8 @@
 
 namespace WebCore {
 
+enum class ReferrerPolicy : uint8_t;
+
 // https://wicg.github.io/nav-speculation/speculation-rules.html
 class SpeculationRules : public RefCounted<SpeculationRules> {
 public:
@@ -89,7 +91,7 @@ public:
         Vector<URL> urls;
         std::optional<DocumentPredicate> predicate;
         Eagerness eagerness;
-        String referrerPolicy;
+        std::optional<ReferrerPolicy> referrerPolicy;
         Vector<String> tags;
         Vector<String> requirements;
         String noVarySearchHint;
@@ -98,7 +100,7 @@ public:
     static Ref<SpeculationRules> create();
 
     // https://wicg.github.io/nav-speculation/speculation-rules.html#parse-speculation-rules
-    WEBCORE_EXPORT void parseSpeculationRules(const StringView&, const URL& rulesetBaseURL, const URL& documentBaseURL);
+    WEBCORE_EXPORT bool parseSpeculationRules(const StringView&, const URL& rulesetBaseURL, const URL& documentBaseURL);
 
     const Vector<Rule>& prefetchRules() const;
 

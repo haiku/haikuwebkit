@@ -35,6 +35,7 @@
 #import "QuerySet.h"
 #import "RenderPassEncoder.h"
 #import "Texture.h"
+#import "TextureOrTextureView.h"
 #if ENABLE(WEBGPU_SWIFT)
 #import "WebGPUSwiftInternal.h"
 #endif
@@ -509,66 +510,6 @@ static bool isMultisampleTexture(id<MTLTexture> texture)
     return texture.textureType == MTLTextureType2DMultisample || texture.textureType == MTLTextureType2DMultisampleArray;
 }
 
-class TextureOrTextureView {
-public:
-    TextureOrTextureView(Texture& texture)
-        : m_texture(&texture)
-    {
-    }
-    TextureOrTextureView(TextureView& view)
-        : m_view(&view)
-    {
-    }
-
-#define TEXTURE_OR_VIEW_INVOKE(x) return m_view ? RefPtr { m_view }->x() : RefPtr { m_texture }->x()
-#define TEXTURE_OR_VIEW_HELPER(x) auto x() const { TEXTURE_OR_VIEW_INVOKE(x); }
-#define TEXTURE_OR_VIEW_HELPER_NONCONST(x) auto x() { TEXTURE_OR_VIEW_INVOKE(x); }
-#define TEXTURE_OR_VIEW_HELPER_REF(x) const auto& x() const { TEXTURE_OR_VIEW_INVOKE(x); }
-
-    TEXTURE_OR_VIEW_HELPER(width)
-    TEXTURE_OR_VIEW_HELPER(height)
-    TEXTURE_OR_VIEW_HELPER(is2DTexture)
-    TEXTURE_OR_VIEW_HELPER(is2DArrayTexture)
-    TEXTURE_OR_VIEW_HELPER(is3DTexture)
-    TEXTURE_OR_VIEW_HELPER(sampleCount)
-    TEXTURE_OR_VIEW_HELPER(format)
-    TEXTURE_OR_VIEW_HELPER(isDestroyed)
-    TEXTURE_OR_VIEW_HELPER(depthOrArrayLayers)
-    TEXTURE_OR_VIEW_HELPER(baseArrayLayer)
-    TEXTURE_OR_VIEW_HELPER(baseMipLevel)
-    TEXTURE_OR_VIEW_HELPER(parentTexture)
-    TEXTURE_OR_VIEW_HELPER(parentRelativeSlice)
-    TEXTURE_OR_VIEW_HELPER(previouslyCleared)
-    TEXTURE_OR_VIEW_HELPER_NONCONST(setPreviouslyCleared)
-    TEXTURE_OR_VIEW_HELPER(texture)
-    TEXTURE_OR_VIEW_HELPER(isValid)
-    TEXTURE_OR_VIEW_HELPER(usage)
-    TEXTURE_OR_VIEW_HELPER(mipLevelCount)
-    TEXTURE_OR_VIEW_HELPER(arrayLayerCount)
-
-    TEXTURE_OR_VIEW_HELPER_REF(apiParentTexture)
-    TEXTURE_OR_VIEW_HELPER_REF(device)
-
-    void setCommandEncoder(CommandEncoder& encoder)
-    {
-        m_view ? RefPtr { m_view }->setCommandEncoder(encoder) : RefPtr { m_texture }->setCommandEncoder(encoder);
-    }
-
-#undef TEXTURE_OR_VIEW_INVOKE
-#undef TEXTURE_OR_VIEW_HELPER
-#undef TEXTURE_OR_VIEW_HELPER_REF
-#undef TEXTURE_OR_VIEW_HELPER_NONCONST
-
-private:
-    RefPtr<Texture> m_texture;
-    RefPtr<TextureView> m_view;
-};
-
-static bool isRenderableTextureView(const auto& texture)
-{
-    return (texture.usage() & WGPUTextureUsage_RenderAttachment) && (texture.is2DTexture() || texture.is2DArrayTexture() || texture.is3DTexture()) && texture.mipLevelCount() == 1 && texture.arrayLayerCount() <= 1;
-}
-
 Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescriptor& descriptor)
 {
 #if ENABLE(WEBGPU_SWIFT)
@@ -738,6 +679,8 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
                 texture.setPreviouslyCleared();
             if (attachment.resolveTarget)
                 protectedFromAPI(attachment.resolveTarget)->setPreviouslyCleared();
+            if (attachment.resolveTexture)
+                protectedFromAPI(attachment.resolveTexture)->setPreviouslyCleared();
         }
     }
 

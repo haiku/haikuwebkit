@@ -111,11 +111,6 @@ typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
 @property (nonatomic, readonly, getter=isFocused) BOOL focused;
 @end
 
-@interface WKTextExtractionPopupMenu : NSObject
-- (instancetype)initWithItemTitles:(NSArray<NSString *> *)titles;
-@property (nonatomic, readonly) NSArray<NSString *> *itemTitles;
-@end
-
 @interface WKTextExtractionItem : NSObject
 @property (nonatomic, readonly) NSArray<WKTextExtractionItem *> *children;
 @property (nonatomic, readonly) CGRect rectInWebView;
@@ -181,10 +176,8 @@ typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
 @end
 
 @interface WKTextExtractionResult : NSObject
-- (instancetype)initWithRootItem:(WKTextExtractionItem *)rootItem popupMenu:(nullable WKTextExtractionPopupMenu *)popupMenu;
+- (instancetype)initWithRootItem:(WKTextExtractionItem *)rootItem;
 @property (nonatomic, readonly) WKTextExtractionItem *rootItem;
-@property (nonatomic, readonly, nullable) WKTextExtractionPopupMenu *popupMenu;
-@property (nonatomic, readonly) NSString *textRepresentation;
 @end
 
 NS_ASSUME_NONNULL_END

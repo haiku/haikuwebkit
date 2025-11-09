@@ -18,6 +18,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/README.md
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/booleans.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/document.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/domxpath/elements-are-parents-of-their-attributes.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/evaluator-constructor.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/evaluator-cross-realm.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/evaluator-different-document.tentative.html
@@ -25,6 +26,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/expression-different-document.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-concat.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-contains.html
+/LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-id.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-lang.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-normalize-space.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/fn-starts-with.html
@@ -40,7 +42,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/resolver-callback-interface-cross-realm.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/resolver-callback-interface.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/resolver-non-string-result.html
+/LayoutTests/imported/w3c/web-platform-tests/domxpath/result-iterateNext.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/text-html-attributes.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/text-html-elements.html
+/LayoutTests/imported/w3c/web-platform-tests/domxpath/variables-in-expression-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/xpath-evaluate-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/domxpath/xpathevaluatorbase-creatensresolver.html

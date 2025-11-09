@@ -117,6 +117,15 @@ void WebTransportSession::streamReceiveBytes(WebCore::WebTransportStreamIdentifi
         ASSERT_NOT_REACHED();
 }
 
+void WebTransportSession::didFail()
+{
+    ASSERT(RunLoop::isMain());
+    if (RefPtr strongClient = m_client.get())
+        strongClient->didFail();
+    else
+        ASSERT_NOT_REACHED();
+}
+
 Ref<WebCore::WebTransportSendPromise> WebTransportSession::sendDatagram(std::span<const uint8_t> datagram)
 {
     return sendWithPromisedReply(Messages::NetworkTransportSession::SendDatagram(datagram))->whenSettled(RunLoop::mainSingleton(), [] (auto&& exception) {
@@ -191,13 +200,6 @@ Ref<WebCore::WebTransportSendPromise> WebTransportSession::streamSendBytes(WebCo
 void WebTransportSession::terminate(WebCore::WebTransportSessionErrorCode code, CString&& reason)
 {
     send(Messages::NetworkTransportSession::Terminate(code, WTFMove(reason)));
-}
-
-void WebTransportSession::networkProcessCrashed()
-{
-    ASSERT(RunLoop::isMain());
-    if (RefPtr strongClient = m_client.get())
-        strongClient->networkProcessCrashed();
 }
 
 void WebTransportSession::cancelReceiveStream(WebCore::WebTransportStreamIdentifier identifier, std::optional<WebCore::WebTransportStreamErrorCode> errorCode)

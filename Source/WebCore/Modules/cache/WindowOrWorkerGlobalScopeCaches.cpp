@@ -28,12 +28,10 @@
 
 #include "CacheStorageProvider.h"
 #include "DOMCacheStorage.h"
-#include "Document.h"
-#include "FrameInlines.h"
+#include "DocumentPage.h"
 #include "LocalDOMWindow.h"
 #include "LocalDOMWindowProperty.h"
 #include "LocalFrameInlines.h"
-#include "Page.h"
 #include "Supplementable.h"
 #include "WorkerGlobalScope.h"
 #include <wtf/TZoneMallocInlines.h>

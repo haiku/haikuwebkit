@@ -219,7 +219,7 @@ JSC_DEFINE_HOST_FUNCTION(mapProtoFuncGetOrInsertComputed, (JSGlobalObject* globa
 
     key = normalizeMapKey(key);
     RELEASE_AND_RETURN(scope, JSValue::encode(map->getOrInsert(globalObject, key, [&] {
-        auto callData = JSC::getCallData(valueCallback);
+        auto callData = JSC::getCallDataInline(valueCallback);
         ASSERT(callData.type != CallData::Type::None);
 
         if (callData.type == CallData::Type::JS) [[likely]] {

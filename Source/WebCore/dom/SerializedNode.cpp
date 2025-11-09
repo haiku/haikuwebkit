@@ -30,9 +30,8 @@
 #include "CDATASection.h"
 #include "Comment.h"
 #include "CustomElementRegistry.h"
-#include "DocumentInlines.h"
-#include "Document.h"
 #include "DocumentFragment.h"
+#include "DocumentInlines.h"
 #include "DocumentType.h"
 #include "HTMLAttachmentElement.h"
 #include "HTMLScriptElement.h"
@@ -119,9 +118,9 @@ Ref<Node> SerializedNode::deserialize(SerializedNode&& serializedNode, WebCore::
         addShadowRootIfNecessary(result, WTFMove(element.shadowRoot));
         return result;
     }, [&] (SerializedNode::HTMLTemplateElement&& element) -> Ref<Node> {
+        ASSERT(!element.shadowRoot);
         Ref result = WebCore::HTMLTemplateElement::create(WTFMove(element.name).qualifiedName(), document);
         setAttributes(result, WTFMove(element.attributes));
-        addShadowRootIfNecessary(result, WTFMove(element.shadowRoot));
         if (element.content) {
             Ref content = TemplateContentDocumentFragment::create(Ref { document.ensureTemplateDocument() }.get(), result);
             for (auto&& child : std::exchange(element.content->children, { })) {

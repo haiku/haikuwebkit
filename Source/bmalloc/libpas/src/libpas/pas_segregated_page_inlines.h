@@ -28,6 +28,7 @@
 
 #include "pas_config.h"
 #include "pas_log.h"
+#include "pas_mte.h"
 #include "pas_page_base_inlines.h"
 #include "pas_segregated_deallocation_mode.h"
 #include "pas_segregated_exclusive_view_inlines.h"
@@ -465,6 +466,7 @@ pas_segregated_page_deallocate_with_page(pas_segregated_page* page,
     }
 
     PAS_PROFILE(SEGREGATED_PAGE_DEALLOCATION, page_config, begin, object_size);
+    PAS_MTE_HANDLE(SEGREGATED_PAGE_DEALLOCATION, page_config, begin, object_size);
 
     if (page_config.base.page_size > page_config.base.granule_size) {
         /* This is the partial decommit case. It's intended for medium pages. It requires doing

@@ -266,6 +266,7 @@ Tests/WebKitCocoa/ShrinkToFit.mm @nonARC
 Tests/WebKitCocoa/ShouldOpenAppLinks.mm @nonARC
 Tests/WebKitCocoa/SimulateClickOverText.mm @nonARC
 Tests/WebKitCocoa/SiteIsolation.mm @nonARC
+Tests/WebKitCocoa/SiteIsolationUtilities.mm @nonARC
 Tests/WebKitCocoa/SnapshotStore.mm @nonARC
 Tests/WebKitCocoa/SpeechRecognition.mm @nonARC
 Tests/WebKitCocoa/StopSuspendResumeAllMedia.mm @nonARC

@@ -788,41 +788,6 @@ JSC_DEFINE_HOST_FUNCTION(globalFuncSetPrototypeDirectOrThrow, (JSGlobalObject* g
     return JSValue::encode(jsUndefined());
 }
 
-JSC_DEFINE_HOST_FUNCTION(globalFuncHostPromiseRejectionTracker, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    VM& vm = globalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
-
-    JSPromise* promise = jsCast<JSPromise*>(callFrame->argument(0));
-
-    // InternalPromises should not be exposed to user scripts.
-    if (jsDynamicCast<JSInternalPromise*>(promise))
-        return JSValue::encode(jsUndefined());
-
-    JSValue operationValue = callFrame->argument(1);
-
-    ASSERT(operationValue.isNumber());
-    auto operation = static_cast<JSPromiseRejectionOperation>(operationValue.toUInt32(globalObject));
-    ASSERT(operation == JSPromiseRejectionOperation::Reject || operation == JSPromiseRejectionOperation::Handle);
-    scope.assertNoException();
-
-    if (globalObject->globalObjectMethodTable()->promiseRejectionTracker)
-        globalObject->globalObjectMethodTable()->promiseRejectionTracker(globalObject, promise, operation);
-    else {
-        switch (operation) {
-        case JSPromiseRejectionOperation::Reject:
-            vm.promiseRejected(promise);
-            break;
-        case JSPromiseRejectionOperation::Handle:
-            // do nothing
-            break;
-        }
-    }
-    RETURN_IF_EXCEPTION(scope, { });
-
-    return JSValue::encode(jsUndefined());
-}
-
 JSC_DEFINE_HOST_FUNCTION(globalFuncBuiltinLog, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
     dataLog(callFrame->argument(0).toWTFString(globalObject), "\n");

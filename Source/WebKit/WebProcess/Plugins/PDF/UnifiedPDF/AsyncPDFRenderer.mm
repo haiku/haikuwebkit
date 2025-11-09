@@ -35,6 +35,7 @@
 #include <PDFKit/PDFKit.h>
 #include <WebCore/GeometryUtilities.h>
 #include <WebCore/GraphicsContext.h>
+#include <WebCore/GraphicsLayer.h>
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/NativeImage.h>
 #include <wtf/NumberOfCores.h>

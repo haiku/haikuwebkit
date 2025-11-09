@@ -61,11 +61,13 @@
 #include "DocumentFullscreen.h"
 #include "DocumentInlines.h"
 #include "DocumentType.h"
+#include "DocumentView.h"
 #include "Editing.h"
 #include "ElementInlines.h"
 #include "Event.h"
 #include "EventListener.h"
 #include "EventNames.h"
+#include "FrameInlines.h"
 #include "FrameTree.h"
 #include "HTMLElement.h"
 #include "HTMLFrameOwnerElement.h"
@@ -207,7 +209,7 @@ public:
     void timerFired();
 
 private:
-    InspectorDOMAgent* m_domAgent;
+    const CheckedPtr<InspectorDOMAgent> m_domAgent;
     Timer m_timer;
     HashSet<RefPtr<Element>> m_elements;
 };
@@ -263,14 +265,14 @@ public:
     void handleEvent(ScriptExecutionContext&, Event& event) final
     {
         RefPtr node = dynamicDowncast<Node>(event.target());
-        if (!node || m_domAgent.m_dispatchedEvents.contains(&event))
+        if (!node || m_domAgent->m_dispatchedEvents.contains(&event))
             return;
 
-        auto nodeId = m_domAgent.pushNodePathToFrontend(node.get());
+        auto nodeId = m_domAgent->pushNodePathToFrontend(node.get());
         if (!nodeId)
             return;
 
-        m_domAgent.m_dispatchedEvents.add(&event);
+        m_domAgent->m_dispatchedEvents.add(&event);
 
         RefPtr<JSON::Object> data = JSON::Object::create();
 
@@ -279,8 +281,8 @@ public:
             data->setBoolean("enabled"_s, !!node->document().fullscreen().fullscreenElement());
 #endif // ENABLE(FULLSCREEN_API)
 
-        auto timestamp = m_domAgent.m_environment.executionStopwatch().elapsedTime().seconds();
-        m_domAgent.m_frontendDispatcher->didFireEvent(nodeId, event.type(), timestamp, data->size() ? WTFMove(data) : nullptr);
+        auto timestamp = m_domAgent->m_environment.executionStopwatch().elapsedTime().seconds();
+        m_domAgent->m_frontendDispatcher->didFireEvent(nodeId, event.type(), timestamp, data->size() ? WTFMove(data) : nullptr);
     }
 
 private:
@@ -290,7 +292,7 @@ private:
     {
     }
 
-    InspectorDOMAgent& m_domAgent;
+    const CheckedRef<InspectorDOMAgent> m_domAgent;
 };
 
 String InspectorDOMAgent::toErrorString(ExceptionCode ec)
@@ -329,7 +331,7 @@ void InspectorDOMAgent::didCreateFrontendAndBackend()
     m_history = makeUnique<InspectorHistory>();
     m_domEditor = makeUnique<DOMEditor>(*m_history);
 
-    m_instrumentingAgents.setPersistentDOMAgent(this);
+    Ref { m_instrumentingAgents.get() }->setPersistentDOMAgent(this);
     m_document = m_inspectedPage->localTopDocument();
 
     // Force a layout so that we can collect additional information from the layout process.
@@ -360,7 +362,7 @@ void InspectorDOMAgent::willDestroyFrontendAndBackend(Inspector::DisconnectReaso
     overlay->clearAllGridOverlays();
     overlay->clearAllFlexOverlays();
 
-    m_instrumentingAgents.setPersistentDOMAgent(nullptr);
+    Ref { m_instrumentingAgents.get() }->setPersistentDOMAgent(nullptr);
     m_documentRequested = false;
     reset();
 }
@@ -457,7 +459,7 @@ void InspectorDOMAgent::unbind(Node& node)
             unbind(*afterElement);
     }
 
-    if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent())
+    if (auto* cssAgent = Ref { m_instrumentingAgents.get() }->enabledCSSAgent())
         cssAgent->didRemoveDOMNode(node, id);
 
     if (m_childrenRequested.remove(id)) {
@@ -474,7 +476,7 @@ Node* InspectorDOMAgent::assertNode(Inspector::Protocol::ErrorString& errorStrin
         errorString = "Missing node for given nodeId"_s;
         return nullptr;
     }
-    return node.get();
+    return node.unsafeGet();
 }
 
 Document* InspectorDOMAgent::assertDocument(Inspector::Protocol::ErrorString& errorString, Inspector::Protocol::DOM::NodeId nodeId)
@@ -485,7 +487,7 @@ Document* InspectorDOMAgent::assertDocument(Inspector::Protocol::ErrorString& er
     RefPtr document = dynamicDowncast<Document>(*node);
     if (!document)
         errorString = "Node for given nodeId is not a document"_s;
-    return document.get();
+    return document.unsafeGet();
 }
 
 Element* InspectorDOMAgent::assertElement(Inspector::Protocol::ErrorString& errorString, Inspector::Protocol::DOM::NodeId nodeId)
@@ -496,7 +498,7 @@ Element* InspectorDOMAgent::assertElement(Inspector::Protocol::ErrorString& erro
     RefPtr element = dynamicDowncast<Element>(*node);
     if (!element)
         errorString = "Node for given nodeId is not an element"_s;
-    return element.get();
+    return element.unsafeGet();
 }
 
 Node* InspectorDOMAgent::assertEditableNode(Inspector::Protocol::ErrorString& errorString, Inspector::Protocol::DOM::NodeId nodeId)
@@ -512,7 +514,7 @@ Node* InspectorDOMAgent::assertEditableNode(Inspector::Protocol::ErrorString& er
         errorString = "Node for given nodeId is a pseudo-element"_s;
         return nullptr;
     }
-    return node.get();
+    return node.unsafeGet();
 }
 
 Element* InspectorDOMAgent::assertEditableElement(Inspector::Protocol::ErrorString& errorString, Inspector::Protocol::DOM::NodeId nodeId)
@@ -523,7 +525,7 @@ Element* InspectorDOMAgent::assertEditableElement(Inspector::Protocol::ErrorStri
     RefPtr element = dynamicDowncast<Element>(node);
     if (!element)
         errorString = "Node for given nodeId is not an element"_s;
-    return element.get();
+    return element.unsafeGet();
 }
 
 Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::Node>> InspectorDOMAgent::getDocument()
@@ -585,9 +587,9 @@ static Element* elementToPushForStyleable(const Styleable& styleable)
     auto* element = &styleable.element;
     // FIXME: We want to get rid of PseudoElement.
     if (styleable.pseudoElementIdentifier) {
-        if (styleable.pseudoElementIdentifier->pseudoId == PseudoId::Before)
+        if (styleable.pseudoElementIdentifier->type == PseudoElementType::Before)
             return element->beforePseudoElement();
-        if (styleable.pseudoElementIdentifier->pseudoId == PseudoId::After)
+        if (styleable.pseudoElementIdentifier->type == PseudoElementType::After)
             return element->afterPseudoElement();
     }
     return element;
@@ -760,7 +762,7 @@ Ref<Inspector::Protocol::DOM::Styleable> InspectorDOMAgent::pushStyleablePathToF
 
     // FIXME: This should support PseudoElementIdentifier name argument.
     if (styleable.pseudoElementIdentifier) {
-        if (auto pseudoId = InspectorCSSAgent::protocolValueForPseudoId(styleable.pseudoElementIdentifier->pseudoId))
+        if (auto pseudoId = InspectorCSSAgent::protocolValueForPseudoElementType(styleable.pseudoElementIdentifier->type))
             protocolStyleable->setPseudoId(*pseudoId);
     }
 
@@ -1507,7 +1509,8 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightSelector(co
     RefPtr<Document> document;
 
     if (!!frameId) {
-        auto* pageAgent = m_instrumentingAgents.enabledPageAgent();
+        Ref agents = m_instrumentingAgents.get();
+        auto* pageAgent = agents->enabledPageAgent();
         if (!pageAgent)
             return makeUnexpected("Page domain must be enabled"_s);
 
@@ -1537,40 +1540,41 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightSelector(co
             continue;
 
         auto isInUserAgentShadowTree = descendantElement->isInUserAgentShadowTree();
-        auto pseudoId = descendantElement->pseudoId();
+        auto pseudoElementIdentifier = descendantElement->pseudoElementIdentifier();
 
         for (auto& selector : *selectorList) {
             if (isInUserAgentShadowTree && (selector.match() != CSSSelector::Match::PseudoElement || selector.value() != descendantElement->userAgentPart()))
                 continue;
 
             SelectorChecker::CheckingContext context(SelectorChecker::Mode::ResolvingStyle);
-            context.pseudoId = pseudoId;
+            if (pseudoElementIdentifier)
+                context.setRequestedPseudoElement(*pseudoElementIdentifier);
 
             if (selectorChecker.match(selector, *descendantElement, context)) {
                 if (seenNodes.add(*descendantElement))
                     nodeList.append(*descendantElement);
             }
 
-            if (context.pseudoIDSet) {
-                auto pseudoIDs = PseudoIdSet::fromMask(context.pseudoIDSet.data());
+            if (context.publicPseudoElements) {
+                auto pseudoElements = context.publicPseudoElements;
 
-                if (pseudoIDs.has(PseudoId::Before)) {
-                    pseudoIDs.remove(PseudoId::Before);
+                if (pseudoElements.contains(PseudoElementType::Before)) {
+                    pseudoElements.remove(PseudoElementType::Before);
                     if (RefPtr beforePseudoElement = descendantElement->beforePseudoElement()) {
                         if (seenNodes.add(*beforePseudoElement))
                             nodeList.append(*beforePseudoElement);
                     }
                 }
 
-                if (pseudoIDs.has(PseudoId::After)) {
-                    pseudoIDs.remove(PseudoId::After);
+                if (pseudoElements.contains(PseudoElementType::After)) {
+                    pseudoElements.remove(PseudoElementType::After);
                     if (RefPtr afterPseudoElement = descendantElement->afterPseudoElement()) {
                         if (seenNodes.add(*afterPseudoElement))
                             nodeList.append(*afterPseudoElement);
                     }
                 }
 
-                if (pseudoIDs) {
+                if (pseudoElements) {
                     if (seenNodes.add(*descendantElement))
                         nodeList.append(*descendantElement);
                 }
@@ -1681,7 +1685,8 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightFrame(const
 {
     Inspector::Protocol::ErrorString errorString;
 
-    auto* pageAgent = m_instrumentingAgents.enabledPageAgent();
+    Ref agents = m_instrumentingAgents.get();
+    auto* pageAgent = agents->enabledPageAgent();
     if (!pageAgent)
         return makeUnexpected("Page domain must be enabled"_s);
 
@@ -1912,13 +1917,13 @@ static String documentBaseURLString(Document* document)
     return document->completeURL(emptyString()).string();
 }
 
-static bool pseudoElementType(PseudoId pseudoId, Inspector::Protocol::DOM::PseudoType* type)
+static bool pseudoElementType(PseudoElementType pseudoElementType, Inspector::Protocol::DOM::PseudoType* type)
 {
-    switch (pseudoId) {
-    case PseudoId::Before:
+    switch (pseudoElementType) {
+    case PseudoElementType::Before:
         *type = Inspector::Protocol::DOM::PseudoType::Before;
         return true;
-    case PseudoId::After:
+    case PseudoElementType::After:
         *type = Inspector::Protocol::DOM::PseudoType::After;
         return true;
     default:
@@ -2012,12 +2017,13 @@ Ref<Inspector::Protocol::DOM::Node> InspectorDOMAgent::buildObjectForNode(Node* 
             value->setChildren(WTFMove(children));
     }
 
-    if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent()) {
+    Ref agents = m_instrumentingAgents.get();
+    if (auto* cssAgent = agents->enabledCSSAgent()) {
         if (auto layoutFlags = cssAgent->protocolLayoutFlagsForNode(*node))
             value->setLayoutFlags(layoutFlags.releaseNonNull());
     }
 
-    auto* pageAgent = m_instrumentingAgents.enabledPageAgent();
+    auto* pageAgent = agents->enabledPageAgent();
     if (pageAgent) {
         if (auto* frameView = node->document().view())
             value->setFrameId(pageAgent->frameId(&frameView->frame()));
@@ -2046,9 +2052,9 @@ Ref<Inspector::Protocol::DOM::Node> InspectorDOMAgent::buildObjectForNode(Node* 
         if (state != Inspector::Protocol::DOM::CustomElementState::Builtin)
             value->setCustomElementState(state);
 
-        if (element->pseudoId() != PseudoId::None) {
+        if (element->pseudoElementIdentifier()) {
             Inspector::Protocol::DOM::PseudoType pseudoType;
-            if (pseudoElementType(element->pseudoId(), &pseudoType))
+            if (pseudoElementType(element->pseudoElementIdentifier()->type, &pseudoType))
                 value->setPseudoType(pseudoType);
         } else {
             if (auto pseudoElements = buildArrayForPseudoElements(*element))
@@ -2747,7 +2753,7 @@ void InspectorDOMAgent::willDestroyDOMNode(Node& node)
     m_idToNode.remove(nodeId);
     m_childrenRequested.remove(nodeId);
 
-    if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent())
+    if (auto* cssAgent = Ref { m_instrumentingAgents.get() }->enabledCSSAgent())
         cssAgent->didRemoveDOMNode(node, nodeId);
 
     // This can be called in response to GC. Due to the single-process model used in WebKit1, the
@@ -2795,7 +2801,7 @@ void InspectorDOMAgent::didModifyDOMAttr(Element& element, const AtomString& nam
     if (!id)
         return;
 
-    if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent())
+    if (auto* cssAgent = Ref { m_instrumentingAgents.get() }->enabledCSSAgent())
         cssAgent->didModifyDOMAttr(element);
 
     m_frontendDispatcher->attributeModified(id, name, value);
@@ -2807,7 +2813,7 @@ void InspectorDOMAgent::didRemoveDOMAttr(Element& element, const AtomString& nam
     if (!id)
         return;
 
-    if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent())
+    if (auto* cssAgent = Ref { m_instrumentingAgents.get() }->enabledCSSAgent())
         cssAgent->didModifyDOMAttr(element);
 
     m_frontendDispatcher->attributeRemoved(id, name);
@@ -2816,12 +2822,13 @@ void InspectorDOMAgent::didRemoveDOMAttr(Element& element, const AtomString& nam
 void InspectorDOMAgent::styleAttributeInvalidated(const Vector<Element*>& elements)
 {
     auto nodeIds = JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>::create();
+    Ref agents = m_instrumentingAgents.get();
     for (auto& element : elements) {
         auto id = boundNodeId(element);
         if (!id)
             continue;
 
-        if (auto* cssAgent = m_instrumentingAgents.enabledCSSAgent())
+        if (auto* cssAgent = agents->enabledCSSAgent())
             cssAgent->didModifyDOMAttr(*element);
 
         nodeIds->addItem(id);

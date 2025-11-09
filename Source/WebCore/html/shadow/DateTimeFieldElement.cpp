@@ -210,4 +210,15 @@ bool DateTimeFieldElement::supportsFocus() const
     return true;
 }
 
+bool DateTimeFieldElement::transferredFocusToPicker() const
+{
+    return m_fieldOwner && m_fieldOwner->didFieldOwnerTransferFocusToPicker();
+}
+
+void DateTimeFieldElement::didSuppressBlurDueToPickerFocusTransfer()
+{
+    if (m_fieldOwner)
+        m_fieldOwner->didSuppressBlurDueToPickerFocusTransfer();
+}
+
 } // namespace WebCore

@@ -256,6 +256,9 @@ if (isCMakeBuild() && !isAnyWindows()) {
     my @featureArgs = cmakeArgsFromFeatures(@features, !$noExperimentalFeatures);
     removeCMakeCache(@featureArgs);
 
+    # Allow ccache to hit when building on different directories
+    $ENV{"CCACHE_BASEDIR"} //= sourceDir();
+
     buildCMakeProjectOrExit($clean, $prefixPath, $makeArgs, @featureArgs, @cmakeArgs);
 }
 

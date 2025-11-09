@@ -140,8 +140,8 @@
           [% IF bug.dup_id %]
             of [% "${terms.bug} ${bug.dup_id}" FILTER bug_link(bug.dup_id) FILTER none %]
           [% END %]
-        [% END %]
-      </span><a href="show_bug.cgi?id=[% bug.bug_id %]" class="bug_id" [% IF user.id %]  id="copy-commitlog"[% END %]>[% bug.bug_id FILTER html %]</a> [% IF user.id %]<span id="copy-commitlog-label"></span>[% END %]
+        [% END %]</span><a href="show_bug.cgi?id=[% bug.bug_id %]" class="bug_id">[% bug.bug_id FILTER html %]</a>
+        [% IF user.id %]<button id="copy-commitlog">Copy for commit log</button>[% END %]
      </div>
      <style>
      a.bug_id::before {

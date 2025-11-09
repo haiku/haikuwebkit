@@ -61,8 +61,8 @@ public:
 
 private:
     void createInstance();
-    RefPtr<WebCore::GLDisplay> createGLDisplay() const;
-    void initializeDevice();
+    RefPtr<WebCore::GLDisplay> createGLDisplay(bool isForTesting) const;
+    void initializeDevice(bool isForTesting);
     void initializeSystem();
     void initializeBlendModes();
     void collectViewConfigurations();
@@ -74,6 +74,7 @@ private:
         WebCore::PageIdentifier pageIdentifier;
         Box<RenderState> renderState;
         RefPtr<WorkQueue> renderQueue;
+        bool didStart { false };
     };
     using State = Variant<Idle, Active>;
 

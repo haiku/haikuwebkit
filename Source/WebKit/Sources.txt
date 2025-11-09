@@ -247,6 +247,7 @@ Shared/SessionState.cpp
 Shared/SharedStringHashStore.cpp
 Shared/SharedStringHashTableReadOnly.cpp
 Shared/SharedStringHashTable.cpp
+Shared/TextExtractionToStringConversion.cpp
 Shared/UserData.cpp
 Shared/WebBackForwardListFrameItem.cpp
 Shared/WebBackForwardListItem.cpp
@@ -325,8 +326,6 @@ Shared/Gamepad/GamepadData.cpp
 
 Shared/graphics/ImageBufferSet.cpp
 
-Shared/Model/DDMeshDescriptor.cpp
-Shared/Model/DDUpdateMeshDescriptor.cpp
 Shared/Model/ModelObjectDescriptorBase.cpp
 
 Shared/WebGPU/WebGPUBindGroupDescriptor.cpp
@@ -902,7 +901,7 @@ WebProcess/WebCoreSupport/WebPerformanceLoggingClient.cpp
 WebProcess/WebCoreSupport/WebPermissionController.cpp
 WebProcess/WebCoreSupport/WebPlatformStrategies.cpp
 WebProcess/WebCoreSupport/WebPopupMenu.cpp
-WebProcess/WebCoreSupport/WebProcessSyncClient.cpp
+WebProcess/WebCoreSupport/WebDocumentSyncClient.cpp
 WebProcess/WebCoreSupport/WebProgressTrackerClient.cpp
 WebProcess/WebCoreSupport/WebRemoteFrameClient.cpp
 WebProcess/WebCoreSupport/WebResourceLoadObserver.cpp

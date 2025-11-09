@@ -54,13 +54,6 @@ inline bool tryToDisassemble(const CodePtr<DisassemblyPtrTag>& code, size_t size
 // the range of machine code addresses.
 void disassemble(const CodePtr<DisassemblyPtrTag>&, size_t, void* codeStart, void* codeEnd, const char* prefix, PrintStream& out);
 
-// Asynchronous disassembly. This happens on another thread, and calls the provided
-// callback when the disassembly is done.
-void disassembleAsynchronously(
-    const CString& header, const MacroAssemblerCodeRef<DisassemblyPtrTag>&, size_t, void* codeStart, void* codeEnd, const char* prefix);
-
-JS_EXPORT_PRIVATE void waitForAsynchronousDisassembly();
-
 void registerLabel(void* thunkAddress, CString&& label);
 void registerLabel(void* thunkAddress, const char* label);
 const char* labelFor(void* thunkAddress);

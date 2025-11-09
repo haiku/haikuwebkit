@@ -3549,6 +3549,12 @@ private:
         case CallCustomAccessorSetter:
         case MultiGetByVal:
         case MultiPutByVal:
+        case ResolvePromiseFirstResolving:
+        case RejectPromiseFirstResolving:
+        case FulfillPromiseFirstResolving:
+        case PromiseResolve:
+        case PromiseReject:
+        case PromiseThen:
             break;
 #else // not ASSERT_ENABLED
         default:

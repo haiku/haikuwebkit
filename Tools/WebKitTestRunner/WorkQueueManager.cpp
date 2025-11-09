@@ -64,7 +64,7 @@ public:
         NonLoading
     };
 
-    virtual ~WorkQueueItem() { }
+    virtual ~WorkQueueItem() = default;
     virtual Type invoke() const = 0;
 };
 
@@ -102,9 +102,7 @@ WorkQueueManager::WorkQueueManager()
 {
 }
 
-WorkQueueManager::~WorkQueueManager()
-{
-}
+WorkQueueManager::~WorkQueueManager() = default;
 
 void WorkQueueManager::clearWorkQueue()
 {

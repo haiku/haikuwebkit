@@ -26,7 +26,7 @@
 #include "config.h"
 #include "XRGPUSubImage.h"
 
-#if ENABLE(WEBXR_LAYERS)
+#if ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)
 
 #include "GPUDevice.h"
 #include "GPUTextureDescriptor.h"
@@ -111,4 +111,4 @@ const WebXRViewport& XRGPUSubImage::viewport() const
 
 } // namespace WebCore
 
-#endif // ENABLE(WEBXR_LAYERS)
+#endif // ENABLE(WEBXR_LAYERS) && ENABLE(WEBGPU)

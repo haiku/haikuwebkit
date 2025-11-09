@@ -30,13 +30,11 @@
 
 #import "Chrome.h"
 #import "Cursor.h"
-#import "Document.h"
+#import "DocumentPage.h"
 #import "FontCascade.h"
-#import "FrameInlines.h"
 #import "GraphicsContext.h"
 #import "LocalFrameInlines.h"
 #import "LocalFrameView.h"
-#import "Page.h"
 #import "PlatformMouseEvent.h"
 #import "WebCoreFrameView.h"
 #import "WebCoreView.h"
@@ -178,7 +176,7 @@ NSView *Widget::outerView() const
         ASSERT(view);
     }
 
-    return view.get();
+    return view.unsafeGet();
 }
 
 RetainPtr<NSView> Widget::protectedOuterView() const

@@ -27,8 +27,9 @@
 #include "Chrome.h"
 #include "CommonVM.h"
 #include "ContentSecurityPolicy.h"
-#include "Document.h"
-#include "DocumentInlines.h"
+#include "DocumentPage.h"
+#include "DocumentQuirks.h"
+#include "DocumentSettingsValues.h"
 #include "Element.h"
 #include "Event.h"
 #include "EventLoop.h"
@@ -47,13 +48,10 @@
 #include "Logging.h"
 #include "Microtasks.h"
 #include "NodeDocument.h"
-#include "Page.h"
-#include "Quirks.h"
 #include "RejectedPromiseTracker.h"
 #include "ScriptController.h"
 #include "ScriptModuleLoader.h"
 #include "SecurityOrigin.h"
-#include "Settings.h"
 #include "TrustedType.h"
 #include "WebCoreJSClientData.h"
 #include <JavaScriptCore/CodeBlock.h>
@@ -251,11 +249,11 @@ RuntimeFlags JSDOMWindowBase::javaScriptRuntimeFlags(const JSGlobalObject* objec
 }
 
 class UserGestureInitiatedMicrotaskDispatcher final : public WebCoreMicrotaskDispatcher {
-    WTF_MAKE_TZONE_ALLOCATED(UserGestureInitiatedMicrotaskDispatcher);
+    WTF_MAKE_COMPACT_TZONE_ALLOCATED(UserGestureInitiatedMicrotaskDispatcher);
 public:
 
     UserGestureInitiatedMicrotaskDispatcher(EventLoopTaskGroup& group, Ref<UserGestureToken>&& userGestureToken)
-        : WebCoreMicrotaskDispatcher(Type::UserGestureIndicator, group)
+        : WebCoreMicrotaskDispatcher(Type::WebCoreUserGestureIndicator, group)
         , m_userGestureToken(WTFMove(userGestureToken))
     {
     }
@@ -267,7 +265,7 @@ public:
         auto runnability = currentRunnability();
         if (runnability == JSC::QueuedTask::Result::Executed) {
             UserGestureIndicator gestureIndicator(m_userGestureToken.ptr(), UserGestureToken::GestureScope::MediaOnly, UserGestureToken::ShouldPropagateToMicroTask::Yes);
-            JSExecState::runTask(task.globalObject(), task);
+            JSExecState::runTaskWithDebugger(task.globalObject(), task);
         }
         return runnability;
     }
@@ -281,7 +279,7 @@ private:
     const Ref<UserGestureToken> m_userGestureToken;
 };
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(UserGestureInitiatedMicrotaskDispatcher);
+WTF_MAKE_COMPACT_TZONE_ALLOCATED_IMPL(UserGestureInitiatedMicrotaskDispatcher);
 
 
 void JSDOMWindowBase::queueMicrotaskToEventLoop(JSGlobalObject& object, QueuedTask&& task)
@@ -291,12 +289,12 @@ void JSDOMWindowBase::queueMicrotaskToEventLoop(JSGlobalObject& object, QueuedTa
     auto* objectScriptExecutionContext = thisObject.scriptExecutionContext();
     auto& eventLoop = objectScriptExecutionContext->eventLoop();
     // Propagating media only user gesture for Fetch API's promise chain.
-    auto userGestureToken = UserGestureIndicator::currentUserGesture();
+    auto userGestureToken = UserGestureIndicator::currentUserGestureForMainThread();
     if (userGestureToken && (!userGestureToken->shouldPropagateToMicroTask() || !objectScriptExecutionContext->settingsValues().userGesturePromisePropagationEnabled))
         userGestureToken = nullptr;
 
     if (!userGestureToken)
-        task.setDispatcher(eventLoop.jsMicrotaskDispatcher());
+        task.setDispatcher(eventLoop.jsMicrotaskDispatcher(task));
     else
         task.setDispatcher(UserGestureInitiatedMicrotaskDispatcher::create(eventLoop, Ref { *userGestureToken }));
 

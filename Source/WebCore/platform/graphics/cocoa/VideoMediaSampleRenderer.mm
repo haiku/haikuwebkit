@@ -1045,7 +1045,9 @@ auto VideoMediaSampleRenderer::copyDisplayedPixelBuffer() -> DisplayedPixelBuffe
 
 unsigned VideoMediaSampleRenderer::totalDisplayedFrames() const
 {
-    return m_presentedVideoFrames;
+    assertIsMainThread();
+
+    return isUsingDecompressionSession() ? m_presentedVideoFrames.load() : ++m_sampleCount;
 }
 
 unsigned VideoMediaSampleRenderer::totalVideoFrames() const
@@ -1115,7 +1117,7 @@ void VideoMediaSampleRenderer::invalidateDecompressionSession()
     if (decompressionSession)
         decompressionSession->invalidate();
 
-    ensureOnMainThread([weakThis = WeakRef { *this }] {
+    ensureOnMainThread([weakThis = ThreadSafeWeakPtr { *this }] {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->notifyVideoRendererRequiresFlushToResumeDecoding();
     });
@@ -1280,7 +1282,7 @@ void VideoMediaSampleRenderer::videoRendererReadyForDisplayChanged(WebSampleBuff
     if (renderer != this->renderer() || !isReadyForDisplay)
         return;
     if (!isUsingDecompressionSession() && m_hasFirstFrameAvailableCallback)
-        m_hasFirstFrameAvailableCallback({ }, { });
+        m_hasFirstFrameAvailableCallback(currentTime(), (MonotonicTime::now() - m_startupTime).seconds());
 }
 
 void VideoMediaSampleRenderer::outputObscuredDueToInsufficientExternalProtectionChanged(bool obscured)

@@ -72,7 +72,6 @@ public:
 
     void disconnect();
     void releaseMemory();
-    void releaseNativeImages();
 
     void willDestroyRemoteNativeImageProxy(const RemoteNativeImageProxy&);
     WebCore::PlatformImagePtr platformImage(const RemoteNativeImageProxy&);

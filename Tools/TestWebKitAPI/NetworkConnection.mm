@@ -31,6 +31,7 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/SHA1.h>
 #import <wtf/StdLibExtras.h>
+#import <wtf/ThreadSafeRefCounted.h>
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/darwin/DispatchExtras.h>
 #import <wtf/text/Base64.h>
@@ -203,7 +204,9 @@ void Connection::terminate(CompletionHandler<void()>&& completionHandler)
 
 #if HAVE(WEB_TRANSPORT)
 
-struct ConnectionGroup::Data : public RefCounted<ConnectionGroup::Data> {
+// FIXME: This shouldn't need to be thread safe.
+// Make it non-thread-safe once rdar://161905206 is resolved.
+struct ConnectionGroup::Data : public ThreadSafeRefCounted<ConnectionGroup::Data> {
     static Ref<Data> create(nw_connection_group_t group) { return adoptRef(*new Data(group)); }
     Data(nw_connection_group_t group)
         : group(group) { }
@@ -232,6 +235,11 @@ Connection ConnectionGroup::createWebTransportConnection(ConnectionType type) co
     nw_connection_set_queue(connection.get(), mainDispatchQueueSingleton());
     nw_connection_start(connection.get());
     return Connection(connection.get());
+}
+
+void ConnectionGroup::cancel()
+{
+    nw_connection_group_cancel(m_data->group.get());
 }
 
 void ReceiveIncomingConnectionOperation::await_suspend(std::coroutine_handle<> handle)

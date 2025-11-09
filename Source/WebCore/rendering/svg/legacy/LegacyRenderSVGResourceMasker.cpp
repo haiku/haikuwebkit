@@ -184,7 +184,7 @@ FloatRect LegacyRenderSVGResourceMasker::resourceBoundingBox(const RenderObject&
 {
     FloatRect objectBoundingBox = object.objectBoundingBox();
     Ref maskElement = this->maskElement();
-    FloatRect maskBoundaries = SVGLengthContext::resolveRectangle<SVGMaskElement>(maskElement.ptr(), maskElement->maskUnits(), objectBoundingBox);
+    FloatRect maskBoundaries = SVGLengthContext::resolveRectangle(maskElement.get(), maskElement->maskUnits(), objectBoundingBox);
 
     // Resource was not layouted yet. Give back clipping rect of the mask.
     if (selfNeedsLayout())

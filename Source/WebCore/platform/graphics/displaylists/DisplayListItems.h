@@ -495,8 +495,40 @@ class DrawGlyphs {
 public:
     static constexpr char name[] = "draw-glyphs";
 
-#if USE(SKIA)
     DrawGlyphs(Ref<const Font>&& font, Vector<GlyphBufferGlyph>&& glyphs, Vector<GlyphBufferAdvance>&& advances, const FloatPoint& localAnchor, FontSmoothingMode smoothingMode)
+        : m_font(WTFMove(font))
+        , m_glyphs(WTFMove(glyphs))
+        , m_advances(WTFMove(advances))
+        , m_localAnchor(localAnchor)
+        , m_fontSmoothingMode(smoothingMode)
+    {
+    }
+
+    Ref<const Font> font() const { return m_font; }
+    const Vector<GlyphBufferGlyph>& glyphs() const { return m_glyphs; }
+    const Vector<GlyphBufferAdvance>& advances() const { return m_advances; }
+    size_t length() const { return m_glyphs.size(); }
+
+    FloatPoint localAnchor() const { return m_localAnchor; }
+    FontSmoothingMode fontSmoothingMode() const { return m_fontSmoothingMode; }
+
+    WEBCORE_EXPORT void apply(GraphicsContext&) const;
+    void dump(TextStream&, OptionSet<AsTextFlag>) const;
+
+private:
+    Ref<const Font> m_font;
+    Vector<GlyphBufferGlyph> m_glyphs;
+    Vector<GlyphBufferAdvance> m_advances;
+    FloatPoint m_localAnchor;
+    FontSmoothingMode m_fontSmoothingMode;
+};
+
+#if USE(SKIA)
+class DrawTextBlob {
+public:
+    static constexpr char name[] = "draw-text-blob";
+
+    DrawTextBlob(Ref<const Font>&& font, Vector<GlyphBufferGlyph>&& glyphs, Vector<GlyphBufferAdvance>&& advances, const FloatPoint& localAnchor, FontSmoothingMode smoothingMode)
         : m_textBlob(font->buildTextBlob(glyphs, advances, smoothingMode))
         , m_enableAntialiasing(font->enableAntialiasing(smoothingMode))
         , m_isVertical(font->platformData().orientation() == FontOrientation::Vertical)
@@ -517,21 +549,6 @@ public:
             glyphsCount += run.fGlyphCount;
         return glyphsCount;
     }
-#else
-    DrawGlyphs(Ref<const Font>&& font, Vector<GlyphBufferGlyph>&& glyphs, Vector<GlyphBufferAdvance>&& advances, const FloatPoint& localAnchor, FontSmoothingMode smoothingMode)
-        : m_font(WTFMove(font))
-        , m_glyphs(WTFMove(glyphs))
-        , m_advances(WTFMove(advances))
-        , m_localAnchor(localAnchor)
-        , m_fontSmoothingMode(smoothingMode)
-    {
-    }
-
-    Ref<const Font> font() const { return m_font; }
-    const Vector<GlyphBufferGlyph>& glyphs() const { return m_glyphs; }
-    const Vector<GlyphBufferAdvance>& advances() const { return m_advances; }
-    size_t length() const { return m_glyphs.size(); }
-#endif
 
     FloatPoint localAnchor() const { return m_localAnchor; }
     FontSmoothingMode fontSmoothingMode() const { return m_fontSmoothingMode; }
@@ -540,18 +557,13 @@ public:
     void dump(TextStream&, OptionSet<AsTextFlag>) const;
 
 private:
-#if USE(SKIA)
     sk_sp<SkTextBlob> m_textBlob;
     bool m_enableAntialiasing { false };
     bool m_isVertical { false };
-#else
-    Ref<const Font> m_font;
-    Vector<GlyphBufferGlyph> m_glyphs;
-    Vector<GlyphBufferAdvance> m_advances;
-#endif
     FloatPoint m_localAnchor;
     FontSmoothingMode m_fontSmoothingMode;
 };
+#endif // USE(SKIA)
 
 class DrawDisplayList {
 public:

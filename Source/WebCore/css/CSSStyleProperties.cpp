@@ -32,7 +32,6 @@
 #include "CSSStyleSheet.h"
 #include "DeprecatedCSSOMValue.h"
 #include "Document.h"
-#include "DocumentInlines.h"
 #include "HTMLNames.h"
 #include "InspectorInstrumentation.h"
 #include "JSDOMGlobalObject.h"
@@ -585,6 +584,11 @@ void StyleRuleCSSStyleProperties::didMutate(MutationType type)
 CSSStyleSheet* StyleRuleCSSStyleProperties::parentStyleSheet() const
 {
     return m_parentRule ? m_parentRule->parentStyleSheet() : nullptr;
+}
+
+CSSRule* StyleRuleCSSStyleProperties::parentRule() const
+{
+    return m_parentRule.get();
 }
 
 OptionalOrReference<CSSParserContext> StyleRuleCSSStyleProperties::cssParserContext() const

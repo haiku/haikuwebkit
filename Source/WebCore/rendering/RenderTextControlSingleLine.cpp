@@ -27,7 +27,6 @@
 #include "CSSFontSelector.h"
 #include "CSSValueKeywords.h"
 #include "ContainerNodeInlines.h"
-#include "DocumentInlines.h"
 #include "Font.h"
 #include "FrameSelection.h"
 #include "HTMLNames.h"
