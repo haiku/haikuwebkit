@@ -46,7 +46,7 @@ void WebPage::platformInitialize(WebKit::WebPageCreationParameters const&)
 {
 }
 
-void WebPage::platformReinitialize()
+void WebPage::platformReinitializeAccessibilityToken()
 {
 }
 

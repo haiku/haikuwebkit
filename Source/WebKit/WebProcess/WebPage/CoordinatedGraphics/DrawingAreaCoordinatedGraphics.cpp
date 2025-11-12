@@ -47,7 +47,7 @@
 #include <WebCore/ShareableBitmap.h>
 #include <wtf/SetForScope.h>
 
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || PLATFORM(HAIKU)
 #include "LayerTreeHostPlayStation.h"
 #else
 #include "LayerTreeHost.h"
