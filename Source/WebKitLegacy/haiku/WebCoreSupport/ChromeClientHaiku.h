@@ -195,11 +195,11 @@ namespace WebCore {
             completionHandler(true);
         }
 
-        virtual IntPoint rootViewToScreen(const IntPoint&) const final;
-        virtual bool canShowDataListSuggestionLabels() const final;
+        IntPoint rootViewToScreen(const IntPoint&) const final;
+        bool canShowDataListSuggestionLabels() const final;
         RefPtr<DataListSuggestionPicker> createDataListSuggestionPicker(DataListSuggestionsClient&) final;
 
-        void updateTextIndicator(const TextIndicatorData&) const override {}
+        void updateTextIndicator(WTF::RefPtr<WebCore::TextIndicator>&&) const final {}
 
         bool hasAccessoryMousePointingDevice() const override { return false; }
     private:
