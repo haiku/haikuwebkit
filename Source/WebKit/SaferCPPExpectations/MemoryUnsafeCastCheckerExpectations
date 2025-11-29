@@ -1,5 +1,4 @@
 AutomationProtocolObjects.h
-WebDriverBidiProtocolObjects.h
 [ iOS ] NetworkProcess/ios/NetworkConnectionToWebProcessIOS.mm
 [ iOS ] Shared/RemoteLayerTree/RemoteLayerTreePropertyApplier.mm
 [ iOS ] UIProcess/API/ios/WKWebViewIOS.mm
@@ -14,4 +13,5 @@ WebDriverBidiProtocolObjects.h
 [ iOS ] UIProcess/ios/forms/WKFormPeripheralBase.mm
 [ iOS ] UIProcess/ios/forms/WKFormSelectPicker.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
+WebDriverBidiProtocolObjects.h
 [ iOS ] WebProcess/WebPage/ios/WebPageIOS.mm

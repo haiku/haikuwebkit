@@ -99,6 +99,7 @@ private:
     void updateMaterial(const WebCore::DDModel::DDUpdateMaterialDescriptor&);
     void updateTransform(const WebCore::DDModel::DDFloat4x4& transform);
     void setCameraDistance(float);
+    void play(bool);
 
     void render();
 

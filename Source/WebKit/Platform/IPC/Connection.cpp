@@ -477,6 +477,9 @@ void Connection::dispatchMessageReceiverMessage(MessageReceiverType& messageRece
 #endif
 
 #if ENABLE(IPC_TESTING_API)
+    if (decoder->hasErrorString())
+        setErrorString(decoder->takeErrorString());
+
     if (m_ignoreInvalidMessageForTesting)
         return;
 #endif
@@ -1400,7 +1403,7 @@ void Connection::dispatchMessage(Decoder& decoder)
     if (decoder.isAsyncReplyMessage()) {
         auto handler = takeAsyncReplyHandler(AtomicObjectIdentifier<AsyncReplyIDType>(decoder.destinationID()));
         if (!handler) {
-            markCurrentlyDispatchedMessageAsInvalid();
+            markCurrentlyDispatchedMessageAsInvalid("Failed to get reply handler for message"_s);
 #if ENABLE(IPC_TESTING_API)
             if (m_ignoreInvalidMessageForTesting)
                 return;
@@ -1427,6 +1430,14 @@ void Connection::dispatchMessage(Decoder& decoder)
 #endif
 
     client->didReceiveMessage(*this, decoder);
+
+#if ENABLE(IPC_TESTING_API)
+    // If we haven't registered an error yet, check whether we found one
+    // when decoding. It's possible we failed before we reached the message
+    // receiver.
+    if (!hasErrorString() && decoder.hasErrorString())
+        setErrorString(decoder.takeErrorString());
+#endif
 }
 
 void Connection::dispatchMessage(UniqueRef<Decoder> message)

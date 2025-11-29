@@ -1059,14 +1059,14 @@ template <typename ExecutableType>
 void ScriptExecutable::prepareForExecution(VM& vm, JSFunction* function, JSScope* scope, CodeSpecializationKind kind, CodeBlock*& resultCodeBlock)
 {
     if (hasJITCodeFor(kind)) {
-        if constexpr (std::is_same<ExecutableType, EvalExecutable>::value)
+        if constexpr (std::same_as<ExecutableType, EvalExecutable>)
             resultCodeBlock = jsCast<CodeBlock*>(jsCast<ExecutableType*>(this)->codeBlock());
-        else if constexpr (std::is_same<ExecutableType, ProgramExecutable>::value)
+        else if constexpr (std::same_as<ExecutableType, ProgramExecutable>)
             resultCodeBlock = jsCast<CodeBlock*>(jsCast<ExecutableType*>(this)->codeBlock());
-        else if constexpr (std::is_same<ExecutableType, ModuleProgramExecutable>::value)
+        else if constexpr (std::same_as<ExecutableType, ModuleProgramExecutable>)
             resultCodeBlock = jsCast<CodeBlock*>(jsCast<ExecutableType*>(this)->codeBlock());
         else {
-            static_assert(std::is_same<ExecutableType, FunctionExecutable>::value);
+            static_assert(std::same_as<ExecutableType, FunctionExecutable>);
             resultCodeBlock = jsCast<CodeBlock*>(jsCast<ExecutableType*>(this)->codeBlockFor(kind));
         }
         return;

@@ -119,7 +119,7 @@ class VTTCue
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(VTTCue);
 public:
     static Ref<VTTCue> create(Document&, double start, double end, String&& content);
-    static Ref<VTTCue> create(Document&, const WebVTTCueData&);
+    static Ref<VTTCue> create(Document&, Ref<WebVTTCueData>&&);
 
     virtual ~VTTCue();
 
@@ -233,7 +233,7 @@ protected:
     void toJSON(JSON::Object&) const override;
 
 private:
-    VTTCue(Document&, const WebVTTCueData&);
+    VTTCue(Document&, Ref<WebVTTCueData>&&);
 
     void createWebVTTNodeTree();
 

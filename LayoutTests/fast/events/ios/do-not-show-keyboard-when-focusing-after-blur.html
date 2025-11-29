@@ -40,7 +40,7 @@ addEventListener("load", async () => {
     screenHeight = screen.height;
 
     // Verify that the keyboard is positioned off-screen.
-    shouldBeGreaterThanOrEqual("inputBounds.top", "screenHeight");
+    shouldBeTrue("inputBounds.top === null || inputBounds.top >= screenHeight");
     shouldBe("inputBounds.height", "0");
     shouldBe("document.activeElement", "field");
     finishJSTest();

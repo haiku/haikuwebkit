@@ -188,13 +188,13 @@ private:
     void createSnapshotRecorder(RemoteSnapshotRecorderIdentifier, RemoteSnapshotIdentifier);
     void sinkSnapshotRecorderIntoSnapshotFrame(RemoteSnapshotRecorderIdentifier, WebCore::FrameIdentifier, CompletionHandler<void(bool)>&&);
 
-    void createRemoteBarcodeDetector(ShapeDetectionIdentifier, const WebCore::ShapeDetection::BarcodeDetectorOptions&);
-    void releaseRemoteBarcodeDetector(ShapeDetectionIdentifier);
-    void getRemoteBarcodeDetectorSupportedFormats(CompletionHandler<void(Vector<WebCore::ShapeDetection::BarcodeFormat>&&)>&&);
-    void createRemoteFaceDetector(ShapeDetectionIdentifier, const WebCore::ShapeDetection::FaceDetectorOptions&);
-    void releaseRemoteFaceDetector(ShapeDetectionIdentifier);
-    void createRemoteTextDetector(ShapeDetectionIdentifier);
-    void releaseRemoteTextDetector(ShapeDetectionIdentifier);
+    void createBarcodeDetector(ShapeDetectionIdentifier, const WebCore::ShapeDetection::BarcodeDetectorOptions&);
+    void releaseBarcodeDetector(ShapeDetectionIdentifier);
+    void supportedBarcodeDetectorBarcodeFormats(CompletionHandler<void(Vector<WebCore::ShapeDetection::BarcodeFormat>&&)>&&);
+    void createFaceDetector(ShapeDetectionIdentifier, const WebCore::ShapeDetection::FaceDetectorOptions&);
+    void releaseFaceDetector(ShapeDetectionIdentifier);
+    void createTextDetector(ShapeDetectionIdentifier);
+    void releaseTextDetector(ShapeDetectionIdentifier);
 
     bool shouldUseLockdownFontParser() const;
 

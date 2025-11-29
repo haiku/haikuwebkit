@@ -26,11 +26,14 @@
 #include "config.h"
 #include "SVGPropertyTraits.h"
 
-#include "ContainerNodeInlines.h"
+#include "CSSParser.h"
 #include "CSSPropertyParserConsumer+ColorInlines.h"
+#include "ColorSerialization.h"
+#include "ContainerNodeInlines.h"
 #include "RenderElement.h"
 #include "RenderObjectStyle.h"
 #include "SVGElement.h"
+#include "StyleColor.h"
 #include <wtf/text/StringToIntegerConversion.h>
 
 namespace WebCore {
@@ -82,6 +85,11 @@ Color SVGPropertyTraits<Color>::fromString(SVGElement& targetElement, const Stri
 int SVGPropertyTraits<int>::fromString(SVGElement&, const String& string)
 {
     return parseInteger<int>(string).value_or(0);
+}
+
+String SVGPropertyTraits<Color>::toString(const Color& type)
+{
+    return serializationForHTML(type);
 }
 
 } // namespace WebCore

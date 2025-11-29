@@ -216,15 +216,35 @@ inline RefPtr<T, U, V> adoptRef(T* p)
 }
 
 template<typename T, typename U = RawPtrTraits<T>, typename V = DefaultRefDerefTraits<T>, typename X, typename Y, typename Z>
-inline RefPtr<T, U, V> static_pointer_cast(const RefPtr<X, Y, Z>& p)
-{ 
+inline RefPtr<T, U, V> upcast(const RefPtr<X, Y, Z>& p)
+{
+    static_assert(!std::same_as<X, T>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<X, T>, "Should be an upcast");
     return RefPtr<T, U, V>(static_cast<T*>(p.get()));
 }
 
 template<typename T, typename U = RawPtrTraits<T>, typename V = DefaultRefDerefTraits<T>, typename X, typename Y, typename Z>
-inline RefPtr<T, U, V> static_pointer_cast(RefPtr<X, Y, Z>&& p)
+inline RefPtr<T, U, V> upcast(RefPtr<X, Y, Z>&& p)
 {
+    static_assert(!std::same_as<X, T>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<X, T>, "Should be an upcast");
     return adoptRef(static_cast<T*>(p.leakRef()));
+}
+
+template<typename T, typename U = RawPtrTraits<T>, typename V = DefaultRefDerefTraits<T>, typename X, typename Y, typename Z>
+inline RefPtr<T, U, V> unsafeRefPtrDowncast(const RefPtr<X, Y, Z>& p)
+{
+    static_assert(!std::same_as<X, T>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<T, X>, "Use upcast instead");
+    SUPPRESS_MEMORY_UNSAFE_CAST return RefPtr<T, U, V>(static_cast<T*>(p.get()));
+}
+
+template<typename T, typename U = RawPtrTraits<T>, typename V = DefaultRefDerefTraits<T>, typename X, typename Y, typename Z>
+inline RefPtr<T, U, V> unsafeRefPtrDowncast(RefPtr<X, Y, Z>&& p)
+{
+    static_assert(!std::same_as<X, T>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<T, X>, "Use upcast instead");
+    SUPPRESS_MEMORY_UNSAFE_CAST return adoptRef(static_cast<T*>(p.leakRef()));
 }
 
 template <typename T, typename U, typename V>
@@ -242,30 +262,30 @@ inline bool is(const RefPtr<ArgType, PtrTraits, RefDerefTraits>& source)
 template<typename Target, typename Source, typename PtrTraits, typename RefDerefTraits>
 inline RefPtr<match_constness_t<Source, Target>> uncheckedDowncast(RefPtr<Source, PtrTraits, RefDerefTraits> source)
 {
-    static_assert(!std::is_same_v<Source, Target>, "Unnecessary cast to same type");
-    static_assert(std::is_base_of_v<Source, Target>, "Should be a downcast");
+    static_assert(!std::same_as<Source, Target>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<Target, Source>, "Should be a downcast");
     ASSERT_WITH_SECURITY_IMPLICATION(!source || is<Target>(*source));
-    return static_pointer_cast<match_constness_t<Source, Target>>(WTFMove(source));
+    return unsafeRefPtrDowncast<match_constness_t<Source, Target>>(WTFMove(source));
 }
 
 template<typename Target, typename Source, typename PtrTraits, typename RefDerefTraits>
 inline RefPtr<match_constness_t<Source, Target>> downcast(RefPtr<Source, PtrTraits, RefDerefTraits> source)
 {
-    static_assert(!std::is_same_v<Source, Target>, "Unnecessary cast to same type");
-    static_assert(std::is_base_of_v<Source, Target>, "Should be a downcast");
+    static_assert(!std::same_as<Source, Target>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<Target, Source>, "Should be a downcast");
     RELEASE_ASSERT(!source || is<Target>(*source));
-    return static_pointer_cast<match_constness_t<Source, Target>>(WTFMove(source));
+    return unsafeRefPtrDowncast<match_constness_t<Source, Target>>(WTFMove(source));
 }
 
 template<typename Target, typename Source, typename TargetPtrTraits = RawPtrTraits<Target>, typename TargetRefDerefTraits = DefaultRefDerefTraits<Target>,
     typename SourcePtrTraits, typename SourceRefDerefTraits>
 inline RefPtr<match_constness_t<Source, Target>, TargetPtrTraits, TargetRefDerefTraits> dynamicDowncast(RefPtr<Source, SourcePtrTraits, SourceRefDerefTraits> source)
 {
-    static_assert(!std::is_same_v<Source, Target>, "Unnecessary cast to same type");
-    static_assert(std::is_base_of_v<Source, Target>, "Should be a downcast");
+    static_assert(!std::same_as<Source, Target>, "Unnecessary cast to same type");
+    static_assert(std::derived_from<Target, Source>, "Should be a downcast");
     if (!is<Target>(source))
         return nullptr;
-    return static_pointer_cast<match_constness_t<Source, Target>, TargetPtrTraits, TargetRefDerefTraits>(WTFMove(source));
+    return unsafeRefPtrDowncast<match_constness_t<Source, Target>, TargetPtrTraits, TargetRefDerefTraits>(WTFMove(source));
 }
 
 template<typename T, typename U>
@@ -279,5 +299,6 @@ ALWAYS_INLINE void lazyInitialize(const RefPtr<T>& ptr, Ref<U>&& obj)
 
 using WTF::RefPtr;
 using WTF::adoptRef;
-using WTF::static_pointer_cast;
+using WTF::upcast;
+using WTF::unsafeRefPtrDowncast;
 using WTF::lazyInitialize;

@@ -56,10 +56,10 @@ HTMLFormElement* HTMLLegendElement::form() const
     return fieldset ? fieldset->form() : nullptr;
 }
 
-HTMLFormElement* HTMLLegendElement::formForBindings() const
+RefPtr<HTMLFormElement> HTMLLegendElement::formForBindings() const
 {
     // FIXME: The downcast should be unnecessary, but the WPT was written before https://github.com/WICG/webcomponents/issues/1072 was resolved. Update once the WPT has been updated.
-    return dynamicDowncast<HTMLFormElement>(retargetReferenceTargetForBindings(form())).unsafeGet();
+    return dynamicDowncast<HTMLFormElement>(retargetReferenceTargetForBindings(form()));
 }
     
 } // namespace

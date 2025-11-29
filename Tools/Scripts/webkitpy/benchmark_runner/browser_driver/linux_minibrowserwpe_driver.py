@@ -80,4 +80,4 @@ class WPEMiniBrowserLegacyAPIDriver(WPEMiniBrowserBaseDriver):
     browser_name = 'minibrowser-wpe-legacy'
 
     def _extra_wpe_minibrowser_args(self):
-        return ['--use-legacy-api']
+        return ['--use-legacy-api', '--fullscreen']

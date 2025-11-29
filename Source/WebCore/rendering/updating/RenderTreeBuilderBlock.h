@@ -48,7 +48,7 @@ public:
     void dropAnonymousBoxChild(RenderBlock& parent, RenderBlock& child);
     void childBecameNonInline(RenderBlock& parent, RenderElement& child);
 
-    static RenderPtr<RenderBlock> createAnonymousBlockWithStyle(Document&, const RenderStyle&);
+    static RenderPtr<RenderBlockFlow> createAnonymousBlockWithStyle(Document&, const RenderStyle&);
 
 private:
     void insertChildToContinuation(RenderBlock& parent, RenderPtr<RenderObject> child, RenderObject* beforeChild);

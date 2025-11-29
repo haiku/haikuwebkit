@@ -27,11 +27,11 @@
 #import "RemoteLayerWithRemoteRenderingBackingStore.h"
 
 #import "PlatformCALayerRemote.h"
+#import "PrepareBackingStoreBuffersData.h"
 #import "RemoteImageBufferSetProxy.h"
 #import "RemoteLayerBackingStoreCollection.h"
 #import "RemoteLayerTreeContext.h"
 #import "RemoteRenderingBackendProxy.h"
-#import "SwapBuffersDisplayRequirement.h"
 #import <WebCore/PlatformCALayerClient.h>
 #import <wtf/TZoneMallocInlines.h>
 

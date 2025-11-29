@@ -44,6 +44,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC {
 
+class CalleeBits;
 class VM;
 class CallFrame;
 class JSWebAssemblyInstance;
@@ -122,8 +123,9 @@ public:
     void trackModule(Module&);
     void untrackModule(Module&);
 
-    bool interruptRequested() const;
     void setInterruptBreakpoint(JSWebAssemblyInstance*, IPIntCallee*);
+    void setStepIntoBreakpointForCall(VM&, CalleeBits, JSWebAssemblyInstance*);
+    void setStepIntoBreakpointForThrow(VM&, JSWebAssemblyInstance*);
     bool stopCode(CallFrame*, JSWebAssemblyInstance*, IPIntCallee*, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal*, IPInt::IPIntStackEntry*);
 
     void setPort(uint64_t port) { m_port = port; }

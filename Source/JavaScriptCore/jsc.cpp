@@ -111,6 +111,7 @@
 #include <wtf/text/Base64.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
+#include <wtf/text/StringToIntegerConversion.h>
 #include <wtf/threads/BinarySemaphore.h>
 #include <wtf/threads/Signals.h>
 
@@ -571,10 +572,10 @@ public:
 
     static RuntimeFlags javaScriptRuntimeFlags(const JSGlobalObject*) { return RuntimeFlags::createAllEnabled(); }
 
-    static void getOwnPropertyNames(JSObject* object, JSGlobalObject* globalObject, PropertyNameArray& propertyNames, DontEnumPropertiesMode mode)
+    static void getOwnPropertyNames(JSObject* object, JSGlobalObject* globalObject, PropertyNameArrayBuilder& propertyNames, DontEnumPropertiesMode mode)
     {
         VM& vm = globalObject->vm();
-        PropertyNameArray ownPropertyNames(vm, propertyNames.propertyNameMode(), propertyNames.privateSymbolMode());
+        PropertyNameArrayBuilder ownPropertyNames(vm, propertyNames.propertyNameMode(), propertyNames.privateSymbolMode());
         Base::getOwnPropertyNames(object, globalObject, ownPropertyNames, mode);
         auto* thisObject = jsCast<GlobalObject*>(object);
         auto& filter = thisObject->ensurePropertyFilter();
@@ -1711,9 +1712,13 @@ JSC_DEFINE_HOST_FUNCTION(functionDebug, (JSGlobalObject* globalObject, CallFrame
 JSC_DEFINE_HOST_FUNCTION(functionDescribe, (JSGlobalObject* globalObject, CallFrame* callFrame))
 {
     VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
     if (callFrame->argumentCount() < 1)
         return JSValue::encode(jsUndefined());
-    return JSValue::encode(jsString(vm, toString(callFrame->argument(0))));
+    std::optional<String> string = toStringWithBoundsCheck(callFrame->argument(0));
+    if (!string)
+        return JSValue::encode(throwException(globalObject, scope, createRangeError(globalObject, "Out of memory."_s)));
+    return JSValue::encode(jsString(vm, *string));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionDescribeArray, (JSGlobalObject* globalObject, CallFrame* callFrame))

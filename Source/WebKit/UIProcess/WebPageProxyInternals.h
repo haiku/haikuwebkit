@@ -33,6 +33,7 @@
 #include "PageLoadState.h"
 #include "ProcessThrottler.h"
 #include "ScrollingAccelerationCurve.h"
+#include "TextManipulationParameters.h"
 #include "VisibleWebPageCounter.h"
 #include "WebColorPicker.h"
 #include "WebDataListSuggestionsDropdown.h"
@@ -436,8 +437,10 @@ public:
     bool allowsLayoutViewportHeightExpansion { true };
 
 #if ENABLE(IMAGE_ANALYSIS)
-    std::optional<WebCore::ImageTranslationLanguageIdentifiers> imageTranslationLanguageIdentifiers { std::nullopt };
+    std::optional<WebCore::ImageTranslationLanguageIdentifiers> imageTranslationLanguageIdentifiers;
 #endif
+
+    std::optional<TextManipulationParameters> textManipulationParameters;
 
     explicit Internals(WebPageProxy&);
 

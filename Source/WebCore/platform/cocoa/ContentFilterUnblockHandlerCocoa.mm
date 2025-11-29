@@ -174,7 +174,7 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
 #else
         auto& filter = WebCore::ParentalControlsURLFilter::singleton();
 #endif
-        filter.allowURL(*m_evaluatedURL, [decisionHandler = WTFMove(decisionHandler)](bool didAllow) {
+        filter.allowURL(*m_evaluatedURL, [decisionHandler = WTFMove(decisionHandler)](bool didAllow) mutable {
             callOnMainThread([decisionHandler = WTFMove(decisionHandler), didAllow]() {
                 decisionHandler(didAllow);
             });
@@ -184,7 +184,7 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
 #endif
 #if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     if (RetainPtr evaluator = webFilterEvaluator()) {
-        [evaluator unblockWithCompletion:[decisionHandler = WTFMove(decisionHandler)](BOOL unblocked, NSError *) {
+        [evaluator unblockWithCompletion:[decisionHandler = WTFMove(decisionHandler)](BOOL unblocked, NSError *) mutable {
             callOnMainThread([decisionHandler = WTFMove(decisionHandler), unblocked] {
                 LOG(ContentFiltering, "WebFilterEvaluator %s the unblock request.\n", unblocked ? "allowed" : "did not allow");
                 decisionHandler(unblocked);
@@ -200,7 +200,7 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
         };
     }
     if (unblockRequester) {
-        unblockRequester([decisionHandler = WTFMove(decisionHandler)](bool unblocked) {
+        unblockRequester([decisionHandler = WTFMove(decisionHandler)](bool unblocked) mutable {
             callOnMainThread([decisionHandler = WTFMove(decisionHandler), unblocked] {
                 decisionHandler(unblocked);
             });

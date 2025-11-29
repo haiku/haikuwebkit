@@ -4240,8 +4240,7 @@ void SpeculativeJIT::compile(Node* node)
     }
 
     case ArrayIncludes:
-    case ArrayIndexOf:
-    case ArrayLastIndexOf: {
+    case ArrayIndexOf: {
         compileArrayIndexOfOrArrayIncludes(node);
         break;
     }

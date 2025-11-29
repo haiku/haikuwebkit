@@ -29,7 +29,6 @@
 
 #include "AudioNode.h"
 #include "AudioSourceProviderClient.h"
-#include "HTMLMediaElement.h"
 #include "MultiChannelResampler.h"
 #include <memory>
 #include <wtf/Lock.h>
@@ -37,6 +36,7 @@
 namespace WebCore {
 
 class AudioContext;
+class HTMLMediaElement;
 struct MediaElementAudioSourceOptions;
     
 class MediaElementAudioSourceNode final : public AudioNode, public AudioSourceProviderClient {

@@ -68,7 +68,7 @@ void testPayloadImpl(pas_heap_ref& heap, bool firstRun)
 
     void* largeArray = bmalloc_iso_allocate_array_by_size(&heap, 2000, pas_non_compact_allocation_mode);
     CHECK(largeArray);
-    CHECK_EQUAL(bmalloc_get_allocation_size(largeArray), 2016);
+    CHECK_EQUAL(bmalloc_get_allocation_size(largeArray), 2048);
 
     void* largerArray = bmalloc_iso_allocate_array_by_size(&heap, 10000, pas_non_compact_allocation_mode);
     CHECK(largerArray);

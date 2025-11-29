@@ -487,14 +487,6 @@ Vector<Ref<ShadowRoot>> assignedShadowRootsIfSlotted(const Node& node)
     return result;
 }
 
-#if ENABLE(PICTURE_IN_PICTURE_API)
-Element* ShadowRoot::pictureInPictureElement() const
-{
-    notImplemented();
-    return nullptr;
-}
-#endif
-
 Vector<RefPtr<WebAnimation>> ShadowRoot::getAnimations()
 {
     return document().matchingAnimations([&] (Element& target) -> bool {

@@ -863,7 +863,7 @@ using namespace Inspector;
     _networkHandler = handler;
 
     auto alternateDispatcher = makeUnique<ObjCInspectorNetworkBackendDispatcher>(handler);
-    auto alternateAgent = makeUnique<AlternateDispatchableAgent<NetworkBackendDispatcher, AlternateNetworkBackendDispatcher>>("Network"_s, *_controller, WTFMove(alternateDispatcher));
+    auto alternateAgent = makeUniqueRef<AlternateDispatchableAgent<NetworkBackendDispatcher, AlternateNetworkBackendDispatcher>>("Network"_s, *_controller, WTFMove(alternateDispatcher));
     _controller->registerAlternateAgent(WTFMove(alternateAgent));
 }
 

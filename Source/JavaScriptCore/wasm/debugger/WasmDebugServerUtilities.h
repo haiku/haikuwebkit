@@ -29,13 +29,8 @@
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
-#include <JavaScriptCore/WasmIPIntGenerator.h>
-#include <JavaScriptCore/WasmOps.h>
-#include <wtf/DataLog.h>
 #include <wtf/HexNumber.h>
-#include <wtf/RawPointer.h>
-#include <wtf/text/ASCIILiteral.h>
-#include <wtf/text/StringToIntegerConversion.h>
+#include <wtf/text/StringBuilder.h>
 #include <wtf/text/StringView.h>
 
 namespace JSC {
@@ -43,9 +38,15 @@ namespace JSC {
 class CallFrame;
 class JSWebAssemblyInstance;
 
+namespace IPInt {
+struct IPIntLocal;
+} // namespace IPInt
+
 namespace Wasm {
 
 class VirtualAddress;
+enum class TypeKind : int8_t;
+struct Type;
 
 enum class ProtocolError : uint8_t {
     None = 0,
@@ -54,6 +55,40 @@ enum class ProtocolError : uint8_t {
     InvalidRegister = 3,
     MemoryError = 4,
     UnknownCommand = 5
+};
+
+class StepIntoEvent {
+public:
+    using BitField = uint8_t;
+
+    enum Event : BitField {
+        NoEvent = 0,
+        StepIntoCall = 1 << 0, // Step into a function call
+        StepIntoThrow = 1 << 1, // Step into an exception handler
+    };
+
+    StepIntoEvent() = default;
+
+    void set(Event event)
+    {
+        RELEASE_ASSERT(!hasAny());
+        RELEASE_ASSERT(event == StepIntoCall || event == StepIntoThrow);
+        m_event = event;
+    }
+
+    bool take(Event event)
+    {
+        if (m_event == event) {
+            m_event = NoEvent;
+            return true;
+        }
+        return false;
+    }
+
+    bool hasAny() const { return m_event != NoEvent; }
+
+private:
+    BitField m_event { NoEvent };
 };
 
 struct Breakpoint {
@@ -105,60 +140,13 @@ inline String toNativeEndianHex(const T& value)
     return hexString.toString();
 }
 
-inline String stringToHex(StringView str)
-{
-    StringBuilder result;
-    CString utf8 = str.utf8();
-    for (size_t i = 0; i < utf8.length(); ++i)
-        result.append(hex(static_cast<uint8_t>(utf8.data()[i]), 2, Lowercase));
-    return result.toString();
-}
+String stringToHex(StringView);
 
-inline void logWasmLocalValue(size_t index, const JSC::IPInt::IPIntLocal& local, const Wasm::Type& localType)
-{
-    dataLog("  Local[", index, "] (", localType, "): ");
+void logWasmLocalValue(size_t index, const JSC::IPInt::IPIntLocal&, const Wasm::Type&);
 
-    switch (localType.kind) {
-    case TypeKind::I32:
-        dataLogLn("i32=", local.i32, " [index ", index, "]");
-        break;
-    case TypeKind::I64:
-        dataLogLn("i64=", local.i64, " [index ", index, "]");
-        break;
-    case TypeKind::F32:
-        dataLogLn("f32=", local.f32, " [index ", index, "]");
-        break;
-    case TypeKind::F64:
-        dataLogLn("f64=", local.f64, " [index ", index, "]");
-        break;
-    case TypeKind::V128:
-        dataLogLn("v128=0x", hex(local.v128.u64x2[1], 16, Lowercase), hex(local.v128.u64x2[0], 16, Lowercase), " [index ", index, "]");
-        break;
-    case TypeKind::Ref:
-    case TypeKind::RefNull:
-        dataLogLn("ref=", local.ref, " [index ", index, "]");
-        break;
-    default:
-        dataLogLn("raw=0x", hex(local.i64, 16, Lowercase), " [index ", index, "]");
-        break;
-    }
-}
+uint64_t parseHex(StringView, uint64_t defaultValue = 0);
 
-inline uint64_t parseHex(StringView str, uint64_t defaultValue = 0)
-{
-    if (str.isEmpty())
-        return defaultValue;
-    auto result = parseInteger<uint64_t>(str, 16);
-    return result.value_or(defaultValue);
-}
-
-inline uint32_t parseDecimal(StringView str, uint32_t defaultValue = 0)
-{
-    if (str.isEmpty())
-        return defaultValue;
-    auto result = parseInteger<uint32_t>(str, 10);
-    return result.value_or(defaultValue);
-}
+uint32_t parseDecimal(StringView, uint32_t defaultValue = 0);
 
 Vector<StringView> splitWithDelimiters(StringView packet, StringView delimiters);
 

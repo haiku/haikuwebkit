@@ -26,6 +26,8 @@
 #include "config.h"
 #include "WebXRHitTestSource.h"
 
+#include "WebXRSession.h"
+#include <wtf/Ref.h>
 #include <wtf/TZoneMallocInlines.h>
 
 #if ENABLE(WEBXR_HIT_TEST)
@@ -34,17 +36,35 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRHitTestSource);
 
-Ref<WebXRHitTestSource> WebXRHitTestSource::create()
+Ref<WebXRHitTestSource> WebXRHitTestSource::create(WebXRSession& session, PlatformXR::HitTestSource&& source)
 {
-    return adoptRef(*new WebXRHitTestSource);
+    return adoptRef(*new WebXRHitTestSource(session, WTFMove(source)));
 }
 
-WebXRHitTestSource::WebXRHitTestSource() = default;
-
-WebXRHitTestSource::~WebXRHitTestSource() = default;
-
-void WebXRHitTestSource::cancel()
+WebXRHitTestSource::WebXRHitTestSource(WebXRSession& session, PlatformXR::HitTestSource&& source)
+    : m_session(session)
+    , m_source(WTFMove(source))
 {
+}
+
+WebXRHitTestSource::~WebXRHitTestSource()
+{
+    cancel();
+}
+
+ExceptionOr<void> WebXRHitTestSource::cancel()
+{
+    if (!m_source)
+        return Exception { ExceptionCode::InvalidStateError };
+    RefPtr session = m_session.get();
+    if (!session)
+        return Exception { ExceptionCode::InvalidStateError };
+    RefPtr device = session->device();
+    if (!device)
+        return Exception { ExceptionCode::InvalidStateError };
+    device->deleteHitTestSource(*m_source);
+    m_source = std::nullopt;
+    return { };
 }
 
 } // namespace WebCore

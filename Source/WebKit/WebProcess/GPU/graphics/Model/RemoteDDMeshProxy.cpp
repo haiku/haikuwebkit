@@ -133,16 +133,11 @@ void RemoteDDMeshProxy::addMesh(const WebCore::DDModel::DDMeshDescriptor& descri
 }
 
 #if ENABLE(GPU_PROCESS_MODEL)
-static WebCore::DDModel::DDFloat4x4 buildTranslation(simd_float4 translation)
+static WebCore::DDModel::DDFloat4x4 buildTranslation(float x, float y, float z)
 {
     WebCore::DDModel::DDFloat4x4 result = matrix_identity_float4x4;
-    result.column3 = translation;
+    result.column3 = simd_make_float4(x, y, z, 1.f);
     return result;
-}
-
-static simd_float4x4 buildTranslation(float x, float y, float z)
-{
-    return buildTranslation(simd_make_float4(x, y, z, 1.f));
 }
 #endif
 
@@ -240,6 +235,14 @@ void RemoteDDMeshProxy::setEntityTransform(const WebCore::DDModel::DDFloat4x4& t
 #endif
 }
 
+void RemoteDDMeshProxy::play(bool playing)
+{
+#if ENABLE(GPU_PROCESS_MODEL)
+    auto sendResult = send(Messages::RemoteDDMesh::Play(playing));
+    UNUSED_PARAM(sendResult);
+#endif
+}
+
 std::optional<WebCore::DDModel::DDFloat4x4> RemoteDDMeshProxy::entityTransform() const
 {
     return m_transform;
@@ -311,7 +314,7 @@ void RemoteDDMeshProxy::setScale(float scale)
 void RemoteDDMeshProxy::setStageMode(WebCore::StageModeOperation stageMode)
 {
 #if ENABLE(GPU_PROCESS_MODEL)
-    if (m_stageMode == stageMode || stageMode == WebCore::StageModeOperation::None)
+    if (stageMode == WebCore::StageModeOperation::None || !m_transform)
         return;
 
     m_stageMode = stageMode;
@@ -324,13 +327,45 @@ void RemoteDDMeshProxy::setStageMode(WebCore::StageModeOperation stageMode)
     result.column0 = scale * simd_normalize(result.column0);
     result.column1 = scale * simd_normalize(result.column1);
     result.column2 = scale * simd_normalize(result.column2);
-    result.column3 = simd_make_float4(-scale * center.xyz, 1.f);
+    result.column3 = simd_make_float4(
+        -simd_dot(center.xyz, simd_make_float3(result.column0.x, result.column1.x, result.column2.x)),
+        -simd_dot(center.xyz, simd_make_float3(result.column0.y, result.column1.y, result.column2.y)),
+        -simd_dot(center.xyz, simd_make_float3(result.column0.z, result.column1.z, result.column2.z)),
+        1.f);
 
     setEntityTransform(result);
 #else
     UNUSED_PARAM(stageMode);
 #endif
 }
+
+#if ENABLE(GPU_PROCESS_MODEL)
+static simd_float4x4 buildRotation(float azimuth, float elevation)
+{
+    float cosAz = std::cos(azimuth);
+    float sinAz = std::sin(azimuth);
+    float cosEl = std::cos(elevation);
+    float sinEl = std::sin(elevation);
+
+    simd_float4x4 matrix;
+    matrix.columns[0] = simd_make_float4(cosAz,     sinAz * sinEl,  sinAz * cosEl, 0.0f);
+    matrix.columns[1] = simd_make_float4(0.0f,      cosEl,         -sinEl,         0.0f);
+    matrix.columns[2] = simd_make_float4(-sinAz,    cosAz * sinEl,  cosAz * cosEl, 0.0f);
+    matrix.columns[3] = simd_make_float4(0.0f,      0.0f,           0.0f,          1.0f);
+
+    return matrix;
+}
+
+void RemoteDDMeshProxy::setRotation(float yaw, float pitch, float roll)
+{
+    if (!m_transform)
+        return;
+
+    UNUSED_PARAM(roll);
+    m_transform = buildRotation(yaw, pitch);
+    setStageMode(m_stageMode);
+}
+#endif
 
 }
 

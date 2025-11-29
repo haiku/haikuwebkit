@@ -126,7 +126,7 @@ public:
     virtual void setKind(const AtomString&);
 
 protected:
-    MediaTrackBase(ScriptExecutionContext*, Type, const std::optional<AtomString>& id, TrackID, const AtomString& label, const AtomString& language);
+    MediaTrackBase(ScriptExecutionContext*, Type, const std::optional<String>& id, TrackID, const String& label, const String& language);
 
     void setKindInternal(const AtomString&);
 

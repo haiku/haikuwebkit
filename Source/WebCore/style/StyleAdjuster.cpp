@@ -137,6 +137,7 @@ static DisplayType equivalentBlockDisplay(const RenderStyle& style)
     case DisplayType::Box:
     case DisplayType::Flex:
     case DisplayType::Grid:
+    case DisplayType::Masonry:
     case DisplayType::FlowRoot:
     case DisplayType::ListItem:
     case DisplayType::RubyBlock:
@@ -149,6 +150,8 @@ static DisplayType equivalentBlockDisplay(const RenderStyle& style)
         return DisplayType::Flex;
     case DisplayType::InlineGrid:
         return DisplayType::Grid;
+    case DisplayType::InlineMasonry:
+        return DisplayType::Masonry;
     case DisplayType::Ruby:
         return DisplayType::RubyBlock;
 
@@ -191,6 +194,8 @@ static DisplayType equivalentInlineDisplay(const RenderStyle& style)
         return DisplayType::InlineFlex;
     case DisplayType::Grid:
         return DisplayType::InlineGrid;
+    case DisplayType::Masonry:
+        return DisplayType::InlineMasonry;
     case DisplayType::RubyBlock:
         return DisplayType::Ruby;
 
@@ -200,6 +205,7 @@ static DisplayType equivalentInlineDisplay(const RenderStyle& style)
     case DisplayType::InlineBox:
     case DisplayType::InlineFlex:
     case DisplayType::InlineGrid:
+    case DisplayType::InlineMasonry:
     case DisplayType::Ruby:
     case DisplayType::RubyBase:
     case DisplayType::RubyAnnotation:
@@ -258,6 +264,7 @@ static bool shouldInheritTextDecorationsInEffect(const RenderStyle& style, const
     case DisplayType::InlineTable:
     case DisplayType::InlineBlock:
     case DisplayType::InlineGrid:
+    case DisplayType::InlineMasonry:
     case DisplayType::InlineFlex:
     case DisplayType::InlineBox:
         return false;
@@ -770,7 +777,7 @@ void Adjuster::adjust(RenderStyle& style) const
 
     // If the inherited value of justify-items includes the 'legacy' keyword (plus 'left', 'right' or
     // 'center'), 'legacy' computes to the the inherited value. Otherwise, 'auto' computes to 'normal'.
-    if (m_parentBoxStyle.justifyItems().positionType() == ItemPositionType::Legacy && style.justifyItems().position() == ItemPosition::Legacy)
+    if (m_parentBoxStyle.justifyItems().resolve().positionType() == ItemPositionType::Legacy && style.justifyItems().resolve().position() == ItemPosition::Legacy)
         style.setJustifyItems(m_parentBoxStyle.justifyItems());
 
 #if HAVE(CORE_MATERIAL)

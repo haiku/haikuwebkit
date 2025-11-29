@@ -73,6 +73,9 @@ public:
         , bool hasEntireImage
         , bool allowsFollowingLink
         , bool allowsFollowingImageURL
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+        , std::optional<WebCore::HTMLMediaElementIdentifier> mediaElementIdentifier
+#endif
     );
 
     Type type() const { return m_type; }
@@ -135,6 +138,11 @@ public:
     void setQRCodePayloadString(const String& string) { m_qrCodePayloadString = string; }
 #endif
 
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    void setMediaElementIdentifier(WebCore::HTMLMediaElementIdentifier identifier) { m_mediaElementIdentifier = identifier; }
+    std::optional<WebCore::HTMLMediaElementIdentifier> mediaElementIdentifier() const { return m_mediaElementIdentifier; }
+#endif
+
 private:
     Type m_type;
 
@@ -168,6 +176,10 @@ private:
     RefPtr<WebCore::ShareableBitmap> m_potentialQRCodeViewportSnapshotImage;
 
     String m_qrCodePayloadString;
+#endif
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    Markable<WebCore::HTMLMediaElementIdentifier> m_mediaElementIdentifier;
 #endif
 };
 

@@ -571,11 +571,55 @@ void DebugServer::untrackModule(Module& module)
     m_instanceManager->unregisterModule(module);
 }
 
-bool DebugServer::interruptRequested() const { return m_vm && m_vm->isWasmStopWorldActive(); }
-
 bool DebugServer::stopCode(CallFrame* callFrame, JSWebAssemblyInstance* instance, IPIntCallee* callee, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack) { return m_executionHandler->stopCode(callFrame, instance, callee, pc, mc, locals, stack); }
 
-void DebugServer::setInterruptBreakpoint(JSWebAssemblyInstance* instance, IPIntCallee* callee) { return m_executionHandler->setInterruptBreakpoint(instance, callee); }
+void DebugServer::setInterruptBreakpoint(JSWebAssemblyInstance* instance, IPIntCallee* callee) { return m_executionHandler->setBreakpointAtEntry(instance, callee, Breakpoint::Type::Interrupt); }
+
+void DebugServer::setStepIntoBreakpointForCall(VM& vm, CalleeBits boxedCallee, JSWebAssemblyInstance* instance)
+{
+    if (!vm.takeStepIntoWasmCall())
+        return;
+
+    if (!instance)
+        return;
+    if (!boxedCallee.isNativeCallee())
+        return;
+    RefPtr wasmCallee = uncheckedDowncast<Wasm::Callee>(boxedCallee.asNativeCallee());
+    if (wasmCallee->compilationMode() != Wasm::CompilationMode::IPIntMode)
+        return;
+
+    m_executionHandler->setBreakpointAtEntry(instance, uncheckedDowncast<IPIntCallee>(wasmCallee.get()), Breakpoint::Type::Step);
+}
+
+void DebugServer::setStepIntoBreakpointForThrow(VM& vm, JSWebAssemblyInstance* instance)
+{
+    RELEASE_ASSERT(instance);
+
+    if (!vm.takeStepIntoWasmThrow())
+        return;
+
+    if (!vm.callFrameForCatch)
+        return;
+    if (!vm.callFrameForCatch->callee().isNativeCallee())
+        return;
+    RefPtr wasmCallee = uncheckedDowncast<Wasm::Callee>(vm.callFrameForCatch->callee().asNativeCallee());
+    if (wasmCallee->compilationMode() != Wasm::CompilationMode::IPIntMode)
+        return;
+
+    RefPtr catchCallee = uncheckedDowncast<IPIntCallee>(wasmCallee.get());
+    ASSERT(std::holds_alternative<uintptr_t>(vm.targetInterpreterPCForThrow));
+    uintptr_t handlerOffset = std::get<uintptr_t>(vm.targetInterpreterPCForThrow);
+    const uint8_t* handlerPC = catchCallee->bytecode() + handlerOffset;
+
+    if (*handlerPC == static_cast<uint8_t>(Wasm::OpType::TryTable) && vm.targetInterpreterMetadataPCForThrow) {
+        const uint8_t* metadataPtr = catchCallee->metadata() + vm.targetInterpreterMetadataPCForThrow;
+        metadataPtr += sizeof(IPInt::CatchMetadata);
+        const IPInt::BlockMetadata* blockMetadata = reinterpret_cast<const IPInt::BlockMetadata*>(metadataPtr);
+        handlerPC = handlerPC + blockMetadata->deltaPC;
+    }
+
+    m_executionHandler->setBreakpointAtPC(instance, catchCallee->functionIndex(), Breakpoint::Type::Step, handlerPC);
+}
 
 bool DebugServer::isConnected() const
 {

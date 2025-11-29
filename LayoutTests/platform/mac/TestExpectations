@@ -256,15 +256,6 @@ fast/events/autoscroll-when-input-is-offscreen.html [ Skip ]
 # JSC does not support setIsolatedWorldSecurityOrigin
 webkit.org/b/61540 http/tests/security/isolatedWorld/cross-origin-xhr.html
 
-# https://bugs.webkit.org/show_bug.cgi?id=63282 layerTreeAsText doesn't work for iframes
-compositing/rtl/rtl-iframe-absolute-overflow-scrolled.html [ Skip ]
-compositing/rtl/rtl-iframe-fixed-overflow-scrolled.html [ Skip ]
-compositing/rtl/rtl-iframe-absolute-overflow.html [ Skip ]
-compositing/rtl/rtl-iframe-absolute.html [ Skip ]
-compositing/rtl/rtl-iframe-fixed-overflow.html [ Skip ]
-compositing/rtl/rtl-iframe-fixed.html [ Skip ]
-compositing/rtl/rtl-iframe-relative.html [ Skip ]
-
 # ENABLE(DRAGGABLE_REGION) is disabled
 fast/css/draggable-region-parser.html
 
@@ -2100,7 +2091,6 @@ webkit.org/b/157589 fast/text-autosizing/ios/text-autosizing-after-back.html [ P
 [ Debug ] media/video-concurrent-playback.html [ Pass Failure ]
 
 # webkit.org/b/261308 Batch mark expectations for flaky imported/w3c/web-platform-tests
-imported/w3c/web-platform-tests/workers/WorkerGlobalScope_ErrorEvent_colno.htm [ Pass Failure ]
 [ Debug ] imported/w3c/web-platform-tests/encoding/streams/realms.window.html [ Pass Failure ]
 imported/w3c/web-platform-tests/workers/WorkerGlobalScope_ErrorEvent_filename.htm [ Pass Failure ]
 imported/w3c/web-platform-tests/css/css-writing-modes/forms/text-input-vertical-overflow-no-scroll.html [ Pass Failure Timeout ]
@@ -2565,9 +2555,6 @@ webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Fail
 [ Tahoe Debug ] fast/forms/switch/click-animation.html [ ImageOnlyFailure ]
 [ Tahoe Debug ] fast/forms/switch/click-animation-redundant-disabled.html [ ImageOnlyFailure ]
 [ Tahoe Debug ] fast/forms/switch/click-animation-redundant-checked.html  [ ImageOnlyFailure ]
-
-# https://bugs.webkit.org/show_bug.cgi?id=301000 [ macOS Tahoe ] 3x fast/ tests (layout-tests) are constant text failures
-[ Tahoe Debug ] fast/repaint/block-inputrange-repaint.html [ Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=301002 [ macOS Tahoe ] fast/css/apple-system-control-colors.html is a constant text failure
 [ Tahoe Debug ] fast/css/apple-system-control-colors.html [ Failure ]

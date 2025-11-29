@@ -1171,13 +1171,8 @@ RefPtr<WebCore::ShapeDetection::BarcodeDetector> WebChromeClient::createBarcodeD
     RefPtr page = m_page.get();
     if (!page)
         return nullptr;
-
-    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
-    // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy->connection();
-    if (!connection)
-        return nullptr;
-    return ShapeDetection::RemoteBarcodeDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), barcodeDetectorOptions);
+    Ref renderingBackend = page->ensureRemoteRenderingBackendProxy();
+    return renderingBackend->createBarcodeDetector(barcodeDetectorOptions);
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::BarcodeDetectorImpl::create(barcodeDetectorOptions);
 #else
@@ -1193,14 +1188,8 @@ void WebChromeClient::getBarcodeDetectorSupportedFormats(CompletionHandler<void(
         completionHandler({ });
         return;
     }
-    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
-    // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy->connection();
-    if (!connection) {
-        completionHandler({ });
-        return;
-    }
-    ShapeDetection::RemoteBarcodeDetectorProxy::getSupportedFormats(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), WTFMove(completionHandler));
+    Ref renderingBackend = page->ensureRemoteRenderingBackendProxy();
+    renderingBackend->supportedBarcodeDetectorBarcodeFormats(WTFMove(completionHandler));
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     WebCore::ShapeDetection::BarcodeDetectorImpl::getSupportedFormats(WTFMove(completionHandler));
 #else
@@ -1214,13 +1203,8 @@ RefPtr<WebCore::ShapeDetection::FaceDetector> WebChromeClient::createFaceDetecto
     RefPtr page = m_page.get();
     if (!page)
         return nullptr;
-
-    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
-    // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy->connection();
-    if (!connection)
-        return nullptr;
-    return ShapeDetection::RemoteFaceDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), faceDetectorOptions);
+    Ref renderingBackend = page->ensureRemoteRenderingBackendProxy();
+    return renderingBackend->createFaceDetector(faceDetectorOptions);
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::FaceDetectorImpl::create(faceDetectorOptions);
 #else
@@ -1234,13 +1218,8 @@ RefPtr<WebCore::ShapeDetection::TextDetector> WebChromeClient::createTextDetecto
     RefPtr page = m_page.get();
     if (!page)
         return nullptr;
-
-    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
-    // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy->connection();
-    if (!connection)
-        return nullptr;
-    return ShapeDetection::RemoteTextDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate());
+    Ref renderingBackend = page->ensureRemoteRenderingBackendProxy();
+    return renderingBackend->createTextDetector();
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::TextDetectorImpl::create();
 #else
@@ -1785,10 +1764,10 @@ void WebChromeClient::setTextIndicator(const WebCore::TextIndicatorData& indicat
         page->setTextIndicator(indicatorData);
 }
 
-void WebChromeClient::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData) const
+void WebChromeClient::updateTextIndicator(RefPtr<WebCore::TextIndicator>&& textIndicator) const
 {
     if (RefPtr page = m_page.get())
-        page->updateTextIndicator(indicatorData);
+        page->updateTextIndicator(WTFMove(textIndicator));
 }
 
 #if ENABLE(TELEPHONE_NUMBER_DETECTION) && PLATFORM(MAC)
@@ -2159,10 +2138,10 @@ double WebChromeClient::baseViewportLayoutSizeScaleFactor() const
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 
-void WebChromeClient::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
+void WebChromeClient::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, HTMLMediaElement& element, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
 {
     if (RefPtr page = m_page.get())
-        page->showMediaControlsContextMenu(WTFMove(targetFrame), WTFMove(items), WTFMove(completionHandler));
+        page->showMediaControlsContextMenu(WTFMove(targetFrame), WTFMove(items), element.identifier(), WTFMove(completionHandler));
     else
         completionHandler({ });
 }
@@ -2209,7 +2188,7 @@ void WebChromeClient::abortApplePayAMSUISession()
 void WebChromeClient::beginSystemPreview(const URL& url, const SecurityOriginData& topOrigin, const SystemPreviewInfo& systemPreviewInfo, CompletionHandler<void()>&& completionHandler)
 {
     if (RefPtr page = m_page.get())
-        page->sendWithAsyncReply(Messages::WebPageProxy::BeginSystemPreview(WTFMove(url), topOrigin, WTFMove(systemPreviewInfo)), WTFMove(completionHandler));
+        page->sendWithAsyncReply(Messages::WebPageProxy::BeginSystemPreview(url, topOrigin, systemPreviewInfo), WTFMove(completionHandler));
     else
         completionHandler();
 }
@@ -2402,6 +2381,17 @@ bool WebChromeClient::usePluginRendererScrollableArea(LocalFrame& frame) const
         return !pluginView->pluginDelegatesScrollingToMainFrame();
 #endif
     return true;
+}
+
+void WebChromeClient::showCaptionDisplaySettings(CompletionHandler<void(bool)>&& callback)
+{
+    RefPtr page = m_page.get();
+    if (!page) {
+        callback(false);
+        return;
+    }
+
+    page->sendWithAsyncReply(Messages::WebPageProxy::ShowCaptionDisplaySettings(), WTFMove(callback));
 }
 
 } // namespace WebKit

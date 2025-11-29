@@ -428,7 +428,7 @@ end
 
     restoreWasmArgumentRegisters()
 
-    btpz ws0, .recover
+    btpz ws0, .continue
 
     restoreIPIntRegisters()
     restoreCallerPCAndCFR()
@@ -440,8 +440,6 @@ end
         jmp ws0, WasmEntryPtrTag
     end
 
-.recover:
-    loadp UnboxedWasmCalleeStackSlot[cfr], ws0
 .continue:
     if ARMv7
         break # FIXME: ipint support.
@@ -1238,10 +1236,14 @@ if ARMv7
 else
     ipintPrologueOSR(5)
 end
-    move sp, PL
+    move cfr, a1
+    operationCall(macro() cCall2(_ipint_extern_prepare_function_body) end)
+    move r0, ws0
 
+    move sp, PL
     loadp Wasm::IPIntCallee::m_bytecode[ws0], PC
     loadp Wasm::IPIntCallee::m_metadata + VectorBufferOffset[ws0], MC
+
     # Load memory
     ipintReloadMemory()
 

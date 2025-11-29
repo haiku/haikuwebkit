@@ -43,7 +43,7 @@
 #include <wtf/UUID.h>
 
 #if PLATFORM(COCOA)
-#include "MockAudioSharedUnit.h"
+#include "MockAudioCaptureUnit.h"
 #endif
 
 #if USE(GSTREAMER)
@@ -190,10 +190,15 @@ void MockRealtimeAudioSource::setIsInterrupted(bool isInterrupted)
 {
     UNUSED_PARAM(isInterrupted);
 #if PLATFORM(COCOA)
-    if (isInterrupted)
-        CoreAudioSharedUnit::singleton().suspend();
-    else
-        CoreAudioSharedUnit::singleton().resume();
+    if (isInterrupted) {
+        CoreAudioCaptureUnit::forEach([](auto& unit) {
+            unit.suspend();
+        });
+    } else {
+        CoreAudioCaptureUnit::forEach([](auto& unit) {
+            unit.resume();
+        });
+    }
 #elif USE(GSTREAMER)
     for (auto* source : MockRealtimeAudioSourceGStreamer::allMockRealtimeAudioSources())
         source->setInterruptedForTesting(isInterrupted);

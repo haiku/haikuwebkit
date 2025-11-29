@@ -128,6 +128,8 @@ public:
     };
     virtual Type type() const { return Type::Default; }
 
+    JSDOMGlobalObject* globalObject();
+
 protected:
     static ExceptionOr<Ref<ReadableStream>> createFromJSValues(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
     static ExceptionOr<Ref<InternalReadableStream>> createInternalReadableStream(JSDOMGlobalObject&, Ref<ReadableStreamSource>&&);

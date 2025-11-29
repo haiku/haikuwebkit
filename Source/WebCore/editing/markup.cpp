@@ -97,6 +97,7 @@
 #include "VisibleSelection.h"
 #include "VisibleUnits.h"
 #include <JavaScriptCore/JSCJSValueInlines.h>
+#include <ranges>
 #include <wtf/StdLibExtras.h>
 #include <wtf/URL.h>
 #include <wtf/URLParser.h>
@@ -581,7 +582,7 @@ String StyledMarkupAccumulator::takeResults()
         length += string.length();
     StringBuilder result;
     result.reserveCapacity(length);
-    for (auto& string : makeReversedRange(m_reversedPrecedingMarkup))
+    for (auto& string : m_reversedPrecedingMarkup | std::views::reverse)
         result.append(string);
     result.append(takeMarkup());
     // Remove '\0' characters because they are not visibly rendered to the user.

@@ -28,7 +28,6 @@ crypto/SubtleCrypto.cpp
 css/CSSPendingSubstitutionValue.cpp
 css/CSSValue.cpp
 css/CSSVariableReferenceValue.cpp
-css/StyleRule.cpp
 dom/ContentVisibilityDocumentState.cpp
 dom/CustomElementDefaultARIA.cpp
 dom/RejectedPromiseTracker.cpp
@@ -62,7 +61,7 @@ platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
 platform/mediastream/RealtimeVideoCaptureSource.cpp
 platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
 [ iOS ] platform/mediastream/ios/ReplayKitCaptureSource.mm
-[ iOS ] platform/mediastream/mac/CoreAudioSharedUnit.cpp
+[ iOS ] platform/mediastream/mac/CoreAudioCaptureUnit.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/mediastream/mac/RealtimeOutgoingAudioSourceCocoa.cpp
 rendering/BackgroundPainter.cpp
@@ -86,6 +85,7 @@ style/StyleCustomProperty.cpp
 style/Styleable.cpp
 style/values/StyleValueTypes.h
 style/values/backgrounds/StyleFillLayers.h
+style/values/fonts/StyleFontFeatureSettings.cpp
 style/values/fonts/StyleFontVariationSettings.cpp
 style/values/images/StyleGradient.cpp
 style/values/primitives/StylePrimitiveKeyword+CSSValueCreation.h

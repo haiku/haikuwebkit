@@ -59,6 +59,7 @@
 #include "RenderView.h"
 #include "SVGTextFragment.h"
 #include "ShapeOutsideInfo.h"
+#include <ranges>
 #include <wtf/Assertions.h>
 #include <wtf/Range.h>
 
@@ -223,7 +224,7 @@ static const InlineDisplay::Line& lastLineWithInlineContent(const InlineDisplay:
 {
     // Out-of-flow/float content only don't produce lines with inline content. They should not be taken into
     // account when computing content box height/baselines.
-    for (auto& line : makeReversedRange(lines)) {
+    for (auto& line : lines | std::views::reverse) {
         ASSERT(line.boxCount());
         if (line.boxCount() > 1)
             return line;
@@ -512,7 +513,7 @@ std::optional<LayoutRect> LineLayout::layout(ForceFullLayout forcedFullLayout)
             return *m_inlineContentConstraints;
         }
         auto constraintsForInFlowContent = Layout::ConstraintsForInFlowContent { m_inlineContentConstraints->horizontal(), m_lineDamage->layoutStartPosition()->partialContentTop };
-        return { constraintsForInFlowContent, m_inlineContentConstraints->visualLeft(), m_inlineContentConstraints->containerRenderSize() };
+        return { constraintsForInFlowContent, m_inlineContentConstraints->visualLeft(), m_inlineContentConstraints->formattingRootBorderBoxSize() };
     };
 
     auto parentBlockLayoutState = Layout::BlockLayoutState {
@@ -629,7 +630,7 @@ void LineLayout::updateRenderTreePositions(const Vector<LineAdjustment>& lineAdj
             // FIXME: Find out what to do with discarded (see line-clamp) floats in render tree.
             auto isInitialLetter = layoutBox.style().pseudoElementType() == PseudoElementType::FirstLetter;
             auto& floatingObject = flow().insertFloatingBox(renderer);
-            auto [marginBoxVisualRect, borderBoxVisualRect] = toMarginAndBorderBoxVisualRect(logicalGeometry, m_inlineContentConstraints->containerRenderSize(), placedFloatsWritingMode);
+            auto [marginBoxVisualRect, borderBoxVisualRect] = toMarginAndBorderBoxVisualRect(logicalGeometry, m_inlineContentConstraints->formattingRootBorderBoxSize(), placedFloatsWritingMode);
 
             auto paginationOffset = floatPaginationOffsetMap.getOptional(layoutBox);
             if (paginationOffset) {
@@ -761,9 +762,7 @@ void LineLayout::preparePlacedFloats()
         auto& visualRect = floatingObject->frameRect();
 
         auto usedPosition = RenderStyle::usedFloat(floatingObject->renderer());
-        auto logicalPosition = (usedPosition == UsedFloat::Left) == placedFloatsIsLeftToRight
-            ? Layout::PlacedFloats::Item::Position::Start
-            : Layout::PlacedFloats::Item::Position::End;
+        auto logicalPosition = (usedPosition == UsedFloat::Left) == placedFloatsIsLeftToRight ? Layout::PlacedFloats::Item::Position::Start : Layout::PlacedFloats::Item::Position::End;
 
         auto boxGeometry = Layout::BoxGeometry { };
         auto logicalRect = [&] {
@@ -788,9 +787,9 @@ void LineLayout::preparePlacedFloats()
         boxGeometry.setVerticalMargin({ });
 
         auto shapeOutsideInfo = floatingObject->renderer().shapeOutsideInfo();
-        auto* shape = shapeOutsideInfo ? &shapeOutsideInfo->computedShape() : nullptr;
+        RefPtr shape = shapeOutsideInfo ? &shapeOutsideInfo->computedShape() : nullptr;
 
-        placedFloats.append({ logicalPosition, boxGeometry, logicalRect.location(), shape });
+        placedFloats.add({ logicalPosition, boxGeometry, logicalRect.location(), WTFMove(shape) });
     }
 }
 
@@ -804,7 +803,7 @@ bool LineLayout::hasEllipsisInBlockDirectionOnLastFormattedLine() const
     if (!m_inlineContent)
         return false;
 
-    for (auto& line : makeReversedRange(m_inlineContent->displayContent().lines)) {
+    for (auto& line : m_inlineContent->displayContent().lines | std::views::reverse) {
         if (line.boxCount() == 1) {
             // Out-of-flow content could initiate a line with no inline content.
             continue;
@@ -1178,7 +1177,7 @@ bool LineLayout::hitTest(const HitTestRequest& request, HitTestResult& result, c
 
     LayerPaintScope layerPaintScope(layerRenderer);
 
-    for (auto& box : makeReversedRange(boxRange)) {
+    for (auto& box : boxRange | std::views::reverse) {
         bool visibleForHitTesting = request.userTriggered() ? box.isVisible() : box.isVisibleIgnoringUsedVisibility();
         if (!visibleForHitTesting)
             continue;

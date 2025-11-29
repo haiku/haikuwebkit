@@ -64,7 +64,7 @@ public:
     int trackIndex() const final { return m_index; }
 
     TrackID id() const final { return m_trackID.value_or(m_id); }
-    std::optional<AtomString> trackUID() const final
+    std::optional<String> trackUID() const final
     {
         auto player = m_player.get();
 
@@ -74,8 +74,8 @@ public:
         return std::nullopt;
     }
 
-    AtomString label() const final { return m_label; }
-    AtomString language() const final { return m_language; }
+    String label() const final { return m_label; }
+    String language() const final { return m_language; }
 
     void updateConfigurationFromCaps(GRefPtr<GstCaps>&&) final;
 

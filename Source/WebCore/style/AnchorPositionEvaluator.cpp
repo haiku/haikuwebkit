@@ -90,26 +90,36 @@ AnchorScrollAdjuster::AnchorScrollAdjuster(RenderBox& anchored, const RenderBoxM
         if (positionArea->coordMatchedTrackForAxis(BoxAxis::Horizontal, containingWritingMode, style.writingMode()) != PositionAreaTrack::SpanAll)
             m_needsXAdjustment |= true;
         else {
-            auto alignment = containingWritingMode.isHorizontal() ? style.justifySelf().position() : style.alignSelf().position();
-            m_needsXAdjustment |= alignment == ItemPosition::Auto || alignment == ItemPosition::Normal || alignment == ItemPosition::AnchorCenter;
+            if (containingWritingMode.isHorizontal()) {
+                auto alignment = style.justifySelf();
+                m_needsXAdjustment |= alignment.isAuto() || alignment.isNormal() || alignment.isAnchorCenter();
+            } else {
+                auto alignment = style.alignSelf();
+                m_needsXAdjustment |= alignment.isAuto() || alignment.isNormal() || alignment.isAnchorCenter();
+            }
         }
         if (positionArea->coordMatchedTrackForAxis(BoxAxis::Vertical, containingWritingMode, style.writingMode()) != PositionAreaTrack::SpanAll)
             m_needsYAdjustment |= true;
         else {
-            auto alignment = containingWritingMode.isHorizontal() ? style.alignSelf().position() : style.justifySelf().position();
-            m_needsYAdjustment |= alignment == ItemPosition::Auto || alignment == ItemPosition::Normal || alignment == ItemPosition::AnchorCenter;
+            if (containingWritingMode.isHorizontal()) {
+                auto alignment = style.alignSelf();
+                m_needsYAdjustment |= alignment.isAuto() || alignment.isNormal() || alignment.isAnchorCenter();
+            } else {
+                auto alignment = style.justifySelf();
+                m_needsYAdjustment |= alignment.isAuto() || alignment.isNormal() || alignment.isAnchorCenter();
+            }
         }
     }
 
     if (!m_needsXAdjustment) {
         m_needsXAdjustment = containingWritingMode.isHorizontal()
-            ? style.justifySelf().position() == ItemPosition::AnchorCenter
-            : style.alignSelf().position() == ItemPosition::AnchorCenter;
+            ? style.justifySelf().isAnchorCenter()
+            : style.alignSelf().isAnchorCenter();
     }
     if (!m_needsYAdjustment) {
         m_needsYAdjustment = containingWritingMode.isHorizontal()
-            ? style.alignSelf().position() == ItemPosition::AnchorCenter
-            : style.alignSelf().position() == ItemPosition::AnchorCenter;
+            ? style.alignSelf().isAnchorCenter()
+            : style.alignSelf().isAnchorCenter();
     }
 
     m_isHidden = style.isForceHidden();
@@ -1197,7 +1207,7 @@ static RefPtr<Element> findLastAcceptableAnchorWithName(ResolvedScopedName ancho
 
     const auto& anchors = anchorsForAnchorName.get(anchorName);
 
-    for (auto& anchor : makeReversedRange(anchors)) {
+    for (auto& anchor : anchors | std::views::reverse) {
         if (isAcceptableAnchorElement(anchor.get(), anchorPositionedElement, anchorName))
             return anchor->element();
     }
@@ -1371,7 +1381,7 @@ bool AnchorPositionEvaluator::isLayoutTimeAnchorPositioned(const RenderStyle& st
     if (style.positionArea())
         return true;
 
-    return style.justifySelf().position() == ItemPosition::AnchorCenter || style.alignSelf().position() == ItemPosition::AnchorCenter;
+    return style.justifySelf().isAnchorCenter() || style.alignSelf().isAnchorCenter();
 }
 
 static CSSPropertyID flipHorizontal(CSSPropertyID propertyID)
@@ -1475,6 +1485,81 @@ CSSPropertyID AnchorPositionEvaluator::resolvePositionTryFallbackProperty(CSSPro
         }
     }
     return propertyID;
+}
+
+CSSValueID AnchorPositionEvaluator::resolvePositionTryFallbackValueForSelfPosition(CSSPropertyID propertyID, CSSValueID position, WritingMode writingMode, const BuilderPositionTryFallback& fallback)
+{
+    // Implements the bullet starting "For the self-alignment properties" from step 4 of https://drafts.csswg.org/css-anchor-position-1/#swap-due-to-a-try-tactic.
+
+    ASSERT(propertyID == CSSPropertyAlignSelf || propertyID == CSSPropertyJustifySelf);
+
+    auto flipSidedPosition = [](auto position) -> CSSValueID {
+        // Swap to the "opposite" position if the current position is "sided".
+        // If there is no opposite value, nothing is changed.
+        switch (position) {
+        case CSSValueStart:
+            return CSSValueEnd;
+        case CSSValueEnd:
+            return CSSValueStart;
+        case CSSValueSelfStart:
+            return CSSValueSelfEnd;
+        case CSSValueSelfEnd:
+            return CSSValueSelfStart;
+        case CSSValueFlexStart:
+            return CSSValueFlexEnd;
+        case CSSValueFlexEnd:
+            return CSSValueFlexStart;
+        case CSSValueLeft:
+            return CSSValueRight;
+        case CSSValueRight:
+            return CSSValueLeft;
+        default:
+            return position;
+        }
+    };
+
+    auto flipStart = [](auto writingMode, auto position) -> CSSValueID {
+        // `justify-self` additionally takes `left`/`right`, `align-self` doesn't. When
+        // applying `flip-start`, `justify-self` gets swapped with `align-self` (see
+        // call to `flipStart` in `AnchorPositionEvaluator::resolvePositionTryFallbackProperty`).
+        // So if we're resolving `justify-self` (which later gets swapped with `align-self`),
+        // and the position is `left`/`right`, resolve it to `self-start`/`self-end`.
+        switch (position) {
+        case CSSValueLeft:
+            return writingMode.bidiDirection() == TextDirection::LTR ? CSSValueSelfStart : CSSValueSelfEnd;
+        case CSSValueRight:
+            return writingMode.bidiDirection() == TextDirection::LTR ? CSSValueSelfEnd : CSSValueSelfStart;
+        default:
+            return position;
+        }
+    };
+
+    for (auto tactic : fallback.tactics) {
+        switch (tactic) {
+        case PositionTryFallback::Tactic::FlipBlock:
+            if (propertyID == CSSPropertyAlignSelf)
+                position = flipSidedPosition(position);
+            break;
+        case PositionTryFallback::Tactic::FlipInline:
+            if (propertyID == CSSPropertyJustifySelf)
+                position = flipSidedPosition(position);
+            break;
+        case PositionTryFallback::Tactic::FlipX:
+            if (propertyID == (writingMode.isHorizontal() ? CSSPropertyJustifySelf : CSSPropertyAlignSelf))
+                position = flipSidedPosition(position);
+            break;
+        case PositionTryFallback::Tactic::FlipY:
+            if (propertyID == (writingMode.isHorizontal() ? CSSPropertyAlignSelf : CSSPropertyJustifySelf))
+                position = flipSidedPosition(position);
+            break;
+        case PositionTryFallback::Tactic::FlipStart:
+            if (propertyID == CSSPropertyJustifySelf)
+                position = flipStart(writingMode, position);
+            break;
+        }
+    }
+
+    return position;
 }
 
 bool AnchorPositionEvaluator::overflowsInsetModifiedContainingBlock(const RenderBox& anchoredBox)

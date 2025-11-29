@@ -349,7 +349,7 @@ void JSDOMWindow::analyzeHeap(JSCell* cell, HeapAnalyzer& analyzer)
 
 // https://html.spec.whatwg.org/#crossoriginproperties-(-o-)
 template <CrossOriginObject objectType>
-static void addCrossOriginPropertyNames(VM& vm, PropertyNameArray& propertyNames)
+static void addCrossOriginPropertyNames(VM& vm, PropertyNameArrayBuilder& propertyNames)
 {
     auto& builtinNames = WebCore::builtinNames(vm);
     switch (objectType) {
@@ -377,7 +377,7 @@ static void addCrossOriginPropertyNames(VM& vm, PropertyNameArray& propertyNames
 
 // https://html.spec.whatwg.org/#crossoriginownpropertykeys-(-o-)
 template <CrossOriginObject objectType>
-void addCrossOriginOwnPropertyNames(JSC::JSGlobalObject& lexicalGlobalObject, JSC::PropertyNameArray& propertyNames)
+void addCrossOriginOwnPropertyNames(JSC::JSGlobalObject& lexicalGlobalObject, JSC::PropertyNameArrayBuilder& propertyNames)
 {
     auto& vm = lexicalGlobalObject.vm();
     addCrossOriginPropertyNames<objectType>(vm, propertyNames);
@@ -390,10 +390,10 @@ void addCrossOriginOwnPropertyNames(JSC::JSGlobalObject& lexicalGlobalObject, JS
         propertyNames.add(*property);
 
 }
-template void addCrossOriginOwnPropertyNames<CrossOriginObject::Window>(JSC::JSGlobalObject&, JSC::PropertyNameArray&);
-template void addCrossOriginOwnPropertyNames<CrossOriginObject::Location>(JSC::JSGlobalObject&, JSC::PropertyNameArray&);
+template void addCrossOriginOwnPropertyNames<CrossOriginObject::Window>(JSC::JSGlobalObject&, JSC::PropertyNameArrayBuilder&);
+template void addCrossOriginOwnPropertyNames<CrossOriginObject::Location>(JSC::JSGlobalObject&, JSC::PropertyNameArrayBuilder&);
 
-static void addScopedChildrenIndexes(JSGlobalObject& lexicalGlobalObject, DOMWindow& window, PropertyNameArray& propertyNames)
+static void addScopedChildrenIndexes(JSGlobalObject& lexicalGlobalObject, DOMWindow& window, PropertyNameArrayBuilder& propertyNames)
 {
     RefPtr localDOMWindow = dynamicDowncast<LocalDOMWindow>(window);
     if (!localDOMWindow)
@@ -414,7 +414,7 @@ static void addScopedChildrenIndexes(JSGlobalObject& lexicalGlobalObject, DOMWin
 }
 
 // https://html.spec.whatwg.org/#windowproxy-ownpropertykeys
-void JSDOMWindow::getOwnPropertyNames(JSObject* object, JSGlobalObject* lexicalGlobalObject, PropertyNameArray& propertyNames, DontEnumPropertiesMode mode)
+void JSDOMWindow::getOwnPropertyNames(JSObject* object, JSGlobalObject* lexicalGlobalObject, PropertyNameArrayBuilder& propertyNames, DontEnumPropertiesMode mode)
 {
     auto* thisObject = jsCast<JSDOMWindow*>(object);
 

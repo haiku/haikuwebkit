@@ -415,13 +415,14 @@ void SliderThumbElement::clearExclusiveTouchIdentifier()
     m_exclusiveTouchIdentifier = NoIdentifier;
 }
 
+// FIXME: Share these functions with CheckboxInputType somehow?
 static Touch* findTouchWithIdentifier(TouchList& list, unsigned identifier)
 {
     unsigned length = list.length();
     for (unsigned i = 0; i < length; ++i) {
-        RefPtr<Touch> touch = list.item(i);
+        auto* touch = list.item(i);
         if (touch->identifier() == identifier)
-            return touch.unsafeGet();
+            return touch;
     }
     return nullptr;
 }
@@ -459,7 +460,7 @@ void SliderThumbElement::handleTouchMove(TouchEvent& touchEvent)
     if (!targetTouches)
         return;
 
-    RefPtr<Touch> touch = findTouchWithIdentifier(*targetTouches, identifier);
+    RefPtr touch = findTouchWithIdentifier(*targetTouches, identifier);
     if (!touch)
         return;
 
@@ -479,7 +480,7 @@ void SliderThumbElement::handleTouchEndAndCancel(TouchEvent& touchEvent)
         return;
     // If our exclusive touch still exists, it was not the touch
     // that ended, so we should not stop dragging.
-    RefPtr<Touch> exclusiveTouch = findTouchWithIdentifier(*targetTouches, identifier);
+    RefPtr exclusiveTouch = findTouchWithIdentifier(*targetTouches, identifier);
     if (exclusiveTouch)
         return;
 

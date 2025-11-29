@@ -59,8 +59,8 @@ namespace JSC {
 class DeferGC;
 class DeferredStructureTransitionWatchpointFire;
 class LLIntOffsetsExtractor;
+class PropertyNameArrayBuilder;
 class PropertyNameArray;
-class PropertyNameArrayData;
 class PropertyTable;
 class StructureChain;
 class StructureShape;
@@ -702,7 +702,7 @@ public:
     void setCachedPropertyNames(VM&, CachedPropertyNamesKind, JSCellButterfly*);
     bool canCacheOwnPropertyNames() const;
 
-    void getPropertyNamesFromStructure(VM&, PropertyNameArray&, DontEnumPropertiesMode);
+    void getPropertyNamesFromStructure(VM&, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
 
     JSValue cachedSpecialProperty(CachedSpecialPropertyKey key)
     {

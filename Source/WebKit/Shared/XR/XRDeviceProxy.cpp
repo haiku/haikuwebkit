@@ -144,6 +144,26 @@ void XRDeviceProxy::submitFrame(Vector<PlatformXR::Device::Layer>&& layers)
     }
 }
 
+#if ENABLE(WEBXR_HIT_TEST)
+void XRDeviceProxy::requestHitTestSource(const PlatformXR::HitTestOptions& init, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler)
+{
+    RefPtr xrSystem = m_xrSystem.get();
+    if (!xrSystem) {
+        completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
+        return;
+    }
+    xrSystem->requestHitTestSource(init, WTFMove(completionHandler));
+}
+
+void XRDeviceProxy::deleteHitTestSource(PlatformXR::HitTestSource source)
+{
+    RefPtr xrSystem = m_xrSystem.get();
+    if (!xrSystem)
+        return;
+    xrSystem->deleteHitTestSource(source);
+}
+#endif
+
 } // namespace WebKit
 
 #endif // ENABLE(WEBXR)

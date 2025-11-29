@@ -169,11 +169,12 @@ enum ContextMenuAction {
     ContextMenuItemTagProofread,
     ContextMenuItemTagRewrite,
     ContextMenuItemTagSummarize,
+    ContextMenuItemCaptionDisplayStyleSubmenu,
 #if PLATFORM(COCOA)
     ContextMenuItemTagSmartLists,
     ContextMenuItemLastNonCustomTag = ContextMenuItemTagSmartLists,
 #else
-    ContextMenuItemLastNonCustomTag = ContextMenuItemTagSummarize,
+    ContextMenuItemLastNonCustomTag = ContextMenuItemCaptionDisplayStyleSubmenu,
 #endif
     ContextMenuItemBaseCustomTag = 5000,
     ContextMenuItemLastCustomTag = 5999,

@@ -231,6 +231,7 @@ static void registerUserDefaults()
     
     [registrationDictionary setObject:@YES forKey:WebKitJSCJITEnabledDefaultsKey];
     [registrationDictionary setObject:@YES forKey:WebKitJSCFTLJITEnabledDefaultsKey];
+    [registrationDictionary setObject:@YES forKey:@"WebKitPrefersFullScreenDimming"];
 
     [[NSUserDefaults standardUserDefaults] registerDefaults:registrationDictionary.get()];
 }
@@ -729,7 +730,7 @@ void WebProcessPool::hardwareKeyboardAvailabilityChanged()
 
 void WebProcessPool::initializeHardwareKeyboardAvailability()
 {
-    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr([weakThis = WeakPtr { *this }] {
+    dispatch_async(globalDispatchQueueSingleton(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), makeBlockPtr([weakThis = WeakPtr { *this }]() mutable {
         auto keyboardState = currentHardwareKeyboardState();
         callOnMainRunLoop([weakThis = WTFMove(weakThis), keyboardState] {
             RefPtr protectedThis = weakThis.get();
@@ -1622,7 +1623,7 @@ void WebProcessPool::registerAssetFonts(WebProcessProxy& process)
     for (auto& fontName : assetFonts)
         [descriptions addObject:(__bridge id)fontDescription(fontName).get()];
 
-    auto blockPtr = makeBlockPtr([assetFonts = WTFMove(assetFonts), weakProcess = WeakPtr { process }, weakThis = WeakPtr { *this }](CTFontDescriptorMatchingState state, CFDictionaryRef progressParameter) {
+    auto blockPtr = makeBlockPtr([assetFonts = WTFMove(assetFonts), weakProcess = WeakPtr { process }, weakThis = WeakPtr { *this }](CTFontDescriptorMatchingState state, CFDictionaryRef progressParameter) mutable {
         if (state != kCTFontDescriptorMatchingDidFinish)
             return true;
         RELEASE_LOG(Process, "Font matching finished, progress parameter = %@", (__bridge id)progressParameter);

@@ -78,18 +78,6 @@ inline void add(Hasher& hasher, const Trigger& trigger)
     add(hasher, trigger.urlFilterIsCaseSensitive, trigger.urlFilter, trigger.flags, trigger.conditions);
 }
 
-struct TriggerHash {
-    static unsigned hash(const Trigger& trigger)
-    {
-        return computeHash(trigger);
-    }
-    static bool equal(const Trigger& a, const Trigger& b)
-    {
-        return a == b;
-    }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 struct TriggerHashTraits : public WTF::CustomHashTraits<Trigger> {
     static constexpr bool emptyValueIsZero = false;
     static constexpr bool hasIsEmptyValueFunction = true;

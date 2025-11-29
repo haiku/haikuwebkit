@@ -157,4 +157,8 @@ messages -> NetworkConnectionToWebProcess WantsDispatchMessage {
 #if ENABLE(CONTENT_EXTENSIONS)
     ShouldOffloadIFrameForHost(String host) -> (bool wasGranted)
 #endif
+
+#if ENABLE(IPC_TESTING_API)
+    TakeInvalidMessageStringForTesting() -> (String error) Synchronous
+#endif
 }

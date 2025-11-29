@@ -1395,7 +1395,7 @@ public:
         initializePrecoloredTmp();
         build();
 
-        if constexpr (reportInterferenceGraphMemoryUse && (std::is_same<InterferenceSet, LargeInterferenceGraph>::value || std::is_same<InterferenceSet, HugeInterferenceGraph>::value)) {
+        if constexpr (reportInterferenceGraphMemoryUse && (std::same_as<InterferenceSet, LargeInterferenceGraph> || std::same_as<InterferenceSet, HugeInterferenceGraph>)) {
             dataLog("numTmps|numEdges|memoryUse(kB): ", m_code.numTmps(bank), " | ", m_interferenceEdges.size(), " | ");
             m_interferenceEdges.dumpMemoryUseInKB();
             dataLog("\n");

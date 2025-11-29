@@ -5150,6 +5150,49 @@ TEST(SiteIsolation, CompleteTextManipulationFailsInSomeFrame)
     TestWebKitAPI::Util::run(&done);
 }
 
+TEST(SiteIsolation, TextManipulationInIframeIfIframeIsAddedAfterTranslationCall)
+{
+    HTTPServer server({
+        { "/example"_s, {
+        "<script>"
+        "    function addCrossDomainIframe() {"
+        "        const iframe = document.createElement('iframe');"
+        "        iframe.src = 'https://apple.com/iframe.html';"
+        "        document.body.appendChild(iframe);"
+        "    }"
+        "</script>"_s } },
+
+        { "/iframe.html"_s, { "<html><body>hello<br>world<div>WebKit</div></body></html>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto webViewAndDelegates = makeWebViewAndDelegates(server);
+    RetainPtr webView = webViewAndDelegates.webView;
+    RetainPtr navigationDelegate = webViewAndDelegates.navigationDelegate;
+    RetainPtr uiDelegate = webViewAndDelegates.uiDelegate;
+
+    RetainPtr textManipulationDelegate = adoptNS([[SiteIsolationTextManipulationDelegate alloc] init]);
+    [webView _setTextManipulationDelegate:textManipulationDelegate.get()];
+    RetainPtr manipulationConfiguration = adoptNS([[_WKTextManipulationConfiguration alloc] init]);
+    manipulationConfiguration.get().includeSubframes = YES;
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    __block bool done = false;
+    [webView _startTextManipulationsWithConfiguration:manipulationConfiguration.get() completion:^{
+        done = true;
+    }];
+    Util::run(&done);
+
+    [webView evaluateJavaScript:@"addCrossDomainIframe();" completionHandler:nil];
+
+    while ([textManipulationDelegate items].count < 3)
+        Util::spinRunLoop();
+
+    RetainPtr items = [textManipulationDelegate items];
+    EXPECT_EQ(items.get().count, 3UL);
+}
+
 TEST(SiteIsolation, CreateWebArchive)
 {
     HTTPServer server({
@@ -6096,10 +6139,10 @@ TEST(SiteIsolation, SharedProcessWithResourceLoadStatistics)
     [defaultFileManager copyItemAtPath:sourceFile.path toPath:itpDatabaseFile.path error:nil];
     EXPECT_TRUE([defaultFileManager fileExistsAtPath:itpDatabaseFile.path]);
 
-    WebCore::SQLiteDatabase database;
-    EXPECT_TRUE(database.open(itpDatabaseFile.path));
-    EXPECT_TRUE(database.executeCommand("UPDATE ObservedDomains SET hadUserInteraction = 1 WHERE registrableDomain = 'webkit.org'"_s));
-    database.close();
+    auto database = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(database->open(itpDatabaseFile.path));
+    EXPECT_TRUE(database->executeCommand("UPDATE ObservedDomains SET hadUserInteraction = 1 WHERE registrableDomain = 'webkit.org'"_s));
+    database->close();
 
     auto [webView, navigationDelegate] = siteIsolatedViewWithSharedProcess(server, EnableProcessCache::No, dataStoreRoot, itpRoot);
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];

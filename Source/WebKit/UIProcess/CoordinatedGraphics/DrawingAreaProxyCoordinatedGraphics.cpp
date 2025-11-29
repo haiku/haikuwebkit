@@ -211,7 +211,7 @@ void DrawingAreaProxyCoordinatedGraphics::commitTransientZoom(double scale, Floa
 void DrawingAreaProxyCoordinatedGraphics::update(uint64_t, UpdateInfo&& updateInfo)
 {
     if (m_isWaitingForDidUpdateGeometry && updateInfo.viewSize != m_lastSentSize) {
-        send(Messages::DrawingArea::DisplayDidRefresh());
+        send(Messages::DrawingArea::DisplayDidRefresh(MonotonicTime::now()));
         return;
     }
 
@@ -222,7 +222,7 @@ void DrawingAreaProxyCoordinatedGraphics::update(uint64_t, UpdateInfo&& updateIn
 #endif
 
     if (!m_isWaitingForDidUpdateGeometry)
-        send(Messages::DrawingArea::DisplayDidRefresh());
+        send(Messages::DrawingArea::DisplayDidRefresh(MonotonicTime::now()));
 }
 
 void DrawingAreaProxyCoordinatedGraphics::enterAcceleratedCompositingMode(uint64_t, const LayerTreeContext& layerTreeContext)

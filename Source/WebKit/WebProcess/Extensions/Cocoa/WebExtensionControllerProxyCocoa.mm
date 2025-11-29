@@ -65,7 +65,7 @@ void WebExtensionControllerProxy::globalObjectIsAvailableForFrame(WebPage& page,
     auto context = frame.jsContextForWorld(world);
     auto globalObject = JSContextGetGlobalObject(context);
 
-    JSRetainPtr browserString = toJSString("browser");
+    JSRetainPtr browserString = toJSString("browser"_s);
     if (!browserString)
         return;
 
@@ -93,7 +93,7 @@ void WebExtensionControllerProxy::globalObjectIsAvailableForFrame(WebPage& page,
     // This is a safer cpp false positive (rdar://163760990).
     SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
 
-    if (JSRetainPtr chromeString = toJSString("chrome")) {
+    if (JSRetainPtr chromeString = toJSString("chrome"_s)) {
         // This is a safer cpp false positive (rdar://163760990).
         SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
     }
@@ -110,7 +110,7 @@ void WebExtensionControllerProxy::serviceWorkerGlobalObjectIsAvailableForFrame(W
     auto context = frame.jsContextForServiceWorkerWorld(world);
     auto globalObject = JSContextGetGlobalObject(context);
 
-    JSRetainPtr browserString = toJSString("browser");
+    JSRetainPtr browserString = toJSString("browser"_s);
     if (!browserString)
         return;
 
@@ -125,7 +125,7 @@ void WebExtensionControllerProxy::serviceWorkerGlobalObjectIsAvailableForFrame(W
 
     // This is a safer cpp false positive (rdar://163760990).
     SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, browserString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
-    if (JSRetainPtr chromeString = toJSString("chrome")) {
+    if (JSRetainPtr chromeString = toJSString("chrome"_s)) {
         // This is a safer cpp false positive (rdar://163760990).
         SUPPRESS_UNCOUNTED_ARG JSObjectSetProperty(context, globalObject, chromeString.get(), namespaceObject, kJSPropertyAttributeNone, nullptr);
     }
@@ -136,7 +136,7 @@ void WebExtensionControllerProxy::addBindingsToWebPageFrameIfNecessary(WebFrame&
     auto context = frame.jsContextForWorld(world);
     auto globalObject = JSContextGetGlobalObject(context);
 
-    JSRetainPtr browserString = toJSString("browser");
+    JSRetainPtr browserString = toJSString("browser"_s);
     if (!browserString)
         return;
 

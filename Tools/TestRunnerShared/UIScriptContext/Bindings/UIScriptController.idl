@@ -50,6 +50,7 @@ dictionary TextExtractionTestOptions {
     boolean includeNodeIdentifiers = false;
     boolean includeEventListeners = false;
     boolean includeAccessibilityAttributes = false;
+    boolean includeTextInAutoFilledControls = false;
     boolean mergeParagraphs = false;
     boolean skipNearlyTransparentContent = false;
 };
@@ -458,4 +459,8 @@ interface UIScriptController {
 
     readonly attribute boolean didCallEnsurePositionInformationIsUpToDateSinceLastCheck;
     undefined clearEnsurePositionInformationIsUpToDateTracking();
+
+#if defined(ENABLE_THREADED_ANIMATIONS) && ENABLE_THREADED_ANIMATIONS
+    DOMString animationStackForLayerWithID(unsigned long long layerID);
+#endif
 };

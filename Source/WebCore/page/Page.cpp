@@ -2295,7 +2295,7 @@ void Page::updateRendering()
 
     // https://drafts.csswg.org/scroll-animations-1/#event-loop
     forEachDocument([] (Document& document) {
-        document.updateStaleScrollTimelines();
+        document.runPostRenderingUpdateAnimationTasks();
     });
 
     runProcessingStep(RenderingUpdateStep::FocusFixup, [&] (Document& document) {
@@ -5586,7 +5586,7 @@ void Page::setDefaultSpatialTrackingLabel(const String& label)
 {
     if (m_defaultSpatialTrackingLabel == label)
         return;
-    m_defaultSpatialTrackingLabel = WTFMove(label);
+    m_defaultSpatialTrackingLabel = label;
 
     forEachDocument([&] (Document& document) {
         document.defaultSpatialTrackingLabelChanged(m_defaultSpatialTrackingLabel);

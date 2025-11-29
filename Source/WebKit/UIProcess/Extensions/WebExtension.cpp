@@ -1841,7 +1841,6 @@ void WebExtension::populateActionPropertiesIfNeeded()
     // Look for the "default_icon" as a string, which is useful for SVG icons. Only supported by Firefox currently.
     if (auto defaultIconPath = actionObject->getString(defaultIconManifestKey); !defaultIconPath.isEmpty()) {
         auto defaultIconResult = iconForPath(defaultIconPath);
-
         if (!defaultIconResult) {
             recordErrorIfNeeded(defaultIconResult.error());
 
@@ -1852,9 +1851,8 @@ void WebExtension::populateActionPropertiesIfNeeded()
                 localizedErrorDescription = WEB_UI_STRING("Failed to load image for `default_icon` in the `browser_action` or `page_action` manifest entry.", "WKWebExtensionErrorInvalidActionIcon description for failing to load single image for browser_action or page_action");
 
             recordError(createError(Error::InvalidActionIcon, localizedErrorDescription));
-        }
-
-        m_defaultActionIcon = defaultIconResult.value().get();
+        } else
+            m_defaultActionIcon = defaultIconResult.value().get();
     }
 
     m_displayActionLabel = actionObject->getString(defaultTitleManifestKey);

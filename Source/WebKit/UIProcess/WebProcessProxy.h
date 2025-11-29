@@ -593,6 +593,10 @@ public:
     void sendWasmDebuggerResponse(const String& response);
 #endif
 
+#if ENABLE(IPC_TESTING_API)
+    void takeInvalidMessageStringForTesting(CompletionHandler<void(String&&)>&&);
+#endif
+
 private:
     Type type() const final { return Type::WebContent; }
 

@@ -1514,6 +1514,8 @@ bool canUseHandlerIC()
 
 bool canUseWasm()
 {
+    if constexpr (useCompressedHeap)
+        return false;
 #if ENABLE(WEBASSEMBLY) && !PLATFORM(WATCHOS)
     return true;
 #else

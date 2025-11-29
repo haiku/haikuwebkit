@@ -236,8 +236,8 @@ void InbandGenericTextTrack::newCuesParsed()
     if (!document)
         return;
 
-    for (auto& cueData : parser().takeCues()) {
-        auto cue = VTTCue::create(*document, cueData);
+    for (auto&& cueData : parser().takeCues()) {
+        auto cue = VTTCue::create(*document, WTFMove(cueData));
 
         auto existingCue = cueToExtend(cue);
         if (!existingCue)

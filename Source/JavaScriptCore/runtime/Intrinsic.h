@@ -58,10 +58,10 @@ namespace JSC {
     macro(ArraySpliceIntrinsic) \
     macro(ArrayIncludesIntrinsic) \
     macro(ArrayIndexOfIntrinsic) \
-    macro(ArrayLastIndexOfIntrinsic) \
     macro(ArrayValuesIntrinsic) \
     macro(ArrayKeysIntrinsic) \
     macro(ArrayEntriesIntrinsic) \
+    macro(ArrayConstructorOfIntrinsic) \
     macro(AsyncIteratorIntrinsic) \
     macro(BooleanConstructorIntrinsic) \
     macro(CharCodeAtIntrinsic) \
@@ -276,5 +276,3 @@ class PrintStream;
 void printInternal(PrintStream&, JSC::Intrinsic);
 
 } // namespace WTF
-
-

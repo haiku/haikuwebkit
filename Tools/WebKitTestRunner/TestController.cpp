@@ -2066,7 +2066,7 @@ if (window.testRunner) {
     };
     testRunner.setStatisticsShouldBlockThirdPartyCookies = async (value, callback, onlyOnSitesWithoutUserInteraction, onlyUnpartitionedCookies) => { // NOLINT
         let message = 'SetStatisticsShouldBlockThirdPartyCookies';
-        if (onlyOnSitesWithoutUserInteraction || onlyUnpartitionedCookies)
+        if (onlyOnSitesWithoutUserInteraction)
             message = 'SetStatisticsShouldBlockThirdPartyCookiesOnSitesWithoutUserInteraction';
         else if (onlyUnpartitionedCookies)
             message = 'SetStatisticsShouldBlockThirdPartyCookiesExceptPartitioned';

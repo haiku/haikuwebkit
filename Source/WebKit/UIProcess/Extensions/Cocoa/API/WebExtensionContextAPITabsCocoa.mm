@@ -219,19 +219,19 @@ void WebExtensionContext::tabsUpdate(WebPageProxyIdentifier webPageProxyIdentifi
             return;
         }
 
-        updateURL(tab, parameters, [tab, parameters = WTFMove(parameters), updatePinned = WTFMove(updatePinned), updateMuted = WTFMove(updateMuted), updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& urlResult) mutable {
+        updateURL(tab, parameters, [tab, parameters, updatePinned = WTFMove(updatePinned), updateMuted = WTFMove(updateMuted), updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& urlResult) mutable {
             if (!urlResult) {
                 completionHandler(makeUnexpected(urlResult.error()));
                 return;
             }
 
-            updatePinned(tab, parameters, [tab, parameters = WTFMove(parameters), updateMuted = WTFMove(updateMuted), updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& pinnedResult) mutable {
+            updatePinned(tab, parameters, [tab, parameters, updateMuted = WTFMove(updateMuted), updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& pinnedResult) mutable {
                 if (!pinnedResult) {
                     completionHandler(makeUnexpected(pinnedResult.error()));
                     return;
                 }
 
-                updateMuted(tab, parameters, [tab, parameters = WTFMove(parameters), updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& mutedResult) mutable {
+                updateMuted(tab, parameters, [tab, parameters, updateParentTab = WTFMove(updateParentTab), completionHandler = WTFMove(completionHandler)](Expected<void, WebExtensionError>&& mutedResult) mutable {
                     if (!mutedResult) {
                         completionHandler(makeUnexpected(mutedResult.error()));
                         return;

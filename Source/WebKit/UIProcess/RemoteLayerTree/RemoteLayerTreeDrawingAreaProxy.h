@@ -47,6 +47,7 @@ struct MainFrameData;
 struct RemoteLayerTreeCommitBundle;
 
 #if ENABLE(THREADED_ANIMATIONS)
+class RemoteAnimationStack;
 class RemoteAnimationTimeline;
 #endif
 
@@ -68,8 +69,8 @@ public:
     void acceleratedAnimationDidStart(WebCore::PlatformLayerIdentifier, const String& key, MonotonicTime startTime);
     void acceleratedAnimationDidEnd(WebCore::PlatformLayerIdentifier, const String& key);
 
-    TransactionID nextMainFrameLayerTreeTransactionID() const { return m_webPageProxyProcessState.pendingLayerTreeTransactionID.value_or(TransactionID(TransactionIdentifier(),  m_transactionIDForPendingCACommit.processIdentifier())).next(); }
-    TransactionID lastCommittedMainFrameLayerTreeTransactionID() const { return m_transactionIDForPendingCACommit; }
+    TransactionID nextMainFrameLayerTreeTransactionID() const;
+    TransactionID lastCommittedMainFrameLayerTreeTransactionID() const;
 
     virtual void didRefreshDisplay();
     virtual void setDisplayLinkWantsFullSpeedUpdates(bool) { }
@@ -86,6 +87,7 @@ public:
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
     void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime);
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
+    RefPtr<const RemoteAnimationStack> animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier) const;
 #endif
 
     // For testing.
@@ -96,6 +98,14 @@ public:
 #endif
 
     void drawSlowFrameIndicator(WebCore::GraphicsContext&);
+
+    struct CommitLayerTreePending {
+        size_t requestedNotifyPendingCommitLayerTree { 1 };
+        size_t requestedCommitLayerTree { 1 };
+        bool missedDisplayDidRefresh { false };
+    };
+    struct NeedsDisplayDidRefresh { };
+    struct Idle { };
 
 protected:
     RemoteLayerTreeDrawingAreaProxy(WebPageProxy&, WebProcessProxy&);
@@ -108,17 +118,17 @@ protected:
     // with a commitLayerTree message (ideally before the next
     // displayDidRefresh, otherwise we mark it as missed and send
     // it when commitLayerTree does arrive).
-    enum CommitLayerTreeMessageState { CommitLayerTreePending, NeedsDisplayDidRefresh, MissedCommit, Idle };
     struct ProcessState {
         WTF_MAKE_NONCOPYABLE(ProcessState);
         ProcessState() = default;
         ProcessState(ProcessState&&) = default;
         ProcessState& operator=(ProcessState&&) = default;
 
-        CommitLayerTreeMessageState commitLayerTreeMessageState { Idle };
-        std::optional<MonotonicTime> transactionStartTime;
+        bool canSendDisplayDidRefresh();
+
+        Variant<Idle, CommitLayerTreePending, NeedsDisplayDidRefresh> commitLayerTreeMessageState;
         std::optional<TransactionID> pendingLayerTreeTransactionID;
-        bool receivedCommitLayerTreePendingConfirmation { false };
+        std::optional<TransactionID> committedLayerTreeTransactionID;
     };
 
     ProcessState& processStateForConnection(IPC::Connection&);
@@ -190,7 +200,7 @@ private:
     bool m_isWaitingForDidUpdateGeometry { false };
 
     void didRefreshDisplay(IPC::Connection*);
-    void didRefreshDisplay(ProcessState&, IPC::Connection&);
+    IPC::Error didRefreshDisplay(ProcessState&, IPC::Connection&);
     bool maybePauseDisplayRefreshCallbacks();
 
     ProcessState m_webPageProxyProcessState;
@@ -211,14 +221,14 @@ private:
     std::optional<ActivityStateChangeID> m_activityStateChangeForUnhidingContent;
     bool m_hasDetachedRootLayer { false };
 
-#if ASSERT_ENABLED
-    TransactionID m_lastVisibleTransactionID;
-#endif
-    TransactionID m_transactionIDForPendingCACommit;
     ActivityStateChangeID m_activityStateChangeID { ActivityStateChangeAsynchronous };
 
     unsigned m_countOfTransactionsWithNonEmptyLayerChanges { 0 };
 };
+
+TextStream& operator<<(TextStream&, const RemoteLayerTreeDrawingAreaProxy::Idle&);
+TextStream& operator<<(TextStream&, const RemoteLayerTreeDrawingAreaProxy::NeedsDisplayDidRefresh&);
+TextStream& operator<<(TextStream&, const RemoteLayerTreeDrawingAreaProxy::CommitLayerTreePending&);
 
 } // namespace WebKit
 

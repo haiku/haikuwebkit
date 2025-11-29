@@ -372,7 +372,7 @@ void InlineFormattingContext::layoutFloatContentOnly(const ConstraintsForInlineC
 
             auto floatBoxTopLeft = floatingContext.positionForFloat(floatBox, floatBoxGeometry, constraints.horizontal());
             floatBoxGeometry.setTopLeft(floatBoxTopLeft);
-            placedFloats.append(floatingContext.makeFloatItem(floatBox, floatBoxGeometry));
+            placedFloats.add(floatingContext.makeFloatItem(floatBox, floatBoxGeometry));
             continue;
         }
         ASSERT_NOT_REACHED();
@@ -479,7 +479,7 @@ bool InlineFormattingContext::createDisplayContentForLineFromCachedContent(const
             return { };
         if (ceiledLayoutUnit(lineContent.contentGeometry.logicalWidth) + LayoutUnit::epsilon() <= horizontalAvailableSpace)
             return { };
-        if (!Line::restoreTrimmedTrailingWhitespace(lineContent.trimmedTrailingWhitespaceWidth, lineContent.inlineAndOpaqueContent, lineContent.inlineItemRange, inlineContentCache.inlineItems().content())) {
+        if (!Line::restoreTrimmedTrailingWhitespace(lineContent.trimmedTrailingWhitespaceWidth, lineContent.runs, lineContent.inlineItemRange, inlineContentCache.inlineItems().content())) {
             ASSERT_NOT_REACHED();
             return false;
         }
@@ -496,7 +496,7 @@ bool InlineFormattingContext::createDisplayContentForLineFromCachedContent(const
 
     lineContent.lineGeometry.logicalTopLeft = { constraints.horizontal().logicalLeft, constraints.logicalTop() };
     lineContent.lineGeometry.logicalWidth = constraints.horizontal().logicalWidth;
-    lineContent.contentGeometry.logicalLeft = InlineFormattingUtils::horizontalAlignmentOffset(root().style(), lineContent.contentGeometry.logicalWidth, lineContent.lineGeometry.logicalWidth, lineContent.hangingContent.logicalWidth, lineContent.inlineAndOpaqueContent, true);
+    lineContent.contentGeometry.logicalLeft = InlineFormattingUtils::horizontalAlignmentOffset(root().style(), lineContent.contentGeometry.logicalWidth, lineContent.lineGeometry.logicalWidth, lineContent.hangingContent.logicalWidth, lineContent.runs, true);
     auto lineBox = LineBoxBuilder { *this, lineContent }.build({ });
     size_t numberOfContentfulLines = 0;
     createDisplayContentForInlineContent(lineBox, lineContent, constraints, layoutResult.displayContent, numberOfContentfulLines);

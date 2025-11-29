@@ -1288,9 +1288,6 @@ template<GridTrackSizingDirection direction> Ref<CSSValue> extractGridTemplateVa
 
     auto& tracks = state.style.gridTemplateList(direction);
 
-    if (tracks.masonry)
-        return createCSSValue(state.pool, state.style, CSS::Keyword::Masonry { });
-
     auto* renderGrid = dynamicDowncast<RenderGrid>(state.renderer);
 
     auto& trackSizes = tracks.sizes;
@@ -1385,9 +1382,6 @@ template<GridTrackSizingDirection direction> Ref<CSSValue> extractGridTemplateVa
             },
             [&](const GridTrackEntrySubgrid&) {
                 list.append(createCSSValue(state.pool, state.style, CSS::Keyword::Subgrid { }));
-            },
-            [&](const GridTrackEntryMasonry&) {
-                list.append(createCSSValue(state.pool, state.style, CSS::Keyword::Masonry { }));
             }
         );
     }

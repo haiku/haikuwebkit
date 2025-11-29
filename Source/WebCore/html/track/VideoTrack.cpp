@@ -155,17 +155,17 @@ void VideoTrack::idChanged(TrackID id)
     });
 }
 
-void VideoTrack::labelChanged(const AtomString& label)
+void VideoTrack::labelChanged(const String& label)
 {
-    setLabel(label);
+    setLabel(AtomString { label.isolatedCopy() });
     m_clients.forEach([this] (auto& client) {
         client.videoTrackLabelChanged(*this);
     });
 }
 
-void VideoTrack::languageChanged(const AtomString& language)
+void VideoTrack::languageChanged(const String& language)
 {
-    setLanguage(language);
+    setLanguage(AtomString { language.isolatedCopy() });
 }
 
 void VideoTrack::willRemove()

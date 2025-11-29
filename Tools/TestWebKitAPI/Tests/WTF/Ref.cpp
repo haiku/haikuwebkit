@@ -279,7 +279,7 @@ TEST(WTF_Ref, StaticReferenceCastFromConstReference)
     {
         DerivedRefCheckingRefLogger a("a");
         const Ref<DerivedRefCheckingRefLogger> ref(a);
-        auto ref2 = static_reference_cast<RefCheckingRefLogger>(ref);
+        auto ref2 = upcast<RefCheckingRefLogger>(ref);
     }
     EXPECT_STREQ("ref(a) ref(a) deref(a) deref(a) ", takeLogStr().c_str());
 }
@@ -289,7 +289,7 @@ TEST(WTF_Ref, StaticReferenceCastFromRValueReference)
     {
         DerivedRefCheckingRefLogger a("a");
         Ref<DerivedRefCheckingRefLogger> ref(a);
-        auto ref2 = static_reference_cast<RefCheckingRefLogger>(WTFMove(ref));
+        auto ref2 = upcast<RefCheckingRefLogger>(WTFMove(ref));
     }
     EXPECT_STREQ("ref(a) deref(a) ", takeLogStr().c_str());
 }

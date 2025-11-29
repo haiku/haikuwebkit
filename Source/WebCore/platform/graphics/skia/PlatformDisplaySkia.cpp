@@ -301,7 +301,7 @@ GrDirectContext* PlatformDisplay::skiaGrContext()
 
 unsigned PlatformDisplay::msaaSampleCount() const
 {
-    return s_skiaGLContext->sampleCount();
+    return s_skiaGLContext ? s_skiaGLContext->sampleCount() : 0;
 }
 
 void PlatformDisplay::clearSkiaGLContext()

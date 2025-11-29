@@ -1262,10 +1262,12 @@ void WebAuthenticatorCoordinatorProxy::isUserVerifyingPlatformAuthenticatorAvail
             return;
         }
 
+#if HAVE(WEB_AUTHN_PUBLIC_KEY_CREDENTIAL_MANAGER)
         if (![getASAuthorizationWebBrowserPublicKeyCredentialManagerClassSingleton() isDeviceConfiguredForPasskeys]) {
             handler(false);
             return;
         }
+#endif
 
         getArePasskeysDisallowedForRelyingParty(data, [handler = WTFMove(handler)](bool passkeysDisallowed) mutable {
             handler(!passkeysDisallowed);

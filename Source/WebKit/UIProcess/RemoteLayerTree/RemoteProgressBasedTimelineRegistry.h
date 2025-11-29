@@ -41,6 +41,8 @@ public:
     bool isEmpty() const { return m_timelines.isEmpty(); }
     void update(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&);
     RemoteProgressBasedTimeline* get(const TimelineID&) const;
+    void updateTimelinesForNode(const WebCore::ScrollingTreeScrollingNode&);
+    bool hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode&) const;
 
 private:
     UncheckedKeyHashMap<WebCore::ProcessIdentifier, UncheckedKeyHashMap<WebCore::ScrollingNodeID, HashSet<Ref<RemoteProgressBasedTimeline>>>> m_timelines;

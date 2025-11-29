@@ -201,11 +201,11 @@ private:
         HTMLStackItem& contextElementStackItem();
 
     private:
-        DocumentFragment* m_fragment { nullptr };
+        WeakPtr<DocumentFragment, WeakPtrImplWithEventTargetData> m_fragment;
         HTMLStackItem m_contextElementStackItem;
     };
 
-    HTMLDocumentParser& m_parser;
+    WeakRef<HTMLDocumentParser> m_parser;
     const HTMLParserOptions m_options;
     FragmentParsingContext m_fragmentContext;
 
@@ -264,7 +264,7 @@ inline bool HTMLTreeBuilder::hasParserBlockingScriptWork() const
 
 inline DocumentFragment* HTMLTreeBuilder::FragmentParsingContext::fragment() const
 {
-    return m_fragment;
+    return m_fragment.get();
 }
 
 } // namespace WebCore

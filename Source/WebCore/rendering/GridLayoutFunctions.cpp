@@ -51,10 +51,13 @@ static inline bool marginEndIsAuto(const RenderBox& gridItem, Style::GridTrackSi
 
 static bool gridItemHasMargin(const RenderBox& gridItem, Style::GridTrackSizingDirection direction)
 {
-    // `isPossiblyZero` returns true for 'auto' margins, which is aligned with the purpose of this function.
+    auto hasMarginEdge = [](auto& edge) {
+        return !edge.isKnownZero() && !edge.isAuto();
+    };
+
     if (direction == Style::GridTrackSizingDirection::Columns)
-        return !gridItem.style().marginStart().isPossiblyZero() || !gridItem.style().marginEnd().isPossiblyZero();
-    return !gridItem.style().marginBefore().isPossiblyZero() || !gridItem.style().marginAfter().isPossiblyZero();
+        return hasMarginEdge(gridItem.style().marginStart()) || hasMarginEdge(gridItem.style().marginEnd());
+    return hasMarginEdge(gridItem.style().marginBefore()) || hasMarginEdge(gridItem.style().marginAfter());
 }
 
 LayoutUnit computeMarginLogicalSizeForGridItem(const RenderGrid& grid, Style::GridTrackSizingDirection direction, const RenderBox& gridItem)
@@ -249,11 +252,11 @@ bool hasAutoSizeInColumnAxis(const RenderBox& gridItem, WritingMode parentWritin
 {
     if (gridItem.style().hasAspectRatio()) {
         // FIXME: should align-items + align-self: auto/justify-items + justify-self: auto be taken into account?
-        if (parentWritingMode.isHorizontal() == gridItem.isHorizontalWritingMode() && gridItem.style().alignSelf().position() != ItemPosition::Stretch) {
+        if (parentWritingMode.isHorizontal() == gridItem.isHorizontalWritingMode() && !gridItem.style().alignSelf().isStretch()) {
             // A non-auto inline size means the same for block size (column axis size) because of the aspect ratio.
             if (!gridItem.style().logicalWidth().isAuto())
                 return false;
-        } else if (gridItem.style().justifySelf().position() != ItemPosition::Stretch) {
+        } else if (!gridItem.style().justifySelf().isStretch()) {
             auto& logicalHeight = gridItem.style().logicalHeight();
             if (logicalHeight.isFixed() || (logicalHeight.isPercentOrCalculated() && gridItem.percentageLogicalHeightIsResolvable()))
                 return false;
@@ -266,12 +269,12 @@ bool hasAutoSizeInRowAxis(const RenderBox& gridItem, WritingMode parentWritingMo
 {
     if (gridItem.style().hasAspectRatio()) {
         // FIXME: should align-items + align-self: auto/justify-items + justify-self: auto be taken into account?
-        if (parentWritingMode.isHorizontal() == gridItem.isHorizontalWritingMode() && gridItem.style().alignSelf().position() != ItemPosition::Stretch) {
+        if (parentWritingMode.isHorizontal() == gridItem.isHorizontalWritingMode() && !gridItem.style().alignSelf().isStretch()) {
             // A non-auto block size means the same for inline size (row axis size) because of the aspect ratio.
             auto& logicalHeight = gridItem.style().logicalHeight();
             if (logicalHeight.isFixed() || (logicalHeight.isPercentOrCalculated() && gridItem.percentageLogicalHeightIsResolvable()))
                 return false;
-        } else if (gridItem.style().justifySelf().position() != ItemPosition::Stretch) {
+        } else if (!gridItem.style().justifySelf().isStretch()) {
             if (!gridItem.style().logicalWidth().isAuto())
                 return false;
         }

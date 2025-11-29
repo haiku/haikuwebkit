@@ -792,7 +792,7 @@ inline StringImpl* JSString::tryGetValueImpl() const
 
 inline JSString* asString(JSValue value)
 {
-    ASSERT(value.isString());
+    ASSERT(value.isStringSlow());
     return jsCast<JSString*>(value.asCell());
 }
 

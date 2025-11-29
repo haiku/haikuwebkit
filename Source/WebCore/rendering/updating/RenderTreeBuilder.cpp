@@ -783,7 +783,7 @@ void RenderTreeBuilder::createAnonymousWrappersForInlineContent(RenderBlock& par
     parent.repaint();
 }
 
-RenderObject* RenderTreeBuilder::splitAnonymousBoxesAroundChild(RenderBox& parent, RenderObject& originalBeforeChild)
+RenderObject* RenderTreeBuilder::splitAnonymousBoxesAroundChild(RenderBoxModelObject& parent, RenderObject& originalBeforeChild)
 {
     // Adjust beforeChild if it is a column spanner and has been moved out of its original position.
     auto* beforeChild = RenderTreeBuilder::MultiColumn::adjustBeforeChildForMultiColumnSpannerIfNeeded(originalBeforeChild);
@@ -799,7 +799,7 @@ RenderObject* RenderTreeBuilder::splitAnonymousBoxesAroundChild(RenderBox& paren
             auto newPostBox = createAnonymousBoxWithSameTypeAndWithStyle(boxToSplit, parent.style());
             auto& postBox = *newPostBox;
             postBox.setChildrenInline(boxToSplit.childrenInline());
-            RenderBox* parentBox = downcast<RenderBox>(boxToSplit.parent());
+            auto* parentBox = downcast<RenderBoxModelObject>(boxToSplit.parent());
             // We need to invalidate the |parentBox| before inserting the new node
             // so that the table repainting logic knows the structure is dirty.
             // See for example RenderTableCell:clippedOverflowRectForRepaint.
@@ -999,6 +999,8 @@ void RenderTreeBuilder::updateAfterDescendants(RenderElement& renderer)
         listBuilder().updateItemMarker(*listItem);
     if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(renderer))
         multiColumnBuilder().updateAfterDescendants(*blockFlow);
+    if (auto* inlineRenderer = dynamicDowncast<RenderInline>(renderer))
+        inlineBuilder().updateAfterDescendants(*inlineRenderer);
 }
 
 RenderPtr<RenderObject> RenderTreeBuilder::detachFromRenderGrid(RenderGrid& parent, RenderObject& child, WillBeDestroyed willBeDestroyed)
@@ -1122,7 +1124,7 @@ void RenderTreeBuilder::reportVisuallyNonEmptyContent(const RenderElement& paren
     }
 }
 
-void RenderTreeBuilder::markBoxForRelayoutAfterSplit(RenderBox& box)
+void RenderTreeBuilder::markBoxForRelayoutAfterSplit(RenderBoxModelObject& box)
 {
     // FIXME: The table code should handle that automatically. If not,
     // we should fix it and remove the table part checks.

@@ -574,6 +574,15 @@ void DDMesh::setCameraDistance(float distance)
 #endif
 }
 
+void DDMesh::play(bool play)
+{
+#if ENABLE(WEBGPU_SWIFT)
+    [m_ddReceiver setPlaying:play];
+#else
+    UNUSED_PARAM(play);
+#endif
+}
+
 }
 
 #pragma mark WGPU Stubs
@@ -631,4 +640,9 @@ WGPU_EXPORT void wgpuDDMaterialAdd(WGPUDDMesh mesh, WGPUDDMaterialDescriptor* de
 WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance)
 {
     WebGPU::protectedFromAPI(mesh)->setCameraDistance(distance);
+}
+
+WGPU_EXPORT void wgpuDDMeshPlay(WGPUDDMesh mesh, bool play)
+{
+    WebGPU::protectedFromAPI(mesh)->play(play);
 }

@@ -67,7 +67,7 @@ platform/ios/PlaybackSessionInterfaceAVKitLegacy.mm
 platform/ios/WebAVPlayerController.mm
 platform/libwebrtc/LibWebRTCVPXVideoDecoder.cpp
 platform/mediastream/mac/AVVideoCaptureSource.mm
-platform/mediastream/mac/CoreAudioSharedUnit.mm
+platform/mediastream/mac/CoreAudioCaptureUnit.mm
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/network/mac/ResourceHandleMac.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm

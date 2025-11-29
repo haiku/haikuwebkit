@@ -27,9 +27,7 @@
 
 #if ENABLE(VIDEO)
 
-#include <WebCore/HTMLMediaElement.h>
 #include <WebCore/RenderImage.h>
-#include <WebCore/RenderObjectNode.h>
 
 namespace WebCore {
 
@@ -40,8 +38,8 @@ public:
     RenderMedia(Type, HTMLMediaElement&, RenderStyle&&);
     virtual ~RenderMedia();
 
-    HTMLMediaElement& mediaElement() const { return downcast<HTMLMediaElement>(nodeForNonAnonymous()); }
-    Ref<HTMLMediaElement> protectedMediaElement() const { return mediaElement(); }
+    inline HTMLMediaElement& mediaElement() const; // Defined in RenderMediaInlines.h
+    inline Ref<HTMLMediaElement> protectedMediaElement() const; // Defined in RenderMediaInlines.h
 
     bool shouldDisplayBrokenImageIcon() const final { return false; }
 
@@ -60,16 +58,6 @@ private:
     bool isImage() const final { return false; }
     void paintReplaced(PaintInfo&, const LayoutPoint&) override;
 };
-
-inline bool HTMLMediaElement::hasRenderer() const
-{
-    return is<RenderMedia>(Node::renderer());
-}
-
-inline RenderMedia* HTMLMediaElement::renderer() const
-{
-    return downcast<RenderMedia>(Node::renderer());
-}
 
 } // namespace WebCore
 

@@ -330,9 +330,14 @@ auto JavaScriptEvaluationResult::JSExtractor::toValue(JSGlobalContextRef context
         return Seconds(JSValueToNumber(context, object, 0) / 1000.0);
 
     if (JSValueIsArray(context, object)) {
+        JSValueRef exception { nullptr };
         SUPPRESS_UNCOUNTED_ARG JSValueRef lengthPropertyName = JSValueMakeString(context, adopt(JSStringCreateWithUTF8CString("length")).get());
-        JSValueRef lengthValue = JSObjectGetPropertyForKey(context, object, lengthPropertyName, nullptr);
-        double lengthDouble = JSValueToNumber(context, lengthValue, nullptr);
+        JSValueRef lengthValue = JSObjectGetPropertyForKey(context, object, lengthPropertyName, &exception);
+        if (exception)
+            return std::nullopt;
+        double lengthDouble = JSValueToNumber(context, lengthValue, &exception);
+        if (exception)
+            return std::nullopt;
         if (lengthDouble < 0 || lengthDouble > static_cast<double>(std::numeric_limits<size_t>::max()))
             return EmptyType::Undefined;
 
@@ -342,7 +347,11 @@ auto JavaScriptEvaluationResult::JSExtractor::toValue(JSGlobalContextRef context
             return EmptyType::Undefined;
 
         for (size_t i = 0; i < length; ++i) {
-            if (auto identifier = addObjectToMap(context, JSObjectGetPropertyAtIndex(context, object, i, nullptr)))
+            JSValueRef exception { nullptr };
+            JSValueRef element = JSObjectGetPropertyAtIndex(context, object, i, &exception);
+            if (!element || exception)
+                return std::nullopt;
+            if (auto identifier = addObjectToMap(context, element))
                 vector.append(*identifier);
         }
         return { WTFMove(vector) };
@@ -366,8 +375,13 @@ auto JavaScriptEvaluationResult::JSExtractor::toValue(JSGlobalContextRef context
     ObjectMap map;
     for (size_t i = 0; i < length; i++) {
         JSRetainPtr<JSStringRef> key = JSPropertyNameArrayGetNameAtIndex(names, i);
-        SUPPRESS_UNCOUNTED_ARG auto keyID = addObjectToMap(context, JSValueMakeString(context, key.get()));
-        SUPPRESS_UNCOUNTED_ARG auto valueID = addObjectToMap(context, JSObjectGetPropertyForKey(context, object, JSValueMakeString(context, key.get()), nullptr));
+        SUPPRESS_UNCOUNTED_ARG JSValueRef keyJSValue = JSValueMakeString(context, key.get());
+        SUPPRESS_UNCOUNTED_ARG auto keyID = addObjectToMap(context, keyJSValue);
+        JSValueRef exception { nullptr };
+        SUPPRESS_UNCOUNTED_ARG JSValueRef value = JSObjectGetPropertyForKey(context, object, keyJSValue, &exception);
+        if (exception)
+            continue;
+        SUPPRESS_UNCOUNTED_ARG auto valueID = addObjectToMap(context, value);
         if (keyID && valueID)
             map.add(*keyID, *valueID);
     }
@@ -401,16 +415,29 @@ JSValueRef JavaScriptEvaluationResult::JSInserter::toJS(JSGlobalContextRef conte
         auto string = OpaqueJSString::tryCreate(WTFMove(value));
         return JSValueMakeString(context, string.get());
     }, [&] (Seconds value) -> JSValueRef {
+        JSValueRef exception { nullptr };
         JSValueRef argument = JSValueMakeNumber(context, value.value() * 1000.0);
-        return JSObjectMakeDate(context, 1, &argument, 0);
+        JSObjectRef date = JSObjectMakeDate(context, 1, &argument, &exception);
+        if (date && !exception)
+            return date;
+        ASSERT_NOT_REACHED();
+        return JSValueMakeUndefined(context);
     }, [&] (Vector<JSObjectID>&& vector) -> JSValueRef {
-        JSValueRef array = JSObjectMakeArray(context, 0, nullptr, 0);
-        m_arrays.append({ WTFMove(vector), Protected<JSValueRef>(context, array) });
-        return array;
+        JSValueRef exception { nullptr };
+        JSValueRef array = JSObjectMakeArray(context, 0, nullptr, &exception);
+        if (array && !exception) {
+            m_arrays.append({ WTFMove(vector), Protected<JSValueRef>(context, array) });
+            return array;
+        }
+        ASSERT_NOT_REACHED();
+        return JSValueMakeUndefined(context);
     }, [&] (ObjectMap&& map) -> JSValueRef {
-        JSObjectRef dictionary = JSObjectMake(context, 0, 0);
-        m_dictionaries.append({ WTFMove(map), Protected<JSObjectRef>(context, dictionary) });
-        return dictionary;
+        if (JSObjectRef dictionary = JSObjectMake(context, nullptr, nullptr)) {
+            m_dictionaries.append({ WTFMove(map), Protected<JSObjectRef>(context, dictionary) });
+            return dictionary;
+        }
+        ASSERT_NOT_REACHED();
+        return JSValueMakeUndefined(context);
     }, [&] (UniqueRef<JSHandleInfo>&& info) -> JSValueRef {
         auto [originalGlobalObject, object] = WebCore::WebKitJSHandle::objectForIdentifier(info.get().identifier);
         if (!object)
@@ -448,8 +475,9 @@ Protected<JSValueRef> JavaScriptEvaluationResult::toJS(JSGlobalContextRef contex
             if (!key)
                 continue;
             ASSERT(JSValueIsString(context, key.get()));
-            SUPPRESS_UNCOUNTED_ARG auto keyString = adopt(JSValueToStringCopy(context, key.get(), nullptr));
-            if (!keyString)
+            JSValueRef exception { nullptr };
+            SUPPRESS_UNCOUNTED_ARG auto keyString = adopt(JSValueToStringCopy(context, key.get(), &exception));
+            if (!keyString || exception)
                 continue;
             Protected<JSValueRef> value = instantiatedJSObjects.get(valueIdentifier);
             if (!value)

@@ -69,7 +69,7 @@ private:
 
     Ref<WorkQueue> m_workQueue;
     AllowDatabaseWrite m_allowDatabaseWrite { AllowDatabaseWrite::Yes };
-    WebCore::SQLiteDatabase m_db;
+    UniqueRef<WebCore::SQLiteDatabase> m_db;
     HashMap<String, ListHashSet<String>> m_pageURLToIconURLMap;
     Lock m_pageURLToIconURLMapLock;
     HashMap<String, std::pair<WebCore::PlatformImagePtr, MonotonicTime>> m_loadedIcons WTF_GUARDED_BY_LOCK(m_loadedIconsLock);

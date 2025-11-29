@@ -267,7 +267,7 @@ void MemoryPressureHandler::setProcessState(WebsamProcessState state)
 
 ASCIILiteral MemoryPressureHandler::processStateDescription()
 {
-    if (auto handler = memoryPressureHandlerIfExists()) {
+    if (RefPtr handler = memoryPressureHandlerIfExists()) {
         switch (handler->processState()) {
         case WebsamProcessState::Active:
             return "active"_s;

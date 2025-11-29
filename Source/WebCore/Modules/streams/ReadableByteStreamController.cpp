@@ -240,6 +240,14 @@ void ReadableByteStreamController::didStart(JSDOMGlobalObject& globalObject)
     callPullIfNeeded(globalObject);
 }
 
+// Part of https://streams.spec.whatwg.org/#readablestream-close
+void ReadableByteStreamController::closeAndRespondToPendingPullIntos(JSDOMGlobalObject& globalObject)
+{
+    close(globalObject);
+    while (!m_pendingPullIntos.isEmpty())
+        respond(globalObject, 0);
+}
+
 // https://streams.spec.whatwg.org/#readable-byte-stream-controller-close
 void ReadableByteStreamController::close(JSDOMGlobalObject& globalObject)
 {
@@ -298,12 +306,28 @@ ExceptionOr<void> ReadableByteStreamController::enqueue(JSDOMGlobalObject& globa
     if (!buffer || buffer->isDetached())
         return Exception { ExceptionCode::TypeError, "view is detached"_s };
 
-    auto byteOffset = view.byteOffset();
-    auto byteLength = view.byteLength();
+    return enqueue(globalObject, *buffer, view.byteOffset(), view.byteLength());
+}
+
+ExceptionOr<void> ReadableByteStreamController::enqueue(JSDOMGlobalObject& globalObject, JSC::ArrayBuffer& buffer)
+{
+    if (m_closeRequested || protectedStream()->state() != ReadableStream::State::Readable)
+        return { };
+
+    if (buffer.isDetached())
+        return Exception { ExceptionCode::TypeError, "view is detached"_s };
+
+    return enqueue(globalObject, buffer, 0, buffer.byteLength());
+}
+
+ExceptionOr<void> ReadableByteStreamController::enqueue(JSDOMGlobalObject& globalObject, JSC::ArrayBuffer& buffer, size_t byteOffset, size_t byteLength)
+{
+    ASSERT(!m_closeRequested && protectedStream()->state() == ReadableStream::State::Readable);
+    ASSERT(!buffer.isDetached());
 
     Ref vm = globalObject.vm();
 
-    auto transferredBufferOrException = transferArrayBuffer(vm, *buffer);
+    auto transferredBufferOrException = transferArrayBuffer(vm, buffer);
     if (transferredBufferOrException.hasException())
         return transferredBufferOrException.releaseException();
 
@@ -682,7 +706,6 @@ void ReadableByteStreamController::pullInto(JSDOMGlobalObject& globalObject, JSC
             readIntoRequest->runErrorSteps(e);
             return;
         }
-
     }
 
     m_pendingPullIntos.append(WTFMove(pullIntoDescriptor));

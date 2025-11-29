@@ -513,9 +513,9 @@ private:
                     highArgs.append(childParts.second);
 
                     if (rep.isStack())
-                        rep = B3::ValueRep::stack(checkedSum<intptr_t>(rep.offsetFromFP(), static_cast<intptr_t>(bytesForWidth(Width32))));
+                        rep = B3::ValueRep::stack(checkedSum<intptr_t>(rep.offsetFromFP(), static_cast<intptr_t>(bytesForWidth(Width32))).value());
                     else if (rep.isStackArgument())
-                        rep = B3::ValueRep::stackArgument(checkedSum<intptr_t>(rep.offsetFromSP(), static_cast<intptr_t>(bytesForWidth(Width32))));
+                        rep = B3::ValueRep::stackArgument(checkedSum<intptr_t>(rep.offsetFromSP(), static_cast<intptr_t>(bytesForWidth(Width32))).value());
 
                     highReps.append(rep);
                 } else
@@ -580,9 +580,9 @@ private:
                     || rep.kind() == ValueRep::SomeLateRegister
                     || rep.isAny());
                 if (rep.isStack())
-                    rep = B3::ValueRep::stack(checkedSum<intptr_t>(rep.offsetFromFP(), static_cast<intptr_t>(bytesForWidth(Width32))));
+                    rep = B3::ValueRep::stack(checkedSum<intptr_t>(rep.offsetFromFP(), static_cast<intptr_t>(bytesForWidth(Width32))).value());
                 else if (rep.isStackArgument())
-                    rep = B3::ValueRep::stackArgument(checkedSum<intptr_t>(rep.offsetFromSP(), static_cast<intptr_t>(bytesForWidth(Width32))));
+                    rep = B3::ValueRep::stackArgument(checkedSum<intptr_t>(rep.offsetFromSP(), static_cast<intptr_t>(bytesForWidth(Width32))).value());
                 patchpoint->resultConstraints.append(rep);
                 setMapping(m_value, valueLo(patchpoint, m_index + 1), valueHi(patchpoint, m_index + 1));
                 valueReplaced();

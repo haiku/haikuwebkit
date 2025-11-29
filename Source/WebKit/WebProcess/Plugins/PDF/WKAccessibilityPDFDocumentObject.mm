@@ -146,7 +146,7 @@
 {
     if (RefPtr plugin = _pdfPlugin.get()) {
         if (auto coreObject = plugin->accessibilityCoreObject())
-            [coreObject->wrapper() accessibilityScroll:direction];
+            [coreObject->protectedWrapper() accessibilityScroll:direction];
     }
     return YES;
 }
@@ -165,7 +165,7 @@
             if (CheckedPtr existingCache = plugin->axObjectCache()) {
                 if (RefPtr object = existingCache->exportedGetOrCreate(activeAnnotation->protectedElement().get())) {
                 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-                    return [object->wrapper() accessibilityAttributeValue:@"_AXAssociatedPluginParent"];
+                    return [object->protectedWrapper() accessibilityAttributeValue:@"_AXAssociatedPluginParent"];
                 ALLOW_DEPRECATED_DECLARATIONS_END
                 }
             }
@@ -225,7 +225,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         callOnMainRunLoopAndWait([protectedSelf] {
             if (CheckedPtr axObjectCache = protectedSelf->_pdfPlugin.get()->axObjectCache()) {
                 if (RefPtr pluginAxObject = axObjectCache->exportedGetOrCreate(RefPtr { protectedSelf->_pluginElement.get() }.get()))
-                    protectedSelf->_parent = pluginAxObject->wrapper();
+                    protectedSelf->_parent = pluginAxObject->protectedWrapper().get();
             }
         });
     }

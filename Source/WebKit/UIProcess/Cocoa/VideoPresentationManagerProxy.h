@@ -90,7 +90,7 @@ private:
     void setVideoLayerFrame(WebCore::FloatRect) override;
     void setVideoLayerGravity(WebCore::MediaPlayerEnums::VideoGravity) override;
     void setVideoFullscreenFrame(WebCore::FloatRect) override;
-    void fullscreenModeChanged(WebCore::HTMLMediaElementEnums::VideoFullscreenMode) override;
+    void fullscreenModeChanged(WebCore::HTMLMediaElementEnums::VideoFullscreenMode, ShouldNotifyMediaElement) override;
     bool hasVideo() const override { return m_hasVideo; }
     bool isChildOfElementFullscreen() const final { return m_isChildOfElementFullscreen; }
 

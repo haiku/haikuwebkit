@@ -67,4 +67,8 @@ testScopeBreaking(":not(:has(~ :not(foo bar)))");
 testScopeBreaking(":not(:has(+ foo bar))");
 testScopeBreaking(":not(:has(+ :not(foo)))");
 testScopeBreaking(":not(:has(+ :not(foo bar)))");
+testScopeBreaking(":has(> :is(.x > .y))");
+testScopeBreaking(":has(> :is(.x .y))");
+testScopeBreaking(":has(:is(.x > .y))");
+testScopeBreaking("ol:has(> :is(.count-and-index-99-children > li:nth-child(10n+1)))");
 </script>

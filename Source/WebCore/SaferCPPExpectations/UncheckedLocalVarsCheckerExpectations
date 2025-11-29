@@ -6,7 +6,6 @@ Modules/model-element/HTMLModelElement.cpp
 Modules/push-api/PushDatabase.cpp
 Modules/storage/WorkerStorageConnection.cpp
 Modules/webaudio/AudioWorkletGlobalScope.cpp
-Modules/webdatabase/SQLStatement.cpp
 accessibility/AXObjectCache.cpp
 accessibility/AccessibilityListBoxOption.cpp
 accessibility/AccessibilityMathMLElement.cpp
@@ -73,8 +72,6 @@ dom/ComposedTreeIterator.cpp
 dom/ComposedTreeIterator.h
 dom/ContainerNodeAlgorithms.cpp
 dom/CustomElementReactionQueue.cpp
-dom/DeviceMotionController.cpp
-dom/DeviceOrientationController.cpp
 dom/Document.cpp
 dom/Element.cpp
 dom/ElementAndTextDescendantIterator.h
@@ -129,7 +126,6 @@ editing/cocoa/WebContentReaderCocoa.mm
 [ Mac ] editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
 history/CachedFrame.cpp
-html/Autofill.cpp
 html/CachedHTMLCollectionInlines.h
 html/CollectionTraversalInlines.h
 html/FormAssociatedCustomElement.cpp
@@ -138,10 +134,8 @@ html/FormListedElement.cpp
 html/HTMLDocument.cpp
 html/HTMLFormControlElement.cpp
 html/HTMLFormElement.cpp
-html/HTMLImageElement.cpp
 [ iOS ] html/HTMLImageLoader.cpp
 html/HTMLInputElement.cpp
-html/HTMLMediaElement.cpp
 html/HTMLSlotElement.cpp
 html/HTMLStyleElement.cpp
 html/HTMLTextFormControlElement.cpp
@@ -246,7 +240,6 @@ page/AutoscrollController.cpp
 [ iOS ] page/Chrome.cpp
 [ Mac ] page/ContextMenuController.cpp
 [ iOS ] page/DOMTimer.cpp
-page/DeviceController.cpp
 page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
@@ -264,7 +257,6 @@ page/LocalFrame.cpp
 page/LocalFrameView.cpp
 page/LocalFrameViewLayoutContext.cpp
 page/PageColorSampler.cpp
-page/PageOverlay.cpp
 page/PageSerializer.cpp
 page/PerformanceTiming.cpp
 page/PrintContext.cpp
@@ -288,7 +280,6 @@ page/scrolling/ScrollSnapOffsetsInfo.cpp
 page/scrolling/ScrollingCoordinator.cpp
 page/text-extraction/TextExtraction.cpp
 page/writing-tools/WritingToolsController.mm
-platform/CaretAnimator.cpp
 platform/DictationCaretAnimator.cpp
 platform/DragImage.cpp
 platform/ScrollView.cpp

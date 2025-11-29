@@ -41,7 +41,7 @@ AgentRegistry::~AgentRegistry()
         agent->discardAgent();
 }
 
-void AgentRegistry::append(std::unique_ptr<InspectorAgentBase> agent)
+void AgentRegistry::append(UniqueRef<InspectorAgentBase>&& agent)
 {
     m_agents.append(WTFMove(agent));
 }

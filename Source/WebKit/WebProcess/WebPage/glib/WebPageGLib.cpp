@@ -278,6 +278,11 @@ void WebPage::getRenderProcessInfo(CompletionHandler<void(RenderProcessInfo&&)>&
         break;
 #endif
 #endif
+#if OS(ANDROID)
+    case PlatformDisplay::Type::Android:
+        info.platform = "Android"_s;
+        break;
+#endif
 #if USE(WPE_RENDERER)
     case PlatformDisplay::Type::WPE:
         info.platform = "WPE"_s;
@@ -291,11 +296,16 @@ void WebPage::getRenderProcessInfo(CompletionHandler<void(RenderProcessInfo&&)>&
     info.msaaSampleCount = display->msaaSampleCount();
 #endif
 
+#if USE(GBM)
     if (info.platform != "WPE"_s) {
         info.supportedBufferFormats = display->bufferFormats().map([](const auto& format) -> RendererBufferFormat::Format {
-            return { format.fourcc.value, format.modifiers };
+            return {
+                format.fourcc.value,
+                format.modifiers,
+            };
         });
     }
+#endif // USE(GBM)
 
     static_cast<DrawingAreaCoordinatedGraphics*>(m_drawingArea.get())->fillGLInformation(WTFMove(info), WTFMove(completionHandler));
 }

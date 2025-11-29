@@ -32,6 +32,7 @@
 #import "InbandTextTrackPrivateClient.h"
 #import <AVFoundation/AVMetadataItem.h>
 #import <pal/avfoundation/MediaTimeAVFoundation.h>
+#import <wtf/CrossThreadCopier.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/text/StringBuilder.h>
 #import <wtf/text/WTFString.h>
@@ -66,9 +67,9 @@ void InbandChapterTrackPrivateAVFObjC::processChapters(RetainPtr<NSArray<AVTimed
             return;
         m_processedChapters.append(chapterData);
 
-        ISOWebVTTCue cueData = ISOWebVTTCue(PAL::toMediaTime([item time]), PAL::toMediaTime([item duration]), AtomString::number(chapterNumber), [item stringValue]);
+        ISOWebVTTCue cueData = ISOWebVTTCue(PAL::toMediaTime([item time]), PAL::toMediaTime([item duration]), String::number(chapterNumber), [item stringValue]);
         INFO_LOG(identifier, "created cue ", cueData);
-        notifyMainThreadClient([cueData = WTFMove(cueData)](TrackPrivateBaseClient& client) mutable {
+        notifyMainThreadClient([cueData = crossThreadCopy(WTFMove(cueData))](TrackPrivateBaseClient& client) mutable {
             downcast<InbandTextTrackPrivateClient>(client).parseWebVTTCueData(WTFMove(cueData));
         });
     });
@@ -98,7 +99,7 @@ void InbandChapterTrackPrivateAVFObjC::processChapters(RetainPtr<NSArray<AVTimed
     }
 }
 
-AtomString InbandChapterTrackPrivateAVFObjC::language() const
+String InbandChapterTrackPrivateAVFObjC::language() const
 {
     if (!m_language.isEmpty())
         return m_language;

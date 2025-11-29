@@ -88,7 +88,7 @@ class Identifier {
     friend class Structure;
 public:
     Identifier() = default;
-    enum EmptyIdentifierFlag { EmptyIdentifier };
+    enum class EmptyIdentifierFlag { EmptyIdentifier };
     Identifier(EmptyIdentifierFlag) : m_string(StringImpl::empty()) { ASSERT(m_string.impl()->isAtom()); }
 
     const AtomString& string() const { return m_string; }

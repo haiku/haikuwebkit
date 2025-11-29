@@ -34,7 +34,6 @@
 #include "CommonAtomStrings.h"
 #include "FloatConversion.h"
 #include "FontCacheCoreText.h"
-#include "HTMLMediaElement.h"
 #include "LocalizedStrings.h"
 #include "Logging.h"
 #include "TextTrackList.h"
@@ -759,6 +758,8 @@ static String trackDisplayName(const TrackBase& track, const Vector<String>& pre
 {
     if (&track == &TextTrack::captionMenuOffItem())
         return textTrackOffMenuItemText();
+    if (&track == &TextTrack::captionMenuOnItem())
+        return textTrackOnMenuItemText();
     if (&track == &TextTrack::captionMenuAutomaticItem())
         return textTrackAutomaticMenuItemText();
 
@@ -1051,6 +1052,19 @@ String CaptionUserPreferencesMediaAF::nameForProfileID(const String& profileID)
     RetainPtr cfProfileID = profileID.createCFString();
     RetainPtr cfProfileName = adoptCF(MACaptionAppearanceCopyProfileName(cfProfileID.get()));
     return cfProfileName.get();
+}
+
+String CaptionUserPreferencesMediaAF::captionPreviewTitle() const
+{
+    if (testingMode())
+        return CaptionUserPreferences::captionPreviewTitle();
+
+    String activeProfileID = platformActiveProfileID();
+    String activeProfileName = nameForProfileID(activeProfileID);
+    if (activeProfileName.isEmpty())
+        return CaptionUserPreferences::captionPreviewTitle();
+
+    return WEB_UI_FORMAT_STRING("This is the %s subtitle style", "This is the %s subtitle style (Caption User Preferences)", activeProfileName.utf8().data());
 }
 
 }

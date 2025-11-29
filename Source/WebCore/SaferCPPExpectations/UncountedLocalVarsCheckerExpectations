@@ -195,7 +195,6 @@ editing/cocoa/NodeHTMLConverter.mm
 [ Mac ] editing/mac/FrameSelectionMac.mm
 history/CachedFrame.cpp
 history/CachedPage.cpp
-html/Autofill.cpp
 html/CachedHTMLCollectionInlines.h
 html/CollectionTraversalInlines.h
 html/FormAssociatedCustomElement.cpp
@@ -203,7 +202,6 @@ html/FormListedElement.cpp
 [ iOS ] html/HTMLAnchorElement.cpp
 html/HTMLDocument.cpp
 html/HTMLFormElement.cpp
-html/HTMLImageElement.cpp
 [ iOS ] html/HTMLImageLoader.cpp
 html/HTMLInputElement.cpp
 html/HTMLMediaElement.cpp
@@ -250,18 +248,14 @@ inspector/agents/page/PageDOMDebuggerAgent.cpp
 inspector/agents/page/PageNetworkAgent.cpp
 layout/formattingContexts/inline/InlineItemsBuilder.cpp
 layout/formattingContexts/inline/InlineLineBoxBuilder.cpp
-layout/integration/inline/LayoutIntegrationLineLayout.cpp
 layout/layouttree/LayoutTreeBuilder.cpp
 loader/ApplicationManifestLoader.cpp
 loader/EmptyClients.cpp
 mathml/MathMLSelectElement.cpp
-page/BarProp.cpp
 page/CaptionUserPreferences.cpp
 [ iOS ] page/Chrome.cpp
 [ Mac ] page/ContextMenuController.cpp
 page/DebugPageOverlays.cpp
-page/DeviceController.cpp
-page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/FocusController.cpp
@@ -278,7 +272,6 @@ page/OpportunisticTaskScheduler.cpp
 page/PageColorSampler.cpp
 page/PageGroup.cpp
 page/PageGroupLoadDeferrer.cpp
-page/PageOverlay.cpp
 page/PageOverlayController.cpp
 page/PageSerializer.cpp
 page/PerformanceLogging.cpp
@@ -316,7 +309,6 @@ page/scrolling/ScrollingTreeOverflowScrollProxyNode.cpp
 page/scrolling/ScrollingTreePositionedNode.cpp
 page/scrolling/ScrollingTreeStickyNode.cpp
 page/text-extraction/TextExtraction.cpp
-platform/CaretAnimator.cpp
 platform/DictationCaretAnimator.cpp
 platform/KeyboardScrollingAnimator.cpp
 platform/ScrollAnimator.cpp

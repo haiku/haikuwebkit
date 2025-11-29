@@ -24,20 +24,15 @@ body {
 <script>
 jsTestIsAsync = true;
 
-let unexpectedValue = undefined;
+let largestDelta = 0;
 
 async function runTest()
 {
     description("Verifies that getBoundingClientRect() on a fixedpos always returns the layout value.");
 
     window.addEventListener('scroll', () => {
-        if (unexpectedValue !== undefined)
-            return;
-
         const targetTop = document.getElementById('target').getBoundingClientRect().top;
-        
-        if (targetTop != 100)
-            unexpectedValue = targetTop;
+        largestDelta = Math.max(largestDelta, Math.abs(targetTop - 100));
     }, false);
 
     if (!window.testRunner)
@@ -45,7 +40,7 @@ async function runTest()
 
     await UIHelper.dragFromPointToPoint(150, 300, 150, 50, 0.1);
     await UIHelper.waitForTargetScrollAnimationToSettle(document.scrollingElement);
-    shouldBe("unexpectedValue", "undefined");
+    shouldBe("largestDelta", "0");
 
    finishJSTest();
 }

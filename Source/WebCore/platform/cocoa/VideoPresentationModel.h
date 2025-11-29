@@ -64,7 +64,8 @@ public:
     virtual void setVideoLayerFrame(FloatRect) = 0;
     virtual void setVideoLayerGravity(MediaPlayerEnums::VideoGravity) = 0;
     virtual void setVideoFullscreenFrame(FloatRect) = 0;
-    virtual void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode) = 0;
+    enum class ShouldNotifyMediaElement { No, Yes };
+    virtual void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode, ShouldNotifyMediaElement) = 0;
 
     virtual FloatSize videoDimensions() const = 0;
     virtual bool hasVideo() const = 0;
@@ -125,6 +126,7 @@ public:
     virtual void audioSessionCategoryChanged(AudioSessionCategory, AudioSessionMode, RouteSharingPolicy) { }
     virtual void routingContextUIDChanged(const String&) { }
     virtual void hasBeenInteractedWith() { }
+    virtual void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode) { }
 };
 
 } // namespace WebCore

@@ -42,7 +42,7 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range, CSS::PropertyParserS
 {
     // <'display'>        = [ <display-outside> || <display-inside> ] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>
     // <display-outside>  = block | inline | run-in
-    // <display-inside>   = flow | flow-root | table | flex | grid | ruby
+    // <display-inside>   = flow | flow-root | table | flex | grid | masonry | ruby
     // <display-listitem> = <display-outside>? && [ flow | flow-root ]? && list-item
     // <display-internal> = table-row-group | table-header-group |
     //                      table-footer-group | table-row | table-cell |
@@ -50,36 +50,41 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range, CSS::PropertyParserS
     //                      ruby-base | ruby-text | ruby-base-container |
     //                      ruby-text-container
     // <display-box>      = contents | none
-    // <display-legacy>   = inline-block | inline-table | inline-flex | inline-grid
+    // <display-legacy>   = inline-block | inline-table | inline-flex | inline-grid | inline-masonry
     // https://drafts.csswg.org/css-display/#propdef-display
+    // FIXME: The masonry keyword is a temporary placeholder for now, so that we can run WPT tests.
 
     // Parse single keyword values
-    auto singleKeyword = consumeIdent<
-        // <display-box>
-        CSSValueContents,
-        CSSValueNone,
-        // <display-internal>
-        CSSValueTableCaption,
-        CSSValueTableCell,
-        CSSValueTableColumnGroup,
-        CSSValueTableColumn,
-        CSSValueTableHeaderGroup,
-        CSSValueTableFooterGroup,
-        CSSValueTableRow,
-        CSSValueTableRowGroup,
-        CSSValueRubyBase,
-        CSSValueRubyText,
-        // <display-legacy>
-        CSSValueInlineBlock,
-        CSSValueInlineFlex,
-        CSSValueInlineGrid,
-        CSSValueInlineTable,
-        // Prefixed values
-        CSSValueWebkitInlineBox,
-        CSSValueWebkitBox,
-        // No layout support for the full <display-listitem> syntax, so treat it as <display-legacy>
-        CSSValueListItem
-    >(range);
+    auto singleKeyword = [&]() {
+        if (state.context.itemPackCollapseDisplayGridEnabled && range.peek().id() == CSSValueInlineMasonry)
+            return consumeIdent(range);
+        return consumeIdent<
+            // <display-box>
+            CSSValueContents,
+            CSSValueNone,
+            // <display-internal>
+            CSSValueTableCaption,
+            CSSValueTableCell,
+            CSSValueTableColumnGroup,
+            CSSValueTableColumn,
+            CSSValueTableHeaderGroup,
+            CSSValueTableFooterGroup,
+            CSSValueTableRow,
+            CSSValueTableRowGroup,
+            CSSValueRubyBase,
+            CSSValueRubyText,
+            // <display-legacy>
+            CSSValueInlineBlock,
+            CSSValueInlineFlex,
+            CSSValueInlineGrid,
+            CSSValueInlineTable,
+            // Prefixed values
+            CSSValueWebkitInlineBox,
+            CSSValueWebkitBox,
+            // No layout support for the full <display-listitem> syntax, so treat it as <display-legacy>
+            CSSValueListItem
+        >(range);
+    }();
 
     auto allowsValue = [&](CSSValueID value) {
         bool isRuby = value == CSSValueRubyBase || value == CSSValueRubyText || value == CSSValueBlockRuby || value == CSSValueRuby;
@@ -118,6 +123,10 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range, CSS::PropertyParserS
             parsedDisplayOutside = nextValueID;
             break;
         // <display-inside>
+        case CSSValueMasonry:
+            if (!state.context.itemPackCollapseDisplayGridEnabled)
+                return nullptr;
+            [[fallthrough]];
         case CSSValueFlex:
         case CSSValueFlow:
         case CSSValueFlowRoot:
@@ -162,6 +171,8 @@ RefPtr<CSSValue> consumeDisplay(CSSParserTokenRange& range, CSS::PropertyParserS
             return CSSValueInlineBlock;
         case CSSValueGrid:
             return CSSValueInlineGrid;
+        case CSSValueMasonry:
+            return CSSValueInlineMasonry;
         case CSSValueTable:
             return CSSValueInlineTable;
         default:

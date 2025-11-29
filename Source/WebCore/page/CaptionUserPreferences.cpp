@@ -215,6 +215,8 @@ static String trackDisplayName(TextTrack* track)
 {
     if (track == &TextTrack::captionMenuOffItem())
         return textTrackOffMenuItemText();
+    if (track == &TextTrack::captionMenuOnItem())
+        return textTrackOnMenuItemText();
     if (track == &TextTrack::captionMenuAutomaticItem())
         return textTrackAutomaticMenuItemText();
 
@@ -456,6 +458,14 @@ String CaptionUserPreferences::primaryAudioTrackLanguageOverride() const
     if (!m_primaryAudioTrackLanguageOverride.isEmpty())
         return m_primaryAudioTrackLanguageOverride;
     return defaultLanguage(ShouldMinimizeLanguages::No);
+}
+
+String CaptionUserPreferences::captionPreviewTitle() const
+{
+    if (testingMode())
+        return "This is a preview"_s;
+
+    return WEB_UI_STRING_KEY("This is a preview style", "This is a preview style (Caption User Preferences)", "Caption Style Preview String");
 }
 
 PageGroup& CaptionUserPreferences::pageGroup() const

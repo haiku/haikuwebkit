@@ -384,7 +384,7 @@ void DrawingAreaCoordinatedGraphics::updateGeometry(const IntSize& size, Complet
     completionHandler();
 }
 
-void DrawingAreaCoordinatedGraphics::displayDidRefresh()
+void DrawingAreaCoordinatedGraphics::displayDidRefresh(MonotonicTime)
 {
     // We might get didUpdate messages from the UI process even after we've
     // entered accelerated compositing mode. Ignore them.

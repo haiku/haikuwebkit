@@ -206,7 +206,7 @@ public:
     ALWAYS_INLINE static constexpr Storage* nextTable(Storage& storage)
     {
         JSValue* value = slot(storage, aliveEntryCountIndex());
-        if (value->isCell()) {
+        if (!value->isInt32()) {
             ASSERT(jsDynamicCast<Storage*>(*value));
             return jsCast<Storage*>(*value);
         }

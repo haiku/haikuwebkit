@@ -44,6 +44,7 @@ struct PushSubscriptionSetIdentifier {
     bool operator==(const PushSubscriptionSetIdentifier&) const;
     void add(Hasher&, const PushSubscriptionSetIdentifier&);
     bool isHashTableDeletedValue() const;
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     PushSubscriptionSetIdentifier isolatedCopy() const &;
     PushSubscriptionSetIdentifier isolatedCopy() &&;
@@ -95,14 +96,6 @@ inline PushSubscriptionSetIdentifier PushSubscriptionSetIdentifier::isolatedCopy
 } // namespace WebCore
 
 namespace WTF {
-
-struct PushSubscriptionSetIdentifierHash {
-    static unsigned hash(const WebCore::PushSubscriptionSetIdentifier& key) { return computeHash(key); }
-    static bool equal(const WebCore::PushSubscriptionSetIdentifier& a, const WebCore::PushSubscriptionSetIdentifier& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = true;
-};
-
-template<> struct DefaultHash<WebCore::PushSubscriptionSetIdentifier> : PushSubscriptionSetIdentifierHash { };
 
 template<> struct HashTraits<WebCore::PushSubscriptionSetIdentifier> : GenericHashTraits<WebCore::PushSubscriptionSetIdentifier> {
     static const bool emptyValueIsZero = false;

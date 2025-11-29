@@ -53,7 +53,7 @@ struct PendingDisplayNoneActions {
     Vector<uint32_t> clientLocations;
 };
 
-using PendingDisplayNoneActionsMap = HashMap<Trigger, PendingDisplayNoneActions, TriggerHash, TriggerHashTraits>;
+using PendingDisplayNoneActionsMap = HashMap<Trigger, PendingDisplayNoneActions, DefaultHash<Trigger>, TriggerHashTraits>;
 
 static void resolvePendingDisplayNoneActions(Vector<SerializedActionByte>& actions, Vector<uint32_t>& actionLocations, PendingDisplayNoneActionsMap& map)
 {

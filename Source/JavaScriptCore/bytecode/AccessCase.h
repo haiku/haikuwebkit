@@ -36,7 +36,6 @@
 #include "ObjectPropertyConditionSet.h"
 #include "PolyProtoAccessChain.h"
 #include <wtf/CommaPrinter.h>
-#include <wtf/VectorHash.h>
 
 namespace JSC {
 

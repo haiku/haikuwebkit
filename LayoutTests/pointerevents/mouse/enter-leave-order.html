@@ -19,7 +19,6 @@ div.test-container {
 
 </style>
 </head>
-<body>
 <script src="../../resources/testharness.js"></script>
 <script src="../../resources/testharnessreport.js"></script>
 <script src="../utils.js"></script>
@@ -44,24 +43,24 @@ function makeDiv(id)
     return div;
 }
 
-// Add three nested and fully overlapping elements.
-document.body.appendChild(makeDiv("top")).appendChild(makeDiv("middle")).appendChild(makeDiv("bottom"));
-
-// mouse over and out of the elements.
-eventSender.mouseMoveTo(75, 75);
-eventSender.mouseMoveTo(25, 25);
-
-test(() => {
-    assert_array_equals(events, [
-        "pointerenter@top",
-        "pointerenter@middle",
-        "pointerenter@bottom",
-        "pointerleave@bottom",
-        "pointerleave@middle",
-        "pointerleave@top"
-    ]);
-}, `Testing that "pointerenter" events are dispatched from top to bottom and "pointerleave" events are dispatched bottom to top.`);
-
+async function runTest() {
+    // Add three nested and fully overlapping elements.
+    document.body.appendChild(makeDiv("top")).appendChild(makeDiv("middle")).appendChild(makeDiv("bottom"));
+    // mouse over and out of the elements.
+    await eventSender.asyncMouseMoveTo(75, 75);
+    await eventSender.asyncMouseMoveTo(25, 25);
+    test(() => {
+        assert_array_equals(events, [
+            "pointerenter@top",
+            "pointerenter@middle",
+            "pointerenter@bottom",
+            "pointerleave@bottom",
+            "pointerleave@middle",
+            "pointerleave@top"
+        ]);
+    }, `Testing that "pointerenter" events are dispatched from top to bottom and "pointerleave" events are dispatched bottom to top.`);
+}
 </script>
+<body onload="runTest()">
 </body>
 </html>

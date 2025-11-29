@@ -297,7 +297,7 @@ void InlineBoxPainter::paintDecorations()
 
 template<typename Layers> void InlineBoxPainter::paintFillLayers(const Color& color, const Layers& fillLayers, const LayoutRect& rect, CompositeOperator op)
 {
-    for (auto& layer : std::ranges::reverse_view(fillLayers.usedValues()))
+    for (auto& layer : fillLayers.usedValues() | std::views::reverse)
         paintFillLayer(color, FillLayerToPaint<typename Layers::value_type> { .layer = layer, .isLast = &layer == &fillLayers.usedLast() }, rect, op);
 }
 

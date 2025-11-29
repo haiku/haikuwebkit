@@ -36,6 +36,11 @@
 
 namespace fido {
 
+enum class PINUVAuthProtocol : uint8_t {
+    kPinProtocol1 = 1,
+    kPinProtocol2 = 2,
+};
+
 enum class ProtocolVersion {
     kCtap2,
     kCtap21,
@@ -177,6 +182,10 @@ constexpr size_t kHidInitNonceLength = 8;
 constexpr uint8_t kHidMaxLockSeconds = 10;
 
 constexpr size_t kPINMaxSizeInBytes = 63;
+
+// HKDF info strings for PIN/UV Auth Protocol 2 key derivation (CTAP 2.1 spec 6.5.7)
+constexpr std::array<uint8_t, 14> kHKDFInfoHMACKey { 'C', 'T', 'A', 'P', '2', ' ', 'H', 'M', 'A', 'C', ' ', 'k', 'e', 'y' };
+constexpr std::array<uint8_t, 13> kHKDFInfoAESKey { 'C', 'T', 'A', 'P', '2', ' ', 'A', 'E', 'S', ' ', 'k', 'e', 'y' };
 
 // Messages are limited to an initiation packet and 128 continuation packets.
 constexpr size_t kHidMaxMessageSize = 7609;

@@ -71,12 +71,12 @@ void DeviceOrientationController::resumeUpdates()
 
 bool DeviceOrientationController::hasLastData()
 {
-    return m_client->lastOrientation();
+    return checkedClient()->lastOrientation();
 }
 
 RefPtr<Event> DeviceOrientationController::getLastEvent()
 {
-    RefPtr orientation = m_client->lastOrientation();
+    RefPtr orientation = checkedClient()->lastOrientation();
     return DeviceOrientationEvent::create(eventNames().deviceorientationEvent, orientation.get());
 }
 
@@ -89,12 +89,17 @@ DeviceOrientationController* DeviceOrientationController::from(Page* page)
 
 bool DeviceOrientationController::isActiveAt(Page* page)
 {
-    if (DeviceOrientationController* self = DeviceOrientationController::from(page))
+    if (CheckedPtr self = DeviceOrientationController::from(page))
         return self->isActive();
     return false;
 }
 
 DeviceClient& DeviceOrientationController::client()
+{
+    return m_client.get();
+}
+
+CheckedRef<DeviceOrientationClient> DeviceOrientationController::checkedClient()
 {
     return m_client.get();
 }

@@ -26,8 +26,6 @@
 
 #pragma once
 
-#if ENABLE(WEB_AUTHN)
-
 #include <WebCore/DigitalCredentialRequestOptions.h>
 #include <WebCore/MediationRequirement.h>
 #include <WebCore/PublicKeyCredentialRequestOptions.h>
@@ -47,5 +45,3 @@ struct CredentialRequestOptions {
 };
 
 } // namespace WebCore
-
-#endif // ENABLE(WEB_AUTHN)

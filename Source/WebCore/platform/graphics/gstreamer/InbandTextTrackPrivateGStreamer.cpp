@@ -70,7 +70,7 @@ InbandTextTrackPrivateGStreamer::InbandTextTrackPrivateGStreamer(unsigned index,
     ensureTextTrackDebugCategoryInitialized();
     installUpdateConfigurationHandlers();
 
-    GST_INFO("Track %" PRIu64 " got stream start. GStreamer stream-id: %s", m_id, m_gstStreamId.string().utf8().data());
+    GST_INFO("Track %" PRIu64 " got stream start. GStreamer stream-id: %s", m_id, m_gstStreamId.utf8().data());
 
     GST_DEBUG("Stream %" GST_PTR_FORMAT, m_stream.get());
     auto caps = adoptGRef(gst_stream_get_caps(m_stream.get()));

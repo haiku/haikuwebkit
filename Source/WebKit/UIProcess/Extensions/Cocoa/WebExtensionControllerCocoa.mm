@@ -480,15 +480,15 @@ void WebExtensionController::removeUserContentController(WebUserContentControlle
     m_allUserContentControllers.remove(userContentController);
 }
 
-WebsiteDataStore* WebExtensionController::websiteDataStore(std::optional<PAL::SessionID> sessionID) const
+RefPtr<WebsiteDataStore> WebExtensionController::websiteDataStore(std::optional<PAL::SessionID> sessionID) const
 {
     Ref configuration = m_configuration;
     if (!sessionID || configuration->defaultWebsiteDataStore().sessionID() == sessionID.value())
-        return &configuration->defaultWebsiteDataStore();
+        return configuration->defaultWebsiteDataStore();
 
     for (Ref dataStore : allWebsiteDataStores()) {
         if (dataStore->sessionID() == sessionID.value())
-            return dataStore.unsafePtr();
+            return dataStore;
     }
 
     return nullptr;

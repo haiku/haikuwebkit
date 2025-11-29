@@ -43,7 +43,12 @@
 #include <wtf/WeakHashMap.h>
 #include <wtf/WeakHashSet.h>
 
+#if PLATFORM(COCOA)
+#include <wtf/RetainPtr.h>
+#endif
+
 OBJC_CLASS NSMutableArray;
+OBJC_CLASS NSString;
 
 namespace WTF {
 class TextStream;
@@ -77,6 +82,7 @@ class VisiblePosition;
 class Widget;
 
 struct AXTextStateChangeIntent;
+struct AriaNotifyOptions;
 struct TextMarkerData;
 
 enum class AXNotification : uint8_t;
@@ -127,6 +133,18 @@ struct AXDebugInfo {
     String isolatedTree;
     uint64_t remoteTokenHash;
     uint64_t webProcessLocalTokenHash;
+};
+
+enum class NotifyPriority : uint8_t { Normal, High };
+
+enum class InterruptBehavior : uint8_t { None, All, Pending };
+
+// When this is updated, WebCoreArgumentCoders.serialization.in must be updated as well.
+struct AriaNotifyData {
+    String message;
+    NotifyPriority priority { NotifyPriority::Normal };
+    InterruptBehavior interrupt { InterruptBehavior::None };
+    String language;
 };
 
 #if PLATFORM(COCOA)
@@ -413,6 +431,8 @@ public:
 #endif
 
 #if PLATFORM(COCOA)
+    static bool shouldRepostNotificationsForTests() { return gShouldRepostNotificationsForTests; }
+
     static void initializeUserDefaultValues();
     static bool accessibilityDOMIdentifiersEnabled() { return gAccessibilityDOMIdentifiersEnabled; }
 #endif
@@ -496,6 +516,7 @@ public:
             postNotification(*object, notification);
     }
     void postNotification(AccessibilityObject&, AXNotification);
+    void postARIANotifyNotification(Node&, const String&, const AriaNotifyOptions&);
     // Requests clients to announce to the user the given message in the way they deem appropriate.
     WEBCORE_EXPORT void announce(const String&);
 
@@ -531,9 +552,10 @@ public:
     inline void objectBecameUnignored(const AccessibilityObject&);
 #endif
 
-#if PLATFORM(MAC)
+#if PLATFORM(COCOA)
     static void setShouldRepostNotificationsForTests(bool);
 #endif
+
     void deferRecomputeIsIgnoredIfNeeded(Element*);
     void deferRecomputeIsIgnored(Element*);
     void deferRecomputeTableIsExposed(Element*);
@@ -618,11 +640,13 @@ protected:
 
 #if PLATFORM(COCOA)
     WEBCORE_EXPORT void postPlatformAnnouncementNotification(const String&);
+    WEBCORE_EXPORT void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&);
 #else
     void postPlatformAnnouncementNotification(const String&) { }
+    void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&) { }
 #endif
 
-    void frameLoadingEventPlatformNotification(AccessibilityObject*, AXLoadingEvent);
+    void frameLoadingEventPlatformNotification(RenderView*, AXLoadingEvent);
     void handleLabelChanged(AccessibilityObject*);
 
     // CharacterOffset functions.
@@ -821,6 +845,10 @@ private:
     bool m_modalNodesInitialized { false };
     bool m_isRetrievingCurrentModalNode { false };
 
+#if PLATFORM(COCOA)
+    static std::atomic<bool> gShouldRepostNotificationsForTests;
+#endif
+
     Timer m_performCacheUpdateTimer;
 
     AXTextStateChangeIntent m_textSelectionIntent;
@@ -904,5 +932,10 @@ inline void AXObjectCache::setForceDeferredSpellChecking(bool shouldForce)
 {
     gForceDeferredSpellChecking = shouldForce;
 }
+
+#if PLATFORM(COCOA)
+WEBCORE_EXPORT RetainPtr<NSString> notifyPriorityToAXValueString(NotifyPriority);
+WEBCORE_EXPORT RetainPtr<NSString> interruptBehaviorToAXValueString(InterruptBehavior);
+#endif
 
 } // namespace WebCore

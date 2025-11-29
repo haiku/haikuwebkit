@@ -143,6 +143,7 @@
 #include "WheelEventDeltaFilter.h"
 #include "WheelEventTestMonitor.h"
 #include "WindowsKeyboardCodes.h"
+#include <ranges>
 #include <wtf/Assertions.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/RuntimeApplicationChecks.h>
@@ -2486,14 +2487,20 @@ bool EventHandler::swallowAnyClickEvent(const PlatformMouseEvent& platformMouseE
     auto& eventName = isPrimaryPointerButton ? eventNames().clickEvent : eventNames().auxclickEvent;
 
     bool swallowed = false;
-    if (RefPtr clickCaptureElement = std::exchange(m_clickCaptureElement, nullptr)) {
+    RefPtr clickCaptureElement = std::exchange(m_clickCaptureElement, nullptr);
+    if (clickCaptureElement) {
         updateMouseEventTargetNode(eventName, nodeToClick.get(), platformMouseEvent, FireMouseOverOut::Yes);
         swallowed = !dispatchAnyClickEvent(eventName, clickCaptureElement.get(), m_clickCount, platformMouseEvent);
-    } else
+    } else if (nodeToClick)
         swallowed = !dispatchMouseEvent(eventName, nodeToClick.get(), m_clickCount, platformMouseEvent, FireMouseOverOut::No);
 
-    if (RefPtr page = m_frame->page())
-        page->chrome().client().didDispatchClickEvent(platformMouseEvent, *nodeToClick);
+    // Prefer nodeToClick for didDispatchClickEvent since it represents the actual click location.
+    RefPtr dispatchNode = nodeToClick;
+    if (!dispatchNode)
+        dispatchNode = clickCaptureElement;
+
+    if (RefPtr page = m_frame->page(); page && dispatchNode)
+        page->chrome().client().didDispatchClickEvent(platformMouseEvent, *dispatchNode);
 
     return swallowed;
 }
@@ -2792,10 +2799,10 @@ EventHandler::DragTargetResponse EventHandler::updateDragAndDrop(const PlatformM
     RefPtr<Element> newTarget;
     if (RefPtr targetNode = mouseEvent.targetNode()) {
         // Drag events should never go to non-element nodes (following IE, and proper mouseover/out dispatch)
-        if (!is<Element>(*targetNode))
-            newTarget = targetNode->parentOrShadowHostElement();
+        if (is<Element>(*targetNode))
+            newTarget = uncheckedDowncast<Element>(WTFMove(targetNode));
         else
-            newTarget = static_pointer_cast<Element>(WTFMove(targetNode));
+            newTarget = targetNode->parentOrShadowHostElement();
     }
 
     m_autoscrollController->updateDragAndDrop(newTarget.get(), flooredIntPoint(event.position()), event.timestamp());
@@ -3063,7 +3070,7 @@ void EventHandler::updateMouseEventTargetNode(const AtomString& eventType, Node*
             if (auto elementUnderMouse = m_elementUnderMouse)
                 elementUnderMouse->dispatchMouseEvent(platformMouseEvent, eventNames.mouseoverEvent, 0, m_lastElementUnderMouse.get());
 
-            for (auto& chain : makeReversedRange(enteredElementsChain)) {
+            for (auto& chain : enteredElementsChain | std::views::reverse) {
                 if (!chain)
                     continue;
 

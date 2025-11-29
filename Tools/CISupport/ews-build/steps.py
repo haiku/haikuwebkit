@@ -685,6 +685,7 @@ class ConfigureBuild(buildstep.BuildStep, AddToLogMixin):
             self.setProperty('configuration', self.configuration, 'config.json')
         if self.architecture:
             self.setProperty('architecture', self.architecture, 'config.json')
+        self.setProperty('archForUpload', '-'.join(self.getProperty('architecture').split(' ')))
         if self.buildOnly:
             self.setProperty('buildOnly', self.buildOnly, 'config.json')
         if self.triggers and not self.getProperty('triggers'):
@@ -1874,7 +1875,7 @@ class ValidateChange(buildstep.BuildStep, BugzillaMixin, GitHubMixin):
     @defer.inlineCallbacks
     def run(self):
         patch_id = self.getProperty('patch_id', '')
-        pr_number = self.getProperty('github.number', '')
+        pr_number = self.getProperty('github.number', self.getProperty('pr_number', ''))
         branch = self.getProperty('github.base.ref', DEFAULT_BRANCH)
 
         if not any(candidate.match(branch) for candidate in self.branches):
@@ -1971,6 +1972,18 @@ class ValidateChange(buildstep.BuildStep, BugzillaMixin, GitHubMixin):
         pr_json = yield self.get_pr_json(pr_number, repository_url, retry=3)
 
         if pr_json:
+            # Manually triggered from "Try build" button, manually populate data
+            if not self.getProperty('github.number', ''):
+                self.setProperty('github.base.ref', pr_json['base']['ref'])
+                self.setProperty('github.head.ref', pr_json['head']['ref'])
+                self.setProperty('github.head.repo.full_name', pr_json['head']['repo']['full_name'])
+                self.setProperty('github.head.sha', pr_json['head']['sha'])
+                self.setProperty('github.head.user.login', pr_json['head']['user']['login'])
+                self.setProperty('github.number', pr_json['number'])
+                self.setProperty('github.title', pr_json['title'])
+                self.setProperty('owners', [pr_json['head']['user']['login']])
+                yield ConfigureBuild.add_pr_details(self)
+
             # Only track actionable labels, since bug category labels may reveal information about security bugs
             self.setProperty('github_labels', [
                 data.get('name')
@@ -3364,7 +3377,7 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
             if SHOULD_FILTER_LOGS is True:
                 return [
                     GenerateS3URL(
-                        f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                        f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                         extension='txt',
                         additions=f'{self.build.number}',
                         content_type='text/plain',
@@ -3397,7 +3410,7 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
                 steps_to_add += [ArchiveBuiltProduct()]
                 if CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES:
                     steps_to_add.extend([
-                        GenerateS3URL(f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}"),
+                        GenerateS3URL(f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}"),
                         UploadFileToS3(f"WebKitBuild/{self.getProperty('configuration')}.zip", links={self.name: 'Archive'}),
                     ])
                 else:
@@ -3782,7 +3795,7 @@ class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -4301,7 +4314,7 @@ class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -4402,7 +4415,7 @@ class RunWebKitTestsInStressMode(RunWebKitTests):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -4460,7 +4473,7 @@ class ReRunWebKitTests(RunWebKitTests):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -4585,7 +4598,7 @@ class RunWebKitTestsWithoutChange(RunWebKitTests):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -4953,7 +4966,7 @@ class RunWebKitTestsRedTree(RunWebKitTests):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -5026,7 +5039,7 @@ class RunWebKitTestsRepeatFailuresRedTree(RunWebKitTestsRedTree):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -5114,7 +5127,7 @@ class RunWebKitTestsRepeatFailuresWithoutChangeRedTree(RunWebKitTestsRedTree):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -5162,7 +5175,7 @@ class RunWebKitTestsWithoutChangeRedTree(RunWebKitTestsWithoutChange):
         if SHOULD_FILTER_LOGS is True:
             steps_to_add = [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -5361,7 +5374,7 @@ class ArchiveBuiltProduct(shell.ShellCommand):
 class UploadBuiltProduct(transfer.FileUpload):
     name = 'upload-built-product'
     workersrc = WithProperties('WebKitBuild/%(configuration)s.zip')
-    masterdest = WithProperties('public_html/archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(change_id)s.zip')
+    masterdest = WithProperties('public_html/archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(change_id)s.zip')
     descriptionDone = ['Uploaded built product']
     haltOnFailure = True
 
@@ -5500,8 +5513,8 @@ class TransferToS3(master.MasterShellCommand):
     name = 'transfer-to-s3'
     description = ['transferring to s3']
     descriptionDone = ['Transferred archive to S3']
-    archive = WithProperties('public_html/archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(change_id)s.zip')
-    identifier = WithProperties('%(fullPlatform)s-%(architecture)s-%(configuration)s')
+    archive = WithProperties('public_html/archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(change_id)s.zip')
+    identifier = WithProperties('%(fullPlatform)s-%(archForUpload)s-%(configuration)s')
     change_id = WithProperties('%(change_id)s')
     command = ['python3', '../Shared/transfer-archive-to-s3', '--change-id', change_id, '--identifier', identifier, '--archive', archive]
     haltOnFailure = False
@@ -5542,7 +5555,7 @@ class DownloadBuiltProduct(shell.ShellCommand):
     command = [
         'python3', 'Tools/CISupport/download-built-product',
         WithProperties('--%(configuration)s'),
-        WithProperties(S3URL + S3_BUCKET + '/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(change_id)s.zip'),
+        WithProperties(S3URL + S3_BUCKET + '/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(change_id)s.zip'),
     ]
     name = 'download-built-product'
     description = ['downloading built product']
@@ -5572,7 +5585,7 @@ class DownloadBuiltProduct(shell.ShellCommand):
 
 
 class DownloadBuiltProductFromMaster(transfer.FileDownload):
-    mastersrc = WithProperties('public_html/archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(change_id)s.zip')
+    mastersrc = WithProperties('public_html/archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(change_id)s.zip')
     workerdest = WithProperties('WebKitBuild/%(configuration)s.zip')
     name = 'download-built-product-from-master'
     description = ['downloading built product from buildbot master']
@@ -5671,7 +5684,7 @@ class RunAPITests(shell.Test, AddToLogMixin, ShellMixin):
         if SHOULD_FILTER_LOGS is True:
             self.steps_to_add += [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     additions=f'{self.build.number}',
                     content_type='text/plain',
@@ -7147,7 +7160,7 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
     def uploadLogsSteps(self):
         return [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 content_type='text/plain',
             ), UploadFileToS3(

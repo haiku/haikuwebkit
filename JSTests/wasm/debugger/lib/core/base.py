@@ -430,8 +430,7 @@ class BaseTestCase:
         if not self.start_debugger(test_file):
             return False
 
-        # Start LLDB
-        if not self.start_lldb():
+        if not self.start_lldb(connection_timeout=20.0):
             return False
 
         self.logger.success(f"Debugging session ready for {self.name}")

@@ -1364,8 +1364,8 @@ TEST(ResourceLoadStatistics, DatabaseSchemeUpdate)
     EXPECT_NULL(error);
     
     NSURL *targetURL = [dataStoreConfiguration.get()._resourceLoadStatisticsDirectory URLByAppendingPathComponent:@"observations.db"];
-    WebCore::SQLiteDatabase database;
-    EXPECT_TRUE(database.open(targetURL.path));
+    auto database = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(database->open(targetURL.path));
 
     constexpr auto createObservedDomain = "CREATE TABLE ObservedDomains ("
         "domainID INTEGER PRIMARY KEY, registrableDomain TEXT NOT NULL UNIQUE ON CONFLICT FAIL, lastSeen REAL NOT NULL, "
@@ -1374,8 +1374,8 @@ TEST(ResourceLoadStatistics, DatabaseSchemeUpdate)
         "timesAccessedAsFirstPartyDueToUserInteraction INTEGER NOT NULL, timesAccessedAsFirstPartyDueToStorageAccessAPI INTEGER NOT NULL,"
         "isScheduledForAllButCookieDataRemoval INTEGER NOT NULL)"_s;
 
-    EXPECT_TRUE(database.executeCommand(createObservedDomain));
-    database.close();
+    EXPECT_TRUE(database->executeCommand(createObservedDomain));
+    database->close();
 
     auto dataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration.get()]);
     [dataStore _setResourceLoadStatisticsEnabled:YES];
@@ -1385,10 +1385,10 @@ TEST(ResourceLoadStatistics, DatabaseSchemeUpdate)
     }];
     TestWebKitAPI::Util::run(&done);
     
-    WebCore::SQLiteDatabase databaseAfterMigration;
-    EXPECT_TRUE(databaseAfterMigration.open(targetURL.path));
+    auto databaseAfterMigration = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(databaseAfterMigration->open(targetURL.path));
     auto columns = columnsForTable(databaseAfterMigration, "ObservedDomains"_s);
-    databaseAfterMigration.close();
+    databaseAfterMigration->close();
     EXPECT_WK_STREQ(columns.last(), "mostRecentWebPushInteractionTime");
 }
 

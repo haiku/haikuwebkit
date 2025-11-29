@@ -44,7 +44,6 @@ struct SimpleRange;
 class LegacyWebArchive final : public Archive {
 public:
     // Archive is created directly from data or members so ArchiveOptions is not needed.
-    WEBCORE_EXPORT static Ref<LegacyWebArchive> create();
     WEBCORE_EXPORT static Ref<LegacyWebArchive> create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<FrameIdentifier>&& subframeIdentifiers, std::optional<FrameIdentifier> mainFrameIdentifier);
     WEBCORE_EXPORT static RefPtr<LegacyWebArchive> create(FragmentedSharedBuffer&);
     WEBCORE_EXPORT static RefPtr<LegacyWebArchive> create(const URL&, FragmentedSharedBuffer&);
@@ -86,6 +85,7 @@ private:
 
     enum MainResourceStatus { Subresource, MainResource };
 
+    static RefPtr<LegacyWebArchive> create(CFDictionaryRef);
     static RefPtr<LegacyWebArchive> createInternal(Node&, const ArchiveOptions&, NOESCAPE const Function<bool(LocalFrame&)>& frameFilter);
     static RefPtr<LegacyWebArchive> createInternal(const String& markupString, const ArchiveOptions&, LocalFrame&, Vector<Ref<Node>>&& nodes, NOESCAPE const Function<bool(LocalFrame&)>& frameFilter);
     static RefPtr<ArchiveResource> createResource(CFDictionaryRef);
@@ -94,8 +94,6 @@ private:
     static RetainPtr<CFDataRef> createPropertyListRepresentation(const ResourceResponse&);
     static RetainPtr<CFDictionaryRef> createPropertyListRepresentation(Archive&);
     static RetainPtr<CFDictionaryRef> createPropertyListRepresentation(ArchiveResource*, MainResourceStatus);
-
-    bool extract(CFDictionaryRef);
 
     std::optional<FrameIdentifier> m_frameIdentifier;
     Vector<FrameIdentifier> m_subframeIdentifiers;

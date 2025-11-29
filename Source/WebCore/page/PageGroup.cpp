@@ -126,13 +126,13 @@ CaptionUserPreferences& PageGroup::ensureCaptionPreferences()
 {
     if (!m_captionPreferences) {
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
-        m_captionPreferences = CaptionUserPreferencesMediaAF::create(*this);
+        lazyInitialize(m_captionPreferences, CaptionUserPreferencesMediaAF::create(*this));
 #else
-        m_captionPreferences = CaptionUserPreferences::create(*this);
+        lazyInitialize(m_captionPreferences, CaptionUserPreferences::create(*this));
 #endif
     }
 
-    return *m_captionPreferences.get();
+    return *m_captionPreferences;
 }
 
 Ref<CaptionUserPreferences> PageGroup::ensureProtectedCaptionPreferences()

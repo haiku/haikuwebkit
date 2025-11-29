@@ -1002,7 +1002,7 @@ void ReplaceSelectionCommand::handleStyleSpans(InsertedNodes& insertedNodes)
     // so search for the top level style span instead of assuming it's at the top.
     for (RefPtr node = insertedNodes.firstNodeInserted(); node; node = NodeTraversal::next(*node)) {
         if (isLegacyAppleStyleSpan(node.get())) {
-            wrappingStyleSpan = static_pointer_cast<HTMLElement>(WTFMove(node));
+            wrappingStyleSpan = downcast<HTMLElement>(WTFMove(node));
             break;
         }
     }

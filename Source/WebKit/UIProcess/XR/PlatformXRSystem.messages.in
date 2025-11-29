@@ -44,6 +44,10 @@ messages -> PlatformXRSystem {
 #if !USE(OPENXR)
     SubmitFrame()
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    RequestHitTestSource(PlatformXR::HitTestOptions hitTestOptions) -> (Expected<PlatformXR::HitTestSource, WebCore::ExceptionData> exceptionOrSource)
+    DeleteHitTestSource(PlatformXR::HitTestSource source)
+#endif
     DidCompleteShutdownTriggeredBySystem()
 }
 

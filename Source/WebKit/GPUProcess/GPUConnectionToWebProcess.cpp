@@ -159,7 +159,7 @@
 #endif
 
 #if PLATFORM(MAC) && ENABLE(MEDIA_STREAM)
-#include <WebCore/CoreAudioSharedUnit.h>
+#include <WebCore/CoreAudioCaptureUnit.h>
 #endif
 
 #if ENABLE(MEDIA_STREAM)
@@ -1262,7 +1262,7 @@ void GPUConnectionToWebProcess::updateCaptureAccess(bool allowAudioCapture, bool
 {
 #if PLATFORM(MAC) && ENABLE(MEDIA_STREAM)
     if (allowAudioCapture)
-        CoreAudioSharedUnit::singleton().prewarmAudioUnitCreation([] { });
+        CoreAudioCaptureUnit::defaultSingleton().prewarmAudioUnitCreation([] { });
 #endif
 
     m_allowsAudioCapture |= allowAudioCapture;
@@ -1381,6 +1381,15 @@ void GPUConnectionToWebProcess::setPresentingApplicationAuditToken(WebCore::Page
         m_presentingApplicationAuditTokens.set(pageIdentifier, *auditToken);
     else
         m_presentingApplicationAuditTokens.remove(pageIdentifier);
+}
+#endif
+
+#if ENABLE(IPC_TESTING_API)
+void GPUConnectionToWebProcess::takeInvalidMessageStringForTesting(CompletionHandler<void(String&&)>&& callback)
+{
+    ASCIILiteral error = connection().takeErrorString();
+    String errorString = !error.isNull() ? String::fromUTF8(error) : emptyString();
+    callback(WTFMove(errorString));
 }
 #endif
 

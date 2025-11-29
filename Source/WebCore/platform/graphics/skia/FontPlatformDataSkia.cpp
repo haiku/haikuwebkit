@@ -34,7 +34,6 @@
 #include "OpenTypeTypes.h"
 #include "SkiaHarfBuzzFont.h"
 #include <wtf/Hasher.h>
-#include <wtf/VectorHash.h>
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkStream.h>

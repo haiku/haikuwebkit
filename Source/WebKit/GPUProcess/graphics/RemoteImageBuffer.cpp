@@ -185,7 +185,7 @@ void RemoteImageBuffer::setFlushSignal(IPC::Signal&& signal)
 
 void RemoteImageBuffer::flushContext()
 {
-    RELEASE_ASSERT(m_flushSignal);
+    MESSAGE_CHECK(m_flushSignal, "Cannot flush context without a valid flush signal. Use FlushContextSync for synchronous flushing.");
     assertIsCurrent(workQueue());
     m_imageBuffer->flushDrawingContext();
     m_flushSignal->signal();

@@ -233,7 +233,7 @@ private:
 #endif
 
     virtual void setDeviceScaleFactor(float, CompletionHandler<void()>&& completionHandler) { completionHandler(); }
-    virtual void displayDidRefresh() { }
+    virtual void displayDidRefresh(MonotonicTime) { }
 
     // DisplayRefreshMonitorFactory.
     RefPtr<WebCore::DisplayRefreshMonitor> createDisplayRefreshMonitor(WebCore::PlatformDisplayID) override;

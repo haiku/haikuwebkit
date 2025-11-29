@@ -326,7 +326,7 @@ ${implementationClassName}* to${implementationClassName}(JSContextRef context, J
 {
     if (!context || !value || !${className}::${classRefGetter}() || !JSValueIsObjectOfClass(context, value, ${className}::${classRefGetter}()))
         return nullptr;
-    return static_cast<${implementationClassName}*>(JSWebExtensionWrapper::unwrap(context, value));
+    return downcast<${implementationClassName}>(JSWebExtensionWrapper::unwrap(context, value));
 }
 
 JSClassRef ${className}::${classRefGetter}()
@@ -815,7 +815,7 @@ ${functionSignature}
 EOF
 
                 my $keyArgumentName = $specifiedParameters[0]->name;
-                push(@contents, "    auto ${keyArgumentName} = toJSString(argumentCount > 0 ? " . $self->_platformTypeConstructor($specifiedParameters[0], "arguments[0]") . " : nil);\n");
+                push(@contents, "    auto ${keyArgumentName} = toJSString(argumentCount > 0 ? " . $self->_platformTypeConstructor($specifiedParameters[0], "arguments[0]") . "_s : emptyString());\n");
 
                 if ($isGetPropertyFunction) {
                     push(@contents, "\n");
@@ -938,7 +938,7 @@ EOF
 
             push(@contents, <<EOF);
 
-    return @{[$self->_returnExpression($attribute, $getterExpression, $interface)]};
+    SUPPRESS_UNCOUNTED_ARG return @{[$self->_returnExpression($attribute, $getterExpression, $interface)]};
 }
 EOF
 
@@ -1732,7 +1732,7 @@ EOF
         return unless $_->extendedAttributes->{"Dynamic"} or $_->extendedAttributes->{"MainWorldOnly"};
 
         my $name = $_->name;
-        return "    JSPropertyNameAccumulatorAddName(propertyNames, toJSString(\"${name}\").get());\n" unless $hasDynamicProperties;
+        return "    JSPropertyNameAccumulatorAddName(propertyNames, toJSString(\"${name}\"_s).get());\n" unless $hasDynamicProperties;
 
         my $condition = &$generateCondition($_);
         my $conditionalString = conditionalString($_);
@@ -1740,7 +1740,7 @@ EOF
         my $content = "";
         $content .= "#if ${conditionalString}\n" if $conditionalString;
         $content .= "    if (${condition})\n";
-        $content .= "        JSPropertyNameAccumulatorAddName(propertyNames, toJSString(\"${name}\").get());\n";
+        $content .= "        JSPropertyNameAccumulatorAddName(propertyNames, toJSString(\"${name}\"_s).get());\n";
         $content .= "#endif // ${conditionalString}\n" if $conditionalString;
         $content .= "\n";
         return $content;

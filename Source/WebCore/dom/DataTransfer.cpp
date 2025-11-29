@@ -115,8 +115,8 @@ Ref<DataTransfer> DataTransfer::create()
 DataTransfer::~DataTransfer()
 {
 #if ENABLE(DRAG_SUPPORT)
-    if (m_dragImageLoader && m_dragImage)
-        m_dragImageLoader->stopLoading(m_dragImage);
+    if (CheckedPtr dragImageLoader = m_dragImageLoader.get(); dragImageLoader && m_dragImage)
+        dragImageLoader->stopLoading(m_dragImage);
 #endif
 }
 
@@ -561,13 +561,13 @@ void DataTransfer::setDragImage(Ref<Element>&& element, int x, int y)
     m_dragLocation = IntPoint(x, y);
 
     Ref document = element->document();
-    if (m_dragImageLoader && m_dragImage)
-        m_dragImageLoader->stopLoading(m_dragImage);
+    if (CheckedPtr dragImageLoader = m_dragImageLoader.get(); dragImageLoader && m_dragImage)
+        dragImageLoader->stopLoading(m_dragImage);
     m_dragImage = image;
     if (m_dragImage) {
         if (!m_dragImageLoader)
             m_dragImageLoader = makeUnique<DragImageLoader>(*this, document);
-        m_dragImageLoader->startLoading(m_dragImage);
+        CheckedRef { *m_dragImageLoader }->startLoading(m_dragImage);
     }
 
     if (image)
@@ -771,8 +771,8 @@ void DataTransfer::moveDragState(Ref<DataTransfer>&& other)
     m_dragImage = other->m_dragImage;
     m_dragImageElement = WTFMove(other->m_dragImageElement);
     m_dragImageLoader = WTFMove(other->m_dragImageLoader);
-    if (m_dragImageLoader)
-        m_dragImageLoader->moveToDataTransfer(*this);
+    if (CheckedPtr dragImageLoader = m_dragImageLoader.get())
+        dragImageLoader->moveToDataTransfer(*this);
     m_fileList = WTFMove(other->m_fileList);
 }
 

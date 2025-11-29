@@ -100,12 +100,12 @@ void RemoteTextTrackProxy::idChanged(TrackID)
     configurationChanged();
 }
 
-void RemoteTextTrackProxy::labelChanged(const AtomString&)
+void RemoteTextTrackProxy::labelChanged(const String&)
 {
     configurationChanged();
 }
 
-void RemoteTextTrackProxy::languageChanged(const AtomString&)
+void RemoteTextTrackProxy::languageChanged(const String&)
 {
     configurationChanged();
 }

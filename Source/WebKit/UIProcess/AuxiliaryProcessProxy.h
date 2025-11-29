@@ -42,7 +42,6 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/UniqueRef.h>
-#include <wtf/VectorHash.h>
 #include <wtf/WeakPtrFactory.h>
 
 namespace WebCore {

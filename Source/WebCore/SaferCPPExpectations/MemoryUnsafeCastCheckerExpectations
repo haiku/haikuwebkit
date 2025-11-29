@@ -46,7 +46,6 @@ dom/NodeRareData.h
 domjit/DOMJITHelpers.h
 domjit/JSDocumentDOMJIT.cpp
 domjit/JSNodeDOMJIT.cpp
-editing/TypingCommand.cpp
 html/InputType.cpp
 html/track/TextTrackCueGeneric.cpp
 inspector/CommandLineAPIModule.cpp

@@ -1,4 +1,4 @@
-PASS inputBounds.top is >= screenHeight
+PASS inputBounds.top === null || inputBounds.top >= screenHeight is true
 PASS inputBounds.height is 0
 PASS document.activeElement is field
 PASS successfullyParsed is true

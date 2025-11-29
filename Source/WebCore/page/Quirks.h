@@ -296,6 +296,10 @@ public:
 
     bool shouldDisableDOMAudioSessionQuirk() const;
 
+    bool needsSuppressPostLayoutBoundaryEventsQuirk() const;
+
+    bool shouldExposeCredentialsContainerQuirk() const;
+
     void determineRelevantQuirks();
 
 private:

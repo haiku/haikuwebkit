@@ -81,6 +81,7 @@ public:
     {
         return m_processIdentifier.isHashTableDeletedValue();
     }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = DefaultHash<T>::safeToCompareToEmptyOrDeleted;
 
     friend bool operator==(const ProcessQualified&, const ProcessQualified&) = default;
 
@@ -148,21 +149,6 @@ inline void add(Hasher& hasher, const ProcessQualified<T>& processQualified)
 } // namespace WebCore
 
 namespace WTF {
-
-template<typename T> struct DefaultHash;
-template<typename T> struct DefaultHash<WebCore::ProcessQualified<T>> {
-    static unsigned hash(const WebCore::ProcessQualified<T>& processQualified)
-    {
-        return computeHash(processQualified);
-    }
-
-    static bool equal(const WebCore::ProcessQualified<T>& a, const WebCore::ProcessQualified<T>& b)
-    {
-        return a == b;
-    }
-
-    static const bool safeToCompareToEmptyOrDeleted = DefaultHash<T>::safeToCompareToEmptyOrDeleted;
-};
 
 template<typename T> struct HashTraits<WebCore::ProcessQualified<T>> : SimpleClassHashTraits<WebCore::ProcessQualified<T>> {
     static constexpr bool emptyValueIsZero = HashTraits<T>::emptyValueIsZero;

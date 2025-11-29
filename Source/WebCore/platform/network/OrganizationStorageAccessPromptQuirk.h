@@ -69,7 +69,7 @@ struct OrganizationStorageAccessPromptQuirk {
     }
 };
 
-static bool operator==(const OrganizationStorageAccessPromptQuirk& a, const OrganizationStorageAccessPromptQuirk& b)
+inline bool operator==(const OrganizationStorageAccessPromptQuirk& a, const OrganizationStorageAccessPromptQuirk& b)
 {
     return a.organizationName == b.organizationName;
 }
@@ -85,17 +85,10 @@ struct OrganizationStorageAccessPromptQuirkHashTraits : SimpleClassHashTraits<Or
     static bool isEmptyValue(const OrganizationStorageAccessPromptQuirk& quirk) { return quirk.organizationName.isNull(); }
 };
 
-struct OrganizationStorageAccessPromptQuirkHash {
-    static unsigned hash(const OrganizationStorageAccessPromptQuirk& quirk) { return computeHash(quirk); }
-    static bool equal(const OrganizationStorageAccessPromptQuirk& a, const OrganizationStorageAccessPromptQuirk& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 } // namespace WebCore
 
 namespace WTF {
 
 template<> struct HashTraits<WebCore::OrganizationStorageAccessPromptQuirk> : WebCore::OrganizationStorageAccessPromptQuirkHashTraits { };
-template<> struct DefaultHash<WebCore::OrganizationStorageAccessPromptQuirk> : WebCore::OrganizationStorageAccessPromptQuirkHash { };
 
 } // namespace WTF

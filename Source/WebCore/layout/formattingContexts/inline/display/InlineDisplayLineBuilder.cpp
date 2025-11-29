@@ -34,7 +34,7 @@
 namespace WebCore {
 namespace Layout {
 
-static InlineRect mapLineRectLogicalToVisual(const InlineRect& lineLogicalRect, const LayoutSize containerRenderSize, WritingMode writingMode)
+static InlineRect mapLineRectLogicalToVisual(const InlineRect& lineLogicalRect, const LayoutSize formattingRootBorderBoxSize, WritingMode writingMode)
 {
     if (writingMode.isHorizontal())
         return lineLogicalRect;
@@ -42,7 +42,7 @@ static InlineRect mapLineRectLogicalToVisual(const InlineRect& lineLogicalRect, 
         return { lineLogicalRect.left(), lineLogicalRect.top(), lineLogicalRect.height(), lineLogicalRect.width() };
 
     return {
-        containerRenderSize.height() - lineLogicalRect.right(),
+        formattingRootBorderBoxSize.height() - lineLogicalRect.right(),
         lineLogicalRect.top(),
         lineLogicalRect.height(),
         lineLogicalRect.width()
@@ -139,8 +139,8 @@ InlineDisplay::Line InlineDisplayLineBuilder::build(const LineLayoutResult& line
 
     auto writingMode = root().writingMode();
     return InlineDisplay::Line { lineBoxLogicalRect
-        , mapLineRectLogicalToVisual(lineBoxLogicalRect, constraints.containerRenderSize(), writingMode)
-        , mapLineRectLogicalToVisual(enclosingLineGeometry.contentOverflowRect, constraints.containerRenderSize(), writingMode)
+        , mapLineRectLogicalToVisual(lineBoxLogicalRect, constraints.formattingRootBorderBoxSize(), writingMode)
+        , mapLineRectLogicalToVisual(enclosingLineGeometry.contentOverflowRect, constraints.formattingRootBorderBoxSize(), writingMode)
         , enclosingLineGeometry.enclosingTopAndBottom
         , rootInlineBox.logicalTop() + rootInlineBox.ascent()
         , lineBox.baselineType()

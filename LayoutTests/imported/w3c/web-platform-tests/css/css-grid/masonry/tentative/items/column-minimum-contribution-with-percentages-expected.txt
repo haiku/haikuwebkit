@@ -1,10 +1,10 @@
 
-FAIL auto - columns assert_equals: grid-template-columns expected "100px" but got "auto"
-FAIL min - columns assert_equals: grid-template-columns expected "50px" but got "auto"
-FAIL max - columns assert_equals: grid-template-columns expected "100px" but got "auto"
-FAIL size - columns assert_equals: grid-template-columns expected "100px" but got "auto"
-FAIL min max - columns assert_equals: grid-template-columns expected "50px" but got "auto"
-FAIL min size - columns assert_equals: grid-template-columns expected "50px" but got "auto"
-FAIL max size - columns assert_equals: grid-template-columns expected "100px" but got "auto"
-FAIL min max size - columns assert_equals: grid-template-columns expected "50px" but got "auto"
+PASS auto - columns
+PASS min - columns
+PASS max - columns
+PASS size - columns
+PASS min max - columns
+PASS min size - columns
+PASS max size - columns
+PASS min max size - columns
 

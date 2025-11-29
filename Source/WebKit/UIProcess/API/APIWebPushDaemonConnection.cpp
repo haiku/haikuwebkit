@@ -93,7 +93,7 @@ void WebPushDaemonConnection::unsubscribeFromPushService(const WTF::URL& scopeUR
 void WebPushDaemonConnection::getPushSubscription(const WTF::URL& scopeURL, CompletionHandler<void(const Expected<std::optional<WebCore::PushSubscriptionData>, WebCore::ExceptionData>&)>&& completionHandler)
 {
 #if ENABLE(WEB_PUSH_NOTIFICATIONS)
-    m_connection->sendWithAsyncReplyWithoutUsingIPCConnection(Messages::PushClientConnection::GetPushSubscription(WTFMove(scopeURL)), WTFMove(completionHandler));
+    m_connection->sendWithAsyncReplyWithoutUsingIPCConnection(Messages::PushClientConnection::GetPushSubscription(scopeURL), WTFMove(completionHandler));
 #else
     completionHandler(std::optional<WebCore::PushSubscriptionData> { });
 #endif

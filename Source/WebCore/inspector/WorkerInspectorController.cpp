@@ -79,8 +79,8 @@ WorkerInspectorController::WorkerInspectorController(WorkerOrWorkletGlobalScope&
 
     auto workerContext = workerAgentContext();
 
-    auto consoleAgent = makeUnique<WorkerConsoleAgent>(workerContext);
-    m_instrumentingAgents->setWebConsoleAgent(consoleAgent.get());
+    auto consoleAgent = makeUniqueRef<WorkerConsoleAgent>(workerContext);
+    m_instrumentingAgents->setWebConsoleAgent(consoleAgent.ptr());
     m_agents.append(WTFMove(consoleAgent));
 }
 
@@ -226,27 +226,27 @@ void WorkerInspectorController::createLazyAgents()
 
     auto workerContext = workerAgentContext();
 
-    m_agents.append(makeUnique<WorkerRuntimeAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WorkerRuntimeAgent>(workerContext));
 
     if (is<ServiceWorkerGlobalScope>(m_globalScope)) {
-        m_agents.append(makeUnique<InspectorAgent>(workerContext));
-        m_agents.append(makeUnique<ServiceWorkerAgent>(workerContext));
-        m_agents.append(makeUnique<WorkerNetworkAgent>(workerContext));
+        m_agents.append(makeUniqueRef<InspectorAgent>(workerContext));
+        m_agents.append(makeUniqueRef<ServiceWorkerAgent>(workerContext));
+        m_agents.append(makeUniqueRef<WorkerNetworkAgent>(workerContext));
     }
 
-    m_agents.append(makeUnique<WebHeapAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WebHeapAgent>(workerContext));
 
     ensureDebuggerAgent();
-    m_agents.append(makeUnique<WorkerDOMDebuggerAgent>(workerContext, m_debuggerAgent.get()));
+    m_agents.append(makeUniqueRef<WorkerDOMDebuggerAgent>(workerContext, m_debuggerAgent.get()));
 
-    m_agents.append(makeUnique<WorkerAuditAgent>(workerContext));
-    m_agents.append(makeUnique<WorkerCanvasAgent>(workerContext));
-    m_agents.append(makeUnique<WorkerTimelineAgent>(workerContext));
-    m_agents.append(makeUnique<WorkerWorkerAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WorkerAuditAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WorkerCanvasAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WorkerTimelineAgent>(workerContext));
+    m_agents.append(makeUniqueRef<WorkerWorkerAgent>(workerContext));
 
-    auto scriptProfilerAgentPtr = makeUnique<InspectorScriptProfilerAgent>(workerContext);
-    m_instrumentingAgents->setPersistentScriptProfilerAgent(scriptProfilerAgentPtr.get());
-    m_agents.append(WTFMove(scriptProfilerAgentPtr));
+    auto scriptProfilerAgent = makeUniqueRef<InspectorScriptProfilerAgent>(workerContext);
+    m_instrumentingAgents->setPersistentScriptProfilerAgent(scriptProfilerAgent.ptr());
+    m_agents.append(WTFMove(scriptProfilerAgent));
 
     if (auto& commandLineAPIHost = m_injectedScriptManager->commandLineAPIHost())
         commandLineAPIHost->init(m_instrumentingAgents.copyRef());
@@ -256,8 +256,8 @@ WorkerDebuggerAgent& WorkerInspectorController::ensureDebuggerAgent()
 {
     if (!m_debuggerAgent) {
         auto workerContext = workerAgentContext();
-        auto debuggerAgent = makeUnique<WorkerDebuggerAgent>(workerContext);
-        m_debuggerAgent = debuggerAgent.get();
+        auto debuggerAgent = makeUniqueRef<WorkerDebuggerAgent>(workerContext);
+        m_debuggerAgent = debuggerAgent.ptr();
         m_agents.append(WTFMove(debuggerAgent));
     }
     return *m_debuggerAgent;

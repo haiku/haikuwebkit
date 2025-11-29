@@ -2507,6 +2507,126 @@ TEST(WebAuthenticationPanel, ImportMalformedCredential)
     EXPECT_EQ(credentialId, nil);
 }
 
+TEST(WebAuthenticationPanel, MakeCredentialPinProtocol2)
+{
+    reset();
+
+    NSString *html = @"<input type='text' id='input'>"
+    "<script>"
+    "const testCtapPinAuthInvalidErrorBase64 = 'Mw==';"
+    "const testPinGetRetriesResponseBase64 = 'AKEDCA==';"
+    "const testPinGetKeyAgreementResponseBase64 = 'AKEBpQECAzgYIAEhWCDodiWJbuTkbcAydm6Ah5YvNt+d/otWfzdjAVsZkKYOFCJYICfeYS1mQYvaGVBYHrxcjB2tcQyxTCL4yXBF9GEvsgyR';"
+    "const testPinGetPinTokenResponseBase64 = 'AKECWDBE7mm7VEDVMaCPd0lkZ2ycNjJPIrMATMRykVUU6i7YIvEeSSKRGSwvP+rXzq/RTvw=';"
+    "const testCreationMessageBase64 ="
+    "    'AKMBZnBhY2tlZAJYxEbMf7lnnVWy25CS4cjZ5eHQK3WA8LSBLHcJYuHkj1rYQQAA' +"
+    "    'AE74oBHzjApNFYAGFxEfntx9AEAoCK3O6P5OyXN6V/f+9nAga0NA2Cgp4V3mgSJ5' +"
+    "    'jOHLMDrmxp/S0rbD+aihru1C0aAN3BkiM6GNy5nSlDVqOgTgpQECAyYgASFYIEFb' +"
+    "    'he3RkNud6sgyraBGjlh1pzTlCZehQlL/b18HZ6WGIlggJgfUd/en9p5AIqMQbUni' +"
+    "    'nEeXdFLkvW0/zV5BpEjjNxADo2NhbGcmY3NpZ1hHMEUCIQDKg+ZBmEBtf0lWq4Re' +"
+    "    'dH4/i/LOYqOR4uR2NAj2zQmw9QIgbTXb4hvFbj4T27bv/rGrc+y+0puoYOBkBk9P' +"
+    "    'mCewWlNjeDVjgVkCwjCCAr4wggGmoAMCAQICBHSG/cIwDQYJKoZIhvcNAQELBQAw' +"
+    "    'LjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEw' +"
+    "    'IBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMG8xCzAJBgNVBAYTAlNF' +"
+    "    'MRIwEAYDVQQKDAlZdWJpY28gQUIxIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0' +"
+    "    'ZXN0YXRpb24xKDAmBgNVBAMMH1l1YmljbyBVMkYgRUUgU2VyaWFsIDE5NTUwMDM4' +"
+    "    'NDIwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASVXfOt9yR9MXXv/ZzE8xpOh466' +"
+    "    '4YEJVmFQ+ziLLl9lJ79XQJqlgaUNCsUvGERcChNUihNTyKTlmnBOUjvATevto2ww' +"
+    "    'ajAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuMTATBgsrBgEEAYLl' +"
+    "    'HAIBAQQEAwIFIDAhBgsrBgEEAYLlHAEBBAQSBBD4oBHzjApNFYAGFxEfntx9MAwG' +"
+    "    'A1UdEwEB/wQCMAAwDQYJKoZIhvcNAQELBQADggEBADFcSIDmmlJ+OGaJvWn9Cqhv' +"
+    "    'SeueToVFQVVvqtALOgCKHdwB+Wx29mg2GpHiMsgQp5xjB0ybbnpG6x212FxESJ+G' +"
+    "    'inZD0ipchi7APwPlhIvjgH16zVX44a4e4hOsc6tLIOP71SaMsHuHgCcdH0vg5d2s' +"
+    "    'c006WJe9TXO6fzV+ogjJnYpNKQLmCXoAXE3JBNwKGBIOCvfQDPyWmiiG5bGxYfPt' +"
+    "    'y8Z3pnjX+1MDnM2hhr40ulMxlSNDnX/ZSnDyMGIbk8TOQmjTF02UO8auP8k3wt5D' +"
+    "    '1rROIRU9+FCSX5WQYi68RuDrGMZB8P5+byoJqbKQdxn2LmE1oZAyohPAmLcoPO4=';"
+    "if (window.internals) {"
+    "    internals.setMockWebAuthenticationConfiguration({"
+    "        hid: {"
+    "            supportClientPin: true,"
+    "            pinProtocols: [1, 2],"
+    "            payloadBase64: [testCtapPinAuthInvalidErrorBase64, testPinGetRetriesResponseBase64, testPinGetKeyAgreementResponseBase64, testPinGetPinTokenResponseBase64, testCreationMessageBase64]"
+    "        }"
+    "    });"
+    "    internals.withUserGesture(() => { input.focus(); });"
+    "}"
+    "const options = {"
+    "    publicKey: {"
+    "        rp: { name: 'localhost' },"
+    "        user: {"
+    "            name: 'John Appleseed',"
+    "            id: new Uint8Array(16),"
+    "            displayName: 'Appleseed'"
+    "        },"
+    "        challenge: new Uint8Array(16),"
+    "        pubKeyCredParams: [{ type: 'public-key', alg: -7 }]"
+    "    }"
+    "};"
+    "navigator.credentials.create(options).then(credential => {"
+    "    window.webkit.messageHandlers.testHandler.postMessage('Succeeded!');"
+    "}, error => {"
+    "    window.webkit.messageHandlers.testHandler.postMessage(error.message);"
+    "});"
+    "</script>";
+
+    auto webView = setUpTestWebViewForTestAuthenticationPanel();
+    auto delegate = adoptNS([[TestWebAuthenticationPanelUIDelegate alloc] init]);
+    [webView setUIDelegate:delegate.get()];
+    [webView focus];
+
+    webAuthenticationPanelPin = "1234"_s;
+    [webView loadHTMLString:html baseURL:[NSURL URLWithString:@"https://localhost:443"]];
+    [webView waitForMessage:@"Succeeded!"];
+}
+
+TEST(WebAuthenticationPanel, GetAssertionPinProtocol2)
+{
+    reset();
+
+    NSString *html = @"<input type='text' id='input'>"
+    "<script>"
+    "const testCtapPinAuthInvalidErrorBase64 = 'Mw==';"
+    "const testPinGetRetriesResponseBase64 = 'AKEDCA==';"
+    "const testPinGetKeyAgreementResponseBase64 = 'AKEBpQECAzgYIAEhWCDodiWJbuTkbcAydm6Ah5YvNt+d/otWfzdjAVsZkKYOFCJYICfeYS1mQYvaGVBYHrxcjB2tcQyxTCL4yXBF9GEvsgyR';"
+    "const testPinGetPinTokenResponseBase64 = 'AKECWDBE7mm7VEDVMaCPd0lkZ2ycNjJPIrMATMRykVUU6i7YIvEeSSKRGSwvP+rXzq/RTvw=';"
+    "const testAssertionMessageBase64 ="
+    "    'AKMBomJpZFhAKAitzuj+Tslzelf3/vZwIGtDQNgoKeFd5oEieYzhyzA65saf0tK2' +"
+    "    'w/mooa7tQtGgDdwZIjOhjcuZ0pQ1ajoE4GR0eXBlanB1YmxpYy1rZXkCWCVGzH+5' +"
+    "    'Z51VstuQkuHI2eXh0Ct1gPC0gSx3CWLh5I9a2AEAAABQA1hHMEUCIQCSFTuuBWgB' +"
+    "    '4/F0VB7DlUVM09IHPmxe1MzHUwRoCRZbCAIgGKov6xoAx2MEf6/6qNs8OutzhP2C' +"
+    "    'QoJ1L7Fe64G9uBc=';"
+    "if (window.internals) {"
+    "    internals.setMockWebAuthenticationConfiguration({"
+    "        hid: {"
+    "            supportClientPin: true,"
+    "            pinProtocols: [1, 2],"
+    "            payloadBase64: [testCtapPinAuthInvalidErrorBase64, testPinGetRetriesResponseBase64, testPinGetKeyAgreementResponseBase64, testPinGetPinTokenResponseBase64, testAssertionMessageBase64]"
+    "        }"
+    "    });"
+    "    internals.withUserGesture(() => { input.focus(); });"
+    "}"
+    "const options = {"
+    "    publicKey: {"
+    "        challenge: new Uint8Array(16),"
+    "        timeout: 100"
+    "    }"
+    "};"
+    "navigator.credentials.get(options).then(credential => {"
+    "    window.webkit.messageHandlers.testHandler.postMessage('Succeeded!');"
+    "}, error => {"
+    "    window.webkit.messageHandlers.testHandler.postMessage(error.message);"
+    "});"
+    "</script>";
+
+    auto webView = setUpTestWebViewForTestAuthenticationPanel();
+    auto delegate = adoptNS([[TestWebAuthenticationPanelUIDelegate alloc] init]);
+    [webView setUIDelegate:delegate.get()];
+    [webView focus];
+
+    webAuthenticationPanelPin = "1234"_s;
+    [webView loadHTMLString:html baseURL:[NSURL URLWithString:@"https://localhost:443"]];
+    [webView waitForMessage:@"Succeeded!"];
+}
+
 TEST(WebAuthenticationPanel, DeleteOneCredential)
 {
     reset();

@@ -336,8 +336,8 @@ void VideoPresentationInterfaceLMK::swapFullscreenModesWith(VideoPresentationInt
     auto currentMode = mode();
     auto previousMode = otherInterface.mode();
 
-    setMode(previousMode, true);
-    otherInterface.setMode(currentMode, true);
+    setMode(previousMode, WebCore::VideoPresentationModel::ShouldNotifyMediaElement::Yes);
+    otherInterface.setMode(currentMode, WebCore::VideoPresentationModel::ShouldNotifyMediaElement::Yes);
 }
 
 } // namespace WebKit

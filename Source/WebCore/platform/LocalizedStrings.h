@@ -355,6 +355,7 @@ namespace WebCore {
 #if ENABLE(VIDEO)
     String trackNoLabelText();
     String textTrackOffMenuItemText();
+    String textTrackOnMenuItemText();
     String textTrackAutomaticMenuItemText();
 #if PLATFORM(COCOA)
     String addTrackLabelAsSuffix(const String&, const String&);

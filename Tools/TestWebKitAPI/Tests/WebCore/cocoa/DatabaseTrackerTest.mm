@@ -59,17 +59,17 @@ TEST(DatabaseTracker, DeleteDatabaseFileIfEmpty)
 
 static void addToDatabasesTable(const String& databasePath, const SecurityOriginData& origin, const String& newDatabaseName, const String& newDatabasePath)
 {
-    SQLiteDatabase database;
-    database.open(databasePath);
+    auto database = makeUniqueRef<SQLiteDatabase>();
+    database->open(databasePath);
 
-    if (auto addDatabaseStatement = database.prepareStatement("INSERT INTO Databases (origin, name, path) VALUES (?, ?, ?);"_s)) {
+    if (auto addDatabaseStatement = database->prepareStatement("INSERT INTO Databases (origin, name, path) VALUES (?, ?, ?);"_s)) {
         addDatabaseStatement->bindText(1, origin.databaseIdentifier());
         addDatabaseStatement->bindText(2, newDatabaseName);
         addDatabaseStatement->bindText(3, newDatabasePath);
         addDatabaseStatement->executeCommand();
     }
 
-    database.close();
+    database->close();
 }
 
 static void removeDirectoryAndAllContents(const String& directoryPath)

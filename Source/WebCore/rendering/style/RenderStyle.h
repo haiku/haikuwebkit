@@ -68,11 +68,9 @@ class RenderElement;
 class RenderStyle;
 class SVGRenderStyle;
 class ScrollTimeline;
-class StyleContentAlignmentData;
 class StyleInheritedData;
 class StyleNonInheritedData;
 class StyleRareInheritedData;
-class StyleSelfAlignmentData;
 class TransformationMatrix;
 class ViewTimeline;
 
@@ -234,6 +232,9 @@ class CustomPropertyData;
 class CustomPropertyRegistry;
 
 struct AccentColor;
+struct AlignContent;
+struct AlignItems;
+struct AlignSelf;
 struct Animation;
 struct AnchorNames;
 struct AppleColorFilter;
@@ -286,6 +287,9 @@ struct HyphenateLimitEdge;
 struct HyphenateLimitLines;
 struct ImageOrNone;
 struct InsetEdge;
+struct JustifyContent;
+struct JustifyItems;
+struct JustifySelf;
 struct LetterSpacing;
 struct LineHeight;
 struct LineWidth;
@@ -486,17 +490,6 @@ public:
 
     bool scrollAnchoringSuppressionStyleDidChange(const RenderStyle*) const;
     bool outOfFlowPositionStyleDidChange(const RenderStyle*) const;
-
-    ContentPosition resolvedJustifyContentPosition(const StyleContentAlignmentData& normalValueBehavior) const;
-    ContentDistribution resolvedJustifyContentDistribution(const StyleContentAlignmentData& normalValueBehavior) const;
-    ContentPosition resolvedAlignContentPosition(const StyleContentAlignmentData& normalValueBehavior) const;
-    ContentDistribution resolvedAlignContentDistribution(const StyleContentAlignmentData& normalValueBehavior) const;
-    StyleSelfAlignmentData resolvedAlignItems(ItemPosition normalValueBehavior) const;
-    StyleSelfAlignmentData resolvedAlignSelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const;
-    StyleContentAlignmentData resolvedAlignContent(const StyleContentAlignmentData& normalValueBehavior) const;
-    StyleSelfAlignmentData resolvedJustifyItems(ItemPosition normalValueBehavior) const;
-    StyleSelfAlignmentData resolvedJustifySelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const;
-    StyleContentAlignmentData resolvedJustifyContent(const StyleContentAlignmentData& normalValueBehavior) const;
 
     std::optional<PseudoElementType> pseudoElementType() const;
     const AtomString& pseudoElementNameArgument() const;
@@ -951,17 +944,17 @@ public:
     inline Style::FlexGrow flexGrow() const;
     inline Style::FlexShrink flexShrink() const;
     inline const Style::FlexBasis& flexBasis() const;
-    inline const StyleContentAlignmentData& alignContent() const;
-    inline const StyleSelfAlignmentData& alignItems() const;
-    inline const StyleSelfAlignmentData& alignSelf() const;
+    inline Style::AlignContent alignContent() const;
+    inline Style::AlignItems alignItems() const;
+    inline Style::AlignSelf alignSelf() const;
     inline FlexDirection flexDirection() const;
     inline bool isRowFlexDirection() const;
     inline bool isColumnFlexDirection() const;
     inline bool isReverseFlexDirection() const;
     inline FlexWrap flexWrap() const;
-    inline const StyleContentAlignmentData& justifyContent() const;
-    inline const StyleSelfAlignmentData& justifyItems() const;
-    inline const StyleSelfAlignmentData& justifySelf() const;
+    inline Style::JustifyContent justifyContent() const;
+    inline Style::JustifyItems justifyItems() const;
+    inline Style::JustifySelf justifySelf() const;
 
     inline Style::GridAutoFlow gridAutoFlow() const;
     inline const Style::GridTrackSizes& gridAutoColumns() const;
@@ -1556,19 +1549,16 @@ public:
     inline void setFlexGrow(Style::FlexGrow);
     inline void setFlexShrink(Style::FlexShrink);
     inline void setFlexBasis(Style::FlexBasis&&);
-    inline void setOrder(Style::Order);
-    inline void setAlignContent(const StyleContentAlignmentData&);
-    inline void setAlignItems(const StyleSelfAlignmentData&);
-    inline void setAlignItemsPosition(ItemPosition);
-    inline void setAlignSelf(const StyleSelfAlignmentData&);
-    inline void setAlignSelfPosition(ItemPosition);
     inline void setFlexDirection(FlexDirection);
     inline void setFlexWrap(FlexWrap);
-    inline void setJustifyContent(const StyleContentAlignmentData&);
-    inline void setJustifyContentPosition(ContentPosition);
-    inline void setJustifyItems(const StyleSelfAlignmentData&);
-    inline void setJustifySelf(const StyleSelfAlignmentData&);
-    inline void setJustifySelfPosition(ItemPosition);
+    inline void setOrder(Style::Order);
+
+    inline void setAlignContent(Style::AlignContent);
+    inline void setAlignItems(Style::AlignItems);
+    inline void setAlignSelf(Style::AlignSelf);
+    inline void setJustifyContent(Style::JustifyContent);
+    inline void setJustifyItems(Style::JustifyItems);
+    inline void setJustifySelf(Style::JustifySelf);
 
     inline void setBoxDecorationBreak(BoxDecorationBreak);
 
@@ -1993,6 +1983,9 @@ public:
     static constexpr OverscrollBehavior initialOverscrollBehaviorX();
     static constexpr OverscrollBehavior initialOverscrollBehaviorY();
 
+    static constexpr Style::AlignContent initialAlignContent();
+    static constexpr Style::AlignItems initialAlignItems();
+    static constexpr Style::AlignSelf initialAlignSelf();
     static constexpr Clear initialClear();
     static inline Style::Clip initialClip();
     static inline Style::SVGCenterCoordinateComponent initialCx();
@@ -2121,10 +2114,9 @@ public:
     static constexpr Style::FlexShrink initialFlexShrink();
     static inline Style::FlexBasis initialFlexBasis();
     static constexpr Style::Order initialOrder();
-    static constexpr StyleSelfAlignmentData initialJustifyItems();
-    static constexpr StyleSelfAlignmentData initialSelfAlignment();
-    static constexpr StyleSelfAlignmentData initialDefaultAlignment();
-    static constexpr StyleContentAlignmentData initialContentAlignment();
+    static constexpr Style::JustifyContent initialJustifyContent();
+    static constexpr Style::JustifyItems initialJustifyItems();
+    static constexpr Style::JustifySelf initialJustifySelf();
     static constexpr FlexDirection initialFlexDirection();
     static constexpr FlexWrap initialFlexWrap();
     static constexpr MarqueeBehavior initialMarqueeBehavior();

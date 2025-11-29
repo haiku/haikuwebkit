@@ -855,17 +855,19 @@ header: <WebCore/RenderStyleConstants.h>
     WebCore::FloatSize radii().bottomRight();
 }
 
-[AdditionalEncoder=StreamConnectionEncoder] class WebCore::IntRect {
+webkit_platform_headers: <WebCore/IntRect.h>
+
+[AdditionalEncoder=StreamConnectionEncoder, WebKitPlatform] class WebCore::IntRect {
     WebCore::IntPoint location();
     [Validator='WebCore::IntRect { *location, *size }.isValid()'] WebCore::IntSize size();
 }
 
-[AdditionalEncoder=StreamConnectionEncoder] class WebCore::IntPoint {
+[AdditionalEncoder=StreamConnectionEncoder, WebKitPlatform] class WebCore::IntPoint {
     int x();
     int y();
 }
 
-[AdditionalEncoder=StreamConnectionEncoder] class WebCore::IntSize {
+[AdditionalEncoder=StreamConnectionEncoder, WebKitPlatform] class WebCore::IntSize {
     int width();
     int height();
 }
@@ -1746,6 +1748,7 @@ enum class WebCore::RotationDirection : bool
     WebCore::MockContentFilterSettings::Decision m_unblockRequestDecision;
     String m_blockedString;
     String m_modifiedRequestURL;
+    Seconds m_willSendRequestDecisionDelay;
 }
 [Nested] enum class WebCore::MockContentFilterSettings::DecisionPoint : uint8_t {
     AfterWillSendRequest,
@@ -6189,7 +6192,7 @@ header: <WebCore/ISOVTTCue.h>
 [CustomHeader] class WebCore::ISOWebVTTCue {
     MediaTime presentationTime();
     MediaTime duration();
-    AtomString id();
+    String id();
     String cueText();
     String settings();
     String sourceID();
@@ -6243,6 +6246,7 @@ header: <WebCore/ISOVTTCue.h>
     bool expectCancel;
     bool supportClientPin;
     bool supportInternalUV;
+    Vector<uint8_t> pinProtocols;
     int64_t maxCredentialCountInList;
     int64_t maxCredentialIdLength;
 };
@@ -6334,6 +6338,7 @@ header: <WebCore/MockMediaDevice.h>
 [CustomHeader] struct WebCore::MockMicrophoneProperties {
     int defaultSampleRate;
     std::optional<bool> echoCancellation;
+    uint32_t deviceID;
 };
 
 header: <WebCore/MockMediaDevice.h>
@@ -6732,6 +6737,7 @@ header: <WebCore/TextExtractionTypes.h>
 
 header: <WebCore/TextExtractionTypes.h>
 [CustomHeader] struct WebCore::TextExtraction::Request {
+    HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> clientNodeAttributes;
     std::optional<WebCore::FloatRect> collectionRectInRootView;
     std::optional<WebCore::JSHandleIdentifier> targetNodeHandleIdentifier;
     bool mergeParagraphs;
@@ -6739,6 +6745,7 @@ header: <WebCore/TextExtractionTypes.h>
     bool includeNodeIdentifiers;
     bool includeEventListeners;
     bool includeAccessibilityAttributes;
+    bool includeTextInAutoFilledControls;
 };
 
 header: <WebCore/TextExtractionTypes.h>
@@ -6829,6 +6836,7 @@ header: <WebCore/TextExtractionTypes.h>
     OptionSet<WebCore::TextExtraction::EventListenerCategory> eventListeners;
     HashMap<String, String> ariaAttributes;
     String accessibilityRole;
+    HashMap<String, String> clientAttributes;
 };
 
 #if ENABLE(WRITING_TOOLS)
@@ -8930,6 +8938,19 @@ struct WebCore::FocusEventData {
 }
 
 header: <WebCore/AXObjectCache.h>
+[CustomHeader] enum class WebCore::NotifyPriority : uint8_t {
+    Normal,
+    High
+};
+
+header: <WebCore/AXObjectCache.h>
+[CustomHeader] enum class WebCore::InterruptBehavior : uint8_t {
+    None,
+    All,
+    Pending
+};
+
+header: <WebCore/AXObjectCache.h>
 [CustomHeader] struct WebCore::AXDebugInfo {
     bool isAccessibilityEnabled;
     bool isAccessibilityThreadInitialized;
@@ -8937,7 +8958,15 @@ header: <WebCore/AXObjectCache.h>
     String isolatedTree;
     uint64_t remoteTokenHash;
     uint64_t webProcessLocalTokenHash;
-}
+};
+
+header: <WebCore/AXObjectCache.h>
+[CustomHeader] struct WebCore::AriaNotifyData {
+    String message;
+    WebCore::NotifyPriority priority;
+    WebCore::InterruptBehavior interrupt;
+    String language;
+};
 
 header: <WebCore/ScriptTrackingPrivacyCategory.h>
 [OptionSet] enum class WebCore::ScriptTrackingPrivacyFlag : uint16_t {

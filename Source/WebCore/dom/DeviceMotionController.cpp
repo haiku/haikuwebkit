@@ -70,12 +70,12 @@ void DeviceMotionController::didChangeDeviceMotion(DeviceMotionData* deviceMotio
 
 bool DeviceMotionController::hasLastData()
 {
-    return m_client->lastMotion();
+    return checkedClient()->lastMotion();
 }
 
 RefPtr<Event> DeviceMotionController::getLastEvent()
 {
-    RefPtr lastMotion = m_client->lastMotion();
+    RefPtr lastMotion = checkedClient()->lastMotion();
     return DeviceMotionEvent::create(eventNames().devicemotionEvent, lastMotion.get());
 }
 
@@ -86,12 +86,17 @@ DeviceMotionController* DeviceMotionController::from(Page* page)
 
 bool DeviceMotionController::isActiveAt(Page* page)
 {
-    if (DeviceMotionController* self = DeviceMotionController::from(page))
+    if (CheckedPtr self = DeviceMotionController::from(page))
         return self->isActive();
     return false;
 }
 
 DeviceClient& DeviceMotionController::client()
+{
+    return m_client.get();
+}
+
+CheckedRef<DeviceMotionClient> DeviceMotionController::checkedClient()
 {
     return m_client.get();
 }

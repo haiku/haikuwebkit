@@ -819,7 +819,7 @@ using namespace Inspector;
     _network1Handler = handler;
 
     auto alternateDispatcher = makeUnique<ObjCInspectorNetwork1BackendDispatcher>(handler);
-    auto alternateAgent = makeUnique<AlternateDispatchableAgent<Network1BackendDispatcher, AlternateNetwork1BackendDispatcher>>("Network1"_s, *_controller, WTFMove(alternateDispatcher));
+    auto alternateAgent = makeUniqueRef<AlternateDispatchableAgent<Network1BackendDispatcher, AlternateNetwork1BackendDispatcher>>("Network1"_s, *_controller, WTFMove(alternateDispatcher));
     _controller->registerAlternateAgent(WTFMove(alternateAgent));
 }
 

@@ -144,23 +144,53 @@ TemporalPlainTime* TemporalPlainTime::tryCreateIfValid(JSGlobalObject* globalObj
 }
 
 // https://tc39.es/proposal-temporal/#sec-temporal-balancetime
-static ISO8601::Duration balanceTime(double hour, double minute, double second, double millisecond, double microsecond, double nanosecond)
+static ISO8601::Duration balanceTime(Int128 hour, Int128 minute, Int128 second, Int128 millisecond, Int128 microsecond, Int128 nanosecond)
 {
     // https://github.com/tc39/proposal-temporal/issues/1804
     // Use non-negative modulo operation.
-    microsecond += std::floor(nanosecond / 1000);
-    nanosecond = nonNegativeModulo(nanosecond, 1000);
-    millisecond += std::floor(microsecond / 1000);
-    microsecond = nonNegativeModulo(microsecond, 1000);
-    second += std::floor(millisecond / 1000);
-    millisecond = nonNegativeModulo(millisecond, 1000);
-    minute += std::floor(second / 60);
-    second = nonNegativeModulo(second, 60);
-    hour += std::floor(minute / 60);
-    minute = nonNegativeModulo(minute, 60);
-    double days = std::floor(hour / 24);
-    hour = nonNegativeModulo(hour, 24);
-    return ISO8601::Duration(0, 0, 0, days, hour, minute, second, millisecond, microsecond, nanosecond);
+    microsecond += nanosecond / 1000;
+    nanosecond = nanosecond % 1000;
+    if (nanosecond < 0) {
+        microsecond -= 1;
+        nanosecond += 1000;
+    }
+
+    millisecond += microsecond / 1000;
+    microsecond = microsecond % 1000;
+    if (microsecond < 0) {
+        millisecond -= 1;
+        microsecond += 1000;
+    }
+
+    second += millisecond / 1000;
+    millisecond = millisecond % 1000;
+    if (millisecond < 0) {
+        second -= 1;
+        millisecond += 1000;
+    }
+
+    minute += second / 60;
+    second = second % 60;
+    if (second < 0) {
+        minute -= 1;
+        second += 60;
+    }
+
+    hour += minute / 60;
+    minute = minute % 60;
+    if (minute < 0) {
+        hour -= 1;
+        minute += 60;
+    }
+
+    Int128 days = hour / 24;
+    hour = hour % 24;
+    if (hour < 0) {
+        days -= 1;
+        hour += 24;
+    }
+
+    return ISO8601::Duration(0, 0, 0, static_cast<double>(days), static_cast<double>(hour), static_cast<double>(minute), static_cast<double>(second), static_cast<double>(millisecond), static_cast<double>(microsecond), static_cast<double>(nanosecond));
 }
 
 // https://tc39.es/proposal-temporal/#sec-temporal-roundtime
@@ -181,32 +211,38 @@ ISO8601::Duration TemporalPlainTime::roundTime(ISO8601::PlainTime plainTime, dou
     case TemporalUnit::Hour: {
         quantity = (fractionalSecond(plainTime) / 60.0 + plainTime.minute()) / 60.0 + plainTime.hour();
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(result, 0, 0, 0, 0, 0);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(result), 0, 0, 0, 0, 0);
     }
     case TemporalUnit::Minute: {
         quantity = fractionalSecond(plainTime) / 60.0 + plainTime.minute();
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(plainTime.hour(), result, 0, 0, 0, 0);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(plainTime.hour()), static_cast<Int128>(result), 0, 0, 0, 0);
     }
     case TemporalUnit::Second: {
         quantity = fractionalSecond(plainTime);
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(plainTime.hour(), plainTime.minute(), result, 0, 0, 0);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(plainTime.hour()), static_cast<Int128>(plainTime.minute()), static_cast<Int128>(result), 0, 0, 0);
     }
     case TemporalUnit::Millisecond: {
         quantity = plainTime.millisecond() + plainTime.microsecond() * 1e-3 + plainTime.nanosecond() * 1e-6;
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(plainTime.hour(), plainTime.minute(), plainTime.second(), result, 0, 0);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(plainTime.hour()), static_cast<Int128>(plainTime.minute()), static_cast<Int128>(plainTime.second()), static_cast<Int128>(result), 0, 0);
     }
     case TemporalUnit::Microsecond: {
         quantity = plainTime.microsecond() + plainTime.nanosecond() * 1e-3;
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(plainTime.hour(), plainTime.minute(), plainTime.second(), plainTime.millisecond(), result, 0);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(plainTime.hour()), static_cast<Int128>(plainTime.minute()), static_cast<Int128>(plainTime.second()), static_cast<Int128>(plainTime.millisecond()), static_cast<Int128>(result), 0);
     }
     case TemporalUnit::Nanosecond: {
         quantity = plainTime.nanosecond();
         auto result = roundNumberToIncrementDouble(quantity, increment, roundingMode);
-        return balanceTime(plainTime.hour(), plainTime.minute(), plainTime.second(), plainTime.millisecond(), plainTime.microsecond(), result);
+        ASSERT(std::isfinite(result));
+        return balanceTime(static_cast<Int128>(plainTime.hour()), static_cast<Int128>(plainTime.minute()), static_cast<Int128>(plainTime.second()), static_cast<Int128>(plainTime.millisecond()), static_cast<Int128>(plainTime.microsecond()), static_cast<Int128>(result));
     }
     default:
         RELEASE_ASSERT_NOT_REACHED();
@@ -481,12 +517,16 @@ int32_t TemporalPlainTime::compare(const ISO8601::PlainTime& t1, const ISO8601::
 ISO8601::Duration TemporalPlainTime::addTime(const ISO8601::PlainTime& plainTime, const ISO8601::Duration& duration)
 {
     return balanceTime(
-        plainTime.hour() + duration.hours(),
-        plainTime.minute() + duration.minutes(),
-        plainTime.second() + duration.seconds(),
-        plainTime.millisecond() + duration.milliseconds(),
-        plainTime.microsecond() + duration.microseconds(),
-        plainTime.nanosecond() + duration.nanoseconds());
+        // The seconds, milliseconds, microseconds, or nanoseconds fields can be up to
+        // MAX_SAFE_INTEGER. So to do the addition, we have to convert to Int128.
+        // The hour and minute fields are more constrained, but for consistency, these
+        // arguments are Int128 as well.
+        static_cast<Int128>(plainTime.hour()) + static_cast<Int128>(duration.hours()),
+        static_cast<Int128>(plainTime.minute()) + static_cast<Int128>(duration.minutes()),
+        static_cast<Int128>(plainTime.second()) + static_cast<Int128>(duration.seconds()),
+        static_cast<Int128>(plainTime.millisecond()) + static_cast<Int128>(duration.milliseconds()),
+        static_cast<Int128>(plainTime.microsecond()) + static_cast<Int128>(duration.microseconds()),
+        static_cast<Int128>(plainTime.nanosecond()) + static_cast<Int128>(duration.nanoseconds()));
 }
 
 ISO8601::PlainTime TemporalPlainTime::with(JSGlobalObject* globalObject, JSObject* temporalTimeLike, JSValue optionsValue) const

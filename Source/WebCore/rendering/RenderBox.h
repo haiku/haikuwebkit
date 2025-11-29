@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <WebCore/CSSPrimitiveNumeric.h>
 #include <WebCore/FontBaseline.h>
 #include <WebCore/LayoutRange.h>
 #include <WebCore/LocalFrameView.h>
@@ -31,6 +32,7 @@
 #include <WebCore/ScrollSnapOffsetsInfo.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/ShapeOutsideInfo.h>
+#include <WebCore/StyleUnevaluatedCalculation.h>
 #include <wtf/TypeCasts.h>
 
 namespace WebCore {

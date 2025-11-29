@@ -107,6 +107,11 @@ public:
             return;
         }
 
+        if (onlyIncludeText()) {
+            m_lines[lineIndex] = WTFMove(text);
+            return;
+        }
+
         StringBuilder indentation;
         indentation.reserveCapacity(indentLevel);
         for (unsigned i = 0; i < indentLevel; ++i)
@@ -123,12 +128,17 @@ public:
 
     bool includeRects() const
     {
-        return m_options.flags.contains(TextExtractionOptionFlag::IncludeRects);
+        return !onlyIncludeText() && m_options.flags.contains(TextExtractionOptionFlag::IncludeRects);
     }
 
     bool includeURLs() const
     {
-        return m_options.flags.contains(TextExtractionOptionFlag::IncludeURLs);
+        return !onlyIncludeText() && m_options.flags.contains(TextExtractionOptionFlag::IncludeURLs);
+    }
+
+    bool onlyIncludeText() const
+    {
+        return m_options.flags.contains(TextExtractionOptionFlag::OnlyIncludeText);
     }
 
     RefPtr<TextExtractionFilterPromise> filter(const String& text, std::optional<WebCore::NodeIdentifier>&& identifier) const
@@ -139,9 +149,18 @@ public:
         return m_options.filterCallback(text, WTFMove(identifier));
     }
 
+    void applyReplacements(String& text)
+    {
+        for (auto& [original, replacement] : m_options.replacementStrings)
+            text = makeStringByReplacingAll(text, original, replacement);
+    }
+
 private:
     void addLineForNativeMenuItemsIfNeeded()
     {
+        if (onlyIncludeText())
+            return;
+
         if (m_options.nativeMenuItems.isEmpty())
             return;
 
@@ -152,7 +171,7 @@ private:
         addResult({ advanceToNextLine(), 0 }, { "nativePopupMenu"_s, WTFMove(itemsDescription) });
     }
 
-    TextExtractionOptions m_options;
+    const TextExtractionOptions m_options;
     Vector<String> m_lines;
     unsigned m_nextLineIndex { 0 };
     CompletionHandler<void(String&&)> m_completion;
@@ -174,6 +193,13 @@ static Vector<String> eventListenerTypesToStringArray(OptionSet<TextExtraction::
     if (eventListeners.contains(TextExtraction::EventListenerCategory::Keyboard))
         result.append("keyboard"_s);
     return result;
+}
+
+template<typename T> static Vector<String> sortedKeys(const HashMap<String, T>& dictionary)
+{
+    auto keys = copyToVector(dictionary.keys());
+    std::ranges::sort(keys, codePointCompareLessThan);
+    return keys;
 }
 
 static Vector<String> partsForItem(const TextExtraction::Item& item, const TextExtractionAggregator& aggregator)
@@ -198,20 +224,29 @@ static Vector<String> partsForItem(const TextExtraction::Item& item, const TextE
     if (!listeners.isEmpty())
         parts.append(makeString("events=["_s, commaSeparatedString(listeners), ']'));
 
-    auto attributeKeys = copyToVector(item.ariaAttributes.keys());
-    std::ranges::sort(attributeKeys, codePointCompareLessThan);
-
-    for (auto& key : attributeKeys)
+    for (auto& key : sortedKeys(item.ariaAttributes))
         parts.append(makeString(key, "='"_s, escapeString(item.ariaAttributes.get(key)), '\''));
+
+    for (auto& key : sortedKeys(item.clientAttributes))
+        parts.append(makeString(key, "='"_s, item.clientAttributes.get(key), '\''));
 
     return parts;
 }
 
 static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector<String>&& itemParts, std::optional<NodeIdentifier>&& enclosingNode, const TextExtractionLine& line, Ref<TextExtractionAggregator>&& aggregator)
 {
-    auto completion = [itemParts = WTFMove(itemParts), selectedRange = textItem.selectedRange, aggregator, line](const String& filteredText) mutable {
+    auto completion = [itemParts = WTFMove(itemParts), selectedRange = textItem.selectedRange, aggregator, line](String&& filteredText) mutable {
         Vector<String> textParts;
         if (!filteredText.isEmpty()) {
+            // Apply replacements only after filtering, so any filtering steps that rely on comparing DOM text against
+            // visual data (e.g. recognized text) won't result in false positives.
+            aggregator->applyReplacements(filteredText);
+
+            if (aggregator->onlyIncludeText()) {
+                aggregator->addResult(line, { escapeString(filteredText.trim(isASCIIWhitespace).simplifyWhiteSpace(isASCIIWhitespace)) });
+                return;
+            }
+
             auto isNewline = [](UChar character) {
                 return character == '\n' || character == '\r';
             };
@@ -257,7 +292,7 @@ static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector
 
     RefPtr filterPromise = aggregator->filter(textItem.content, WTFMove(enclosingNode));
     if (!filterPromise) {
-        completion(textItem.content);
+        completion(String { textItem.content });
         return;
     }
 
@@ -362,7 +397,7 @@ static void addPartsForItem(const TextExtraction::Item& item, std::optional<Node
             if (controlData.editable.isFocused)
                 parts.append("focused"_s);
 
-        aggregator.addResult(line, WTFMove(parts));
+            aggregator.addResult(line, WTFMove(parts));
         },
         [&](const TextExtraction::LinkItemData& linkData) {
             parts.append("link"_s);
@@ -418,6 +453,14 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
     auto identifier = item.nodeIdentifier;
     if (!identifier)
         identifier = enclosingNode;
+
+    if (aggregator.onlyIncludeText()) {
+        if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
+            addPartsForText(std::get<TextExtraction::TextItemData>(item.data), { }, std::optional { identifier }, { aggregator.advanceToNextLine(), depth }, aggregator);
+        for (auto& child : item.children)
+            addTextRepresentationRecursive(child, std::optional { identifier }, depth + 1, aggregator);
+        return;
+    }
 
     TextExtractionLine line { aggregator.advanceToNextLine(), depth };
     addPartsForItem(item, std::optional { identifier }, line, aggregator);

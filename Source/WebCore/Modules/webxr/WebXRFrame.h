@@ -61,7 +61,7 @@ public:
     static Ref<WebXRFrame> create(WebXRSession&, IsAnimationFrame);
     ~WebXRFrame();
 
-    const WebXRSession& session() const { return m_session.get(); }
+    WebXRSession& session() const { return m_session.get(); }
 
     ExceptionOr<RefPtr<WebXRViewerPose>> getViewerPose(const Document&, const WebXRReferenceSpace&);
     ExceptionOr<RefPtr<WebXRPose>> getPose(const Document&, const WebXRSpace&, const WebXRSpace&);
@@ -73,8 +73,8 @@ public:
 #endif
 
 #if ENABLE(WEBXR_HIT_TEST)
-    Vector<RefPtr<WebXRHitTestResult>> getHitTestResults(const WebXRHitTestSource&);
-    Vector<RefPtr<WebXRTransientInputHitTestResult>> getHitTestResultsForTransientInput(const WebXRTransientInputHitTestSource&);
+    ExceptionOr<Vector<Ref<WebXRHitTestResult>>> getHitTestResults(const WebXRHitTestSource&);
+    ExceptionOr<Vector<Ref<WebXRTransientInputHitTestResult>>> getHitTestResultsForTransientInput(const WebXRTransientInputHitTestSource&);
 #endif
 
     void setTime(DOMHighResTimeStamp time) { m_time = time; }
@@ -85,15 +85,15 @@ public:
 
     static TransformationMatrix matrixFromPose(const PlatformXR::FrameData::Pose&);
 
+    struct PopulatedPose;
+    ExceptionOr<std::optional<PopulatedPose>> populatePose(const Document&, const WebXRSpace&, const WebXRSpace&);
+
 private:
     WebXRFrame(WebXRSession&, IsAnimationFrame);
 
     bool isOutsideNativeBoundsOfBoundedReferenceSpace(const WebXRSpace&, const WebXRSpace&) const;
     bool isLocalReferenceSpace(const WebXRSpace&) const;
     bool mustPosesBeLimited(const WebXRSpace&, const WebXRSpace&) const;
-
-    struct PopulatedPose;
-    ExceptionOr<std::optional<PopulatedPose>> populatePose(const Document&, const WebXRSpace&, const WebXRSpace&);
 
     bool m_active { false };
     bool m_isAnimationFrame { false };

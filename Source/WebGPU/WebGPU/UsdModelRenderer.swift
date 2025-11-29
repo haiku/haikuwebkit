@@ -1558,10 +1558,17 @@ extension DDBridgeReceiver {
         }
     }
 
-    @objc(setCameraDistance:)
+    @objc
     func setCameraDistance(_ distance: Float) {
         #if canImport(DirectDrawBackend)
         context.setCameraDistance(distance)
+        #endif
+    }
+
+    @objc
+    func setPlaying(_ play: Bool) {
+        #if canImport(DirectDrawBackend)
+        context.setEnableModelRotation(play)
         #endif
     }
 }

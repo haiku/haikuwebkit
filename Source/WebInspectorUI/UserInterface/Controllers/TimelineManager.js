@@ -41,7 +41,6 @@ WI.TimelineManager = class TimelineManager extends WI.Object
         this._enabledTimelineTypesSetting = new WI.Setting("enabled-instrument-types", WI.TimelineManager.defaultTimelineTypes());
 
         this._capturingState = TimelineManager.CapturingState.Inactive;
-        this._capturingInstrumentCount = 0;
         this._capturingStartTime = NaN;
         this._capturingEndTime = NaN;
 
@@ -396,11 +395,6 @@ WI.TimelineManager = class TimelineManager extends WI.Object
             this._activeRecording.initializeTimeBoundsIfNecessary(startTime);
         }
 
-        this._capturingInstrumentCount++;
-        console.assert(this._capturingInstrumentCount);
-        if (this._capturingInstrumentCount > 1)
-            return;
-
         if (this._capturingState === TimelineManager.CapturingState.Active)
             return;
 
@@ -437,11 +431,6 @@ WI.TimelineManager = class TimelineManager extends WI.Object
             if (isNaN(this._capturingEndTime) || endTime > this._capturingEndTime)
                 this._capturingEndTime = endTime;
         }
-
-        this._capturingInstrumentCount--;
-        console.assert(this._capturingInstrumentCount >= 0);
-        if (this._capturingInstrumentCount)
-            return;
 
         if (this._capturingState === TimelineManager.CapturingState.Inactive)
             return;

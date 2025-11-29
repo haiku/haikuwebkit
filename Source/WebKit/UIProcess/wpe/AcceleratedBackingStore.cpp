@@ -39,6 +39,8 @@
 
 #if USE(LIBDRM)
 #include <drm_fourcc.h>
+#elif OS(ANDROID)
+#include <drm/drm_fourcc.h>
 #endif
 
 #if USE(SKIA)

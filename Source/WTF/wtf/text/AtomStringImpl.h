@@ -130,9 +130,9 @@ ALWAYS_INLINE Ref<AtomStringImpl> AtomStringImpl::add(StringImpl& string)
 
 ALWAYS_INLINE Ref<AtomStringImpl> AtomStringImpl::add(Ref<StringImpl>&& string)
 {
-    if (string->isAtom()) {
+    if (is<AtomStringImpl>(string)) {
         ASSERT_WITH_MESSAGE(!string->length() || isInAtomStringTable(string.ptr()), "The atom string comes from an other thread!");
-        return static_reference_cast<AtomStringImpl>(WTFMove(string));
+        return uncheckedDowncast<AtomStringImpl>(WTFMove(string));
     }
     return addSlowCase(WTFMove(string));
 }

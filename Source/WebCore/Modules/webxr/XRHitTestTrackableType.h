@@ -29,7 +29,7 @@
 
 namespace WebCore {
 
-enum class XRHitTestTrackableType {
+enum class XRHitTestTrackableType : uint8_t {
     Point,
     Plane,
     Mesh

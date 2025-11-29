@@ -34,7 +34,9 @@ SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorization);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationController);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationPlatformPublicKeyCredentialProvider);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationSecurityKeyPublicKeyCredentialProvider);
+#if HAVE(WEB_AUTHN_PUBLIC_KEY_CREDENTIAL_MANAGER)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationWebBrowserPublicKeyCredentialManager);
+#endif
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationWebBrowserPlatformPublicKeyCredentialProvider);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASPublicKeyCredentialClientData);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, ASAuthorizationPlatformPublicKeyCredentialRegistration);

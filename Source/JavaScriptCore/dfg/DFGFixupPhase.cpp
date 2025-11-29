@@ -1702,7 +1702,6 @@ private:
 
         case ArrayIncludes:
         case ArrayIndexOf:
-        case ArrayLastIndexOf:
             fixupArrayIndexOfOrArrayIncludes(node);
             break;
             
@@ -5178,7 +5177,7 @@ private:
 
     void fixupArrayIndexOfOrArrayIncludes(Node* node)
     {
-        ASSERT(node->op() == ArrayIndexOf || node->op() == ArrayIncludes || node->op() == ArrayLastIndexOf);
+        ASSERT(node->op() == ArrayIndexOf || node->op() == ArrayIncludes);
 
         bool isArrayIncludes = node->op() == ArrayIncludes;
 

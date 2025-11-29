@@ -39,6 +39,7 @@ css/CSSToLengthConversionData.h
 css/MediaList.h
 css/StyleSheetContents.cpp
 css/StyleSheetContents.h
+css/values/primitives/CSSPrimitiveData.h
 dom/CustomElementReactionQueue.h
 dom/Element.h
 dom/FragmentDirectiveRangeFinder.cpp
@@ -70,6 +71,7 @@ page/EventHandler.h
 page/Page.h
 page/PageOverlayController.cpp
 page/WheelEventTestMonitor.h
+[ iOS ] page/ios/ContentChangeObserver.h
 [ Mac ] page/mac/ImageOverlayControllerMac.mm
 [ Mac ] page/mac/ServicesOverlayController.mm
 page/scrolling/ScrollingCoordinator.h
@@ -78,11 +80,15 @@ page/scrolling/ScrollingStateNode.h
 platform/PODRedBlackTree.h
 platform/Scrollbar.h
 platform/cocoa/TelephoneNumberDetectorCocoa.cpp
+[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
 platform/graphics/ImageBufferContextSwitcher.h
 platform/graphics/StringTruncator.cpp
 platform/graphics/ca/PlatformCALayer.h
 platform/graphics/ca/TileController.cpp
+[ iOS ] platform/ios/DeviceMotionClientIOS.h
+[ iOS ] platform/ios/LegacyTileCache.h
 platform/mediastream/libwebrtc/LibWebRTCDav1dDecoder.cpp
+[ iOS ] platform/text/TextBoundaries.cpp
 rendering/BreakablePositions.h
 rendering/RenderLayerBacking.cpp
 rendering/RenderLayerCompositor.cpp
@@ -90,7 +96,6 @@ rendering/RenderTableCellInlines.h
 rendering/RenderText.cpp
 rendering/RenderTextLineBoxes.h
 rendering/TableLayout.h
-rendering/line/LineWidth.h
 rendering/style/StyleCachedImage.cpp
 rendering/svg/SVGRenderingContext.h
 style/StyleExtractorState.h
@@ -99,8 +104,3 @@ style/values/will-change/StyleWillChange.cpp
 testing/Internals.cpp
 xml/XSLStyleSheetLibxslt.cpp
 xml/parser/XMLDocumentParserLibxml2.cpp
-[ iOS ] page/ios/ContentChangeObserver.h
-[ iOS ] platform/cocoa/WebAVPlayerLayerView.mm
-[ iOS ] platform/ios/DeviceMotionClientIOS.h
-[ iOS ] platform/ios/LegacyTileCache.h
-[ iOS ] platform/text/TextBoundaries.cpp

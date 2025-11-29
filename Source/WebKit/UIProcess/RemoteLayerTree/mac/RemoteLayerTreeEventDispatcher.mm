@@ -393,7 +393,7 @@ void RemoteLayerTreeEventDispatcher::startOrStopDisplayLinkOnMainThread()
 #if ENABLE(THREADED_ANIMATIONS)
         {
             Locker lock { m_animationLock };
-            if (!m_animationStacks.isEmpty())
+            if (m_monotonicTimelineRegistry && !m_monotonicTimelineRegistry->isEmpty())
                 return true;
         }
 #endif
@@ -693,6 +693,16 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
         if (!animationStack->isEmpty())
             m_animationStacks.set(layerID, WTFMove(animationStack));
     }
+}
+
+RefPtr<const RemoteAnimationStack> RemoteLayerTreeEventDispatcher::animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier layerID) const
+{
+    assertIsHeld(m_animationLock);
+
+    auto it = m_animationStacks.find(layerID);
+    if (it != m_animationStacks.end())
+        return it->value.ptr();
+    return nullptr;
 }
 #endif
 

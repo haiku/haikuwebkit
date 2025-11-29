@@ -348,6 +348,7 @@ RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWe
     [configuration setIncludeNodeIdentifiers:options && options->includeNodeIdentifiers];
     [configuration setIncludeEventListeners:options && options->includeEventListeners];
     [configuration setIncludeAccessibilityAttributes:options && options->includeAccessibilityAttributes];
+    [configuration setIncludeTextInAutoFilledControls:options && options->includeTextInAutoFilledControls];
     if (auto wordLimit = options ? options->wordLimit : 0)
         [configuration setMaxWordsPerParagraph:static_cast<NSUInteger>(wordLimit)];
     [configuration setTargetRect:extractionRect];
@@ -549,5 +550,12 @@ void UIScriptControllerCocoa::setObscuredInsets(double top, double right, double
 #endif
     [webView() setObscuredContentInsets:insets];
 }
+
+#if ENABLE(THREADED_ANIMATIONS)
+JSRetainPtr<JSStringRef> UIScriptControllerCocoa::animationStackForLayerWithID(uint64_t layerID) const
+{
+    return adopt(JSStringCreateWithCFString((CFStringRef) [webView() _animationStackForLayerWithID:layerID]));
+}
+#endif
 
 } // namespace WTR

@@ -99,6 +99,7 @@ public:
     Vector<RefPtr<TextTrack>> sortedTrackListForMenu(TextTrackList*, HashSet<TextTrack::Kind>) override;
     String displayNameForTrack(AudioTrack*) const override;
     String displayNameForTrack(TextTrack*) const override;
+    String captionPreviewTitle() const override;
 
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
     WEBCORE_EXPORT String captionsWindowCSS() const;

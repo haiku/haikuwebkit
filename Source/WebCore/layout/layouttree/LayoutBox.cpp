@@ -237,6 +237,7 @@ bool Box::isBlockLevelBox() const
         || display == DisplayType::Table
         || display == DisplayType::Flex
         || display == DisplayType::Grid
+        || display == DisplayType::Masonry
         || display == DisplayType::FlowRoot;
 }
 
@@ -254,6 +255,7 @@ bool Box::isInlineLevelBox() const
         || display == DisplayType::InlineBox
         || display == DisplayType::InlineFlex
         || display == DisplayType::InlineGrid
+        || display == DisplayType::InlineMasonry
         || display == DisplayType::Ruby
         || display == DisplayType::RubyBase
         || display == DisplayType::RubyAnnotation

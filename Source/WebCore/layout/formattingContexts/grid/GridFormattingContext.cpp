@@ -133,17 +133,15 @@ PlacedGridItems GridFormattingContext::constructPlacedGridItems(const GridAreas&
         CheckedRef gridItemStyle = unplacedGridItem.m_layoutBox->style();
 
         auto usedJustifySelf = [&] {
-            if (auto gridItemJustifySelf = gridItemStyle->justifySelf(); gridItemJustifySelf.position() != ItemPosition::Auto)
-                return gridItemJustifySelf;
-            auto& formattingContextRootStyle = root().style();
-            return formattingContextRootStyle.justifyItems();
+            if (auto gridItemJustifySelf = gridItemStyle->justifySelf(); !gridItemJustifySelf.isAuto())
+                return gridItemJustifySelf.resolve();
+            return root().style().justifyItems().resolve();
         };
 
         auto usedAlignSelf = [&] {
-            if (auto gridItemAlignSelf = gridItemStyle->alignSelf(); gridItemAlignSelf.position() != ItemPosition::Auto)
-                return gridItemAlignSelf;
-            auto& formattingContextRootStyle = root().style();
-            return formattingContextRootStyle.alignItems();
+            if (auto gridItemAlignSelf = gridItemStyle->alignSelf(); !gridItemAlignSelf.isAuto())
+                return gridItemAlignSelf.resolve();
+            return root().style().alignItems().resolve();
         };
 
         PlacedGridItem::ComputedSizes inlineAxisSizes {

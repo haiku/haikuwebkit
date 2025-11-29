@@ -343,7 +343,11 @@
 /* WK_UNUSED_INSTANCE_VARIABLE */
 
 #if !defined(WK_UNUSED_INSTANCE_VARIABLE)
+#if COMPILER_HAS_ATTRIBUTE(suppress)
+#define WK_UNUSED_INSTANCE_VARIABLE [[clang::suppress]] __attribute__((unused))
+#else
 #define WK_UNUSED_INSTANCE_VARIABLE __attribute__((unused))
+#endif
 #endif
 
 /* UNUSED_FUNCTION */

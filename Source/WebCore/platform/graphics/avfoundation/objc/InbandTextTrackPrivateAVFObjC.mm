@@ -138,7 +138,7 @@ bool InbandTextTrackPrivateAVFObjC::isEasyToRead() const
     return hasMediaCharacteristic(AVMediaCharacteristicEasyToRead);
 }
 
-AtomString InbandTextTrackPrivateAVFObjC::label() const
+String InbandTextTrackPrivateAVFObjC::label() const
 {
     NSArray<AVMetadataItem*>* commonMetadata = nil;
     if (m_mediaSelectionOption)
@@ -146,7 +146,7 @@ AtomString InbandTextTrackPrivateAVFObjC::label() const
     else if (m_assetTrack)
         commonMetadata = [m_assetTrack commonMetadata];
     if (!commonMetadata)
-        return emptyAtom();
+        return emptyString();
 
     RetainPtr<NSString> title;
     RetainPtr<NSArray> titles = [PAL::getAVMetadataItemClassSingleton() metadataItemsFromArray:commonMetadata withKey:AVMetadataCommonKeyTitle keySpace:AVMetadataKeySpaceCommon];
@@ -160,18 +160,18 @@ AtomString InbandTextTrackPrivateAVFObjC::label() const
             title = [[titles objectAtIndex:0] stringValue];
     }
 
-    return title ? AtomString(title.get()) : emptyAtom();
+    return title.get();
 }
 
-AtomString InbandTextTrackPrivateAVFObjC::language() const
+String InbandTextTrackPrivateAVFObjC::language() const
 {
     if (m_mediaSelectionOption)
-        return AtomString(AVTrackPrivateAVFObjCImpl::languageForAVMediaSelectionOption(m_mediaSelectionOption.get()));
+        return AVTrackPrivateAVFObjCImpl::languageForAVMediaSelectionOption(m_mediaSelectionOption.get());
 
     if (m_assetTrack)
-        return AtomString(AVTrackPrivateAVFObjCImpl::languageForAVAssetTrack(m_assetTrack.get()));
+        return AVTrackPrivateAVFObjCImpl::languageForAVAssetTrack(m_assetTrack.get());
 
-    return emptyAtom();
+    return emptyString();
 }
 
 bool InbandTextTrackPrivateAVFObjC::isDefault() const

@@ -109,9 +109,8 @@ WebKitWebExtensionMatchPattern* webkitWebExtensionMatchPatternCreate(const RefPt
     if (!apiMatchPattern)
         return nullptr;
 
-    ASSERT(API::Object::unwrap(static_cast<void*>(apiMatchPattern.get()))->type() == API::Object::Type::WebExtensionMatchPattern);
     WebKitWebExtensionMatchPattern* matchPattern = static_cast<WebKitWebExtensionMatchPattern*>(fastMalloc(sizeof(WebKitWebExtensionMatchPattern)));
-    new (matchPattern) WebKitWebExtensionMatchPattern(static_pointer_cast<WebExtensionMatchPattern>(apiMatchPattern));
+    new (matchPattern) WebKitWebExtensionMatchPattern(apiMatchPattern.copyRef());
     return matchPattern;
 }
 

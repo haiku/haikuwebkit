@@ -41,6 +41,7 @@ public:
 
     bool isHashTableDeletedValue() const { return m_layoutBox.isHashTableDeletedValue(); }
     bool isHashTableEmptyValue() const { return m_layoutBox.isHashTableEmptyValue(); }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     // The grammar for <grid-line>, which is used by the grid-{column, row}-{start-end}
     // placement properties is 1-index in regards to line numbers. To allow for easy
@@ -92,14 +93,6 @@ template<> struct HashTraits<WebCore::Layout::UnplacedGridItem> : SimpleClassHas
 
     static bool isEmptyValue(const WebCore::Layout::UnplacedGridItem& unplacedGridItem) { return unplacedGridItem.isHashTableEmptyValue(); }
     static WebCore::Layout::UnplacedGridItem emptyValue() { return WebCore::Layout::UnplacedGridItem { HashTableEmptyValueType::HashTableEmptyValue }; }
-};
-
-template<> struct DefaultHash<WebCore::Layout::UnplacedGridItem> {
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-
-    static unsigned hash (const WebCore::Layout::UnplacedGridItem key) { return computeHash(key); }
-
-    static bool equal(const WebCore::Layout::UnplacedGridItem& a, const WebCore::Layout::UnplacedGridItem& b) { return a == b; }
 };
 
 }

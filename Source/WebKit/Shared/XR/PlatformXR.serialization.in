@@ -186,6 +186,30 @@ header: <WebCore/PlatformXR.h>
 #endif
 };
 
+#if ENABLE(WEBXR_HIT_TEST)
+header: <WebCore/XRHitTestTrackableType.h>
+enum class WebCore::XRHitTestTrackableType : uint8_t {
+    Point,
+    Plane,
+    Mesh
+};
+
+[CustomHeader] struct PlatformXR::Ray {
+    WebCore::FloatPoint3D origin;
+    WebCore::FloatPoint3D direction;
+};
+
+[CustomHeader] struct PlatformXR::HitTestOptions {
+    WebCore::TransformationMatrix nativeOrigin;
+    Vector<WebCore::XRHitTestTrackableType> entityTypes;
+    PlatformXR::Ray offsetRay;
+};
+
+[Nested] struct PlatformXR::FrameData::HitTestResult {
+    PlatformXR::FrameData::Pose pose;
+};
+#endif
+
 header: <WebCore/PlatformXR.h>
 [CustomHeader, RValue] struct PlatformXR::FrameData {
     bool isTrackingValid;
@@ -198,6 +222,9 @@ header: <WebCore/PlatformXR.h>
     PlatformXR::FrameData::StageParameters stageParameters;
     Vector<PlatformXR::FrameData::View> views;
     HashMap<PlatformXR::LayerHandle, UniqueRef<PlatformXR::FrameData::LayerData>> layers;
+#if ENABLE(WEBXR_HIT_TEST)
+    HashMap<PlatformXR::HitTestSource, Vector<PlatformXR::FrameData::HitTestResult>> hitTestResults;
+#endif
     Vector<PlatformXR::FrameData::InputSource> inputSources;
 };
 

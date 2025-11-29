@@ -26,13 +26,12 @@
 import WebGPU_Internal
 
 extension WebGPU.Buffer {
-    func copy(from data: Span<UInt8>, offset: Int) {
-        // FIXME: Use a bounds-checking implementation when one is available.
-        var bufferContents = unsafe MutableSpan<UInt8>(_unsafeCxxSpan: getBufferContents());
-        precondition(bufferContents.count >= offset + data.count)
-        for i in 0..<data.count {
-            bufferContents[offset + i] = data[i]
-        }
+    func copy(from source: Span<UInt8>, offset: Int) {
+        // FIXME (rdar://161274084): Swift doesn't have a lifetime-safe way to return a borrowed value from a refcounted object yet.
+        let bufferContents = unsafe MutableSpan(_unsafeCxxSpan: getBufferContents())
+
+        var destination = bufferContents._consumingExtracting(droppingFirst: offset)
+        destination.copyMemory(from: source)
     }
 }
 

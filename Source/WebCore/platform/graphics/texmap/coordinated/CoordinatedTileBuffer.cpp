@@ -206,11 +206,19 @@ bool CoordinatedAcceleratedTileBuffer::tryEnsureSurface()
     const auto& size = m_texture->size();
     auto backendTexture = GrBackendTextures::MakeGL(size.width(), size.height(), skgpu::Mipmapped::kNo, externalTexture);
 
+#if PLATFORM(GTK)
+    // FIXME: there's a deadlock when two rendering threads try to create a texture with MSAA enabled. So, for now
+    // we just disable MSAA for the GTK port to render tiles until we find a solution.
+    unsigned msaaSampleCount = 0;
+#else
+    unsigned msaaSampleCount = PlatformDisplay::sharedDisplay().msaaSampleCount();
+#endif
+
     SkSurfaceProps properties = { 0, FontRenderOptions::singleton().subpixelOrder() };
     m_surface = SkSurfaces::WrapBackendTexture(PlatformDisplay::sharedDisplay().skiaGrContext(),
         backendTexture,
         kTopLeft_GrSurfaceOrigin,
-        PlatformDisplay::sharedDisplay().msaaSampleCount(),
+        msaaSampleCount,
         kRGBA_8888_SkColorType,
         SkColorSpace::MakeSRGB(),
         &properties);

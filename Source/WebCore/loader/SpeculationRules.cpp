@@ -364,9 +364,8 @@ bool SpeculationRules::parseSpeculationRules(const StringView& text, const URL& 
     }
 
     auto prefetch = parseRules(*jsonObject, "prefetch"_s, rulesetLevelTag, rulesetBaseURL, documentBaseURL);
-    if (!prefetch)
-        return false;
-    m_prefetchRules.appendVector(WTFMove(*prefetch));
+    if (prefetch)
+        m_prefetchRules.appendVector(WTFMove(*prefetch));
     return true;
 }
 

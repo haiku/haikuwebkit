@@ -68,7 +68,8 @@ public:
     void handleThreadStopInfo(StringView packet);
     void reset();
 
-    void setInterruptBreakpoint(JSWebAssemblyInstance*, IPIntCallee*);
+    void setBreakpointAtEntry(JSWebAssemblyInstance*, IPIntCallee*, Breakpoint::Type);
+    void setBreakpointAtPC(JSWebAssemblyInstance*, FunctionCodeIndex, Breakpoint::Type, const uint8_t* pc);
     void setBreakpoint(StringView packet);
     void removeBreakpoint(StringView packet);
 
@@ -162,10 +163,9 @@ private:
     friend class DebugServer;
 
     enum class DebuggerState : uint8_t {
-        ReplyFailed,
-        Replied,
-        StopRequested,
-        ContinueRequested,
+        Replied, // Received LLDB message replied.
+        StopRequested, // Requested mutator to stop.
+        ContinueRequested, // Requested mutator to continue.
     };
 
     enum class MutatorState : uint8_t {
@@ -173,10 +173,7 @@ private:
         Stopped,
     };
 
-    void stopOneTimeBreakpoint(StopReason&&);
-    void stopRegularBreakpoint(StopReason&&);
-    template<typename LockType>
-    void stopImpl(LockType&);
+    void stopImpl(StopReason&&);
 
     void sendStopReply(AbstractLocker&);
     void sendReplyOK();

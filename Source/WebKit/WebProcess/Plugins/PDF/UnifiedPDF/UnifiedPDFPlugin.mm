@@ -202,7 +202,7 @@ UnifiedPDFPlugin::UnifiedPDFPlugin(HTMLPlugInElement& element)
     [m_accessibilityDocumentObject setPDFPlugin:this];
     RefPtr frame = m_frame.get();
     if (isFullMainFramePlugin())
-        [m_accessibilityDocumentObject setParent:frame->protectedPage()->accessibilityRemoteObject()];
+        [m_accessibilityDocumentObject setParent:frame->protectedPage()->protectedAccessibilityRemoteObject().get()];
 
     if (protectedPresentationController()->wantsWheelEvents())
         wantsWheelEventsChanged();
@@ -913,7 +913,7 @@ void UnifiedPDFPlugin::paintPDFContent(const WebCore::GraphicsLayer* layer, Grap
 
         if (!asyncRenderer) {
             LOG_WITH_STREAM(PDF, stream << "UnifiedPDFPlugin: painting PDF page " << pageInfo.pageIndex << " into rect " << pageDestinationRect << " with clip " << clipRect);
-            [page drawWithBox:kPDFDisplayBoxCropBox toContext:context.platformContext()];
+            [page drawWithBox:kPDFDisplayBoxCropBox toContext:context.protectedPlatformContext().get()];
         }
 
         if constexpr (hasFullAnnotationSupport) {
@@ -4070,7 +4070,8 @@ void UnifiedPDFPlugin::setActiveAnnotation(SetActiveAnnotationParams&& setActive
         if (isInPluginCleanup != IsInPluginCleanup::Yes) {
             if (RefPtr activeAnnotation = m_activeAnnotation) {
                 activeAnnotation->commit();
-                setNeedsRepaintForAnnotation(activeAnnotation->annotation(), repaintRequirementsForAnnotation(activeAnnotation->annotation(), IsAnnotationCommit::Yes));
+                RetainPtr pdfAnnotation = activeAnnotation->annotation();
+                setNeedsRepaintForAnnotation(pdfAnnotation.get(), repaintRequirementsForAnnotation(pdfAnnotation.get(), IsAnnotationCommit::Yes));
             }
         }
 
@@ -4083,7 +4084,7 @@ void UnifiedPDFPlugin::setActiveAnnotation(SetActiveAnnotationParams&& setActive
             RefPtr newActiveAnnotation = PDFPluginAnnotation::create(annotation.get(), this);
             newActiveAnnotation->attach(m_annotationContainer.get());
             m_activeAnnotation = WTFMove(newActiveAnnotation);
-            revealAnnotation(protectedActiveAnnotation()->annotation());
+            revealAnnotation(protectedActiveAnnotation()->protectedAnnotation().get());
         } else
             m_activeAnnotation = nullptr;
     });

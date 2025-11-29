@@ -30,7 +30,7 @@
 
 #import "AVAudioSessionCaptureDevice.h"
 #import "AudioSession.h"
-#import "CoreAudioSharedUnit.h"
+#import "CoreAudioCaptureUnit.h"
 #import "Logging.h"
 #import "RealtimeMediaSourceCenter.h"
 #import <AVFoundation/AVAudioSession.h>
@@ -250,7 +250,9 @@ Vector<AVAudioSessionCaptureDevice> AVAudioSessionCaptureDeviceManager::retrieve
         if (currentInput != m_lastDefaultMicrophone.get()) {
             auto device = AVAudioSessionCaptureDevice::createInput(currentInput, currentInput);
             callOnWebThreadOrDispatchAsyncOnMainThread(makeBlockPtr([device = crossThreadCopy(WTFMove(device))] () mutable {
-                CoreAudioSharedUnit::singleton().handleNewCurrentMicrophoneDevice(WTFMove(device));
+                CoreAudioCaptureUnit::forEach([&device](auto& unit) {
+                    unit.handleNewCurrentMicrophoneDevice(device);
+                });
             }).get());
         }
         m_lastDefaultMicrophone = currentInput;

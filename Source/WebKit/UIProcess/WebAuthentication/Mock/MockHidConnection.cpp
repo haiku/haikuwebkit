@@ -230,7 +230,18 @@ void MockHidConnection::feedReports()
             AuthenticatorGetInfoResponse infoResponse({ ProtocolVersion::kCtap2 }, Vector<uint8_t>(aaguidLength, 0u));
             AuthenticatorSupportedOptions options;
             if (m_configuration.hid->supportClientPin) {
-                infoResponse.setPinProtocols({ pin::kProtocolVersion });
+                StdSet<PINUVAuthProtocol> protocols;
+                if (!m_configuration.hid->pinProtocols.isEmpty()) {
+                    for (auto protocol : m_configuration.hid->pinProtocols) {
+                        if (protocol == static_cast<uint8_t>(PINUVAuthProtocol::kPinProtocol1))
+                            protocols.insert(PINUVAuthProtocol::kPinProtocol1);
+                        else if (protocol == static_cast<uint8_t>(PINUVAuthProtocol::kPinProtocol2))
+                            protocols.insert(PINUVAuthProtocol::kPinProtocol2);
+                    }
+                } else
+                    protocols.insert(PINUVAuthProtocol::kPinProtocol1);
+
+                infoResponse.setPinProtocols(WTFMove(protocols));
                 options.setClientPinAvailability(AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet);
             }
             if (m_configuration.hid->supportInternalUV)

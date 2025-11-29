@@ -37,7 +37,7 @@ namespace JSC  {
 class ArgList;
 class Identifier;
 class JSGlobalObject;
-class PropertyNameArray;
+class PropertyNameArrayBuilder;
 class RuntimeMethod;
 
 namespace Bindings {
@@ -104,7 +104,7 @@ public:
     virtual bool supportsConstruct() const { return false; }
     virtual JSValue invokeConstruct(JSGlobalObject*, CallFrame*, const ArgList&) { return JSValue(); }
 
-    virtual void getPropertyNames(JSGlobalObject*, PropertyNameArray&) { }
+    virtual void getPropertyNames(JSGlobalObject*, PropertyNameArrayBuilder&) { }
 
     virtual JSValue defaultValue(JSGlobalObject*, PreferredPrimitiveType) const = 0;
 

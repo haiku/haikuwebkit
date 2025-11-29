@@ -585,7 +585,8 @@ void AXIsolatedTree::objectChangedIgnoredState(const AccessibilityObject& object
     }
 
     if (object.isLink()) {
-        if (RefPtr webArea = m_axObjectCache ? m_axObjectCache->rootWebArea() : nullptr)
+        CheckedPtr axObjectCache = m_axObjectCache.get();
+        if (RefPtr webArea = axObjectCache ? axObjectCache->rootWebArea() : nullptr)
             queueNodeUpdate(webArea->objectID(), { AXProperty::DocumentLinks });
     }
 #else
@@ -1589,7 +1590,8 @@ void AXIsolatedTree::queueNodeRemoval(const AccessibilityObject& axObject)
 {
     ASSERT(isMainThread());
 
-    std::optional labeledObjectIDs = axObjectCache() ? axObjectCache()->relatedObjectIDsFor(axObject, AXRelation::LabelFor, AXObjectCache::UpdateRelations::No) : std::nullopt;
+    CheckedPtr axObjectCache = this->axObjectCache();
+    std::optional labeledObjectIDs = axObjectCache ? axObjectCache->relatedObjectIDsFor(axObject, AXRelation::LabelFor, AXObjectCache::UpdateRelations::No) : std::nullopt;
     if (labeledObjectIDs) {
         // Update the labeled objects since axObject is one of their labels and it is being removed.
         for (AXID labeledObjectID : *labeledObjectIDs) {
@@ -1602,8 +1604,8 @@ void AXIsolatedTree::queueNodeRemoval(const AccessibilityObject& axObject)
     std::optional<AXID> parentID = parent ? std::optional { parent->objectID() } : std::nullopt;
 
     m_needsNodeRemoval.add(axObject.objectID(), parentID);
-    if (auto* cache = axObjectCache())
-        cache->startUpdateTreeSnapshotTimer();
+    if (axObjectCache)
+        axObjectCache->startUpdateTreeSnapshotTimer();
 }
 
 void AXIsolatedTree::processQueuedNodeUpdates()
@@ -1615,7 +1617,7 @@ void AXIsolatedTree::processQueuedNodeUpdates()
         return;
 
     if (AXObjectCache::isAppleInternalInstall()) [[unlikely]]
-        WTFBeginSignpostAlways(this, UpdateAccessibilityIsolatedTree, "updating isolated tree for AXObjectCache: %" PRIVATE_LOG_STRING "", axObjectCache() ? axObjectCache()->debugDescription().utf8().data() : "null");
+        WTFBeginSignpostAlways(this, UpdateAccessibilityIsolatedTree, "updating isolated tree for AXObjectCache: %" PRIVATE_LOG_STRING "", cache ? CheckedPtr { cache.get() }->debugDescription().utf8().data() : "null");
 
     for (const auto& nodeIDs : m_needsNodeRemoval)
         removeNode(nodeIDs.key, nodeIDs.value);

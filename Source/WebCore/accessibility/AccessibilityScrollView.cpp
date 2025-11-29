@@ -524,9 +524,11 @@ AccessibilityObject* AccessibilityScrollView::crossFrameParentObject() const
         ancestorElement = ancestorElement->parentElementInComposedTree();
     }
 
-    if (ancestorAccessibilityObject->isIgnored())
+    if (ancestorAccessibilityObject && ancestorAccessibilityObject->isIgnored())
         return ancestorAccessibilityObject->parentObjectUnignored();
-    return ancestorAccessibilityObject.get();
+
+    // TODO: this should return a RefPtr
+    return ancestorAccessibilityObject.unsafeGet();  // NOLINT
 }
 
 AccessibilityObject* AccessibilityScrollView::crossFrameChildObject() const

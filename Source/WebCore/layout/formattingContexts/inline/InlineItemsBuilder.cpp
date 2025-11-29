@@ -577,7 +577,9 @@ static inline void buildBidiParagraph(const RenderStyle& rootStyle, const Inline
                 // truly opaque items are also opaque to bidi.
                 inlineItemOffsetList.append({ });
             }
-        } else
+        } else if (inlineItem.isBlock())
+            handleBidiParagraphStart(paragraphContentBuilder, inlineItemOffsetList, bidiContextStack);
+        else
             ASSERT_NOT_IMPLEMENTED_YET();
 
     }

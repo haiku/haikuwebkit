@@ -62,6 +62,10 @@ struct OpenXRCoordinator::RenderState {
     PlatformXR::Device::RequestFrameCallback onFrameUpdate;
     XrFrameState frameState;
     bool passthroughFullyObscured { false };
+#if ENABLE(WEBXR_HIT_TEST)
+    PlatformXR::HitTestSource nextHitTestSource { 1 };
+    HashSet<PlatformXR::HitTestSource> hitTestSources;
+#endif
 };
 
 OpenXRCoordinator::OpenXRCoordinator()
@@ -352,6 +356,62 @@ void OpenXRCoordinator::submitFrame(WebPageProxy& page, Vector<XRDeviceLayer>&& 
             });
         });
 }
+
+#if ENABLE(WEBXR_HIT_TEST)
+void OpenXRCoordinator::requestHitTestSource(WebPageProxy& page, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler)
+{
+    ASSERT(RunLoop::isMain());
+    WTF::switchOn(m_state,
+        [&](Idle&) {
+            RELEASE_LOG(XR, "OpenXRCoordinator: trying to request a hit test source for an inactive session");
+        },
+        [&](Active& active) {
+            if (active.pageIdentifier != page.webPageIDInMainFrameProcess()) {
+                RELEASE_LOG(XR, "OpenXRCoordinator: trying to request a hit test source for session owned by another page");
+                return;
+            }
+
+            if (active.renderState->terminateRequested.load()) {
+                RELEASE_LOG(XR, "OpenXRCoordinator: trying to request a hit test source for a terminating session");
+                return;
+            }
+
+            active.renderQueue->dispatch([renderState = active.renderState, completionHandler = WTFMove(completionHandler)]() mutable {
+                auto addResult = renderState->hitTestSources.add(renderState->nextHitTestSource);
+                ASSERT_UNUSED(addResult.isNewEntry, addResult);
+                callOnMainRunLoop([source = renderState->nextHitTestSource, completionHandler = WTFMove(completionHandler)] mutable {
+                    completionHandler(source);
+                });
+                renderState->nextHitTestSource++;
+            });
+        });
+}
+
+void OpenXRCoordinator::deleteHitTestSource(WebPageProxy& page, PlatformXR::HitTestSource source)
+{
+    ASSERT(RunLoop::isMain());
+    WTF::switchOn(m_state,
+        [&](Idle&) {
+            RELEASE_LOG(XR, "OpenXRCoordinator: trying to delete a hit test source for an inactive session");
+        },
+        [&](Active& active) {
+            if (active.pageIdentifier != page.webPageIDInMainFrameProcess()) {
+                RELEASE_LOG(XR, "OpenXRCoordinator: trying to delete a hit test source for session owned by another page");
+                return;
+            }
+
+            if (active.renderState->terminateRequested.load()) {
+                RELEASE_LOG(XR, "OpenXRCoordinator: trying to delete a hit test source for a terminating session");
+                return;
+            }
+
+            active.renderQueue->dispatch([renderState = active.renderState, source]() mutable {
+                bool removed = renderState->hitTestSources.remove(source);
+                ASSERT_UNUSED(removed, removed);
+            });
+        });
+}
+#endif
 
 void OpenXRCoordinator::createInstance()
 {
@@ -780,6 +840,11 @@ PlatformXR::FrameData OpenXRCoordinator::populateFrameData(Box<RenderState> rend
             frameData.layers.add(layer.key, WTFMove(layerDataRef));
         }
     }
+
+#if ENABLE(WEBXR_HIT_TEST)
+    for (auto source : renderState->hitTestSources)
+        frameData.hitTestResults.add(source, Vector<PlatformXR::FrameData::HitTestResult> { });
+#endif
 
     return frameData;
 }

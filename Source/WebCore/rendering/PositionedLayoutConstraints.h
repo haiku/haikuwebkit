@@ -95,9 +95,9 @@ private:
     bool containingCoordsAreFlipped() const;
 
     void captureInsets();
-    void captureScrollableArea();
     void captureGridArea();
     void captureAnchorGeometry();
+    void expandToScrollableArea(LayoutRange&, const std::optional<ScrollPosition> fromScrollPosition = { }) const;
     LayoutRange adjustForPositionArea(const LayoutRange rangeToAdjust, const LayoutRange anchorArea, const BoxAxis containerAxis);
     std::pair<bool, bool> containerAllowsInfiniteOverflow() const;
 

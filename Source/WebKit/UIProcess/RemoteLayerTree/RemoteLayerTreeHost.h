@@ -52,6 +52,7 @@ class WebPageProxy;
 struct MainFrameData;
 
 #if ENABLE(THREADED_ANIMATIONS)
+class RemoteAnimationStack;
 class RemoteAnimationTimeline;
 #endif
 
@@ -89,6 +90,7 @@ public:
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
+    RefPtr<const RemoteAnimationStack> animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier) const;
 #endif
 
     void detachFromDrawingArea();

@@ -1,4 +1,3 @@
-[ Mac ] UIProcess/API/Cocoa/WKView.h
 [ iOS ] Platform/ios/PaymentAuthorizationController.mm
 [ iOS ] UIProcess/API/Cocoa/WKPreviewActionItem.h
 [ iOS ] UIProcess/API/Cocoa/WKSnapshotConfiguration.h

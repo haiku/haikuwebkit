@@ -574,7 +574,7 @@ void AccessibilityUIElement::elementAtPointResolvingRemoteFrame(JSContextRef con
 {
     JSValueProtect(context, jsCallback);
     s_controller->executeOnAXThreadAndWait([x, y, protectedThis = Ref { *this }, jsCallback = WTFMove(jsCallback), context = JSRetainPtr { JSContextGetGlobalContext(context) }] () mutable {
-        auto callback = [jsCallback = WTFMove(jsCallback), context = WTFMove(context)](NSString *result) {
+        auto callback = [jsCallback = WTFMove(jsCallback), context = WTFMove(context)](NSString *result) mutable {
             s_controller->executeOnMainThread([result = WTFMove(result), jsCallback = WTFMove(jsCallback), context = WTFMove(context)] () {
                 JSValueRef arguments[1];
                 arguments[0] = makeValueRefForValue(context.get(), result);

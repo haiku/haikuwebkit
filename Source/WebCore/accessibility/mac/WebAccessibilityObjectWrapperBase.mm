@@ -770,7 +770,7 @@ static BOOL accessibilityShouldRepostNotifications;
 + (void)accessibilitySetShouldRepostNotifications:(BOOL)repost
 {
     accessibilityShouldRepostNotifications = repost;
-#if PLATFORM(MAC)
+#if PLATFORM(COCOA)
     AXObjectCache::setShouldRepostNotificationsForTests(repost);
 #endif
 }
@@ -788,7 +788,7 @@ static bool isValueTypeSupported(id value)
         return true;
 #endif // PLATFORM(MAC)
 
-    return [value isKindOfClass:[NSString class]] || [value isKindOfClass:[NSNumber class]] || [value isKindOfClass:[WebAccessibilityObjectWrapperBase class]];
+    return [value isKindOfClass:[NSString class]] || [value isKindOfClass:[NSAttributedString class]] || [value isKindOfClass:[NSNumber class]] || [value isKindOfClass:[WebAccessibilityObjectWrapperBase class]];
 }
 
 static NSArray *arrayRemovingNonSupportedTypes(NSArray *array)

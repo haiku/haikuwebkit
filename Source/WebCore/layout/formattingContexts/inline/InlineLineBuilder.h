@@ -64,6 +64,7 @@ private:
     enum MayOverConstrainLine : uint8_t { No, Yes, OnlyWhenFirstFloatOnLine };
     bool tryPlacingFloatBox(const Box&, MayOverConstrainLine);
     Result handleInlineContent(const InlineItemRange& needsLayoutRange, LineCandidate&);
+    void handleBlockContent(const InlineItem& blockItem);
     Result processLineBreakingResult(LineCandidate&, const InlineItemRange& layoutRange, const InlineContentBreaker::Result&);
     struct RectAndFloatConstraints {
         InlineRect logicalRect;

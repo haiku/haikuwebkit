@@ -67,7 +67,7 @@ inline std::pair<Style::PreferredSize, Style::ZoomFactor> RenderTableCell::style
 inline bool RenderTableCell::isBaselineAligned() const
 {
     if (auto alignContent = style().alignContent(); !alignContent.isNormal())
-        return alignContent.position() == ContentPosition::Baseline;
+        return alignContent.isFirstBaseline();
 
     auto& verticalAlign = style().verticalAlign();
     return WTF::holdsAlternative<CSS::Keyword::Baseline>(verticalAlign)

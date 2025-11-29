@@ -9644,10 +9644,9 @@ void SpeculativeJIT::compileArraySplice(Node* node)
 
 void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
 {
-    ASSERT(node->op() == ArrayIndexOf || node->op() == ArrayIncludes || node->op() == ArrayLastIndexOf);
+    ASSERT(node->op() == ArrayIndexOf || node->op() == ArrayIncludes);
 
     bool isArrayIncludes = node->op() == ArrayIncludes;
-    bool isArrayLastIndexOf = node->op() == ArrayLastIndexOf;
 
     StorageOperand storage(this, m_graph.varArgChild(node, node->numChildren() == 3 ? 2 : 3));
     GPRTemporary index(this);
@@ -9661,13 +9660,8 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
 
     if (node->numChildren() == 4)
         emitPopulateSliceIndex(m_graph.varArgChild(node, 2), std::nullopt, lengthGPR, indexGPR);
-    else {
-        if (isArrayLastIndexOf) {
-            move(lengthGPR, indexGPR);
-            sub32(TrustedImm32(1), indexGPR);
-        } else
-            move(TrustedImm32(0), indexGPR);
-    }
+    else
+        move(TrustedImm32(0), indexGPR);
 
     Edge& searchElementEdge = m_graph.varArgChild(node, 1);
     switch (searchElementEdge.useKind()) {
@@ -9681,18 +9675,11 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
             zeroExtend32ToWord(indexGPR, indexGPR);
 
             auto loop = label();
-            Jump notFound;
-            if (isArrayLastIndexOf)
-                notFound = branch32(LessThan, indexGPR, TrustedImm32(0));
-            else
-                notFound = branch32(Equal, indexGPR, lengthGPR);
+            auto notFound = branch32(Equal, indexGPR, lengthGPR);
 
             auto found = emitCompare();
 
-            if (isArrayLastIndexOf)
-                sub32(TrustedImm32(1), indexGPR);
-            else
-                add32(TrustedImm32(1), indexGPR);
+            add32(TrustedImm32(1), indexGPR);
             jump().linkTo(loop, this);
 
             if (isArrayIncludes) {
@@ -9754,17 +9741,10 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
         zeroExtend32ToWord(indexGPR, indexGPR);
 
         auto loop = label();
-        Jump notFound;
-        if (isArrayLastIndexOf)
-            notFound = branch32(LessThan, indexGPR, TrustedImm32(0));
-        else
-            notFound = branch32(Equal, indexGPR, lengthGPR);
+        auto notFound = branch32(Equal, indexGPR, lengthGPR);
         loadDouble(BaseIndex(storageGPR, indexGPR, TimesEight), tempFPR);
         auto found = branchDouble(DoubleEqualAndOrdered, tempFPR, searchElementFPR);
-        if (isArrayLastIndexOf)
-            sub32(TrustedImm32(1), indexGPR);
-        else
-            add32(TrustedImm32(1), indexGPR);
+        add32(TrustedImm32(1), indexGPR);
         jump().linkTo(loop, this);
 
         if (isArrayIncludes) {
@@ -9798,9 +9778,6 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
         if (isArrayIncludes) {
             callOperation(operationArrayIncludesString, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementGPR, indexGPR);
             unblessedBooleanResult(lengthGPR, node);
-        } else if (isArrayLastIndexOf) {
-            callOperation(operationArrayLastIndexOfString, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementGPR, indexGPR);
-            strictInt32Result(lengthGPR, node);
         } else {
             callOperation(operationArrayIndexOfString, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementGPR, indexGPR);
             strictInt32Result(lengthGPR, node);
@@ -9829,7 +9806,7 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
 
         JumpList slowCase;
 
-        auto indexOfOperation = operationArrayIndexOfString;
+        auto operation = operationArrayIndexOfString;
 
         auto isCopyOnWriteArrayWithContiguous = [&]() {
             Edge& baseEdge = m_graph.varArgChild(node, 0);
@@ -9845,7 +9822,7 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
         };
 
         if (isCopyOnWriteArrayWithContiguous()) {
-            indexOfOperation = operationCopyOnWriteArrayIndexOfString;
+            operation = operationCopyOnWriteArrayIndexOfString;
             loadLinkableConstant(LinkableConstant(*this, vm().cellButterflyOnlyAtomStringsStructure.get()), compareLengthGPR);
             emitEncodeStructureID(compareLengthGPR, compareLengthGPR);
             addPtr(TrustedImm32(-static_cast<ptrdiff_t>(JSCellButterfly::offsetOfData())), storageGPR, leftStringGPR);
@@ -9867,18 +9844,11 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
 #endif
             Label loop = label();
 
-            Jump notFound;
-            if (isArrayLastIndexOf)
-                notFound = branch32(LessThan, indexGPR, TrustedImm32(0));
-            else
-                notFound = branch32(Equal, indexGPR, lengthGPR);
+            Jump notFound = branch32(Equal, indexGPR, lengthGPR);
 
             JumpList found = emitCompare();
 
-            if (isArrayLastIndexOf)
-                sub32(TrustedImm32(1), indexGPR);
-            else
-                add32(TrustedImm32(1), indexGPR);
+            add32(TrustedImm32(1), indexGPR);
             jump().linkTo(loop, this);
 
             if (isArrayIncludes) {
@@ -9956,7 +9926,7 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
             unblessedBooleanResult(indexGPR, node);
         } else {
             addSlowPathGenerator(slowPathCall(
-                slowCase, this, isArrayLastIndexOf ? operationArrayLastIndexOfString : indexOfOperation,
+                slowCase, this, operation,
                 indexGPR, LinkableConstant::globalObject(*this, node),
                 storageGPR, searchElementGPR, indexGPR
             ));
@@ -9981,9 +9951,6 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
         if (isArrayIncludes) {
             callOperationWithoutExceptionCheck(operationArrayIncludesNonStringIdentityValueContiguous, lengthGPR, storageGPR, valueRegs, indexGPR);
             unblessedBooleanResult(lengthGPR, node);
-        } else if (isArrayLastIndexOf) {
-            callOperationWithoutExceptionCheck(operationArrayLastIndexOfNonStringIdentityValueContiguous, lengthGPR, storageGPR, valueRegs, indexGPR);
-            strictInt32Result(lengthGPR, node);
         } else {
             callOperationWithoutExceptionCheck(operationArrayIndexOfNonStringIdentityValueContiguous, lengthGPR, storageGPR, valueRegs, indexGPR);
             strictInt32Result(lengthGPR, node);
@@ -10001,24 +9968,18 @@ void SpeculativeJIT::compileArrayIndexOfOrArrayIncludes(Node* node)
         case Array::Double:
             if (isArrayIncludes)
                 callOperation(operationArrayIncludesValueDouble, lengthGPR, storageGPR, searchElementRegs, indexGPR);
-            else if (isArrayLastIndexOf)
-                callOperation(operationArrayLastIndexOfValueDouble, lengthGPR, storageGPR, searchElementRegs, indexGPR);
             else
                 callOperation(operationArrayIndexOfValueDouble, lengthGPR, storageGPR, searchElementRegs, indexGPR);
             break;
         case Array::Int32:
             if (isArrayIncludes)
                 callOperation(operationArrayIncludesValueInt32, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
-            else if (isArrayLastIndexOf)
-                callOperation(operationArrayLastIndexOfValueInt32, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
             else
                 callOperation(operationArrayIndexOfValueInt32, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
             break;
         case Array::Contiguous:
             if (isArrayIncludes)
                 callOperation(operationArrayIncludesValueInt32OrContiguous, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
-            else if (isArrayLastIndexOf)
-                callOperation(operationArrayLastIndexOfValueInt32OrContiguous, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
             else
                 callOperation(operationArrayIndexOfValueInt32OrContiguous, lengthGPR, LinkableConstant::globalObject(*this, node), storageGPR, searchElementRegs, indexGPR);
             break;

@@ -102,6 +102,7 @@ class SelectionRect;
 struct ContactInfo;
 struct ContactsRequestData;
 struct DigitalCredentialsRequestData;
+struct MediaPlayerClientIdentifierType;
 struct PromisedAttachmentInfo;
 struct ShareDataWithParsedURL;
 struct TextRecognitionResult;
@@ -118,6 +119,8 @@ struct DragItem;
 #endif
 
 using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
+using HTMLMediaElementIdentifier = ObjectIdentifier<MediaPlayerClientIdentifierType>;
+
 }
 
 namespace WebKit {
@@ -275,6 +278,13 @@ struct WKSelectionDrawingInfo {
     Vector<WebCore::SelectionGeometry> selectionGeometries;
     WebCore::IntRect selectionClipRect;
     std::optional<WebCore::PlatformLayerIdentifier> enclosingLayerID;
+
+    enum class ComparisonResult : uint8_t {
+        VisuallyDistinct,
+        EquivalentExceptForEnclosingLayer,
+        EquivalentIncludingEnclosingLayer,
+    };
+    ComparisonResult compare(const WKSelectionDrawingInfo&) const;
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, const WKSelectionDrawingInfo&);
@@ -969,7 +979,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 #endif
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
-- (void)_showMediaControlsContextMenu:(WebCore::FloatRect&&)targetFrame items:(Vector<WebCore::MediaControlsContextMenuItem>&&)items completionHandler:(CompletionHandler<void(WebCore::MediaControlsContextMenuItem::ID)>&&)completionHandler;
+- (void)_showMediaControlsContextMenu:(WebCore::FloatRect&&)targetFrame items:(Vector<WebCore::MediaControlsContextMenuItem>&&)items frameInfo:(const WebKit::FrameInfoData&)frameInfo identifier:(WebCore::HTMLMediaElementIdentifier)identifier completionHandler:(CompletionHandler<void(WebCore::MediaControlsContextMenuItem::ID)>&&)completionHandler;
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 
 - (BOOL)_formControlRefreshEnabled;

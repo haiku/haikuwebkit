@@ -77,7 +77,7 @@ Vector<uint8_t> activityAccessToken()
 
 - (void)begin
 {
-    [m_downloadMonitor beginMonitoring:makeBlockPtr([weakDownload = WeakPtr { m_download }](BEDownloadMonitorLocation *location, NSError *error) {
+    [m_downloadMonitor beginMonitoring:makeBlockPtr([weakDownload = WeakPtr { m_download }](BEDownloadMonitorLocation *location, NSError *error) mutable {
         RELEASE_LOG(Network, "Download begin for url %{sensitive}s, error %s", location.url.absoluteString.UTF8String, error.localizedDescription.UTF8String);
         ensureOnMainRunLoop([weakDownload = WTFMove(weakDownload), location = RetainPtr { location }] {
             if (!weakDownload)

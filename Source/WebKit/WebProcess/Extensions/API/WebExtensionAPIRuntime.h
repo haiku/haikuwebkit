@@ -127,4 +127,7 @@ NSDictionary *toWebAPI(const WebExtensionMessageSenderParameters&);
 
 } // namespace WebKit
 
+SPECIALIZE_TYPE_TRAITS_WEB_EXTENSION(WebExtensionAPIRuntime, runtime);
+SPECIALIZE_TYPE_TRAITS_WEB_EXTENSION(WebExtensionAPIWebPageRuntime, webPageRuntime);
+
 #endif // ENABLE(WK_WEB_EXTENSIONS)

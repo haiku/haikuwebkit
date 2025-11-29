@@ -235,7 +235,7 @@ WKTypeID WKBundlePageOverlayGetTypeID()
 WKBundlePageOverlayRef WKBundlePageOverlayCreate(WKBundlePageOverlayClientBase* wkClient)
 {
     auto clientImpl = makeUnique<PageOverlayClientImpl>(wkClient);
-    SUPPRESS_UNCOUNTED_ARG return toAPI(&WebKit::WebPageOverlay::create(WTFMove(clientImpl)).leakRef());
+    return toAPILeakingRef(WebKit::WebPageOverlay::create(WTFMove(clientImpl)));
 }
 
 void WKBundlePageOverlaySetAccessibilityClient(WKBundlePageOverlayRef bundlePageOverlayRef, WKBundlePageOverlayAccessibilityClientBase* client)

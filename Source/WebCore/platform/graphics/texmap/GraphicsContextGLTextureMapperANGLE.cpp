@@ -166,15 +166,11 @@ RefPtr<GraphicsContextGL> createWebProcessGraphicsContextGL(const GraphicsContex
             eglExtensions.ANDROID_get_native_client_buffer ? "found" : "missing", eglExtensions.ANDROID_image_native_buffer ? "found" : "missing");
     }
 #elif USE(GBM)
-    auto& display = PlatformDisplay::sharedDisplay();
-    if (display.type() == PlatformDisplay::Type::GBM && display.eglExtensions().KHR_image_base && display.eglExtensions().EXT_image_dma_buf_import) {
-        static const char* disableGBM = getenv("WEBKIT_WEBGL_DISABLE_GBM");
-        if (!disableGBM || *disableGBM == '0') {
-            RefPtr delegate = GraphicsLayerContentsDisplayDelegateCoordinated::create();
-            if (auto context = GraphicsContextGLTextureMapperGBM::create(GraphicsContextGLAttributes { attributes }, WTFMove(delegate)))
-                return context;
-            WTFLogAlways("Failed to create a graphics context for WebGL using GBM, falling back to textures");
-        }
+    if (GraphicsContextGLTextureMapperGBM::checkRequirements()) {
+        RefPtr delegate = GraphicsLayerContentsDisplayDelegateCoordinated::create();
+        if (auto context = GraphicsContextGLTextureMapperGBM::create(GraphicsContextGLAttributes { attributes }, WTFMove(delegate)))
+            return context;
+        WTFLogAlways("Failed to create a graphics context for WebGL using GBM, falling back to textures");
     }
 #endif
     return GraphicsContextGLTextureMapperANGLE::create(GraphicsContextGLAttributes { attributes });

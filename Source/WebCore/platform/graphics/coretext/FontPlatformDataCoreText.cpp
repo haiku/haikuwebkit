@@ -372,8 +372,54 @@ std::optional<FontPlatformSerializedAttributes> FontPlatformSerializedAttributes
     if (traits && CFGetTypeID(traits.get()) == CFDictionaryGetTypeID())
         result.traits = FontPlatformSerializedTraits::fromCF(traits.get());
 
-    EXTRACT_TYPED_VALUE(kCTFontFeatureSettingsAttribute, CFArray, result.featureSettings);
+    RetainPtr settings = checked_cf_cast<CFArrayRef>(CFDictionaryGetValue(dictionary, kCTFontFeatureSettingsAttribute));
+    if (settings && CFGetTypeID(settings.get()) == CFArrayGetTypeID()) {
+        Vector<FontPlatformFeatureSetting> featureSettings;
+        for (CFIndex i = 0; i < CFArrayGetCount(settings.get()); ++i) {
+            RetainPtr object = CFArrayGetValueAtIndex(settings.get(), i);
+            if (CFGetTypeID(object.get()) == CFDictionaryGetTypeID()) {
+                featureSettings.append(FontPlatformFeatureSetting {
+                    checked_cf_cast<CFNumberRef>(CFDictionaryGetValue(checked_cf_cast<CFDictionaryRef>(object.get()), kCTFontFeatureTypeIdentifierKey)),
+                    checked_cf_cast<CFNumberRef>(CFDictionaryGetValue(checked_cf_cast<CFDictionaryRef>(object.get()), kCTFontFeatureSelectorIdentifierKey)),
+                    checked_cf_cast<CFStringRef>(CFDictionaryGetValue(checked_cf_cast<CFDictionaryRef>(object.get()), kCTFontOpenTypeFeatureTag)),
+                    checked_cf_cast<CFNumberRef>(CFDictionaryGetValue(checked_cf_cast<CFDictionaryRef>(object.get()), kCTFontOpenTypeFeatureValue))
+                });
+            } else {
+                RetainPtr<CFTypeRef> typeOrTag = nullptr;
+                RetainPtr<CFNumberRef> selectorOrValue = nullptr;
+                if (CFGetTypeID(object.get()) == CFArrayGetTypeID()) {
+                    RetainPtr array = checked_cf_cast<CFArrayRef>(object.get());
+                    CFIndex count = CFArrayGetCount(array.get());
+                    if (!count)
+                        continue;
 
+                    typeOrTag = CFArrayGetValueAtIndex(array.get(), 0);
+                    if (count > 1)
+                        selectorOrValue = checked_cf_cast<CFNumberRef>(CFArrayGetValueAtIndex(array.get(), 1));
+                }
+
+                if (!typeOrTag)
+                    continue;
+
+                if (CFGetTypeID(typeOrTag.get()) == CFNumberGetTypeID()) {
+                    featureSettings.append(FontPlatformFeatureSetting {
+                        checked_cf_cast<CFNumberRef>(typeOrTag.get()),
+                        selectorOrValue,
+                        nullptr,
+                        nullptr
+                    });
+                } else {
+                    featureSettings.append(FontPlatformFeatureSetting {
+                        nullptr,
+                        nullptr,
+                        checked_cf_cast<CFStringRef>(typeOrTag.get()),
+                        selectorOrValue
+                    });
+                }
+            }
+        }
+        result.featureSettings = featureSettings;
+    }
     return WTFMove(result);
 }
 
@@ -420,7 +466,22 @@ RetainPtr<CFDictionaryRef> FontPlatformSerializedAttributes::toCFDictionary() co
     INJECT_CF_VALUE(additionalFontPlatformSerializedAttributesNumberDictionaryKey(), additionalNumber);
 #endif
 
-    INJECT_CF_VALUE(kCTFontFeatureSettingsAttribute, featureSettings);
+    if (featureSettings) {
+        RetainPtr settingsArray = adoptCF(CFArrayCreateMutable(nullptr, Checked<CFIndex>(featureSettings->size()), &kCFTypeArrayCallBacks));
+        for (const FontPlatformFeatureSetting& setting : *featureSettings) {
+            RetainPtr destinationSetting = adoptCF(CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
+            if (setting.type)
+                CFDictionaryAddValue(destinationSetting.get(), kCTFontFeatureTypeIdentifierKey, setting.type->get());
+            if (setting.selector)
+                CFDictionaryAddValue(destinationSetting.get(), kCTFontFeatureSelectorIdentifierKey, setting.selector->get());
+            if (setting.tag)
+                CFDictionaryAddValue(destinationSetting.get(), kCTFontOpenTypeFeatureTag, setting.tag->get());
+            if (setting.value)
+                CFDictionaryAddValue(destinationSetting.get(), kCTFontOpenTypeFeatureValue, setting.value->get());
+            CFArrayAppendValue(settingsArray.get(), destinationSetting.get());
+        }
+        CFDictionaryAddValue(result.get(), kCTFontFeatureSettingsAttribute, settingsArray.get());
+    }
 
     if (opticalSize) {
         if (auto opticalSizeCF = opticalSize->toCF())

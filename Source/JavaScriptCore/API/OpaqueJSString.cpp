@@ -73,7 +73,7 @@ Identifier OpaqueJSString::identifier(VM* vm) const
     if (m_string.isNull())
         return Identifier();
     if (m_string.isEmpty())
-        return Identifier(Identifier::EmptyIdentifier);
+        return Identifier(Identifier::EmptyIdentifierFlag::EmptyIdentifier);
     if (m_string.is8Bit())
         return Identifier::fromString(*vm, m_string.span8());
     return Identifier::fromString(*vm, m_string.span16());

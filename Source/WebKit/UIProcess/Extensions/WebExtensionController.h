@@ -144,7 +144,7 @@ public:
     const WebPageProxySet& allPages() const { return m_pages; }
 
     const WebsiteDataStoreSet& allWebsiteDataStores() const { return m_websiteDataStores; }
-    WebsiteDataStore* websiteDataStore(std::optional<PAL::SessionID> = std::nullopt) const;
+    RefPtr<WebsiteDataStore> websiteDataStore(std::optional<PAL::SessionID> = std::nullopt) const;
 
     // Includes both non-private and private browsing content controllers.
     const UserContentControllerProxySet& allUserContentControllers() const { return m_allUserContentControllers; }

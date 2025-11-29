@@ -76,13 +76,14 @@ void TextDetector::detect(ScriptExecutionContext& scriptExecutionContext, ImageB
         }
 
         // FIXME: This is a safer cpp false positive (rdar://160082559).
-        SUPPRESS_UNCOUNTED_ARG auto imageBuffer = imageBitmap.releaseReturnValue()->takeImageBuffer();
-        if (!imageBuffer) {
+        SUPPRESS_UNCOUNTED_ARG RefPtr imageBuffer = imageBitmap.releaseReturnValue()->takeImageBuffer();
+        RefPtr<NativeImage> image = imageBuffer ? imageBuffer->copyNativeImage() : nullptr;
+        if (!image) {
             promise.resolve({ });
             return;
         }
 
-        backing->detect(imageBuffer.releaseNonNull(), [promise = WTFMove(promise)](Vector<ShapeDetection::DetectedText>&& detectedText) mutable {
+        backing->detect(*image, [promise = WTFMove(promise)](Vector<ShapeDetection::DetectedText>&& detectedText) mutable {
             promise.resolve(detectedText.map([](const auto& detectedText) {
                 return convertFromBacking(detectedText);
             }));

@@ -59,10 +59,7 @@ TEST(ElementFullscreen, ScrollViewSetToInitialScale)
     [fullscreenDelegate waitForDidEnterElementFullscreen];
     [webView waitForNextPresentationUpdate];
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // FIXME: <rdar://155548417> ([ Build-Failure ] [ iOS26+ ] error: 'mainScreen' is deprecated: first deprecated in iOS 26.0)
-    CGFloat expectedScale = std::min<CGFloat>(UIScreen.mainScreen.bounds.size.width / 1000, 1);
-ALLOW_DEPRECATED_DECLARATIONS_END
+    CGFloat expectedScale = std::min<CGFloat>([webView window].screen.bounds.size.width / 1000, 1);
 
     EXPECT_EQ([webView scrollView].zoomScale, expectedScale);
     EXPECT_EQ([webView scrollView].minimumZoomScale, expectedScale);

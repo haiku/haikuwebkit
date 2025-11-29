@@ -274,14 +274,15 @@ bool RenderTableCell::computeIntrinsicPadding(LayoutUnit heightConstraint)
     auto intrinsicPaddingBefore = oldIntrinsicPaddingBefore;
     auto alignment = style().verticalAlign();
     if (auto alignContent = style().alignContent(); !alignContent.isNormal()) {
+        auto resolveAlignedContent = alignContent.resolve();
         // align-content overrides vertical-align
-        if (alignContent.position() == ContentPosition::Baseline)
+        if (resolveAlignedContent.position() == ContentPosition::Baseline)
             alignment = CSS::Keyword::Baseline { };
-        else if (alignContent.isCentered())
+        else if (resolveAlignedContent.isCentered())
             alignment = CSS::Keyword::Middle { };
-        else if (alignContent.isStartward())
+        else if (resolveAlignedContent.isStartward())
             alignment = CSS::Keyword::Top { };
-        else if (alignContent.isEndward())
+        else if (resolveAlignedContent.isEndward())
             alignment = CSS::Keyword::Bottom { };
     }
 
@@ -1594,7 +1595,7 @@ void RenderTableCell::scrollbarsChanged(bool horizontalScrollbarChanged, bool ve
 
     // Shrink our intrinsic padding as much as possible to accommodate the scrollbar.
     if ((WTF::holdsAlternative<CSS::Keyword::Middle>(style().verticalAlign()) && style().alignContent().isNormal())
-        || style().alignContent().isCentered()) {
+        || style().alignContent().resolve().isCentered()) {
         LayoutUnit totalHeight = logicalHeight();
         LayoutUnit heightWithoutIntrinsicPadding = totalHeight - intrinsicPaddingBefore() - intrinsicPaddingAfter();
         totalHeight -= scrollbarHeight;

@@ -23,6 +23,7 @@
 /* Begin PBXBuildFile section */
 		0100000D37BABA0A0A991999 /* pas_zero_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 0100000B37BABA0A0A991999 /* pas_zero_memory.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		079E6EA02E45531700E9AF5F /* pas_backtrace_metadata.h in Headers */ = {isa = PBXBuildFile; fileRef = 079E6E9F2E45531700E9AF5F /* pas_backtrace_metadata.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		07FB5E3D2EA4B31B00603B46 /* bmalloc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FB5E3C2EA4B31B00603B46 /* bmalloc.swift */; };
 		0F26A7A5205483130090A141 /* PerProcess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0F26A7A42054830D0090A141 /* PerProcess.cpp */; };
 		0F5167741FAD685C008236A8 /* bmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0F5167731FAD6852008236A8 /* bmalloc.cpp */; };
 		0F5414442CFD832E0025EAD0 /* bmalloc_heap_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5414432CFD832E0025EAD0 /* bmalloc_heap_internal.h */; };
@@ -756,6 +757,7 @@
 /* Begin PBXFileReference section */
 		0100000B37BABA0A0A991999 /* pas_zero_memory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pas_zero_memory.h; path = libpas/src/libpas/pas_zero_memory.h; sourceTree = "<group>"; };
 		079E6E9F2E45531700E9AF5F /* pas_backtrace_metadata.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = pas_backtrace_metadata.h; path = libpas/src/libpas/pas_backtrace_metadata.h; sourceTree = "<group>"; };
+		07FB5E3C2EA4B31B00603B46 /* bmalloc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = bmalloc.swift; sourceTree = "<group>"; };
 		0F18F83C25C3467700721C2A /* pas_segregated_exclusive_view_inlines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pas_segregated_exclusive_view_inlines.h; path = libpas/src/libpas/pas_segregated_exclusive_view_inlines.h; sourceTree = "<group>"; };
 		0F18F83D25C3467700721C2A /* minalign32_heap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = minalign32_heap.c; path = libpas/src/libpas/minalign32_heap.c; sourceTree = "<group>"; };
 		0F18F83E25C3467700721C2A /* pagesize64k_heap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pagesize64k_heap.c; path = libpas/src/libpas/pagesize64k_heap.c; sourceTree = "<group>"; };
@@ -2098,6 +2100,7 @@
 			children = (
 				0F5167731FAD6852008236A8 /* bmalloc.cpp */,
 				1448C2FE18F3754300502839 /* bmalloc.h */,
+				07FB5E3C2EA4B31B00603B46 /* bmalloc.swift */,
 				1448C2FF18F3754300502839 /* mbmalloc.cpp */,
 			);
 			name = api;
@@ -2934,6 +2937,7 @@
 				14F271C318EA3978008C152F /* Allocator.cpp in Sources */,
 				6599C5CC1EC3F15900A2F7BB /* AvailableMemory.cpp in Sources */,
 				0F5167741FAD685C008236A8 /* bmalloc.cpp in Sources */,
+				07FB5E3D2EA4B31B00603B46 /* bmalloc.swift in Sources */,
 				14F271C418EA397B008C152F /* Cache.cpp in Sources */,
 				0F74B93F1F89713E00B935D3 /* CryptoRandom.cpp in Sources */,
 				14F271C518EA397E008C152F /* Deallocator.cpp in Sources */,

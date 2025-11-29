@@ -21,6 +21,7 @@
 
 #if USE(GLIB_EVENT_LOOP)
 
+#include <wtf/Lock.h>
 #include <wtf/RunLoop.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 
@@ -57,10 +58,16 @@ public:
 
     void stop()
     {
-        ASSERT(m_callback);
+        {
+            Locker lock { m_callbackLock };
+            if (!m_callback)
+                return;
+
+            m_callback = nullptr;
+        }
+
         if (auto runLoop = m_runLoop.get())
             runLoop->unobserveActivity(*this);
-        m_callback = nullptr;
     }
 
     uint8_t order() const { return m_order; }
@@ -68,9 +75,12 @@ public:
 
     NotifyResult notify() const
     {
-        if (m_callback)
-            return m_callback();
-        return NotifyResult::Destroyed;
+        {
+            Locker lock { m_callbackLock };
+            if (!m_callback)
+                return NotifyResult::Destroyed;
+        }
+        return m_callback();
     }
 
 private:
@@ -87,7 +97,8 @@ private:
     ThreadSafeWeakPtr<RunLoop> m_runLoop;
     uint8_t m_order { 0 };
     OptionSet<RunLoop::Activity> m_activities;
-    Callback m_callback;
+    mutable Lock m_callbackLock;
+    Callback m_callback WTF_GUARDED_BY_LOCK(m_callbackLock);
 };
 
 } // namespace WTF

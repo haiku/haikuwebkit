@@ -217,7 +217,7 @@ RemoteCommandListenerCocoa::RemoteCommandListenerCocoa(RemoteCommandListenerClie
             status = MRMediaRemoteCommandHandlerStatusCommandFailed;
         };
 
-        ensureOnMainThread([weakThis = WTFMove(weakThis), platformCommand, argument] {
+        ensureOnMainThread([weakThis, platformCommand, argument] {
             if (RefPtr protectedThis = weakThis.get())
                 protectedThis->client().didReceiveRemoteControlCommand(platformCommand, argument);
         });

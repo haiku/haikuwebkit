@@ -83,19 +83,23 @@ void CoordinatedPlatformLayerBufferProxy::consumePendingBufferIfNeeded()
 
 void CoordinatedPlatformLayerBufferProxy::setDisplayBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&& buffer)
 {
-    Locker locker { m_lock };
-    if (!m_layer) {
-        m_pendingBuffer = WTFMove(buffer);
-        return;
-    }
+    RefPtr<CoordinatedPlatformLayer> layer;
+    {
+        Locker locker { m_lock };
+        if (!m_layer) {
+            m_pendingBuffer = WTFMove(buffer);
+            return;
+        }
 
-    m_pendingBuffer = nullptr;
+        m_pendingBuffer = nullptr;
+        layer = m_layer;
+    }
 
     {
-        Locker layerLocker { m_layer->lock() };
-        m_layer->setContentsBuffer(WTFMove(buffer), std::nullopt, CoordinatedPlatformLayer::RequireComposition::No);
+        Locker layerLocker { layer->lock() };
+        layer->setContentsBuffer(WTFMove(buffer), std::nullopt, CoordinatedPlatformLayer::RequireComposition::No);
     }
-    m_layer->requestComposition();
+    layer->requestComposition();
 }
 
 #if ENABLE(VIDEO) && USE(GSTREAMER)

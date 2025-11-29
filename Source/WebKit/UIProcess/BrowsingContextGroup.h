@@ -72,7 +72,7 @@ public:
     void removePage(WebPageProxy&);
     void forEachRemotePage(const WebPageProxy&, Function<void(RemotePageProxy&)>&&);
 
-    RemotePageProxy* remotePageInProcess(const WebPageProxy&, const WebProcessProxy&);
+    RefPtr<RemotePageProxy> remotePageInProcess(const WebPageProxy&, const WebProcessProxy&);
 
     RefPtr<RemotePageProxy> takeRemotePageInProcessForProvisionalPage(const WebPageProxy&, const WebProcessProxy&);
     void transitionPageToRemotePage(WebPageProxy&, const WebCore::Site& openerSite);

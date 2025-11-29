@@ -67,9 +67,8 @@ static Ref<WebKit::WebAutomationSession> protectedSession(_WKAutomationSession *
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(_WKAutomationSession.class, self))
         return;
 
-    Ref session = *_session;
-    session->setClient(nullptr);
-    session->~WebAutomationSession();
+    protectedSession(self)->setClient(nullptr);
+    SUPPRESS_UNCOUNTED_ARG _session->~WebAutomationSession();
 
     [super dealloc];
 }

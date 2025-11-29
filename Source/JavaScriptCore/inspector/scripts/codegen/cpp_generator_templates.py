@@ -245,6 +245,6 @@ ${constructorExample}
     auto result = value->asObject();
     BindingTraits<${objectType}>::assertValueHasExpectedType(result.get());
     static_assert(sizeof(${objectType}) == sizeof(JSON::ObjectBase), "type cast problem");
-    return static_reference_cast<${objectType}>(static_reference_cast<JSON::ObjectBase>(result.releaseNonNull()));
+    return unsafeRefDowncast<${objectType}>(upcast<JSON::ObjectBase>(result.releaseNonNull()));
 }
 """)

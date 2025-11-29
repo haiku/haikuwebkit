@@ -2761,7 +2761,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
     VM& vm = m_lexicalGlobalObject->vm();
     Vector<uint32_t, 16> indexStack;
     Vector<uint32_t, 16> lengthStack;
-    Vector<PropertyNameArray, 16> propertyStack;
+    Vector<PropertyNameArrayBuilder, 16> propertyStack;
     Vector<JSObject*, 32> inputObjectStack;
     Vector<JSMapIterator*, 4> mapIteratorStack;
     Vector<JSSetIterator*, 4> setIteratorStack;
@@ -2798,7 +2798,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
                     lengthStack.removeLast();
                     write(TerminatorTag); // Terminate the indexed property section.
 
-                    propertyStack.append(PropertyNameArray(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
+                    propertyStack.append(PropertyNameArrayBuilder(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
                     array->getOwnNonIndexPropertyNames(m_lexicalGlobalObject, propertyStack.last(), DontEnumPropertiesMode::Exclude);
                     if (scope.exception()) [[unlikely]]
                         return SerializationReturnCode::ExistingExceptionError;
@@ -2856,7 +2856,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
                     return SerializationReturnCode::DataCloneError;
                 inputObjectStack.append(inObject);
                 indexStack.append(0);
-                propertyStack.append(PropertyNameArray(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
+                propertyStack.append(PropertyNameArrayBuilder(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
                 inObject->methodTable()->getOwnPropertyNames(inObject, m_lexicalGlobalObject, propertyStack.last(), DontEnumPropertiesMode::Exclude);
                 if (scope.exception()) [[unlikely]]
                     return SerializationReturnCode::ExistingExceptionError;
@@ -2866,7 +2866,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
             case ObjectStartVisitNamedMember: {
                 JSObject* object = inputObjectStack.last();
                 uint32_t index = indexStack.last();
-                PropertyNameArray& properties = propertyStack.last();
+                PropertyNameArrayBuilder& properties = propertyStack.last();
                 if (index == properties.size()) {
                     endObject();
                     inputObjectStack.removeLast();
@@ -2928,7 +2928,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
                     mapIteratorStack.removeLast();
                     JSObject* object = inputObjectStack.last();
                     ASSERT(jsDynamicCast<JSMap*>(object));
-                    propertyStack.append(PropertyNameArray(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
+                    propertyStack.append(PropertyNameArrayBuilder(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
                     object->methodTable()->getOwnPropertyNames(object, m_lexicalGlobalObject, propertyStack.last(), DontEnumPropertiesMode::Exclude);
                     if (scope.exception()) [[unlikely]]
                         return SerializationReturnCode::ExistingExceptionError;
@@ -2976,7 +2976,7 @@ SerializationReturnCode CloneSerializer::serialize(JSValue in)
                     setIteratorStack.removeLast();
                     JSObject* object = inputObjectStack.last();
                     ASSERT(jsDynamicCast<JSSet*>(object));
-                    propertyStack.append(PropertyNameArray(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
+                    propertyStack.append(PropertyNameArrayBuilder(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
                     object->methodTable()->getOwnPropertyNames(object, m_lexicalGlobalObject, propertyStack.last(), DontEnumPropertiesMode::Exclude);
                     if (scope.exception()) [[unlikely]]
                         return SerializationReturnCode::ExistingExceptionError;

@@ -358,6 +358,8 @@ public:
     }
     WriteBarrier<JSObject>& importFunction(unsigned importFunctionNum) { return importFunctionInfo(importFunctionNum)->importFunction; }
 
+    JSObject* getImportFunctionObject(unsigned importFunctionIndex, JSGlobalObject*);
+
     RefPtr<Wasm::BaselineData>& baselineData(Wasm::FunctionCodeIndex index)
     {
         return baselineDatas()[index];

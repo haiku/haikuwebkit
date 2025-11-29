@@ -38,7 +38,7 @@ struct LineLayoutResult {
     using SuspendedFloatList = Vector<const Box*>;
 
     InlineItemRange inlineItemRange;
-    Line::RunList inlineAndOpaqueContent;
+    Line::RunList runs;
 
     struct FloatContent {
         PlacedFloatList placedFloats;
@@ -58,7 +58,8 @@ struct LineLayoutResult {
     struct LineGeometry {
         InlineLayoutPoint logicalTopLeft;
         InlineLayoutUnit logicalWidth { 0.f };
-        InlineLayoutUnit initialLogicalLeftIncludingIntrusiveFloats { 0.f };
+        InlineLayoutUnit initialLogicalLeft { 0.f };
+        InlineLayoutUnit intrusiveFloatsOffset { 0.f }; // Inherited floats from parent formatting context offseting line box.
         std::optional<InlineLayoutUnit> initialLetterClearGap { };
     };
     LineGeometry lineGeometry { };

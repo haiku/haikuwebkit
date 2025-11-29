@@ -249,14 +249,18 @@ public:
     iterator& operator++() { ++m_iterator; return *this; }
     iterator operator++(int)
     {
-        iterator temp = *this;
+        iterator result = *this;
         ++(*this);
-        return temp;
+        return result;
     }
 
     iterator& operator--() { --m_iterator; return *this; }
-
-    // postfix -- intentionally omitted
+    iterator operator--(int)
+    {
+        iterator result = *this;
+        --(*this);
+        return result;
+    }
 
     // Comparison.
     friend bool operator==(const iterator&, const iterator&) = default;
@@ -328,9 +332,9 @@ public:
 
     const_iterator operator++(int)
     {
-        const_iterator temp = *this;
+        const_iterator result = *this;
         ++(*this);
-        return temp;
+        return result;
     }
 
     const_iterator& operator--()
@@ -350,7 +354,12 @@ public:
         return *this;
     }
 
-    // postfix -- intentionally omitted
+    const_iterator operator--(int)
+    {
+        const_iterator result = *this;
+        --(*this);
+        return result;
+    }
 
     // Comparison.
     bool operator==(const const_iterator& other) const

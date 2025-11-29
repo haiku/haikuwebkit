@@ -68,6 +68,7 @@
 #include "HTMLInputElement.h"
 #include "HTMLLabelElement.h"
 #include "HTMLMapElement.h"
+#include "HTMLMediaElement.h"
 #include "HTMLMeterElement.h"
 #include "HTMLNames.h"
 #include "HTMLOptionElement.h"
@@ -76,7 +77,6 @@
 #include "HTMLSummaryElement.h"
 #include "HTMLTableElement.h"
 #include "HTMLTextAreaElement.h"
-#include "HTMLVideoElement.h"
 #include "HitTestRequest.h"
 #include "HitTestResult.h"
 #include "Image.h"
@@ -3188,6 +3188,11 @@ bool AccessibilityRenderObject::isPlaying() const
 bool AccessibilityRenderObject::isMuted() const
 {
     return AccessibilityMediaHelpers::isMuted(mediaElement());
+}
+
+bool AccessibilityRenderObject::isMediaObject() const
+{
+    return is<HTMLMediaElement>(node());
 }
 
 bool AccessibilityRenderObject::isAutoplayEnabled() const

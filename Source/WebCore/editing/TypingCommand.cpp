@@ -314,11 +314,10 @@ void TypingCommand::insertParagraphSeparator(Ref<Document>&& document, OptionSet
 
 RefPtr<TypingCommand> TypingCommand::lastTypingCommandIfStillOpenForTyping(Document& document)
 {
-    RefPtr lastEditCommand = document.editor().lastEditCommand();
-    if (!lastEditCommand || !lastEditCommand->isTypingCommand() || !static_cast<TypingCommand*>(lastEditCommand.get())->isOpenForMoreTyping())
+    RefPtr lastEditCommand = dynamicDowncast<TypingCommand>(document.editor().lastEditCommand());
+    if (!lastEditCommand || !lastEditCommand->isOpenForMoreTyping())
         return nullptr;
-
-    return static_pointer_cast<TypingCommand>(WTFMove(lastEditCommand));
+    return lastEditCommand;
 }
 
 bool TypingCommand::shouldDeferWillApplyCommandUntilAddingTypingCommand() const
@@ -673,11 +672,11 @@ void TypingCommand::deleteKeyPressed(TextGranularity granularity, bool shouldAdd
 
         m_smartDelete = false;
 
-        FrameSelection selection;
-        selection.setSelection(endingSelection());
-        selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, granularity);
-        if (shouldAddToKillRing && selection.isCaret() && granularity != TextGranularity::CharacterGranularity)
-            selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, TextGranularity::CharacterGranularity);
+        auto selection = makeUniqueRef<FrameSelection>();
+        selection->setSelection(endingSelection());
+        selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, granularity);
+        if (shouldAddToKillRing && selection->isCaret() && granularity != TextGranularity::CharacterGranularity)
+            selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, TextGranularity::CharacterGranularity);
 
         const VisiblePosition& visibleStart = endingSelection().visibleStart();
         const VisiblePosition& previousPosition = visibleStart.previous(CannotCrossEditingBoundary);
@@ -712,7 +711,7 @@ void TypingCommand::deleteKeyPressed(TextGranularity granularity, bool shouldAdd
             if (isLastPositionBeforeTable(visibleStart))
                 return;
             // Extend the selection backward into the last cell, then deletion will handle the move.
-            selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, granularity);
+            selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Backward, granularity);
         // If the caret is just after a table, select the table and don't delete anything.
         } else if (RefPtr table = isFirstPositionAfterTable(visibleStart)) {
             setEndingSelection(VisibleSelection(positionBeforeNode(table.get()), endingSelection().start(), Affinity::Downstream, endingSelection().directionality()));
@@ -720,7 +719,7 @@ void TypingCommand::deleteKeyPressed(TextGranularity granularity, bool shouldAdd
             return;
         }
 
-        selectionToDelete = selection.selection();
+        selectionToDelete = selection->selection();
 
         if (granularity == TextGranularity::CharacterGranularity && selectionToDelete.end().containerNode() == selectionToDelete.start().containerNode()
             && selectionToDelete.end().computeOffsetInContainerNode() - selectionToDelete.start().computeOffsetInContainerNode() > 1) {
@@ -792,13 +791,13 @@ void TypingCommand::forwardDeleteKeyPressed(TextGranularity granularity, bool sh
         // Handle delete at beginning-of-block case.
         // Do nothing in the case that the caret is at the start of a
         // root editable element or at the start of a document.
-        FrameSelection selection;
-        selection.setSelection(endingSelection());
-        selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, granularity);
-        if (selection.isNone())
+        auto selection = makeUniqueRef<FrameSelection>();
+        selection->setSelection(endingSelection());
+        selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, granularity);
+        if (selection->isNone())
             return;
-        if (shouldAddToKillRing && selection.isCaret() && granularity != TextGranularity::CharacterGranularity)
-            selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, TextGranularity::CharacterGranularity);
+        if (shouldAddToKillRing && selection->isCaret() && granularity != TextGranularity::CharacterGranularity)
+            selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, TextGranularity::CharacterGranularity);
 
         Position downstreamEnd = endingSelection().end().downstream();
         VisiblePosition visibleEnd = endingSelection().visibleEnd();
@@ -816,10 +815,10 @@ void TypingCommand::forwardDeleteKeyPressed(TextGranularity granularity, bool sh
         }
 
         // deleting to end of paragraph when at end of paragraph needs to merge the next paragraph (if any)
-        if (granularity == TextGranularity::ParagraphBoundary && selection.selection().isCaret() && isEndOfParagraph(selection.selection().visibleEnd()))
-            selection.modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, TextGranularity::CharacterGranularity);
+        if (granularity == TextGranularity::ParagraphBoundary && selection->selection().isCaret() && isEndOfParagraph(selection->selection().visibleEnd()))
+            selection->modify(FrameSelection::Alteration::Extend, SelectionDirection::Forward, TextGranularity::CharacterGranularity);
 
-        selectionToDelete = selection.selection();
+        selectionToDelete = selection->selection();
         if (!startingSelection().isRange() || selectionToDelete.base() != startingSelection().start())
             selectionAfterUndo = selectionToDelete;
         else {

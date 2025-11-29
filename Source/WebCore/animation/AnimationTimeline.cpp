@@ -135,8 +135,6 @@ AcceleratedTimeline& AnimationTimeline::acceleratedRepresentation()
 
 Ref<AcceleratedTimeline> AnimationTimeline::createAcceleratedRepresentation()
 {
-    // Until we implement accelerated representations of other timeline types,
-    // we should only ever call DocumentTimeline::createAcceleratedRepresentation().
     ASSERT_NOT_REACHED();
     return AcceleratedTimeline::create(m_acceleratedTimelineIdentifier, 0_s);
 }

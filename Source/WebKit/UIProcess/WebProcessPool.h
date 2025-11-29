@@ -363,7 +363,6 @@ public:
     void setHTTPPipeliningEnabled(bool);
     bool httpPipeliningEnabled() const;
 
-    WebProcessProxy* webProcessProxyFromConnection(const IPC::Connection&) const;
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess(const IPC::Connection&) const;
 
     bool javaScriptConfigurationFileEnabled() { return m_javaScriptConfigurationFileEnabled; }
@@ -644,9 +643,14 @@ public:
     void initializeAccessibilityIfNecessary();
 #endif
 
+    void setPLTResourceDelayInterval(Seconds interval) { m_pltResourceDelayInterval = interval; }
+    Seconds pltResourceDelayInterval() const { return m_pltResourceDelayInterval; }
+
 private:
     enum class NeedsGlobalStaticInitialization : bool { No, Yes };
     void platformInitialize(NeedsGlobalStaticInitialization);
+
+    RefPtr<WebProcessProxy> webProcessProxyFromConnection(const IPC::Connection&) const;
 
     void platformInitializeWebProcess(const WebProcessProxy&, WebProcessCreationParameters&);
     void platformInvalidateContext();
@@ -1044,6 +1048,8 @@ private:
 
     bool m_hasReceivedAXRequestInUIProcess { false };
     bool m_suppressEDR { false };
+
+    Seconds m_pltResourceDelayInterval { 100_ms };
 };
 
 template<typename T>

@@ -420,7 +420,7 @@ FlexLayout::LinesCrossSizeList FlexLayout::crossSizeForFlexLines(const LineRange
         for (size_t flexItemIndex = lineRanges[lineIndex].begin(); flexItemIndex < lineRanges[lineIndex].end(); ++flexItemIndex) {
             // Collect all the flex items whose inline-axis is parallel to the main-axis, whose align-self is baseline, and whose cross-axis margins are both non-auto.
             auto& flexItem = flexItems[flexItemIndex];
-            if (!flexItem.isOrthogonal() && flexItem.style().alignSelf().position() == ItemPosition::Baseline && flexItem.crossAxis().hasNonAutoMargins()) {
+            if (!flexItem.isOrthogonal() && flexItem.style().alignSelf().isFirstBaseline() && flexItem.crossAxis().hasNonAutoMargins()) {
                 // Find the largest of the distances between each item's baseline and its hypothetical outer cross-start edge,
                 // and the largest of the distances between each item's baseline and its hypothetical outer cross-end edge, and sum these two values.
                 maximumAscent = std::max(maximumAscent, flexItem.crossAxis().ascent);
@@ -450,9 +450,7 @@ void FlexLayout::stretchFlexLines(LinesCrossSizeList& flexLinesCrossSizeList, si
     // increase the cross size of each flex line by equal amounts such that the sum of their cross sizes exactly equals the flex container's inner cross size.
     auto linesMayStretch = [&] {
         auto alignContent = flexContainerStyle().alignContent();
-        if (alignContent.distribution() == ContentDistribution::Stretch)
-            return true;
-        return alignContent.distribution() == ContentDistribution::Default && alignContent.position() == ContentPosition::Normal;
+        return alignContent.isStretch() || alignContent.isNormal();
     };
     if (!linesMayStretch() || !crossAxisAvailableSpace)
         return;
@@ -487,8 +485,8 @@ FlexLayout::SizeList FlexLayout::computeCrossSizeForFlexItems(const LogicalFlexI
         for (auto flexItemIndex = lineRanges[lineIndex].begin(); flexItemIndex < lineRanges[lineIndex].end(); ++flexItemIndex) {
             auto& flexItem = flexItems[flexItemIndex];
             auto& crossAxis = flexItem.crossAxis();
-            auto& flexItemAlignSelf = flexItem.style().alignSelf();
-            auto alignValue = flexItemAlignSelf.position() != ItemPosition::Auto ? flexItemAlignSelf.position() : flexContainerStyle().alignItems().position();
+            auto flexItemAlignSelf = flexItem.style().alignSelf();
+            auto alignValue = !flexItemAlignSelf.isAuto() ? flexItemAlignSelf.resolve().position() : flexContainerStyle().alignItems().resolve().position();
             // If a flex item has align-self: stretch, its computed cross size property is auto, and neither of its cross-axis margins are auto, the used outer cross size is the used cross size of its flex line,
             // clamped according to the item's used min and max cross sizes. Otherwise, the used cross size is the item's hypothetical cross size.
             if ((alignValue == ItemPosition::Stretch || alignValue == ItemPosition::Normal) && crossAxis.hasSizeAuto && crossAxis.hasNonAutoMargins()) {
@@ -559,7 +557,7 @@ FlexLayout::PositionAndMarginsList FlexLayout::handleMainAxisAlignment(LayoutUni
         };
         resolveMarginAuto();
 
-        auto& justifyContentValue = flexContainerStyle().justifyContent();
+        auto justifyContentValue = flexContainerStyle().justifyContent().resolve();
         auto justifyContentDistribution = justifyContentValue.distribution();
         auto justifyContentPosition = justifyContentValue.position();
 
@@ -717,7 +715,7 @@ FlexLayout::PositionAndMarginsList FlexLayout::handleCrossAxisAlignmentForFlexIt
                 auto flexItemOuterCrossSize = outerCrossSize(flexItem, flexItemsCrossSizeList[flexItemIndex], crossPositionAndMargins[flexItemIndex].margin());
                 auto flexItemOuterCrossPosition = LayoutUnit { };
 
-                auto& flexItemAlign = flexItem.style().alignSelf().position() != ItemPosition::Auto ? flexItem.style().alignSelf() : flexContainerStyle().alignItems();
+                auto flexItemAlign = !flexItem.style().alignSelf().isAuto() ? flexItem.style().alignSelf().resolve() : flexContainerStyle().alignItems().resolve();
                 auto alignSelfPosition = flexItemAlign.position();
                 auto setFallbackValuesIfApplicable = [&] {
                     if (flexItemOuterCrossSize > flexLinesCrossSizeList[lineIndex] && flexItemAlign.overflow() == OverflowAlignment::Safe)
@@ -772,7 +770,7 @@ FlexLayout::LinesCrossPositionList FlexLayout::handleCrossAxisAlignmentForFlexLi
     // Align all flex lines per align-content.
     auto distributableCrossSpace = flexContainerUsedCrossSize - flexLinesCrossSize;
     auto initialOffset = [&]() -> LayoutUnit {
-        auto& alignContentValue = flexContainerStyle().alignContent();
+        auto alignContentValue = flexContainerStyle().alignContent().resolve();
         auto alignContentPosition = alignContentValue.position();
         auto alignContentDistribution = alignContentValue.distribution();
 
@@ -841,25 +839,29 @@ FlexLayout::LinesCrossPositionList FlexLayout::handleCrossAxisAlignmentForFlexLi
     auto gap = [&]() -> LayoutUnit {
         if (distributableCrossSpace <= 0)
             return { };
-        switch (flexContainerStyle().alignContent().distribution()) {
-        case ContentDistribution::SpaceBetween:
-            return distributableCrossSpace / (lineRanges.size() - 1);
-        case ContentDistribution::SpaceAround:
-            return distributableCrossSpace / lineRanges.size();
-        case ContentDistribution::Stretch: {
-            // Lines stretch to take up the remaining space. If the leftover free-space is negative,
-            // this value is identical to flex-start. Otherwise, the free-space is split equally between all of the lines,
-            // increasing their cross size.
-            auto extraCrossSpaceForEachLine = distributableCrossSpace / flexLinesCrossSizeList.size();
-            for (size_t lineIndex = 0; lineIndex < flexLinesCrossSizeList.size(); ++lineIndex)
-                flexLinesCrossSizeList[lineIndex] += extraCrossSpaceForEachLine;
-            return { };
-        }
-        case ContentDistribution::SpaceEvenly:
-            return distributableCrossSpace / (lineRanges.size() + 1);
-        default:
-            return { };
-        }
+        return WTF::switchOn(flexContainerStyle().alignContent(),
+            [&](const CSS::Keyword::SpaceBetween&) -> LayoutUnit {
+                return distributableCrossSpace / (lineRanges.size() - 1);
+            },
+            [&](const CSS::Keyword::SpaceAround&) -> LayoutUnit {
+                return distributableCrossSpace / lineRanges.size();
+            },
+            [&](const CSS::Keyword::Stretch&) -> LayoutUnit {
+                // Lines stretch to take up the remaining space. If the leftover free-space is negative,
+                // this value is identical to flex-start. Otherwise, the free-space is split equally between all of the lines,
+                // increasing their cross size.
+                auto extraCrossSpaceForEachLine = distributableCrossSpace / flexLinesCrossSizeList.size();
+                for (size_t lineIndex = 0; lineIndex < flexLinesCrossSizeList.size(); ++lineIndex)
+                    flexLinesCrossSizeList[lineIndex] += extraCrossSpaceForEachLine;
+                return { };
+            },
+            [&](const CSS::Keyword::SpaceEvenly&) -> LayoutUnit {
+                return distributableCrossSpace / (lineRanges.size() + 1);
+            },
+            [](const auto&) -> LayoutUnit {
+                return { };
+            }
+        );
     }();
     for (size_t lineIndex = 1; lineIndex < lineRanges.size(); ++lineIndex)
         linesCrossPositionList[lineIndex] = (linesCrossPositionList[lineIndex - 1] + flexLinesCrossSizeList[lineIndex - 1]) + gap;

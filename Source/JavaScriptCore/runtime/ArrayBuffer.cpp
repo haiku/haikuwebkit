@@ -61,15 +61,15 @@ static bool tryAllocate(VM* vm, const Func& allocate)
     bool success = false;
     for (unsigned i = 0; i < numTries && !success; ++i) {
         switch (allocate()) {
-        case BufferMemoryResult::Success:
+        case BufferMemoryResult::Kind::Success:
             success = true;
             break;
-        case BufferMemoryResult::SuccessAndNotifyMemoryPressure:
+        case BufferMemoryResult::Kind::SuccessAndNotifyMemoryPressure:
             if (vm)
                 vm->heap.collectAsync(CollectionScope::Full);
             success = true;
             break;
-        case BufferMemoryResult::SyncTryToReclaimMemory:
+        case BufferMemoryResult::Kind::SyncTryToReclaimMemory:
             if (i + 1 == numTries)
                 break;
             if (vm)

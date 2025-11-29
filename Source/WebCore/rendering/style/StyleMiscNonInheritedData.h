@@ -26,17 +26,21 @@
 
 #pragma once
 
+#include <WebCore/StyleAlignContent.h>
+#include <WebCore/StyleAlignItems.h>
+#include <WebCore/StyleAlignSelf.h>
 #include <WebCore/StyleAnimations.h>
 #include <WebCore/StyleAppearance.h>
 #include <WebCore/StyleAspectRatio.h>
 #include <WebCore/StyleBoxShadow.h>
 #include <WebCore/StyleContent.h>
-#include <WebCore/StyleContentAlignmentData.h>
+#include <WebCore/StyleJustifyContent.h>
+#include <WebCore/StyleJustifyItems.h>
+#include <WebCore/StyleJustifySelf.h>
 #include <WebCore/StyleMaskLayers.h>
 #include <WebCore/StyleObjectPosition.h>
 #include <WebCore/StyleOpacity.h>
 #include <WebCore/StyleOrder.h>
-#include <WebCore/StyleSelfAlignmentData.h>
 #include <WebCore/StyleTransitions.h>
 #include <memory>
 #include <wtf/DataRef.h>
@@ -90,12 +94,14 @@ public:
     Style::Content content;
     Style::BoxShadows boxShadow;
     Style::AspectRatio aspectRatio;
-    StyleContentAlignmentData alignContent;
-    StyleContentAlignmentData justifyContent;
-    StyleSelfAlignmentData alignItems;
-    StyleSelfAlignmentData alignSelf;
-    StyleSelfAlignmentData justifyItems;
-    StyleSelfAlignmentData justifySelf;
+
+    Style::AlignContent alignContent;
+    Style::AlignItems alignItems;
+    Style::AlignSelf alignSelf;
+    Style::JustifyContent justifyContent;
+    Style::JustifyItems justifyItems;
+    Style::JustifySelf justifySelf;
+
     Style::ObjectPosition objectPosition;
     Style::Order order;
 

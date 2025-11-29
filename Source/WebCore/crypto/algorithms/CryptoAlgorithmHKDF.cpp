@@ -80,5 +80,10 @@ ExceptionOr<std::optional<size_t>> CryptoAlgorithmHKDF::getKeyLength(const Crypt
 {
     return std::optional<size_t>();
 }
-    
+
+ExceptionOr<Vector<uint8_t>> CryptoAlgorithmHKDF::deriveBits(const CryptoAlgorithmHkdfParams& parameters, const CryptoKeyRaw& key, size_t length)
+{
+    return platformDeriveBits(parameters, key, length);
+}
+
 } // namespace WebCore

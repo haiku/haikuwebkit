@@ -65,6 +65,7 @@
 #include <wtf/Unexpected.h>
 #include <wtf/UniqueRef.h>
 #include <wtf/WorkQueue.h>
+#include <wtf/text/ASCIILiteral.h>
 #include <wtf/text/CString.h>
 
 #if OS(ANDROID)
@@ -157,7 +158,7 @@ extern ASCIILiteral errorAsString(Error);
 #define MESSAGE_CHECK_WITH_MESSAGE_BASE(assertion, connection, message) do { \
     if (!(assertion)) [[unlikely]] { \
         RELEASE_LOG_FAULT(IPC, __FILE__ " " CONNECTION_STRINGIFY_MACRO(__LINE__) ": Invalid message dispatched %" PUBLIC_LOG_STRING ": " message, WTF_PRETTY_FUNCTION); \
-        IPC::markCurrentlyDispatchedMessageAsInvalid(connection); \
+        IPC::markCurrentlyDispatchedMessageAsInvalid(connection, "Message check failed: " #assertion " - " #message ## _s); \
         CRASH_IF_TESTING \
         return; \
     } \
@@ -169,7 +170,7 @@ extern ASCIILiteral errorAsString(Error);
 #define MESSAGE_CHECK_OPTIONAL_CONNECTION_BASE(assertion, connection) do { \
     if (!(assertion)) [[unlikely]] { \
         RELEASE_LOG_FAULT(IPC, __FILE__ " " CONNECTION_STRINGIFY_MACRO(__LINE__) ": Invalid message dispatched %" PUBLIC_LOG_STRING, WTF_PRETTY_FUNCTION); \
-        IPC::markCurrentlyDispatchedMessageAsInvalid(connection); \
+        IPC::markCurrentlyDispatchedMessageAsInvalid(connection, "Message check failed: " #assertion ## _s); \
         CRASH_IF_TESTING \
         return; \
     } \
@@ -178,7 +179,7 @@ extern ASCIILiteral errorAsString(Error);
 #define MESSAGE_CHECK_COMPLETION_BASE(assertion, connection, completion) do { \
     if (!(assertion)) [[unlikely]] { \
         RELEASE_LOG_FAULT(IPC, __FILE__ " " CONNECTION_STRINGIFY_MACRO(__LINE__) ": Invalid message dispatched %" PUBLIC_LOG_STRING, WTF_PRETTY_FUNCTION); \
-        IPC::markCurrentlyDispatchedMessageAsInvalid(connection); \
+        IPC::markCurrentlyDispatchedMessageAsInvalid(connection, "Message check failed: " #assertion ## _s); \
         CRASH_IF_TESTING \
         { completion; } \
         return; \
@@ -188,7 +189,7 @@ extern ASCIILiteral errorAsString(Error);
 #define MESSAGE_CHECK_COMPLETION_BASE_COROUTINE(assertion, connection, completion) do { \
     if (!(assertion)) [[unlikely]] { \
         RELEASE_LOG_FAULT(IPC, __FILE__ " " CONNECTION_STRINGIFY_MACRO(__LINE__) ": Invalid message dispatched %" PUBLIC_LOG_STRING, WTF_PRETTY_FUNCTION); \
-        IPC::markCurrentlyDispatchedMessageAsInvalid(connection); \
+        IPC::markCurrentlyDispatchedMessageAsInvalid(connection, "Message check failed: " #assertion ## _s); \
         CRASH_IF_TESTING \
         { completion; } \
         co_return { }; \
@@ -198,7 +199,7 @@ extern ASCIILiteral errorAsString(Error);
 #define MESSAGE_CHECK_WITH_RETURN_VALUE_BASE(assertion, connection, returnValue) do { \
     if (!(assertion)) [[unlikely]] { \
         RELEASE_LOG_FAULT(IPC, __FILE__ " " CONNECTION_STRINGIFY_MACRO(__LINE__) ": Invalid message dispatched %" PUBLIC_LOG_STRING, WTF_PRETTY_FUNCTION); \
-        IPC::markCurrentlyDispatchedMessageAsInvalid(connection); \
+        IPC::markCurrentlyDispatchedMessageAsInvalid(connection, "Message check failed: " #assertion ## _s); \
         CRASH_IF_TESTING \
         return (returnValue); \
     } \
@@ -547,7 +548,7 @@ public:
     template<typename T, typename C> static void callReply(Connection*, Decoder&, C&&);
     template<typename T, typename C> static void cancelReply(C&&);
 
-    void markCurrentlyDispatchedMessageAsInvalid();
+    void markCurrentlyDispatchedMessageAsInvalid(ASCIILiteral error);
 
 #if ENABLE(CORE_IPC_SIGNPOSTS)
     static bool signpostsEnabled();
@@ -556,6 +557,16 @@ public:
 
     static bool shouldCrashOnMessageCheckFailure();
     static void setShouldCrashOnMessageCheckFailure(bool);
+
+#if ENABLE(IPC_TESTING_API)
+    bool hasErrorString() const { return !m_errorString.isNull(); }
+    void setErrorString(ASCIILiteral error)
+    {
+        if (!hasErrorString())
+            m_errorString = error;
+    }
+    ASCIILiteral takeErrorString() { return std::exchange(m_errorString, { }); }
+#endif
 
 private:
     Connection(Identifier&&, bool isServer, Thread::QOS = Thread::QOS::Default);
@@ -813,6 +824,11 @@ private:
     EventListener m_writeListener;
     HANDLE m_connectionPipe { INVALID_HANDLE_VALUE };
 #endif
+
+#if ENABLE(IPC_TESTING_API)
+    ASCIILiteral m_errorString;
+#endif
+
     friend class StreamClientConnection;
 };
 
@@ -1074,11 +1090,16 @@ void Connection::cancelReply(C&& completionHandler)
         callWithConnectionAndArgsTuple(std::forward<C>(completionHandler), nullptr, WTFMove(emptyReplyTuple));
 }
 
-inline void Connection::markCurrentlyDispatchedMessageAsInvalid()
+inline void Connection::markCurrentlyDispatchedMessageAsInvalid(ASCIILiteral error)
 {
     // This should only be called while processing a message.
     ASSERT(m_inDispatchMessageCount > 0);
     m_didReceiveInvalidMessage = true;
+
+#if ENABLE(IPC_TESTING_API)
+    if (!error.isNull())
+        setErrorString(error);
+#endif
 }
 
 class UnboundedSynchronousIPCScope {
@@ -1105,15 +1126,15 @@ private:
     static std::atomic<unsigned> unboundedSynchronousIPCCount;
 };
 
-inline void markCurrentlyDispatchedMessageAsInvalid(Connection& connection)
+inline void markCurrentlyDispatchedMessageAsInvalid(Connection& connection, ASCIILiteral error)
 {
-    connection.markCurrentlyDispatchedMessageAsInvalid();
+    connection.markCurrentlyDispatchedMessageAsInvalid(error);
 }
 
-inline void markCurrentlyDispatchedMessageAsInvalid(const RefPtr<Connection>& connection)
+inline void markCurrentlyDispatchedMessageAsInvalid(const RefPtr<Connection>& connection, ASCIILiteral error)
 {
     if (connection)
-        connection->markCurrentlyDispatchedMessageAsInvalid();
+        connection->markCurrentlyDispatchedMessageAsInvalid(error);
 }
 
 

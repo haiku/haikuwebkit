@@ -54,7 +54,10 @@ class Device;
 class QuerySet : public WGPUQuerySetImpl, public RefCounted<QuerySet> {
     WTF_MAKE_TZONE_ALLOCATED(QuerySet);
 public:
-    using CounterSampleBuffer = std::pair<id<MTLCounterSampleBuffer>, uint32_t>;
+    struct CounterSampleBuffer {
+        id<MTLCounterSampleBuffer> buffer { nil }; // Safety: ARC retains this pointer
+        uint32_t offset { 0 };
+    } SWIFT_ESCAPABLE;
 
     static Ref<QuerySet> create(id<MTLBuffer> visibilityBuffer, uint32_t count, WGPUQueryType type, Device& device)
     {

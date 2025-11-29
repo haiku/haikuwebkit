@@ -73,6 +73,7 @@
 #include "MutableCSSSelector.h"
 #include "NestingLevelIncrementer.h"
 #include "NodeDocument.h"
+#include "StyleColor.h"
 #include "StylePropertiesInlines.h"
 #include "StyleRule.h"
 #include "StyleRuleFunction.h"

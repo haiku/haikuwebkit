@@ -73,15 +73,9 @@ static Vector<Landmark> convertLandmarks(VNFaceLandmarks2D *landmarks, const Flo
     };
 }
 
-void FaceDetectorImpl::detect(Ref<ImageBuffer>&& imageBuffer, CompletionHandler<void(Vector<DetectedFace>&&)>&& completionHandler)
+void FaceDetectorImpl::detect(const NativeImage& image, CompletionHandler<void(Vector<DetectedFace>&&)>&& completionHandler)
 {
-    auto nativeImage = imageBuffer->copyNativeImage();
-    if (!nativeImage) {
-        completionHandler({ });
-        return;
-    }
-
-    auto platformImage = nativeImage->platformImage();
+    auto platformImage = image.platformImage();
     if (!platformImage) {
         completionHandler({ });
         return;
@@ -99,12 +93,13 @@ void FaceDetectorImpl::detect(Ref<ImageBuffer>&& imageBuffer, CompletionHandler<
         return;
     }
 
+    auto imageSize = image.size();
     Vector<DetectedFace> results;
     results.reserveInitialCapacity(std::min<size_t>(m_maxDetectedFaces, request.get().results.count));
     for (VNFaceObservation *observation in request.get().results) {
         results.append({
-            convertRectFromVisionToWeb(nativeImage->size(), observation.boundingBox),
-            { convertLandmarks(retainPtr(observation.landmarks).get(), nativeImage->size()) },
+            convertRectFromVisionToWeb(imageSize, observation.boundingBox),
+            { convertLandmarks(retainPtr(observation.landmarks).get(), imageSize) },
         });
         if (results.size() >= m_maxDetectedFaces)
             break;

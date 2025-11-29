@@ -26,6 +26,7 @@
 #include "config.h"
 #include "LayoutIntegrationFormattingContextLayout.h"
 
+#include "BlockLayoutState.h"
 #include "LayoutIntegrationBoxGeometryUpdater.h"
 #include "RenderBlock.h"
 #include "RenderBoxInlines.h"
@@ -34,6 +35,17 @@
 
 namespace WebCore {
 namespace LayoutIntegration {
+
+static inline const Layout::ElementBox& rootLayoutBox(const Layout::ElementBox& child)
+{
+    auto* ancestor = &child.parent();
+    while (!ancestor->isInitialContainingBlock()) {
+        if (ancestor->establishesFormattingContext())
+            break;
+        ancestor = &ancestor->parent();
+    }
+    return *ancestor;
+}
 
 void layoutWithFormattingContextForBox(const Layout::ElementBox& box, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint, Layout::LayoutState& layoutState)
 {
@@ -54,17 +66,74 @@ void layoutWithFormattingContextForBox(const Layout::ElementBox& box, std::optio
     if (widthConstraint)
         renderer.clearOverridingBorderBoxLogicalWidth();
 
-    auto rootLayoutBox = [&]() -> const Layout::ElementBox& {
-        auto* ancestor = &box.parent();
-        while (!ancestor->isInitialContainingBlock()) {
-            if (ancestor->establishesFormattingContext())
-                break;
-            ancestor = &ancestor->parent();
-        }
-        return *ancestor;
-    };
-    auto updater = BoxGeometryUpdater { layoutState, rootLayoutBox() };
+    auto updater = BoxGeometryUpdater { layoutState, rootLayoutBox(box) };
     updater.updateBoxGeometryAfterIntegrationLayout(box, widthConstraint.value_or(renderer.containingBlock()->contentBoxLogicalWidth()));
+}
+
+void layoutWithFormattingContextForBlockInInline(const Layout::ElementBox& block, LayoutPoint blockLogicalTopLeft, Layout::BlockLayoutState& parentBlockLayoutState, Layout::LayoutState& layoutState)
+{
+    auto& placedFloats = parentBlockLayoutState.placedFloats();
+
+    auto populateRootRendererWithFloatsFromIFC = [&] {
+        auto& rootBlockContainer = downcast<RenderBlockFlow>(*rootLayoutBox(block).rendererForIntegration());
+        for (auto& floatItem : placedFloats.list()) {
+            auto* layoutBox = floatItem.layoutBox();
+            if (!layoutBox) {
+                // Floats inherited by IFC do not have associated layout boxes.
+                continue;
+            }
+            auto& floatingObject = rootBlockContainer.insertFloatingBox(downcast<RenderBox>(*layoutBox->rendererForIntegration()));
+            if (floatingObject.isPlaced()) {
+                // We have already inserted this float when laying out a previous middle-block.
+                continue;
+            }
+
+            floatingObject.setFrameRect(Layout::BoxGeometry::marginBoxRect(floatItem.boxGeometry()));
+            floatingObject.setIsPlaced(true);
+        }
+    };
+    populateRootRendererWithFloatsFromIFC();
+
+    // FIXME: We need to run this through the render tree code of "estimateLogicalTopPosition"
+    downcast<RenderBox>(*block.rendererForIntegration()).setLogicalTop(blockLogicalTopLeft.y());
+
+    layoutWithFormattingContextForBox(block, { }, { }, layoutState);
+    ASSERT(!block.rendererForIntegration()->needsLayout());
+
+    auto populateIFCWithNewlyPlacedFloats = [&] {
+        auto* renderBlockFlow = dynamicDowncast<RenderBlockFlow>(*block.rendererForIntegration());
+        if (!renderBlockFlow)
+            return;
+
+        auto& blockBoxGeometry = layoutState.ensureGeometryForBox(block);
+        blockBoxGeometry.setTopLeft(LayoutPoint { blockBoxGeometry.marginStart(), blockBoxGeometry.marginBefore() });
+
+        if (!renderBlockFlow->containsFloats() || renderBlockFlow->createsNewFormattingContext())
+            return;
+
+        for (auto& floatingObject : *renderBlockFlow->floatingObjectSet()) {
+            if (!floatingObject->isDescendant())
+                continue;
+
+            auto floatRect = floatingObject->frameRect();
+
+            auto boxGeometry = Layout::BoxGeometry { };
+            boxGeometry.setTopLeft(blockLogicalTopLeft + floatRect.location());
+            boxGeometry.setContentBoxWidth(floatRect.width());
+            boxGeometry.setContentBoxHeight(floatRect.height());
+            boxGeometry.setBorder({ });
+            boxGeometry.setPadding({ });
+            boxGeometry.setHorizontalMargin({ });
+            boxGeometry.setVerticalMargin({ });
+
+            auto shapeOutsideInfo = floatingObject->renderer().shapeOutsideInfo();
+            RefPtr shape = shapeOutsideInfo ? &shapeOutsideInfo->computedShape() : nullptr;
+
+            auto usedPosition = RenderStyle::usedFloat(floatingObject->renderer()) == UsedFloat::Left ? Layout::PlacedFloats::Item::Position::Start : Layout::PlacedFloats::Item::Position::End;
+            placedFloats.add({ usedPosition, boxGeometry, floatRect.location(), WTFMove(shape) });
+        }
+    };
+    populateIFCWithNewlyPlacedFloats();
 }
 
 LayoutUnit formattingContextRootLogicalWidthForType(const Layout::ElementBox& box, LogicalWidthType logicalWidthType)

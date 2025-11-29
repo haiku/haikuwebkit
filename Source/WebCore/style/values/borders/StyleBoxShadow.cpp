@@ -34,6 +34,7 @@
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Serialization.h"
 #include "StyleShadowInterpolation.h"
+#include <ranges>
 #include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
@@ -69,7 +70,7 @@ Ref<CSSValue> CSSValueCreation<BoxShadowList>::operator()(CSSValuePool&, const R
 {
     CSS::BoxShadowProperty::List list;
 
-    for (const auto& shadow : makeReversedRange(value))
+    for (const auto& shadow : value | std::views::reverse)
         list.value.append(toCSS(shadow, style));
 
     return CSSBoxShadowPropertyValue::create(CSS::BoxShadowProperty { WTFMove(list) });
@@ -89,7 +90,7 @@ auto CSSValueConversion<BoxShadows>::operator()(BuilderState& state, const CSSVa
             return CSS::Keyword::None { };
         },
         [&](const typename CSS::BoxShadowProperty::List& list) -> BoxShadows {
-            return BoxShadows::List::map(makeReversedRange(list), [&](const CSS::BoxShadow& element) {
+            return BoxShadows::List::map(list | std::views::reverse, [&](const CSS::BoxShadow& element) {
                 return toStyle(element, state);
             });
         }
@@ -100,7 +101,7 @@ auto CSSValueConversion<BoxShadows>::operator()(BuilderState& state, const CSSVa
 
 void Serialize<BoxShadowList>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const BoxShadowList& value)
 {
-    serializationForCSSOnRangeLike(builder, context, style, makeReversedRange(value), SerializationSeparatorString<BoxShadowList>);
+    serializationForCSSOnRangeLike(builder, context, style, value | std::views::reverse, SerializationSeparatorString<BoxShadowList>);
 }
 
 // MARK: - Blending

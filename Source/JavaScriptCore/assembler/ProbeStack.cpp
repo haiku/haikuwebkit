@@ -118,7 +118,9 @@ Stack::Stack(Stack&& other)
 
 bool Stack::hasWritesToFlush()
 {
-    return std::any_of(m_pages.begin(), m_pages.end(), [] (auto& it) { return it.value->hasWritesToFlush(); });
+    return std::ranges::any_of(m_pages, [] (auto& it) {
+        return it.value->hasWritesToFlush();
+    });
 }
 
 void Stack::flushWrites()

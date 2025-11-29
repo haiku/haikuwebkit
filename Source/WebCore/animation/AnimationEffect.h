@@ -64,6 +64,7 @@ public:
     ExceptionOr<void> updateTiming(Document&, std::optional<OptionalEffectTiming>);
 
     virtual void animationDidTick() { };
+    virtual void animationBecameReady() { };
     virtual void animationDidChangeTimingProperties() { };
     virtual void animationWasCanceled() { };
     virtual void animationSuspensionStateDidChange(bool) { };
@@ -96,6 +97,7 @@ public:
     ExceptionOr<void> setIterations(double);
 
     WebAnimationTime iterationDuration();
+    WebAnimationTime iterationDuration() const;
     std::optional<Seconds> specifiedIterationDuration() const { return m_timing.specifiedIterationDuration; }
     void setIterationDuration(const std::optional<Seconds>&);
 

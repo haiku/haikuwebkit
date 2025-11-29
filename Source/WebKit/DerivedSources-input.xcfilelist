@@ -245,7 +245,6 @@ $(PROJECT_DIR)/Shared/Cocoa/CoreIPCCFURL.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCCVPixelBufferRef.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCColor.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCContacts.serialization.in
-$(PROJECT_DIR)/Shared/Cocoa/CoreIPCDDActionContext.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCDDScannerResult.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCData.serialization.in
 $(PROJECT_DIR)/Shared/Cocoa/CoreIPCDate.serialization.in
@@ -323,6 +322,7 @@ $(PROJECT_DIR)/Shared/IPCConnectionTester.messages.in
 $(PROJECT_DIR)/Shared/IPCStreamTester.messages.in
 $(PROJECT_DIR)/Shared/IPCStreamTesterProxy.messages.in
 $(PROJECT_DIR)/Shared/IPCTester.messages.in
+$(PROJECT_DIR)/Shared/IPCTester.serialization.in
 $(PROJECT_DIR)/Shared/IPCTesterReceiver.messages.in
 $(PROJECT_DIR)/Shared/ImageOptions.serialization.in
 $(PROJECT_DIR)/Shared/InspectorExtensionTypes.serialization.in
@@ -372,6 +372,7 @@ $(PROJECT_DIR)/Shared/TextAnimationType.serialization.in
 $(PROJECT_DIR)/Shared/TextAnimationTypes.serialization.in
 $(PROJECT_DIR)/Shared/TextFlags.serialization.in
 $(PROJECT_DIR)/Shared/TextIndicatorStyle.serialization.in
+$(PROJECT_DIR)/Shared/TextManipulationParameters.serialization.in
 $(PROJECT_DIR)/Shared/TextRecognitionResult.serialization.in
 $(PROJECT_DIR)/Shared/TextRecognitionUpdateResult.serialization.in
 $(PROJECT_DIR)/Shared/URLSchemeTaskParameters.serialization.in
@@ -511,6 +512,7 @@ $(PROJECT_DIR)/Shared/ios/InteractionInformationAtPosition.serialization.in
 $(PROJECT_DIR)/Shared/ios/InteractionInformationRequest.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionContext.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionData.serialization.in
+$(PROJECT_DIR)/Shared/mac/CoreIPCDDSecureActionContext.serialization.in
 $(PROJECT_DIR)/Shared/mac/PDFContextMenuItem.serialization.in
 $(PROJECT_DIR)/Shared/mac/SecItemRequestData.serialization.in
 $(PROJECT_DIR)/Shared/mac/SecItemResponseData.serialization.in
@@ -622,7 +624,6 @@ $(PROJECT_DIR)/WebProcess/GPU/graphics/BufferIdentifierSet.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/PrepareBackingStoreBuffersData.serialization.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteGraphicsContextGLProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteImageBufferProxy.messages.in
-$(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteImageBufferSetProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/RemoteRenderingBackendProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/graphics/WebGPU/RemoteGPUProxy.messages.in
 $(PROJECT_DIR)/WebProcess/GPU/media/AudioVideoRendererRemoteMessageReceiver.messages.in

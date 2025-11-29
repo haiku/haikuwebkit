@@ -80,7 +80,7 @@ public:
     virtual void screenshot(JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) = 0;
 
 private:
-    enum ArgumentRequirement { ArgumentRequired, ArgumentNotRequired };
+    enum class ArgumentRequirement { No, Yes };
     void internalMessageWithTypeAndLevel(MessageType, MessageLevel, JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&, ArgumentRequirement);
 };
 

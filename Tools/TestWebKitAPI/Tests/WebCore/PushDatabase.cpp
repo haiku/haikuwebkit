@@ -923,9 +923,9 @@ TEST(PushDatabase, StartsFromScratchOnDowngrade)
     auto path = makeTemporaryDatabasePath();
 
     {
-        SQLiteDatabase db;
-        db.open(path);
-        ASSERT_TRUE(db.executeCommand("PRAGMA user_version = 100000"_s));
+        auto db = makeUniqueRef<SQLiteDatabase>();
+        db->open(path);
+        ASSERT_TRUE(db->executeCommand("PRAGMA user_version = 100000"_s));
     }
 
     {
@@ -934,11 +934,11 @@ TEST(PushDatabase, StartsFromScratchOnDowngrade)
     }
 
     {
-        SQLiteDatabase db;
-        db.open(path);
+        auto db = makeUniqueRef<SQLiteDatabase>();
+        db->open(path);
         {
             int version = 0;
-            auto sql = db.prepareStatement("PRAGMA user_version"_s);
+            auto sql = db->prepareStatement("PRAGMA user_version"_s);
             if (sql && sql->step() == SQLITE_ROW)
                 version = sql->columnInt(0);
             EXPECT_GT(version, 0);
@@ -949,11 +949,11 @@ TEST(PushDatabase, StartsFromScratchOnDowngrade)
 
 static bool createDatabaseFromStatements(String path, ASCIILiteral* statements, size_t count)
 {
-    SQLiteDatabase db;
-    db.open(path);
+    auto db = makeUniqueRef<SQLiteDatabase>();
+    db->open(path);
 
     for (size_t i = 0; i < count; i++) {
-        if (!db.executeCommand(statements[i]))
+        if (!db->executeCommand(statements[i]))
             return false;
     }
 

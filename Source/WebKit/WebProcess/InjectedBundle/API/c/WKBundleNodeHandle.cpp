@@ -82,13 +82,13 @@ WKTypeID WKBundleNodeHandleGetTypeID()
 WKBundleNodeHandleRef WKBundleNodeHandleCreate(JSContextRef contextRef, JSObjectRef objectRef)
 {
     RefPtr<WebKit::InjectedBundleNodeHandle> nodeHandle = WebKit::InjectedBundleNodeHandle::getOrCreate(contextRef, objectRef);
-    SUPPRESS_UNCOUNTED_ARG return toAPI(nodeHandle.leakRef());
+    return toAPILeakingRef(WTFMove(nodeHandle));
 }
 
 WKBundleNodeHandleRef WKBundleNodeHandleCopyDocument(WKBundleNodeHandleRef nodeHandleRef)
 {
     RefPtr<WebKit::InjectedBundleNodeHandle> nodeHandle = WebKit::toProtectedImpl(nodeHandleRef)->document();
-    SUPPRESS_UNCOUNTED_ARG return toAPI(nodeHandle.leakRef());
+    return toAPILeakingRef(WTFMove(nodeHandle));
 }
 
 WKRect WKBundleNodeHandleGetRenderRect(WKBundleNodeHandleRef nodeHandleRef, bool* isReplaced)
@@ -100,7 +100,7 @@ WKRect WKBundleNodeHandleGetRenderRect(WKBundleNodeHandleRef nodeHandleRef, bool
 WKImageRef WKBundleNodeHandleCopySnapshotWithOptions(WKBundleNodeHandleRef nodeHandleRef, WKSnapshotOptions options)
 {
     RefPtr<WebKit::WebImage> image = WebKit::toProtectedImpl(nodeHandleRef)->renderedImage(WebKit::toSnapshotOptions(options), options & kWKSnapshotOptionsExcludeOverflow);
-    SUPPRESS_UNCOUNTED_ARG return toAPI(image.leakRef());
+    return toAPILeakingRef(WTFMove(image));
 }
 
 WKBundleRangeHandleRef WKBundleNodeHandleCopyVisibleRange(WKBundleNodeHandleRef)
@@ -202,7 +202,7 @@ WKBundleNodeHandleRef WKBundleNodeHandleCopyHTMLTableCellElementCellAbove(WKBund
 WKBundleFrameRef WKBundleNodeHandleCopyDocumentFrame(WKBundleNodeHandleRef documentHandleRef)
 {
     RefPtr<WebKit::WebFrame> frame = WebKit::toProtectedImpl(documentHandleRef)->documentFrame();
-    SUPPRESS_UNCOUNTED_ARG return toAPI(frame.leakRef());
+    return toAPILeakingRef(WTFMove(frame));
 }
 
 WKBundleFrameRef WKBundleNodeHandleCopyHTMLFrameElementContentFrame(WKBundleNodeHandleRef htmlFrameElementHandleRef)
@@ -214,7 +214,7 @@ WKBundleFrameRef WKBundleNodeHandleCopyHTMLFrameElementContentFrame(WKBundleNode
 WKBundleFrameRef WKBundleNodeHandleCopyHTMLIFrameElementContentFrame(WKBundleNodeHandleRef htmlIFrameElementHandleRef)
 {
     RefPtr<WebKit::WebFrame> frame = WebKit::toProtectedImpl(htmlIFrameElementHandleRef)->htmlIFrameElementContentFrame();
-    SUPPRESS_UNCOUNTED_ARG return toAPI(frame.leakRef());
+    return toAPILeakingRef(WTFMove(frame));
 }
 
 bool WKBundleNodeHandleGetHTMLInputElementAutofilled(WKBundleNodeHandleRef htmlInputElementHandleRef)
@@ -236,6 +236,6 @@ void WKBundleNodeHandleSetHTMLInputElementAutoFillButtonEnabled(WKBundleNodeHand
 WKBundleFrameRef WKBundleNodeHandleCopyOwningDocumentFrame(WKBundleNodeHandleRef documentHandleRef)
 {
     if (RefPtr document = WebKit::toProtectedImpl(documentHandleRef)->document())
-        SUPPRESS_UNCOUNTED_ARG return toAPI(document->documentFrame().leakRef());
+        return toAPILeakingRef(document->documentFrame());
     return nullptr;
 }

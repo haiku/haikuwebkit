@@ -70,6 +70,7 @@
 #import "WebPageProxy.h"
 #import "WebProcessProxy.h"
 #import "_WKDownloadInternal.h"
+#import <WebCore/AXObjectCache.h>
 #import <WebCore/Cursor.h>
 #import <WebCore/DOMPasteAccess.h>
 #import <WebCore/DictionaryLookup.h>
@@ -516,6 +517,21 @@ void PageClientImpl::relayAccessibilityNotification(String&& notificationName, R
     auto contentView = this->contentView();
     if ([contentView respondsToSelector:@selector(accessibilityRelayNotification:notificationData:)])
         [contentView accessibilityRelayNotification:notificationName.createNSString().get() notificationData:notificationData.get()];
+}
+
+void PageClientImpl::relayAriaNotifyNotification(const WebCore::AriaNotifyData& notificationData)
+{
+    RetainPtr message = notificationData.message.createNSString();
+
+    RetainPtr attributes = adoptNS([[NSDictionary alloc] initWithObjectsAndKeys:
+        WebCore::notifyPriorityToAXValueString(notificationData.priority).get(), @"UIAccessibilityARIAAnnouncementPriority",
+        WebCore::interruptBehaviorToAXValueString(notificationData.interrupt).get(), @"UIAccessibilityARIAAnnouncementInterruptBehavior",
+        notificationData.language.createNSString().get(), @"UIAccessibilitySpeechAttributeLanguage",
+        nil]);
+
+    RetainPtr attributedString = adoptNS([[NSAttributedString alloc] initWithString:message.get() attributes:attributes.get()]);
+
+    UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, attributedString.get());
 }
 
 IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
@@ -1185,9 +1201,9 @@ void PageClientImpl::setMouseEventPolicy(WebCore::MouseEventPolicy policy)
 }
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
-void PageClientImpl::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
+void PageClientImpl::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, const FrameInfoData& frameInfo, HTMLMediaElementIdentifier identifier, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
 {
-    [contentView() _showMediaControlsContextMenu:WTFMove(targetFrame) items:WTFMove(items) completionHandler:WTFMove(completionHandler)];
+    [contentView() _showMediaControlsContextMenu:WTFMove(targetFrame) items:WTFMove(items) frameInfo:frameInfo identifier:identifier completionHandler:WTFMove(completionHandler)];
 }
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 

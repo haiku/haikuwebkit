@@ -36,6 +36,7 @@ OBJC_CLASS NSMenu;
 OBJC_CLASS NSMenuItem;
 OBJC_CLASS NSView;
 OBJC_CLASS NSWindow;
+OBJC_CLASS WKCaptionStyleMenuController;
 OBJC_CLASS WKMenuDelegate;
 
 #if ENABLE(WRITING_TOOLS)
@@ -75,6 +76,9 @@ public:
     RetainPtr<CGImageRef> imageForCopySubject() const final { return m_copySubjectResult; }
 #endif
 
+    void captionStyleMenuWillOpen();
+    void captionStyleMenuDidClose();
+
 private:
     WebContextMenuProxyMac(NSView *, WebPageProxy&, FrameInfoData&&, ContextMenuContextData&&, const UserData&);
 
@@ -99,11 +103,20 @@ private:
     NSMenu *platformMenu() const override;
     RetainPtr<NSArray> platformData() const override;
 
+#if ENABLE(VIDEO)
+    WKCaptionStyleMenuController *captionStyleMenuController();
+#endif
+
+    WKMenuDelegate *menuDelegate();
+
     RetainPtr<NSMenu> m_menu;
     RetainPtr<WKMenuDelegate> m_menuDelegate;
     WeakObjCPtr<NSView> m_webView;
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
     RetainPtr<CGImageRef> m_copySubjectResult;
+#endif
+#if ENABLE(VIDEO)
+    RetainPtr<WKCaptionStyleMenuController> m_captionStyleMenuController;
 #endif
     const FrameInfoData m_frameInfo;
 };

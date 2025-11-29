@@ -163,7 +163,8 @@ void TextIndicatorWindow::updateTextIndicator(Ref<WebCore::TextIndicator>&& text
 
     NSRect frame = NSMakeRect(0, 0, [m_textIndicatorWindow frame].size.width, [m_textIndicatorWindow frame].size.height);
 
-    [m_textIndicatorLayer updateWithFrame:frame textIndicator:m_textIndicator  margin:NSMakeSize(horizontalMargin, verticalMargin) offset:fractionalTextOffset updatingIndicator:YES];
+    RefPtr<WebCore::TextIndicator> protectedTextIndicator = m_textIndicator.get();
+    [m_textIndicatorLayer updateWithFrame:frame textIndicator:protectedTextIndicator.get() margin:NSMakeSize(horizontalMargin, verticalMargin) offset:fractionalTextOffset updatingIndicator:YES];
 }
 
 void TextIndicatorWindow::closeWindow()

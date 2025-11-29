@@ -65,18 +65,13 @@ struct FontPlatformDataCacheKey {
     FontCreationContext fontCreationContext;
 
     friend bool operator==(const FontPlatformDataCacheKey&, const FontPlatformDataCacheKey&) = default;
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 };
 
 inline void add(Hasher& hasher, const FontPlatformDataCacheKey& key)
 {
     add(hasher, key.descriptionKey, key.family, key.fontCreationContext);
 }
-
-struct FontPlatformDataCacheKeyHash {
-    static unsigned hash(const FontPlatformDataCacheKey& key) { return computeHash(key); }
-    static bool equal(const FontPlatformDataCacheKey& a, const FontPlatformDataCacheKey& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
 
 struct FontPlatformDataCacheKeyHashTraits : public SimpleClassHashTraits<FontPlatformDataCacheKey> {
     static constexpr bool emptyValueIsZero = false;
@@ -112,7 +107,7 @@ struct FontDataCacheKeyTraits : WTF::GenericHashTraits<FontPlatformData> {
     }
 };
 
-using FontPlatformDataCache = HashMap<FontPlatformDataCacheKey, std::unique_ptr<FontPlatformData>, FontPlatformDataCacheKeyHash, FontPlatformDataCacheKeyHashTraits>;
+using FontPlatformDataCache = HashMap<FontPlatformDataCacheKey, std::unique_ptr<FontPlatformData>, DefaultHash<FontPlatformDataCacheKey>, FontPlatformDataCacheKeyHashTraits>;
 using FontDataCache = HashMap<FontPlatformData, Ref<Font>, DefaultHash<FontPlatformData>, FontDataCacheKeyTraits>;
 #if ENABLE(OPENTYPE_VERTICAL)
 using FontVerticalDataCache = HashMap<FontPlatformData, RefPtr<OpenTypeVerticalData>, DefaultHash<FontPlatformData>, FontDataCacheKeyTraits>;

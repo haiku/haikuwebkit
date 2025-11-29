@@ -57,6 +57,7 @@
 #include <WebCore/TreeScope.h>
 #include <WebCore/TypedElementDescendantIteratorInlines.h>
 #include <WebCore/UserGestureIndicator.h>
+#include <ranges>
 #include <wtf/LoggerHelper.h>
 
 #if PLATFORM(IOS_FAMILY)
@@ -775,7 +776,7 @@ void WebFullScreenManager::enterFullScreenForOwnerElements(WebCore::FrameIdentif
         if (RefPtr element = frame->ownerElement())
             elements.append(element.releaseNonNull());
     }
-    for (auto element : makeReversedRange(elements))
+    for (auto element : elements | std::views::reverse)
         DocumentFullscreen::elementEnterFullscreen(element);
 
     completionHandler();

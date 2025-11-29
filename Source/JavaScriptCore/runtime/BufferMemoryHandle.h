@@ -60,7 +60,7 @@ enum class GrowFailReason : uint8_t {
 };
 
 struct BufferMemoryResult {
-    enum Kind {
+    enum class Kind {
         Success,
         SuccessAndNotifyMemoryPressure,
         SyncTryToReclaimMemory

@@ -170,7 +170,6 @@ template<typename T, ConcurrencyTag C> struct DefaultHash<OptionSet<T, C>>;
 template<> struct DefaultHash<String>;
 template<> struct DefaultHash<StringImpl*>;
 template<> struct DefaultHash<URL>;
-template<typename T, size_t inlineCapacity> struct DefaultHash<Vector<T, inlineCapacity>>;
 
 template<typename> struct RawValueTraits;
 template<typename> struct EnumTraits;

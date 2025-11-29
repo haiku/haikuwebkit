@@ -1,0 +1,8 @@
+
+PASS Transient hit test subscription succeeds if the feature was requested - webgl
+PASS Transient hit test subscription succeeds if the feature was requested - webgl2
+FAIL Transient hit test subscription fails if the feature was not requested - webgl assert_true: `requestHitTestSourceForTransientInput` succeeded when it was expected to fail expected true got false
+FAIL Transient hit test subscription fails if the feature was not requested - webgl2 assert_true: `requestHitTestSourceForTransientInput` succeeded when it was expected to fail expected true got false
+FAIL Transient test subscription fails if the feature was requested but the session already ended - webgl assert_true: `requestHitTestSourceForTransientInput` succeeded when it was expected to fail expected true got false
+FAIL Transient test subscription fails if the feature was requested but the session already ended - webgl2 assert_true: `requestHitTestSourceForTransientInput` succeeded when it was expected to fail expected true got false
+

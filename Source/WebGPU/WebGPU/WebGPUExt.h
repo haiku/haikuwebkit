@@ -320,6 +320,7 @@ WGPU_EXPORT void wgpuDDMaterialUpdate(WGPUDDMesh mesh, WGPUDDUpdateMaterialDescr
 WGPU_EXPORT void wgpuDDMeshRender(WGPUDDMesh mesh);
 WGPU_EXPORT void wgpuDDMeshSetTransform(WGPUDDMesh mesh, const simd_float4x4& transform);
 WGPU_EXPORT void wgpuDDMeshSetCameraDistance(WGPUDDMesh mesh, float distance);
+WGPU_EXPORT void wgpuDDMeshPlay(WGPUDDMesh mesh, bool autoplay);
 
 WGPU_EXPORT void wgpuRenderBundleSetLabel(WGPURenderBundle renderBundle, char const * label);
 

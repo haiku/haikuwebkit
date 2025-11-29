@@ -911,7 +911,7 @@ using namespace Inspector;
     _commandDomainHandler = handler;
 
     auto alternateDispatcher = makeUnique<ObjCInspectorCommandDomainBackendDispatcher>(handler);
-    auto alternateAgent = makeUnique<AlternateDispatchableAgent<CommandDomainBackendDispatcher, AlternateCommandDomainBackendDispatcher>>("CommandDomain"_s, *_controller, WTFMove(alternateDispatcher));
+    auto alternateAgent = makeUniqueRef<AlternateDispatchableAgent<CommandDomainBackendDispatcher, AlternateCommandDomainBackendDispatcher>>("CommandDomain"_s, *_controller, WTFMove(alternateDispatcher));
     _controller->registerAlternateAgent(WTFMove(alternateAgent));
 }
 

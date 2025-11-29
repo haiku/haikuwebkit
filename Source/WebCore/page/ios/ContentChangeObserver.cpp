@@ -412,6 +412,7 @@ void ContentChangeObserver::reset()
     m_observedDomTimerIsBeingExecuted = false;
 
     m_visibilityCandidateList.clear();
+    m_initialElementVisibility.clear();
 
     m_contentObservationTimer.stop();
     m_elementsWithDestroyedVisibleRenderer.clear();
@@ -463,6 +464,11 @@ void ContentChangeObserver::didAddMouseMoveRelatedEventListener(const AtomString
 
 void ContentChangeObserver::elementDidBecomeVisible(const Element& element)
 {
+    if (m_initialElementVisibility.add(element, ElementVisibility::Hidden).iterator->value == ElementVisibility::Visible) {
+        LOG_WITH_STREAM(ContentObservation, stream << "elementDidBecomeVisible: element was initially visible, ignoring visibility change: " << &element);
+        return;
+    }
+
     LOG_WITH_STREAM(ContentObservation, stream << "elementDidBecomeVisible: element went from hidden to visible: " << &element);
     m_visibilityCandidateList.add(element);
     adjustObservedState(Event::ElementDidBecomeVisible);
@@ -471,6 +477,7 @@ void ContentChangeObserver::elementDidBecomeVisible(const Element& element)
 void ContentChangeObserver::elementDidBecomeHidden(const Element& element)
 {
     LOG_WITH_STREAM(ContentObservation, stream << "elementDidBecomeHidden: element went from visible to hidden: " << &element);
+    m_initialElementVisibility.add(element, ElementVisibility::Visible);
     // Candidate element is no longer visible.
     if (!m_visibilityCandidateList.remove(element))
         return;
@@ -711,6 +718,7 @@ ContentChangeObserver::StyleChangeScope::StyleChangeScope(Document& document, co
     , m_element(element)
     , m_hadRenderer(element.renderer())
 {
+    // FIXME: Should this use `isConsideredVisible` like the destructor instead of `isVisuallyHidden`?
     if (m_contentChangeObserver.shouldObserveVisibilityChangeForElement(element))
         m_wasHidden = isVisuallyHidden(m_element);
 }

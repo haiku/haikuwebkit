@@ -74,10 +74,6 @@ static ObjectValue valueFromID(id object)
 #if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
     case IPC::NSType::DDScannerResult:
         return CoreIPCDDScannerResult((DDScannerResult *)object);
-#if PLATFORM(MAC)
-    case IPC::NSType::WKDDActionContext:
-        return CoreIPCDDSecureActionContext((WKDDActionContext *)object);
-#endif
 #endif
     case IPC::NSType::NSDateComponents:
         return CoreIPCDateComponents((NSDateComponents *)object);

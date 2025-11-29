@@ -129,7 +129,9 @@ my $deviceOS;
 my $failFast = 1;
 my $coverage = 0;
 my $coverageDir;
-my %jsonData = ();
+my %jsonData = (
+    timestamp => time()
+);
 my %reportData = ();
 my @testResults = ();
 my $isTestFailed = 0;

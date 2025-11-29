@@ -300,7 +300,7 @@
 #include <WebCore/RenderLayerCompositor.h>
 #include <WebCore/RenderTheme.h>
 #include <WebCore/RenderTreeAsText.h>
-#include <WebCore/RenderVideo.h>
+#include <WebCore/RenderVideoInlines.h>
 #include <WebCore/RenderView.h>
 #include <WebCore/Report.h>
 #include <WebCore/ReportingScope.h>
@@ -911,6 +911,11 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #if ENABLE(IMAGE_ANALYSIS)
     pageConfiguration.imageTranslationLanguageIdentifiers = WTFMove(parameters.imageTranslationLanguageIdentifiers);
 #endif
+
+    if (parameters.textManipulationParameters) {
+        m_textManipulationIncludesSubframes = parameters.textManipulationParameters->includeSubframes;
+        m_internals->textManipulationExclusionRules = WTFMove(parameters.textManipulationParameters->exclusionRules);
+    }
 
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
     if (parameters.store.getBoolValueForKey(WebPreferencesKey::remoteMediaSessionManagerEnabledKey())) {
@@ -3369,7 +3374,7 @@ Ref<WebContextMenu> WebPage::protectedContextMenu()
     return contextMenu();
 }
 
-RefPtr<WebContextMenu> WebPage::contextMenuAtPointInWindow(FrameIdentifier frameID, const IntPoint& point)
+RefPtr<WebContextMenu> WebPage::contextMenuAtPointInWindow(FrameIdentifier frameID, const DoublePoint& point)
 {
     RefPtr frame = WebProcess::singleton().webFrame(frameID);
     if (!frame)
@@ -4924,7 +4929,7 @@ void WebPage::updatePreferences(const WebPreferencesStore& store)
 void WebPage::setDataDetectionResults(NSArray *detectionResults)
 {
     DataDetectionResult dataDetectionResult;
-    dataDetectionResult.results = detectionResults;
+    dataDetectionResult.setResults(detectionResults);
     send(Messages::WebPageProxy::SetDataDetectionResult(dataDetectionResult));
 }
 
@@ -4960,7 +4965,7 @@ static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDe
     DataDetection::detectContentInFrame(localFrame.get(), dataDetectorTypes, dataDetectionReferenceDate, [localFrame, mainFrameResult = WTFMove(mainFrameResult), dataDetectionReferenceDate, completionHandler = WTFMove(completionHandler), dataDetectorTypes](NSArray *results) mutable {
         localFrame->dataDetectionResults().setDocumentLevelResults(results);
         if (localFrame->isMainFrame())
-            mainFrameResult->results = results;
+            mainFrameResult->setResults(results);
 
         RefPtr next = localFrame->tree().traverseNext();
         if (!next) {
@@ -5697,9 +5702,9 @@ void WebPage::setTextIndicator(const WebCore::TextIndicatorData& indicatorData)
     send(Messages::WebPageProxy::SetTextIndicatorFromFrame(m_mainFrame->frameID(), indicatorData, WebCore::TextIndicatorLifetime::Temporary));
 }
 
-void WebPage::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData)
+void WebPage::updateTextIndicator(RefPtr<WebCore::TextIndicator>&& textIndicator)
 {
-    send(Messages::WebPageProxy::UpdateTextIndicatorFromFrame(m_mainFrame->frameID(), indicatorData));
+    send(Messages::WebPageProxy::UpdateTextIndicatorFromFrame(m_mainFrame->frameID(), WTFMove(textIndicator)));
 }
 
 void WebPage::replaceStringMatchesFromInjectedBundle(const Vector<uint32_t>& matchIndices, const String& replacementText, bool selectionOnly)
@@ -9064,9 +9069,15 @@ void WebPage::requestImageBitmap(const ElementContext& context, CompletionHandle
 }
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
-void WebPage::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
+void WebPage::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, WebCore::HTMLMediaElementIdentifier identifier, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::WebPageProxy::ShowMediaControlsContextMenu(WTFMove(targetFrame), WTFMove(items)), completionHandler);
+    RefPtr frame = m_mainFrame->coreFrame();
+    if (!frame) {
+        completionHandler(MediaControlsContextMenuItem::invalidID);
+        return;
+    }
+
+    sendWithAsyncReply(Messages::WebPageProxy::ShowMediaControlsContextMenu(WTFMove(targetFrame), WTFMove(items), WebFrame::fromCoreFrame(*frame)->info(), identifier), completionHandler);
 }
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 
@@ -10261,6 +10272,28 @@ std::unique_ptr<FrameInfoData> WebPage::takeMainFrameNavigationInitiator()
 bool WebPage::hasAccessoryMousePointingDevice() const
 {
     return true;
+}
+#endif
+
+#if ENABLE(VIDEO)
+void WebPage::showCaptionDisplaySettingsPreview(HTMLMediaElementIdentifier identifier)
+{
+#if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
+    if (RefPtr mediaElement = protectedPlaybackSessionManager()->mediaElementWithContextId(identifier))
+        mediaElement->showCaptionDisplaySettingsPreview();
+#else
+    UNUSED_PARAM(identifier);
+#endif
+}
+
+void WebPage::hideCaptionDisplaySettingsPreview(HTMLMediaElementIdentifier identifier)
+{
+#if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
+    if (RefPtr mediaElement = protectedPlaybackSessionManager()->mediaElementWithContextId(identifier))
+        mediaElement->hideCaptionDisplaySettingsPreview();
+#else
+    UNUSED_PARAM(identifier);
+#endif
 }
 #endif
 

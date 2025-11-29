@@ -539,6 +539,8 @@ void showInlineContent(TextStream& stream, const InlineContent& inlineContent, s
                     runStream << "Line break";
                 else if (box.isAtomicInlineBox())
                     runStream << "Atomic box";
+                else if (box.isBlockLevelBox())
+                    runStream << "Block level box";
                 else if (box.isGenericInlineLevelBox())
                     runStream << "Generic inline level box";
                 runStream << " at (" << box.left() << "," << box.top() << ") size " << box.width() << "x" << box.height();

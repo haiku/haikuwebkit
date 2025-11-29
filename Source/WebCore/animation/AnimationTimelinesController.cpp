@@ -29,10 +29,13 @@
 #include "AnimationEventBase.h"
 #include "CSSAnimation.h"
 #include "CSSTransition.h"
+#include "DocumentEventLoop.h"
 #include "DocumentPage.h"
 #include "DocumentTimeline.h"
+#include "DocumentWindow.h"
 #include "ElementInlines.h"
 #include "EventLoop.h"
+#include "EventTargetInlines.h"
 #include "KeyframeEffect.h"
 #include "LocalDOMWindow.h"
 #include "Logging.h"
@@ -205,7 +208,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
     }
 
     // 3. Perform a microtask checkpoint.
-    protectedDocument()->eventLoop().performMicrotaskCheckpoint();
+    protectedDocument()->checkedEventLoop()->performMicrotaskCheckpoint();
 
     if (RefPtr documentTimeline = m_document->existingTimeline()) {
         // FIXME: pending animation events should be owned by this controller rather
@@ -220,7 +223,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
 
         // 7. Dispatch each of the events in events to dispatch at their corresponding target using the order established in the previous step.
         for (auto& event : events)
-            event->target()->dispatchEvent(event);
+            event->protectedTarget()->dispatchEvent(event);
     }
 
     // This will cancel any scheduled invalidation if we end up removing all animations.
@@ -293,7 +296,7 @@ void AnimationTimelinesController::resumeAnimations()
 
 ReducedResolutionSeconds AnimationTimelinesController::liveCurrentTime() const
 {
-    return m_document->window()->nowTimestamp();
+    return protectedDocument()->protectedWindow()->nowTimestamp();
 }
 
 std::optional<Seconds> AnimationTimelinesController::currentTime(UseCachedCurrentTime useCachedCurrentTime)
@@ -333,7 +336,7 @@ void AnimationTimelinesController::cacheCurrentTime(ReducedResolutionSeconds new
     // start time.
     if (!m_pendingAnimationsProcessingTaskCancellationGroup.hasPendingTask()) {
         CancellableTask task(m_pendingAnimationsProcessingTaskCancellationGroup, std::bind(&AnimationTimelinesController::processPendingAnimations, this));
-        m_document->eventLoop().queueTask(TaskSource::InternalAsyncTask, WTFMove(task));
+        protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, WTFMove(task));
     }
 
     if (!m_isSuspended) {

@@ -259,15 +259,23 @@ struct DrawSystemImage {
 struct ResetClipRect {
     void operator()(WebCore::GraphicsContext& c)
     {
+        c.translate(10, 10);
+        c.save();
         c.resetClip();
+        c.restore();
     }
 
     static String description()
     {
         return R"DL(
+(translate
+  (x 10.00)
+  (y 10.00))
+(save)
 (reset-clip)
 (clip
-  (rect at (0,0) size 77x88)))DL"_s;
+  (rect at (-10,-10) size 77x88))
+(restore))DL"_s;
     }
 };
 

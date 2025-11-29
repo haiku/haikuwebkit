@@ -10,10 +10,11 @@ Fixed layer.
       (contentsOpaque 1)
       (children 869
         (GraphicsLayer
+          (position 323.00 0.00)
           (bounds 785.00 585.00)
           (children 1
             (GraphicsLayer
-              (position 369.00 106.00)
+              (position 46.00 106.00)
               (preserves3D 1)
               (children 1
                 (GraphicsLayer

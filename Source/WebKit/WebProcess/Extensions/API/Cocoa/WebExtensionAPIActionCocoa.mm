@@ -119,7 +119,7 @@ void WebExtensionAPIAction::getTitle(NSDictionary *details, Ref<WebExtensionCall
             return;
         }
 
-        callback->call(result.value().createNSString().get());
+        callback->call(JSValueMakeString(callback->globalContext(), toJSString(result.value()).get()));
     }, extensionContext().identifier());
 }
 
@@ -178,7 +178,7 @@ void WebExtensionAPIAction::getBadgeText(NSDictionary *details, Ref<WebExtension
             return;
         }
 
-        callback->call(result.value().createNSString().get());
+        callback->call(JSValueMakeString(callback->globalContext(), toJSString(result.value()).get()));
     }, extensionContext().identifier());
 }
 
@@ -229,7 +229,7 @@ void WebExtensionAPIAction::getBadgeBackgroundColor(NSDictionary *details, Ref<W
 
     // FIXME: <rdar://problem/57666368> Implement getting/setting the extension toolbar item's badge background color.
 
-    callback->call(@[ @255, @0, @0, @255 ]);
+    callback->call(fromArray(callback->globalContext(), { 255, 0, 0, 255 }));
 }
 
 void WebExtensionAPIAction::setBadgeBackgroundColor(NSDictionary *details, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)
@@ -301,7 +301,7 @@ void WebExtensionAPIAction::isEnabled(NSDictionary *details, Ref<WebExtensionCal
             return;
         }
 
-        callback->call(@(result.value()));
+        callback->call(JSValueMakeBoolean(callback->globalContext(), result.value()));
     }, extensionContext().identifier());
 }
 
@@ -627,7 +627,7 @@ void WebExtensionAPIAction::getPopup(NSDictionary *details, Ref<WebExtensionCall
             return;
         }
 
-        callback->call(result.value().createNSString().get());
+        callback->call(JSValueMakeString(callback->globalContext(), toJSString(result.value()).get()));
     }, extensionContext().identifier());
 }
 

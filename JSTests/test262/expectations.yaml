@@ -70,6 +70,9 @@ test/built-ins/Temporal/Duration/compare/options-read-before-algorithmic-validat
 test/built-ins/Temporal/Duration/compare/relativeto-propertybag-invalid-offset-string.js:
   default: 'Test262Error: "1000 is not a valid offset string Expected a TypeError but got a RangeError'
   strict mode: 'Test262Error: "1000 is not a valid offset string Expected a TypeError but got a RangeError'
+test/built-ins/Temporal/Duration/compare/relativeto-propertybag-optional-properties.js:
+  default: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
+  strict mode: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
 test/built-ins/Temporal/Duration/compare/relativeto-propertybag-timezone-string.js:
   default: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot compare a duration of years, months, or weeks without a relativeTo option'
@@ -124,6 +127,9 @@ test/built-ins/Temporal/Duration/prototype/round/largestunit-smallestunit-combin
 test/built-ins/Temporal/Duration/prototype/round/next-day-out-of-range.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(86400_0000_0000_000_000_000n, \"UTC\")')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(86400_0000_0000_000_000_000n, \"UTC\")')"
+test/built-ins/Temporal/Duration/prototype/round/options-read-before-algorithmic-validation.js:
+  default: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString] and expected [get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.relativeTo, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
+  strict mode: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString] and expected [get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.relativeTo, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
 test/built-ins/Temporal/Duration/prototype/round/relative-to-required-for-rounding-durations-with-calendar-units.js:
   default: 'Test262Error: Expected a RangeError but got a Error'
   strict mode: 'Test262Error: Expected a RangeError but got a Error'
@@ -133,15 +139,15 @@ test/built-ins/Temporal/Duration/prototype/round/relative-to-required-to-round-c
 test/built-ins/Temporal/Duration/prototype/round/relativeTo-ignores-incorrect-properties.js:
   default: 'RangeError: Cannot round a duration of years, months, or weeks without a relativeTo option'
   strict mode: 'RangeError: Cannot round a duration of years, months, or weeks without a relativeTo option'
-test/built-ins/Temporal/Duration/prototype/round/options-read-before-algorithmic-validation.js:
-  default: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString] and expected [get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.relativeTo, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
-  strict mode: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString] and expected [get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.relativeTo, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
 test/built-ins/Temporal/Duration/prototype/round/relativeTo-required-properties.js:
   default: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/built-ins/Temporal/Duration/prototype/round/relativeto-propertybag-calendar-invalid-iso-string.js:
   default: 'Test262Error: empty string is not a valid calendar ID Expected a RangeError but got a Error'
   strict mode: 'Test262Error: empty string is not a valid calendar ID Expected a RangeError but got a Error'
+test/built-ins/Temporal/Duration/prototype/round/relativeto-propertybag-optional-properties.js:
+  default: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
+  strict mode: 'Error: FIXME: years, months, or weeks rounding with relativeTo not implemented yet'
 test/built-ins/Temporal/Duration/prototype/round/relativeto-string-limits.js:
   default: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
@@ -193,6 +199,9 @@ test/built-ins/Temporal/Duration/prototype/total/options-read-before-algorithmic
 test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-invalid-offset-string.js:
   default: 'Test262Error: "0" is not a valid offset string Expected a TypeError but got a RangeError'
   strict mode: 'Test262Error: "0" is not a valid offset string Expected a TypeError but got a RangeError'
+test/built-ins/Temporal/Duration/prototype/total/relativeto-propertybag-optional-properties.js:
+  default: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
+  strict mode: 'RangeError: Cannot total a duration of years, months, or weeks without a relativeTo option'
 test/built-ins/Temporal/Duration/prototype/total/relativeto-string-limits.js:
   default: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
   strict mode: 'Test262Error: "+275760-09-13T00:00Z[UTC]" is outside the representable range for a relativeTo parameter after conversion to DateTime Expected a RangeError to be thrown but no exception was thrown at all'
@@ -232,9 +241,6 @@ test/built-ins/Temporal/Instant/prototype/until/options-read-before-algorithmic-
 test/built-ins/Temporal/Instant/prototype/until/order-of-operations.js:
   default: 'Test262Error: Actual [get other.toString, call other.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get other.toString, call other.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. order of operations'
   strict mode: 'Test262Error: Actual [get other.toString, call other.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get other.toString, call other.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. order of operations'
-test/built-ins/Temporal/PlainDate/calendar-case-insensitive.js:
-  default: 'Test262Error: Calendar is case-insensitive Expected SameValue(«undefined», «"iso8601"») to be true'
-  strict mode: 'Test262Error: Calendar is case-insensitive Expected SameValue(«undefined», «"iso8601"») to be true'
 test/built-ins/Temporal/PlainDate/compare/argument-propertybag-calendar-case-insensitive.js:
   default: 'RangeError: invalid calendar ID'
   strict mode: 'RangeError: invalid calendar ID'
@@ -322,12 +328,12 @@ test/built-ins/Temporal/PlainDateTime/from/argument-propertybag-calendar-iso-str
 test/built-ins/Temporal/PlainDateTime/from/monthcode-invalid.js:
   default: "Test262Error: monthCode 'M19' is not valid for ISO 8601 calendar Expected a RangeError to be thrown but no exception was thrown at all"
   strict mode: "Test262Error: monthCode 'M19' is not valid for ISO 8601 calendar Expected a RangeError to be thrown but no exception was thrown at all"
-test/built-ins/Temporal/PlainDateTime/from/observable-get-overflow-argument-string-invalid.js:
-  default: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. options read after string parsing'
-  strict mode: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. options read after string parsing'
 test/built-ins/Temporal/PlainDateTime/from/observable-get-overflow-argument-primitive.js:
   default: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. Failing call before options is processed'
   strict mode: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. Failing call before options is processed'
+test/built-ins/Temporal/PlainDateTime/from/observable-get-overflow-argument-string-invalid.js:
+  default: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. options read after string parsing'
+  strict mode: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString] and expected [] should have the same contents. options read after string parsing'
 test/built-ins/Temporal/PlainDateTime/from/options-wrong-type.js:
   default: 'Test262Error: Invalid string processed before throwing TypeError Expected a RangeError but got a TypeError'
   strict mode: 'Test262Error: Invalid string processed before throwing TypeError Expected a RangeError but got a TypeError'
@@ -385,9 +391,6 @@ test/built-ins/Temporal/PlainTime/from/options-wrong-type.js:
 test/built-ins/Temporal/PlainTime/from/order-of-operations.js:
   default: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString, get fields.calendar, get fields.calendar.toString, call fields.calendar.toString, get fields.hour, get fields.hour.valueOf, call fields.hour.valueOf, get fields.microsecond, get fields.microsecond.valueOf, call fields.microsecond.valueOf, get fields.millisecond, get fields.millisecond.valueOf, call fields.millisecond.valueOf, get fields.minute, get fields.minute.valueOf, call fields.minute.valueOf, get fields.nanosecond, get fields.nanosecond.valueOf, call fields.nanosecond.valueOf, get fields.second, get fields.second.valueOf, call fields.second.valueOf] and expected [get fields.hour, get fields.hour.valueOf, call fields.hour.valueOf, get fields.microsecond, get fields.microsecond.valueOf, call fields.microsecond.valueOf, get fields.millisecond, get fields.millisecond.valueOf, call fields.millisecond.valueOf, get fields.minute, get fields.minute.valueOf, call fields.minute.valueOf, get fields.nanosecond, get fields.nanosecond.valueOf, call fields.nanosecond.valueOf, get fields.second, get fields.second.valueOf, call fields.second.valueOf, get options.overflow, get options.overflow.toString, call options.overflow.toString] should have the same contents. order of operations'
   strict mode: 'Test262Error: Actual [get options.overflow, get options.overflow.toString, call options.overflow.toString, get fields.calendar, get fields.calendar.toString, call fields.calendar.toString, get fields.hour, get fields.hour.valueOf, call fields.hour.valueOf, get fields.microsecond, get fields.microsecond.valueOf, call fields.microsecond.valueOf, get fields.millisecond, get fields.millisecond.valueOf, call fields.millisecond.valueOf, get fields.minute, get fields.minute.valueOf, call fields.minute.valueOf, get fields.nanosecond, get fields.nanosecond.valueOf, call fields.nanosecond.valueOf, get fields.second, get fields.second.valueOf, call fields.second.valueOf] and expected [get fields.hour, get fields.hour.valueOf, call fields.hour.valueOf, get fields.microsecond, get fields.microsecond.valueOf, call fields.microsecond.valueOf, get fields.millisecond, get fields.millisecond.valueOf, call fields.millisecond.valueOf, get fields.minute, get fields.minute.valueOf, call fields.minute.valueOf, get fields.nanosecond, get fields.nanosecond.valueOf, call fields.nanosecond.valueOf, get fields.second, get fields.second.valueOf, call fields.second.valueOf, get options.overflow, get options.overflow.toString, call options.overflow.toString] should have the same contents. order of operations'
-test/built-ins/Temporal/PlainTime/prototype/add/precision-exact-mathematical-values-1.js:
-  default: 'Test262Error: microsecond result: Expected SameValue(«992», «993») to be true'
-  strict mode: 'Test262Error: microsecond result: Expected SameValue(«992», «993») to be true'
 test/built-ins/Temporal/PlainTime/prototype/round/options-read-before-algorithmic-validation.js:
   default: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
   strict mode: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
@@ -397,9 +400,6 @@ test/built-ins/Temporal/PlainTime/prototype/since/options-read-before-algorithmi
 test/built-ins/Temporal/PlainTime/prototype/since/order-of-operations.js:
   default: 'Test262Error: Actual [get other.calendar, get other.hour, get other.hour.valueOf, call other.hour.valueOf, get other.microsecond, get other.microsecond.valueOf, call other.microsecond.valueOf, get other.millisecond, get other.millisecond.valueOf, call other.millisecond.valueOf, get other.minute, get other.minute.valueOf, call other.minute.valueOf, get other.nanosecond, get other.nanosecond.valueOf, call other.nanosecond.valueOf, get other.second, get other.second.valueOf, call other.second.valueOf, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get other.hour, get other.hour.valueOf, call other.hour.valueOf, get other.microsecond, get other.microsecond.valueOf, call other.microsecond.valueOf, get other.millisecond, get other.millisecond.valueOf, call other.millisecond.valueOf, get other.minute, get other.minute.valueOf, call other.minute.valueOf, get other.nanosecond, get other.nanosecond.valueOf, call other.nanosecond.valueOf, get other.second, get other.second.valueOf, call other.second.valueOf, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. order of operations'
   strict mode: 'Test262Error: Actual [get other.calendar, get other.hour, get other.hour.valueOf, call other.hour.valueOf, get other.microsecond, get other.microsecond.valueOf, call other.microsecond.valueOf, get other.millisecond, get other.millisecond.valueOf, call other.millisecond.valueOf, get other.minute, get other.minute.valueOf, call other.minute.valueOf, get other.nanosecond, get other.nanosecond.valueOf, call other.nanosecond.valueOf, get other.second, get other.second.valueOf, call other.second.valueOf, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf] and expected [get other.hour, get other.hour.valueOf, call other.hour.valueOf, get other.microsecond, get other.microsecond.valueOf, call other.microsecond.valueOf, get other.millisecond, get other.millisecond.valueOf, call other.millisecond.valueOf, get other.minute, get other.minute.valueOf, call other.minute.valueOf, get other.nanosecond, get other.nanosecond.valueOf, call other.nanosecond.valueOf, get other.second, get other.second.valueOf, call other.second.valueOf, get options.largestUnit, get options.largestUnit.toString, call options.largestUnit.toString, get options.roundingIncrement, get options.roundingIncrement.valueOf, call options.roundingIncrement.valueOf, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. order of operations'
-test/built-ins/Temporal/PlainTime/prototype/subtract/precision-exact-mathematical-values-1.js:
-  default: 'Test262Error: microsecond result: Expected SameValue(«992», «993») to be true'
-  strict mode: 'Test262Error: microsecond result: Expected SameValue(«992», «993») to be true'
 test/built-ins/Temporal/PlainTime/prototype/toString/options-read-before-algorithmic-validation.js:
   default: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] and expected [get options.fractionalSecondDigits, get options.fractionalSecondDigits.toString, call options.fractionalSecondDigits.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
   strict mode: 'Test262Error: Actual [get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] and expected [get options.fractionalSecondDigits, get options.fractionalSecondDigits.toString, call options.fractionalSecondDigits.toString, get options.roundingMode, get options.roundingMode.toString, call options.roundingMode.toString, get options.smallestUnit, get options.smallestUnit.toString, call options.smallestUnit.toString] should have the same contents. all options should be read first'
@@ -415,6 +415,9 @@ test/built-ins/Temporal/PlainTime/prototype/until/order-of-operations.js:
 test/built-ins/Temporal/getOwnPropertyNames.js:
   default: 'Test262Error: ZonedDateTime'
   strict mode: 'Test262Error: ZonedDateTime'
+test/built-ins/ThrowTypeError/distinct-cross-realm.js:
+  default: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
+  strict mode: 'Test262Error: Expected a TypeError but got a different error constructor with the same name'
 test/built-ins/TypedArray/prototype/includes/index-compared-against-initial-length-out-of-bounds.js:
   default: 'Test262Error: Expected SameValue(«true», «false») to be true'
   strict mode: 'Test262Error: Expected SameValue(«true», «false») to be true'
@@ -475,6 +478,15 @@ test/built-ins/TypedArrayConstructors/internals/Set/key-is-valid-index-prototype
 test/built-ins/TypedArrayConstructors/internals/Set/key-is-valid-index-reflect-set.js:
   default: 'Test262Error: target[0] should remain unchanged (receiver: empty object) Expected SameValue(«2.3», «0») to be true (Testing with Float64Array.)'
   strict mode: 'Test262Error: target[0] should remain unchanged (receiver: empty object) Expected SameValue(«2.3», «0») to be true (Testing with Float64Array.)'
+test/built-ins/Uint8Array/prototype/setFromBase64/trailing-garbage-empty.js:
+  default: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
+  strict mode: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
+test/built-ins/Uint8Array/prototype/setFromBase64/trailing-garbage.js:
+  default: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
+  strict mode: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
+test/intl402/DateTimeFormat/constructor-options-calendar-islamic-fallback.js:
+  default: "Test262Error: no valid fallback for 'islamic' calendar option Expected SameValue(«false», «true») to be true"
+  strict mode: "Test262Error: no valid fallback for 'islamic' calendar option Expected SameValue(«false», «true») to be true"
 test/intl402/DateTimeFormat/prototype/format/temporal-objects-not-overlapping-options.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
@@ -484,9 +496,6 @@ test/intl402/DateTimeFormat/prototype/format/temporal-plaindate-formatting-datet
 test/intl402/DateTimeFormat/prototype/format/temporal-plaindatetime-formatting-datetime-style.js:
   default: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
   strict mode: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
-test/intl402/DateTimeFormat/prototype/format/temporal-plainmonthday-formatting-datetime-style.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(3, 4, \"gregory\", 5678)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(3, 4, \"gregory\", 5678)')"
 test/intl402/DateTimeFormat/prototype/format/temporal-plaintime-formatting-datetime-style.js:
   default: 'TypeError: Temporal.PlainTime.prototype.valueOf must not be called. To compare PlainTime values, use Temporal.PlainTime.compare'
   strict mode: 'TypeError: Temporal.PlainTime.prototype.valueOf must not be called. To compare PlainTime values, use Temporal.PlainTime.compare'
@@ -496,9 +505,6 @@ test/intl402/DateTimeFormat/prototype/format/temporal-plainyearmonth-formatting-
 test/intl402/DateTimeFormat/prototype/format/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
-test/intl402/DateTimeFormat/prototype/formatRange/fails-on-distinct-temporal-types.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(5, 2)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(5, 2)')"
 test/intl402/DateTimeFormat/prototype/formatRange/temporal-objects-not-overlapping-options.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
@@ -508,9 +514,6 @@ test/intl402/DateTimeFormat/prototype/formatRange/temporal-zoneddatetime-not-sup
 test/intl402/DateTimeFormat/prototype/formatRange/to-datetime-formattable-with-different-arg-kinds.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
-test/intl402/DateTimeFormat/prototype/formatRangeToParts/fails-on-distinct-temporal-types.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(5, 2)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainMonthDay(5, 2)')"
 test/intl402/DateTimeFormat/prototype/formatRangeToParts/temporal-objects-not-overlapping-options.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
@@ -526,18 +529,18 @@ test/intl402/DateTimeFormat/prototype/formatToParts/temporal-objects-not-overlap
 test/intl402/DateTimeFormat/prototype/formatToParts/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
-test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DateTimeFormat.js:
-  default: 'RangeError: calendar is not a well-formed calendar value'
-  strict mode: 'RangeError: calendar is not a well-formed calendar value'
 test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DisplayNames.js:
   default: 'Test262Error: bangla is supported by DisplayNames Expected SameValue(«"undefined"», «"string"») to be true'
   strict mode: 'Test262Error: bangla is supported by DisplayNames Expected SameValue(«"undefined"», «"string"») to be true'
-test/intl402/Intl/supportedValuesOf/calendars.js:
-  default: "Test262Error: malayalam matches the 'type' production"
-  strict mode: "Test262Error: malayalam matches the 'type' production"
+test/intl402/Intl/supportedValuesOf/calendars-required-by-intl-era-monthcode.js:
+  default: 'Test262Error: Required calendar: ethiopic-amete-alem must be supported'
+  strict mode: 'Test262Error: Required calendar: ethiopic-amete-alem must be supported'
 test/intl402/Locale/extensions-grandfathered.js:
   default: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
+test/intl402/Locale/prototype/getWeekInfo/output-object-keys.js:
+  default: 'Test262Error: Actual [firstDay, weekend, minimalDays] and expected [firstDay, weekend] should have the same contents. '
+  strict mode: 'Test262Error: Actual [firstDay, weekend, minimalDays] and expected [firstDay, weekend] should have the same contents. '
 test/intl402/NumberFormat/currency-digits-nonstandard-notation.js:
   default: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"
   strict mode: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"
@@ -685,6 +688,8 @@ test/language/module-code/top-level-await/async-module-does-not-block-sibling-mo
 test/language/module-code/top-level-await/dynamic-import-of-waiting-module.js:
   default: 'Test262:AsyncTestFailure:Test262Error: Test262Error: The second import should not resolve before the first one'
   strict mode: 'Test262:AsyncTestFailure:Test262Error: Test262Error: The second import should not resolve before the first one'
+test/language/module-code/top-level-await/unobservable-global-async-evaluation-count-reset.js:
+  module: 'Test262:AsyncTestFailure:Test262Error: Test262Error: Actual [D, A] and expected [A, D] should have the same contents. A should evaluate before D'
 test/language/statements/async-generator/yield-star-promise-not-unwrapped.js:
   default: 'Test262:AsyncTestFailure:Test262Error: Test262Error: yield* should not unwrap promises from manually-implemented async iterators Expected SameValue(«"unwrapped value"», «[object Promise]») to be true'
   strict mode: 'Test262:AsyncTestFailure:Test262Error: Test262Error: yield* should not unwrap promises from manually-implemented async iterators Expected SameValue(«"unwrapped value"», «[object Promise]») to be true'
@@ -709,7 +714,7 @@ test/language/statements/class/subclass/default-constructor-spread-override.js:
   default: 'Test262Error: @@iterator invoked'
   strict mode: 'Test262Error: @@iterator invoked'
 test/language/statements/class/subclass/private-class-field-on-nonextensible-return-override.js:
-  strict mode: "TypeError: t.val is not a function. (In 't.val()', 't.val' is undefined)"
+  strict mode: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/language/statements/for-await-of/head-lhs-async.js:
   default: "SyntaxError: Unexpected identifier 'of'"
   strict mode: "SyntaxError: Unexpected identifier 'of'"
@@ -754,18 +759,6 @@ test/staging/sm/Function/function-name-assignment.js:
 test/staging/sm/Function/function-toString-builtin-name.js:
   default: 'Test262Error: Incorrect match for undefined Expected SameValue(«"fn"», «undefined») to be true'
   strict mode: 'Test262Error: Incorrect match for undefined Expected SameValue(«"fn"», «undefined») to be true'
-test/staging/sm/Math/acosh-exact.js:
-  default: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
-  strict mode: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
-test/staging/sm/Math/atanh-exact.js:
-  default: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
-  strict mode: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
-test/staging/sm/Math/log1p-exact.js:
-  default: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
-  strict mode: "ReferenceError: Can't find variable: ONE_PLUS_EPSILON"
-test/staging/sm/Math/trunc.js:
-  default: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
-  strict mode: "ReferenceError: Can't find variable: ONE_MINUS_EPSILON"
 test/staging/sm/PrivateName/modify-non-extensible.js:
   default: 'Test262Error: Expected a TypeError to be thrown but no exception was thrown at all'
 test/staging/sm/Proxy/revoked-get-function-realm-typeerror.js:
@@ -870,5 +863,3 @@ test/staging/sm/module/module-export-name-star.js:
 test/staging/sm/object/defineProperties-order.js:
   default: 'Test262Error: Expected SameValue(«"ownKeys,getOwnPropertyDescriptor,getOwnPropertyDescriptor,get,get"», «"ownKeys,getOwnPropertyDescriptor,get,getOwnPropertyDescriptor,get"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"ownKeys,getOwnPropertyDescriptor,getOwnPropertyDescriptor,get,get"», «"ownKeys,getOwnPropertyDescriptor,get,getOwnPropertyDescriptor,get"») to be true'
-test/staging/top-level-await/tla-hang-entry.js:
-  module: "TypeError: Module specifier, 'parent-tla_FIXTURE.js' is not absolute and does not start with \"./\" or \"../\"."

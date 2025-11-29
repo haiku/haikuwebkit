@@ -158,7 +158,7 @@ void WebExtensionAPIDeclarativeNetRequest::updateEnabledRulesets(NSDictionary *o
 void WebExtensionAPIDeclarativeNetRequest::getEnabledRulesets(Ref<WebExtensionCallbackHandler>&& callback)
 {
     WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::DeclarativeNetRequestGetEnabledRulesets(), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Vector<String> enabledRulesets) {
-        callback->call(createNSArray(enabledRulesets).get());
+        callback->call(fromArray(callback->globalContext(), WTFMove(enabledRulesets)));
     }, extensionContext().identifier());
 }
 
@@ -229,7 +229,7 @@ void WebExtensionAPIDeclarativeNetRequest::getDynamicRules(NSDictionary *filter,
             return;
         }
 
-        callback->call(parseJSON(result.value().createNSString().get(), JSONOptions::FragmentsAllowed));
+        callback->call(fromJSON(callback->globalContext(), JSON::Value::parseJSON(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -300,7 +300,7 @@ void WebExtensionAPIDeclarativeNetRequest::getSessionRules(NSDictionary *filter,
             return;
         }
 
-        callback->call(parseJSON(result.value().createNSString().get(), JSONOptions::FragmentsAllowed));
+        callback->call(fromJSON(callback->globalContext(), JSON::Value::parseJSON(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -361,7 +361,7 @@ void WebExtensionAPIDeclarativeNetRequest::getMatchedRules(NSDictionary *filter,
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext->identifier());
 }
 
@@ -378,9 +378,14 @@ void WebExtensionAPIDeclarativeNetRequest::isRegexSupported(NSDictionary *option
 
     NSString *regexString = objectForKey<NSString>(options, regexKey);
     if (![WKContentRuleList _supportsRegularExpression:regexString])
-        callback->call(@{ @"isSupported": @NO, @"reason": @"syntaxError" });
+        callback->call(fromObject(callback->globalContext(), {
+            { "isSupported"_s, JSValueMakeBoolean(callback->globalContext(), false) },
+            { "reason"_s, JSValueMakeString(callback->globalContext(), toJSString("syntaxError"_s).get()) }
+        }));
     else
-        callback->call(@{ @"isSupported": @YES });
+        callback->call(fromObject(callback->globalContext(), {
+            { "isSupported"_s, JSValueMakeBoolean(callback->globalContext(), true) }
+        }));
 }
 
 void WebExtensionAPIDeclarativeNetRequest::setExtensionActionOptions(NSDictionary *options, Ref<WebExtensionCallbackHandler>&& callback, NSString **outExceptionString)

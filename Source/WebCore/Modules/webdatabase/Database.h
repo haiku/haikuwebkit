@@ -31,6 +31,7 @@
 #include "SQLiteDatabase.h"
 #include <wtf/Deque.h>
 #include <wtf/Lock.h>
+#include <wtf/UniqueRef.h>
 
 namespace WebCore {
 
@@ -165,7 +166,7 @@ private:
     bool m_opened { false };
     bool m_new { false };
 
-    SQLiteDatabase m_sqliteDatabase;
+    UniqueRef<SQLiteDatabase> m_sqliteDatabase;
 
     const Ref<DatabaseAuthorizer> m_databaseAuthorizer;
 

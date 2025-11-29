@@ -1025,7 +1025,7 @@ bool ProxyObject::forwardsGetOwnPropertyNamesToTarget(DontEnumPropertiesMode don
     return true;
 }
 
-void ProxyObject::performGetOwnPropertyNames(JSGlobalObject* globalObject, PropertyNameArray& propertyNames)
+void ProxyObject::performGetOwnPropertyNames(JSGlobalObject* globalObject, PropertyNameArrayBuilder& propertyNames)
 {
     NO_TAIL_CALLS();
 
@@ -1089,7 +1089,7 @@ void ProxyObject::performGetOwnPropertyNames(JSGlobalObject* globalObject, Prope
     bool targetIsExensible = target->isExtensible(globalObject);
     RETURN_IF_EXCEPTION(scope, void());
 
-    PropertyNameArray targetKeys(vm, PropertyNameMode::StringsAndSymbols, PrivateSymbolMode::Exclude);
+    PropertyNameArrayBuilder targetKeys(vm, PropertyNameMode::StringsAndSymbols, PrivateSymbolMode::Exclude);
     target->methodTable()->getOwnPropertyNames(target, globalObject, targetKeys, DontEnumPropertiesMode::Include);
     RETURN_IF_EXCEPTION(scope, void());
     UncheckedKeyHashSet<UniquedStringImpl*> targetNonConfigurableKeys;
@@ -1126,12 +1126,12 @@ void ProxyObject::performGetOwnPropertyNames(JSGlobalObject* globalObject, Prope
     }
 }
 
-void ProxyObject::performGetOwnEnumerablePropertyNames(JSGlobalObject* globalObject, PropertyNameArray& propertyNames)
+void ProxyObject::performGetOwnEnumerablePropertyNames(JSGlobalObject* globalObject, PropertyNameArrayBuilder& propertyNames)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    PropertyNameArray unfilteredNames(vm, propertyNames.propertyNameMode(), propertyNames.privateSymbolMode());
+    PropertyNameArrayBuilder unfilteredNames(vm, propertyNames.propertyNameMode(), propertyNames.privateSymbolMode());
     performGetOwnPropertyNames(globalObject, unfilteredNames);
     RETURN_IF_EXCEPTION(scope, void());
     // Filtering DontEnum properties is observable in proxies and must occur after the invariant checks pass.
@@ -1147,7 +1147,7 @@ void ProxyObject::performGetOwnEnumerablePropertyNames(JSGlobalObject* globalObj
     }
 }
 
-void ProxyObject::getOwnPropertyNames(JSObject* object, JSGlobalObject* globalObject, PropertyNameArray& propertyNameArray, DontEnumPropertiesMode mode)
+void ProxyObject::getOwnPropertyNames(JSObject* object, JSGlobalObject* globalObject, PropertyNameArrayBuilder& propertyNameArray, DontEnumPropertiesMode mode)
 {
     ProxyObject* thisObject = jsCast<ProxyObject*>(object);
     if (mode == DontEnumPropertiesMode::Include)

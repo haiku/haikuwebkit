@@ -164,7 +164,7 @@ static void didReceiveServerTrustChallenge(NetworkConnectionToWebProcess& connec
         auto decisionHandler = makeBlockPtr([
             connectionToWebProcess = Ref { connectionToWebProcess },
             pageID = WTFMove(pageID),
-            clientOrigin = WTFMove(clientOrigin),
+            clientOrigin,
             challengeCompletionHandler = WTFMove(challengeCompletionHandler)
         ] (NSURLAuthenticationChallenge *challenge, OSStatus trustResult) mutable {
             if (trustResult == noErr) {
@@ -199,7 +199,7 @@ static RetainPtr<nw_parameters_t> createParameters(NetworkConnectionToWebProcess
         pageID = WTFMove(pageID),
         hashes = WTFMove(hashes),
         clientOrigin = WTFMove(clientOrigin)
-    ](nw_protocol_options_t options) {
+    ](nw_protocol_options_t options) mutable {
         RetainPtr securityOptions = adoptNS(nw_tls_copy_sec_protocol_options(options));
         sec_protocol_options_set_peer_authentication_required(securityOptions.get(), true);
         sec_protocol_options_set_verify_block(securityOptions.get(), makeBlockPtr([

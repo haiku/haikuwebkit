@@ -168,7 +168,7 @@ template<typename Layers> void BackgroundPainter::paintFillLayersImpl(const Colo
         context.beginTransparencyLayer(1);
     }
 
-    for (auto& layer : std::ranges::reverse_view(fillLayers.usedValues()))
+    for (auto& layer : fillLayers.usedValues() | std::views::reverse)
         paintFillLayerImpl(color, FillLayerToPaint<typename Layers::value_type> { .layer = layer, .isLast = &layer == &fillLayers.usedLast() }, rect, bleedAvoidance, { }, { }, op, backgroundObject, baseBgColorUsage);
 
     if (shouldDrawBackgroundInSeparateBuffer)

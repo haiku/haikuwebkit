@@ -250,7 +250,11 @@ id WebProcess::accessibilityFocusedUIElement()
             bool foundValidTree = false;
             switchOn(tree,
                 [&] (RefPtr<AXIsolatedTree>& typedTree) {
+#if ENABLE_ACCESSIBILITY_LOCAL_FRAME
+                    if (typedTree && typedTree->focusedNode()) {
+#else
                     if (typedTree) {
+#endif
                         OptionSet<ActivityState> state = typedTree->lockedPageActivityState();
                         if (state.containsAll({ ActivityState::IsVisible, ActivityState::IsFocused, ActivityState::WindowIsActive }))
                             foundValidTree = true;

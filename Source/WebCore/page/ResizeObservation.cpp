@@ -92,6 +92,9 @@ auto ResizeObservation::computeObservedSizes() const -> std::optional<BoxSizes>
 
 LayoutPoint ResizeObservation::computeTargetLocation() const
 {
+    if (!m_target)
+        return { };
+
     if (!m_target->isSVGElement()) {
         if (auto box = m_target->renderBox())
             return LayoutPoint(box->paddingLeft(), box->paddingTop());

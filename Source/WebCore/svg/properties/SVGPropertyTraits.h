@@ -21,10 +21,8 @@
 
 #pragma once
 
-#include <WebCore/CSSParser.h>
 #include <WebCore/CSSPropertyParserConsumer+Color.h>
 #include <WebCore/Color.h>
-#include <WebCore/ColorSerialization.h>
 #include <WebCore/CommonAtomStrings.h>
 #include <WebCore/FloatPoint.h>
 #include <WebCore/FloatRect.h>
@@ -35,6 +33,10 @@
 namespace WebCore {
 
 class SVGElement;
+
+namespace Style {
+struct Color;
+}
 
 template<typename PropertyType>
 struct SVGPropertyTraits { };
@@ -51,7 +53,7 @@ template<>
 struct SVGPropertyTraits<Color> {
     static Color initialValue() { return Color(); }
     static Color fromString(SVGElement&, const String&);
-    static String toString(const Color& type) { return serializationForHTML(type); }
+    static String toString(const Color&);
 };
 
 template<>

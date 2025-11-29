@@ -184,13 +184,13 @@ private:
     WebCore::HostingContext hostingContext() const final;
     void setLayerHostingContext(WebCore::HostingContext&&);
 #if PLATFORM(COCOA)
-    WebCore::FloatSize videoLayerSize() const { return m_videoLayerSize; };
+    WebCore::FloatSize videoLayerSize() const;
     void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRightAnnotated&&) final;
 #endif
     void notifyVideoLayerSizeChanged(Function<void(const MediaTime&, WebCore::FloatSize)>&& callback) final;
     // VideoLayerRemoteParent
     bool inVideoFullscreenOrPictureInPicture() const final;
-    WebCore::FloatSize naturalSize() const final { return m_naturalSize; }
+    WebCore::FloatSize naturalSize() const final;
 
 #if ENABLE(ENCRYPTED_MEDIA)
     void setCDMInstance(WebCore::CDMInstance*) final;
@@ -210,50 +210,61 @@ private:
     WTFLogChannel& logChannel() const final;
 #endif
 
+    void setState(RemoteAudioVideoRendererState);
+
     void ensureOnDispatcher(Function<void()>&&);
-    void ensureOnDispatcherSync(Function<void()>&&);
+    void ensureOnDispatcherSync(NOESCAPE Function<void()>&&);
+    void ensureOnDispatcherWithConnection(Function<void(AudioVideoRendererRemote&, IPC::Connection&)>&&);
     static WorkQueue& queueSingleton();
     bool isGPURunning() const { return !m_shutdown; }
 
     void updateCacheState(const RemoteAudioVideoRendererState&);
+    class ReadyForMoreData {
+    public:
+        static constexpr size_t kMaxPendingSample = 20;
+        bool isReadyForMoreData() const { return m_pendingSamples < kMaxPendingSample; }
+        void reset() { m_pendingSamples = 0; }
+        void sampleEnqueued() { m_pendingSamples++; }
+    private:
+        size_t m_pendingSamples { 0 };
+    };
+    ReadyForMoreData& readyForMoreData(TrackIdentifier);
 
     const ThreadSafeWeakPtr<GPUProcessConnection> m_gpuProcessConnection;
     const Ref<MessageReceiver> m_receiver;
     const RemoteAudioVideoRendererIdentifier m_identifier;
 
-    bool m_shutdown { false };
+    std::atomic<bool> m_shutdown { false };
 
-    RemoteAudioVideoRendererState m_state;
+    mutable Lock m_lock;
+    RemoteAudioVideoRendererState m_state WTF_GUARDED_BY_LOCK(m_lock);
 
-    Function<void(WebCore::PlatformMediaError)> m_errorCallback;
-    Function<void()> m_firstFrameAvailableCallback;
-    Function<void(const MediaTime&, double)> m_hasAvailableVideoFrameCallback;
-    Function<void()> m_notifyWhenRequiresFlushToResumeCallback;
-    Function<void()> m_renderingModeChangedCallback;
-    Function<void(const MediaTime&, WebCore::FloatSize)> m_sizeChangedCallback;
-    Function<void(const MediaTime&)> m_currentTimeDidChangeCallback;
-    Function<void(double)> m_effectiveRateChangedCallback;
-    Function<void(const MediaTime&)> m_timeReachedAndStallCallback;
-    Function<void(const MediaTime&)> m_performTaskAtTimeCallback;
-    MediaTime m_performTaskAtTime;
-    Function<void(const MediaTime&, WebCore::FloatSize)> m_videoLayerSizeChangedCallback;
+    Function<void(WebCore::PlatformMediaError)> m_errorCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void()> m_firstFrameAvailableCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&, double)> m_hasAvailableVideoFrameCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void()> m_notifyWhenRequiresFlushToResumeCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void()> m_renderingModeChangedCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&, WebCore::FloatSize)> m_sizeChangedCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&)> m_currentTimeDidChangeCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(double)> m_effectiveRateChangedCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&)> m_timeReachedAndStallCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&)> m_performTaskAtTimeCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    MediaTime m_performTaskAtTime WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    Function<void(const MediaTime&, WebCore::FloatSize)> m_videoLayerSizeChangedCallback WTF_GUARDED_BY_CAPABILITY(queueSingleton());
 
-    static constexpr size_t kMaxPendingSample = 10;
-    struct RequestMediaDataWhenReadyData {
-        bool readyForMoreData() const { return pendingSamples < kMaxPendingSample; }
-        size_t pendingSamples { kMaxPendingSample };
-        Function<void(TrackIdentifier)> callback;
-    };
-    HashMap<TrackIdentifier, RequestMediaDataWhenReadyData> m_requestMediaDataWhenReadyData;
-    HashMap<TrackIdentifier, Function<void(TrackIdentifier, const MediaTime&)>> m_trackNeedsReenqueuingCallbacks;
+    HashMap<TrackIdentifier, ReadyForMoreData> m_readyForMoreData WTF_GUARDED_BY_LOCK(m_lock);
+    HashMap<TrackIdentifier, Function<void(TrackIdentifier)>> m_requestMediaDataWhenReadyDataCallbacks WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    HashMap<TrackIdentifier, Function<void(TrackIdentifier, const MediaTime&)>> m_trackNeedsReenqueuingCallbacks WTF_GUARDED_BY_CAPABILITY(queueSingleton());
 
-    Vector<LayerHostingContextCallback> m_layerHostingContextRequests;
-    WebCore::HostingContext m_layerHostingContext;
-    WebCore::FloatSize m_naturalSize;
+    Vector<LayerHostingContextCallback> m_layerHostingContextRequests WTF_GUARDED_BY_CAPABILITY(queueSingleton());
+    WebCore::HostingContext m_layerHostingContext WTF_GUARDED_BY_LOCK(m_lock);
+    WebCore::FloatSize m_naturalSize WTF_GUARDED_BY_LOCK(m_lock);
+    std::atomic<bool> m_seeking { false };
+    MediaTime m_lastSeekTime; // Always call on the renderer's client thread.
 #if PLATFORM(COCOA)
-    const UniqueRef<WebCore::VideoLayerManager> m_videoLayerManager;
-    mutable PlatformLayerContainer m_videoLayer;
-    WebCore::FloatSize m_videoLayerSize;
+    const UniqueRef<WebCore::VideoLayerManager> m_videoLayerManager WTF_GUARDED_BY_LOCK(m_lock);
+    mutable PlatformLayerContainer m_videoLayer WTF_GUARDED_BY_LOCK(m_lock);
+    WebCore::FloatSize m_videoLayerSize WTF_GUARDED_BY_LOCK(m_lock);
 #endif
 #if !RELEASE_LOG_DISABLED
     const Ref<const Logger> m_logger;

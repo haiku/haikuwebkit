@@ -123,7 +123,7 @@ void WebExtensionAPIAlarms::get(NSString *name, Ref<WebExtensionCallbackHandler>
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/alarms/get
 
     WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::AlarmsGet(name ?: emptyAlarmName), [protectedThis = Ref { *this }, callback = WTFMove(callback)](std::optional<WebExtensionAlarmParameters>&& alarm) {
-        callback->call(toWebAPI(alarm));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(alarm)));
     }, extensionContext().identifier());
 }
 
@@ -132,7 +132,7 @@ void WebExtensionAPIAlarms::getAll(Ref<WebExtensionCallbackHandler>&& callback)
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/alarms/getAll
 
     WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::AlarmsGetAll(), [protectedThis = Ref { *this }, callback = WTFMove(callback)](Vector<WebExtensionAlarmParameters> alarms) {
-        callback->call(toWebAPI(alarms));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(alarms)));
     }, extensionContext().identifier());
 }
 

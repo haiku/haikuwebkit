@@ -36,7 +36,7 @@
 #import "PlaybackSessionInterfaceAVKitLegacy.h"
 #import "PlaybackSessionModelMediaElement.h"
 #import "RenderObjectInlines.h"
-#import "RenderVideo.h"
+#import "RenderVideoInlines.h"
 #import "TimeRanges.h"
 #import "VideoPresentationInterfaceAVKitLegacy.h"
 #import "VideoPresentationModelVideoElement.h"
@@ -135,6 +135,7 @@ private:
     // VideoPresentationModelClient
     void hasVideoChanged(bool) override;
     void videoDimensionsChanged(const FloatSize&) override;
+    void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode) override { }
 
     // PlaybackSessionModel
     void addClient(PlaybackSessionModelClient&) override;
@@ -209,7 +210,7 @@ private:
     void setVideoLayerFrame(FloatRect) override;
     void setVideoLayerGravity(MediaPlayerEnums::VideoGravity) override;
     void setVideoFullscreenFrame(FloatRect) override { }
-    void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode) override;
+    void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode, ShouldNotifyMediaElement) override;
     bool hasVideo() const override;
     bool isChildOfElementFullscreen() const override;
     FloatSize videoDimensions() const override;
@@ -630,12 +631,15 @@ void VideoFullscreenControllerContext::setVideoLayerGravity(MediaPlayerEnums::Vi
     });
 }
 
-void VideoFullscreenControllerContext::fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode mode)
+void VideoFullscreenControllerContext::fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode mode, ShouldNotifyMediaElement shouldNotifyMediaElement)
 {
     ASSERT(isUIThread());
+    if (shouldNotifyMediaElement == ShouldNotifyMediaElement::No)
+        return;
+
     WebThreadRun([protectedThis = Ref { *this }, this, mode] {
         if (m_presentationModel)
-            m_presentationModel->fullscreenModeChanged(mode);
+            m_presentationModel->fullscreenModeChanged(mode, ShouldNotifyMediaElement::Yes);
     });
 }
 

@@ -31,5 +31,5 @@
     Exposed=Window,
     InterfaceName=XRHitTestResult
 ] interface WebXRHitTestResult {
-    WebXRPose? getPose(WebXRSpace baseSpace);
+    [CallWith=CurrentDocument] WebXRPose? getPose(WebXRSpace baseSpace);
 };

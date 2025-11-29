@@ -531,6 +531,8 @@ inline-flex
 contents
 grid
 inline-grid
+masonry
+inline-masonry
 flow-root
 flow
 -webkit-inline-flex
@@ -1566,7 +1568,6 @@ span
 // grid-template-{columns|rows}
 minmax
 subgrid
-masonry
 
 // grid-auto-flow
 auto-flow

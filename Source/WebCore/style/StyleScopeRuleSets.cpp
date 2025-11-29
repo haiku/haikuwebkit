@@ -44,6 +44,7 @@
 #include "StyleResolver.h"
 #include "StyleScope.h"
 #include "StyleSheetContents.h"
+#include <ranges>
 
 namespace WebCore {
 namespace Style {
@@ -338,7 +339,7 @@ static Vector<InvalidationRuleSet>* ensureInvalidationRuleSets(const KeyType& ke
                 auto alreadyContains = [&](const CSSSelectorList& invalidationSelector) {
                     constexpr auto maximumSearchCount = 8;
                     auto count = 0;
-                    for (auto& existing : makeReversedRange(builder.invalidationSelectors)) {
+                    for (auto& existing : builder.invalidationSelectors | std::views::reverse) {
                         if (++count > maximumSearchCount)
                             break;
                         if (invalidationSelector == *existing)

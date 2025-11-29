@@ -30,6 +30,7 @@
 #include <WebCore/InlineLineTypes.h>
 #include <WebCore/InlineTextItem.h>
 #include <WebCore/RenderStyle.h>
+#include <ranges>
 #include <unicode/ubidi.h>
 #include <wtf/Range.h>
 
@@ -57,6 +58,7 @@ public:
     void appendLineBreak(const InlineItem&, const RenderStyle&);
     void appendWordBreakOpportunity(const InlineItem&, const RenderStyle&);
     void appendOpaqueBox(const InlineItem&, const RenderStyle&);
+    void appendBlock(const InlineItem&, InlineLayoutUnit marginBoxLogicalWidth);
 
     void setContentNeedsBidiReordering() { m_hasNonDefaultBidiLevelRun = true; }
 
@@ -333,7 +335,7 @@ inline bool Line::hasContentOrListMarker() const
 
 inline bool Line::hasContent() const
 {
-    for (auto& run : makeReversedRange(m_runs)) {
+    for (auto& run : m_runs | std::views::reverse) {
         if (run.isContentful() && !run.isGenerated())
             return true;
     }

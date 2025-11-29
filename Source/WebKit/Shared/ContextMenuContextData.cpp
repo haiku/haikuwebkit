@@ -70,6 +70,11 @@ ContextMenuContextData::ContextMenuContextData(const IntPoint& menuLocation, con
     if (RefPtr image = context.potentialQRCodeViewportSnapshotImage())
         setPotentialQRCodeViewportSnapshotImage(*image);
 #endif
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    if (auto identifier = context.mediaElementIdentifier())
+        setMediaElementIdentifier(*identifier);
+#endif
 }
 
 #if ENABLE(SERVICE_CONTROLS)
@@ -159,6 +164,9 @@ ContextMenuContextData::ContextMenuContextData(WebCore::ContextMenuContext::Type
     , bool hasEntireImage
     , bool allowsFollowingLink
     , bool allowsFollowingImageURL
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    , std::optional<WebCore::HTMLMediaElementIdentifier> mediaElementIdentifier
+#endif
 )
     : m_type(type)
     , m_menuLocation(WTFMove(menuLocation))
@@ -176,6 +184,9 @@ ContextMenuContextData::ContextMenuContextData(WebCore::ContextMenuContext::Type
     , m_controlledImageAttachmentID(WTFMove(controlledImageAttachmentID))
     , m_controlledImageElementContext(WTFMove(controlledImageElementContext))
     , m_controlledImageMIMEType(WTFMove(controlledImageMIMEType))
+#endif
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    , m_mediaElementIdentifier(WTFMove(mediaElementIdentifier))
 #endif
 {
 #if ENABLE(SERVICE_CONTROLS)

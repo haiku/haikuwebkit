@@ -2,6 +2,8 @@
 <html>
 <head>
 <script src="../../../resources/ui-helper.js"></script>
+<script src="../../../resources/js-test.js"></script>
+
 <style>
 textarea {
     font-size: 16px;
@@ -15,9 +17,12 @@ textarea {
 <textarea id="textarea">good morning.
 </textarea>
 <script>
-addEventListener("load", async () => {
-    const editor = document.getElementById('textarea');
+jsTestIsAsync = true;
 
+addEventListener("load", async () => {
+    description("Verifies that writing suggestions are inserted at the correct offset within the render tree. Requires WebKitTestRunner");
+
+    const editor = document.getElementById("textarea");
     const shadowRoot = internals.shadowRoot(editor);
 
     shadowRoot.childNodes[0].appendChild(document.createTextNode("My na"));
@@ -25,12 +30,18 @@ addEventListener("load", async () => {
     editor.focus();
     editor.selectionStart = 20;
     editor.selectionEnd = 20;
-    testRunner.waitUntilDone();
 
     await UIHelper.setInlinePrediction("name is", 2);
     await UIHelper.ensurePresentationUpdate();
 
-    testRunner.notifyDone();
+    renderedText = internals.elementRenderTreeAsText(editor)
+        .split("\n")
+        .filter(line => line.includes("text run"))
+        .map(line => line.match(/"(.*)"$/)[1])
+        .join("");
+
+    shouldBeEqualToString("renderedText", "good morning. My name is");
+    finishJSTest();
 });
 </script>
 </body>

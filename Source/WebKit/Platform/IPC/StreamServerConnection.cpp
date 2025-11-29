@@ -301,8 +301,9 @@ void StreamServerConnection::dispatchDidReceiveInvalidMessage(Decoder& message)
     invalidate();
 }
 
-void StreamServerConnection::markCurrentlyDispatchedMessageAsInvalid()
+void StreamServerConnection::markCurrentlyDispatchedMessageAsInvalid(ASCIILiteral error)
 {
+    UNUSED_PARAM(error);
     ASSERT(m_isDispatchingMessage);
     m_didReceiveInvalidMessage = true;
 }

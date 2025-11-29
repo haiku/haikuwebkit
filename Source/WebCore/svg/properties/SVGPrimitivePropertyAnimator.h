@@ -51,7 +51,7 @@ public:
     template<typename... Arguments>
     SVGPrimitivePropertyAnimator(const QualifiedName& attributeName, Ref<SVGProperty>&& property, Arguments&&... arguments)
         : Base(attributeName, std::forward<Arguments>(arguments)...)
-        , m_property(static_reference_cast<ValuePropertyType>(WTFMove(property)))
+        , m_property(unsafeRefDowncast<ValuePropertyType>(WTFMove(property)))
     {
     }
 

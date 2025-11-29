@@ -263,20 +263,23 @@ namespace WTF {
     template<typename T, typename U> struct DefaultHash<std::pair<T, U>> : PairHash<T, U> { };
     template<typename... Types> struct DefaultHash<std::tuple<Types...>> : TupleHash<Types...> { };
 
+    template<typename T> constexpr bool isSafeToCompareToHashTableEmptyOrDeletedValue() {
+        if constexpr (requires { T::safeToCompareToHashTableEmptyOrDeletedValue; }) {
+            static_assert(std::same_as<decltype(T::safeToCompareToHashTableEmptyOrDeletedValue), const bool>);
+            return T::safeToCompareToHashTableEmptyOrDeletedValue;
+        } else
+            return false;
+    }
+
     // Default hash for any type with a hash() member function and an equality operator.
-    template<typename T> concept HashableWithMemberFunction = std::equality_comparable<T> && requires(const T& t) {
+    template<typename T> concept HashableWithMemberFunction = requires(const T& t) {
+        requires std::equality_comparable<T>;
         { t.hash() } -> std::same_as<unsigned>;
     };
     template<HashableWithMemberFunction T> struct MemberBasedHash {
         static unsigned hash(const T& key) { return key.hash(); }
         static bool equal(const T& a, const T& b) { return a == b; }
-        static constexpr bool safeToCompareToEmptyOrDeleted = [] {
-            if constexpr (requires { T::safeToCompareToHashTableEmptyOrDeletedValue; }) {
-                static_assert(std::same_as<decltype(T::safeToCompareToHashTableEmptyOrDeletedValue), const bool>);
-                return T::safeToCompareToHashTableEmptyOrDeletedValue;
-            } else
-                return false;
-        }();
+        static constexpr bool safeToCompareToEmptyOrDeleted = isSafeToCompareToHashTableEmptyOrDeletedValue<T>();
     };
     template<HashableWithMemberFunction T> struct DefaultHash<T> : MemberBasedHash<T> { };
 

@@ -50,9 +50,7 @@ WebKitBuildbot = function()
         "Apple-Sequoia-Debug-WK2-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: true, tester: true, testCategory: Buildbot.TestCategory.WebKit2},
         "Apple-Sequoia-Release-WK1-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: false, tester: true, testCategory: Buildbot.TestCategory.WebKit1},
         "Apple-Sequoia-Release-WK2-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: false, tester: true, testCategory: Buildbot.TestCategory.WebKit2},
-        "Apple-Sequoia-Debug-AppleSilicon-WK1-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: true, tester: true, testCategory: Buildbot.TestCategory.WebKit1, heading: "Debug AppleSilicon"},
         "Apple-Sequoia-Debug-AppleSilicon-WK2-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: true, tester: true, testCategory: Buildbot.TestCategory.WebKit2, heading: "Debug AppleSilicon"},
-        "Apple-Sequoia-Release-AppleSilicon-WK1-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: false, tester: true, testCategory: Buildbot.TestCategory.WebKit1, heading: "Release AppleSilicon"},
         "Apple-Sequoia-Release-AppleSilicon-WK2-Tests": {platform: Dashboard.Platform.macOSSequoia, debug: false, tester: true, testCategory: Buildbot.TestCategory.WebKit2, heading: "Release AppleSilicon"},
         "Apple-Sequoia-Safer-CPP-Checks": {platform: Dashboard.Platform.macOSSequoia, debug: false, performance: true, heading: "Safer CPP Checks"},
         "Apple-Sonoma-Release-Build": {platform: Dashboard.Platform.macOSSonoma, debug: false, builder: true, architecture: Buildbot.BuildArchitecture.SixtyFourBit},
@@ -104,9 +102,6 @@ WebKitBuildbot = function()
         "GTK LTS Builders": {platform: Dashboard.Platform.LinuxGTK, heading: "LTS Builders", combinedQueues: {
             "GTK-Linux-64-bit-Release-Debian-Stable-Build": {heading: "Debian Stable (Build)"},
             "GTK-Linux-64-bit-Release-Ubuntu-LTS-Build": {heading: "Ubuntu LTS (Build)"},
-        }},
-        "GTK Wayland Testers": {platform: Dashboard.Platform.LinuxGTK, heading: "Wayland", combinedQueues: {
-            "GTK-Linux-64-bit-Release-Wayland-Tests": {heading: "Wayland"},
         }},
         "JSCOnly AArch64 Testers": {platform: Dashboard.Platform.LinuxJSCOnly, heading: "AArch64", combinedQueues: {
             "JSCOnly-Linux-AArch64-Release": {heading: "AArch64"},

@@ -28,6 +28,7 @@
 
 #include "Logging.h"
 #include <JavaScriptCore/DataView.h>
+#include <wtf/CrossThreadCopier.h>
 #include <wtf/JSONValues.h>
 #include <wtf/URL.h>
 
@@ -84,9 +85,9 @@ ISOWebVTTCue::ISOWebVTTCue(const MediaTime& presentationTime, const MediaTime& d
 {
 }
 
-ISOWebVTTCue::ISOWebVTTCue(MediaTime&& presentationTime, MediaTime&& duration, AtomString&& cueID, String&& cueText, String&& settings, String&& sourceID, String&& originalStartTime)
-    : m_presentationTime(WTFMove(presentationTime))
-    , m_duration(WTFMove(duration))
+ISOWebVTTCue::ISOWebVTTCue(const MediaTime& presentationTime, const MediaTime& duration, String&& cueID, String&& cueText, String&& settings, String&& sourceID, String&& originalStartTime)
+    : m_presentationTime(presentationTime)
+    , m_duration(duration)
     , m_sourceID(WTFMove(sourceID))
     , m_identifier(WTFMove(cueID))
     , m_originalStartTime(WTFMove(originalStartTime))
@@ -138,6 +139,16 @@ String ISOWebVTTCue::toJSONString() const
     object->setDouble("duration"_s, m_duration.toDouble());
 
     return object->toJSONString();
+}
+
+ISOWebVTTCue ISOWebVTTCue::isolatedCopy() const &
+{
+    return { m_presentationTime, m_duration, crossThreadCopy(m_identifier), crossThreadCopy(m_cueText), crossThreadCopy(m_settings), crossThreadCopy(m_sourceID), crossThreadCopy(m_originalStartTime) };
+}
+
+ISOWebVTTCue ISOWebVTTCue::isolatedCopy() &&
+{
+    return { m_presentationTime, m_duration, crossThreadCopy(WTFMove(m_identifier)), crossThreadCopy(WTFMove(m_cueText)), crossThreadCopy(WTFMove(m_settings)), crossThreadCopy(WTFMove(m_sourceID)), crossThreadCopy(WTFMove(m_originalStartTime)) };
 }
 
 } // namespace WebCore

@@ -271,7 +271,7 @@ public:
 
         void reset()
         {
-            std::fill(std::begin(m_priorContext), std::end(m_priorContext), 0);
+            std::ranges::fill(m_priorContext, 0);
         }
 
         unsigned length() const

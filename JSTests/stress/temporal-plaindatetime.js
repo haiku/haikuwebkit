@@ -262,6 +262,11 @@ shouldBe(pdt.add(new Temporal.Duration(0,10,3,7,19,54,53,992,991,991)).toString(
 shouldBe(Temporal.PlainDateTime.from('2020-01-30').add({ months: 1 }).toString(), '2020-02-29T00:00:00');
 shouldThrow(() => { Temporal.PlainDateTime.from('2020-01-30').add({ months: 1 }, { overflow: 'reject' }); }, RangeError);
 shouldThrow(() => { pdt.add({ years: 300000 }); }, RangeError);
+const pdt1 = Temporal.PlainDateTime.from("2020-02-29T00:57:27.747612578");
+shouldThrow(() => pdt1.add(Temporal.Duration.from({seconds: Number.MAX_SAFE_INTEGER})), RangeError);
+shouldThrow(() => pdt1.add(Temporal.Duration.from({milliseconds: Number.MAX_SAFE_INTEGER})), RangeError);
+shouldBe(pdt1.add(Temporal.Duration.from({microseconds: Number.MAX_SAFE_INTEGER})).toString(), '2305-08-04T00:45:02.488603578');
+shouldBe(pdt1.add(Temporal.Duration.from({nanoseconds: Number.MAX_SAFE_INTEGER})).toString(), '2020-06-12T06:57:27.002353569');
 
 shouldBe(Temporal.PlainDateTime.prototype.subtract.length, 1);
 shouldBe(pdt.subtract(new Temporal.Duration()).toString(), '0001-02-03T04:05:06.007008009');

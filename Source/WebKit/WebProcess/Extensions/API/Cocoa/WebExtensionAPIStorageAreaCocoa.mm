@@ -82,7 +82,7 @@ void WebExtensionAPIStorageArea::get(WebPageProxyIdentifier webPageProxyIdentifi
 
     if (keysWithDefaultValues) {
         if (!keysWithDefaultValues.count) {
-            callback->call(@{ });
+            callback->call(JSObjectMake(callback->globalContext(), nullptr, nullptr));
             return;
         }
 
@@ -91,7 +91,7 @@ void WebExtensionAPIStorageArea::get(WebPageProxyIdentifier webPageProxyIdentifi
 
     if (NSArray *keys = dynamic_objc_cast<NSArray>(items)) {
         if (!keys.count) {
-            callback->call(@{ });
+            callback->call(JSObjectMake(callback->globalContext(), nullptr, nullptr));
             return;
         }
 
@@ -113,7 +113,7 @@ void WebExtensionAPIStorageArea::get(WebPageProxyIdentifier webPageProxyIdentifi
         });
 
         deserializedData = keysWithDefaultValues ? mergeDictionaries(deserializedData, keysWithDefaultValues) : deserializedData;
-        callback->call(deserializedData);
+        callback->call(toJSValueRef(callback->globalContext(), deserializedData));
     }, extensionContext().identifier());
 }
 
@@ -125,7 +125,7 @@ void WebExtensionAPIStorageArea::getKeys(WebPageProxyIdentifier webPageProxyIden
             return;
         }
 
-        callback->call(createNSArray(result.value()).get());
+        callback->call(fromArray(callback->globalContext(), WTFMove(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -149,7 +149,7 @@ void WebExtensionAPIStorageArea::getBytesInUse(WebPageProxyIdentifier webPagePro
         if (!result)
             callback->reportError(result.error().createNSString().get());
         else
-            callback->call(@(result.value()));
+            callback->call(JSValueMakeNumber(callback->globalContext(), result.value()));
     }, extensionContext().identifier());
 }
 

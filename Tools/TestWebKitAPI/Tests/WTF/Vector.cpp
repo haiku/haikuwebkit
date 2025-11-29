@@ -32,7 +32,6 @@
 #include <wtf/HashSet.h>
 #include <wtf/ListHashSet.h>
 #include <wtf/Vector.h>
-#include <wtf/VectorHash.h>
 #include <wtf/text/StringHash.h>
 #include <wtf/text/WTFString.h>
 

@@ -8,7 +8,7 @@ let worker = new Worker("resources/subworker-manager.js");
 worker.postMessage({url: "worker-console.js", data: null});
 
 function triggerConsoleMethodInSubworker(method) {
-    worker.postMessage({url: "worker-console.js", data: method});
+    worker.postMessage({url: "worker-console.js", data: {method}});
 }
 
 async function test()

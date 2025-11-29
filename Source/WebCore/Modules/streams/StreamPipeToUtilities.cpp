@@ -322,6 +322,9 @@ void StreamPipeToState::doWrite(JSC::JSValue value)
 
     m_pendingReadRequest = nullptr;
     m_pendingWritePromise = writableStreamDefaultWriterWrite(m_writer, value);
+    if (!m_pendingWritePromise)
+        return;
+
     RefPtr { m_pendingWritePromise }->markAsHandled();
 
     loop();

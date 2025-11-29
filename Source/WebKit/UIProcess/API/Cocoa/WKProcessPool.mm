@@ -554,6 +554,11 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     enableAllSDKAlignedBehaviors();
 }
 
+- (void)_setPLTResourceDelayIntervalForTesting:(NSTimeInterval)interval
+{
+    _processPool->setPLTResourceDelayInterval(Seconds(interval));
+}
+
 + (void)_setCaptivePortalModeEnabledGloballyForTesting:(BOOL)isEnabled
 {
     WebKit::setLockdownModeEnabledGloballyForTesting(!!isEnabled);

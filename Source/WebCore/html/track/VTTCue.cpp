@@ -272,9 +272,9 @@ Ref<VTTCue> VTTCue::create(Document& document, double start, double end, String&
     return cue;
 }
 
-Ref<VTTCue> VTTCue::create(Document& document, const WebVTTCueData& data)
+Ref<VTTCue> VTTCue::create(Document& document, Ref<WebVTTCueData>&& data)
 {
-    auto cue = adoptRef(*new VTTCue(document, data));
+    auto cue = adoptRef(*new VTTCue(document, WTFMove(data)));
     cue->suspendIfNeeded();
     return cue;
 }
@@ -294,15 +294,15 @@ VTTCue::VTTCue(Document& document, const MediaTime& start, const MediaTime& end,
 {
 }
 
-VTTCue::VTTCue(Document& document, const WebVTTCueData& cueData)
+VTTCue::VTTCue(Document& document, Ref<WebVTTCueData>&& cueData)
     : VTTCue(document, MediaTime::zeroTime(), MediaTime::zeroTime(), { })
 {
-    m_originalStartTime = cueData.originalStartTime();
-    setText(cueData.content());
-    setStartTime(cueData.startTime());
-    setEndTime(cueData.endTime());
-    setId(cueData.id());
-    setCueSettings(cueData.settings());
+    m_originalStartTime = cueData->originalStartTime();
+    setText(cueData->content());
+    setStartTime(cueData->startTime());
+    setEndTime(cueData->endTime());
+    setId(AtomString { cueData->id() });
+    setCueSettings(cueData->settings());
 }
 
 VTTCue::~VTTCue()

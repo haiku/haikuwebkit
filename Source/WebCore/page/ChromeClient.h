@@ -137,6 +137,7 @@ class ScrollingCoordinator;
 class SearchPopupMenu;
 class SecurityOrigin;
 class SecurityOriginData;
+class TextIndicator;
 class ViewportConstraints;
 class Widget;
 class WorkerClient;
@@ -153,6 +154,7 @@ struct GraphicsContextGLAttributes;
 
 struct AppHighlight;
 struct ApplePayAMSUIRequest;
+struct AriaNotifyData;
 struct CharacterRange;
 struct ContactsRequestData;
 struct ContentRuleListMatchedRule;
@@ -286,6 +288,7 @@ public:
     virtual IntRect rootViewToAccessibilityScreen(const IntRect&) const = 0;
 #if PLATFORM(IOS_FAMILY)
     virtual void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const = 0;
+    virtual void relayAriaNotifyNotification(AriaNotifyData&&) const = 0;
 #endif
 
     virtual void mainFrameDidChange() { };
@@ -399,7 +402,7 @@ public:
     virtual RefPtr<DateTimeChooser> createDateTimeChooser(DateTimeChooserClient&) = 0;
 
     virtual void setTextIndicator(const TextIndicatorData&) const = 0;
-    virtual void updateTextIndicator(const TextIndicatorData&) const = 0;
+    virtual void updateTextIndicator(RefPtr<TextIndicator>&&) const = 0;
 
     virtual void runOpenPanel(LocalFrame&, FileChooser&) = 0;
     virtual void showShareSheet(ShareDataWithParsedURL&&, CompletionHandler<void(bool)>&& callback) { callback(false); }
@@ -697,7 +700,7 @@ public:
     virtual bool needsScrollGeometryUpdates() const { return false; }
 
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
-    virtual void showMediaControlsContextMenu(FloatRect&&, Vector<MediaControlsContextMenuItem>&&, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler) { completionHandler(MediaControlsContextMenuItem::invalidID); }
+    virtual void showMediaControlsContextMenu(FloatRect&&, Vector<MediaControlsContextMenuItem>&&, HTMLMediaElement&,  CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler) { completionHandler(MediaControlsContextMenuItem::invalidID); }
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 
 #if ENABLE(WEBXR)
@@ -774,6 +777,10 @@ public:
 #endif
 
     virtual bool usePluginRendererScrollableArea(LocalFrame&) const { return true; }
+
+#if ENABLE(VIDEO)
+    virtual void showCaptionDisplaySettings(CompletionHandler<void(bool)>&& callback) { callback(false); }
+#endif
 
     WEBCORE_EXPORT virtual ~ChromeClient();
 

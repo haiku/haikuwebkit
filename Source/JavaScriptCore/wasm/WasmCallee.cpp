@@ -288,11 +288,6 @@ const RegisterAtOffsetList* IPIntCallee::calleeSaveRegistersImpl()
     return &RegisterAtOffsetList::ipintCalleeSaveRegisters();
 }
 
-bool IPIntCallee::needsProfiling() const
-{
-    return numCallProfiles();
-}
-
 #if ENABLE(WEBASSEMBLY_OMGJIT)
 void OptimizingJITCallee::addCodeOrigin(unsigned firstInlineCSI, unsigned lastInlineCSI, const Wasm::ModuleInformation& info, uint32_t functionIndex)
 {

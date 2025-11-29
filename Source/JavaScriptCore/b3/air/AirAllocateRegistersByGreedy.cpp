@@ -55,15 +55,17 @@ namespace Greedy {
 
 // Experiments
 static constexpr bool eagerGroupsExhaustiveSearch = false;
-static constexpr bool spillCostDivideBySize = true;
-static constexpr bool spillCostSizeBias = 1000; // Only relevant when spillCostDivideBySize
 
 // Quickly filters out short ranges from live range splitting consideration.
 static constexpr size_t splitMinRangeSize = 8;
 
+static constexpr unsigned spillCostSizeBias = 50000;
+
 static constexpr float unspillableCost = std::numeric_limits<float>::infinity();
 static constexpr float fastTmpSpillCost = std::numeric_limits<float>::max();
+static constexpr float maxSpillableSpillCost = std::numeric_limits<float>::max();
 static_assert(unspillableCost > fastTmpSpillCost);
+static_assert(unspillableCost > maxSpillableSpillCost);
 
 // Phase constants used for the PhaseInsertionSet. Ensures that the fixup and spill/fill instructions
 // inserted in a particular gap ends up in the correct order.
@@ -543,7 +545,6 @@ struct TmpData {
 
     float spillCost()
     {
-        ASSERT(liveRange.size()); // 0-sized ranges shouldn't be allocated
         switch (spillability) {
         case Spillability::Unspillable:
             return unspillableCost;
@@ -554,14 +555,14 @@ struct TmpData {
         default:
             ASSERT_NOT_REACHED();
         }
-        // Heuristic that favors not spilling higher use/def frequency-adjusted counts and
-        // shorter ranges. The spillCostSizeBias causes the penalty for larger ranges to
-        // be more dramatic as the range size gets larger.
-        if (spillCostDivideBySize)
-            return useDefCost / (liveRange.size() + spillCostSizeBias);
-
-        // Simplest heuristic: favors not spill higher use/def frequency-adjusted counts.
-        return useDefCost;
+        ASSERT(liveRange.size()); // 0-sized ranges shouldn't be allocated
+        // Heuristic that primarily favors not spilling higher use/def frequency-adjusted counts and
+        // secondarily favors smaller ranges. The range size is a crude proxy for degree of
+        // interference, since the register allocator never directly computes that.
+        // The spillCostSizeBias causes the range size penalty to be relatively insignificant
+        // for smaller ranges but become significant for very larger ranges.
+        float cost = useDefCost / (liveRange.size() + spillCostSizeBias);
+        return std::min(cost, maxSpillableSpillCost);
     }
 
     void validate()
@@ -1381,6 +1382,7 @@ private:
                 return;
             if (tmpData.liveRange.intervals().isEmpty())
                 return;
+            m_stats[bank].maxLiveRangeSize = std::max(m_stats[bank].maxLiveRangeSize, static_cast<unsigned>(tmpData.liveRange.size()));
             setStageAndEnqueue(tmp, tmpData, Stage::TryAllocate);
         });
 

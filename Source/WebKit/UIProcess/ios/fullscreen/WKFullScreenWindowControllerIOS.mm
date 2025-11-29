@@ -259,6 +259,60 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 };
 
+#if PLATFORM(VISION)
+
+class FullScreenWindowControllerVideoPresentationModelClient final : WebCore::VideoPresentationModelClient, public CanMakeCheckedPtr<FullScreenWindowControllerVideoPresentationModelClient> {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(FullScreenWindowControllerVideoPresentationModelClient);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(FullScreenWindowControllerVideoPresentationModelClient);
+public:
+    explicit FullScreenWindowControllerVideoPresentationModelClient(WKFullScreenWindowController *windowController)
+        : m_windowController { windowController }
+    {
+    }
+
+    void setInterface(WebCore::VideoPresentationInterfaceIOS* interface)
+    {
+        if (m_interface == interface)
+            return;
+
+        if (m_interface && m_interface->videoPresentationModel())
+            m_interface->videoPresentationModel()->removeClient(*this);
+        m_interface = interface;
+        if (m_interface && m_interface->videoPresentationModel())
+            m_interface->videoPresentationModel()->addClient(*this);
+    }
+
+    WebCore::VideoPresentationInterfaceIOS* interface() const
+    {
+        return m_interface.get();
+    }
+
+    ~FullScreenWindowControllerVideoPresentationModelClient()
+    {
+        if (m_interface && m_interface->videoPresentationModel())
+            m_interface->videoPresentationModel()->removeClient(*this);
+    }
+
+private:
+    // CheckedPtr interface
+    uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
+
+    // VideoPresentationModelClient
+    void fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode) final
+    {
+        [m_windowController.get() bestVideoFullscreenModeChanged];
+    }
+
+    WeakObjCPtr<WKFullScreenWindowController> m_windowController;
+    RefPtr<WebCore::VideoPresentationInterfaceIOS> m_interface;
+};
+
+#endif // PLATFORM(VISION)
+
 } // namespace WebKit
 
 namespace WTF {
@@ -802,6 +856,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     RetainPtr<id> _notificationListener;
 
+#if PLATFORM(VISION)
+    const std::unique_ptr<WebKit::FullScreenWindowControllerVideoPresentationModelClient> _bestVideoPresentationModelClient;
+#endif
+
 #if !RELEASE_LOG_DISABLED
     RefPtr<Logger> _logger;
     uint64_t _logIdentifier;
@@ -823,6 +881,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 #endif
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:[UIApplication sharedApplication]];
+
+#if PLATFORM(VISION)
+    lazyInitialize(_bestVideoPresentationModelClient, makeUnique<WebKit::FullScreenWindowControllerVideoPresentationModelClient>(self));
+#endif
 
     return self;
 }
@@ -946,7 +1008,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!self.isFullScreen || !WebKit::useSpatialFullScreenTransition())
         return;
 
-    bool prefersAutoDimming = false;
+    bool prefersAutoDimming = true;
     if (RefPtr videoPresentationManager = [self _videoPresentationManager]) {
         if (RefPtr bestVideo = videoPresentationManager->bestVideoForElementFullscreen())
             prefersAutoDimming = bestVideo->playbackSessionModel()->prefersAutoDimming();
@@ -1464,8 +1526,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _window = nil;
 
 #if PLATFORM(VISION)
-    _lastKnownParentWindow = nil;
-    _parentWindowState = nil;
+    if (!self._isBestVideoInFullScreen) {
+        _lastKnownParentWindow = nil;
+        _parentWindowState = nil;
+    }
 #endif
 
     CompletionHandler<void()> completionHandlerAfterRenderingUpdateIfFocused([protectedSelf = retainPtr(self), self, windowWasKey, logIdentifier = OBJC_LOGIDENTIFIER] {
@@ -1930,7 +1994,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             return bestVideo->playbackSessionModel()->prefersAutoDimming();
     }
 
-    return NO;
+    return YES;
 }
 
 - (void)_configureSpatialFullScreenTransition
@@ -2002,6 +2066,37 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             ornament.viewController.view.window.alpha = originalAlpha;
         }
     }
+}
+
+- (BOOL)_isBestVideoInFullScreen
+{
+    return _bestVideoPresentationModelClient->interface() && _bestVideoPresentationModelClient->interface()->hasMode(WebCore::MediaPlayerEnums::VideoFullscreenModeStandard);
+}
+
+- (BOOL)_shouldShowOrnaments
+{
+    if (self._isBestVideoInFullScreen)
+        return NO;
+
+    // FIXME: It would be simpler to check self.isFullScreen here, but _fullScreenState is set to
+    // NotInFullScreen after showing ornaments when exiting via -_dismissFullscreenViewController,
+    // but *before* showing ornaments when exiting via -_exitFullscreenImmediately. We should make
+    // these two paths behave consistently.
+    switch (_fullScreenState) {
+    case WebKit::ExitingFullScreen:
+    case WebKit::NotInFullScreen:
+        break;
+    case WebKit::WaitingToEnterFullScreen:
+    case WebKit::EnteringFullScreen:
+    case WebKit::InFullScreen:
+    case WebKit::WaitingToExitFullScreen:
+        return NO;
+    }
+
+    if (!_parentWindowState)
+        return NO;
+
+    return YES;
 }
 
 - (void)_performSpatialFullScreenTransition:(BOOL)enter completionHandler:(CompletionHandler<void()>&&)completionHandler
@@ -2088,7 +2183,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     });
 
     [UIView animateWithDuration:kIncomingWindowFadeDuration delay:kIncomingWindowFadeDelay options:UIViewAnimationOptionCurveEaseInOut animations:^{
-        if (!enter)
+        if (!enter && self._shouldShowOrnaments)
             [self _setOrnamentsHidden:NO];
 
         inWindow.alpha = 1;
@@ -2111,6 +2206,25 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         stage.preferredDarkness = target;
 ALLOW_DEPRECATED_DECLARATIONS_END
     }
+}
+
+- (void)bestVideoFullscreenModeChanged
+{
+    if (!self._shouldShowOrnaments)
+        return;
+
+    [UIView animateWithDuration:kIncomingWindowFadeDuration delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+        [self _setOrnamentsHidden:NO];
+    } completion:^(BOOL) {
+        UIWindowScene *scene = [_lastKnownParentWindow windowScene];
+        scene.mrui_placement.preferredChromeOptions = [_parentWindowState sceneChromeOptions];
+        scene.mrui_placement.preferredResizingBehavior = [_parentWindowState sceneResizingBehavior];
+        scene.sizeRestrictions.minimumSize = [_parentWindowState sceneMinimumSize];
+
+        _lastKnownParentWindow = nil;
+        _parentWindowState = nil;
+        _bestVideoPresentationModelClient->setInterface(nullptr);
+    }];
 }
 
 #endif // PLATFORM(VISION)
@@ -2142,6 +2256,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     scene.mrui_placement.preferredChromeOptions = RSSSceneChromeOptionsNone;
 #endif
 }
+
+- (void)fullScreenViewControllerDidInvalidate:(WKFullScreenViewController *)fullScreenViewController
+{
+#if PLATFORM(VISION)
+    if (!self._isBestVideoInFullScreen)
+        _bestVideoPresentationModelClient->setInterface(nullptr);
+#endif
+}
+
+#if PLATFORM(VISION)
+- (void)fullScreenViewController:(WKFullScreenViewController *)fullScreenViewController bestVideoPresentationInterfaceDidChange:(nullable WebCore::PlatformVideoPresentationInterface*)bestVideoPresentationInterface
+{
+    _bestVideoPresentationModelClient->setInterface(bestVideoPresentationInterface);
+}
+#endif
 
 - (void)didCleanupFullscreen
 {

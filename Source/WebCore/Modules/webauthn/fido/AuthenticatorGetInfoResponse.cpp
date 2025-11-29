@@ -60,7 +60,7 @@ AuthenticatorGetInfoResponse& AuthenticatorGetInfoResponse::setMaxMsgSize(uint32
     return *this;
 }
 
-AuthenticatorGetInfoResponse& AuthenticatorGetInfoResponse::setPinProtocols(Vector<uint8_t>&& pinProtocols)
+AuthenticatorGetInfoResponse& AuthenticatorGetInfoResponse::setPinProtocols(StdSet<PINUVAuthProtocol>&& pinProtocols)
 {
     m_pinProtocols = WTFMove(pinProtocols);
     return *this;
@@ -129,8 +129,12 @@ Vector<uint8_t> encodeAsCBOR(const AuthenticatorGetInfoResponse& response)
     if (response.maxMsgSize())
         deviceInfoMap.emplace(CBORValue(kCtapAuthenticatorGetInfoMaxMsgSizeKey), CBORValue(static_cast<int64_t>(*response.maxMsgSize())));
 
-    if (response.pinProtocol())
-        deviceInfoMap.emplace(CBORValue(kCtapAuthenticatorGetInfoPinUVAuthProtocolsKey), toArrayValue(*response.pinProtocol()));
+    if (response.pinProtocol()) {
+        CBORValue::ArrayValue protocols;
+        for (auto protocol : *response.pinProtocol())
+            protocols.append(CBORValue(static_cast<int64_t>(protocol)));
+        deviceInfoMap.emplace(CBORValue(kCtapAuthenticatorGetInfoPinUVAuthProtocolsKey), CBORValue(WTFMove(protocols)));
+    }
     
     if (response.transports()) {
         auto transports = *response.transports();

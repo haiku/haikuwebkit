@@ -489,14 +489,16 @@ RefPtr<HTMLElement> ApplyStyleCommand::splitAncestorsWithUnicodeBidi(Node* node,
 
     RefPtr<HTMLElement> unsplitAncestor;
 
-    if (allowedDirection != WritingDirection::Natural && highestAncestorUnicodeBidi != CSSValueBidiOverride && is<HTMLElement>(*highestAncestorWithUnicodeBidi)) {
-        auto highestAncestorDirection = EditingStyle::create(highestAncestorWithUnicodeBidi.get(), EditingStyle::PropertiesToInclude::AllProperties)->textDirection();
-        if (highestAncestorDirection && *highestAncestorDirection == allowedDirection) {
-            if (!nextHighestAncestorWithUnicodeBidi)
-                return static_pointer_cast<HTMLElement>(WTFMove(highestAncestorWithUnicodeBidi));
+    if (allowedDirection != WritingDirection::Natural && highestAncestorUnicodeBidi != CSSValueBidiOverride) {
+        if (RefPtr highestAncestorElementWithUnicodeBidi = dynamicDowncast<HTMLElement>(*highestAncestorWithUnicodeBidi)) {
+            auto highestAncestorDirection = EditingStyle::create(highestAncestorElementWithUnicodeBidi.get(), EditingStyle::PropertiesToInclude::AllProperties)->textDirection();
+            if (highestAncestorDirection && *highestAncestorDirection == allowedDirection) {
+                if (!nextHighestAncestorWithUnicodeBidi)
+                    return highestAncestorElementWithUnicodeBidi;
 
-            unsplitAncestor = static_pointer_cast<HTMLElement>(WTFMove(highestAncestorWithUnicodeBidi));
-            highestAncestorWithUnicodeBidi = nextHighestAncestorWithUnicodeBidi;
+                unsplitAncestor = WTFMove(highestAncestorElementWithUnicodeBidi);
+                highestAncestorWithUnicodeBidi = nextHighestAncestorWithUnicodeBidi;
+            }
         }
     }
 

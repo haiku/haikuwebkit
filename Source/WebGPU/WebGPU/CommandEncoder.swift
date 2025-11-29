@@ -115,7 +115,7 @@ extension WebGPU.CommandEncoder {
     public func finish(descriptor: WGPUCommandBufferDescriptor) -> WebGPU_Internal.RefCommandBuffer {
         if !isValid() || (m_existingCommandEncoder != nil && m_existingCommandEncoder !== m_blitCommandEncoder) {
             setEncoderState(WebGPU.CommandsMixin.EncoderState.Ended)
-            discardCommandBuffer();
+            discardCommandBuffer()
             protectedDevice().ptr().generateAValidationError(m_lastErrorString != nil ? m_lastErrorString! as String : String("Invalid CommandEncoder"))
             return WebGPU.CommandBuffer.createInvalid(m_device.ptr())
         }
@@ -123,7 +123,7 @@ extension WebGPU.CommandEncoder {
         // https://gpuweb.github.io/gpuweb/#dom-gpucommandencoder-finish
         let validationFailedError = validateFinishError()
 
-        // FIXME: equivalent of ? UNUSED_PARAM(priorState);
+        // FIXME: equivalent of ? UNUSED_PARAM(priorState)
         let _ = getEncoderState()
 
         setEncoderState(WebGPU.CommandsMixin.EncoderState.Ended)
@@ -554,8 +554,7 @@ extension WebGPU.CommandEncoder {
         }
 
         // https://gpuweb.github.io/gpuweb/#abstract-opdef-set-of-subresources-for-texture-copy
-        // FIXME(rdar://130765784): we should be able use === here once the radar lands
-        if unsafe unsafeBitCast(source.texture, to: UnsafeRawPointer.self) == unsafeBitCast(destination.texture, to: UnsafeRawPointer.self) {
+        if source.texture === destination.texture {
             // Mip levels are never ranges.
             if source.mipLevel == destination.mipLevel {
                 switch WebGPU.fromAPI(source.texture).dimension() {
@@ -568,7 +567,7 @@ extension WebGPU.CommandEncoder {
                         return errorString("can't copy 2D texture to itself with overlapping array range")
                     }
                 case WGPUTextureDimension_3D:
-                    return errorString("can't copy 3D texture to itself");
+                    return errorString("can't copy 3D texture to itself")
                 case WGPUTextureDimension_Force32:
                     assertionFailure("ASSERT_NOT_REACHED")
                     return errorString("unknown texture format")
@@ -651,7 +650,7 @@ extension WebGPU.CommandEncoder {
         // https://gpuweb.github.io/gpuweb/#abstract-opdef-validating-gpuimagecopybuffer
         let buffer = WebGPU.fromAPI(imageCopyBuffer.buffer)
         if !WebGPU_Internal.isValidToUseWithBufferCommandEncoder(buffer, self) {
-            return "buffer is not valid";
+            return "buffer is not valid"
         }
 
         if imageCopyBuffer.layout.bytesPerRow != WGPU_COPY_STRIDE_UNDEFINED && (imageCopyBuffer.layout.bytesPerRow % 256 != 0) {
@@ -838,27 +837,25 @@ extension WebGPU.CommandEncoder {
         }
 
         let mtlDescriptor = MTLRenderPassDescriptor()
-        var counterSampleBuffer: MTLCounterSampleBuffer? = nil
-        var counterSampleBufferOffset: UInt32 = 0
+        var counterSampleBuffer = WebGPU.QuerySet.CounterSampleBuffer()
         if let wgpuTimestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)?[0] {
             let wgpuQuerySet = wgpuTimestampWrites.querySet
             let timestampsWrites = WebGPU.fromAPI(wgpuQuerySet)
-            counterSampleBuffer = unsafe timestampsWrites.counterSampleBufferWithOffset().first
-            counterSampleBufferOffset = unsafe timestampsWrites.counterSampleBufferWithOffset().second
+            counterSampleBuffer = timestampsWrites.counterSampleBufferWithOffset()
             timestampsWrites.setCommandEncoder(self)
         }
 
-        if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
-            if counterSampleBuffer != nil {
+        if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer.buffer != nil {
+            if let buffer = counterSampleBuffer.buffer {
                 let timestampWrites = wgpuGetRenderPassDescriptorTimestampWrites(descriptorSpan)![0]
-                mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer;
-                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(writeIndex: timestampWrites.beginningOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBufferOffset)
-                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(writeIndex: timestampWrites.endOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBufferOffset)
+                mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = buffer
+                mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(writeIndex: timestampWrites.beginningOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBuffer.offset)
+                mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(writeIndex: timestampWrites.endOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBuffer.offset)
                 mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex
                 mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex
-                m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer);
+                m_device.ptr().trackTimestampsBuffer(m_commandBuffer, buffer)
             } else {
-                mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? counterSampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 4)
+                mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.buffer ?? m_device.ptr().timestampsBuffer(m_commandBuffer, 4)
                 mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = 0
                 mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = 1
                 mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = 2
@@ -1692,18 +1689,18 @@ extension WebGPU.CommandEncoder {
             case WGPUTextureDimension_1D:
                 // https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400771-copyfrombuffer?language=objc
                 // "When you copy to a 1D texture, height and depth must be 1."
-                let sourceSize = MTLSizeMake(Int(widthForMetal), 1, 1);
+                let sourceSize = MTLSizeMake(Int(widthForMetal), 1, 1)
                 guard widthForMetal != 0 else {
                     return
                 }
 
-                let destinationOrigin = MTLOriginMake(Int(destination.origin.x), 0, 0);
+                let destinationOrigin = MTLOriginMake(Int(destination.origin.x), 0, 0)
                 var widthTimesBlockSize: UInt32 = widthForMetal
                 (widthTimesBlockSize, didOverflow) = widthTimesBlockSize.multipliedReportingOverflow(by: blockSize.value())
                 guard !didOverflow else {
                     return
                 }
-                sourceBytesPerRow = min(sourceBytesPerRow, UInt(widthTimesBlockSize));
+                sourceBytesPerRow = min(sourceBytesPerRow, UInt(widthTimesBlockSize))
                 for layer in 0..<copySize.depthOrArrayLayers {
                     var layerTimesSourceBytesPerImage = UInt(layer)
                     (layerTimesSourceBytesPerImage, didOverflow) = layerTimesSourceBytesPerImage.multipliedReportingOverflow(by: sourceBytesPerImage)
@@ -1746,12 +1743,12 @@ extension WebGPU.CommandEncoder {
             case WGPUTextureDimension_2D:
                 // https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400771-copyfrombuffer?language=objc
                 // "When you copy to a 2D texture, depth must be 1."
-                let sourceSize = MTLSizeMake(Int(widthForMetal), Int(heightForMetal), 1);
+                let sourceSize = MTLSizeMake(Int(widthForMetal), Int(heightForMetal), 1)
                 guard widthForMetal != 0 && heightForMetal != 0 else {
                     return
                 }
 
-                let destinationOrigin = MTLOriginMake(Int(destination.origin.x), Int(destination.origin.y), 0);
+                let destinationOrigin = MTLOriginMake(Int(destination.origin.x), Int(destination.origin.y), 0)
                 for layer in 0..<copySize.depthOrArrayLayers {
                     var layerTimesSourceBytesPerImage = UInt(layer)
                     (layerTimesSourceBytesPerImage, didOverflow) = layerTimesSourceBytesPerImage.multipliedReportingOverflow(by: sourceBytesPerImage)
@@ -1784,7 +1781,7 @@ extension WebGPU.CommandEncoder {
                 }
 
             case WGPUTextureDimension_3D:
-                let sourceSize = MTLSizeMake(Int(widthForMetal), Int(heightForMetal), Int(depthForMetal));
+                let sourceSize = MTLSizeMake(Int(widthForMetal), Int(heightForMetal), Int(depthForMetal))
                 guard widthForMetal != 0 && heightForMetal != 0 && depthForMetal != 0 else {
                     return
                 }
@@ -1873,7 +1870,7 @@ extension WebGPU.CommandEncoder {
         querySet.setCommandEncoder(self)
         // FIXME: rdar://138042799 need to pass in the default argument.
         destination.setCommandEncoder(self, false)
-        destination.indirectBufferInvalidated(self);
+        destination.indirectBufferInvalidated(self)
         if querySet.isDestroyed() || destination.isDestroyed() || queryCount == 0 {
             return
         }
@@ -1897,15 +1894,13 @@ extension WebGPU.CommandEncoder {
             guard ensureBlitCommandEncoder() != nil else {
                 return
             }
-            var counterSampleBuffer: MTLCounterSampleBuffer? = nil
-            counterSampleBuffer = unsafe querySet.counterSampleBufferWithOffset().first
-            let counterSampleBufferOffset = unsafe querySet.counterSampleBufferWithOffset().second
-            guard let counterSampleBuffer else {
+            let counterSampleBuffer = querySet.counterSampleBufferWithOffset()
+            guard let buffer = counterSampleBuffer.buffer else {
                 return
             }
-            unsafe m_blitCommandEncoder?.resolveCounters(
-                counterSampleBuffer,
-                range: Range(uncheckedBounds: (Int(firstQuery + counterSampleBufferOffset), Int(firstQuery + counterSampleBufferOffset + queryCount))),
+            m_blitCommandEncoder?.resolveCounters(
+                buffer,
+                range: Int(firstQuery + counterSampleBuffer.offset)..<Int(firstQuery + counterSampleBuffer.offset + queryCount),
                 destinationBuffer: destination.buffer(),
                 destinationOffset: Int(destinationOffset)
             )
@@ -2151,24 +2146,21 @@ extension WebGPU.CommandEncoder {
         }
         let computePassDescriptor = MTLComputePassDescriptor()
         computePassDescriptor.dispatchType = MTLDispatchType.serial
-        var counterSampleBuffer: MTLCounterSampleBuffer? = nil
-        var counterSampleBufferOffset: UInt32 = 0
+        var counterSampleBuffer = WebGPU.QuerySet.CounterSampleBuffer()
         if let wgpuTimestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0] {
             let timestampsWrites = WebGPU.fromAPI(wgpuTimestampWrites.querySet)
-            counterSampleBuffer = unsafe timestampsWrites.counterSampleBufferWithOffset().first
-            counterSampleBufferOffset = unsafe timestampsWrites.counterSampleBufferWithOffset().second
+            counterSampleBuffer = timestampsWrites.counterSampleBufferWithOffset()
             timestampsWrites.setCommandEncoder(self)
         }
 
-        if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer != nil {
+        if m_device.ptr().enableEncoderTimestamps() || counterSampleBuffer.buffer != nil {
             let timestampWrites = wgpuGetComputePassDescriptorTimestampWrites(collection.span)?[0]
-            computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer != nil ? computePassDescriptor.sampleBufferAttachments[0].sampleBuffer : m_device.ptr().timestampsBuffer(m_commandBuffer, 2)
+            computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.buffer ?? m_device.ptr().timestampsBuffer(m_commandBuffer, 2)
+            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWriteIndex(writeIndex: timestampWrites!.beginningOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBuffer.offset)
+            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWriteIndex(writeIndex: timestampWrites!.endOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBuffer.offset)
 
-            computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWriteIndex(writeIndex: timestampWrites!.beginningOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBufferOffset)
-            computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWriteIndex(writeIndex: timestampWrites!.endOfPassWriteIndex, defaultValue: MTLCounterDontSample, offset: counterSampleBufferOffset)
-
-            if counterSampleBuffer != nil {
-                m_device.ptr().trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer)
+            if let buffer = counterSampleBuffer.buffer {
+                m_device.ptr().trackTimestampsBuffer(m_commandBuffer, buffer)
             }
         }
         guard let computeCommandEncoder = m_commandBuffer?.makeComputeCommandEncoder(descriptor: computePassDescriptor) else {

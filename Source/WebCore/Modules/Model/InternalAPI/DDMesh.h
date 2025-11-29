@@ -77,6 +77,8 @@ public:
     virtual void setScale(float) { }
     virtual void setCameraDistance(float) = 0;
     virtual void setStageMode(WebCore::StageModeOperation) { }
+    virtual void setRotation(float, float = 0.f, float = 0.f) { }
+    virtual void play(bool) = 0;
 
     virtual void render() = 0;
 #if PLATFORM(COCOA)

@@ -121,7 +121,7 @@ def handleRemoveError(func, path, excinfo):
     print("Failed to delete:", path)
     timestamp = int(time.time())
     new_path = os.path.join(tempfile.gettempdir(), 'WebKitTrash', f"{os.path.basename(path)}.locked.{timestamp}")
-    os.makedirs(os.path.dirname(new_path))
+    os.makedirs(os.path.dirname(new_path), exist_ok=True)
     shutil.move(path, new_path)
     print("Moved to:", new_path)
 

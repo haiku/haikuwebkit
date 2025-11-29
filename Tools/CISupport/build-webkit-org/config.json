@@ -41,14 +41,14 @@
                   { "name": "bot2001", "platform": "mac-tahoe" },
                   { "name": "bot130", "platform": "mac-sequoia" },
                   { "name": "bot131", "platform": "mac-sequoia" },
-                  { "name": "bot132", "platform": "mac-sequoia" },
+                  { "name": "bot132", "platform": "mac-tahoe" },
                   { "name": "bot141", "platform": "mac-sequoia" },
                   { "name": "bot165", "platform": "mac-tahoe" },
                   { "name": "bot178", "platform": "mac-tahoe", "notes": "Macmini8,1 on Sequoia building for Tahoe" },
                   { "name": "bot179", "platform": "mac-tahoe" },
                   { "name": "bot184", "platform": "mac-tahoe", "notes": "Macmini8,1 on Sequoia building for Tahoe" },
                   { "name": "bot185", "platform": "mac-sequoia" },
-                  { "name": "bot187", "platform": "mac-sequoia" },
+                  { "name": "bot187", "platform": "mac-tahoe" },
                   { "name": "bot198", "platform": "mac-sequoia" },
                   { "name": "bot279", "platform": "mac-sequoia" },
                   { "name": "bot303", "platform": "mac-tahoe" },
@@ -208,7 +208,7 @@
                   { "name": "Apple-Tahoe-Release-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot245"]
+                  "workernames": ["bot187"]
                   },
                   { "name": "Apple-Tahoe-Release-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "release", "architectures": ["x86_64", "arm64"],
@@ -228,9 +228,9 @@
                     "additionalArguments": ["--no-retry-failures", "--accessibility-isolated-tree", "accessibility/"],
                     "workernames": ["bot179"]
                   },
-                  { "name": "Apple-Tahoe-Release-WK2-Site-Isolation-Tree-Tests", "factory": "TestLayoutFactory",
+                  { "name": "Apple-Tahoe-Release-WK2-Site-Isolation-Tree-Tests", "factory": "TestLayoutAndAPIOnlyFactory",
                   "platform": "mac-tahoe", "configuration": "release", "architectures": ["x86_64", "arm64"],
-                  "additionalArguments": ["--no-retry-failures", "--site-isolation", "--load-in-cross-origin-iframe", "--child-processes=19"],
+                  "additionalArguments": ["--no-retry-failures", "--site-isolation"],
                   "workernames": ["bot2000", "bot2001"]
                   },
                   { "name": "Apple-Tahoe-Debug-Build", "factory": "BuildFactory",
@@ -254,7 +254,7 @@
                   { "name": "Apple-Tahoe-Debug-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot256"]
+                  "workernames": ["bot132"]
                   },
                   { "name": "Apple-Tahoe-Debug-AppleSilicon-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-tahoe", "configuration": "debug", "architectures": ["x86_64", "arm64"],
@@ -274,7 +274,7 @@
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "triggers": [
                       "sequoia-release-tests-wk1", "sequoia-release-tests-wk2",
-                      "sequoia-release-applesilicon-tests-wk1", "sequoia-release-applesilicon-tests-wk2"
+                      "sequoia-release-applesilicon-tests-wk2"
                   ],
                   "workernames": ["bot279", "bot198"]
                   },
@@ -288,11 +288,6 @@
                   "additionalArguments": ["--no-retry-failures"],
                   "workernames": ["bot185"]
                   },
-                  { "name": "Apple-Sequoia-Release-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
-                  "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
-                  "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot187"]
-                  },
                   { "name": "Apple-Sequoia-Release-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "release", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
@@ -301,7 +296,7 @@
                   { "name": "Apple-Sequoia-Debug-Build", "factory": "BuildFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "triggers": [
-                      "sequoia-debug-tests-wk1", "sequoia-debug-tests-wk2", "sequoia-debug-applesilicon-tests-wk1",
+                      "sequoia-debug-tests-wk1", "sequoia-debug-tests-wk2",
                       "sequoia-debug-applesilicon-tests-wk2"
                   ],
                   "workernames": ["bot131", "bot141"]
@@ -315,11 +310,6 @@
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "additionalArguments": ["--no-retry-failures"],
                   "workernames": ["bot614"]
-                  },
-                  { "name": "Apple-Sequoia-Debug-AppleSilicon-WK1-Tests", "factory": "TestWebKit1AllButJSCFactory",
-                  "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
-                  "additionalArguments": ["--no-retry-failures"],
-                  "workernames": ["bot132"]
                   },
                   { "name": "Apple-Sequoia-Debug-AppleSilicon-WK2-Tests", "factory": "TestAllButJSCFactory",
                   "platform": "mac-sequoia", "configuration": "debug", "architectures": ["x86_64", "arm64"],
@@ -498,8 +488,7 @@
                     "name": "GTK-Linux-64-bit-Release-Build", "factory": "BuildAndGenerateJSCBundleFactory",
                     "platform": "gtk", "configuration": "release", "architectures": ["x86_64"],
                     "triggers": ["gtk-linux-64-release-tests", "gtk-linux-64-release-tests-js", "gtk-linux-64-release-tests-webdriver",
-                                 "gtk-linux-64-release-wayland-tests", "gtk-linux-64-release-perf-tests",
-                                 "gtk-linux-64-release-skip-failing-tests", "gtk-linux-64-release-tests-mvt"],
+                                 "gtk-linux-64-release-perf-tests", "gtk-linux-64-release-tests-mvt"],
                     "workernames": ["gtk-linux-bot-2"]
                   },
                   {
@@ -545,12 +534,6 @@
                     "workernames": ["gtk-linux-bot-8"]
                   },
                   {
-                    "name": "GTK-Linux-64-bit-Release-Wayland-Tests", "factory": "TestAllButJSCFactory",
-                    "platform": "gtk", "configuration": "release", "architectures": ["x86_64"],
-                    "additionalArguments": ["--display-server=wayland"],
-                    "workernames": ["gtk-linux-bot-9"]
-                  },
-                  {
                     "name": "GTK-Linux-64-bit-Release-Debian-Stable-Build", "factory": "NoInstallDependenciesBuildFactory",
                     "platform": "gtk", "configuration": "release", "architectures": ["x86_64"],
                     "additionalArguments": ["--no-experimental-features"],
@@ -584,12 +567,6 @@
                     "name": "GTK-Linux-64-bit-Release-GTK3-Build", "factory": "BuildFactory",
                     "platform": "gtk-3", "configuration": "release", "architectures": ["x86_64"],
                     "workernames": ["gtk-linux-bot-18"]
-                  },
-                  {
-                    "name": "GTK-Linux-64-bit-Release-Skip-Failing-Tests", "factory": "TestLayoutFactory",
-                    "platform": "gtk", "configuration": "release", "architectures": ["x86_64"],
-                    "additionalArguments": ["--skip-failing-tests"],
-                    "workernames": ["gtk-linux-bot-19"]
                   },
                   {
                     "name": "GTK-Linux-64-bit-Release-Clang-Build", "factory": "BuildFactory",
@@ -854,9 +831,6 @@
                   { "type": "Triggerable", "name": "sequoia-release-tests-wk2",
                   "builderNames": ["Apple-Sequoia-Release-WK2-Tests"]
                   },
-                  { "type": "Triggerable", "name": "sequoia-release-applesilicon-tests-wk1",
-                  "builderNames": ["Apple-Sequoia-Release-AppleSilicon-WK1-Tests"]
-                  },
                   { "type": "Triggerable", "name": "sequoia-release-applesilicon-tests-wk2",
                   "builderNames": ["Apple-Sequoia-Release-AppleSilicon-WK2-Tests"]
                   },
@@ -865,9 +839,6 @@
                   },
                   { "type": "Triggerable", "name": "sequoia-debug-tests-wk2",
                   "builderNames": ["Apple-Sequoia-Debug-WK2-Tests"]
-                  },
-                  { "type": "Triggerable", "name": "sequoia-debug-applesilicon-tests-wk1",
-                  "builderNames": ["Apple-Sequoia-Debug-AppleSilicon-WK1-Tests"]
                   },
                   { "type": "Triggerable", "name": "sequoia-debug-applesilicon-tests-wk2",
                   "builderNames": ["Apple-Sequoia-Debug-AppleSilicon-WK2-Tests"]
@@ -976,12 +947,6 @@
                   },
                   { "type": "Triggerable", "name": "gtk-linux-64-release-perf-tests",
                     "builderNames": ["GTK-Linux-64-bit-Release-Perf"]
-                  },
-                  { "type": "Triggerable", "name": "gtk-linux-64-release-wayland-tests",
-                    "builderNames": ["GTK-Linux-64-bit-Release-Wayland-Tests"]
-                  },
-                  { "type": "Triggerable", "name": "gtk-linux-64-release-skip-failing-tests",
-                    "builderNames": ["GTK-Linux-64-bit-Release-Skip-Failing-Tests"]
                   },
                   { "type": "Triggerable", "name": "gtk-linux-64-release-tests-mvt",
                     "builderNames": ["GTK-Linux-64-bit-Release-MVT-Tests"]

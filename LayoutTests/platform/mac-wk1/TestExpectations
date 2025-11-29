@@ -1049,6 +1049,10 @@ accessibility/youtube-embed-accessibility-hierarchy.html [ Skip ]
 
 accessibility/mac/iframe-hit-testing.html [ Skip ]
 
+# Skipping because ariaNotify is not supported in WK1.
+accessibility/mac/aria-notify-with-options.html [ Skip ]
+accessibility/mac/aria-notify.html [ Skip ]
+
 # DOM paste access requests are not implemented in WebKit1.
 editing/async-clipboard/clipboard-change-data-while-reading.html [ Skip ]
 editing/async-clipboard/clipboard-do-not-read-text-from-platform-if-text-changes.html [ Skip ]
@@ -1265,6 +1269,7 @@ http/tests/media/cross-origin-webm-video.html [ Skip ]
 http/tests/media/video-webm-stall.html
 http/tests/media/video-src-webm-blob.html [ Failure ]
 http/tests/media/video-srcobject-webm-blob.html [ Failure ]
+media/media-multi-audio-tracks-webm.html [ Skip ]
 media/media-vp8-hiddenframes.html [ Skip ]
 media/media-vp8-webm-error.html [ Failure ]
 media/media-vp8-webm-error-offscreen.html [ Failure ]
@@ -1766,6 +1771,7 @@ fast/scrolling/iframe-scrollable-after-back.html [ Skip ]
 fast/scrolling/overflow-scrollable-after-back.html [ Skip ]
 
 compositing/rtl/rtl-fixed-overflow-scrolled.html [ Failure ]
+compositing/rtl/rtl-fixed-clipping-layer.html [ ImageOnlyFailure ]
 compositing/iframes/border-uneven-radius-composited-frame.html [ ImageOnlyFailure ]
 compositing/iframes/overlapped-nested-iframes.html [ Pass Failure ]
 compositing/clipping/border-radius-async-overflow-non-stacking.html [ ImageOnlyFailure ]
@@ -2189,9 +2195,9 @@ webkit.org/b/177397 [ Release ] compositing/masks/compositing-clip-path-change-n
 webkit.org/b/172384 fast/hidpi/hidpi-long-page-with-inset-element.html [ Skip ]
 
 webkit.org/b/195098 pointerevents/mouse/enter-leave-order.html [ Failure ]
-webkit.org/b/195098 pointerevents/mouse/over-enter-out-leave.html [ Failure ]
-webkit.org/b/195098 pointerevents/mouse/pointer-capture.html [ Failure ]
-webkit.org/b/195098 pointerevents/mouse/pointer-events-before-mouse-events.html [ Failure ]
+webkit.org/b/195098 pointerevents/mouse/over-enter-out-leave.html [ Skip ]
+webkit.org/b/195098 pointerevents/mouse/pointer-capture.html [ Skip ]
+webkit.org/b/195098 pointerevents/mouse/pointer-events-before-mouse-events.html [ Skip ]
 
 webkit.org/b/244304 pointer-lock/pointermove-movement-delta.html [ Pass Timeout ]
 
@@ -2279,8 +2285,6 @@ webkit.org/b/207157 inspector/debugger/tail-deleted-frames/tail-deleted-frames-s
 webkit.org/b/207167 inspector/unit-tests/server-timing-entry.html [ Pass Timeout ]
 
 webkit.org/b/207469 [ Debug ] imported/w3c/web-platform-tests/svg/animations/slider-switch.html [ Pass Failure ]
-
-webkit.org/b/207470 [ Debug ] imported/w3c/web-platform-tests/workers/WorkerGlobalScope_ErrorEvent_colno.htm [ Pass Failure ]
 
 # This seems to be indicative of a CFNetwork bug.
 webkit.org/b/207895 http/tests/cookies/document-cookie-during-iframe-parsing.html [ Pass Failure ]
@@ -3299,3 +3303,8 @@ webkit.org/b/301065 imported/w3c/web-platform-tests/upgrade-insecure-requests/ge
 webkit.org/b/301198 [ Sonoma ] imported/w3c/web-platform-tests/media-source/mediasource-seek-during-pending-seek.html [ Failure ]
 webkit.org/b/299137 imported/w3c/web-platform-tests/css/css-font-loading/fontfacesetloadevent-constructor.html [ Failure ]
 imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies-same-site-subresource-to-cross-site-redirect.tentative.https.html [ Failure Pass ]
+
+imported/w3c/web-platform-tests/css/CSS2/stacking-context/composite-change-after-scroll-preserves-stacking-order.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/css/CSS2/abspos/abspos-containing-block-initial-004b.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/abspos/abspos-containing-block-initial-004d.xht [ ImageOnlyFailure ]

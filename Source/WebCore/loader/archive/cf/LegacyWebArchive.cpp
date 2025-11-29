@@ -313,11 +313,6 @@ LegacyWebArchive::LegacyWebArchive(std::optional<FrameIdentifier> frameIdentifie
 {
 }
 
-Ref<LegacyWebArchive> LegacyWebArchive::create()
-{
-    return adoptRef(*new LegacyWebArchive);
-}
-
 Ref<LegacyWebArchive> LegacyWebArchive::create(Ref<ArchiveResource>&& mainResource, Vector<Ref<ArchiveResource>>&& subresources, Vector<FrameIdentifier>&& subframeIdentifiers, std::optional<FrameIdentifier> mainFrameIdentifier)
 {
     auto archive = adoptRef(*new LegacyWebArchive(mainFrameIdentifier, WTFMove(subframeIdentifiers)));
@@ -352,8 +347,6 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(const URL&, FragmentedSharedBu
 {
     LOG(Archives, "LegacyWebArchive - Creating from raw data");
 
-    Ref<LegacyWebArchive> archive = create();
-
     RetainPtr<CFDataRef> cfData = data.makeContiguous()->createCFData();
     if (!cfData)
         return nullptr;
@@ -377,87 +370,81 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(const URL&, FragmentedSharedBu
         return nullptr;
     }
 
-    if (!archive->extract(plist.get()))
-        return nullptr;
-
-    return WTFMove(archive);
+    return create(plist.get());
 }
 
-bool LegacyWebArchive::extract(CFDictionaryRef dictionary)
+RefPtr<LegacyWebArchive> LegacyWebArchive::create(CFDictionaryRef dictionary)
 {
     ASSERT(dictionary);
     if (!dictionary) {
         LOG(Archives, "LegacyWebArchive - Null root CFDictionary, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
 
     CFDictionaryRef mainResourceDict = static_cast<CFDictionaryRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveMainResourceKey));
     if (!mainResourceDict) {
         LOG(Archives, "LegacyWebArchive - No main resource in archive, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
     if (CFGetTypeID(mainResourceDict) != CFDictionaryGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Main resource is not the expected CFDictionary, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
 
-    auto mainResource = createResource(mainResourceDict);
+    RefPtr mainResource = createResource(mainResourceDict);
     if (!mainResource) {
         LOG(Archives, "LegacyWebArchive - Failed to parse main resource from CFDictionary or main resource does not exist, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
 
     if (mainResource->mimeType().isNull()) {
         LOG(Archives, "LegacyWebArchive - Main resource MIME type is required, but was null.");
-        return false;
+        return nullptr;
     }
-
-    setMainResource(mainResource.releaseNonNull());
 
     auto subresourceArray = static_cast<CFArrayRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveSubresourcesKey));
     if (subresourceArray && CFGetTypeID(subresourceArray) != CFArrayGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Subresources is not the expected Array, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
 
+    Vector<Ref<ArchiveResource>> subresources;
     if (subresourceArray) {
         auto count = CFArrayGetCount(subresourceArray);
         for (CFIndex i = 0; i < count; ++i) {
             auto subresourceDict = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(subresourceArray, i));
             if (CFGetTypeID(subresourceDict) != CFDictionaryGetTypeID()) {
                 LOG(Archives, "LegacyWebArchive - Subresource is not expected CFDictionary, aborting invalid WebArchive");
-                return false;
+                return nullptr;
             }
 
             if (auto subresource = createResource(subresourceDict))
-                addSubresource(subresource.releaseNonNull());
+                subresources.append(subresource.releaseNonNull());
         }
     }
 
     auto subframeArray = static_cast<CFArrayRef>(CFDictionaryGetValue(dictionary, LegacyWebArchiveSubframeArchivesKey));
     if (subframeArray && CFGetTypeID(subframeArray) != CFArrayGetTypeID()) {
         LOG(Archives, "LegacyWebArchive - Subframe archives is not the expected Array, aborting invalid WebArchive");
-        return false;
+        return nullptr;
     }
 
+    Vector<Ref<LegacyWebArchive>> subframeArchives;
     if (subframeArray) {
         auto count = CFArrayGetCount(subframeArray);
         for (CFIndex i = 0; i < count; ++i) {
             auto subframeDict = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(subframeArray, i));
             if (CFGetTypeID(subframeDict) != CFDictionaryGetTypeID()) {
                 LOG(Archives, "LegacyWebArchive - Subframe array is not expected CFDictionary, aborting invalid WebArchive");
-                return false;
+                return nullptr;
             }
 
-            auto subframeArchive = create();
-            if (subframeArchive->extract(subframeDict))
-                addSubframeArchive(WTFMove(subframeArchive));
-            else
-                LOG(Archives, "LegacyWebArchive - Invalid subframe archive skipped");
+            if (RefPtr subFrameArchive = create(subframeDict))
+                subframeArchives.append(subFrameArchive.releaseNonNull());
         }
     }
 
-    return true;
+    return create(mainResource.releaseNonNull(), WTFMove(subresources), WTFMove(subframeArchives), std::nullopt);
 }
 
 RetainPtr<CFDataRef> LegacyWebArchive::rawDataRepresentation()
@@ -514,7 +501,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::create(Node& node, ArchiveOptions&& o
 {
     RefPtr frame = node.document().frame();
     if (!frame)
-        return create();
+        return nullptr;
 
     auto currentOptions = WTFMove(options);
     // If the page was loaded with JavaScript enabled, we don't want to archive <noscript> tags
@@ -698,7 +685,7 @@ RefPtr<LegacyWebArchive> LegacyWebArchive::createInternal(Node& node, const Arch
 {
     RefPtr frame = node.document().frame();
     if (!frame)
-        return create();
+        return nullptr;
 
     Vector<Ref<Node>> nodeList;
     String markupString = serializeFragment(node, SerializedNodes::SubtreeIncludingNode, &nodeList, ResolveURLs::No, std::nullopt, SerializeShadowRoots::AllForInterchange, { }, options.markupExclusionRules);

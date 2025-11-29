@@ -134,7 +134,7 @@ private: \
         setPropertyPath(#PropertyName##_s, &parentObject); \
     } \
 \
-    JSClassRef wrapperClass() final { return JS##ImplClass::ScriptClass##Class(); } \
+    JSClassRef wrapperClass() const final { return JS##ImplClass::ScriptClass##Class(); } \
 \
     using __thisIsHereToForceASemicolonAfterThisMacro UNUSED_TYPE_ALIAS = int
 

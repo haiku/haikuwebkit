@@ -64,6 +64,8 @@ private:
     static ASCIILiteral supplementName() { return "DeviceOrientationController"_s; }
     bool isDeviceOrientationController() const final { return true; }
 
+    CheckedRef<DeviceOrientationClient> checkedClient();
+
     WeakRef<DeviceOrientationClient> m_client;
 };
 

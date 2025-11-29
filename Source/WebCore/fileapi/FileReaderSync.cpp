@@ -46,8 +46,8 @@ FileReaderSync::FileReaderSync()
 
 ExceptionOr<RefPtr<ArrayBuffer>> FileReaderSync::readAsArrayBuffer(ScriptExecutionContext& scriptExecutionContext, Blob& blob)
 {
-    auto loader = makeUniqueRef<FileReaderLoader>(FileReaderLoader::ReadAsArrayBuffer, nullptr);
-    auto result = startLoading(scriptExecutionContext, CheckedRef { loader.get() }.get(), blob);
+    Ref loader = FileReaderLoader::create(FileReaderLoader::ReadAsArrayBuffer, nullptr);
+    auto result = startLoading(scriptExecutionContext, loader, blob);
     if (result.hasException())
         return result.releaseException();
     return loader->arrayBufferResult();
@@ -55,22 +55,22 @@ ExceptionOr<RefPtr<ArrayBuffer>> FileReaderSync::readAsArrayBuffer(ScriptExecuti
 
 ExceptionOr<String> FileReaderSync::readAsBinaryString(ScriptExecutionContext& scriptExecutionContext, Blob& blob)
 {
-    auto loader = makeUniqueRef<FileReaderLoader>(FileReaderLoader::ReadAsBinaryString, nullptr);
-    return startLoadingString(scriptExecutionContext, CheckedRef { loader.get() }.get(), blob);
+    Ref loader = FileReaderLoader::create(FileReaderLoader::ReadAsBinaryString, nullptr);
+    return startLoadingString(scriptExecutionContext, loader, blob);
 }
 
 ExceptionOr<String> FileReaderSync::readAsText(ScriptExecutionContext& scriptExecutionContext, Blob& blob, const String& encoding)
 {
-    auto loader = makeUniqueRef<FileReaderLoader>(FileReaderLoader::ReadAsText, nullptr);
+    Ref loader = FileReaderLoader::create(FileReaderLoader::ReadAsText, nullptr);
     loader->setEncoding(encoding);
-    return startLoadingString(scriptExecutionContext, CheckedRef { loader.get() }.get(), blob);
+    return startLoadingString(scriptExecutionContext, loader, blob);
 }
 
 ExceptionOr<String> FileReaderSync::readAsDataURL(ScriptExecutionContext& scriptExecutionContext, Blob& blob)
 {
-    auto loader = makeUniqueRef<FileReaderLoader>(FileReaderLoader::ReadAsDataURL, nullptr);
+    Ref loader = FileReaderLoader::create(FileReaderLoader::ReadAsDataURL, nullptr);
     loader->setDataType(blob.type());
-    return startLoadingString(scriptExecutionContext, CheckedRef { loader.get() }.get(), blob);
+    return startLoadingString(scriptExecutionContext, loader, blob);
 }
 
 ExceptionOr<void> FileReaderSync::startLoading(ScriptExecutionContext& scriptExecutionContext, FileReaderLoader& loader, Blob& blob)

@@ -170,8 +170,8 @@ public:
     WEBCORE_EXPORT virtual void prepareForPictureInPictureStopWithCompletionHandler(void (^)(BOOL));
     virtual bool isPlayingVideoInEnhancedFullscreen() const = 0;
 
-    WEBCORE_EXPORT void setMode(HTMLMediaElementEnums::VideoFullscreenMode, bool shouldNotifyModel);
-    void clearMode(HTMLMediaElementEnums::VideoFullscreenMode, bool shouldNotifyModel);
+    WEBCORE_EXPORT void setMode(HTMLMediaElementEnums::VideoFullscreenMode, VideoPresentationModel::ShouldNotifyMediaElement);
+    void clearMode(HTMLMediaElementEnums::VideoFullscreenMode, VideoPresentationModel::ShouldNotifyMediaElement);
     bool hasMode(HTMLMediaElementEnums::VideoFullscreenMode mode) const { return m_currentMode.hasMode(mode); }
     WEBCORE_EXPORT UIViewController *presentingViewController();
     UIViewController *fullscreenViewController() const { return m_viewController.get(); }

@@ -35,6 +35,7 @@
 #include "RenderStyleInlines.h"
 #include "RubyFormattingContext.h"
 #include "TextUtil.h"
+#include <ranges>
 #include <wtf/ListHashSet.h>
 #include <wtf/Range.h>
 #include <wtf/text/MakeString.h>
@@ -97,7 +98,7 @@ InlineDisplayContentBuilder::InlineDisplayContentBuilder(InlineFormattingContext
 InlineDisplay::Boxes InlineDisplayContentBuilder::build(const LineLayoutResult& lineLayoutResult)
 {
     auto boxes = InlineDisplay::Boxes { };
-    boxes.reserveInitialCapacity(lineLayoutResult.inlineAndOpaqueContent.size() + lineBox().nonRootInlineLevelBoxes().size() + 1);
+    boxes.reserveInitialCapacity(lineLayoutResult.runs.size() + lineBox().nonRootInlineLevelBoxes().size() + 1);
 
     auto contentNeedsBidiReordering = !lineLayoutResult.directionality.visualOrderList.isEmpty();
     if (contentNeedsBidiReordering)
@@ -299,8 +300,7 @@ void InlineDisplayContentBuilder::appendHardLineBreakDisplayBox(const Line::Run&
 
 void InlineDisplayContentBuilder::appendAtomicInlineLevelDisplayBox(const Line::Run& lineRun, const InlineRect& borderBoxRect, InlineDisplay::Boxes& boxes)
 {
-    // FIXME: Blocks in inline. Refactor and remove the block test.
-    ASSERT(lineRun.layoutBox().isAtomicInlineBox() || lineRun.isBlock());
+    ASSERT(lineRun.layoutBox().isAtomicInlineBox());
     auto& layoutBox = lineRun.layoutBox();
 
     auto isContentful = true;
@@ -324,6 +324,26 @@ void InlineDisplayContentBuilder::appendAtomicInlineLevelDisplayBox(const Line::
         , { }
         , isContentful
         , isLineFullyTruncatedInBlockDirection()
+    });
+}
+
+void InlineDisplayContentBuilder::appendBlockLevelDisplayBox(const Line::Run& lineRun, const InlineRect& borderBoxRect, InlineDisplay::Boxes& boxes)
+{
+    ASSERT(lineRun.isBlock());
+    auto& layoutBox = lineRun.layoutBox();
+
+    auto isContentful = true;
+    boxes.append({ lineIndex()
+        , InlineDisplay::Box::Type::BlockLevelBox
+        , layoutBox
+        , lineRun.bidiLevel()
+        , borderBoxRect
+        , borderBoxRect
+        , isFirstFormattedLine()
+        , { }
+        , { }
+        , isContentful
+        , { }
     });
 }
 
@@ -423,7 +443,7 @@ void InlineDisplayContentBuilder::processNonBidiContent(const LineLayoutResult& 
 {
 #ifndef NDEBUG
     auto hasContent = false;
-    for (auto& lineRun : lineLayoutResult.inlineAndOpaqueContent)
+    for (auto& lineRun : lineLayoutResult.runs)
         hasContent = hasContent || lineRun.isContentful();
     ASSERT(lineLayoutResult.directionality.inlineBaseDirection == TextDirection::LTR || !hasContent);
 #endif
@@ -439,8 +459,8 @@ void InlineDisplayContentBuilder::processNonBidiContent(const LineLayoutResult& 
 
     Vector<size_t> blockLevelOutOfFlowBoxList;
     auto textSpacingAdjustment = 0.f;
-    for (size_t index = 0; index < lineLayoutResult.inlineAndOpaqueContent.size(); ++index) {
-        auto& lineRun = lineLayoutResult.inlineAndOpaqueContent[index];
+    for (size_t index = 0; index < lineLayoutResult.runs.size(); ++index) {
+        auto& lineRun = lineLayoutResult.runs[index];
         if (lineRun.isWordBreakOpportunity() || lineRun.isInlineBoxEnd())
             continue;
         auto& layoutBox = lineRun.layoutBox();
@@ -487,9 +507,10 @@ void InlineDisplayContentBuilder::processNonBidiContent(const LineLayoutResult& 
             if (lineRun.isLineSpanningInlineBoxStart())
                 return lineBox.logicalBorderBoxForInlineBox(layoutBox, boxGeometry);
             if (lineRun.isBlock()) {
-                // FIXME: Blocks in inline.
-                return lineBox.logicalBorderBoxForAtomicInlineBox(layoutBox, boxGeometry);
+                auto borderBoxRect = BoxGeometry::borderBoxRect(boxGeometry);
+                return { borderBoxRect.top(), borderBoxRect.left(), borderBoxRect.width(), borderBoxRect.height() };
             }
+
             ASSERT_NOT_REACHED();
             return { };
         }();
@@ -510,9 +531,16 @@ void InlineDisplayContentBuilder::processNonBidiContent(const LineLayoutResult& 
             else if (lineRun.isAtomicInlineBox() || lineRun.isListMarker())
                 appendAtomicInlineLevelDisplayBox(lineRun, visualRectRelativeToRoot, boxes);
             else if (lineRun.isBlock()) {
-                // FIXME: Blocks in inline.
-                appendAtomicInlineLevelDisplayBox(lineRun, visualRectRelativeToRoot, boxes);
-            } else if (lineRun.isInlineBoxStart() || lineRun.isLineSpanningInlineBoxStart()) {
+                // Block content should always be placed at the start of the content box even when floats shrink the line.
+                auto adjustedVisualRect = [&] {
+                    auto lineOffset = lineBoxLogicalRect.left() - lineLayoutResult.lineGeometry.initialLogicalLeft;
+                    auto rect = visualRectRelativeToRoot;
+                    writingMode.isHorizontal() ? rect.moveHorizontally(-lineOffset) : rect.moveVertically(-lineOffset);
+                    return rect;
+                };
+                appendBlockLevelDisplayBox(lineRun, adjustedVisualRect(), boxes);
+            }
+            else if (lineRun.isInlineBoxStart() || lineRun.isLineSpanningInlineBoxStart()) {
                 // Do not generate display boxes for inline boxes on non-contentful lines (e.g. <span></span>)
                 if (lineBox.hasContent())
                     appendInlineBoxDisplayBox(lineRun, lineBox.inlineLevelBoxFor(lineRun), visualRectRelativeToRoot, boxes);
@@ -542,7 +570,7 @@ void InlineDisplayContentBuilder::processNonBidiContent(const LineLayoutResult& 
         };
         updateAssociatedBoxGeometry();
     }
-    setGeometryForBlockLevelOutOfFlowBoxes(blockLevelOutOfFlowBoxList, lineLayoutResult.inlineAndOpaqueContent);
+    setGeometryForBlockLevelOutOfFlowBoxes(blockLevelOutOfFlowBoxList, lineLayoutResult.runs);
 }
 
 struct DisplayBoxTree {
@@ -726,7 +754,7 @@ void InlineDisplayContentBuilder::adjustVisualGeometryForDisplayBox(size_t displ
 
 void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lineLayoutResult, InlineDisplay::Boxes& boxes)
 {
-    ASSERT(lineLayoutResult.directionality.visualOrderList.size() <= lineLayoutResult.inlineAndOpaqueContent.size());
+    ASSERT(lineLayoutResult.directionality.visualOrderList.size() <= lineLayoutResult.runs.size());
 
     AncestorStack ancestorStack;
     auto displayBoxTree = DisplayBoxTree { };
@@ -752,7 +780,7 @@ void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lin
 
         Vector<size_t> blockLevelOutOfFlowBoxList;
         auto contentLineRightEdge = contentLineLeftEdge;
-        auto& inlineContent = lineLayoutResult.inlineAndOpaqueContent;
+        auto& inlineContent = lineLayoutResult.runs;
         for (size_t index = 0; index < lineLayoutResult.directionality.visualOrderList.size(); ++index) {
             auto logicalIndex = lineLayoutResult.directionality.visualOrderList[index];
             ASSERT(inlineContent[logicalIndex].bidiLevel() != InlineItem::opaqueBidiLevel);
@@ -764,7 +792,7 @@ void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lin
 
             auto& layoutBox = lineRun.layoutBox();
             auto parentDisplayBoxNodeIndex = ensureDisplayBoxForContainer(layoutBox.parent(), displayBoxTree, ancestorStack, boxes);
-            hasInlineBox = hasInlineBox || parentDisplayBoxNodeIndex || lineRun.isInlineBoxStart() || lineRun.isLineSpanningInlineBoxStart();
+            hasInlineBox = hasInlineBox || (!lineRun.isBlock() && (parentDisplayBoxNodeIndex || lineRun.isInlineBoxStart() || lineRun.isLineSpanningInlineBoxStart()));
 
             if (lineRun.isOpaque()) {
                 if (layoutBox.style().isOriginalDisplayInlineType()) {
@@ -788,6 +816,10 @@ void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lin
                 auto& boxGeometry = formattingContext().geometryForBox(layoutBox);
                 if (lineRun.isAtomicInlineBox() || lineRun.isListMarker())
                     return lineBox.logicalBorderBoxForAtomicInlineBox(layoutBox, boxGeometry);
+                if (lineRun.isBlock()) {
+                    auto borderBoxRect = BoxGeometry::borderBoxRect(boxGeometry);
+                    return { borderBoxRect.top(), borderBoxRect.left(), borderBoxRect.width(), borderBoxRect.height() };
+                }
                 ASSERT_NOT_REACHED();
                 return { };
             }();
@@ -875,6 +907,19 @@ void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lin
                 }
                 continue;
             }
+            if (lineRun.isBlock()) {
+                ASSERT(!hasInlineBox);
+
+                auto& boxGeometry = formattingContext().geometryForBox(layoutBox);
+                auto boxMarginLeft = marginLineLeft(boxGeometry, writingMode);
+                // Block content should always be placed at the start of the content box even when floats shrink the line.
+                auto lineOffset = lineBoxLogicalRect.left() - lineLayoutResult.lineGeometry.initialLogicalLeft;
+                isHorizontalWritingMode ? visualRectRelativeToRoot.moveHorizontally(lineOffset + boxMarginLeft) : visualRectRelativeToRoot.moveVertically(lineOffset + boxMarginLeft);
+
+                appendBlockLevelDisplayBox(lineRun, visualRectRelativeToRoot, boxes);
+                boxGeometry.setTopLeft({ lineLogicalLeft + contentLineRightEdge - lineOffset, lineLogicalTop + logicalRect.top() });
+                continue;
+            }
             ASSERT_NOT_REACHED();
         }
         setGeometryForBlockLevelOutOfFlowBoxes(blockLevelOutOfFlowBoxList, inlineContent, lineLayoutResult.directionality.visualOrderList);
@@ -924,7 +969,7 @@ void InlineDisplayContentBuilder::processBidiContent(const LineLayoutResult& lin
     handleInlineBoxes();
 
     auto handleTrailingOpenInlineBoxes = [&] {
-        for (auto& lineRun : makeReversedRange(lineLayoutResult.inlineAndOpaqueContent)) {
+        for (auto& lineRun : lineLayoutResult.runs | std::views::reverse) {
             if (!lineRun.isInlineBoxStart() || lineRun.bidiLevel() != InlineItem::opaqueBidiLevel)
                 break;
             // These are trailing inline box start runs (without the closing inline box end <span> <-line breaks here</span>).
@@ -1191,7 +1236,7 @@ void InlineDisplayContentBuilder::processRubyContent(InlineDisplay::Boxes& displ
         return;
 
     HashSet<CheckedPtr<const Box>> lineSpanningRubyBaseList;
-    for (auto& lineRun : lineLayoutResult.inlineAndOpaqueContent) {
+    for (auto& lineRun : lineLayoutResult.runs) {
         if (lineRun.isLineSpanningInlineBoxStart() && lineRun.layoutBox().isRubyBase())
             lineSpanningRubyBaseList.add(&lineRun.layoutBox());
     }
@@ -1217,7 +1262,7 @@ void InlineDisplayContentBuilder::processRubyContent(InlineDisplay::Boxes& displ
     auto lineBoxLogicalRect = lineBox().logicalRect();
     auto writingMode = root().writingMode();
     auto isHorizontalWritingMode = writingMode.isHorizontal();
-    for (auto baseIndex : makeReversedRange(rubyBaseStartIndexListWithAnnotation)) {
+    for (auto baseIndex : rubyBaseStartIndexListWithAnnotation | std::views::reverse) {
         auto& annotationBox = *displayBoxes[baseIndex].layoutBox().associatedRubyAnnotationBox();
         auto annotationBorderBoxVisualRect = [&] {
             // FIXME: We may wanna go back to full logical geometry on BoxGeometry (instead of this with visual left) and resolve it when

@@ -66,7 +66,7 @@ void WebExtensionAPIWebRequestEvent::enumerateListeners(WebExtensionTabIdentifie
 void WebExtensionAPIWebRequestEvent::invokeListenersWithArgument(NSDictionary *argument, WebExtensionTabIdentifier tabIdentifier, WebExtensionWindowIdentifier windowIdentifier, const ResourceLoadInfo& resourceLoadInfo)
 {
     enumerateListeners(tabIdentifier, windowIdentifier, resourceLoadInfo, [argument = RetainPtr { argument }](auto& listener, auto&) {
-        listener.call(argument.get());
+        listener.call(toJSValueRef(listener.globalContext(), argument.get()));
     });
 }
 

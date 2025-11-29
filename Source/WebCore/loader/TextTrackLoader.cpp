@@ -202,8 +202,8 @@ Vector<Ref<VTTCue>> TextTrackLoader::getNewCues()
     if (!m_cueParser)
         return { };
 
-    return m_cueParser->takeCues().map([this](auto& cueData) {
-        return VTTCue::create(protectedDocument(), cueData);
+    return map(m_cueParser->takeCues(), [this](auto&& cueData) {
+        return VTTCue::create(protectedDocument(), WTFMove(cueData));
     });
 }
 

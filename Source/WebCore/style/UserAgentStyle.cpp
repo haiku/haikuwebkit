@@ -48,7 +48,6 @@
 #include "HTMLHeadElement.h"
 #include "HTMLHtmlElement.h"
 #include "HTMLInputElement.h"
-#include "HTMLMediaElement.h"
 #include "HTMLMeterElement.h"
 #include "HTMLObjectElement.h"
 #include "HTMLProgressElement.h"

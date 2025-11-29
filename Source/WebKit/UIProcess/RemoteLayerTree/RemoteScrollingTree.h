@@ -40,6 +40,9 @@
 
 namespace WebCore {
 class PlatformMouseEvent;
+#if ENABLE(THREADED_ANIMATIONS)
+class ScrollingTreeScrollingNode;
+#endif
 };
 
 namespace WebKit {
@@ -92,6 +95,7 @@ public:
 #if ENABLE(THREADED_ANIMATIONS)
     void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&);
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
+    bool hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode&) const;
 #endif
 
 protected:
@@ -109,6 +113,8 @@ protected:
     bool m_hasNodesWithSynchronousScrollingReasons WTF_GUARDED_BY_LOCK(m_treeLock) { false };
 
 #if ENABLE(THREADED_ANIMATIONS)
+    void updateProgressBasedTimelinesForNode(const WebCore::ScrollingTreeScrollingNode&);
+
 private:
     std::unique_ptr<RemoteProgressBasedTimelineRegistry> m_progressBasedTimelineRegistry;
 #endif

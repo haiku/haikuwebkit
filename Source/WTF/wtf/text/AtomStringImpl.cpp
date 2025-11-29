@@ -406,7 +406,7 @@ Ref<AtomStringImpl> AtomStringImpl::addSlowCase(Ref<StringImpl>&& string)
     if (addResult.isNewEntry) {
         ASSERT(addResult.iterator->get() == string.ptr());
         string->setIsAtom(true);
-        return static_reference_cast<AtomStringImpl>(WTFMove(string));
+        return uncheckedDowncast<AtomStringImpl>(WTFMove(string));
     }
 
     return *static_cast<AtomStringImpl*>(addResult.iterator->get());

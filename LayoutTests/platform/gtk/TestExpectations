@@ -140,7 +140,10 @@ webrtc/vp8-then-h264-gpu-process-crash.html [ Skip ]
 #
 # 9. TESTS FAILING
 # Each test should (eventually) have a bug. Missing test harness features also go here.
-#
+
+webkit.org/b/302127 imported/w3c/web-platform-tests/css/css-grid/masonry/tentative/alignment/column-justify-items-end-justify-self-start-001.html [ ImageOnlyFailure ]
+webkit.org/b/302127 imported/w3c/web-platform-tests/css/css-grid/masonry/tentative/alignment/column-masonry-justify-self-003.html [ ImageOnlyFailure ]
+
 # 10. THREADED COMPOSITOR FAILURES
 # Tests that are now failing because of the switch to ThreadedCompositor.
 

@@ -396,6 +396,7 @@ enum class DDBridgeNodeType {
 - (void)updateMaterial:(DDBridgeUpdateMaterialRequest *)descriptor identifier:(NSUUID*)identifier;
 - (void)setTransform:(simd_float4x4)transform;
 - (void)setCameraDistance:(float)distance;
+- (void)setPlaying:(BOOL)play;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithDevice:(id<MTLDevice>)device NS_DESIGNATED_INITIALIZER;

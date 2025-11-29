@@ -3021,7 +3021,12 @@ bool RenderBox::columnFlexItemHasStretchAlignment() const
     ASSERT(parentStyle.isColumnFlexDirection());
     if (style().marginStart().isAuto() || style().marginEnd().isAuto())
         return false;
-    return style().resolvedAlignSelf(&parentStyle, containingBlock()->selfAlignmentNormalBehavior()).position() == ItemPosition::Stretch;
+
+    auto normalBehavior = containingBlock()->selfAlignmentNormalBehavior();
+
+    if (!style().alignSelf().isAuto())
+        return style().alignSelf().resolve(normalBehavior).position() == ItemPosition::Stretch;
+    return parentStyle.alignItems().resolve(normalBehavior).position() == ItemPosition::Stretch;
 }
 
 bool RenderBox::isStretchingColumnFlexItem() const
@@ -3050,11 +3055,19 @@ bool RenderBox::hasStretchedLogicalHeight() const
     if (containingBlock->isHorizontalWritingMode() != isHorizontalWritingMode()) {
         if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Columns))
             return true;
-        return style.resolvedJustifySelf(&containingBlock->style(), containingBlock->selfAlignmentNormalBehavior(this)).position() == ItemPosition::Stretch;
+
+        auto normalBehavior = containingBlock->selfAlignmentNormalBehavior(this);
+        if (!style.justifySelf().isAuto())
+            return style.justifySelf().resolve(normalBehavior).position() == ItemPosition::Stretch;
+        return containingBlock->style().justifyItems().resolve(normalBehavior).position() == ItemPosition::Stretch;
     }
     if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Rows))
         return true;
-    return style.resolvedAlignSelf(&containingBlock->style(), containingBlock->selfAlignmentNormalBehavior(this)).position() == ItemPosition::Stretch;
+
+    auto normalBehavior = containingBlock->selfAlignmentNormalBehavior(this);
+    if (!style.alignSelf().isAuto())
+        return style.alignSelf().resolve(normalBehavior).position() == ItemPosition::Stretch;
+    return containingBlock->style().alignItems().resolve(normalBehavior).position() == ItemPosition::Stretch;
 }
 
 // FIXME: Can/Should we move this inside specific layout classes (flex. grid)? Can we refactor columnFlexItemHasStretchAlignment logic?
@@ -3073,11 +3086,17 @@ bool RenderBox::hasStretchedLogicalWidth(StretchingMode stretchingMode) const
     if (containingBlock->isHorizontalWritingMode() != isHorizontalWritingMode()) {
         if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Rows))
             return true;
-        return style.resolvedAlignSelf(&containingBlock->style(), normalItemPosition).position() == ItemPosition::Stretch;
+
+        if (!style.alignSelf().isAuto())
+            return style.alignSelf().resolve(normalItemPosition).position() == ItemPosition::Stretch;
+        return containingBlock->style().alignItems().resolve(normalItemPosition).position() == ItemPosition::Stretch;
     }
     if (auto* grid = dynamicDowncast<RenderGrid>(*this); grid && grid->isSubgridInParentDirection(Style::GridTrackSizingDirection::Columns))
         return true;
-    return style.resolvedJustifySelf(&containingBlock->style(), normalItemPosition).position() == ItemPosition::Stretch;
+
+    if (!style.justifySelf().isAuto())
+        return style.justifySelf().resolve(normalItemPosition).position() == ItemPosition::Stretch;
+    return containingBlock->style().justifyItems().resolve(normalItemPosition).position() == ItemPosition::Stretch;
 }
 
 bool RenderBox::sizesPreferredLogicalWidthToFitContent() const

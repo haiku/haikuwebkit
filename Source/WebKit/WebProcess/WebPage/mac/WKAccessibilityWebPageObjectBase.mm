@@ -131,7 +131,7 @@ namespace ax = WebCore::Accessibility;
                 return [protectedSelf accessibilityPluginObject];
         }
 
-        RefPtr frame = protectedFrame ? WTFMove(protectedFrame) : [protectedSelf focusedLocalFrame];
+        RefPtr frame = protectedFrame ? protectedFrame : [protectedSelf focusedLocalFrame];
         if (RefPtr document = frame ? frame->document() : nullptr) {
             if (CheckedPtr cache = document->axObjectCache()) {
                 if (RefPtr root = cache->rootObjectForFrame(*frame))
@@ -143,7 +143,7 @@ namespace ax = WebCore::Accessibility;
             // It's possible we were given a null frame (this is explicitly expected when off the main-thread, since
             // we can't access the webpage off the main-thread to get a frame). Now that we are actually on the main-thread,
             // try again if necessary.
-            RefPtr frame = protectedFrame ? WTFMove(protectedFrame) : [protectedSelf focusedLocalFrame];
+            RefPtr frame = protectedFrame ? protectedFrame : [protectedSelf focusedLocalFrame];
 
             if (RefPtr root = frame ? cache->rootObjectForFrame(*frame) : nullptr)
                 return root->wrapper();

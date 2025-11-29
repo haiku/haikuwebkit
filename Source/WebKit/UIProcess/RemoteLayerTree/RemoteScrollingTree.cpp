@@ -39,6 +39,7 @@
 #include <WebCore/ScrollingTreePluginHostingNode.h>
 #include <WebCore/ScrollingTreePluginScrollingNode.h>
 #include <WebCore/ScrollingTreePositionedNodeCocoa.h>
+#include <WebCore/ScrollingTreeScrollingNode.h>
 #include <WebCore/ScrollingTreeStickyNodeCocoa.h>
 
 namespace WebKit {
@@ -313,6 +314,17 @@ RefPtr<const RemoteAnimationTimeline> RemoteScrollingTree::timeline(const Timeli
     if (m_progressBasedTimelineRegistry)
         return m_progressBasedTimelineRegistry->get(timelineID);
     return nullptr;
+}
+
+bool RemoteScrollingTree::hasTimelineForNode(const WebCore::ScrollingTreeScrollingNode& node) const
+{
+    return m_progressBasedTimelineRegistry && m_progressBasedTimelineRegistry->hasTimelineForNode(node);
+}
+
+void RemoteScrollingTree::updateProgressBasedTimelinesForNode(const WebCore::ScrollingTreeScrollingNode& node)
+{
+    if (m_progressBasedTimelineRegistry)
+        m_progressBasedTimelineRegistry->updateTimelinesForNode(node);
 }
 #endif
 

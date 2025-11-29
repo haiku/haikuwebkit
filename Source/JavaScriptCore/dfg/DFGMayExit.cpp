@@ -333,8 +333,7 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
             break;
         return Exits;
 
-    case ArrayIndexOf:
-    case ArrayLastIndexOf: {
+    case ArrayIndexOf: {
         Edge& searchElementEdge = graph.child(node, 1);
         switch (searchElementEdge.useKind()) {
         case Int32Use:
@@ -426,7 +425,6 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
             
             switch (node->op()) {
             case ArrayIndexOf:
-            case ArrayLastIndexOf:
                 break;
             default: {
                 switch (edge.useKind()) {

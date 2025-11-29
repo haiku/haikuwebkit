@@ -67,11 +67,9 @@ struct OpcodeConfig {
     void* ipint_atomic_dispatch_base;
 };
 
-constexpr size_t OpcodeConfigAlignment = CeilingOnPageSize;
 constexpr size_t OpcodeConfigSizeToProtect = std::max(CeilingOnPageSize, 16 * KB);
 
 #if HAVE(OS_SCRIPT_CONFIG_SPI)
-static_assert(OS_SCRIPT_CONFIG_STORAGE_SIZE == OpcodeConfigAlignment);
 static_assert(OS_SCRIPT_CONFIG_STORAGE_SIZE == OpcodeConfigSizeToProtect);
 #else
 extern "C" WTF_EXPORT_PRIVATE uint8_t os_script_config_storage[];

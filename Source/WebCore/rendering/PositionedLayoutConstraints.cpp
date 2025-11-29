@@ -36,6 +36,7 @@
 #include "RenderLayer.h"
 #include "RenderStyle.h"
 #include "RenderTableRow.h"
+#include "RenderView.h"
 
 namespace WebCore {
 
@@ -55,7 +56,7 @@ PositionedLayoutConstraints::PositionedLayoutConstraints(const RenderBox& render
     , m_containingAxis(!isOrthogonal() ? selfAxis : oppositeAxis(selfAxis))
     , m_physicalAxis(selfAxis == LogicalBoxAxis::Inline ? m_writingMode.inlineAxis() : m_writingMode.blockAxis())
     , m_style(style)
-    , m_alignment(m_containingAxis == LogicalBoxAxis::Inline ? style.justifySelf() : style.alignSelf())
+    , m_alignment(m_containingAxis == LogicalBoxAxis::Inline ? style.justifySelf().resolve() : style.alignSelf().resolve())
     , m_defaultAnchorBox(needsAnchor() ? Style::AnchorPositionEvaluator::defaultAnchorForBox(renderer) : nullptr)
     , m_marginBefore { 0_css_px }
     , m_marginAfter { 0_css_px }
@@ -71,7 +72,8 @@ PositionedLayoutConstraints::PositionedLayoutConstraints(const RenderBox& render
         : renderer.containingBlockRangeForPositioned(*m_container, oppositeAxis(m_physicalAxis)).size();
 
     // Adjust for scrollable area.
-    captureScrollableArea();
+    if (m_style.positionArea() && PositionType::Fixed != m_style.position())
+        expandToScrollableArea(m_containingRange);
 
     // Adjust for grid-area.
     captureGridArea();
@@ -145,10 +147,10 @@ void PositionedLayoutConstraints::captureInsets()
 
 // MARK: - Adjustments to the containing block.
 
-void PositionedLayoutConstraints::captureScrollableArea()
+void PositionedLayoutConstraints::expandToScrollableArea(LayoutRange& containingRange, const std::optional<ScrollPosition> fromScrollPosition) const
 {
     // FIXME: Extend this logic to other scrollable containing blocks.
-    if (!is<RenderView>(m_container) || !m_style.positionArea())
+    if (!is<RenderView>(m_container))
         return;
 
     auto initialContainingBlock = downcast<RenderBox>(m_container.get());
@@ -159,9 +161,14 @@ void PositionedLayoutConstraints::captureScrollableArea()
             ? child->height() + std::max(0_lu, child->marginTop() + child->marginBottom())
             : child->width() + std::max(0_lu, child->marginLeft() + child->marginRight());
         if (startIsBefore())
-            m_containingRange.floorSizeFromMinEdge(outerSize);
+            containingRange.floorSizeFromMinEdge(outerSize);
         else
-            m_containingRange.floorSizeFromMaxEdge(outerSize);
+            containingRange.floorSizeFromMaxEdge(outerSize);
+    }
+
+    if (fromScrollPosition) {
+        auto scrollOffset = BoxAxis::Horizontal == m_physicalAxis ? fromScrollPosition->x() : fromScrollPosition->y();
+        containingRange.moveBy(-scrollOffset);
     }
 }
 
@@ -273,9 +280,14 @@ std::optional<LayoutUnit> PositionedLayoutConstraints::remainingSpaceForStaticAl
         return { };
 
     if (auto* parent = dynamicDowncast<RenderGrid>(m_renderer->parent())) {
-
         auto& itemStyle = m_renderer->style();
-        auto itemResolvedAlignSelf = itemStyle.resolvedAlignSelf(&parent->style(), ItemPosition::Start);
+
+        auto itemResolvedAlignSelf = [&] {
+            if (!itemStyle.alignSelf().isAuto())
+                return itemStyle.alignSelf().resolve(ItemPosition::Start);
+            return parent->style().alignItems().resolve(ItemPosition::Start);
+        }();
+
         switch (itemResolvedAlignSelf.position()) {
         case ItemPosition::Center:
         case ItemPosition::FlexEnd:
@@ -432,8 +444,20 @@ LayoutUnit PositionedLayoutConstraints::resolveAlignmentShift(LayoutUnit unusedS
         && OverflowAlignment::Default == m_alignment.overflow()) {
         // Allow overflow, but try to stay within the containing block.
         // See https://www.w3.org/TR/css-align-3/#auto-safety-position
-        auto spaceAfter = std::max(0_lu, m_originalContainingRange.max() - m_insetModifiedContainingRange.max());
-        auto spaceBefore = std::max(0_lu, m_insetModifiedContainingRange.min() - m_originalContainingRange.min());
+
+        auto containingRange = m_originalContainingRange;
+        if (m_defaultAnchorBox && PositionType::Fixed == m_style.position()) {
+            // We didn't modify the m_containingRange to include scrollable area for positioning,
+            // but we should allow it for overflow management if we can scroll to reach that overflow.
+            if (auto renderView = dynamicDowncast<RenderView>(m_container.get())) {
+                auto& view = renderView->frameView();
+                auto scrollPosition = view.constrainedScrollPosition(ScrollPosition(view.scrollPositionRespectingCustomFixedPosition()));
+                expandToScrollableArea(containingRange, scrollPosition);
+            }
+        }
+
+        auto spaceAfter = std::max(0_lu, containingRange.max() - m_insetModifiedContainingRange.max());
+        auto spaceBefore = std::max(0_lu, m_insetModifiedContainingRange.min() - containingRange.min());
 
         auto [allowsInfiniteOverflowBefore, allowsInfiniteOverflowAfter] = containerAllowsInfiniteOverflow();
 
@@ -468,7 +492,10 @@ ItemPosition PositionedLayoutConstraints::resolveAlignmentValue() const
         ASSERT(m_isEligibleForStaticRangeAlignment);
 #endif
         auto* parentStyle = m_renderer->parentStyle();
-        return m_style.resolvedAlignSelf(parentStyle, ItemPosition::Start).position();
+
+        if (!parentStyle || !m_style.alignSelf().isAuto())
+            return m_style.alignSelf().resolve(ItemPosition::Start).position();
+        return parentStyle->alignItems().resolve(ItemPosition::Start).position();
     }
 
     auto alignmentPosition = [&] {
@@ -486,7 +513,7 @@ ItemPosition PositionedLayoutConstraints::resolveAlignmentValue() const
 
 std::pair<bool, bool> PositionedLayoutConstraints::containerAllowsInfiniteOverflow() const
 {
-    if (!m_container->hasPotentiallyScrollableOverflow())
+    if (!(m_container->hasPotentiallyScrollableOverflow() || (is<RenderView>(m_container) && PositionType::Fixed != m_style.position())))
         return { false, false };
     auto* containerBox = dynamicDowncast<RenderBox>(m_container.get());
     ASSERT(containerBox);
@@ -546,11 +573,10 @@ void PositionedLayoutConstraints::computeStaticPosition()
 
             if (ItemPosition::Auto == m_alignment.position()) {
                 if (LogicalBoxAxis::Inline == m_containingAxis) {
-                    auto justifyItems = m_container->style().justifyItems();
-                    if (ItemPosition::Legacy != justifyItems.position())
-                        m_alignment = justifyItems;
+                    if (auto justifyItems = m_container->style().justifyItems(); !justifyItems.isLegacyNone())
+                        m_alignment = justifyItems.resolve();
                 } else
-                    m_alignment = m_container->style().alignItems();
+                    m_alignment = m_container->style().alignItems().resolve();
             }
             if (ItemPosition::Auto == m_alignment.position() || ItemPosition::Normal == m_alignment.position())
                 m_alignment.setPosition(ItemPosition::Start);

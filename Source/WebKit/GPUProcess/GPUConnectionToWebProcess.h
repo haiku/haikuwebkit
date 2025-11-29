@@ -276,6 +276,10 @@ public:
     void setMediaEnvironment(WebCore::PageIdentifier, const String&);
 #endif
 
+#if ENABLE(IPC_TESTING_API)
+    void takeInvalidMessageStringForTesting(CompletionHandler<void(String&&)>&&);
+#endif
+
     bool isAlwaysOnLoggingAllowed() const;
 
 #if USE(AUDIO_SESSION)

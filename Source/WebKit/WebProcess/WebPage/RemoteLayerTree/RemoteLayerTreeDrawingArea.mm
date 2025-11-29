@@ -301,6 +301,8 @@ void RemoteLayerTreeDrawingArea::startRenderingUpdateTimer()
 {
     if (m_updateRenderingTimer.isActive())
         return;
+    if (!m_updateStartTime)
+        m_updateStartTime = MonotonicTime::now();
     m_updateRenderingTimer.startOneShot(0_s);
 }
 
@@ -334,6 +336,9 @@ void RemoteLayerTreeDrawingArea::updateRendering()
     // This function is not reentrant, e.g. a rAF callback may force repaint.
     if (m_inUpdateRendering)
         return;
+
+    if (!m_updateStartTime)
+        m_updateStartTime = MonotonicTime::now();
 
     Ref webPage = m_webPage.get();
     if (!webPage->hasRootFrames())
@@ -409,6 +414,7 @@ void RemoteLayerTreeDrawingArea::updateRendering()
         webPage->willCommitMainFrameData(*bundle.mainFrameData);
         willCommitLayerTree(*bundle.mainFrameData);
     }
+    bundle.startTime = *std::exchange(m_updateStartTime, std::nullopt);
 
     auto commitEncoder = makeUniqueRef<IPC::Encoder>(Messages::RemoteLayerTreeDrawingAreaProxy::CommitLayerTree::name(), m_identifier.toUInt64());
     commitEncoder.get() << bundle;
@@ -445,7 +451,7 @@ void RemoteLayerTreeDrawingArea::didCompleteRenderingUpdateDisplayFlush(bool flu
     didCompleteRenderingUpdateDisplay();
 }
 
-void RemoteLayerTreeDrawingArea::displayDidRefresh()
+void RemoteLayerTreeDrawingArea::displayDidRefresh(MonotonicTime start)
 {
     // FIXME: This should use a counted replacement for setLayerTreeStateIsFrozen, but
     // the callers of that function are not strictly paired.
@@ -459,6 +465,7 @@ void RemoteLayerTreeDrawingArea::displayDidRefresh()
     }
 
     if (m_deferredRenderingUpdateWhileWaitingForBackingStoreSwap || (m_isScheduled && !m_scheduleRenderingTimer.isActive())) {
+        m_updateStartTime = start;
         triggerRenderingUpdate();
         m_deferredRenderingUpdateWhileWaitingForBackingStoreSwap = false;
         m_isScheduled = false;
@@ -503,7 +510,7 @@ RemoteLayerTreeDrawingArea::BackingStoreFlusher::BackingStoreFlusher(Ref<IPC::Co
 
 bool RemoteLayerTreeDrawingArea::BackingStoreFlusher::flush(UniqueRef<IPC::Encoder>&& commitEncoder, Vector<std::unique_ptr<ThreadSafeImageBufferSetFlusher>>&& flushers)
 {
-    ASSERT(m_hasPendingFlush);
+    ASSERT(m_pendingFlushes);
 
     TraceScope tracingScope(BackingStoreFlushStart, BackingStoreFlushEnd);
     bool flushSucceeded = true;
@@ -516,7 +523,7 @@ bool RemoteLayerTreeDrawingArea::BackingStoreFlusher::flush(UniqueRef<IPC::Encod
     // FIXME: Currently we send the transaction even if the flush timed out.
     commitEncoder.get() << WTFMove(handles);
 
-    m_hasPendingFlush = false;
+    m_pendingFlushes--;
 
     m_connection->sendMessage(WTFMove(commitEncoder), { });
     return flushSucceeded;

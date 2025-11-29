@@ -63,6 +63,7 @@ public:
     void updateTexture(WGPUDDUpdateTextureDescriptor*);
     void addMaterial(WGPUDDMaterialDescriptor*);
     void updateMaterial(WGPUDDUpdateMaterialDescriptor*);
+    void play(bool);
 
     id<MTLTexture> texture() const;
     void render() const;

@@ -443,3 +443,12 @@ function traverseChildrenToFirstStaticText(startObject) {
     }
     return null;
 }
+
+function formatAriaNotifyUserInfo(userInfo) {
+    var result = "";
+    result += `AnnouncementKey: ${userInfo["AXAnnouncementKey"]}\n`;
+    result += `AXARIAAnnouncementInterruptBehavior: ${userInfo["AXARIAAnnouncementInterruptBehavior"]}\n`;
+    result += `AXARIAAnnouncementPriority: ${userInfo["AXARIAAnnouncementPriority"]}\n`;
+    result += `AXAnnouncementLanguageKey: ${userInfo["AXAnnouncementLanguageKey"]}\n\n`
+    return result;
+}

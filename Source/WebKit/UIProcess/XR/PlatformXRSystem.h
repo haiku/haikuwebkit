@@ -101,6 +101,10 @@ private:
 #else
     void submitFrame(IPC::Connection&);
 #endif
+#if ENABLE(WEBXR_HIT_TEST)
+    void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(Expected<PlatformXR::HitTestSource, WebCore::ExceptionData>)>&&);
+    void deleteHitTestSource(PlatformXR::HitTestSource);
+#endif
     void didCompleteShutdownTriggeredBySystem(IPC::Connection&);
 
     // PlatformXRCoordinatorSessionEventClient

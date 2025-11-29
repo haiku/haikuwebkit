@@ -231,6 +231,7 @@ Shared/mac/SecItemRequestData.cpp
 Shared/mac/WebEventFactory.mm @nonARC
 Shared/mac/WebGestureEvent.cpp
 Shared/mac/WebMemorySampler.mac.mm @nonARC
+Shared/mac/CoreIPCDDSecureActionContext.mm
 
 Shared/RemoteLayerTree/DynamicContentScalingBifurcatedImageBuffer.mm @nonARC
 Shared/RemoteLayerTree/DynamicContentScalingImageBufferBackend.mm @nonARC
@@ -674,6 +675,7 @@ UIProcess/RemoteLayerTree/ios/ScrollingTreeScrollingNodeDelegateIOS.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteAnimation.cpp
 UIProcess/RemoteLayerTree/RemoteAnimationStack.mm @nonARC
 UIProcess/RemoteLayerTree/RemoteAnimationTimeline.cpp
+UIProcess/RemoteLayerTree/RemoteAnimationUtilities.cpp
 UIProcess/RemoteLayerTree/RemoteMonotonicTimeline.cpp
 UIProcess/RemoteLayerTree/RemoteMonotonicTimelineRegistry.cpp
 UIProcess/RemoteLayerTree/RemoteLayerTreeDrawingAreaProxy.mm @nonARC
@@ -955,7 +957,6 @@ RemoteCDMProxyMessageReceiver.cpp
 RemoteImageBufferMessageReceiver.cpp
 RemoteImageBufferProxyMessageReceiver.cpp
 RemoteImageBufferSetMessageReceiver.cpp
-RemoteImageBufferSetProxyMessageReceiver.cpp
 RemoteImageDecoderAVFManagerMessageReceiver.cpp
 RemoteImageDecoderAVFProxyMessageReceiver.cpp
 RemoteLayerTreeDrawingAreaProxyMessageReceiver.cpp

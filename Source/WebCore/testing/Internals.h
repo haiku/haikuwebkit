@@ -836,6 +836,10 @@ public:
     ExceptionOr<String> textTrackBCP47Language(TextTrack&);
     Ref<TimeRanges> createTimeRanges(Float32Array& startTimes, Float32Array& endTimes);
     double closestTimeToTimeRanges(double time, TimeRanges&);
+
+    void showCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement&);
+    void hideCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement&);
+
 #endif
 
     ExceptionOr<Ref<DOMRect>> selectionBounds();
@@ -1025,6 +1029,7 @@ public:
     void setMediaStreamSourceInterrupted(MediaStreamTrack&, bool);
     const String& mediaStreamTrackPersistentId(const MediaStreamTrack&);
     size_t audioCaptureSourceCount() const;
+    bool supportsMultiMicrophoneCaptureWithoutEchoCancellation() const;
     bool isMediaStreamSourceInterrupted(MediaStreamTrack&) const;
     bool isMediaStreamSourceEnded(MediaStreamTrack&) const;
     bool isMockRealtimeMediaSourceCenterEnabled();

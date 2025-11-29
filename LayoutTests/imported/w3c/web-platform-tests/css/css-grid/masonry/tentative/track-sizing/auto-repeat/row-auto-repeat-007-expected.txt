@@ -8,7 +8,7 @@ FAIL .masonry 2 assert_equals:
 <div class="masonry" style="width: 200px; height: 100px;" data-expected-width="300" data-expected-height="200">
   <div class="item" data-offset-x="0" data-offset-y="150" data-expected-width="300" data-expected-height="50"></div>
 </div>
-height expected 50 but got 200
+height expected 50 but got 0
 FAIL .masonry 3 assert_equals:
 <div class="masonry" style="width: min-content; height: min-content;" data-expected-width="300" data-expected-height="200">
   <div class="item" data-offset-x="0" data-offset-y="150" data-expected-width="300" data-expected-height="50"></div>
@@ -28,7 +28,7 @@ FAIL .masonry 6 assert_equals:
 <div class="masonry border" style="width: 200px; height: 100px;" data-expected-width="320" data-expected-height="220">
   <div class="item" data-offset-x="0" data-offset-y="150" data-expected-width="300" data-expected-height="50"></div>
 </div>
-height expected 50 but got 200
+height expected 50 but got 0
 FAIL .masonry 7 assert_equals:
 <div class="masonry border" style="width: min-content; height: min-content;" data-expected-width="320" data-expected-height="220">
   <div class="item" data-offset-x="0" data-offset-y="150" data-expected-width="300" data-expected-height="50"></div>
@@ -48,7 +48,7 @@ FAIL .masonry 10 assert_equals:
 <div class="masonry border border-box" style="width: 200px; height: 100px;" data-expected-width="300" data-expected-height="200">
   <div class="item" data-offset-x="0" data-offset-y="100" data-expected-width="300" data-expected-height="50"></div>
 </div>
-height expected 50 but got 180
+height expected 50 but got 0
 FAIL .masonry 11 assert_equals:
 <div class="masonry border border-box" style="width: min-content; height: min-content;" data-expected-width="320" data-expected-height="220">
   <div class="item" data-offset-x="0" data-offset-y="150" data-expected-width="300" data-expected-height="50"></div>

@@ -176,17 +176,17 @@ void AudioTrack::idChanged(TrackID id)
     });
 }
 
-void AudioTrack::labelChanged(const AtomString& label)
+void AudioTrack::labelChanged(const String& label)
 {
-    setLabel(label);
+    setLabel(AtomString { label.isolatedCopy() });
     m_clients.forEach([this] (auto& client) {
         client.audioTrackLabelChanged(*this);
     });
 }
 
-void AudioTrack::languageChanged(const AtomString& language)
+void AudioTrack::languageChanged(const String& language)
 {
-    setLanguage(language);
+    setLanguage(AtomString { language.isolatedCopy() });
 }
 
 void AudioTrack::willRemove()

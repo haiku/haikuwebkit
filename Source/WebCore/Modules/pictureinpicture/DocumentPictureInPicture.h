@@ -28,7 +28,6 @@
 
 #if ENABLE(PICTURE_IN_PICTURE_API)
 
-#include <WebCore/HTMLVideoElement.h>
 #include <WebCore/Supplementable.h>
 #include <wtf/TZoneMalloc.h>
 

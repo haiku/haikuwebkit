@@ -83,6 +83,7 @@ private:
 #if PLATFORM(COCOA)
     std::pair<simd_float4, simd_float4> getCenterAndExtents() const final;
 #endif
+    void play(bool) final;
 
     void render() final;
     void setLabelInternal(const String&) final;
@@ -92,6 +93,9 @@ private:
     void setScale(float) final;
     void setCameraDistance(float) final;
     void setStageMode(WebCore::StageModeOperation) final;
+#if ENABLE(GPU_PROCESS_MODEL)
+    void setRotation(float yaw, float pitch, float roll) final;
+#endif
 
     const DDModelIdentifier m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;

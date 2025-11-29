@@ -441,7 +441,7 @@ RefPtr<Element> TreeScope::elementFromPoint(double clientX, double clientY, HitT
         node = retargetToScope(*node);
     }
 
-    return static_pointer_cast<Element>(WTFMove(node));
+    return uncheckedDowncast<Element>(WTFMove(node));
 }
 
 Vector<RefPtr<Element>> TreeScope::elementsFromPoint(double clientX, double clientY, HitTestSource source)
@@ -490,7 +490,7 @@ Vector<RefPtr<Element>> TreeScope::elementsFromPoint(double clientX, double clie
         if (node == lastNode)
             continue;
 
-        elements.append(static_pointer_cast<Element>(node));
+        elements.append(uncheckedDowncast<Element>(node));
         lastNode = node;
     }
 

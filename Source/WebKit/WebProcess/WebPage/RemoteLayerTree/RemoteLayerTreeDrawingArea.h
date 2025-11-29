@@ -120,7 +120,7 @@ private:
     WebCore::FloatRect exposedContentRect() const final;
     void setExposedContentRect(const WebCore::FloatRect&) final;
 
-    void displayDidRefresh() final;
+    void displayDidRefresh(MonotonicTime) final;
 
     void setDeviceScaleFactor(float, CompletionHandler<void()>&&) final;
 
@@ -153,18 +153,17 @@ private:
         // Returns true when flush succeeds. False if it failed, for example due to timeout.
         bool flush(UniqueRef<IPC::Encoder>&&, Vector<std::unique_ptr<ThreadSafeImageBufferSetFlusher>>&&);
 
-        bool hasPendingFlush() const { return m_hasPendingFlush; }
+        bool hasPendingFlush() const { return m_pendingFlushes; }
         void markHasPendingFlush()
         {
-            bool hadPendingFlush = m_hasPendingFlush.exchange(true);
-            RELEASE_ASSERT(!hadPendingFlush);
+            m_pendingFlushes++;
         }
 
     private:
         explicit BackingStoreFlusher(Ref<IPC::Connection>&&);
 
         const Ref<IPC::Connection> m_connection;
-        std::atomic<bool> m_hasPendingFlush { false };
+        std::atomic<uint32_t> m_pendingFlushes { 0 };
     };
 
     const Ref<RemoteLayerTreeContext> m_remoteLayerTreeContext;
@@ -182,6 +181,7 @@ private:
     std::optional<WebCore::FloatRect> m_viewExposedRect;
 
     WebCore::Timer m_updateRenderingTimer;
+    Markable<MonotonicTime> m_updateStartTime;
     bool m_isRenderingSuspended { false };
     bool m_hasDeferredRenderingUpdate { false };
     bool m_inUpdateRendering { false };

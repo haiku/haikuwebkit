@@ -122,7 +122,7 @@ TextTrack* TextTrackList::item(unsigned index) const
     return nullptr;
 }
 
-TextTrack* TextTrackList::getTrackById(const AtomString& id) const
+RefPtr<TextTrack> TextTrackList::getTrackById(const AtomString& id) const
 {
     // 4.8.10.12.5 Text track API
     // The getTrackById(id) method must return the first TextTrack in the
@@ -131,19 +131,19 @@ TextTrack* TextTrackList::getTrackById(const AtomString& id) const
     for (unsigned i = 0; i < length(); ++i) {
         Ref track = *item(i);
         if (track->id() == id)
-            return track.unsafePtr();
+            return track;
     }
 
     // When no tracks match the given argument, the method must return null.
     return nullptr;
 }
 
-TextTrack* TextTrackList::getTrackById(TrackID id) const
+RefPtr<TextTrack> TextTrackList::getTrackById(TrackID id) const
 {
     for (unsigned i = 0; i < length(); ++i) {
         Ref track = *item(i);
         if (track->trackId() == id)
-            return track.unsafePtr();
+            return track;
     }
     return nullptr;
 }

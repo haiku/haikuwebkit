@@ -31,6 +31,7 @@
 #include <WebCore/LinkLoader.h>
 #include <WebCore/LinkLoaderClient.h>
 #include <WebCore/LinkRelAttribute.h>
+#include <wtf/CheckedPtr.h>
 
 namespace WebCore {
 
@@ -148,6 +149,8 @@ private:
     void addPendingSheet(PendingSheetType);
 
     void removePendingSheet();
+
+    CheckedPtr<Style::Scope> checkedStyleScope();
 
     LinkLoader m_linkLoader;
     CheckedPtr<Style::Scope> m_styleScope;

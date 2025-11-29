@@ -1,0 +1,4 @@
+root
+	textFormControl,'email',placeholder='Enter your email'
+	textFormControl,'password',placeholder='Enter your password',secure
+	textFormControl,'number',placeholder='Security code','123456'

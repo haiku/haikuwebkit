@@ -193,8 +193,11 @@ void HTMLFrameSetElement::defaultEventHandler(Event& event)
 
 void HTMLFrameSetElement::willRecalcStyle(OptionSet<Style::Change>)
 {
-    if (needsStyleRecalc() && renderer())
-        renderer()->setNeedsLayout();
+    if (!needsStyleRecalc())
+        return;
+
+    if (CheckedPtr renderer = this->renderer())
+        renderer->setNeedsLayout();
 }
 
 Node::InsertedIntoAncestorResult HTMLFrameSetElement::insertedIntoAncestor(InsertionType insertionType, ContainerNode& parentOfInsertedTree)

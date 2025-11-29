@@ -3215,12 +3215,11 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         setNonCellTypeForNode(node, SpecBoolean);
         break;
 
-    case ArrayIndexOf:
-    case ArrayLastIndexOf: {
+    case ArrayIndexOf: {
         setNonCellTypeForNode(node, SpecInt32Only);
         break;
     }
-
+            
     case ArrayPop:
         clobberWorld();
         makeHeapTopForNode(node);

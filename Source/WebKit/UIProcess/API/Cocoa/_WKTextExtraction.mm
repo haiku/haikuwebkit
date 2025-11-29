@@ -26,25 +26,41 @@
 #import "config.h"
 #import "_WKTextExtractionInternal.h"
 
+#import "Logging.h"
 #import "WKWebViewInternal.h"
+#import "_WKJSHandleInternal.h"
 #import <WebKit/WKError.h>
 #import <wtf/RetainPtr.h>
 
 @implementation _WKTextExtractionConfiguration {
     RetainPtr<_WKJSHandle> _targetNode;
+    HashMap<RetainPtr<NSString>, HashMap<RetainPtr<_WKJSHandle>, RetainPtr<NSString>>> _clientNodeAttributes;
+    RetainPtr<NSDictionary<NSString *, NSString *>> _replacementStrings;
 }
 
 - (instancetype)init
+{
+    return [self _initForOnlyVisibleText:NO];
+}
+
++ (instancetype)configurationForVisibleTextOnly
+{
+    return adoptNS([[self alloc] _initForOnlyVisibleText:YES]).autorelease();
+}
+
+- (instancetype)_initForOnlyVisibleText:(BOOL)onlyVisibleText
 {
     if (!(self = [super init]))
         return nil;
 
     _shouldFilterText = YES;
-    _includeURLs = YES;
-    _includeRects = YES;
-    _includeNodeIdentifiers = YES;
-    _includeEventListeners = YES;
-    _includeAccessibilityAttributes = YES;
+    _includeURLs = !onlyVisibleText;
+    _includeRects = !onlyVisibleText;
+    _includeNodeIdentifiers = !onlyVisibleText;
+    _includeEventListeners = !onlyVisibleText;
+    _includeAccessibilityAttributes = !onlyVisibleText;
+    _includeTextInAutoFilledControls = !onlyVisibleText;
+    _onlyIncludeVisibleText = onlyVisibleText;
     _targetRect = CGRectNull;
     _maxWordsPerParagraph = NSUIntegerMax;
     return self;
@@ -59,6 +75,82 @@
 {
     _targetNode = adoptNS([targetNode copy]);
 }
+
+- (void)addClientAttribute:(NSString *)attributeName value:(NSString *)attributeValue forNode:(_WKJSHandle *)node
+{
+    _clientNodeAttributes.ensure(RetainPtr { attributeName }, [] {
+        return HashMap<RetainPtr<_WKJSHandle>, RetainPtr<NSString>> { };
+    }).iterator->value.set(RetainPtr { node }, RetainPtr { attributeValue });
+}
+
+- (void)forEachClientNodeAttribute:(void(^)(NSString *attribute, NSString *value, _WKJSHandle *))block
+{
+    for (auto [attribute, values] : _clientNodeAttributes) {
+        for (auto [handle, value] : values)
+            block(attribute.get(), value.get(), handle.get());
+    }
+}
+
+- (NSDictionary<NSString *, NSString *> *)replacementStrings
+{
+    return _replacementStrings.get();
+}
+
+- (void)setReplacementStrings:(NSDictionary<NSString *, NSString *> *)replacementStrings
+{
+    _replacementStrings = adoptNS([replacementStrings copy]);
+}
+
+#define ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value) do { \
+    if (_onlyIncludeVisibleText && value) { \
+        RELEASE_LOG_ERROR(TextExtraction, "%{public}s ignored for text-only %{public}@", __PRETTY_FUNCTION__, [self class]); \
+        return; \
+    } \
+} while (0)
+
+- (void)setIncludeURLs:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeURLs = value;
+}
+
+- (void)setIncludeRects:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeRects = value;
+}
+
+- (void)setIncludeNodeIdentifiers:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeNodeIdentifiers = value;
+}
+
+- (void)setIncludeEventListeners:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeEventListeners = value;
+}
+
+- (void)setIncludeAccessibilityAttributes:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeAccessibilityAttributes = value;
+}
+
+- (void)setIncludeTextInAutoFilledControls:(BOOL)value
+{
+    ENSURE_VALID_TEXT_ONLY_CONFIGURATION(value);
+
+    _includeTextInAutoFilledControls = value;
+}
+
+#undef ENSURE_VALID_TEXT_ONLY_CONFIGURATION
 
 @end
 

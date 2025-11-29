@@ -44,6 +44,10 @@
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/text/WTFString.h>
 
+#if PLATFORM(MAC) && !__has_include(<UIFoundation/NSTextTable.h>)
+#define NSTextBlockLayerBorder NSTextBlockBorder
+#endif
+
 @implementation WKWebView (WKWebViewGetContents)
 
 - (NSAttributedString *)_contentsAsAttributedString
@@ -339,12 +343,7 @@ TEST(WKWebView, AttributedStringFromTable)
         EXPECT_EQ(cell.columnSpan, static_cast<NSInteger>(1));
         EXPECT_EQ(cell.rowSpan, static_cast<NSInteger>(1));
         EXPECT_EQ(cell.table, expectedTable);
-#if PLATFORM(IOS_FAMILY)
-        auto leftEdge = CGRectMinXEdge;
-#else
-        auto leftEdge = NSRectEdgeMinX;
-#endif
-        EXPECT_EQ([cell widthForLayer:NSTextBlockBorder edge:leftEdge], expectedBorderWidth);
+        EXPECT_EQ([cell widthForLayer:NSTextBlockLayerBorder edge:NSRectEdgeMinX], expectedBorderWidth);
 
         if (!expectedBackgroundColor)
             EXPECT_NULL(cell.backgroundColor);

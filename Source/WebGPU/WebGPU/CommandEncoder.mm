@@ -278,19 +278,19 @@ Ref<ComputePassEncoder> CommandEncoder::beginComputePass(const WGPUComputePassDe
 
     MTLComputePassDescriptor* computePassDescriptor = [MTLComputePassDescriptor new];
     computePassDescriptor.dispatchType = MTLDispatchTypeSerial;
-    std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer;
+    QuerySet::CounterSampleBuffer counterSampleBuffer;
     if (auto* wgpuTimestampWrites = descriptor.timestampWrites) {
         Ref timestampWrites = protectedFromAPI(wgpuTimestampWrites->querySet);
         counterSampleBuffer = timestampWrites->counterSampleBufferWithOffset();
         timestampWrites->setCommandEncoder(*this);
     }
 
-    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.first) {
+    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.buffer) {
         auto* timestampWrites = descriptor.timestampWrites;
-        computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.first ?: m_device->timestampsBuffer(m_commandBuffer, 2);
-        computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second) : 0;
-        computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second) : 1;
-        m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.first);
+        computePassDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.buffer ?: m_device->timestampsBuffer(m_commandBuffer, 2);
+        computePassDescriptor.sampleBufferAttachments[0].startOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset) : 0;
+        computePassDescriptor.sampleBufferAttachments[0].endOfEncoderSampleIndex = timestampWrites ? timestampWriteIndex(timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset) : 1;
+        m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.buffer);
     }
 
     id<MTLComputeCommandEncoder> computeCommandEncoder = [m_commandBuffer computeCommandEncoderWithDescriptor:computePassDescriptor];
@@ -531,21 +531,21 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         return RenderPassEncoder::createInvalid(*this, m_device, @"command buffer has already been committed");
 
     MTLRenderPassDescriptor* mtlDescriptor = [MTLRenderPassDescriptor new];
-    std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer;
+    QuerySet::CounterSampleBuffer counterSampleBuffer;
     if (auto* wgpuTimestampWrites = descriptor.timestampWrites) {
         Ref timestampWrites = protectedFromAPI(wgpuTimestampWrites->querySet);
         timestampWrites->setCommandEncoder(*this);
         counterSampleBuffer = timestampWrites->counterSampleBufferWithOffset();
     }
 
-    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.first) {
-        if (counterSampleBuffer.first) {
-            mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.first;
-            mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
-            mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
-            mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
-            mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.second);
-            m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.first);
+    if (m_device->enableEncoderTimestamps() || counterSampleBuffer.buffer) {
+        if (counterSampleBuffer.buffer) {
+            mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = counterSampleBuffer.buffer;
+            mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->beginningOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset);
+            mtlDescriptor.sampleBufferAttachments[0].endOfVertexSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset);
+            mtlDescriptor.sampleBufferAttachments[0].startOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset);
+            mtlDescriptor.sampleBufferAttachments[0].endOfFragmentSampleIndex = timestampWriteIndex(descriptor.timestampWrites->endOfPassWriteIndex, MTLCounterDontSample, counterSampleBuffer.offset);
+            m_device->trackTimestampsBuffer(m_commandBuffer, counterSampleBuffer.buffer);
         } else {
             mtlDescriptor.sampleBufferAttachments[0].sampleBuffer = m_device->timestampsBuffer(m_commandBuffer, 4);
             mtlDescriptor.sampleBufferAttachments[0].startOfVertexSampleIndex = 0;
@@ -2268,8 +2268,8 @@ void CommandEncoder::resolveQuerySet(const QuerySet& querySet, uint32_t firstQue
         [m_commandBuffer encodeSignalEvent:workaround value:1];
         [m_commandBuffer encodeWaitForEvent:workaround value:1];
         ensureBlitCommandEncoder();
-        std::pair<id<MTLCounterSampleBuffer>, uint32_t> counterSampleBuffer = querySet.counterSampleBufferWithOffset();
-        [m_blitCommandEncoder resolveCounters:counterSampleBuffer.first inRange:NSMakeRange(firstQuery + counterSampleBuffer.second, queryCount) destinationBuffer:destination.buffer() destinationOffset:destinationOffset];
+        auto counterSampleBuffer = querySet.counterSampleBufferWithOffset();
+        [m_blitCommandEncoder resolveCounters:counterSampleBuffer.buffer inRange:NSMakeRange(firstQuery + counterSampleBuffer.offset, queryCount) destinationBuffer:destination.buffer() destinationOffset:destinationOffset];
         break;
     }
     default:

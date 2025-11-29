@@ -124,6 +124,8 @@ WK_CLASS_AVAILABLE(macos(14.5), ios(17.5), visionos(1.2))
 
 + (void)_setLinkedOnOrAfterEverything WK_API_AVAILABLE(macos(13.0), ios(16.0));
 
+- (void)_setPLTResourceDelayIntervalForTesting:(NSTimeInterval)interval;
+
 // Test only. Should be called only while no web content processes are running.
 - (void)_terminateServiceWorkers WK_API_AVAILABLE(macos(10.14), ios(12.0));
 

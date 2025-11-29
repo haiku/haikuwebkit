@@ -75,10 +75,10 @@ public:
     void updateConfiguration(TextTrackPrivateRemoteConfiguration&&);
 
     WebCore::TrackID id() const final { return m_id; }
-    AtomString label() const final { return AtomString { m_label.isolatedCopy() }; }
-    AtomString language() const final { return AtomString { m_language.isolatedCopy() }; }
+    String label() const final { return m_label; }
+    String language() const final { return m_language; }
     int trackIndex() const final { return m_trackIndex; }
-    AtomString inBandMetadataTrackDispatchType() const final { return AtomString { m_inBandMetadataTrackDispatchType.isolatedCopy() }; }
+    String inBandMetadataTrackDispatchType() const final { return m_inBandMetadataTrackDispatchType; }
 
     using TextTrackKind = WebCore::InbandTextTrackPrivate::Kind;
     TextTrackKind kind() const final { return m_kind; }

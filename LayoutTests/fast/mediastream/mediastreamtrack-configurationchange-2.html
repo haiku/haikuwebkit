@@ -14,6 +14,10 @@ promise_test(async (t) => {
 
     assert_true(track.getSettings().echoCancellation);
 
+    // Currently, iOS platforms do not support capturing audio with and without echo cancellation.
+    if (!window.internals || internals.supportsMultiMicrophoneCaptureWithoutEchoCancellation())
+        return;
+
     let promise = new Promise((resolve, reject) => {
         track.onconfigurationchange = resolve;
         setTimeout(()=> reject("waited too long for configurationchange"), 5000);
@@ -28,12 +32,11 @@ promise_test(async (t) => {
     await promise;
     assert_false(track.getSettings().echoCancellation, "track");
 
-     promise = new Promise((resolve, reject) => {
+    promise = new Promise((resolve, reject) => {
         track2.onconfigurationchange = resolve;
         setTimeout(()=> reject("waited too long for configurationchange2"), 5000);
     });
 
-    // Currently, cocoa platforms do not support capturing audio with and without echo cancellation.
     track.applyConstraints({echoCancellation: true});
 
     await promise;

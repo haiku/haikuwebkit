@@ -266,88 +266,6 @@ RenderStyle RenderStyle::replace(RenderStyle&& newStyle)
     return RenderStyle { *this, WTFMove(newStyle) };
 }
 
-static StyleSelfAlignmentData resolvedSelfAlignment(const StyleSelfAlignmentData& value, ItemPosition normalValueBehavior)
-{
-    if (value.position() == ItemPosition::Legacy || value.position() == ItemPosition::Normal || value.position() == ItemPosition::Auto)
-        return { normalValueBehavior, OverflowAlignment::Default };
-    return value;
-}
-
-StyleSelfAlignmentData RenderStyle::resolvedAlignItems(ItemPosition normalValueBehavior) const
-{
-    return resolvedSelfAlignment(alignItems(), normalValueBehavior);
-}
-
-StyleSelfAlignmentData RenderStyle::resolvedAlignSelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const
-{
-    // The auto keyword computes to the parent's align-items computed value.
-    // We will return the behavior of 'normal' value if needed, which is specific of each layout model.
-    if (!parentStyle || alignSelf().position() != ItemPosition::Auto)
-        return resolvedSelfAlignment(alignSelf(), normalValueBehavior);
-    return parentStyle->resolvedAlignItems(normalValueBehavior);
-}
-
-StyleSelfAlignmentData RenderStyle::resolvedJustifyItems(ItemPosition normalValueBehavior) const
-{
-    return resolvedSelfAlignment(justifyItems(), normalValueBehavior);
-}
-
-StyleSelfAlignmentData RenderStyle::resolvedJustifySelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const
-{
-    // The auto keyword computes to the parent's justify-items computed value.
-    // We will return the behavior of 'normal' value if needed, which is specific of each layout model.
-    if (!parentStyle || justifySelf().position() != ItemPosition::Auto)
-        return resolvedSelfAlignment(justifySelf(), normalValueBehavior);
-    return parentStyle->resolvedJustifyItems(normalValueBehavior);
-}
-
-static inline StyleContentAlignmentData resolvedContentAlignment(const StyleContentAlignmentData& value, const StyleContentAlignmentData& normalValueBehavior)
-{
-    return (value.position() == ContentPosition::Normal && value.distribution() == ContentDistribution::Default) ? normalValueBehavior : value;
-}
-
-StyleContentAlignmentData RenderStyle::resolvedAlignContent(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    // We will return the behavior of 'normal' value if needed, which is specific of each layout model.
-    return resolvedContentAlignment(alignContent(), normalValueBehavior);
-}
-
-StyleContentAlignmentData RenderStyle::resolvedJustifyContent(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    // We will return the behavior of 'normal' value if needed, which is specific of each layout model.
-    return resolvedContentAlignment(justifyContent(), normalValueBehavior);
-}
-
-static inline ContentPosition resolvedContentAlignmentPosition(const StyleContentAlignmentData& value, const StyleContentAlignmentData& normalValueBehavior)
-{
-    return (value.position() == ContentPosition::Normal && value.distribution() == ContentDistribution::Default) ? normalValueBehavior.position() : value.position();
-}
-
-static inline ContentDistribution resolvedContentAlignmentDistribution(const StyleContentAlignmentData& value, const StyleContentAlignmentData& normalValueBehavior)
-{
-    return (value.position() == ContentPosition::Normal && value.distribution() == ContentDistribution::Default) ? normalValueBehavior.distribution() : value.distribution();
-}
-
-ContentPosition RenderStyle::resolvedJustifyContentPosition(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    return resolvedContentAlignmentPosition(justifyContent(), normalValueBehavior);
-}
-
-ContentDistribution RenderStyle::resolvedJustifyContentDistribution(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    return resolvedContentAlignmentDistribution(justifyContent(), normalValueBehavior);
-}
-
-ContentPosition RenderStyle::resolvedAlignContentPosition(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    return resolvedContentAlignmentPosition(alignContent(), normalValueBehavior);
-}
-
-ContentDistribution RenderStyle::resolvedAlignContentDistribution(const StyleContentAlignmentData& normalValueBehavior) const
-{
-    return resolvedContentAlignmentDistribution(alignContent(), normalValueBehavior);
-}
-
 void RenderStyle::inheritFrom(const RenderStyle& inheritParent)
 {
     m_rareInheritedData = inheritParent.m_rareInheritedData;
@@ -1837,12 +1755,12 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyAspectRatio);
         if (first.alignContent != second.alignContent)
             changingProperties.m_properties.set(CSSPropertyAlignContent);
-        if (first.justifyContent != second.justifyContent)
-            changingProperties.m_properties.set(CSSPropertyJustifyContent);
         if (first.alignItems != second.alignItems)
             changingProperties.m_properties.set(CSSPropertyAlignItems);
         if (first.alignSelf != second.alignSelf)
             changingProperties.m_properties.set(CSSPropertyAlignSelf);
+        if (first.justifyContent != second.justifyContent)
+            changingProperties.m_properties.set(CSSPropertyJustifyContent);
         if (first.justifyItems != second.justifyItems)
             changingProperties.m_properties.set(CSSPropertyJustifyItems);
         if (first.justifySelf != second.justifySelf)

@@ -82,8 +82,8 @@ private:
 
     // TrackPrivateBaseClient
     void idChanged(TrackID) final;
-    void labelChanged(const AtomString&) final;
-    void languageChanged(const AtomString&) final;
+    void labelChanged(const String&) final;
+    void languageChanged(const String&) final;
     void willRemove() final;
 
     void updateKindFromPrivate();

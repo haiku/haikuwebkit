@@ -294,38 +294,6 @@ function any(iterable)
     return promise;
 }
 
-function race(iterable)
-{
-    "use strict";
-
-    if (!@isObject(this))
-        @throwTypeError("|this| is not an object");
-
-    var promiseCapability = @newPromiseCapability(this);
-    var resolve = promiseCapability.resolve;
-    var reject = promiseCapability.reject;
-    var promise = promiseCapability.promise;
-
-    try {
-        var promiseResolve = this.resolve;
-        if (!@isCallable(promiseResolve))
-            @throwTypeError("Promise resolve is not a function");
-
-        for (var value of iterable) {
-            var nextPromise = promiseResolve.@call(this, value);
-            var then = nextPromise.then;
-            if (@isPromise(nextPromise) && then === @defaultPromiseThen)
-                @performPromiseThen(nextPromise, resolve, reject, @undefined, /* context */ promise);
-            else
-                nextPromise.then(resolve, reject);
-        }
-    } catch (error) {
-        reject.@call(@undefined, error);
-    }
-
-    return promise;
-}
-
 function try(callback /*, ...args */)
 {
     "use strict";

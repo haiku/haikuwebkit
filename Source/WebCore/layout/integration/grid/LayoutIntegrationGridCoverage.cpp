@@ -72,6 +72,7 @@ enum class AvoidanceReason : uint64_t {
     GridItemHasContainsSize = 1LLU << 35,
     GridItemHasUnsupportedColumnPlacement = 1LLU << 36,
     GridItemHasUnsupportedRowPlacement = 1LLU << 37,
+    NotAGrid = 1LLU << 38,
 };
 
 static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid& renderGrid)
@@ -86,6 +87,9 @@ static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid
 
     if (renderGridStyle->display() == DisplayType::InlineGrid)
         return AvoidanceReason::GridNeedsBaseline;
+
+    if (renderGridStyle->display() != DisplayType::Grid)
+        return AvoidanceReason::NotAGrid;
 
     if (!renderGridStyle->writingMode().isHorizontal())
         return AvoidanceReason::GridHasVerticalWritingMode;
@@ -156,9 +160,6 @@ static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid
             },
             [&](const Style::GridTrackEntrySubgrid&) {
                 return std::make_optional(AvoidanceReason::GridHasUnsupportedGridTemplateColumns);
-            },
-            [&](const Style::GridTrackEntryMasonry&) {
-                return std::make_optional(AvoidanceReason::GridHasUnsupportedGridTemplateColumns);
             }
         );
 
@@ -196,9 +197,6 @@ static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid
                 return std::make_optional(AvoidanceReason::GridHasUnsupportedGridTemplateColumns);
             },
             [&](const Style::GridTrackEntrySubgrid&) {
-                return std::make_optional(AvoidanceReason::GridHasUnsupportedGridTemplateColumns);
-            },
-            [&](const Style::GridTrackEntryMasonry&) {
                 return std::make_optional(AvoidanceReason::GridHasUnsupportedGridTemplateColumns);
             }
         );
@@ -255,12 +253,12 @@ static std::optional<AvoidanceReason> gridLayoutAvoidanceReason(const RenderGrid
         if (gridItemHasMargins())
             return AvoidanceReason::GridItemHasMargin;
 
-        auto& justifySelf = gridItemStyle->justifySelf();
+        auto justifySelf = gridItemStyle->justifySelf().resolve();
         if (justifySelf.position() != ItemPosition::Start && justifySelf.overflow() != OverflowAlignment::Default
             && justifySelf.positionType() != ItemPositionType::NonLegacy)
             return AvoidanceReason::GridItemHasUnsupportedInlineAxisAlignment;
 
-        auto& alignSelf = gridItemStyle->alignSelf();
+        auto alignSelf = gridItemStyle->alignSelf().resolve();
         if (alignSelf.position() != ItemPosition::Start && alignSelf.overflow() != OverflowAlignment::Default
             && alignSelf.positionType() != ItemPositionType::NonLegacy)
             return AvoidanceReason::GridItemHasUnsupportedBlockAxisAlignment;

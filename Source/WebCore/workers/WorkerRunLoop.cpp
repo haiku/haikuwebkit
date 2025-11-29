@@ -341,7 +341,19 @@ WorkerDedicatedRunLoop::RunInModeResult WorkerDedicatedRunLoop::runInMode(Worker
             runInModeResult.firedRunLoopTimer = true;
 
             runInModeResult.activeRunLoopTimersBeforeFiring = RunLoop::currentSingleton().listActiveTimersForLogging();
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, /*returnAfterSourceHandled*/ false);
+
+            // CFRunLoopGetNextTimerFireDate may return a date in the past even though the next fire
+            // date is in the future (rdar://163967161). This can happen if e.g. the system goes to
+            // sleep while a timer is armed.
+            //
+            // To mitigate this causing us to spin runInMode in an infinite loop, when we detect
+            // that there's a timer that should have fired in the distant past (more than one second
+            // ago), have the run loop block for up to 1 second. This should limit the number of
+            // wakeups to one per second.
+            //
+            // rdar://163967161 tracks fixing this correctly by using CFRunLoop to drive everything.
+            CFTimeInterval runLoopTimeoutInSeconds = (timeUntilNextCFRunLoopTimerInSeconds <= -1) ? 1 : 0;
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, runLoopTimeoutInSeconds, /*returnAfterSourceHandled*/ true);
             runInModeResult.activeRunLoopTimersAfterFiring = RunLoop::currentSingleton().listActiveTimersForLogging();
         }
     }

@@ -65,17 +65,17 @@ std::optional<bool> AudioTrackPrivateWebM::defaultEnabled() const
     return std::nullopt;
 }
 
-AtomString AudioTrackPrivateWebM::label() const
+String AudioTrackPrivateWebM::label() const
 {
     if (m_label.isNull())
-        m_label = m_track.name.is_present() ? AtomString::fromUTF8(m_track.name.value()) : emptyAtom();
+        m_label = m_track.name.is_present() ? String::fromUTF8(m_track.name.value()) : emptyString();
     return m_label;
 }
 
-AtomString AudioTrackPrivateWebM::language() const
+String AudioTrackPrivateWebM::language() const
 {
     if (m_language.isNull())
-        m_language = m_track.language.is_present() ? AtomString::fromUTF8(m_track.language.value()) : emptyAtom();
+        m_language = m_track.language.is_present() ? String::fromUTF8(m_track.language.value()) : emptyString();
     return m_language;
 }
 

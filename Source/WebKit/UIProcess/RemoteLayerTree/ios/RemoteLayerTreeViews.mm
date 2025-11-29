@@ -41,6 +41,7 @@
 #import <WebCore/WebCoreCALayerExtras.h>
 #import <pal/cocoa/CoreMaterialSoftLink.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
+#import <ranges>
 #import <wtf/SoftLinking.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
@@ -154,7 +155,7 @@ bool mayContainEditableElementsInRect(UIView *rootView, const WebCore::FloatRect
     if (viewsInRect.isEmpty())
         return false;
     bool possiblyHasEditableElements = true;
-    for (RetainPtr view : WTF::makeReversedRange(viewsInRect)) {
+    for (RetainPtr view : viewsInRect | std::views::reverse) {
         if (![view isKindOfClass:WKCompositingView.class])
             continue;
         auto* node = RemoteLayerTreeNode::forCALayer([view layer]);
@@ -203,7 +204,7 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
         return { WebCore::TouchAction::Auto };
 
     RetainPtr<UIView> hitView;
-    for (RetainPtr view : WTF::makeReversedRange(viewsAtPoint)) {
+    for (RetainPtr view : viewsAtPoint | std::views::reverse) {
         // We only hit WKChildScrollView directly if its content layer doesn't have an event region.
         // We don't generate the region if there is nothing interesting in it, meaning the touch-action is auto.
         if ([view isKindOfClass:[WKChildScrollView class]])
@@ -237,7 +238,7 @@ OptionSet<WebCore::EventListenerRegionType> eventListenerTypesAtPoint(UIView *ro
         return { };
 
     RetainPtr<UIView> hitView;
-    for (RetainPtr view : WTF::makeReversedRange(viewsAtPoint)) {
+    for (RetainPtr view : viewsAtPoint | std::views::reverse) {
         if ([view isKindOfClass:[WKCompositingView class]]) {
             hitView = WTFMove(view);
             break;
@@ -303,7 +304,7 @@ static Class scrollViewScrollIndicatorClassSingleton()
 
     LOG_WITH_STREAM(UIHitTesting, stream << (void*)self << "_web_findDescendantViewAtPoint " << WebCore::FloatPoint(point) << " found " << viewsAtPoint.size() << " views");
 
-    for (RetainPtr view : WTF::makeReversedRange(viewsAtPoint)) {
+    for (RetainPtr view : viewsAtPoint | std::views::reverse) {
         if ([view conformsToProtocol:@protocol(WKNativelyInteractible)]) {
             LOG_WITH_STREAM(UIHitTesting, stream << " " << (void*)view.get() << " is natively interactible");
             CGPoint subviewPoint = [view convertPoint:point fromView:self];

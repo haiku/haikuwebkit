@@ -351,8 +351,8 @@ void HTMLTreeBuilder::constructTree(AtomHTMLToken&& token)
         && !HTMLElementStack::isHTMLIntegrationPoint(m_tree.currentStackItem())
         && !HTMLElementStack::isMathMLTextIntegrationPoint(m_tree.currentStackItem());
 
-    m_parser.tokenizer().setForceNullCharacterReplacement(m_insertionMode == InsertionMode::Text || inForeignContent);
-    m_parser.tokenizer().setShouldAllowCDATA(inForeignContent);
+    m_parser->tokenizer().setForceNullCharacterReplacement(m_insertionMode == InsertionMode::Text || inForeignContent);
+    m_parser->tokenizer().setShouldAllowCDATA(inForeignContent);
 
 #if ASSERT_ENABLED
     m_destructionProhibited = false;
@@ -741,7 +741,7 @@ void HTMLTreeBuilder::processStartTagForInBody(AtomHTMLToken&& token)
     case TagName::plaintext:
         processFakePEndTagIfPInButtonScope();
         m_tree.insertHTMLElement(WTFMove(token));
-        m_parser.tokenizer().setPLAINTEXTState();
+        m_parser->tokenizer().setPLAINTEXTState();
         return;
     case TagName::button:
         if (m_tree.openElements().inScope(HTML::button)) {
@@ -866,7 +866,7 @@ void HTMLTreeBuilder::processStartTagForInBody(AtomHTMLToken&& token)
     case TagName::textarea:
         m_tree.insertHTMLElement(WTFMove(token));
         m_shouldSkipLeadingNewline = true;
-        m_parser.tokenizer().setRCDATAState();
+        m_parser->tokenizer().setRCDATAState();
         m_originalInsertionMode = m_insertionMode;
         m_framesetOk = false;
         m_insertionMode = InsertionMode::Text;
@@ -2363,8 +2363,8 @@ void HTMLTreeBuilder::processEndTag(AtomHTMLToken&& token)
             // self-closing script tag was encountered and pre-HTML5 parser
             // quirks are enabled. We must set the tokenizer's state to
             // DataState explicitly if the tokenizer didn't have a chance to.
-            ASSERT(m_parser.tokenizer().isInDataState() || m_options.usePreHTML5ParserQuirks);
-            m_parser.tokenizer().setDataState();
+            ASSERT(m_parser->tokenizer().isInDataState() || m_options.usePreHTML5ParserQuirks);
+            m_parser->tokenizer().setDataState();
             return;
         }
         m_tree.openElements().pop();
@@ -2975,7 +2975,7 @@ void HTMLTreeBuilder::processGenericRCDATAStartTag(AtomHTMLToken&& token)
 {
     ASSERT(token.type() == HTMLToken::Type::StartTag);
     m_tree.insertHTMLElement(WTFMove(token));
-    m_parser.tokenizer().setRCDATAState();
+    m_parser->tokenizer().setRCDATAState();
     m_originalInsertionMode = m_insertionMode;
     m_insertionMode = InsertionMode::Text;
 }
@@ -2984,7 +2984,7 @@ void HTMLTreeBuilder::processGenericRawTextStartTag(AtomHTMLToken&& token)
 {
     ASSERT(token.type() == HTMLToken::Type::StartTag);
     m_tree.insertHTMLElement(WTFMove(token));
-    m_parser.tokenizer().setRAWTEXTState();
+    m_parser->tokenizer().setRAWTEXTState();
     m_originalInsertionMode = m_insertionMode;
     m_insertionMode = InsertionMode::Text;
 }
@@ -2993,10 +2993,10 @@ void HTMLTreeBuilder::processScriptStartTag(AtomHTMLToken&& token)
 {
     ASSERT(token.type() == HTMLToken::Type::StartTag);
     m_tree.insertScriptElement(WTFMove(token));
-    m_parser.tokenizer().setScriptDataState();
+    m_parser->tokenizer().setScriptDataState();
     m_originalInsertionMode = m_insertionMode;
 
-    TextPosition position = m_parser.textPosition();
+    TextPosition position = m_parser->textPosition();
 
     m_scriptToProcessStartPosition = position;
 

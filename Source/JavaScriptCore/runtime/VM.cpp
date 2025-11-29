@@ -640,7 +640,7 @@ Exception* VM::ensureTerminationException()
 {
     if (!m_terminationException) {
         JSString* terminationError = jsNontrivialString(*this, terminationErrorString);
-        m_terminationException = Exception::create(*this, terminationError, Exception::DoNotCaptureStack);
+        m_terminationException = Exception::create(*this, terminationError, Exception::StackCaptureAction::DoNotCaptureStack);
     }
     return m_terminationException;
 }
@@ -1522,7 +1522,7 @@ JSCell* VM::orderedHashTableSentinelSlow()
 JSPropertyNameEnumerator* VM::emptyPropertyNameEnumeratorSlow()
 {
     ASSERT(!m_emptyPropertyNameEnumerator);
-    PropertyNameArray propertyNames(*this, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+    PropertyNameArrayBuilder propertyNames(*this, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
     auto* enumerator = JSPropertyNameEnumerator::create(*this, nullptr, 0, 0, WTFMove(propertyNames));
     m_emptyPropertyNameEnumerator.setWithoutWriteBarrier(enumerator);
     return enumerator;

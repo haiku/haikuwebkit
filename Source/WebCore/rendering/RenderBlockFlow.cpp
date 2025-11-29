@@ -79,6 +79,7 @@
 #include "TextBoxTrimmer.h"
 #include "TextUtil.h"
 #include "VisiblePosition.h"
+#include <ranges>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -240,10 +241,18 @@ void RenderBlockFlow::rebuildFloatingObjectSetFromIntrudingFloats()
         return;
     }
 
-    // We should not process floats if the parent node is not a RenderBlock. Otherwise, we will add 
-    // floats in an invalid context. This will cause a crash arising from a bad cast on the parent.
-    // See <rdar://problem/8049753>, where float property is applied on a text node in a SVG.
-    CheckedPtr parentBlock = dynamicDowncast<RenderBlockFlow>(parent());
+    auto parentBlock = [&]() -> CheckedPtr<RenderBlockFlow> {
+        if (auto* blockFlowParent = dynamicDowncast<RenderBlockFlow>(parent()))
+            return blockFlowParent;
+        if (auto* inlineBoxParent = dynamicDowncast<RenderInline>(parent())) {
+            ASSERT(settings().blocksInInlineLayoutEnabled());
+            return dynamicDowncast<RenderBlockFlow>(inlineBoxParent->containingBlock());
+        }
+        // We should not process floats if the parent node is not a RenderBlock. Otherwise, we will add
+        // floats in an invalid context. This will cause a crash arising from a bad cast on the parent.
+        // See <rdar://problem/8049753>, where float property is applied on a text node in a SVG.
+        return { };
+    }();
     if (!parentBlock)
         return;
 
@@ -716,7 +725,7 @@ void RenderBlockFlow::dirtyForLayoutFromPercentageHeightDescendants()
 
 LayoutUnit RenderBlockFlow::shiftForAlignContent(LayoutUnit intrinsicLogicalHeight, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom)
 {
-    auto& alignment = style().alignContent();
+    auto alignment = style().alignContent().resolve();
 
     // Exit if no alignment necessary.
     if (alignment.isNormal() || alignment.isStartward())
@@ -3200,7 +3209,7 @@ bool RenderBlockFlow::hitTestFloats(const HitTestRequest& request, HitTestResult
     if (auto* renderView = dynamicDowncast<RenderView>(*this))
         adjustedLocation += toLayoutSize(renderView->frameView().scrollPosition());
 
-    for (auto& floatingObject : makeReversedRange(m_floatingObjects->set())) {
+    for (auto& floatingObject : m_floatingObjects->set() | std::views::reverse) {
         auto& renderer = floatingObject->renderer();
         if (floatingObject->shouldPaint()) {
             LayoutPoint childPoint = flipFloatForWritingModeForChild(*floatingObject, adjustedLocation + floatingObject->translationOffsetToAncestor());
@@ -4383,7 +4392,7 @@ LayoutOptionalOutsets RenderBlockFlow::allowedLayoutOverflow() const
 {
     LayoutOptionalOutsets allowance = RenderBox::allowedLayoutOverflow();
 
-    if (style().alignContent().position() != ContentPosition::Normal) {
+    if (!style().alignContent().isNormal()) {
         if (hasRareBlockFlowData()) {
             if (isHorizontalWritingMode())
                 allowance.setTop(-rareBlockFlowData()->m_alignContentShift);

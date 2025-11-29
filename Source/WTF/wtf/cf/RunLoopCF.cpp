@@ -96,7 +96,7 @@ void RunLoop::dispatch(const SchedulePairHashSet& schedulePairs, Function<void()
     }, function.leak());
 
     for (auto& schedulePair : schedulePairs)
-        CFRunLoopAddTimer(schedulePair->runLoop(), timer.get(), schedulePair->mode());
+        CFRunLoopAddTimer(schedulePair->protectedRunLoop().get(), timer.get(), schedulePair->protectedMode().get());
 }
 
 // RunLoop::Timer

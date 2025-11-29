@@ -95,7 +95,7 @@ WKFrameLoadState WKBundleFrameGetFrameLoadState(WKBundleFrameRef frameRef)
 
 WKArrayRef WKBundleFrameCopyChildFrames(WKBundleFrameRef frameRef)
 {
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&WebKit::toImpl(frameRef)->childFrames().leakRef());
+    return WebKit::toAPILeakingRef(WebKit::toProtectedImpl(frameRef)->childFrames());
 }
 
 JSGlobalContextRef WKBundleFrameGetJavaScriptContext(WKBundleFrameRef frameRef)
@@ -140,7 +140,7 @@ unsigned WKBundleFrameGetPendingUnloadCount(WKBundleFrameRef frameRef)
 
 WKBundlePageRef WKBundleFrameGetPage(WKBundleFrameRef frameRef)
 {
-    return toAPI(WebKit::toProtectedImpl(frameRef)->page());
+    return toAPI(WebKit::toProtectedImpl(frameRef)->protectedPage().get());
 }
 
 void WKBundleFrameStopLoading(WKBundleFrameRef frameRef)
@@ -270,7 +270,7 @@ bool WKBundleFrameCallShouldCloseOnWebView(WKBundleFrameRef frameRef)
 WKBundleHitTestResultRef WKBundleFrameCreateHitTestResult(WKBundleFrameRef frameRef, WKPoint point)
 {
     ASSERT(frameRef);
-    return WebKit::toAPI(WebKit::toProtectedImpl(frameRef)->hitTest(WebKit::toIntPoint(point)).leakRef());
+    return WebKit::toAPILeakingRef(WebKit::toProtectedImpl(frameRef)->hitTest(WebKit::toIntPoint(point)));
 }
 
 WKSecurityOriginRef WKBundleFrameCopySecurityOrigin(WKBundleFrameRef frameRef)

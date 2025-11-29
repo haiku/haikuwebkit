@@ -6,7 +6,7 @@ module bmalloc [system] {
     // exported as part of the WebKit SPI, and therefore these headers need to be
     // buildable as a clang module.
     explicit module bmalloc_cpp {
-        requires cplusplus11
+        requires cplusplus20
         header "Algorithm.h"
         header "BAssert.h"
         header "BCompiler.h"

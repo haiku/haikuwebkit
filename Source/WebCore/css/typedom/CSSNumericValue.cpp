@@ -72,12 +72,12 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(CSSNumericValue);
 template<typename T> static ExceptionOr<Ref<CSSNumericValue>> convertToExceptionOrNumericValue(ExceptionOr<Ref<T>>&& input)
 {
     CSS_NUMERIC_RETURN_IF_EXCEPTION(result, WTFMove(input));
-    return static_reference_cast<CSSNumericValue>(WTFMove(result));
+    return upcast<CSSNumericValue>(WTFMove(result));
 }
 
 template<typename T> static ExceptionOr<Ref<CSSNumericValue>> convertToExceptionOrNumericValue(Ref<T>&& input)
 {
-    return static_reference_cast<CSSNumericValue>(WTFMove(input));
+    return upcast<CSSNumericValue>(WTFMove(input));
 }
 
 static ExceptionOr<Vector<Ref<CSSNumericValue>>> reifyMathExpressions(const CSSCalc::Children& nodes)

@@ -26,13 +26,39 @@
 #include "config.h"
 #include "WorkerConsoleClient.h"
 
+#include "ImageBitmap.h"
+#include "ImageBitmapRenderingContext.h"
+#include "ImageBuffer.h"
+#include "ImageData.h"
+#include "InspectorCanvas.h"
 #include "InspectorInstrumentation.h"
+#include "IntRect.h"
+#include "JSImageBitmap.h"
+#include "JSImageBitmapRenderingContext.h"
+#include "JSImageData.h"
 #include "WorkerGlobalScope.h"
 #include <JavaScriptCore/ConsoleMessage.h>
+#include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/ScriptArguments.h>
 #include <JavaScriptCore/ScriptCallStack.h>
 #include <JavaScriptCore/ScriptCallStackFactory.h>
+#include <JavaScriptCore/StrongInlines.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/text/WTFString.h>
+
+#if ENABLE(OFFSCREEN_CANVAS)
+#include "JSOffscreenCanvas.h"
+#include "JSOffscreenCanvasRenderingContext2D.h"
+#include "OffscreenCanvas.h"
+#include "OffscreenCanvasRenderingContext2D.h"
+#endif
+
+#if ENABLE(WEBGL)
+#include "JSWebGL2RenderingContext.h"
+#include "JSWebGLRenderingContext.h"
+#include "WebGL2RenderingContext.h"
+#include "WebGLRenderingContext.h"
+#endif
 
 namespace WebCore {
 using namespace Inspector;
@@ -117,11 +143,86 @@ void WorkerConsoleClient::timeStamp(JSC::JSGlobalObject*, Ref<ScriptArguments>&&
         InspectorInstrumentation::consoleTimeStamp(*worker, WTFMove(arguments));
 }
 
+static CanvasRenderingContext* canvasRenderingContext(JSC::VM& vm, JSC::JSValue target)
+{
+#if ENABLE(OFFSCREEN_CANVAS)
+    if (auto* canvas = JSOffscreenCanvas::toWrapped(vm, target))
+        return canvas->renderingContext();
+    if (auto* context = JSOffscreenCanvasRenderingContext2D::toWrapped(vm, target))
+        return context;
+#endif
+    if (auto* context = JSImageBitmapRenderingContext::toWrapped(vm, target))
+        return context;
+#if ENABLE(WEBGL)
+    if (auto* context = JSWebGLRenderingContext::toWrapped(vm, target))
+        return context;
+    if (auto* context = JSWebGL2RenderingContext::toWrapped(vm, target))
+        return context;
+#endif
+    return nullptr;
+}
+
 // FIXME: <https://webkit.org/b/243362> Web Inspector: support starting/stopping recordings from the console in a Worker
 void WorkerConsoleClient::record(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) { }
 void WorkerConsoleClient::recordEnd(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) { }
 
-// FIXME: <https://webkit.org/b/243361> Web Inspector: support console screenshots in a Worker
-void WorkerConsoleClient::screenshot(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) { }
+void WorkerConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, Ref<ScriptArguments>&& arguments)
+{
+    // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
+    if (!is<WorkerGlobalScope>(m_globalScope))
+        return;
+
+    JSC::VM& vm = lexicalGlobalObject->vm();
+    String dataURL;
+    JSC::JSValue target;
+
+    auto timestamp = WallTime::now();
+
+    if (arguments->argumentCount()) {
+        auto possibleTarget = arguments->argumentAt(0);
+
+        if (auto* imageData = JSImageData::toWrapped(vm, possibleTarget)) {
+            target = possibleTarget;
+            if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
+                if (auto imageBuffer = ImageBuffer::create(imageData->size(), RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, /* scale */ 1, DestinationColorSpace::SRGB(), PixelFormat::BGRA8)) {
+                    imageBuffer->putPixelBuffer(imageData->byteArrayPixelBuffer().get(), IntRect(IntPoint(), imageData->size()));
+                    dataURL = imageBuffer->toDataURL("image/png"_s, /* quality */ std::nullopt, PreserveResolution::Yes);
+                }
+            }
+        } else if (auto* imageBitmap = JSImageBitmap::toWrapped(vm, possibleTarget)) {
+            target = possibleTarget;
+            if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
+                if (auto* imageBuffer = imageBitmap->buffer())
+                    dataURL = imageBuffer->toDataURL("image/png"_s, /* quality */ std::nullopt, PreserveResolution::Yes);
+            }
+        } else if (auto* context = canvasRenderingContext(vm, possibleTarget)) {
+            target = possibleTarget;
+            if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
+                if (auto result = InspectorCanvas::getContentAsDataURL(*context))
+                    dataURL = result.value();
+            }
+        } else {
+            String base64;
+            if (possibleTarget.getString(lexicalGlobalObject, base64) && base64.length() > 5 && startsWithLettersIgnoringASCIICase(base64, "data:"_s)) {
+                target = possibleTarget;
+                dataURL = base64;
+            }
+        }
+    }
+
+    if (InspectorInstrumentation::hasFrontends()) [[unlikely]] {
+        if (dataURL.isEmpty()) {
+            InspectorInstrumentation::addMessageToConsole(m_globalScope, makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Error, "Could not capture screenshot"_s, WTFMove(arguments)));
+            return;
+        }
+    }
+
+    Vector<JSC::Strong<JSC::Unknown>> adjustedArguments;
+    adjustedArguments.reserveInitialCapacity(arguments->argumentCount() + !target);
+    adjustedArguments.append({ vm, target ? target : JSC::jsNontrivialString(vm, "Viewport"_s) });
+    for (size_t i = (!target ? 0 : 1); i < arguments->argumentCount(); ++i)
+        adjustedArguments.append({ vm, arguments->argumentAt(i) });
+    InspectorInstrumentation::addMessageToConsole(m_globalScope, makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Log, dataURL, ScriptArguments::create(lexicalGlobalObject, WTFMove(adjustedArguments)), lexicalGlobalObject, /* requestIdentifier */ 0, timestamp));
+}
 
 } // namespace WebCore

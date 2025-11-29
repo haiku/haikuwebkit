@@ -326,6 +326,10 @@ private:
     void didCleanupFullscreen() final { }
 #endif
 
+#if ENABLE(VIDEO)
+    void showCaptionDisplaySettings(CompletionHandler<void(bool)>&&) final;
+#endif
+
     CheckedPtr<WebViewImpl> checkedImpl() const { return m_impl.get(); }
 
     bool isViewVisible(NSView *, NSWindow *);

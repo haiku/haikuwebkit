@@ -267,6 +267,11 @@ inline WebCore::IntPoint toIntPoint(const WKPoint& wkPoint)
     return WebCore::IntPoint(static_cast<int>(wkPoint.x), static_cast<int>(wkPoint.y));
 }
 
+inline WebCore::DoublePoint toDoublePoint(const WKPoint& wkPoint)
+{
+    return WebCore::DoublePoint(wkPoint.x, wkPoint.y);
+}
+
 inline WebCore::IntRect toIntRect(const WKRect& wkRect)
 {
     return WebCore::IntRect(static_cast<int>(wkRect.origin.x), static_cast<int>(wkRect.origin.y),

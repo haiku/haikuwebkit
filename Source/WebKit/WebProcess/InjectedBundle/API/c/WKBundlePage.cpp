@@ -129,7 +129,7 @@ WKBundleFrameRef WKBundlePageGetMainFrame(WKBundlePageRef pageRef)
 
 WKFrameHandleRef WKBundleFrameCreateFrameHandle(WKBundleFrameRef bundleFrameRef)
 {
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&API::FrameHandle::create(WebKit::toImpl(bundleFrameRef)->frameID()).leakRef());
+    return WebKit::toAPILeakingRef(API::FrameHandle::create(WebKit::toImpl(bundleFrameRef)->frameID()));
 }
 
 void WKBundlePageClickMenuItem(WKBundlePageRef pageRef, WKContextMenuItemRef item)
@@ -156,8 +156,7 @@ WKArrayRef WKBundlePageCopyContextMenuItems(WKBundlePageRef pageRef)
 {
 #if ENABLE(CONTEXT_MENUS)
     Ref contextMenu = WebKit::toProtectedImpl(pageRef)->contextMenu();
-
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&contextMenuItems(contextMenu.get()).leakRef());
+    return WebKit::toAPILeakingRef(contextMenuItems(contextMenu.get()));
 #else
     UNUSED_PARAM(pageRef);
     return nullptr;
@@ -171,11 +170,11 @@ WKArrayRef WKBundlePageCopyContextMenuAtPointInWindow(WKBundlePageRef pageRef, W
     if (!page)
         return nullptr;
 
-    RefPtr contextMenu = WebKit::toProtectedImpl(pageRef)->contextMenuAtPointInWindow(page->mainFrame().frameID(), WebKit::toIntPoint(point));
+    RefPtr contextMenu = WebKit::toProtectedImpl(pageRef)->contextMenuAtPointInWindow(page->mainFrame().frameID(), WebKit::toDoublePoint(point));
     if (!contextMenu)
         return nullptr;
 
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&contextMenuItems(*contextMenu).leakRef());
+    return WebKit::toAPILeakingRef(contextMenuItems(*contextMenu));
 #else
     UNUSED_PARAM(pageRef);
     UNUSED_PARAM(point);
@@ -408,7 +407,7 @@ void WKBundlePageReplaceStringMatches(WKBundlePageRef pageRef, WKArrayRef matchI
 WKImageRef WKBundlePageCreateSnapshotWithOptions(WKBundlePageRef pageRef, WKRect rect, WKSnapshotOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, WebKit::toSnapshotOptions(options));
-    SUPPRESS_UNCOUNTED_ARG return toAPI(webImage.leakRef());
+    return toAPILeakingRef(WTFMove(webImage));
 }
 
 WKImageRef WKBundlePageCreateSnapshotInViewCoordinates(WKBundlePageRef pageRef, WKRect rect, WKImageOptions options)
@@ -416,19 +415,19 @@ WKImageRef WKBundlePageCreateSnapshotInViewCoordinates(WKBundlePageRef pageRef, 
     auto snapshotOptions = WebKit::snapshotOptionsFromImageOptions(options);
     snapshotOptions.add(WebKit::SnapshotOption::InViewCoordinates);
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, snapshotOptions);
-    SUPPRESS_UNCOUNTED_ARG return toAPI(webImage.leakRef());
+    return toAPILeakingRef(WTFMove(webImage));
 }
 
 WKImageRef WKBundlePageCreateSnapshotInDocumentCoordinates(WKBundlePageRef pageRef, WKRect rect, WKImageOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), 1, WebKit::snapshotOptionsFromImageOptions(options));
-    SUPPRESS_UNCOUNTED_ARG return toAPI(webImage.leakRef());
+    return toAPILeakingRef(WTFMove(webImage));
 }
 
 WKImageRef WKBundlePageCreateScaledSnapshotInDocumentCoordinates(WKBundlePageRef pageRef, WKRect rect, double scaleFactor, WKImageOptions options)
 {
     RefPtr<WebKit::WebImage> webImage = WebKit::toProtectedImpl(pageRef)->scaledSnapshotWithOptions(WebKit::toIntRect(rect), scaleFactor, WebKit::snapshotOptionsFromImageOptions(options));
-    SUPPRESS_UNCOUNTED_ARG return toAPI(webImage.leakRef());
+    return toAPILeakingRef(WTFMove(webImage));
 }
 
 double WKBundlePageGetBackingScaleFactor(WKBundlePageRef pageRef)
@@ -489,7 +488,7 @@ bool WKBundlePageIsTrackingRepaints(WKBundlePageRef pageRef)
 
 WKArrayRef WKBundlePageCopyTrackedRepaintRects(WKBundlePageRef pageRef)
 {
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&WebKit::toProtectedImpl(pageRef)->trackedRepaintRects().leakRef());
+    return WebKit::toAPILeakingRef(WebKit::toProtectedImpl(pageRef)->trackedRepaintRects());
 }
 
 void WKBundlePageSetComposition(WKBundlePageRef pageRef, WKStringRef text, int from, int length, bool suppressUnderline, WKArrayRef highlightData, WKArrayRef annotationData)
@@ -675,7 +674,7 @@ void WKBundlePagePostSynchronousMessageForTesting(WKBundlePageRef pageRef, WKStr
     RefPtr<API::Object> returnData;
     WebKit::toProtectedImpl(pageRef)->postSynchronousMessageForTesting(WebKit::toWTFString(messageNameRef), WebKit::toProtectedImpl(messageBodyRef).get(), returnData);
     if (returnRetainedDataRef)
-        SUPPRESS_UNCOUNTED_ARG *returnRetainedDataRef = WebKit::toAPI(returnData.leakRef());
+        *returnRetainedDataRef = WebKit::toAPILeakingRef(WTFMove(returnData));
 }
 
 bool WKBundlePageIsSuspended(WKBundlePageRef pageRef)
@@ -725,7 +724,7 @@ WKCaptionUserPreferencesTestingModeTokenRef WKBundlePageCreateCaptionUserPrefere
 {
 #if ENABLE(VIDEO)
     Ref captionPreferences = WebKit::toProtectedImpl(page)->protectedCorePage()->checkedGroup()->ensureCaptionPreferences();
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&API::CaptionUserPreferencesTestingModeToken::create(captionPreferences.get()).leakRef());
+    return WebKit::toAPILeakingRef(API::CaptionUserPreferencesTestingModeToken::create(captionPreferences.get()));
 #else
     UNUSED_PARAM(page);
     return { };
@@ -744,5 +743,5 @@ void WKBundlePageSetSkipDecidePolicyForResponseIfPossible(WKBundlePageRef page, 
 
 WKStringRef WKBundlePageCopyFrameTextForTesting(WKBundlePageRef page, bool includeSubframes)
 {
-    SUPPRESS_UNCOUNTED_ARG return WebKit::toAPI(&API::String::create(WebKit::toProtectedImpl(page)->frameTextForTestingIncludingSubframes(includeSubframes)).leakRef());
+    return WebKit::toAPILeakingRef(API::String::create(WebKit::toProtectedImpl(page)->frameTextForTestingIncludingSubframes(includeSubframes)));
 }

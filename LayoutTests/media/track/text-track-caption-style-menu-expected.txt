@@ -1,0 +1,19 @@
+
+RUN(video.textTracks[0].mode = "showing")
+EXPECTED (allCueElements().length == '1') OK
+EXPECTED (firstCueElement().textContent == 'Lorem') OK
+
+Pretend to show the subtitle style menu:
+RUN(internals.showCaptionDisplaySettingsPreviewForMediaElement(video))
+EXPECTED (allCueElements().length == '1') OK
+EXPECTED (firstCueElement().textContent == 'This is a preview') OK
+
+Ensure that activeCues does not change:
+EXPECTED (video.textTracks[0].activeCues[0].text == 'Lorem') OK
+
+Pretend to hide the subtitle style menu:
+RUN(internals.hideCaptionDisplaySettingsPreviewForMediaElement(video))
+EXPECTED (allCueElements().length == '1') OK
+EXPECTED (firstCueElement().textContent == 'Lorem') OK
+END OF TEST
+

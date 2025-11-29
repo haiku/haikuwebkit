@@ -81,6 +81,10 @@
 #import "ModelProcessProxy.h"
 #endif
 
+#if ENABLE(THREADED_ANIMATIONS)
+#import "RemoteAnimationStack.h"
+#endif
+
 #if ENABLE(MEDIA_SESSION_COORDINATOR)
 @interface WKMediaSessionCoordinatorHelper : NSObject <_WKMediaSessionCoordinatorDelegate>
 - (id)initWithCoordinator:(WebCore::MediaSessionCoordinatorClient*)coordinator;
@@ -1143,17 +1147,51 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
         return @"standard";
 
     Ref connection = process->connection();
+
+#if !PLATFORM(IOS_FAMILY)
+    bool hasAllowJIT = hasEntitlement(connection->xpcConnection(), "com.apple.security.cs.allow-jit"_s);
+    bool hasVerifiedJIT = hasEntitlement(connection->xpcConnection(), "com.apple.private.verified-jit"_s);
+    bool hasSingleJIT = hasEntitlement(connection->xpcConnection(), "com.apple.security.cs.single-jit"_s);
+    bool hasJIT = hasAllowJIT || hasVerifiedJIT || hasSingleJIT;
+
+    bool hasEnhancedSecurityEntitlement = hasEntitlement(connection->xpcConnection(), "com.apple.private.webkit.enhanced-security"_s);
+
+    bool hasEnhancedSecurity = hasEnhancedSecurityEntitlement || !hasJIT;
+    bool hasLockdownMode = !hasAllowJIT && !hasEnhancedSecurity;
+
+#else
     bool hasEnhancedSecurity = hasEntitlement(connection->xpcConnection(), "com.apple.private.webkit.enhanced-security"_s);
     bool hasLockdownMode = hasEntitlement(connection->xpcConnection(), "com.apple.private.webkit.lockdown-mode"_s);
 
-    if (hasEnhancedSecurity)
-        return @"security";
+#endif
+
     if (hasLockdownMode)
         return @"lockdown";
+    if (hasEnhancedSecurity)
+        return @"security";
 
 #endif
     return @"standard";
 }
+
+#if ENABLE(THREADED_ANIMATIONS)
+- (NSString *)_animationStackForLayerWithID:(unsigned long long)layerID
+{
+    auto animationStack = [&] -> RefPtr<const WebKit::RemoteAnimationStack> {
+        if (!layerID)
+            return nullptr;
+        WebCore::PlatformLayerIdentifier platformLayerID { ObjectIdentifier<WebCore::PlatformLayerIdentifierType>(layerID), _page->legacyMainFrameProcess().coreProcessIdentifier() };
+        if (RefPtr nodeStack = downcast<WebKit::RemoteLayerTreeDrawingAreaProxy>(_page->protectedDrawingArea())->animationStackForNodeWithIDForTesting(platformLayerID))
+            return nodeStack;
+        if (CheckedPtr scrollingCoordinator = _page->scrollingCoordinatorProxy())
+            return scrollingCoordinator->animationStackForNodeWithIDForTesting(platformLayerID);
+        return nullptr;
+    }();
+    if (animationStack)
+        return animationStack->toJSONForTesting()->toJSONString().createNSString().autorelease();
+    return @"";
+}
+#endif
 
 @end
 

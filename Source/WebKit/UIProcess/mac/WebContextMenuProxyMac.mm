@@ -43,6 +43,7 @@
 #import "WebContextMenuItemData.h"
 #import "WebPageProxy.h"
 #import "WebPreferences.h"
+#import "_WKCaptionStyleMenuController.h"
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <WebCore/GraphicsContext.h>
 #import <WebCore/IntRect.h>
@@ -189,7 +190,7 @@
 
 @end
 
-@interface WKMenuDelegate : NSObject <NSMenuDelegate> {
+@interface WKMenuDelegate : NSObject <NSMenuDelegate, WKCaptionStyleMenuControllerDelegate> {
     WeakPtr<WebKit::WebContextMenuProxyMac> _menuProxy;
 }
 - (instancetype)initWithMenuProxy:(WebKit::WebContextMenuProxyMac&)menuProxy;
@@ -217,6 +218,18 @@
 - (void)menuDidClose:(NSMenu *)menu
 {
     Ref { *_menuProxy }->protectedPage()->didDismissContextMenu();
+}
+
+#pragma mark - WKCaptionStyleMenuControllerDelegate
+
+- (void)captionStyleMenuWillOpen:(NSMenu *)menu
+{
+    Ref { *_menuProxy }->captionStyleMenuWillOpen();
+}
+
+- (void)captionStyleMenuDidClose:(NSMenu *)menu
+{
+    Ref { *_menuProxy }->captionStyleMenuDidClose();
 }
 
 @end
@@ -929,15 +942,23 @@ void WebContextMenuProxyMac::getContextMenuItem(const WebContextMenuItemData& it
         return;
 
     case WebCore::ContextMenuItemType::Submenu: {
-        getContextMenuFromItems(item.submenu(), [action = item.action(), completionHandler = WTFMove(completionHandler), enabled = item.enabled(), title = item.title(), indentationLevel = item.indentationLevel()](NSMenu *menu) mutable {
-            RetainPtr menuItem = adoptNS([[NSMenuItem alloc] initWithTitle:title.createNSString().get() action:nullptr keyEquivalent:@""]);
-            [menuItem setEnabled:enabled];
-            [menuItem setIndentationLevel:indentationLevel];
-            [menuItem setSubmenu:menu];
-            [menuItem setIdentifier:menuItemIdentifier(action).get()];
+        RetainPtr menuItem = adoptNS([[NSMenuItem alloc] initWithTitle:item.title().createNSString().get() action:nullptr keyEquivalent:@""]);
+        [menuItem setEnabled:item.enabled()];
+        [menuItem setIndentationLevel:item.indentationLevel()];
+        [menuItem setIdentifier:menuItemIdentifier(item.action()).get()];
 #if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
-            updateMenuItemImage(menuItem.get(), action, title);
+        updateMenuItemImage(menuItem.get(), item.action(), item.title());
 #endif
+
+        if (item.action() == ContextMenuItemCaptionDisplayStyleSubmenu) {
+            RetainPtr controller = captionStyleMenuController();
+            [menuItem setSubmenu:[controller captionStyleMenu]];
+            completionHandler(menuItem.get());
+            return;
+        }
+
+        getContextMenuFromItems(item.submenu(), [menuItem = WTFMove(menuItem), completionHandler = WTFMove(completionHandler)](NSMenu *menu) mutable {
+            [menuItem setSubmenu:menu];
             completionHandler(menuItem.get());
         });
         return;
@@ -991,10 +1012,8 @@ void WebContextMenuProxyMac::useContextMenuItems(Vector<Ref<WebContextMenuItem>>
         [[WKMenuTarget sharedMenuTarget] setMenuProxy:this];
 
         auto menuFromProposedMenu = [this, protectedThis = Ref { *this }] (RetainPtr<NSMenu>&& menu) {
-            m_menuDelegate = adoptNS([[WKMenuDelegate alloc] initWithMenuProxy:*this]);
-
             m_menu = WTFMove(menu);
-            [m_menu setDelegate:m_menuDelegate.get()];
+            [m_menu setDelegate:RetainPtr { menuDelegate() }.get()];
 
             WebContextMenuProxy::useContextMenuItems({ });
         };
@@ -1066,6 +1085,34 @@ RetainPtr<NSArray> WebContextMenuProxyMac::platformData() const
     }
 
     return result;
+}
+
+WKCaptionStyleMenuController *WebContextMenuProxyMac::captionStyleMenuController()
+{
+    if (!m_captionStyleMenuController) {
+        m_captionStyleMenuController = adoptNS([[WKCaptionStyleMenuController alloc] init]);
+        [m_captionStyleMenuController setDelegate:RetainPtr { menuDelegate() }.get()];
+    }
+    return m_captionStyleMenuController.get();
+}
+
+WKMenuDelegate *WebContextMenuProxyMac::menuDelegate()
+{
+    if (!m_menuDelegate)
+        m_menuDelegate = adoptNS([[WKMenuDelegate alloc] initWithMenuProxy:*this]);
+    return m_menuDelegate.get();
+}
+
+void WebContextMenuProxyMac::captionStyleMenuWillOpen()
+{
+    if (auto identifier = m_context.mediaElementIdentifier())
+        protectedPage()->showCaptionDisplaySettingsPreview(m_frameInfo, *identifier);
+}
+
+void WebContextMenuProxyMac::captionStyleMenuDidClose()
+{
+    if (auto identifier = m_context.mediaElementIdentifier())
+        protectedPage()->hideCaptionDisplaySettingsPreview(m_frameInfo, *identifier);
 }
 
 } // namespace WebKit

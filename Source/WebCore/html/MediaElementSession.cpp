@@ -52,7 +52,7 @@
 #include "NowPlayingInfo.h"
 #include "Page.h"
 #include "PlatformMediaSessionManager.h"
-#include "RenderMedia.h"
+#include "RenderMediaInlines.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "ScriptController.h"

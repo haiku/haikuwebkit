@@ -370,11 +370,14 @@ void VideoPresentationModelContext::setVideoFullscreenFrame(WebCore::FloatRect f
         manager->setVideoFullscreenFrame(m_contextId, frame);
 }
 
-void VideoPresentationModelContext::fullscreenModeChanged(WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode)
+void VideoPresentationModelContext::fullscreenModeChanged(WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode, ShouldNotifyMediaElement shouldNotifyMediaElement)
 {
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, mode);
-    if (RefPtr manager = m_manager.get())
+    if (RefPtr manager = m_manager.get(); manager && shouldNotifyMediaElement == ShouldNotifyMediaElement::Yes)
         manager->fullscreenModeChanged(m_contextId, mode);
+    m_clients.forEach([&](auto& client) {
+        client.fullscreenModeChanged(mode);
+    });
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -1240,7 +1243,7 @@ void VideoPresentationManagerProxy::setVideoFullscreenMode(PlaybackSessionContex
 {
     MESSAGE_CHECK((mode | HTMLMediaElementEnums::VideoFullscreenModeAllValidBitsMask) == HTMLMediaElementEnums::VideoFullscreenModeAllValidBitsMask);
 
-    ensureInterface(contextId)->setMode(mode, false);
+    ensureInterface(contextId)->setMode(mode, VideoPresentationModel::ShouldNotifyMediaElement::No);
 }
 
 void VideoPresentationManagerProxy::clearVideoFullscreenMode(PlaybackSessionContextIdentifier contextId, WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode)
@@ -1248,7 +1251,7 @@ void VideoPresentationManagerProxy::clearVideoFullscreenMode(PlaybackSessionCont
     MESSAGE_CHECK((mode | HTMLMediaElementEnums::VideoFullscreenModeAllValidBitsMask) == HTMLMediaElementEnums::VideoFullscreenModeAllValidBitsMask);
 
 #if PLATFORM(MAC)
-    ensureInterface(contextId)->clearMode(mode);
+    ensureInterface(contextId)->clearMode(mode, VideoPresentationModel::ShouldNotifyMediaElement::Yes);
 #endif
 }
 
@@ -1512,7 +1515,7 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
     sendToWebProcess(contextId, Messages::VideoPresentationManager::DidCleanupFullscreen(contextId.object()));
 
     if (!hasMode(HTMLMediaElementEnums::VideoFullscreenModeInWindow)) {
-        interface->setMode(HTMLMediaElementEnums::VideoFullscreenModeNone, false);
+        interface->setMode(HTMLMediaElementEnums::VideoFullscreenModeNone, VideoPresentationModel::ShouldNotifyMediaElement::No);
         removeClientForContext(contextId);
     }
 

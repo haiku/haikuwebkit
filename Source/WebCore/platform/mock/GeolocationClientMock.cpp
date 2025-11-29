@@ -109,14 +109,13 @@ void GeolocationClientMock::permissionTimerFired()
 {
     ASSERT(m_permissionState != PermissionStateUnset);
     bool allowed = m_permissionState == PermissionStateAllowed;
-    GeolocationSet::iterator end = m_pendingPermission.end();
 
     // Once permission has been set (or denied) on a Geolocation object, there can be
     // no further requests for permission to the mock. Consequently the callbacks
     // which fire synchronously from Geolocation::setIsAllowed() cannot reentrantly modify
     // m_pendingPermission.
-    for (GeolocationSet::iterator it = m_pendingPermission.begin(); it != end; ++it)
-        (*it)->setIsAllowed(allowed, { });
+    for (RefPtr permission : m_pendingPermission)
+        permission->setIsAllowed(allowed, { });
     m_pendingPermission.clear();
 }
 

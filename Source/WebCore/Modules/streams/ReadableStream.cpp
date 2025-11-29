@@ -323,6 +323,9 @@ void ReadableStream::fulfillReadRequest(JSDOMGlobalObject& globalObject, RefPtr<
         return;
     }
 
+    auto& vm = globalObject.vm();
+    JSC::JSLockHolder lock(vm);
+
     auto chunk = toJS<IDLNullable<IDLArrayBufferView>>(globalObject, globalObject, WTFMove(filledView));
     readRequest->runChunkSteps(chunk);
 }
@@ -347,6 +350,9 @@ void ReadableStream::fulfillReadIntoRequest(JSDOMGlobalObject& globalObject, Ref
     ASSERT(byobReader->readIntoRequestsSize());
 
     Ref readRequest = byobReader->takeFirstReadIntoRequest();
+
+    auto& vm = globalObject.vm();
+    JSC::JSLockHolder lock(vm);
 
     auto chunk = toJS<IDLNullable<IDLArrayBufferView>>(globalObject, globalObject, WTFMove(filledView));
     if (done) {
@@ -558,6 +564,12 @@ void ReadableStream::visitAdditionalChildren(JSC::AbstractSlotVisitor& visitor)
         m_controller->underlyingSourceConcurrently().visit(visitor);
         m_controller->storedErrorConcurrently().visit(visitor);
     }
+}
+
+JSDOMGlobalObject* ReadableStream::globalObject()
+{
+    RefPtr context = scriptExecutionContext();
+    return context ? JSC::jsCast<JSDOMGlobalObject*>(context->globalObject()) : nullptr;
 }
 
 template<typename Visitor>

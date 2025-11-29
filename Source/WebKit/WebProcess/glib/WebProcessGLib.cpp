@@ -65,7 +65,11 @@
 #include <WebCore/PlatformDisplaySurfaceless.h>
 #endif
 
-#if PLATFORM(GTK)
+#if OS(ANDROID)
+#include <WebCore/PlatformDisplayAndroid.h>
+#endif
+
+#if PLATFORM(GTK) || OS(ANDROID)
 #include <WebCore/PlatformDisplayDefault.h>
 #endif
 
@@ -160,12 +164,19 @@ void WebProcess::initializePlatformDisplayIfNeeded() const
     }
 #endif
 
+#if OS(ANDROID)
+    if (auto display = PlatformDisplayAndroid::create()) {
+        PlatformDisplay::setSharedDisplay(WTFMove(display));
+        return;
+    }
+#endif
+
     if (auto display = PlatformDisplaySurfaceless::create()) {
         PlatformDisplay::setSharedDisplay(WTFMove(display));
         return;
     }
 
-#if PLATFORM(GTK)
+#if PLATFORM(GTK) || OS(ANDROID)
     if (auto display = PlatformDisplayDefault::create()) {
         PlatformDisplay::setSharedDisplay(WTFMove(display));
         return;

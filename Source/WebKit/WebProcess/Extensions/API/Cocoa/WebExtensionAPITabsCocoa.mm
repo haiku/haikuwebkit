@@ -632,7 +632,7 @@ void WebExtensionAPITabs::createTab(WebPageProxyIdentifier webPageProxyIdentifie
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -650,7 +650,7 @@ void WebExtensionAPITabs::query(WebPageProxyIdentifier webPageProxyIdentifier, N
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -668,7 +668,7 @@ void WebExtensionAPITabs::get(double tabID, Ref<WebExtensionCallbackHandler>&& c
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -682,7 +682,7 @@ void WebExtensionAPITabs::getCurrent(WebPageProxyIdentifier webPageProxyIdentifi
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -712,7 +712,7 @@ void WebExtensionAPITabs::getSelected(WebPageProxyIdentifier webPageProxyIdentif
 
         ASSERT(tabs.size() == 1);
 
-        callback->call(toWebAPI(tabs.first()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(tabs.first())));
     }, extensionContext().identifier());
 }
 
@@ -734,7 +734,7 @@ void WebExtensionAPITabs::duplicate(double tabID, NSDictionary *properties, Ref<
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -756,7 +756,7 @@ void WebExtensionAPITabs::update(WebPageProxyIdentifier webPageProxyIdentifier, 
             return;
         }
 
-        callback->call(toWebAPI(result.value()));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -881,7 +881,7 @@ void WebExtensionAPITabs::getZoom(WebPageProxyIdentifier webPageProxyIdentifier,
             return;
         }
 
-        callback->call(@(result.value()));
+        callback->call(JSValueMakeNumber(callback->globalContext(), result.value()));
     }, extensionContext().identifier());
 }
 
@@ -918,11 +918,13 @@ void WebExtensionAPITabs::detectLanguage(WebPageProxyIdentifier webPageProxyIden
         }
 
         if (result.value().isEmpty()) {
-            callback->call(unknownLanguageValue);
+            // This is a safer cpp false positive (rdar://163760990).
+            SUPPRESS_UNCOUNTED_ARG callback->call(JSValueMakeString(callback->globalContext(), toJSString(unknownLanguageValue).get()));
             return;
         }
 
-        callback->call(result.value().createNSString().get());
+        // This is a safer cpp false positive (rdar://163760990).
+        SUPPRESS_UNCOUNTED_ARG callback->call(JSValueMakeString(callback->globalContext(), toJSString(result.value()).get()));
     }, extensionContext().identifier());
 }
 
@@ -965,11 +967,13 @@ void WebExtensionAPITabs::captureVisibleTab(WebPageProxyIdentifier webPageProxyI
         }
 
         if (result.value().isEmpty()) {
-            callback->call(emptyDataURLValue);
+            // This is a safer cpp false positive (rdar://163760990).
+            SUPPRESS_UNCOUNTED_ARG callback->call(JSValueMakeString(callback->globalContext(), toJSString(emptyDataURLValue).get()));
             return;
         }
 
-        callback->call(result.value().string().createNSString().get());
+        // This is a safer cpp false positive (rdar://163760990).
+        SUPPRESS_UNCOUNTED_ARG callback->call(JSValueMakeString(callback->globalContext(), toJSString(result.value().string()).get()));
     }, extensionContext().identifier());
 }
 
@@ -1012,7 +1016,7 @@ void WebExtensionAPITabs::sendMessage(WebFrame& frame, double tabID, const Strin
             return;
         }
 
-        callback->call(parseJSON(result.value().createNSString().get(), JSONOptions::FragmentsAllowed));
+        callback->call(fromJSON(callback->globalContext(), JSON::Value::parseJSON(result.value())));
     }, extensionContext().identifier());
 }
 
@@ -1078,7 +1082,7 @@ void WebExtensionAPITabs::executeScript(WebPageProxyIdentifier webPageProxyIdent
             return;
         }
 
-        callback->call(toWebAPI(result.value(), true));
+        callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value(), true)));
     }, extensionContext().identifier());
 }
 

@@ -1176,7 +1176,6 @@ private:
             break;
         case ArrayIncludes:
         case ArrayIndexOf:
-        case ArrayLastIndexOf:
             compileArrayIndexOfOrArrayIncludes();
             break;
         case CreateActivation:
@@ -8306,15 +8305,12 @@ IGNORE_CLANG_WARNINGS_END
 
     void compileArrayIndexOfOrArrayIncludes()
     {
-        ASSERT(m_node->op() == ArrayIncludes || m_node->op() == ArrayIndexOf || m_node->op() == ArrayLastIndexOf);
+        ASSERT(m_node->op() == ArrayIncludes || m_node->op() == ArrayIndexOf);
 
         JSGlobalObject* globalObject = m_graph.globalObjectFor(m_origin.semantic);
         LValue base = lowCell(m_graph.varArgChild(m_node, 0));
         LValue storage = lowStorage(m_node->numChildren() == 3 ? m_graph.varArgChild(m_node, 2) : m_graph.varArgChild(m_node, 3));
         LValue length = m_out.load32(storage, m_heaps.Butterfly_publicLength);
-
-        bool isArrayIncludes = m_node->op() == ArrayIncludes;
-        bool isArrayLastIndexOf = m_node->op() == ArrayLastIndexOf;
 
         LValue startIndex;
         if (m_node->numChildren() == 4) {
@@ -8322,12 +8318,10 @@ IGNORE_CLANG_WARNINGS_END
             startIndex = m_out.select(m_out.greaterThanOrEqual(startIndex, m_out.int32Zero),
                 m_out.select(m_out.above(startIndex, length), length, startIndex),
                 m_out.select(m_out.lessThan(m_out.add(length, startIndex), m_out.int32Zero), m_out.int32Zero, m_out.add(length, startIndex)));
-        } else {
-            if (isArrayLastIndexOf)
-                startIndex = m_out.sub(length, m_out.int32One);
-            else
-                startIndex = m_out.int32Zero;
-        }
+        } else
+            startIndex = m_out.int32Zero;
+
+        bool isArrayIncludes = m_node->op() == ArrayIncludes;
 
         Edge& searchElementEdge = m_graph.varArgChild(m_node, 1);
         switch (searchElementEdge.useKind()) {
@@ -8363,10 +8357,7 @@ IGNORE_CLANG_WARNINGS_END
 
             LBasicBlock lastNext = m_out.appendTo(loopHeader, loopBody);
             LValue index = m_out.phi(pointerType(), initialStartIndex);
-            if (isArrayLastIndexOf)
-                m_out.branch(m_out.greaterThanOrEqual(index, m_out.constIntPtr(0)), unsure(loopBody), unsure(notFound));
-            else
-                m_out.branch(m_out.notEqual(index, length), unsure(loopBody), unsure(notFound));
+            m_out.branch(m_out.notEqual(index, length), unsure(loopBody), unsure(notFound));
 
             m_out.appendTo(loopBody, loopNext);
             ValueFromBlock foundResult = isArrayIncludes ? m_out.anchor(m_out.constBool(true)) : m_out.anchor(index);
@@ -8389,7 +8380,7 @@ IGNORE_CLANG_WARNINGS_END
             }
 
             m_out.appendTo(loopNext, notFound);
-            LValue nextIndex = isArrayLastIndexOf ? m_out.sub(index, m_out.intPtrOne) : m_out.add(index, m_out.intPtrOne);
+            LValue nextIndex = m_out.add(index, m_out.intPtrOne);
             m_out.addIncomingToPhi(index, m_out.anchor(nextIndex));
             m_out.jump(loopHeader);
 
@@ -8437,7 +8428,7 @@ IGNORE_CLANG_WARNINGS_END
 
             ValueFromBlock initialStartIndex = m_out.anchor(startIndex);
 
-            auto indexOfOperation = operationArrayIndexOfString;
+            auto operation = operationArrayIndexOfString;
 
             auto isCopyOnWriteArrayWithContiguous = [&]() {
                 Edge& baseEdge = m_graph.varArgChild(m_node, 0);
@@ -8453,7 +8444,7 @@ IGNORE_CLANG_WARNINGS_END
             };
 
             if (isCopyOnWriteArrayWithContiguous()) {
-                indexOfOperation = operationCopyOnWriteArrayIndexOfString;
+                operation = operationCopyOnWriteArrayIndexOfString;
                 LValue targetStructureID = encodeStructureID(weakPointer(vm().cellButterflyOnlyAtomStringsStructure.get()));
                 LValue butterflyStructureID = m_out.load32(m_out.add(storage, m_out.constIntPtr(-JSCellButterfly::offsetOfData())), m_heaps.JSCell_structureID);
                 m_out.branch(m_out.equal(butterflyStructureID, targetStructureID), unsure(slowCase), unsure(checkSearchRopeString));
@@ -8469,10 +8460,7 @@ IGNORE_CLANG_WARNINGS_END
 
             m_out.appendTo(loopHeader, fastCheckElementEmpty);
             LValue index = m_out.phi(pointerType(), initialStartIndex);
-            if (isArrayLastIndexOf)
-                m_out.branch(m_out.greaterThanOrEqual(index, m_out.constIntPtr(0)), unsure(fastCheckElementEmpty), unsure(notFound));
-            else
-                m_out.branch(m_out.notEqual(index, length), unsure(fastCheckElementEmpty), unsure(notFound));
+            m_out.branch(m_out.notEqual(index, length), unsure(fastCheckElementEmpty), unsure(notFound));
 
             m_out.appendTo(fastCheckElementEmpty, fastCheckElementCell);
             LValue element = m_out.load64(m_out.baseIndex(m_heaps.indexedContiguousProperties, storage, index));
@@ -8529,7 +8517,7 @@ IGNORE_CLANG_WARNINGS_END
             m_out.branch(m_out.notZero32(compareBytesLoopIndexInLoop), unsure(compareBytesLoop), unsure(continuation));
 
             m_out.appendTo(loopNext,  notFound);
-            LValue nextIndex = isArrayLastIndexOf ? m_out.sub(index, m_out.intPtrOne) : m_out.add(index, m_out.intPtrOne);
+            LValue nextIndex = m_out.add(index, m_out.intPtrOne);
             m_out.addIncomingToPhi(index, m_out.anchor(nextIndex));
             m_out.jump(loopHeader);
 
@@ -8538,7 +8526,7 @@ IGNORE_CLANG_WARNINGS_END
             m_out.jump(continuation);
 
             m_out.appendTo(slowCase, continuation);
-            ValueFromBlock slowCaseResult = isArrayIncludes ? m_out.anchor(vmCall(Int32, operationArrayIncludesString, weakPointer(globalObject), storage, searchElement, startIndex)) : m_out.anchor(vmCall(Int64, isArrayLastIndexOf ? operationArrayLastIndexOfString : indexOfOperation, weakPointer(globalObject), storage, searchElement, startIndex));
+            ValueFromBlock slowCaseResult = isArrayIncludes ? m_out.anchor(vmCall(Int32, operationArrayIncludesString, weakPointer(globalObject), storage, searchElement, startIndex)) : m_out.anchor(vmCall(Int64, operation, weakPointer(globalObject), storage, searchElement, startIndex));
             m_out.jump(continuation);
 
             m_out.appendTo(continuation, lastNext);
@@ -8573,8 +8561,6 @@ IGNORE_CLANG_WARNINGS_END
             }
             if (isArrayIncludes)
                 setBoolean(vmCall(Int32, operationArrayIncludesNonStringIdentityValueContiguous, storage, searchElement, startIndex));
-            else if (isArrayLastIndexOf)
-                setInt32(vmCall(Int32, operationArrayLastIndexOfNonStringIdentityValueContiguous, storage, searchElement, startIndex));
             else
                 setInt32(vmCall(Int32, operationArrayIndexOfNonStringIdentityValueContiguous, storage, searchElement, startIndex));
             return;
@@ -8585,8 +8571,6 @@ IGNORE_CLANG_WARNINGS_END
             case Array::Double:
                 if (isArrayIncludes)
                     setBoolean(vmCall(Int32, operationArrayIncludesValueDouble, storage, lowJSValue(searchElementEdge), startIndex));
-                else if (isArrayLastIndexOf)
-                    setInt32(vmCall(Int32, operationArrayLastIndexOfValueDouble, storage, lowJSValue(searchElementEdge), startIndex));
                 else
                     setInt32(vmCall(Int32, operationArrayIndexOfValueDouble, storage, lowJSValue(searchElementEdge), startIndex));
                 return;
@@ -8595,16 +8579,12 @@ IGNORE_CLANG_WARNINGS_END
                 ensureStillAliveHere(base);
                 if (isArrayIncludes)
                     setBoolean(vmCall(Int32, operationArrayIncludesValueInt32OrContiguous, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
-                else if (isArrayLastIndexOf)
-                    setInt32(vmCall(Int32, operationArrayLastIndexOfValueInt32OrContiguous, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
                 else
                     setInt32(vmCall(Int32, operationArrayIndexOfValueInt32OrContiguous, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
                 return;
             case Array::Int32:
                 if (isArrayIncludes)
                     setBoolean(vmCall(Int32, operationArrayIncludesValueInt32, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
-                else if (isArrayLastIndexOf)
-                    setInt32(vmCall(Int32, operationArrayLastIndexOfValueInt32, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
                 else
                     setInt32(vmCall(Int32, operationArrayIndexOfValueInt32, weakPointer(globalObject), storage, lowJSValue(searchElementEdge), startIndex));
                 return;
@@ -12646,7 +12626,7 @@ IGNORE_CLANG_WARNINGS_END
         arguments.append(ConstrainedValue(jsCallee, ValueRep::reg(BaselineJITRegisters::Call::calleeGPR)));
 
         auto addArgument = [&] (LValue value, VirtualRegister reg, int offset) {
-            intptr_t offsetFromSP =
+            Value::OffsetType offsetFromSP =
                 (reg.offset() - CallerFrameAndPC::sizeInRegisters) * sizeof(EncodedJSValue) + offset;
             arguments.append(ConstrainedValue(value, ValueRep::stackArgument(offsetFromSP)));
         };
@@ -12728,7 +12708,7 @@ IGNORE_CLANG_WARNINGS_END
         arguments.append(ConstrainedValue(jsCallee, ValueRep::SomeRegister));
         if (!isTail) {
             auto addArgument = [&] (LValue value, VirtualRegister reg, int offset) {
-                intptr_t offsetFromSP =
+                Value::OffsetType offsetFromSP =
                     (reg.offset() - CallerFrameAndPC::sizeInRegisters) * sizeof(EncodedJSValue) + offset;
                 arguments.append(ConstrainedValue(value, ValueRep::stackArgument(offsetFromSP)));
             };
@@ -13655,7 +13635,7 @@ IGNORE_CLANG_WARNINGS_END
         arguments.append(ConstrainedValue(thisValue, ValueRep::reg(GPRInfo::regT3)));
 
         auto addArgument = [&] (LValue value, VirtualRegister reg, int offset) {
-            intptr_t offsetFromSP =
+            Value::OffsetType offsetFromSP =
                 (reg.offset() - CallerFrameAndPC::sizeInRegisters) * sizeof(EncodedJSValue) + offset;
             arguments.append(ConstrainedValue(value, ValueRep::stackArgument(offsetFromSP)));
         };
@@ -13752,7 +13732,7 @@ IGNORE_CLANG_WARNINGS_END
             switch (type.kind) {
             case Wasm::TypeKind::I32:
                 if (isStack)
-                    arguments.append(ConstrainedValue(lowInt32(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(wasmCallInfo.params[i].location.offsetFromSP())));
+                    arguments.append(ConstrainedValue(lowInt32(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(safeCast<int32_t>(wasmCallInfo.params[i].location.offsetFromSP()))));
                 else
                     arguments.append(ConstrainedValue(m_out.zeroExtPtr(lowInt32(m_graph.varArgChild(node, 2 + i))), ValueRep::reg(wasmCallInfo.params[i].location.jsr().payloadGPR())));
                 break;
@@ -13770,7 +13750,7 @@ IGNORE_CLANG_WARNINGS_END
                         jit.toBigInt64(params[1].gpr(), params[0].gpr(), params.gpScratch(0), params.gpScratch(1));
                     });
                 if (isStack)
-                    arguments.append(ConstrainedValue(patchpoint, ValueRep::stackArgument(wasmCallInfo.params[i].location.offsetFromSP())));
+                    arguments.append(ConstrainedValue(patchpoint, ValueRep::stackArgument(safeCast<Value::OffsetType>(wasmCallInfo.params[i].location.offsetFromSP()))));
                 else
                     arguments.append(ConstrainedValue(patchpoint, ValueRep::reg(wasmCallInfo.params[i].location.jsr().payloadGPR())));
                 break;
@@ -13781,19 +13761,19 @@ IGNORE_CLANG_WARNINGS_END
             case Wasm::TypeKind::Externref:
                 ASSERT(Wasm::isExternref(type) && type.isNullable());
                 if (isStack)
-                    arguments.append(ConstrainedValue(lowJSValue(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(wasmCallInfo.params[i].location.offsetFromSP())));
+                    arguments.append(ConstrainedValue(lowJSValue(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(safeCast<Value::OffsetType>(wasmCallInfo.params[i].location.offsetFromSP()))));
                 else
                     arguments.append(ConstrainedValue(lowJSValue(m_graph.varArgChild(node, 2 + i)), ValueRep::reg(wasmCallInfo.params[i].location.jsr().payloadGPR())));
                 break;
             case Wasm::TypeKind::F32:
                 if (isStack)
-                    arguments.append(ConstrainedValue(m_out.doubleToFloat(lowDouble(m_graph.varArgChild(node, 2 + i))), ValueRep::stackArgument(wasmCallInfo.params[i].location.offsetFromSP())));
+                    arguments.append(ConstrainedValue(m_out.doubleToFloat(lowDouble(m_graph.varArgChild(node, 2 + i))), ValueRep::stackArgument(safeCast<Value::OffsetType>(wasmCallInfo.params[i].location.offsetFromSP()))));
                 else
                     arguments.append(ConstrainedValue(m_out.doubleToFloat(lowDouble(m_graph.varArgChild(node, 2 + i))), ValueRep::reg(wasmCallInfo.params[i].location.fpr())));
                 break;
             case Wasm::TypeKind::F64:
                 if (isStack)
-                    arguments.append(ConstrainedValue(lowDouble(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(wasmCallInfo.params[i].location.offsetFromSP())));
+                    arguments.append(ConstrainedValue(lowDouble(m_graph.varArgChild(node, 2 + i)), ValueRep::stackArgument(safeCast<Value::OffsetType>(wasmCallInfo.params[i].location.offsetFromSP()))));
                 else
                     arguments.append(ConstrainedValue(lowDouble(m_graph.varArgChild(node, 2 + i)), ValueRep::reg(wasmCallInfo.params[i].location.fpr())));
                 break;

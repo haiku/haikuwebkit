@@ -197,7 +197,8 @@ std::unique_ptr<AudioFileReaderWebMData> AudioFileReader::demuxWebMData(std::spa
             if (audioTrack.track) {
                 duration = init.duration;
                 audioTrackId = audioTrack.track->id();
-                track = static_pointer_cast<AudioTrackPrivateWebM>(audioTrack.track);
+                // FIXME: Use downcast instead.
+                track = unsafeRefPtrDowncast<AudioTrackPrivateWebM>(audioTrack.track);
                 return;
             }
         }

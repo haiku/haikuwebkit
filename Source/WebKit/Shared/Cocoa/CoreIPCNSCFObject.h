@@ -52,9 +52,6 @@ class CoreIPCCNPostalAddress;
 #endif
 #if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
 class CoreIPCDDScannerResult;
-#if PLATFORM(MAC)
-class CoreIPCDDSecureActionContext;
-#endif
 #endif
 class CoreIPCData;
 class CoreIPCDate;
@@ -102,9 +99,6 @@ using ObjectValue = Variant<
 #endif
 #if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
     CoreIPCDDScannerResult,
-#if PLATFORM(MAC)
-    CoreIPCDDSecureActionContext,
-#endif
 #endif
     CoreIPCDateComponents,
 #if !HAVE(WK_SECURE_CODING_NSURLREQUEST)

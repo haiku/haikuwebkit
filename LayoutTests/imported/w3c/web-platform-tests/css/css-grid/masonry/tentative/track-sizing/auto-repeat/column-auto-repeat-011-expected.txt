@@ -1,22 +1,6 @@
 
-FAIL .masonry 1 assert_equals:
-<div class="masonry" data-expected-width="300" data-expected-height="200">
-    <div class="item" data-offset-x="200" data-offset-y="0" data-expected-width="100" data-expected-height="200"></div>
-  </div>
-width expected 100 but got 300
-FAIL .masonry 2 assert_equals:
-<div class="masonry" style="width: 200px; height: 100px;" data-expected-width="200" data-expected-height="100">
-    <div class="item" data-offset-x="100" data-offset-y="0" data-expected-width="100" data-expected-height="200"></div>
-  </div>
-width expected 100 but got 200
-FAIL .masonry 3 assert_equals:
-<div class="masonry" style="width: min-content; height: min-content;" data-expected-width="300" data-expected-height="200">
-    <div class="item" data-offset-x="200" data-offset-y="0" data-expected-width="100" data-expected-height="200"></div>
-  </div>
-width expected 300 but got 0
-FAIL .masonry 4 assert_equals:
-<div class="masonry" style="width: max-content; height: max-content;" data-expected-width="300" data-expected-height="200">
-    <div class="item" data-offset-x="200" data-offset-y="0" data-expected-width="100" data-expected-height="200"></div>
-  </div>
-width expected 300 but got 0
+PASS .masonry 1
+PASS .masonry 2
+PASS .masonry 3
+PASS .masonry 4
 

@@ -237,7 +237,7 @@ void WebExtensionContext::scriptingRegisterContentScripts(const Vector<WebExtens
     }
 
     auto serializedScripts = toJSONSerialization(scripts);
-    registeredContentScriptsStore()->addScripts(serializedScripts, [this, protectedThis = Ref { *this }, scripts = WTFMove(scripts), injectedContentsMap = WTFMove(injectedContentsMap), completionHandler = WTFMove(completionHandler)](const String& errorMessage) mutable {
+    registeredContentScriptsStore()->addScripts(serializedScripts, [this, protectedThis = Ref { *this }, scripts, injectedContentsMap = WTFMove(injectedContentsMap), completionHandler = WTFMove(completionHandler)](const String& errorMessage) mutable {
         if (!errorMessage.isEmpty()) {
             completionHandler(toWebExtensionError(apiName, nullString(), errorMessage));
             return;

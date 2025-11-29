@@ -82,4 +82,6 @@ public:
 
 } // namespace WebKit
 
+SPECIALIZE_TYPE_TRAITS_WEB_EXTENSION(WebExtensionAPISidebarAction, sidebarAction);
+
 #endif // ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)

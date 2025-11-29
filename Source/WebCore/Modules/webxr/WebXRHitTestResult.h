@@ -28,20 +28,30 @@
 #if ENABLE(WEBXR_HIT_TEST)
 
 #include "ExceptionOr.h"
+#include "PlatformXR.h"
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
+class Document;
+class WebXRFrame;
 class WebXRPose;
 class WebXRSpace;
 
 class WebXRHitTestResult : public RefCounted<WebXRHitTestResult> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRHitTestResult);
 public:
+    static Ref<WebXRHitTestResult> create(WebXRFrame&, const PlatformXR::FrameData::HitTestResult&);
     ~WebXRHitTestResult();
-    ExceptionOr<RefPtr<WebXRPose>> getPose(const WebXRSpace& baseSpace);
+    ExceptionOr<RefPtr<WebXRPose>> getPose(Document&, const WebXRSpace& baseSpace);
+
+private:
+    WebXRHitTestResult(WebXRFrame&, const PlatformXR::FrameData::HitTestResult&);
+
+    const Ref<WebXRFrame> m_frame;
+    PlatformXR::FrameData::HitTestResult m_result;
 };
 
 } // namespace WebCore

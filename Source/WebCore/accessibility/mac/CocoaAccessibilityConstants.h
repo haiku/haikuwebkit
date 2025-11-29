@@ -497,3 +497,10 @@
 #define NSAccessibilityMathSubscriptAttribute @"AXMathSubscript"
 #define NSAccessibilityMathSuperscriptAttribute @"AXMathSuperscript"
 #define NSAccessibilityMathUnderAttribute @"AXMathUnder"
+
+// ariaNotify notification userInfo attributes.
+#define NSAccessibilityARIAAnnouncementPriority @"AXARIAAnnouncementPriority"
+#define NSAccessibilityARIAAnnouncementInterrupt @"AXARIAAnnouncementInterruptBehavior"
+
+// User info key to specify an announcment's language.
+#define NSAccessibilityAnnouncementLanguageKey @"AXAnnouncementLanguageKey"

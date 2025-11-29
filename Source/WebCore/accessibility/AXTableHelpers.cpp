@@ -193,11 +193,16 @@ bool isDataTableWithTraversal(HTMLTableElement& tableElement, AXObjectCache& cac
         return tableSectionIndicatesAccessibleTable(*tableSectionElement, cache);
     };
 
-    CheckedPtr<const RenderStyle> tableStyle = safeStyleFrom(tableElement);
     // Store the background color of the table to check against cell's background colors.
-    Color tableBackgroundColor = tableStyle ? tableStyle->visitedDependentColor(CSSPropertyBackgroundColor) : Color::white;
-    unsigned tableHorizontalBorderSpacing = tableStyle ? tableStyle->borderHorizontalSpacing().resolveZoom(tableStyle->usedZoomForLength()) : 0;
-    unsigned tableVerticalBorderSpacing = tableStyle ? tableStyle->borderVerticalSpacing().resolveZoom(tableStyle->usedZoomForLength()) : 0;
+    Color tableBackgroundColor = Color::white;
+    unsigned tableHorizontalBorderSpacing = 0;
+    unsigned tableVerticalBorderSpacing = 0;
+    if (CheckedPtr<const RenderStyle> tableStyle = safeStyleFrom(tableElement)) {
+        tableBackgroundColor = tableStyle->visitedDependentColor(CSSPropertyBackgroundColor);
+        tableHorizontalBorderSpacing = tableStyle->borderHorizontalSpacing().resolveZoom(tableStyle->usedZoomForLength());
+        tableVerticalBorderSpacing = tableStyle->borderVerticalSpacing().resolveZoom(tableStyle->usedZoomForLength());
+
+    }
 
     unsigned cellCount = 0;
     unsigned borderedCellCount = 0;
@@ -293,10 +298,14 @@ bool isDataTableWithTraversal(HTMLTableElement& tableElement, AXObjectCache& cac
                 if (cell->integralAttribute(aria_colspanAttr) >= 1 || cell->integralAttribute(aria_rowspanAttr) >= 1)
                     return true;
 
-                CheckedPtr<const RenderStyle> cellStyle = styleFrom(*cell);
-                // If the empty-cells style is set, we'll call it a data table.
-                if (cellStyle && cellStyle->emptyCells() == EmptyCell::Hide)
-                    return true;
+                Color cellColor = Color::white;
+                if (CheckedPtr<const RenderStyle> cellStyle = styleFrom(*cell)) {
+                    if (cellStyle->emptyCells() == EmptyCell::Hide) {
+                        // If the empty-cells style is set, we'll call it a data table.
+                        return true;
+                    }
+                    cellColor = cellStyle->visitedDependentColor(CSSPropertyBackgroundColor);
+                }
 
                 if (CheckedPtr cellRenderer = dynamicDowncast<RenderBlock>(cell->renderer())) {
                     bool hasBorderTop = cellRenderer->borderTop() > 0;
@@ -321,7 +330,6 @@ bool isDataTableWithTraversal(HTMLTableElement& tableElement, AXObjectCache& cac
 
                 // If the cell has a different color from the table and there is cell spacing,
                 // then it is probably a data table cell (spacing and colors take the place of borders).
-                Color cellColor = cellStyle ? cellStyle->visitedDependentColor(CSSPropertyBackgroundColor) : Color::white;
                 if (tableHorizontalBorderSpacing > 0 && tableVerticalBorderSpacing > 0 && tableBackgroundColor != cellColor && !cellColor.isOpaque())
                     backgroundDifferenceCellCount++;
 

@@ -110,7 +110,7 @@ Virtual Memory Layout:
 - **[DONE]** `continue`: Resume WebAssembly execution
 - **[DONE]** `breakpoint set`: Set breakpoints at virtual addresses
 - **[DONE]** `step over`: Step over function calls
-- **[DONE]** `step in`: Step into function calls
+- **[DONE]** `step in`: Step into function calls and exception handlers
 - **[DONE]** `step out`: Step out of current function
 - **[DONE]** `step instruction`: Single step through bytecode
 
@@ -126,17 +126,41 @@ Virtual Memory Layout:
 
 ## Testing
 
-### Automated Tests
+### Unit Tests
+
+The debugger includes comprehensive unit tests that validate debug info generation
+for WebAssembly opcodes:
 
 ```bash
-# Run WebAssembly debugger unit tests
+# Run unit tests via WebKit build system
 ./Tools/Scripts/run-javascriptcore-tests --testwasmdebugger
+```
 
+**Opcode Coverage (Base OpType):**
+- **[DONE]** Special Ops (FOR_EACH_WASM_SPECIAL_OP)
+- **[DONE]** Control Flow Ops (FOR_EACH_WASM_CONTROL_FLOW_OP)
+- **[DONE]** Unary Ops (FOR_EACH_WASM_UNARY_OP)
+- **[DONE]** Binary Ops (FOR_EACH_WASM_BINARY_OP)
+- **[DONE]** Memory Load Ops (FOR_EACH_WASM_MEMORY_LOAD_OP)
+- **[DONE]** Memory Store Ops (FOR_EACH_WASM_MEMORY_STORE_OP)
+
+**Extended Opcode Coverage:**
+- **[TODO]** Ext1OpType (FOR_EACH_WASM_EXT1_OP)
+- **[PARTIAL]** ExtGCOpType (FOR_EACH_WASM_GC_OP) - 2 control flow ops fully tested (BrOnCast, BrOnCastFail), 29 non-control-flow ops have stub tests
+- **[TODO]** ExtAtomicOpType (FOR_EACH_WASM_EXT_ATOMIC_OP)
+- **[TODO]** ExtSIMDOpType (FOR_EACH_WASM_EXT_SIMD_OP)
+
+### Integration Tests
+
+The `JSTests/wasm/debugger` includes a comprehensive test framework with auto-discovery,
+parallel execution, and process isolation capabilities:
+
+```bash
 # Run comprehensive test framework with LLDB and wasm debugger
 python3 JSTests/wasm/debugger/test-wasm-debugger.py
 ```
 
-The `JSTests/wasm/debugger` includes a comprehensive test framework with auto-discovery, parallel execution, and process isolation capabilities. For details, see [JSTests/wasm/debugger/README.md](../../../../JSTests/wasm/debugger/README.md).
+For details, see [JSTests/wasm/debugger/README.md](../../../../JSTests/wasm/debugger/README.md).
 
 ### Manual Testing
 
@@ -178,17 +202,17 @@ See [RWI_ARCHITECTURE.md](./RWI_ARCHITECTURE.md) for complete setup instructions
 - **Solution**: Extend debugging protocol to expose WASM operand stack contents with proper type information
 - **Benefits**: Complete variable inspection during debugging, better understanding of WASM execution state
 
-### Step Into Call Instructions
+### Extended Opcode Test Coverage
 
-- **Issue**: Step into breakpoints not implemented for CallIndirect instructions
-- **Location**: `WasmExecutionHandler.cpp:298-299`
-- **Solution**: Add step into breakpoint support for indirect function calls
-
-### Control Flow Debug Info Validation
-
-- **Issue**: Not all WebAssembly control flow bytecodes may have correct debug info collection for next instruction mappings
-- **Location**: `WasmIPIntGenerator.cpp` - Various control flow instruction handlers
-- **Solution**: Systematically test each control flow bytecode (block, loop, if, try, catch, br, br_if, br_table, call, call_indirect, return, etc.) to ensure corresponding debug info is collected correctly for accurate stepping behavior
+- **Issue**: Current unit tests only cover base OpType opcodes; ExtGCOpType has partial coverage with stub implementations
+- **Complete Coverage**:
+  - ExtGCOpType control flow: BrOnCast, BrOnCastFail (fully tested)
+- **Partial Coverage**:
+  - ExtGCOpType non-control-flow: 29 opcodes have stub tests that need proper implementation
+- **Missing Coverage**:
+  - Ext1OpType (table operations, saturated truncation)
+  - ExtAtomicOpType (atomic operations)
+  - ExtSIMDOpType (SIMD operations)
 
 ### Client Session Management
 

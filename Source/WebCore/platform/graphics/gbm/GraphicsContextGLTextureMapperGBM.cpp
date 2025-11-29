@@ -42,6 +42,20 @@
 
 namespace WebCore {
 
+bool GraphicsContextGLTextureMapperGBM::checkRequirements()
+{
+    auto& display = PlatformDisplay::sharedDisplay();
+    if (display.type() != PlatformDisplay::Type::GBM)
+        return false;
+
+    const auto& eglExtensions = display.eglExtensions();
+    if (!eglExtensions.KHR_image_base || !eglExtensions.EXT_image_dma_buf_import)
+        return false;
+
+    static const char* disableGBM = getenv("WEBKIT_WEBGL_DISABLE_GBM");
+    return !disableGBM || *disableGBM == '0';
+}
+
 RefPtr<GraphicsContextGLTextureMapperGBM> GraphicsContextGLTextureMapperGBM::create(GraphicsContextGLAttributes&& attributes, RefPtr<GraphicsLayerContentsDisplayDelegate>&& delegate)
 {
     auto context = adoptRef(new GraphicsContextGLTextureMapperGBM(WTFMove(attributes), WTFMove(delegate)));

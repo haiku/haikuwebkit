@@ -220,7 +220,10 @@ option(GCC_OFFLINEASM_SOURCE_MAP
 
 # Record references to files using relative paths instead of absolute.
 # This helps both with reproducible builds and ccache hits.
-WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
+# It also breaks debugedit, so limit this to DEVELOPER_MODE.
+if (DEVELOPER_MODE)
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
+endif ()
 
 option(USE_APPLE_ICU "Use Apple's internal ICU" ${APPLE})
 

@@ -1114,6 +1114,9 @@
 /* Menu item label for the track that represents disabling closed captions. */
 "Off (text track)" = "Off";
 
+/* Menu item label for the track that represents enabling closed captions. */
+"On (text track)" = "On";
+
 /* Title for Open Link action button */
 "Open" = "Open";
 
@@ -1560,6 +1563,9 @@
 
 /* text that appears at the start of nearly-obsolete web pages in the form of a 'searchable index' */
 "This is a searchable index. Enter search keywords: " = "This is a searchable index. Enter search keywords: ";
+
+/* This is the %s subtitle style (Caption User Preferences) */
+"This is the %s subtitle style" = "This is the %s subtitle style";
 
 /* Not Secure Connection warning text */
 "This website does not support connecting securely over HTTPS. The information you see and enter on this website, including credit cards, phone numbers, and passwords, can be read and altered by other people." = "This website does not support connecting securely over HTTPS. The information you see and enter on this website, including credit cards, phone numbers, and passwords, can be read and altered by other people.";

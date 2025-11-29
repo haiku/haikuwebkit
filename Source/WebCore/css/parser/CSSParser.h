@@ -34,7 +34,6 @@
 #include <WebCore/CSSParserTokenRange.h>
 #include <WebCore/CSSProperty.h>
 #include <WebCore/CSSPropertyNames.h>
-#include <WebCore/StyleColor.h>
 #include <WebCore/StyleRule.h>
 #include <memory>
 #include <wtf/Vector.h>
@@ -71,6 +70,10 @@ class StyleSheetContents;
 class ImmutableStyleProperties;
 class Element;
 class MutableStyleProperties;
+
+namespace Style {
+struct Color;
+}
 
 enum CSSAtRuleID : uint8_t;
 

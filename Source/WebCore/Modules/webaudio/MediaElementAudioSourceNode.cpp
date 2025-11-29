@@ -34,6 +34,7 @@
 #include "AudioSourceProvider.h"
 #include "AudioUtilities.h"
 #include "ExceptionOr.h"
+#include "HTMLMediaElement.h"
 #include "Logging.h"
 #include "MediaElementAudioSourceOptions.h"
 #include "MediaPlayer.h"

@@ -61,16 +61,24 @@ LineBox LineBoxBuilder::build(size_t lineIndex)
         return lineLayoutResult.contentGeometry.logicalWidth;
     };
     auto lineBox = LineBox { rootBox(), lineLayoutResult.contentGeometry.logicalLeft, contentLogicalWidth(), lineIndex, isFirstFormattedLine(), lineLayoutResult.nonSpanningInlineLevelBoxCount };
-    constructInlineLevelBoxes(lineBox);
-    adjustIdeographicBaselineIfApplicable(lineBox);
-    adjustInlineBoxHeightsForLineBoxContainIfApplicable(lineBox);
-    if (m_lineHasNonLineSpanningRubyContent)
-        RubyFormattingContext::applyAnnotationContributionToLayoutBounds(lineBox, formattingContext());
-    computeLineBoxGeometry(lineBox);
-    adjustOutsideListMarkersPosition(lineBox);
+    auto& runs = lineLayoutResult.runs;
+    if (!runs.isEmpty() && runs[0].isBlock()) {
+        // Since we don't need to position and align block content inside the line, we don't need to create any boxes for this block content.
+        auto lineBoxLogicalHeight = formattingContext().geometryForBox(runs[0].layoutBox()).marginBoxHeight();
+        lineBox.setLogicalRect({ lineLayoutResult.lineGeometry.logicalTopLeft, lineLayoutResult.lineGeometry.logicalWidth, lineBoxLogicalHeight });
+        setVerticalPropertiesForInlineLevelBox(lineBox, lineBox.rootInlineBox());
+    } else {
+        constructInlineLevelBoxes(lineBox);
+        adjustIdeographicBaselineIfApplicable(lineBox);
+        adjustInlineBoxHeightsForLineBoxContainIfApplicable(lineBox);
+        if (m_lineHasNonLineSpanningRubyContent)
+            RubyFormattingContext::applyAnnotationContributionToLayoutBounds(lineBox, formattingContext());
+        computeLineBoxGeometry(lineBox);
+        adjustOutsideListMarkersPosition(lineBox);
 
-    if (auto adjustment = formattingContext().quirks().adjustmentForLineGridLineSnap(lineBox))
-        expandAboveRootInlineBox(lineBox, *adjustment);
+        if (auto adjustment = formattingContext().quirks().adjustmentForLineGridLineSnap(lineBox))
+            expandAboveRootInlineBox(lineBox, *adjustment);
+    }
 
     return lineBox;
 }
@@ -403,7 +411,7 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
     };
 
     auto lineHasContent = false;
-    auto& inlineContent = lineLayoutResult().inlineAndOpaqueContent;
+    auto& inlineContent = lineLayoutResult().runs;
     for (size_t index = 0; index < inlineContent.size(); ++index) {
         auto& run = inlineContent[index];
         auto& layoutBox = run.layoutBox();
@@ -504,14 +512,6 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
             lineBox.addInlineLevelBox(InlineLevelBox::createGenericInlineLevelBox(layoutBox, style, logicalLeft));
             continue;
         }
-        if (run.isBlock()) {
-            auto& inlineLevelBoxGeometry = formattingContext.geometryForBox(layoutBox);
-            logicalLeft += inlineLevelBoxGeometry.marginStart();
-            auto atomicInlineBox = InlineLevelBox::createAtomicInlineBox(layoutBox, style, logicalLeft, inlineLevelBoxGeometry.borderBoxWidth());
-            setVerticalPropertiesForInlineLevelBox(lineBox, atomicInlineBox);
-            lineBox.addInlineLevelBox(WTFMove(atomicInlineBox));
-            continue;
-        }
         ASSERT(run.isOpaque());
     }
     lineBox.setHasContent(lineHasContent);
@@ -563,7 +563,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
 
     if (lineBoxContain.contains(Style::LineBoxContain::Glyphs)) {
         // Compute text content (glyphs) hugging inline box layout bounds.
-        for (auto run : lineLayoutResult().inlineAndOpaqueContent) {
+        for (auto run : lineLayoutResult().runs) {
             if (!run.isText())
                 continue;
 
@@ -588,7 +588,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
         InlineLayoutUnit initialLetterAscent = fontMetrics.intCapHeight();
         auto initialLetterDescent = InlineLayoutUnit { };
 
-        for (auto run : lineLayoutResult().inlineAndOpaqueContent) {
+        for (auto run : lineLayoutResult().runs) {
             // We really should only have one text run for initial letter.
             if (!run.isText())
                 continue;
@@ -782,7 +782,7 @@ InlineLayoutUnit LineBoxBuilder::applyTextBoxTrimOnLineBoxIfNeeded(InlineLayoutU
 void LineBoxBuilder::computeLineBoxGeometry(LineBox& lineBox) const
 {
     auto lineBoxLogicalHeight = applyTextBoxTrimOnLineBoxIfNeeded(LineBoxVerticalAligner { formattingContext() }.computeLogicalHeightAndAlign(lineBox), lineBox);
-    if (formattingContext().quirks().shouldCollapseLineBoxHeight(lineLayoutResult().inlineAndOpaqueContent, m_outsideListMarkers.size()))
+    if (formattingContext().quirks().shouldCollapseLineBoxHeight(lineLayoutResult().runs, m_outsideListMarkers.size()))
         lineBoxLogicalHeight = { };
     lineBox.setLogicalRect({ lineLayoutResult().lineGeometry.logicalTopLeft, lineLayoutResult().lineGeometry.logicalWidth, lineBoxLogicalHeight });
 }
@@ -792,11 +792,11 @@ void LineBoxBuilder::adjustOutsideListMarkersPosition(LineBox& lineBox)
     auto lineBoxRect = lineBox.logicalRect();
     auto floatConstraints = formattingContext().floatingContext().constraints(LayoutUnit { lineBoxRect.top() }, LayoutUnit { lineBoxRect.bottom() }, FloatingContext::MayBeAboveLastFloat::No);
 
-    auto lineBoxOffset = lineBoxRect.left() - lineLayoutResult().lineGeometry.initialLogicalLeftIncludingIntrusiveFloats;
+    auto lineBoxOffset = lineBoxRect.left() - (lineLayoutResult().lineGeometry.initialLogicalLeft + lineLayoutResult().lineGeometry.intrusiveFloatsOffset);
     auto rootInlineBoxLogicalLeft = lineBox.logicalRectForRootInlineBox().left();
     auto rootInlineBoxOffsetFromContentBoxOrIntrusiveFloat = lineBoxOffset + rootInlineBoxLogicalLeft;
     for (auto listMarkerBoxIndex : m_outsideListMarkers) {
-        auto& listMarkerRun = lineLayoutResult().inlineAndOpaqueContent[listMarkerBoxIndex];
+        auto& listMarkerRun = lineLayoutResult().runs[listMarkerBoxIndex];
         ASSERT(listMarkerRun.isListMarkerOutside());
         auto& listMarkerBox = downcast<ElementBox>(listMarkerRun.layoutBox());
         auto& listMarkerInlineLevelBox = lineBox.inlineLevelBoxFor(listMarkerRun);

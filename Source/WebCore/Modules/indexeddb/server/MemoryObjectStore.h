@@ -54,7 +54,7 @@ namespace IDBServer {
 
 class MemoryBackingStoreTransaction;
 
-typedef HashMap<IDBKeyData, ThreadSafeDataBuffer, IDBKeyDataHash, IDBKeyDataHashTraits> KeyValueMap;
+typedef HashMap<IDBKeyData, ThreadSafeDataBuffer, DefaultHash<IDBKeyData>, IDBKeyDataHashTraits> KeyValueMap;
 
 class MemoryObjectStore : public RefCountedAndCanMakeWeakPtr<MemoryObjectStore> {
 public:

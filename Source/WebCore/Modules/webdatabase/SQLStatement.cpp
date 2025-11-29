@@ -113,15 +113,15 @@ bool SQLStatement::execute(Database& db)
 
     db.setAuthorizerPermissions(m_permissions);
 
-    SQLiteDatabase& database = db.sqliteDatabase();
+    CheckedRef database = db.sqliteDatabase();
 
-    auto statement = database.prepareStatementSlow(m_statement);
+    auto statement = database->prepareStatementSlow(m_statement);
     if (!statement) {
-        LOG(StorageAPI, "Unable to verify correctness of statement %s - error %i (%s)", m_statement.ascii().data(), database.lastError(), database.lastErrorMsg());
-        if (database.lastError() == SQLITE_INTERRUPT)
-            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not prepare statement"_s, database.lastError(), "interrupted"_s);
+        LOG(StorageAPI, "Unable to verify correctness of statement %s - error %i (%s)", m_statement.ascii().data(), database->lastError(), database->lastErrorMsg());
+        if (database->lastError() == SQLITE_INTERRUPT)
+            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not prepare statement"_s, database->lastError(), "interrupted"_s);
         else
-            m_error = SQLError::create(SQLError::SYNTAX_ERR, "could not prepare statement"_s, database.lastError(), database.lastErrorMsg());
+            m_error = SQLError::create(SQLError::SYNTAX_ERR, "could not prepare statement"_s, database->lastError(), database->lastErrorMsg());
         return false;
     }
 
@@ -142,7 +142,7 @@ bool SQLStatement::execute(Database& db)
 
         if (result != SQLITE_OK) {
             LOG(StorageAPI, "Failed to bind value index %i to statement for query '%s'", i + 1, m_statement.ascii().data());
-            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not bind value"_s, result, database.lastErrorMsg());
+            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not bind value"_s, result, database->lastErrorMsg());
             return false;
         }
     }
@@ -167,7 +167,7 @@ bool SQLStatement::execute(Database& db)
         } while (result == SQLITE_ROW);
 
         if (result != SQLITE_DONE) {
-            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not iterate results"_s, result, database.lastErrorMsg());
+            m_error = SQLError::create(SQLError::DATABASE_ERR, "could not iterate results"_s, result, database->lastErrorMsg());
             return false;
         }
         break;
@@ -175,7 +175,7 @@ bool SQLStatement::execute(Database& db)
     case SQLITE_DONE: {
         // Didn't find anything, or was an insert
         if (db.lastActionWasInsert())
-            resultSet->setInsertId(database.lastInsertRowID());
+            resultSet->setInsertId(database->lastInsertRowID());
         break;
     }
     case SQLITE_FULL:
@@ -183,17 +183,17 @@ bool SQLStatement::execute(Database& db)
         setFailureDueToQuota();
         return false;
     case SQLITE_CONSTRAINT:
-        m_error = SQLError::create(SQLError::CONSTRAINT_ERR, "could not execute statement due to a constaint failure"_s, result, database.lastErrorMsg());
+        m_error = SQLError::create(SQLError::CONSTRAINT_ERR, "could not execute statement due to a constaint failure"_s, result, database->lastErrorMsg());
         return false;
     default:
-        m_error = SQLError::create(SQLError::DATABASE_ERR, "could not execute statement"_s, result, database.lastErrorMsg());
+        m_error = SQLError::create(SQLError::DATABASE_ERR, "could not execute statement"_s, result, database->lastErrorMsg());
         return false;
     }
 
     // rowsAffected should be 0 for read only statements (e.g. SELECT statement). However, SQLiteDatabase::lastChanges() returns
     // the number of changes made by the most recent INSERT, UPDATE or DELETE statement.
     if (!statement->isReadOnly())
-        resultSet->setRowsAffected(database.lastChanges());
+        resultSet->setRowsAffected(database->lastChanges());
 
     m_resultSet = WTFMove(resultSet);
     return true;

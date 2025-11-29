@@ -245,7 +245,7 @@ std::optional<NSRange> AXIsolatedObject::visibleCharacterRange() const
     const auto* currentRuns = textRuns();
     std::optional stopAtID = idOfNextSiblingIncludingIgnoredOrParent();
     auto advanceCurrent = [&] () {
-        current = findObjectWithRuns(*current, AXDirection::Next, stopAtID);
+        current = Accessibility::findObjectWithRuns(*current, AXDirection::Next, stopAtID);
         currentRuns = current ? current->textRuns() : nullptr;
     };
 
@@ -373,7 +373,7 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRangeForNSRange(const NSRange& ran
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis()) {
-        if (std::optional markerRange = markerRangeFrom(range, *this)) {
+        if (std::optional markerRange = Accessibility::markerRangeFrom(range, *this)) {
             if (range.length > markerRange->toString().length())
                 return { };
             return WTFMove(*markerRange);

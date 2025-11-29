@@ -43,6 +43,8 @@
 #    endif
 #endif
 
+#ifdef __cplusplus
+
 struct ProcessMemoryFootprint {
 public:
     uint64_t current;
@@ -74,5 +76,7 @@ public:
 #endif
     }
 };
+
+#endif
 
 #endif

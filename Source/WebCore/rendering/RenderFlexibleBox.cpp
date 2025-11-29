@@ -374,15 +374,27 @@ void RenderFlexibleBox::styleDidChange(StyleDifference diff, const RenderStyle* 
     if (!oldStyle || diff != StyleDifference::Layout)
         return;
 
-    auto oldStyleAlignItemsIsStretch = oldStyle->resolvedAlignItems(selfAlignmentNormalBehavior()).position() == ItemPosition::Stretch;
+    auto oldStyleAlignItemsIsStretch = oldStyle->alignItems().resolve(selfAlignmentNormalBehavior()).position() == ItemPosition::Stretch;
     for (auto& flexItem : childrenOfType<RenderBox>(*this)) {
         // Flex items that were previously stretching need to be relayed out so we
         // can compute new available cross axis space. This is only necessary for
         // stretching since other alignment values don't change the size of the
         // box.
         if (oldStyleAlignItemsIsStretch) {
-            ItemPosition previousAlignment = flexItem.style().resolvedAlignSelf(oldStyle, selfAlignmentNormalBehavior()).position();
-            if (previousAlignment == ItemPosition::Stretch && previousAlignment != flexItem.style().resolvedAlignSelf(&style(), selfAlignmentNormalBehavior()).position())
+            auto normalBehavior = selfAlignmentNormalBehavior();
+
+            auto previousAlignment = [&] {
+                if (!flexItem.style().alignSelf().isAuto())
+                    return flexItem.style().alignSelf().resolve(normalBehavior).position();
+                return oldStyle->alignItems().resolve(normalBehavior).position();
+            }();
+            auto newAlignment = [&] {
+                if (!flexItem.style().alignSelf().isAuto())
+                    return flexItem.style().alignSelf().resolve(normalBehavior).position();
+                return style().alignItems().resolve(normalBehavior).position();
+            }();
+
+            if (previousAlignment == ItemPosition::Stretch && previousAlignment != newAlignment)
                 flexItem.setChildNeedsLayout(MarkOnlyThis);
         }
     }
@@ -1979,11 +1991,11 @@ bool RenderFlexibleBox::resolveFlexibleLengths(FlexSign flexSign, FlexLayoutItem
     return !totalViolation;
 }
 
-inline ContentPosition resolveLeftRightAlignment(ContentPosition position, const RenderStyle& style, bool isReversed)
+inline ContentPosition resolveLeftRightAlignment(ContentPosition position, StyleContentAlignmentData justifyContent, const RenderStyle& style, bool isReversed)
 {
     if (position == ContentPosition::Left || position == ContentPosition::Right) {
         auto leftRightAxisDirection = RenderFlexibleBox::leftRightAxisDirectionFromStyle(style);
-        position = (style.justifyContent().isEndward(leftRightAxisDirection, isReversed))
+        position = (justifyContent.isEndward(leftRightAxisDirection, isReversed))
             ? ContentPosition::End : ContentPosition::Start;
     }
     return position;
@@ -1991,27 +2003,29 @@ inline ContentPosition resolveLeftRightAlignment(ContentPosition position, const
 
 static LayoutUnit initialJustifyContentOffset(const RenderStyle& style, LayoutUnit availableFreeSpace, unsigned numberOfFlexItems, bool isReversed)
 {
-    ContentPosition justifyContent = style.resolvedJustifyContentPosition(contentAlignmentNormalBehavior());
-    ContentDistribution justifyContentDistribution = style.resolvedJustifyContentDistribution(contentAlignmentNormalBehavior());
+    auto resolvedJustifyContent = style.justifyContent().resolve(contentAlignmentNormalBehavior());
+    auto justifyContentPosition = resolvedJustifyContent.position();
+    auto justifyContentDistribution = resolvedJustifyContent.distribution();
 
-    if (availableFreeSpace < 0 && style.justifyContent().overflow() == OverflowAlignment::Safe) {
-        ASSERT(justifyContent != ContentPosition::Normal);
-        justifyContent = ContentPosition::Start;
+    if (availableFreeSpace < 0 && resolvedJustifyContent.overflow() == OverflowAlignment::Safe) {
+        ASSERT(justifyContentPosition != ContentPosition::Normal);
+        justifyContentPosition = ContentPosition::Start;
+    } else {
+        // First of all resolve Left and Right so we could convert it to their equivalent properties handled bellow.
+        // If the property's axis is not parallel with either left<->right axis, this value behaves as start. Currently,
+        // the only case where the property's axis is not parallel with either left<->right axis is in a column flexbox.
+        // https: //www.w3.org/TR/css-align-3/#valdef-justify-content-left
+        justifyContentPosition = resolveLeftRightAlignment(justifyContentPosition, resolvedJustifyContent, style, isReversed);
     }
 
-    // First of all resolve Left and Right so we could convert it to their equivalent properties handled bellow.
-    // If the property's axis is not parallel with either left<->right axis, this value behaves as start. Currently,
-    // the only case where the property's axis is not parallel with either left<->right axis is in a column flexbox.
-    // https: //www.w3.org/TR/css-align-3/#valdef-justify-content-left
-    justifyContent = resolveLeftRightAlignment(justifyContent, style, isReversed);
-    ASSERT(justifyContent != ContentPosition::Left);
-    ASSERT(justifyContent != ContentPosition::Right);
+    ASSERT(justifyContentPosition != ContentPosition::Left);
+    ASSERT(justifyContentPosition != ContentPosition::Right);
 
-    if (justifyContent == ContentPosition::FlexEnd
-        || (justifyContent == ContentPosition::End && !isReversed)
-        || (justifyContent == ContentPosition::Start && isReversed))
+    if (justifyContentPosition == ContentPosition::FlexEnd
+        || (justifyContentPosition == ContentPosition::End && !isReversed)
+        || (justifyContentPosition == ContentPosition::Start && isReversed))
         return availableFreeSpace;
-    if (justifyContent == ContentPosition::Center)
+    if (justifyContentPosition == ContentPosition::Center)
         return availableFreeSpace / 2;
     if (justifyContentDistribution == ContentDistribution::SpaceAround) {
         if (!numberOfFlexItems)
@@ -2196,12 +2210,21 @@ void RenderFlexibleBox::prepareFlexItemForPositionedLayout(RenderBox& flexItem)
 
 inline OverflowAlignment RenderFlexibleBox::overflowAlignmentForFlexItem(const RenderBox& flexItem) const
 {
-    return flexItem.style().resolvedAlignSelf(&style(), selfAlignmentNormalBehavior()).overflow();
+    auto normalBehavior = selfAlignmentNormalBehavior();
+    if (!flexItem.style().alignSelf().isAuto())
+        return flexItem.style().alignSelf().resolve(normalBehavior).overflow();
+    return style().alignItems().resolve(normalBehavior).overflow();
 }
 
 ItemPosition RenderFlexibleBox::alignmentForFlexItem(const RenderBox& flexItem) const
 {
-    ItemPosition align = flexItem.style().resolvedAlignSelf(&style(), selfAlignmentNormalBehavior()).position();
+    auto align = [&] {
+        auto normalBehavior = selfAlignmentNormalBehavior();
+        if (!flexItem.style().alignSelf().isAuto())
+            return flexItem.style().alignSelf().resolve(normalBehavior).position();
+        return style().alignItems().resolve(normalBehavior).position();
+    }();
+
     ASSERT(align != ItemPosition::Auto && align != ItemPosition::Normal);
     // Left and Right are only for justify-*.
     ASSERT(align != ItemPosition::Left && align != ItemPosition::Right);
@@ -2387,10 +2410,10 @@ void RenderFlexibleBox::layoutAndPlaceFlexItems(LayoutUnit& crossAxisOffset, Fle
         mainAxisOffset += isHorizontalFlow() ? verticalScrollbarWidth() : horizontalScrollbarHeight();
 
     if (availableFreeSpace < 0) {
-        ContentPosition position = style().resolvedJustifyContentPosition(contentAlignmentNormalBehavior());
-        ContentDistribution distribution = style().resolvedJustifyContentDistribution(contentAlignmentNormalBehavior());
-        OverflowAlignment safety = style().justifyContent().overflow();
-        position = resolveLeftRightAlignment(position, style(), isColumnOrRowReverse());
+        auto resolvedJustifyContent = style().justifyContent().resolve(contentAlignmentNormalBehavior());
+        auto distribution = resolvedJustifyContent.distribution();
+        auto safety = resolvedJustifyContent.overflow();
+        auto position = resolveLeftRightAlignment(resolvedJustifyContent.position(), resolvedJustifyContent, style(), isColumnOrRowReverse());
         LayoutUnit overflow = contentAlignmentStartOverflow(availableFreeSpace, position, distribution, safety, isColumnOrRowReverse());
         m_justifyContentStartOverflow = std::max(m_justifyContentStartOverflow, overflow);
     }
@@ -2403,7 +2426,8 @@ void RenderFlexibleBox::layoutAndPlaceFlexItems(LayoutUnit& crossAxisOffset, Fle
     LayoutUnit lastBaselineMaxAscent;
     std::optional<BaselineAlignmentState> baselineAlignmentState;
 
-    ContentDistribution distribution = style().resolvedJustifyContentDistribution(contentAlignmentNormalBehavior());
+    auto resolvedJustifyContent = style().justifyContent().resolve(contentAlignmentNormalBehavior());
+    auto distribution = resolvedJustifyContent.distribution();
     bool shouldFlipMainAxis = !isColumnFlow() && !isLeftToRightFlow();
     for (size_t i = 0; i < flexLayoutItems.size(); ++i) {
         auto& flexLayoutItem = flexLayoutItems[i];
@@ -2519,7 +2543,7 @@ void RenderFlexibleBox::layoutColumnReverse(const FlexLayoutItems& flexLayoutIte
     mainAxisOffset -= initialJustifyContentOffset(style(), availableFreeSpace, flexLayoutItems.size(), isColumnOrRowReverse());
     mainAxisOffset -= isHorizontalFlow() ? verticalScrollbarWidth() : horizontalScrollbarHeight();
 
-    ContentDistribution distribution = style().resolvedJustifyContentDistribution(contentAlignmentNormalBehavior());
+    auto distribution = style().justifyContent().resolve(contentAlignmentNormalBehavior()).distribution();
 
     for (size_t i = 0; i < flexLayoutItems.size(); ++i) {
         auto& flexItem = flexLayoutItems[i].renderer;
@@ -2581,9 +2605,11 @@ void RenderFlexibleBox::alignFlexLines(FlexLineStates& lineStates, LayoutUnit ga
     if (lineStates.isEmpty() || !isMultiline())
         return;
 
-    ContentPosition position = style().resolvedAlignContentPosition(contentAlignmentNormalBehavior());
-    ContentDistribution distribution = style().resolvedAlignContentDistribution(contentAlignmentNormalBehavior());
-    OverflowAlignment safety = style().alignContent().overflow();
+    auto alignedContent = style().alignContent().resolve(contentAlignmentNormalBehavior());
+    auto position = alignedContent.position();
+    auto distribution = alignedContent.distribution();
+    auto safety = alignedContent.overflow();
+
     bool isWrapReverse = this->isWrapReverse();
 
     if (position == ContentPosition::FlexStart && !gapBetweenLines && safety != OverflowAlignment::Safe && !isWrapReverse)

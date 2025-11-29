@@ -10,8 +10,8 @@ msgstr ""
 "Project-Id-Version: webkit HEAD\n"
 "Report-Msgid-Bugs-To: https://bugs.webkit.org/enter_bug.cgi?"
 "product=WebKit&component=WebKitGTK\n"
-"POT-Creation-Date: 2025-10-26 04:12+0000\n"
-"PO-Revision-Date: 2025-10-26 09:29+0100\n"
+"POT-Creation-Date: 2025-11-07 04:15+0000\n"
+"PO-Revision-Date: 2025-11-08 15:28+0100\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl\n"
@@ -1105,101 +1105,107 @@ msgstr "Neznano"
 msgctxt ""
 "Menu item label for the track that represents disabling closed captions."
 msgid "Off"
-msgstr "Onemogočeno"
+msgstr "Izklopljeno"
 
 #: ../../LocalizedStrings.cpp:1354
+msgctxt ""
+"Menu item label for the track that represents enabling closed captions."
+msgid "On"
+msgstr "Vklopljeno"
+
+#: ../../LocalizedStrings.cpp:1359
 msgctxt "Menu item label for automatic track selection behavior."
 msgid "Auto (Recommended)"
 msgstr "Samodejno (priporočeno)"
 
-#: ../../LocalizedStrings.cpp:1488
+#: ../../LocalizedStrings.cpp:1493
 msgid "Show Media Statistics"
 msgstr "Pokaži statistiko medijev"
 
-#: ../../LocalizedStrings.cpp:1502
+#: ../../LocalizedStrings.cpp:1507
 msgid "Used to encrypt WebCrypto keys in persistent storage, such as IndexedDB"
 msgstr ""
 "Uporablja se za šifriranje ključev WebCrypto v trajnem pomnilniku, kot je "
 "IndexedDB"
 
-#: ../../LocalizedStrings.cpp:1511
+#: ../../LocalizedStrings.cpp:1516
 msgctxt "Title of the OK button for the number pad in zoomed form controls."
 msgid "OK"
 msgstr "V redu"
 
-#: ../../LocalizedStrings.cpp:1516
+#: ../../LocalizedStrings.cpp:1521
 msgid "Cancel"
 msgstr "Prekliči"
 
-#: ../../LocalizedStrings.cpp:1521
+#: ../../LocalizedStrings.cpp:1526
 msgid "Hide"
 msgstr "Skrij"
 
-#: ../../LocalizedStrings.cpp:1526
+#: ../../LocalizedStrings.cpp:1531
 msgid "Go"
 msgstr "Pojdi"
 
-#: ../../LocalizedStrings.cpp:1531
+#: ../../LocalizedStrings.cpp:1536
 msgid "Search"
 msgstr "išči"
 
-#: ../../LocalizedStrings.cpp:1536
+#: ../../LocalizedStrings.cpp:1541
 msgctxt "Set button below date picker"
 msgid "Set"
 msgstr "Določi"
 
-#: ../../LocalizedStrings.cpp:1541
+#: ../../LocalizedStrings.cpp:1546
 msgctxt "Day label in date picker"
 msgid "DAY"
 msgstr "DAN"
 
-#: ../../LocalizedStrings.cpp:1546
+#: ../../LocalizedStrings.cpp:1551
 msgctxt "Month label in date picker"
 msgid "MONTH"
 msgstr "MONTH"
 
-#: ../../LocalizedStrings.cpp:1551
+#: ../../LocalizedStrings.cpp:1556
 msgctxt "Year label in date picker"
 msgid "YEAR"
 msgstr "YEAR"
 
-#: ../../LocalizedStrings.cpp:1570
+#: ../../LocalizedStrings.cpp:1575
 msgid "Unacceptable TLS certificate"
 msgstr "Nesprejemljivo potrdilo TLS"
 
-#: ../../LocalizedStrings.cpp:1589
+#: ../../LocalizedStrings.cpp:1594
 msgid "Continue with Touch ID."
 msgstr "Nadaljujte s funkcijo Touch ID."
 
-#: ../../LocalizedStrings.cpp:1595
+#: ../../LocalizedStrings.cpp:1600
 msgid "This document is password protected."
 msgstr "Ta dokument je zaščiten z geslom."
 
-#: ../../LocalizedStrings.cpp:1600
+#: ../../LocalizedStrings.cpp:1605
 msgid "Please enter the password below."
 msgstr "Spodaj vnesite geslo."
 
-#: ../../LocalizedStrings.cpp:1605
+#: ../../LocalizedStrings.cpp:1610
 msgid "Invalid Password"
 msgstr "Neveljavno geslo"
 
-#: ../../LocalizedStrings.cpp:1610
+#: ../../LocalizedStrings.cpp:1615
 msgid "Copy Link with Highlight"
 msgstr "Kopiraj povezavo s poudarkom"
 
-#: ../../LocalizedStrings.cpp:1616
+#: ../../LocalizedStrings.cpp:1621
 msgid "View Spatial"
 msgstr "Pokaži prostorsko"
 
-#: ../../LocalizedStrings.cpp:1621
+#: ../../LocalizedStrings.cpp:1626
 msgid "View Immersive"
 msgstr "Poglobljeni pogled"
 
-#: ../../LocalizedStrings.cpp:1628
+#: ../../LocalizedStrings.cpp:1633
 msgid "SPATIAL"
 msgstr "PROSTORSKO"
 
-#: ../../LocalizedStrings.cpp:1633
+#: ../../LocalizedStrings.cpp:1638
 msgid "PANORAMA"
 msgstr "PANORAMA"
 
@@ -1526,7 +1532,7 @@ msgstr "Stran %s nima navedene ikone zaznamka"
 msgid "Unknown favicon for page %s"
 msgstr "Ni ikone zaznamke za stran %s"
 
-#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:269
+#: ../../../../WebKit/UIProcess/API/glib/WebKitFaviconDatabase.cpp:270
 msgid "Failed to create texture"
 msgstr "Ustvarjanje teksture ni uspelo"
 

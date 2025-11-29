@@ -31,6 +31,7 @@
 #include "ContentSecurityPolicy.h"
 #include "CrossOriginAccessControl.h"
 #include "CurrentScriptIncrementer.h"
+#include "DOMWrapperWorld.h"
 #include "DocumentEventLoop.h"
 #include "DocumentInlines.h"
 #include "DocumentPage.h"
@@ -48,6 +49,7 @@
 #include "InlineClassicScript.h"
 #include "LoadableClassicScript.h"
 #include "LoadableModuleScript.h"
+#include "LoadableScriptError.h"
 #include "LocalFrame.h"
 #include "MIMETypeRegistry.h"
 #include "ModuleFetchParameters.h"
@@ -62,7 +64,12 @@
 #include "Settings.h"
 #include "TextNodeTraversal.h"
 #include "TrustedType.h"
+#include <JavaScriptCore/Error.h>
+#include <JavaScriptCore/Exception.h>
 #include <JavaScriptCore/ImportMap.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/JSGlobalObject.h>
+#include <JavaScriptCore/JSLock.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/Scope.h>
 #include <wtf/SystemTracing.h>
@@ -126,6 +133,24 @@ void ScriptElement::handleAsyncAttribute()
 void ScriptElement::dispatchErrorEvent()
 {
     protectedElement()->dispatchEvent(Event::create(eventNames().errorEvent, Event::CanBubble::No, Event::IsCancelable::No));
+}
+
+static void reportSpeculationRulesError(LocalFrame& frame, const String& errorMessage)
+{
+    // https://html.spec.whatwg.org/C#report-an-exception
+    auto& world = mainThreadNormalWorldSingleton();
+    JSC::VM& vm = world.vm();
+    JSLockHolder lock(vm);
+
+    if (auto* jsGlobalObject = frame.checkedScript()->globalObject(world)) {
+        auto* error = JSC::createTypeError(jsGlobalObject, errorMessage);
+        LoadableScript::Error scriptError {
+            LoadableScriptErrorType::Script,
+            std::nullopt,
+            JSC::Strong<JSC::Unknown>(vm, error)
+        };
+        frame.checkedScript()->reportExceptionFromScriptError(scriptError, false);
+    }
 }
 
 // https://html.spec.whatwg.org/C#prepare-the-script-element (Steps 8-12)
@@ -633,7 +658,7 @@ ScriptElement* dynamicDowncastScriptElement(Element& element)
     return dynamicDowncast<SVGScriptElement>(element);
 }
 
-// https://wicg.github.io/nav-speculation/speculation-rules.html#register-speculation-rules
+// https://html.spec.whatwg.org/C#register-speculation-rules
 void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
 {
     ASSERT(m_alreadyStarted);
@@ -649,6 +674,8 @@ void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
 
     if (sourceCode.isEmpty()) {
         dispatchErrorEvent();
+        if (frame)
+            reportSpeculationRulesError(*frame, "Speculation rules script has empty content"_s);
         return;
     }
 
@@ -669,6 +696,10 @@ void ScriptElement::registerSpeculationRules(const ScriptSourceCode& sourceCode)
 
     if (frame->checkedScript()->registerSpeculationRules(sourceCode, document->baseURL()))
         document->considerSpeculationRules();
+    else {
+        dispatchErrorEvent();
+        reportSpeculationRulesError(*frame, "Failed to register speculation rules"_s);
+    }
 }
 
 // TODO: Also implement unregister/update speculation rules

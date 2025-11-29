@@ -43,7 +43,9 @@
 #include "RenderBoxInlines.h"
 #include "RenderElementStyleInlines.h"
 #include "RenderElementInlines.h"
+#include "RenderMediaInlines.h"
 #include "RenderObjectInlines.h"
+#include "RenderVideoInlines.h"
 #include "RenderView.h"
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>

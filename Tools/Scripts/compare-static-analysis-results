@@ -38,7 +38,7 @@ STATIC_ANALYZER_UNEXPECTED = 'StaticAnalyzerUnexpectedRegressions'
 UNEXPECTED_PASS = {'actual': 'PASS', 'expected': 'FAIL'}
 UNEXPECTED_FAILURE = {'actual': 'FAIL', 'expected': 'PASS'}
 EXPECTED_FAILURE = {'actual': 'FAIL', 'expected': 'FAIL'}
-DERIVED_SOURCES_RE = r'(^|.*\/)DerivedSources\/.*\/JS.*'
+DERIVED_SOURCES_RE = r'(^|.*\/)DerivedSources\/WebCore\/JS.*'
 EXPECTATION_LINE_RE = r'(\s*\[\s*(?P<platform>\w+)\s*\]\s*)?(?P<path>.+)'
 
 

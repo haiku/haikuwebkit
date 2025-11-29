@@ -109,15 +109,12 @@ GridTemplateList::GridTemplateList(GridTrackList&& entries)
             },
             [&](const GridTrackEntrySubgrid&) {
                 subgrid = true;
-            },
-            [&](const GridTrackEntryMasonry&) {
-                masonry = true;
             }
         );
     }
     // The parser should have rejected any <track-list> without any <track-size> as
     // this is not conformant to the syntax.
-    ASSERT(!sizes.isEmpty() || !autoRepeatSizes.isEmpty() || subgrid || masonry);
+    ASSERT(!sizes.isEmpty() || !autoRepeatSizes.isEmpty() || subgrid);
 }
 
 // MARK: - Conversion
@@ -130,10 +127,6 @@ auto CSSValueConversion<GridTemplateList>::operator()(BuilderState& state, const
     RefPtr subgridValue = dynamicDowncast<CSSSubgridValue>(value);
 
     if (RefPtr primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        if (primitiveValue->valueID() == CSSValueMasonry) {
-            trackList.append(GridTrackEntryMasonry());
-            return { WTFMove(trackList) };
-        }
         if (primitiveValue->valueID() == CSSValueNone)
             return CSS::Keyword::None { };
     } else if (subgridValue) {
@@ -265,9 +258,6 @@ auto Blending<GridTemplateList>::canBlend(const GridTemplateList& from, const Gr
         },
         [](const GridTrackEntrySubgrid&) {
             return false;
-        },
-        [](const GridTrackEntryMasonry&) {
-            return false;
         }
     );
 
@@ -312,8 +302,6 @@ auto Blending<GridTemplateList>::blend(const GridTemplateList& from, const GridT
             result.append(WTFMove(repeatResult));
         },
         [](const GridTrackEntrySubgrid&) {
-        },
-        [](const GridTrackEntryMasonry&) {
         }
     );
 
@@ -360,9 +348,6 @@ TextStream& operator<<(TextStream& ts, const GridTrackEntry& entry)
         },
         [&](const GridTrackEntrySubgrid&) {
             ts << "subgrid"_s;
-        },
-        [&](const GridTrackEntryMasonry&) {
-            ts << "masonry"_s;
         }
     );
     return ts;

@@ -48,15 +48,6 @@ Platform/IPC/ArgumentCoders.h
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
 [ iOS ] WebProcess/GPU/media/ios/RemoteMediaSessionHelper.cpp
-WebProcess/InjectedBundle/API/c/WKBundleFrame.cpp
-WebProcess/InjectedBundle/API/c/mac/WKBundleMac.mm
-[ Mac ] WebProcess/InjectedBundle/API/c/mac/WKBundlePageBannerMac.mm
-WebProcess/InjectedBundle/API/mac/WKDOMDocument.mm
-WebProcess/InjectedBundle/API/mac/WKDOMNode.mm
-WebProcess/InjectedBundle/API/mac/WKDOMRange.mm
-WebProcess/InjectedBundle/API/mac/WKDOMTextIterator.mm
-WebProcess/InjectedBundle/API/mac/WKWebProcessPlugIn.mm
-WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
 [ iOS ] WebProcess/Network/NetworkProcessConnection.cpp
 [ iOS ] WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm
 [ iOS ] WebProcess/WebCoreSupport/WebChromeClientCocoa.mm

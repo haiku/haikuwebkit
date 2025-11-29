@@ -1637,7 +1637,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    _impl->setCanInstallScrollPocket();
+    _impl->setClientImplicitlyRequestedTopScrollPocket();
 #endif
 
     _impl->setObscuredContentInsets(coreBoxExtentsFromEdgeInsets(insets));
@@ -1665,7 +1665,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (void)_setOverflowHeightForTopScrollEdgeEffect:(CGFloat)height
 {
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    _impl->setCanInstallScrollPocket();
+    _impl->setClientImplicitlyRequestedTopScrollPocket();
 #endif
 
     if (_page->overflowHeightForTopScrollEdgeEffect() == height)
@@ -1689,7 +1689,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (void)_setOverrideTopScrollEdgeEffectColor:(NSColor *)color
 {
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    _impl->setCanInstallScrollPocket();
+    _impl->setClientImplicitlyRequestedTopScrollPocket();
 #endif
 
     if (_overrideTopScrollEdgeEffectColor == color || [_overrideTopScrollEdgeEffectColor isEqual:color])
@@ -1729,7 +1729,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (void)_setUsesAutomaticContentInsetBackgroundFill:(BOOL)value
 {
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    _impl->setCanInstallScrollPocket();
+    _impl->setClientImplicitlyRequestedTopScrollPocket();
 #endif
 
     if (_usesAutomaticContentInsetBackgroundFill == value)

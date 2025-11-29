@@ -80,8 +80,6 @@ public:
     static void serializeTextEmphasisPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextEmphasisPosition>);
     static void serializeSpeakAs(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<SpeakAs>);
     static void serializeHangingPunctuation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<HangingPunctuation>);
-    static void serializeSelfOrDefaultAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleSelfAlignmentData&);
-    static void serializeContentAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleContentAlignmentData&);
     static void serializePositionAnchor(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const std::optional<ScopedName>&);
     static void serializePositionArea(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const std::optional<PositionArea>&);
     static void serializeNameScope(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const NameScope&);
@@ -481,58 +479,6 @@ inline void ExtractorSerializer::serializeHangingPunctuation(ExtractorState& sta
 
     if (listEmpty)
         serializationForCSS(builder, context, state.style, CSS::Keyword::None { });
-}
-
-inline void ExtractorSerializer::serializeSelfOrDefaultAlignmentData(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StyleSelfAlignmentData& data)
-{
-    CSSValueListBuilder list;
-    if (data.positionType() == ItemPositionType::Legacy)
-        list.append(CSSPrimitiveValue::create(CSSValueLegacy));
-    if (data.position() == ItemPosition::Baseline)
-        list.append(CSSPrimitiveValue::create(CSSValueBaseline));
-    else if (data.position() == ItemPosition::LastBaseline) {
-        list.append(CSSPrimitiveValue::create(CSSValueLast));
-        list.append(CSSPrimitiveValue::create(CSSValueBaseline));
-    } else {
-        if (data.position() >= ItemPosition::Center && data.overflow() != OverflowAlignment::Default)
-            list.append(ExtractorConverter::convert(state, data.overflow()));
-        if (data.position() == ItemPosition::Legacy)
-            list.append(CSSPrimitiveValue::create(CSSValueNormal));
-        else
-            list.append(ExtractorConverter::convert(state, data.position()));
-    }
-    builder.append(CSSValueList::createSpaceSeparated(WTFMove(list))->cssText(context));
-}
-
-inline void ExtractorSerializer::serializeContentAlignmentData(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const StyleContentAlignmentData& data)
-{
-    CSSValueListBuilder list;
-
-    // Handle content-distribution values
-    if (data.distribution() != ContentDistribution::Default)
-        list.append(ExtractorConverter::convert(state, data.distribution()));
-
-    // Handle content-position values (either as fallback or actual value)
-    switch (data.position()) {
-    case ContentPosition::Normal:
-        // Handle 'normal' value, not valid as content-distribution fallback.
-        if (data.distribution() == ContentDistribution::Default)
-            list.append(CSSPrimitiveValue::create(CSSValueNormal));
-        break;
-    case ContentPosition::LastBaseline:
-        list.append(CSSPrimitiveValue::create(CSSValueLast));
-        list.append(CSSPrimitiveValue::create(CSSValueBaseline));
-        break;
-    default:
-        // Handle overflow-alignment (only allowed for content-position values)
-        if ((data.position() >= ContentPosition::Center || data.distribution() != ContentDistribution::Default) && data.overflow() != OverflowAlignment::Default)
-            list.append(ExtractorConverter::convert(state, data.overflow()));
-        list.append(ExtractorConverter::convert(state, data.position()));
-    }
-
-    ASSERT(list.size() > 0);
-    ASSERT(list.size() <= 3);
-    builder.append(CSSValueList::createSpaceSeparated(WTFMove(list))->cssText(context));
 }
 
 inline void ExtractorSerializer::serializePositionAnchor(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const std::optional<ScopedName>& positionAnchor)

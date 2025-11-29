@@ -210,8 +210,8 @@ void PlatformCALayer::moveToLayerPool()
 
 LayerPool* PlatformCALayer::layerPool()
 {
-    static LayerPool* sharedPool = new LayerPool;
-    return sharedPool;
+    static NeverDestroyed<UniqueRef<LayerPool>> sharedPool = makeUniqueRef<LayerPool>();
+    return sharedPool->ptr();
 }
 
 void PlatformCALayer::clearContents()

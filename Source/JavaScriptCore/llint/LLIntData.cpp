@@ -35,6 +35,7 @@
 #include "Opcode.h"
 
 #if PLATFORM(COCOA)
+#include <wtf/ResourceUsage.h>
 #include <wtf/cocoa/Entitlements.h>
 #endif
 
@@ -55,7 +56,7 @@ namespace LLInt {
 #else
 #define LLINT_OPCODE_CONFIG_SECTION
 #endif
-alignas(OpcodeConfigAlignment) uint8_t LLINT_OPCODE_CONFIG_SECTION os_script_config_storage[OpcodeConfigSizeToProtect];
+alignas(CeilingOnPageSize) uint8_t LLINT_OPCODE_CONFIG_SECTION os_script_config_storage[OpcodeConfigSizeToProtect];
 #endif
 
 static_assert(sizeof(OpcodeConfig) <= OpcodeConfigSizeToProtect);
@@ -97,7 +98,7 @@ void initialize()
     // is a potential SDK vs OS mismatch. The check is intentionally designed to be cheap.
     auto osVersionSupports = [] (void* storageAddress) {
         auto addressValue = reinterpret_cast<uintptr_t>(storageAddress);
-        uintptr_t pageSizeMask = CeilingOnPageSize - 1;
+        uintptr_t pageSizeMask = vmPageSize() - 1;
 
         if (addressValue & pageSizeMask)
             return false; // os_script_config_storage should be page aligned.

@@ -86,12 +86,6 @@ inline TextBreakingPositionContext::TextBreakingPositionContext(const RenderStyl
 
 void add(Hasher&, const TextBreakingPositionContext&);
 
-struct TextBreakingPositionContextHash {
-    static unsigned hash(const TextBreakingPositionContext& context) { return computeHash(context); }
-    static bool equal(const TextBreakingPositionContext& a, const TextBreakingPositionContext& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 } // namespace Layout
 } // namespace WebCore
 
@@ -103,7 +97,5 @@ struct HashTraits<WebCore::Layout::TextBreakingPositionContext> : GenericHashTra
     static bool isDeletedValue(const WebCore::Layout::TextBreakingPositionContext& value) { return value.isHashTableDeletedValue; }
     static WebCore::Layout::TextBreakingPositionContext emptyValue() { return { }; }
 };
-
-template<> struct DefaultHash<WebCore::Layout::TextBreakingPositionContext> : WebCore::Layout::TextBreakingPositionContextHash { };
 
 } // namespace WTF

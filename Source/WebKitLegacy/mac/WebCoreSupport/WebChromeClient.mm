@@ -742,7 +742,7 @@ void WebChromeClient::setTextIndicator(const WebCore::TextIndicatorData& indicat
 {
 }
 
-void WebChromeClient::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData) const
+void WebChromeClient::updateTextIndicator(RefPtr<TextIndicator>&& textIndicator) const
 {
 }
 

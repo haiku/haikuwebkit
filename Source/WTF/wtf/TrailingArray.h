@@ -191,7 +191,7 @@ public:
 
     void fill(const T& val)
     {
-        std::fill(begin(), end(), val);
+        std::ranges::fill(*this, val);
     }
 
     static constexpr ptrdiff_t offsetOfSize() { return OBJECT_OFFSETOF(Derived, m_size); }

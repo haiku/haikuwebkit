@@ -35,6 +35,7 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include "XRDeviceInfo.h"
+#include <WebCore/ExceptionData.h>
 #include <WebCore/Page.h>
 #include <WebCore/SecurityOrigin.h>
 #include <WebCore/Settings.h>
@@ -187,6 +188,23 @@ void PlatformXRSystemProxy::deref() const
 {
     m_page->deref();
 }
+
+#if ENABLE(WEBXR_HIT_TEST)
+void PlatformXRSystemProxy::requestHitTestSource(const PlatformXR::HitTestOptions& options, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler)
+{
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](Expected<PlatformXR::HitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
+        if (exceptionOrSource)
+            completionHandler(WTFMove(exceptionOrSource).value());
+        else
+            completionHandler(WTFMove(exceptionOrSource).error().toException());
+    });
+}
+
+void PlatformXRSystemProxy::deleteHitTestSource(PlatformXR::HitTestSource source)
+{
+    protectedPage()->send(Messages::PlatformXRSystem::DeleteHitTestSource(source));
+}
+#endif
 
 } // namespace WebKit
 

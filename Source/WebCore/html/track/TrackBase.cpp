@@ -213,8 +213,15 @@ void TrackBase::removeClientFromTrackPrivateBase(TrackPrivateBase& track)
     track.removeClient(m_clientRegistrationId);
 }
 
-MediaTrackBase::MediaTrackBase(ScriptExecutionContext* context, Type type, const std::optional<AtomString>& id, TrackID trackId, const AtomString& label, const AtomString& language)
-    : TrackBase(context, type, id, trackId, label, language)
+static std::optional<AtomString> trackUID(const std::optional<String>& id)
+{
+    if (!id)
+        return { };
+    return AtomString { *id };
+}
+
+MediaTrackBase::MediaTrackBase(ScriptExecutionContext* context, Type type, const std::optional<String>& id, TrackID trackId, const String& label, const String& language)
+    : TrackBase(context, type, trackUID(id), trackId, AtomString { label.isolatedCopy() }, AtomString { language.isolatedCopy() })
 {
 }
 

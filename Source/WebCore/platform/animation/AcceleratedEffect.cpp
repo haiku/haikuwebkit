@@ -216,6 +216,7 @@ AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const Timelin
     if (RefPtr animation = effect.animation()) {
         m_paused = animation->playState() == WebAnimation::PlayState::Paused;
         m_playbackRate = animation->playbackRate();
+        ASSERT(!animation->pending());
         ASSERT(animation->holdTime() || animation->startTime());
         m_holdTime = animation->holdTime();
         m_startTime = animation->startTime();

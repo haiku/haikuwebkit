@@ -110,6 +110,13 @@ header: <WebCore/FontPlatformData.h>
     Variant<RetainPtr<CFNumberRef>, String> opticalSize;
 };
 
+[CustomHeader] struct WebCore::FontPlatformFeatureSetting {
+    std::optional<RetainPtr<CFNumberRef>> type;
+    std::optional<RetainPtr<CFNumberRef>> selector;
+    std::optional<RetainPtr<CFStringRef>> tag;
+    std::optional<RetainPtr<CFNumberRef>> value;
+};
+
 [CustomHeader] struct WebCore::FontPlatformSerializedAttributes {
     String fontName;
     String descriptorLanguage;
@@ -135,7 +142,7 @@ header: <WebCore/FontPlatformData.h>
     std::optional<WebCore::FontPlatformOpticalSize> opticalSize;
     std::optional<WebCore::FontPlatformSerializedTraits> traits;
 
-    std::optional<RetainPtr<CFArrayRef>> featureSettings;
+    std::optional<Vector<WebCore::FontPlatformFeatureSetting>> featureSettings;
 
 #if HAVE(ADDITIONAL_FONT_PLATFORM_SERIALIZED_ATTRIBUTES)
     std::optional<RetainPtr<CFNumberRef>> additionalNumber;

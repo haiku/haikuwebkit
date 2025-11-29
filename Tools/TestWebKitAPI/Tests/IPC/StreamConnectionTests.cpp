@@ -556,6 +556,30 @@ TEST_P(StreamMessageTest, ASendSyncMessageNotStreamEncodableReply)
     m_clientConnection->invalidate();
 }
 
+TEST_P(StreamMessageTest, SendWithAsyncReplyOnDispatcher)
+{
+    auto cleanup = localReferenceBarrier();
+    HashSet<uint64_t> replies;
+    {
+        AutoWorkQueue awq;
+
+        for (uint64_t i = 100u; i < 160u; ++i) {
+            m_clientConnection->sendWithAsyncReplyOnDispatcher(MockStreamTestMessageWithAsyncReply1 { i }, awq.queue(), [&, j = i, queue = awq.queue()] (uint64_t value) {
+                assertIsCurrent(queue);
+                EXPECT_GE(value, 100u) << j;
+                replies.add(value);
+            }, defaultDestinationID());
+        }
+        while (replies.size() < 60u)
+            RunLoop::currentSingleton().cycle();
+        m_clientConnection->invalidate();
+
+        awq.queue()->beginShutdown();
+    }
+    for (uint64_t i = 100u; i < 160u; ++i)
+        EXPECT_TRUE(replies.contains(i));
+}
+
 #if ENABLE(IPC_TESTING_API)
 // Tests the case where we send a sync reply cancel message for a decoding failure. This is
 // for the purposes of JS IPC Testing API to detect when a sync message was not handled.
@@ -644,11 +668,11 @@ public:
         } else {
             // Cause a validation error, MESSAGE_CHECK.
             m_mockServerReceiver->setAsyncMessageHandler([] (IPC::StreamServerConnection& connection, IPC::Decoder&) {
-                connection.markCurrentlyDispatchedMessageAsInvalid();
+                connection.markCurrentlyDispatchedMessageAsInvalid("async stream message check"_s);
                 return true;
             });
             m_mockServerReceiver->setSyncMessageHandler([] (IPC::StreamServerConnection& connection, IPC::Decoder&) {
-                connection.markCurrentlyDispatchedMessageAsInvalid();
+                connection.markCurrentlyDispatchedMessageAsInvalid("sync stream message check"_s);
                 return true;
             });
         }

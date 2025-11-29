@@ -30,6 +30,7 @@
 #include "InlineIteratorTextBox.h"
 #include "PaintInfo.h"
 #include "RenderObject.h"
+#include "StylePrimitiveNumeric.h"
 #include "TextBoxSelectableRange.h"
 #include "TextDecorationPainter.h"
 #include "TextRun.h"

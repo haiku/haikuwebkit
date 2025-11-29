@@ -41,6 +41,7 @@
 #include <algorithm>
 #include <iterator>
 #include <ranges>
+#include <wtf/Hasher.h>
 #include <wtf/MainThread.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/StdLibExtras.h>

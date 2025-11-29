@@ -43,6 +43,7 @@ enum class LogicalHeightType : uint8_t;
 namespace Layout {
 
 class BlockFormattingState;
+class BlockLayoutState;
 class BoxGeometry;
 class FormattingContext;
 class FormattingState;
@@ -60,8 +61,9 @@ public:
     using FormattingContextLayoutFunction = Function<void(const ElementBox&, std::optional<LayoutUnit>, std::optional<LayoutUnit>, LayoutState&)>;
     using FormattingContextLogicalWidthFunction = Function<LayoutUnit(const ElementBox&, LayoutIntegration::LogicalWidthType)>;
     using FormattingContextLogicalHeightFunction = Function<LayoutUnit(const ElementBox&, LayoutIntegration::LogicalHeightType)>;
+    using FormattingContextLayoutForBlockInInlineFunction = Function<void(const ElementBox&, LayoutPoint, BlockLayoutState&, LayoutState&)>;
 
-    LayoutState(const Document&, const ElementBox& rootContainer, Type, FormattingContextLayoutFunction&&, FormattingContextLogicalWidthFunction&&, FormattingContextLogicalHeightFunction&&);
+    LayoutState(const Document&, const ElementBox& rootContainer, Type, FormattingContextLayoutFunction&&, FormattingContextLogicalWidthFunction&&, FormattingContextLogicalHeightFunction&&, FormattingContextLayoutForBlockInInlineFunction&&);
     ~LayoutState();
 
     Type type() const { return m_type; }
@@ -108,6 +110,7 @@ public:
     void layoutWithFormattingContextForBox(const ElementBox&, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint) const;
     LayoutUnit logicalWidthWithFormattingContextForBox(const ElementBox&, LayoutIntegration::LogicalWidthType) const;
     LayoutUnit logicalHeightWithFormattingContextForBox(const ElementBox&, LayoutIntegration::LogicalHeightType) const;
+    void layoutWithFormattingContextForBlockInInline(const Layout::ElementBox& block, LayoutPoint blockLogicalTopLeft, const BlockLayoutState&) const;
 
 private:
     void setQuirksMode(QuirksMode quirksMode) { m_quirksMode = quirksMode; }
@@ -133,6 +136,7 @@ private:
     FormattingContextLayoutFunction m_formattingContextLayoutFunction;
     FormattingContextLogicalWidthFunction m_formattingContextLogicalWidthFunction;
     FormattingContextLogicalHeightFunction m_formattingContextLogicalHeightFunction;
+    FormattingContextLayoutForBlockInInlineFunction m_formattingContextLayoutForBlockInInlineFunction;
 };
 
 inline bool LayoutState::hasBoxGeometry(const Box& layoutBox) const

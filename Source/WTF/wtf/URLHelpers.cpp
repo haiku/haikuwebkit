@@ -32,9 +32,9 @@
 
 #include "URLParser.h"
 #include <mutex>
+#include <ranges>
 #include <unicode/uidna.h>
 #include <unicode/uscript.h>
-#include <wtf/IteratorRange.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/ParsingUtilities.h>
 #include <wtf/text/WTFString.h>
@@ -440,7 +440,7 @@ static inline bool isSecondLevelDomainNameAllowedByTLDRules(std::span<const char
 {
     ASSERT(!buffer.empty());
 
-    for (auto ch : makeReversedRange(buffer)) {
+    for (auto ch : buffer | std::views::reverse) {
         if (characterIsAllowed(ch))
             continue;
         

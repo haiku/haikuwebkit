@@ -787,7 +787,7 @@ Ref<Protocol::Test::TypeNeedingCast> BindingTraits<Protocol::Test::TypeNeedingCa
     auto result = value->asObject();
     BindingTraits<Protocol::Test::TypeNeedingCast>::assertValueHasExpectedType(result.get());
     static_assert(sizeof(Protocol::Test::TypeNeedingCast) == sizeof(JSON::ObjectBase), "type cast problem");
-    return static_reference_cast<Protocol::Test::TypeNeedingCast>(static_reference_cast<JSON::ObjectBase>(result.releaseNonNull()));
+    return unsafeRefDowncast<Protocol::Test::TypeNeedingCast>(upcast<JSON::ObjectBase>(result.releaseNonNull()));
 }
 
 

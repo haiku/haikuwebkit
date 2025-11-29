@@ -74,7 +74,7 @@ void VideoTrackPrivateRemote::updateConfiguration(VideoTrackPrivateRemoteConfigu
         m_label = configuration.label;
         if (changed && hasClients()) {
             notifyClients([label = crossThreadCopy(m_label)](auto& client) {
-                client.labelChanged(AtomString { label.isolatedCopy() });
+                client.labelChanged(label);
             });
         }
     }
@@ -84,7 +84,7 @@ void VideoTrackPrivateRemote::updateConfiguration(VideoTrackPrivateRemoteConfigu
         m_language = configuration.language;
         if (changed && hasClients()) {
             notifyClients([language = crossThreadCopy(m_language)](auto& client) {
-                client.languageChanged(AtomString { language.isolatedCopy() });
+                client.languageChanged(language);
             });
         }
     }

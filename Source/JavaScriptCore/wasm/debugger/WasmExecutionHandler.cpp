@@ -125,9 +125,25 @@ ExecutionHandler::ExecutionHandler(DebugServer& debugServer, ModuleManager& inst
 {
 }
 
-template<typename LockType>
-void ExecutionHandler::stopImpl(LockType& locker) WTF_REQUIRES_LOCK(m_lock)
+void ExecutionHandler::stopImpl(StopReason&& stopReason)
 {
+    RELEASE_ASSERT(Thread::currentSingleton().uid() == m_debugServer.mutatorThreadId());
+
+    Locker locker { m_lock };
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][Breakpoint] Start");
+
+    m_stopReason = stopReason;
+    m_mutatorState = MutatorState::Stopped;
+    m_breakpointManager.clearAllTmpBreakpoints();
+
+    if (m_debuggerState == DebuggerState::ContinueRequested) {
+        sendStopReply(locker);
+        dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][Breakpoint] Currently in continue. Sent a stop reply and waiting...");
+    } else {
+        RELEASE_ASSERT(m_debuggerState == DebuggerState::StopRequested);
+        m_debuggerContinue.notifyOne();
+    }
+
     dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][Breakpoint] Updated stop reason and waiting...");
     m_mutatorContinue.wait(locker);
     dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][Breakpoint] Unblocked and running...");
@@ -138,39 +154,6 @@ void ExecutionHandler::stopImpl(LockType& locker) WTF_REQUIRES_LOCK(m_lock)
         m_debuggerContinue.notifyOne();
 }
 
-void ExecutionHandler::stopOneTimeBreakpoint(StopReason&& stopReason)
-{
-    Locker locker { m_lock };
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][OneTimeBreakpoint] Start");
-
-    m_stopReason = stopReason;
-    m_mutatorState = MutatorState::Stopped;
-    m_breakpointManager.clearAllTmpBreakpoints();
-
-    RELEASE_ASSERT(m_debuggerState == DebuggerState::StopRequested);
-    m_debuggerContinue.notifyOne();
-
-    stopImpl(locker);
-}
-
-void ExecutionHandler::stopRegularBreakpoint(StopReason&& stopReason)
-{
-    Locker locker { m_lock };
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][RegularBreakpoint] Start");
-
-    m_stopReason = stopReason;
-    m_mutatorState = MutatorState::Stopped;
-    if (m_debuggerState == DebuggerState::ContinueRequested) {
-        sendStopReply(locker);
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop][RegularBreakpoint] Currently in continue. Sent a stop reply and waiting...");
-    } else {
-        RELEASE_ASSERT(m_debuggerState == DebuggerState::StopRequested);
-        m_debuggerContinue.notifyOne();
-    }
-
-    stopImpl(locker);
-}
-
 bool ExecutionHandler::stopCode(CallFrame* callFrame, JSWebAssemblyInstance* instance, IPIntCallee* callee, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack)
 {
     RELEASE_ASSERT(Thread::currentSingleton().uid() == m_debugServer.mutatorThreadId());
@@ -179,10 +162,7 @@ bool ExecutionHandler::stopCode(CallFrame* callFrame, JSWebAssemblyInstance* ins
     if (auto* breakpoint = m_breakpointManager.findBreakpoint(address)) {
         StopReason stopReason(breakpoint->type, address, breakpoint->originalBytecode, pc, mc, locals, stack, callee, instance, callFrame);
         dataLogLnIf(Options::verboseWasmDebugger(), "[Code][Stop] Going to stop at ", *breakpoint, " with ", stopReason);
-        if (breakpoint->isOneTimeBreakpoint())
-            stopOneTimeBreakpoint(WTFMove(stopReason));
-        else
-            stopRegularBreakpoint(WTFMove(stopReason));
+        stopImpl(WTFMove(stopReason));
         return true;
     }
     return false;
@@ -243,9 +223,8 @@ void ExecutionHandler::step()
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Start with ", m_stopReason);
 
     uint8_t* currentPC = m_stopReason.pc;
-    uint8_t* currentMC = m_stopReason.mc;
 
-    auto setStepTmpBreakpoint = [&](const uint8_t* nextPC) WTF_REQUIRES_LOCK(m_lock) {
+    auto setStepBreakpoint = [&](const uint8_t* nextPC) WTF_REQUIRES_LOCK(m_lock) {
         VirtualAddress nextAddress = VirtualAddress(m_stopReason.address.value() + (nextPC - currentPC));
         dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step][SetTmpBreakpoint] current PC=", RawPointer(currentPC), "(", m_stopReason.address, "), next PC=", RawPointer(nextPC), "(", nextAddress, ")");
         if (m_breakpointManager.findBreakpoint(nextAddress))
@@ -253,54 +232,14 @@ void ExecutionHandler::step()
         m_breakpointManager.setBreakpoint(nextAddress, Breakpoint(const_cast<uint8_t*>(nextPC), Breakpoint::Type::Step));
     };
 
-    auto setStepTmpBreakpointAtCaller = [&]() WTF_REQUIRES_LOCK(m_lock) {
+    auto setStepBreakpointAtCaller = [&]() WTF_REQUIRES_LOCK(m_lock) {
         uint8_t* returnPC = nullptr;
         VirtualAddress virtualReturnPC;
-        if (getWasmReturnPC(m_stopReason.callFrame, returnPC, virtualReturnPC)) {
+        if (getWasmReturnPC(m_stopReason.callFrame, returnPC, virtualReturnPC))
             m_breakpointManager.setBreakpoint(virtualReturnPC, Breakpoint(const_cast<uint8_t*>(returnPC), Breakpoint::Type::Step));
-            return true;
-        }
-        return false;
     };
 
-    auto setStepIntoBreakpointForDirectCall = [&]() WTF_REQUIRES_LOCK(m_lock) -> bool {
-        const IPInt::CallMetadata* metadata = reinterpret_cast<const IPInt::CallMetadata*>(currentMC);
-        Wasm::FunctionSpaceIndex functionSpaceIndex = metadata->functionIndex;
-
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Call instruction metadata: function index ", static_cast<uint32_t>(functionSpaceIndex));
-
-        JSWebAssemblyInstance* instance = m_stopReason.instance;
-        RefPtr calleeGroup = instance->calleeGroup();
-        RefPtr<Wasm::IPIntCallee> callee = calleeGroup->wasmCalleeFromFunctionIndexSpace(functionSpaceIndex);
-        if (callee->compilationMode() != Wasm::CompilationMode::IPIntMode) {
-            dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Target function is not IPInt mode");
-            return false;
-        }
-
-        const uint8_t* functionStart = callee->bytecode();
-        VirtualAddress address = VirtualAddress::toVirtual(instance, callee->functionIndex(), callee->bytecode());
-        m_breakpointManager.setBreakpoint(address, Breakpoint(const_cast<uint8_t*>(functionStart), Breakpoint::Type::Step));
-        return true;
-    };
-
-    bool needToWaitForStop = true;
-    switch (m_stopReason.originalBytecode) {
-    case Return:
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Handling return instruction - setting breakpoint at caller");
-        needToWaitForStop = setStepTmpBreakpointAtCaller();
-        break;
-    case Call:
-    case TailCall:
-        if (setStepIntoBreakpointForDirectCall())
-            break;
-        [[fallthrough]];
-    // FIXME: Need to set step into breakpoints for these calls
-    case CallIndirect:
-    case TailCallIndirect:
-    case CallRef:
-    case TailCallRef:
-        [[fallthrough]];
-    default: {
+    auto setStepBreakpointsFromDebugInfo = [&]() WTF_REQUIRES_LOCK(m_lock) {
         const auto& moduleInfo = m_stopReason.instance->moduleInformation();
         auto functionIndex = m_stopReason.callee->functionIndex();
         uint32_t offset = m_stopReason.address.offset();
@@ -308,7 +247,49 @@ void ExecutionHandler::step()
         RELEASE_ASSERT(nextInstructions, "Didn't find nextInstructions");
         uint8_t* const basePC = m_stopReason.pc - offset;
         for (uint32_t nextOffset : *nextInstructions)
-            setStepTmpBreakpoint(basePC + nextOffset);
+            setStepBreakpoint(basePC + nextOffset);
+    };
+
+    switch (m_stopReason.originalBytecode) {
+    case Nop:
+    case Drop:
+    case Select:
+        setStepBreakpoint(currentPC + 1);
+        break;
+    case End:
+        if (currentPC != m_stopReason.callee->bytecodeEnd()) {
+            setStepBreakpoint(currentPC + 1);
+            break;
+        }
+        [[fallthrough]];
+    case Return:
+        setStepBreakpointAtCaller();
+        break;
+    case Throw:
+    case Rethrow:
+    case ThrowRef:
+    case Delegate:
+        m_debugServer.vm()->setStepIntoWasmThrow();
+        break;
+    case TailCall:
+    case TailCallIndirect:
+    case TailCallRef:
+        // The tail calls have two debugging behaviors:
+        // 2. Step-into: If the callee is a Wasm call.
+        // 1. Back to caller: If the callee is a non-Wasm call.
+        m_debugServer.vm()->setStepIntoWasmCall();
+        setStepBreakpointAtCaller();
+        break;
+    case Call:
+    case CallIndirect:
+    case CallRef:
+        // The calls have two debugging behaviors:
+        // 2. Step-into: If the callee is a Wasm call.
+        // 1. Step-over: If the callee is a non-Wasm call.
+        m_debugServer.vm()->setStepIntoWasmCall();
+        [[fallthrough]];
+    default: {
+        setStepBreakpointsFromDebugInfo();
         break;
     }
     }
@@ -316,27 +297,24 @@ void ExecutionHandler::step()
     RELEASE_ASSERT(m_debuggerState == DebuggerState::Replied && m_mutatorState == MutatorState::Stopped);
     m_mutatorContinue.notifyOne();
 
-    if (needToWaitForStop) {
-        m_debuggerState = DebuggerState::StopRequested;
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Notified code to continue and waiting...");
-        m_debuggerContinue.wait(m_lock);
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] JSC is stoped");
-        sendStopReply(locker);
-    } else {
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Notified code to continue and waiting...");
-        m_debuggerState = DebuggerState::ContinueRequested;
-        m_debuggerContinue.wait(m_lock);
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Confirmed that code is running...");
-    }
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Notified code to continue and waiting...");
+    m_debuggerState = DebuggerState::ContinueRequested;
+    m_debuggerContinue.wait(m_lock);
+    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step] Confirmed that code is running...");
 }
 
-void ExecutionHandler::setInterruptBreakpoint(JSWebAssemblyInstance* instance, IPIntCallee* callee)
+void ExecutionHandler::setBreakpointAtEntry(JSWebAssemblyInstance* instance, IPIntCallee* callee, Breakpoint::Type type)
 {
-    uint8_t* pc = const_cast<uint8_t*>(callee->bytecode());
-    VirtualAddress address = VirtualAddress::toVirtual(instance, callee->functionIndex(), pc);
+    setBreakpointAtPC(instance, callee->functionIndex(), type, callee->bytecode());
+}
+
+void ExecutionHandler::setBreakpointAtPC(JSWebAssemblyInstance* instance, FunctionCodeIndex functionIndex, Breakpoint::Type type, const uint8_t* pc)
+{
+    RELEASE_ASSERT(pc);
+    VirtualAddress address = VirtualAddress::toVirtual(instance, functionIndex, pc);
     if (m_breakpointManager.findBreakpoint(address))
         return;
-    m_breakpointManager.setBreakpoint(address, Breakpoint(pc, Breakpoint::Type::Interrupt));
+    m_breakpointManager.setBreakpoint(address, Breakpoint(const_cast<uint8_t*>(pc), type));
 }
 
 void ExecutionHandler::setBreakpoint(StringView packet)

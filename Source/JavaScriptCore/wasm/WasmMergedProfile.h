@@ -69,7 +69,7 @@ public:
         std::array<std::tuple<Callee*, uint32_t>, CallProfile::maxPolymorphicCallees> m_callees { };
     };
 
-    MergedProfile(const IPIntCallee&, double totalCount);
+    MergedProfile(const IPIntCallee&);
     unsigned size() const { return m_callSites.size(); }
     bool isCalled(size_t index) const { return m_callSites[index].isCalled(); }
     Candidates candidates(size_t index) const { return m_callSites[index].finalize(); }
@@ -77,11 +77,11 @@ public:
 
     void merge(const Module&, const IPIntCallee&, BaselineData&);
     bool merged() const { return m_merged; }
-    double totalCount() const { return m_totalCount; }
+    uint32_t totalCount() const { return m_totalCount; }
 
 private:
     Vector<Candidates> m_callSites;
-    double m_totalCount { 0 };
+    uint32_t m_totalCount { 0 };
     bool m_merged { false };
 };
 

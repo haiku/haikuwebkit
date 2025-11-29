@@ -83,6 +83,12 @@ TextTrack& TextTrack::captionMenuOffItem()
     return off;
 }
 
+TextTrack& TextTrack::captionMenuOnItem()
+{
+    static TextTrack& on = TextTrack::create(nullptr, "on menu item"_s, emptyAtom(), emptyAtom(), emptyAtom()).leakRef();
+    return on;
+}
+
 TextTrack& TextTrack::captionMenuAutomaticItem()
 {
     static TextTrack& automatic = TextTrack::create(nullptr, "automatic menu item"_s, emptyAtom(), emptyAtom(), emptyAtom()).leakRef();

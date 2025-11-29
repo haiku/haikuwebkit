@@ -72,7 +72,7 @@ public:
     void preparedToReturnToStandby() { }
     bool mayAutomaticallyShowVideoPictureInPicture() const { return false; }
     void applicationDidBecomeActive() { }
-    void setMode(HTMLMediaElementEnums::VideoFullscreenMode, bool) { }
+    void setMode(HTMLMediaElementEnums::VideoFullscreenMode, VideoPresentationModel::ShouldNotifyMediaElement) { }
     HTMLMediaElementEnums::VideoFullscreenMode mode() const { return HTMLMediaElementEnums::VideoFullscreenModeNone; }
     bool hasMode(HTMLMediaElementEnums::VideoFullscreenMode) const { return false; }
     bool pictureInPictureWasStartedWhenEnteringBackground() const { return false; }

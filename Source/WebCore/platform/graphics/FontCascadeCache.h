@@ -140,6 +140,7 @@ struct FontDescriptionKey {
     }
 
     bool isHashTableDeletedValue() const { return m_isDeletedValue; }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     friend void add(Hasher&, const FontDescriptionKey&);
 
@@ -195,13 +196,6 @@ inline void add(Hasher& hasher, const FontDescriptionKey& key)
 } // namespace WebCore
 
 namespace WTF {
-
-template<> struct DefaultHash<WebCore::FontDescriptionKey> {
-    static unsigned hash(const WebCore::FontDescriptionKey& key) { return computeHash(key); }
-    static bool equal(const WebCore::FontDescriptionKey& a, const WebCore::FontDescriptionKey& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
-
 template<> struct HashTraits<WebCore::FontDescriptionKey> : SimpleClassHashTraits<WebCore::FontDescriptionKey> {
 };
 
@@ -247,12 +241,6 @@ struct FontCascadeCacheEntry {
     Ref<FontCascadeFonts> fonts;
 };
 
-struct FontCascadeCacheKeyHash {
-    static unsigned hash(const FontCascadeCacheKey& key) { return computeHash(key); }
-    static bool equal(const FontCascadeCacheKey& a, const FontCascadeCacheKey& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = false;
-};
-
 struct FontCascadeCacheKeyHashTraits : HashTraits<FontCascadeCacheKey> {
     static FontCascadeCacheKey emptyValue() { return { }; }
     static void constructDeletedValue(FontCascadeCacheKey& slot) { new (NotNull, &slot.fontDescriptionKey) FontDescriptionKey(WTF::HashTableDeletedValue); }
@@ -274,7 +262,7 @@ public:
     Ref<FontCascadeFonts> retrieveOrAddCachedFonts(const FontCascadeDescription&, FontSelector*);
 
 private:
-    HashMap<FontCascadeCacheKey, std::unique_ptr<FontCascadeCacheEntry>, FontCascadeCacheKeyHash, FontCascadeCacheKeyHashTraits> m_entries;
+    HashMap<FontCascadeCacheKey, std::unique_ptr<FontCascadeCacheEntry>, DefaultHash<FontCascadeCacheKey>, FontCascadeCacheKeyHashTraits> m_entries;
 };
 
 } // namespace WebCore

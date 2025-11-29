@@ -34,17 +34,19 @@
 #include "ImageBufferRemotePDFDocumentBackend.h"
 #include "ImageBufferShareableBitmapBackend.h"
 #include "Logging.h"
+#include "PrepareBackingStoreBuffersData.h"
+#include "RemoteBarcodeDetectorProxy.h"
 #include "RemoteDisplayListRecorderProxy.h"
+#include "RemoteFaceDetectorProxy.h"
 #include "RemoteImageBufferMessages.h"
 #include "RemoteImageBufferProxy.h"
 #include "RemoteImageBufferProxyMessages.h"
 #include "RemoteImageBufferSetProxy.h"
-#include "RemoteImageBufferSetProxyMessages.h"
 #include "RemoteRenderingBackendMessages.h"
 #include "RemoteRenderingBackendProxyMessages.h"
 #include "RemoteSharedResourceCacheProxy.h"
 #include "RemoteSnapshotRecorderProxy.h"
-#include "SwapBuffersDisplayRequirement.h"
+#include "RemoteTextDetectorProxy.h"
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <JavaScriptCore/TypedArrayInlines.h>
@@ -700,6 +702,47 @@ Function<bool()> RemoteRenderingBackendProxy::flushImageBuffers()
 void RemoteRenderingBackendProxy::getImageBufferResourceLimitsForTesting(CompletionHandler<void(ImageBufferResourceLimits)>&& callback)
 {
     sendWithAsyncReply(Messages::RemoteRenderingBackend::GetImageBufferResourceLimitsForTesting(), WTFMove(callback));
+}
+
+Ref<ShapeDetection::RemoteBarcodeDetectorProxy> RemoteRenderingBackendProxy::createBarcodeDetector(const WebCore::ShapeDetection::BarcodeDetectorOptions& options)
+{
+    Ref instance = ShapeDetection::RemoteBarcodeDetectorProxy::create(*this);
+    send(Messages::RemoteRenderingBackend::CreateBarcodeDetector(instance->identifier(), options));
+    return instance;
+}
+
+void RemoteRenderingBackendProxy::releaseBarcodeDetector(ShapeDetection::RemoteBarcodeDetectorProxy& instance)
+{
+    send(Messages::RemoteRenderingBackend::ReleaseBarcodeDetector(instance.identifier()));
+}
+
+void RemoteRenderingBackendProxy::supportedBarcodeDetectorBarcodeFormats(CompletionHandler<void(Vector<WebCore::ShapeDetection::BarcodeFormat>&&)> completionHandler)
+{
+    sendWithAsyncReply(Messages::RemoteRenderingBackend::SupportedBarcodeDetectorBarcodeFormats(), WTFMove(completionHandler));
+}
+
+Ref<ShapeDetection::RemoteFaceDetectorProxy> RemoteRenderingBackendProxy::createFaceDetector(const WebCore::ShapeDetection::FaceDetectorOptions& options)
+{
+    Ref instance = ShapeDetection::RemoteFaceDetectorProxy::create(*this);
+    send(Messages::RemoteRenderingBackend::CreateFaceDetector(instance->identifier(), options));
+    return instance;
+}
+
+void RemoteRenderingBackendProxy::releaseFaceDetector(ShapeDetection::RemoteFaceDetectorProxy& instance)
+{
+    send(Messages::RemoteRenderingBackend::ReleaseFaceDetector(instance.identifier()));
+}
+
+Ref<ShapeDetection::RemoteTextDetectorProxy> RemoteRenderingBackendProxy::createTextDetector()
+{
+    Ref instance = ShapeDetection::RemoteTextDetectorProxy::create(*this);
+    send(Messages::RemoteRenderingBackend::CreateTextDetector(instance->identifier()));
+    return instance;
+}
+
+void RemoteRenderingBackendProxy::releaseTextDetector(ShapeDetection::RemoteTextDetectorProxy& instance)
+{
+    send(Messages::RemoteRenderingBackend::ReleaseTextDetector(instance.identifier()));
 }
 
 } // namespace WebKit

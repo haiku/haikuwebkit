@@ -129,6 +129,11 @@ void RemoteDDMesh::setCameraDistance(float distance)
     m_backing->setCameraDistance(distance);
 }
 
+void RemoteDDMesh::play(bool playing)
+{
+    m_backing->play(playing);
+}
+
 } // namespace WebKit
 
 #undef MESSAGE_CHECK

@@ -1409,6 +1409,7 @@ $(PROJECT_DIR)/dom/AbortSignal.idl
 $(PROJECT_DIR)/dom/AbstractRange.idl
 $(PROJECT_DIR)/dom/AddEventListenerOptions.idl
 $(PROJECT_DIR)/dom/AnimationEvent.idl
+$(PROJECT_DIR)/dom/AriaNotifyOptions.idl
 $(PROJECT_DIR)/dom/Attr.idl
 $(PROJECT_DIR)/dom/BeforeUnloadEvent.idl
 $(PROJECT_DIR)/dom/BroadcastChannel.idl

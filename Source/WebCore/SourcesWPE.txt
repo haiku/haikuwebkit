@@ -70,8 +70,8 @@ platform/graphics/glib/IconGLib.cpp
 platform/graphics/glib/ImageAdapterGLib.cpp
 platform/graphics/glib/SystemFontDatabaseGLib.cpp
 
-platform/graphics/android/GraphicsContextGLTextureMapperAndroid.h @no-unify
 platform/graphics/android/GraphicsContextGLTextureMapperAndroid.cpp @no-unify
+platform/graphics/android/PlatformDisplayAndroid.cpp @no-unify
 
 platform/graphics/egl/GLContext.cpp @no-unify
 platform/graphics/egl/GLContextLibWPE.cpp @no-unify
@@ -80,6 +80,7 @@ platform/graphics/egl/GLDisplay.cpp @no-unify
 platform/graphics/egl/GLFence.cpp @no-unify
 platform/graphics/egl/GLFenceEGL.cpp @no-unify
 platform/graphics/egl/GLFenceGL.cpp @no-unify
+platform/graphics/egl/PlatformDisplayDefault.cpp @no-unify
 platform/graphics/egl/PlatformDisplaySurfaceless.cpp @no-unify
 
 platform/graphics/gbm/DMABufBuffer.cpp

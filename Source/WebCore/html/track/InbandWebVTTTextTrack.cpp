@@ -85,8 +85,8 @@ void InbandWebVTTTextTrack::newCuesParsed()
     if (!document)
         return;
 
-    for (auto& cueData : parser().takeCues()) {
-        auto cue = VTTCue::create(*document, cueData);
+    for (auto&& cueData : parser().takeCues()) {
+        auto cue = VTTCue::create(*document, WTFMove(cueData));
         auto existingCue = matchCue(cue, TextTrackCue::IgnoreDuration);
         if (!existingCue) {
             INFO_LOG(LOGIDENTIFIER, cue.get());

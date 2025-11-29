@@ -872,6 +872,7 @@ public:
     Vector<std::invoke_result_t<MapFunction, const T&>> map(NOESCAPE const MapFunction&) const;
 
     bool isHashTableDeletedValue() const { return m_size == std::numeric_limits<decltype(m_size)>::max(); }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
 private:
     void unsafeAppendWithoutCapacityCheck(value_type&& value) { unsafeAppendWithoutCapacityCheck<value_type>(std::forward<value_type>(value)); }
@@ -1113,7 +1114,7 @@ void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::fill(const
 
     asanBufferSizeWillChangeTo(newSize);
 
-    std::fill(begin(), end(), val);
+    std::ranges::fill(*this, val);
     TypeOperations::uninitializedFill(end(), begin() + newSize, val);
     m_size = newSize;
 }

@@ -35,7 +35,6 @@
 #include "GPUErrorFilter.h"
 #include "GPURenderPipeline.h"
 #include "GPUQueue.h"
-#include "HTMLVideoElement.h"
 #include "JSDOMPromiseDeferredForward.h"
 #include "ScriptExecutionContext.h"
 #include "WebGPUDevice.h"
@@ -81,6 +80,7 @@ class GPUSupportedFeatures;
 class GPUSupportedLimits;
 class GPUTexture;
 struct GPUTextureDescriptor;
+class HTMLVideoElement;
 class WebXRSession;
 class XRGPUBinding;
 

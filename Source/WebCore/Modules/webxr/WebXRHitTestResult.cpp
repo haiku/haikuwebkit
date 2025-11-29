@@ -37,11 +37,31 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRHitTestResult);
 
+Ref<WebXRHitTestResult> WebXRHitTestResult::create(WebXRFrame& frame, const PlatformXR::FrameData::HitTestResult& result)
+{
+    return adoptRef(*new WebXRHitTestResult(frame, result));
+}
+
+WebXRHitTestResult::WebXRHitTestResult(WebXRFrame& frame, const PlatformXR::FrameData::HitTestResult& result)
+    : m_frame(frame)
+    , m_result(result)
+{
+}
+
 WebXRHitTestResult::~WebXRHitTestResult() = default;
 
-ExceptionOr<RefPtr<WebXRPose>> WebXRHitTestResult::getPose(const WebXRSpace&)
+// https://immersive-web.github.io/hit-test/#dom-xrhittestresult-getpose
+ExceptionOr<RefPtr<WebXRPose>> WebXRHitTestResult::getPose(Document& document, const WebXRSpace& baseSpace)
 {
-    return nullptr;
+    PlatformXR::FrameData::InputSourcePose pose { m_result.pose };
+    Ref space = WebXRInputSpace::create(document, m_frame->session(), pose);
+    auto exceptionOrPose = m_frame->populatePose(document, space, baseSpace);
+    if (exceptionOrPose.hasException())
+        return exceptionOrPose.releaseException();
+    auto populatedPose = exceptionOrPose.releaseReturnValue();
+    if (!populatedPose)
+        return nullptr;
+    return RefPtr<WebXRPose>(WebXRPose::create(WebXRRigidTransform::create(populatedPose->transform), populatedPose->emulatedPosition));
 }
 
 } // namespace WebCore

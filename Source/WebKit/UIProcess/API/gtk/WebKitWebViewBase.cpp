@@ -3685,7 +3685,7 @@ void webkitWebViewBaseSetCursor(WebKitWebViewBase* webViewBase, const Cursor& cu
         GRefPtr<GdkCursor> newCursor = adoptGRef(gdk_cursor_new_from_name(name, fallbackCursor().get()));
         gtk_widget_set_cursor(GTK_WIDGET(webViewBase), newCursor.get());
 #else
-        if (!currentCursor)
+        if (!currentCursor && cursor.type() == Cursor::Type::Pointer)
             return;
         GRefPtr<GdkCursor> newCursor = adoptGRef(gdk_cursor_new_from_name(gtk_widget_get_display(GTK_WIDGET(webViewBase)), name));
         gdk_window_set_cursor(window, newCursor.get());

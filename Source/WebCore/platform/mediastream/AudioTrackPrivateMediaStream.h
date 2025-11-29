@@ -91,8 +91,8 @@ private:
 
     // AudioTrackPrivate
     Kind kind() const final { return Kind::Main; }
-    std::optional<AtomString> trackUID() const { return AtomString { m_streamTrack->id() }; }
-    AtomString label() const final { return AtomString { m_streamTrack->label() }; }
+    std::optional<String> trackUID() const { return m_streamTrack->id(); }
+    String label() const final { return m_streamTrack->label(); }
     int trackIndex() const final { return m_index; }
     bool isBackedByMediaStreamTrack() const final { return true; }
 

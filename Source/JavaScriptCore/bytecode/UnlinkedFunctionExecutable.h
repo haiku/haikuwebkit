@@ -311,7 +311,7 @@ private:
     LexicallyScopedFeatures m_lexicallyScopedFeatures : bitWidthOfLexicallyScopedFeatures;
     uint8_t m_functionMode : 2; // FunctionMode
     uint8_t m_derivedContextType : 2;
-    uint8_t m_inlineAttribute : 2;
+    uint8_t m_inlineAttribute : 1;
 
     union {
         WriteBarrier<UnlinkedFunctionCodeBlock> m_unlinkedCodeBlockForCall;

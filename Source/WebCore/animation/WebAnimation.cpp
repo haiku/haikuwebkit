@@ -1536,6 +1536,8 @@ bool WebAnimation::needsTick() const
 
 void WebAnimation::tick()
 {
+    auto wasPending = pending();
+
     // https://drafts.csswg.org/scroll-animations-1/#event-loop
     // When updating timeline current time, the start time of any attached animation is
     // conditionally updated. For each attached animation, run the procedure for calculating
@@ -1549,8 +1551,11 @@ void WebAnimation::tick()
     updateFinishedState(DidSeek::No, SynchronouslyNotify::Yes);
     m_shouldSkipUpdatingFinishedStateWhenResolving = true;
 
-    if (!isEffectInvalidationSuspended() && m_effect)
+    if (!isEffectInvalidationSuspended() && m_effect) {
         m_effect->animationDidTick();
+        if (wasPending && !pending())
+            m_effect->animationBecameReady();
+    }
 }
 
 void WebAnimation::maybeMarkAsReady()
@@ -1617,8 +1622,24 @@ void WebAnimation::setSuspended(bool isSuspended)
 
 void WebAnimation::acceleratedStateDidChange()
 {
-    if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline))
-        documentTimeline->animationAcceleratedRunningStateDidChange(*this);
+    // FIXME: this would not be necessary if we didn't go through DocumentTimeline to
+    // schedule accelerated animations.
+    auto documentTimeline = [&]() -> DocumentTimeline* {
+        if (auto* timeline = dynamicDowncast<DocumentTimeline>(m_timeline.get()))
+            return timeline;
+        if (RefPtr scrollTimeline = dynamicDowncast<ScrollTimeline>(m_timeline.get())) {
+            if (RefPtr source = scrollTimeline->source())
+                return &source->protectedDocument()->timeline();
+        }
+        if (RefPtr keyframeEffect = this->keyframeEffect()) {
+            if (RefPtr target = keyframeEffect->target())
+                return &target->protectedDocument()->timeline();
+        }
+        return nullptr;
+    };
+
+    if (RefPtr timeline = documentTimeline())
+        timeline->animationAcceleratedRunningStateDidChange(*this);
 }
 
 WebAnimation& WebAnimation::readyPromiseResolve()

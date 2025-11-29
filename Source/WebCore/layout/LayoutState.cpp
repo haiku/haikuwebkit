@@ -43,7 +43,7 @@ namespace Layout {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(LayoutState);
 
-LayoutState::LayoutState(const Document& document, const ElementBox& rootContainer, Type type, FormattingContextLayoutFunction&& formattingContextLayoutFunction, FormattingContextLogicalWidthFunction&& formattingContextLogicalWidthFunction , FormattingContextLogicalHeightFunction&& formattingContextLogicalHeightFunction)
+LayoutState::LayoutState(const Document& document, const ElementBox& rootContainer, Type type, FormattingContextLayoutFunction&& formattingContextLayoutFunction, FormattingContextLogicalWidthFunction&& formattingContextLogicalWidthFunction , FormattingContextLogicalHeightFunction&& formattingContextLogicalHeightFunction, FormattingContextLayoutForBlockInInlineFunction&& formattingContextLayoutForBlockInInlineFunction)
     : m_type(type)
     , m_isTextShapingAcrossInlineBoxesEnabled(document.settings().textShapingAcrossInlineBoxes())
     , m_rootContainer(rootContainer)
@@ -51,6 +51,7 @@ LayoutState::LayoutState(const Document& document, const ElementBox& rootContain
     , m_formattingContextLayoutFunction(WTFMove(formattingContextLayoutFunction))
     , m_formattingContextLogicalWidthFunction(WTFMove(formattingContextLogicalWidthFunction))
     , m_formattingContextLogicalHeightFunction(WTFMove(formattingContextLogicalHeightFunction))
+    , m_formattingContextLayoutForBlockInInlineFunction(WTFMove(formattingContextLayoutForBlockInInlineFunction))
 {
     // It makes absolutely no sense to construct a dedicated layout state for a non-formatting context root (layout would be a no-op).
     ASSERT(root().establishesFormattingContext());
@@ -168,6 +169,11 @@ LayoutUnit LayoutState::logicalWidthWithFormattingContextForBox(const ElementBox
 LayoutUnit LayoutState::logicalHeightWithFormattingContextForBox(const ElementBox& box, LayoutIntegration::LogicalHeightType logicalHeightType) const
 {
     return const_cast<LayoutState&>(*this).m_formattingContextLogicalHeightFunction(box, logicalHeightType);
+}
+
+void LayoutState::layoutWithFormattingContextForBlockInInline(const Layout::ElementBox& block, LayoutPoint blockLogicalTopLeft, const BlockLayoutState& parentBlockLayoutState) const
+{
+    const_cast<LayoutState&>(*this).m_formattingContextLayoutForBlockInInlineFunction(block, blockLogicalTopLeft, const_cast<BlockLayoutState&>(parentBlockLayoutState), const_cast<LayoutState&>(*this));
 }
 
 }

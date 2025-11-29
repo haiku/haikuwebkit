@@ -67,22 +67,22 @@ VideoTrack* VideoTrackList::item(unsigned index) const
     return nullptr;
 }
 
-VideoTrack* VideoTrackList::getTrackById(const AtomString& id) const
+RefPtr<VideoTrack> VideoTrackList::getTrackById(const AtomString& id) const
 {
     for (auto& inbandTracks : m_inbandTracks) {
         Ref track = downcast<VideoTrack>(*inbandTracks);
         if (track->id() == id)
-            return track.unsafePtr();
+            return track;
     }
     return nullptr;
 }
 
-VideoTrack* VideoTrackList::getTrackById(TrackID id) const
+RefPtr<VideoTrack> VideoTrackList::getTrackById(TrackID id) const
 {
     for (auto& inbandTracks : m_inbandTracks) {
-        auto& track = downcast<VideoTrack>(*inbandTracks);
-        if (track.trackId() == id)
-            return &track;
+        Ref track = downcast<VideoTrack>(*inbandTracks);
+        if (track->trackId() == id)
+            return track;
     }
     return nullptr;
 }

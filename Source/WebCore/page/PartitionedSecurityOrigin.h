@@ -71,14 +71,6 @@ inline void add(Hasher& hasher, const WebCore::PartitionedSecurityOrigin& origin
     add(hasher, origin.topOrigin.get(), origin.clientOrigin.get());
 }
 
-struct PartitionedSecurityOriginHash {
-    static unsigned hash(const WebCore::PartitionedSecurityOrigin& origin) { return computeHash(origin); }
-    static bool equal(const WebCore::PartitionedSecurityOrigin& a, const WebCore::PartitionedSecurityOrigin& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = false;
-};
-
-template<> struct DefaultHash<WebCore::PartitionedSecurityOrigin> : PartitionedSecurityOriginHash { };
-
 template<> struct HashTraits<WebCore::PartitionedSecurityOrigin> : SimpleClassHashTraits<WebCore::PartitionedSecurityOrigin> {
     static constexpr bool emptyValueIsZero = true;
     static WebCore::PartitionedSecurityOrigin emptyValue() { return HashTableEmptyValue; }

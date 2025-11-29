@@ -790,6 +790,12 @@ void WebPageProxy::relayAccessibilityNotification(String&& notificationName, std
         pageClient->relayAccessibilityNotification(WTFMove(notificationName), toNSData(data));
 }
 
+void WebPageProxy::relayAriaNotifyNotification(WebCore::AriaNotifyData&& notificationData)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->relayAriaNotifyNotification(notificationData);
+}
+
 void WebPageProxy::assistiveTechnologyMakeFirstResponder()
 {
     if (RefPtr pageClient = this->pageClient())

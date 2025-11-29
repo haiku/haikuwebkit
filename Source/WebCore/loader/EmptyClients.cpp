@@ -634,7 +634,7 @@ void EmptyChromeClient::setTextIndicator(const TextIndicatorData&) const
 {
 }
 
-void EmptyChromeClient::updateTextIndicator(const TextIndicatorData&) const
+void EmptyChromeClient::updateTextIndicator(RefPtr<TextIndicator>&&) const
 {
 }
 

@@ -47,7 +47,7 @@ public:
     bool isDefault() const override;
     size_t inbandTrackIndex();
 
-    AtomString inBandMetadataTrackDispatchType() const override;
+    String inBandMetadataTrackDispatchType() const override;
 
     void setPrivate(InbandTextTrackPrivate&);
 #if !RELEASE_LOG_DISABLED
@@ -67,8 +67,8 @@ protected:
 private:
     bool isInband() const final { return true; }
     void idChanged(TrackID) override;
-    void labelChanged(const AtomString&) override;
-    void languageChanged(const AtomString&) override;
+    void labelChanged(const String&) override;
+    void languageChanged(const String&) override;
     void willRemove() override;
 
     void addDataCue(const MediaTime&, const MediaTime&, std::span<const uint8_t>) override { ASSERT_NOT_REACHED(); }

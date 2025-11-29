@@ -127,5 +127,5 @@ const obj125 = { value: 125 };
 const obj126 = { value: 126 };
 const obj127 = { value: 127 };
 
-for (let i = 0; i < 1e4; ++i)
+for (let i = 0; i < 1e5; ++i)
   Array.of(obj0, obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8, obj9, obj10, obj11, obj12, obj13, obj14, obj15, obj16, obj17, obj18, obj19, obj20, obj21, obj22, obj23, obj24, obj25, obj26, obj27, obj28, obj29, obj30, obj31, obj32, obj33, obj34, obj35, obj36, obj37, obj38, obj39, obj40, obj41, obj42, obj43, obj44, obj45, obj46, obj47, obj48, obj49, obj50, obj51, obj52, obj53, obj54, obj55, obj56, obj57, obj58, obj59, obj60, obj61, obj62, obj63, obj64, obj65, obj66, obj67, obj68, obj69, obj70, obj71, obj72, obj73, obj74, obj75, obj76, obj77, obj78, obj79, obj80, obj81, obj82, obj83, obj84, obj85, obj86, obj87, obj88, obj89, obj90, obj91, obj92, obj93, obj94, obj95, obj96, obj97, obj98, obj99, obj100, obj101, obj102, obj103, obj104, obj105, obj106, obj107, obj108, obj109, obj110, obj111, obj112, obj113, obj114, obj115, obj116, obj117, obj118, obj119, obj120, obj121, obj122, obj123, obj124, obj125, obj126, obj127);

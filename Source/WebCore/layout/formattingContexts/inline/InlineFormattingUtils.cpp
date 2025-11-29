@@ -37,6 +37,7 @@
 #include "LayoutElementBox.h"
 #include "RenderStyleInlines.h"
 #include "RubyFormattingContext.h"
+#include <ranges>
 
 namespace WebCore {
 namespace Layout {
@@ -54,7 +55,7 @@ InlineLayoutUnit InlineFormattingUtils::logicalTopForNextLine(const LineLayoutRe
         // with the clear property set, the next line needs to clear the existing floats.
         if (!lineLayoutResult.hasInlineContent())
             return lineLogicalRect.bottom();
-        auto& lastRunLayoutBox = lineLayoutResult.inlineAndOpaqueContent.last().layoutBox();
+        auto& lastRunLayoutBox = lineLayoutResult.runs.last().layoutBox();
         if (!lastRunLayoutBox.hasFloatClear() || lastRunLayoutBox.isOutOfFlowPositioned())
             return lineLogicalRect.bottom();
         auto blockAxisPositionWithClearance = floatingContext.blockAxisPositionWithClearance(lastRunLayoutBox, formattingContext().geometryForBox(lastRunLayoutBox));
@@ -66,7 +67,7 @@ InlineLayoutUnit InlineFormattingUtils::logicalTopForNextLine(const LineLayoutRe
     auto intrusiveFloatBottom = [&]() -> std::optional<InlineLayoutUnit> {
         // Floats must have prevented us placing any content on the line.
         // Move next line below the intrusive float(s).
-        ASSERT(!lineLayoutResult.hasInlineContent() || lineLayoutResult.inlineAndOpaqueContent[0].isLineSpanningInlineBoxStart());
+        ASSERT(!lineLayoutResult.hasInlineContent() || lineLayoutResult.runs[0].isLineSpanningInlineBoxStart());
         auto nextLineLogicalTop = [&]() -> LayoutUnit {
             if (auto nextLineLogicalTopCandidate = lineLayoutResult.hintForNextLineTopToAvoidIntrusiveFloat)
                 return LayoutUnit { *nextLineLogicalTopCandidate };
@@ -488,7 +489,7 @@ size_t InlineFormattingUtils::nextWrapOpportunity(size_t startIndex, const Inlin
             continue;
         }
         if (currentItem.isBlock()) {
-            // FIXME: Blocks in inline.
+            // Let's break before and after a block level box.
             auto wrappingPosition = index == startIndex ? std::min(index + 1, layoutRange.endIndex()) : index;
             return wrappingPosition;
         }
@@ -611,7 +612,7 @@ LineEndingTruncationPolicy InlineFormattingUtils::lineEndingTruncationPolicy(con
 
 std::optional<LineLayoutResult::InlineContentEnding> InlineFormattingUtils::inlineContentEnding(const Line::Result& lineContent)
 {
-    for (auto& run : makeReversedRange(lineContent.runs)) {
+    for (auto& run : lineContent.runs | std::views::reverse) {
         if (run.isOpaque())
             continue;
 

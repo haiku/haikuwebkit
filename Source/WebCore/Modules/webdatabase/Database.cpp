@@ -198,6 +198,7 @@ Database::Database(DatabaseContext& context, const String& name, const String& e
     , m_displayName(displayName.isolatedCopy())
     , m_estimatedSize(estimatedSize)
     , m_filename(DatabaseManager::singleton().fullPathForDatabase(m_document->securityOrigin(), m_name))
+    , m_sqliteDatabase(makeUniqueRef<SQLiteDatabase>())
     , m_databaseAuthorizer(DatabaseAuthorizer::create(unqualifiedInfoTableName))
 {
     {
@@ -256,7 +257,7 @@ ExceptionOr<void> Database::openAndVerifyVersion(bool setVersionInNewDatabase)
 void Database::interrupt()
 {
     // It is safe to call this from any thread for an opened or closed database.
-    m_sqliteDatabase.interrupt();
+    m_sqliteDatabase->interrupt();
 }
 
 void Database::close()
@@ -339,12 +340,12 @@ ExceptionOr<void> Database::performOpenAndVerify(bool shouldSetVersionInNewDatab
 
     SQLiteTransactionInProgressAutoCounter transactionCounter;
 
-    if (!m_sqliteDatabase.open(m_filename))
-        return Exception { ExceptionCode::InvalidStateError, formatErrorMessage("unable to open database"_s, m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg()) };
-    if (!m_sqliteDatabase.turnOnIncrementalAutoVacuum())
-        LOG_ERROR("Unable to turn on incremental auto-vacuum (%d %s)", m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg());
+    if (!m_sqliteDatabase->open(m_filename))
+        return Exception { ExceptionCode::InvalidStateError, formatErrorMessage("unable to open database"_s, m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg()) };
+    if (!m_sqliteDatabase->turnOnIncrementalAutoVacuum())
+        LOG_ERROR("Unable to turn on incremental auto-vacuum (%d %s)", m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg());
 
-    m_sqliteDatabase.setBusyTimeout(maxSqliteBusyWaitTime);
+    m_sqliteDatabase->setBusyTimeout(maxSqliteBusyWaitTime);
 
     String currentVersion;
     {
@@ -358,27 +359,27 @@ ExceptionOr<void> Database::performOpenAndVerify(bool shouldSetVersionInNewDatab
         } else {
             LOG(StorageAPI, "No cached version for guid %i", m_guid);
 
-            SQLiteTransaction transaction(m_sqliteDatabase);
+            SQLiteTransaction transaction(m_sqliteDatabase.get());
             transaction.begin();
             if (!transaction.inProgress()) {
-                String message = formatErrorMessage("unable to open database, failed to start transaction"_s, m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg());
-                m_sqliteDatabase.close();
+                String message = formatErrorMessage("unable to open database, failed to start transaction"_s, m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg());
+                m_sqliteDatabase->close();
                 return Exception { ExceptionCode::InvalidStateError, WTFMove(message) };
             }
 
-            if (!m_sqliteDatabase.tableExists(unqualifiedInfoTableName)) {
+            if (!m_sqliteDatabase->tableExists(unqualifiedInfoTableName)) {
                 m_new = true;
 
-                if (!m_sqliteDatabase.executeCommandSlow(makeString("CREATE TABLE "_s, unqualifiedInfoTableName, " (key TEXT NOT NULL ON CONFLICT FAIL UNIQUE ON CONFLICT REPLACE,value TEXT NOT NULL ON CONFLICT FAIL);"_s))) {
-                    String message = formatErrorMessage("unable to open database, failed to create 'info' table"_s, m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg());
+                if (!m_sqliteDatabase->executeCommandSlow(makeString("CREATE TABLE "_s, unqualifiedInfoTableName, " (key TEXT NOT NULL ON CONFLICT FAIL UNIQUE ON CONFLICT REPLACE,value TEXT NOT NULL ON CONFLICT FAIL);"_s))) {
+                    String message = formatErrorMessage("unable to open database, failed to create 'info' table"_s, m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg());
                     transaction.rollback();
-                    m_sqliteDatabase.close();
+                    m_sqliteDatabase->close();
                 return Exception { ExceptionCode::InvalidStateError, WTFMove(message) };
                 }
             } else if (!getVersionFromDatabase(currentVersion, false)) {
-                String message = formatErrorMessage("unable to open database, failed to read current version"_s, m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg());
+                String message = formatErrorMessage("unable to open database, failed to read current version"_s, m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg());
                 transaction.rollback();
-                m_sqliteDatabase.close();
+                m_sqliteDatabase->close();
                 return Exception { ExceptionCode::InvalidStateError, WTFMove(message) };
             }
 
@@ -387,9 +388,9 @@ ExceptionOr<void> Database::performOpenAndVerify(bool shouldSetVersionInNewDatab
             } else if (!m_new || shouldSetVersionInNewDatabase) {
                 LOG(StorageAPI, "Setting version %s in database %s that was just created", m_expectedVersion.ascii().data(), databaseDebugName().ascii().data());
                 if (!setVersionInDatabase(m_expectedVersion, false)) {
-                    String message = formatErrorMessage("unable to open database, failed to write current version"_s, m_sqliteDatabase.lastError(), m_sqliteDatabase.lastErrorMsg());
+                    String message = formatErrorMessage("unable to open database, failed to write current version"_s, m_sqliteDatabase->lastError(), m_sqliteDatabase->lastErrorMsg());
                     transaction.rollback();
-                    m_sqliteDatabase.close();
+                    m_sqliteDatabase->close();
                     return Exception { ExceptionCode::InvalidStateError, WTFMove(message) };
                 }
                 currentVersion = m_expectedVersion;
@@ -407,11 +408,11 @@ ExceptionOr<void> Database::performOpenAndVerify(bool shouldSetVersionInNewDatab
     // If the expected version isn't the empty string, ensure that the current database version we have matches that version. Otherwise, set an exception.
     // If the expected version is the empty string, then we always return with whatever version of the database we have.
     if ((!m_new || shouldSetVersionInNewDatabase) && m_expectedVersion.length() && m_expectedVersion != currentVersion) {
-        m_sqliteDatabase.close();
+        m_sqliteDatabase->close();
         return Exception { ExceptionCode::InvalidStateError, makeString("unable to open database, version mismatch, '"_s, m_expectedVersion, "' does not match the currentVersion of '"_s, currentVersion, '\'') };
     }
 
-    m_sqliteDatabase.setAuthorizer(m_databaseAuthorizer.get());
+    m_sqliteDatabase->setAuthorizer(m_databaseAuthorizer.get());
 
     DatabaseTracker::singleton().addOpenDatabase(*this);
     m_opened = true;
@@ -429,7 +430,7 @@ void Database::closeDatabase()
     if (!m_opened)
         return;
 
-    m_sqliteDatabase.close();
+    m_sqliteDatabase->close();
     m_opened = false;
 
     // See comment at the top this file regarding calling removeOpenDatabase().
@@ -508,7 +509,7 @@ void Database::setCachedVersion(const String& actualVersion)
 
 bool Database::getActualVersionForTransaction(String &actualVersion)
 {
-    ASSERT(m_sqliteDatabase.transactionInProgress());
+    ASSERT(m_sqliteDatabase->transactionInProgress());
 
     // Note: In multi-process browsers the cached value may be inaccurate.
     // So we retrieve the value from the database and update the cached value here.
@@ -739,12 +740,12 @@ void Database::incrementalVacuumIfNeeded()
 {
     SQLiteTransactionInProgressAutoCounter transactionCounter;
 
-    int64_t freeSpaceSize = m_sqliteDatabase.freeSpaceSize();
-    int64_t totalSize = m_sqliteDatabase.totalSize();
+    int64_t freeSpaceSize = m_sqliteDatabase->freeSpaceSize();
+    int64_t totalSize = m_sqliteDatabase->totalSize();
     if (totalSize <= 10 * freeSpaceSize) {
-        int result = m_sqliteDatabase.runIncrementalVacuumCommand();
+        int result = m_sqliteDatabase->runIncrementalVacuumCommand();
         if (result != SQLITE_OK)
-            logErrorMessage(formatErrorMessage("error vacuuming database"_s, result, m_sqliteDatabase.lastErrorMsg()));
+            logErrorMessage(formatErrorMessage("error vacuuming database"_s, result, m_sqliteDatabase->lastErrorMsg()));
     }
 }
 

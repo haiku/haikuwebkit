@@ -40,5 +40,6 @@ messages -> RemoteDDMesh Stream {
     void UpdateMaterial(WebCore::DDModel::DDUpdateMaterialDescriptor descriptor)
     void UpdateTransform(WebCore::DDModel::DDFloat4x4 transform)
     void SetCameraDistance(float distance)
+    void Play(bool playing)
 }
 #endif

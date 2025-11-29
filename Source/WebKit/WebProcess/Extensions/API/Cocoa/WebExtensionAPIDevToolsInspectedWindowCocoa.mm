@@ -78,18 +78,24 @@ void WebExtensionAPIDevToolsInspectedWindow::eval(WebPageProxyIdentifier webPage
             return;
         }
 
-        auto *undefinedValue = [JSValue valueWithUndefinedInContext:[JSContext contextWithJSGlobalContextRef:callback->globalContext()]];
+        auto globalContext = callback->globalContext();
+        auto undefinedValue = JSValueMakeUndefined(globalContext);
 
         if (!result.value()) {
             // If an error occurred, element 0 will be undefined, and element 1 will contain an object giving details about the error.
-            callback->call(@[ undefinedValue, @{ isExceptionKey: @YES, valueKey: result.value().error() ? result.value().error()->message.createNSString().get() : @"" } ]);
+            String valueKey = result.value().error() ? result.value().error()->message : emptyString();
+            SUPPRESS_UNCOUNTED_ARG auto valueData = JSValueMakeString(globalContext, toJSString(valueKey).get());
+            callback->call(fromArray(globalContext, { undefinedValue, fromObject(globalContext, {
+                { "isExceptionKey"_s, JSValueMakeBoolean(globalContext, true) },
+                { "valueKey"_s, valueData }
+            }) }));
             return;
         }
 
-        RetainPtr scriptResult = result.value()->toID();
+        auto scriptResult = result.value()->toJS(globalContext);
 
         // If no error occurred, element 0 will contain the result of evaluating the expression, and element 1 will be undefined.
-        callback->call(@[ scriptResult ? scriptResult.get() : undefinedValue, undefinedValue ]);
+        callback->call(fromArray(globalContext, { scriptResult.get(), undefinedValue }));
     }, extensionContext().identifier());
 }
 

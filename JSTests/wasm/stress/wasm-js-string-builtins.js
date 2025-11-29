@@ -671,6 +671,18 @@ async function testImportedStringConstants() {
     assert.eq("this is constant 2", instance.exports.exportedConst2.value);
 }
 
+async function testImportInElem() {
+    const wat = `
+    (module
+        (type (func (param externref) (result i32)))
+        (import "wasm:js-string" "length" (func (type 0)))
+        (table 16 32 funcref)
+        (elem (i32.const 0) func 0)
+    )
+    `;
+    const instance = await instantiate(wat);
+}
+
 await assert.asyncTest(testInstantiation());
 await assert.asyncTest(testInstantiationWithEmptyCompileOptions());
 await assert.asyncTest(testCast());
@@ -687,3 +699,4 @@ await assert.asyncTest(testSubstring());
 await assert.asyncTest(testEquals());
 await assert.asyncTest(testCompare());
 await assert.asyncTest(testImportedStringConstants());
+await assert.asyncTest(testImportInElem());

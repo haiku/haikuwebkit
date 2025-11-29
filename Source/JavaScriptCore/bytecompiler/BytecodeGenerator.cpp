@@ -4432,7 +4432,7 @@ void BytecodeGenerator::endSwitch(const Vector<Ref<Label>, 8>& labels, Expressio
         UnlinkedSimpleJumpTable& jumpTable = m_codeBlock->unlinkedSwitchJumpTable(bytecode.m_tableIndex);
         jumpTable.m_min = min;
         jumpTable.m_branchOffsets = FixedVector<int32_t>(max - min + 1);
-        std::fill(jumpTable.m_branchOffsets.begin(), jumpTable.m_branchOffsets.end(), 0);
+        std::ranges::fill(jumpTable.m_branchOffsets, 0);
         for (uint32_t i = 0; i < labels.size(); ++i) {
             // We're emitting this after the clause labels should have been fixed, so
             // the labels should not be "forward" references

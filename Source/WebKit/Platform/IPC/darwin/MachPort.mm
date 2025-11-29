@@ -26,6 +26,8 @@
 #import "config.h"
 #import "MachPort.h"
 
+#import "Logging.h"
+
 namespace IPC {
 
 kern_return_t allocateImmovableConnectionPort(mach_port_name_t* port)
@@ -35,10 +37,12 @@ kern_return_t allocateImmovableConnectionPort(mach_port_name_t* port)
         .flags = MPO_CONNECTION_PORT | MPO_IMMOVABLE_RECEIVE,
         .service_port_name = MPO_ANONYMOUS_SERVICE
     };
-    return mach_port_construct(mach_task_self(), &options, 0x0, port);
-#else
-    return mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, port);
+    auto kr = mach_port_construct(mach_task_self(), &options, 0x0, port);
+    if (kr == KERN_SUCCESS)
+        return kr;
+    RELEASE_LOG_ERROR(IPC, "allocateImmovableConnectionPort: Call to mach_port_construct() failed with %{private}s (%x), falling back to calling mach_port_allocate()", mach_error_string(kr), kr);
 #endif
+    return mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE, port);
 }
 
 } // namespace IPC

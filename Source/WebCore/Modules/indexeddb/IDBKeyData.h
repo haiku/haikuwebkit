@@ -169,12 +169,6 @@ inline void add(Hasher& hasher, const IDBKeyData& keyData)
     }
 }
 
-struct IDBKeyDataHash {
-    static unsigned hash(const IDBKeyData& a) { return computeHash(a); }
-    static bool equal(const IDBKeyData& a, const IDBKeyData& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 struct IDBKeyDataHashTraits : public WTF::CustomHashTraits<IDBKeyData> {
     static const bool emptyValueIsZero = false;
     static const bool hasIsEmptyValueFunction = true;

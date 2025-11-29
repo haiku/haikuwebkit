@@ -919,4 +919,9 @@ messages -> WebPage WantsAsyncDispatchMessage {
     WillBeginContextMenuInteraction()
     DidEndContextMenuInteraction()
 #endif
+
+#if ENABLE(VIDEO)
+    ShowCaptionDisplaySettingsPreview(WebCore::MediaPlayerClientIdentifier identifier)
+    HideCaptionDisplaySettingsPreview(WebCore::MediaPlayerClientIdentifier identifier)
+#endif
 }

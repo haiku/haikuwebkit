@@ -1836,6 +1836,15 @@ void NetworkConnectionToWebProcess::shouldOffloadIFrameForHost(const String& hos
 }
 #endif
 
+#if ENABLE(IPC_TESTING_API)
+void NetworkConnectionToWebProcess::takeInvalidMessageStringForTesting(CompletionHandler<void(String&&)>&& callback)
+{
+    ASCIILiteral error = connection().takeErrorString();
+    String errorString = !error.isNull() ? String::fromUTF8(error) : emptyString();
+    callback(WTFMove(errorString));
+}
+#endif
+
 } // namespace WebKit
 
 #undef CONNECTION_RELEASE_LOG

@@ -35,6 +35,7 @@
 #include "LayoutRect.h"
 #include "TextRun.h"
 #include "WidthIterator.h"
+#include <ranges>
 #include <wtf/MainThread.h>
 #include <wtf/MathExtras.h>
 #include <wtf/NeverDestroyed.h>
@@ -1146,7 +1147,7 @@ std::pair<unsigned, bool> FontCascade::expansionOpportunityCountInternal(std::sp
                 isAfterExpansion = false;
         }
     } else {
-        for (auto character : makeReversedRange(characters)) {
+        for (auto character : characters | std::views::reverse) {
             if (treatAsSpace(character)) {
                 ++count;
                 isAfterExpansion = true;

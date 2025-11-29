@@ -3031,11 +3031,11 @@ RefPtr<NetworkConnectionToWebProcess> NetworkProcess::protectedWebProcessConnect
     return webProcessConnection(identifier);
 }
 
-NetworkConnectionToWebProcess* NetworkProcess::webProcessConnection(const IPC::Connection& connection) const
+RefPtr<NetworkConnectionToWebProcess> NetworkProcess::webProcessConnection(const IPC::Connection& connection) const
 {
     for (Ref webProcessConnection : m_webProcessConnections.values()) {
         if (webProcessConnection->connection().uniqueID() == connection.uniqueID())
-            return webProcessConnection.unsafePtr();
+            return webProcessConnection;
     }
     return nullptr;
 }

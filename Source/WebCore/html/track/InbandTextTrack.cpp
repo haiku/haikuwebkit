@@ -60,7 +60,7 @@ Ref<InbandTextTrack> InbandTextTrack::create(ScriptExecutionContext& context, In
 }
 
 InbandTextTrack::InbandTextTrack(ScriptExecutionContext& context, InbandTextTrackPrivate& trackPrivate)
-    : TextTrack(&context, emptyAtom(), trackPrivate.id(), trackPrivate.label(), trackPrivate.language(), InBand)
+    : TextTrack(&context, emptyAtom(), trackPrivate.id(), AtomString { trackPrivate.label().isolatedCopy() }, AtomString { trackPrivate.language().isolatedCopy() }, InBand)
     , m_private(trackPrivate)
 {
     addClientToTrackPrivateBase(*this, trackPrivate);
@@ -146,7 +146,7 @@ size_t InbandTextTrack::inbandTrackIndex()
     return m_private->trackIndex();
 }
 
-AtomString InbandTextTrack::inBandMetadataTrackDispatchType() const
+String InbandTextTrack::inBandMetadataTrackDispatchType() const
 {
     return m_private->inBandMetadataTrackDispatchType();
 }
@@ -156,14 +156,14 @@ void InbandTextTrack::idChanged(TrackID id)
     setId(id);
 }
 
-void InbandTextTrack::labelChanged(const AtomString& label)
+void InbandTextTrack::labelChanged(const String& label)
 {
-    setLabel(label);
+    setLabel(AtomString { label.isolatedCopy() });
 }
 
-void InbandTextTrack::languageChanged(const AtomString& language)
+void InbandTextTrack::languageChanged(const String& language)
 {
-    setLanguage(language);
+    setLanguage(AtomString { language.isolatedCopy() });
 }
 
 void InbandTextTrack::willRemove()

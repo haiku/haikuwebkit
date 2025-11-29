@@ -460,6 +460,8 @@
                 "inline-flex",
                 "grid",
                 "inline-grid",
+                "masonry",
+                "inline-masonry",
                 {
                     "value": "ruby",
                     "status": "unimplemented"
@@ -9406,8 +9408,7 @@
                 "aliases": [
                     "-webkit-align-content"
                 ],
-                "render-style-initial": "initialContentAlignment",
-                "style-converter": "ContentAlignmentData",
+                "style-converter": "StyleType<AlignContent>",
                 "parser-function": "consumeAlignContent",
                 "parser-grammar-unused": "normal | <baseline-position> | <content-distribution> | [ <overflow-position>? <content-position> ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals.",
@@ -9441,8 +9442,7 @@
                 "aliases": [
                     "-webkit-align-items"
                 ],
-                "render-style-initial": "initialDefaultAlignment",
-                "style-converter": "SelfOrDefaultAlignmentData",
+                "style-converter": "StyleType<AlignItems>",
                 "parser-function": "consumeAlignItems",
                 "parser-grammar-unused": "normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals.",
@@ -9478,8 +9478,7 @@
                 "aliases": [
                     "-webkit-align-self"
                 ],
-                "render-style-initial": "initialSelfAlignment",
-                "style-converter": "SelfOrDefaultAlignmentData",
+                "style-converter": "StyleType<AlignSelf>",
                 "parser-function": "consumeAlignSelf",
                 "parser-grammar-unused": "auto | normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals.",
@@ -9677,8 +9676,7 @@
                 "aliases": [
                     "-webkit-justify-content"
                 ],
-                "render-style-initial": "initialContentAlignment",
-                "style-converter": "ContentAlignmentData",
+                "style-converter": "StyleType<JustifyContent>",
                 "parser-function": "consumeJustifyContent",
                 "parser-grammar-unused": "normal | <content-distribution> | [ <overflow-position>? [ <content-position> | left | right ] ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals.",
@@ -9742,8 +9740,7 @@
             "animation-type": "discrete",
             "initial": "auto",
             "codegen-properties": {
-                "render-style-initial": "initialSelfAlignment",
-                "style-converter": "SelfOrDefaultAlignmentData",
+                "style-converter": "StyleType<JustifySelf>",
                 "parser-function": "consumeJustifySelf",
                 "parser-grammar-unused": "auto | normal | stretch | <baseline-position> | [ <overflow-position>? [ <self-position> | left | right ] ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals."
@@ -9760,7 +9757,7 @@
                 "aliases": [
                     "-webkit-justify-items"
                 ],
-                "style-converter": "SelfOrDefaultAlignmentData",
+                "style-converter": "StyleType<JustifyItems>",
                 "parser-function": "consumeJustifyItems",
                 "parser-grammar-unused": "[ normal | stretch | <baseline-position> | [ <overflow-position>? [ <self-position> | left | right ] ] | legacy | legacy ] && [ left | right | center ]",
                 "parser-grammar-unused-reason": "Needs support for default values on optionals."
@@ -14015,7 +14012,7 @@
             }
         },
         "<display-inside>": {
-            "grammar": "flow | flow-root | table | flex | grid | ruby",
+            "grammar": "flow | flow-root | table | flex | grid | masonry | ruby",
             "specification": {
                 "category": "css-display",
                 "url": "https://www.w3.org/TR/css-display-3/#typedef-display-inside"
@@ -14043,7 +14040,7 @@
             }
         },
         "<display-legacy>": {
-            "grammar": "inline-block | inline-table | inline-flex | inline-grid",
+            "grammar": "inline-block | inline-table | inline-flex | inline-grid | inline-masonry",
             "specification": {
                 "category": "css-display",
                 "url": "https://www.w3.org/TR/css-display-3/#typedef-display-legacy"

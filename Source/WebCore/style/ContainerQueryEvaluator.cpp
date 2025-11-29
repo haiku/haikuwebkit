@@ -39,6 +39,7 @@
 #include "RenderView.h"
 #include "StyleRule.h"
 #include "StyleScope.h"
+#include <ranges>
 
 namespace WebCore::Style {
 
@@ -186,7 +187,7 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
     }
 
     if (evaluationState && !requiredAxes.isEmpty()) {
-        for (auto& container : makeReversedRange(evaluationState->sizeQueryContainers)) {
+        for (auto& container : evaluationState->sizeQueryContainers | std::views::reverse) {
             if (isContainerForQuery(container))
                 return container.ptr();
         }

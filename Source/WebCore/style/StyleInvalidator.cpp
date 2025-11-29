@@ -40,6 +40,7 @@
 #include "StyleScopeRuleSets.h"
 #include "StyleSheetContents.h"
 #include "TypedElementDescendantIteratorInlines.h"
+#include <ranges>
 #include <wtf/SetForScope.h>
 
 namespace WebCore {
@@ -355,7 +356,7 @@ void Invalidator::invalidateStyleWithMatchElement(Element& element, MatchElement
 
         SelectorMatchingState selectorMatchingState;
         selectorMatchingState.selectorFilter.parentStackReserveInitialCapacity(ancestors.size());
-        for (auto* ancestor : makeReversedRange(ancestors)) {
+        for (auto* ancestor : ancestors | std::views::reverse) {
             invalidateIfNeeded(*ancestor, &selectorMatchingState);
             selectorMatchingState.selectorFilter.pushParent(ancestor);
         }
@@ -393,7 +394,7 @@ void Invalidator::invalidateStyleWithMatchElement(Element& element, MatchElement
 
         SelectorMatchingState selectorMatchingState;
         selectorMatchingState.selectorFilter.parentStackReserveInitialCapacity(elementAndAncestors.size());
-        for (auto* elementOrAncestor : makeReversedRange(elementAndAncestors)) {
+        for (auto* elementOrAncestor : elementAndAncestors | std::views::reverse) {
             for (auto* sibling = elementOrAncestor->previousElementSibling(); sibling; sibling = sibling->previousElementSibling())
                 invalidateIfNeeded(*sibling, &selectorMatchingState);
 
@@ -409,7 +410,7 @@ void Invalidator::invalidateStyleWithMatchElement(Element& element, MatchElement
 
         SelectorMatchingState selectorMatchingState;
         selectorMatchingState.selectorFilter.parentStackReserveInitialCapacity(ancestors.size());
-        for (auto* ancestor : makeReversedRange(ancestors)) {
+        for (auto* ancestor : ancestors | std::views::reverse) {
             selectorMatchingState.selectorFilter.pushParent(ancestor);
             for (auto& ancestorChild : childrenOfType<Element>(*ancestor))
                 invalidateIfNeeded(ancestorChild, &selectorMatchingState);

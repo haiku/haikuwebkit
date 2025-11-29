@@ -63,7 +63,7 @@ public:
     static CallData getCallData(JSCell*);
     static CallData getConstructData(JSCell*);
 
-    static void getOwnPropertyNames(JSObject*, JSGlobalObject*, PropertyNameArray&, DontEnumPropertiesMode);
+    static void getOwnPropertyNames(JSObject*, JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
 
     void invalidate();
 

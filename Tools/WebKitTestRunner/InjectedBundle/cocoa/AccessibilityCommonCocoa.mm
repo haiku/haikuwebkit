@@ -90,6 +90,8 @@ JSValueRef makeValueRefForValue(JSContextRef context, id value)
 {
     if ([value isKindOfClass:[NSString class]])
         return JSValueMakeString(context, [value createJSStringRef].get());
+    if ([value isKindOfClass:[NSAttributedString class]])
+        return JSValueMakeString(context, [[value description] createJSStringRef].get());
     if ([value isKindOfClass:[NSNumber class]]) {
         if (nsValueHasObjCType<BOOL>((NSValue *)value) || nsValueHasObjCType<char>((NSValue *)value))
             return JSValueMakeBoolean(context, [value boolValue]);

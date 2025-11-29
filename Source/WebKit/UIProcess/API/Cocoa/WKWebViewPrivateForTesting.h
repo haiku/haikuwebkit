@@ -180,6 +180,10 @@ struct WKAppPrivacyReportTestingData {
 
 - (NSString *)_webContentProcessVariantForFrame:(nullable _WKFrameHandle *)frameHandle;
 
+#if defined(ENABLE_THREADED_ANIMATIONS) && ENABLE_THREADED_ANIMATIONS
+- (NSString *)_animationStackForLayerWithID:(unsigned long long)layerID;
+#endif
+
 @end
 
 typedef NS_ENUM(NSInteger, _WKMediaSessionReadyState) {

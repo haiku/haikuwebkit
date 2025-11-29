@@ -289,7 +289,7 @@ CallData RuntimeObject::getConstructData(JSCell* cell)
     return constructData;
 }
 
-void RuntimeObject::getOwnPropertyNames(JSObject* object, JSGlobalObject* lexicalGlobalObject, PropertyNameArray& propertyNames, DontEnumPropertiesMode)
+void RuntimeObject::getOwnPropertyNames(JSObject* object, JSGlobalObject* lexicalGlobalObject, PropertyNameArrayBuilder& propertyNames, DontEnumPropertiesMode)
 {
     auto scope = DECLARE_THROW_SCOPE(lexicalGlobalObject->vm());
 

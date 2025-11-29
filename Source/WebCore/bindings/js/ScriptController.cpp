@@ -862,9 +862,14 @@ void ScriptController::executeJavaScriptURL(const URL& url, const NavigationActi
     if (!scriptExecutionContext)
         return;
 
+    VM& vm = globalObject->vm();
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+
     auto preNavigationCheckHolder = requireTrustedTypesForPreNavigationCheckPasses(*scriptExecutionContext, url.string());
-    if (preNavigationCheckHolder.hasException())
+    if (preNavigationCheckHolder.hasException()) {
+        throwScope.clearException();
         return;
+    }
 
     auto preNavigationCheckURLString = preNavigationCheckHolder.releaseReturnValue();
     if (preNavigationCheckURLString.isNull())
@@ -872,9 +877,6 @@ void ScriptController::executeJavaScriptURL(const URL& url, const NavigationActi
 
     if (!ownerDocument->checkedContentSecurityPolicy()->allowJavaScriptURLs(ownerDocument->url().string(), eventHandlerPosition().m_line, preNavigationCheckURLString, nullptr))
         return;
-
-    VM& vm = globalObject->vm();
-    auto throwScope = DECLARE_THROW_SCOPE(vm);
 
     const int javascriptSchemeLength = sizeof("javascript:") - 1;
     String decodedURL = PAL::decodeURLEscapeSequences(preNavigationCheckURLString);

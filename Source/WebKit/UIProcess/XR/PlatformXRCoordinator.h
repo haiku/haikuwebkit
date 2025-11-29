@@ -32,6 +32,7 @@
 #if USE(OPENXR)
 #include "XRDeviceLayer.h"
 #endif
+#include <WebCore/ExceptionOr.h>
 #include <WebCore/PlatformXR.h>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Function.h>
@@ -81,6 +82,11 @@ public:
     virtual void submitFrame(WebPageProxy&, Vector<XRDeviceLayer>&&) = 0;
 #else
     virtual void submitFrame(WebPageProxy&) { }
+#endif
+
+#if ENABLE(WEBXR_HIT_TEST)
+    virtual void requestHitTestSource(WebPageProxy&, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionhandler) { completionhandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError }); }
+    virtual void deleteHitTestSource(WebPageProxy&, PlatformXR::HitTestSource) { }
 #endif
 };
 

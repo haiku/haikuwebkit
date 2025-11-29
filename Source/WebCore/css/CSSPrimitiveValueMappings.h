@@ -774,6 +774,10 @@ constexpr CSSValueID toCSSValueID(DisplayType e)
         return CSSValueGrid;
     case DisplayType::InlineGrid:
         return CSSValueInlineGrid;
+    case DisplayType::Masonry:
+        return CSSValueMasonry;
+    case DisplayType::InlineMasonry:
+        return CSSValueInlineMasonry;
     case DisplayType::None:
         return CSSValueNone;
     case DisplayType::Contents:
@@ -836,6 +840,10 @@ template<> constexpr DisplayType fromCSSValueID(CSSValueID valueID)
         return DisplayType::Grid;
     case CSSValueInlineGrid:
         return DisplayType::InlineGrid;
+    case CSSValueMasonry:
+        return DisplayType::Masonry;
+    case CSSValueInlineMasonry:
+        return DisplayType::InlineMasonry;
     case CSSValueNone:
         return DisplayType::None;
     case CSSValueContents:

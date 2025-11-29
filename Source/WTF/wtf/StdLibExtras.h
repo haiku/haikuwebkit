@@ -672,7 +672,7 @@ template<size_t I, typename V> constexpr bool holdsAlternative(const V& v)
     }                                                                                \
     template<typename T> friend const T&& get(const Self&& self)                     \
     {                                                                                \
-        return std::get<T>(WTFMove(self.name));                                      \
+        return std::get<T>(std::move(self.name));                                    \
     }                                                                                \
     template<typename T> friend std::add_pointer_t<T> get_if(Self* self)             \
     {                                                                                \

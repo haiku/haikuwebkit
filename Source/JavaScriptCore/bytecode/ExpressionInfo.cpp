@@ -287,9 +287,9 @@ struct ExpressionInfo::Diff {
 // The type for divot, line, and column is intentionally int, not unsigned. These are
 // diff values which can be negative. These asserts are just here to draw attention to
 // this comment in case anyone naively changes their type.
-static_assert(std::is_same_v<decltype(ExpressionInfo::Diff::divot), int>);
-static_assert(std::is_same_v<decltype(ExpressionInfo::Diff::line), int>);
-static_assert(std::is_same_v<decltype(ExpressionInfo::Diff::column), int>);
+static_assert(std::same_as<decltype(ExpressionInfo::Diff::divot), int>);
+static_assert(std::same_as<decltype(ExpressionInfo::Diff::line), int>);
+static_assert(std::same_as<decltype(ExpressionInfo::Diff::column), int>);
 
 bool ExpressionInfo::EncodedInfo::isAbsInstPC() const
 {

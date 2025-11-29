@@ -500,7 +500,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
         model->setRequiresTextTrackRepresentation(false);
     }
 
-    videoPresentationInterfaceMac->clearMode(HTMLMediaElementEnums::VideoFullscreenModePictureInPicture);
+    videoPresentationInterfaceMac->clearMode(HTMLMediaElementEnums::VideoFullscreenModePictureInPicture, VideoPresentationModel::ShouldNotifyMediaElement::Yes);
 }
 
 - (void)pipActionPlay:(PIPViewController *)pip
@@ -584,7 +584,7 @@ void VideoPresentationInterfaceMac::setVideoPresentationModel(VideoPresentationM
         model->addClient(*this);
 }
 
-void VideoPresentationInterfaceMac::setMode(HTMLMediaElementEnums::VideoFullscreenMode mode, bool)
+void VideoPresentationInterfaceMac::setMode(HTMLMediaElementEnums::VideoFullscreenMode mode, VideoPresentationModel::ShouldNotifyMediaElement)
 {
     HTMLMediaElementEnums::VideoFullscreenMode newMode = m_mode | mode;
     if (m_mode == newMode)
@@ -600,7 +600,7 @@ void VideoPresentationInterfaceMac::setMode(HTMLMediaElementEnums::VideoFullscre
         return;
 
     if (model)
-        model->fullscreenModeChanged(m_mode);
+        model->fullscreenModeChanged(m_mode, VideoPresentationModel::ShouldNotifyMediaElement::Yes);
 }
 #if HAVE(PIP_SKIP_PREROLL)
 void VideoPresentationInterfaceMac::skipAd()
@@ -608,7 +608,7 @@ void VideoPresentationInterfaceMac::skipAd()
     m_playbackSessionInterface->skipAd();
 }
 #endif
-void VideoPresentationInterfaceMac::clearMode(HTMLMediaElementEnums::VideoFullscreenMode mode)
+void VideoPresentationInterfaceMac::clearMode(HTMLMediaElementEnums::VideoFullscreenMode mode, VideoPresentationModel::ShouldNotifyMediaElement)
 {
     HTMLMediaElementEnums::VideoFullscreenMode newMode = m_mode & ~mode;
     if (m_mode == newMode)
@@ -624,7 +624,7 @@ void VideoPresentationInterfaceMac::clearMode(HTMLMediaElementEnums::VideoFullsc
         return;
 
     if (model)
-        model->fullscreenModeChanged(m_mode);
+        model->fullscreenModeChanged(m_mode, VideoPresentationModel::ShouldNotifyMediaElement::Yes);
 }
 
 void VideoPresentationInterfaceMac::durationChanged(double duration)

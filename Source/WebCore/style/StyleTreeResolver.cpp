@@ -38,6 +38,7 @@
 #include "DocumentQuirks.h"
 #include "DocumentTimeline.h"
 #include "DocumentView.h"
+#include "EventTarget.h"
 #include "HTMLBodyElement.h"
 #include "HTMLInputElement.h"
 #include "HTMLMeterElement.h"
@@ -72,7 +73,7 @@
 #include "ViewTransition.h"
 #include "WebAnimationTypes.h"
 #include "WebAnimationUtilities.h"
-#include "dom/EventTarget.h"
+#include <ranges>
 
 namespace WebCore {
 
@@ -603,7 +604,7 @@ std::optional<ResolvedStyle> TreeResolver::resolveAncestorFirstLinePseudoElement
         if (parent().resolvedFirstLineAndLetterChild)
             return nullptr;
 
-        for (auto& parent : makeReversedRange(m_parentStack)) {
+        for (auto& parent : m_parentStack | std::views::reverse) {
             if (parent.style.display() == DisplayType::Contents)
                 continue;
             if (!supportsFirstLineAndLetterPseudoElement(parent.style))
@@ -641,7 +642,7 @@ std::optional<ResolvedStyle> TreeResolver::resolveAncestorFirstLetterPseudoEleme
         if (!skipInlines && !isChildInBlockFormattingContext(*elementUpdate.style))
             return nullptr;
 
-        for (auto& parent : makeReversedRange(m_parentStack)) {
+        for (auto& parent : m_parentStack | std::views::reverse) {
             if (parent.style.display() == DisplayType::Contents)
                 continue;
             if (skipInlines && parent.style.display() == DisplayType::Inline)
@@ -725,7 +726,7 @@ const RenderStyle* TreeResolver::documentElementStyle() const
 auto TreeResolver::boxGeneratingParent() const -> const Parent*
 {
     // 'display: contents' doesn't generate boxes.
-    for (auto& parent : makeReversedRange(m_parentStack)) {
+    for (auto& parent : m_parentStack | std::views::reverse) {
         if (parent.style.display() == DisplayType::None)
             return nullptr;
         if (parent.style.display() != DisplayType::Contents)

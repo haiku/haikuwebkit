@@ -39,7 +39,6 @@
 #include <WebCore/StyleColor.h>
 #include <WebCore/StyleContainIntrinsicSize.h>
 #include <WebCore/StyleContainerName.h>
-#include <WebCore/StyleContentAlignmentData.h>
 #include <WebCore/StyleGapGutter.h>
 #include <WebCore/StyleMaskBorder.h>
 #include <WebCore/StyleMaximumLines.h>
@@ -64,7 +63,6 @@
 #include <WebCore/StyleScrollTimelines.h>
 #include <WebCore/StyleScrollbarGutter.h>
 #include <WebCore/StyleScrollbarWidth.h>
-#include <WebCore/StyleSelfAlignmentData.h>
 #include <WebCore/StyleShapeImageThreshold.h>
 #include <WebCore/StyleShapeMargin.h>
 #include <WebCore/StyleShapeOutside.h>

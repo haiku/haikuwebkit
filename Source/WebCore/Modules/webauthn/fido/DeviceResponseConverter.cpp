@@ -316,12 +316,17 @@ std::optional<AuthenticatorGetInfoResponse> readCTAPGetInfoResponse(const Vector
         if (!it->second.isArray())
             return std::nullopt;
 
-        Vector<uint8_t> supportedPinProtocols;
+        StdSet<PINUVAuthProtocol> supportedPinProtocols;
         for (const auto& protocol : it->second.getArray()) {
             if (!protocol.isUnsigned())
                 return std::nullopt;
 
-            supportedPinProtocols.append(protocol.getUnsigned());
+            auto value = protocol.getUnsigned();
+            if (value == static_cast<uint8_t>(PINUVAuthProtocol::kPinProtocol1))
+                supportedPinProtocols.insert(PINUVAuthProtocol::kPinProtocol1);
+            else if (value == static_cast<uint8_t>(PINUVAuthProtocol::kPinProtocol2))
+                supportedPinProtocols.insert(PINUVAuthProtocol::kPinProtocol2);
+            // Ignore unknown protocols
         }
         response.setPinProtocols(WTFMove(supportedPinProtocols));
     }

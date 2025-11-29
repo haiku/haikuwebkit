@@ -105,6 +105,7 @@ private:
     RefPtr<WebCore::PopupMenu> createPopupMenu(WebCore::PopupMenuClient&) const final;
     RefPtr<WebCore::SearchPopupMenu> createSearchPopupMenu(WebCore::PopupMenuClient&) const final;
     void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const final { }
+    void relayAriaNotifyNotification(WebCore::AriaNotifyData&&) const final { }
     void webAppOrientationsUpdated() final;
     void focusedElementChanged(WebCore::Element*, WebCore::LocalFrame*, WebCore::FocusOptions, WebCore::BroadcastFocusedElement) final;
     void showPlaybackTargetPicker(bool hasVideo, WebCore::RouteSharingPolicy, const String&) final;

@@ -130,6 +130,7 @@
 #include "SVGViewElement.h"
 #include "SVGViewSpec.h"
 #include "ScriptController.h"
+#include "ScriptDisallowedScope.h"
 #include "ScriptSourceCode.h"
 #include "ScrollAnimator.h"
 #include "SecurityOrigin.h"
@@ -147,7 +148,7 @@
 #include "UserGestureIndicator.h"
 #include "WindowFeatures.h"
 #include "XMLDocumentParser.h"
-#include <dom/ScriptDisallowedScope.h>
+#include <ranges>
 #include <wtf/CheckedPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Ref.h>
@@ -3209,7 +3210,7 @@ void FrameLoader::checkLoadComplete(LoadWillContinueInAnotherProcess loadWillCon
     }
 
     // To process children before their parents, iterate the vector backwards.
-    for (Ref frame : makeReversedRange(frames)) {
+    for (Ref frame : frames | std::views::reverse) {
         if (frame->page())
             frame->loader().checkLoadCompleteForThisFrame(loadWillContinueInAnotherProcess);
     }
@@ -4424,11 +4425,6 @@ bool FrameLoader::dispatchNavigateEvent(FrameLoadType loadType, const FrameLoadR
         return true;
 
     RefPtr sourceElement = event ? dynamicDowncast<Element>(event->target()) : nullptr;
-
-    // For non-form navigations, if sourceElement is from a different frame, it should be null.
-    // For form submissions, sourceElement can be from a different frame (when form has target attribute).
-    if (!formState && sourceElement && sourceElement->document().frame() != m_frame.ptr())
-        sourceElement = nullptr;
 
     return window->protectedNavigation()->dispatchPushReplaceReloadNavigateEvent(newURL, navigationType, isSameDocument, formState, classicHistoryAPIState, sourceElement.get());
 }

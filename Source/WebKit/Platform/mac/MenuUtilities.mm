@@ -371,6 +371,8 @@ static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCo
         return { { SymbolType::Public, "translate"_s } };
     case WebCore::ContextMenuItemTagUnderline:
         return { { SymbolType::Public, "underline"_s } };
+    case WebCore::ContextMenuItemCaptionDisplayStyleSubmenu:
+        return { };
     }
 
     return { };

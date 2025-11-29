@@ -126,6 +126,7 @@ class EmptyChromeClient : public ChromeClient {
     IntRect rootViewToAccessibilityScreen(const IntRect& r) const final { return r; };
 #if PLATFORM(IOS_FAMILY)
     void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const final { };
+    void relayAriaNotifyNotification(AriaNotifyData&&) const final { };
 #endif
 
     void didFinishLoadingImageForElement(HTMLImageElement&) final { }
@@ -150,7 +151,7 @@ class EmptyChromeClient : public ChromeClient {
     RefPtr<DateTimeChooser> createDateTimeChooser(DateTimeChooserClient&) final;
 
     void setTextIndicator(const TextIndicatorData&) const final;
-    void updateTextIndicator(const TextIndicatorData&) const final;
+    void updateTextIndicator(RefPtr<TextIndicator>&&) const final;
 
     DisplayRefreshMonitorFactory* displayRefreshMonitorFactory() const final;
 

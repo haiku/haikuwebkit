@@ -1133,6 +1133,13 @@ TEST(EvaluateJavaScript, ReturnTypes)
     TestWebKitAPI::Util::run(&didEvaluateJavaScript);
 }
 
+TEST(EvaluateJavaScript, ExceptionAccessingProperty)
+{
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+    id result = [webView objectByCallingAsyncFunction:@"return { get foo() { throw new Error(); }, get bar() { return 123; } }" withArguments:nil];
+    EXPECT_TRUE([result isEqual:@{ @"bar": @123 }]);
+}
+
 @interface TestScriptMessageHandlerWithReply : NSObject <WKScriptMessageHandlerWithReply>
 @end
 

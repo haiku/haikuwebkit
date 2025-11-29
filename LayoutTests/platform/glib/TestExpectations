@@ -1115,6 +1115,13 @@ imported/w3c/web-platform-tests/css/css-text/text-align/text-align-last-justify-
 imported/w3c/web-platform-tests/css/css-text/text-autospace/text-autospace-mixed-001.html [ Failure ]
 imported/w3c/web-platform-tests/css/CSS2/visudet/height-applies-to-010a.xht [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/CSS2/visudet/line-height-204.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/stacking-context/composite-change-after-scroll-preserves-stacking-order.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-002.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-003.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-004.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-005.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-006.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/linebox/inline-formatting-context-007.xht [ ImageOnlyFailure ]
 webkit.org/b/229389 imported/w3c/web-platform-tests/css/css-text/white-space/control-chars-001.html [ ImageOnlyFailure ]
 webkit.org/b/229389 imported/w3c/web-platform-tests/css/css-text/white-space/control-chars-002.html [ ImageOnlyFailure ]
 webkit.org/b/229389 imported/w3c/web-platform-tests/css/css-text/white-space/control-chars-003.html [ ImageOnlyFailure ]
@@ -2858,9 +2865,7 @@ imported/w3c/web-platform-tests/webxr/webGLCanvasContext_create_xrcompatible.htt
 
 imported/w3c/web-platform-tests/webxr/hand-input/ [ Pass ]
 
-imported/w3c/web-platform-tests/webxr/hit-test/idlharness.https.html [ Pass ]
-imported/w3c/web-platform-tests/webxr/hit-test/xrRay_constructor.https.html [ Pass ]
-imported/w3c/web-platform-tests/webxr/hit-test/xrRay_matrix.https.html [ Pass ]
+imported/w3c/web-platform-tests/webxr/hit-test [ Pass ]
 
 http/wpt/webxr [ Pass ]
 webxr [ Pass ]
@@ -4863,6 +4868,8 @@ webkit.org/b/157179 fast/events/dropzone-003.html [ Failure ]
 webkit.org/b/157179 fast/events/dropzone-005.html [ Failure ]
 webkit.org/b/157179 fast/events/ondragenter.html [ Failure ]
 webkit.org/b/157179 fast/events/remove-target-with-shadow-in-drag.html [ Failure ]
+
+webkit.org/b/301856 fast/events/contextmenu-items-match-node-receiving-contextmenu-event.html [ Skip ]
 
 webkit.org/b/163779 http/tests/xmlhttprequest/on-network-timeout-error-during-preflight.html [ Skip ] # Timeout.
 

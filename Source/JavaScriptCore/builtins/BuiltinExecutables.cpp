@@ -281,7 +281,7 @@ DEFINE_VISIT_AGGREGATE(BuiltinExecutables);
 
 void BuiltinExecutables::clear()
 {
-    std::fill(std::begin(m_unlinkedExecutables), std::end(m_unlinkedExecutables), nullptr);
+    std::ranges::fill(m_unlinkedExecutables, nullptr);
 }
 
 #define DEFINE_BUILTIN_EXECUTABLES(name, functionName, overrideName, length) \

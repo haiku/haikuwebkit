@@ -103,13 +103,12 @@ set(WPEPlatform_PRIVATE_INCLUDE_DIRECTORIES
     "${WPEPlatform_DERIVED_SOURCES_DIR}/wpe"
     "${WEBKIT_DIR}/WPEPlatform"
     "${WEBKIT_DIR}/WPEPlatform/wpe"
-    "${WTF_FRAMEWORK_HEADERS_DIR}"
 )
 
 set(WPEPlatform_LIBRARIES
     Epoxy::Epoxy
     GLib::Gio
-    WTF
+    WebKit::WTF
     ${LIBXKBCOMMON_LIBRARIES}
 )
 

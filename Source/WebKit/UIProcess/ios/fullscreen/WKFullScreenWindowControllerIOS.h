@@ -65,6 +65,7 @@
 
 #if PLATFORM(VISION)
 - (void)toggleSceneDimming;
+- (void)bestVideoFullscreenModeChanged;
 #endif
 
 @end

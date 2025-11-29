@@ -352,8 +352,9 @@ const AtomString& VideoPresentationModelVideoElement::eventNameAll()
     return sEventNameAll;
 }
 
-void VideoPresentationModelVideoElement::fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode videoFullscreenMode)
+void VideoPresentationModelVideoElement::fullscreenModeChanged(HTMLMediaElementEnums::VideoFullscreenMode videoFullscreenMode, ShouldNotifyMediaElement shouldNotifyMediaElement)
 {
+    ASSERT_UNUSED(shouldNotifyMediaElement, shouldNotifyMediaElement == ShouldNotifyMediaElement::Yes);
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, videoFullscreenMode);
     if (RefPtr videoElement = m_videoElement) {
         UserGestureIndicator gestureIndicator(IsProcessingUserGesture::Yes, &videoElement->document());

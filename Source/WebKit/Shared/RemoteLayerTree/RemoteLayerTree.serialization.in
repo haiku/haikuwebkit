@@ -81,13 +81,6 @@ header: "RemoteLayerTreeTransaction.h"
 #endif
 };
 
-header: "SwapBuffersDisplayRequirement.h"
-enum class WebKit::SwapBuffersDisplayRequirement : uint8_t {
-    NeedsFullDisplay,
-    NeedsNormalDisplay,
-    NeedsNoDisplay
-};
-
 header: "RemoteLayerBackingStore.h"
 [Nested] enum class WebKit::RemoteLayerBackingStore::Type : bool;
 
@@ -305,4 +298,5 @@ struct WebKit::RemoteLayerTreeCommitBundle {
     Vector<WebKit::RemoteLayerTreeCommitBundle::RootFrameData> transactions;
     WebKit::PageData pageData;
     std::optional<WebKit::MainFrameData> mainFrameData;
+    MonotonicTime startTime;
 };

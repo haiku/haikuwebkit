@@ -198,8 +198,8 @@ static OptionSet<AvoidanceReason> canUseForFlexLayoutWithReason(const RenderFlex
         if ((is<RenderBox>(flexItem) && downcast<RenderBox>(flexItem).hasIntrinsicAspectRatio()) || flexItemStyle.hasAspectRatio())
             ADD_REASON_AND_RETURN_IF_NEEDED(FlexItemHasAspectRatio, reasons, includeReasons);
 
-        auto alignValue = flexItemStyle.alignSelf().position() != ItemPosition::Auto ? flexItemStyle.alignSelf().position() : flexBoxStyle.alignItems().position();
-        if (alignValue == ItemPosition::Baseline || alignValue == ItemPosition::LastBaseline)
+        auto isBaseline = !flexItemStyle.alignSelf().isAuto() ? flexItemStyle.alignSelf().isBaseline() : flexBoxStyle.alignItems().isBaseline();
+        if (isBaseline)
             ADD_REASON_AND_RETURN_IF_NEEDED(FlexItemHasBaselineAlign, reasons, includeReasons);
 
         for (auto& child : childrenOfType<RenderElement>(flexItem)) {

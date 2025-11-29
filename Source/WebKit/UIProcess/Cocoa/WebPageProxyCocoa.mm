@@ -225,7 +225,9 @@ void WebPageProxy::layerTreeCommitComplete()
 
 void WebPageProxy::setDataDetectionResult(DataDetectionResult&& dataDetectionResult)
 {
-    m_dataDetectionResults = WTFMove(dataDetectionResult.results);
+    m_dataDetectionResults = createNSArray(dataDetectionResult.results, [](const RetainPtr<DDScannerResult>& result) {
+        return result.get();
+    });
 }
 
 void WebPageProxy::handleClickForDataDetectionResult(const DataDetectorElementInfo& info, const IntPoint& clickLocation)
@@ -1530,7 +1532,7 @@ void WebPageProxy::setTextIndicatorFromFrame(FrameIdentifier frameID, const WebC
         return;
 
     auto rect = indicatorData.textBoundingRectInRootViewCoordinates;
-    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, indicatorData = WTFMove(indicatorData), lifetime] (std::optional<FloatRect> convertedRect) mutable {
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, indicatorData = indicatorData, lifetime](std::optional<FloatRect> convertedRect) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !convertedRect)
             return;
@@ -1565,26 +1567,26 @@ void WebPageProxy::setTextIndicator(const WebCore::TextIndicatorData& indicatorD
         m_textIndicatorFadeTimer.startOneShot(WebCore::timeBeforeFadeStarts);
 }
 
-void WebPageProxy::updateTextIndicatorFromFrame(FrameIdentifier frameID, const WebCore::TextIndicatorData& indicatorData)
+void WebPageProxy::updateTextIndicatorFromFrame(FrameIdentifier frameID, RefPtr<WebCore::TextIndicator>&& textIndicator)
 {
     RefPtr frame = WebFrameProxy::webFrame(frameID);
     if (!frame)
         return;
 
-    auto rect = indicatorData.textBoundingRectInRootViewCoordinates;
-    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, indicatorData = WTFMove(indicatorData)] (std::optional<FloatRect> convertedRect) mutable {
+    auto rect = textIndicator->textBoundingRectInRootViewCoordinates();
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, textIndicator = WTFMove(textIndicator)] (std::optional<FloatRect> convertedRect) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !convertedRect)
             return;
-        indicatorData.textBoundingRectInRootViewCoordinates = *convertedRect;
-        protectedThis->updateTextIndicator(WTFMove(indicatorData));
+        textIndicator->setTextBoundingRectInRootViewCoordinates(*convertedRect);
+        protectedThis->updateTextIndicator(WTFMove(textIndicator));
     });
 }
 
-void WebPageProxy::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData)
+void WebPageProxy::updateTextIndicator(RefPtr<WebCore::TextIndicator>&& textIndicator)
 {
     if (m_textIndicator && m_textIndicatorLayer)
-        [m_textIndicatorLayer updateWithFrame:m_textIndicator->textBoundingRectInRootViewCoordinates() textIndicator:TextIndicator::create(indicatorData) margin:CGSizeZero offset:CGPointZero updatingIndicator:YES];
+        [m_textIndicatorLayer updateWithFrame:m_textIndicator->textBoundingRectInRootViewCoordinates() textIndicator:textIndicator.get() margin:CGSizeZero offset:CGPointZero updatingIndicator:YES];
 }
 
 void WebPageProxy::clearTextIndicator()

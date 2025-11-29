@@ -114,7 +114,7 @@ JSValue *WebExtensionAPIExtension::getBackgroundPage(JSContextRef context)
     if (!backgroundPage)
         return toJSValue(context, JSValueMakeNull(context));
 
-    return toWindowObject(context, *backgroundPage);
+    return toJSValue(context, toWindowObject(context, *backgroundPage));
 }
 
 NSArray *WebExtensionAPIExtension::getViews(JSContextRef context, NSDictionary *filter, NSString **outExceptionString)
@@ -136,22 +136,22 @@ NSArray *WebExtensionAPIExtension::getViews(JSContextRef context, NSDictionary *
     // Any of the filters (type, tabId, or windowId) would preclude the background page.
     if (!anyFiltersSpecified) {
         if (auto backgroundPage = extensionContext->backgroundPage()) {
-            if (auto *windowObject = toWindowObject(context, *backgroundPage))
-                [result addObject:windowObject];
+            if (auto windowObject = toWindowObject(context, *backgroundPage); !JSValueIsUndefined(context, windowObject))
+                [result addObject:toJSValue(context, windowObject)];
         }
     }
 
     if (!viewType || viewType == ViewType::Popup) {
         for (auto& page : extensionContext->popupPages(tabIdentifier, windowIdentifier)) {
-            if (auto *windowObject = toWindowObject(context, page))
-                [result addObject:windowObject];
+            if (auto windowObject = toWindowObject(context, page); !JSValueIsUndefined(context, windowObject))
+                [result addObject:toJSValue(context, windowObject)];
         }
     }
 
     if (!viewType || viewType == ViewType::Tab) {
         for (auto& page : extensionContext->tabPages(tabIdentifier, windowIdentifier)) {
-            if (auto *windowObject = toWindowObject(context, page))
-                [result addObject:windowObject];
+            if (auto windowObject = toWindowObject(context, page); !JSValueIsUndefined(context, windowObject))
+                [result addObject:toJSValue(context, windowObject)];
         }
     }
 
@@ -170,7 +170,7 @@ void WebExtensionAPIExtension::isAllowedFileSchemeAccess(Ref<WebExtensionCallbac
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/extension/isAllowedFileSchemeAccess
     // FIXME: rdar://problem/58428135 Consider allowing file URL access if the user opted in explicitly in some way.
 
-    callback->call(@NO);
+    callback->call(JSValueMakeBoolean(callback->globalContext(), false));
 }
 
 void WebExtensionAPIExtension::isAllowedIncognitoAccess(Ref<WebExtensionCallbackHandler>&& callback)
@@ -178,7 +178,7 @@ void WebExtensionAPIExtension::isAllowedIncognitoAccess(Ref<WebExtensionCallback
     // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/extension/isAllowedIncognitoAccess
 
     WebProcess::singleton().sendWithAsyncReply(Messages::WebExtensionContext::ExtensionIsAllowedIncognitoAccess(), [protectedThis = Ref { *this }, callback = WTFMove(callback)](bool result) {
-        callback->call(@(result));
+        callback->call(JSValueMakeBoolean(callback->globalContext(), result));
     }, extensionContext().identifier());
 }
 

@@ -36,7 +36,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(TrackPrivateBase);
 
-std::optional<AtomString> TrackPrivateBase::trackUID() const
+std::optional<String> TrackPrivateBase::trackUID() const
 {
     return std::nullopt;
 }

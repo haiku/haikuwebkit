@@ -50,7 +50,7 @@ void ThreadedScrollingCoordinator::pageDestroyed()
     AsyncScrollingCoordinator::pageDestroyed();
 
     // Invalidating the scrolling tree will break the reference cycle between the ScrollingCoordinator and ScrollingTree objects.
-    RefPtr scrollingTree = static_pointer_cast<ThreadedScrollingTree>(releaseScrollingTree());
+    RefPtr scrollingTree = downcast<ThreadedScrollingTree>(releaseScrollingTree());
     ScrollingThread::dispatch([scrollingTree = WTFMove(scrollingTree)] {
         scrollingTree->invalidate();
     });

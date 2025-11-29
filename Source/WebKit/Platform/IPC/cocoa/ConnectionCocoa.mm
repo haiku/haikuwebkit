@@ -166,7 +166,7 @@ void Connection::platformOpen()
         ASSERT(!m_receivePort);
         auto kr = allocateImmovableConnectionPort(&m_receivePort);
         if (kr != KERN_SUCCESS) {
-            LOG_ERROR("Could not allocate mach port, error %x: %s", kr, mach_error_string(kr));
+            RELEASE_LOG_ERROR(IPC, "Could not allocate mach port, error: %{private}s (%x)", mach_error_string(kr), kr);
             CRASH();
         }
 #if !PLATFORM(WATCHOS)

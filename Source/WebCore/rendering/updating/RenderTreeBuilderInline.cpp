@@ -214,6 +214,12 @@ void RenderTreeBuilder::Inline::attachIgnoringContinuation(RenderInline& parent,
         return;
     }
 
+    if (!m_buildsContinuations) {
+        // In blocks-in-inline case we allow blocks that may need splitting.
+        if (beforeChild && beforeChild->parent() != &parent)
+            beforeChild = m_builder.splitAnonymousBoxesAroundChild(parent, *beforeChild);
+    }
+
     auto& childToAdd = *child;
     m_builder.attachToRenderElement(parent, WTFMove(child), beforeChild);
     childToAdd.setNeedsLayoutAndPreferredWidthsUpdate();
@@ -429,6 +435,64 @@ void RenderTreeBuilder::Inline::childBecameNonInline(RenderInline& parent, Rende
     auto* beforeChild = child.nextSibling();
     auto removedChild = m_builder.detachFromRenderElement(parent, child, WillBeDestroyed::No);
     splitFlow(parent, beforeChild, WTFMove(newBox), WTFMove(removedChild), oldContinuation);
+}
+
+void RenderTreeBuilder::Inline::updateAfterDescendants(RenderInline& parent)
+{
+    if (m_buildsContinuations)
+        return;
+    wrapRunsOfBlocksInAnonymousBlock(parent);
+}
+
+void RenderTreeBuilder::Inline::wrapRunsOfBlocksInAnonymousBlock(RenderInline& parent)
+{
+    // Wrap runs of block boxes with an anonymous block so their margins collapse correctly for blocks-in-inline.
+    ASSERT(!m_buildsContinuations);
+
+    auto dropNestedAnonymousBlocks = [&](CheckedRef<RenderBlockFlow> anonymousBlock) {
+        ASSERT(anonymousBlock->isAnonymousBlock());
+        SingleThreadWeakPtr<RenderObject> nextChild;
+        for (SingleThreadWeakPtr<RenderObject> movedChild = anonymousBlock->firstChild(); movedChild; movedChild = nextChild) {
+            nextChild = movedChild->nextSibling();
+            auto blockChild = dynamicDowncast<RenderBlockFlow>(movedChild.get());
+            if (blockChild && blockChild->isAnonymousBlock() && !blockChild->childrenInline())
+                m_builder.blockBuilder().dropAnonymousBoxChild(anonymousBlock, *blockChild);
+        }
+    };
+
+    SingleThreadWeakPtr<RenderBox> firstInRun;
+    SingleThreadWeakPtr<RenderBox> lastInRun;
+
+    auto wrapRunInAnonymousBlockIfNeeded = [&] {
+        // Only wrap if there are multiple consecutive blocks.
+        if (firstInRun == lastInRun)
+            return;
+
+        auto newBlock = Block::createAnonymousBlockWithStyle(parent.protectedDocument(), parent.style());
+        newBlock->setChildrenInline(false);
+        CheckedRef block = *newBlock;
+        m_builder.attachToRenderElementInternal(parent, WTFMove(newBlock), firstInRun.get());
+        m_builder.moveChildren(parent, block, firstInRun.get(), lastInRun->nextSibling(), RenderTreeBuilder::NormalizeAfterInsertion::No);
+
+        // We might have wrapped existing anonymous blocks and they are now nested. Get rid of them,
+        dropNestedAnonymousBlocks(block);
+    };
+
+    for (CheckedPtr child = parent.firstChild() ; child; child = child->nextSibling()) {
+        if (child->isInline()) {
+            wrapRunInAnonymousBlockIfNeeded();
+            firstInRun = nullptr;
+            lastInRun = nullptr;
+            continue;
+        }
+        if (auto* blockChild = dynamicDowncast<RenderBox>(*child); blockChild && blockChild->isInFlow()) {
+            // Floats and out-of-flow boxes are wrapped if they are in the middle of a block run.
+            if (!firstInRun)
+                firstInRun = blockChild;
+            lastInRun = blockChild;
+        }
+    }
+    wrapRunInAnonymousBlockIfNeeded();
 }
 
 }

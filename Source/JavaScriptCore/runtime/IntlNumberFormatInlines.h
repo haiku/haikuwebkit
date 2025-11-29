@@ -29,6 +29,7 @@
 #include "IntlNumberFormat.h"
 #include "IntlPluralRules.h"
 #include "IntlObjectInlines.h"
+#include "JSBigIntInlines.h"
 #include "JSGlobalObject.h"
 #include "JSGlobalObjectFunctions.h"
 

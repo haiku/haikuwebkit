@@ -135,7 +135,6 @@ public:
 
     RefPtr<JITCallee> tryGetReplacementConcurrently(FunctionCodeIndex functionIndex) const WTF_IGNORES_THREAD_SAFETY_ANALYSIS;
 #if ENABLE(WEBASSEMBLY_BBQJIT)
-    RefPtr<BBQCallee> tryGetBBQCallee(FunctionCodeIndex) WTF_IGNORES_THREAD_SAFETY_ANALYSIS;
     RefPtr<BBQCallee> tryGetBBQCalleeForLoopOSRConcurrently(VM&, FunctionCodeIndex) WTF_IGNORES_THREAD_SAFETY_ANALYSIS;
 #endif
 #if ENABLE(WEBASSEMBLY_OMGJIT)

@@ -555,7 +555,7 @@ TileRenderInfo AsyncPDFRenderer::renderInfoForTile(const TiledBacking& tiledBack
 
     auto pageCoverage = presentationController->pageCoverageAndScalesForContentsRect(paintingClipRect, layoutRow, tilingScaleFactor);
 
-    return TileRenderInfo { tileRect, renderRect, WTFMove(background), pageCoverage, m_showDebugBorders };
+    return TileRenderInfo { tileRect, encloseRectToDevicePixels(renderRect, pageCoverage.deviceScaleFactor), WTFMove(background), pageCoverage, m_showDebugBorders };
 }
 
 static void renderPDFTile(PDFDocument *pdfDocument, const TileRenderInfo& renderInfo, GraphicsContext& context)
@@ -563,9 +563,6 @@ static void renderPDFTile(PDFDocument *pdfDocument, const TileRenderInfo& render
     context.translate(-renderInfo.tileRect.location());
     if (renderInfo.tileRect != renderInfo.renderRect)
         context.clip(renderInfo.renderRect);
-    context.fillRect(renderInfo.renderRect, Color::white);
-    if (renderInfo.showDebugIndicators)
-        context.fillRect(renderInfo.renderRect, Color::green.colorWithAlphaByte(32));
 
     context.scale(renderInfo.pageCoverage.tilingScaleFactor);
     context.translate(-renderInfo.pageCoverage.contentsOffset);
@@ -578,6 +575,9 @@ static void renderPDFTile(PDFDocument *pdfDocument, const TileRenderInfo& render
         auto destinationRect = pageInfo.pageBounds;
         auto pageStateSaver = GraphicsContextStateSaver(context);
         context.clip(destinationRect);
+        context.fillRect(destinationRect, Color::white);
+        if (renderInfo.showDebugIndicators)
+            context.fillRect(destinationRect, Color::green.colorWithAlphaByte(32));
 
         // Translate the context to the bottom of pageBounds and flip, so that PDFKit operates
         // from this page's drawing origin.

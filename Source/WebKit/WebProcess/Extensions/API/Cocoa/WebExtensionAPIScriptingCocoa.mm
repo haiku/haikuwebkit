@@ -192,7 +192,7 @@ void WebExtensionAPIScripting::executeScript(NSDictionary *script, Ref<WebExtens
         if (!result)
             callback->reportError(result.error().createNSString().get());
         else
-            callback->call(toWebAPI(result.value(), false));
+            callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value(), false)));
     }, extensionContext().identifier());
 }
 
@@ -257,7 +257,7 @@ void WebExtensionAPIScripting::getRegisteredContentScripts(NSDictionary *filter,
         if (!result)
             callback->reportError(result.error().createNSString().get());
         else
-            callback->call(toWebAPI(result.value()));
+            callback->call(toJSValueRef(callback->globalContext(), toWebAPI(result.value())));
     }, extensionContext().identifier());
 }
 

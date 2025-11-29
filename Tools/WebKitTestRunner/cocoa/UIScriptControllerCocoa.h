@@ -103,6 +103,10 @@ private:
     void cancelFixedColorExtensionFadeAnimations() const final;
 
     void setObscuredInsets(double top, double right, double bottom, double left) final;
+
+#if ENABLE(THREADED_ANIMATIONS)
+    JSRetainPtr<JSStringRef> animationStackForLayerWithID(uint64_t layerID) const final;
+#endif
 };
 
 } // namespace WTR

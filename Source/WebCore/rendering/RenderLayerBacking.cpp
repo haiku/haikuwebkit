@@ -1579,6 +1579,13 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
                         fixedPositionRect.moveBy(-LayoutPoint { entry.clippingLayer->position() });
                 }
             }
+
+            // RenderView's layer has a non-zero offsetFromGraphicsLayer in RTL content; we have to account
+            // for that to map rectForFixedPositionLayout from content to GraphicsLayer coordinates.
+            CheckedPtr renderViewLayer = renderer().view().layer();
+            ASSERT(renderViewLayer->isComposited());
+            fixedPositionRect.move(renderViewLayer->backing()->contentOffsetInCompositingLayer());
+
             m_viewportClippingLayer->setPosition(fixedPositionRect.location());
             m_viewportClippingLayer->setSize(fixedPositionRect.size());
             primaryLayerPosition.moveBy(-fixedPositionRect.location());

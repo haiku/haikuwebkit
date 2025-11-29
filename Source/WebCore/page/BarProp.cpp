@@ -47,7 +47,7 @@ BarProp::BarProp(LocalDOMWindow& window, Type type)
 
 bool BarProp::visible() const
 {
-    auto* frame = this->frame();
+    RefPtr frame = this->frame();
     if (!frame)
         return false;
     RefPtr page = frame->page();

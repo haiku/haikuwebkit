@@ -447,7 +447,14 @@ RemoteLayerTreeDrawingAreaProxyIOS& RemoteScrollingCoordinatorProxyIOS::drawingA
 void RemoteScrollingCoordinatorProxyIOS::animationsWereAddedToNode(RemoteLayerTreeNode& node)
 {
     m_animatedNodeLayerIDs.add(node.layerID());
-    drawingAreaIOS().scheduleDisplayRefreshCallbacksForAnimation();
+    if (m_monotonicTimelineRegistry && !m_monotonicTimelineRegistry->isEmpty())
+        drawingAreaIOS().scheduleDisplayRefreshCallbacksForAnimation();
+}
+
+void RemoteScrollingCoordinatorProxyIOS::progressBasedTimelinesWereUpdatedForNode(const WebCore::ScrollingTreeScrollingNode& node)
+{
+    if (scrollingTree().hasTimelineForNode(node))
+        drawingAreaIOS().scheduleDisplayRefreshCallbacksForAnimation();
 }
 
 void RemoteScrollingCoordinatorProxyIOS::animationsWereRemovedFromNode(RemoteLayerTreeNode& node)

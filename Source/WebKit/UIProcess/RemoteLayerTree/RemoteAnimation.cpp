@@ -28,6 +28,7 @@
 
 #if ENABLE(THREADED_ANIMATIONS)
 
+#import "RemoteAnimationUtilities.h"
 #import <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
@@ -47,7 +48,41 @@ RemoteAnimation::RemoteAnimation(const WebCore::AcceleratedEffect& effect, const
 
 void RemoteAnimation::apply(WebCore::AcceleratedEffectValues& values)
 {
-    Ref { m_effect }->apply(values, m_timeline->currentTime(), m_timeline->duration());
+    m_effect->apply(values, m_timeline->currentTime(), m_timeline->duration());
+}
+
+Ref<JSON::Object> RemoteAnimation::toJSONForTesting() const
+{
+    auto convertProperties = [](const OptionSet<WebCore::AcceleratedEffectProperty>& properties) {
+        Ref convertedProperties = JSON::Array::create();
+        for (auto property : properties)
+            convertedProperties->pushString(toStringForTesting(property));
+        return convertedProperties;
+    };
+
+    auto convertKeyframes = [](const Vector<WebCore::AcceleratedEffect::Keyframe>& keyframes) {
+        Ref convertedKeyframes = JSON::Array::create();
+        for (auto& keyframe : keyframes) {
+            Ref convertedKeyframe = WebKit::toJSONForTesting(keyframe.values(), keyframe.animatedProperties());
+            convertedKeyframe->setDouble("offset"_s, keyframe.offset());
+            convertedKeyframe->setValue("composite"_s, WebKit::toJSONForTesting(keyframe.compositeOperation()));
+            convertedKeyframe->setValue("easing"_s, WebKit::toJSONForTesting(keyframe.timingFunction()));
+            convertedKeyframes->pushObject(WTFMove(convertedKeyframe));
+        }
+        return convertedKeyframes;
+    };
+
+    Ref object = JSON::Object::create();
+    object->setValue("composite"_s, WebKit::toJSONForTesting(m_effect->compositeOperation()));
+    object->setBoolean("paused"_s, m_effect->paused());
+    object->setDouble("playbackRate"_s, m_effect->playbackRate());
+    object->setValue("startTime"_s, WebKit::toJSONForTesting(m_effect->startTime()));
+    object->setValue("holdTime"_s, WebKit::toJSONForTesting(m_effect->holdTime()));
+    object->setArray("properties"_s, convertProperties(animatedProperties()));
+    object->setArray("keyframes"_s, convertKeyframes(keyframes()));
+    object->setObject("timing"_s, WebKit::toJSONForTesting(m_effect->timing()));
+    object->setObject("timeline"_s, m_timeline->toJSONForTesting());
+    return object;
 }
 
 } // namespace WebKit

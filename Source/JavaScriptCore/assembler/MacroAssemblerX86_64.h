@@ -2914,7 +2914,7 @@ public:
     template<typename LeftType, typename RightType>
     void moveDoubleConditionally32(RelationalCondition cond, LeftType left, RightType right, FPRegisterID thenCase, FPRegisterID elseCase, FPRegisterID dest)
     {
-        static_assert(!std::is_same<LeftType, FPRegisterID>::value && !std::is_same<RightType, FPRegisterID>::value, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
+        static_assert(!std::same_as<LeftType, FPRegisterID> && !std::same_as<RightType, FPRegisterID>, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
 
         if (thenCase != dest && elseCase != dest) {
             moveDouble(elseCase, dest);
@@ -2935,7 +2935,7 @@ public:
     template<typename TestType, typename MaskType>
     void moveDoubleConditionallyTest32(ResultCondition cond, TestType test, MaskType mask, FPRegisterID thenCase, FPRegisterID elseCase, FPRegisterID dest)
     {
-        static_assert(!std::is_same<TestType, FPRegisterID>::value && !std::is_same<MaskType, FPRegisterID>::value, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
+        static_assert(!std::same_as<TestType, FPRegisterID> && !std::same_as<MaskType, FPRegisterID>, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
 
         if (elseCase == dest && isInvertible(cond)) {
             Jump falseCase = branchTest32(invert(cond), test, mask);
@@ -6599,7 +6599,7 @@ public:
     template<typename LeftType, typename RightType>
     void moveDoubleConditionally64(RelationalCondition cond, LeftType left, RightType right, FPRegisterID thenCase, FPRegisterID elseCase, FPRegisterID dest)
     {
-        static_assert(!std::is_same<LeftType, FPRegisterID>::value && !std::is_same<RightType, FPRegisterID>::value, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
+        static_assert(!std::same_as<LeftType, FPRegisterID> && !std::same_as<RightType, FPRegisterID>, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
 
         if (thenCase != dest && elseCase != dest) {
             moveDouble(elseCase, dest);
@@ -6620,7 +6620,7 @@ public:
     template<typename TestType, typename MaskType>
     void moveDoubleConditionallyTest64(ResultCondition cond, TestType test, MaskType mask, FPRegisterID thenCase, FPRegisterID elseCase, FPRegisterID dest)
     {
-        static_assert(!std::is_same<TestType, FPRegisterID>::value && !std::is_same<MaskType, FPRegisterID>::value, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
+        static_assert(!std::same_as<TestType, FPRegisterID> && !std::same_as<MaskType, FPRegisterID>, "One of the tested argument could be aliased on dest. Use moveDoubleConditionallyDouble().");
 
         if (elseCase == dest && isInvertible(cond)) {
             Jump falseCase = branchTest64(invert(cond), test, mask);

@@ -62,13 +62,13 @@ static Vector<KeyValuePair<int32_t, WGPUDDMeshPart>> convertToBacking(const Vect
 {
     Vector<KeyValuePair<int32_t, WGPUDDMeshPart>> result;
     for (auto& p : parts) {
-        result.append(KeyValuePair(WTFMove(p.key), WGPUDDMeshPart {
+        result.append(KeyValuePair(int32_t { p.key }, WGPUDDMeshPart {
             .indexOffset = p.value.indexOffset,
             .indexCount = p.value.indexCount,
             .topology = p.value.topology,
             .materialIndex = p.value.materialIndex,
-            .boundsMin = WTFMove(p.value.boundsMin),
-            .boundsMax = WTFMove(p.value.boundsMax)
+            .boundsMin = p.value.boundsMin,
+            .boundsMax = p.value.boundsMax
         }));
     }
     return result;
@@ -79,7 +79,7 @@ static Vector<WGPUDDReplaceVertices> convertToBacking(const Vector<DDReplaceVert
     for (auto& p : vertices) {
         result.append(WGPUDDReplaceVertices {
             .bufferIndex = p.bufferIndex,
-            .buffer = WTFMove(p.buffer)
+            .buffer = p.buffer
         });
     }
     return result;
@@ -142,12 +142,12 @@ void DDMeshImpl::update(const DDUpdateMeshDescriptor& descriptor)
     WGPUDDUpdateMeshDescriptor backingDescriptor {
         .partCount = descriptor.partCount,
         .parts = convertToBacking(descriptor.parts),
-        .renderFlags = WTFMove(descriptor.renderFlags),
+        .renderFlags = descriptor.renderFlags,
         .vertices = convertToBacking(descriptor.vertices),
-        .indices = WTFMove(descriptor.indices),
-        .transform = WTFMove(descriptor.transform),
+        .indices = descriptor.indices,
+        .transform = descriptor.transform,
         .instanceTransforms4x4 = toVector(descriptor.instanceTransforms4x4),
-        .materialIds = WTFMove(descriptor.materialIds),
+        .materialIds = descriptor.materialIds,
         .identifier = descriptor.identifier
     };
 
@@ -465,6 +465,10 @@ void DDMeshImpl::setCameraDistance(float distance)
     wgpuDDMeshSetCameraDistance(m_backing.get(), distance);
 }
 
+void DDMeshImpl::play(bool play)
+{
+    wgpuDDMeshPlay(m_backing.get(), play);
+}
 #endif
 
 Vector<MachSendRight> DDMeshImpl::ioSurfaceHandles()

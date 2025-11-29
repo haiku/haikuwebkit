@@ -167,7 +167,7 @@ AutofillData AutofillData::createFromHTMLFormControlElement(const HTMLFormContro
         if (element.autofillMantle() == AutofillMantle::Anchor)
             return { emptyAtom(), emptyString(), NonAutofillCredentialType::None };
         
-        auto form = element.form();
+        RefPtr form = element.form();
         if (form && form->autocomplete() == offAtom())
             return { offAtom(), emptyString(), NonAutofillCredentialType::None };
         return { onAtom(), emptyString(), NonAutofillCredentialType::None };

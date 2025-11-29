@@ -28,6 +28,22 @@
 #import <UIKit/UIKit.h>
 
 #if USE(APPLE_INTERNAL_SDK)
+#import <Foundation/NSGeometry.h>
+#endif
+
+#ifndef WK_HAS_DEFINED_NS_RECT_EDGE
+#ifndef NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES
+typedef NS_ENUM(NSUInteger, NSRectEdge) {
+    NSRectEdgeMinX = CGRectMinXEdge,
+    NSRectEdgeMinY = CGRectMinYEdge,
+    NSRectEdgeMaxX = CGRectMaxXEdge,
+    NSRectEdgeMaxY = CGRectMaxYEdge,
+};
+#define WK_HAS_DEFINED_NS_RECT_EDGE 1
+#endif // !defined(NSGEOMETRY_TYPES_SAME_AS_CGGEOMETRY_TYPES)
+#endif // !defined(WK_HAS_DEFINED_NS_RECT_EDGE)
+
+#if USE(APPLE_INTERNAL_SDK)
 
 #import <UIKit/NSParagraphStyle_Private.h>
 #import <UIKit/NSTextAlternatives.h>
@@ -536,14 +552,18 @@ typedef NS_ENUM(NSUInteger, _UIClickInteractionShouldBeginResult) {
 - (UITextInputArrowKeyHistory *)_moveToStartOfParagraph:(BOOL)extending withHistory:(UITextInputArrowKeyHistory *)history;
 @end
 
+#if __has_include(<UIFoundation/NSTextTable.h>)
+#import <UIFoundation/NSTextTable.h>
+#else
+
 typedef NS_ENUM(NSInteger, NSTextBlockLayer) {
-    NSTextBlockPadding  = -1,
-    NSTextBlockBorder   =  0,
-    NSTextBlockMargin   =  1
+    NSTextBlockLayerPadding  = -1,
+    NSTextBlockLayerBorder   =  0,
+    NSTextBlockLayerMargin   =  1
 };
 
 @interface NSTextBlock : NSObject
-- (CGFloat)widthForLayer:(NSTextBlockLayer)layer edge:(CGRectEdge)edge;
+- (CGFloat)widthForLayer:(NSTextBlockLayer)layer edge:(NSRectEdge)edge;
 @property (nonatomic, copy) UIColor *backgroundColor;
 @end
 
@@ -559,9 +579,11 @@ typedef NS_ENUM(NSInteger, NSTextBlockLayer) {
 - (NSInteger)rowSpan;
 @end
 
-@interface NSParagraphStyle ()
+@interface NSParagraphStyle (TextBlocks)
 - (NSArray<NSTextBlock *> *)textBlocks;
 @end
+
+#endif // !__has_include(<UIFoundation/NSTextTable.h>)
 
 @interface UIResponder (Internal)
 - (void)_share:(id)sender;

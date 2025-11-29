@@ -66,9 +66,9 @@ static guint windowHeight = 0;
 static guint defaultWindowWidthLegacyAPI = 1280;
 static guint defaultWindowHeightLegacyAPI = 720;
 static GHashTable* openViews;
-#if ENABLE_WPE_PLATFORM
 static gboolean windowMaximized;
 static gboolean windowFullscreen;
+#if ENABLE_WPE_PLATFORM
 static gboolean useLegacyAPI;
 static const char* defaultWindowTitle = "WPEWebKit MiniBrowser";
 static const char* configFile;
@@ -122,10 +122,10 @@ static const GOptionEntry commandLineOptions[] =
     { "enable-itp", 0, 0, G_OPTION_ARG_NONE, &enableITP, "Enable Intelligent Tracking Prevention (ITP)", nullptr },
     { "time-zone", 't', 0, G_OPTION_ARG_STRING, &timeZone, "Set time zone", "TIMEZONE" },
     { "features", 'F', 0, G_OPTION_ARG_STRING, &featureList, "Enable or disable WebKit features (hint: pass 'help' for a list)", "FEATURE-LIST" },
-#if ENABLE_WPE_PLATFORM
-    { "use-legacy-api", 0, 0, G_OPTION_ARG_NONE, &useLegacyAPI, "Use the WPE legacy API (libwpe)", nullptr },
     { "maximized", 'm', 0, G_OPTION_ARG_NONE, &windowMaximized, "Start with maximized window", nullptr },
     { "fullscreen", 'f', 0, G_OPTION_ARG_NONE, &windowFullscreen, "Start with fullscreen window", nullptr },
+#if ENABLE_WPE_PLATFORM
+    { "use-legacy-api", 0, 0, G_OPTION_ARG_NONE, &useLegacyAPI, "Use the WPE legacy API (libwpe)", nullptr },
     { "config-file", 0, 0, G_OPTION_ARG_FILENAME, &configFile, "Config file to load for settings", "FILE" },
 #endif
     { "size", 's', 0, G_OPTION_ARG_CALLBACK, reinterpret_cast<gpointer>(parseWindowSize), "Specify the window size to use, e.g. --size=\"800x600\"", nullptr },
@@ -136,9 +136,10 @@ static const GOptionEntry commandLineOptions[] =
 
 class InputClient final : public WPEToolingBackends::ViewBackend::InputClient {
 public:
-    InputClient(GApplication* application, WebKitWebView* webView)
+    InputClient(GApplication* application, WebKitWebView* webView, WPEToolingBackends::ViewBackend* backend)
         : m_application(application)
         , m_webView(webView)
+        , m_backend(backend)
     {
     }
 
@@ -164,12 +165,16 @@ public:
             }
         }
 
+        if (event->key_code == WPE_KEY_F11)
+            m_backend->setFullscreen(!m_backend->isFullscreen());
+
         return false;
     }
 
 private:
     GApplication* m_application { nullptr };
     WebKitWebView* m_webView { nullptr };
+    WPEToolingBackends::ViewBackend* m_backend { nullptr };
 };
 
 #if ENABLE_WPE_PLATFORM
@@ -598,7 +603,11 @@ static void activate(GApplication* application, WPEToolingBackends::ViewBackend*
 #endif
 
     if (backend) {
-        backend->setInputClient(std::make_unique<InputClient>(application, webView));
+        backend->setInputClient(std::make_unique<InputClient>(application, webView, backend));
+
+        backend->setMaximized(windowMaximized);
+        backend->setFullscreen(windowFullscreen);
+
 #if USE_ATK
         auto* accessible = wpe_view_backend_dispatch_get_accessible(backend->backend());
         if (ATK_IS_OBJECT(accessible))
@@ -714,18 +723,12 @@ int main(int argc, char *argv[])
 #if ENABLE_WPE_PLATFORM
     if (!useLegacyAPI)
         setDefaultWindowSize = false;
+#endif
 
     if (windowMaximized && windowFullscreen) {
         g_printerr("You cannot specify both --maximized and --fullscreen, these options are mutually exclusive.");
         return 1;
     }
-
-    if ((windowMaximized || windowFullscreen) && useLegacyAPI) {
-        g_printerr("You cannot specify either --maximized or --fullscreen, with legacy WPE API enabled.");
-        return 1;
-    }
-
-#endif
 
     if (setDefaultWindowSize) {
         // Default values used in old API, for legacy reasons.

@@ -26,8 +26,6 @@
 
 #pragma once
 
-#if ENABLE(WEB_AUTHN)
-
 #include "CredentialsContainer.h"
 #include "Supplementable.h"
 #include <wtf/TZoneMalloc.h>
@@ -61,5 +59,3 @@ private:
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::NavigatorCredentials)
     static bool isType(const WebCore::SupplementBase& supplement) { return supplement.isNavigatorCredentials(); }
 SPECIALIZE_TYPE_TRAITS_END()
-
-#endif // ENABLE(WEB_AUTHN)

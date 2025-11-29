@@ -1771,6 +1771,21 @@ CanvasUsesAcceleratedDrawing:
     WebCore:
       default: false
 
+CaptionDisplaySettingsEnabled:
+  type: bool
+  status: unstable
+  category: media
+  humanReadableName: "Caption Display Settings API"
+  humanReadableDescription: "Enable Caption Display Settings API"
+  condition: ENABLE(VIDEO)
+  defaultValue:
+    WebKit:
+      default: false
+    WebKitLegacy:
+      default: false
+    WebCore:
+      default: false
+
 CaptureAudioInGPUProcessEnabled:
   type: bool
   status: internal
@@ -3086,6 +3101,22 @@ ForceCompositingMode:
     WebKit:
       default: false
 
+ForceEnhancedSecurity:
+  type: bool
+  status: internal
+  defaultsOverridable: true
+  humanReadableName: "Force Enhanced Security Mode"
+  humanReadableDescription: "Force all navigations to use Enhanced Security"
+  webcoreBinding: none
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 ForceFTPDirectoryListings:
   type: bool
   status: embedder
@@ -4134,6 +4165,19 @@ InvisibleAutoplayNotPermitted:
       default: false
     WebKit:
       "PLATFORM(IOS_FAMILY)": true
+      default: false
+    WebCore:
+      default: false
+
+IsARIANotifyEnabled:
+  type: bool
+  status: unstable
+  humanReadableName: "ariaNotify()"
+  humanReadableDescription: "Enable ariaNotify support"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
       default: false
     WebCore:
       default: false
@@ -9858,6 +9902,22 @@ WindowFocusRestricted:
       default: true
     WebCore:
       default: true
+
+WirelessPlaybackMediaPlayerEnabled:
+  type: bool
+  status: unstable
+  humanReadableName: "Wireless Playback Media Player"
+  humanReadableDescription: "Enable wireless playback via MediaPlayerPrivateWirelessPlayback"
+  condition: ENABLE(REMOTE_PLAYBACK_MEDIA_PLAYER)
+  defaultValue:
+    WebCore:
+      default: false
+    WebKit:
+      default: false
+    WebKitLegacy:
+      default: false
+  disableInLockdownMode: true
+  sharedPreferenceForWebProcess: true
 
 WirelessPlaybackTargetAPIEnabled:
   type: bool

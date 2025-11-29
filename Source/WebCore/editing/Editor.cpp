@@ -838,9 +838,10 @@ bool Editor::shouldInsertText(const String& text, const std::optional<SimpleRang
 void Editor::respondToChangedContents(const VisibleSelection& endingSelection)
 {
     if (AXObjectCache::accessibilityEnabled()) {
-        RefPtr node = endingSelection.start().deprecatedNode();
-        if (AXObjectCache* cache = document().existingAXObjectCache())
-            cache->onEditableTextValueChanged(*node.get());
+        if (RefPtr node = endingSelection.start().deprecatedNode()) {
+            if (AXObjectCache* cache = document().existingAXObjectCache())
+                cache->onEditableTextValueChanged(*node.get());
+        }
     }
 
     updateMarkersForWordsAffectedByEditing(true);
@@ -2588,8 +2589,8 @@ void Editor::setComposition(const String& text, const Vector<CompositionUnderlin
         RefPtr extentNode = extent.deprecatedNode();
         unsigned extentOffset = extent.deprecatedEditingOffset();
 
-        if (is<Text>(baseNode) && baseNode == extentNode && baseOffset + text.length() == extentOffset) {
-            m_compositionNode = static_pointer_cast<Text>(baseNode);
+        if (RefPtr baseTextNode = dynamicDowncast<Text>(baseNode); baseTextNode && baseNode == extentNode && baseOffset + text.length() == extentOffset) {
+            m_compositionNode = baseTextNode;
             m_compositionStart = baseOffset;
             m_compositionEnd = extentOffset;
             m_customCompositionUnderlines = underlines;
@@ -2609,12 +2610,12 @@ void Editor::setComposition(const String& text, const Vector<CompositionUnderlin
                     range.location += baseOffset;
             }
 
-            if (auto renderer = baseNode->renderer())
+            if (auto renderer = baseTextNode->renderer())
                 renderer->repaint();
 
             unsigned start = std::min(baseOffset + selectionStart, extentOffset);
             unsigned end = std::min(std::max(start, baseOffset + selectionEnd), extentOffset);
-            auto range = SimpleRange { { *baseNode, start }, { *baseNode, end } };
+            auto range = SimpleRange { { *baseTextNode, start }, { *baseTextNode, end } };
             document->selection().setSelectedRange(range, Affinity::Downstream, FrameSelection::ShouldCloseTyping::No);
         }
     }

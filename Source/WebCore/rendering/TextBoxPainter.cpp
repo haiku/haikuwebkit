@@ -53,6 +53,7 @@
 #include "StyledMarkedText.h"
 #include "TextPaintStyle.h"
 #include "TextPainter.h"
+#include <ranges>
 
 #if ENABLE(WRITING_TOOLS)
 #include "GraphicsContextCG.h"
@@ -851,7 +852,7 @@ void TextBoxPainter::paintBackgroundDecorations(TextDecorationPainter& decoratio
     auto decoratingBoxList = DecoratingBoxList { };
     collectDecoratingBoxesForBackgroundPainting(decoratingBoxList, textBox, textBoxPaintRect.location(), markedText.style.textDecorationStyles);
 
-    for (auto& decoratingBox : makeReversedRange(decoratingBoxList)) {
+    for (auto& decoratingBox : decoratingBoxList | std::views::reverse) {
         auto computedTextDecorationType = WebCore::computedTextDecorationType(decoratingBox.style, decoratingBox.textDecorationStyles);
         auto computedBackgroundDecorationGeometry = [&] {
             auto textDecorationThickness = computedTextDecorationThickness(decoratingBox.style, m_document.deviceScaleFactor());

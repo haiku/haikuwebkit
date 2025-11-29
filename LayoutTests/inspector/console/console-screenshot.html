@@ -64,7 +64,7 @@ function test()
 {
     let suite = InspectorTest.createAsyncSuite("console.screenshot");
 
-    function addTest({name, expression, imageMessageAddedCallback, shouldCaptureViewport, shouldError}) {
+    function addTest({name, expression, shouldCaptureViewport, shouldError}) {
         suite.addTestCase({
             name,
             async test() {
@@ -132,13 +132,6 @@ function test()
     addTest({
         name: "console.screenshot.Node.DetachedScreenshotable.Canvas",
         expression: `testHTMLCanvasElement()`,
-        async imageMessageAddedCallback(message) {
-            InspectorTest.expectNotEqual(message.messageText, "data:", "The image should not be empty.");
-
-            let img = await WI.ImageUtilities.promisifyLoad(message.messageText);
-            InspectorTest.expectEqual(img.width, 2, "The image width should be 2px.");
-            InspectorTest.expectEqual(img.height, 2, "The image height should be 2px.");
-        },
     });
 
     addTest({

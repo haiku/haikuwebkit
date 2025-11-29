@@ -41,6 +41,7 @@
 #include "PointerEvent.h"
 #include "Quirks.h"
 #include <algorithm>
+#include <ranges>
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -241,7 +242,7 @@ void PointerCaptureController::dispatchEnterOrLeaveEvent(const AtomString& type,
     }
 
     if (type == eventNames().pointerenterEvent) {
-        for (auto& element : makeReversedRange(targetChain))
+        for (auto& element : targetChain | std::views::reverse)
             dispatchEvent(PointerEvent::create(type, event, { }, { }, index, isPrimary, view, touchDelta), element.ptr());
     } else {
         for (auto& element : targetChain)
@@ -316,7 +317,7 @@ void PointerCaptureController::dispatchEventForTouchAtIndex(EventTarget& target,
         if (currentTarget)
             dispatchOverOrOutEvent(eventNames().pointeroverEvent, currentTarget.get(), platformTouchEvent, index, isPrimary, view, touchDelta);
 
-        for (auto& chain : makeReversedRange(enteredElementsChain)) {
+        for (auto& chain : enteredElementsChain | std::views::reverse) {
             if (hasCapturingPointerEnterListener || chain->hasEventListeners(eventNames().pointerenterEvent))
                 dispatchEvent(PointerEvent::create(eventNames().pointerenterEvent, platformTouchEvent, coalescedEvents, predictedEvents, index, isPrimary, view, touchDelta), chain.ptr());
         }

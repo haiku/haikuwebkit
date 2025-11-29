@@ -2001,6 +2001,18 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static remoteAnimationStackForElement(element)
+    {
+        if (!this.isWebKit2() || !element)
+            return Promise.resolve();
+
+        const layerID = window.internals?.layerIDForElement(element);
+        const script = `uiController.uiScriptComplete(uiController.animationStackForLayerWithID(${layerID}))`;
+        return new Promise(resolve => {
+            testRunner.runUIScript(script, result => resolve(JSON.parse(result)));
+        });
+    }
+
     static dragFromPointToPoint(fromX, fromY, toX, toY, duration)
     {
         if (!this.isWebKit2() || !this.isIOSFamily()) {

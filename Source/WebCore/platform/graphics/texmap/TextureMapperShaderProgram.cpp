@@ -117,7 +117,7 @@ static const char* vertexTemplateCommon =
                     float newDistance = distance(v_nonProjectedPosition.xyz, centerInViewportCoordinates.xyz);
                     // Move v_texCoord based on 3D distance inflation ratio.
                     v_texCoord += normalize(position - center) * (newDistance - oldDistance) / oldDistance;
-                } 
+                }
                 v_antialias = 0.;
             }
         }
@@ -243,6 +243,48 @@ static const char* fragmentTemplateCommon =
         void applyTextureRGB(inout vec4 color, vec2 texCoord) { color = u_textureColorSpaceMatrix * texture2D(s_sampler, texCoord); }
 
         void applyPremultiply(inout vec4 color) { color = vec4(color.rgb * color.a, color.a); }
+
+        void applyToneMapPQ(inout vec4 color)
+        {
+            // Reference PQ EOTF (ITU-R BT.2100)
+            float m1 = 0.1593017578125;
+            float m2 = 78.84375;
+            float c1 = 0.8359375;
+            float c2 = 18.8515625;
+            float c3 = 18.6875;
+
+            vec3 pqPowM2 = pow(max(color.rgb, vec3(0.0)), vec3(1.0 / m2));
+            vec3 numerator = max(pqPowM2 - c1, vec3(0.0));
+            vec3 denominator = c2 - c3 * pqPowM2;
+            vec3 linear = pow(numerator / denominator, vec3(1.0 / m1));
+
+            // Normalize using HDR reference white (ITU-R BT.2408)
+            const float hdrReferenceWhite = 203.0;
+            const float pqMaxNits = 10000.0;
+            vec3 normalized = linear * (pqMaxNits / hdrReferenceWhite);
+
+            // Tone-map using maxRGB-based Reinhard, which preserves saturation.
+            // Simplified version of that Chromium does, described in
+            // https://docs.google.com/document/d/17T2ek1i2R7tXdfHCnM-i5n6__RoYe0JyMfKmTEjoGR8/edit?tab=t.0#heading=h.h00l7d53phqy
+            float maxRGB = max(max(normalized.r, normalized.g), normalized.b);
+            vec3 toneMapped = normalized / (1.0 + maxRGB);
+
+            // Convert from BT.2020 to BT.709 color primaries
+            mat3 bt2020ToBt709 = mat3(
+                1.6605, -0.1246, -0.0182,
+                -0.5876, 1.1329, -0.1006,
+                -0.0728, -0.0083, 1.1187
+            );
+            vec3 bt709Linear = bt2020ToBt709 * toneMapped;
+
+            // Apply inverse EOTF for sRGB gamma encoding (IEC 61966-2)
+            bvec3 cutoff = lessThan(bt709Linear, vec3(0.0031308));
+            vec3 higher = vec3(1.055) * pow(bt709Linear, vec3(1.0 / 2.4)) - vec3(0.055);
+            vec3 lower = bt709Linear * vec3(12.92);
+            vec3 srgb = mix(higher, lower, vec3(cutoff));
+
+            color = vec4(srgb, color.a);
+        }
 
         vec3 yuvToRgb(float y, float u, float v)
         {
@@ -509,6 +551,7 @@ static const char* fragmentTemplateCommon =
             applyTextureNV12IfNeeded(color, texCoord);
             applyTextureNV21IfNeeded(color, texCoord);
             applyTexturePackedYUVIfNeeded(color, texCoord);
+            applyToneMapPQIfNeeded(color);
             applyPremultiplyIfNeeded(color);
             applySolidColorIfNeeded(color);
             applyAlphaBlurIfNeeded(color, texCoord);
@@ -547,6 +590,7 @@ Ref<TextureMapperShaderProgram> TextureMapperShaderProgram::create(TextureMapper
     SET_APPLIER_FROM_OPTIONS(TextureNV12);
     SET_APPLIER_FROM_OPTIONS(TextureNV21);
     SET_APPLIER_FROM_OPTIONS(TexturePackedYUV);
+    SET_APPLIER_FROM_OPTIONS(ToneMapPQ);
     SET_APPLIER_FROM_OPTIONS(SolidColor);
     SET_APPLIER_FROM_OPTIONS(Opacity);
     SET_APPLIER_FROM_OPTIONS(Antialiasing);

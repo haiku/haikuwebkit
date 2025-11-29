@@ -128,6 +128,10 @@ private:
         Vector<Device::ViewData> views(XRSessionMode) const final;
         std::optional<PlatformXR::LayerHandle> createLayerProjection(uint32_t, uint32_t, bool) final { return std::nullopt; }
         void deleteLayer(PlatformXR::LayerHandle) final { }
+#if ENABLE(WEBXR_HIT_TEST)
+        void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&) final { };
+        void deleteHitTestSource(PlatformXR::HitTestSource) final { };
+#endif
     };
 
     WeakPtr<Navigator> m_navigator;

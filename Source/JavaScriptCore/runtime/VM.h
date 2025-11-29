@@ -63,6 +63,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include <JavaScriptCore/ThunkGenerator.h>
 #include <JavaScriptCore/VMThreadContext.h>
 #include <JavaScriptCore/WasmContext.h>
+#include <JavaScriptCore/WasmDebugServerUtilities.h>
 #include <JavaScriptCore/WeakGCMap.h>
 #include <JavaScriptCore/WriteBarrier.h>
 #include <wtf/BumpPointerAllocator.h>
@@ -411,6 +412,7 @@ private:
 
 public:
     bool didEnterVM { false };
+    bool m_isInService { false };
 private:
     VMIdentifier m_identifier;
     const Ref<JSLock> m_apiLock;
@@ -1111,6 +1113,13 @@ public:
     bool isWasmStopWorldActive() { return m_isWasmStopWorldActive; }
     void setIsWasmStopWorldActive(bool isWasmStopWorldActive) { m_isWasmStopWorldActive = isWasmStopWorldActive; }
 
+#if ENABLE(WEBASSEMBLY)
+    bool takeStepIntoWasmCall() { return m_stepIntoEvent.take(Wasm::StepIntoEvent::StepIntoCall); }
+    void setStepIntoWasmCall() { m_stepIntoEvent.set(Wasm::StepIntoEvent::StepIntoCall); }
+    bool takeStepIntoWasmThrow() { return m_stepIntoEvent.take(Wasm::StepIntoEvent::StepIntoThrow); }
+    void setStepIntoWasmThrow() { m_stepIntoEvent.set(Wasm::StepIntoEvent::StepIntoThrow); }
+#endif
+
 private:
     VM(VMType, HeapType, WTF::RunLoop* = nullptr, bool* success = nullptr);
     static VM*& sharedInstanceInternal();
@@ -1204,7 +1213,6 @@ private:
     std::unique_ptr<TypeProfiler> m_typeProfiler;
     std::unique_ptr<TypeProfilerLog> m_typeProfilerLog;
     unsigned m_typeProfilerEnabledCount { 0 };
-    bool m_isInService { false };
     Lock m_scratchBufferLock;
     Vector<ScratchBuffer*> m_scratchBuffers;
     size_t m_sizeOfLastScratchBuffer { 0 };
@@ -1237,6 +1245,10 @@ private:
     bool m_executionForbiddenOnTermination { false };
     bool m_isDebuggerHookInjected { false };
     bool m_isWasmStopWorldActive { false };
+
+#if ENABLE(WEBASSEMBLY)
+    Wasm::StepIntoEvent m_stepIntoEvent;
+#endif
 
     Lock m_loopHintExecutionCountLock;
     UncheckedKeyHashMap<const JSInstruction*, std::pair<unsigned, std::unique_ptr<uintptr_t>>> m_loopHintExecutionCounts;

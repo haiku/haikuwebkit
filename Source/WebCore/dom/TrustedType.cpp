@@ -289,25 +289,27 @@ ExceptionOr<String> requireTrustedTypesForPreNavigationCheckPasses(ScriptExecuti
     auto decodedURLString = PAL::decodeURLEscapeSequences(urlString);
     auto scriptSource = decodedURLString.substring(javascriptSchemeLength);
 
+    VM& vm = scriptExecutionContext.vm();
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+
     auto convertedScriptSource = processValueWithDefaultPolicy(scriptExecutionContext, expectedType, scriptSource, sink);
     if (std::holds_alternative<Exception>(convertedScriptSource))
-        return WTFMove(std::get<Exception>(convertedScriptSource));
+        throwScope.clearException();
+    else if (!std::holds_alternative<std::monostate>(convertedScriptSource)) {
+        auto stringifiedConvertedScriptSource = WTF::visit(TrustedTypeVisitor { }, convertedScriptSource);
 
-    if (std::holds_alternative<std::monostate>(convertedScriptSource)) {
-        auto allowMissingTrustedTypes = contentSecurityPolicy->allowMissingTrustedTypesForSinkGroup(trustedTypeToString(expectedType), sink, sinkGroup, scriptSource);
+        auto newURL = URL(makeString("javascript:"_s, stringifiedConvertedScriptSource));
 
-        if (!allowMissingTrustedTypes)
-            return Exception { ExceptionCode::TypeError, makeString("This assignment requires a "_s, trustedTypeToString(expectedType)) };
-
-        return String(urlString);
+        if (newURL.isValid())
+            return String(newURL.string());
     }
 
-    auto stringifiedConvertedScriptSource = WTF::visit(TrustedTypeVisitor { }, convertedScriptSource);
+    auto allowMissingTrustedTypes = contentSecurityPolicy->allowMissingTrustedTypesForSinkGroup(trustedTypeToString(expectedType), sink, sinkGroup, scriptSource);
 
-    auto newURL = URL(makeString("javascript:"_s, stringifiedConvertedScriptSource));
-    return String(newURL.isValid()
-        ? newURL.string()
-        : nullString());
+    if (!allowMissingTrustedTypes)
+        return Exception { ExceptionCode::TypeError, makeString("This assignment requires a "_s, trustedTypeToString(expectedType)) };
+
+    return String(urlString);
 }
 
 ExceptionOr<bool> canCompile(ScriptExecutionContext& scriptExecutionContext, JSC::CompilationType compilationType, String codeString, const JSC::ArgList& args)

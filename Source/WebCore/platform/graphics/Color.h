@@ -105,6 +105,7 @@ public:
     explicit Color(WTF::HashTableDeletedValueType);
     bool isHashTableDeletedValue() const;
     bool isHashTableEmptyValue() const;
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     Color(const Color&);
     Color(Color&&);
@@ -646,6 +647,5 @@ inline void Color::setOutOfLineComponents(Ref<OutOfLineComponents>&& color, Colo
 } // namespace WebCore
 
 namespace WTF {
-template<> struct DefaultHash<WebCore::Color>;
 template<> struct HashTraits<WebCore::Color>;
 }

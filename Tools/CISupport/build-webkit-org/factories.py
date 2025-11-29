@@ -33,7 +33,7 @@ class Factory(factory.BuildFactory):
 
     def __init__(self, platform, configuration, architectures, buildOnly, additionalArguments, device_model, triggers=None):
         factory.BuildFactory.__init__(self)
-        self.addStep(ConfigureBuild(platform=platform, configuration=configuration, architecture=" ".join(architectures), buildOnly=buildOnly, additionalArguments=additionalArguments, device_model=device_model, triggers=triggers))
+        self.addStep(ConfigureBuild(platform=platform, configuration=configuration, architecture=' '.join(architectures), buildOnly=buildOnly, additionalArguments=additionalArguments, device_model=device_model, triggers=triggers))
         self.addStep(PrintConfiguration())
         self.addStep(CheckOutSource())
         self.addStep(CheckOutSpecificRevision())
@@ -125,8 +125,6 @@ class TestFactory(Factory):
 
         if platform.startswith("gtk"):
             self.addStep(RunGtkAPITests())
-            if additionalArguments and "--display-server=wayland" in additionalArguments:
-                self.addStep(RunWebDriverTests())
         if platform == "wpe":
             self.addStep(RunWPEAPITests())
 

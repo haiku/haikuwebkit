@@ -2357,8 +2357,10 @@ void MediaPlayerPrivateAVFoundationObjC::tracksChanged()
         updateAudioTracks();
         updateVideoTracks();
 
-        hasAudio |= (m_audibleGroup && m_audibleGroup->selectedOption());
-        hasVideo |= (m_visualGroup && m_visualGroup->selectedOption());
+        RefPtr audibleGroup = m_audibleGroup;
+        RefPtr visualGroup = m_visualGroup;
+        hasAudio |= (audibleGroup && audibleGroup->selectedOption());
+        hasVideo |= (visualGroup && visualGroup->selectedOption());
 
         // HLS streams will occasionally recreate all their tracks; during seek and after
         // buffering policy changes. "debounce" notifications which result in no enabled
@@ -2485,7 +2487,7 @@ void determineChangedTracksFromNewTracksAndOldItems(MediaSelectionGroupAVFObjC* 
     for (auto& option : group->options()) {
         if (!option)
             continue;
-        AVMediaSelectionOption* avOption = option->avMediaSelectionOption();
+        RetainPtr avOption = option->avMediaSelectionOption();
         if (!avOption)
             continue;
         newSelectionOptions.add(option);
@@ -4044,7 +4046,7 @@ void MediaPlayerPrivateAVFoundationObjC::setDefaultSpatialTrackingLabel(const St
 {
     if (m_defaultSpatialTrackingLabel == defaultSpatialTrackingLabel)
         return;
-    m_defaultSpatialTrackingLabel = WTFMove(defaultSpatialTrackingLabel);
+    m_defaultSpatialTrackingLabel = defaultSpatialTrackingLabel;
     updateSpatialTrackingLabel();
 }
 
@@ -4057,7 +4059,7 @@ void MediaPlayerPrivateAVFoundationObjC::setSpatialTrackingLabel(const String& s
 {
     if (m_spatialTrackingLabel == spatialTrackingLabel)
         return;
-    m_spatialTrackingLabel = WTFMove(spatialTrackingLabel);
+    m_spatialTrackingLabel = spatialTrackingLabel;
     updateSpatialTrackingLabel();
 }
 

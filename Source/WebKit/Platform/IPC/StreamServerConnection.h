@@ -105,7 +105,7 @@ public:
         HasMoreMessages
     };
     DispatchResult dispatchStreamMessages(size_t messageLimit);
-    void markCurrentlyDispatchedMessageAsInvalid();
+    void markCurrentlyDispatchedMessageAsInvalid(ASCIILiteral error);
 
     void open(Client&, StreamConnectionWorkQueue&);
     void invalidate();
@@ -206,15 +206,15 @@ void StreamServerConnection::sendAsyncReply(AsyncReplyID asyncReplyID, Arguments
     m_connection->sendAsyncReply<T>(asyncReplyID, std::forward<Arguments>(arguments)...);
 }
 
-inline void markCurrentlyDispatchedMessageAsInvalid(StreamServerConnection& connection)
+inline void markCurrentlyDispatchedMessageAsInvalid(StreamServerConnection& connection, ASCIILiteral error)
 {
-    connection.markCurrentlyDispatchedMessageAsInvalid();
+    connection.markCurrentlyDispatchedMessageAsInvalid(error);
 }
 
-inline void markCurrentlyDispatchedMessageAsInvalid(const RefPtr<StreamServerConnection>& connection)
+inline void markCurrentlyDispatchedMessageAsInvalid(const RefPtr<StreamServerConnection>& connection, ASCIILiteral error)
 {
     if (connection)
-        connection->markCurrentlyDispatchedMessageAsInvalid();
+        connection->markCurrentlyDispatchedMessageAsInvalid(error);
 }
 
 }

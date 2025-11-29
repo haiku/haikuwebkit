@@ -59,6 +59,11 @@ public:
     void scheduleAnimationFrame(WebPageProxy&, std::optional<PlatformXR::RequestData>&&, PlatformXR::Device::RequestFrameCallback&& onFrameUpdateCallback) override;
     void submitFrame(WebPageProxy&, Vector<XRDeviceLayer>&&) override;
 
+#if ENABLE(WEBXR_HIT_TEST)
+    void requestHitTestSource(WebPageProxy&, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&) override;
+    void deleteHitTestSource(WebPageProxy&, PlatformXR::HitTestSource) override;
+#endif
+
 private:
     void createInstance();
     RefPtr<WebCore::GLDisplay> createGLDisplay(bool isForTesting) const;

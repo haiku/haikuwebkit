@@ -37,9 +37,8 @@ namespace JSC::Wasm {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MergedProfile);
 
-MergedProfile::MergedProfile(const IPIntCallee& callee, double totalCount)
+MergedProfile::MergedProfile(const IPIntCallee& callee)
     : m_callSites(callee.numCallProfiles())
-    , m_totalCount(totalCount)
 {
 }
 
@@ -132,6 +131,7 @@ auto MergedProfile::Candidates::finalize() const -> Candidates
 
 void MergedProfile::merge(const Module& module, const IPIntCallee& callee, BaselineData& data)
 {
+    m_totalCount += data.totalCount();
     m_merged = true;
     auto span = m_callSites.mutableSpan();
     RELEASE_ASSERT(data.size() == span.size());

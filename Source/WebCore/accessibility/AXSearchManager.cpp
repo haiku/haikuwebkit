@@ -36,6 +36,7 @@
 #include "Logging.h"
 #include "LocalFrameInlines.h"
 #include "TextIterator.h"
+#include <ranges>
 
 namespace WebCore {
 
@@ -465,7 +466,7 @@ std::optional<AXTextMarkerRange> AXSearchManager::findMatchingRange(Accessibilit
                     return range;
             }
         } else {
-            for (auto& range : makeReversedRange(ranges)) {
+            for (auto& range : ranges | std::views::reverse) {
                 if (range < startRange)
                     return range;
             }

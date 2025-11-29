@@ -34,6 +34,7 @@
 #include "PlatformXRSystemProxyMessages.h"
 #include "WebPageProxy.h"
 #include "WebProcessProxy.h"
+#include <WebCore/ExceptionData.h>
 #include <WebCore/GPUTextureFormat.h>
 #include <WebCore/SecurityOriginData.h>
 #include <WebCore/XRCanvasConfiguration.h>
@@ -270,6 +271,39 @@ void PlatformXRSystem::submitFrame(IPC::Connection& connection)
 #endif
     }
 }
+
+#if ENABLE(WEBXR_HIT_TEST)
+void PlatformXRSystem::requestHitTestSource(const PlatformXR::HitTestOptions& hitTestOptions, CompletionHandler<void(Expected<PlatformXR::HitTestSource, WebCore::ExceptionData>)>&& passedCompletionHandler)
+{
+    auto completionHandler = [passedCompletionHandler = WTFMove(passedCompletionHandler)](WebCore::ExceptionOr<PlatformXR::HitTestSource> exceptionOrValue) mutable {
+        if (exceptionOrValue.hasException()) {
+            auto exception = exceptionOrValue.releaseException();
+            passedCompletionHandler(makeUnexpected(WebCore::ExceptionData { exception.code(), exception.releaseMessage() }));
+        } else
+            passedCompletionHandler(exceptionOrValue.releaseReturnValue());
+    };
+    RefPtr page = m_page.get();
+    if (!page) {
+        completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
+        return;
+    }
+    auto* xrCoordinator = PlatformXRSystem::xrCoordinator();
+    if (!xrCoordinator) {
+        completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
+        return;
+    }
+    xrCoordinator->requestHitTestSource(*page, hitTestOptions, WTFMove(completionHandler));
+}
+
+void PlatformXRSystem::deleteHitTestSource(PlatformXR::HitTestSource source)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
+        xrCoordinator->deleteHitTestSource(*page, source);
+}
+#endif
 
 void PlatformXRSystem::didCompleteShutdownTriggeredBySystem(IPC::Connection& connection)
 {

@@ -1746,7 +1746,7 @@ bool RenderThemeCocoa::adjustInnerSpinButtonStyleForVectorBasedControls(RenderSt
 
     style.setLogicalWidth(Style::PreferredSize::Fixed { pixelsPerEm });
     style.setLogicalHeight(CSS::Keyword::Auto { });
-    style.setAlignSelf(StyleSelfAlignmentData(ItemPosition::Stretch));
+    style.setAlignSelf(CSS::Keyword::Stretch { });
 
     return true;
 #endif

@@ -130,6 +130,7 @@ enum class CommandType: uint8_t {
     RequestClose,
 };
 
+struct AriaNotifyOptions;
 struct CheckVisibilityOptions;
 struct FocusEventData;
 struct FullscreenOptions;
@@ -247,6 +248,9 @@ public:
     const AtomString& ariaRequired() const;
     const AtomString& ariaSelected() const;
     const AtomString& ariaSort() const;
+
+    WEBCORE_EXPORT void ariaNotify(const String&);
+    WEBCORE_EXPORT void ariaNotify(const String&, const AriaNotifyOptions&);
 
 #if DUMP_NODE_STATISTICS
     bool hasNamedNodeMap() const;

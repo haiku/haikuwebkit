@@ -24,6 +24,7 @@
 #include <WebCore/GraphicsTypesGL.h>
 #include <WebCore/IntRect.h>
 #include <WebCore/IntSize.h>
+#include <WebCore/TransformationMatrix.h>
 #include <memory>
 #include <wtf/CompletionHandler.h>
 #include <wtf/HashMap.h>
@@ -47,6 +48,10 @@
 #include <wtf/MachSendRight.h>
 #endif
 
+#if ENABLE(WEBXR_HIT_TEST)
+#include <WebCore/ExceptionOr.h>
+#endif
+
 namespace PlatformXR {
 class TrackingAndRenderingClient;
 }
@@ -57,6 +62,7 @@ template<> struct IsDeprecatedWeakRefSmartPointerException<PlatformXR::TrackingA
 }
 
 namespace WebCore {
+enum class XRHitTestTrackableType : uint8_t;
 class SecurityOriginData;
 
 struct XRCanvasConfiguration;
@@ -105,6 +111,7 @@ enum class VisibilityState : uint8_t {
 using LayerHandle = int;
 
 #if ENABLE(WEBXR)
+using HitTestSource = unsigned;
 using InputSourceHandle = int;
 
 // https://immersive-web.github.io/webxr/#enumdef-xrhandedness
@@ -269,6 +276,19 @@ struct RateMapDescription {
     Vector<float> verticalSamples;
 };
 
+#if ENABLE(WEBXR_HIT_TEST)
+struct Ray {
+    WebCore::FloatPoint3D origin;
+    WebCore::FloatPoint3D direction;
+};
+
+struct HitTestOptions {
+    WebCore::TransformationMatrix nativeOrigin;
+    Vector<WebCore::XRHitTestTrackableType> entityTypes;
+    Ray offsetRay;
+};
+#endif // ENABLE(WEBXR_HIT_TEST)
+
 struct FrameData {
     struct FloatQuaternion {
         float x { 0.0f };
@@ -386,6 +406,12 @@ struct FrameData {
 #endif
     };
 
+#if ENABLE(WEBXR_HIT_TEST)
+    struct HitTestResult {
+        Pose pose;
+    };
+#endif
+
     bool isTrackingValid { false };
     bool isPositionValid { false };
     bool isPositionEmulated { false };
@@ -396,6 +422,9 @@ struct FrameData {
     StageParameters stageParameters;
     Vector<View> views;
     HashMap<LayerHandle, UniqueRef<LayerData>> layers;
+#if ENABLE(WEBXR_HIT_TEST)
+    HashMap<HitTestSource, Vector<HitTestResult>> hitTestResults;
+#endif
     Vector<InputSource> inputSources;
 
     FrameData copy() const;
@@ -440,6 +469,11 @@ public:
     virtual void initializeReferenceSpace(ReferenceSpaceType) = 0;
     virtual std::optional<LayerHandle> createLayerProjection(uint32_t width, uint32_t height, bool alpha) = 0;
     virtual void deleteLayer(LayerHandle) = 0;
+
+#if ENABLE(WEBXR_HIT_TEST)
+    virtual void requestHitTestSource(const HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<HitTestSource>)>&&) = 0;
+    virtual void deleteHitTestSource(HitTestSource) = 0;
+#endif
 
     struct LayerView {
         Eye eye { Eye::None };

@@ -125,7 +125,7 @@ private:
         bool m_hasFastObjectProperties { false };
         unsigned m_index { 0 };
         unsigned m_size { 0 };
-        RefPtr<PropertyNameArrayData> m_propertyNames;
+        RefPtr<PropertyNameArray> m_propertyNames;
         Vector<std::tuple<PropertyName, unsigned>, 8> m_propertiesAndOffsets;
     };
 
@@ -147,7 +147,7 @@ private:
     JSGlobalObject* const m_globalObject;
     JSValue m_replacer;
     bool m_usingArrayReplacer { false };
-    PropertyNameArray m_arrayReplacerPropertyNames;
+    PropertyNameArrayBuilder m_arrayReplacerPropertyNames;
     CallData m_replacerCallData;
     String m_gap;
 
@@ -557,7 +557,7 @@ bool Stringifier::Holder::appendNextProperty(Stringifier& stringifier, StringBui
                 });
                 m_size = m_propertiesAndOffsets.size();
             } else {
-                PropertyNameArray objectPropertyNames(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+                PropertyNameArrayBuilder objectPropertyNames(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
                 m_object->methodTable()->getOwnPropertyNames(m_object, globalObject, objectPropertyNames, DontEnumPropertiesMode::Exclude);
                 RETURN_IF_EXCEPTION(scope, false);
                 m_propertyNames = objectPropertyNames.releaseData();
@@ -1599,7 +1599,7 @@ NEVER_INLINE JSValue Walker::walk(JSValue unfiltered)
     VM& vm = m_globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    Vector<PropertyNameArray, 16, UnsafeVectorOverflow> propertyStack;
+    Vector<PropertyNameArrayBuilder, 16, UnsafeVectorOverflow> propertyStack;
     Vector<uint32_t, 16, UnsafeVectorOverflow> indexStack;
     MarkedArgumentBuffer markedStack;
     Vector<const JSONRanges::Entry*, 16> entryStack;
@@ -1719,7 +1719,7 @@ NEVER_INLINE JSValue Walker::walk(JSValue unfiltered)
                     entryStack.append(inValueRange);
                 }
                 indexStack.append(0);
-                propertyStack.append(PropertyNameArray(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
+                propertyStack.append(PropertyNameArrayBuilder(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude));
                 object->methodTable()->getOwnPropertyNames(object, m_globalObject, propertyStack.last(), DontEnumPropertiesMode::Exclude);
                 RETURN_IF_EXCEPTION(scope, { });
             }
@@ -1728,7 +1728,7 @@ NEVER_INLINE JSValue Walker::walk(JSValue unfiltered)
             case ObjectStartVisitMember: {
                 JSObject* object = jsCast<JSObject*>(markedStack.last());
                 uint32_t index = indexStack.last();
-                PropertyNameArray& properties = propertyStack.last();
+                PropertyNameArrayBuilder& properties = propertyStack.last();
                 if (index == properties.size()) {
                     outValue = object;
                     if (m_sourceRanges)

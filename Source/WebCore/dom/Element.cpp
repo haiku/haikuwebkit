@@ -27,6 +27,7 @@
 #include "Element.h"
 
 #include "AXObjectCache.h"
+#include "AriaNotifyOptions.h"
 #include "Attr.h"
 #include "AttributeChangeInvalidation.h"
 #include "CheckVisibilityOptions.h"
@@ -172,6 +173,7 @@
 #include "markup.h"
 #include <JavaScriptCore/JSCJSValue.h>
 #include <JavaScriptCore/JSONObject.h>
+#include <ranges>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -4676,7 +4678,7 @@ const RenderStyle* Element::resolveComputedStyle(ResolveComputedStyleMode mode)
     // Resolve and cache styles starting from the most distant ancestor.
     // FIXME: This is not as efficient as it could be. For example if an ancestor has a non-inherited style change but
     // the styles are otherwise clean we would not need to re-resolve descendants.
-    for (auto& element : makeReversedRange(elementsRequiringComputedStyle)) {
+    for (auto& element : elementsRequiringComputedStyle | std::views::reverse) {
         if (computedStyle && computedStyle->containerType() != ContainerType::Normal && mode != ResolveComputedStyleMode::Editability) {
             // If we find a query container we need to bail out and do full style update to resolve it.
             if (document->updateStyleIfNeeded())
@@ -6856,6 +6858,24 @@ const AtomString& Element::ariaSort() const
     }
 
     return value.isNull() ? nullAtom() : value;
+}
+
+void Element::ariaNotify(const String& announcement)
+{
+    if (!document().settings().isARIANotifyEnabled())
+        return;
+
+    if (CheckedPtr cache = document().axObjectCache())
+        cache->postARIANotifyNotification(*this, announcement, { });
+}
+
+void Element::ariaNotify(const String& announcement, const AriaNotifyOptions& options)
+{
+    if (!document().settings().isARIANotifyEnabled())
+        return;
+
+    if (CheckedPtr cache = document().axObjectCache())
+        cache->postARIANotifyNotification(*this, announcement, options);
 }
 
 } // namespace WebCore

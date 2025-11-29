@@ -33,6 +33,7 @@
 #else
 #include <JavaScriptCore/JavaScript.h>
 #endif
+#include <wtf/JSONValues.h>
 #include <wtf/WeakPtr.h>
 
 namespace WebKit {
@@ -55,37 +56,31 @@ public:
 
 class WebExtensionCallbackHandler : public RefCounted<WebExtensionCallbackHandler> {
 public:
-    template<typename... Args>
-    static Ref<WebExtensionCallbackHandler> create(Args&&... args)
-    {
-        return adoptRef(*new WebExtensionCallbackHandler(std::forward<Args>(args)...));
-    }
+    static Ref<WebExtensionCallbackHandler> create(JSContextRef, JSObjectRef resolveFunction, JSObjectRef rejectFunction);
+    static Ref<WebExtensionCallbackHandler> create(JSContextRef, JSObjectRef callbackFunction, WebExtensionAPIRuntimeBase&);
+    static Ref<WebExtensionCallbackHandler> create(JSContextRef, WebExtensionAPIRuntimeBase&);
 
     ~WebExtensionCallbackHandler();
 
-#if PLATFORM(COCOA) && defined(__OBJC__)
     JSGlobalContextRef globalContext() const { return m_globalContext.get(); }
-    JSValue *callbackFunction() const;
+    JSValueRef callbackFunction() const;
 
     void reportError(const String&);
 
-    id call();
-    id call(id argument);
-    id call(id argumentOne, id argumentTwo);
-    id call(id argumentOne, id argumentTwo, id argumentThree);
-#endif
+    JSValueRef call();
+    JSValueRef call(JSValueRef argument);
+    JSValueRef call(JSValueRef argumentOne, JSValueRef argumentTwo);
+    JSValueRef call(JSValueRef argumentOne, JSValueRef argumentTwo, JSValueRef argumentThree);
 
 private:
     WebExtensionCallbackHandler(JSContextRef, JSObjectRef resolveFunction, JSObjectRef rejectFunction);
     WebExtensionCallbackHandler(JSContextRef, JSObjectRef callbackFunction, WebExtensionAPIRuntimeBase&);
     WebExtensionCallbackHandler(JSContextRef, WebExtensionAPIRuntimeBase&);
 
-#if PLATFORM(COCOA)
     JSObjectRef m_callbackFunction = nullptr;
     JSObjectRef m_rejectFunction = nullptr;
     JSRetainPtr<JSGlobalContextRef> m_globalContext;
     RefPtr<WebExtensionAPIRuntimeBase> m_runtime;
-#endif
 };
 
 enum class NullStringPolicy : uint8_t {
@@ -112,10 +107,9 @@ enum class ValuePolicy : bool {
 RefPtr<WebFrame> toWebFrame(JSContextRef);
 RefPtr<WebPage> toWebPage(JSContextRef);
 
-inline JSRetainPtr<JSStringRef> toJSString(const char* string)
+inline JSRetainPtr<JSStringRef> toJSString(const String& string)
 {
-    ASSERT(string);
-    return JSRetainPtr<JSStringRef>(Adopt, JSStringCreateWithUTF8CString(string));
+    return JSRetainPtr(Adopt, JSStringCreateWithUTF8CString(!string.isEmpty() ? string.utf8().data() : ""));
 }
 
 inline JSValueRef toJSValueRefOrJSNull(JSContextRef context, JSValueRef value)
@@ -147,8 +141,6 @@ String toString(JSStringRef);
 
 JSObjectRef toJSError(JSContextRef, const String&);
 
-JSRetainPtr<JSStringRef> toJSString(const String&);
-
 JSValueRef deserializeJSONString(JSContextRef, const String& jsonString);
 String serializeJSObject(JSContextRef, JSValueRef, JSValueRef* exception);
 
@@ -158,6 +150,18 @@ bool isFunction(JSContextRef, JSValueRef);
 bool isDictionary(JSContextRef, JSValueRef);
 bool isRegularExpression(JSContextRef, JSValueRef);
 bool isThenable(JSContextRef, JSValueRef);
+
+JSValueRef fromArray(JSContextRef, Vector<JSValueRef>&&);
+JSValueRef fromArray(JSContextRef, Vector<size_t>&&);
+JSValueRef fromArray(JSContextRef, Vector<String>&&);
+
+JSValueRef fromJSON(JSContextRef, RefPtr<JSON::Value>);
+JSValueRef fromObject(JSContextRef, HashMap<String, JSValueRef>&&);
+
+JSValueRef toJSValueRef(JSContextRef, const String&, NullOrEmptyString = NullOrEmptyString::NullStringAsEmptyString);
+
+JSValueRef toWindowObject(JSContextRef, WebFrame&);
+JSValueRef toWindowObject(JSContextRef, WebPage&);
 
 #ifdef __OBJC__
 
@@ -169,12 +173,8 @@ JSContext *toJSContext(JSContextRef);
 NSArray *toNSArray(JSContextRef, JSValueRef, Class containingObjectsOfClass = NSObject.class);
 JSValue *toJSValue(JSContextRef, JSValueRef);
 
-JSValue *toWindowObject(JSContextRef, WebFrame&);
-JSValue *toWindowObject(JSContextRef, WebPage&);
-
 JSValueRef toJSValueRef(JSContextRef, id);
 
-JSValueRef toJSValueRef(JSContextRef, const String&, NullOrEmptyString = NullOrEmptyString::NullStringAsEmptyString);
 JSValueRef toJSValueRef(JSContextRef, NSURL *, NullOrEmptyString = NullOrEmptyString::NullStringAsEmptyString);
 
 JSValueRef toJSValueRefOrJSNull(JSContextRef, id);

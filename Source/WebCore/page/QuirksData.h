@@ -39,6 +39,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool isGoogleDocs : 1 { false };
     bool isGoogleProperty : 1 { false };
     bool isGoogleMaps : 1 { false };
+    bool isGoogleAccounts : 1 { false };
     bool isNetflix : 1 { false };
     bool isOutlook : 1 { false };
     bool isSoundCloud : 1 { false };
@@ -207,6 +208,8 @@ struct WEBCORE_EXPORT QuirksData {
 #if HAVE(PIP_SKIP_PREROLL)
     bool shouldDisableAdSkippingInPip : 1 { false };
 #endif
+
+    bool needsSuppressPostLayoutBoundaryEventsQuirk : 1 { false };
 };
 
 } // namespace WebCore

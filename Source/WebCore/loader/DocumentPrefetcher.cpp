@@ -34,6 +34,7 @@
 #include "DocumentLoader.h"
 #include "Frame.h"
 #include "FrameLoader.h"
+#include "MemoryCache.h"
 #include "ReferrerPolicy.h"
 #include "ResourceRequest.h"
 #include "SecurityOrigin.h"
@@ -161,6 +162,11 @@ void DocumentPrefetcher::notifyFinished(CachedResource& resource, const NetworkL
     auto it = m_prefetchedData.find(resourceURL);
     if (it != m_prefetchedData.end())
         it->value.metrics = Box<NetworkLoadMetrics>::create(metrics);
+
+    if (!resource.response().isSuccessful()) {
+        m_prefetchedData.remove(resourceURL);
+        MemoryCache::singleton().remove(resource);
+    }
 
     if (resource.hasClient(*this))
         resource.removeClient(*this);

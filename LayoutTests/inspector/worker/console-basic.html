@@ -5,8 +5,8 @@
 <script>
 let worker = new Worker("resources/worker-console.js");
 
-function triggerConsoleMethodInWorker(msg) {
-    worker.postMessage(msg);
+function triggerConsoleMethodInWorker(method) {
+    worker.postMessage({method});
 }
 
 function test()

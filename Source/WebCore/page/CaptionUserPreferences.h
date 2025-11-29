@@ -108,7 +108,9 @@ public:
 
     friend class CaptionUserPreferencesTestingModeToken;
     WEBCORE_EXPORT UniqueRef<CaptionUserPreferencesTestingModeToken> createTestingModeToken();
-    
+
+    virtual String captionPreviewTitle() const;
+
     PageGroup& pageGroup() const;
 
 protected:

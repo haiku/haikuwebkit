@@ -346,7 +346,6 @@ set(WebKit_MESSAGES_IN_FILES
 
     WebProcess/GPU/graphics/RemoteGraphicsContextGLProxy
     WebProcess/GPU/graphics/RemoteImageBufferProxy
-    WebProcess/GPU/graphics/RemoteImageBufferSetProxy
     WebProcess/GPU/graphics/RemoteRenderingBackendProxy
 
     WebProcess/GPU/graphics/WebGPU/RemoteGPUProxy
@@ -524,6 +523,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/SessionState.serialization.in
     Shared/SyntheticEditingCommandType.serialization.in
     Shared/TextFlags.serialization.in
+    Shared/TextManipulationParameters.serialization.in
     Shared/TextRecognitionResult.serialization.in
     Shared/TextRecognitionUpdateResult.serialization.in
     Shared/URLSchemeTaskParameters.serialization.in

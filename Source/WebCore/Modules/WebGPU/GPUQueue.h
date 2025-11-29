@@ -28,7 +28,6 @@
 #include "BufferSource.h"
 #include "GPUCommandBuffer.h"
 #include "GPUExtent3DDict.h"
-#include "GPUImageCopyExternalImage.h"
 #include "GPUImageCopyTexture.h"
 #include "GPUImageCopyTextureTagged.h"
 #include "GPUImageDataLayout.h"
@@ -44,6 +43,7 @@
 namespace WebCore {
 
 class GPUBuffer;
+struct GPUImageCopyExternalImage;
 
 namespace WebGPU {
 class Device;

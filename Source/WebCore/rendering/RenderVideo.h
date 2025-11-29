@@ -27,10 +27,11 @@
 
 #if ENABLE(VIDEO)
 
-#include <WebCore/HTMLVideoElement.h>
 #include <WebCore/RenderMedia.h>
 
 namespace WebCore {
+
+class HTMLVideoElement;
 
 class RenderVideo final : public RenderMedia {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(RenderVideo);
@@ -92,11 +93,6 @@ private:
 
     LayoutSize m_cachedImageSize;
 };
-
-inline RenderVideo* HTMLVideoElement::renderer() const
-{
-    return downcast<RenderVideo>(Node::renderer());
-}
 
 } // namespace WebCore
 

@@ -1182,6 +1182,11 @@ void PageClientImpl::didChangeLocalInspectorAttachment()
 #endif
 }
 
+void PageClientImpl::showCaptionDisplaySettings(CompletionHandler<void(bool)>&& callback)
+{
+    checkedImpl()->showCaptionDisplaySettings(WTFMove(callback));
+}
+
 RetainPtr<NSView> PageClient::protectedViewForPresentingRevealPopover() const
 {
     return viewForPresentingRevealPopover();

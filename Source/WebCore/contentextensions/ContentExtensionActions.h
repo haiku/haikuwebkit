@@ -126,6 +126,7 @@ struct WEBCORE_EXPORT ModifyHeadersAction {
     ModifyHeadersAction(EmptyValueTag) : hashTableType(HashTableType::Empty) { }
     ModifyHeadersAction(DeletedValueTag) : hashTableType(HashTableType::Deleted) { }
     bool isDeletedValue() const { return hashTableType == HashTableType::Deleted; }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     static Expected<ModifyHeadersAction, std::error_code> parse(const JSON::Object&);
     ModifyHeadersAction isolatedCopy() const &;
@@ -225,6 +226,7 @@ struct WEBCORE_EXPORT RedirectAction {
     RedirectAction(EmptyValueTag) : hashTableType(HashTableType::Empty) { }
     RedirectAction(DeletedValueTag) : hashTableType(HashTableType::Deleted) { }
     bool isDeletedValue() const { return hashTableType == HashTableType::Deleted; }
+    static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
     static Expected<RedirectAction, std::error_code> parse(const JSON::Object&, const String& urlFilter);
     RedirectAction isolatedCopy() const &;
@@ -355,20 +357,7 @@ inline void add(Hasher& hasher, const ModifyHeadersAction& action)
 
 namespace WTF {
 
-template<> struct DefaultHash<WebCore::ContentExtensions::RedirectAction> {
-    using Action = WebCore::ContentExtensions::RedirectAction;
-    static uint32_t hash(const Action& action) { return computeHash(action); }
-    static bool equal(const Action& a, const Action& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
 template<> struct HashTraits<WebCore::ContentExtensions::RedirectAction> : public CustomHashTraits<WebCore::ContentExtensions::RedirectAction> { };
-
-template<> struct DefaultHash<WebCore::ContentExtensions::ModifyHeadersAction> {
-    using Action = WebCore::ContentExtensions::ModifyHeadersAction;
-    static uint32_t hash(const Action& action) { return computeHash(action); }
-    static bool equal(const Action& a, const Action& b) { return a == b; }
-    static constexpr bool safeToCompareToEmptyOrDeleted = true;
-};
 template<> struct HashTraits<WebCore::ContentExtensions::ModifyHeadersAction> : public CustomHashTraits<WebCore::ContentExtensions::ModifyHeadersAction> { };
 
 } // namespace WTF

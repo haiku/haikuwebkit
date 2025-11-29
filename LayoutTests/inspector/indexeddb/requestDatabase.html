@@ -12,6 +12,12 @@ function test()
         return stores;
     }
 
+    function sortedIndexes(store) {
+        const indexes = store.indexes;
+        indexes.sort((a, b) => a.name > b.name);
+        return indexes;
+    }
+
     let suite = InspectorTest.createAsyncSuite("IndexedDB.requestDatabase");
 
     suite.addTestCase({
@@ -65,16 +71,18 @@ function test()
                     InspectorTest.expectThat(objectStores[1].keyPath.type === "null", "Object store keypath is null.");
                     InspectorTest.expectThat(objectStores[1].autoIncrement, "Object store should autoIncrement.");
                     InspectorTest.expectThat(objectStores[1].indexes.length === 2, "Object store should have 2 indexes.");
-                    InspectorTest.log("INDEX: " + JSON.stringify(objectStores[1].indexes[0]));
-                    InspectorTest.log("INDEX: " + JSON.stringify(objectStores[1].indexes[1]));
+                    let indexes = sortedIndexes(objectStores[1]);
+                    InspectorTest.log("INDEX: " + JSON.stringify(indexes[0]));
+                    InspectorTest.log("INDEX: " + JSON.stringify(indexes[1]));
 
                     InspectorTest.expectThat(objectStores[2].name === "Stats", "Object store should have name 'Stats'.");
                     InspectorTest.expectThat(objectStores[2].keyPath.type === "string", "Object store keypath is string type.");
                     InspectorTest.expectThat(objectStores[2].keyPath.string === "name", "Object store keypath is 'name''.");
                     InspectorTest.expectThat(!objectStores[2].autoIncrement, "Object store should not autoIncrement.");
                     InspectorTest.expectThat(objectStores[2].indexes.length === 2, "Object store should have 2 indexes.");
-                    InspectorTest.log("INDEX: " + JSON.stringify(objectStores[2].indexes[0]));
-                    InspectorTest.log("INDEX: " + JSON.stringify(objectStores[2].indexes[1]));
+                    indexes = sortedIndexes(objectStores[2]);
+                    InspectorTest.log("INDEX: " + JSON.stringify(indexes[0]));
+                    InspectorTest.log("INDEX: " + JSON.stringify(indexes[1]));
 
                     resolve();
                 });

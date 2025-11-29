@@ -35,9 +35,9 @@
 #include "VideoTrackPrivate.h"
 #include <wtf/Observer.h>
 #include <wtf/Ref.h>
-#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/ThreadSafeWeakPtr.h>
 
 OBJC_CLASS AVAssetTrack;
 OBJC_CLASS AVPlayerItem;
@@ -55,7 +55,7 @@ struct PlatformVideoTrackConfiguration;
 struct PlatformAudioTrackConfiguration;
 struct VideoProjectionMetadata;
 
-class AVTrackPrivateAVFObjCImpl final : public RefCountedAndCanMakeWeakPtr<AVTrackPrivateAVFObjCImpl> {
+class AVTrackPrivateAVFObjCImpl final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<AVTrackPrivateAVFObjCImpl, WTF::DestructionThread::Main> {
     WTF_MAKE_TZONE_ALLOCATED(AVTrackPrivateAVFObjCImpl);
 public:
     static Ref<AVTrackPrivateAVFObjCImpl> create(AVPlayerItemTrack* track) { return adoptRef(*new AVTrackPrivateAVFObjCImpl(track)); }
@@ -74,24 +74,24 @@ public:
     VideoTrackPrivate::Kind videoKind() const;
     InbandTextTrackPrivate::Kind textKind() const;
 
-    static InbandTextTrackPrivate::Kind textKindForAVAssetTrack(const AVAssetTrack*);
-    static InbandTextTrackPrivate::Kind textKindForAVMediaSelectionOption(const AVMediaSelectionOption*);
+    static InbandTextTrackPrivate::Kind textKindForAVAssetTrack(const AVAssetTrack *);
+    static InbandTextTrackPrivate::Kind textKindForAVMediaSelectionOption(const AVMediaSelectionOption *);
 
     int index() const;
     TrackID id() const;
-    AtomString label() const;
-    AtomString language() const;
+    String label() const;
+    String language() const;
 
-    static String languageForAVAssetTrack(AVAssetTrack*);
-    static String languageForAVMediaSelectionOption(AVMediaSelectionOption *);
+    static String languageForAVAssetTrack(const AVAssetTrack *);
+    static String languageForAVMediaSelectionOption(const AVMediaSelectionOption *);
 
     PlatformVideoTrackConfiguration videoTrackConfiguration() const;
     using VideoTrackConfigurationObserver = Observer<void()>;
-    void setVideoTrackConfigurationObserver(VideoTrackConfigurationObserver& observer) { m_videoTrackConfigurationObserver = observer; }
+    void setVideoTrackConfigurationObserver(VideoTrackConfigurationObserver&);
 
     PlatformAudioTrackConfiguration audioTrackConfiguration() const;
     using AudioTrackConfigurationObserver = Observer<void()>;
-    void setAudioTrackConfigurationObserver(AudioTrackConfigurationObserver& observer) { m_audioTrackConfigurationObserver = observer; }
+    void setAudioTrackConfigurationObserver(AudioTrackConfigurationObserver&);
 
 private:
     AVTrackPrivateAVFObjCImpl(AVPlayerItemTrack*);

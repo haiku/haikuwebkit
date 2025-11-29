@@ -74,4 +74,6 @@ String toWebAPI(WebExtension::InjectionTime);
 
 } // namespace WebKit
 
+SPECIALIZE_TYPE_TRAITS_WEB_EXTENSION(WebExtensionAPIScripting, scripting);
+
 #endif // ENABLE(WK_WEB_EXTENSIONS)

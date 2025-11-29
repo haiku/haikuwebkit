@@ -128,11 +128,10 @@ void RenderMenuList::adjustInnerStyle()
     // Use margin:auto instead of align-items:center to get safe centering, i.e.
     // when the content overflows, treat it the same as align-items: flex-start.
     // But we only do that for the cases where html.css would otherwise use center.
-    if (style().alignItems().position() == ItemPosition::Center) {
+    if (style().alignItems().isCenter()) {
         innerStyle.setMarginBefore(CSS::Keyword::Auto { });
         innerStyle.setMarginAfter(CSS::Keyword::Auto { });
-
-        innerStyle.setAlignSelfPosition(ItemPosition::FlexStart);
+        innerStyle.setAlignSelf(CSS::Keyword::FlexStart { });
     }
 
     auto paddingBox = theme().popupInternalPaddingBox(style());

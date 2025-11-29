@@ -531,6 +531,13 @@ RefPtr<const RemoteAnimationTimeline> RemoteLayerTreeHost::timeline(const Timeli
 {
     return protectedDrawingArea()->timeline(timelineID);
 }
+
+RefPtr<const RemoteAnimationStack> RemoteLayerTreeHost::animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier layerID) const
+{
+    if (RefPtr node = nodeForID(layerID))
+        return node->animationStack();
+    return nullptr;
+}
 #endif
 
 void RemoteLayerTreeHost::remotePageProcessDidTerminate(WebCore::ProcessIdentifier processIdentifier)

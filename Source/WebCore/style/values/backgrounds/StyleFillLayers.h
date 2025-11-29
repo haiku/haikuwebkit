@@ -32,7 +32,7 @@
 #include <WebCore/StyleImageOrNone.h>
 #include <WebCore/StylePosition.h>
 #include <WebCore/StyleRepeatStyle.h>
-#include <wtf/IteratorRange.h>
+#include <ranges>
 
 namespace WebCore {
 
@@ -55,7 +55,7 @@ template<FillLayer T>
 void computeClipMax(const CoordinatedValueList<T>& list)
 {
     auto computedClipMax = FillBox::NoClip;
-    for (auto& layer : std::ranges::reverse_view(list.usedValues())) {
+    for (auto& layer : list.usedValues() | std::views::reverse) {
         computedClipMax = clipMax(computedClipMax, layer.clip());
         layer.setClipMax(computedClipMax);
     }

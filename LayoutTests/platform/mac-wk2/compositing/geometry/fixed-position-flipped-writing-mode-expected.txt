@@ -9,11 +9,11 @@
       (contentsOpaque 1)
       (children 2
         (GraphicsLayer
-          (position -300.00 0.00)
+          (position 3908.00 0.00)
           (bounds 800.00 585.00)
           (children 1
             (GraphicsLayer
-              (position 4608.00 0.00)
+              (position 400.00 0.00)
               (preserves3D 1)
               (children 1
                 (GraphicsLayer

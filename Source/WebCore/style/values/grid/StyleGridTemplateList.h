@@ -52,15 +52,13 @@ struct GridTrackEntryAutoRepeat {
 };
 
 struct GridTrackEntrySubgrid { bool operator==(const GridTrackEntrySubgrid&) const = default; };
-struct GridTrackEntryMasonry { bool operator==(const GridTrackEntryMasonry&) const = default; };
 
 using GridTrackEntry = Variant<
     GridTrackSize,
     Vector<String>,
     GridTrackEntryRepeat,
     GridTrackEntryAutoRepeat,
-    GridTrackEntrySubgrid,
-    GridTrackEntryMasonry
+    GridTrackEntrySubgrid
 >;
 using GridTrackList = Vector<GridTrackEntry>;
 
@@ -85,7 +83,6 @@ struct GridTemplateList {
     AutoRepeatType autoRepeatType { AutoRepeatType::None };
 
     bool subgrid { false };
-    bool masonry { false };
 
     bool operator==(const GridTemplateList& other) const
     {

@@ -33,7 +33,7 @@
 
 #include <array>
 #include <mutex>
-#include <wtf/IteratorRange.h>
+#include <ranges>
 #include <wtf/Lock.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/OSRandomSource.h>
@@ -140,7 +140,7 @@ void ARC4RandomNumberGenerator::randomValues(std::span<uint8_t> buffer)
 {
     Locker locker { m_lock };
 
-    for (auto& byte : WTF::makeReversedRange(buffer)) {
+    for (auto& byte : buffer | std::views::reverse) {
         m_count--;
         stirIfNeeded();
         byte = getByte();

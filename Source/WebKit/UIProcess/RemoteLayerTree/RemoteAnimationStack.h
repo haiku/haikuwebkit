@@ -31,12 +31,16 @@
 #include <WebCore/AcceleratedEffectValues.h>
 #include <WebCore/PlatformCAFilters.h>
 #include <WebCore/PlatformLayer.h>
+#include <wtf/JSONValues.h>
 #include <wtf/OptionSet.h>
-#include <wtf/RetainPtr.h>
 #include <wtf/TZoneMalloc.h>
+
+#if PLATFORM(MAC)
+#include <wtf/RetainPtr.h>
 
 OBJC_CLASS CAPresentationModifierGroup;
 OBJC_CLASS CAPresentationModifier;
+#endif
 
 namespace WebKit {
 
@@ -49,6 +53,9 @@ public:
 
     bool isEmpty() const { return m_animations.isEmpty(); }
 
+    auto begin() const LIFETIME_BOUND { return m_animations.begin(); }
+    auto end() const LIFETIME_BOUND { return m_animations.end(); }
+
 #if PLATFORM(MAC)
     void initEffectsFromMainThread(PlatformLayer*);
     void applyEffectsFromScrollingThread() const;
@@ -57,6 +64,8 @@ public:
     void applyEffectsFromMainThread(PlatformLayer*, bool backdropRootIsOpaque) const;
 
     void clear(PlatformLayer*);
+
+    Ref<JSON::Object> toJSONForTesting() const;
 
 private:
     explicit RemoteAnimationStack(RemoteAnimations&&, WebCore::AcceleratedEffectValues&&, WebCore::FloatRect);

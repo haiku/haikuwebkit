@@ -241,7 +241,7 @@ static JSObject* defaultMergeFields(JSGlobalObject* globalObject, JSObject* fiel
     auto* merged = constructEmptyObject(globalObject);
 
     {
-        PropertyNameArray originalKeys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+        PropertyNameArrayBuilder originalKeys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
         fields->methodTable()->getOwnPropertyNames(fields, globalObject, originalKeys, DontEnumPropertiesMode::Include);
         RETURN_IF_EXCEPTION(scope, { });
 
@@ -260,7 +260,7 @@ static JSObject* defaultMergeFields(JSGlobalObject* globalObject, JSObject* fiel
 
     bool includesMonthOrMonthCode = false;
     {
-        PropertyNameArray newKeys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+        PropertyNameArrayBuilder newKeys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
         additionalFields->methodTable()->getOwnPropertyNames(additionalFields, globalObject, newKeys, DontEnumPropertiesMode::Include);
         RETURN_IF_EXCEPTION(scope, { });
 
@@ -326,7 +326,7 @@ JSC_DEFINE_HOST_FUNCTION(temporalCalendarPrototypeFuncMergeFields, (JSGlobalObje
 
         auto* copied = constructEmptyObject(globalObject);
 
-        PropertyNameArray keys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+        PropertyNameArrayBuilder keys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
         object->methodTable()->getOwnPropertyNames(object, globalObject, keys, DontEnumPropertiesMode::Include);
         RETURN_IF_EXCEPTION(scope, { });
 
@@ -355,7 +355,7 @@ JSC_DEFINE_HOST_FUNCTION(temporalCalendarPrototypeFuncMergeFields, (JSGlobalObje
     JSValue newEra = jsUndefined();
     JSValue newEraYear = jsUndefined();
     {
-        PropertyNameArray keys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
+        PropertyNameArrayBuilder keys(vm, PropertyNameMode::Strings, PrivateSymbolMode::Exclude);
         additionalFieldsCopied->methodTable()->getOwnPropertyNames(additionalFieldsCopied, globalObject, keys, DontEnumPropertiesMode::Include);
         RETURN_IF_EXCEPTION(scope, { });
 

@@ -39,6 +39,7 @@
 namespace WebCore {
 
 class ContextMenu;
+class ContextMenuContext;
 
 class ContextMenuProvider : public RefCounted<ContextMenuProvider> {
 public:
@@ -49,6 +50,7 @@ public:
     virtual void contextMenuItemSelected(ContextMenuAction, const String& title) = 0;
     virtual void contextMenuCleared() = 0;
     virtual ContextMenuContext::Type contextMenuContextType() { return ContextMenuContext::Type::ContextMenu; };
+    virtual void prepareContext(ContextMenuContext&) { }
 };
 
 } // namespace WebCore

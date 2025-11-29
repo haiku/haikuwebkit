@@ -436,6 +436,7 @@ public:
     FunctionCodeIndex functionIndex() const { return m_functionIndex; }
     void setEntrypoint(CodePtr<WasmEntryPtrTag>);
     const uint8_t* bytecode() const { return m_bytecode; }
+    const uint8_t* bytecodeEnd() const { return m_bytecodeEnd; }
     const uint8_t* metadata() const { return m_metadata.span().data(); }
 
     unsigned numLocals() const { return m_numLocals; }
@@ -444,8 +445,6 @@ public:
 
     const Vector<FunctionSpaceIndex>& callTargets() const { return m_callTargets; }
     unsigned numCallProfiles() const { return m_callTargets.size(); }
-
-    bool needsProfiling() const;
 
     IPIntTierUpCounter& tierUpCounter() { return m_tierUpCounter; }
     const IPIntTierUpCounter& tierUpCounter() const { return m_tierUpCounter; }

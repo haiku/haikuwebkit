@@ -34,7 +34,6 @@
 
 #include "ActiveDOMObject.h"
 #include "EventTarget.h"
-#include "HTMLMediaElement.h"
 #include "MediaPlayer.h"
 #include "MediaPromiseTypes.h"
 #include "MediaSourceInit.h"
@@ -53,6 +52,7 @@ class AudioTrack;
 class AudioTrackPrivate;
 class ContentType;
 class InbandTextTrackPrivate;
+class HTMLMediaElement;
 class MediaSourceClientImpl;
 class MediaSourceHandle;
 class SourceBuffer;

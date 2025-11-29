@@ -31,6 +31,7 @@
 #include "ProvisionalFrameCreationParameters.h"
 #include "SandboxExtension.h"
 #include "SessionState.h"
+#include "TextManipulationParameters.h"
 #include "UserContentControllerParameters.h"
 #include "ViewWindowCoordinates.h"
 #include "VisitedLinkTableIdentifier.h"
@@ -369,8 +370,10 @@ struct WebPageCreationParameters {
     bool shouldSendConsoleLogsToUIProcessForTesting { false };
 
 #if ENABLE(IMAGE_ANALYSIS)
-    std::optional<WebCore::ImageTranslationLanguageIdentifiers> imageTranslationLanguageIdentifiers;
+    std::optional<WebCore::ImageTranslationLanguageIdentifiers> imageTranslationLanguageIdentifiers { std::nullopt };
 #endif
+
+    std::optional<TextManipulationParameters> textManipulationParameters { std::nullopt };
 };
 
 } // namespace WebKit

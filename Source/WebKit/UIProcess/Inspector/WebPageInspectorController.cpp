@@ -60,8 +60,8 @@ WebPageInspectorController::WebPageInspectorController(WebPageProxy& inspectedPa
     , m_backendDispatcher(BackendDispatcher::create(m_frontendRouter.copyRef()))
     , m_inspectedPage(inspectedPage)
 {
-    auto targetAgent = makeUnique<InspectorTargetAgent>(m_frontendRouter, m_backendDispatcher);
-    m_targetAgent = targetAgent.get();
+    auto targetAgent = makeUniqueRef<InspectorTargetAgent>(m_frontendRouter, m_backendDispatcher);
+    m_targetAgent = targetAgent.ptr();
     m_agents.append(WTFMove(targetAgent));
 }
 
@@ -261,7 +261,7 @@ void WebPageInspectorController::createLazyAgents()
 
     auto webPageContext = webPageAgentContext();
 
-    m_agents.append(makeUnique<InspectorBrowserAgent>(webPageContext));
+    m_agents.append(makeUniqueRef<InspectorBrowserAgent>(webPageContext));
 }
 
 void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>&& target)

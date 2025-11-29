@@ -31,10 +31,10 @@
 #import "ImageBufferShareableMappedIOSurfaceBackend.h"
 #import "Logging.h"
 #import "PlatformCALayerRemote.h"
+#import "PrepareBackingStoreBuffersData.h"
 #import "RemoteImageBufferSetProxy.h"
 #import "RemoteLayerBackingStoreCollection.h"
 #import "RemoteLayerTreeContext.h"
-#import "SwapBuffersDisplayRequirement.h"
 #import <WebCore/GraphicsContext.h>
 #import <WebCore/IOSurfacePool.h>
 #import <WebCore/PixelFormat.h>

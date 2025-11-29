@@ -243,16 +243,40 @@ void DDModelPlayer::enterFullscreen()
 {
 }
 
-void DDModelPlayer::handleMouseDown(const LayoutPoint&, MonotonicTime)
+void DDModelPlayer::handleMouseDown(const LayoutPoint& startingPoint, MonotonicTime)
 {
+    m_currentPoint = startingPoint;
+    m_yawAcceleration = 0.f;
+    m_pitchAcceleration = 0.f;
 }
 
-void DDModelPlayer::handleMouseMove(const LayoutPoint&, MonotonicTime)
+void DDModelPlayer::handleMouseMove(const LayoutPoint& currentPoint, MonotonicTime)
 {
+    if (!m_currentPoint)
+        return;
+
+    float deltaX = static_cast<float>(m_currentPoint->x() - currentPoint.x());
+    float deltaY = static_cast<float>(currentPoint.y() - m_currentPoint->y());
+    m_currentPoint = currentPoint;
+    if (RefPtr model = m_currentModel) {
+        if (m_yawAcceleration * deltaX < 0.f)
+            m_yawAcceleration = 0.f;
+        if (m_pitchAcceleration * deltaY < 0.f)
+            m_pitchAcceleration = 0.f;
+
+        m_yawAcceleration += 0.1f * deltaX;
+        m_pitchAcceleration += 0.1f * deltaY;
+    }
+}
+
+bool DDModelPlayer::supportsMouseInteraction()
+{
+    return true;
 }
 
 void DDModelPlayer::handleMouseUp(const LayoutPoint&, MonotonicTime)
 {
+    m_currentPoint = std::nullopt;
 }
 
 void DDModelPlayer::getCamera(CompletionHandler<void(std::optional<HTMLModelElementCamera>&&)>&&)
@@ -341,9 +365,33 @@ GraphicsLayerContentsDisplayDelegate* DDModelPlayer::contentsDisplayDelegate()
     return m_contentsDisplayDelegate.get();
 }
 
+void DDModelPlayer::simulate(float elapsedTime)
+{
+    RefPtr model = m_currentModel;
+    if (!model)
+        return;
+
+    m_yawAcceleration *= 0.95f;
+    m_pitchAcceleration *= 0.95f;
+
+    m_yawAcceleration = std::clamp(m_yawAcceleration, -5.f, 5.f);
+    m_pitchAcceleration = std::clamp(m_pitchAcceleration, -5.f, 5.f);
+    if (fabs(m_yawAcceleration) < 0.01f)
+        m_yawAcceleration = 0.f;
+    if (fabs(m_pitchAcceleration) < 0.01f)
+        m_pitchAcceleration = 0.f;
+
+    m_yaw += m_yawAcceleration * elapsedTime;
+    m_pitch += m_pitchAcceleration * elapsedTime;
+    model->setRotation(m_yaw, m_pitch);
+}
+
 void DDModelPlayer::update()
 {
-    [m_modelLoader update:1.0 / 60.0];
+    constexpr float elapsedTime = 1.f / 60.f;
+    simulate(elapsedTime);
+
+    [m_modelLoader update:elapsedTime];
     if (RefPtr currentModel = m_currentModel)
         currentModel->render();
 
@@ -365,6 +413,34 @@ bool DDModelPlayer::supportsTransform(TransformationMatrix transformationMatrix)
         return currentModel->supportsTransform(transformationMatrix);
 
     return false;
+}
+
+void DDModelPlayer::play(bool playing)
+{
+    if (RefPtr model = m_currentModel) {
+        model->play(playing);
+        m_pauseState = playing ? PauseState::Playing : PauseState::Paused;
+    }
+}
+
+void DDModelPlayer::setAutoplay(bool autoplay)
+{
+    if (m_pauseState == PauseState::Paused)
+        return;
+
+    play(autoplay);
+    m_pauseState = autoplay ? PauseState::Playing : PauseState::Paused;
+}
+
+void DDModelPlayer::setPaused(bool paused, CompletionHandler<void(bool succeeded)>&& completion)
+{
+    play(!paused);
+    completion(!!m_currentModel);
+}
+
+bool DDModelPlayer::paused() const
+{
+    return m_pauseState != PauseState::Playing;
 }
 
 std::optional<TransformationMatrix> DDModelPlayer::entityTransform() const
@@ -391,8 +467,10 @@ void DDModelPlayer::setStageMode(StageModeOperation stageMode)
 
 void DDModelPlayer::setEntityTransform(TransformationMatrix matrix)
 {
-    if (RefPtr model = m_currentModel)
+    if (RefPtr model = m_currentModel) {
         model->setEntityTransform(static_cast<simd_float4x4>(matrix));
+        notifyEntityTransformUpdated();
+    }
 }
 
 } // namespace WebCore

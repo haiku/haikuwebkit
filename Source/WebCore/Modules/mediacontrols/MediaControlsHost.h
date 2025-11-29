@@ -27,7 +27,6 @@
 
 #if ENABLE(VIDEO)
 
-#include "HTMLMediaElement.h"
 #include "JSValueInWrappedObject.h"
 #include "MediaSession.h"
 #include <wtf/Ref.h>
@@ -39,6 +38,7 @@ namespace WebCore {
 
 class AudioTrack;
 class AudioTrackList;
+class DOMPromise;
 class Element;
 class WeakPtrImplWithEventTargetData;
 class HTMLElement;
@@ -48,6 +48,8 @@ class TextTrack;
 class TextTrackList;
 class TextTrackRepresentation;
 class VoidCallback;
+
+enum class HTMLMediaElementSourceType : uint8_t;
 
 class MediaControlsHost final
     : public CanMakeWeakPtr<MediaControlsHost>
@@ -104,6 +106,7 @@ public:
     bool needsChromeMediaControlsPseudoElement() const;
     bool isMediaControlsMacInlineSizeSpecsEnabled() const;
 
+    void captionPreferencesChanged();
     enum class ForceUpdate : bool { No, Yes };
     void updateCaptionDisplaySizes(ForceUpdate = ForceUpdate::No);
     void updateTextTrackRepresentationImageIfNeeded();
@@ -125,9 +128,11 @@ public:
     static String base64StringForIconNameAndType(const String& iconName, const String& iconType);
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
     bool showMediaControlsContextMenu(HTMLElement&, String&& optionsJSONString, Ref<VoidCallback>&&);
+    void showCaptionDisplaySettingsPreview();
+    void hideCaptionDisplaySettingsPreview();
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
 
-    using SourceType = HTMLMediaElement::SourceType;
+    using SourceType = HTMLMediaElementSourceType;
     std::optional<SourceType> sourceType() const;
 
     void presentationModeChanged();
@@ -142,6 +147,8 @@ public:
 private:
     void savePreviouslySelectedTextTrackIfNecessary();
     void restorePreviouslySelectedTextTrackIfNecessary();
+
+    MediaControlTextTrackContainerElement* ensureTextTrackContainer();
 
 #if ENABLE(MEDIA_SESSION)
     RefPtr<MediaSession> mediaSession() const;

@@ -28,6 +28,7 @@
 
 #include "Filter.h"
 #include "GraphicsContext.h"
+#include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -69,7 +70,7 @@ void TransparencyLayerContextSwitcher::beginDrawSourceImage(GraphicsContext& des
 
 void TransparencyLayerContextSwitcher::endDrawSourceImage(GraphicsContext& destinationContext, const DestinationColorSpace&)
 {
-    for ([[maybe_unused]] auto& filterStyle : makeReversedRange(m_filterStyles)) {
+    for ([[maybe_unused]] auto& filterStyle : m_filterStyles) {
         destinationContext.endTransparencyLayer();
         destinationContext.restore();
     }

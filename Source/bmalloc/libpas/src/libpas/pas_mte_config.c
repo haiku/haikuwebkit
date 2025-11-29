@@ -98,6 +98,13 @@ static void pas_mte_do_initialization(void)
     if (!*enabled_byte)
         return;
 
+    uint64_t ldmState = 0;
+    size_t sysCtlLen = sizeof(ldmState);
+    if (sysctlbyname("security.mac.lockdown_mode_state", &ldmState, &sysCtlLen, NULL, 0) >= 0 && ldmState == 1)
+        *lockdown_mode_byte = 1;
+    else
+        *lockdown_mode_byte = 0;
+
     unsigned mode = 0;
     if (get_value_if_available(&mode, "JSC_allocationProfilingMode"))
         *mode_byte = (uint8_t)(mode & 0xFF);
@@ -127,16 +134,8 @@ static void pas_mte_do_initialization(void)
 
         bool wcp_is_hardened = false;
         bool isEnhancedSecurityWebContentProcess = !strncmp(name, "com.apple.WebKit.WebContent.EnhancedSecurity", 44);
-        if (isEnhancedSecurityWebContentProcess)
+        if (*lockdown_mode_byte || isEnhancedSecurityWebContentProcess)
             wcp_is_hardened = true;
-
-        uint64_t ldmState = 0;
-        size_t sysCtlLen = sizeof(ldmState);
-        if (sysctlbyname("security.mac.lockdown_mode_state", &ldmState, &sysCtlLen, NULL, 0) >= 0 && ldmState == 1) {
-            wcp_is_hardened = true;
-            *lockdown_mode_byte = 1;
-        } else
-            *lockdown_mode_byte = 0;
 
         if (wcp_is_hardened) {
             *medium_byte = 1;
@@ -169,8 +168,10 @@ static void pas_mte_do_initialization(void)
             *enabled_byte = 0;
             *medium_byte = 0;
         }
-    } else
-        *medium_byte = 1; // Tag libpas medium objects in privileged processes.
+    } else {
+        *medium_byte = 1; // Tag libpas medium objects in privileged processes
+        *hardened_byte = 1;
+    }
 }
 
 static bool pas_mte_is_enabled(void)

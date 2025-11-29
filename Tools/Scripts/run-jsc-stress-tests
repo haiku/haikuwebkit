@@ -624,25 +624,7 @@ if $cloop
 end
 
 $hostOS = determineOS unless $hostOS
-$architectureOfJSCBinary = determineArchitecture
-if not $architectureOfJSCBinary.nil? and not $architecture.nil? and $architectureOfJSCBinary != $architecture
-    $stderr.puts("Specified architecture (#{$architecture}) does not match that of the JSC binary (#{$architectureOfJSCBinary})")
-    exit(2)
-end
-if $architectureOfJSCBinary.nil?
-    if $architecture.nil?
-        $stderr.puts("Could not detect the architecture of the JSC binary and no --architecture given")
-        exit(2)
-    end
-else
-    # We have checked above that if $architecture is not nil, it matches architectureOfJSCBinary.
-    $architecture = $architectureOfJSCBinary
-end
-if $architecture.nil?
-    # Can only get here if there's a logic error above.
-    raise "Ended up with no $architecture"
-end
-
+$architecture = determineArchitecture unless $architecture
 $isFTLPlatform = !($architecture == "x86" || $architecture == "arm" || $architecture == "mips" || $architecture == "riscv64" || $hostOS == "playstation")
 # Special case armv7 and windows, we want to run the wasm tests temporarily without B3/Air support
 $isWasmPlatform = (not $cloop) && $jitTests && ($isFTLPlatform || $architecture == "arm" || ($hostOS == "windows" && $architecture == "x86_64"))

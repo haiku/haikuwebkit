@@ -44,113 +44,6 @@
 
 namespace WebKit {
 
-WebExtensionCallbackHandler::WebExtensionCallbackHandler(JSContextRef context, JSObjectRef callbackFunction, WebExtensionAPIRuntimeBase& runtime)
-    : m_callbackFunction(callbackFunction)
-    , m_globalContext(JSContextGetGlobalContext(context))
-    , m_runtime(&runtime)
-{
-    ASSERT(context);
-    ASSERT(callbackFunction);
-
-    JSValueProtect(m_globalContext.get(), m_callbackFunction);
-}
-
-WebExtensionCallbackHandler::WebExtensionCallbackHandler(JSContextRef context, WebExtensionAPIRuntimeBase& runtime)
-    : m_globalContext(JSContextGetGlobalContext(context))
-    , m_runtime(&runtime)
-{
-    ASSERT(context);
-}
-
-WebExtensionCallbackHandler::WebExtensionCallbackHandler(JSContextRef context, JSObjectRef resolveFunction, JSObjectRef rejectFunction)
-    : m_callbackFunction(resolveFunction)
-    , m_rejectFunction(rejectFunction)
-    , m_globalContext(JSContextGetGlobalContext(context))
-{
-    ASSERT(context);
-    ASSERT(resolveFunction);
-    ASSERT(rejectFunction);
-
-    JSValueProtect(m_globalContext.get(), m_callbackFunction);
-    JSValueProtect(m_globalContext.get(), m_rejectFunction);
-}
-
-WebExtensionCallbackHandler::~WebExtensionCallbackHandler()
-{
-    if (m_callbackFunction)
-        JSValueUnprotect(m_globalContext.get(), m_callbackFunction);
-
-    if (m_rejectFunction)
-        JSValueUnprotect(m_globalContext.get(), m_rejectFunction);
-}
-
-JSValue *WebExtensionCallbackHandler::callbackFunction() const
-{
-    if (!m_globalContext || !m_callbackFunction)
-        return nil;
-
-    return [JSValue valueWithJSValueRef:m_callbackFunction inContext:[JSContext contextWithJSGlobalContextRef:m_globalContext.get()]];
-}
-
-template<size_t ArgumentCount>
-id callWithArguments(JSObjectRef callbackFunction, JSRetainPtr<JSGlobalContextRef>& globalContext, std::array<JSValueRef, ArgumentCount>&& arguments)
-{
-    if (!globalContext || !callbackFunction)
-        return nil;
-    return toNSObject(globalContext.get(), JSObjectCallAsFunction(globalContext.get(), callbackFunction, nullptr, ArgumentCount, arguments.data(), nullptr));
-}
-
-void WebExtensionCallbackHandler::reportError(const String& message)
-{
-    if (!m_globalContext)
-        return;
-
-    if (RefPtr runtime = m_runtime) {
-        runtime->reportError(message, *this);
-        return;
-    }
-
-    if (!m_rejectFunction)
-        return;
-
-    RELEASE_LOG_ERROR(Extensions, "Promise rejected: %" PUBLIC_LOG_STRING, message.utf8().data());
-
-    JSValue *error = [JSValue valueWithNewErrorFromMessage:message.createNSString().get() inContext:[JSContext contextWithJSGlobalContextRef:m_globalContext.get()]];
-
-    callWithArguments<1>(m_rejectFunction, m_globalContext, {
-        toJSValueRef(m_globalContext.get(), error)
-    });
-}
-
-id WebExtensionCallbackHandler::call()
-{
-    return callWithArguments<0>(m_callbackFunction, m_globalContext, { });
-}
-
-id WebExtensionCallbackHandler::call(id argument)
-{
-    return callWithArguments<1>(m_callbackFunction, m_globalContext, {
-        toJSValueRef(m_globalContext.get(), argument)
-    });
-}
-
-id WebExtensionCallbackHandler::call(id argumentOne, id argumentTwo)
-{
-    return callWithArguments<2>(m_callbackFunction, m_globalContext, {
-        toJSValueRef(m_globalContext.get(), argumentOne),
-        toJSValueRef(m_globalContext.get(), argumentTwo)
-    });
-}
-
-id WebExtensionCallbackHandler::call(id argumentOne, id argumentTwo, id argumentThree)
-{
-    return callWithArguments<3>(m_callbackFunction, m_globalContext, {
-        toJSValueRef(m_globalContext.get(), argumentOne),
-        toJSValueRef(m_globalContext.get(), argumentTwo),
-        toJSValueRef(m_globalContext.get(), argumentThree)
-    });
-}
-
 id toNSObject(JSContextRef context, JSValueRef valueRef, Class containingObjectsOfClass, NullValuePolicy nullPolicy, ValuePolicy valuePolicy)
 {
     ASSERT(context);
@@ -189,32 +82,6 @@ id toNSObject(JSContextRef context, JSValueRef valueRef, Class containingObjects
         return value;
 
     return [value toObject];
-}
-
-String toString(JSContextRef context, JSValueRef value, NullStringPolicy nullStringPolicy)
-{
-    ASSERT(context);
-    ASSERT(value);
-
-    switch (nullStringPolicy) {
-    case NullStringPolicy::NullAndUndefinedAsNullString:
-        if (JSValueIsUndefined(context, value))
-            return nullString();
-        [[fallthrough]];
-
-    case NullStringPolicy::NullAsNullString:
-        if (JSValueIsNull(context, value))
-            return nullString();
-        [[fallthrough]];
-
-    case NullStringPolicy::NoNullString:
-        // Don't try to convert other objects into strings.
-        if (!JSValueIsString(context, value))
-            return nullString();
-
-        JSRetainPtr string(Adopt, JSValueToStringCopy(context, value, 0));
-        return toString(string.get());
-    }
 }
 
 NSDictionary *toNSDictionary(JSContextRef context, JSValueRef valueRef, NullValuePolicy nullPolicy, ValuePolicy valuePolicy)
@@ -269,100 +136,11 @@ NSDictionary *toNSDictionary(JSContextRef context, JSValueRef valueRef, NullValu
     return [result copy];
 }
 
-JSValueRef toJSValueRef(JSContextRef context, const String& string, NullOrEmptyString nullOrEmptyString)
-{
-    ASSERT(context);
-
-    switch (nullOrEmptyString) {
-    case NullOrEmptyString::NullStringAsNull:
-        if (string.isEmpty())
-            return JSValueMakeNull(context);
-        [[fallthrough]];
-
-    case NullOrEmptyString::NullStringAsEmptyString:
-        if (JSRetainPtr stringRef = toJSString(string)) {
-            // This is a safer cpp false positive (rdar://163760990).
-            SUPPRESS_UNCOUNTED_ARG return JSValueMakeString(context, stringRef.get());
-        }
-        return JSValueMakeNull(context);
-    }
-}
-
 JSValueRef toJSValueRef(JSContextRef context, NSURL *url, NullOrEmptyString nullOrEmptyString)
 {
     ASSERT(context);
 
     return toJSValueRef(context, url.absoluteURL.absoluteString, nullOrEmptyString);
-}
-
-RefPtr<WebExtensionCallbackHandler> toJSCallbackHandler(JSContextRef context, JSValueRef callbackValue, WebExtensionAPIRuntimeBase& runtime)
-{
-    ASSERT(context);
-
-    if (!callbackValue)
-        return nullptr;
-
-    JSObjectRef callbackFunction = JSValueToObject(context, callbackValue, nullptr);
-    if (!callbackFunction)
-        return nullptr;
-
-    if (!JSObjectIsFunction(context, callbackFunction))
-        return nullptr;
-
-    return WebExtensionCallbackHandler::create(context, callbackFunction, runtime);
-}
-
-String toString(JSStringRef string)
-{
-    if (!string)
-        return nullString();
-
-    Vector<char> buffer(JSStringGetMaximumUTF8CStringSize(string));
-    JSStringGetUTF8CString(string, buffer.mutableSpan().data(), buffer.size());
-    return String::fromUTF8(buffer.span().data());
-}
-
-JSValueRef deserializeJSONString(JSContextRef context, const String& jsonString)
-{
-    ASSERT(context);
-
-    if (jsonString.isEmpty())
-        return JSValueMakeNull(context);
-
-    if (JSRetainPtr string = toJSString(jsonString)) {
-        // This is a safer cpp false positive (rdar://163760990).
-        SUPPRESS_UNCOUNTED_ARG if (JSValueRef value = JSValueMakeFromJSONString(context, string.get()))
-            return value;
-    }
-
-    return JSValueMakeNull(context);
-}
-
-String serializeJSObject(JSContextRef context, JSValueRef value, JSValueRef* exception)
-{
-    ASSERT(context);
-
-    if (!value)
-        return nullString();
-
-    JSRetainPtr string(Adopt, JSValueCreateJSONString(context, value, 0, exception));
-
-    return toString(string.get());
-}
-
-JSObjectRef toJSError(JSContextRef context, const String& string)
-{
-    ASSERT(context);
-
-    RELEASE_LOG_ERROR(Extensions, "Exception thrown: %" PUBLIC_LOG_STRING, string.utf8().data());
-
-    JSValueRef messageArgument = toJSValueRef(context, string, NullOrEmptyString::NullStringAsEmptyString);
-    return JSObjectMakeError(context, 1, &messageArgument, nullptr);
-}
-
-JSRetainPtr<JSStringRef> toJSString(const String& string)
-{
-    return JSRetainPtr(Adopt, JSStringCreateWithUTF8CString(!string.isEmpty() ? string.utf8().data() : ""));
 }
 
 JSValueRef toJSValueRefOrJSNull(JSContextRef context, id object)
@@ -391,24 +169,6 @@ JSValue *toJSValue(JSContextRef context, JSValueRef value)
         return nil;
 
     return [JSValue valueWithJSValueRef:value inContext:toJSContext(context)];
-}
-
-JSValue *toWindowObject(JSContextRef context, WebFrame& frame)
-{
-    ASSERT(context);
-
-    auto frameContext = frame.jsContext();
-    if (!frameContext)
-        return nil;
-
-    return toJSValue(context, JSContextGetGlobalObject(frameContext));
-}
-
-JSValue *toWindowObject(JSContextRef context, WebPage& page)
-{
-    ASSERT(context);
-
-    return toWindowObject(context, page.mainWebFrame());
 }
 
 JSValueRef toJSValueRef(JSContextRef context, id object)

@@ -197,6 +197,7 @@ class ConfigureBuild(buildstep.BuildStep, AddToLogMixin):
         self.setProperty("fullPlatform", self.fullPlatform)
         self.setProperty("configuration", self.configuration)
         self.setProperty("architecture", self.architecture)
+        self.setProperty("archForUpload", '-'.join(self.architecture.split(' ')))
         self.setProperty("buildOnly", self.buildOnly)
         self.setProperty("additionalArguments", self.additionalArguments)
         self.setProperty("device_model", self.device_model)
@@ -439,7 +440,7 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin, AddToLogMixin):
         if self.getProperty('platform') in self.APPLE_PLATFORMS and CURRENT_HOSTNAME in BUILD_WEBKIT_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES:
             return [
                 GenerateS3URL(
-                    f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                    f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
                     content_type='text/plain',
                     additions=f'{self.build.number}'
@@ -457,7 +458,7 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin, AddToLogMixin):
 
         triggers = self.getProperty('triggers', None)
         full_platform = self.getProperty('fullPlatform')
-        architecture = self.getProperty('architecture')
+        arch_for_upload = self.getProperty('archForUpload')
         configuration = self.getProperty('configuration')
 
         if triggers:
@@ -465,7 +466,7 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin, AddToLogMixin):
             steps_to_add += [ArchiveBuiltProduct()]
             if CURRENT_HOSTNAME in BUILD_WEBKIT_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES:
                 steps_to_add.extend([
-                    GenerateS3URL(f"{full_platform}-{architecture}-{configuration}"),
+                    GenerateS3URL(f"{full_platform}-{arch_for_upload}-{configuration}"),
                     UploadFileToS3(f"WebKitBuild/{configuration}.zip", links={self.name: 'Archive'}),
                 ])
             else:
@@ -477,7 +478,7 @@ class CompileWebKit(shell.Compile, CustomFlagsMixin, ShellMixin, AddToLogMixin):
                 steps_to_add += [ArchiveMinifiedBuiltProduct()]
                 if CURRENT_HOSTNAME in BUILD_WEBKIT_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES:
                     steps_to_add.extend([
-                        GenerateS3URL(f"{full_platform}-{architecture}-{configuration}", minified=True),
+                        GenerateS3URL(f"{full_platform}-{arch_for_upload}-{configuration}", minified=True),
                         UploadFileToS3(f"WebKitBuild/minified-{configuration}.zip", links={self.name: 'Minified Archive'}),
                     ])
                 else:
@@ -624,7 +625,7 @@ class TestMiniBrowserBundle(shell.ShellCommand, ShellMixin):
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 content_type='text/plain',
                 additions=f'{self.build.number}',
@@ -654,7 +655,7 @@ class ExtractBuiltProduct(shell.ShellCommand):
 class UploadBuiltProduct(transfer.FileUpload):
     name = 'upload-built-product'
     workersrc = WithProperties("WebKitBuild/%(configuration)s.zip")
-    masterdest = WithProperties("archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(archive_revision)s.zip")
+    masterdest = WithProperties("archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(archive_revision)s.zip")
     haltOnFailure = True
 
     def __init__(self, **kwargs):
@@ -668,14 +669,14 @@ class UploadBuiltProduct(transfer.FileUpload):
 class UploadMinifiedBuiltProduct(UploadBuiltProduct):
     name = 'upload-minified-built-product'
     workersrc = WithProperties("WebKitBuild/minified-%(configuration)s.zip")
-    masterdest = WithProperties("archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/minified-%(archive_revision)s.zip")
+    masterdest = WithProperties("archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/minified-%(archive_revision)s.zip")
 
 
 class DownloadBuiltProduct(shell.ShellCommand):
     command = [
         "python3", "Tools/CISupport/download-built-product",
         WithProperties("--platform=%(platform)s"), WithProperties("--%(configuration)s"),
-        WithProperties(S3URL + S3_BUCKET + "/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(archive_revision)s.zip"),
+        WithProperties(S3URL + S3_BUCKET + "/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(archive_revision)s.zip"),
     ]
     name = "download-built-product"
     description = ["downloading built product"]
@@ -697,7 +698,7 @@ class DownloadBuiltProduct(shell.ShellCommand):
 
 
 class DownloadBuiltProductFromMaster(transfer.FileDownload):
-    mastersrc = WithProperties('archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(archive_revision)s.zip')
+    mastersrc = WithProperties('archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(archive_revision)s.zip')
     workerdest = WithProperties('WebKitBuild/%(configuration)s.zip')
     name = 'download-built-product-from-master'
     description = ['downloading built product from buildbot master']
@@ -779,7 +780,7 @@ class RunJavaScriptCoreTests(TestWithFailureCount, CustomFlagsMixin, ShellMixin)
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 content_type='text/plain',
                 additions=f'{self.build.number}',
@@ -840,7 +841,7 @@ class RunTest262Tests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 content_type='text/plain',
                 additions=f'{self.build.number}',
@@ -957,7 +958,7 @@ class RunWebKitTests(shell.Test, CustomFlagsMixin, ShellMixin):
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 additions=f"{self.build.number}{'-wk1' if self.getProperty('use-dump-render-tree', False) else ''}",
                 extension='txt',
                 content_type='text/plain',
@@ -1038,7 +1039,7 @@ class RunWorldLeaksTests(RunWebKitTests):
 
 class RunAPITests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
     name = "run-api-tests"
-    VALID_ADDITIONAL_ARGUMENTS_LIST = ["--remote-layer-tree", "--use-gpu-process", "--child-processes"]
+    VALID_ADDITIONAL_ARGUMENTS_LIST = ["--remote-layer-tree", "--use-gpu-process", "--child-processes", "--site-isolation",]
     description = ["api tests running"]
     descriptionDone = ["api-tests"]
     jsonFileName = "api_test_results.json"
@@ -1096,7 +1097,7 @@ class RunAPITests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
 
         self.build.addStepsAfterCurrentStep([
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 additions=f'{self.build.number}',
                 content_type='text/plain',
@@ -1445,7 +1446,7 @@ class RunWebDriverTests(shell.Test, CustomFlagsMixin, ShellMixin):
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 additions=f'{self.build.number}',
                 extension='txt',
                 content_type='text/plain',
@@ -1772,7 +1773,7 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
 
         steps_to_add = [
             GenerateS3URL(
-                f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
+                f"{self.getProperty('fullPlatform')}-{self.getProperty('archForUpload')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
                 content_type='text/plain',
                 additions=f'{self.build.number}'
@@ -2023,9 +2024,9 @@ class TransferToS3(master.MasterShellCommand):
     name = "transfer-to-s3"
     description = ["transferring to s3"]
     descriptionDone = ["transferred to s3"]
-    archive = WithProperties("archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/%(archive_revision)s.zip")
-    minifiedArchive = WithProperties("archives/%(fullPlatform)s-%(architecture)s-%(configuration)s/minified-%(archive_revision)s.zip")
-    identifier = WithProperties("%(fullPlatform)s-%(architecture)s-%(configuration)s")
+    archive = WithProperties("archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/%(archive_revision)s.zip")
+    minifiedArchive = WithProperties("archives/%(fullPlatform)s-%(archForUpload)s-%(configuration)s/minified-%(archive_revision)s.zip")
+    identifier = WithProperties("%(fullPlatform)s-%(archForUpload)s-%(configuration)s")
     revision = WithProperties("%(archive_revision)s")
     command = ["python3", "../Shared/transfer-archive-to-s3", "--revision", revision, "--identifier", identifier, "--archive", archive]
     haltOnFailure = True

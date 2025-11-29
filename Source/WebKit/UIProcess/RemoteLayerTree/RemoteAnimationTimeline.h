@@ -30,6 +30,7 @@
 #include <WebCore/ProcessQualified.h>
 #include <WebCore/TimelineIdentifier.h>
 #include <WebCore/WebAnimationTime.h>
+#include <wtf/JSONValues.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -45,6 +46,8 @@ public:
     const WebCore::WebAnimationTime& currentTime() const { return m_currentTime; }
     const std::optional<WebCore::WebAnimationTime>& duration() const { return m_duration; }
     const TimelineID& identifier() const { return m_identifier; }
+
+    Ref<JSON::Object> toJSONForTesting() const;
 
 protected:
     RemoteAnimationTimeline(TimelineID, std::optional<WebCore::WebAnimationTime> duration);

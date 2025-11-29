@@ -95,9 +95,6 @@ enum class NSType : uint8_t {
 #endif
 #if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
     DDScannerResult,
-#if PLATFORM(MAC)
-    WKDDActionContext,
-#endif
 #endif
     NSDateComponents,
     Data,

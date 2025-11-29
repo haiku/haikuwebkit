@@ -53,6 +53,7 @@
 #include "PageGroup.h"
 #include "RenderLayer.h"
 #include "RenderLayerInlines.h"
+#include "RenderMediaInlines.h"
 #include "RenderVideo.h"
 #include "RenderView.h"
 #include "Settings.h"
@@ -62,6 +63,7 @@
 #include "TextTrackCueGeneric.h"
 #include "TextTrackList.h"
 #include "UserAgentParts.h"
+#include "VTTCue.h"
 #include "VTTRegionList.h"
 #include <ranges>
 #include <wtf/Language.h>
@@ -86,6 +88,8 @@ MediaControlTextTrackContainerElement::MediaControlTextTrackContainerElement(Doc
     , m_mediaElement(element)
 {
 }
+
+MediaControlTextTrackContainerElement::~MediaControlTextTrackContainerElement() = default;
 
 RenderPtr<RenderElement> MediaControlTextTrackContainerElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition&)
 {
@@ -135,7 +139,7 @@ void MediaControlTextTrackContainerElement::updateDisplay()
     // 7. Let cues be an empty list of text track cues.
     // 8. For each track track in tracks, append to cues all the cues from
     // track's list of cues that have their text track cue active flag set.
-    CueList activeCues = video->currentlyActiveCues();
+    CueList activeCues = currentlyActiveCues();
 
     // 9. Let regions be an empty list of WebVTT regions.
 
@@ -271,7 +275,7 @@ void MediaControlTextTrackContainerElement::updateTextStrokeStyle()
     RefPtr mediaElement = m_mediaElement.get();
     if (!mediaElement)
         return;
-    
+
     String language;
 
     // FIXME: Since it is possible to have more than one text track enabled, the following code may not find the correct language.
@@ -372,6 +376,34 @@ void MediaControlTextTrackContainerElement::exitedFullscreen()
     updateSizes(ForceUpdate::Yes);
 }
 
+void MediaControlTextTrackContainerElement::showCaptionDisplaySettingsPreview()
+{
+    if (m_shouldShowCaptionPreviewCue)
+        return;
+
+    removeChildren();
+
+    // Normally, the HTMLMediaElement will call updateDisplayTree() with its
+    // currentMediaTime from updateActiveTextTrackCues(). But since the preview
+    // cue is not a real cue with a real TextTrack, it won't be updated by the
+    // HTMLMediaElement. Do so here.
+    ensurePreviewCue().updateDisplayTree(MediaTime::zeroTime());
+
+    m_shouldShowCaptionPreviewCue = true;
+    updateDisplay();
+}
+
+void MediaControlTextTrackContainerElement::hideCaptionDisplaySettingsPreview()
+{
+    if (!m_shouldShowCaptionPreviewCue)
+        return;
+    m_shouldShowCaptionPreviewCue = false;
+
+    removeChildren();
+
+    updateDisplay();
+}
+
 bool MediaControlTextTrackContainerElement::updateVideoDisplaySize()
 {
     if (!document().page())
@@ -398,6 +430,17 @@ bool MediaControlTextTrackContainerElement::updateVideoDisplaySize()
     return true;
 }
 
+void MediaControlTextTrackContainerElement::captionPreferencesChanged()
+{
+    if (RefPtr page = document().page()) {
+        if (RefPtr previewCue = m_previewCue) {
+            previewCue->setText(page->checkedGroup()->ensureProtectedCaptionPreferences()->captionPreviewTitle());
+            previewCue->updateDisplayTree(MediaTime::zeroTime());
+        }
+    }
+    updateSizes(ForceUpdate::Yes);
+}
+
 void MediaControlTextTrackContainerElement::updateSizes(ForceUpdate force)
 {
     if (!updateVideoDisplaySize() && force != ForceUpdate::Yes)
@@ -415,7 +458,7 @@ void MediaControlTextTrackContainerElement::updateSizes(ForceUpdate force)
 
     updateActiveCuesFontSize();
     updateTextStrokeStyle();
-    for (auto& activeCue : mediaElement->currentlyActiveCues())
+    for (auto& activeCue : currentlyActiveCues())
         activeCue.data()->recalculateStyles();
 
     document->checkedEventLoop()->queueTask(TaskSource::MediaElement, [weakThis = WeakPtr { *this }] () {
@@ -488,6 +531,42 @@ bool MediaControlTextTrackContainerElement::isShowing() const
     return (!propertySet || !propertySet->getPropertyCSSValue(CSSPropertyDisplay));
 }
 
+CueList MediaControlTextTrackContainerElement::currentlyActiveCues() const
+{
+    if (m_shouldShowCaptionPreviewCue) {
+        Ref previewCue = ensurePreviewCue();
+        CueInterval previewInterval { MediaTime::zeroTime(), MediaTime::positiveInfiniteTime(), previewCue.ptr() };
+        return { previewInterval };
+    }
+
+    if (RefPtr mediaElement = m_mediaElement.get())
+        return mediaElement->currentlyActiveCues();
+
+    return { };
+}
+
+VTTCue& MediaControlTextTrackContainerElement::ensurePreviewCue() const
+{
+    if (!m_previewTrack) {
+        m_previewTrack = TextTrack::create(nullptr, "Preview Track"_s, emptyAtom(), emptyAtom(), emptyAtom());
+        m_previewTrack->setMode(TextTrack::Mode::Showing);
+    }
+
+    if (!m_previewCue) {
+        m_previewCue = VTTCue::create(protectedDocument(), 0, 0, { });
+        m_previewCue->setSnapToLines(false);
+        m_previewCue->setLine(25.);
+        m_previewCue->setStartTime(MediaTime::zeroTime());
+        m_previewCue->setEndTime(MediaTime::positiveInfiniteTime());
+        m_previewCue->setIsActive(true);
+
+        if (RefPtr page = document().page())
+            m_previewCue->setText(page->checkedGroup()->ensureProtectedCaptionPreferences()->captionPreviewTitle());
+
+        m_previewTrack->addCue(*m_previewCue);
+    }
+    return *m_previewCue;
+}
 
 #if !RELEASE_LOG_DISABLED
 const Logger& MediaControlTextTrackContainerElement::logger() const

@@ -117,7 +117,7 @@ void CommandBuffer::makeInvalidDueToCommit(NSString* lastError)
     m_cachedCommandBuffer = m_commandBuffer;
     [m_commandBuffer addCompletedHandler:[protectedThis = Ref { *this }](id<MTLCommandBuffer>) {
         protectedThis->m_commandBufferComplete.signal();
-        protectedThis->m_device->protectedQueue()->scheduleWork([protectedThis = WTFMove(protectedThis)]() mutable {
+        protectedThis->m_device->protectedQueue()->scheduleWork([protectedThis]() mutable {
             protectedThis->m_cachedCommandBuffer = nil;
             protectedThis->m_commandEncoder = nullptr;
         });

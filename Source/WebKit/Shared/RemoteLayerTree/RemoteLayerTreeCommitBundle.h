@@ -64,6 +64,7 @@ struct RemoteLayerTreeCommitBundle {
     Vector<RootFrameData> transactions;
     PageData pageData;
     std::optional<MainFrameData> mainFrameData;
+    MonotonicTime startTime;
 };
 
 } // namespace WebKit

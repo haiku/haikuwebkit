@@ -35,8 +35,8 @@ DECLARE_SYSTEM_HEADER
 
 #endif
 
-extern "C" {
+WTF_EXTERN_C_BEGIN
 
 CF_EXPORT const char *_CFProcessPath(void);
 
-}
+WTF_EXTERN_C_END

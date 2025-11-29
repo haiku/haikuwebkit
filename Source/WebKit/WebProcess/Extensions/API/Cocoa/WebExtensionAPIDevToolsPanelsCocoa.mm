@@ -61,10 +61,7 @@ void WebExtensionAPIDevToolsPanels::createPanel(WebPageProxyIdentifier webPagePr
         Ref extensionPanel = WebExtensionAPIDevToolsExtensionPanel::create(*this);
         m_extensionPanels.set(result.value(), extensionPanel);
 
-        auto globalContext = callback->globalContext();
-        auto *panelValue = toJSValue(globalContext, toJS(globalContext, extensionPanel.ptr()));
-
-        callback->call(panelValue);
+        callback->call(toJS(callback->globalContext(), extensionPanel.ptr()));
     }, extensionContext().identifier());
 }
 

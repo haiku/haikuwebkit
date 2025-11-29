@@ -647,7 +647,7 @@ TEST(CTAPResponseTest, TestSerializeGetInfoResponse)
     options.setUserVerificationAvailability(AuthenticatorSupportedOptions::UserVerificationAvailability::kSupportedAndConfigured);
     response.setOptions(WTFMove(options));
     response.setMaxMsgSize(1200);
-    response.setPinProtocols({ 1 });
+    response.setPinProtocols({ PINUVAuthProtocol::kPinProtocol1 });
 
     auto responseAsCBOR = encodeAsCBOR(response);
     EXPECT_EQ(responseAsCBOR.size(), sizeof(TestData::kTestGetInfoResponsePlatformDevice) - 1);

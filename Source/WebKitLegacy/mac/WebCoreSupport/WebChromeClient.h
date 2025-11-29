@@ -151,7 +151,7 @@ private:
     RefPtr<WebCore::DateTimeChooser> createDateTimeChooser(WebCore::DateTimeChooserClient&) final;
 
     void setTextIndicator(const WebCore::TextIndicatorData&) const final;
-    void updateTextIndicator(const WebCore::TextIndicatorData&) const final;
+    void updateTextIndicator(RefPtr<WebCore::TextIndicator>&&) const final;
 
 #if ENABLE(POINTER_LOCK)
     void requestPointerLock(CompletionHandler<void(WebCore::PointerLockRequestResult)>&&) final;

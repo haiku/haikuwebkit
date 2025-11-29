@@ -61,7 +61,6 @@
 #include "WebAnimation.h"
 #include "WebAnimationUtilities.h"
 #include <ranges>
-#include <wtf/IndexedRange.h>
 
 namespace WebCore {
 
@@ -408,7 +407,7 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
     // cause the existing animation for ‘a’ to become the second animation in the list and a new animation will be created for the
     // first item in the list.
     if (!currentAnimationList.isInitial()) {
-        for (auto& currentAnimation : std::ranges::reverse_view(currentAnimationList.usedValues())) {
+        for (auto& currentAnimation : currentAnimationList.usedValues() | std::views::reverse) {
             auto keyframesName = currentAnimation.name().tryKeyframesName();
             if (!keyframesName || keyframesName->name.isEmpty())
                 continue;
@@ -465,7 +464,7 @@ static KeyframeEffect* keyframeEffectForElementAndProperty(const Styleable& styl
 {
     if (auto* keyframeEffectStack = styleable.keyframeEffectStack()) {
         auto effects = keyframeEffectStack->sortedEffects();
-        for (const auto& effect : makeReversedRange(effects)) {
+        for (const auto& effect : effects | std::views::reverse) {
             if (effect->animatesProperty(property))
                 return effect.get();
         }

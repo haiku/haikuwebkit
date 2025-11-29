@@ -169,6 +169,11 @@ void SimulatedXRDevice::frameTimerFired()
             data.inputSources.append(input->getFrameData());
     }
 
+#if ENABLE(WEBXR_HIT_TEST)
+    for (auto source : m_hitTestSources)
+        data.hitTestResults.add(source, Vector<PlatformXR::FrameData::HitTestResult> { });
+#endif
+
     if (m_FrameCallback)
         m_FrameCallback(WTFMove(data));
 }
@@ -196,6 +201,22 @@ void SimulatedXRDevice::deleteLayer(PlatformXR::LayerHandle handle)
         m_layers.remove(it);
     }
 }
+
+#if ENABLE(WEBXR_HIT_TEST)
+void SimulatedXRDevice::requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler)
+{
+    auto addResult = m_hitTestSources.add(m_nextHitTestSource);
+    ASSERT_UNUSED(addResult.isNewEntry, addResult);
+    completionHandler(m_nextHitTestSource);
+    m_nextHitTestSource++;
+}
+
+void SimulatedXRDevice::deleteHitTestSource(PlatformXR::HitTestSource source)
+{
+    bool removed = m_hitTestSources.remove(source);
+    ASSERT_UNUSED(removed, removed);
+}
+#endif
 
 Vector<PlatformXR::Device::ViewData> SimulatedXRDevice::views(PlatformXR::SessionMode mode) const
 {

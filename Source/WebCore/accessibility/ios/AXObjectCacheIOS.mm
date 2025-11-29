@@ -133,6 +133,28 @@ void AXObjectCache::postPlatformAnnouncementNotification(const String& message)
     }
 }
 
+void AXObjectCache::postPlatformARIANotifyNotification(const String& announcement, NotifyPriority priority, InterruptBehavior interruptBehavior, const String& language)
+{
+    AriaNotifyData notificationData { announcement, priority, interruptBehavior, language };
+
+    if (RefPtr page = document() ? document()->page() : nullptr)
+        page->chrome().relayAriaNotifyNotification(WTFMove(notificationData));
+
+    // For tests, also call the wrapper's accessibilityPostedNotification.
+    if (gShouldRepostNotificationsForTests) [[unlikely]] {
+        if (RefPtr root = getOrCreate(m_document->view())) {
+            RetainPtr notificationName = notificationPlatformName(AXNotification::AnnouncementRequested).createNSString();
+            RetainPtr message = announcement.createNSString();
+            RetainPtr announcementString = adoptNS([[NSAttributedString alloc] initWithString:message.get() attributes:@{
+                @"UIAccessibilityARIAPriority": notifyPriorityToAXValueString(priority).get(),
+                @"UIAccessibilityARIAInterruptBehavior": interruptBehaviorToAXValueString(interruptBehavior).get(),
+                @"UIAccessibilitySpeechAttributeLanguage": language.createNSString().get()
+            }]);
+            [root->wrapper() accessibilityPostedNotification:notificationName.get() userInfo:@{ notificationName.get() : announcementString.get() }];
+        }
+    }
+}
+
 void AXObjectCache::postTextSelectionChangePlatformNotification(AccessibilityObject* object, const AXTextStateChangeIntent&, const VisibleSelection&)
 {
     if (object)
@@ -157,13 +179,18 @@ void AXObjectCache::postTextReplacementPlatformNotificationForTextControl(Access
         postPlatformNotification(*object, AXNotification::ValueChanged);
 }
 
-void AXObjectCache::frameLoadingEventPlatformNotification(AccessibilityObject* axFrameObject, AXLoadingEvent loadingEvent)
+void AXObjectCache::frameLoadingEventPlatformNotification(RenderView* renderView, AXLoadingEvent loadingEvent)
 {
-    if (!axFrameObject)
+    if (!renderView || loadingEvent != AXLoadingEvent::Finished) {
+        // It's not always safe to call getOrCreate (e.g. if layout is dirty), so
+        // only do so if necessary based on the loading event type.
         return;
+    }
 
-    if (loadingEvent == AXLoadingEvent::Finished && axFrameObject->document() == axFrameObject->topDocument())
-        postPlatformNotification(*axFrameObject, AXNotification::LoadComplete);
+    if (renderView->document().isTopDocument()) {
+        if (RefPtr axWebArea = getOrCreate(*renderView))
+            postPlatformNotification(*axWebArea, AXNotification::LoadComplete);
+    }
 }
 
 void AXObjectCache::platformHandleFocusedUIElementChanged(Element*, Element* newElement)

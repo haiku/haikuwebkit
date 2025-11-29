@@ -11,26 +11,26 @@
 
 'use strict';
 
-target_test({ x: "100px", y: "100px", width: "100px", height: "100px" }, (target, test) => {
+target_test({ x: "100px", y: "100px", width: "100px", height: "100px" }, async (target, test) => {
     const eventTracker = new EventTracker(target, ["pointermove", "gotpointercapture", "lostpointercapture"]);
 
     // Start with the mouse outside of the target.
-    eventSender.mouseMoveTo(50, 50);
+    await eventSender.asyncMouseMoveTo(50, 50);
 
     // Move it over the target, this yields a "pointermove" event.
-    eventSender.mouseMoveTo(150, 150);
+    await eventSender.asyncMouseMoveTo(150, 150);
     eventTracker.assertMatchesEvents([
         { type: "pointermove", x: 150, y: 150 }
     ]);
     eventTracker.clear();
 
     // Press the mouse and move it outside the target and release it, this does not yield a "pointermove" event since there is no capture.
-    eventSender.mouseDown();
-    eventSender.mouseMoveTo(250, 250);
-    eventSender.mouseUp();
+    await eventSender.asyncMouseDown();
+    await eventSender.asyncMouseMoveTo(250, 250);
+    await eventSender.asyncMouseUp();
 
     // Now, move the mouse over the target again.
-    eventSender.mouseMoveTo(150, 150);
+    await eventSender.asyncMouseMoveTo(150, 150);
     eventTracker.assertMatchesEvents([
         { type: "pointermove", x: 150, y: 150 }
     ]);
@@ -44,10 +44,10 @@ target_test({ x: "100px", y: "100px", width: "100px", height: "100px" }, (target
         target.setPointerCapture(pointerId);
         assert_true(target.hasPointerCapture(pointerId), "The target has pointer capture after calling setPointerCapture().");
     });
-    eventSender.mouseDown();
+    await eventSender.asyncMouseDown();
 
     // Move the mouse oustide the target again. This will yield a "gotpointercapture" event and a "pointermove" event since the target now has pointer capture.
-    eventSender.mouseMoveTo(250, 250);
+    await eventSender.asyncMouseMoveTo(250, 250);
     eventTracker.assertMatchesEvents([
         { type: "gotpointercapture" },
         { type: "pointermove", x: 250, y: 250 }
@@ -57,7 +57,7 @@ target_test({ x: "100px", y: "100px", width: "100px", height: "100px" }, (target
     // Finally, release capture and mouse the mouse again, this should not yield a "pointermove" event.
     target.releasePointerCapture(pointerId);
     assert_false(target.hasPointerCapture(pointerId), "The target no longer has pointer capture after calling releasePointerCapture().");
-    eventSender.mouseMoveTo(240, 240);
+    await eventSender.asyncMouseMoveTo(240, 240);
     eventTracker.assertMatchesEvents([
         { type: "lostpointercapture" }
     ]);

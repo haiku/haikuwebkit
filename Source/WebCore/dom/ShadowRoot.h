@@ -146,10 +146,6 @@ public:
     const PartMappings& partMappings() const;
     void invalidatePartMappings();
 
-#if ENABLE(PICTURE_IN_PICTURE_API)
-    Element* pictureInPictureElement() const;
-#endif
-
     Vector<RefPtr<WebAnimation>> getAnimations();
 
     bool hasReferenceTarget() const { return !m_referenceTarget.isNull(); }

@@ -187,15 +187,14 @@ void SVGFEImageElement::notifyFinished(CachedResource&, const NetworkLoadMetrics
 
 std::tuple<RefPtr<ImageBuffer>, FloatRect> SVGFEImageElement::imageBufferForEffect(const GraphicsContext& destinationContext) const
 {
-    auto target = SVGURIReference::targetElementFromIRIString(href(), const_cast<SVGFEImageElement&>(*this).treeScopeForSVGReferences());
-    if (!is<SVGElement>(target.element))
+    auto targetElement = dynamicDowncast<SVGElement>(SVGURIReference::targetElementFromIRIString(href(), const_cast<SVGFEImageElement&>(*this).treeScopeForSVGReferences()).element);
+    if (!targetElement)
         return { };
 
-    if (isShadowIncludingDescendantOf(target.element.get()))
+    if (isShadowIncludingDescendantOf(targetElement.get()))
         return { };
 
-    RefPtr contextNode = static_pointer_cast<SVGElement>(target.element);
-    CheckedPtr renderer = contextNode->renderer();
+    CheckedPtr renderer = targetElement->renderer();
     if (!renderer)
         return { };
 

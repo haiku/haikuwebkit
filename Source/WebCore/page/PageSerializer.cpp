@@ -106,7 +106,7 @@ public:
 
 private:
     PageSerializer& m_serializer;
-    Document& m_document;
+    WeakRef<Document, WeakPtrImplWithEventTargetData> m_document;
 
     void appendText(StringBuilder&, const Text&) override;
     void appendStartTag(StringBuilder&, const Element&, Namespaces*) override;
@@ -120,8 +120,8 @@ PageSerializer::SerializerMarkupAccumulator::SerializerMarkupAccumulator(PageSer
     , m_document(document)
 {
     // MarkupAccumulator does not serialize the <?xml ... line, so we add it explicitly to ensure the right encoding is specified.
-    if (m_document.isXMLDocument() || m_document.xmlStandalone())
-        append("<?xml version=\""_s, m_document.xmlVersion(), "\" encoding=\""_s, m_document.charset(), "\"?>"_s);
+    if (m_document->isXMLDocument() || m_document->xmlStandalone())
+        append("<?xml version=\""_s, m_document->xmlVersion(), "\" encoding=\""_s, m_document->charset(), "\"?>"_s);
 }
 
 void PageSerializer::SerializerMarkupAccumulator::appendText(StringBuilder& out, const Text& text)
@@ -137,7 +137,7 @@ void PageSerializer::SerializerMarkupAccumulator::appendStartTag(StringBuilder& 
         MarkupAccumulator::appendStartTag(out, element, namespaces);
 
     if (element.hasTagName(HTMLNames::headTag))
-        out.append("<meta charset=\""_s, m_document.charset(), "\">"_s);
+        out.append("<meta charset=\""_s, m_document->charset(), "\">"_s);
 
     // FIXME: For object (plugins) tags and video tag we could replace them by an image of their current contents.
 }

@@ -4305,10 +4305,8 @@ private:
     };
 
     struct Imm {
-        template<typename T>
-        using EnableIfInteger = std::enable_if_t<(std::is_same_v<T, int32_t> || std::is_same_v<T, int64_t>)>;
-
-        template<typename ImmediateType, typename T, typename = EnableIfInteger<T>>
+        template<typename ImmediateType, typename T>
+            requires (std::same_as<T, int32_t> || std::same_as<T, int64_t>)
         static bool isValid(T value) { return ImmediateType::isValid(value); }
 
         using IType = RISCV64Assembler::IImmediate;
@@ -4489,14 +4487,14 @@ private:
     Jump branchForArithmeticOverflow(RegisterID op1, Op2Type op2, RegisterID dest)
     {
         static_assert(bitSize == 32 || bitSize == 64);
-        static_assert(std::is_same_v<Op2Type, RegisterID> || std::is_same_v<Op2Type, TrustedImm32>);
+        static_assert(std::same_as<Op2Type, RegisterID> || std::same_as<Op2Type, TrustedImm32>);
         auto temp = temps<Data, Memory>();
 
         if constexpr (bitSize == 32) {
             RELEASE_ASSERT(op1 == temp.data() || op1 != temp.memory());
             m_assembler.signExtend<32>(temp.data(), op1);
 
-            if constexpr (!std::is_same_v<Op2Type, TrustedImm32>) {
+            if constexpr (!std::same_as<Op2Type, TrustedImm32>) {
                 RELEASE_ASSERT(op2 == temp.memory() || op1 != temp.data());
                 m_assembler.signExtend<32>(temp.memory(), op2);
             } else
@@ -4533,7 +4531,7 @@ private:
         RELEASE_ASSERT(dest != temp.data() && dest != temp.memory());
 
         RegisterID rop2;
-        if constexpr (std::is_same_v<Op2Type, TrustedImm32>) {
+        if constexpr (std::same_as<Op2Type, TrustedImm32>) {
             loadImmediate(op2, temp.memory());
             rop2 = temp.memory();
         } else {

@@ -143,6 +143,7 @@ public:
     // for a dummy top-level block from parseBody() that cannot be jumped to.
     struct ControlData {
         static bool isIf(const ControlData&) { return false; }
+        static bool isElse(const ControlData&) { return false; }
         static bool isTry(const ControlData&) { return false; }
         static bool isAnyCatch(const ControlData&) { return false; }
         static bool isCatch(const ControlData&) { return false; }

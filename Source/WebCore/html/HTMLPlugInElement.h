@@ -153,7 +153,7 @@ private:
 
     RefPtr<JSC::Bindings::Instance> m_instance;
     Timer m_swapRendererTimer;
-    RefPtr<PluginReplacement> m_pluginReplacement;
+    const RefPtr<PluginReplacement> m_pluginReplacement;
     bool m_isCapturingMouseEvents { false };
     DisplayState m_displayState { DisplayState::Playing };
 

@@ -44,6 +44,7 @@ class ConstExprGenerator;
 
 enum class BlockType {
     If,
+    Else,
     Block,
     Loop,
     TopLevel,
@@ -205,7 +206,7 @@ private:
     PartialResult WARN_UNUSED_RETURN parseUnreachableExpression();
     PartialResult WARN_UNUSED_RETURN unifyControl(ArgumentList&, unsigned level);
     PartialResult WARN_UNUSED_RETURN checkLocalInitialized(uint32_t);
-    PartialResult WARN_UNUSED_RETURN unify(const ControlType&);
+    PartialResult WARN_UNUSED_RETURN checkExpressionStack(const ControlType&, bool forceSignature = false);
 
     enum BranchConditionalityTag {
         Unconditional,
@@ -1777,13 +1778,18 @@ auto FunctionParser<Context>::checkLocalInitialized(uint32_t index) -> PartialRe
 }
 
 template<typename Context>
-auto FunctionParser<Context>::unify(const ControlType& controlData) -> PartialResult
+auto FunctionParser<Context>::checkExpressionStack(const ControlType& controlData, bool forceSignature) -> PartialResult
 {
     auto blockSignature = controlData.signature();
     const FunctionSignature* signature = blockSignature.m_signature;
     WASM_VALIDATOR_FAIL_IF(signature->returnCount() != m_expressionStack.size(), " block with type: "_s, signature->toString(), " returns: "_s, signature->returnCount(), " but stack has: "_s, m_expressionStack.size(), " values"_s);
-    for (unsigned i = 0; i < signature->returnCount(); ++i)
-        WASM_VALIDATOR_FAIL_IF(!isSubtype(m_expressionStack[i].type(), signature->returnType(i)), "control flow returns with unexpected type. "_s, m_expressionStack[i].type(), " is not a "_s, signature->returnType(i));
+    for (unsigned i = 0; i < signature->returnCount(); ++i) {
+        const auto actualType = m_expressionStack[i].type();
+        const auto expectedType = signature->returnType(i);
+        WASM_VALIDATOR_FAIL_IF(!isSubtype(actualType, expectedType), "control flow returns with unexpected type. "_s, actualType, " is not a "_s, expectedType);
+        if (forceSignature)
+            m_expressionStack[i].setType(expectedType);
+    }
 
     return { };
 }
@@ -3303,7 +3309,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
         ControlEntry& controlEntry = m_controlStack.last();
 
         WASM_VALIDATOR_FAIL_IF(!ControlType::isIf(controlEntry.controlData), "else block isn't associated to an if");
-        WASM_FAIL_IF_HELPER_FAILS(unify(controlEntry.controlData));
+        WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(controlEntry.controlData));
         WASM_TRY_ADD_TO_CONTEXT(addElse(controlEntry.controlData, m_expressionStack));
         m_expressionStack = WTFMove(controlEntry.elseBlockStack);
         resetLocalInitStackToHeight(controlEntry.localInitStackHeight);
@@ -3343,7 +3349,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
 
         ControlEntry& controlEntry = m_controlStack.last();
         WASM_VALIDATOR_FAIL_IF(!isTryOrCatch(controlEntry.controlData), "catch block isn't associated to a try");
-        WASM_FAIL_IF_HELPER_FAILS(unify(controlEntry.controlData));
+        WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(controlEntry.controlData));
 
         ResultList results;
         Stack preCatchStack;
@@ -3369,7 +3375,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
         ControlEntry& controlEntry = m_controlStack.last();
 
         WASM_VALIDATOR_FAIL_IF(!isTryOrCatch(controlEntry.controlData), "catch block isn't associated to a try");
-        WASM_FAIL_IF_HELPER_FAILS(unify(controlEntry.controlData));
+        WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(controlEntry.controlData));
 
         ResultList results;
         Stack preCatchStack;
@@ -3481,7 +3487,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
         WASM_VALIDATOR_FAIL_IF(!ControlType::isTry(targetData) && !ControlType::isTopLevel(targetData), "delegate target isn't a try or the top level block");
 
         WASM_TRY_ADD_TO_CONTEXT(addDelegate(targetData, controlEntry.controlData));
-        WASM_FAIL_IF_HELPER_FAILS(unify(controlEntry.controlData));
+        WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(controlEntry.controlData));
         WASM_TRY_ADD_TO_CONTEXT(endBlock(controlEntry, m_expressionStack));
         m_expressionStack.swap(controlEntry.enclosedExpressionStack);
         resetLocalInitStackToHeight(controlEntry.localInitStackHeight);
@@ -3613,14 +3619,17 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
     case End: {
         ControlEntry data = m_controlStack.takeLast();
         if (ControlType::isIf(data.controlData)) {
-            WASM_FAIL_IF_HELPER_FAILS(unify(data.controlData));
+            WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(data.controlData));
             WASM_TRY_ADD_TO_CONTEXT(addElse(data.controlData, m_expressionStack));
             m_expressionStack = WTFMove(data.elseBlockStack);
         }
+        // When ending an 'if'/'else', including a synthetic 'else' added right above,
+        // the spec requires the output type of 'if' to be the type from the signature.
+        const bool shouldForceSignature = ControlType::isElse(data.controlData);
         // FIXME: This is a little weird in that it will modify the expressionStack for the result of the block.
         // That's a little too effectful for me but I don't have a better API right now.
         // see: https://bugs.webkit.org/show_bug.cgi?id=164353
-        WASM_FAIL_IF_HELPER_FAILS(unify(data.controlData));
+        WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(data.controlData, shouldForceSignature));
         WASM_TRY_ADD_TO_CONTEXT(endBlock(data, m_expressionStack));
         m_expressionStack.swap(data.enclosedExpressionStack);
         if (!ControlType::isTopLevel(data.controlData))
@@ -3800,7 +3809,7 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
             if (ControlType::isIf(data.controlData)) {
                 WASM_TRY_ADD_TO_CONTEXT(addElseToUnreachable(data.controlData));
                 m_expressionStack = WTFMove(data.elseBlockStack);
-                WASM_FAIL_IF_HELPER_FAILS(unify(data.controlData));
+                WASM_FAIL_IF_HELPER_FAILS(checkExpressionStack(data.controlData));
                 WASM_TRY_ADD_TO_CONTEXT(endBlock(data, m_expressionStack));
             } else {
                 Stack emptyStack;

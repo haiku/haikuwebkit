@@ -3,7 +3,7 @@ function shouldBe(a, b) {
     throw new Error(`Expected ${b} but got ${a}`);
 }
 
-{
+for (let i = 0; i < testLoopCount; i++) {
   const value1 = { value: 1 };
   const value2 = { value: 2 };
   const value3 = { value: 3 };
@@ -18,7 +18,7 @@ function shouldBe(a, b) {
   shouldBe(array[4], value5);
 }
 
-{
+for (let i = 0; i < testLoopCount; i++) {
   const value1 = { value: 1 };
   const value2 = { value: 2 };
   const value3 = { value: 3 };
@@ -33,7 +33,7 @@ function shouldBe(a, b) {
   shouldBe(array[4], value5);
 }
 
-{
+for (let i = 0; i < testLoopCount; i++) {
   const value1 = { value: 1 };
   const value2 = { value: 2 };
   const value3 = { value: 3 };

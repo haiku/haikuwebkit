@@ -48,7 +48,7 @@
     Conditional=WEBXR,
 ] dictionary FakeXRDeviceInit {
     // Deprecated - use `supportedModes` instead.
-    required boolean supportsImmersive;
+    boolean supportsImmersive;
     // Sequence of modes that should be supported by this device.
     sequence<XRSessionMode> supportedModes;
     required sequence<FakeXRViewInit> views;

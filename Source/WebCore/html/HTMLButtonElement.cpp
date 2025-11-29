@@ -76,7 +76,7 @@ RenderPtr<RenderElement> HTMLButtonElement::createElementRenderer(RenderStyle&& 
 {
     // https://html.spec.whatwg.org/multipage/rendering.html#button-layout
     DisplayType display = style.display();
-    if (display == DisplayType::InlineGrid || display == DisplayType::Grid || display == DisplayType::InlineFlex || display == DisplayType::Flex)
+    if (display == DisplayType::InlineGrid || display == DisplayType::Grid || display == DisplayType::InlineFlex || display == DisplayType::Flex || display == DisplayType::Masonry || display == DisplayType::InlineMasonry)
         return HTMLFormControlElement::createElementRenderer(WTFMove(style), position);
     return createRenderer<RenderButton>(*this, WTFMove(style));
 }

@@ -551,7 +551,7 @@ private:
         return true;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     Arg indexArg(Tmp base, Value* index, unsigned scale, Int offset)
     {
 #if CPU(ARM64)
@@ -565,7 +565,7 @@ private:
         return Arg::index(base, tmp(index), scale, offset);
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     std::optional<unsigned> scaleForShl(Air::Opcode opcode, Value* shl, Int offset, std::optional<Width> width = std::nullopt)
     {
         if (shl->opcode() != Shl)
@@ -589,7 +589,7 @@ private:
     }
 
     // This turns the given operand into an address.
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     Arg effectiveAddr(Type accessType, Value* address, Int offset, Width width)
     {
         // This function currently is currently only used for loads/stores, so

@@ -120,7 +120,7 @@ public:
     void exitToFullscreenModeWithoutAnimationIfPossible(HTMLMediaElementEnums::VideoFullscreenMode fromMode, HTMLMediaElementEnums::VideoFullscreenMode toMode);
 #endif
 
-    inline RenderVideo* renderer() const; // Defined in RenderVideo.h.
+    inline RenderVideo* renderer() const; // Defined in RenderVideoInlines.h.
     void acceleratedRenderingStateChanged();
     bool supportsAcceleratedRendering() const;
 

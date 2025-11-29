@@ -82,10 +82,7 @@ void ImageOverlayController::selectionQuadsDidChange(LocalFrame& frame, const Ve
         if (!ImageOverlay::isInsideOverlay(*selectedRange))
             return nullptr;
 
-        if (RefPtr host = selectedRange->startContainer().shadowHost(); is<HTMLElement>(host))
-            return static_pointer_cast<HTMLElement>(WTFMove(host));
-
-        return nullptr;
+        return dynamicDowncast<HTMLElement>(selectedRange->startContainer().shadowHost());
     })();
 
     if (!overlayHost) {

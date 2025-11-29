@@ -1,5 +1,3 @@
 
-Harness Error (TIMEOUT), message = null
-
-TIMEOUT A script with invalid JSON should fire error events on the element and window Test timed out
+PASS A script with invalid JSON should fire error events on the element and window
 

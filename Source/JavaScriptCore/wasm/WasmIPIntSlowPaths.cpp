@@ -68,6 +68,21 @@ namespace JSC { namespace IPInt {
 #define IPINT_CALLEE(callFrame) \
     (uncheckedDowncast<Wasm::IPIntCallee>(uncheckedDowncast<Wasm::Callee>(callFrame->callee().asNativeCallee())))
 
+// Sets a breakpoint at the callee entry when stepping into a call.
+// Should Call this before WASM_CALL_RETURN in prepare_call* functions.
+#define IPINT_HANDLE_STEP_INTO_CALL(vmValue, boxedCalleeValue, targetInstanceValue) do { \
+        if (Options::enableWasmDebugger()) [[unlikely]] \
+            Wasm::DebugServer::singleton().setStepIntoBreakpointForCall((vmValue), (boxedCalleeValue), (targetInstanceValue)); \
+    } while (false)
+
+// Sets a breakpoint at the exception handler when stepping into a throw.
+// Should Call this after genericUnwind() in throw/rethrow/throw_ref functions.
+#define IPINT_HANDLE_STEP_INTO_THROW(vm, instance) do { \
+        if (Options::enableWasmDebugger()) [[unlikely]] \
+            Wasm::DebugServer::singleton().setStepIntoBreakpointForThrow((vm), (instance)); \
+    } while (false)
+
+
 // For operation calls that may throw an exception, we return (<val>, 0)
 // if it is fine, and (<exception value>, SlowPathExceptionTag) if it is not
 
@@ -436,6 +451,8 @@ WASM_IPINT_EXTERN_CPP_DECL(throw_exception, CallFrame* callFrame, IPIntStackEntr
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
     ASSERT(!!vm.targetMachinePCForThrow);
+
+    IPINT_HANDLE_STEP_INTO_THROW(vm, instance);
     WASM_RETURN_TWO(vm.targetMachinePCForThrow, nullptr);
 }
 
@@ -460,6 +477,8 @@ WASM_IPINT_EXTERN_CPP_DECL(rethrow_exception, CallFrame* callFrame, IPIntStackEn
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
     ASSERT(!!vm.targetMachinePCForThrow);
+
+    IPINT_HANDLE_STEP_INTO_THROW(vm, instance);
     WASM_RETURN_TWO(vm.targetMachinePCForThrow, nullptr);
 }
 
@@ -478,6 +497,8 @@ WASM_IPINT_EXTERN_CPP_DECL(throw_ref, CallFrame* callFrame, EncodedJSValue exnre
     genericUnwind(vm, callFrame);
     ASSERT(!!vm.callFrameForCatch);
     ASSERT(!!vm.targetMachinePCForThrow);
+
+    IPINT_HANDLE_STEP_INTO_THROW(vm, instance);
     WASM_RETURN_TWO(vm.targetMachinePCForThrow, nullptr);
 }
 
@@ -909,6 +930,13 @@ WASM_IPINT_EXTERN_CPP_DECL(ref_cast, int32_t heapType, bool allowNull, EncodedJS
     IPINT_RETURN(value);
 }
 
+WASM_IPINT_EXTERN_CPP_DECL(prepare_function_body, CallFrame* callFrame)
+{
+    Wasm::IPIntCallee* callee = IPINT_CALLEE(callFrame);
+    instance->ensureBaselineData(callee->functionIndex()).incrementTotalCount();
+    WASM_RETURN_TWO(callee, nullptr);
+}
+
 /**
  * Given a function index, determine the pointer to its executable code.
  * Return a pair of the wasm instance pointer received as the first argument and the code pointer.
@@ -929,13 +957,15 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call, CallFrame* callFrame, CallMetadata* cal
     Register& calleeReturn = calleeAndWasmInstanceReturn[0];
     Register& wasmInstanceReturn = calleeAndWasmInstanceReturn[1];
     CodePtr<WasmEntryPtrTag> codePtr;
+    bool isJSCallee = false;
     if (functionIndex < importFunctionCount) {
         auto* functionInfo = instance->importFunctionInfo(functionIndex);
         codePtr = functionInfo->importFunctionStub;
         calleeReturn = functionInfo->boxedCallee.encodedBits();
-        if (functionInfo->isJS())
+        if (functionInfo->isJS()) {
+            isJSCallee = true;
             wasmInstanceReturn = reinterpret_cast<uintptr_t>(functionInfo);
-        else
+        } else
             wasmInstanceReturn = functionInfo->targetInstance.get();
     } else {
         // Target is a wasm function within the same instance
@@ -944,6 +974,9 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call, CallFrame* callFrame, CallMetadata* cal
         calleeReturn = CalleeBits::encodeNativeCallee(callee.get());
         wasmInstanceReturn = instance;
     }
+
+    JSWebAssemblyInstance* targetInstance = isJSCallee ? nullptr : jsDynamicCast<JSWebAssemblyInstance*>(wasmInstanceReturn.unboxedCell());
+    IPINT_HANDLE_STEP_INTO_CALL(instance->vm(), CalleeBits(calleeReturn.encodedJSValue()), targetInstance);
 
     RELEASE_ASSERT(WTF::isTaggedWith<WasmEntryPtrTag>(codePtr));
 
@@ -991,6 +1024,8 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call_indirect, CallFrame* callFrame, Wasm::Fu
             callProfile.observeCallIndirect(boxedCallee);
     }
 
+    IPINT_HANDLE_STEP_INTO_CALL(instance->vm(), function->m_function.boxedCallee, function->m_function.targetInstance.get());
+
     auto callTarget = *function->m_function.entrypointLoadLocation;
     WASM_CALL_RETURN(function->m_function.targetInstance.get(), callTarget);
 }
@@ -1026,6 +1061,8 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call_ref, CallFrame* callFrame, CallRefMetada
         else
             callProfile.observeCallIndirect(boxedCallee);
     }
+
+    IPINT_HANDLE_STEP_INTO_CALL(instance->vm(), function.boxedCallee, calleeInstance);
 
     auto callTarget = *function.entrypointLoadLocation;
     WASM_CALL_RETURN(calleeInstance, callTarget);
@@ -1154,9 +1191,8 @@ WASM_IPINT_EXTERN_CPP_DECL(check_stack_and_vm_traps, void* candidateNewStackPoin
     // Redo stack check because we may really have gotten here due to an imminent StackOverflow.
     if (vm.softStackLimit() <= candidateNewStackPointer) {
         if (Options::enableWasmDebugger()) [[unlikely]] {
-            auto& debugServer = Wasm::DebugServer::singleton();
-            if (debugServer.interruptRequested())
-                debugServer.setInterruptBreakpoint(instance, callee);
+            if (vm.isWasmStopWorldActive())
+                Wasm::DebugServer::singleton().setInterruptBreakpoint(instance, callee);
         }
         IPINT_RETURN(encodedJSValue()); // No stack overflow. Carry on.
     }

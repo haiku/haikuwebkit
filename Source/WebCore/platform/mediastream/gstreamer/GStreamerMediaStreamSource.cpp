@@ -44,6 +44,7 @@
 #endif
 
 #include <gst/app/gstappsrc.h>
+#include <gst/base/gstbasesrc.h>
 #include <gst/base/gstflowcombiner.h>
 #include <wtf/UUID.h>
 #include <wtf/glib/GThreadSafeWeakPtr.h>
@@ -594,7 +595,8 @@ private:
         m_src = makeGStreamerElement("appsrc"_s, elementName);
 
         g_object_set(m_src.get(), "is-live", TRUE, "format", GST_FORMAT_TIME, "min-percent", 100,
-            "do-timestamp", isCaptureTrack, "handle-segment-change", TRUE, "automatic-eos", FALSE, nullptr);
+            "do-timestamp", isCaptureTrack, "handle-segment-change", TRUE, nullptr);
+        gst_base_src_set_automatic_eos(GST_BASE_SRC_CAST(m_src.get()), FALSE);
 
         static GstAppSrcCallbacks callbacks = {
             // need_data
@@ -1298,7 +1300,6 @@ void webkitMediaStreamSrcAddTrack(WebKitMediaStreamSrc* self, MediaStreamTrackPr
 
     auto* ghostPad = webkitGstGhostPadFromStaticTemplate(padTemplate, CStringView::unsafeFromUTF8(padName.utf8().data()), pad.get());
     gst_pad_store_sticky_event(ghostPad, stickyStreamStartEvent.get());
-    gst_pad_set_active(ghostPad, TRUE);
     gst_element_add_pad(GST_ELEMENT_CAST(self), ghostPad);
 
     auto proxyPad = adoptGRef(GST_PAD_CAST(gst_proxy_pad_get_internal(GST_PROXY_PAD(ghostPad))));
@@ -1323,7 +1324,6 @@ void webkitMediaStreamSrcAddTrack(WebKitMediaStreamSrc* self, MediaStreamTrackPr
         return gst_pad_event_default(pad, parent, event);
     }));
 
-    gst_pad_set_active(pad.get(), TRUE);
     gst_element_sync_state_with_parent(element);
 }
 

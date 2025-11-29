@@ -248,14 +248,14 @@ void BrowsingContextGroup::forEachRemotePage(const WebPageProxy& page, Function<
         function(remotePage);
 }
 
-RemotePageProxy* BrowsingContextGroup::remotePageInProcess(const WebPageProxy& page, const WebProcessProxy& process)
+RefPtr<RemotePageProxy> BrowsingContextGroup::remotePageInProcess(const WebPageProxy& page, const WebProcessProxy& process)
 {
     auto it = m_remotePages.find(page);
     if (it == m_remotePages.end())
         return nullptr;
     for (Ref remotePage : it->value) {
         if (remotePage->process().coreProcessIdentifier() == process.coreProcessIdentifier())
-            return remotePage.unsafePtr();
+            return remotePage;
     }
     return nullptr;
 }

@@ -121,7 +121,7 @@ void NetworkConnectionToWebProcess::checkInWebProcess(const CoreIPCAuditToken& a
 
     RELEASE_LOG(Process, "Launch Services checkin starting, infoDictionary = %{public}@", (__bridge NSDictionary *)infoDictionary.get());
 
-    auto block = makeBlockPtr([weakThis = WeakPtr { *this }, auditToken](CFDictionaryRef result, CFErrorRef error) mutable {
+    auto block = makeBlockPtr([weakThis = WeakPtr { *this }, auditToken = auditToken](CFDictionaryRef result, CFErrorRef error) mutable {
         NSDictionary *dictionary = (__bridge NSDictionary *)result;
         RELEASE_LOG(Process, "Launch Services checkin completed, result = %{public}@, error = %{public}@", dictionary, (__bridge NSError *)error);
 

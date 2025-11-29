@@ -63,6 +63,11 @@ public:
     void ref() const final;
     void deref() const final;
 
+#if ENABLE(WEBXR_HIT_TEST)
+    void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&);
+    void deleteHitTestSource(PlatformXR::HitTestSource);
+#endif
+
 private:
     RefPtr<XRDeviceProxy> deviceByIdentifier(XRDeviceIdentifier);
     bool webXREnabled() const;

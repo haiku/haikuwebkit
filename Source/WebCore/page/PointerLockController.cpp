@@ -65,12 +65,12 @@ PointerLockController::~PointerLockController() = default;
 
 void PointerLockController::ref() const
 {
-    m_page.ref();
+    m_page->ref();
 }
 
 void PointerLockController::deref() const
 {
-    m_page.deref();
+    m_page->deref();
 }
 
 
@@ -131,7 +131,7 @@ void PointerLockController::requestPointerLock(Element* target, std::optional<Po
                 promise->resolve();
             // FIXME: https://bugs.webkit.org/show_bug.cgi?id=261786
             // This probably needs to be called in all code paths.
-            m_page.pointerCaptureController().pointerLockWasApplied();
+            m_page->pointerCaptureController().pointerLockWasApplied();
         }
     } else {
         m_lockPending = true;
@@ -140,7 +140,7 @@ void PointerLockController::requestPointerLock(Element* target, std::optional<Po
         if (promise)
             m_promises.append(promise.releaseNonNull());
 
-        m_page.chrome().client().requestPointerLock([this, protectedThis = Ref { *this }, target = RefPtr { target }](PointerLockRequestResult result) {
+        m_page->chrome().client().requestPointerLock([this, protectedThis = Ref { *this }, target = RefPtr { target }](PointerLockRequestResult result) {
             switch (result) {
             case PointerLockRequestResult::Success:
                 didAcquirePointerLock();
@@ -164,7 +164,7 @@ void PointerLockController::requestPointerUnlock()
         return;
 
     m_unlockPending = true;
-    m_page.chrome().client().requestPointerUnlock([this, protectedThis = Ref { *this }](bool result) {
+    m_page->chrome().client().requestPointerUnlock([this, protectedThis = Ref { *this }](bool result) {
         if (result)
             didLosePointerLock();
         else
@@ -180,7 +180,7 @@ void PointerLockController::requestPointerUnlockAndForceCursorVisible()
         return;
 
     m_unlockPending = true;
-    m_page.chrome().client().requestPointerUnlock([this, protectedThis = Ref { *this }](bool result) {
+    m_page->chrome().client().requestPointerUnlock([this, protectedThis = Ref { *this }](bool result) {
         if (result)
             didLosePointerLock();
         else
@@ -271,7 +271,7 @@ void PointerLockController::didLosePointerLock()
     m_documentOfRemovedElementWhileWaitingForUnlock = nullptr;
     if (m_forceCursorVisibleUponUnlock) {
         m_forceCursorVisibleUponUnlock = false;
-        m_page.chrome().client().setCursorHiddenUntilMouseMoves(false);
+        m_page->chrome().client().setCursorHiddenUntilMouseMoves(false);
     }
 }
 
@@ -333,7 +333,7 @@ void PointerLockController::rejectPromises(ExceptionCode code, const String& rea
 bool PointerLockController::supportsUnadjustedMovement() const
 {
 #if HAVE(MOUSE_UNACCELERATED_MOVEMENT) || PLATFORM(IOS_FAMILY)
-    return m_page.chrome().client().hasAccessoryMousePointingDevice();
+    return m_page->chrome().client().hasAccessoryMousePointingDevice();
 #else
     return false;
 #endif

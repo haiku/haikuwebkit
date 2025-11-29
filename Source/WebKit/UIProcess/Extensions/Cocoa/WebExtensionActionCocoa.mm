@@ -708,7 +708,7 @@ void WebExtensionAction::propertiesDidChange()
     }).get());
 }
 
-WebExtensionAction* WebExtensionAction::fallbackAction() const
+RefPtr<WebExtensionAction> WebExtensionAction::fallbackAction() const
 {
     RefPtr extensionContext = this->extensionContext();
     if (!extensionContext)
@@ -716,11 +716,11 @@ WebExtensionAction* WebExtensionAction::fallbackAction() const
 
     // Tab actions whose tab references have not dropped fallback to the window action.
     if (RefPtr tab = this->tab())
-        return extensionContext->getAction(tab->window().get()).unsafePtr();
+        return extensionContext->getAction(tab->window().get());
 
     // Window actions and tab actions whose tab references have dropped fallback to the default action.
     if (m_window.has_value() || m_tab.has_value())
-        return &extensionContext->defaultAction();
+        return extensionContext->defaultAction();
 
     // Default actions have no fallback.
     return nullptr;

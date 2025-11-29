@@ -226,6 +226,10 @@ void RemoteScrollingTreeMac::scrollingTreeNodeDidScroll(ScrollingTreeScrollingNo
 {
     ScrollingTree::scrollingTreeNodeDidScroll(node, action);
 
+#if ENABLE(THREADED_ANIMATIONS)
+    updateProgressBasedTimelinesForNode(node);
+#endif
+
     std::optional<FloatPoint> layoutViewportOrigin;
     if (auto* scrollingNode = dynamicDowncast<ScrollingTreeFrameScrollingNode>(node))
         layoutViewportOrigin = scrollingNode->layoutViewport().location();

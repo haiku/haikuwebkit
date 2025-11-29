@@ -469,7 +469,7 @@ void MediaRecorderPrivateEncoder::appendVideoFrame(MediaTime sampleTime, Ref<Vid
         VideoEncoder::Config config { static_cast<uint64_t>(frame->presentationSize().width()), static_cast<uint64_t>(frame->presentationSize().height()), false, videoBitRate() };
 
         Ref promise = VideoEncoder::create(codecStringForMediaVideoCodecId(m_videoCodec), config, [weakThis = ThreadSafeWeakPtr { *this }, config](auto&& configuration) mutable {
-            queueSingleton().dispatch([weakThis, config = WTFMove(config), configuration] {
+            queueSingleton().dispatch([weakThis, config = WTFMove(config), configuration = WTFMove(configuration)]() mutable {
                 if (RefPtr protectedThis = weakThis.get())
                     protectedThis->processVideoEncoderActiveConfiguration(config, WTFMove(configuration));
             });

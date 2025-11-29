@@ -75,9 +75,8 @@ public:
     unsigned removeAllOfTypeMatching(NOESCAPE const MatchFunction& matchFunction)
     {
         return m_elements.removeAllMatching([&] (const RefPtr<Object>& object) -> bool {
-            if (object->type() != T::APIType)
-                return false;
-            return matchFunction(static_pointer_cast<T>(object));
+            RefPtr objectAsT = dynamicDowncast<T>(*object);
+            return objectAsT && matchFunction(objectAsT.releaseNonNull());
         });
     }
 

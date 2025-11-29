@@ -81,7 +81,8 @@ struct Box {
         AtomicInlineBox,
         NonRootInlineBox,
         RootInlineBox,
-        GenericInlineLevelBox
+        GenericInlineLevelBox,
+        BlockLevelBox,
     };
     struct Expansion;
     enum class PositionWithinInlineLevelBox : uint8_t {
@@ -104,6 +105,7 @@ struct Box {
     bool isRootInlineBox() const { return m_type == Type::RootInlineBox; }
     bool isGenericInlineLevelBox() const { return m_type == Type::GenericInlineLevelBox; }
     bool isInlineLevelBox() const { return isAtomicInlineBox() || isLineBreakBox() || isInlineBox() || isGenericInlineLevelBox(); }
+    bool isBlockLevelBox() const { return m_type == Type::BlockLevelBox; }
     bool isNonRootInlineLevelBox() const { return isInlineLevelBox() && !isRootInlineBox(); }
 
     UBiDiLevel bidiLevel() const { return m_bidiLevel; }

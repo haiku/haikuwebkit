@@ -64,14 +64,6 @@
 [ iOS ] UIProcess/ios/forms/WKFormSelectPopover.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenViewController.mm
 [ iOS ] UIProcess/ios/fullscreen/WKFullScreenWindowControllerIOS.mm
-WebProcess/InjectedBundle/API/mac/WKDOMInternals.mm
-WebProcess/InjectedBundle/API/mac/WKWebProcessPlugIn.mm
-WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
-WebProcess/Plugins/PDF/PDFIncrementalLoader.mm
-WebProcess/Plugins/PDF/PDFPluginChoiceAnnotation.mm
-WebProcess/Plugins/PDF/PDFPluginTextAnnotation.mm
-WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm
-WebProcess/Plugins/PDF/WKAccessibilityPDFDocumentObject.mm
 [ iOS ] WebProcess/WebCoreSupport/mac/WebDragClientMac.mm
 [ iOS ] WebProcess/WebPage/WKAccessibilityWebPageObjectIOS.mm
 [ iOS ] WebProcess/WebPage/ios/WebPageIOS.mm

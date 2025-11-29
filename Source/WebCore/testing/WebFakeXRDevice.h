@@ -100,6 +100,10 @@ private:
     void requestFrame(std::optional<PlatformXR::RequestData>&&, RequestFrameCallback&&) final;
     std::optional<PlatformXR::LayerHandle> createLayerProjection(uint32_t width, uint32_t height, bool alpha) final;
     void deleteLayer(PlatformXR::LayerHandle) final;
+#if ENABLE(WEBXR_HIT_TEST)
+    void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&) final;
+    void deleteHitTestSource(PlatformXR::HitTestSource) final;
+#endif
 
     void stopTimer();
     void frameTimerFired();
@@ -110,6 +114,10 @@ private:
     RequestFrameCallback m_FrameCallback;
     HashMap<PlatformXR::LayerHandle, WebCore::IntSize> m_layers;
     uint32_t m_layerIndex { 0 };
+#if ENABLE(WEBXR_HIT_TEST)
+    PlatformXR::HitTestSource m_nextHitTestSource { 1 };
+    HashSet<PlatformXR::HitTestSource> m_hitTestSources;
+#endif
     Vector<Ref<WebFakeXRInputController>> m_inputConnections;
 };
 

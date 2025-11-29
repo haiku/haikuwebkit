@@ -600,7 +600,7 @@ public:
         return result;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg addr(Air::Tmp base, Int offset)
     {
         ASSERT(base.isGP());
@@ -611,7 +611,7 @@ public:
         return result;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg extendedOffsetAddr(Int offsetFromFP)
     {
         Arg result;
@@ -626,7 +626,7 @@ public:
         return addr(base, 0);
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg stack(StackSlot* value, Int offset)
     {
         Arg result;
@@ -641,7 +641,7 @@ public:
         return stack(value, 0);
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg callArg(Int offset)
     {
         Arg result;
@@ -693,7 +693,7 @@ public:
         }
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg index(Air::Tmp base, Air::Tmp index, unsigned scale, Int offset, MacroAssembler::Extend extend = MacroAssembler::Extend::None)
     {
         ASSERT(base.isGP());
@@ -714,7 +714,7 @@ public:
         return Arg::index(base, index, scale, 0);
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg preIndex(Air::Tmp base, Int index)
     {
         ASSERT(base.isGP());
@@ -726,7 +726,7 @@ public:
         return result;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static Arg postIndex(Air::Tmp base, Int index)
     {
         ASSERT(base.isGP());
@@ -1377,7 +1377,7 @@ public:
         return ARM64FPImmediate::create64(value).isValid();
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static bool isValidAddrForm(Air::Opcode opcode, Int offset, std::optional<Width> width = std::nullopt)
     {
 #if !CPU(ARM_THUMB2)
@@ -1425,7 +1425,7 @@ public:
         return false;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static bool isValidIndexForm(Air::Opcode opcode, unsigned scale, Int offset, std::optional<Width> width = std::nullopt)
     {
         if (!isValidScale(scale, width))
@@ -1446,7 +1446,7 @@ public:
         return false;
     }
 
-    template<typename Int, typename = Value::IsLegalOffset<Int>>
+    template<IsLegalOffset Int>
     static bool isValidIncrementIndexForm(Int offset)
     {
         if (isARM64())

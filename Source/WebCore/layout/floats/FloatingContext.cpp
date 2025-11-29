@@ -35,6 +35,7 @@
 #include "LayoutElementBox.h"
 #include "LayoutShape.h"
 #include "RenderStyleInlines.h"
+#include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -412,7 +413,7 @@ FloatingContext::Constraints FloatingContext::constraints(LayoutUnit candidateTo
 
     auto constraints = Constraints { };
     if (mayBeAboveLastFloat == MayBeAboveLastFloat::No) {
-        for (auto& floatItem : makeReversedRange(placedFloats.list())) {
+        for (auto& floatItem : placedFloats.list() | std::views::reverse) {
             if ((constraints.start && floatItem.isStartPositioned()) || (constraints.end && !floatItem.isStartPositioned()))
                 continue;
 
@@ -433,7 +434,7 @@ FloatingContext::Constraints FloatingContext::constraints(LayoutUnit candidateTo
                 break;
         }
     } else {
-        for (auto& floatItem : makeReversedRange(placedFloats.list())) {
+        for (auto& floatItem : placedFloats.list() | std::views::reverse) {
             auto edgeAndBottom = computeFloatEdgeAndBottom(floatItem);
             if (!edgeAndBottom)
                 continue;

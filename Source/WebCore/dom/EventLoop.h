@@ -162,7 +162,7 @@ private:
     mutable Markable<MonotonicTime> m_nextTimerFireTimeCache;
 };
 
-class EventLoopTaskGroup final : public CanMakeWeakPtr<EventLoopTaskGroup>, public CanMakeCheckedPtr<EventLoopTaskGroup, WTF::DefaultedOperatorEqual::No, WTF::CheckedPtrDeleteCheckException::Yes> {
+class EventLoopTaskGroup final : public CanMakeWeakPtr<EventLoopTaskGroup>, public CanMakeCheckedPtr<EventLoopTaskGroup> {
     WTF_MAKE_TZONE_ALLOCATED(EventLoopTaskGroup);
     WTF_MAKE_NONCOPYABLE(EventLoopTaskGroup);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(EventLoopTaskGroup);

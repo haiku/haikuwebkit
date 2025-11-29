@@ -160,7 +160,7 @@ class SingleTestRunner(object):
         if self_comparison_header:
             return self._run_self_comparison_test(self_comparison_header)
         if self._options.site_isolation:
-            comparison_header = 'SiteIsolationEnabled=true runInCrossOriginFrame=true'
+            comparison_header = 'SiteIsolationEnabled=true'
             if self._reference_files:
                 return self._run_self_comparison_test(comparison_header)
             return self._run_self_comparison_without_reference_test(comparison_header)

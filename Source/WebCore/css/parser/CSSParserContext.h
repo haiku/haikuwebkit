@@ -106,12 +106,6 @@ void add(Hasher&, const CSSParserContext&);
 
 WEBCORE_EXPORT const CSSParserContext& strictCSSParserContext();
 
-struct CSSParserContextHash {
-    static unsigned hash(const CSSParserContext& context) { return computeHash(context); }
-    static bool equal(const CSSParserContext& a, const CSSParserContext& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 } // namespace WebCore
 
 namespace WTF {
@@ -121,7 +115,5 @@ template<> struct HashTraits<WebCore::CSSParserContext> : GenericHashTraits<WebC
     static bool isDeletedValue(const WebCore::CSSParserContext& value) { return value.baseURL.isHashTableDeletedValue(); }
     static WebCore::CSSParserContext emptyValue() { return WebCore::CSSParserContext(WebCore::HTMLStandardMode); }
 };
-
-template<> struct DefaultHash<WebCore::CSSParserContext> : WebCore::CSSParserContextHash { };
 
 } // namespace WTF

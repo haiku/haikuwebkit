@@ -36,6 +36,7 @@
 #include <JavaScriptCore/DataView.h>
 #include <JavaScriptCore/Int8Array.h>
 #include <pal/avfoundation/MediaTimeAVFoundation.h>
+#include <wtf/CrossThreadCopier.h>
 #include <wtf/MediaTime.h>
 #include <wtf/StringPrintStream.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -564,7 +565,7 @@ void InbandTextTrackPrivateAVF::processVTTSample(CMSampleBufferRef sampleBuffer,
             ISOWebVTTCue cueData = ISOWebVTTCue(presentationTime, PAL::toMediaTime(timingInfo.duration));
             cueData.read(view);
 
-            notifyMainThreadClient([cueData = WTFMove(cueData)](auto& client) mutable {
+            notifyMainThreadClient([cueData = crossThreadCopy(WTFMove(cueData))](auto& client) mutable {
                 downcast<InbandTextTrackPrivateClient>(client).parseWebVTTCueData(WTFMove(cueData));
             });
         }

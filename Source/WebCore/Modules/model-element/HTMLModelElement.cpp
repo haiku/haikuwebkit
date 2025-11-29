@@ -774,7 +774,11 @@ bool HTMLModelElement::isDraggableIgnoringAttributes() const
 
 bool HTMLModelElement::isInteractive() const
 {
+#if ENABLE(MODEL_ELEMENT_STAGE_MODE)
+    return canSetEntityTransform();
+#else
     return hasAttributeWithoutSynchronization(HTMLNames::interactiveAttr);
+#endif
 }
 
 void HTMLModelElement::attributeChanged(const QualifiedName& name, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason attributeModificationReason)

@@ -412,10 +412,6 @@ NSType typeFromObject(id object)
 #if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
     SUPPRESS_UNRETAINED_ARG if ([object isKindOfClass:getClass<DDScannerResult>()])
         return NSType::DDScannerResult;
-#if PLATFORM(MAC)
-    SUPPRESS_UNRETAINED_ARG if ([object isKindOfClass:getClass<WKDDActionContext>()])
-        return NSType::WKDDActionContext;
-#endif
 #endif
     if ([object isKindOfClass:[NSDateComponents class]])
         return NSType::NSDateComponents;

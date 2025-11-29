@@ -83,12 +83,6 @@ inline void add(Hasher& hasher, const IDBResourceIdentifier& identifier)
     add(hasher, identifier.m_idbConnectionIdentifier, identifier.m_resourceNumber);
 }
 
-struct IDBResourceIdentifierHash {
-    static unsigned hash(const IDBResourceIdentifier& a) { return computeHash(a); }
-    static bool equal(const IDBResourceIdentifier& a, const IDBResourceIdentifier& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 struct IDBResourceIdentifierHashTraits : WTF::CustomHashTraits<IDBResourceIdentifier> {
     static constexpr bool hasIsEmptyValueFunction = true;
     static constexpr bool emptyValueIsZero = false;
@@ -120,7 +114,6 @@ struct IDBResourceIdentifierHashTraits : WTF::CustomHashTraits<IDBResourceIdenti
 namespace WTF {
 
 template<> struct HashTraits<WebCore::IDBResourceIdentifier> : WebCore::IDBResourceIdentifierHashTraits { };
-template<> struct DefaultHash<WebCore::IDBResourceIdentifier> : WebCore::IDBResourceIdentifierHash { };
 
 inline WebCore::IDBConnectionIdentifier crossThreadCopy(WebCore::IDBConnectionIdentifier identifier)
 {

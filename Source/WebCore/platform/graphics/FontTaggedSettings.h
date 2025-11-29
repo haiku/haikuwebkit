@@ -53,9 +53,7 @@ inline void add(Hasher& hasher, std::array<char, 4> array)
     add(hasher, integer);
 }
 
-struct FourCharacterTagHash {
-    static unsigned hash(FontTag characters) { return computeHash(characters); }
-    static bool equal(FontTag a, FontTag b) { return a == b; }
+struct FourCharacterTagHash : WTF::HasherBasedHash<FontTag> {
     static const bool safeToCompareToEmptyOrDeleted = true;
 };
 

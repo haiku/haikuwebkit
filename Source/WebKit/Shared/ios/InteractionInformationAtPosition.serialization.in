@@ -84,16 +84,16 @@ struct WebKit::InteractionInformationAtPosition {
     RefPtr<WebCore::TextIndicator> textIndicator;
 #if ENABLE(DATA_DETECTION)
     String dataDetectorIdentifier;
-    [SecureCodingAllowed=[NSArray.class, PAL::getDDScannerResultClassSingleton()]] RetainPtr<NSArray> dataDetectorResults;
+    Vector<RetainPtr<DDScannerResult>> serializableDataDetectorResults();
     WebCore::IntRect dataDetectorBounds;
 #endif
-
-    std::optional<WebCore::ElementContext> elementContext;
-    std::optional<WebCore::ElementContext> hostImageOrVideoElementContext;
 
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
     Vector<WebCore::ElementAnimationContext> animationsAtPoint;
 #endif
+
+    std::optional<WebCore::ElementContext> elementContext;
+    std::optional<WebCore::ElementContext> hostImageOrVideoElementContext;
 };
 
 #endif

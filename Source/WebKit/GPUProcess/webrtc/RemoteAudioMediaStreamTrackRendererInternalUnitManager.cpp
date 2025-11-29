@@ -44,7 +44,7 @@
 #include <WebCore/CAAudioStreamDescription.h>
 #include <WebCore/CARingBuffer.h>
 #include <WebCore/CoreAudioCaptureSource.h>
-#include <WebCore/CoreAudioSharedUnit.h>
+#include <WebCore/CoreAudioCaptureUnit.h>
 #include <WebCore/WebAudioBufferList.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/WeakPtr.h>
@@ -314,7 +314,7 @@ void RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::captureUnitIsSt
 void RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::captureUnitHasStopped()
 {
     // Capture unit has stopped and audio will no longer be rendered through it so start the local unit.
-    if (m_isPlaying && !WebCore::CoreAudioSharedUnit::singleton().isSuspended())
+    if (m_isPlaying && !WebCore::CoreAudioCaptureUnit::defaultSingleton().isSuspended())
         protectedLocalUnit()->start();
 }
 
@@ -343,7 +343,7 @@ void RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::endAudioSession
     if (!m_isPlaying)
         return;
 
-    if (m_shouldRegisterAsSpeakerSamplesProducer && (WebCore::CoreAudioSharedUnit::singleton().isRunning() || WebCore::CoreAudioSharedUnit::singleton().isSuspended()))
+    if (m_shouldRegisterAsSpeakerSamplesProducer && (WebCore::CoreAudioCaptureUnit::defaultSingleton().isRunning() || WebCore::CoreAudioCaptureUnit::defaultSingleton().isSuspended()))
         return;
 
     protectedLocalUnit()->start();

@@ -32,6 +32,7 @@
 #include "AXObjectCacheInlines.h"
 #include "AnimationTimelinesController.h"
 #include "ApplicationManifest.h"
+#include "AriaNotifyOptions.h"
 #include "AsyncNodeDeletionQueueInlines.h"
 #include "Attr.h"
 #include "BeforeUnloadEvent.h"
@@ -443,10 +444,6 @@
 #if ENABLE(WEBGL)
 #include "WebGLRenderingContext.h"
 #include "WebGL2RenderingContext.h"
-#endif
-
-#if ENABLE(PICTURE_IN_PICTURE_API)
-#include "HTMLVideoElement.h"
 #endif
 
 #define DOCUMENT_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] Document::" fmt, this, pageID() ? pageID()->toUInt64() : 0, frameID() ? frameID()->toUInt64() : 0, this->isTopDocument(), ##__VA_ARGS__)
@@ -4198,6 +4195,11 @@ HTMLElement* Document::bodyOrFrameset() const
     return nullptr;
 }
 
+RefPtr<HTMLElement> Document::protectedBodyOrFrameset() const
+{
+    return bodyOrFrameset();
+}
+
 ExceptionOr<void> Document::setBodyOrFrameset(RefPtr<HTMLElement>&& newBody)
 {
     if (!is<HTMLBodyElement>(newBody) && !is<HTMLFrameSetElement>(newBody))
@@ -6593,18 +6595,17 @@ bool Document::setFocusedElement(Element* newFocusedElement, const FocusOptions&
     }
 
     if (m_focusedElement) {
-
         if (settings().navigationAPIEnabled())
             window()->navigation().setFocusChanged(FocusDidChange::Yes);
+    }
 
 #if PLATFORM(GTK)
-        // GTK relies on creating the AXObjectCache when a focus change happens.
-        if (CheckedPtr cache = axObjectCache())
+    // GTK relies on creating the AXObjectCache when a focus change happens.
+    if (CheckedPtr cache = axObjectCache())
 #else
-        if (CheckedPtr cache = existingAXObjectCache())
+    if (CheckedPtr cache = existingAXObjectCache())
 #endif
-            cache->onFocusChange(oldFocusedElement.get(), newFocusedElement);
-    }
+        cache->onFocusChange(oldFocusedElement.get(), newFocusedElement);
 
     if (RefPtr page = this->page())
         page->chrome().focusedElementChanged(protectedFocusedElement().get(), page->focusController().focusedLocalFrame(), options, broadcast);
@@ -10797,6 +10798,11 @@ AnimationTimelinesController& Document::ensureTimelinesController()
     return *m_timelinesController.get();
 }
 
+CheckedRef<AnimationTimelinesController> Document::ensureCheckedTimelinesController()
+{
+    return ensureTimelinesController();
+}
+
 StyleOriginatedTimelinesController& Document::ensureStyleOriginatedTimelinesController()
 {
     if (!m_styleOriginatedTimelinesController)
@@ -10814,8 +10820,10 @@ void Document::updateAnimationsAndSendEvents()
         timelinesController->updateAnimationsAndSendEvents(window->frozenNowTimestamp());
 }
 
-void Document::updateStaleScrollTimelines()
+void Document::runPostRenderingUpdateAnimationTasks()
 {
+    if (m_timeline)
+        m_timeline->runPostRenderingUpdateTasks();
     if (CheckedPtr timelinesController = this->timelinesController())
         timelinesController->updateStaleScrollTimelines();
 }
@@ -10929,7 +10937,7 @@ void Document::removeTopLayerElement(Element& element)
 
 HTMLDialogElement* Document::activeModalDialog() const
 {
-    for (auto& element : makeReversedRange(m_topLayerElements)) {
+    for (auto& element : m_topLayerElements | std::views::reverse) {
         if (auto* dialog = dynamicDowncast<HTMLDialogElement>(element.get()); dialog && dialog->isModal())
             return dialog;
     }
@@ -11023,7 +11031,7 @@ void Document::handlePopoverLightDismiss(const PointerEvent& event, Node& target
                 return second;
             if (!second)
                 return first;
-            for (auto& element : makeReversedRange(m_autoPopoverList)) {
+            for (auto& element : m_autoPopoverList | std::views::reverse) {
                 if (element.ptr() == first || element.ptr() == second)
                     return element.ptr();
             }
@@ -12094,6 +12102,24 @@ void Document::processSpeculationRulesHeader(const String& headerValue, const UR
                 protectedThis->m_loadableSpeculationRules.append(WTFMove(loadableSpeculationRules));
         });
     }
+}
+
+void Document::ariaNotify(const String& announcement)
+{
+    if (!settings().isARIANotifyEnabled())
+        return;
+
+    if (CheckedPtr cache = axObjectCache())
+        cache->postARIANotifyNotification(*this, announcement, { });
+}
+
+void Document::ariaNotify(const String& announcement, const AriaNotifyOptions& options)
+{
+    if (!settings().isARIANotifyEnabled())
+        return;
+
+    if (CheckedPtr cache = axObjectCache())
+        cache->postARIANotifyNotification(*this, announcement, options);
 }
 
 } // namespace WebCore

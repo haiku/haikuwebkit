@@ -1148,6 +1148,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSArrayIterator.h
     runtime/JSArrayBuffer.h
     runtime/JSBigInt.h
+    runtime/JSBigIntInlines.h
     runtime/JSBoundFunction.h
     runtime/JSCBytecodeCacheVersion.h
     runtime/JSCConfig.h
@@ -1159,6 +1160,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSCellInlines.h
     runtime/JSCInlines.h
     runtime/JSCJSValue.h
+    runtime/JSCJSValueCellInlines.h
     runtime/JSCJSValueInlines.h
     runtime/JSCPtrTag.h
     runtime/JSCustomGetterFunction.h
@@ -1168,6 +1170,8 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSDateMath.h
     runtime/JSDestructibleObject.h
     runtime/JSDestructibleObjectHeapCellType.h
+    runtime/JSHeapDouble.h
+    runtime/JSHeapInt32.h
     runtime/JSExportMacros.h
     runtime/JSFloat16Array.h
     runtime/JSFloat32Array.h

@@ -74,14 +74,14 @@ static bool tryAllocate(VM& vm, const Func& allocate)
     bool done = false;
     for (unsigned i = 0; i < numTries && !done; ++i) {
         switch (allocate()) {
-        case BufferMemoryResult::Success:
+        case BufferMemoryResult::Kind::Success:
             done = true;
             break;
-        case BufferMemoryResult::SuccessAndNotifyMemoryPressure:
+        case BufferMemoryResult::Kind::SuccessAndNotifyMemoryPressure:
             vm.heap.collectAsync(CollectionScope::Full);
             done = true;
             break;
-        case BufferMemoryResult::SyncTryToReclaimMemory:
+        case BufferMemoryResult::Kind::SyncTryToReclaimMemory:
             if (i + 1 == numTries)
                 break;
             vm.heap.collectSync(CollectionScope::Full);

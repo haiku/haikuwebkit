@@ -19,6 +19,7 @@
 
 <script>
 var output = "This test ensures objects that aria-activedescendant is correct after a visibility change.\n\n";
+var done = false;
 
 document.getElementById("open").addEventListener("click", () => {
     document.getElementById("listbox").hidden = false;
@@ -37,6 +38,11 @@ function notifyCallback(element, notification) {
             return;
         }
 
+        if (done) {
+            return;
+        }
+
+        done = true;
         output += `The listbox option should be focused: ${axFocused.role} ${axFocused.title}\n`;
         accessibilityController.removeNotificationListener();
         debug(output);

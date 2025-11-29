@@ -75,7 +75,7 @@ private:
     unsigned m_identifier;
 
 #if ENABLE(VIDEO)
-    RefPtr<CaptionUserPreferences> m_captionPreferences;
+    const RefPtr<CaptionUserPreferences> m_captionPreferences;
 #endif
 };
 

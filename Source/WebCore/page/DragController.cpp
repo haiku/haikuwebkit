@@ -392,7 +392,7 @@ static bool isInShadowTreeOfEnabledColorInput(Node& node)
 }
 
 // This can return null if an empty document is loaded.
-static Element* elementUnderMouse(Document& documentUnderMouse, const IntPoint& p)
+static RefPtr<Element> elementUnderMouse(Document& documentUnderMouse, const IntPoint& p)
 {
     RefPtr frame = documentUnderMouse.frame();
     float zoomFactor = frame ? frame->pageZoomFactor() : 1;
@@ -409,8 +409,8 @@ static Element* elementUnderMouse(Document& documentUnderMouse, const IntPoint& 
     RefPtr element = dynamicDowncast<Element>(*node);
     if (!element)
         element = node->parentElement();
-    auto* host = element->shadowHost();
-    return host ? host : element.unsafeGet();
+    RefPtr host = element->shadowHost();
+    return host ? host : element;
 }
 
 #if !PLATFORM(IOS_FAMILY)
@@ -1286,7 +1286,7 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
         return true;
     }
 
-#if ENABLE(MODEL_ELEMENT)
+#if ENABLE(MODEL_ELEMENT) && !ENABLE(GPU_PROCESS_MODEL)
     if (RefPtr modelElement = dynamicDowncast<HTMLModelElement>(state.source); modelElement && m_dragSourceAction.contains(DragSourceAction::Model)) {
         dragImage = DragImage { createDragImageForNode(src, *modelElement) };
 
@@ -1321,10 +1321,11 @@ void DragController::doImageDrag(Element& element, const IntPoint& dragOrigin, c
     DragImage dragImage;
     IntPoint scaledOrigin;
 
-    if (!element.renderer())
+    CheckedPtr renderer = element.renderer();
+    if (!renderer)
         return;
 
-    ImageOrientation orientation = element.renderer()->imageOrientation();
+    auto orientation = renderer->imageOrientation();
 
     RefPtr image = getImage(element);
     if (image && !layoutRect.isEmpty() && shouldUseCachedImageForDragImage(*image)
@@ -1382,9 +1383,9 @@ void DragController::beginDrag(DragItem dragItem, LocalFrame& frame, const IntPo
 
 static RefPtr<Element> containingLinkElement(Element& element)
 {
-    for (auto& currentElement : lineageOfType<Element>(element)) {
-        if (currentElement.isLink())
-            return &currentElement;
+    for (Ref currentElement : lineageOfType<Element>(element)) {
+        if (currentElement->isLink())
+            return currentElement;
     }
     return nullptr;
 }
@@ -1431,7 +1432,7 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
             item.dragPreviewFrameInRootViewCoordinates = element->boundsInRootViewSpace();
         }
 
-        if (auto link = containingLinkElement(*element)) {
+        if (RefPtr link = containingLinkElement(*element)) {
             auto titleAttribute = link->attributeWithoutSynchronization(HTMLNames::titleAttr);
             item.title = titleAttribute.isEmpty() ? link->innerText() : titleAttribute.string();
             item.url = frame.document()->completeURL(link->getAttribute(HTMLNames::hrefAttr));
@@ -1549,7 +1550,7 @@ void DragController::insertDroppedImagePlaceholdersAtCaret(const Vector<IntSize>
     }
 
     Vector<Ref<HTMLImageElement>> placeholders;
-    for (auto& placeholder : descendantsOfType<HTMLImageElement>(*container)) {
+    for (Ref placeholder : descendantsOfType<HTMLImageElement>(*container)) {
         if (intersects<ComposedTree>(*insertedContentRange, placeholder))
             placeholders.append(placeholder);
     }

@@ -31,6 +31,8 @@ namespace JSC {
     macro(StructureType, SpecCellOther) \
     macro(StringType, SpecString) \
     macro(HeapBigIntType, SpecHeapBigInt) \
+    macro(HeapDoubleType, SpecCellOther) \
+    macro(HeapInt32Type, SpecCellOther) \
     macro(SymbolType, SpecSymbol) \
     \
     macro(GetterSetterType, SpecCellOther) \

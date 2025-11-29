@@ -1545,7 +1545,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 #if HAVE(NW_PROXY_CONFIG)
     if (parameters.proxyConfigData)
-        setProxyConfigData(WTFMove(*parameters.proxyConfigData));
+        setProxyConfigData(*parameters.proxyConfigData);
 #endif
 }
 

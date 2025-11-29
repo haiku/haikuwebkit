@@ -1128,7 +1128,11 @@ static bool readyForClick;
 
 @end
 
+#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+TEST(WebKit, DISABLED_ClickAutoFillButton)
+#else
 TEST(WebKit, ClickAutoFillButton)
+#endif
 {
     WKWebViewConfiguration *configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"ClickAutoFillButton"];
 

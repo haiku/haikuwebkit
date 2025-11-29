@@ -58,12 +58,6 @@ struct CSSSelectorParserContext {
 
 void add(Hasher&, const CSSSelectorParserContext&);
 
-struct CSSSelectorParserContextHash {
-    static unsigned hash(const CSSSelectorParserContext& context) { return computeHash(context); }
-    static bool equal(const CSSSelectorParserContext& a, const CSSSelectorParserContext& b) { return a == b; }
-    static const bool safeToCompareToEmptyOrDeleted = false;
-};
-
 } // namespace WebCore
 
 namespace WTF {
@@ -73,7 +67,5 @@ template<> struct HashTraits<WebCore::CSSSelectorParserContext> : GenericHashTra
     static bool isDeletedValue(const WebCore::CSSSelectorParserContext& value) { return value.isHashTableDeletedValue; }
     static WebCore::CSSSelectorParserContext emptyValue() { return { }; }
 };
-
-template<> struct DefaultHash<WebCore::CSSSelectorParserContext> : WebCore::CSSSelectorParserContextHash { };
 
 } // namespace WTF

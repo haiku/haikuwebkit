@@ -31,6 +31,9 @@
 #include "Element.h"
 #include "KeyframeEffect.h"
 #include "RenderElementInlines.h"
+#include "RenderLayer.h"
+#include "RenderLayerBacking.h"
+#include "RenderLayerModelObject.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
@@ -381,6 +384,31 @@ void ScrollTimeline::animationTimingDidChange(WebAnimation& animation)
     if (RefPtr page = source->element.protectedDocument()->page())
         page->scheduleRenderingUpdate(RenderingUpdateStep::Animations);
 }
+
+#if ENABLE(THREADED_ANIMATIONS)
+Ref<AcceleratedTimeline> ScrollTimeline::createAcceleratedRepresentation()
+{
+    ASSERT(this->source());
+    Ref source = *this->source();
+    CheckedPtr sourceScrollableArea = scrollableAreaForSourceRenderer(source->renderer(), source->document());
+    ASSERT(sourceScrollableArea);
+    ASSERT(sourceScrollableArea->scrollingNodeID());
+
+    ASSERT(duration());
+    auto direction = resolvedScrollDirection();
+    auto data = computeTimelineData();
+
+    return AcceleratedTimeline::create(m_acceleratedTimelineIdentifier, {
+        *sourceScrollableArea->scrollingNodeID(),
+        *duration(),
+        direction.isVertical,
+        direction.isReversed,
+        data.scrollOffset,
+        data.rangeStart,
+        data.rangeEnd
+    });
+}
+#endif
 
 TextStream& operator<<(TextStream& ts, const ScrollTimeline& timeline)
 {

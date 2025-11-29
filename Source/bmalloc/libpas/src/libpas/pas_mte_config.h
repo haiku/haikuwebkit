@@ -157,10 +157,12 @@ void pas_mte_ensure_initialized(void);
 #define PAS_MTE_INITIALIZE_IN_WTF_CONFIG \
     pas_mte_ensure_initialized()
 
-#if defined(PAS_BMALLOC) && BENABLE(LIBPAS)
+#if defined(PAS_BMALLOC)
+#if BENABLE(LIBPAS)
 #if BENABLE_MTE != PAS_ENABLE_MTE
 #error "cannot enable MTE in libpas without enabling it in bmalloc, or vice versa"
-#endif
+#endif // BENABLE(LIBPAS)
+#endif // defined(PAS_BMALLOC)
 
 #define BMALLOC_VM_MTE PAS_VM_MTE
 #define BMALLOC_USE_MTE PAS_USE_MTE

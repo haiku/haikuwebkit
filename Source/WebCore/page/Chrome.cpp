@@ -148,6 +148,11 @@ void Chrome::relayAccessibilityNotification(String&& notificationName, RetainPtr
 {
     return m_client->relayAccessibilityNotification(WTFMove(notificationName), WTFMove(notificationData));
 }
+
+void Chrome::relayAriaNotifyNotification(AriaNotifyData&& notificationData) const
+{
+    return m_client->relayAriaNotifyNotification(WTFMove(notificationData));
+}
 #endif
 
 PlatformPageClient Chrome::platformPageClient() const

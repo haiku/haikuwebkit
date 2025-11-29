@@ -43,8 +43,8 @@ public:
     }
     virtual ~VideoTrackList();
 
-    VideoTrack* getTrackById(const AtomString&) const;
-    VideoTrack* getTrackById(TrackID) const;
+    RefPtr<VideoTrack> getTrackById(const AtomString&) const;
+    RefPtr<VideoTrack> getTrackById(TrackID) const;
     int selectedIndex() const;
 
     bool isSupportedPropertyIndex(unsigned index) const { return index < m_inbandTracks.size(); }

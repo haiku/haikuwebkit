@@ -328,6 +328,14 @@ RefPtr<const RemoteAnimationTimeline> RemoteScrollingCoordinatorProxyMac::timeli
 {
     return m_eventDispatcher->timeline(timelineID);
 }
+
+RefPtr<const RemoteAnimationStack> RemoteScrollingCoordinatorProxyMac::animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier layerID) const
+{
+    m_eventDispatcher->lockForAnimationChanges();
+    RefPtr animationStack = m_eventDispatcher->animationStackForNodeWithIDForTesting(layerID);
+    m_eventDispatcher->unlockForAnimationChanges();
+    return animationStack;
+}
 #endif
 
 } // namespace WebKit

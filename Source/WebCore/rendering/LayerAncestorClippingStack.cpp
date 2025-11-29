@@ -29,6 +29,7 @@
 #include "GraphicsLayer.h"
 #include "ScrollingConstraints.h"
 #include "ScrollingCoordinator.h"
+#include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
 
@@ -100,7 +101,7 @@ GraphicsLayer* LayerAncestorClippingStack::lastLayer() const
 
 std::optional<ScrollingNodeID> LayerAncestorClippingStack::lastOverflowScrollProxyNodeID() const
 {
-    for (auto& entry : makeReversedRange(m_stack)) {
+    for (auto& entry : m_stack | std::views::reverse) {
         if (entry.overflowScrollProxyNodeID)
             return entry.overflowScrollProxyNodeID;
     }

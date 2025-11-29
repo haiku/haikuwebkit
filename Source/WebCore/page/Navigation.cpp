@@ -1142,6 +1142,10 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
 
                 auto focusChanged = std::exchange(protectedThis->m_focusChangedDuringOngoingNavigation, FocusDidChange::No);
                 protectedThis->protectedOngoingNavigateEvent()->finish(*document, InterceptionHandlersDidFulfill::No, focusChanged);
+
+                if (abortController)
+                    abortController->signal().signalAbort(result);
+
                 protectedThis->m_ongoingNavigateEvent = nullptr;
 
                 ErrorInformation errorInformation;

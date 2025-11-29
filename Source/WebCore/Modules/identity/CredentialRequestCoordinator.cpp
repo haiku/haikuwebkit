@@ -293,7 +293,7 @@ void CredentialRequestCoordinator::finalizeDigitalCredential(const DigitalCreden
     Ref credential = DigitalCredential::create(
         { returnValue->vm(), returnValue },
         responseData.protocol);
-    m_currentPromise->resolve(WTFMove(credential.ptr()));
+    m_currentPromise->resolve(credential.ptr());
     m_currentPromise.reset();
 }
 

@@ -118,6 +118,7 @@
 #include <wtf/URLHash.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakListHashSet.h>
+#include <wtf/text/ASCIILiteral.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/TextStream.h>
@@ -3228,6 +3229,15 @@ void WebProcessProxy::sendWasmDebuggerResponse(const String& response)
 
     debuggable->sendResponseToFrontend(response);
 }
+
+#if ENABLE(IPC_TESTING_API)
+void WebProcessProxy::takeInvalidMessageStringForTesting(CompletionHandler<void(String&&)>&& callback)
+{
+    ASCIILiteral error = protectedConnection()->takeErrorString();
+    String errorString = !error.isNull() ? String::fromUTF8(error) : emptyString();
+    callback(WTFMove(errorString));
+}
+#endif
 
 #endif // ENABLE(REMOTE_INSPECTOR) && ENABLE(WEBASSEMBLY)
 

@@ -49,10 +49,10 @@ public:
     WEBCORE_EXPORT ~Range();
 
     Node& startContainer() const final { return m_start.container(); }
-    Ref<Node> protectedStartContainer() const;
+    WEBCORE_EXPORT Ref<Node> protectedStartContainer() const;
     unsigned startOffset() const final { return m_start.offset(); }
     Node& endContainer() const final { return m_end.container(); }
-    Ref<Node> protectedEndContainer() const;
+    WEBCORE_EXPORT Ref<Node> protectedEndContainer() const;
     unsigned endOffset() const final { return m_end.offset(); }
     bool collapsed() const final { return m_start == m_end; }
     WEBCORE_EXPORT Node* commonAncestorContainer() const;

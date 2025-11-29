@@ -49,7 +49,7 @@
 #include "RenderImage.h"
 #include "RenderLayerCompositor.h"
 #include "RenderObjectDocument.h"
-#include "RenderVideo.h"
+#include "RenderVideoInlines.h"
 #include "RenderView.h"
 #include "ScriptController.h"
 #include "Settings.h"

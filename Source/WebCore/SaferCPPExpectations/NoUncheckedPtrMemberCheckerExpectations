@@ -1,9 +1,5 @@
 Modules/websockets/WorkerThreadableWebSocketChannel.h
 [ iOS ] accessibility/ios/WebAccessibilityObjectWrapperIOS.h
-[ iOS ] page/ios/ContentChangeObserver.h
-[ iOS ] platform/ios/DeviceMotionClientIOS.h
-[ iOS ] platform/ios/DeviceOrientationClientIOS.h
-[ iOS ] rendering/ios/RenderThemeIOS.mm
 bindings/js/JSLazyEventListener.cpp
 css/CSSToLengthConversionData.h
 css/SelectorChecker.h
@@ -13,7 +9,6 @@ dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
 editing/TextCheckingHelper.h
-html/parser/HTMLTreeBuilder.h
 inspector/InstrumentingAgents.h
 inspector/agents/WebHeapAgent.cpp
 layout/formattingContexts/inline/AbstractLineBuilder.h
@@ -34,16 +29,15 @@ layout/layouttree/LayoutIterator.h
 loader/DocumentThreadableLoader.h
 loader/WorkerThreadableLoader.h
 page/FrameSnapshotting.cpp
-page/UndoManager.h
+[ iOS ] page/ios/ContentChangeObserver.h
 platform/graphics/TextRunIterator.h
 platform/graphics/ca/TileCoverageMap.h
-platform/mock/DeviceOrientationClientMock.h
+[ iOS ] platform/ios/DeviceMotionClientIOS.h
+[ iOS ] platform/ios/DeviceOrientationClientIOS.h
 rendering/BackgroundPainter.h
 rendering/GlyphDisplayListCache.cpp
 rendering/GridTrackSizingAlgorithm.h
 rendering/InlineBoxPainter.h
-rendering/LayerOverlapMap.cpp
-rendering/LayerOverlapMap.h
 rendering/LayoutRepainter.h
 rendering/LegacyInlineIterator.h
 rendering/LegacyLineLayout.h
@@ -74,11 +68,8 @@ rendering/RenderText.cpp
 rendering/TableLayout.h
 rendering/TextBoxPainter.h
 rendering/TextDecorationPainter.h
+[ iOS ] rendering/ios/RenderThemeIOS.mm
 rendering/line/BreakingContext.h
-rendering/line/LineBreaker.h
-rendering/line/LineWidth.h
-rendering/line/TrailingObjects.h
-rendering/line/WordTrailingSpace.h
 rendering/mathml/RenderMathMLScripts.h
 rendering/shapes/ShapeOutsideInfo.h
 rendering/svg/SVGRenderingContext.h

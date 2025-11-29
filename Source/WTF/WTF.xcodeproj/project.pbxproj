@@ -345,7 +345,6 @@
 		DD3DC8AE27A4BF8E007E5B61 /* WordLock.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE4479B1B7AAA03009498EB /* WordLock.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8AF27A4BF8E007E5B61 /* FastTLS.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F79C7C31E73511800EB34D1 /* FastTLS.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8B027A4BF8E007E5B61 /* BagToHashMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FB14E1A1810E1DA009B6B4D /* BagToHashMap.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		DD3DC8B127A4BF8E007E5B61 /* VectorHash.h in Headers */ = {isa = PBXBuildFile; fileRef = E419F2E623AB9E2300B26129 /* VectorHash.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8B227A4BF8E007E5B61 /* IterationStatus.h in Headers */ = {isa = PBXBuildFile; fileRef = 5295B00427920C54006D746A /* IterationStatus.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8B327A4BF8E007E5B61 /* RandomDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 24F1B248619F412296D1C19C /* RandomDevice.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC8B427A4BF8E007E5B61 /* LikelyDenseUnsignedIntegerSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 337B2D6926546EAA00DDFD3D /* LikelyDenseUnsignedIntegerSet.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -2000,7 +1999,6 @@
 		E3EE4E8E2E8A34BC00398282 /* unumberoptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = unumberoptions.h; sourceTree = "<group>"; };
 		E3EE4E8F2E8A34BC00398282 /* usimplenumberformatter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = usimplenumberformatter.h; sourceTree = "<group>"; };
 		E3FD6D6627A1F6AD00935000 /* GenericHashKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GenericHashKey.h; sourceTree = "<group>"; };
-		E419F2E623AB9E2300B26129 /* VectorHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorHash.h; sourceTree = "<group>"; };
 		E42785642E9BC0F200A0DEF4 /* EnumSet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EnumSet.h; sourceTree = "<group>"; };
 		E4A0AD371A96245500536DF6 /* WorkQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WorkQueue.cpp; sourceTree = "<group>"; };
 		E4A0AD381A96245500536DF6 /* WorkQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WorkQueue.h; sourceTree = "<group>"; };
@@ -2763,7 +2761,6 @@
 				BC05ACA52CEA70E500750CB1 /* VariantListOperations.h */,
 				0F95B63420CB53C100479635 /* Vector.cpp */,
 				A8A47370151A825B004123FF /* Vector.h */,
-				E419F2E623AB9E2300B26129 /* VectorHash.h */,
 				A8A47371151A825B004123FF /* VectorTraits.h */,
 				A8A47372151A825B004123FF /* VMTags.h */,
 				0F66B2881DC97BAB004A1D3F /* WallTime.cpp */,
@@ -3925,7 +3922,6 @@
 				DD3DC90B27A4BF8E007E5B61 /* Vector.h in Headers */,
 				4448265228D18CA600D916E8 /* VectorCF.h in Headers */,
 				DDF3079727C086CD006A526F /* VectorCocoa.h in Headers */,
-				DD3DC8B127A4BF8E007E5B61 /* VectorHash.h in Headers */,
 				DD3DC95327A4BF8E007E5B61 /* VectorTraits.h in Headers */,
 				DD3DC95127A4BF8E007E5B61 /* VMTags.h in Headers */,
 				DD3DC8EE27A4BF8E007E5B61 /* WallTime.h in Headers */,

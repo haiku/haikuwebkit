@@ -861,6 +861,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     Modules/webxr/XRCanvasConfiguration.h
     Modules/webxr/XRGPUProjectionLayerInit.h
+    Modules/webxr/XRHitTestTrackableType.h
 
     Scripts/generate-log-declarations.py
 
@@ -3121,6 +3122,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/RenderLineBreak.h
     rendering/RenderListItem.h
     rendering/RenderMedia.h
+    rendering/RenderMediaInlines.h
     rendering/RenderModel.h
     rendering/RenderObject.h
     rendering/RenderObjectDocument.h
@@ -3140,6 +3142,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/RenderTreeAsText.h
     rendering/RenderTreeMutationDisallowedScope.h
     rendering/RenderVideo.h
+    rendering/RenderVideoInlines.h
     rendering/RenderView.h
     rendering/RenderViewTransitionCapture.h
     rendering/RenderWidget.h
@@ -3245,7 +3248,16 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/StyleValueTypes.h
 
+    style/values/align/StyleAlignContent.h
+    style/values/align/StyleAlignItems.h
+    style/values/align/StyleAlignSelf.h
+    style/values/align/StyleBaselineAlignmentPreference.h
     style/values/align/StyleGapGutter.h
+    style/values/align/StyleJustifyContent.h
+    style/values/align/StyleJustifyItems.h
+    style/values/align/StyleJustifySelf.h
+    style/values/align/StyleLegacyPosition.h
+    style/values/align/StyleOverflowPosition.h
 
     style/values/anchor-position/StyleAnchorName.h
 
@@ -3454,6 +3466,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/shapes/StylePathOperationWrappers.h
     style/values/shapes/StylePolygonFunction.h
     style/values/shapes/StyleRectFunction.h
+    style/values/shapes/StyleShapeForward.h
     style/values/shapes/StyleShapeFunction.h
     style/values/shapes/StyleShapeImageThreshold.h
     style/values/shapes/StyleShapeMargin.h
