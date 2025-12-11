@@ -1610,8 +1610,11 @@ int Element::clientWidth()
         // Currently, WebKit doesn't have table wrapper box, and we are supposed to
         // retrieve clientWidth/Height from table wrapper box, not table grid box. So
         // when we retrieve clientWidth/Height, it includes table's border size.
-        if (renderer->isRenderTable())
+        if (renderer->isRenderTable()) {
+            if (renderer->style().boxSizing() == BoxSizing::ContentBox)
+                clientWidth += renderer->paddingLeft() + renderer->paddingRight();
             clientWidth += renderer->borderLeft() + renderer->borderRight();
+        }
         return convertToNonSubpixelValue(adjustLayoutUnitForAbsoluteZoom(clientWidth, *renderer).toDouble());
     }
     return 0;
@@ -1644,8 +1647,11 @@ int Element::clientHeight()
         // Currently, WebKit doesn't have table wrapper box, and we are supposed to
         // retrieve clientWidth/Height from table wrapper box, not table grid box. So
         // when we retrieve clientWidth/Height, it includes table's border size.
-        if (renderer->isRenderTable())
+        if (renderer->isRenderTable()) {
+            if (renderer->style().boxSizing() == BoxSizing::ContentBox)
+                clientHeight += renderer->paddingTop() + renderer->paddingBottom();
             clientHeight += renderer->borderTop() + renderer->borderBottom();
+        }
         return convertToNonSubpixelValue(adjustLayoutUnitForAbsoluteZoom(clientHeight, *renderer).toDouble());
     }
     return 0;
@@ -2278,8 +2284,10 @@ void Element::notifyAttributeChanged(const QualifiedName& name, const AtomString
         CustomElementReactionQueue::enqueueAttributeChangedCallbackIfNeeded(*this, name, oldValue, newValue);
 
     if (oldValue != newValue) {
-        invalidateNodeListAndCollectionCachesInAncestorsForAttribute(name);
-
+        IsMutationBySetInnerHTML isMutationBySetInnerHTML = reason == AttributeModificationReason::ParserFastPath
+            ? IsMutationBySetInnerHTML::Yes
+            : IsMutationBySetInnerHTML::No;
+        invalidateNodeListCollectionAndInnerHTMLPrefixCachesInAncestorsForAttribute(name, isMutationBySetInnerHTML);
         if (CheckedPtr cache = document().existingAXObjectCache())
             cache->deferAttributeChangeIfNeeded(*this, name, oldValue, newValue);
 
@@ -2358,6 +2366,10 @@ void Element::attributeChanged(const QualifiedName& name, const AtomString& oldV
             updateEffectiveLangStateAndPropagateToDescendants();
         break;
     }
+    case AttributeNames::customelementregistryAttr:
+        if (reason == AttributeModificationReason::Parser && !isDefinedCustomElement())
+            setUsesNullCustomElementRegistry();
+        break;
     default: {
         Ref document = this->document();
         if (isElementReflectionAttribute(document->settings(), name) || isElementsArrayReflectionAttribute(name)) {
@@ -2569,7 +2581,7 @@ void Element::classAttributeChanged(const AtomString& newClassString, AttributeM
             classList->associatedAttributeValueChanged();
     }
 
-    if (reason == AttributeModificationReason::Parser) {
+    if (reason == AttributeModificationReason::Parser || reason == AttributeModificationReason::ParserFastPath) {
         // If ElementData is ShareableElementData created in parserSetAttributes,
         // it is possible that SpaceSplitString is already created and set.
         // We also do not need to invalidate caches / styles since it is not inserted to the tree yet.
@@ -2635,7 +2647,7 @@ void Element::setIsLink(bool flag)
 
 bool Element::allowsDoubleTapGesture() const
 {
-    if (renderStyle() && renderStyle()->touchActions() != TouchAction::Auto)
+    if (renderStyle() && !renderStyle()->touchAction().isAuto())
         return false;
 
     RefPtr parent = parentElement();
@@ -2824,7 +2836,7 @@ void Element::stripScriptingAttributes(Vector<Attribute>& attributeVector) const
     });
 }
 
-void Element::parserSetAttributes(std::span<const Attribute> attributes)
+void Element::parserSetAttributes(std::span<const Attribute> attributes, AttributeModificationReason reason)
 {
     ASSERT(!isConnected());
     ASSERT(!parentNode());
@@ -2844,7 +2856,7 @@ void Element::parserSetAttributes(std::span<const Attribute> attributes)
 
     // Use attributes instead of m_elementData because attributeChanged might modify m_elementData.
     for (const auto& attribute : attributes)
-        notifyAttributeChanged(attribute.name(), nullAtom(), attribute.value(), AttributeModificationReason::Parser);
+        notifyAttributeChanged(attribute.name(), nullAtom(), attribute.value(), reason);
 }
 
 void Element::didMoveToNewDocument(Document& oldDocument, Document& newDocument)
@@ -3044,23 +3056,23 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
                 updateNameForDocument(*newHTMLDocument, nullAtom(), nameValue);
         }
 
-        if (parentOfInsertedTree.isInTreeScope() && usesScopedCustomElementRegistryMap()) {
-            if (CustomElementRegistry::registryForElement(*this) == treeScope().customElementRegistry())
-                CustomElementRegistry::removeFromScopedCustomElementRegistryMap(*this);
-        }
-    }
-
-    if (usesNullCustomElementRegistry() && !parentOfInsertedTree.usesNullCustomElementRegistry()) {
-        clearUsesNullCustomElementRegistry();
-        if (parentOfInsertedTree.usesScopedCustomElementRegistryMap()) [[unlikely]] {
-            RefPtr registry = CustomElementRegistry::registryForElement(downcast<Element>(parentOfInsertedTree));
-            ASSERT(registry);
-            CustomElementRegistry::addToScopedCustomElementRegistryMap(*this, *registry);
+        if (parentOfInsertedTree.isInTreeScope()) {
+            if (usesScopedCustomElementRegistryMap()) {
+                if (CustomElementRegistry::registryForElement(*this) == treeScope().customElementRegistry())
+                    CustomElementRegistry::removeFromScopedCustomElementRegistryMap(*this);
+            } else if (!usesNullCustomElementRegistry()) {
+                if (treeScope().customElementRegistry() != document().customElementRegistry()) [[unlikely]] {
+                    // This element was moved into a shadow tree with a scoped custom elemnt registry.
+                    // Keep using the document's non-scoped custom element registry.
+                    if (RefPtr window = document().window())
+                        CustomElementRegistry::addToScopedCustomElementRegistryMap(*this, window->ensureCustomElementRegistry());
+                }
+            }
         }
     }
 
     if (insertionType.connectedToDocument) {
-        if (isCustomElementUpgradeCandidate()) [[unlikely]] {
+        if (isCustomElementUpgradeCandidate() && !usesNullCustomElementRegistry()) [[unlikely]] {
             ASSERT(isConnected());
             CustomElementReactionQueue::tryToUpgradeElement(*this);
         }
@@ -3375,9 +3387,14 @@ ExceptionOr<ShadowRoot&> Element::attachShadow(const ShadowRootInit& init, std::
         }
         return Exception { ExceptionCode::NotSupportedError };
     }
-    RefPtr registry = init.customElementRegistry;
-    if (registry && !registry->isScoped() && registry != document().customElementRegistry())
-        return Exception { ExceptionCode::NotSupportedError };
+    RefPtr<CustomElementRegistry> registry;
+    if (init.customElementRegistry) {
+        registry = *init.customElementRegistry;
+        if (registry && !registry->isScoped() && registry != document().customElementRegistry())
+            return Exception { ExceptionCode::NotSupportedError };
+        if (!registry)
+            registryKind = CustomElementRegistryKind::Null;
+    }
     auto scopedRegistry = ShadowRootScopedCustomElementRegistry::No;
     if (!registryKind)
         registryKind = !registry && usesNullCustomElementRegistry() ? CustomElementRegistryKind::Null : CustomElementRegistryKind::Window;
@@ -3412,7 +3429,7 @@ ExceptionOr<ShadowRoot&> Element::attachDeclarativeShadow(ShadowRootMode mode, S
         clonable == ShadowRootClonable::Yes,
         serializable == ShadowRootSerializable::Yes,
         SlotAssignmentMode::Named,
-        nullptr,
+        std::nullopt,
         referenceTarget,
     }, registryKind);
     if (exceptionOrShadowRoot.hasException())
@@ -4350,7 +4367,11 @@ ExceptionOr<void> Element::replaceChildrenWithMarkup(const String& markup, Optio
     if (fragment.hasException())
         return fragment.releaseException();
 
-    return replaceChildrenWithFragment(container, fragment.releaseReturnValue());
+    bool usedFastPath = fragment.returnValue()->hasWasParsedWithFastPath();
+    auto result = replaceChildrenWithFragment(container, fragment.releaseReturnValue());
+    if (!result.hasException() && usedFastPath)
+        document().updateCachedSetInnerHTML(markup, container.get(), *this);
+    return result;
 }
 
 ExceptionOr<void> Element::setHTMLUnsafe(Variant<RefPtr<TrustedHTML>, String>&& html)
@@ -5066,8 +5087,33 @@ void Element::requestFullscreen(FullscreenOptions&& options, RefPtr<DeferredProm
 #else
     bool optionsEnabled = document().settings().fullScreenKeyboardLock();
 #endif
-    if (optionsEnabled && document().page() && document().page()->hardwareKeyboardAttached())
+
+    if (optionsEnabled) {
+#if PLATFORM(IOS_FAMILY)
+        // Registers a callback to exit fullscreen mode
+        document().page()->addHardwareKeyboardAttachmentObserver([weakThis = WeakPtr { *this }](bool attached) {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis)
+                return;
+
+            if (attached)
+                return;
+
+            // Exit the fullscreen API when the hardware keyboard is detached.
+            protectedThis->protectedDocument()->postTask([weakThis](ScriptExecutionContext&) {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
+
+                Ref document = protectedThis->document();
+                if (document->fullscreen().fullscreenElement())
+                    document->fullscreen().fullyExitFullscreen();
+            });
+        });
+#endif
+        // Set the desired keyboard lock mode while entering fullscreen.
         protectedDocument()->fullscreen().setKeyboardLockMode(options.keyboardLock);
+    }
     else {
         if (options.keyboardLock != FullscreenOptions::KeyboardLock::None) {
             promise->reject(ExceptionCode::NotSupportedError, "options.keyboardLock is unavailable."_s);

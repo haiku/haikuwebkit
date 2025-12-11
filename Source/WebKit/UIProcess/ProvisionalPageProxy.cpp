@@ -144,7 +144,7 @@ ProvisionalPageProxy::ProvisionalPageProxy(WebPageProxy& page, Ref<FrameProcess>
         else
             m_mainFrame->frameLoadState().didStartProvisionalLoad(URL { m_request.url() });
         page.didReceiveServerRedirectForProvisionalLoadForFrameShared(WTFMove(process), m_mainFrame->frameID(), m_navigationID, WTFMove(m_request), { });
-    } else if (previousMainFrame && !previousMainFrame->provisionalURL().isEmpty()) {
+    } else if (previousMainFrame && !previousMainFrame->provisionalURL().isEmpty() && !m_isProcessSwappingForNewWindow) {
         // In case of a process swap after response policy, the didStartProvisionalLoad already happened but the new main frame doesn't know about it
         // so we need to tell it so it can update its provisional URL.
         protectedMainFrame()->didStartProvisionalLoad(URL { previousMainFrame->provisionalURL() });
@@ -295,15 +295,10 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
             mainFrame->frameTreeCreationParameters(),
             websitePolicies ? std::optional(websitePolicies->dataForProcess(process)) : std::nullopt
         };
-        creationParameters.provisionalFrameCreationParameters = ProvisionalFrameCreationParameters {
-            m_mainFrame->frameID(),
+        creationParameters.provisionalFrameCreationParameters = mainFrame->provisionalFrameCreationParameters(
             page->mainFrame() && !m_isProcessSwappingForNewWindow ? std::optional(page->mainFrame()->frameID()) : std::nullopt,
-            std::nullopt,
-            mainFrame->effectiveSandboxFlags(),
-            mainFrame->effectiveReferrerPolicy(),
-            mainFrame->scrollingMode(),
-            mainFrame->remoteFrameSize()
-        };
+            CommitTiming::WaitForLoad
+        );
     }
     process->send(Messages::WebProcess::CreateWebPage(m_webPageID, WTFMove(creationParameters)), 0);
     if (!preferences->siteIsolationEnabled())
@@ -645,13 +640,13 @@ void ProvisionalPageProxy::bindAccessibilityTree(const String& plugID)
 #endif
 
 #if ENABLE(CONTENT_FILTERING)
-void ProvisionalPageProxy::contentFilterDidBlockLoadForFrame(IPC::Connection& connection, const WebCore::ContentFilterUnblockHandler& unblockHandler, FrameIdentifier frameID)
+void ProvisionalPageProxy::contentFilterDidBlockLoadForFrame(const WebCore::ContentFilterUnblockHandler& unblockHandler, FrameIdentifier frameID)
 {
     RefPtr page = m_page.get();
     if (!page)
         return;
 
-    page->contentFilterDidBlockLoadForFrameShared(connection, unblockHandler, frameID);
+    page->contentFilterDidBlockLoadForFrameShared(unblockHandler, frameID);
 }
 #endif
 

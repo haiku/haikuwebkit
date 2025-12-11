@@ -326,7 +326,7 @@ pas_try_reallocate(void* old_ptr,
         if (!begin)
             return allocate_callback(heap, new_size, allocation_mode, allocate_callback_arg);
 
-        if (PAS_UNLIKELY(pas_system_heap_is_enabled(config.kind))) {
+        if (PAS_UNLIKELY(pas_system_heap_should_supplant_bmalloc(config.kind))) {
             void* raw_result;
             
             PAS_ASSERT(free_mode == pas_reallocate_free_if_successful);

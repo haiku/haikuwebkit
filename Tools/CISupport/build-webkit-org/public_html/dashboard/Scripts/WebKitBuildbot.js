@@ -66,7 +66,7 @@ WebKitBuildbot = function()
         "Apple-Sonoma JSC": {platform: Dashboard.Platform.macOSSonoma, heading: "JavaScript", combinedQueues: {
             "Apple-Sonoma-Debug-Test262-Tests": {heading: "Debug Test262 (Tests)"},
             "Apple-Sonoma-Release-Test262-Tests": {heading: "Release Test262 (Tests)"},
-            "Apple-Sonoma-AppleSilicon-Debug-JSC-Tests": {heading: "Debug arm64 JSC (Tests)"},
+            "Apple-Sonoma-AppleSilicon-O3-Debug-JSC-BuildAndTest": {heading: "O3 Debug arm64 JSC (BuildAndTest)"},
             "Apple-Sonoma-AppleSilicon-Release-JSC-Tests": {heading: "Release arm64 JSC (Tests)"},
             "Apple-Sonoma-Intel-Release-JSC-Tests": {heading: "Release x86_64 JSC (Tests)"},
         }},

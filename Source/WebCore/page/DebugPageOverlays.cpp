@@ -50,6 +50,11 @@
 #include "RenderView.h"
 #include "ScrollingCoordinator.h"
 #include "Settings.h"
+
+#if PLATFORM(COCOA)
+#include <pal/cocoa/EnhancedSecurityCocoa.h>
+#endif
+
 #include <wtf/SortedArrayMap.h>
 #include <wtf/text/MakeString.h>
 
@@ -675,6 +680,50 @@ bool InteractionRegionOverlay::mouseEvent(PageOverlay& overlay, const PlatformMo
 }
 
 #if COMPILER(CLANG)
+#pragma mark - EnhancedSecurityOverlay
+#endif
+
+class EnhancedSecurityOverlay final : public RegionOverlay {
+public:
+    static Ref<EnhancedSecurityOverlay> create(Page& page)
+    {
+        return adoptRef(*new EnhancedSecurityOverlay(page));
+    }
+
+private:
+    explicit EnhancedSecurityOverlay(Page& page)
+        : RegionOverlay(page, Color::transparentBlack)
+    {
+    }
+
+    bool updateRegion() final
+    {
+        m_overlay->setNeedsDisplay();
+        return true;
+    }
+    void drawRect(PageOverlay&, GraphicsContext&, const IntRect& dirtyRect) final;
+};
+
+void EnhancedSecurityOverlay::drawRect(PageOverlay&, GraphicsContext& context, const IntRect& dirtyRect)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+
+#if PLATFORM(COCOA)
+    bool isEnhancedSecurityEnabled = PAL::isEnhancedSecurityEnabledForCurrentProcess();
+#else
+    bool isEnhancedSecurityEnabled = false;
+#endif
+
+    Color overlayColor = isEnhancedSecurityEnabled
+        ? Color::green.colorWithAlphaByte(32) // Green overlay when enabled
+        : Color::red.colorWithAlphaByte(32); // Red overlay when disabled
+
+    context.fillRect(dirtyRect, overlayColor);
+}
+
+#if COMPILER(CLANG)
 #pragma mark - RegionOverlay
 #endif
 
@@ -687,6 +736,8 @@ Ref<RegionOverlay> RegionOverlay::create(Page& page, DebugPageOverlays::RegionTy
         return NonFastScrollableRegionOverlay::create(page);
     case DebugPageOverlays::RegionType::InteractionRegion:
         return InteractionRegionOverlay::create(page);
+    case DebugPageOverlays::RegionType::EnhancedSecurity:
+        return EnhancedSecurityOverlay::create(page);
     }
     ASSERT_NOT_REACHED();
     return MouseWheelRegionOverlay::create(page);
@@ -852,11 +903,16 @@ void DebugPageOverlays::updateOverlayRegionVisibility(Page& page, OptionSet<Debu
         showRegionOverlay(page, RegionType::WheelEventHandlers);
     else
         hideRegionOverlay(page, RegionType::WheelEventHandlers);
-    
+
     if (visibleRegions.contains(DebugOverlayRegions::InteractionRegion))
         showRegionOverlay(page, RegionType::InteractionRegion);
     else
         hideRegionOverlay(page, RegionType::InteractionRegion);
+
+    if (visibleRegions.contains(DebugOverlayRegions::EnhancedSecurity))
+        showRegionOverlay(page, RegionType::EnhancedSecurity);
+    else
+        hideRegionOverlay(page, RegionType::EnhancedSecurity);
 }
 
 void DebugPageOverlays::settingsChanged(Page& page)

@@ -43,6 +43,7 @@
 #include "BroadcastChannelRegistry.h"
 #include "CacheStorageProvider.h"
 #include "CachedImage.h"
+#include "CaptionDisplaySettingsClient.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
 #include "CommonAtomStrings.h"
@@ -109,7 +110,6 @@
 #include "ImageOverlay.h"
 #include "ImageOverlayController.h"
 #include "InspectorBackendClient.h"
-#include "InspectorController.h"
 #include "InspectorInstrumentation.h"
 #include "IntelligenceTextEffectsSupport.h"
 #include "KeyboardScrollingAnimator.h"
@@ -134,6 +134,7 @@
 #include "PageConfiguration.h"
 #include "PageDebuggable.h"
 #include "PageGroup.h"
+#include "PageInspectorController.h"
 #include "PageOverlayController.h"
 #include "PaymentCoordinator.h"
 #include "PerformanceLogging.h"
@@ -228,7 +229,6 @@
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
 #include "HTMLVideoElement.h"
-#include "MediaPlaybackTarget.h"
 #endif
 
 #if PLATFORM(MAC)
@@ -256,6 +256,10 @@
 
 #if PLATFORM(VISION) && ENABLE(GAMEPAD)
 #include "GamepadManager.h"
+#endif
+
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+#include "DocumentImmersive.h"
 #endif
 
 namespace WebCore {
@@ -382,7 +386,7 @@ Page::Page(PageConfiguration&& pageConfiguration)
 #if ENABLE(CONTEXT_MENUS)
     , m_contextMenuController(makeUniqueRef<ContextMenuController>(*this, WTFMove(pageConfiguration.contextMenuClient)))
 #endif
-    , m_inspectorController(makeUniqueRefWithoutRefCountedCheck<InspectorController>(*this, WTFMove(pageConfiguration.inspectorBackendClient)))
+    , m_inspectorController(makeUniqueRefWithoutRefCountedCheck<PageInspectorController>(*this, WTFMove(pageConfiguration.inspectorBackendClient)))
     , m_pointerCaptureController(makeUniqueRef<PointerCaptureController>(*this))
 #if ENABLE(POINTER_LOCK)
     , m_pointerLockController(makeUniqueRefWithoutRefCountedCheck<PointerLockController>(*this))
@@ -2274,6 +2278,12 @@ void Page::updateRendering()
     m_renderingUpdateRemainingSteps.last().remove(RenderingUpdateStep::Fullscreen);
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    runProcessingStep(RenderingUpdateStep::Immersive, [] (Document& document) {
+        document.protectedImmersive()->dispatchPendingEvents();
+    });
+#endif
+
     runProcessingStep(RenderingUpdateStep::VideoFrameCallbacks, [] (Document& document) {
         document.serviceRequestVideoFrameCallbacks();
     });
@@ -2603,7 +2613,7 @@ void Page::prioritizeVisibleResources()
         return;
 
     auto resourceLoaders = toPrioritize.map([](auto& resource) {
-        return resource->loader();
+        return RefPtr { resource->loader() };
     });
 
     platformStrategies()->loaderStrategy()->prioritizeResourceLoads(resourceLoaders);
@@ -3133,9 +3143,7 @@ RefPtr<HTMLMediaElement> Page::bestMediaElementForRemoteControls(MediaElementSes
 
 void Page::playbackControlsManagerUpdateTimerFired()
 {
-    WeakPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get());
-    RefPtr document = localMainFrame ? localMainFrame->document() : nullptr;
-    if (auto bestMediaElement = bestMediaElementForRemoteControls(MediaElementSession::PlaybackControlsPurpose::ControlsManager, document.get()))
+    if (auto bestMediaElement = bestMediaElementForRemoteControls(MediaElementSession::PlaybackControlsPurpose::ControlsManager, nullptr))
         chrome().client().setUpPlaybackControlsManager(*bestMediaElement);
     else
         chrome().client().clearPlaybackControlsManager();
@@ -3368,7 +3376,7 @@ void Page::setActivityState(OptionSet<ActivityState> activityState)
         observer->activityStateDidChange(oldActivityState, m_activityState);
 
     if (wasVisibleAndActive != isVisibleAndActive()) {
-        if (RefPtr manager = mediaSessionManager())
+        if (RefPtr manager = mediaSessionManagerIfExists())
             manager->updateNowPlayingInfoIfNecessary();
         stopKeyboardScrollAnimation();
     }
@@ -4132,7 +4140,7 @@ void Page::setMockMediaPlaybackTargetPickerEnabled(bool enabled)
     chrome().client().setMockMediaPlaybackTargetPickerEnabled(enabled);
 }
 
-void Page::setMockMediaPlaybackTargetPickerState(const String& name, MediaPlaybackTargetContext::MockState state)
+void Page::setMockMediaPlaybackTargetPickerState(const String& name, MediaPlaybackTargetMockState state)
 {
     chrome().client().setMockMediaPlaybackTargetPickerState(name, state);
 }
@@ -5068,6 +5076,9 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, RenderingUpdateStep step)
     case RenderingUpdateStep::RestoreScrollPositionAndViewState: ts << "RestoreScrollPositionAndViewState"_s; break;
     case RenderingUpdateStep::AdjustVisibility: ts << "AdjustVisibility"_s; break;
     case RenderingUpdateStep::SnapshottedScrollOffsets: ts << "SnapshottedScrollOffsets"_s; break;
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    case RenderingUpdateStep::Immersive: ts << "Immersive"_s; break;
+#endif
     }
     return ts;
 }
@@ -5075,8 +5086,13 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, RenderingUpdateStep step)
 ImageOverlayController& Page::imageOverlayController()
 {
     if (!m_imageOverlayController)
-        m_imageOverlayController = makeUnique<ImageOverlayController>(*this);
+        lazyInitialize(m_imageOverlayController, makeUniqueWithoutRefCountedCheck<ImageOverlayController>(*this));
     return *m_imageOverlayController;
+}
+
+Ref<ImageOverlayController> Page::protectedImageOverlayController()
+{
+    return imageOverlayController();
 }
 
 Page* Page::serviceWorkerPage(ScriptExecutionContextIdentifier serviceWorkerPageIdentifier)
@@ -5935,7 +5951,7 @@ bool Page::isAlwaysOnLoggingAllowed() const
     return m_sessionID.isAlwaysOnLoggingAllowed() || settings().allowPrivacySensitiveOperationsInNonPersistentDataStores();
 }
 
-Ref<InspectorController> Page::protectedInspectorController()
+Ref<PageInspectorController> Page::protectedInspectorController()
 {
     return m_inspectorController.get();
 }
@@ -6009,6 +6025,10 @@ RefPtr<MediaSessionManagerInterface> Page::mediaSessionManager()
         }
 
         m_mediaSessionManager = m_mediaSessionManagerFactory.value()(*m_identifier);
+
+#if USE(AUDIO_SESSION)
+        Ref { *m_mediaSessionManager }->setShouldDeactivateAudioSession(true);
+#endif
 
         MediaEngineConfigurationFactory::setMediaSessionManagerProvider([] (PageIdentifier identifier) {
             return Page::mediaSessionManagerForPageIdentifier(identifier);
@@ -6084,5 +6104,52 @@ void Page::updateControlTints()
             view->updateControlTints();
     });
 }
+
+#if PLATFORM(IOS_FAMILY)
+void Page::addHardwareKeyboardAttachmentObserver(HardwareKeyboardAttachmentObserver&& observer)
+{
+    m_hardwareKeyboardAttachmentObservers.append(WTFMove(observer));
+}
+
+void Page::flushHardwareKeyboardAttachmentObservers()
+{
+    bool attached = m_hardwareKeyboardAttached;
+    std::ranges::for_each(m_hardwareKeyboardAttachmentObservers, [attached](auto& observer) {
+        observer(attached);
+    });
+    m_hardwareKeyboardAttachmentObservers.clear();
+}
+
+void Page::didUpdateHardwareKeyboardAttachment(bool attached)
+{
+    if (m_hardwareKeyboardAttached == attached)
+        return;
+
+    m_hardwareKeyboardAttached = attached;
+    flushHardwareKeyboardAttachmentObservers();
+}
+#endif
+
+#if ENABLE(VIDEO)
+void Page::setCaptionDisplaySettingsClientForTesting(Ref<CaptionDisplaySettingsClient>&& client)
+{
+    m_captionDisplaySettingsClientForTesting = WTFMove(client);
+}
+
+void Page::clearCaptionDisplaySettingsClientForTesting()
+{
+    m_captionDisplaySettingsClientForTesting = nullptr;
+}
+
+void Page::showCaptionDisplaySettings(HTMLMediaElement& element, const ResolvedCaptionDisplaySettingsOptions& options, CompletionHandler<void(ExceptionOr<void>)>&& callback)
+{
+    if (RefPtr client = m_captionDisplaySettingsClientForTesting) {
+        client->showCaptionDisplaySettings(element, options, WTFMove(callback));
+        return;
+    }
+
+    chrome().client().showCaptionDisplaySettings(element, options, WTFMove(callback));
+}
+#endif
 
 } // namespace WebCore

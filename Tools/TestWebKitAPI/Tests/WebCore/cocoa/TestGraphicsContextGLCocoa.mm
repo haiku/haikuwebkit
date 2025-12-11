@@ -538,7 +538,12 @@ TEST_P(AnyContextAttributeTest, DisplayBuffersAreNotRecycledWhedInUse)
 
 // Test that drawing to GraphicsContextGL and marking the display buffer in use does not leak big
 // amounts of memory for each displayed buffer.
+// FIXME when rdar://164264557 is resolved.
+#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+TEST_P(AnyContextAttributeTest, DISABLED_UnrecycledDisplayBuffersNoLeaks)
+#else
 TEST_P(AnyContextAttributeTest, UnrecycledDisplayBuffersNoLeaks)
+#endif
 {
     // The test detects the leak by observing memory footprint. However, some of the freed IOSurface
     // memory (130mb) stays resident, presumably by intention of IOKit. The test would originally leak

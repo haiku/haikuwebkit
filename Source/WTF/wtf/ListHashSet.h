@@ -407,6 +407,9 @@ inline ListHashSet<T, U>::ListHashSet(const ListHashSet& other)
 template<typename T, typename U>
 inline ListHashSet<T, U>& ListHashSet<T, U>::operator=(const ListHashSet& other)
 {
+    if (&other == this)
+        return *this;
+
     ListHashSet tmp(other);
     swap(tmp);
     return *this;

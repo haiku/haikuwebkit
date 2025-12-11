@@ -37,7 +37,8 @@
 #import "Texture.h"
 #import "TextureOrTextureView.h"
 #if ENABLE(WEBGPU_SWIFT)
-#import "WebGPUSwiftInternal.h"
+#import "CxxBridging.h"
+#import "WebGPUSwift-Generated.h"
 #endif
 #import <wtf/CheckedArithmetic.h>
 #import <wtf/IndexedRange.h>
@@ -368,10 +369,8 @@ bool Device::isStencilOnlyFormat(MTLPixelFormat format)
 
 id<MTLFunction> Device::nopVertexFunction(id<MTLDevice> device)
 {
-    static id<MTLFunction> function = nil;
-    NSError *error = nil;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [&] {
+    static id<MTLFunction> function = [&] {
+        NSError *error = nil;
         MTLCompileOptions* options = [MTLCompileOptions new];
         ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         options.fastMathEnabled = YES;
@@ -379,8 +378,8 @@ id<MTLFunction> Device::nopVertexFunction(id<MTLDevice> device)
         id<MTLLibrary> library = [device newLibraryWithSource:@"[[vertex]] float4 vsNop() { return (float4)0; }" options:options error:&error];
         if (error)
             WTFLogAlways("%@", error); // NOLINT
-        function = [library newFunctionWithName:@"vsNop"];
-    });
+        return [library newFunctionWithName:@"vsNop"];
+    }();
 
     return function;
 }
@@ -648,7 +647,7 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
             textureToClear = mtlAttachment.texture;
 
         auto compositorTexture = texture;
-        if (attachment.resolveTarget) {
+        if (attachment.resolveTarget || attachment.resolveTexture) {
             auto resolveTarget = attachment.resolveTarget ? TextureOrTextureView(fromAPI(attachment.resolveTarget)) : TextureOrTextureView(fromAPI(attachment.resolveTexture));
             compositorTexture = resolveTarget;
 
@@ -675,8 +674,7 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         if (textureToClear) {
             TextureAndClearColor *textureWithResolve = [[TextureAndClearColor alloc] initWithTexture:textureToClear];
             [attachmentsToClear setObject:textureWithResolve forKey:@(i)];
-            if (textureToClear)
-                texture.setPreviouslyCleared();
+            texture.setPreviouslyCleared();
             if (attachment.resolveTarget)
                 protectedFromAPI(attachment.resolveTarget)->setPreviouslyCleared();
             if (attachment.resolveTexture)
@@ -797,8 +795,10 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
     }
 
     if (attachmentsToClear.count || depthStencilAttachmentToClear) {
-        if (const auto* attachment = descriptor.depthStencilAttachment; depthStencilAttachmentToClear)
-            protectedFromAPI(attachment->view)->setPreviouslyCleared();
+        if (const auto* attachment = descriptor.depthStencilAttachment; depthStencilAttachmentToClear) {
+            auto textureView = attachment->view ? TextureOrTextureView(fromAPI(attachment->view)) : TextureOrTextureView(fromAPI(attachment->texture));
+            textureView.setPreviouslyCleared();
+        }
 
         runClearEncoder(attachmentsToClear, depthStencilAttachmentToClear, depthAttachmentToClear, stencilAttachmentToClear);
     }

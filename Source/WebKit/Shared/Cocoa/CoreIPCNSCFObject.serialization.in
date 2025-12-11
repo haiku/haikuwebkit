@@ -56,9 +56,6 @@ using WebKit::ObjectValue = Variant<
     WebKit::CoreIPCCNPhoneNumber,
     WebKit::CoreIPCCNPostalAddress,
 #endif
-#if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
-    WebKit::CoreIPCDDScannerResult,
-#endif
     WebKit::CoreIPCDateComponents,
 #if !HAVE(WK_SECURE_CODING_NSURLREQUEST)
     WebKit::CoreIPCSecureCoding,

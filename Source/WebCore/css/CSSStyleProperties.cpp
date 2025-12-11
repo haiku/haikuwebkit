@@ -634,6 +634,10 @@ void InlineCSSStyleProperties::didMutate(MutationType type)
     if (!m_parentElement)
         return;
 
+    // Inline style changes from JavaScript (e.g., element.style.color = 'red') need to set
+    // the mutation bit for innerHTML prefix cache invalidation, since they don't go through
+    // the normal attribute change notification path.
+    m_parentElement->setDidMutateSubtreeAfterSetInnerHTMLOnAncestors();
     m_parentElement->invalidateStyleAttribute();
     InspectorInstrumentation::didInvalidateStyleAttr(*m_parentElement);
 }

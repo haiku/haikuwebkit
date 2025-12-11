@@ -38,6 +38,7 @@
 #include <WebCore/Styleable.h>
 #include <WebCore/TimelineRangeValue.h>
 #include <WebCore/WebAnimationTypes.h>
+#include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
 #include <wtf/Markable.h>
 #include <wtf/RefCounted.h>
@@ -60,17 +61,20 @@ namespace Style {
 struct ResolutionContext;
 }
 
-class WebAnimation : public RefCounted<WebAnimation>, public EventTarget, public ActiveDOMObject {
+class WebAnimation : public RefCounted<WebAnimation>, public EventTarget, public ActiveDOMObject, public CanMakeCheckedPtr<WebAnimation> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebAnimation);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(WebAnimation);
 public:
-    void ref() const final { RefCounted::ref(); }
-    void deref() const final { RefCounted::deref(); }
-
     static Ref<WebAnimation> create(Document&, AnimationEffect*);
     static Ref<WebAnimation> create(Document&, AnimationEffect*, AnimationTimeline*);
     ~WebAnimation();
 
-    WEBCORE_EXPORT static HashSet<WebAnimation*>& instances();
+    // ContextDestructionObserver.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+    USING_CAN_MAKE_WEAKPTR(EventTarget);
+
+    WEBCORE_EXPORT static HashSet<CheckedPtr<WebAnimation>>& instances();
 
     virtual bool isStyleOriginatedAnimation() const { return false; }
     virtual bool isCSSAnimation() const { return false; }
@@ -157,7 +161,7 @@ public:
     bool needsTick() const;
     virtual void tick();
     WEBCORE_EXPORT Seconds timeToNextTick() const;
-    virtual OptionSet<AnimationImpact> resolve(RenderStyle& targetStyle, const Style::ResolutionContext&, EndpointInclusiveActiveInterval = EndpointInclusiveActiveInterval::No);
+    OptionSet<AnimationImpact> resolve(RenderStyle& targetStyle, const Style::ResolutionContext&, EndpointInclusiveActiveInterval = EndpointInclusiveActiveInterval::No);
     void effectTargetDidChange(const std::optional<const Styleable>& previousTarget, const std::optional<const Styleable>& newTarget);
     void acceleratedStateDidChange();
     void willChangeRenderer();

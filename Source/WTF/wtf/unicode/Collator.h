@@ -28,6 +28,8 @@
 
 #pragma once
 
+DECLARE_SYSTEM_HEADER
+
 #include <unicode/uconfig.h>
 #include <wtf/Noncopyable.h>
 

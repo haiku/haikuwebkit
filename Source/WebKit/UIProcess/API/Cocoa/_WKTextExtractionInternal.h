@@ -25,11 +25,13 @@
 
 #pragma once
 
+#import <WebKit/_WKJSHandle.h>
 #import <WebKit/_WKTextExtraction.h>
 
-@class _WKJSHandle;
-
 NS_ASSUME_NONNULL_BEGIN
+
+// This is equivalent to USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCH) && !PLATFORM(APPLETV)
+#if (defined __has_include && __has_include(<CoreFoundation/CFPriv.h>)) || (!TARGET_OS_WATCH && !TARGET_OS_TV)
 
 @interface _WKTextExtractionConfiguration ()
 
@@ -47,14 +49,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL skipNearlyTransparentContent;
 
 /*!
- Defaults to `YES`.
- */
-@property (nonatomic) BOOL shouldFilterText;
-
-/*!
  Iterates over all custom node attributes added via -addClientAttribute:value:forNode:.
  */
-- (void)forEachClientNodeAttribute:(void(^)(NSString *attribute, NSString *value, _WKJSHandle *))block;
+- (void)forEachClientNodeAttribute:(void(NS_NOESCAPE ^)(NSString *attribute, NSString *value, _WKJSHandle *))block;
 
 /*!
  Only include visible text content, excluding all DOM attributes and element types.
@@ -62,6 +59,12 @@ NS_ASSUME_NONNULL_BEGIN
  Defaults to `NO`.
  */
 @property (nonatomic) BOOL onlyIncludeVisibleText;
+
+@end
+
+@interface _WKTextExtractionResult ()
+
+- (instancetype)initWithTextContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText;
 
 @end
 
@@ -73,9 +76,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface _WKTextExtractionInteractionResult ()
 
-- (instancetype)initWithErrorDescription:(NSString *)errorDescription;
+- (instancetype)initWithErrorDescription:(nullable NSString *)errorDescription;
 
 @end
+
+#endif // (defined __has_include && __has_include(<CoreFoundation/CFPriv.h>)) || (!TARGET_OS_WATCH && !TARGET_OS_TV)
 
 typedef NS_ENUM(NSInteger, WKTextExtractionContainer) {
     WKTextExtractionContainerRoot,
@@ -88,6 +93,8 @@ typedef NS_ENUM(NSInteger, WKTextExtractionContainer) {
     WKTextExtractionContainerNav,
     WKTextExtractionContainerButton,
     WKTextExtractionContainerCanvas,
+    WKTextExtractionContainerSubscript,
+    WKTextExtractionContainerSuperscript,
     WKTextExtractionContainerGeneric
 };
 
@@ -183,9 +190,5 @@ typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
 @property (nonatomic, readonly) NSString *altText;
 @end
 
-@interface WKTextExtractionResult : NSObject
-- (instancetype)initWithRootItem:(WKTextExtractionItem *)rootItem;
-@property (nonatomic, readonly) WKTextExtractionItem *rootItem;
-@end
-
 NS_ASSUME_NONNULL_END
+

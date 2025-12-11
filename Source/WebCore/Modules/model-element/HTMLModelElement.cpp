@@ -87,6 +87,10 @@
 #include "ModelContext.h"
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+#include "DocumentImmersive.h"
+#endif
+
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -1354,6 +1358,27 @@ void HTMLModelElement::setIsMuted(bool isMuted, DOMPromiseDeferred<void>&& promi
     });
 }
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+
+bool HTMLModelElement::immersive() const
+{
+    RefPtr documentImmersive = document().immersiveIfExists();
+    return documentImmersive && documentImmersive->immersiveElement() == this;
+}
+
+void HTMLModelElement::requestImmersive(DOMPromiseDeferred<void>&& promise)
+{
+    document().protectedImmersive()->requestImmersive(this, [promise = WTFMove(promise)] (ExceptionOr<void> result) mutable {
+        if (result.hasException()) {
+            promise.reject(result.releaseException());
+            return;
+        }
+        promise.resolve();
+    });
+}
+
+#endif
+
 bool HTMLModelElement::virtualHasPendingActivity() const
 {
     // We need to ensure the JS wrapper is kept alive if a load is in progress and we may yet dispatch
@@ -1462,6 +1487,11 @@ void HTMLModelElement::removedFromAncestor(RemovalType removalType, ContainerNod
         m_loadModelTimer = nullptr;
 
         deleteModelPlayer();
+
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+        if (immersive())
+            document().protectedImmersive()->exitRemovedImmersiveElement(this);
+#endif
     }
 }
 

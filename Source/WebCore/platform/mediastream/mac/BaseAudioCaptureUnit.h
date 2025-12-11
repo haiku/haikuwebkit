@@ -77,7 +77,9 @@ public:
 
     void setVolume(double volume) { m_volume = volume; }
     void setSampleRate(int sampleRate) { m_sampleRate = sampleRate; }
+#if !PLATFORM(MAC)
     void setEnableEchoCancellation(bool);
+#endif
 
     void addClient(CoreAudioCaptureSource&);
     void removeClient(CoreAudioCaptureSource&);
@@ -145,7 +147,7 @@ private:
     OSStatus startUnit();
     bool shouldContinueRunning() const { return m_producingCount || m_isRenderingAudio || hasClients(); }
 
-    virtual void willChangeCaptureDevice() { };
+    virtual void willChangeCaptureDeviceTo(const String&) { };
 
     // RealtimeMediaSourceCenterObserver
     void devicesChanged() final;

@@ -208,34 +208,6 @@ bool isValidDashedFunction(CSSParserTokenRange range, const CSSParserContext& pa
     // <dashed-function> --*( <declaration-value>#? )
     range.consumeWhitespace();
 
-    bool consumeComma = false;
-
-    auto consumeArgument = [&] -> std::optional<CSSParserTokenRange> {
-        if (range.atEnd())
-            return { };
-
-        if (std::exchange(consumeComma, false)) {
-            ASSERT(range.peek().type() == CommaToken);
-            range.consume();
-        }
-
-        range.consumeWhitespace();
-
-        auto argumentStart = range;
-        while (!range.atEnd()) {
-            if (range.peek().type() == CommaToken) {
-                consumeComma = true;
-                break;
-            }
-            if (range.peek().getBlockType() == CSSParserToken::BlockStart) {
-                range.consumeBlock();
-                continue;
-            }
-            range.consume();
-        }
-        return argumentStart.rangeUntil(range);
-    };
-
     auto validateArgument = [&](auto argumentRange) {
         if (argumentRange.atEnd())
             return false;
@@ -246,9 +218,11 @@ bool isValidDashedFunction(CSSParserTokenRange range, const CSSParserContext& pa
         return result && !result->hasTopLevelBraceBlockMixedWithOtherValues && !result->hasEmptyTopLevelBraceBlock;
     };
 
-    while (auto argumentRange = consumeArgument()) {
+    unsigned index = 0;
+    while (auto argumentRange = CSSPropertyParserHelpers::consumeArgument(range, index)) {
         if (!validateArgument(*argumentRange))
             return false;
+        ++index;
     }
     return true;
 }

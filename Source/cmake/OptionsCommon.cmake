@@ -11,29 +11,6 @@ add_definitions(-DPAS_BMALLOC=1)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 define_property(TARGET PROPERTY FOLDER INHERITED BRIEF_DOCS "folder" FULL_DOCS "IDE folder name")
 
-if (WTF_CPU_ARM)
-    set(ARM_THUMB2_TEST_SOURCE
-    "
-    #if !defined(thumb2) && !defined(__thumb2__)
-    #error \"Thumb2 instruction set isn't available\"
-    #endif
-    int main() {}
-    ")
-
-    if (COMPILER_IS_GCC_OR_CLANG AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
-        set(CLANG_EXTRA_ARM_ARGS " -mthumb")
-    endif ()
-
-    set(CMAKE_REQUIRED_FLAGS "${CLANG_EXTRA_ARM_ARGS}")
-    CHECK_CXX_SOURCE_COMPILES("${ARM_THUMB2_TEST_SOURCE}" ARM_THUMB2_DETECTED)
-    unset(CMAKE_REQUIRED_FLAGS)
-
-    if (ARM_THUMB2_DETECTED AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
-        string(APPEND CMAKE_C_FLAGS " ${CLANG_EXTRA_ARM_ARGS}")
-        string(APPEND CMAKE_CXX_FLAGS " ${CLANG_EXTRA_ARM_ARGS}")
-    endif ()
-endif ()
-
 # NB: We can't use CMAKE_HOST_SYSTEM_PROCESSOR as its value is on armv8l is
 # "aarch64". Also, `uname` is not available on Windows, but Windows doesn't
 # currently use this variable.
@@ -218,18 +195,11 @@ option(GCC_OFFLINEASM_SOURCE_MAP
   "Produce debug line information for offlineasm-generated code"
   ${GCC_OFFLINEASM_SOURCE_MAP_DEFAULT})
 
-# Record references to files using relative paths instead of absolute.
-# This helps both with reproducible builds and ccache hits.
-# It also breaks debugedit, so limit this to DEVELOPER_MODE.
-if (DEVELOPER_MODE)
-    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
-endif ()
-
-option(USE_APPLE_ICU "Use Apple's internal ICU" ${APPLE})
-
 # Enable the usage of OpenMP.
 #  - At this moment, OpenMP is only used as an alternative implementation
 #    to native threads for the parallelization of the SVG filters.
+#
+# FIXME: there is no option() for this, so how can it ever be enabled...?
 if (USE_OPENMP)
     find_package(OpenMP REQUIRED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

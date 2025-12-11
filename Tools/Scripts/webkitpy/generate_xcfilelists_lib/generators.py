@@ -281,6 +281,8 @@ class BaseGenerator(object):
             input_lines = self._replacePrefix(input_lines, "WebCore/",                      "$(PROJECT_DIR)/")
             input_lines = self._replacePrefix(input_lines, "WebCorePrivateHeaders/",        "$(WEBCORE_PRIVATE_HEADERS_DIR)/")
             input_lines = self._replacePrefix(input_lines, "WebKit2PrivateHeaders/",        "$(WEBKIT2_PRIVATE_HEADERS_DIR)/")
+            # Any other line that's not an absolute path should be treated as a derived sources member, relative to BUILT_PRODUCTS_DIR.
+            input_lines = [line if line.startswith('$') else os.path.join(self._get_derived_sources_dir(), line) for line in input_lines]
 
             input_lines = self._unexpand(input_lines, "JAVASCRIPTCORE_PRIVATE_HEADERS_DIR")
             input_lines = self._unexpand(input_lines, "PROJECT_DIR")

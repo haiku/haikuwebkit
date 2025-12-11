@@ -40,17 +40,17 @@ class WebXRHitTestResult;
 class WebXRTransientInputHitTestResult : public RefCounted<WebXRTransientInputHitTestResult> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRTransientInputHitTestResult);
 public:
-    static Ref<WebXRTransientInputHitTestResult> create(Ref<WebXRInputSource>&&, Vector<RefPtr<WebXRHitTestResult>>&&);
+    static Ref<WebXRTransientInputHitTestResult> create(Ref<WebXRInputSource>&&, Vector<Ref<WebXRHitTestResult>>&&);
     ~WebXRTransientInputHitTestResult();
 
     const WebXRInputSource& inputSource() const;
-    const Vector<RefPtr<WebXRHitTestResult>>& results() const;
+    const Vector<Ref<WebXRHitTestResult>>& results() const;
 
 private:
-    WebXRTransientInputHitTestResult(Ref<WebXRInputSource>&&, Vector<RefPtr<WebXRHitTestResult>>&&);
+    WebXRTransientInputHitTestResult(Ref<WebXRInputSource>&&, Vector<Ref<WebXRHitTestResult>>&&);
 
     Ref<WebXRInputSource> m_inputSource;
-    Vector<RefPtr<WebXRHitTestResult>> m_results;
+    Vector<Ref<WebXRHitTestResult>> m_results;
 };
 
 } // namespace WebCore

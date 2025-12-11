@@ -26,8 +26,10 @@
 #pragma once
 
 #include <wtf/HashSet.h>
+#include <wtf/Lock.h>
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/Vector.h>
+#include <wtf/WordLock.h>
 
 namespace WTF {
 
@@ -236,7 +238,7 @@ private:
     mutable HashSet<std::pair<ControlBlockRefPtr, const T*>> m_set WTF_GUARDED_BY_LOCK(m_lock);
     mutable unsigned m_operationCountSinceLastCleanup WTF_GUARDED_BY_LOCK(m_lock) { 0 };
     mutable unsigned m_maxOperationCountWithoutCleanup WTF_GUARDED_BY_LOCK(m_lock) { 0 };
-    mutable Lock m_lock;
+    mutable WordLock m_lock;
 };
 
 } // namespace WTF

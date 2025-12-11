@@ -51,6 +51,7 @@
 #endif
 
 #if USE(GLIB_EVENT_LOOP)
+#include <wtf/OptionCountedSet.h>
 #include <wtf/glib/GRefPtr.h>
 #endif
 
@@ -351,6 +352,7 @@ private:
     using ActivityObservers = Vector<Ref<ActivityObserver>, 4>;
     Lock m_activityObserversLock;
     ActivityObservers m_activityObservers WTF_GUARDED_BY_LOCK(m_activityObserversLock);
+    OptionCountedSet<Activity> m_activities WTF_GUARDED_BY_LOCK(m_activityObserversLock);
 
     static constexpr size_t s_pollFDsCapacity = 64;
     Vector<GPollFD, s_pollFDsCapacity> m_pollFDs;

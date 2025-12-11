@@ -21,7 +21,6 @@
 #include "AudioBus.h"
 #include "AudioDestination.h"
 #include "GRefPtrGStreamer.h"
-#include <wtf/Condition.h>
 #include <wtf/Forward.h>
 
 namespace WebCore {
@@ -48,6 +47,7 @@ protected:
     virtual void stopRendering(CompletionHandler<void(bool)>&&);
 
 private:
+    void initializePipeline();
     void notifyStartupResult(bool);
     void notifyStopResult(bool);
 

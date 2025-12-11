@@ -96,10 +96,6 @@ PACKAGES=(
     ruby-highline
     ruby-json
 
-    # These are dependencies necessary for building with the Flatpak SDK.
-    flatpak
-    libglib2.0-bin
-
     # These are dependencies necessary for building the jhbuild.
     bison
     flex

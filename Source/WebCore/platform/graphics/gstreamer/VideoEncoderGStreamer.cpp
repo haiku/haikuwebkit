@@ -66,6 +66,7 @@ public:
     String initialize(const String& codecName);
     bool encode(VideoEncoder::RawFrame&&, bool shouldGenerateKeyFrame);
     void setRates(uint64_t bitRate, double frameRate);
+    void setBitRateAllocation(RefPtr<WebKitVideoEncoderBitRateAllocation>&&, double frameRate);
     void applyRates();
     void flush();
     void close() { m_isClosed = true; }
@@ -79,6 +80,7 @@ private:
     VideoEncoder::Config m_config;
     VideoEncoder::DescriptionCallback m_descriptionCallback;
     VideoEncoder::OutputCallback m_outputCallback;
+    RefPtr<WebKitVideoEncoderBitRateAllocation> m_bitrateAllocation;
     int64_t m_timestamp { 0 };
     std::optional<uint64_t> m_duration;
     bool m_isClosed { false };
@@ -92,31 +94,38 @@ private:
 
 void GStreamerVideoEncoder::create(const String& codecName, const VideoEncoder::Config& config, CreateCallback&& callback, DescriptionCallback&& descriptionCallback, OutputCallback&& outputCallback)
 {
+    auto createResult = create(codecName, config, WTFMove(descriptionCallback), WTFMove(outputCallback));
+    if (!createResult) {
+        callback(makeUnexpected(WTFMove(createResult.error())));
+        return;
+    }
+
+    gstEncoderWorkQueue().dispatch([callback = WTFMove(callback), encoder = WTFMove(*createResult)]() mutable {
+        GST_DEBUG("Encoder created");
+        callback(Ref<VideoEncoder> { WTFMove(encoder) });
+    });
+}
+
+Expected<Ref<GStreamerVideoEncoder>, String> GStreamerVideoEncoder::create(const String& codecName, const VideoEncoder::Config& config, DescriptionCallback&& descriptionCallback, OutputCallback&& outputCallback)
+{
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {
         GST_DEBUG_CATEGORY_INIT(webkit_video_encoder_debug, "webkitvideoencoder", 0, "WebKit WebCodecs Video Encoder");
     });
     registerWebKitGStreamerVideoEncoder();
     auto& scanner = GStreamerRegistryScanner::singleton();
-    if (!scanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Encoding, codecName)) {
-        auto errorMessage = makeString("No GStreamer encoder found for codec "_s, codecName);
-        callback(makeUnexpected(WTFMove(errorMessage)));
-        return;
-    }
+    if (!scanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Encoding, codecName))
+        return makeUnexpected(makeString("No GStreamer encoder found for codec "_s, codecName));
+    auto encoder = adoptRef(*new GStreamerVideoEncoder(config, WTFMove(descriptionCallback), WTFMove(outputCallback)));
 
-    Ref encoder = adoptRef(*new GStreamerVideoEncoder(config, WTFMove(descriptionCallback), WTFMove(outputCallback)));
     Ref internalEncoder = encoder->m_internalEncoder;
     auto error = internalEncoder->initialize(codecName);
     if (!error.isEmpty()) {
         GST_WARNING("Error creating encoder: %s", error.ascii().data());
-        callback(makeUnexpected(makeString("GStreamer encoding initialization failed with error: "_s, error)));
-        return;
+        return makeUnexpected(makeString("GStreamer encoding initialization failed with error: "_s, error));
     }
-    gstEncoderWorkQueue().dispatch([callback = WTFMove(callback), encoder = WTFMove(encoder)]() mutable {
-        auto internalEncoder = encoder->m_internalEncoder;
-        GST_DEBUG("Encoder created");
-        callback(Ref<VideoEncoder> { WTFMove(encoder) });
-    });
+
+    return encoder;
 }
 
 GStreamerVideoEncoder::GStreamerVideoEncoder(const VideoEncoder::Config& config, DescriptionCallback&& descriptionCallback, OutputCallback&& outputCallback)
@@ -154,6 +163,14 @@ Ref<GenericPromise> GStreamerVideoEncoder::setRates(uint64_t bitRate, double fra
 {
     return invokeAsync(gstEncoderWorkQueue(), [encoder = m_internalEncoder, bitRate, frameRate] {
         encoder->setRates(bitRate, frameRate);
+        return GenericPromise::createAndResolve();
+    });
+}
+
+Ref<GenericPromise> GStreamerVideoEncoder::setBitRateAllocation(RefPtr<WebKitVideoEncoderBitRateAllocation>&& allocation, double frameRate)
+{
+    return invokeAsync(gstEncoderWorkQueue(), [encoder = m_internalEncoder, bitrateAllocation = WTFMove(allocation), frameRate] mutable {
+        encoder->setBitRateAllocation(WTFMove(bitrateAllocation), frameRate);
         return GenericPromise::createAndResolve();
     });
 }
@@ -278,7 +295,7 @@ String GStreamerInternalVideoEncoder::initialize(const String& codecName)
 {
     GST_DEBUG_OBJECT(m_harness->element(), "Initializing encoder for codec %s", codecName.ascii().data());
     IntSize size { static_cast<int>(m_config.width), static_cast<int>(m_config.height) };
-    if (!videoEncoderSetCodec(WEBKIT_VIDEO_ENCODER(m_harness->element()), codecName, size))
+    if (!videoEncoderSetCodec(WEBKIT_VIDEO_ENCODER(m_harness->element()), { codecName, m_config.useAnnexB }, size))
         return "Unable to set encoder format"_s;
 
     applyRates();
@@ -303,7 +320,19 @@ bool GStreamerInternalVideoEncoder::encode(VideoEncoder::RawFrame&& rawFrame, bo
     }
 
     auto& gstVideoFrame = downcast<VideoFrameGStreamer>(rawFrame.frame.get());
-    return m_harness->pushSample(gstVideoFrame.sample());
+    GRefPtr sample = gstVideoFrame.sample();
+
+    if (m_config.frameRate) {
+        int framerateNumerator, framerateDenominator;
+        gst_util_double_to_fraction(m_config.frameRate, &framerateNumerator, &framerateDenominator);
+
+        GRefPtr caps = gst_sample_get_caps(sample.get());
+        caps = adoptGRef(gst_caps_make_writable(caps.leakRef()));
+        sample = adoptGRef(gst_sample_make_writable(sample.leakRef()));
+        gst_caps_set_simple(caps.get(), "framerate", GST_TYPE_FRACTION, framerateNumerator, framerateDenominator, nullptr);
+        gst_sample_set_caps(sample.get(), caps.get());
+    }
+    return m_harness->pushSample(WTFMove(sample));
 }
 
 void GStreamerInternalVideoEncoder::setRates(uint64_t bitRate, double frameRate)
@@ -313,12 +342,20 @@ void GStreamerInternalVideoEncoder::setRates(uint64_t bitRate, double frameRate)
     applyRates();
 }
 
-void GStreamerInternalVideoEncoder::applyRates()
+void GStreamerInternalVideoEncoder::setBitRateAllocation(RefPtr<WebKitVideoEncoderBitRateAllocation>&& allocation, double frameRate)
 {
-    // FIXME: Propagate m_config.frameRate to caps?
+    auto encoder = WEBKIT_VIDEO_ENCODER(m_harness->element());
+    if (frameRate)
+        videoEncoderSetFrameRate(encoder, frameRate);
     if (m_config.bitRate > 1000)
         g_object_set(m_harness->element(), "bitrate", static_cast<uint32_t>(m_config.bitRate / 1000), nullptr);
 
+    m_hasMultipleTemporalLayers = !!allocation->getBitRate(0, 1);
+    videoEncoderSetBitRateAllocation(encoder, WTFMove(allocation));
+}
+
+void GStreamerInternalVideoEncoder::applyRates()
+{
     auto bitRateAllocation = WebKitVideoEncoderBitRateAllocation::create(m_config.scalabilityMode);
     auto totalBitRate = m_config.bitRate ? m_config.bitRate : 3 * m_config.width * m_config.height;
     switch (m_config.scalabilityMode) {
@@ -326,18 +363,16 @@ void GStreamerInternalVideoEncoder::applyRates()
         bitRateAllocation->setBitRate(0, 0, totalBitRate);
         break;
     case VideoEncoder::ScalabilityMode::L1T2:
-        m_hasMultipleTemporalLayers = true;
         bitRateAllocation->setBitRate(0, 0, totalBitRate * 0.6);
         bitRateAllocation->setBitRate(0, 1, totalBitRate * 0.4);
         break;
     case VideoEncoder::ScalabilityMode::L1T3:
-        m_hasMultipleTemporalLayers = true;
         bitRateAllocation->setBitRate(0, 0, totalBitRate * 0.5);
         bitRateAllocation->setBitRate(0, 1, totalBitRate * 0.3);
         bitRateAllocation->setBitRate(0, 2, totalBitRate * 0.2);
         break;
     }
-    videoEncoderSetBitRateAllocation(WEBKIT_VIDEO_ENCODER(m_harness->element()), WTFMove(bitRateAllocation));
+    setBitRateAllocation(WTFMove(bitRateAllocation), m_config.frameRate);
 }
 
 void GStreamerInternalVideoEncoder::flush()

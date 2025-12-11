@@ -471,7 +471,7 @@ void EventRegion::unite(const Region& region, const RenderObject& renderer, cons
     m_region.unite(region);
 
 #if ENABLE(TOUCH_ACTION_REGIONS)
-    uniteTouchActions(region, style.usedTouchActions());
+    uniteTouchActions(region, Style::toPlatform(style.usedTouchAction()));
 #endif
 
     uniteEventListeners(region, style.eventListenerRegionTypes());
@@ -624,6 +624,9 @@ OptionSet<EventListenerRegionType> touchEventTypes =
     , EventListenerRegionType::MouseMove, EventListenerRegionType::NonPassiveMouseMove
     , EventListenerRegionType::MouseDown, EventListenerRegionType::NonPassiveMouseDown
     , EventListenerRegionType::MouseMove, EventListenerRegionType::NonPassiveMouseMove
+    , EventListenerRegionType::GestureChange, EventListenerRegionType::NonPassiveGestureChange
+    , EventListenerRegionType::GestureEnd, EventListenerRegionType::NonPassiveGestureEnd
+    , EventListenerRegionType::GestureStart, EventListenerRegionType::NonPassiveGestureStart
 };
 
 OptionSet<EventListenerRegionType> touchEventNonPassiveTypes =
@@ -642,6 +645,9 @@ OptionSet<EventListenerRegionType> touchEventNonPassiveTypes =
     , EventListenerRegionType::NonPassiveMouseDown
     , EventListenerRegionType::NonPassiveMouseUp
     , EventListenerRegionType::NonPassiveMouseMove
+    , EventListenerRegionType::NonPassiveGestureChange
+    , EventListenerRegionType::NonPassiveGestureEnd
+    , EventListenerRegionType::NonPassiveGestureStart
 };
 
 static bool isNonPassiveTouchEventType(EventListenerRegionType eventListenerRegionType)
@@ -685,6 +691,12 @@ static EventTrackingRegionsEventType eventTypeForEventListenerType(EventListener
         return EventTrackingRegionsEventType::Mousemove;
     case EventListenerRegionType::NonPassiveMouseMove:
         return EventTrackingRegionsEventType::Mouseup;
+    case EventListenerRegionType::NonPassiveGestureChange:
+        return EventTrackingRegionsEventType::Gesturechange;
+    case EventListenerRegionType::NonPassiveGestureEnd:
+        return EventTrackingRegionsEventType::Gestureend;
+    case EventListenerRegionType::NonPassiveGestureStart:
+        return EventTrackingRegionsEventType::Gesturestart;
     default:
         break;
     }

@@ -192,9 +192,9 @@ ExceptionOr<Ref<WebSocket>> WebSocket::create(ScriptExecutionContext& context, c
     return create(context, url, Vector<String> { 1, protocol });
 }
 
-HashSet<WebSocket*>& WebSocket::allActiveWebSockets()
+HashSet<CheckedPtr<WebSocket>>& WebSocket::allActiveWebSockets()
 {
-    static NeverDestroyed<HashSet<WebSocket*>> activeWebSockets;
+    static NeverDestroyed<HashSet<CheckedPtr<WebSocket>>> activeWebSockets;
     return activeWebSockets;
 }
 

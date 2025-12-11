@@ -34,10 +34,6 @@
 #include <wtf/Threading.h>
 #include <wtf/threads/BinarySemaphore.h>
 
-#if USE(GLIB_EVENT_LOOP)
-#include <wtf/glib/RunLoopSourcePriority.h>
-#endif
-
 namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CompositingRunLoop);
@@ -47,9 +43,6 @@ CompositingRunLoop::CompositingRunLoop(Function<void ()>&& updateFunction)
     , m_updateTimer(m_runLoop.get(), "CompositingRunLoop::UpdateTimer"_s, this, &CompositingRunLoop::updateTimerFired)
     , m_updateFunction(WTFMove(updateFunction))
 {
-#if USE(GLIB_EVENT_LOOP)
-    m_updateTimer.setPriority(RunLoopSourcePriority::CompositingThreadUpdateTimer);
-#endif
 }
 
 CompositingRunLoop::~CompositingRunLoop()

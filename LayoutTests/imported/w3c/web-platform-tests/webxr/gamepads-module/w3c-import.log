@@ -15,6 +15,7 @@ None
 ------------------------------------------------------------------------
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/gamepads-module/META.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/gamepads-module/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webxr/gamepads-module/idlharness.https.window.js
 /LayoutTests/imported/w3c/web-platform-tests/webxr/gamepads-module/xrInputSource_gamepad_disconnect.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/gamepads-module/xrInputSource_gamepad_input_registered.https.html

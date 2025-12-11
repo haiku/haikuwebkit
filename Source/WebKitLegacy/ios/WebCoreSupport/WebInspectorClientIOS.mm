@@ -36,9 +36,9 @@
 #import "WebViewInternal.h"
 #import <WebCore/CertificateInfo.h>
 #import <WebCore/FloatRect.h>
-#import <WebCore/InspectorController.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/Page.h>
+#import <WebCore/PageInspectorController.h>
 #import <WebCore/Settings.h>
 #import <WebCore/WebCoreThread.h>
 
@@ -56,7 +56,7 @@ void WebInspectorClient::inspectedPageDestroyed()
 {
 }
 
-Inspector::FrontendChannel* WebInspectorClient::openLocalFrontend(InspectorController*)
+Inspector::FrontendChannel* WebInspectorClient::openLocalFrontend(PageInspectorController*)
 {
     // iOS does not have a local inspector, this should not be reached.
     ASSERT_NOT_REACHED();
@@ -114,7 +114,7 @@ void WebInspectorClient::didSetSearchingForNode(bool enabled)
 #pragma mark -
 #pragma mark WebInspectorFrontendClient Implementation
 
-WebInspectorFrontendClient::WebInspectorFrontendClient(WebView* inspectedWebView, WebInspectorWindowController* frontendWindowController, InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings)
+WebInspectorFrontendClient::WebInspectorFrontendClient(WebView* inspectedWebView, WebInspectorWindowController* frontendWindowController, PageInspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings)
     : InspectorFrontendClientLocal(inspectedPageController, frontendPage, WTFMove(settings))
 {
     // iOS does not have a local inspector, this should not be reached.

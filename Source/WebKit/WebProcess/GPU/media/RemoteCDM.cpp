@@ -92,7 +92,7 @@ bool RemoteCDM::supportsSessionTypeWithConfiguration(const CDMSessionType&, cons
     return false;
 }
 
-bool RemoteCDM::supportsInitData(const AtomString& type, const SharedBuffer& data) const
+bool RemoteCDM::supportsInitData(const String& type, const SharedBuffer& data) const
 {
     // This check will be done, later, inside RemoteCDMInstanceSessionProxy::requestLicense().
     return true;

@@ -150,7 +150,6 @@ ADD_WK2_TEST(TestResources ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestResou
 ADD_WK2_TEST(TestSSL ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestSSL.cpp)
 ADD_WK2_TEST(TestUIClient ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestUIClient.cpp)
 ADD_WK2_TEST(TestWebProcessExtensions ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebProcessExtensions.cpp)
-ADD_WK2_TEST(TestWebKitImage ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitImage.cpp)
 ADD_WK2_TEST(TestWebKitPolicyClient ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitPolicyClient.cpp)
 ADD_WK2_TEST(TestWebKitSecurityOrigin ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitSecurityOrigin.cpp)
 ADD_WK2_TEST(TestWebKitSettings ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitSettings.cpp)
@@ -169,6 +168,7 @@ if (ENABLE_WEBXR AND USE_OPENXR)
 endif ()
 
 if (ENABLE_2022_GLIB_API)
+    ADD_WK2_TEST(TestWebKitImage ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitImage.cpp)
     ADD_WK2_TEST(TestWebKitNetworkSession ${TOOLS_DIR}/TestWebKitAPI/Tests/WebKitGLib/TestWebKitNetworkSession.cpp)
 
 if (ENABLE_WK_WEB_EXTENSIONS)

@@ -273,7 +273,7 @@ static void webkit_media_src_class_init(WebKitMediaSrcClass* klass)
 
     // In GStreamer 1.20 and older urisourcebin mishandles source elements with dynamic pads. This
     // is not an issue in 1.22.
-    if (webkitGstCheckVersion(1, 22, 0))
+    if (gst_check_version(1, 22, 0))
         eklass->query = GST_DEBUG_FUNCPTR(webKitMediaSrcQuery);
 
     g_object_class_install_property(oklass,
@@ -339,7 +339,7 @@ void webKitMediaSrcEmitStreams(WebKitMediaSrc* source, const Vector<RefPtr<Media
                 return GST_PAD_PROBE_OK;
             }, nullptr, nullptr);
 
-        if (!webkitGstCheckVersion(1, 20, 6)) {
+        if (!gst_check_version(1, 20, 6)) {
             // Workaround: gst_element_add_pad() should already call gst_pad_set_active() if the element is PAUSED or
             // PLAYING. Unfortunately, as of GStreamer 1.18.2 it does so with the element lock taken, causing a deadlock
             // in gst_pad_start_task(), who tries to post a `stream-status` message in the element, which also requires
@@ -713,7 +713,7 @@ static void webKitMediaSrcStreamFlush(Stream* stream, bool isSeekingFlush)
             streamingMembers->isFlushing = false;
             streamingMembers->doesNeedSegmentEvent = true;
 
-            if (!webkitGstCheckVersion(1, 22, 0)) {
+            if (!gst_check_version(1, 22, 0)) {
                 // In older GST versions STREAM_COLLECTION event is delivered to decodebin3
                 // from parsebin src pad probe. On the way, this event is cached inside
                 // parser element (GstBaseParse) and pushed downstream with first frame.

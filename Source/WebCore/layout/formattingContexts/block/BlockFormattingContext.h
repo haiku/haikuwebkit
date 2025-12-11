@@ -90,14 +90,14 @@ protected:
     BlockMarginCollapse marginCollapse() const;
 
 #if ASSERT_ENABLED
-    void setPrecomputedMarginBefore(const ElementBox& layoutBox, const PrecomputedMarginBefore& precomputedMarginBefore) { m_precomputedMarginBeforeList.set(&layoutBox, precomputedMarginBefore); }
-    PrecomputedMarginBefore precomputedMarginBefore(const ElementBox& layoutBox) const { return m_precomputedMarginBeforeList.get(&layoutBox); }
-    bool hasPrecomputedMarginBefore(const ElementBox& layoutBox) const { return m_precomputedMarginBeforeList.contains(&layoutBox); }
+    void setPrecomputedMarginBefore(const ElementBox& layoutBox, const PrecomputedMarginBefore& precomputedMarginBefore) { m_precomputedMarginBeforeList.set(layoutBox, precomputedMarginBefore); }
+    PrecomputedMarginBefore precomputedMarginBefore(const ElementBox& layoutBox) const { return m_precomputedMarginBeforeList.get(layoutBox); }
+    bool hasPrecomputedMarginBefore(const ElementBox& layoutBox) const { return m_precomputedMarginBeforeList.contains(layoutBox); }
 #endif
 
 private:
 #if ASSERT_ENABLED
-    HashMap<const ElementBox*, PrecomputedMarginBefore> m_precomputedMarginBeforeList;
+    HashMap<CheckedRef<const ElementBox>, PrecomputedMarginBefore> m_precomputedMarginBeforeList;
 #endif
     BlockFormattingState& m_blockFormattingState;
     const BlockFormattingGeometry m_blockFormattingGeometry;

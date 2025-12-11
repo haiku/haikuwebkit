@@ -31,6 +31,7 @@
 #include <WebCore/PlatformExportMacros.h>
 #include <WebCore/PlatformImage.h>
 #include <WebCore/RenderingResource.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/UniqueRef.h>
 
@@ -44,8 +45,9 @@ class IntSize;
 class NativeImageBackend;
 struct ImagePaintingOptions;
 
-class NativeImage : public ThreadSafeRefCounted<NativeImage> {
+class NativeImage : public ThreadSafeRefCounted<NativeImage>, public CanMakeThreadSafeCheckedPtr<NativeImage> {
     WTF_MAKE_TZONE_ALLOCATED(NativeImage);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(NativeImage);
 public:
     static WEBCORE_EXPORT RefPtr<NativeImage> create(PlatformImagePtr&&);
     // Creates a NativeImage that is intended to be drawn once or only few times. Signals the platform to avoid generating any caches for the image.

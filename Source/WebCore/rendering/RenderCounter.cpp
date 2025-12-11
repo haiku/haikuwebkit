@@ -68,7 +68,7 @@ static Element* ancestorStyleContainmentObject(const Element& element)
     Element* ancestor = pseudoElement ? pseudoElement->hostElement() : element.parentElement();
     while (ancestor) {
         if (auto* style = ancestor->existingComputedStyle()) {
-            if (style->containsStyle())
+            if (style->usedContain().contains(Style::ContainValue::Style))
                 break;
         }
         // FIXME: this should use parentInComposedTree but for now matches the rest of RenderCounter.
@@ -133,7 +133,7 @@ static Element* previousSiblingOrParentElement(const Element& element)
     auto* parent = element.parentElement();
     if (parent && !parent->renderer())
         parent = previousSiblingOrParentElement(*parent);
-    if (parent && parent->renderer() && parent->renderer()->style().containsStyle())
+    if (parent && parent->renderer() && parent->renderer()->style().usedContain().contains(Style::ContainValue::Style))
         return nullptr;
     return parent;
 }

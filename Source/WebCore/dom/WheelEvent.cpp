@@ -38,7 +38,7 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WheelEvent);
 
 inline static unsigned determineDeltaMode(const PlatformWheelEvent& event)
 {
-    return event.granularity() == ScrollByPageWheelEvent ? WheelEvent::DOM_DELTA_PAGE : WheelEvent::DOM_DELTA_PIXEL;
+    return event.granularity() == PlatformWheelEventGranularity::ScrollByPageWheelEvent ? WheelEvent::DOM_DELTA_PAGE : WheelEvent::DOM_DELTA_PIXEL;
 }
 
 static double wheelDeltaToDelta(int wheelDelta)

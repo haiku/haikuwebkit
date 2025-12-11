@@ -69,7 +69,7 @@ static void initializeDMABufAvailability()
 {
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [] {
-        if (!webkitGstCheckVersion(1, 20, 0))
+        if (!gst_check_version(1, 20, 0))
             return;
 
         auto value = unsafeSpan(g_getenv("WEBKIT_GST_DMABUF_SINK_DISABLED"));

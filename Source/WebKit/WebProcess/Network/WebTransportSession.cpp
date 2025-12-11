@@ -32,6 +32,7 @@
 #include "NetworkTransportSessionMessages.h"
 #include "WebProcess.h"
 #include <WebCore/Exception.h>
+#include <WebCore/WebTransportConnectionInfo.h>
 #include <WebCore/WebTransportConnectionStats.h>
 #include <WebCore/WebTransportOptions.h>
 #include <WebCore/WebTransportReceiveStreamStats.h>
@@ -50,7 +51,7 @@ std::pair<Ref<WebTransportSession>, Ref<WebCore::WebTransportSessionPromise>> We
         adoptRef(*new WebTransportSession(connection.copyRef(), WTFMove(client), identifier)),
         connection->sendWithPromisedReply(Messages::NetworkConnectionToWebProcess::InitializeWebTransportSession(identifier, url, options, pageID, clientOrigin))->whenSettled(RunLoop::mainSingleton(), [] (auto&& result) {
             if (result && *result)
-                return WebCore::WebTransportSessionPromise::createAndResolve();
+                return WebCore::WebTransportSessionPromise::createAndResolve(WTFMove(**result));
             return WebCore::WebTransportSessionPromise::createAndReject();
         })
     };
@@ -117,18 +118,27 @@ void WebTransportSession::streamReceiveBytes(WebCore::WebTransportStreamIdentifi
         ASSERT_NOT_REACHED();
 }
 
-void WebTransportSession::didFail()
+void WebTransportSession::didFail(std::optional<unsigned>&& code, String&& message)
 {
     ASSERT(RunLoop::isMain());
     if (RefPtr strongClient = m_client.get())
-        strongClient->didFail();
+        strongClient->didFail(WTFMove(code), WTFMove(message));
     else
         ASSERT_NOT_REACHED();
 }
 
-Ref<WebCore::WebTransportSendPromise> WebTransportSession::sendDatagram(std::span<const uint8_t> datagram)
+void WebTransportSession::didDrain()
 {
-    return sendWithPromisedReply(Messages::NetworkTransportSession::SendDatagram(datagram))->whenSettled(RunLoop::mainSingleton(), [] (auto&& exception) {
+    ASSERT(RunLoop::isMain());
+    if (RefPtr strongClient = m_client.get())
+        strongClient->didDrain();
+    else
+        ASSERT_NOT_REACHED();
+}
+
+Ref<WebCore::WebTransportSendPromise> WebTransportSession::sendDatagram(std::optional<WebCore::WebTransportSendGroupIdentifier> identifier, std::span<const uint8_t> datagram)
+{
+    return sendWithPromisedReply(Messages::NetworkTransportSession::SendDatagram(identifier, datagram))->whenSettled(RunLoop::mainSingleton(), [] (auto&& exception) {
         ASSERT(RunLoop::isMain());
         if (!exception)
             return WebCore::WebTransportSendPromise::createAndReject();
@@ -188,6 +198,16 @@ Ref<WebCore::WebTransportReceiveStreamStatsPromise> WebTransportSession::getRece
     });
 }
 
+Ref<WebCore::WebTransportSendStreamStatsPromise> WebTransportSession::getSendGroupStats(WebCore::WebTransportSendGroupIdentifier identifier)
+{
+    return sendWithPromisedReply(Messages::NetworkTransportSession::GetSendGroupStats(identifier))->whenSettled(RunLoop::mainSingleton(), [] (auto&& stats) mutable {
+        ASSERT(RunLoop::isMain());
+        if (!stats || !*stats)
+            return WebCore::WebTransportSendStreamStatsPromise::createAndReject();
+        return WebCore::WebTransportSendStreamStatsPromise::createAndResolve(WTFMove(**stats));
+    });
+}
+
 Ref<WebCore::WebTransportSendPromise> WebTransportSession::streamSendBytes(WebCore::WebTransportStreamIdentifier identifier, std::span<const uint8_t> bytes, bool withFin)
 {
     return sendWithPromisedReply(Messages::NetworkTransportSession::StreamSendBytes(identifier, bytes, withFin))->whenSettled(RunLoop::mainSingleton(), [] (auto&& exception) {
@@ -215,6 +235,26 @@ void WebTransportSession::cancelSendStream(WebCore::WebTransportStreamIdentifier
 void WebTransportSession::destroyStream(WebCore::WebTransportStreamIdentifier identifier, std::optional<WebCore::WebTransportStreamErrorCode> errorCode)
 {
     send(Messages::NetworkTransportSession::DestroyStream(identifier, errorCode));
+}
+
+void WebTransportSession::datagramIncomingMaxAgeUpdated(std::optional<double> maxAge)
+{
+    send(Messages::NetworkTransportSession::DatagramIncomingMaxAgeUpdated(maxAge));
+}
+
+void WebTransportSession::datagramOutgoingMaxAgeUpdated(std::optional<double> maxAge)
+{
+    send(Messages::NetworkTransportSession::DatagramOutgoingMaxAgeUpdated(maxAge));
+}
+
+void WebTransportSession::datagramIncomingHighWaterMarkUpdated(double watermark)
+{
+    send(Messages::NetworkTransportSession::DatagramIncomingHighWaterMarkUpdated(watermark));
+}
+
+void WebTransportSession::datagramOutgoingHighWaterMarkUpdated(double watermark)
+{
+    send(Messages::NetworkTransportSession::DatagramOutgoingHighWaterMarkUpdated(watermark));
 }
 
 }

@@ -46,6 +46,11 @@ namespace WasmStreamingParserInternal {
 static constexpr bool verbose = false;
 }
 
+#define WASM_STREAMING_PARSER_FAIL_IF(condition, ...) do { \
+    if (condition) [[unlikely]]                    \
+        return fail(__VA_ARGS__);                  \
+} while (0)
+
 #define WASM_STREAMING_PARSER_FAIL_IF_HELPER_FAILS(helper) \
     do { \
         auto helperResult = helper; \
@@ -112,9 +117,9 @@ auto StreamingParser::parseModuleHeader(Vector<uint8_t>&& data) -> State
 {
     ASSERT(data.size() == moduleHeaderSize);
     dataLogLnIf(WasmStreamingParserInternal::verbose, "header validation");
-    WASM_PARSER_FAIL_IF(data[0] != '\0' || data[1] != 'a' || data[2] != 's' || data[3] != 'm', "module doesn't start with '\\0asm'"_s);
+    WASM_STREAMING_PARSER_FAIL_IF(data[0] != '\0' || data[1] != 'a' || data[2] != 's' || data[3] != 'm', "module doesn't start with '\\0asm'"_s);
     uint32_t versionNumber = WTF::unalignedLoad<uint32_t>(data.span().data() + 4);
-    WASM_PARSER_FAIL_IF(versionNumber != expectedVersionNumber, "unexpected version number "_s, versionNumber, " expected "_s, expectedVersionNumber);
+    WASM_STREAMING_PARSER_FAIL_IF(versionNumber != expectedVersionNumber, "unexpected version number "_s, versionNumber, " expected "_s, expectedVersionNumber);
     return State::SectionID;
 }
 
@@ -123,12 +128,12 @@ auto StreamingParser::parseSectionID(Vector<uint8_t>&& data) -> State
     ASSERT(data.size() == sectionIDSize);
     size_t offset = 0;
     auto result = parseUInt7(data.span().data(), offset, data.size());
-    WASM_PARSER_FAIL_IF(!result, "can't get section byte"_s);
+    WASM_STREAMING_PARSER_FAIL_IF(!result, "can't get section byte"_s);
 
     Section section = Section::Custom;
-    WASM_PARSER_FAIL_IF(!decodeSection(*result, section), "invalid section"_s);
+    WASM_STREAMING_PARSER_FAIL_IF(!decodeSection(*result, section), "invalid section"_s);
     ASSERT(section != Section::Begin);
-    WASM_PARSER_FAIL_IF(!validateOrder(m_previousKnownSection, section), "invalid section order, "_s, m_previousKnownSection, " followed by "_s, section);
+    WASM_STREAMING_PARSER_FAIL_IF(!validateOrder(m_previousKnownSection, section), "invalid section order, "_s, m_previousKnownSection, " followed by "_s, section);
     m_section = section;
     if (isKnownSection(section))
         m_previousKnownSection = section;
@@ -150,11 +155,11 @@ auto StreamingParser::parseCodeSectionSize(uint32_t functionCount) -> State
     m_functionIndex = 0;
     m_codeOffset = m_offset;
 
-    WASM_PARSER_FAIL_IF(functionCount == std::numeric_limits<uint32_t>::max(), "Code section's count is too big "_s, functionCount);
-    WASM_PARSER_FAIL_IF(functionCount != m_info->functions.size(), "Code section count "_s, functionCount, " exceeds the declared number of functions "_s, m_info->functions.size());
+    WASM_STREAMING_PARSER_FAIL_IF(functionCount == std::numeric_limits<uint32_t>::max(), "Code section's count is too big "_s, functionCount);
+    WASM_STREAMING_PARSER_FAIL_IF(functionCount != m_info->functions.size(), "Code section count "_s, functionCount, " exceeds the declared number of functions "_s, m_info->functions.size());
 
     if (m_functionIndex == m_functionCount) {
-        WASM_PARSER_FAIL_IF((m_codeOffset + m_sectionLength) != m_nextOffset, "parsing ended before the end of "_s, m_section, " section"_s);
+        WASM_STREAMING_PARSER_FAIL_IF((m_codeOffset + m_sectionLength) != m_nextOffset, "parsing ended before the end of "_s, m_section, " section"_s);
         if (!m_client.didReceiveSectionData(m_section))
             return State::FatalError;
         return State::SectionID;
@@ -165,7 +170,7 @@ auto StreamingParser::parseCodeSectionSize(uint32_t functionCount) -> State
 auto StreamingParser::parseFunctionSize(uint32_t functionSize) -> State
 {
     m_functionSize = functionSize;
-    WASM_PARSER_FAIL_IF(functionSize > maxFunctionSize, "Code function's size "_s, functionSize, " is too big"_s);
+    WASM_STREAMING_PARSER_FAIL_IF(functionSize > maxFunctionSize, "Code function's size "_s, functionSize, " is too big"_s);
     if (functionSize < Options::wasmInliningSmallFunctionThreshold())
         ++m_info->m_numSmallFunctions;
     return State::FunctionPayload;
@@ -185,7 +190,7 @@ auto StreamingParser::parseFunctionPayload(Vector<uint8_t>&& data) -> State
 
     if (m_functionIndex == m_functionCount) {
         m_info->setTotalFunctionSize(m_totalFunctionSize);
-        WASM_PARSER_FAIL_IF((m_codeOffset + m_sectionLength) != (m_offset + m_functionSize), "parsing ended before the end of "_s, m_section, " section"_s);
+        WASM_STREAMING_PARSER_FAIL_IF((m_codeOffset + m_sectionLength) != (m_offset + m_functionSize), "parsing ended before the end of "_s, m_section, " section"_s);
         if (!m_client.didReceiveSectionData(m_section))
             return State::FatalError;
         return State::SectionID;
@@ -216,7 +221,7 @@ auto StreamingParser::parseSectionPayload(Vector<uint8_t>&& data) -> State
     }
     }
 
-    WASM_PARSER_FAIL_IF(parser.source().size() != parser.offset(), "parsing ended before the end of "_s, m_section, " section"_s);
+    WASM_STREAMING_PARSER_FAIL_IF(parser.source().size() != parser.offset(), "parsing ended before the end of "_s, m_section, " section"_s);
 
     if (!m_client.didReceiveSectionData(m_section))
         return State::FatalError;

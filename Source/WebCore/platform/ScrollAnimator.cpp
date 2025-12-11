@@ -216,7 +216,7 @@ bool ScrollAnimator::handleSteppedScrolling(const PlatformWheelEvent& wheelEvent
             behavior.add(ScrollBehavior::NeverAnimate);
 
         if (deltaY) {
-            if (wheelEvent.granularity() == ScrollByPageWheelEvent)
+            if (wheelEvent.granularity() == PlatformWheelEventGranularity::ScrollByPageWheelEvent)
                 deltaY = std::copysign(Scrollbar::pageStepDelta(scrollableArea->visibleHeight()), deltaY);
 
             auto scrollDelta = verticalScrollbar->pixelStep() * -deltaY; // Wheel deltas are reversed from scrolling direction.
@@ -224,7 +224,7 @@ bool ScrollAnimator::handleSteppedScrolling(const PlatformWheelEvent& wheelEvent
         }
 
         if (deltaX) {
-            if (wheelEvent.granularity() == ScrollByPageWheelEvent)
+            if (wheelEvent.granularity() == PlatformWheelEventGranularity::ScrollByPageWheelEvent)
                 deltaX = std::copysign(Scrollbar::pageStepDelta(scrollableArea->visibleWidth()), deltaX);
 
             auto scrollDelta = horizontalScrollbar->pixelStep() * -deltaX; // Wheel deltas are reversed from scrolling direction.

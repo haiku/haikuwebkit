@@ -18,4 +18,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_inactiveFrame.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_incorrectUsage.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_luminance_alpha_dataValid.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_matchDepthViewDepthData.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_matchDepthViewIdentity.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_pauseResume.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/cpu/depth_sensing_cpu_staleView.https.html

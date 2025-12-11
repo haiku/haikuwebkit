@@ -60,6 +60,16 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     DEFINE_SIMD_FUNC(name##Float32, name, SIMDLane::f32x4) \
     DEFINE_SIMD_FUNC(name##Float64, name, SIMDLane::f64x2)
 
+#if CPU(ADDRESS64)
+#define DEFINE_PTR_FUNC(name) \
+    template <typename ...Args> \
+    auto name##Ptr(Args&&... args) -> decltype(auto) { return name##64(std::forward<Args>(args)...); }
+#else
+#define DEFINE_PTR_FUNC(name) \
+    template <typename ...Args> \
+    auto name##Ptr(Args&&... args) -> decltype(auto) { return name##32(std::forward<Args>(args)...); }
+#endif
+
 #if CPU(ARM_THUMB2)
 #define TARGET_ASSEMBLER ARMv7Assembler
 #define TARGET_MACROASSEMBLER MacroAssemblerARMv7
@@ -157,6 +167,8 @@ public:
     {
         return numberOfRegisters() + numberOfFPRegisters();
     }
+
+    DEFINE_PTR_FUNC(moveConditionallyTest)
 
     using MacroAssemblerBase::pop;
     using MacroAssemblerBase::jump;

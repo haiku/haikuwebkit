@@ -62,6 +62,8 @@ public:
 #if ENABLE(WEBXR_HIT_TEST)
     void requestHitTestSource(WebPageProxy&, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&) override;
     void deleteHitTestSource(WebPageProxy&, PlatformXR::HitTestSource) override;
+    void requestTransientInputHitTestSource(WebPageProxy&, const PlatformXR::TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&&) override;
+    void deleteTransientInputHitTestSource(WebPageProxy&, PlatformXR::TransientInputHitTestSource) override;
 #endif
 
 private:
@@ -98,6 +100,7 @@ private:
     void beginFrame(Box<RenderState>);
     void endFrame(Box<RenderState>, Vector<XRDeviceLayer>&&);
     void renderLoop(Box<RenderState>);
+    XrEnvironmentBlendMode blendModeForSessionMode(Box<RenderState>) const;
 
     XRDeviceIdentifier m_deviceIdentifier { XRDeviceIdentifier::generate() };
     XrInstance m_instance { XR_NULL_HANDLE };

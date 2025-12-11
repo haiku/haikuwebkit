@@ -1,0 +1,11 @@
+
+PASS Document: customElementRegistry.prototype.initialize should upgrade the element given to the first argument
+PASS Document: customElementRegistry.prototype.initialize should upgrade elements in tree order
+PASS Document: customElementRegistry.prototype.initialize only upgrades elements beloning to the registry
+PASS HTMLDocument: customElementRegistry.prototype.initialize should upgrade the element given to the first argument
+PASS HTMLDocument: customElementRegistry.prototype.initialize should upgrade elements in tree order
+PASS HTMLDocument: customElementRegistry.prototype.initialize only upgrades elements beloning to the registry
+PASS XHTMLDocument: customElementRegistry.prototype.initialize should upgrade the element given to the first argument
+PASS XHTMLDocument: customElementRegistry.prototype.initialize should upgrade elements in tree order
+PASS XHTMLDocument: customElementRegistry.prototype.initialize only upgrades elements beloning to the registry
+

@@ -1,12 +1,2 @@
-usr/local/include/wtf/text/SymbolImpl.h
-usr/local/include/wtf/text/TextBreakIterator.h
-usr/local/include/wtf/text/icu/TextBreakIteratorICU.h
-usr/local/include/wtf/unicode/Collator.h
 wtf/ParkingLot.h
-wtf/PrintStream.h
 wtf/RetainPtr.h
-wtf/URLParser.cpp
-wtf/cocoa/FileSystemCocoa.mm
-wtf/text/StringView.cpp
-wtf/text/TextBreakIterator.cpp
-wtf/unicode/icu/CollatorICU.cpp

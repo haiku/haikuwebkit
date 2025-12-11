@@ -57,6 +57,7 @@ static NSString * const ResourceLoadStatisticsEnabledPreferenceKey = @"ResourceL
 static NSString * const NonFastScrollableRegionOverlayVisiblePreferenceKey = @"NonFastScrollableRegionOverlayVisible";
 static NSString * const WheelEventHandlerRegionOverlayVisiblePreferenceKey = @"WheelEventHandlerRegionOverlayVisible";
 static NSString * const InteractionRegionOverlayVisiblePreferenceKey = @"InteractionRegionOverlayVisible";
+static NSString * const EnhancedSecurityOverlayVisiblePreferenceKey = @"EnhancedSecurityOverlayVisible";
 
 static NSString * const UseTransparentWindowsPreferenceKey = @"UseTransparentWindows";
 static NSString * const UsePaginatedModePreferenceKey = @"UsePaginatedMode";
@@ -85,6 +86,7 @@ typedef NS_ENUM(NSInteger, DebugOverylayMenuItemTag) {
     NonFastScrollableRegionOverlayTag = 100,
     WheelEventHandlerRegionOverlayTag,
     InteractionRegionOverlayTag,
+    EnhancedSecurityOverlayTag,
     ExperimentalFeatureTag,
     InternalDebugFeatureTag,
 };
@@ -225,6 +227,7 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
     addItemToMenu(debugOverlaysMenu, @"Non-fast Scrollable Region", @selector(toggleDebugOverlay:), NO, NonFastScrollableRegionOverlayTag);
     addItemToMenu(debugOverlaysMenu, @"Wheel Event Handler Region", @selector(toggleDebugOverlay:), NO, WheelEventHandlerRegionOverlayTag);
     addItemToMenu(debugOverlaysMenu, @"Interaction Region", @selector(toggleDebugOverlay:), NO, InteractionRegionOverlayTag);
+    addItemToMenu(debugOverlaysMenu, @"Enhanced Security", @selector(toggleDebugOverlay:), NO, EnhancedSecurityOverlayTag);
     addItemToMenu(debugOverlaysMenu, @"Resource Usage", @selector(toggleShowResourceUsageOverlay:), NO, 0);
 
     NSMenu *experimentalFeaturesMenu = addSubmenu(@"Experimental Features");
@@ -813,6 +816,11 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
     return [[NSUserDefaults standardUserDefaults] boolForKey:InteractionRegionOverlayVisiblePreferenceKey];
 }
 
+- (BOOL)enhancedSecurityOverlayVisible
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:EnhancedSecurityOverlayVisiblePreferenceKey];
+}
+
 - (NSString *)preferenceKeyForRegionOverlayTag:(NSUInteger)tag
 {
     switch (tag) {
@@ -824,6 +832,9 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
 
     case InteractionRegionOverlayTag:
         return InteractionRegionOverlayVisiblePreferenceKey;
+
+    case EnhancedSecurityOverlayTag:
+        return EnhancedSecurityOverlayVisiblePreferenceKey;
     }
     return nil;
 }

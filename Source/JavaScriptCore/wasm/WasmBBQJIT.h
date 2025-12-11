@@ -1079,8 +1079,8 @@ private:
 #define LOG_DEDENT() do { if (Options::verboseBBQJITInstructions()) [[unlikely]] { m_loggingIndent -= 2; } } while (false);
 
 public:
-    // FIXME: Support fused branch compare on 32-bit platforms.
-    static constexpr bool shouldFuseBranchCompare = is64Bit();
+    // Enable fused branch compare for all platforms
+    static constexpr bool shouldFuseBranchCompare = true;
 
     static constexpr bool tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = true;
@@ -2217,13 +2217,8 @@ private:
 
     constexpr static int tempSlotSize = 16; // Size of the stack slot for a stack temporary. Currently the size of the largest possible temporary (a v128).
 
-    enum class ShiftI64HelperOp { Lshift, Urshift, Rshift };
-    void shiftI64Helper(ShiftI64HelperOp op, Location lhsLocation, Location rhsLocation, Location resultLocation);
-
     enum class RotI64HelperOp { Left, Right };
     void rotI64Helper(RotI64HelperOp op, Location lhsLocation, Location rhsLocation, Location resultLocation);
-
-    void compareI64Helper(RelationalCondition condition, Location lhsLocation, Location rhsLocation, Location resultLocation);
 
     bool canTierUpToOMG() const;
 

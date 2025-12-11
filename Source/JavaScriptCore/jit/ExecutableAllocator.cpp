@@ -779,7 +779,7 @@ public:
                 visitRight = true;
         });
 
-        for (Islands* islands : toRemove)
+        SUPPRESS_UNCHECKED_LOCAL for (Islands* islands : toRemove)
             freeIslands(locker, islands);
 
         if (ASSERT_ENABLED) {
@@ -834,16 +834,16 @@ private:
 
     void* islandForJumpLocation(const Locker<Lock>& locker, uintptr_t jumpLocation, uintptr_t target, bool concurrently, bool useMemcpy)
     {
-        Islands* islands = m_islandsForJumpSourceLocation.findExact(std::bit_cast<void*>(jumpLocation));
+        CheckedPtr islands = m_islandsForJumpSourceLocation.findExact(std::bit_cast<void*>(jumpLocation));
         if (islands) {
             // FIXME: We could create some method of reusing already allocated islands here, but it's
             // unlikely to matter in practice.
             if (!concurrently)
-                freeJumpIslands(locker, islands);
+                freeJumpIslands(locker, islands.get());
         } else {
             islands = new Islands;
             islands->jumpSourceLocation = CodeLocationLabel<ExecutableMemoryPtrTag>(tagCodePtr<ExecutableMemoryPtrTag>(std::bit_cast<void*>(jumpLocation)));
-            m_islandsForJumpSourceLocation.insert(islands);
+            m_islandsForJumpSourceLocation.insert(islands.get());
         }
 
         RegionAllocator* allocator = findRegion(jumpLocation > target ? jumpLocation - m_regionSize : jumpLocation);
@@ -1099,8 +1099,9 @@ private:
     }
 
 #if ENABLE(JUMP_ISLANDS)
-    class Islands : public RedBlackTree<Islands, void*>::Node {
+    class Islands final : public RedBlackTree<Islands, void*>::ThreadSafeNode {
         WTF_MAKE_TZONE_ALLOCATED(Islands);
+        WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Islands);
     public:
         void* key() { return jumpSourceLocation.dataLocation(); }
         CodeLocationLabel<ExecutableMemoryPtrTag> jumpSourceLocation;

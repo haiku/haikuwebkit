@@ -182,6 +182,25 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'validate-change',
             'compile-webkit'
         ],
+        'macOS-Tahoe-Debug-API-Tests-EWS': [
+            'configure-build',
+            'validate-change',
+            'configuration',
+            'clean-up-git-repo',
+            'prune-coresymbolicationd-cache-if-too-large',
+            'set-credential-helper',
+            'checkout-source',
+            'fetch-branch-references',
+            'checkout-specific-revision',
+            'show-identifier',
+            'apply-patch',
+            'checkout-pull-request',
+            'kill-old-processes',
+            'download-built-product',
+            'extract-built-product',
+            'run-api-tests',
+            'set-build-summary'
+        ],
         'macOS-Tahoe-Debug-WK2-Tests-EWS': [
             'configure-build',
             'validate-change',
@@ -536,7 +555,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'clean-derived-sources',
             'compile-webkit'
         ],
-        'WPE-Cairo-Build-EWS': [
+        'WPE-Cairo-LibWebRTC-Build-EWS': [
             'configure-build',
             'validate-change',
             'configuration',

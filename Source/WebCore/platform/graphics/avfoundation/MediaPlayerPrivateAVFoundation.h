@@ -165,7 +165,7 @@ public:
     };
 
 protected:
-    explicit MediaPlayerPrivateAVFoundation(MediaPlayer*);
+    explicit MediaPlayerPrivateAVFoundation(MediaPlayer&);
 
     // MediaPlayerPrivatePrivateInterface overrides.
     void load(const String& url) override;

@@ -57,6 +57,7 @@
 #include <wtf/OptionSet.h>
 #include <wtf/Ref.h>
 #include <wtf/RefPtr.h>
+#include <wtf/RetainReleaseSwift.h>
 #include <wtf/RunLoop.h>
 #include <wtf/ThreadAssertions.h>
 #include <wtf/ThreadSafeWeakPtr.h>
@@ -75,6 +76,7 @@
 #if OS(DARWIN)
 #include <mach/mach_port.h>
 #include <wtf/OSObjectPtr.h>
+#include <wtf/darwin/XPCObjectPtr.h>
 #include <wtf/spi/darwin/XPCSPI.h>
 #if HAVE(XPC_API)
 #include <xpc/xpc.h>
@@ -328,20 +330,20 @@ public:
             : port(port)
         {
         }
-        Identifier(mach_port_t port, OSObjectPtr<xpc_connection_t> xpcConnection)
+        Identifier(mach_port_t port, XPCObjectPtr<xpc_connection_t> xpcConnection)
             : port(port)
             , xpcConnection(WTFMove(xpcConnection))
         {
         }
         operator bool() const { return MACH_PORT_VALID(port); }
         mach_port_t port { MACH_PORT_NULL };
-        OSObjectPtr<xpc_connection_t> xpcConnection;
+        XPCObjectPtr<xpc_connection_t> xpcConnection;
 #endif
     };
 
 #if OS(DARWIN)
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
-    OSObjectPtr<xpc_connection_t> protectedXPCConnection() const { return xpcConnection(); }
+    XPCObjectPtr<xpc_connection_t> protectedXPCConnection() const { return xpcConnection(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
 #endif
@@ -650,9 +652,7 @@ private:
     SerialFunctionDispatcher& dispatcher();
 
     class SyncMessageState;
-    struct SyncMessageStateRelease {
-        void operator()(SyncMessageState*) const;
-    };
+    RefPtr<SyncMessageState> protectedSyncState() const;
 
     void addAsyncReplyHandler(AsyncReplyHandler&&);
     void addAsyncReplyHandlerWithDispatcher(AsyncReplyHandlerWithDispatcher&&);
@@ -660,8 +660,28 @@ private:
 
     static constexpr size_t largeOutgoingMessageQueueCountThreshold { 128 };
 
+    enum class MessageIdentifierType { };
+    using MessageIdentifier = AtomicObjectIdentifier<MessageIdentifierType>;
+
+    // Represents a sync request for which we're waiting on a reply.
+    struct PendingSyncReply {
+        PendingSyncReply();
+        explicit PendingSyncReply(Connection::SyncRequestID);
+        PendingSyncReply(PendingSyncReply&&);
+        ~PendingSyncReply();
+
+        // The request ID.
+        Markable<Connection::SyncRequestID> syncRequestID;
+        // The reply decoder, will be null if there was an error processing the sync
+        // message on the other side.
+        std::unique_ptr<Decoder> replyDecoder;
+        // To make sure we maintain message ordering, we keep track of the last message (that returns true for shouldDispatchMessageWhenWaitingForSyncReply())
+        // and that was received *before* the sync reply. This is to make sure that we dispatch messages up until this one, before dispatching the sync reply.
+        std::optional<MessageIdentifier> identifierOfLastMessageToDispatchBeforeSyncReply;
+    };
+
     CheckedPtr<Client> m_client;
-    std::unique_ptr<SyncMessageState, SyncMessageStateRelease> m_syncState;
+    RefPtr<SyncMessageState> m_syncState;
     UniqueID m_uniqueID;
     bool m_isServer;
     std::atomic<bool> m_isValid { true };
@@ -725,7 +745,7 @@ private:
     Lock m_syncReplyStateLock;
     bool m_shouldWaitForSyncReplies WTF_GUARDED_BY_LOCK(m_syncReplyStateLock) { true };
     bool m_shouldWaitForMessages WTF_GUARDED_BY_LOCK(m_waitForMessageLock) { true };
-    struct PendingSyncReply;
+
     Vector<PendingSyncReply> m_pendingSyncReplies WTF_GUARDED_BY_LOCK(m_syncReplyStateLock);
 
     Lock m_incomingSyncMessageCallbackLock;
@@ -793,7 +813,7 @@ private:
 
     std::unique_ptr<MachMessage> m_pendingOutgoingMachMessage;
 
-    OSObjectPtr<xpc_connection_t> m_xpcConnection;
+    XPCObjectPtr<xpc_connection_t> m_xpcConnection;
     std::atomic<bool> m_didRequestProcessTermination { false };
     std::optional<audit_token_t> m_auditToken;
 #elif OS(WINDOWS)
@@ -830,7 +850,7 @@ private:
 #endif
 
     friend class StreamClientConnection;
-};
+} SWIFT_SHARED_REFERENCE(refConnection, derefConnection);
 
 template<typename T>
 Error Connection::send(T&& message, uint64_t destinationID, OptionSet<SendOption> sendOptions, std::optional<Thread::QOS> qos)
@@ -1139,3 +1159,13 @@ inline void markCurrentlyDispatchedMessageAsInvalid(const RefPtr<Connection>& co
 
 
 } // namespace IPC
+
+inline void refConnection(IPC::Connection* WTF_NONNULL obj)
+{
+    WTF::ref(obj);
+}
+
+inline void derefConnection(IPC::Connection* WTF_NONNULL obj)
+{
+    WTF::deref(obj);
+}

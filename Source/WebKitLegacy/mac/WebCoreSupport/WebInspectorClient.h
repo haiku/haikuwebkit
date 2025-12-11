@@ -62,7 +62,7 @@ public:
 
     void inspectedPageDestroyed() override;
 
-    Inspector::FrontendChannel* openLocalFrontend(WebCore::InspectorController*) override;
+    Inspector::FrontendChannel* openLocalFrontend(WebCore::PageInspectorController*) override;
     void bringFrontendToFront() override;
     void didResizeMainFrame(WebCore::LocalFrame*) override;
 
@@ -113,7 +113,7 @@ private:
 
 class WebInspectorFrontendClient : public WebCore::InspectorFrontendClientLocal {
 public:
-    WebInspectorFrontendClient(WebView*, WebInspectorWindowController*, WebCore::InspectorController*, WebCore::Page*, std::unique_ptr<Settings>);
+    WebInspectorFrontendClient(WebView*, WebInspectorWindowController*, WebCore::PageInspectorController*, WebCore::Page*, std::unique_ptr<Settings>);
 
     void attachAvailabilityChanged(bool);
     bool canAttach();

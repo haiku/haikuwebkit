@@ -187,6 +187,11 @@ void BoxTreeUpdater::adjustStyleIfNeeded(const RenderElement& renderer, RenderSt
                 styleToAdjust.setOverflowX(anonBlockParentStyle.overflowX());
                 styleToAdjust.setOverflowY(anonBlockParentStyle.overflowY());
             }
+            if (renderer.isRenderTextControl()) {
+                // Something like <input style="appearance:none; display:table-header-group"> confuses IFC.
+                if (styleToAdjust.isInternalTableBox() || styleToAdjust.display() == DisplayType::TableCaption)
+                    styleToAdjust.setDisplay(DisplayType::Block);
+            }
             return;
         }
         if (auto* renderInline = dynamicDowncast<RenderInline>(renderer)) {
@@ -496,7 +501,9 @@ void showInlineContent(TextStream& stream, const InlineContent& inlineContent, s
         };
         addSpacing(stream);
         auto& line = lines[lineIndex];
-        stream << "line at (" << line.lineBoxLeft() << "," << line.lineBoxTop() << ") size (" << line.lineBoxRight() - line.lineBoxLeft() << "x" << line.lineBoxBottom() - line.lineBoxTop() << ") baseline (" << line.baseline() << ") enclosing top (" << line.enclosingContentLogicalTop() << ") bottom (" << line.enclosingContentLogicalBottom() << ")";
+        stream << "line at (" << line.lineBoxLeft() << "," << line.lineBoxTop() << ") size (" << line.lineBoxRight() - line.lineBoxLeft() << "x" << line.lineBoxBottom() - line.lineBoxTop() << ") baseline (" << line.baseline() << ") enclosing top (" << line.enclosingContentLogicalTop() << ") bottom (" << line.enclosingContentLogicalBottom() << ") ";
+        if (line.hasEllipsis())
+            stream << "truncated with ellipsis.";
         stream.nextLine();
 
         addSpacing(stream);

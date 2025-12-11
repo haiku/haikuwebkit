@@ -33,6 +33,7 @@
 #include "LayoutChildIterator.h"
 #include "PlacedGridItem.h"
 #include "RenderStyleInlines.h"
+#include "StyleGapGutter.h"
 #include "StylePrimitiveNumeric.h"
 #include "UnplacedGridItem.h"
 #include "UsedTrackSizes.h"
@@ -112,12 +113,30 @@ void GridFormattingContext::layout(GridLayoutConstraints layoutConstraints)
     // Grid layout positions each item within its containing block which is the grid area.
     // Here we translate it to the coordinate space of the grid.
     auto mapGridItemLocationsToGrid = [&] {
+
+        // Compute gap values for columns and rows.
+        // For now, we handle fixed gaps only (not percentages or calc).
+        CheckedRef gridStyle = root().style();
+
+        auto computeGapValue = [](const Style::GapGutter& gap) -> LayoutUnit {
+            if (gap.isNormal())
+                return 0_lu;
+            // Only handle fixed length gaps for now
+            if (auto fixedGap = gap.tryFixed())
+                return Style::evaluate<LayoutUnit>(*fixedGap, 0_lu, Style::ZoomNeeded { });
+            ASSERT_NOT_REACHED();
+            return 0_lu;
+        };
+
+        auto columnGap = computeGapValue(gridStyle->columnGap());
+        auto rowGap = computeGapValue(gridStyle->rowGap());
+
         for (auto& gridItemRect : gridItemRects) {
             auto& lineNumbersForGridArea = gridItemRect.lineNumbersForGridArea;
-            auto columnLocation = GridLayoutUtils::computeTrackSizesBefore(lineNumbersForGridArea.columnStartLine, usedTrackSizes.columnSizes);
-            auto rowLocation = GridLayoutUtils::computeTrackSizesBefore(lineNumbersForGridArea.rowStartLine, usedTrackSizes.rowSizes);
+            auto columnPosition = GridLayoutUtils::computeGridLinePosition(lineNumbersForGridArea.columnStartLine, usedTrackSizes.columnSizes, columnGap);
+            auto rowPosition = GridLayoutUtils::computeGridLinePosition(lineNumbersForGridArea.rowStartLine, usedTrackSizes.rowSizes, rowGap);
 
-            gridItemRect.borderBoxRect.moveBy({ columnLocation, rowLocation });
+            gridItemRect.borderBoxRect.moveBy({ columnPosition, rowPosition });
         }
     };
     mapGridItemLocationsToGrid();

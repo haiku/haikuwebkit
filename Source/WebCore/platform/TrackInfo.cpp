@@ -56,27 +56,4 @@ Ref<TrackInfo> TrackInfo::fromVariant(Variant<Ref<AudioInfo>, Ref<VideoInfo>> va
     }), WTFMove(variant));
 }
 
-#if PLATFORM(COCOA)
-FourCC VideoInfo::computeBoxType() const
-{
-    if (boxType.value)
-        return boxType;
-
-    switch (codecName.value) {
-    case kCMVideoCodecType_VP9:
-    case 'vp08':
-        return 'vpcC';
-    case kCMVideoCodecType_H264:
-        return 'avcC';
-    case kCMVideoCodecType_HEVC:
-        return 'hvcC';
-    case kCMVideoCodecType_AV1:
-        return 'av1C';
-    default:
-        ASSERT_NOT_REACHED();
-        return 'baad';
-    }
-}
-#endif
-
 } // namespace WebCore

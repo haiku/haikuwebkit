@@ -344,7 +344,7 @@ static String int128ToString(Int128 value)
     if (isNegative)
         resultString.append('-');
 
-    std::reverse(resultString.begin(), resultString.end());
+    std::ranges::reverse(resultString);
 
     return StringImpl::adopt(WTFMove(resultString));
 }

@@ -76,6 +76,11 @@ static Ref<WebKit::InjectedBundleScriptWorld> protectedWorld(WKWebProcessPlugInS
     protectedWorld(self)->disableOverrideBuiltinsBehavior();
 }
 
+- (void)allowJSHandleCreation
+{
+    protectedWorld(self)->setAllowJSHandleCreation();
+}
+
 - (NSString *)name
 {
     return _world->name().createNSString().autorelease();

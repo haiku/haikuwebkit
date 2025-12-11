@@ -123,15 +123,46 @@ void NetworkTransportSession::getReceiveStreamStats(WebCore::WebTransportStreamI
         completionHandler(std::nullopt);
 }
 
+void NetworkTransportSession::getSendGroupStats(WebCore::WebTransportSendGroupIdentifier identifier, CompletionHandler<void(std::optional<WebCore::WebTransportSendStreamStats>&&)>&& completionHandler)
+{
+    // FIXME: Get better data from the stream.
+    uint64_t bytesSent = m_datagramStats.get(identifier);
+    completionHandler(WebCore::WebTransportSendStreamStats {
+        bytesSent,
+        bytesSent,
+        bytesSent
+    });
+}
+
+void NetworkTransportSession::datagramIncomingMaxAgeUpdated(std::optional<double>)
+{
+    // FIXME: Use this value.
+}
+
+void NetworkTransportSession::datagramOutgoingMaxAgeUpdated(std::optional<double>)
+{
+    // FIXME: Use this value.
+}
+
+void NetworkTransportSession::datagramIncomingHighWaterMarkUpdated(double)
+{
+    // FIXME: Use this value.
+}
+
+void NetworkTransportSession::datagramOutgoingHighWaterMarkUpdated(double)
+{
+    // FIXME: Use this value.
+}
+
 #if !PLATFORM(COCOA)
 RefPtr<NetworkTransportSession> NetworkTransportSession::create(NetworkConnectionToWebProcess&, WebTransportSessionIdentifier, URL&&, WebCore::WebTransportOptions&&, WebKit::WebPageProxyIdentifier&&, WebCore::ClientOrigin&&)
 {
     return nullptr;
 }
 
-void NetworkTransportSession::initialize(CompletionHandler<void(bool)>&& completionHandler)
+void NetworkTransportSession::initialize(CompletionHandler<void(std::optional<WebCore::WebTransportConnectionInfo>&&)>&& completionHandler)
 {
-    completionHandler(false);
+    completionHandler(std::nullopt);
 }
 
 NetworkTransportSession::NetworkTransportSession()
@@ -139,7 +170,7 @@ NetworkTransportSession::NetworkTransportSession()
 {
 }
 
-void NetworkTransportSession::sendDatagram(std::span<const uint8_t>, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
+void NetworkTransportSession::sendDatagram(std::optional<WebCore::WebTransportSendGroupIdentifier>, std::span<const uint8_t>, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
 {
     completionHandler(std::nullopt);
 }

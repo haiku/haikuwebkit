@@ -108,6 +108,7 @@ void DynamicsCompressor::process(const AudioBus& sourceBus, AudioBus& destinatio
 
     switch (numberOfChannels) {
     case 2: // stereo
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         m_sourceChannels[0] = sourceBus.channel(0)->span();
 
         if (numberOfSourceChannels > 1)
@@ -115,6 +116,7 @@ void DynamicsCompressor::process(const AudioBus& sourceBus, AudioBus& destinatio
         else
             // Simply duplicate mono channel input data to right channel for stereo processing.
             m_sourceChannels[1] = m_sourceChannels[0];
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         break;
     default:
@@ -124,8 +126,10 @@ void DynamicsCompressor::process(const AudioBus& sourceBus, AudioBus& destinatio
         return;
     }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     for (unsigned i = 0; i < numberOfChannels; ++i)
         m_destinationChannels[i] = destinationBus.channel(i)->mutableSpan();
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     float dbThreshold = parameterValue(ParamThreshold);
     float dbKnee = parameterValue(ParamKnee);

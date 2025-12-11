@@ -13,7 +13,6 @@ TestIPC.ArgumentCoderTest/ArgumentCoderVectorTest/Encoder
 TestIPC.ArgumentCoderTest/ArgumentCoderVectorTest/StreamConnectionEncoder
 TestIPC.ConnectionTest
 TestIPC.ConnectionTest/ConnectionDidReceiveInvalidMessageTest
-TestIPC.ConnectionTest/ConnectionRunLoopTest
 TestIPC.ConnectionTest/ConnectionTestABBA
 TestIPC.CoreIPCCFDictionary
 TestIPC.EventTest/EventTestABBA
@@ -287,7 +286,6 @@ TestWebKitAPI.DisplayListRecorderTest/DisplayListRecorderResultStateTest/7
 TestWebKitAPI.DisplayListRecorderTest/DisplayListRecorderResultStateTest/8
 TestWebKitAPI.DisplayListRecorderTest/DisplayListRecorderResultStateTest/9
 TestWebKitAPI.DocumentOrder
-TestWebKitAPI.DrawingToPDF
 TestWebKitAPI.DynamicDeviceScaleFactor
 TestWebKitAPI.EditorStateTests
 TestWebKitAPI.ElementActionTests
@@ -366,7 +364,6 @@ TestWebKitAPI.Navigation
 TestWebKitAPI.Notification
 TestWebKitAPI.NowPlayingControlsTests
 TestWebKitAPI.NowPlayingInfoArtwork
-TestWebKitAPI.ObscuredContentInsets
 TestWebKitAPI.OverflowScrollViewTests
 TestWebKitAPI.PAL
 TestWebKitAPI.PDFSnapshot

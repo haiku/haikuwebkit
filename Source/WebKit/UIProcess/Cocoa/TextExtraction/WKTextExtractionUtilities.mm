@@ -26,7 +26,7 @@
 #import "config.h"
 #import "WKTextExtractionUtilities.h"
 
-#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
+#if ENABLE(TEXT_EXTRACTION)
 
 #import "WKWebViewInternal.h"
 #import "_WKTextExtractionInternal.h"
@@ -62,6 +62,10 @@ inline static WKTextExtractionContainer containerType(TextExtraction::ContainerT
         return WKTextExtractionContainerButton;
     case TextExtraction::ContainerType::Canvas:
         return WKTextExtractionContainerCanvas;
+    case TextExtraction::ContainerType::Subscript:
+        return WKTextExtractionContainerSubscript;
+    case TextExtraction::ContainerType::Superscript:
+        return WKTextExtractionContainerSuperscript;
     case TextExtraction::ContainerType::Generic:
         return WKTextExtractionContainerGeneric;
     }
@@ -283,4 +287,4 @@ std::optional<double> computeSimilarity(NSString *stringA, NSString *stringB, un
 
 } // namespace WebKit
 
-#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
+#endif // ENABLE(TEXT_EXTRACTION)

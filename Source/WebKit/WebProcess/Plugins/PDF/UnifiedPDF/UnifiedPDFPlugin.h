@@ -82,7 +82,7 @@ struct DocumentEditingContext;
 struct PDFContextMenu;
 struct PDFContextMenuItem;
 
-enum class WebEventType : uint8_t;
+enum class WebEventType : uint32_t;
 enum class WebMouseEventButton : int8_t;
 enum class WebEventModifier : uint8_t;
 
@@ -258,6 +258,7 @@ private:
     void didInvalidateDataDetectorHighlightOverlayRects();
 
     PDFDataDetectorOverlayController& dataDetectorOverlayController() { return *m_dataDetectorOverlayController; }
+    Ref<PDFDataDetectorOverlayController> protectedDataDetectorOverlayController();
 #endif
 
     const PDFDocumentLayout& documentLayout() const { return m_documentLayout; }
@@ -475,9 +476,9 @@ private:
 
     // GraphicsLayerClient
     void notifyFlushRequired(const WebCore::GraphicsLayer*) override;
-    void paintContents(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect&, OptionSet<WebCore::GraphicsLayerPaintBehavior>) override;
+    void paintContents(const WebCore::GraphicsLayer&, WebCore::GraphicsContext&, const WebCore::FloatRect&, OptionSet<WebCore::GraphicsLayerPaintBehavior>) override;
     float pageScaleFactor() const override;
-    bool layerNeedsPlatformContext(const WebCore::GraphicsLayer*) const override;
+    bool layerNeedsPlatformContext(const WebCore::GraphicsLayer&) const override;
 
     void paintPDFContent(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect& clipRect, const std::optional<PDFLayoutRow>& = { }, AsyncPDFRenderer* = nullptr);
     void paintPDFSelection(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect& clipRect, std::optional<PDFLayoutRow> = { });
@@ -714,7 +715,7 @@ private:
     PDFPageCoverage m_findMatchRects;
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
-    std::unique_ptr<PDFDataDetectorOverlayController> m_dataDetectorOverlayController;
+    RefPtr<PDFDataDetectorOverlayController> m_dataDetectorOverlayController;
 #endif
 
 #if PLATFORM(IOS_FAMILY)

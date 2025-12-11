@@ -357,9 +357,9 @@ void PDFScrollingPresentationController::paintBackgroundLayerForPage(const Graph
         asyncRenderer->paintPagePreview(context, clipRect, destinationRect, pageIndex);
 }
 
-std::optional<PDFDocumentLayout::PageIndex> PDFScrollingPresentationController::pageIndexForPageBackgroundLayer(const GraphicsLayer* layer) const
+std::optional<PDFDocumentLayout::PageIndex> PDFScrollingPresentationController::pageIndexForPageBackgroundLayer(const GraphicsLayer& layer) const
 {
-    auto it = m_pageBackgroundLayers.find(layer);
+    auto it = m_pageBackgroundLayers.find(&layer);
     if (it == m_pageBackgroundLayers.end())
         return { };
 
@@ -397,7 +397,7 @@ float PDFScrollingPresentationController::deviceScaleFactor() const
     return m_plugin->deviceScaleFactor();
 }
 
-std::optional<float> PDFScrollingPresentationController::customContentsScale(const GraphicsLayer* layer) const
+std::optional<float> PDFScrollingPresentationController::customContentsScale(const GraphicsLayer& layer) const
 {
     if (pageIndexForPageBackgroundLayer(layer))
         return scaleForPagePreviews();
@@ -405,9 +405,9 @@ std::optional<float> PDFScrollingPresentationController::customContentsScale(con
     return { };
 }
 
-bool PDFScrollingPresentationController::layerNeedsPlatformContext(const GraphicsLayer* layer) const
+bool PDFScrollingPresentationController::layerNeedsPlatformContext(const GraphicsLayer& layer) const
 {
-    return shouldUseInProcessBackingStore() && (layer == m_contentsLayer || pageIndexForPageBackgroundLayer(layer));
+    return shouldUseInProcessBackingStore() && (&layer == m_contentsLayer || pageIndexForPageBackgroundLayer(layer));
 }
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
@@ -424,23 +424,23 @@ void PDFScrollingPresentationController::tiledBackingUsageChanged(const Graphics
         layer->checkedTiledBacking()->setIsInWindow(m_plugin->isInWindow());
 }
 
-void PDFScrollingPresentationController::paintContents(const GraphicsLayer* layer, GraphicsContext& context, const FloatRect& clipRect, OptionSet<GraphicsLayerPaintBehavior>)
+void PDFScrollingPresentationController::paintContents(const GraphicsLayer& layer, GraphicsContext& context, const FloatRect& clipRect, OptionSet<GraphicsLayerPaintBehavior>)
 {
-    if (layer == m_contentsLayer.get()) {
+    if (&layer == m_contentsLayer.get()) {
         RefPtr asyncRenderer = asyncRendererIfExists();
-        m_plugin->paintPDFContent(layer, context, clipRect, { }, asyncRenderer.get());
+        m_plugin->paintPDFContent(&layer, context, clipRect, { }, asyncRenderer.get());
         return;
     }
 
 #if ENABLE(PDFKIT_PAINTED_SELECTIONS)
-    if (layer == m_selectionLayer.get()) {
-        paintPDFSelection(layer, context, clipRect, { });
+    if (&layer == m_selectionLayer.get()) {
+        paintPDFSelection(&layer, context, clipRect, { });
         return;
     }
 #endif
 
     if (auto backgroundLayerPageIndex = pageIndexForPageBackgroundLayer(layer)) {
-        paintBackgroundLayerForPage(layer, context, clipRect, *backgroundLayerPageIndex);
+        paintBackgroundLayerForPage(&layer, context, clipRect, *backgroundLayerPageIndex);
         return;
     }
 }

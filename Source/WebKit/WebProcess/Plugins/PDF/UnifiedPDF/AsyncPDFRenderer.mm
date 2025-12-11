@@ -112,7 +112,7 @@ void AsyncPDFRenderer::releaseMemory()
     for (Ref layer : m_layerIDtoLayerMap.values()) {
         // Ideally we'd be able to make the ImageBuffer memory volatile which would eliminate the need for this callback: webkit.org/b/274878
         if (CheckedPtr tiledBacking = layer->tiledBacking())
-            removePagePreviewsOutsideCoverageRect(tiledBacking->coverageRect(), presentationController->rowForLayer(layer.ptr()));
+            removePagePreviewsOutsideCoverageRect(tiledBacking->coverageRect(), presentationController->rowForLayer(layer.get()));
     }
 
     LOG_WITH_STREAM(PDFAsyncRendering, stream << "AsyncPDFRenderer::releaseMemory - reduced page preview count from " << oldPagePreviewCount << " to " << m_pagePreviews.size());
@@ -343,7 +343,7 @@ void AsyncPDFRenderer::coverageRectDidChange(TiledBacking& tiledBacking, const F
     std::optional<PDFLayoutRow> layoutRow;
     RefPtr layer = layerForTileGrid(tiledBacking.primaryGridIdentifier());
     if (layer)
-        layoutRow = presentationController->rowForLayer(layer.get());
+        layoutRow = presentationController->rowForLayer(*layer);
 
     m_currentPageCoverage = presentationController->pageCoverageForContentsRect(coverageRect, layoutRow);
     ensurePreviewsForCurrentPageCoverage();
@@ -551,7 +551,7 @@ TileRenderInfo AsyncPDFRenderer::renderInfoForTile(const TiledBacking& tiledBack
 
     std::optional<PDFLayoutRow> layoutRow;
     if (RefPtr layer = layerForTileGrid(tileInfo.gridIdentifier))
-        layoutRow = presentationController->rowForLayer(layer.get());
+        layoutRow = presentationController->rowForLayer(*layer);
 
     auto pageCoverage = presentationController->pageCoverageAndScalesForContentsRect(paintingClipRect, layoutRow, tilingScaleFactor);
 

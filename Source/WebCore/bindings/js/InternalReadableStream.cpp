@@ -29,7 +29,6 @@
 #include "JSDOMConvertObject.h"
 #include "JSDOMConvertSequences.h"
 #include "JSDOMException.h"
-#include "JSReadableStreamSink.h"
 #include "WebCoreJSClientData.h"
 #include <JavaScriptCore/JSObjectInlines.h>
 
@@ -196,28 +195,6 @@ void InternalReadableStream::lock()
         scope.clearException();
 }
 
-void InternalReadableStream::pipeTo(ReadableStreamSink& sink)
-{
-    auto* globalObject = this->globalObject();
-    if (!globalObject)
-        return;
-
-    auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());
-    JSC::JSLockHolder lock(globalObject->vm());
-
-    auto* clientData = downcast<JSVMClientData>(globalObject->vm().clientData);
-    auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().readableStreamPipeToPrivateName();
-
-    JSC::MarkedArgumentBuffer arguments;
-    arguments.append(guardedObject());
-    arguments.append(toJS(globalObject, globalObject, sink));
-    ASSERT(!arguments.hasOverflowed());
-
-    invokeReadableStreamFunction(*globalObject, privateName, arguments);
-    if (scope.exception()) [[unlikely]]
-        scope.clearException();
-}
-
 ExceptionOr<std::pair<Ref<InternalReadableStream>, Ref<InternalReadableStream>>> InternalReadableStream::tee(bool shouldClone)
 {
     auto* globalObject = this->globalObject();
@@ -248,42 +225,6 @@ JSC::JSValue InternalReadableStream::cancel(JSC::JSGlobalObject& globalObject, J
     JSC::MarkedArgumentBuffer arguments;
     arguments.append(guardedObject());
     arguments.append(reason);
-    ASSERT(!arguments.hasOverflowed());
-
-    auto result = invokeReadableStreamFunction(globalObject, privateName, arguments);
-    if (result.hasException())
-        return { };
-
-    return result.returnValue();
-}
-
-JSC::JSValue InternalReadableStream::pipeTo(JSC::JSGlobalObject& globalObject, JSC::JSValue streams, JSC::JSValue options)
-{
-    auto* clientData = downcast<JSVMClientData>(globalObject.vm().clientData);
-    auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().readableStreamPipeToForBindingsPrivateName();
-
-    JSC::MarkedArgumentBuffer arguments;
-    arguments.append(guardedObject());
-    arguments.append(streams);
-    arguments.append(options);
-    ASSERT(!arguments.hasOverflowed());
-
-    auto result = invokeReadableStreamFunction(globalObject, privateName, arguments);
-    if (result.hasException())
-        return { };
-
-    return result.returnValue();
-}
-
-JSC::JSValue InternalReadableStream::pipeThrough(JSC::JSGlobalObject& globalObject, JSC::JSValue dest, JSC::JSValue options)
-{
-    auto* clientData = downcast<JSVMClientData>(globalObject.vm().clientData);
-    auto& privateName = clientData->builtinFunctions().readableStreamInternalsBuiltins().readableStreamPipeThroughForBindingsPrivateName();
-
-    JSC::MarkedArgumentBuffer arguments;
-    arguments.append(guardedObject());
-    arguments.append(dest);
-    arguments.append(options);
     ASSERT(!arguments.hasOverflowed());
 
     auto result = invokeReadableStreamFunction(globalObject, privateName, arguments);

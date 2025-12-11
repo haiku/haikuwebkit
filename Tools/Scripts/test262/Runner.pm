@@ -46,6 +46,7 @@ use Time::HiRes qw(time);
 use IO::Handle;
 use IO::Select;
 use Pod::Usage;
+use lib $FindBin::Bin;
 use webkitdirs;
 
 my $Bin;
@@ -159,6 +160,10 @@ sub processCLI {
     my $stats;
     my $specifiedResultsFile;
     my $specifiedExpectationsFile;
+
+    # Cache the product dir. Do this before processing CLI options because it implicitly processes
+    # CLI args.
+    productDir();
 
     # If adding a new commandline argument, you must update the POD
     # documentation at the end of the file.

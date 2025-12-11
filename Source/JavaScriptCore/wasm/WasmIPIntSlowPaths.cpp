@@ -210,6 +210,7 @@ WASM_IPINT_EXTERN_CPP_DECL(prologue_osr, CallFrame* callFrame)
     WASM_RETURN_TWO(nullptr, nullptr);
 }
 
+// This needs to be kept in sync with BBQJIT::makeStackMap.
 template<SavedFPWidth savedFPWidth>
 static ALWAYS_INLINE uint64_t* buildEntryBufferForLoopOSR(Wasm::IPIntCallee* ipintCallee, Wasm::BBQCallee* bbqCallee, JSWebAssemblyInstance* instance, const Wasm::IPIntTierUpCounter::OSREntryData& osrEntryData, IPIntLocal* pl)
 {

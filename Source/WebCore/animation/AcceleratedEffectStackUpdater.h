@@ -42,8 +42,9 @@ class AcceleratedEffectStackUpdater {
 public:
     AcceleratedEffectStackUpdater() = default;
 
-    void updateEffectStacks();
-    void updateEffectStackForTarget(const Styleable&);
+    void update();
+    void scheduleUpdateForTarget(const Styleable&);
+    bool hasTargetsPendingUpdate() const { return !m_targetsPendingUpdate.isEmpty(); }
 
     const HashSet<Ref<AcceleratedTimeline>>& timelines() const { return m_timelines; }
 

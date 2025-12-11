@@ -45,7 +45,7 @@ public:
     WTF_EXPORT_PRIVATE static RefPtr<AtomStringImpl> add(StringImpl*, unsigned offset, unsigned length);
     ALWAYS_INLINE static RefPtr<AtomStringImpl> add(StringImpl*);
     ALWAYS_INLINE static RefPtr<AtomStringImpl> add(RefPtr<StringImpl>&&);
-    WTF_EXPORT_PRIVATE static RefPtr<AtomStringImpl> add(const StaticStringImpl*);
+    WTF_EXPORT_PRIVATE static RefPtr<AtomStringImpl> add(const StaticStringImpl&);
     ALWAYS_INLINE static Ref<AtomStringImpl> add(ASCIILiteral);
 
     // Returns null if the input data contains an invalid UTF-8 sequence.
@@ -161,6 +161,9 @@ template<> struct ValueCheck<const AtomStringImpl*> {
 };
 
 #endif // ASSERT_ENABLED
+
+inline void printInternal(PrintStream& out, const AtomStringImpl* value) { printInternal(out, std::bit_cast<const StringImpl*>(value)); }
+inline void printInternal(PrintStream& out, AtomStringImpl* value) { printInternal(out, static_cast<const AtomStringImpl*>(value)); }
 
 } // namespace WTF
 

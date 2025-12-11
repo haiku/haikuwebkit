@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,6 +63,8 @@ class Quirks {
 public:
     Quirks(Document&);
     ~Quirks();
+
+    bool hasRelevantQuirks() const;
 
     bool shouldSilenceResizeObservers() const;
     bool shouldSilenceWindowResizeEventsDuringApplicationSnapshotting() const;
@@ -240,6 +242,11 @@ public:
     bool shouldIgnorePlaysInlineRequirementQuirk() const;
     WEBCORE_EXPORT bool shouldUseEphemeralPartitionedStorageForDOMCookies(const URL&) const;
 
+#if PLATFORM(IOS_FAMILY)
+    bool shouldAllowPopupFromMicrosoftOfficeToOneDrive() const { return m_quirksData.quirkIsEnabled(QuirksData::SiteSpecificQuirk::ShouldAllowPopupFromMicrosoftOfficeToOneDrive); }
+    bool needsPopupFromMicrosoftOfficeToOneDrive(const URL& targetURL) const;
+#endif
+
     bool needsLaxSameSiteCookieQuirk(const URL&) const;
     static String standardUserAgentWithApplicationNameIncludingCompatOverrides(const String&, const String&, UserAgentType);
 
@@ -263,8 +270,6 @@ public:
 #endif
 
     bool needsMozillaFileTypeForDataTransfer() const;
-
-    bool needsBingGestureEventQuirk(EventTarget*) const;
 
     WEBCORE_EXPORT bool shouldAvoidStartingSelectionOnMouseDownOverPointerCursor(const Node&) const;
 

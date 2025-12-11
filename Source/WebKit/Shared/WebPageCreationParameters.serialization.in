@@ -100,7 +100,6 @@ enum class WebCore::UserInterfaceLayoutDirection : bool;
     bool hasResourceLoadClient;
 
     Vector<String> mimeTypesWithCustomContentProviders;
-    String overrideReferrerForAllRequests;
 
     bool controlledByAutomation;
     bool isProcessSwap;

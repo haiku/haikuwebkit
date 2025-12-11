@@ -38,6 +38,7 @@
 #include <wtf/UnalignedAccess.h>
 #include <wtf/text/ASCIIFastPath.h>
 #include <wtf/text/ASCIILiteral.h>
+#include <wtf/unicode/UTF8Conversion.h>
 
 namespace WTF {
 
@@ -51,20 +52,6 @@ inline std::span<const char16_t> span(const char16_t& character)
     return unsafeMakeSpan(&character, 1);
 }
 
-inline std::span<const Latin1Character> unsafeSpan8(const char* string)
-{
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    return unsafeMakeSpan(byteCast<Latin1Character>(string), string ? strlen(string) : 0);
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-}
-
-inline std::span<const Latin1Character> unsafeSpan8IncludingNullTerminator(const char* string)
-{
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    return unsafeMakeSpan(byteCast<Latin1Character>(string), string ? strlen(string) + 1 : 0);
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-}
-
 inline std::span<const char> unsafeSpan(const char* string)
 {
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
@@ -76,13 +63,6 @@ inline std::span<const char> unsafeSpanIncludingNullTerminator(const char* strin
 {
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     return unsafeMakeSpan(string, string ? strlen(string) + 1 : 0);
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-}
-
-inline std::span<const Latin1Character> unsafeSpan(const Latin1Character* string)
-{
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    return unsafeMakeSpan(string, string ? strlen(byteCast<char>(string)) : 0);
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
@@ -128,7 +108,9 @@ template<> ALWAYS_INLINE constexpr bool isLatin1(Latin1Character)
 
 using CodeUnitMatchFunction = bool (*)(char16_t);
 
-template<typename CharacterTypeA, typename CharacterTypeB> bool equalIgnoringASCIICase(std::span<const CharacterTypeA>, std::span<const CharacterTypeB>);
+template<typename CharacterTypeA, typename CharacterTypeB>
+    requires(TriviallyComparableCodeUnits<CharacterTypeA, CharacterTypeB>)
+bool equalIgnoringASCIICase(std::span<const CharacterTypeA>, std::span<const CharacterTypeB>);
 
 template<typename StringClassA, typename StringClassB> bool equalIgnoringASCIICaseCommon(const StringClassA&, const StringClassB&);
 
@@ -139,9 +121,13 @@ template<typename StringClass> bool equalLettersIgnoringASCIICaseCommon(const St
 
 bool equalIgnoringASCIICase(const char*, const char*);
 
+template<typename T>
+concept OneByteCharacterType = std::is_same_v<std::remove_const_t<T>, Latin1Character> || std::is_same_v<std::remove_const_t<T>, char8_t> || std::is_same_v<std::remove_const_t<T>, char>;
+
 // Do comparisons 8 or 4 bytes-at-a-time on architectures where it's safe.
 #if (CPU(X86_64) || CPU(ARM64)) && !ASAN_ENABLED
-ALWAYS_INLINE bool equal(const Latin1Character* a, std::span<const Latin1Character> b)
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE bool equal(const CharacterType* a, std::span<const CharacterType> b)
 {
     ASSERT(b.size() <= std::numeric_limits<unsigned>::max());
     unsigned length = b.size();
@@ -242,7 +228,8 @@ ALWAYS_INLINE bool equal(const char16_t* a, std::span<const char16_t> b)
     }
 }
 #elif CPU(X86) && !ASAN_ENABLED
-ALWAYS_INLINE bool equal(const Latin1Character* a, std::span<const Latin1Character> b)
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE bool equal(const CharacterType* a, std::span<const CharacterType> b)
 {
     ASSERT(b.size() <= std::numeric_limits<unsigned>::max());
     unsigned length = b.size();
@@ -261,8 +248,8 @@ ALWAYS_INLINE bool equal(const Latin1Character* a, std::span<const Latin1Charact
     length &= 3;
 
     if (length) {
-        const Latin1Character* aRemainder = byteCast<Latin1Character>(aString);
-        const Latin1Character* bRemainder = byteCast<Latin1Character>(bString);
+        auto* aRemainder = byteCast<CharacterType>(aString);
+        auto* bRemainder = byteCast<CharacterType>(bString);
 
         for (unsigned i = 0; i < length; ++i) {
             if (aRemainder[i] != bRemainder[i])
@@ -295,7 +282,11 @@ ALWAYS_INLINE bool equal(const char16_t* a, std::span<const char16_t> b)
     return true;
 }
 #else
-ALWAYS_INLINE bool equal(const Latin1Character* a, std::span<const Latin1Character> b) { return !memcmp(a, b.data(), b.size()); }
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE bool equal(const CharacterType* a, std::span<const CharacterType> b)
+{
+    return !memcmp(a, b.data(), b.size());
+}
 ALWAYS_INLINE bool equal(const char16_t* a, std::span<const char16_t> b) { return !memcmp(a, b.data(), b.size_bytes()); }
 #endif
 
@@ -355,6 +346,20 @@ ALWAYS_INLINE bool equal(const char16_t* a, std::span<const Latin1Character> b)
     return equal(b.data(), { a, b.size() });
 }
 
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE bool equal(std::span<const CharacterType> a, std::span<const CharacterType> b)
+{
+    if (a.size() != b.size())
+        return false;
+    return equal(a.data(), b);
+}
+
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE bool equal(std::span<const CharacterType> a, ASCIILiteral b)
+{
+    return equal(a, byteCast<CharacterType>(b.span()));
+}
+
 template<typename StringClassA, typename StringClassB>
 ALWAYS_INLINE bool equalCommon(const StringClassA& a, const StringClassB& b, unsigned length)
 {
@@ -411,6 +416,23 @@ template<typename StringClass, unsigned length> bool equal(const StringClass& a,
     return equal(a.span16().data(), { codeUnits, length });
 }
 
+template<typename T>
+concept ContainsEncodingAwareSpans = requires(T t)
+{
+    { t.is8Bit() } -> std::convertible_to<bool>;
+    { t.span8() } -> std::convertible_to<std::span<const Latin1Character>>;
+    { t.span16() } -> std::convertible_to<std::span<const char16_t>>;
+};
+
+template<ContainsEncodingAwareSpans StringClass>
+bool equal(const StringClass& string, std::span<const char8_t> span)
+{
+    if (string.is8Bit())
+        return Unicode::equal(string.span8(), span);
+
+    return Unicode::equal(string.span16(), span);
+}
+
 template<typename CharacterTypeA, typename CharacterTypeB> inline bool equalIgnoringASCIICaseWithLength(std::span<const CharacterTypeA> a, std::span<const CharacterTypeB> b, size_t lengthToCheck)
 {
     ASSERT(a.size() >= lengthToCheck);
@@ -429,9 +451,17 @@ template<typename CharacterTypeA, typename CharacterTypeB> inline bool spanHasPr
     return equalIgnoringASCIICaseWithLength(span, prefix, prefix.size());
 }
 
-template<typename CharacterTypeA, typename CharacterTypeB> inline bool equalIgnoringASCIICase(std::span<const CharacterTypeA> a, std::span<const CharacterTypeB> b)
+template<typename CharacterTypeA, typename CharacterTypeB>
+    requires(TriviallyComparableCodeUnits<CharacterTypeA, CharacterTypeB>)
+inline bool equalIgnoringASCIICase(std::span<const CharacterTypeA> a, std::span<const CharacterTypeB> b)
 {
     return a.size() == b.size() && equalIgnoringASCIICaseWithLength(a, b, a.size());
+}
+
+template<OneByteCharacterType CharacterType>
+inline bool equalIgnoringASCIICase(std::span<const CharacterType> a, ASCIILiteral b)
+{
+    return equalIgnoringASCIICase(a, byteCast<CharacterType>(b.span()));
 }
 
 template<typename StringClassA, typename StringClassB>
@@ -452,7 +482,7 @@ bool equalIgnoringASCIICaseCommon(const StringClassA& a, const StringClassB& b)
 
 template<typename StringClassA> bool equalIgnoringASCIICaseCommon(const StringClassA& a, const char* b)
 {
-    auto bSpan = unsafeSpan8(b);
+    auto bSpan = unsafeSpan(b);
     if (a.length() != bSpan.size())
         return false;
     if (a.is8Bit())
@@ -460,8 +490,9 @@ template<typename StringClassA> bool equalIgnoringASCIICaseCommon(const StringCl
     return equalIgnoringASCIICaseWithLength(a.span16(), bSpan, bSpan.size());
 }
 
-template <typename SearchCharacterType, typename MatchCharacterType>
-size_t findIgnoringASCIICase(std::span<const SearchCharacterType> source, std::span<const MatchCharacterType> matchCharacters, size_t startOffset)
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+size_t findIgnoringASCIICase(std::span<const SearchCharacterType> source, std::span<const MatchCharacterType> matchCharacters, size_t startOffset = 0)
 {
     ASSERT(source.size() >= matchCharacters.size());
 
@@ -475,6 +506,24 @@ size_t findIgnoringASCIICase(std::span<const SearchCharacterType> source, std::s
             return startOffset + i;
     }
     return notFound;
+}
+
+template<OneByteCharacterType CharacterType>
+size_t findIgnoringASCIICase(std::span<const CharacterType> source, ASCIILiteral matchCharacters)
+{
+    return findIgnoringASCIICase(source, byteCast<CharacterType>(matchCharacters.span()));
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+bool containsIgnoringASCIICase(std::span<const SearchCharacterType> source, std::span<const MatchCharacterType> matchCharacters)
+{
+    return findIgnoringASCIICase(source, matchCharacters) != notFound;
+}
+
+template<typename CharacterType>
+bool containsIgnoringASCIICase(std::span<const CharacterType> source, ASCIILiteral matchCharacters)
+{
+    return containsIgnoringASCIICase(source, byteCast<CharacterType>(matchCharacters.span()));
 }
 
 inline size_t findIgnoringASCIICaseWithoutLength(const char* source, const char* matchCharacters)
@@ -734,10 +783,22 @@ inline size_t find(std::span<const Latin1Character> characters, char16_t matchCh
     return find(characters, static_cast<Latin1Character>(matchCharacter), index);
 }
 
+template<OneByteCharacterType CharacterType>
+inline size_t find(std::span<const CharacterType> characters, ASCIILiteral matchCharacters)
+{
+    return find(characters, byteCast<CharacterType>(matchCharacters.span()));
+}
+
 template<std::integral CharacterType1, std::integral CharacterType2>
 inline bool contains(std::span<const CharacterType1> characters, CharacterType2 matchCharacter, size_t index = 0)
 {
     return find(characters, matchCharacter, index) != notFound;
+}
+
+template<OneByteCharacterType CharacterType>
+inline bool contains(std::span<const CharacterType> characters, ASCIILiteral matchCharacters)
+{
+    return contains(characters, byteCast<CharacterType>(matchCharacters.span()));
 }
 
 template <typename SearchCharacterType, typename MatchCharacterType>
@@ -767,7 +828,28 @@ ALWAYS_INLINE static size_t reverseFindInner(std::span<const SearchCharacterType
     return delta;
 }
 
-template<typename CharacterType> inline bool equalLettersIgnoringASCIICaseWithLength(std::span<const CharacterType> characters, std::span<const Latin1Character> lowercaseLetters, size_t length)
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+ALWAYS_INLINE static size_t reverseFind(std::span<const SearchCharacterType> searchCharacters, std::span<const MatchCharacterType> matchCharacters, size_t start = std::numeric_limits<size_t>::max())
+{
+    return reverseFindInner(searchCharacters, matchCharacters, start);
+}
+
+template<OneByteCharacterType CharacterType>
+ALWAYS_INLINE static size_t reverseFind(std::span<const CharacterType> searchCharacters, ASCIILiteral matchCharacters)
+{
+    return reverseFind(searchCharacters, byteCast<CharacterType>(matchCharacters.span()));
+}
+
+template<typename CharT, typename OneByteCharT>
+concept SearchableStringByOneByteCharacter =
+    sizeof(OneByteCharT) == 1
+    && (std::is_same_v<std::remove_const_t<CharT>, std::remove_const_t<OneByteCharT>>
+    || std::is_same_v<std::remove_const_t<OneByteCharT>, Latin1Character>);
+
+template<typename CharacterType, typename OneByteCharacterType>
+    requires SearchableStringByOneByteCharacter<CharacterType, OneByteCharacterType>
+inline bool equalLettersIgnoringASCIICaseWithLength(std::span<const CharacterType> characters, std::span<const OneByteCharacterType> lowercaseLetters, size_t length)
 {
     ASSERT(characters.size() >= length);
     ASSERT(lowercaseLetters.size() >= length);
@@ -815,6 +897,93 @@ template<typename StringClass> bool equalLettersIgnoringASCIICaseCommon(const St
     return hasPrefixWithLettersIgnoringASCIICaseCommon(string, literal);
 }
 
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool startsWith(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> prefix)
+{
+    if (prefix.size() > string.size())
+        return false;
+
+    return equal(string.data(), prefix);
+}
+
+template<OneByteCharacterType CharacterType>
+bool startsWith(std::span<const CharacterType> string, ASCIILiteral prefix)
+{
+    return startsWith(string, byteCast<CharacterType>(prefix.span()));
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool endsWith(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> suffix)
+{
+    unsigned suffixSize = suffix.size();
+    unsigned referenceSize = string.size();
+    if (suffixSize > referenceSize)
+        return false;
+
+    unsigned startOffset = referenceSize - suffixSize;
+
+    return equal(string.subspan(startOffset).data(), suffix);
+}
+
+template<OneByteCharacterType CharacterType>
+bool endsWith(std::span<const CharacterType> string, ASCIILiteral suffix)
+{
+    return endsWith(string, byteCast<CharacterType>(suffix.span()));
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool endsWithLettersIgnoringASCIICaseCommon(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> suffix)
+{
+    unsigned suffixLength = suffix.size();
+    unsigned referenceLength = string.size();
+    if (suffixLength > referenceLength)
+        return false;
+
+    unsigned startOffset = referenceLength - suffixLength;
+
+    return equalIgnoringASCIICaseWithLength(string.subspan(startOffset), suffix, suffixLength);
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool endsWithLettersIgnoringASCIICase(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> suffix)
+{
+    return endsWithLettersIgnoringASCIICaseCommon(string, suffix);
+}
+
+template<OneByteCharacterType CharacterType>
+bool endsWithLettersIgnoringASCIICase(std::span<const CharacterType> string, ASCIILiteral suffix)
+{
+    return endsWithLettersIgnoringASCIICase(string, byteCast<CharacterType>(suffix.span()));
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool startsWithLettersIgnoringASCIICaseCommon(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> prefix)
+{
+    if (prefix.empty())
+        return true;
+    if (string.size() < prefix.size())
+        return false;
+    return equalLettersIgnoringASCIICaseWithLength(string, prefix, prefix.size());
+}
+
+template<typename SearchCharacterType, typename MatchCharacterType>
+    requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
+bool startsWithLettersIgnoringASCIICase(std::span<const SearchCharacterType> string, std::span<const MatchCharacterType> prefix)
+{
+    return startsWithLettersIgnoringASCIICaseCommon(string, prefix);
+}
+
+template<OneByteCharacterType CharacterType>
+bool startsWithLettersIgnoringASCIICase(std::span<const CharacterType> string, ASCIILiteral prefix)
+{
+    return startsWithLettersIgnoringASCIICase(string, byteCast<CharacterType>(prefix.span()));
+}
+
 template<typename StringClass> bool startsWithLettersIgnoringASCIICaseCommon(const StringClass& string, std::span<const Latin1Character> prefix)
 {
     if (prefix.empty())
@@ -836,7 +1005,7 @@ template<typename StringClass> inline bool startsWithLettersIgnoringASCIICaseCom
 
 inline bool equalIgnoringASCIICase(const char* a, const char* b)
 {
-    return equalIgnoringASCIICase(unsafeSpan8(a), unsafeSpan8(b));
+    return equalIgnoringASCIICase(unsafeSpan(a), unsafeSpan(b));
 }
 
 inline bool equalLettersIgnoringASCIICase(ASCIILiteral a, ASCIILiteral b)
@@ -846,7 +1015,7 @@ inline bool equalLettersIgnoringASCIICase(ASCIILiteral a, ASCIILiteral b)
 
 inline bool equalIgnoringASCIICase(const char* string, ASCIILiteral literal)
 {
-    return equalIgnoringASCIICase(unsafeSpan8(string), literal.span8());
+    return equalIgnoringASCIICase(unsafeSpan(string), literal.span());
 }
 
 inline bool equalIgnoringASCIICase(ASCIILiteral a, ASCIILiteral b)
@@ -1202,21 +1371,75 @@ inline size_t countMatchedCharacters(std::span<const CharacterType> span, Charac
     return SIMD::count(span, vectorMatch, scalarMatch);
 }
 
+struct NewlinePosition {
+    size_t position { notFound };
+    size_t length { 0 };
+};
+
+template<typename CharacterType>
+inline NewlinePosition findNextNewline(std::span<const CharacterType> span, size_t startPosition = 0)
+{
+    // Find newlines matching the pattern \r\n?|\n
+    // This handles: LF (\n), CR (\r), and CRLF (\r\n)
+
+    if (startPosition >= span.size())
+        return { };
+
+    auto searchSpan = span.subspan(startPosition);
+    using UnsignedType = SameSizeUnsignedInteger<CharacterType>;
+
+    auto lfVector = SIMD::splat<UnsignedType>('\n');
+    auto crVector = SIMD::splat<UnsignedType>('\r');
+
+    auto vectorMatch = [&](auto value) ALWAYS_INLINE_LAMBDA {
+        auto lfMask = SIMD::equal(value, lfVector);
+        auto crMask = SIMD::equal(value, crVector);
+        auto combinedMask = SIMD::bitOr(lfMask, crMask);
+        return SIMD::findFirstNonZeroIndex(combinedMask);
+    };
+
+    auto scalarMatch = [&](auto current) ALWAYS_INLINE_LAMBDA {
+        return current == '\n' || current == '\r';
+    };
+
+    constexpr size_t threshold = 32;
+    auto* ptr = SIMD::find<CharacterType, threshold>(searchSpan, vectorMatch, scalarMatch);
+
+    if (ptr == searchSpan.data() + searchSpan.size())
+        return { };
+
+    CharacterType ch = *ptr;
+    size_t pos = ptr - searchSpan.data();
+
+    if (ch == '\r') {
+        if (pos + 1 < searchSpan.size() && searchSpan[pos + 1] == '\n')
+            return { startPosition + pos, 2 };
+        return { startPosition + pos, 1 };
+    }
+
+    return { startPosition + pos, 1 };
+}
+
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 }
 
 using WTF::charactersContain;
 using WTF::contains;
+using WTF::containsIgnoringASCIICase;
+using WTF::endsWith;
+using WTF::endsWithLettersIgnoringASCIICase;
 using WTF::equalIgnoringASCIICase;
 using WTF::equalIgnoringASCIICaseWithLength;
 using WTF::equalLettersIgnoringASCIICase;
 using WTF::equalLettersIgnoringASCIICaseWithLength;
+using WTF::findIgnoringASCIICase;
 using WTF::isLatin1;
+using WTF::reverseFind;
 using WTF::span;
 using WTF::spanHasPrefixIgnoringASCIICase;
+using WTF::startsWith;
+using WTF::startsWithLettersIgnoringASCIICase;
 using WTF::strlenSpan;
 using WTF::unsafeSpan;
-using WTF::unsafeSpan8;
 using WTF::unsafeSpanIncludingNullTerminator;
-using WTF::unsafeSpan8IncludingNullTerminator;

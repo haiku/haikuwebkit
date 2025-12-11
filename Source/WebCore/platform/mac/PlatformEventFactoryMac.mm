@@ -758,7 +758,7 @@ public:
         // PlatformWheelEvent
         m_position = IntPoint(pointForEvent(event, windowView));
         m_globalPosition = IntPoint(globalPointForEvent(event));
-        m_granularity = ScrollByPixelWheelEvent;
+        m_granularity = PlatformWheelEventGranularity::ScrollByPixelWheelEvent;
 
         BOOL continuous;
         getWheelEventDeltas(event, m_deltaX, m_deltaY, continuous);

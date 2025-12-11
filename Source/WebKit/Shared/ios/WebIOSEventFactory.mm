@@ -169,24 +169,25 @@ WebMouseEvent WebIOSEventFactory::createWebMouseEvent(::WebEvent *event)
 #if HAVE(UISCROLLVIEW_ASYNCHRONOUS_SCROLL_EVENT_HANDLING)
 static WebWheelEvent::Phase toWebPhase(WKBEScrollViewScrollUpdatePhase phase)
 {
+    using enum WebWheelEvent::Phase;
     switch (phase) {
 #if !USE(BROWSERENGINEKIT)
     case UIScrollPhaseNone:
-        return WebWheelEvent::PhaseNone;
+        return None;
     case UIScrollPhaseMayBegin:
-        return WebWheelEvent::PhaseMayBegin;
+        return MayBegin;
 #endif // !USE(BROWSERENGINEKIT)
     case WKBEScrollViewScrollUpdatePhaseBegan:
-        return WebWheelEvent::PhaseBegan;
+        return Began;
     case WKBEScrollViewScrollUpdatePhaseChanged:
-        return WebWheelEvent::PhaseChanged;
+        return Changed;
     case WKBEScrollViewScrollUpdatePhaseEnded:
-        return WebWheelEvent::PhaseEnded;
+        return Ended;
     case WKBEScrollViewScrollUpdatePhaseCancelled:
-        return WebWheelEvent::PhaseCancelled;
+        return Cancelled;
     default:
         ASSERT_NOT_REACHED();
-        return WebWheelEvent::PhaseNone;
+        return None;
     }
 }
 
@@ -217,7 +218,7 @@ WebWheelEvent WebIOSEventFactory::createWebWheelEvent(WKBEScrollViewScrollUpdate
         WebWheelEvent::Granularity::ScrollByPixelWheelEvent,
         false,
         overridePhase.value_or(toWebPhase(update.phase)),
-        WebWheelEvent::PhaseNone,
+        WebWheelEvent::Phase::None,
         true,
         1,
         delta,

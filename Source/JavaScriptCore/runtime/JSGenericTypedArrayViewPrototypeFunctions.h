@@ -49,7 +49,7 @@
 
 #pragma once
 
-#include "CachedCall.h"
+#include "CachedCallInlines.h"
 #include "Error.h"
 #include "InterpreterInlines.h"
 #include "JSArrayBufferViewInlines.h"

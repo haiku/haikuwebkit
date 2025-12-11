@@ -70,8 +70,11 @@ template<typename E, E...> struct EnumValues;
 
 template<typename E, E... values>
 struct EnumValues {
-    static constexpr E max = std::max({ values... });
-    static constexpr E min = std::min({ values... });
+private:
+    static constexpr auto boundsImpl = std::minmax({ values... });
+public:
+    static constexpr E min = boundsImpl.first;
+    static constexpr E max = boundsImpl.second;
     static constexpr size_t count = sizeof...(values);
 
     template <typename Callable>

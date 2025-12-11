@@ -40,10 +40,9 @@ Ref<Thread> createMaybeRealtimeAudioThread(ASCIILiteral threadName, Function<voi
     // FIXME: Coalesce these threads to allow a single realtime thread to service every audio instance.
 
     bool shouldCreateRealtimeThread = [] {
-        Locker threadLocker { Thread::allThreadsLock() };
         uint8_t numberOfRealtimeThreads = 0;
-        for (RefPtr thread : Thread::allThreads()) {
-            if (thread && thread->isRealtime())
+        for (Ref thread : Thread::allThreads()) {
+            if (thread->isRealtime())
                 ++numberOfRealtimeThreads;
         }
 

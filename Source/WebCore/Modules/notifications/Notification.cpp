@@ -64,9 +64,9 @@ namespace WebCore {
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(Notification);
 
 static Lock nonPersistentNotificationMapLock;
-static HashMap<WTF::UUID, Notification*>& nonPersistentNotificationMap() WTF_REQUIRES_LOCK(nonPersistentNotificationMapLock)
+static HashMap<WTF::UUID, WeakRef<Notification, WeakPtrImplWithEventTargetData>>& nonPersistentNotificationMap() WTF_REQUIRES_LOCK(nonPersistentNotificationMapLock)
 {
-    static NeverDestroyed<HashMap<WTF::UUID, Notification*>> map;
+    static NeverDestroyed<HashMap<WTF::UUID, WeakRef<Notification, WeakPtrImplWithEventTargetData>>> map;
     return map;
 }
 
@@ -77,7 +77,7 @@ static void addNotificationToMapIfNecessary(Notification& notification)
 
     Locker locker { nonPersistentNotificationMapLock };
     ASSERT(!nonPersistentNotificationMap().contains(notification.identifier()));
-    nonPersistentNotificationMap().add(notification.identifier(), &notification);
+    nonPersistentNotificationMap().add(notification.identifier(), notification);
 }
 
 static ExceptionOr<Ref<SerializedScriptValue>> createSerializedScriptValue(ScriptExecutionContext& context, JSC::JSValue value)
@@ -203,7 +203,7 @@ Notification::~Notification()
 {
     if (!isPersistent()) {
         Locker locker { nonPersistentNotificationMapLock };
-        ASSERT(nonPersistentNotificationMap().contains(identifier()));
+        ASSERT(nonPersistentNotificationMap().get(identifier()) == this);
         nonPersistentNotificationMap().remove(identifier());
     }
 

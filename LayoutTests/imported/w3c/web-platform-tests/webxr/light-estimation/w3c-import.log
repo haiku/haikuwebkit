@@ -14,6 +14,8 @@ Property values requiring vendor prefixes:
 None
 ------------------------------------------------------------------------
 List of files:
+/LayoutTests/imported/w3c/web-platform-tests/webxr/light-estimation/WEB_FEATURES.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/light-estimation/idlharness.https.window.js
 /LayoutTests/imported/w3c/web-platform-tests/webxr/light-estimation/xrFrame_getLightEstimate_oldSession.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/light-estimation/xrFrame_getLightEstimate_staleFrame.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/light-estimation/xrFrame_getLightEstimate_valid.https.html

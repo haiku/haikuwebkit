@@ -337,6 +337,11 @@ void ReadableStreamDefaultReader::onClosedPromiseResolution(Function<void()>&& c
     });
 }
 
+bool ReadableStreamDefaultReader::isReachableFromOpaqueRoots() const
+{
+    return getNumReadRequests() && m_stream && m_stream->isReachableFromOpaqueRoots();
+}
+
 JSC::JSValue JSReadableStreamDefaultReader::read(JSC::JSGlobalObject& globalObject, JSC::CallFrame& callFrame)
 {
     RefPtr internalDefaultReader = wrapped().internalDefaultReader();
@@ -361,6 +366,19 @@ JSC::JSValue JSReadableStreamDefaultReader::closed(JSC::JSGlobalObject& globalOb
 WebCoreOpaqueRoot root(ReadableStreamDefaultReader* reader)
 {
     return WebCoreOpaqueRoot { reader };
+}
+
+bool JSReadableStreamDefaultReaderOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> handle, void*, AbstractSlotVisitor& visitor, ASCIILiteral* reason)
+{
+    auto* jsReader = jsCast<JSReadableStreamDefaultReader*>(handle.slot()->asCell());
+    SUPPRESS_UNCOUNTED_LOCAL auto& reader = jsReader->wrapped();
+    SUPPRESS_UNCOUNTED_LOCAL if (reader.isReachableFromOpaqueRoots()) {
+        if (reason) [[unlikely]]
+            *reason = "ReadableStreamDefaultReader is reachable from opaque root"_s;
+        return true;
+    }
+
+    return containsWebCoreOpaqueRoot(visitor, reader);
 }
 
 template<typename Visitor>

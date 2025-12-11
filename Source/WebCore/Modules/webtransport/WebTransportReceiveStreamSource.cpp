@@ -65,11 +65,13 @@ void WebTransportReceiveStreamSource::receiveBytes(std::span<const uint8_t> byte
         clean();
         return;
     }
-    auto arrayBuffer = ArrayBuffer::tryCreateUninitialized(bytes.size(), 1);
-    if (arrayBuffer)
-        memcpySpan(arrayBuffer->mutableSpan(), bytes);
-    if (!controller().enqueue(WTFMove(arrayBuffer)))
-        doCancel();
+    if (bytes.size()) {
+        auto arrayBuffer = ArrayBuffer::tryCreateUninitialized(bytes.size(), 1);
+        if (arrayBuffer)
+            memcpySpan(arrayBuffer->mutableSpan(), bytes);
+        if (!controller().enqueue(WTFMove(arrayBuffer)))
+            doCancel();
+    }
     if (withFin) {
         m_isClosed = true;
         controller().close();

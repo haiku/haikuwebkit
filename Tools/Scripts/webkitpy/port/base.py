@@ -1117,9 +1117,6 @@ class Port(object):
     def _is_arch_based(self):
         return self._filesystem.exists('/etc/arch-release')
 
-    def _is_flatpak(self):
-        return self._filesystem.exists('/.flatpak-info')
-
     def _apache_version(self):
         config = self._executive.run_command([self._path_to_apache(), '-v'])
         return re.sub(r'(?:.|\n)*Server version: Apache/(\d+\.\d+)(?:.|\n)*', r'\1', config)
@@ -1139,8 +1136,6 @@ class Port(object):
                 return 'debian-httpd-' + self._apache_version() + '.conf'
             if self._is_arch_based():
                 return 'archlinux-httpd.conf'
-            if self._is_flatpak():
-                return 'flatpak-httpd.conf'
         # All platforms use apache2 except for CYGWIN (and Mac OS X Tiger and prior, which we no longer support).
         return 'apache' + self._apache_version() + '-httpd.conf'
 
@@ -1282,13 +1277,7 @@ class Port(object):
     def sample_process(self, name, pid, target_host=None):
         pass
 
-    def _in_flatpak_sandbox(self):
-        return self._filesystem.exists("/.flatpak-info")
-
     def _should_use_jhbuild(self):
-        if self._in_flatpak_sandbox():
-            return False
-
         suffix = ""
         if self.port_name:
             suffix = self.port_name.upper()

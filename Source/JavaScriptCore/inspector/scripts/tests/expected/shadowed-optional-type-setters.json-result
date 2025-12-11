@@ -383,17 +383,25 @@ public:
         AllFieldsSet = (TypeSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<KeyPath> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*KeyPath*/JSON::Object>&& object)
+        Builder(Ref<KeyPath>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -413,12 +421,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(KeyPath) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<KeyPath>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    KeyPath() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<KeyPath> result = KeyPath::create()
@@ -427,7 +437,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new KeyPath));
     }
 
     void setString(const String& in_opt_string)

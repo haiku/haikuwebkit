@@ -41,7 +41,7 @@ addEventListener("load", async () => {
     document.body.textContent = await UIHelper.requestDebugText({
         includeRects: false,
         includeURLs: false,
-        includeNodeIdentifiers: false,
+        nodeIdentifierInclusion: "none",
         includeTextInAutoFilledControls: false,
     });
 

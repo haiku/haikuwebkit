@@ -37,9 +37,37 @@
 
 #if PLATFORM(IOS_FAMILY)
 #import <UIKit/UIAction.h>
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+#import <pal/spi/cocoa/AVKitSPI.h>
+#if __has_include(<AVKit/AVLegibleMediaOptionsMenuController.h>)
+#import <AVKit/AVLegibleMediaOptionsMenuController.h>
+#endif
+#endif
 #endif
 
 #import <WebCore/MediaAccessibilitySoftLink.h>
+
+#if PLATFORM(IOS_FAMILY)
+// Test category to access internal methods
+@interface WKCaptionStyleMenuController (Testing)
+- (void)notifyMenuWillOpen;
+- (void)notifyMenuDidClose;
+- (void)rebuildMenu;
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+- (void)findAndDismissContextMenus;
+#endif
+@end
+
+// Simple delegate for testing
+@interface TestContextMenuDelegate : NSObject <UIContextMenuInteractionDelegate>
+@end
+
+@implementation TestContextMenuDelegate
+- (UIContextMenuConfiguration *)contextMenuInteraction:(UIContextMenuInteraction *)interaction configurationForMenuAtLocation:(CGPoint)location {
+    return nil;
+}
+@end
+#endif
 
 #if PLATFORM(MAC)
 @interface NSMenu (PrivateHighlightItem)
@@ -53,6 +81,10 @@
 
 static bool s_captionStyleMenuWillOpenCalled = false;
 static bool s_captionStyleMenuDidCloseCalled = false;
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+static bool s_captionPreviewRequestedCalled = false;
+static NSString *s_lastPreviewProfileID = nil;
+#endif
 
 @interface CaptionPreferenceTestMenuControllerDelegate : NSObject<WKCaptionStyleMenuControllerDelegate>
 @end
@@ -68,6 +100,19 @@ static bool s_captionStyleMenuDidCloseCalled = false;
     s_captionStyleMenuDidCloseCalled = true;
 }
 @end
+
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+@interface TestAVKitDelegate : NSObject<AVLegibleMediaOptionsMenuControllerDelegate>
+@end
+
+@implementation TestAVKitDelegate
+- (void)legibleMenuController:(AVLegibleMediaOptionsMenuController *)menuController didRequestCaptionPreviewForProfileID:(NSString *)profileID
+{
+    s_captionPreviewRequestedCalled = true;
+    s_lastPreviewProfileID = [profileID copy];
+}
+@end
+#endif
 
 namespace TestWebKitAPI {
 
@@ -167,7 +212,11 @@ public:
     {
         if (!m_styleMenuController) {
             m_delegate = adoptNS([[CaptionPreferenceTestMenuControllerDelegate alloc] init]);
+#if PLATFORM(IOS_FAMILY)
+            m_styleMenuController = adoptNS([WKCaptionStyleMenuController menuController]);
+#else
             m_styleMenuController = adoptNS([[WKCaptionStyleMenuController alloc] init]);
+#endif
             [m_styleMenuController setDelegate:m_delegate.get()];
         }
         return m_styleMenuController.get();
@@ -226,6 +275,16 @@ public:
         function();
         Util::run(&s_captionStyleMenuDidCloseCalled);
     }
+
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+    void runAndWaitForCaptionPreviewRequested(Function<void()>&& function)
+    {
+        s_captionPreviewRequestedCalled = false;
+        s_lastPreviewProfileID = nil;
+        function();
+        Util::run(&s_captionPreviewRequestedCalled);
+    }
+#endif
 
     void selectProfileAtIndex(NSUInteger index)
     {
@@ -289,7 +348,12 @@ TEST_F(CaptionPreferenceTests, FontSize)
     EXPECT_STREQ(preferences->captionsFontSizeCSS().utf8().data(), "font-size: 10cqmin;");
 }
 
+// FIXME: https://bugs.webkit.org/show_bug.cgi?id=302171
+#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED < 150000 && defined(__x86_64__)
+TEST_F(CaptionPreferenceTests, DISABLED_Colors)
+#else
 TEST_F(CaptionPreferenceTests, Colors)
+#endif
 {
     MediaAccessibilityShim shim;
 
@@ -446,5 +510,105 @@ TEST_F(CaptionPreferenceTests, CaptionStyleMenuDelegate)
         });
     });
 }
+
+#if HAVE(AVLEGIBLEMEDIAOPTIONSMENUCONTROLLER)
+TEST_F(CaptionPreferenceTests, AVKitMenuControllerIntegration)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    WKCaptionStyleMenuController *controller = ensureController();
+    EXPECT_TRUE(controller != nil);
+    EXPECT_TRUE(controller.captionStyleMenu != nil);
+
+    PlatformMenu *menu = controller.captionStyleMenu;
+    EXPECT_EQ(menu.children.count, 2UL);
+}
+
+TEST_F(CaptionPreferenceTests, ProfileIDSavingAndRestoration)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    CaptionUserPreferencesMediaAF::setActiveProfileID("Profile 1"_s);
+    EXPECT_WK_STREQ("Profile 1", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+    WKCaptionStyleMenuController *controller = ensureController();
+
+    [controller notifyMenuWillOpen];
+
+    CaptionUserPreferencesMediaAF::setActiveProfileID("Profile 2"_s);
+    EXPECT_WK_STREQ("Profile 2", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+
+    [controller notifyMenuDidClose];
+
+    EXPECT_WK_STREQ("Profile 1", CaptionUserPreferencesMediaAF::platformActiveProfileID());
+}
+
+TEST_F(CaptionPreferenceTests, ContextMenuDismissalSearch)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    RetainPtr window = adoptNS([[UIWindow alloc] initWithFrame:CGRectMake(0, 0, 300, 300)]);
+    RetainPtr viewController = adoptNS([[UIViewController alloc] init]);
+    RetainPtr testView = adoptNS([[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 300)]);
+
+    RetainPtr contextMenuDelegate = adoptNS([[TestContextMenuDelegate alloc] init]);
+    RetainPtr contextMenuInteraction = adoptNS([[UIContextMenuInteraction alloc] initWithDelegate:contextMenuDelegate.get()]);
+    [testView addInteraction:contextMenuInteraction.get()];
+
+    [viewController setView:testView.get()];
+    [window setRootViewController:viewController.get()];
+    [window makeKeyAndVisible];
+
+    WKCaptionStyleMenuController *controller = ensureController();
+
+    [controller findAndDismissContextMenus];
+
+    EXPECT_TRUE(true);
+}
+
+TEST_F(CaptionPreferenceTests, MenuRebuildingWithAVKit)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    WKCaptionStyleMenuController *controller = ensureController();
+    PlatformMenu *initialMenu = controller.captionStyleMenu;
+    EXPECT_TRUE(initialMenu != nil);
+
+    [controller rebuildMenu];
+
+    PlatformMenu *rebuiltMenu = controller.captionStyleMenu;
+    EXPECT_TRUE(rebuiltMenu != nil);
+
+    EXPECT_EQ(rebuiltMenu.children.count, 2UL);
+}
+
+TEST_F(CaptionPreferenceTests, MenuAncestryCheck)
+{
+    if (!CaptionUserPreferencesMediaAF::canSetActiveProfileID())
+        return;
+
+    MediaAccessibilityShim shim;
+
+    WKCaptionStyleMenuController *controller = ensureController();
+    PlatformMenu *menu = controller.captionStyleMenu;
+
+    EXPECT_TRUE([controller isAncestorOf:menu]);
+
+    RetainPtr otherMenu = adoptNS([UIMenu menuWithTitle:@"Other" children:@[]]);
+    EXPECT_FALSE([controller isAncestorOf:otherMenu.get()]);
+}
+#endif
 
 }

@@ -1056,13 +1056,20 @@ std::strong_ordering compareSpans(std::span<T, TExtent> a, std::span<U, UExtent>
     return std::strong_ordering::equal;
 }
 
+template<typename T, typename U>
+concept TriviallyComparableCodeUnits = std::is_same_v<std::remove_const_t<T>, std::remove_const_t<U>> || (!std::is_same_v<std::remove_const_t<T>, char8_t> && !std::is_same_v<std::remove_const_t<U>, char8_t>);
+
+template<typename T>
+concept CanBeConstByteType = sizeof(T) == 1 && ((std::is_integral_v<T> && !std::same_as<T, bool>) || std::same_as<T, std::byte>);
+
+template<typename T, typename U>
+concept TriviallyComparableOneByteCodeUnits = TriviallyComparableCodeUnits<T, U> && CanBeConstByteType<T> && CanBeConstByteType<U>;
+
 // Returns the index of the first occurrence of |needed| in |haystack| or notFound if not present.
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
+    requires(TriviallyComparableOneByteCodeUnits<T, U>)
 size_t find(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 {
-    static_assert(sizeof(T) == 1);
-    static_assert(sizeof(T) == sizeof(U));
-
 #if !HAVE(MEMMEM)
     if (needle.empty())
         return 0;
@@ -1088,10 +1095,9 @@ size_t find(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 }
 
 template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
+    requires(TriviallyComparableOneByteCodeUnits<T, U>)
 size_t contains(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 {
-    static_assert(sizeof(T) == 1);
-    static_assert(sizeof(T) == sizeof(U));
     return find(haystack, needle) != notFound;
 }
 
@@ -1246,31 +1252,32 @@ template<typename T> requires (std::is_pointer_v<T>) inline T safePrintfType(T a
     snprintf(destinationSpan.data(), destinationSpan.size_bytes(), format __VA_OPT__(, SAFE_PRINTF_TYPE(__VA_ARGS__))) \
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
-template<typename T> concept ByteType = sizeof(T) == 1 && ((std::is_integral_v<T> && !std::same_as<T, bool>) || std::same_as<T, std::byte>) && !std::is_const_v<T>;
+template<typename T>
+concept NonConstByteType = CanBeConstByteType<T> && !std::is_const_v<T>;
 
 template<typename> struct ByteCastTraits;
 
-template<ByteType T> struct ByteCastTraits<T> {
-    template<ByteType U> static constexpr U cast(T character) { return static_cast<U>(character); }
+template<NonConstByteType T> struct ByteCastTraits<T> {
+    template<NonConstByteType U> static constexpr U cast(T character) { return static_cast<U>(character); }
 };
 
-template<ByteType T> struct ByteCastTraits<T*> {
-    template<ByteType U> static constexpr auto cast(T* pointer) { return std::bit_cast<U*>(pointer); }
+template<NonConstByteType T> struct ByteCastTraits<T*> {
+    template<NonConstByteType U> static constexpr auto cast(T* pointer) { return std::bit_cast<U*>(pointer); }
 };
 
-template<ByteType T> struct ByteCastTraits<const T*> {
-    template<ByteType U> static constexpr auto cast(const T* pointer) { return std::bit_cast<const U*>(pointer); }
+template<NonConstByteType T> struct ByteCastTraits<const T*> {
+    template<NonConstByteType U> static constexpr auto cast(const T* pointer) { return std::bit_cast<const U*>(pointer); }
 };
 
-template<ByteType T, size_t Extent> struct ByteCastTraits<std::span<T, Extent>> {
-    template<ByteType U> static constexpr auto cast(std::span<T, Extent> span) { return spanReinterpretCast<U>(span); }
+template<NonConstByteType T, size_t Extent> struct ByteCastTraits<std::span<T, Extent>> {
+    template<NonConstByteType U> static constexpr auto cast(std::span<T, Extent> span) { return spanReinterpretCast<U>(span); }
 };
 
-template<ByteType T, size_t Extent> struct ByteCastTraits<std::span<const T, Extent>> {
-    template<ByteType U> static constexpr auto cast(std::span<const T, Extent> span) { return spanReinterpretCast<const U>(span); }
+template<NonConstByteType T, size_t Extent> struct ByteCastTraits<std::span<const T, Extent>> {
+    template<NonConstByteType U> static constexpr auto cast(std::span<const T, Extent> span) { return spanReinterpretCast<const U>(span); }
 };
 
-template<ByteType T, typename U> constexpr auto byteCast(const U& value)
+template<NonConstByteType T, typename U> constexpr auto byteCast(const U& value)
 {
     return ByteCastTraits<U>::template cast<T>(value);
 }
@@ -1550,19 +1557,6 @@ struct SizedUnsignedTrait<8> {
 template<typename T>
 using SameSizeUnsignedInteger = SizedUnsignedTrait<sizeof(T)>::Type;
 
-// We use this primitive on ARM to express memory ordering efficiently.
-template<typename T>
-inline T* addOpaqueZero(T* pointer, unsigned opaqueZero)
-{
-    ASSERT(!opaqueZero); // Use a debug ASSERT only so the RELEASE compiler doesn't optimize out this function.
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    // This is bounds-safe because opaqueZero is always zero.
-    return std::bit_cast<T*>(std::bit_cast<char*>(pointer) + opaqueZero);
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-}
-
-
 } // namespace WTF
 
 #define WTFMove(value) std::move<WTF::CheckMoveParameter>(value)
@@ -1581,7 +1575,6 @@ template<typename T, typename U> constexpr auto forward_like_preserving_const(U&
 using WTF::GB;
 using WTF::KB;
 using WTF::MB;
-using WTF::addOpaqueZero;
 using WTF::approximateBinarySearch;
 using WTF::asBytes;
 using WTF::asByteSpan;

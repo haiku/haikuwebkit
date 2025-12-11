@@ -42,15 +42,21 @@ struct NowPlayingInfo;
 
 enum class MediaPlayerPitchCorrectionAlgorithm : uint8_t;
 
-class MediaSessionManagerCocoa
+class WEBCORE_EXPORT MediaSessionManagerCocoa
     : public PlatformMediaSessionManager
-    , private NowPlayingManagerClient
-    , private AudioHardwareListener::Client {
+    , public NowPlayingManagerClient
+    , public AudioHardwareListener::Client {
     WTF_MAKE_TZONE_ALLOCATED(MediaSessionManagerCocoa);
 public:
     MediaSessionManagerCocoa(PageIdentifier);
     
-    void updateSessionState() final;
+    static WEBCORE_EXPORT void clearNowPlayingInfo();
+    static WEBCORE_EXPORT void setNowPlayingInfo(bool setAsNowPlayingApplication, bool shouldUpdateNowPlayingSuppression, const NowPlayingInfo&);
+
+    static String audioTimePitchAlgorithmForMediaPlayerPitchCorrectionAlgorithm(MediaPlayerPitchCorrectionAlgorithm, bool preservesPitch, double rate);
+
+protected:
+    void updateSessionState() override;
     void beginInterruption(PlatformMediaSession::InterruptionType) final;
 
     bool hasActiveNowPlayingSession() const final { return m_nowPlayingActive; }
@@ -62,19 +68,14 @@ public:
     bool haveEverRegisteredAsNowPlayingApplication() const final { return m_haveEverRegisteredAsNowPlayingApplication; }
 
     std::optional<NowPlayingInfo> nowPlayingInfo() const final { return m_nowPlayingInfo; }
-    static WEBCORE_EXPORT void clearNowPlayingInfo();
-    static WEBCORE_EXPORT void setNowPlayingInfo(bool setAsNowPlayingApplication, bool shouldUpdateNowPlayingSuppression, const NowPlayingInfo&);
 
-    static String audioTimePitchAlgorithmForMediaPlayerPitchCorrectionAlgorithm(MediaPlayerPitchCorrectionAlgorithm, bool preservesPitch, double rate);
-
-protected:
     void scheduleSessionStatusUpdate() final;
     void updateNowPlayingInfo();
     void updateActiveNowPlayingSession(RefPtr<PlatformMediaSessionInterface>);
 
-    void removeSession(PlatformMediaSessionInterface&) final;
-    void addSession(PlatformMediaSessionInterface&) final;
-    void setCurrentSession(PlatformMediaSessionInterface&) final;
+    void removeSession(PlatformMediaSessionInterface&) override;
+    void addSession(PlatformMediaSessionInterface&) override;
+    void setCurrentSession(PlatformMediaSessionInterface&) override;
 
     bool sessionWillBeginPlayback(PlatformMediaSessionInterface&) override;
     void sessionWillEndPlayback(PlatformMediaSessionInterface&, DelayCallingUpdateNowPlaying) override;
@@ -91,18 +92,16 @@ protected:
     void resetHaveEverRegisteredAsNowPlayingApplicationForTesting() final { m_haveEverRegisteredAsNowPlayingApplication = false; };
     void resetSessionState() final;
 
-private:
-#if !RELEASE_LOG_DISABLED
-    ASCIILiteral logClassName() const override { return "MediaSessionManagerCocoa"_s; }
-#endif
-
-    // NowPlayingManagerClient
-    void didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType type, const PlatformMediaSession::RemoteCommandArgument& argument) final { processDidReceiveRemoteControlCommand(type, argument); }
+    RefPtr<AudioHardwareListener> audioHardwareListener() const;
 
     // AudioHardwareListenerClient
-    void audioHardwareDidBecomeActive() final { }
-    void audioHardwareDidBecomeInactive() final { }
-    void audioOutputDeviceChanged() final;
+    void audioHardwareDidBecomeActive() override;
+    void audioHardwareDidBecomeInactive() override;
+    void audioOutputDeviceChanged() override;
+
+private:
+    // NowPlayingManagerClient
+    void didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType, const PlatformMediaSession::RemoteCommandArgument&) final;
 
     void possiblyChangeAudioCategory();
 
@@ -110,6 +109,10 @@ private:
 
 #if USE(NOW_PLAYING_ACTIVITY_SUPPRESSION)
     static void updateNowPlayingSuppression(const NowPlayingInfo*);
+#endif
+
+#if !RELEASE_LOG_DISABLED
+    ASCIILiteral logClassName() const override;
 #endif
 
     bool m_nowPlayingActive { false };
@@ -133,6 +136,18 @@ private:
     AudioSession::CategoryType m_previousCategory { AudioSession::CategoryType::None };
     bool m_previousHadAudibleAudioOrVideoMediaType { false };
 };
+
+inline RefPtr<AudioHardwareListener> MediaSessionManagerCocoa::audioHardwareListener() const { return m_audioHardwareListener; }
+
+inline void MediaSessionManagerCocoa::audioHardwareDidBecomeActive() { }
+
+inline void MediaSessionManagerCocoa::audioHardwareDidBecomeInactive() { }
+
+inline void MediaSessionManagerCocoa::didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType type, const PlatformMediaSession::RemoteCommandArgument& argument) { processDidReceiveRemoteControlCommand(type, argument); }
+
+#if !RELEASE_LOG_DISABLED
+inline ASCIILiteral MediaSessionManagerCocoa::logClassName() const { return "MediaSessionManagerCocoa"_s; }
+#endif
 
 } // namespace WebCore
 

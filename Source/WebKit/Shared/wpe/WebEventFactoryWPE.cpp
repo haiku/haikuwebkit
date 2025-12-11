@@ -168,7 +168,7 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(WPEEvent* event)
 
 WebWheelEvent WebEventFactory::createWebWheelEvent(WPEEvent* event)
 {
-    auto phase = wpe_event_scroll_is_stop(event) ? WebWheelEvent::Phase::PhaseEnded : WebWheelEvent::Phase::PhaseChanged;
+    auto phase = wpe_event_scroll_is_stop(event) ? WebWheelEvent::Phase::Ended : WebWheelEvent::Phase::Changed;
     return createWebWheelEvent(event, phase);
 }
 
@@ -209,7 +209,7 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(WPEEvent* event, WebWheelEven
     }
 
     return WebWheelEvent({ WebEventType::Wheel, modifiersFromWPEModifiers(wpe_event_get_modifiers(event)), monotonicTimeForEvent(event) },
-        position, position, delta, wheelTicks, WebWheelEvent::ScrollByPixelWheelEvent, phase, WebWheelEvent::Phase::PhaseNone, hasPreciseScrollingDeltas);
+        position, position, delta, wheelTicks, WebWheelEvent::Granularity::ScrollByPixelWheelEvent, phase, WebWheelEvent::Phase::None, hasPreciseScrollingDeltas);
 }
 
 WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(WPEEvent* event, const String& text, bool isAutoRepeat)

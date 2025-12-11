@@ -919,7 +919,7 @@ pas_local_allocator_try_allocate_in_primordial_partial_view(
 
     if (result.did_succeed) {
         PAS_PROFILE(PRIMORDIAL_BUMP_ALLOCATION, &page_config, result.begin, allocator->object_size, allocation_mode);
-        PAS_MTE_HANDLE(PRIMORDIAL_BUMP_ALLOCATION, &page_config, result.begin, allocator->object_size, allocation_mode);
+        PAS_MTE_HANDLE(PRIMORDIAL_BUMP_ALLOCATION, page_config, result.begin, allocator->object_size, allocation_mode);
     }
 
     pas_lock_switch(&held_lock, NULL);
@@ -1519,7 +1519,7 @@ pas_local_allocator_try_allocate_with_free_bits(
     }
 
     PAS_PROFILE(LOCAL_FREEBITS_ALLOCATION, &page_config, result, allocator, allocation_mode);
-    PAS_MTE_HANDLE(LOCAL_FREEBITS_ALLOCATION, &page_config, result, allocator, allocation_mode);
+    PAS_MTE_HANDLE(LOCAL_FREEBITS_ALLOCATION, page_config, result, allocator, allocation_mode);
     
     return pas_allocation_result_create_success(result);
 }
@@ -1586,7 +1586,7 @@ pas_local_allocator_try_allocate_small_segregated_slow_impl(
     pas_heap_config config,
     pas_allocator_counts* counts)
 {
-    PAS_ASSERT(!pas_system_heap_is_enabled(config.kind));
+    PAS_ASSERT(!pas_system_heap_should_supplant_bmalloc(config.kind));
     
     pas_local_allocator_commit_if_necessary(allocator, config);
     
@@ -1718,7 +1718,7 @@ pas_local_allocator_try_allocate_slow_impl(pas_local_allocator* allocator,
                 pas_local_allocator_config_kind_get_string(allocator->config_kind));
     }
     
-    PAS_ASSERT(!pas_system_heap_is_enabled(config.kind));
+    PAS_ASSERT(!pas_system_heap_should_supplant_bmalloc(config.kind));
     
     pas_local_allocator_commit_if_necessary(allocator, config);
     
@@ -1860,7 +1860,7 @@ pas_local_allocator_try_allocate(pas_local_allocator* allocator,
             pas_allocation_result_create_success_with_zero_mode(result.begin, result.zero_mode));
     }
 
-    if (PAS_UNLIKELY(pas_system_heap_is_enabled(config.kind)))
+    if (PAS_UNLIKELY(pas_system_heap_should_supplant_bmalloc(config.kind)))
         return pas_system_heap_allocate(size, alignment, allocation_mode);
     
     if (config.small_segregated_config.base.is_enabled &&

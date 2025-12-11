@@ -1816,7 +1816,7 @@ void NetworkStorageManager::didFinishHandlingVersionChangeTransaction(WebCore::I
         connection->didFinishHandlingVersionChange(transactionIdentifier);
 }
 
-WebCore::IDBServer::UniqueIDBDatabaseTransaction* NetworkStorageManager::idbTransaction(const WebCore::IDBRequestData& requestData)
+RefPtr<WebCore::IDBServer::UniqueIDBDatabaseTransaction> NetworkStorageManager::idbTransaction(const WebCore::IDBRequestData& requestData)
 {
     return m_idbStorageRegistry->transaction(requestData.transactionIdentifier());
 }

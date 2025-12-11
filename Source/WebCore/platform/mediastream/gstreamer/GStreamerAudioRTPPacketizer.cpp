@@ -43,9 +43,8 @@ RefPtr<GStreamerAudioRTPPacketizer> GStreamerAudioRTPPacketizer::create(RefPtr<U
 
     GST_DEBUG("Creating packetizer for codec: %" GST_PTR_FORMAT " and encoding parameters %" GST_PTR_FORMAT, codecParameters, encodingParameters.get());
     String encoding;
-    auto encodingName = gstStructureGetString(codecParameters, "encoding-name"_s);
-    if (encodingName)
-        encoding = encodingName.toString().convertToASCIILowercase();
+    if (auto encodingName = gstStructureGetString(codecParameters, "encoding-name"_s))
+        encoding = String(encodingName.span()).convertToASCIILowercase();
     else {
         GST_ERROR("encoding-name not found");
         return nullptr;
@@ -93,7 +92,7 @@ RefPtr<GStreamerAudioRTPPacketizer> GStreamerAudioRTPPacketizer::create(RefPtr<U
 
         if (gst_caps_is_any(inputCaps.get())) {
             if (auto encodingParameters = gstStructureGetString(structure.get(), "encoding-params"_s)) {
-                if (auto channels = parseIntegerAllowingTrailingJunk<int>(encodingParameters.toString()))
+                if (auto channels = parseIntegerAllowingTrailingJunk<int>(encodingParameters.span()))
                     inputCaps = adoptGRef(gst_caps_new_simple("audio/x-raw", "channels", G_TYPE_INT, *channels, nullptr));
             }
         }
@@ -121,7 +120,7 @@ RefPtr<GStreamerAudioRTPPacketizer> GStreamerAudioRTPPacketizer::create(RefPtr<U
     g_object_set(payloader.get(), "auto-header-extension", TRUE, "mtu", 1200, nullptr);
 
     if (auto minPTime = gstStructureGetString(structure.get(), "minptime"_s)) {
-        if (auto value = parseIntegerAllowingTrailingJunk<int64_t>(minPTime.toString())) {
+        if (auto value = parseIntegerAllowingTrailingJunk<int64_t>(minPTime.span())) {
             if (gstObjectHasProperty(payloader.get(), "min-ptime"_s))
                 g_object_set(payloader.get(), "min-ptime", *value * GST_MSECOND, nullptr);
             else

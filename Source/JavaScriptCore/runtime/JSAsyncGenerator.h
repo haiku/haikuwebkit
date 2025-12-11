@@ -30,16 +30,9 @@
 
 namespace JSC {
 
-class JSAsyncGenerator final : public JSInternalFieldObjectImpl<8> {
+class JSAsyncGenerator final : public JSInternalFieldObjectImpl<7> {
 public:
-    using Base = JSInternalFieldObjectImpl<8>;
-
-    // JSAsyncGenerator has one inline storage slot, which is pointing internalField(0).
-    static size_t allocationSize(Checked<size_t> inlineCapacity)
-    {
-        ASSERT_UNUSED(inlineCapacity, inlineCapacity == 0U);
-        return sizeof(JSAsyncGenerator);
-    }
+    using Base = JSInternalFieldObjectImpl<7>;
 
     template<typename CellType, SubspaceAccess mode>
     static GCClient::IsoSubspace* subspaceFor(VM& vm)
@@ -64,10 +57,7 @@ public:
     };
 
     enum class Field : uint32_t {
-        // FIXME: JSAsyncGenerator should support PolyProto, since generator tends to be created with poly proto mode.
-        // We reserve the first internal field for PolyProto property. This offset is identical to JSFinalObject's first inline storage slot which will be used for PolyProto.
-        PolyProto = 0,
-        State,
+        State = 0,
         Next,
         This,
         Frame,
@@ -75,11 +65,10 @@ public:
         QueueFirst,
         QueueLast,
     };
-    static_assert(numberOfInternalFields == 8);
+    static_assert(numberOfInternalFields == 7);
     static std::array<JSValue, numberOfInternalFields> initialValues()
     {
         return { {
-            jsNull(),
             jsNumber(static_cast<int32_t>(AsyncGeneratorState::SuspendedStart)),
             jsUndefined(),
             jsUndefined(),

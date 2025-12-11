@@ -1671,6 +1671,8 @@ void MediaElementSession::clientCharacteristicsChanged(bool positionChanged)
 #if !RELEASE_LOG_DISABLED
 String MediaElementSession::descriptionForTrack(const AudioTrack& track)
 {
+    if (track.configuration().isProtected())
+        return makeString(track.configuration().codec(), " protected"_s);
     return track.configuration().codec();
 }
 
@@ -1681,6 +1683,8 @@ String MediaElementSession::descriptionForTrack(const VideoTrack& track)
     builder.append(track.configuration().width(), 'x', track.configuration().height());
     if (!track.configuration().codec().isEmpty())
         builder.append(' ', track.configuration().codec());
+    if (track.configuration().isProtected())
+        builder.append(" protected"_s);
     if (track.configuration().spatialVideoMetadata())
         builder.append(" spatial"_s);
     if (auto metadata = track.configuration().videoProjectionMetadata())

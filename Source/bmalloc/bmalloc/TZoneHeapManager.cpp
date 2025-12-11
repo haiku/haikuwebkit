@@ -35,6 +35,7 @@
 #include "bmalloc.h"
 
 #if BOS(DARWIN)
+#include <CommonCrypto/CommonHMAC.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/sysctl.h>
@@ -123,7 +124,7 @@ void determineTZoneMallocFallback()
     if (tzoneMallocFallback != TZoneMallocFallback::Undecided)
         return;
 
-    if (Environment::get()->isSystemHeapEnabled()) {
+    if (Environment::get()->shouldBmallocAllocateThroughSystemHeap()) {
         tzoneMallocFallback = TZoneMallocFallback::ForceDebugMalloc;
         return;
     }
@@ -381,7 +382,7 @@ void TZoneHeapManager::dumpRegisteredTypes()
         if (!m_typeSizes.size())
             return;
 
-        std::sort(m_typeSizes.begin(), m_typeSizes.end());
+        std::ranges::sort(m_typeSizes);
         auto typeSizesEnd = m_typeSizes.end();
 
         Vector<unsigned> bucketCountHistogram;
@@ -470,22 +471,24 @@ BINLINE unsigned TZoneHeapManager::bucketCountForSizeClass(SizeAndAlignment::Val
 
 class WeakRandom final {
 public:
-    static constexpr uint64_t nextState(uint64_t x, uint64_t y)
+    static constexpr std::pair<uint64_t, uint64_t> nextState(uint64_t x, uint64_t y)
     {
         x ^= x << 23;
         x ^= x >> 17;
         x ^= y ^ (y >> 26);
-        return x;
+        x += y * 0x10101;
+        return { y, x };
     }
 
-    static constexpr uint64_t generate(uint64_t seed)
+    static constexpr std::pair<uint64_t, uint64_t> generate(uint64_t seed1, uint64_t seed2)
     {
-        if (!seed)
-            seed = 1;
-        uint64_t low = seed;
-        uint64_t high = seed;
-        high = nextState(low, high);
-        return low + high;
+        if (!seed1)
+            seed1 = 1;
+        if (!seed2)
+            seed2 = 1;
+        uint64_t low = seed1;
+        uint64_t high = seed2;
+        return nextState(low, high);
     }
 };
 
@@ -494,11 +497,28 @@ BALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 BINLINE unsigned TZoneHeapManager::tzoneBucketForKey(const TZoneSpecification& spec, unsigned bucketCountForSize, LockHolder&)
 {
     static constexpr bool verboseBucketSelection = false;
-    uint64_t random = WeakRandom::generate(m_tzoneKeySeed);
-    random = WeakRandom::nextState(random, std::bit_cast<uintptr_t>(spec.addressOfHeapRef));
-    random = WeakRandom::nextState(random, spec.size);
-    random = WeakRandom::nextState(random, SizeAndAlignment::decodeAlignment(spec.sizeAndAlignment));
+
+#if BOS(DARWIN)
+    // The output of HMAC_SHA256 is the same length as the SHA256 digest, since HMAC's final step is running
+    // the hash function H on a value derived from the original message.
+    uint64_t hmac[CC_SHA256_DIGEST_LENGTH / sizeof(uint64_t)];
+    static_assert(sizeof(hmac) == 32);
+
+    uintptr_t addressOfHeapRef = std::bit_cast<uintptr_t>(spec.addressOfHeapRef);
+
+    CCHmac(kCCHmacAlgSHA256, &m_tzoneKeySeed, sizeof(m_tzoneKeySeed), &addressOfHeapRef, sizeof(addressOfHeapRef), hmac);
+    uint64_t random = hmac[0];
     unsigned bucket = random % bucketCountForSize;
+
+#else
+    // We don't necessarily have CommonCrypto included. We'll fall back to WeakRandom here.
+    auto [randomLow, randomHigh] = WeakRandom::generate(m_tzoneKeySeed, std::bit_cast<uintptr_t>(spec.addressOfHeapRef));
+    std::tie(randomLow, randomHigh) = WeakRandom::nextState(randomLow, randomHigh);
+    std::tie(randomLow, randomHigh) = WeakRandom::nextState(randomLow, randomHigh);
+    std::tie(randomLow, randomHigh) = WeakRandom::nextState(randomLow, randomHigh);
+    uint64_t random = randomLow;
+    unsigned bucket = random % bucketCountForSize;
+#endif
 
     if constexpr (verboseBucketSelection) {
         TZONE_LOG_DEBUG("Choosing Bucket heapRef: %p size: %u align: %u", spec.addressOfHeapRef, spec.size, SizeAndAlignment::decodeAlignment(spec.sizeAndAlignment));
@@ -534,7 +554,7 @@ void TZoneHeapManager::initializeTZoneDynamicCompactMode()
         // The generated seed can be zero, but that's OK:
         // that corresponds to dynamic compaction being enabled for no types,
         // which is a valid configuration that's worth fuzzing.
-        m_tzoneDynamicCompactModeSalt = WeakRandom::generate(m_tzoneDynamicCompactModeSeed);
+        m_tzoneDynamicCompactModeSalt = WeakRandom::generate(m_tzoneDynamicCompactModeSeed, m_tzoneDynamicCompactModeSeed).second;
 
         if constexpr (verbose) {
             TZONE_LOG_DEBUG("dynamicCompactionSeed: 0x%llx\n", m_tzoneDynamicCompactModeSeed);

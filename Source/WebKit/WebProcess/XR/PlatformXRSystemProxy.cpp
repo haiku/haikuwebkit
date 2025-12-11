@@ -204,6 +204,21 @@ void PlatformXRSystemProxy::deleteHitTestSource(PlatformXR::HitTestSource source
 {
     protectedPage()->send(Messages::PlatformXRSystem::DeleteHitTestSource(source));
 }
+
+void PlatformXRSystemProxy::requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions& options, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&& completionHandler)
+{
+    protectedPage()->sendWithAsyncReply(Messages::PlatformXRSystem::RequestTransientInputHitTestSource(options), [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](Expected<PlatformXR::TransientInputHitTestSource, WebCore::ExceptionData> exceptionOrSource) mutable {
+        if (exceptionOrSource)
+            completionHandler(WTFMove(exceptionOrSource).value());
+        else
+            completionHandler(WTFMove(exceptionOrSource).error().toException());
+    });
+}
+
+void PlatformXRSystemProxy::deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource source)
+{
+    protectedPage()->send(Messages::PlatformXRSystem::DeleteTransientInputHitTestSource(source));
+}
 #endif
 
 } // namespace WebKit

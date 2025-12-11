@@ -85,8 +85,10 @@ public:
 #endif
 
 #if ENABLE(WEBXR_HIT_TEST)
-    virtual void requestHitTestSource(WebPageProxy&, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionhandler) { completionhandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError }); }
+    virtual void requestHitTestSource(WebPageProxy&, const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&& completionHandler) { completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError }); }
     virtual void deleteHitTestSource(WebPageProxy&, PlatformXR::HitTestSource) { }
+    virtual void requestTransientInputHitTestSource(WebPageProxy&, const PlatformXR::TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&& completionHandler) { completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError }); }
+    virtual void deleteTransientInputHitTestSource(WebPageProxy&, PlatformXR::TransientInputHitTestSource) { }
 #endif
 };
 

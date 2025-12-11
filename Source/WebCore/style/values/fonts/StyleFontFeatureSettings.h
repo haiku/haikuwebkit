@@ -26,7 +26,7 @@
 #pragma once
 
 #include <WebCore/FontTaggedSettings.h>
-#include <WebCore/StyleValueTypes.h>
+#include <WebCore/StylePrimitiveNumericTypes.h>
 
 namespace WebCore {
 namespace Style {

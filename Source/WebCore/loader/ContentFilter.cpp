@@ -72,9 +72,6 @@ Vector<ContentFilter::Type>& ContentFilter::types()
 std::unique_ptr<ContentFilter> ContentFilter::create(ContentFilterClient& client)
 {
     PlatformContentFilter::FilterParameters params {
-#if HAVE(WEBCONTENTRESTRICTIONS)
-        client.usesWebContentRestrictions(),
-#endif
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
         client.webContentRestrictionsConfigurationPath(),
 #endif

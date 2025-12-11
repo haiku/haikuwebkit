@@ -61,17 +61,17 @@ TEST(OS_OBJECT_PTR_TEST_NAME, RetainRelease)
     auto fooPtr = reinterpret_cast<uintptr_t>(foo);
     EXPECT_EQ(1, CFGetRetainCount((CFTypeRef)fooPtr));
 
-    WTF::retainOSObject(foo); // Does nothing under ARC.
+    WTF::DefaultOSObjectRetainTraits<dispatch_queue_t>::retain(foo); // Does nothing under ARC.
 #if __has_feature(objc_arc)
     EXPECT_EQ(1, CFGetRetainCount((CFTypeRef)fooPtr));
 #else
     EXPECT_EQ(2, CFGetRetainCount((CFTypeRef)fooPtr));
 #endif
 
-    WTF::releaseOSObject(foo); // Does nothing under ARC.
+    WTF::DefaultOSObjectRetainTraits<dispatch_queue_t>::release(foo); // Does nothing under ARC.
     EXPECT_EQ(1, CFGetRetainCount((CFTypeRef)fooPtr));
 
-    WTF::releaseOSObject(foo); // Balance dispatch_queue_create() without ARC.
+    WTF::DefaultOSObjectRetainTraits<dispatch_queue_t>::release(foo); // Balance dispatch_queue_create() without ARC.
 }
 
 TEST(OS_OBJECT_PTR_TEST_NAME, LeakRef)
@@ -90,7 +90,7 @@ TEST(OS_OBJECT_PTR_TEST_NAME, LeakRef)
     EXPECT_EQ(nullptr, foo.get());
     EXPECT_EQ(1, CFGetRetainCount((CFTypeRef)fooPtr));
 
-    WTF::releaseOSObject(queue);
+    WTF::DefaultOSObjectRetainTraits<dispatch_queue_t>::release(queue);
 }
 
 } // namespace TestWebKitAPI

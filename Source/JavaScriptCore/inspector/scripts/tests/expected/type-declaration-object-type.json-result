@@ -405,17 +405,25 @@ public:
         AllFieldsSet = (MessageSet | CodeSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<Error> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*Error*/JSON::Object>&& object)
+        Builder(Ref<Error>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -442,12 +450,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(Error) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<Error>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    Error() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<Error> result = Error::create()
@@ -457,7 +467,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new Error));
     }
 };
 
@@ -482,17 +492,25 @@ public:
         AllFieldsSet = 0
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<OptionalParameterBundle> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*OptionalParameterBundle*/JSON::Object>&& object)
+        Builder(Ref<OptionalParameterBundle>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -505,12 +523,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(OptionalParameterBundle) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<OptionalParameterBundle>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    OptionalParameterBundle() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<OptionalParameterBundle> result = OptionalParameterBundle::create()
@@ -518,7 +538,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new OptionalParameterBundle));
     }
 
     void setColumnNames(Ref<JSON::ArrayOf<String>>&& in_opt_columnNames)
@@ -589,17 +609,25 @@ public:
         AllFieldsSet = (ColumnNamesSet | ButtonsSet | DirectionalitySet | NotesSet | TimestampSet | ValuesSet | PayloadSet | ErrorSet | ErrorListSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<ParameterBundle> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*ParameterBundle*/JSON::Object>&& object)
+        Builder(Ref<ParameterBundle>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -675,12 +703,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(ParameterBundle) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<ParameterBundle>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    ParameterBundle() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<ParameterBundle> result = ParameterBundle::create()
@@ -697,7 +727,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new ParameterBundle));
     }
 };
 
@@ -714,17 +744,25 @@ public:
         AllFieldsSet = (IntegerSet | ArraySet | StringSet | ValueSet | ObjectSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<ObjectWithPropertyNameConflicts> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*ObjectWithPropertyNameConflicts*/JSON::Object>&& object)
+        Builder(Ref<ObjectWithPropertyNameConflicts>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -772,12 +810,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(ObjectWithPropertyNameConflicts) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<ObjectWithPropertyNameConflicts>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    ObjectWithPropertyNameConflicts() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<ObjectWithPropertyNameConflicts> result = ObjectWithPropertyNameConflicts::create()
@@ -790,7 +830,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new ObjectWithPropertyNameConflicts));
     }
 };
 
@@ -802,17 +842,25 @@ public:
         AllFieldsSet = 0
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<DummyObject> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*DummyObject*/JSON::Object>&& object)
+        Builder(Ref<DummyObject>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -825,12 +873,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(DummyObject) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<DummyObject>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    DummyObject() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<DummyObject> result = DummyObject::create()
@@ -838,7 +888,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new DummyObject));
     }
 };
 
@@ -851,17 +901,25 @@ public:
         AllFieldsSet = (NullableObjectSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<ObjectWithNullableProperties> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*ObjectWithNullableProperties*/JSON::Object>&& object)
+        Builder(Ref<ObjectWithNullableProperties>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -888,12 +946,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(ObjectWithNullableProperties) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<ObjectWithNullableProperties>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    ObjectWithNullableProperties() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<ObjectWithNullableProperties> result = ObjectWithNullableProperties::create()
@@ -902,7 +962,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new ObjectWithNullableProperties));
     }
 
     void setNullableObject(Ref<Protocol::Database::DummyObject>&& in_opt_nullableObject)
@@ -951,17 +1011,25 @@ public:
         AllFieldsSet = (DirectionalitySet | ButtonsSet | ColumnNamesSet | NotesSet | TimestampSet | ValuesSet | PayloadSet | ErrorSet)
     };
 
+    using JSON::ObjectBase::setBoolean;
+    using JSON::ObjectBase::setInteger;
+    using JSON::ObjectBase::setDouble;
+    using JSON::ObjectBase::setString;
+    using JSON::ObjectBase::setValue;
+    using JSON::ObjectBase::setObject;
+    using JSON::ObjectBase::setArray;
+
     template<int STATE>
     class Builder {
     private:
-        RefPtr<JSON::Object> m_result;
+        RefPtr<ParameterBundle> m_result;
 
         template<int STEP> Builder<STATE | STEP>& castState()
         {
-            return *reinterpret_cast<Builder<STATE | STEP>*>(this);
+            SUPPRESS_MEMORY_UNSAFE_CAST return *reinterpret_cast<Builder<STATE | STEP>*>(this);
         }
 
-        Builder(Ref</*ParameterBundle*/JSON::Object>&& object)
+        Builder(Ref<ParameterBundle>&& object)
             : m_result(WTFMove(object))
         {
             static_assert(STATE == NoFieldsSet, "builder created in non init state");
@@ -1030,12 +1098,14 @@ public:
             static_assert(STATE == AllFieldsSet, "result is not ready");
             static_assert(sizeof(ParameterBundle) == sizeof(JSON::Object), "cannot cast");
 
-            Ref<JSON::Object> jsonResult = m_result.releaseNonNull();
-            auto result = WTFMove(*reinterpret_cast<Ref<ParameterBundle>*>(&jsonResult));
-            return result;
+            return m_result.releaseNonNull();
         }
     };
 
+private:
+    ParameterBundle() = default;
+
+public:
     /*
      * Synthetic constructor:
      * Ref<ParameterBundle> result = ParameterBundle::create()
@@ -1051,7 +1121,7 @@ public:
      */
     static Builder<NoFieldsSet> create()
     {
-        return Builder<NoFieldsSet>(JSON::Object::create());
+        return Builder<NoFieldsSet>(adoptRef(*new ParameterBundle));
     }
 };
 

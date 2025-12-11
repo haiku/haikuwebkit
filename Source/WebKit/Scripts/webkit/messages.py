@@ -25,6 +25,7 @@ import itertools
 import re
 import sys
 
+from webkit.opaque_ipc_types import opaque_ipc_types
 from webkit import parser
 from webkit.model import BUILTIN_ATTRIBUTE, SYNCHRONOUS_ATTRIBUTE, ALLOWEDWHENWAITINGFORSYNCREPLY_ATTRIBUTE, ALLOWEDWHENWAITINGFORSYNCREPLYDURINGUNBOUNDEDIPC_ATTRIBUTE, MAINTHREADCALLBACK_ATTRIBUTE, STREAM_ATTRIBUTE, CALL_WITH_REPLY_ID_ATTRIBUTE, MessageReceiver, Message
 
@@ -302,6 +303,14 @@ def message_to_struct_declaration(receiver, message):
     result.append('    {\n')
     for i in range(len(message.parameters)):
         parameter = message.parameters[i]
+        if message.is_async_reply:
+            # Extract original message name (remove 'Reply' suffix)
+            original_message_name = message.name[:-5] if message.name.endswith('Reply') else message.name
+            if not opaque_ipc_types.reply_webcontent_dispatchable(receiver.name, original_message_name, parameter.name, parameter.type):
+                result.append('        ASSERT(!isInWebProcess());\n')
+        else:
+            if not opaque_ipc_types.webcontent_dispatchable(receiver.name, message.name, parameter.name, parameter.type):
+                result.append('        ASSERT(!isInWebProcess());\n')
         result.append('        ')
         if requires_suppress_forward_decl[i]:
             result.append('SUPPRESS_FORWARD_DECL_ARG ')
@@ -454,6 +463,7 @@ def serialized_identifiers():
         'WebCore::WebLockIdentifierID',
         'WebCore::WebProcessJSHandleIdentifier',
         'WebCore::WebSocketIdentifier',
+        'WebCore::WebTransportSendGroupIdentifier',
         'WebCore::WebTransportStreamIdentifier',
         'WebCore::WindowIdentifier',
         'WebKit::AudioMediaStreamTrackRendererInternalUnitIdentifier',
@@ -467,6 +477,7 @@ def serialized_identifiers():
         'WebKit::GPUProcessConnectionIdentifier',
         'WebKit::ImageBufferSetIdentifier',
         'WebKit::RemoteGraphicsContextGLIdentifier',
+        'WebKit::RiceBackendIdentifier',
         'WebKit::IPCConnectionTesterIdentifier',
         'WebKit::IPCStreamTesterIdentifier',
         'WebKit::JSObjectID',
@@ -550,6 +561,8 @@ def types_that_cannot_be_forward_declared():
         'PlatformXR::Layout',
         'PlatformXR::SessionFeature',
         'PlatformXR::SessionMode',
+        'PlatformXR::TransientInputHitTestOptions',
+        'PlatformXR::TransientInputHitTestSource',
         'PlatformXR::VisibilityState',
         'String',
         'WebCore::BackForwardFrameItemIdentifier',
@@ -683,7 +696,7 @@ def conditions_for_header(header):
         '<WebCore/DataDetectorType.h>': ["ENABLE(DATA_DETECTION)"],
         '<WebCore/DynamicContentScalingDisplayList.h>': ["ENABLE(RE_DYNAMIC_CONTENT_SCALING)"],
         '<WebCore/ImageUtilities.h>': ["PLATFORM(COCOA)"],
-        '<WebCore/MediaPlaybackTargetContext.h>': ["ENABLE(WIRELESS_PLAYBACK_TARGET)"],
+        '<WebCore/MediaPlaybackTarget.h>': ["ENABLE(WIRELESS_PLAYBACK_TARGET)"],
         '<WebCore/ModelPlayerIdentifier.h>': ["ENABLE(MODEL_PROCESS)"],
         '<WebCore/PlaybackTargetClientContextIdentifier.h>': ["ENABLE(WIRELESS_PLAYBACK_TARGET)"],
         '<WebCore/SoupNetworkProxySettings.h>': ["USE(SOUP)"],
@@ -1008,6 +1021,8 @@ def headers_for_type(type, for_implementation_file=False):
         'PlatformXR::RequestData': ['<WebCore/PlatformXR.h>'],
         'PlatformXR::SessionFeature': ['<WebCore/PlatformXR.h>'],
         'PlatformXR::SessionMode': ['<WebCore/PlatformXR.h>'],
+        'PlatformXR::TransientInputHitTestOptions': ['<WebCore/PlatformXR.h>'],
+        'PlatformXR::TransientInputHitTestSource': ['<WebCore/PlatformXR.h>'],
         'PlatformXR::VisibilityState': ['<WebCore/PlatformXR.h>'],
         'Seconds': ['<wtf/Seconds.h>'],
         'String': ['<wtf/text/WTFString.h>'],
@@ -1017,6 +1032,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WallTime': ['<wtf/WallTime.h>'],
         'WebCore::AXDebugInfo': ['<WebCore/AXObjectCache.h>'],
         'WebCore::AriaNotifyData': ['<WebCore/AXObjectCache.h>'],
+        'WebCore::LiveRegionAnnouncementData': ['<WebCore/AXObjectCache.h>'],
         'WebCore::AlternativeTextType': ['<WebCore/AlternativeTextClient.h>'],
         'WebCore::ApplyTrackingPrevention': ['<WebCore/NetworkStorageSession.h>'],
         'WebCore::AttachmentAssociatedElementType': ['<WebCore/AttachmentAssociatedElement.h>'],
@@ -1061,11 +1077,10 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::DDModel::DDMeshDescriptor': ['<WebCore/DDMeshDescriptor.h>'],
         'WebCore::DDModel::DDUpdateMeshDescriptor': ['<WebCore/DDUpdateMeshDescriptor.h>'],
         'WebCore::DDModel::DDImageAsset': ['<WebCore/DDImageAsset.h>'],
-        'WebCore::DDModel::DDTextureDescriptor': ['<WebCore/DDTextureDescriptor.h>'],
+        'WebCore::DDModel::DDImageAssetSwizzle': ['<WebCore/DDImageAssetSwizzle.h>'],
         'WebCore::DDModel::DDUpdateTextureDescriptor': ['<WebCore/DDUpdateTextureDescriptor.h>'],
         'WebCore::DDModel::DDMaterialDescriptor': ['<WebCore/DDMaterialDescriptor.h>'],
         'WebCore::DDModel::DDUpdateMaterialDescriptor': ['<WebCore/DDUpdateMaterialDescriptor.h>'],
-        'WebCore::DDModel::DDReplaceVertices': ['<WebCore/DDReplaceVertices.h>'],
         'WebCore::DDModel::DDMeshPart': ['<WebCore/DDMeshPart.h>'],
         'WebCore::DDModel::DDVertexAttributeFormat': ['<WebCore/DDVertexAttributeFormat.h>'],
         'WebCore::DDModel::DDVertexLayout': ['<WebCore/DDVertexLayout.h>'],
@@ -1157,7 +1172,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::PlayingToAutomotiveHeadUnit': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::PlaybackSessionModelExternalPlaybackTargetType': ['<WebCore/PlaybackSessionModel.h>'],
         'WebCore::LockBackForwardList': ['<WebCore/FrameLoaderTypes.h>'],
-        'WebCore::MediaPlaybackTargetContextMockState': ['<WebCore/MediaPlaybackTargetContext.h>'],
+        'WebCore::MediaPlaybackTargetMockState': ['<WebCore/MediaPlaybackTargetMock.h>'],
         'WebCore::MediaPlayerBufferingPolicy': ['<WebCore/MediaPlayerEnums.h>'],
         'WebCore::MediaPlayerMediaEngineIdentifier': ['<WebCore/MediaPlayerEnums.h>'],
         'WebCore::MediaPlayerPitchCorrectionAlgorithm': ['<WebCore/MediaPlayerEnums.h>'],
@@ -1366,6 +1381,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::WillInternallyHandleFailure': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::WindowProxyProperty': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::WebTransportStreamIdentifier': ['"WebTransportSession.h"'],
+        'WebCore::WebTransportSendGroupIdentifier': ['<WebCore/WebTransportSendGroup.h>'],
         'WebKit::ActivityStateChangeID': ['"DrawingAreaInfo.h"'],
         'WebKit::AllowOverwrite': ['"DownloadID.h"'],
         'WebKit::AppPrivacyReportTestingData': ['"AppPrivacyReport.h"'],
@@ -1384,6 +1400,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebKit::FrameState': ['"SessionState.h"'],
         'WebKit::GestureRecognizerState': ['"GestureTypes.h"'],
         'WebKit::GestureType': ['"GestureTypes.h"'],
+        'WebKit::RiceBackendIdentifier': ['"RiceBackend.h"'],
         'WebKit::JSObjectID': ['"JavaScriptEvaluationResult.h"'],
         'WebKit::SnapshotOption': ['"ImageOptions.h"'],
         'WebKit::LastNavigationWasAppInitiated': ['"AppPrivacyReport.h"'],
@@ -1629,16 +1646,6 @@ def generate_enabled_by_for_receiver(receiver, messages):
         '    }\n',
     ]
 
-def header_for_receiver_name(name):
-    # By default, the header name should usually be the same as the receiver name.
-
-    special_headers = {
-        # WebInspector.h is taken by the public API header, so this name is used instead.
-        'WebInspector': 'WebInspectorInternal'
-    }
-
-    return special_headers.get(name, name)
-
 
 def generate_message_handler(receiver):
     header_conditions = {
@@ -1658,7 +1665,7 @@ def generate_message_handler(receiver):
     if receiver.condition:
         result.append('#if %s\n' % receiver.condition)
 
-    result.append('#include "%s.h"\n\n' % header_for_receiver_name(receiver.name))
+    result.append('#include "%s.h"\n\n' % receiver.name)
     result += generate_header_includes_from_conditions(header_conditions)
     result.append('\n')
 

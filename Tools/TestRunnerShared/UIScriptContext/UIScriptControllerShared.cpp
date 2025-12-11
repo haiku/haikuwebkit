@@ -80,7 +80,8 @@ TextExtractionTestOptions* toTextExtractionTestOptions(JSContextRef context, JSV
     options.wordLimit = static_cast<unsigned>(numericProperty(context, (JSObjectRef)argument, "wordLimit"));
     options.mergeParagraphs = booleanProperty(context, (JSObjectRef)argument, "mergeParagraphs", false);
     options.skipNearlyTransparentContent = booleanProperty(context, (JSObjectRef)argument, "skipNearlyTransparentContent", false);
-    options.includeNodeIdentifiers = booleanProperty(context, (JSObjectRef)argument, "includeNodeIdentifiers", false);
+    options.nodeIdentifierInclusion = stringProperty(context, (JSObjectRef)argument, "nodeIdentifierInclusion");
+    options.outputFormat = stringProperty(context, (JSObjectRef)argument, "outputFormat");
     return &options;
 }
 
@@ -102,6 +103,14 @@ TextExtractionInteractionOptions* toTextExtractionInteractionOptions(JSContextRe
 
     options.replaceAll = booleanProperty(context, (JSObjectRef)argument, "replaceAll");
     options.scrollToVisible = booleanProperty(context, (JSObjectRef)argument, "scrollToVisible");
+
+    if (auto deltaObject = objectProperty(context, (JSObjectRef)argument, "scrollDelta")) {
+        options.scrollDelta = {
+            numericProperty(context, deltaObject, "x"),
+            numericProperty(context, deltaObject, "y")
+        };
+    } else
+        options.scrollDelta = std::nullopt;
 
     if (auto locationObject = objectProperty(context, (JSObjectRef)argument, "location")) {
         options.location = {

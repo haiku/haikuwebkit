@@ -295,15 +295,14 @@ RetainPtr<CMFormatDescriptionRef> createFormatDescriptionFromTrackInfo(const Tra
     }();
     RetainPtr extensions = adoptCF(CFDictionaryCreateMutable(kCFAllocatorDefault, maxNumberOfElements, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
 
-    CFIndex numKeys = !!videoInfo.atomData;
+    CFIndex numKeys = videoInfo.extensionAtoms.size();
 #if ENABLE(ENCRYPTED_MEDIA)
     numKeys += videoInfo.encryptionInitDatas.size();
 #endif
     Vector<std::pair<FourCC, Ref<SharedBuffer>>> configurations;
     configurations.reserveInitialCapacity(numKeys);
 
-    if (RefPtr atomData = videoInfo.atomData)
-        configurations.append({ videoInfo.computeBoxType(), atomData.releaseNonNull() });
+    configurations.appendVector(videoInfo.extensionAtoms);
 #if ENABLE(ENCRYPTED_MEDIA)
     configurations.appendVector(videoInfo.encryptionInitDatas);
 #endif
@@ -405,7 +404,6 @@ RefPtr<VideoInfo> createVideoInfoFromFormatDescription(CMFormatDescriptionRef de
     videoInfo->size = IntSize { dimensions.width, dimensions.height };
     videoInfo->displaySize = presentationSizeFromFormatDescription(description);
 
-    RetainPtr<CFDataRef> atomData;
     RetainPtr extensionAtoms = PAL::CMFormatDescriptionGetExtension(description, PAL::kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms);
     if (RetainPtr atomDictionary = dynamic_cf_cast<CFDictionaryRef>(extensionAtoms.get())) {
         CFIndex extensionCount = CFDictionaryGetCount(atomDictionary.get());
@@ -415,16 +413,12 @@ RefPtr<VideoInfo> createVideoInfoFromFormatDescription(CMFormatDescriptionRef de
             Vector<const void*, 1> keys(extensionCount);
             Vector<const void*, 1> values(extensionCount);
             CFDictionaryGetKeysAndValues(atomDictionary.get(), keys.mutableSpan().data(), values.mutableSpan().data());
-            if (RetainPtr key = dynamic_cf_cast<CFStringRef>(keys[0]))
-                videoInfo->boxType = cfStringToFourCC(key.get());
-            atomData = dynamic_cf_cast<CFDataRef>(values[0]);
+            videoInfo->extensionAtoms = { size_t(extensionCount), [&](auto index) -> TrackInfo::AtomData {
+                return { cfStringToFourCC(checked_cf_cast<CFStringRef>(keys[index])), SharedBuffer::create(checked_cf_cast<CFDataRef>(values[index])) };
+            } };
         }
-    } else if (RetainPtr atomArray = dynamic_cf_cast<CFArrayRef>(extensionAtoms.get()); atomArray && CFArrayGetCount(atomArray.get()) > 0)
-        atomData = dynamic_cf_cast<CFDataRef>(CFArrayGetValueAtIndex(atomArray.get(), 0));
-    if (atomData)
-        videoInfo->atomData = SharedBuffer::create(atomData.get());
-    else
-        RELEASE_LOG_ERROR(Media, "Couldn't retrieve atomData from CMFormatDescription");
+    } else
+        RELEASE_LOG_ERROR(Media, "Couldn't retrieve extensionAtoms from CMFormatDescription");
 
     int bitDepth;
     if (RetainPtr bitsPerComponent = dynamic_cf_cast<CFNumberRef>(PAL::CMFormatDescriptionGetExtension(description, PAL::kCMFormatDescriptionExtension_BitsPerComponent))) {
@@ -834,6 +828,24 @@ Vector<Ref<SharedBuffer>> getKeyIDs(CMFormatDescriptionRef description)
     return { };
 }
 #endif
+
+FourCC computeBoxType(FourCC codecType)
+{
+    switch (codecType.value) {
+    case kCMVideoCodecType_VP9:
+    case 'vp08':
+        return 'vpcC';
+    case kCMVideoCodecType_H264:
+        return 'avcC';
+    case kCMVideoCodecType_HEVC:
+        return 'hvcC';
+    case kCMVideoCodecType_AV1:
+        return 'av1C';
+    default:
+        ASSERT_NOT_REACHED();
+        return 'baad';
+    }
+}
 
 } // namespace WebCore
 

@@ -5,6 +5,11 @@
 <script src="../resources/inspector-test.js"></script>
 <script src="../resources/stable-id-map.js"></script>
 <script>
+function navigate()
+{
+    window.location.href = "http://localhost:8000/inspector/target/provisional-load-cancels-previous-load.html";
+}
+
 function test()
 {
     let suite = InspectorTest.createAsyncSuite("Target.PSON");
@@ -15,7 +20,6 @@ function test()
         test(resolve, reject) {
             let targetIdMap = new StableIdMap;
             InspectorTest.log(`Current target is ${targetIdMap.get(WI.mainTarget.identifier)}.`);
-            const url = "http://localhost:8000/inspector/target/provisional-load-cancels-previous-load.html";
             let navigatedTwice = false;
 
             let originalResumeIfPaused = WI.Target.prototype._resumeIfPaused;
@@ -39,7 +43,7 @@ function test()
 
                     // Send two consequtive navigation requests. The latter will cancel provisional
                     // load of the former.
-                    WI.mainTarget.PageAgent.navigate(url);
+                    InspectorTest.evaluateInPage(`navigate();`);
                 }
             });
 
@@ -67,7 +71,7 @@ function test()
             })
             .then(resolve);
 
-            WI.mainTarget.PageAgent.navigate(url);
+            InspectorTest.evaluateInPage(`navigate();`);
         }
     });
 

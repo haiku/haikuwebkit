@@ -114,7 +114,7 @@ private:
             return false;
         }
 
-        return !webkitGstCheckVersion(1, 24, 0);
+        return !gst_check_version(1, 24, 0);
     }
 
     static void initializeIsNeeded()

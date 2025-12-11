@@ -29,7 +29,7 @@
 
 namespace WebCore {
 
-class PlatformMediaSession : public PlatformMediaSessionInterface {
+class WEBCORE_EXPORT PlatformMediaSession : public PlatformMediaSessionInterface {
     WTF_MAKE_TZONE_ALLOCATED(PlatformMediaSession);
 public:
     static Ref<PlatformMediaSession> create(PlatformMediaSessionClient& client)
@@ -82,7 +82,7 @@ public:
 
     bool canPlayConcurrently(const PlatformMediaSessionInterface&) const final;
 
-    WeakPtr<PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSessionInterface>>&, PlaybackControlsPurpose) final;
+    WeakPtr<PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSessionInterface>>&, PlaybackControlsPurpose) override;
 
     bool isActiveNowPlayingSession() const final { return m_isActiveNowPlayingSession; }
     void setActiveNowPlayingSession(bool) final;

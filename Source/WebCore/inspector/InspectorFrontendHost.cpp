@@ -51,7 +51,6 @@
 #include "FrameDestructionObserverInlines.h"
 #include "HTMLIFrameElement.h"
 #include "HitTestResult.h"
-#include "InspectorController.h"
 #include "InspectorDebuggableType.h"
 #include "JSDOMConvertInterface.h"
 #include "JSDOMExceptionHandling.h"
@@ -66,6 +65,7 @@
 #include "NodeInlines.h"
 #include "OffscreenCanvasRenderingContext2D.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "PagePasteboardContext.h"
 #include "Pasteboard.h"
 #include "Path2D.h"
@@ -653,7 +653,7 @@ bool InspectorFrontendHost::isBeingInspected()
     if (!m_frontendPage)
         return false;
 
-    InspectorController& inspectorController = m_frontendPage->inspectorController();
+    PageInspectorController& inspectorController = m_frontendPage->inspectorController();
     return inspectorController.hasLocalFrontend() || inspectorController.hasRemoteFrontend();
 }
 

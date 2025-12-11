@@ -75,6 +75,7 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
     class JSScope;
     class SourceCode;
     class StackFrame;
+    class StackVisitor;
     enum class HandlerType : uint8_t;
     struct HandlerInfo;
     struct ProtoCallFrame;
@@ -194,6 +195,17 @@ using JSOrWasmInstruction = Variant<const JSInstruction*, uintptr_t /* IPIntOffs
     void setupForwardArgumentsFrame(JSGlobalObject*, CallFrame* execCaller, CallFrame* execCallee, uint32_t length);
     void setupForwardArgumentsFrameAndSetThis(JSGlobalObject*, CallFrame* execCaller, CallFrame* execCallee, JSValue thisValue, uint32_t length);
 
+    class UnwindFunctorBase {
+    protected:
+        UnwindFunctorBase(VM& vm)
+            : m_vm(vm)
+        { }
+
+        void copyCalleeSavesToEntryFrameCalleeSavesBuffer(StackVisitor&) const;
+        void notifyDebuggerOfUnwinding(JSGlobalObject*, CallFrame*) const;
+
+        VM& m_vm;
+    };
 } // namespace JSC
 
 namespace WTF {

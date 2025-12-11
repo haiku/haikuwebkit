@@ -34,54 +34,11 @@
 
 namespace WebCore {
 
-struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<GreaterThanOrSameSizeAsStyleRareInheritedData> {
-    float firstFloat;
-    float secondFloat;
-    Style::ImageOrNone styleImage;
-    Style::WebkitTextStrokeWidth textStrokeWidth;
-    Style::Color firstColor;
-    Style::Color colors[10];
-    Style::ScrollbarColor scrollbarColor;
-    Style::DynamicRangeLimit dynamicRangeLimit;
-    void* ownPtrs[1];
-    AtomString atomStrings[5];
-    void* refPtrs[3];
-    float thirdFloat;
-    Style::TextEmphasisStyle textEmphasisStyle;
-    Style::TextIndent textIndent;
-    Style::TextUnderlineOffset offset;
-    Style::TextBoxEdge textBoxEdge;
-    Style::LineFitEdge lineFitEdge;
-    void* customPropertyDataRefs[1];
-    unsigned bitfields[7];
-    short pagedMediaShorts[2];
-    Style::TabSize tabSize;
-    short hyphenationShorts[3];
-
-#if ENABLE(TEXT_AUTOSIZING)
-    Style::TextSizeAdjust textSizeAdjust;
-#endif
-
-#if ENABLE(TOUCH_EVENTS)
-    Style::Color tapHighlightColor;
-#endif
-
-#if ENABLE(DARK_MODE_CSS)
-    Style::ColorScheme colorScheme;
-#endif
-    Style::ListStyleType listStyleType;
-    Style::BlockEllipsis blockEllipsis;
-    Style::MathDepth mathDepth;
-};
-
-static_assert(sizeof(StyleRareInheritedData) <= sizeof(GreaterThanOrSameSizeAsStyleRareInheritedData), "StyleRareInheritedData should bit pack");
-
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
 
 StyleRareInheritedData::StyleRareInheritedData()
     : usedZoom(RenderStyle::initialZoom())
     , deviceScaleFactor(1.0f)
-    , listStyleImage(RenderStyle::initialListStyleImage())
     , textStrokeWidth(RenderStyle::initialTextStrokeWidth())
     , textStrokeColor(RenderStyle::initialTextStrokeColor())
     , textFillColor(RenderStyle::initialTextFillColor())
@@ -93,18 +50,44 @@ StyleRareInheritedData::StyleRareInheritedData()
     , visitedLinkCaretColor(Style::Color::currentColor())
     , accentColor(RenderStyle::initialAccentColor())
     , scrollbarColor(RenderStyle::initialScrollbarColor())
+    , textEmphasisStyle(RenderStyle::initialTextEmphasisStyle())
+    , quotes(RenderStyle::initialQuotes())
+    , strokeColor(RenderStyle::initialStrokeColor())
+    , visitedLinkStrokeColor(Style::Color::currentColor())
+#if ENABLE(DARK_MODE_CSS)
+    , colorScheme(RenderStyle::initialColorScheme())
+#endif
+    , cursorImages(RenderStyle::initialCursor().images)
+#if ENABLE(TOUCH_EVENTS)
+    , tapHighlightColor(RenderStyle::initialTapHighlightColor())
+#endif
+    , listStyleType(RenderStyle::initialListStyleType())
+    , blockEllipsis(RenderStyle::initialBlockEllipsis())
+    , textIndent(RenderStyle::initialTextIndent())
+    , listStyleImage(RenderStyle::initialListStyleImage())
     , dynamicRangeLimit(RenderStyle::initialDynamicRangeLimit())
     , textShadow(RenderStyle::initialTextShadow())
-    , cursorImages(RenderStyle::initialCursor().images)
-    , textEmphasisStyle(RenderStyle::initialTextEmphasisStyle())
-    , textIndent(RenderStyle::initialTextIndent())
+    , hyphenateCharacter(RenderStyle::initialHyphenateCharacter())
+    , customProperties(Style::CustomPropertyData::create())
+    , eventListenerRegionTypes { }
+    , strokeWidth(RenderStyle::initialStrokeWidth())
     , textUnderlineOffset(RenderStyle::initialTextUnderlineOffset())
+    , appleColorFilter(StyleAppleColorFilterData::create())
+    , lineGrid(RenderStyle::initialLineGrid())
+    , tabSize(RenderStyle::initialTabSize())
+    , strokeMiterLimit(RenderStyle::initialStrokeMiterLimit())
+#if ENABLE(TEXT_AUTOSIZING)
+    , textSizeAdjust(RenderStyle::initialTextSizeAdjust())
+#endif
+    , mathDepth(RenderStyle::initialMathDepth())
     , textBoxEdge(RenderStyle::initialTextBoxEdge())
     , lineFitEdge(RenderStyle::initialLineFitEdge())
-    , miterLimit(RenderStyle::initialStrokeMiterLimit())
-    , customProperties(Style::CustomPropertyData::create())
     , widows(RenderStyle::initialWidows())
     , orphans(RenderStyle::initialOrphans())
+    , hyphenateLimitBefore(RenderStyle::initialHyphenateLimitBefore())
+    , hyphenateLimitAfter(RenderStyle::initialHyphenateLimitAfter())
+    , hyphenateLimitLines(RenderStyle::initialHyphenateLimitLines())
+    , usedTouchAction(RenderStyle::initialTouchAction())
     , textSecurity(static_cast<unsigned>(RenderStyle::initialTextSecurity()))
     , userModify(static_cast<unsigned>(UserModify::ReadOnly))
     , wordBreak(static_cast<unsigned>(RenderStyle::initialWordBreak()))
@@ -112,6 +95,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , nbspMode(static_cast<unsigned>(NBSPMode::Normal))
     , lineBreak(static_cast<unsigned>(LineBreak::Auto))
     , userSelect(static_cast<unsigned>(RenderStyle::initialUserSelect()))
+    , speakAs(RenderStyle::initialSpeakAs().toRaw())
     , hyphens(static_cast<unsigned>(Hyphens::Manual))
     , textCombine(static_cast<unsigned>(RenderStyle::initialTextCombine()))
     , textEmphasisPosition(static_cast<unsigned>(RenderStyle::initialTextEmphasisPosition().toRaw()))
@@ -122,7 +106,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , lineSnap(static_cast<unsigned>(RenderStyle::initialLineSnap()))
     , lineAlign(static_cast<unsigned>(RenderStyle::initialLineAlign()))
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
-    , webkitOverflowScrolling(static_cast<unsigned>(RenderStyle::initialOverflowScrolling()))
+    , overflowScrolling(static_cast<unsigned>(RenderStyle::initialOverflowScrolling()))
 #endif
     , textAlignLast(static_cast<unsigned>(RenderStyle::initialTextAlignLast()))
     , textJustify(static_cast<unsigned>(RenderStyle::initialTextJustify()))
@@ -134,7 +118,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , rubyOverhang(static_cast<unsigned>(RenderStyle::initialRubyOverhang()))
     , textZoom(static_cast<unsigned>(RenderStyle::initialTextZoom()))
 #if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
-    , webkitTouchCallout(static_cast<unsigned>(RenderStyle::initialTouchCallout()))
+    , touchCallout(static_cast<unsigned>(RenderStyle::initialTouchCallout()))
 #endif
     , hangingPunctuation(RenderStyle::initialHangingPunctuation().toRaw())
     , paintOrder(static_cast<unsigned>(RenderStyle::initialPaintOrder().type()))
@@ -156,29 +140,6 @@ StyleRareInheritedData::StyleRareInheritedData()
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(static_cast<unsigned>(AppleVisualEffect::None))
 #endif
-    , usedTouchActions(RenderStyle::initialTouchActions())
-    , strokeWidth(RenderStyle::initialStrokeWidth())
-    , strokeColor(RenderStyle::initialStrokeColor())
-    , hyphenateCharacter(RenderStyle::initialHyphenateCharacter())
-    , hyphenateLimitBefore(RenderStyle::initialHyphenateLimitBefore())
-    , hyphenateLimitAfter(RenderStyle::initialHyphenateLimitAfter())
-    , hyphenateLimitLines(RenderStyle::initialHyphenateLimitLines())
-#if ENABLE(DARK_MODE_CSS)
-    , colorScheme(RenderStyle::initialColorScheme())
-#endif
-    , quotes(RenderStyle::initialQuotes())
-    , appleColorFilter(StyleAppleColorFilterData::create())
-    , lineGrid(RenderStyle::initialLineGrid())
-    , tabSize(RenderStyle::initialTabSize())
-#if ENABLE(TEXT_AUTOSIZING)
-    , textSizeAdjust(RenderStyle::initialTextSizeAdjust())
-#endif
-#if ENABLE(TOUCH_EVENTS)
-    , tapHighlightColor(RenderStyle::initialTapHighlightColor())
-#endif
-    , listStyleType(RenderStyle::initialListStyleType())
-    , blockEllipsis(RenderStyle::initialBlockEllipsis())
-    , mathDepth(RenderStyle::initialMathDepth())
 {
 }
 
@@ -186,7 +147,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     : RefCounted<StyleRareInheritedData>()
     , usedZoom(o.usedZoom)
     , deviceScaleFactor(o.deviceScaleFactor)
-    , listStyleImage(o.listStyleImage)
     , textStrokeWidth(o.textStrokeWidth)
     , textStrokeColor(o.textStrokeColor)
     , textFillColor(o.textFillColor)
@@ -198,18 +158,44 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , visitedLinkCaretColor(o.visitedLinkCaretColor)
     , accentColor(o.accentColor)
     , scrollbarColor(o.scrollbarColor)
+    , textEmphasisStyle(o.textEmphasisStyle)
+    , quotes(o.quotes)
+    , strokeColor(o.strokeColor)
+    , visitedLinkStrokeColor(o.visitedLinkStrokeColor)
+#if ENABLE(DARK_MODE_CSS)
+    , colorScheme(o.colorScheme)
+#endif
+    , cursorImages(o.cursorImages)
+#if ENABLE(TOUCH_EVENTS)
+    , tapHighlightColor(o.tapHighlightColor)
+#endif
+    , listStyleType(o.listStyleType)
+    , blockEllipsis(o.blockEllipsis)
+    , textIndent(o.textIndent)
+    , listStyleImage(o.listStyleImage)
     , dynamicRangeLimit(o.dynamicRangeLimit)
     , textShadow(o.textShadow)
-    , cursorImages(o.cursorImages)
-    , textEmphasisStyle(o.textEmphasisStyle)
-    , textIndent(o.textIndent)
+    , hyphenateCharacter(o.hyphenateCharacter)
+    , customProperties(o.customProperties)
+    , eventListenerRegionTypes(o.eventListenerRegionTypes)
+    , strokeWidth(o.strokeWidth)
     , textUnderlineOffset(o.textUnderlineOffset)
+    , appleColorFilter(o.appleColorFilter)
+    , lineGrid(o.lineGrid)
+    , tabSize(o.tabSize)
+    , strokeMiterLimit(o.strokeMiterLimit)
+#if ENABLE(TEXT_AUTOSIZING)
+    , textSizeAdjust(o.textSizeAdjust)
+#endif
+    , mathDepth(o.mathDepth)
     , textBoxEdge(o.textBoxEdge)
     , lineFitEdge(o.lineFitEdge)
-    , miterLimit(o.miterLimit)
-    , customProperties(o.customProperties)
     , widows(o.widows)
     , orphans(o.orphans)
+    , hyphenateLimitBefore(o.hyphenateLimitBefore)
+    , hyphenateLimitAfter(o.hyphenateLimitAfter)
+    , hyphenateLimitLines(o.hyphenateLimitLines)
+    , usedTouchAction(o.usedTouchAction)
     , textSecurity(o.textSecurity)
     , userModify(o.userModify)
     , wordBreak(o.wordBreak)
@@ -228,7 +214,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , lineSnap(o.lineSnap)
     , lineAlign(o.lineAlign)
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
-    , webkitOverflowScrolling(o.webkitOverflowScrolling)
+    , overflowScrolling(o.overflowScrolling)
 #endif
     , textAlignLast(o.textAlignLast)
     , textJustify(o.textJustify)
@@ -240,7 +226,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , rubyOverhang(o.rubyOverhang)
     , textZoom(o.textZoom)
 #if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
-    , webkitTouchCallout(o.webkitTouchCallout)
+    , touchCallout(o.touchCallout)
 #endif
     , hangingPunctuation(o.hangingPunctuation)
     , paintOrder(o.paintOrder)
@@ -262,31 +248,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(o.usedAppleVisualEffectForSubtree)
 #endif
-    , usedTouchActions(o.usedTouchActions)
-    , eventListenerRegionTypes(o.eventListenerRegionTypes)
-    , strokeWidth(o.strokeWidth)
-    , strokeColor(o.strokeColor)
-    , visitedLinkStrokeColor(o.visitedLinkStrokeColor)
-    , hyphenateCharacter(o.hyphenateCharacter)
-    , hyphenateLimitBefore(o.hyphenateLimitBefore)
-    , hyphenateLimitAfter(o.hyphenateLimitAfter)
-    , hyphenateLimitLines(o.hyphenateLimitLines)
-#if ENABLE(DARK_MODE_CSS)
-    , colorScheme(o.colorScheme)
-#endif
-    , quotes(o.quotes)
-    , appleColorFilter(o.appleColorFilter)
-    , lineGrid(o.lineGrid)
-    , tabSize(o.tabSize)
-#if ENABLE(TEXT_AUTOSIZING)
-    , textSizeAdjust(o.textSizeAdjust)
-#endif
-#if ENABLE(TOUCH_EVENTS)
-    , tapHighlightColor(o.tapHighlightColor)
-#endif
-    , listStyleType(o.listStyleType)
-    , blockEllipsis(o.blockEllipsis)
-    , mathDepth(o.mathDepth)
 {
     ASSERT(o == *this, "StyleRareInheritedData should be properly copied.");
 }
@@ -323,7 +284,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && textUnderlineOffset == o.textUnderlineOffset
         && textBoxEdge == o.textBoxEdge
         && lineFitEdge == o.lineFitEdge
-        && miterLimit == o.miterLimit
+        && strokeMiterLimit == o.strokeMiterLimit
         && widows == o.widows
         && orphans == o.orphans
         && textSecurity == o.textSecurity
@@ -333,7 +294,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && nbspMode == o.nbspMode
         && lineBreak == o.lineBreak
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
-        && webkitOverflowScrolling == o.webkitOverflowScrolling
+        && overflowScrolling == o.overflowScrolling
 #endif
 #if ENABLE(TEXT_AUTOSIZING)
         && textSizeAdjust == o.textSizeAdjust
@@ -351,7 +312,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && textEmphasisPosition == o.textEmphasisPosition
         && lineBoxContain == o.lineBoxContain
 #if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
-        && webkitTouchCallout == o.webkitTouchCallout
+        && touchCallout == o.touchCallout
 #endif
         && hyphenateCharacter == o.hyphenateCharacter
         && quotes == o.quotes
@@ -383,7 +344,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && isInSubtreeWithBlendMode == o.isInSubtreeWithBlendMode
         && isForceHidden == o.isForceHidden
         && autoRevealsWhenFound == o.autoRevealsWhenFound
-        && usedTouchActions == o.usedTouchActions
+        && usedTouchAction == o.usedTouchAction
         && eventListenerRegionTypes == o.eventListenerRegionTypes
         && effectiveInert == o.effectiveInert
         && effectivelyTransparent == o.effectivelyTransparent
@@ -450,7 +411,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT(textBoxEdge);
     LOG_IF_DIFFERENT(lineFitEdge);
 
-    LOG_IF_DIFFERENT(miterLimit);
+    LOG_IF_DIFFERENT(strokeMiterLimit);
 
     LOG_IF_DIFFERENT(widows);
     LOG_IF_DIFFERENT(orphans);
@@ -465,14 +426,14 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(UserSelect, userSelect);
     LOG_IF_DIFFERENT_WITH_CAST(ColorSpace, colorSpace);
 
-    LOG_RAW_OPTIONSET_IF_DIFFERENT(SpeakAs, speakAs);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::SpeakAs, speakAs);
 
     LOG_IF_DIFFERENT_WITH_CAST(Hyphens, hyphens);
     LOG_IF_DIFFERENT_WITH_CAST(TextCombine, textCombine);
-    LOG_IF_DIFFERENT_WITH_CAST(TextEmphasisPosition, textEmphasisPosition);
-    LOG_IF_DIFFERENT_WITH_CAST(TextUnderlinePosition, textUnderlinePosition);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::TextEmphasisPosition, textEmphasisPosition);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::TextUnderlinePosition, textUnderlinePosition);
 
-    LOG_RAW_OPTIONSET_IF_DIFFERENT(Style::LineBoxContain, lineBoxContain);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::WebkitLineBoxContain, lineBoxContain);
 
     LOG_IF_DIFFERENT_WITH_CAST(Style::ImageOrientation, imageOrientation);
     LOG_IF_DIFFERENT_WITH_CAST(ImageRendering, imageRendering);
@@ -480,10 +441,10 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(LineAlign, lineAlign);
 
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
-    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitOverflowScrolling, webkitOverflowScrolling);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitOverflowScrolling, overflowScrolling);
 #endif
 
-    LOG_IF_DIFFERENT_WITH_CAST(TextAlignLast, textAlignLast);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::TextAlignLast, textAlignLast);
     LOG_IF_DIFFERENT_WITH_CAST(TextJustify, textJustify);
     LOG_IF_DIFFERENT_WITH_CAST(TextDecorationSkipInk, textDecorationSkipInk);
 
@@ -494,12 +455,12 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(TextZoom, textZoom);
 
 #if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
-    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitTouchCallout, webkitTouchCallout);
+    LOG_IF_DIFFERENT_WITH_CAST(Style::WebkitTouchCallout, touchCallout);
 #endif
 
-    LOG_RAW_OPTIONSET_IF_DIFFERENT(HangingPunctuation, hangingPunctuation);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::HangingPunctuation, hangingPunctuation);
 
-    LOG_IF_DIFFERENT_WITH_CAST_AND_CONSTRUCTION(Style::SVGPaintOrder::Type, Style::SVGPaintOrder, paintOrder);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::SVGPaintOrder, paintOrder);
     LOG_IF_DIFFERENT_WITH_CAST(LineCap, capStyle);
     LOG_IF_DIFFERENT_WITH_CAST(LineJoin, joinStyle);
 
@@ -527,7 +488,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(AppleVisualEffect, usedAppleVisualEffectForSubtree);
 #endif
 
-    LOG_IF_DIFFERENT(usedTouchActions);
+    LOG_IF_DIFFERENT(usedTouchAction);
     LOG_IF_DIFFERENT(eventListenerRegionTypes);
 
     LOG_IF_DIFFERENT(strokeWidth);

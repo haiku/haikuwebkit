@@ -15,4 +15,5 @@ None
 ------------------------------------------------------------------------
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hand-input/META.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/hand-input/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hand-input/idlharness.https.window.js

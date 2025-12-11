@@ -29,6 +29,7 @@
 #include "AnimationEventBase.h"
 #include "CSSAnimation.h"
 #include "CSSTransition.h"
+#include "ContainerNodeInlines.h"
 #include "DocumentEventLoop.h"
 #include "DocumentPage.h"
 #include "DocumentTimeline.h"
@@ -36,9 +37,14 @@
 #include "ElementInlines.h"
 #include "EventLoop.h"
 #include "EventTargetInlines.h"
+#include "GraphicsLayer.h"
 #include "KeyframeEffect.h"
 #include "LocalDOMWindow.h"
 #include "Logging.h"
+#include "RenderBoxModelObject.h"
+#include "RenderLayer.h"
+#include "RenderLayerBacking.h"
+#include "RenderObject.h"
 #include "ScrollTimeline.h"
 #include "Settings.h"
 #include "StyleOriginatedTimelinesController.h"
@@ -250,8 +256,16 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
     }
 }
 
-void AnimationTimelinesController::updateStaleScrollTimelines()
+void AnimationTimelinesController::runPostRenderingUpdateTasks()
 {
+#if ENABLE(THREADED_ANIMATIONS)
+    if (m_document->settings().threadedScrollDrivenAnimationsEnabled()) {
+        for (Ref timeline : m_timelines)
+            timeline->runPostRenderingUpdateTasks();
+        if (m_acceleratedEffectStackUpdater)
+            m_acceleratedEffectStackUpdater->update();
+    }
+#endif
     // https://drafts.csswg.org/scroll-animations-1/#event-loop
     auto scrollTimelines = std::exchange(m_updatedScrollTimelines, { });
     for (auto scrollTimeline : scrollTimelines)
@@ -375,22 +389,27 @@ bool AnimationTimelinesController::isPendingTimelineAttachment(const WebAnimatio
 }
 
 #if ENABLE(THREADED_ANIMATIONS)
-AcceleratedEffectStackUpdater& AnimationTimelinesController::acceleratedEffectStackUpdater()
+void AnimationTimelinesController::scheduleAcceleratedEffectStackUpdateForTarget(const Styleable& target)
 {
     if (!m_acceleratedEffectStackUpdater)
         m_acceleratedEffectStackUpdater = makeUnique<AcceleratedEffectStackUpdater>();
-    return *m_acceleratedEffectStackUpdater;
-}
+    m_acceleratedEffectStackUpdater->scheduleUpdateForTarget(target);
 
-void AnimationTimelinesController::updateAcceleratedEffectStacks()
-{
-    if (!m_acceleratedEffectStackUpdater)
-        return;
-    for (Ref timeline : m_timelines)
-        timeline->clearAcceleratedRepresentation();
-    m_acceleratedEffectStackUpdater->updateEffectStacks();
+    if (RefPtr documentTimeline = m_document->existingTimeline())
+        documentTimeline->scheduleAcceleratedEffectStackUpdate();
 }
 #endif
+
+Vector<GraphicsLayer::AcceleratedAnimationForTesting> AnimationTimelinesController::acceleratedAnimationsForElement(const Element& element) const
+{
+    CheckedPtr renderer = element.renderer();
+    if (renderer && renderer->isComposited()) {
+        CheckedPtr compositedRenderer = downcast<RenderBoxModelObject>(renderer.get());
+        if (RefPtr graphicsLayer = compositedRenderer->layer()->backing()->graphicsLayer())
+            return graphicsLayer->acceleratedAnimationsForTesting();
+    }
+    return { };
+}
 
 } // namespace WebCore
 

@@ -32,6 +32,7 @@
 #include "RealtimeIncomingVideoSourceLibWebRTC.h"
 
 #include "GStreamerVideoFrameLibWebRTC.h"
+#include "LibWebRTCVideoFrameUtilities.h"
 #include "VideoFrameGStreamer.h"
 
 namespace WebCore {
@@ -59,17 +60,12 @@ void RealtimeIncomingVideoSourceLibWebRTC::OnFrame(const webrtc::VideoFrame& fra
         return;
 
     auto presentationTime = MediaTime(frame.timestamp_us(), G_USEC_PER_SEC);
-    if (frame.video_frame_buffer()->type() == webrtc::VideoFrameBuffer::Type::kNative) {
-        auto* framebuffer = static_cast<GStreamerVideoFrameLibWebRTC*>(frame.video_frame_buffer().get());
-        videoFrameAvailable(VideoFrameGStreamer::createWrappedSample(framebuffer->getSample(), presentationTime, static_cast<VideoFrame::Rotation>(frame.rotation())), { });
-    } else {
-        auto gstSample = convertLibWebRTCVideoFrameToGStreamerSample(frame);
-        VideoFrameGStreamer::CreateOptions options;
-        options.timeMetadata = std::make_optional(metadataFromVideoFrame(frame));
-        options.presentationTime = presentationTime;
-        options.rotation = static_cast<VideoFrame::Rotation>(frame.rotation());
-        videoFrameAvailable(VideoFrameGStreamer::create(WTFMove(gstSample), options), { });
-    }
+    auto gstSample = convertLibWebRTCVideoFrameToGStreamerSample(frame);
+    VideoFrameGStreamer::CreateOptions options;
+    options.timeMetadata = std::make_optional(metadataFromVideoFrame(frame));
+    options.presentationTime = presentationTime;
+    options.rotation = videoRotationFromLibWebRTCVideoFrame(frame);
+    videoFrameAvailable(VideoFrameGStreamer::create(WTFMove(gstSample), options), { });
 }
 
 } // namespace WebCore

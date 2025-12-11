@@ -70,7 +70,7 @@ public:
     void didGarbageCollect(JSC::CollectionScope) final;
 
     // JSC::HeapSnapshotBuilder::Client
-    bool heapSnapshotBuilderIgnoreNode(JSC::HeapSnapshotBuilder&, JSC::JSCell*) final;
+    bool heapSnapshotBuilderIgnoreNode(const JSC::HeapSnapshotBuilder&, JSC::JSCell*) final;
 
 protected:
     void clearHeapSnapshots();

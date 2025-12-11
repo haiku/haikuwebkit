@@ -255,7 +255,7 @@ LocalFrame::~LocalFrame()
 
     disconnectOwnerElement();
 
-    while (auto* destructionObserver = m_destructionObservers.takeAny())
+    while (auto destructionObserver = m_destructionObservers.takeAny())
         destructionObserver->frameDestroyed();
 
     RefPtr localMainFrame = this->localMainFrame();
@@ -1130,11 +1130,12 @@ float LocalFrame::frameScaleFactor() const
     // https://github.com/w3c/csswg-drafts/issues/9644
     // Check if this frame's owner element (iframe) has CSS zoom applied.
     if (!isMainFrame()) {
+        auto rootZoom = rootFrame().pageZoomFactor();
         if (RefPtr ownerElement = this->ownerElement()) {
             if (auto* ownerRenderer = ownerElement->renderer())
-                return ownerRenderer->style().usedZoom();
+                return ownerRenderer->style().usedZoom() / rootZoom;
         }
-        return 1;
+        return rootZoom;
     }
 
     // Main frame is scaled with respect to the container.

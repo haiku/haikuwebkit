@@ -91,7 +91,11 @@ public:
     ProcessAssertionType type() const { return m_assertionType; }
     ProcessID pid() const { return m_pid; }
 
-    bool isValid() const;
+#if USE(RUNNINGBOARD)
+    bool isValid() const { return !m_wasInvalidated; }
+#else
+    bool isValid() const { return true; }
+#endif
 
 protected:
 #if !USE(EXTENSIONKIT)

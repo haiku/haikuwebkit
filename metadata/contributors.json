@@ -3243,7 +3243,8 @@
          "garrett_davidson@apple.com"
       ],
       "github" : "g-davidson",
-      "name" : "Garrett Davidson"
+      "name" : "Garrett Davidson",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -7626,7 +7627,8 @@
       "name" : "Shu-yu Guo",
       "nicks" : [
          "syg"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [

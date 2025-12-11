@@ -216,6 +216,7 @@ RefPtr<StyleProperties> StyledElement::protectedInlineStyle() const
 
 void StyledElement::inlineStyleChanged()
 {
+    setDidMutateSubtreeAfterSetInnerHTMLOnAncestors();
     invalidateStyleAttribute();
     InspectorInstrumentation::didInvalidateStyleAttr(*this);
 }

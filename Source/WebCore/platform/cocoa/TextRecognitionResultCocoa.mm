@@ -55,8 +55,13 @@ RetainPtr<NSAttributedString> stringForRange(const TextRecognitionResult& result
     if (!result.imageAnalysisData)
         return nil;
 
-    auto everything = result.imageAnalysisData->nsAttributedString();
-    return [everything attributedSubstringFromRange:range];
+    RetainPtr wholeString = result.imageAnalysisData->nsAttributedString();
+    NSUInteger stringLength = [wholeString length];
+    if (range.location >= stringLength)
+        return nil;
+
+    NSUInteger clampedLength = std::min<NSUInteger>(range.length, stringLength - range.location);
+    return [wholeString attributedSubstringFromRange:NSMakeRange(range.location, clampedLength)];
 }
 
 #endif // ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)

@@ -217,16 +217,17 @@ void AudioVideoRendererAVFObjC::enqueueSample(TrackIdentifier trackId, Ref<Media
     attachContentKeyToSampleIfNeeded(sample);
 #endif
 
+    RetainPtr cmSampleBuffer = sample->platformSample().cmSampleBuffer();
+    RetainPtr formatDescription = PAL::CMSampleBufferGetFormatDescription(cmSampleBuffer.get());
+    ASSERT(formatDescription);
+    if (!formatDescription) {
+        ERROR_LOG(LOGIDENTIFIER, "Received sample with a null formatDescription. Bailing.");
+        return;
+    }
+    auto mediaType = typeFromFormatDescription(formatDescription.get());
+
     switch (*type) {
-    case TrackType::Video: {
-        RetainPtr cmSampleBuffer = sample->platformSample().cmSampleBuffer();
-        RetainPtr formatDescription = PAL::CMSampleBufferGetFormatDescription(cmSampleBuffer.get());
-        ASSERT(formatDescription);
-        if (!formatDescription) {
-            ERROR_LOG(LOGIDENTIFIER, "Received sample with a null formatDescription. Bailing.");
-            return;
-        }
-        auto mediaType = typeFromFormatDescription(formatDescription.get());
+    case TrackType::Video:
         ASSERT(mediaType == TrackType::Video);
         if (mediaType != TrackType::Video) {
             ERROR_LOG(LOGIDENTIFIER, "Expected sample of type: video got: '", mediaType, "'. Bailing.");
@@ -248,10 +249,14 @@ void AudioVideoRendererAVFObjC::enqueueSample(TrackIdentifier trackId, Ref<Media
         if (RefPtr videoRenderer = m_videoRenderer; videoRenderer && isEnabledVideoTrackId(trackId))
             videoRenderer->enqueueSample(sample, minimumUpcomingTime.value_or(sample->presentationTime()));
         break;
-    }
+
     case TrackType::Audio:
+        ASSERT(mediaType == TrackType::Audio);
+        if (mediaType != TrackType::Audio) {
+            ERROR_LOG(LOGIDENTIFIER, "Expected sample of type: audio got: '", mediaType, "'. Bailing.");
+            return;
+        }
         if (RetainPtr audioRenderer = audioRendererFor(trackId)) {
-            RetainPtr cmSampleBuffer = sample->platformSample().cmSampleBuffer();
             [audioRenderer enqueueSampleBuffer:cmSampleBuffer.get()];
             if (!allRenderersHaveAvailableSamples() && !sample->isNonDisplaying())
                 setHasAvailableAudioSample(trackId, true);
@@ -284,11 +289,11 @@ bool AudioVideoRendererAVFObjC::isReadyForMoreSamples(TrackIdentifier trackId)
     }
 }
 
-void AudioVideoRendererAVFObjC::requestMediaDataWhenReady(TrackIdentifier trackId, Function<void(TrackIdentifier)>&& callback)
+Ref<AudioVideoRenderer::RequestPromise> AudioVideoRendererAVFObjC::requestMediaDataWhenReady(TrackIdentifier trackId)
 {
     auto type = typeOf(trackId);
     if (!type)
-        return;
+        return RequestPromise::createAndReject(PlatformMediaError::LogicError);
 
     DEBUG_LOG(LOGIDENTIFIER, "trackId: ", toString(trackId), " isEnabledVideoTrackId: ", isEnabledVideoTrackId(trackId));
 
@@ -296,54 +301,53 @@ void AudioVideoRendererAVFObjC::requestMediaDataWhenReady(TrackIdentifier trackI
     case TrackType::Video:
         ASSERT(m_videoRenderer);
         if (RefPtr videoRenderer = m_videoRenderer) {
-            videoRenderer->requestMediaDataWhenReady([trackId, weakThis = WeakPtr { *this }, callback = WTFMove(callback)]() mutable {
-                if (RefPtr protectedThis = weakThis.get()) {
-                    if (protectedThis->m_readyToRequestVideoData)
-                        callback(trackId);
-                    else
+            m_requestVideoPromise.emplace(PlatformMediaError::Cancelled);
+            videoRenderer->requestMediaDataWhenReady([trackId, weakThis = WeakPtr { *this }] {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
+                if (!protectedThis->m_readyToRequestVideoData) {
                         DEBUG_LOG_WITH_THIS(protectedThis, LOGIDENTIFIER_WITH_THIS(protectedThis), "Not ready to request video data, ignoring");
+                    return;
                 }
+                if (RefPtr videoRenderer = protectedThis->m_videoRenderer)
+                    videoRenderer->stopRequestingMediaData();
+                if (auto existingPromise = std::exchange(protectedThis->m_requestVideoPromise, std::nullopt))
+                    existingPromise->resolve(trackId);
             });
+            return m_requestVideoPromise->promise();
         }
         break;
     case TrackType::Audio:
         if (RetainPtr audioRenderer = audioRendererFor(trackId)) {
-            auto handler = makeBlockPtr([trackId, weakThis = WeakPtr { *this }, callback = WTFMove(callback)]() mutable {
-                if (RefPtr protectedThis = weakThis.get()) {
-                    if (protectedThis->m_readyToRequestAudioData)
-                        callback(trackId);
-                    else
+            auto& property = audioTrackPropertiesFor(trackId);
+            property.requestPromise = makeUnique<RequestPromise::AutoRejectProducer>(PlatformMediaError::Cancelled);
+            auto handler = makeBlockPtr([trackId, weakThis = WeakPtr { *this }] {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
+                if (!protectedThis->m_readyToRequestAudioData) {
                         DEBUG_LOG_WITH_THIS(protectedThis, LOGIDENTIFIER_WITH_THIS(protectedThis), "Not ready to request audio data, ignoring");
+                    return;
                 }
+
+                RetainPtr audioRenderer = protectedThis->audioRendererFor(trackId);
+                if (!audioRenderer)
+                    return;
+                [audioRenderer stopRequestingMediaData];
+                auto& property = protectedThis->audioTrackPropertiesFor(trackId);
+                if (auto existingPromise = std::exchange(property.requestPromise, nullptr))
+                    existingPromise->resolve(trackId);
             });
             [audioRenderer requestMediaDataWhenReadyOnQueue:mainDispatchQueueSingleton() usingBlock:handler.get()];
+            return property.requestPromise->promise();
         }
         break;
     default:
         ASSERT_NOT_REACHED();
         break;
     }
-}
-
-void AudioVideoRendererAVFObjC::stopRequestingMediaData(TrackIdentifier trackId)
-{
-    auto type = typeOf(trackId);
-    if (!type)
-        return;
-
-    switch (*type) {
-    case TrackType::Video:
-        if (RefPtr videoRenderer = m_videoRenderer; videoRenderer && isEnabledVideoTrackId(trackId))
-            videoRenderer->stopRequestingMediaData();
-        break;
-    case TrackType::Audio:
-        if (RetainPtr audioRenderer = audioRendererFor(trackId))
-            [audioRenderer stopRequestingMediaData];
-        break;
-    default:
-        ASSERT_NOT_REACHED();
-        break;
-    }
+    return RequestPromise::createAndReject(PlatformMediaError::LogicError);
 }
 
 void AudioVideoRendererAVFObjC::notifyTrackNeedsReenqueuing(TrackIdentifier trackId, Function<void(TrackIdentifier, const MediaTime&)>&& callback)
@@ -581,7 +585,7 @@ void AudioVideoRendererAVFObjC::prepareToSeek()
 
 Ref<MediaTimePromise> AudioVideoRendererAVFObjC::seekTo(const MediaTime& seekTime)
 {
-    ALWAYS_LOG(LOGIDENTIFIER, seekTime, "state: ", toString(m_seekState), " m_isSynchronizerSeeking: ", m_isSynchronizerSeeking, " hasAvailableVideoFrame: ", m_hasAvailableVideoFrame);
+    ALWAYS_LOG(LOGIDENTIFIER, seekTime, "state: ", toString(m_seekState), " m_isSynchronizerSeeking: ", m_isSynchronizerSeeking, " hasAvailableVideoFrame: ", m_videoRenderer && allRenderersHaveAvailableSamples());
 
     cancelSeekingPromiseIfNeeded();
     if (m_seekState == RequiresFlush)
@@ -593,7 +597,7 @@ Ref<MediaTimePromise> AudioVideoRendererAVFObjC::seekTo(const MediaTime& seekTim
 
     bool isSynchronizerSeeking = m_isSynchronizerSeeking || std::abs((synchronizerTime - seekTime).toMicroseconds()) > 1000;
 
-    if (!isSynchronizerSeeking) {
+    if (!isSynchronizerSeeking && allRenderersHaveAvailableSamples()) {
         ALWAYS_LOG(LOGIDENTIFIER, "Synchroniser doesn't require seeking current: ", synchronizerTime, " seeking: ", seekTime);
         // In cases where the destination seek time matches too closely the synchronizer's existing time
         // no time jumped notification will be issued. In this case, just notify the MediaPlayer that
@@ -1007,7 +1011,7 @@ void AudioVideoRendererAVFObjC::maybeCompleteSeek()
         ALWAYS_LOG(LOGIDENTIFIER, "Not resuming playback, shouldBePlaying:false");
 
     if (auto promise = std::exchange(m_seekPromise, std::nullopt))
-        promise->resolve();
+        promise->resolve(m_lastSeekTime);
     ALWAYS_LOG(LOGIDENTIFIER, "seek completed");
 }
 
@@ -1031,6 +1035,13 @@ void AudioVideoRendererAVFObjC::setHasAvailableAudioSample(TrackIdentifier track
     properties.hasAudibleSample = flag;
 
     updateAllRenderersHaveAvailableSamples();
+}
+
+AudioVideoRendererAVFObjC::AudioTrackProperties& AudioVideoRendererAVFObjC::audioTrackPropertiesFor(TrackIdentifier trackId)
+{
+    auto it = m_audioTracksMap.find(trackId);
+    RELEASE_ASSERT(it != m_audioTracksMap.end());
+    return it->value;
 }
 
 void AudioVideoRendererAVFObjC::updateAllRenderersHaveAvailableSamples()
@@ -1242,7 +1253,7 @@ Ref<GenericPromise> AudioVideoRendererAVFObjC::setVideoRenderer(WebSampleBufferV
         destroyVideoRenderer();
     }
 
-    RefPtr videoRenderer = VideoMediaSampleRenderer::create(renderer);
+    RefPtr videoRenderer = VideoMediaSampleRenderer::create(renderer, logger(), logIdentifier());
     m_videoRenderer = videoRenderer;
 
     videoRenderer->setPreferences(m_preferences);
@@ -1628,12 +1639,9 @@ Ref<MediaPromise> AudioVideoRendererAVFObjC::setInitData(Ref<SharedBuffer> initD
     }
 #endif
     auto keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsSinf(initData);
-    AtomString initDataType = CDMPrivateFairPlayStreaming::sinfName();
 #if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
-    if (!keyIDs) {
+    if (!keyIDs)
         keyIDs = CDMPrivateFairPlayStreaming::extractKeyIDsMpts(initData);
-        initDataType = CDMPrivateFairPlayStreaming::mptsName();
-    }
 #endif
     if (!keyIDs)
         return MediaPromise::createAndResolve();

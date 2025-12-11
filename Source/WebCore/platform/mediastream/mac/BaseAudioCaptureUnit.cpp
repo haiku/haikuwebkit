@@ -53,11 +53,13 @@ BaseAudioCaptureUnit::~BaseAudioCaptureUnit()
     RealtimeMediaSourceCenter::singleton().removeDevicesChangedObserver(*this);
 }
 
+#if !PLATFORM(MAC)
 void BaseAudioCaptureUnit::setEnableEchoCancellation(bool enableEchoCancellation)
 {
     ASSERT(m_canEnableEchoCancellation || (!enableEchoCancellation && !m_enableEchoCancellation));
     m_enableEchoCancellation = enableEchoCancellation;
 }
+#endif
 
 void BaseAudioCaptureUnit::addClient(CoreAudioCaptureSource& client)
 {
@@ -188,7 +190,7 @@ void BaseAudioCaptureUnit::setCaptureDevice(String&& persistentID, uint32_t capt
 {
     bool hasChanged = this->persistentID() != persistentID || this->captureDeviceID() != captureDeviceID || m_isCapturingWithDefaultMicrophone != isDefault;
     if (hasChanged)
-        willChangeCaptureDevice();
+        willChangeCaptureDeviceTo(persistentID);
 
     m_capturingDevice = { WTFMove(persistentID), captureDeviceID };
     m_isCapturingWithDefaultMicrophone = isDefault;

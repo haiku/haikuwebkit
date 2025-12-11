@@ -37,6 +37,7 @@
 #import "ScrollerPairMac.h"
 #import "ScrollingTreeScrollingNode.h"
 #import <QuartzCore/CALayer.h>
+#import <QuartzCore/QuartzCore.h>
 #import <pal/spi/mac/NSScrollerImpSPI.h>
 #import <wtf/BlockObjCExceptions.h>
 
@@ -320,12 +321,17 @@ ScrollerMac::~ScrollerMac()
 void ScrollerMac::attach()
 {
     Locker locker { m_scrollerImpLock };
+
+    [CATransaction lock];
+
     RefPtr pair = m_pair.get();
 
     [m_scrollerImpDelegate invalidate];
     m_scrollerImpDelegate = adoptNS([[WebScrollerImpDelegateMac alloc] initWithScroller:this]);
     setScrollerImp([NSScrollerImp scrollerImpWithStyle:nsScrollerStyle(pair->scrollbarStyle()) controlSize:nsControlSizeFromScrollbarWidth(pair->scrollbarWidthStyle()) horizontal:m_orientation == ScrollbarOrientation::Horizontal replacingScrollerImp:nil]);
     [m_scrollerImp setDelegate:m_scrollerImpDelegate.get()];
+
+    [CATransaction unlock];
 }
 
 void ScrollerMac::detach()
@@ -352,6 +358,9 @@ void ScrollerMac::setHostLayer(CALayer *layer)
 void ScrollerMac::setHiddenByStyle(NativeScrollbarVisibility visibility)
 {
     Locker locker { m_scrollerImpLock };
+
+    [CATransaction lock];
+
     m_isHiddenByStyle = visibility != NativeScrollbarVisibility::Visible;
     if (m_isHiddenByStyle) {
         detach();
@@ -362,6 +371,8 @@ void ScrollerMac::setHiddenByStyle(NativeScrollbarVisibility visibility)
         updateValues();
     }
     updatePairScrollerImps();
+
+    [CATransaction unlock];
 }
 
 void ScrollerMac::updateValues()
@@ -389,6 +400,8 @@ void ScrollerMac::updateScrollbarStyle()
 {
     Locker locker { m_scrollerImpLock };
 
+    [CATransaction lock];
+
     RefPtr pair = m_pair.get();
     setScrollerImp([NSScrollerImp scrollerImpWithStyle:nsScrollerStyle(pair->scrollbarStyle()) controlSize:nsControlSizeFromScrollbarWidth(pair->scrollbarWidthStyle()) horizontal:m_orientation == ScrollbarOrientation::Horizontal replacingScrollerImp:nil]);
     [m_scrollerImp setDelegate:m_scrollerImpDelegate.get()];
@@ -397,6 +410,8 @@ void ScrollerMac::updateScrollbarStyle()
 
     updatePairScrollerImps();
     updateValues();
+
+    [CATransaction unlock];
 }
 
 void ScrollerMac::updatePairScrollerImps()
@@ -532,8 +547,7 @@ void ScrollerMac::setUsePresentationValue(bool inMomentumPhase)
 
 void ScrollerMac::updateProgress(FeatureToAnimate featureToAnimate, double currentValue)
 {
-    Locker locker { m_scrollerImpLock };
-
+    // CATransaction lock should be held when this function is called
     switch (featureToAnimate) {
     case FeatureToAnimate::KnobAlpha:
         [m_scrollerImp setKnobAlpha:currentValue];

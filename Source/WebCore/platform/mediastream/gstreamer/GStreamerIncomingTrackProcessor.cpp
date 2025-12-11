@@ -67,26 +67,26 @@ void GStreamerIncomingTrackProcessor::configure(ThreadSafeWeakPtr<GStreamerMedia
         m_data.ssrc = *ssrc;
         auto msIdAttributeName = makeString("ssrc-"_s, *ssrc, "-msid"_s);
         if (auto msIdAttribute = gstStructureGetString(structure, CStringView::unsafeFromUTF8(msIdAttributeName.utf8().data()))) {
-            auto components = msIdAttribute.toString().split(' ');
+            auto components = String(msIdAttribute.span()).split(' ');
             if (components.size() == 2)
-                m_sdpMsIdAndTrackId = { components[0], components[1] };
+                m_sdpMsIdAndTrackId = { WTFMove(components[0]), WTFMove(components[1]) };
         }
     }
 
     if (auto mid = gstStructureGetString(structure, "a-mid"_s))
-        m_data.mid = mid.toString();
+        m_data.mid = mid.span();
 
     m_data.mediaStreamBinName = makeString("incoming-"_s, typeName, "-track-"_s, m_data.ssrc, '-', unsafeSpan(GST_OBJECT_NAME(m_pad.get())));
     m_bin = gst_bin_new(m_data.mediaStreamBinName.ascii().data());
 
     g_object_get(m_pad.get(), "transceiver", &m_data.transceiver.outPtr(), nullptr);
 
-    auto msIdAttribute = gstStructureGetString(structure, "a-msid"_s).toString();
+    auto msIdAttribute = gstStructureGetString(structure, "a-msid"_s);
     if (!msIdAttribute.isEmpty()) {
-        if (msIdAttribute.startsWith(' '))
-            m_sdpMsIdAndTrackId = { emptyString(), msIdAttribute.substring(1) };
+        if (startsWith(msIdAttribute.span(), " "_s))
+            m_sdpMsIdAndTrackId = { emptyString(), msIdAttribute.span().subspan(1) };
         else {
-            auto components = msIdAttribute.split(' ');
+            auto components = String(msIdAttribute.span()).split(' ');
             if (components.size() == 2)
                 m_sdpMsIdAndTrackId = { components[0], components[1] };
         }
@@ -101,7 +101,7 @@ void GStreamerIncomingTrackProcessor::configure(ThreadSafeWeakPtr<GStreamerMedia
         m_data.trackId = m_sdpMsIdAndTrackId.second;
 
     m_sink = gst_element_factory_make("fakesink", "sink");
-    g_object_set(m_sink.get(), "sync", TRUE, "enable-last-sample", FALSE, nullptr);
+    g_object_set(m_sink.get(), "sync", TRUE, "enable-last-sample", FALSE, "qos", TRUE, nullptr);
     auto queue = gst_element_factory_make("queue", "queue");
 
     auto trackProcessor = incomingTrackProcessor();
@@ -195,8 +195,8 @@ GRefPtr<GstElement> GStreamerIncomingTrackProcessor::incomingTrackProcessor()
     if (!forceEarlyVideoDecoding) {
         auto structure = gst_caps_get_structure(m_data.caps.get(), 0);
         ASSERT(gst_structure_has_name(structure, "application/x-rtp"));
-        auto encodingName = gstStructureGetString(structure, "encoding-name"_s).toString();
-        auto mediaType = makeString("video/x-"_s, encodingName.convertToASCIILowercase());
+        auto encodingName = gstStructureGetString(structure, "encoding-name"_s);
+        auto mediaType = makeString("video/x-"_s, String(encodingName.span()).convertToASCIILowercase());
         auto codecCaps = adoptGRef(gst_caps_new_empty_simple(mediaType.ascii().data()));
 
         auto& scanner = GStreamerRegistryScanner::singleton();
@@ -229,20 +229,36 @@ GRefPtr<GstElement> GStreamerIncomingTrackProcessor::incomingTrackProcessor()
             return;
 
         configureMediaStreamVideoDecoder(element);
+        webkitGstTraceProcessingTimeForElement(element);
 
         auto pad = adoptGRef(gst_element_get_static_pad(element, "src"));
-        gst_pad_add_probe(pad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM), [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+        gst_pad_add_probe(pad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM), [](GstPad* pad, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
             auto self = reinterpret_cast<GStreamerIncomingTrackProcessor*>(userData);
             if (info->type & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM) {
                 auto event = GST_PAD_PROBE_INFO_EVENT(info);
                 if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
                     GstCaps* caps;
                     gst_event_parse_caps(event, &caps);
-                    self->m_videoSize = getVideoResolutionFromCaps(caps).value_or(FloatSize { 0, 0 });
+
+                    GstVideoInfo info;
+                    gst_video_info_init(&info);
+                    if (!gst_video_info_from_caps(&info, caps))
+                        return GST_PAD_PROBE_OK;
+
+                    self->m_videoSize = { GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info) };
+                    gst_util_fraction_to_double(GST_VIDEO_INFO_FPS_N(&info), GST_VIDEO_INFO_FPS_D(&info), &self->m_frameRate);
                 }
                 return GST_PAD_PROBE_OK;
             }
+
             self->m_decodedVideoFrames++;
+
+            auto decoder = adoptGRef(gst_pad_get_parent_element(pad));
+            auto processingTime = webkitGstBufferGetProcessingTime(gst_pad_probe_info_get_buffer(info), decoder.get());
+            if (processingTime.isInvalid())
+                return GST_PAD_PROBE_OK;
+
+            self->m_totalVideoDecodeTime += processingTime;
             return GST_PAD_PROBE_OK;
         }, userData, nullptr);
     }), this);
@@ -356,6 +372,13 @@ const GstStructure* GStreamerIncomingTrackProcessor::stats()
 
     if (!m_videoSize.isZero())
         gst_structure_set(m_stats.get(), "frame-width", G_TYPE_UINT, static_cast<unsigned>(m_videoSize.width()), "frame-height", G_TYPE_UINT, static_cast<unsigned>(m_videoSize.height()), nullptr);
+
+    auto averageRate = gstStructureGet<double>(stats.get(), "average-rate"_s);
+    if (averageRate && m_frameRate)
+        gst_structure_set(m_stats.get(), "frames-per-second", G_TYPE_DOUBLE, *averageRate * m_frameRate, nullptr);
+
+    if (m_totalVideoDecodeTime.isValid())
+        gst_structure_set(m_stats.get(), "total-decode-time", G_TYPE_DOUBLE, m_totalVideoDecodeTime.toDouble(), nullptr);
 
     return m_stats.get();
 }

@@ -159,35 +159,6 @@ static bool equalIgnoringPseudoElement(const RuleFeatureWithInvalidationSelector
         && a.invalidationSelector == b.invalidationSelector;
 }
 
-static void addIgnoringPseudoElement(Hasher& hasher, const RuleFeature& feature)
-{
-    addComplexSelector(hasher, feature.selector(), ComplexSelectorsEqualMode::IgnoreNonElementBackedPseudoElements);
-    add(hasher, feature.matchElement, feature.isNegation);
-}
-
-static void addIgnoringPseudoElement(Hasher& hasher, const RuleFeatureWithInvalidationSelector& feature)
-{
-    addIgnoringPseudoElement(hasher, static_cast<RuleFeature>(feature));
-    add(hasher, feature.invalidationSelector);
-}
-
-template<typename RuleFeatureType> unsigned RuleFeatureDeduplicationKey<RuleFeatureType>::hash() const
-{
-    Hasher hasher;
-    add(hasher, vector);
-    addIgnoringPseudoElement(hasher, feature);
-    return hasher.hash();
-}
-
-template<typename RuleFeatureType> bool RuleFeatureDeduplicationKey<RuleFeatureType>::operator==(const RuleFeatureDeduplicationKey& other) const
-{
-    // Selectors like '.foo' and '.foo::before' are equal for invalidation as they both invalidate the generating element.
-    return vector == other.vector && equalIgnoringPseudoElement(feature, other.feature);
-}
-
-template struct RuleFeatureDeduplicationKey<RuleFeature>;
-template struct RuleFeatureDeduplicationKey<RuleFeatureWithInvalidationSelector>;
-
 static MatchElement computeNextMatchElement(MatchElement matchElement, CSSSelector::Relation relation)
 {
     ASSERT(!isHasPseudoClassMatchElement(matchElement));
@@ -477,7 +448,7 @@ static PseudoClassInvalidationKey makePseudoClassInvalidationKey(CSSSelector::Ps
     return makePseudoClassInvalidationKey(pseudoClass, InvalidationKeyType::Universal);
 };
 
-void RuleFeatureSet::collectFeatures(CollectionContext& collectionContext, const RuleData& ruleData, const Vector<Ref<const StyleRuleScope>>& scopeRules)
+void RuleFeatureSet::collectFeatures(const RuleData& ruleData, const Vector<Ref<const StyleRuleScope>>& scopeRules)
 {
     SelectorFeatures selectorFeatures;
     recursivelyCollectFeaturesFromSelector(selectorFeatures, *ruleData.selector());
@@ -498,16 +469,18 @@ void RuleFeatureSet::collectFeatures(CollectionContext& collectionContext, const
     if (ruleData.usedRuleTypes().contains(UsedRuleType::StartingStyle))
         hasStartingStyleRules = true;
 
-    auto addToVectorDeduplicating = [&]<typename FeatureType>(auto& featureVector, FeatureType&& featureToAdd) {
-        auto deduplicationSet = [&] -> auto& {
-            if constexpr (std::same_as<FeatureType, RuleFeatureWithInvalidationSelector>)
-                return collectionContext.withInvalidationSelectorDeduplicationSet;
-            else
-                return collectionContext.deduplicationSet;
-        };
-        bool shouldAdd = deduplicationSet().add(RuleFeatureDeduplicationKey<FeatureType> { &featureVector, featureToAdd }).isNewEntry;
-        if (shouldAdd)
-            featureVector.append(WTFMove(featureToAdd));
+    auto addToVectorDeduplicating = [](auto& featureVector, auto&& featureToAdd) {
+        // FIXME: Make selectors hashable.
+        constexpr auto maximumSearchCount = 32;
+        auto count = 0;
+        for (auto& existing : featureVector | std::views::reverse) {
+            if (++count > maximumSearchCount)
+                break;
+            // Selectors like '.foo' and '.foo::before' are equal for invalidation as they both invalidate the generating element.
+            if (equalIgnoringPseudoElement(existing, featureToAdd))
+                return;
+        }
+        featureVector.append(WTFMove(featureToAdd));
     };
 
     auto addToMap = [&]<typename HostAffectingNames>(auto& map, auto& entries, HostAffectingNames hostAffectingNames) {

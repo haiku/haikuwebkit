@@ -35,11 +35,14 @@ public:
     BEXPORT Environment(const LockHolder&);
     
     bool isSystemHeapEnabled() { return m_isSystemHeapEnabled; }
+    bool shouldBmallocAllocateThroughSystemHeap() { return m_shouldBmallocAllocateThroughSystemHeap; }
 
 private:
     bool computeIsSystemHeapEnabled();
+    bool computeShouldBmallocAllocateThroughSystemHeap();
 
     bool m_isSystemHeapEnabled;
+    bool m_shouldBmallocAllocateThroughSystemHeap;
 };
 BALLOW_DEPRECATED_DECLARATIONS_BEGIN
 DECLARE_STATIC_PER_PROCESS_STORAGE(Environment);

@@ -1379,6 +1379,9 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::operator=(const HashTable& other) -> HashTable&
     {
+        if (&other == this)
+            return *this;
+
         HashTable tmp(other);
         swap(tmp);
         return *this;

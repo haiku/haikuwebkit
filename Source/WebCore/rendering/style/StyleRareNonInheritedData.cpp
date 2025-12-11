@@ -47,12 +47,10 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , zoom(RenderStyle::initialZoom())
     , maxLines(RenderStyle::initialMaxLines())
     , overflowContinue(RenderStyle::initialOverflowContinue())
-    , touchActions(RenderStyle::initialTouchActions())
-    , marginTrim(RenderStyle::initialMarginTrim())
-    , contain(RenderStyle::initialContainment())
+    , touchAction(RenderStyle::initialTouchAction())
     , initialLetter(RenderStyle::initialInitialLetter())
     , marquee(StyleMarqueeData::create())
-    , backdropFilter(StyleFilterData::create())
+    , backdropFilter(StyleBackdropFilterData::create())
     , grid(StyleGridData::create())
     , gridItem(StyleGridItemData::create())
     , clip(RenderStyle::initialClip())
@@ -79,6 +77,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , viewTransitionName(RenderStyle::initialViewTransitionName())
     , columnGap(RenderStyle::initialColumnGap())
     , rowGap(RenderStyle::initialRowGap())
+    , itemTolerance(RenderStyle::initialItemTolerance())
     , offsetPath(RenderStyle::initialOffsetPath())
     , offsetDistance(RenderStyle::initialOffsetDistance())
     , offsetPosition(RenderStyle::initialOffsetPosition())
@@ -93,7 +92,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , viewTimelineInsets(RenderStyle::initialViewTimelineInsets())
     , viewTimelineAxes(RenderStyle::initialViewTimelineAxes())
     , viewTimelineNames(RenderStyle::initialViewTimelineNames())
-    // timelineScope
+    , timelineScope(RenderStyle::initialTimelineScope())
     , scrollbarGutter(RenderStyle::initialScrollbarGutter())
     , scrollSnapType(RenderStyle::initialScrollSnapType())
     , scrollSnapAlign(RenderStyle::initialScrollSnapAlign())
@@ -138,11 +137,13 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
 #if HAVE(CORE_MATERIAL)
     , appleVisualEffect(static_cast<unsigned>(RenderStyle::initialAppleVisualEffect()))
 #endif
-    , scrollbarWidth(static_cast<unsigned>(RenderStyle::initialScrollbarWidth().platform()))
+    , scrollbarWidth(static_cast<unsigned>(RenderStyle::initialScrollbarWidth()))
     , usesAnchorFunctions(false)
     , anchorFunctionScrollCompensatedAxes(0)
     , isPopoverInvoker(false)
     , useSVGZoomRulesForLength(false)
+    , marginTrim(RenderStyle::initialMarginTrim().toRaw())
+    , contain(RenderStyle::initialContain().toRaw())
 {
 }
 
@@ -154,9 +155,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , zoom(o.zoom)
     , maxLines(o.maxLines)
     , overflowContinue(o.overflowContinue)
-    , touchActions(o.touchActions)
-    , marginTrim(o.marginTrim)
-    , contain(o.contain)
+    , touchAction(o.touchAction)
     , initialLetter(o.initialLetter)
     , marquee(o.marquee)
     , backdropFilter(o.backdropFilter)
@@ -186,6 +185,7 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , viewTransitionName(o.viewTransitionName)
     , columnGap(o.columnGap)
     , rowGap(o.rowGap)
+    , itemTolerance(o.itemTolerance)
     , offsetPath(o.offsetPath)
     , offsetDistance(o.offsetDistance)
     , offsetPosition(o.offsetPosition)
@@ -250,6 +250,8 @@ inline StyleRareNonInheritedData::StyleRareNonInheritedData(const StyleRareNonIn
     , anchorFunctionScrollCompensatedAxes(o.anchorFunctionScrollCompensatedAxes)
     , isPopoverInvoker(o.isPopoverInvoker)
     , useSVGZoomRulesForLength(o.useSVGZoomRulesForLength)
+    , marginTrim(o.marginTrim)
+    , contain(o.contain)
 {
 }
 
@@ -268,9 +270,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && zoom == o.zoom
         && maxLines == o.maxLines
         && overflowContinue == o.overflowContinue
-        && touchActions == o.touchActions
-        && marginTrim == o.marginTrim
-        && contain == o.contain
+        && touchAction == o.touchAction
         && initialLetter == o.initialLetter
         && marquee == o.marquee
         && backdropFilter == o.backdropFilter
@@ -299,6 +299,7 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && containerNames == o.containerNames
         && columnGap == o.columnGap
         && rowGap == o.rowGap
+        && itemTolerance == o.itemTolerance
         && offsetPath == o.offsetPath
         && offsetDistance == o.offsetDistance
         && offsetPosition == o.offsetPosition
@@ -363,30 +364,32 @@ bool StyleRareNonInheritedData::operator==(const StyleRareNonInheritedData& o) c
         && usesAnchorFunctions == o.usesAnchorFunctions
         && anchorFunctionScrollCompensatedAxes == o.anchorFunctionScrollCompensatedAxes
         && isPopoverInvoker == o.isPopoverInvoker
-        && useSVGZoomRulesForLength == o.useSVGZoomRulesForLength;
+        && useSVGZoomRulesForLength == o.useSVGZoomRulesForLength
+        && marginTrim == o.marginTrim
+        && contain == o.contain;
 }
 
-OptionSet<Containment> StyleRareNonInheritedData::usedContain() const
+Style::Contain StyleRareNonInheritedData::usedContain() const
 {
-    auto containment = contain;
+    auto result = Style::Contain::fromRaw(contain);
 
     switch (static_cast<ContainerType>(containerType)) {
     case ContainerType::Normal:
         break;
     case ContainerType::Size:
-        containment.add({ Containment::Style, Containment::Size });
+        result.add({ Style::ContainValue::Style, Style::ContainValue::Size });
         break;
     case ContainerType::InlineSize:
-        containment.add({ Containment::Style, Containment::InlineSize });
+        result.add({ Style::ContainValue::Style, Style::ContainValue::InlineSize });
         break;
     };
 
-    return containment;
+    return result;
 }
 
 bool StyleRareNonInheritedData::hasBackdropFilters() const
 {
-    return !backdropFilter->filter.isNone();
+    return !backdropFilter->backdropFilter.isNone();
 }
 
 #if !LOG_DISABLED
@@ -407,9 +410,7 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT(maxLines);
     LOG_IF_DIFFERENT(overflowContinue);
 
-    LOG_IF_DIFFERENT(touchActions);
-    LOG_IF_DIFFERENT(marginTrim);
-    LOG_IF_DIFFERENT(contain);
+    LOG_IF_DIFFERENT(touchAction);
 
     LOG_IF_DIFFERENT(initialLetter);
 
@@ -450,6 +451,7 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
 
     LOG_IF_DIFFERENT(columnGap);
     LOG_IF_DIFFERENT(rowGap);
+    LOG_IF_DIFFERENT(itemTolerance);
 
     LOG_IF_DIFFERENT(offsetPath);
     LOG_IF_DIFFERENT(offsetDistance);
@@ -537,6 +539,9 @@ void StyleRareNonInheritedData::dumpDifferences(TextStream& ts, const StyleRareN
     LOG_IF_DIFFERENT_WITH_CAST(bool, anchorFunctionScrollCompensatedAxes);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isPopoverInvoker);
     LOG_IF_DIFFERENT_WITH_CAST(bool, useSVGZoomRulesForLength);
+
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::MarginTrim, marginTrim);
+    LOG_IF_DIFFERENT_WITH_FROM_RAW(Style::Contain, contain);
 }
 #endif // !LOG_DISABLED
 

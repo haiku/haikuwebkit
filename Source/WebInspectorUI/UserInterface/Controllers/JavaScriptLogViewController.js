@@ -170,7 +170,9 @@ WI.JavaScriptLogViewController = class JavaScriptLogViewController extends WI.Ob
                 return false;
             let messageView = this.appendConsoleMessage(previousMessageView.message);
             messageView.timestamp = timestamp;
-            this._repeatCountWasInterrupted = true;
+            messageView[WI.JavaScriptLogViewController.IgnoredRepeatCount] = count - 1;
+            messageView.repeatCount = 1;
+            this._repeatCountWasInterrupted = false;
             return true;
         }
 

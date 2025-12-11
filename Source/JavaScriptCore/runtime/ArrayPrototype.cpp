@@ -27,7 +27,7 @@
 #include "ArrayConstructor.h"
 #include "ArrayPrototypeInlines.h"
 #include "BuiltinNames.h"
-#include "CachedCall.h"
+#include "CachedCallInlines.h"
 #include "IntegrityInlines.h"
 #include "InterpreterInlines.h"
 #include "JSArrayInlines.h"
@@ -872,10 +872,9 @@ static ALWAYS_INLINE std::tuple<uint64_t, IndexingType, std::span<EncodedJSValue
 static unsigned sortBucketSort(std::span<EncodedJSValue> sorted, unsigned dst, SortEntryVector& bucket, unsigned depth)
 {
     if (bucket.size() < 32 || depth > 32) {
-        std::sort(bucket.begin(), bucket.end(),
-            [](const auto& lhs, const auto& rhs) {
-                return codePointCompareLessThan(std::get<1>(lhs), std::get<1>(rhs));
-            });
+        std::ranges::sort(bucket, WTF::codePointCompareLessThan, [](const auto& element) {
+            return std::get<1>(element);
+        });
         for (auto& entry : bucket)
             sorted[dst++] = JSValue::encode(std::get<0>(entry));
         return dst;
@@ -1575,27 +1574,6 @@ static JSArray* concatAppendArray(JSGlobalObject* globalObject, VM& vm, JSArray*
 
     Butterfly::clearRange(type, butterfly, resultSize, vectorLength);
     return JSArray::createWithButterfly(vm, nullptr, resultStructure, butterfly);
-}
-
-JSC_DEFINE_HOST_FUNCTION(arrayProtoPrivateFuncFromFastFillWithUndefined, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    VM& vm = globalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
-
-    JSValue constructor = callFrame->uncheckedArgument(0);
-    if (constructor != globalObject->arrayConstructor() && constructor.isObject()) [[unlikely]]
-        return JSValue::encode(jsUndefined());
-
-    JSValue arrayValue = callFrame->uncheckedArgument(1);
-    if (!isJSArray(arrayValue)) [[unlikely]]
-        return JSValue::encode(jsUndefined());
-
-    JSArray* array = tryCloneArrayFromFast<ArrayFillMode::Undefined>(globalObject, arrayValue);
-    RETURN_IF_EXCEPTION(scope, { });
-    if (array)
-        return JSValue::encode(array);
-
-    return JSValue::encode(jsUndefined());
 }
 
 JSC_DEFINE_HOST_FUNCTION(arrayProtoFuncConcat, (JSGlobalObject* globalObject, CallFrame* callFrame))

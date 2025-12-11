@@ -37,9 +37,11 @@
 #include "HTTPStatusCodes.h"
 #include "JSBlob.h"
 #include "JSDOMFormData.h"
+#include "JSDOMPromise.h"
 #include "JSDOMPromiseDeferred.h"
 #include "ResourceError.h"
 #include "ResourceResponse.h"
+#include "Settings.h"
 #include "WindowEventLoop.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -383,8 +385,10 @@ ExceptionOr<RefPtr<ReadableStream>> FetchBodyOwner::readableStream(JSC::JSGlobal
 ExceptionOr<void> FetchBodyOwner::createReadableStream(JSC::JSGlobalObject& state)
 {
     ASSERT(!m_readableStreamSource);
+
+    auto& globalObject = *JSC::jsCast<JSDOMGlobalObject*>(&state);
     if (isDisturbed()) {
-        auto streamOrException = ReadableStream::create(*JSC::jsCast<JSDOMGlobalObject*>(&state), { }, { });
+        auto streamOrException = ReadableStream::create(globalObject, { }, { });
         if (streamOrException.hasException()) [[unlikely]]
             return streamOrException.releaseException();
         m_body->setReadableStream(streamOrException.releaseReturnValue());
@@ -392,8 +396,30 @@ ExceptionOr<void> FetchBodyOwner::createReadableStream(JSC::JSGlobalObject& stat
         return { };
     }
 
-    m_readableStreamSource = adoptRef(*new FetchBodySource(*this));
-    auto streamOrException = ReadableStream::create(*JSC::jsCast<JSDOMGlobalObject*>(&state), *m_readableStreamSource);
+    RefPtr context = scriptExecutionContext();
+    if (context && context->settingsValues().readableByteStreamFetchSourceEnabled) {
+        Ref readableStreamSource = FetchBodySource::createByteSource(*this);
+        Ref readableStream = ReadableStream::createReadableByteStream(globalObject, [readableStreamSource](auto& globalObject, auto& controller) {
+            return readableStreamSource->pull(globalObject, controller);
+        }, [readableStreamSource](auto& globalObject, auto& controller, auto&& value) {
+            return readableStreamSource->cancel(globalObject, controller, WTFMove(value));
+        }, {
+            .highwaterMark = 1,
+            .startSynchronously = ReadableStream::StartSynchronously::Yes,
+            .isReachableFromOpaqueRootIfPulling = ReadableStream::IsReachableFromOpaqueRootIfPulling::Yes
+        });
+
+        m_readableStreamSource = readableStreamSource.ptr();
+        readableStreamSource->setByteController(*readableStream->controller());
+        m_body->setReadableStream(WTFMove(readableStream));
+
+        return { };
+    }
+
+    auto [fetchBodySource, readableStreamSource] = FetchBodySource::createNonByteSource(*this);
+    m_readableStreamSource = WTFMove(fetchBodySource);
+
+    auto streamOrException = ReadableStream::create(*JSC::jsCast<JSDOMGlobalObject*>(&state), readableStreamSource);
     if (streamOrException.hasException()) [[unlikely]] {
         m_readableStreamSource = nullptr;
         return streamOrException.releaseException();

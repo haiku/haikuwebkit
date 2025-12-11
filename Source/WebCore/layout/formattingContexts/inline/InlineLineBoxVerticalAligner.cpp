@@ -109,6 +109,10 @@ InlineLayoutUnit LineBoxVerticalAligner::simplifiedVerticalAlignment(LineBox& li
 
     if (!lineBox.hasContent()) {
         rootInlineBox.setLogicalTop(-rootInlineBoxAscent);
+        for (auto& inlineLevelBox : lineBox.nonRootInlineLevelBoxes()) {
+            ASSERT(inlineLevelBox.layoutBox().isWordBreakOpportunity() || (inlineLevelBox.isInlineBox() && !inlineLevelBox.hasContent()));
+            inlineLevelBox.setLogicalTop(rootInlineBoxAscent);
+        }
         return { };
     }
 

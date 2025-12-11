@@ -66,10 +66,10 @@ void ExtensionProcess::invalidate() const
     });
 }
 
-OSObjectPtr<xpc_connection_t> ExtensionProcess::makeLibXPCConnection() const
+XPCObjectPtr<xpc_connection_t> ExtensionProcess::makeLibXPCConnection() const
 {
     NSError *error = nil;
-    OSObjectPtr<xpc_connection_t> xpcConnection;
+    XPCObjectPtr<xpc_connection_t> xpcConnection;
     WTF::switchOn(m_process, [&] (auto& process) {
         xpcConnection = [process makeLibXPCConnectionError:&error];
     });

@@ -308,6 +308,11 @@ void WebPage::relayAriaNotifyNotification(WebCore::AriaNotifyData&& notification
     send(Messages::WebPageProxy::RelayAriaNotifyNotification(WTFMove(notificationData)));
 }
 
+void WebPage::relayLiveRegionNotification(WebCore::LiveRegionAnnouncementData&& notificationData)
+{
+    send(Messages::WebPageProxy::RelayLiveRegionNotification(WTFMove(notificationData)));
+}
+
 static void computeEditableRootHasContentAndPlainText(const VisibleSelection& selection, EditorState::PostLayoutData& data)
 {
     data.hasContent = false;
@@ -1399,10 +1404,9 @@ Awaitable<std::optional<WebCore::RemoteUserInputEventData>> WebPage::potentialTa
         if (RefPtr frameView = localFrame ? localFrame->view() : nullptr) {
             if (RefPtr remoteFrameView = remoteFrame->view()) {
                 RemoteFrameGeometryTransformer transformer(remoteFrameView.releaseNonNull(), frameView.releaseNonNull(), remoteFrame->frameID());
-                // FIXME: Use a different type with a FloatPoint to avoid rounding to an int.
                 co_return WebCore::RemoteUserInputEventData {
                     remoteFrame->frameID(),
-                    transformer.transformToRemoteFrameCoordinates(roundedIntPoint(position))
+                    transformer.transformToRemoteFrameCoordinates(position)
                 };
             }
         }
@@ -5115,11 +5119,11 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     RefPtr localMainFrame = m_page->localMainFrame();
     if (!localMainFrame)
         return;
-    auto& frameView = *localMainFrame->view();
+    RefPtr frameView = *localMainFrame->view();
 
     if (auto* scrollingCoordinator = this->scrollingCoordinator()) {
         auto& remoteScrollingCoordinator = downcast<RemoteScrollingCoordinator>(*scrollingCoordinator);
-        if (auto mainFrameScrollingNodeID = frameView.scrollingNodeID()) {
+        if (auto mainFrameScrollingNodeID = frameView->scrollingNodeID()) {
             if (visibleContentRectUpdateInfo.viewStability().contains(ViewStabilityFlag::ScrollViewRubberBanding))
                 remoteScrollingCoordinator.addNodeWithActiveRubberBanding(*mainFrameScrollingNodeID);
             else
@@ -5199,7 +5203,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
             setCorePageScaleFactor(scaleToUse, scrollPosition, true);
     }
 
-    if (scrollPosition != frameView.scrollPosition())
+    if (scrollPosition != frameView->scrollPosition())
         m_internals->dynamicSizeUpdateHistory.clear();
 
     if (m_viewportConfiguration.setCanIgnoreScalingConstraints(visibleContentRectUpdateInfo.allowShrinkToFit()))
@@ -5220,8 +5224,8 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     if (m_viewportConfiguration.setMinimumEffectiveDeviceWidthWhenIgnoringScalingConstraints(minimumEffectiveDeviceWidthWhenIgnoringScalingConstraints))
         viewportConfigurationChanged();
 
-    frameView.clearObscuredInsetsAdjustmentsIfNeeded();
-    frameView.setUnobscuredContentSize(unobscuredContentRect.size());
+    frameView->clearObscuredInsetsAdjustmentsIfNeeded();
+    frameView->setUnobscuredContentSize(unobscuredContentRect.size());
     m_page->setContentInsets(visibleContentRectUpdateInfo.contentInsets());
     m_page->setObscuredInsets(visibleContentRectUpdateInfo.obscuredInsets());
     m_page->setUnobscuredSafeAreaInsets(visibleContentRectUpdateInfo.unobscuredSafeAreaInsets());
@@ -5229,13 +5233,13 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
 
     VelocityData scrollVelocity = visibleContentRectUpdateInfo.scrollVelocity();
     adjustVelocityDataForBoundedScale(scrollVelocity, visibleContentRectUpdateInfo.scale(), m_viewportConfiguration.minimumScale(), m_viewportConfiguration.maximumScale());
-    frameView.setScrollVelocity(scrollVelocity);
+    frameView->setScrollVelocity(scrollVelocity);
 
     bool visualViewportChanged = unobscuredContentRect != visibleContentRectUpdateInfo.unobscuredContentRectRespectingInputViewBounds();
     if (visualViewportChanged)
-        frameView.setVisualViewportOverrideRect(LayoutRect(visibleContentRectUpdateInfo.unobscuredContentRectRespectingInputViewBounds()));
+        frameView->setVisualViewportOverrideRect(LayoutRect(visibleContentRectUpdateInfo.unobscuredContentRectRespectingInputViewBounds()));
     else if (m_isInStableState) {
-        frameView.setVisualViewportOverrideRect(std::nullopt);
+        frameView->setVisualViewportOverrideRect(std::nullopt);
         visualViewportChanged = true;
     }
 
@@ -5243,21 +5247,21 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     bool shouldPerformLayout = m_isInStableState && !isChangingObscuredInsetsInteractively;
 
     LOG_WITH_STREAM(VisibleRects, stream << "WebPage::updateVisibleContentRects - setLayoutViewportOverrideRect " << layoutViewportRect);
-    frameView.setLayoutViewportOverrideRect(LayoutRect(layoutViewportRect), shouldPerformLayout ? LocalFrameView::TriggerLayoutOrNot::Yes : LocalFrameView::TriggerLayoutOrNot::No);
+    frameView->setLayoutViewportOverrideRect(LayoutRect(layoutViewportRect), shouldPerformLayout ? LocalFrameView::TriggerLayoutOrNot::Yes : LocalFrameView::TriggerLayoutOrNot::No);
 
     if (m_isInStableState) {
         if (selectionIsInsideFixedPositionContainer(*localMainFrame)) {
             // Ensure that the next layer tree commit contains up-to-date caret/selection rects.
-            frameView.frame().selection().setCaretRectNeedsUpdate();
+            frameView->frame().selection().setCaretRectNeedsUpdate();
             scheduleFullEditorStateUpdate();
         }
     }
 
     if (visualViewportChanged)
-        frameView.layoutOrVisualViewportChanged();
+        frameView->layoutOrVisualViewportChanged();
 
     if (!isChangingObscuredInsetsInteractively)
-        frameView.setCustomSizeForResizeEvent(expandedIntSize(visibleContentRectUpdateInfo.unobscuredRectInScrollViewCoordinates().size()));
+        frameView->setCustomSizeForResizeEvent(expandedIntSize(visibleContentRectUpdateInfo.unobscuredRectInScrollViewCoordinates().size()));
 
     if (auto* scrollingCoordinator = this->scrollingCoordinator()) {
         auto viewportStability = ViewportRectStability::Stable;
@@ -5270,9 +5274,9 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
             viewportStability = ViewportRectStability::Unstable;
             layerAction = ScrollingLayerPositionAction::SetApproximate;
         }
-        scrollingCoordinator->reconcileScrollingState(frameView, scrollPosition, visibleContentRectUpdateInfo.layoutViewportRect(), ScrollType::User, viewportStability, layerAction);
-        if (visibleContentRectUpdateInfo.needsScrollend()) {
-            auto scrollUpdate = ScrollUpdate { *frameView.scrollingNodeID(), { }, { }, ScrollUpdateType::WheelEventScrollDidEnd };
+        scrollingCoordinator->reconcileScrollingState(*frameView, scrollPosition, visibleContentRectUpdateInfo.layoutViewportRect(), ScrollType::User, viewportStability, layerAction);
+        if (visibleContentRectUpdateInfo.needsScrollend() && frameView->scrollingNodeID()) {
+            auto scrollUpdate = ScrollUpdate { *frameView->scrollingNodeID(), { }, { }, ScrollUpdateType::WheelEventScrollDidEnd };
             scrollingCoordinator->applyScrollUpdate(WTFMove(scrollUpdate), ScrollType::User);
         }
     }
@@ -5739,6 +5743,8 @@ void WebPage::hardwareKeyboardAvailabilityChanged(HardwareKeyboardState state)
 {
     m_keyboardIsAttached = state.isAttached;
     setHardwareKeyboardState(state);
+
+    m_page->didUpdateHardwareKeyboardAttachment(m_keyboardIsAttached);
 
     if (RefPtr focusedFrame = m_page->focusController().focusedLocalFrame())
         focusedFrame->eventHandler().capsLockStateMayHaveChanged();

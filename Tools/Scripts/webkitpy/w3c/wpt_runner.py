@@ -49,30 +49,16 @@ def main(script_name, argv):
         sys.exit(-1)
 
     runner = WPTRunner(port, port.host, script_name, options)
-    # If necessary, inject the jhbuild wrapper or re-run in flatpak sandbox.
+    # If necessary, inject the jhbuild wrapper.
     if port.name() in ['gtk', 'wpe']:
         filesystem = host.filesystem
 
         top_level_directory = filesystem.normpath(filesystem.join(filesystem.dirname(__file__), '..', '..', '..', '..'))
-        sys.path.insert(0, filesystem.join(top_level_directory, 'Tools', 'flatpak'))
-        import flatpakutils
-        if not flatpakutils.is_sandboxed() and flatpakutils.check_flatpak(verbose=False):
-            flatpak_runner = flatpakutils.WebkitFlatpak.load_from_args(sys.argv)
-            if flatpak_runner.clean_args() and flatpak_runner.has_environment():
-                if not runner.prepare_wpt_checkout():
-                    sys.exit(1)
-
-                hostfilename = os.path.join(flatpak_runner.build_path, "wpt_etc_hosts")
-                with open(hostfilename, "w") as stdout:
-                    flatpak_runner.run_in_sandbox(os.path.join(options.wpt_checkout, "wpt"), "make-hosts-file", stdout=stdout)
-
-                sys.exit(flatpak_runner.run_in_sandbox(*sys.argv,
-                    extra_flatpak_args=['--bind-mount=/etc/hosts=%s' % hostfilename]))
 
         sys.path.insert(0, filesystem.join(top_level_directory, 'Tools', 'jhbuild'))
         import jhbuildutils
 
-        if not flatpakutils.is_sandboxed() and not jhbuildutils.enter_jhbuild_environment_if_available(port.name()) and os.environ.get('WEBKIT_BUILD_USE_SYSTEM_LIBRARIES') != '1':
+        if not jhbuildutils.enter_jhbuild_environment_if_available(port.name()) and os.environ.get('WEBKIT_BUILD_USE_SYSTEM_LIBRARIES') != '1':
             _log.warning('jhbuild environment not present. Run update-webkitgtk-libs before build-webkit to ensure proper testing.')
 
     # Create the Port-specific driver.

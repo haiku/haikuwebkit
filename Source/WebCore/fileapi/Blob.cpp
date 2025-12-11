@@ -361,7 +361,7 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
 
             if (m_queue.isEmpty()) {
                 m_promise = WTFMove(promise);
-                m_controller = &controller;
+                m_controller = controller;
                 return;
             }
 
@@ -397,7 +397,8 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
                 return;
             }
 
-            tryEnqueuing(buffer, m_controller.releaseNonNull(), m_promise.releaseNonNull(), nullptr);
+            RefPtr controller = m_controller.get();
+            tryEnqueuing(buffer, controller.releaseNonNull(), m_promise.releaseNonNull(), nullptr);
         }
 
         void didFinishLoading() final
@@ -424,7 +425,7 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
             if (!promise)
                 return;
 
-            RefPtr controller = m_controller;
+            RefPtr controller = m_controller.get();
             auto* globalObject = controller->protectedStream()->globalObject();
             if (!globalObject)
                 return;
@@ -482,7 +483,7 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
         enum class LoaderState : uint8_t { Started, Completed, Cancelled };
         LoaderState m_loaderState { LoaderState::Started };
         RefPtr<DeferredPromise> m_promise;
-        RefPtr<ReadableByteStreamController> m_controller;
+        WeakPtr<ReadableByteStreamController> m_controller;
     };
 
     RefPtr context = scriptExecutionContext();
@@ -503,7 +504,9 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
         return promise;
     };
 
-    return ReadableStream::createReadableByteStream(*JSC::jsCast<JSDOMGlobalObject*>(globalObject), WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm));
+    return ReadableStream::createReadableByteStream(*JSC::jsCast<JSDOMGlobalObject*>(globalObject), WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), {
+        .isReachableFromOpaqueRootIfPulling = ReadableStream::IsReachableFromOpaqueRootIfPulling::Yes
+    });
 }
 
 #if ASSERT_ENABLED

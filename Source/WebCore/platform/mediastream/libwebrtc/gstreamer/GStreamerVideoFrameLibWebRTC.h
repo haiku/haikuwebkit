@@ -37,21 +37,21 @@ webrtc::VideoFrame convertGStreamerSampleToLibWebRTCVideoFrame(GRefPtr<GstSample
 
 class GStreamerVideoFrameLibWebRTC : public webrtc::RefCountedObject<webrtc::VideoFrameBuffer> {
 public:
+    static webrtc::scoped_refptr<webrtc::VideoFrameBuffer> create(GRefPtr<GstSample>&&);
+
+    GRefPtr<GstSample>& sample() { return m_sample; }
+
+    // webrtc::VideoFrameBuffer interface.
+    webrtc::scoped_refptr<webrtc::I420BufferInterface> ToI420() final;
+    int width() const final { return GST_VIDEO_INFO_WIDTH(&m_info); }
+    int height() const final { return GST_VIDEO_INFO_HEIGHT(&m_info); }
+
+private:
     GStreamerVideoFrameLibWebRTC(GRefPtr<GstSample>&& sample, GstVideoInfo info)
         : m_sample(WTFMove(sample))
         , m_info(info)
     {
     }
-
-    static webrtc::scoped_refptr<webrtc::VideoFrameBuffer> create(GRefPtr<GstSample>&&);
-
-    GstSample* getSample() const { return m_sample.get(); }
-    webrtc::scoped_refptr<webrtc::I420BufferInterface> ToI420() final;
-
-    int width() const final { return GST_VIDEO_INFO_WIDTH(&m_info); }
-    int height() const final { return GST_VIDEO_INFO_HEIGHT(&m_info); }
-
-private:
     webrtc::VideoFrameBuffer::Type type() const final { return Type::kNative; }
 
     GRefPtr<GstSample> m_sample;

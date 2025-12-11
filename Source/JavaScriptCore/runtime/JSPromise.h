@@ -139,18 +139,25 @@ public:
     static void rejectWithoutPromise(JSGlobalObject*, JSValue argument, JSValue onFulfilled, JSValue onRejected, JSValue context);
     static void fulfillWithoutPromise(JSGlobalObject*, JSValue argument, JSValue onFulfilled, JSValue onRejected, JSValue context);
 
+    static void resolveWithInternalMicrotaskForAsyncAwait(JSGlobalObject*, JSValue resolution, InternalMicrotask, JSValue context);
+    static void resolveWithInternalMicrotask(JSGlobalObject*, JSValue resolution, InternalMicrotask, JSValue context);
+    static void rejectWithInternalMicrotask(JSGlobalObject*, JSValue argument, InternalMicrotask, JSValue context);
+    static void fulfillWithInternalMicrotask(JSGlobalObject*, JSValue argument, InternalMicrotask, JSValue context);
+
+    void performPromiseThenWithInternalMicrotask(VM&, JSGlobalObject*, InternalMicrotask, JSValue promise, JSValue context);
+
     bool isThenFastAndNonObservable();
 
     std::tuple<JSFunction*, JSFunction*> createResolvingFunctions(VM&, JSGlobalObject*);
     std::tuple<JSFunction*, JSFunction*> createFirstResolvingFunctions(VM&, JSGlobalObject*);
     static std::tuple<JSFunction*, JSFunction*> createResolvingFunctionsWithoutPromise(VM&, JSGlobalObject*, JSValue onFulfilled, JSValue onRejected, JSValue context);
+    static std::tuple<JSFunction*, JSFunction*> createResolvingFunctionsWithInternalMicrotask(VM&, JSGlobalObject*, InternalMicrotask, JSValue context);
     static std::tuple<JSObject*, JSObject*, JSObject*> newPromiseCapability(JSGlobalObject*, JSValue constructor);
     static JSValue createPromiseCapability(VM&, JSGlobalObject*, JSObject* promise, JSObject* resolve, JSObject* reject);
     static JSObject* promiseResolve(JSGlobalObject*, JSObject* constructor, JSValue);
     static JSObject* promiseReject(JSGlobalObject*, JSObject* constructor, JSValue);
 
     JSObject* then(JSGlobalObject*, JSValue onFulfilled, JSValue onRejected);
-
 protected:
     JSPromise(VM&, Structure*);
     void finishCreation(VM&);

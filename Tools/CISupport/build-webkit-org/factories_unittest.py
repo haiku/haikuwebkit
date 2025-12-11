@@ -852,7 +852,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'extract-built-product',
             'test262-test'
         ],
-        'Apple-Sonoma-AppleSilicon-Debug-JSC-Tests': [
+        'Apple-Sonoma-AppleSilicon-O3-Debug-JSC-BuildAndTest': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -862,8 +862,8 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'delete-WebKitBuild-directory',
             'delete-stale-build-files',
             'prune-coresymbolicationd-cache-if-too-large',
-            'download-built-product',
-            'extract-built-product',
+            'set-o3-optimization-level',
+            'compile-jsc',
             'jscore-test'
         ],
         'Apple-Sonoma-AppleSilicon-Release-JSC-Tests': [
@@ -953,6 +953,25 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'bindings-generation-tests',
             'builtins-generator-tests',
             'trigger-crash-log-submission'
+        ],
+        'Apple-iOS-26-Simulator-Release-WK2-Site-Isolation-Tree-Tests': [
+            'configure-build',
+            'configuration',
+            'clean-and-update-working-directory',
+            'checkout-specific-revision',
+            'show-identifier',
+            'kill-old-processes',
+            'delete-WebKitBuild-directory',
+            'delete-stale-build-files',
+            'download-built-product',
+            'extract-built-product',
+            'layout-test',
+            'dashboard-tests',
+            'archive-test-results',
+            'upload',
+            'extract-test-results',
+            'set-permissions',
+            'run-api-tests'
         ],
         'Apple-iOS-26-Simulator-Debug-WK2-Tests': [
             'configure-build',
@@ -1820,7 +1839,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'extract-built-product',
             'benchmark-test'
         ],
-        'WPE-Linux-64-bit-Release-Cairo-Build': [
+        'WPE-Linux-64-bit-Release-Cairo-LibWebRTC-Build': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <JavaScriptCore/CachedCall.h>
+#include <JavaScriptCore/CachedCallInlines.h>
 #include <JavaScriptCore/IterationModeMetadata.h>
 #include <JavaScriptCore/JSArrayIterator.h>
 #include <JavaScriptCore/JSCJSValue.h>

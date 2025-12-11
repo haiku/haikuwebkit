@@ -124,6 +124,7 @@ Tests/WebKitCocoa/ExitPiPOnSuspendVideoElement.mm @nonARC
 Tests/WebKitCocoa/FTP.mm @nonARC
 Tests/WebKitCocoa/FileSystemAccess.mm @nonARC
 Tests/WebKitCocoa/FindInPage.mm @nonARC
+Tests/WebKitCocoa/FindInPageUtilities.mm @nonARC
 Tests/WebKitCocoa/FindInPageAPI.mm @nonARC
 Tests/WebKitCocoa/FirstVisuallyNonEmptyMilestone.mm @nonARC
 Tests/WebKitCocoa/FixedLayoutSize.mm @nonARC

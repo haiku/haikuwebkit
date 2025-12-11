@@ -60,14 +60,14 @@ public:
     bool addEffect(KeyframeEffect&);
     void removeEffect(KeyframeEffect&);
     bool hasEffects() const { return !m_effects.isEmpty(); }
-    Vector<WeakPtr<KeyframeEffect>> sortedEffects();
+    const Vector<WeakPtr<KeyframeEffect>>& sortedEffects();
     const std::optional<Style::Animations>& cssAnimationList() const { return m_cssAnimationList; }
     void setCSSAnimationList(std::optional<Style::Animations>&&);
     bool containsProperty(CSSPropertyID) const;
     bool isCurrentlyAffectingProperty(CSSPropertyID) const;
     bool requiresPseudoElement() const;
     OptionSet<AnimationImpact> applyKeyframeEffects(RenderStyle& targetStyle, HashSet<AnimatableCSSProperty>& affectedProperties, const RenderStyle* previousLastStyleChangeEventStyle, const Style::ResolutionContext&);
-    bool hasEffectWithImplicitKeyframes() const;
+    bool hasMatchingEffect(NOESCAPE const Function<bool(const KeyframeEffect&)>&) const;
 
     void effectAbilityToBeAcceleratedDidChange(const KeyframeEffect&);
     bool allowsAcceleration() const;
@@ -90,8 +90,6 @@ public:
 #endif
 
 private:
-    void ensureEffectsAreSorted();
-    bool hasMatchingEffect(NOESCAPE const Function<bool(const KeyframeEffect&)>&) const;
     void startAcceleratedAnimationsIfPossible();
     void stopAcceleratedAnimations();
 

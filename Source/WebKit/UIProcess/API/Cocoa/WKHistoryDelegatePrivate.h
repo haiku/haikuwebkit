@@ -29,6 +29,7 @@
 
 @class WKNavigationData;
 @class WKWebView;
+@class SSBLookupResult;
 
 @protocol WKHistoryDelegatePrivate <NSObject>
 
@@ -38,5 +39,8 @@
 - (void)_webView:(WKWebView *)webView didPerformClientRedirectFromURL:(NSURL *)sourceURL toURL:(NSURL *)destinationURL;
 - (void)_webView:(WKWebView *)webView didPerformServerRedirectFromURL:(NSURL *)sourceURL toURL:(NSURL *)destinationURL;
 - (void)_webView:(WKWebView *)webView didUpdateHistoryTitle:(NSString *)title forURL:(NSURL *)URL;
+
+- (void)_webView:(WKWebView *)webView didReceiveSafeBrowsingResult:(SSBLookupResult *)result forURL:(NSURL *)URL;
+- (void)_webView:(WKWebView *)webView cachedSafeBrowsingResultForURL:(NSURL *)URL completionHandler:(void (^)(SSBLookupResult * _Nullable result, NSError * _Nullable error))completionHandler;
 
 @end

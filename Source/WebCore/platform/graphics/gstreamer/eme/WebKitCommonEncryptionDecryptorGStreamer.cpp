@@ -270,7 +270,7 @@ static GstFlowReturn transformInPlace(GstBaseTransform* base, GstBuffer* buffer)
 
     bool isCbcs = false;
     if (auto cipherMode = WebCore::gstStructureGetString(protectionMeta->info, "cipher-mode"_s))
-        isCbcs = WTF::equalIgnoringASCIICase(cipherMode.toString(), "cbcs"_s);
+        isCbcs = WTF::equalIgnoringASCIICase(cipherMode.span(), "cbcs"_s);
 
     auto ivSizeFromMeta = WebCore::gstStructureGet<unsigned>(protectionMeta->info, "iv_size"_s);
     if (!ivSizeFromMeta) {

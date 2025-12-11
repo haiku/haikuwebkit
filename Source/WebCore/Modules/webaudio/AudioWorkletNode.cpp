@@ -66,6 +66,12 @@ ExceptionOr<Ref<AudioWorkletNode>> AudioWorkletNode::create(JSC::JSGlobalObject&
     if (!options.numberOfInputs && !options.numberOfOutputs)
         return Exception { ExceptionCode::NotSupportedError, "Number of inputs and outputs cannot both be 0"_s };
 
+    if (options.numberOfInputs > UINT16_MAX)
+        return Exception { ExceptionCode::RangeError, "Number of inputs is out of range"_s };
+
+    if (options.numberOfOutputs > UINT16_MAX)
+        return Exception { ExceptionCode::RangeError, "Number of outputs is out of range"_s };
+
     if (options.outputChannelCount) {
         if (options.numberOfOutputs != options.outputChannelCount->size())
             return Exception { ExceptionCode::IndexSizeError, "Length of specified outputChannelCount does not match the given number of outputs"_s };
@@ -198,7 +204,7 @@ void AudioWorkletNode::process(size_t framesToProcess)
 
     auto zeroOutput = [&] {
         for (unsigned i = 0; i < numberOfOutputs(); ++i)
-            output(i)->bus().zero();
+            checkedOutput(i)->bus().zero();
     };
 
     if (!m_processLock.tryLock()) {
@@ -213,10 +219,12 @@ void AudioWorkletNode::process(size_t framesToProcess)
     }
 
     // If the input is not connected, pass nullptr to the processor.
-    for (unsigned i = 0; i < numberOfInputs(); ++i)
-        m_inputs[i] = input(i)->isConnected() ? &input(i)->bus() : nullptr;
+    for (unsigned i = 0; i < numberOfInputs(); ++i) {
+        CheckedPtr currentInput = input(i);
+        m_inputs[i] = currentInput->isConnected() ? &currentInput->bus() : nullptr;
+    }
     for (unsigned i = 0; i < numberOfOutputs(); ++i)
-        m_outputs[i] = output(i)->bus();
+        m_outputs[i] = checkedOutput(i)->bus();
 
     if (noiseInjectionPolicies().contains(NoiseInjectionPolicy::Minimal)) {
         for (unsigned inputIndex = 0; inputIndex < numberOfInputs(); ++inputIndex) {
@@ -262,7 +270,7 @@ void AudioWorkletNode::updatePullStatus()
 
     bool hasConnectedOutput = false;
     for (unsigned i = 0; i < numberOfOutputs(); ++i) {
-        if (output(i)->isConnected()) {
+        if (checkedOutput(i)->isConnected()) {
             hasConnectedOutput = true;
             break;
         }
@@ -287,7 +295,7 @@ void AudioWorkletNode::checkNumberOfChannelsForInput(AudioNodeInput* input)
         unsigned numberOfInputChannels = input->numberOfChannels();
         if (numberOfInputChannels != output(0)->numberOfChannels()) {
             // This will propagate the channel count to any nodes connected further downstream in the graph.
-            output(0)->setNumberOfChannels(numberOfInputChannels);
+            checkedOutput(0)->setNumberOfChannels(numberOfInputChannels);
         }
     }
 

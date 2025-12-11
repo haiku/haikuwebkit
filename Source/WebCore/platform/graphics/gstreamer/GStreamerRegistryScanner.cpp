@@ -457,7 +457,7 @@ void GStreamerRegistryScanner::initializeDecoders(const GStreamerRegistryScanner
 
     bool matroskaSupported = factories.hasElementForMediaType(ElementFactories::Type::Demuxer, "video/x-matroska"_s);
     if (matroskaSupported) {
-        auto vp8DecoderAvailable = factories.hasElementForMediaType(ElementFactories::Type::VideoDecoder, "video/x-vp8"_s, ElementFactories::CheckHardwareClassifier::Yes, { { "vp8alphadecodebin"_s } });
+        auto vp8DecoderAvailable = factories.hasElementForMediaType(ElementFactories::Type::VideoDecoder, "video/x-vp8"_s, ElementFactories::CheckHardwareClassifier::Yes, { { "vp8alphadecodebin"_s, "vavp8alphadecodebin"_s } });
         auto vp9DecoderAvailable = factories.hasElementForMediaType(ElementFactories::Type::VideoDecoder, "video/x-vp9"_s, ElementFactories::CheckHardwareClassifier::Yes, { { "vp9alphadecodebin"_s, "vavp9alphadecodebin"_s } });
 
         if (vp8DecoderAvailable || vp9DecoderAvailable)
@@ -1166,20 +1166,19 @@ void GStreamerRegistryScanner::fillVideoRtpCapabilities(Configuration configurat
             element = gst_element_factory_make("webkitvideoencoder", nullptr);
 
         if (element) {
-            Vector<ASCIILiteral> profiles = {
-                "42e01f"_s,
-                "640c1f"_s,
-                "42001f"_s,
-                "4d001f"_s,
-            };
+            static constexpr std::array<std::pair<ASCIILiteral, unsigned>, 4> profiles = { {
+                { "42e01f"_s, 0x42e01f },
+                { "640c1f"_s, 0x640c1f },
+                { "42001f"_s, 0x42001f },
+                { "4d001f"_s, 0x4d001f },
+            } };
 
-            for (auto& profileLevelId : profiles) {
+            for (auto& [profileLevelId, spsAsInteger] : profiles) {
                 if (WEBKIT_IS_VIDEO_ENCODER(element.get())) {
                     auto codec = makeString("avc1."_s, profileLevelId);
                     if (!videoEncoderSupportsCodec(WEBKIT_VIDEO_ENCODER(element.get()), codec))
                         continue;
                 } else {
-                    auto spsAsInteger = parseInteger<uint64_t>(profileLevelId, 16).value_or(0);
                     std::array<uint8_t, 3> sps;
                     sps[0] = spsAsInteger >> 16;
                     sps[1] = (spsAsInteger >> 8) & 0xff;

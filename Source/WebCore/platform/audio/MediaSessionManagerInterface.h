@@ -167,6 +167,10 @@ public:
     virtual void scheduleSessionStatusUpdate() { }
     virtual void resetSessionState() { };
 
+#if !RELEASE_LOG_DISABLED
+    const Logger& logger() const final;
+#endif
+
 protected:
     MediaSessionManagerInterface(PageIdentifier);
 
@@ -200,7 +204,6 @@ protected:
     void scheduleStateLog();
     void dumpSessionStates();
 
-    const Logger& logger() const final { return m_logger; }
     uint64_t logIdentifier() const final { return 0; }
     ASCIILiteral logClassName() const override { return "MediaSessionManagerInterface"_s; }
     WTFLogChannel& logChannel() const final;
@@ -239,5 +242,9 @@ private:
     bool m_becameActive { false };
 #endif
 };
+
+#if !RELEASE_LOG_DISABLED
+inline const Logger& MediaSessionManagerInterface::logger() const { return m_logger; }
+#endif
 
 } // namespace WebCore

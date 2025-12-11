@@ -181,7 +181,7 @@ UnifiedPDFPlugin::UnifiedPDFPlugin(HTMLPlugInElement& element)
     : PDFPluginBase(element)
     , m_pdfMutationObserver(adoptNS([[WKPDFFormMutationObserver alloc] initWithPlugin:this]))
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
-    , m_dataDetectorOverlayController { WTF::makeUnique<PDFDataDetectorOverlayController>(*this) }
+    , m_dataDetectorOverlayController(PDFDataDetectorOverlayController::create(*this))
 #endif
 {
     this->setVerticalScrollElasticity(ScrollElasticity::Automatic);
@@ -422,6 +422,11 @@ void UnifiedPDFPlugin::enableDataDetection()
 #endif
 }
 
+Ref<PDFDataDetectorOverlayController> UnifiedPDFPlugin::protectedDataDetectorOverlayController()
+{
+    return dataDetectorOverlayController();
+}
+
 void UnifiedPDFPlugin::handleClickForDataDetectionResult(const DataDetectorElementInfo& dataDetectorElementInfo, const IntPoint& clickPointInPluginSpace)
 {
     RefPtr page = this->page();
@@ -440,7 +445,7 @@ void UnifiedPDFPlugin::didInvalidateDataDetectorHighlightOverlayRects()
 {
     auto lastKnownMousePositionInDocumentSpace = convertDown<FloatPoint>(CoordinateSpace::Plugin, CoordinateSpace::PDFDocumentLayout, lastKnownMousePositionInView());
     auto pageIndex = protectedPresentationController()->pageIndexForDocumentPoint(lastKnownMousePositionInDocumentSpace);
-    dataDetectorOverlayController().didInvalidateHighlightOverlayRects(pageIndex);
+    protectedDataDetectorOverlayController()->didInvalidateHighlightOverlayRects(pageIndex);
 }
 
 #endif
@@ -808,7 +813,7 @@ void UnifiedPDFPlugin::paint(GraphicsContext& context, const IntRect&)
     paintPDFContent(nullptr, context, clipRect, protectedPresentationController()->visibleRow());
 }
 
-void UnifiedPDFPlugin::paintContents(const GraphicsLayer* layer, GraphicsContext& context, const FloatRect& clipRect, OptionSet<GraphicsLayerPaintBehavior>)
+void UnifiedPDFPlugin::paintContents(const GraphicsLayer& layer, GraphicsContext& context, const FloatRect& clipRect, OptionSet<GraphicsLayerPaintBehavior>)
 {
     // This scrollbar painting code is used in the non-UI-side compositing configuration.
     auto paintScrollbar = [](Scrollbar* scrollbar, GraphicsContext& context) {
@@ -821,17 +826,17 @@ void UnifiedPDFPlugin::paintContents(const GraphicsLayer* layer, GraphicsContext
         scrollbar->paint(context, scrollbarRect);
     };
 
-    if (layer == layerForHorizontalScrollbar()) {
+    if (&layer == layerForHorizontalScrollbar()) {
         paintScrollbar(m_horizontalScrollbar.get(), context);
         return;
     }
 
-    if (layer == layerForVerticalScrollbar()) {
+    if (&layer == layerForVerticalScrollbar()) {
         paintScrollbar(m_verticalScrollbar.get(), context);
         return;
     }
 
-    if (layer == layerForScrollCorner()) {
+    if (&layer == layerForScrollCorner()) {
         auto cornerRect = viewRelativeScrollCornerRect();
 
         GraphicsContextStateSaver stateSaver(context);
@@ -1162,7 +1167,7 @@ void UnifiedPDFPlugin::didBeginMagnificationGesture()
     m_inMagnificationGesture = true;
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
-    dataDetectorOverlayController().hideActiveHighlightOverlay();
+    protectedDataDetectorOverlayController()->hideActiveHighlightOverlay();
 #endif
 }
 
@@ -2012,7 +2017,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
     }
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
-    if (dataDetectorOverlayController().handleMouseEvent(event, pageIndex))
+    if (protectedDataDetectorOverlayController()->handleMouseEvent(event, pageIndex))
         return true;
 #endif
 
@@ -3483,22 +3488,12 @@ Vector<WebCore::FloatRect> UnifiedPDFPlugin::visibleRectsForFindMatchRects(const
     if (!visibleRow)
         rectsInPluginCoordinates.reserveCapacity(findMatchRects.size());
 
-    auto clipRectInPluginSpace = [this, clipRect] -> std::optional<IntRect> {
-        RefPtr frame = m_frame.get();
-        if (!frame || !frame->coreLocalFrame())
-            return { };
-        RefPtr view = frame->coreLocalFrame()->view();
-        if (!view)
-            return { };
-        return convertFromRootViewToPlugin(clipRect);
-    }();
-
     for (auto& perPageInfo : findMatchRects) {
         if (visibleRow && !visibleRow->containsPage(perPageInfo.pageIndex))
             continue;
 
         auto pluginRect = convertUp(CoordinateSpace::PDFPage, CoordinateSpace::Plugin, perPageInfo.pageBounds, perPageInfo.pageIndex);
-        if (!clipRectInPluginSpace || pluginRect.intersects(clipRectInPluginSpace.value()))
+        if (pluginRect.intersects(clipRect))
             rectsInPluginCoordinates.append(pluginRect);
     }
 
@@ -4839,9 +4834,9 @@ bool UnifiedPDFPlugin::shouldUseInProcessBackingStore() const
     return false;
 }
 
-bool UnifiedPDFPlugin::layerNeedsPlatformContext(const GraphicsLayer* layer) const
+bool UnifiedPDFPlugin::layerNeedsPlatformContext(const GraphicsLayer& layer) const
 {
-    return shouldUseInProcessBackingStore() && (layer == layerForHorizontalScrollbar() || layer == layerForVerticalScrollbar() || layer == layerForScrollCorner());
+    return shouldUseInProcessBackingStore() && (&layer == layerForHorizontalScrollbar() || &layer == layerForVerticalScrollbar() || &layer == layerForScrollCorner());
 }
 
 bool UnifiedPDFPlugin::delegatesScrollingToMainFrame() const

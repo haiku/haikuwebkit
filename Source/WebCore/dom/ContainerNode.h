@@ -80,6 +80,7 @@ public:
     void takeAllChildrenFrom(ContainerNode*);
 
     void cloneChildNodes(Document&, CustomElementRegistry*, ContainerNode& clone, size_t currentDepth = 0) const;
+    void cloneSubtreeForFastParser(Document&, CustomElementRegistry*, ContainerNode& clone, size_t currentDepth = 0) const;
     Vector<SerializedNode> serializeChildNodes(size_t currentDepth = 0) const;
 
     enum class CanDelayNodeDeletion : uint8_t { No, Yes, Unknown };
@@ -95,6 +96,7 @@ public:
         SUPPRESS_UNCOUNTED_MEMBER Element* nextSiblingElement;
         ChildChange::Source source;
         AffectsElements affectsElements;
+        IsMutationBySetInnerHTML isMutationBySetInnerHTML { IsMutationBySetInnerHTML::No };
 
         bool isInsertion() const
         {

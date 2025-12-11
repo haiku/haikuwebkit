@@ -110,7 +110,7 @@ class JS_EXPORT_PRIVATE HeapSnapshotBuilder final : public HeapAnalyzer {
 public:
     enum SnapshotType { InspectorSnapshot, GCDebuggingSnapshot };
 
-    HeapSnapshotBuilder(HeapProfiler&, SnapshotType = SnapshotType::InspectorSnapshot, OverflowPolicy = OverflowPolicy::CrashOnOverflow);
+    HeapSnapshotBuilder(HeapProfiler&, SnapshotType = SnapshotType::InspectorSnapshot);
     ~HeapSnapshotBuilder() final;
 
     static void resetNextAvailableObjectIdentifier();
@@ -132,6 +132,7 @@ public:
     void setLabelForCell(JSCell*, const String&) final;
 
     String json();
+    void dumpToStream(PrintStream&);
 
     bool hasOverflowed() const { return m_hasOverflowed; }
 
@@ -141,9 +142,9 @@ public:
     public:
         virtual ~Client() = default;
 
-        virtual bool heapSnapshotBuilderIgnoreNode(HeapSnapshotBuilder&, JSCell*) { return false; }
-        virtual String heapSnapshotBuilderOverrideClassName(HeapSnapshotBuilder&, JSCell*, const String& currentClassName) { return currentClassName; }
-        virtual bool heapSnapshotBuilderIsElement(HeapSnapshotBuilder&, JSCell*) { return false; }
+        virtual bool heapSnapshotBuilderIgnoreNode(const HeapSnapshotBuilder&, JSCell*) { return false; }
+        virtual String heapSnapshotBuilderOverrideClassName(const HeapSnapshotBuilder&, JSCell*, const String& currentClassName) { return currentClassName; }
+        virtual bool heapSnapshotBuilderIsElement(const HeapSnapshotBuilder&, JSCell*) { return false; }
     };
     void setClient(Client* client) { m_client = client; }
 
@@ -165,7 +166,6 @@ private:
     HeapProfiler& m_profiler;
     CheckedPtr<Client> m_client;
 
-    OverflowPolicy m_overflowPolicy;
     bool m_hasOverflowed { false };
 
     // SlotVisitors run in parallel.

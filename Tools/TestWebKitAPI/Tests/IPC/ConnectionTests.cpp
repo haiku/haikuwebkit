@@ -471,9 +471,8 @@ public:
         }
         while (true) {
             sleep(0.1_s);
-            Locker lock { Thread::allThreadsLock() };
             for (auto& thread : threadsToWait) {
-                if (Thread::allThreads().contains(thread.ptr()))
+                if (Thread::allThreads().contains(thread.get()))
                     continue;
             }
             break;

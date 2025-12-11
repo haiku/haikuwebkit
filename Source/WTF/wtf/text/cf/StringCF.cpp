@@ -57,10 +57,9 @@ String::String(CFStringRef str)
 
 RetainPtr<CFStringRef> String::createCFString() const
 {
-    if (!m_impl)
-        return CFSTR("");
-
-    return m_impl->createCFString();
+    if (RefPtr impl = m_impl)
+        return impl->createCFString();
+    return CFSTR("");
 }
 
 RetainPtr<CFStringRef> makeCFArrayElement(const String& vectorElement)

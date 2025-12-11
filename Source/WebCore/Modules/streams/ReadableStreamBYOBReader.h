@@ -74,6 +74,7 @@ public:
 
     void read(JSDOMGlobalObject&, JSC::ArrayBufferView&, size_t, Ref<ReadableStreamReadIntoRequest>&&);
 
+    bool isReachableFromOpaqueRoots() const;
     template<typename Visitor> void visitAdditionalChildren(Visitor&);
 
 private:

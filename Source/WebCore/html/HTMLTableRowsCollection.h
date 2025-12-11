@@ -40,7 +40,7 @@ class HTMLTableRowsCollection final : public CachedHTMLCollection<HTMLTableRowsC
 public:
     static Ref<HTMLTableRowsCollection> create(HTMLTableElement&, CollectionType);
 
-    HTMLTableElement& tableElement() const { return downcast<HTMLTableElement>(ownerNode()); }
+    Ref<HTMLTableElement> protectedTableElement() const { return downcast<HTMLTableElement>(ownerNode()); }
 
     static HTMLTableRowElement* rowAfter(HTMLTableElement&, HTMLTableRowElement*);
     static HTMLTableRowElement* lastRow(HTMLTableElement&);

@@ -212,13 +212,13 @@ class GitHubEWS(GitHub):
     STATUS_BUBBLE_ROWS = [['style', 'ios', 'mac', 'wpe', 'win'],  # FIXME: generate this list dynamically to have merge queue show up on top
                           ['bindings', 'ios-sim', 'mac-AS-debug', 'wpe-wk2', 'win-tests'],
                           ['webkitperl', 'ios-wk2', 'api-mac', 'api-wpe', ''],
-                          ['webkitpy', 'ios-wk2-wpt', 'mac-wk1', 'wpe-cairo', ''],
-                          ['jsc', 'api-ios', 'mac-wk2', 'gtk', ''],
-                          ['jsc-arm64', 'vision', 'mac-AS-debug-wk2', 'gtk-wk2', ''],
-                          ['services', 'vision-sim', 'mac-wk2-stress', 'api-gtk', ''],
-                          ['merge', 'vision-wk2', 'mac-intel-wk2', 'playstation', ''],
-                          ['unsafe-merge', 'tv', 'mac-safer-cpp', 'jsc-armv7', ''],
-                          ['', 'tv-sim', '', 'jsc-armv7-tests', ''],
+                          ['webkitpy', 'ios-wk2-wpt', 'api-mac-debug', 'wpe-cairo-libwebrtc', ''],
+                          ['jsc', 'api-ios', 'mac-wk1', 'gtk', ''],
+                          ['jsc-arm64', 'vision', 'mac-wk2', 'gtk-wk2', ''],
+                          ['services', 'vision-sim', 'mac-AS-debug-wk2', 'api-gtk', ''],
+                          ['merge', 'vision-wk2', 'mac-wk2-stress', 'playstation', ''],
+                          ['unsafe-merge', 'tv', 'mac-intel-wk2', 'jsc-armv7', ''],
+                          ['', 'tv-sim', 'mac-safer-cpp', 'jsc-armv7-tests', ''],
                           ['', 'watch', '', '', ''],
                           ['', 'watch-sim', '', '', '']]
     approved_user_list_for_apple_internal_builds = []

@@ -36,8 +36,12 @@ VM* VMManager::s_recentVM { nullptr };
 
 VMManager& VMManager::singleton()
 {
-    static NeverDestroyed<VMManager> manager;
-    return manager;
+    static LazyNeverDestroyed<VMManager> manager;
+    static std::once_flag onceKey;
+    std::call_once(onceKey, [] {
+        manager.construct();
+    });
+    return manager.get();
 }
 
 VMThreadContext::VMThreadContext()

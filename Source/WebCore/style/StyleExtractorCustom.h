@@ -85,6 +85,7 @@ public:
     static Ref<CSSValue> extractTranslate(ExtractorState&);
     static Ref<CSSValue> extractScale(ExtractorState&);
     static Ref<CSSValue> extractRotate(ExtractorState&);
+    static Ref<CSSValue> extractGridAutoFlow(ExtractorState&);
     static Ref<CSSValue> extractGridTemplateColumns(ExtractorState&);
     static Ref<CSSValue> extractGridTemplateRows(ExtractorState&);
     static Ref<CSSValue> extractAnimationDuration(ExtractorState&);
@@ -92,6 +93,8 @@ public:
     static Ref<CSSValue> extractOrphans(ExtractorState&);
     static Ref<CSSValue> extractWebkitTextCombine(ExtractorState&);
     static Ref<CSSValue> extractWebkitRubyPosition(ExtractorState&);
+    static Ref<CSSValue> extractWebkitMaskComposite(ExtractorState&);
+    static Ref<CSSValue> extractWebkitMaskSourceType(ExtractorState&);
 
     // MARK: Shorthands
 
@@ -177,6 +180,7 @@ public:
     static void extractTranslateSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractScaleSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractRotateSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractGridAutoFlowSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractGridTemplateColumnsSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractGridTemplateRowsSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractAnimationDurationSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
@@ -184,6 +188,8 @@ public:
     static void extractOrphansSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractWebkitTextCombineSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractWebkitRubyPositionSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractWebkitMaskCompositeSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractWebkitMaskSourceTypeSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
 
     static void extractAnimationShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractAnimationRangeShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
@@ -347,24 +353,24 @@ template<CSSPropertyID propertyID> struct MarginEdgeSharedAdaptor {
     template<typename F> decltype(auto) computedValue(ExtractorState& state, const MarginEdge& value, F&& functor) const
     {
         auto rendererCanHaveTrimmedMargin = [](const RenderBox& renderer) {
-            auto marginTrimType = [] -> MarginTrimType {
+            auto marginTrimSide = [] -> Style::MarginTrimSide {
                 if constexpr (propertyID == CSSPropertyMarginTop)
-                    return MarginTrimType::BlockStart;
+                    return Style::MarginTrimSide::BlockStart;
                 else if constexpr (propertyID == CSSPropertyMarginRight)
-                    return MarginTrimType::InlineEnd;
+                    return Style::MarginTrimSide::InlineEnd;
                 else if constexpr (propertyID == CSSPropertyMarginBottom)
-                    return MarginTrimType::BlockEnd;
+                    return Style::MarginTrimSide::BlockEnd;
                 else if constexpr (propertyID == CSSPropertyMarginLeft)
-                    return MarginTrimType::InlineStart;
+                    return Style::MarginTrimSide::InlineStart;
             };
 
             // A renderer will have a specific margin marked as trimmed by setting its rare data bit if:
             // 1.) The layout system the box is in has this logic (setting the rare data bit for this
             // specific margin) implemented
             // 2.) The block container/flexbox/grid has this margin specified in its margin-trim style
-            // If marginTrimType is empty we will check if any of the supported margins are in the style
+            // If marginTrimSide is empty we will check if any of the supported margins are in the style
             if (renderer.isFlexItem() || renderer.isGridItem())
-                return renderer.parent()->style().marginTrim().contains(marginTrimType());
+                return renderer.parent()->style().marginTrim().contains(marginTrimSide());
 
             // Even though margin-trim is not inherited, it is possible for nested block level boxes
             // to get placed at the block-start of an containing block ancestor which does have margin-trim.
@@ -380,7 +386,7 @@ template<CSSPropertyID propertyID> struct MarginEdgeSharedAdaptor {
             return false;
         };
 
-        auto toMarginTrimType = [](const RenderBox& renderer) -> MarginTrimType {
+        auto toMarginTrimSide = [](const RenderBox& renderer) -> Style::MarginTrimSide {
             auto formattingContextRootStyle = [](const RenderBox& renderer) -> const RenderStyle& {
                 if (auto* ancestorToUse = (renderer.isFlexItem() || renderer.isGridItem()) ? renderer.parent() : renderer.containingBlock())
                     return ancestorToUse->style();
@@ -401,16 +407,16 @@ template<CSSPropertyID propertyID> struct MarginEdgeSharedAdaptor {
 
             switch (mapSidePhysicalToLogical(formattingContextRootStyle(renderer).writingMode(), boxSide())) {
             case LogicalBoxSide::BlockStart:
-                return MarginTrimType::BlockStart;
+                return Style::MarginTrimSide::BlockStart;
             case LogicalBoxSide::BlockEnd:
-                return MarginTrimType::BlockEnd;
+                return Style::MarginTrimSide::BlockEnd;
             case LogicalBoxSide::InlineStart:
-                return MarginTrimType::InlineStart;
+                return Style::MarginTrimSide::InlineStart;
             case LogicalBoxSide::InlineEnd:
-                return MarginTrimType::InlineEnd;
+                return Style::MarginTrimSide::InlineEnd;
             default:
                 ASSERT_NOT_REACHED();
-                return MarginTrimType::BlockStart;
+                return Style::MarginTrimSide::BlockStart;
             }
         };
 
@@ -430,7 +436,7 @@ template<CSSPropertyID propertyID> struct MarginEdgeSharedAdaptor {
             return functor(value);
 
         if constexpr (propertyID == CSSPropertyMarginRight) {
-            if (rendererCanHaveTrimmedMargin(*box) && box->hasTrimmedMargin(toMarginTrimType(*box)))
+            if (rendererCanHaveTrimmedMargin(*box) && box->hasTrimmedMargin(toMarginTrimSide(*box)))
                 return functor(usedValue(*box));
 
             if (value.isFixed())
@@ -686,6 +692,16 @@ template<> struct PropertyExtractorAdaptor<CSSPropertyLineHeight> {
     }
 };
 
+template<> struct PropertyExtractorAdaptor<CSSPropertyFontFamily> {
+    template<typename F> decltype(auto) computedValue(ExtractorState& state, F&& functor) const
+    {
+        auto fontFamily = state.style.fontFamily();
+        if (fontFamily.size() == 1)
+            return functor(fontFamily.first());
+        return functor(fontFamily);
+    }
+};
+
 template<> struct PropertyExtractorAdaptor<CSSPropertyFontSize> {
     template<typename F> decltype(auto) computedValue(ExtractorState& state, F&& functor) const
     {
@@ -816,6 +832,43 @@ template<> struct PropertyExtractorAdaptor<CSSPropertyMinWidth> {
     template<typename F> decltype(auto) computedValue(ExtractorState& state, F&& functor) const
     {
         return MinimumSizeSharedAdaptor<CSSPropertyMinWidth> { }.computedValue(state, state.style.minWidth(), std::forward<F>(functor));
+    }
+};
+
+template<> struct PropertyExtractorAdaptor<CSSPropertyGridAutoFlow> {
+    template<typename F> decltype(auto) computedValue(ExtractorState& state, F&& functor) const
+    {
+        // FIXME: Adjust this once CSSWG clarifies exactly how the initial value should compute.
+        // For now, this gives the most backwards-compatible behavior.
+        auto gridFlow = state.style.gridAutoFlow();
+        switch (gridFlow.direction()) {
+        case GridAutoFlow::Direction::Column:
+            switch (gridFlow.packing()) {
+            case GridAutoFlow::Packing::Dense:
+                return functor(SpaceSeparatedTuple { CSS::Keyword::Column { }, CSS::Keyword::Dense { } });
+            case GridAutoFlow::Packing::Sparse:
+                return functor(CSS::Keyword::Column { });
+            }
+        case GridAutoFlow::Direction::Row:
+            switch (gridFlow.packing()) {
+            case GridAutoFlow::Packing::Dense:
+                if (!state.style.gridTemplateRows().isNone() && state.style.gridTemplateColumns().isNone()
+                    && (state.style.display() == DisplayType::GridLanes || state.style.display() == DisplayType::InlineGridLanes))
+                    return functor(SpaceSeparatedTuple { CSS::Keyword::Row { }, CSS::Keyword::Dense { } });
+                return functor(CSS::Keyword::Dense { });
+            case GridAutoFlow::Packing::Sparse:
+                return functor(CSS::Keyword::Row { });
+            }
+        default:
+            ASSERT(state.style.display() != DisplayType::GridLanes && state.style.display() != DisplayType::InlineGridLanes
+                && state.style.display() != DisplayType::Grid && state.style.display() != DisplayType::InlineGrid);
+            switch (gridFlow.packing()) {
+            case GridAutoFlow::Packing::Dense:
+                return functor(CSS::Keyword::Dense { });
+            case GridAutoFlow::Packing::Sparse:
+                return functor(CSS::Keyword::Normal { });
+            }
+        }
     }
 };
 
@@ -1817,20 +1870,12 @@ inline void ExtractorCustom::extractLineHeightSerialization(ExtractorState& stat
 
 inline Ref<CSSValue> ExtractorCustom::extractFontFamily(ExtractorState& state)
 {
-    if (state.style.fontCascade().familyCount() == 1)
-        return ExtractorConverter::convertFontFamily(state, state.style.fontCascade().familyAt(0));
-
-    CSSValueListBuilder list;
-    for (unsigned i = 0; i < state.style.fontCascade().familyCount(); ++i)
-        list.append(ExtractorConverter::convertFontFamily(state, state.style.fontCascade().familyAt(i)));
-    return CSSValueList::createCommaSeparated(WTFMove(list));
+    return extractCSSValue<CSSPropertyFontFamily>(state);
 }
 
 inline void ExtractorCustom::extractFontFamilySerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
-    builder.append(interleave(state.style.fontCascade().fontDescription().families(), [&](auto& builder, auto& family) {
-        ExtractorSerializer::serializeFontFamily(state, builder, context, family);
-    }, ", "_s));
+    extractSerialization<CSSPropertyFontFamily>(state, builder, context);
 }
 
 inline Ref<CSSValue> ExtractorCustom::extractFontSize(ExtractorState& state)
@@ -2021,6 +2066,16 @@ inline Ref<CSSValue> ExtractorCustom::extractMinWidth(ExtractorState& state)
 inline void ExtractorCustom::extractMinWidthSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     extractSerialization<CSSPropertyMinWidth>(state, builder, context);
+}
+
+inline Ref<CSSValue> ExtractorCustom::extractGridAutoFlow(ExtractorState& state)
+{
+    return extractCSSValue<CSSPropertyGridAutoFlow>(state);
+}
+
+inline void ExtractorCustom::extractGridAutoFlowSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
+{
+    extractSerialization<CSSPropertyGridAutoFlow>(state, builder, context);
 }
 
 inline Ref<CSSValue> ExtractorCustom::extractCounterIncrement(ExtractorState& state)
@@ -2249,6 +2304,38 @@ inline Ref<CSSValue> ExtractorCustom::extractWebkitRubyPosition(ExtractorState& 
 inline void ExtractorCustom::extractWebkitRubyPositionSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     extractSerialization<CSSPropertyWebkitRubyPosition>(state, builder, context);
+}
+
+inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskComposite(ExtractorState& extractorState)
+{
+    auto mapper = [](auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) -> Ref<CSSValue> {
+        return CSSPrimitiveValue::create(toCSSValueIDForWebkitMaskComposite(value));
+    };
+    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskComposite>(extractorState, extractorState.style.maskLayers(), mapper);
+}
+
+inline void ExtractorCustom::extractWebkitMaskCompositeSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+{
+    auto mapper = [](auto&, auto& builder, const auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) {
+        builder.append(nameLiteralForSerialization(toCSSValueIDForWebkitMaskComposite(value)));
+    };
+    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskComposite>(extractorState, builder, context, extractorState.style.maskLayers(), mapper);
+}
+
+inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskSourceType(ExtractorState& extractorState)
+{
+    auto mapper = [](auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) -> Ref<CSSValue> {
+        return CSSPrimitiveValue::create(toCSSValueIDForWebkitMaskSourceType(value));
+    };
+    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskMode>(extractorState, extractorState.style.maskLayers(), mapper);
+}
+
+inline void ExtractorCustom::extractWebkitMaskSourceTypeSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+{
+    auto mapper = [](auto&, auto& builder, const auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) {
+        builder.append(nameLiteralForSerialization(toCSSValueIDForWebkitMaskSourceType(value)));
+    };
+    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskMode>(extractorState, builder, context, extractorState.style.maskLayers(), mapper);
 }
 
 // MARK: - Shorthands
@@ -2664,10 +2751,7 @@ inline RefPtr<CSSValue> ExtractorCustom::extractFontShorthand(ExtractorState& st
     if (*fontStyle != CSSValueNormal)
         computedFont->style = CSSPrimitiveValue::create(*fontStyle);
 
-    CSSValueListBuilder familyList;
-    for (unsigned i = 0; i < state.style.fontCascade().familyCount(); ++i)
-        familyList.append(ExtractorConverter::convertFontFamily(state, state.style.fontCascade().familyAt(i)));
-    computedFont->family = CSSValueList::createCommaSeparated(WTFMove(familyList));
+    computedFont->family = createCSSValue(state.pool, state.style, state.style.fontFamily());
 
     return computedFont;
 }

@@ -32,7 +32,9 @@
 #include <optional>
 #include <tuple>
 #include <utility>
+#include <wtf/EnumSet.h>
 #include <wtf/FixedVector.h>
+#include <wtf/ListHashSet.h>
 #include <wtf/Markable.h>
 #include <wtf/RefCountedFixedVector.h>
 #include <wtf/StdLibExtras.h>
@@ -183,7 +185,7 @@ template<typename> inline constexpr SerializationCoalescingType SerializationCoa
 
 // - Optional-like
 template<typename T> inline constexpr auto TreatAsOptionalLike<std::optional<T>> = true;
-template<typename T> inline constexpr auto TreatAsOptionalLike<WTF::Markable<T>> = true;
+template<typename T, typename MarkableTraits> inline constexpr auto TreatAsOptionalLike<WTF::Markable<T, MarkableTraits>> = true;
 
 // - Tuple-like
 template<typename... Ts> inline constexpr auto TreatAsTupleLike<std::tuple<Ts...>> = true;
@@ -260,6 +262,262 @@ template<CSSValueID C, typename T> TextStream& operator<<(TextStream& ts, const 
 
 template<CSSValueID C, typename T> inline constexpr auto TreatAsTupleLike<FunctionNotation<C, T>> = true;
 
+// Wraps an enum set, semantically marking it as serializing as "space separated".
+template<typename T>
+    requires (std::is_enum_v<T>)
+struct SpaceSeparatedEnumSet {
+    using Container = EnumSet<T>;
+    using StorageType = typename Container::StorageType;
+    using const_iterator = typename Container::iterator;
+    using value_type = T;
+
+    constexpr SpaceSeparatedEnumSet() = default;
+
+    constexpr SpaceSeparatedEnumSet(std::initializer_list<T> initializerList)
+        : value { initializerList }
+    {
+    }
+
+    constexpr SpaceSeparatedEnumSet(Container&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static SpaceSeparatedEnumSet map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        Container result;
+        for (auto&& value : range)
+            result.add(mapper(value));
+        return result;
+    }
+
+    static constexpr SpaceSeparatedEnumSet fromRaw(StorageType rawValue)
+    {
+        return Container::fromRaw(rawValue);
+    }
+
+    constexpr StorageType toRaw() const { return value.toRaw(); }
+
+    constexpr const_iterator begin() const { return value.begin(); }
+    constexpr const_iterator end() const { return value.end(); }
+
+    constexpr bool isEmpty() const { return value.isEmpty(); }
+    constexpr size_t size() const { return value.size(); }
+
+    constexpr bool contains(T e) const
+    {
+        return value.contains(e);
+    }
+
+    constexpr bool containsAny(Container other) const
+    {
+        return value.containsAny(other);
+    }
+
+    constexpr bool containsAll(Container other) const
+    {
+        return value.containsAll(other);
+    }
+
+    constexpr bool containsOnly(Container other) const
+    {
+        return value.containsOnly(other);
+    }
+
+    constexpr friend SpaceSeparatedEnumSet operator&(SpaceSeparatedEnumSet lhs, SpaceSeparatedEnumSet rhs)
+    {
+        return lhs.value & rhs.value;
+    }
+
+    constexpr friend SpaceSeparatedEnumSet operator-(SpaceSeparatedEnumSet lhs, SpaceSeparatedEnumSet rhs)
+    {
+        return lhs.value - rhs.value;
+    }
+
+    constexpr friend SpaceSeparatedEnumSet operator^(SpaceSeparatedEnumSet lhs, SpaceSeparatedEnumSet rhs)
+    {
+        return lhs.value ^ rhs.value;
+    }
+
+    constexpr bool operator==(const SpaceSeparatedEnumSet&) const = default;
+
+    Container value;
+};
+template<typename T> inline constexpr auto TreatAsRangeLike<SpaceSeparatedEnumSet<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparatedEnumSet<T>> = SerializationSeparatorType::Space;
+
+// Wraps an enum set, semantically marking it as serializing as "comma separated".
+template<typename T>
+    requires (std::is_enum_v<T>)
+struct CommaSeparatedEnumSet {
+    using Container = EnumSet<T>;
+    using StorageType = typename Container::StorageType;
+    using const_iterator = typename Container::iterator;
+    using value_type = T;
+
+    constexpr CommaSeparatedEnumSet() = default;
+
+    constexpr CommaSeparatedEnumSet(std::initializer_list<T> initializerList)
+        : value { initializerList }
+    {
+    }
+
+    constexpr CommaSeparatedEnumSet(Container&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static CommaSeparatedEnumSet map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        Container result;
+        for (auto&& value : range)
+            result.add(mapper(value));
+        return result;
+    }
+
+    static constexpr CommaSeparatedEnumSet fromRaw(StorageType rawValue)
+    {
+        return Container::fromRaw(rawValue);
+    }
+
+    constexpr StorageType toRaw() const { return value.toRaw(); }
+
+    constexpr const_iterator begin() const { return value.begin(); }
+    constexpr const_iterator end() const { return value.end(); }
+
+    constexpr bool isEmpty() const { return value.isEmpty(); }
+    constexpr size_t size() const { return value.size(); }
+
+    constexpr bool contains(T e) const
+    {
+        return value.contains(e);
+    }
+
+    constexpr bool containsAny(Container other) const
+    {
+        return value.containsAny(other);
+    }
+
+    constexpr bool containsAll(Container other) const
+    {
+        return value.containsAll(other);
+    }
+
+    constexpr bool containsOnly(Container other) const
+    {
+        return value.containsOnly(other);
+    }
+
+    constexpr friend CommaSeparatedEnumSet operator&(CommaSeparatedEnumSet lhs, CommaSeparatedEnumSet rhs)
+    {
+        return lhs.value & rhs.value;
+    }
+
+    constexpr friend CommaSeparatedEnumSet operator-(CommaSeparatedEnumSet lhs, CommaSeparatedEnumSet rhs)
+    {
+        return lhs.value - rhs.value;
+    }
+
+    constexpr friend CommaSeparatedEnumSet operator^(CommaSeparatedEnumSet lhs, CommaSeparatedEnumSet rhs)
+    {
+        return lhs.value ^ rhs.value;
+    }
+
+    bool operator==(const CommaSeparatedEnumSet&) const = default;
+
+    Container value;
+};
+template<typename T> inline constexpr auto TreatAsRangeLike<CommaSeparatedEnumSet<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<CommaSeparatedEnumSet<T>> = SerializationSeparatorType::Comma;
+
+// Wraps a ListHashSet, semantically marking it as serializing as "space separated".
+template<typename T>
+struct SpaceSeparatedListHashSet {
+    using Container = ListHashSet<T>;
+    using const_iterator = typename Container::const_iterator;
+    using value_type = T;
+
+    constexpr SpaceSeparatedListHashSet() = default;
+
+    constexpr SpaceSeparatedListHashSet(std::initializer_list<T> initializerList)
+        : value { initializerList }
+    {
+    }
+
+    constexpr SpaceSeparatedListHashSet(Container&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static SpaceSeparatedListHashSet map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        Container result;
+        for (auto&& value : range)
+            result.add(mapper(value));
+        return result;
+    }
+
+    constexpr const_iterator begin() const { return value.begin(); }
+    constexpr const_iterator end() const { return value.end(); }
+
+    constexpr bool isEmpty() const { return value.isEmpty(); }
+    constexpr size_t size() const { return value.size(); }
+
+    constexpr bool contains(const T& item) const { return value.contains(item); }
+
+    constexpr bool operator==(const SpaceSeparatedListHashSet&) const = default;
+
+    Container value;
+};
+template<typename T> inline constexpr auto TreatAsRangeLike<SpaceSeparatedListHashSet<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<SpaceSeparatedListHashSet<T>> = SerializationSeparatorType::Space;
+
+// Wraps a ListHashSet, semantically marking it as serializing as "comma separated".
+template<typename T>
+struct CommaSeparatedListHashSet {
+    using Container = ListHashSet<T>;
+    using const_iterator = typename Container::const_iterator;
+    using value_type = T;
+
+    constexpr CommaSeparatedListHashSet() = default;
+
+    constexpr CommaSeparatedListHashSet(std::initializer_list<T> initializerList)
+        : value { initializerList }
+    {
+    }
+
+    constexpr CommaSeparatedListHashSet(Container&& value)
+        : value { WTFMove(value) }
+    {
+    }
+
+    template<typename SizedRange, typename Mapper>
+    static CommaSeparatedListHashSet map(SizedRange&& range, NOESCAPE Mapper&& mapper)
+    {
+        Container result;
+        for (auto&& value : range)
+            result.add(mapper(value));
+        return result;
+    }
+
+    constexpr const_iterator begin() const { return value.begin(); }
+    constexpr const_iterator end() const { return value.end(); }
+
+    constexpr bool isEmpty() const { return value.isEmpty(); }
+    constexpr size_t size() const { return value.size(); }
+
+    constexpr bool contains(const T& item) const { return value.contains(item); }
+
+    constexpr bool operator==(const CommaSeparatedListHashSet&) const = default;
+
+    Container value;
+};
+template<typename T> inline constexpr auto TreatAsRangeLike<CommaSeparatedListHashSet<T>> = true;
+template<typename T> inline constexpr auto SerializationSeparator<CommaSeparatedListHashSet<T>> = SerializationSeparatorType::Comma;
+
 // Wraps a variable number of elements of a single type, semantically marking them as serializing as "space separated".
 template<typename T, size_t inlineCapacity = 0> struct SpaceSeparatedVector {
     using Container = WTF::Vector<T, inlineCapacity>;
@@ -293,6 +551,9 @@ template<typename T, size_t inlineCapacity = 0> struct SpaceSeparatedVector {
     bool isEmpty() const { return value.isEmpty(); }
     size_t size() const { return value.size(); }
     const T& operator[](size_t i) const { return value[i]; }
+
+    bool contains(const auto& x) const { return value.contains(x); }
+    bool containsIf(NOESCAPE const Invocable<bool(const value_type&)> auto& f) const { return value.containsIf(f); }
 
     template<typename F> decltype(auto) map(F&& functor) const { return value.map(std::forward<F>(functor)); }
 
@@ -337,6 +598,9 @@ template<typename T, size_t inlineCapacity = 0> struct CommaSeparatedVector {
     bool isEmpty() const { return value.isEmpty(); }
     size_t size() const { return value.size(); }
     const T& operator[](size_t i) const { return value[i]; }
+
+    bool contains(const auto& x) const { return value.contains(x); }
+    bool containsIf(NOESCAPE const Invocable<bool(const value_type&)> auto& f) const { return value.containsIf(f); }
 
     template<typename F> decltype(auto) map(F&& functor) const { return value.map(std::forward<F>(functor)); }
 
@@ -654,16 +918,16 @@ template<typename T> struct ListOrNone {
     {
     }
 
-    const_iterator begin() const { return m_value.begin(); }
-    const_iterator end() const { return m_value.end(); }
-    const_reverse_iterator rbegin() const { return m_value.rbegin(); }
-    const_reverse_iterator rend() const { return m_value.rend(); }
+    const_iterator begin() const LIFETIME_BOUND { return m_value.begin(); }
+    const_iterator end() const LIFETIME_BOUND { return m_value.end(); }
+    const_reverse_iterator rbegin() const LIFETIME_BOUND { return m_value.rbegin(); }
+    const_reverse_iterator rend() const LIFETIME_BOUND { return m_value.rend(); }
 
     const value_type& first() const LIFETIME_BOUND { return m_value.first(); }
     const value_type& last() const LIFETIME_BOUND { return m_value.last(); }
 
     size_t size() const { return m_value.size(); }
-    const value_type& operator[](size_t i) const { return m_value[i]; }
+    const value_type& operator[](size_t i) const LIFETIME_BOUND { return m_value[i]; }
 
     bool contains(const auto& x) const { return m_value.contains(x); }
     bool containsIf(NOESCAPE const Invocable<bool(const value_type&)> auto& f) const { return m_value.containsIf(f); }
@@ -672,7 +936,7 @@ template<typename T> struct ListOrNone {
 
     bool isNone() const { return m_value.isEmpty(); }
     bool isList() const { return !m_value.isEmpty(); }
-    const List* tryList() const { return isList() ? &m_value : nullptr; }
+    const List* tryList() const LIFETIME_BOUND { return isList() ? &m_value : nullptr; }
 
     template<typename... F> decltype(auto) switchOn(F&&... f) const
     {
@@ -786,6 +1050,136 @@ template<typename T> concept ListOrDefaultDerived = WTF::IsBaseOfTemplate<ListOr
 #define DEFINE_RANGE_LIKE_CONFORMANCE_FOR_LIST_OR_DEFAULT_DERIVED_TYPE(t) \
     DEFINE_RANGE_LIKE_CONFORMANCE(t) \
     template<> inline constexpr auto WebCore::SerializationSeparator<t> = WebCore::SerializationSeparator<typename t::List>;
+
+// Wraps a list and behaves as `optional-like`, using the `list.isEmpty()` as the nullopt state.
+template<typename T> struct ListOrNullopt {
+    using List = T;
+    using const_iterator = typename List::const_iterator;
+    using const_reverse_iterator = typename List::const_reverse_iterator;
+    using value_type = typename List::value_type;
+
+    ListOrNullopt(List&& list)
+        : m_value { WTFMove(list) }
+    {
+        RELEASE_ASSERT(!m_value.isEmpty());
+    }
+
+    ListOrNullopt(std::nullopt_t)
+        : m_value { }
+    {
+    }
+
+    ListOrNullopt()
+        : m_value { }
+    {
+    }
+
+    const_iterator begin() const LIFETIME_BOUND { return m_value.begin(); }
+    const_iterator end() const LIFETIME_BOUND { return m_value.end(); }
+    const_reverse_iterator rbegin() const LIFETIME_BOUND { return m_value.rbegin(); }
+    const_reverse_iterator rend() const LIFETIME_BOUND { return m_value.rend(); }
+
+    const value_type& first() const LIFETIME_BOUND { return m_value.first(); }
+    const value_type& last() const LIFETIME_BOUND { return m_value.last(); }
+
+    size_t size() const { return m_value.size(); }
+    const value_type& operator[](size_t i) const LIFETIME_BOUND { return m_value[i]; }
+
+    bool contains(const auto& x) const { return m_value.contains(x); }
+    bool containsIf(NOESCAPE const Invocable<bool(const value_type&)> auto& f) const { return m_value.containsIf(f); }
+
+    bool operator==(const ListOrNullopt&) const = default;
+
+    bool isNullopt() const { return m_value.isEmpty(); }
+    bool isList() const { return !m_value.isEmpty(); }
+    const List* tryList() const LIFETIME_BOUND { return isList() ? &m_value : nullptr; }
+
+    // Returns the underlying list regardless of whether or not it is empty.
+    const List& list() const LIFETIME_BOUND { return m_value; }
+
+    explicit operator bool() const { return !m_value.isEmpty(); }
+
+    const List* operator->() const LIFETIME_BOUND { return &m_value; }
+    const List& operator*() const LIFETIME_BOUND { return m_value; }
+
+protected:
+    List m_value;
+};
+
+template<typename List> inline constexpr auto TreatAsOptionalLike<ListOrNullopt<List>> = true;
+
+// Wraps an `EnumSet` and enforces the invariant that it is either created with a non-empty value or specified keyword.
+// Required to be subclassed, passing the derived type as the first template parameter.
+template<typename Derived, typename T, typename K> struct EnumSetOrKeywordBase {
+    using Base = EnumSetOrKeywordBase<Derived, T, K>;
+    using EnumSet = T;
+    using Keyword = K;
+    using value_type = typename EnumSet::value_type;
+
+    constexpr EnumSetOrKeywordBase(EnumSet&& list)
+        : m_value { WTFMove(list) }
+    {
+        RELEASE_ASSERT(!m_value.isEmpty());
+    }
+
+    constexpr EnumSetOrKeywordBase(Keyword)
+        : m_value { }
+    {
+    }
+
+    constexpr EnumSetOrKeywordBase(value_type value)
+        : EnumSetOrKeywordBase { EnumSet { value } }
+    {
+    }
+
+    constexpr EnumSetOrKeywordBase(std::initializer_list<value_type> initializerList)
+        : EnumSetOrKeywordBase { EnumSet { initializerList } }
+    {
+    }
+
+    static constexpr Derived fromRaw(typename EnumSet::StorageType rawValue)
+    {
+        if (!rawValue)
+            return Keyword { };
+        return EnumSet::fromRaw(rawValue);
+    }
+    constexpr typename EnumSet::StorageType toRaw() const { return m_value.toRaw(); }
+
+    constexpr bool contains(value_type e) const { return m_value.contains(e); }
+    constexpr bool containsAny(EnumSet other) const { return m_value.containsAny(other.value); }
+    constexpr bool containsAll(EnumSet other) const { return m_value.containsAll(other.value); }
+    constexpr bool containsOnly(EnumSet other) const { return m_value.containsOnly(other.value); }
+
+    constexpr decltype(auto) begin() const LIFETIME_BOUND { return m_value.begin(); }
+    constexpr decltype(auto) end() const LIFETIME_BOUND { return m_value.end(); }
+
+    constexpr size_t size() const { return m_value.size(); }
+
+    constexpr bool contains(const auto& x) const { return m_value.contains(x); }
+
+    constexpr bool operator==(const EnumSetOrKeywordBase&) const = default;
+
+    constexpr bool isKeyword() const { return m_value.isEmpty(); }
+    constexpr bool isEnumSet() const { return !m_value.isEmpty(); }
+    constexpr const EnumSet* tryEnumSet() const { return isEnumSet() ? &m_value : nullptr; }
+
+    template<typename... F> constexpr decltype(auto) switchOn(F&&... f) const
+    {
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
+
+        if (isKeyword())
+            return visitor(Keyword { });
+        return visitor(m_value);
+    }
+
+protected:
+    // An empty enum set indicates the value is `Keyword`. This invariant is ensured
+    // with a release assert in the constructor.
+    EnumSet m_value;
+};
+
+// Concept to constrain types to only those that derive from `EnumSetOrKeywordBase`.
+template<typename T> concept EnumSetOrKeywordBaseDerived = WTF::IsBaseOfTemplate<EnumSetOrKeywordBase, T>::value;
 
 // Wraps a fixed size list of elements of a single type, semantically marking them as serializing as "space separated".
 template<typename T, size_t N> struct SpaceSeparatedArray {
@@ -1260,13 +1654,7 @@ template<typename T> void logForCSSOnTupleLike(TextStream& ts, const T& value, A
 {
     auto swappedSeparator = ""_s;
     auto caller = WTF::makeVisitor(
-        [&]<typename U>(const std::optional<U>& element) {
-            if (!element)
-                return;
-            ts << std::exchange(swappedSeparator, separator);
-            ts << *element;
-        },
-        [&]<typename U>(const Markable<U>& element) {
+        [&]<OptionalLike U>(const U& element) {
             if (!element)
                 return;
             ts << std::exchange(swappedSeparator, separator);
@@ -1293,6 +1681,30 @@ template<typename T> void logForCSSOnRangeLike(TextStream& ts, const T& value, A
 template<typename T> void logForCSSOnVariantLike(TextStream& ts, const T& value)
 {
     WTF::switchOn(value, [&](const auto& value) { ts << value; });
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const SpaceSeparatedEnumSet<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<SpaceSeparatedEnumSet<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const CommaSeparatedEnumSet<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<CommaSeparatedEnumSet<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const SpaceSeparatedListHashSet<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<SpaceSeparatedListHashSet<T>>);
+    return ts;
+}
+
+template<typename T> TextStream& operator<<(TextStream& ts, const CommaSeparatedListHashSet<T>& value)
+{
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<CommaSeparatedListHashSet<T>>);
+    return ts;
 }
 
 template<typename T, size_t inlineCapacity> TextStream& operator<<(TextStream& ts, const SpaceSeparatedVector<T, inlineCapacity>& value)
@@ -1398,6 +1810,13 @@ template<typename T> TextStream& operator<<(TextStream& ts, const MinimallySeria
     return ts;
 }
 
+// Helper for using `Markable<>` with `RangeLike` types where an empty range can represent `Markable::emptyValue`.
+template<typename RangeLike>
+struct NonEmptyRangeLikeMarkableTraits {
+    static bool isEmptyValue(const RangeLike& value) { return value.isEmpty(); }
+    static RangeLike emptyValue() { return RangeLike { }; }
+};
+
 } // namespace WebCore
 
 namespace std {
@@ -1490,6 +1909,18 @@ public:
 
 namespace WTF {
 
+template<typename T>
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedEnumSet<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::CommaSeparatedEnumSet<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::SpaceSeparatedListHashSet<T>> : supports_text_stream_insertion<T> { };
+
+template<typename T>
+struct supports_text_stream_insertion<WebCore::CommaSeparatedListHashSet<T>> : supports_text_stream_insertion<T> { };
+
 template<typename T, size_t inlineCapacity>
 struct supports_text_stream_insertion<WebCore::SpaceSeparatedVector<T, inlineCapacity>> : supports_text_stream_insertion<T> { };
 
@@ -1528,7 +1959,6 @@ struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparate
 
 template<typename T>
 struct supports_text_stream_insertion<WebCore::MinimallySerializingSpaceSeparatedRectCorners<T>> : supports_text_stream_insertion<T> { };
-
 
 template<>
 struct MarkableTraits<WebCore::CustomIdentifier> {

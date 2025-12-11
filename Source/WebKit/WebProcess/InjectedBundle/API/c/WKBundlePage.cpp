@@ -54,7 +54,7 @@
 #include "WebContextMenuItem.h"
 #include "WebFrame.h"
 #include "WebImage.h"
-#include "WebInspectorInternal.h"
+#include "WebInspectorBackend.h"
 #include "WebPage.h"
 #include "WebPageGroupProxy.h"
 #include "WebPageOverlay.h"

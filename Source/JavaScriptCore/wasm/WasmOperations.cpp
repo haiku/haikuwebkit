@@ -1166,6 +1166,9 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmLoopOSREnterBBQJIT, void, (Probe:
     const StackMap& stackMap = entryData.values();
     auto writeValueToRep = [&](uint64_t* bufferSlot, const OSREntryValue& value) {
         B3::Type type = value.type();
+        // Void signifies an unused exception slot in `try` (since we can't have an exception at that time)
+        if (type.kind() == B3::TypeKind::Void)
+            return;
         if (value.isGPR()) {
             ASSERT(!type.isFloat() && !type.isVector());
             context.gpr(value.gpr()) = *bufferSlot;

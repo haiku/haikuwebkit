@@ -186,6 +186,11 @@ JSRetainPtr<JSStringRef> UIScriptControllerCocoa::caLayerTreeAsText() const
     return adopt(JSStringCreateWithCFString((CFStringRef)[webView() _caLayerTreeAsText]));
 }
 
+JSRetainPtr<JSStringRef> UIScriptControllerCocoa::caLayerTreeAsTextForLayerWithID(uint64_t layerID) const
+{
+    return adopt(JSStringCreateWithCFString((CFStringRef)[webView() _caLayerTreeAsTextForLayerWithID:layerID]));
+}
+
 JSObjectRef UIScriptControllerCocoa::propertiesOfLayerWithID(uint64_t layerID) const
 {
     RetainPtr jsValue = [JSValue valueWithObject:[webView() _propertiesOfLayerWithID:layerID] inContext:[JSContext contextWithJSGlobalContextRef:m_context->jsContext()]];
@@ -338,6 +343,7 @@ void UIScriptControllerCocoa::setSpellCheckerResults(JSValueRef results)
 
 RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWebView *webView, TextExtractionTestOptions* options)
 {
+#if ENABLE(TEXT_EXTRACTION)
     auto extractionRect = CGRectNull;
     if (options && options->clipToBounds)
         extractionRect = webView.bounds;
@@ -345,30 +351,67 @@ RetainPtr<_WKTextExtractionConfiguration> createTextExtractionConfiguration(WKWe
     RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
     [configuration setIncludeRects:options && options->includeRects];
     [configuration setIncludeURLs:options && options->includeURLs];
-    [configuration setIncludeNodeIdentifiers:options && options->includeNodeIdentifiers];
+    [configuration setNodeIdentifierInclusion:^{
+        if (!options)
+            return _WKTextExtractionNodeIdentifierInclusionNone;
+
+        auto inclusion = toWTFString(options->nodeIdentifierInclusion.get());
+        if (equalLettersIgnoringASCIICase(inclusion, "interactive"_s))
+            return _WKTextExtractionNodeIdentifierInclusionInteractive;
+
+        if (equalLettersIgnoringASCIICase(inclusion, "editableonly"_s))
+            return _WKTextExtractionNodeIdentifierInclusionEditableOnly;
+
+        return _WKTextExtractionNodeIdentifierInclusionNone;
+    }()];
     [configuration setIncludeEventListeners:options && options->includeEventListeners];
     [configuration setIncludeAccessibilityAttributes:options && options->includeAccessibilityAttributes];
     [configuration setIncludeTextInAutoFilledControls:options && options->includeTextInAutoFilledControls];
+
+    auto outputFormat = [&] -> std::optional<_WKTextExtractionOutputFormat> {
+        if (!options)
+            return std::nullopt;
+
+        auto outputFormat = toWTFString(options->outputFormat.get());
+        if (equalLettersIgnoringASCIICase(outputFormat, "html"_s))
+            return _WKTextExtractionOutputFormatHTML;
+
+        if (equalLettersIgnoringASCIICase(outputFormat, "markdown"_s))
+            return _WKTextExtractionOutputFormatMarkdown;
+
+        if (equalLettersIgnoringASCIICase(outputFormat, "texttree"_s))
+            return _WKTextExtractionOutputFormatTextTree;
+
+        return std::nullopt;
+    }();
+    if (outputFormat)
+        [configuration setOutputFormat:*outputFormat];
+
     if (auto wordLimit = options ? options->wordLimit : 0)
         [configuration setMaxWordsPerParagraph:static_cast<NSUInteger>(wordLimit)];
     [configuration setTargetRect:extractionRect];
     [configuration setMergeParagraphs:options && options->mergeParagraphs];
     [configuration setSkipNearlyTransparentContent:options && options->skipNearlyTransparentContent];
     return configuration;
+#else
+    return nil;
+#endif // ENABLE(TEXT_EXTRACTION)
 }
 
 void UIScriptControllerCocoa::requestTextExtraction(JSValueRef callback, TextExtractionTestOptions* options)
 {
+#if ENABLE(TEXT_EXTRACTION)
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
     RetainPtr configuration = createTextExtractionConfiguration(webView(), options);
     auto includeRects = [configuration includeRects] ? IncludeRects::Yes : IncludeRects::No;
-    [webView() _requestTextExtraction:configuration.get() completionHandler:^(WKTextExtractionResult *result) {
+    [webView() _requestTextExtraction:configuration.get() completionHandler:^(WKTextExtractionItem *rootItem) {
         if (!m_context)
             return;
 
-        auto description = adopt(JSStringCreateWithCFString((__bridge CFStringRef)recursiveDescription([result rootItem], includeRects)));
+        auto description = adopt(JSStringCreateWithCFString((__bridge CFStringRef)recursiveDescription(rootItem, includeRects)));
         m_context->asyncTaskComplete(callbackID, { JSValueMakeString(m_context->jsContext(), description.get()) });
     }];
+#endif // ENABLE(TEXT_EXTRACTION)
 }
 
 void UIScriptControllerCocoa::requestDebugText(JSValueRef callback, TextExtractionTestOptions* options)
@@ -386,6 +429,7 @@ void UIScriptControllerCocoa::requestDebugText(JSValueRef callback, TextExtracti
 
 void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAction, TextExtractionInteractionOptions* options, JSValueRef callback)
 {
+#if ENABLE(TEXT_EXTRACTION)
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
 
     if (!options) {
@@ -407,6 +451,8 @@ void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAct
         action = _WKTextExtractionActionKeyPress;
     if (equalLettersIgnoringASCIICase(actionName, "highlighttext"))
         action = _WKTextExtractionActionHighlightText;
+    if (equalLettersIgnoringASCIICase(actionName, "scrollby"))
+        action = _WKTextExtractionActionScrollBy;
 
     if (!action) {
         ASSERT_NOT_REACHED();
@@ -429,6 +475,9 @@ void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAct
         [interaction setLocation:CGPointMake(x, y)];
     }
 
+    if (auto scrollDelta = options->scrollDelta)
+        [interaction setScrollDelta:std::apply(CGSizeMake, *scrollDelta)];
+
     [webView() _performInteraction:interaction.get() completionHandler:^(_WKTextExtractionInteractionResult *result) {
         if (!m_context)
             return;
@@ -437,6 +486,7 @@ void UIScriptControllerCocoa::performTextExtractionInteraction(JSStringRef jsAct
         JSRetainPtr jsDescription = adopt(JSStringCreateWithCFString((__bridge CFStringRef)description.get()));
         m_context->asyncTaskComplete(callbackID, { JSValueMakeString(m_context->jsContext(), jsDescription.get()) });
     }];
+#endif // ENABLE(TEXT_EXTRACTION)
 }
 
 void UIScriptControllerCocoa::requestRenderedTextForFrontmostTarget(int x, int y, JSValueRef callback)

@@ -1,4 +1,5 @@
 root
-	textFormControl,'email',placeholder='Enter your email'
-	textFormControl,'password',placeholder='Enter your password',secure
-	textFormControl,'number',placeholder='Security code','123456'
+	input,'email',placeholder='Enter your email'
+	input,'password',placeholder='Enter your password',secure
+	input,'number',placeholder='Security code','123456'
+version=2

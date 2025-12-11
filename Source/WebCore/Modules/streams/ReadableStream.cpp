@@ -164,10 +164,11 @@ Ref<ReadableStream> ReadableStream::create(Ref<InternalReadableStream>&& interna
     return adoptRef(*new ReadableStream(globalObject->protectedScriptExecutionContext().get(), WTFMove(internalReadableStream)));
 }
 
-ReadableStream::ReadableStream(ScriptExecutionContext* context, RefPtr<InternalReadableStream>&& internalReadableStream, RefPtr<ReadableStream>&& relatedStreamForGC)
+ReadableStream::ReadableStream(ScriptExecutionContext* context, RefPtr<InternalReadableStream>&& internalReadableStream, RefPtr<DependencyToVisit>&& dependencyToVisit, IsReachableFromOpaqueRootIfPulling isReachableFromOpaqueRootIfPulling)
     : ContextDestructionObserver(context)
+    , m_isReachableFromOpaqueRootIfPulling(isReachableFromOpaqueRootIfPulling == IsReachableFromOpaqueRootIfPulling::Yes)
     , m_internalReadableStream(WTFMove(internalReadableStream))
-    , m_relatedStreamForGC(WTFMove(relatedStreamForGC))
+    , m_dependencyToVisit(WTFMove(dependencyToVisit))
 {
 }
 
@@ -274,13 +275,6 @@ void ReadableStream::cancel(Exception&& exception)
     cancel(*globalObject, jsException);
 }
 
-void ReadableStream::pipeTo(ReadableStreamSink& sink)
-{
-    // FIXME: support byte stream.
-    if (RefPtr internalReadableStream = m_internalReadableStream)
-        internalReadableStream->pipeTo(sink);
-}
-
 ReadableStream::State ReadableStream::state() const
 {
     if (RefPtr internalReadableStream = m_internalReadableStream)
@@ -302,10 +296,10 @@ ReadableStreamDefaultReader* ReadableStream::defaultReader()
 }
 
 // https://streams.spec.whatwg.org/#abstract-opdef-createreadablebytestream
-Ref<ReadableStream> ReadableStream::createReadableByteStream(JSDOMGlobalObject& globalObject, ReadableByteStreamController::PullAlgorithm&& pullAlgorithm, ReadableByteStreamController::CancelAlgorithm&& cancelAlgorithm, RefPtr<ReadableStream>&& relatedStreamForGC)
+Ref<ReadableStream> ReadableStream::createReadableByteStream(JSDOMGlobalObject& globalObject, ReadableByteStreamController::PullAlgorithm&& pullAlgorithm, ReadableByteStreamController::CancelAlgorithm&& cancelAlgorithm, ByteStreamOptions&& options)
 {
-    Ref readableStream = adoptRef(*new ReadableStream(globalObject.protectedScriptExecutionContext().get(), { }, WTFMove(relatedStreamForGC)));
-    readableStream->setupReadableByteStreamController(globalObject, WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), 0);
+    Ref readableStream = adoptRef(*new ReadableStream(globalObject.protectedScriptExecutionContext().get(), { }, WTFMove(options.dependencyToVisit), options.isReachableFromOpaqueRootIfPulling));
+    readableStream->setupReadableByteStreamController(globalObject, WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), options.highwaterMark, options.startSynchronously);
     return readableStream;
 }
 
@@ -376,9 +370,13 @@ ExceptionOr<void> ReadableStream::setupReadableByteStreamControllerFromUnderlyin
     return m_controller->start(globalObject, underlyingSourceDict.start.get());
 }
 
-void ReadableStream::setupReadableByteStreamController(JSDOMGlobalObject& globalObject, ReadableByteStreamController::PullAlgorithm&& pullAlgorithm, ReadableByteStreamController::CancelAlgorithm&& cancelAlgorithm, double highWaterMark)
+void ReadableStream::setupReadableByteStreamController(JSDOMGlobalObject& globalObject, ReadableByteStreamController::PullAlgorithm&& pullAlgorithm, ReadableByteStreamController::CancelAlgorithm&& cancelAlgorithm, double highWaterMark, StartSynchronously startSynchronously)
 {
     lazyInitialize(m_controller, std::unique_ptr<ReadableByteStreamController>(new ReadableByteStreamController(*this, WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), highWaterMark, 0)));
+    if (startSynchronously == StartSynchronously::Yes) {
+        m_controller->didStart(globalObject);
+        return;
+    }
     m_controller->start(globalObject, nullptr);
 }
 
@@ -557,8 +555,8 @@ void ReadableStream::visitAdditionalChildren(JSC::AbstractSlotVisitor& visitor)
     SUPPRESS_UNCOUNTED_ARG addWebCoreOpaqueRoot(visitor, m_byobReader.get());
     SUPPRESS_UNCOUNTED_ARG addWebCoreOpaqueRoot(visitor, m_defaultReader.get());
 
-    if (m_relatedStreamForGC)
-        m_relatedStreamForGC->visitAdditionalChildren(visitor);
+    if (m_dependencyToVisit)
+        m_dependencyToVisit->visit(visitor);
 
     if (m_controller) {
         m_controller->underlyingSourceConcurrently().visit(visitor);
@@ -570,6 +568,16 @@ JSDOMGlobalObject* ReadableStream::globalObject()
 {
     RefPtr context = scriptExecutionContext();
     return context ? JSC::jsCast<JSDOMGlobalObject*>(context->globalObject()) : nullptr;
+}
+
+bool ReadableStream::isPulling() const
+{
+    return m_controller && m_controller->isPulling();
+}
+
+void ReadableStream::Iterator::next(Callback&& callback)
+{
+    callback({ std::nullopt });
 }
 
 template<typename Visitor>

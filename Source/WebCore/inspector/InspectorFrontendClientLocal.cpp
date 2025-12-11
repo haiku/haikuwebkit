@@ -41,7 +41,6 @@
 #include "FrameInspectorController.h"
 #include "FrameLoadRequest.h"
 #include "FrameLoader.h"
-#include "InspectorController.h"
 #include "InspectorFrontendHost.h"
 #include "InspectorPageAgent.h"
 #include "LocalFrame.h"
@@ -49,6 +48,7 @@
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "ScriptController.h"
 #include "ScriptSourceCode.h"
 #include "Settings.h"
@@ -80,7 +80,7 @@ static const float minimumAttachedInspectedWidth = 320.0f;
 class InspectorBackendDispatchTask : public RefCounted<InspectorBackendDispatchTask> {
     WTF_MAKE_TZONE_ALLOCATED(InspectorBackendDispatchTask);
 public:
-    static Ref<InspectorBackendDispatchTask> create(InspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
+    static Ref<InspectorBackendDispatchTask> create(PageInspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
     {
         return adoptRef(*new InspectorBackendDispatchTask(inspectedPageController, dispatchTarget));
     }
@@ -100,7 +100,7 @@ public:
     }
 
 private:
-    InspectorBackendDispatchTask(InspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
+    InspectorBackendDispatchTask(PageInspectorController* inspectedPageController, InspectorFrontendClientLocal::DispatchBackendTarget dispatchTarget)
         : m_inspectedPageController(inspectedPageController)
         , m_dispatchTarget(dispatchTarget)
     {
@@ -147,7 +147,7 @@ private:
             scheduleOneShot();
     }
 
-    WeakPtr<InspectorController> m_inspectedPageController;
+    WeakPtr<PageInspectorController> m_inspectedPageController;
     InspectorFrontendClientLocal::DispatchBackendTarget m_dispatchTarget;
     Deque<String> m_messages;
     bool m_hasScheduledTask { false };
@@ -168,7 +168,7 @@ void InspectorFrontendClientLocal::Settings::deleteProperty(const String&)
 {
 }
 
-InspectorFrontendClientLocal::InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings, DispatchBackendTarget dispatchTarget)
+InspectorFrontendClientLocal::InspectorFrontendClientLocal(PageInspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings> settings, DispatchBackendTarget dispatchTarget)
     : m_inspectedPageController(inspectedPageController)
     , m_frontendPage(frontendPage)
     , m_settings(WTFMove(settings))
@@ -274,7 +274,7 @@ void InspectorFrontendClientLocal::setDockingUnavailable(bool unavailable)
     m_frontendAPIDispatcher->dispatchCommandWithResultAsync("setDockingUnavailable"_s, { JSON::Value::create(unavailable) });
 }
 
-RefPtr<InspectorController> InspectorFrontendClientLocal::protectedInspectedPageController() const
+RefPtr<PageInspectorController> InspectorFrontendClientLocal::protectedInspectedPageController() const
 {
     return m_inspectedPageController.get();
 }
@@ -369,8 +369,8 @@ void InspectorFrontendClientLocal::restoreAttachedWindowHeight()
     unsigned preferredHeight = value.isEmpty() ? defaultAttachedHeight : parseIntegerAllowingTrailingJunk<unsigned>(value).value_or(0);
 
     // This call might not go through (if the window starts out detached), but if the window is initially created attached,
-    // InspectorController::attachWindow is never called, so we need to make sure to set the attachedWindowHeight.
-    // FIXME: Clean up code so we only have to call setAttachedWindowHeight in InspectorController::attachWindow
+    // PageInspectorController::attachWindow is never called, so we need to make sure to set the attachedWindowHeight.
+    // FIXME: Clean up code so we only have to call setAttachedWindowHeight in PageInspectorController::attachWindow
     setAttachedWindowHeight(constrainedAttachedWindowHeight(preferredHeight, inspectedPageHeight));
 }
 

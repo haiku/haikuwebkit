@@ -397,26 +397,22 @@ bool CocoaApplication::isDumpRenderTree()
 
 bool CocoaApplication::shouldOSFaultLogForAppleApplicationUsingWebKit1()
 {
-    static bool bundleIdentifierShouldLog;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        bundleIdentifierShouldLog = []() -> bool {
-            if (!isAppleApplication())
-                return false;
+    static bool bundleIdentifierShouldLog = [] {
+        if (!isAppleApplication())
+            return false;
 
-            String bundleIdentifier = applicationBundleIdentifier();
-            if (bundleIdentifier.startsWith("com.apple.InstallerRemotePluginService."_s))
-                return false;
-            if (applicationBundleIsEqualTo("com.apple.WebKit.TestWebKitAPI"_s))
-                return false;
-            if (applicationBundleIsEqualTo("com.apple.ibtool"_s))
-                return false;
-            if (CocoaApplication::isDumpRenderTree())
-                return false;
+        String bundleIdentifier = applicationBundleIdentifier();
+        if (bundleIdentifier.startsWith("com.apple.InstallerRemotePluginService."_s))
+            return false;
+        if (applicationBundleIsEqualTo("com.apple.WebKit.TestWebKitAPI"_s))
+            return false;
+        if (applicationBundleIsEqualTo("com.apple.ibtool"_s))
+            return false;
+        if (CocoaApplication::isDumpRenderTree())
+            return false;
 
-            return true;
-        }();
-    });
+        return true;
+    }();
 
     return bundleIdentifierShouldLog && !((rand() * 1000) % 1000);
 }

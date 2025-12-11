@@ -57,7 +57,7 @@ Inspector::Protocol::Network::FrameId WorkerNetworkAgent::frameIdentifier(Docume
     return { };
 }
 
-Vector<WebSocket*> WorkerNetworkAgent::activeWebSockets()
+Vector<Ref<WebSocket>> WorkerNetworkAgent::activeWebSockets()
 {
     // FIXME: <https://webkit.org/b/168475> Web Inspector: Correctly display worker's WebSockets
     return { };

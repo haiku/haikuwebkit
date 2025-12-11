@@ -30,7 +30,7 @@
 #include "CryptoUtilitiesCocoa.h"
 #include <CommonCrypto/CommonHMAC.h>
 #if HAVE(SWIFT_CPP_INTEROP)
-#include <pal/PALSwiftUtils.h>
+#include <pal/PALSwift.h>
 #endif
 #include <wtf/CryptographicUtilities.h>
 
@@ -41,13 +41,13 @@ static ExceptionOr<Vector<uint8_t>> platformSignCryptoKit(const CryptoKeyHMAC& k
 {
     if (!isValidHashParameter(key.hashAlgorithmIdentifier()))
         return Exception { ExceptionCode::OperationError };
-    return PAL::HMAC::sign(key.key().span(), data.span(), toCKHashFunction(key.hashAlgorithmIdentifier()));
+    return PAL::HMAC::sign(key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
 }
 static ExceptionOr<bool> platformVerifyCryptoKit(const CryptoKeyHMAC& key, const Vector<uint8_t>& signature, const Vector<uint8_t>& data)
 {
     if (!isValidHashParameter(key.hashAlgorithmIdentifier()))
         return Exception { ExceptionCode::OperationError };
-    return PAL::HMAC::verify(signature.span(), key.key().span(), data.span(), toCKHashFunction(key.hashAlgorithmIdentifier()));
+    return PAL::HMAC::verify(signature.span(), key.key().span(), data.span(), std::to_underlying(toCKHashFunction(key.hashAlgorithmIdentifier())));
 }
 
 #else

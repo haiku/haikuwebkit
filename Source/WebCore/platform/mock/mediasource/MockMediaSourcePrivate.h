@@ -75,9 +75,6 @@ private:
     void durationChanged(const MediaTime&) override;
     void markEndOfStream(EndOfStreamStatus) override;
 
-    MediaPlayer::ReadyState mediaPlayerReadyState() const override;
-    void setMediaPlayerReadyState(MediaPlayer::ReadyState) override;
-
     void notifyActiveSourceBuffersChanged() final;
 
     friend class MockSourceBufferPrivate;

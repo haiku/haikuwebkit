@@ -116,6 +116,7 @@ class MediaStreamTrack;
 class MemoryInfo;
 class MessagePort;
 class MockCDMFactory;
+class MockCaptionDisplaySettingsClientCallback;
 class MockContentFilterSettings;
 class MockPageOverlay;
 class MockPaymentCoordinator;
@@ -195,7 +196,7 @@ struct MockWebAuthenticationConfiguration;
 
 class Internals final
     : public RefCounted<Internals>
-    , private ContextDestructionObserver
+    , public ContextDestructionObserver
 #if ENABLE(MEDIA_STREAM)
     , public CanMakeCheckedPtr<Internals>
     , public RealtimeMediaSourceObserver
@@ -210,6 +211,11 @@ class Internals final
 public:
     static Ref<Internals> create(Document&);
     virtual ~Internals();
+
+    // ContextDestructionObserver.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+    USING_CAN_MAKE_WEAKPTR(ContextDestructionObserver);
 
     static void resetToConsistentState(Page&);
 
@@ -321,6 +327,7 @@ public:
     struct AcceleratedAnimation {
         String property;
         double speed;
+        bool isThreaded;
     };
     Vector<AcceleratedAnimation> acceleratedAnimationsForElement(Element&);
     unsigned numberOfAnimationTimelineInvalidations() const;
@@ -840,6 +847,8 @@ public:
     void showCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement&);
     void hideCaptionDisplaySettingsPreviewForMediaElement(HTMLMediaElement&);
 
+    void setMockCaptionDisplaySettingsClientCallback(RefPtr<MockCaptionDisplaySettingsClientCallback>&&);
+    MockCaptionDisplaySettingsClientCallback* mockCaptionDisplaySettingsClientCallback() const;
 #endif
 
     ExceptionOr<Ref<DOMRect>> selectionBounds();
@@ -1465,6 +1474,10 @@ public:
 
     String windowLocationHost(DOMWindow&);
 
+    // Navigation API rate limiter testing
+    void setNavigationRateLimiterParameters(DOMWindow&, unsigned maxNavigations, double windowDurationSeconds);
+    void resetNavigationRateLimiter(DOMWindow&);
+
     ExceptionOr<String> systemColorForCSSValue(const String& cssValue, bool useDarkModeAppearance, bool useElevatedUserInterfaceLevel);
 
     bool systemHasBattery() const;
@@ -1597,7 +1610,7 @@ public:
     bool sendEditingCommandToPDFForTesting(Element&, const String& commandName, const String& argument) const;
     void registerPDFTest(Ref<VoidCallback>&&, Element&);
 
-    const String& defaultSpatialTrackingLabel() const;
+    String defaultSpatialTrackingLabel() const;
 
 #if ENABLE(VIDEO)
     bool isEffectivelyMuted(const HTMLMediaElement&);
@@ -1634,6 +1647,8 @@ public:
     String modelElementState(HTMLModelElement&);
     bool isModelElementIntersectingViewport(HTMLModelElement&);
 #endif
+
+    bool hasMediaSessionManager() const;
 
 private:
     explicit Internals(Document&);
@@ -1686,7 +1701,7 @@ private:
     int m_trackVideoRotation { 0 };
 #endif
 #if ENABLE(MEDIA_SESSION) && ENABLE(WEB_CODECS)
-    std::unique_ptr<ArtworkImageLoader> m_artworkLoader;
+    RefPtr<ArtworkImageLoader> m_artworkLoader;
     std::unique_ptr<ArtworkImagePromise> m_artworkImagePromise;
 #endif
     std::unique_ptr<InspectorStubFrontend> m_inspectorFrontend;
@@ -1708,6 +1723,7 @@ private:
 #endif
 #if ENABLE(VIDEO)
     std::unique_ptr<CaptionUserPreferencesTestingModeToken> m_testingModeToken;
+    RefPtr<MockCaptionDisplaySettingsClientCallback> m_mockCaptionDisplaySettingsClientCallback;
 #endif
 };
 

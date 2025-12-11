@@ -37,6 +37,8 @@
 #include "CSSGridLineNamesValue.h"
 #include "CSSSerializationContext.h"
 #include "CSSStyleDeclaration.h"
+#include "CSSValuePool.h"
+#include "ContainerNodeInlines.h"
 #include "DOMCSSNamespace.h"
 #include "DOMTokenList.h"
 #include "ElementInlines.h"
@@ -50,7 +52,6 @@
 #include "GraphicsContext.h"
 #include "GridArea.h"
 #include "InspectorBackendClient.h"
-#include "InspectorController.h"
 #include "InspectorDOMAgent.h"
 #include "IntPoint.h"
 #include "IntRect.h"
@@ -63,6 +64,7 @@
 #include "NodeRenderStyle.h"
 #include "OrderIterator.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "PseudoElement.h"
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObject.h"
@@ -72,6 +74,7 @@
 #include "RenderInline.h"
 #include "RenderObjectInlines.h"
 #include "Settings.h"
+#include "StyleExtractor.h"
 #include "StyleGridData.h"
 #include "StyleGridTrackSizingDirection.h"
 #include "StyleResolver.h"
@@ -392,7 +395,7 @@ static void drawShapeHighlight(GraphicsContext& context, Node& node, InspectorOv
     context.fillPath(shapePath);
 }
 
-InspectorOverlay::InspectorOverlay(InspectorController& controller, InspectorBackendClient* client)
+InspectorOverlay::InspectorOverlay(PageInspectorController& controller, InspectorBackendClient* client)
     : m_controller(controller)
     , m_client(client)
     , m_paintRectUpdateTimer(*this, &InspectorOverlay::updatePaintRectsTimerFired)
@@ -1434,10 +1437,17 @@ static Vector<String> authoredGridTrackSizes(Node* node, Style::GridTrackSizingD
         }
     }
 
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=301874 add indication for developers that value originally auto
+    if (cssValue && cssValue->hasVariableReferences()) {
+        Style::Extractor extractor(element);
+        auto& style = element->renderer()->style();
+        if (auto computedValue = extractor.propertyValueInStyle(style, directionCSSPropertyID, CSSValuePool::singleton(), nullptr))
+            cssValue = computedValue;
+    }
+
     auto* cssValueList = dynamicDowncast<CSSValueList>(cssValue.get());
     if (!cssValueList)
         return { };
-    
     Vector<String> trackSizes;
     
     auto handleValueIgnoringLineNames = [&](const CSSValue& currentValue) {

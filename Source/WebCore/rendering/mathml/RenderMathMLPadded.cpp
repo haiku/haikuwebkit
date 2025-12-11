@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Igalia S.L. All rights reserved.
+ * Copyright (C) 2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -119,8 +120,10 @@ void RenderMathMLPadded::layoutBlock(RelayoutChildren relayoutChildren, LayoutUn
     LayoutUnit ascent = mpaddedHeight(contentAscent);
     LayoutUnit descent = mpaddedDepth(contentDescent);
 
+    auto inlineShift = style().writingMode().inlineDirection() == FlowDirection::RightToLeft ? -lspace() : lspace();
+
     // Align children on the new baseline and shift them by (lspace, -voffset)
-    shiftInFlowChildren(lspace(), ascent - contentAscent - voffset());
+    shiftInFlowChildren(inlineShift, ascent - contentAscent - voffset());
 
     // Set the final metrics.
     setLogicalWidth(width);

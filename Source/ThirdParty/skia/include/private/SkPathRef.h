@@ -118,7 +118,7 @@ public:
     {
         fBoundsIsDirty = true;    // this also invalidates fIsFinite
         fGenerationID = 0;        // recompute
-        fSegmentMask = segmentMask;
+        fSegmentMask = SkToU8(segmentMask);
         fType = SkPathIsAType::kGeneral;
         SkDEBUGCODE(fEditorsAttached.store(0);)
         if (mx && !mx->isIdentity()) {
@@ -387,7 +387,7 @@ private:
 
     // Return true if the computed bounds are finite.
     static bool ComputePtBounds(SkRect* bounds, const SkPathRef& ref) {
-        return bounds->setBoundsCheck({ref.points(), ref.countPoints()});
+        return bounds->setBoundsCheck(ref.pointSpan());
     }
 
     // called, if dirty, by getBounds()

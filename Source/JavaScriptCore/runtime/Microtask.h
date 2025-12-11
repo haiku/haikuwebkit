@@ -35,10 +35,18 @@ using MicrotaskIdentifier = ObjectIdentifier<MicrotaskIdentifierType>;
 enum class InternalMicrotask : uint16_t {
     PromiseResolveThenableJobFast = 0,
     PromiseResolveThenableJobWithoutPromiseFast,
+    PromiseResolveThenableJobWithInternalMicrotaskFast,
+
     PromiseResolveThenableJob,
+
+    PromiseFirstResolveWithoutHandlerJob,
     PromiseResolveWithoutHandlerJob,
+
     PromiseReactionJob,
     PromiseReactionJobWithoutPromise,
+
+    AsyncFunctionResume,
+
     InvokeFunctionJob,
     Opaque, // Dispatch must handle everything.
 };

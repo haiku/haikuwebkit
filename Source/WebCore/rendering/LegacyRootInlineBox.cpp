@@ -36,7 +36,6 @@
 #include "RenderInline.h"
 #include "RenderLayoutState.h"
 #include "RenderView.h"
-#include "StyleLineBoxContain.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

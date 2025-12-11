@@ -42,7 +42,7 @@ Ref<CStringBuffer> CStringBuffer::createUninitialized(size_t length)
 {
     // The +1 is for the terminating null character.
     size_t size = Checked<size_t>(sizeof(CStringBuffer)) + length + 1U;
-    auto* stringBuffer = static_cast<CStringBuffer*>(CStringBufferMalloc::malloc(size));
+    auto* stringBuffer = CStringBufferMalloc::malloc(size);
 
     Ref buffer = adoptRef(*new (NotNull, stringBuffer) CStringBuffer(length));
     buffer->mutableSpanIncludingNullTerminator()[length] = '\0';
@@ -167,6 +167,32 @@ bool CStringHash::equal(const CString& a, const CString& b)
     if (b.isHashTableDeletedValue())
         return false;
     return a == b;
+}
+
+enum class ASCIICase { Lower, Upper };
+
+template<ASCIICase type>
+CString convertASCIICase(std::span<const char8_t> input)
+{
+    if (input.empty())
+        return CString(""_s);
+
+    std::span<char> characters;
+    auto result = CString::newUninitialized(input.size(), characters);
+    size_t i = 0;
+    for (auto character : input)
+        characters[i++] = type == ASCIICase::Lower ? toASCIILower(character) : toASCIIUpper(character);
+    return result;
+}
+
+CString convertToASCIILowercase(std::span<const char8_t> string)
+{
+    return convertASCIICase<ASCIICase::Lower>(string);
+}
+
+CString convertToASCIIUppercase(std::span<const char8_t> string)
+{
+    return convertASCIICase<ASCIICase::Upper>(string);
 }
 
 } // namespace WTF

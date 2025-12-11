@@ -160,7 +160,7 @@ ExceptionOr<void> GStreamerRtpTransceiverBackend::setCodecPreferences(const Vect
     if (currentCaps && gst_caps_get_size(currentCaps.get()) > 0) {
         auto structure = gst_caps_get_structure(currentCaps.get(), 0);
         if (auto msIdValue = gstStructureGetString(structure, "a-msid"_s))
-            msid = msIdValue.toString();
+            msid = msIdValue.span();
 
         gstStructureForeach(structure, [&](auto id, const auto& value) -> bool {
             auto key = gstIdToString(id);

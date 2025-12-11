@@ -40,20 +40,34 @@
 #include "CompositeOperation.h"
 #include "FontSizeAdjust.h"
 #include "GraphicsTypes.h"
-#include "PositionTryFallback.h"
 #include "RenderStyleConstants.h"
 #include "SVGRenderStyleDefs.h"
 #include "ScrollAxis.h"
 #include "ScrollTypes.h"
+#include "StyleContain.h"
+#include "StyleHangingPunctuation.h"
 #include "StyleImageOrientation.h"
+#include "StyleMarginTrim.h"
+#include "StyleMaskMode.h"
+#include "StylePositionTryFallbackTactic.h"
+#include "StylePositionVisibility.h"
+#include "StyleResize.h"
 #include "StyleScrollBehavior.h"
+#include "StyleScrollbarWidth.h"
+#include "StyleSpeakAs.h"
+#include "StyleTextAlign.h"
+#include "StyleTextAlignLast.h"
 #include "StyleTextDecorationLine.h"
+#include "StyleTextEmphasisPosition.h"
+#include "StyleTextTransform.h"
+#include "StyleTextUnderlinePosition.h"
+#include "StyleTouchAction.h"
+#include "StyleWebKitLineBoxContain.h"
 #include "StyleWebKitOverflowScrolling.h"
 #include "StyleWebKitTouchCallout.h"
 #include "TextFlags.h"
 #include "TextSpacing.h"
 #include "ThemeTypes.h"
-#include "TouchAction.h"
 #include "UnicodeBidi.h"
 #include "WritingMode.h"
 #include <wtf/MathExtras.h>
@@ -261,52 +275,55 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-constexpr CSSValueID toCSSValueID(CompositeOperator e, CSSPropertyID propertyID)
+constexpr CSSValueID toCSSValueID(CompositeOperator e)
 {
-    if (propertyID == CSSPropertyMaskComposite) {
-        switch (e) {
-        case CompositeOperator::SourceOver:
-            return CSSValueAdd;
-        case CompositeOperator::SourceIn:
-            return CSSValueIntersect;
-        case CompositeOperator::SourceOut:
-            return CSSValueSubtract;
-        case CompositeOperator::XOR:
-            return CSSValueExclude;
-        default:
-            break;
-        }
-    } else {
-        switch (e) {
-        case CompositeOperator::Clear:
-            return CSSValueClear;
-        case CompositeOperator::Copy:
-            return CSSValueCopy;
-        case CompositeOperator::SourceOver:
-            return CSSValueSourceOver;
-        case CompositeOperator::SourceIn:
-            return CSSValueSourceIn;
-        case CompositeOperator::SourceOut:
-            return CSSValueSourceOut;
-        case CompositeOperator::SourceAtop:
-            return CSSValueSourceAtop;
-        case CompositeOperator::DestinationOver:
-            return CSSValueDestinationOver;
-        case CompositeOperator::DestinationIn:
-            return CSSValueDestinationIn;
-        case CompositeOperator::DestinationOut:
-            return CSSValueDestinationOut;
-        case CompositeOperator::DestinationAtop:
-            return CSSValueDestinationAtop;
-        case CompositeOperator::XOR:
-            return CSSValueXor;
-        case CompositeOperator::PlusDarker:
-            return CSSValuePlusDarker;
-        case CompositeOperator::PlusLighter:
-            return CSSValuePlusLighter;
-        case CompositeOperator::Difference:
-            break;
-        }
+    switch (e) {
+    case CompositeOperator::SourceOver:
+        return CSSValueAdd;
+    case CompositeOperator::SourceIn:
+        return CSSValueIntersect;
+    case CompositeOperator::SourceOut:
+        return CSSValueSubtract;
+    case CompositeOperator::XOR:
+        return CSSValueExclude;
+    default:
+        break;
+    }
+    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
+    return CSSValueInvalid;
+}
+
+constexpr CSSValueID toCSSValueIDForWebkitMaskComposite(CompositeOperator e)
+{
+    switch (e) {
+    case CompositeOperator::Clear:
+        return CSSValueClear;
+    case CompositeOperator::Copy:
+        return CSSValueCopy;
+    case CompositeOperator::SourceOver:
+        return CSSValueSourceOver;
+    case CompositeOperator::SourceIn:
+        return CSSValueSourceIn;
+    case CompositeOperator::SourceOut:
+        return CSSValueSourceOut;
+    case CompositeOperator::SourceAtop:
+        return CSSValueSourceAtop;
+    case CompositeOperator::DestinationOver:
+        return CSSValueDestinationOver;
+    case CompositeOperator::DestinationIn:
+        return CSSValueDestinationIn;
+    case CompositeOperator::DestinationOut:
+        return CSSValueDestinationOut;
+    case CompositeOperator::DestinationAtop:
+        return CSSValueDestinationAtop;
+    case CompositeOperator::XOR:
+        return CSSValueXor;
+    case CompositeOperator::PlusDarker:
+        return CSSValuePlusDarker;
+    case CompositeOperator::PlusLighter:
+        return CSSValuePlusLighter;
+    case CompositeOperator::Difference:
+        break;
     }
     ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
     return CSSValueInvalid;
@@ -774,10 +791,10 @@ constexpr CSSValueID toCSSValueID(DisplayType e)
         return CSSValueGrid;
     case DisplayType::InlineGrid:
         return CSSValueInlineGrid;
-    case DisplayType::Masonry:
-        return CSSValueMasonry;
-    case DisplayType::InlineMasonry:
-        return CSSValueInlineMasonry;
+    case DisplayType::GridLanes:
+        return CSSValueGridLanes;
+    case DisplayType::InlineGridLanes:
+        return CSSValueInlineGridLanes;
     case DisplayType::None:
         return CSSValueNone;
     case DisplayType::Contents:
@@ -840,10 +857,10 @@ template<> constexpr DisplayType fromCSSValueID(CSSValueID valueID)
         return DisplayType::Grid;
     case CSSValueInlineGrid:
         return DisplayType::InlineGrid;
-    case CSSValueMasonry:
-        return DisplayType::Masonry;
-    case CSSValueInlineMasonry:
-        return DisplayType::InlineMasonry;
+    case CSSValueGridLanes:
+        return DisplayType::GridLanes;
+    case CSSValueInlineGridLanes:
+        return DisplayType::InlineGridLanes;
     case CSSValueNone:
         return DisplayType::None;
     case CSSValueContents:
@@ -919,8 +936,8 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE HangingPunctuation
-#define FOR_EACH(CASE) CASE(First) CASE(Last) CASE(AllowEnd) CASE(ForceEnd)
+#define TYPE Style::HangingPunctuationValue
+#define FOR_EACH(CASE) CASE(First) CASE(ForceEnd) CASE(AllowEnd) CASE(Last)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
@@ -1153,7 +1170,7 @@ template<> constexpr PositionType fromCSSValueID(CSSValueID valueID)
     return PositionType::Static;
 }
 
-#define TYPE Resize
+#define TYPE Style::Resize
 #define FOR_EACH(CASE) CASE(Both) CASE(Horizontal) CASE(Vertical) CASE(Block) CASE(Inline) CASE(None)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
@@ -1165,46 +1182,74 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-constexpr CSSValueID toCSSValueID(TextAlignMode e)
+constexpr CSSValueID toCSSValueID(Style::TextAlign e)
 {
     switch (e) {
-    case TextAlignMode::Start:
+    case Style::TextAlign::Start:
         return CSSValueStart;
-    case TextAlignMode::End:
+    case Style::TextAlign::End:
         return CSSValueEnd;
-    case TextAlignMode::Left:
+    case Style::TextAlign::Left:
         return CSSValueLeft;
-    case TextAlignMode::Right:
+    case Style::TextAlign::Right:
         return CSSValueRight;
-    case TextAlignMode::Center:
+    case Style::TextAlign::Center:
         return CSSValueCenter;
-    case TextAlignMode::Justify:
+    case Style::TextAlign::Justify:
         return CSSValueJustify;
-    case TextAlignMode::WebKitLeft:
+    case Style::TextAlign::WebKitLeft:
         return CSSValueWebkitLeft;
-    case TextAlignMode::WebKitRight:
+    case Style::TextAlign::WebKitRight:
         return CSSValueWebkitRight;
-    case TextAlignMode::WebKitCenter:
+    case Style::TextAlign::WebKitCenter:
         return CSSValueWebkitCenter;
     }
     ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
     return CSSValueInvalid;
 }
 
-template<> constexpr TextAlignMode fromCSSValueID(CSSValueID valueID)
+template<> constexpr Style::TextAlign fromCSSValueID(CSSValueID valueID)
 {
     switch (valueID) {
-    case CSSValueWebkitAuto: // Legacy -webkit-auto. Eqiuvalent to start.
+    case CSSValueWebkitAuto: // Legacy -webkit-auto. Equivalent to start.
     case CSSValueStart:
-        return TextAlignMode::Start;
+        return Style::TextAlign::Start;
     case CSSValueEnd:
-        return TextAlignMode::End;
+        return Style::TextAlign::End;
     default:
-        return static_cast<TextAlignMode>(valueID - CSSValueLeft);
+        return static_cast<Style::TextAlign>(valueID - CSSValueLeft);
     }
 }
 
-#define TYPE TextAlignLast
+template<> struct Style::ValueRepresentation<Style::TextAlign> {
+    template<typename... F> constexpr decltype(auto) operator()(Style::TextAlign value, F&&... f)
+    {
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
+        switch (value) {
+        case Style::TextAlign::Start:
+            return visitor(CSS::Keyword::Start { });
+        case Style::TextAlign::End:
+            return visitor(CSS::Keyword::End { });
+        case Style::TextAlign::Left:
+            return visitor(CSS::Keyword::Left { });
+        case Style::TextAlign::Right:
+            return visitor(CSS::Keyword::Right { });
+        case Style::TextAlign::Center:
+            return visitor(CSS::Keyword::Center { });
+        case Style::TextAlign::Justify:
+            return visitor(CSS::Keyword::Justify { });
+        case Style::TextAlign::WebKitLeft:
+            return visitor(CSS::Keyword::WebkitLeft { });
+        case Style::TextAlign::WebKitRight:
+            return visitor(CSS::Keyword::WebkitRight { });
+        case Style::TextAlign::WebKitCenter:
+            return visitor(CSS::Keyword::WebkitCenter { });
+        }
+        RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
+    }
+};
+
+#define TYPE Style::TextAlignLast
 #define FOR_EACH(CASE) CASE(Start) CASE(End) CASE(Left) CASE(Right) CASE(Center) CASE(Justify) CASE(Auto)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
@@ -1263,6 +1308,18 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
+#define TYPE Style::TextEmphasisPositionValue
+#define FOR_EACH(CASE) CASE(Over) CASE(Under) CASE(Left) CASE(Right)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE Style::TextUnderlinePositionValue
+#define FOR_EACH(CASE) CASE(FromFont) CASE(Under) CASE(Left) CASE(Right)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
 #define TYPE TextSecurity
 #define FOR_EACH(CASE) CASE(None) CASE(Disc) CASE(Circle) CASE(Square)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
@@ -1275,8 +1332,8 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE TextTransform
-#define FOR_EACH(CASE) CASE(Capitalize) CASE(Uppercase) CASE(Lowercase) CASE(FullSizeKana) CASE(FullWidth) CASE(MathAuto)
+#define TYPE Style::TextTransformValue
+#define FOR_EACH(CASE) CASE(Capitalize) CASE(Uppercase) CASE(Lowercase) CASE(FullWidth) CASE(FullSizeKana) CASE(MathAuto)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
@@ -1799,7 +1856,7 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE SpeakAs
+#define TYPE Style::SpeakAsValue
 #define FOR_EACH(CASE) CASE(SpellOut) CASE(Digits) CASE(LiteralPunctuation) CASE(NoPunctuation)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
@@ -2233,8 +2290,8 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE TouchAction
-#define FOR_EACH(CASE) CASE(Auto) CASE(Manipulation) CASE(None) CASE(PanX) CASE(PanY) CASE(PinchZoom)
+#define TYPE Style::TouchActionValue
+#define FOR_EACH(CASE) CASE(PanX) CASE(PanY) CASE(PinchZoom)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
@@ -2295,7 +2352,7 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE ScrollbarWidth
+#define TYPE Style::ScrollbarWidth
 #define FOR_EACH(CASE) CASE(Auto) CASE(Thin) CASE(None)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
@@ -2520,13 +2577,13 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE PositionVisibility
+#define TYPE Style::PositionVisibilityValue
 #define FOR_EACH(CASE) CASE(AnchorsValid) CASE(AnchorsVisible) CASE(NoOverflow)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
 
-#define TYPE Style::PositionTryFallback::Tactic
+#define TYPE Style::PositionTryFallbackTactic
 #define FOR_EACH(CASE) CASE(FlipBlock) CASE(FlipInline) CASE(FlipStart) CASE(FlipX) CASE(FlipY)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
@@ -2603,6 +2660,44 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
+
+#define TYPE Style::MarginTrimSide
+#define FOR_EACH(CASE) CASE(BlockStart) CASE(InlineStart) CASE(BlockEnd) CASE(InlineEnd)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE Style::WebkitLineBoxContainValue
+#define FOR_EACH(CASE) CASE(Block) CASE(Inline) CASE(Font) CASE(Glyphs) CASE(Replaced) CASE(InlineBox) CASE(InitialLetter)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE Style::ContainValue
+#define FOR_EACH(CASE) CASE(Size) CASE(InlineSize) CASE(Layout) CASE(Style) CASE(Paint)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+#define TYPE Style::MaskMode
+#define FOR_EACH(CASE) CASE(Alpha) CASE(Luminance) CASE(MatchSource)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+constexpr CSSValueID toCSSValueIDForWebkitMaskSourceType(Style::MaskMode e)
+{
+    switch (e) {
+    case Style::MaskMode::Alpha:
+        return CSSValueAlpha;
+    case Style::MaskMode::Luminance:
+        return CSSValueLuminance;
+    case Style::MaskMode::MatchSource:
+        return CSSValueAlpha;
+    }
+    ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
+    return CSSValueInvalid;
+}
 
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
 

@@ -1,7 +1,7 @@
 This directory contains a copy of Skia from the official repository.
 
   - URL: https://skia.googlesource.com/skia
-  - Commit: 06243224ecf02b13a81d94652ad03ef57094611c
+  - Commit: b30859d35b89d6d476223a5f5ef772d8fd65e57b
 
 The simplest way of updating its contents is to re-create the directory
 from scratch, and restoring the needed files with Git. Example commands:

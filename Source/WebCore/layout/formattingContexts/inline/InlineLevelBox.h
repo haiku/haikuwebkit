@@ -34,6 +34,7 @@
 #include <WebCore/StyleLineHeight.h>
 #include <WebCore/StylePrimitiveNumericTypes+Evaluation.h>
 #include <WebCore/StyleTextBoxEdge.h>
+#include <WebCore/StyleWebKitLineBoxContain.h>
 #include <WebCore/StyleZoomPrimitives.h>
 #include <wtf/OptionSet.h>
 
@@ -171,7 +172,7 @@ private:
         WebCore::Style::TextBoxEdge textBoxEdge;
         WebCore::Style::LineFitEdge lineFitEdge;
         WebCore::Style::ZoomFactor zoomFactor { 1.0f, 1.0f };
-        OptionSet<WebCore::Style::LineBoxContain> lineBoxContain;
+        WebCore::Style::WebkitLineBoxContain lineBoxContain;
         InlineLayoutUnit primaryFontSize { 0 };
         VerticalAlignment verticalAlignment { };
     };

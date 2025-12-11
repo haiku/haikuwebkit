@@ -25,6 +25,8 @@
 
 #import "config.h"
 
+#if ENABLE(TEXT_EXTRACTION)
+
 #import "PlatformUtilities.h"
 #import "Test.h"
 #import "TestWKWebView.h"
@@ -37,6 +39,7 @@
 
 @interface WKWebView (TextExtractionTests)
 - (NSString *)synchronouslyGetDebugText:(_WKTextExtractionConfiguration *)configuration;
+- (_WKTextExtractionResult *)synchronouslyExtractDebugTextResult:(_WKTextExtractionConfiguration *)configuration;
 - (_WKTextExtractionInteractionResult *)synchronouslyPerformInteraction:(_WKTextExtractionInteraction *)interaction;
 @end
 
@@ -48,14 +51,19 @@
 
 - (NSString *)synchronouslyGetDebugText:(_WKTextExtractionConfiguration *)configuration
 {
+    return [[self synchronouslyExtractDebugTextResult:configuration] textContent];
+}
+
+- (_WKTextExtractionResult *)synchronouslyExtractDebugTextResult:(_WKTextExtractionConfiguration *)configuration
+{
     RetainPtr configurationToUse = configuration;
     if (!configurationToUse)
         configurationToUse = adoptNS([_WKTextExtractionConfiguration new]);
 
     __block bool done = false;
-    __block RetainPtr<NSString> result;
-    [self _debugTextWithConfiguration:configurationToUse.get() completionHandler:^(NSString *text) {
-        result = text;
+    __block RetainPtr<_WKTextExtractionResult> result;
+    [self _extractDebugTextWithConfiguration:configurationToUse.get() completionHandler:^(_WKTextExtractionResult *extractionResult) {
+        result = extractionResult;
         done = true;
     }];
     TestWebKitAPI::Util::run(&done);
@@ -315,4 +323,45 @@ TEST(TextExtractionTests, VisibleTextOnly)
 #endif // ENABLE(TEXT_EXTRACTION_FILTER)
 }
 
+TEST(TextExtractionTests, FilterOptions)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:^{
+        RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+        [[configuration preferences] _setTextExtractionEnabled:YES];
+        return configuration.autorelease();
+    }()]);
+    [webView synchronouslyLoadTestPageNamed:@"debug-text-extraction"];
+
+    auto extractTextWithFilterOptions = [webView](_WKTextExtractionFilterOptions options) {
+        return [webView synchronouslyExtractDebugTextResult:^{
+            RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+            [configuration setFilterOptions:options];
+            return configuration.autorelease();
+        }()];
+    };
+
+    {
+        RetainPtr result = extractTextWithFilterOptions(_WKTextExtractionFilterNone);
+        EXPECT_TRUE([[result textContent] containsString:@"“The quick brown fox jumped over the lazy dog”"]);
+        EXPECT_TRUE([[result textContent] containsString:@"Here’s to the crazy ones"]);
+        EXPECT_FALSE([result filteredOutAnyText]);
+    }
+    {
+        RetainPtr result = extractTextWithFilterOptions(_WKTextExtractionFilterTextRecognition);
+        EXPECT_TRUE([[result textContent] containsString:@"“The quick brown fox jumped over the lazy dog”"]);
+#if ENABLE(TEXT_EXTRACTION_FILTER)
+        EXPECT_FALSE([[result textContent] containsString:@"Here’s to the crazy ones"]);
+        EXPECT_TRUE([result filteredOutAnyText]);
+#endif
+    }
+    {
+        RetainPtr result = extractTextWithFilterOptions(_WKTextExtractionFilterClassifier);
+        EXPECT_TRUE([[result textContent] containsString:@"“The quick brown fox jumped over the lazy dog”"]);
+        EXPECT_TRUE([[result textContent] containsString:@"Here’s to the crazy ones"]);
+        EXPECT_FALSE([result filteredOutAnyText]);
+    }
+}
+
 } // namespace TestWebKitAPI
+
+#endif // ENABLE(TEXT_EXTRACTION)

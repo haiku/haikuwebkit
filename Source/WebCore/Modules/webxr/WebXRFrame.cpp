@@ -32,10 +32,12 @@
 #include "ExceptionOr.h"
 #include "WebXRBoundedReferenceSpace.h"
 #include "WebXRHitTestSource.h"
+#include "WebXRInputSource.h"
 #include "WebXRJointPose.h"
 #include "WebXRJointSpace.h"
 #include "WebXRReferenceSpace.h"
 #include "WebXRSession.h"
+#include "WebXRTransientInputHitTestSource.h"
 #include "WebXRViewerPose.h"
 #include <JavaScriptCore/GenericTypedArrayViewInlines.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -101,11 +103,6 @@ bool WebXRFrame::mustPosesBeLimited(const WebXRSpace& space, const WebXRSpace& b
 
     return false;
 }
-
-struct WebXRFrame::PopulatedPose {
-    TransformationMatrix transform;
-    bool emulatedPosition { false };
-};
 
 // https://immersive-web.github.io/webxr/#populate-the-pose
 ExceptionOr<std::optional<WebXRFrame::PopulatedPose>> WebXRFrame::populatePose(const Document& document, const WebXRSpace& space, const WebXRSpace& baseSpace)
@@ -409,9 +406,28 @@ ExceptionOr<Vector<Ref<WebXRHitTestResult>>> WebXRFrame::getHitTestResults(const
 }
 
 // https://immersive-web.github.io/hit-test/#dom-xrframe-gethittestresultsfortransientinput
-ExceptionOr<Vector<Ref<WebXRTransientInputHitTestResult>>> WebXRFrame::getHitTestResultsForTransientInput(const WebXRTransientInputHitTestSource&)
+ExceptionOr<Vector<Ref<WebXRTransientInputHitTestResult>>> WebXRFrame::getHitTestResultsForTransientInput(const WebXRTransientInputHitTestSource& source)
 {
-    Vector<Ref<WebXRTransientInputHitTestResult>> results;
+    if (!m_active)
+        return Exception { ExceptionCode::InvalidStateError, "Frame is not active"_s };
+    if (!source.handle())
+        return Exception { ExceptionCode::InvalidStateError, "Transient input hit test source is already cancelled"_s };
+
+    auto& platformResultsHash = m_session->frameData().transientInputHitTestResults;
+    auto platformResults = platformResultsHash.find(*source.handle());
+    if (platformResults == platformResultsHash.end())
+        return Exception { ExceptionCode::InvalidStateError, "Unable to obtain transient input hit test results for specified transient input hit test source."_s };
+
+    Vector<Ref<WebXRTransientInputHitTestResult>> results(platformResults->value.size());
+    for (auto& platformResult : platformResults->value) {
+        RefPtr inputSource = m_session->inputSources().itemByHandle(platformResult.inputSource);
+        if (!inputSource)
+            continue;
+        Vector<Ref<WebXRHitTestResult>> hitTestResults(platformResult.results.size());
+        for (auto platformHitTestResult : platformResult.results)
+            hitTestResults.append(WebXRHitTestResult::create(*this, platformHitTestResult));
+        results.append(WebXRTransientInputHitTestResult::create(inputSource.releaseNonNull(), WTFMove(hitTestResults)));
+    }
     return results;
 }
 #endif

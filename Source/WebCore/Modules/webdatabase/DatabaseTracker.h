@@ -39,6 +39,7 @@
 #include <wtf/Platform.h>
 #include <wtf/RobinHoodHashSet.h>
 #include <wtf/TZoneMalloc.h>
+#include <wtf/ThreadSafeWeakHashSet.h>
 #include <wtf/WallTime.h>
 #include <wtf/text/StringHash.h>
 
@@ -162,7 +163,7 @@ private:
 
     void deleteOriginLockFor(const SecurityOriginData&) WTF_REQUIRES_LOCK(m_databaseGuard);
 
-    using DatabaseSet = HashSet<Database*>;
+    using DatabaseSet = ThreadSafeWeakHashSet<Database>;
     using DatabaseNameMap = HashMap<String, DatabaseSet>;
     using DatabaseOriginMap = HashMap<SecurityOriginData, DatabaseNameMap>;
 

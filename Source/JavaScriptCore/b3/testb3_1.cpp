@@ -135,7 +135,7 @@ void testRotLWithImmShift(T valueInt, int32_t shift)
 template<typename T>
 void testComputeDivisionMagic(T value, T magicMultiplier, unsigned shift)
 {
-    DivisionMagic<T> magic = computeDivisionMagic(value);
+    DivisionMagic<T> magic = computeSignedDivisionMagic(value);
     CHECK_EQ(magic.magicMultiplier, magicMultiplier);
     CHECK_EQ(magic.shift, shift);
 }

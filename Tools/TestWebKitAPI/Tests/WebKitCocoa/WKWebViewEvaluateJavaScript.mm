@@ -1162,3 +1162,91 @@ TEST(WKWebView, LegacySynchronousMessages)
     [webView loadHTMLString:@"<script>alert(window.webkit.messageHandlers.testHandler.postLegacySynchronousMessage('hello!'))</script>" baseURL:nil];
     EXPECT_WK_STREQ([webView _test_waitForAlert], "UI process received: hello!");
 }
+
+// Serialization of JavaScript objects using the old SerializedScriptValue code path
+// had a supported object depth of 40,000.
+// The new JSExtractor code path - when working recursively - blew out the stack well before 40,000.
+// This test validates that its iterative refactoring works at 40,000 deep.
+static constexpr auto deepObjectJS = R"SERIALIZEJS(
+window.deepObject = {
+    foo: "bar"
+};
+
+var currentObject = window.deepObject;
+
+for (var i = 0; i < 40000; ++i) {
+    currentObject.baz = {
+        foo: "bar"
+    }
+    currentObject = currentObject.baz
+}
+
+return 1;
+)SERIALIZEJS"_s;
+
+// Verify that an array with some serializable values, but some unserializable,
+// comes out as complete as possible in the UI process.
+static constexpr auto unserializableArrayJS = R"SERIALIZEJS(
+window.arrayObject = [1, 2, 3, 4, 5, 6];
+window.arrayObject[0] = window;
+
+return 1;
+)SERIALIZEJS"_s;
+
+// Verify that an object with some serializable values, and some unserializable,
+// comes out as complete as possible in the UI process.
+static constexpr auto unserializableObjectJS = R"SERIALIZEJS(
+window.objectObject = {
+    foo: "bar",
+    bar: 17,
+    baz: window
+};
+
+return 1;
+)SERIALIZEJS"_s;
+
+TEST(EvaluateJavaScript, Serialization)
+{
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+
+    id result = [webView objectByCallingAsyncFunction:[NSString stringWithUTF8String:deepObjectJS] withArguments:nil];
+    EXPECT_TRUE([result isEqual:@1]);
+    result = [webView objectByCallingAsyncFunction:[NSString stringWithUTF8String:unserializableArrayJS] withArguments:nil];
+    EXPECT_TRUE([result isEqual:@1]);
+    result = [webView objectByCallingAsyncFunction:[NSString stringWithUTF8String:unserializableObjectJS] withArguments:nil];
+    EXPECT_TRUE([result isEqual:@1]);
+
+    // The full deepObject is 40,001 nesting levels deep, which should not be able to serialize.
+    NSError *error = nil;
+    result = [webView objectByCallingAsyncFunction:@"return window.deepObject" withArguments:nil error:&error];
+    EXPECT_TRUE(!!error);
+
+    // Returning an object 40,000 nesting levels deep should succeed.
+    error = nil;
+    result = [webView objectByCallingAsyncFunction:@"return window.deepObject.baz" withArguments:nil error:&error];
+    EXPECT_NULL(error);
+
+    size_t depth = 0;
+    NSDictionary *nextDictionary = (NSDictionary *)result;
+    while (nextDictionary) {
+        nextDictionary = (NSDictionary *)nextDictionary[@"baz"];
+        ++depth;
+    }
+    EXPECT_EQ(depth, 40000u);
+
+    // One of the array members is not serializable, so it should be missing from the result.
+    result = [webView objectByCallingAsyncFunction:@"return window.arrayObject" withArguments:nil error:&error];
+    EXPECT_NULL(error);
+    NSArray *expectedArray = @[ @2, @3, @4, @5, @6 ];
+    EXPECT_TRUE([result isEqual:expectedArray]);
+
+    // One of the object values is not serializable, so it should be missing from the result.
+    result = [webView objectByCallingAsyncFunction:@"return window.objectObject" withArguments:nil error:&error];
+    EXPECT_NULL(error);
+    NSDictionary *expectedDictionary = @{
+        @"bar" : @17,
+        @"foo" : @"bar"
+    };
+    EXPECT_TRUE([result isEqual:expectedDictionary]);
+}
+

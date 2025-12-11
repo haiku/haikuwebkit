@@ -303,6 +303,37 @@ void PlatformXRSystem::deleteHitTestSource(PlatformXR::HitTestSource source)
     if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
         xrCoordinator->deleteHitTestSource(*page, source);
 }
+
+void PlatformXRSystem::requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions& hitTestOptions, CompletionHandler<void(Expected<PlatformXR::TransientInputHitTestSource, WebCore::ExceptionData>)>&& passedCompletionHandler)
+{
+    auto completionHandler = [passedCompletionHandler = WTFMove(passedCompletionHandler)](WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource> exceptionOrValue) mutable {
+        if (exceptionOrValue.hasException()) {
+            auto exception = exceptionOrValue.releaseException();
+            passedCompletionHandler(makeUnexpected(WebCore::ExceptionData { exception.code(), exception.releaseMessage() }));
+        } else
+            passedCompletionHandler(exceptionOrValue.releaseReturnValue());
+    };
+    RefPtr page = m_page.get();
+    if (!page) {
+        completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
+        return;
+    }
+    auto* xrCoordinator = PlatformXRSystem::xrCoordinator();
+    if (!xrCoordinator) {
+        completionHandler(WebCore::Exception { WebCore::ExceptionCode::InvalidStateError });
+        return;
+    }
+    xrCoordinator->requestTransientInputHitTestSource(*page, hitTestOptions, WTFMove(completionHandler));
+}
+
+void PlatformXRSystem::deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource source)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
+        xrCoordinator->deleteTransientInputHitTestSource(*page, source);
+}
 #endif
 
 void PlatformXRSystem::didCompleteShutdownTriggeredBySystem(IPC::Connection& connection)

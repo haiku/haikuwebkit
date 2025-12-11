@@ -99,9 +99,10 @@ bool HTMLFormControlElement::formNoValidate() const
 String HTMLFormControlElement::formAction() const
 {
     const AtomString& value = attributeWithoutSynchronization(formactionAttr);
+    Ref document = this->document();
     if (value.isEmpty())
-        return document().url().string();
-    return document().completeURL(value).string();
+        return document->url().string();
+    return document->completeURL(value).string();
 }
 
 Node::InsertedIntoAncestorResult HTMLFormControlElement::insertedIntoAncestor(InsertionType insertionType, ContainerNode& parentOfInsertedTree)
@@ -157,8 +158,8 @@ void HTMLFormControlElement::finishParsingChildren()
 void HTMLFormControlElement::disabledStateChanged()
 {
     ValidatedFormListedElement::disabledStateChanged();
-    if (renderer() && renderer()->style().hasUsedAppearance())
-        renderer()->repaint();
+    if (CheckedPtr renderer = this->renderer(); renderer && renderer->style().hasUsedAppearance())
+        renderer->repaint();
 }
 
 void HTMLFormControlElement::readOnlyStateChanged()
@@ -180,8 +181,8 @@ void HTMLFormControlElement::didAttachRenderers()
     // The call to updateFromElement() needs to go after the call through
     // to the base class's attach() because that can sometimes do a close
     // on the renderer.
-    if (renderer())
-        renderer()->updateFromElement();
+    if (CheckedPtr renderer = this->renderer())
+        renderer->updateFromElement();
 }
 
 void HTMLFormControlElement::setChangedSinceLastFormControlChangeEvent(bool changed)
@@ -219,7 +220,7 @@ void HTMLFormControlElement::didRecalcStyle(OptionSet<Style::Change>)
     if (renderer()) {
         RefPtr<HTMLFormControlElement> element = this;
         Style::deprecatedQueuePostResolutionCallback([element] {
-            if (auto* renderer = element->renderer())
+            if (CheckedPtr renderer = element->renderer())
                 renderer->updateFromElement();
         });
     }
@@ -240,7 +241,7 @@ bool HTMLFormControlElement::isMouseFocusable() const
     return HTMLElement::isMouseFocusable();
 #else
     // FIXME: We should remove the quirk once <rdar://problem/47334655> is fixed.
-    if (!!tabIndexSetExplicitly() || document().quirks().needsFormControlToBeMouseFocusable())
+    if (!!tabIndexSetExplicitly() || protectedDocument()->quirks().needsFormControlToBeMouseFocusable())
         return HTMLElement::isMouseFocusable();
     return false;
 #endif

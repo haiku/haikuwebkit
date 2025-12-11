@@ -47,7 +47,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(SQLiteIDBCursor);
 
 std::unique_ptr<SQLiteIDBCursor> SQLiteIDBCursor::maybeCreate(SQLiteIDBTransaction& transaction, const IDBCursorInfo& info)
 {
-    auto cursor = makeUnique<SQLiteIDBCursor>(transaction, info);
+    auto cursor = makeUniqueRef<SQLiteIDBCursor>(transaction, info);
 
     if (!cursor->establishStatement())
         return nullptr;
@@ -55,12 +55,12 @@ std::unique_ptr<SQLiteIDBCursor> SQLiteIDBCursor::maybeCreate(SQLiteIDBTransacti
     if (!cursor->advance(1))
         return nullptr;
 
-    return cursor;
+    return cursor.moveToUniquePtr();
 }
 
 std::unique_ptr<SQLiteIDBCursor> SQLiteIDBCursor::maybeCreateBackingStoreCursor(SQLiteIDBTransaction& transaction, IDBObjectStoreIdentifier objectStoreID, std::optional<IDBIndexIdentifier> indexID, const IDBKeyRangeData& range)
 {
-    auto cursor = makeUnique<SQLiteIDBCursor>(transaction, objectStoreID, indexID, range);
+    auto cursor = makeUniqueRef<SQLiteIDBCursor>(transaction, objectStoreID, indexID, range);
 
     if (!cursor->establishStatement())
         return nullptr;
@@ -68,7 +68,7 @@ std::unique_ptr<SQLiteIDBCursor> SQLiteIDBCursor::maybeCreateBackingStoreCursor(
     if (!cursor->advance(1))
         return nullptr;
 
-    return cursor;
+    return cursor.moveToUniquePtr();
 }
 
 SQLiteIDBCursor::SQLiteIDBCursor(SQLiteIDBTransaction& transaction, const IDBCursorInfo& info)

@@ -1128,22 +1128,24 @@ static bool readyForClick;
 
 @end
 
-#if PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
-TEST(WebKit, DISABLED_ClickAutoFillButton)
-#else
 TEST(WebKit, ClickAutoFillButton)
-#endif
 {
-    WKWebViewConfiguration *configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"ClickAutoFillButton"];
+    RetainPtr configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"ClickAutoFillButton" configureJSCForTesting:YES];
 
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration]);
-    auto delegate = adoptNS([[AutoFillDelegate alloc] init]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+    RetainPtr delegate = adoptNS([[AutoFillDelegate alloc] init]);
     [webView setUIDelegate:delegate.get()];
-    [webView evaluateJavaScript:@"" completionHandler: nil]; // Ensure the WebProcess and injected bundle are running.
+
+    [webView synchronouslyLoadHTMLString:@""];
+
     TestWebKitAPI::Util::run(&readyForClick);
-    NSPoint buttonLocation = NSMakePoint(130, 577);
-    [webView mouseDownAtPoint:buttonLocation simulatePressure:NO];
-    [webView mouseUpAtPoint:buttonLocation];
+
+    RetainPtr<NSDictionary> jsRect = [webView objectByEvaluatingJavaScript:@"internals.shadowRoot(document.querySelector('input')).querySelector('[useragentpart=\\'-webkit-contacts-auto-fill-button\\']').getBoundingClientRect().toJSON()"];
+    NSRect rect = NSMakeRect([jsRect.get()[@"left"] floatValue], [jsRect.get()[@"top"] floatValue], [jsRect.get()[@"width"] floatValue], [jsRect.get()[@"height"] floatValue]);
+
+    NSPoint buttonLocation = NSMakePoint(rect.origin.x + rect.size.width / 2, [webView frame].size.height - (rect.origin.y + rect.size.height / 2));
+    [webView sendClickAtPoint:buttonLocation];
+
     TestWebKitAPI::Util::run(&done);
 }
 

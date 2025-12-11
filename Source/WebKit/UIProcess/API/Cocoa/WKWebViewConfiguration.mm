@@ -782,16 +782,6 @@ static NSString *defaultApplicationNameForUserAgent()
     [self setShowsSystemScreenTimeBlockingView:shows];
 }
 
-- (void)_setOverrideReferrerForAllRequests:(NSString *)referrer
-{
-    _pageConfiguration->setOverrideReferrerForAllRequests(referrer);
-}
-
-- (NSString *)_overrideReferrerForAllRequests
-{
-    return _pageConfiguration->overrideReferrerForAllRequests().createNSString().autorelease();
-}
-
 - (void)_setShouldSendConsoleLogsToUIProcessForTesting:(BOOL)should
 {
     _pageConfiguration->setShouldSendConsoleLogsToUIProcessForTesting(should);

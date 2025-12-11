@@ -225,11 +225,9 @@ Ref<WebBackForwardListFrameItem> WebBackForwardListItem::protectedMainFrameItem(
     return m_mainFrameItem;
 }
 
-#if !LOG_DISABLED
 String WebBackForwardListItem::loggingString()
 {
     return m_mainFrameItem->loggingString();
 }
-#endif // !LOG_DISABLED
 
 } // namespace WebKit

@@ -527,14 +527,6 @@ public:
     PartialResult WARN_UNUSED_RETURN addUnreachable();
     PartialResult WARN_UNUSED_RETURN addCrash();
 
-    inline void assertAboutStackSize(bool condition)
-    {
-        // There's a few cases that we only want to assert our stack contents if SIMD isn't enabled.
-        // When !useWasmIPIntSIMD, we don't update the stack size correctly, but this is
-        // not an issue because the code never gets run.
-        ASSERT_UNUSED(condition, (m_usesSIMD && !Options::useWasmIPIntSIMD()) || condition);
-    }
-
     void setParser(FunctionParser<IPIntGenerator>* parser) { m_parser = parser; };
     size_t getCurrentInstructionLength()
     {
@@ -552,7 +544,7 @@ public:
     void didParseOpcode()
     {
         if (!m_parser->unreachableBlocks()) {
-            assertAboutStackSize(m_parser->getStackHeightInValues() == m_stackSize.value());
+            ASSERT(m_parser->getStackHeightInValues() == m_stackSize.value());
             if (Options::enableWasmDebugger()) [[unlikely]] {
                 if (m_debugInfo) {
                     OpType currentOpcode = m_parser->currentOpcode();
@@ -620,7 +612,7 @@ public:
         return m_cachedCallInformation;
     }
 
-    static bool tierSupportsSIMD() { return Options::useWasmIPIntSIMD(); }
+    static constexpr bool tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = true;
 
 private:
@@ -818,7 +810,12 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDV_VV(SIMDLaneOperation, 
     changeStackSize(-1); // Pop two v128 values, push one v128 value
     return { };
 }
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDRelaxedFMA(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType, ExpressionType&) IPINT_UNIMPLEMENTED
+
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::addSIMDRelaxedFMA(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType, ExpressionType&)
+{
+    changeStackSize(-2); // Pop three v128 values, push one v128 value
+    return { };
+}
 
 // References
 
@@ -2252,7 +2249,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addLoop(BlockSignature signatur
     m_metadata->appendMetadata(md);
 
     // Loop OSR
-    assertAboutStackSize(m_parser->getStackHeightInValues() + newStack.size() == m_stackSize.value());
+    ASSERT(m_parser->getStackHeightInValues() + newStack.size() == m_stackSize.value());
     unsigned numOSREntryDataValues = m_stackSize.value();
 
     // Note the +1: we do this to avoid having 0 as a key in the map, since the current map can't handle 0 as a key
@@ -2445,7 +2442,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCatchToUnreachable(unsigned 
     for (unsigned i = 0; i < signature.argumentCount(); i++)
         results.append(Value { });
 
-    assertAboutStackSize(block.stackSize() == m_parser->getControlEntryStackHeightInValues());
+    ASSERT(block.stackSize() == m_parser->getControlEntryStackHeightInValues());
     m_stackSize = block.stackSize();
     changeStackSize(signature.argumentCount());
 
@@ -2485,7 +2482,7 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::addCatchAllToUnreachable(Contro
     else
         block.m_catchKind = CatchKind::CatchAll;
 
-    assertAboutStackSize(block.stackSize() == m_parser->getControlEntryStackHeightInValues());
+    ASSERT(block.stackSize() == m_parser->getControlEntryStackHeightInValues());
     m_stackSize = block.stackSize();
 
     // FIXME: If this is actually unreachable we shouldn't need metadata.

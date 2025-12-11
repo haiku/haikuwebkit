@@ -63,29 +63,42 @@ TEST(WTF, CStringViewNullAndEmpty)
     EXPECT_TRUE(string);
 }
 
-TEST(WTF, CStringViewLength)
+TEST(WTF, CStringViewSize)
 {
     CStringView string;
-    EXPECT_EQ(string.length(), static_cast<size_t>(0));
-    EXPECT_EQ(string.span8().size(), static_cast<size_t>(0));
+    EXPECT_EQ(string.lengthInBytes(), 0UZ);
+    EXPECT_EQ(string.span().size(), 0UZ);
+    EXPECT_EQ(string.spanIncludingNullTerminator().size(), 0UZ);
 
     string = CStringView("test"_s);
-    EXPECT_EQ(string.length(), static_cast<size_t>(4));
-    EXPECT_EQ(string.span8().size(), static_cast<size_t>(4));
+    EXPECT_EQ(string.lengthInBytes(), 4UZ);
+    EXPECT_EQ(string.span().size(), 4UZ);
+    EXPECT_EQ(string.spanIncludingNullTerminator().size(), 5UZ);
+
+    string = CStringView::unsafeFromUTF8("water🍉melon");
+    EXPECT_EQ(string.lengthInBytes(), 14UZ);
+    EXPECT_EQ(string.span().size(), 14UZ);
+    EXPECT_EQ(string.spanIncludingNullTerminator().size(), 15UZ);
 }
 
 TEST(WTF, CStringViewFrom)
 {
     const char* stringPtr = "test";
     CStringView string = CStringView::unsafeFromUTF8(stringPtr);
-    EXPECT_EQ(string.length(), static_cast<size_t>(4));
+    EXPECT_EQ(string.lengthInBytes(), 4UZ);
     EXPECT_TRUE(string);
     EXPECT_EQ(string.utf8(), stringPtr);
 
     stringPtr = "";
     string = CStringView::unsafeFromUTF8(stringPtr);
-    EXPECT_EQ(string.length(), static_cast<size_t>(0));
+    EXPECT_EQ(string.lengthInBytes(), 0UZ);
     EXPECT_FALSE(string);
+    EXPECT_EQ(string.utf8(), stringPtr);
+
+    stringPtr = "water🍉melon";
+    string = CStringView::unsafeFromUTF8(stringPtr);
+    EXPECT_EQ(string.lengthInBytes(), 14UZ);
+    EXPECT_TRUE(string);
     EXPECT_EQ(string.utf8(), stringPtr);
 }
 
@@ -101,6 +114,14 @@ TEST(WTF, CStringViewEquality)
     EXPECT_EQ(string, sameString);
     EXPECT_TRUE(string != anotherString);
     EXPECT_EQ(emptyString, nullString);
+
+    char* bareEmptyString = strdup("");
+    char* bareEmptyString2 = strdup("");
+    emptyString = CStringView::unsafeFromUTF8(bareEmptyString);
+    auto emptyString2 = CStringView::unsafeFromUTF8(bareEmptyString2);
+    EXPECT_EQ(emptyString, emptyString2);
+    free(bareEmptyString);
+    free(bareEmptyString2);
 }
 
 } // namespace TestWebKitAPI

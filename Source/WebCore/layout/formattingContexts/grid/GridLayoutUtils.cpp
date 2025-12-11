@@ -51,10 +51,15 @@ LayoutUnit usedBlockSizeForGridItem(const PlacedGridItem& placedGridItem)
 }
 
 
-LayoutUnit computeTrackSizesBefore(size_t trackIndex, const TrackSizes& trackSizes)
+LayoutUnit computeGridLinePosition(size_t gridLineIndex, const TrackSizes& trackSizes, LayoutUnit gap)
 {
-    auto trackSizesBefore = trackSizes.subspan(0, trackIndex);
-    return std::reduce(trackSizesBefore.begin(), trackSizesBefore.end());
+    auto trackSizesBefore = trackSizes.subspan(0, gridLineIndex);
+    auto sumOfTrackSizes = std::reduce(trackSizesBefore.begin(), trackSizesBefore.end());
+
+    // For grid line i, there are i-1 gaps before it (between the i tracks)
+    auto numberOfGaps = gridLineIndex > 0 ? gridLineIndex - 1 : 0;
+
+    return sumOfTrackSizes + (numberOfGaps * gap);
 }
 
 }

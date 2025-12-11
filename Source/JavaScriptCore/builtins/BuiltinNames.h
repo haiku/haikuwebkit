@@ -85,6 +85,7 @@ namespace JSC {
     macro(rejectPromiseWithFirstResolvingFunctionCallCheck) \
     macro(fulfillPromiseWithFirstResolvingFunctionCallCheck) \
     macro(resolveWithoutPromiseForAsyncAwait) \
+    macro(driveAsyncFunction) \
     macro(awaitValue) \
     macro(newHandledRejectedPromise) \
     macro(promiseOnRejectedWithContext) \
@@ -212,7 +213,7 @@ namespace JSC {
     macro(sentinelString) \
     macro(createRemoteFunction) \
     macro(isRemoteFunction) \
-    macro(arrayFromFastFillWithUndefined) \
+    macro(arrayFromFastWithoutMapFn) \
     macro(jsonParse) \
     macro(jsonStringify) \
     macro(String) \

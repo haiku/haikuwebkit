@@ -12,8 +12,7 @@ function test()
         name: "InlineDebuggerStatement",
         description: "Check that new provisional page can be paused before navigation.",
         async test() {
-            const url = "http://localhost:8000/inspector/target/resources/inline-debugger-statement.html";
-            WI.mainTarget.PageAgent.navigate(url);
+            InspectorTest.evaluateInPage(`window.location.href = "http://localhost:8000/inspector/target/resources/inline-debugger-statement.html";`);
 
             await WI.debuggerManager.awaitEvent(WI.DebuggerManager.Event.Paused);
 

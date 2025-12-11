@@ -63,12 +63,12 @@ static CDMFactory* factoryForKeySystem(const String& keySystem)
     auto foundIndex = factories.findIf([&] (auto& factory) { return factory->supportsKeySystem(keySystem); });
     if (foundIndex == notFound)
         return nullptr;
-    return factories[foundIndex];
+    return factories[foundIndex].ptr();
 }
 
 void RemoteCDMFactoryProxy::createCDM(const String& keySystem, const String& mediaKeysHashSalt, CompletionHandler<void(std::optional<RemoteCDMIdentifier>&&, RemoteCDMConfiguration&&)>&& completion)
 {
-    auto factory = factoryForKeySystem(keySystem);
+    RefPtr factory = factoryForKeySystem(keySystem);
     if (!factory) {
         completion(std::nullopt, { });
         return;

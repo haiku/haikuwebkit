@@ -383,9 +383,9 @@ void EventDispatcher::pageScreenDidChange(PageIdentifier pageID, PlatformDisplay
 }
 
 #if ENABLE(MOMENTUM_EVENT_DISPATCHER)
-void EventDispatcher::setScrollingAccelerationCurve(PageIdentifier pageID, std::optional<ScrollingAccelerationCurve> curve)
+void EventDispatcher::setScrollingAccelerationCurve(PageIdentifier pageID, std::optional<ScrollingAccelerationCurve>&& curve)
 {
-    m_momentumEventDispatcher->setScrollingAccelerationCurve(pageID, curve);
+    m_momentumEventDispatcher->setScrollingAccelerationCurve(pageID, WTFMove(curve));
 }
 
 void EventDispatcher::handleSyntheticWheelEvent(WebCore::PageIdentifier pageIdentifier, const WebWheelEvent& event, WebCore::RectEdges<WebCore::RubberBandingBehavior> rubberBandableEdges)

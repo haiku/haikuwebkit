@@ -36,7 +36,6 @@ inspector/agents/InspectorDebuggerAgent.h
 interpreter/StackVisitor.h
 jit/JIT.h
 jit/JITCode.h
-jit/JITPlan.h
 jit/JITWorklistThread.h
 jit/OperationResult.h
 jsc.cpp

@@ -91,17 +91,17 @@ static bool isValidColumnSpanner(const RenderMultiColumnFlow& fragmentedFlow, co
     if (descendantBox->isFloatingOrOutOfFlowPositioned())
         return false;
 
+    if (!descendantBox->isBlockLevelBox())
+        return false;
+
     if (descendantBox->style().columnSpan() != ColumnSpan::All)
         return false;
 
     if (descendantBox->isLegend())
         return false;
 
-    auto* parent = descendantBox->parent();
-    if (!is<RenderBlockFlow>(*parent) || parent->childrenInline()) {
-        // Needs to be block-level.
+    if (!is<RenderBlockFlow>(descendantBox->parent()) && !is<RenderInline>(descendantBox->parent()))
         return false;
-    }
 
     // We need to have the flow thread as the containing block. A spanner cannot break out of the flow thread.
     auto* enclosingFragmentedFlow = descendantBox->enclosingFragmentedFlow();
@@ -373,7 +373,7 @@ RenderObject* RenderTreeBuilder::MultiColumn::processPossibleSpannerDescendant(R
         // so that they live among the column sets. This simplifies the layout implementation, and
         // basically just relies on regular block layout done by the RenderBlockFlow that
         // establishes the multicol container.
-        RenderBlockFlow* container = downcast<RenderBlockFlow>(descendant.parent());
+        auto* container = descendant.parent();
         RenderMultiColumnSet* setToSplit = nullptr;
         if (nextRendererInFragmentedFlow) {
             setToSplit = findSetRendering(flow, descendant);

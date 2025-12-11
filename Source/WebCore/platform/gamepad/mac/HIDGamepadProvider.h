@@ -96,7 +96,7 @@ private:
     Timer m_inputNotificationTimer;
 
 #if HAVE(MULTIGAMEPADPROVIDER_SUPPORT)
-    HashSet<IOHIDDeviceRef> m_gameControllerManagedGamepads;
+    HashSet<RetainPtr<IOHIDDeviceRef>> m_gameControllerManagedGamepads;
 #endif // HAVE(MULTIGAMEPADPROVIDER_SUPPORT)
 };
 

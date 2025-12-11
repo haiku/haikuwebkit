@@ -33,6 +33,8 @@
 
 #else
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface WCRBrowserEngineClient : NSObject
 + (BOOL)shouldEvaluateURLs;
 - (void)evaluateURL:(NSURL *)url withCompletion:(void (^)(BOOL shouldBlock, NSData * _Nullable blockPageRepresentation))completion onCompletionQueue:(dispatch_queue_t)queue;
@@ -43,6 +45,8 @@
 + (BOOL)shouldEvaluateURLsForConfigurationAtPath:(NSString *)configurationPath;
 #endif
 @end
+
+NS_ASSUME_NONNULL_END
 
 #endif // USE(APPLE_INTERNAL_SDK)
 

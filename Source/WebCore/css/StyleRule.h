@@ -52,7 +52,7 @@ class StyleSheetContents;
 using CascadeLayerName = Vector<AtomString>;
     
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRuleBase);
-class StyleRuleBase : public RefCounted<StyleRuleBase>, public NoVirtualDestructorBase {
+class WTF_EMPTY_BASE_CLASS StyleRuleBase : public RefCounted<StyleRuleBase>, public NoVirtualDestructorBase {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(StyleRuleBase, StyleRuleBase);
 public:
     StyleRuleType type() const { return static_cast<StyleRuleType>(m_type); }
@@ -520,7 +520,9 @@ inline CompiledSelector& StyleRule::compiledSelectorForListIndex(unsigned index)
         RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(index < listSize);
         m_compiledSelectors = makeUniqueArray<CompiledSelector>(listSize);
     }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     return m_compiledSelectors[index];
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
 #endif

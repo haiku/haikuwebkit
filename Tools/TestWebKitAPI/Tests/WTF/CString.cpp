@@ -26,22 +26,26 @@
 #include "config.h"
 
 #include <wtf/text/CString.h>
+#include <wtf/text/StringCommon.h>
 
 TEST(WTF, CStringNullStringConstructor)
 {
     CString string;
     constexpr size_t zeroLength = 0;
     ASSERT_TRUE(string.isNull());
+    EXPECT_TRUE(string.isEmpty());
     ASSERT_EQ(string.data(), static_cast<const char*>(0));
     ASSERT_EQ(string.length(), zeroLength);
 
     CString stringFromCharPointer(static_cast<const char*>(0));
     ASSERT_TRUE(stringFromCharPointer.isNull());
+    EXPECT_TRUE(stringFromCharPointer.isEmpty());
     ASSERT_EQ(stringFromCharPointer.data(), static_cast<const char*>(0));
     ASSERT_EQ(stringFromCharPointer.length(), zeroLength);
 
     CString stringFromCharAndLength(std::span { static_cast<const char*>(0), zeroLength });
     ASSERT_TRUE(stringFromCharAndLength.isNull());
+    EXPECT_TRUE(stringFromCharAndLength.isEmpty());
     ASSERT_EQ(stringFromCharAndLength.data(), static_cast<const char*>(0));
     ASSERT_EQ(stringFromCharAndLength.length(), zeroLength);
 }
@@ -49,13 +53,21 @@ TEST(WTF, CStringNullStringConstructor)
 TEST(WTF, CStringEmptyEmptyConstructor)
 {
     const char* emptyString = "";
+
+    CString stringFromEmptySpanWithNonNullPointer(unsafeMakeSpan(emptyString, 0));
+    EXPECT_FALSE(stringFromEmptySpanWithNonNullPointer.isNull());
+    EXPECT_TRUE(stringFromEmptySpanWithNonNullPointer.isEmpty());
+    EXPECT_EQ(stringFromEmptySpanWithNonNullPointer.length(), 0UZ);
+
     CString string(emptyString);
     ASSERT_FALSE(string.isNull());
+    EXPECT_TRUE(string.isEmpty());
     ASSERT_EQ(string.length(), static_cast<size_t>(0));
     ASSERT_EQ(string.data()[0], 0);
 
     CString stringWithLength(""_span);
     ASSERT_FALSE(stringWithLength.isNull());
+    EXPECT_TRUE(stringWithLength.isEmpty());
     ASSERT_EQ(stringWithLength.length(), static_cast<size_t>(0));
     ASSERT_EQ(stringWithLength.data()[0], 0);
 }
@@ -248,3 +260,14 @@ TEST(WTF, CStringStdStringInterop)
     }
 }
 
+TEST(WTF, CStringViewASCIICaseConversions)
+{
+    EXPECT_EQ(WTF::convertToASCIILowercase(u8"Test"_span), CString("test"));
+    EXPECT_EQ(WTF::convertToASCIIUppercase(u8"Test"_span), CString("TEST"));
+    EXPECT_EQ(WTF::convertToASCIILowercase(u8"Water🍉Melon"_span), CString("water🍉melon"));
+    EXPECT_EQ(WTF::convertToASCIIUppercase(u8"Water🍉Melon"_span), CString("WATER🍉MELON"));
+    EXPECT_EQ(WTF::convertToASCIILowercase(std::span<const char8_t>()), CString(""_s));
+    EXPECT_EQ(WTF::convertToASCIIUppercase(std::span<const char8_t>()), CString(""_s));
+    EXPECT_EQ(WTF::convertToASCIILowercase(u8""_span), CString(""_s));
+    EXPECT_EQ(WTF::convertToASCIIUppercase(u8""_span), CString(""_s));
+}

@@ -261,6 +261,10 @@ void UIDelegate::setDelegate(id<WKUIDelegate> delegate)
     m_delegateMethods.webViewDidEnterStandby = [delegate respondsToSelector:@selector(_webViewDidEnterStandbyForTesting:)];
     m_delegateMethods.webViewDidExitStandby = [delegate respondsToSelector:@selector(_webViewDidExitStandbyForTesting:)];
 #endif
+
+#if PLATFORM(VISION)
+    m_delegateMethods.webViewWillPresentModalUI = [delegate respondsToSelector:@selector(_webViewWillPresentModalUI:)];
+#endif
 }
 
 #if ENABLE(CONTEXT_MENUS)
@@ -2099,6 +2103,10 @@ static _WKXRSessionFeatureFlags toWKXRSessionFeatureFlags(PlatformXR::SessionFea
 #endif
     case PlatformXR::SessionFeature::WebGPU:
         return _WKXRSessionFeatureFlagsWebGPU;
+#if ENABLE(WEBXR_LAYERS)
+    case PlatformXR::SessionFeature::Layers:
+        return _WKXRSessionFeatureFlagsLayers;
+#endif
     }
 }
 
@@ -2132,6 +2140,10 @@ static std::optional<PlatformXR::Device::FeatureList> toPlatformXRFeatures(_WKXR
 #endif
     if (featureFlags & _WKXRSessionFeatureFlagsWebGPU)
         features.append(PlatformXR::SessionFeature::WebGPU);
+#if ENABLE(WEBXR_LAYERS)
+    if (featureFlags & _WKXRSessionFeatureFlagsLayers)
+        features.append(PlatformXR::SessionFeature::Layers);
+#endif
     return features;
 }
 
@@ -2306,5 +2318,23 @@ void UIDelegate::UIClient::didExitStandby(WebPageProxy&)
     [delegate _webViewDidExitStandbyForTesting:uiDelegate->m_webView.get().get()];
 }
 #endif // PLATFORM(IOS_FAMILY)
+
+#if PLATFORM(VISION)
+void UIDelegate::UIClient::willPresentModalUI(WebPageProxy& page)
+{
+    RefPtr uiDelegate = m_uiDelegate.get();
+    if (!uiDelegate)
+        return;
+
+    if (!uiDelegate->m_delegateMethods.webViewWillPresentModalUI)
+        return;
+
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate)
+        return;
+
+    [delegate _webViewWillPresentModalUI:uiDelegate->m_webView.get().get()];
+}
+#endif
 
 } // namespace WebKit

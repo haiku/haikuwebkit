@@ -28,14 +28,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/Element-customElementRegistry.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/Element-innerHTML.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/ShadowRoot-init-customElementRegistry.html
-/LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/ShadowRoot-init-declarative.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/ShadowRoot-innerHTML.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/adoption.window.js
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/constructor-reentry-with-different-definition.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/define-customized-builtins.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/define.html
-/LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/element-mutation.html
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/global.window.js
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/initial-about-blank.window.js
 /LayoutTests/imported/w3c/web-platform-tests/custom-elements/registries/per-global.html

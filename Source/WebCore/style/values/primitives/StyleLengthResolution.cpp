@@ -42,6 +42,7 @@
 #include "RenderStyleInlines.h"
 #include "RenderView.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
 namespace Style {

@@ -168,7 +168,7 @@ pas_try_allocate_common_impl_slow(
     type = heap_ref->type;
     alignment = PAS_MAX(alignment, config.get_type_alignment(type));
     
-    if (PAS_UNLIKELY(pas_system_heap_is_enabled(config.kind))) {
+    if (PAS_UNLIKELY(pas_system_heap_should_supplant_bmalloc(config.kind))) {
         if (verbose)
             pas_log("System heap enabled, asking system heap.\n");
         result = pas_system_heap_allocate(size, alignment, allocation_mode);

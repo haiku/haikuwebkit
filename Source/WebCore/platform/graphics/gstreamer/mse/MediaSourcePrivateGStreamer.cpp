@@ -174,18 +174,6 @@ void MediaSourcePrivateGStreamer::unmarkEndOfStream()
     MediaSourcePrivate::unmarkEndOfStream();
 }
 
-MediaPlayer::ReadyState MediaSourcePrivateGStreamer::mediaPlayerReadyState() const
-{
-    RefPtr player = platformPlayer();
-    return player ? player->readyState() : MediaPlayer::ReadyState::HaveNothing;
-}
-
-void MediaSourcePrivateGStreamer::setMediaPlayerReadyState(MediaPlayer::ReadyState state)
-{
-    if (RefPtr player = platformPlayer())
-        player->setReadyState(state);
-}
-
 void MediaSourcePrivateGStreamer::startPlaybackIfHasAllTracks()
 {
     RefPtr player = platformPlayer();

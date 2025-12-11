@@ -70,7 +70,7 @@ void RealtimeOutgoingAudioSourceGStreamer::setInitialParameters(GUniquePtr<GstSt
 {
     for (const auto& codec : gstStructureGetList<const GstStructure*>(parameters.get(), "codecs"_s)) {
         auto encodingName = gstStructureGetString(codec, "mime-type"_s);
-        if (encodingName.isEmpty() || encodingName.isNull())
+        if (encodingName.isEmpty())
             continue;
 
         if (encodingName != "audio/telephone-event"_s)

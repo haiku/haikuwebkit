@@ -28,15 +28,70 @@
 
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
 
+#include "MessageSenderInlines.h"
+#include "RemoteMediaSessionManagerMessages.h"
+#include "RemoteMediaSessionManagerProxy.h"
+#include <WebCore/NotImplemented.h>
+
 namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteMediaSessionClientProxy);
 
-RemoteMediaSessionClientProxy(RemoteMediaPlayerState& state, RemoteMediaSessionManagerProxy& manager)
+RemoteMediaSessionClientProxy::RemoteMediaSessionClientProxy(const RemoteMediaSessionState& state, RemoteMediaSessionManagerProxy& manager)
     : PlatformMediaSessionClient()
     , m_manager(manager)
     , m_state(state)
+#if !RELEASE_LOG_DISABLED
+    , m_logger(manager.process()->logger())
+#endif
 {
+}
+
+RemoteMediaSessionClientProxy::~RemoteMediaSessionClientProxy() = default;
+
+void RemoteMediaSessionClientProxy::resumeAutoplaying()
+{
+    if (RefPtr manager = m_manager.get())
+        manager->send(Messages::RemoteMediaSessionManager::ClientShouldResumeAutoplaying(sessionIdentifier()));
+}
+
+void RemoteMediaSessionClientProxy::mayResumePlayback(bool shouldResume)
+{
+    if (RefPtr manager = m_manager.get())
+        manager->send(Messages::RemoteMediaSessionManager::ClientMayResumePlayback(sessionIdentifier(), shouldResume));
+}
+
+void RemoteMediaSessionClientProxy::suspendPlayback()
+{
+    if (RefPtr manager = m_manager.get())
+        manager->send(Messages::RemoteMediaSessionManager::ClientShouldSuspendPlayback(sessionIdentifier()));
+}
+
+void RemoteMediaSessionClientProxy::didReceiveRemoteControlCommand(WebCore::PlatformMediaSessionRemoteControlCommandType command, const WebCore::PlatformMediaSessionRemoteCommandArgument& argument)
+{
+    ASSERT_NOT_REACHED();
+}
+
+bool RemoteMediaSessionClientProxy::shouldOverrideBackgroundPlaybackRestriction(WebCore::PlatformMediaSessionInterruptionType) const
+{
+    // FIXME: Sync XPC?
+    notImplemented();
+
+    return false;
+}
+
+void RemoteMediaSessionClientProxy::setShouldPlayToPlaybackTarget(bool shouldPlay)
+{
+    if (RefPtr manager = m_manager.get())
+        manager->send(Messages::RemoteMediaSessionManager::ClientSetShouldPlayToPlaybackTarget(sessionIdentifier(), shouldPlay));
+}
+
+RefPtr<WebCore::MediaSessionManagerInterface> RemoteMediaSessionClientProxy::sessionManager() const
+{
+    if (RefPtr manager = m_manager.get())
+        return manager;
+
+    return nullptr;
 }
 
 } // namespace WebKit

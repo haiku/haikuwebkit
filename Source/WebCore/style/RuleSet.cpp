@@ -136,11 +136,10 @@ static bool shouldHaveBucketForAttributeName(const CSSSelector& attributeSelecto
 void RuleSet::addRule(const StyleRule& rule, unsigned selectorIndex, unsigned selectorListIndex)
 {
     RuleData ruleData(rule, selectorIndex, selectorListIndex, m_ruleCount, { });
-    // This path is used when building invalidation RuleSets, no need to collect features (nullptr CollectionContext).
-    addRule(WTFMove(ruleData), 0, 0, 0, nullptr);
+    addRule(WTFMove(ruleData), 0, 0, 0);
 }
 
-void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerIdentifier, ContainerQueryIdentifier containerQueryIdentifier, ScopeRuleIdentifier scopeRuleIdentifier, RuleFeatureSet::CollectionContext* featureCollectionContext)
+void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerIdentifier, ContainerQueryIdentifier containerQueryIdentifier, ScopeRuleIdentifier scopeRuleIdentifier)
 {
     ASSERT(ruleData.position() == m_ruleCount);
 
@@ -171,8 +170,7 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
     };
     ruleData.setLinkMatchType(computeLinkMatchType());
 
-    if (featureCollectionContext)
-        m_features.collectFeatures(*featureCollectionContext, ruleData, scopeRules);
+    m_features.collectFeatures(ruleData, scopeRules);
 
     unsigned classBucketSize = 0;
     const CSSSelector* idSelector = nullptr;
@@ -181,6 +179,7 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
     const CSSSelector* attributeSelector = nullptr;
     const CSSSelector* linkSelector = nullptr;
     const CSSSelector* focusSelector = nullptr;
+    const CSSSelector* focusVisibleSelector = nullptr;
     const CSSSelector* rootElementSelector = nullptr;
     const CSSSelector* hostPseudoClassSelector = nullptr;
     const CSSSelector* customPseudoElementSelector = nullptr;
@@ -260,8 +259,10 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
                 linkSelector = selector;
                 break;
             case CSSSelector::PseudoClass::Focus:
-            case CSSSelector::PseudoClass::FocusVisible:
                 focusSelector = selector;
+                break;
+            case CSSSelector::PseudoClass::FocusVisible:
+                focusVisibleSelector = selector;
                 break;
             case CSSSelector::PseudoClass::Host:
                 hostPseudoClassSelector = selector;
@@ -385,6 +386,11 @@ void RuleSet::addRule(RuleData&& ruleData, CascadeLayerIdentifier cascadeLayerId
         return;
     }
 
+    if (focusVisibleSelector) {
+        m_focusVisiblePseudoClassRules.append(ruleData);
+        return;
+    }
+
     if (namedPseudoElementSelector) {
         addToRuleSet(namedPseudoElementSelector->argumentList()->first(), m_namedPseudoElementRules, ruleData);
         return;
@@ -449,6 +455,7 @@ void RuleSet::traverseRuleDatas(Function&& function)
     traverseVector(m_slottedPseudoElementRules);
     traverseVector(m_partPseudoElementRules);
     traverseVector(m_focusPseudoClassRules);
+    traverseVector(m_focusVisiblePseudoClassRules);
     traverseVector(m_rootElementRules);
     traverseVector(m_universalRules);
 }
@@ -551,6 +558,7 @@ void RuleSet::shrinkToFit()
     m_slottedPseudoElementRules.shrinkToFit();
     m_partPseudoElementRules.shrinkToFit();
     m_focusPseudoClassRules.shrinkToFit();
+    m_focusVisiblePseudoClassRules.shrinkToFit();
     m_rootElementRules.shrinkToFit();
     m_universalRules.shrinkToFit();
 

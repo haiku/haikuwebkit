@@ -34,14 +34,13 @@
 #import <wtf/SoftLinking.h>
 #import <wtf/StdLibExtras.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
+#import <wtf/spi/cocoa/BOMSPI.h>
 #import <wtf/text/MakeString.h>
 #import <wtf/text/StringCommon.h>
 
 #if HAVE(APFS_CACHEDELETE_PURGEABLE)
 #import <apfs/apfs_fsctl.h>
 #endif
-
-typedef struct _BOMCopier* BOMCopier;
 
 SOFT_LINK_PRIVATE_FRAMEWORK(Bom)
 SOFT_LINK(Bom, BOMCopierNew, BOMCopier, (), ())

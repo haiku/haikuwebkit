@@ -413,7 +413,7 @@ ExceptionOr<Vector<std::reference_wrapper<CSSFontFace>>> CSSFontFaceSet::matchin
             [&](CSSValueID familyKeyword) -> AtomString {
                 if (familyKeyword == CSSValueWebkitBody)
                     return AtomString { context.settingsValues().fontGenericFamilies.standardFontFamily() };
-                return familyNamesData->at(CSSPropertyParserHelpers::genericFontFamilyIndex(familyKeyword));
+                return *familyNamesData->at(CSSPropertyParserHelpers::genericFontFamilyIndex(familyKeyword));
             },
             [&](const AtomString& familyString) -> AtomString  {
                 return familyString;

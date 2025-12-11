@@ -1,8 +1,8 @@
 
 PASS Ensures hit test source cancellation works when the session has not ended. - webgl
 PASS Ensures hit test source cancellation works when the session has not ended. - webgl2
-FAIL Ensures transient input hit test source cancellation works when the session has not ended. - webgl assert_throws_dom: function "() => hitTestSource.cancel()" did not throw
-FAIL Ensures transient input hit test source cancellation works when the session has not ended. - webgl2 assert_throws_dom: function "() => hitTestSource.cancel()" did not throw
+PASS Ensures transient input hit test source cancellation works when the session has not ended. - webgl
+PASS Ensures transient input hit test source cancellation works when the session has not ended. - webgl2
 PASS Ensures hit test source cancellation works when the session has ended - webgl
 PASS Ensures hit test source cancellation works when the session has ended - webgl2
 PASS Ensures transient input hit test source cancellation works when the session has ended - webgl

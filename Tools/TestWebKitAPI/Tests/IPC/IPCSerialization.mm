@@ -1683,6 +1683,67 @@ static RetainPtr<DDScannerResult> fakeDataDetectorResultForTesting()
     return [[PAL::getDDScannerResultClassSingleton() resultsFromCoreResults:results.get()] firstObject];
 }
 
+#if HAVE(WK_SECURE_CODING_DATA_DETECTORS)
+static RetainPtr<DDScannerResult> fakeDataDetectorResultWithContextualData()
+{
+    NSDictionary *plist = @{
+        @"AR": [NSValue valueWithRange:NSMakeRange(0, 10)],
+        @"MS": @"webkit.org",
+        @"T": @"Link",
+        @"P": @1,
+        @"VN": @1,
+        @"C": @{
+            @"C": @"addressBookUID-12345",
+            @"D": @"webkit.org",
+            @"U": @"uuid-67890-abcdef",
+            @"urlificationBegin": @2,
+            @"urlificationLength": @8
+        }
+    };
+
+    return adoptNS([[PAL::getDDScannerResultClassSingleton() alloc] _initWithWebKitPropertyListData:plist]);
+}
+
+TEST(IPCSerialization, DDScannerResultPlist)
+{
+    auto scannerResult = fakeDataDetectorResultWithContextualData();
+    EXPECT_NOT_NULL(scannerResult.get());
+
+    NSDictionary *originalPlist = [scannerResult _webKitPropertyListData];
+    NSDictionary *originalContextualData = originalPlist[@"C"];
+    EXPECT_NOT_NULL(originalContextualData);
+    EXPECT_TRUE([originalContextualData[@"C"] isEqualToString:@"addressBookUID-12345"]);
+    EXPECT_TRUE([originalContextualData[@"D"] isEqualToString:@"webkit.org"]);
+    EXPECT_TRUE([originalContextualData[@"U"] isEqualToString:@"uuid-67890-abcdef"]);
+    EXPECT_TRUE([originalContextualData[@"urlificationBegin"] isEqualToNumber:@2]);
+    EXPECT_TRUE([originalContextualData[@"urlificationLength"] isEqualToNumber:@8]);
+
+    __block bool done = false;
+    __block ObjCHolderForTesting holder { scannerResult.get() };
+    auto sender = SerializationTestSender { };
+    sender.sendWithAsyncReplyWithoutUsingIPCConnection(ObjCPingBackMessage(holder), ^(ObjCHolderForTesting&& result) {
+        EXPECT_TRUE(holder == result);
+
+        id resultObject = result.valueAsID();
+        EXPECT_NOT_NULL(resultObject);
+        EXPECT_TRUE([resultObject isKindOfClass:PAL::getDDScannerResultClassSingleton()]);
+
+        NSDictionary *resultPlist = [resultObject _webKitPropertyListData];
+        NSDictionary *resultContextualData = resultPlist[@"C"];
+        EXPECT_NOT_NULL(resultContextualData);
+        EXPECT_TRUE([resultContextualData[@"C"] isEqualToString:@"addressBookUID-12345"]);
+        EXPECT_TRUE([resultContextualData[@"D"] isEqualToString:@"webkit.org"]);
+        EXPECT_TRUE([resultContextualData[@"U"] isEqualToString:@"uuid-67890-abcdef"]);
+        EXPECT_TRUE([resultContextualData[@"urlificationBegin"] isEqualToNumber:@2]);
+        EXPECT_TRUE([resultContextualData[@"urlificationLength"] isEqualToNumber:@8]);
+
+        done = true;
+    });
+
+    EXPECT_TRUE(done);
+}
+#endif // HAVE(WK_SECURE_CODING_DATA_DETECTORS)
+
 @interface PKPaymentMerchantSession ()
 - (instancetype)initWithMerchantIdentifier:(NSString *)merchantIdentifier
                  merchantSessionIdentifier:(NSString *)merchantSessionIdentifier

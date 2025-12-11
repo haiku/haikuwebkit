@@ -39,9 +39,9 @@ class MetaAllocator;
 class PrintStream;
 
 DECLARE_COMPACT_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorHandle);
-class MetaAllocatorHandle : public ThreadSafeRefCounted<MetaAllocatorHandle>, public RedBlackTree<MetaAllocatorHandle, void*>::Node {
+class MetaAllocatorHandle final : public ThreadSafeRefCounted<MetaAllocatorHandle>, public RedBlackTree<MetaAllocatorHandle, void*>::ThreadSafeNode {
     WTF_DEPRECATED_MAKE_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(MetaAllocatorHandle, MetaAllocatorHandle);
-
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MetaAllocatorHandle);
 public:
     using MemoryPtr = CodePtr<HandleMemoryPtrTag>;
 

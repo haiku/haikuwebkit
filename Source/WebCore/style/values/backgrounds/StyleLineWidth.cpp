@@ -38,25 +38,39 @@ namespace Style {
 
 // MARK: - Conversion
 
+static auto handleKeywordValue(BuilderState& state, CSSValueID valueID) -> LineWidth
+{
+    float keywordValue;
+    switch (valueID) {
+    case CSSValueThin:
+        keywordValue = 1.0f;
+        break;
+    case CSSValueMedium:
+        keywordValue = 3.0f;
+        break;
+    case CSSValueThick:
+        keywordValue = 5.0f;
+        break;
+    default:
+        state.setCurrentPropertyInvalidAtComputedValueTime();
+        keywordValue = 3.0f; // Medium
+        break;
+    }
+
+    if (evaluationTimeZoomEnabled(state))
+        return LineWidth::Length { keywordValue };
+
+    return LineWidth::Length { floorToDevicePixel(keywordValue * state.style().usedZoom(), state.document().deviceScaleFactor()) };
+}
+
 auto CSSValueConversion<LineWidth>::operator()(BuilderState& state, const CSSValue& value) -> LineWidth
 {
     RefPtr primitiveValue = requiredDowncast<CSSPrimitiveValue>(state, value);
     if (!primitiveValue)
-        return CSS::Keyword::Medium { };
+        return LineWidth::Length { 3.0f };
 
-    if (primitiveValue->isValueID()) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueThin:
-            return CSS::Keyword::Thin { };
-        case CSSValueMedium:
-            return CSS::Keyword::Medium { };
-        case CSSValueThick:
-            return CSS::Keyword::Thick { };
-        default:
-            state.setCurrentPropertyInvalidAtComputedValueTime();
-            return CSS::Keyword::Medium { };
-        }
-    }
+    if (primitiveValue->isValueID())
+        return handleKeywordValue(state, primitiveValue->valueID());
 
     if (evaluationTimeZoomEnabled(state))
         return toStyleFromCSSValue<LineWidth::Length>(state, value);
@@ -67,7 +81,7 @@ auto CSSValueConversion<LineWidth>::operator()(BuilderState& state, const CSSVal
     if (state.style().usedZoom() < 1.0f && result < 1.0f) {
         auto originalLength = primitiveValue->resolveAsLength<float>(state.cssToLengthConversionData().copyWithAdjustedZoom(1.0));
         if (originalLength >= 1.0f)
-            return CSS::Keyword::Thin { };
+            return LineWidth::Length { 1.0f };
     }
 
     if (auto minimumLineWidth = 1.0f / state.document().deviceScaleFactor(); result > 0.0f && result < minimumLineWidth)
@@ -86,7 +100,7 @@ void Serialize<LineWidth>::operator()(StringBuilder& builder, const CSS::Seriali
     if (auto minimumLineWidth = 1.0f / deviceScaleFactor; result > 0.0f && result < minimumLineWidth)
         result = minimumLineWidth;
 
-    result = floorToDevicePixel(result, deviceScaleFactor);
+    result = std::floor(result * deviceScaleFactor) / deviceScaleFactor;
 
     CSS::serializationForCSS(builder, context, CSS::LengthRaw<> { CSS::LengthUnit::Px, result });
 }

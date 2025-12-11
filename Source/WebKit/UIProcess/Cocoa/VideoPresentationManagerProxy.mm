@@ -31,6 +31,7 @@
 #import "APIPageConfiguration.h"
 #import "APIUIClient.h"
 #import "DrawingAreaProxy.h"
+#import "FrameInfoData.h"
 #import "GPUProcessProxy.h"
 #import "Logging.h"
 #import "MessageSenderInlines.h"
@@ -41,6 +42,7 @@
 #import "VideoPresentationManagerMessages.h"
 #import "VideoPresentationManagerProxyMessages.h"
 #import "WKVideoView.h"
+#import "WebFrameProxy.h"
 #import "WebFullScreenManagerProxy.h"
 #import "WebPageProxy.h"
 #import "WebProcessPool.h"
@@ -549,6 +551,20 @@ void VideoPresentationModelContext::setTextTrackRepresentationBounds(const IntRe
         manager->setTextTrackRepresentationBounds(m_contextId, bounds);
 }
 
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+void VideoPresentationModelContext::requestShowCaptionDisplaySettingsPreview()
+{
+    if (RefPtr manager = m_manager.get())
+        manager->requestShowCaptionDisplaySettingsPreview(m_contextId);
+}
+
+void VideoPresentationModelContext::requestHideCaptionDisplaySettingsPreview()
+{
+    if (RefPtr manager = m_manager.get())
+        manager->requestHideCaptionDisplaySettingsPreview(m_contextId);
+}
+#endif
+
 #if !RELEASE_LOG_DISABLED
 uint64_t VideoPresentationModelContext::logIdentifier() const
 {
@@ -953,6 +969,21 @@ RetainPtr<WKLayerHostView> VideoPresentationManagerProxy::createLayerHostViewWit
     return view;
 }
 
+#if USE(EXTENSIONKIT)
+void VideoPresentationManagerProxy::setVisibilityPropagationViewForLayerHostView(UIView *visibilityPropagationView, WKLayerHostView *layerHostView)
+{
+    if (RefPtr page = m_page.get()) {
+        if (RefPtr pageClient = page->pageClient()) {
+            RetainPtr oldVisibilityPropagationView = [layerHostView visibilityPropagationView];
+            if (oldVisibilityPropagationView)
+                pageClient->removeVisibilityPropagationView(oldVisibilityPropagationView.get());
+        }
+    }
+
+    [layerHostView setVisibilityPropagationView:visibilityPropagationView];
+}
+#endif
+
 #if PLATFORM(IOS_FAMILY)
 RefPtr<PlatformVideoPresentationInterface> VideoPresentationManagerProxy::returningToStandbyInterface() const
 {
@@ -1097,8 +1128,8 @@ void VideoPresentationManagerProxy::setupFullscreenWithID(PlaybackSessionContext
     RetainPtr view = interface->layerHostView() ? static_cast<WKLayerHostView*>(interface->layerHostView()) : createLayerHostViewWithID(contextId, hostingContext, initialSize, hostingDeviceScaleFactor);
 #if USE(EXTENSIONKIT)
     RefPtr pageClient = page->pageClient();
-    if (UIView *visibilityPropagationView = pageClient ? pageClient->createVisibilityPropagationView() : nullptr)
-        [view setVisibilityPropagationView:visibilityPropagationView];
+    if (RetainPtr visibilityPropagationView = pageClient ? pageClient->createVisibilityPropagationView() : nil)
+        setVisibilityPropagationViewForLayerHostView(visibilityPropagationView.get(), view.get());
 #else
     UNUSED_VARIABLE(view);
 #endif
@@ -1344,6 +1375,43 @@ void VideoPresentationManagerProxy::setTextTrackRepresentationBounds(PlaybackSes
     sendToWebProcess(contextId, Messages::VideoPresentationManager::SetTextTrackRepresentationBounds(contextId.object(), bounds));
 }
 
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+
+void VideoPresentationManagerProxy::performCaptionDisplaySettingsAction(PlaybackSessionContextIdentifier contextId, Function<void(WebPageProxy&, const FrameInfoData&, WebCore::HTMLMediaElementIdentifier)>&& action)
+{
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+
+    RefPtr mainFrame = page->mainFrame();
+    if (!mainFrame)
+        return;
+
+    WebCore::HTMLMediaElementIdentifier htmlMediaElementIdentifier { contextId.object() };
+
+    mainFrame->getFrameInfo([protectedPage = RefPtr { page }, action = WTFMove(action), htmlMediaElementIdentifier](std::optional<FrameInfoData>&& frameInfo) {
+        if (!frameInfo || !protectedPage)
+            return;
+
+        action(*protectedPage, *frameInfo, htmlMediaElementIdentifier);
+    });
+}
+
+void VideoPresentationManagerProxy::requestShowCaptionDisplaySettingsPreview(PlaybackSessionContextIdentifier contextId)
+{
+    performCaptionDisplaySettingsAction(contextId, [](WebPageProxy& page, const FrameInfoData& frameInfo, WebCore::HTMLMediaElementIdentifier htmlMediaElementIdentifier) {
+        page.showCaptionDisplaySettingsPreview(frameInfo, htmlMediaElementIdentifier);
+    });
+}
+
+void VideoPresentationManagerProxy::requestHideCaptionDisplaySettingsPreview(PlaybackSessionContextIdentifier contextId)
+{
+    performCaptionDisplaySettingsAction(contextId, [](WebPageProxy& page, const FrameInfoData& frameInfo, WebCore::HTMLMediaElementIdentifier htmlMediaElementIdentifier) {
+        page.hideCaptionDisplaySettingsPreview(frameInfo, htmlMediaElementIdentifier);
+    });
+}
+#endif
+
 void VideoPresentationManagerProxy::textTrackRepresentationUpdate(PlaybackSessionContextIdentifier contextId, ShareableBitmap::Handle&& textTrack)
 {
     auto bitmap = ShareableBitmap::create(WTFMove(textTrack));
@@ -1495,8 +1563,8 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
     auto [model, interface] = ensureModelAndInterface(contextId);
 
 #if USE(EXTENSIONKIT)
-    if (auto layerHostView = dynamic_objc_cast<WKLayerHostView>(interface->layerHostView()))
-        [layerHostView setVisibilityPropagationView:nil];
+    if (RetainPtr layerHostView = dynamic_objc_cast<WKLayerHostView>(interface->layerHostView()))
+        setVisibilityPropagationViewForLayerHostView(nil, layerHostView.get());
 #endif
 
     [interface->protectedLayerHostView() removeFromSuperview];
@@ -1540,7 +1608,7 @@ void VideoPresentationManagerProxy::setVideoLayerFrame(PlaybackSessionContextIde
 #if ENABLE(MACH_PORT_LAYER_HOSTING)
         sendRightAnnotated = LayerHostingContext::fence(hostingUpdateCoordinator);
 #else
-        OSObjectPtr<xpc_object_t> xpcRepresentationHostingCoordinator = [hostingUpdateCoordinator createXPCRepresentation];
+        XPCObjectPtr<xpc_object_t> xpcRepresentationHostingCoordinator = [hostingUpdateCoordinator createXPCRepresentation];
         sendRightAnnotated.sendRight = MachSendRight::adopt(xpc_dictionary_copy_mach_send(xpcRepresentationHostingCoordinator.get(), machPortKey));
 #endif
         RELEASE_LOG(Media, "VideoPresentationManagerProxy::setVideoLayerFrame: x=%f y=%f w=%f h=%f send right %d, fence data size %lu", frame.x(), frame.y(), frame.width(), frame.height(), sendRightAnnotated.sendRight.sendRight(), sendRightAnnotated.data.size());

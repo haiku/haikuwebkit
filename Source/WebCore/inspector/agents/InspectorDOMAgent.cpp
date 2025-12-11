@@ -81,7 +81,6 @@
 #include "HitTestResult.h"
 #include "InspectorBackendClient.h"
 #include "InspectorCSSAgent.h"
-#include "InspectorController.h"
 #include "InspectorHistory.h"
 #include "InspectorNodeFinder.h"
 #include "InspectorPageAgent.h"
@@ -103,6 +102,7 @@
 #include "NodeInlines.h"
 #include "NodeList.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "Pasteboard.h"
 #include "PseudoElement.h"
 #include "RenderGrid.h"
@@ -634,7 +634,7 @@ Node* InspectorDOMAgent::nodeForId(Inspector::Protocol::DOM::NodeId id)
     if (!m_idToNode.isValidKey(id))
         return nullptr;
 
-    return m_idToNode.get(id).get();
+    return m_idToNode.get(id);
 }
 
 Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::requestChildNodes(Inspector::Protocol::DOM::NodeId nodeId, std::optional<int>&& depth)
@@ -3284,6 +3284,8 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::MediaStats>> In
                 .release();
             videoJSON->setVideoProjectionMetadata(WTFMove(metadataJSON));
         }
+        if (configuration.isProtected())
+            videoJSON->setIsProtected(true);
         stats->setVideo(WTFMove(videoJSON));
     }
 
@@ -3296,6 +3298,8 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::MediaStats>> In
             .setNumberOfChannels(configuration.numberOfChannels())
             .setSampleRate(configuration.sampleRate())
             .release();
+        if (configuration.isProtected())
+            audioJSON->setIsProtected(true);
         stats->setAudio(WTFMove(audioJSON));
     }
 

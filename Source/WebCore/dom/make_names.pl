@@ -157,7 +157,7 @@ END
 
     print F "\n";
     for my $name (sort keys %parameters) {
-        print F "    ${name}.construct(&${name}Data);\n";
+        print F "    ${name}.construct(${name}Data);\n";
     }
 
     print F "\n";
@@ -1033,7 +1033,7 @@ sub printTagNameCppFile
     print F "        *(tagNamesEntry++) = reinterpret_cast<LazyNeverDestroyed<QualifiedName>*>(qualifiedName)->get().localName();\n";
     print F "    for (auto& string : unadjustedTagNames) {\n";
     print F "        reinterpret_cast<const StringImpl&>(string).assertHashIsCorrect();\n";
-    print F "        *(tagNamesEntry++) = AtomString(&string);\n";
+    print F "        *(tagNamesEntry++) = AtomString(string);\n";
     print F "    }\n";
     print F "    ASSERT(tagNamesEntry == tagNameStrings->end());\n";
     print F "}\n";
@@ -1696,7 +1696,7 @@ sub printDefinitions
     print F "    };\n";
     print F "\n";
     print F "    for (auto& entry : ${type}Table)\n";
-    print F "        entry.targetAddress->construct(nullAtom(), AtomString(&entry.name), $namespaceURI, Namespace::$namespaceEnumValue, entry.nodeName);\n";
+    print F "        entry.targetAddress->construct(nullAtom(), AtomString(entry.name), $namespaceURI, Namespace::$namespaceEnumValue, entry.nodeName);\n";
 }
 
 ## ElementFactory routines

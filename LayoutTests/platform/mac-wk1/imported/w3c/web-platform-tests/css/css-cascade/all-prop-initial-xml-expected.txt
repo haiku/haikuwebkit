@@ -193,6 +193,7 @@ PASS inset-block-start
 PASS inset-inline-end
 PASS inset-inline-start
 PASS isolation
+PASS item-tolerance
 PASS justify-content
 PASS justify-items
 PASS justify-self

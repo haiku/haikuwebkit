@@ -222,15 +222,21 @@ void OpenXRLayer::setGBMDevice(RefPtr<WebCore::GBMDevice> gbmDevice)
 
 std::optional<PlatformXR::FrameData::ExternalTexture> OpenXRLayer::exportOpenXRTextureGBM(WebCore::GLDisplay& display, PlatformGLObject openxrTexture)
 {
-    WebCore::FourCC preferredDMABufFormat = m_swapchain->hasAlpha() == OpenXRSwapchain::HasAlpha::Yes ? DRM_FORMAT_ARGB8888 : DRM_FORMAT_XRGB8888;
+    static constexpr std::array<WebCore::FourCC, 3> preferredAlphaDRMFormats = { DRM_FORMAT_ARGB8888, DRM_FORMAT_RGBA8888, DRM_FORMAT_ABGR8888 };
+    static constexpr std::array<WebCore::FourCC, 3> preferredNoAlphaDRMFormats = { DRM_FORMAT_XRGB8888, DRM_FORMAT_RGBX8888, DRM_FORMAT_BGRX8888 };
+    const auto& preferredDRMFormats = m_swapchain->hasAlpha() == OpenXRSwapchain::HasAlpha::Yes ? preferredAlphaDRMFormats : preferredNoAlphaDRMFormats;
     WebCore::GLDisplay::BufferFormat format;
     const auto& supportedFormats = display.bufferFormats();
-    for (const auto& supportedFormat : supportedFormats) {
-        if (supportedFormat.fourcc == preferredDMABufFormat) {
-            format = supportedFormat;
+    for (const auto& preferredFormat : preferredDRMFormats) {
+        auto matchIndex = supportedFormats.findIf([preferredFormat](const auto& supportedFormat) {
+            return supportedFormat.fourcc == preferredFormat;
+        });
+        if (matchIndex != notFound) {
+            format = supportedFormats[matchIndex];
             break;
         }
     }
+
     if (!format.fourcc.value) {
         RELEASE_LOG(XR, "OpenXR texture format not supported");
         return std::nullopt;

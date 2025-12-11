@@ -53,8 +53,8 @@ auto SectionParser::parseType() -> PartialResult
     WASM_PARSER_FAIL_IF(count > maxTypes, "Type section's count is too big "_s, count, " maximum "_s, maxTypes);
     RELEASE_ASSERT(!m_info->typeSignatures.capacity());
     RELEASE_ASSERT(!m_info->rtts.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->typeSignatures.tryReserveInitialCapacity(count), "can't allocate enough memory for Type section's "_s, count, " entries"_s);
-    WASM_PARSER_FAIL_IF(!m_info->rtts.tryReserveInitialCapacity(count), "can't allocate enough memory for Type section's "_s, count, " canonical RTT entries"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->typeSignatures.tryReserveInitialCapacity(count), "can't allocate enough memory for Type section's "_s, count, " entries"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->rtts.tryReserveInitialCapacity(count), "can't allocate enough memory for Type section's "_s, count, " canonical RTT entries"_s);
 
     for (uint32_t i = 0; i < count; ++i) {
         int8_t typeKind;
@@ -138,10 +138,10 @@ auto SectionParser::parseImport() -> PartialResult
     RELEASE_ASSERT(!m_info->imports.capacity());
     RELEASE_ASSERT(!m_info->importFunctionTypeIndices.capacity());
     RELEASE_ASSERT(!m_info->importExceptionTypeIndices.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->globals.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " globals"_s); // FIXME this over-allocates when we fix the FIXMEs below.
-    WASM_PARSER_FAIL_IF(!m_info->imports.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " imports"_s); // FIXME this over-allocates when we fix the FIXMEs below.
-    WASM_PARSER_FAIL_IF(!m_info->importFunctionTypeIndices.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " import function signatures"_s); // FIXME this over-allocates when we fix the FIXMEs below.
-    WASM_PARSER_FAIL_IF(!m_info->importExceptionTypeIndices.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " import exception signatures"_s); // FIXME this over-allocates when we fix the FIXMEs below.
+    WASM_ALLOCATOR_FAIL_IF(!m_info->globals.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " globals"_s); // FIXME this over-allocates when we fix the FIXMEs below.
+    WASM_ALLOCATOR_FAIL_IF(!m_info->imports.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " imports"_s); // FIXME this over-allocates when we fix the FIXMEs below.
+    WASM_ALLOCATOR_FAIL_IF(!m_info->importFunctionTypeIndices.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " import function signatures"_s); // FIXME this over-allocates when we fix the FIXMEs below.
+    WASM_ALLOCATOR_FAIL_IF(!m_info->importExceptionTypeIndices.tryReserveInitialCapacity(importCount), "can't allocate enough memory for "_s, importCount, " import exception signatures"_s); // FIXME this over-allocates when we fix the FIXMEs below.
 
     for (uint32_t importNumber = 0; importNumber < importCount; ++importNumber) {
         uint32_t moduleLen;
@@ -152,10 +152,10 @@ auto SectionParser::parseImport() -> PartialResult
         unsigned kindIndex { 0 };
 
         WASM_PARSER_FAIL_IF(!parseVarUInt32(moduleLen), "can't get "_s, importNumber, "th Import's module name length"_s);
-        WASM_PARSER_FAIL_IF(!consumeUTF8String(moduleString, moduleLen), "can't get "_s, importNumber, "th Import's module name of length "_s, moduleLen);
+        WASM_ALLOCATOR_FAIL_IF(!consumeUTF8String(moduleString, moduleLen), "can't get "_s, importNumber, "th Import's module name of length "_s, moduleLen);
 
         WASM_PARSER_FAIL_IF(!parseVarUInt32(fieldLen), "can't get "_s, importNumber, "th Import's field name length in module '"_s, moduleString, "'"_s);
-        WASM_PARSER_FAIL_IF(!consumeUTF8String(fieldString, fieldLen), "can't get "_s, importNumber, "th Import's field name of length "_s, moduleLen, " in module '"_s, moduleString, "'"_s);
+        WASM_ALLOCATOR_FAIL_IF(!consumeUTF8String(fieldString, fieldLen), "can't get "_s, importNumber, "th Import's field name of length "_s, moduleLen, " in module '"_s, moduleString, "'"_s);
 
         WASM_PARSER_FAIL_IF(!parseExternalKind(kind), "can't get "_s, importNumber, "th Import's kind in module '"_s, moduleString, "' field '"_s, fieldString, "'"_s);
         switch (kind) {
@@ -227,8 +227,8 @@ auto SectionParser::parseFunction() -> PartialResult
     WASM_PARSER_FAIL_IF(count > maxFunctions, "Function section's count is too big "_s, count, " maximum "_s, maxFunctions);
     RELEASE_ASSERT(!m_info->internalFunctionTypeIndices.capacity());
     RELEASE_ASSERT(!m_info->functions.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->internalFunctionTypeIndices.tryReserveInitialCapacity(count), "can't allocate enough memory for "_s, count, " Function signatures"_s);
-    WASM_PARSER_FAIL_IF(!m_info->functions.tryReserveInitialCapacity(count), "can't allocate enough memory for "_s, count, "Function locations"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->internalFunctionTypeIndices.tryReserveInitialCapacity(count), "can't allocate enough memory for "_s, count, " Function signatures"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->functions.tryReserveInitialCapacity(count), "can't allocate enough memory for "_s, count, "Function locations"_s);
 
     for (uint32_t i = 0; i < count; ++i) {
         uint32_t typeNumber;
@@ -411,9 +411,10 @@ auto SectionParser::parseGlobal() -> PartialResult
         Type typeForInitOpcode;
         bool isExtendedConstantExpression;
         WASM_FAIL_IF_HELPER_FAILS(parseInitExpr(initOpcode, isExtendedConstantExpression, initialBitsOrImportNumber, initVector, global.type, typeForInitOpcode));
-        if (typeForInitOpcode.isV128())
+        if (initOpcode == ExtSIMD && !isExtendedConstantExpression) {
+            RELEASE_ASSERT(typeForInitOpcode.isV128());
             global.initialBits.initialVector = initVector;
-        else
+        } else
             global.initialBits.initialBitsOrImportNumber = initialBitsOrImportNumber;
 
         if (isExtendedConstantExpression)
@@ -443,7 +444,7 @@ auto SectionParser::parseExport() -> PartialResult
     WASM_PARSER_FAIL_IF(!parseVarUInt32(exportCount), "can't get Export section's count"_s);
     WASM_PARSER_FAIL_IF(exportCount > maxExports, "Export section's count is too big "_s, exportCount, " maximum "_s, maxExports);
     RELEASE_ASSERT(!m_info->exports.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->exports.tryReserveInitialCapacity(exportCount), "can't allocate enough memory for "_s, exportCount, " exports"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->exports.tryReserveInitialCapacity(exportCount), "can't allocate enough memory for "_s, exportCount, " exports"_s);
 
     UncheckedKeyHashSet<String> exportNames;
     for (uint32_t exportNumber = 0; exportNumber < exportCount; ++exportNumber) {
@@ -453,7 +454,7 @@ auto SectionParser::parseExport() -> PartialResult
         unsigned kindIndex;
 
         WASM_PARSER_FAIL_IF(!parseVarUInt32(fieldLen), "can't get "_s, exportNumber, "th Export's field name length"_s);
-        WASM_PARSER_FAIL_IF(!consumeUTF8String(fieldString, fieldLen), "can't get "_s, exportNumber, "th Export's field name of length "_s, fieldLen);
+        WASM_ALLOCATOR_FAIL_IF(!consumeUTF8String(fieldString, fieldLen), "can't get "_s, exportNumber, "th Export's field name of length "_s, fieldLen);
         String fieldName = WTF::makeString(fieldString);
         WASM_PARSER_FAIL_IF(exportNames.contains(fieldName), "duplicate export: '"_s, fieldString, "'"_s);
         exportNames.add(fieldName);
@@ -516,7 +517,7 @@ auto SectionParser::parseElement() -> PartialResult
     WASM_PARSER_FAIL_IF(!parseVarUInt32(elementCount), "can't get Element section's count"_s);
     WASM_PARSER_FAIL_IF(elementCount > maxTableEntries, "Element section's count is too big "_s, elementCount, " maximum "_s, maxTableEntries);
     RELEASE_ASSERT(!m_info->elements.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->elements.tryReserveInitialCapacity(elementCount), "can't allocate memory for "_s, elementCount, " Elements"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->elements.tryReserveInitialCapacity(elementCount), "can't allocate memory for "_s, elementCount, " Elements"_s);
     for (unsigned elementNum = 0; elementNum < elementCount; ++elementNum) {
         uint32_t elementFlags;
         WASM_PARSER_FAIL_IF(!parseVarUInt32(elementFlags), "can't get "_s, elementNum, "th Element reserved byte, which should be element flags"_s);
@@ -534,8 +535,8 @@ auto SectionParser::parseElement() -> PartialResult
             ASSERT(!!m_info->tables[tableIndex]);
 
             Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTFMove(initExpr));
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -548,8 +549,8 @@ auto SectionParser::parseElement() -> PartialResult
             uint32_t indexCount;
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             Element element(Element::Kind::Passive, nonNullFuncrefType());
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -571,8 +572,8 @@ auto SectionParser::parseElement() -> PartialResult
             ASSERT(!!m_info->tables[tableIndex]);
 
             Element element(Element::Kind::Active, nonNullFuncrefType(), tableIndex, WTFMove(initExpr));
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -585,8 +586,8 @@ auto SectionParser::parseElement() -> PartialResult
             uint32_t indexCount;
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
             Element element(Element::Kind::Declared, nonNullFuncrefType());
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfIndexes(element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -604,8 +605,8 @@ auto SectionParser::parseElement() -> PartialResult
             ASSERT(!!m_info->tables[tableIndex]);
 
             Element element(Element::Kind::Active, funcrefType(), tableIndex, WTFMove(initExpr));
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(funcrefType(), element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -619,8 +620,8 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
 
             Element element(Element::Kind::Passive, refType);
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -642,8 +643,8 @@ auto SectionParser::parseElement() -> PartialResult
             ASSERT(!!m_info->tables[tableIndex]);
 
             Element element(Element::Kind::Active, refType, tableIndex, WTFMove(initExpr));
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -657,8 +658,8 @@ auto SectionParser::parseElement() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseIndexCountForElementSection(indexCount, elementNum));
 
             Element element(Element::Kind::Declared, refType);
-            WASM_PARSER_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
-            WASM_PARSER_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initTypes.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
+            WASM_ALLOCATOR_FAIL_IF(!element.initialBitsOrIndices.tryReserveInitialCapacity(indexCount), "can't allocate memory for "_s, indexCount, " Element init_exprs"_s);
 
             WASM_FAIL_IF_HELPER_FAILS(parseElementSegmentVectorOfExpressions(refType, element.initTypes, element.initialBitsOrIndices, indexCount, elementNum));
             m_info->elements.append(WTFMove(element));
@@ -720,8 +721,9 @@ auto SectionParser::parseInitExpr(uint8_t& opcode, bool& isExtendedConstantExpre
 #if ENABLE(B3_JIT)
     case ExtSIMD: {
         WASM_PARSER_FAIL_IF(!Options::useWasmSIMD(), "SIMD must be enabled"_s);
-        WASM_PARSER_FAIL_IF(!parseUInt8(opcode), "can't get init_expr's simd opcode"_s);
-        WASM_PARSER_FAIL_IF(static_cast<ExtSIMDOpType>(opcode) != ExtSIMDOpType::V128Const, "unknown init_expr simd opcode "_s, opcode);
+        uint8_t simdOpcode;
+        WASM_PARSER_FAIL_IF(!parseUInt8(simdOpcode), "can't get init_expr's simd opcode"_s);
+        WASM_PARSER_FAIL_IF(static_cast<ExtSIMDOpType>(simdOpcode) != ExtSIMDOpType::V128Const, "unknown init_expr simd opcode "_s, opcode);
         v128_t constant;
         WASM_PARSER_FAIL_IF(!parseImmByteArray16(constant), "get constant value for init_expr's v128.const"_s);
 
@@ -834,7 +836,7 @@ auto SectionParser::parseFunctionType(uint32_t position, RefPtr<TypeDefinition>&
     WASM_PARSER_FAIL_IF(!parseVarUInt32(argumentCount), "can't get Type's argument count at index "_s, position);
     WASM_PARSER_FAIL_IF(argumentCount > maxFunctionParams, "argument count of Type at index "_s, position, " is too big "_s, argumentCount, " maximum "_s, maxFunctionParams);
     Vector<Type, 16> argumentTypes;
-    WASM_PARSER_FAIL_IF(!argumentTypes.tryReserveInitialCapacity(argumentCount), "can't allocate enough memory for Type section's "_s, position, "th signature"_s);
+    WASM_ALLOCATOR_FAIL_IF(!argumentTypes.tryReserveInitialCapacity(argumentCount), "can't allocate enough memory for Type section's "_s, position, "th signature"_s);
 
     argumentTypes.grow(argumentCount);
     for (unsigned i = 0; i < argumentCount; ++i) {
@@ -848,7 +850,7 @@ auto SectionParser::parseFunctionType(uint32_t position, RefPtr<TypeDefinition>&
     WASM_PARSER_FAIL_IF(returnCount > maxFunctionReturns, "return count of Type at index "_s, position, " is too big "_s, returnCount, " maximum "_s, maxFunctionReturns);
 
     Vector<Type, 16> returnTypes;
-    WASM_PARSER_FAIL_IF(!returnTypes.tryReserveInitialCapacity(returnCount), "can't allocate enough memory for Type section's "_s, position, "th signature"_s);
+    WASM_ALLOCATOR_FAIL_IF(!returnTypes.tryReserveInitialCapacity(returnCount), "can't allocate enough memory for Type section's "_s, position, "th signature"_s);
     returnTypes.grow(returnCount);
     for (unsigned i = 0; i < returnCount; ++i) {
         Type value;
@@ -894,7 +896,7 @@ auto SectionParser::parseStructType(uint32_t position, RefPtr<TypeDefinition>& s
     WASM_PARSER_FAIL_IF(!parseVarUInt32(fieldCount), "can't get "_s, position, "th struct type's field count"_s);
     WASM_PARSER_FAIL_IF(fieldCount > maxStructFieldCount, "number of fields for struct type at position "_s, position, " is too big "_s, fieldCount, " maximum "_s, maxStructFieldCount);
     Vector<FieldType> fields;
-    WASM_PARSER_FAIL_IF(!fields.tryReserveInitialCapacity(fieldCount), "can't allocate enough memory for struct fields "_s, fieldCount, " entries"_s);
+    WASM_ALLOCATOR_FAIL_IF(!fields.tryReserveInitialCapacity(fieldCount), "can't allocate enough memory for struct fields "_s, fieldCount, " entries"_s);
     fields.grow(fieldCount);
 
     Checked<unsigned, RecordOverflow> structInstancePayloadSize { 0 };
@@ -936,9 +938,9 @@ auto SectionParser::parseRecursionGroup(uint32_t position, RefPtr<TypeDefinition
     WASM_PARSER_FAIL_IF(!parseVarUInt32(typeCount), "can't get "_s, position, "th recursion group's type count"_s);
     WASM_PARSER_FAIL_IF(typeCount > maxRecursionGroupCount, "number of types for recursion group at position "_s, position, " is too big "_s, typeCount, " maximum "_s, maxRecursionGroupCount);
     Vector<TypeIndex> types;
-    WASM_PARSER_FAIL_IF(!types.tryReserveInitialCapacity(typeCount), "can't allocate enough memory for recursion group "_s, typeCount, " entries"_s);
+    WASM_ALLOCATOR_FAIL_IF(!types.tryReserveInitialCapacity(typeCount), "can't allocate enough memory for recursion group "_s, typeCount, " entries"_s);
     Vector<Ref<TypeDefinition>> signatures;
-    WASM_PARSER_FAIL_IF(!signatures.tryReserveInitialCapacity(typeCount), "can't allocate enough memory for recursion group "_s, typeCount, " entries"_s);
+    WASM_ALLOCATOR_FAIL_IF(!signatures.tryReserveInitialCapacity(typeCount), "can't allocate enough memory for recursion group "_s, typeCount, " entries"_s);
 
     SetForScope<RecursionGroupInformation> recursionGroupInfo(m_recursionGroupInformation, RecursionGroupInformation { true, m_info->typeCount(), m_info->typeCount() + typeCount });
 
@@ -1238,7 +1240,7 @@ auto SectionParser::parseData() -> PartialResult
     if (m_info->numberOfDataSegments)
         WASM_PARSER_FAIL_IF(segmentCount != m_info->numberOfDataSegments.value(), "Data section's count "_s, segmentCount, " is different from Data Count section's count "_s, m_info->numberOfDataSegments.value());
     RELEASE_ASSERT(!m_info->data.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->data.tryReserveInitialCapacity(segmentCount), "can't allocate enough memory for Data section's "_s, segmentCount, " segments"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->data.tryReserveInitialCapacity(segmentCount), "can't allocate enough memory for Data section's "_s, segmentCount, " segments"_s);
 
     for (uint32_t segmentNumber = 0; segmentNumber < segmentCount; ++segmentNumber) {
         uint32_t memoryIndexOrDataFlag = UINT32_MAX;
@@ -1329,7 +1331,7 @@ auto SectionParser::parseException() -> PartialResult
     WASM_PARSER_FAIL_IF(!parseVarUInt32(exceptionCount), "can't get Exception section's count"_s);
     WASM_PARSER_FAIL_IF(exceptionCount > maxExceptions, "Export section's count is too big "_s, exceptionCount, " maximum "_s, maxExceptions);
     RELEASE_ASSERT(!m_info->internalExceptionTypeIndices.capacity());
-    WASM_PARSER_FAIL_IF(!m_info->internalExceptionTypeIndices.tryReserveInitialCapacity(exceptionCount), "can't allocate enough memory for "_s, exceptionCount, " exceptions"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->internalExceptionTypeIndices.tryReserveInitialCapacity(exceptionCount), "can't allocate enough memory for "_s, exceptionCount, " exceptions"_s);
 
     for (uint32_t exceptionNumber = 0; exceptionNumber < exceptionCount; ++exceptionNumber) {
         uint8_t tagType;
@@ -1353,12 +1355,12 @@ auto SectionParser::parseCustom() -> PartialResult
     CustomSection section;
     uint32_t customSectionNumber = m_info->customSections.size() + 1;
     uint32_t nameLen;
-    WASM_PARSER_FAIL_IF(!m_info->customSections.tryReserveCapacity(customSectionNumber), "can't allocate enough memory for "_s, customSectionNumber, "th custom section"_s);
+    WASM_ALLOCATOR_FAIL_IF(!m_info->customSections.tryReserveCapacity(customSectionNumber), "can't allocate enough memory for "_s, customSectionNumber, "th custom section"_s);
     WASM_PARSER_FAIL_IF(!parseVarUInt32(nameLen), "can't get "_s, customSectionNumber, "th custom section's name length"_s);
-    WASM_PARSER_FAIL_IF(!consumeUTF8String(section.name, nameLen), "nameLen get "_s, customSectionNumber, "th custom section's name of length "_s, nameLen);
+    WASM_ALLOCATOR_FAIL_IF(!consumeUTF8String(section.name, nameLen), "nameLen get "_s, customSectionNumber, "th custom section's name of length "_s, nameLen);
 
     uint32_t payloadBytes = source().size() - m_offset;
-    WASM_PARSER_FAIL_IF(!section.payload.tryReserveInitialCapacity(payloadBytes), "can't allocate enough memory for "_s, customSectionNumber, "th custom section's "_s, payloadBytes, " bytes"_s);
+    WASM_ALLOCATOR_FAIL_IF(!section.payload.tryReserveInitialCapacity(payloadBytes), "can't allocate enough memory for "_s, customSectionNumber, "th custom section's "_s, payloadBytes, " bytes"_s);
 
     section.payload.grow(payloadBytes);
     memcpySpan(section.payload.mutableSpan(), source().subspan(m_offset, payloadBytes));

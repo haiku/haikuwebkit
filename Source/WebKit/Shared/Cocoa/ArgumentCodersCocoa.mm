@@ -338,7 +338,7 @@ template<> Class getClass<PKSecureElementPass>()
 }
 #endif
 
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#if !HAVE(WEBCONTENTRESTRICTIONS) && HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
 template<> Class getClass<WebFilterEvaluator>()
 {
     return PAL::getWebFilterEvaluatorClassSingleton();
@@ -408,10 +408,6 @@ NSType typeFromObject(id object)
         return NSType::CNPhoneNumber;
     SUPPRESS_UNRETAINED_ARG if ([object isKindOfClass:getClass<CNPostalAddress>()])
         return NSType::CNPostalAddress;
-#endif
-#if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
-    SUPPRESS_UNRETAINED_ARG if ([object isKindOfClass:getClass<DDScannerResult>()])
-        return NSType::DDScannerResult;
 #endif
     if ([object isKindOfClass:[NSDateComponents class]])
         return NSType::NSDateComponents;

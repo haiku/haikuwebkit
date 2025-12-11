@@ -153,13 +153,10 @@ ProcessThrottler::~ProcessThrottler()
     invalidateAllActivities();
 }
 
-static void assertIfCalledFromBackgroundThread()
+NEVER_INLINE static void crashDueToApplicationCallingMainThreadOnlyWebKitAPIFromBackgroundThread()
 {
 #if PLATFORM(COCOA)
-    if (isMainRunLoop())
-        return;
-
-    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::CrashWhenPreconnectingFromBackgroundThread)) {
+    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::CrashWhenMutatingProcessAssertionsFromBackgroundThread)) {
         static bool didLog;
         if (!didLog) {
             didLog = true;
@@ -172,6 +169,14 @@ static void assertIfCalledFromBackgroundThread()
 #else
     ASSERT(isMainRunLoop());
 #endif
+}
+
+static void assertIfCalledFromBackgroundThread()
+{
+    if (isMainRunLoop()) [[likely]]
+        return;
+
+    crashDueToApplicationCallingMainThreadOnlyWebKitAPIFromBackgroundThread();
 }
 
 bool ProcessThrottler::addActivity(Activity& activity)

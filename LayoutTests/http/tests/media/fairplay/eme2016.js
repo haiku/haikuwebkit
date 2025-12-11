@@ -66,19 +66,26 @@ async function startEME(options) {
 }
 
 async function fetchAndAppend(sourceBuffer, url, options) {
-    let buffer = await fetchBuffer(url, options);
+    const buffer = await fetchBuffer(url, options);
     sourceBuffer.appendBuffer(buffer);
     await waitFor(sourceBuffer, 'updateend', options && options.silent);
 }
 
-async function runAndWaitForLicenseRequest(session, callback) {
+async function fetchAndSilentAppend(sourceBuffer, url, options) {
+    const buffer = await fetchBuffer(url, options);
+    sourceBuffer.appendBuffer(buffer);
+    await waitFor(sourceBuffer, 'updateend', true);
+}
+
+async function runAndWaitForLicenseRequest(session, callback, options) {
     var licenseRequestPromise = waitFor(session, 'message');
     await callback();
     let message = await licenseRequestPromise;
 
     let response = await getResponse(message, options);
     await session.update(response);
-    consoleWrite('PROMISE: session.update() resolved');
+    if (!options || options.silent)
+        consoleWrite('PROMISE: session.update() resolved');
 }
 
 async function fetchAndWaitForLicenseRequest(session, sourceBuffer, url) {
@@ -88,7 +95,7 @@ async function fetchAndWaitForLicenseRequest(session, sourceBuffer, url) {
 }
 
 async function fetchAppendAndWaitForEncrypted(video, mediaKeys, sourceBuffer, url, options) {
-    let updateEndPromise = fetchAndAppend(sourceBuffer, url, options);
+    let updateEndPromise = fetchAndSilentAppend(sourceBuffer, url, options);
     let encryptedEvent = await waitFor(video, 'encrypted', options && options.silent);
 
     let session = mediaKeys.createSession();

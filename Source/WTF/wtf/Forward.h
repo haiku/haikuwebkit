@@ -75,6 +75,7 @@ class WallTime;
 class WorkQueue;
 
 struct AnyThreadsAccessTraits;
+struct ARCEnabled;
 struct FastMalloc;
 struct MachSendRightAnnotated;
 struct MainThreadAccessTraits;
@@ -111,6 +112,7 @@ enum class ConcurrencyTag : uint8_t {
     Atomic
 };
 
+template<typename, typename> struct DefaultOSObjectRetainTraits;
 template<typename> struct DefaultRefDerefTraits;
 
 template<typename> class Awaitable;
@@ -129,7 +131,7 @@ template<typename, typename> class LazyUniqueRef;
 template<typename> struct MarkableTraits;
 template<typename T, typename Traits = MarkableTraits<T>> class Markable;
 template<typename, typename = AnyThreadsAccessTraits> class NeverDestroyed;
-template<typename> class OSObjectPtr;
+template<typename T, typename = DefaultOSObjectRetainTraits<T, ARCEnabled>> class OSObjectPtr;
 template<typename, typename, typename> class ObjectIdentifierGeneric;
 template<typename T, typename RawValue = uint64_t> using ObjectIdentifier = ObjectIdentifierGeneric<T, ObjectIdentifierMainThreadAccessTraits<RawValue>, RawValue>;
 template<typename T, typename RawValue = uint64_t> using AtomicObjectIdentifier = ObjectIdentifierGeneric<T, ObjectIdentifierThreadSafeAccessTraits<RawValue>, RawValue>;

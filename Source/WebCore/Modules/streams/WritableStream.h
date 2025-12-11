@@ -57,7 +57,8 @@ public:
     enum class Type : uint8_t {
         Default,
         FileSystem,
-        WebTransport
+        WebTransport,
+        WebTransportDatagrams,
     };
     virtual Type type() const { return Type::Default; }
 

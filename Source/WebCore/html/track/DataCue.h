@@ -57,6 +57,7 @@ public:
     void setData(JSC::ArrayBuffer&);
 
     const SerializedPlatformDataCue* platformValue() const { return m_platformValue.get(); }
+    RefPtr<const SerializedPlatformDataCue> protectedPlatformValue() const { return m_platformValue.get(); }
 
     JSC::JSValue value(JSC::JSGlobalObject&) const;
     void setValue(JSC::JSGlobalObject&, JSC::JSValue);

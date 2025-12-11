@@ -1,0 +1,37 @@
+root
+    role='banner'
+        aria-label='Main Page Title','Welcome to Test Page'
+    navigation,role='navigation',aria-label='Main navigation'
+        list
+            list-item
+                link,'Section 1'
+            list-item
+                link,'Section 2'
+    role='main'
+        section,aria-label='Interactive Elements'
+            button,aria-describedby='This button does nothing',aria-label='Test button','Click Me'
+            'This button does nothing'
+            input,'text',uid=…,placeholder='Enter text here'
+            role='button','Clickable Div'
+        section,aria-label='Content with Roles'
+            article,role='article','Article Title\n\n\n                January 1, 2024\n            \n\n            \nThis is some article content with highlighted text.'
+            role='complementary',aria-label='Related information'
+                'Related Links'
+                list
+                    list-item
+                        link,'Example Link'
+                    list-item
+                        link,'Test Link'
+            role='region'
+                role='status','Ready'
+                button,'Update Status'
+            textarea,uid=…,'This is a text box'
+            contentEditable,uid=…,role='textbox'
+                subscript
+                    'WebKit home page:'
+                    link
+    role='contentinfo'
+        'Footer content with'
+        role='img',aria-label='copyright symbol','©'
+        '2024'
+version=2

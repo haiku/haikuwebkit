@@ -527,8 +527,8 @@ Vector<Ref<Database>> DatabaseTracker::openDatabases()
 
         for (auto& nameMap : m_openDatabaseMap.values()) {
             for (auto& set : nameMap.values()) {
-                for (auto& database : set)
-                    openDatabases.append(*database);
+                for (Ref database : set)
+                    openDatabases.append(database);
             }
         }
     }
@@ -542,7 +542,7 @@ void DatabaseTracker::addOpenDatabase(Database& database)
     auto name = database.stringIdentifierIsolatedCopy();
     m_openDatabaseMap.add(database.securityOrigin().isolatedCopy(), DatabaseNameMap { }).iterator->value
         .add(name, DatabaseSet { }).iterator->value
-        .add(&database);
+        .add(database);
 
     LOG(StorageAPI, "Added open Database %s (%p)\n", name.utf8().data(), &database);
 }
@@ -564,11 +564,11 @@ void DatabaseTracker::removeOpenDatabase(Database& database)
         return;
     }
 
-    innerIterator->value.remove(&database);
+    innerIterator->value.remove(database);
 
     LOG(StorageAPI, "Removed open Database %s (%p)\n", name.utf8().data(), &database);
 
-    if (!innerIterator->value.isEmpty())
+    if (!innerIterator->value.isEmptyIgnoringNullReferences())
         return;
 
     iterator->value.remove(innerIterator);
@@ -1091,8 +1091,8 @@ bool DatabaseTracker::deleteDatabaseFile(const SecurityOriginData& origin, const
         Locker openDatabaseMapLock { m_openDatabaseMapGuard };
         if (auto iterator = m_openDatabaseMap.find(origin); iterator != m_openDatabaseMap.end()) {
             if (auto innerIterator = iterator->value.find(name); innerIterator != iterator->value.end()) {
-                for (auto& database : innerIterator->value)
-                    deletedDatabases.append(*database);
+                for (Ref database : innerIterator->value)
+                    deletedDatabases.append(database);
             }
         }
     }
@@ -1137,7 +1137,7 @@ void DatabaseTracker::removeDeletedOpenedDatabases() WTF_IGNORES_THREAD_SAFETY_A
     }
     
     // Keep track of which opened databases have been deleted.
-    Vector<RefPtr<Database>> deletedDatabases;
+    Vector<Ref<Database>> deletedDatabases;
     Vector<std::pair<SecurityOriginData, Vector<String>>> deletedDatabaseNames;
 
     // Make sure not to hold the m_openDatabaseMapGuard mutex when calling
@@ -1165,11 +1165,11 @@ void DatabaseTracker::removeDeletedOpenedDatabases() WTF_IGNORES_THREAD_SAFETY_A
                 bool foundDeletedDatabase = false;
                 for (auto& db : databases.value) {
                     // We are done if this database has already been marked as deleted.
-                    if (db->deleted())
+                    if (db.deleted())
                         continue;
 
                     // If this database has been deleted or if its database file no longer matches the current version, this database is no longer valid and it should be marked as deleted.
-                    if (databaseFileName.isNull() || databaseFileName != FileSystem::pathFileName(db->fileNameIsolatedCopy())) {
+                    if (databaseFileName.isNull() || databaseFileName != FileSystem::pathFileName(db.fileNameIsolatedCopy())) {
                         deletedDatabases.append(db);
                         foundDeletedDatabase = true;
                     }

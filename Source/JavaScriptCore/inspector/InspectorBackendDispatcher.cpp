@@ -342,7 +342,7 @@ std::optional<double> BackendDispatcher::getDouble(JSON::Object* params, const S
 String BackendDispatcher::getString(JSON::Object* params, const String& name, bool required)
 {
     // FIXME: <http://webkit.org/b/179847> simplify this when legacy InspectorObject symbols are no longer needed.
-    String (JSON::Value::*asString)() const = &JSON::Value::asString;
+    const String& (JSON::Value::*asString)() const = &JSON::Value::asString;
     return getPropertyValue<String>(params, name, required, asString, "String"_s);
 }
 

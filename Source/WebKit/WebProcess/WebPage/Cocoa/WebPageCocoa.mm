@@ -1182,33 +1182,33 @@ static std::optional<bool> elementHasHiddenVisibility(StyledElement* styledEleme
     return value->valueID() == CSSValueHidden;
 }
 
-void WebPage::createTextIndicatorForElementWithID(const String& elementID, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&& completionHandler)
+void WebPage::createTextIndicatorForElementWithID(const String& elementID, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     RefPtr frame = corePage()->focusController().focusedOrMainFrame();
     if (!frame) {
         ASSERT_NOT_REACHED();
-        completionHandler(std::nullopt);
+        completionHandler(nil);
         return;
     }
 
     RefPtr document = frame->document();
     if (!document) {
         ASSERT_NOT_REACHED();
-        completionHandler(std::nullopt);
+        completionHandler(nil);
         return;
     }
 
     RefPtr element = document->getElementById(elementID);
     if (!element) {
         ASSERT_NOT_REACHED();
-        completionHandler(std::nullopt);
+        completionHandler(nil);
         return;
     }
 
     RefPtr styledElement = dynamicDowncast<StyledElement>(element.get());
     if (!styledElement) {
         ASSERT_NOT_REACHED();
-        completionHandler(std::nullopt);
+        completionHandler(nil);
         return;
     }
 
@@ -1233,7 +1233,7 @@ void WebPage::createTextIndicatorForElementWithID(const String& elementID, Compl
 
     RefPtr textIndicator = WebCore::TextIndicator::createWithRange(elementRange, textIndicatorOptions, WebCore::TextIndicatorPresentationTransition::None, { });
     if (!textIndicator) {
-        completionHandler(std::nullopt);
+        completionHandler(nil);
         return;
     }
 
@@ -1245,7 +1245,7 @@ void WebPage::createTextIndicatorForElementWithID(const String& elementID, Compl
     else
         styledElement->removeInlineStyleProperty(CSSPropertyVisibility);
 
-    completionHandler(textIndicator->data());
+    completionHandler(WTFMove(textIndicator));
 }
 
 void WebPage::createBitmapsFromImageData(Ref<WebCore::SharedBuffer>&& buffer, const Vector<unsigned>& lengths, CompletionHandler<void(Vector<Ref<WebCore::ShareableBitmap>>&&)>&& completionHandler)
@@ -1977,44 +1977,20 @@ void WebPage::willCommitLayerTree(RemoteLayerTreeTransaction& layerTransaction, 
 
     Ref page = *corePage();
 #if ENABLE(THREADED_ANIMATIONS)
-    if (RefPtr document = localRootFrame->document()) {
-        if (CheckedPtr timelinesController = document->timelinesController()) {
+    HashSet<Ref<AcceleratedTimeline>> timelines;
+    page->forEachDocument([&](const auto& document) {
+        if (CheckedPtr timelinesController = document.timelinesController()) {
             if (auto* acceleratedEffectStackUpdater = timelinesController->existingAcceleratedEffectStackUpdater())
-                layerTransaction.setTimelines(acceleratedEffectStackUpdater->timelines());
+                timelines = timelines.unionWith(acceleratedEffectStackUpdater->timelines());
         }
-    }
+    });
+    if (!timelines.isEmpty())
+        layerTransaction.setTimelines(WTFMove(timelines));
 #endif
 
     layerTransaction.setContentsSize(frameView->contentsSize());
     layerTransaction.setScrollGeometryContentSize(frameView->scrollGeometryContentSize());
     layerTransaction.setScrollOrigin(frameView->scrollOrigin());
-    layerTransaction.setPageScaleFactor(page->pageScaleFactor());
-    layerTransaction.setRenderTreeSize(page->renderTreeSize());
-    layerTransaction.setBaseLayoutViewportSize(frameView->baseLayoutViewportSize());
-    layerTransaction.setMinStableLayoutViewportOrigin(frameView->minStableLayoutViewportOrigin());
-    layerTransaction.setMaxStableLayoutViewportOrigin(frameView->maxStableLayoutViewportOrigin());
-
-#if PLATFORM(IOS_FAMILY)
-    layerTransaction.setScaleWasSetByUIProcess(scaleWasSetByUIProcess());
-    layerTransaction.setMinimumScaleFactor(m_viewportConfiguration.minimumScale());
-    layerTransaction.setMaximumScaleFactor(m_viewportConfiguration.maximumScale());
-    layerTransaction.setInitialScaleFactor(m_viewportConfiguration.initialScale());
-    layerTransaction.setViewportMetaTagInteractiveWidget(m_viewportConfiguration.viewportArguments().interactiveWidget);
-    layerTransaction.setViewportMetaTagWidth(m_viewportConfiguration.viewportArguments().width);
-    layerTransaction.setViewportMetaTagWidthWasExplicit(m_viewportConfiguration.viewportArguments().widthWasExplicit);
-    layerTransaction.setViewportMetaTagCameFromImageDocument(m_viewportConfiguration.viewportArguments().type == ViewportArguments::Type::ImageDocument);
-    layerTransaction.setAvoidsUnsafeArea(m_viewportConfiguration.avoidsUnsafeArea());
-    layerTransaction.setAllowsUserScaling(allowsUserScaling());
-    if (m_pendingDynamicViewportSizeUpdateID) {
-        layerTransaction.setDynamicViewportSizeUpdateID(*m_pendingDynamicViewportSizeUpdateID);
-        m_pendingDynamicViewportSizeUpdateID = std::nullopt;
-    }
-    if (m_lastTransactionPageScaleFactor != layerTransaction.pageScaleFactor()) {
-        m_lastTransactionPageScaleFactor = layerTransaction.pageScaleFactor();
-        m_internals->lastTransactionIDWithScaleChange = layerTransaction.transactionID();
-    }
-#endif
-
     layerTransaction.setScrollPosition(frameView->scrollPosition());
 
     m_pendingThemeColorChange = false;
@@ -2022,9 +1998,14 @@ void WebPage::willCommitLayerTree(RemoteLayerTreeTransaction& layerTransaction, 
     m_pendingSampledPageTopColorChange = false;
 }
 
-void WebPage::willCommitMainFrameData(MainFrameData& data)
+void WebPage::willCommitMainFrameData(MainFrameData& data, const TransactionID& transactionID)
 {
+    RefPtr mainFrameView = localMainFrameView();
+    if (!mainFrameView)
+        return;
+
     Ref page = *corePage();
+    data.pageScaleFactor = page->pageScaleFactor();
     data.themeColor = page->themeColor();
     data.pageExtendedBackgroundColor = page->pageExtendedBackgroundColor();
     data.sampledPageTopColor = page->sampledPageTopColor();
@@ -2034,8 +2015,30 @@ void WebPage::willCommitMainFrameData(MainFrameData& data)
         data.fixedContainerEdges = page->fixedContainerEdges();
     }
 
+    data.baseLayoutViewportSize = mainFrameView->baseLayoutViewportSize();
+    data.minStableLayoutViewportOrigin = mainFrameView->minStableLayoutViewportOrigin();
+    data.maxStableLayoutViewportOrigin = mainFrameView->maxStableLayoutViewportOrigin();
+
 #if PLATFORM(IOS_FAMILY)
+    data.scaleWasSetByUIProcess = scaleWasSetByUIProcess();
+    data.minimumScaleFactor = m_viewportConfiguration.minimumScale();
+    data.maximumScaleFactor = m_viewportConfiguration.maximumScale();
+    data.initialScaleFactor = m_viewportConfiguration.initialScale();
+    data.viewportMetaTagInteractiveWidget = m_viewportConfiguration.viewportArguments().interactiveWidget;
+    data.viewportMetaTagWidth = m_viewportConfiguration.viewportArguments().width;
+    data.viewportMetaTagWidthWasExplicit = m_viewportConfiguration.viewportArguments().widthWasExplicit;
+    data.viewportMetaTagCameFromImageDocument = m_viewportConfiguration.viewportArguments().type == ViewportArguments::Type::ImageDocument;
+    data.avoidsUnsafeArea = m_viewportConfiguration.avoidsUnsafeArea();
     data.isInStableState = m_isInStableState;
+    data.allowsUserScaling = allowsUserScaling();
+    if (m_pendingDynamicViewportSizeUpdateID) {
+        data.dynamicViewportSizeUpdateID = *m_pendingDynamicViewportSizeUpdateID;
+        m_pendingDynamicViewportSizeUpdateID = std::nullopt;
+    }
+    if (m_lastTransactionPageScaleFactor != data.pageScaleFactor) {
+        m_lastTransactionPageScaleFactor = data.pageScaleFactor;
+        m_internals->lastTransactionIDWithScaleChange = transactionID;
+    }
 #endif
 
     if (hasPendingEditorStateUpdate() || m_needsEditorStateVisualDataUpdate) {

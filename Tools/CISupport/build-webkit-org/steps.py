@@ -287,7 +287,7 @@ class CheckOutSpecificRevision(shell.ShellCommand):
         return not self.doStepIf(step)
 
     def run(self):
-        self.command = ['git', 'checkout', self.getProperty('user_provided_git_hash')]
+        self.command = ['git', 'checkout', '--progress', self.getProperty('user_provided_git_hash')]
         return super().run()
 
 
@@ -831,13 +831,13 @@ class RunTest262Tests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
         super().__init__(*args, timeout=2 * 60 * 60, **kwargs)
 
     def run(self):
+        self.appendCustomBuildFlags(self.getProperty('platform'), self.getProperty('fullPlatform'))
         filter_command = ' '.join(self.command) + ' 2>&1 | python3 Tools/Scripts/filter-test-logs test262'
         self.command = self.shell_command(filter_command)
 
         self.log_observer = ParseByLineLogObserver(self.parseOutputLine)
         self.addLogObserver('stdio', self.log_observer)
         self.failedTestCount = 0
-        self.appendCustomBuildFlags(self.getProperty('platform'), self.getProperty('fullPlatform'))
 
         steps_to_add = [
             GenerateS3URL(
@@ -865,6 +865,7 @@ class RunTest262Tests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
 
 
 class RunWebKitTests(shell.Test, CustomFlagsMixin, ShellMixin):
+    DO_REPORT = True
     name = "layout-test"
     description = ["layout-tests running"]
     descriptionDone = ["layout-tests"]
@@ -878,7 +879,6 @@ class RunWebKitTests(shell.Test, CustomFlagsMixin, ShellMixin):
                "--build-number", WithProperties("%(buildnumber)s"),
                "--buildbot-worker", WithProperties("%(workername)s"),
                "--buildbot-master", DNS_NAME,
-               "--report", RESULTS_WEBKIT_URL,
                "--exit-after-n-crashes-or-timeouts", "50",
                "--exit-after-n-failures", "500",
                WithProperties("--%(configuration)s")]
@@ -910,6 +910,8 @@ class RunWebKitTests(shell.Test, CustomFlagsMixin, ShellMixin):
         self.appendCustomTestingFlags(platform, self.getProperty('device_model'))
         additionalArguments = self.getProperty('additionalArguments')
 
+        if self.DO_REPORT:
+            self.command += ["--report", RESULTS_WEBKIT_URL]
         self.command += ["--results-directory", self.resultDirectory]
         self.command += ['--debug-rwt-logging']
 
@@ -1008,6 +1010,7 @@ class RunWebKitTests(shell.Test, CustomFlagsMixin, ShellMixin):
 
 
 class RunDashboardTests(RunWebKitTests):
+    DO_REPORT = False
     name = "dashboard-tests"
     description = ["dashboard-tests running"]
     descriptionDone = ["dashboard-tests"]
@@ -1019,6 +1022,7 @@ class RunDashboardTests(RunWebKitTests):
 
 
 class RunWorldLeaksTests(RunWebKitTests):
+    DO_REPORT = False
     name = "world-leaks-tests"
     description = ["world-leaks-tests running"]
     descriptionDone = ["world-leaks-tests"]
@@ -2320,3 +2324,10 @@ class RebootWithUpdatedCrossTargetImage(shell.ShellCommand):
         if rc == SUCCESS:
             self.build.buildFinished(['Rebooting with updated image, retrying build'], RETRY)
         defer.returnValue(rc)
+
+
+class SetO3OptimizationLevel(shell.ShellCommand):
+    command = ["Tools/Scripts/set-webkit-configuration", "--force-optimization-level=O3"]
+    name = "set-o3-optimization-level"
+    description = ["set O3 optimization level"]
+    descriptionDone = ["set O3 optimization level"]

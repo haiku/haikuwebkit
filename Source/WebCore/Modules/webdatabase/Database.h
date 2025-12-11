@@ -53,7 +53,7 @@ template<typename> class ExceptionOr;
 
 using DatabaseGUID = int;
 
-class Database : public ThreadSafeRefCounted<Database> {
+class Database : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<Database> {
 public:
     ~Database();
 

@@ -2390,7 +2390,7 @@ String JSBigInt::toStringGeneric(VM& vm, JSGlobalObject* nullOrGlobalObjectForOO
     if (sign)
         resultString.append('-');
 
-    std::reverse(resultString.begin(), resultString.end());
+    std::ranges::reverse(resultString);
 
     return StringImpl::adopt(WTFMove(resultString));
 }

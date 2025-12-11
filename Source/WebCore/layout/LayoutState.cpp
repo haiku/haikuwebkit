@@ -98,7 +98,7 @@ BoxGeometry& LayoutState::ensureGeometryForBoxSlow(const Box& layoutBox)
 bool LayoutState::hasFormattingState(const ElementBox& formattingContextRoot) const
 {
     ASSERT(formattingContextRoot.establishesFormattingContext());
-    return m_blockFormattingStates.contains(&formattingContextRoot) || m_tableFormattingStates.contains(&formattingContextRoot);
+    return m_blockFormattingStates.contains(formattingContextRoot) || m_tableFormattingStates.contains(formattingContextRoot);
 }
 
 FormattingState& LayoutState::formattingStateForFormattingContext(const ElementBox& formattingContextRoot) const
@@ -117,43 +117,43 @@ FormattingState& LayoutState::formattingStateForFormattingContext(const ElementB
 BlockFormattingState& LayoutState::formattingStateForBlockFormattingContext(const ElementBox& blockFormattingContextRoot) const
 {
     ASSERT(blockFormattingContextRoot.establishesBlockFormattingContext());
-    return *m_blockFormattingStates.get(&blockFormattingContextRoot);
+    return *m_blockFormattingStates.get(blockFormattingContextRoot);
 }
 
 TableFormattingState& LayoutState::formattingStateForTableFormattingContext(const ElementBox& tableFormattingContextRoot) const
 {
     ASSERT(tableFormattingContextRoot.establishesTableFormattingContext());
-    return *m_tableFormattingStates.get(&tableFormattingContextRoot);
+    return *m_tableFormattingStates.get(tableFormattingContextRoot);
 }
 
 InlineContentCache& LayoutState::inlineContentCache(const ElementBox& formattingContextRoot)
 {
     ASSERT(formattingContextRoot.establishesInlineFormattingContext());
-    return *m_inlineContentCaches.ensure(&formattingContextRoot, [&] { return makeUnique<InlineContentCache>(); }).iterator->value;
+    return *m_inlineContentCaches.ensure(formattingContextRoot, [&] { return makeUnique<InlineContentCache>(); }).iterator->value;
 }
 
 BlockFormattingState& LayoutState::ensureBlockFormattingState(const ElementBox& formattingContextRoot)
 {
     ASSERT(formattingContextRoot.establishesBlockFormattingContext());
-    return *m_blockFormattingStates.ensure(&formattingContextRoot, [&] { return makeUnique<BlockFormattingState>(*this, formattingContextRoot); }).iterator->value;
+    return *m_blockFormattingStates.ensure(formattingContextRoot, [&] { return makeUnique<BlockFormattingState>(*this, formattingContextRoot); }).iterator->value;
 }
 
 TableFormattingState& LayoutState::ensureTableFormattingState(const ElementBox& formattingContextRoot)
 {
     ASSERT(formattingContextRoot.establishesTableFormattingContext());
-    return *m_tableFormattingStates.ensure(&formattingContextRoot, [&] { return makeUnique<TableFormattingState>(*this, formattingContextRoot); }).iterator->value;
+    return *m_tableFormattingStates.ensure(formattingContextRoot, [&] { return makeUnique<TableFormattingState>(*this, formattingContextRoot); }).iterator->value;
 }
 
 void LayoutState::destroyBlockFormattingState(const ElementBox& formattingContextRoot)
 {
     ASSERT(formattingContextRoot.establishesBlockFormattingContext());
-    m_blockFormattingStates.remove(&formattingContextRoot);
+    m_blockFormattingStates.remove(formattingContextRoot);
 }
 
 void LayoutState::destroyInlineContentCache(const ElementBox& formattingContextRoot)
 {
     ASSERT(formattingContextRoot.establishesInlineFormattingContext());
-    m_inlineContentCaches.remove(&formattingContextRoot);
+    m_inlineContentCaches.remove(formattingContextRoot);
 }
 
 void LayoutState::layoutWithFormattingContextForBox(const ElementBox& box, std::optional<LayoutUnit> widthConstraint, std::optional<LayoutUnit> heightConstraint) const
@@ -171,9 +171,9 @@ LayoutUnit LayoutState::logicalHeightWithFormattingContextForBox(const ElementBo
     return const_cast<LayoutState&>(*this).m_formattingContextLogicalHeightFunction(box, logicalHeightType);
 }
 
-void LayoutState::layoutWithFormattingContextForBlockInInline(const Layout::ElementBox& block, LayoutPoint blockLogicalTopLeft, const BlockLayoutState& parentBlockLayoutState) const
+void LayoutState::layoutWithFormattingContextForBlockInInline(const Layout::ElementBox& block, LayoutPoint blockLogicalTopLeft, const InlineLayoutState& inlineLayoutState) const
 {
-    const_cast<LayoutState&>(*this).m_formattingContextLayoutForBlockInInlineFunction(block, blockLogicalTopLeft, const_cast<BlockLayoutState&>(parentBlockLayoutState), const_cast<LayoutState&>(*this));
+    const_cast<LayoutState&>(*this).m_formattingContextLayoutForBlockInInlineFunction(block, blockLogicalTopLeft, const_cast<InlineLayoutState&>(inlineLayoutState), const_cast<LayoutState&>(*this));
 }
 
 }

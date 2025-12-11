@@ -120,7 +120,6 @@ void WebAssemblyBuiltinSet::finalizeCreation()
         String fullName = makeString(String(m_qualifiedName), "."_s, builtinName);
         auto span = fullName.span8();
         Wasm::Name name;
-        name.tryReserveCapacity(span.size());
         name.grow(span.size());
         memcpySpan(name.mutableSpan(), span);
         m_nameSection->functionNames[i] = WTFMove(name);

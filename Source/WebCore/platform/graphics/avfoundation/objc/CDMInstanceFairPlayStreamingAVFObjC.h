@@ -119,7 +119,7 @@ public:
     SharedBuffer* serverCertificate() const { return m_serverCertificate.get(); }
     AVContentKeySession *contentKeySession();
 
-    RetainPtr<AVContentKeyRequest> takeUnexpectedKeyRequestForInitializationData(const AtomString& initDataType, SharedBuffer& initData);
+    RetainPtr<AVContentKeyRequest> takeUnexpectedKeyRequestForInitializationData(const String& initDataType, SharedBuffer& initData);
 
     // AVContentKeySessionDelegateClient
     void didProvideRequest(AVContentKeyRequest*) final;
@@ -191,7 +191,7 @@ public:
     virtual ~CDMInstanceSessionFairPlayStreamingAVFObjC();
 
     // CDMInstanceSession
-    void requestLicense(LicenseType, KeyGroupingStrategy, const AtomString& initDataType, Ref<SharedBuffer>&& initData, LicenseCallback&&) final;
+    void requestLicense(LicenseType, KeyGroupingStrategy, const String& initDataType, Ref<SharedBuffer>&& initData, LicenseCallback&&) final;
     void updateLicense(const String&, LicenseType, Ref<SharedBuffer>&&, LicenseUpdateCallback&&) final;
     void loadSession(LicenseType, const String&, const String&, LoadSessionCallback&&) final;
     void closeSession(const String&, CloseSessionCallback&&) final;
@@ -221,7 +221,7 @@ public:
     WebAVContentKeyGrouping *contentKeyReportGroup() { return m_group.get(); }
 
     struct Request {
-        AtomString initType;
+        String initType;
         Vector<RetainPtr<AVContentKeyRequest>> requests;
         friend bool operator==(const Request&, const Request&) = default;
     };

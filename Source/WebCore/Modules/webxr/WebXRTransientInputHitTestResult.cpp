@@ -36,12 +36,12 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebXRTransientInputHitTestResult);
 
-Ref<WebXRTransientInputHitTestResult> WebXRTransientInputHitTestResult::create(Ref<WebXRInputSource>&& inputSource, Vector<RefPtr<WebXRHitTestResult>>&& results)
+Ref<WebXRTransientInputHitTestResult> WebXRTransientInputHitTestResult::create(Ref<WebXRInputSource>&& inputSource, Vector<Ref<WebXRHitTestResult>>&& results)
 {
     return adoptRef(*new WebXRTransientInputHitTestResult(WTFMove(inputSource), WTFMove(results)));
 }
 
-WebXRTransientInputHitTestResult::WebXRTransientInputHitTestResult(Ref<WebXRInputSource>&& inputSource, Vector<RefPtr<WebXRHitTestResult>>&& results)
+WebXRTransientInputHitTestResult::WebXRTransientInputHitTestResult(Ref<WebXRInputSource>&& inputSource, Vector<Ref<WebXRHitTestResult>>&& results)
     : m_inputSource(WTFMove(inputSource))
     , m_results(WTFMove(results))
 {
@@ -54,7 +54,7 @@ const WebXRInputSource& WebXRTransientInputHitTestResult::inputSource() const
     return m_inputSource;
 }
 
-const Vector<RefPtr<WebXRHitTestResult>>& WebXRTransientInputHitTestResult::results() const
+const Vector<Ref<WebXRHitTestResult>>& WebXRTransientInputHitTestResult::results() const
 {
     return m_results;
 }

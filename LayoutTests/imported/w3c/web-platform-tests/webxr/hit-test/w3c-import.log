@@ -15,6 +15,7 @@ None
 ------------------------------------------------------------------------
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/META.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_source_cancel.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_inputSources.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/hit-test/ar_hittest_subscription_refSpaces.https.html

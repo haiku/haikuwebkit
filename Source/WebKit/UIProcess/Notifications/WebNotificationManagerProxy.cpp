@@ -366,14 +366,14 @@ void WebNotificationManagerProxy::providerDidRemoveNotificationPolicies(API::Arr
 
 void WebNotificationManagerProxy::getNotifications(const URL& url, const String& tag, PAL::SessionID sessionID, CompletionHandler<void(Vector<NotificationData>&&)>&& callback)
 {
-    Vector<WebNotification*> notifications;
+    Vector<Ref<WebNotification>> notifications;
     for (auto& notification : m_notifications.values()) {
         auto& data = notification->data();
         if (data.serviceWorkerRegistrationURL != url || data.sourceSession != sessionID)
             continue;
         if (!tag.isEmpty() && data.tag != tag)
             continue;
-        notifications.append(notification.ptr());
+        notifications.append(notification.copyRef());
     }
     // Let's sort as per https://notifications.spec.whatwg.org/#dom-serviceworkerregistration-getnotifications.
     std::ranges::sort(notifications, [](auto& a, auto& b) {

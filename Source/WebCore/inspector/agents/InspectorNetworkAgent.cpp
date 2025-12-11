@@ -807,7 +807,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorNetworkAgent::enable()
     {
         Locker locker { WebSocket::allActiveWebSocketsLock() };
 
-        for (auto* webSocket : activeWebSockets()) {
+        for (Ref webSocket : activeWebSockets()) {
             RefPtr document = dynamicDowncast<Document>(webSocket->scriptExecutionContext());
             if (!document)
                 continue;
@@ -996,11 +996,11 @@ Inspector::Protocol::ErrorStringOr<String> InspectorNetworkAgent::getSerializedC
     return base64EncodeToString(encoder.span());
 }
 
-WebSocket* InspectorNetworkAgent::webSocketForRequestId(const Inspector::Protocol::Network::RequestId& requestId)
+RefPtr<WebSocket> InspectorNetworkAgent::webSocketForRequestId(const Inspector::Protocol::Network::RequestId& requestId)
 {
     Locker locker { WebSocket::allActiveWebSocketsLock() };
 
-    for (auto* webSocket : activeWebSockets()) {
+    for (Ref webSocket : activeWebSockets()) {
         if (IdentifiersFactory::requestId(webSocket->channel()->progressIdentifier().toUInt64()) == requestId)
             return webSocket;
     }
@@ -1008,7 +1008,7 @@ WebSocket* InspectorNetworkAgent::webSocketForRequestId(const Inspector::Protoco
     return nullptr;
 }
 
-static JSC::JSValue webSocketAsScriptValue(JSC::JSGlobalObject& state, WebSocket* webSocket)
+static JSC::JSValue webSocketAsScriptValue(JSC::JSGlobalObject& state, WebSocket& webSocket)
 {
     JSC::JSLockHolder lock(&state);
     return toJS(&state, deprecatedGlobalObjectForPrototype(&state), webSocket);
@@ -1016,7 +1016,7 @@ static JSC::JSValue webSocketAsScriptValue(JSC::JSGlobalObject& state, WebSocket
 
 Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObject>> InspectorNetworkAgent::resolveWebSocket(const Inspector::Protocol::Network::RequestId& requestId, const String& objectGroup)
 {
-    WebSocket* webSocket = webSocketForRequestId(requestId);
+    RefPtr webSocket = webSocketForRequestId(requestId);
     if (!webSocket)
         return makeUnexpected("Missing web socket for given requestId"_s);
 
@@ -1033,7 +1033,7 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObjec
     auto injectedScript = m_injectedScriptManager.injectedScriptFor(&globalObject);
     ASSERT(!injectedScript.hasNoValue());
 
-    auto object = injectedScript.wrapObject(webSocketAsScriptValue(globalObject, webSocket), objectGroup);
+    auto object = injectedScript.wrapObject(webSocketAsScriptValue(globalObject, *webSocket), objectGroup);
     if (!object)
         return makeUnexpected("Internal error: unable to cast WebSocket"_s);
 

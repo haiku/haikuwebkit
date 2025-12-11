@@ -87,7 +87,7 @@ public:
     }
 
 private:
-    void paintContents(const GraphicsLayer*, GraphicsContext& context, const FloatRect& clip, OptionSet<GraphicsLayerPaintBehavior>) override
+    void paintContents(const GraphicsLayer&, GraphicsContext& context, const FloatRect& clip, OptionSet<GraphicsLayerPaintBehavior>) override
     {
         GraphicsContextStateSaver stateSaver(context);
         context.fillRect(clip, Color::black.colorWithAlphaByte(204));

@@ -67,12 +67,12 @@ String AXCoreObject::speechHint() const
     auto speakAs = this->speakAs();
 
     StringBuilder builder;
-    builder.append((speakAs & SpeakAs::SpellOut) ? "spell-out"_s : "normal"_s);
-    if (speakAs & SpeakAs::Digits)
+    builder.append(speakAs.contains(Style::SpeakAsValue::SpellOut) ? "spell-out"_s : "normal"_s);
+    if (speakAs.contains(Style::SpeakAsValue::Digits))
         builder.append(" digits"_s);
-    if (speakAs & SpeakAs::LiteralPunctuation)
+    if (speakAs.contains(Style::SpeakAsValue::LiteralPunctuation))
         builder.append(" literal-punctuation"_s);
-    if (speakAs & SpeakAs::NoPunctuation)
+    if (speakAs.contains(Style::SpeakAsValue::NoPunctuation))
         builder.append(" no-punctuation"_s);
 
     return builder.toString();

@@ -102,7 +102,7 @@ BNO_INLINE void* IsoTLS::allocateSlow(api::IsoHeapBase<Type>& handle, bool abort
         return fallbackResult.ptr;
     
     // If system heap is enabled, IsoMallocFallback::mallocFallbackState becomes MallocFallbackState::FallBackToMalloc.
-    BASSERT(!Environment::get()->isSystemHeapEnabled());
+    BASSERT(!Environment::get()->shouldBmallocAllocateThroughSystemHeap());
     
     IsoTLS* tls = ensureHeapAndEntries(handle);
     
@@ -141,7 +141,7 @@ BNO_INLINE void IsoTLS::deallocateSlow(api::IsoHeapBase<Type>& handle, void* p)
         return;
     
     // If system heap is enabled, IsoMallocFallback::mallocFallbackState becomes MallocFallbackState::FallBackToMalloc.
-    BASSERT(!Environment::get()->isSystemHeapEnabled());
+    BASSERT(!Environment::get()->shouldBmallocAllocateThroughSystemHeap());
     
     RELEASE_BASSERT(handle.isInitialized());
     

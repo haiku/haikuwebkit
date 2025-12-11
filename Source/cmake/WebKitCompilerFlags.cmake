@@ -142,6 +142,13 @@ if (DEVELOPER_MODE OR ARM)
     WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-fno-omit-frame-pointer)
 endif ()
 
+# Record references to files using relative paths instead of absolute.
+# This helps both with reproducible builds and ccache hits.
+# It also breaks debugedit, so limit this to DEVELOPER_MODE.
+if (DEVELOPER_MODE)
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)
+endif ()
+
 if (COMPILER_IS_GCC_OR_CLANG)
     if (COMPILER_IS_CLANG OR (DEVELOPER_MODE AND NOT ARM))
         # Split debug information in ".debug_types" / ".debug_info" sections - this leads
@@ -185,7 +192,8 @@ if (COMPILER_IS_GCC_OR_CLANG)
                                          -Wno-maybe-uninitialized
                                          -Wno-parentheses-equality
                                          -Wno-misleading-indentation
-                                         -Wno-psabi)
+                                         -Wno-psabi
+                                         -Wno-nullability-completeness)
 
     # GCC < 12.0 gives false warnings for mismatched-new-delete <https://webkit.org/b/241516>
     if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.0.0"))
@@ -341,7 +349,6 @@ if (UNIX AND NOT APPLE AND NOT ENABLED_COMPILER_SANITIZERS)
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined ${CMAKE_SHARED_LINKER_FLAGS}")
 endif ()
 
-
 if (MSVC)
     set(CODE_GENERATOR_PREPROCESSOR "\"${CMAKE_CXX_COMPILER}\" /nologo /EP /TP")
 elseif (COMPILER_IS_QCC)
@@ -349,7 +356,6 @@ elseif (COMPILER_IS_QCC)
 else ()
     set(CODE_GENERATOR_PREPROCESSOR "\"${CMAKE_CXX_COMPILER}\" -E -P -x c++")
 endif ()
-
 
 # Ensure that the default include system directories are added to the list of CMake implicit includes.
 # This workarounds an issue that happens when using GCC 6 and using system includes (-isystem).
@@ -504,6 +510,29 @@ int main() {
 }
   ")
   check_cxx_source_compiles("${FLOAT16_TEST_SOURCE}" HAVE_FLOAT16)
+endif ()
+
+if (WTF_CPU_ARM)
+    set(ARM_THUMB2_TEST_SOURCE
+    "
+    #if !defined(thumb2) && !defined(__thumb2__)
+    #error \"Thumb2 instruction set isn't available\"
+    #endif
+    int main() {}
+    ")
+
+    if (COMPILER_IS_GCC_OR_CLANG AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
+        set(CLANG_EXTRA_ARM_ARGS " -mthumb")
+    endif ()
+
+    set(CMAKE_REQUIRED_FLAGS "${CLANG_EXTRA_ARM_ARGS}")
+    CHECK_CXX_SOURCE_COMPILES("${ARM_THUMB2_TEST_SOURCE}" ARM_THUMB2_DETECTED)
+    unset(CMAKE_REQUIRED_FLAGS)
+
+    if (ARM_THUMB2_DETECTED AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin"))
+        string(APPEND CMAKE_C_FLAGS " ${CLANG_EXTRA_ARM_ARGS}")
+        string(APPEND CMAKE_CXX_FLAGS " ${CLANG_EXTRA_ARM_ARGS}")
+    endif ()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND WTF_CPU_MIPS)

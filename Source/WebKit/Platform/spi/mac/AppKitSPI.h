@@ -48,6 +48,8 @@ DECLARE_SYSTEM_HEADER
 #import <AppKit/NSScrollPocket_Private.h>
 #endif
 
+#import <AppKit/NSPanGestureRecognizer_Private.h>
+
 #else
 
 @interface NSInspectorBar : NSObject
@@ -125,6 +127,10 @@ typedef NS_ENUM(NSInteger, NSScrollPocketEdge) {
 
 @interface NSView (NSConstraintBasedLayout)
 - (void)_setHostsAutolayoutEngine:(BOOL)flag;
+@end
+
+@interface NSPanGestureRecognizer (SPI)
+@property (readonly) NSTimeInterval timestamp;
 @end
 
 #endif

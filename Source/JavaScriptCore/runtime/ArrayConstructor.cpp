@@ -244,4 +244,122 @@ JSC_DEFINE_HOST_FUNCTION(arrayConstructorOf, (JSGlobalObject* globalObject, Call
     return JSValue::encode(result);
 }
 
+template<typename Arguments>
+static ALWAYS_INLINE JSArray* tryCreateArrayFromArguments(JSGlobalObject* globalObject, Arguments* arguments)
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    unsigned length = arguments->internalLength();
+
+    if (!length)
+        RELEASE_AND_RETURN(scope, constructEmptyArray(globalObject, nullptr));
+
+    IndexingType indexingType = IsArray;
+    for (unsigned i = 0; i < length; ++i) {
+        JSValue value = arguments->getIndexQuickly(i);
+        if (!value)
+            value = jsUndefined();
+        indexingType = leastUpperBoundOfIndexingTypeAndValue(indexingType, value);
+    }
+
+    Structure* resultStructure = globalObject->arrayStructureForIndexingTypeDuringAllocation(indexingType);
+    IndexingType resultIndexingType = resultStructure->indexingType();
+
+    if (hasAnyArrayStorage(resultIndexingType)) [[unlikely]]
+        return nullptr;
+
+    ASSERT(!globalObject->isHavingABadTime());
+
+    auto vectorLength = Butterfly::optimalContiguousVectorLength(resultStructure, length);
+    void* memory = vm.auxiliarySpace().allocate(
+        vm,
+        Butterfly::totalSize(0, 0, true, vectorLength * sizeof(EncodedJSValue)),
+        nullptr, AllocationFailureMode::ReturnNull);
+    if (!memory) [[unlikely]]
+        return nullptr;
+    auto* resultButterfly = Butterfly::fromBase(memory, 0, 0);
+    resultButterfly->setVectorLength(vectorLength);
+    resultButterfly->setPublicLength(length);
+
+    if (hasDouble(resultIndexingType)) {
+        for (uint64_t i = 0; i < length; ++i) {
+            JSValue value = arguments->getIndexQuickly(i);
+            ASSERT(value.isNumber());
+            resultButterfly->contiguousDouble().atUnsafe(i) = value.asNumber();
+        }
+    } else if (hasInt32(resultIndexingType) || hasContiguous(resultIndexingType)) {
+        for (size_t i = 0; i < length; ++i) {
+            JSValue value = arguments->getIndexQuickly(i);
+            if (!value)
+                value = jsUndefined();
+            resultButterfly->contiguous().atUnsafe(i).setWithoutWriteBarrier(value);
+        }
+    } else
+        RELEASE_ASSERT_NOT_REACHED();
+
+    Butterfly::clearRange(resultIndexingType, resultButterfly, length, vectorLength);
+    return JSArray::createWithButterfly(vm, nullptr, resultStructure, resultButterfly);
+}
+
+static JSArray* tryCreateArrayFromScopedArguments(JSGlobalObject* globalObject, ScopedArguments* arguments)
+{
+    return tryCreateArrayFromArguments(globalObject, arguments);
+}
+
+static JSArray* tryCreateArrayFromDirectArguments(JSGlobalObject* globalObject, DirectArguments* arguments)
+{
+    return tryCreateArrayFromArguments(globalObject, arguments);
+}
+
+JSC_DEFINE_HOST_FUNCTION(arrayConstructorPrivateFromFastWithoutMapFn, (JSGlobalObject* globalObject, CallFrame* callFrame))
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    ASSERT(callFrame->argumentCount() == 2);
+
+    JSValue constructor = callFrame->uncheckedArgument(0);
+    if (constructor != globalObject->arrayConstructor() && constructor.isObject()) [[unlikely]]
+        return JSValue::encode(jsUndefined());
+
+    JSValue items = callFrame->uncheckedArgument(1);
+    JSArray* result = nullptr;
+    if (isJSArray(items)) [[likely]] {
+        // For `Array.from(array)`
+        result = tryCloneArrayFromFast<ArrayFillMode::Undefined>(globalObject, items);
+        RETURN_IF_EXCEPTION(scope, { });
+    } else if (items && items.isCell() && TypeInfo::isArgumentsType(items.asCell()->type())) {
+        // For `Array.from(arguments)`
+        switch (items.asCell()->type()) {
+        case DirectArgumentsType: {
+            auto* arguments = jsCast<DirectArguments*>(items.asCell());
+            if (arguments->isIteratorProtocolFastAndNonObservable()) [[likely]] {
+                result = tryCreateArrayFromDirectArguments(globalObject, arguments);
+                RETURN_IF_EXCEPTION(scope, { });
+            }
+            break;
+        }
+        case ScopedArgumentsType: {
+            auto* arguments = jsCast<ScopedArguments*>(items.asCell());
+            if (arguments->isIteratorProtocolFastAndNonObservable()) [[likely]] {
+                result = tryCreateArrayFromScopedArguments(globalObject, arguments);
+                RETURN_IF_EXCEPTION(scope, { });
+            }
+            break;
+        }
+        case ClonedArgumentsType: {
+            // FIXME: Add fast path for ClonedArguments
+            break;
+        }
+        default:
+            RELEASE_ASSERT_NOT_REACHED();
+            break;
+        }
+    }
+    if (result)
+        return JSValue::encode(result);
+    return JSValue::encode(jsUndefined());
+}
+
 } // namespace JSC

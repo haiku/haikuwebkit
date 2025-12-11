@@ -28,6 +28,7 @@
 
 #if ENABLE(VP9) && PLATFORM(COCOA)
 
+#import "CMUtilities.h"
 #import "FourCC.h"
 #import "LibWebRTCProvider.h"
 #import "MediaCapabilitiesInfo.h"
@@ -533,9 +534,9 @@ static Ref<VideoInfo> createVideoInfoFromVPCodecConfigurationRecord(const VPCode
     auto videoInfo = VideoInfo::create();
     videoInfo->size = size;
     videoInfo->displaySize = displaySize;
-    videoInfo->atomData = SharedBuffer::create(vpcCFromVPCodecConfigurationRecord(record));
-    videoInfo->colorSpace = colorSpaceFromVPCodecConfigurationRecord(record);
     videoInfo->codecName = record.codecName == "vp09"_s ? 'vp09' : 'vp08';
+    videoInfo->extensionAtoms = { 1, { computeBoxType(videoInfo->codecName), SharedBuffer::create(vpcCFromVPCodecConfigurationRecord(record)) } };
+    videoInfo->colorSpace = colorSpaceFromVPCodecConfigurationRecord(record);
     videoInfo->codecString = createVPCodecParametersString(record);
     return videoInfo;
 }

@@ -50,7 +50,7 @@ void BreakpointManager::setBreakpoint(VirtualAddress address, Breakpoint&& break
     breakpoint.patchBreakpoint();
     dataLogLnIf(Options::verboseWasmDebugger(), "[BreakpointManager] setBreakpoint ", breakpoint, " at moduleAddress:", address);
     if (breakpoint.isOneTimeBreakpoint())
-        m_tmpBreakpoints.add(address);
+        m_oneTimeBreakpoints.add(address);
     m_breakpoints.set(address, WTFMove(breakpoint));
 }
 
@@ -72,12 +72,12 @@ bool BreakpointManager::removeBreakpoint(VirtualAddress address)
     return true;
 }
 
-void BreakpointManager::clearAllTmpBreakpoints()
+void BreakpointManager::clearAllOneTimeBreakpoints()
 {
-    for (VirtualAddress address : m_tmpBreakpoints)
+    for (VirtualAddress address : m_oneTimeBreakpoints)
         removeBreakpoint(address);
-    m_tmpBreakpoints.clear();
-    dataLogLnIf(Options::verboseWasmDebugger(), "[BreakpointManager] Cleared all tmp breakpoints");
+    m_oneTimeBreakpoints.clear();
+    dataLogLnIf(Options::verboseWasmDebugger(), "[BreakpointManager] Cleared all one-time breakpoints");
 }
 
 void BreakpointManager::clearAllBreakpoints()
@@ -85,7 +85,7 @@ void BreakpointManager::clearAllBreakpoints()
     for (auto& [_, breakpoint] : m_breakpoints)
         breakpoint.restorePatch();
     m_breakpoints.clear();
-    RELEASE_ASSERT(m_tmpBreakpoints.isEmpty());
+    RELEASE_ASSERT(m_oneTimeBreakpoints.isEmpty());
 }
 
 } // namespace Wasm

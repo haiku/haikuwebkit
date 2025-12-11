@@ -483,8 +483,8 @@ TextStream& operator<<(TextStream& ts, DisplayType display)
     case DisplayType::Contents: ts << "contents"_s; break;
     case DisplayType::Grid: ts << "grid"_s; break;
     case DisplayType::InlineGrid: ts << "inline-grid"_s; break;
-    case DisplayType::Masonry: ts << "masonry"_s; break;
-    case DisplayType::InlineMasonry: ts << "inline-masonry"_s; break;
+    case DisplayType::GridLanes: ts << "grid-lanes"_s; break;
+    case DisplayType::InlineGridLanes: ts << "inline-grid-lanes"_s; break;
     case DisplayType::FlowRoot: ts << "flow-root"_s; break;
     case DisplayType::Ruby: ts << "ruby"_s; break;
     case DisplayType::RubyBlock: ts << "block ruby"_s; break;
@@ -549,6 +549,12 @@ TextStream& operator<<(TextStream& ts, EventListenerRegionType listenerType)
     case EventListenerRegionType::NonPassiveMouseUp: ts << "active mouse up"_s; break;
     case EventListenerRegionType::MouseMove: ts << "mouse down"_s; break;
     case EventListenerRegionType::NonPassiveMouseMove: ts << "active mouse move"_s; break;
+    case EventListenerRegionType::GestureChange: ts << "gesture change"_s; break;
+    case EventListenerRegionType::NonPassiveGestureChange: ts << "active gesture change"_s; break;
+    case EventListenerRegionType::GestureEnd: ts << "gesture end"_s; break;
+    case EventListenerRegionType::NonPassiveGestureEnd: ts << "active gesture end"_s; break;
+    case EventListenerRegionType::GestureStart: ts << "gesture start"_s; break;
+    case EventListenerRegionType::NonPassiveGestureStart: ts << "active gesture start"_s; break;
     }
     return ts;
 }
@@ -647,17 +653,6 @@ TextStream& operator<<(TextStream& ts, UsedFloat floating)
     case UsedFloat::None: ts << "none"_s; break;
     case UsedFloat::Left: ts << "left"_s; break;
     case UsedFloat::Right: ts << "right"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, HangingPunctuation punctuation)
-{
-    switch (punctuation) {
-    case HangingPunctuation::First: ts << "first"_s; break;
-    case HangingPunctuation::Last: ts << "last"_s; break;
-    case HangingPunctuation::AllowEnd: ts << "allow-end"_s; break;
-    case HangingPunctuation::ForceEnd: ts << "force-end"_s; break;
     }
     return ts;
 }
@@ -776,17 +771,6 @@ TextStream& operator<<(TextStream& ts, ListStylePosition position)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, MarginTrimType marginTrimType)
-{
-    switch (marginTrimType) {
-    case MarginTrimType::BlockStart: ts << "block-start"_s; break;
-    case MarginTrimType::BlockEnd: ts << "block-end"_s; break;
-    case MarginTrimType::InlineStart: ts << "inline-start"_s; break;
-    case MarginTrimType::InlineEnd: ts << "inline-end"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, MarqueeBehavior marqueeBehavior)
 {
     switch (marqueeBehavior) {
@@ -809,17 +793,6 @@ TextStream& operator<<(TextStream& ts, MarqueeDirection marqueeDirection)
     case MarqueeDirection::Forward: ts << "forward"_s; break;
     case MarqueeDirection::Backward: ts << "backward"_s; break;
     }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, MaskMode maskMode)
-{
-    switch (maskMode) {
-    case MaskMode::Alpha: ts << "alpha"_s; break;
-    case MaskMode::Luminance: ts << "luminance"_s; break;
-    case MaskMode::MatchSource: ts << "match-source"_s; break;
-    }
-
     return ts;
 }
 
@@ -1010,19 +983,6 @@ TextStream& operator<<(TextStream& ts, ReflectionDirection direction)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, Resize resize)
-{
-    switch (resize) {
-    case Resize::None: ts << "none"_s; break;
-    case Resize::Both: ts << "both"_s; break;
-    case Resize::Horizontal: ts << "horizontal"_s; break;
-    case Resize::Vertical: ts << "vertical"_s; break;
-    case Resize::Block: ts << "block"_s; break;
-    case Resize::Inline: ts << "inline"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, RubyPosition position)
 {
     switch (position) {
@@ -1105,17 +1065,6 @@ TextStream& operator<<(TextStream& ts, Scroller scroller)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, SpeakAs speakAs)
-{
-    switch (speakAs) {
-    case SpeakAs::SpellOut: ts << "spell-out"_s; break;
-    case SpeakAs::Digits: ts << "digits"_s; break;
-    case SpeakAs::LiteralPunctuation: ts << "literal-punctuation"_s; break;
-    case SpeakAs::NoPunctuation: ts << "no-punctuation"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, StyleDifference diff)
 {
     switch (diff) {
@@ -1139,37 +1088,6 @@ TextStream& operator<<(TextStream& ts, TableLayoutType layoutType)
     case TableLayoutType::Auto: ts << "Auto"_s; break;
     case TableLayoutType::Fixed: ts << "Fixed"_s; break;
     }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, TextAlignMode alignMode)
-{
-    switch (alignMode) {
-    case TextAlignMode::Left: ts << "left"_s; break;
-    case TextAlignMode::Right: ts << "right"_s; break;
-    case TextAlignMode::Center: ts << "center"_s; break;
-    case TextAlignMode::Justify: ts << "justify"_s; break;
-    case TextAlignMode::WebKitLeft: ts << "webkit-left"_s; break;
-    case TextAlignMode::WebKitRight: ts << "webkit-right"_s; break;
-    case TextAlignMode::WebKitCenter: ts << "webkit-center"_s; break;
-    case TextAlignMode::Start: ts << "start"_s; break;
-    case TextAlignMode::End: ts << "end"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, TextAlignLast textAlignLast)
-{
-    switch (textAlignLast) {
-    case TextAlignLast::Auto: ts << "auto"_s; break;
-    case TextAlignLast::Start: ts << "start"_s; break;
-    case TextAlignLast::End: ts << "end"_s; break;
-    case TextAlignLast::Left: ts << "left"_s; break;
-    case TextAlignLast::Right: ts << "right"_s; break;
-    case TextAlignLast::Center: ts << "center"_s; break;
-    case TextAlignLast::Justify: ts << "justify"_s; break;
-    }
-
     return ts;
 }
 
@@ -1225,17 +1143,6 @@ TextStream& operator<<(TextStream& ts, TextEmphasisMark mark)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, TextEmphasisPosition position)
-{
-    switch (position) {
-    case TextEmphasisPosition::Over: ts << "Over"_s; break;
-    case TextEmphasisPosition::Under: ts << "Under"_s; break;
-    case TextEmphasisPosition::Left: ts << "Left"_s; break;
-    case TextEmphasisPosition::Right: ts << "Right"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, TextGroupAlign textGroupAlign)
 {
     switch (textGroupAlign) {
@@ -1278,30 +1185,6 @@ TextStream& operator<<(TextStream& ts, TextSecurity textSecurity)
     case TextSecurity::Disc: ts << "disc"_s; break;
     case TextSecurity::Circle: ts << "circle"_s; break;
     case TextSecurity::Square: ts << "square"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, TextTransform textTransform)
-{
-    switch (textTransform) {
-    case TextTransform::Capitalize: ts << "capitalize"_s; break;
-    case TextTransform::Uppercase: ts << "uppercase"_s; break;
-    case TextTransform::Lowercase: ts << "lowercase"_s; break;
-    case TextTransform::FullSizeKana: ts << "full-size-kana"_s; break;
-    case TextTransform::FullWidth: ts << "full-width"_s; break;
-    case TextTransform::MathAuto: ts << "math-auto"_s; break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, TextUnderlinePosition position)
-{
-    switch (position) {
-    case TextUnderlinePosition::FromFont: ts << "from-font"_s; break;
-    case TextUnderlinePosition::Under: ts << "under"_s; break;
-    case TextUnderlinePosition::Left: ts << "left"_s; break;
-    case TextUnderlinePosition::Right: ts << "right"_s; break;
     }
     return ts;
 }
@@ -1517,16 +1400,6 @@ TextStream& operator<<(TextStream& ts, OverflowContinue overflowContinue)
     case OverflowContinue::Discard:
         ts << "discard"_s;
         break;
-    }
-    return ts;
-}
-
-TextStream& operator<<(TextStream& ts, PositionVisibility positionVisibility)
-{
-    switch (positionVisibility) {
-    case PositionVisibility::AnchorsValid: ts << "anchors-valid"; break;
-    case PositionVisibility::AnchorsVisible: ts << "anchors-visible"; break;
-    case PositionVisibility::NoOverflow: ts << "no-overflow"; break;
     }
     return ts;
 }

@@ -51,10 +51,6 @@
 #include <wtf/URL.h>
 #include <wtf/Vector.h>
 
-#if ENABLE(WIRELESS_PLAYBACK_TARGET)
-#include <WebCore/MediaPlaybackTargetContext.h>
-#endif
-
 #if PLATFORM(IOS_FAMILY)
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/WKContentObservation.h>
@@ -163,12 +159,13 @@ struct DataDetectorElementInfo;
 struct DateTimeChooserParameters;
 struct FocusOptions;
 struct GraphicsDeviceAdapter;
+struct LiveRegionAnnouncementData;
 struct MockWebAuthenticationConfiguration;
+struct ResolvedCaptionDisplaySettingsOptions;
 struct ShareDataWithParsedURL;
 struct SimpleRange;
 struct StringWithDirection;
 struct SystemPreviewInfo;
-struct TextIndicatorData;
 struct TextRecognitionOptions;
 struct ViewportArguments;
 struct WindowFeatures;
@@ -195,6 +192,11 @@ enum class TextAnimationRunMode : uint8_t;
 
 enum class MediaProducerMediaState : uint32_t;
 using MediaProducerMediaStateFlags = OptionSet<MediaProducerMediaState>;
+
+
+#if ENABLE(WIRELESS_PLAYBACK_TARGET)
+enum class MediaPlaybackTargetMockState : uint8_t;
+#endif
 
 typedef int32_t IntDegrees;
 
@@ -289,6 +291,7 @@ public:
 #if PLATFORM(IOS_FAMILY)
     virtual void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const = 0;
     virtual void relayAriaNotifyNotification(AriaNotifyData&&) const = 0;
+    virtual void relayLiveRegionNotification(LiveRegionAnnouncementData&&) const = 0;
 #endif
 
     virtual void mainFrameDidChange() { };
@@ -335,6 +338,10 @@ public:
     virtual void sampledPageTopColorChanged() const { }
 #if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
     virtual void spatialBackdropSourceChanged() const { }
+#endif
+
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    virtual void canEnterImmersiveElement(const Element&, CompletionHandler<void(bool)>&& completion) const { completion(false); }
 #endif
 
 #if ENABLE(APP_HIGHLIGHTS)
@@ -401,7 +408,7 @@ public:
 
     virtual RefPtr<DateTimeChooser> createDateTimeChooser(DateTimeChooserClient&) = 0;
 
-    virtual void setTextIndicator(const TextIndicatorData&) const = 0;
+    virtual void setTextIndicator(RefPtr<TextIndicator>&&) const = 0;
     virtual void updateTextIndicator(RefPtr<TextIndicator>&&) const = 0;
 
     virtual void runOpenPanel(LocalFrame&, FileChooser&) = 0;
@@ -652,7 +659,7 @@ public:
     virtual void showPlaybackTargetPicker(PlaybackTargetClientContextIdentifier, const IntPoint&, bool /*isVideo*/) { }
     virtual void playbackTargetPickerClientStateDidChange(PlaybackTargetClientContextIdentifier, MediaProducerMediaStateFlags) { }
     virtual void setMockMediaPlaybackTargetPickerEnabled(bool)  { }
-    virtual void setMockMediaPlaybackTargetPickerState(const String&, MediaPlaybackTargetContext::MockState) { }
+    virtual void setMockMediaPlaybackTargetPickerState(const String&, MediaPlaybackTargetMockState) { }
     virtual void mockMediaPlaybackTargetPickerDismissPopup() { }
 #endif
 
@@ -779,7 +786,7 @@ public:
     virtual bool usePluginRendererScrollableArea(LocalFrame&) const { return true; }
 
 #if ENABLE(VIDEO)
-    virtual void showCaptionDisplaySettings(CompletionHandler<void(bool)>&& callback) { callback(false); }
+    WEBCORE_EXPORT virtual void showCaptionDisplaySettings(HTMLMediaElement&, const ResolvedCaptionDisplaySettingsOptions&, CompletionHandler<void(ExceptionOr<void>)>&&);
 #endif
 
     WEBCORE_EXPORT virtual ~ChromeClient();

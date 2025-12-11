@@ -15,6 +15,7 @@ None
 ------------------------------------------------------------------------
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/ar-module/META.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/ar-module/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webxr/ar-module/idlharness.https.window.js
 /LayoutTests/imported/w3c/web-platform-tests/webxr/ar-module/xrDevice_isSessionSupported_immersive-ar.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/ar-module/xrDevice_requestSession_immersive-ar.https.html

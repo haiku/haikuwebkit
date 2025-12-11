@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+<style type="text/css">
+canvas {
+    width: 100px;
+    height: 100px;
+}
+</style>
+<canvas id="source"></canvas>
+<canvas id="target"></canvas>
+<script src="../resources/runner.js"></script>
+<script>
+source.width = 7680;
+source.height = 4320;
+var gl = source.getContext("webgl2");
+gl.globalCompositeOperation = "copy";
+
+target.width = source.width;
+target.height = source.height;
+var ctx = target.getContext("2d");
+ctx.globalCompositeOperation = "copy";
+
+var i = 0;
+PerfTestRunner.measureRunsPerSecond({run: function() {
+    gl.clearColor(0, i, 0, 0.5);
+    i += 0.01;
+    if (i > 1.0)
+        i = 0;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const frame = new VideoFrame(source, {
+      timestamp: performance.now(),
+    });
+    ctx.drawImage(frame, 0, 0);
+    frame.close();
+}});
+</script>
+</body>
+</html>

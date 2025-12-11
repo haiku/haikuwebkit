@@ -25,6 +25,7 @@
 #pragma once
 
 #include <WebCore/StyleValueTypes.h>
+#include <wtf/EnumTraits.h>
 
 namespace WebCore {
 namespace Style {
@@ -33,6 +34,8 @@ enum class PaintType : uint8_t { Fill, Stroke, Markers };
 
 // <'paint-order'> = normal | [ fill || stroke || markers ]
 // https://svgwg.org/svg2-draft/painting.html#PaintOrderProperty
+// NOTE: A `SpaceSeparatedEnumSet` cannot be used here as the order of the
+// values is relevant to the interpretation and serialization.
 struct SVGPaintOrder {
     using value_type = std::span<const PaintType, 3>::value_type;
     using iterator = std::span<const PaintType, 3>::iterator;
@@ -89,6 +92,12 @@ struct SVGPaintOrder {
     };
     constexpr SVGPaintOrder(Type type) : m_type { type } { }
     constexpr Type type() const { return m_type; }
+
+    static constexpr SVGPaintOrder fromRaw(std::underlying_type_t<Type> rawValue)
+    {
+        return SVGPaintOrder { static_cast<Type>(rawValue) } ;
+    }
+    constexpr uint8_t toRaw() const { return enumToUnderlyingType(m_type); }
 
 private:
     Type m_type { Type::Normal };

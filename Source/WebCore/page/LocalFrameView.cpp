@@ -76,7 +76,6 @@
 #include "HighlightRegistry.h"
 #include "ImageDocument.h"
 #include "InspectorBackendClient.h"
-#include "InspectorController.h"
 #include "InspectorInstrumentation.h"
 #include "LegacyRenderSVGRoot.h"
 #include "LocalDOMWindow.h"
@@ -89,6 +88,7 @@
 #include "NullGraphicsContext.h"
 #include "Page.h"
 #include "PageColorSampler.h"
+#include "PageInspectorController.h"
 #include "PageOverlayController.h"
 #include "PerformanceLoggingClient.h"
 #include "ProgressTracker.h"
@@ -839,7 +839,7 @@ ScrollableArea* LocalFrameView::scrollableAreaForScrollingNodeID(ScrollingNodeID
         return nullptr;
 
     if (auto area = m_scrollingNodeIDToPluginScrollableAreaMap.get(nodeID))
-        return area.get();
+        return area;
 
     return renderView->compositor().scrollableAreaForScrollingNodeID(nodeID);
 }
@@ -4547,7 +4547,7 @@ void LocalFrameView::scrollToPendingTextFragmentRange()
         if (m_haveCreatedTextIndicator)
             document->protectedPage()->chrome().client().updateTextIndicator(WTFMove(textIndicator));
         else {
-            document->protectedPage()->chrome().client().setTextIndicator(textIndicator->data());
+            document->protectedPage()->chrome().client().setTextIndicator(WTFMove(textIndicator));
             m_haveCreatedTextIndicator = true;
         }
     }
@@ -7014,7 +7014,7 @@ ScrollbarWidth LocalFrameView::scrollbarWidthStyle()  const
     auto* document = m_frame->document();
     auto scrollingObject = document && document->documentElement() ? document->documentElement()->renderer() : nullptr;
     if (scrollingObject && renderView())
-        return scrollingObject->style().scrollbarWidth().value;
+        return Style::toPlatform(scrollingObject->style().scrollbarWidth());
     return ScrollbarWidth::Auto;
 }
 

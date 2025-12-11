@@ -480,9 +480,9 @@ void BitmapImageSource::cacheNativeImageAtIndex(unsigned index, SubsamplingLevel
 
     auto& frame = m_frames[index];
     auto& source = frame.source(options.shouldDecodeToHDR());
-    source.nativeImage = WTFMove(nativeImage);
+    source.nativeImage = nativeImage.copyRef();
     source.decodingOptions = options;
-    source.headroom = source.nativeImage->headroom();
+    source.headroom = nativeImage->headroom();
 
     cacheMetadataAtIndex(index, subsamplingLevel, options);
     decodedSizeIncreased(frame.sizeInBytes());

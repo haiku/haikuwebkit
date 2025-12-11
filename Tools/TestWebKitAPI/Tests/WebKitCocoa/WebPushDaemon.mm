@@ -64,6 +64,7 @@
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/darwin/DispatchExtras.h>
 #import <wtf/darwin/XPCExtras.h>
+#import <wtf/darwin/XPCObjectPtr.h>
 #import <wtf/text/Base64.h>
 #import <wtf/text/MakeString.h>
 
@@ -426,15 +427,16 @@ public:
     void sendWithAsyncReplyWithoutUsingIPCConnection(M&&, CH&&) const;
 
 private:
-    OSObjectPtr<xpc_object_t> messageDictionaryFromEncoder(TestEncoder&&) const;
+    XPCObjectPtr<xpc_object_t> messageDictionaryFromEncoder(TestEncoder&&) const;
 
-    OSObjectPtr<xpc_connection_t> m_connection;
+    XPCObjectPtr<xpc_connection_t> m_connection;
     bool m_shouldIncrementProtocolVersionForTesting { false };
 };
 
-OSObjectPtr<xpc_object_t> WebPushXPCConnectionMessageSender::messageDictionaryFromEncoder(TestEncoder&& encoder) const
+XPCObjectPtr<xpc_object_t> WebPushXPCConnectionMessageSender::messageDictionaryFromEncoder(TestEncoder&& encoder) const
 {
-    auto dictionary = adoptOSObject(xpc_dictionary_create(nullptr, nullptr, 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto dictionary = adoptXPCObject(xpc_dictionary_create(nullptr, nullptr, 0));
 
     uint64_t protocolVersion = WebKit::WebPushD::protocolVersionValue;
     if (m_shouldIncrementProtocolVersionForTesting)
@@ -443,10 +445,11 @@ OSObjectPtr<xpc_object_t> WebPushXPCConnectionMessageSender::messageDictionaryFr
 
     __block auto blockBytes = encoder.takeBytes();
     auto buffer = blockBytes.span();
-    auto dispatchData = adoptNS(dispatch_data_create(buffer.data(), buffer.size(), mainDispatchQueueSingleton(), ^{
+    auto dispatchData = adoptOSObject(dispatch_data_create(buffer.data(), buffer.size(), mainDispatchQueueSingleton(), ^{
         blockBytes.clear();
     }));
-    auto encoderData = adoptOSObject(xpc_data_create_with_dispatch_data(dispatchData.get()));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto encoderData = adoptXPCObject(xpc_data_create_with_dispatch_data(dispatchData.get()));
 
     xpc_dictionary_set_value(dictionary.get(), WebKit::WebPushD::protocolEncodedMessageKey, encoderData.get());
 
@@ -508,9 +511,10 @@ static WebKit::WebPushD::WebPushDaemonConnectionConfiguration defaultWebPushDaem
     IGNORE_CLANG_WARNINGS_END
 }
 
-RetainPtr<xpc_connection_t> createAndConfigureConnectionToService(const char* serviceName, std::optional<WebKit::WebPushD::WebPushDaemonConnectionConfiguration> configuration = std::nullopt)
+XPCObjectPtr<xpc_connection_t> createAndConfigureConnectionToService(const char* serviceName, std::optional<WebKit::WebPushD::WebPushDaemonConnectionConfiguration> configuration = std::nullopt)
 {
-    auto connection = adoptNS(xpc_connection_create_mach_service(serviceName, mainDispatchQueueSingleton(), 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto connection = adoptXPCObject(xpc_connection_create_mach_service(serviceName, mainDispatchQueueSingleton(), 0));
     xpc_connection_set_event_handler(connection.get(), ^(xpc_object_t) { });
     xpc_connection_activate(connection.get());
     auto sender = WebPushXPCConnectionMessageSender { connection.get() };
@@ -519,14 +523,15 @@ RetainPtr<xpc_connection_t> createAndConfigureConnectionToService(const char* se
         configuration = defaultWebPushDaemonConfiguration();
     sender.sendWithoutUsingIPCConnection(Messages::PushClientConnection::InitializeConnection(configuration.value()));
 
-    return WTFMove(connection);
+    return connection;
 }
 
 TEST(WebPushD, BasicCommunication)
 {
     NSURL *tempDir = setUpTestWebPushD();
 
-    auto connection = adoptNS(xpc_connection_create_mach_service("org.webkit.webpushtestdaemon.service", mainDispatchQueueSingleton(), 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto connection = adoptXPCObject(xpc_connection_create_mach_service("org.webkit.webpushtestdaemon.service", mainDispatchQueueSingleton(), 0));
 
     __block bool done = false;
     __block bool interrupted = false;
@@ -910,10 +915,10 @@ public:
             ready = true;
         }];
 
-        m_server.reset(new TestWebKitAPI::HTTPServer({
+        m_server = makeUnique<TestWebKitAPI::HTTPServer>(std::initializer_list<std::pair<String, TestWebKitAPI::HTTPResponse>> {
             { "/"_s, { html } },
             { "/sw.js"_s, { { { "Content-Type"_s, "application/javascript"_s } }, serviceWorkerScriptSource } }
-        }, TestWebKitAPI::HTTPServer::Protocol::HttpsProxy));
+        }, TestWebKitAPI::HTTPServer::Protocol::HttpsProxy);
 
         auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
         // This step is required early to make sure the first NetworkProcess access has the correct

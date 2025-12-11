@@ -30,22 +30,17 @@
 #include "AnimationTimelinesController.h"
 #include "CSSProperty.h"
 #include "CSSTransition.h"
-#include "ContainerNodeInlines.h"
 #include "CustomAnimationOptions.h"
 #include "CustomEffect.h"
 #include "CustomEffectCallback.h"
 #include "Document.h"
 #include "EventNames.h"
-#include "GraphicsLayer.h"
 #include "KeyframeEffect.h"
 #include "KeyframeEffectStack.h"
 #include "Logging.h"
 #include "Node.h"
 #include "Page.h"
-#include "RenderBoxModelObject.h"
 #include "RenderElement.h"
-#include "RenderLayer.h"
-#include "RenderLayerBacking.h"
 #include "RenderObjectInlines.h"
 #include "Settings.h"
 #include "StyleOriginatedAnimation.h"
@@ -179,6 +174,14 @@ void DocumentTimeline::clearTickScheduleTimer()
 
 bool DocumentTimeline::shouldRunUpdateAnimationsAndSendEventsIgnoringSuspensionState() const
 {
+#if ENABLE(THREADED_ANIMATIONS)
+    if (CheckedPtr controller = this->controller()) {
+        if (auto* acceleratedEffectStackUpdater = controller->existingAcceleratedEffectStackUpdater()) {
+            if (acceleratedEffectStackUpdater->hasTargetsPendingUpdate())
+                return true;
+        }
+    }
+#endif
     return !m_animations.isEmpty() || !m_pendingAnimationEvents.isEmpty() || !m_acceleratedAnimationsPendingRunningStateChange.isEmpty();
 }
 
@@ -404,6 +407,16 @@ void DocumentTimeline::scheduleNextTick()
     }
 }
 
+#if ENABLE(THREADED_ANIMATIONS)
+void DocumentTimeline::scheduleAcceleratedEffectStackUpdate()
+{
+    if (shouldRunUpdateAnimationsAndSendEventsIgnoringSuspensionState())
+        scheduleAnimationResolution();
+    else
+        clearTickScheduleTimer();
+}
+#endif
+
 void DocumentTimeline::animationAcceleratedRunningStateDidChange(WebAnimation& animation)
 {
     m_acceleratedAnimationsPendingRunningStateChange.add(&animation);
@@ -414,30 +427,8 @@ void DocumentTimeline::animationAcceleratedRunningStateDidChange(WebAnimation& a
         clearTickScheduleTimer();
 }
 
-void DocumentTimeline::runPostRenderingUpdateTasks()
-{
-#if ENABLE(THREADED_ANIMATIONS)
-    if (!m_document || m_acceleratedAnimationsPendingRunningStateChange.isEmpty())
-        return;
-    Ref settings = m_document->settings();
-    if (!settings->threadedScrollDrivenAnimationsEnabled() && !settings->threadedTimeBasedAnimationsEnabled())
-        return;
-    m_acceleratedAnimationsPendingRunningStateChange.clear();
-    if (CheckedPtr timelinesController = m_document->timelinesController())
-        timelinesController->updateAcceleratedEffectStacks();
-#endif
-}
-
 void DocumentTimeline::applyPendingAcceleratedAnimations()
 {
-#if ENABLE(THREADED_ANIMATIONS)
-    if (m_document) {
-        Ref settings = m_document->settings();
-        if (settings->threadedScrollDrivenAnimationsEnabled() || settings->threadedTimeBasedAnimationsEnabled())
-            return;
-    }
-#endif
-
     auto acceleratedAnimationsPendingRunningStateChange = std::exchange(m_acceleratedAnimationsPendingRunningStateChange, { });
 
     HashSet<KeyframeEffectStack*> keyframeEffectStacksToUpdate;
@@ -486,18 +477,6 @@ AnimationEvents DocumentTimeline::prepareForPendingAnimationEventsDispatch()
 {
     m_shouldScheduleAnimationResolutionForNewPendingEvents = true;
     return std::exchange(m_pendingAnimationEvents, { });
-}
-
-Vector<std::pair<String, double>> DocumentTimeline::acceleratedAnimationsForElement(Element& element) const
-{
-    ASSERT(m_document);
-    auto* renderer = element.renderer();
-    if (renderer && renderer->isComposited()) {
-        auto* compositedRenderer = downcast<RenderBoxModelObject>(renderer);
-        if (RefPtr graphicsLayer = compositedRenderer->layer()->backing()->graphicsLayer())
-            return graphicsLayer->acceleratedAnimationsForTesting(m_document->settings());
-    }
-    return { };
 }
 
 unsigned DocumentTimeline::numberOfAnimationTimelineInvalidationsForTesting() const
@@ -557,13 +536,14 @@ Seconds DocumentTimeline::convertTimelineTimeToOriginRelativeTime(Seconds timeli
 }
 
 #if ENABLE(THREADED_ANIMATIONS)
-Ref<AcceleratedTimeline> DocumentTimeline::createAcceleratedRepresentation()
+Ref<AcceleratedTimeline> DocumentTimeline::createAcceleratedRepresentation() const
 {
     // The origin time of a document timeline is relative to the time origin
     // of the document's associated performance object. We must convert this
     // origin time back to the time scale used in the remote layer tree.
     ASSERT(m_document);
     ASSERT(m_document->window());
+    ASSERT(m_document->settings().threadedTimeBasedAnimationsEnabled());
     Ref window = *Ref { *m_document }->window();
     auto monotonicOriginTime = MonotonicTime::fromRawSeconds(m_originTime.seconds());
     auto convertedOriginTime = m_originTime - window->performance().relativeTimeFromTimeOriginInReducedResolutionSeconds(monotonicOriginTime);

@@ -170,8 +170,8 @@ void HTMLVideoElement::computeAcceleratedRenderingStateAndUpdateMediaPlayer()
 #else
     bool isInFullScreen = false;
 #endif
-    auto* renderer = this->renderer();
-    bool canBeAccelerated = player->supportsAcceleratedRendering() && (isInFullScreen || (renderer && renderer->view().compositor().hasAcceleratedCompositing()));
+    CheckedPtr renderer = this->renderer();
+    bool canBeAccelerated = player->supportsAcceleratedRendering() && (isInFullScreen || (renderer && renderer->checkedView()->compositor().hasAcceleratedCompositing()));
     if (canBeAccelerated == m_renderingCanBeAccelerated)
         return;
     m_renderingCanBeAccelerated = canBeAccelerated;
@@ -327,7 +327,7 @@ bool HTMLVideoElement::shouldDisplayPosterImage() const
     if (posterImageURL().isEmpty())
         return false;
 
-    auto* renderer = this->renderer();
+    CheckedPtr renderer = this->renderer();
     if (renderer && renderer->failedToLoadPosterImage())
         return false;
 
@@ -363,7 +363,9 @@ std::optional<DestinationColorSpace> HTMLVideoElement::colorSpace() const
 
 RefPtr<ImageBuffer> HTMLVideoElement::createBufferForPainting(const FloatSize& size, RenderingMode renderingMode, const DestinationColorSpace& colorSpace, ImageBufferFormat pixelFormat) const
 {
-    auto* hostWindow = document().view() && document().view()->root() ? document().view()->root()->hostWindow() : nullptr;
+    CheckedPtr view = document().view();
+    CheckedPtr root = view ? view->root() : nullptr;
+    auto* hostWindow = root ? root->hostWindow() : nullptr;
     return ImageBuffer::create(size, renderingMode, RenderingPurpose::MediaPainting, 1, colorSpace, pixelFormat, hostWindow);
 }
 

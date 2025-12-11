@@ -34,6 +34,7 @@
         let sourceBuffer = mediaSource.addSourceBuffer('video/mp4');
         let updateEndPromise = fetchAndAppend(sourceBuffer, 'content/elementary-stream-video-header-keyid-1.m4v', true);
         event = await waitFor(video, 'webkitneedkey');
+        await updateEndPromise;
 
         let keySession = keys.createSession('video/mp4', event.initData);
         waitFor(keySession, 'webkitkeyerror').then(event => {
@@ -50,8 +51,6 @@
         event = await waitFor(keySession, 'webkitkeymessage');
         let response = await getResponse(event);
         keySession.update(response);
-
-        await updateEndPromise;
 
         consoleWrite('-');
         consoleWrite('Appending Encrypted Video Payload');

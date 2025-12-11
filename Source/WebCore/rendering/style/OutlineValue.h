@@ -54,7 +54,7 @@ public:
 
 private:
     Style::Color m_color { Style::Color::currentColor() };
-    Style::LineWidth m_width { CSS::Keyword::Medium { } };
+    Style::LineWidth m_width { Style::LineWidth::Length { 3.0f } };
     Style::Length<> m_offset { 0 };
     PREFERRED_TYPE(OutlineStyle) unsigned m_style : 4;
 };

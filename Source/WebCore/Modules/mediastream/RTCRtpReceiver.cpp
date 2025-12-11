@@ -130,11 +130,12 @@ ExceptionOr<RTCEncodedStreams> RTCRtpReceiver::createEncodedStreams(ScriptExecut
         return Exception { ExceptionCode::InvalidStateError };
 
     if (!m_encodedStreamProducer) {
-        auto producerOrException = RTCEncodedStreamProducer::create(context, m_backend->rtcRtpTransformBackend(), m_track->isVideo());
+        auto producerOrException = RTCEncodedStreamProducer::create(context);
         if (producerOrException.hasException())
             return producerOrException.releaseException();
 
         lazyInitialize(m_encodedStreamProducer, producerOrException.releaseReturnValue());
+        m_encodedStreamProducer->start(m_backend->rtcRtpTransformBackend(), m_track->isVideo());
     }
 
     return m_encodedStreamProducer->streams();

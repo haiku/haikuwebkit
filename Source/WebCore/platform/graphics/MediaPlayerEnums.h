@@ -90,11 +90,12 @@ enum class MediaPlayerMediaEngineIdentifier : uint8_t {
     AVFoundationCF,
     GStreamer,
     GStreamerMSE,
+    Haiku,
     HolePunch,
     MediaFoundation,
     MockMSE,
     CocoaWebM,
-    Haiku
+    WirelessPlayback,
 };
 
 enum class MediaPlayerWirelessPlaybackTargetType : uint8_t {

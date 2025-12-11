@@ -53,6 +53,10 @@ class TrackBase
 public:
     virtual ~TrackBase();
 
+    // ContextDestructionObserver.
+    void ref() const override { RefCounted::ref(); }
+    void deref() const override { RefCounted::deref(); }
+
     virtual void didMoveToNewDocument(Document&);
 
     enum Type { BaseTrack, TextTrack, AudioTrack, VideoTrack };
@@ -81,6 +85,7 @@ public:
 #if !RELEASE_LOG_DISABLED
     virtual void setLogger(const Logger&, uint64_t);
     const Logger& logger() const final { ASSERT(m_logger); return *m_logger.get(); }
+    Ref<const Logger> protectedLogger() const { return logger(); }
     uint64_t logIdentifier() const final { return m_logIdentifier; }
     WTFLogChannel& logChannel() const final;
 #endif

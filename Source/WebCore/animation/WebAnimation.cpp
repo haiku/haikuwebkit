@@ -68,9 +68,9 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(WebAnimation);
 
-HashSet<WebAnimation*>& WebAnimation::instances()
+HashSet<CheckedPtr<WebAnimation>>& WebAnimation::instances()
 {
-    static NeverDestroyed<HashSet<WebAnimation*>> instances;
+    static NeverDestroyed<HashSet<CheckedPtr<WebAnimation>>> instances;
     return instances;
 }
 
@@ -382,6 +382,8 @@ void WebAnimation::setTimelineInternal(RefPtr<AnimationTimeline>&& timeline)
 
     if (m_effect)
         m_effect->animationTimelineDidChange(m_timeline.get());
+
+    m_pendingStartTime = std::nullopt;
 }
 
 void WebAnimation::effectTargetDidChange(const std::optional<const Styleable>& previousTarget, const std::optional<const Styleable>& newTarget)
@@ -1622,24 +1624,8 @@ void WebAnimation::setSuspended(bool isSuspended)
 
 void WebAnimation::acceleratedStateDidChange()
 {
-    // FIXME: this would not be necessary if we didn't go through DocumentTimeline to
-    // schedule accelerated animations.
-    auto documentTimeline = [&]() -> DocumentTimeline* {
-        if (auto* timeline = dynamicDowncast<DocumentTimeline>(m_timeline.get()))
-            return timeline;
-        if (RefPtr scrollTimeline = dynamicDowncast<ScrollTimeline>(m_timeline.get())) {
-            if (RefPtr source = scrollTimeline->source())
-                return &source->protectedDocument()->timeline();
-        }
-        if (RefPtr keyframeEffect = this->keyframeEffect()) {
-            if (RefPtr target = keyframeEffect->target())
-                return &target->protectedDocument()->timeline();
-        }
-        return nullptr;
-    };
-
-    if (RefPtr timeline = documentTimeline())
-        timeline->animationAcceleratedRunningStateDidChange(*this);
+    if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline))
+        documentTimeline->animationAcceleratedRunningStateDidChange(*this);
 }
 
 WebAnimation& WebAnimation::readyPromiseResolve()

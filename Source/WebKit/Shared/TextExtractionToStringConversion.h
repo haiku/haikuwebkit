@@ -46,10 +46,18 @@ using NodeIdentifier = ObjectIdentifier<NodeIdentifierType>;
 
 namespace WebKit {
 
+using TextExtractionVersion = unsigned;
+
 enum class TextExtractionOptionFlag : uint8_t {
     IncludeURLs     = 1 << 0,
     IncludeRects    = 1 << 1,
     OnlyIncludeText = 1 << 2,
+};
+
+enum class TextExtractionOutputFormat : uint8_t {
+    TextTree,
+    HTMLMarkup,
+    Markdown
 };
 
 using TextExtractionOptionFlags = OptionSet<TextExtractionOptionFlag>;
@@ -58,27 +66,38 @@ using TextExtractionFilterCallback = Function<Ref<TextExtractionFilterPromise>(c
 
 struct TextExtractionOptions {
     TextExtractionOptions(TextExtractionOptions&& other)
-        : filterCallback(WTFMove(other.filterCallback))
+        : filterCallbacks(WTFMove(other.filterCallbacks))
         , nativeMenuItems(WTFMove(other.nativeMenuItems))
         , replacementStrings(WTFMove(other.replacementStrings))
+        , version(other.version)
         , flags(other.flags)
+        , outputFormat(other.outputFormat)
     {
     }
 
-    TextExtractionOptions(TextExtractionFilterCallback&& filter, Vector<String>&& items, HashMap<String, String>&& replacementStrings, TextExtractionOptionFlags flags)
-        : filterCallback(WTFMove(filter))
+    TextExtractionOptions(Vector<TextExtractionFilterCallback>&& filters, Vector<String>&& items, HashMap<String, String>&& replacementStrings, std::optional<TextExtractionVersion> version, TextExtractionOptionFlags flags, TextExtractionOutputFormat outputFormat)
+        : filterCallbacks(WTFMove(filters))
         , nativeMenuItems(WTFMove(items))
         , replacementStrings(WTFMove(replacementStrings))
+        , version(version)
         , flags(flags)
+        , outputFormat(outputFormat)
     {
     }
 
-    TextExtractionFilterCallback filterCallback;
+    Vector<TextExtractionFilterCallback> filterCallbacks;
     Vector<String> nativeMenuItems;
     HashMap<String, String> replacementStrings;
+    std::optional<TextExtractionVersion> version;
     TextExtractionOptionFlags flags;
+    TextExtractionOutputFormat outputFormat { TextExtractionOutputFormat::TextTree };
 };
 
-void convertToText(WebCore::TextExtraction::Item&&, TextExtractionOptions&&, CompletionHandler<void(String&&)>&&);
+struct TextExtractionResult {
+    String textContent;
+    bool filteredOutAnyText { false };
+};
+
+void convertToText(WebCore::TextExtraction::Item&&, TextExtractionOptions&&, CompletionHandler<void(TextExtractionResult&&)>&&);
 
 } // namespace WebKit

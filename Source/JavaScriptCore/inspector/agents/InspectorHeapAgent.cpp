@@ -295,7 +295,7 @@ void InspectorHeapAgent::didGarbageCollect(CollectionScope scope)
     m_gcStartTime = Seconds::nan();
 }
 
-bool InspectorHeapAgent::heapSnapshotBuilderIgnoreNode(HeapSnapshotBuilder&, JSC::JSCell* cell)
+bool InspectorHeapAgent::heapSnapshotBuilderIgnoreNode(const HeapSnapshotBuilder&, JSC::JSCell* cell)
 {
     if (const Structure* structure = cell->structure()) {
         if (JSGlobalObject* globalObject = structure->globalObject()) {

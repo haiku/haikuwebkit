@@ -40,6 +40,9 @@
 #include "JSDOMFormData.h"
 #include "JSDOMPromiseDeferred.h"
 #include "ReadableStreamSource.h"
+#include "StreamPipeOptions.h"
+#include "TransformStream.h"
+#include "WritableStream.h"
 #include <JavaScriptCore/ArrayBufferView.h>
 #include <pal/text/TextCodecUTF8.h>
 #include <wtf/text/MakeString.h>
@@ -202,7 +205,7 @@ void FetchBody::consumeAsStream(FetchBodyOwner& owner, FetchBodySource& source)
     else if (isFormData())
         checkedConsumer()->consumeFormDataAsStream(protectedFormDataBody().get(), source, owner.protectedScriptExecutionContext().get());
     else if (CheckedRef consumer = this->consumer(); consumer->hasData())
-        closeStream = source.enqueue(consumer->takeAsArrayBuffer());
+        closeStream = source.enqueue(consumer->asArrayBuffer());
     else
         closeStream = true;
 
@@ -283,20 +286,17 @@ void FetchBody::convertReadableStreamToArrayBuffer(FetchBodyOwner& owner, Comple
     ASSERT(hasReadableStream());
 
     checkedConsumer()->extract(*protectedReadableStream(), [owner = Ref { owner }, data = SharedBufferBuilder(), completionHandler = WTFMove(completionHandler)](auto&& result) mutable {
-        if (result.hasException()) {
-            completionHandler(result.releaseException());
-            return;
-        }
-
-        if (auto* chunk = result.returnValue()) {
-            data.append(*chunk);
-            return;
-        }
-
-        if (RefPtr arrayBuffer = data.takeAsArrayBuffer())
-            owner->body().m_data = *arrayBuffer;
-
-        completionHandler({ });
+        WTF::switchOn(WTFMove(result), [&](std::nullptr_t) {
+            if (RefPtr arrayBuffer = data.takeAsArrayBuffer())
+                owner->body().m_data = *arrayBuffer;
+            completionHandler({ });
+        }, [&](std::span<const uint8_t>&& chunk) {
+            data.append(chunk);
+        }, [&](JSC::JSValue) {
+            completionHandler(Exception { ExceptionCode::TypeError, "Load failed"_s });
+        }, [&](Exception&& error) {
+            completionHandler(WTFMove(error));
+        });
     });
 }
 
@@ -364,6 +364,34 @@ FetchBody FetchBody::clone(JSDOMGlobalObject& globalObject)
         }
     }
     return clone;
+}
+
+FetchBody FetchBody::createProxy(JSDOMGlobalObject& globalObject)
+{
+    FetchBody proxy;
+
+    proxy.m_consumer = std::exchange(m_consumer, { });
+    proxy.m_data = std::exchange(m_data, { });
+
+    if (!proxy.isReadableStream())
+        return proxy;
+
+    auto identityTransformOrException = TransformStream::create(globalObject, { }, { }, { });
+    ASSERT(!identityTransformOrException.hasException());
+    if (identityTransformOrException.hasException())
+        return proxy;
+
+    Ref identityTransform = identityTransformOrException.releaseReturnValue();
+    auto proxyStreamOrException = Ref { *m_readableStream }->pipeThrough(globalObject, { &identityTransform->readable(), &identityTransform->writable() }, { });
+    ASSERT(!proxyStreamOrException.hasException());
+    if (proxyStreamOrException.hasException())
+        return proxy;
+
+    Ref proxyStream = proxyStreamOrException.releaseReturnValue();
+    proxy.m_data = proxyStream.get();
+    proxy.m_readableStream = WTFMove(proxyStream);
+
+    return proxy;
 }
 
 }

@@ -67,15 +67,6 @@ class WPEMiniBrowserSkiaCPUDriver(WPEMiniBrowserDriver):
         self._test_environ['WEBKIT_SKIA_ENABLE_CPU_RENDERING'] = '1'
 
 
-class WPEMiniBrowserNoHybridDriver(WPEMiniBrowserDriver):
-    browser_name = 'minibrowser-wpe-nohybrid'
-
-    def prepare_env(self, config):
-        super().prepare_env(config)
-        # Disabling CPU rendering threads disables hybrid mode.
-        self._test_environ['WEBKIT_SKIA_CPU_PAINTING_THREADS'] = '0'
-
-
 class WPEMiniBrowserLegacyAPIDriver(WPEMiniBrowserBaseDriver):
     browser_name = 'minibrowser-wpe-legacy'
 

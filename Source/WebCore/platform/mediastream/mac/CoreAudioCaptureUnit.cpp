@@ -232,6 +232,18 @@ static WeakHashSet<CoreAudioCaptureUnit>& allCoreAudioCaptureUnits()
     return units;
 }
 
+bool CoreAudioCaptureUnit::isAnyUnitCapturingExceptFor(CoreAudioCaptureUnit* unitToNotTest)
+{
+    return std::ranges::any_of(allCoreAudioCaptureUnits(), [unitToNotTest = WeakPtr { unitToNotTest }](auto& unit) {
+        return unit.isProducingMicrophoneSamples() && &unit != unitToNotTest.get();
+    });
+}
+
+bool CoreAudioCaptureUnit::isAnyUnitCapturing()
+{
+    return isAnyUnitCapturingExceptFor(nullptr);
+}
+
 void CoreAudioCaptureUnit::forEach(NOESCAPE Function<void(CoreAudioCaptureUnit&)>&& callback)
 {
     allCoreAudioCaptureUnits().forEach(WTFMove(callback));
@@ -273,7 +285,7 @@ CoreAudioCaptureUnit::~CoreAudioCaptureUnit()
 #if PLATFORM(MAC)
 void CoreAudioCaptureUnit::setStoredVPIOUnit(StoredAudioUnit&& unit)
 {
-    RELEASE_LOG(WebRTC, "CoreAudioCaptureUnit::setStoredVPIOUnit");
+    RELEASE_LOG(WebRTC, "CoreAudioCaptureUnit::setStoredVPIOUnit(%p)", this);
 
     static constexpr Seconds delayBeforeStoredVPIOUnitDeallocation = 3_s;
     m_storedVPIOUnit = WTFMove(unit);
@@ -282,7 +294,7 @@ void CoreAudioCaptureUnit::setStoredVPIOUnit(StoredAudioUnit&& unit)
 
 CoreAudioCaptureUnit::StoredAudioUnit CoreAudioCaptureUnit::takeStoredVPIOUnit()
 {
-    RELEASE_LOG(WebRTC, "CoreAudioCaptureUnit::takeStoredVPIOUnit");
+    RELEASE_LOG(WebRTC, "CoreAudioCaptureUnit::takeStoredVPIOUnit(%p)", this);
 
     m_storedVPIOUnitDeallocationTimer.stop();
     return std::exchange(m_storedVPIOUnit, nullptr);
@@ -520,7 +532,7 @@ OSStatus CoreAudioCaptureUnit::configureSpeakerProc(int sampleRate)
 void CoreAudioCaptureUnit::checkTimestamps(const AudioTimeStamp& timeStamp, double hostTime)
 {
     if (!timeStamp.mSampleTime || timeStamp.mSampleTime == m_latestMicTimeStamp || !hostTime)
-        RELEASE_LOG_ERROR(WebRTC, "CoreAudioCaptureUnit::checkTimestamps: unusual timestamps, sample time = %f, previous sample time = %f, hostTime %f", timeStamp.mSampleTime, m_latestMicTimeStamp, hostTime);
+        RELEASE_LOG_ERROR(WebRTC, "CoreAudioCaptureUnit::checkTimestamps(%p): unusual timestamps, sample time = %f, previous sample time = %f, hostTime %f", this, timeStamp.mSampleTime, m_latestMicTimeStamp, hostTime);
 }
 #endif
 
@@ -755,12 +767,13 @@ void CoreAudioCaptureUnit::updateMutedState(SyncUpdate syncUpdate)
         RELEASE_LOG_ERROR_IF(error, WebRTC, "CoreAudioCaptureUnit::updateMutedState(%p) unable to set kAUVoiceIOProperty_MuteOutput, error %d (%.4s)", this, (int)error, (char*)&error);
     }
 
-    auto isAnyUnitCapturing = [] {
-        return std::ranges::any_of(allCoreAudioCaptureUnits(), [](auto& unit) {
-            return unit.isProducingData();
-        });
-    };
-    setMutedState(muteUplinkOutput && !isAnyUnitCapturing());
+    bool isAnyOtherUnitCapturing = isAnyUnitCapturingExceptFor(this);
+    RELEASE_LOG_INFO(WebRTC, "CoreAudioCaptureUnit::updateMutedState muteUplinkOutput=%d isAnyOtherUnitCapturing=%d", muteUplinkOutput, isAnyOtherUnitCapturing);
+
+    if (isAnyOtherUnitCapturing)
+        return;
+
+    setMutedState(muteUplinkOutput);
 }
 
 void CoreAudioCaptureUnit::updateMutedStateTimerFired()
@@ -949,12 +962,24 @@ void CoreAudioCaptureUnit::disableMutedSpeechActivityEventListener()
 
 void CoreAudioCaptureUnit::handleMuteStatusChangedNotification(bool isMuting)
 {
-    if (m_muteStatusChangedCallback && isMuting == isProducingMicrophoneSamples())
+    RELEASE_LOG_INFO(WebRTC, "CoreAudioCaptureUnit::handleMuteStatusChangedNotification isMuting=%d isAnyUnitCapturing=%d", isMuting, isAnyUnitCapturing());
+
+    if (m_muteStatusChangedCallback && isMuting == isAnyUnitCapturing())
         m_muteStatusChangedCallback(isMuting);
 }
 
-void CoreAudioCaptureUnit::willChangeCaptureDevice()
+void CoreAudioCaptureUnit::willChangeCaptureDeviceTo(const String& persistentId)
 {
+#if PLATFORM(MAC)
+    if (m_shouldUseVPIO) {
+        forEachClient([&persistentId](auto& client) {
+            client.vpioUnitWillChangeCaptureDeviceTo(persistentId);
+        });
+    }
+#else
+    UNUSED_PARAM(persistentId);
+#endif
+
     if (!m_voiceActivityDetectionEnabled)
         return;
 
@@ -980,15 +1005,19 @@ void CoreAudioCaptureUnit::setIsInBackground(bool isInBackground)
     if (m_statusBarManager)
         return;
 
-    m_statusBarManager = makeUnique<MediaCaptureStatusBarManager>([this](CompletionHandler<void()>&& completionHandler) {
-        if (m_statusBarWasTappedCallback)
-            m_statusBarWasTappedCallback(WTFMove(completionHandler));
-    }, [this] {
+    m_statusBarManager = MediaCaptureStatusBarManager::create([weakThis = WeakPtr { *this }](CompletionHandler<void()>&& completionHandler) {
+        RefPtr protectedThis = weakThis.get();
+        if (protectedThis && protectedThis->m_statusBarWasTappedCallback)
+            protectedThis->m_statusBarWasTappedCallback(WTFMove(completionHandler));
+    }, [weakThis = WeakPtr { *this }] {
         RELEASE_LOG_ERROR(WebRTC, "CoreAudioCaptureUnit status bar failed");
-        auto statusBarManager = std::exchange(m_statusBarManager, { });
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+        auto statusBarManager = std::exchange(protectedThis->m_statusBarManager, { });
         statusBarManager->stop();
-        if (isRunning())
-            captureFailed();
+        if (protectedThis->isRunning())
+            protectedThis->captureFailed();
     });
     m_statusBarManager->start();
 }

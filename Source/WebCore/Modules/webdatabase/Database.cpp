@@ -99,11 +99,7 @@ const unsigned long long quotaIncreaseSize = 5 * 1024 * 1024;
 
 static const String& fullyQualifiedInfoTableName()
 {
-    static LazyNeverDestroyed<String> qualifiedName;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-        qualifiedName.construct(MAKE_STATIC_STRING_IMPL("main.__WebKitDatabaseInfoTable__"));
-    });
+    static NeverDestroyed<String> qualifiedName { MAKE_STATIC_STRING_IMPL("main.__WebKitDatabaseInfoTable__") };
     return qualifiedName;
 }
 
@@ -155,28 +151,27 @@ static bool retrieveTextResultFromDatabase(SQLiteDatabase& db, StringView query,
 // FIXME: move all guid-related functions to a DatabaseVersionTracker class.
 static Lock guidLock;
 
-static HashMap<DatabaseGUID, String>& guidToVersionMap() WTF_REQUIRES_LOCK(guidLock)
+struct VersionAndUseCount {
+    String version;
+    size_t useCount { 0 };
+};
+
+static HashMap<DatabaseGUID, VersionAndUseCount>& guidToVersionMap() WTF_REQUIRES_LOCK(guidLock)
 {
-    static NeverDestroyed<HashMap<DatabaseGUID, String>> map;
+    static NeverDestroyed<HashMap<DatabaseGUID, VersionAndUseCount>> map;
     return map;
 }
 
 static inline void updateGUIDVersionMap(DatabaseGUID guid, const String& newVersion) WTF_REQUIRES_LOCK(guidLock)
 {
-    // Note: It is not safe to put an empty string into the guidToVersionMap() map.
-    // That's because the map is cross-thread, but empty strings are per-thread.
-    // The copy() function makes a version of the string you can use on the current
-    // thread, but we need a string we can keep in a cross-thread data structure.
-    // FIXME: This is a quite-awkward restriction to have to program with.
+    // FIXME: This code maps empty string to null string because at one time static strings were not thread-safe.
+    // But that time is long gone. So we can remove the mapping now.
 
-    // Map empty string to null string (see comment above).
-    guidToVersionMap().set(guid, newVersion.isEmpty() ? String() : newVersion.isolatedCopy());
-}
-
-static HashMap<DatabaseGUID, HashSet<Database*>>& guidToDatabaseMap() WTF_REQUIRES_LOCK(guidLock)
-{
-    static NeverDestroyed<HashMap<DatabaseGUID, HashSet<Database*>>> map;
-    return map;
+    auto addResult = guidToVersionMap().ensure(guid, [&] {
+        return VersionAndUseCount { String(), 0 };
+    });
+    addResult.iterator->value.version = newVersion.isEmpty() ? String() : newVersion.isolatedCopy(); // Map empty string to null string (see comment above).
+    ++addResult.iterator->value.useCount;
 }
 
 static inline DatabaseGUID guidForOriginAndName(const String& origin, const String& name) WTF_REQUIRES_LOCK(guidLock)
@@ -205,9 +200,6 @@ Database::Database(DatabaseContext& context, const String& name, const String& e
         Locker locker { guidLock };
 
         m_guid = guidForOriginAndName(securityOrigin().securityOrigin()->toString(), name);
-        guidToDatabaseMap().ensure(m_guid, [] {
-            return HashSet<Database*>();
-        }).iterator->value.add(this);
     }
 
     m_databaseContext->databaseThread();
@@ -354,7 +346,7 @@ ExceptionOr<void> Database::performOpenAndVerify(bool shouldSetVersionInNewDatab
         auto entry = guidToVersionMap().find(m_guid);
         if (entry != guidToVersionMap().end()) {
             // Map null string to empty string (see updateGUIDVersionMap()).
-            currentVersion = entry->value.isNull() ? emptyString() : entry->value.isolatedCopy();
+            currentVersion = entry->value.version.isNull() ? emptyString() : entry->value.version.isolatedCopy();
             LOG(StorageAPI, "Current cached version for guid %i is %s", m_guid, currentVersion.ascii().data());
         } else {
             LOG(StorageAPI, "No cached version for guid %i", m_guid);
@@ -439,14 +431,11 @@ void Database::closeDatabase()
     {
         Locker locker { guidLock };
 
-        auto it = guidToDatabaseMap().find(m_guid);
-        ASSERT(it != guidToDatabaseMap().end());
-        ASSERT(it->value.contains(this));
-        it->value.remove(this);
-        if (it->value.isEmpty()) {
-            guidToDatabaseMap().remove(it);
-            guidToVersionMap().remove(m_guid);
-        }
+        auto it = guidToVersionMap().find(m_guid);
+        RELEASE_ASSERT(it != guidToVersionMap().end());
+        --it->value.useCount;
+        if (!it->value.useCount)
+            guidToVersionMap().remove(it);
     }
 }
 
@@ -497,7 +486,7 @@ String Database::getCachedVersion() const
 {
     Locker locker { guidLock };
 
-    return guidToVersionMap().get(m_guid).isolatedCopy();
+    return guidToVersionMap().get(m_guid).version.isolatedCopy();
 }
 
 void Database::setCachedVersion(const String& actualVersion)

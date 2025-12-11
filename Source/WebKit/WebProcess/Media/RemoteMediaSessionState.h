@@ -30,23 +30,27 @@
 #include <WebCore/MediaSessionGroupIdentifier.h>
 #include <WebCore/MediaSessionIdentifier.h>
 #include <WebCore/NowPlayingInfo.h>
+#include <WebCore/PageIdentifier.h>
 #include <WebCore/PlatformMediaSessionTypes.h>
 #include <wtf/LoggerHelper.h>
 #include <wtf/MediaTime.h>
 
-namespace WebCore {
-class PlatformMediaSessionInterface;
-}
-
 namespace WebKit {
 
 struct RemoteMediaSessionState {
+    WTF_MAKE_STRUCT_TZONE_ALLOCATED(RemoteMediaSessionState);
+
+    WebCore::PageIdentifier pageIdentifier;
     WebCore::MediaSessionIdentifier sessionIdentifier;
     uint64_t logIdentifier { 0 };
 
     WebCore::PlatformMediaSessionMediaType mediaType { WebCore::PlatformMediaSessionMediaType::None };
     WebCore::PlatformMediaSessionMediaType presentationType { WebCore::PlatformMediaSessionMediaType::None };
     WebCore::PlatformMediaSessionDisplayType displayType { WebCore::PlatformMediaSessionDisplayType::Normal };
+
+    WebCore::PlatformMediaSessionState state { WebCore::PlatformMediaSessionState::Idle };
+    WebCore::PlatformMediaSessionState stateToRestore { WebCore::PlatformMediaSessionState::Idle };
+    WebCore::PlatformMediaSessionInterruptionType interruptionType { WebCore::PlatformMediaSessionInterruptionType::NoInterruption };
 
     MediaTime duration { MediaTime::invalidTime() };
 
@@ -66,7 +70,17 @@ struct RemoteMediaSessionState {
     bool isEnded { false };
     bool canReceiveRemoteControlCommands { false };
     bool supportsSeeking { false };
+    bool hasPlayedAudiblySinceLastInterruption { false };
+    bool isLongEnoughForMainContent { false };
+    bool blockedBySystemInterruption { false };
+    bool activeAudioSessionRequired { false };
+    bool preparingToPlay { false };
+    bool isActiveNowPlayingSession { false };
+#if PLATFORM(IOS_FAMILY)
+    bool requiresPlaybackTargetRouteMonitoring { false };
+#endif
 };
+
 
 } // namespace WebKit
 

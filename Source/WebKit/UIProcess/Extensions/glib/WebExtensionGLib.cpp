@@ -30,6 +30,8 @@
 #include <wtf/FileSystem.h>
 #include <wtf/Language.h>
 #include <wtf/glib/GRefPtr.h>
+#include <wtf/text/MakeString.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebKit {
 

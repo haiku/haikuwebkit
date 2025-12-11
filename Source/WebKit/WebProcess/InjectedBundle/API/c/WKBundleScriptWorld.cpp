@@ -75,3 +75,8 @@ WKStringRef WKBundleScriptWorldCopyName(WKBundleScriptWorldRef scriptWorldRef)
 {
     return WebKit::toCopiedAPI(WebKit::toImpl(scriptWorldRef)->name());
 }
+
+void WKBundleScriptWorldSetAllowJSHandleCreation(WKBundleScriptWorldRef scriptWorldRef)
+{
+    WebKit::toProtectedImpl(scriptWorldRef)->setAllowJSHandleCreation();
+}

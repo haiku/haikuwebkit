@@ -1,4 +1,23 @@
 ================
+WebKitGTK 2.51.2
+================
+
+What's new in WebKitGTK 2.51.2?
+
+  - Add WebKitImage utility class that will be used for favicons and snapshots.
+  - Videos with BT2100-PQ colorspace are now tone-mapped to SDR, ensuring colours
+    do not appear washed out.
+  - Use a run loop observer also to notify the main thread when composition is done.
+  - Remove the hybrid rendering mode now that we are computing a different tile size
+    for GPU and CPU rendering modes.
+  - Make jsc_value_array_buffer_get_data() introspectable.
+  - Restrict allowed URI protocols for media playback.
+  - Add rendering and buffer formats information to webkit://gpu.
+  - Enable dynamic MSAA for accelerated 2D canvas rendering.
+  - Fix several crashes and rendering issues.
+  - Translation updates: Slovenian, Turkish.
+
+================
 WebKitGTK 2.51.1
 ================
 

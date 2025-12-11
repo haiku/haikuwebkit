@@ -195,6 +195,13 @@ void RenderTreeUpdater::GeneratedContent::updateBeforeOrAfterPseudoElement(Eleme
 
     auto* updateStyle = (elementUpdate.style && elementUpdate.style->hasCachedPseudoStyles()) ? elementUpdate.style->getCachedPseudoStyle({ pseudoElementType }) : nullptr;
 
+    // If we end up losing a previous pseudo because the style got removed we need to
+    // cancel any animations that were on it so we do not end up thinking we need to keep
+    // the renderer around. We cannot completely rely on needsPseudoElement because
+    // we may need to animate a box with display: none.
+    if (!updateStyle)
+        Styleable { current, Style::PseudoElementIdentifier { pseudoElementType } }.cancelStyleOriginatedAnimations();
+
     ASSERT(!is<PseudoElement>(current));
     if (!needsPseudoElement(updateStyle) && !needsPseudoElementForAnimation(current, pseudoElementType)) {
         if (pseudoElement) {

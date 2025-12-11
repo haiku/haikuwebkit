@@ -26,7 +26,7 @@
 #pragma once
 
 #if USE(COORDINATED_GRAPHICS)
-#include "CompositingRunLoop.h"
+#include <WebCore/CoordinatedCompositionReason.h>
 #include <WebCore/Damage.h>
 #include <WebCore/DisplayUpdate.h>
 #include <WebCore/GLContext.h>
@@ -41,6 +41,7 @@
 #include <wtf/OptionSet.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/WorkQueue.h>
 
 namespace WebCore {
 class TextureMapper;
@@ -68,10 +69,11 @@ public:
 #if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)
     void preferredBufferFormatsDidChange();
 #endif
+    void pendingTilesDidChange();
 
     void setSize(const WebCore::IntSize&, float);
-    uint32_t requestComposition();
-    void scheduleUpdate();
+    void requestCompositionForRenderingUpdate(Function<void()>&&);
+    void requestComposition(WebCore::CompositionReason);
     RunLoop* runLoop();
 
     void invalidate();
@@ -96,7 +98,8 @@ public:
 private:
     explicit ThreadedCompositor(LayerTreeHost&);
 
-    void updateSceneState();
+    void scheduleUpdateLocked();
+    void flushCompositingState(const OptionSet<WebCore::CompositionReason>&);
     void renderLayerTree();
     void paintToCurrentGLContext(const WebCore::TransformationMatrix&, const WebCore::IntSize&);
     void frameComplete();
@@ -108,6 +111,7 @@ private:
     void initializeFPSCounter();
     void updateFPSCounter();
 
+    const Ref<WorkQueue> m_workQueue;
     CheckedPtr<LayerTreeHost> m_layerTreeHost;
     RefPtr<AcceleratedSurface> m_surface;
     RefPtr<CoordinatedSceneState> m_sceneState;
@@ -117,7 +121,20 @@ private:
     int m_maxTextureSize { 0 };
     std::atomic<unsigned> m_suspendedCount { 0 };
 
-    std::unique_ptr<CompositingRunLoop> m_compositingRunLoop;
+    enum class State {
+        Idle,
+        Scheduled,
+        InProgress,
+        ScheduledWhileInProgress,
+        WaitingForTiles
+    };
+
+    struct {
+        mutable Lock lock;
+        State state WTF_GUARDED_BY_LOCK(lock) { State::Idle };
+        OptionSet<WebCore::CompositionReason> reasons WTF_GUARDED_BY_LOCK(lock);
+        Function<void()> didCompositeRenderinUpdateFunction WTF_GUARDED_BY_LOCK(lock);
+    } m_state;
 
     struct {
         Lock lock;
@@ -125,6 +142,7 @@ private:
         float deviceScaleFactor { 1 };
     } m_attributes;
 
+    RunLoop::Timer m_renderTimer;
     std::unique_ptr<WebCore::TextureMapper> m_textureMapper;
 
     struct {
@@ -143,8 +161,6 @@ private:
     } m_damage;
 #endif
 
-    std::atomic<uint32_t> m_compositionRequestID { 0 };
-    std::atomic<uint32_t> m_compositionResponseID { 0 };
     std::unique_ptr<WebCore::RunLoopObserver> m_didCompositeRunLoopObserver;
 };
 

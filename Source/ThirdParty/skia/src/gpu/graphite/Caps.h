@@ -101,7 +101,7 @@ public:
 #if defined(GPU_TEST_UTILS)
     std::string_view deviceName() const { return fDeviceName; }
 
-    PathRendererStrategy requestedPathRendererStrategy() const {
+    std::optional<PathRendererStrategy> requestedPathRendererStrategy() const {
         return fRequestedPathRendererStrategy;
     }
 #endif
@@ -189,7 +189,7 @@ public:
      */
     size_t requiredTransferBufferAlignment() const { return fRequiredTransferBufferAlignment; }
 
-    /* Returns the aligned rowBytes when transfering to or from a Texture */
+    /* Returns the aligned rowBytes when transferring to or from a Texture */
     size_t getAlignedTextureDataRowBytes(size_t rowBytes) const {
         return SkAlignTo(rowBytes, fTextureDataRowBytesAlignment);
     }
@@ -202,10 +202,13 @@ public:
         return {};
     }
 
+    /* Returns a compressed label describing the immutable sampler for the Pipeline label */
+    virtual std::string toString(const ImmutableSamplerInfo&) const { return ""; }
+
     /**
      * Backends may have restrictions on what types of textures support Device::writePixels().
      * If this returns false then the caller should implement a fallback where a temporary texture
-     * is created, pixels are written to it, and then that is copied or drawn into the the surface.
+     * is created, pixels are written to it, and then that is copied or drawn into the surface.
      */
     virtual bool supportsWritePixels(const TextureInfo&) const = 0;
 
@@ -557,9 +560,9 @@ protected:
 
 #if defined(GPU_TEST_UTILS)
     std::string fDeviceName;
-    int fMaxTextureAtlasSize = 2048;
-    PathRendererStrategy fRequestedPathRendererStrategy;
+    std::optional<PathRendererStrategy> fRequestedPathRendererStrategy;
 #endif
+
     size_t fGlyphCacheTextureMaximumBytes = 2048 * 1024 * 4;
 
     float fMinMSAAPathSize = 0;

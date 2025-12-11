@@ -35,6 +35,7 @@
 #include <wtf/Function.h>
 #include <wtf/HashSet.h>
 #include <wtf/ObjectIdentifier.h>
+#include <wtf/ThreadSafeWeakHashSet.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/WTFString.h>
 
@@ -99,7 +100,9 @@ class ResourceRequest;
 class ServiceWorker;
 class ServiceWorkerContainer;
 class SocketProvider;
+class WeakPtrImplWithEventTargetData;
 class WebCoreOpaqueRoot;
+class WebTransport;
 enum class AdvancedPrivacyProtections : uint16_t;
 enum class CrossOriginMode : bool;
 enum class LoadedFromOpaqueSource : bool;
@@ -229,7 +232,7 @@ public:
 
     virtual CSSFontSelector* cssFontSelector() { return nullptr; }
     virtual CSSValuePool& cssValuePool();
-    virtual std::unique_ptr<FontLoadRequest> fontLoadRequest(const String& url, bool isSVG, bool isInitiatingElementInUserAgentShadowTree, LoadedFromOpaqueSource);
+    virtual RefPtr<FontLoadRequest> fontLoadRequest(const String& url, bool isSVG, bool isInitiatingElementInUserAgentShadowTree, LoadedFromOpaqueSource);
     virtual void beginLoadingFontSoon(FontLoadRequest&) { }
 
     WEBCORE_EXPORT static void setCrossOriginMode(CrossOriginMode);
@@ -340,7 +343,7 @@ public:
 
     void registerServiceWorker(ServiceWorker&);
     void unregisterServiceWorker(ServiceWorker&);
-    inline ServiceWorker* serviceWorker(ServiceWorkerIdentifier); // Defined in ScriptExecutionContextInlines.h.
+    inline ServiceWorker* serviceWorker(ServiceWorkerIdentifier); // Defined in ServiceWorker.h.
 
     ServiceWorkerContainer* serviceWorkerContainer();
     ServiceWorkerContainer* ensureServiceWorkerContainer();
@@ -384,6 +387,8 @@ public:
 
     bool isAlwaysOnLoggingAllowed() const;
 
+    void createdWebTransport(WebTransport&);
+
 protected:
     class AddConsoleMessageTask : public Task {
     public:
@@ -420,9 +425,9 @@ private:
     void checkConsistency() const;
     WEBCORE_EXPORT GuaranteedSerialFunctionDispatcher& nativePromiseDispatcher();
 
-    HashSet<MessagePort*> m_messagePorts;
-    HashSet<ContextDestructionObserver*> m_destructionObservers;
-    HashSet<ActiveDOMObject*> m_activeDOMObjects;
+    WeakHashSet<MessagePort, WeakPtrImplWithEventTargetData> m_messagePorts;
+    WeakHashSet<ContextDestructionObserver> m_destructionObservers;
+    WeakHashSet<ActiveDOMObject> m_activeDOMObjects;
 
     HashMap<int, RefPtr<DOMTimer>> m_timeouts;
 
@@ -444,7 +449,7 @@ private:
 #endif
 
     RefPtr<ServiceWorker> m_activeServiceWorker;
-    HashMap<ServiceWorkerIdentifier, ServiceWorker*> m_serviceWorkers;
+    HashMap<ServiceWorkerIdentifier, WeakRef<ServiceWorker, WeakPtrImplWithEventTargetData>> m_serviceWorkers;
 
     String m_domainForCachePartition;
     mutable ScriptExecutionContextIdentifier m_identifier;
@@ -464,6 +469,7 @@ private:
 
     RefPtr<GuaranteedSerialFunctionDispatcher> m_nativePromiseDispatcher;
     WeakHashSet<NativePromiseRequest> m_nativePromiseRequests;
+    ThreadSafeWeakHashSet<WebTransport> m_activeWebTransports;
 };
 
 WebCoreOpaqueRoot root(ScriptExecutionContext*);

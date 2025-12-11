@@ -154,20 +154,20 @@ void MediaSessionManagerCocoa::updateSessionState()
     else if (captureCount || audioMediaStreamTrackCount) {
         // In case of audio capture or audio MediaStreamTrack playing, we want to grab 20 ms chunks to limit the latency so that it is not noticeable by users
         // while having a large enough buffer so that the audio rendering remains stable, hence a computation based on sample rate.
-        bufferSize = roundUpToPowerOfTwo<size_t>(AudioSession::singleton().sampleRate() / 50);
+        bufferSize = roundUpToPowerOfTwo<size_t>(sharedSession->sampleRate() / 50);
     } else if (m_supportedAudioHardwareBufferSizes && DeprecatedGlobalSettings::lowPowerVideoAudioBufferSizeEnabled())
         bufferSize = m_supportedAudioHardwareBufferSizes.nearest(kLowPowerVideoBufferSize);
 
-    AudioSession::singleton().setPreferredBufferSize(bufferSize);
+    sharedSession->setPreferredBufferSize(bufferSize);
 
     if (!DeprecatedGlobalSettings::shouldManageAudioSessionCategory())
         return;
 
     auto category = AudioSession::CategoryType::None;
     auto mode = AudioSession::Mode::Default;
-    if (AudioSession::singleton().categoryOverride() != AudioSession::CategoryType::None)
-        category = AudioSession::singleton().categoryOverride();
-    else if (captureCount || (isPlayingAudio && AudioSession::singleton().category() == AudioSession::CategoryType::PlayAndRecord)) {
+    if (sharedSession->categoryOverride() != AudioSession::CategoryType::None)
+        category = sharedSession->categoryOverride();
+    else if (captureCount || (isPlayingAudio && sharedSession->category() == AudioSession::CategoryType::PlayAndRecord)) {
         category = AudioSession::CategoryType::PlayAndRecord;
         mode = AudioSession::Mode::VideoChat;
     } else if (hasAudibleVideoMediaType) {
@@ -198,7 +198,7 @@ void MediaSessionManagerCocoa::updateSessionState()
     ALWAYS_LOG(LOGIDENTIFIER, "setting category = ", category, ", mode = ", mode, ", policy = ", policy, ", previous category = ", m_previousCategory);
 
     m_previousCategory = category;
-    AudioSession::singleton().setCategory(category, mode, policy);
+    sharedSession->setCategory(category, mode, policy);
 
     forEachSession([&] (auto& session) {
         session.audioSessionCategoryChanged(category, mode, policy);
@@ -248,8 +248,10 @@ String MediaSessionManagerCocoa::audioTimePitchAlgorithmForMediaPlayerPitchCorre
 void MediaSessionManagerCocoa::scheduleSessionStatusUpdate()
 {
     enqueueTaskOnMainThread([this, protectedThis = Ref { *this }] () mutable {
-        m_nowPlayingManager->setSupportsSeeking(computeSupportsSeeking());
-        updateNowPlayingInfo();
+        if (m_nowPlayingManager) {
+            m_nowPlayingManager->setSupportsSeeking(computeSupportsSeeking());
+            updateNowPlayingInfo();
+        }
 
         forEachSession([] (auto& session) {
             session.updateMediaUsageIfChanged();
@@ -273,7 +275,8 @@ void MediaSessionManagerCocoa::sessionDidEndRemoteScrubbing(PlatformMediaSession
 
 void MediaSessionManagerCocoa::addSession(PlatformMediaSessionInterface& session)
 {
-    m_nowPlayingManager->addClient(*this);
+    if (m_nowPlayingManager)
+        m_nowPlayingManager->addClient(*this);
 
     if (!m_audioHardwareListener) {
         m_audioHardwareListener = AudioHardwareListener::create(*this);
@@ -294,7 +297,8 @@ void MediaSessionManagerCocoa::removeSession(PlatformMediaSessionInterface& sess
     }
 
     if (hasNoSession()) {
-        m_nowPlayingManager->removeClient(*this);
+        if (m_nowPlayingManager)
+            m_nowPlayingManager->removeClient(*this);
         m_audioHardwareListener = nullptr;
     }
 
@@ -304,8 +308,8 @@ void MediaSessionManagerCocoa::removeSession(PlatformMediaSessionInterface& sess
 void MediaSessionManagerCocoa::setCurrentSession(PlatformMediaSessionInterface& session)
 {
     PlatformMediaSessionManager::setCurrentSession(session);
-
-    m_nowPlayingManager->updateSupportedCommands();
+    if (m_nowPlayingManager)
+        m_nowPlayingManager->updateSupportedCommands();
 }
 
 void MediaSessionManagerCocoa::sessionWillEndPlayback(PlatformMediaSessionInterface& session, DelayCallingUpdateNowPlaying delayCallingUpdateNowPlaying)
@@ -356,16 +360,19 @@ void MediaSessionManagerCocoa::sessionCanProduceAudioChanged()
 
 void MediaSessionManagerCocoa::addSupportedCommand(PlatformMediaSession::RemoteControlCommandType command)
 {
+    ASSERT(m_nowPlayingManager);
     m_nowPlayingManager->addSupportedCommand(command);
 }
 
 void MediaSessionManagerCocoa::removeSupportedCommand(PlatformMediaSession::RemoteControlCommandType command)
 {
+    ASSERT(m_nowPlayingManager);
     m_nowPlayingManager->removeSupportedCommand(command);
 }
 
 RemoteCommandListener::RemoteCommandsSet MediaSessionManagerCocoa::supportedCommands() const
 {
+    ASSERT(m_nowPlayingManager);
     return m_nowPlayingManager->supportedCommands();
 }
 
@@ -487,6 +494,8 @@ void MediaSessionManagerCocoa::updateActiveNowPlayingSession(RefPtr<PlatformMedi
 
 void MediaSessionManagerCocoa::updateNowPlayingInfo()
 {
+    ASSERT(m_nowPlayingManager);
+
     if (!isMediaRemoteFrameworkAvailable())
         return;
 

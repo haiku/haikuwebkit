@@ -77,6 +77,8 @@
                   { "name": "bot653", "platform": "ios-simulator-26" },
                   { "name": "bot667", "platform": "ios-simulator-26"},
                   { "name": "bot664", "platform": "ios-simulator-26"},
+                  { "name": "bot2002", "platform": "ios-simulator-26"},
+                  { "name": "bot2003", "platform": "ios-simulator-26"},
 
                   { "name": "bot134", "platform": "visionos-simulator-26" },
                   { "name": "bot135", "platform": "visionos-simulator-26" },
@@ -361,8 +363,7 @@
                   "platform": "mac-sonoma", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                   "triggers": [
                       "sonoma-debug-tests-test262", "sonoma-debug-tests-wk1", "sonoma-debug-tests-wk2",
-                      "sonoma-debug-applesilicon-tests-wk1", "sonoma-debug-applesilicon-tests-wk2",
-                      "sonoma-applesilicon-debug-tests-jsc"
+                      "sonoma-debug-applesilicon-tests-wk1", "sonoma-debug-applesilicon-tests-wk2"
                   ],
                   "workernames": ["bot247", "bot248"]
                   },
@@ -390,8 +391,8 @@
                     "platform": "mac-sonoma", "configuration": "debug", "architectures": ["x86_64", "arm64"],
                     "workernames": ["bot603"]
                   },
-                  { "name": "Apple-Sonoma-AppleSilicon-Debug-JSC-Tests", "factory": "TestJSCFactory",
-                    "platform": "mac-sonoma", "configuration": "debug", "architectures": ["x86_64", "arm64"],
+                  { "name": "Apple-Sonoma-AppleSilicon-O3-Debug-JSC-BuildAndTest", "factory": "BuildO3AndJSCTestsFactory",
+                    "platform": "mac-sonoma", "configuration": "debug", "architectures": ["arm64"],
                     "workernames": ["bot105"]
                   },
                   {
@@ -402,7 +403,7 @@
                   {
                     "name": "Apple-iOS-26-Simulator-Release-Build", "factory": "BuildFactory",
                     "platform": "ios-simulator-26", "configuration": "release", "architectures": ["x86_64", "arm64"],
-                    "triggers": ["ios-simulator-26-release-tests-wk2", "ipados-simulator-26-release-tests-wk2"],
+                    "triggers": ["ios-simulator-26-release-tests-wk2", "ipados-simulator-26-release-tests-wk2", "ios-simulator-26-release-tests-wk2-site-isolation-tree"],
                     "workernames": ["bot305", "bot306"]
                   },
                   {
@@ -416,6 +417,11 @@
                     "platform": "ios-simulator-26", "configuration": "release", "architectures": ["x86_64", "arm64"], "device_model": "iphone",
                     "additionalArguments": ["--no-retry-failures", "--child-processes=6"],
                     "workernames": ["bot651", "bot652"]
+                  },
+                  { "name": "Apple-iOS-26-Simulator-Release-WK2-Site-Isolation-Tree-Tests", "factory": "TestLayoutAndAPIOnlyFactory",
+                  "platform": "ios-simulator-26", "configuration": "release", "architectures": ["x86_64", "arm64"], "device_model": "iphone",
+                  "additionalArguments": ["--no-retry-failures", "--site-isolation", "--child-processes=6"],
+                  "workernames": ["bot2002", "bot2003"]
                   },
                   {
                     "name": "Apple-iOS-26-Simulator-Debug-WK2-Tests", "factory": "TestAllButJSCFactory",
@@ -733,9 +739,8 @@
                     "workernames": ["wpe-linux-bot-27", "wpe-linux-bot-28", "wpe-linux-bot-29", "wpe-linux-bot-30", "wpe-linux-bot-31", "wpe-linux-bot-32", "wpe-linux-bot-33", "wpe-linux-bot-34"]
                   },
                   {
-                    "name": "WPE-Linux-64-bit-Release-Cairo-Build", "factory": "BuildFactory",
+                    "name": "WPE-Linux-64-bit-Release-Cairo-LibWebRTC-Build", "factory": "BuildFactory",
                     "platform": "wpe", "configuration": "release", "architectures": ["x86_64"],
-                    "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF", "--cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE"],
                     "workernames": ["wpe-linux-bot-35"]
                   },
                   {
@@ -775,7 +780,7 @@
                                      "Windows-64-bit-Release-Build", "Windows-64-bit-Debug-Build",
                                      "WPE-Linux-64-bit-Release-Build", "WPE-Linux-64-bit-Debug-Build",
                                      "WPE-Linux-64-bit-Release-Clang-Build",
-                                     "WPE-Linux-64-bit-Release-Cairo-Build",
+                                     "WPE-Linux-64-bit-Release-Cairo-LibWebRTC-Build",
                                      "WPE-Linux-ARM64-bit-Release-Debian-Stable-Build",
                                      "WPE-Linux-ARM32-bit-Release-Debian-Stable-Build",
                                      "WPE-Linux-64-bit-Release-Non-Unified-Build"]
@@ -844,7 +849,7 @@
                   "builderNames": ["Apple-Sequoia-Debug-AppleSilicon-WK2-Tests"]
                   },
                   { "type": "PlatformSpecificScheduler", "platform": "mac-sonoma", "branch": "main", "treeStableTimer": 45.0,
-                  "builderNames": ["Apple-Sonoma-Release-Build", "Apple-Sonoma-Debug-Build"]
+                  "builderNames": ["Apple-Sonoma-Release-Build", "Apple-Sonoma-Debug-Build", "Apple-Sonoma-AppleSilicon-O3-Debug-JSC-BuildAndTest"]
                   },
                   { "type": "Triggerable", "name": "sonoma-release-tests-wk1",
                   "builderNames": ["Apple-Sonoma-Release-WK1-Tests"]
@@ -875,9 +880,6 @@
                   },
                   { "type": "Triggerable", "name": "sonoma-release-tests-test262",
                     "builderNames": ["Apple-Sonoma-Release-Test262-Tests"]
-                  },
-                  { "type": "Triggerable", "name": "sonoma-applesilicon-debug-tests-jsc",
-                    "builderNames": ["Apple-Sonoma-AppleSilicon-Debug-JSC-Tests"]
                   },
                   { "type": "Triggerable", "name": "sonoma-applesilicon-release-tests-jsc",
                     "builderNames": ["Apple-Sonoma-AppleSilicon-Release-JSC-Tests"]
@@ -911,6 +913,9 @@
                   },
                   { "type": "Triggerable", "name": "ios-simulator-26-release-tests-wk2",
                     "builderNames": ["Apple-iOS-26-Simulator-Release-WK2-Tests"]
+                  },
+                  { "type": "Triggerable", "name": "ios-simulator-26-release-tests-wk2-site-isolation-tree",
+                    "builderNames": ["Apple-iOS-26-Simulator-Release-WK2-Site-Isolation-Tree-Tests"]
                   },
                   { "type": "Triggerable", "name": "ios-simulator-26-debug-tests-wk2",
                     "builderNames": ["Apple-iOS-26-Simulator-Debug-WK2-Tests"]

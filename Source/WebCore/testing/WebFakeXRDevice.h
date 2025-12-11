@@ -103,6 +103,8 @@ private:
 #if ENABLE(WEBXR_HIT_TEST)
     void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&) final;
     void deleteHitTestSource(PlatformXR::HitTestSource) final;
+    void requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&&) final;
+    void deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource) final;
 #endif
 
     void stopTimer();
@@ -116,7 +118,9 @@ private:
     uint32_t m_layerIndex { 0 };
 #if ENABLE(WEBXR_HIT_TEST)
     PlatformXR::HitTestSource m_nextHitTestSource { 1 };
+    PlatformXR::TransientInputHitTestSource m_nextTransientInputHitTestSource { 1 };
     HashSet<PlatformXR::HitTestSource> m_hitTestSources;
+    HashSet<PlatformXR::TransientInputHitTestSource> m_transientInputHitTestSources;
 #endif
     Vector<Ref<WebFakeXRInputController>> m_inputConnections;
 };

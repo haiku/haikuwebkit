@@ -148,11 +148,6 @@ double ProcessAssertion::remainingRunTimeInSeconds(ProcessID)
     return 0;
 }
 
-bool ProcessAssertion::isValid() const
-{
-    return true;
-}
-
 void ProcessAssertion::acquireAsync(CompletionHandler<void()>&& completionHandler)
 {
     if (completionHandler)
@@ -173,4 +168,3 @@ ProcessAndUIAssertion::~ProcessAndUIAssertion() = default;
 #endif
 
 } // namespace WebKit
-

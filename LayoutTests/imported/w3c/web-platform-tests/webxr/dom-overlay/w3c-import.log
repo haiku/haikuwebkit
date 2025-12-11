@@ -15,6 +15,7 @@ None
 ------------------------------------------------------------------------
 List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/dom-overlay/META.yml
+/LayoutTests/imported/w3c/web-platform-tests/webxr/dom-overlay/WEB_FEATURES.yml
 /LayoutTests/imported/w3c/web-platform-tests/webxr/dom-overlay/ar_dom_overlay.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/dom-overlay/ar_dom_overlay_hit_test.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/dom-overlay/idlharness.https.window.js

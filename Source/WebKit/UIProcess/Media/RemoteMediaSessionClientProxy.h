@@ -25,77 +25,91 @@
 
 #pragma once
 
-#include "RemoteMediaPlayerState.h"
+#if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
+
+#include "RemoteMediaSessionState.h"
+#include <WebCore/PlatformMediaSessionInterface.h>
 #include <WebCore/PlatformMediaSessionTypes.h>
+#include <wtf/RefCounted.h>
+#include <wtf/TZoneMalloc.h>
 
 namespace WebKit {
 
 class RemoteMediaSessionManagerProxy;
 
-class RemoteMediaSessionClientProxy : final WebCore::PlatformMediaSessionClient {
+class RemoteMediaSessionClientProxy final
+    : public WebCore::PlatformMediaSessionClient
+    , public RefCounted<RemoteMediaSessionClientProxy> {
     WTF_MAKE_TZONE_ALLOCATED(RemoteMediaSessionClientProxy);
 public:
-public:
-    static Ref<RemoteMediaSessionClientProxy> create(RemoteMediaPlayerState& state, RemoteMediaSessionManagerProxy& manager)
-    {
-        return adoptRef(*new RemoteMediaSessionClientProxy(state, manager));
-    }
-
+    RemoteMediaSessionClientProxy(const RemoteMediaSessionState&, RemoteMediaSessionManagerProxy&);
     virtual ~RemoteMediaSessionClientProxy();
 
+    WebCore::MediaSessionIdentifier sessionIdentifier() const { return m_state.sessionIdentifier; }
+
+    void updateState(const RemoteMediaSessionState& state) { m_state = state; }
+
+#if !RELEASE_LOG_DISABLED
+    uint64_t logIdentifier() const { return m_state.logIdentifier; }
+#endif
+
+    WebCore::PageIdentifier pageIdentifier() const { return m_state.pageIdentifier; }
+
 protected:
-    RemoteMediaSessionClientProxy(RemoteMediaPlayerState&, RemoteMediaSessionManagerProxy&);
 
-    RefPtr<MediaSessionManagerInterface> sessionManager() const final;
+    RefPtr<WebCore::MediaSessionManagerInterface> sessionManager() const final;
 
-    PlatformMediaSessionMediaType mediaType() const final { return m_state.mediaType };
-    PlatformMediaSessionMediaType presentationType() const final { return m_state.presentationType };
-    PlatformMediaSessionDisplayType displayType() const final { return m_state.displayType };
+    WebCore::PlatformMediaSessionMediaType mediaType() const final { return m_state.mediaType; }
+    WebCore::PlatformMediaSessionMediaType presentationType() const final { return m_state.presentationType; }
+    WebCore::PlatformMediaSessionDisplayType displayType() const final { return m_state.displayType; }
 
     void resumeAutoplaying() final;
     void mayResumePlayback(bool shouldResume) final;
     void suspendPlayback() final;
 
-    bool canReceiveRemoteControlCommands() const final { return m_state.canReceiveRemoteControlCommands };
-    void didReceiveRemoteControlCommand(PlatformMediaSessionRemoteControlCommandType, const PlatformMediaSessionRemoteCommandArgument&) final;
-    bool supportsSeeking() const final { return m_state.supportsSeeking };
+    bool canReceiveRemoteControlCommands() const final { return m_state.canReceiveRemoteControlCommands; }
+    void didReceiveRemoteControlCommand(WebCore::PlatformMediaSessionRemoteControlCommandType, const WebCore::PlatformMediaSessionRemoteCommandArgument&) final;
+    bool supportsSeeking() const final { return m_state.supportsSeeking; }
 
-    bool canProduceAudio() const final { return m_state.canProduceAudio };
-    bool isSuspended() const final { return m_state.isSuspended };
-    bool isPlaying() const final { return m_state.isPlaying };
-    bool isAudible() const final { return m_state.isAudible };
-    bool isEnded() const final { return m_state.isEnded };
-    MediaTime mediaSessionDuration() const final { return m_state.mediaSessionDuration };
+    bool canProduceAudio() const final { return m_state.canProduceAudio; }
+    bool isSuspended() const final { return m_state.isSuspended; }
+    bool isPlaying() const final { return m_state.isPlaying; }
+    bool isAudible() const final { return m_state.isAudible; }
+    bool isEnded() const final { return m_state.isEnded; }
+    MediaTime mediaSessionDuration() const final { return m_state.duration; }
 
-    bool shouldOverrideBackgroundPlaybackRestriction(PlatformMediaSessionInterruptionType) const final;
-    bool shouldOverrideBackgroundLoadingRestriction() const final { return m_state.shouldOverrideBackgroundLoadingRestriction };
+    bool shouldOverrideBackgroundPlaybackRestriction(WebCore::PlatformMediaSessionInterruptionType) const final;
+    bool shouldOverrideBackgroundLoadingRestriction() const final { return m_state.shouldOverrideBackgroundLoadingRestriction; }
 
-    bool isPlayingToWirelessPlaybackTarget() const final { return m_state.isPlayingToWirelessPlaybackTarget };
+    bool isPlayingToWirelessPlaybackTarget() const final { return m_state.isPlayingToWirelessPlaybackTarget; }
+    void setShouldPlayToPlaybackTarget(bool) final;
 
-    bool isPlayingOnSecondScreen() const final { return m_state.isPlayingOnSecondScreen };
+    bool isPlayingOnSecondScreen() const final { return m_state.isPlayingOnSecondScreen; }
 
-    std::optional<MediaSessionGroupIdentifier> mediaSessionGroupIdentifier() const final { return m_state.mediaSessionGroupIdentifier };
+    std::optional<WebCore::MediaSessionGroupIdentifier> mediaSessionGroupIdentifier() const final { return m_state.groupIdentifier; }
 
-    bool hasMediaStreamSource() const final { return m_state.hasMediaStreamSource };
+    bool hasMediaStreamSource() const final { return m_state.hasMediaStreamSource; }
 
-    bool shouldOverridePauseDuringRouteChange() const final { return m_state.shouldOverridePauseDuringRouteChange };
+    bool shouldOverridePauseDuringRouteChange() const final { return m_state.shouldOverridePauseDuringRouteChange; }
 
-    bool isNowPlayingEligible() const final { return m_state.isNowPlayingEligible };
-    std::optional<NowPlayingInfo> nowPlayingInfo() const final { return m_state.nowPlayingInfo };
+    bool isNowPlayingEligible() const final { return m_state.isNowPlayingEligible; }
+    std::optional<WebCore::NowPlayingInfo> nowPlayingInfo() const final { return m_state.nowPlayingInfo; }
 
-    WeakPtr<PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSessionInterface>>&, PlatformMediaSessionPlaybackControlsPurpose) { return nullptr; }
+    WeakPtr<WebCore::PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<WebCore::PlatformMediaSessionInterface>>&, WebCore::PlatformMediaSessionPlaybackControlsPurpose) { return nullptr; }
 
 #if !RELEASE_LOG_DISABLED
-    const Logger& logger() const = 0;
+    const Logger& logger() const { return m_logger; }
     Ref<const Logger> protectedLogger() const { return logger(); }
-    uint64_t logIdentifier() const = 0;
 #endif
-
-    virtual ~RemoteMediaSessionClientProxy();
 
 private:
     WeakPtr<RemoteMediaSessionManagerProxy> m_manager;
-    RemoteMediaPlayerState m_state;
+    RemoteMediaSessionState m_state;
+#if !RELEASE_LOG_DISABLED
+    const Ref<const Logger> m_logger;
+#endif
 };
 
 } // namespace WebKit
+
+#endif // ENABLE(VIDEO) || ENABLE(WEB_AUDIO)

@@ -85,7 +85,11 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, BlockedLoadTest)
     Util::run(&receivedActionNotification);
 }
 
+#if !defined(NDEBUG)
+TEST(WKWebExtensionAPIDeclarativeNetRequest, DISABLED_BlockedLoadInPrivateBrowsingTest)
+#else
 TEST(WKWebExtensionAPIDeclarativeNetRequest, BlockedLoadInPrivateBrowsingTest)
+#endif
 {
     TestWebKitAPI::HTTPServer server({
         { "/"_s, { { { "Content-Type"_s, "text/html"_s } }, "<iframe src='/frame.html'></iframe>"_s } },

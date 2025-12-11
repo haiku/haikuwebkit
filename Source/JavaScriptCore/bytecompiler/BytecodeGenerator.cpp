@@ -69,36 +69,36 @@ namespace JSC {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(BytecodeGenerator);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ForInContext);
 
-template<typename CallOp, typename = std::true_type>
+template<typename CallOp>
 struct VarArgsOp;
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpCall>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpCall> {
     using type = OpCallVarargs;
 };
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpCallIgnoreResult>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpCallIgnoreResult> {
     using type = OpCallVarargs;
 };
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpCallDirectEval>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpCallDirectEval> {
     using type = OpCallVarargs;
 };
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpTailCall>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpTailCall> {
     using type = OpTailCallVarargs;
 };
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpConstruct>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpConstruct> {
     using type = OpConstructVarargs;
 };
 
-template<typename CallOp>
-struct VarArgsOp<CallOp, std::enable_if_t<std::is_same<CallOp, OpSuperConstruct>::value, std::true_type>> {
+template<>
+struct VarArgsOp<OpSuperConstruct> {
     using type = OpSuperConstructVarargs;
 };
 
@@ -4464,6 +4464,7 @@ void BytecodeGenerator::endSwitch(const Vector<Ref<Label>, 8>& labels, Expressio
     auto handleSwitchList = [&](auto bytecode) {
         UnlinkedSimpleJumpTable& jumpTable = m_codeBlock->unlinkedSwitchJumpTable(bytecode.m_tableIndex);
         jumpTable.m_min = INT32_MAX;
+        jumpTable.m_isList = true;
 
         Vector<int32_t> branchOffsets;
         branchOffsets.reserveInitialCapacity(labels.size() * 2);

@@ -1705,6 +1705,8 @@
 
 (define (kernel-mig-routines-in-use) (kernel-mig-routine
     _mach_make_memory_entry
+    ;; rdar://131735906 - we should see if we can modify the dependent library to remove the clock_get_time call
+    clock_get_time
     host_get_io_master
     host_info
     io_iterator_is_valid

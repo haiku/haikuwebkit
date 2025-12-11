@@ -1154,8 +1154,11 @@ void RenderTreeBuilder::removeFloatingObjects(RenderBlock& renderer)
     auto copyOfFloatingObjects = WTF::map(*floatingObjects, [](auto& floatingObject) {
         return floatingObject.get();
     });
-    for (auto* floatingObject : copyOfFloatingObjects)
-        floatingObject->renderer().removeFloatingOrOutOfFlowChildFromBlockLists();
+    for (auto* floatingObject : copyOfFloatingObjects) {
+        if (!floatingObject->renderer())
+            continue;
+        floatingObject->renderer()->removeFloatingOrOutOfFlowChildFromBlockLists();
+    }
 }
 
 RenderPtr<RenderBox> RenderTreeBuilder::createAnonymousBoxWithSameTypeAndWithStyle(const RenderBox& renderer, const RenderStyle& style)

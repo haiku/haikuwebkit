@@ -4505,18 +4505,18 @@ void paintScrollbar(Scrollbar* scrollbar, GraphicsContext& context, const IntRec
     context.restore();
 }
 
-void RenderLayerCompositor::paintContents(const GraphicsLayer* graphicsLayer, GraphicsContext& context, const FloatRect& clip, OptionSet<GraphicsLayerPaintBehavior>)
+void RenderLayerCompositor::paintContents(const GraphicsLayer& graphicsLayer, GraphicsContext& context, const FloatRect& clip, OptionSet<GraphicsLayerPaintBehavior>)
 {
 #if PLATFORM(MAC)
     LocalDefaultSystemAppearance localAppearance(m_renderView.useDarkAppearance());
 #endif
 
     IntRect pixelSnappedRectForIntegralPositionedItems = snappedIntRect(LayoutRect(clip));
-    if (graphicsLayer == layerForHorizontalScrollbar())
+    if (&graphicsLayer == layerForHorizontalScrollbar())
         paintScrollbar(RefPtr { m_renderView.frameView().horizontalScrollbar() }.get(), context, pixelSnappedRectForIntegralPositionedItems, m_viewBackgroundColor);
-    else if (graphicsLayer == layerForVerticalScrollbar())
+    else if (&graphicsLayer == layerForVerticalScrollbar())
         paintScrollbar(RefPtr { m_renderView.frameView().verticalScrollbar() }.get(), context, pixelSnappedRectForIntegralPositionedItems, m_viewBackgroundColor);
-    else if (graphicsLayer == layerForScrollCorner()) {
+    else if (&graphicsLayer == layerForScrollCorner()) {
         Ref frameView = m_renderView.frameView();
         const IntRect& scrollCorner = frameView->scrollCornerRect();
         context.save();

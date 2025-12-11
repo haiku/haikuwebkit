@@ -381,7 +381,7 @@ bool doCapsHaveType(const GstCaps* caps, ASCIILiteral type)
         GST_WARNING("Failed to get MediaType");
         return false;
     }
-    return mediaType.toString().startsWith(type);
+    return startsWith(mediaType.span(), type);
 }
 
 bool areEncryptedCaps(const GstCaps* caps)
@@ -438,7 +438,7 @@ bool ensureGStreamerInitialized()
         // playbin3.
         // The USE_PLAYBIN3 environment variable is no longer supported.
         // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/6255
-        if (!webkitGstCheckVersion(1, 24, 0) && g_getenv("USE_PLAYBIN3"))
+        if (!gst_check_version(1, 24, 0) && g_getenv("USE_PLAYBIN3"))
             WTFLogAlways("The USE_PLAYBIN3 variable was detected in the environment. Expect playback issues or please unset it.");
 
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
@@ -558,7 +558,7 @@ void registerWebKitGStreamerElements()
         // The new demuxers based on adaptivedemux2 cannot be used in WebKit yet because this new
         // base class does not abstract away network access. They can't work in a sandboxed
         // media process, so demote their rank in order to prevent decodebin3 from auto-plugging them.
-        if (webkitGstCheckVersion(1, 22, 0)) {
+        if (gst_check_version(1, 22, 0)) {
             std::array<ASCIILiteral, 3> elementNames = { "dashdemux2"_s, "hlsdemux2"_s, "mssdemux2"_s };
             for (auto& elementName : elementNames) {
                 if (auto factory = adoptGRef(gst_element_factory_find(elementName)))
@@ -570,17 +570,15 @@ void registerWebKitGStreamerElements()
         if (auto factory = adoptGRef(gst_element_factory_find("isofmp4mux")))
             gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE_CAST(factory.get()), GST_RANK_PRIMARY + 1);
 
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port
         // The VAAPI plugin is not much maintained anymore and prone to rendering issues. In the
         // mid-term we will leverage the new stateless VA decoders. Disable the legacy plugin,
         // unless the WEBKIT_GST_ENABLE_LEGACY_VAAPI environment variable is set to 1.
-        const char* enableLegacyVAAPIPlugin = getenv("WEBKIT_GST_ENABLE_LEGACY_VAAPI");
-        if (!enableLegacyVAAPIPlugin || !strcmp(enableLegacyVAAPIPlugin, "0")) {
+        auto enableLegacyVAAPIPlugin = CStringView::unsafeFromUTF8(g_getenv("WEBKIT_GST_ENABLE_LEGACY_VAAPI"));
+        if (enableLegacyVAAPIPlugin.isEmpty() || enableLegacyVAAPIPlugin == "0"_s) {
             auto* registry = gst_registry_get();
             if (auto vaapiPlugin = adoptGRef(gst_registry_find_plugin(registry, "vaapi")))
                 gst_registry_remove_plugin(registry, vaapiPlugin.get());
         }
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         // Make sure the quirks are created as early as possible.
         [[maybe_unused]] auto& quirksManager = GStreamerQuirksManager::singleton();
@@ -821,14 +819,16 @@ GstVideoFrame* GstMappedFrame::get()
     return &m_frame;
 }
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port
-
-uint8_t* GstMappedFrame::componentData(int comp) const
+std::span<uint8_t> GstMappedFrame::componentData(int comp) const
 {
     RELEASE_ASSERT(isValid());
-    return GST_VIDEO_FRAME_COMP_DATA(&m_frame, comp);
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
+    auto data = byteCast<uint8_t>(GST_VIDEO_FRAME_COMP_DATA(&m_frame, comp));
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
+    return unsafeMakeSpan(data, componentStride(comp));
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
 int GstMappedFrame::componentStride(int stride) const
 {
     RELEASE_ASSERT(isValid());
@@ -840,6 +840,7 @@ int GstMappedFrame::componentWidth(int index) const
     RELEASE_ASSERT(isValid());
     return GST_VIDEO_FRAME_COMP_WIDTH(&m_frame, index);
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
 
 GstVideoInfo* GstMappedFrame::info()
 {
@@ -865,19 +866,22 @@ int GstMappedFrame::format() const
     return GST_VIDEO_FRAME_FORMAT(&m_frame);
 }
 
-void* GstMappedFrame::planeData(uint32_t planeIndex) const
+std::span<uint8_t> GstMappedFrame::planeData(uint32_t planeIndex) const
 {
     RELEASE_ASSERT(isValid());
-    return GST_VIDEO_FRAME_PLANE_DATA(&m_frame, planeIndex);
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
+    auto data = reinterpret_cast<uint8_t*>(GST_VIDEO_FRAME_PLANE_DATA(&m_frame, planeIndex));
+    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
+    return unsafeMakeSpan(data, height() * planeStride(planeIndex));
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
 int GstMappedFrame::planeStride(uint32_t planeIndex) const
 {
     RELEASE_ASSERT(isValid());
     return GST_VIDEO_FRAME_PLANE_STRIDE(&m_frame, planeIndex);
 }
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
 
 GstMappedAudioBuffer::GstMappedAudioBuffer(GstBuffer* buffer, GstAudioInfo info, GstMapFlags flags)
 {
@@ -2106,6 +2110,43 @@ GstStateChangeReturn gstElementLockAndSetState(GstElement* element, GstState sta
     if (parent)
         GST_STATE_UNLOCK(parent.get());
     return result;
+}
+
+GRefPtr<GstElement> createVideoConvertScaleElement(const String& name)
+{
+    // Keep videoconvertscale disabled for now due to some performance issues.
+    // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/issues/3815
+    auto useVideoConvertScale = StringView::fromLatin1(std::getenv("WEBKIT_GST_USE_VIDEOCONVERT_SCALE"));
+    if (useVideoConvertScale == "1"_s && gst_check_version(1, 22, 0)) {
+        GRefPtr videoConvertScale = makeGStreamerElement("videoconvertscale"_s, name);
+        if (!videoConvertScale)
+            return nullptr;
+
+        // Enable multi-threading in the converter.
+        g_object_set(videoConvertScale.get(), "n-threads", 0U, nullptr);
+        return videoConvertScale;
+    }
+
+    auto videoScale = makeGStreamerElement("videoscale"_s);
+    if (!videoScale)
+        return nullptr;
+
+    auto videoConvert = makeGStreamerElement("videoconvert"_s);
+    if (!videoConvert)
+        return nullptr;
+
+    // Enable multi-threading in the converter.
+    g_object_set(videoConvert, "n-threads", 0U, nullptr);
+
+    GRefPtr bin = gst_bin_new(name.utf8().data());
+    gst_bin_add_many(GST_BIN_CAST(bin.get()), videoScale, videoConvert, nullptr);
+    gst_element_link(videoScale, videoConvert);
+
+    auto pad = adoptGRef(gst_element_get_static_pad(videoScale, "sink"));
+    gst_element_add_pad(bin.get(), gst_ghost_pad_new("sink", pad.get()));
+    pad = adoptGRef(gst_element_get_static_pad(videoConvert, "src"));
+    gst_element_add_pad(bin.get(), gst_ghost_pad_new("src", pad.get()));
+    return bin;
 }
 
 #undef GST_CAT_DEFAULT

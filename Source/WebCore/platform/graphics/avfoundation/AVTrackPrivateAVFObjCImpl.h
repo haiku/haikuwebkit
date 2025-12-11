@@ -111,6 +111,7 @@ private:
     std::optional<VideoProjectionMetadata> videoProjectionMetadata() const;
     uint32_t sampleRate() const;
     uint32_t numberOfChannels() const;
+    bool isProtected() const;
 
     const RetainPtr<AVPlayerItemTrack> m_playerItemTrack;
     const RefPtr<MediaSelectionOptionAVFObjC> m_mediaSelectionOption;

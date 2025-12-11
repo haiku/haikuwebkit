@@ -454,7 +454,7 @@ void RenderText::styleDidChange(StyleDifference diff, const RenderStyle* oldStyl
         needsResetText = true;
     }
 
-    auto oldTransform = oldStyle ? oldStyle->textTransform() : OptionSet<TextTransform> { };
+    auto oldTransform = oldStyle ? oldStyle->textTransform() : Style::TextTransform { CSS::Keyword::None { } };
     TextSecurity oldSecurity = oldStyle ? oldStyle->textSecurity() : TextSecurity::None;
     if (needsResetText || oldTransform != newStyle.textTransform() || oldSecurity != newStyle.textSecurity())
         RenderText::setText(originalText(), true);
@@ -1187,7 +1187,7 @@ float RenderText::maxWordFragmentWidth(const RenderStyle& style, const FontCasca
     Vector<int, 8> hyphenLocations;
     ASSERT(word.length() >= minimumSuffixLength);
     unsigned hyphenLocation = word.length() - minimumSuffixLength;
-    while ((hyphenLocation = lastHyphenLocation(word, hyphenLocation, style.computedLocale())) >= std::max(minimumPrefixLength, 1U))
+    while ((hyphenLocation = lastHyphenLocation(word, hyphenLocation, Style::toPlatform(style.computedLocale()))) >= std::max(minimumPrefixLength, 1U))
         hyphenLocations.append(hyphenLocation);
 
     if (hyphenLocations.isEmpty())
@@ -1254,7 +1254,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
     unsigned length = string.length();
     auto iteratorMode = mapLineBreakToIteratorMode(style.lineBreak());
     auto contentAnalysis = mapWordBreakToContentAnalysis(style.wordBreak());
-    CachedLineBreakIteratorFactory lineBreakIteratorFactory(string, style.computedLocale(), iteratorMode, contentAnalysis);
+    CachedLineBreakIteratorFactory lineBreakIteratorFactory(string, Style::toPlatform(style.computedLocale()), iteratorMode, contentAnalysis);
     bool needsWordSpacing = false;
     bool ignoringSpaces = false;
     bool isSpace = false;
@@ -1269,7 +1269,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
     float maxWordWidth = std::numeric_limits<float>::max();
     unsigned minimumPrefixLength = 0;
     unsigned minimumSuffixLength = 0;
-    if (style.hyphens() == Hyphens::Auto && canHyphenate(style.computedLocale())) {
+    if (style.hyphens() == Hyphens::Auto && canHyphenate(Style::toPlatform(style.computedLocale()))) {
         maxWordWidth = 0;
 
         // Map 'hyphenate-limit-{before,after}: auto;' to 2.
@@ -1693,25 +1693,25 @@ String applyTextTransform(const RenderStyle& style, const String& text, Vector<c
 {
     auto transform = style.textTransform();
 
-    if (transform.isEmpty())
+    if (transform.isNone())
         return text;
 
     // https://w3c.github.io/csswg-drafts/css-text/#text-transform-order
     auto modified = text;
-    if (transform.contains(TextTransform::Capitalize))
+    if (transform.contains(Style::TextTransformValue::Capitalize))
         modified = capitalize(modified, previousCharacter); // FIXME: Need to take locale into account.
-    else if (transform.contains(TextTransform::Uppercase))
-        modified = modified.convertToUppercaseWithLocale(style.computedLocale());
-    else if (transform.contains(TextTransform::Lowercase))
-        modified = modified.convertToLowercaseWithLocale(style.computedLocale());
+    else if (transform.contains(Style::TextTransformValue::Uppercase))
+        modified = modified.convertToUppercaseWithLocale(Style::toPlatform(style.computedLocale()));
+    else if (transform.contains(Style::TextTransformValue::Lowercase))
+        modified = modified.convertToLowercaseWithLocale(Style::toPlatform(style.computedLocale()));
 
-    if (transform.contains(TextTransform::FullWidth))
+    if (transform.contains(Style::TextTransformValue::FullWidth))
         modified = transformToFullWidth(modified);
 
-    if (transform.contains(TextTransform::FullSizeKana))
+    if (transform.contains(Style::TextTransformValue::FullSizeKana))
         modified = convertToFullSizeKana(modified);
 
-    if (transform.contains(TextTransform::MathAuto))
+    if (transform.contains(Style::TextTransformValue::MathAuto))
         modified = convertToMathAuto(modified);
 
     return modified;
@@ -1729,7 +1729,7 @@ void RenderText::setRenderedText(const String& newText)
         m_text = makeStringByReplacingAll(m_text, '\\', yenSign);
     
     const auto& style = this->style();
-    if (!style.textTransform().isEmpty())
+    if (!style.textTransform().isNone())
         m_text = applyTextTransform(style, m_text, previousCharacter());
 
     // At rendering time, if certain fonts are used, these characters get swapped out with higher-quality PUA characters.
@@ -1802,8 +1802,7 @@ void RenderText::secureText(char16_t maskingCharacter)
     std::span<char16_t> characters;
     m_text = String::createUninitialized(length, characters);
 
-    for (unsigned i = 0; i < length; ++i)
-        characters[i] = maskingCharacter;
+    std::ranges::fill(characters, maskingCharacter);
     if (characterToReveal)
         characters[revealedCharactersOffset] = characterToReveal;
 }
@@ -1871,7 +1870,7 @@ String RenderText::textWithoutConvertingBackslashToYenSymbol() const
     if (!m_useBackslashAsYenSymbol || style().textSecurity() != TextSecurity::None)
         return text();
 
-    if (style().textTransform().isEmpty())
+    if (style().textTransform().isNone())
         return originalText();
 
     return applyTextTransform(style(), originalText(), previousCharacter());
@@ -2156,7 +2155,7 @@ RenderInline* RenderText::inlineWrapperForDisplayContents()
 
     if (!m_hasInlineWrapperForDisplayContents)
         return nullptr;
-    return inlineWrapperForDisplayContentsMap().get(this).get();
+    return inlineWrapperForDisplayContentsMap().get(this);
 }
 
 void RenderText::setInlineWrapperForDisplayContents(RenderInline* wrapper)

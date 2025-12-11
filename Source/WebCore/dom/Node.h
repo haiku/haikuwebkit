@@ -109,6 +109,8 @@ enum class TaskSource : uint8_t;
 using MutationObserverOptions = OptionSet<MutationObserverOptionType>;
 using MutationRecordDeliveryOptions = OptionSet<MutationObserverOptionType>;
 
+enum class IsMutationBySetInnerHTML : uint8_t { No, Yes };
+
 using NodeOrString = Variant<RefPtr<Node>, String>;
 
 const int initialNodeVectorSize = 11; // Covers 99.5%. See webkit.org/b/80706
@@ -393,6 +395,15 @@ public:
     void setHasHeldBackChildrenChanged() { setStateFlag(StateFlag::HasHeldBackChildrenChanged); }
     void clearHasHeldBackChildrenChanged() { clearStateFlag(StateFlag::HasHeldBackChildrenChanged); }
 
+    bool hasDidMutateSubtreeAfterSetInnerHTML() const { return hasStateFlag(StateFlag::DidMutateSubtreeAfterSetInnerHTML); }
+    void setDidMutateSubtreeAfterSetInnerHTML() { setStateFlag(StateFlag::DidMutateSubtreeAfterSetInnerHTML); }
+    void clearDidMutateSubtreeAfterSetInnerHTML() { clearStateFlag(StateFlag::DidMutateSubtreeAfterSetInnerHTML); }
+    void setDidMutateSubtreeAfterSetInnerHTMLOnAncestors();
+
+    bool hasWasParsedWithFastPath() const { return hasStateFlag(StateFlag::WasParsedWithFastPath); }
+    void setWasParsedWithFastPath() { setStateFlag(StateFlag::WasParsedWithFastPath); }
+    void clearWasParsedWithFastPath() { clearStateFlag(StateFlag::WasParsedWithFastPath); }
+
     void setChildNeedsStyleRecalc() { setStyleFlag(NodeStyleFlag::DescendantNeedsStyleResolution); }
     inline void clearChildNeedsStyleRecalc();
 
@@ -543,7 +554,7 @@ public:
 #endif // ENABLE(TREE_DEBUGGING)
 
     void invalidateNodeListAndCollectionCachesInAncestors();
-    void invalidateNodeListAndCollectionCachesInAncestorsForAttribute(const QualifiedName&);
+    void invalidateNodeListCollectionAndInnerHTMLPrefixCachesInAncestorsForAttribute(const QualifiedName&, const IsMutationBySetInnerHTML = IsMutationBySetInnerHTML::No);
     NodeListsNodeData* nodeLists();
     void clearNodeLists();
 
@@ -675,7 +686,9 @@ protected:
 #endif
         IsShadowRootAttachedEventPending = 1 << 20,
         InLargestContentfulPaintTextContentSet = 1 << 21,
-        // 11 bits free.
+        DidMutateSubtreeAfterSetInnerHTML = 1 << 22,
+        WasParsedWithFastPath = 1 << 23
+        // 8 bits free.
     };
 
     enum class TabIndexState : uint8_t {

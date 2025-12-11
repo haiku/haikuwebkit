@@ -1,4 +1,4 @@
-find_package(Libxkbcommon 0.4.0 REQUIRED)
+find_package(XkbCommon 0.4.0 REQUIRED)
 find_package(Wayland 1.15 REQUIRED)
 find_package(WaylandProtocols 1.15 REQUIRED)
 find_package(WPEBackendFDO 1.3.0 REQUIRED)
@@ -26,8 +26,8 @@ list(APPEND WPEToolingBackends_SYSTEM_INCLUDE_DIRECTORIES
 list(APPEND WPEToolingBackends_LIBRARIES
     GLib::Object
     WPE::FDO
+    XkbCommon::XkbCommon
     ${LIBEPOXY_LIBRARIES}
-    ${LIBXKBCOMMON_LIBRARIES}
     ${WAYLAND_LIBRARIES}
 )
 

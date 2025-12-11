@@ -277,64 +277,6 @@ public:
     }
 };
 
-class DiscreteFontDescriptionWrapper : public WrapperBase {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(DiscreteFontDescriptionWrapper, Animation);
-public:
-    DiscreteFontDescriptionWrapper(CSSPropertyID property)
-        : WrapperBase(property)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const override
-    {
-        return propertiesInFontDescriptionAreEqual(a.fontDescription(), b.fontDescription());
-    }
-
-    bool canInterpolate(const RenderStyle&, const RenderStyle&, CompositeOperation) const override
-    {
-        return false;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
-    {
-        ASSERT(!context.progress || context.progress == 1.0);
-        auto destinationDescription = destination.fontDescription();
-        auto& sourceDescription = (context.progress ? to : from).fontDescription();
-        setPropertiesInFontDescription(sourceDescription, destinationDescription);
-        destination.setFontDescription(WTFMove(destinationDescription));
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle&, const RenderStyle&, const RenderStyle&, double) const override
-    {
-    }
-#endif
-
-protected:
-    virtual bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription&, const FontCascadeDescription&) const { return false; }
-    virtual void setPropertiesInFontDescription(const FontCascadeDescription&, FontCascadeDescription&) const { }
-};
-
-class FontFamilyWrapper final : public DiscreteFontDescriptionWrapper {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FontFamilyWrapper, Animation);
-public:
-    FontFamilyWrapper()
-        : DiscreteFontDescriptionWrapper(CSSPropertyFontFamily)
-    {
-    }
-
-private:
-    bool propertiesInFontDescriptionAreEqual(const FontCascadeDescription& a, const FontCascadeDescription& b) const override
-    {
-        return a.families() == b.families();
-    }
-
-    void setPropertiesInFontDescription(const FontCascadeDescription& source, FontCascadeDescription& destination) const override
-    {
-        destination.setFamilies(source.families());
-    }
-};
-
 // MARK: - Color Property Wrappers
 
 class ColorWrapper final : public WrapperWithGetter<const WebCore::Color&> {

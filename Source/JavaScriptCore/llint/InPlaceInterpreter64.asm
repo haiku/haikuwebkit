@@ -67,7 +67,7 @@ if ARM64 or ARM64E
     # x0 = opcode
     pcrtoaddr ipint_dispatch_base, t7
     addlshiftp t7, t0, (constexpr (WTF::fastLog2(JSC::IPInt::alignIPInt))), t0
-    emit "br x0"
+    jmp t0
 elsif X86_64
     leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_dispatch_base[t1], t1
@@ -201,7 +201,7 @@ macro argumINTDispatch()
 if ARM64 or ARM64E
     pcrtoaddr _argumINT_begin, argumINTDsp
     addp argumINTTmp, argumINTDsp
-    emit "br x23"
+    jmp argumINTDsp
 elsif X86_64
     leap (_argumINT_begin - _ipint_entry_relativePCBase)[PL], argumINTDsp
     addp argumINTTmp, argumINTDsp
@@ -409,8 +409,7 @@ if ARM64 or ARM64E
     lshiftq (constexpr (WTF::fastLog2(JSC::IPInt::alignUInt))), sc2
     pcrtoaddr _uint_begin, sc3
     addq sc2, ws3
-    # ws3 = x12
-    emit "br x12"
+    jmp ws3
 elsif X86_64
     loadb [MC], sc1
     addq 1, MC
@@ -3209,8 +3208,8 @@ ipintOp(_gc_prefix, macro()
     leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_gc_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        emit "add x0, x1, x0, lsl 8"
-        emit "br x0"
+        addlshiftp t1, t0, 8, t0
+        jmp t0
     elsif X86_64
         lshiftq 8, t0
         addq t1, t0
@@ -3228,8 +3227,8 @@ ipintOp(_conversion_prefix, macro()
     leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_conversion_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        emit "add x0, x1, x0, lsl 8"
-        emit "br x0"
+        addlshiftp t1, t0, 8, t0
+        jmp t0
     elsif X86_64
         lshiftq 8, t0
         addq t1, t0
@@ -3247,8 +3246,8 @@ ipintOp(_simd_prefix, macro()
     leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_simd_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        emit "add x0, x1, x0, lsl 8"
-        emit "br x0"
+        addlshiftp t1, t0, 8, t0
+        jmp t0
     elsif X86_64
         lshiftq 8, t0
         addq t1, t0
@@ -3266,8 +3265,8 @@ ipintOp(_atomic_prefix, macro()
     leap _os_script_config_storage, t1
     loadp JSC::LLInt::OpcodeConfig::ipint_atomic_dispatch_base[t1], t1
     if ARM64 or ARM64E
-        emit "add x0, x1, x0, lsl 8"
-        emit "br x0"
+        addlshiftp t1, t0, 8, t0
+        jmp t0
     elsif X86_64
         lshiftq 8, t0
         addq t1, t0
@@ -10148,8 +10147,7 @@ macro mintArgDispatch()
 if ARM64 or ARM64E
     pcrtoaddr _mint_begin, csr4
     addq sc0, csr4
-    # csr4 = x23
-    emit "br x23"
+    jmp csr4
 elsif X86_64
     leap (_mint_begin - _mint_arg_relativePCBase)[PC, sc0], sc0
     jmp sc0
@@ -10164,8 +10162,7 @@ macro mintRetDispatch()
 if ARM64 or ARM64E
     pcrtoaddr _mint_begin_return, csr4
     addq sc0, csr4
-    # csr4 = x23
-    emit "br x23"
+    jmp csr4
 elsif X86_64
     leap (_mint_begin_return - _mint_ret_relativePCBase)[PC, sc0], sc0
     jmp sc0
@@ -10231,6 +10228,9 @@ end
     # reserved
     # reserved        <- sp
 
+    # save t3 as a frame-relative value so stack data can be moved easily for JSPI
+    # t3 is not used after this
+    subp cfr, t3
     push t3, PC
     push PL, wasmInstance
 
@@ -10238,14 +10238,14 @@ end
     move sp, t2
     subp stackFrameSize, sp
 
-    # <first non-arg> <- t3
+    # <first non-arg> <- first_non_arg_addr
     # arg
     # ...
     # arg
     # arg             <- t4 = initial SP (wasm stack)
     # reserved
     # reserved
-    # t3, PC
+    # (first_non_arg_addr - cfr), PC
     # PL, wasmInstance <- t2 = native argument stack (pushed by mINT)
     # call frame
     # call frame
@@ -10318,7 +10318,7 @@ end
     # determine the location to begin copying stack arguments, starting from the last
     move cfr, sc2
     addp FirstArgumentOffset, sc2
-    addp t3, sc2
+    addp t3, sc2 # t3 = callerStackArgSize from the metadata
 
     #  <caller frame>              <- sc2
     #  return val
@@ -10602,14 +10602,14 @@ _wasm_ipint_call_return_location_wide32:
     addp cfr, sc0
     move sc0, sp
 
-    # <first non-arg>   <- t3
+    # <first non-arg>   <- first_non_arg_addr
     # arg
     # ...
     # arg
     # arg
     # reserved
     # reserved
-    # t3, PC
+    # (first_non_arg_addr - cfr), PC
     # PL, wasmInstance  <- sc3
     # call frame return
     # call frame return
@@ -10628,12 +10628,13 @@ _wasm_ipint_call_return_location_wide32:
     advanceMC(IPInt::CallReturnMetadata::resultBytecode)
     leap [sp, mintRetSrc], mintRetSrc
 
-    # load "saved t3" from the stack
+    # load (first_non_arg_addr - cfr) from the stack and make it absolute
 if ARM64 or ARM64E
     loadp (2 * SlotSize)[sc3], mintRetDst
 elsif X86_64
     loadp (3 * SlotSize)[sc3], mintRetDst
 end
+    addp cfr, mintRetDst
 
     # on x86, we'll use PC again for our PC base
     initPCRelative(mint_ret, PC)
@@ -10767,14 +10768,14 @@ mintAlign(_result_stack_vector)
 
 mintAlign(_end)
 
-    # <first non-arg>   <- t3
+    # <first non-arg>   <- first_non_arg_addr
     # return result
     # ...
     # return result
     # return result
     # return result
     # return result     <- mintRetDst => new SP
-    # t3, PC
+    # (first_non_arg_addr - cfr), PC
     # PL, wasmInstance  <- sc3
     # call frame return <- mintRetSrc
     # call frame return

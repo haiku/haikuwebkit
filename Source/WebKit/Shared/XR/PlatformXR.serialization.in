@@ -35,6 +35,9 @@ enum class PlatformXR::SessionFeature : uint8_t {
     HitTest,
 #endif
     WebGPU,
+#if ENABLE(WEBXR_LAYERS)
+    Layers,
+#endif
 };
 
 enum class PlatformXR::SessionMode : uint8_t {
@@ -60,6 +63,12 @@ enum class PlatformXR::XRTargetRayMode : uint8_t {
     TrackedPointer,
     Screen,
     TransientPointer,
+};
+
+enum class PlatformXR::XREnvironmentBlendMode : uint8_t {
+    Opaque,
+    AlphaBlend,
+    Additive,
 };
 
 [Nested] struct PlatformXR::DepthRange {
@@ -208,6 +217,17 @@ enum class WebCore::XRHitTestTrackableType : uint8_t {
 [Nested] struct PlatformXR::FrameData::HitTestResult {
     PlatformXR::FrameData::Pose pose;
 };
+
+[CustomHeader] struct PlatformXR::TransientInputHitTestOptions {
+    String profile;
+    Vector<WebCore::XRHitTestTrackableType> entityTypes;
+    PlatformXR::Ray offsetRay;
+};
+
+[Nested] struct PlatformXR::FrameData::TransientInputHitTestResult {
+    PlatformXR::InputSourceHandle inputSource;
+    Vector<PlatformXR::FrameData::HitTestResult> results;
+};
 #endif
 
 header: <WebCore/PlatformXR.h>
@@ -224,8 +244,10 @@ header: <WebCore/PlatformXR.h>
     HashMap<PlatformXR::LayerHandle, UniqueRef<PlatformXR::FrameData::LayerData>> layers;
 #if ENABLE(WEBXR_HIT_TEST)
     HashMap<PlatformXR::HitTestSource, Vector<PlatformXR::FrameData::HitTestResult>> hitTestResults;
+    HashMap<PlatformXR::TransientInputHitTestSource, Vector<PlatformXR::FrameData::TransientInputHitTestResult>> transientInputHitTestResults;
 #endif
     Vector<PlatformXR::FrameData::InputSource> inputSources;
+    PlatformXR::XREnvironmentBlendMode environmentBlendMode;
 };
 
 #if USE(OPENXR)

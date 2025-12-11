@@ -373,13 +373,11 @@ static String threadedRenderingInfo(const RenderProcessInfo& info)
     if (!info.cpuPaintingThreadsCount && !info.gpuPaintingThreadsCount)
         return "Disabled"_s;
 
-    if (!info.gpuPaintingThreadsCount)
+    if (info.cpuPaintingThreadsCount)
         return makeString("CPU ("_s, info.cpuPaintingThreadsCount, " threads)"_s);
 
-    if (!info.cpuPaintingThreadsCount)
-        return makeString("GPU ("_s, info.gpuPaintingThreadsCount, " threads)"_s);
-
-    return makeString("GPU ("_s, info.gpuPaintingThreadsCount, " threads), CPU ("_s, info.cpuPaintingThreadsCount, " threads)"_s);
+    ASSERT(info.gpuPaintingThreadsCount);
+    return makeString("GPU ("_s, info.gpuPaintingThreadsCount, " threads)"_s);
 }
 #endif
 
@@ -387,6 +385,7 @@ static String threadedRenderingInfo(const RenderProcessInfo& info)
 static String supportedBufferFormats(const RenderProcessInfo& info, JSON::Array& jsonArray)
 {
     StringBuilder builder;
+#if PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
     for (const auto& format : info.supportedBufferFormats) {
         StringBuilder jsonStringBuilder;
         auto formatName = webkitDrmGetFormatName(format.fourcc);
@@ -401,6 +400,7 @@ static String supportedBufferFormats(const RenderProcessInfo& info, JSON::Array&
         }
         jsonArray.pushString(jsonStringBuilder.toString());
     }
+#endif
     return builder.toString();
 }
 #endif
@@ -678,7 +678,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
     addTableRow(displayObject, "Device scale"_s, String::number(page->deviceScaleFactor()));
     addTableRow(displayObject, "Depth"_s, String::number(screenDepth(nullptr)));
     addTableRow(displayObject, "Bits per color component"_s, String::number(screenDepthPerComponent(nullptr)));
-    addTableRow(displayObject, "Font Scaling DPI"_s, String::number(fontDPI()));
+    addTableRow(displayObject, "Font Scaling DPI"_s, String::number(WebCore::fontDPI()));
 #if PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
     addTableRow(displayObject, "Screen DPI"_s, String::number(screenDPI(displayID.value_or(primaryScreenDisplayID()))));
 #endif
@@ -739,6 +739,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
         bool showBuffersInfo = false;
 #endif
         if (showBuffersInfo) {
+#if PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
             addTableRow(hardwareAccelerationObject, "Renderer"_s, dmabufRendererWithSupportedBuffers());
 #if USE(LIBDRM)
 #if USE(GBM)
@@ -747,7 +748,8 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request, RenderPro
             addTableRow(hardwareAccelerationObject, "Preferred buffer formats"_s, formatsString, WTFMove(jsonFormats));
 #endif
             addTableRow(hardwareAccelerationObject, "Buffer format"_s, renderBufferDescription(request));
-#endif
+#endif // USE(LIBDRM)
+#endif // PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
         }
 
         addTableRow(hardwareAccelerationObject, "Native interface"_s, uiProcessContextIsEGL() ? "EGL"_s : "None"_s);

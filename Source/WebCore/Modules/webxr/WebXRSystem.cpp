@@ -274,6 +274,9 @@ bool WebXRSystem::isFeaturePermitted(PlatformXR::SessionFeature feature) const
     switch (feature) {
     case PlatformXR::SessionFeature::ReferenceSpaceTypeViewer:
         return true;
+#if ENABLE(WEBXR_LAYERS)
+    case PlatformXR::SessionFeature::Layers:
+#endif
     case PlatformXR::SessionFeature::WebGPU:
         return true;
     case PlatformXR::SessionFeature::ReferenceSpaceTypeLocal:
@@ -303,6 +306,18 @@ bool WebXRSystem::isFeatureSupported(PlatformXR::SessionFeature feature, XRSessi
     if (feature == PlatformXR::SessionFeature::HandTracking) {
         auto scriptExecutionContext = this->scriptExecutionContext();
         if (!scriptExecutionContext || !scriptExecutionContext->settingsValues().webXRHandInputModuleEnabled)
+            return false;
+    }
+#endif
+
+#if ENABLE(WEBXR_LAYERS)
+    if (feature == PlatformXR::SessionFeature::Layers) {
+        if (!isImmersive(mode))
+            return false;
+
+        auto scriptExecutionContext = this->scriptExecutionContext();
+        // FIXME: remove the testing check once the feature is stable.
+        if (!scriptExecutionContext || (!scriptExecutionContext->settingsValues().webXRLayersAPIEnabled && !m_testingDevices))
             return false;
     }
 #endif

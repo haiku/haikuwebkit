@@ -85,6 +85,7 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/CallbackAggregator.h>
 #import <wtf/FileSystem.h>
+#import <wtf/OSObjectPtr.h>
 #import <wtf/ProcessPrivilege.h>
 #import <wtf/SoftLinking.h>
 #import <wtf/StdLibExtras.h>
@@ -298,11 +299,7 @@ static AccessibilityPreferences accessibilityPreferences()
 #if HAVE(MEDIA_ACCESSIBILITY_FRAMEWORK)
 void WebProcessPool::setMediaAccessibilityPreferences(WebProcessProxy& process)
 {
-    static LazyNeverDestroyed<RetainPtr<dispatch_queue_t>> mediaAccessibilityQueue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        mediaAccessibilityQueue.construct(adoptNS(dispatch_queue_create("MediaAccessibility queue", DISPATCH_QUEUE_SERIAL)));
-    });
+    static NeverDestroyed<OSObjectPtr<dispatch_queue_t>> mediaAccessibilityQueue = adoptOSObject(dispatch_queue_create("MediaAccessibility queue", DISPATCH_QUEUE_SERIAL));
 
     dispatch_async(mediaAccessibilityQueue.get().get(), [weakProcess = WeakPtr { process }] {
         auto captionDisplayMode = WebCore::CaptionUserPreferencesMediaAF::platformCaptionDisplayMode();
@@ -815,18 +812,18 @@ void WebProcessPool::registerNotificationObservers()
         return notifyToken;
     });
 
-    const Vector<NSString*> nsNotificationMessages = {
+    const Vector<RetainPtr<NSString>> nsNotificationMessages = {
         NSProcessInfoPowerStateDidChangeNotification
     };
-    m_notificationObservers = WTF::compactMap(nsNotificationMessages, [weakThis = WeakPtr { *this }](NSString* message) -> RetainPtr<NSObject>  {
-        RetainPtr observer = [[NSNotificationCenter defaultCenter] addObserverForName:message object:nil queue:[NSOperationQueue currentQueue] usingBlock:[weakThis, message](NSNotification *notification) {
+    m_notificationObservers = WTF::compactMap(nsNotificationMessages, [weakThis = WeakPtr { *this }](const RetainPtr<NSString>& message) -> RetainPtr<NSObject>  {
+        RetainPtr observer = [[NSNotificationCenter defaultCenter] addObserverForName:message.get() object:nil queue:[NSOperationQueue currentQueue] usingBlock:[weakThis, message](NSNotification *notification) {
             RefPtr protectedThis = weakThis.get();
             if (!protectedThis)
                 return;
             if (!protectedThis->m_processes.isEmpty()) {
-                String messageString(message);
+                String messageString(message.get());
                 for (auto& process : protectedThis->m_processes)
-                    process->send(Messages::WebProcess::PostObserverNotification(message), 0);
+                    process->send(Messages::WebProcess::PostObserverNotification(messageString), 0);
             }
         }];
         return observer;

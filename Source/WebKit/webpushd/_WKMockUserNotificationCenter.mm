@@ -60,7 +60,7 @@ static _WKMockUserNotificationCenter *centersByBundleIdentifier(NSString *bundle
     if (!self)
         return nil;
 
-    m_queue = adoptOSObject(dispatch_queue_create(nullptr, retainPtr(DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL).get()));
+    m_queue = adoptOSObject(dispatch_queue_create(nullptr, OSObjectPtr { DISPATCH_QUEUE_SERIAL_WITH_AUTORELEASE_POOL }.get()));
     m_bundleIdentifier = bundleIdentifier;
     m_notifications = adoptNS([[NSMutableArray alloc] init]);
 

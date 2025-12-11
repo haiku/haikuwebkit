@@ -71,10 +71,6 @@ static ObjectValue valueFromID(id object)
     case IPC::NSType::CNPostalAddress:
         return CoreIPCCNPostalAddress((CNPostalAddress *)object);
 #endif
-#if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
-    case IPC::NSType::DDScannerResult:
-        return CoreIPCDDScannerResult((DDScannerResult *)object);
-#endif
     case IPC::NSType::NSDateComponents:
         return CoreIPCDateComponents((NSDateComponents *)object);
     case IPC::NSType::Data:

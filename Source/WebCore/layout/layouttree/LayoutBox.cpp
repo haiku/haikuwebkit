@@ -169,7 +169,7 @@ bool Box::establishesFlexFormattingContext() const
 
 bool Box::establishesGridFormattingContext() const
 {
-    return isGridBox();
+    return isGridFormattingContext();
 }
 
 bool Box::establishesIndependentFormattingContext() const
@@ -237,7 +237,7 @@ bool Box::isBlockLevelBox() const
         || display == DisplayType::Table
         || display == DisplayType::Flex
         || display == DisplayType::Grid
-        || display == DisplayType::Masonry
+        || display == DisplayType::GridLanes
         || display == DisplayType::FlowRoot;
 }
 
@@ -255,7 +255,7 @@ bool Box::isInlineLevelBox() const
         || display == DisplayType::InlineBox
         || display == DisplayType::InlineFlex
         || display == DisplayType::InlineGrid
-        || display == DisplayType::InlineMasonry
+        || display == DisplayType::InlineGridLanes
         || display == DisplayType::Ruby
         || display == DisplayType::RubyBase
         || display == DisplayType::RubyAnnotation
@@ -286,7 +286,7 @@ bool Box::isFlexItem() const
 
 bool Box::isGridItem() const
 {
-    return isInFlow() && parent().isGridBox();
+    return isInFlow() && parent().isGridFormattingContext();
 }
 
 bool Box::isBlockContainer() const
@@ -315,7 +315,7 @@ bool Box::isLayoutContainmentBox() const
             return isAtomicInlineBox();
         return true;
     };
-    return m_style.usedContain().contains(Containment::Layout) && supportsLayoutContainment();
+    return m_style.usedContain().contains(Style::ContainValue::Layout) && supportsLayoutContainment();
 }
 
 bool Box::isRubyAnnotationBox() const
@@ -347,7 +347,7 @@ bool Box::isSizeContainmentBox() const
             return isAtomicInlineBox();
         return true;
     };
-    return m_style.usedContain().contains(Containment::Size) && supportsSizeContainment();
+    return m_style.usedContain().contains(Style::ContainValue::Size) && supportsSizeContainment();
 }
 
 bool Box::isInternalTableBox() const
@@ -405,12 +405,20 @@ const Box* Box::previousOutOfFlowSibling() const
     return previousSibling;
 }
 
-bool Box::isDescendantOf(const ElementBox& ancestor) const
+bool Box::isDescendantOf(const Box& box) const
 {
-    if (ancestor.isInitialContainingBlock())
-        return true;
-    for (auto& containingBlock : containingBlockChain(*this)) {
-        if (&containingBlock == &ancestor)
+
+    for (auto* ancestor = &parent(); !ancestor->isInitialContainingBlock(); ancestor = &ancestor->parent()) {
+        if (ancestor == &box)
+            return true;
+    }
+    return false;
+}
+
+bool Box::isDescendantOfWithinFormattingContext(const Box& box) const
+{
+    for (auto* ancestor = &parent(); !ancestor->establishesFormattingContext(); ancestor = &ancestor->parent()) {
+        if (ancestor == &box)
             return true;
     }
     return false;

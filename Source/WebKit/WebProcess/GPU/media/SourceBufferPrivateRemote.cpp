@@ -108,10 +108,8 @@ Ref<MediaPromise> SourceBufferPrivateRemote::append(Ref<SharedBuffer>&& data)
         return sendWithPromisedReply(Messages::RemoteSourceBufferProxy::Append(IPC::SharedBufferReference { WTFMove(data) }))->whenSettled(m_dispatcher, [weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
             if (!result)
                 return MediaPromise::createAndReject(PlatformMediaError::IPCError);
-            if (RefPtr protectedThis = weakThis.get()) {
-                Locker locker { protectedThis->m_lock };
-                protectedThis->m_timestampOffset = std::get<MediaTime>(*result);
-            }
+            if (RefPtr protectedThis = weakThis.get())
+                protectedThis->setTimestampOffset(std::get<MediaTime>(*result));
             return MediaPromise::createAndSettle(std::get<MediaPromise::Result>(*result));
         });
     });
@@ -153,15 +151,9 @@ void SourceBufferPrivateRemote::removedFromMediaSource()
     });
 }
 
-bool SourceBufferPrivateRemote::isActive() const
-{
-    return m_isActive;
-}
-
 void SourceBufferPrivateRemote::setActive(bool active)
 {
     // Called from the SourceBuffer's dispatcher
-    m_isActive = true;
     ensureWeakOnDispatcher([active](auto& buffer) {
         auto mediaSource = buffer.m_mediaSource.get();
         if (!mediaSource)
@@ -319,19 +311,10 @@ void SourceBufferPrivateRemote::startChangingType()
     });
 }
 
-MediaTime SourceBufferPrivateRemote::timestampOffset() const
-{
-    Locker locker { m_lock };
-    return m_timestampOffset;
-}
-
 void SourceBufferPrivateRemote::setTimestampOffset(const MediaTime& timestampOffset)
 {
     // Called from the SourceBuffer's dispatcher
-    {
-        Locker locker { m_lock };
-        m_timestampOffset = timestampOffset;
-    }
+    SourceBufferPrivate::setTimestampOffset(timestampOffset);
     ensureWeakOnDispatcher([timestampOffset](auto& buffer) {
         buffer.sendToProxy(Messages::RemoteSourceBufferProxy::SetTimestampOffset(timestampOffset));
     });
@@ -353,10 +336,8 @@ void SourceBufferPrivateRemote::setAppendWindowEnd(const MediaTime& appendWindow
 
 Ref<GenericPromise> SourceBufferPrivateRemote::setMaximumBufferSize(size_t size)
 {
-    {
-        Locker locker { m_lock };
-        m_evictionData.maximumBufferSize = size;
-    }
+    if (m_maximumBufferSize.exchange(size) == size)
+        return GenericPromise::createAndResolve();
     GenericPromise::AutoRejectProducer producer;
     Ref promise = producer.promise();
     ensureWeakOnDispatcher([size, producer = WTFMove(producer)](auto& buffer) mutable {
@@ -493,12 +474,6 @@ void SourceBufferPrivateRemote::MessageReceiver::sourceBufferPrivateDidDropSampl
         client->sourceBufferPrivateDidDropSample();
 }
 
-void SourceBufferPrivateRemote::MessageReceiver::sourceBufferPrivateDidReceiveRenderingError(int64_t errorCode)
-{
-    if (auto client = this->client())
-        client->sourceBufferPrivateDidReceiveRenderingError(errorCode);
-}
-
 void SourceBufferPrivateRemote::MessageReceiver::sourceBufferPrivateDidAttach(InitializationSegmentInfo&& segmentInfo, CompletionHandler<void(WebCore::MediaPromise::Result&&)>&& completionHandler)
 {
     assertIsCurrent(SourceBufferPrivateRemote::queueSingleton());
@@ -549,11 +524,6 @@ SourceBufferPrivateClient::InitializationSegment SourceBufferPrivateRemote::Mess
     return segment;
 }
 
-uint64_t SourceBufferPrivateRemote::totalTrackBufferSizeInBytes() const
-{
-    return m_evictionData.contentSize;
-}
-
 void SourceBufferPrivateRemote::memoryPressure(const MediaTime& currentTime)
 {
     ensureOnDispatcher([protectedThis = Ref { *this }, this, currentTime]() mutable {
@@ -589,22 +559,6 @@ void SourceBufferPrivateRemote::setMaximumQueueDepthForTrackID(TrackID trackID, 
 
         sendToProxy(Messages::RemoteSourceBufferProxy::SetMaximumQueueDepthForTrackID(trackID, depth));
     });
-}
-
-bool SourceBufferPrivateRemote::isBufferFullFor(uint64_t requiredSize) const
-{
-    Locker locker { m_lock };
-
-    ALWAYS_LOG(LOGIDENTIFIER, "requiredSize:", requiredSize, " evictionData:", m_evictionData);
-
-    return SourceBufferPrivate::isBufferFullFor(requiredSize);
-}
-
-bool SourceBufferPrivateRemote::canAppend(uint64_t requiredSize) const
-{
-    Locker locker { m_lock };
-
-    return SourceBufferPrivate::canAppend(requiredSize);
 }
 
 RefPtr<MediaPlayerPrivateRemote> SourceBufferPrivateRemote::player() const

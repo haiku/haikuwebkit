@@ -87,6 +87,21 @@ public:
     {
     }
 
+    WeakPtr(HashTableDeletedValueType) : m_impl(HashTableDeletedValue) { }
+    WeakPtr(HashTableEmptyValueType) : m_impl(HashTableEmptyValue) { }
+
+    bool isHashTableDeletedValue() const { return m_impl.isHashTableDeletedValue(); }
+    bool isHashTableEmptyValue() const { return !m_impl; }
+
+    T* ptrAllowingHashTableEmptyValue() const
+    {
+        static_assert(
+            HasRefPtrMemberFunctions<T>::value || HasCheckedPtrMemberFunctions<T>::value || IsDeprecatedWeakRefSmartPointerException<std::remove_cv_t<T>>::value,
+            "Classes that offer weak pointers should also offer RefPtr or CheckedPtr. Please do not add new exceptions.");
+
+        return !m_impl.isHashTableEmptyValue() ? static_cast<T*>(m_impl->template get<T>()) : nullptr;
+    }
+
     RefPtr<WeakPtrImpl, PtrTraits> releaseImpl() { return WTFMove(m_impl); }
 
     T* get() const
@@ -283,6 +298,35 @@ struct IsSmartPtr<WeakPtr<T, WeakPtrImpl, PtrTraits>> {
     static constexpr bool value = true;
     static constexpr bool isNullable = true;
 };
+
+template<typename P, typename WeakPtrImpl> struct WeakPtrHashTraits : SimpleClassHashTraits<WeakPtr<P, WeakPtrImpl>> {
+    static constexpr bool emptyValueIsZero = true;
+    static P* emptyValue() { return nullptr; }
+
+    template <typename>
+    static void constructEmptyValue(WeakPtr<P, WeakPtrImpl>& slot)
+    {
+        new (NotNull, std::addressof(slot)) WeakPtr<P, WeakPtrImpl>();
+    }
+
+    static constexpr bool hasIsEmptyValueFunction = true;
+    static bool isEmptyValue(const WeakPtr<P, WeakPtrImpl>& value) { return value.isHashTableEmptyValue(); }
+
+    using PeekType = P*;
+    static PeekType peek(const WeakPtr<P, WeakPtrImpl>& value) { return const_cast<PeekType>(value.ptrAllowingHashTableEmptyValue()); }
+    static PeekType peek(P* value) { return value; }
+
+    using TakeType = WeakPtr<P, WeakPtrImpl>;
+    static TakeType take(WeakPtr<P, WeakPtrImpl>&& value) { return isEmptyValue(value) ? nullptr : WeakPtr<P, WeakPtrImpl>(WTFMove(value)); }
+};
+
+template<typename P, typename WeakPtrImpl> struct HashTraits<WeakPtr<P, WeakPtrImpl>> : WeakPtrHashTraits<P, WeakPtrImpl> { };
+
+template<typename P, typename WeakPtrImpl> struct PtrHash<WeakPtr<P, WeakPtrImpl>> : PtrHashBase<WeakPtr<P, WeakPtrImpl>, IsSmartPtr<WeakPtr<P, WeakPtrImpl>>::value> {
+    static constexpr bool safeToCompareToEmptyOrDeleted = false;
+};
+
+template<typename P, typename WeakPtrImpl> struct DefaultHash<WeakPtr<P, WeakPtrImpl>> : PtrHash<WeakPtr<P, WeakPtrImpl>> { };
 
 template<typename ExpectedType, typename ArgType, typename WeakPtrImpl, typename PtrTraits>
 inline bool is(WeakPtr<ArgType, WeakPtrImpl, PtrTraits>& source)

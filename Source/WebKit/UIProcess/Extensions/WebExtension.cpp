@@ -302,7 +302,7 @@ bool WebExtension::parseManifest(StringView manifestString)
 RefPtr<const JSON::Object> WebExtension::manifestObject()
 {
     if (m_parsedManifest)
-        return m_manifestJSON->asObject();
+        return Ref { m_manifestJSON }->asObject();
 
     m_parsedManifest = true;
 
@@ -315,7 +315,7 @@ RefPtr<const JSON::Object> WebExtension::manifestObject()
     if (!parseManifest(manifestStringResult.value()))
         return nullptr;
 
-    return m_manifestJSON->asObject();
+    return Ref { m_manifestJSON }->asObject();
 }
 
 bool WebExtension::manifestParsedSuccessfully()

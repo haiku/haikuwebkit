@@ -86,9 +86,6 @@ public:
 #endif
 
     struct FilterParameters {
-#if HAVE(WEBCONTENTRESTRICTIONS)
-        bool usesWebContentRestrictions { false };
-#endif
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
         String webContentRestrictionsConfigurationPath { };
 #endif

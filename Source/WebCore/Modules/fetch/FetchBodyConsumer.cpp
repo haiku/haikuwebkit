@@ -348,21 +348,21 @@ void FetchBodyConsumer::resolve(Ref<DeferredPromise>&& promise, const String& co
     if (stream) {
         ASSERT(!m_sink);
         m_sink = ReadableStreamToSharedBufferSink::create([promise = WTFMove(promise), data = SharedBufferBuilder(), type = m_type, contentType](auto&& result) mutable {
-            if (result.hasException()) {
-                auto protectedPromise = WTFMove(promise);
-                protectedPromise->reject(result.releaseException());
-                return;
-            }
-
-            auto* chunk = result.returnValue();
-            if (!chunk) {
+            WTF::switchOn(WTFMove(result), [&](std::nullptr_t) {
                 auto protectedPromise = WTFMove(promise);
                 auto buffer = data.takeAsContiguous();
                 resolveWithTypeAndData(WTFMove(protectedPromise), type, contentType, buffer->span());
-                return;
-            }
-
-            data.append(*chunk);
+            }, [&](std::span<const uint8_t>&& chunk) {
+                data.append(chunk);
+            }, [&](JSC::JSValue reason) {
+                auto protectedPromise = WTFMove(promise);
+                protectedPromise->rejectWithCallback([&](auto&) {
+                    return reason;
+                });
+            }, [&](Exception&& error) {
+                auto protectedPromise = WTFMove(promise);
+                protectedPromise->reject(WTFMove(error));
+            });
         });
         protectedSink()->pipeFrom(*stream);
         return;
@@ -422,7 +422,8 @@ void FetchBodyConsumer::append(const SharedBuffer& buffer)
 
 void FetchBodyConsumer::setData(Ref<FragmentedSharedBuffer>&& data)
 {
-    m_buffer = WTFMove(data);
+    m_buffer.reset();
+    m_buffer.append(WTFMove(data));
 }
 
 RefPtr<FragmentedSharedBuffer> FetchBodyConsumer::takeData()
@@ -435,6 +436,11 @@ RefPtr<FragmentedSharedBuffer> FetchBodyConsumer::takeData()
 RefPtr<JSC::ArrayBuffer> FetchBodyConsumer::takeAsArrayBuffer()
 {
     return m_buffer.takeAsArrayBuffer();
+}
+
+RefPtr<JSC::ArrayBuffer> FetchBodyConsumer::asArrayBuffer()
+{
+    return m_buffer.tryCreateArrayBuffer();
 }
 
 Ref<Blob> FetchBodyConsumer::takeAsBlob(ScriptExecutionContext* context, const String& contentType)

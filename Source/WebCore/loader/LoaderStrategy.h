@@ -75,7 +75,7 @@ public:
     virtual void resumePendingRequests() = 0;
 
     virtual void setResourceLoadSchedulingMode(Page&, LoadSchedulingMode);
-    virtual void prioritizeResourceLoads(const Vector<SubresourceLoader*>&);
+    virtual void prioritizeResourceLoads(const Vector<RefPtr<SubresourceLoader>>&);
 
     virtual bool usePingLoad() const { return true; }
     using PingLoadCompletionHandler = Function<void(const ResourceError&, const ResourceResponse&)>;

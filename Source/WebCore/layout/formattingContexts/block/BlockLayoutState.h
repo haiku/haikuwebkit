@@ -60,7 +60,41 @@ public:
         LayoutUnit pageLogicalTop;
     };
 
-    BlockLayoutState(PlacedFloats&, std::optional<LineClamp> = { }, TextBoxTrim = { }, Style::TextBoxEdge = CSS::Keyword::Auto { }, std::optional<LayoutUnit> intrusiveInitialLetterLogicalBottom = { }, std::optional<LineGrid> lineGrid = { });
+    struct MarginState {
+        void resetBeforeSideOfBlock()
+        {
+            if (!atBeforeSideOfBlock) {
+                ASSERT_NOT_REACHED();
+                return;
+            }
+            atBeforeSideOfBlock = { };
+            positiveMargin = { };
+            negativeMargin = { };
+        }
+
+        void resetMarginValues()
+        {
+            positiveMargin = { };
+            negativeMargin = { };
+        }
+
+        LayoutUnit margin() const { return positiveMargin - negativeMargin; }
+
+        // FIXME: This tracks RenderBlockFlow's MarginInfo for now.
+        bool canCollapseWithChildren : 1 { false };
+        bool canCollapseMarginBeforeWithChildren : 1 { false };
+        bool canCollapseMarginAfterWithChildren : 1 { false };
+        bool quirkContainer : 1 { false };
+        bool atBeforeSideOfBlock : 1 { true };
+        bool atAfterSideOfBlock : 1 { false };
+        bool hasMarginBeforeQuirk : 1 { false };
+        bool hasMarginAfterQuirk : 1 { false };
+        bool determinedMarginBeforeQuirk : 1 { false };
+        LayoutUnit positiveMargin;
+        LayoutUnit negativeMargin;
+    };
+
+    BlockLayoutState(PlacedFloats&, MarginState, std::optional<LineClamp> = { }, TextBoxTrim = { }, Style::TextBoxEdge = CSS::Keyword::Auto { }, std::optional<LayoutUnit> intrusiveInitialLetterLogicalBottom = { }, std::optional<LineGrid> lineGrid = { });
 
     PlacedFloats& placedFloats() { return m_placedFloats; }
     const PlacedFloats& placedFloats() const { return m_placedFloats; }
@@ -72,6 +106,9 @@ public:
     std::optional<LayoutUnit> intrusiveInitialLetterLogicalBottom() const { return m_intrusiveInitialLetterLogicalBottom; }
     const std::optional<LineGrid>& lineGrid() const { return m_lineGrid; }
 
+    MarginState& marginState() { return m_marginState; }
+    const MarginState& marginState() const { return m_marginState; }
+
 private:
     PlacedFloats& m_placedFloats;
     std::optional<LineClamp> m_lineClamp;
@@ -79,15 +116,17 @@ private:
     Style::TextBoxEdge m_textBoxEdge;
     std::optional<LayoutUnit> m_intrusiveInitialLetterLogicalBottom;
     std::optional<LineGrid> m_lineGrid;
+    MarginState m_marginState;
 };
 
-inline BlockLayoutState::BlockLayoutState(PlacedFloats& placedFloats, std::optional<LineClamp> lineClamp, TextBoxTrim textBoxTrim, Style::TextBoxEdge textBoxEdge, std::optional<LayoutUnit> intrusiveInitialLetterLogicalBottom, std::optional<LineGrid> lineGrid)
+inline BlockLayoutState::BlockLayoutState(PlacedFloats& placedFloats, MarginState marginState, std::optional<LineClamp> lineClamp, TextBoxTrim textBoxTrim, Style::TextBoxEdge textBoxEdge, std::optional<LayoutUnit> intrusiveInitialLetterLogicalBottom, std::optional<LineGrid> lineGrid)
     : m_placedFloats(placedFloats)
     , m_lineClamp(lineClamp)
     , m_textBoxTrim(textBoxTrim)
     , m_textBoxEdge(textBoxEdge)
     , m_intrusiveInitialLetterLogicalBottom(intrusiveInitialLetterLogicalBottom)
     , m_lineGrid(lineGrid)
+    , m_marginState(marginState)
 {
 }
 

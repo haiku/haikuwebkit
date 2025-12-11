@@ -66,8 +66,11 @@ MediaSourcePrivate::AddStatus MockMediaSourcePrivate::addSourceBuffer(const Cont
     if (MockMediaPlayerMediaSource::supportsType(parameters) == MediaPlayer::SupportsType::IsNotSupported)
         return AddStatus::NotSupported;
 
-    m_sourceBuffers.append(MockSourceBufferPrivate::create(*this));
-    outPrivate = m_sourceBuffers.last();
+    {
+        Locker locker { m_lock };
+        m_sourceBuffers.append(MockSourceBufferPrivate::create(*this));
+        outPrivate = m_sourceBuffers.last();
+    }
     outPrivate->setMediaSourceDuration(duration());
 
     return AddStatus::Ok;
@@ -95,19 +98,6 @@ void MockMediaSourcePrivate::markEndOfStream(EndOfStreamStatus status)
     if (m_player && status == EndOfStreamStatus::NoError)
         m_player->setNetworkState(MediaPlayer::NetworkState::Loaded);
     MediaSourcePrivate::markEndOfStream(status);
-}
-
-MediaPlayer::ReadyState MockMediaSourcePrivate::mediaPlayerReadyState() const
-{
-    if (m_player)
-        return m_player->readyState();
-    return MediaPlayer::ReadyState::HaveNothing;
-}
-
-void MockMediaSourcePrivate::setMediaPlayerReadyState(MediaPlayer::ReadyState readyState)
-{
-    if (m_player)
-        m_player->setReadyState(readyState);
 }
 
 void MockMediaSourcePrivate::notifyActiveSourceBuffersChanged()

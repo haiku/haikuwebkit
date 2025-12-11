@@ -164,9 +164,8 @@ public:
     const HashSet<AnimatableCSSProperty>& acceleratedProperties() const { return m_acceleratedProperties; }
     const HashSet<AnimatableCSSProperty>& acceleratedPropertiesWithImplicitKeyframe() const { return m_acceleratedPropertiesWithImplicitKeyframe; }
 
+    bool animatesMotionPath() const;
     bool computeExtentOfTransformAnimation(LayoutRect&) const;
-    bool computeTransformedExtentViaTransformList(const FloatRect&, const RenderStyle&, LayoutRect&) const;
-    bool computeTransformedExtentViaMatrix(const FloatRect&, const RenderStyle&, LayoutRect&) const;
     bool forceLayoutIfNeeded();
 
     enum class Accelerated : bool { No, Yes };
@@ -175,7 +174,6 @@ public:
     bool isRunningAcceleratedTransformRelatedAnimation() const;
 
     bool requiresPseudoElement() const;
-    bool hasImplicitKeyframes() const;
 
     void customPropertyRegistrationDidChange(const AtomString&);
 
@@ -196,12 +194,15 @@ public:
     WebAnimationType animationType() const { return m_animationType; }
 
 #if ENABLE(THREADED_ANIMATIONS)
+    bool canHaveAcceleratedRepresentation() const;
     const AcceleratedEffect* acceleratedRepresentation() const { return m_acceleratedRepresentation.get(); }
-    void setAcceleratedRepresentation(const AcceleratedEffect* acceleratedRepresentation) { m_acceleratedRepresentation = acceleratedRepresentation; }
+    RefPtr<AcceleratedEffect> updatedAcceleratedRepresentation(const TimelineIdentifier&, const IntRect&, const AcceleratedEffectValues&, OptionSet<AcceleratedEffectProperty>&);
+    void timelineAccelerationAbilityDidChange();
 #endif
 
 private:
     KeyframeEffect(Element*, const std::optional<Style::PseudoElementIdentifier>&);
+    ~KeyframeEffect();
 
     enum class AcceleratedAction : uint8_t { Play, Pause, UpdateProperties, TransformChange, Stop };
     enum class AcceleratedProperties : uint8_t { None, Some, All };
@@ -266,8 +267,7 @@ private:
         std::optional<Style::PseudoElementIdentifier> m_originalPseudoElementIdentifier;
     };
 
-    bool threadedAnimationsEnabled() const;
-    void updateAssociatedThreadedEffectStack(const std::optional<const Styleable>& = std::nullopt);
+    void scheduleAssociatedAcceleratedEffectStackUpdate(const std::optional<const Styleable>& = std::nullopt);
 #endif
 
     // AnimationEffect

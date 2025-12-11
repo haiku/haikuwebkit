@@ -71,9 +71,10 @@ VideoReceiverEndpointMessage VideoReceiverEndpointMessage::decode(xpc_object_t m
     };
 }
 
-OSObjectPtr<xpc_object_t> VideoReceiverEndpointMessage::encode() const
+XPCObjectPtr<xpc_object_t> VideoReceiverEndpointMessage::encode() const
 {
-    OSObjectPtr message = adoptOSObject(xpc_dictionary_create(nullptr, nullptr, 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto message = adoptXPCObject(xpc_dictionary_create(nullptr, nullptr, 0));
     xpc_dictionary_set_string(message.get(), XPCEndpoint::xpcMessageNameKey, messageName().characters());
     xpc_dictionary_set_uint64(message.get(), processIdentifierKey.characters(), m_processIdentifier ? m_processIdentifier->toUInt64() : 0);
     xpc_dictionary_set_uint64(message.get(), mediaElementIdentifierKey.characters(), m_mediaElementIdentifier.toUInt64());
@@ -109,9 +110,10 @@ VideoReceiverSwapEndpointsMessage VideoReceiverSwapEndpointsMessage::decode(xpc_
     };
 }
 
-OSObjectPtr<xpc_object_t> VideoReceiverSwapEndpointsMessage::encode() const
+XPCObjectPtr<xpc_object_t> VideoReceiverSwapEndpointsMessage::encode() const
 {
-    OSObjectPtr message = adoptOSObject(xpc_dictionary_create(nullptr, nullptr, 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto message = adoptXPCObject(xpc_dictionary_create(nullptr, nullptr, 0));
     xpc_dictionary_set_string(message.get(), XPCEndpoint::xpcMessageNameKey, messageName().characters());
     xpc_dictionary_set_uint64(message.get(), processIdentifierKey.characters(), m_processIdentifier ? m_processIdentifier->toUInt64() : 0);
     xpc_dictionary_set_uint64(message.get(), sourceMediaElementIdentifierKey.characters(), m_sourceMediaElementIdentifier.toUInt64());

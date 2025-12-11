@@ -2775,7 +2775,7 @@ void JSObject::getOwnIndexedPropertyNames(JSGlobalObject*, PropertyNameArrayBuil
                     return std::nullopt;
                 });
                 
-                std::sort(keys.begin(), keys.end());
+                std::ranges::sort(keys);
                 for (unsigned i = 0; i < keys.size(); ++i)
                     propertyNames.add(keys[i]);
             }
@@ -3202,13 +3202,8 @@ bool JSObject::putByIndexBeyondVectorLengthWithoutAttributes(JSGlobalObject* glo
         || (i >= MIN_SPARSE_ARRAY_INDEX && !isDenseEnoughForVector(i, countElements<indexingShape>(butterfly)))
         || indexIsSufficientlyBeyondLengthForSparseMap(i, butterfly->vectorLength())) {
         ASSERT(i <= MAX_ARRAY_INDEX);
-        ensureArrayStorageSlow(vm);
-        SparseArrayValueMap* map = allocateSparseIndexMap(vm);
-        bool result = map->putEntry(globalObject, this, i, value, false);
-        RETURN_IF_EXCEPTION(scope, false);
-        ASSERT(i >= arrayStorage()->length());
-        arrayStorage()->setLength(i + 1);
-        return result;
+        ArrayStorage* storage = ensureArrayStorageSlow(vm);
+        RELEASE_AND_RETURN(scope, putByIndexBeyondVectorLengthWithArrayStorage(globalObject, i, value, false, storage));
     }
 
     if (!ensureLength(vm, i + 1)) {
@@ -3251,6 +3246,10 @@ template bool JSObject::putByIndexBeyondVectorLengthWithoutAttributes<Contiguous
 bool JSObject::putByIndexBeyondVectorLengthWithArrayStorage(JSGlobalObject* globalObject, unsigned i, JSValue value, bool shouldThrow, ArrayStorage* storage)
 {
     VM& vm = globalObject->vm();
+    // We're transitioning between states here, if a termination comes in we could leave the object
+    // in an inconsistent state. We could still be in the middle a GC during termination so we could
+    // try to mark this object and crash. It's much easier to just not think about it.
+    DeferTerminationForAWhile noTermination(vm);
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     ASSERT(!isCopyOnWrite(indexingMode()));
@@ -3392,6 +3391,10 @@ bool JSObject::putByIndexBeyondVectorLength(JSGlobalObject* globalObject, unsign
 bool JSObject::putDirectIndexBeyondVectorLengthWithArrayStorage(JSGlobalObject* globalObject, unsigned i, JSValue value, unsigned attributes, PutDirectIndexMode mode, ArrayStorage* storage)
 {
     VM& vm = globalObject->vm();
+    // We're transitioning between states here, if a termination comes in we could leave the object
+    // in an inconsistent state. We could still be in the middle a GC during termination so we could
+    // try to mark this object and crash. It's much easier to just not think about it.
+    DeferTerminationForAWhile noTermination(vm);
     auto scope = DECLARE_THROW_SCOPE(vm);
     
     // i should be a valid array index that is outside of the current vector.

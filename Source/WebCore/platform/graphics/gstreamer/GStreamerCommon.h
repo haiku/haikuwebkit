@@ -54,7 +54,8 @@ using TrackIDHashMap = HashMap<TrackID, MappedArg, WTF::IntHash<TrackID>, WTF::U
 #define GST_CHECK_VERSION_FULL(major, minor, micro, nano) \
     (GST_CHECK_VERSION(major, minor, micro) && (GST_VERSION_NANO >= nano))
 
-inline bool webkitGstCheckVersion(guint major, guint minor, guint micro)
+#if !GST_CHECK_VERSION_FULL(1, 27, 2, 1)
+inline bool gst_check_version(guint major, guint minor, guint micro)
 {
     guint currentMajor, currentMinor, currentMicro, currentNano;
     gst_version(&currentMajor, &currentMinor, &currentMicro, &currentNano);
@@ -74,6 +75,7 @@ inline bool webkitGstCheckVersion(guint major, guint minor, guint micro)
 
     return true;
 }
+#endif
 
 #define GST_VIDEO_CAPS_TYPE_PREFIX  "video/"_s
 #define GST_AUDIO_CAPS_TYPE_PREFIX  "audio/"_s
@@ -225,7 +227,7 @@ public:
 
     GstVideoFrame* get();
 
-    uint8_t* componentData(int) const;
+    std::span<uint8_t> componentData(int) const;
     int componentStride(int) const;
     int componentWidth(int) const;
 
@@ -235,7 +237,7 @@ public:
     int height() const;
 
     int format() const;
-    void* planeData(uint32_t) const;
+    std::span<uint8_t> planeData(uint32_t) const;
     int planeStride(uint32_t) const;
 
     bool isValid() const { return m_frame.buffer; }
@@ -368,6 +370,8 @@ bool setGstElementGLContext(GstElement*, ASCIILiteral contextType);
 #endif
 
 GstStateChangeReturn gstElementLockAndSetState(GstElement*, GstState);
+
+GRefPtr<GstElement> createVideoConvertScaleElement(const String& name = emptyString());
 
 } // namespace WebCore
 

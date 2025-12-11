@@ -3215,12 +3215,13 @@ poke 0, 1            # Store 0 to [sp + 8]
 
 **Syntax:** `removeCodePtrTag <gpr>`
 
-**Description:** Remove pointer authentication code from code pointer.
+**Description:** Strip pointer authentication information from code pointer without authenticating its value.
+(ARM64e specific, no effect on other platforms).
 
 **Operands:**
 - Pointer: GPR (in-place removal)
 
-**Effect:** Strips PAC from code pointer (ARM64e specific)
+**ARM64E Translation:** `xpaci <gpr>`
 
 ---
 
@@ -3230,9 +3231,9 @@ poke 0, 1            # Store 0 to [sp + 8]
 
 **Description:** Return from function.
 
-**Effect:** Pop return address and jump to it
+**Effect:** ARM64E only: authenticate the return address in the `lr` register using the IB key and `sp` as the discriminator, then jump to it if authentication succeeds. Other architectures: pop the return address and jump to it.
 
-**ARM64 Translation:** `ret`
+**ARM64E Translation:** `retab`
 
 ---
 
@@ -3444,29 +3445,48 @@ storei 42, [cfr, 8]          # Store constant to [cfr + 8]
 
 ### tagCodePtr
 
-**Syntax:** `tagCodePtr <gpr>, <tag>, <gpr>`
+**Base Syntax:** `tagCodePtr <gpr1>, <gpr2>`
 
-**Description:** Add pointer authentication code to code pointer (ARM64e).
+**Description:** Sign a code pointer in a register using the IB key and a discriminator in another register.
+(ARM64e specific).
 
 **Operands:**
-- Source: GPR
-- Tag: Immediate or GPR (discriminator)
-- Destination: GPR
+- gpr1: A register containing the pointer to sign.
+- gpr2: Discriminator.
 
-**Effect:** Signs code pointer with specified tag/discriminator
+**ARM64E translation:** `pacib <gpr1> <gpr2>`
+
+**Expanded Syntax:** `tagCodePtr <gpr1>, <imm1>, <imm2>, <gpr2>`
+
+**Description:** Sign a code pointer in a register using the IB key and a discriminator created by combining
+a constant tag and the value of another register.
+
+**Operands:**
+- gpr1: A register containing the pointer to sign.
+- imm1: A constant tag. Must be less than or equal to 0xFFFF.
+- imm2: Must be the constant `AddressDiversified` (numeric value 1).
+- gpr2: Discriminator.
+
+**Effect:** Expands into the following sequence of offlineasm instructions:
+```
+move (imm1 << 48), tempGPR
+xorp gpr2, tempGPR
+tagCodePtr gpr1, tempGPR
+```
 
 ---
 
 ### tagReturnAddress
 
-**Syntax:** `tagReturnAddress <gpr>`
+**Syntax:** `tagReturnAddress <reg>`
 
-**Description:** Sign return address with pointer authentication (ARM64e).
+**Description:** Sign the address in the `lr` register using the IB key and another register value as a discriminator.
+(ARM64e specific).
 
 **Operands:**
-- Return address register: GPR
+- Discriminator register: GPR or `sp`
 
-**Effect:** Signs the return address in the specified register
+**ARM64E Translation:** `pacibsp` or `pacib lr, GPR`
 
 ---
 
@@ -3777,11 +3797,16 @@ storei 42, [cfr, 8]          # Store constant to [cfr + 8]
 
 ### untagReturnAddress
 
-**Syntax:** `untagReturnAddress <gpr>`
+**Syntax:** `untagReturnAddress <reg>`
 
-**Description:** Remove pointer authentication from return address (ARM64e).
+**Description:** Remove the PAC signature from the value in the  `lr` register if it successfully authenticates
+using the IB key and the value of the specified GPR or `sp` as the discriminator.
+(ARM64e specific).
 
-**Effect:** Authenticates and strips PAC from return address
+**Operands:**
+- reg: GPR or `sp` containing the discriminator value
+
+**ARM64E Translation:** `autibsp` or `autib lr, GPR`
 
 ---
 

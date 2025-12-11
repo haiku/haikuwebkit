@@ -112,6 +112,7 @@ using LayerHandle = int;
 
 #if ENABLE(WEBXR)
 using HitTestSource = unsigned;
+using TransientInputHitTestSource = unsigned;
 using InputSourceHandle = int;
 
 // https://immersive-web.github.io/webxr/#enumdef-xrhandedness
@@ -129,6 +130,12 @@ enum class XRTargetRayMode : uint8_t {
     TransientPointer,
 };
 
+enum class XREnvironmentBlendMode : uint8_t {
+    Opaque,
+    AlphaBlend,
+    Additive
+};
+
 // https://immersive-web.github.io/webxr/#feature-descriptor
 enum class SessionFeature : uint8_t {
     ReferenceSpaceTypeViewer,
@@ -143,6 +150,9 @@ enum class SessionFeature : uint8_t {
     HitTest,
 #endif
     WebGPU,
+#if ENABLE(WEBXR_LAYERS)
+    Layers,
+#endif
 };
 
 inline SessionFeature sessionFeatureFromReferenceSpaceType(ReferenceSpaceType referenceSpaceType)
@@ -190,7 +200,10 @@ inline std::optional<SessionFeature> parseSessionFeatureDescriptor(StringView st
 #endif
     if (feature == "webgpu"_s)
         return SessionFeature::WebGPU;
-
+#if ENABLE(WEBXR_LAYERS)
+    if (feature == "layers"_s)
+        return SessionFeature::Layers;
+#endif
     return std::nullopt;
 }
 
@@ -217,6 +230,10 @@ inline String sessionFeatureDescriptor(SessionFeature sessionFeature)
 #endif
     case SessionFeature::WebGPU:
         return "webgpu"_s;
+#if ENABLE(WEBXR_LAYERS)
+    case SessionFeature::Layers:
+        return "layers"_s;
+#endif
     default:
         ASSERT_NOT_REACHED();
         return ""_s;
@@ -283,7 +300,14 @@ struct Ray {
 };
 
 struct HitTestOptions {
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(HitTestOptions);
     WebCore::TransformationMatrix nativeOrigin;
+    Vector<WebCore::XRHitTestTrackableType> entityTypes;
+    Ray offsetRay;
+};
+struct TransientInputHitTestOptions {
+    WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(TransientInputHitTestOptions);
+    String profile;
     Vector<WebCore::XRHitTestTrackableType> entityTypes;
     Ray offsetRay;
 };
@@ -410,6 +434,10 @@ struct FrameData {
     struct HitTestResult {
         Pose pose;
     };
+    struct TransientInputHitTestResult {
+        InputSourceHandle inputSource;
+        Vector<HitTestResult> results;
+    };
 #endif
 
     bool isTrackingValid { false };
@@ -424,8 +452,10 @@ struct FrameData {
     HashMap<LayerHandle, UniqueRef<LayerData>> layers;
 #if ENABLE(WEBXR_HIT_TEST)
     HashMap<HitTestSource, Vector<HitTestResult>> hitTestResults;
+    HashMap<TransientInputHitTestSource, Vector<TransientInputHitTestResult>> transientInputHitTestResults;
 #endif
     Vector<InputSource> inputSources;
+    XREnvironmentBlendMode environmentBlendMode { XREnvironmentBlendMode::Opaque };
 
     FrameData copy() const;
 };
@@ -473,6 +503,8 @@ public:
 #if ENABLE(WEBXR_HIT_TEST)
     virtual void requestHitTestSource(const HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<HitTestSource>)>&&) = 0;
     virtual void deleteHitTestSource(HitTestSource) = 0;
+    virtual void requestTransientInputHitTestSource(const TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<TransientInputHitTestSource>)>&&) = 0;
+    virtual void deleteTransientInputHitTestSource(TransientInputHitTestSource) = 0;
 #endif
 
     struct LayerView {
@@ -542,6 +574,7 @@ inline FrameData FrameData::copy() const
     frameData.stageParameters = stageParameters;
     frameData.views = views;
     frameData.inputSources = inputSources;
+    frameData.environmentBlendMode = environmentBlendMode;
     return frameData;
 }
 

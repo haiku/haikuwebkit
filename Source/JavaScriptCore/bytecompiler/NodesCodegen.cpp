@@ -5543,24 +5543,86 @@ void FunctionNode::emitBytecode(BytecodeGenerator& generator, RegisterID*)
         if (generator.parseMode() == SourceParseMode::AsyncArrowFunctionMode && generator.isThisUsedInInnerArrowFunction())
             generator.emitLoadThisFromArrowFunctionLexicalEnvironment();
 
-        generator.emitPutGeneratorFields(next.get());
+        generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::State), generator.emitLoad(nullptr, jsNumber(static_cast<int32_t>(JSGenerator::State::Executing))));
+
+        // We do not store 'this' in arrow function within constructor,
+        // because it might be not initialized, if super is called later.
+        RefPtr<RegisterID> generatorThis;
+        if (!(generator.isDerivedConstructorContext() && generator.parseMode() == SourceParseMode::AsyncArrowFunctionMode)) {
+            generatorThis = generator.thisRegister();
+            generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::This), generatorThis.get());
+        } else
+            generatorThis = generator.emitLoad(generatorThis.get(), jsUndefined());
+
+        generator.emitPutInternalField(generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::Next), next.get());
 
         ASSERT(startOffset() >= lineStartOffset());
-        generator.emitDebugHook(WillLeaveCallFrame, JSTextPosition(lastLine(), startOffset(), lineStartOffset()));
+        Ref<Label> tryStartLabel = generator.newEmittedLabel();
+        Ref<Label> catchLabel = generator.newLabel();
+        Ref<Label> successLabel = generator.newLabel();
+        Ref<Label> driveLabel = generator.newLabel();
 
-        // load and call @asyncFunctionResume
-        RefPtr<RegisterID> asyncFunctionResume = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::asyncFunctionResume);
-
-        CallArguments args(generator, nullptr, 3);
-        unsigned argumentCount = 0;
-        generator.emitLoad(args.thisRegister(), jsUndefined());
-        generator.move(args.argumentRegister(argumentCount++), generator.generatorRegister());
-        generator.emitLoad(args.argumentRegister(argumentCount++), jsUndefined());
-        generator.emitLoad(args.argumentRegister(argumentCount++), JSGenerator::ResumeMode::NormalMode);
-        // JSTextPosition(int _line, int _offset, int _lineStartOffset)
         JSTextPosition divot(firstLine(), startOffset(), lineStartOffset());
+        TryData* tryData = generator.pushTry(tryStartLabel.get(), catchLabel.get(), HandlerType::SynthesizedCatch);
 
-        generator.emitCallIgnoreResult(generator.newTemporary(), asyncFunctionResume.get(), NoExpectedFunction, args, divot, divot, divot, DebuggableCall::No);
+        RefPtr<RegisterID> nextResult = generator.newTemporary();
+        {
+            CallArguments nextArgs(generator, nullptr, 5);
+            generator.move(nextArgs.thisRegister(), generatorThis.get());
+            generator.move(nextArgs.argumentRegister(0), generator.generatorRegister());
+            generator.emitLoad(nextArgs.argumentRegister(1), jsNumber(static_cast<int32_t>(JSGenerator::State::Init)));
+            generator.emitLoad(nextArgs.argumentRegister(2), jsUndefined());
+            generator.emitLoad(nextArgs.argumentRegister(3), jsNumber(static_cast<int32_t>(JSGenerator::ResumeMode::NormalMode)));
+            generator.emitLoad(nextArgs.argumentRegister(4), jsUndefined());
+
+            nextResult = generator.emitCall(nextResult.get(), next.get(), NoExpectedFunction, nextArgs, divot, divot, divot, DebuggableCall::No);
+        }
+
+        {
+            RefPtr<RegisterID> currentState = generator.emitGetInternalField(generator.newTemporary(), generator.generatorRegister(), static_cast<unsigned>(JSGenerator::Field::State));
+            RefPtr<RegisterID> executingState = generator.emitLoad(nullptr, jsNumber(static_cast<int32_t>(JSGenerator::State::Executing)));
+            generator.emitJumpIfFalse(generator.emitEqualityOp<OpStricteq>(generator.newTemporary(), currentState.get(), executingState.get()), driveLabel.get());
+        }
+
+        {
+            RefPtr<RegisterID> resolvePromise = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::resolvePromiseWithFirstResolvingFunctionCallCheck);
+            CallArguments resolveArgs(generator, nullptr, 2);
+            generator.emitLoad(resolveArgs.thisRegister(), jsUndefined());
+            generator.move(resolveArgs.argumentRegister(0), generator.promiseRegister());
+            generator.move(resolveArgs.argumentRegister(1), nextResult.get());
+            generator.emitCallIgnoreResult(generator.newTemporary(), resolvePromise.get(), NoExpectedFunction, resolveArgs, divot, divot, divot, DebuggableCall::No);
+            generator.emitJump(successLabel.get());
+        }
+
+        {
+            generator.emitLabel(driveLabel.get());
+            RefPtr<RegisterID> driveAsyncFunction = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::driveAsyncFunction);
+            CallArguments driveArgs(generator, nullptr, 2);
+            generator.emitLoad(driveArgs.thisRegister(), jsUndefined());
+            generator.move(driveArgs.argumentRegister(0), nextResult.get());
+            generator.move(driveArgs.argumentRegister(1), generator.generatorRegister());
+            generator.emitCallIgnoreResult(generator.newTemporary(), driveAsyncFunction.get(), NoExpectedFunction, driveArgs, divot, divot, divot, DebuggableCall::No);
+            generator.emitJump(successLabel.get());
+        }
+
+        Ref<Label> tryEndLabel = generator.newEmittedLabel();
+        generator.popTry(tryData, tryEndLabel.get());
+
+        {
+            generator.emitLabel(catchLabel.get());
+            RefPtr<RegisterID> thrownValue = generator.newTemporary();
+            generator.emitOutOfLineCatchHandler(thrownValue.get(), nullptr, tryData);
+
+            RefPtr<RegisterID> rejectPromise = generator.moveLinkTimeConstant(nullptr, LinkTimeConstant::rejectPromiseWithFirstResolvingFunctionCallCheck);
+            CallArguments rejectArgs(generator, nullptr, 2);
+            generator.emitLoad(rejectArgs.thisRegister(), jsUndefined());
+            generator.move(rejectArgs.argumentRegister(0), generator.promiseRegister());
+            generator.move(rejectArgs.argumentRegister(1), thrownValue.get());
+            generator.emitCallIgnoreResult(generator.newTemporary(), rejectPromise.get(), NoExpectedFunction, rejectArgs, divot, divot, divot, DebuggableCall::No);
+        }
+
+        generator.emitLabel(successLabel.get());
+        generator.emitDebugHook(WillLeaveCallFrame, JSTextPosition(lastLine(), startOffset(), lineStartOffset()));
         generator.emitReturn(generator.promiseRegister());
         break;
     }

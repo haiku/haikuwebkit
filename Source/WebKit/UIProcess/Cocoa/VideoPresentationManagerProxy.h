@@ -27,6 +27,7 @@
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
 
+#include "FrameInfoData.h"
 #include "LayerHostingContext.h"
 #include "MessageReceiver.h"
 #include "PlaybackSessionContextIdentifier.h"
@@ -123,6 +124,11 @@ private:
 #endif
     void setRequiresTextTrackRepresentation(bool) final;
     void setTextTrackRepresentationBounds(const WebCore::IntRect&) final;
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    void requestShowCaptionDisplaySettingsPreview() final;
+    void requestHideCaptionDisplaySettingsPreview() final;
+#endif
 
 #if !RELEASE_LOG_DISABLED
     uint64_t logIdentifier() const final;
@@ -226,6 +232,10 @@ private:
 
     RetainPtr<WKLayerHostView> createLayerHostViewWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatSize& initialSize, float hostingScaleFactor);
 
+#if USE(EXTENSIONKIT)
+    void setVisibilityPropagationViewForLayerHostView(UIView *, WKLayerHostView *);
+#endif
+
     // Messages from VideoPresentationManager
     void setupFullscreenWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatRect& screenRect, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& videoDimensions, float hostingScaleFactor, WebCore::HTMLMediaElementEnums::VideoFullscreenMode, bool allowsPictureInPicture, bool standby, bool blocksReturnToFullscreenFromPictureInPicture);
     void setInlineRect(PlaybackSessionContextIdentifier, const WebCore::FloatRect& inlineRect, bool visible);
@@ -251,6 +261,12 @@ private:
     void textTrackRepresentationSetHidden(PlaybackSessionContextIdentifier, bool hidden);
     void setRequiresTextTrackRepresentation(PlaybackSessionContextIdentifier, bool);
     void setTextTrackRepresentationBounds(PlaybackSessionContextIdentifier, const WebCore::IntRect&);
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    void requestShowCaptionDisplaySettingsPreview(PlaybackSessionContextIdentifier);
+    void requestHideCaptionDisplaySettingsPreview(PlaybackSessionContextIdentifier);
+    void performCaptionDisplaySettingsAction(PlaybackSessionContextIdentifier, Function<void(WebPageProxy&, const FrameInfoData&, WebCore::HTMLMediaElementIdentifier)>&& action);
+#endif
 
     // Messages to VideoPresentationManager
     void requestFullscreenMode(PlaybackSessionContextIdentifier, WebCore::HTMLMediaElementEnums::VideoFullscreenMode, bool finishedWithMedia = false);

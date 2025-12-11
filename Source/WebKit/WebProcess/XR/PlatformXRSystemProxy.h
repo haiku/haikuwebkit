@@ -66,6 +66,8 @@ public:
 #if ENABLE(WEBXR_HIT_TEST)
     void requestHitTestSource(const PlatformXR::HitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::HitTestSource>)>&&);
     void deleteHitTestSource(PlatformXR::HitTestSource);
+    void requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&&);
+    void deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource);
 #endif
 
 private:

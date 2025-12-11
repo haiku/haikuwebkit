@@ -480,7 +480,7 @@ void PlaybackSessionModelMediaElement::setPlayingOnSecondScreen(bool value)
 }
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
-const String& PlaybackSessionModelMediaElement::spatialTrackingLabel() const
+String PlaybackSessionModelMediaElement::spatialTrackingLabel() const
 {
     if (RefPtr mediaElement = m_mediaElement)
         return mediaElement->spatialTrackingLabel();

@@ -33,7 +33,7 @@
 #include "LayoutBoxGeometry.h"
 #include "RenderStyleInlines.h"
 #include "RubyFormattingContext.h"
-#include "StyleLineBoxContain.h"
+#include "StyleWebKitLineBoxContain.h"
 
 namespace WebCore {
 namespace Layout {
@@ -61,16 +61,25 @@ LineBox LineBoxBuilder::build(size_t lineIndex)
         return lineLayoutResult.contentGeometry.logicalWidth;
     };
     auto lineBox = LineBox { rootBox(), lineLayoutResult.contentGeometry.logicalLeft, contentLogicalWidth(), lineIndex, isFirstFormattedLine(), lineLayoutResult.nonSpanningInlineLevelBoxCount };
-    auto& runs = lineLayoutResult.runs;
-    if (!runs.isEmpty() && runs[0].isBlock()) {
-        // Since we don't need to position and align block content inside the line, we don't need to create any boxes for this block content.
-        auto lineBoxLogicalHeight = formattingContext().geometryForBox(runs[0].layoutBox()).marginBoxHeight();
-        lineBox.setLogicalRect({ lineLayoutResult.lineGeometry.logicalTopLeft, lineLayoutResult.lineGeometry.logicalWidth, lineBoxLogicalHeight });
-        setVerticalPropertiesForInlineLevelBox(lineBox, lineBox.rootInlineBox());
-    } else {
+    if (lineLayoutResult.hasBlockContent())
+        constructBlockContent(lineBox);
+    else {
         constructInlineLevelBoxes(lineBox);
-        adjustIdeographicBaselineIfApplicable(lineBox);
-        adjustInlineBoxHeightsForLineBoxContainIfApplicable(lineBox);
+        if (lineBox.hasContent()) {
+            adjustIdeographicBaselineIfApplicable(lineBox);
+            adjustInlineBoxHeightsForLineBoxContainIfApplicable(lineBox);
+        } else {
+            // Collapse all inline boxes (they are supposed to be empty as well).
+            for (auto& inlineBox : lineBox.nonRootInlineLevelBoxes()) {
+                if (!inlineBox.isInlineBox()) {
+                    ASSERT(inlineBox.layoutBox().isWordBreakOpportunity());
+                    ASSERT(!inlineBox.logicalHeight());
+                    continue;
+                }
+                ASSERT(!inlineBox.hasContent());
+                inlineBox.setLogicalHeight({ });
+            }
+        }
         if (m_lineHasNonLineSpanningRubyContent)
             RubyFormattingContext::applyAnnotationContributionToLayoutBounds(lineBox, formattingContext());
         computeLineBoxGeometry(lineBox);
@@ -517,6 +526,37 @@ void LineBoxBuilder::constructInlineLevelBoxes(LineBox& lineBox)
     lineBox.setHasContent(lineHasContent);
 }
 
+void LineBoxBuilder::constructBlockContent(LineBox& lineBox)
+{
+    auto& lineLayoutResult = this->lineLayoutResult();
+    auto& runs = lineLayoutResult.runs;
+    if (runs.isEmpty() || !runs.last().isBlock()) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
+
+    // Since we don't need to position and align block content inside the line, we don't need to create any boxes for this block content.
+    auto& blockGeometry = formattingContext().geometryForBox(runs.last().layoutBox());
+    for (size_t index = 0;  index < runs.size() - 1; ++index) {
+        auto& run = runs[index];
+        if (run.isLineSpanningInlineBoxStart()) {
+            auto lineSpanningInlineBox = InlineLevelBox::createInlineBox(run.layoutBox(), run.layoutBox().style(), lineLayoutResult.contentGeometry.logicalLeft, lineLayoutResult.contentGeometry.logicalWidth, InlineLevelBox::LineSpanningInlineBox::Yes);
+            setVerticalPropertiesForInlineLevelBox(lineBox, lineSpanningInlineBox);
+            lineSpanningInlineBox.setLogicalTop(blockGeometry.marginBefore());
+            lineSpanningInlineBox.setLogicalHeight(InlineLayoutUnit(blockGeometry.borderBoxHeight()));
+            lineBox.addInlineLevelBox(WTFMove(lineSpanningInlineBox));
+            continue;
+        }
+        ASSERT_NOT_REACHED();
+    }
+
+    auto blockLineLogicalTopLeft = InlineLayoutPoint { lineLayoutResult.lineGeometry.initialLogicalLeft, lineLayoutResult.lineGeometry.logicalTopLeft.y() };
+    lineBox.setLogicalRect({ blockLineLogicalTopLeft, lineLayoutResult.lineGeometry.logicalWidth, blockGeometry.marginBoxHeight() });
+    setVerticalPropertiesForInlineLevelBox(lineBox, lineBox.rootInlineBox());
+    // FIXME: Let's considered collapsed block boxes contentful for now (webkit.org/b/302804).
+    lineBox.setHasContent(true);
+}
+
 void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox& lineBox)
 {
     // While line-box-contain normally tells whether a certain type of content should be included when computing the line box height,
@@ -525,7 +565,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
     // Collect layout bounds based on the contain property and set them on the inline boxes when they are applicable.
     HashMap<InlineLevelBox*, TextUtil::EnclosingAscentDescent> inlineBoxBoundsMap;
 
-    if (lineBoxContain.contains(Style::LineBoxContain::InlineBox)) {
+    if (lineBoxContain.contains(Style::WebkitLineBoxContainValue::InlineBox)) {
         for (auto& inlineLevelBox : lineBox.nonRootInlineLevelBoxes()) {
             if (!inlineLevelBox.isInlineBox())
                 continue;
@@ -536,7 +576,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
         }
     }
 
-    if (lineBoxContain.contains(Style::LineBoxContain::Font)) {
+    if (lineBoxContain.contains(Style::WebkitLineBoxContainValue::Font)) {
         // Assign font based layout bounds to all inline boxes.
         auto ensureFontMetricsBasedHeight = [&] (auto& inlineBox) {
             ASSERT(inlineBox.isInlineBox());
@@ -561,7 +601,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
         }
     }
 
-    if (lineBoxContain.contains(Style::LineBoxContain::Glyphs)) {
+    if (lineBoxContain.contains(Style::WebkitLineBoxContainValue::Glyphs)) {
         // Compute text content (glyphs) hugging inline box layout bounds.
         for (auto run : lineLayoutResult().runs) {
             if (!run.isText())
@@ -581,7 +621,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
         }
     }
 
-    if (lineBoxContain.contains(Style::LineBoxContain::InitialLetter)) {
+    if (lineBoxContain.contains(Style::WebkitLineBoxContainValue::InitialLetter)) {
         // Initial letter contain is based on the font metrics cap geometry and we hug descent.
         auto& rootInlineBox = lineBox.rootInlineBox();
         auto& fontMetrics = rootInlineBox.primarymetricsOfPrimaryFont();
@@ -612,7 +652,7 @@ void LineBoxBuilder::adjustInlineBoxHeightsForLineBoxContainIfApplicable(LineBox
         auto inlineBoxLayoutBounds = inlineBox->layoutBounds();
 
         // "line-box-container: block" The extended block progression dimension of the root inline box must fit within the line box.
-        auto mayShrinkLineBox = inlineBox->isRootInlineBox() ? !lineBoxContain.contains(Style::LineBoxContain::Block) : true;
+        auto mayShrinkLineBox = inlineBox->isRootInlineBox() ? !lineBoxContain.contains(Style::WebkitLineBoxContainValue::Block) : true;
         auto ascent = mayShrinkLineBox ? enclosingAscentDescentForInlineBox.ascent : std::max(enclosingAscentDescentForInlineBox.ascent, inlineBoxLayoutBounds.ascent);
         auto descent = mayShrinkLineBox ? enclosingAscentDescentForInlineBox.descent : std::max(enclosingAscentDescentForInlineBox.descent, inlineBoxLayoutBounds.descent);
         inlineBox->setLayoutBounds({ ceilf(ascent), ceilf(descent) });

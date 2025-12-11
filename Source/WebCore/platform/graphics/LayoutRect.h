@@ -64,8 +64,6 @@ public:
 
     void setLocation(const LayoutPoint& location) { m_location = location; }
     void setSize(const LayoutSize& size) { m_size = size; }
-    void floorSize() { m_size.clampNegativeToZero(); }
-    void floorSize(LayoutSize& size) { m_size.clampToMinimumSize(size); }
 
     LayoutUnit x() const { return m_location.x(); }
     LayoutUnit y() const { return m_location.y(); }

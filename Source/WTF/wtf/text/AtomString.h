@@ -36,7 +36,7 @@ public:
     AtomString(AtomStringImpl*);
     AtomString(RefPtr<AtomStringImpl>&&);
     AtomString(Ref<AtomStringImpl>&&);
-    AtomString(const StaticStringImpl*);
+    AtomString(const StaticStringImpl&);
     AtomString(StringImpl*);
     explicit AtomString(const String&);
     explicit AtomString(String&&);
@@ -195,7 +195,7 @@ inline AtomString::AtomString(StringImpl* string)
 {
 }
 
-inline AtomString::AtomString(const StaticStringImpl* string)
+inline AtomString::AtomString(const StaticStringImpl& string)
     : m_string(AtomStringImpl::add(string))
 {
 }

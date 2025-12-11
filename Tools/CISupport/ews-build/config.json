@@ -162,6 +162,14 @@
     { "name": "ews200", "platform": "mac-sonoma" },
     { "name": "ews205", "platform": "mac-sonoma" },
     { "name": "ews206", "platform": "mac-sonoma" },
+    { "name": "ews207", "platform": "mac-tahoe" },
+    { "name": "ews208", "platform": "mac-tahoe" },
+    { "name": "ews209", "platform": "mac-tahoe" },
+    { "name": "ews210", "platform": "mac-tahoe" },
+    { "name": "ews211", "platform": "mac-tahoe" },
+    { "name": "ews212", "platform": "mac-tahoe" },
+    { "name": "ews213", "platform": "mac-tahoe" },
+    { "name": "ews214", "platform": "mac-tahoe" },
     { "name": "ews201", "platform": "mac-sonoma" },
     { "name": "ews202", "platform": "mac-sonoma" },
     { "name": "ews203", "platform": "mac-sonoma" },
@@ -269,8 +277,15 @@
       "name": "macOS-Tahoe-Debug-Build-EWS", "shortname": "mac-AS-debug", "icon": "buildOnly",
       "factory": "macOSBuildOnlyFactory", "platform": "mac-tahoe",
       "configuration": "debug", "architectures": ["arm64"],
-      "triggers": ["macos-tahoe-debug-wk2-tests-ews"],
+      "triggers": ["macos-tahoe-debug-api-tests-ews", "macos-tahoe-debug-wk2-tests-ews"],
       "workernames": ["ews171", "ews172", "ews173", "ews174"]
+    },
+    {
+      "name": "macOS-Tahoe-Debug-API-Tests-EWS", "shortname": "api-mac-debug", "icon": "testOnly",
+      "factory": "APITestsFactory", "platform": "mac-tahoe",
+      "configuration": "debug",
+      "triggered_by": ["macos-tahoe-debug-build-ews"],
+      "workernames": ["ews207", "ews208", "ews209", "ews210", "ews211", "ews212", "ews213", "ews214"]
     },
     {
       "name": "macOS-Tahoe-Debug-WK2-Tests-EWS", "shortname": "mac-AS-debug-wk2", "icon": "testOnly",
@@ -400,10 +415,9 @@
       "workernames": ["igalia4-wpe-ews", "igalia5-wpe-ews", "igalia6-wpe-ews", "igalia7-wpe-ews", "igalia8-wpe-ews", "igalia9-wpe-ews", "igalia10-wpe-ews", "igalia11-wpe-ews"]
     },
     {
-      "name": "WPE-Cairo-Build-EWS", "shortname": "wpe-cairo", "icon": "buildOnly",
-      "factory": "WPECairoBuildFactory", "platform": "wpe",
+      "name": "WPE-Cairo-LibWebRTC-Build-EWS", "shortname": "wpe-cairo-libwebrtc", "icon": "buildOnly",
+      "factory": "WPECairoLibWebRTCBuildFactory", "platform": "wpe",
       "configuration": "release", "architectures": ["x86_64"],
-      "additionalArguments": ["--cmakeargs=-DUSE_SKIA=OFF", "--cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE"],
       "workernames": ["igalia16-wpe-ews", "igalia17-wpe-ews", "igalia18-wpe-ews", "igalia19-wpe-ews"]
     },
     {
@@ -511,7 +525,7 @@
             "macOS-Tahoe-Debug-Build-EWS", "macOS-Sonoma-Release-Build-EWS", "macOS-Safer-CPP-Checks-EWS",
             "Services-EWS", "Style-EWS", "tvOS-26-Build-EWS", "tvOS-26-Simulator-Build-EWS", "visionOS-26-Build-EWS", "visionOS-26-Simulator-Build-EWS",
             "watchOS-26-Build-EWS", "watchOS-26-Simulator-Build-EWS", "WPE-Build-EWS", "WebKitPerl-Tests-EWS", "WebKitPy-Tests-EWS", "PlayStation-Build-EWS", "Win-Build-EWS",
-            "WPE-Cairo-Build-EWS"
+            "WPE-Cairo-LibWebRTC-Build-EWS"
       ]
     },
     {
@@ -526,7 +540,7 @@
             "macOS-Tahoe-Debug-Build-EWS", "macOS-Sonoma-Release-Build-EWS", "macOS-Safer-CPP-Checks-EWS",
             "Services-EWS", "Style-EWS", "Style-EWS", "tvOS-26-Build-EWS", "tvOS-26-Simulator-Build-EWS", "visionOS-26-Build-EWS", "visionOS-26-Simulator-Build-EWS",
             "watchOS-26-Build-EWS", "watchOS-26-Simulator-Build-EWS", "WPE-Build-EWS", "WebKitPerl-Tests-EWS", "WebKitPy-Tests-EWS", "PlayStation-Build-EWS", "Win-Build-EWS",
-            "WPE-Cairo-Build-EWS"
+            "WPE-Cairo-LibWebRTC-Build-EWS"
       ]
     },
     {
@@ -564,6 +578,10 @@
     {
       "type": "Triggerable", "name": "macos-tahoe-debug-build-ews",
       "builderNames": ["macOS-Tahoe-Debug-Build-EWS"]
+    },
+    {
+      "type": "Triggerable", "name": "macos-tahoe-debug-api-tests-ews",
+      "builderNames": ["macOS-Tahoe-Debug-API-Tests-EWS"]
     },
     {
       "type": "Triggerable", "name": "macos-tahoe-debug-wk2-tests-ews",

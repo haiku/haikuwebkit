@@ -38,7 +38,7 @@ namespace GridLayoutUtils {
 LayoutUnit usedInlineSizeForGridItem(const PlacedGridItem&);
 LayoutUnit usedBlockSizeForGridItem(const PlacedGridItem&);
 
-LayoutUnit computeTrackSizesBefore(size_t trackIndex, const TrackSizes&);
+LayoutUnit computeGridLinePosition(size_t gridLineIndex, const TrackSizes&, LayoutUnit gap);
 
 } // namespace GridLayoutUtils
 } // namespace Layout

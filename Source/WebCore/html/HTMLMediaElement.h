@@ -710,7 +710,7 @@ public:
     void updateSpatialTrackingLabel();
     void defaultSpatialTrackingLabelChanged(const String&);
 
-    const String& spatialTrackingLabel() const;
+    String spatialTrackingLabel() const;
     void setSpatialTrackingLabel(const String&);
 #endif
 

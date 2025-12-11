@@ -46,32 +46,22 @@ public func Buffer_getMappedRange_thunk(_ buffer: WebGPU.Buffer, offset: Int, si
     unsafe buffer.getMappedRange(offset: offset, size: size)
 }
 
-internal func computeRangeSize(size: Int, offset: Int) -> Int
-{
-    let result = WebGPU_Internal.checkedDifferenceSizeT(size, offset)
-    if result.hasOverflowed() {
-        return 0
-    }
-    return result.value()
-}
-
 extension WebGPU.Buffer {
-    public func getMappedRange(offset: Int, size: Int) -> SpanUInt8
-    {
+    func getMappedRange(offset: Int, size: Int) -> SpanUInt8 {
         if !isValid() {
             return unsafe SpanUInt8()
         }
 
         var rangeSize = size
         if size == WGPU_WHOLE_MAP_SIZE {
-            rangeSize = computeRangeSize(size: Int(currentSize()), offset: offset)
+            rangeSize = max(Int(currentSize()) - offset, 0)
         }
 
         if !validateGetMappedRange(offset, rangeSize) {
             return unsafe SpanUInt8()
         }
 
-        m_mappedRanges.add(WTFRangeSizeT(UInt(offset), UInt(offset + rangeSize)))
+        m_mappedRanges.add(.init(UInt(offset), UInt(offset + rangeSize)))
         m_mappedRanges.compact()
 
         if m_buffer.storageMode == .private || m_buffer.storageMode == .memoryless || m_buffer.length == 0 {

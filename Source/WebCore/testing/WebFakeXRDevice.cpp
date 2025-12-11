@@ -110,7 +110,7 @@ WebCore::IntSize SimulatedXRDevice::recommendedResolution(PlatformXR::SessionMod
     return IntSize(32, 32);
 }
 
-void SimulatedXRDevice::initializeTrackingAndRendering(const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&)
+void SimulatedXRDevice::initializeTrackingAndRendering(const WebCore::SecurityOriginData&, PlatformXR::SessionMode sessionMode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&)
 {
     if (m_trackingAndRenderingClient) {
         // WebXR FakeDevice waits for simulateInputConnection calls to add input sources-
@@ -125,6 +125,7 @@ void SimulatedXRDevice::initializeTrackingAndRendering(const WebCore::SecurityOr
                 m_trackingAndRenderingClient->sessionDidInitializeInputSources({ });
         });
     }
+    m_frameData.environmentBlendMode = (sessionMode == PlatformXR::SessionMode::ImmersiveAr) ? PlatformXR::XREnvironmentBlendMode::AlphaBlend : PlatformXR::XREnvironmentBlendMode::Opaque;
 }
 
 void SimulatedXRDevice::shutDownTrackingAndRendering()
@@ -172,6 +173,8 @@ void SimulatedXRDevice::frameTimerFired()
 #if ENABLE(WEBXR_HIT_TEST)
     for (auto source : m_hitTestSources)
         data.hitTestResults.add(source, Vector<PlatformXR::FrameData::HitTestResult> { });
+    for (auto source : m_transientInputHitTestSources)
+        data.transientInputHitTestResults.add(source, Vector<PlatformXR::FrameData::TransientInputHitTestResult> { });
 #endif
 
     if (m_FrameCallback)
@@ -214,6 +217,20 @@ void SimulatedXRDevice::requestHitTestSource(const PlatformXR::HitTestOptions&, 
 void SimulatedXRDevice::deleteHitTestSource(PlatformXR::HitTestSource source)
 {
     bool removed = m_hitTestSources.remove(source);
+    ASSERT_UNUSED(removed, removed);
+}
+
+void SimulatedXRDevice::requestTransientInputHitTestSource(const PlatformXR::TransientInputHitTestOptions&, CompletionHandler<void(WebCore::ExceptionOr<PlatformXR::TransientInputHitTestSource>)>&& completionHandler)
+{
+    auto addResult = m_transientInputHitTestSources.add(m_nextTransientInputHitTestSource);
+    ASSERT_UNUSED(addResult.isNewEntry, addResult);
+    completionHandler(m_nextTransientInputHitTestSource);
+    m_nextTransientInputHitTestSource++;
+}
+
+void SimulatedXRDevice::deleteTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource source)
+{
+    bool removed = m_transientInputHitTestSources.remove(source);
     ASSERT_UNUSED(removed, removed);
 }
 #endif

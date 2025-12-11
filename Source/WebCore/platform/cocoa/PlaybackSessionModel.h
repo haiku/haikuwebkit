@@ -100,7 +100,7 @@ public:
     virtual void setVideoReceiverEndpoint(const VideoReceiverEndpoint&) = 0;
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
-    virtual const String& spatialTrackingLabel() const { return emptyString(); }
+    virtual String spatialTrackingLabel() const { return emptyString(); }
     virtual void setSpatialTrackingLabel(const String&) { }
 #endif
 

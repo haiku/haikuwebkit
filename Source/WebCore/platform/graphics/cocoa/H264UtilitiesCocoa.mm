@@ -24,6 +24,7 @@
  */
 
 #import "config.h"
+#import "CMUtilities.h"
 #import "H264UtilitiesCocoa.h"
 
 #import "BitReader.h"
@@ -114,7 +115,7 @@ RefPtr<VideoInfo> createVideoInfoFromAVCC(std::span<const uint8_t> avcc)
     info->codecName = kCMVideoCodecType_H264;
     info->size = { static_cast<float>(dimensions.width), static_cast<float>(dimensions.height) };
     info->displaySize = { static_cast<float>(presentationDimensions.width), static_cast<float>(presentationDimensions.height) };
-    info->atomData = SharedBuffer::create(avcc);
+    info->extensionAtoms = { 1 , { computeBoxType(kCMVideoCodecType_H264), SharedBuffer::create(avcc) } };
 
     return info;
 }

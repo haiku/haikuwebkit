@@ -138,7 +138,7 @@ void VideoTrackPrivateGStreamer::updateConfigurationFromCaps(GRefPtr<GstCaps>&& 
     GUniquePtr<char> mimeCodec(gst_codec_utils_caps_get_mime_codec(caps.get()));
     if (mimeCodec) {
         String codec = unsafeSpan(mimeCodec.get());
-        if (!webkitGstCheckVersion(1, 22, 8)) {
+        if (!gst_check_version(1, 22, 8)) {
             // The gst_codec_utils_caps_get_mime_codec() function will return all the codec parameters,
             // including the default ones, so to strip them away, re-parse the returned string, using
             // WebCore VPx codec string parser.

@@ -27,10 +27,10 @@
 #include "InspectorFrontendAPIDispatcher.h"
 
 #include "DOMWrapperWorld.h"
-#include "InspectorController.h"
 #include "JSDOMPromise.h"
 #include "LocalFrame.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "ScriptController.h"
 #include "ScriptDisallowedScope.h"
 #include "ScriptSourceCode.h"

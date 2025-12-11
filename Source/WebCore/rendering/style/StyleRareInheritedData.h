@@ -32,12 +32,12 @@
 #include <WebCore/StyleCursor.h>
 #include <WebCore/StyleCustomPropertyData.h>
 #include <WebCore/StyleDynamicRangeLimit.h>
+#include <WebCore/StyleHangingPunctuation.h>
 #include <WebCore/StyleHyphenateCharacter.h>
 #include <WebCore/StyleHyphenateLimitEdge.h>
 #include <WebCore/StyleHyphenateLimitLines.h>
 #include <WebCore/StyleImageOrNone.h>
 #include <WebCore/StyleImageOrientation.h>
-#include <WebCore/StyleLineBoxContain.h>
 #include <WebCore/StyleLineFitEdge.h>
 #include <WebCore/StyleListStyleType.h>
 #include <WebCore/StyleMathDepth.h>
@@ -45,20 +45,25 @@
 #include <WebCore/StyleQuotes.h>
 #include <WebCore/StyleSVGPaintOrder.h>
 #include <WebCore/StyleScrollbarColor.h>
+#include <WebCore/StyleSpeakAs.h>
 #include <WebCore/StyleStrokeMiterlimit.h>
 #include <WebCore/StyleStrokeWidth.h>
 #include <WebCore/StyleTabSize.h>
+#include <WebCore/StyleTextAlignLast.h>
 #include <WebCore/StyleTextBoxEdge.h>
+#include <WebCore/StyleTextEmphasisPosition.h>
 #include <WebCore/StyleTextEmphasisStyle.h>
 #include <WebCore/StyleTextIndent.h>
 #include <WebCore/StyleTextShadow.h>
 #include <WebCore/StyleTextUnderlineOffset.h>
+#include <WebCore/StyleTextUnderlinePosition.h>
+#include <WebCore/StyleTouchAction.h>
+#include <WebCore/StyleWebKitLineBoxContain.h>
 #include <WebCore/StyleWebKitLineGrid.h>
 #include <WebCore/StyleWebKitOverflowScrolling.h>
 #include <WebCore/StyleWebKitTextStrokeWidth.h>
 #include <WebCore/StyleWebKitTouchCallout.h>
 #include <WebCore/StyleWidows.h>
-#include <WebCore/TouchAction.h>
 #include <wtf/DataRef.h>
 #include <wtf/FixedVector.h>
 #include <wtf/OptionSet.h>
@@ -107,18 +112,14 @@ public:
 
     float usedZoom;
     float deviceScaleFactor { 1.0f };
-
-    Style::ImageOrNone listStyleImage;
-
     Style::WebkitTextStrokeWidth textStrokeWidth;
+
     Style::Color textStrokeColor;
     Style::Color textFillColor;
     Style::Color textEmphasisColor;
-    
     Style::Color visitedLinkTextStrokeColor;
     Style::Color visitedLinkTextFillColor;
     Style::Color visitedLinkTextEmphasisColor;
-
     Style::Color caretColor;
     Style::Color visitedLinkCaretColor;
 
@@ -126,28 +127,58 @@ public:
 
     Style::ScrollbarColor scrollbarColor;
 
-    Style::DynamicRangeLimit dynamicRangeLimit;
+    Style::TextEmphasisStyle textEmphasisStyle;
 
-    Style::TextShadows textShadow;
+    Style::Quotes quotes;
 
-    // The `cursor` property's state is stored broken up into two parts:
-    //  - the cursor's `predefined` state is stored in `RenderStyle::InheritedFlags::cursor`.
-    //  - the cursor's `images` state is stored here in `StyleRareInheritedData::cursorImages`.
+    Style::Color strokeColor;
+    Style::Color visitedLinkStrokeColor;
+
+#if ENABLE(DARK_MODE_CSS)
+    Style::ColorScheme colorScheme;
+#endif
+
     Style::Cursor::Images cursorImages;
 
-    Style::TextEmphasisStyle textEmphasisStyle;
+#if ENABLE(TOUCH_EVENTS)
+    Style::Color tapHighlightColor;
+#endif
+
+    Style::ListStyleType listStyleType;
+    Style::BlockEllipsis blockEllipsis;
+
     Style::TextIndent textIndent;
+
+    Style::ImageOrNone listStyleImage;
+    Style::DynamicRangeLimit dynamicRangeLimit;
+    Style::TextShadows textShadow;
+    Style::HyphenateCharacter hyphenateCharacter;
+    DataRef<Style::CustomPropertyData> customProperties;
+    OptionSet<EventListenerRegionType> eventListenerRegionTypes;
+    Style::StrokeWidth strokeWidth;
     Style::TextUnderlineOffset textUnderlineOffset;
+    DataRef<StyleAppleColorFilterData> appleColorFilter;
+    Style::WebkitLineGrid lineGrid;
+    Style::TabSize tabSize;
+
+    Style::StrokeMiterlimit strokeMiterLimit;
+
+#if ENABLE(TEXT_AUTOSIZING)
+    Style::TextSizeAdjust textSizeAdjust;
+#endif
+
+    Style::MathDepth mathDepth;
 
     Style::TextBoxEdge textBoxEdge;
     Style::LineFitEdge lineFitEdge;
 
-    Style::StrokeMiterlimit miterLimit;
-
-    DataRef<Style::CustomPropertyData> customProperties;
-
     Style::Widows widows;
     Style::Orphans orphans;
+    Style::HyphenateLimitEdge hyphenateLimitBefore;
+    Style::HyphenateLimitEdge hyphenateLimitAfter;
+    Style::HyphenateLimitLines hyphenateLimitLines;
+
+    Style::TouchAction usedTouchAction;
 
     PREFERRED_TYPE(TextSecurity) unsigned textSecurity : 2;
     PREFERRED_TYPE(UserModify) unsigned userModify : 2;
@@ -157,20 +188,20 @@ public:
     PREFERRED_TYPE(LineBreak) unsigned lineBreak : 3;
     PREFERRED_TYPE(UserSelect) unsigned userSelect : 2;
     PREFERRED_TYPE(ColorSpace) unsigned colorSpace : 1;
-    PREFERRED_TYPE(OptionSet<SpeakAs>) unsigned speakAs : 4 { 0 };
+    PREFERRED_TYPE(Style::SpeakAs) unsigned speakAs : 4;
     PREFERRED_TYPE(Hyphens) unsigned hyphens : 2;
     PREFERRED_TYPE(TextCombine) unsigned textCombine : 1;
-    PREFERRED_TYPE(TextEmphasisPosition) unsigned textEmphasisPosition : 4;
-    PREFERRED_TYPE(TextUnderlinePosition) unsigned textUnderlinePosition : 4;
-    PREFERRED_TYPE(OptionSet<Style::LineBoxContain>) unsigned lineBoxContain: 7;
+    PREFERRED_TYPE(Style::TextEmphasisPosition) unsigned textEmphasisPosition : 4;
+    PREFERRED_TYPE(Style::TextUnderlinePosition) unsigned textUnderlinePosition : 4;
+    PREFERRED_TYPE(Style::WebkitLineBoxContain) unsigned lineBoxContain: 7;
     PREFERRED_TYPE(Style::ImageOrientation) unsigned imageOrientation : 1;
     PREFERRED_TYPE(ImageRendering) unsigned imageRendering : 3;
     PREFERRED_TYPE(LineSnap) unsigned lineSnap : 2;
     PREFERRED_TYPE(LineAlign) unsigned lineAlign : 1;
 #if ENABLE(WEBKIT_OVERFLOW_SCROLLING_CSS_PROPERTY)
-    PREFERRED_TYPE(Style::WebkitOverflowScrolling) unsigned webkitOverflowScrolling: 1;
+    PREFERRED_TYPE(Style::WebkitOverflowScrolling) unsigned overflowScrolling: 1;
 #endif
-    PREFERRED_TYPE(TextAlignLast) unsigned textAlignLast : 3;
+    PREFERRED_TYPE(Style::TextAlignLast) unsigned textAlignLast : 3;
     PREFERRED_TYPE(TextJustify) unsigned textJustify : 2;
     PREFERRED_TYPE(TextDecorationSkipInk) unsigned textDecorationSkipInk : 2;
     PREFERRED_TYPE(MathShift) unsigned mathShift : 1;
@@ -180,9 +211,9 @@ public:
     PREFERRED_TYPE(RubyOverhang) unsigned rubyOverhang : 1;
     PREFERRED_TYPE(TextZoom) unsigned textZoom: 1;
 #if ENABLE(WEBKIT_TOUCH_CALLOUT_CSS_PROPERTY)
-    PREFERRED_TYPE(Style::WebkitTouchCallout) unsigned webkitTouchCallout : 1;
+    PREFERRED_TYPE(Style::WebkitTouchCallout) unsigned touchCallout : 1;
 #endif
-    PREFERRED_TYPE(OptionSet<HangingPunctuation>) unsigned hangingPunctuation : 4;
+    PREFERRED_TYPE(Style::HangingPunctuation) unsigned hangingPunctuation : 4;
     PREFERRED_TYPE(Style::SVGPaintOrder::Type) unsigned paintOrder : 3;
     PREFERRED_TYPE(LineCap) unsigned capStyle : 2;
     PREFERRED_TYPE(LineJoin) unsigned joinStyle : 2;
@@ -202,41 +233,6 @@ public:
 #if HAVE(CORE_MATERIAL)
     PREFERRED_TYPE(AppleVisualEffect) unsigned usedAppleVisualEffectForSubtree : 5;
 #endif
-
-    OptionSet<TouchAction> usedTouchActions;
-    OptionSet<EventListenerRegionType> eventListenerRegionTypes;
-
-    Style::StrokeWidth strokeWidth;
-    Style::Color strokeColor;
-    Style::Color visitedLinkStrokeColor;
-
-    Style::HyphenateCharacter hyphenateCharacter;
-    Style::HyphenateLimitEdge hyphenateLimitBefore;
-    Style::HyphenateLimitEdge hyphenateLimitAfter;
-    Style::HyphenateLimitLines hyphenateLimitLines;
-
-#if ENABLE(DARK_MODE_CSS)
-    Style::ColorScheme colorScheme;
-#endif
-
-    Style::Quotes quotes;
-
-    DataRef<StyleAppleColorFilterData> appleColorFilter;
-
-    Style::WebkitLineGrid lineGrid;
-    Style::TabSize tabSize;
-
-#if ENABLE(TEXT_AUTOSIZING)
-    Style::TextSizeAdjust textSizeAdjust;
-#endif
-
-#if ENABLE(TOUCH_EVENTS)
-    Style::Color tapHighlightColor;
-#endif
-    Style::ListStyleType listStyleType;
-    Style::BlockEllipsis blockEllipsis;
-
-    Style::MathDepth mathDepth;
 
 private:
     StyleRareInheritedData();

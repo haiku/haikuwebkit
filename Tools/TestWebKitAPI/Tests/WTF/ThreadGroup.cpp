@@ -163,7 +163,7 @@ TEST(WTF, ThreadGroupRemove)
 
     Vector<Ref<Thread>> threads;
 
-    auto threadGroup = ThreadGroup::create();
+    RefPtr threadGroup = ThreadGroup::create().ptr();
     for (unsigned i = 0; i < NumberOfThreads; i++) {
         auto thread = Thread::create("ThreadGroupWorker"_s, [&]() {
             Locker locker { lock };

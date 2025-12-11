@@ -122,6 +122,14 @@ void WebMediaStrategy::enableMockMediaSource()
     WebCore::DeprecatedGlobalSettings::setGStreamerEnabled(false);
 #endif
     m_mockMediaSourceEnabled = true;
+
+#if USE(AVFOUNDATION)
+    if (hasRemoteRendererFor(MediaPlayerMediaEngineIdentifier::AVFoundationMSE)) {
+        WebCore::MediaStrategy::addMockMediaSourceEngine();
+        return;
+    }
+#endif
+
 #if ENABLE(GPU_PROCESS)
     if (m_useGPUProcess) {
         Ref connection = WebProcess::singleton().ensureGPUProcessConnection().connection();
@@ -130,14 +138,6 @@ void WebMediaStrategy::enableMockMediaSource()
     }
 #endif
     WebCore::MediaStrategy::addMockMediaSourceEngine();
-}
-#endif
-
-#if PLATFORM(COCOA) && ENABLE(VIDEO)
-void WebMediaStrategy::nativeImageFromVideoFrame(const WebCore::VideoFrame& frame, CompletionHandler<void(std::optional<RefPtr<WebCore::NativeImage>>&&)>&& completionHandler)
-{
-    // FIMXE: Move out of sync IPC.
-    completionHandler(WebProcess::singleton().ensureProtectedGPUProcessConnection()->protectedVideoFrameObjectHeapProxy()->getNativeImage(frame));
 }
 #endif
 

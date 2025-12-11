@@ -22,12 +22,10 @@ import os
 import sys
 
 top_level_directory = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, os.path.join(top_level_directory, "Tools", "flatpak"))
 sys.path.insert(0, os.path.join(top_level_directory, "Tools", "jhbuild"))
 sys.path.insert(0, os.path.join(top_level_directory, "Tools", "glib"))
 import common
 import jhbuildutils
-import flatpakutils
 from api_test_runner import TestRunner, create_option_parser, get_runner_args
 
 
@@ -35,7 +33,7 @@ try:
     from gi.repository import Gio, GLib
 except ImportError:
     # We don't require gi to be installed outside the sandbox
-    if flatpakutils.is_sandboxed() or jhbuildutils.enter_jhbuild_environment_if_available("gtk"):
+    if jhbuildutils.enter_jhbuild_environment_if_available("gtk"):
         raise
 
 class GtkTestRunner(TestRunner):
@@ -93,11 +91,10 @@ class GtkTestRunner(TestRunner):
 
 if __name__ == "__main__":
     runner_args = get_runner_args(sys.argv)
-    flatpakutils.run_in_sandbox_if_available(runner_args)
-    if not flatpakutils.is_sandboxed() and not jhbuildutils.enter_jhbuild_environment_if_available("gtk") and os.environ.get('WEBKIT_BUILD_USE_SYSTEM_LIBRARIES') != '1':
+    if not jhbuildutils.enter_jhbuild_environment_if_available("gtk") and os.environ.get('WEBKIT_BUILD_USE_SYSTEM_LIBRARIES') != '1':
         print('***')
-        print('*** Warning: jhbuild environment not present and not running in flatpak.')
-        print('*** Run update-webkitgtk-libs or update-webkit-flatpak before build-webkit to ensure proper testing..')
+        print('*** Warning: jhbuild environment not present.')
+        print('*** Run update-webkitgtk-libs before build-webkit to ensure proper testing.')
         print('***')
 
     option_parser = create_option_parser()

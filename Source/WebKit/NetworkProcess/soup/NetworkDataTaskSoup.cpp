@@ -1436,10 +1436,15 @@ void NetworkDataTaskSoup::didGetFileInfo(GFileInfo* info)
         m_response.setExpectedContentLength(-1);
     } else {
         auto contentType = String::fromLatin1(g_file_info_get_content_type(info));
-        m_response.setMimeType(extractMIMETypeFromMediaType(contentType));
+        auto mimeTypeFromExtension = MIMETypeRegistry::mimeTypeForPath(m_response.url().path());
+        auto mimeTypeFromContent = extractMIMETypeFromMediaType(contentType);
+        // If an application calls g_app_info_get_default_for_type($ext) then Glib will return "application/x-extension-$ext" in mimeTypeFromExtension which WebKit doesn't know how to handle.
+        // So, only prefer mimeTypeFromExtension if that is a mimeType that WebKit recognizes internally. See: https://gitlab.gnome.org/GNOME/glib/-/issues/2511
+        if (MIMETypeRegistry::canShowMIMEType(mimeTypeFromExtension) || mimeTypeFromContent.isEmpty())
+            m_response.setMimeType(WTFMove(mimeTypeFromExtension));
+        else
+            m_response.setMimeType(WTFMove(mimeTypeFromContent));
         m_response.setTextEncodingName(extractCharsetFromMediaType(contentType).toString());
-        if (m_response.mimeType().isEmpty())
-            m_response.setMimeType(MIMETypeRegistry::mimeTypeForPath(m_response.url().path().toString()));
         m_response.setExpectedContentLength(g_file_info_get_size(info));
     }
 }

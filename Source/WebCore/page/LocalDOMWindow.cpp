@@ -1762,10 +1762,20 @@ double LocalDOMWindow::devicePixelRatio() const
     if (!page)
         return 0.0;
 
-    float frameScale = 1.0f;
-    if (auto* localFrame = dynamicDowncast<LocalFrame>(frame.get()))
-        frameScale = localFrame->frameScaleFactor();
-    return page->deviceScaleFactor() * frameScale;
+    auto frameScaleRatio = [&] {
+        float frameScale = 1.0f;
+        if (auto* localFrame = dynamicDowncast<LocalFrame>(frame.get())) {
+            frameScale = localFrame->frameScaleFactor();
+            // Page zoom applies to all frames synchronously, so include it in devicePixelRatio
+            // for both main frame and iframes. frameScaleFactor() doesn't include page zoom
+            // since page zoom is applied globally for rendering.
+            float pageZoom = localFrame->pageZoomFactor();
+            frameScale *= pageZoom;
+        }
+        return frameScale;
+    };
+
+    return page->deviceScaleFactor() * frameScaleRatio();
 }
 
 void LocalDOMWindow::scrollBy(double x, double y) const
@@ -2865,6 +2875,17 @@ ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString,
     return noopener ? RefPtr<Frame> { nullptr } : newFrame;
 }
 
+#if PLATFORM(IOS_FAMILY)
+static bool shouldBypassPopupBlockerForQuirk(const Document* document, const String& urlString)
+{
+    if (RefPtr firstFrameDocument = document) {
+        if (firstFrameDocument->quirks().shouldAllowPopupFromMicrosoftOfficeToOneDrive())
+            return firstFrameDocument->quirks().needsPopupFromMicrosoftOfficeToOneDrive(firstFrameDocument->completeURL(urlString));
+    }
+    return false;
+}
+#endif
+
 ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWindow, LocalDOMWindow& firstWindow, const String& urlStringToOpen, const AtomString& frameName, const String& windowFeaturesString)
 {
     if (!isCurrentlyDisplayedInFrame())
@@ -2898,7 +2919,12 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
     if (!frame)
         return RefPtr<WindowProxy> { nullptr };
 
-    if (!firstWindow.allowPopUp()) {
+    auto popupAllowed = firstWindow.allowPopUp();
+#if PLATFORM(IOS_FAMILY)
+    popupAllowed |= shouldBypassPopupBlockerForQuirk(firstFrame->document(), urlString);
+#endif
+
+    if (!popupAllowed) {
         // Because FrameTree::findFrameForNavigation() returns true for empty strings, we must check for empty frame names.
         // Otherwise, illegitimate window.open() calls with no name will pass right through the popup blocker.
         if (frameName.isEmpty() || !frame->loader().findFrameForNavigation(frameName, activeDocument.get()))

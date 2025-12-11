@@ -231,19 +231,22 @@ void CoreAudioCaptureSource::initializeToStartProducingData()
     m_shouldInitializeAudioUnit = false;
 
 #if PLATFORM(MAC)
-    if (echoCancellation() != protectedUnit()->enableEchoCancellation())
+    if (echoCancellation() != m_unit->enableEchoCancellation())
         m_unit = echoCancellation() ? Ref { CoreAudioCaptureUnit::defaultSingleton() } : CoreAudioCaptureUnit::createNonVPIOUnit();
+    ASSERT(echoCancellation() == m_unit->enableEchoCancellation());
 #endif
 
     Ref unit = m_unit;
+    // We add ourselves as a client before changing of capture device, as it can trigger reconfiguration.
+    unit->addClient(*this);
     unit->setCaptureDevice(String { persistentID() }, m_captureDeviceID, captureDevice().isDefault());
 
     bool shouldReconfigure = echoCancellation() != unit->enableEchoCancellation() || sampleRate() != unit->sampleRate() || volume() != unit->volume();
+#if !PLATFORM(MAC)
     unit->setEnableEchoCancellation(echoCancellation());
+#endif
     unit->setSampleRate(sampleRate());
     unit->setVolume(volume());
-
-    unit->addClient(*this);
 
     if (shouldReconfigure)
         unit->reconfigure();
@@ -320,6 +323,21 @@ const RealtimeMediaSourceSettings& CoreAudioCaptureSource::settings()
     return m_currentSettings.value();
 }
 
+#if PLATFORM(MAC)
+void CoreAudioCaptureSource::changeAudioUnit()
+{
+    Ref unit = m_unit;
+    unit->removeClient(*this);
+    if (isProducingData())
+        unit->stopProducingData();
+
+    m_unit = echoCancellation() ? Ref { CoreAudioCaptureUnit::defaultSingleton() } : CoreAudioCaptureUnit::createNonVPIOUnit();
+    m_shouldInitializeAudioUnit = true;
+    if (isProducingData())
+        startProducingData();
+}
+#endif
+
 void CoreAudioCaptureSource::settingsDidChange(OptionSet<RealtimeMediaSourceSettings::Flag> settings)
 {
     if (m_shouldInitializeAudioUnit || m_echoCancellationChanging) {
@@ -330,15 +348,7 @@ void CoreAudioCaptureSource::settingsDidChange(OptionSet<RealtimeMediaSourceSett
     bool shouldReconfigure = false;
     if (settings.contains(RealtimeMediaSourceSettings::Flag::EchoCancellation)) {
 #if PLATFORM(MAC)
-        Ref unit = m_unit;
-        unit->removeClient(*this);
-        if (isProducingData())
-            unit->stopProducingData();
-
-        m_unit = echoCancellation() ? Ref { CoreAudioCaptureUnit::defaultSingleton() } : CoreAudioCaptureUnit::createNonVPIOUnit();
-        m_shouldInitializeAudioUnit = true;
-        if (isProducingData())
-            startProducingData();
+        changeAudioUnit();
         return;
 #else
         protectedUnit()->setEnableEchoCancellation(echoCancellation());
@@ -384,7 +394,7 @@ void CoreAudioCaptureSource::handleNewCurrentMicrophoneDevice(const CaptureDevic
 {
     if (!isProducingData() || persistentID() == device.persistentId())
         return;
-    
+
     RELEASE_LOG_INFO(WebRTC, "CoreAudioCaptureSource switching from '%s' to '%s'", name().utf8().data(), device.label().utf8().data());
     
     setName(AtomString { device.label() });
@@ -397,6 +407,23 @@ void CoreAudioCaptureSource::handleNewCurrentMicrophoneDevice(const CaptureDevic
         observer.sourceConfigurationChanged();
     });
 }
+
+#if PLATFORM(MAC)
+void CoreAudioCaptureSource::vpioUnitWillChangeCaptureDeviceTo(const String& persistentID)
+{
+    if (!isProducingData() || this->persistentID() == persistentID || !echoCancellation())
+        return;
+
+    // We migrate capture to a non VPIO unit so that we keep only one VPIO unit running.
+    m_echoCancellationChanging = true;
+    setEchoCancellation(false);
+    m_echoCancellationChanging = false;
+
+    changeAudioUnit();
+
+    configurationChanged();
+}
+#endif
 
 void CoreAudioCaptureSource::echoCancellationChanged()
 {

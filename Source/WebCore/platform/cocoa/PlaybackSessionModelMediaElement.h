@@ -105,7 +105,7 @@ public:
     WEBCORE_EXPORT void setVolume(double) final;
     WEBCORE_EXPORT void setPlayingOnSecondScreen(bool) final;
 #if HAVE(SPATIAL_TRACKING_LABEL)
-    WEBCORE_EXPORT const String& spatialTrackingLabel() const final;
+    WEBCORE_EXPORT String spatialTrackingLabel() const final;
     WEBCORE_EXPORT void setSpatialTrackingLabel(const String&) final;
 #endif
     WEBCORE_EXPORT void sendRemoteCommand(PlatformMediaSession::RemoteControlCommandType, const PlatformMediaSession::RemoteCommandArgument&) final;

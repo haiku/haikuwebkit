@@ -109,6 +109,7 @@ class BackForwardController;
 class BadgeClient;
 class BroadcastChannelRegistry;
 class CacheStorageProvider;
+class CaptionDisplaySettingsClient;
 class Chrome;
 class CompositeEditCommand;
 class ContextMenuController;
@@ -141,7 +142,6 @@ class OpportunisticTaskScheduler;
 class ImageAnalysisQueue;
 class ImageOverlayController;
 class InspectorBackendClient;
-class InspectorController;
 class IntSize;
 class KeyboardScrollingAnimator;
 class LayoutRect;
@@ -156,6 +156,7 @@ class ModelPlayerProvider;
 class PageConfiguration;
 class PageDebuggable;
 class PageGroup;
+class PageInspectorController;
 class PageOverlayController;
 class PaymentCoordinator;
 class PerformanceLogging;
@@ -231,6 +232,7 @@ struct ClientOrigin;
 struct DocumentSyncSerializationData;
 struct FixedContainerEdges;
 struct NavigationAPIMethodTracker;
+struct ResolvedCaptionDisplaySettingsOptions;
 struct SpatialBackdropSource;
 struct SystemPreviewInfo;
 struct TextRecognitionResult;
@@ -254,7 +256,7 @@ enum class FilterRenderingMode : uint8_t;
 enum class LayoutMilestone : uint16_t;
 enum class LoginStatusAuthenticationType : uint8_t;
 enum class PlatformMediaSessionPlaybackControlsPurpose : uint8_t;
-enum class MediaPlaybackTargetContextMockState : uint8_t;
+enum class MediaPlaybackTargetMockState : uint8_t;
 enum class MediaProducerMediaState : uint32_t;
 enum class MediaProducerMediaCaptureKind : uint8_t;
 enum class MediaProducerMutedState : uint8_t;
@@ -319,6 +321,9 @@ enum class RenderingUpdateStep : uint32_t {
     RestoreScrollPositionAndViewState   = 1 << 27,
     AdjustVisibility                    = 1 << 28,
     SnapshottedScrollOffsets            = 1 << 29,
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    Immersive                           = 1 << 30,
+#endif
 
 };
 
@@ -507,8 +512,8 @@ public:
     ContextMenuController& contextMenuController() { return m_contextMenuController.get(); }
     const ContextMenuController& contextMenuController() const { return m_contextMenuController.get(); }
 #endif
-    InspectorController& inspectorController() { return m_inspectorController.get(); }
-    WEBCORE_EXPORT Ref<InspectorController> protectedInspectorController();
+    PageInspectorController& inspectorController() { return m_inspectorController.get(); }
+    WEBCORE_EXPORT Ref<PageInspectorController> protectedInspectorController();
     PointerCaptureController& pointerCaptureController() { return m_pointerCaptureController.get(); }
 #if ENABLE(POINTER_LOCK)
     PointerLockController& pointerLockController() { return m_pointerLockController.get(); }
@@ -750,6 +755,7 @@ public:
     Ref<ServicesOverlayController> protectedServicesOverlayController();
 #endif
     ImageOverlayController& imageOverlayController();
+    Ref<ImageOverlayController> protectedImageOverlayController();
     ImageOverlayController* imageOverlayControllerIfExists() { return m_imageOverlayController.get(); }
 
 #if ENABLE(IMAGE_ANALYSIS)
@@ -1076,7 +1082,7 @@ public:
     void showPlaybackTargetPicker(PlaybackTargetClientContextIdentifier, const IntPoint&, bool, RouteSharingPolicy, const String&);
     void playbackTargetPickerClientStateDidChange(PlaybackTargetClientContextIdentifier, MediaProducerMediaStateFlags);
     WEBCORE_EXPORT void setMockMediaPlaybackTargetPickerEnabled(bool);
-    WEBCORE_EXPORT void setMockMediaPlaybackTargetPickerState(const String&, MediaPlaybackTargetContextMockState);
+    WEBCORE_EXPORT void setMockMediaPlaybackTargetPickerState(const String&, MediaPlaybackTargetMockState);
     WEBCORE_EXPORT void mockMediaPlaybackTargetPickerDismissPopup();
 
     WEBCORE_EXPORT void setPlaybackTarget(PlaybackTargetClientContextIdentifier, Ref<MediaPlaybackTarget>&&);
@@ -1280,7 +1286,7 @@ public:
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     WEBCORE_EXPORT void setDefaultSpatialTrackingLabel(const String&);
-    const String& defaultSpatialTrackingLabel() const { return m_defaultSpatialTrackingLabel; }
+    String defaultSpatialTrackingLabel() const { return m_defaultSpatialTrackingLabel; }
 #endif
 
 #if ENABLE(GAMEPAD)
@@ -1390,13 +1396,21 @@ public:
     void updateDisplayEDRSuppression();
 #endif
 
-    // Checking hardware keyboard attached
-    void setHardwareKeyboardAttached(bool attached) { m_hardwareKeyboardAttached = attached; }
-    bool hardwareKeyboardAttached() const { return m_hardwareKeyboardAttached; }
-
 #if PLATFORM(IOS_FAMILY)
+    using HardwareKeyboardAttachmentObserver = Function<void(bool)>;
+    void addHardwareKeyboardAttachmentObserver(HardwareKeyboardAttachmentObserver&&);
+
+    WEBCORE_EXPORT void didUpdateHardwareKeyboardAttachment(bool);
+
     WEBCORE_EXPORT void clearIsShowingInputView();
 #endif
+
+#if ENABLE(VIDEO)
+    WEBCORE_EXPORT void setCaptionDisplaySettingsClientForTesting(Ref<CaptionDisplaySettingsClient>&&);
+    WEBCORE_EXPORT void clearCaptionDisplaySettingsClientForTesting();
+    void showCaptionDisplaySettings(HTMLMediaElement&, const ResolvedCaptionDisplaySettingsOptions&, CompletionHandler<void(ExceptionOr<void>)>&&);
+#endif
+
 private:
     explicit Page(PageConfiguration&&);
 
@@ -1488,7 +1502,7 @@ private:
 #if ENABLE(CONTEXT_MENUS)
     const UniqueRef<ContextMenuController> m_contextMenuController;
 #endif
-    const UniqueRef<InspectorController> m_inspectorController;
+    const UniqueRef<PageInspectorController> m_inspectorController;
     const UniqueRef<PointerCaptureController> m_pointerCaptureController;
 #if ENABLE(POINTER_LOCK)
     const UniqueRef<PointerLockController> m_pointerLockController;
@@ -1873,8 +1887,12 @@ private:
     // Checking hardware keyboard attached
 #if PLATFORM(IOS_FAMILY)
     bool m_hardwareKeyboardAttached { false };
-#else
-    bool m_hardwareKeyboardAttached { true };
+    Vector<HardwareKeyboardAttachmentObserver> m_hardwareKeyboardAttachmentObservers;
+    void flushHardwareKeyboardAttachmentObservers();
+#endif
+
+#if ENABLE(VIDEO)
+    RefPtr<CaptionDisplaySettingsClient> m_captionDisplaySettingsClientForTesting;
 #endif
 }; // class Page
 

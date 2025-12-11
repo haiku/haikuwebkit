@@ -164,12 +164,6 @@ static WebCore::ModalContainerObservationPolicy coreModalContainerObservationPol
 
 } // namespace WebKit
 
-// EnhancedSecurityFeatureEnabled is a temporary NSUserDefault, See: rdar://163369863
-static BOOL isEnhancedSecurityFeatureEnabled()
-{
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"EnhancedSecurityFeatureEnabled"];
-}
-
 static Ref<API::WebsitePolicies> protectedWebsitePolicies(WKWebpagePreferences *preferences)
 {
     return *preferences->_websitePolicies;
@@ -505,19 +499,24 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
     }
 }
 
+- (void)_setOverrideReferrerForAllRequests:(NSString *)referrer
+{
+    _websitePolicies->setOverrideReferrerForAllRequests(referrer);
+}
+
+- (NSString *)_overrideReferrerForAllRequests
+{
+    return _websitePolicies->overrideReferrerForAllRequests().createNSString().autorelease();
+}
+
 ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)_setEnhancedSecurityEnabled:(BOOL)enhancedSecurityEnabled
 {
-    if (!isEnhancedSecurityFeatureEnabled())
-        return;
-
     _websitePolicies->setEnhancedSecurityEnabled(enhancedSecurityEnabled ? true : false);
 }
 
 - (BOOL)_enhancedSecurityEnabled
 {
-    if (!isEnhancedSecurityFeatureEnabled())
-        return NO;
     return _websitePolicies->enhancedSecurityEnabled();
 }
 ALLOW_DEPRECATED_IMPLEMENTATIONS_END
@@ -843,9 +842,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 - (void)setSecurityRestrictionMode:(WKSecurityRestrictionMode)mode
 {
-    if (!isEnhancedSecurityFeatureEnabled())
-        return;
-
     switch (mode) {
     case WKSecurityRestrictionModeNone:
         _websitePolicies->setEnhancedSecurityEnabled(false);
@@ -864,8 +860,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 - (WKSecurityRestrictionMode)securityRestrictionMode
 {
-    if (!isEnhancedSecurityFeatureEnabled())
-        return WKSecurityRestrictionModeNone;
     if (Ref { *_websitePolicies }->lockdownModeEnabled())
         return WKSecurityRestrictionModeLockdown;
     if (_websitePolicies->enhancedSecurityEnabled())

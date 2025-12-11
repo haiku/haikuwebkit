@@ -501,12 +501,15 @@ CaptureSourceOrError UserMediaCaptureManagerProxy::createMicrophoneSource(const 
     if (!sourceOrError)
         return sourceOrError;
 
+    Ref source = sourceOrError.source();
+
+#if PLATFORM(IOS_FAMILY)
     auto& perPageSources = m_pageSources.ensure(pageIdentifier, [] {
         return PageSources { };
     }).iterator->value;
 
     // FIXME: Support multiple microphones simultaneously.
-    if (auto microphoneSource = perPageSources.microphoneSource.get()) {
+    if (RefPtr microphoneSource = perPageSources.microphoneSource.get()) {
         if (microphoneSource->persistentID() != device.persistentId() && !microphoneSource->isEnded()) {
             RELEASE_LOG_ERROR(WebRTC, "Ending microphone source as new source is using a different device.");
             // FIXME: We should probably fail the capture in a way that shows a specific console log message.
@@ -514,8 +517,9 @@ CaptureSourceOrError UserMediaCaptureManagerProxy::createMicrophoneSource(const 
         }
     }
 
-    auto source = sourceOrError.source();
     perPageSources.microphoneSource = ThreadSafeWeakPtr { source.get() };
+#endif
+
     return source;
 }
 
@@ -701,9 +705,11 @@ void UserMediaCaptureManagerProxy::removeSource(RealtimeMediaSourceIdentifier id
                     if (!shouldContinueMonitoring)
                         m_connectionProxy->stopMonitoringCaptureDeviceRotation(*pageIdentifier, source->persistentID());
                 }
+#if PLATFORM(IOS_FAMILY)
             } else if (source->deviceType() == WebCore::CaptureDevice::DeviceType::Microphone) {
                 if (source.ptr() == pageSources.microphoneSource.get().get())
                     iterator->value.microphoneSource = nullptr;
+#endif
             }
         }
     }

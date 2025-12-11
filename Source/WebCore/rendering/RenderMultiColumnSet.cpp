@@ -972,8 +972,6 @@ void RenderMultiColumnSet::addOverflowFromInFlowChildren(OptionSet<ComputeOverfl
     addLayoutOverflow(lastRect);
     if (!hasNonVisibleOverflow())
         addVisualOverflow(lastRect);
-    if (hasRenderOverflow())
-        m_overflow->addContentOverflow(lastRect);
 }
 
 PositionWithAffinity RenderMultiColumnSet::positionForPoint(const LayoutPoint& logicalPoint, HitTestSource source, const RenderFragmentContainer*)

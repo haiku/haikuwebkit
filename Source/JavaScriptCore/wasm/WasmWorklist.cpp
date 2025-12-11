@@ -51,6 +51,8 @@ void Worklist::dump(PrintStream& out) const
 // many threads. In order to stop a thread from wasting time we remove any plan that is
 // is currently in a single threaded state from the work queue so other plans can run.
 class Worklist::Thread final : public AutomaticThread {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(Thread);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Thread);
 public:
     using Base = AutomaticThread;
     static Ref<Thread> create(const AbstractLocker& locker, Worklist& work)
@@ -233,7 +235,7 @@ Worklist::~Worklist()
         m_planEnqueued->notifyAll(locker);
     }
     for (unsigned i = 0; i < m_threads.size(); ++i)
-        m_threads[i]->join();
+        Ref { m_threads[i] }->join();
 }
 
 static Worklist* globalWorklist;

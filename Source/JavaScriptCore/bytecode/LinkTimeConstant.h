@@ -65,6 +65,7 @@ class JSGlobalObject;
     v(rejectPromiseWithFirstResolvingFunctionCallCheck, nullptr) \
     v(fulfillPromiseWithFirstResolvingFunctionCallCheck, nullptr) \
     v(resolveWithoutPromiseForAsyncAwait, nullptr) \
+    v(driveAsyncFunction, nullptr) \
     v(awaitValue, nullptr) \
     v(newHandledRejectedPromise, nullptr) \
     v(promiseOnRejectedWithContext, nullptr) \
@@ -144,7 +145,7 @@ class JSGlobalObject;
     v(sentinelString, nullptr) \
     v(createRemoteFunction, nullptr) \
     v(isRemoteFunction, nullptr) \
-    v(arrayFromFastFillWithUndefined, nullptr) \
+    v(arrayFromFastWithoutMapFn, nullptr) \
     v(jsonParse, nullptr) \
     v(jsonStringify, nullptr) \
     v(String, nullptr) \

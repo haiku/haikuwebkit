@@ -273,10 +273,8 @@ TEST(WTF_RunLoop, Create)
         });
         semaphore.wait();
     }
-    {
-        Locker threadsLock { Thread::allThreadsLock() };
-        EXPECT_TRUE(Thread::allThreads().contains(runLoopThread));
-    }
+
+    EXPECT_TRUE(Thread::allThreads().contains(*runLoopThread));
 
     runLoop->dispatch([] {
         RunLoop::currentSingleton().stop();
@@ -285,10 +283,7 @@ TEST(WTF_RunLoop, Create)
     Util::runFor(.2_s);
 
     // Expect that RunLoop Thread does not leak.
-    {
-        Locker threadsLock { Thread::allThreadsLock() };
-        EXPECT_FALSE(Thread::allThreads().contains(runLoopThread));
-    }
+    EXPECT_FALSE(Thread::allThreads().contains(*runLoopThread));
 }
 
 // FIXME(https://bugs.webkit.org/show_bug.cgi?id=246569): glib and Windows runloop does not match Cocoa.

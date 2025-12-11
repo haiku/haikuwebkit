@@ -56,6 +56,7 @@ public:
     unsigned length() const;
     bool isSupportedPropertyIndex(unsigned index) const { return index < length(); }
     WebXRInputSource* item(unsigned) const;
+    RefPtr<WebXRInputSource> itemByHandle(PlatformXR::InputSourceHandle) const;
 
     void clear();
     void update(double timestamp, const InputSourceList&);

@@ -146,14 +146,6 @@
             ]
         },
         {
-            "name": "navigate",
-            "description": "Navigates current page to the given URL.",
-            "targetTypes": ["page"],
-            "parameters": [
-                { "name": "url", "type": "string", "description": "URL to navigate the page to." }
-            ]
-        },
-        {
             "name": "overrideUserAgent",
             "description": "Override's the user agent of the inspected page",
             "targetTypes": ["page"],

@@ -1,0 +1,4 @@
+
+PASS e.style['masonry-direction'] = "auto" should not set the property value
+PASS e.style['masonry-direction'] = "column row-reverse" should not set the property value
+

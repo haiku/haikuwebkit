@@ -223,7 +223,7 @@ const DawnSampler* DawnCommandBuffer::getSampler(
     if (desc.isImmutable()) {
         const DawnSampler* immutableSampler = fActiveGraphicsPipeline->immutableSampler(index);
         if (immutableSampler) {
-            this->trackResource(sk_ref_sp<Sampler>(immutableSampler));
+            this->trackCommandBufferResource(sk_ref_sp<Sampler>(immutableSampler));
         }
         return immutableSampler;
     } else {
@@ -999,7 +999,7 @@ bool DawnCommandBuffer::updateIntrinsicUniformsAsPushConstant(UniformDataBlock u
 #if !defined(__EMSCRIPTEN__)
     SkASSERT(fActiveRenderPassEncoder);
     SkASSERT(uniformData.size() <= DawnGraphicsPipeline::kIntrinsicUniformSize);
-    fActiveRenderPassEncoder.SetImmediateData(0, uniformData.data(), uniformData.size());
+    fActiveRenderPassEncoder.SetImmediates(0, uniformData.data(), uniformData.size());
     return true;
 #else
     SkASSERT(false); // No push constant support in WASM yet

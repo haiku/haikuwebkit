@@ -169,7 +169,7 @@ void DrawingAreaCoordinatedGraphics::updateRenderingWithForcedRepaint()
     }
 
     if (!m_layerTreeStateIsFrozen)
-        m_layerTreeHost->forceRepaint();
+        m_layerTreeHost->updateRenderingWithForcedRepaint();
 }
 
 void DrawingAreaCoordinatedGraphics::updateRenderingWithForcedRepaintAsync(WebPage& page, CompletionHandler<void()>&& completionHandler)
@@ -182,7 +182,7 @@ void DrawingAreaCoordinatedGraphics::updateRenderingWithForcedRepaintAsync(WebPa
     if (m_layerTreeStateIsFrozen)
         return completionHandler();
 
-    m_layerTreeHost->forceRepaintAsync(WTFMove(completionHandler));
+    m_layerTreeHost->updateRenderingWithForcedRepaintAsync(WTFMove(completionHandler));
 }
 
 void DrawingAreaCoordinatedGraphics::setLayerTreeStateIsFrozen(bool isFrozen)
@@ -327,7 +327,7 @@ void DrawingAreaCoordinatedGraphics::triggerRenderingUpdate()
         return;
 
     if (m_layerTreeHost)
-        m_layerTreeHost->scheduleLayerFlush();
+        m_layerTreeHost->scheduleRenderingUpdate();
     else
         scheduleDisplay();
 }

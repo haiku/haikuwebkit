@@ -185,7 +185,7 @@ private:
     std::unique_ptr<MemoryHandler> m_memoryHandler;
     std::unique_ptr<ExecutionHandler> m_executionHandler;
 
-    std::unique_ptr<ModuleManager> m_instanceManager;
+    std::unique_ptr<ModuleManager> m_moduleManager;
     std::unique_ptr<BreakpointManager> m_breakpointManager;
 
 #if ENABLE(REMOTE_INSPECTOR)

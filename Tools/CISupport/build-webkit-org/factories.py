@@ -166,6 +166,14 @@ class BuildAndJSCTests32Factory(Factory):
         self.addStep(RunJavaScriptCoreTests(timeout=60 * 60))
 
 
+class BuildO3AndJSCTestsFactory(Factory):
+    def __init__(self, platform, configuration, architectures, triggers=None, additionalArguments=None, device_model=None):
+        Factory.__init__(self, platform, configuration, architectures, False, additionalArguments, device_model)
+        self.addStep(SetO3OptimizationLevel())
+        self.addStep(CompileJSCOnly(timeout=60 * 60))
+        self.addStep(RunJavaScriptCoreTests(timeout=60 * 60))
+
+
 class TestAllButJSCFactory(TestFactory):
     JSCTestClass = None
 

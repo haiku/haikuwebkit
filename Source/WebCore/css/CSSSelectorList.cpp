@@ -43,8 +43,10 @@ CSSSelectorList::CSSSelectorList(const CSSSelectorList& other)
         return;
 
     m_selectorArray = makeUniqueArray<CSSSelector>(otherComponentCount);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     for (unsigned i = 0; i < otherComponentCount; ++i)
         new (NotNull, &m_selectorArray[i]) CSSSelector(other.m_selectorArray[i]);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
 CSSSelectorList::CSSSelectorList(MutableCSSSelectorList&& selectorVector)
@@ -59,6 +61,7 @@ CSSSelectorList::CSSSelectorList(MutableCSSSelectorList&& selectorVector)
     ASSERT(flattenedSize);
     m_selectorArray = makeUniqueArray<CSSSelector>(flattenedSize);
     size_t arrayIndex = 0;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     for (size_t i = 0; i < selectorVector.size(); ++i) {
         auto* last = selectorVector[i].get();
         auto* current = last;
@@ -66,9 +69,7 @@ CSSSelectorList::CSSSelectorList(MutableCSSSelectorList&& selectorVector)
             {
                 // Move item from the parser selector vector into m_selectorArray without invoking destructor (Ugh.)
                 auto* currentSelector = current->releaseSelector().release();
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
                 memcpy(static_cast<void*>(&m_selectorArray[arrayIndex]), static_cast<void*>(currentSelector), sizeof(CSSSelector));
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
                 // Free the underlying memory without invoking the destructor.
                 operator delete (currentSelector);
@@ -85,16 +86,19 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     }
     ASSERT(flattenedSize == arrayIndex);
     m_selectorArray[arrayIndex - 1].m_isLastInSelectorList = true;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
 CSSSelectorList CSSSelectorList::makeCopyingSimpleSelector(const CSSSelector& simpleSelector)
 {
     auto selectorArray = makeUniqueArray<CSSSelector>(1);
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     new (NotNull, &selectorArray[0]) CSSSelector(simpleSelector);
     selectorArray[0].m_isFirstInComplexSelector = true;
     selectorArray[0].m_isLastInComplexSelector = true;
     selectorArray[0].m_isLastInSelectorList = true;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     return CSSSelectorList { WTFMove(selectorArray) };
 }
@@ -107,10 +111,12 @@ CSSSelectorList CSSSelectorList::makeCopyingComplexSelector(const CSSSelector& c
 
     auto selectorArray = makeUniqueArray<CSSSelector>(length);
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     size_t i = 0;
     for (auto* selector = &complexSelector; selector; selector = selector->precedingInComplexSelector(), ++i)
         new (NotNull, &selectorArray[i]) CSSSelector(*selector);
     selectorArray[length - 1].m_isLastInSelectorList = true;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     return CSSSelectorList { WTFMove(selectorArray) };
 }
@@ -127,6 +133,7 @@ CSSSelectorList CSSSelectorList::makeJoining(const CSSSelectorList& a, const CSS
 
     auto selectorArray = makeUniqueArray<CSSSelector>(aComponentCount + bComponentCount);
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     for (size_t i = 0; i < aComponentCount; ++i)
         new (NotNull, &selectorArray[i]) CSSSelector(a.m_selectorArray[i]);
     for (size_t i = 0; i < bComponentCount; ++i)
@@ -134,6 +141,7 @@ CSSSelectorList CSSSelectorList::makeJoining(const CSSSelectorList& a, const CSS
 
     selectorArray[aComponentCount - 1].m_isLastInSelectorList = false;
     selectorArray[aComponentCount + bComponentCount - 1].m_isLastInSelectorList = true;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     return CSSSelectorList { WTFMove(selectorArray) };
 }
@@ -149,6 +157,7 @@ CSSSelectorList CSSSelectorList::makeJoining(const Vector<const CSSSelectorList*
 
     auto selectorArray = makeUniqueArray<CSSSelector>(totalComponentCount);
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     size_t componentIndex = 0;
     for (auto list : lists) {
         auto count = list->componentCount();
@@ -159,6 +168,7 @@ CSSSelectorList CSSSelectorList::makeJoining(const Vector<const CSSSelectorList*
 
     ASSERT(componentIndex == totalComponentCount);
     selectorArray[componentIndex - 1].m_isLastInSelectorList = true;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     return CSSSelectorList { WTFMove(selectorArray) };
 }
@@ -267,12 +277,5 @@ bool CSSSelectorList::operator==(const CSSSelectorList& other) const
     }
     return true;
 }
-
-void add(Hasher& hasher, const CSSSelectorList& list)
-{
-    for (auto& selector : list)
-        addComplexSelector(hasher, selector);
-}
-
 
 } // namespace WebCore

@@ -1231,7 +1231,7 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
                     return BindGroup::createInvalid(*this);
                 }
 
-                id<MTLSamplerState> sampler = apiSampler->samplerState();
+                id<MTLSamplerState> sampler = apiSampler->tryCacheSamplerState();
                 if (stage != ShaderStage::Undefined) {
                     argumentIndices[stage].remove(index);
                     [argumentEncoder[stage] setSamplerState:sampler atIndex:index];
@@ -1466,11 +1466,11 @@ bool BindGroup::rebindSamplersIfNeeded() const
     for (auto& [samplerRefPtr, shaderStageArray] : m_samplers) {
         auto sampler = samplerRefPtr;
         ASSERT(sampler);
-        if (!sampler || sampler->cachedSampler())
+        if (!sampler || sampler->cachedSamplerState())
             continue;
 
         WTFLogAlways("Rebinding of samplers required, if this occurs frequently the application is using too many unique samplers");
-        id<MTLSamplerState> samplerState = sampler->samplerState();
+        id<MTLSamplerState> samplerState = sampler->tryCacheSamplerState();
         if (!samplerState)
             return false;
         if (shaderStageArray[ShaderStage::Vertex].has_value() && setArgumentBuffer(m_bindGroupLayout->vertexArgumentEncoder(), vertexArgumentBuffer()))

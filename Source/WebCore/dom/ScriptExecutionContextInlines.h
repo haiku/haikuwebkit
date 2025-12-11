@@ -28,7 +28,6 @@
 #include <WebCore/DOMTimer.h>
 #include <WebCore/EventLoop.h>
 #include <WebCore/ScriptExecutionContext.h>
-#include <WebCore/ServiceWorkerIdentifier.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/CrossThreadTask.h>
 #include <wtf/NativePromise.h>
@@ -48,11 +47,6 @@ inline RefPtr<DOMTimer> ScriptExecutionContext::takeTimeout(int timeoutId)
 inline DOMTimer* ScriptExecutionContext::findTimeout(int timeoutId)
 {
     return m_timeouts.get(timeoutId);
-}
-
-inline ServiceWorker* ScriptExecutionContext::serviceWorker(ServiceWorkerIdentifier identifier)
-{
-    return m_serviceWorkers.get(identifier);
 }
 
 inline CheckedRef<EventLoopTaskGroup> ScriptExecutionContext::checkedEventLoop()

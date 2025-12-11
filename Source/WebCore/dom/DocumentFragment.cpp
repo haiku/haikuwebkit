@@ -95,6 +95,7 @@ void DocumentFragment::parseHTML(const String& source, Element& contextElement, 
 {
     Ref document = this->document();
     if (!registry && tryFastParsingHTMLFragment(source, document, *this, contextElement, parserContentPolicy)) {
+        setWasParsedWithFastPath();
 #if ASSERT_ENABLED
         // As a sanity check for the fast-path, create another fragment using the full parser and compare the results.
         auto referenceFragment = DocumentFragment::create(document);
@@ -103,6 +104,7 @@ void DocumentFragment::parseHTML(const String& source, Element& contextElement, 
 #endif
         return;
     }
+    clearWasParsedWithFastPath();
     if (hasChildNodes())
         removeChildren();
 

@@ -50,6 +50,7 @@ typedef NS_ENUM(NSInteger, AttachmentElementEnabledState) {
 @property (nonatomic, readonly) BOOL nonFastScrollableRegionOverlayVisible;
 @property (nonatomic, readonly) BOOL wheelEventHandlerRegionOverlayVisible;
 @property (nonatomic, readonly) BOOL interactionRegionOverlayVisible;
+@property (nonatomic, readonly) BOOL enhancedSecurityOverlayVisible;
 @property (nonatomic, readonly) BOOL useUISideCompositing;
 @property (nonatomic, readonly) BOOL perWindowWebProcessesDisabled;
 @property (nonatomic, readonly) BOOL acceleratedDrawingEnabled;

@@ -39,7 +39,7 @@ protected:
 
     void willBeDestroyed() override;
 
-    void computeOverflow(LayoutRect contentArea, OptionSet<ComputeOverflowOptions>) override;
+    void computeOverflow(LayoutUnit oldClientAfterEdge, OptionSet<ComputeOverflowOptions>) override;
 
     void updateFromStyle() override;
     bool needsHasSVGTransformFlags() const override;

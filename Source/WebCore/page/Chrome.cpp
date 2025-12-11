@@ -153,6 +153,11 @@ void Chrome::relayAriaNotifyNotification(AriaNotifyData&& notificationData) cons
 {
     return m_client->relayAriaNotifyNotification(WTFMove(notificationData));
 }
+
+void Chrome::relayLiveRegionNotification(LiveRegionAnnouncementData&& notificationData) const
+{
+    return m_client->relayLiveRegionNotification(WTFMove(notificationData));
+}
 #endif
 
 PlatformPageClient Chrome::platformPageClient() const

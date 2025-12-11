@@ -17,4 +17,6 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_dataUnavailable.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_inactiveFrame.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_incorrectUsage.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_matchDepthViewIdentity.https.html
+/LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_pauseResume.https.html
 /LayoutTests/imported/w3c/web-platform-tests/webxr/depth-sensing/gpu/depth_sensing_gpu_staleView.https.html

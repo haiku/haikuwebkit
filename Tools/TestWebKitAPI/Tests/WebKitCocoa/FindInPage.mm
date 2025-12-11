@@ -25,6 +25,7 @@
 
 #import "config.h"
 
+#import "FindInPageUtilities.h"
 #import "InstanceMethodSwizzler.h"
 #import "PDFTestHelpers.h"
 #import "PlatformUtilities.h"
@@ -442,75 +443,6 @@ static BOOL swizzledIsEmbeddedScreen(id, SEL, UIScreen *)
 
 @end
 
-@interface TestTextSearchOptions : NSObject
-@property (nonatomic) _UITextSearchMatchMethod wordMatchMethod;
-@property (nonatomic) NSStringCompareOptions stringCompareOptions;
-@end
-
-@implementation TestTextSearchOptions
-@end
-
-@interface TestSearchAggregator : NSObject <UITextSearchAggregator>
-
-@property (readonly) NSUInteger count;
-@property (nonatomic, readonly) NSOrderedSet<UITextRange *> *allFoundRanges;
-
-- (instancetype)initWithCompletionHandler:(dispatch_block_t)completionHandler;
-
-@end
-
-@implementation TestSearchAggregator {
-    RetainPtr<NSMutableOrderedSet<UITextRange *>> _foundRanges;
-    BlockPtr<void()> _completionHandler;
-}
-
-- (instancetype)initWithCompletionHandler:(dispatch_block_t)completionHandler
-{
-    if (!(self = [super init]))
-        return nil;
-
-    _foundRanges = adoptNS([[NSMutableOrderedSet alloc] init]);
-    _completionHandler = makeBlockPtr(completionHandler);
-
-    return self;
-}
-
-- (void)foundRange:(UITextRange *)range forSearchString:(NSString *)string inDocument:(UITextSearchDocumentIdentifier)document
-{
-    if (!string.length)
-        return;
-
-    [_foundRanges addObject:range];
-}
-
-- (void)finishedSearching
-{
-    if (_completionHandler)
-        _completionHandler();
-}
-
-- (NSOrderedSet<UITextRange *> *)allFoundRanges
-{
-    return _foundRanges.get();
-}
-
-- (void)invalidateFoundRange:(UITextRange *)range inDocument:(UITextSearchDocumentIdentifier)document
-{
-    [_foundRanges removeObject:range];
-}
-
-- (void)invalidate
-{
-    [_foundRanges removeAllObjects];
-}
-
-- (NSUInteger)count
-{
-    return [_foundRanges count];
-}
-
-@end
-
 @interface FindInPageTestWKWebView : TestWKWebView
 - (void)overrideSupportsTextReplacement:(BOOL)supportsTextReplacement;
 @end
@@ -555,35 +487,6 @@ static size_t overlayCount(WKWebView *webView)
             count++;
     });
     return count;
-}
-
-static void testPerformTextSearchWithQueryStringInWebView(WKWebView *webView, NSString *query, UITextSearchOptions *searchOptions, NSUInteger expectedMatches)
-{
-    __block bool finishedSearching = false;
-    RetainPtr aggregator = adoptNS([[TestSearchAggregator alloc] initWithCompletionHandler:^{
-        finishedSearching = true;
-    }]);
-
-    [webView performTextSearchWithQueryString:query usingOptions:searchOptions resultAggregator:aggregator.get()];
-
-    TestWebKitAPI::Util::run(&finishedSearching);
-
-    EXPECT_EQ([aggregator count], expectedMatches);
-}
-
-static RetainPtr<NSOrderedSet<UITextRange *>> textRangesForQueryString(WKWebView *webView, NSString *query)
-{
-    __block bool finishedSearching = false;
-    auto aggregator = adoptNS([[TestSearchAggregator alloc] initWithCompletionHandler:^{
-        finishedSearching = true;
-    }]);
-
-    auto options = adoptNS([[UITextSearchOptions alloc] init]);
-    [webView performTextSearchWithQueryString:query usingOptions:options.get() resultAggregator:aggregator.get()];
-
-    TestWebKitAPI::Util::run(&finishedSearching);
-
-    return adoptNS([[aggregator allFoundRanges] copy]);
 }
 
 TEST(WebKit, FindInPage)

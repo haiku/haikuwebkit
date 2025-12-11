@@ -76,7 +76,7 @@ RTCRtpParameters GStreamerRtpReceiverBackend::getParameters()
         auto media = gstStructureGetString(structure, "media"_s);
         auto encodingName = gstStructureGetString(structure, "encoding-name"_s);
         if (!media.isEmpty() && !encodingName.isEmpty())
-            codec.mimeType = makeString(media.toString(), '/', encodingName.toString().convertToASCIILowercase());
+            codec.mimeType = makeString(media.span(), '/', String(encodingName.span()).convertToASCIILowercase());
 
         if (auto clockRate = gstStructureGet<uint64_t>(structure, "clock-rate"_s))
             codec.clockRate = *clockRate;
@@ -85,7 +85,7 @@ RTCRtpParameters GStreamerRtpReceiverBackend::getParameters()
             codec.channels = *channels;
 
         if (auto fmtpLine = gstStructureGetString(structure, "fmtp-line"_s))
-            codec.sdpFmtpLine = fmtpLine.toString();
+            codec.sdpFmtpLine = fmtpLine.span();
 
         parameters.codecs.append(WTFMove(codec));
 
@@ -94,7 +94,7 @@ RTCRtpParameters GStreamerRtpReceiverBackend::getParameters()
             if (!name.startsWith("extmap-"_s))
                 return true;
 
-            auto extensionId = parseInteger<unsigned short>(name.toStringWithoutCopying().substring(7));
+            auto extensionId = parseInteger<unsigned short>(name.substring(7));
             if (!extensionId)
                 return true;
 

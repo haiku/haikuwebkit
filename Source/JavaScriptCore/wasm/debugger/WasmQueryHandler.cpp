@@ -183,7 +183,7 @@ bool QueryHandler::parseLibrariesReadPacket(StringView packet, size_t& offset, s
 
 bool QueryHandler::handleChunkedLibrariesResponse(size_t offset, size_t maxSize, String& response)
 {
-    String xmlData = m_debugServer.m_instanceManager->generateLibrariesXML();
+    String xmlData = m_debugServer.m_moduleManager->generateLibrariesXML();
 
     // Handle chunked response according to GDB Remote Protocol
     // 'm' prefix = more data follows

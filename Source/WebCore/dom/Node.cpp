@@ -57,7 +57,6 @@
 #include "HTMLSlotElement.h"
 #include "HTMLStyleElement.h"
 #include "InputEvent.h"
-#include "InspectorController.h"
 #include "InspectorInstrumentation.h"
 #include "KeyboardEvent.h"
 #include "LiveNodeListInlines.h"
@@ -69,6 +68,7 @@
 #include "NodeName.h"
 #include "NodeRareDataInlines.h"
 #include "NodeRenderStyle.h"
+#include "PageInspectorController.h"
 #include "PointerEvent.h"
 #include "ProcessingInstruction.h"
 #include "ProgressEvent.h"
@@ -1082,23 +1082,49 @@ void Node::invalidateNodeListAndCollectionCachesInAncestors()
     }
 }
 
-void Node::invalidateNodeListAndCollectionCachesInAncestorsForAttribute(const QualifiedName& attrName)
+void Node::invalidateNodeListCollectionAndInnerHTMLPrefixCachesInAncestorsForAttribute(const QualifiedName& attrName, const IsMutationBySetInnerHTML isMutationBySetInnerHTML)
 {
     ASSERT(is<Element>(*this));
 
-    if (!document().shouldInvalidateNodeListAndCollectionCachesForAttribute(attrName))
+    bool shouldInvalidate = document().shouldInvalidateNodeListAndCollectionCachesForAttribute(attrName);
+
+    WeakPtr cachedContainer = document().cachedSetInnerHTML().cachedContainer;
+    bool shouldSetMutationBit = isMutationBySetInnerHTML == IsMutationBySetInnerHTML::No && cachedContainer;
+
+    if (!shouldInvalidate && !shouldSetMutationBit)
         return;
 
-    document().invalidateNodeListAndCollectionCaches([&attrName](auto& list) {
-        list.invalidateCacheForAttribute(attrName);
-    });
+    if (shouldInvalidate) {
+        document().invalidateNodeListAndCollectionCaches([&attrName](auto& list) {
+            list.invalidateCacheForAttribute(attrName);
+        });
+    }
 
     for (auto* node = this; node; node = node->parentNode()) {
-        if (!node->hasRareData())
+        if (shouldSetMutationBit && !node->hasDidMutateSubtreeAfterSetInnerHTML()) {
+            node->setDidMutateSubtreeAfterSetInnerHTML();
+            if (node == cachedContainer.get())
+                shouldSetMutationBit = false;
+        }
+
+        if (!shouldInvalidate || !node->hasRareData())
             continue;
 
         if (auto* lists = node->rareData()->nodeLists())
             lists->invalidateCachesForAttribute(attrName);
+    }
+}
+
+void Node::setDidMutateSubtreeAfterSetInnerHTMLOnAncestors()
+{
+    WeakPtr cachedContainer = document().cachedSetInnerHTML().cachedContainer;
+    if (!cachedContainer)
+        return;
+
+    for (auto* node = this; node; node = node->parentNode()) {
+        node->setDidMutateSubtreeAfterSetInnerHTML();
+        if (node == cachedContainer.get())
+            break;
     }
 }
 
@@ -1764,7 +1790,7 @@ String Node::textContent(bool convertBRsToNewlines) const
 }
 
 ExceptionOr<void> Node::setTextContent(String&& text)
-{           
+{
     switch (nodeType()) {
     case ATTRIBUTE_NODE:
     case TEXT_NODE:
@@ -2196,9 +2222,18 @@ static ALWAYS_INLINE bool isDocumentEligibleForFastAdoption(Document& oldDocumen
         && oldDocument.inQuirksMode() == newDocument.inQuirksMode();
 }
 
+static ALWAYS_INLINE void adoptCustomElementRegistryIfNotExplicitlySet(ShadowRoot& shadowRoot, Document& newDocument)
+{
+    if (shadowRoot.hasScopedCustomElementRegistry() || !shadowRoot.usesNullCustomElementRegistry() || newDocument.usesNullCustomElementRegistry()) [[likely]]
+        return;
+    shadowRoot.clearUsesNullCustomElementRegistry();
+    shadowRoot.setCustomElementRegistry(newDocument.customElementRegistry());
+}
+
 inline unsigned Node::moveShadowTreeToNewDocumentFastCase(ShadowRoot& shadowRoot, Document& oldDocument, Document& newDocument)
 {
     ASSERT(isDocumentEligibleForFastAdoption(oldDocument, newDocument));
+    adoptCustomElementRegistryIfNotExplicitlySet(shadowRoot, newDocument);
     return traverseSubtreeToUpdateTreeScope(shadowRoot, [&](Node& node) {
         node.moveNodeToNewDocumentFastCase(oldDocument, newDocument);
     }, [&oldDocument, &newDocument](ShadowRoot& innerShadowRoot) {
@@ -2211,6 +2246,7 @@ inline unsigned Node::moveShadowTreeToNewDocumentFastCase(ShadowRoot& shadowRoot
 inline void Node::moveShadowTreeToNewDocumentSlowCase(ShadowRoot& shadowRoot, Document& oldDocument, Document& newDocument)
 {
     ASSERT(!isDocumentEligibleForFastAdoption(oldDocument, newDocument));
+    adoptCustomElementRegistryIfNotExplicitlySet(shadowRoot, newDocument);
     traverseSubtreeToUpdateTreeScope(shadowRoot, [&](Node& node) {
         node.moveNodeToNewDocumentSlowCase(oldDocument, newDocument);
     }, [&oldDocument, &newDocument](ShadowRoot& innerShadowRoot) {
@@ -2293,6 +2329,9 @@ void Node::moveNodeToNewDocumentFastCase(Document& oldDocument, Document& newDoc
     ASSERT(!transientMutationObserverRegistry());
     ASSERT(!oldDocument.numberOfIntersectionObservers());
 
+    if (usesNullCustomElementRegistry() && !newDocument.usesNullCustomElementRegistry()) [[unlikely]]
+        clearUsesNullCustomElementRegistry();
+
     if (!hasTypeFlag(TypeFlag::HasDidMoveToNewDocument) && !hasEventTargetFlag(EventTargetFlag::HasLangAttr) && !hasEventTargetFlag(EventTargetFlag::HasXMLLangAttr)
         && !isDefinedCustomElement())
         return;
@@ -2305,6 +2344,9 @@ void Node::moveNodeToNewDocumentSlowCase(Document& oldDocument, Document& newDoc
 {
     newDocument.incrementReferencingNodeCount();
     oldDocument.decrementReferencingNodeCount();
+
+    if (usesNullCustomElementRegistry() && !newDocument.usesNullCustomElementRegistry()) [[unlikely]]
+        clearUsesNullCustomElementRegistry();
 
     if (hasRareData()) {
         if (auto* nodeLists = rareData()->nodeLists())

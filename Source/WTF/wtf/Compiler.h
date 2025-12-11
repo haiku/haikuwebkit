@@ -696,6 +696,18 @@
     ALLOW_DEPRECATED_DECLARATIONS_END \
     ALLOW_UNUSED_PARAMETERS_END
 
+/* NULLABLE etc. */
+
+#if COMPILER(CLANG)
+#define WTF_NULL_UNSPECIFIED _Null_unspecified
+#define WTF_NULLABLE _Nullable
+#define WTF_NONNULL _Nonnull
+#else
+#define WTF_NULL_UNSPECIFIED
+#define WTF_NULLABLE
+#define WTF_NONNULL
+#endif
+
 // Used to indicate that a class member has a specialized implementation in Swift. See
 // "SwiftCXXThunk.h".
 #define HAS_SWIFTCXX_THUNK  NS_REFINED_FOR_SWIFT

@@ -68,6 +68,15 @@ WebXRInputSource* WebXRInputSourceArray::item(unsigned index) const
     return index >= m_inputSources.size() ? nullptr: m_inputSources[index].ptr();
 }
 
+RefPtr<WebXRInputSource> WebXRInputSourceArray::itemByHandle(PlatformXR::InputSourceHandle handle) const
+{
+    for (auto& item : m_inputSources) {
+        if (item->handle() == handle)
+            return item.ptr();
+    }
+    return nullptr;
+}
+
 void WebXRInputSourceArray::clear()
 {
     m_inputSources.clear();

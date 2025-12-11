@@ -123,6 +123,7 @@ Output Options:
                   text: Plain text
                   color: Plain text with colors
                   oneline: Plain text with colors on one line
+                  quiet: Only show errors and final result
                   debug: Prefix lines with message class 
 Unfiltered Logging Options:
   -l|--log      Save unfiltered output to file (see --log-file)
@@ -322,6 +323,15 @@ sub printLine($$$$)
 {
     my ($line, $target, $project, $style) = @_;
 
+    # In quiet mode, only show errors and success messages (suppress warnings)
+    if ($outputFormat eq "quiet") {
+        return if ($style == STYLE_PLAIN || $style == STYLE_HEADER);
+        # Suppress warnings, only show errors
+        if ($style == STYLE_ALERT && $line =~ /^\s*warning:/i) {
+            return;
+        }
+    }
+
     if ($outputFormat eq "html") {
         $line = escapeHTML($line);
         if    ($style == STYLE_HEADER)  { print OUTPUT_HANDLE "<h2>$line</h2>"; }
@@ -336,7 +346,7 @@ sub printLine($$$$)
     my $color = "";
     my $reset = "";
     my $endl = "\n";
-    if ($outputFormat eq "color" or $outputFormat eq "oneline") {
+    if ($outputFormat eq "color" or $outputFormat eq "oneline" or $outputFormat eq "quiet") {
         if ($target && $project) {
             my $checksum = crc16($target . $project);
             # Pick an ANSI color other than white or black (so, colors 1-6 and 9-14).
@@ -372,8 +382,8 @@ sub setOutputFormatOption($$)
 {
     my ($opt, $value) = @_;
     $value = lc($value);
-    if ($value ne "html" && $value ne "text" && $value ne "color" && $value ne "oneline" && $value ne "debug") {
-        die "The $opt option must be either \"html\", \"text\", \”color\", \”oneline\" or \"debug\"";
+    if ($value ne "html" && $value ne "text" && $value ne "color" && $value ne "oneline" && $value ne "quiet" && $value ne "debug") {
+        die "The $opt option must be either \"html\", \"text\", \"color\", \"oneline\", \"quiet\" or \"debug\"";
     }
     $outputFormat = $value;
 }

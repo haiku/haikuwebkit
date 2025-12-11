@@ -69,6 +69,8 @@ WEBCORE_EXPORT void attachColorSpaceToPixelBuffer(const PlatformVideoColorSpace&
 WEBCORE_EXPORT Vector<Ref<SharedBuffer>> getKeyIDs(CMFormatDescriptionRef);
 #endif
 
+WEBCORE_EXPORT FourCC computeBoxType(FourCC);
+
 class PacketDurationParser final {
     WTF_MAKE_TZONE_ALLOCATED(PacketDurationParser);
 public:

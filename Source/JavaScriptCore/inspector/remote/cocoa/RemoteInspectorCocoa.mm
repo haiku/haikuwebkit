@@ -337,13 +337,14 @@ void RemoteInspector::setupXPCConnectionIfNeeded()
         return;
     }
 
-    auto connection = adoptOSObject(xpc_connection_create_mach_service(WIRXPCMachPortName, m_xpcQueue.get(), 0));
+    // FIXME: This is a false positive. <rdar://164843889>
+    SUPPRESS_RETAINPTR_CTOR_ADOPT auto connection = adoptXPCObject(xpc_connection_create_mach_service(WIRXPCMachPortName, m_xpcQueue.get(), 0));
     if (!connection) {
         WTFLogAlways("RemoteInspector failed to create XPC connection.");
         return;
     }
 
-    Ref relayConnection = adoptRef(*new RemoteInspectorXPCConnection(connection.get(), m_xpcQueue.get(), this));
+    Ref relayConnection = RemoteInspectorXPCConnection::create(connection.get(), m_xpcQueue.get(), this);
     m_relayConnection = relayConnection.copyRef();
     relayConnection->sendMessage(@"syn", nil); // Send a simple message to initialize the XPC connection.
 

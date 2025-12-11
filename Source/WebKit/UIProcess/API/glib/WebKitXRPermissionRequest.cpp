@@ -55,6 +55,10 @@ static PlatformXR::Device::FeatureList toFeatureList(WebKitXRSessionFeatures fea
     if (features & WEBKIT_XR_SESSION_FEATURES_HIT_TEST)
         result.append(PlatformXR::SessionFeature::HitTest);
 #endif
+#if ENABLE(WEBXR_LAYERS)
+    if (features & WEBKIT_XR_SESSION_FEATURES_LAYERS)
+        result.append(PlatformXR::SessionFeature::Layers);
+#endif
     return result;
 }
 #endif // ENABLE(WEBXR)
@@ -373,6 +377,11 @@ static WebKitXRSessionFeatures toWebKitXRSessionFeatures(const PlatformXR::Devic
 #if ENABLE(WEBXR_HIT_TEST)
         case PlatformXR::SessionFeature::HitTest:
             result |= WEBKIT_XR_SESSION_FEATURES_HIT_TEST;
+            break;
+#endif
+#if ENABLE(WEBXR_LAYERS)
+        case PlatformXR::SessionFeature::Layers:
+            result |= WEBKIT_XR_SESSION_FEATURES_LAYERS;
             break;
 #endif
         default:

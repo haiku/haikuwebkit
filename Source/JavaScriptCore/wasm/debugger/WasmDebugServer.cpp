@@ -112,9 +112,9 @@ bool DebugServer::start(VM* vm)
     RELEASE_ASSERT(isSocketValid(m_serverSocket));
 
     m_vm = vm;
-    m_instanceManager = makeUnique<ModuleManager>(*vm);
+    m_moduleManager = makeUnique<ModuleManager>(*vm);
     m_breakpointManager = makeUnique<BreakpointManager>();
-    m_executionHandler = makeUnique<ExecutionHandler>(*this, *m_instanceManager, *m_breakpointManager);
+    m_executionHandler = makeUnique<ExecutionHandler>(*this, *m_moduleManager, *m_breakpointManager);
 
     startAcceptThread();
 
@@ -133,9 +133,9 @@ bool DebugServer::startRWI(VM* vm, Function<bool(const String&)>&& rwiResponseHa
     setState(State::Starting);
 
     m_vm = vm;
-    m_instanceManager = makeUnique<ModuleManager>(*vm);
+    m_moduleManager = makeUnique<ModuleManager>(*vm);
     m_breakpointManager = makeUnique<BreakpointManager>();
-    m_executionHandler = makeUnique<ExecutionHandler>(*this, *m_instanceManager, *m_breakpointManager);
+    m_executionHandler = makeUnique<ExecutionHandler>(*this, *m_moduleManager, *m_breakpointManager);
     m_rwiResponseHandler = WTFMove(rwiResponseHandler);
 
     // RWI mode: No thread creation needed!
@@ -220,7 +220,7 @@ void DebugServer::resetAll()
     m_memoryHandler = nullptr;
     m_executionHandler = nullptr;
 
-    m_instanceManager = nullptr;
+    m_moduleManager = nullptr;
     m_breakpointManager = nullptr;
 
 #if ENABLE(REMOTE_INSPECTOR)
@@ -541,10 +541,10 @@ void DebugServer::handleThreadManagement(StringView packet)
 
 void DebugServer::trackInstance(JSWebAssemblyInstance* instance)
 {
-    if (!m_instanceManager)
+    if (!m_moduleManager)
         return;
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Tracking WebAssembly instance: ", RawPointer(instance));
-    uint32_t instanceId = m_instanceManager->registerInstance(instance);
+    uint32_t instanceId = m_moduleManager->registerInstance(instance);
     if (isConnected()) {
         UNUSED_VARIABLE(instanceId);
         // FIXME: Should notify LLDB with new module library.
@@ -553,10 +553,10 @@ void DebugServer::trackInstance(JSWebAssemblyInstance* instance)
 
 void DebugServer::trackModule(Module& module)
 {
-    if (!m_instanceManager)
+    if (!m_moduleManager)
         return;
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Tracking WebAssembly module: ", RawPointer(&module));
-    uint32_t moduleId = m_instanceManager->registerModule(module);
+    uint32_t moduleId = m_moduleManager->registerModule(module);
     if (isConnected()) {
         UNUSED_VARIABLE(moduleId);
         // FIXME: Should notify LLDB with new module library.
@@ -565,10 +565,10 @@ void DebugServer::trackModule(Module& module)
 
 void DebugServer::untrackModule(Module& module)
 {
-    if (!m_instanceManager)
+    if (!m_moduleManager)
         return;
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Untracking WebAssembly module: ", RawPointer(&module));
-    m_instanceManager->unregisterModule(module);
+    m_moduleManager->unregisterModule(module);
 }
 
 bool DebugServer::stopCode(CallFrame* callFrame, JSWebAssemblyInstance* instance, IPIntCallee* callee, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack) { return m_executionHandler->stopCode(callFrame, instance, callee, pc, mc, locals, stack); }

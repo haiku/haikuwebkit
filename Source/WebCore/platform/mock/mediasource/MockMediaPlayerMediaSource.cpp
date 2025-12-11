@@ -47,7 +47,7 @@ class MediaPlayerFactoryMediaSourceMock final : public MediaPlayerFactory {
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::MockMSE; };
 
-    Ref<MediaPlayerPrivateInterface> createMediaEnginePlayer(MediaPlayer* player) const final { return adoptRef(*new MockMediaPlayerMediaSource(player)); }
+    Ref<MediaPlayerPrivateInterface> createMediaEnginePlayer(MediaPlayer& player) const final { return adoptRef(*new MockMediaPlayerMediaSource(player)); }
 
     void getSupportedTypes(HashSet<String>& types) const final
     {
@@ -100,7 +100,7 @@ MediaPlayer::SupportsType MockMediaPlayerMediaSource::supportsType(const MediaEn
     return MediaPlayer::SupportsType::MayBeSupported;
 }
 
-MockMediaPlayerMediaSource::MockMediaPlayerMediaSource(MediaPlayer* player)
+MockMediaPlayerMediaSource::MockMediaPlayerMediaSource(MediaPlayer& player)
     : m_player(player)
 {
 }
@@ -177,7 +177,15 @@ MediaPlayer::NetworkState MockMediaPlayerMediaSource::networkState() const
 
 MediaPlayer::ReadyState MockMediaPlayerMediaSource::readyState() const
 {
-    return m_readyState;
+    RefPtr mediaSourcePrivate = m_mediaSourcePrivate;
+    return mediaSourcePrivate ? mediaSourcePrivate->mediaPlayerReadyState() : MediaPlayer::ReadyState::HaveNothing;
+}
+
+void MockMediaPlayerMediaSource::readyStateFromMediaSourceChanged()
+{
+    assertIsMainThread();
+    if (RefPtr player = m_player.get())
+        player->readyStateChanged();
 }
 
 MediaTime MockMediaPlayerMediaSource::maxTimeSeekable() const
@@ -285,16 +293,6 @@ void MockMediaPlayerMediaSource::updateDuration(const MediaTime& duration)
     m_duration = duration;
     if (auto player = m_player.get())
         player->durationChanged();
-}
-
-void MockMediaPlayerMediaSource::setReadyState(MediaPlayer::ReadyState readyState)
-{
-    if (readyState == m_readyState)
-        return;
-
-    m_readyState = readyState;
-    if (auto player = m_player.get())
-        player->readyStateChanged();
 }
 
 void MockMediaPlayerMediaSource::setNetworkState(MediaPlayer::NetworkState networkState)

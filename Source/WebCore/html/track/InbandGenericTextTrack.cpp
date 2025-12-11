@@ -139,7 +139,7 @@ void InbandGenericTextTrack::addGenericCue(InbandGenericCue& inbandCue)
     if (m_cueMap.find(inbandCue.uniqueId()))
         return;
 
-    auto cue = TextTrackCueGeneric::create(*scriptExecutionContext(), inbandCue.startTime(), inbandCue.endTime(), inbandCue.content());
+    auto cue = TextTrackCueGeneric::create(*RefPtr { scriptExecutionContext() }, inbandCue.startTime(), inbandCue.endTime(), inbandCue.content());
     updateCueFromCueData(cue.get(), inbandCue);
     if (hasCue(cue, TextTrackCue::IgnoreDuration)) {
         INFO_LOG(LOGIDENTIFIER, "ignoring already added cue: ", cue.get());
@@ -189,7 +189,7 @@ WebVTTParser& InbandGenericTextTrack::parser()
 {
     ASSERT(is<Document>(scriptExecutionContext()));
     if (!m_webVTTParser)
-        m_webVTTParser = makeUnique<WebVTTParser>(static_cast<WebVTTParserClient&>(*this), downcast<Document>(*scriptExecutionContext()));
+        m_webVTTParser = makeUnique<WebVTTParser>(static_cast<WebVTTParserClient&>(*this), Ref { downcast<Document>(*scriptExecutionContext()) });
     return *m_webVTTParser;
 }
 
@@ -211,9 +211,10 @@ RefPtr<TextTrackCue> InbandGenericTextTrack::cueToExtend(TextTrackCue& newCue)
     if (!m_cues || m_cues->length() < 2)
         return nullptr;
 
-    return [this, &newCue]() -> RefPtr<TextTrackCue> {
-        for (size_t i = 0; i < m_cues->length(); ++i) {
-            RefPtr existingCue = m_cues->item(i);
+    RefPtr cues = m_cues;
+    return [this, &newCue, &cues]() -> RefPtr<TextTrackCue> {
+        for (size_t i = 0; i < cues->length(); ++i) {
+            RefPtr existingCue = cues->item(i);
             ASSERT(existingCue->track() == this);
 
             if (abs(newCue.startMediaTime() - existingCue->startMediaTime()) > startTimeVariance())
@@ -261,8 +262,9 @@ void InbandGenericTextTrack::newCuesParsed()
 
 void InbandGenericTextTrack::newRegionsParsed()
 {
+    RefPtr regions = this->regions();
     for (auto& region : parser().takeRegions())
-        regions()->add(WTFMove(region));
+        regions->add(WTFMove(region));
 }
 
 void InbandGenericTextTrack::newStyleSheetsParsed()

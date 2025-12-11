@@ -540,13 +540,6 @@ void ProcessAssertion::processAssertionWasInvalidated()
         m_invalidationHandler();
 }
 
-bool ProcessAssertion::isValid() const
-{
-    return !m_wasInvalidated;
-}
-
-
-
 #if !USE(EXTENSIONKIT)
 
 ProcessAndUIAssertion::ProcessAndUIAssertion(pid_t pid, const String& reason, ProcessAssertionType assertionType, const String& environmentIdentifier)

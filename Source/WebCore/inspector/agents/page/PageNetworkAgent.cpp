@@ -76,11 +76,11 @@ Inspector::Protocol::Network::FrameId PageNetworkAgent::frameIdentifier(Document
     return { };
 }
 
-Vector<WebSocket*> PageNetworkAgent::activeWebSockets()
+Vector<Ref<WebSocket>> PageNetworkAgent::activeWebSockets()
 {
-    Vector<WebSocket*> webSockets;
+    Vector<Ref<WebSocket>> webSockets;
 
-    for (auto* webSocket : WebSocket::allActiveWebSockets()) {
+    for (CheckedPtr webSocket : WebSocket::allActiveWebSockets()) {
         RefPtr channel = webSocket->channel();
         if (!channel)
             continue;
@@ -96,7 +96,7 @@ Vector<WebSocket*> PageNetworkAgent::activeWebSockets()
         if (document->page() != m_inspectedPage.ptr())
             continue;
 
-        webSockets.append(webSocket);
+        webSockets.append(*webSocket);
     }
 
     return webSockets;

@@ -105,7 +105,7 @@ static PAS_ALWAYS_INLINE bool pas_try_deallocate_not_small_exclusive_segregated(
         }
     }
 
-    if (pas_system_heap_is_enabled(config.kind)) {
+    if (pas_system_heap_should_supplant_bmalloc(config.kind)) {
         pas_system_heap_free((void*)begin);
         return true;
     }

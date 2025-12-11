@@ -930,15 +930,11 @@ static Style::PreferredSizePair checkboxSize(const Style::PreferredSizePair& zoo
 
 static const std::span<const IntSize, 4> radioSizes()
 {
-    static std::array<IntSize, 4> sizes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        if (supportsLargeFormControls()) {
-            sizes = { { IntSize(14, 14), IntSize(12, 12), IntSize(10, 10), IntSize(16, 16) } };
-            return;
-        }
-        sizes = { { IntSize(16, 16), IntSize(12, 12), IntSize(10, 10), IntSize(0, 0) } };
-    });
+    static std::array<IntSize, 4> sizes = [] {
+        if (supportsLargeFormControls())
+            return std::array<IntSize, 4> { { IntSize(14, 14), IntSize(12, 12), IntSize(10, 10), IntSize(16, 16) } };
+        return std::array<IntSize, 4> { { IntSize(16, 16), IntSize(12, 12), IntSize(10, 10), IntSize(0, 0) } };
+    }();
     return sizes;
 }
 

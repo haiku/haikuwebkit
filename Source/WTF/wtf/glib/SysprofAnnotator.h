@@ -145,8 +145,7 @@ public:
         case BuildTransactionStart:
         case WaitForCompositionCompletionStart:
         case RenderLayerTreeStart:
-        case FlushPendingLayerChangesStart:
-        case LayerFlushStart:
+        case UpdateRenderingStart:
         case SyncMessageStart:
         case SyncTouchEventStart:
         case InitializeWebProcessStart:
@@ -209,8 +208,7 @@ public:
         case BackingStoreFlushEnd:
         case WaitForCompositionCompletionEnd:
         case RenderLayerTreeEnd:
-        case FlushPendingLayerChangesEnd:
-        case LayerFlushEnd:
+        case UpdateRenderingEnd:
         case BuildTransactionEnd:
         case SyncMessageEnd:
         case SyncTouchEventEnd:
@@ -497,18 +495,15 @@ private:
         case WakeUpAndApplyDisplayListEnd:
             return "WakeUpAndApplyDisplayList"_s;
 
-        case FlushPendingLayerChangesStart:
-        case FlushPendingLayerChangesEnd:
-            return "FlushPendingLayerChanges"_s;
+        case UpdateRenderingStart:
+        case UpdateRenderingEnd:
+            return "UpdateRendering"_s;
         case WaitForCompositionCompletionStart:
         case WaitForCompositionCompletionEnd:
             return "WaitForCompositionCompletion"_s;
         case RenderLayerTreeStart:
         case RenderLayerTreeEnd:
             return "RenderLayerTree"_s;
-        case LayerFlushStart:
-        case LayerFlushEnd:
-            return "LayerFlush"_s;
 
         case WTFRange:
         case JavaScriptRange:

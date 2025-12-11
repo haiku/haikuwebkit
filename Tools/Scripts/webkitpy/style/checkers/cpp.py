@@ -142,6 +142,8 @@ _AUTO_GENERATED_FILES = [
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/CSSPropertyNames.h',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/CSSPropertyParsing.cpp',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/CSSPropertyParsing.h',
+    'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/RenderStyleInlinesGenerated.h',
+    'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/RenderStyleSettersGenerated.h',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/StyleBuilderGenerated.cpp',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/StyleInterpolationWrapperMap.cpp',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/StyleInterpolationWrapperMap.h',
@@ -2974,6 +2976,65 @@ def check_wtf_never_destroyed(clean_lines, line_number, file_state, error):
         error(line_number, 'runtime/wtf_never_destroyed', 4, "Use 'static Lock/Condition' instead of 'NeverDestroyed<Lock/Condition>'.")
 
 
+def check_wtf_os_object_ptr(clean_lines, line_number, file_state, error):
+    """Looks for usage of RetainPtr with OS objects, which should be replaced with OSObjectPtr.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      line_number: The number of the line to check.
+      file_state: A _FileState instance which maintains information about
+                  the state of things in the file.
+      error: The function to call with any errors found.
+    """
+
+    line = clean_lines.elided[line_number]  # Get rid of comments and strings.
+    dispatch_object_using_retain_ptr = search(r'RetainPtr<dispatch_', line)
+    if dispatch_object_using_retain_ptr:
+        error(line_number, 'runtime/wtf_os_object_ptr', 4, "Use 'OSObjectPtr' instead of 'RetainPtr' for dispatch objects.")
+        return
+    dispatch_constant_using_retain_ptr = search(r'RetainPtr { DISPATCH_', line)
+    if dispatch_constant_using_retain_ptr:
+        error(line_number, 'runtime/wtf_os_object_ptr', 4, "Use 'OSObjectPtr' instead of 'RetainPtr' for dispatch objects.")
+        return
+    dispatch_constant_using_retainptr = search(r'retainPtr\(DISPATCH_', line)
+    if dispatch_constant_using_retainptr:
+        error(line_number, 'runtime/wtf_os_object_ptr', 4, "Use 'OSObjectPtr' instead of 'RetainPtr' for dispatch objects.")
+        return
+    dispatch_object_using_adoptns = search(r'adoptNS\(dispatch_', line)
+    if dispatch_object_using_adoptns:
+        error(line_number, 'runtime/wtf_os_object_ptr', 4, "Use 'adoptOSObject()' instead of 'adoptNS()' for dispatch objects.")
+        return
+
+def check_wtf_xpc_object_ptr(clean_lines, line_number, file_state, error):
+    """Looks for usage of RetainPtr / OSObjectPtr with XPC objects, which should be replaced with XPCObjectPtr.
+
+    Args:
+      clean_lines: A CleansedLines instance containing the file.
+      line_number: The number of the line to check.
+      file_state: A _FileState instance which maintains information about
+                  the state of things in the file.
+      error: The function to call with any errors found.
+    """
+
+    line = clean_lines.elided[line_number]  # Get rid of comments and strings.
+    using_retain_ptr = search(r'RetainPtr<xpc_', line)
+    if using_retain_ptr:
+        error(line_number, 'runtime/wtf_xpc_object_ptr', 4, "Use 'XPCObjectPtr' instead of 'RetainPtr' for XPC objects.")
+        return
+    using_adoptns = search(r'adoptNS\(xpc_', line)
+    if using_adoptns:
+        error(line_number, 'runtime/wtf_xpc_object_ptr', 4, "Use 'adoptXPCObject()' instead of 'adoptNS()' for XPC objects.")
+        return
+    using_osobject_ptr = search(r'OSObjectPtr<xpc_', line)
+    if using_osobject_ptr:
+        error(line_number, 'runtime/wtf_xpc_object_ptr', 4, "Use 'XPCObjectPtr' instead of 'OSObjectPtr' for XPC objects.")
+        return
+    using_adoptosobject = search(r'adoptOSObject\(xpc_', line)
+    if using_adoptosobject:
+        error(line_number, 'runtime/wtf_xpc_object_ptr', 4, "Use 'adoptXPCObject()' instead of 'adoptOSObject()' for XPC objects.")
+        return
+
+
 def check_lock_guard(clean_lines, line_number, file_state, error):
     """Looks for use of 'std::lock_guard<>' which should be replaced with 'WTF::Locker'.
 
@@ -3773,6 +3834,8 @@ def check_style(clean_lines, line_number, file_extension, class_state, file_stat
     check_unsafe_get(clean_lines, line_number, file_state, error)
     check_wtf_make_unique(clean_lines, line_number, file_state, error)
     check_wtf_never_destroyed(clean_lines, line_number, file_state, error)
+    check_wtf_os_object_ptr(clean_lines, line_number, file_state, error)
+    check_wtf_xpc_object_ptr(clean_lines, line_number, file_state, error)
     check_lock_guard(clean_lines, line_number, file_state, error)
     check_log(clean_lines, line_number, file_state, error)
     check_ctype_functions(clean_lines, line_number, file_state, error)
@@ -5053,6 +5116,8 @@ class CppChecker(object):
         'runtime/wtf_make_unique',
         'runtime/wtf_move',
         'runtime/wtf_never_destroyed',
+        'runtime/wtf_os_object_ptr',
+        'runtime/wtf_xpc_object_ptr',
         'safercpp/atoi',
         'safercpp/checked_getter_for_init',
         'safercpp/dispatch_get_global_queue',

@@ -96,7 +96,7 @@ bool methodSignaturesAreCompatible(NSString *wire, NSString *local)
     RefPtr<API::Array> _objectStream;
 
     RefPtr<API::Dictionary> _currentDictionary;
-    HashSet<NSObject *> _objectsBeingEncoded; // Used to detect cycles.
+    HashSet<RetainPtr<NSObject>> _objectsBeingEncoded; // Used to detect cycles.
 }
 
 - (id)init

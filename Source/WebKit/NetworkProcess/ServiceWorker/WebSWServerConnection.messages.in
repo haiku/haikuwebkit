@@ -50,7 +50,7 @@ messages -> WebSWServerConnection {
     [EnabledBy=ServiceWorkersEnabled] TerminateWorkerFromClient(WebCore::ServiceWorkerIdentifier workerIdentifier) -> ()
     [EnabledBy=ServiceWorkersEnabled] WhenServiceWorkerIsTerminatedForTesting(WebCore::ServiceWorkerIdentifier workerIdentifier) -> ()
 
-    [EnabledBy=ServiceWorkersEnabled] SetThrottleState(bool isThrottleable)
+    SetThrottleState(bool isThrottleable)
     [EnabledBy=ServiceWorkersEnabled] StoreRegistrationsOnDisk() -> ()
 
     [EnabledBy=PushAPIEnabled] SubscribeToPushService(WebCore::ServiceWorkerRegistrationIdentifier identifier, Vector<uint8_t> applicationServerKey) -> (Expected<WebCore::PushSubscriptionData, WebCore::ExceptionData> result)

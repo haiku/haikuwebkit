@@ -227,7 +227,7 @@ String WebExtensionSQLiteStore::deleteDatabase()
     String deleteDatabaseFileErrorMessage = deleteDatabaseFileAtURL(databaseURL(), false);
 
     // An error from closing the database takes precedence over an error deleting the database file.
-    return databaseCloseErrorMessage.length() ? databaseCloseErrorMessage : deleteDatabaseFileErrorMessage;
+    return !databaseCloseErrorMessage.isEmpty() ? databaseCloseErrorMessage : deleteDatabaseFileErrorMessage;
 }
 
 String WebExtensionSQLiteStore::handleSchemaVersioning(bool deleteDatabaseFileOnError)
@@ -318,7 +318,7 @@ String WebExtensionSQLiteStore::savepointNameFromUUID(const WTF::UUID& savepoint
 
 void WebExtensionSQLiteStore::createSavepoint(CompletionHandler<void(Markable<WTF::UUID> savepointIdentifier, const String& errorMessage)>&& completionHandler)
 {
-    UUID savepointIdentifier = UUID::createVersion4();
+    auto savepointIdentifier = UUID::createVersion4();
 
     m_queue->dispatch([protectedThis = Ref { *this }, savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
@@ -330,7 +330,7 @@ void WebExtensionSQLiteStore::createSavepoint(CompletionHandler<void(Markable<WT
             return;
         }
 
-        ASSERT(!errorMessage.length());
+        ASSERT(errorMessage.isEmpty());
         ASSERT(protectedThis->m_database);
 
         DatabaseResult result = SQLiteDatabaseExecute(*(protectedThis->m_database), makeString("SAVEPOINT "_s, protectedThis->savepointNameFromUUID(savepointIdentifier)));
@@ -339,10 +339,10 @@ void WebExtensionSQLiteStore::createSavepoint(CompletionHandler<void(Markable<WT
             errorMessage = "Failed to create savepoint."_s;
         }
 
-        protectedThis->m_savepointsAreValid = true;
+        protectedThis->m_savepointsAreValid = errorMessage.isEmpty();
 
         WorkQueue::mainSingleton().dispatch([errorMessage = crossThreadCopy(errorMessage), savepointIdentifier = crossThreadCopy(savepointIdentifier), completionHandler = WTFMove(completionHandler)]() mutable {
-            completionHandler(!errorMessage.length() ? savepointIdentifier : WTF::UUID { UInt128 { 0 } }, errorMessage);
+            completionHandler(errorMessage.isEmpty() ? std::optional(savepointIdentifier) : std::nullopt, errorMessage);
         });
     });
 }

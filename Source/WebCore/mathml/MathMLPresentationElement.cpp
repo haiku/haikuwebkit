@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 Alex Milowski (alex@milowski.com). All rights reserved.
- * Copyright (C) 2010 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2016 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,11 +76,12 @@ const MathMLElement::BooleanValue& MathMLPresentationElement::cachedBooleanAttri
     if (attribute)
         return attribute.value();
 
-    // In MathML, attribute values are case-sensitive.
+    // In MathML Core, attribute values are ASCII case-insensitive.
+    // https://w3c.github.io/mathml-core/#dfn-boolean
     const AtomString& value = attributeWithoutSynchronization(name);
-    if (value == trueAtom())
+    if (equalIgnoringASCIICase(value, trueAtom()))
         attribute = BooleanValue::True;
-    else if (value == falseAtom())
+    else if (equalIgnoringASCIICase(value, falseAtom()))
         attribute = BooleanValue::False;
     else
         attribute = BooleanValue::Default;

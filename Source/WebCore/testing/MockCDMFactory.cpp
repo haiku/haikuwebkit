@@ -127,14 +127,14 @@ MockCDM::MockCDM(WeakPtr<MockCDMFactory> factory, const String& mediaKeysHashSal
 {
 }
 
-Vector<AtomString> MockCDM::supportedInitDataTypes() const
+Vector<String> MockCDM::supportedInitDataTypes() const
 {
     if (m_factory)
         return m_factory->supportedDataTypes();
     return { };
 }
 
-Vector<AtomString> MockCDM::supportedRobustnesses() const
+Vector<String> MockCDM::supportedRobustnesses() const
 {
     if (m_factory)
         return m_factory->supportedRobustness();
@@ -216,7 +216,7 @@ bool MockCDM::supportsSessions() const
     return m_factory && m_factory->supportsSessions();
 }
 
-bool MockCDM::supportsInitData(const AtomString& initDataType, const SharedBuffer& initData) const
+bool MockCDM::supportsInitData(const String& initDataType, const SharedBuffer& initData) const
 {
     if (!supportedInitDataTypes().contains(initDataType))
         return false;
@@ -311,11 +311,11 @@ MockCDMInstanceSession::MockCDMInstanceSession(WeakPtr<MockCDMInstance>&& instan
 {
 }
 
-void MockCDMInstanceSession::requestLicense(LicenseType licenseType, KeyGroupingStrategy, const AtomString& initDataType, Ref<SharedBuffer>&& initData, LicenseCallback&& callback)
+void MockCDMInstanceSession::requestLicense(LicenseType licenseType, KeyGroupingStrategy, const String& initDataType, Ref<SharedBuffer>&& initData, LicenseCallback&& callback)
 {
     MockCDMFactory* factory = m_instance ? m_instance->factory() : nullptr;
     if (!factory) {
-        callback(SharedBuffer::create(), emptyAtom(), false, SuccessValue::Failed);
+        callback(SharedBuffer::create(), emptyString(), false, SuccessValue::Failed);
         return;
     }
 

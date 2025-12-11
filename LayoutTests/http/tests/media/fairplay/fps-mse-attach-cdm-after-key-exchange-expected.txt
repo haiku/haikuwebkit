@@ -1,3 +1,4 @@
+
 PROMISE: requestMediaKeySystemAccess resolved
 PROMISE: createMediaKeys resolved
 FETCH: resources/cert.der OK

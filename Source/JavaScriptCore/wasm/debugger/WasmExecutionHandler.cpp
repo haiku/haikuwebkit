@@ -118,9 +118,9 @@ static inline StopReasonInfo stopReasonCodeToInfo(ExecutionHandler::StopReason::
     }
 }
 
-ExecutionHandler::ExecutionHandler(DebugServer& debugServer, ModuleManager& instanceManager, BreakpointManager& breakpointManager)
+ExecutionHandler::ExecutionHandler(DebugServer& debugServer, ModuleManager& moduleManager, BreakpointManager& breakpointManager)
     : m_debugServer(debugServer)
-    , m_instanceManager(instanceManager)
+    , m_moduleManager(moduleManager)
     , m_breakpointManager(breakpointManager)
 {
 }
@@ -134,7 +134,7 @@ void ExecutionHandler::stopImpl(StopReason&& stopReason)
 
     m_stopReason = stopReason;
     m_mutatorState = MutatorState::Stopped;
-    m_breakpointManager.clearAllTmpBreakpoints();
+    m_breakpointManager.clearAllOneTimeBreakpoints();
 
     if (m_debuggerState == DebuggerState::ContinueRequested) {
         sendStopReply(locker);
@@ -226,7 +226,7 @@ void ExecutionHandler::step()
 
     auto setStepBreakpoint = [&](const uint8_t* nextPC) WTF_REQUIRES_LOCK(m_lock) {
         VirtualAddress nextAddress = VirtualAddress(m_stopReason.address.value() + (nextPC - currentPC));
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step][SetTmpBreakpoint] current PC=", RawPointer(currentPC), "(", m_stopReason.address, "), next PC=", RawPointer(nextPC), "(", nextAddress, ")");
+        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger][Step][SetOneTimeBreakpoint] current PC=", RawPointer(currentPC), "(", m_stopReason.address, "), next PC=", RawPointer(nextPC), "(", nextAddress, ")");
         if (m_breakpointManager.findBreakpoint(nextAddress))
             return;
         m_breakpointManager.setBreakpoint(nextAddress, Breakpoint(const_cast<uint8_t*>(nextPC), Breakpoint::Type::Step));
@@ -362,7 +362,7 @@ void ExecutionHandler::setBreakpoint(StringView packet)
         return;
     }
 
-    uint8_t* pc = address.toPhysicalPC(m_instanceManager);
+    uint8_t* pc = address.toPhysicalPC(m_moduleManager);
     if (!pc) {
         dataLogLnIf(Options::verboseWasmDebugger(), "[ExecutionHandler] Failed to convert virtual address to physical: ", address);
         sendErrorReply(ProtocolError::InvalidAddress);

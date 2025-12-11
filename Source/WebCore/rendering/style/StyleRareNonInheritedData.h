@@ -27,9 +27,6 @@
 
 #include <WebCore/CSSPropertyNames.h>
 #include <WebCore/CounterDirectives.h>
-#include <WebCore/NameScope.h>
-#include <WebCore/PositionArea.h>
-#include <WebCore/PositionTryFallback.h>
 #include <WebCore/ScopedName.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/StyleAnchorName.h>
@@ -37,11 +34,15 @@
 #include <WebCore/StyleClip.h>
 #include <WebCore/StyleClipPath.h>
 #include <WebCore/StyleColor.h>
+#include <WebCore/StyleContain.h>
 #include <WebCore/StyleContainIntrinsicSize.h>
 #include <WebCore/StyleContainerName.h>
 #include <WebCore/StyleGapGutter.h>
+#include <WebCore/StyleItemTolerance.h>
+#include <WebCore/StyleMarginTrim.h>
 #include <WebCore/StyleMaskBorder.h>
 #include <WebCore/StyleMaximumLines.h>
+#include <WebCore/StyleNameScope.h>
 #include <WebCore/StyleOffsetAnchor.h>
 #include <WebCore/StyleOffsetDistance.h>
 #include <WebCore/StyleOffsetPath.h>
@@ -50,6 +51,10 @@
 #include <WebCore/StylePageSize.h>
 #include <WebCore/StylePerspective.h>
 #include <WebCore/StylePerspectiveOrigin.h>
+#include <WebCore/StylePositionAnchor.h>
+#include <WebCore/StylePositionArea.h>
+#include <WebCore/StylePositionTryFallbacks.h>
+#include <WebCore/StylePositionVisibility.h>
 #include <WebCore/StylePrimitiveNumericTypes.h>
 #include <WebCore/StyleProgressTimelineAxes.h>
 #include <WebCore/StyleProgressTimelineName.h>
@@ -67,6 +72,7 @@
 #include <WebCore/StyleShapeMargin.h>
 #include <WebCore/StyleShapeOutside.h>
 #include <WebCore/StyleTextDecorationThickness.h>
+#include <WebCore/StyleTouchAction.h>
 #include <WebCore/StyleTranslate.h>
 #include <WebCore/StyleViewTimelineInsets.h>
 #include <WebCore/StyleViewTimelines.h>
@@ -76,7 +82,6 @@
 #include <WebCore/StyleWebKitInitialLetter.h>
 #include <WebCore/StyleWebKitLineClamp.h>
 #include <WebCore/StyleWillChange.h>
-#include <WebCore/TouchAction.h>
 #include <memory>
 #include <wtf/DataRef.h>
 #include <wtf/Markable.h>
@@ -91,9 +96,9 @@ namespace WebCore {
 using namespace CSS::Literals;
 
 class PathOperation;
+class StyleBackdropFilterData;
 class StyleCustomPropertyData;
 class StyleDeprecatedFlexibleBoxData;
-class StyleFilterData;
 class StyleFlexibleBoxData;
 class StyleGridData;
 class StyleGridItemData;
@@ -128,7 +133,7 @@ public:
     bool hasScrollTimelines() const { return !scrollTimelines.isEmpty() || !scrollTimelineNames.isNone(); }
     bool hasViewTimelines() const { return !viewTimelines.isEmpty() || !viewTimelineNames.isNone(); }
 
-    OptionSet<Containment> usedContain() const;
+    Style::Contain usedContain() const;
 
     Style::ContainIntrinsicSize containIntrinsicWidth;
     Style::ContainIntrinsicSize containIntrinsicHeight;
@@ -141,15 +146,13 @@ public:
 
     OverflowContinue overflowContinue { OverflowContinue::Auto };
 
-    OptionSet<TouchAction> touchActions;
-    OptionSet<MarginTrimType> marginTrim;
-    OptionSet<Containment> contain;
+    Style::TouchAction touchAction;
 
     Style::WebkitInitialLetter initialLetter;
 
     DataRef<StyleMarqueeData> marquee; // Marquee properties
 
-    DataRef<StyleFilterData> backdropFilter; // Filter operations (url, sepia, blur, etc.)
+    DataRef<StyleBackdropFilterData> backdropFilter; // Filter operations (url, sepia, blur, etc.)
 
     DataRef<StyleGridData> grid;
     DataRef<StyleGridItemData> gridItem;
@@ -193,6 +196,8 @@ public:
     Style::GapGutter columnGap;
     Style::GapGutter rowGap;
 
+    Style::ItemTolerance itemTolerance;
+
     Style::OffsetPath offsetPath;
     Style::OffsetDistance offsetDistance;
     Style::OffsetPosition offsetPosition;
@@ -211,7 +216,7 @@ public:
     Style::ProgressTimelineAxes viewTimelineAxes;
     Style::ProgressTimelineNames viewTimelineNames;
 
-    NameScope timelineScope;
+    Style::NameScope timelineScope;
 
     Style::ScrollbarGutter scrollbarGutter;
 
@@ -222,10 +227,10 @@ public:
     AtomString pseudoElementNameArgument;
 
     Style::AnchorNames anchorNames;
-    NameScope anchorScope;
-    std::optional<Style::ScopedName> positionAnchor;
-    std::optional<PositionArea> positionArea;
-    FixedVector<Style::PositionTryFallback> positionTryFallbacks;
+    Style::NameScope anchorScope;
+    Style::PositionAnchor positionAnchor;
+    Style::PositionArea positionArea;
+    Style::PositionTryFallbacks positionTryFallbacks;
     std::optional<size_t> usedPositionOptionIndex;
 
     Style::BlockStepSize blockStepSize;
@@ -258,7 +263,7 @@ public:
     PREFERRED_TYPE(TextBoxTrim) unsigned textBoxTrim : 2;
     PREFERRED_TYPE(OverflowAnchor) unsigned overflowAnchor : 1;
     PREFERRED_TYPE(Style::PositionTryOrder) unsigned positionTryOrder : 3;
-    PREFERRED_TYPE(OptionSet<PositionVisibility>) unsigned positionVisibility : 3;
+    PREFERRED_TYPE(Style::PositionVisibility) unsigned positionVisibility : 3;
     PREFERRED_TYPE(FieldSizing) unsigned fieldSizing : 1;
     PREFERRED_TYPE(bool) unsigned nativeAppearanceDisabled : 1;
 #if HAVE(CORE_MATERIAL)
@@ -270,6 +275,8 @@ public:
     PREFERRED_TYPE(bool) unsigned usesTreeCountingFunctions : 1;
     PREFERRED_TYPE(bool) unsigned isPopoverInvoker : 1;
     PREFERRED_TYPE(bool) unsigned useSVGZoomRulesForLength : 1;
+    PREFERRED_TYPE(Style::MarginTrim) unsigned marginTrim : 4;
+    PREFERRED_TYPE(Style::Contain) unsigned contain : 5;
 
 private:
     StyleRareNonInheritedData();

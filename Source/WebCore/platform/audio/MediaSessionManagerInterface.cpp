@@ -628,9 +628,6 @@ void MediaSessionManagerInterface::addSession(PlatformMediaSessionInterface& ses
 {
 #if !RELEASE_LOG_DISABLED && (ENABLE(VIDEO) || ENABLE(WEB_AUDIO))
     m_logger->addLogger(session.protectedLogger());
-#endif
-
-#if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
     MEDIASESSIONMANAGERINTERFACE_RELEASE_LOG(ADDSESSION, session.logIdentifier());
 #endif
 

@@ -32,6 +32,7 @@
 #include <WebCore/RenderStyleConstants.h>
 #include <WebCore/RepaintRectCalculation.h>
 #include <wtf/CheckedPtr.h>
+#include <wtf/EnumSet.h>
 #include <wtf/Platform.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -99,6 +100,7 @@ class Box;
 
 namespace Style {
 class PseudoElementRequest;
+enum class MarginTrimSide : uint8_t;
 }
 
 enum class Affinity : bool;
@@ -111,7 +113,7 @@ enum class StyleColorOptions : uint8_t;
 typedef const void* WrappedImagePtr;
 
 // Base class for all rendering tree objects.
-class RenderObject : public CachedImageClient {
+class RenderObject : public CanMakeSingleThreadWeakPtr<RenderObject>, public CanMakeCheckedPtr<RenderObject> {
     WTF_MAKE_PREFERABLY_COMPACT_TZONE_OR_ISO_ALLOCATED(RenderObject);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RenderObject);
     friend class RenderBlock;
@@ -1055,8 +1057,18 @@ public:
     virtual int previousOffsetForBackwardDeletion(int current) const;
     virtual int nextOffset(int current) const;
 
-    void imageChanged(CachedImage*, const IntRect* = nullptr) override;
+    // CachedImageClient emulation.
+    virtual void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) { }
     virtual void imageChanged(WrappedImagePtr, const IntRect* = nullptr) { }
+    virtual bool allowsAnimation() const { return true; }
+    virtual bool canDestroyDecodedData() const { return true; }
+    virtual VisibleInViewportState imageFrameAvailable(CachedImage&, ImageAnimatingState, const IntRect*);
+    virtual VisibleInViewportState imageVisibleInViewport(const Document&) const { return VisibleInViewportState::No; }
+    virtual void didRemoveCachedImageClient(CachedImage&) { }
+    virtual void imageContentChanged(CachedImage&) { }
+    virtual void scheduleRenderingUpdateForImage(CachedImage&) { }
+    CachedImageClient& cachedImageClient() const;
+    Ref<CachedImageClient> protectedCachedImageClient() const { return cachedImageClient(); }
 
     // Map points and quads through elements, potentially via 3d transforms. You should never need to call these directly; use
     // localToAbsolute/absoluteToLocal methods instead.
@@ -1070,8 +1082,6 @@ public:
 
     bool participatesInPreserve3D() const;
 
-    virtual void addFocusRingRects(Vector<LayoutRect>&, const LayoutPoint& /* additionalOffset */, const RenderLayerModelObject* /* paintContainer */ = nullptr) const { };
-
     LayoutRect absoluteOutlineBounds() const { return outlineBoundsForRepaint(nullptr); }
 
     // FIXME: Renderers should not need to be notified about internal reparenting (webkit.org/b/224143).
@@ -1083,8 +1093,6 @@ public:
 
     virtual String description() const;
     virtual String debugDescription() const;
-
-    void addPDFURLRect(const PaintInfo&, const LayoutPoint&) const;
 
     bool isSkippedContent() const;
 
@@ -1127,6 +1135,35 @@ protected:
     BoxDecorationState boxDecorationState() const { return m_stateBitfields.boxDecorationState(); }
 
 private:
+    // This class is to avoid making RenderObject refcounted.
+    class CachedImageListener final : public CachedImageClient, public RefCounted<CachedImageListener> {
+        WTF_MAKE_TZONE_ALLOCATED(CachedImageListener);
+    public:
+        static Ref<CachedImageListener> create(RenderObject&);
+
+        // CachedImageClient.
+        void ref() const final { RefCounted::ref(); }
+        void deref() const final { RefCounted::deref(); }
+
+    private:
+        // CachedResourceClient.
+        void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) final;
+
+        // CachedImageClient.
+        void imageChanged(CachedImage*, const IntRect* = nullptr) final;
+        bool allowsAnimation() const final;
+        bool canDestroyDecodedData() const final;
+        VisibleInViewportState imageFrameAvailable(CachedImage&, ImageAnimatingState, const IntRect*) final;
+        VisibleInViewportState imageVisibleInViewport(const Document&) const final;
+        void didRemoveCachedImageClient(CachedImage&) final;
+        void imageContentChanged(CachedImage&) final;
+        void scheduleRenderingUpdateForImage(CachedImage&) final;
+
+        explicit CachedImageListener(RenderObject&);
+
+        SingleThreadWeakPtr<RenderObject> m_renderer;
+    };
+
     virtual RepaintRects localRectsForRepaint(RepaintOutlineBounds) const;
 
     void addAbsoluteRectForLayer(LayoutRect& result);
@@ -1245,6 +1282,7 @@ private:
     const TypeSpecificFlags m_typeSpecificFlags;
 
     CheckedPtr<Layout::Box> m_layoutBox;
+    const RefPtr<CachedImageListener> m_cachedImageClient;
 
     // FIXME: This should be RenderElementRareData.
     class RenderObjectRareData {
@@ -1258,7 +1296,7 @@ private:
         // Dirty bit was set with MarkingBehavior::MarkOnlyThis
         bool preferredLogicalWidthsNeedUpdateIsMarkOnlyThis { false };
         bool isYouTubeReplacement { false };
-        OptionSet<MarginTrimType> trimmedMargins;
+        EnumSet<Style::MarginTrimSide> trimmedMargins;
 
         // From RenderElement
         std::unique_ptr<ReferencedSVGResources> referencedSVGResources;
@@ -1426,6 +1464,13 @@ inline bool RenderObject::usesBoundaryCaching() const
     ASSERT(enumToUnderlyingType(ReplacedFlag::UsesBoundaryCaching) == enumToUnderlyingType(SVGModelObjectFlag::UsesBoundaryCaching));
     return (m_typeSpecificFlags.kind() == TypeSpecificFlags::Kind::Replaced && m_typeSpecificFlags.replacedFlags().contains(ReplacedFlag::UsesBoundaryCaching))
         || (m_typeSpecificFlags.kind() == TypeSpecificFlags::Kind::SVGModelObject && m_typeSpecificFlags.svgFlags().contains(SVGModelObjectFlag::UsesBoundaryCaching));
+}
+
+inline CachedImageClient& RenderObject::cachedImageClient() const
+{
+    if (!m_cachedImageClient)
+        lazyInitialize(m_cachedImageClient, CachedImageListener::create(*const_cast<RenderObject*>(this)));
+    return *m_cachedImageClient.get();
 }
 
 WTF::TextStream& operator<<(WTF::TextStream&, const RenderObject&);

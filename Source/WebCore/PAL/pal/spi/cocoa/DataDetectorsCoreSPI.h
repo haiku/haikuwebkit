@@ -156,6 +156,11 @@ struct __DDScanQuery {
 
 #endif // !USE(APPLE_INTERNAL_SDK)
 
+@interface DDScannerResult(WKSecureCoding)
+- (NSDictionary *)_webKitPropertyListData;
+- (instancetype)_initWithWebKitPropertyListData:(NSDictionary *)plist;
+@end
+
 static_assert(sizeof(DDQueryOffset) == 8, "DDQueryOffset is no longer 8 bytes. Update the definition of DDQueryOffset in this file to match the new size.");
 
 typedef struct __DDScanQuery *DDScanQueryRef;

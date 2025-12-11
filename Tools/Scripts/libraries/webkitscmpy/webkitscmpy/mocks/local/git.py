@@ -129,7 +129,7 @@ class Git(mocks.Subprocess):
                     '\tmerge = refs/heads/{branch}\n'.format(
                         remote=self.remote,
                         branch=self.default_branch,
-                        editor='\teditor = /bin/example -n -w\n' if editor else '',
+                        editor='\teditor = /bin/Example\\ Program -n -w\n' if editor else '',
                     ))
                 for name, url in (remotes or {}).items():
                     config.write(
@@ -816,7 +816,7 @@ nothing to commit, working tree clean
                 self.executable, 'lfs', 'install',
                 generator=lambda *args, **kwargs: self._configure_git_lfs(),
             ), mocks.Subprocess.Route(
-                '/bin/example', '-n', '-w',
+                '/bin/Example Program', '-n', '-w',
                 generator=editor_generator,
             ), *git_svn_routes
         )

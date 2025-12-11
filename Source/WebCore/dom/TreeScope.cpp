@@ -670,7 +670,7 @@ LegacyRenderSVGResourceContainer* TreeScope::lookupLegacySVGResoureById(const At
         return nullptr;
 
     if (auto resource = svgResourcesMap().legacyResources.get(id))
-        return resource.get();
+        return resource;
 
     return nullptr;
 }

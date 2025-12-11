@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,11 +28,15 @@
 
 #include <wtf/text/AtomString.h>
 #include <wtf/text/CString.h>
+#include <wtf/text/MakeString.h>
 #include <wtf/text/WTFString.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WTF {
+
+static constexpr size_t stringLengthThresholdToTriggerTruncation = 5000000;
+static constexpr size_t stringLengthToTruncateToForPrinting = 1000;
 
 PrintStream::PrintStream() = default;
 PrintStream::~PrintStream() = default; // Force the vtable to be in this module
@@ -99,6 +103,12 @@ void printInternal(PrintStream& out, StringView string)
 
 void printInternal(PrintStream& out, const CString& string)
 {
+    if (string.length() > stringLengthThresholdToTriggerTruncation) [[unlikely]] {
+        size_t lengthNotPrinted = string.length() - stringLengthToTruncateToForPrinting;
+        auto subString = makeString(string.span().first(stringLengthToTruncateToForPrinting), "...["_s, lengthNotPrinted, " characters not shown]"_s);
+        printInternal(out, subString.utf8().data());
+        return;
+    }
     printInternal(out, string.data());
 }
 
@@ -139,6 +149,11 @@ void printInternal(PrintStream& out, int value)
 void printInternal(PrintStream& out, unsigned value)
 {
     out.printf("%u", value);
+}
+
+void printInternal(PrintStream& out, char value)
+{
+    out.printf("%c", value);
 }
 
 void printInternal(PrintStream& out, signed char value)

@@ -82,6 +82,7 @@ enum class SpecificPattern : uint8_t {
     LeadingSpacesPlus,
     TrailingSpacesStar,
     TrailingSpacesPlus,
+    Newlines,
 };
 
 struct BytecodePattern;

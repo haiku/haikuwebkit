@@ -61,7 +61,7 @@ static bool isDoneWithFormSubmission;
 @implementation InputDelegateForFormSubmission {
 }
 
-- (void)_webView:(WKWebView *)webView willSubmitFormValues:(NSDictionary *)values frameInfo:(WKFrameInfo *)frameInfo sourceFrameInfo:(WKFrameInfo *)sourceFrameInfo userObject:(NSObject <NSSecureCoding> *)userObject submissionHandler:(void (^)(void))submissionHandler
+- (void)_webView:(WKWebView *)webView willSubmitFormValues:(NSDictionary *)values frameInfo:(WKFrameInfo *)frameInfo sourceFrameInfo:(WKFrameInfo *)sourceFrameInfo userObject:(NSObject <NSSecureCoding> *)userObject requestURL:(NSURL *)requestURL method:(NSString *)method submissionHandler:(void (^)(void))submissionHandler
 {
     auto *dictionary = (NSDictionary *)userObject;
     EXPECT_WK_STREQ((NSString *)dictionary[@"foo"], @"bar");
@@ -1650,3 +1650,54 @@ TEST(WKUserContentController, FormSubmissionWithUserInfo)
     "</form></body>" baseURL:nil];
     TestWebKitAPI::Util::run(&isDoneWithFormSubmission);
 }
+
+#if PLATFORM(MAC)
+
+TEST(WKUserContentController, AutoFillWorldTrustedEventHandler)
+{
+    RetainPtr contentWorldConfiguration = adoptNS([[_WKContentWorldConfiguration alloc] init]);
+    [contentWorldConfiguration setAllowAutofill:YES];
+
+    __block int autoFillWorldEventCount = 0;
+    __block int pageWorldEventCount = 0;
+    __block bool done = false;
+
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:contentWorldConfiguration.get()];
+    RetainPtr autoFillHandler = adoptNS([[TestMessageHandler alloc] init]);
+    [autoFillHandler addMessage:@"event" withHandler:^{
+        autoFillWorldEventCount++;
+    }];
+    [[configuration userContentController] addScriptMessageHandler:autoFillHandler.get() contentWorld:world.get() name:@"autofill"];
+
+    RetainPtr handler = adoptNS([[TestMessageHandler alloc] init]);
+    [handler addMessage:@"event" withHandler:^{
+        pageWorldEventCount++;
+        done = true;
+    }];
+    [[configuration userContentController] addScriptMessageHandler:handler.get() name:@"page"];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get() addToWindow:YES]);
+    [webView synchronouslyLoadHTMLString:@"<input id='input' type='text'><script>input.focus()</script>"];
+
+    // webkitTrustedOnly should only have an effect in the autofill world.
+    [webView objectByEvaluatingJavaScript:@"window.addEventListener('keydown', (e) => { window.webkit.messageHandlers.autofill.postMessage('event'); }, { webkitTrustedOnly: true })" inFrame:nil inContentWorld:world.get()];
+    [webView objectByEvaluatingJavaScript:@"window.addEventListener('keydown', (e) => { window.webkit.messageHandlers.page.postMessage('event'); }, { webkitTrustedOnly: true });"];
+
+    [webView typeCharacter:'c'];
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+
+    EXPECT_EQ(autoFillWorldEventCount, 1);
+    EXPECT_EQ(pageWorldEventCount, 1);
+
+    [webView objectByEvaluatingJavaScript:@"input.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', code: 'keyA', keyCode: 65, which: 65, bubbles: true }))"];
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+
+    EXPECT_EQ(autoFillWorldEventCount, 1);
+    EXPECT_EQ(pageWorldEventCount, 2);
+}
+
+#endif

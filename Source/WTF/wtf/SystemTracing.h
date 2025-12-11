@@ -179,14 +179,12 @@ enum TracePointCode {
 #if PLATFORM(GTK) || PLATFORM(WPE)
     GTKWPEPortRange = 20000,
 
-    FlushPendingLayerChangesStart,
-    FlushPendingLayerChangesEnd,
+    UpdateRenderingStart,
+    UpdateRenderingEnd,
     WaitForCompositionCompletionStart,
     WaitForCompositionCompletionEnd,
     RenderLayerTreeStart,
     RenderLayerTreeEnd,
-    LayerFlushStart,
-    LayerFlushEnd,
     UpdateLayerContentBuffersStart,
     UpdateLayerContentBuffersEnd,
 #endif

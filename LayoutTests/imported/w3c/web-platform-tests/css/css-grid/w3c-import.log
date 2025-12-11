@@ -43,6 +43,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/firefox-bug-1881495-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/firefox-bug-1881495.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/firefox-bug-1958131-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-calc-margin-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-calc-margin-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-calc-margin.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-child-percent-basis-resize-1-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-child-percent-basis-resize-1-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-grid/grid-child-percent-basis-resize-1.html

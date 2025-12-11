@@ -28,6 +28,7 @@
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
 #include <JavaScriptCore/ContentSearchUtilities.h>
+#include <JavaScriptCore/RegularExpression.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {

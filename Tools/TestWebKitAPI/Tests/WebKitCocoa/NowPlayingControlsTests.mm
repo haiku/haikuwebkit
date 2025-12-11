@@ -27,10 +27,9 @@
 
 #import "PlatformUtilities.h"
 #import "TestWKWebView.h"
+#import "WKWebViewConfigurationExtras.h"
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
-
-#if PLATFORM(IOS_FAMILY)
 
 @interface NowPlayingTestWebView : TestWKWebView
 @property (nonatomic, readonly) BOOL hasActiveNowPlayingSession;
@@ -77,7 +76,6 @@
     }
 }
 
-#if ENABLE(REQUIRES_PAGE_VISIBILITY_FOR_NOW_PLAYING)
 - (void)expectRegisteredAsNowPlayingApplication:(BOOL)registeredAsNowPlayingApplication
 {
     [self requestActiveNowPlayingSessionInfo];
@@ -88,7 +86,6 @@
         finishedWaiting = self.registeredAsNowPlayingApplication == registeredAsNowPlayingApplication;
     }
 }
-#endif
 
 - (void)setWindowVisible:(BOOL)isVisible
 {
@@ -101,6 +98,8 @@
 @end
 
 namespace TestWebKitAPI {
+
+#if PLATFORM(IOS_FAMILY)
 
 #if PLATFORM(MAC)
 TEST(NowPlayingControlsTests, NowPlayingControlsDoNotShowForForegroundPage)
@@ -257,7 +256,6 @@ TEST(NowPlayingControlsTests, NowPlayingControlsCheckRegistered)
 
 #endif // PLATFORM(MAC)
 
-#if PLATFORM(IOS_FAMILY)
 // FIXME: Re-enable this test once <webkit.org/b/175204> is resolved.
 TEST(NowPlayingControlsTests, DISABLED_NowPlayingControlsIOS)
 {
@@ -274,6 +272,26 @@ TEST(NowPlayingControlsTests, DISABLED_NowPlayingControlsIOS)
 }
 #endif
 
-} // namespace TestWebKitAPI
+TEST(NowPlayingControlsTests, LazyRegisterAsNowPlayingApplication)
+{
+    auto configuration = retainPtr([WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES]);
+    auto webView = adoptNS([[NowPlayingTestWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView synchronouslyLoadHTMLString:@"<body>Hello world</body>"];
 
-#endif // PLATFORM(IOS_FAMILY)
+    auto haveMediaSessionManager = [&] {
+        return [webView stringByEvaluatingJavaScript:@"window.internals.hasMediaSessionManager"].boolValue;
+    };
+
+    [webView expectRegisteredAsNowPlayingApplication:NO];
+    ASSERT_FALSE(haveMediaSessionManager());
+
+    [webView setWindowVisible:NO];
+    [webView expectRegisteredAsNowPlayingApplication:NO];
+    ASSERT_FALSE(haveMediaSessionManager());
+
+    [webView setWindowVisible:YES];
+    [webView expectRegisteredAsNowPlayingApplication:NO];
+    ASSERT_FALSE(haveMediaSessionManager());
+}
+
+} // namespace TestWebKitAPI

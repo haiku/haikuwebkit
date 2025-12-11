@@ -709,6 +709,20 @@
     },
     {
      "access": "public",
+     "instanceMethods": [
+      {"access": "public", "name": "evaluateURL:completionHandler:"},
+      {"access": "public", "name": "allowURL:completionHandler:"}
+     ],
+     "introduced": "26.2",
+     "linkage": "exported",
+     "name": "BEWebContentFilter",
+     "properties": [
+      {"access": "public", "attr": [ "readonly", "class" ], "getter": "shouldEvaluateURLs", "name": "shouldEvaluateURLs"}
+     ],
+     "super": "NSObject"
+    },
+    {
+     "access": "public",
      "categories": [
       "BEExtensionProcessConformance",
       "Capability",
@@ -954,7 +968,7 @@
      "name": "BETextSelectionDirectionNavigation"
     }
    ],
-   "target": "arm64e-apple-ios26.1",
+   "target": "arm64e-apple-ios26.2",
    "typedefs": [
     {"access": "public", "name": "BEAccessibilityContainerType"},
     {"access": "public", "name": "BEAccessibilityPressedState"},
@@ -1070,6 +1084,7 @@
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit18RenderingExtensionPAA26RestrictedSandboxAppliableTb"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit18RenderingExtensionPAAE13configurationAA0dE13ConfigurationVvg"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit18RenderingExtensionPAAE13configurationAA0dE13ConfigurationVvpMV"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit18RenderingExtensionPAAE13enableFeatureyyAA0deG0OF"},
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit18RenderingExtensionTL"},
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit19BEProcessCapabilityCMa"},
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit19BEProcessCapabilityCMn"},
@@ -1125,6 +1140,16 @@
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit21__BEWebContentProcessCMu"},
     {"access": "public", "introduced": "17.4", "linkage": "exported", "name": "_$s16BrowserEngineKit21__BEWebContentProcessCN"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit21__BEWebContentProcessCfD"},
+    {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureO2eeoiySbAC_ACtFZ"},
+    {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureO4hash4intoys6HasherVz_tF"},
+    {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureO6coreMLyA2CmFWC"},
+    {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureO9hashValueSivg"},
+    {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureO9hashValueSivpMV"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureOMa"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureOMn"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureON"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureOSHAAMc"},
+    {"access": "public", "introduced": "26.2", "linkage": "exported", "name": "_$s16BrowserEngineKit25RenderingExtensionFeatureOSQAAMc"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RestrictedSandboxRevisionO1loiySbAC_ACtFZ"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RestrictedSandboxRevisionO2eeoiySbAC_ACtFZ"},
     {"access": "public", "linkage": "exported", "name": "_$s16BrowserEngineKit25RestrictedSandboxRevisionO4hash4intoys6HasherVz_tF"},
@@ -1243,7 +1268,7 @@
      "super": "NSObject"
     }
    ],
-   "target": "arm64e-apple-ios26.1"
+   "target": "arm64e-apple-ios26.2"
   }
  ],
  "version": "1.0"

@@ -29,6 +29,7 @@
 #include <wtf/TZoneMallocInlines.h>
 
 #if ENABLE(WEBXR_HIT_TEST)
+#include "WebXRInputSpace.h"
 #include "WebXRPose.h"
 #include "WebXRRigidTransform.h"
 #include "WebXRSpace.h"

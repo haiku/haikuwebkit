@@ -58,12 +58,12 @@ public:
     JS_EXPORT_PRIVATE Breakpoint* findBreakpoint(VirtualAddress);
     JS_EXPORT_PRIVATE void setBreakpoint(VirtualAddress, Breakpoint&&);
     JS_EXPORT_PRIVATE bool removeBreakpoint(VirtualAddress);
-    JS_EXPORT_PRIVATE void clearAllTmpBreakpoints();
+    JS_EXPORT_PRIVATE void clearAllOneTimeBreakpoints();
     JS_EXPORT_PRIVATE void clearAllBreakpoints();
 
 private:
     UncheckedKeyHashMap<VirtualAddress, Breakpoint> m_breakpoints;
-    UncheckedKeyHashSet<VirtualAddress> m_tmpBreakpoints;
+    UncheckedKeyHashSet<VirtualAddress> m_oneTimeBreakpoints;
 };
 
 } // namespace Wasm

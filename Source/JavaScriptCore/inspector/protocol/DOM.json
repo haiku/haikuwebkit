@@ -223,7 +223,8 @@
                 { "name": "codec", "type": "string", "description": "The codec string of the primary audio track. (E.g., \"hvc1.1.6.L123.B0\")" },
                 { "name": "humanReadableCodecString", "type": "string", "description": "A human readable version of the `codec` parameter."},
                 { "name": "numberOfChannels", "type": "integer", "description": "The number of audio channels in the primary audio track." },
-                { "name": "sampleRate", "type": "number", "description": "The sample rate of the primary audio track in hertz." }
+                { "name": "sampleRate", "type": "number", "description": "The sample rate of the primary audio track in hertz." },
+                { "name": "isProtected", "type": "boolean", "optional": true, "description": "Whether the track contains protected contents" }
             ]
         },
         {
@@ -239,7 +240,8 @@
                 { "name": "height", "type": "integer", "description": "The native height of the video track in CSS pixels" },
                 { "name": "width", "type": "integer", "description": "The native width of the video track in CSS pixels" },
                 { "name": "spatialVideoMetadata", "$ref": "SpatialVideoMetadata", "optional": true },
-                { "name": "videoProjectionMetadata", "$ref": "VideoProjectionMetadata", "optional": true }
+                { "name": "videoProjectionMetadata", "$ref": "VideoProjectionMetadata", "optional": true },
+                { "name": "isProtected", "type": "boolean", "optional": true, "description": "Whether the track contains protected contents" }
             ]
         },
         {

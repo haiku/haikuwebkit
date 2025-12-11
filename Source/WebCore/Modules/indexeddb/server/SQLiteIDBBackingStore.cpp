@@ -2616,13 +2616,13 @@ IDBError SQLiteIDBBackingStore::openCursor(const IDBResourceIdentifier& transact
     if (!transaction || !transaction->inProgressOrReadOnly())
         return IDBError { ExceptionCode::UnknownError, "Attempt to open a cursor in database without an in-progress transaction"_s };
 
-    auto* cursor = transaction->maybeOpenCursor(info);
+    CheckedPtr cursor = transaction->maybeOpenCursor(info);
     if (!cursor) {
         LOG_ERROR("Unable to open cursor");
         return IDBError { ExceptionCode::UnknownError, "Unable to open cursor"_s };
     }
 
-    m_cursors.set(cursor->identifier(), cursor);
+    m_cursors.set(cursor->identifier(), cursor.get());
 
     auto* objectStoreInfo = infoForObjectStore(info.objectStoreIdentifier());
     ASSERT(objectStoreInfo);
@@ -2637,7 +2637,7 @@ IDBError SQLiteIDBBackingStore::iterateCursor(const IDBResourceIdentifier& trans
     ASSERT(m_sqliteDB);
     ASSERT(m_sqliteDB->isOpen());
 
-    auto* cursor = m_cursors.get(cursorIdentifier);
+    CheckedPtr cursor = m_cursors.get(cursorIdentifier);
     if (!cursor) {
         LOG_ERROR("Attempt to iterate a cursor that doesn't exist");
         return IDBError { ExceptionCode::UnknownError, "Attempt to iterate a cursor that doesn't exist"_s };

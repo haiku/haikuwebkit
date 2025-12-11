@@ -6,6 +6,10 @@ PASS selectMenuItemError is ""
 PASS select.value is "Three"
 PASS selectTextError is ""
 PASS getSelection().toString() is "Subject"
+PASS scrollChildContainerError is ""
+PASS childScroller.scrollTop is 100
+PASS scrollPageError is ""
+PASS document.scrollingElement.scrollTop is 100
 PASS invalidActionError is "Failed to resolve nodeIdentifier 4294967293"
 PASS successfullyParsed is true
 
@@ -16,3 +20,6 @@ Subject
 Hello world.
 
 1
+
+Foo bar
+

@@ -238,7 +238,7 @@ void WorkerDedicatedRunLoop::run(WorkerOrWorkletGlobalScope* context)
 
 #if PLATFORM(COCOA)
         if (WTF::CocoaApplication::isAppleApplication())
-            os_fault_with_payload(OS_REASON_WEBKIT, 0, nullptr, 0, reason.utf8().data(), 0);
+            RELEASE_LOG_FAULT_WITH_PAYLOAD(ServiceWorker, reason.utf8().data());
 #endif
 
         // Reset status to start tracking a new sequence of spinning.

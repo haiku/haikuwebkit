@@ -796,8 +796,6 @@ void WebBackForwardList::backForwardListCounts(CompletionHandler<void(WebBackFor
     completionHandler(counts());
 }
 
-#if !LOG_DISABLED
-
 String WebBackForwardList::loggingString()
 {
     StringBuilder builder;
@@ -805,13 +803,13 @@ String WebBackForwardList::loggingString()
     builder.append("\nWebBackForwardList 0x"_s, hex(reinterpret_cast<uintptr_t>(this)), " - "_s, m_entries.size(), " entries, has current index "_s, m_currentIndex ? "YES"_s : "NO"_s, " ("_s, m_currentIndex ? *m_currentIndex : 0, ")\n"_s);
 
     for (size_t i = 0; i < m_entries.size(); ++i) {
+        Ref entry = m_entries[i];
         ASCIILiteral prefix = (m_currentIndex && *m_currentIndex == i) ? " * "_s : " - "_s;
-        builder.append(prefix, m_entries[i]->loggingString());
+        auto entryString = entry->loggingString();
+        builder.append(prefix, entryString);
     }
 
     return builder.toString();
 }
-
-#endif // !LOG_DISABLED
 
 } // namespace WebKit

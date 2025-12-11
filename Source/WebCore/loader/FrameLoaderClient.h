@@ -29,6 +29,7 @@
 
 #include <WebCore/FloatSize.h>
 #include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/FrameTreeSyncClient.h>
 #include <WebCore/NavigationIdentifier.h>
 #include <WebCore/SandboxFlags.h>
 
@@ -51,7 +52,7 @@ enum class IsPerformingHTTPFallback : bool { No, Yes };
 using FramePolicyFunction = CompletionHandler<void(PolicyAction)>;
 using SandboxFlags = OptionSet<SandboxFlag>;
 
-class FrameLoaderClient {
+class FrameLoaderClient : public WebCore::FrameTreeSyncClient {
 public:
     virtual void dispatchDecidePolicyForNavigationAction(const NavigationAction&, const ResourceRequest&, const ResourceResponse& redirectResponse, FormState*, const String& clientRedirectSourceForHistory, std::optional<NavigationIdentifier>, std::optional<HitTestResult>&&, bool hasOpener, IsPerformingHTTPFallback, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&) = 0;
     virtual bool dispatchDidReceiveInvalidCertificate(DocumentLoader*, const CertificateInfo&, const char*) { return false; }

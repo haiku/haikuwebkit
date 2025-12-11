@@ -58,6 +58,8 @@ public:
     bool isInlineBox() const;
     bool isRootInlineBox() const;
     bool isLineBreak() const;
+    bool isBlockLevelBox() const;
+    bool isAtomicInlineBox() const;
 
     FloatRect visualRect() const;
     FloatRect visualRectIgnoringBlockDirection() const;
@@ -235,6 +237,20 @@ inline bool Box::isLineBreak() const
 {
     return WTF::switchOn(m_pathVariant, [](auto& path) {
         return path.isLineBreak();
+    });
+}
+
+inline bool Box::isBlockLevelBox() const
+{
+    return WTF::switchOn(m_pathVariant, [](auto& path) {
+        return path.isBlockLevelBox();
+    });
+}
+
+inline bool Box::isAtomicInlineBox() const
+{
+    return WTF::switchOn(m_pathVariant, [](auto& path) {
+        return path.isAtomicInlineBox();
     });
 }
 

@@ -428,7 +428,7 @@ std::tuple<GRefPtr<GstCaps>, StreamType, FloatSize> AppendPipeline::parseDemuxer
     auto& gstRegistryScanner = GStreamerRegistryScannerMSE::singleton();
     if (doCapsHaveType(demuxerSrcPadCaps, GST_TEXT_CAPS_TYPE_PREFIX) || originalMediaType == "application/x-subtitle-vtt"_s || originalMediaType == "closedcaption/x-cea-608") {
         streamType = StreamType::Text;
-    } else if (!gstRegistryScanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Decoding, originalMediaType.toString())) {
+    } else if (!gstRegistryScanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Decoding, originalMediaType.span())) {
         streamType = StreamType::Invalid;
     } else if (doCapsHaveType(demuxerSrcPadCaps, GST_VIDEO_CAPS_TYPE_PREFIX)) {
         presentationSize = getVideoResolutionFromCaps(demuxerSrcPadCaps).value_or(FloatSize());
@@ -721,7 +721,7 @@ void AppendPipeline::resetParserState()
     // Flush approach requires these GStreamer patches, shipped in 1.24:
     // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/4101.
     // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/4199.
-    if (webkitGstCheckVersion(1, 24, 0)) {
+    if (gst_check_version(1, 24, 0)) {
         GST_DEBUG_OBJECT(pipeline(), "Handling resetParserState() in AppendPipeline by flushing the pipeline");
         gst_element_send_event(m_appsrc.get(), gst_event_new_flush_start());
         gst_element_send_event(m_appsrc.get(), gst_event_new_flush_stop(true));
@@ -1083,7 +1083,7 @@ bool AppendPipeline::recycleTrackForPad(GstPad* demuxerSrcPad)
 {
     ASSERT(isMainThread());
     ASSERT(m_hasReceivedFirstInitializationSegment);
-    auto trackId = AtomString(unsafeSpan8(GST_PAD_NAME(demuxerSrcPad)));
+    AtomString trackId = byteCast<Latin1Character>(unsafeSpan(GST_PAD_NAME(demuxerSrcPad)));
     auto [parsedCaps, streamType, presentationSize] = parseDemuxerSrcPadCaps(adoptGRef(gst_pad_get_current_caps(demuxerSrcPad)).get());
 
     GST_DEBUG_OBJECT(demuxerSrcPad, "Caps: %" GST_PTR_FORMAT, parsedCaps.get());
@@ -1192,6 +1192,24 @@ Ref<WebCore::TrackPrivateBase> AppendPipeline::makeWebKitTrack(Track& appendPipe
     return track.releaseNonNull();
 }
 
+static ASCIILiteral serializeLowercase(StreamType streamType)
+{
+    switch (streamType) {
+    case StreamType::Audio:
+        return "audio"_s;
+    case StreamType::Video:
+        return "video"_s;
+    case StreamType::Text:
+        return "text"_s;
+    case StreamType::Invalid:
+        return "invalid"_s;
+    case StreamType::Unknown:
+        return "unknown"_s;
+    default:
+        return "(unsupported_stream_type)"_s;
+    }
+}
+
 void AppendPipeline::Track::emplaceOptionalElementsForFormat(GstBin* bin, const GRefPtr<GstCaps>& newCaps)
 {
     // Some audio files unhelpfully omit the duration of frames in the container. We need to parse
@@ -1216,8 +1234,8 @@ void AppendPipeline::Track::emplaceOptionalElementsForFormat(GstBin* bin, const 
         gst_bin_remove_many(bin, parser.get(), encoder.get(), nullptr);
     }
 
-    auto parserName = makeString("parser_"_s, unsafeSpan8(streamTypeToStringLower(streamType)), "_"_s, trackId);
-    auto encoderName = makeString("encoder_"_s, unsafeSpan8(streamTypeToStringLower(streamType)), "_"_s, trackId);
+    auto parserName = makeString("parser_"_s, serializeLowercase(streamType), '_', trackId);
+    auto encoderName = makeString("encoder_"_s, serializeLowercase(streamType), '_', trackId);
     parser = createOptionalParserForFormat(bin, demuxerSrcPad, parserName, newCaps.get());
     encoder = createOptionalEncoderForFormat(bin, encoderName, newCaps.get());
 
@@ -1335,24 +1353,6 @@ const char* AppendPipeline::streamTypeToString(StreamType streamType)
     }
 }
 #endif
-
-const char* AppendPipeline::streamTypeToStringLower(StreamType streamType)
-{
-    switch (streamType) {
-    case StreamType::Audio:
-        return "audio";
-    case StreamType::Video:
-        return "video";
-    case StreamType::Text:
-        return "text";
-    case StreamType::Invalid:
-        return "invalid";
-    case StreamType::Unknown:
-        return "unknown";
-    default:
-        return "(unsupported_stream_type)";
-    }
-}
 
 #if !LOG_DISABLED
 static GstPadProbeReturn appendPipelinePadProbeDebugInformation(GstPad* pad, GstPadProbeInfo* info, struct PadProbeInformation* padProbeInformation)

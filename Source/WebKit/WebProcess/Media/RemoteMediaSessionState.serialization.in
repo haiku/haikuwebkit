@@ -24,12 +24,17 @@
 
 header: "RemoteMediaSessionState.h"
 struct WebKit::RemoteMediaSessionState {
+    WebCore::PageIdentifier pageIdentifier;
     WebCore::MediaSessionIdentifier sessionIdentifier;
     uint64_t logIdentifier;
 
     WebCore::PlatformMediaSessionMediaType mediaType;
     WebCore::PlatformMediaSessionMediaType presentationType;
     WebCore::PlatformMediaSessionDisplayType displayType;
+
+    WebCore::PlatformMediaSessionState state;
+    WebCore::PlatformMediaSessionState stateToRestore;
+    WebCore::PlatformMediaSessionInterruptionType interruptionType
 
     MediaTime duration;
 
@@ -49,6 +54,16 @@ struct WebKit::RemoteMediaSessionState {
     bool isEnded;
     bool canReceiveRemoteControlCommands;
     bool supportsSeeking;
+    bool hasPlayedAudiblySinceLastInterruption;
+    bool isLongEnoughForMainContent;
+    bool blockedBySystemInterruption;
+    bool activeAudioSessionRequired;
+    bool preparingToPlay;
+    bool isActiveNowPlayingSession;
+
+#if PLATFORM(IOS_FAMILY)
+    bool requiresPlaybackTargetRouteMonitoring;
+#endif
 };
 
 #endif

@@ -243,7 +243,7 @@ void RemoteWebInspectorUIProxy::createFrontendPageAndWindow()
     m_inspectorPage = platformCreateFrontendPageAndWindow();
     RefPtr inspectorPage = m_inspectorPage.get();
 
-    trackInspectorPage(inspectorPage.get(), nullptr);
+    trackInspectorPage(*inspectorPage, nullptr);
 
     inspectorPage->protectedLegacyMainFrameProcess()->addMessageReceiver(Messages::RemoteWebInspectorUIProxy::messageReceiverName(), inspectorPage->webPageIDInMainFrameProcess(), *this);
 
@@ -260,7 +260,7 @@ void RemoteWebInspectorUIProxy::closeFrontendPageAndWindow()
 
     inspectorPage->protectedLegacyMainFrameProcess()->removeMessageReceiver(Messages::RemoteWebInspectorUIProxy::messageReceiverName(), inspectorPage->webPageIDInMainFrameProcess());
 
-    untrackInspectorPage(inspectorPage.get());
+    untrackInspectorPage(*inspectorPage);
 
 #if ENABLE(INSPECTOR_EXTENSIONS)
     // This extension controller may be kept alive by the IPC dispatcher beyond the point

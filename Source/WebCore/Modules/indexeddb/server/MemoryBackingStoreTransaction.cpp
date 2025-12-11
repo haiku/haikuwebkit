@@ -86,6 +86,7 @@ void MemoryBackingStoreTransaction::removeNewIndex(MemoryIndex& index)
 
     ASSERT(isVersionChange());
 
+    m_originalIndexNames.remove(&index);
     m_versionChangeAddedIndexes.remove(&index);
     m_indexes.remove(&index);
 }
@@ -263,7 +264,7 @@ void MemoryBackingStoreTransaction::finish()
 
 MemoryCursor* MemoryBackingStoreTransaction::cursor(const IDBResourceIdentifier& identifier) const
 {
-    return m_cursors.get(identifier).get();
+    return m_cursors.get(identifier);
 }
 
 void MemoryBackingStoreTransaction::addCursor(MemoryCursor& cursor)

@@ -117,6 +117,15 @@ void VideoTrackConfiguration::setVideoProjectionMetadata(std::optional<VideoProj
     notifyObservers();
 }
 
+void VideoTrackConfiguration::setProtected(bool isProtected)
+{
+    if (m_state.isProtected == isProtected)
+        return;
+
+    m_state.isProtected = isProtected;
+    notifyObservers();
+}
+
 void VideoTrackConfiguration::notifyObservers()
 {
     m_observers.forEach([] (auto& observer) {
@@ -135,6 +144,7 @@ Ref<JSON::Object> VideoTrackConfiguration::toJSON() const
     json->setInteger("bitrate"_s, bitrate());
     json->setBoolean("isSpatial"_s, !!spatialVideoMetadata());
     json->setBoolean("isImmersive"_s, !!videoProjectionMetadata());
+    json->setBoolean("isProtected"_s, isProtected());
     return json;
 }
 

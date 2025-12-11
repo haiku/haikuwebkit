@@ -38,6 +38,7 @@
 #import "PageClientImplIOS.h"
 #import "PickerDismissalReason.h"
 #import "PrintInfo.h"
+#import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeDrawingAreaProxyIOS.h"
 #import "SmartMagnificationController.h"
 #import "UIKitSPI.h"
@@ -224,7 +225,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
 #if USE(EXTENSIONKIT)
     RetainPtr<UIView> _visibilityPropagationViewForWebProcess;
     RetainPtr<UIView> _visibilityPropagationViewForGPUProcess;
-    RetainPtr<NSHashTable<WKVisibilityPropagationView *>> _visibilityPropagationViews;
+    RetainPtr<NSMutableSet<WKVisibilityPropagationView *>> _visibilityPropagationViews;
 #else
 #if HAVE(NON_HOSTING_VISIBILITY_PROPAGATION_VIEW)
     RetainPtr<_UINonHostingVisibilityPropagationView> _visibilityPropagationViewForWebProcess;
@@ -263,10 +264,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
 
     [self _updateRuntimeProtocolConformanceIfNeeded];
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // FIXME: <rdar://131638772> UIScreen.mainScreen is deprecated.
-    _page->setIntrinsicDeviceScaleFactor(WebCore::screenScaleFactor([UIScreen mainScreen]));
-ALLOW_DEPRECATED_DECLARATIONS_END
+    _page->setIntrinsicDeviceScaleFactor([self intrinsicDeviceScaleFactor]);
     _page->setUseFixedLayout(true);
     _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
 
@@ -327,10 +325,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:[UIApplication sharedApplication]];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:[UIApplication sharedApplication]];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:[UIApplication sharedApplication]];
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // FIXME: <rdar://131638772> UIScreen.mainScreen is deprecated.
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_screenCapturedDidChange:) name:UIScreenCapturedDidChangeNotification object:[UIScreen mainScreen]];
-ALLOW_DEPRECATED_DECLARATIONS_END
+
+    [self registerForTraitChanges:@[ UITraitDisplayScale.class ] withTarget:self action:@selector(_displayScaleDidChange)];
+    [self registerForTraitChanges:@[ UITraitSceneCaptureState.class ] withTarget:self action:@selector(_sceneCaptureStateDidChange)];
 
     return self;
 }
@@ -585,7 +582,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
     [self setUpInteraction];
-    _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     RunLoop::mainSingleton().dispatch([strongSelf = retainPtr(self)] {
@@ -761,12 +757,18 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self _didEndScrollingOrZooming];
 }
 
+- (CGFloat)intrinsicDeviceScaleFactor
+{
+    auto scaleFactor = self.traitCollection.displayScale;
+    if (!scaleFactor)
+        return WebCore::screenScaleFactor();
+
+    return scaleFactor;
+}
+
 - (BOOL)screenIsBeingCaptured
 {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    // FIXME: <rdar://131638936> UIScreen.isCaptured is deprecated.
-    return [[[self window] screen] isCaptured];
-ALLOW_DEPRECATED_DECLARATIONS_END
+    return self.traitCollection.sceneCaptureState == UISceneCaptureStateActive;
 }
 
 - (NSUndoManager *)undoManagerForWebView
@@ -825,7 +827,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (void)_updateForScreen:(UIScreen *)screen
 {
     ASSERT(screen);
-    _page->setIntrinsicDeviceScaleFactor(WebCore::screenScaleFactor(screen));
     [self _accessibilityRegisterUIProcessTokens];
 }
 
@@ -975,7 +976,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 - (WKVisibilityPropagationView *)_createVisibilityPropagationView
 {
     if (!_visibilityPropagationViews)
-        _visibilityPropagationViews = [NSHashTable weakObjectsHashTable];
+        _visibilityPropagationViews = adoptNS([[NSMutableSet alloc] init]);
 
     RetainPtr visibilityPropagationView = adoptNS([[WKVisibilityPropagationView alloc] init]);
     [_visibilityPropagationViews addObject:visibilityPropagationView.get()];
@@ -990,23 +991,29 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 
     return visibilityPropagationView.autorelease();
 }
+
+- (void)_removeVisibilityPropagationView:(UIView *)view
+{
+    if (RetainPtr visibilityPropagationView = dynamic_objc_cast<WKVisibilityPropagationView>(view))
+        [_visibilityPropagationViews removeObject:visibilityPropagationView.get()];
+}
 #endif // USE(EXTENSIONKIT)
 #endif // HAVE(VISIBILITY_PROPAGATION_VIEW)
 
-- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction mainFrameData:(const std::optional<WebKit::MainFrameData>&)mainFrameData
+- (void)_didCommitLayerTree:(const WebKit::RemoteLayerTreeTransaction&)layerTreeTransaction mainFrameData:(const std::optional<WebKit::MainFrameData>&)mainFrameData pageData:(const WebKit::PageData&)pageData transactionID:(const WebKit::TransactionID&)transactionID
 {
-    BOOL transactionMayChangeBounds = layerTreeTransaction.isMainFrameProcessTransaction();
+    BOOL transactionMayChangeBounds = mainFrameData.has_value();
     CGSize contentsSize = layerTreeTransaction.contentsSize();
     CGPoint scrollOrigin = -layerTreeTransaction.scrollOrigin();
     CGRect contentBounds = { scrollOrigin, contentsSize };
 
-    LOG_WITH_STREAM(VisibleRects, stream << "-[WKContentView _didCommitLayerTree:] transactionID " <<  layerTreeTransaction.transactionID() << " contentBounds " << WebCore::FloatRect(contentBounds));
+    LOG_WITH_STREAM(VisibleRects, stream << "-[WKContentView _didCommitLayerTree:] transactionID " << transactionID << " contentBounds " << WebCore::FloatRect(contentBounds));
 
     BOOL boundsChanged = transactionMayChangeBounds && !CGRectEqualToRect([self bounds], contentBounds);
     if (boundsChanged)
         [self setBounds:contentBounds];
 
-    [_webView _didCommitLayerTree:layerTreeTransaction mainFrameData:mainFrameData];
+    [_webView _didCommitLayerTree:layerTreeTransaction mainFrameData:mainFrameData pageData:pageData transactionID:transactionID];
 
     if (_interactionViewsContainerView) {
         WebCore::FloatPoint scaledOrigin = layerTreeTransaction.scrollOrigin();
@@ -1120,7 +1127,12 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
         _page->applicationWillEnterForegroundForMedia();
 }
 
-- (void)_screenCapturedDidChange:(NSNotification *)notification
+- (void)_displayScaleDidChange
+{
+    _page->setIntrinsicDeviceScaleFactor([self intrinsicDeviceScaleFactor]);
+}
+
+- (void)_sceneCaptureStateDidChange
 {
     _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
 }

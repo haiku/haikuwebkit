@@ -2118,6 +2118,24 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _impl->toggleSmartLists();
 }
 
+- (void)_storePrivateClickMeasurementWithSourceID:(uint8_t)sourceID destinationURL:(NSURL *)destinationURL reportEndpoint:(NSURL *)reportEndpoint
+{
+    WebCore::PrivateClickMeasurement measurement(
+        WebCore::PrivateClickMeasurement::SourceID(sourceID),
+        WebCore::PCM::SourceSite(reportEndpoint),
+        WebCore::PCM::AttributionDestinationSite(destinationURL),
+        applicationBundleIdentifier(),
+        WallTime::now(),
+        WebCore::PCM::AttributionEphemeral::No
+    );
+    _page->setPrivateClickMeasurementImmediately(WTFMove(measurement));
+}
+
+- (void)_storeSimulatedPrivateClickMeasurementConversionWithPriority:(uint8_t)priority triggerData:(uint8_t)triggerData sourceURL:(NSURL *)sourceURL destinationURL:(NSURL *)destinationURL
+{
+    _page->simulatePrivateClickMeasurementConversion(priority, triggerData, sourceURL, destinationURL);
+}
+
 @end // WKWebView (WKPrivateMac)
 
 @implementation WKWebView (WKWindowSnapshot)

@@ -996,7 +996,7 @@ void ContainerNode::parserNotifyChildrenChanged()
     ASSERT(hasHeldBackChildrenChanged());
     clearHasHeldBackChildrenChanged();
     childrenChanged(ChildChange { ContainerNode::ChildChange::Type::AllChildrenReplaced, nullptr, nullptr, nullptr, ChildChange::Source::Parser,
-        firstElementChild() ? ChildChange::AffectsElements::Yes : ChildChange::AffectsElements::No });
+        firstElementChild() ? ChildChange::AffectsElements::Yes : ChildChange::AffectsElements::No, IsMutationBySetInnerHTML::Yes });
 }
 
 ExceptionOr<void> ContainerNode::appendChild(ChildChange::Source source, Node& newChild)
@@ -1022,6 +1022,8 @@ void ContainerNode::childrenChanged(const ChildChange& change)
     if (change.source == ChildChange::Source::API && change.type != ChildChange::Type::TextChanged)
         document->updateRangesAfterChildrenChanged(*this);
 
+    if (change.isMutationBySetInnerHTML == IsMutationBySetInnerHTML::No)
+        setDidMutateSubtreeAfterSetInnerHTMLOnAncestors();
     if (change.affectsElements == ChildChange::AffectsElements::Yes)
         invalidateNodeListAndCollectionCachesInAncestors();
     else if (change.type != ChildChange::Type::TextChanged) {
@@ -1036,6 +1038,25 @@ void ContainerNode::childrenChanged(const ChildChange& change)
 }
 
 static constexpr size_t cloneMaxDepth = 1024;
+
+void ContainerNode::cloneSubtreeForFastParser(Document& document, CustomElementRegistry* fallbackRegistry, ContainerNode& clone, size_t currentDepth) const
+{
+    if (!hasChildNodes() || currentDepth >= cloneMaxDepth)
+        return;
+
+    for (RefPtr child = firstChild(); child; child = child->nextSibling()) {
+        Ref clonedChild = child->cloneNodeInternal(document, CloningOperation::SelfOnly, fallbackRegistry);
+        executeParserNodeInsertionIntoIsolatedTreeWithoutNotifyingParent(clone, clonedChild.get(), [&] {
+            clone.appendChildCommon(clonedChild);
+            clonedChild->setTreeScopeRecursively(clone.treeScope());
+            clonedChild->updateAncestorConnectedSubframeCountForInsertion();
+        });
+
+        if (RefPtr childAsContainerNode = dynamicDowncast<ContainerNode>(*child))
+            childAsContainerNode->cloneSubtreeForFastParser(document, fallbackRegistry, downcast<ContainerNode>(clonedChild.get()), currentDepth + 1);
+    }
+    clone.parserNotifyChildrenChanged();
+}
 
 void ContainerNode::cloneChildNodes(Document& document, CustomElementRegistry* fallbackRegistry, ContainerNode& clone, size_t currentDepth) const
 {

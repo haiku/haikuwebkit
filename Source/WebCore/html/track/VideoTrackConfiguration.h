@@ -71,6 +71,9 @@ public:
     std::optional<VideoProjectionMetadata> videoProjectionMetadata() const { return m_state.videoProjectionMetadata; }
     void setVideoProjectionMetadata(std::optional<VideoProjectionMetadata>);
 
+    bool isProtected() const { return m_state.isProtected; }
+    void setProtected(bool);
+
     using ChangedStateObserver = Observer<void()>;
     void addStateObserver(ChangedStateObserver&);
     void removeStateObserver(const ChangedStateObserver&);

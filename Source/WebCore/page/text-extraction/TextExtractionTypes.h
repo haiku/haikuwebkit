@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <JavaScriptCore/RegularExpression.h>
 #include <WebCore/CharacterRange.h>
 #include <WebCore/FloatRect.h>
 #include <WebCore/FloatSize.h>
@@ -43,6 +44,7 @@ enum class Action : uint8_t {
     TextInput,
     KeyPress,
     HighlightText,
+    ScrollBy,
 };
 
 struct Interaction {
@@ -50,6 +52,7 @@ struct Interaction {
     String text;
     std::optional<FloatPoint> locationInRootView;
     std::optional<NodeIdentifier> nodeIdentifier;
+    FloatSize scrollDelta;
     bool replaceAll { false };
     bool scrollToVisible { false };
 };
@@ -72,13 +75,19 @@ enum class EventListenerCategory : uint8_t {
     Keyboard    = 1 << 4,
 };
 
+enum class NodeIdentifierInclusion : uint8_t {
+    None,
+    EditableOnly,
+    Interactive,
+};
+
 struct Request {
     HashMap<String, HashMap<JSHandleIdentifier, String>> clientNodeAttributes;
     std::optional<FloatRect> collectionRectInRootView;
     std::optional<JSHandleIdentifier> targetNodeHandleIdentifier;
     bool mergeParagraphs { false };
     bool skipNearlyTransparentContent { false };
-    bool includeNodeIdentifiers { false };
+    NodeIdentifierInclusion nodeIdentifierInclusion { NodeIdentifierInclusion::None };
     bool includeEventListeners { false };
     bool includeAccessibilityAttributes { false };
     bool includeTextInAutoFilledControls { false };
@@ -142,6 +151,8 @@ enum class ContainerType : uint8_t {
     Nav,
     Button,
     Canvas,
+    Subscript,
+    Superscript,
     Generic,
 };
 
@@ -151,11 +162,33 @@ struct Item {
     ItemData data;
     FloatRect rectInRootView;
     Vector<Item> children;
+    String nodeName;
     std::optional<NodeIdentifier> nodeIdentifier;
     OptionSet<EventListenerCategory> eventListeners;
     HashMap<String, String> ariaAttributes;
     String accessibilityRole;
     HashMap<String, String> clientAttributes;
+
+    template<typename T> std::optional<T> dataAs() const
+    {
+        if (std::holds_alternative<T>(data))
+            return std::get<T>(data);
+        return std::nullopt;
+    }
+};
+
+struct FilterRuleData {
+    String name;
+    String urlPatternString;
+    String scriptSource;
+};
+
+enum class FilterRulePattern : uint8_t { Global };
+
+struct FilterRule {
+    String name;
+    Variant<FilterRulePattern, JSC::Yarr::RegularExpression> urlPattern;
+    String scriptSource;
 };
 
 } // namespace TextExtraction

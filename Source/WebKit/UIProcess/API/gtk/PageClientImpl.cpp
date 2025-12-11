@@ -31,6 +31,7 @@
 #include "Clipboard.h"
 #include "DrawingAreaProxyCoordinatedGraphics.h"
 #include "GtkUtilities.h"
+#include "GtkVersioning.h"
 #include "NativeWebKeyboardEvent.h"
 #include "NativeWebMouseEvent.h"
 #include "NativeWebWheelEvent.h"
@@ -458,7 +459,7 @@ void PageClientImpl::wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&
         GdkDevice* device = gdk_event_get_source_device(event.nativeEvent());
         GdkInputSource source = gdk_device_get_source(device);
 
-        bool isEnd = event.phase() == WebWheelEvent::Phase::PhaseEnded;
+        bool isEnd = event.phase() == WebWheelEvent::Phase::Ended;
 
         PlatformGtkScrollData scrollData = { .delta = delta, .eventTime = eventTime, .source = source, .isEnd = isEnd };
         controller->wheelEventWasNotHandledByWebCore(&scrollData);

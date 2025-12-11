@@ -101,10 +101,10 @@ bool WebWheelEventCoalescer::shouldDispatchEventNow(const WebWheelEvent& event) 
     // scrolling session to beginning or end correctly.
     // This is only needed by platforms whose WebWheelEvent has this phase
     // information (Cocoa and GTK+) but Cocoa was fine without it.
-    if (event.phase() == WebWheelEvent::Phase::PhaseNone
-        || event.phase() == WebWheelEvent::Phase::PhaseChanged
-        || event.momentumPhase() == WebWheelEvent::Phase::PhaseNone
-        || event.momentumPhase() == WebWheelEvent::Phase::PhaseChanged)
+    if (event.phase() == WebWheelEvent::Phase::None
+        || event.phase() == WebWheelEvent::Phase::Changed
+        || event.momentumPhase() == WebWheelEvent::Phase::None
+        || event.momentumPhase() == WebWheelEvent::Phase::Changed)
         return true;
 #else
     UNUSED_PARAM(event);

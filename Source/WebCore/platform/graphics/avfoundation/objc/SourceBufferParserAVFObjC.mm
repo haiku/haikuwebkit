@@ -375,6 +375,13 @@ void SourceBufferParserAVFObjC::didProvideContentKeyRequestSpecifierForTrackID(N
     });
 }
 
+#if !RELEASE_LOG_DISABLED
+WTFLogChannel& SourceBufferParserAVFObjC::logChannel() const
+{
+    return LogMedia;
+}
+#endif // !RELEASE_LOG_DISABLED
+
 }
 
 #endif // ENABLE(MEDIA_SOURCE)

@@ -47,3 +47,13 @@ func === (_ lhs: WGPUTexture, _ rhs: WGPUTexture) -> Bool {
     // Safety: Swift represents all reference types, including foreign reference types, as raw pointers
     unsafe unsafeBitCast(lhs, to: UnsafeRawPointer.self) == unsafeBitCast(rhs, to: UnsafeRawPointer.self)
 }
+
+extension Comparable {
+    /// Returns this comparable value clamped to the given limiting range.
+    ///
+    /// - Parameter limits: The range to clamp the bounds of this value.
+    /// - Returns: A value guaranteed to be in the range `[limits.lowerBound, limits.upperBound]`
+    func clamped(to limits: ClosedRange<Self>) -> Self {
+        min(max(self, limits.lowerBound), limits.upperBound)
+    }
+}

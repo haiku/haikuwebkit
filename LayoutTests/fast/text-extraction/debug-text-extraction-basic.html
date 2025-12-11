@@ -36,6 +36,10 @@ canvas {
     border: 1px dashed gray;
     padding: 1em;
 }
+
+#error-text {
+    display: none;
+}
 </style>
 <script src="../../resources/ui-helper.js"></script>
 </head>
@@ -56,7 +60,22 @@ canvas {
         <input type="text" class="focusable" placeholder="Enter text here" onfocus="this.style.backgroundColor='yellow'" onblur="this.style.backgroundColor=''" aria-required="true" aria-invalid="false" />
         <div class="interactive" tabindex="0"  role="button" onclick="this.textContent = 'Clicked!'" onkeydown="if(event.key==='Enter') this.click()" aria-pressed="false">Clickable Div</div>
     </section>
-    <section id="section2" aria-label="Content with Roles">
+    <section id="section2" aria-label="ARIA Labeling Examples">
+        <div id="label1">Name Field</div>
+        <div id="label2">Description</div>
+        <input type="text" aria-labelledby="label1" placeholder="Your name" />
+        <div aria-labelledby="label2" role="region">
+            <p>This region is labeled by another element.</p>
+        </div>
+        <div id="error-text">Name not found.</div>
+        <input type="text" aria-labelledby="label1" aria-describedby="error-text" placeholder="Full name" />
+        <div id="title-label">User Profile</div>
+        <div role="group" aria-labelledby="title-label">
+            <label for="username">Username:</label>
+            <input type="text" id="username" />
+        </div>
+    </section>
+    <section id="section3" aria-label="Content with Roles">
         <article role="article">
             <header>
                 <h3>Article Title</h3>
@@ -78,6 +97,9 @@ canvas {
         <div class="canvas-container" aria-label="Figure 1">
             <canvas width="400" height="400"></canvas>
         </div>
+        <textarea rows="15" cols="40">This is a text box</textarea>
+        Price: $11<sup>99</sup>
+        Link to <sub>WebKit home page:<a href="https://webkit.org">webkit.org</a></sub>
     </section>
 </main>
 <footer role="contentinfo">
@@ -132,7 +154,7 @@ addEventListener("load", async () => {
         normalize: true,
         includeRects: true,
         includeURLs: true,
-        includeNodeIdentifiers: true,
+        nodeIdentifierInclusion: "interactive",
         includeEventListeners: true,
         includeAccessibilityAttributes: true,
         includeTextInAutoFilledControls: true,

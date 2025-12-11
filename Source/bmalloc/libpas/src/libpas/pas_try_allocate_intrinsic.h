@@ -112,7 +112,7 @@ pas_try_allocate_intrinsic_impl_casual_case(
     if (!pas_is_power_of_2(alignment))
         return pas_allocation_result_create_failure();
 
-    if (PAS_UNLIKELY(pas_system_heap_is_enabled(config.kind)))
+    if (PAS_UNLIKELY(pas_system_heap_should_supplant_bmalloc(config.kind)))
         return pas_system_heap_allocate(size, alignment, allocation_mode);
 
     if (verbose)

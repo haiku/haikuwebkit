@@ -167,8 +167,8 @@ ViewLegacy::ViewLegacy(struct wpe_view_backend* backend, const API::PageConfigur
             // to a 'stop' event. Motion events with zero motion don't exist naturally,
             // so this allows a backend to express 'stop' events without changing API.
             // The wheel event phase is adjusted accordingly.
-            WebWheelEvent::Phase phase = WebWheelEvent::Phase::PhaseChanged;
-            WebWheelEvent::Phase momentumPhase = WebWheelEvent::Phase::PhaseNone;
+            WebWheelEvent::Phase phase = WebWheelEvent::Phase::Changed;
+            WebWheelEvent::Phase momentumPhase = WebWheelEvent::Phase::None;
 
 #if WPE_CHECK_VERSION(1, 5, 0)
             if (event->type & wpe_input_axis_event_type_mask_2d) {
@@ -176,7 +176,7 @@ ViewLegacy::ViewLegacy(struct wpe_view_backend* backend, const API::PageConfigur
                 view.m_horizontalScrollActive = !!event2D->x_axis;
                 view.m_verticalScrollActive = !!event2D->y_axis;
                 if (!view.m_horizontalScrollActive && !view.m_verticalScrollActive)
-                    phase = WebWheelEvent::Phase::PhaseEnded;
+                    phase = WebWheelEvent::Phase::Ended;
 
                 auto& page = view.page();
                 page.handleNativeWheelEvent(WebKit::NativeWebWheelEvent(event, page.deviceScaleFactor(), phase, momentumPhase));
@@ -196,7 +196,7 @@ ViewLegacy::ViewLegacy(struct wpe_view_backend* backend, const API::PageConfigur
             bool shouldDispatch = !!event->value;
             if (!view.m_horizontalScrollActive && !view.m_verticalScrollActive) {
                 shouldDispatch = true;
-                phase = WebWheelEvent::Phase::PhaseEnded;
+                phase = WebWheelEvent::Phase::Ended;
             }
 
             if (shouldDispatch) {
@@ -233,7 +233,7 @@ ViewLegacy::ViewLegacy(struct wpe_view_backend* backend, const API::PageConfigur
 #endif
                         if (event->type != wpe_input_axis_event_type_null) {
                             page.handleNativeWheelEvent(WebKit::NativeWebWheelEvent(event, page.deviceScaleFactor(),
-                                axisEvent.phase, WebWheelEvent::Phase::PhaseNone));
+                                axisEvent.phase, WebWheelEvent::Phase::None));
                             handledThroughGestureController = true;
                         }
                     });

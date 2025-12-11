@@ -304,7 +304,7 @@ void RuleSetBuilder::addStyleRuleWithSelectorList(const CSSSelectorList& selecto
     for (size_t selectorIndex = 0; selectorIndex != notFound; selectorIndex = selectorList.indexOfNextSelectorAfter(selectorIndex)) {
         RuleData ruleData(rule, selectorIndex, selectorListIndex, m_ruleSet->ruleCount(), m_usedRuleTypes);
         m_mediaQueryCollector.addRuleIfNeeded(ruleData);
-        m_ruleSet->addRule(WTFMove(ruleData), m_currentCascadeLayerIdentifier, m_currentContainerQueryIdentifier, m_currentScopeIdentifier, &m_featureCollectionContext);
+        m_ruleSet->addRule(WTFMove(ruleData), m_currentCascadeLayerIdentifier, m_currentContainerQueryIdentifier, m_currentScopeIdentifier);
         ++selectorListIndex;
     }
 }

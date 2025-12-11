@@ -38,7 +38,7 @@ auto SourceMappingURLSectionParser::parse() -> PartialResult
     uint32_t length;
     Name name;
     WASM_PARSER_FAIL_IF(!parseVarUInt32(length), "can't get source mapping URL length"_s);
-    WASM_PARSER_FAIL_IF(!consumeUTF8String(name, length), "can't get source mapping URL of length "_s, length, " for payload "_s);
+    WASM_ALLOCATOR_FAIL_IF(!consumeUTF8String(name, length), "can't get source mapping URL of length "_s, length, " for payload "_s);
     m_info->sourceMappingURL = WTFMove(name);
     return { };
 }

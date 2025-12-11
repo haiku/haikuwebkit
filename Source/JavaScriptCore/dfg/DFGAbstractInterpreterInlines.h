@@ -1664,6 +1664,9 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
 
     case MapStorage:
+        setTypeForNode(node, SpecCellOther | SpecEmpty);
+        break;
+
     case MapStorageOrSentinel:
     case MapIterationNext:
         setTypeForNode(node, SpecCellOther);
@@ -3078,7 +3081,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
 
     case PutByValDirect:
     case PutByVal:
-    case PutByValAlias:
+    case PutByValDirectResolved:
     case PutByValMegamorphic: {
         switch (node->arrayMode().modeForPut().type()) {
         case Array::ForceExit:
@@ -3722,6 +3725,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
 
     case MaterializeNewArrayWithButterfly: {
+#if ASSERT_ENABLED
         SpeculatedType validTypes = [&]() {
             switch (node->indexingType()) {
             // We can get JSValue() (aka SpecEmpty) when the property hasn't been initialized yet and is still a hole.
@@ -3733,8 +3737,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             RELEASE_ASSERT_NOT_REACHED();
         }();
         for (unsigned i = 2; i < node->numChildren(); ++i)
-            DFG_ASSERT(m_graph, node, isSubtypeSpeculation(forNode(m_graph.varArgChild(node, i)).m_type, validTypes));
-
+            ASSERT(isSubtypeSpeculation(forNode(m_graph.varArgChild(node, i)).m_type, validTypes));
+#endif
         [[fallthrough]];
     }
     case NewArrayWithButterfly: {

@@ -117,7 +117,7 @@ public:
         m_globalPosition = IntPoint(globalPointForEvent(event));
         m_deltaX = event.deltaX;
         m_deltaY = event.deltaY;
-        m_granularity = ScrollByPixelWheelEvent; // iOS only supports continuous (pixel-mode) scrolling.
+        m_granularity = PlatformWheelEventGranularity::ScrollByPixelWheelEvent; // iOS only supports continuous (pixel-mode) scrolling.
     }
 };
 

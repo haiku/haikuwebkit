@@ -419,7 +419,7 @@ public:
         // Sort the incoming Unicode matches, since Unicode case folding canonicalization may cause
         // characters to be added to rhsMatches out of code point order.
         Vector<char32_t> rhsSortedMatchesUnicode(rhsMatchesUnicode);
-        std::sort(rhsSortedMatchesUnicode.begin(), rhsSortedMatchesUnicode.end());
+        std::ranges::sort(rhsSortedMatchesUnicode);
 
         unicodeOpSorted(rhsSortedMatchesUnicode, rhsRangesUnicode);
     }
@@ -449,10 +449,9 @@ public:
 
     static void sort(Vector<Vector<char32_t>>& utf32Strings)
     {
-        std::sort(utf32Strings.begin(), utf32Strings.end(), [](const Vector<char32_t>& a, const Vector<char32_t>& b)
-            {
-                return compareUTF32Strings(a, b) < 0;
-            });
+        std::ranges::sort(utf32Strings, [](const auto& a, const auto& b) {
+            return compareUTF32Strings(a, b) < 0;
+        });
     }
 
     std::unique_ptr<CharacterClass> charClass()
@@ -2346,10 +2345,81 @@ public:
             return false;
         };
 
+        auto tryExtractNewlines = [&]() -> bool {
+            // Detect patterns: \r\n?|\n or \n|\r\n?
+            // These patterns match LF (\n), CR (\r), and CRLF (\r\n)
+
+            PatternDisjunction* disjunction = m_pattern.m_body;
+            auto& alternatives = disjunction->m_alternatives;
+
+            if (alternatives.size() != 2)
+                return false;
+
+            auto isCROptionalLF = [](PatternAlternative* alternative) -> bool {
+                if (alternative->m_terms.size() != 2)
+                    return false;
+
+                auto& term0 = alternative->m_terms[0];
+                if (term0.type != PatternTerm::Type::PatternCharacter)
+                    return false;
+                if (term0.patternCharacter != '\r')
+                    return false;
+                if (term0.quantityType != QuantifierType::FixedCount)
+                    return false;
+                if (term0.quantityMinCount != 1 || term0.quantityMaxCount != 1)
+                    return false;
+
+                auto& term1 = alternative->m_terms[1];
+                if (term1.type != PatternTerm::Type::PatternCharacter)
+                    return false;
+                if (term1.patternCharacter != '\n')
+                    return false;
+                if (term1.quantityType != QuantifierType::Greedy)
+                    return false;
+                if (term1.quantityMinCount || term1.quantityMaxCount != 1)
+                    return false;
+
+                return true;
+            };
+
+            auto isLF = [](PatternAlternative* alternative) -> bool {
+                if (alternative->m_terms.size() != 1)
+                    return false;
+
+                auto& term = alternative->m_terms[0];
+                if (term.type != PatternTerm::Type::PatternCharacter)
+                    return false;
+                if (term.patternCharacter != '\n')
+                    return false;
+                if (term.quantityType != QuantifierType::FixedCount)
+                    return false;
+                if (term.quantityMinCount != 1 || term.quantityMaxCount != 1)
+                    return false;
+
+                return true;
+            };
+
+            auto* alternative1 = alternatives[0].get();
+            auto* alternative2 = alternatives[1].get();
+
+            bool matches = (isCROptionalLF(alternative1) && isLF(alternative2))
+                || (isLF(alternative1) && isCROptionalLF(alternative2));
+
+            if (matches) {
+                m_pattern.m_specificPattern = SpecificPattern::Newlines;
+                return true;
+            }
+
+            return false;
+        };
+
         if (tryExtractAtom())
             return;
 
         if (tryExtractSpaces())
+            return;
+
+        if (tryExtractNewlines())
             return;
     }
 

@@ -21,7 +21,7 @@
 #include "config.h"
 #include "RegExpPrototype.h"
 
-#include "CachedCall.h"
+#include "CachedCallInlines.h"
 #include "InterpreterInlines.h"
 #include "IntegrityInlines.h"
 #include "JSArray.h"
@@ -36,6 +36,7 @@
 #include "StringRecursionChecker.h"
 #include "YarrFlags.h"
 #include <wtf/text/StringBuilder.h>
+#include <wtf/text/StringCommon.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
@@ -664,6 +665,53 @@ JSC_DEFINE_HOST_FUNCTION(regExpProtoFuncSplitFast, (JSGlobalObject* globalObject
             result->putDirectIndex(globalObject, 0, inputString);
             RETURN_IF_EXCEPTION(scope, { });
         }
+        return JSValue::encode(result);
+    }
+
+    // Fast path for newline splitting pattern: \r\n?|\n
+    if (regexp->specificPattern() == Yarr::SpecificPattern::Newlines) {
+        JSArray* result = JSArray::tryCreate(vm, globalObject->arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous), 1);
+        if (!result) [[unlikely]] {
+            throwOutOfMemoryError(globalObject, scope);
+            return { };
+        }
+
+        unsigned resultLength = 0;
+        MatchResult lastMatchResult = MatchResult::failed();
+
+        auto processSplit = [&](auto span) {
+            while (position < inputSize && resultLength < limit) {
+                auto newlinePos = WTF::findNextNewline(span, position);
+                if (newlinePos.position == WTF::notFound)
+                    break;
+
+                result->putDirectIndex(globalObject, resultLength++, jsSubstringOfResolved(vm, inputString, position, newlinePos.position - position));
+                RETURN_IF_EXCEPTION(scope, AbortSplit);
+
+                if (resultLength >= limit)
+                    break;
+
+                lastMatchResult = MatchResult(newlinePos.position, newlinePos.position + newlinePos.length);
+                position = newlinePos.position + newlinePos.length;
+            }
+            return ContinueSplit;
+        };
+
+        if (input->is8Bit())
+            processSplit(input->span8());
+        else
+            processSplit(input->span16());
+        RETURN_IF_EXCEPTION(scope, { });
+
+        if (resultLength >= limit)
+            return JSValue::encode(result);
+
+        result->putDirectIndex(globalObject, resultLength++, jsSubstringOfResolved(vm, inputString, position, inputSize - position));
+        RETURN_IF_EXCEPTION(scope, { });
+
+        if (lastMatchResult)
+            globalObject->regExpGlobalData().recordMatch(vm, globalObject, regexp, inputString, lastMatchResult, false);
+
         return JSValue::encode(result);
     }
 

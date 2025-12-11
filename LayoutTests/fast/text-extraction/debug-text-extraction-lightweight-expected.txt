@@ -1,25 +1,26 @@
 root
-    '    \nWelcome to Test Page'
+    'Welcome to Test Page'
     navigation
         list
             list-item
                 link,'Section 1'
             list-item
                 link,'Section 2'
-    '    \nHere’s to the crazy ones…\n\n\n    '
+    'Here’s to the crazy ones…'
     section
         button,'Click Me'
-        '        \nThis button does nothing\n\n        '
-        textFormControl,'text',placeholder='Enter text here','Enter text here'
-        '        \nClickable Div\n\n    '
+        'This button does nothing'
+        input,'text',placeholder='Enter text here'
+        'Clickable Div'
     section
-        article,'            \n\n                \nArticle Title\n\n\n                January 1, 2024\n            \n\n            \nThis is some article content…\n\n\n        '
-        '        \n\n            \nRelated Links\n\n\n            '
+        article,'Article Title\n\n\n                January 1, 2024\n            \n\n            \nThis is some article content…'
+        'Related Links'
         list
             list-item
                 link,'Example Link'
             list-item
                 link,'Test Link'
-        '        \n\n        \n\n            \nReady\n\n            '
+        'Ready'
         button,'Update Status'
-    '    \nThe quick brown fox jumped…\n\n\n\n\n    \nFooter content with © 2024'
+    'The quick brown fox jumped…\n\n\n\n\n    \nFooter content with © 2024'
+version=2

@@ -50,9 +50,6 @@ class CoreIPCCNContact;
 class CoreIPCCNPhoneNumber;
 class CoreIPCCNPostalAddress;
 #endif
-#if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
-class CoreIPCDDScannerResult;
-#endif
 class CoreIPCData;
 class CoreIPCDate;
 class CoreIPCDateComponents;
@@ -96,9 +93,6 @@ using ObjectValue = Variant<
     CoreIPCCNContact,
     CoreIPCCNPhoneNumber,
     CoreIPCCNPostalAddress,
-#endif
-#if ENABLE(DATA_DETECTION) && HAVE(WK_SECURE_CODING_DATA_DETECTORS)
-    CoreIPCDDScannerResult,
 #endif
     CoreIPCDateComponents,
 #if !HAVE(WK_SECURE_CODING_NSURLREQUEST)

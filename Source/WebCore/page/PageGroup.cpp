@@ -81,25 +81,21 @@ PageGroup::PageGroup(Page& page)
 
 PageGroup::~PageGroup() = default;
 
-using PageGroupMap = HashMap<String, PageGroup*>;
-static PageGroupMap* pageGroups = nullptr;
+using PageGroupMap = HashMap<String, UniqueRef<PageGroup>>;
+
+static PageGroupMap& pageGroups()
+{
+    static NeverDestroyed<PageGroupMap> pageGroupsMap;
+    return pageGroupsMap;
+}
 
 PageGroup* PageGroup::pageGroup(const String& groupName)
 {
     ASSERT(!groupName.isEmpty());
-    
-    if (!pageGroups)
-        pageGroups = new PageGroupMap;
 
-    PageGroupMap::AddResult result = pageGroups->add(groupName, nullptr);
-
-    if (result.isNewEntry) {
-        ASSERT(!result.iterator->value);
-        result.iterator->value = new PageGroup(groupName);
-    }
-
-    ASSERT(result.iterator->value);
-    return result.iterator->value;
+    return pageGroups().ensure(groupName, [&] {
+        return PageGroup::create(groupName);
+    }).iterator->value.ptr();
 }
 
 void PageGroup::addPage(Page& page)

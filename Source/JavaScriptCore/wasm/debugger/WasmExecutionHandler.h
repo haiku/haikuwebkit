@@ -183,7 +183,7 @@ private:
     void handleClientDisconnectionLocked() WTF_REQUIRES_LOCK(m_lock);
 
     DebugServer& m_debugServer;
-    ModuleManager& m_instanceManager;
+    ModuleManager& m_moduleManager;
     BreakpointManager& m_breakpointManager;
 
     Lock m_lock;

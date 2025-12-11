@@ -56,8 +56,6 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 #endif
 
-#include "PixelFormat.h"
-
 namespace WebCore {
 
 Lock CoordinatedTileBuffer::s_layersMemoryUsageLock;
@@ -135,17 +133,6 @@ CoordinatedUnacceleratedTileBuffer::CoordinatedUnacceleratedTileBuffer(const Int
     }
 }
 
-PixelFormat CoordinatedUnacceleratedTileBuffer::pixelFormat() const
-{
-#if USE(SKIA)
-    // For GPU/hybrid rendering, prefer RGBA, otherwise use BGRA.
-    if (ProcessCapabilities::canUseAcceleratedBuffers())
-        return PixelFormat::RGBA8;
-#endif
-
-    return PixelFormat::BGRA8;
-}
-
 CoordinatedUnacceleratedTileBuffer::~CoordinatedUnacceleratedTileBuffer()
 {
     const auto checkedArea = m_size.area().value() * 4;
@@ -161,8 +148,7 @@ bool CoordinatedUnacceleratedTileBuffer::tryEnsureSurface()
     if (m_surface)
         return true;
 
-    auto colorType = pixelFormat() == PixelFormat::BGRA8 ? kBGRA_8888_SkColorType : kRGBA_8888_SkColorType;
-    auto imageInfo = SkImageInfo::Make(m_size.width(), m_size.height(), colorType, kPremul_SkAlphaType, SkColorSpace::MakeSRGB());
+    auto imageInfo = SkImageInfo::Make(m_size.width(), m_size.height(), kBGRA_8888_SkColorType, kPremul_SkAlphaType, SkColorSpace::MakeSRGB());
     // FIXME: ref buffer and unref on release proc?
     SkSurfaceProps properties = { 0, FontRenderOptions::singleton().subpixelOrder() };
     m_surface = SkSurfaces::WrapPixels(imageInfo, data(), imageInfo.minRowBytes64(), &properties);

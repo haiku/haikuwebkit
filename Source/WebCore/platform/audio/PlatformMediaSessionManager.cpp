@@ -72,6 +72,12 @@ void PlatformMediaSessionManager::addSession(PlatformMediaSessionInterface& sess
     MediaSessionManagerInterface::addSession(session);
 }
 
+WeakListHashSet<PlatformMediaSessionInterface>& PlatformMediaSessionManager::sessions() const
+{
+    m_sessions.removeNullReferences();
+    return m_sessions;
+}
+
 void PlatformMediaSessionManager::removeSession(PlatformMediaSessionInterface& session)
 {
     m_sessions.removeNullReferences();

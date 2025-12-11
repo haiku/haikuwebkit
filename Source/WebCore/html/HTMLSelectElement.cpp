@@ -1467,11 +1467,14 @@ void HTMLSelectElement::listBoxDefaultEventHandler(Event& event)
 
             mouseEvent->setDefaultHandled();
         }
-    } else if (event.type() == eventNames.mousemoveEvent && mouseEvent && !downcast<RenderListBox>(*renderer()).canBeScrolledAndHasScrollableArea()) {
+    } else if (event.type() == eventNames.mousemoveEvent && mouseEvent) {
+        CheckedRef renderListBox = downcast<RenderListBox>(*renderer());
+        if (renderListBox->canBeScrolledAndHasScrollableArea())
+            return;
+
         if (mouseEvent->button() != MouseButton::Left || !mouseEvent->buttonDown())
             return;
 
-        CheckedRef renderListBox = downcast<RenderListBox>(*renderer());
         IntPoint localOffset = roundedIntPoint(renderListBox->absoluteToLocal(mouseEvent->absoluteLocation(), UseTransforms));
         int listIndex = renderListBox->listIndexAtOffset(toIntSize(localOffset));
         if (listIndex >= 0) {

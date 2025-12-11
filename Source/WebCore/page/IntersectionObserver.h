@@ -107,7 +107,7 @@ public:
     void rootDestroyed();
 
     enum class NeedNotify : bool { No, Yes };
-    NeedNotify updateObservations(Document&);
+    NeedNotify updateObservations(const Frame&);
 
     std::optional<ReducedResolutionSeconds> nowTimestamp() const;
 

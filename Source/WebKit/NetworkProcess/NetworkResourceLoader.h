@@ -203,9 +203,6 @@ private:
     void cancelMainResourceLoadForContentFilter(const WebCore::ResourceError&) final;
     void handleProvisionalLoadFailureFromContentFilter(const URL& blockedPageURL, WebCore::SubstituteData&&) final;
     CheckedPtr<WebCore::ContentFilter> checkedContentFilter();
-#if HAVE(WEBCONTENTRESTRICTIONS)
-    bool usesWebContentRestrictions() final;
-#endif
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
     String webContentRestrictionsConfigurationPath() const final;
 #endif

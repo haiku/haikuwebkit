@@ -199,14 +199,14 @@ FloatingContext::Constraints InlineFormattingUtils::floatConstraintsForLine(Inli
     return floatingContext.constraints(logicalTopCandidate, logicalBottomCandidate, FloatingContext::MayBeAboveLastFloat::Yes);
 }
 
-InlineLayoutUnit InlineFormattingUtils::horizontalAlignmentOffset(const RenderStyle& rootStyle, InlineLayoutUnit contentLogicalRight, InlineLayoutUnit lineLogicalWidth, InlineLayoutUnit hangingTrailingWidth, const Line::RunList& runs, bool isLastLine, std::optional<TextDirection> inlineBaseDirectionOverride)
+InlineLayoutUnit InlineFormattingUtils::horizontalAlignmentOffset(const RenderStyle& rootStyle, InlineLayoutUnit contentLogicalRight, InlineLayoutUnit lineLogicalWidth, InlineLayoutUnit hangingTrailingWidth, bool isLastLineOrLineEndsWithForcedLineBreak, std::optional<TextDirection> inlineBaseDirectionOverride)
 {
     // Depending on the line's alignment/justification, the hanging glyph can be placed outside the line box.
     if (hangingTrailingWidth) {
         // If white-space is set to pre-wrap, the UA must (unconditionally) hang this sequence, unless the sequence is followed
         // by a forced line break, in which case it must conditionally hang the sequence is instead.
         // Note that end of last line in a paragraph is considered a forced break.
-        auto isConditionalHanging = runs.last().isLineBreak() || isLastLine;
+        auto isConditionalHanging = isLastLineOrLineEndsWithForcedLineBreak;
         // In some cases, a glyph at the end of a line can conditionally hang: it hangs only if it does not otherwise fit in the line prior to justification.
         if (isConditionalHanging) {
             // FIXME: Conditional hanging needs partial overflow trimming at glyph boundary, one by one until they fit.
@@ -215,7 +215,6 @@ InlineLayoutUnit InlineFormattingUtils::horizontalAlignmentOffset(const RenderSt
             contentLogicalRight -= hangingTrailingWidth;
     }
 
-    auto isLastLineOrAfterLineBreak = isLastLine || (!runs.isEmpty() && runs.last().isLineBreak());
     auto horizontalAvailableSpace = lineLogicalWidth - contentLogicalRight;
 
     if (horizontalAvailableSpace <= 0)
@@ -225,52 +224,52 @@ InlineLayoutUnit InlineFormattingUtils::horizontalAlignmentOffset(const RenderSt
 
     auto computedHorizontalAlignment = [&] {
         auto textAlign = rootStyle.textAlign();
-        if (!isLastLineOrAfterLineBreak)
+        if (!isLastLineOrLineEndsWithForcedLineBreak)
             return textAlign;
         // The last line before a forced break or the end of the block is aligned according to text-align-last.
         switch (rootStyle.textAlignLast()) {
-        case TextAlignLast::Auto:
-            if (textAlign == TextAlignMode::Justify)
-                return TextAlignMode::Start;
+        case Style::TextAlignLast::Auto:
+            if (textAlign == Style::TextAlign::Justify)
+                return Style::TextAlign::Start;
             return textAlign;
-        case TextAlignLast::Start:
-            return TextAlignMode::Start;
-        case TextAlignLast::End:
-            return TextAlignMode::End;
-        case TextAlignLast::Left:
-            return TextAlignMode::Left;
-        case TextAlignLast::Right:
-            return TextAlignMode::Right;
-        case TextAlignLast::Center:
-            return TextAlignMode::Center;
-        case TextAlignLast::Justify:
-            return TextAlignMode::Justify;
+        case Style::TextAlignLast::Start:
+            return Style::TextAlign::Start;
+        case Style::TextAlignLast::End:
+            return Style::TextAlign::End;
+        case Style::TextAlignLast::Left:
+            return Style::TextAlign::Left;
+        case Style::TextAlignLast::Right:
+            return Style::TextAlign::Right;
+        case Style::TextAlignLast::Center:
+            return Style::TextAlign::Center;
+        case Style::TextAlignLast::Justify:
+            return Style::TextAlign::Justify;
         default:
             ASSERT_NOT_REACHED();
-            return TextAlignMode::Start;
+            return Style::TextAlign::Start;
         }
     };
 
     switch (computedHorizontalAlignment()) {
-    case TextAlignMode::Left:
-    case TextAlignMode::WebKitLeft:
+    case Style::TextAlign::Left:
+    case Style::TextAlign::WebKitLeft:
         if (!isLeftToRightDirection)
             return horizontalAvailableSpace;
         [[fallthrough]];
-    case TextAlignMode::Start:
+    case Style::TextAlign::Start:
         return { };
-    case TextAlignMode::Right:
-    case TextAlignMode::WebKitRight:
+    case Style::TextAlign::Right:
+    case Style::TextAlign::WebKitRight:
         if (!isLeftToRightDirection)
             return { };
         [[fallthrough]];
-    case TextAlignMode::End:
+    case Style::TextAlign::End:
         return horizontalAvailableSpace;
-    case TextAlignMode::Center:
-    case TextAlignMode::WebKitCenter:
+    case Style::TextAlign::Center:
+    case Style::TextAlign::WebKitCenter:
         return horizontalAvailableSpace / 2;
-    case TextAlignMode::Justify:
-        // TextAlignMode::Justify is a run alignment (and we only do inline box alignment here)
+    case Style::TextAlign::Justify:
+        // Style::TextAlign::Justify is a run alignment (and we only do inline box alignment here)
         return { };
     default:
         ASSERT_NOT_IMPLEMENTED_YET();
@@ -353,7 +352,7 @@ static inline bool endsWithSoftWrapOpportunity(const InlineTextItem& previousInl
         // The bidi boundary may or may not be the reason for splitting the inline text box content.
         // FIXME: We could add a "reason flag" to InlineTextItem to tell why the split happened.
         auto& style = previousInlineTextItem.style();
-        auto lineBreakIteratorFactory = CachedLineBreakIteratorFactory { previousInlineTextItem.inlineTextBox().content(), style.computedLocale(), TextUtil::lineBreakIteratorMode(style.lineBreak()), TextUtil::contentAnalysis(style.wordBreak()) };
+        auto lineBreakIteratorFactory = CachedLineBreakIteratorFactory { previousInlineTextItem.inlineTextBox().content(), Style::toPlatform(style.computedLocale()), TextUtil::lineBreakIteratorMode(style.lineBreak()), TextUtil::contentAnalysis(style.wordBreak()) };
         auto softWrapOpportunityCandidate = nextInlineTextItem.start();
         return TextUtil::findNextBreakablePosition(lineBreakIteratorFactory, softWrapOpportunityCandidate, style) == softWrapOpportunityCandidate;
     }
@@ -378,11 +377,11 @@ static inline const ElementBox& nearestCommonAncestor(const Box& first, const Bo
     if (&firstParent != &rootBox && &secondParent != &rootBox && &firstParent.parent() == &secondParent.parent())
         return firstParent.parent();
 
-    HashSet<const ElementBox*> descendantsSet;
+    HashSet<CheckedRef<const ElementBox>> descendantsSet;
     for (auto* descendant = &firstParent; descendant != &rootBox; descendant = &descendant->parent())
-        descendantsSet.add(descendant);
+        descendantsSet.add(*descendant);
     for (auto* descendant = &secondParent; descendant != &rootBox; descendant = &descendant->parent()) {
-        if (!descendantsSet.add(descendant).isNewEntry)
+        if (!descendantsSet.add(*descendant).isNewEntry)
             return *descendant;
     }
     return rootBox;
@@ -563,10 +562,10 @@ std::pair<InlineLayoutUnit, InlineLayoutUnit> InlineFormattingUtils::textEmphasi
     auto hasAboveTextEmphasis = false;
     auto hasUnderTextEmphasis = false;
     if (style.writingMode().isVerticalTypographic()) {
-        hasAboveTextEmphasis = !emphasisPosition.contains(TextEmphasisPosition::Left);
+        hasAboveTextEmphasis = !emphasisPosition.contains(Style::TextEmphasisPositionValue::Left);
         hasUnderTextEmphasis = !hasAboveTextEmphasis;
     } else {
-        hasAboveTextEmphasis = !emphasisPosition.contains(TextEmphasisPosition::Under);
+        hasAboveTextEmphasis = !emphasisPosition.contains(Style::TextEmphasisPositionValue::Under);
         hasUnderTextEmphasis = !hasAboveTextEmphasis;
     }
 
@@ -612,10 +611,18 @@ LineEndingTruncationPolicy InlineFormattingUtils::lineEndingTruncationPolicy(con
 
 std::optional<LineLayoutResult::InlineContentEnding> InlineFormattingUtils::inlineContentEnding(const Line::Result& lineContent)
 {
+    if (!lineContent.runs.isEmpty() && lineContent.runs.last().isBlock()) {
+#if ASSERT_ENABLED
+    for (auto& run : lineContent.runs)
+        ASSERT(run.isLineSpanningInlineBoxStart() || run.isBlock());
+#endif
+        return { };
+    }
+
     for (auto& run : lineContent.runs | std::views::reverse) {
+        ASSERT(!run.isBlock());
         if (run.isOpaque())
             continue;
-
         if (run.isLineBreak())
             return { LineLayoutResult::InlineContentEnding::LineBreak };
         if (auto& textContent = run.textContent(); textContent && textContent->needsHyphen)
@@ -625,13 +632,14 @@ std::optional<LineLayoutResult::InlineContentEnding> InlineFormattingUtils::inli
     return { };
 }
 
-bool InlineFormattingUtils::shouldDiscardRemainingContentInBlockDirection(size_t numberOfLinesWithInlineContent) const
+bool InlineFormattingUtils::shouldDiscardRemainingContentInBlockDirection() const
 {
-    auto lineClamp = formattingContext().layoutState().parentBlockLayoutState().lineClamp();
+    auto& inlineLayoutState = formattingContext().layoutState();
+    auto lineClamp = inlineLayoutState.parentBlockLayoutState().lineClamp();
     if (!lineClamp || !lineClamp->shouldDiscardOverflow)
         return false;
     ASSERT(!lineClamp->isLegacy);
-    return lineClamp->maximumLines == numberOfLinesWithInlineContent;
+    return lineClamp->maximumLines == inlineLayoutState.lineCountWithInlineContentIncludingNestedBlocks();
 }
 
 }

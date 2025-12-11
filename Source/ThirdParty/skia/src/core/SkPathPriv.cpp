@@ -749,7 +749,7 @@ private:
 
 ContourIter::ContourIter(SkSpan<const SkPoint> pts, SkSpan<const SkPathVerb> vbs,
                          SkSpan<const float> conicWeights) {
-    fStopVerbs = vbs.end();
+    fStopVerbs = vbs.data() + vbs.size();
     fDone = false;
     fCurrPt = pts.data();
     fCurrVerb = vbs.data();
@@ -1565,3 +1565,22 @@ SkRect SkPathPriv::ComputeTightBounds(SkSpan<const SkPoint> points,
     return {L, T, R, B};
 }
 
+int SkPathPriv::FindLastMoveToIndex(SkSpan<const SkPathVerb> verbs, const size_t ptCount) {
+    if (verbs.empty()) {
+        SkASSERT(ptCount == 0);
+        return -1;
+    }
+    SkASSERT(verbs[0] == SkPathVerb::kMove);
+    SkASSERT(ptCount > 0);
+
+    int ptIndex = SkToInt(ptCount) - 1;
+    for (auto it = verbs.rbegin(), end = verbs.rend(); it != end; ++it) {
+        const SkPathVerb verb = *it;
+        if (verb == SkPathVerb::kMove) {
+            break;
+        }
+        ptIndex -= PtsInVerb(verb);
+    }
+    SkASSERT(ptIndex >= 0);
+    return ptIndex;
+}

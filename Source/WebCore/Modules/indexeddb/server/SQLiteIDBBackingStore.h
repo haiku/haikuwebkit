@@ -213,7 +213,7 @@ private:
     std::unique_ptr<SQLiteDatabase> m_sqliteDB;
 
     HashMap<IDBResourceIdentifier, std::unique_ptr<SQLiteIDBTransaction>> m_transactions;
-    HashMap<IDBResourceIdentifier, SQLiteIDBCursor*> m_cursors;
+    HashMap<IDBResourceIdentifier, CheckedPtr<SQLiteIDBCursor>> m_cursors;
 
     String m_databaseDirectory;
 };

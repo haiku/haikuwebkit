@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <WebCore/DoublePoint.h>
 #include <WebCore/HitTestLocation.h>
 #include <WebCore/HitTestRequest.h>
 #include <WebCore/PseudoElementIdentifier.h>
@@ -48,7 +49,9 @@ public:
     using NodeSet = ListHashSet<Ref<Node>>;
 
     WEBCORE_EXPORT HitTestResult();
+    WEBCORE_EXPORT explicit HitTestResult(const IntPoint&);
     WEBCORE_EXPORT explicit HitTestResult(const LayoutPoint&);
+    WEBCORE_EXPORT explicit HitTestResult(const DoublePoint&);
 
     WEBCORE_EXPORT explicit HitTestResult(const LayoutRect&);
     WEBCORE_EXPORT explicit HitTestResult(const HitTestLocation&);
@@ -89,7 +92,8 @@ public:
     IntPoint roundedPointInMainFrame() const { return roundedIntPoint(pointInMainFrame()); }
 
     // The hit-tested point in the coordinates of the innerNode frame, the frame containing innerNode.
-    const LayoutPoint& pointInInnerNodeFrame() const { return m_pointInInnerNodeFrame; }
+    const LayoutPoint pointInInnerNodeFrame() const { return LayoutPoint(m_doublePointInInnerNodeFrame); }
+    const DoublePoint& doublePointInInnerNodeFrame() const { return m_doublePointInInnerNodeFrame; }
     IntPoint roundedPointInInnerNodeFrame() const { return roundedIntPoint(pointInInnerNodeFrame()); }
     WEBCORE_EXPORT LocalFrame* innerNodeFrame() const;
 
@@ -191,7 +195,7 @@ private:
 
     RefPtr<Node> m_innerNode;
     RefPtr<Node> m_innerNonSharedNode;
-    LayoutPoint m_pointInInnerNodeFrame; // The hit-tested point in innerNode frame coordinates.
+    DoublePoint m_doublePointInInnerNodeFrame; // The hit-tested point in innerNode frame coordinates.
     LayoutPoint m_localPoint; // A point in the local coordinate space of m_innerNonSharedNode's renderer. Allows us to efficiently
                               // determine where inside the renderer we hit on subsequent operations.
     RefPtr<Element> m_innerURLElement;

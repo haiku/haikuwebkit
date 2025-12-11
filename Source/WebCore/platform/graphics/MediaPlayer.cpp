@@ -112,6 +112,10 @@
 #include "MediaPlayerPrivateHolePunch.h"
 #endif
 
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+#include "MediaPlayerPrivateWirelessPlayback.h"
+#endif
+
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaPlayer);
@@ -316,7 +320,8 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
 #if USE(AVFOUNDATION)
     auto& registerRemoteEngine = registerRemotePlayerCallback();
 #if ENABLE(MEDIA_SOURCE)
-    if (registerRemoteEngine && platformStrategies()->mediaStrategy()->mockMediaSourceEnabled())
+    bool useMSERemoteRenderer = hasPlatformStrategies() && platformStrategies()->mediaStrategy()->hasRemoteRendererFor(MediaPlayerMediaEngineIdentifier::AVFoundationMSE);
+    if (!useMSERemoteRenderer && registerRemoteEngine && platformStrategies()->mediaStrategy()->mockMediaSourceEnabled())
         registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::MockMSE);
 #endif
 
@@ -327,7 +332,6 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
             MediaPlayerPrivateAVFoundationObjC::registerMediaEngine(addMediaEngine);
 
 #if ENABLE(MEDIA_SOURCE)
-        bool useMSERemoteRenderer = hasPlatformStrategies() && platformStrategies()->mediaStrategy()->hasRemoteRendererFor(MediaPlayerMediaEngineIdentifier::AVFoundationMSE);
         if (registerRemoteEngine && !useMSERemoteRenderer)
             registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::AVFoundationMSE);
         else
@@ -365,6 +369,15 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
 
 #if USE(EXTERNAL_HOLEPUNCH)
     MediaPlayerPrivateHolePunch::registerMediaEngine(addMediaEngine);
+#endif
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    if (DeprecatedGlobalSettings::isWirelessPlaybackMediaPlayerEnabled()) {
+        if (registerRemoteEngine)
+            registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::WirelessPlayback);
+        else
+            MediaPlayerPrivateWirelessPlayback::registerMediaEngine(addMediaEngine);
+    }
 #endif
 
     haveMediaEnginesVector() = true;
@@ -561,6 +574,10 @@ bool MediaPlayer::load(const URL& url, const LoadOptions& options, MediaSourcePr
     m_mediaSource = mediaSource;
     m_url = url;
     m_loadOptions = options;
+#if USE(AVFOUNDATION)
+    if (DeprecatedGlobalSettings::isAVFoundationEnabled() && hasPlatformStrategies() && platformStrategies()->mediaStrategy()->hasRemoteRendererFor(MediaPlayerMediaEngineIdentifier::AVFoundationMSE))
+        m_activeEngineIdentifier = MediaPlayerMediaEngineIdentifier::AVFoundationMSE;
+#endif
     loadWithNextMediaEngine(nullptr);
     return m_currentMediaEngine;
 }
@@ -651,7 +668,7 @@ void MediaPlayer::loadWithNextMediaEngine(const MediaPlayerFactory* current)
     } else if (m_currentMediaEngine != engine) {
         m_currentMediaEngine = engine;
         m_attemptedEngines.add(*engine);
-        RefPtr playerPrivate = engine->createMediaEnginePlayer(this);
+        RefPtr playerPrivate = engine->createMediaEnginePlayer(*this);
         m_private = playerPrivate;
         if (playerPrivate) {
             protectedClient()->mediaPlayerEngineUpdated();
@@ -2001,7 +2018,7 @@ void MediaPlayer::setShouldCheckHardwareSupport(bool value)
 }
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
-const String& MediaPlayer::defaultSpatialTrackingLabel() const
+String MediaPlayer::defaultSpatialTrackingLabel() const
 {
     return m_defaultSpatialTrackingLabel;
 }
@@ -2014,7 +2031,7 @@ void MediaPlayer::setDefaultSpatialTrackingLabel(const String& defaultSpatialTra
     protectedPrivate()->setDefaultSpatialTrackingLabel(defaultSpatialTrackingLabel);
 }
 
-const String& MediaPlayer::spatialTrackingLabel() const
+String MediaPlayer::spatialTrackingLabel() const
 {
     return m_spatialTrackingLabel;
 }

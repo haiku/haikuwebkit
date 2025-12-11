@@ -36,6 +36,7 @@
 #import <WebKit/WKUserScriptPrivate.h>
 #import <WebKit/WKWebView.h>
 #import <WebKit/WKWebViewConfigurationPrivate.h>
+#import <WebKit/WKWebpagePreferencesPrivate.h>
 #import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <WebKit/_WKWebsiteDataStoreConfiguration.h>
 #import <wtf/Function.h>
@@ -376,10 +377,15 @@ TEST(WebKit, OverrideReferrer)
     bool done { false };
     HTTPServer server(HTTPServer::UseCoroutines::Yes, [&] (Connection connection) -> ConnectionTask { while (true) {
         auto request = co_await connection.awaitableReceiveHTTPRequest();
+        auto path = HTTPServer::parsePath(request);
+        if (path == "/next_navigation"_s) {
+            EXPECT_FALSE(strnstr(request.span().data(), "\r\nReferer: overridereferer\r\n", request.size()));
+            co_await connection.awaitableSend(HTTPResponse("<script>alert('main frame loaded without referrer')</script>"_s).serialize());
+            continue;
+        }
         EXPECT_TRUE(strnstr(request.span().data(), "\r\nReferer: overridereferer\r\n", request.size()));
         EXPECT_FALSE(strnstr(request.span().data(), "eferrer", request.size()));
         EXPECT_EQ(String(request.span()).split("Referer"_s).size(), 2u);
-        auto path = HTTPServer::parsePath(request);
         if (path == "/example"_s) {
             co_await connection.awaitableSend(HTTPResponse("<script>window.location = 'https://webkit.org/webkit'</script>"_s).serialize());
             continue;
@@ -395,12 +401,28 @@ TEST(WebKit, OverrideReferrer)
         EXPECT_FALSE(true);
     } }, HTTPServer::Protocol::HttpsProxy);
 
-    auto configuration = server.httpsProxyConfiguration();
-    configuration._overrideReferrerForAllRequests = @"overridereferer";
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:server.httpsProxyConfiguration()]);
     auto delegate = adoptNS([TestNavigationDelegate new]);
+    auto addReferrer = ^(WKNavigationAction *, WKWebpagePreferences *preferences, void (^completionHandler)(WKNavigationActionPolicy, WKWebpagePreferences *)) {
+        preferences._overrideReferrerForAllRequests = @"overridereferer";
+        completionHandler(WKNavigationActionPolicyAllow, preferences);
+    };
+    delegate.get().decidePolicyForNavigationActionWithPreferences = addReferrer;
     [delegate allowAnyTLSCertificate];
     webView.get().navigationDelegate = delegate.get();
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    Util::run(&done);
+
+    delegate.get().decidePolicyForNavigationActionWithPreferences = nil;
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/next_navigation"]]];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "main frame loaded without referrer");
+
+    done = false;
+    delegate.get().decidePolicyForNavigationActionWithPreferences = addReferrer;
+    [webView evaluateJavaScript:@"const iframe = document.createElement('iframe'); iframe.src = 'https://example.com/webkit'; document.body.appendChild(iframe)" completionHandler:nil];
+    Util::run(&done);
+
+    done = false;
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
     Util::run(&done);
 }

@@ -364,7 +364,6 @@ webkit.org/b/107118 fast/canvas/canvas-quadratic-same-endpoint.html [ Failure ]
 webkit.org/b/142258 fast/css/object-fit/object-fit-canvas.html [ Pass ImageOnlyFailure ]
 
 # --- Compositing ----
-css3/filters/composited-during-transition-layertree.html
 
 platform/mac/fast/text/combining-character-sequence-fallback.html [ Pass Failure ]
 
@@ -502,8 +501,6 @@ webkit.org/b/87748 fast/forms/select/optgroup-clicking.html [ Skip ]
 webkit.org/b/73304 fast/forms/select/menulist-popup-crash.html [ Skip ]
 webkit.org/b/113220 fast/forms/select/popup-closes-on-blur.html [ Skip ]
 webkit.org/b/74384 fast/forms/select/menulist-onchange-fired-with-key-up-down.html [ WontFix ] # Additionally, this is not an expected behavior on Mac.
-
-webkit.org/b/123029 [ Debug ] editing/mac/attributed-string [ Pass Crash ]
 
 webkit.org/b/124933 svg/animations/getCurrentTime-pause-unpause.html [ Pass Failure ]
 
@@ -1299,8 +1296,6 @@ webkit.org/b/190724 [ Debug ] http/tests/misc/large-js-program.py [ Pass Timeout
 
 webkit.org/b/239405 fast/css/counters/element-removal-crash.xhtml [ Pass Failure ]
 
-webkit.org/b/190976 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play.html [ Pass Failure ]
-
 webkit.org/b/189680 platform/mac/media/audio-session-category-video-paused.html [ Pass Timeout ]
 
 webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/ready-states/autoplay.html [ Pass Failure ]
@@ -1568,8 +1563,6 @@ webkit.org/b/209353 [ Release ] media/video-background-tab-playback.html [ Pass 
 
 webkit.org/b/215110 [ Release ] imported/w3c/web-platform-tests/css/css-animations/webkit-writing-mode-crash.html [ Pass Failure ]
 
-webkit.org/b/215450 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-negative.html [ Pass Failure ]
-
 # <rdar://problem/31017631> Stress GC bot failing LayoutTest step with timeout while running WebCryptoAPI/derive_bits_keys tests
 [ Debug ] imported/w3c/web-platform-tests/WebCryptoAPI/derive_bits_keys [ Skip ]
 
@@ -1596,10 +1589,6 @@ imported/w3c/web-platform-tests/css/css-sizing/percentage-height-in-flexbox.html
 
 # <rdar://problem/62860846> REGRESSION [ Mac Debug ] accessibility/roles-exposed.html is flaky timing out.
 [ Debug ] accessibility/roles-exposed.html [ Pass Timeout ]
-
-# rdar://66910555 ([ Layout Tests ] REGRESSION (r264345): [ macOS ] 2 media-source/mediasource-changetype-play are a flaky failure)
-imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Pass Failure ]
-imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-without-codecs-parameter.html [ Crash Pass Failure ]
 
 # WebP images
 fast/images/webp-as-image.html [ Pass ]
@@ -1841,7 +1830,6 @@ fast/css/accent-color/button.html [ Skip ]
 fast/css/accent-color/date.html [ Skip ]
 fast/css/accent-color/submit.html [ Skip ]
 
-webkit.org/b/199350 fast/css/accent-color/datalist.html [ ImageOnlyFailure ]
 webkit.org/b/231463 fast/css/accent-color/range.html [ ImageOnlyFailure ]
 
 # display-p3 canvas and ImageData are Cocoa only for now.
@@ -2513,10 +2501,6 @@ imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/t
 fast/forms/number/number-min-max-spinbutton-appearance-none-percentage-width.html [ Pass Failure ]
 fast/multicol/flexbox-rows.html [ Pass ImageOnlyFailure ]
 fast/forms/hidpi-textarea-on-subpixel-position.html [ Pass ImageOnlyFailure ]
-fast/forms/select-non-native-rendering-direction.html [ Pass Failure ]
-fast/forms/select-background-none.html [ Pass Failure ]
-fast/forms/menulist-separator-painting.html [ Pass Failure ]
-fast/forms/menulist-restrict-line-height.html [ Pass Failure ]
 platform/mac/fast/forms/switch-repaint-size-vertical.html [ Pass Failure ]
 fast/forms/color/color-input-set-attribute-value.html [ Pass ImageOnlyFailure ]
 fast/css/accent-color/select.html [ Pass ImageOnlyFailure ]
@@ -2528,19 +2512,16 @@ imported/w3c/web-platform-tests/css/css-ui/compute-kind-widget-no-fallback-props
 imported/w3c/web-platform-tests/css/css-contain/contain-layout-suppress-baseline-002.html [ Pass ImageOnlyFailure ]
 media/modern-media-controls/volume-support/volume-support-drag-to-mute.html [ Pass Timeout ]
 fast/forms/input-appearance-spinbutton-up.html [ Pass Failure ]
-fast/forms/001.html [ Pass Failure ]
-fast/forms/basic-textareas.html [ Pass Failure ]
-fast/forms/basic-textareas-quirks.html [ Pass Failure ]
-fast/forms/basic-selects.html  [ Pass Failure ]
 fast/forms/input-appearance-spinbutton.html [ Pass Failure ]
-fast/forms/input-number-click.html [ Pass Failure ]
+fast/forms/number/number-appearance-rtl.html [ Pass Failure ]
+fast/forms/001.html [ Pass Failure ]
+fast/forms/basic-selects.html [ Pass Failure ]
+fast/forms/basic-textareas-quirks.html [ Pass Failure ]
+fast/forms/basic-textareas.html [ Pass Failure ]
 fast/forms/menulist-narrow-width.html [ Pass Failure ]
 fast/forms/menulist-style-color.html [ Pass Failure ]
-fast/forms/number/number-appearance-rtl.html [ Pass Failure ]
 fast/forms/number/number-appearance-spinbutton-disabled-readonly.html [ Pass Failure ]
-fast/forms/number/number-appearance-spinbutton-layer.html [ Pass Failure ]
 fast/forms/select-style.html [ Pass Failure ]
-fast/forms/textarea-metrics.html [ Pass Failure ]
 http/tests/workers/service/shownotification-allowed.html [ Pass Failure ]
 webgl/2.0.y/conformance/glsl/bugs/sampler-array-using-loop-index.html [ Pass Failure ]
 webgl/2.0.y/conformance/ogles/GL/greaterThan/greaterThan_001_to_008.html [ Pass Failure ]
@@ -2559,12 +2540,22 @@ webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Fail
 # https://bugs.webkit.org/show_bug.cgi?id=301002 [ macOS Tahoe ] fast/css/apple-system-control-colors.html is a constant text failure
 [ Tahoe Debug ] fast/css/apple-system-control-colors.html [ Failure ]
 
-# https://bugs.webkit.org/show_bug.cgi?id=301013 [ macOS Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html is a flaky text failure
-[ Tahoe ] http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html [ Pass Failure ]
-
 # https://bugs.webkit.org/show_bug.cgi?id=301143# [ macOS Tahoe ] fast/html/text-field-input-types.html is a constant text failure 
 [ Tahoe Debug ] fast/html/text-field-input-types.html [ Failure ]
 
-webkit.org/b/301655 fast/images/page-wide-animation-toggle.html [ Pass Timeout ]
-
 webkit.org/b/301668 fast/repaint/iframe-avoid-redundant-repaint.html [ Pass Failure ]
+
+# List buttons no longer have tint color after the form control refresh.
+fast/css/accent-color/datalist.html [ Skip ]
+
+webkit.org/b/302273 accessibility/mac/focus-setting-selection-syncronizing-not-clearing.html [ Pass Timeout ]
+
+webkit.org/b/302331 imported/w3c/web-platform-tests/css/css-viewport/zoom/iframe-zoom-nested.html [ Pass Failure ]
+
+webkit.org/b/302364 http/tests/site-isolation/window-open-with-name-cross-site.html [ Pass Crash ]
+
+webkit.org/b/301013 http/tests/workers/service/registerServiceWorkerClient-after-network-process-crash.html [ Pass Failure ]
+
+# webkit.org/b/301655 Internals animation toggle causes the Image global preference to change, unpausing animations in tests
+fast/images/page-wide-animation-toggle.html [ Pass Timeout ]
+fast/images/individual-animation-toggle.html [ Pass Timeout ]

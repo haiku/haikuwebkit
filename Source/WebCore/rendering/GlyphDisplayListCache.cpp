@@ -119,7 +119,7 @@ RefPtr<const DisplayList::DisplayList> GlyphDisplayListCache::getDisplayList(con
 
     if (auto iterator = m_entries.find<GlyphDisplayListCacheKeyTranslator>(GlyphDisplayListCacheKey { textRun, font, context }); iterator != m_entries.end()) {
         Ref entry { iterator->get() };
-        auto* result = &entry->displayList();
+        RefPtr result = &entry->displayList();
         const_cast<LayoutRun&>(run).setIsInGlyphDisplayListCache();
         m_entriesForLayoutRun.add(&run, WTFMove(entry));
         return result;

@@ -224,4 +224,14 @@ constexpr std::size_t parameterCount(ReturnType(*)(Args...))
     return ParameterCountImpl<Args...>::value;
 }
 
+#if defined(__has_feature)
+#if __has_feature(objc_arc)
+struct ARCEnabled : std::true_type { };
+#else
+struct ARCEnabled : std::false_type { };
+#endif
+#else
+struct ARCEnabled : std::false_type { };
+#endif
+
 } // namespace NTF

@@ -31,6 +31,7 @@ namespace WebCore {
 namespace Layout {
 
 class ElementBox;
+class GridLayout;
 
 class UnplacedGridItem {
 public:
@@ -43,6 +44,26 @@ public:
     bool isHashTableEmptyValue() const { return m_layoutBox.isHashTableEmptyValue(); }
     static constexpr bool safeToCompareToHashTableEmptyOrDeletedValue = true;
 
+    size_t normalizedColumnStart() const;
+    size_t normalizedColumnEnd() const;
+    size_t normalizedRowStart() const;
+    size_t normalizedRowEnd() const;
+
+    bool hasDefiniteRowPosition() const;
+    bool hasDefiniteColumnPosition() const;
+    bool hasAutoColumnPosition() const;
+    size_t columnSpanSize() const;
+
+    std::pair<size_t, size_t> normalizedRowStartEnd() const;
+    std::pair<size_t, size_t> normalizedColumnStartEnd() const;
+
+private:
+    CheckedRef<const ElementBox> m_layoutBox;
+
+    // https://drafts.csswg.org/css-grid-1/#typedef-grid-row-start-grid-line
+    std::pair<Style::GridPosition, Style::GridPosition> m_columnPosition;
+    std::pair<Style::GridPosition, Style::GridPosition> m_rowPosition;
+
     // The grammar for <grid-line>, which is used by the grid-{column, row}-{start-end}
     // placement properties is 1-index in regards to line numbers. To allow for easy
     // indexing from these line numbers into our structures we subtract 1 from them
@@ -54,20 +75,22 @@ public:
     int explicitRowStart() const;
     int explicitRowEnd() const;
 
-    bool hasDefiniteRowPosition() const;
-    bool hasDefiniteColumnPosition() const;
-    bool hasAutoColumnPosition() const;
-    size_t columnSpanSize() const;
     std::pair<int, int> definiteRowStartEnd() const;
+    std::pair<int, int> definiteColumnStartEnd() const;
 
-private:
-    CheckedRef<const ElementBox> m_layoutBox;
+    void applyGridOffsets(size_t rowOffset, size_t columnOffset);
 
-    // https://drafts.csswg.org/css-grid-1/#typedef-grid-row-start-grid-line
-    std::pair<Style::GridPosition, Style::GridPosition> m_columnPosition;
-    std::pair<Style::GridPosition, Style::GridPosition> m_rowPosition;
+    // Offsets applied to normalize negative grid positions to non-negative matrix indices.
+    size_t m_rowNormalizationOffset { 0 };
+    size_t m_columnNormalizationOffset { 0 };
+
+    // Flag to track whether applyGridOffsets() has been called.
+    // This helps catch bugs where normalized methods are used before offsets are applied,
+    // or where offsets are applied multiple times.
+    bool m_hasAppliedGridOffsets { false };
 
     friend class GridFormattingContext;
+    friend class GridLayout;
     friend class PlacedGridItem;
     friend void add(Hasher&, const WebCore::Layout::UnplacedGridItem&);
 };

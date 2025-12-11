@@ -28,21 +28,29 @@
 #if ENABLE(WEBXR_HIT_TEST)
 
 #include "ExceptionOr.h"
+#include "PlatformXR.h"
 #include <wtf/Forward.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
+class WebXRSession;
+
 class WebXRTransientInputHitTestSource : public RefCounted<WebXRTransientInputHitTestSource> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebXRTransientInputHitTestSource);
 public:
-    static Ref<WebXRTransientInputHitTestSource> create();
+    static Ref<WebXRTransientInputHitTestSource> create(WebXRSession&, PlatformXR::TransientInputHitTestSource&&);
     ~WebXRTransientInputHitTestSource();
     ExceptionOr<void> cancel();
 
+    std::optional<PlatformXR::TransientInputHitTestSource> handle() const { return m_source; }
+
 private:
-    WebXRTransientInputHitTestSource();
+    WebXRTransientInputHitTestSource(WebXRSession&, PlatformXR::TransientInputHitTestSource&&);
+
+    WeakPtr<WebXRSession> m_session;
+    std::optional<PlatformXR::TransientInputHitTestSource> m_source;
 };
 
 } // namespace WebCore

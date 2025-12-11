@@ -260,9 +260,27 @@ void ReadableStreamBYOBReader::onClosedPromiseRejection(ClosedCallback&& callbac
     });
 }
 
+bool ReadableStreamBYOBReader::isReachableFromOpaqueRoots() const
+{
+    return readIntoRequestsSize() && m_stream && m_stream->isReachableFromOpaqueRoots();
+}
+
 WebCoreOpaqueRoot root(ReadableStreamBYOBReader* reader)
 {
     return WebCoreOpaqueRoot { reader };
+}
+
+bool JSReadableStreamBYOBReaderOwner::isReachableFromOpaqueRoots(JSC::Handle<JSC::Unknown> handle, void*, AbstractSlotVisitor& visitor, ASCIILiteral* reason)
+{
+    auto* jsReader = jsCast<JSReadableStreamBYOBReader*>(handle.slot()->asCell());
+    SUPPRESS_UNCOUNTED_LOCAL auto& reader = jsReader->wrapped();
+    SUPPRESS_UNCOUNTED_LOCAL if (reader.isReachableFromOpaqueRoots()) {
+        if (reason) [[unlikely]]
+            *reason = "ReadableStreamBYOBReader is reachable from opaque root"_s;
+        return true;
+    }
+
+    return containsWebCoreOpaqueRoot(visitor, reader);
 }
 
 template<typename Visitor>

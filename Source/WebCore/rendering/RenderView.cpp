@@ -25,6 +25,7 @@
 #include "DocumentPage.h"
 #include "Element.h"
 #include "FloatQuad.h"
+#include "FrameInlines.h"
 #include "GraphicsContext.h"
 #include "GraphicsLayerEnums.h"
 #include "HTMLBodyElement.h"
@@ -584,8 +585,10 @@ void RenderView::flushAccumulatedRepaintRegion() const
     CheckedPtr<RenderBox> iframeOwnerRenderer;
     if (RefPtr ownerElement = protectedDocument()->ownerElement()) {
         iframeOwnerRenderer = ownerElement->renderBox();
-        if (!iframeOwnerRenderer)
+        if (!iframeOwnerRenderer) {
+            m_accumulatedRepaintRegion = nullptr;
             return;
+        }
 
         auto viewRect = this->viewRect();
         auto rectOffsetLayoutSize = toLayoutSize(-viewRect.location() + iframeOwnerRenderer->contentBoxRect().location());
@@ -1217,7 +1220,7 @@ void RenderView::removeViewTransitionGroup(const AtomString& name)
 
 RenderBox* RenderView::viewTransitionGroupForName(const AtomString& name)
 {
-    return m_viewTransitionGroups.get(name).get();
+    return m_viewTransitionGroups.get(name);
 }
 
 } // namespace WebCore

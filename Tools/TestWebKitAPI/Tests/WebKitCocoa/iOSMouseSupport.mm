@@ -27,6 +27,7 @@
 
 #if PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(VISION)
 
+#import "HTTPServer.h"
 #import "IOSMouseEventTestHarness.h"
 #import "InstanceMethodSwizzler.h"
 #import "MouseSupportUIDelegate.h"
@@ -37,6 +38,7 @@
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
 #import <WebCore/PointerEventTypeNames.h>
+#import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKUIDelegatePrivate.h>
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
@@ -161,10 +163,92 @@ static constexpr NSString *fractionalCoordinatesTestPage = @(R"(
     </html>
     )");
 
+static constexpr auto iframeContentForFractionalCoordinates = R"(
+    <!DOCTYPE html>
+    <html>
+    <body style='margin: 0; padding: 0;'>
+        <script>
+            document.addEventListener('pointerdown', function(e) {
+                parent.postMessage({
+                    type: 'pointerdown',
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pageX: e.pageX,
+                    pageY: e.pageY
+                }, '*');
+            });
+        </script>
+    </body>
+    </html>
+)"_s;
+
+static constexpr auto mainHTMLForCrossOriginFractionalCoordinates = R"(
+    <!DOCTYPE html>
+    <html>
+    <body style='margin: 0; padding: 0;'>
+        <iframe id='frame' src='https://webkit.org/iframe' style='width: 100px; height: 100px; position: absolute; border: none;'></iframe>
+        <script>
+            window.coordinatesReceived = new Promise(resolve => {
+                window.addEventListener('message', function(e) {
+                    if (e.data.type === 'pointerdown') {
+                        window.clientX = e.data.clientX;
+                        window.clientY = e.data.clientY;
+                        window.pageX = e.data.pageX;
+                        window.pageY = e.data.pageY;
+                        resolve();
+                    }
+                });
+            });
+        </script>
+    </body>
+    </html>
+)"_s;
+
+static const auto serverForCrossOriginFrameTests = TestWebKitAPI::HTTPServer({
+    { "/example"_s, { mainHTMLForCrossOriginFractionalCoordinates } },
+    { "/iframe"_s, { iframeContentForFractionalCoordinates } }
+}, TestWebKitAPI::HTTPServer::Protocol::HttpsProxy);
+
+static std::pair<RetainPtr<TestWKWebView>, RetainPtr<TestNavigationDelegate>> siteIsolatedViewAndDelegate(const TestWebKitAPI::HTTPServer& server)
+{
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [navigationDelegate allowAnyTLSCertificate];
+
+    RetainPtr configuration = server.httpsProxyConfiguration();
+    [[configuration preferences] _setSiteIsolationEnabled:YES];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView setNavigationDelegate:navigationDelegate.get()];
+
+    return { WTFMove(webView), WTFMove(navigationDelegate) };
+}
+
+static void testFractionalCoordinatesInIFrame(TestWKWebView *webView, double mouseX, double mouseY, NSString *expectedX, NSString *expectedY, NSString *jsTransform = nil, bool isCrossOrigin = false)
+{
+    if (jsTransform) {
+        __block bool done = false;
+        [webView evaluateJavaScript:jsTransform completionHandler:^(id, NSError *) {
+            done = true;
+        }];
+        TestWebKitAPI::Util::run(&done);
+    }
+
+    TestWebKitAPI::MouseEventTestHarness testHarness { webView };
+    testHarness.mouseMove(mouseX, mouseY);
+    testHarness.mouseDown();
+    testHarness.mouseUp();
+    [webView waitForPendingMouseEvents];
+
+    EXPECT_WK_STREQ(expectedX, [webView stringByEvaluatingJavaScript:@"window.clientX"]);
+    EXPECT_WK_STREQ(expectedY, [webView stringByEvaluatingJavaScript:@"window.clientY"]);
+    EXPECT_WK_STREQ(expectedX, [webView stringByEvaluatingJavaScript:@"window.pageX"]);
+    EXPECT_WK_STREQ(expectedY, [webView stringByEvaluatingJavaScript:@"window.pageY"]);
+}
+
 TEST_F(iOSMouseSupport, DoNotChangeSelectionWithRightClick)
 {
-    auto webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    RetainPtr webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView objectByEvaluatingJavaScript:@"document.body.setAttribute('contenteditable','');"];
 
@@ -186,8 +270,8 @@ TEST_F(iOSMouseSupport, DoNotChangeSelectionWithRightClick)
 
 TEST_F(iOSMouseSupport, RightClickOutsideOfTextNodeDoesNotSelect)
 {
-    auto webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    RetainPtr webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadTestPageNamed:@"emptyTable"];
     [webView stringByEvaluatingJavaScript:@"getSelection().selectAllChildren(document.getElementById('target'))"];
 
@@ -203,8 +287,8 @@ TEST_F(iOSMouseSupport, RightClickOutsideOfTextNodeDoesNotSelect)
 
 TEST_F(iOSMouseSupport, RightClickDoesNotShowMenuIfPreventDefault)
 {
-    auto webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    RetainPtr webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadTestPageNamed:@"image"];
     [webView stringByEvaluatingJavaScript:@"window.didContextMenu = false; document.addEventListener('contextmenu', (event) => { event.preventDefault(); didContextMenu = true; })"];
 
@@ -358,64 +442,49 @@ TEST_F(iOSMouseSupport, FractionalCoordinatesInSimpleIFrame)
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadHTMLString:fractionalCoordinatesTestPage];
 
-    TestWebKitAPI::MouseEventTestHarness testHarness { webView.get() };
-    testHarness.mouseMove(0.5, 0.5);
-    testHarness.mouseDown();
-    testHarness.mouseUp();
-    [webView waitForPendingMouseEvents];
-
-    EXPECT_WK_STREQ("0.5", [webView stringByEvaluatingJavaScript:@"window.clientX"]);
-    EXPECT_WK_STREQ("0.5", [webView stringByEvaluatingJavaScript:@"window.clientY"]);
-    EXPECT_WK_STREQ("0.5", [webView stringByEvaluatingJavaScript:@"window.pageX"]);
-    EXPECT_WK_STREQ("0.5", [webView stringByEvaluatingJavaScript:@"window.pageY"]);
+    testFractionalCoordinatesInIFrame(webView.get(), 0.5, 0.5, @"0.5", @"0.5");
 }
 
 TEST_F(iOSMouseSupport, FractionalCoordinatesInRotatedIFrame)
 {
     RetainPtr webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    __block RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadHTMLString:fractionalCoordinatesTestPage];
 
-    __block bool done = false;
-    [webView evaluateJavaScript:@"frame.style.rotate = \"180deg\";" completionHandler:^(id, NSError *) {
-        TestWebKitAPI::MouseEventTestHarness testHarness { webView.get() };
-        testHarness.mouseMove(1.5, 1.5);
-        testHarness.mouseDown();
-        testHarness.mouseUp();
-        [webView waitForPendingMouseEvents];
-
-        EXPECT_WK_STREQ("98.5", [webView stringByEvaluatingJavaScript:@"window.clientX"]);
-        EXPECT_WK_STREQ("98.5", [webView stringByEvaluatingJavaScript:@"window.clientY"]);
-        EXPECT_WK_STREQ("98.5", [webView stringByEvaluatingJavaScript:@"window.pageX"]);
-        EXPECT_WK_STREQ("98.5", [webView stringByEvaluatingJavaScript:@"window.pageY"]);
-        done = true;
-    }];
-
-    TestWebKitAPI::Util::run(&done);
+    testFractionalCoordinatesInIFrame(webView.get(), 1.5, 1.5, @"98.5", @"98.5", @"frame.style.rotate = \"180deg\";");
 }
 
 TEST_F(iOSMouseSupport, FractionalCoordinatesInScaledIFrame)
 {
     RetainPtr webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
-    __block RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
     [webView synchronouslyLoadHTMLString:fractionalCoordinatesTestPage];
 
-    __block bool done = false;
-    [webView evaluateJavaScript:@"frame.style.transformOrigin = \"top left\"; frame.style.scale = \"2\";" completionHandler:^(id, NSError *) {
-        TestWebKitAPI::MouseEventTestHarness testHarness { webView.get() };
-        testHarness.mouseMove(0.5, 0.5);
-        testHarness.mouseDown();
-        testHarness.mouseUp();
-        [webView waitForPendingMouseEvents];
+    testFractionalCoordinatesInIFrame(webView.get(), 0.5, 0.5, @"0.25", @"0.25", @"frame.style.transformOrigin = \"top left\"; frame.style.scale = \"2\";");
+}
 
-        EXPECT_WK_STREQ("0.25", [webView stringByEvaluatingJavaScript:@"window.clientX"]);
-        EXPECT_WK_STREQ("0.25", [webView stringByEvaluatingJavaScript:@"window.clientY"]);
-        EXPECT_WK_STREQ("0.25", [webView stringByEvaluatingJavaScript:@"window.pageX"]);
-        EXPECT_WK_STREQ("0.25", [webView stringByEvaluatingJavaScript:@"window.pageY"]);
-        done = true;
-    }];
+TEST_F(iOSMouseSupport, FractionalCoordinatesInSimpleIFrameCrossOrigin)
+{
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(serverForCrossOriginFrameTests);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    testFractionalCoordinatesInIFrame(webView.get(), 0.5, 0.5, @"0.5", @"0.5", nil, true);
+}
 
-    TestWebKitAPI::Util::run(&done);
+TEST_F(iOSMouseSupport, FractionalCoordinatesInRotatedIFrameCrossOrigin)
+{
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(serverForCrossOriginFrameTests);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    testFractionalCoordinatesInIFrame(webView.get(), 1.5, 1.5, @"98.5", @"98.5", @"frame.style.rotate = \"180deg\";", true);
+}
+
+TEST_F(iOSMouseSupport, FractionalCoordinatesInScaledIFrameCrossOrigin)
+{
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(serverForCrossOriginFrameTests);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    testFractionalCoordinatesInIFrame(webView.get(), 0.5, 0.5, @"0.25", @"0.25", @"frame.style.transformOrigin = \"top left\"; frame.style.scale = \"2\";", true);
 }
 
 static bool selectionUpdated = false;

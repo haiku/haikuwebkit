@@ -36,11 +36,11 @@
 
 namespace WebCore {
 
-OptionSet<SpeakAs> AccessibilityObject::speakAs() const
+Style::SpeakAs AccessibilityObject::speakAs() const
 {
     if (auto* style = this->style())
         return style->speakAs();
-    return { };
+    return CSS::Keyword::Normal { };
 }
 
 FloatPoint AccessibilityObject::screenRelativePosition() const

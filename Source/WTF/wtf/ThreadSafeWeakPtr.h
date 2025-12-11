@@ -31,6 +31,7 @@
 #include <wtf/RefPtr.h>
 #include <wtf/SwiftBridging.h>
 #include <wtf/TaggedPtr.h>
+#include <wtf/WordLock.h>
 
 namespace WTF {
 
@@ -89,7 +90,7 @@ public:
             m_weakReferenceCount++;
         }
 
-        auto deleteObject = [this, object] SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE {
+        SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE auto deleteObject = [this, object] {
             delete static_cast<const T*>(object);
 
             bool hasOtherWeakRefs;
@@ -178,7 +179,7 @@ private:
 
     void setStrongReferenceCountDuringInitialization(size_t count) WTF_IGNORES_THREAD_SAFETY_ANALYSIS { m_strongReferenceCount = count; }
 
-    mutable Lock m_lock;
+    mutable WordLock m_lock;
     mutable size_t m_strongReferenceCount WTF_GUARDED_BY_LOCK(m_lock) { 1 };
     mutable size_t m_weakReferenceCount WTF_GUARDED_BY_LOCK(m_lock) { 0 };
     mutable void* m_object WTF_GUARDED_BY_LOCK(m_lock) { nullptr };
@@ -241,7 +242,7 @@ public:
         if (didDerefStrongOnly) {
             if (newStrongOnlyRefCount == strongOnlyFlag) {
                 ASSERT(m_bits.exchangeOr(destructionStartedFlag) == newStrongOnlyRefCount);
-                auto deleteObject = [this] SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE {
+                SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE auto deleteObject = [this] {
                     delete static_cast<const T*>(this);
                 };
                 switch (destructionThread) {
@@ -321,7 +322,7 @@ private:
     template<typename> friend class ThreadSafeWeakHashSet;
 
     mutable Atomic<uintptr_t> m_bits { refIncrement + strongOnlyFlag };
-};
+} SWIFT_RETURNED_AS_UNRETAINED_BY_DEFAULT;
 
 template<typename T, typename TaggingTraits /* = NoTaggingTraits<T> */>
 class ThreadSafeWeakPtr {

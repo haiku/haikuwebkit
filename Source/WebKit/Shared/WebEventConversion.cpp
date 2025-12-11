@@ -292,6 +292,32 @@ WebCore::PlatformMouseEvent platform(const WebMouseEvent& webEvent)
     return WebKit2PlatformMouseEvent(webEvent);
 }
 
+#if ENABLE(KINETIC_SCROLLING)
+static WebCore::PlatformWheelEventPhase platform(WebWheelEvent::Phase webPhase)
+{
+    switch (webPhase) {
+    case WebWheelEvent::Phase::None:
+        return WebCore::PlatformWheelEventPhase::None;
+    case WebWheelEvent::Phase::Began:
+        return WebCore::PlatformWheelEventPhase::Began;
+    case WebWheelEvent::Phase::Stationary:
+        return WebCore::PlatformWheelEventPhase::Stationary;
+    case WebWheelEvent::Phase::Changed:
+        return WebCore::PlatformWheelEventPhase::Changed;
+    case WebWheelEvent::Phase::Ended:
+        return WebCore::PlatformWheelEventPhase::Ended;
+    case WebWheelEvent::Phase::Cancelled:
+        return WebCore::PlatformWheelEventPhase::Cancelled;
+    case WebWheelEvent::Phase::MayBegin:
+        return WebCore::PlatformWheelEventPhase::MayBegin;
+    case WebWheelEvent::Phase::WillBegin:
+        return WebCore::PlatformWheelEventPhase::WillBegin;
+    }
+    ASSERT_NOT_REACHED();
+    return WebCore::PlatformWheelEventPhase::None;
+}
+#endif
+
 class WebKit2PlatformWheelEvent : public WebCore::PlatformWheelEvent {
 public:
     WebKit2PlatformWheelEvent(const WebWheelEvent& webEvent)
@@ -308,11 +334,11 @@ public:
         m_deltaY = webEvent.delta().height();
         m_wheelTicksX = webEvent.wheelTicks().width();
         m_wheelTicksY = webEvent.wheelTicks().height();
-        m_granularity = (webEvent.granularity() == WebWheelEvent::ScrollByPageWheelEvent) ? WebCore::ScrollByPageWheelEvent : WebCore::ScrollByPixelWheelEvent;
+        m_granularity = (webEvent.granularity() == WebWheelEvent::Granularity::ScrollByPageWheelEvent) ? WebCore::PlatformWheelEventGranularity::ScrollByPageWheelEvent : WebCore::PlatformWheelEventGranularity::ScrollByPixelWheelEvent;
         m_directionInvertedFromDevice = webEvent.directionInvertedFromDevice();
 #if ENABLE(KINETIC_SCROLLING)
-        m_phase = static_cast<WebCore::PlatformWheelEventPhase>(webEvent.phase());
-        m_momentumPhase = static_cast<WebCore::PlatformWheelEventPhase>(webEvent.momentumPhase());
+        m_phase = platform(webEvent.phase());
+        m_momentumPhase = platform(webEvent.momentumPhase());
 #endif
 #if PLATFORM(COCOA) || PLATFORM(GTK) || USE(LIBWPE)
         m_hasPreciseScrollingDeltas = webEvent.hasPreciseScrollingDeltas();

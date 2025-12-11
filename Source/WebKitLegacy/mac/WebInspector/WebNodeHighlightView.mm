@@ -30,7 +30,7 @@
 #import "WebNodeHighlight.h"
 
 #import <WebCore/GraphicsContextCG.h>
-#import <WebCore/InspectorController.h>
+#import <WebCore/PageInspectorController.h>
 #import <wtf/Assertions.h>
 
 #if PLATFORM(IOS_FAMILY)

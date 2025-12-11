@@ -55,7 +55,6 @@ if (shouldUseFlatpak()) {
     runInFlatpak(@command);
 }
 
-
 # These variables are intentionally left undefined.
 my $root;
 my $showHelp;

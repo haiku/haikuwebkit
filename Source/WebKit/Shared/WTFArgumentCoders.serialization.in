@@ -140,6 +140,7 @@ template: struct WebCore::TimelineIdentifierType
 template: struct WebCore::UserGestureTokenIdentifierType
 template: struct WebCore::UserMediaRequestIdentifierType
 template: struct WebCore::WebTransportStreamIdentifierType
+template: struct WebCore::WebTransportSendGroupIdentifierType
 template: struct WebKit::AuthenticationChallengeIdentifierType
 template: struct WebKit::DataTaskIdentifierType
 template: struct WebKit::DisplayLinkObserverIDType
@@ -159,6 +160,7 @@ template: struct WebKit::RemoteAudioDestinationIdentifierType
 template: struct WebKit::RemoteAudioHardwareListenerIdentifierType
 template: struct WebKit::RemoteMediaResourceIdentifierType
 template: struct WebKit::RemoteRemoteCommandListenerIdentifierType
+template: struct WebKit::RiceBackendIdentifierType
 template: struct WebKit::SampleBufferDisplayLayerIdentifierType
 template: struct WebKit::ScriptMessageHandlerIdentifierType
 template: struct WebKit::TapIdentifierType
@@ -194,7 +196,7 @@ template: enum class WebCore::MainThreadPermissionObserverIdentifierType
 template: enum class WebCore::OpaqueOriginIdentifierType
 template: enum class WebCore::PortIdentifierType
 template: enum class WebCore::RTCDataChannelLocalIdentifierType
-template: enum class WebCore::RTCRtpScriptTransformerIdentifierType
+template: enum class WebCore::RTCEncodedStreamProducerIdentifierType
 template: struct WebCore::RenderingResourceIdentifierType
 template: struct WebCore::ResourceLoaderIdentifierType
 template: struct WebCore::SamplesRendererTrackIdentifierType

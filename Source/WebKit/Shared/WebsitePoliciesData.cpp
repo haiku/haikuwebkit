@@ -185,10 +185,10 @@ void WebsitePoliciesData::applyToDocumentLoader(WebsitePoliciesData&& websitePol
     if (!websitePolicies.alternateRequest.isNull())
         documentLoader.willContinueMainResourceLoadAfterRedirect(websitePolicies.alternateRequest);
 
-    WebCore::DocumentLoader::WebpagePreferences preferences;
-    if (websitePolicies.userContentControllerParameters)
-        preferences.userContentProvider = WebUserContentController::getOrCreate(WTFMove(*websitePolicies.userContentControllerParameters));
-    documentLoader.setPreferences(WTFMove(preferences));
+    documentLoader.setPreferences(WebCore::DocumentLoader::WebpagePreferences {
+        websitePolicies.userContentControllerParameters ? RefPtr { WebUserContentController::getOrCreate(WTFMove(*websitePolicies.userContentControllerParameters)) } : nullptr,
+        websitePolicies.overrideReferrerForAllRequests,
+    });
 
     RefPtr frame = documentLoader.frame();
     if (!frame)

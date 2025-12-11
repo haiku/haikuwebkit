@@ -1,0 +1,11 @@
+<style>
+ div { border-image-width: auto; }
+</style>
+<script>
+window.testRunner?.dumpAsText();
+
+const div = document.createElement('div');
+document.documentElement.appendChild(div);
+div.attributeStyleMap.set('accent-color', div.computedStyleMap().get('border-image-width'));
+</script>
+This test passes if it doesn't crash.

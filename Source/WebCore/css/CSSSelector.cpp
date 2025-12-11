@@ -36,7 +36,6 @@
 #include <memory>
 #include <queue>
 #include <wtf/Assertions.h>
-#include <wtf/Hasher.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/Vector.h>
@@ -1018,26 +1017,26 @@ bool isElementBackedPseudoElement(CSSSelector::PseudoElement pseudoElement)
     }
 }
 
-static bool shouldSkipForEqualMode(const CSSSelector& simpleSelector, ComplexSelectorsEqualMode mode)
-{
-    if (mode == ComplexSelectorsEqualMode::IgnoreNonElementBackedPseudoElements)
-        return simpleSelector.matchesPseudoElement() && !isElementBackedPseudoElement(simpleSelector.pseudoElement());
-    return false;
-};
-
 bool complexSelectorsEqual(const CSSSelector& complexA, const CSSSelector& complexB, ComplexSelectorsEqualMode mode)
 {
     auto aRelation = CSSSelector::Relation::Subselector;
     auto bRelation = CSSSelector::Relation::Subselector;
 
     for (auto a = &complexA, b = &complexB; a || b; a = a->precedingInComplexSelector(), b = b->precedingInComplexSelector()) {
-        if (a && shouldSkipForEqualMode(*a, mode)) {
-            aRelation = a->relation();
-            a = a->precedingInComplexSelector();
-        }
-        if (b && shouldSkipForEqualMode(*b, mode)) {
-            bRelation = b->relation();
-            b = b->precedingInComplexSelector();
+        if (mode == ComplexSelectorsEqualMode::IgnoreNonElementBackedPseudoElements) {
+            auto canSkipPseudoElement = [](const CSSSelector& simpleSelector) {
+                if (!simpleSelector.matchesPseudoElement())
+                    return false;
+                return !isElementBackedPseudoElement(simpleSelector.pseudoElement());
+            };
+            if (a && canSkipPseudoElement(*a)) {
+                aRelation = a->relation();
+                a = a->precedingInComplexSelector();
+            }
+            if (b && canSkipPseudoElement(*b)) {
+                bRelation = b->relation();
+                b = b->precedingInComplexSelector();
+            }
         }
         if (!a || !b)
             return a == b;
@@ -1049,53 +1048,6 @@ bool complexSelectorsEqual(const CSSSelector& complexA, const CSSSelector& compl
         bRelation = b->relation();
     }
     return true;
-}
-
-static void addSimpleSelector(Hasher& hasher, const CSSSelector& simpleSelector)
-{
-    // This hash does try to include every possible thing in a selector.
-    add(hasher, simpleSelector.match());
-
-    switch (simpleSelector.match()) {
-    case CSSSelector::Match::Tag:
-        add(hasher, simpleSelector.tagQName());
-        break;
-    case CSSSelector::Match::PseudoClass:
-        add(hasher, simpleSelector.pseudoClass());
-        break;
-    case CSSSelector::Match::PseudoElement:
-        add(hasher, simpleSelector.pseudoElement());
-        break;
-    case CSSSelector::Match::Exact:
-    case CSSSelector::Match::Set:
-    case CSSSelector::Match::List:
-    case CSSSelector::Match::Hyphen:
-    case CSSSelector::Match::Begin:
-    case CSSSelector::Match::End:
-    case CSSSelector::Match::Contain:
-        add(hasher, simpleSelector.attribute());
-        add(hasher, simpleSelector.value());
-        break;
-    default:
-        add(hasher, simpleSelector.value());
-        break;
-    }
-    if (simpleSelector.selectorList())
-        add(hasher, *simpleSelector.selectorList());
-}
-
-void addComplexSelector(Hasher& hasher, const CSSSelector& complexSelector, ComplexSelectorsEqualMode mode)
-{
-    auto relationToRight = CSSSelector::Relation::Subselector;
-    for (auto simpleSelector = &complexSelector; simpleSelector; simpleSelector = simpleSelector->precedingInComplexSelector()) {
-        if (shouldSkipForEqualMode(*simpleSelector, mode)) {
-            relationToRight = simpleSelector->relation();
-            continue;
-        }
-        add(hasher, relationToRight);
-        addSimpleSelector(hasher, *simpleSelector);
-        relationToRight = simpleSelector->relation();
-    }
 }
 
 } // namespace WebCore

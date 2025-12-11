@@ -24,9 +24,19 @@
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
 [
     DispatchedFrom=UI,
-    DispatchedTo=WebContent
+    DispatchedTo=WebContent,
+    EnabledBy=RemoteMediaSessionManagerEnabled
 ]
 messages -> RemoteMediaSessionManager {
+    void ClientShouldResumeAutoplaying(WebCore::MediaSessionIdentifier identifier)
+    void ClientMayResumePlayback(WebCore::MediaSessionIdentifier identifier, bool shouldResume)
+    void ClientShouldSuspendPlayback(WebCore::MediaSessionIdentifier identifier)
+    void ClientSetShouldPlayToPlaybackTarget(WebCore::MediaSessionIdentifier identifier, bool shouldPlay)
+
+#if USE(AUDIO_SESSION)
+    void SetAudioSessionCategory(enum:uint8_t WebCore::AudioSessionCategory type, enum:uint8_t WebCore::AudioSessionMode mode, enum:uint8_t WebCore::RouteSharingPolicy policy)
+    void SetAudioSessionPreferredBufferSize(uint64_t preferredBufferSize)
+#endif
 }
 
 #endif // ENABLE(VIDEO) || ENABLE(WEB_AUDIO)

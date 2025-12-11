@@ -103,7 +103,7 @@ void MediaStreamTrackProcessor::tryEnqueueingVideoFrame()
     if (!context || !videoFrameObserverWrapper || !m_readable)
         return;
 
-    if (m_readableStreamSource->isCancelled())
+    if (m_readableStreamSource->isCancelled() || !m_readableStreamSource->isEnabled())
         return;
 
     // FIXME: If the stream is waiting, we might want to buffer based on

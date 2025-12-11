@@ -61,9 +61,7 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(const URL& evaluatedURL
     : m_evaluatedURL(evaluatedURL)
 {
 }
-#endif
-
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
 ContentFilterUnblockHandler::ContentFilterUnblockHandler(String unblockURLHost, RetainPtr<WebFilterEvaluator> evaluator)
     : m_unblockURLHost { WTFMove(unblockURLHost) }
     , m_webFilterEvaluator { WTFMove(evaluator) }
@@ -77,8 +75,7 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(
     URL&& unreachableURL,
 #if HAVE(WEBCONTENTRESTRICTIONS)
     std::optional<URL>&& evaluatedURL,
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     RetainPtr<WebFilterEvaluator>&& webFilterEvaluator,
 #endif
     bool unblockedAfterRequest
@@ -87,8 +84,7 @@ ContentFilterUnblockHandler::ContentFilterUnblockHandler(
     , m_unreachableURL(WTFMove(unreachableURL))
 #if HAVE(WEBCONTENTRESTRICTIONS)
     , m_evaluatedURL(WTFMove(evaluatedURL))
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     , m_webFilterEvaluator(WTFMove(webFilterEvaluator))
 #endif
     , m_unblockedAfterRequest(unblockedAfterRequest)
@@ -106,8 +102,7 @@ void ContentFilterUnblockHandler::wrapWithDecisionHandler(const DecisionHandlerF
     }};
 #if HAVE(WEBCONTENTRESTRICTIONS)
     m_evaluatedURL = { };
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     m_webFilterEvaluator = nullptr;
 #endif
     std::swap(m_unblockRequester, wrappedRequester);
@@ -116,10 +111,8 @@ void ContentFilterUnblockHandler::wrapWithDecisionHandler(const DecisionHandlerF
 bool ContentFilterUnblockHandler::needsUIProcess() const
 {
 #if HAVE(WEBCONTENTRESTRICTIONS)
-    if (m_evaluatedURL)
-        return true;
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+    return !!m_evaluatedURL;
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     return !!m_webFilterEvaluator;
 #else
     return false;
@@ -144,8 +137,7 @@ bool ContentFilterUnblockHandler::canHandleRequest(const ResourceRequest& reques
         bool hasWebFilterEvaluator = false;
 #if HAVE(WEBCONTENTRESTRICTIONS)
         hasEvaluatedURL = !!m_evaluatedURL;
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
         hasWebFilterEvaluator = !!m_webFilterEvaluator;
 #endif
         if (!hasEvaluatedURL && !hasWebFilterEvaluator)
@@ -170,19 +162,18 @@ void ContentFilterUnblockHandler::requestUnblockAsync(DecisionHandlerFunction&& 
 #if HAVE(WEBCONTENTRESTRICTIONS)
     if (m_evaluatedURL) {
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
-        auto& filter = WebCore::ParentalControlsURLFilter::filterWithConfigurationPath(configurationPath());
+        Ref filter = WebCore::ParentalControlsURLFilter::filterWithConfigurationPath(configurationPath());
 #else
-        auto& filter = WebCore::ParentalControlsURLFilter::singleton();
+        Ref filter = WebCore::ParentalControlsURLFilter::singleton();
 #endif
-        filter.allowURL(*m_evaluatedURL, [decisionHandler = WTFMove(decisionHandler)](bool didAllow) mutable {
+        filter->allowURL(*m_evaluatedURL, [decisionHandler = WTFMove(decisionHandler)](bool didAllow) mutable {
             callOnMainThread([decisionHandler = WTFMove(decisionHandler), didAllow]() {
                 decisionHandler(didAllow);
             });
         });
         return;
     }
-#endif
-#if HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
+#elif HAVE(PARENTAL_CONTROLS_WITH_UNBLOCK_HANDLER)
     if (RetainPtr evaluator = webFilterEvaluator()) {
         [evaluator unblockWithCompletion:[decisionHandler = WTFMove(decisionHandler)](BOOL unblocked, NSError *) mutable {
             callOnMainThread([decisionHandler = WTFMove(decisionHandler), unblocked] {

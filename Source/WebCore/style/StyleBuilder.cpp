@@ -325,6 +325,9 @@ bool Builder::applyRollbackCascadeCustomProperty(const PropertyCascade& rollback
 
         SetForScope levelScope(m_state->m_currentProperty, &rollbackProperty);
         auto resolvedValue = resolveCustomPropertyValue(customPropertyValue);
+        if (!resolvedValue)
+            resolvedValue = CustomProperty::createForGuaranteedInvalid(name);
+
         applyCustomProperty(name, WTFMove(*resolvedValue));
     }
     return true;
@@ -335,7 +338,8 @@ void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::
     ASSERT_WITH_MESSAGE(!isShorthand(id), "Shorthand property id = %d wasn't expanded at parsing time", id);
     ASSERT_WITH_MESSAGE(id != CSSPropertyCustom, "Custom property should be handled by applyCustomProperty");
 
-    auto valueToApply = resolveVariableReferences(id, value);
+    auto valueToApply = resolveInternalAutoBaseFunction(value);
+    valueToApply = resolveVariableReferences(id, valueToApply);
     auto& style = m_state->style();
 
     if (CSSProperty::isDirectionAwareProperty(id)) {
@@ -541,6 +545,23 @@ void Builder::applyCustomProperty(const AtomString& name, Variant<Ref<const Styl
             applyValue(WTFMove(resolved));
         }
     );
+}
+
+Ref<CSSValue> Builder::resolveInternalAutoBaseFunction(CSSValue& value)
+{
+    RefPtr functionValue = dynamicDowncast<CSSFunctionValue>(value);
+    if (!functionValue)
+        return value;
+
+    if (functionValue->name() != CSSValueInternalAutoBase)
+        return value;
+
+    RefPtr result = const_cast<CSSValue*>(m_state->style().appearance() == StyleAppearance::Base ? functionValue->item(1) : functionValue->item(0));
+
+    if (!result)
+        return value;
+
+    return result.releaseNonNull();
 }
 
 Ref<CSSValue> Builder::resolveVariableReferences(CSSPropertyID propertyID, CSSValue& value)
@@ -753,7 +774,8 @@ const PropertyCascade* Builder::ensureRollbackCascadeForRevertLayer()
 
 auto Builder::makeRollbackCascadeKey(PropertyCascade::Origin cascadeOrigin, ScopeOrdinal scopeOrdinal, CascadeLayerPriority cascadeLayerPriority) -> RollbackCascadeKey
 {
-    return { static_cast<unsigned>(cascadeOrigin), static_cast<unsigned>(scopeOrdinal), static_cast<unsigned>(cascadeLayerPriority) };
+    static constexpr auto isNonEmptyValue = true;
+    return { static_cast<unsigned>(cascadeOrigin), static_cast<unsigned>(scopeOrdinal), static_cast<unsigned>(cascadeLayerPriority), isNonEmptyValue };
 }
 
 }

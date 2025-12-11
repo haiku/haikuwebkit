@@ -27,6 +27,7 @@
 
 #include <atomic>
 #include <wtf/FastMalloc.h>
+#include <wtf/StdIntExtras.h>
 #include <wtf/StdLibExtras.h>
 
 namespace WTF {
@@ -313,14 +314,36 @@ inline void dependentLoadLoadFence() { compilerFence(); }
 inline void dependentLoadLoadFence() { loadLoadFence(); }
 #endif
 
+// We use this primitive to hide an atomic variable from the optimizer.
 template<typename T>
-T opaque(T pointer)
+inline T opaque(T value)
 {
-    asm volatile("" : "+r"(pointer) ::);
-    return pointer;
+    asm ("" : "+r"(value) ::);
+    return value;
 }
 
-typedef unsigned InternalDependencyType;
+// We use this primitive on ARM to express memory ordering efficiently.
+template<typename T>
+inline T* addOpaqueZero(T* pointer, unsigned opaqueZero)
+{
+    ASSERT(!opaque(opaqueZero));
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // @safe
+    // Safety: This is bounds-safe because we're not actually adjusting the pointer, only pretending to.
+    return std::bit_cast<T*>(std::bit_cast<char*>(pointer) + opaqueZero);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+}
+
+using InternalDependencyType = UCPURegister;
+
+template<typename T>
+inline InternalDependencyType toInternalDependencyType(T value)
+{
+    if constexpr (std::is_pointer_v<T>)
+        return static_cast<InternalDependencyType>(reinterpret_cast<uintptr_t>(value));
+    else
+        return static_cast<InternalDependencyType>(value);
+}
 
 inline InternalDependencyType opaqueMixture()
 {
@@ -330,13 +353,7 @@ inline InternalDependencyType opaqueMixture()
 template<typename... Arguments, typename T>
 inline InternalDependencyType opaqueMixture(T value, Arguments... arguments)
 {
-    union {
-        InternalDependencyType copy;
-        T value;
-    } u;
-    u.copy = 0;
-    u.value = value;
-    return opaqueMixture(arguments...) + u.copy;
+    return opaqueMixture(arguments...) + toInternalDependencyType(opaque(value));
 }
 
 class Dependency {

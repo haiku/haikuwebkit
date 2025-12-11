@@ -312,8 +312,8 @@ function statsForSingleResult(result) {
     }
     Expectations.failureTypes.forEach(type => {
         const idForType = Expectations.stringToStateId(Expectations.failureTypeMap[type]);
-        stats[`tests_${type}`] = actualId > idForType  ? 0 : 1;
-        stats[`tests_unexpected_${type}`] = unexpectedId > idForType  ? 0 : 1;
+        stats[`tests_${type}`] = +(actualId <= idForType)
+        stats[`tests_unexpected_${type}`] = +(unexpectedId <= idForType)
     });
     return stats;
 }
@@ -366,6 +366,7 @@ class TimelineFromEndpoint {
         this.endpoint = endpoint;
         this.displayAllCommits = true;
 
+        this.regRange = null;
         this.configurations = Configuration.fromQuery();
         this.results = {};
         this.regressions = {
@@ -407,6 +408,8 @@ class TimelineFromEndpoint {
         CommitBank.callbacks.push(this.commit_callback);
 
         this.reload();
+        this.showRegressionHighlight = true;
+
     }
     teardown() {
         CommitBank.callbacks = CommitBank.callbacks.filter((value, index, arr) => {
@@ -595,12 +598,13 @@ class TimelineFromEndpoint {
         const rateChange = pastSuccessRate - newSuccessRate;
         const description = `Success rate has dropped ${(rateChange * 100).toFixed(1)}% (from ${(pastSuccessRate * 100).toFixed(1)}% to ${(newSuccessRate * 100).toFixed(1)}%)`;
 
-        if (pastSuccessRate === 1.0 && newSuccessRate <= 0.2) {
+        if (pastSuccessRate === 1.0 && newSuccessRate <= 0.15) {
                 return {
                     uuid: currentResult.uuid,
                     rateChange,
                     patternDescription: description,
-                    affectedConfigs: [currentResult.configuration?.toKey() || 'unknown']
+                    affectedConfigs: [currentResult.configuration?.toKey() || 'unknown'],
+                    range: true
                 };
         }
 
@@ -609,8 +613,8 @@ class TimelineFromEndpoint {
                 uuid: currentResult.uuid,
                 rateChange,
                 patternDescription: description,
-                affectedConfigs: [currentResult.configuration?.toKey() || 'unknown']
-
+                affectedConfigs: [currentResult.configuration?.toKey() || 'unknown'],
+                range: true
             };
         }
         else if (pastSuccessRate === 0 && newSuccessRate === 0 && rateChange === 0) {
@@ -661,6 +665,33 @@ class TimelineFromEndpoint {
         if (allConfigResults.length > 0) {
             this.regressions.points = this.computedRegressionPoints(allConfigResults);
         }
+    }
+    getRangeUuids(centerUuid, allConfigResults) {
+        const i = allConfigResults.findIndex(r => r.uuid === centerUuid);
+        if (i < 0) return null;
+
+        const win = this.regressions.analysisWindow;
+        const start = Math.max(0, i - win);
+        const end = Math.min(allConfigResults.length - 1, i + win - 1);
+
+        let leftIdx = -1;
+        let rightIdx = -1;
+
+        for (let j = start; j <= end; j++) {
+            const { failureType } = this.getTestResultStatus(allConfigResults[j], willFilterExpected);
+            const failure = failureType !== 'success';
+
+            if (!failure) continue;
+
+            if (leftIdx === -1) leftIdx = j;
+            rightIdx = j;
+        }
+        if (leftIdx === -1) return null;
+
+        return {
+            leftUuid: allConfigResults[leftIdx].uuid,
+            rightUuid: allConfigResults[rightIdx].uuid
+        };
     }
 
     getTestResultUrl(config, data) {
@@ -762,6 +793,71 @@ class TimelineFromEndpoint {
             this.searchScale(null);
     };
 
+    highlightRange(baseDotRenderer, seriesResults, uuidRange) {
+        let leftX = null, rightX = null;
+        const idxByUuid = new Map(seriesResults.map((r, i) => [r.uuid, i]));
+
+        return (data, context, x, y) => {
+            const range = this.regRange;
+            if (!this.showRegressionHighlight || !range) {
+                return baseDotRenderer(data, context, x, y);
+            }
+
+            if (!uuidRange || !uuidRange.has(range.leftUuid) || !uuidRange.has(range.rightUuid)) {
+                return baseDotRenderer(data, context, x, y);
+            }
+
+            if (data && data.uuid === range.leftUuid) {
+                leftX = x;
+            }
+            if (data && data.uuid === range.rightUuid) {
+             rightX = x;
+            }
+
+            const li = idxByUuid.get(range.leftUuid);
+            const ri = idxByUuid.get(range.rightUuid);
+            if (li == null || ri == null) {
+                    return baseDotRenderer(data, context, x, y);
+            }
+            const a = Math.min(li, ri), b = Math.max(li, ri);
+            const allPassesInRange = seriesResults.slice(a, b + 1).every(r => {
+                const {failureType} = this.getTestResultStatus(r, willFilterExpected);
+                return !failureType || failureType === 'success';
+            });
+
+            if (allPassesInRange) {
+                return baseDotRenderer(data, context, x, y)
+            }
+
+            if (leftX !== null && rightX !== null) {
+                const lx = Math.min(leftX, rightX);
+                const rx = Math.max(leftX, rightX);
+                const pad = 8;
+
+                context.save();
+
+                context.beginPath();
+                context.rect(0, 0, context.canvas.width, context.canvas.height);
+                context.clip();
+
+                const fillL = Math.round(lx - pad);
+                const fillW = Math.max(0, Math.round((rx - lx) + pad * 2));
+                context.fillStyle = 'rgba(51,160,255,0.18)';
+                context.fillRect(fillL, 0, fillW, context.canvas.height);
+
+                const L = Math.round(lx) + 0.5;
+                const R = Math.round(rx) + 0.5;
+                context.strokeStyle = 'rgba(51,160,255,0.5)';
+                context.lineWidth = 1;
+                context.beginPath(); context.moveTo(L, 0); context.lineTo(L, context.canvas.height); context.stroke();
+                context.beginPath(); context.moveTo(R, 0); context.lineTo(R, context.canvas.height); context.stroke();
+
+                context.restore();
+            }
+
+            return baseDotRenderer(data, context, x, y);
+        };
+    }
     render(limit) {
         const branch = queryToParams(document.URL.split('?')[1]).branch;
         const self = this;
@@ -1019,7 +1115,7 @@ class TimelineFromEndpoint {
 
             // Create a list of configurations to display with SDKs stripped
             let mappedChildrenConfigs = {};
-            let childrenConfigsBySDK = {}
+            let childrenConfigsBySDK = {};
             let resultsByKey = {};
             this.results[configuration.toKey()].forEach(pair => {
                 const strippedConfig = new Configuration(pair.configuration);
@@ -1051,15 +1147,18 @@ class TimelineFromEndpoint {
                 let queueParams = config.toParams();
                 queueParams['suite'] = [this.suite];
                 if (branch)
-                    queueParams['branch'];
+                    queueParams['branch'] = branch;
+                const uuidsInThisSeries = new Set(resultsForConfig.map(r => r.uuid));
                 let myTimeline = Timeline.SeriesWithHeaderComponent(
                     `${childrenConfigsBySDK[config.toKey()].length > 1 ? ' | ' : ''}<a href="/urls/queue?${paramsToQuery(queueParams)}" target="_blank">${config}</a>`,
                     Timeline.CanvasSeriesComponent(resultsForConfig, this.scale, {
                         getScaleFunc: options.getScaleFunc,
                         compareFunc: options.compareFunc,
                         shouldHighLightFunc: options.shouldHighLightFunc,
-                        renderFactory: options.renderFactory,
-                        exporter: options.exporter,
+                        renderFactory: (drawDot) => {
+                            const baseDotRenderer = options.renderFactory(drawDot);
+                            return self.highlightRange(baseDotRenderer, resultsForConfig, uuidsInThisSeries);
+                        },
                         onDotClick: onDotClickFactory(config),
                         onDotEnter: onDotEnterFactory(config),
                         onDotLeave: onDotLeave,
@@ -1075,14 +1174,18 @@ class TimelineFromEndpoint {
                 if (childrenConfigsBySDK[config.toKey()].length > 1) {
                     let timelinesBySDK = [];
                     childrenConfigsBySDK[config.toKey()].forEach(sdkConfig => {
+                        const seriesResults = resultsByKey[sdkConfig.toKey()];
+                        const uuidsInThisSDKRow = new Set(seriesResults.map(r => r.uuid));
                         timelinesBySDK.push(
                             Timeline.SeriesWithHeaderComponent(`${Configuration.integerToVersion(sdkConfig.version)} (${sdkConfig.sdk})`,
-                                Timeline.CanvasSeriesComponent(resultsByKey[sdkConfig.toKey()], this.scale, {
+                                Timeline.CanvasSeriesComponent(seriesResults, this.scale, {
                                     getScaleFunc: options.getScaleFunc,
                                     compareFunc: options.compareFunc,
                                     shouldHighLightFunc: options.shouldHighLightFunc,
-                                    renderFactory: options.renderFactory,
-                                    exporter: options.exporter,
+                                    renderFactory: (drawDot) => {
+                                        const baseDotRenderer = options.renderFactory(drawDot);
+                                        return self.highlightRange(baseDotRenderer, seriesResults, uuidsInThisSDKRow);
+                                    },
                                     onDotClick: onDotClickFactory(sdkConfig),
                                     onDotEnter: onDotEnterFactory(sdkConfig),
                                     onDotLeave: onDotLeave,
@@ -1092,7 +1195,7 @@ class TimelineFromEndpoint {
                                         else
                                             this.selectedDots.delete(sdkConfig);
                                     },
-                                    exporter: exporterFactory(resultsByKey[sdkConfig.toKey()]),
+                                    exporter: exporterFactory(seriesResults),
                                 })));
                     });
                     myTimeline = Timeline.ExpandableSeriesWithHeaderExpanderComponent(myTimeline, {}, ...timelinesBySDK);
@@ -1110,6 +1213,7 @@ class TimelineFromEndpoint {
             }
 
             allConfigResults = combineResults(allConfigResults, allResults);
+            const uuidsInThisSeries_all = new Set(allResults.map(r => r.uuid));
             children.push(
                 Timeline.ExpandableSeriesWithHeaderExpanderComponent(
                 Timeline.SeriesWithHeaderComponent(` ${configuration}`,
@@ -1117,7 +1221,10 @@ class TimelineFromEndpoint {
                         getScaleFunc: options.getScaleFunc,
                         compareFunc: options.compareFunc,
                         shouldHighLightFunc: options.shouldHighLightFunc,
-                        renderFactory: options.renderFactory,
+                        renderFactory: (drawDot) => {
+                                const baseDotRenderer = options.renderFactory(drawDot);
+                                return self.highlightRange(baseDotRenderer, allResults, uuidsInThisSeries_all);
+                            },
                         onDotClick: onDotClickFactory(configuration),
                         onDotEnter: onDotEnterFactory(configuration),
                         onDotLeave: onDotLeave,
@@ -1186,6 +1293,12 @@ class TimelineFromEndpoint {
 
             const regression = sortedRegressions[index];
             currentRegressPointIndex = index;
+            let rng = null;
+            if (regression.range === true) {
+                rng = this.getRangeUuids(regression.uuid, allConfigResults);
+            }
+
+            this.regRange = rng;
 
             const targetResult = allConfigResults.find(r => r.uuid === regression.uuid);
             searchDot(targetResult);
@@ -1213,12 +1326,6 @@ class TimelineFromEndpoint {
                 if (nextRegression.uuid === currentUuid) {
                     nextIndex++;
                     continue;
-                }
-
-                // Find the actual result data for this regression point
-                const targetResult = allConfigResults.find(r => r.uuid === nextRegression.uuid);
-                if (targetResult) {
-                    const status = this.getTestResultStatus(targetResult, willFilterExpected);
                 }
                 break;
             }
@@ -1278,6 +1385,8 @@ class TimelineFromEndpoint {
             sortedRegressions = [];
             this.regressions.analysisWindow = 10;
             this.regressions.points = [];
+            this.regRange = null;
+            this.notifyRerender();
 
             previousRegressButtonRef.setState({disabled: true});
             nextRegressButtonRef.setState({disabled: true});
@@ -1400,12 +1509,11 @@ class TimelineFromEndpoint {
                     this.selectedDotsButtonGroupRef.setState({show: false});
                 },
                 onSelect: (dots, selectedDotRect, seriesRect, e) => {
-                    // this api will called with selected dots for each series once, and compose the selectedDotRect during the call
                     this.selectedDotsButtonGroupRef.setState({show: true, top: selectedDotRect.bottom, left: selectedDotRect.right});
                 },
                 onSelectionScroll: (dots, selectedDotRect) => {
-                    // this api will called with selected dots for each series once, and compose the selectedDotRect during the call
                     this.selectedDotsButtonGroupRef.setState({top: selectedDotRect.bottom, left: selectedDotRect.right});
+                    this.notifyRerender();
                 },
             }, composer, ...children)}
         </div>`;

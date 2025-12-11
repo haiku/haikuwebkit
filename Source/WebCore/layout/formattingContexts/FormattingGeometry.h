@@ -26,8 +26,9 @@
 #pragma once
 
 #include "FormattingContext.h"
-#include <WebCore/LayoutBoxGeometry.h>
-#include <WebCore/StyleZoomPrimitives.h>
+#include "LayoutBoxGeometry.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
+#include "StyleZoomPrimitives.h"
 
 namespace WebCore {
 

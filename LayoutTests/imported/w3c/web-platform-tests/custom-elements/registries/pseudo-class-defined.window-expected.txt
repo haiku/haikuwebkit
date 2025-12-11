@@ -1,5 +1,5 @@
 
 PASS "uncustomized" :defined doesn't care about your registry'
 PASS "custom" :defined doesn't care about your registry
-PASS pseudo-class-defined
+PASS "custom" :defined should apply after initialize
 

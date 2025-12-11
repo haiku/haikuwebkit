@@ -109,7 +109,7 @@ set(WPEPlatform_LIBRARIES
     Epoxy::Epoxy
     GLib::Gio
     WebKit::WTF
-    ${LIBXKBCOMMON_LIBRARIES}
+    XkbCommon::XkbCommon
 )
 
 if (USE_GBM)

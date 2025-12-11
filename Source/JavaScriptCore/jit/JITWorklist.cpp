@@ -59,7 +59,7 @@ JITWorklist::JITWorklist()
 
     Locker locker { *m_lock };
     for (unsigned i = 0; i < Options::maxNumberOfWorklistThreads(); ++i)
-        m_threads.append(*new JITWorklistThread(locker, *this));
+        m_threads.append(adoptRef(*new JITWorklistThread(locker, *this)));
 }
 
 JITWorklist::~JITWorklist()

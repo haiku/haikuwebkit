@@ -42,6 +42,7 @@ TrackInfoTrackType typeFromFormatDescription(CMFormatDescriptionRef);
 FloatSize presentationSizeFromFormatDescription(CMFormatDescriptionRef);
 std::optional<PlatformVideoColorSpace> colorSpaceFromFormatDescription(CMFormatDescriptionRef);
 String codecFromFormatDescription(CMFormatDescriptionRef);
+bool formatDescriptionIsProtected(CMFormatDescriptionRef);
 std::optional<SpatialVideoMetadata> spatialVideoMetadataFromFormatDescription(CMFormatDescriptionRef);
 std::optional<VideoProjectionMetadata> videoProjectionMetadataFromFormatDescription(CMFormatDescriptionRef);
 

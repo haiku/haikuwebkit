@@ -464,16 +464,18 @@ void writeDebugInfo(TextStream& ts, const RenderObject& object, OptionSet<Render
     }
 }
 
-void write(TextStream& ts, const RenderObject& o, OptionSet<RenderAsTextFlag> behavior)
+static inline void writeTextRuns(TextStream& ts, auto& textRenderer)
 {
-    auto writeTextRun = [&] (auto& textRenderer, auto& textRun) {
+    auto writeTextRun = [&] (auto& textRun) {
+        ts << indent;
+
         auto rect = textRun.visualRectIgnoringBlockDirection();
         int x = rect.x();
         int y = rect.y();
         // FIXME: Use non-logical width. webkit.org/b/206809.
         int logicalWidth = ceilf(rect.x() + (textRun.isHorizontal() ? rect.width() : rect.height())) - x;
         // FIXME: Table cell adjustment is temporary until results can be updated.
-        if (auto* tableCell = dynamicDowncast<RenderTableCell>(*o.containingBlock()))
+        if (auto* tableCell = dynamicDowncast<RenderTableCell>(*textRenderer.containingBlock()))
             y -= floorToInt(tableCell->intrinsicPaddingBefore());
 
         ts << "text run at ("_s << x << ',' << y << ") width "_s << logicalWidth;
@@ -486,69 +488,77 @@ void write(TextStream& ts, const RenderObject& o, OptionSet<RenderAsTextFlag> be
         ts << '\n';
     };
 
+    for (auto& run : InlineIterator::textBoxesFor(textRenderer))
+        writeTextRun(run);
+}
 
-    if (auto* svgShape = dynamicDowncast<LegacyRenderSVGShape>(o)) {
+static inline void writeSVGRenderer(TextStream& ts, const RenderObject& renderer, OptionSet<RenderAsTextFlag> behavior)
+{
+    if (auto* svgShape = dynamicDowncast<LegacyRenderSVGShape>(renderer)) {
         write(ts, *svgShape, behavior);
         return;
     }
-    if (auto* svgGradientStop = dynamicDowncast<RenderSVGGradientStop>(o)) {
+    if (auto* svgGradientStop = dynamicDowncast<RenderSVGGradientStop>(renderer)) {
         writeSVGGradientStop(ts, *svgGradientStop, behavior);
         return;
     }
-    if (auto* svgResourceContainer = dynamicDowncast<LegacyRenderSVGResourceContainer>(o)) {
+    if (auto* svgResourceContainer = dynamicDowncast<LegacyRenderSVGResourceContainer>(renderer)) {
         writeSVGResourceContainer(ts, *svgResourceContainer, behavior);
         return;
     }
-    if (auto* svgContainer = dynamicDowncast<LegacyRenderSVGContainer>(o)) {
+    if (auto* svgContainer = dynamicDowncast<LegacyRenderSVGContainer>(renderer)) {
         writeSVGContainer(ts, *svgContainer, behavior);
         return;
     }
-    if (auto* svgRoot = dynamicDowncast<LegacyRenderSVGRoot>(o)) {
+    if (auto* svgRoot = dynamicDowncast<LegacyRenderSVGRoot>(renderer)) {
         write(ts, *svgRoot, behavior);
         return;
     }
-    if (auto* text = dynamicDowncast<RenderSVGText>(o)) {
+    if (auto* text = dynamicDowncast<RenderSVGText>(renderer)) {
         writeSVGText(ts, *text, behavior);
         return;
     }
-    if (auto* inlineText = dynamicDowncast<RenderSVGInlineText>(o)) {
+    if (auto* inlineText = dynamicDowncast<RenderSVGInlineText>(renderer)) {
         writeSVGInlineText(ts, *inlineText, behavior);
         return;
     }
-    if (auto* svgImage = dynamicDowncast<LegacyRenderSVGImage>(o)) {
+    if (auto* svgImage = dynamicDowncast<LegacyRenderSVGImage>(renderer)) {
         writeSVGImage(ts, *svgImage, behavior);
+        return;
+    }
+}
+
+void write(TextStream& ts, const RenderObject& renderer, OptionSet<RenderAsTextFlag> behavior)
+{
+
+    if (is<LegacyRenderSVGShape>(renderer) || is<RenderSVGGradientStop>(renderer) || is<LegacyRenderSVGResourceContainer>(renderer)
+        || is<LegacyRenderSVGContainer>(renderer) || is<LegacyRenderSVGRoot>(renderer) || is<RenderSVGText>(renderer)
+        || is<RenderSVGInlineText>(renderer) || is<LegacyRenderSVGImage>(renderer)) {
+        writeSVGRenderer(ts, renderer, behavior);
         return;
     }
 
     ts << indent;
-
-    RenderTreeAsText::writeRenderObject(ts, o, behavior);
+    RenderTreeAsText::writeRenderObject(ts, renderer, behavior);
     ts << '\n';
 
     TextStream::IndentScope indentScope(ts);
-
-    if (auto* text = dynamicDowncast<RenderText>(o)) {
-        for (auto& run : InlineIterator::textBoxesFor(*text)) {
-            ts << indent;
-            writeTextRun(*text, run);
-        }
-    } else {
-        for (auto& child : childrenOfType<RenderObject>(downcast<RenderElement>(o))) {
-            if (child.hasLayer())
-                continue;
-            write(ts, child, behavior);
-        }
+    if (auto* textRenderer = dynamicDowncast<RenderText>(renderer)) {
+        writeTextRuns(ts, *textRenderer);
+        return;
     }
 
-    if (auto* renderWidget = dynamicDowncast<RenderWidget>(o)) {
-        if (auto* widget = renderWidget->widget()) {
-            if (auto* frameView = dynamicDowncast<FrameView>(widget))
-                frameView->writeRenderTreeAsText(ts, behavior);
-        }
+    for (auto& child : childrenOfType<RenderObject>(downcast<RenderElement>(renderer))) {
+        if (child.hasLayer())
+            continue;
+        write(ts, child, behavior);
     }
 
-    if (is<RenderSVGModelObject>(o) || is<RenderSVGRoot>(o))
-        writeResources(ts, o, behavior);
+    if (auto* renderWidget = dynamicDowncast<RenderWidget>(renderer); renderWidget && renderWidget->widget() && is<FrameView>(renderWidget->widget()))
+        dynamicDowncast<FrameView>(renderWidget->widget())->writeRenderTreeAsText(ts, behavior);
+
+    if (is<RenderSVGModelObject>(renderer) || is<RenderSVGRoot>(renderer))
+        writeResources(ts, renderer, behavior);
 }
 
 enum LayerPaintPhase {

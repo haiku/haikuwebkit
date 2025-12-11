@@ -71,6 +71,7 @@
 #include "SocketProvider.h"
 #include "WebCoreJSClientData.h"
 #include "WebCoreOpaqueRoot.h"
+#include "WebTransport.h"
 #include "WorkerGlobalScope.h"
 #include "WorkerLoaderProxy.h"
 #include "WorkerNavigator.h"
@@ -102,9 +103,9 @@ using namespace Inspector;
 static std::atomic<CrossOriginMode> globalCrossOriginMode { CrossOriginMode::Shared };
 
 static Lock allScriptExecutionContextsMapLock;
-static HashMap<ScriptExecutionContextIdentifier, ScriptExecutionContext*>& allScriptExecutionContextsMap() WTF_REQUIRES_LOCK(allScriptExecutionContextsMapLock)
+static HashMap<ScriptExecutionContextIdentifier, WeakRef<ScriptExecutionContext>>& allScriptExecutionContextsMap() WTF_REQUIRES_LOCK(allScriptExecutionContextsMapLock)
 {
-    static NeverDestroyed<HashMap<ScriptExecutionContextIdentifier, ScriptExecutionContext*>> contexts;
+    static NeverDestroyed<HashMap<ScriptExecutionContextIdentifier, WeakRef<ScriptExecutionContext>>> contexts;
     ASSERT(allScriptExecutionContextsMapLock.isLocked());
     return contexts;
 }
@@ -153,14 +154,14 @@ void ScriptExecutionContext::regenerateIdentifier()
     m_identifier = ScriptExecutionContextIdentifier::generate();
 
     ASSERT(!allScriptExecutionContextsMap().contains(m_identifier));
-    allScriptExecutionContextsMap().add(m_identifier, this);
+    allScriptExecutionContextsMap().add(m_identifier, *this);
 }
 
 void ScriptExecutionContext::addToContextsMap()
 {
     Locker locker { allScriptExecutionContextsMapLock };
     ASSERT(!allScriptExecutionContextsMap().contains(m_identifier));
-    allScriptExecutionContextsMap().add(m_identifier, this);
+    allScriptExecutionContextsMap().add(m_identifier, *this);
 }
 
 void ScriptExecutionContext::removeFromContextsMap()
@@ -180,16 +181,16 @@ inline void ScriptExecutionContext::checkConsistency() const
 
 void ScriptExecutionContext::checkConsistency() const
 {
-    for (auto* messagePort : m_messagePorts)
-        ASSERT(messagePort->scriptExecutionContext() == this);
+    for (auto& messagePort : m_messagePorts)
+        ASSERT(messagePort.scriptExecutionContext() == this);
 
-    for (auto* destructionObserver : m_destructionObservers)
-        ASSERT(destructionObserver->scriptExecutionContext() == this);
+    for (auto& destructionObserver : m_destructionObservers)
+        ASSERT(destructionObserver.scriptExecutionContext() == this);
 
     // This can run on the GC thread.
-    for (SUPPRESS_UNCOUNTED_LOCAL auto* activeDOMObject : m_activeDOMObjects) {
-        ASSERT(activeDOMObject->scriptExecutionContext() == this);
-        activeDOMObject->assertSuspendIfNeededWasCalled();
+    for (SUPPRESS_UNCOUNTED_LOCAL auto& activeDOMObject : m_activeDOMObjects) {
+        ASSERT(activeDOMObject.scriptExecutionContext() == this);
+        activeDOMObject.assertSuspendIfNeededWasCalled();
     }
 }
 
@@ -218,7 +219,7 @@ ScriptExecutionContext::~ScriptExecutionContext()
 
     setActiveServiceWorker(nullptr);
 
-    while (auto* destructionObserver = m_destructionObservers.takeAny())
+    while (RefPtr destructionObserver = m_destructionObservers.takeAny())
         destructionObserver->contextDestroyed();
 
     setContentSecurityPolicy(nullptr);
@@ -253,14 +254,10 @@ void ScriptExecutionContext::dispatchMessagePortEvents()
 
     auto completionHandlers = std::exchange(m_processMessageWithMessagePortsSoonHandlers, Vector<CompletionHandler<void()>> { });
 
-    // Make a frozen copy of the ports so we can iterate while new ones might be added or destroyed.
-    for (RefPtr messagePort : copyToVectorOf<RefPtr<MessagePort>>(m_messagePorts)) {
-        // The port may be destroyed, and another one created at the same address,
-        // but this is harmless. The worst that can happen as a result is that
-        // dispatchMessages() will be called needlessly.
-        if (m_messagePorts.contains(messagePort.get()) && messagePort->started())
-            messagePort->dispatchMessages();
-    }
+    m_messagePorts.forEach([](auto& messagePort) {
+        if (messagePort.started())
+            messagePort.dispatchMessages();
+    });
 
     for (auto& completionHandler : completionHandlers)
         completionHandler();
@@ -270,14 +267,14 @@ void ScriptExecutionContext::createdMessagePort(MessagePort& messagePort)
 {
     ASSERT(isContextThread());
 
-    m_messagePorts.add(&messagePort);
+    m_messagePorts.add(messagePort);
 }
 
 void ScriptExecutionContext::destroyedMessagePort(MessagePort& messagePort)
 {
     ASSERT(isContextThread());
 
-    m_messagePorts.remove(&messagePort);
+    m_messagePorts.remove(messagePort);
 }
 
 void ScriptExecutionContext::didLoadResourceSynchronously(const URL&)
@@ -289,7 +286,7 @@ CSSValuePool& ScriptExecutionContext::cssValuePool()
     return CSSValuePool::singleton();
 }
 
-std::unique_ptr<FontLoadRequest> ScriptExecutionContext::fontLoadRequest(const String&, bool, bool, LoadedFromOpaqueSource)
+RefPtr<FontLoadRequest> ScriptExecutionContext::fontLoadRequest(const String&, bool, bool, LoadedFromOpaqueSource)
 {
     return nullptr;
 }
@@ -303,17 +300,10 @@ void ScriptExecutionContext::forEachActiveDOMObject(NOESCAPE const Function<Shou
     SetForScope activeDOMObjectAdditionForbiddenScope(m_activeDOMObjectAdditionForbidden, true);
 
     // Make a frozen copy of the objects so we can iterate while new ones might be destroyed.
-    auto possibleActiveDOMObjects = copyToVectorOf<RefPtr<ActiveDOMObject>>(m_activeDOMObjects);
-
-    for (auto& activeDOMObject : possibleActiveDOMObjects) {
-        // Check if this object was deleted already. If so, just skip it.
-        // Calling contains on a possibly-already-deleted object is OK because we guarantee
-        // no new object can be added, so even if a new object ends up allocated with the
-        // same address, that will be *after* this function exits.
-        if (!m_activeDOMObjects.contains(activeDOMObject.get()))
-            continue;
-
-        if (apply(*activeDOMObject) == ShouldContinue::No)
+    auto possibleActiveDOMObjects = copyToVectorOf<WeakPtr<ActiveDOMObject>>(m_activeDOMObjects);
+    for (auto& weakActiveDOMObject : possibleActiveDOMObjects) {
+        RefPtr activeDOMObject = weakActiveDOMObject.get();
+        if (activeDOMObject && apply(*activeDOMObject) == ShouldContinue::No)
             break;
     }
 }
@@ -357,6 +347,11 @@ URL ScriptExecutionContext::currentSourceURL(CallStackPosition position) const
     return sourceURL;
 }
 
+void ScriptExecutionContext::createdWebTransport(WebTransport& transport)
+{
+    m_activeWebTransports.add(transport);
+}
+
 void ScriptExecutionContext::suspendActiveDOMObjects(ReasonForSuspension why)
 {
     checkConsistency();
@@ -370,6 +365,11 @@ void ScriptExecutionContext::suspendActiveDOMObjects(ReasonForSuspension why)
     }
 
     m_activeDOMObjectsAreSuspended = true;
+
+    if (why == ReasonForSuspension::BackForwardCache) {
+        for (auto& webTransport : m_activeWebTransports)
+            webTransport.cleanupContext(*this);
+    }
 
     forEachActiveDOMObject([why](auto& activeDOMObject) {
         activeDOMObject.suspend(why);
@@ -420,7 +420,7 @@ void ScriptExecutionContext::stopActiveDOMObjects()
 
 void ScriptExecutionContext::suspendActiveDOMObjectIfNeeded(ActiveDOMObject& activeDOMObject)
 {
-    ASSERT(m_activeDOMObjects.contains(&activeDOMObject));
+    ASSERT(m_activeDOMObjects.contains(activeDOMObject));
     if (m_activeDOMObjectsAreSuspended)
         activeDOMObject.suspend(m_reasonForSuspendingActiveDOMObjects);
     if (m_activeDOMObjectsAreStopped)
@@ -435,23 +435,23 @@ void ScriptExecutionContext::didCreateActiveDOMObject(ActiveDOMObject& activeDOM
     // rather have a crash than continue running with the set possibly compromised.
     ASSERT(!m_inScriptExecutionContextDestructor);
     RELEASE_ASSERT(!m_activeDOMObjectAdditionForbidden);
-    m_activeDOMObjects.add(&activeDOMObject);
+    m_activeDOMObjects.add(activeDOMObject);
 }
 
 void ScriptExecutionContext::willDestroyActiveDOMObject(ActiveDOMObject& activeDOMObject)
 {
-    m_activeDOMObjects.remove(&activeDOMObject);
+    m_activeDOMObjects.remove(activeDOMObject);
 }
 
 void ScriptExecutionContext::didCreateDestructionObserver(ContextDestructionObserver& observer)
 {
     ASSERT(!m_inScriptExecutionContextDestructor);
-    m_destructionObservers.add(&observer);
+    m_destructionObservers.add(observer);
 }
 
 void ScriptExecutionContext::willDestroyDestructionObserver(ContextDestructionObserver& observer)
 {
-    m_destructionObservers.remove(&observer);
+    m_destructionObservers.remove(observer);
 }
 
 std::optional<PAL::SessionID> ScriptExecutionContext::sessionID() const
@@ -658,8 +658,8 @@ bool ScriptExecutionContext::hasPendingActivity() const
     checkConsistency();
 
     // This runs on the GC thread.
-    for (SUPPRESS_UNCOUNTED_LOCAL auto* activeDOMObject : m_activeDOMObjects) {
-        if (activeDOMObject->hasPendingActivity())
+    for (SUPPRESS_UNCOUNTED_LOCAL auto& activeDOMObject : m_activeDOMObjects) {
+        if (activeDOMObject.hasPendingActivity())
             return true;
     }
 
@@ -713,7 +713,7 @@ void ScriptExecutionContext::setActiveServiceWorker(RefPtr<ServiceWorker>&& serv
 
 void ScriptExecutionContext::registerServiceWorker(ServiceWorker& serviceWorker)
 {
-    auto addResult = m_serviceWorkers.add(serviceWorker.identifier(), &serviceWorker);
+    auto addResult = m_serviceWorkers.add(serviceWorker.identifier(), serviceWorker);
     ASSERT_UNUSED(addResult, addResult.isNewEntry);
 
     ensureOnMainThread([identifier = serviceWorker.identifier()] {

@@ -29,6 +29,8 @@
 
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
+#import "TestCocoa.h"
+#import "TestNavigationDelegate.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
 #import "UserInterfaceSwizzler.h"
@@ -862,6 +864,36 @@ TEST(WKScrollViewTests, SafeAreaEnvironmentVariablesAccountForObscuredContentIns
     EXPECT_WK_STREQ("10px", computedBodyPadding(@"Left"));
     EXPECT_WK_STREQ("14px", computedBodyPadding(@"Bottom"));
     EXPECT_WK_STREQ("10px", computedBodyPadding(@"Right"));
+}
+
+TEST(WKScrollViewTests, ContentInsetAdjustmentBehaviorChangeAfterViewportFitChange)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 400, 800)]);
+    RetainPtr scrollView = [webView scrollView];
+
+    UIEdgeInsets insets = UIEdgeInsetsMake(0, 60, 0, 60);
+    [webView setOverrideSafeAreaInset:insets];
+
+    RetainPtr navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    [webView setNavigationDelegate:navigationDelegate.get()];
+
+    [webView loadSimulatedRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://domain1.com"]] responseHTMLString:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'></head></html>"];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView waitForNextPresentationUpdate];
+
+    EXPECT_EQ([scrollView contentInsetAdjustmentBehavior], UIScrollViewContentInsetAdjustmentNever);
+    EXPECT_EQ([scrollView adjustedContentInset], UIEdgeInsetsZero);
+
+    EXPECT_WK_STREQ([webView stringByEvaluatingJavaScript:@"document.body.clientWidth"], "400");
+
+    [webView loadSimulatedRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://domain2.com"]] responseHTMLString:@"<html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head></html>"];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView waitForNextPresentationUpdate];
+
+    EXPECT_EQ([scrollView contentInsetAdjustmentBehavior], UIScrollViewContentInsetAdjustmentAlways);
+    EXPECT_EQ([scrollView adjustedContentInset], insets);
+
+    EXPECT_WK_STREQ([webView stringByEvaluatingJavaScript:@"document.body.clientWidth"], "280");
 }
 
 } // namespace TestWebKitAPI

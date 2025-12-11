@@ -28,10 +28,10 @@
 
 #include "CommandLineAPIHost.h"
 #include "InspectorBackendClient.h"
-#include "InspectorController.h"
 #include "InstrumentingAgents.h"
 #include "JSExecState.h"
 #include "Page.h"
+#include "PageInspectorController.h"
 #include "SWContextManager.h"
 #include "ServiceWorkerAgent.h"
 #include "ServiceWorkerGlobalScope.h"

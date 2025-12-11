@@ -43,11 +43,11 @@ namespace WebCore {
 
 class Color;
 class FloatRect;
-class InspectorController;
 class InspectorBackendDispatchTask;
 class InspectorFrontendHost;
 class LocalFrame;
 class Page;
+class PageInspectorController;
 
 class InspectorFrontendClientLocal : public InspectorFrontendClient {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(InspectorFrontendClientLocal, WEBCORE_EXPORT);
@@ -65,7 +65,7 @@ public:
 
     enum class DispatchBackendTarget { Page, MainFrame };
 
-    WEBCORE_EXPORT InspectorFrontendClientLocal(InspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings>, DispatchBackendTarget = DispatchBackendTarget::Page);
+    WEBCORE_EXPORT InspectorFrontendClientLocal(PageInspectorController* inspectedPageController, Page* frontendPage, std::unique_ptr<Settings>, DispatchBackendTarget = DispatchBackendTarget::Page);
     WEBCORE_EXPORT ~InspectorFrontendClientLocal() override;
 
     WEBCORE_EXPORT void resetState() override;
@@ -148,9 +148,9 @@ private:
     std::optional<bool> evaluationResultToBoolean(InspectorFrontendAPIDispatcher::EvaluationResult);
 
     RefPtr<Page> protectedFrontendPage() const;
-    RefPtr<InspectorController> protectedInspectedPageController() const;
+    RefPtr<PageInspectorController> protectedInspectedPageController() const;
 
-    WeakPtr<InspectorController> m_inspectedPageController;
+    WeakPtr<PageInspectorController> m_inspectedPageController;
     WeakPtr<Page> m_frontendPage;
     // TODO(yurys): this ref shouldn't be needed.
     RefPtr<InspectorFrontendHost> m_frontendHost;

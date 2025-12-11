@@ -130,6 +130,10 @@ String codecFromFormatDescription(CMFormatDescriptionRef formatDescription)
         return emptyString();
 
     auto subType = PAL::softLink_CoreMedia_CMFormatDescriptionGetMediaSubType(formatDescription);
+    CFStringRef originalFormatKey = PAL::canLoad_CoreMedia_kCMFormatDescriptionExtension_ProtectedContentOriginalFormat() ? PAL::kCMFormatDescriptionExtension_ProtectedContentOriginalFormat : CFSTR("CommonEncryptionOriginalFormat");
+    if (auto originalFormat = dynamic_cf_cast<CFNumberRef>(PAL::CMFormatDescriptionGetExtension(formatDescription, originalFormatKey)))
+        CFNumberGetValue(originalFormat, kCFNumberSInt32Type, &subType);
+
     switch (subType) {
     case kCMVideoCodecType_H264:
     case 'cavc':
@@ -223,6 +227,22 @@ String codecFromFormatDescription(CMFormatDescriptionRef formatDescription)
     }
 
     return emptyString();
+}
+
+bool formatDescriptionIsProtected(CMFormatDescriptionRef formatDescription)
+{
+    if (!formatDescription)
+        return false;
+
+    CFStringRef originalFormatKey = PAL::canLoad_CoreMedia_kCMFormatDescriptionExtension_ProtectedContentOriginalFormat() ? PAL::kCMFormatDescriptionExtension_ProtectedContentOriginalFormat : CFSTR("CommonEncryptionOriginalFormat");
+
+    // Note: this assumes only-and-all content which is protected will have the ProtectedContentOriginalFormat key.
+    if (auto originalFormat = dynamic_cf_cast<CFNumberRef>(PAL::CMFormatDescriptionGetExtension(formatDescription, originalFormatKey))) {
+        UNUSED_PARAM(originalFormat);
+        return true;
+    }
+
+    return false;
 }
 
 std::optional<SpatialVideoMetadata> spatialVideoMetadataFromFormatDescription(CMFormatDescriptionRef formatDescription)

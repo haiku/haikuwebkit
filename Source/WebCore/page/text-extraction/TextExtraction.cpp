@@ -29,6 +29,7 @@
 #include "AXObjectCache.h"
 #include "AccessibilityObject.h"
 #include "BoundaryPointInlines.h"
+#include "CommonVM.h"
 #include "ComposedTreeIterator.h"
 #include "ContainerNodeInlines.h"
 #include "DocumentPage.h"
@@ -73,6 +74,8 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
+#include "RunJavaScriptParameters.h"
+#include "ScriptController.h"
 #include "SimpleRange.h"
 #include "StaticRange.h"
 #include "Text.h"
@@ -82,13 +85,34 @@
 #include "UserTypingGestureIndicator.h"
 #include "VisibleSelection.h"
 #include "WritingMode.h"
+#include <JavaScriptCore/JSCInlines.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/JSLock.h>
+#include <JavaScriptCore/JSString.h>
+#include <JavaScriptCore/RegularExpression.h>
 #include <ranges>
 #include <unicode/uchar.h>
+#include <wtf/CallbackAggregator.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
 
 namespace WebCore {
 namespace TextExtraction {
+
+using namespace JSC;
+
+static String normalizeText(const String& string, unsigned maxDescriptionLength = 512)
+{
+    auto result = foldQuoteMarks(string);
+    result = makeStringByReplacingAll(result, '"', "'"_s);
+    result = makeStringByReplacingAll(result, '\r', ""_s);
+    result = makeStringByReplacingAll(result, '\n', " "_s);
+    result = result.trim(isASCIIWhitespace<char16_t>);
+    if (result.length() <= maxDescriptionLength)
+        return result;
+
+    return makeString(result.left(maxDescriptionLength / 2 - 2), "..."_s, result.right(maxDescriptionLength / 2 - 1));
+}
 
 static constexpr auto minOpacityToConsiderVisible = 0.05;
 
@@ -164,11 +188,11 @@ using ClientNodeAttributesMap = WeakHashMap<Node, HashMap<String, String>, WeakP
 struct TraversalContext {
     const ClientNodeAttributesMap clientNodeAttributes;
     const TextAndSelectedRangeMap visibleText;
-    const std::optional<WebCore::FloatRect> rectInRootView;
+    const std::optional<FloatRect> rectInRootView;
     unsigned onlyCollectTextAndLinksCount { 0 };
     bool mergeParagraphs { false };
     bool skipNearlyTransparentContent { false };
-    bool includeNodeIdentifiers { false };
+    NodeIdentifierInclusion nodeIdentifierInclusion { NodeIdentifierInclusion::None };
     bool includeEventListeners { false };
     bool includeAccessibilityAttributes { false };
 
@@ -482,6 +506,12 @@ static inline Variant<SkipExtraction, ItemData, URL, Editable> extractItemData(N
     if (element->hasTagName(HTMLNames::navTag))
         return { ItemData { ContainerType::Nav } };
 
+    if (element->hasTagName(HTMLNames::supTag))
+        return { ItemData { ContainerType::Superscript } };
+
+    if (element->hasTagName(HTMLNames::subTag))
+        return { ItemData { ContainerType::Subscript } };
+
     if (CheckedPtr renderElement = dynamicDowncast<RenderBox>(*renderer); renderElement && renderElement->style().hasViewportConstrainedPosition())
         return { ItemData { ContainerType::ViewportConstrained } };
 
@@ -495,20 +525,29 @@ static inline Variant<SkipExtraction, ItemData, URL, Editable> extractItemData(N
     return { SkipExtraction::Self };
 }
 
-static inline bool shouldIncludeNodeIdentifier(OptionSet<EventListenerCategory> eventListeners, AccessibilityRole role, const ItemData& data)
+static inline bool shouldIncludeNodeIdentifier(NodeIdentifierInclusion inclusion, OptionSet<EventListenerCategory> eventListeners, AccessibilityRole role, const ItemData& data)
 {
+    using enum NodeIdentifierInclusion;
+    if (inclusion == None)
+        return false;
+
     return WTF::switchOn(data,
-        [eventListeners, role](ContainerType type) {
+        [inclusion, eventListeners, role](ContainerType type) {
+            if (inclusion != Interactive)
+                return false;
+
             switch (type) {
             case ContainerType::Root:
-            case ContainerType::Article:
                 return false;
+            case ContainerType::Article:
             case ContainerType::ViewportConstrained:
             case ContainerType::List:
             case ContainerType::ListItem:
             case ContainerType::BlockQuote:
             case ContainerType::Section:
             case ContainerType::Nav:
+            case ContainerType::Subscript:
+            case ContainerType::Superscript:
             case ContainerType::Generic:
                 return eventListeners || AccessibilityObject::isARIAControl(role);
             case ContainerType::Button:
@@ -521,8 +560,17 @@ static inline bool shouldIncludeNodeIdentifier(OptionSet<EventListenerCategory> 
         [](const TextItemData&) {
             return false;
         },
-        [](auto&) {
+        [](const TextFormControlData&) {
             return true;
+        },
+        [](const ContentEditableData&) {
+            return true;
+        },
+        [](const SelectData&) {
+            return true;
+        },
+        [inclusion](auto&) {
+            return inclusion == Interactive;
         });
 }
 
@@ -585,6 +633,20 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
                 ariaAttributes.set(attributeName.toString(), WTFMove(value));
         }
         role = element->attributeWithoutSynchronization(HTMLNames::roleAttr);
+
+        auto elementAttributesToExtract = std::array { HTMLNames::aria_labeledbyAttr.get(), HTMLNames::aria_labelledbyAttr.get(), HTMLNames::aria_describedbyAttr.get() };
+        for (auto& attributeName : elementAttributesToExtract) {
+            RefPtr elementForAttribute = element->elementForAttributeInternal(attributeName);
+            if (!elementForAttribute)
+                continue;
+
+            static constexpr auto maximumLengthForAttributeText = 32;
+            auto elementText = normalizeText(plainText(makeRangeSelectingNodeContents(*elementForAttribute)).trim(isASCIIWhitespace<char16_t>), maximumLengthForAttributeText);
+            if (elementText.isEmpty())
+                continue;
+
+            ariaAttributes.set(attributeName.toString(), WTFMove(elementText));
+        }
     }
 
     auto policy = [&] {
@@ -627,13 +689,14 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
                 return;
 
             std::optional<NodeIdentifier> nodeIdentifier;
-            if (context.includeNodeIdentifiers && shouldIncludeNodeIdentifier(eventListeners, AccessibilityObject::ariaRoleToWebCoreRole(role), result))
+            if (shouldIncludeNodeIdentifier(context.nodeIdentifierInclusion, eventListeners, AccessibilityObject::ariaRoleToWebCoreRole(role), result))
                 nodeIdentifier = node.nodeIdentifier();
 
             item = { {
                 WTFMove(result),
                 WTFMove(bounds),
                 { },
+                node.nodeName(),
                 WTFMove(nodeIdentifier),
                 eventListeners,
                 WTFMove(ariaAttributes),
@@ -651,6 +714,7 @@ static inline void extractRecursive(Node& node, Item& parentItem, TraversalConte
             item = {
                 TextItemData { { }, { }, emptyString(), { } },
                 WTFMove(bounds),
+                { },
                 { },
                 { },
                 eventListeners,
@@ -745,8 +809,8 @@ static void pruneEmptyContainersRecursive(Item& item)
 
 static Node* nodeFromJSHandle(JSHandleIdentifier identifier)
 {
-    auto [globalObject, object] = WebKitJSHandle::objectForIdentifier(identifier);
-    if (!globalObject || !object)
+    auto* object = WebKitJSHandle::objectForIdentifier(identifier);
+    if (!object)
         return nullptr;
 
     if (auto* jsNode = jsDynamicCast<JSNode*>(object))
@@ -757,7 +821,7 @@ static Node* nodeFromJSHandle(JSHandleIdentifier identifier)
 
 Item extractItem(Request&& request, Page& page)
 {
-    Item root { ContainerType::Root, { }, { }, { }, { }, { }, { }, { } };
+    Item root { ContainerType::Root, { }, { }, { }, { }, { }, { }, { }, { } };
     RefPtr mainFrame = dynamicDowncast<LocalFrame>(page.mainFrame());
     if (!mainFrame) {
         // FIXME: Propagate text extraction to RemoteFrames.
@@ -808,7 +872,7 @@ Item extractItem(Request&& request, Page& page)
             .onlyCollectTextAndLinksCount = 0,
             .mergeParagraphs = request.mergeParagraphs,
             .skipNearlyTransparentContent = request.skipNearlyTransparentContent,
-            .includeNodeIdentifiers = request.includeNodeIdentifiers,
+            .nodeIdentifierInclusion = request.nodeIdentifierInclusion,
             .includeEventListeners = request.includeEventListeners,
             .includeAccessibilityAttributes = request.includeAccessibilityAttributes,
         };
@@ -1277,6 +1341,24 @@ static void highlightText(Page& page, std::optional<NodeIdentifier>&& identifier
     return completion(true, { });
 }
 
+static void scrollBy(Page& page, std::optional<NodeIdentifier>&& identifier, FloatSize scrollDelta, CompletionHandler<void(bool, String&&)>&& completion)
+{
+    RefPtr foundNode = resolveNodeWithBodyAsFallback(page, identifier);
+    if (!foundNode)
+        return completion(false, invalidNodeIdentifierDescription(WTFMove(identifier)));
+
+    RefPtr frame = foundNode->protectedDocument()->frame();
+    if (!frame)
+        return completion(false, nullFrameDescription);
+
+    WeakPtr scroller = CheckedRef { frame->eventHandler() }->enclosingScrollableArea(foundNode.get());
+    if (!scroller)
+        return completion(false, "No scrollable area found"_s);
+
+    scroller->scrollToOffsetWithoutAnimation(FloatPoint { scroller->scrollOffset() } + scrollDelta);
+    completion(true, { });
+}
+
 static bool simulateKeyPress(LocalFrame& frame, const String& key)
 {
     auto keyDown = PlatformKeyboardEvent::syntheticEventFromText(PlatformEvent::Type::KeyDown, key);
@@ -1423,26 +1505,16 @@ void handleInteraction(Interaction&& interaction, Page& page, CompletionHandler<
 
         return highlightText(page, WTFMove(interaction.nodeIdentifier), WTFMove(interaction.text), interaction.scrollToVisible, WTFMove(completion));
     }
+    case Action::ScrollBy:
+        if (interaction.scrollDelta.isZero())
+            return completion(false, "Scroll delta is zero"_s);
+
+        return scrollBy(page, WTFMove(interaction.nodeIdentifier), interaction.scrollDelta, WTFMove(completion));
     default:
         ASSERT_NOT_REACHED();
         break;
     }
     completion(false, "Invalid action"_s);
-}
-
-static constexpr auto maxDescriptionLength = 512;
-
-static String normalizeText(const String& string)
-{
-    auto result = foldQuoteMarks(string);
-    result = makeStringByReplacingAll(result, '"', "'"_s);
-    result = makeStringByReplacingAll(result, '\r', ""_s);
-    result = makeStringByReplacingAll(result, '\n', " "_s);
-    result = result.trim(isASCIIWhitespace<char16_t>);
-    if (result.length() <= maxDescriptionLength)
-        return result;
-
-    return makeString(result.left(maxDescriptionLength / 2 - 2), "..."_s, result.right(maxDescriptionLength / 2 - 1));
 }
 
 static String normalizedLabelText(const Element& element)
@@ -1620,6 +1692,8 @@ InteractionDescription interactionDescription(const Interaction& interaction, Pa
             return "Enter text"_s;
         case Action::HighlightText:
             return "Highlight text"_s;
+        case Action::ScrollBy:
+            return "Scroll"_s;
         }
         ASSERT_NOT_REACHED();
         return { };
@@ -1633,6 +1707,11 @@ InteractionDescription interactionDescription(const Interaction& interaction, Pa
             description.append(makeString(" "_s, wrapWithDoubleQuotes(String { escapedString })));
             stringsToValidate.append(WTFMove(escapedString));
         }
+    }
+
+    if (action == Action::ScrollBy) {
+        auto delta = roundedIntSize(interaction.scrollDelta);
+        description.append(makeString(" by ("_s, delta.width(), ", "_s, delta.height(), ')'));
     }
 
     auto appendElementString = [&]<typename... T>(T&&... args) {
@@ -1649,6 +1728,7 @@ InteractionDescription interactionDescription(const Interaction& interaction, Pa
             case Action::SelectMenuItem:
             case Action::KeyPress:
             case Action::HighlightText:
+            case Action::ScrollBy:
                 return " in "_s;
             case Action::TextInput:
                 return " into "_s;
@@ -1702,6 +1782,108 @@ std::optional<SimpleRange> rangeForExtractedText(const LocalFrame& frame, Extrac
         return { makeRangeSelectingNodeContents(*node) };
 
     return searchForText(*node, text);
+}
+
+Vector<FilterRule> extractRules(Vector<FilterRuleData>&& data)
+{
+    return WTF::map(WTFMove(data), [](auto&& data) -> FilterRule {
+        auto&& [name, urlPattern, scriptSource] = WTFMove(data);
+        if (urlPattern.isEmpty())
+            return { WTFMove(name), { FilterRulePattern::Global }, WTFMove(scriptSource) };
+
+        auto regex = Yarr::RegularExpression { urlPattern, { Yarr::Flags::IgnoreCase } };
+        if (!regex.isValid())
+            return { WTFMove(name), { FilterRulePattern::Global }, WTFMove(scriptSource) };
+
+        return { WTFMove(name), { WTFMove(regex) }, WTFMove(scriptSource) };
+    });
+}
+
+static DOMWrapperWorld& filteringWorld()
+{
+    static NeverDestroyed<RefPtr<DOMWrapperWorld>> world = DOMWrapperWorld::create(commonVM(), DOMWrapperWorld::Type::Internal, "Text Extraction Filtering Rules"_s);
+    return *world.get();
+}
+
+void applyRules(const String& input, std::optional<NodeIdentifier>&& containerNodeID, const Vector<FilterRule>& rules, Page& page, CompletionHandler<void(const String&)>&& completion)
+{
+    if (rules.isEmpty())
+        return completion(input);
+
+    RefPtr mainFrame = page.localMainFrame();
+    if (!mainFrame)
+        return completion(input);
+
+    RefPtr document = mainFrame->document();
+    if (!document)
+        return completion(input);
+
+    RefPtr containerNode = resolveNodeWithBodyAsFallback(page, WTFMove(containerNodeID));
+    if (!containerNode)
+        return completion(input);
+
+    Ref world = filteringWorld();
+    auto arguments = [&] {
+        ArgumentMap argumentMap;
+        argumentMap.reserveInitialCapacity(2);
+        argumentMap.add("input"_s, [input](auto& lexicalGlobalObject) {
+            JSLockHolder lock { &lexicalGlobalObject };
+            return JSValue { jsString(commonVM(), input) };
+        });
+        argumentMap.add("containerNode"_s, [containerNode, mainFrame, world = world.copyRef()](auto& lexicalGlobalObject) {
+            if (!containerNode)
+                return jsNull();
+
+            JSLockHolder lock { &lexicalGlobalObject };
+            return toJS(&lexicalGlobalObject, mainFrame->checkedScript()->globalObject(world), *containerNode);
+        });
+        return std::make_optional(WTFMove(argumentMap));
+    }();
+
+    auto filteredStrings = Box<Vector<String>>::create();
+    auto aggregator = MainRunLoopCallbackAggregator::create([completion = WTFMove(completion), input, filteredStrings] mutable {
+        if (filteredStrings->isEmpty())
+            return completion(input);
+
+        auto shortestFilteredString = std::ranges::min(*filteredStrings, { }, [](auto& string) {
+            return string.length();
+        });
+        completion(WTFMove(shortestFilteredString));
+    });
+
+    auto urlString = document->url().string();
+    for (auto& [name, urlPattern, source] : rules) {
+        bool shouldApplyRule = WTF::switchOn(urlPattern, [](FilterRulePattern pattern) {
+            return pattern == FilterRulePattern::Global;
+        }, [&](const Yarr::RegularExpression& regex) {
+            return regex.match(urlString) >= 0;
+        });
+
+        if (!shouldApplyRule)
+            continue;
+
+        auto parameters = RunJavaScriptParameters {
+            source,
+            SourceTaintedOrigin::Untainted,
+            { },
+            true, // runAsAsyncFunction
+            WTFMove(arguments),
+            false, // forceUserGesture
+            RemoveTransientActivation::No
+        };
+
+        JSLockHolder lock(commonVM());
+        mainFrame->checkedScript()->executeAsynchronousUserAgentScriptInWorld(world, WTFMove(parameters), [document, aggregator, filteredStrings](auto valueOrException) {
+            if (!valueOrException)
+                return;
+
+            auto jsValue = valueOrException.value();
+            if (!jsValue.isString())
+                return;
+
+            filteredStrings->append(jsValue.getString(document->globalObject()));
+        });
+    }
 }
 
 } // namespace TextExtraction

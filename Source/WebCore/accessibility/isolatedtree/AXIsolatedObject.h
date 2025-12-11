@@ -112,6 +112,8 @@ public:
     FontOrientation fontOrientation() const final { return propertyValue<FontOrientation>(AXProperty::FontOrientation); }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 
+    String description() const final { return stringAttributeValue(AXProperty::Description); }
+
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     bool isIgnored() const final { return boolAttributeValue(AXProperty::IsIgnored); }
 #else
@@ -184,10 +186,10 @@ private:
     URL urlAttributeValue(AXProperty) const;
     uint64_t uint64AttributeValue(AXProperty) const;
     Path pathAttributeValue(AXProperty) const;
+    Style::SpeakAs speakAsAttributeValue(AXProperty) const;
     std::pair<unsigned, unsigned> indexRangePairAttributeValue(AXProperty) const;
     template<typename T> T rectAttributeValue(AXProperty) const;
     template<typename T> Vector<T> vectorAttributeValue(AXProperty) const;
-    template<typename T> OptionSet<T> optionSetAttributeValue(AXProperty) const;
     template<typename T> std::optional<T> optionalAttributeValue(AXProperty) const;
     template<typename T> T propertyValue(AXProperty) const;
 
@@ -398,7 +400,7 @@ private:
     void mathPrescripts(AccessibilityMathMultiscriptPairs&) final;
     void mathPostscripts(AccessibilityMathMultiscriptPairs&) final;
 #if PLATFORM(COCOA)
-    OptionSet<SpeakAs> speakAs() const final { return optionSetAttributeValue<SpeakAs>(AXProperty::SpeakAs); }
+    Style::SpeakAs speakAs() const final { return speakAsAttributeValue(AXProperty::SpeakAs); }
 #endif
 #if PLATFORM(MAC)
     bool caretBrowsingEnabled() const final { return boolAttributeValue(AXProperty::CaretBrowsingEnabled); }
@@ -556,9 +558,11 @@ private:
     String textContentPrefixFromListMarker() const final;
     String webAreaTitle() const final { return stringAttributeValue(AXProperty::WebAreaTitle); }
     String titleAttribute() const final { return stringAttributeValue(AXProperty::TitleAttribute); }
-    String description() const final { return stringAttributeValue(AXProperty::Description); }
 
     std::optional<String> textContent() const final;
+    bool isBlockFlow() const final { return boolAttributeValue(AXProperty::IsBlockFlow); }
+    StitchState stitchState(IncludeStitchGroup = IncludeStitchGroup::Yes) const final;
+    const Vector<Vector<AXID>>* stitchGroupsView() const;
 
     String text() const final;
     unsigned textLength() const final;

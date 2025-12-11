@@ -47,7 +47,7 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
-    explicit MockMediaPlayerMediaSource(MediaPlayer*);
+    explicit MockMediaPlayerMediaSource(MediaPlayer&);
 
     // MediaPlayer Engine Support
     WEBCORE_EXPORT static void registerMediaEngine(MediaEngineRegistrar);
@@ -65,7 +65,7 @@ public:
     void updateDuration(const MediaTime&);
 
     MediaPlayer::ReadyState readyState() const override;
-    void setReadyState(MediaPlayer::ReadyState);
+    void readyStateFromMediaSourceChanged() final;
     void setNetworkState(MediaPlayer::NetworkState);
 
 #if !RELEASE_LOG_DISABLED
@@ -107,7 +107,6 @@ private:
     MediaTime m_currentTime;
     MediaTime m_duration;
     std::optional<SeekTarget> m_lastSeekTarget;
-    MediaPlayer::ReadyState m_readyState { MediaPlayer::ReadyState::HaveNothing };
     MediaPlayer::NetworkState m_networkState { MediaPlayer::NetworkState::Empty };
     bool m_playing { false };
 };

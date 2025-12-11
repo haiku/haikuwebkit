@@ -107,16 +107,16 @@ Ref<FrameProcess> BrowsingContextGroup::ensureProcessForSite(const Site& site, c
     return FrameProcess::create(process, *this, site, mainFrameSite, preferences, injectBrowsingContextIntoProcess);
 }
 
-FrameProcess* BrowsingContextGroup::processForSite(const Site& site)
+RefPtr<FrameProcess> BrowsingContextGroup::processForSite(const Site& site)
 {
     if (m_sharedProcessSites.contains(site))
         return m_sharedProcess.get();
-    auto process = m_processMap.get(site);
+    RefPtr process = m_processMap.get(site);
     if (!process)
         return nullptr;
     if (process->process().state() == WebProcessProxy::State::Terminated)
         return nullptr;
-    return process.get();
+    return process;
 }
 
 void BrowsingContextGroup::processDidTerminate(WebPageProxy& page, WebProcessProxy& process)
@@ -181,7 +181,7 @@ void BrowsingContextGroup::removeFrameProcess(FrameProcess& process)
         m_sharedProcessSites.clear();
     } else {
         auto& site = *process.site();
-        ASSERT(site.isEmpty() || m_processMap.get(site).get() == &process || process.process().state() == WebProcessProxy::State::Terminated);
+        ASSERT(site.isEmpty() || m_processMap.get(site) == &process || process.process().state() == WebProcessProxy::State::Terminated);
         m_processMap.remove(site);
     }
     m_remotePages.removeIf([&] (auto& pair) {

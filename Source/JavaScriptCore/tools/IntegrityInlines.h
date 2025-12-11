@@ -25,11 +25,11 @@
 
 #pragma once
 
-#include "Integrity.h"
-#include "JSCJSValue.h"
-#include "StructureID.h"
-#include "VM.h"
-#include "VMManager.h"
+#include <JavaScriptCore/Integrity.h>
+#include <JavaScriptCore/JSCJSValue.h>
+#include <JavaScriptCore/StructureID.h>
+#include <JavaScriptCore/VM.h>
+#include <JavaScriptCore/VMManager.h>
 #include <wtf/Atomics.h>
 #include <wtf/Gigacage.h>
 

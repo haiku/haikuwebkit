@@ -41,7 +41,6 @@ heap/SlotVisitor.cpp
 heap/VerifierSlotVisitor.cpp
 heap/WeakBlock.h
 heap/WeakInlines.h
-inspector/InspectorProtocolObjects.h
 inspector/JSInjectedScriptHost.cpp
 inspector/JSJavaScriptCallFrame.cpp
 inspector/agents/InspectorDebuggerAgent.cpp

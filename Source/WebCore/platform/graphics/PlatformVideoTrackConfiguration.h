@@ -43,6 +43,7 @@ struct PlatformVideoTrackConfiguration : PlatformTrackConfiguration {
     uint64_t bitrate { 0 };
     std::optional<SpatialVideoMetadata> spatialVideoMetadata;
     std::optional<VideoProjectionMetadata> videoProjectionMetadata;
+    bool isProtected { false };
 
     friend bool operator==(const PlatformVideoTrackConfiguration&, const PlatformVideoTrackConfiguration&) = default;
 };

@@ -668,7 +668,7 @@ void MediaRecorderPrivateEncoder::processVideoEncoderActiveConfiguration(const V
     else
         videoInfo->displaySize = { static_cast<float>(config.width), static_cast<float>(config.height) };
     if (configuration.description)
-        videoInfo->atomData = SharedBuffer::create(*configuration.description);
+        videoInfo->extensionAtoms = { 1, { computeBoxType(m_videoCodec), SharedBuffer::create(*configuration.description) } };
     if (configuration.colorSpace)
         videoInfo->colorSpace = *configuration.colorSpace;
     videoInfo->codecName = m_videoCodec;

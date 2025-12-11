@@ -27,7 +27,6 @@
 
 #include "AXObjectCache.h"
 #include "AnchorPositionEvaluator.h"
-#include "BorderPainter.h"
 #include "BorderShape.h"
 #include "ContainerNodeInlines.h"
 #include "ContentVisibilityDocumentState.h"
@@ -52,6 +51,7 @@
 #include "LayoutIntegrationLineLayout.h"
 #include "LocalFrame.h"
 #include "Logging.h"
+#include "OutlinePainter.h"
 #include "Page.h"
 #include "PathUtilities.h"
 #include "ReferencedSVGResources.h"
@@ -233,8 +233,8 @@ RenderPtr<RenderElement> RenderElement::createFor(Element& element, RenderStyle&
         return createRenderer<RenderFlexibleBox>(RenderObject::Type::FlexibleBox, element, WTFMove(style));
     case DisplayType::Grid:
     case DisplayType::InlineGrid:
-    case DisplayType::Masonry:
-    case DisplayType::InlineMasonry:
+    case DisplayType::GridLanes:
+    case DisplayType::InlineGridLanes:
         return createRenderer<RenderGrid>(element, WTFMove(style));
     case DisplayType::Box:
     case DisplayType::InlineBox:
@@ -339,7 +339,10 @@ StyleDifference RenderElement::adjustStyleDifference(StyleDifference diff, Optio
         else
             diff = std::max(diff, StyleDifference::RecompositeLayer);
     }
-    
+
+    if (isHTMLMarquee())
+        diff = std::max(diff, StyleDifference::Layout);
+
     // The answer to requiresLayer() for plugins, iframes, and canvas can change without the actual
     // style changing, since it depends on whether we decide to composite these elements. When the
     // layer status of one of these elements changes, we need to force a layout.
@@ -964,7 +967,7 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
             if (m_style.usedPointerEvents() != newStyle.usedPointerEvents())
                 return true;
 #if ENABLE(TOUCH_ACTION_REGIONS)
-            if (m_style.usedTouchActions() != newStyle.usedTouchActions())
+            if (m_style.usedTouchAction() != newStyle.usedTouchAction())
                 return true;
 #endif
             if (m_style.eventListenerRegionTypes() != newStyle.eventListenerRegionTypes())
@@ -2103,62 +2106,6 @@ MarginRect RenderElement::absoluteAnchorRectWithScrollMargin(bool* insideFixed) 
     return { marginRect, anchorRect };
 }
 
-static bool usePlatformFocusRingColorForOutlineStyleAuto()
-{
-#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
-    return true;
-#else
-    return false;
-#endif
-}
-
-static bool useShrinkWrappedFocusRingForOutlineStyleAuto()
-{
-#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
-    return true;
-#else
-    return false;
-#endif
-}
-
-static void drawFocusRing(GraphicsContext& context, const Path& path, const RenderStyle& style, const Color& color)
-{
-    context.drawFocusRing(path, Style::evaluate<float>(style.outlineWidth(), style.usedZoomForLength()), color);
-}
-
-static void drawFocusRing(GraphicsContext& context, Vector<FloatRect> rects, const RenderStyle& style, const Color& color)
-{
-#if PLATFORM(MAC)
-    context.drawFocusRing(rects, 0, Style::evaluate<float>(style.outlineWidth(), style.usedZoomForLength()), color);
-#else
-    context.drawFocusRing(rects, Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { }), Style::evaluate<float>(style.outlineWidth(), style.usedZoomForLength()), color);
-#endif
-}
-
-void RenderElement::paintFocusRing(const PaintInfo& paintInfo, const RenderStyle& style, const Vector<LayoutRect>& focusRingRects) const
-{
-    ASSERT(style.outlineStyle() == OutlineStyle::Auto);
-    auto outlineOffset = Style::evaluate<float>(style.outlineOffset(), Style::ZoomNeeded { });
-    Vector<FloatRect> pixelSnappedFocusRingRects;
-    float deviceScaleFactor = document().deviceScaleFactor();
-    for (auto rect : focusRingRects) {
-        rect.inflate(outlineOffset);
-        pixelSnappedFocusRingRects.append(snapRectToDevicePixels(rect, deviceScaleFactor));
-    }
-    auto styleOptions = styleColorOptions();
-    styleOptions.add(StyleColorOptions::UseSystemAppearance);
-    auto focusRingColor = usePlatformFocusRingColorForOutlineStyleAuto() ? RenderTheme::singleton().focusRingColor(styleOptions) : style.visitedDependentColorWithColorFilter(CSSPropertyOutlineColor);
-    if (useShrinkWrappedFocusRingForOutlineStyleAuto() && style.hasBorderRadius()) {
-        Path path = PathUtilities::pathWithShrinkWrappedRectsForOutline(pixelSnappedFocusRingRects, style.border().radii(), outlineOffset, style.writingMode(), document().deviceScaleFactor());
-        if (path.isEmpty()) {
-            for (auto rect : pixelSnappedFocusRingRects)
-                path.addRect(rect);
-        }
-        drawFocusRing(paintInfo.context(), path, style, focusRingColor);
-    } else
-        drawFocusRing(paintInfo.context(), pixelSnappedFocusRingRects, style, focusRingColor);
-}
-
 void RenderElement::paintOutline(PaintInfo& paintInfo, const LayoutRect& paintRect)
 {
     if (paintInfo.context().paintingDisabled())
@@ -2167,14 +2114,14 @@ void RenderElement::paintOutline(PaintInfo& paintInfo, const LayoutRect& paintRe
     if (!hasOutline())
         return;
 
-    BorderPainter { *this, paintInfo }.paintOutline(paintRect);
+    OutlinePainter { paintInfo }.paintOutline(*this, paintRect);
 }
 
 void RenderElement::issueRepaintForOutlineAuto(float outlineSize)
 {
+    auto focusRingRects = OutlinePainter::collectFocusRingRects(*this, LayoutPoint(), containerForRepaint().renderer.get());
+
     LayoutRect repaintRect;
-    Vector<LayoutRect> focusRingRects;
-    addFocusRingRects(focusRingRects, LayoutPoint(), containerForRepaint().renderer.get());
     for (auto rect : focusRingRects) {
         rect.inflate(outlineSize);
         repaintRect.unite(rect);
@@ -2362,8 +2309,8 @@ void RenderElement::adjustFragmentedFlowStateOnContainingBlockChangeIfNeeded(con
 #if HAVE(CORE_MATERIAL)
         || oldStyle.hasAppleVisualEffectRequiringBackdropFilter() != newStyle.hasAppleVisualEffectRequiringBackdropFilter()
 #endif
-        || oldStyle.containsLayout() != newStyle.containsLayout()
-        || oldStyle.containsSize() != newStyle.containsSize();
+        || oldStyle.usedContain().contains(Style::ContainValue::Layout) != newStyle.usedContain().contains(Style::ContainValue::Layout)
+        || oldStyle.usedContain().contains(Style::ContainValue::Size) != newStyle.usedContain().contains(Style::ContainValue::Size);
     if (!mayNotBeContainingBlockForDescendantsAnymore)
         return;
 

@@ -78,6 +78,18 @@ static int memfd_create(const char* name, unsigned flags)
 namespace WebKit {
 using namespace WebCore;
 
+static bool remoteInspectorEnabled()
+{
+    static int enabled = -1;
+
+    if (enabled == -1) {
+        const char* env = g_getenv("WEBKIT_INSPECTOR_SERVER");
+        enabled = env && *env;
+    }
+
+    return enabled;
+}
+
 static int createSealedMemFdWithData(const char* name, gconstpointer data, size_t size)
 {
     int fd = memfd_create(name, MFD_ALLOW_SEALING);
@@ -165,6 +177,10 @@ static int createFlatpakInfo(const char* instanceID)
         GUniquePtr<GKeyFile> keyFile(g_key_file_new());
         g_key_file_set_string(keyFile.get(), "Application", "name", WTF::applicationID().data());
         g_key_file_set_string(keyFile.get(), "Instance", "instance-id", instanceID);
+
+        if (remoteInspectorEnabled())
+            g_key_file_set_string(keyFile.get(), "Context", "shared", "network;");
+
         data->reset(g_key_file_to_data(keyFile.get(), &size, nullptr));
     }
 
@@ -682,6 +698,9 @@ static bool shouldUnshareNetwork(ProcessLauncher::ProcessType processType, char*
 {
     // gdbserver requires network access for remote debugging.
     if (enableDebugPermissions() && g_str_has_suffix(argv[0], "gdbserver"))
+        return false;
+
+    if (remoteInspectorEnabled())
         return false;
 
     // xdg-dbus-proxy needs access to host abstract sockets to connect to the a11y bus. Secure

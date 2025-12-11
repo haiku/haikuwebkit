@@ -893,7 +893,6 @@ JSObject* IntlLocale::weekInfo(JSGlobalObject* globalObject)
     }
 
     int32_t firstDayOfWeek = ucal_getAttribute(calendar.get(), UCAL_FIRST_DAY_OF_WEEK);
-    int32_t minimalDays = ucal_getAttribute(calendar.get(), UCAL_MINIMAL_DAYS_IN_FIRST_WEEK);
 
     auto canonicalizeDayOfWeekType = [](UCalendarWeekdayType type) {
         switch (type) {
@@ -961,7 +960,6 @@ JSObject* IntlLocale::weekInfo(JSGlobalObject* globalObject)
     JSObject* result = constructEmptyObject(globalObject);
     result->putDirect(vm, Identifier::fromString(vm, "firstDay"_s), jsNumber(convertUCalendarDaysOfWeekToMondayBasedDay(firstDayOfWeek)));
     result->putDirect(vm, Identifier::fromString(vm, "weekend"_s), weekendArray);
-    result->putDirect(vm, Identifier::fromString(vm, "minimalDays"_s), jsNumber(minimalDays));
     return result;
 }
 

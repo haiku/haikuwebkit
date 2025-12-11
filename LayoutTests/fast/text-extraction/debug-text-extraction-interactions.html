@@ -1,4 +1,4 @@
-<!-- webkit-test-runner [ useFlexibleViewport=true textExtractionEnabled=true ] -->
+<!-- webkit-test-runner [ useFlexibleViewport=true textExtractionEnabled=true AsyncOverflowScrollingEnabled=true ] -->
 <!DOCTYPE html>
 <html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -6,6 +6,18 @@
 <head>
     <script src="../../resources/js-test.js"></script>
     <script src="../../resources/ui-helper.js"></script>
+    <style>
+        .tall {
+            height: 4000px;
+        }
+
+        .scroller {
+            overflow: scroll;
+            width: 200px;
+            height: 200px;
+            border: 1px solid tomato;
+        }
+    </style>
 </head>
 <body>
     <button id="test-button" aria-label="Click Me">Test</button>
@@ -20,6 +32,10 @@
         <p>Hello world.</p>
     </div>
     <h1 class="click-count">0</h1>
+    <div class="scroller" aria-label="Child scroller">
+        <div class="tall">Foo bar</div>
+    </div>
+    <div class="tall"></div>
     <script>
     jsTestIsAsync = true;
 
@@ -27,6 +43,7 @@
         textField = document.querySelector("input");
         select = document.querySelector("select");
         clickCount = document.querySelector(".click-count");
+        childScroller = document.querySelector(".scroller");
         document.getElementById("test-button").addEventListener("click", () => {
             clickCount.textContent = parseInt(clickCount.textContent) + 1;
         });
@@ -35,7 +52,7 @@
             return;
 
         const debugText = await UIHelper.requestDebugText({
-            includeNodeIdentifiers: true,
+            nodeIdentifierInclusion: "interactive",
             includeEventListeners: true,
             includeAccessibilityAttributes: true,
         });
@@ -60,6 +77,21 @@
             text: "Subject"
         });
 
+        scrollChildContainerError = await UIHelper.performTextExtractionInteraction("scrollby", {
+            nodeIdentifier: UIHelper.nodeIdentifierFromDebugText(debugText, "Child scroller"),
+            scrollDelta: {
+                x: 0,
+                y: 100
+            }
+        });
+
+        scrollPageError = await UIHelper.performTextExtractionInteraction("scrollby", {
+            scrollDelta: {
+                x: 0,
+                y: 100
+            }
+        });
+
         invalidActionError = await UIHelper.performTextExtractionInteraction("click", {
             nodeIdentifier: "4294967293",
         });
@@ -72,6 +104,10 @@
         shouldBeEqualToString("select.value", "Three");
         shouldBeEqualToString("selectTextError", "");
         shouldBeEqualToString("getSelection().toString()", "Subject");
+        shouldBeEqualToString("scrollChildContainerError", "");
+        shouldBe("childScroller.scrollTop", "100");
+        shouldBeEqualToString("scrollPageError", "");
+        shouldBe("document.scrollingElement.scrollTop", "100");
         shouldBeEqualToString("invalidActionError", "Failed to resolve nodeIdentifier 4294967293");
 
         finishJSTest();

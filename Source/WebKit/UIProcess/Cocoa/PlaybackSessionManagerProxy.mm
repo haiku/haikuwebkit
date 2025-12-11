@@ -1054,7 +1054,7 @@ void PlaybackSessionManagerProxy::setVideoReceiverEndpoint(PlaybackSessionContex
 
     Ref gpuProcess = process->processPool().ensureProtectedGPUProcess();
     Ref connection = gpuProcess->connection();
-    OSObjectPtr xpcConnection = connection->xpcConnection();
+    XPCObjectPtr<xpc_connection_t> xpcConnection = connection->xpcConnection();
     if (!xpcConnection)
         return;
 
@@ -1094,7 +1094,7 @@ void PlaybackSessionManagerProxy::swapVideoReceiverEndpoints(PlaybackSessionCont
 
     Ref gpuProcess = process->processPool().ensureProtectedGPUProcess();
     Ref connection = gpuProcess->connection();
-    OSObjectPtr xpcConnection = connection->xpcConnection();
+    XPCObjectPtr<xpc_connection_t> xpcConnection = connection->xpcConnection();
     if (!xpcConnection)
         return;
 

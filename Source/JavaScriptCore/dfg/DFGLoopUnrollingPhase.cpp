@@ -192,7 +192,7 @@ public:
             }
             loops[loopIndex] = std::tuple { &loop, depth };
         }
-        std::sort(loops.begin(), loops.end(), [&](const auto& lhs, const auto& rhs) {
+        std::ranges::sort(loops, [&](const auto& lhs, const auto& rhs) {
             return std::get<1>(lhs) > std::get<1>(rhs);
         });
         return loops;
@@ -350,6 +350,11 @@ public:
 
         if (tail != exit) {
             dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *header, " since the exit ", *exit, " and tail ", *tail, " are not the same one");
+            return false;
+        }
+
+        if (!tail->terminal()->isBranch()) {
+            dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *header, " since the tail ", *tail, " has a non-branch terminal");
             return false;
         }
 

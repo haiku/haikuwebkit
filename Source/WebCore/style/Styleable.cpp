@@ -196,7 +196,7 @@ bool Styleable::computeAnimationExtent(LayoutRect& bounds) const
     RefPtr<KeyframeEffect> matchingEffect = nullptr;
     for (const auto& animation : *animations) {
         if (RefPtr keyframeEffect = animation->keyframeEffect()) {
-            if (keyframeEffect->blendingKeyframes().containsProperty(CSSPropertyTransform))
+            if (animatablePropertiesContainTransformRelatedProperty(keyframeEffect->blendingKeyframes().properties()))
                 matchingEffect = keyframeEffect;
         }
     }
@@ -220,29 +220,23 @@ bool Styleable::mayHaveNonZeroOpacity() const
         return true;
 
     auto* effectStack = keyframeEffectStack();
-    if (!effectStack || !effectStack->hasEffects())
-        return false;
-
-    for (const auto& effect : effectStack->sortedEffects()) {
-        if (effect->animatesProperty(CSSPropertyOpacity))
-            return true;
-    }
-
-    return false;
+    return effectStack && effectStack->containsProperty(CSSPropertyOpacity);
 }
 
 bool Styleable::isRunningAcceleratedAnimationOfProperty(CSSPropertyID property) const
 {
     auto* effectStack = keyframeEffectStack();
-    if (!effectStack)
-        return false;
+    return effectStack && effectStack->hasMatchingEffect([property](auto& effect) {
+        return effect.isCurrentlyAffectingProperty(property, KeyframeEffect::Accelerated::Yes);
+    });
+}
 
-    for (const auto& effect : effectStack->sortedEffects()) {
-        if (effect->isCurrentlyAffectingProperty(property, KeyframeEffect::Accelerated::Yes))
-            return true;
-    }
-
-    return false;
+bool Styleable::isRunningAcceleratedTransformRelatedAnimation() const
+{
+    auto* effectStack = keyframeEffectStack();
+    return effectStack && effectStack->hasMatchingEffect([](auto& effect) {
+        return effect.isRunningAcceleratedTransformRelatedAnimation();
+    });
 }
 
 bool Styleable::hasRunningAcceleratedAnimations() const
@@ -463,7 +457,7 @@ void Styleable::updateCSSAnimations(const RenderStyle* currentStyle, const Rende
 static KeyframeEffect* keyframeEffectForElementAndProperty(const Styleable& styleable, const AnimatableCSSProperty& property)
 {
     if (auto* keyframeEffectStack = styleable.keyframeEffectStack()) {
-        auto effects = keyframeEffectStack->sortedEffects();
+        auto& effects = keyframeEffectStack->sortedEffects();
         for (const auto& effect : effects | std::views::reverse) {
             if (effect->animatesProperty(property))
                 return effect.get();
@@ -595,14 +589,6 @@ static void updateCSSTransitionsForStyleableAndProperty(const Styleable& styleab
         hasMatchingTransitionProperty = true;
     }
 
-    auto effectTargetsProperty = [&property](KeyframeEffect& effect) {
-        if (effect.animatesProperty(property))
-            return true;
-        if (auto* transition = dynamicDowncast<CSSTransition>(effect.animation()))
-            return transition->property() == property;
-        return false;
-    };
-
     // https://drafts.csswg.org/css-transitions-1/#before-change-style
     // Define the before-change style as the computed values of all properties on the element as of the previous style change event, except with
     // any styles derived from declarative animations such as CSS Transitions, CSS Animations, and SMIL Animations updated to the current time.
@@ -611,8 +597,8 @@ static void updateCSSTransitionsForStyleableAndProperty(const Styleable& styleab
             auto style = RenderStyle::clone(*lastStyleChangeEventStyle);
             if (auto* keyframeEffectStack = styleable.keyframeEffectStack()) {
                 for (const auto& effect : keyframeEffectStack->sortedEffects()) {
-                    if (effectTargetsProperty(*effect))
-                        Ref { *effect->animation() }->resolve(style, { nullptr });
+                    if (effect->animatesProperty(property))
+                        Ref { *effect }->apply(style, { nullptr });
                 }
             }
             return style;
@@ -696,7 +682,15 @@ static void updateCSSTransitionsForStyleableAndProperty(const Styleable& styleab
     ASSERT(hasMatchingTransitionProperty);
     if (hasRunningTransition && !propertyInStyleMatchesValueForTransitionInMap(property, afterChangeStyle, styleable.ensureRunningTransitionsByProperty(), document)) {
         auto previouslyRunningTransition = styleable.ensureRunningTransitionsByProperty().take(property);
-        auto& previouslyRunningTransitionCurrentStyle = previouslyRunningTransition->currentStyle();
+        auto previouslyRunningTransitionCurrentStyle = [&] {
+            if (auto* lastStyleChangeEventStyle = styleable.lastStyleChangeEventStyle()) {
+                auto style = RenderStyle::clone(*lastStyleChangeEventStyle);
+                ASSERT(previouslyRunningTransition->keyframeEffect());
+                Ref { *previouslyRunningTransition->keyframeEffect() }->apply(style, { nullptr });
+                return style;
+            }
+            return RenderStyle::clone(currentStyle);
+        }();
         // 4. If the element has a running transition for the property, there is a matching transition-property value, and the end value of the running
         //    transition is not equal to the value of the property in the after-change style, then:
         if (Style::Interpolation::equals(property, previouslyRunningTransitionCurrentStyle, afterChangeStyle, document) || !propertyCanBeInterpolated(property, currentStyle, afterChangeStyle)) {

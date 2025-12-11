@@ -86,19 +86,19 @@ void WebExtensionContext::updateDeclarativeNetRequestRulesInStorage(RefPtr<WebEx
 {
     if (storage) {
         storage->createSavepoint([this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), storage, storageType, apiName, rulesToAdd, ruleIDsToRemove](Markable<WTF::UUID> savepointIdentifier, const String& errorMessage) mutable {
-            if (errorMessage.length()) {
+            if (!savepointIdentifier || !errorMessage.isEmpty()) {
                 RELEASE_LOG_ERROR(Extensions, "Unable to create %s rules savepoint for extension %s. Error: %s", storageType.utf8().data(), uniqueIdentifier().utf8().data(), errorMessage.utf8().data());
                 completionHandler(toWebExtensionError(apiName, nullString(), errorMessage));
                 return;
             }
 
             storage->updateRulesByRemovingIDs(ruleIDsToRemove, rulesToAdd, [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), storage, storageType, apiName, savepointIdentifier = WTFMove(savepointIdentifier)](const String& errorMessage) mutable {
-                if (errorMessage.length()) {
+                if (!errorMessage.isEmpty()) {
                     RELEASE_LOG_ERROR(Extensions, "Unable to update %s rules for extension %s. Error: %s", storageType.utf8().data(), uniqueIdentifier().utf8().data(), errorMessage.utf8().data());
 
                     // Update was unsucessful, rollback the changes to the database.
                     storage->rollbackToSavepoint(savepointIdentifier.value(), [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), storageType, apiName, errorMessage](const String& savepointErrorMessage) mutable {
-                        if (savepointErrorMessage.length())
+                        if (!savepointErrorMessage.isEmpty())
                             RELEASE_LOG_ERROR(Extensions, "Unable to rollback to %s rules savepoint for extension %s. Error: %s", storageType.utf8().data(), uniqueIdentifier().utf8().data(), savepointErrorMessage.utf8().data());
 
                         completionHandler(toWebExtensionError(apiName, nullString(), errorMessage));
@@ -112,7 +112,7 @@ void WebExtensionContext::updateDeclarativeNetRequestRulesInStorage(RefPtr<WebEx
                     if (!success) {
                         // Load was unsucessful, rollback the changes to the database.
                         storage->rollbackToSavepoint(savepointIdentifier.value(), [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), storageType, apiName, errorMessage](const String& savepointErrorMessage) mutable {
-                            if (savepointErrorMessage.length())
+                            if (!savepointErrorMessage.isEmpty())
                                 RELEASE_LOG_ERROR(Extensions, "Unable to rollback to %s rules savepoint for extension %s. Error: %s", storageType.utf8().data(), uniqueIdentifier().utf8().data(), savepointErrorMessage.utf8().data());
 
                             // Load the declarativeNetRequest rules again after rolling back the dynamic update.
@@ -131,7 +131,7 @@ void WebExtensionContext::updateDeclarativeNetRequestRulesInStorage(RefPtr<WebEx
 
                     // Load was successful, commit the changes to the database.
                     storage->commitSavepoint(savepointIdentifier.value(), [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), storageType](const String& savepointErrorMessage) mutable {
-                        if (savepointErrorMessage.length())
+                        if (!savepointErrorMessage.isEmpty())
                             RELEASE_LOG_ERROR(Extensions, "Unable to commit %s rules savepoint for extension %s. Error: %s", storageType.utf8().data(), uniqueIdentifier().utf8().data(), savepointErrorMessage.utf8().data());
 
                         completionHandler({ });
@@ -152,7 +152,7 @@ void WebExtensionContext::declarativeNetRequestGetDynamicRules(Vector<double>&& 
     });
 
     declarativeNetRequestDynamicRulesStore()->getRulesWithRuleIDs(ruleIDs, [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](RefPtr<JSON::Array> rules, const String& errorMessage) mutable {
-        if (errorMessage.length()) {
+        if (!errorMessage.isEmpty()) {
             completionHandler(toWebExtensionError("declarativeNetRequest.getDynamicRules()"_s, nullString(), errorMessage));
             return;
         }
@@ -203,7 +203,7 @@ void WebExtensionContext::declarativeNetRequestGetSessionRules(Vector<double>&& 
     });
 
     declarativeNetRequestSessionRulesStore()->getRulesWithRuleIDs(ruleIDs, [protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)](RefPtr<JSON::Array> rules, const String& errorMessage) mutable {
-        if (errorMessage.length()) {
+        if (!errorMessage.isEmpty()) {
             completionHandler(toWebExtensionError("declarativeNetRequest.getSessionRules()"_s, nullString(), errorMessage));
             return;
         }

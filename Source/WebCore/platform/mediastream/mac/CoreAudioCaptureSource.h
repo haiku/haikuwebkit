@@ -63,6 +63,9 @@ public:
     CMClockRef timebaseClock();
 
     void handleNewCurrentMicrophoneDevice(const CaptureDevice&);
+#if PLATFORM(MAC)
+    void vpioUnitWillChangeCaptureDeviceTo(const String&);
+#endif
     void echoCancellationChanged();
 
     WTF_ABSTRACT_THREAD_SAFE_REF_COUNTED_AND_CAN_MAKE_WEAK_PTR_IMPL;
@@ -101,6 +104,10 @@ private:
 
     void initializeToStartProducingData();
     void audioUnitWillStart();
+
+#if PLATFORM(MAC)
+    void changeAudioUnit();
+#endif
 
 #if !RELEASE_LOG_DISABLED
     ASCIILiteral logClassName() const override { return "CoreAudioCaptureSource"_s; }

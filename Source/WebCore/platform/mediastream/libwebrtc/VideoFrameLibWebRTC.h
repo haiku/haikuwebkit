@@ -49,8 +49,6 @@ public:
 
     webrtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer() const { return webrtc::scoped_refptr { m_buffer.ptr() }; }
 
-    static std::optional<PlatformVideoColorSpace> colorSpaceFromFrame(const webrtc::VideoFrame&);
-
 private:
     VideoFrameLibWebRTC(MediaTime, bool isMirrored, Rotation, PlatformVideoColorSpace&&, Ref<webrtc::VideoFrameBuffer>&&, ConversionCallback&&);
 
@@ -58,6 +56,7 @@ private:
     IntSize presentationSize() const final { return m_size; }
     uint32_t pixelFormat() const final { return m_videoPixelFormat; }
     CVPixelBufferRef pixelBuffer() const final;
+    RefPtr<NativeImage> copyNativeImage() const final;
 
     Ref<VideoFrame> clone() final;
 

@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 include(VersioningUtils)
 
-SET_PROJECT_VERSION(2 51 1)
+SET_PROJECT_VERSION(2 51 2)
 
 set(USER_AGENT_BRANDING "" CACHE STRING "Branding to add to user agent string")
 
@@ -13,8 +13,8 @@ find_package(JPEG REQUIRED)
 find_package(Epoxy 1.5.4 REQUIRED)
 find_package(LibGcrypt 1.7.0 REQUIRED)
 find_package(Soup3 3.0.0 REQUIRED)
-find_package(Libtasn1 REQUIRED)
-find_package(Libxkbcommon 0.4.0 REQUIRED)
+find_package(Tasn1 REQUIRED)
+find_package(XkbCommon 0.4.0 REQUIRED)
 find_package(LibXml2 2.9.13 REQUIRED)
 find_package(PNG REQUIRED)
 find_package(SQLite3 REQUIRED)
@@ -181,9 +181,9 @@ endif ()
 EXPOSE_STRING_VARIABLE_TO_BUILD(WPE_API_VERSION)
 
 if (WPE_API_VERSION VERSION_EQUAL "1.1")
-    CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 11 0 11)
+    CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 11 1 11)
 else ()
-    CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 8 0 7)
+    CALCULATE_LIBRARY_VERSIONS_FROM_LIBTOOL_TRIPLE(WEBKIT 8 1 7)
 endif ()
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)

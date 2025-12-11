@@ -422,4 +422,12 @@ bool styleHasDisplayTransition(const RenderStyle& style)
     return false;
 }
 
+bool animatablePropertiesContainTransformRelatedProperty(const HashSet<AnimatableCSSProperty>& properties)
+{
+    return properties.contains(CSSPropertyTranslate)
+        || properties.contains(CSSPropertyScale)
+        || properties.contains(CSSPropertyRotate)
+        || properties.contains(CSSPropertyTransform);
+}
+
 } // namespace WebCore

@@ -54,9 +54,7 @@ AutoInstall.install(Package('Mako', Version(1, 3, 10)))
 AutoInstall.install(Package('croniter', Version(6, 0, 0)))
 AutoInstall.install(Package('pytz', Version(2025, 2)))
 
-# buildbot has wheel=False because we rely on items in buildbot.test that only
-# became public API and started being included in wheels from 3.5.0.
-AutoInstall.install(Package('buildbot', Version(4, 3, 0), wheel=False))
+AutoInstall.install(Package('buildbot', Version(4, 3, 0)))
 AutoInstall.install(Package('buildbot_worker', Version(4, 3, 0), pypi_name='buildbot-worker'))
 
 

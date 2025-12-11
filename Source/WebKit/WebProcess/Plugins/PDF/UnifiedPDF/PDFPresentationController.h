@@ -93,7 +93,7 @@ public:
     void setNeedsRepaintForPageCoverage(RepaintRequirements, const PDFPageCoverage&);
 
     virtual std::optional<PDFLayoutRow> visibleRow() const { return { }; }
-    virtual std::optional<PDFLayoutRow> rowForLayer(const WebCore::GraphicsLayer*) const { return { }; }
+    virtual std::optional<PDFLayoutRow> rowForLayer(const WebCore::GraphicsLayer&) const { return { }; }
 
     enum class AnchorPoint : uint8_t { TopLeft, Center };
     std::optional<VisiblePDFPosition> pdfPositionForCurrentView(AnchorPoint, bool preservePosition = true) const;

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "CachedCall.h"
+#include "CachedCallInlines.h"
 #include "ExceptionHelpers.h"
 #include "JSCellButterfly.h"
 #include "ObjectConstructor.h"
@@ -812,11 +812,6 @@ static ALWAYS_INLINE JSString* replaceAllWithCacheUsingRegExpSearchThreeArgument
             totalLength += (sourceLen - lastIndex);
     }
 
-    if (totalLength > StringImpl::MaxLength) [[unlikely]] {
-        throwOutOfMemoryError(globalObject, scope);
-        return nullptr;
-    }
-
     StringView sourceView { source };
     if (sourceView.is8Bit() && replacementsAre8Bit) {
         std::span<Latin1Character> buffer;
@@ -955,11 +950,6 @@ static ALWAYS_INLINE JSString* replaceAllWithCacheUsingRegExpSearch(VM& vm, JSGl
             }
             if (static_cast<unsigned>(lastIndex) < sourceLen)
                 totalLength += (sourceLen - lastIndex);
-        }
-
-        if (totalLength > StringImpl::MaxLength) [[unlikely]] {
-            throwOutOfMemoryError(globalObject, scope);
-            return nullptr;
         }
 
         StringView sourceView { source };
@@ -1117,6 +1107,7 @@ static ALWAYS_INLINE JSString* tryTrimSpaces(VM& vm, JSGlobalObject* globalObjec
     case Yarr::SpecificPattern::TrailingSpacesStar:
     case Yarr::SpecificPattern::LeadingSpacesStar:
     case Yarr::SpecificPattern::Atom:
+    case Yarr::SpecificPattern::Newlines:
     case Yarr::SpecificPattern::None:
         break;
     }
@@ -1300,6 +1291,7 @@ ALWAYS_INLINE JSString* replaceUsingRegExpSearch(VM& vm, JSGlobalObject* globalO
             break;
         }
         case Yarr::SpecificPattern::Atom:
+        case Yarr::SpecificPattern::Newlines:
         case Yarr::SpecificPattern::None:
             break;
         }

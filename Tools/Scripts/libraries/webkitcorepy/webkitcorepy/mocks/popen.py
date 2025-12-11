@@ -167,7 +167,7 @@ class Popen(PopenBase):
 
         self.text_mode = encoding or errors or text or universal_newlines
 
-        if self.stdin is not None and self.text_mode:
+        if self.stdin is not None and text:
             self.stdin = io.TextIOWrapper(self.stdin, write_through=True, line_buffering=(bufsize == 1), encoding=encoding, errors=errors)
         if self.stdout is not None and self.text_mode:
             self.stdout = io.TextIOWrapper(self.stdout, encoding=encoding, errors=errors)
@@ -181,7 +181,9 @@ class Popen(PopenBase):
             raise ValueError('Cannot send input after starting communication')
 
         self._communication_started = True
-        if input:
+        if input and isinstance(self.stdin, io.TextIOWrapper):
+            self.stdin.write(input)
+        elif input:
             self.stdin.write(string_utils.encode(input))
         self.wait(timeout=timeout)
         return self.stdout.read() if self.stdout else None, self.stderr.read() if self.stderr else None

@@ -1,0 +1,13 @@
+framework module WebCore_Private [system] {
+    explicit module WebCoreVirtualLogFunctions {
+        textual header "WebCoreVirtualLogFunctions.h"
+    }
+
+    explicit module Core {
+        umbrella "PrivateHeaders"
+
+        explicit module * {
+            export *
+        }
+    }
+}
