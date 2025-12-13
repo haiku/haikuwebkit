@@ -131,7 +131,7 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void dispatchUnableToImplementPolicy(const ResourceError&) override;
 
     void dispatchWillSendSubmitEvent(WTF::Ref<FormState>&&) override { }
-    void dispatchWillSubmitForm(FormState&, WTF::CompletionHandler<void()>&&) override;
+    void dispatchWillSubmitForm(FormState&, URL&&, String&&, WTF::CompletionHandler<void()>&&) override;
 
     void revertToProvisionalState(DocumentLoader*) override;
     void setMainDocumentError(DocumentLoader*, const ResourceError&) override;

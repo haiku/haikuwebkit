@@ -43,7 +43,7 @@ class MediaPlayerFactoryHaiku final : public MediaPlayerFactory {
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::Haiku; };
 
-    Ref<MediaPlayerPrivateInterface> createMediaEnginePlayer(MediaPlayer* player) const final
+    Ref<MediaPlayerPrivateInterface> createMediaEnginePlayer(MediaPlayer& player) const final
     {
         return adoptRef(* new MediaPlayerPrivate(player));
     }
@@ -70,7 +70,7 @@ void MediaPlayerPrivate::registerMediaEngine(MediaEngineRegistrar registrar)
     registrar(makeUnique<MediaPlayerFactoryHaiku>());
 }
 
-MediaPlayerPrivate::MediaPlayerPrivate(MediaPlayer* player)
+MediaPlayerPrivate::MediaPlayerPrivate(MediaPlayer& player)
     : m_didReceiveData(false)
     , m_mediaFile(nullptr)
     , m_audioTrack(nullptr)
@@ -122,10 +122,10 @@ void MediaPlayerPrivate::load(const String& url)
     // BMediaFile should not block until data is ready?)
     IdentifyTracks(url);
     if (m_mediaFile && m_mediaFile->InitCheck() == B_OK) {
-        m_player->characteristicChanged();
-        m_player->durationChanged();
-        m_player->sizeChanged();
-        m_player->firstVideoFrameAvailable();
+        m_player.characteristicChanged();
+        m_player.durationChanged();
+        m_player.sizeChanged();
+        m_player.firstVideoFrameAvailable();
 
         //m_readyState = MediaPlayer::HaveMetadata;
         //m_readyState = MediaPlayer::HaveFutureData;
@@ -135,8 +135,8 @@ void MediaPlayerPrivate::load(const String& url)
         m_readyState = MediaPlayer::ReadyState::HaveMetadata;
         m_networkState = MediaPlayer::NetworkState::FormatError;
     }
-    m_player->networkStateChanged();
-    m_player->readyStateChanged();
+    m_player.networkStateChanged();
+    m_player.readyStateChanged();
 }
 
 void MediaPlayerPrivate::cancelLoad()
@@ -178,7 +178,7 @@ void MediaPlayerPrivate::playCallback(void* cookie, void* buffer,
             callOnMainThread([p] {
                 if (!p)
                     return;
-                p->m_player->timeChanged();
+                p->m_player.timeChanged();
             });
 
             player->m_audioTrack = nullptr;
@@ -200,7 +200,7 @@ void MediaPlayerPrivate::playCallback(void* cookie, void* buffer,
             callOnMainThread([p] {
                 if (!p)
                     return;
-                p->m_player->repaint();
+                p->m_player.repaint();
             });
         }
     }

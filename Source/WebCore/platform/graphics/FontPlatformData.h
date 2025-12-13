@@ -294,7 +294,7 @@ struct FontPlatformSerializedData {
 #endif
 };
 #elif USE(HAIKU)
-struct FontPlatformSerializedCreationData {
+struct CustomFontCreationData {
 };
 
 struct FontPlatformSerializedData {

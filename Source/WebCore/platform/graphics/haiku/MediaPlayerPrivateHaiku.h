@@ -55,7 +55,7 @@ public:
 
         static void registerMediaEngine(MediaEngineRegistrar);
 
-        MediaPlayerPrivate(MediaPlayer*);
+        MediaPlayerPrivate(MediaPlayer&);
         MediaPlayerPrivate() = delete;
 
         ~MediaPlayerPrivate();
@@ -116,7 +116,7 @@ private:
         BBitmap* m_frameBuffer;
         BLocker m_mediaLock;
 
-        MediaPlayer* m_player;
+        MediaPlayer& m_player;
         MediaPlayer::NetworkState m_networkState;
         MediaPlayer::ReadyState m_readyState;
 

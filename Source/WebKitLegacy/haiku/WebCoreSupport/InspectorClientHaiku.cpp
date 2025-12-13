@@ -39,7 +39,7 @@ void InspectorClientHaiku::inspectedPageDestroyed()
 {
 }
 
-Inspector::FrontendChannel* InspectorClientHaiku::openLocalFrontend(WebCore::InspectorController*)
+Inspector::FrontendChannel* InspectorClientHaiku::openLocalFrontend(WebCore::PageInspectorController*)
 {
     notImplemented();
     return NULL;

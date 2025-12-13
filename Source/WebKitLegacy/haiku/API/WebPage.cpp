@@ -1352,7 +1352,7 @@ void BWebPage::handleMouseWheelChanged(BMessage* message)
     int32 modifiers = message->FindInt32("modifiers");
 
     PlatformWheelEvent event(IntPoint(position), IntPoint(globalPosition), deltaX, deltaY,
-        wheelTicksX, wheelTicksY, ScrollByPixelWheelEvent, modifiers & B_SHIFT_KEY,
+        wheelTicksX, wheelTicksY, WebCore::PlatformWheelEventGranularity::ScrollByPixelWheelEvent, modifiers & B_SHIFT_KEY,
         modifiers & B_COMMAND_KEY, modifiers & B_CONTROL_KEY, modifiers & B_OPTION_KEY);
     frame->eventHandler().handleWheelEvent(event, { WheelEventProcessingSteps::SynchronousScrolling,
         WheelEventProcessingSteps::NonBlockingDOMEventDispatch });

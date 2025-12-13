@@ -182,7 +182,7 @@ namespace WebCore {
 
         RefPtr<WebCore::DateTimeChooser> createDateTimeChooser(WebCore::DateTimeChooserClient&) override;
 
-        void setTextIndicator(const TextIndicatorData&) const final {};
+        void setTextIndicator(RefPtr<TextIndicator>&&) const final {};
 
         bool supportsVideoFullscreen(HTMLMediaElementEnums::VideoFullscreenMode) override { return true; }
         void enterVideoFullscreenForVideoElement(HTMLVideoElement& element, HTMLMediaElementEnums::VideoFullscreenMode, bool) override

@@ -509,7 +509,7 @@ void FrameLoaderClientHaiku::dispatchDidFinishLoad()
     dispatchMessage(message);
 }
 
-void FrameLoaderClientHaiku::dispatchWillSubmitForm(FormState&, WTF::CompletionHandler<void()>&& function)
+void FrameLoaderClientHaiku::dispatchWillSubmitForm(FormState&, URL&&, String&&, WTF::CompletionHandler<void()>&& function)
 {
     CALLED();
     notImplemented();
