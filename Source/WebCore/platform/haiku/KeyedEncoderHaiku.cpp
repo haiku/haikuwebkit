@@ -69,7 +69,7 @@ RefPtr<WebCore::SharedBuffer> KeyedEncoderHaiku::finishEncoding()
     SharedBufferIO sio(&buffer);
     root.Flatten(&sio);
 
-    return buffer.takeAsContiguous();
+    return buffer.takeBufferAsContiguous();
 }
 
 void KeyedEncoderHaiku::encodeBytes(const String& key, std::span<const uint8_t> data)

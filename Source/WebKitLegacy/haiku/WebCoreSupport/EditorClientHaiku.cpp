@@ -386,6 +386,11 @@ void EditorClientHaiku::requestCheckingOfString(TextCheckingRequest&, const WebC
     notImplemented();
 }
 
+void EditorClientHaiku::requestExtendedCheckingOfString(TextCheckingRequest&, const VisibleSelection& currentSelection)
+{
+    notImplemented();
+}
+
 void EditorClientHaiku::updateSpellingUIWithGrammarString(const String&, const GrammarDetail&)
 {
     notImplemented();
