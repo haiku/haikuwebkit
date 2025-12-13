@@ -1511,8 +1511,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     RELEASE_ASSERT(storageSession);
 
     RetainPtr<NSHTTPCookieStorage> cookieStorage;
-    if (CFHTTPCookieStorageRef storage = storageSession->cookieStorage().unsafeGet()) {
-        cookieStorage = adoptNS([[NSHTTPCookieStorage alloc] _initWithCFHTTPCookieStorage:storage]);
+    if (RetainPtr storage = storageSession->cookieStorage()) {
+        cookieStorage = adoptNS([[NSHTTPCookieStorage alloc] _initWithCFHTTPCookieStorage:storage.get()]);
         configuration.get().HTTPCookieStorage = cookieStorage.get();
     } else
         cookieStorage = storageSession->nsCookieStorage();
@@ -1577,14 +1577,24 @@ void NetworkSessionCocoa::initializeNSURLSessionsInSet(SessionSet& sessionSet, N
 
 SessionSet& NetworkSessionCocoa::sessionSetForPage(std::optional<WebPageProxyIdentifier> webPageProxyID)
 {
-    RefPtr sessionSet = webPageProxyID ? m_perPageSessionSets.get(*webPageProxyID) : nullptr;
-    return sessionSet ? *sessionSet.unsafeGet() : m_defaultSessionSet.get();
+    if (webPageProxyID) {
+        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+        // as we merely return it right away (rdar://165602290).
+        SUPPRESS_UNCOUNTED_LOCAL if (auto* sessionSet = m_perPageSessionSets.get(*webPageProxyID))
+            return *sessionSet;
+    }
+    return m_defaultSessionSet.get();
 }
 
 const SessionSet& NetworkSessionCocoa::sessionSetForPage(std::optional<WebPageProxyIdentifier> webPageProxyID) const
 {
-    RefPtr sessionSet = webPageProxyID ? m_perPageSessionSets.get(*webPageProxyID) : nullptr;
-    return sessionSet ? *sessionSet.unsafeGet() : m_defaultSessionSet.get();
+    if (webPageProxyID) {
+        // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+        // as we merely return it right away (rdar://165602290).
+        SUPPRESS_UNCOUNTED_LOCAL if (auto* sessionSet = m_perPageSessionSets.get(*webPageProxyID))
+            return *sessionSet;
+    }
+    return m_defaultSessionSet.get();
 }
 
 SessionWrapper& NetworkSessionCocoa::initializeEphemeralStatelessSessionIfNeeded(std::optional<WebPageProxyIdentifier> webPageProxyID, NavigatingToAppBoundDomain isNavigatingToAppBoundDomain)
@@ -2129,7 +2139,7 @@ void NetworkSessionCocoa::loadImageForDecoding(WebCore::ResourceRequest&& reques
         void didCompleteWithError(const WebCore::ResourceError& error, const WebCore::NetworkLoadMetrics&) final
         {
             if (error.isNull())
-                m_completionHandler(m_buffer.take());
+                m_completionHandler(m_buffer.takeBuffer());
             else
                 m_completionHandler(makeUnexpected(error));
             m_selfReference = nullptr;

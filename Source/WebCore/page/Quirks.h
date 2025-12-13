@@ -91,7 +91,6 @@ public:
 
     bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscape() const;
     bool shouldFlipScreenDimensions() const;
-    bool requirePageVisibilityToPlayAudioQuirk() const;
 
     WEBCORE_EXPORT bool shouldDispatchSyntheticMouseEventsWhenModifyingSelection() const;
     WEBCORE_EXPORT bool shouldSuppressAutocorrectionAndAutocapitalizationInHiddenEditableAreas() const;
@@ -130,6 +129,7 @@ public:
     bool needsZomatoEmailLoginLabelQuirk() const;
     bool needsGoogleMapsScrollingQuirk() const;
     bool needsGoogleTranslateScrollingQuirk() const;
+    bool needsGeforcenowWarningDisplayNoneQuirk() const;
 
     bool needsPrimeVideoUserSelectNoneQuirk() const;
 

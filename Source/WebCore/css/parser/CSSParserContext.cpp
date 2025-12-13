@@ -106,7 +106,6 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , colorLayersEnabled { document.settings().cssColorLayersEnabled() }
     , contrastColorEnabled { document.settings().cssContrastColorEnabled() }
     , targetTextPseudoElementEnabled { document.settings().targetTextPseudoElementEnabled() }
-    , viewTransitionTypesEnabled { document.settings().viewTransitionsEnabled() && document.settings().viewTransitionTypesEnabled() }
     , cssProgressFunctionEnabled { document.settings().cssProgressFunctionEnabled() }
     , cssRandomFunctionEnabled { document.settings().cssRandomFunctionEnabled() }
     , cssTreeCountingFunctionsEnabled { document.settings().cssTreeCountingFunctionsEnabled() }
@@ -148,18 +147,17 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.colorLayersEnabled                        << 17
         | context.contrastColorEnabled                      << 18
         | context.targetTextPseudoElementEnabled            << 19
-        | context.viewTransitionTypesEnabled                << 20
-        | context.cssProgressFunctionEnabled                << 21
-        | context.cssRandomFunctionEnabled                  << 22
-        | context.cssTreeCountingFunctionsEnabled           << 23
-        | context.cssURLModifiersEnabled                    << 24
-        | context.cssURLIntegrityModifierEnabled            << 25
-        | context.cssAxisRelativePositionKeywordsEnabled    << 26
-        | context.cssDynamicRangeLimitMixEnabled            << 27
-        | context.cssConstrainedDynamicRangeLimitEnabled    << 28
-        | context.cssTextDecorationLineErrorValues          << 29
-        | context.cssTextTransformMathAutoEnabled           << 30
-        | context.cssInternalAutoBaseParsingEnabled         << 31;
+        | context.cssProgressFunctionEnabled                << 20
+        | context.cssRandomFunctionEnabled                  << 21
+        | context.cssTreeCountingFunctionsEnabled           << 22
+        | context.cssURLModifiersEnabled                    << 23
+        | context.cssURLIntegrityModifierEnabled            << 24
+        | context.cssAxisRelativePositionKeywordsEnabled    << 25
+        | context.cssDynamicRangeLimitMixEnabled            << 26
+        | context.cssConstrainedDynamicRangeLimitEnabled    << 27
+        | context.cssTextDecorationLineErrorValues          << 28
+        | context.cssTextTransformMathAutoEnabled           << 29
+        | context.cssInternalAutoBaseParsingEnabled         << 30;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 

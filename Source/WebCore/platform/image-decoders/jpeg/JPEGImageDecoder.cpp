@@ -253,7 +253,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     if (buffer.isEmpty())
         return nullptr;
 
-    return buffer.takeAsContiguous();
+    return buffer.takeBufferAsContiguous();
 }
 #endif
 

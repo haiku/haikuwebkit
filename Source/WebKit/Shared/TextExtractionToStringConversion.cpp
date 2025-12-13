@@ -716,10 +716,12 @@ static void addPartsForItem(const TextExtraction::Item& item, std::optional<Node
     );
 }
 
-static bool childTextNodeIsRedundant(const TextExtraction::Item& parent, const String& childText)
+static bool childTextNodeIsRedundant(const TextExtractionAggregator& aggregator, const TextExtraction::Item& parent, const String& childText)
 {
-    if (auto link = parent.dataAs<TextExtraction::LinkItemData>(); link && link->completedURL.string().containsIgnoringASCIICase(childText))
-        return true;
+    if (parent.hasData<TextExtraction::LinkItemData>()) {
+        if (valueOrDefault(aggregator.currentURLString()).containsIgnoringASCIICase(childText))
+            return true;
+    }
 
     if (auto formControl = parent.dataAs<TextExtraction::TextFormControlData>()) {
         auto& editable = formControl->editable;
@@ -782,7 +784,7 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
 
     if (item.children.size() == 1) {
         if (auto text = item.children[0].dataAs<TextExtraction::TextItemData>()) {
-            if (childTextNodeIsRedundant(item, text->content.trim(isASCIIWhitespace)))
+            if (childTextNodeIsRedundant(aggregator, item, text->content.trim(isASCIIWhitespace)))
                 return;
 
             if (aggregator.useHTMLOutput()) {

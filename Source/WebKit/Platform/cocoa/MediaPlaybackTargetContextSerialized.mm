@@ -31,6 +31,7 @@
 #import "MediaPlaybackTargetSerialized.h"
 #import <WebCore/MediaPlaybackTargetCocoa.h>
 #import <WebCore/MediaPlaybackTargetMock.h>
+#import <WebCore/MediaPlaybackTargetWirelessPlayback.h>
 #import <pal/spi/cocoa/AVFoundationSPI.h>
 
 #if HAVE(WK_SECURE_CODING_AVOUTPUTCONTEXT)
@@ -72,20 +73,25 @@ MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(const
         m_contextType = downcast<MediaPlaybackTargetSerialized>(target).context().contextType();
 #endif
     }
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    else if (is<MediaPlaybackTargetWirelessPlayback>(target))
+        m_identifier = downcast<MediaPlaybackTargetWirelessPlayback>(target).identifier();
+#endif
 }
 
 #if HAVE(WK_SECURE_CODING_AVOUTPUTCONTEXT)
-MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, CoreIPCAVOutputContext&& context)
+MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, CoreIPCAVOutputContext&& context, std::optional<WTF::UUID>&& identifier)
     : m_deviceName { WTFMove(deviceName) }
     , m_hasActiveRoute { hasActiveRoute }
     , m_supportsRemoteVideoPlayback { supportsRemoteVideoPlayback }
     , m_targetType { targetType }
     , m_state { state }
     , m_context { WTFMove(context) }
+    , m_identifier { WTFMove(identifier) }
 {
 }
 #else
-MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, String&& contextID, String&& contextType)
+MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(String&& deviceName, bool hasActiveRoute, bool supportsRemoteVideoPlayback, MediaPlaybackTargetType targetType, MediaPlaybackTargetMockState state, String&& contextID, String&& contextType, std::optional<WTF::UUID>&& identifier)
     : m_deviceName(WTFMove(deviceName))
     , m_hasActiveRoute(hasActiveRoute)
     , m_supportsRemoteVideoPlayback(supportsRemoteVideoPlayback)
@@ -93,6 +99,7 @@ MediaPlaybackTargetContextSerialized::MediaPlaybackTargetContextSerialized(Strin
     , m_state(state)
     , m_contextID(WTFMove(contextID))
     , m_contextType(WTFMove(contextType))
+    , m_identifier { WTFMove(identifier) }
 {
 }
 #endif
@@ -101,6 +108,11 @@ Ref<MediaPlaybackTarget> MediaPlaybackTargetContextSerialized::playbackTarget() 
 {
     if (m_targetType == MediaPlaybackTargetType::Mock)
         return MediaPlaybackTargetMock::create(m_deviceName, m_state);
+
+#if ENABLE(WIRELESS_PLAYBACK_MEDIA_PLAYER)
+    if (m_targetType == MediaPlaybackTargetType::WirelessPlayback)
+        return MediaPlaybackTargetWirelessPlayback::create(m_identifier);
+#endif
 
     ASSERT(m_targetType == MediaPlaybackTargetType::AVOutputContext);
 
@@ -117,5 +129,23 @@ Ref<MediaPlaybackTarget> MediaPlaybackTargetContextSerialized::playbackTarget() 
 }
 
 } // namespace WebKit
+
+namespace WTF {
+
+template<> bool isValidEnum<WebCore::MediaPlaybackTargetType>(std::underlying_type_t<WebCore::MediaPlaybackTargetType> value)
+{
+    switch (value) {
+    case enumToUnderlyingType(WebCore::MediaPlaybackTargetType::None):
+    case enumToUnderlyingType(WebCore::MediaPlaybackTargetType::AVOutputContext):
+    case enumToUnderlyingType(WebCore::MediaPlaybackTargetType::Mock):
+    case enumToUnderlyingType(WebCore::MediaPlaybackTargetType::WirelessPlayback):
+    case enumToUnderlyingType(WebCore::MediaPlaybackTargetType::Serialized):
+        return true;
+    default:
+        return false;
+    }
+}
+
+} // namespace WTF
 
 #endif // ENABLE(WIRELESS_PLAYBACK_TARGET)

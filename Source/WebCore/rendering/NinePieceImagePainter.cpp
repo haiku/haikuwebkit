@@ -75,11 +75,11 @@ static bool isVerticalPiece(ImagePiece piece)
 }
 
 template<typename WidthValue>
-static LayoutUnit computeSlice(const WidthValue& length, LayoutUnit width, LayoutUnit slice, LayoutUnit extent, const Style::ZoomFactor& zoom)
+static LayoutUnit computeSlice(const WidthValue& length, LayoutUnit width, LayoutUnit slice, LayoutUnit extent, const Style::ZoomFactor&)
 {
     return WTF::switchOn(length,
         [&](const typename WidthValue::LengthPercentage& value) {
-            return Style::evaluate<LayoutUnit>(value, extent, zoom);
+            return Style::evaluate<LayoutUnit>(value, extent, Style::ZoomNeeded { });
         },
         [&](const typename WidthValue::Number& value) {
             return LayoutUnit { value.value * width };
@@ -230,7 +230,7 @@ static void paintNinePieceImage(const T& ninePieceImage, GraphicsContext& graphi
     ASSERT(styleImage->isLoaded(renderer));
 
     auto sourceSlices      = computeSlices(source, ninePieceImage.slice(), styleImage->imageScaleFactor());
-    auto destinationSlices = computeSlices(destination.size(), ninePieceImage.width(), Style::evaluate<LayoutBoxExtent>(style.borderWidth(), style.usedZoomForLength()), sourceSlices, style.usedZoomForLength());
+    auto destinationSlices = computeSlices(destination.size(), ninePieceImage.width(), Style::evaluate<LayoutBoxExtent>(style.borderWidth(), Style::ZoomNeeded { }), sourceSlices, style.usedZoomForLength());
 
     scaleSlicesIfNeeded(destination.size(), destinationSlices, deviceScaleFactor);
 

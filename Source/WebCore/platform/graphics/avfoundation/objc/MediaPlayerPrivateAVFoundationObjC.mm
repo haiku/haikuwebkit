@@ -261,6 +261,7 @@ static dispatch_queue_t globalLoaderDelegateQueue()
 
 class MediaPlayerPrivateAVFoundationObjC::Factory final : public MediaPlayerFactory {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(Factory);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(Factory);
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::AVFoundation; };
 
@@ -3448,6 +3449,11 @@ void MediaPlayerPrivateAVFoundationObjC::setWirelessVideoPlaybackDisabled(bool d
         return;
 
     [m_avPlayer setAllowsExternalPlayback:!disabled];
+}
+
+OptionSet<MediaPlaybackTargetType> MediaPlayerPrivateAVFoundationObjC::supportedPlaybackTargetTypes() const
+{
+    return { MediaPlaybackTargetType::AVOutputContext, MediaPlaybackTargetType::Mock };
 }
 
 #if !PLATFORM(IOS_FAMILY)

@@ -1074,6 +1074,15 @@ void Device::trackTimestampsBuffer(id<MTLCommandBuffer> commandBuffer, id<MTLCou
     [sampleBufferArray addObject:counterSampleBuffer];
 }
 
+void Device::makeSubmitInvalidClearingEncoders(TrackedResourceContainer& commandEncoders)
+{
+    auto encoders = std::exchange(commandEncoders, { });
+    for (auto commandEncoder : encoders) {
+        if (RefPtr ptr = commandEncoderFromIdentifier(commandEncoder))
+            ptr->makeSubmitInvalid();
+    }
+}
+
 } // namespace WebGPU
 
 #pragma mark WGPU Stubs

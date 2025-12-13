@@ -279,6 +279,10 @@ static BOOL areEssentiallyEqual(double a, double b)
 {
     SEL action = menuItem.action;
 
+    if (action == @selector(cloneSiteIsolatedWindow:))
+        return YES;
+    if (action == @selector(cloneNonIsolatedWindow:))
+        return YES;
     if (action == @selector(saveAsPDF:))
         return YES;
     if (action == @selector(saveAsImage:))
@@ -1026,6 +1030,31 @@ static BOOL isJavaScriptURL(NSURL *url)
 
 - (void)findBarViewDidChangeHeight
 {
+}
+
+- (void)_cloneWindowSiteIsolated:(BOOL)siteIsolated
+{
+    _WKSessionState *sessionState = [_webView _sessionState];
+
+    WKWebViewConfiguration *configuration = _webView.configuration;
+    _configuration.preferences._siteIsolationEnabled = siteIsolated;
+
+    WK2BrowserWindowController *controller = [[WK2BrowserWindowController alloc] initWithConfiguration:configuration];
+    [controller.window makeKeyAndOrderFront:self];
+
+    [[[NSApplication sharedApplication] browserAppDelegate] didCreateBrowserWindowController:controller];
+
+    [controller->_webView _restoreSessionState:sessionState andNavigate:YES];
+}
+
+- (IBAction)cloneSiteIsolatedWindow:(id)sender
+{
+    [self _cloneWindowSiteIsolated:YES];
+}
+
+- (IBAction)cloneNonIsolatedWindow:(id)sender
+{
+    [self _cloneWindowSiteIsolated:NO];
 }
 
 - (IBAction)saveAsPDF:(id)sender

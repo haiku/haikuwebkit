@@ -156,9 +156,9 @@ messages -> WebPage WantsAsyncDispatchMessage {
 
     SetControlledByAutomation(bool controlled)
 
-    ConnectInspector(String targetId, Inspector::FrontendChannel::ConnectionType connectionType)
-    DisconnectInspector(String targetId)
-    SendMessageToTargetBackend(String targetId, String message)
+    ConnectInspector(Inspector::FrontendChannel::ConnectionType connectionType)
+    DisconnectInspector()
+    SendMessageToTargetBackend(String message)
 
 #if ENABLE(REMOTE_INSPECTOR)
     SetIndicating(bool indicating);
@@ -345,7 +345,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
     CountStringMatches(String string, OptionSet<WebKit::FindOptions> findOptions, unsigned maxMatchCount) -> (uint32_t matchCount)
     ReplaceMatches(Vector<uint32_t> matchIndices, String replacementText, bool selectionOnly) -> (uint64_t numberOfReplacements)
 
-    FindTextRangesForStringMatches(String string, OptionSet<WebKit::FindOptions> findOptions, unsigned maxMatchCount) -> (Vector<WebKit::WebFoundTextRange> ranges)
+    FindTextRangesForStringMatches(String string, OptionSet<WebKit::FindOptions> findOptions, unsigned maxMatchCount) -> (HashMap<WebCore::FrameIdentifier, Vector<WebKit::WebFoundTextRange>> frameOrderMap)
     ReplaceFoundTextRangeWithString(struct WebKit::WebFoundTextRange range, String string)
     DecorateTextRangeWithStyle(struct WebKit::WebFoundTextRange range, enum:uint8_t WebKit::FindDecorationStyle style)
     ScrollTextRangeToVisible(struct WebKit::WebFoundTextRange range)
@@ -705,6 +705,8 @@ messages -> WebPage WantsAsyncDispatchMessage {
 #endif
 
     UpdateCurrentModifierState(OptionSet<WebCore::PlatformEventModifier> modifiers)
+
+    SimulateDeviceMotionChange(double xAcceleration, double yAcceleration, double zAcceleration, double xAccelerationIncludingGravity, double yAccelerationIncludingGravity, double zAccelerationIncludingGravity, double xRotationRate, double yRotationRate, double zRotationRate)
     SimulateDeviceOrientationChange(double alpha, double beta, double gamma)
 
 #if ENABLE(SPEECH_SYNTHESIS)

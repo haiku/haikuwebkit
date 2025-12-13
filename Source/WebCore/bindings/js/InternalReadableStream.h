@@ -46,8 +46,6 @@ public:
     void cancel(Exception&&);
     ExceptionOr<std::pair<Ref<InternalReadableStream>, Ref<InternalReadableStream>>> tee(bool shouldClone);
 
-    JSC::JSValue pipeTo(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
-    JSC::JSValue pipeThrough(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
     JSC::JSValue cancel(JSC::JSGlobalObject&, JSC::JSValue);
 
     enum class State : uint8_t { Readable, Closed, Errored };

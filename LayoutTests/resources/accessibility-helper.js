@@ -268,6 +268,16 @@ function expect(expression, expectedValue) {
     return `FAIL: ${expression} !== ${expectedValue}, was ${eval(expression)}\n`;
 }
 
+function expectNumber(expression, expectedValue, allowedVariance = 0) {
+    if (typeof expression !== "string")
+        debug("WARN: The expression arg in expect() should be a string.");
+
+    const actualValue = eval(expression);
+    if (Math.abs(actualValue - expectedValue) <= allowedVariance)
+        return `PASS: ${expression} was ${allowedVariance === 0 ? "equal" : "equal or approximately equal"} to ${expectedValue}.\n`;
+    return `FAIL: ${expression} varied more than allowed variance ${allowedVariance}. Was: ${actualValue}, expected ${expectedValue}\n`;
+}
+
 function expectRectWithVariance(expression, x, y, width, height, allowedVariance) {
     if (typeof expression !== "string")
         debug("WARN: The expression arg in expectRectWithVariance() must be a string.");

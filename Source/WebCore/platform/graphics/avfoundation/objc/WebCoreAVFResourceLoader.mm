@@ -233,7 +233,7 @@ void PlatformResourceMediaLoader::dataReceived(PlatformMediaResource&, const Sha
     assertIsCurrent(m_targetDispatcher.get());
 
     m_buffer.append(buffer);
-    m_parent.newDataStoredInSharedBuffer(*m_buffer.get());
+    m_parent.newDataStoredInSharedBuffer(*m_buffer.buffer());
 }
 
 class DataURLResourceMediaLoader {

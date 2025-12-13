@@ -29,6 +29,7 @@
 #include "StyleAppleColorFilterData.h"
 #include "StyleImage.h"
 #include "StylePrimitiveKeyword+Logging.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 
@@ -37,7 +38,7 @@ namespace WebCore {
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleRareInheritedData);
 
 StyleRareInheritedData::StyleRareInheritedData()
-    : usedZoom(RenderStyle::initialZoom())
+    : usedZoom(Style::evaluate<float>(RenderStyle::initialZoom()))
     , deviceScaleFactor(1.0f)
     , textStrokeWidth(RenderStyle::initialTextStrokeWidth())
     , textStrokeColor(RenderStyle::initialTextStrokeColor())
@@ -124,8 +125,8 @@ StyleRareInheritedData::StyleRareInheritedData()
     , paintOrder(static_cast<unsigned>(RenderStyle::initialPaintOrder().type()))
     , capStyle(static_cast<unsigned>(RenderStyle::initialCapStyle()))
     , joinStyle(static_cast<unsigned>(RenderStyle::initialJoinStyle()))
-    , hasSetStrokeWidth(false)
-    , hasSetStrokeColor(false)
+    , hasExplicitlySetStrokeWidth(false)
+    , hasExplicitlySetStrokeColor(false)
     , hasAutoCaretColor(true)
     , hasVisitedLinkAutoCaretColor(true)
     , effectiveInert(false)
@@ -232,8 +233,8 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , paintOrder(o.paintOrder)
     , capStyle(o.capStyle)
     , joinStyle(o.joinStyle)
-    , hasSetStrokeWidth(o.hasSetStrokeWidth)
-    , hasSetStrokeColor(o.hasSetStrokeColor)
+    , hasExplicitlySetStrokeWidth(o.hasExplicitlySetStrokeWidth)
+    , hasExplicitlySetStrokeColor(o.hasExplicitlySetStrokeColor)
     , hasAutoCaretColor(o.hasAutoCaretColor)
     , hasVisitedLinkAutoCaretColor(o.hasVisitedLinkAutoCaretColor)
     , effectiveInert(o.effectiveInert)
@@ -335,8 +336,8 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && paintOrder == o.paintOrder
         && capStyle == o.capStyle
         && joinStyle == o.joinStyle
-        && hasSetStrokeWidth == o.hasSetStrokeWidth
-        && hasSetStrokeColor == o.hasSetStrokeColor
+        && hasExplicitlySetStrokeWidth == o.hasExplicitlySetStrokeWidth
+        && hasExplicitlySetStrokeColor == o.hasExplicitlySetStrokeColor
         && mathShift == o.mathShift
         && mathStyle == o.mathStyle
         && hasAutoCaretColor == o.hasAutoCaretColor
@@ -464,8 +465,8 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(LineCap, capStyle);
     LOG_IF_DIFFERENT_WITH_CAST(LineJoin, joinStyle);
 
-    LOG_IF_DIFFERENT_WITH_CAST(bool, hasSetStrokeWidth);
-    LOG_IF_DIFFERENT_WITH_CAST(bool, hasSetStrokeColor);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, hasExplicitlySetStrokeWidth);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, hasExplicitlySetStrokeColor);
 
     LOG_IF_DIFFERENT_WITH_CAST(MathShift, mathShift);
     LOG_IF_DIFFERENT_WITH_CAST(MathStyle, mathStyle);

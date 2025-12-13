@@ -120,8 +120,10 @@ void CcidService::updateSlots(NSArray *slots)
         if (it == m_slotObservers.end()) {
             [[TKSmartCardSlotManager defaultManager] getSlotWithName:nsName reply:makeBlockPtr([this, protectedThis = Ref { *this }, name](TKSmartCardSlot * _Nullable slot) mutable {
                 auto slotObserver = adoptNS([[_WKSmartCardSlotStateObserver alloc] initWithService:this slot:WTFMove(slot)]);
-                m_slotObservers.add(name, slotObserver);
                 [slot addObserver:slotObserver.get() forKeyPath:@"state" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial context:nil];
+                callOnMainRunLoop([this, protectedThis = WTFMove(protectedThis), name, slotObserver = WTFMove(slotObserver)] () mutable {
+                    m_slotObservers.add(name, slotObserver);
+                });
             }).get()];
         }
     }

@@ -221,6 +221,14 @@ BorderBoxPositions GridLayout::performInlineAxisSelfAlignment(const PlacedGridIt
         case ItemPosition::SelfStart:
         case ItemPosition::Start:
             return { };
+
+        // https://www.w3.org/TR/css-align-3/#justify-grid
+        // Sizes as either stretch (typical non-replaced elements) or start (typical replaced elements);
+        // see Grid Item Sizing in [CSS-GRID-1]. The resulting box is then start-aligned.
+        //
+        // Stretching should be handled by GridLayout::layoutGridItems.
+        case ItemPosition::Normal:
+            return { };
         default:
             ASSERT_NOT_IMPLEMENTED_YET();
             return { };
@@ -264,6 +272,7 @@ BorderBoxPositions GridLayout::performBlockAxisSelfAlignment(const PlacedGridIte
 
 TrackSizingFunctionsList GridLayout::trackSizingFunctions(size_t implicitGridTracksCount, const Vector<Style::GridTrackSize> gridTemplateTrackSizes)
 {
+    // FIXME: Support implicit tracks (both before and after the explicit grid)
     ASSERT(implicitGridTracksCount == gridTemplateTrackSizes.size(), "Currently only support mapping track sizes from explicit grid from grid-template-{columns, rows}");
     UNUSED_VARIABLE(implicitGridTracksCount);
 
@@ -386,7 +395,7 @@ Vector<UsedMargins> GridLayout::computeBlockMargins(const PlacedGridItems& place
 }
 
 // https://drafts.csswg.org/css-grid-1/#grid-item-sizing
-std::pair<UsedInlineSizes, UsedBlockSizes> GridLayout::layoutGridItems(const PlacedGridItems& placedGridItems, const UsedTrackSizes&) const
+std::pair<UsedInlineSizes, UsedBlockSizes> GridLayout::layoutGridItems(const PlacedGridItems& placedGridItems, const UsedTrackSizes& usedTrackSizes) const
 {
     UsedInlineSizes usedInlineSizes;
     UsedBlockSizes usedBlockSizes;
@@ -399,7 +408,8 @@ std::pair<UsedInlineSizes, UsedBlockSizes> GridLayout::layoutGridItems(const Pla
     for (auto& gridItem : placedGridItems) {
         auto& gridItemBoxGeometry = formattingContext.geometryForGridItem(gridItem.layoutBox());
 
-        auto usedInlineSizeForGridItem = GridLayoutUtils::usedInlineSizeForGridItem(gridItem) + gridItemBoxGeometry.horizontalBorderAndPadding();
+        auto columnsGap = GridLayoutUtils::computeGapValue(formattingContext.root().style().columnGap());
+        auto usedInlineSizeForGridItem = GridLayoutUtils::usedInlineSizeForGridItem(gridItem, gridItemBoxGeometry.horizontalBorderAndPadding(), usedTrackSizes.columnSizes, columnsGap);
         usedInlineSizes.append(usedInlineSizeForGridItem);
 
         auto usedBlockSizeForGridItem = GridLayoutUtils::usedBlockSizeForGridItem(gridItem) + gridItemBoxGeometry.verticalBorderAndPadding();

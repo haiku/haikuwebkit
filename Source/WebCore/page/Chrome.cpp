@@ -651,8 +651,10 @@ void Chrome::unregisterPopupOpeningObserver(PopupOpeningObserver& observer)
 void Chrome::notifyPopupOpeningObservers() const
 {
     auto observers = m_popupOpeningObservers;
-    for (auto& observer : observers)
-        observer->willOpenPopup();
+    for (auto& weakObserver : observers) {
+        if (RefPtr observer = weakObserver.get())
+            observer->willOpenPopup();
+    }
 }
 
 } // namespace WebCore

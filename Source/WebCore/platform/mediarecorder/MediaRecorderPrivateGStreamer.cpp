@@ -270,7 +270,7 @@ void MediaRecorderPrivateBackend::fetchData(MediaRecorderPrivate::FetchDataCallb
         {
             Locker locker { m_dataLock };
             GST_DEBUG_OBJECT(m_pipeline.get(), "Transfering %zu encoded bytes, mimeType: %s", m_data.size(), mimeType.ascii().data());
-            buffer = m_data.take();
+            buffer = m_data.takeBuffer();
             timeCode = m_timeCode;
         }
         completionHandler(buffer.releaseNonNull(), mimeType, timeCode);

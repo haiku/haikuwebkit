@@ -42,13 +42,16 @@ void TestSyncData::update(const TestSyncSerializationData& data)
     case TestSyncDataType::UserDidInteractWithPage:
         userDidInteractWithPage = std::get<enumToUnderlyingType(TestSyncDataType::UserDidInteractWithPage)>(data.value);
         break;
+    case TestSyncDataType::AnotherOne:
+        anotherOne = std::get<enumToUnderlyingType(TestSyncDataType::AnotherOne)>(data.value);
+        break;
 #if ENABLE(DOM_AUDIO_SESSION)
     case TestSyncDataType::AudioSessionType:
         audioSessionType = std::get<enumToUnderlyingType(TestSyncDataType::AudioSessionType)>(data.value);
         break;
 #endif
-    case TestSyncDataType::AnotherOne:
-        anotherOne = std::get<enumToUnderlyingType(TestSyncDataType::AnotherOne)>(data.value);
+    case TestSyncDataType::MultipleHeaders:
+        multipleHeaders = std::get<enumToUnderlyingType(TestSyncDataType::MultipleHeaders)>(data.value);
         break;
     default:
         RELEASE_ASSERT_NOT_REACHED();
@@ -59,18 +62,20 @@ TestSyncData::TestSyncData(
       URL mainFrameURLChange
     , bool isAutofocusProcessed
     , bool userDidInteractWithPage
+    , StringifyThis anotherOne
 #if ENABLE(DOM_AUDIO_SESSION)
     , WebCore::DOMAudioSessionType audioSessionType
 #endif
-    , StringifyThis anotherOne
+    , HashSet<URL> multipleHeaders
 )
     : mainFrameURLChange(mainFrameURLChange)
     , isAutofocusProcessed(isAutofocusProcessed)
     , userDidInteractWithPage(userDidInteractWithPage)
+    , anotherOne(anotherOne)
 #if ENABLE(DOM_AUDIO_SESSION)
     , audioSessionType(audioSessionType)
 #endif
-    , anotherOne(anotherOne)
+    , multipleHeaders(multipleHeaders)
 {
 }
 

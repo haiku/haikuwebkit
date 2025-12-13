@@ -30,6 +30,7 @@
 #import "Logging.h"
 #import "MachPort.h"
 #import "WebPreferencesDefaultValues.h"
+#import "WebProcessPool.h"
 #import "XPCUtilities.h"
 #import <crt_externs.h>
 #import <mach-o/dyld.h>
@@ -77,6 +78,8 @@ static std::pair<ASCIILiteral, RetainPtr<NSString>> serviceNameAndIdentifier(Pro
     case ProcessLauncher::ProcessType::Web: {
         bool useCaptivePortal = client && client->shouldEnableLockdownMode();
         bool useEnhancedSecurity = client && client->shouldEnableEnhancedSecurity();
+        if (client && !useCaptivePortal && lockdownModeEnabledBySystem())
+            useEnhancedSecurity = true;
         if (!hasExtensionsInAppBundle) {
             if (!useCaptivePortal && !useEnhancedSecurity)
                 return { "com.apple.WebKit.WebContent"_s, @"com.apple.WebKit.WebContent" };
@@ -155,10 +158,15 @@ static void launchWithExtensionKit(ProcessLauncher& processLauncher, ProcessLaun
 #if !USE(EXTENSIONKIT) || !PLATFORM(IOS)
 static ASCIILiteral webContentServiceName(const ProcessLauncher::LaunchOptions& launchOptions, ProcessLauncher::Client* client)
 {
-    if (client && client->shouldEnableLockdownMode())
+    bool useCaptivePortal = client && client->shouldEnableLockdownMode();
+    bool useEnhancedSecurity = client && client->shouldEnableEnhancedSecurity();
+    if (client && !useCaptivePortal && lockdownModeEnabledBySystem())
+        useEnhancedSecurity = true;
+
+    if (useCaptivePortal)
         return "com.apple.WebKit.WebContent.CaptivePortal"_s;
 
-    if (client && client->shouldEnableEnhancedSecurity())
+    if (useEnhancedSecurity)
         return "com.apple.WebKit.WebContent.EnhancedSecurity"_s;
 
     return launchOptions.nonValidInjectedCodeAllowed ? "com.apple.WebKit.WebContent.Development"_s : "com.apple.WebKit.WebContent"_s;

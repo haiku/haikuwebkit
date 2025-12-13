@@ -39,8 +39,6 @@
 #include "CSSValueList.h"
 #include "StyleBuilderChecking.h"
 #include "StyleCalculationValue.h"
-#include "StyleExtractorConverter.h"
-#include "StyleExtractorSerializer.h"
 #include "StyleInterpolationContext.h"
 #include "StyleLengthWrapper+Blending.h"
 #include "StyleMatrix3DTransformFunction.h"
@@ -633,13 +631,38 @@ auto CSSValueCreation<TransformFunction>::operator()(CSSValuePool& pool, const R
     case TransformFunctionType::Matrix3D: {
         TransformationMatrix transform;
         function.apply(transform, { });
-        return ExtractorConverter::convertTransformationMatrix(style, transform);
+        return createCSSValue(pool, style, transform);
     }
     }
 
     RELEASE_ASSERT_NOT_REACHED();
     return createCSSValue(pool, style, CSS::Keyword::None { });
 }
+
+auto CSSValueCreation<TransformationMatrix>::operator()(CSSValuePool&, const RenderStyle& style, const TransformationMatrix& transform) -> Ref<CSSValue>
+{
+    auto zoom = style.usedZoom();
+    if (transform.isAffine()) {
+        double values[] = { transform.a(), transform.b(), transform.c(), transform.d(), transform.e() / zoom, transform.f() / zoom };
+        CSSValueListBuilder arguments;
+        for (auto value : values)
+            arguments.append(CSSPrimitiveValue::create(value));
+        return CSSFunctionValue::create(CSSValueMatrix, WTFMove(arguments));
+    }
+
+    double values[] = {
+        transform.m11(), transform.m12(), transform.m13(), transform.m14() * zoom,
+        transform.m21(), transform.m22(), transform.m23(), transform.m24() * zoom,
+        transform.m31(), transform.m32(), transform.m33(), transform.m34() * zoom,
+        transform.m41() / zoom, transform.m42() / zoom, transform.m43() / zoom, transform.m44()
+    };
+    CSSValueListBuilder arguments;
+    for (auto value : values)
+        arguments.append(CSSPrimitiveValue::create(value));
+    return CSSFunctionValue::create(CSSValueMatrix3d, WTFMove(arguments));
+}
+
+// MARK: - Serialization
 
 void Serialize<TransformFunction>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const TransformFunction& value)
 {
@@ -805,12 +828,34 @@ void Serialize<TransformFunction>::operator()(StringBuilder& builder, const CSS:
     case TransformFunctionType::Matrix3D: {
         TransformationMatrix transform;
         function.apply(transform, { });
-        ExtractorSerializer::serializeTransformationMatrix(style, builder, context, transform);
+        serializationForCSS(builder, context, style, transform);
         return;
     }
     }
 
     RELEASE_ASSERT_NOT_REACHED();
+}
+
+void Serialize<TransformationMatrix>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const TransformationMatrix& transform)
+{
+    auto zoom = style.usedZoom();
+    if (transform.isAffine()) {
+        std::array values { transform.a(), transform.b(), transform.c(), transform.d(), transform.e() / zoom, transform.f() / zoom };
+        builder.append(nameLiteral(CSSValueMatrix), '(', interleave(values, [&](auto& builder, auto& value) {
+            CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { value });
+        }, ", "_s), ')');
+        return;
+    }
+
+    std::array values {
+        transform.m11(), transform.m12(), transform.m13(), transform.m14() * zoom,
+        transform.m21(), transform.m22(), transform.m23(), transform.m24() * zoom,
+        transform.m31(), transform.m32(), transform.m33(), transform.m34() * zoom,
+        transform.m41() / zoom, transform.m42() / zoom, transform.m43() / zoom, transform.m44()
+    };
+    builder.append(nameLiteral(CSSValueMatrix3d), '(', interleave(values, [&](auto& builder, auto& value) {
+        CSS::serializationForCSS(builder, context, CSS::NumberRaw<> { value });
+    }, ", "_s), ')');
 }
 
 // MARK: - Blending

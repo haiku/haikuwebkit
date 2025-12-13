@@ -300,6 +300,8 @@ std::optional<PseudoElementType> CSSSelector::stylePseudoElementTypeFor(PseudoEl
         return PseudoElementType::Before;
     case PseudoElement::After:
         return PseudoElementType::After;
+    case PseudoElement::Checkmark:
+        return PseudoElementType::Checkmark;
     case PseudoElement::WebKitScrollbar:
         return PseudoElementType::WebKitScrollbar;
     case PseudoElement::WebKitScrollbarButton:

@@ -357,8 +357,10 @@ static Node* firstNode(const BoundaryPoint& point)
 {
     if (point.container->isCharacterDataNode())
         return point.container.ptr();
-    if (RefPtr child = point.container->traverseToChildAt(point.offset))
-        return child.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* child = point.container->traverseToChildAt(point.offset))
+        return child;
     if (!point.offset)
         return point.container.ptr();
     return NodeTraversal::nextSkippingChildren(point.container);

@@ -123,6 +123,20 @@
                             <menuItem isSeparatorItem="YES" id="79">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Clone Site Isolated Window" tag="4" keyEquivalent="i" id="ka5-QP-WgC">
+                                <connections>
+                                    <action selector="cloneSiteIsolatedWindow:" target="-1" id="fSF-Rg-NSY"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Clone Non-isolated Window" tag="4" keyEquivalent="i" id="TOF-K0-SlE">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="cloneNonIsolatedWindow:" target="-1" id="qDa-CW-kBR"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Rug-SG-b5b">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Close" keyEquivalent="w" id="73">
                                 <connections>
                                     <action selector="performClose:" target="-1" id="193"/>

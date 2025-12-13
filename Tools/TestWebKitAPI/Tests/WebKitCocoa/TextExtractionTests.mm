@@ -25,8 +25,6 @@
 
 #import "config.h"
 
-#if ENABLE(TEXT_EXTRACTION)
-
 #import "PlatformUtilities.h"
 #import "Test.h"
 #import "TestWKWebView.h"
@@ -362,6 +360,74 @@ TEST(TextExtractionTests, FilterOptions)
     }
 }
 
-} // namespace TestWebKitAPI
+TEST(TextExtractionTests, FilterRedundantTextInLinks)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:^{
+        RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+        [[configuration preferences] _setTextExtractionEnabled:YES];
+        return configuration.autorelease();
+    }()]);
 
-#endif // ENABLE(TEXT_EXTRACTION)
+    [webView synchronouslyLoadHTMLString:@"<body>"
+        "<a class='first' href='http://apple.com'>apple</a>"
+        "<a class='second' href='http://webkit.org'>webkit</a>"
+        "</body>"];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:^{
+        RetainPtr configuration = adoptNS([_WKContentWorldConfiguration new]);
+        [configuration setAllowJSHandleCreation:YES];
+        return configuration.autorelease();
+    }()];
+
+    RetainPtr debugText = [webView synchronouslyGetDebugText:^{
+        RetainPtr firstLink = [webView querySelector:@".first" frame:nil world:world.get()];
+        RetainPtr secondLink = [webView querySelector:@".second" frame:nil world:world.get()];
+        RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+        [configuration setIncludeURLs:NO];
+        [configuration setIncludeRects:NO];
+        [configuration setNodeIdentifierInclusion:_WKTextExtractionNodeIdentifierInclusionNone];
+        [configuration addClientAttribute:@"href" value:@"url1.com" forNode:firstLink.get()];
+        [configuration addClientAttribute:@"href" value:@"webkit.org" forNode:secondLink.get()];
+        return configuration.autorelease();
+    }()];
+
+    EXPECT_TRUE([debugText containsString:@"link,href='url1.com','apple'"]);
+    EXPECT_TRUE([debugText containsString:@"link,href='webkit.org'"]);
+}
+
+TEST(TextExtractionTests, NodesToSkip)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:^{
+        RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+        [[configuration preferences] _setTextExtractionEnabled:YES];
+        return configuration.autorelease();
+    }()]);
+
+    [webView synchronouslyLoadTestPageNamed:@"debug-text-extraction"];
+
+    RetainPtr world = [WKContentWorld _worldWithConfiguration:^{
+        RetainPtr configuration = adoptNS([_WKContentWorldConfiguration new]);
+        [configuration setAllowJSHandleCreation:YES];
+        return configuration.autorelease();
+    }()];
+
+    RetainPtr selectHandle = [webView querySelector:@"select" frame:nil world:world.get()];
+    RetainPtr inputHandle = [webView querySelector:@"input[type=email]" frame:nil world:world.get()];
+    RetainPtr editorHandle = [webView querySelector:@"div[contenteditable]" frame:nil world:world.get()];
+    RetainPtr hiddenTextHandle = [webView querySelector:@"h4" frame:nil world:world.get()];
+    RetainPtr debugText = [webView synchronouslyGetDebugText:^{
+        RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+        [configuration setNodesToSkip:@[editorHandle.get(), selectHandle.get(), inputHandle.get(), hiddenTextHandle.get()]];
+        [configuration setOutputFormat:_WKTextExtractionOutputFormatMarkdown];
+        [configuration setNodeIdentifierInclusion:_WKTextExtractionNodeIdentifierInclusionNone];
+        [configuration setIncludeRects:NO];
+        return configuration.autorelease();
+    }()];
+
+    NSArray<NSString *> *lines = [debugText componentsSeparatedByString:@"\n"];
+    EXPECT_EQ([lines count], 3u);
+    EXPECT_WK_STREQ("Test", lines[0]);
+    EXPECT_WK_STREQ("0", lines[1]);
+}
+
+} // namespace TestWebKitAPI

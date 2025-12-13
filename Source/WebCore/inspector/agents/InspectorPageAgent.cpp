@@ -133,7 +133,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorPageAgent::enable()
 
     agents->setEnabledPageAgent(this);
 
-    auto& stopwatch = m_environment.executionStopwatch();
+    auto& stopwatch = checkedEnvironment()->executionStopwatch();
     stopwatch.reset();
     stopwatch.start();
 
@@ -178,7 +178,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorPageAgent::disable()
 
 double InspectorPageAgent::timestamp()
 {
-    return m_environment.executionStopwatch().elapsedTime().seconds();
+    return checkedEnvironment()->executionStopwatch().elapsedTime().seconds();
 }
 
 Inspector::Protocol::ErrorStringOr<void> InspectorPageAgent::reload(std::optional<bool>&& ignoreCache, std::optional<bool>&& revalidateAllResources)

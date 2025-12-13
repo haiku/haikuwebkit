@@ -95,7 +95,7 @@ public:
         void setInactive() { };
         void doStart() final;
         void doPull() final;
-        void doCancel() final;
+        void doCancel(JSC::JSValue) final;
 
         bool m_isWaiting { false };
         bool m_isCancelled { false };

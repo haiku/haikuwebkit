@@ -146,7 +146,7 @@ bool MediaSessionManagerInterface::activeAudioSessionRequired() const
         return true;
 
     return std::ranges::any_of(m_audioCaptureSources, [](auto& source) {
-        return source.isCapturingAudio();
+        return Ref { source }->isCapturingAudio();
     });
 #else
     return false;
@@ -425,7 +425,7 @@ MediaSessionRestrictions MediaSessionManagerInterface::restrictions(PlatformMedi
     return m_restrictions[indexFromMediaType(type)];
 }
 
-bool MediaSessionManagerInterface::sessionWillBeginPlayback(PlatformMediaSessionInterface& session)
+void MediaSessionManagerInterface::sessionWillBeginPlayback(PlatformMediaSessionInterface& session, CompletionHandler<void(bool)>&& completionHandler)
 {
     ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier());
 
@@ -436,12 +436,14 @@ bool MediaSessionManagerInterface::sessionWillBeginPlayback(PlatformMediaSession
     auto restrictions = this->restrictions(sessionType);
     if (session.state() == PlatformMediaSession::State::Interrupted && restrictions & MediaSessionRestriction::InterruptedPlaybackNotPermitted) {
         ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier(), " returning false because session.state() is Interrupted, and InterruptedPlaybackNotPermitted");
-        return false;
+        completionHandler(false);
+        return;
     }
 
     if (!maybeActivateAudioSession()) {
         ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier(), " returning false, failed to activate AudioSession");
-        return false;
+        completionHandler(false);
+        return;
     }
 
     if (m_currentInterruption)
@@ -461,9 +463,9 @@ bool MediaSessionManagerInterface::sessionWillBeginPlayback(PlatformMediaSession
         });
     }
     ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier(), " returning true");
-    return true;
+    completionHandler(true);
 #else
-    return false;
+    completionHandler(false);
 #endif
 }
 
@@ -568,8 +570,8 @@ void MediaSessionManagerInterface::removeAudioCaptureSource(AudioCaptureSource& 
 int MediaSessionManagerInterface::countActiveAudioCaptureSources()
 {
     int count = 0;
-    for (const auto& source : m_audioCaptureSources) {
-        if (source.wantsToCaptureAudio())
+    for (Ref source : m_audioCaptureSources) {
+        if (source->wantsToCaptureAudio())
             ++count;
     }
     return count;

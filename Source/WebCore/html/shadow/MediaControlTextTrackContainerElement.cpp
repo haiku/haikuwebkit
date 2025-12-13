@@ -104,7 +104,7 @@ static bool compareCueIntervalForDisplay(const CueInterval& one, const CueInterv
 void MediaControlTextTrackContainerElement::updateDisplay()
 {
     RefPtr mediaElement = m_mediaElement.get();
-    if (mediaElement && !mediaElement->closedCaptionsVisible())
+    if (mediaElement && !mediaElement->closedCaptionsVisible() && !m_shouldShowCaptionPreviewCue)
         removeChildren();
 
     // 1. If the media element is an audio element, or is another playback
@@ -180,7 +180,7 @@ void MediaControlTextTrackContainerElement::updateDisplay()
     // so that the newest captions appear at the bottom.
     std::ranges::sort(activeCues, &compareCueIntervalForDisplay);
 
-    if (mediaElement->closedCaptionsVisible()) {
+    if (mediaElement->closedCaptionsVisible() || m_shouldShowCaptionPreviewCue) {
         // 10. For each text track cue in cues that has not yet had
         // corresponding CSS boxes added to output, in text track cue order, run the
         // following substeps:

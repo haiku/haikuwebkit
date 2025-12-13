@@ -131,7 +131,11 @@ auto LegacyRenderSVGResourceFilter::applyResource(RenderElement& renderer, const
     auto preferredFilterModes = renderer.page().preferredFilterRenderingModes(*context);
 
     // Create the SVGFilterRenderer object.
-    filterData->filter = SVGFilterRenderer::create(contextElement.get(), filterElement, preferredFilterModes, filterScale, filterRegion, targetBoundingBox, *context, RenderingResourceIdentifier::generate());
+    filterData->filter = SVGFilterRenderer::create(contextElement.get(), filterElement, {
+        .referenceBox = targetBoundingBox,
+        .filterRegion = filterRegion,
+        .scale = filterScale,
+    }, preferredFilterModes, *context, RenderingResourceIdentifier::generate());
     if (!filterData->filter) {
         m_rendererFilterDataMap.remove(renderer);
         return { };

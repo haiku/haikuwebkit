@@ -68,7 +68,7 @@ public:
     virtual void animationDidChangeTimingProperties() { };
     virtual void animationWasCanceled() { };
     virtual void animationSuspensionStateDidChange(bool) { };
-    virtual void animationTimelineDidChange(const AnimationTimeline*);
+    virtual void animationTimelineDidChange();
     virtual void animationDidFinish() { };
     virtual void animationPlaybackRateDidChange();
     virtual void animationProgressBasedTimelineSourceDidChangeMetrics(const Style::SingleAnimationRange&);

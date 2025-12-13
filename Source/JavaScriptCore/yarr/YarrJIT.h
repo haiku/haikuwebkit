@@ -314,11 +314,6 @@ public:
         saveMaps(WTFMove(maps));
     }
 
-    bool usesPatternContextBuffer() { return m_usesPatternContextBuffer; }
-#if ENABLE(YARR_JIT_ALL_PARENS_EXPRESSIONS)
-    void setUsesPatternContextBuffer() { m_usesPatternContextBuffer = true; }
-#endif
-
     void set8BitInlineStats(unsigned insnCount, unsigned stackSize, bool canInline, bool needsT2)
     {
         m_matchOnly8Stats.set(insnCount, stackSize, canInline, needsT2);
@@ -432,7 +427,6 @@ private:
     InlineStats m_matchOnly16Stats;
     RegExp* m_regExp { nullptr };
 
-    bool m_usesPatternContextBuffer { false };
     std::optional<JITFailureReason> m_failureReason;
 };
 

@@ -85,6 +85,7 @@ struct Request {
     HashMap<String, HashMap<JSHandleIdentifier, String>> clientNodeAttributes;
     std::optional<FloatRect> collectionRectInRootView;
     std::optional<JSHandleIdentifier> targetNodeHandleIdentifier;
+    Vector<JSHandleIdentifier> handleIdentifiersOfNodesToSkip;
     bool mergeParagraphs { false };
     bool skipNearlyTransparentContent { false };
     NodeIdentifierInclusion nodeIdentifierInclusion { NodeIdentifierInclusion::None };
@@ -169,9 +170,14 @@ struct Item {
     String accessibilityRole;
     HashMap<String, String> clientAttributes;
 
+    template<typename T> bool hasData() const
+    {
+        return std::holds_alternative<T>(data);
+    }
+
     template<typename T> std::optional<T> dataAs() const
     {
-        if (std::holds_alternative<T>(data))
+        if (hasData<T>())
             return std::get<T>(data);
         return std::nullopt;
     }

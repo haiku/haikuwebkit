@@ -122,14 +122,18 @@ RefPtr<Filter> CanvasRenderingContext2D::createFilter(const FloatRect& bounds) c
     if (!page)
         return nullptr;
 
+    auto outsets = calculateFilterOutsets(bounds);
+    auto filterRegion = bounds + toFloatBoxExtent(outsets);
+
     auto preferredFilterRenderingModes = page->preferredFilterRenderingModes(*context);
-    auto filter = CSSFilterRenderer::create(*renderer, state().filter, preferredFilterRenderingModes, { 1, 1 }, bounds, *context);
+    auto filter = CSSFilterRenderer::create(*renderer, state().filter, {
+            .referenceBox = bounds,
+            .filterRegion = filterRegion,
+            .scale = { 1, 1 },
+        }, preferredFilterRenderingModes, *context);
     if (!filter)
         return nullptr;
 
-    auto outsets = calculateFilterOutsets(bounds);
-
-    filter->setFilterRegion(bounds + toFloatBoxExtent(outsets));
     return filter;
 }
 

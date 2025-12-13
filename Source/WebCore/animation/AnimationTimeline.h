@@ -82,14 +82,16 @@ public:
 #if ENABLE(THREADED_ANIMATIONS)
     bool canBeAccelerated() const { return m_canBeAccelerated; }
     virtual bool computeCanBeAccelerated() const { return false; }
-    AcceleratedTimeline& acceleratedRepresentation();
+    Ref<AcceleratedTimeline> acceleratedRepresentation();
     void runPostRenderingUpdateTasks();
+    const TimelineIdentifier& acceleratedTimelineIdentifier() const { return m_acceleratedTimelineIdentifier; }
 #endif
 
 protected:
     AnimationTimeline(std::optional<WebAnimationTime> = std::nullopt);
 
 #if ENABLE(THREADED_ANIMATIONS)
+    WeakPtr<AcceleratedTimeline> m_acceleratedRepresentation;
     virtual Ref<AcceleratedTimeline> createAcceleratedRepresentation() const;
 #endif
 
@@ -101,7 +103,6 @@ protected:
 
 private:
 #if ENABLE(THREADED_ANIMATIONS)
-    RefPtr<AcceleratedTimeline> m_acceleratedRepresentation;
     bool m_canBeAccelerated { false };
 #endif
     std::optional<WebAnimationTime> m_currentTime;

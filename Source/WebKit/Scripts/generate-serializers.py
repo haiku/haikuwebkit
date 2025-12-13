@@ -538,10 +538,7 @@ def one_argument_coder_declaration_cf(type):
     result.append('};')
     result.append(f'template<> struct ArgumentCoder<RetainPtr<{name_with_template}>> {{')
     for encoder in type.encoders:
-        result.append(f'    static void encode({encoder}& encoder, const RetainPtr<{name_with_template}>& retainPtr)')
-        result.append('    {')
-        result.append(f'        ArgumentCoder<{name_with_template}>::encode(encoder, retainPtr.get());')
-        result.append('    }')
+        result.append(f'    static void encode({encoder}&, const RetainPtr<{name_with_template}>&);')
     result.append(f'    static std::optional<RetainPtr<{name_with_template}>> decode(Decoder&);')
     result.append('};')
     if type.condition is not None:
@@ -878,6 +875,11 @@ def encode_type(type):
 
 def decode_cf_type(type):
     result = []
+    result.append('    auto isEngaged = decoder.template decode<bool>();')
+    result.append('    if (!isEngaged)')
+    result.append('        return std::nullopt;')
+    result.append('    if (!*isEngaged)')
+    result.append('        return { nullptr };')
     result.append(f'    auto result = decoder.decode<{type.cf_wrapper_type()}>();')
     result.append('    if (!decoder.isValid()) [[unlikely]]')
     result.append('        return std::nullopt;')
@@ -936,7 +938,7 @@ def decode_type(type, serialized_types):
                 else:
                     condition = re.search(r'Precondition', attribute)
                     assert not condition
-            result.append(f'    auto {sanitized_variable_name} = decoder.decodeWithAllowedClasses<{match.groups()[0]}>({{ {decodable_classes[0]} }});')
+            result.append(f'    auto {sanitized_variable_name} = decoder.decodeWithAllowedClasses<{member.type}>({{ {decodable_classes[0]} }});')
         elif member.is_subclass:
             result.append(f'    if (type == {type.subclass_enum_name()}::{member.name}) {{')
             typename = f'{member.namespace}::{member.name}'
@@ -1102,6 +1104,18 @@ def generate_one_impl(type, template_argument, serialized_types):
         if type.members_are_subclasses:
             result.append('IGNORE_WARNINGS_END')
         result.append('')
+    if type.cf_type is not None:
+        for encoder in type.encoders:
+            result.append(f'void ArgumentCoder<RetainPtr<{name_with_template}>>::encode({encoder}& encoder, const RetainPtr<{name_with_template}>& retainPtr)')
+            result.append('{')
+            result.append('    if (!retainPtr) {')
+            result.append('        encoder << false;')
+            result.append('        return;')
+            result.append('    }')
+            result.append('    encoder << true;')
+            result.append(f'    ArgumentCoder<{name_with_template}>::encode(encoder, retainPtr.get());')
+            result.append('}')
+            result.append('')
     if type.cf_type is not None:
         result.append(f'std::optional<RetainPtr<{name_with_template}>> ArgumentCoder<RetainPtr<{name_with_template}>>::decode(Decoder& decoder)')
     elif type.return_ref:

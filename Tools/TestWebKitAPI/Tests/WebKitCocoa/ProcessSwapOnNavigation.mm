@@ -381,7 +381,7 @@ static RetainPtr<WKWebView> createdWebView;
     }, 0.1);
 
     doAsynchronouslyIfNecessary([self, finalURL](id <WKURLSchemeTask> task) {
-        if (auto data = _dataMappings.get([finalURL absoluteString]))
+        if (RetainPtr data = _dataMappings.get([finalURL absoluteString]))
             [task didReceiveData:data.get()];
         else if (_bytes)
             [task didReceiveData:toNSData(_bytes.span8()).get()];
@@ -6411,8 +6411,9 @@ TEST(ProcessSwap, NavigateCrossOriginWithOpenee)
     TestWebKitAPI::Util::run(&done);
     done = false;
 
-    // We should not have process-swapped since an auxiliary window has an opener link to us.
-    EXPECT_EQ(webkitPID, [webView _webProcessIdentifier]);
+    bool processSwapped = webkitPID != [webView _webProcessIdentifier];
+    // PSON does not swap procss when the window is opener of other window, but Site Isolation does.
+    EXPECT_EQ(processSwapped, isSiteIsolationEnabled(webView.get()));
 
     // Navigate cross-origin via the API. This should allow a process swap and sever the opener link.
     request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.webkit.org.com/main3.html"]];

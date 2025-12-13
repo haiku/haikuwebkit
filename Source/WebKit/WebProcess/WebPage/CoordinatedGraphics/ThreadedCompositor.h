@@ -125,15 +125,15 @@ private:
         Idle,
         Scheduled,
         InProgress,
-        ScheduledWhileInProgress,
-        WaitingForTiles
+        ScheduledWhileInProgress
     };
 
     struct {
         mutable Lock lock;
         State state WTF_GUARDED_BY_LOCK(lock) { State::Idle };
+        bool isWaitingForTiles WTF_GUARDED_BY_LOCK(lock) { false };
         OptionSet<WebCore::CompositionReason> reasons WTF_GUARDED_BY_LOCK(lock);
-        Function<void()> didCompositeRenderinUpdateFunction WTF_GUARDED_BY_LOCK(lock);
+        Function<void()> didCompositeRenderingUpdateFunction WTF_GUARDED_BY_LOCK(lock);
     } m_state;
 
     struct {

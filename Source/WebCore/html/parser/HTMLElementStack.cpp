@@ -479,6 +479,23 @@ bool HTMLElementStack::inTableScope(ElementName targetElement) const
     return inScopeCommon<isTableScopeMarker>(m_top.get(), targetElement);
 }
 
+bool HTMLElementStack::hasAnyInTableScope(std::initializer_list<ElementName> targetElements) const
+{
+    for (auto* record = m_top.get(); record; record = record->next()) {
+        auto& item = record->stackItem();
+
+        for (auto targetElement : targetElements) {
+            if (item.elementName() == targetElement)
+                return true;
+        }
+
+        if (isTableScopeMarker(item))
+            return false;
+    }
+    ASSERT_NOT_REACHED();
+    return false;
+}
+
 bool HTMLElementStack::inButtonScope(ElementName targetElement) const
 {
     return inScopeCommon<isButtonScopeMarker>(m_top.get(), targetElement);

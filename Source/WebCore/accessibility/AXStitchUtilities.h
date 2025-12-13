@@ -27,12 +27,18 @@
 
 namespace WebCore {
 
+class AccessibilityObject;
+class AccessibilityNodeObject;
+class ContainerNode;
 class RenderObject;
 
 struct StitchingContext {
+    explicit StitchingContext(const AccessibilityNodeObject&);
+
     RefPtr<ContainerNode> lastStitchBreakingAncestor { nullptr };
+    RefPtr<const AccessibilityNodeObject> containingBlockFlowObject { nullptr };
 };
 
-bool shouldStopStitchingAt(const RenderObject&, StitchingContext&);
+bool shouldStopStitchingAt(const RenderObject&, const AccessibilityObject&, StitchingContext&);
 
 } // namespace WebCore

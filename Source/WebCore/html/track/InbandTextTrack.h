@@ -38,6 +38,10 @@ public:
     static Ref<InbandTextTrack> create(ScriptExecutionContext&, InbandTextTrackPrivate&);
     virtual ~InbandTextTrack();
 
+    // InbandTextTrackPrivateClient.
+    void ref() const final { TextTrack::ref(); }
+    void deref() const final { TextTrack::deref(); }
+
     bool isClosedCaptions() const override;
     bool isSDH() const override;
     bool containsOnlyForcedSubtitles() const override;

@@ -175,7 +175,7 @@ bool isDefaultValue(AXProperty property, AXPropertyValueVariant& value)
 #endif
         [](InputType::Type&) { return false; },
         [](Vector<Vector<Markable<AXID>>>& typedValue) { return typedValue.isEmpty(); },
-        [](Vector<Vector<AXID>>& typedValue) { return typedValue.isEmpty(); },
+        [](Vector<AXStitchGroup>& typedValue) { return typedValue.isEmpty(); },
         [](CharacterRange& typedValue) { return !typedValue.location && !typedValue.length; },
         [](std::unique_ptr<AXIDAndCharacterRange>& typedValue) {
             return !typedValue || (!typedValue->first && !typedValue->second.location && !typedValue->second.length);
@@ -368,19 +368,19 @@ void AXIsolatedObject::accessibilityText(Vector<AccessibilityText>& texts) const
     texts = vectorAttributeValue<AccessibilityText>(AXProperty::AccessibilityText);
 }
 
-const Vector<Vector<AXID>>* AXIsolatedObject::stitchGroupsView() const
+const Vector<AXStitchGroup>* AXIsolatedObject::stitchGroupsView() const
 {
     size_t index = indexOfProperty(AXProperty::StitchGroups);
     if (index == notFound)
         return nullptr;
 
     return WTF::switchOn(m_properties[index].second,
-        [] (const Vector<Vector<AXID>>& typedValue) -> const Vector<Vector<AXID>>* { return &typedValue; },
-        [] (auto&) -> const Vector<Vector<AXID>>* { return nullptr; }
+        [] (const Vector<AXStitchGroup>& typedValue) -> const Vector<AXStitchGroup>* { return &typedValue; },
+        [] (auto&) -> const Vector<AXStitchGroup>* { return nullptr; }
     );
 }
 
-AXIsolatedObject::StitchState AXIsolatedObject::stitchState(IncludeStitchGroup includeStitchGroup) const
+std::optional<AXStitchGroup> AXIsolatedObject::stitchGroup(IncludeGroupMembers includeGroupMembers) const
 {
     if (!AXObjectCache::isAXTextStitchingEnabled())
         return { };
@@ -389,7 +389,7 @@ AXIsolatedObject::StitchState AXIsolatedObject::stitchState(IncludeStitchGroup i
     if (!blockFlowAncestor)
         return { };
 
-    return stitchStateFromGroups(blockFlowAncestor->stitchGroupsView(), includeStitchGroup);
+    return stitchGroupFromGroups(blockFlowAncestor->stitchGroupsView(), includeGroupMembers);
 }
 
 void AXIsolatedObject::insertMathPairs(Vector<std::pair<Markable<AXID>, Markable<AXID>>>& isolatedPairs, AccessibilityMathMultiscriptPairs& pairs)
@@ -1099,18 +1099,19 @@ FloatRect AXIsolatedObject::relativeFrame() const
         relativeFrame = *cachedRelativeFrame;
 
         if (isStaticText()) {
-            auto stitchState = this->stitchState();
-            if (stitchState.stitchedIntoID && *stitchState.stitchedIntoID == objectID() && stitchState.group.size()) {
-                // |this| is a stitching of multiple objects, so we need to combine all of their frames.
+            if (std::optional stitchGroup = this->stitchGroup()) {
+                if (stitchGroup->representativeID() == objectID() && !stitchGroup->isEmpty()) {
+                    // |this| is a stitching of multiple objects, so we need to combine all of their frames.
 
-                RefPtr tree = this->tree();
-                for (AXID axID : stitchState.group) {
-                    if (axID == objectID())
-                        continue;
+                    RefPtr tree = this->tree();
+                    for (AXID axID : stitchGroup->members()) {
+                        if (axID == objectID())
+                            continue;
 
-                    if (RefPtr object = tree->objectForID(axID)) {
-                        if (std::optional otherCachedFrame = object->cachedRelativeFrame())
-                            relativeFrame = unionRect(relativeFrame, *otherCachedFrame);
+                        if (RefPtr object = tree->objectForID(axID)) {
+                            if (std::optional otherCachedFrame = object->cachedRelativeFrame())
+                                relativeFrame = unionRect(relativeFrame, *otherCachedFrame);
+                        }
                     }
                 }
             }
@@ -1804,12 +1805,12 @@ String AXIsolatedObject::stringValue() const
     size_t index = indexOfProperty(AXProperty::StringValue);
     if (index == notFound) {
         if (hasStitchableRole()) {
-            auto stitchState = this->stitchState();
-            if (!stitchState.stitchedIntoID)
+            std::optional stitchGroup = this->stitchGroup();
+            if (!stitchGroup)
                 return textMarkerRange().toString(IncludeListMarkerText::No);
 
             AXID thisID = objectID();
-            if (*stitchState.stitchedIntoID != thisID) {
+            if (stitchGroup->representativeID() != thisID) {
                 // |this| is stitched into another object, so don't return any string value.
                 return emptyString();
             }
@@ -1823,10 +1824,10 @@ String AXIsolatedObject::stringValue() const
             AXTextMarker endMarker;
 
             RefPtr tree = std::get<RefPtr<AXIsolatedTree>>(axTreeForID(treeID()));
-            if (!tree || stitchState.group.isEmpty())
+            if (!tree || stitchGroup->isEmpty())
                 return textMarkerRange().toString(IncludeListMarkerText::No);
 
-            for (auto axID = stitchState.group.rbegin(); axID != stitchState.group.rend() && *axID != thisID; ++axID) {
+            for (auto axID = stitchGroup->members().rbegin(); axID != stitchGroup->members().rend(); ++axID) {
                 if (RefPtr object = tree->objectForID(*axID)) {
                     if (const auto* runs = object->textRuns()) {
                         endMarker = AXTextMarker { *object, runs->totalLength() };
@@ -1838,7 +1839,7 @@ String AXIsolatedObject::stringValue() const
             if (!endMarker.isValid())
                 return textMarkerRange().toString(IncludeListMarkerText::No);
 
-            return AXTextMarkerRange { WTFMove(startMarker), WTFMove(endMarker) }.toString(IncludeListMarkerText::No);
+            return AXTextMarkerRange { WTFMove(startMarker), WTFMove(endMarker) }.toString(IncludeListMarkerText::Yes);
         }
         return emptyString();
     }

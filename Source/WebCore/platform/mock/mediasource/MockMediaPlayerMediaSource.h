@@ -91,6 +91,7 @@ private:
     bool seeking() const final;
     bool paused() const override;
     MediaPlayer::NetworkState networkState() const override;
+    void mediaSourceHasRetrievedAllData() final;
     MediaTime maxTimeSeekable() const override;
     const PlatformTimeRanges& buffered() const override;
     bool didLoadingProgress() const override;

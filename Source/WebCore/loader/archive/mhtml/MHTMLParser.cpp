@@ -194,7 +194,7 @@ RefPtr<ArchiveResource> MHTMLParser::parseNextPart(const MIMEHeader& mimeHeader,
     }
 
     Vector<uint8_t> data;
-    auto contiguousContent = content.takeAsContiguous();
+    auto contiguousContent = content.takeBufferAsContiguous();
     switch (mimeHeader.contentTransferEncoding()) {
     case MIMEHeader::Base64: {
         auto decodedData = base64Decode(contiguousContent->span());

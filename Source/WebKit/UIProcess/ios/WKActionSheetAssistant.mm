@@ -102,6 +102,7 @@ static LSAppLink *appLinkForURL(NSURL *url)
 @interface WKActionSheetAssistant () <WKCaptionStyleMenuControllerDelegate>
 - (void)captionStyleMenuWillOpen:(PlatformMenu *)menu;
 - (void)captionStyleMenuDidClose:(PlatformMenu *)menu;
+- (void)captionStyleMenu:(PlatformMenu *)menu didSelectProfile:(NSString *)profileID;
 @end
 #endif
 
@@ -922,6 +923,39 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         [_delegate captionStyleMenuWillOpenWithFrameInfo:*_frameInfo identifier:*_mediaElementIdentifier];
 }
 
+- (void)captionStyleMenu:(PlatformMenu *)captionStyleMenu didSelectProfile:(NSString *)profileID
+{
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    if (!_mediaControlsContextMenuPresenter)
+        return;
+
+    if (!_captionStyleMenuController)
+        return;
+
+    BlockPtr<UIMenu*(UIMenu*)> menuUpdater;
+    menuUpdater = makeBlockPtr([&](UIMenu *menu) -> UIMenu* {
+        if ([menu.identifier isEqual:captionStyleMenu.identifier])
+            return captionStyleMenu;
+
+        if (!menu.children.count)
+            return menu;
+
+        RetainPtr newChildren = adoptNS([[NSMutableArray alloc] initWithCapacity:menu.children.count]);
+
+        for (id childMenuItem in menu.children) {
+            if (auto childMenu = dynamic_objc_cast<UIMenu>(childMenuItem))
+                [newChildren addObject:menuUpdater(childMenu)];
+            else
+                [newChildren addObject:childMenuItem];
+        }
+
+        return [menu menuByReplacingChildren:newChildren.get()];
+    });
+
+    _mediaControlsContextMenuPresenter->updateVisibleMenu(menuUpdater.get());
+#endif
+}
+
 - (void)captionStyleMenuDidClose:(PlatformMenu *)menu
 {
     if ([_delegate respondsToSelector:@selector(captionStyleMenuWillOpenWithFrameInfo:identifier:)] && _mediaElementIdentifier && _frameInfo)
@@ -936,7 +970,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if ENABLE(VIDEO) && USE(UICONTEXTMENU)
 - (void)showCaptionDisplaySettingsMenu:(WebCore::HTMLMediaElementIdentifier)identifier withOptions:(const WebCore::ResolvedCaptionDisplaySettingsOptions&)options completionHandler:(CompletionHandler<void(Expected<void, WebCore::ExceptionData>)>&&)completionHandler
 {
-    _captionStyleMenuController = adoptNS([[WKCaptionStyleMenuController alloc] init]);
+    _captionStyleMenuController = adoptNS([WKCaptionStyleMenuController menuController]);
     [_captionStyleMenuController setDelegate:self];
 
     _mediaControlsContextMenu = [_captionStyleMenuController captionStyleMenu];

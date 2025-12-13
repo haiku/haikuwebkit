@@ -442,17 +442,17 @@ static WPEView* wpeDisplayDRMCreateView(WPEDisplay* display)
     return view;
 }
 
-static WPEBufferDMABufFormats* wpeDisplayDRMGetPreferredDMABufFormats(WPEDisplay* display)
+static WPEBufferFormats* wpeDisplayDRMGetPreferredBufferFormats(WPEDisplay* display)
 {
     auto* displayDRM = WPE_DISPLAY_DRM(display);
-    auto* builder = wpe_buffer_dma_buf_formats_builder_new(displayDRM->priv->displayDevice.get());
-    wpe_buffer_dma_buf_formats_builder_append_group(builder, nullptr, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT);
+    auto* builder = wpe_buffer_formats_builder_new(displayDRM->priv->displayDevice.get());
+    wpe_buffer_formats_builder_append_group(builder, nullptr, WPE_BUFFER_FORMAT_USAGE_SCANOUT);
     for (const auto& format : displayDRM->priv->primaryPlane->formats()) {
         for (auto modifier : format.modifiers)
-            wpe_buffer_dma_buf_formats_builder_append_format(builder, format.format, modifier);
+            wpe_buffer_formats_builder_append_format(builder, format.format, modifier);
     }
 
-    return wpe_buffer_dma_buf_formats_builder_end(builder);
+    return wpe_buffer_formats_builder_end(builder);
 }
 
 static guint wpeDisplayDRMGetNScreens(WPEDisplay*)
@@ -487,7 +487,7 @@ static void wpe_display_drm_class_init(WPEDisplayDRMClass* displayDRMClass)
     WPEDisplayClass* displayClass = WPE_DISPLAY_CLASS(displayDRMClass);
     displayClass->connect = wpeDisplayDRMConnect;
     displayClass->create_view = wpeDisplayDRMCreateView;
-    displayClass->get_preferred_dma_buf_formats = wpeDisplayDRMGetPreferredDMABufFormats;
+    displayClass->get_preferred_buffer_formats = wpeDisplayDRMGetPreferredBufferFormats;
     displayClass->get_n_screens = wpeDisplayDRMGetNScreens;
     displayClass->get_screen = wpeDisplayDRMGetScreen;
     displayClass->get_drm_device = wpeDisplayDRMGetDRMDevice;

@@ -1219,11 +1219,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
-            'builtins-generator-tests',
-            'API-tests'
+            'builtins-generator-tests'
         ],
         'GTK-Linux-64-bit-Release-JS-Tests': [
             'configure-build',
@@ -1285,11 +1285,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
-            'builtins-generator-tests',
-            'API-tests'
+            'builtins-generator-tests'
         ],
         'GTK-Linux-64-bit-Debug-JS-Tests': [
             'configure-build',
@@ -1423,11 +1423,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
             'builtins-generator-tests',
-            'API-tests',
             'archive-built-product',
             'upload-built-product'
         ],
@@ -1603,11 +1603,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
-            'builtins-generator-tests',
-            'API-tests',
+            'builtins-generator-tests'
         ],
         'WPE-Linux-64-bit-Release-JS-Tests': [
             'configure-build',
@@ -1669,11 +1669,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
-            'builtins-generator-tests',
-            'API-tests',
+            'builtins-generator-tests'
         ],
         'WPE-Linux-64-bit-Debug-JS-Tests': [
             'configure-build',
@@ -1868,11 +1868,11 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+            'run-api-tests',
             'webkitpy-test',
             'webkitperl-test',
             'bindings-generation-tests',
             'builtins-generator-tests',
-            'API-tests',
             'archive-built-product',
             'upload-built-product'
         ],
@@ -1908,7 +1908,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
-            'API-tests'
+            'run-api-tests'
         ],
     }
 

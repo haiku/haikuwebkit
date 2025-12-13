@@ -429,14 +429,16 @@ bool PDFPluginBase::getByteRanges(CFMutableArrayRef dataBuffersArray, std::span<
         RELEASE_ASSERT(range.location >= 0);
         RELEASE_ASSERT(range.length >= 0);
 
-        if (haveStreamedDataForRange(range.location, range.length))
-            return true;
-
         uint64_t rangeLocation = range.location;
         uint64_t rangeLength = range.length;
 
         uint64_t dataLength = CFDataGetLength(m_data.get());
-        if (rangeLocation + rangeLength > dataLength)
+        bool rangeExtentIsSmallerThanBufferSize = isSumSmallerThanOrEqual(rangeLocation, rangeLength, dataLength);
+
+        if (haveStreamedDataForRange(rangeLocation, rangeLength))
+            return rangeExtentIsSmallerThanBufferSize;
+
+        if (!rangeExtentIsSmallerThanBufferSize)
             return false;
 
         return m_validRanges.contains({ rangeLocation, rangeLocation + rangeLength - 1 });

@@ -267,6 +267,20 @@ void MediaSourcePrivate::setMediaPlayerReadyState(MediaPlayer::ReadyState readyS
     });
 }
 
+void MediaSourcePrivate::markEndOfStream(EndOfStreamStatus status)
+{
+    m_isEnded = true;
+    if (status != EndOfStreamStatus::NoError)
+        return;
+    ensureOnMainThread([weakThis = ThreadSafeWeakPtr { *this }] {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+        if (RefPtr player = protectedThis->player())
+            player->mediaSourceHasRetrievedAllData();
+    });
+}
+
 PlatformTimeRanges MediaSourcePrivate::seekable() const
 {
     MediaTime duration;

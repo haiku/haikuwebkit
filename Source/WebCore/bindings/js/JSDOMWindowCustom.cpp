@@ -242,7 +242,7 @@ bool JSDOMWindow::getOwnPropertySlotByIndex(JSObject* object, JSGlobalObject* le
         // FIXME: scopedChild/scopedChildCount and RemoteFrame need to work together well. We're using using child/childCount until then.
         if (is<LocalFrame>(frame)) {
             if (index < frame->tree().scopedChildCount()) {
-                if (auto* scopedChild = frame->tree().scopedChild(index)) {
+                if (RefPtr scopedChild = frame->tree().scopedChild(index)) {
                     slot.setValue(thisObject, enumToUnderlyingType(JSC::PropertyAttribute::ReadOnly), toJS(lexicalGlobalObject, scopedChild->window()));
                     return true;
                 }

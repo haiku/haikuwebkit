@@ -531,7 +531,7 @@ CommitDate: {time_c}
             )
 
     def test_diff_identifier(self):
-        with mocks.local.Git(self.path):
+        with mocks.local.Git(self.path), OutputCapture():
             repo = local.Git(self.path)
             self.assertEqual(
                 ['--- a/ChangeLog', '+++ b/ChangeLog', '@@ -1,0 +1,0 @@', '+8th commit'],
@@ -620,7 +620,7 @@ CommitDate: {time_c}
             )
 
     def test_last_commits_on(self):
-        with mocks.local.Git(self.path):
+        with mocks.local.Git(self.path), OutputCapture():
             git = local.Git(self.path)
             commits = git.last_commits_on('README.md', count=5)
 

@@ -75,7 +75,7 @@ public:
         return *this;
     }
 
-    T* pointer() const { return m_data.pointer(); }
+    T* pointer() const LIFETIME_BOUND { return m_data.pointer(); }
 
     std::unique_ptr<T, Deleter> moveToUniquePtr()
     {

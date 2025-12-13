@@ -444,7 +444,7 @@ void WebProcess::initializeConnection(IPC::Connection* connection)
 
     protectedEventDispatcher()->initializeConnection(*connection);
 #if PLATFORM(IOS_FAMILY)
-    m_viewUpdateDispatcher.initializeConnection(*connection);
+    Ref { m_viewUpdateDispatcher }->initializeConnection(*connection);
 #endif // PLATFORM(IOS_FAMILY)
 
     protectedWebInspectorInterruptDispatcher()->initializeConnection(*connection);

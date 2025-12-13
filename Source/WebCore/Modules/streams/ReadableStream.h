@@ -125,7 +125,7 @@ public:
     void pipeTo(JSDOMGlobalObject&, WritableStream&, StreamPipeOptions&&, Ref<DeferredPromise>&&);
     ExceptionOr<Ref<ReadableStream>> pipeThrough(JSDOMGlobalObject&, WritablePair&&, StreamPipeOptions&&);
 
-    bool isReachableFromOpaqueRoots() const { return m_isReachableFromOpaqueRootIfPulling && isPulling(); }
+    bool isReachableFromOpaqueRoots() const { return m_isSourceReachableFromOpaqueRoot && m_state == State::Readable; }
     void visitAdditionalChildren(JSC::AbstractSlotVisitor&);
 
     class DependencyToVisit : public AbstractRefCounted {
@@ -134,12 +134,12 @@ public:
         virtual void visit(JSC::AbstractSlotVisitor&) = 0;
     };
     enum class StartSynchronously : bool { No, Yes };
-    enum class IsReachableFromOpaqueRootIfPulling : bool { No, Yes };
+    enum class IsSourceReachableFromOpaqueRoot : bool { No, Yes };
     struct ByteStreamOptions {
         RefPtr<DependencyToVisit> dependencyToVisit { };
         double highwaterMark { 0 };
         StartSynchronously startSynchronously { StartSynchronously::No };
-        IsReachableFromOpaqueRootIfPulling isReachableFromOpaqueRootIfPulling { IsReachableFromOpaqueRootIfPulling::No };
+        IsSourceReachableFromOpaqueRoot isSourceReachableFromOpaqueRoot { IsSourceReachableFromOpaqueRoot::No };
     };
     static Ref<ReadableStream> createReadableByteStream(JSDOMGlobalObject&, ReadableByteStreamController::PullAlgorithm&&, ReadableByteStreamController::CancelAlgorithm&&, ByteStreamOptions&&);
 
@@ -153,23 +153,26 @@ public:
 
     class Iterator : public RefCountedAndCanMakeWeakPtr<Iterator> {
     public:
-        static Ref<Iterator> create() { return adoptRef(*new Iterator()); }
-        ~Iterator() = default;
+        static Ref<Iterator> create(Ref<ReadableStreamDefaultReader>&&, bool preventCancel);
+        ~Iterator();
 
-        using Result = std::optional<JSC::JSValue>;
-        using Callback = CompletionHandler<void(ExceptionOr<Result>&&)>;
-        void next(Callback&&);
+        Ref<DOMPromise> next(JSDOMGlobalObject&);
+        bool isFinished() const;
+        Ref<DOMPromise> returnSteps(JSDOMGlobalObject&, JSC::JSValue);
 
     private:
-        Iterator() = default;
+        Iterator(Ref<ReadableStreamDefaultReader>&&, bool preventCancel);
+
+        const Ref<ReadableStreamDefaultReader> m_reader;
+        bool m_preventCancel { false };
     };
 
-    Ref<Iterator> createIterator(ScriptExecutionContext*) { return Iterator::create(); }
+    ExceptionOr<Ref<Iterator>> createIterator(ScriptExecutionContext*, IteratorOptions&&);
 
 protected:
     static ExceptionOr<Ref<ReadableStream>> createFromJSValues(JSC::JSGlobalObject&, JSC::JSValue, JSC::JSValue);
     static ExceptionOr<Ref<InternalReadableStream>> createInternalReadableStream(JSDOMGlobalObject&, Ref<ReadableStreamSource>&&);
-    explicit ReadableStream(ScriptExecutionContext*, RefPtr<InternalReadableStream>&& = { }, RefPtr<DependencyToVisit>&& = { }, IsReachableFromOpaqueRootIfPulling = IsReachableFromOpaqueRootIfPulling::No);
+    explicit ReadableStream(ScriptExecutionContext*, RefPtr<InternalReadableStream>&& = { }, RefPtr<DependencyToVisit>&& = { }, IsSourceReachableFromOpaqueRoot = IsSourceReachableFromOpaqueRoot::No);
 
 private:
     ExceptionOr<void> setupReadableByteStreamControllerFromUnderlyingSource(JSDOMGlobalObject&, JSC::JSValue, UnderlyingSource&&, double);
@@ -177,7 +180,7 @@ private:
 
     bool isPulling() const;
 
-    const bool m_isReachableFromOpaqueRootIfPulling { false };
+    const bool m_isSourceReachableFromOpaqueRoot { false };
     bool m_disturbed { false };
     WeakPtr<ReadableStreamDefaultReader> m_defaultReader;
     WeakPtr<ReadableStreamBYOBReader> m_byobReader;

@@ -26,7 +26,7 @@
 
 #import <wtf/Platform.h>
 
-#if ENABLE(GPU_PROCESS_MODEL)
+#if ENABLE(WEBGPU_SWIFT)
 
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>

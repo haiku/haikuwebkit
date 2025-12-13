@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<!--
+     Any copyright is dedicated to the Public Domain.
+     http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CSS Grid Lanes Subgrid Test: negative line numbers inside subgrid</title>
+  <link rel="author" title="Brandon Stewart" href="mailto:brandonstewart@apple.com">
+  <link rel="help" href="https://drafts.csswg.org/css-grid-3/#subgrids">
+  <link rel="match" href="line-numbers-002-ref.html">
+  <style>
+html, body {
+  color: black;
+  background: white;
+  font: 10px/1 monospace;
+  padding: 0;
+  margin: 0;
+}
+
+.grid {
+  display: inline-grid-lanes;
+  grid-lanes-direction: column;
+  grid-template-columns: 40px 60px 80px 100px 120px;
+  border: 1px solid black;
+  margin: 10px;
+  background: lightgrey;
+}
+
+.subgrid {
+  display: grid;
+  grid-template-columns: subgrid;
+  background: lightblue;
+}
+
+.item {
+  background: salmon;
+  border: 1px solid red;
+}
+
+.subitem {
+  background: lightgreen;
+  border: 1px solid green;
+}
+  </style>
+</head>
+<body>
+
+<!-- Subgrid spans 3 columns, test negative line placement -1, -2, -3 -->
+<div class="grid">
+  <div class="item" style="grid-column: 1">A</div>
+  <div class="subgrid" style="grid-column: 2 / 5">
+    <div class="subitem" style="grid-column: -2">-2</div>
+    <div class="subitem" style="grid-column: -4">-4</div>
+    <div class="subitem" style="grid-column: -3">-3</div>
+  </div>
+  <div class="item" style="grid-column: 5">E</div>
+</div>
+
+<!-- Test negative end line -->
+<div class="grid">
+  <div class="item" style="grid-column: 1">A</div>
+  <div class="subgrid" style="grid-column: 2 / 5">
+    <div class="subitem" style="grid-column: 1 / -1">1 / -1</div>
+  </div>
+  <div class="item" style="grid-column: 5">E</div>
+</div>
+
+<!-- Test positive start with negative end -->
+<div class="grid">
+  <div class="item" style="grid-column: 1">A</div>
+  <div class="subgrid" style="grid-column: 2 / 5">
+    <div class="subitem" style="grid-column: -2 / -1">-2 / -1</div>
+    <div class="subitem" style="grid-column: 1 / -2">1 / -2</div>
+  </div>
+  <div class="item" style="grid-column: 5">E</div>
+</div>
+
+<!-- Test span from negative line -->
+<div class="grid">
+  <div class="item" style="grid-column: 1">A</div>
+  <div class="subgrid" style="grid-column: 2 / 6">
+    <div class="subitem" style="grid-column: span 2 / -3">span 2 / -3</div>
+    <div class="subitem" style="grid-column: span 2 / -1">span 2 / -1</div>
+  </div>
+</div>
+
+</body>
+</html>

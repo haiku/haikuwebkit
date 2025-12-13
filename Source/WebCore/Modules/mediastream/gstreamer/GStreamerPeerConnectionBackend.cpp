@@ -362,7 +362,7 @@ ExceptionOr<Ref<RTCRtpSender>> GStreamerPeerConnectionBackend::addTrack(MediaStr
     auto transceiverBackend = m_endpoint->transceiverBackendFromSender(*senderBackend);
 
     Ref peerConnection = m_peerConnection.get();
-    auto newSender = RTCRtpSender::create(peerConnection, track, WTFMove(senderBackend));
+    auto newSender = RTCRtpSender::create(peerConnection, track, senderBackend.releaseNonNull());
     newSender->setMediaStreamIds(mediaStreamIds);
     auto receiver = createReceiver(transceiverBackend->createReceiverBackend(), track.kind(), track.id());
     auto transceiver = RTCRtpTransceiver::create(newSender.copyRef(), WTFMove(receiver), WTFMove(transceiverBackend));
@@ -381,7 +381,7 @@ ExceptionOr<Ref<RTCRtpTransceiver>> GStreamerPeerConnectionBackend::addTransceiv
     GST_DEBUG_OBJECT(m_endpoint->pipeline(), "Creating new transceiver.");
     auto backends = result.releaseReturnValue();
     Ref peerConnection = m_peerConnection.get();
-    auto sender = RTCRtpSender::create(peerConnection, WTFMove(trackOrKind), WTFMove(backends.senderBackend));
+    auto sender = RTCRtpSender::create(peerConnection, WTFMove(trackOrKind), backends.senderBackend.releaseNonNull());
     auto receiver = createReceiver(WTFMove(backends.receiverBackend), sender->trackKind(), sender->trackId());
     auto transceiver = RTCRtpTransceiver::create(WTFMove(sender), WTFMove(receiver), WTFMove(backends.transceiverBackend));
     peerConnection->addInternalTransceiver(transceiver.copyRef());

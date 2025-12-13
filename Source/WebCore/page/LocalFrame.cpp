@@ -255,7 +255,7 @@ LocalFrame::~LocalFrame()
 
     disconnectOwnerElement();
 
-    while (auto destructionObserver = m_destructionObservers.takeAny())
+    while (RefPtr destructionObserver = m_destructionObservers.takeAny())
         destructionObserver->frameDestroyed();
 
     RefPtr localMainFrame = this->localMainFrame();
@@ -747,22 +747,24 @@ FloatSize LocalFrame::resizePageRectsKeepingRatio(const FloatSize& originalSize,
 const UserContentProvider* LocalFrame::userContentProvider() const
 {
     RefPtr document = this->document();
-    RefPtr documentLoader = document ? document->loader() : nullptr;
-    if (RefPtr userContentProvider = documentLoader ? documentLoader->preferences().userContentProvider : nullptr)
-        return userContentProvider.unsafeGet();
+    if (RefPtr documentLoader = document ? document->loader() : nullptr) {
+        if (auto* userContentProvider = documentLoader->preferences().userContentProvider.get())
+            return userContentProvider;
+    }
     if (RefPtr page = this->page())
-        return page->protectedUserContentProviderForFrame().unsafePtr();
+        return &page->userContentProviderForFrame();
     return nullptr;
 }
 
 UserContentProvider* LocalFrame::userContentProvider()
 {
     RefPtr document = this->document();
-    RefPtr documentLoader = document ? document->loader() : nullptr;
-    if (RefPtr userContentProvider = documentLoader ? documentLoader->preferences().userContentProvider : nullptr)
-        return userContentProvider.unsafeGet();
+    if (RefPtr documentLoader = document ? document->loader() : nullptr) {
+        if (auto* userContentProvider = documentLoader->preferences().userContentProvider.get())
+            return userContentProvider;
+    }
     if (RefPtr page = this->page())
-        return page->protectedUserContentProviderForFrame().unsafePtr();
+        return &page->userContentProviderForFrame();
     return nullptr;
 }
 
@@ -893,8 +895,8 @@ void LocalFrame::willDetachPage()
     if (RefPtr parent = dynamicDowncast<LocalFrame>(tree().parent()))
         parent->loader().checkLoadComplete();
 
-    for (auto& observer : m_destructionObservers)
-        observer.willDetachPage();
+    for (Ref observer : m_destructionObservers)
+        observer->willDetachPage();
 
     // FIXME: It's unclear as to why this is called more than once, but it is,
     // so page() could be NULL.
@@ -1676,7 +1678,7 @@ bool LocalFrame::frameCanCreatePaymentSession() const
 #endif
 }
 
-RefPtr<SecurityOrigin> LocalFrame::frameDocumentSecurityOrigin() const
+SecurityOrigin* LocalFrame::frameDocumentSecurityOrigin() const
 {
     if (RefPtr document = this->document())
         return &document->securityOrigin();

@@ -28,8 +28,10 @@
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/URL.h>
-#include "DOMAudioSession.h"
 #include "StringifyThis"
+#include "DOMAudioSession.h"
+#include <wtf/HashSet.h>
+#include <wtf/URL.h>
 
 namespace WebCore {
 
@@ -49,10 +51,11 @@ public:
     URL mainFrameURLChange = { };
     bool isAutofocusProcessed = { };
     bool userDidInteractWithPage = { };
+    StringifyThis anotherOne = { };
 #if ENABLE(DOM_AUDIO_SESSION)
     WebCore::DOMAudioSessionType audioSessionType = { };
 #endif
-    StringifyThis anotherOne = { };
+    HashSet<URL> multipleHeaders = { };
 
 private:
     TestSyncData() = default;
@@ -60,10 +63,11 @@ private:
         URL
       , bool
       , bool
+      , StringifyThis
 #if ENABLE(DOM_AUDIO_SESSION)
       , WebCore::DOMAudioSessionType
 #endif
-      , StringifyThis
+      , HashSet<URL>
     );
 };
 
@@ -75,16 +79,18 @@ enum class TestSyncDataType : uint8_t {
     IsAutofocusProcessed = 2,
     UserDidInteractWithPage = 3,
     AnotherOne = 4,
+    MultipleHeaders = 5,
 };
 
 static const TestSyncDataType allTestSyncDataTypes[] = {
     TestSyncDataType::MainFrameURLChange
     , TestSyncDataType::IsAutofocusProcessed
     , TestSyncDataType::UserDidInteractWithPage
+    , TestSyncDataType::AnotherOne
 #if ENABLE(DOM_AUDIO_SESSION)
     , TestSyncDataType::AudioSessionType
 #endif
-    , TestSyncDataType::AnotherOne
+    , TestSyncDataType::MultipleHeaders
 };
 
 #if !ENABLE(DOM_AUDIO_SESSION)
@@ -96,7 +102,8 @@ using TestSyncDataVariant = Variant<
     URL,
     bool,
     bool,
-    StringifyThis
+    StringifyThis,
+    HashSet<URL>
 >;
 
 struct TestSyncSerializationData {

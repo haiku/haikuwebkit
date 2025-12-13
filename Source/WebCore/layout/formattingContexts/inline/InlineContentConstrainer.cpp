@@ -288,7 +288,7 @@ void InlineContentConstrainer::initialize()
 
         layoutRange.start = InlineFormattingUtils::leadingInlineItemPositionForNextLine(lineLayoutResult.inlineItemRange.end, previousLineEnd, !lineLayoutResult.floatContent.hasIntrusiveFloat.isEmpty() || !lineLayoutResult.floatContent.placedFloats.isEmpty(), layoutRange.end);
         previousLineEnd = layoutRange.start;
-        isFirstFormattedLineCandidate &= !lineLayoutResult.hasInflowContent();
+        isFirstFormattedLineCandidate &= !lineLayoutResult.hasContentfulInFlowContent();
         previousLine = buildPreviousLine(lineIndex, lineLayoutResult);
         lineIndex++;
     }

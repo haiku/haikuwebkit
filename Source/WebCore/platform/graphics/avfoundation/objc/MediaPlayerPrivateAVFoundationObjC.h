@@ -310,7 +310,7 @@ private:
     MediaPlayer::WirelessPlaybackTargetType wirelessPlaybackTargetType() const final;
     bool wirelessVideoPlaybackDisabled() const final;
     void setWirelessVideoPlaybackDisabled(bool) final;
-    bool canPlayToWirelessPlaybackTarget() const final { return true; }
+    OptionSet<MediaPlaybackTargetType> supportedPlaybackTargetTypes() const final;
     void updateDisableExternalPlayback();
 #endif
 

@@ -87,71 +87,6 @@ template<typename TargetType> TargetType fromCSSValue(const CSSValue& value)
     return fromCSSValueID<TargetType>(value.valueID());
 }
 
-class TypeDeducingCSSValueMapper {
-public:
-    TypeDeducingCSSValueMapper(const Style::BuilderState& builderState, const CSSValue& value)
-        : m_builderState { builderState }
-        , m_value { value }
-    {
-    }
-
-    template<typename TargetType> operator TargetType() const
-    {
-        return fromCSSValue<TargetType>(m_value);
-    }
-
-    operator const CSSPrimitiveValue&() const
-    {
-        return downcast<CSSPrimitiveValue>(m_value).unsafeGet();
-    }
-
-    operator const CSSValue&() const
-    {
-        return m_value;
-    }
-
-    operator unsigned short() const
-    {
-        return protectedNumericValue()->resolveAsNumber<unsigned short>(m_builderState->cssToLengthConversionData());
-    }
-
-    operator int() const
-    {
-        return protectedNumericValue()->resolveAsNumber<int>(m_builderState->cssToLengthConversionData());
-    }
-
-    operator unsigned() const
-    {
-        return protectedNumericValue()->resolveAsNumber<unsigned>(m_builderState->cssToLengthConversionData());
-    }
-
-    operator float() const
-    {
-        return protectedNumericValue()->resolveAsNumber<float>(m_builderState->cssToLengthConversionData());
-    }
-
-    operator double() const
-    {
-        return protectedNumericValue()->resolveAsNumber<double>(m_builderState->cssToLengthConversionData());
-    }
-
-private:
-    Ref<const CSSPrimitiveValue> protectedNumericValue() const
-    {
-        Ref value = downcast<const CSSPrimitiveValue>(m_value);
-        ASSERT(value->isNumberOrInteger());
-        return value;
-    }
-
-    const CheckedRef<const Style::BuilderState> m_builderState;
-    Ref<const CSSValue> m_value;
-};
-
-inline TypeDeducingCSSValueMapper fromCSSValueDeducingType(const Style::BuilderState& builderState, const CSSValue& value)
-{
-    return { builderState, value };
-}
-
 #define EMIT_TO_CSS_SWITCH_CASE(VALUE) case TYPE::VALUE: return CSSValue##VALUE;
 #define EMIT_FROM_CSS_SWITCH_CASE(VALUE) case CSSValue##VALUE: return TYPE::VALUE;
 #define EMIT_VALUE_REPRESENTATION_CSS_SWITCH_CASE(VALUE) case WebCore::TYPE::VALUE: return visitor(CSS::Keyword::VALUE { });
@@ -234,7 +169,6 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH
-
 
 constexpr CSSValueID toCSSValueID(BorderStyle e)
 {

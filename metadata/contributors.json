@@ -1951,6 +1951,17 @@
    },
    {
       "emails" : [
+         "cobrien22@apple.com",
+         "connor.p.obrien@gmail.com"
+      ],
+      "github" : "connorpobrien",
+      "name" : "Connor O'Brien",
+      "nicks" : [
+         "connorpobrien"
+      ]
+   },
+   {
+      "emails" : [
          "conrad_shultz@apple.com"
       ],
       "github" : "shultzc",

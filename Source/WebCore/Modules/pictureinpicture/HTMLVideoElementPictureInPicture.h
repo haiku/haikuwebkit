@@ -50,7 +50,8 @@ class HTMLVideoElementPictureInPicture
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(HTMLVideoElementPictureInPicture);
 public:
     HTMLVideoElementPictureInPicture(HTMLVideoElement&);
-    static HTMLVideoElementPictureInPicture* from(HTMLVideoElement&);
+    static HTMLVideoElementPictureInPicture& from(HTMLVideoElement&);
+    static Ref<HTMLVideoElementPictureInPicture> protectedFrom(HTMLVideoElement&);
     static void providePictureInPictureTo(HTMLVideoElement&);
     virtual ~HTMLVideoElementPictureInPicture();
 
@@ -72,6 +73,10 @@ public:
     ASCIILiteral logClassName() const final { return "HTMLVideoElementPictureInPicture"_s; }
     WTFLogChannel& logChannel() const final;
 #endif
+
+    // PictureInPictureObserver.
+    void ref() const final;
+    void deref() const final;
 
 private:
     static ASCIILiteral supplementName() { return "HTMLVideoElementPictureInPicture"_s; }

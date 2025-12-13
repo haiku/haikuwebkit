@@ -135,7 +135,7 @@ SOFT_LINK_CLASS(ContactsUI, CNContactPickerViewController)
 
 - (id<WKContactPickerDelegate>)delegate
 {
-    return _delegate.get().unsafeGet();
+    return _delegate.getAutoreleased();
 }
 
 - (void)setDelegate:(id<WKContactPickerDelegate>)delegate

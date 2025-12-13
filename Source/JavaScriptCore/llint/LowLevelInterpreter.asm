@@ -1957,6 +1957,7 @@ if ARM64E
     jmp t5, YarrEntryPtrTag
     _vmEntryToYarrJITAfter:
 end
+    move cfr, sp
     functionEpilogue()
     ret
 

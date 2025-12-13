@@ -30,6 +30,7 @@
 #include "GridLayout.h"
 #include "PlacedGridItem.h"
 #include "UnplacedGridItem.h"
+#include <wtf/Assertions.h>
 #include <wtf/Range.h>
 
 namespace WebCore {
@@ -107,23 +108,61 @@ void ImplicitGrid::insertDefiniteRowItem(const UnplacedGridItem& unplacedGridIte
     // FIXME: Support multi-row spans
     ASSERT(normalizedRowEnd - normalizedRowStart == 1);
 
-    std::optional<size_t> columnPosition;
-    if (autoFlowOptions.strategy == PackingStrategy::Dense) {
-        // Dense packing: always start searching from column 0
-        columnPosition = findFirstAvailableColumnPosition(normalizedRowStart, normalizedRowEnd, columnSpan, 0);
-    } else {
+    auto findColumnPosition = [&]() -> std::optional<size_t> {
+        if (autoFlowOptions.strategy == PackingStrategy::Dense) {
+            // Dense packing: always start searching from column 0
+            return findFirstAvailableColumnPosition(normalizedRowStart, normalizedRowEnd, columnSpan, 0);
+        }
         // Sparse packing: use per-row cursors to maintain placement order
         // For multi-row items, use the maximum cursor position across all spanned rows
+        ASSERT(autoFlowOptions.strategy == PackingStrategy::Sparse);
         size_t startSearchColumn = 0;
         for (size_t row = normalizedRowStart; row < normalizedRowEnd; ++row)
             startSearchColumn = std::max(startSearchColumn, rowCursors->get(row));
-        columnPosition = findFirstAvailableColumnPosition(normalizedRowStart, normalizedRowEnd, columnSpan, startSearchColumn);
-    }
+        return findFirstAvailableColumnPosition(normalizedRowStart, normalizedRowEnd, columnSpan, startSearchColumn);
+    };
+
+    auto growGridToFit = [&](size_t columnSpan, size_t normalizedRowStart, size_t normalizedRowEnd, size_t currentColumnsCount) {
+        // Find the last occupied column in the spanned rows
+        size_t lastOccupiedColumn = 0;
+        for (size_t row = normalizedRowStart; row < normalizedRowEnd; ++row) {
+            for (size_t column = currentColumnsCount; column > 0; --column) {
+                if (!m_gridMatrix[row][column - 1].isEmpty()) {
+                    lastOccupiedColumn = std::max(lastOccupiedColumn, column - 1);
+                    break;
+                }
+            }
+        }
+
+        size_t minimumColumnsNeeded = lastOccupiedColumn + 1 + columnSpan;
+        for (auto& row : m_gridMatrix)
+            row.resize(minimumColumnsNeeded);
+    };
+
+    auto columnPosition = findColumnPosition();
 
     if (!columnPosition) {
-        ASSERT_NOT_IMPLEMENTED_YET();
-        // FIXME: Handle implicit grid growth when no space is found within current grid
-        return;
+        growGridToFit(columnSpan, normalizedRowStart, normalizedRowEnd, columnsCount());
+
+        // Retry finding position in the grown grid
+        columnPosition = findColumnPosition();
+#ifndef NDEBUG
+        ASSERT(columnPosition); // Must succeed after growing
+
+        // Verify the found position doesn't overlap with existing items
+        ASSERT(isCellRangeEmpty(*columnPosition, *columnPosition + columnSpan, normalizedRowStart, normalizedRowEnd),
+            "After grid growth, placed item overlaps with occupied cells.");
+
+        auto verifyHasEmptyLastColumn = [&]() {
+            for (size_t row = 0; row < m_gridMatrix.size(); ++row) {
+                if (!m_gridMatrix[row].last().isEmpty())
+                    return false;
+            }
+            ASSERT_NOT_REACHED();
+            return true;
+        };
+        verifyHasEmptyLastColumn();
+#endif
     }
 
     insertItemInArea(unplacedGridItem, *columnPosition, *columnPosition + columnSpan, normalizedRowStart, normalizedRowEnd);
@@ -138,16 +177,16 @@ std::optional<size_t> ImplicitGrid::findFirstAvailableColumnPosition(size_t rowS
 {
     auto currentColumnsCount = columnsCount();
 
-    // Validate we can fit the span within the grid
-    if (columnSpan > currentColumnsCount)
-        ASSERT_NOT_IMPLEMENTED_YET();
+    // If we can't fit the span starting from the search position, signal that we need to grow the grid
+    if (startSearchColumn + columnSpan > currentColumnsCount)
+        return std::nullopt;
 
     // Search within existing grid bounds
     for (size_t columnStart = startSearchColumn; columnStart <= currentColumnsCount - columnSpan; ++columnStart) {
         if (isCellRangeEmpty(columnStart, columnStart + columnSpan, rowStart, rowEnd))
             return columnStart;
     }
-    // FIXME: Support implicit grid growth
+    // If we are unable to find a valid position, signal that we need to grow the grid.
     return std::nullopt;
 }
 

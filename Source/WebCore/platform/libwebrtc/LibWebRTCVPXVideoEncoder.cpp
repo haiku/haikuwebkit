@@ -28,6 +28,7 @@
 
 #if USE(LIBWEBRTC) && PLATFORM(COCOA)
 
+#include "LibWebRTCMacros.h"
 #include "VideoFrameLibWebRTC.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/TZoneMallocInlines.h>

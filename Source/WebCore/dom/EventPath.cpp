@@ -287,8 +287,11 @@ Vector<Ref<EventTarget>> EventPath::computePathTreatingAllShadowRootsAsOpen() co
     auto pathSize = m_path.size();
     RELEASE_ASSERT(pathSize);
     path.reserveInitialCapacity(pathSize);
-    for (auto& currentContext : m_path)
+    for (auto& currentContext : m_path) {
+        if (auto* currentNode = currentContext.node(); currentNode && currentNode->hasBeenInUserAgentShadowTree())
+            continue;
         path.append(*currentContext.currentTarget());
+    }
     return path;
 }
 

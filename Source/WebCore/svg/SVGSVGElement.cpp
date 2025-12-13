@@ -832,7 +832,7 @@ void SVGSVGElement::resumeFromDocumentSuspension()
 
 // getElementById on SVGSVGElement is restricted to only the child subtree defined by the <svg> element.
 // See http://www.w3.org/TR/SVG11/struct.html#InterfaceSVGSVGElement
-Element* SVGSVGElement::getElementById(const AtomString& id)
+RefPtr<Element> SVGSVGElement::getElementById(const AtomString& id)
 {
     if (id.isNull())
         return nullptr;
@@ -847,7 +847,7 @@ Element* SVGSVGElement::getElementById(const AtomString& id)
 
     RefPtr element = treeScope().getElementById(id);
     if (element && element->isDescendantOf(*this))
-        return element.unsafeGet();
+        return element;
     if (treeScope().containsMultipleElementsWithId(id)) {
         for (auto& element : *treeScope().getAllElementsById(id)) {
             if (element->isDescendantOf(*this))

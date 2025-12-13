@@ -458,12 +458,14 @@ void writeSVGResourceContainer(TextStream& ts, const LegacyRenderSVGResourceCont
         ts << '\n';
         // Creating a placeholder filter which is passed to the builder.
         Ref filterElement = filter.filterElement();
-        FloatRect dummyRect;
-        FloatSize dummyScale(1, 1);
-        auto dummyFilter = SVGFilterRenderer::create(filterElement.ptr(), filterElement, FilterRenderingMode::Software, dummyScale, dummyRect, dummyRect, NullGraphicsContext());
-        if (dummyFilter) {
+        auto placeholderFilter = SVGFilterRenderer::create(filterElement.ptr(), filterElement, {
+                .referenceBox = { },
+                .filterRegion = { },
+                .scale = { 1, 1},
+            }, FilterRenderingMode::Software, NullGraphicsContext());
+        if (placeholderFilter) {
             TextStream::IndentScope indentScope(ts);
-            dummyFilter->externalRepresentation(ts, FilterRepresentation::TestOutput);
+            placeholderFilter->externalRepresentation(ts, FilterRepresentation::TestOutput);
         }
     } else if (resource.resourceType() == ClipperResourceType) {
         const auto& clipper = static_cast<const LegacyRenderSVGResourceClipper&>(resource);

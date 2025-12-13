@@ -475,15 +475,12 @@ test/built-ins/Uint8Array/prototype/setFromBase64/trailing-garbage-empty.js:
 test/built-ins/Uint8Array/prototype/setFromBase64/trailing-garbage.js:
   default: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
   strict mode: 'SyntaxError: Uint8Array.prototype.setFromBase64 requires a valid base64 string'
-test/intl402/DateTimeFormat/constructor-options-calendar-islamic-fallback.js:
-  default: "Test262Error: no valid fallback for 'islamic' calendar option Expected SameValue(«false», «true») to be true"
-  strict mode: "Test262Error: no valid fallback for 'islamic' calendar option Expected SameValue(«false», «true») to be true"
 test/intl402/DateTimeFormat/prototype/format/temporal-objects-format-with-era.js:
   default: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
   strict mode: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
 test/intl402/DateTimeFormat/prototype/format/temporal-objects-not-overlapping-options.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
+  default: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
+  strict mode: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
 test/intl402/DateTimeFormat/prototype/format/temporal-plaindate-formatting-datetime-style.js:
   default: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
   strict mode: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
@@ -493,36 +490,39 @@ test/intl402/DateTimeFormat/prototype/format/temporal-plaindatetime-formatting-d
 test/intl402/DateTimeFormat/prototype/format/temporal-plaintime-formatting-datetime-style.js:
   default: 'TypeError: Temporal.PlainTime.prototype.valueOf must not be called. To compare PlainTime values, use Temporal.PlainTime.compare'
   strict mode: 'TypeError: Temporal.PlainTime.prototype.valueOf must not be called. To compare PlainTime values, use Temporal.PlainTime.compare'
-test/intl402/DateTimeFormat/prototype/format/temporal-plainyearmonth-formatting-datetime-style.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2222, 1, \"gregory\", 30)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2222, 1, \"gregory\", 30)')"
 test/intl402/DateTimeFormat/prototype/format/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
+test/intl402/DateTimeFormat/prototype/formatRange/fails-on-distinct-temporal-types.js:
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, 'America/Kentucky/Louisville')')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, 'America/Kentucky/Louisville')')"
 test/intl402/DateTimeFormat/prototype/formatRange/temporal-objects-format-with-era.js:
   default: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
   strict mode: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
 test/intl402/DateTimeFormat/prototype/formatRange/temporal-objects-not-overlapping-options.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
+  default: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
+  strict mode: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
 test/intl402/DateTimeFormat/prototype/formatRange/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
 test/intl402/DateTimeFormat/prototype/formatRange/to-datetime-formattable-with-different-arg-kinds.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, \"UTC\")')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, \"UTC\")')"
+test/intl402/DateTimeFormat/prototype/formatRangeToParts/fails-on-distinct-temporal-types.js:
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, 'America/Kentucky/Louisville')')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, 'America/Kentucky/Louisville')')"
 test/intl402/DateTimeFormat/prototype/formatRangeToParts/temporal-objects-format-with-era.js:
   default: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
   strict mode: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
 test/intl402/DateTimeFormat/prototype/formatRangeToParts/temporal-objects-not-overlapping-options.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
+  default: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
+  strict mode: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
 test/intl402/DateTimeFormat/prototype/formatRangeToParts/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
 test/intl402/DateTimeFormat/prototype/formatRangeToParts/to-datetime-formattable-with-different-arg-kinds.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(1970, 1)')"
+  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, \"UTC\")')"
+  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, \"UTC\")')"
 test/intl402/DateTimeFormat/prototype/formatToParts/dangi-calendar-dates.js:
   default: "ReferenceError: Can't find variable: Temporal"
   strict mode: "ReferenceError: Can't find variable: Temporal"
@@ -530,8 +530,8 @@ test/intl402/DateTimeFormat/prototype/formatToParts/temporal-objects-format-with
   default: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
   strict mode: 'TypeError: Temporal.PlainDate.prototype.valueOf must not be called. To compare PlainDate values, use Temporal.PlainDate.compare'
 test/intl402/DateTimeFormat/prototype/formatToParts/temporal-objects-not-overlapping-options.js:
-  default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
-  strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.PlainYearMonth(2024, 9)')"
+  default: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
+  strict mode: 'TypeError: Temporal.PlainDateTime.prototype.valueOf must not be called. To compare PlainDateTime values, use Temporal.PlainDateTime.compare'
 test/intl402/DateTimeFormat/prototype/formatToParts/temporal-zoneddatetime-not-supported.js:
   default: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
   strict mode: "TypeError: undefined is not a constructor (evaluating 'new Temporal.ZonedDateTime(0n, timeZone)')"
@@ -541,9 +541,6 @@ test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DisplayNames.js:
 test/intl402/Locale/extensions-grandfathered.js:
   default: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"fr-Cyrl-FR-gaulish-u-nu-latn"», «"fr-Cyrl-FR-u-nu-latn"») to be true'
-test/intl402/NumberFormat/currency-digits-nonstandard-notation.js:
-  default: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"
-  strict mode: "Test262Error: Didn't get correct maximumFractionDigits for JPY in engineering notation. Expected SameValue(«0», «3») to be true"
 test/intl402/NumberFormat/prototype/format/unit-ja-JP.js:
   default: 'Test262Error: Expected SameValue(«"時速-987キロメートル"», «"時速 -987 キロメートル"») to be true'
   strict mode: 'Test262Error: Expected SameValue(«"時速-987キロメートル"», «"時速 -987 キロメートル"») to be true'
@@ -710,10 +707,6 @@ test/language/identifiers/start-unicode-17.0.0-escaped.js:
 test/language/identifiers/start-unicode-17.0.0.js:
   default: "SyntaxError: Invalid character '\\u088f'"
   strict mode: "SyntaxError: Invalid character '\\u088f'"
-test/language/module-code/ambiguous-export-bindings/namespace-unambiguous-if-export-star-as-from-and-import-star-as-and-export.js:
-  module: "SyntaxError: Importing binding name 'foo' cannot be resolved due to ambiguous multiple bindings."
-test/language/module-code/ambiguous-export-bindings/namespace-unambiguous-if-import-star-as-and-export.js:
-  module: "SyntaxError: Importing binding name 'foo' cannot be resolved due to ambiguous multiple bindings."
 test/language/module-code/top-level-await/async-module-does-not-block-sibling-modules.js:
   module: 'Test262Error: Expected SameValue(«true», «false») to be true'
 test/language/module-code/top-level-await/dynamic-import-of-waiting-module.js:

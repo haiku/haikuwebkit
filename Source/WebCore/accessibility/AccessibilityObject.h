@@ -273,7 +273,7 @@ public:
     Element* element() const final;
     Node* node() const override { return nullptr; }
     RenderObject* renderer() const override { return nullptr; }
-    RenderObject* rendererOrNearestAncestor() const;
+    CheckedPtr<RenderObject> rendererOrNearestAncestor() const;
     // Resolves the computed style if necessary (and safe to do so).
     const RenderStyle* style() const;
 
@@ -408,7 +408,7 @@ public:
 
     // Methods for determining accessibility text.
     bool isARIAStaticText() const { return ariaRoleAttribute() == AccessibilityRole::StaticText; }
-    virtual Vector<Vector<AXID>> stitchGroups() const { return { }; }
+    virtual Vector<AXStitchGroup> stitchGroups() const { return { }; }
     // Whether this object should cache a string value when an isolated object is created for it.
     bool shouldCacheStringValue() const;
     String stringValue() const override { return { }; }

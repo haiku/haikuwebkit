@@ -156,6 +156,19 @@ template<auto R, typename V, typename Result> struct Evaluation<LengthPercentage
     }
 };
 
+// MARK: - NumberOrPercentageResolvedToNumber
+
+template<CSS::Range nR, CSS::Range pR, typename V, typename Result> struct Evaluation<NumberOrPercentageResolvedToNumber<nR, pR, V>, Result> {
+    constexpr auto operator()(const NumberOrPercentageResolvedToNumber<nR, pR, V>& value) -> Result
+    {
+        return evaluate<Result>(value.value);
+    }
+    constexpr auto operator()(const NumberOrPercentageResolvedToNumber<nR, pR, V>& value, Result) -> Result
+    {
+        return evaluate<Result>(value.value);
+    }
+};
+
 // MARK: - SpaceSeparatedPoint
 
 template<typename T> struct Evaluation<SpaceSeparatedPoint<T>, FloatPoint> {

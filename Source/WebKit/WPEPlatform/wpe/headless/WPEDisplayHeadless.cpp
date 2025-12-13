@@ -26,7 +26,6 @@
 #include "config.h"
 #include "WPEDisplayHeadless.h"
 
-#include "WPEBufferDMABufFormats.h"
 #include "WPEDRMDevicePrivate.h"
 #include "WPEExtensions.h"
 #include "WPEToplevelHeadless.h"

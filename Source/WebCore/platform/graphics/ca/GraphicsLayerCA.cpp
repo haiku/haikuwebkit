@@ -1452,6 +1452,18 @@ void GraphicsLayerCA::setContentsToModelContext(Ref<ModelContext> modelContext, 
 }
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+void GraphicsLayerCA::removeModelContents()
+{
+    if (!m_contentsLayer)
+        return;
+
+    m_contentsLayer = nullptr;
+    noteSublayersChanged();
+    noteLayerPropertyChanged(ContentsPlatformLayerChanged);
+}
+#endif
+
 void GraphicsLayerCA::setContentsToVideoElement(HTMLVideoElement& videoElement, ContentsLayerPurpose purpose)
 {
 #if HAVE(AVKIT)

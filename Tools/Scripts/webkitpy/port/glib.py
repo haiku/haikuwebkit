@@ -130,9 +130,6 @@ class GLibPort(Port):
         # Disable SIMD optimization in GStreamer's ORC. Some bots (WPE release) crash in ORC's optimizations.
         environment['ORC_CODE'] = 'backup'
 
-        # Current LibRice version in SDK emits errors which seem to be debug leftover statements.
-        environment['RICE_LOG'] = 'none'
-
         if self.get_option("leaks"):
             # Turn off GLib memory optimisations https://wiki.gnome.org/Valgrind.
             environment['G_SLICE'] = 'always-malloc'

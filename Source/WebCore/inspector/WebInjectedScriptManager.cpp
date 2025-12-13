@@ -43,6 +43,12 @@ WebInjectedScriptManager::WebInjectedScriptManager(InspectorEnvironment& environ
 {
 }
 
+WebInjectedScriptManager::~WebInjectedScriptManager()
+{
+    if (isConnected())
+        disconnect();
+}
+
 void WebInjectedScriptManager::connect()
 {
     InjectedScriptManager::connect();

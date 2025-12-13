@@ -54,6 +54,7 @@ public:
     static unsigned numberOfCPUPaintingThreads();
     static unsigned numberOfGPUPaintingThreads();
     static bool shouldUseLinearTileTextures();
+    static bool shouldUseVivanteSuperTiledTileTextures();
 
     bool useThreadedRendering() const { return m_workerPool; }
 

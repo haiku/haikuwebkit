@@ -33,9 +33,11 @@
 namespace WebCore {
 
 enum class MediaPlaybackTargetType : uint8_t {
-    AVOutputContext,
-    Mock,
-    Serialized,
+    None = 0,
+    AVOutputContext = 1 << 0,
+    Mock = 1 << 1,
+    WirelessPlayback = 1 << 2,
+    Serialized = 1 << 3,
 };
 
 class MediaPlaybackTarget : public ThreadSafeRefCounted<MediaPlaybackTarget> {
@@ -45,6 +47,7 @@ public:
     virtual ~MediaPlaybackTarget() = default;
 
     Type type() const { return m_type; }
+    virtual Type targetType() const { return type(); }
 
     virtual bool hasActiveRoute() const = 0;
     virtual String deviceName() const = 0;

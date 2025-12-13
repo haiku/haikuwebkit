@@ -549,10 +549,10 @@ void CDMInstanceSessionThunder::requestLicense(LicenseType licenseType, KeyGroup
         m_challengeCallbacks.append(WTFMove(generateChallenge));
 }
 
-void CDMInstanceSessionThunder::sessionFailure()
+void CDMInstanceSessionThunder::sessionChanged(SessionChangedResult result)
 {
     for (auto& sessionChangedCallback : m_sessionChangedCallbacks)
-        sessionChangedCallback(false, nullptr);
+        sessionChangedCallback(result == SessionChangedResult::Success, nullptr);
     m_sessionChangedCallbacks.clear();
 }
 
@@ -594,7 +594,7 @@ void CDMInstanceSessionThunder::updateLicense(const String& sessionID, LicenseTy
     });
     auto responseData = response->extractData();
     if (!m_session || m_sessionID.isEmpty() || opencdm_session_update(m_session->get(), responseData.span().data(), responseData.size()))
-        sessionFailure();
+        sessionChanged(SessionChangedResult::Failure);
 }
 
 void CDMInstanceSessionThunder::loadSession(LicenseType, const String& sessionID, const String&, LoadSessionCallback&& callback)
@@ -639,7 +639,7 @@ void CDMInstanceSessionThunder::loadSession(LicenseType, const String& sessionID
     });
     if (!m_session || m_sessionID.isEmpty() || opencdm_session_load(m_session->get())) {
         GST_DEBUG("loading failed");
-        sessionFailure();
+        sessionChanged(SessionChangedResult::Failure);
     }
 }
 
@@ -687,7 +687,14 @@ void CDMInstanceSessionThunder::removeSessionData(const String& sessionID, Licen
         }
     });
     if (!m_session || m_sessionID.isEmpty() || opencdm_session_remove(m_session->get()))
-        sessionFailure();
+        sessionChanged(SessionChangedResult::Failure);
+    else
+        sessionChanged(SessionChangedResult::Success);
+    m_session = BoxPtr<OpenCDMSession>();
+    auto instance = cdmInstanceThunder();
+    if (instance)
+        instance->unrefAllKeysFrom(m_keyStore);
+    m_keyStore.clear();
 }
 
 void CDMInstanceSessionThunder::storeRecordOfKeyUsage(const String&)

@@ -185,6 +185,7 @@ struct WKAppPrivacyReportTestingData {
 
 #if defined(ENABLE_THREADED_ANIMATIONS) && ENABLE_THREADED_ANIMATIONS
 - (NSString *)_animationStackForLayerWithID:(unsigned long long)layerID;
+- (NSString *)_progressBasedTimelinesForScrollingNodeID:(uint64_t)scrollingNodeID processID:(uint64_t)processID;
 #endif
 
 @end

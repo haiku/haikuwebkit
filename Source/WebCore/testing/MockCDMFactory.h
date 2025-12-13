@@ -41,15 +41,6 @@
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
-class MockCDM;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::MockCDM> : std::true_type { };
-}
-
-namespace WebCore {
 
 class MockCDMFactory : public RefCounted<MockCDMFactory>, public CDMFactory {
 public:
@@ -114,6 +105,7 @@ private:
 
 class MockCDM : public CDMPrivate {
     WTF_MAKE_TZONE_ALLOCATED(MockCDM);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MockCDM);
 public:
     MockCDM(WeakPtr<MockCDMFactory>, const String&);
 
@@ -145,13 +137,15 @@ private:
 
 class MockCDMInstance : public CDMInstance, public CanMakeWeakPtr<MockCDMInstance> {
 public:
-    MockCDMInstance(WeakPtr<MockCDM>);
+    static Ref<MockCDMInstance> create(MockCDM&);
 
     MockCDMFactory* factory() const { return m_cdm ? m_cdm->factory() : nullptr; }
     bool distinctiveIdentifiersAllowed() const { return m_distinctiveIdentifiersAllowed; }
     bool persistentStateAllowed() const { return m_persistentStateAllowed; }
 
 private:
+    explicit MockCDMInstance(MockCDM&);
+
     ImplementationType implementationType() const final { return ImplementationType::Mock; }
     void initializeWithConfiguration(const MediaKeySystemConfiguration&, AllowDistinctiveIdentifiers, AllowPersistentState, SuccessCallback&&) final;
     void setServerCertificate(Ref<SharedBuffer>&&, SuccessCallback&&) final;

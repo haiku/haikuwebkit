@@ -188,6 +188,7 @@ using ClientNodeAttributesMap = WeakHashMap<Node, HashMap<String, String>, WeakP
 struct TraversalContext {
     const ClientNodeAttributesMap clientNodeAttributes;
     const TextAndSelectedRangeMap visibleText;
+    const WeakHashSet<Node, WeakPtrImplWithEventTargetData> nodesToSkip;
     const std::optional<FloatRect> rectInRootView;
     unsigned onlyCollectTextAndLinksCount { 0 };
     bool mergeParagraphs { false };
@@ -576,6 +577,9 @@ static inline bool shouldIncludeNodeIdentifier(NodeIdentifierInclusion inclusion
 
 static inline void extractRecursive(Node& node, Item& parentItem, TraversalContext& context)
 {
+    if (context.nodesToSkip.contains(node))
+        return;
+
     std::optional<Item> item;
     std::optional<Editable> editable;
     std::optional<URL> linkURL;
@@ -865,9 +869,16 @@ Item extractItem(Request&& request, Page& page)
 
         auto includeTextInAutoFilledControls = request.includeTextInAutoFilledControls ? IncludeTextInAutoFilledControls::Yes : IncludeTextInAutoFilledControls::No;
 
+        WeakHashSet<Node, WeakPtrImplWithEventTargetData> nodesToSkip;
+        for (auto identifier : request.handleIdentifiersOfNodesToSkip) {
+            if (RefPtr node = nodeFromJSHandle(identifier))
+                nodesToSkip.add(node.releaseNonNull());
+        }
+
         TraversalContext context {
             .clientNodeAttributes = WTFMove(clientNodeAttributes),
             .visibleText = collectText(*extractionRootNode, includeTextInAutoFilledControls),
+            .nodesToSkip = WTFMove(nodesToSkip),
             .rectInRootView = WTFMove(request.collectionRectInRootView),
             .onlyCollectTextAndLinksCount = 0,
             .mergeParagraphs = request.mergeParagraphs,

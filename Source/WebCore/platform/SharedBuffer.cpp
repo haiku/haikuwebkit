@@ -76,7 +76,7 @@ std::optional<Ref<FragmentedSharedBuffer>> FragmentedSharedBuffer::fromIPCData(I
         if (useUnixDomainSockets || size < minimumPageSize) {
             SharedBufferBuilder builder;
             builder.appendSpans(data);
-            return builder.take();
+            return builder.takeBuffer();
         }
         return std::nullopt;
     }, [](std::optional<WebCore::SharedMemoryHandle>&& handle) -> std::optional<Ref<FragmentedSharedBuffer>> {
@@ -601,7 +601,7 @@ RefPtr<ArrayBuffer> SharedBufferBuilder::tryCreateArrayBuffer() const
     return RefPtr { m_buffer }->tryCreateArrayBuffer();
 }
 
-Ref<FragmentedSharedBuffer> SharedBufferBuilder::take()
+Ref<FragmentedSharedBuffer> SharedBufferBuilder::takeBuffer()
 {
     if (isEmpty())
         return SharedBuffer::create();
@@ -611,16 +611,16 @@ Ref<FragmentedSharedBuffer> SharedBufferBuilder::take()
     return buffer;
 }
 
-Ref<SharedBuffer> SharedBufferBuilder::takeAsContiguous()
+Ref<SharedBuffer> SharedBufferBuilder::takeBufferAsContiguous()
 {
-    return take()->makeContiguous();
+    return takeBuffer()->makeContiguous();
 }
 
-RefPtr<ArrayBuffer> SharedBufferBuilder::takeAsArrayBuffer()
+RefPtr<ArrayBuffer> SharedBufferBuilder::takeBufferAsArrayBuffer()
 {
     if (isEmpty())
         return ArrayBuffer::tryCreate();
-    return take()->tryCreateArrayBuffer();
+    return takeBuffer()->tryCreateArrayBuffer();
 }
 
 void SharedBufferBuilder::updateBufferIfNeeded() const

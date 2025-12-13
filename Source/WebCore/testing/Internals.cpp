@@ -95,6 +95,7 @@
 #include "FetchRequest.h"
 #include "FetchResponse.h"
 #include "File.h"
+#include "FileSystemHandle.h"
 #include "FloatQuad.h"
 #include "FontCache.h"
 #include "FormController.h"
@@ -219,6 +220,7 @@
 #include "ScriptController.h"
 #include "ScriptExecutionContextInlines.h"
 #include "ScriptedAnimationController.h"
+#include "ScrollTimeline.h"
 #include "ScrollToOptions.h"
 #include "ScrollbarsControllerMock.h"
 #include "ScrollingCoordinator.h"
@@ -569,9 +571,9 @@ static bool markerTypesFrom(const String& markerType, OptionSet<DocumentMarkerTy
     return true;
 }
 
-static std::unique_ptr<PrintContext>& printContextForTesting()
+static RefPtr<PrintContext>& printContextForTesting()
 {
-    static NeverDestroyed<std::unique_ptr<PrintContext>> context;
+    static NeverDestroyed<RefPtr<PrintContext>> context;
     return context;
 }
 
@@ -1437,6 +1439,29 @@ ExceptionOr<void> Internals::resumeAnimations() const
     return { };
 }
 
+uint64_t Internals::identifierForTimeline(AnimationTimeline& timeline) const
+{
+#if ENABLE(THREADED_ANIMATIONS)
+    return timeline.acceleratedTimelineIdentifier().toRawValue();
+#else
+    UNUSED_PARAM(timeline);
+    return 0;
+#endif
+}
+
+Internals::ScrollingNodeID Internals::scrollingNodeIDForTimeline(AnimationTimeline& timeline) const
+{
+#if ENABLE(THREADED_ANIMATIONS)
+    if (RefPtr scrollTimeline = dynamicDowncast<ScrollTimeline>(timeline)) {
+        if (auto scrollingNodeID = scrollTimeline->scrollingNodeIDForTesting())
+            return { scrollingNodeID->object().toUInt64(), scrollingNodeID->processIdentifier().toUInt64() };
+    }
+#else
+    UNUSED_PARAM(timeline);
+#endif
+    return { 0, 0 };
+}
+
 Vector<Internals::AcceleratedAnimation> Internals::acceleratedAnimationsForElement(Element& element)
 {
     CheckedPtr timelinesController = element.document().timelinesController();
@@ -1713,10 +1738,10 @@ void Internals::setCanShowPlaceholder(Element& element, bool canShowPlaceholder)
         textFormControlElement->setCanShowPlaceholder(canShowPlaceholder);
 }
 
-Element* Internals::insertTextPlaceholder(int width, int height)
+RefPtr<Element> Internals::insertTextPlaceholder(int width, int height)
 {
     RefPtr localFrame = frame();
-    return localFrame ? localFrame->editor().insertTextPlaceholder(IntSize { width, height }).unsafeGet() : nullptr;
+    return localFrame ? localFrame->editor().insertTextPlaceholder(IntSize { width, height }) : nullptr;
 }
 
 void Internals::removeTextPlaceholder(Element& element)
@@ -3472,7 +3497,7 @@ ExceptionOr<uint64_t> Internals::verticalScrollbarLayerID(Node* node) const
     return getLayerID(areaOrException.returnValue()->layerForVerticalScrollbar());
 }
 
-ExceptionOr<Vector<uint64_t>> Internals::scrollingNodeIDForNode(Node* node)
+ExceptionOr<Internals::ScrollingNodeID> Internals::scrollingNodeIDForNode(Node* node)
 {
     auto areaOrException = scrollableAreaForNode(node);
     if (areaOrException.hasException())
@@ -3480,8 +3505,8 @@ ExceptionOr<Vector<uint64_t>> Internals::scrollingNodeIDForNode(Node* node)
 
     auto scrollingNodeID = areaOrException.returnValue()->scrollingNodeID();
     if (!scrollingNodeID)
-        return Vector<uint64_t>({ 0, 0 });
-    return Vector({ scrollingNodeID->object().toUInt64(), scrollingNodeID->processIdentifier().toUInt64() });
+        return { { 0, 0 } };
+    return { { scrollingNodeID->object().toUInt64(), scrollingNodeID->processIdentifier().toUInt64() } };
 }
 
 ExceptionOr<unsigned> Internals::scrollableAreaWidth(Node& node)
@@ -4022,7 +4047,7 @@ ExceptionOr<void> Internals::setViewExposedRect(float x, float y, float width, f
 
 void Internals::setPrinting(int width, int height)
 {
-    printContextForTesting() = makeUnique<PrintContext>(frame());
+    printContextForTesting() = PrintContext::create(frame());
     printContextForTesting()->begin(width, height);
 }
 
@@ -8136,6 +8161,11 @@ bool Internals::hasMediaSessionManager() const
         return false;
 
     return !!page->mediaSessionManagerIfExists();
+}
+
+size_t Internals::fileConnectionHandleCount(const FileSystemHandle& handle) const
+{
+    return handle.connectionHandleCount();
 }
 
 #if ENABLE(MODEL_ELEMENT)

@@ -91,8 +91,6 @@
 #include "JSIteratorHelper.h"
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
-#include "JSPromiseAllContext.h"
-#include "JSPromiseAllGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "JSRegExpStringIterator.h"
 #include "JSSetIterator.h"
@@ -9496,12 +9494,6 @@ IGNORE_CLANG_WARNINGS_END
         case JSAsyncFromSyncIteratorType:
             compileNewInternalFieldObjectImpl<JSAsyncFromSyncIterator>(operationNewAsyncFromSyncIterator);
             break;
-        case JSPromiseAllContextType:
-            compileNewInternalFieldObjectImpl<JSPromiseAllContext>(operationNewPromiseAllContext);
-            break;
-        case JSPromiseAllGlobalContextType:
-            compileNewInternalFieldObjectImpl<JSPromiseAllGlobalContext>(operationNewPromiseAllGlobalContext);
-            break;
         case JSRegExpStringIteratorType:
             compileNewInternalFieldObjectImpl<JSRegExpStringIterator>(operationNewRegExpStringIterator);
             break;
@@ -18019,12 +18011,6 @@ IGNORE_CLANG_WARNINGS_END
         case JSRegExpStringIteratorType:
             compileMaterializeNewInternalFieldObjectImpl<JSRegExpStringIterator>(operationNewRegExpStringIterator);
             break;
-        case JSPromiseAllContextType:
-            compileMaterializeNewInternalFieldObjectImpl<JSPromiseAllContext>(operationNewPromiseAllContext);
-            break;
-        case JSPromiseAllGlobalContextType:
-            compileMaterializeNewInternalFieldObjectImpl<JSPromiseAllGlobalContext>(operationNewPromiseAllGlobalContext);
-            break;
         case JSPromiseType:
             if (m_node->structure()->classInfoForCells() == JSInternalPromise::info())
                 compileMaterializeNewInternalFieldObjectImpl<JSInternalPromise>(operationNewInternalPromise);
@@ -23559,6 +23545,9 @@ IGNORE_CLANG_WARNINGS_END
         case NotDoubleUse:
             speculateNotDouble(edge);
             break;
+        case NotOtherUse:
+            speculateNotOther(edge);
+            break;
         case NeitherDoubleNorHeapBigIntUse:
             speculateNeitherDoubleNorHeapBigInt(edge);
             break;
@@ -24515,6 +24504,15 @@ IGNORE_CLANG_WARNINGS_END
 
         LValue value = lowJSValue(edge, ManualOperandSpeculation);
         typeCheck(jsValueValue(value), edge, SpecOther, isNotOther(value));
+    }
+
+    void speculateNotOther(Edge edge)
+    {
+        if (!m_interpreter.needsTypeCheck(edge))
+            return;
+
+        LValue value = lowJSValue(edge, ManualOperandSpeculation);
+        typeCheck(jsValueValue(value), edge, ~SpecOther, isOther(value));
     }
 
     void speculateMisc(Edge edge)

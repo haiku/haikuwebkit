@@ -1090,6 +1090,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRRigidTransformInit.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRRigidTransformInit.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRViewInit.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRViewInit.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRWorldInit.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFakeXRWorldInit.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFetchBody.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFetchBody.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSFetchEvent.cpp
@@ -3737,8 +3739,9 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamDefaultReaderBuiltins
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamDefaultReaderBuiltins.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamInternalsBuiltins.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/ReadableStreamInternalsBuiltins.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/RenderStyleInlinesGenerated.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/RenderStyleSettersGenerated.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/RenderStyleProperties.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/RenderStylePropertiesGettersInlines.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/RenderStylePropertiesSettersInlines.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/SVGElementFactory.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/SVGElementFactory.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/SVGElementTypeHelpers.h

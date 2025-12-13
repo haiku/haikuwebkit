@@ -105,6 +105,8 @@ public:
     virtual std::optional<NowPlayingInfo> nowPlayingInfo() const { return { }; }
     virtual WeakPtr<PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSessionInterface>>&, PlatformMediaSessionPlaybackControlsPurpose) { return nullptr; }
 
+    virtual bool isRemoteSessionClientProxy() const;
+
 #if !RELEASE_LOG_DISABLED
     virtual const Logger& logger() const = 0;
     Ref<const Logger> protectedLogger() const { return logger(); }
@@ -114,6 +116,8 @@ public:
 protected:
     virtual ~PlatformMediaSessionClient();
 };
+
+inline bool PlatformMediaSessionClient::isRemoteSessionClientProxy() const { return false; }
 
 PlatformMediaSessionClient& emptyPlatformMediaSessionClient();
 
@@ -154,7 +158,7 @@ public:
     virtual void clientCharacteristicsChanged(bool) = 0;
 
     virtual void clientWillBeginAutoplaying() = 0;
-    virtual bool clientWillBeginPlayback() = 0;
+    virtual void clientWillBeginPlayback(CompletionHandler<void(bool)>&&) = 0;
     virtual bool clientWillPausePlayback() = 0;
 
     virtual void clientWillBeDOMSuspended() = 0;
@@ -238,6 +242,8 @@ public:
     virtual std::optional<MediaSessionGroupIdentifier> mediaSessionGroupIdentifier() const { return client().mediaSessionGroupIdentifier(); }
     virtual bool isPlayingOnSecondScreen() const { return client().isPlayingOnSecondScreen(); }
 
+    virtual bool isRemoteSessionProxy() const;
+
     void invalidateClient() { m_client = emptyPlatformMediaSessionClient(); }
     PlatformMediaSessionClient& client() const;
     CheckedRef<PlatformMediaSessionClient> checkedClient() const;
@@ -268,5 +274,6 @@ private:
 inline void PlatformMediaSessionInterface::setMediaSessionIdentifier(MediaSessionIdentifier identifier) { m_mediaSessionIdentifier = identifier; }
 inline PlatformMediaSessionClient& PlatformMediaSessionInterface::client() const { return m_client; }
 inline CheckedRef<PlatformMediaSessionClient> PlatformMediaSessionInterface::checkedClient() const { return m_client; }
+inline bool PlatformMediaSessionInterface::isRemoteSessionProxy() const { return false; }
 
 } // namespace WebCore

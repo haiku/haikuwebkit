@@ -182,6 +182,9 @@ void printInternal(PrintStream& out, UseKind useKind)
     case NotDoubleUse:
         out.print("NotDouble");
         return;
+    case NotOtherUse:
+        out.print("NotOther");
+        return;
     case NeitherDoubleNorHeapBigIntUse:
         out.print("NeitherDoubleNorHeapBigInt");
         return;

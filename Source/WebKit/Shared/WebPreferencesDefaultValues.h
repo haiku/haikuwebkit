@@ -72,6 +72,12 @@
 #define Modelelement_feature_status Testable
 #endif
 
+#if HAVE(COMPLETE_WEB_TRANSPORT)
+#define Web_transport_status Stable
+#else
+#define Web_transport_status Testable
+#endif
+
 namespace WebKit {
 
 #if HAVE(LIQUID_GLASS)
@@ -142,6 +148,10 @@ bool defaultVisuallyContiguousBidiTextSelectionEnabled();
 bool defaultBidiContentAwarePasteEnabled();
 #endif
 
+#if PLATFORM(COCOA)
+bool defaultExtendedProofreadingEnabled();
+#endif
+
 bool defaultRunningBoardThrottlingEnabled();
 bool defaultShouldDropNearSuspendedAssertionAfterDelay();
 bool defaultShouldTakeNearSuspendedAssertion();
@@ -208,5 +218,9 @@ bool defaultUnifiedPDFEnabled();
 bool defaultScrollbarColorEnabled();
 
 bool defaultAllowMultipleCommitLayerTreePending();
+
+#if ENABLE(VIDEO)
+bool defaultCaptionDisplaySettingsEnabled();
+#endif
 
 } // namespace WebKit

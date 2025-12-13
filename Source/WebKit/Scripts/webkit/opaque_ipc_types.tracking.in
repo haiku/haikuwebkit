@@ -239,7 +239,6 @@
     [Legacy] StructureParam WebKit::WebPushD::WebPushDaemonConnectionConfiguration.hostAppAuditTokenData
     [Legacy] StructureParam WebKit::WebsiteDataStoreParameters.uiProcessCookieStorageIdentifier
     [Legacy] StructureParam WebCore::ContentFilterUnblockHandler.webFilterEvaluatorData()
-    [Legacy] StructureParam WebCore::FontPlatformSerializedCreationData.fontFaceData
     [Legacy] StructureParam WebCore::FormData.m_boundary
     [Legacy] StructureParam WebCore::NotificationData.data
     [Legacy] StructureParam WebCore::PushSubscriptionData.clientECDHPublicKey
@@ -354,14 +353,9 @@
     [Legacy] StructureParam WebKit::NetworkSessionCreationParameters.proxyConfiguration
     [Legacy] StructureParam WebKit::SecItemRequestData.m_attributesToMatch
     [Legacy] StructureParam WebKit::SecItemRequestData.m_queryDictionary
-    [Legacy] StructureParam WebCore::FontPlatformDataAttributes.m_attributes
 }
 
-[UnsafeWrapper] std::optional<RetainPtr<CFArrayRef>> {
-    [Legacy] StructureParam WebCore::FontPlatformSerializedAttributes.featureSettings
-}
-
-[UnsafeWrapper] std::optional<RetainPtr<CFDataRef>> {
+[UnsafeWrapper] RetainPtr<CFDataRef> {
     [Legacy] StructureParam WebCore::FontPlatformSerializedAttributes.matrix
 }
 
@@ -446,6 +440,8 @@
 [UnsafeWrapper] WebCore::SharedMemoryHandle {
     [Legacy] StructureParam WebKit::ConsumerSharedCARingBufferHandle.memory
     [Legacy] StructureParam WebCore::ShareableResourceHandle.m_handle
+    [NotSentFromWebContent] StructureParam IPC::TransferString::SharedSpan8.dataHandle
+    [NotSentFromWebContent] StructureParam IPC::TransferString::SharedSpan16.dataHandle
 }
 
 [UnsafeWrapper] WebCore::SharedMemory::Handle {
@@ -471,6 +467,8 @@
 }
 
 [Legacy] StructureParam WebCore::DDModel::DDUpdateMeshDescriptor.vertexData Vector<Vector<uint8_t>>
+
+[UnsafeWrapper] AliasParam IPC::TransferString::IPCData Variant<std::span<const uint8_t>, std::span<const char16_t>, IPC::TransferString::SharedSpan8, IPC::TransferString::SharedSpan16>
 
 # GTK Specific
 [Legacy] StructureParam sk_sp<SkColorSpace>.dataReference() std::span<const uint8_t>

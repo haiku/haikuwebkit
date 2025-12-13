@@ -32,9 +32,10 @@
 #import "WebsiteDataStore.h"
 
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/cocoa/VectorCocoa.h>
 
 #if HAVE(MODERN_DOWNLOADPROGRESS)
-#import <WebKitAdditions/DownloadProgressAdditions.h>
+#import <BrowserEngineKit/BrowserEngineKit.h>
 #endif
 
 namespace WebKit {
@@ -93,7 +94,7 @@ Vector<uint8_t> DownloadProxy::bookmarkDataForURL(const URL& url)
 
 Vector<uint8_t> DownloadProxy::activityAccessToken()
 {
-    return ::activityAccessToken();
+    return makeVector([BEDownloadMonitor createAccessToken]);
 }
 
 #endif

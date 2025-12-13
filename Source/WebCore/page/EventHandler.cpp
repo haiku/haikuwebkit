@@ -557,13 +557,13 @@ static inline bool dispatchSelectStart(Node* node)
     return !event->defaultPrevented();
 }
 
-static Node* nodeToSelectOnMouseDownForNode(Node& targetNode)
+static RefPtr<Node> nodeToSelectOnMouseDownForNode(Node& targetNode)
 {
     if (ImageOverlay::isInsideOverlay(targetNode))
         return nullptr;
 
     if (RefPtr rootUserSelectAll = Position::rootUserSelectAllForNode(&targetNode))
-        return rootUserSelectAll.unsafeGet();
+        return rootUserSelectAll;
 
     if (targetNode.shouldSelectOnMouseDown())
         return &targetNode;

@@ -28,8 +28,8 @@
 
 #if HAVE(AVROUTING_FRAMEWORK)
 
-#include <WebKitAdditions/MediaDeviceRouteImplementationAdditions.h>
-#include <wtf/TZoneMallocInlines.h>
+#import <WebKitAdditions/MediaDeviceRouteAdditions.mm>
+#import <wtf/TZoneMallocInlines.h>
 
 #define FOR_EACH_READONLY_KEY_PATH(Macro) \
     Macro(minValue, MinValue, float) \
@@ -335,8 +335,14 @@ Ref<MediaDeviceRoute> MediaDeviceRoute::create(WebMediaDevicePlatformRoute *plat
 }
 
 MediaDeviceRoute::MediaDeviceRoute(WebMediaDevicePlatformRoute *platformRoute)
-    : m_route { adoptNS([[WebMediaDeviceRoute alloc] initWithRoute:*this platformRoute:platformRoute]) }
+    : m_identifier { WTF::UUID::createVersion4() }
+    , m_route { adoptNS([[WebMediaDeviceRoute alloc] initWithRoute:*this platformRoute:platformRoute]) }
 {
+}
+
+WebMediaDevicePlatformRoute *MediaDeviceRoute::platformRoute() const
+{
+    return [m_route platformRoute];
 }
 
 MediaDeviceRoute::~MediaDeviceRoute() = default;

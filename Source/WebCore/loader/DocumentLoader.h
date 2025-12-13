@@ -198,7 +198,7 @@ public:
 
     WEBCORE_EXPORT virtual ~DocumentLoader();
 
-    // CachedResourceClient, ContentFilterClient.
+    // CachedResourceClient, FrameDestructionObserver, ContentFilterClient.
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 

@@ -20,7 +20,7 @@
 #include "config.h"
 #include "OpenXRHitTestManager.h"
 
-#if ENABLE(WEBXR) && USE(OPENXR)
+#if ENABLE(WEBXR_HIT_TEST) && USE(OPENXR)
 
 #include "OpenXRExtensions.h"
 #include "OpenXRUtils.h"
@@ -71,4 +71,4 @@ Vector<PlatformXR::FrameData::HitTestResult> OpenXRHitTestManager::requestHitTes
 
 } // namespace WebKit
 
-#endif // ENABLE(WEBXR) && USE(OPENXR)
+#endif // ENABLE(WEBXR_HIT_TEST) && USE(OPENXR)

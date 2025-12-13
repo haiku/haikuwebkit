@@ -107,7 +107,7 @@ grid-template-rows: minmax(auto, 0px) minmax(auto, 0px); item border height: 10p
 grid-template-rows: minmax(auto, 20px) minmax(auto, 20px); item border height: 10px;
 grid-template-rows: minmax(auto, 0px) minmax(auto, 0px); item height + margin + border + padding: 10px;
 grid-template-rows: minmax(auto, 20px) minmax(auto, 20px); item height + margin + border + padding: 10px;
-masonry container writing-mode: vertical-lr; & item writing-mode: horizontal-tb;
+grid-lanes container writing-mode: vertical-lr; & item writing-mode: horizontal-tb;
 
 grid-template-rows: auto auto;
 XXXXXXXXXX
@@ -131,7 +131,7 @@ grid-template-rows: minmax(auto, 0px) minmax(auto, 0px); item border width: 10px
 grid-template-rows: minmax(auto, 20px) minmax(auto, 20px); item border width: 10px;
 grid-template-rows: minmax(auto, 0px) minmax(auto, 0px); item width + margin + border + padding: 10px;
 grid-template-rows: minmax(auto, 20px) minmax(auto, 20px); item width + margin + border + padding: 10px;
-masonry container writing-mode: vertical-rl; & item writing-mode: horizontal-tb;
+grid-lanes container writing-mode: vertical-rl; & item writing-mode: horizontal-tb;
 
 grid-template-rows: auto auto;
 XXXXXXXXXX

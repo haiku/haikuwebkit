@@ -48,6 +48,10 @@ public:
     }
     virtual ~AudioTrack();
 
+    // AudioTrackPrivateClient.
+    void ref() const final { MediaTrackBase::ref(); }
+    void deref() const final { MediaTrackBase::deref(); }
+
     static const AtomString& descriptionKeyword();
     static const AtomString& mainDescKeyword();
     static const AtomString& translationKeyword();

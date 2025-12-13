@@ -29,6 +29,7 @@
 
 #include "LibWebRTCProvider.h"
 #include <sstream>
+#include <webrtc/api/webrtc_sdp.h>
 #include <webrtc/pc/media_stream.h>
 #include <wtf/Function.h>
 #include <wtf/MainThread.h>
@@ -454,7 +455,8 @@ void MockLibWebRTCPeerConnection::CreateOffer(webrtc::CreateSessionDescriptionOb
                     "a=setup:actpass\r\n";
             }
         }
-        observer->OnSuccess(new MockLibWebRTCSessionDescription(sdp.str()));
+        auto description = webrtc::SdpDeserialize(webrtc::SdpType::kOffer, sdp.str());
+        observer->OnSuccess(description.release());
     });
 }
 
@@ -554,7 +556,8 @@ void MockLibWebRTCPeerConnection::CreateOffer(webrtc::CreateSessionDescriptionOb
                     "a=setup:active\r\n";
             }
         }
-        observer->OnSuccess(new MockLibWebRTCSessionDescription(sdp.str()));
+        auto description = webrtc::SdpDeserialize(webrtc::SdpType::kAnswer, sdp.str());
+        observer->OnSuccess(description.release());
     });
 }
 

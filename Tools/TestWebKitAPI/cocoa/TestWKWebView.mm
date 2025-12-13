@@ -45,6 +45,7 @@
 #import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WebKitPrivate.h>
 #import <WebKit/_WKActivatedElementInfo.h>
+#import <WebKit/_WKContextMenuElementInfo.h>
 #import <WebKit/_WKFrameTreeNode.h>
 #import <WebKit/_WKJSHandle.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
@@ -1770,6 +1771,81 @@ static WKContentView *recursiveFindWKContentView(UIView *view)
         TestWebKitAPI::Util::spinRunLoop();
     return findResult.autorelease();
 }
+
+@end
+
+
+@implementation TestWKWebView (ContextMenu)
+
+#if PLATFORM(MAC)
+
+static NSMenuItem *itemMatchingFilter(NSMenu *menu, MenuItemFilter filter)
+{
+    for (NSInteger index = 0; index < menu.numberOfItems; ++index) {
+        auto *item = [menu itemAtIndex:index];
+        if (!item)
+            continue;
+
+        if (filter(item))
+            return item;
+
+        if (item.hasSubmenu) {
+            if (auto *foundItem = itemMatchingFilter(item.submenu, filter))
+                return foundItem;
+        }
+    }
+    return nil;
+}
+
+- (void)rightClick:(NSPoint)clickLocation andSelectItemMatching:(MenuItemFilter)filter
+{
+    bool selectedItem = false;
+    RetainPtr selectItemTimer = [NSTimer timerWithTimeInterval:0.25 repeats:YES block:[&selectedItem, strongSelf = RetainPtr { self }, filter = makeBlockPtr(filter)](NSTimer *timer) {
+        NSMenu *activeMenu = [strongSelf _activeMenu];
+        if (!activeMenu)
+            return;
+
+        auto *item = itemMatchingFilter(activeMenu, filter.get());
+        if (!item)
+            return;
+
+        auto *itemMenu = item.menu;
+        [itemMenu performActionForItemAtIndex:[itemMenu indexOfItem:item]];
+        [activeMenu cancelTracking];
+        [timer invalidate];
+        selectedItem = true;
+    }];
+
+    [NSRunLoop.mainRunLoop addTimer:selectItemTimer.get() forMode:NSEventTrackingRunLoopMode];
+    [self.window orderFrontRegardless];
+    [self mouseDownAtPoint:NSMakePoint(50, 350) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
+    [self mouseUpAtPoint:NSMakePoint(50, 350) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    TestWebKitAPI::Util::run(&selectedItem);
+}
+
+- (_WKContextMenuElementInfo *)rightClickAtPointAndWaitForContextMenu:(NSPoint)clickLocation
+{
+    RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
+
+    __block RetainPtr<_WKContextMenuElementInfo> result;
+    __block bool gotProposedMenu = false;
+    [uiDelegate setGetContextMenuFromProposedMenu:^(NSMenu *, _WKContextMenuElementInfo *elementInfo, id<NSSecureCoding>, void (^completion)(NSMenu *)) {
+        result = elementInfo;
+        gotProposedMenu = true;
+        completion(nil);
+    }];
+
+    EXPECT_NULL(self.UIDelegate);
+    self.UIDelegate = uiDelegate.get();
+    [self rightClickAtPoint:clickLocation];
+    TestWebKitAPI::Util::run(&gotProposedMenu);
+    [self waitForNextPresentationUpdate];
+
+    self.UIDelegate = nil;
+    return result.autorelease();
+}
+
+#endif
 
 @end
 

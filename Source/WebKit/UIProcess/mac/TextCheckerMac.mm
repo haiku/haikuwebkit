@@ -33,6 +33,7 @@
 #import <pal/spi/cocoa/FoundationSPI.h>
 #import <pal/spi/mac/NSSpellCheckerSPI.h>
 #import <wtf/CheckedArithmetic.h>
+#import <wtf/CrossThreadCopier.h>
 #import <wtf/NeverDestroyed.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/VectorCocoa.h>
@@ -549,6 +550,46 @@ void TextChecker::ignoreWord(SpellDocumentTag spellDocumentTag, const String& wo
 void TextChecker::requestCheckingOfString(Ref<TextCheckerCompletion>&&, int32_t)
 {
     notImplemented();
+}
+
+static Vector<TextCheckingResult> convertExtendedCheckingResults(NSArray<NSTextCheckingResult *> *incomingResults)
+{
+    Vector<TextCheckingResult> results;
+    for (NSTextCheckingResult *incomingResult in incomingResults) {
+        NSTextCheckingType resultType = [incomingResult resultType];
+        auto resultRange = incomingResult.range;
+        if (resultType == NSTextCheckingTypeGrammar) {
+            TextCheckingResult result;
+            RetainPtr details = [incomingResult grammarDetails];
+            result.type = TextCheckingType::Grammar;
+            result.range = resultRange;
+            result.details.reserveInitialCapacity(details.get().count);
+            for (NSDictionary *incomingDetail in details.get()) {
+                GrammarDetail detail;
+                RetainPtr detailRangeAsNSValue = [incomingDetail objectForKey:NSGrammarRange];
+                NSRange detailNSRange = [detailRangeAsNSValue rangeValue];
+                detail.range = detailNSRange;
+                detail.userDescription = [incomingDetail objectForKey:NSGrammarUserDescription];
+                RetainPtr<NSArray> guesses = [incomingDetail objectForKey:NSGrammarCorrections];
+                detail.guesses = makeVector<String>(guesses.get());
+                result.details.append(WTFMove(detail));
+            }
+            results.append(result);
+        }
+    }
+    return results;
+}
+
+void TextChecker::requestExtendedCheckingOfString(Ref<TextCheckerCompletion>&& textCheckerCompletion, int32_t insertionPoint)
+{
+    RetainPtr textString = textCheckerCompletion->textCheckingRequestData().text().createNSString();
+    NSRange range = NSMakeRange(0, textCheckerCompletion->textCheckingRequestData().text().length());
+    [[NSSpellChecker sharedSpellChecker] requestGrammarCheckingOfString:textString.get() range:range language:nil options:@{ NSTextCheckingInsertionPointKey : @(insertionPoint), @"ProofreadingReview": @1 } completionHandler:makeBlockPtr([textCompletion = WTFMove(textCheckerCompletion)](NSInteger sequenceNumber, NSArray<NSTextCheckingResult *> *incomingResults) mutable {
+        auto results = convertExtendedCheckingResults(incomingResults);
+        callOnMainRunLoop([textCompletion = WTFMove(textCompletion), results = crossThreadCopy(WTFMove(results))] {
+            textCompletion->didFinishCheckingText(results);
+        });
+    }).get()];
 }
 
 } // namespace WebKit

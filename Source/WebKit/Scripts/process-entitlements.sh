@@ -650,6 +650,7 @@ function ios_family_process_model_entitlements()
     plistbuddy Add :com.apple.private.pac.exception bool YES
     plistbuddy Add :com.apple.pac.shared_region_id string WebKitModel
     plistbuddy Add :com.apple.developer.hardened-process bool YES
+    plistbuddy Add :com.apple.private.usd.enableusdgltf bool YES
 }
 
 function ios_family_process_adattributiond_entitlements()

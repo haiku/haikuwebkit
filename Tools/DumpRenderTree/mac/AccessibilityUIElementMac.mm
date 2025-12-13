@@ -32,6 +32,7 @@
 #import "JSBasics.h"
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JSStringRefCF.h>
+#import <WebCore/CocoaAccessibilityConstants.h>
 #import <WebKit/WebFrame.h>
 #import <WebKit/WebHTMLView.h>
 #import <wtf/RetainPtr.h>
@@ -1961,6 +1962,9 @@ static JSRetainPtr<JSStringRef> createJSStringRef(id string)
             [mutableString appendFormat:@"%@: YES\n", NSAccessibilityStrikethroughTextAttribute];
             appendColorDescription(mutableString, NSAccessibilityStrikethroughColorTextAttribute, attributes);
         }
+
+        if ([attributes objectForKey:NSAccessibilityTableAttribute])
+            [mutableString appendFormat:@"%@: {present}\n", NSAccessibilityTableAttribute];
     };
     [string enumerateAttributesInRange:NSMakeRange(0, [string length]) options:(NSAttributedStringEnumerationOptions)0 usingBlock:attributeEnumerationBlock];
     [mutableString appendString:[string string]];

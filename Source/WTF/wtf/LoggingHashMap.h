@@ -102,20 +102,20 @@ public:
     unsigned capacity() const { return m_map.capacity(); }
     bool isEmpty() const { return m_map.isEmpty(); }
     
-    iterator begin() { return m_map.begin(); }
-    iterator end() { return m_map.end(); }
-    const_iterator begin() const { return m_map.begin(); }
-    const_iterator end() const { return m_map.end(); }
+    iterator begin() LIFETIME_BOUND { return m_map.begin(); }
+    iterator end() LIFETIME_BOUND { return m_map.end(); }
+    const_iterator begin() const LIFETIME_BOUND { return m_map.begin(); }
+    const_iterator end() const LIFETIME_BOUND { return m_map.end(); }
 
-    iterator random() { return m_map.random(); }
-    const_iterator random() const { return m_map.random(); }
+    iterator random() LIFETIME_BOUND { return m_map.random(); }
+    const_iterator random() const LIFETIME_BOUND { return m_map.random(); }
     
-    auto keys() { return m_map.keys(); }
-    auto keys() const { return m_map.keys(); }
-    auto values() { return m_map.values(); }
-    auto values() const { return m_map.values(); }
+    auto keys() LIFETIME_BOUND { return m_map.keys(); }
+    auto keys() const LIFETIME_BOUND { return m_map.keys(); }
+    auto values() LIFETIME_BOUND { return m_map.values(); }
+    auto values() const LIFETIME_BOUND { return m_map.values(); }
     
-    iterator find(const KeyType& key)
+    iterator find(const KeyType& key) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print("{\n");
@@ -132,7 +132,7 @@ public:
         return result;
     }
     
-    const_iterator find(const KeyType& key) const
+    const_iterator find(const KeyType& key) const LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print("{\n");
@@ -167,7 +167,7 @@ public:
     }
     
     template<typename PassedType>
-    AddResult set(const KeyType& key, PassedType&& passedValue)
+    AddResult set(const KeyType& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->set(");
@@ -180,7 +180,7 @@ public:
     }
     
     template<typename PassedType>
-    AddResult set(KeyType&& key, PassedType&& passedValue)
+    AddResult set(KeyType&& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->set(");
@@ -193,7 +193,7 @@ public:
     }
     
     template<typename PassedType>
-    AddResult add(const KeyType& key, PassedType&& passedValue)
+    AddResult add(const KeyType& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->add(");
@@ -206,7 +206,7 @@ public:
     }
     
     template<typename PassedType>
-    AddResult add(KeyType&& key, PassedType&& passedValue)
+    AddResult add(KeyType&& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->add(");
@@ -219,19 +219,19 @@ public:
     }
     
     template<typename PassedType>
-    AddResult fastAdd(const KeyType& key, PassedType&& passedValue)
+    AddResult fastAdd(const KeyType& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         return add(key, std::forward<PassedType>(passedValue));
     }
     
     template<typename PassedType>
-    AddResult fastAdd(KeyType&& key, PassedType&& passedValue)
+    AddResult fastAdd(KeyType&& key, PassedType&& passedValue) LIFETIME_BOUND
     {
         return add(WTFMove(key), std::forward<PassedType>(passedValue));
     }
     
     template<typename Func>
-    AddResult ensure(const KeyType& key, Func&& func)
+    AddResult ensure(const KeyType& key, Func&& func) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->ensure(");
@@ -255,7 +255,7 @@ public:
     }
     
     template<typename Func>
-    AddResult ensure(KeyType&& key, Func&& func)
+    AddResult ensure(KeyType&& key, Func&& func) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->ensure(");

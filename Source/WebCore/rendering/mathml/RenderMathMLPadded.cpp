@@ -120,7 +120,7 @@ void RenderMathMLPadded::layoutBlock(RelayoutChildren relayoutChildren, LayoutUn
     LayoutUnit ascent = mpaddedHeight(contentAscent);
     LayoutUnit descent = mpaddedDepth(contentDescent);
 
-    auto inlineShift = style().writingMode().inlineDirection() == FlowDirection::RightToLeft ? -lspace() : lspace();
+    auto inlineShift = style().writingMode().inlineDirection() == FlowDirection::RightToLeft ? (width - contentWidth - lspace()) : lspace();
 
     // Align children on the new baseline and shift them by (lspace, -voffset)
     shiftInFlowChildren(inlineShift, ascent - contentAscent - voffset());

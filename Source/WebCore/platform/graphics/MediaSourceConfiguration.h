@@ -31,6 +31,9 @@ namespace WebCore {
 
 struct MediaSourceConfiguration {
     bool textTracksEnabled { false };
+#if USE(MEDIAPARSERD)
+    bool demuxInProcess { false };
+#endif
 #if ENABLE(MEDIA_RECORDER_WEBM)
     bool supportsLimitedMatroska { false };
 #endif

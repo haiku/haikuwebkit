@@ -153,7 +153,7 @@ void SpeechRecognitionPermissionManager::startProcessingRequest()
 void SpeechRecognitionPermissionManager::continueProcessingRequest()
 {
     ASSERT(!m_requests.isEmpty());
-    auto recognitionRequest = m_requests.first().first->request();
+    RefPtr recognitionRequest = m_requests.first().first->request();
     auto frameInfo = m_requests.first().second;
     if (!recognitionRequest) {
         completeCurrentRequest();

@@ -49,7 +49,7 @@ public:
 
     explicit operator bool() const { return m_port != MACH_PORT_NULL; }
 
-    mach_port_t sendRight() const { return m_port; }
+    mach_port_t sendRight() const LIFETIME_BOUND { return m_port; }
 
     WTF_EXPORT_PRIVATE mach_port_t leakSendRight() WARN_UNUSED_RETURN;
 

@@ -286,6 +286,7 @@ platform/audio/cocoa/WebAudioBufferList.cpp
 platform/audio/ios/AudioOutputUnitAdaptorIOS.cpp @no-unify
 platform/audio/ios/AudioSessionIOS.mm @nonARC @no-unify
 platform/audio/ios/MediaDeviceRoute.mm @nonARC
+platform/audio/ios/MediaDeviceRouteController.mm @nonARC
 platform/audio/ios/MediaSessionHelperIOS.mm @nonARC @no-unify
 platform/audio/ios/MediaSessionManagerIOS.mm @nonARC @no-unify
 platform/audio/mac/AudioBusMac.mm @nonARC

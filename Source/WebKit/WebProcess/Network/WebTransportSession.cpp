@@ -118,7 +118,25 @@ void WebTransportSession::streamReceiveBytes(WebCore::WebTransportStreamIdentifi
         ASSERT_NOT_REACHED();
 }
 
-void WebTransportSession::didFail(std::optional<unsigned>&& code, String&& message)
+void WebTransportSession::streamReceiveError(WebCore::WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    ASSERT(RunLoop::isMain());
+    if (RefPtr strongClient = m_client.get())
+        strongClient->streamReceiveError(identifier, errorCode);
+    else
+        ASSERT_NOT_REACHED();
+}
+
+void WebTransportSession::streamSendError(WebCore::WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    ASSERT(RunLoop::isMain());
+    if (RefPtr strongClient = m_client.get())
+        strongClient->streamSendError(identifier, errorCode);
+    else
+        ASSERT_NOT_REACHED();
+}
+
+void WebTransportSession::didFail(std::optional<uint32_t>&& code, String&& message)
 {
     ASSERT(RunLoop::isMain());
     if (RefPtr strongClient = m_client.get())

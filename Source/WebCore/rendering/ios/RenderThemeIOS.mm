@@ -385,7 +385,7 @@ Style::PaddingBox RenderThemeIOS::popupInternalPaddingBox(const RenderStyle& sty
 
     if (style.usedAppearance() == StyleAppearance::MenulistButton) {
         // FIXME: Reduce code duplication with toTruncatedPaddingEdge.
-        auto value = Style::PaddingEdge::Fixed { static_cast<float>(std::trunc(padding + Style::evaluate<float>(style.borderTopWidth(), style.usedZoomForLength()))) / style.usedZoom() };
+        auto value = Style::PaddingEdge::Fixed { static_cast<float>(std::trunc(padding + Style::evaluate<float>(style.borderTopWidth(),  Style::ZoomNeeded { }))) / style.usedZoom() };
 
         if (style.writingMode().isBidiRTL())
             return { 0_css_px, 0_css_px, 0_css_px, value };
@@ -612,9 +612,9 @@ void RenderThemeIOS::paintMenuListButtonDecorations(const RenderBox& box, const 
     FloatPoint glyphOrigin;
     glyphOrigin.setY(logicalRect.center().y() - glyphSize.height() / 2.0f);
     if (!style.writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) - Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) - Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) + Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) + Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();

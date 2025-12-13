@@ -972,6 +972,31 @@ TEST(EnhancedSecurity, EnhancedSecurityRequestedWhenLockdownModeActive)
 #endif
 }
 
+#if HAVE(ENHANCED_SECURITY_WEB_CONTENT_PROCESS)
+TEST(EnhancedSecurity, SystemLockdownModeEnablesEnhancedSecurityWhenAPIOptsOut)
+{
+    [WKProcessPool _setCaptivePortalModeEnabledGloballyForTesting:YES];
+
+    auto webViewConfiguration = adoptNS([WKWebViewConfiguration new]);
+    webViewConfiguration.get().defaultWebpagePreferences.securityRestrictionMode = WKSecurityRestrictionModeNone;
+    webViewConfiguration.get().defaultWebpagePreferences.lockdownModeEnabled = NO;
+
+    auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    NSURL *url = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
+    [webView loadRequest:[NSURLRequest requestWithURL:url]];
+    [webView _test_waitForDidFinishNavigation];
+
+    EXPECT_EQ(false, isJITEnabled(webView.get()));
+
+#if USE(APPLE_INTERNAL_SDK)
+    NSString *processVariant = [webView _webContentProcessVariantForFrame:nil];
+    EXPECT_STREQ("security", processVariant.UTF8String);
+#endif
+
+    [WKProcessPool _clearCaptivePortalModeEnabledGloballyForTesting];
+}
+#endif
+
 #endif
 
 } // namespace TestWebKitAPI

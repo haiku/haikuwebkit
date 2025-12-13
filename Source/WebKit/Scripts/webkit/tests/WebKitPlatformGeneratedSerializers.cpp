@@ -381,8 +381,33 @@ void ArgumentCoder<CFStringRef>::encode(StreamConnectionEncoder& encoder, CFStri
     encoder << WTF::String { instance };
 }
 
+void ArgumentCoder<RetainPtr<CFStringRef>>::encode(Encoder& encoder, const RetainPtr<CFStringRef>& retainPtr)
+{
+    if (!retainPtr) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    ArgumentCoder<CFStringRef>::encode(encoder, retainPtr.get());
+}
+
+void ArgumentCoder<RetainPtr<CFStringRef>>::encode(StreamConnectionEncoder& encoder, const RetainPtr<CFStringRef>& retainPtr)
+{
+    if (!retainPtr) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    ArgumentCoder<CFStringRef>::encode(encoder, retainPtr.get());
+}
+
 std::optional<RetainPtr<CFStringRef>> ArgumentCoder<RetainPtr<CFStringRef>>::decode(Decoder& decoder)
 {
+    auto isEngaged = decoder.template decode<bool>();
+    if (!isEngaged)
+        return std::nullopt;
+    if (!*isEngaged)
+        return { nullptr };
     auto result = decoder.decode<WTF::String>();
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;

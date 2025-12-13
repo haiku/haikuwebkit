@@ -195,8 +195,7 @@ public:
 
 #if ENABLE(THREADED_ANIMATIONS)
     bool canHaveAcceleratedRepresentation() const;
-    const AcceleratedEffect* acceleratedRepresentation() const { return m_acceleratedRepresentation.get(); }
-    RefPtr<AcceleratedEffect> updatedAcceleratedRepresentation(const TimelineIdentifier&, const IntRect&, const AcceleratedEffectValues&, OptionSet<AcceleratedEffectProperty>&);
+    Ref<AcceleratedEffect> acceleratedRepresentation(const IntRect&, const AcceleratedEffectValues&, OptionSet<AcceleratedEffectProperty>&);
     void timelineAccelerationAbilityDidChange();
 #endif
 
@@ -277,7 +276,7 @@ private:
     void animationDidChangeTimingProperties() final;
     void animationWasCanceled() final;
     void animationSuspensionStateDidChange(bool) final;
-    void animationTimelineDidChange(const AnimationTimeline*) final;
+    void animationTimelineDidChange() final;
     void animationDidFinish() final;
     void animationPlaybackRateDidChange() final;
     void setAnimation(WebAnimation*) final;

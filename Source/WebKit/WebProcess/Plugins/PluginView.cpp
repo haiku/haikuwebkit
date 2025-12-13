@@ -816,7 +816,7 @@ RefPtr<FragmentedSharedBuffer> PluginView::liveResourceData() const
 {
     if (!m_isInitialized) {
         if (m_manualStreamState == ManualStreamState::Finished)
-            return m_manualStreamData.get();
+            return m_manualStreamData.buffer();
 
         return nullptr;
     }
@@ -989,7 +989,7 @@ void PluginView::redeliverManualStream()
 
     // Deliver the data.
     if (m_manualStreamData) {
-        m_manualStreamData.take()->forEachSegmentAsSharedBuffer([&](auto&& buffer) {
+        m_manualStreamData.takeBuffer()->forEachSegmentAsSharedBuffer([&](auto&& buffer) {
             manualLoadDidReceiveData(buffer);
         });
     }

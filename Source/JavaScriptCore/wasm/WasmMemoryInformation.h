@@ -50,12 +50,13 @@ public:
         ASSERT(!*this);
     }
 
-    MemoryInformation(PageCount initial, PageCount maximum, bool isShared, bool isImport);
+    MemoryInformation(PageCount initial, PageCount maximum, bool isShared, bool isImport, bool isMemory64);
 
     PageCount initial() const { return m_initial; }
     PageCount maximum() const { return m_maximum; }
     bool isShared() const { return m_isShared; }
     bool isImport() const { return m_isImport; }
+    bool isMemory64() const { return m_isMemory64; }
 
     explicit operator bool() const { return !!m_initial; }
 
@@ -64,6 +65,7 @@ private:
     PageCount m_maximum { };
     bool m_isShared { false };
     bool m_isImport { false };
+    bool m_isMemory64 { false };
 };
 
 } } // namespace JSC::Wasm

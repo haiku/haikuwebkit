@@ -454,7 +454,7 @@ class WebMouseEvent;
 class WebNotificationClient;
 class WebOpenPanelResultListener;
 class WebPageGroupProxy;
-class WebPageInspectorTargetController;
+class WebPageInspectorTarget;
 class WebPageOverlay;
 class WebPageTesting;
 class WebPaymentCoordinator;
@@ -1626,9 +1626,9 @@ public:
     bool isControlledByAutomation() const;
     void setControlledByAutomation(bool);
 
-    void connectInspector(const String& targetId, Inspector::FrontendChannel::ConnectionType);
-    void disconnectInspector(const String& targetId);
-    void sendMessageToTargetBackend(const String& targetId, const String& message);
+    void connectInspector(Inspector::FrontendChannel::ConnectionType);
+    void disconnectInspector();
+    void sendMessageToTargetBackend(const String& message);
 
     void insertNewlineInQuotedContent();
 
@@ -1690,7 +1690,9 @@ public:
 #endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-    void canEnterImmersiveElement(const WebCore::Element&, CompletionHandler<void(bool)>&&);
+    void allowImmersiveElement(const WebCore::Element&, CompletionHandler<void(bool)>&&);
+    void presentImmersiveElement(const WebCore::Element&, const WebCore::LayerHostingContextIdentifier, CompletionHandler<void(bool)>&&);
+    void dismissImmersiveElement(const WebCore::Element&, CompletionHandler<void()>&&);
 #endif
 
     void flushPendingEditorStateUpdate();
@@ -2419,7 +2421,7 @@ private:
     void countStringMatches(const String&, OptionSet<FindOptions>, uint32_t maxMatchCount, CompletionHandler<void(uint32_t)>&&);
     void replaceMatches(const Vector<uint32_t>& matchIndices, const String& replacementText, bool selectionOnly, CompletionHandler<void(uint64_t)>&&);
 
-    void findTextRangesForStringMatches(const String&, OptionSet<FindOptions>, uint32_t maxMatchCount, CompletionHandler<void(Vector<WebFoundTextRange>&&)>&&);
+    void findTextRangesForStringMatches(const String&, OptionSet<FindOptions>, uint32_t maxMatchCount, CompletionHandler<void(HashMap<WebCore::FrameIdentifier, Vector<WebFoundTextRange>>&&)>&&);
     void replaceFoundTextRangeWithString(const WebFoundTextRange&, const String&);
     void decorateTextRangeWithStyle(const WebFoundTextRange&, WebKit::FindDecorationStyle);
     void scrollTextRangeToVisible(const WebFoundTextRange&);
@@ -2534,6 +2536,7 @@ private:
 
     void setUserInterfaceLayoutDirection(uint32_t);
 
+    void simulateDeviceMotionChange(double xAcceleration, double yAcceleration, double zAcceleration, double xAccelerationIncludingGravity, double yAccelerationIncludingGravity, double zAccelerationIncludingGravity, double xRotationRate, double yRotationRate, double zRotationRate);
     void simulateDeviceOrientationChange(double alpha, double beta, double gamma);
 
 #if USE(SYSTEM_PREVIEW)
@@ -2683,6 +2686,8 @@ private:
 
     void frameNameWasChangedInAnotherProcess(WebCore::FrameIdentifier, const String& frameName);
 
+    WebPageInspectorTarget& ensureInspectorTarget();
+
     struct Internals;
     const UniqueRef<Internals> m_internals;
 
@@ -2814,7 +2819,7 @@ private:
     RefPtr<WebInspectorBackend> m_inspector;
     RefPtr<WebInspectorUI> m_inspectorUI;
     RefPtr<RemoteWebInspectorUI> m_remoteInspectorUI;
-    const UniqueRef<WebPageInspectorTargetController> m_inspectorTargetController;
+    std::unique_ptr<WebPageInspectorTarget> m_inspectorTarget;
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     RefPtr<PlaybackSessionManager> m_playbackSessionManager;
@@ -2866,7 +2871,7 @@ private:
     const UniqueRef<MediaKeySystemPermissionRequestManager> m_mediaKeySystemPermissionRequestManager;
 #endif
 
-    std::unique_ptr<WebCore::PrintContext> m_printContext;
+    RefPtr<WebCore::PrintContext> m_printContext;
     bool m_inActivePrintContextAccessScope { false };
     bool m_shouldEndPrintingImmediately { false };
 

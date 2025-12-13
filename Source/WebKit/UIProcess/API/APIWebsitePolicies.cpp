@@ -51,7 +51,7 @@ Ref<WebsitePolicies> WebsitePolicies::copy() const
     policies->setWebsiteDataStore(m_websiteDataStore.get());
     policies->setUserContentController(m_userContentController.get());
     policies->setLockdownModeEnabled(m_lockdownModeEnabled);
-    policies->setEnhancedSecurityEnabled(m_enhancedSecurityEnabled);
+    policies->setIsEnhancedSecurityEnabled(m_isEnhancedSecurityEnabled);
     return policies;
 }
 

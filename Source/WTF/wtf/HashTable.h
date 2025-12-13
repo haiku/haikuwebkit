@@ -362,25 +362,6 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         static_assert(!static_cast<unsigned>(value >> 31), "HashTableNoCapacityOverflow");
     };
 
-    template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
-    static inline void checkHashTableKey(const T& key)
-    {
-        if constexpr (!ASSERT_ENABLED && shouldValidateKey == ShouldValidateKey::No)
-            return;
-
-        if constexpr (std::is_convertible_v<T, Key>) {
-            RELEASE_ASSERT(!isHashTraitsEmptyValue<KeyTraits>(key));
-            RELEASE_ASSERT(!KeyTraits::isDeletedValue(key));
-        } else if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted) {
-            RELEASE_ASSERT(!HashTranslator::equal(KeyTraits::emptyValue(), key));
-
-            AlignedStorage<Value> deletedValueBuffer;
-            auto& deletedValue = *deletedValueBuffer;
-            Traits::constructDeletedValue(deletedValue);
-            RELEASE_ASSERT(!HashTranslator::equal(Extractor::extract(deletedValue), key));
-        }
-    }
-
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
     class HashTable {
     public:
@@ -502,21 +483,21 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             setKeyCount(0);
         }
 
-        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(const ValueType& value) { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return value; }); }
-        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(ValueType&& value) { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return WTFMove(value); }); }
+        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(const ValueType& value) LIFETIME_BOUND { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return value; }); }
+        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> AddResult add(ValueType&& value) LIFETIME_BOUND { return add<IdentityTranslatorType, shouldValidateKey>(Extractor::extract(value), [&]() ALWAYS_INLINE_LAMBDA { return WTFMove(value); }); }
 
         // A special version of add() that finds the object by hashing and comparing
         // with some other type, to avoid the cost of type conversion if the object is already
         // in the table.
-        template<typename HashTranslator, ShouldValidateKey> AddResult add(auto&& key, NOESCAPE const std::invocable<> auto& functor);
-        template<typename HashTranslator, ShouldValidateKey> AddResult addPassingHashCode(auto&& key, NOESCAPE const std::invocable<> auto& functor);
+        template<typename HashTranslator, ShouldValidateKey> AddResult add(auto&& key, NOESCAPE const std::invocable<> auto& functor) LIFETIME_BOUND;
+        template<typename HashTranslator, ShouldValidateKey> AddResult addPassingHashCode(auto&& key, NOESCAPE const std::invocable<> auto& functor) LIFETIME_BOUND;
 
-        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> iterator find(const KeyType& key) { return find<IdentityTranslatorType, shouldValidateKey>(key); }
-        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> const_iterator find(const KeyType& key) const { return find<IdentityTranslatorType, shouldValidateKey>(key); }
+        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> iterator find(const KeyType& key) LIFETIME_BOUND { return find<IdentityTranslatorType, shouldValidateKey>(key); }
+        template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> const_iterator find(const KeyType& key) const LIFETIME_BOUND { return find<IdentityTranslatorType, shouldValidateKey>(key); }
         template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> bool contains(const KeyType& key) const { return contains<IdentityTranslatorType, shouldValidateKey>(key); }
 
-        template<typename HashTranslator, ShouldValidateKey, typename T> iterator find(const T&);
-        template<typename HashTranslator, ShouldValidateKey, typename T> const_iterator find(const T&) const;
+        template<typename HashTranslator, ShouldValidateKey, typename T> iterator find(const T&) LIFETIME_BOUND;
+        template<typename HashTranslator, ShouldValidateKey, typename T> const_iterator find(const T&) const LIFETIME_BOUND;
         template<typename HashTranslator, ShouldValidateKey, typename T> bool contains(const T&) const;
 
         template<ShouldValidateKey> void remove(const KeyType&);
@@ -534,6 +515,17 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         static bool isReleasedWeakBucket(const ValueType& value) { return isHashTraitsReleasedWeakValue<KeyTraits>(Extractor::extract(value)); }
         static bool isDeletedBucket(const ValueType& value) { return KeyTraits::isDeletedValue(Extractor::extract(value)); }
         static bool isEmptyOrDeletedBucket(const ValueType& value) { return isEmptyBucket(value) || isDeletedBucket(value); }
+
+        bool isValidKey(const ValueType& value) { return !isEmptyOrDeletedBucket(value); }
+
+        template<ShouldValidateKey shouldValidateKey>
+        void validateKey(const ValueType& value)
+        {
+            if constexpr (shouldValidateKey == ShouldValidateKey::No)
+                ASSERT(isValidKey(value));
+            else
+                RELEASE_ASSERT(isValidKey(value));
+        }
 
         template<ShouldValidateKey shouldValidateKey = ShouldValidateKey::Yes> ValueType* lookup(const Key& key) { return lookup<IdentityTranslatorType, shouldValidateKey>(key); }
         template<typename HashTranslator, ShouldValidateKey = ShouldValidateKey::Yes, typename T> ValueType* lookup(const T&);
@@ -563,7 +555,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
 
         ValueType* lookupForReinsert(const Key& key) { return lookupForReinsert<IdentityTranslatorType>(key); };
         template<typename HashTranslator, typename T> ValueType* lookupForReinsert(const T&);
-        template<typename HashTranslator, typename T> FullLookupType fullLookupForWriting(const T&);
+        template<typename HashTranslator, ShouldValidateKey, typename T> FullLookupType fullLookupForWriting(const T&);
 
         template<typename HashTranslator> void addUniqueForInitialization(auto&& key, NOESCAPE const std::invocable<> auto& functor);
 
@@ -666,7 +658,6 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     ALWAYS_INLINE auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::inlineLookup(const T& key) -> ValueType*
     {
         static_assert(sizeof(Value) <= 150, "Your HashTable types are too big to efficiently move when rehashing.  Consider using UniqueRef instead");
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, shouldValidateKey>(key);
 
         ValueType* table = m_table;
         if (!table)
@@ -689,9 +680,11 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             ValueType* entry = table + i;
                 
             // We count on the compiler to optimize out this branch.
-            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted) {
-                if (HashTranslator::equal(Extractor::extract(*entry), key))
+            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted && shouldValidateKey == ShouldValidateKey::No) {
+                if (HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return entry;
+                }
                 
                 if (isEmptyBucket(*entry))
                     return nullptr;
@@ -699,8 +692,10 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
                 if (isEmptyBucket(*entry))
                     return nullptr;
                 
-                if (!isDeletedBucket(*entry) && HashTranslator::equal(Extractor::extract(*entry), key))
+                if (!isDeletedBucket(*entry) && HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return entry;
+                }
             }
 
             ++probeCount;
@@ -722,7 +717,6 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     inline auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::lookupForReinsert(const T& key) -> ValueType*
     {
         ASSERT(m_table);
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, ShouldValidateKey::No>(key);
 
         ValueType* table = m_table;
         unsigned sizeMask = tableSizeMask();
@@ -759,11 +753,10 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     }
 
     template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits, typename Malloc>
-    template<typename HashTranslator, typename T>
+    template<typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
     inline auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::fullLookupForWriting(const T& key) -> FullLookupType
     {
         ASSERT(m_table);
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, ShouldValidateKey::No>(key);
 
         ValueType* table = m_table;
         unsigned sizeMask = tableSizeMask();
@@ -785,12 +778,14 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             ValueType* entry = table + i;
             
             // We count on the compiler to optimize out this branch.
-            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted) {
+            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted && shouldValidateKey == ShouldValidateKey::No) {
                 if (isEmptyBucket(*entry))
                     return makeLookupResult(deletedEntry ? deletedEntry : entry, false, h);
                 
-                if (HashTranslator::equal(Extractor::extract(*entry), key))
+                if (HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return makeLookupResult(entry, true, h);
+                }
                 
                 if (isDeletedBucket(*entry))
                     deletedEntry = entry;
@@ -800,8 +795,10 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             
                 if (isDeletedBucket(*entry))
                     deletedEntry = entry;
-                else if (HashTranslator::equal(Extractor::extract(*entry), key))
+                else if (HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return makeLookupResult(entry, true, h);
+                }
             }
 
             ++probeCount;
@@ -823,13 +820,13 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     ALWAYS_INLINE void HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::addUniqueForInitialization(T&& key, NOESCAPE const std::invocable<> auto& functor)
     {
         ASSERT(m_table);
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, ShouldValidateKey::No>(key);
         invalidateIterators(this);
 
         internalCheckTableConsistency();
 
         Value* entry = lookupForReinsert<HashTranslator>(key);
         HashTranslator::translate(*entry, std::forward<T>(key), functor);
+        ASSERT(isValidKey(*entry));
 
         internalCheckTableConsistency();
     }
@@ -856,7 +853,6 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
     ALWAYS_INLINE auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::add(T&& key, NOESCAPE const std::invocable<> auto& functor) -> AddResult
     {
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, shouldValidateKey>(key);
         invalidateIterators(this);
 
         if (!m_table)
@@ -886,12 +882,14 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             entry = table + i;
             
             // We count on the compiler to optimize out this branch.
-            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted) {
+            if constexpr (HashFunctions::safeToCompareToEmptyOrDeleted && shouldValidateKey == ShouldValidateKey::No) {
                 if (isEmptyBucket(*entry))
                     break;
                 
-                if (HashTranslator::equal(Extractor::extract(*entry), key))
+                if (HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return AddResult(makeKnownGoodIterator(entry), false);
+                }
                 
                 if (isDeletedBucket(*entry))
                     deletedEntry = entry;
@@ -901,8 +899,10 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             
                 if (isDeletedBucket(*entry))
                     deletedEntry = entry;
-                else if (HashTranslator::equal(Extractor::extract(*entry), key))
+                else if (HashTranslator::equal(Extractor::extract(*entry), key)) {
+                    ASSERT(isValidKey(*entry));
                     return AddResult(makeKnownGoodIterator(entry), false);
+                }
             }
 
             ++probeCount;
@@ -925,6 +925,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         }
 
         HashTranslator::translate(*entry, std::forward<T>(key), functor);
+        validateKey<shouldValidateKey>(*entry);
         setKeyCount(keyCount() + 1);
         
         if (shouldExpand())
@@ -939,8 +940,6 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
     template<typename HashTranslator, ShouldValidateKey shouldValidateKey, typename T>
     inline auto HashTable<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, Malloc>::addPassingHashCode(T&& key, NOESCAPE const std::invocable<> auto& functor) -> AddResult
     {
-        checkHashTableKey<Key, Value, Extractor, HashFunctions, Traits, KeyTraits, HashTranslator, shouldValidateKey>(key);
-
         invalidateIterators(this);
 
         if (!m_table)
@@ -948,7 +947,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
 
         internalCheckTableConsistency();
 
-        FullLookupType lookupResult = fullLookupForWriting<HashTranslator>(key);
+        FullLookupType lookupResult = fullLookupForWriting<HashTranslator, shouldValidateKey>(key);
 
         ValueType* entry = lookupResult.first.first;
         bool found = lookupResult.first.second;
@@ -963,6 +962,7 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
         }
 
         HashTranslator::translate(*entry, std::forward<T>(key), functor, h);
+        validateKey<shouldValidateKey>(*entry);
         setKeyCount(keyCount() + 1);
 
         if (shouldExpand())
@@ -1442,6 +1442,12 @@ DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(HashTable);
             }
 
             auto& key = Extractor::extract(*entry);
+            // A weak key can become null without being eagerly removed from the table.
+            if (!key) {
+                ++count;
+                continue;
+            }
+
             const_iterator it = find<ShouldValidateKey::No>(key);
             ASSERT(entry == it.m_position);
             ++count;

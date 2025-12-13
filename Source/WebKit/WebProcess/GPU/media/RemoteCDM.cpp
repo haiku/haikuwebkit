@@ -37,8 +37,11 @@
 #include <WebCore/CDMKeySystemConfiguration.h>
 #include <WebCore/CDMRestrictions.h>
 #include <WebCore/SharedBuffer.h>
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteCDM);
 
 using namespace WebCore;
 

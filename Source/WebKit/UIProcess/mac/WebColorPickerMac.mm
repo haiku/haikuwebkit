@@ -190,7 +190,8 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
     [popover showRelativeToRect:self.bounds ofView:self preferredEdge:NSMinYEdge];
 }
 
-- (void)popoverDidClose:(NSNotification *)notification {
+- (void)popoverDidClose:(NSNotification *)notification
+{
     [retainPtr(self.webDelegate) didClosePopover];
 }
 
@@ -264,16 +265,31 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
     }
 }
 
+- (void)didClosePopover
+{
+    callOnMainRunLoop([retainedSelf = retainPtr(self), self] {
+        RefPtr picker = _picker.get();
+        if (!picker)
+            return;
+
+        if (![NSColorPanel sharedColorPanel].isVisible)
+            picker->endPicker();
+    });
+}
+
 - (void)windowWillClose:(NSNotification *)notification
 {
-    RefPtr picker = _picker.get();
-    if (!picker)
+    if (notification.object != [NSColorPanel sharedColorPanel])
         return;
 
-    if (notification.object == [NSColorPanel sharedColorPanel]) {
+    callOnMainRunLoop([retainedSelf = retainPtr(self), self] {
+        RefPtr picker = _picker.get();
+        if (!picker)
+            return;
+
         _lastChangedByUser = YES;
         picker->endPicker();
-    }
+    });
 }
 
 - (void)didChooseColor:(id)sender
@@ -295,16 +311,6 @@ void WebColorPickerMac::showColorPicker(const WebCore::Color& color)
 {
     _lastChangedByUser = NO;
     [_popoverWell setColor:color];
-}
-
-- (void)didClosePopover
-{
-    RefPtr picker = _picker.get();
-    if (!picker)
-        return;
-
-    if (![NSColorPanel sharedColorPanel].isVisible)
-        picker->endPicker();
 }
 
 @end

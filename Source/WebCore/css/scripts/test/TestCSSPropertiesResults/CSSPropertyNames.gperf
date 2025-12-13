@@ -24,95 +24,14 @@ namespace WebCore {
 
 static_assert(cssPropertyIDEnumValueCount <= (std::numeric_limits<uint16_t>::max() + 1), "CSSPropertyID should fit into uint16_t.");
 
-const std::array<CSSPropertyID, 113> computedPropertyIDs {
+const std::array<CSSPropertyID, 16> computedPropertyIDs {
     CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete,
-    CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter,
     CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo,
     CSSPropertyID::CSSPropertyTestAnimationWrapper,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
     CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasFixed,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommasSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpaces,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesFixed,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithType,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPrevious,
-    CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo,
-    CSSPropertyID::CSSPropertyTestColor,
-    CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute,
-    CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport,
-    CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport,
-    CSSPropertyID::CSSPropertyTestCustomExtractor,
-    CSSPropertyID::CSSPropertyTestExtractorConverter,
-    CSSPropertyID::CSSPropertyTestFunctionBoundedParameters,
-    CSSPropertyID::CSSPropertyTestFunctionFixedParameters,
-    CSSPropertyID::CSSPropertyTestFunctionNoParameters,
-    CSSPropertyID::CSSPropertyTestFunctionParametersMatchAllAnyOrder,
-    CSSPropertyID::CSSPropertyTestFunctionParametersMatchAllAnyOrderWithOptional,
-    CSSPropertyID::CSSPropertyTestFunctionParametersMatchAllOrdered,
-    CSSPropertyID::CSSPropertyTestFunctionParametersMatchAllOrderedWithOptional,
-    CSSPropertyID::CSSPropertyTestFunctionParametersMatchOneOrMoreAnyOrder,
-    CSSPropertyID::CSSPropertyTestFunctionSingleParameter,
-    CSSPropertyID::CSSPropertyTestFunctionSingleParameterMatchOne,
-    CSSPropertyID::CSSPropertyTestFunctionSingleParameterOptional,
-    CSSPropertyID::CSSPropertyTestFunctionUnboundedParametersNoMin,
-    CSSPropertyID::CSSPropertyTestFunctionUnboundedParametersWithMinimum,
-    CSSPropertyID::CSSPropertyTestHighPriority,
-    CSSPropertyID::CSSPropertyTestImage,
-    CSSPropertyID::CSSPropertyTestImageNoImageSet,
-    CSSPropertyID::CSSPropertyTestKeyword,
-    CSSPropertyID::CSSPropertyTestKeywordWithAliasedTo,
     CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalBlock,
-    CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline,
-    CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalHorizontal,
     CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalVertical,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrder,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptional,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndMultipleRequiredAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndMultipleRequiredAndCustomTypeNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndMultipleRequiredAndPreserveOrderAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndMultipleRequiredAndPreserveOrderAndCustomTypeNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndPreserveOrderAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalWithPreserveOrder,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalWithPreserveOrderNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithPreserveOrder,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithPreserveOrderAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithPreserveOrderNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllOrdered,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptional,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalAndCustomTypeAndNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalAndMultipleRequired,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalAndMultipleRequiredAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchAllOrderedWithOptionalSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchOne,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrder,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithCustomType,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithCustomTypeNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithPreserveOrder,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithPreserveOrderAndCustomType,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithPreserveOrderAndCustomTypeNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchOneOrMoreAnyOrderWithPreserveOrderNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestMatchOneWithGroupWithSettingsFlag,
-    CSSPropertyID::CSSPropertyTestMatchOneWithKeywordWithSettingsFlag,
-    CSSPropertyID::CSSPropertyTestMatchOneWithMultipleKeywords,
-    CSSPropertyID::CSSPropertyTestMatchOneWithReferenceWithSettingsFlag,
-    CSSPropertyID::CSSPropertyTestMatchOneWithSettingsFlag,
-    CSSPropertyID::CSSPropertyTestMediumPriority,
-    CSSPropertyID::CSSPropertyTestNumericValueRange,
-    CSSPropertyID::CSSPropertyTestProperty,
     CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelEnum,
     CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelRaw,
     CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelReference,
@@ -122,22 +41,6 @@ const std::array<CSSPropertyID, 113> computedPropertyIDs {
     CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference,
     CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue,
     CSSPropertyID::CSSPropertyTestSettingsOne,
-    CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter,
-    CSSPropertyID::CSSPropertyTestSinkPriority,
-    CSSPropertyID::CSSPropertyTestTopPriority,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMin,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesNoMin,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesNoMinNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesWithMin,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesWithMinNoSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesWithMinSingleItemOpt,
-    CSSPropertyID::CSSPropertyTestUrlWithModifiers,
-    CSSPropertyID::CSSPropertyTestUrlWithNoModifiers,
-    CSSPropertyID::CSSPropertyTestUsingSharedRule,
-    CSSPropertyID::CSSPropertyTestUsingSharedRuleExported,
-    CSSPropertyID::CSSPropertyTestUsingSharedRuleWithOverrideFunction,
 };
 
 constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
@@ -145,7 +48,6 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-high-priority"_s,
     "test-medium-priority"_s,
     "background-coordinated-value-list-property-test-discrete"_s,
-    "background-coordinated-value-list-property-test-three-with-converter"_s,
     "background-coordinated-value-list-property-test-two"_s,
     "first-test-descriptor-for-first-descriptor"_s,
     "first-test-descriptor-for-second-descriptor"_s,
@@ -169,7 +71,6 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-color-property-with-no-visited-link-support"_s,
     "test-color-property-with-visited-link-support"_s,
     "test-custom-extractor"_s,
-    "test-extractor-converter"_s,
     "test-function-bounded-parameters"_s,
     "test-function-fixed-parameters"_s,
     "test-function-no-parameters"_s,
@@ -237,7 +138,6 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-render-style-storage-two-level-reference"_s,
     "test-render-style-storage-two-level-value"_s,
     "test-settings-one"_s,
-    "test-shared-builder-extractor-converter"_s,
     "test-unbounded-repetition-with-commas-with-min"_s,
     "test-unbounded-repetition-with-commas-with-min-no-single-item-opt"_s,
     "test-unbounded-repetition-with-commas-with-min-single-item-opt"_s,
@@ -279,7 +179,6 @@ struct CSSPropertyHashTableEntry {
 %%
 all, CSSPropertyID::CSSPropertyAll
 background-coordinated-value-list-property-test-discrete, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete
-background-coordinated-value-list-property-test-three-with-converter, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter
 background-coordinated-value-list-property-test-two, CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo
 first-test-descriptor-for-first-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
 first-test-descriptor-for-second-descriptor, CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
@@ -304,7 +203,6 @@ test-color-allows-types-absolute, CSSPropertyID::CSSPropertyTestColorAllowsTypes
 test-color-property-with-no-visited-link-support, CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport
 test-color-property-with-visited-link-support, CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport
 test-custom-extractor, CSSPropertyID::CSSPropertyTestCustomExtractor
-test-extractor-converter, CSSPropertyID::CSSPropertyTestExtractorConverter
 test-function-bounded-parameters, CSSPropertyID::CSSPropertyTestFunctionBoundedParameters
 test-function-fixed-parameters, CSSPropertyID::CSSPropertyTestFunctionFixedParameters
 test-function-no-parameters, CSSPropertyID::CSSPropertyTestFunctionNoParameters
@@ -378,7 +276,6 @@ test-render-style-storage-two-level-raw, CSSPropertyID::CSSPropertyTestRenderSty
 test-render-style-storage-two-level-reference, CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference
 test-render-style-storage-two-level-value, CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue
 test-settings-one, CSSPropertyID::CSSPropertyTestSettingsOne
-test-shared-builder-extractor-converter, CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter
 test-shorthand-one, CSSPropertyID::CSSPropertyTestShorthandOne
 test-shorthand-two, CSSPropertyID::CSSPropertyTestShorthandTwo
 test-sink-priority, CSSPropertyID::CSSPropertyTestSinkPriority
@@ -527,7 +424,6 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestHighPriority
     false, // CSSPropertyID::CSSPropertyTestMediumPriority
     false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete
-    false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter
     false, // CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForFirstDescriptor
     false, // CSSPropertyID::CSSPropertyFirstTestDescriptorForSecondDescriptor
@@ -551,7 +447,6 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport
     false, // CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport
     false, // CSSPropertyID::CSSPropertyTestCustomExtractor
-    false, // CSSPropertyID::CSSPropertyTestExtractorConverter
     false, // CSSPropertyID::CSSPropertyTestFunctionBoundedParameters
     false, // CSSPropertyID::CSSPropertyTestFunctionFixedParameters
     false, // CSSPropertyID::CSSPropertyTestFunctionNoParameters
@@ -619,7 +514,6 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference
     false, // CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue
     false, // CSSPropertyID::CSSPropertyTestSettingsOne
-    false, // CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter
     false, // CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMin
     false, // CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinNoSingleItemOpt
     false, // CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinSingleItemOpt
@@ -699,7 +593,6 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestHighPriority:
     case CSSPropertyID::CSSPropertyTestMediumPriority:
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
-    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
@@ -713,7 +606,6 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPrevious:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo:
     case CSSPropertyID::CSSPropertyTestCustomExtractor:
-    case CSSPropertyID::CSSPropertyTestExtractorConverter:
     case CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndCustomType:
     case CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndPreserveOrderAndCustomType:
     case CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalNoSingleItemOpt:
@@ -744,7 +636,6 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue:
     case CSSPropertyID::CSSPropertyTestSettingsOne:
-    case CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter:
     case CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinNoSingleItemOpt:
     case CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinSingleItemOpt:
     case CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithSpacesNoMin:

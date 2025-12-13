@@ -86,6 +86,7 @@
 #include "StorageEvent.h"
 #include "StyleResolver.h"
 #include "StyleSheetContents.h"
+#include "SubmitEvent.h"
 #include "TemplateContentDocumentFragment.h"
 #include "TextEvent.h"
 #include "TextManipulationController.h"
@@ -2564,7 +2565,7 @@ void Node::removeAllEventListeners()
     });
 }
 
-Vector<std::unique_ptr<MutationObserverRegistration>>* Node::mutationObserverRegistry()
+Vector<Ref<MutationObserverRegistration>>* Node::mutationObserverRegistry()
 {
     if (!hasRareData())
         return nullptr;
@@ -2601,7 +2602,7 @@ HashMap<Ref<MutationObserver>, MutationRecordDeliveryOptions> Node::registeredMu
     for (RefPtr node = this; node; node = node->parentNode()) {
         if (auto* registry = node->mutationObserverRegistry()) {
             for (auto& registration : *registry)
-                collectMatchingObserversForMutation(*registration);
+                collectMatchingObserversForMutation(registration);
         }
         if (auto* registry = node->transientMutationObserverRegistry()) {
             for (auto& registration : *registry)
@@ -2614,19 +2615,19 @@ HashMap<Ref<MutationObserver>, MutationRecordDeliveryOptions> Node::registeredMu
 
 void Node::registerMutationObserver(MutationObserver& observer, MutationObserverOptions options, const MemoryCompactLookupOnlyRobinHoodHashSet<AtomString>& attributeFilter)
 {
-    MutationObserverRegistration* registration = nullptr;
+    RefPtr<MutationObserverRegistration> registration;
     auto& registry = ensureRareData().mutationObserverData().registry;
 
     for (auto& candidateRegistration : registry) {
         if (&candidateRegistration->observer() == &observer) {
-            registration = candidateRegistration.get();
+            registration = candidateRegistration.ptr();
             registration->resetObservation(options, attributeFilter);
         }
     }
 
     if (!registration) {
-        registry.append(makeUnique<MutationObserverRegistration>(observer, *this, options, attributeFilter));
-        registration = registry.last().get();
+        registry.append(MutationObserverRegistration::create(observer, *this, options, attributeFilter));
+        registration = registry.last().ptr();
     }
 
     document().addMutationObserverTypes(registration->mutationTypes());
@@ -2640,7 +2641,7 @@ void Node::unregisterMutationObserver(MutationObserverRegistration& registration
         return;
 
     registry->removeFirstMatching([&registration] (auto& current) {
-        return current.get() == &registration;
+        return current.ptr() == &registration;
     });
 }
 
@@ -2720,6 +2721,22 @@ void Node::dispatchInputEvent()
     dispatchScopedEvent(Event::create(eventNames().inputEvent, Event::CanBubble::Yes, Event::IsCancelable::No, Event::IsComposed::Yes));
 }
 
+void Node::dispatchWebKitSubmitEvent(Event& underlyingSubmitEvent)
+{
+    RefPtr submitEvent = dynamicDowncast<SubmitEvent>(underlyingSubmitEvent);
+    if (!submitEvent)
+        return;
+
+    SubmitEvent::Init init { };
+    init.bubbles = true;
+    init.cancelable = true;
+    init.composed = true;
+    init.submitter = submitEvent->submitter();
+    Ref webkitSubmitEvent = SubmitEvent::create(eventNames().webkitsubmitEvent, WTFMove(init));
+    webkitSubmitEvent->setIsAutofillEvent();
+    dispatchScopedEvent(webkitSubmitEvent);
+}
+
 void Node::defaultEventHandler(Event& event)
 {
     if (event.target() != this)
@@ -2747,6 +2764,9 @@ void Node::defaultEventHandler(Event& event)
         }
         break;
 #endif
+    case EventType::submit:
+        dispatchWebKitSubmitEvent(event);
+        break;
     case EventType::textInput:
         if (RefPtr textEvent = dynamicDowncast<TextEvent>(event)) {
             if (RefPtr frame = document().frame())

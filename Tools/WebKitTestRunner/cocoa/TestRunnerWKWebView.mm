@@ -708,9 +708,19 @@ static bool isQuickboardViewController(UIViewController *viewController)
 
 #pragma mark - _WKImmersiveEnvironmentDelegate
 
-- (void)webView:(WKWebView *)webView canPresentImmersiveEnvironmentFromURL:(NSURL *)url completion:(void (^)(bool))completion
+- (void)webView:(WKWebView *)webView allowImmersiveEnvironmentFromURL:(NSURL *)url completion:(void (^)(bool))completion
 {
     completion(self.shouldAcceptImmersiveEnvironmentRequests);
+}
+
+- (void)webView:(WKWebView *)webView presentImmersiveEnvironment:(UIView *)environmentView completion:(void (^)(NSError * _Nullable))completion
+{
+    completion(nil);
+}
+
+- (void)webView:(WKWebView *)webView dismissImmersiveEnvironment:(void (^)())completion
+{
+    completion();
 }
 
 #endif

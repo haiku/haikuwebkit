@@ -80,7 +80,6 @@ Modules/webdatabase/LocalDOMWindowWebDatabase.cpp
 Modules/webdatabase/SQLStatement.cpp
 Modules/webdatabase/SQLTransaction.cpp
 Modules/webdatabase/SQLTransactionBackend.cpp
-Modules/webdatabase/SQLTransactionCoordinator.cpp
 Modules/webtransport/WebTransport.cpp
 accessibility/AXLogger.cpp
 accessibility/AXObjectCache.cpp
@@ -128,7 +127,6 @@ bindings/js/JSCSSStyleDeclarationCustom.cpp
 bindings/js/JSCanvasRenderingContext2DCustom.cpp
 bindings/js/JSCustomElementInterface.cpp
 bindings/js/JSCustomElementRegistryCustom.cpp
-bindings/js/JSDOMAsyncIterator.h
 bindings/js/JSDOMBindingSecurity.cpp
 bindings/js/JSDOMBindingSecurity.h
 bindings/js/JSDOMBindingSecurityInlines.h
@@ -781,6 +779,7 @@ rendering/shapes/ShapeOutsideInfo.cpp
 rendering/shapes/ShapeOutsideInfo.h
 rendering/style/RenderStyle.cpp
 rendering/style/RenderStyleInlines.h
+rendering/style/RenderStylePropertiesGettersCustom.h
 rendering/style/SVGRenderStyle.cpp
 rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp

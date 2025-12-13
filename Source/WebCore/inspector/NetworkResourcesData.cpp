@@ -103,7 +103,7 @@ void NetworkResourcesData::ResourceData::decodeDataToContent()
 {
     ASSERT(!hasContent());
 
-    auto buffer = m_dataBuffer.takeAsContiguous();
+    auto buffer = m_dataBuffer.takeBufferAsContiguous();
 
     if (m_decoder) {
         m_base64Encoded = false;

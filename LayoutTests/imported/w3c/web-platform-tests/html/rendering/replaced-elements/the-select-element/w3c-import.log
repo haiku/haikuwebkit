@@ -28,6 +28,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-button-min-height-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-button-min-height-001-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-button-min-height-001.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-display-inline-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-display-inline-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-display-inline.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-empty-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-empty-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-empty.html

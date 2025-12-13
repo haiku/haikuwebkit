@@ -93,10 +93,6 @@ enum class TapHandlingResult : uint8_t;
 - (void)_setHasCustomContentView:(BOOL)hasCustomContentView loadedMIMEType:(const WTF::String&)mimeType;
 - (void)_didFinishLoadingDataForCustomContentProviderWithSuggestedFilename:(const WTF::String&)suggestedFilename data:(NSData *)data;
 
-#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-- (void)_updateOverlayRegions;
-#endif
-
 - (void)_willInvokeUIScrollViewDelegateCallback;
 - (void)_didInvokeUIScrollViewDelegateCallback;
 

@@ -38,14 +38,14 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 namespace WTF {
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorHandle);
-
-DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER_AND_EXPORT(MetaAllocatorFreeSpace, WTF_INTERNAL);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(MetaAllocatorFreeSpace);
-
-WTF_MAKE_TZONE_ALLOCATED_IMPL(MetaAllocator::FreeSpaceNode);
 
 MetaAllocator::~MetaAllocator()
 {
+    // Clear CheckedPtrs in these maps before we start freeing nodes.
+    m_freeSpaceStartAddressMap.clear();
+    m_freeSpaceEndAddressMap.clear();
+
     for (CheckedPtr node = m_freeSpaceSizeMap.first(); node;) {
         CheckedPtr next = node->successor();
         m_freeSpaceSizeMap.remove(node.get());
@@ -351,13 +351,13 @@ void MetaAllocator::addFreeSpace(FreeSpacePtr start, size_t sizeInBytes)
             m_freeSpaceSizeMap.remove(rightNode.get());
             m_freeSpaceStartAddressMap.remove(rightStart);
             m_freeSpaceEndAddressMap.remove(rightEnd);
-            
-            freeFreeSpaceNode(WTFMove(rightNode));
 
             leftNode->m_end += (sizeInBytes + rightSize);
 
             m_freeSpaceSizeMap.insert(leftNode.get());
             m_freeSpaceEndAddressMap.add(rightEnd, leftNode.get());
+
+            freeFreeSpaceNode(WTFMove(rightNode));
         } else {
             leftNode->m_end += sizeInBytes;
 
@@ -479,7 +479,7 @@ MetaAllocator::FreeSpaceNode* MetaAllocator::allocFreeSpaceNode()
 #ifndef NDEBUG
     m_mallocBalance++;
 #endif
-    return new (NotNull, MetaAllocatorFreeSpaceMalloc::malloc(sizeof(FreeSpaceNode))) FreeSpaceNode();
+    return new FreeSpaceNode;
 }
 
 void MetaAllocator::freeFreeSpaceNode(CheckedPtr<FreeSpaceNode>&& node)
@@ -488,7 +488,7 @@ void MetaAllocator::freeFreeSpaceNode(CheckedPtr<FreeSpaceNode>&& node)
     m_mallocBalance--;
 #endif
     SUPPRESS_UNCHECKED_LOCAL auto* nodePtr = std::exchange(node, nullptr).unsafeGet(); // NOLINT
-    MetaAllocatorFreeSpaceMalloc::free(nodePtr);
+    delete nodePtr;
 }
 
 #if ENABLE(META_ALLOCATOR_PROFILE)

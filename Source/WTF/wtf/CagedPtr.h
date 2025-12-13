@@ -55,14 +55,14 @@ public:
         : m_ptr(ptr)
     { }
 
-    T* get() const
+    T* get() const LIFETIME_BOUND
     {
         ASSERT(m_ptr);
         T* ptr = PtrTraits::unwrap(m_ptr);
         return Gigacage::caged(kind, ptr);
     }
 
-    T* getMayBeNull() const
+    T* getMayBeNull() const LIFETIME_BOUND
     {
         T* ptr = PtrTraits::unwrap(m_ptr);
         if (!ptr)
@@ -70,7 +70,7 @@ public:
         return Gigacage::caged(kind, ptr);
     }
 
-    T* getUnsafe() const
+    T* getUnsafe() const LIFETIME_BOUND
     {
         T* ptr = PtrTraits::unwrap(m_ptr);
         return Gigacage::cagedMayBeNull(kind, ptr);

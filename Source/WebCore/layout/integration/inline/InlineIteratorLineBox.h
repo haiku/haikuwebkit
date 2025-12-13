@@ -325,7 +325,7 @@ inline bool LineBox::isFirst() const
 inline bool LineBox::hasBlockContent() const
 {
     return WTF::switchOn(m_pathVariant, [](const auto& path) {
-        return path.hasBlockContent();
+        return path.hasBlockLevelBox();
     });
 }
 

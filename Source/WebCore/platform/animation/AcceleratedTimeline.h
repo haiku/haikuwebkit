@@ -29,13 +29,15 @@
 
 #include <WebCore/ProgressResolutionData.h>
 #include <WebCore/TimelineIdentifier.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Variant.h>
+#include <wtf/WeakPtr.h>
 
 namespace WebCore {
 
-class AcceleratedTimeline : public RefCounted<AcceleratedTimeline> {
+class AcceleratedTimeline : public RefCountedAndCanMakeWeakPtr<AcceleratedTimeline> {
     WTF_MAKE_TZONE_ALLOCATED(AcceleratedTimeline);
 public:
 
@@ -47,6 +49,8 @@ public:
 
     WEBCORE_EXPORT std::optional<Seconds> originTime() const;
     WEBCORE_EXPORT std::optional<ProgressResolutionData> progressResolutionData() const;
+
+    void setProgressResolutionData(ProgressResolutionData&&);
 
     // Encoding support.
     using Data = Variant<Seconds, ProgressResolutionData>;
@@ -63,6 +67,14 @@ private:
 
     TimelineIdentifier m_identifier;
     Data m_data;
+};
+
+struct AcceleratedTimelinesUpdate {
+    HashSet<Ref<AcceleratedTimeline>> created;
+    HashSet<Ref<AcceleratedTimeline>> modified;
+    HashSet<TimelineIdentifier> destroyed;
+
+    bool isEmpty() const { return created.isEmpty() && modified.isEmpty() && destroyed.isEmpty(); }
 };
 
 } // namespace WebCore

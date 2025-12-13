@@ -98,7 +98,9 @@ messages -> WebPageProxy {
     SetCanShortCircuitHorizontalWheelEvents(bool canShortCircuitHorizontalWheelEvents)
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-    [EnabledBy=ModelElementImmersiveEnabled] CanEnterImmersiveElementFromURL(URL url) -> (bool canEnterImmersive)
+    [EnabledBy=ModelElementImmersiveEnabled] AllowImmersiveElementFromURL(URL url) -> (bool allow)
+    [EnabledBy=ModelElementImmersiveEnabled] PresentImmersiveElement(WebCore::LayerHostingContextIdentifier contextID) -> (bool success)
+    [EnabledBy=ModelElementImmersiveEnabled] DismissImmersiveElement() -> ()
 #endif
 
     DidChangeContentSize(WebCore::IntSize newSize)
@@ -323,6 +325,7 @@ messages -> WebPageProxy {
     LearnWord(String word)
     IgnoreWord(String word)
     RequestCheckingOfString(WebKit::TextCheckerRequestID requestID, WebCore::TextCheckingRequestData request, int32_t insertionPoint)
+    RequestExtendedCheckingOfString(WebKit::TextCheckerRequestID requestID, WebCore::TextCheckingRequestData request, int32_t insertionPoint)
 
     # Drag and drop messages
 #if PLATFORM(COCOA) && ENABLE(DRAG_SUPPORT)
@@ -672,7 +675,8 @@ messages -> WebPageProxy {
 #endif
 
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
-    EnsureRemoteMediaSessionManagerProxy()
+    AddRemoteMediaSessionManager(WebCore::PageIdentifier pageIdentifier)
+    RemoveRemoteMediaSessionManager(WebCore::PageIdentifier pageIdentifier)
 #endif
 
     HasActiveNowPlayingSessionChanged(bool hasActiveNowPlayingSessionChanged)

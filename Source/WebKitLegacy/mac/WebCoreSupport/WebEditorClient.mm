@@ -1269,6 +1269,10 @@ void WebEditorClient::requestCheckingOfString(TextCheckingRequest& request, cons
 #endif
 }
 
+void WebEditorClient::requestExtendedCheckingOfString(TextCheckingRequest& request, const VisibleSelection& currentSelection)
+{
+}
+
 #if PLATFORM(IOS_FAMILY)
 bool WebEditorClient::shouldAllowSingleClickToChangeSelection(WebCore::Node& targetNode, const WebCore::VisibleSelection& newSelection) const
 {

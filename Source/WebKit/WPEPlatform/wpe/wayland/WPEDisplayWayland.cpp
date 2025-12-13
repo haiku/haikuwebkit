@@ -547,18 +547,18 @@ static WPEClipboard* wpeDisplayWaylandGetClipboard(WPEDisplay* display)
     return priv->clipboard.get();
 }
 
-static WPEBufferDMABufFormats* wpeDisplayWaylandGetPreferredDMABufFormats(WPEDisplay* display)
+static WPEBufferFormats* wpeDisplayWaylandGetPreferredBufferFormats(WPEDisplay* display)
 {
     auto* priv = WPE_DISPLAY_WAYLAND(display)->priv;
     if (!priv->linuxDMABuf)
         return nullptr;
 
-    auto* builder = wpe_buffer_dma_buf_formats_builder_new(priv->drmDevice.get());
-    wpe_buffer_dma_buf_formats_builder_append_group(builder, nullptr, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING);
+    auto* builder = wpe_buffer_formats_builder_new(priv->drmDevice.get());
+    wpe_buffer_formats_builder_append_group(builder, nullptr, WPE_BUFFER_FORMAT_USAGE_RENDERING);
     for (const auto& format : priv->linuxDMABufFormats)
-        wpe_buffer_dma_buf_formats_builder_append_format(builder, format.first, format.second);
+        wpe_buffer_formats_builder_append_format(builder, format.first, format.second);
 
-    return wpe_buffer_dma_buf_formats_builder_end(builder);
+    return wpe_buffer_formats_builder_end(builder);
 }
 
 static guint wpeDisplayWaylandGetNScreens(WPEDisplay* display)
@@ -671,7 +671,7 @@ static void wpe_display_wayland_class_init(WPEDisplayWaylandClass* displayWaylan
     displayClass->get_egl_display = wpeDisplayWaylandGetEGLDisplay;
     displayClass->get_keymap = wpeDisplayWaylandGetKeymap;
     displayClass->get_clipboard = wpeDisplayWaylandGetClipboard;
-    displayClass->get_preferred_dma_buf_formats = wpeDisplayWaylandGetPreferredDMABufFormats;
+    displayClass->get_preferred_buffer_formats = wpeDisplayWaylandGetPreferredBufferFormats;
     displayClass->get_n_screens = wpeDisplayWaylandGetNScreens;
     displayClass->get_screen = wpeDisplayWaylandGetScreen;
     displayClass->get_drm_device = wpeDisplayWaylandGetDRMDevice;

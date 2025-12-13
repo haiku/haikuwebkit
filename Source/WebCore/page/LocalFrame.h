@@ -375,7 +375,7 @@ private:
     void changeLocation(FrameLoadRequest&&) final;
     void loadFrameRequest(FrameLoadRequest&&, Event*) final;
     void didFinishLoadInAnotherProcess() final;
-    RefPtr<SecurityOrigin> frameDocumentSecurityOrigin() const final;
+    SecurityOrigin* frameDocumentSecurityOrigin() const final;
     String frameURLProtocol() const final;
 
     FrameView* virtualView() const final;

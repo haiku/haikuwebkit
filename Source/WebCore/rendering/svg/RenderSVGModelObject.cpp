@@ -108,14 +108,14 @@ const RenderElement* RenderSVGModelObject::pushMappingToContainer(const RenderLa
     ASSERT(style().position() == PositionType::Static);
 
     bool ancestorSkipped;
-    CheckedPtr container = this->container(ancestorToStopAt, ancestorSkipped);
+    WeakPtr container = this->container(ancestorToStopAt, ancestorSkipped);
     if (!container)
         return nullptr;
 
     ASSERT_UNUSED(ancestorSkipped, !ancestorSkipped);
 
-    pushOntoGeometryMap(geometryMap, ancestorToStopAt, container.get(), ancestorSkipped);
-    return container.unsafeGet();
+    pushOntoGeometryMap(geometryMap, ancestorToStopAt, CheckedPtr { container.get() }.get(), ancestorSkipped);
+    return container.get();
 }
 
 LayoutRect RenderSVGModelObject::outlineBoundsForRepaint(const RenderLayerModelObject* repaintContainer, const RenderGeometryMap* geometryMap) const

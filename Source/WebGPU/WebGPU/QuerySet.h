@@ -25,6 +25,7 @@
 
 #pragma once
 
+#import "BindableResource.h"
 #import "WebGPU.h"
 #import "WebGPUExt.h"
 #import <optional>
@@ -32,7 +33,7 @@
 #import <wtf/Range.h>
 #import <wtf/RangeSet.h>
 #import <wtf/Ref.h>
-#import <wtf/RefCounted.h>
+#import <wtf/RefCountedAndCanMakeWeakPtr.h>
 #import <wtf/RetainReleaseSwift.h>
 #import <wtf/TZoneMalloc.h>
 #import <wtf/Vector.h>
@@ -51,7 +52,7 @@ class CommandEncoder;
 class Device;
 
 // https://gpuweb.github.io/gpuweb/#gpuqueryset
-class QuerySet : public WGPUQuerySetImpl, public RefCounted<QuerySet> {
+class QuerySet : public WGPUQuerySetImpl, public RefCountedAndCanMakeWeakPtr<QuerySet>, public TrackedResource {
     WTF_MAKE_TZONE_ALLOCATED(QuerySet);
 public:
     struct CounterSampleBuffer {
@@ -114,7 +115,6 @@ private:
         Ref<QuerySet> other;
         uint32_t otherIndex;
     };
-    mutable Vector<uint64_t> m_commandEncoders;
     bool m_destroyed { false };
 
     // static is intentional here as the limit is per process

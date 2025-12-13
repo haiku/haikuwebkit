@@ -125,17 +125,17 @@ public:
     const_iterator begin() const LIFETIME_BOUND;
     const_iterator end() const LIFETIME_BOUND;
     
-    iterator random() { return m_impl.random(); }
-    const_iterator random() const { return m_impl.random(); }
+    iterator random() LIFETIME_BOUND { return m_impl.random(); }
+    const_iterator random() const LIFETIME_BOUND { return m_impl.random(); }
 
-    KeysIteratorRange keys() { return makeSizedIteratorRange(*this, begin().keys(), end().keys()); }
-    const KeysConstIteratorRange keys() const { return makeSizedIteratorRange(*this, begin().keys(), end().keys()); }
+    KeysIteratorRange keys() LIFETIME_BOUND { return makeSizedIteratorRange(*this, begin().keys(), end().keys()); }
+    const KeysConstIteratorRange keys() const LIFETIME_BOUND { return makeSizedIteratorRange(*this, begin().keys(), end().keys()); }
 
-    ValuesIteratorRange values() { return makeSizedIteratorRange(*this, begin().values(), end().values()); }
-    const ValuesConstIteratorRange values() const { return makeSizedIteratorRange(*this, begin().values(), end().values()); }
+    ValuesIteratorRange values() LIFETIME_BOUND { return makeSizedIteratorRange(*this, begin().values(), end().values()); }
+    const ValuesConstIteratorRange values() const LIFETIME_BOUND { return makeSizedIteratorRange(*this, begin().values(), end().values()); }
 
-    iterator find(const KeyType&);
-    const_iterator find(const KeyType&) const;
+    iterator find(const KeyType&) LIFETIME_BOUND;
+    const_iterator find(const KeyType&) const LIFETIME_BOUND;
     bool contains(const KeyType&) const;
     MappedPeekType get(const KeyType&) const;
     std::optional<MappedType> getOptional(const KeyType&) const;
@@ -148,21 +148,21 @@ public:
     // Replaces the value but not the key if the key is already present.
     // Return value includes both an iterator to the key location,
     // and an isNewEntry boolean that's true if a new entry was added.
-    template<typename V> AddResult set(const KeyType&, V&&);
-    template<typename V> AddResult set(KeyType&&, V&&);
+    template<typename V> AddResult set(const KeyType&, V&&) LIFETIME_BOUND;
+    template<typename V> AddResult set(KeyType&&, V&&) LIFETIME_BOUND;
 
     // Does nothing if the key is already present.
     // Return value includes both an iterator to the key location,
     // and an isNewEntry boolean that's true if a new entry was added.
-    template<typename V> AddResult add(const KeyType&, V&&);
-    template<typename V> AddResult add(KeyType&&, V&&);
+    template<typename V> AddResult add(const KeyType&, V&&) LIFETIME_BOUND;
+    template<typename V> AddResult add(KeyType&&, V&&) LIFETIME_BOUND;
 
     // Same as add(), but aggressively inlined.
-    template<typename V> AddResult fastAdd(const KeyType&, V&&);
-    template<typename V> AddResult fastAdd(KeyType&&, V&&);
+    template<typename V> AddResult fastAdd(const KeyType&, V&&) LIFETIME_BOUND;
+    template<typename V> AddResult fastAdd(KeyType&&, V&&) LIFETIME_BOUND;
 
-    AddResult ensure(const KeyType&, NOESCAPE const Invocable<MappedType()> auto&);
-    AddResult ensure(KeyType&&, NOESCAPE const Invocable<MappedType()> auto&);
+    AddResult ensure(const KeyType&, NOESCAPE const Invocable<MappedType()> auto&) LIFETIME_BOUND;
+    AddResult ensure(KeyType&&, NOESCAPE const Invocable<MappedType()> auto&) LIFETIME_BOUND;
 
     bool remove(const KeyType&);
     bool remove(iterator);
@@ -180,8 +180,8 @@ public:
     // HashTranslator must have the following function members:
     //   static unsigned hash(const T&);
     //   static bool equal(const ValueType&, const T&);
-    template<typename HashTranslator, typename T> iterator find(const T&);
-    template<typename HashTranslator, typename T> const_iterator find(const T&) const;
+    template<typename HashTranslator, typename T> iterator find(const T&) LIFETIME_BOUND;
+    template<typename HashTranslator, typename T> const_iterator find(const T&) const LIFETIME_BOUND;
     template<typename HashTranslator, typename T> bool contains(const T&) const;
     template<typename HashTranslator, typename T> MappedPeekType get(const T&) const;
     template<typename HashTranslator, typename T> MappedPeekType inlineGet(const T&) const;
@@ -193,14 +193,14 @@ public:
     //   static unsigned hash(const T&);
     //   static bool equal(const ValueType&, const T&);
     //   static translate(ValueType&, const T&, unsigned hashCode);
-    template<typename HashTranslator, typename K, typename V> AddResult add(K&&, V&&);
-    template<typename HashTranslator> AddResult ensure(auto&& key, NOESCAPE const Invocable<MappedType()> auto&);
+    template<typename HashTranslator, typename K, typename V> AddResult add(K&&, V&&) LIFETIME_BOUND;
+    template<typename HashTranslator> AddResult ensure(auto&& key, NOESCAPE const Invocable<MappedType()> auto&) LIFETIME_BOUND;
 
     // Overloads for smart pointer keys that take the raw pointer type as the parameter.
     template<SmartPtr K = KeyType>
-    iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>*);
+    iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>*) LIFETIME_BOUND;
     template<SmartPtr K = KeyType>
-    const_iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>*) const;
+    const_iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>*) const LIFETIME_BOUND;
     template<SmartPtr K = KeyType>
     bool contains(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>*) const;
     template<SmartPtr K = KeyType>
@@ -214,9 +214,9 @@ public:
 
     // Overloads for non-nullable smart pointer values that take the raw reference type as the parameter.
     template<NonNullableSmartPtr K = KeyType>
-    iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>&);
+    iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>&) LIFETIME_BOUND;
     template<NonNullableSmartPtr K = KeyType>
-    const_iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>&) const;
+    const_iterator find(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>&) const LIFETIME_BOUND;
     template<NonNullableSmartPtr K = KeyType>
     bool contains(std::add_const_t<typename GetPtrHelper<K>::UnderlyingType>&) const;
     template<NonNullableSmartPtr K = KeyType>

@@ -4294,9 +4294,14 @@ void webkitWebViewRunJavascriptWithoutForcedUserGestures(WebKitWebView* webView,
 {
     g_return_if_fail(WEBKIT_IS_WEB_VIEW(webView));
     g_return_if_fail(script);
-
+    GRefPtr task = adoptGRef(g_task_new(webView, cancellable, callback, userData));
+    auto string = IPC::TransferString::create(String::fromUTF8(script));
+    if (!string) {
+        g_task_return_new_error(task.get(), WEBKIT_JAVASCRIPT_ERROR, WEBKIT_JAVASCRIPT_ERROR_SCRIPT_FAILED, "Out of memory");
+        return;
+    }
     WebKit::RunJavaScriptParameters params {
-        String::fromUTF8(script),
+        WTFMove(*string),
         JSC::SourceTaintedOrigin::Untainted,
         URL { },
         RunAsAsyncFunction::No,
@@ -4304,17 +4309,22 @@ void webkitWebViewRunJavascriptWithoutForcedUserGestures(WebKitWebView* webView,
         ForceUserGesture::No,
         RemoveTransientActivation::Yes
     };
-    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), nullptr, RunJavascriptReturnType::JSCValue, adoptGRef(g_task_new(webView, cancellable, callback, userData)));
+    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), nullptr, RunJavascriptReturnType::JSCValue, WTFMove(task));
 }
 
 static void webkitWebViewEvaluateJavascriptInternal(WebKitWebView* webView, const char* script, gssize length, const char* worldName, const char* sourceURI, RunJavascriptReturnType returnType, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer userData)
 {
     g_return_if_fail(WEBKIT_IS_WEB_VIEW(webView));
     g_return_if_fail(script);
-
+    GRefPtr task = adoptGRef(g_task_new(webView, cancellable, callback, userData));
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
+    auto string = IPC::TransferString::create(String::fromUTF8(std::span(script, length < 0 ? strlen(script) : length)));
+    if (!string) {
+        g_task_return_new_error(task.get(), WEBKIT_JAVASCRIPT_ERROR, WEBKIT_JAVASCRIPT_ERROR_SCRIPT_FAILED, "Out of memory");
+        return;
+    }
     WebKit::RunJavaScriptParameters params {
-        String::fromUTF8(std::span(script, length < 0 ? strlen(script) : length)),
+        WTFMove(*string),
         JSC::SourceTaintedOrigin::Untainted,
         URL({ }, String::fromUTF8(sourceURI)),
         RunAsAsyncFunction::No,
@@ -4323,7 +4333,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
         RemoveTransientActivation::Yes
     };
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), worldName, returnType, adoptGRef(g_task_new(webView, cancellable, callback, userData)));
+    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), worldName, returnType, WTFMove(task));
 }
 
 /**
@@ -4451,17 +4461,21 @@ static void webkitWebViewCallAsyncJavascriptFunctionInternal(WebKitWebView* webV
     g_return_if_fail(WEBKIT_IS_WEB_VIEW(webView));
     g_return_if_fail(body);
     g_return_if_fail(!arguments || g_variant_is_of_type(arguments, G_VARIANT_TYPE("a{sv}")));
-
+    GRefPtr task = adoptGRef(g_task_new(webView, cancellable, callback, userData));
     GError* error = nullptr;
     auto argumentsVector = parseAsyncFunctionArguments(arguments, &error);
     if (error) {
-        g_task_report_error(webView, callback, userData, nullptr, error);
+        g_task_return_error(task.get(), error);
         return;
     }
-
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
+    auto string = IPC::TransferString::create(String::fromUTF8(std::span(body, length < 0 ? strlen(body) : length)));
+    if (!string) {
+        g_task_return_new_error(task.get(), WEBKIT_JAVASCRIPT_ERROR, WEBKIT_JAVASCRIPT_ERROR_SCRIPT_FAILED, "Out of memory");
+        return;
+    }
     WebKit::RunJavaScriptParameters params {
-        String::fromUTF8(std::span(body, length < 0 ? strlen(body) : length)),
+        WTFMove(*string),
         JSC::SourceTaintedOrigin::Untainted,
         URL({ }, String::fromUTF8(sourceURI)),
         RunAsAsyncFunction::Yes,
@@ -4470,7 +4484,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE port
         RemoveTransientActivation::Yes
     };
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), worldName, returnType, adoptGRef(g_task_new(webView, cancellable, callback, userData)));
+    webkitWebViewRunJavaScriptWithParams(webView, WTFMove(params), worldName, returnType, WTFMove(task));
 }
 
 /**
@@ -4730,8 +4744,13 @@ static void resourcesStreamReadCallback(GObject* object, GAsyncResult* result, g
 
     WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
     gpointer outputStreamData = g_memory_output_stream_get_data(G_MEMORY_OUTPUT_STREAM(object));
+    auto string = IPC::TransferString::create(String::fromUTF8(reinterpret_cast<const gchar*>(outputStreamData)));
+    if (!string) {
+        g_task_return_new_error(task.get(), WEBKIT_JAVASCRIPT_ERROR, WEBKIT_JAVASCRIPT_ERROR_SCRIPT_FAILED, "Out of memory");
+        return;
+    }
     WebKit::RunJavaScriptParameters params {
-        String::fromUTF8(reinterpret_cast<const gchar*>(outputStreamData)),
+        WTFMove(*string),
         JSC::SourceTaintedOrigin::Untainted,
         URL { },
         RunAsAsyncFunction::No,

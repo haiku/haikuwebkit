@@ -101,7 +101,6 @@ css/CSSFontFaceSet.cpp
 css/CSSGroupingRule.cpp
 css/CSSImageSetValue.cpp
 css/CSSImageValue.cpp
-css/CSSKeyframeRule.cpp
 css/CSSLayerBlockRule.cpp
 css/CSSStyleProperties.cpp
 css/CSSStyleRule.cpp
@@ -110,7 +109,6 @@ css/CSSStyleSheetObservableArray.cpp
 css/CSSValue.cpp
 css/CSSValueList.cpp
 css/CSSValueList.h
-css/CSSVariableReferenceValue.cpp
 css/DeprecatedCSSOMPrimitiveValue.cpp
 css/FontFaceSet.cpp
 css/ImmutableStyleProperties.cpp
@@ -120,7 +118,6 @@ css/SelectorChecker.cpp
 css/SelectorFilter.cpp
 css/ShorthandSerializer.cpp
 css/StyleProperties.cpp
-css/StyleRule.cpp
 css/StyleRuleImport.cpp
 css/StyleSheetContents.cpp
 css/query/ContainerQueryFeatures.cpp
@@ -255,7 +252,6 @@ mathml/MathMLSelectElement.cpp
 page/CaptionUserPreferences.cpp
 [ iOS ] page/Chrome.cpp
 [ Mac ] page/ContextMenuController.cpp
-page/DebugPageOverlays.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
 page/FocusController.cpp
@@ -396,6 +392,8 @@ rendering/RenderWidget.cpp
 [ iOS ] rendering/ios/RenderThemeIOS.mm
 rendering/mathml/MathMLStyle.cpp
 rendering/style/RenderStyle.cpp
+rendering/style/RenderStyleBaseSetters.h
+rendering/style/RenderStylePropertiesSettersCustom.h
 rendering/style/RenderStyleSetters.h
 rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp
@@ -432,7 +430,6 @@ style/PseudoClassChangeInvalidation.cpp
 style/RuleSetBuilder.cpp
 style/StyleAdjuster.cpp
 style/StyleBuilder.cpp
-style/StyleBuilderConverter.h
 style/StyleBuilderCustom.h
 style/StyleBuilderState.cpp
 style/StyleCustomPropertyRegistry.cpp

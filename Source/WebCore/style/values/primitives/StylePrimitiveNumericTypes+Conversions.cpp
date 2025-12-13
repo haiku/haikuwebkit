@@ -24,9 +24,9 @@
 
 #include "config.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
-#include "Settings.h"
 
 #include "RenderStyleInlines.h"
+#include "Settings.h"
 #include "StyleLengthResolution.h"
 
 namespace WebCore {

@@ -277,7 +277,7 @@ ALWAYS_INLINE void SelectorDataList::executeFastPathForIdSelector(const Containe
         appendOutputForElement(output, *element);
 }
 
-static ContainerNode& filterRootById(ContainerNode& rootNode, const CSSSelector& firstSelector)
+static Ref<ContainerNode> filterRootById(ContainerNode& rootNode, const CSSSelector& firstSelector)
 {
     if (!rootNode.isConnected())
         return rootNode;
@@ -303,7 +303,7 @@ static ContainerNode& filterRootById(ContainerNode& rootNode, const CSSSelector&
                     if (inAdjacentChain)
                         searchRoot = searchRoot->parentNode();
                     if (searchRoot && (rootNode.isTreeScope() || searchRoot->isInclusiveDescendantOf(rootNode)))
-                        return *searchRoot.unsafeGet();
+                        return searchRoot.releaseNonNull();
                 }
             }
         }
@@ -575,7 +575,7 @@ bool SelectorDataList::compileSelector(const SelectorData& selectorData)
 template<typename OutputType>
 ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType& output) const
 {
-    ContainerNode* searchRootNode = &rootNode;
+    RefPtr<ContainerNode> searchRootNode = &rootNode;
     switch (m_matchType) {
     case RightMostWithIdMatch:
         {
@@ -622,7 +622,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
 #if ENABLE(CSS_SELECTOR_JIT)
     case CompiledSingleWithRootFilter:
         CompiledSingleWithRootFilterCase:
-        searchRootNode = &filterRootById(*searchRootNode, *m_selectors.first().selector);
+        searchRootNode = filterRootById(*searchRootNode, *m_selectors.first().selector);
         [[fallthrough]];
     case CompiledSingle:
         {
@@ -651,7 +651,7 @@ ALWAYS_INLINE void SelectorDataList::execute(ContainerNode& rootNode, OutputType
 
     case SingleSelectorWithRootFilter:
         SingleSelectorWithRootFilterCase:
-        searchRootNode = &filterRootById(*searchRootNode, *m_selectors.first().selector);
+        searchRootNode = filterRootById(*searchRootNode, *m_selectors.first().selector);
         [[fallthrough]];
     case SingleSelector:
         SingleSelectorCase:

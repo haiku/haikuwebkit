@@ -63,5 +63,11 @@ void TestSyncClient::broadcastAnotherOneToOtherProcesses(const StringifyThis& da
     dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::AnotherOne)>(data);
     broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::AnotherOne, WTFMove(dataVariant) });
 }
+void TestSyncClient::broadcastMultipleHeadersToOtherProcesses(const HashSet<URL>& data)
+{
+    TestSyncDataVariant dataVariant;
+    dataVariant.emplace<enumToUnderlyingType(TestSyncDataType::MultipleHeaders)>(data);
+    broadcastTestSyncDataToOtherProcesses({ TestSyncDataType::MultipleHeaders, WTFMove(dataVariant) });
+}
 
 } // namespace WebCore

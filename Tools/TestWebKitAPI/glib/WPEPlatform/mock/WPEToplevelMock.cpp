@@ -124,7 +124,7 @@ static gboolean wpeToplevelMockSetMinimized(WPEToplevel*)
     return FALSE;
 }
 
-static WPEBufferDMABufFormats* wpeToplevelMockGetPreferredDMABufFormats(WPEToplevel*)
+static WPEBufferFormats* wpeToplevelMockGetPreferredBufferFormats(WPEToplevel*)
 {
     return nullptr;
 }
@@ -138,7 +138,7 @@ static void wpe_toplevel_mock_class_init(WPEToplevelMockClass* toplevelMockClass
     toplevelClass->set_fullscreen = wpeToplevelMockSetFullscreen;
     toplevelClass->set_maximized = wpeToplevelMockSetMaximized;
     toplevelClass->set_minimized = wpeToplevelMockSetMinimized;
-    toplevelClass->get_preferred_dma_buf_formats = wpeToplevelMockGetPreferredDMABufFormats;
+    toplevelClass->get_preferred_buffer_formats = wpeToplevelMockGetPreferredBufferFormats;
 }
 
 WPEToplevel* wpeToplevelMockNew(WPEDisplayMock* display, guint maxViews)

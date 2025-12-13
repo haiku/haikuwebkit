@@ -760,6 +760,14 @@ bool WebXRSession::isHandTrackingEnabled() const
 #endif
 
 #if ENABLE(WEBXR_HIT_TEST)
+template <typename OptionsInit>
+Vector<XRHitTestTrackableType> entityTypesFromOptions(const OptionsInit& options)
+{
+    if (options.entityTypes.isEmpty())
+        return { XRHitTestTrackableType::Plane };
+    return options.entityTypes;
+}
+
 // https://immersive-web.github.io/hit-test/#dom-xrsession-requesthittestsource
 void WebXRSession::requestHitTestSource(const XRHitTestOptionsInit& init, RequestHitTestSourcePromise&& promise)
 {
@@ -787,7 +795,7 @@ void WebXRSession::requestHitTestSource(const XRHitTestOptionsInit& init, Reques
     PlatformXR::Ray ray { { 0, 0, 0 }, { 0, 0, -1 } };
     if (init.offsetRay)
         ray = PlatformXR::Ray { toFloatPoint3D(init.offsetRay->origin()), toFloatPoint3D(init.offsetRay->direction()) };
-    PlatformXR::HitTestOptions options = { *WTFMove(maybeNativeOrigin), init.entityTypes, WTFMove(ray) };
+    PlatformXR::HitTestOptions options = { *WTFMove(maybeNativeOrigin), entityTypesFromOptions(init), WTFMove(ray) };
     device->requestHitTestSource(options, [protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<PlatformXR::HitTestSource> exceptionOrSource) mutable {
         if (exceptionOrSource.hasException())
             promise.reject(exceptionOrSource.releaseException());
@@ -818,7 +826,7 @@ void WebXRSession::requestHitTestSourceForTransientInput(const XRTransientInputH
     PlatformXR::Ray ray { { 0, 0, 0 }, { 0, 0, -1 } };
     if (init.offsetRay)
         ray = PlatformXR::Ray { toFloatPoint3D(init.offsetRay->origin()), toFloatPoint3D(init.offsetRay->direction()) };
-    PlatformXR::TransientInputHitTestOptions options = { init.profile, init.entityTypes, WTFMove(ray) };
+    PlatformXR::TransientInputHitTestOptions options = { init.profile, entityTypesFromOptions(init), WTFMove(ray) };
     device->requestTransientInputHitTestSource(options, [protectedThis = Ref { *this }, promise = WTFMove(promise)](ExceptionOr<PlatformXR::TransientInputHitTestSource> exceptionOrSource) mutable {
         if (exceptionOrSource.hasException())
             promise.reject(exceptionOrSource.releaseException());

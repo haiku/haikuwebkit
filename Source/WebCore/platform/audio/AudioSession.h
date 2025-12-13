@@ -41,13 +41,11 @@
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
-class AudioSessionInterruptionObserver;
 class AudioSessionRoutingArbitrationClient;
 }
 
 namespace WTF {
 template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::AudioSessionInterruptionObserver> : std::true_type { };
 template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::AudioSessionRoutingArbitrationClient> : std::true_type { };
 }
 
@@ -202,7 +200,7 @@ protected:
     bool m_isInterrupted { false };
 };
 
-class AudioSessionInterruptionObserver : public CanMakeWeakPtr<AudioSessionInterruptionObserver> {
+class AudioSessionInterruptionObserver : public AbstractRefCountedAndCanMakeWeakPtr<AudioSessionInterruptionObserver> {
 public:
     virtual ~AudioSessionInterruptionObserver() = default;
 

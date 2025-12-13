@@ -41,8 +41,8 @@ public:
     }
     
     size_t index() const { return m_index; }
-    const T& element() const { return m_element; }
-    T& element() { return m_element; }
+    const T& element() const LIFETIME_BOUND { return m_element; }
+    T& element() LIFETIME_BOUND { return m_element; }
     
     bool operator<(const Insertion& other) const
     {

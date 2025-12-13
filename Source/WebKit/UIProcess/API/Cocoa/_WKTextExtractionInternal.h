@@ -25,13 +25,11 @@
 
 #pragma once
 
-#import <WebKit/_WKJSHandle.h>
 #import <WebKit/_WKTextExtraction.h>
 
-NS_ASSUME_NONNULL_BEGIN
+@class _WKJSHandle;
 
-// This is equivalent to USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCH) && !PLATFORM(APPLETV)
-#if (defined __has_include && __has_include(<CoreFoundation/CFPriv.h>)) || (!TARGET_OS_WATCH && !TARGET_OS_TV)
+NS_ASSUME_NONNULL_BEGIN
 
 @interface _WKTextExtractionConfiguration ()
 
@@ -51,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 /*!
  Iterates over all custom node attributes added via -addClientAttribute:value:forNode:.
  */
-- (void)forEachClientNodeAttribute:(void(NS_NOESCAPE ^)(NSString *attribute, NSString *value, _WKJSHandle *))block;
+- (void)forEachClientNodeAttribute:(void(^)(NSString *attribute, NSString *value, _WKJSHandle *))block;
 
 /*!
  Only include visible text content, excluding all DOM attributes and element types.
@@ -76,11 +74,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface _WKTextExtractionInteractionResult ()
 
-- (instancetype)initWithErrorDescription:(nullable NSString *)errorDescription;
+- (instancetype)initWithErrorDescription:(NSString *)errorDescription;
 
 @end
-
-#endif // (defined __has_include && __has_include(<CoreFoundation/CFPriv.h>)) || (!TARGET_OS_WATCH && !TARGET_OS_TV)
 
 typedef NS_ENUM(NSInteger, WKTextExtractionContainer) {
     WKTextExtractionContainerRoot,
@@ -191,4 +187,3 @@ typedef NS_ENUM(NSInteger, WKTextExtractionEditableType) {
 @end
 
 NS_ASSUME_NONNULL_END
-

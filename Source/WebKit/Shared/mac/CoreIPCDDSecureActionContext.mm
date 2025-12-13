@@ -184,7 +184,7 @@ RetainPtr<id> CoreIPCDDSecureActionContext::toID() const
     if (m_data.selectionString)
         [dict setObject:m_data.selectionString.get() forKey:@"selectionString"];
     if (m_data.mainResult)
-        [dict setObject:m_data.mainResult->get() forKey:@"mainResult"];
+        [dict setObject:m_data.mainResult.get() forKey:@"mainResult"];
 
     [dict setObject:@(m_data.immediate) forKey:@"immediate"];
     [dict setObject:@(m_data.isRightClick) forKey:@"isRightClick"];

@@ -154,6 +154,7 @@
 #include "SlotAssignment.h"
 #include "StylableInlines.h"
 #include "StyleInvalidator.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "StyleProperties.h"
 #include "StyleResolver.h"
 #include "StyleScope.h"
@@ -1415,13 +1416,13 @@ static double localZoomForRenderer(const RenderElement& renderer)
         CheckedPtr prev = &renderer;
         for (CheckedPtr curr = prev->parent(); curr; curr = curr->parent()) {
             if (curr->style().usedZoom() != prev->style().usedZoom()) {
-                zoomFactor = prev->style().zoom();
+                zoomFactor = Style::evaluate<double>(prev->style().zoom());
                 break;
             }
             prev = curr;
         }
         if (prev->isRenderView())
-            zoomFactor = prev->style().zoom();
+            zoomFactor = Style::evaluate<double>(prev->style().zoom());
     }
     return zoomFactor;
 }
@@ -3498,8 +3499,8 @@ RefPtr<ShadowRoot> Element::protectedUserAgentShadowRoot() const
 
 ShadowRoot& Element::ensureUserAgentShadowRoot()
 {
-    if (RefPtr shadow = userAgentShadowRoot())
-        return *shadow.unsafeGet();
+    if (auto* shadow = userAgentShadowRoot())
+        return *shadow;
     return createUserAgentShadowRoot();
 }
 
@@ -4291,19 +4292,28 @@ void Element::dispatchFocusEvent(RefPtr<Element>&& oldFocusedElement, const Focu
     static bool dispatchEventBeforeNotifyingClient = false;
 #endif
 
-    Ref focusEvent = FocusEvent::create(eventNames().focusEvent, Event::CanBubble::No, Event::IsCancelable::No, document().windowProxy(), 0, WTFMove(oldFocusedElement));
+    auto dispatchEvent = [&](Element& element) {
+        Ref beforefocusEvent = Event::create(eventNames().webkitbeforefocusEvent, Event::CanBubble::Yes, Event::IsCancelable::No, Event::IsComposed::Yes);
+        beforefocusEvent->setIsAutofillEvent();
+        element.dispatchEvent(beforefocusEvent);
+        element.dispatchEvent(FocusEvent::create(eventNames().focusEvent, Event::CanBubble::No, Event::IsCancelable::No, document().windowProxy(), 0, WTFMove(oldFocusedElement)));
+    };
     if (dispatchEventBeforeNotifyingClient)
-        dispatchEvent(WTFMove(focusEvent));
+        dispatchEvent(*this);
 
     if (RefPtr page = document().page(); page && document().focusedElement() == this)
         page->chrome().client().elementDidFocus(*this, options);
 
     if (!dispatchEventBeforeNotifyingClient)
-        dispatchEvent(WTFMove(focusEvent));
+        dispatchEvent(*this);
 }
 
 void Element::dispatchBlurEvent(RefPtr<Element>&& newFocusedElement)
 {
+    Ref beforeblurEvent = Event::create(eventNames().webkitbeforeblurEvent, Event::CanBubble::Yes, Event::IsCancelable::No, Event::IsComposed::Yes);
+    beforeblurEvent->setIsAutofillEvent();
+    dispatchEvent(beforeblurEvent);
+
     dispatchEvent(FocusEvent::create(eventNames().blurEvent, Event::CanBubble::No, Event::IsCancelable::No, document().windowProxy(), 0, WTFMove(newFocusedElement)));
     if (RefPtr page = document().page())
         page->chrome().client().elementDidBlur(*this);
@@ -6387,7 +6397,7 @@ TextStream& operator<<(TextStream& ts, ContentRelevancy relevancy)
 // https://html.spec.whatwg.org/#topmost-popover-ancestor
 // Consider both DOM ancestors and popovers where the given popover was invoked from as ancestors.
 // Use top layer positions to disambiguate the topmost one when both exist.
-HTMLElement* Element::topmostPopoverAncestor(TopLayerElementType topLayerType)
+RefPtr<HTMLElement> Element::topmostPopoverAncestor(TopLayerElementType topLayerType)
 {
     // Store positions to avoid having to do O(n) search for every popover invoker.
     HashMap<Ref<const Element>, size_t> topLayerPositions;
@@ -6429,7 +6439,7 @@ HTMLElement* Element::topmostPopoverAncestor(TopLayerElementType topLayerType)
     if (topLayerType == TopLayerElementType::Popover)
         checkAncestor(popoverData()->invoker());
 
-    return topmostAncestor.unsafeGet();
+    return topmostAncestor;
 }
 
 double Element::lookupCSSRandomBaseValue(const std::optional<Style::PseudoElementIdentifier>& pseudoElementIdentifier, const CSSCalc::RandomCachingKey& key) const

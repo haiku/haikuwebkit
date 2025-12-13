@@ -1029,6 +1029,17 @@ std::optional<InstalledFont> Font::toSerializableInstalledFont() const
         platformData().syntheticOblique()
     };
 
+    SystemUIFontType fontType = CTFontGetUIFontType(ctFont.get());
+    if (fontType != SystemUIFontTypeNone) {
+        return InstalledFont {
+            InstalledFont::SystemUIFont {
+                fontType,
+                adoptCF(checked_cf_cast<CFStringRef>(CTFontCopyAttribute(ctFont.get(), kCTFontDescriptorLanguageAttribute))).get()
+            },
+            fontData
+        };
+    }
+
     RetainPtr fontDescriptor = adoptCF(CTFontCopyFontDescriptor(ctFont.get()));
     RetainPtr attributes = adoptCF(CTFontDescriptorCopyAttributes(fontDescriptor.get()));
     return InstalledFont {

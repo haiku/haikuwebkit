@@ -1085,12 +1085,12 @@ BoxGeometry::Edges FormattingGeometry::computedBorder(const Box& layoutBox) cons
     LOG_WITH_STREAM(FormattingContextLayout, stream << "[Border] -> layoutBox: " << &layoutBox);
     return {
         {
-            Style::evaluate<LayoutUnit>(style.borderLeftWidth(), style.usedZoomForLength()),
-            Style::evaluate<LayoutUnit>(style.borderRightWidth(), style.usedZoomForLength())
+            Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { })
         },
         {
-            Style::evaluate<LayoutUnit>(style.borderTopWidth(), style.usedZoomForLength()),
-            Style::evaluate<LayoutUnit>(style.borderBottomWidth(), style.usedZoomForLength())
+            Style::evaluate<LayoutUnit>(style.borderTopWidth(), Style::ZoomNeeded { }),
+            Style::evaluate<LayoutUnit>(style.borderBottomWidth(), Style::ZoomNeeded { })
         },
     };
 }

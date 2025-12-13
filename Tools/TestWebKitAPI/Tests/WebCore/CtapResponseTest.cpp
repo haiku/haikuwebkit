@@ -668,36 +668,6 @@ TEST(CTAPResponseTest, TestReadMakeCredentialResponseWithHmacSecret)
     EXPECT_TRUE(*extensions.prf->enabled);
 }
 
-TEST(CTAPResponseTest, TestReadGetAssertionResponseWithHmacSecret)
-{
-    // CBOR-encoded response with hmac-secret extension output (32 bytes encrypted)
-    auto response = readCTAPGetAssertionResponse(std::span { TestData::kTestGetAssertionResponseWithHmacSecret }, AuthenticatorAttachment::CrossPlatform);
-    ASSERT_TRUE(response);
-
-    // Verify extension output contains prf.results with first ArrayBuffer (converted from hmac-secret)
-    auto extensions = response->extensions();
-    ASSERT_TRUE(extensions.prf);
-    ASSERT_TRUE(extensions.prf->results);
-    ASSERT_TRUE(extensions.prf->results->first);
-    EXPECT_EQ(extensions.prf->results->first->byteLength(), 32u);
-}
-
-TEST(CTAPResponseTest, TestReadGetAssertionResponseWithHmacSecret64)
-{
-    // CBOR-encoded response with hmac-secret extension output (64 bytes encrypted for 2 salts)
-    auto response = readCTAPGetAssertionResponse(std::span { TestData::kTestGetAssertionResponseWithHmacSecret64 }, AuthenticatorAttachment::CrossPlatform);
-    ASSERT_TRUE(response);
-
-    // Verify extension output contains prf.results with both first and second ArrayBuffers
-    auto extensions = response->extensions();
-    ASSERT_TRUE(extensions.prf);
-    ASSERT_TRUE(extensions.prf->results);
-    ASSERT_TRUE(extensions.prf->results->first);
-    EXPECT_EQ(extensions.prf->results->first->byteLength(), 32u);
-    ASSERT_TRUE(extensions.prf->results->second);
-    EXPECT_EQ(extensions.prf->results->second->byteLength(), 32u);
-}
-
 } // namespace TestWebKitAPI
 
 

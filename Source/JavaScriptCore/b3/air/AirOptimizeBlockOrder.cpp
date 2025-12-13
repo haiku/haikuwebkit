@@ -351,8 +351,8 @@ Vector<BasicBlock*> blocksInOptimizedOrder(Code& code)
                 if (!done.contains(successor.block()))
                     appendSuccessor(successor);
             }
-            sortedSuccessors.process(chainWorklist);
         }
+        sortedSuccessors.process(chainWorklist);
 
         // Detect if we added a successor. If not decide for a good candidate.
         if (size == chainWorklist.size())

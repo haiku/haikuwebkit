@@ -41,7 +41,7 @@ struct _WPEDisplayMock {
     WPEDisplay parent;
 
     gboolean isConnected;
-    gboolean useFakeDMABufFormats;
+    gboolean useFakeBufferFormats;
     gboolean useExplicitSync;
     WPEDRMDevice* fakeDRMDevice;
     WPEDRMDevice* fakeDisplayDevice;
@@ -113,27 +113,27 @@ static WPEKeymap* wpeDisplayMockGetKeymap(WPEDisplay* display)
     return nullptr;
 }
 
-static WPEBufferDMABufFormats* wpeDisplayMockGetPreferredDMABufFormats(WPEDisplay* display)
+static WPEBufferFormats* wpeDisplayMockGetPreferredBufferFormats(WPEDisplay* display)
 {
     auto* mock = WPE_DISPLAY_MOCK(display);
-    if (!mock->useFakeDMABufFormats)
+    if (!mock->useFakeBufferFormats)
         return nullptr;
 
-    auto* builder = wpe_buffer_dma_buf_formats_builder_new(mock->fakeDRMDevice);
+    auto* builder = wpe_buffer_formats_builder_new(mock->fakeDRMDevice);
     if (!mock->fakeDisplayDevice)
         mock->fakeDisplayDevice = wpe_drm_device_new("/dev/dri/mock1", nullptr);
-    wpe_buffer_dma_buf_formats_builder_append_group(builder, mock->fakeDisplayDevice, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT);
+    wpe_buffer_formats_builder_append_group(builder, mock->fakeDisplayDevice, WPE_BUFFER_FORMAT_USAGE_SCANOUT);
 #if USE(LIBDRM)
-    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_SUPER_TILED);
-    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_TILED);
+    wpe_buffer_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_SUPER_TILED);
+    wpe_buffer_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_TILED);
 #endif
-    wpe_buffer_dma_buf_formats_builder_append_group(builder, nullptr, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING);
+    wpe_buffer_formats_builder_append_group(builder, nullptr, WPE_BUFFER_FORMAT_USAGE_RENDERING);
 #if USE(LIBDRM)
-    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_LINEAR);
-    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_ARGB8888, DRM_FORMAT_MOD_LINEAR);
+    wpe_buffer_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_LINEAR);
+    wpe_buffer_formats_builder_append_format(builder, DRM_FORMAT_ARGB8888, DRM_FORMAT_MOD_LINEAR);
 #endif
-    auto* formats = wpe_buffer_dma_buf_formats_builder_end(builder);
-    wpe_buffer_dma_buf_formats_builder_unref(builder);
+    auto* formats = wpe_buffer_formats_builder_end(builder);
+    wpe_buffer_formats_builder_unref(builder);
 
     return formats;
 }
@@ -180,7 +180,7 @@ static void wpe_display_mock_class_init(WPEDisplayMockClass* displayMockClass)
     displayClass->create_input_method_context = wpeDisplayMockCreateInputMethodContext;
     displayClass->get_egl_display = wpeDisplayMockGetEGLDisplay;
     displayClass->get_keymap = wpeDisplayMockGetKeymap;
-    displayClass->get_preferred_dma_buf_formats = wpeDisplayMockGetPreferredDMABufFormats;
+    displayClass->get_preferred_buffer_formats = wpeDisplayMockGetPreferredBufferFormats;
     displayClass->get_n_screens = wpeDisplayMockGetNScreens;
     displayClass->get_screen = wpeDisplayMockGetScreen;
     displayClass->get_drm_device = wpeDisplayMockGetDRMDevice;
@@ -231,9 +231,9 @@ void wpeDisplayMockUseFakeDRMNodes(WPEDisplayMock* mock, gboolean useFakeDRMNode
         mock->fakeDRMDevice = wpe_drm_device_new("/dev/dri/mock0", "/dev/dri/mockD128");
 }
 
-void wpeDisplayMockUseFakeDMABufFormats(WPEDisplayMock* mock, gboolean useFakeDMABufFormats)
+void wpeDisplayMockUseFakeBufferFormats(WPEDisplayMock* mock, gboolean useFakeBufferFormats)
 {
-    mock->useFakeDMABufFormats = useFakeDMABufFormats;
+    mock->useFakeBufferFormats = useFakeBufferFormats;
 }
 
 void wpeDisplayMockSetUseExplicitSync(WPEDisplayMock* mock, gboolean useExplicitSync)

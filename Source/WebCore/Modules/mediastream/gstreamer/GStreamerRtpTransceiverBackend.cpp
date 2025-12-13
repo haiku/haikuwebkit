@@ -66,11 +66,11 @@ std::unique_ptr<GStreamerRtpReceiverBackend> GStreamerRtpTransceiverBackend::cre
     return WTF::makeUnique<GStreamerRtpReceiverBackend>(GRefPtr(m_rtcTransceiver));
 }
 
-std::unique_ptr<GStreamerRtpSenderBackend> GStreamerRtpTransceiverBackend::createSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&& backend, GStreamerRtpSenderBackend::Source&& source, GUniquePtr<GstStructure>&& initData)
+Ref<GStreamerRtpSenderBackend> GStreamerRtpTransceiverBackend::createSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&& backend, GStreamerRtpSenderBackend::Source&& source, GUniquePtr<GstStructure>&& initData)
 {
     GRefPtr<GstWebRTCRTPSender> sender;
     g_object_get(m_rtcTransceiver.get(), "sender", &sender.outPtr(), nullptr);
-    return WTF::makeUnique<GStreamerRtpSenderBackend>(WTFMove(backend), WTFMove(sender), WTFMove(source), WTFMove(initData));
+    return GStreamerRtpSenderBackend::create(WTFMove(backend), WTFMove(sender), WTFMove(source), WTFMove(initData));
 }
 
 RTCRtpTransceiverDirection GStreamerRtpTransceiverBackend::direction() const

@@ -94,6 +94,8 @@ public:
     GraphemeClusters graphemeClusters() const;
 
     bool is8Bit() const;
+    unsigned sizeInBytes() const;
+
     const void* rawCharacters() const LIFETIME_BOUND { return m_characters; }
     std::span<const Latin1Character> span8() const LIFETIME_BOUND;
     std::span<const char16_t> span16() const LIFETIME_BOUND;
@@ -559,6 +561,11 @@ inline StringView::operator bool() const
 inline bool StringView::is8Bit() const
 {
     return m_is8Bit;
+}
+
+inline unsigned StringView::sizeInBytes() const
+{
+    return m_length * (m_is8Bit ? sizeof(Latin1Character) : sizeof(char16_t));
 }
 
 inline StringView StringView::substring(unsigned start, unsigned length) const

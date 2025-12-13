@@ -661,9 +661,14 @@ Ref<PlaybackSessionModelContext> PlaybackSessionManagerProxy::ensureModel(Playba
     return std::get<0>(ensureModelAndInterface(contextId));
 }
 
-Ref<PlatformPlaybackSessionInterface> PlaybackSessionManagerProxy::ensureInterface(PlaybackSessionContextIdentifier contextId)
+PlatformPlaybackSessionInterface& PlaybackSessionManagerProxy::ensureInterface(PlaybackSessionContextIdentifier contextId)
 {
-    return std::get<1>(ensureModelAndInterface(contextId));
+    return std::get<1>(ensureModelAndInterface(contextId)).get();
+}
+
+Ref<PlatformPlaybackSessionInterface> PlaybackSessionManagerProxy::ensureProtectedInterface(PlaybackSessionContextIdentifier contextId)
+{
+    return ensureInterface(contextId);
 }
 
 void PlaybackSessionManagerProxy::addClientForContext(PlaybackSessionContextIdentifier contextId)
@@ -676,7 +681,7 @@ void PlaybackSessionManagerProxy::removeClientForContext(PlaybackSessionContextI
     if (!m_clientCounts.remove(contextId))
         return;
 
-    ensureInterface(contextId)->invalidate();
+    ensureProtectedInterface(contextId)->invalidate();
     m_contextMap.remove(contextId);
 }
 
@@ -692,7 +697,7 @@ void PlaybackSessionManagerProxy::setUpPlaybackControlsManagerWithID(PlaybackSes
 
     m_controlsManagerContextId = contextId;
     m_controlsManagerContextIsVideo = isVideo;
-    ensureInterface(*m_controlsManagerContextId)->ensureControlsManager();
+    ensureProtectedInterface(*m_controlsManagerContextId)->ensureControlsManager();
     addClientForContext(*m_controlsManagerContextId);
 
     if (RefPtr page = m_page.get())
@@ -1098,8 +1103,8 @@ void PlaybackSessionManagerProxy::swapVideoReceiverEndpoints(PlaybackSessionCont
     if (!xpcConnection)
         return;
 
-    auto firstInterface = ensureInterface(firstContextId);
-    auto secondInterface = ensureInterface(secondContextId);
+    Ref firstInterface = ensureInterface(firstContextId);
+    Ref secondInterface = ensureInterface(secondContextId);
 
     VideoReceiverSwapEndpointsMessage endpointMessage(WTFMove(processIdentifier), firstContextId.object(), firstInterface->playerIdentifier(), secondContextId.object(), secondInterface->playerIdentifier());
     xpc_connection_send_message(xpcConnection.get(), endpointMessage.encode().get());
@@ -1177,12 +1182,17 @@ void PlaybackSessionManagerProxy::requestControlledElementID()
         page->protectedLegacyMainFrameProcess()->send(Messages::PlaybackSessionManager::HandleControlledElementIDRequest(m_controlsManagerContextId->object()), page->webPageIDInMainFrameProcess());
 }
 
-RefPtr<PlatformPlaybackSessionInterface> PlaybackSessionManagerProxy::controlsManagerInterface()
+PlatformPlaybackSessionInterface* PlaybackSessionManagerProxy::controlsManagerInterface()
 {
     if (!m_controlsManagerContextId)
         return nullptr;
 
-    return ensureInterface(*m_controlsManagerContextId);
+    return &ensureInterface(*m_controlsManagerContextId);
+}
+
+RefPtr<WebCore::PlatformPlaybackSessionInterface> PlaybackSessionManagerProxy::protectedControlsManagerInterface()
+{
+    return controlsManagerInterface();
 }
 
 bool PlaybackSessionManagerProxy::isPaused(PlaybackSessionContextIdentifier identifier) const

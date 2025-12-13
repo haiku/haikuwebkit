@@ -92,9 +92,9 @@ public:
     iterator begin() const LIFETIME_BOUND;
     iterator end() const LIFETIME_BOUND;
 
-    iterator random() const { return m_impl.random(); }
+    iterator random() const LIFETIME_BOUND { return m_impl.random(); }
 
-    iterator find(const ValueType&) const;
+    iterator find(const ValueType&) const LIFETIME_BOUND;
     bool contains(const ValueType&) const;
 
     // An alternate version of find() that finds the object by hashing and comparing
@@ -102,15 +102,15 @@ public:
     // must have the following function members:
     //   static unsigned hash(const T&);
     //   static bool equal(const ValueType&, const T&);
-    template<typename HashTranslator, typename T> iterator find(const T&) const;
+    template<typename HashTranslator, typename T> iterator find(const T&) const LIFETIME_BOUND;
     template<typename HashTranslator, typename T> bool contains(const T&) const;
 
     ALWAYS_INLINE bool isNullStorage() const { return m_impl.isNullStorage(); }
 
     // The return value includes both an iterator to the added value's location,
     // and an isNewEntry bool that indicates if it is a new or existing entry in the set.
-    AddResult add(const ValueType&);
-    AddResult add(ValueType&&);
+    AddResult add(const ValueType&) LIFETIME_BOUND;
+    AddResult add(ValueType&&) LIFETIME_BOUND;
     void add(std::initializer_list<std::reference_wrapper<const ValueType>>);
 
     void addVoid(const ValueType&);
@@ -122,7 +122,7 @@ public:
     //   static unsigned hash(const T&);
     //   static bool equal(const ValueType&, const T&);
     //   static translate(ValueType&, const T&, unsigned hashCode);
-    template<typename HashTranslator, typename T> AddResult add(const T&);
+    template<typename HashTranslator, typename T> AddResult add(const T&) LIFETIME_BOUND;
     
     // An alternate version of translated add(), ensure() will still do translation
     // by hashing and comparing with some other type, to avoid the cost of type
@@ -132,7 +132,7 @@ public:
     // function members:
     //   static unsigned hash(const T&);
     //   static bool equal(const ValueType&, const T&);
-    template<typename HashTranslator> AddResult ensure(auto&&, NOESCAPE const Invocable<ValueType()> auto&);
+    template<typename HashTranslator> AddResult ensure(auto&&, NOESCAPE const Invocable<ValueType()> auto&) LIFETIME_BOUND;
 
     // Attempts to add a list of things to the set. Returns true if any of
     // them are new to the set. Returns false if the set is unchanged.
@@ -201,13 +201,13 @@ public:
     bool isSubset(const OtherCollection&);
 
     // Overloads for smart pointer values that take the raw pointer type as the parameter.
-    template<SmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const;
+    template<SmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const LIFETIME_BOUND;
     template<SmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const;
     template<SmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
     template<SmartPtr V = ValueType> TakeType take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
 
     // Overloads for non-nullable smart pointer values that take the raw reference type as the parameter.
-    template<NonNullableSmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const;
+    template<NonNullableSmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const LIFETIME_BOUND;
     template<NonNullableSmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const;
     template<NonNullableSmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);
     template<NonNullableSmartPtr V = ValueType> TakeType take(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);

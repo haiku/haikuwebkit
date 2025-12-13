@@ -54,8 +54,8 @@ private:
 
     void toggle();
     int getSelectedActionChildAndIndex(Element*& selectedChild);
-    Element* getSelectedActionChild();
-    Element* getSelectedSemanticsChild();
+    RefPtr<Element> getSelectedActionChild();
+    RefPtr<Element> getSelectedSemanticsChild();
 
     void updateSelectedChild() final;
     RefPtr<Element> m_selectedChild;

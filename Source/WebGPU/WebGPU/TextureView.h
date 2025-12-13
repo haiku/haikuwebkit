@@ -25,6 +25,7 @@
 
 #pragma once
 
+#import "BindableResource.h"
 #import <wtf/FastMalloc.h>
 #import <wtf/Ref.h>
 #import <wtf/RefCountedAndCanMakeWeakPtr.h>
@@ -45,7 +46,7 @@ class Device;
 class Texture;
 
 // https://gpuweb.github.io/gpuweb/#gputextureview
-class TextureView : public RefCountedAndCanMakeWeakPtr<TextureView>, public WGPUTextureViewImpl {
+class TextureView : public RefCountedAndCanMakeWeakPtr<TextureView>, public WGPUTextureViewImpl, public TrackedResource {
     WTF_MAKE_TZONE_ALLOCATED(TextureView);
 public:
     static Ref<TextureView> create(id<MTLTexture> texture, const WGPUTextureViewDescriptor& descriptor, const std::optional<WGPUExtent3D>& renderExtent, Texture& parentTexture, Device& device)
@@ -108,7 +109,6 @@ private:
 
     const Ref<Device> m_device;
     const Ref<Texture> m_parentTexture;
-    mutable Vector<uint64_t> m_commandEncoders;
 } SWIFT_SHARED_REFERENCE(refTextureView, derefTextureView);
 
 } // namespace WebGPU

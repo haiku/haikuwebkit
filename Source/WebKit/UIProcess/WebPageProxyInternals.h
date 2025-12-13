@@ -27,6 +27,7 @@
 
 #include "ContextMenuContextData.h"
 #include "EditorState.h"
+#include "EnhancedSecurityTracking.h"
 #include "GeolocationPermissionRequestManagerProxy.h"
 #include "HiddenPageThrottlingAutoIncreasesCounter.h"
 #include "LayerTreeContext.h"
@@ -443,6 +444,8 @@ public:
 
     std::optional<TextManipulationParameters> textManipulationParameters;
 
+    EnhancedSecurityTracking enhancedSecurityTracker;
+
     explicit Internals(WebPageProxy&);
 
     Ref<WebPageProxy> protectedPage() const;
@@ -477,6 +480,7 @@ public:
 #endif
 #if ENABLE(APPLE_PAY) && PLATFORM(IOS_FAMILY) && ENABLE(APPLE_PAY_REMOTE_UI_USES_SCENE)
     void getWindowSceneAndBundleIdentifierForPaymentPresentation(WebPageProxyIdentifier, CompletionHandler<void(const String&, const String&)>&&) final;
+    void notifyWillPresentPaymentUI(WebPageProxyIdentifier) final;
 #endif
 #if ENABLE(APPLE_PAY)
     CocoaWindow *paymentCoordinatorPresentingWindow(const WebPaymentCoordinatorProxy&) const final;

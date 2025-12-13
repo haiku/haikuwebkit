@@ -49,7 +49,7 @@ void DatagramDefaultSource::receiveDatagram(std::span<const uint8_t> datagram, b
         if (arrayBuffer)
             memcpySpan(arrayBuffer->mutableSpan(), datagram);
         if (!controller().enqueue(WTFMove(arrayBuffer)))
-            doCancel();
+            doCancel({ });
     }
     if (withFin) {
         m_isClosed = true;
@@ -61,6 +61,11 @@ void DatagramDefaultSource::receiveDatagram(std::span<const uint8_t> datagram, b
 void DatagramDefaultSource::doCancel()
 {
     m_isCancelled = true;
+}
+
+void DatagramDefaultSource::error(JSC::JSGlobalObject& globalObject, JSC::JSValue value)
+{
+    ReadableStreamSource::error(globalObject, value);
 }
 
 }

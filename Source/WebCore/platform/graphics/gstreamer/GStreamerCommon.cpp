@@ -422,6 +422,22 @@ Vector<String> extractGStreamerOptionsFromCommandLine()
     return options;
 }
 
+bool ensureGStreamerInitializedNonWebProcess()
+{
+    RELEASE_ASSERT(!isInWebProcess());
+
+    static std::once_flag onceFlag;
+    static bool isGStreamerInitialized;
+    std::call_once(onceFlag, [] {
+        GUniqueOutPtr<GError> error;
+        isGStreamerInitialized = gst_init_check(nullptr, nullptr, &error.outPtr());
+        ASSERT_WITH_MESSAGE(isGStreamerInitialized, "GStreamer initialization failed: %s", error ? error->message : "unknown error occurred");
+        GST_DEBUG_CATEGORY_INIT(webkit_gst_common_debug, "webkitcommon", 0, "WebKit Common utilities");
+    });
+
+    return isGStreamerInitialized;
+}
+
 bool ensureGStreamerInitialized()
 {
     // WARNING: Please note this function can be called from any thread, for instance when creating
@@ -791,6 +807,12 @@ Ref<SharedBuffer> GstMappedOwnedBuffer::createSharedBuffer()
     return SharedBuffer::create(*this);
 }
 
+GstMappedFrame::GstMappedFrame(GstMappedFrame&& other)
+{
+    std::swap(m_frame, other.m_frame);
+    other.m_frame.buffer = nullptr;
+}
+
 GstMappedFrame::GstMappedFrame(GstBuffer* buffer, const GstVideoInfo* info, GstMapFlags flags)
 {
     // This cast can be removed once the GStreamer minimum version is raised to 1.20
@@ -880,6 +902,27 @@ int GstMappedFrame::planeStride(uint32_t planeIndex) const
 {
     RELEASE_ASSERT(isValid());
     return GST_VIDEO_FRAME_PLANE_STRIDE(&m_frame, planeIndex);
+}
+
+#if USE(GSTREAMER_GL)
+GLuint GstMappedFrame::textureID(int planeIndex) const
+{
+    RELEASE_ASSERT(isValid());
+    RELEASE_ASSERT(m_frame.map->flags & GST_MAP_GL);
+    return *reinterpret_cast<GLuint*>(m_frame.data[planeIndex]);
+}
+#endif
+
+unsigned GstMappedFrame::componentPlane(int planeIndex) const
+{
+    RELEASE_ASSERT(isValid());
+    return GST_VIDEO_INFO_COMP_PLANE(&m_frame.info, planeIndex);
+}
+
+unsigned GstMappedFrame::componentPlaneOffset(int planeIndex) const
+{
+    RELEASE_ASSERT(isValid());
+    return GST_VIDEO_INFO_COMP_POFFSET(&m_frame.info, planeIndex);
 }
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
 

@@ -36,6 +36,7 @@
 #include <WebCore/ImageBuffer.h>
 #include <WebCore/ImageBufferResourceLimits.h>
 #include <WebCore/InputMode.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
 #include <WebCore/MediaControlsContextMenuItem.h>
 #include <WebCore/PlaybackTargetClientContextIdentifier.h>
 #include <WebCore/PointerCharacteristics.h>
@@ -341,7 +342,9 @@ public:
 #endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-    virtual void canEnterImmersiveElement(const Element&, CompletionHandler<void(bool)>&& completion) const { completion(false); }
+    virtual void allowImmersiveElement(const Element&, CompletionHandler<void(bool)>&& completion) const { completion(false); }
+    virtual void presentImmersiveElement(const Element&, const LayerHostingContextIdentifier, CompletionHandler<void(bool)>&& completion) const { completion(false); }
+    virtual void dismissImmersiveElement(const Element&, CompletionHandler<void()>&& completion) const { completion(); }
 #endif
 
 #if ENABLE(APP_HIGHLIGHTS)

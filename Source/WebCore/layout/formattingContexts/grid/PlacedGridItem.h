@@ -65,6 +65,10 @@ public:
     const StyleSelfAlignmentData& inlineAxisAlignment() const { return m_inlineAxisAlignment; }
     const StyleSelfAlignmentData& blockAxisAlignment() const { return m_blockAxisAlignment; }
 
+    // FIXME: Add support for grid item's with preferred aspect ratios.
+    bool hasPreferredAspectRatio() const { return false; }
+    bool isReplacedElement() const { return m_layoutBox->isReplacedBox(); }
+
     const GridAreaLines& gridAreaLines() const { return m_gridAreaLines; }
 
     const Style::ZoomFactor& usedZoom() const { return m_usedZoom; }

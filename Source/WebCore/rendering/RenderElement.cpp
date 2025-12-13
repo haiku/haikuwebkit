@@ -1696,6 +1696,13 @@ bool RenderElement::isVisibleInViewport() const
     return isVisibleInDocumentRect(visibleRect);
 }
 
+bool RenderElement::useSystemDarkAppearance() const
+{
+    if (RefPtr page = document().page())
+        return page->useDarkAppearance();
+    return false;
+}
+
 VisibleInViewportState RenderElement::imageFrameAvailable(CachedImage& image, ImageAnimatingState animatingState, const IntRect* changeRect)
 {
     bool isVisible = isVisibleInViewport();

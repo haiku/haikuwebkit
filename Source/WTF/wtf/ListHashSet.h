@@ -127,56 +127,57 @@ public:
     void removeLast();
     ValueType takeLast();
 
-    iterator find(const ValueType&);
-    const_iterator find(const ValueType&) const;
+    iterator find(const ValueType&) LIFETIME_BOUND;
+    const_iterator find(const ValueType&) const LIFETIME_BOUND;
     bool contains(const ValueType&) const;
 
     // An alternate version of find() that finds the object by hashing and comparing
     // with some other type, to avoid the cost of type conversion.
     // The HashTranslator interface is defined in HashSet.
-    template<typename HashTranslator, typename T> iterator find(const T&);
-    template<typename HashTranslator, typename T> const_iterator find(const T&) const;
+    template<typename HashTranslator, typename T> iterator find(const T&) LIFETIME_BOUND;
+    template<typename HashTranslator, typename T> const_iterator find(const T&) const LIFETIME_BOUND;
     template<typename HashTranslator, typename T> bool contains(const T&) const;
 
     // The return value of add is a pair of an iterator to the new value's location, 
     // and a bool that is true if an new entry was added.
-    AddResult add(const ValueType&);
-    AddResult add(ValueType&&);
+    AddResult add(const ValueType&) LIFETIME_BOUND;
+    AddResult add(ValueType&&) LIFETIME_BOUND;
 
     // Add the value to the end of the collection. If the value was already in
     // the list, it is moved to the end.
-    AddResult appendOrMoveToLast(const ValueType&);
-    AddResult appendOrMoveToLast(ValueType&&);
+    AddResult appendOrMoveToLast(const ValueType&) LIFETIME_BOUND;
+    AddResult appendOrMoveToLast(ValueType&&) LIFETIME_BOUND;
     bool moveToLastIfPresent(const ValueType&);
 
     // Add the value to the beginning of the collection. If the value was already in
     // the list, it is moved to the beginning.
-    AddResult prependOrMoveToFirst(const ValueType&);
-    AddResult prependOrMoveToFirst(ValueType&&);
+    AddResult prependOrMoveToFirst(const ValueType&) LIFETIME_BOUND;
+    AddResult prependOrMoveToFirst(ValueType&&) LIFETIME_BOUND;
 
-    AddResult insertBefore(const ValueType& beforeValue, const ValueType& newValue);
-    AddResult insertBefore(const ValueType& beforeValue, ValueType&& newValue);
-    AddResult insertBefore(iterator, const ValueType&);
-    AddResult insertBefore(iterator, ValueType&&);
+    AddResult insertBefore(const ValueType& beforeValue, const ValueType& newValue) LIFETIME_BOUND;
+    AddResult insertBefore(const ValueType& beforeValue, ValueType&& newValue) LIFETIME_BOUND;
+    AddResult insertBefore(iterator, const ValueType&) LIFETIME_BOUND;
+    AddResult insertBefore(iterator, ValueType&&) LIFETIME_BOUND;
 
     bool remove(const ValueType&);
     bool remove(iterator);
+    bool removeIf(NOESCAPE const Invocable<bool(ValueType&)> auto&);
     void clear();
 
     // Overloads for smart pointer values that take the raw pointer type as the parameter.
-    template<SmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
-    template<SmartPtr V = ValueType> const_iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const;
+    template<SmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) LIFETIME_BOUND;
+    template<SmartPtr V = ValueType> const_iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const LIFETIME_BOUND;
     template<SmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*) const;
-    template<SmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*, const ValueType&);
-    template<SmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*, ValueType&&);
+    template<SmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*, const ValueType&) LIFETIME_BOUND;
+    template<SmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*, ValueType&&) LIFETIME_BOUND;
     template<SmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>*);
 
     // Overloads for non-nullable smart pointer values that take the raw reference type as the parameter.
-    template<NonNullableSmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);
-    template<NonNullableSmartPtr V = ValueType> const_iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const;
+    template<NonNullableSmartPtr V = ValueType> iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) LIFETIME_BOUND;
+    template<NonNullableSmartPtr V = ValueType> const_iterator find(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const LIFETIME_BOUND;
     template<NonNullableSmartPtr V = ValueType> bool contains(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&) const;
-    template<NonNullableSmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&, const ValueType&);
-    template<NonNullableSmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&, ValueType&&);
+    template<NonNullableSmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&, const ValueType&) LIFETIME_BOUND;
+    template<NonNullableSmartPtr V = ValueType> AddResult insertBefore(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&, ValueType&&) LIFETIME_BOUND;
     template<NonNullableSmartPtr V = ValueType> bool remove(std::add_const_t<typename GetPtrHelper<V>::UnderlyingType>&);
 
 private:
@@ -702,6 +703,17 @@ inline bool ListHashSet<T, U>::remove(iterator it)
     m_impl.template remove<ShouldValidateKey::Yes>(it.node());
     unlinkAndDelete(it.node());
     return true;
+}
+
+template<typename T, typename U>
+inline bool ListHashSet<T, U>::removeIf(NOESCAPE const Invocable<bool(ValueType&)> auto& functor)
+{
+    return m_impl.removeIf([&](Node* node) {
+        if (!functor(node->m_value))
+            return false;
+        unlinkAndDelete(node);
+        return true;
+    });
 }
 
 template<typename T, typename U>

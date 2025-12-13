@@ -190,7 +190,7 @@ class HTMLMediaElement
 public:
     USING_CAN_MAKE_WEAKPTR(SINGLE_ARG(CanMakeWeakPtr<HTMLMediaElement, WeakPtrFactoryInitialization::Eager>));
 
-    // ActiveDOMObject.
+    // ActiveDOMObject, AudioSessionConfigurationChangeObserver.
     void ref() const final { HTMLElement::ref(); }
     void deref() const final { HTMLElement::deref(); }
     using HTMLElement::protectedScriptExecutionContext;
@@ -988,6 +988,7 @@ private:
     // These "internal" functions do not check user gesture restrictions.
     void playInternal();
     void pauseInternal();
+    void completePlayInternal();
 
     void prepareForLoad();
     void allowVideoRendering();

@@ -29,6 +29,7 @@
 #if PLATFORM(IOS_FAMILY) && HAVE(AVKIT)
 
 #import "WebAVPlayerLayer.h"
+#import <WebCore/VideoPresentationModel.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
 
@@ -148,9 +149,9 @@ static WebAVPictureInPicturePlayerLayerView *WebAVPlayerLayerView_pictureInPictu
     if (WebAVPictureInPicturePlayerLayerView *pipView = [playerLayerView valueForKey:pictureInPicturePlayerLayerViewKey])
         return pipView;
 
-    auto pipView = adoptNS([allocWebAVPictureInPicturePlayerLayerViewInstance() initWithFrame:CGRectZero]);
+    RetainPtr pipView = adoptNS([allocWebAVPictureInPicturePlayerLayerViewInstance() initWithFrame:CGRectZero]);
     [playerLayerView setValue:pipView.get() forKey:pictureInPicturePlayerLayerViewKey];
-    return pipView.unsafeGet();
+    return pipView.autorelease();
 }
 #endif // HAVE(PICTUREINPICTUREPLAYERLAYERVIEW)
 

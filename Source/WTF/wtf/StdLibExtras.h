@@ -535,6 +535,9 @@ template<typename T> concept HasSwitchOn = requires(T t) {
     t.switchOn([](const auto&) {});
 };
 
+template<typename Derived, typename Base>
+concept DerivedFromOrConvertibleTo = std::is_base_of_v<Base, Derived> || std::is_convertible_v<Derived, Base>;
+
 #ifdef _LIBCPP_VERSION
 
 // Single-variant switch-based visit function adapted from https://www.reddit.com/r/cpp/comments/kst2pu/comment/giilcxv/.
@@ -864,7 +867,7 @@ ALWAYS_INLINE constexpr typename remove_reference<T>::type&& move(T&& value)
 namespace WTF {
 
 template<class T, class... Args>
-ALWAYS_INLINE decltype(auto) makeUnique(Args&&... args)
+[[nodiscard]] ALWAYS_INLINE decltype(auto) makeUnique(Args&&... args)
 {
     static_assert(std::is_same<typename T::WTFIsFastMallocAllocated, int>::value, "T should use FastMalloc (WTF_DEPRECATED_MAKE_FAST_ALLOCATED)");
     static_assert(!HasRefPtrMemberFunctions<T>::value, "T should not be RefCounted");
@@ -876,14 +879,14 @@ ALWAYS_INLINE decltype(auto) makeUnique(Args&&... args)
 // case of reassignment, ref-counting forwarding wouldn't be safe. This function is commonly used
 // with `lazyInitialize()` to initialize a const data member.
 template<class T, class U = T, class... Args>
-ALWAYS_INLINE const std::unique_ptr<U> makeUniqueWithoutRefCountedCheck(Args&&... args)
+[[nodiscard]] ALWAYS_INLINE const std::unique_ptr<U> makeUniqueWithoutRefCountedCheck(Args&&... args)
 {
     static_assert(std::is_same<typename T::WTFIsFastMallocAllocated, int>::value, "T should use FastMalloc (WTF_DEPRECATED_MAKE_FAST_ALLOCATED)");
     return std::unique_ptr<U>(std::make_unique<T>(std::forward<Args>(args)...));
 }
 
 template<class T, class... Args>
-ALWAYS_INLINE decltype(auto) makeUniqueWithoutFastMallocCheck(Args&&... args)
+[[nodiscard]] ALWAYS_INLINE decltype(auto) makeUniqueWithoutFastMallocCheck(Args&&... args)
 {
     static_assert(!HasRefPtrMemberFunctions<T>::value, "T should not be RefCounted");
     return std::make_unique<T>(std::forward<Args>(args)...);
@@ -1070,10 +1073,10 @@ template<typename T, std::size_t TExtent, typename U, std::size_t UExtent>
     requires(TriviallyComparableOneByteCodeUnits<T, U>)
 size_t find(std::span<T, TExtent> haystack, std::span<U, UExtent> needle)
 {
-#if !HAVE(MEMMEM)
     if (needle.empty())
         return 0;
 
+#if !HAVE(MEMMEM)
     if (haystack.size() < needle.size())
         return notFound;
 

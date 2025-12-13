@@ -39,7 +39,7 @@ class WebInjectedScriptManager final : public Inspector::InjectedScriptManager {
     WTF_MAKE_TZONE_ALLOCATED(WebInjectedScriptManager);
 public:
     WebInjectedScriptManager(Inspector::InspectorEnvironment&, Ref<Inspector::InjectedScriptHost>&&);
-    ~WebInjectedScriptManager() override = default;
+    ~WebInjectedScriptManager() override;
 
     const RefPtr<CommandLineAPIHost>& commandLineAPIHost() const { return m_commandLineAPIHost; }
 
@@ -50,6 +50,7 @@ public:
     void discardInjectedScriptsFor(LocalDOMWindow&);
 
 private:
+    bool isConnected() const { return m_commandLineAPIHost; }
     void didCreateInjectedScript(const Inspector::InjectedScript&) override;
 
     RefPtr<CommandLineAPIHost> m_commandLineAPIHost;

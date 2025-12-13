@@ -50,9 +50,10 @@
 #else // PLATFORM(COCOA)
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
+#include <webrtc/api/environment/environment_factory.h>
 #include <webrtc/rtc_base/async_packet_socket.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
-#endif // PLATFORM(COCOA)
+#endif // !PLATFORM(COCOA)
 
 namespace WebKit {
 using namespace WebCore;
@@ -325,7 +326,7 @@ void NetworkRTCProvider::createUDPSocket(LibWebRTCSocketIdentifier identifier, c
 {
     assertIsRTCNetworkThread();
 
-    std::unique_ptr<webrtc::AsyncPacketSocket> socket(m_packetSocketFactory->CreateUdpSocket(address.rtcAddress(), minPort, maxPort));
+    std::unique_ptr<webrtc::AsyncPacketSocket> socket(m_packetSocketFactory->CreateUdpSocket(webrtc::CreateEnvironment(), address.rtcAddress(), minPort, maxPort));
     createSocket(identifier, WTFMove(socket), Socket::Type::UDP, m_ipcConnection.copyRef());
 }
 
@@ -355,7 +356,7 @@ void NetworkRTCProvider::createClientTCPSocket(LibWebRTCSocketIdentifier identif
 
             webrtc::PacketSocketTcpOptions tcpOptions;
             tcpOptions.opts = options;
-            std::unique_ptr<webrtc::AsyncPacketSocket> socket(m_packetSocketFactory->CreateClientTcpSocket(localAddress, remoteAddress, tcpOptions));
+            std::unique_ptr<webrtc::AsyncPacketSocket> socket(m_packetSocketFactory->CreateClientTcpSocket(webrtc::CreateEnvironment(), localAddress, remoteAddress, tcpOptions));
             createSocket(identifier, WTFMove(socket), Socket::Type::ClientTCP, m_ipcConnection.copyRef());
         });
     });

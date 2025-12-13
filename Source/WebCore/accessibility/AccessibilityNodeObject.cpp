@@ -3933,7 +3933,7 @@ bool AccessibilityNodeObject::isBlockFlow() const
     return is<RenderBlockFlow>(renderer());
 }
 
-Vector<Vector<AXID>> AccessibilityNodeObject::stitchGroups() const
+Vector<AXStitchGroup> AccessibilityNodeObject::stitchGroups() const
 {
     CheckedPtr renderBlockFlow = dynamicDowncast<RenderBlockFlow>(renderer());
     if (!renderBlockFlow)
@@ -3948,13 +3948,20 @@ Vector<Vector<AXID>> AccessibilityNodeObject::stitchGroups() const
         return { };
 
     bool shouldStop = false;
-    StitchingContext context;
-    Vector<Vector<AXID>> stitchGroups;
+    StitchingContext context { *this };
+    Vector<AXStitchGroup> stitchGroups;
     Vector<AXID> currentGroup;
+    std::optional<AXID> representativeID;
     for (auto lineBox = inlineLayout->firstLineBox(); lineBox && !shouldStop; lineBox.traverseNext()) {
         for (auto box = lineBox->logicalLeftmostLeafBox(); box; box.traverseLogicalRightwardOnLine()) {
+            if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(box->renderer())) {
+                if (RefPtr object = cache->getOrCreate(const_cast<RenderListMarker&>(*renderListMarker)))
+                    currentGroup.append(object->objectID());
+                continue;
+            }
+
             if (box->isAtomicInlineBox()) {
-                // Atomic inline boxes (like buttons) should break up stitch groups.
+                // Non-list-marker atomic inline boxes (like buttons) should break up stitch groups.
                 shouldStop = true;
                 break;
             }
@@ -3967,11 +3974,13 @@ Vector<Vector<AXID>> AccessibilityNodeObject::stitchGroups() const
                     continue;
                 AXID axID = object->objectID();
 
-                if (shouldStopStitchingAt(renderer, context)) {
-                    if (currentGroup.size() > 1)
-                        stitchGroups.append(std::exchange(currentGroup, { }));
+                if (shouldStopStitchingAt(renderer, *object, context)) {
+                    if (currentGroup.size() > 1 && representativeID)
+                        stitchGroups.append(AXStitchGroup { std::exchange(currentGroup, { }), *representativeID });
                     else
                         currentGroup.clear();
+
+                    representativeID = std::nullopt;
                 } else {
                     CheckedPtr renderText = dynamicDowncast<RenderText>(renderer);
 
@@ -3988,21 +3997,24 @@ Vector<Vector<AXID>> AccessibilityNodeObject::stitchGroups() const
                             continue;
                         }
                     }
+
+                    if (!representativeID)
+                        representativeID = axID;
                     currentGroup.append(axID);
                 }
             }
         }
     }
 
-    if (currentGroup.size() > 1) {
+    if (currentGroup.size() > 1 && representativeID) {
         // Only do this for stitch-groups of multiple elements, since stitching a single element
         // doesn't make any sense.
-        stitchGroups.append(WTFMove(currentGroup));
+        stitchGroups.append(AXStitchGroup { WTFMove(currentGroup), *representativeID });
     }
     return stitchGroups;
 }
 
-AXCoreObject::StitchState AccessibilityNodeObject::stitchState(IncludeStitchGroup includeStitchGroup) const
+std::optional<AXStitchGroup> AccessibilityNodeObject::stitchGroup(IncludeGroupMembers includeGroupMembers) const
 {
     if (!AXObjectCache::isAXTextStitchingEnabled())
         return { };
@@ -4011,10 +4023,9 @@ AXCoreObject::StitchState AccessibilityNodeObject::stitchState(IncludeStitchGrou
     if (!blockFlowAncestor)
         return { };
 
-    CheckedPtr cache = axObjectCache();
-    if (!cache)
-        return { };
-    return stitchStateFromGroups(cache->stitchGroupsOwnedBy(*blockFlowAncestor), includeStitchGroup);
+    if (CheckedPtr cache = axObjectCache())
+        return stitchGroupFromGroups(cache->stitchGroupsOwnedBy(*blockFlowAncestor), includeGroupMembers);
+    return { };
 }
 
 String AccessibilityNodeObject::stringValue() const
@@ -4031,8 +4042,8 @@ String AccessibilityNodeObject::stringValue() const
     }
 
     if (node->isTextNode()) {
-        auto stitchState = this->stitchState();
-        if (!stitchState.stitchedIntoID || *stitchState.stitchedIntoID != objectID())
+        std::optional stitchGroup  = this->stitchGroup();
+        if (!stitchGroup || stitchGroup->representativeID() != objectID())
             return textUnderElement();
 
         // |this| is the sum of several stitched text-like objects. Our string value should
@@ -4042,12 +4053,27 @@ String AccessibilityNodeObject::stringValue() const
         // See AccessibilityObject::shouldCacheStringValue.
         CheckedPtr cache = axObjectCache();
 
-        RefPtr endNode = !stitchState.group.isEmpty() && cache ? lastNode(stitchState.group, *cache) : nullptr;
-        if (!endNode || endNode == node)
+        RefPtr endNode = !stitchGroup->isEmpty() && cache ? lastNode(stitchGroup->members(), *cache) : nullptr;
+        if (!endNode)
             return textUnderElement();
 
+        StringBuilder builder;
+        for (AXID axID : stitchGroup->members()) {
+            if (axID == stitchGroup->representativeID())
+                break;
+            if (RefPtr object = cache->objectForID(axID)) {
+                // The only objects preceeding the group representative in the accessibility tree are renderer-only
+                // objects like list markers and CSS generated content.
+                ASSERT(!object->node());
+                if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(object->renderer()))
+                    builder.append(renderListMarker->textWithSuffix());
+            }
+        }
+
         std::optional range = makeSimpleRange(positionBeforeNode(node.get()), positionAfterNode(endNode.get()));
-        return range ? plainText(*range, textIteratorBehaviorForTextRange()) : emptyString();
+        builder.append(range ? plainText(*range, textIteratorBehaviorForTextRange()) : emptyString());
+
+        return builder.toString();
     }
 
     if (RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(*node)) {

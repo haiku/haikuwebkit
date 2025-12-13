@@ -424,7 +424,7 @@ bool CDMPrivateFairPlayStreaming::distinctiveIdentifiersAreUniquePerOriginAndCle
 RefPtr<CDMInstance> CDMPrivateFairPlayStreaming::createInstance()
 {
 #if HAVE(AVCONTENTKEYSESSION)
-    auto instance = adoptRef(new CDMInstanceFairPlayStreamingAVFObjC(*this));
+    auto instance = CDMInstanceFairPlayStreamingAVFObjC::create(*this);
 #if !RELEASE_LOG_DISABLED
     instance->setLogIdentifier(m_logIdentifier);
 #endif

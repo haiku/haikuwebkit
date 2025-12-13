@@ -243,7 +243,7 @@ std::optional<Namespace::OtherClass> ArgumentCoder<Namespace::OtherClass>::decod
 {
     auto a = decoder.decode<int>();
     auto b = decoder.decode<bool>();
-    auto dataDetectorResults = decoder.decodeWithAllowedClasses<NSArray>({ NSArray.class, PAL::getDDScannerResultClassSingleton() });
+    auto dataDetectorResults = decoder.decodeWithAllowedClasses<RetainPtr<NSArray>>({ NSArray.class, PAL::getDDScannerResultClassSingleton() });
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
     return {
@@ -273,7 +273,7 @@ std::optional<Namespace::ClassWithMemberPrecondition> ArgumentCoder<Namespace::C
 {
     if (!(PAL::isPassKitCoreFrameworkAvailable()))
         return std::nullopt;
-    auto m_pkPaymentMethod = decoder.decodeWithAllowedClasses<PKPaymentMethod>({ PAL::getPKPaymentMethodClassSingleton() });
+    auto m_pkPaymentMethod = decoder.decodeWithAllowedClasses<RetainPtr<PKPaymentMethod>>({ PAL::getPKPaymentMethodClassSingleton() });
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
     return {
@@ -630,8 +630,8 @@ void ArgumentCoder<SoftLinkedMember>::encode(Encoder& encoder, const SoftLinkedM
 
 std::optional<SoftLinkedMember> ArgumentCoder<SoftLinkedMember>::decode(Decoder& decoder)
 {
-    auto firstMember = decoder.decodeWithAllowedClasses<DDActionContext>({ PAL::getDDActionContextClassSingleton() });
-    auto secondMember = decoder.decodeWithAllowedClasses<DDActionContext>({ PAL::getDDActionContextClassSingleton() });
+    auto firstMember = decoder.decodeWithAllowedClasses<RetainPtr<DDActionContext>>({ PAL::getDDActionContextClassSingleton() });
+    auto secondMember = decoder.decodeWithAllowedClasses<RetainPtr<DDActionContext>>({ PAL::getDDActionContextClassSingleton() });
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
     return {
@@ -1242,8 +1242,23 @@ void ArgumentCoder<CFFooRef>::encode(Encoder& encoder, CFFooRef instance)
     encoder << WebKit::FooWrapper { instance };
 }
 
+void ArgumentCoder<RetainPtr<CFFooRef>>::encode(Encoder& encoder, const RetainPtr<CFFooRef>& retainPtr)
+{
+    if (!retainPtr) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    ArgumentCoder<CFFooRef>::encode(encoder, retainPtr.get());
+}
+
 std::optional<RetainPtr<CFFooRef>> ArgumentCoder<RetainPtr<CFFooRef>>::decode(Decoder& decoder)
 {
+    auto isEngaged = decoder.template decode<bool>();
+    if (!isEngaged)
+        return std::nullopt;
+    if (!*isEngaged)
+        return { nullptr };
     auto result = decoder.decode<WebKit::FooWrapper>();
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
@@ -1261,8 +1276,33 @@ void ArgumentCoder<CFBarRef>::encode(StreamConnectionEncoder& encoder, CFBarRef 
     encoder << WebKit::BarWrapper::createFromCF(instance);
 }
 
+void ArgumentCoder<RetainPtr<CFBarRef>>::encode(Encoder& encoder, const RetainPtr<CFBarRef>& retainPtr)
+{
+    if (!retainPtr) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    ArgumentCoder<CFBarRef>::encode(encoder, retainPtr.get());
+}
+
+void ArgumentCoder<RetainPtr<CFBarRef>>::encode(StreamConnectionEncoder& encoder, const RetainPtr<CFBarRef>& retainPtr)
+{
+    if (!retainPtr) {
+        encoder << false;
+        return;
+    }
+    encoder << true;
+    ArgumentCoder<CFBarRef>::encode(encoder, retainPtr.get());
+}
+
 std::optional<RetainPtr<CFBarRef>> ArgumentCoder<RetainPtr<CFBarRef>>::decode(Decoder& decoder)
 {
+    auto isEngaged = decoder.template decode<bool>();
+    if (!isEngaged)
+        return std::nullopt;
+    if (!*isEngaged)
+        return { nullptr };
     auto result = decoder.decode<WebKit::BarWrapper>();
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;

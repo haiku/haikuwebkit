@@ -44,10 +44,12 @@ public:
     static ScriptBuffer empty();
 
     String toString() const;
-    RefPtr<const FragmentedSharedBuffer> buffer() const { return m_buffer.get(); }
+    const SharedBufferBuilder& bufferBuilder() const { return m_buffer; }
+    const FragmentedSharedBuffer* buffer() const { return m_buffer.buffer(); }
+    RefPtr<const FragmentedSharedBuffer> protectedBuffer() const { return m_buffer.buffer(); }
     size_t size() const { return m_buffer.size(); }
 
-    ScriptBuffer isolatedCopy() const { return ScriptBuffer(m_buffer ? RefPtr<FragmentedSharedBuffer>(m_buffer.copy()) : nullptr); }
+    ScriptBuffer isolatedCopy() const { return ScriptBuffer(m_buffer ? RefPtr<FragmentedSharedBuffer>(m_buffer.copyBuffer()) : nullptr); }
     explicit operator bool() const { return !!m_buffer; }
     bool isEmpty() const { return m_buffer.isEmpty(); }
 

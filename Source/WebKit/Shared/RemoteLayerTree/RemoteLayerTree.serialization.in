@@ -119,7 +119,7 @@ header: "RemoteLayerBackingStore.h"
     WebCore::IntPoint m_scrollPosition;
 
 #if ENABLE(THREADED_ANIMATIONS)
-    HashSet<Ref<WebCore::AcceleratedTimeline>> m_timelines;
+    WebCore::AcceleratedTimelinesUpdate m_timelinesUpdate;
 #endif
 }
 

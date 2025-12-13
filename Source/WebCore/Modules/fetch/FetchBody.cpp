@@ -287,7 +287,7 @@ void FetchBody::convertReadableStreamToArrayBuffer(FetchBodyOwner& owner, Comple
 
     checkedConsumer()->extract(*protectedReadableStream(), [owner = Ref { owner }, data = SharedBufferBuilder(), completionHandler = WTFMove(completionHandler)](auto&& result) mutable {
         WTF::switchOn(WTFMove(result), [&](std::nullptr_t) {
-            if (RefPtr arrayBuffer = data.takeAsArrayBuffer())
+            if (RefPtr arrayBuffer = data.takeBufferAsArrayBuffer())
                 owner->body().m_data = *arrayBuffer;
             completionHandler({ });
         }, [&](std::span<const uint8_t>&& chunk) {

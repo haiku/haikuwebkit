@@ -50,9 +50,7 @@ SOFT_LINK_CLASS_OPTIONAL(AVKit, AVLegibleMediaOptionsMenuController)
 using namespace WebCore;
 using namespace WTF;
 
-static const UIMenuIdentifier WKCaptionStyleMenuIdentifier = @"WKCaptionStyleMenuIdentifier";
 static const UIMenuIdentifier WKCaptionStyleMenuProfileGroupIdentifier = @"WKCaptionStyleMenuProfileGroupIdentifier";
-static const UIMenuIdentifier WKCaptionStyleMenuProfileIdentifier = @"WKCaptionStyleMenuProfileIdentifier";
 static const UIMenuIdentifier WKCaptionStyleMenuSystemSettingsIdentifier = @"WKCaptionStyleMenuSystemSettingsIdentifier";
 
 #if USE(UICONTEXTMENU)
@@ -71,7 +69,7 @@ static const UIMenuIdentifier WKCaptionStyleMenuSystemSettingsIdentifier = @"WKC
     if (AVKitLibrary() && getAVLegibleMediaOptionsMenuControllerClassSingleton())
         return [[_WKCaptionStyleMenuControllerAVKit alloc] init];
 #endif
-    return [[super alloc] init];
+    return [[[super alloc] init] autorelease];
 }
 
 - (instancetype)init
@@ -126,12 +124,31 @@ static const UIMenuIdentifier WKCaptionStyleMenuSystemSettingsIdentifier = @"WKC
     self.menu = [UIMenu menuWithTitle:stylesMenuTitle.get() children:@[profileGroup, systemSettingsAction]];
 }
 
-- (BOOL)isAncestorOf:(PlatformMenu*)menu
+static bool menuHasMenuAncestor(UIMenu *targetMenu, UIMenu *ancestorMenu)
 {
-    return [menu.identifier isEqualToString:WKCaptionStyleMenuIdentifier]
-        || [menu.identifier isEqualToString:WKCaptionStyleMenuProfileGroupIdentifier]
-        || [menu.identifier isEqualToString:WKCaptionStyleMenuProfileIdentifier]
-        || [menu.identifier isEqualToString:WKCaptionStyleMenuSystemSettingsIdentifier];
+    if (!ancestorMenu || !targetMenu)
+        return false;
+
+    // UIMenu doesn't have a "parent menu" or "supermenu", so this algorithm
+    // must by necessity do a recursive search for the child menu
+    if ([ancestorMenu.children containsObject:targetMenu])
+        return true;
+
+    return [ancestorMenu.children indexOfObjectPassingTest:^BOOL(UIMenuElement *childMenuItem, NSUInteger, BOOL *) {
+        return menuHasMenuAncestor(targetMenu, dynamic_objc_cast<UIMenu>(childMenuItem));
+    }] != NSNotFound;
+}
+
+- (BOOL)isAncestorOf:(PlatformMenu *)menu
+{
+    if (menu == _menu.get())
+        return true;
+    return menuHasMenuAncestor(menu, _menu.get());
+}
+
+- (BOOL)hasAncestor:(PlatformMenu *)menu
+{
+    return menuHasMenuAncestor(_menu.get(), menu);
 }
 
 #pragma mark - Properties
@@ -238,6 +255,18 @@ static const UIMenuIdentifier WKCaptionStyleMenuSystemSettingsIdentifier = @"WKC
     [self notifyMenuDidClose];
 }
 #endif // USE(UICONTEXTMENU)
+
+#pragma mark - Internal
+- (void)setPreviewProfileID:(NSString *)profileID
+{
+    if (profileID) {
+        CaptionUserPreferencesMediaAF::setActiveProfileID(WTF::String(profileID));
+        return;
+    }
+
+    if (self.savedActiveProfileID && self.savedActiveProfileID.length > 0)
+        CaptionUserPreferencesMediaAF::setActiveProfileID(WTF::String(self.savedActiveProfileID));
+}
 @end
 
 #endif

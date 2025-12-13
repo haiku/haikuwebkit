@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Yusuke Suzuki <utatane.tea@gmail.com>.
+ * Copyright (C) 2025 Haiku, inc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "wtf/MemoryFootprint.h"
+#include <wtf/MemoryFootprint.h>
 
 #include <image.h>
 
@@ -33,17 +33,15 @@ namespace WTF {
 
 size_t memoryFootprint()
 {
-	image_info info;
-	int32* cookie = NULL;
+    image_info info;
+    int32* cookie = nullptr;
 
-	size_t heapSize = 0;
+    size_t heapSize = 0;
 
-	while(get_next_image_info(B_CURRENT_TEAM, cookie, &info) == B_OK)
-	{
-		heapSize += info.data_size;
-	}
+    while (get_next_image_info(B_CURRENT_TEAM, cookie, &info) == B_OK)
+        heapSize += info.data_size;
 
-	return heapSize;
+    return heapSize;
 }
 
 }

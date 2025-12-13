@@ -613,7 +613,8 @@ OptionSet<EventListenerRegionType> touchEventTypes =
     EventListenerRegionType::TouchStart, EventListenerRegionType::NonPassiveTouchStart
     , EventListenerRegionType::TouchEnd, EventListenerRegionType::NonPassiveTouchEnd
     , EventListenerRegionType::TouchMove, EventListenerRegionType::NonPassiveTouchMove
-    , EventListenerRegionType::TouchCancel, EventListenerRegionType::NonPassiveTouchCancel
+    , EventListenerRegionType::TouchCancel
+    , EventListenerRegionType::TouchForceChange, EventListenerRegionType::NonPassiveTouchForceChange
     , EventListenerRegionType::PointerDown, EventListenerRegionType::NonPassivePointerDown
     , EventListenerRegionType::PointerEnter, EventListenerRegionType::NonPassivePointerEnter
     , EventListenerRegionType::PointerLeave, EventListenerRegionType::NonPassivePointerLeave
@@ -634,7 +635,7 @@ OptionSet<EventListenerRegionType> touchEventNonPassiveTypes =
     EventListenerRegionType::NonPassiveTouchStart
     , EventListenerRegionType::NonPassiveTouchEnd
     , EventListenerRegionType::NonPassiveTouchMove
-    , EventListenerRegionType::NonPassiveTouchCancel
+    , EventListenerRegionType::NonPassiveTouchForceChange
     , EventListenerRegionType::NonPassivePointerDown
     , EventListenerRegionType::NonPassivePointerEnter
     , EventListenerRegionType::NonPassivePointerLeave
@@ -669,7 +670,7 @@ static EventTrackingRegionsEventType eventTypeForEventListenerType(EventListener
         return EventTrackingRegionsEventType::Touchend;
     case EventListenerRegionType::NonPassiveTouchMove:
         return EventTrackingRegionsEventType::Touchmove;
-    case EventListenerRegionType::NonPassiveTouchCancel:
+    case EventListenerRegionType::NonPassiveTouchForceChange:
         return EventTrackingRegionsEventType::Touchforcechange;
     case EventListenerRegionType::NonPassivePointerDown:
         return EventTrackingRegionsEventType::Pointerdown;

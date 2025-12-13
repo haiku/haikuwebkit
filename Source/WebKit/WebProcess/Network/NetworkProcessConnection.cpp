@@ -195,8 +195,8 @@ bool NetworkProcessConnection::dispatchMessage(IPC::Connection& connection, IPC:
 
 #if ENABLE(APPLE_PAY_REMOTE_UI)
     if (decoder.messageReceiverName() == Messages::WebPaymentCoordinator::messageReceiverName()) {
-        if (auto webPage = WebProcess::singleton().webPage(ObjectIdentifier<PageIdentifierType>(decoder.destinationID())))
-            webPage->paymentCoordinator()->didReceiveMessage(connection, decoder);
+        if (RefPtr webPage = WebProcess::singleton().webPage(ObjectIdentifier<PageIdentifierType>(decoder.destinationID())))
+            RefPtr { webPage->paymentCoordinator() }->didReceiveMessage(connection, decoder);
         return true;
     }
 #endif
@@ -207,8 +207,8 @@ bool NetworkProcessConnection::dispatchSyncMessage(IPC::Connection& connection, 
 {
 #if ENABLE(APPLE_PAY_REMOTE_UI)
     if (decoder.messageReceiverName() == Messages::WebPaymentCoordinator::messageReceiverName()) {
-        if (auto webPage = WebProcess::singleton().webPage(ObjectIdentifier<PageIdentifierType>(decoder.destinationID()))) {
-            webPage->paymentCoordinator()->didReceiveSyncMessage(connection, decoder, replyEncoder);
+        if (RefPtr webPage = WebProcess::singleton().webPage(ObjectIdentifier<PageIdentifierType>(decoder.destinationID()))) {
+            RefPtr { webPage->paymentCoordinator() }->didReceiveSyncMessage(connection, decoder, replyEncoder);
             return true;
         }
         return false;

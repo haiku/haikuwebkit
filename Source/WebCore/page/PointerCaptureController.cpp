@@ -61,10 +61,9 @@ PointerCaptureController::PointerCaptureController(Page& page)
 
 Element* PointerCaptureController::pointerCaptureElement(Document* document, PointerID pointerId) const
 {
-    if (auto capturingData = m_activePointerIdsToCapturingData.get(pointerId)) {
-        auto pointerCaptureElement = capturingData->targetOverride;
-        if (pointerCaptureElement && &pointerCaptureElement->document() == document)
-            return pointerCaptureElement.unsafeGet();
+    if (auto* capturingData = m_activePointerIdsToCapturingData.get(pointerId)) {
+        if (capturingData->targetOverride && &capturingData->targetOverride->document() == document)
+            return capturingData->targetOverride.get();
     }
     return nullptr;
 }

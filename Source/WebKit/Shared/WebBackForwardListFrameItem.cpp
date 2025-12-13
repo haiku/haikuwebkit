@@ -119,20 +119,20 @@ void WebBackForwardListFrameItem::setChild(Ref<FrameState>&& frameState)
     m_children.append(WTFMove(childItem));
 }
 
-WebBackForwardListFrameItem& WebBackForwardListFrameItem::rootFrame()
+Ref<WebBackForwardListFrameItem> WebBackForwardListFrameItem::rootFrame()
 {
     Ref rootFrame = *this;
     while (rootFrame->m_parent && rootFrame->m_parent->identifier().processIdentifier() == identifier().processIdentifier())
         rootFrame = *rootFrame->m_parent;
-    return rootFrame.unsafeGet();
+    return rootFrame;
 }
 
-WebBackForwardListFrameItem& WebBackForwardListFrameItem::mainFrame()
+Ref<WebBackForwardListFrameItem> WebBackForwardListFrameItem::mainFrame()
 {
     Ref mainFrame = *this;
     while (mainFrame->m_parent)
         mainFrame = *mainFrame->m_parent;
-    return mainFrame.unsafeGet();
+    return mainFrame;
 }
 
 Ref<WebBackForwardListFrameItem> WebBackForwardListFrameItem::protectedMainFrame()

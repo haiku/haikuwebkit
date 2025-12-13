@@ -86,7 +86,7 @@ public:
 #if ENABLE(THREADED_ANIMATIONS)
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
-    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime);
+    void updateTimelinesRegistration(WebCore::ProcessIdentifier, const WebCore::AcceleratedTimelinesUpdate&, MonotonicTime);
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const;
     RefPtr<const RemoteAnimationStack> animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier) const;
 #endif
@@ -169,7 +169,6 @@ private:
     void waitForDidUpdateActivityState(ActivityStateChangeID) final;
     void hideContentUntilPendingUpdate() final;
     void hideContentUntilAnyUpdate() final;
-    void hideContentUntilDidUpdateActivityState(ActivityStateChangeID) final;
     bool hasVisibleContent() const final;
 
     WebCore::FloatPoint indicatorLocation() const;
@@ -221,7 +220,6 @@ private:
     Deque<Seconds> m_frameDurations;
 
     Markable<IPC::AsyncReplyID> m_replyForUnhidingContent;
-    std::optional<ActivityStateChangeID> m_activityStateChangeForUnhidingContent;
     bool m_hasDetachedRootLayer { false };
 
     ActivityStateChangeID m_activityStateChangeID { ActivityStateChangeAsynchronous };

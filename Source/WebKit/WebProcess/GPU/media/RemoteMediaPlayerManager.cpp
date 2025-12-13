@@ -54,6 +54,7 @@ using namespace WebCore;
 
 class MediaPlayerRemoteFactory final : public MediaPlayerFactory {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerRemoteFactory);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaPlayerRemoteFactory);
 public:
     MediaPlayerRemoteFactory(MediaPlayerEnums::MediaEngineIdentifier remoteEngineIdentifier, RemoteMediaPlayerManager& manager)
         : m_remoteEngineIdentifier(remoteEngineIdentifier)
@@ -267,7 +268,7 @@ void RemoteMediaPlayerManager::setUseGPUProcess(bool useGPUProcess)
             return WebProcess::singleton().ensureProtectedGPUProcessConnection()->sampleBufferDisplayLayerManager().createLayer(client);
         });
         WebCore::MediaPlayerPrivateMediaStreamAVFObjC::setNativeImageCreator([](auto& videoFrame) {
-            return videoFrame.copyNativeImage();
+            return WebProcess::singleton().ensureProtectedGPUProcessConnection()->videoFrameObjectHeapProxy().getNativeImage(videoFrame);
         });
     }
 #endif
@@ -275,15 +276,13 @@ void RemoteMediaPlayerManager::setUseGPUProcess(bool useGPUProcess)
 
 GPUProcessConnection& RemoteMediaPlayerManager::gpuProcessConnection()
 {
-    RefPtr gpuProcessConnection = m_gpuProcessConnection.get();
-    if (!gpuProcessConnection) {
-        gpuProcessConnection = WebProcess::singleton().ensureGPUProcessConnection();
-        m_gpuProcessConnection = gpuProcessConnection;
-        gpuProcessConnection = WebProcess::singleton().ensureGPUProcessConnection();
+    if (!m_gpuProcessConnection.get()) {
+        Ref gpuProcessConnection = WebProcess::singleton().ensureGPUProcessConnection();
+        m_gpuProcessConnection = gpuProcessConnection.get();
         gpuProcessConnection->addClient(*this);
     }
-
-    return *gpuProcessConnection.unsafeGet();
+    ASSERT(m_gpuProcessConnection.get() == &WebProcess::singleton().ensureGPUProcessConnection());
+    return WebProcess::singleton().ensureGPUProcessConnection();
 }
 
 Ref<GPUProcessConnection> RemoteMediaPlayerManager::protectedGPUProcessConnection()

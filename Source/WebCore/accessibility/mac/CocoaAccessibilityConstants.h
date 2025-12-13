@@ -306,6 +306,7 @@
 #define NSAccessibilityIsSuggestedInsertionAttribute @"AXIsSuggestedInsertion"
 #define NSAccessibilityIsSuggestedDeletionAttribute @"AXIsSuggestedDeletion"
 #define NSAccessibilityIsSuggestionAttribute @"AXIsSuggestion"
+#define NSAccessibilityTableAttribute @"AXTable"
 
 //
 // Notifications

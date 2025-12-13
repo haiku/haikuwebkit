@@ -308,7 +308,7 @@ void WebServiceWorkerFetchTaskClient::continueDidReceiveResponse()
             didFinishInternal(m_networkLoadMetrics);
     }, [this](const SharedBufferBuilder& buffer) {
         assertIsHeld(m_connectionLock);
-        didReceiveDataInternal(buffer.copy()->makeContiguous());
+        didReceiveDataInternal(buffer.copyBuffer()->makeContiguous());
         if (m_didFinish)
             didFinishInternal(m_networkLoadMetrics);
     }, [this](Ref<FormData>& formData) {

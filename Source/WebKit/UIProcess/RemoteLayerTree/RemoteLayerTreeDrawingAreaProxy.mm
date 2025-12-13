@@ -39,6 +39,9 @@
 #import "RemoteScrollingCoordinatorProxy.h"
 #import "RemoteScrollingCoordinatorTransaction.h"
 #import "RemoteScrollingTreeCocoa.h"
+#if PLATFORM(IOS_FAMILY) && ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+#import "RemoteScrollingCoordinatorProxyIOS.h"
+#endif
 #import "WebFrameProxy.h"
 #import "WebPageMessages.h"
 #import "WebPageProxy.h"
@@ -353,11 +356,6 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
     if (bundle.mainFrameData) {
         m_activityStateChangeID = bundle.mainFrameData->activityStateChangeID;
 
-        if (m_activityStateChangeID == m_activityStateChangeForUnhidingContent) {
-            RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ")::hideContentUntilDidUpdateActivityState completed", identifier().toUInt64());
-            m_activityStateChangeForUnhidingContent = std::nullopt;
-        }
-
         // FIXME(site-isolation): Editor state should be updated for subframes.
         if (bundle.mainFrameData->editorState && page->updateEditorState(EditorState { *bundle.mainFrameData->editorState }, WebPageProxy::ShouldMergeVisualEditorState::Yes))
             page->dispatchDidUpdateEditorState();
@@ -459,7 +457,7 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTreeTransaction(IPC::Connection
             if (layerTreeTransaction.hasAnyLayerChanges())
                 ++m_countOfTransactionsWithNonEmptyLayerChanges;
             if (m_remoteLayerTreeHost->updateLayerTree(connection, layerTreeTransaction, mainFrameData)) {
-                if (!m_replyForUnhidingContent && !m_activityStateChangeForUnhidingContent) {
+                if (!m_replyForUnhidingContent) {
                     if (m_hasDetachedRootLayer)
                         RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ") Unhiding layer tree", identifier().toUInt64());
                     page->setRemoteLayerTreeRootNode(m_remoteLayerTreeHost->protectedRootNode().get());
@@ -498,6 +496,11 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTreeTransaction(IPC::Connection
             page->requestScroll(requestedScroll->destinationPosition(currentScrollPosition), layerTreeTransaction.scrollOrigin(), requestedScroll->animated);
         }
 #endif // ENABLE(ASYNC_SCROLLING)
+
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+        if (layerTreeTransaction.changedLayerProperties().size() || layerTreeTransaction.destroyedLayers().size())
+            scrollingCoordinatorProxy->updateOverlayRegions(layerTreeTransaction.destroyedLayers());
+#endif
 
         if (m_debugIndicatorLayerTreeHost && mainFrameData) {
             float scale = indicatorScale(layerTreeTransaction.contentsSize());
@@ -865,18 +868,6 @@ void RemoteLayerTreeDrawingAreaProxy::hideContentUntilPendingUpdate()
     m_hasDetachedRootLayer = true;
 }
 
-void RemoteLayerTreeDrawingAreaProxy::hideContentUntilDidUpdateActivityState(ActivityStateChangeID activityStateChangeID)
-{
-    if (activityStateChangeID == ActivityStateChangeAsynchronous) {
-        hideContentUntilAnyUpdate();
-        return;
-    }
-    RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ")::hideContentUntilDidUpdateActivityState", identifier().toUInt64());
-    m_activityStateChangeForUnhidingContent = activityStateChangeID;
-    m_remoteLayerTreeHost->detachRootLayer();
-    m_hasDetachedRootLayer = true;
-}
-
 void RemoteLayerTreeDrawingAreaProxy::hideContentUntilAnyUpdate()
 {
     RELEASE_LOG(RemoteLayerTree, "RemoteLayerTreeDrawingAreaProxy(%" PRIu64 ")::hideContentUntilAnyUpdate", identifier().toUInt64());
@@ -931,10 +922,10 @@ void RemoteLayerTreeDrawingAreaProxy::animationsWereRemovedFromNode(RemoteLayerT
         page->checkedScrollingCoordinatorProxy()->animationsWereRemovedFromNode(node);
 }
 
-void RemoteLayerTreeDrawingAreaProxy::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
+void RemoteLayerTreeDrawingAreaProxy::updateTimelinesRegistration(WebCore::ProcessIdentifier processIdentifier, const WebCore::AcceleratedTimelinesUpdate& timelinesUpdate, MonotonicTime now)
 {
     if (RefPtr page = this->page())
-        page->checkedScrollingCoordinatorProxy()->updateTimelineRegistration(processIdentifier, timelineRepresentations, now);
+        page->checkedScrollingCoordinatorProxy()->updateTimelinesRegistration(processIdentifier, timelinesUpdate, now);
 }
 
 RefPtr<const RemoteAnimationTimeline> RemoteLayerTreeDrawingAreaProxy::timeline(const TimelineID& timelineID) const
@@ -948,7 +939,6 @@ RefPtr<const RemoteAnimationStack> RemoteLayerTreeDrawingAreaProxy::animationSta
 {
     return m_remoteLayerTreeHost->animationStackForNodeWithIDForTesting(layerID);
 }
-
 #endif // ENABLE(THREADED_ANIMATIONS)
 
 } // namespace WebKit

@@ -41,7 +41,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(SpeechRecognizer);
 
-SpeechRecognizer::SpeechRecognizer(DelegateCallback&& delegateCallback, UniqueRef<SpeechRecognitionRequest>&& request)
+SpeechRecognizer::SpeechRecognizer(DelegateCallback&& delegateCallback, Ref<SpeechRecognitionRequest>&& request)
     : m_delegateCallback(WTFMove(delegateCallback))
     , m_request(WTFMove(request))
 #if HAVE(SPEECHRECOGNIZER)

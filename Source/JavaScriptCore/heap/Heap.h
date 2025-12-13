@@ -298,8 +298,8 @@ class Heap;
     v(weakSetSpace, weakSetHeapCellType, JSWeakSet) \
     v(withScopeSpace, cellHeapCellType, JSWithScope) \
     v(wrapForValidIteratorSpace, cellHeapCellType, JSWrapForValidIterator) \
-    v(promiseAllContextSpace, cellHeapCellType, JSPromiseAllContext) \
-    v(promiseAllGlobalContextSpace, cellHeapCellType, JSPromiseAllGlobalContext) \
+    v(promiseCombinatorsContextSpace, cellHeapCellType, JSPromiseCombinatorsContext) \
+    v(promiseCombinatorsGlobalContextSpace, cellHeapCellType, JSPromiseCombinatorsGlobalContext) \
     v(promiseReactionSpace, cellHeapCellType, JSPromiseReaction) \
     v(asyncFromSyncIteratorSpace, cellHeapCellType, JSAsyncFromSyncIterator) \
     v(regExpStringIteratorSpace, cellHeapCellType, JSRegExpStringIterator) \
@@ -810,7 +810,7 @@ private:
     void dumpHeapStatisticsAtVMDestruction();
 
     static bool useGenerationalGC();
-    static bool shouldSweepSynchronously();
+    bool shouldSweepSynchronously();
 
     void verifyGC();
     void verifierMark();

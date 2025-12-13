@@ -56,7 +56,7 @@ _header_license = """/*
 class SyncedData(object):
     def __init__(self, name, underlying_type_namespace, underlying_type, options):
         self.conditional = None
-        self.header = None
+        self.headers = None
         self.variant_index = None
 
         if options is not None:
@@ -64,8 +64,8 @@ class SyncedData(object):
             for option in option_list:
                 if option.startswith('Conditional='):
                     self.conditional = option[12:]
-                elif option.startswith('Header='):
-                    self.header = option[7:]
+                elif option.startswith('Headers='):
+                    self.headers = option[8:].split(",")
                 else:
                     raise Exception("Invalid option argument '%s' found" % option)
 
@@ -81,9 +81,9 @@ class SyncedData(object):
 def headers_from_datas(datas):
     header_list = []
     for data in datas:
-        if data.header is None:
+        if data.headers is None:
             continue
-        header_list.append(data.header)
+        header_list.extend(data.headers)
     return header_list
 
 
@@ -289,9 +289,9 @@ def generate_synched_data_header(prefix, variant_sorted_synched_datas, sync_data
     headers.append('<wtf/Ref.h>')
     headers.append('<wtf/RefCounted.h>')
     for data in sync_data_sorted_synched_datas:
-        if data.header is None:
+        if data.headers is None:
             continue
-        headers.append(data.header)
+        headers.extend(data.headers)
 
     for header in headers:
         result.append('#include %s' % header)

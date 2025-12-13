@@ -543,7 +543,7 @@ Ref<FragmentedSharedBuffer> MediaRecorderPrivateEncoder::takeData()
     {
         Locker locker { m_lock };
         flushDataBuffer();
-        return m_data.take();
+        return m_data.takeBuffer();
     }
 }
 

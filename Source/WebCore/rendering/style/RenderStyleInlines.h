@@ -25,50 +25,11 @@
 
 #pragma once
 
-#include <WebCore/AnchorPositionEvaluator.h>
-#include <WebCore/Element.h>
-#include <WebCore/FontCascadeDescription.h>
-#include <WebCore/GraphicsTypes.h>
-#include <WebCore/HitTestRequest.h>
-#include <WebCore/PositionTryOrder.h>
 #include <WebCore/RenderStyle.h>
-#include <WebCore/ScrollTypes.h>
-#include <WebCore/StyleAppearance.h>
-#include <WebCore/StyleFillLayers.h>
-#include <WebCore/StyleFontFamily.h>
-#include <WebCore/StyleFontFeatureSettings.h>
-#include <WebCore/StyleFontPalette.h>
-#include <WebCore/StyleFontSizeAdjust.h>
-#include <WebCore/StyleFontStyle.h>
-#include <WebCore/StyleFontVariantAlternates.h>
-#include <WebCore/StyleFontVariantEastAsian.h>
-#include <WebCore/StyleFontVariantLigatures.h>
-#include <WebCore/StyleFontVariantNumeric.h>
-#include <WebCore/StyleFontVariationSettings.h>
-#include <WebCore/StyleFontWeight.h>
-#include <WebCore/StyleFontWidth.h>
-#include <WebCore/StyleGridTrackSizingDirection.h>
-#include <WebCore/StyleTextAlign.h>
-#include <WebCore/StyleTextAutospace.h>
-#include <WebCore/StyleTextDecorationLine.h>
-#include <WebCore/StyleTextSpacingTrim.h>
-#include <WebCore/StyleTextTransform.h>
-#include <WebCore/StyleWebKitLocale.h>
-#include <WebCore/UnicodeBidi.h>
-#include <WebCore/ViewTimeline.h>
-#include <WebCore/WebAnimationTypes.h>
 
-#if ENABLE(APPLE_PAY)
-#include <WebCore/ApplePayButtonPart.h>
-#endif
-
-#if HAVE(CORE_MATERIAL)
-#include <WebCore/AppleVisualEffect.h>
-#endif
-
-#define RENDER_STYLE_INLINES_GENERATED_INCLUDE_TRAP 1
-#include <WebCore/RenderStyleInlinesGenerated.h>
-#undef RENDER_STYLE_INLINES_GENERATED_INCLUDE_TRAP
+#define RENDER_STYLE_PROPERTIES_GETTERS_INLINES_INCLUDE_TRAP 1
+#include <WebCore/RenderStylePropertiesGettersInlines.h>
+#undef RENDER_STYLE_PROPERTIES_GETTERS_INLINES_INCLUDE_TRAP
 
 namespace WebCore {
 
@@ -76,22 +37,9 @@ using namespace CSS::Literals;
 
 // MARK: - Non-property values
 
-inline bool RenderStyle::effectiveInert() const { return m_rareInheritedData->effectiveInert; }
-inline bool RenderStyle::isEffectivelyTransparent() const { return m_rareInheritedData->effectivelyTransparent; }
-inline bool RenderStyle::insideDefaultButton() const { return m_rareInheritedData->insideDefaultButton; }
-inline bool RenderStyle::insideSubmitButton() const { return m_rareInheritedData->insideSubmitButton; }
-inline bool RenderStyle::isInSubtreeWithBlendMode() const { return m_rareInheritedData->isInSubtreeWithBlendMode; }
-inline bool RenderStyle::isForceHidden() const { return m_rareInheritedData->isForceHidden; }
-inline bool RenderStyle::usesAnchorFunctions() const { return m_nonInheritedData->rareData->usesAnchorFunctions; }
-inline EnumSet<BoxAxis> RenderStyle::anchorFunctionScrollCompensatedAxes() const { return EnumSet<BoxAxis>::fromRaw(m_nonInheritedData->rareData->anchorFunctionScrollCompensatedAxes); }
-inline bool RenderStyle::isPopoverInvoker() const { return m_nonInheritedData->rareData->isPopoverInvoker; }
-inline bool RenderStyle::autoRevealsWhenFound() const { return m_rareInheritedData->autoRevealsWhenFound; }
-inline bool RenderStyle::nativeAppearanceDisabled() const { return m_nonInheritedData->rareData->nativeAppearanceDisabled; }
-inline OptionSet<EventListenerRegionType> RenderStyle::eventListenerRegionTypes() const { return m_rareInheritedData->eventListenerRegionTypes; }
 inline std::optional<PseudoElementType> RenderStyle::pseudoElementType() const { return m_nonInheritedFlags.pseudoElementType ? std::make_optional(static_cast<PseudoElementType>(m_nonInheritedFlags.pseudoElementType - 1)) : std::nullopt; }
 inline const AtomString& RenderStyle::pseudoElementNameArgument() const { return m_nonInheritedData->rareData->pseudoElementNameArgument; }
 inline bool RenderStyle::hasAnyPublicPseudoStyles() const { return m_nonInheritedFlags.hasAnyPublicPseudoStyles(); }
-inline bool RenderStyle::hasAttrContent() const { return m_nonInheritedData->miscData->hasAttrContent; }
 
 // MARK: transform constants
 
@@ -124,42 +72,40 @@ inline bool RenderStyle::borderRightIsTransparent() const { return border().righ
 inline bool RenderStyle::borderTopIsTransparent() const { return border().top().isTransparent(); }
 inline bool RenderStyle::columnRuleIsTransparent() const { return columnRule().isTransparent(); }
 
+inline bool RenderStyle::hasExplicitlySetBorderRadius() const
+{
+    return hasExplicitlySetBorderBottomLeftRadius() || hasExplicitlySetBorderBottomRightRadius() || hasExplicitlySetBorderTopLeftRadius() || hasExplicitlySetBorderTopRightRadius();
+}
+
+inline bool RenderStyle::hasExplicitlySetPadding() const
+{
+    return hasExplicitlySetPaddingBottom() || hasExplicitlySetPaddingLeft() || hasExplicitlySetPaddingRight() || hasExplicitlySetPaddingTop();
+}
+
 // MARK: Cached used values
 
 inline StyleAppearance RenderStyle::usedAppearance() const { return static_cast<StyleAppearance>(m_nonInheritedData->miscData->usedAppearance); }
 inline Style::ZIndex RenderStyle::usedZIndex() const { return m_nonInheritedData->boxData->usedZIndex(); }
 inline Style::Contain RenderStyle::usedContain() const { return m_nonInheritedData->rareData->usedContain(); }
-inline float RenderStyle::usedZoom() const { return m_rareInheritedData->usedZoom; }
 inline ContentVisibility RenderStyle::usedContentVisibility() const { return static_cast<ContentVisibility>(m_rareInheritedData->usedContentVisibility); }
 inline Style::TouchAction RenderStyle::usedTouchAction() const { return m_rareInheritedData->usedTouchAction; }
+inline float RenderStyle::usedLetterSpacing() const { return fontCascade().letterSpacing(); }
+inline float RenderStyle::usedWordSpacing() const { return fontCascade().wordSpacing(); }
 #if HAVE(CORE_MATERIAL)
 inline AppleVisualEffect RenderStyle::usedAppleVisualEffectForSubtree() const { return static_cast<AppleVisualEffect>(m_rareInheritedData->usedAppleVisualEffectForSubtree); }
 #endif
-inline float RenderStyle::usedLetterSpacing() const { return fontCascade().letterSpacing(); }
-inline float RenderStyle::usedWordSpacing() const { return fontCascade().wordSpacing(); }
 
 // MARK: Derived used values
 
 inline UserModify RenderStyle::usedUserModify() const { return effectiveInert() ? UserModify::ReadOnly : userModify(); }
 inline PointerEvents RenderStyle::usedPointerEvents() const { return effectiveInert() ? PointerEvents::None : pointerEvents(); }
-inline TransformStyle3D RenderStyle::usedTransformStyle3D() const { return static_cast<bool>(m_nonInheritedData->rareData->transformStyleForcedToFlat) ? TransformStyle3D::Flat : transformStyle3D(); }
+inline TransformStyle3D RenderStyle::usedTransformStyle3D() const { return transformStyleForcedToFlat() ? TransformStyle3D::Flat : transformStyle3D(); }
 inline float RenderStyle::usedPerspective() const { return perspective().usedPerspective(); }
 inline Visibility RenderStyle::usedVisibility() const
 {
     if (isForceHidden()) [[unlikely]]
         return Visibility::Hidden;
     return static_cast<Visibility>(m_inheritedFlags.visibility);
-}
-
-inline bool RenderStyle::NonInheritedFlags::hasPseudoStyle(PseudoElementType pseudo) const
-{
-    ASSERT(allPublicPseudoElementTypes.contains(pseudo));
-    return EnumSet<PseudoElementType>::fromRaw(pseudoBits).contains(pseudo);
-}
-
-inline bool RenderStyle::NonInheritedFlags::hasAnyPublicPseudoStyles() const
-{
-    return !!pseudoBits;
 }
 
 inline bool RenderStyle::breakOnlyAfterWhiteSpace() const
@@ -512,33 +458,6 @@ inline bool RenderStyle::fontCascadeEqual(const RenderStyle& other) const
         || m_inheritedData->fontData->fontCascade == other.m_inheritedData->fontData->fontCascade;
 }
 
-inline bool RenderStyle::evaluationTimeZoomEnabled() const
-{
-    return m_rareInheritedData->evaluationTimeZoomEnabled;
-}
-
-inline float RenderStyle::deviceScaleFactor() const
-{
-    return m_rareInheritedData->deviceScaleFactor;
-}
-
-inline bool RenderStyle::useSVGZoomRulesForLength() const
-{
-    return m_nonInheritedData->rareData->useSVGZoomRulesForLength;
-}
-
-inline Style::ZoomFactor RenderStyle::usedZoomForLength() const
-{
-    if (useSVGZoomRulesForLength())
-        return Style::ZoomFactor(1.0f, deviceScaleFactor());
-
-    if (evaluationTimeZoomEnabled())
-        return Style::ZoomFactor(usedZoom(), deviceScaleFactor());
-
-    return Style::ZoomFactor(1.0f, deviceScaleFactor());
-}
-
-
 // MARK: has*() functions
 
 inline bool RenderStyle::hasAnimations() const { return !animations().isInitial(); }
@@ -567,7 +486,6 @@ inline bool RenderStyle::hasBoxShadow() const { return !boxShadow().isNone(); }
 inline bool RenderStyle::hasClip() const { return !clip().isAuto(); }
 inline bool RenderStyle::hasClipPath() const { return !clipPath().isNone(); }
 inline bool RenderStyle::hasContent() const { return content().isData(); }
-inline bool RenderStyle::hasDisplayAffectedByAnimations() const { return m_nonInheritedData->miscData->hasDisplayAffectedByAnimations; }
 inline bool RenderStyle::hasFill() const { return !fill().isNone(); }
 inline bool RenderStyle::hasFilter() const { return !filter().isNone(); }
 inline bool RenderStyle::hasInFlowPosition() const { return position() == PositionType::Relative || position() == PositionType::Sticky; }
@@ -696,39 +614,15 @@ inline double RenderStyle::logicalAspectRatio() const
     return ratio->denominator.value / ratio->numerator.value;
 }
 
-// MARK: border-width logical
+// MARK: border logical
+inline const BorderValue& RenderStyle::borderBefore() const { return borderBefore(writingMode()); }
+inline const BorderValue& RenderStyle::borderAfter() const { return borderAfter(writingMode()); }
+inline const BorderValue& RenderStyle::borderStart() const { return borderStart(writingMode()); }
+inline const BorderValue& RenderStyle::borderEnd() const { return borderEnd(writingMode()); }
 inline Style::LineWidth RenderStyle::borderAfterWidth() const { return borderAfterWidth(writingMode()); }
 inline Style::LineWidth RenderStyle::borderBeforeWidth() const { return borderBeforeWidth(writingMode()); }
 inline Style::LineWidth RenderStyle::borderEndWidth() const { return borderEndWidth(writingMode()); }
 inline Style::LineWidth RenderStyle::borderStartWidth() const { return borderStartWidth(writingMode()); }
-
-// MARK: - Aggregate getters
-
-inline const Style::InsetBox& RenderStyle::insetBox() const { return m_nonInheritedData->surroundData->inset; }
-inline const Style::MarginBox& RenderStyle::marginBox() const { return m_nonInheritedData->surroundData->margin; }
-inline const Style::PaddingBox& RenderStyle::paddingBox() const { return m_nonInheritedData->surroundData->padding; }
-inline const Style::ScrollMarginBox& RenderStyle::scrollMarginBox() const { return m_nonInheritedData->rareData->scrollMargin; }
-inline const Style::ScrollPaddingBox& RenderStyle::scrollPaddingBox() const { return m_nonInheritedData->rareData->scrollPadding; }
-inline const Style::ScrollTimelines& RenderStyle::scrollTimelines() const { return m_nonInheritedData->rareData->scrollTimelines; }
-inline const Style::ViewTimelines& RenderStyle::viewTimelines() const { return m_nonInheritedData->rareData->viewTimelines; }
-inline const Style::Animations& RenderStyle::animations() const { return m_nonInheritedData->miscData->animations; }
-inline const Style::Transitions& RenderStyle::transitions() const { return m_nonInheritedData->miscData->transitions; }
-inline const Style::BackgroundLayers& RenderStyle::backgroundLayers() const { return m_nonInheritedData->backgroundData->background; }
-inline const Style::MaskLayers& RenderStyle::maskLayers() const { return m_nonInheritedData->miscData->mask; }
-inline const Style::MaskBorder& RenderStyle::maskBorder() const { return m_nonInheritedData->rareData->maskBorder; }
-inline const Style::BorderImage& RenderStyle::borderImage() const { return border().image(); }
-inline const Style::TransformOrigin& RenderStyle::transformOrigin() const { return m_nonInheritedData->miscData->transform->origin; }
-inline const Style::PerspectiveOrigin& RenderStyle::perspectiveOrigin() const { return m_nonInheritedData->rareData->perspectiveOrigin; }
-inline const OutlineValue& RenderStyle::outline() const { return m_nonInheritedData->backgroundData->outline; }
-inline const BorderData& RenderStyle::border() const { return m_nonInheritedData->surroundData->border; }
-inline Style::LineWidthBox RenderStyle::borderWidth() const { return border().borderWidth(); }
-inline const Style::BorderRadius& RenderStyle::borderRadii() const { return border().radii(); }
-inline const BorderValue& RenderStyle::borderBottom() const { return border().bottom(); }
-inline const BorderValue& RenderStyle::borderLeft() const { return border().left(); }
-inline const BorderValue& RenderStyle::borderRight() const { return border().right(); }
-inline const BorderValue& RenderStyle::borderTop() const { return border().top(); }
-inline const BorderValue& RenderStyle::columnRule() const { return m_nonInheritedData->miscData->multiCol->columnRule; }
-inline const FontCascade& RenderStyle::fontCascade() const { return m_inheritedData->fontData->fontCascade; }
 
 // MARK: - Property initial values
 
@@ -995,6 +889,7 @@ inline Style::TransformOriginZ RenderStyle::initialTransformOriginZ() { return 0
 constexpr TransformStyle3D RenderStyle::initialTransformStyle3D() { return TransformStyle3D::Flat; }
 constexpr UnicodeBidi RenderStyle::initialUnicodeBidi() { return UnicodeBidi::Normal; }
 constexpr Style::ZIndex RenderStyle::initialUsedZIndex() { return CSS::Keyword::Auto { }; }
+constexpr Style::Zoom RenderStyle::initialZoom() { return 1_css_number; }
 constexpr UserDrag RenderStyle::initialUserDrag() { return UserDrag::Auto; }
 constexpr UserModify RenderStyle::initialUserModify() { return UserModify::ReadOnly; }
 constexpr UserSelect RenderStyle::initialUserSelect() { return UserSelect::Text; }
@@ -1078,102 +973,6 @@ constexpr Style::WebkitTouchCallout RenderStyle::initialTouchCallout() { return 
 #if ENABLE(TEXT_AUTOSIZING)
 inline Style::LineHeight RenderStyle::initialSpecifiedLineHeight() { return CSS::Keyword::Normal { }; }
 constexpr Style::TextSizeAdjust RenderStyle::initialTextSizeAdjust() { return CSS::Keyword::Auto { }; }
-#endif
-
-// MARK: - Property getters
-
-inline Style::LineWidth RenderStyle::borderBottomWidth() const { return border().borderBottomWidth(); }
-inline Style::LineWidth RenderStyle::borderLeftWidth() const { return border().borderLeftWidth(); }
-inline Style::LineWidth RenderStyle::borderRightWidth() const { return border().borderRightWidth(); }
-inline Style::LineWidth RenderStyle::borderTopWidth() const { return border().borderTopWidth(); }
-inline Style::LineWidth RenderStyle::columnRuleWidth() const { return m_nonInheritedData->miscData->multiCol->columnRuleWidth(); }
-
-// FIXME: - Below are property getters that are not yet generated
-
-// FIXME: Support properties that set more than one value when set.
-inline StyleAppearance RenderStyle::appearance() const { return static_cast<StyleAppearance>(m_nonInheritedData->miscData->appearance); }
-inline BlendMode RenderStyle::blendMode() const { return static_cast<BlendMode>(m_nonInheritedData->rareData->effectiveBlendMode); }
-inline float RenderStyle::zoom() const { return m_nonInheritedData->rareData->zoom; }
-
-// FIXME: Add a type that encapsulates both caretColor() and hasAutoCaretColor().
-inline const Style::Color& RenderStyle::caretColor() const { return m_rareInheritedData->caretColor; }
-inline bool RenderStyle::hasAutoCaretColor() const { return m_rareInheritedData->hasAutoCaretColor; }
-inline bool RenderStyle::hasVisitedLinkAutoCaretColor() const { return m_rareInheritedData->hasVisitedLinkAutoCaretColor; }
-
-// FIXME: Support generating properties that have their storage spread out
-inline Style::Cursor RenderStyle::cursor() const { return { m_rareInheritedData->cursorImages, cursorType() }; }
-inline Style::ZIndex RenderStyle::specifiedZIndex() const { return m_nonInheritedData->boxData->specifiedZIndex(); }
-
-// FIXME: Support descriptors
-inline const Style::PageSize& RenderStyle::pageSize() const { return m_nonInheritedData->rareData->pageSize; }
-
-// FIXME: Support generating getter and setter with different names (or rename computedLetterSpacing() to letterSpacing() and computedWordSpacing() to wordSpacing())
-inline const Style::LetterSpacing& RenderStyle::computedLetterSpacing() const { return m_inheritedData->fontData->letterSpacing; }
-inline const Style::WordSpacing& RenderStyle::computedWordSpacing() const { return m_inheritedData->fontData->wordSpacing; }
-
-// FIXME: Support generated font-property getters
-inline Style::FontFamilies RenderStyle::fontFamily() const { return { fontDescription().families(), fontDescription().isSpecifiedFont() }; }
-inline Style::FontPalette RenderStyle::fontPalette() const { return fontDescription().fontPalette(); }
-inline Style::FontSizeAdjust RenderStyle::fontSizeAdjust() const { return fontDescription().fontSizeAdjust(); }
-inline Style::FontStyle RenderStyle::fontStyle() const { return { fontDescription().fontStyleSlope(), fontDescription().fontStyleAxis() }; }
-inline FontOpticalSizing RenderStyle::fontOpticalSizing() const { return fontDescription().opticalSizing(); }
-inline Style::FontFeatureSettings RenderStyle::fontFeatureSettings() const { return fontDescription().featureSettings(); }
-inline Style::FontVariationSettings RenderStyle::fontVariationSettings() const { return fontDescription().variationSettings(); }
-inline Style::FontWeight RenderStyle::fontWeight() const { return fontDescription().weight(); }
-inline Style::FontWidth RenderStyle::fontWidth() const { return fontDescription().width(); }
-inline Kerning RenderStyle::fontKerning() const { return fontDescription().kerning(); }
-inline FontSmoothingMode RenderStyle::fontSmoothing() const { return fontDescription().fontSmoothing(); }
-inline FontSynthesisLonghandValue RenderStyle::fontSynthesisSmallCaps() const { return fontDescription().fontSynthesisSmallCaps(); }
-inline FontSynthesisLonghandValue RenderStyle::fontSynthesisStyle() const { return fontDescription().fontSynthesisStyle(); }
-inline FontSynthesisLonghandValue RenderStyle::fontSynthesisWeight() const { return fontDescription().fontSynthesisWeight(); }
-inline Style::FontVariantAlternates RenderStyle::fontVariantAlternates() const { return fontDescription().variantAlternates(); }
-inline FontVariantCaps RenderStyle::fontVariantCaps() const { return fontDescription().variantCaps(); }
-inline Style::FontVariantEastAsian RenderStyle::fontVariantEastAsian() const { return fontDescription().variantEastAsian(); }
-inline FontVariantEmoji RenderStyle::fontVariantEmoji() const { return fontDescription().variantEmoji(); }
-inline Style::FontVariantLigatures RenderStyle::fontVariantLigatures() const { return fontDescription().variantLigatures(); }
-inline Style::FontVariantNumeric RenderStyle::fontVariantNumeric() const { return fontDescription().variantNumeric(); }
-inline FontVariantPosition RenderStyle::fontVariantPosition() const { return fontDescription().variantPosition(); }
-inline TextRenderingMode RenderStyle::textRendering() const { return fontDescription().textRenderingMode(); }
-inline Style::TextAutospace RenderStyle::textAutospace() const { return fontDescription().textAutospace(); }
-inline Style::TextSpacingTrim RenderStyle::textSpacingTrim() const { return fontDescription().textSpacingTrim(); }
-inline Style::WebkitLocale RenderStyle::locale() const { return fontDescription().specifiedLocale(); }
-inline Style::WebkitLocale RenderStyle::computedLocale() const { return fontDescription().computedLocale(); }
-
-// FIXME: Support generating visited link variants
-inline const Style::Color& RenderStyle::visitedLinkBackgroundColor() const { return m_nonInheritedData->miscData->visitedLinkColor->background; }
-inline const Style::Color& RenderStyle::visitedLinkBorderBottomColor() const { return m_nonInheritedData->miscData->visitedLinkColor->borderBottom; }
-inline const Style::Color& RenderStyle::visitedLinkBorderLeftColor() const { return m_nonInheritedData->miscData->visitedLinkColor->borderLeft; }
-inline const Style::Color& RenderStyle::visitedLinkBorderRightColor() const { return m_nonInheritedData->miscData->visitedLinkColor->borderRight; }
-inline const Style::Color& RenderStyle::visitedLinkBorderTopColor() const { return m_nonInheritedData->miscData->visitedLinkColor->borderTop; }
-inline const Style::Color& RenderStyle::visitedLinkCaretColor() const { return m_rareInheritedData->visitedLinkCaretColor; }
-inline const Style::Color& RenderStyle::visitedLinkColumnRuleColor() const { return m_nonInheritedData->miscData->multiCol->visitedLinkColumnRuleColor; }
-inline const Style::Color& RenderStyle::visitedLinkOutlineColor() const { return m_nonInheritedData->miscData->visitedLinkColor->outline; }
-inline const Style::Color& RenderStyle::visitedLinkStrokeColor() const { return m_rareInheritedData->visitedLinkStrokeColor; }
-inline const Style::Color& RenderStyle::visitedLinkTextDecorationColor() const { return m_nonInheritedData->miscData->visitedLinkColor->textDecoration; }
-inline const Style::Color& RenderStyle::visitedLinkTextEmphasisColor() const { return m_rareInheritedData->visitedLinkTextEmphasisColor; }
-inline const Style::Color& RenderStyle::visitedLinkTextFillColor() const { return m_rareInheritedData->visitedLinkTextFillColor; }
-inline const Style::Color& RenderStyle::visitedLinkTextStrokeColor() const { return m_rareInheritedData->visitedLinkTextStrokeColor; }
-inline const Style::SVGPaint& RenderStyle::visitedLinkFill() const { return m_svgStyle->fillData->visitedLinkFill; }
-inline const Style::SVGPaint& RenderStyle::visitedLinkStroke() const { return m_svgStyle->strokeData->visitedLinkStroke; }
-
-// FIXME: Support generating "ExplicitlySet" setters
-inline bool RenderStyle::hasExplicitlySetBorderBottomLeftRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderBottomLeftRadius; }
-inline bool RenderStyle::hasExplicitlySetBorderBottomRightRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderBottomRightRadius; }
-inline bool RenderStyle::hasExplicitlySetBorderRadius() const { return hasExplicitlySetBorderBottomLeftRadius() || hasExplicitlySetBorderBottomRightRadius() || hasExplicitlySetBorderTopLeftRadius() || hasExplicitlySetBorderTopRightRadius(); }
-inline bool RenderStyle::hasExplicitlySetBorderTopLeftRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderTopLeftRadius; }
-inline bool RenderStyle::hasExplicitlySetBorderTopRightRadius() const { return m_nonInheritedData->surroundData->hasExplicitlySetBorderTopRightRadius; }
-inline bool RenderStyle::hasExplicitlySetColor() const { return m_inheritedFlags.hasExplicitlySetColor; }
-inline bool RenderStyle::hasExplicitlySetDirection() const { return m_nonInheritedData->miscData->hasExplicitlySetDirection; }
-inline bool RenderStyle::hasExplicitlySetPadding() const { return hasExplicitlySetPaddingBottom() || hasExplicitlySetPaddingLeft() || hasExplicitlySetPaddingRight() || hasExplicitlySetPaddingTop(); }
-inline bool RenderStyle::hasExplicitlySetPaddingBottom() const { return m_nonInheritedData->surroundData->hasExplicitlySetPaddingBottom; }
-inline bool RenderStyle::hasExplicitlySetPaddingLeft() const { return m_nonInheritedData->surroundData->hasExplicitlySetPaddingLeft; }
-inline bool RenderStyle::hasExplicitlySetPaddingRight() const { return m_nonInheritedData->surroundData->hasExplicitlySetPaddingRight; }
-inline bool RenderStyle::hasExplicitlySetPaddingTop() const { return m_nonInheritedData->surroundData->hasExplicitlySetPaddingTop; }
-inline bool RenderStyle::hasExplicitlySetStrokeColor() const { return m_rareInheritedData->hasSetStrokeColor; }
-inline bool RenderStyle::hasExplicitlySetStrokeWidth() const { return m_rareInheritedData->hasSetStrokeWidth; }
-inline bool RenderStyle::hasExplicitlySetWritingMode() const { return m_nonInheritedData->miscData->hasExplicitlySetWritingMode; }
-#if ENABLE(DARK_MODE_CSS)
-inline bool RenderStyle::hasExplicitlySetColorScheme() const { return m_nonInheritedData->miscData->hasExplicitlySetColorScheme; }
 #endif
 
 } // namespace WebCore

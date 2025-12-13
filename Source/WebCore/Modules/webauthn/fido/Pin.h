@@ -36,6 +36,7 @@
 #if ENABLE(WEB_AUTHN)
 
 #include <WebCore/CBORValue.h>
+#include <WebCore/CryptoKeyAES.h>
 #include <WebCore/FidoConstants.h>
 
 namespace WebCore {
@@ -202,7 +203,7 @@ private:
 class HmacSecretRequest {
     WTF_MAKE_NONCOPYABLE(HmacSecretRequest);
 public:
-    WEBCORE_EXPORT static std::optional<HmacSecretRequest> create(PINUVAuthProtocol, const Vector<uint8_t>& salt1, const std::optional<Vector<uint8_t>>& salt2, const WebCore::CryptoKeyEC& peerKey);
+    WEBCORE_EXPORT static std::optional<HmacSecretRequest> create(PINUVAuthProtocol, const Vector<uint8_t>& salt1, const std::optional<Vector<uint8_t>>& salt2, RefPtr<WebCore::CryptoKeyEC>&& peerKey);
     HmacSecretRequest(HmacSecretRequest&&) = default;
     HmacSecretRequest& operator=(HmacSecretRequest&&) = default;
 

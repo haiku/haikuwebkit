@@ -53,8 +53,6 @@ using namespace JSC;
 
 // Functions
 
-static JSC_DECLARE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_entries);
-static JSC_DECLARE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_keys);
 static JSC_DECLARE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_values);
 
 // Attributes
@@ -114,10 +112,8 @@ template<> void JSTestAsyncIterableWithoutFlagsDOMConstructor::initializePropert
 
 /* Hash table for prototype */
 
-static const std::array<HashTableValue, 4> JSTestAsyncIterableWithoutFlagsPrototypeTableValues {
+static const std::array<HashTableValue, 2> JSTestAsyncIterableWithoutFlagsPrototypeTableValues {
     HashTableValue { "constructor"_s, static_cast<unsigned>(PropertyAttribute::DontEnum), NoIntrinsic, { HashTableValue::GetterSetterType, jsTestAsyncIterableWithoutFlagsConstructor, 0 } },
-    HashTableValue { "entries"_s, static_cast<unsigned>(JSC::PropertyAttribute::Function), NoIntrinsic, { HashTableValue::NativeFunctionType, jsTestAsyncIterableWithoutFlagsPrototypeFunction_entries, 0 } },
-    HashTableValue { "keys"_s, static_cast<unsigned>(JSC::PropertyAttribute::Function), NoIntrinsic, { HashTableValue::NativeFunctionType, jsTestAsyncIterableWithoutFlagsPrototypeFunction_keys, 0 } },
     HashTableValue { "values"_s, static_cast<unsigned>(JSC::PropertyAttribute::Function), NoIntrinsic, { HashTableValue::NativeFunctionType, jsTestAsyncIterableWithoutFlagsPrototypeFunction_values, 0 } },
 };
 
@@ -202,9 +198,9 @@ public:
         return JSC::Structure::create(vm, globalObject, prototype, JSC::TypeInfo(JSC::ObjectType, StructureFlags), info());
     }
 
-    static TestAsyncIterableWithoutFlagsIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind)
+    static TestAsyncIterableWithoutFlagsIterator* create(JSC::VM& vm, JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind, InternalIterator&& iterator)
     {
-        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableWithoutFlagsIterator>(vm)) TestAsyncIterableWithoutFlagsIterator(structure, iteratedObject, kind);
+        auto* instance = new (NotNull, JSC::allocateCell<TestAsyncIterableWithoutFlagsIterator>(vm)) TestAsyncIterableWithoutFlagsIterator(structure, iteratedObject, kind, WTFMove(iterator));
         instance->finishCreation(vm);
         return instance;
     }
@@ -213,8 +209,8 @@ public:
     JSC::JSBoundFunction* createOnFulfilledFunction(JSC::JSGlobalObject*);
     JSC::JSBoundFunction* createOnRejectedFunction(JSC::JSGlobalObject*);
 private:
-    TestAsyncIterableWithoutFlagsIterator(JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind)
-        : Base(structure, iteratedObject, kind)
+    TestAsyncIterableWithoutFlagsIterator(JSC::Structure* structure, JSTestAsyncIterableWithoutFlags& iteratedObject, IterationKind kind, InternalIterator&& iterator)
+        : Base(structure, iteratedObject, kind, WTFMove(iterator))
     {
     }
 };
@@ -229,29 +225,12 @@ const JSC::ClassInfo TestAsyncIterableWithoutFlagsIterator::s_info = { "TestAsyn
 template<>
 const JSC::ClassInfo TestAsyncIterableWithoutFlagsIteratorPrototype::s_info = { "TestAsyncIterableWithoutFlags Iterator"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(TestAsyncIterableWithoutFlagsIteratorPrototype) };
 
-static inline EncodedJSValue jsTestAsyncIterableWithoutFlagsPrototypeFunction_entriesCaller(JSGlobalObject*, CallFrame*, JSTestAsyncIterableWithoutFlags* thisObject)
+static inline EncodedJSValue jsTestAsyncIterableWithoutFlagsPrototypeFunction_valuesCaller(JSGlobalObject* lexicalGlobalObject, CallFrame* callFrame, JSTestAsyncIterableWithoutFlags* thisObject)
 {
-    return JSValue::encode(iteratorCreate<TestAsyncIterableWithoutFlagsIterator>(*thisObject, IterationKind::Values));
-}
-
-JSC_DEFINE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_entries, (JSC::JSGlobalObject* lexicalGlobalObject, JSC::CallFrame* callFrame))
-{
-    return IDLOperation<JSTestAsyncIterableWithoutFlags>::call<jsTestAsyncIterableWithoutFlagsPrototypeFunction_entriesCaller>(*lexicalGlobalObject, *callFrame, "entries");
-}
-
-static inline EncodedJSValue jsTestAsyncIterableWithoutFlagsPrototypeFunction_keysCaller(JSGlobalObject*, CallFrame*, JSTestAsyncIterableWithoutFlags* thisObject)
-{
-    return JSValue::encode(iteratorCreate<TestAsyncIterableWithoutFlagsIterator>(*thisObject, IterationKind::Keys));
-}
-
-JSC_DEFINE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_keys, (JSC::JSGlobalObject* lexicalGlobalObject, JSC::CallFrame* callFrame))
-{
-    return IDLOperation<JSTestAsyncIterableWithoutFlags>::call<jsTestAsyncIterableWithoutFlagsPrototypeFunction_keysCaller>(*lexicalGlobalObject, *callFrame, "keys");
-}
-
-static inline EncodedJSValue jsTestAsyncIterableWithoutFlagsPrototypeFunction_valuesCaller(JSGlobalObject*, CallFrame*, JSTestAsyncIterableWithoutFlags* thisObject)
-{
-    return JSValue::encode(iteratorCreate<TestAsyncIterableWithoutFlagsIterator>(*thisObject, IterationKind::Values));
+    UNUSED_PARAM(callFrame);
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    RELEASE_AND_RETURN(throwScope, JSValue::encode(iteratorCreate<TestAsyncIterableWithoutFlagsIterator>(*thisObject, *lexicalGlobalObject, throwScope, IterationKind::Values)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(jsTestAsyncIterableWithoutFlagsPrototypeFunction_values, (JSC::JSGlobalObject* lexicalGlobalObject, JSC::CallFrame* callFrame))

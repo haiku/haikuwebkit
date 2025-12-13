@@ -223,10 +223,10 @@ private:
 
     NSDictionary *computedAttributesForElement(Element&);
     NSDictionary *attributesForElement(Element&);
-    NSDictionary *aggregatedAttributesForAncestors(CharacterData&);
-    NSDictionary* aggregatedAttributesForElementAndItsAncestors(Element&);
+    RetainPtr<NSDictionary> aggregatedAttributesForAncestors(CharacterData&);
+    RetainPtr<NSDictionary> aggregatedAttributesForElementAndItsAncestors(Element&);
 
-    Element* _blockLevelElementForNode(Node*);
+    RefPtr<Element> _blockLevelElementForNode(Node*);
 
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
     BOOL _addMultiRepresentationHEICAttachmentForImageElement(HTMLImageElement&);
@@ -789,14 +789,14 @@ bool HTMLConverterCaches::elementHasOwnBackgroundColor(Element& element)
     return element.hasTagName(htmlTag) || element.hasTagName(bodyTag) || propertyValueForNode(element, CSSPropertyDisplay).startsWith("table"_s);
 }
 
-Element* HTMLConverter::_blockLevelElementForNode(Node* node)
+RefPtr<Element> HTMLConverter::_blockLevelElementForNode(Node* node)
 {
     RefPtr element = dynamicDowncast<Element>(node);
     if (!element)
         element = node->parentElement();
     if (element && !_caches->isBlockElement(*element))
         element = _blockLevelElementForNode(element->parentInComposedTree());
-    return element.unsafeGet();
+    return element;
 }
 
 static Color normalizedColor(Color color, bool ignoreDefaultColor, Element& element)
@@ -1022,7 +1022,7 @@ NSDictionary *HTMLConverter::computedAttributesForElement(Element& element)
             [attrs setObject:shadow forKey:NSShadowAttributeName];
     }
 
-    Element* blockElement = _blockLevelElementForNode(&element);
+    RefPtr blockElement = _blockLevelElementForNode(&element);
     if (&element != blockElement && [_writingDirectionArray count] > 0)
         [attrs setObject:[NSArray arrayWithArray:_writingDirectionArray.get()] forKey:NSWritingDirectionAttributeName];
 
@@ -1109,7 +1109,7 @@ NSDictionary* HTMLConverter::attributesForElement(Element& element)
     return attributes.get();
 }
 
-NSDictionary* HTMLConverter::aggregatedAttributesForAncestors(CharacterData& node)
+RetainPtr<NSDictionary> HTMLConverter::aggregatedAttributesForAncestors(CharacterData& node)
 {
     Node* ancestor = node.parentInComposedTree();
     while (ancestor && !is<Element>(*ancestor))
@@ -1119,7 +1119,7 @@ NSDictionary* HTMLConverter::aggregatedAttributesForAncestors(CharacterData& nod
     return aggregatedAttributesForElementAndItsAncestors(downcast<Element>(*ancestor));
 }
 
-NSDictionary* HTMLConverter::aggregatedAttributesForElementAndItsAncestors(Element& element)
+RetainPtr<NSDictionary> HTMLConverter::aggregatedAttributesForElementAndItsAncestors(Element& element)
 {
     auto& cachedAttributes = m_aggregatedAttributesForElements.add(&element, nullptr).iterator->value;
     if (cachedAttributes)
@@ -1141,7 +1141,7 @@ NSDictionary* HTMLConverter::aggregatedAttributesForElementAndItsAncestors(Eleme
     [attributesForAncestors addEntriesFromDictionary:attributesForCurrentElement];
     m_aggregatedAttributesForElements.set(&element, attributesForAncestors);
 
-    return attributesForAncestors.unsafeGet();
+    return attributesForAncestors;
 }
 
 void HTMLConverter::_newParagraphForElement(Element& element, NSString *tag, BOOL flag, BOOL suppressTrailingSpace)
@@ -1771,7 +1771,7 @@ BOOL HTMLConverter::_processElement(Element& element, NSInteger depth)
         }
     }
     if (displayValue == "table"_s || (![_textTables count] && displayValue == "table-row-group"_s)) {
-        Element* tableElement = &element;
+        RefPtr tableElement = &element;
         if (displayValue == "table-row-group"_s) {
             // If we are starting in medias res, the first thing we see may be the tbody, so go up to the table
             tableElement = _blockLevelElementForNode(element.parentInComposedTree());
@@ -1780,7 +1780,7 @@ BOOL HTMLConverter::_processElement(Element& element, NSInteger depth)
         }
         while ([_textTables count] > [_textBlocks count])
             _addTableCellForElement(nil);
-        _addTableForElement(tableElement);
+        _addTableForElement(tableElement.get());
     } else if (displayValue == "table-footer-group"_s && [_textTables count] > 0) {
         m_textTableFooters.add((__bridge CFTypeRef)[_textTables lastObject], &element);
         retval = NO;
@@ -1848,7 +1848,7 @@ BOOL HTMLConverter::_processElement(Element& element, NSInteger depth)
             retval = NO;
         }
     } else if (element.hasTagName(brTag)) {
-        Element* blockElement = _blockLevelElementForNode(element.parentInComposedTree());
+        RefPtr blockElement = _blockLevelElementForNode(element.parentInComposedTree());
         RetainPtr breakClass = element.getAttribute(classAttr).createNSString();
         RetainPtr blockTag = blockElement ? blockElement->tagName().createNSString() : nil;
         BOOL isExtraBreak = [AppleInterchangeNewline.createNSString() isEqualToString:breakClass.get()];
@@ -2017,7 +2017,7 @@ void HTMLConverter::_exitElement(Element& element, NSInteger depth, NSUInteger s
         NSTextTableBlock *block;
         NSMutableArray *rowArray = [_textTableRowArrays lastObject], *previousRowArray;
         NSUInteger i, count;
-        NSInteger numberOfColumns = [table numberOfColumns];
+        auto numberOfColumns = [table numberOfColumns];
         NSInteger openColumn;
         NSInteger rowNumber = [[_textTableRows lastObject] integerValue];
         do {
@@ -2027,8 +2027,11 @@ void HTMLConverter::_exitElement(Element& element, NSInteger depth, NSUInteger s
             count = [previousRowArray count];
             for (i = 0; i < count; i++) {
                 block = [previousRowArray objectAtIndex:i];
-                if ([block startingColumn] + [block columnSpan] > numberOfColumns) numberOfColumns = [block startingColumn] + [block columnSpan];
-                if ([block startingRow] + [block rowSpan] > rowNumber) [rowArray addObject:block];
+                if ([block startingColumn] + [block columnSpan] > static_cast<NSInteger>(numberOfColumns))
+                    numberOfColumns = [block startingColumn] + [block columnSpan];
+
+                if ([block startingRow] + [block rowSpan] > rowNumber)
+                    [rowArray addObject:block];
             }
             count = [rowArray count];
             openColumn = 0;
@@ -2036,8 +2039,8 @@ void HTMLConverter::_exitElement(Element& element, NSInteger depth, NSUInteger s
                 block = [rowArray objectAtIndex:i];
                 if (openColumn >= [block startingColumn] && openColumn < [block startingColumn] + [block columnSpan]) openColumn = [block startingColumn] + [block columnSpan];
             }
-        } while (openColumn >= numberOfColumns);
-        if ((NSUInteger)numberOfColumns > [table numberOfColumns])
+        } while (openColumn >= static_cast<NSInteger>(numberOfColumns));
+        if (numberOfColumns > [table numberOfColumns])
             [table setNumberOfColumns:numberOfColumns];
         [_textTableRows removeLastObject];
         [_textTableRows addObject:[NSNumber numberWithInteger:rowNumber]];
@@ -2178,7 +2181,7 @@ void HTMLConverter::_processText(Text& text)
         [_attrStr replaceCharactersInRange:rangeToReplace withString:outputString.createNSString().get()];
         rangeToReplace.length = outputString.length();
         if (rangeToReplace.length)
-            [_attrStr setAttributes:aggregatedAttributesForAncestors(text) range:rangeToReplace];
+            [_attrStr setAttributes:aggregatedAttributesForAncestors(text).get() range:rangeToReplace];
         _flags.isSoft = wasSpace;
     }
 }

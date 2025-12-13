@@ -142,8 +142,6 @@ void WorkerScriptLoader::loadAsynchronously(ScriptExecutionContext& scriptExecut
     ASSERT(scriptRequest.httpMethod() == "GET"_s);
 
     auto request = makeUnique<ResourceRequest>(WTFMove(scriptRequest));
-    if (!request)
-        return;
 
     ThreadableLoaderOptions options { WTFMove(fetchOptions) };
     options.sendLoadCallbacks = SendCallbackPolicy::SendCallbacks;

@@ -377,7 +377,7 @@ private:
     bool wirelessVideoPlaybackDisabled() const final;
     void setWirelessVideoPlaybackDisabled(bool) final;
 
-    bool canPlayToWirelessPlaybackTarget() const final;
+    OptionSet<WebCore::MediaPlaybackTargetType> supportedPlaybackTargetTypes() const final;
     bool isCurrentPlaybackTargetWireless() const final;
     void setWirelessPlaybackTarget(Ref<WebCore::MediaPlaybackTarget>&&) final;
 

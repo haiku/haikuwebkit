@@ -76,6 +76,8 @@ public:
     RetainPtr<CGImageRef> imageForCopySubject() const final { return m_copySubjectResult; }
 #endif
 
+    void didShowContextMenu(NSMenu *);
+    void didDismissContextMenu(NSMenu *);
     void captionStyleMenuWillOpen();
     void captionStyleMenuDidClose();
 

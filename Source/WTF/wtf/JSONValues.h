@@ -184,8 +184,8 @@ protected:
     void setObject(const String& name, Ref<ObjectBase>&&);
     void setArray(const String& name, Ref<ArrayBase>&&);
 
-    iterator find(const String& name);
-    const_iterator find(const String& name) const;
+    iterator find(const String& name) LIFETIME_BOUND;
+    const_iterator find(const String& name) const LIFETIME_BOUND;
 
     WTF_EXPORT_PRIVATE std::optional<bool> getBoolean(const String& name) const;
     WTF_EXPORT_PRIVATE std::optional<double> getDouble(const String& name) const;
@@ -281,10 +281,10 @@ protected:
     void pushObject(Ref<ObjectBase>&&);
     void pushArray(Ref<ArrayBase>&&);
 
-    iterator begin() { return m_map.begin(); }
-    iterator end() { return m_map.end(); }
-    const_iterator begin() const { return m_map.begin(); }
-    const_iterator end() const { return m_map.end(); }
+    iterator begin() LIFETIME_BOUND { return m_map.begin(); }
+    iterator end() LIFETIME_BOUND { return m_map.end(); }
+    const_iterator begin() const LIFETIME_BOUND { return m_map.begin(); }
+    const_iterator end() const LIFETIME_BOUND { return m_map.end(); }
 
 protected:
     ArrayBase();

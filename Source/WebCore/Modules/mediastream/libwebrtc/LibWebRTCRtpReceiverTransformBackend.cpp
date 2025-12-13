@@ -53,7 +53,7 @@ void LibWebRTCRtpReceiverTransformBackend::setTransformableFrameCallback(Callbac
         return;
 
     m_isRegistered = true;
-    m_rtcReceiver->SetDepacketizerToDecoderFrameTransformer(webrtc::scoped_refptr<webrtc::FrameTransformerInterface>(this));
+    m_rtcReceiver->SetFrameTransformer(webrtc::scoped_refptr<webrtc::FrameTransformerInterface>(this));
 }
 
 bool LibWebRTCRtpReceiverTransformBackend::requestKeyFrame(const String& rid)

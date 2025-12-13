@@ -561,8 +561,8 @@ private:
 
     std::optional<String> textContent() const final;
     bool isBlockFlow() const final { return boolAttributeValue(AXProperty::IsBlockFlow); }
-    StitchState stitchState(IncludeStitchGroup = IncludeStitchGroup::Yes) const final;
-    const Vector<Vector<AXID>>* stitchGroupsView() const;
+    std::optional<AXStitchGroup> stitchGroup(IncludeGroupMembers = IncludeGroupMembers::Yes) const final;
+    const Vector<AXStitchGroup>* stitchGroupsView() const;
 
     String text() const final;
     unsigned textLength() const final;

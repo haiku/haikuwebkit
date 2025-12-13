@@ -419,8 +419,10 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuAction action, co
     case ContextMenuItemTagCopyLinkWithHighlight:
         if (RefPtr page = frame->page()) {
             auto url = page->fragmentDirectiveURLForSelectedText();
-            if (url.isValid())
-                frame->editor().copyURL(url, { });
+            if (url.isValid()) {
+                auto selectedRange = frame->selection().selection().toNormalizedRange();
+                frame->editor().copyURL(url, selectedRange ? plainText(*selectedRange) : nullString());
+            }
         }
         break;
     case ContextMenuItemTagGoBack:

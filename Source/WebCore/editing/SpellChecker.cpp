@@ -41,6 +41,7 @@
 #include "TextCheckerClient.h"
 #include "TextIterator.h"
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/SetForScope.h>
 
 namespace WebCore {
 
@@ -76,7 +77,7 @@ void SpellCheckRequest::didSucceed(const Vector<TextCheckingResult>& results)
         return;
 
     Ref<SpellCheckRequest> protectedThis(*this);
-    m_checker->didCheckSucceed(m_requestData.identifier().value(), results);
+    m_checker->didCheckSucceed(m_requestData.identifier().value(), results, m_existingResults, m_checkingRange);
     m_checker = nullptr;
 }
 
@@ -96,6 +97,11 @@ void SpellCheckRequest::setCheckerAndIdentifier(SpellChecker* requester, TextChe
     ASSERT(!m_requestData.identifier());
     m_checker = requester;
     m_requestData.m_identifier = identifier;
+}
+
+void SpellCheckRequest::setExistingResults(const Vector<TextCheckingResult>& existingResults)
+{
+    m_existingResults = existingResults;
 }
 
 void SpellCheckRequest::requesterDestroyed()
@@ -188,6 +194,18 @@ void SpellChecker::requestCheckingFor(Ref<SpellCheckRequest>&& request)
     invokeRequest(WTFMove(request));
 }
 
+void SpellChecker::requestExtendedCheckingFor(Ref<SpellCheckRequest>&& request, const Vector<TextCheckingResult>& results)
+{
+    if (m_inRecheck)
+        return;
+
+    auto identifier = TextCheckingRequestIdentifier::generate();
+    request->setCheckerAndIdentifier(this, identifier);
+    request->setExistingResults(results);
+
+    client()->requestExtendedCheckingOfString(WTFMove(request), protectedDocument()->selection().selection());
+}
+
 void SpellChecker::invokeRequest(Ref<SpellCheckRequest>&& request)
 {
     ASSERT(!m_processingRequest);
@@ -210,12 +228,42 @@ void SpellChecker::enqueueRequest(Ref<SpellCheckRequest>&& request)
     m_requestQueue.append(WTFMove(request));
 }
 
-void SpellChecker::didCheck(TextCheckingRequestIdentifier identifier, const Vector<TextCheckingResult>& results)
+static bool containsGrammarResult(TextCheckingResult result, const Vector<TextCheckingResult>& existingResults)
 {
-    ASSERT(m_processingRequest);
-    ASSERT(m_processingRequest->data().identifier() == identifier);
-    if (m_processingRequest->data().identifier() != identifier) {
-        m_requestQueue.clear();
+    bool foundIt = false;
+    for (TextCheckingResult existingResult : existingResults) {
+        if (!existingResult.type.containsOnly({ TextCheckingType::Grammar }) || result.range.location != existingResult.range.location || result.range.length != existingResult.range.length || result.details.size() != existingResult.details.size())
+            continue;
+        bool detailsMatch = true;
+        for (auto [detail, existingResultDetail] : zippedRange(result.details, existingResult.details)) {
+            if (!detailsMatch)
+                break;
+            detailsMatch = std::tie(detail.range.location, detail.range.length, detail.guesses) == std::tie(existingResultDetail.range.location, existingResultDetail.range.length, existingResultDetail.guesses);
+        }
+        if (detailsMatch)
+            foundIt = true;
+    }
+    return foundIt;
+}
+
+static bool containsAdditionalGrammarResults(const Vector<TextCheckingResult>& results, const Vector<TextCheckingResult>& existingResults)
+{
+    for (const auto& result : results) {
+        if (result.type.containsOnly({ TextCheckingType::Grammar }) && !containsGrammarResult(result, existingResults))
+            return true;
+    }
+    return false;
+}
+
+void SpellChecker::didCheck(TextCheckingRequestIdentifier identifier, const Vector<TextCheckingResult>& results, const Vector<TextCheckingResult>& existingResults, const std::optional<SimpleRange>& range)
+{
+    if (!m_processingRequest || m_processingRequest->data().identifier() != identifier) {
+        // This is the extended checking case
+        if (!range || !containsAdditionalGrammarResults(results, existingResults))
+            return;
+        VisibleSelection selection = VisibleSelection(*range);
+        SetForScope isRecheckingForScope(m_inRecheck, true);
+        protectedDocument()->editor().markMisspellingsAndBadGrammar(selection);
         return;
     }
 
@@ -239,24 +287,26 @@ Ref<Document> SpellChecker::protectedDocument() const
     return m_editor->document();
 }
 
-void SpellChecker::didCheckSucceed(TextCheckingRequestIdentifier identifier, const Vector<TextCheckingResult>& results)
+void SpellChecker::didCheckSucceed(TextCheckingRequestIdentifier identifier, const Vector<TextCheckingResult>& results, const Vector<TextCheckingResult>& existingResults, const std::optional<SimpleRange>& range)
 {
-    TextCheckingRequestData requestData = m_processingRequest->data();
-    if (requestData.identifier() == identifier) {
-        OptionSet<DocumentMarkerType> markerTypes;
-        if (requestData.checkingTypes().contains(TextCheckingType::Spelling))
-            markerTypes.add(DocumentMarkerType::Spelling);
-        if (requestData.checkingTypes().contains(TextCheckingType::Grammar))
-            markerTypes.add(DocumentMarkerType::Grammar);
-        if (!markerTypes.isEmpty())
-            removeMarkers(m_processingRequest->checkingRange(), markerTypes);
+    if (m_processingRequest) {
+        TextCheckingRequestData requestData = m_processingRequest->data();
+        if (requestData.identifier() == identifier) {
+            OptionSet<DocumentMarkerType> markerTypes;
+            if (requestData.checkingTypes().contains(TextCheckingType::Spelling))
+                markerTypes.add(DocumentMarkerType::Spelling);
+            if (requestData.checkingTypes().contains(TextCheckingType::Grammar))
+                markerTypes.add(DocumentMarkerType::Grammar);
+            if (!markerTypes.isEmpty())
+                removeMarkers(m_processingRequest->checkingRange(), markerTypes);
+        }
     }
-    didCheck(identifier, results);
+    didCheck(identifier, results, existingResults, range);
 }
 
 void SpellChecker::didCheckCancel(TextCheckingRequestIdentifier identifier)
 {
-    didCheck(identifier, Vector<TextCheckingResult>());
+    didCheck(identifier, Vector<TextCheckingResult>(), Vector<TextCheckingResult>(), std::nullopt);
 }
 
 } // namespace WebCore

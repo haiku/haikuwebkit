@@ -65,7 +65,11 @@ struct CryptoOperationReturnValue {
 #ifndef __swift__
 // FIXME: This is incorrect, but the rest of this file is also incorrect for the time being, so alas.
 #include <pal/crypto/CryptoDigestHashFunction.h>
+
+#if !defined(CLANG_WEBKIT_BRANCH)
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include "PALSwift-Generated.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
+
+#endif // !__swift__

@@ -816,13 +816,11 @@ FastMallocStatistics fastMallocStatistics()
     GetProcessMemoryInfo(GetCurrentProcess(), &resourceUsage, sizeof(resourceUsage));
     statistics.committedVMBytes = resourceUsage.PeakWorkingSetSize;
 #elif OS(HAIKU)
-	ssize_t cookie = NULL;
-	statistics.committedVMBytes = 0;
-	area_info info;
-	while(get_next_area_info(B_CURRENT_TEAM, &cookie, &info) == B_OK)
-	{
-		statistics.committedVMBytes += info.ram_size;
-	}
+    ssize_t cookie = nullptr;
+    statistics.committedVMBytes = 0;
+    area_info info;
+    while (get_next_area_info(B_CURRENT_TEAM, &cookie, &info) == B_OK)
+        statistics.committedVMBytes += info.ram_size;
 #elif HAVE(RESOURCE_H)
     struct rusage resourceUsage;
     getrusage(RUSAGE_SELF, &resourceUsage);

@@ -842,7 +842,7 @@ ControlStyle RenderTheme::extractControlStyleForRenderer(const RenderElement& re
         style->usedZoom(),
         style->usedAccentColor(renderObject.styleColorOptions()),
         style->visitedDependentColorWithColorFilter(CSSPropertyColor),
-        Style::evaluate<FloatBoxExtent>(style->borderWidth(), style->usedZoomForLength())
+        Style::evaluate<FloatBoxExtent>(style->borderWidth(), Style::ZoomNeeded { })
     };
 }
 
@@ -1399,26 +1399,26 @@ void RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle
     if (!style.writingMode().isHorizontal() && supportsVerticalWritingMode(appearance))
         borderBox = Style::LineWidthBox { borderBox.left(), borderBox.top(), borderBox.right(), borderBox.bottom() };
 
-    if (Style::evaluate<float>(borderBox.top(), style.usedZoomForLength()) != Style::evaluate<int>(style.borderTopWidth(), style.usedZoomForLength())) {
+    if (Style::evaluate<float>(borderBox.top(), Style::ZoomNeeded { }) != Style::evaluate<int>(style.borderTopWidth(), Style::ZoomNeeded { })) {
         if (!borderBox.top().isZero())
             style.setBorderTopWidth(borderBox.top());
         else
             style.resetBorderTop();
     }
-    if (Style::evaluate<float>(borderBox.right(), style.usedZoomForLength()) != Style::evaluate<int>(style.borderRightWidth(), style.usedZoomForLength())) {
+    if (Style::evaluate<float>(borderBox.right(), Style::ZoomNeeded { }) != Style::evaluate<int>(style.borderRightWidth(), Style::ZoomNeeded { })) {
         if (!borderBox.right().isZero())
             style.setBorderRightWidth(borderBox.right());
         else
             style.resetBorderRight();
     }
-    if (Style::evaluate<float>(borderBox.bottom(), style.usedZoomForLength()) != Style::evaluate<int>(style.borderBottomWidth(), style.usedZoomForLength())) {
+    if (Style::evaluate<float>(borderBox.bottom(), Style::ZoomNeeded { }) != Style::evaluate<int>(style.borderBottomWidth(), Style::ZoomNeeded { })) {
         style.setBorderBottomWidth(borderBox.bottom());
         if (!borderBox.bottom().isZero())
             style.setBorderBottomWidth(borderBox.bottom());
         else
             style.resetBorderBottom();
     }
-    if (Style::evaluate<float>(borderBox.left(), style.usedZoomForLength()) != Style::evaluate<int>(style.borderLeftWidth(), style.usedZoomForLength())) {
+    if (Style::evaluate<float>(borderBox.left(), Style::ZoomNeeded { }) != Style::evaluate<int>(style.borderLeftWidth(), Style::ZoomNeeded { })) {
         style.setBorderLeftWidth(borderBox.left());
         if (!borderBox.left().isZero())
             style.setBorderLeftWidth(borderBox.left());

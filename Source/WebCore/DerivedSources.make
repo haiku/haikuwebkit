@@ -1801,6 +1801,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/testing/FakeXRJointStateInit.idl \
     $(WebCore)/testing/FakeXRRigidTransformInit.idl \
     $(WebCore)/testing/FakeXRViewInit.idl \
+    $(WebCore)/testing/FakeXRWorldInit.idl \
     $(WebCore)/testing/WebFakeXRDevice.idl \
     $(WebCore)/testing/WebFakeXRInputController.idl \
     $(WebCore)/testing/WebXRTest.idl \
@@ -1967,8 +1968,9 @@ all : \
     Namespace.h \
     NodeName.cpp \
     NodeName.h \
-    RenderStyleInlinesGenerated.h \
-    RenderStyleSettersGenerated.h \
+    RenderStyleProperties.h \
+    RenderStylePropertiesGettersInlines.h \
+    RenderStylePropertiesSettersInlines.h \
     SVGElementFactory.cpp \
     SVGElementFactory.h \
     SVGElementTypeHelpers.h \
@@ -2019,8 +2021,9 @@ CSS_PROPERTY_NAME_FILES = \
     CSSPropertyParsing.cpp \
     CSSPropertyParsing.h \
     CSSStyleProperties+PropertyNames.idl \
-    RenderStyleInlinesGenerated.h \
-    RenderStyleSettersGenerated.h \
+    RenderStyleProperties.h \
+    RenderStylePropertiesGettersInlines.h \
+    RenderStylePropertiesSettersInlines.h \
     StyleBuilderGenerated.cpp \
     StyleExtractorGenerated.cpp \
     StyleInterpolationWrapperMap.cpp \

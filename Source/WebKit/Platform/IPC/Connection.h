@@ -649,7 +649,7 @@ private:
     bool isThrottlingIncomingMessages() const { return *m_incomingMessagesThrottlingLevel > 0; }
 
     // Only valid between open() and invalidate().
-    SerialFunctionDispatcher& dispatcher();
+    Ref<SerialFunctionDispatcher> dispatcher();
 
     class SyncMessageState;
     RefPtr<SyncMessageState> protectedSyncState() const;

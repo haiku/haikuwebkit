@@ -882,6 +882,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     accessibility/AXObjectCacheInlines.h
     accessibility/AXObjectRareData.h
     accessibility/AXSearchManager.h
+    accessibility/AXStitchGroup.h
     accessibility/AXStitchUtilities.h
     accessibility/AXTextMarker.h
     accessibility/AXTextRun.h
@@ -3185,8 +3186,11 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/OutlineValue.h
     rendering/style/PositionTryOrder.h
     rendering/style/RenderStyle.h
+    rendering/style/RenderStyleBase.h
+    rendering/style/RenderStyleBaseInlines.h
     rendering/style/RenderStyleConstants.h
     rendering/style/RenderStyleInlines.h
+    rendering/style/RenderStylePropertiesGettersCustom.h
     rendering/style/RenderStyleSetters.h
     rendering/style/SVGRenderStyle.h
     rendering/style/SVGRenderStyleDefs.h
@@ -3466,7 +3470,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/primitives/StyleRatio.h
     style/values/primitives/StyleURL.h
     style/values/primitives/StyleUnevaluatedCalculation.h
-    style/values/primitives/StyleZoomPrimitives.h
 
     style/values/rhythm/StyleBlockStepSize.h
 
@@ -3583,6 +3586,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/view-transitions/StyleViewTransitionClass.h
     style/values/view-transitions/StyleViewTransitionName.h
+
+    style/values/viewport/StyleZoom.h
+    style/values/viewport/StyleZoomPrimitives.h
 
     style/values/will-change/StyleWillChange.h
 
@@ -3792,7 +3798,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     ${WebCore_DERIVED_SOURCES_DIR}/Namespace.h
     ${WebCore_DERIVED_SOURCES_DIR}/NodeName.h
     ${WebCore_DERIVED_SOURCES_DIR}/ReadableStreamInternalsBuiltins.h
-    ${WebCore_DERIVED_SOURCES_DIR}/RenderStyleInlinesGenerated.h
+    ${WebCore_DERIVED_SOURCES_DIR}/RenderStyleProperties.h
+    ${WebCore_DERIVED_SOURCES_DIR}/RenderStylePropertiesGettersInlines.h
     ${WebCore_DERIVED_SOURCES_DIR}/SVGNames.h
     ${WebCore_DERIVED_SOURCES_DIR}/Settings.h
     ${WebCore_DERIVED_SOURCES_DIR}/StreamInternalsBuiltins.h

@@ -35,6 +35,7 @@
 #include "AuthenticatorSupportedOptions.h"
 #include "CBORReader.h"
 #include "CBORWriter.h"
+#include "Pin.h"
 #include "WebAuthenticationConstants.h"
 #include "WebAuthenticationUtils.h"
 #include <wtf/StdSet.h>
@@ -93,7 +94,7 @@ static Vector<uint8_t> getCredentialId(const Vector<uint8_t>& authenticatorData)
     return Vector<uint8_t>(authenticatorData.subspan(credentialIdLengthOffset + credentialIdLengthLength, credentialIdLength));
 }
 
-static std::optional<AuthenticationExtensionsClientOutputs> parseAuthenticatorDataExtensions(const Vector<uint8_t>& authData)
+static std::optional<AuthenticationExtensionsClientOutputs> parseAuthenticatorDataExtensions(const Vector<uint8_t>& authData, const std::optional<pin::HmacSecretRequest>& hmacSecretRequest = std::nullopt)
 {
     constexpr size_t minAuthDataLength = rpIdHashLength + flagsLength + signCounterLength;
     if (authData.size() < minAuthDataLength)
@@ -138,30 +139,48 @@ static std::optional<AuthenticationExtensionsClientOutputs> parseAuthenticatorDa
     auto& extensionsMap = extensionsCBOR->getMap();
 
     auto hmacIt = extensionsMap.find(CBOR(kExtensionHmacSecret));
-    if (hmacIt != extensionsMap.end()) {
+    bool searchedHmacSecretMc = false;
+    while (hmacIt != extensionsMap.end()) {
         if (hmacIt->second.isBool()) {
-            outputs.prf = AuthenticationExtensionsClientOutputs::PRFOutputs { };
-            outputs.prf->enabled = hmacIt->second.getBool();
-        } else if (hmacIt->second.isByteString()) {
-            auto& hmacOutput = hmacIt->second.getByteString();
-
-            RefPtr<ArrayBuffer> first = ArrayBuffer::tryCreate(hmacOutput.span().first(std::min<size_t>(32, hmacOutput.size())));
-            RefPtr<ArrayBuffer> second;
-
-            if (hmacOutput.size() == 64)
-                second = ArrayBuffer::tryCreate(hmacOutput.span().subspan(32, 32));
-
-            if (first) {
+            if (!outputs.prf)
                 outputs.prf = AuthenticationExtensionsClientOutputs::PRFOutputs { };
-                outputs.prf->results = AuthenticationExtensionsClientOutputs::PRFValues { first, second };
+            outputs.prf->enabled = hmacIt->second.getBool();
+        } else if (hmacIt->second.isByteString() && hmacSecretRequest) {
+            auto& encryptedOutput = hmacIt->second.getByteString();
+
+            auto decryptedResponse = pin::HmacSecretResponse::parse(
+                hmacSecretRequest->protocol(),
+                Ref { hmacSecretRequest->sharedKey() }.get(),
+                encryptedOutput
+            );
+
+            if (decryptedResponse) {
+                auto& decryptedOutput = decryptedResponse->output();
+                RefPtr<ArrayBuffer> first = ArrayBuffer::tryCreate(
+                    decryptedOutput.span().first(std::min<size_t>(hmacSecretOutputLength, decryptedOutput.size()))
+                );
+                RefPtr<ArrayBuffer> second;
+                if (decryptedOutput.size() == hmacSecretDualOutputLength)
+                    second = ArrayBuffer::tryCreate(decryptedOutput.span().subspan(hmacSecretOutputLength, hmacSecretOutputLength));
+
+                if (first) {
+                    if (!outputs.prf)
+                        outputs.prf = AuthenticationExtensionsClientOutputs::PRFOutputs { };
+                    outputs.prf->results = AuthenticationExtensionsClientOutputs::PRFValues { first, second };
+                }
             }
         }
+        if (!searchedHmacSecretMc) {
+            searchedHmacSecretMc = true;
+            hmacIt = extensionsMap.find(CBOR(kExtensionHmacSecretMc));
+        } else
+            break;
     }
 
     return outputs;
 }
 
-RefPtr<AuthenticatorAttestationResponse> readCTAPMakeCredentialResponse(const Vector<uint8_t>& inBuffer, WebCore::AuthenticatorAttachment attachment, Vector<AuthenticatorTransport>&& transports, const AttestationConveyancePreference& attestation)
+RefPtr<AuthenticatorAttestationResponse> readCTAPMakeCredentialResponse(const Vector<uint8_t>& inBuffer, WebCore::AuthenticatorAttachment attachment, Vector<AuthenticatorTransport>&& transports, const AttestationConveyancePreference& attestation, const std::optional<pin::HmacSecretRequest>& hmacSecretRequest)
 {
     auto decodedMap = decodeResponseMap(inBuffer);
     if (!decodedMap)
@@ -188,7 +207,7 @@ RefPtr<AuthenticatorAttestationResponse> readCTAPMakeCredentialResponse(const Ve
         return nullptr;
     auto attStmt = it->second.clone();
 
-    auto extensions = parseAuthenticatorDataExtensions(authDataBytes);
+    auto extensions = parseAuthenticatorDataExtensions(authDataBytes, hmacSecretRequest);
     if (!extensions)
         extensions = AuthenticationExtensionsClientOutputs { };
 
@@ -206,7 +225,7 @@ RefPtr<AuthenticatorAttestationResponse> readCTAPMakeCredentialResponse(const Ve
     return AuthenticatorAttestationResponse::create(credentialId, *attestationObject, WTFMove(extensions), attachment, WTFMove(transports));
 }
 
-RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector<uint8_t>& inBuffer, WebCore::AuthenticatorAttachment attachment)
+RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector<uint8_t>& inBuffer, WebCore::AuthenticatorAttachment attachment, const std::optional<pin::HmacSecretRequest>& hmacSecretRequest)
 {
     auto decodedMap = decodeResponseMap(inBuffer);
     if (!decodedMap)
@@ -233,7 +252,7 @@ RefPtr<AuthenticatorAssertionResponse> readCTAPGetAssertionResponse(const Vector
     auto& signature = it->second.getByteString();
 
     // Parse extensions from authenticatorData
-    auto extensions = parseAuthenticatorDataExtensions(authData);
+    auto extensions = parseAuthenticatorDataExtensions(authData, hmacSecretRequest);
     if (!extensions)
         extensions = AuthenticationExtensionsClientOutputs { };
 

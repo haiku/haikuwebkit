@@ -197,7 +197,7 @@ void PageInspectorController::createLazyAgents()
     m_agents.append(makeUniqueRef<InspectorAnimationAgent>(pageContext));
 
     if (auto& commandLineAPIHost = m_injectedScriptManager->commandLineAPIHost())
-        commandLineAPIHost->init(m_instrumentingAgents.copyRef());
+        commandLineAPIHost->init(m_instrumentingAgents.get());
 }
 
 void PageInspectorController::inspectedPageDestroyed()

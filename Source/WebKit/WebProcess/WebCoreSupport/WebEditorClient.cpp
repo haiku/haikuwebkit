@@ -681,6 +681,17 @@ void WebEditorClient::requestCheckingOfString(TextCheckingRequest& request, cons
     page->send(Messages::WebPageProxy::RequestCheckingOfString(requestID, request.data(), insertionPointFromCurrentSelection(currentSelection)));
 }
 
+void WebEditorClient::requestExtendedCheckingOfString(TextCheckingRequest& request, const WebCore::VisibleSelection& currentSelection)
+{
+    auto requestID = TextCheckerRequestID::generate();
+    RefPtr page = m_page.get();
+    if (!page)
+        return;
+    page->addTextCheckingRequest(requestID, request);
+
+    page->send(Messages::WebPageProxy::RequestExtendedCheckingOfString(requestID, request.data(), insertionPointFromCurrentSelection(currentSelection)));
+}
+
 void WebEditorClient::willChangeSelectionForAccessibility()
 {
     if (RefPtr page = m_page.get())

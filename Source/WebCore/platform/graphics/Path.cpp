@@ -110,8 +110,10 @@ PathImpl& Path::ensureImpl()
     if (auto segment = asSingle())
         return setImpl(PathStream::create(WTFMove(*segment)));
 
-    if (auto impl = asImpl())
-        return *impl.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* impl = asImpl())
+        return *impl;
     ASSERT_NOT_REACHED(); // Impl is never empty.
     return setImpl(PathStream::create());
 }
@@ -128,18 +130,28 @@ void Path::ensureImplForTesting()
     ensureImpl();
 }
 
-RefPtr<PathImpl> Path::asImpl()
+PathImpl* Path::asImpl()
 {
     if (auto ref = std::get_if<DataRef<PathImpl>>(&m_data))
         return &ref->access();
     return nullptr;
 }
 
-RefPtr<const PathImpl> Path::asImpl() const
+const PathImpl* Path::asImpl() const
 {
     if (auto ref = std::get_if<DataRef<PathImpl>>(&m_data))
         return ref->ptr();
     return nullptr;
+}
+
+RefPtr<PathImpl> Path::asProtectedImpl()
+{
+    return asImpl();
+}
+
+RefPtr<const PathImpl> Path::asProtectedImpl() const
+{
+    return asImpl();
 }
 
 static FloatRoundedRect calculateEvenRoundedRect(const FloatRect& rect, const FloatSize& roundingRadii)
@@ -237,7 +249,7 @@ void Path::applySegments(const PathSegmentApplier& applier) const
 {
     if (auto segment = asSingle())
         applier(*segment);
-    else if (auto impl = asImpl())
+    else if (RefPtr impl = asImpl())
         impl->applySegments(applier);
 }
 
@@ -250,7 +262,7 @@ void Path::applyElements(const PathElementApplier& applier) const
     if (segment && segment->applyElements(applier))
         return;
 
-    auto impl = asImpl();
+    RefPtr impl = asImpl();
     if (impl && impl->applyElements(applier))
         return;
 
@@ -276,7 +288,7 @@ void Path::transform(const AffineTransform& transform)
     if (segment && segment->transform(transform))
         return;
 
-    auto impl = asImpl();
+    RefPtr impl = asImpl();
     if (impl && impl->transform(transform))
         return;
 
@@ -288,7 +300,7 @@ std::optional<PathSegment> Path::singleSegment() const
     if (auto segment = asSingle())
         return *segment;
 
-    if (auto impl = asImpl())
+    if (RefPtr impl = asImpl())
         return impl->singleSegment();
 
     return std::nullopt;
@@ -325,7 +337,7 @@ RetainPtr<CGPathRef> Path::protectedPlatformPath() const
 
 const Vector<PathSegment>* Path::segmentsIfExists() const
 {
-    if (auto impl = asImpl()) {
+    if (RefPtr impl = asImpl()) {
         if (auto* stream = dynamicDowncast<PathStream>((*impl)))
             return &stream->segments();
     }
@@ -362,7 +374,7 @@ bool Path::isClosed() const
     if (auto segment = asSingle())
         return segment->closesSubpath();
 
-    if (auto impl = asImpl())
+    if (RefPtr impl = asImpl())
         return impl->isClosed();
 
     return false;
@@ -407,7 +419,7 @@ bool Path::hasSubpaths() const
     if (auto* segment = asSingle())
         return PathStream::computeHasSubpaths(singleElementSpan(*segment));
 
-    if (auto impl = asImpl())
+    if (RefPtr impl = asImpl())
         return impl->hasSubpaths();
 
     return false;
@@ -418,7 +430,7 @@ FloatRect Path::fastBoundingRect() const
     if (auto* segment = asSingle())
         return segment->fastBoundingRect();
 
-    if (auto impl = asImpl())
+    if (RefPtr impl = asImpl())
         return impl->fastBoundingRect();
 
     return { };
@@ -429,7 +441,7 @@ FloatRect Path::boundingRect() const
     if (auto* segment = asSingle())
         return PathStream::computeBoundingRect(singleElementSpan(*segment));
 
-    if (auto impl = asImpl())
+    if (RefPtr impl = asImpl())
         return impl->boundingRect();
 
     return { };

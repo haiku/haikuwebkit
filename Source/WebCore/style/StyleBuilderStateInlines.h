@@ -26,22 +26,23 @@
 
 #pragma once
 
-#include "RenderStyle.h"
 #include "RenderStyleSetters.h"
 #include "StyleBuilderState.h"
 #include "StyleFontSizeFunctions.h"
+#include "StyleZoom.h"
 
 namespace WebCore {
 namespace Style {
 
-inline const FontCascadeDescription& BuilderState::fontDescription() { return m_style.fontDescription(); }
-inline void BuilderState::setFontDescription(FontCascadeDescription&& description) { m_fontDirty |= m_style.setFontDescriptionWithoutUpdate(WTFMove(description)); }
-
-inline const FontCascadeDescription& BuilderState::parentFontDescription() { return parentStyle().fontDescription(); }
-inline void BuilderState::setUsedZoom(float zoom) { m_fontDirty |= m_style.setUsedZoom(zoom); }
 inline void BuilderState::setTextOrientation(TextOrientation orientation) { m_fontDirty |= m_style.setTextOrientation(orientation); }
 inline void BuilderState::setWritingMode(StyleWritingMode mode) { m_fontDirty |= m_style.setWritingMode(mode); }
-inline void BuilderState::setZoom(float zoom) { m_fontDirty |= m_style.setZoom(zoom); }
+
+inline void BuilderState::setZoom(Zoom zoom) { m_fontDirty |= m_style.setZoom(zoom); }
+inline void BuilderState::setUsedZoom(float zoom) { m_fontDirty |= m_style.setUsedZoom(zoom); }
+
+inline const FontCascadeDescription& BuilderState::parentFontDescription() { return parentStyle().fontDescription(); }
+inline const FontCascadeDescription& BuilderState::fontDescription() { return m_style.fontDescription(); }
+inline void BuilderState::setFontDescription(FontCascadeDescription&& description) { m_fontDirty |= m_style.setFontDescriptionWithoutUpdate(WTFMove(description)); }
 
 inline void BuilderState::setFontDescriptionKeywordSizeFromIdentifier(CSSValueID identifier)
 {

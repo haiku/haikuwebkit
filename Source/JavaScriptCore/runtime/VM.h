@@ -520,6 +520,8 @@ public:
 #endif
     WriteBarrier<Structure> moduleProgramExecutableStructure;
     WriteBarrier<Structure> promiseReactionStructure;
+    WriteBarrier<Structure> promiseCombinatorsContextStructure;
+    WriteBarrier<Structure> promiseCombinatorsGlobalContextStructure;
     WriteBarrier<Structure> regExpStructure;
     WriteBarrier<Structure> symbolStructure;
     WriteBarrier<Structure> symbolTableStructure;
@@ -555,6 +557,14 @@ public:
     WriteBarrier<NativeExecutable> m_promiseResolvingFunctionResolveWithoutPromiseExecutable;
     WriteBarrier<NativeExecutable> m_promiseResolvingFunctionRejectWithoutPromiseExecutable;
     WriteBarrier<NativeExecutable> m_promiseCapabilityExecutorExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllFulfillFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllSlowFulfillFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllSettledFulfillFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllSettledRejectFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllSettledSlowFulfillFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAllSettledSlowRejectFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAnyRejectFunctionExecutable;
+    WriteBarrier<NativeExecutable> m_promiseAnySlowRejectFunctionExecutable;
 
     WriteBarrier<JSCell> m_orderedHashTableDeletedValue;
     WriteBarrier<JSCell> m_orderedHashTableSentinel;
@@ -663,6 +673,62 @@ public:
         if (m_promiseCapabilityExecutorExecutable) [[likely]]
             return m_promiseCapabilityExecutorExecutable.get();
         return promiseCapabilityExecutorExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllFulfillFunctionExecutable()
+    {
+        if (m_promiseAllFulfillFunctionExecutable) [[likely]]
+            return m_promiseAllFulfillFunctionExecutable.get();
+        return promiseAllFulfillFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllSlowFulfillFunctionExecutable()
+    {
+        if (m_promiseAllSlowFulfillFunctionExecutable) [[likely]]
+            return m_promiseAllSlowFulfillFunctionExecutable.get();
+        return promiseAllSlowFulfillFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllSettledFulfillFunctionExecutable()
+    {
+        if (m_promiseAllSettledFulfillFunctionExecutable) [[likely]]
+            return m_promiseAllSettledFulfillFunctionExecutable.get();
+        return promiseAllSettledFulfillFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllSettledRejectFunctionExecutable()
+    {
+        if (m_promiseAllSettledRejectFunctionExecutable) [[likely]]
+            return m_promiseAllSettledRejectFunctionExecutable.get();
+        return promiseAllSettledRejectFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllSettledSlowFulfillFunctionExecutable()
+    {
+        if (m_promiseAllSettledSlowFulfillFunctionExecutable) [[likely]]
+            return m_promiseAllSettledSlowFulfillFunctionExecutable.get();
+        return promiseAllSettledSlowFulfillFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAllSettledSlowRejectFunctionExecutable()
+    {
+        if (m_promiseAllSettledSlowRejectFunctionExecutable) [[likely]]
+            return m_promiseAllSettledSlowRejectFunctionExecutable.get();
+        return promiseAllSettledSlowRejectFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAnyRejectFunctionExecutable()
+    {
+        if (m_promiseAnyRejectFunctionExecutable) [[likely]]
+            return m_promiseAnyRejectFunctionExecutable.get();
+        return promiseAnyRejectFunctionExecutableSlow();
+    }
+
+    NativeExecutable* promiseAnySlowRejectFunctionExecutable()
+    {
+        if (m_promiseAnySlowRejectFunctionExecutable) [[likely]]
+            return m_promiseAnySlowRejectFunctionExecutable.get();
+        return promiseAnySlowRejectFunctionExecutableSlow();
     }
 
     WeakGCMap<SymbolImpl*, Symbol, PtrHash<SymbolImpl*>> symbolImplToSymbolMap;
@@ -898,16 +964,6 @@ public:
     BumpPointerAllocator m_regExpAllocator;
     ConcurrentJSLock m_regExpAllocatorLock;
 
-#if ENABLE(YARR_JIT_ALL_PARENS_EXPRESSIONS)
-    static constexpr size_t patternContextBufferSize = 8192; // Space allocated to save nested parenthesis context
-    Lock m_regExpPatternContextLock;
-    UniqueArray<char> m_regExpPatternContexBuffer;
-    char* acquireRegExpPatternContexBuffer() WTF_ACQUIRES_LOCK(m_regExpPatternContextLock);
-    void releaseRegExpPatternContexBuffer() WTF_RELEASES_LOCK(m_regExpPatternContextLock);
-#else
-    static constexpr size_t patternContextBufferSize = 0; // Space allocated to save nested parenthesis context
-#endif
-
     const Ref<CompactTDZEnvironmentMap> m_compactVariableMap;
 
     LazyUniqueRef<VM, HasOwnPropertyCache> m_hasOwnPropertyCache;
@@ -1131,6 +1187,14 @@ private:
     NativeExecutable* promiseResolvingFunctionResolveWithoutPromiseExecutableSlow();
     NativeExecutable* promiseResolvingFunctionRejectWithoutPromiseExecutableSlow();
     NativeExecutable* promiseCapabilityExecutorExecutableSlow();
+    NativeExecutable* promiseAllFulfillFunctionExecutableSlow();
+    NativeExecutable* promiseAllSlowFulfillFunctionExecutableSlow();
+    NativeExecutable* promiseAllSettledFulfillFunctionExecutableSlow();
+    NativeExecutable* promiseAllSettledRejectFunctionExecutableSlow();
+    NativeExecutable* promiseAllSettledSlowFulfillFunctionExecutableSlow();
+    NativeExecutable* promiseAllSettledSlowRejectFunctionExecutableSlow();
+    NativeExecutable* promiseAnyRejectFunctionExecutableSlow();
+    NativeExecutable* promiseAnySlowRejectFunctionExecutableSlow();
 
     void updateStackLimits();
 

@@ -224,12 +224,12 @@ LocalFrame* HitTestResult::frame() const
     return nullptr;
 }
 
-Frame* HitTestResult::targetFrame() const
+RefPtr<Frame> HitTestResult::targetFrame() const
 {
     if (!m_innerURLElement)
         return nullptr;
 
-    auto* frame = m_innerURLElement->document().frame();
+    RefPtr frame = m_innerURLElement->document().frame();
     if (!frame)
         return nullptr;
 

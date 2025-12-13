@@ -2325,6 +2325,7 @@ fast/dom/linkify-phone-numbers.html [ Pass ]
 accessibility/table-exposure-updates-dynamically.html [ Pass ]
 accessibility/accessibility-node-reparent.html [ Pass ]
 accessibility/area-element-bounding-box.html [ Pass ]
+accessibility/aria-owns-text-stitching.html [ Pass ]
 accessibility/aria-braillelabel.html [ Pass ]
 accessibility/aria-brailleroledescription.html [ Pass ]
 accessibility/aria-checked-mixed-value.html [ Pass ]
@@ -2386,6 +2387,7 @@ accessibility/invalid-inputs.html [ Pass ]
 accessibility/insert-text-into-password-field.html [ Pass ]
 accessibility/language-attribute-change.html [ Pass ]
 accessibility/link-becomes-visited.html [ Pass ]
+accessibility/list-marker-text-stitching.html [ Pass ]
 accessibility/list-with-dynamically-changing-content.html [ Pass ]
 accessibility/live-region-attributes-update-after-dynamic-change.html [ Pass ]
 accessibility/menu-list-crash2.html [ Pass ]
@@ -3523,6 +3525,7 @@ imported/w3c/web-platform-tests/html/rendering/widgets/input-date-baseline-min-h
 imported/w3c/web-platform-tests/html/rendering/widgets/button-layout/propagate-text-decoration.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/rendering/widgets/input-date-whitespace-pre-1.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/rendering/widgets/input-date-whitespace-pre-2.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-element/select-display-inline.html [ ImageOnlyFailure ]
 
 #rdar://82146367 ([Mac, iOS Release] imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html is a flaky failure) imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html [ Pass Failure ]
 
@@ -3760,8 +3763,6 @@ imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visib
 imported/w3c/web-platform-tests/html/user-activation/no-activation-thru-escape-key.html
 
 webkit.org/b/240670 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-move-into-script-disabled-iframe.html [ Pass Crash ]
-
-webkit.org/b/227845 [ Debug ] webaudio/audioworket-out-of-memory.html [ Pass Timeout DumpJSConsoleLogInStdErr ]
 
 webkit.org/b/240918 [ Debug ] fast/loader/create-frame-in-DOMContentLoaded.html [ Pass Failure ]
 webkit.org/b/240918 [ Debug ] fast/loader/user-style-sheet-resource-load-callbacks.html [ Pass Failure ]
@@ -7403,7 +7404,7 @@ webkit.org/b/226600 imported/w3c/web-platform-tests/navigation-timing/test_navig
 # These failures are happening only in iOS simulator on an arm64 host
 webkit.org/b/236928 imported/w3c/web-platform-tests/xhr/event-timeout-order.any.worker.html [ Failure Pass ]
 webkit.org/b/236926 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-biquadfilternode-interface/no-dezippering.html [ Failure Pass ]
-
+webkit.org/b/236926 webrtc/vp9-profile2.html [ Timeout Pass ]
 # This passes only on the arm64 host
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/adopt-from-image-document.html [ Pass ImageOnlyFailure ]
 
@@ -7640,6 +7641,9 @@ media/remove-video-best-media-element-in-main-frame-crash.html [ Pass Timeout ]
 
 # webkit.org/b/278349 [ iOS ] imported/w3c/web-platform-tests/css/css-inline/text-box-trim/text-box-trim-block-in-inline-start-001.html is a flaky image failure
 imported/w3c/web-platform-tests/css/css-inline/text-box-trim/text-box-trim-block-in-inline-start-001.html [ Pass ImageOnlyFailure ]
+
+# Bug does not show with Ahem while Monospace has different metrics on iOS.
+fast/inline/text-box-trim-with-underline3.html [ ImageOnlyFailure ]
 
 # webkit.org/b/278352 [ iOS MacOS ] imported/w3c/web-platform-tests/css/css-view-transitions/capture-with-opacity-zero-child.html is a flaky image failure
 imported/w3c/web-platform-tests/css/css-view-transitions/capture-with-opacity-zero-child.html [ Pass ImageOnlyFailure ]
@@ -8376,8 +8380,6 @@ imported/w3c/web-platform-tests/css/CSS2/box-display/display-009.xht [ ImageOnly
 imported/w3c/web-platform-tests/css/CSS2/box-display/display-012.xht [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/CSS2/box-display/display-013.xht [ ImageOnlyFailure ]
 
-webkit.org/b/302741 imported/w3c/web-platform-tests/html/semantics/popovers/popover-attribute-basic.html [ Failure ]
-
 # webkit.org/b/301655 Internals animation toggle causes the Image global preference to change, unpausing animations in tests
 fast/images/page-wide-animation-toggle.html [ Pass Timeout ]
 fast/images/individual-animation-toggle.html [ Pass Timeout ]
@@ -8385,8 +8387,6 @@ fast/images/individual-animation-toggle.html [ Pass Timeout ]
 webkit.org/b/301175 editing/selection/ios/become-first-responder-after-relinquishing-focus.html [ Pass Timeout ]
 
 webkit.org/b/302893 imported/w3c/web-platform-tests/html/interaction/focus/focus-input-type-switch.html [ Failure ]
-
-webkit.org/b/302898 imported/w3c/web-platform-tests/html/rendering/widgets/input-date-no-resize-on-hover.html [ Failure ]
 
 webkit.org/b/302899 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-details-element/details-toggle-source.html [ Failure ]
 
@@ -8397,6 +8397,55 @@ imported/w3c/web-platform-tests/css/CSS2/normal-flow/max-width-014.xht [ ImageOn
 imported/w3c/web-platform-tests/css/CSS2/normal-flow/min-width-014.xht [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/CSS2/normal-flow/width-014.xht [ ImageOnlyFailure ]
 
-# webkit.org/b/303325 REGRESSION(303533@main): Caused webrtc/vp9-profile2.html to time out
-webrtc/vp9-profile2.html [ Pass Timeout ]
-fast/mediastream/captureStream/canvas3d.html [ Pass Crash ]
+# scroll-animations WPT tests after enabling ThreadedScrollDrivenAnimationsEnabled, only happens with CSSScrollAnchoringEnabled
+webkit.org/b/303401 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/animation-with-root-scroller.html [ ImageOnlyFailure ]
+webkit.org/b/303464 imported/w3c/web-platform-tests/scroll-animations/css/scroll-timeline-default-quirks-mode.html [ ImageOnlyFailure Pass ]
+webkit.org/b/303464 imported/w3c/web-platform-tests/scroll-animations/css/scroll-timeline-default-writing-mode-rl.html [ ImageOnlyFailure Pass ]
+webkit.org/b/303464 imported/w3c/web-platform-tests/scroll-animations/css/scroll-timeline-default.html [ ImageOnlyFailure Pass ]
+webkit.org/b/303464 imported/w3c/web-platform-tests/scroll-animations/css/scroll-timeline-frame-size-changed.html [ ImageOnlyFailure Pass ]
+webkit.org/b/303464 imported/w3c/web-platform-tests/scroll-animations/css/scroll-timeline-inline-orientation.html [ ImageOnlyFailure Pass ]
+
+webkit.org/b/263872 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/layout-changes-on-percentage-based-timeline.html [ Pass ]
+
+webkit.org/b/303341 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-intrinsic-size-001.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/303507 http/tests/xmlhttprequest/origin-exact-matching.html [ Timeout ]
+webkit.org/b/303507 inspector/animation/nameChanged.html [ Timeout ]
+webkit.org/b/303507 inspector/audit/basic-error.html [ Timeout ]
+webkit.org/b/303507 inspector/canvas/console-record-offscreen-webgl.html [ Timeout ]
+webkit.org/b/303507 inspector/dom/customElementState.html [ Timeout ]
+webkit.org/b/303507 inspector/injected-script/observable.html [ Timeout ]
+webkit.org/b/303507 inspector/network/intercept-aborted-request.html [ Timeout ]
+webkit.org/b/303507 inspector/page/filter-cookies-for-domain.html [ Timeout ]
+
+# webkit.org/b/303639 Mass-marking flaky tests
+compositing/backing/page-scale-overlap-in-iframe.html [ Pass Failure ]
+fast/events/ios/rotation/zz-no-rotation.html [ Pass Failure ]
+fast/forms/file/file-input-reset-using-open-panel.html [ Pass Failure ]
+fast/forms/ios/file-upload-panel-blur-focus-document-picker.html [ Pass Failure ]
+fast/scrolling/ios/clipping-ancestor-with-accelerated-scrolling-ancestor.html [ Pass Failure ]
+fast/scrolling/ios/overflow-scrolling-ancestor-clip-size.html [ Pass Failure ]
+fast/scrolling/ios/overflow-scrolling-ancestor-clip.html [ Pass Failure ]
+fast/scrolling/ios/scrolling-content-clip-to-viewport.html [ Pass Failure ]
+fast/scrolling/ios/subpixel-overflow-scrolling-with-ancestor.html [ Pass Failure ]
+fast/scrolling/ios/touch-stacking.html [ Pass Failure ]
+fast/viewport/ios/full-screen-safe-area-insets.html [ Pass Failure ]
+fast/viewport/ios/use-minimum-device-width-for-page-without-viewport-meta.html [ Pass Timeout ]
+scrollingcoordinator/ios/fixed-in-frame-layer-reconcile-layer-position.html [ Pass Failure ]
+scrollingcoordinator/ios/fixed-in-overflow-scroll-scrolling-tree.html [ Pass Failure ]
+scrollingcoordinator/ios/ui-scrolling-tree.html [ Pass Failure ]
+webaudio/audioworklet-addModule-failure.html [ Pass Failure ]
+webaudio/audioworklet-does-not-leak.html [ Pass Failure ]
+webaudio/automatic-pull-node.html [ Pass Failure ]
+webaudio/base-audio-context-wrapper-gc.html [ Pass Failure ]
+webaudio/cancel-values-crash-913217.html [ Pass Failure ]
+webaudio/construct-node-with-closed-context.html [ Pass Failure ]
+webaudio/convolver-setBuffer-different-samplerate.html [ Pass Failure ]
+webaudio/convolver-setBuffer-null.html [ Pass Failure ]
+webaudio/createMediaStreamSource-null.html [ Pass Failure ]
+webrtc/getUserMedia-webaudio-autoplay.html [ Pass Failure ]
+fast/forms/ios/scroll-to-reveal-focused-select.html [ Pass ]
+fast/events/ios/should-be-able-to-dismiss-form-accessory-after-tapping-outside-iframe-with-focused-field.html [ Pass ]
+http/tests/site-isolation/remote-frame-loaded-while-hidden.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/303421 webaudio/audioworket-out-of-memory.html [ Skip ]

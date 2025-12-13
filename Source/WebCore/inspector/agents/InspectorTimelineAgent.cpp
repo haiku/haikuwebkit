@@ -178,7 +178,7 @@ void InspectorTimelineAgent::internalStart(std::optional<int>&& maxCallStackDept
 
     Ref { m_instrumentingAgents.get() }->setTrackingTimelineAgent(this);
 
-    m_environment.debugger()->addObserver(*this);
+    checkedEnvironment()->debugger()->addObserver(*this);
 
     m_frontendDispatcher->recordingStarted(timestamp());
 }
@@ -187,7 +187,7 @@ void InspectorTimelineAgent::internalStop()
 {
     Ref { m_instrumentingAgents.get() }->setTrackingTimelineAgent(nullptr);
 
-    m_environment.debugger()->removeObserver(*this, true);
+    checkedEnvironment()->debugger()->removeObserver(*this, true);
 
     // Complete all pending records to prevent discarding events that are currently in progress.
     while (!m_recordStack.isEmpty())
@@ -205,12 +205,12 @@ void InspectorTimelineAgent::autoCaptureStarted() const
 
 double InspectorTimelineAgent::timestamp()
 {
-    return m_environment.executionStopwatch().elapsedTime().seconds();
+    return checkedEnvironment()->executionStopwatch().elapsedTime().seconds();
 }
 
 std::optional<double> InspectorTimelineAgent::timestampFromMonotonicTime(MonotonicTime time)
 {
-    auto stopwatchTime = m_environment.executionStopwatch().fromMonotonicTime(time);
+    auto stopwatchTime = checkedEnvironment()->executionStopwatch().fromMonotonicTime(time);
     if (!stopwatchTime)
         return std::nullopt;
     return stopwatchTime->seconds();

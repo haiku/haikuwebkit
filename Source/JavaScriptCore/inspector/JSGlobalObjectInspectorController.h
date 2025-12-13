@@ -29,6 +29,7 @@
 #include "InspectorEnvironment.h"
 #include "InspectorFrontendRouter.h"
 #include "Strong.h"
+#include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>
@@ -61,15 +62,24 @@ struct JSAgentContext;
 
 class JSGlobalObjectInspectorController final
     : public InspectorEnvironment
+    , public CanMakeCheckedPtr<JSGlobalObjectInspectorController>
 #if ENABLE(INSPECTOR_ALTERNATE_DISPATCHERS)
     , public AugmentableInspectorController
 #endif
 {
     WTF_MAKE_NONCOPYABLE(JSGlobalObjectInspectorController);
     WTF_MAKE_TZONE_ALLOCATED(JSGlobalObjectInspectorController);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(JSGlobalObjectInspectorController);
 public:
     JSGlobalObjectInspectorController(JSC::JSGlobalObject&);
     ~JSGlobalObjectInspectorController() final;
+
+    // AbstractCanMakeCheckedPtr overrides
+    uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     void connectFrontend(FrontendChannel&, bool isAutomaticInspection, bool immediatelyPause);
     void disconnectFrontend(FrontendChannel&);

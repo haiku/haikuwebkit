@@ -267,20 +267,25 @@ void MediaElementSession::clientWillBeginAutoplaying()
     updateClientDataBuffering();
 }
 
-bool MediaElementSession::clientWillBeginPlayback()
+void MediaElementSession::clientWillBeginPlayback(CompletionHandler<void(bool)>&& completionHandler)
 {
-    if (!PlatformMediaSession::clientWillBeginPlayback())
-        return false;
+    PlatformMediaSession::clientWillBeginPlayback([weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)](bool willBegin) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis || !willBegin) {
+            completionHandler(false);
+            return;
+        }
 
-    m_elementIsHiddenBecauseItWasRemovedFromDOM = false;
-    updateClientDataBuffering();
+        protectedThis->m_elementIsHiddenBecauseItWasRemovedFromDOM = false;
+        protectedThis->updateClientDataBuffering();
 
 #if ENABLE(MEDIA_SESSION)
-    if (auto* session = mediaSession())
-        session->willBeginPlayback();
+        if (auto* session = protectedThis->mediaSession())
+            session->willBeginPlayback();
 #endif
 
-    return true;
+        completionHandler(true);
+    });
 }
 
 bool MediaElementSession::clientWillPausePlayback()
@@ -579,27 +584,37 @@ MediaPlayer::BufferingPolicy MediaElementSession::preferredBufferingPolicy() con
     if (!element)
         return MediaPlayer::BufferingPolicy::Default;
 
-    if (isSuspended())
-        return MediaPlayer::BufferingPolicy::MakeResourcesPurgeable;
+    auto currentPolicy = element->bufferingPolicy();
+    auto isPlaying = state() == PlatformMediaSession::State::Playing;
+    MediaPlayer::BufferingPolicy newPolicy = [&] {
 
-    if (bufferingSuspended())
-        return MediaPlayer::BufferingPolicy::LimitReadAhead;
+        if (isSuspended())
+            return MediaPlayer::BufferingPolicy::MakeResourcesPurgeable;
 
-    if (state() == PlatformMediaSession::State::Playing)
-        return MediaPlayer::BufferingPolicy::Default;
+        if (bufferingSuspended())
+            return MediaPlayer::BufferingPolicy::LimitReadAhead;
 
-    if (shouldOverrideBackgroundLoadingRestriction())
-        return MediaPlayer::BufferingPolicy::Default;
+        if (isPlaying)
+            return MediaPlayer::BufferingPolicy::Default;
+
+        if (shouldOverrideBackgroundLoadingRestriction())
+            return MediaPlayer::BufferingPolicy::Default;
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-    if (m_shouldPlayToPlaybackTarget)
-        return MediaPlayer::BufferingPolicy::Default;
+        if (m_shouldPlayToPlaybackTarget)
+            return MediaPlayer::BufferingPolicy::Default;
 #endif
 
-    if (m_elementIsHiddenUntilVisibleInViewport || m_elementIsHiddenBecauseItWasRemovedFromDOM || element->elementIsHidden())
-        return MediaPlayer::BufferingPolicy::MakeResourcesPurgeable;
+        if (m_elementIsHiddenUntilVisibleInViewport || m_elementIsHiddenBecauseItWasRemovedFromDOM || element->elementIsHidden())
+            return MediaPlayer::BufferingPolicy::MakeResourcesPurgeable;
 
-    return MediaPlayer::BufferingPolicy::Default;
+        return currentPolicy;
+    }();
+
+    if (currentPolicy == MediaPlayer::BufferingPolicy::PurgeResources && !isPlaying && newPolicy != MediaPlayer::BufferingPolicy::Default)
+        return MediaPlayer::BufferingPolicy::PurgeResources;
+
+    return newPolicy;
 }
 
 bool MediaElementSession::fullscreenPermitted() const
@@ -992,7 +1007,15 @@ void MediaElementSession::mediaStateDidChange(MediaProducerMediaStateFlags state
     if (RefPtr element = m_element.get())
         element->document().playbackTargetPickerClientStateDidChange(*this, state);
 }
-#endif
+
+MediaPlaybackTargetType MediaElementSession::playbackTargetType() const
+{
+    if (RefPtr playbackTarget = m_playbackTarget)
+        return playbackTarget->targetType();
+    return MediaPlaybackTargetType::None;
+}
+
+#endif // ENABLE(WIRELESS_PLAYBACK_TARGET)
 
 MediaPlayer::Preload MediaElementSession::effectivePreloadForElement() const
 {

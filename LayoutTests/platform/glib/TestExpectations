@@ -128,6 +128,7 @@ imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-select-elem
 imported/w3c/web-platform-tests/html/rendering/widgets/input-checkbox-zero-size.html [ Pass ]
 imported/w3c/web-platform-tests/html/rendering/widgets/the-select-element/option-add-label-quirks.html [ Pass ]
 imported/w3c/web-platform-tests/streams/readable-byte-streams/construct-byob-request.any.sharedworker.html [ Failure ]
+imported/w3c/web-platform-tests/svg/animations/stop-animation-01.html [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-1.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-none-1.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-001.svg [ Pass ]
@@ -139,6 +140,7 @@ imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-bicubic-001.s
 imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-complex-001.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/radialgradient-fully-overlapping.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/pservers/reftests/stop-color-currentcolor-dynamic-001.svg [ Pass ]
+imported/w3c/web-platform-tests/svg/shapes/rect-03.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/struct/reftests/gradient-in-symbol.svg [ Pass ]
 imported/w3c/web-platform-tests/svg/text/reftests/opacity.svg [ Pass ]
 imported/w3c/web-platform-tests/webvtt/rendering/cues-with-video/processing-model/embedded_style_media_queries.html [ Pass ]
@@ -791,8 +793,12 @@ accessibility/dynamic-expanded-text.html [ Failure ]
 
 accessibility/dynamic-content-visibility.html [ Skip ]
 accessibility/dynamic-selected-radio-button.html [ Skip ]
-accessibility/dynamic-text-stitching.html [ Skip ]
 accessibility/password-notifications-timing.html [ Skip ]
+
+# AccessibilityTextStitchingEnabled feature is not implemented.
+accessibility/aria-owns-text-stitching.html [ Skip ]
+accessibility/dynamic-text-stitching.html [ Skip ]
+accessibility/list-marker-text-stitching.html [ Skip ]
 
 # Timed out since it was introduced.
 accessibility/css-content-alt-text.html [ Skip ]
@@ -957,9 +963,7 @@ webkit.org/b/98382 accessibility/visible-elements.html [ Failure ]
 
 webkit.org/b/215405 accessibility/roles-computedRoleString.html [ Failure ]
 webkit.org/b/215405 [ Release ] accessibility/roles-exposed.html [ Failure ]
-webkit.org/b/215405 [ Debug ] accessibility/canvas-accessibilitynodeobject.html [ Crash ]
 webkit.org/b/215405 [ Debug ] accessibility/canvas-fallback-content-2.html [ Crash ]
-webkit.org/b/215405 [ Debug ] accessibility/canvas-fallback-content.html [ Crash ]
 
 webkit.org/b/207711 [ Debug ] accessibility/roles-exposed.html [ Timeout ]
 
@@ -2411,7 +2415,6 @@ webkit.org/b/218010 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-a
 # WebGL-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
 
-webkit.org/b/211887 [ Debug ] fast/canvas/webgl/tex-sub-image-2d-bad-args.html [ Crash ]
 webkit.org/b/211887 [ Debug ] webgl/1.0.x/conformance/textures/misc/tex-sub-image-2d-bad-args.html [ Crash ]
 
 webkit.org/b/216071 fast/canvas/webgl/move-canvas-in-document-while-clean.html [ ImageOnlyFailure ]
@@ -2547,8 +2550,6 @@ http/tests/webrtc/audioSessionInFrames.html [ Failure ]
 
 webrtc/clone-audio-track.html [ Pass Failure ]
 
-fast/mediastream/stream-switch.html [ Skip ] # Timeout
-
 webkit.org/b/194611 http/wpt/webrtc/getUserMedia-processSwapping.html [ Failure ]
 
 # These tests are macOS-specific. In Linux changing the PipeWire capture source on the fly is not supported.
@@ -2598,6 +2599,7 @@ webrtc/video-sframe.html [ Skip ]
 webkit.org/b/219825 webrtc/sframe-keys.html [ Skip ]
 webkit.org/b/229055 http/wpt/webrtc/sframe-transform-error.html [ Skip ]
 http/wpt/webrtc/video-script-transform-simulcast.html [ Skip ]
+http/wpt/webrtc/unset-transform.html [ Failure ]
 
 # GStreamerRtpReceiverBackend::getSynchronizationSources() unimplemented and also hitting srtpenc errors.
 webkit.org/b/235885 webrtc/video-addTransceiver.html [ Failure ]
@@ -2661,7 +2663,8 @@ webkit.org/b/235885 webrtc/video-maxFramerate.html [ Pass Timeout ]
 webkit.org/b/235885 webrtc/video-mute.html [ Skip ]
 webkit.org/b/235885 webrtc/video-mute-vp8.html [ Skip ]
 webkit.org/b/235885 webrtc/video-replace-muted-track.html [ Skip ]
-webkit.org/b/235885 webrtc/video-stats.html [ Failure ]
+# webkit.org/b/235885 webrtc/video-stats.html [ Failure ]
+webkit.org/b/303673 webrtc/video-stats.html [ Timeout ]
 webkit.org/b/235885 webrtc/video-unmute.html [ Pass Timeout ]
 http/tests/webrtc/muted-video-mediastream-invisible-autoplay.html [ Failure Timeout Pass ]
 
@@ -3669,7 +3672,7 @@ webkit.org/b/160246 fast/text/multiple-feature-properties.html [ ImageOnlyFailur
 webkit.org/b/160248 fast/text/combining-mark-paint.html [ ImageOnlyFailure ]
 webkit.org/b/160248 fast/text/synthetic-bold-transformed.html [ ImageOnlyFailure ]
 webkit.org/b/160249 fast/shrink-wrap/rect-shrink-wrap.html [ ImageOnlyFailure ]
-webkit.org/b/161583 accessibility/auto-fill-types.html [ Timeout ]
+webkit.org/b/161583 accessibility/auto-fill-types.html [ Failure ]
 webkit.org/b/162815 fast/text/variations/font-face-clamp.html [ ImageOnlyFailure ]
 webkit.org/b/162815 fast/text/variations/font-selection-properties.html [ ImageOnlyFailure ]
 webkit.org/b/162815 fast/text/variations/skia-postscript-name.html [ ImageOnlyFailure ]
@@ -4819,6 +4822,17 @@ webkit.org/b/303124 media/media-source/media-source-changetype-vp8-vp9.html [ Fa
 webkit.org/b/303130 media/media-source/media-source-ended.html [ Failure ]
 
 webkit.org/b/303208 imported/blink/fast/pagination/viewport-y-horizontal-bt-rtl.html [ Pass ImageOnlyFailure ]
+
+# Hits assert in Debug, but since GTK/WPE bots run release with assertions enabled, skip. Tracked by https://bugs.webkit.org/show_bug.cgi?id=303414
+fullscreen/fullscreen-grid-item-container-type-crash.html [ Skip ]
+
+webkit.org/b/303539 imported/w3c/web-platform-tests/service-workers/service-worker/multipart-image.https.html [ Crash Failure ]
+webkit.org/b/303547 fullscreen/full-screen-keyboard-lock-option-enabled.html [ Pass Timeout ]
+
+# Flaky soup_session_get_feature crash
+webkit.org/b/303677 imported/w3c/web-platform-tests/workers/constructors/SharedWorker/empty-name.html [ Pass Crash ]
+webkit.org/b/303677 imported/w3c/web-platform-tests/fetch/data-urls/base64.any.html [ Pass Crash ]
+
 
 # End: Common failures between GTK and WPE.
 

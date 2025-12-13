@@ -164,9 +164,9 @@ Ref<ReadableStream> ReadableStream::create(Ref<InternalReadableStream>&& interna
     return adoptRef(*new ReadableStream(globalObject->protectedScriptExecutionContext().get(), WTFMove(internalReadableStream)));
 }
 
-ReadableStream::ReadableStream(ScriptExecutionContext* context, RefPtr<InternalReadableStream>&& internalReadableStream, RefPtr<DependencyToVisit>&& dependencyToVisit, IsReachableFromOpaqueRootIfPulling isReachableFromOpaqueRootIfPulling)
+ReadableStream::ReadableStream(ScriptExecutionContext* context, RefPtr<InternalReadableStream>&& internalReadableStream, RefPtr<DependencyToVisit>&& dependencyToVisit, IsSourceReachableFromOpaqueRoot isSourceReachableFromOpaqueRoot)
     : ContextDestructionObserver(context)
-    , m_isReachableFromOpaqueRootIfPulling(isReachableFromOpaqueRootIfPulling == IsReachableFromOpaqueRootIfPulling::Yes)
+    , m_isSourceReachableFromOpaqueRoot(isSourceReachableFromOpaqueRoot == IsSourceReachableFromOpaqueRoot::Yes)
     , m_internalReadableStream(WTFMove(internalReadableStream))
     , m_dependencyToVisit(WTFMove(dependencyToVisit))
 {
@@ -298,7 +298,7 @@ ReadableStreamDefaultReader* ReadableStream::defaultReader()
 // https://streams.spec.whatwg.org/#abstract-opdef-createreadablebytestream
 Ref<ReadableStream> ReadableStream::createReadableByteStream(JSDOMGlobalObject& globalObject, ReadableByteStreamController::PullAlgorithm&& pullAlgorithm, ReadableByteStreamController::CancelAlgorithm&& cancelAlgorithm, ByteStreamOptions&& options)
 {
-    Ref readableStream = adoptRef(*new ReadableStream(globalObject.protectedScriptExecutionContext().get(), { }, WTFMove(options.dependencyToVisit), options.isReachableFromOpaqueRootIfPulling));
+    Ref readableStream = adoptRef(*new ReadableStream(globalObject.protectedScriptExecutionContext().get(), { }, WTFMove(options.dependencyToVisit), options.isSourceReachableFromOpaqueRoot));
     readableStream->setupReadableByteStreamController(globalObject, WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), options.highwaterMark, options.startSynchronously);
     return readableStream;
 }
@@ -423,6 +423,11 @@ Ref<DOMPromise> ReadableStream::cancel(JSDOMGlobalObject& globalObject, JSC::JSV
 
     if (RefPtr internalStream = m_internalReadableStream) {
         auto result = internalStream->cancel(globalObject, reason);
+        if (!result) {
+            deferred->reject(Exception { ExceptionCode::ExistingExceptionError });
+            return promise;
+        }
+
         auto* jsPromise = jsCast<JSC::JSPromise*>(result);
         if (!jsPromise)
             return promise;
@@ -575,9 +580,115 @@ bool ReadableStream::isPulling() const
     return m_controller && m_controller->isPulling();
 }
 
-void ReadableStream::Iterator::next(Callback&& callback)
+Ref<ReadableStream::Iterator> ReadableStream::Iterator::create(Ref<ReadableStreamDefaultReader>&& reader, bool preventCancel)
 {
-    callback({ std::nullopt });
+    return adoptRef(*new Iterator(WTFMove(reader), preventCancel));
+}
+
+ReadableStream::Iterator::Iterator(Ref<ReadableStreamDefaultReader>&& reader, bool preventCancel)
+    : m_reader(WTFMove(reader))
+    , m_preventCancel(preventCancel)
+{
+}
+
+ReadableStream::Iterator::~Iterator() = default;
+
+class ReadableStreamIteratorReadRequest : public ReadableStreamReadRequest {
+public:
+    static Ref<ReadableStreamIteratorReadRequest> create(ReadableStreamDefaultReader& reader, Ref<DeferredPromise>&& promise) { return adoptRef(*new ReadableStreamIteratorReadRequest(reader,  WTFMove(promise))); }
+
+    ~ReadableStreamIteratorReadRequest() = default;
+
+private:
+    ReadableStreamIteratorReadRequest(ReadableStreamDefaultReader& reader, Ref<DeferredPromise>&& promise)
+        : m_reader(reader)
+        , m_promise(WTFMove(promise))
+    {
+    }
+
+    void runChunkSteps(JSC::JSValue value) final
+    {
+        m_promise->resolveWithJSValue(value);
+    }
+
+    void runCloseSteps() final
+    {
+        if (RefPtr reader = m_reader.get()) {
+            if (auto* globalObject = this->globalObject())
+                reader->releaseLock(*globalObject);
+        }
+        m_promise->resolve();
+    }
+
+    void runErrorSteps(JSC::JSValue value) final
+    {
+        if (RefPtr reader = m_reader.get()) {
+            if (auto* globalObject = this->globalObject())
+                reader->releaseLock(*globalObject);
+        }
+        m_promise->rejectWithCallback([&value](auto&) { return value; });
+    }
+
+    void runErrorSteps(Exception&& exception) final
+    {
+        if (RefPtr reader = m_reader.get()) {
+            if (auto* globalObject = this->globalObject())
+                reader->releaseLock(*globalObject);
+        }
+        m_promise->reject(WTFMove(exception));
+    }
+
+    JSDOMGlobalObject* globalObject() final
+    {
+        return m_promise->globalObject();
+    }
+
+    WeakPtr<ReadableStreamDefaultReader> m_reader;
+    const Ref<DeferredPromise> m_promise;
+};
+
+Ref<DOMPromise> ReadableStream::Iterator::next(JSDOMGlobalObject& globalObject)
+{
+    ASSERT(m_reader->stream());
+
+    auto [promise, deferred] = createPromiseAndWrapper(globalObject);
+    m_reader->read(globalObject, ReadableStreamIteratorReadRequest::create(m_reader.get(), WTFMove(deferred)));
+    return promise;
+}
+
+bool ReadableStream::Iterator::isFinished() const
+{
+    return !m_reader->stream();
+}
+
+Ref<DOMPromise> ReadableStream::Iterator::returnSteps(JSDOMGlobalObject& globalObject, JSC::JSValue value)
+{
+    RefPtr stream = m_reader->stream();
+    ASSERT(stream);
+
+    ASSERT(!m_reader->getNumReadRequests());
+
+    if (!m_preventCancel) {
+        Ref domPromise = m_reader->genericCancel(globalObject, value);
+        m_reader->releaseLock(globalObject);
+        return domPromise;
+    }
+
+    m_reader->releaseLock(globalObject);
+    auto [promise, deferred] = createPromiseAndWrapper(globalObject);
+    deferred->resolve();
+    return promise;
+}
+
+// https://streams.spec.whatwg.org/#rs-asynciterator
+ExceptionOr<Ref<ReadableStream::Iterator>> ReadableStream::createIterator(ScriptExecutionContext* context, IteratorOptions&& options)
+{
+    auto& globalObject = *JSC::jsCast<JSDOMGlobalObject*>(context->globalObject());
+    auto readerOrException = ReadableStreamDefaultReader::create(globalObject, *this);
+    if (readerOrException.hasException())
+        return readerOrException.releaseException();
+
+    return Iterator::create(readerOrException.releaseReturnValue(), options.preventCancel);
 }
 
 template<typename Visitor>

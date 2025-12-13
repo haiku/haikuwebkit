@@ -31,18 +31,48 @@
 
 #pragma once
 
+#include "ColorSerialization.h"
+#include "ContainerNodeInlines.h"
+#include "CSSFontValue.h"
 #include "CSSGridAutoRepeatValue.h"
 #include "CSSGridIntegerRepeatValue.h"
 #include "CSSGridLineNamesValue.h"
+#include "CSSMarkup.h"
+#include "CSSPrimitiveNumericTypes+Serialization.h"
+#include "CSSPrimitiveValue.h"
+#include "CSSPrimitiveValueMappings.h"
+#include "CSSProperty.h"
 #include "CSSPropertyNames.h"
+#include "CSSPropertyParserConsumer+Anchor.h"
+#include "CSSRegisteredCustomProperty.h"
+#include "CSSSerializationContext.h"
+#include "CSSTransformListValue.h"
+#include "CSSValueList.h"
+#include "CSSValuePair.h"
+#include "CSSValuePool.h"
+#include "FontCascade.h"
+#include "FontSelectionValueInlines.h"
+#include "HTMLFrameOwnerElement.h"
+#include "RenderBlock.h"
+#include "RenderBoxInlines.h"
+#include "RenderElementInlines.h"
 #include "RenderElementStyleInlines.h"
-#include "StyleExtractorConverter.h"
-#include "StyleExtractorSerializer.h"
+#include "RenderGrid.h"
+#include "RenderInline.h"
+#include "RenderStyleInlines.h"
+#include "StyleExtractorState.h"
 #include "StyleInterpolation.h"
 #include "StyleOrderedNamedLinesCollector.h"
+#include "StylePrimitiveKeyword+CSSValueCreation.h"
+#include "StylePrimitiveKeyword+Serialization.h"
+#include "StylePrimitiveNumericTypes+CSSValueCreation.h"
+#include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
+#include "StylePrimitiveNumericTypes+Serialization.h"
 #include "StylePropertyShorthand.h"
 #include "StylePropertyShorthandFunctions.h"
+#include "StyleTransformFunction.h"
+#include "WebAnimationUtilities.h"
 
 namespace WebCore {
 namespace Style {
@@ -95,6 +125,8 @@ public:
     static Ref<CSSValue> extractWebkitRubyPosition(ExtractorState&);
     static Ref<CSSValue> extractWebkitMaskComposite(ExtractorState&);
     static Ref<CSSValue> extractWebkitMaskSourceType(ExtractorState&);
+    static Ref<CSSValue> extractColor(ExtractorState&);
+    static Ref<CSSValue> extractZoom(ExtractorState&);
 
     // MARK: Shorthands
 
@@ -190,6 +222,8 @@ public:
     static void extractWebkitRubyPositionSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractWebkitMaskCompositeSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractWebkitMaskSourceTypeSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractColorSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractZoomSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
 
     static void extractAnimationShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractAnimationRangeShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
@@ -1198,6 +1232,13 @@ template<> struct PropertyExtractorAdaptor<CSSPropertyWhiteSpace> {
     }
 };
 
+template<> struct PropertyExtractorAdaptor<CSSPropertyColor> {
+    template<typename F> decltype(auto) computedValue(ExtractorState& state, F&& functor) const
+    {
+        return functor(Style::Color { state.style.color() });
+    }
+};
+
 // MARK: - Adaptor Invokers
 
 template<CSSPropertyID propertyID> Ref<CSSValue> extractCSSValue(ExtractorState& state)
@@ -2132,7 +2173,7 @@ inline Ref<CSSValue> ExtractorCustom::extractTransform(ExtractorState& state)
     if (state.renderer) {
         TransformationMatrix transform;
         state.style.applyTransform(transform, TransformOperationData(state.renderer->transformReferenceBoxRect(state.style), state.renderer), { });
-        return CSSTransformListValue::create(ExtractorConverter::convertTransformationMatrix(state, transform));
+        return CSSTransformListValue::create(createCSSValue(state.pool, state.style, transform));
     }
 
     // https://w3c.github.io/csswg-drafts/css-transforms-1/#serialization-of-the-computed-value
@@ -2154,7 +2195,7 @@ inline void ExtractorCustom::extractTransformSerialization(ExtractorState& state
     if (state.renderer) {
         TransformationMatrix transform;
         state.style.applyTransform(transform, TransformOperationData(state.renderer->transformReferenceBoxRect(state.style), state.renderer), { });
-        ExtractorSerializer::serializeTransformationMatrix(state, builder, context, transform);
+        serializationForCSS(builder, context, state.style, transform);
         return;
     }
 
@@ -2306,36 +2347,52 @@ inline void ExtractorCustom::extractWebkitRubyPositionSerialization(ExtractorSta
     extractSerialization<CSSPropertyWebkitRubyPosition>(state, builder, context);
 }
 
-inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskComposite(ExtractorState& extractorState)
+inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskComposite(ExtractorState& state)
 {
     auto mapper = [](auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) -> Ref<CSSValue> {
         return CSSPrimitiveValue::create(toCSSValueIDForWebkitMaskComposite(value));
     };
-    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskComposite>(extractorState, extractorState.style.maskLayers(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskComposite>(state, state.style.maskLayers(), mapper);
 }
 
-inline void ExtractorCustom::extractWebkitMaskCompositeSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+inline void ExtractorCustom::extractWebkitMaskCompositeSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     auto mapper = [](auto&, auto& builder, const auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) {
         builder.append(nameLiteralForSerialization(toCSSValueIDForWebkitMaskComposite(value)));
     };
-    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskComposite>(extractorState, builder, context, extractorState.style.maskLayers(), mapper);
+    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskComposite>(state, builder, context, state.style.maskLayers(), mapper);
 }
 
-inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskSourceType(ExtractorState& extractorState)
+inline Ref<CSSValue> ExtractorCustom::extractWebkitMaskSourceType(ExtractorState& state)
 {
     auto mapper = [](auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) -> Ref<CSSValue> {
         return CSSPrimitiveValue::create(toCSSValueIDForWebkitMaskSourceType(value));
     };
-    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskMode>(extractorState, extractorState.style.maskLayers(), mapper);
+    return extractCoordinatedValueListValue<CSSPropertyID::CSSPropertyMaskMode>(state, state.style.maskLayers(), mapper);
 }
 
-inline void ExtractorCustom::extractWebkitMaskSourceTypeSerialization(ExtractorState& extractorState, StringBuilder& builder, const CSS::SerializationContext& context)
+inline void ExtractorCustom::extractWebkitMaskSourceTypeSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     auto mapper = [](auto&, auto& builder, const auto&, const auto& value, const std::optional<MaskLayers::value_type>&, const auto&) {
         builder.append(nameLiteralForSerialization(toCSSValueIDForWebkitMaskSourceType(value)));
     };
-    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskMode>(extractorState, builder, context, extractorState.style.maskLayers(), mapper);
+    extractCoordinatedValueListSerialization<CSSPropertyID::CSSPropertyMaskMode>(state, builder, context, state.style.maskLayers(), mapper);
+}
+
+inline Ref<CSSValue> ExtractorCustom::extractColor(ExtractorState& state)
+{
+    if (state.allowVisitedStyle)
+        return state.pool.createColorValue(state.style.visitedDependentColor(CSSPropertyColor));
+    return extractCSSValue<CSSPropertyColor>(state);
+}
+
+inline void ExtractorCustom::extractColorSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
+{
+    if (state.allowVisitedStyle) {
+        builder.append(WebCore::serializationForCSS(state.style.visitedDependentColor(CSSPropertyColor)));
+        return;
+    }
+    extractSerialization<CSSPropertyColor>(state, builder, context);
 }
 
 // MARK: - Shorthands
@@ -2736,7 +2793,7 @@ inline RefPtr<CSSValue> ExtractorCustom::extractFontShorthand(ExtractorState& st
     if (!propertiesResetByShorthandAreExpressible())
         return computedFont;
 
-    computedFont->size = ExtractorConverter::convertNumberAsPixels(state, description.computedSize());
+    computedFont->size = dynamicDowncast<CSSPrimitiveValue>(createCSSValue(state.pool, state.style, Length<> { description.computedSize() }));
 
     auto computedLineHeight = dynamicDowncast<CSSPrimitiveValue>(ExtractorGenerated::extractValue(state, CSSPropertyLineHeight));
     if (computedLineHeight && !isValueID(*computedLineHeight, CSSValueNormal))

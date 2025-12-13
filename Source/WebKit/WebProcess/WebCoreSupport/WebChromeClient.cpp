@@ -75,8 +75,8 @@
 #include "WebProcessProxyMessages.h"
 #include "WebSearchPopupMenu.h"
 #include "WebWorkerClient.h"
-#include <WebCore/AppHighlight.h>
 #include <WebCore/AXObjectCache.h>
+#include <WebCore/AppHighlight.h>
 #include <WebCore/BarcodeDetectorInterface.h>
 #include <WebCore/ColorChooser.h>
 #include <WebCore/ColorChooserClient.h>
@@ -101,6 +101,7 @@
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/HTMLInputElement.h>
+#include <WebCore/HTMLMediaElement.h>
 #include <WebCore/HTMLNames.h>
 #include <WebCore/HTMLParserIdioms.h>
 #include <WebCore/HTMLPlugInElement.h>
@@ -1663,12 +1664,28 @@ void WebChromeClient::spatialBackdropSourceChanged() const
 #endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-void WebChromeClient::canEnterImmersiveElement(const Element& element, CompletionHandler<void(bool)>&& completion) const
+void WebChromeClient::allowImmersiveElement(const Element& element, CompletionHandler<void(bool)>&& completion) const
 {
     if (RefPtr page = m_page.get())
-        page->canEnterImmersiveElement(element, WTFMove(completion));
+        page->allowImmersiveElement(element, WTFMove(completion));
     else
         completion(false);
+}
+
+void WebChromeClient::presentImmersiveElement(const Element& element, const LayerHostingContextIdentifier contextID, CompletionHandler<void(bool)>&& completion) const
+{
+    if (RefPtr page = m_page.get())
+        page->presentImmersiveElement(element, contextID, WTFMove(completion));
+    else
+        completion(false);
+}
+
+void WebChromeClient::dismissImmersiveElement(const Element& element, CompletionHandler<void()>&& completion) const
+{
+    if (RefPtr page = m_page.get())
+        page->dismissImmersiveElement(element, WTFMove(completion));
+    else
+        completion();
 }
 #endif
 
@@ -1851,14 +1868,16 @@ RefPtr<API::Object> userDataFromJSONData(JSON::Value& value)
         return API::String::create(value.asString());
     case JSON::Value::Type::Object: {
         auto result = API::Dictionary::create();
-        for (auto [key, value] : *value.asObject().unsafeGet())
+        RefPtr jsonObject = value.asObject();
+        for (auto [key, value] : *jsonObject)
             result->add(key, userDataFromJSONData(value));
         return result;
     }
     case JSON::Value::Type::Array: {
         auto array = value.asArray();
         Vector<RefPtr<API::Object>> result;
-        for (auto& item : *value.asArray().unsafeGet())
+        RefPtr jsonArray = value.asArray();
+        for (auto& item : *jsonArray)
             result.append(userDataFromJSONData(item));
         return API::Array::create(WTFMove(result));
     }

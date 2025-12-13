@@ -174,6 +174,7 @@ void ensureSpatialControls(HTMLImageElement& imageElement)
 
         Ref button = HTMLButtonElement::create(HTMLNames::buttonTag, document.get(), nullptr);
         button->setIdAttribute(spatialImageControlsButtonIdentifier());
+        button->setAttributeWithoutSynchronization(HTMLNames::aria_labelAttr, AtomString(localizedMediaControlElementString("EnterFullscreenButton"_s)));
         controlLayer->appendChild(button);
 
         Ref backgroundBlurLayer = HTMLDivElement::create(document.get());

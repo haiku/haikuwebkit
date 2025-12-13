@@ -81,6 +81,12 @@ std::optional<ProgressResolutionData> AcceleratedTimeline::progressResolutionDat
     return std::nullopt;
 }
 
+void AcceleratedTimeline::setProgressResolutionData(ProgressResolutionData&& progressResolutionData)
+{
+    ASSERT(!originTime());
+    m_data = WTFMove(progressResolutionData);
+}
+
 } // namespace WebCore
 
 #endif // ENABLE(THREADED_ANIMATIONS)

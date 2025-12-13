@@ -246,7 +246,8 @@ public:
 
     void layoutBlockChild(RenderBox& child, MarginInfo&, LayoutUnit& previousFloatLogicalBottom, LayoutUnit& maxFloatLogicalBottom);
     struct BlockPositionAndMargin {
-        LayoutUnit logicalTop;
+        LayoutUnit childLogicalTop;
+        LayoutUnit containerLogicalBottom; // Note that with self collapsing block, logicalBottom is not necessarily childLogicalTop + child's logicalHeight.
         MarginInfo marginInfo;
     };
     BlockPositionAndMargin layoutBlockChildFromInlineLayout(RenderBox& child, LayoutUnit blockLogicalTop, MarginInfo); // Called from IFC when laying out block in inline.
@@ -354,7 +355,9 @@ public:
 
     void setChildrenInline(bool) final;
 
-    bool hasLines() const;
+    bool hasContentfulInlineOrBlockLine() const;
+    bool hasContentfulInlineLine() const;
+    bool hasBlocksInInlineLayout() const;
 
     enum InvalidationReason : uint8_t {
         InternalMove,       // (anon) block is moved or collapsed

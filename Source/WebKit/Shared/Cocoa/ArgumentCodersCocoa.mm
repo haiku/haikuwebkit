@@ -489,7 +489,8 @@ template<> void encodeObjectDirectly<NSObject<NSSecureCoding>>(Encoder& encoder,
     [archiver finishEncoding];
     [archiver setDelegate:nil];
 
-    encoder << (__bridge CFDataRef)[archiver encodedData];
+    RetainPtr<CFDataRef> archivedData = bridge_cast([archiver encodedData]);
+    encoder << archivedData;
 }
 
 static bool shouldEnableStrictMode(Decoder& decoder, const AllowedClassHashSet& allowedClasses)

@@ -2376,11 +2376,11 @@ WebsiteDataStore* WebExtensionContext::websiteDataStore(std::optional<PAL::Sessi
     if (!extensionController)
         return nullptr;
 
-    RefPtr result = extensionController->websiteDataStore(sessionID);
-    if (result && !result->isPersistent() && !hasAccessToPrivateData())
+    WeakPtr weakDataStore = extensionController->websiteDataStore(sessionID);
+    if (weakDataStore && !weakDataStore->isPersistent() && !hasAccessToPrivateData())
         return nullptr;
 
-    return result.unsafeGet();
+    return weakDataStore.get();
 }
 
 void WebExtensionContext::cookiesDidChange(API::HTTPCookieStore&)

@@ -1759,7 +1759,7 @@ TEST(WebAuthenticationPanel, MakeCredentialLA)
         EXPECT_NOT_NULL(response);
         EXPECT_WK_STREQ([[NSString alloc] initWithData:response.clientDataJSON encoding:NSUTF8StringEncoding], "{\"type\":\"webauthn.create\",\"challenge\":\"AQIDBAECAwQBAgMEAQIDBAECAwQBAgMEAQIDBAECAwQ\",\"origin\":\"https://example.com\"}");
         EXPECT_WK_STREQ([response.rawId base64EncodedStringWithOptions:0], "SMSXHngF7hEOsElA73C3RY+8bR4=");
-        EXPECT_NULL(response.extensions);
+
         EXPECT_WK_STREQ([response.attestationObject base64EncodedStringWithOptions:0], "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViYo3mm9u6vuaVeN4wRgDTidR5oL6ufLTCrE9ISVYbOGUdFAAAAAPv8MAcVTk7MjAtuAgVX170AFEjElx54Be4RDrBJQO9wt0WPvG0epQECAyYgASFYIDj/zxSkzKgaBuS3cdWDF558of8AaIpgFpsjF/Qm1749IlggVBJPgqUIwfhWHJ91nb7UPH76c0+WFOzZKslPyyFse4g=");
     }];
     Util::run(&webAuthenticationPanelRan);
@@ -1797,7 +1797,6 @@ TEST(WebAuthenticationPanel, MakeCredentialLAClientDataHashMediation)
         EXPECT_NULL(response.clientDataJSON);
         // This is the sha1 hash of the public key of testES256PrivateKeyBase64.
         EXPECT_WK_STREQ([response.rawId base64EncodedStringWithOptions:0], "SMSXHngF7hEOsElA73C3RY+8bR4=");
-        EXPECT_NULL(response.extensions);
         EXPECT_WK_STREQ([response.attestationObject base64EncodedStringWithOptions:0], "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViYo3mm9u6vuaVeN4wRgDTidR5oL6ufLTCrE9ISVYbOGUdFAAAAAPv8MAcVTk7MjAtuAgVX170AFEjElx54Be4RDrBJQO9wt0WPvG0epQECAyYgASFYIDj/zxSkzKgaBuS3cdWDF558of8AaIpgFpsjF/Qm1749IlggVBJPgqUIwfhWHJ91nb7UPH76c0+WFOzZKslPyyFse4g=");
     }];
     Util::run(&webAuthenticationPanelRan);
@@ -1974,7 +1973,6 @@ TEST(WebAuthenticationPanel, GetAssertionLA)
         EXPECT_NOT_NULL(response);
         EXPECT_WK_STREQ([[NSString alloc] initWithData:response.clientDataJSON encoding:NSUTF8StringEncoding], "{\"type\":\"webauthn.get\",\"challenge\":\"AQIDBAECAwQBAgMEAQIDBAECAwQBAgMEAQIDBAECAwQ\",\"origin\":\"https://example.com\"}");
         EXPECT_WK_STREQ([response.rawId base64EncodedStringWithOptions:0], "SMSXHngF7hEOsElA73C3RY+8bR4=");
-        EXPECT_NULL(response.extensions);
 
         // echo -n "example.com" | shasum -a 256 | xxd -r -p | base64
         NSString *base64RPIDHash = @"o3mm9u6vuaVeN4wRgDTidR5oL6ufLTCrE9ISVYbOGUc=";
@@ -2024,7 +2022,6 @@ TEST(WebAuthenticationPanel, GetAssertionLAClientDataHashMediation)
         EXPECT_NULL(response.clientDataJSON);
         // This is the sha1 hash of the public key of testES256PrivateKeyBase64.
         EXPECT_WK_STREQ([response.rawId base64EncodedStringWithOptions:0], "SMSXHngF7hEOsElA73C3RY+8bR4=");
-        EXPECT_NULL(response.extensions);
 
         // echo -n "example.com" | shasum -a 256 | xxd -r -p | base64
         NSString *base64RPIDHash = @"o3mm9u6vuaVeN4wRgDTidR5oL6ufLTCrE9ISVYbOGUc=";

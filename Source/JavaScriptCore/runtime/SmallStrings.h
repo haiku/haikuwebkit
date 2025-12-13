@@ -135,6 +135,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     JSString* timedOutString() const { return m_timedOutString; }
     JSString* okString() const { return m_okString; }
     JSString* sentinelString() const { return m_sentinelString; }
+    JSString* fulfilledString() const { return m_fulfilledString; }
+    JSString* rejectedString() const { return m_rejectedString; }
 
     bool needsToBeVisited(CollectionScope scope) const
     {
@@ -171,6 +173,8 @@ private:
     JSString* m_timedOutString { nullptr };
     JSString* m_okString { nullptr };
     JSString* m_sentinelString { nullptr };
+    JSString* m_fulfilledString { nullptr };
+    JSString* m_rejectedString { nullptr };
     JSString* m_singleCharacterStrings[singleCharacterStringCount] { nullptr };
     bool m_needsToBeVisited { true };
     bool m_isInitialized { false };

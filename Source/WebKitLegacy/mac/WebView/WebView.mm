@@ -8634,7 +8634,7 @@ FORWARD(toggleUnderline)
 
 - (id)_objectForIdentifier:(unsigned long)identifier
 {
-    return _private->identifierMap.get(identifier).unsafeGet();
+    return _private->identifierMap.get(identifier);
 }
 
 - (void)_removeObjectForIdentifier:(unsigned long)identifier

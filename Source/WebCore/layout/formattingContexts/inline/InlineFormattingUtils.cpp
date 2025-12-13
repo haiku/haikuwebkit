@@ -34,9 +34,11 @@
 #include "InlineLineBoxVerticalAligner.h"
 #include "InlineLineTypes.h"
 #include "InlineQuirks.h"
+#include "LayoutBoxInlines.h"
 #include "LayoutElementBox.h"
 #include "RenderStyleInlines.h"
 #include "RubyFormattingContext.h"
+#include "Settings.h"
 #include <ranges>
 
 namespace WebCore {
@@ -47,27 +49,30 @@ InlineFormattingUtils::InlineFormattingUtils(const InlineFormattingContext& inli
 {
 }
 
-InlineLayoutUnit InlineFormattingUtils::logicalTopForNextLine(const LineLayoutResult& lineLayoutResult, const InlineRect& lineLogicalRect, const FloatingContext& floatingContext) const
+InlineLayoutUnit InlineFormattingUtils::logicalTopForNextLine(const LineLayoutResult& lineLayoutResult, const InlineRect& lineLogicalRect, const FloatingContext& floatingContext, const BlockLayoutState::MarginState& marginState) const
 {
     auto didManageToPlaceInlineContentOrFloat = !lineLayoutResult.inlineItemRange.isEmpty();
     if (didManageToPlaceInlineContentOrFloat) {
-        // Normally the next line's logical top is the previous line's logical bottom, but when the line ends
-        // with the clear property set, the next line needs to clear the existing floats.
-        if (!lineLayoutResult.hasInlineContent())
-            return lineLogicalRect.bottom();
-        auto& lastRunLayoutBox = lineLayoutResult.runs.last().layoutBox();
-        if (!lastRunLayoutBox.hasFloatClear() || lastRunLayoutBox.isOutOfFlowPositioned())
-            return lineLogicalRect.bottom();
-        auto blockAxisPositionWithClearance = floatingContext.blockAxisPositionWithClearance(lastRunLayoutBox, formattingContext().geometryForBox(lastRunLayoutBox));
-        if (!blockAxisPositionWithClearance)
-            return lineLogicalRect.bottom();
-        return std::max(lineLogicalRect.bottom(), InlineLayoutUnit(blockAxisPositionWithClearance->position));
+        auto logicalTopCandidateByContent = [&] {
+            // Normally the next line's logical top is the previous line's logical bottom, but when the line ends
+            // with the clear property set, the next line needs to clear the existing floats.
+            if (!lineLayoutResult.hasContentfulInlineContent())
+                return lineLogicalRect.bottom();
+            auto& lastRunLayoutBox = lineLayoutResult.runs.last().layoutBox();
+            if (!lastRunLayoutBox.hasFloatClear() || lastRunLayoutBox.isOutOfFlowPositioned())
+                return lineLogicalRect.bottom();
+            auto blockAxisPositionWithClearance = floatingContext.blockAxisPositionWithClearance(lastRunLayoutBox, formattingContext().geometryForBox(lastRunLayoutBox));
+            if (!blockAxisPositionWithClearance)
+                return lineLogicalRect.bottom();
+            return std::max(lineLogicalRect.bottom(), InlineLayoutUnit(blockAxisPositionWithClearance->position));
+        };
+        return logicalTopCandidateByContent() + marginState.contentOffsetAfterSelfCollapsingBlock;
     }
 
     auto intrusiveFloatBottom = [&]() -> std::optional<InlineLayoutUnit> {
         // Floats must have prevented us placing any content on the line.
         // Move next line below the intrusive float(s).
-        ASSERT(!lineLayoutResult.hasInlineContent() || lineLayoutResult.runs[0].isLineSpanningInlineBoxStart());
+        ASSERT(!lineLayoutResult.hasContentfulInlineContent() || lineLayoutResult.runs[0].isLineSpanningInlineBoxStart());
         auto nextLineLogicalTop = [&]() -> LayoutUnit {
             if (auto nextLineLogicalTopCandidate = lineLayoutResult.hintForNextLineTopToAvoidIntrusiveFloat)
                 return LayoutUnit { *nextLineLogicalTopCandidate };
@@ -640,6 +645,48 @@ bool InlineFormattingUtils::shouldDiscardRemainingContentInBlockDirection() cons
         return false;
     ASSERT(!lineClamp->isLegacy);
     return lineClamp->maximumLines == inlineLayoutState.lineCountWithInlineContentIncludingNestedBlocks();
+}
+
+InlineLayoutUnit InlineFormattingUtils::ascent(const FontMetrics& fontMetrics, FontBaseline fontBaseline, const InlineLevelBox& inlineLevelBox)
+{
+    return ascent(fontMetrics, fontBaseline, inlineLevelBox.layoutBox());
+}
+
+InlineLayoutUnit InlineFormattingUtils::descent(const FontMetrics& fontMetrics, FontBaseline fontBaseline, const InlineLevelBox& inlineLevelBox)
+{
+    return descent(fontMetrics, fontBaseline, inlineLevelBox.layoutBox());
+}
+
+InlineLayoutUnit InlineFormattingUtils::ascent(const FontMetrics& fontMetrics, FontBaseline fontBaseline, const Box& layoutBox)
+{
+    return layoutBox.rendererForIntegration()->settings().subpixelInlineLayoutEnabled() ? fontMetrics.ascent(fontBaseline) : fontMetrics.intAscent(fontBaseline);
+}
+
+InlineLayoutUnit InlineFormattingUtils::descent(const FontMetrics& fontMetrics, FontBaseline fontBaseline, const Box& layoutBox)
+{
+    return layoutBox.rendererForIntegration()->settings().subpixelInlineLayoutEnabled() ? fontMetrics.descent(fontBaseline) : fontMetrics.intDescent(fontBaseline);
+}
+
+InlineLayoutUnit InlineFormattingUtils::snapToInt(InlineLayoutUnit value, const InlineLevelBox& inlineLevelBox, SnapDirection direction)
+{
+    return snapToInt(value, inlineLevelBox.layoutBox(), direction);
+}
+
+InlineLayoutUnit InlineFormattingUtils::snapToInt(InlineLayoutUnit value, const Box& layoutBox, SnapDirection direction)
+{
+    if (layoutBox.rendererForIntegration()->settings().subpixelInlineLayoutEnabled())
+        return value;
+
+    switch (direction) {
+    case SnapDirection::Floor:
+        return floorf(value);
+    case SnapDirection::Ceil:
+        return ceilf(value);
+    case SnapDirection::Round:
+        return roundf(value);
+    }
+    ASSERT_NOT_REACHED();
+    return { };
 }
 
 }

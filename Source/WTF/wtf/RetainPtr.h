@@ -118,6 +118,7 @@ public:
     }
 
     PtrType autorelease();
+    PtrType getAutoreleased();
 
 #ifdef __OBJC__
     id bridgingAutorelease();
@@ -223,6 +224,12 @@ template<typename T> inline auto RetainPtr<T>::autorelease() -> PtrType
     return ptr;
 }
 
+template<typename T> inline auto RetainPtr<T>::getAutoreleased() -> PtrType
+{
+    RetainPtr copy { *this };
+    return copy.autorelease();
+}
+
 #ifdef __OBJC__
 // FIXME: It would be better if we could base the return type on the type that is toll-free bridged with T rather than using id.
 template<typename T> inline id RetainPtr<T>::bridgingAutorelease()
@@ -317,6 +324,12 @@ template<typename T> struct IsSmartPtr<RetainPtr<T>> {
 };
 
 template<typename P> struct HashTraits<RetainPtr<P>> : SimpleClassHashTraits<RetainPtr<P>> {
+    static RetainPtr<P>::PtrType emptyValue() { return nullptr; }
+    static bool isEmptyValue(const RetainPtr<P>& value) { return !value; }
+
+    using PeekType = RetainPtr<P>::PtrType;
+    static PeekType peek(const RetainPtr<P>& value) { return value.get(); }
+    static PeekType peek(P* value) { return value; }
 };
 
 template<typename P> struct DefaultHash<RetainPtr<P>> : PtrHash<RetainPtr<P>> { };

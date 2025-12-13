@@ -302,7 +302,6 @@ TestWebKitAPI.FocusPreservationTests
 TestWebKitAPI.FontCascadeTest
 TestWebKitAPI.FontShadowTest
 TestWebKitAPI.FormValidation
-TestWebKitAPI.FragmentDirectiveGeneration
 TestWebKitAPI.FragmentedSharedBufferTest
 TestWebKitAPI.Geolocation
 TestWebKitAPI.GestureRecognizerTests

@@ -68,8 +68,6 @@ class JSGlobalObject;
     v(driveAsyncFunction, nullptr) \
     v(awaitValue, nullptr) \
     v(newHandledRejectedPromise, nullptr) \
-    v(promiseOnRejectedWithContext, nullptr) \
-    v(promiseAllOnFulfilled, nullptr) \
     v(promiseEmptyOnFulfilled, nullptr) \
     v(promiseEmptyOnRejected, nullptr) \
     v(promiseResolve, nullptr) \
@@ -163,8 +161,6 @@ class JSGlobalObject;
     v(BigUint64Array, nullptr) \
     v(wrapForValidIteratorCreate, nullptr) \
     v(asyncFromSyncIteratorCreate, nullptr) \
-    v(promiseAllContextCreate, nullptr) \
-    v(promiseAllGlobalContextCreate, nullptr) \
     v(regExpStringIteratorCreate, nullptr) \
     v(iteratorHelperCreate, nullptr) \
     v(ReferenceError, nullptr) \

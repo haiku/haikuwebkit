@@ -124,12 +124,12 @@ private:
     [super dealloc];
 }
 
-- (VideoPresentationModel*)presentationModel
+- (RefPtr<VideoPresentationModel>)presentationModel
 {
-    return _presentationModel.get().unsafeGet();
+    return _presentationModel.get();
 }
 
-- (void)setPresentationModel:(VideoPresentationModel*)presentationModel
+- (void)setPresentationModel:(RefPtr<VideoPresentationModel>)presentationModel
 {
     auto model = _presentationModel.get();
     if (model == presentationModel)

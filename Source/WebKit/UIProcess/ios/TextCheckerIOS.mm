@@ -366,6 +366,52 @@ void TextChecker::requestCheckingOfString(Ref<TextCheckerCompletion>&&, int32_t)
     notImplemented();
 }
 
+static Vector<TextCheckingResult> convertExtendedCheckingResults(NSArray<NSTextCheckingResult *> *incomingResults)
+{
+    Vector<TextCheckingResult> results;
+    for (NSTextCheckingResult *incomingResult in incomingResults) {
+        NSTextCheckingType resultType = [incomingResult resultType];
+        auto resultRange = incomingResult.range;
+        if (resultType == NSTextCheckingTypeGrammar) {
+            TextCheckingResult result;
+            RetainPtr details = [incomingResult grammarDetails];
+            result.type = TextCheckingType::Grammar;
+            result.range = resultRange;
+            result.details.reserveInitialCapacity(details.get().count);
+            for (NSDictionary *incomingDetail in details.get()) {
+                GrammarDetail detail;
+                RetainPtr detailRangeAsNSValue = [incomingDetail objectForKey:@"NSGrammarRange"];
+                NSRange detailNSRange = [detailRangeAsNSValue rangeValue];
+                detail.range = detailNSRange;
+                detail.userDescription = [incomingDetail objectForKey:@"NSGrammarUserDescription"];
+                RetainPtr<NSArray> guesses = [incomingDetail objectForKey:@"NSGrammarCorrections"];
+                detail.guesses = makeVector<String>(guesses.get());
+                result.details.append(WTFMove(detail));
+            }
+            results.append(result);
+        }
+    }
+    return results;
+}
+
+void TextChecker::requestExtendedCheckingOfString(Ref<TextCheckerCompletion>&& textCheckerCompletion, int32_t)
+{
+    auto textChecker = textCheckerFor(1);
+    if (![textChecker _doneLoading])
+        return;
+    if (![textChecker respondsToSelector:@selector(requestProofreadingReviewOfString:range:language:options:completionHandler:)])
+        return;
+
+    RetainPtr textString = textCheckerCompletion->textCheckingRequestData().text().createNSString();
+    NSRange range = NSMakeRange(0, textCheckerCompletion->textCheckingRequestData().text().length());
+    [textChecker requestProofreadingReviewOfString:textString.get() range:range language:nil options:@{ } completionHandler:makeBlockPtr([textCompletion = WTFMove(textCheckerCompletion)](NSArray<NSTextCheckingResult *> *incomingResults) {
+        auto results = convertExtendedCheckingResults(incomingResults);
+        callOnMainRunLoop([textCompletion, results] {
+            textCompletion->didFinishCheckingText(results);
+        });
+    }).get()];
+}
+
 } // namespace WebKit
 
 #endif // PLATFORM(IOS_FAMILY)

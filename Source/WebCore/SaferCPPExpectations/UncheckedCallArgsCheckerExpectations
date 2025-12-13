@@ -91,7 +91,6 @@ css/CSSStyleProperties.cpp
 css/CSSStyleSheet.cpp
 css/CSSStyleSheetObservableArray.cpp
 css/CSSToLengthConversionData.cpp
-css/CSSVariableReferenceValue.cpp
 css/MediaQueryList.cpp
 css/MediaQueryMatcher.cpp
 css/SelectorChecker.cpp
@@ -456,7 +455,6 @@ rendering/ImageQualityController.cpp
 rendering/InlineBoxPainter.cpp
 rendering/LayoutRepainter.cpp
 rendering/LegacyInlineBox.cpp
-rendering/LegacyInlineBox.h
 rendering/LegacyInlineFlowBox.cpp
 rendering/LegacyInlineFlowBox.h
 rendering/LegacyInlineIterator.h
@@ -573,6 +571,7 @@ rendering/mathml/RenderMathMLToken.cpp
 rendering/mathml/RenderMathMLUnderOver.cpp
 rendering/shapes/ShapeOutsideInfo.cpp
 rendering/style/RenderStyle.cpp
+rendering/style/RenderStyleBase.cpp
 rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp
 rendering/style/StyleGeneratedImage.cpp
@@ -664,9 +663,7 @@ style/StyleBuilderState.cpp
 style/StyleBuilderStateInlines.h
 style/StyleCustomPropertyRegistry.cpp
 style/StyleExtractor.cpp
-style/StyleExtractorConverter.h
 style/StyleExtractorCustom.h
-style/StyleExtractorSerializer.h
 style/StyleInterpolation.cpp
 style/StyleInvalidationFunctions.h
 style/StyleInvalidator.cpp

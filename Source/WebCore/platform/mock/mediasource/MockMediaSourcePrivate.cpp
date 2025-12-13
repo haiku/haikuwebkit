@@ -93,13 +93,6 @@ void MockMediaSourcePrivate::durationChanged(const MediaTime& duration)
         m_player->updateDuration(duration);
 }
 
-void MockMediaSourcePrivate::markEndOfStream(EndOfStreamStatus status)
-{
-    if (m_player && status == EndOfStreamStatus::NoError)
-        m_player->setNetworkState(MediaPlayer::NetworkState::Loaded);
-    MediaSourcePrivate::markEndOfStream(status);
-}
-
 void MockMediaSourcePrivate::notifyActiveSourceBuffersChanged()
 {
     if (m_player)

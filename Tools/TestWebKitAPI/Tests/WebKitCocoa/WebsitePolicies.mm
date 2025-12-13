@@ -1123,7 +1123,7 @@ static unsigned loadCount;
     auto response = adoptNS([[NSURLResponse alloc] initWithURL:finalURL MIMEType:@"text/html" expectedContentLength:1 textEncodingName:nil]);
     [task didReceiveResponse:response.get()];
 
-    if (auto data = _dataMappings.get([finalURL absoluteString]))
+    if (RetainPtr data = _dataMappings.get([finalURL absoluteString]))
         [task didReceiveData:data.get()];
     else
         [task didReceiveData:[@"Hello" dataUsingEncoding:NSUTF8StringEncoding]];

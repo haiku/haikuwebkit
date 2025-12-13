@@ -416,9 +416,10 @@ void AXObjectCache::postPlatformARIANotifyNotification(const String& announcemen
     }
 }
 
-void AXObjectCache::postPlatformLiveRegionNotification(AccessibilityObject& object, LiveRegionStatus status, const String& announcement)
+void AXObjectCache::postPlatformLiveRegionNotification(AccessibilityObject& object, LiveRegionStatus status, const AttributedString& announcement)
 {
-    RetainPtr userInfo = adoptNS([[NSDictionary alloc] initWithObjectsAndKeys:announcement.createNSString().get(), NSAccessibilityAnnouncementKey, @(status == LiveRegionStatus::Assertive ? NSAccessibilityPriorityHigh : NSAccessibilityPriorityLow), NSAccessibilityPriorityKey, @(YES), NSAccessibilityAnnouncementIsLiveRegionKey, nil]);
+    RetainPtr userInfo = adoptNS([[NSMutableDictionary alloc] initWithObjectsAndKeys:announcement.nsAttributedString().get(), NSAccessibilityAnnouncementKey, @(status == LiveRegionStatus::Assertive ? NSAccessibilityPriorityHigh : NSAccessibilityPriorityLow), NSAccessibilityPriorityKey, @(YES), NSAccessibilityAnnouncementIsLiveRegionKey, nil]);
+
     NSAccessibilityPostNotificationWithUserInfo(object.wrapper(), NSAccessibilityAnnouncementRequestedNotification, userInfo.get());
 
     if (gShouldRepostNotificationsForTests) [[unlikely]] {
@@ -437,8 +438,10 @@ void AXObjectCache::onDocumentRenderTreeCreation(const Document& document)
 
 void AXObjectCache::deferSortForNewLiveRegion(Ref<AccessibilityObject>&& object)
 {
+#if PLATFORM(COCOA)
     if (m_liveRegionManager)
         return;
+#endif
 
     queueUnsortedObject(WTFMove(object), PreSortedObjectType::LiveRegion);
 }
@@ -827,8 +830,10 @@ bool AXObjectCache::shouldSpellCheck()
 
 AXCoreObject::AccessibilityChildrenVector AXObjectCache::sortedLiveRegions()
 {
+#if PLATFORM(COCOA)
     if (m_liveRegionManager)
         return { };
+#endif
 
     if (!m_sortedIDListsInitialized)
         initializeSortedIDLists();
@@ -932,7 +937,11 @@ void AXObjectCache::initializeSortedIDLists()
         return;
     m_sortedIDListsInitialized = true;
 
+#if PLATFORM(COCOA)
     bool includeLiveRegions = !m_liveRegionManager;
+#else
+    bool includeLiveRegions = true;
+#endif
 
     RefPtr current = rootWebArea();
     while ((current = current ? downcast<AccessibilityObject>(current->nextInPreOrder()) : nullptr)) {

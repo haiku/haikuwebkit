@@ -161,7 +161,7 @@ static NSString * const UIAccessibilityPriorityDefault = @"UIAccessibilityPriori
 static NSString * const UIAccessibilitySpeechAttributeAnnouncementPriority = @"UIAccessibilitySpeechAttributeAnnouncementPriority";
 static NSString * const UIAccessibilitySpeechAttributeIsLiveRegion = @"UIAccessibilitySpeechAttributeIsLiveRegion";
 
-void AXObjectCache::postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus status, const String& announcement)
+void AXObjectCache::postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus status, const AttributedString& announcement)
 {
     LiveRegionAnnouncementData notificationData { announcement, status };
 
@@ -172,13 +172,13 @@ void AXObjectCache::postPlatformLiveRegionNotification(AccessibilityObject&, Liv
     if (gShouldRepostNotificationsForTests) [[unlikely]] {
         if (RefPtr root = getOrCreate(m_document->view())) {
             RetainPtr notificationName = notificationPlatformName(AXNotification::AnnouncementRequested).createNSString();
-            RetainPtr message = announcement.createNSString();
             RetainPtr priority = status == LiveRegionStatus::Assertive ? UIAccessibilityPriorityDefault : UIAccessibilityPriorityLow;
-            RetainPtr announcementString = adoptNS([[NSAttributedString alloc] initWithString:message.get() attributes:@{
-                UIAccessibilitySpeechAttributeAnnouncementPriority: priority.get(),
-                UIAccessibilitySpeechAttributeIsLiveRegion: @(YES),
-            }]);
-            [root->wrapper() accessibilityPostedNotification:notificationName.get() userInfo:@{ notificationName.get() : announcementString.get() }];
+
+            auto mutableAttributedString = adoptNS([[NSMutableAttributedString alloc] initWithAttributedString:announcement.nsAttributedString().get()]);
+            [mutableAttributedString addAttribute:UIAccessibilitySpeechAttributeAnnouncementPriority value:priority.get() range:NSMakeRange(0, [mutableAttributedString length])];
+            [mutableAttributedString addAttribute:UIAccessibilitySpeechAttributeIsLiveRegion value:@(YES) range:NSMakeRange(0, [mutableAttributedString length])];
+
+            [root->wrapper() accessibilityPostedNotification:notificationName.get() userInfo:@{ notificationName.get() : mutableAttributedString.get() }];
         }
     }
 }

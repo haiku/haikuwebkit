@@ -400,6 +400,7 @@ rendering/mathml/RenderMathMLUnderOver.cpp
 rendering/shapes/BoxLayoutShape.cpp
 rendering/shapes/ShapeOutsideInfo.cpp
 rendering/style/RenderStyle.cpp
+rendering/style/RenderStyleBase.cpp
 rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp
 rendering/style/StyleCrossfadeImage.cpp

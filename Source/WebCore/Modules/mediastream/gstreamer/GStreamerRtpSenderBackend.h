@@ -29,24 +29,19 @@
 #include <wtf/WeakPtr.h>
 
 namespace WebCore {
-class GStreamerRtpSenderBackend;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::GStreamerRtpSenderBackend> : std::true_type { };
-}
-
-namespace WebCore {
 
 class GStreamerPeerConnectionBackend;
 
-class GStreamerRtpSenderBackend final : public RTCRtpSenderBackend {
+class GStreamerRtpSenderBackend final : public RTCRtpSenderBackend, public RefCounted<GStreamerRtpSenderBackend> {
     WTF_MAKE_TZONE_ALLOCATED(GStreamerRtpSenderBackend);
 public:
-    GStreamerRtpSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&);
+    static Ref<GStreamerRtpSenderBackend> create(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&);
     using Source = Variant<std::nullptr_t, Ref<RealtimeOutgoingAudioSourceGStreamer>, Ref<RealtimeOutgoingVideoSourceGStreamer>>;
-    GStreamerRtpSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&, Source&&, GUniquePtr<GstStructure>&& initData);
+    static Ref<GStreamerRtpSenderBackend> create(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&, Source&&, GUniquePtr<GstStructure>&& initData);
+
+    // RTCRtpSenderBackend.
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void setRTCSender(GRefPtr<GstWebRTCRTPSender>&& rtcSender) { m_rtcSender = WTFMove(rtcSender); }
     GstWebRTCRTPSender* rtcSender() { return m_rtcSender.get(); }
@@ -88,6 +83,9 @@ public:
     void dispatchBitrateRequest(uint32_t bitrate);
 
 private:
+    GStreamerRtpSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&);
+    GStreamerRtpSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&&, GRefPtr<GstWebRTCRTPSender>&&, Source&&, GUniquePtr<GstStructure>&& initData);
+
     void clearSource();
     bool replaceTrack(RTCRtpSender&, MediaStreamTrack*) final;
     RTCRtpSendParameters getParameters() const final;

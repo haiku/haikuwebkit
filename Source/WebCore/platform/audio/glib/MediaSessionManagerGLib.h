@@ -67,7 +67,7 @@ protected:
     void addSession(PlatformMediaSessionInterface&) final;
     void setCurrentSession(PlatformMediaSessionInterface&) final;
 
-    bool sessionWillBeginPlayback(PlatformMediaSessionInterface&) override;
+    void sessionWillBeginPlayback(PlatformMediaSessionInterface&, CompletionHandler<void(bool)>&&) override;
     void sessionWillEndPlayback(PlatformMediaSessionInterface&, DelayCallingUpdateNowPlaying) override;
     void sessionStateChanged(PlatformMediaSessionInterface&) override;
     void sessionDidEndRemoteScrubbing(PlatformMediaSessionInterface&) final;

@@ -67,7 +67,7 @@ void WebPreviewLoaderClient::didFinishLoading()
     if (!webPage)
         return;
 
-    webPage->didFinishLoadForQuickLookDocumentInMainFrame(m_buffer.take().get());
+    webPage->didFinishLoadForQuickLookDocumentInMainFrame(m_buffer.takeBuffer().get());
 }
 
 void WebPreviewLoaderClient::didFail()

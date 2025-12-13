@@ -249,7 +249,7 @@ void WorkerInspectorController::createLazyAgents()
     m_agents.append(WTFMove(scriptProfilerAgent));
 
     if (auto& commandLineAPIHost = m_injectedScriptManager->commandLineAPIHost())
-        commandLineAPIHost->init(m_instrumentingAgents.copyRef());
+        commandLineAPIHost->init(m_instrumentingAgents.get());
 }
 
 WorkerDebuggerAgent& WorkerInspectorController::ensureDebuggerAgent()

@@ -75,6 +75,9 @@ static NSArray<DDBridgeMeshPart *> *convert(const Vector<DDModel::DDMeshPart>& p
 
 static NSData* convert(const Vector<uint8_t>& data)
 {
+    if (!data.size())
+        return nil;
+
     return [[NSData alloc] initWithBytes:data.span().data() length:data.sizeInBytes()];
 }
 

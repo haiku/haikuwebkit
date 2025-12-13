@@ -632,7 +632,7 @@ void RenderMultiColumnSet::paintColumnRules(PaintInfo& paintInfo, const LayoutPo
     const Color& ruleColor = blockStyle.visitedDependentColorWithColorFilter(CSSPropertyColumnRuleColor);
     bool ruleTransparent = blockStyle.columnRuleIsTransparent();
     auto ruleStyle = collapsedBorderStyle(blockStyle.columnRuleStyle());
-    auto ruleThickness = Style::evaluate<LayoutUnit>(blockStyle.columnRuleWidth(), blockStyle.usedZoomForLength());
+    auto ruleThickness = Style::evaluate<LayoutUnit>(blockStyle.columnRuleWidth(), Style::ZoomNeeded { });
     auto colGap = columnGap();
     bool renderRule = ruleStyle > BorderStyle::Hidden && !ruleTransparent;
     if (!renderRule)

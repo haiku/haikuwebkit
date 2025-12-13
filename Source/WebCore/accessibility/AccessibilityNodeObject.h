@@ -190,8 +190,8 @@ public:
     String stringValue() const override;
 
     bool isBlockFlow() const final;
-    StitchState stitchState(IncludeStitchGroup = IncludeStitchGroup::Yes) const final;
-    Vector<Vector<AXID>> stitchGroups() const final;
+    std::optional<AXStitchGroup> stitchGroup(IncludeGroupMembers = IncludeGroupMembers::Yes) const final;
+    Vector<AXStitchGroup> stitchGroups() const final;
 
     WallTime dateTimeValue() const final;
     SRGBA<uint8_t> colorValue() const final;

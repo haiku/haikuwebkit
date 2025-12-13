@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "WasmIPIntGenerator.h"
+#include <cstdint>
 
 #if ENABLE(WEBASSEMBLY)
 
@@ -299,8 +300,8 @@ public:
 
     // Memory
 
-    PartialResult WARN_UNUSED_RETURN load(LoadOpType, ExpressionType, ExpressionType&, uint32_t);
-    PartialResult WARN_UNUSED_RETURN store(StoreOpType, ExpressionType, ExpressionType, uint32_t);
+    PartialResult WARN_UNUSED_RETURN load(LoadOpType, ExpressionType, ExpressionType&, uint64_t);
+    PartialResult WARN_UNUSED_RETURN store(StoreOpType, ExpressionType, ExpressionType, uint64_t);
     PartialResult WARN_UNUSED_RETURN addGrowMemory(ExpressionType, ExpressionType&);
     PartialResult WARN_UNUSED_RETURN addCurrentMemory(ExpressionType&);
     PartialResult WARN_UNUSED_RETURN addMemoryFill(ExpressionType, ExpressionType, ExpressionType);
@@ -1062,16 +1063,22 @@ PartialResult WARN_UNUSED_RETURN IPIntGenerator::setGlobal(uint32_t index, Expre
 
 // Loads and Stores
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::load(LoadOpType, ExpressionType, ExpressionType&, uint32_t offset)
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::load(LoadOpType, ExpressionType, ExpressionType&, uint64_t offset)
 {
-    m_metadata->addLEB128ConstantInt32AndLength(offset, getCurrentInstructionLength());
+    if (m_info.memory.isMemory64())
+        m_metadata->addLEB128ConstantInt64AndLength(offset, getCurrentInstructionLength());
+    else
+        m_metadata->addLEB128ConstantInt32AndLength(static_cast<uint32_t>(offset), getCurrentInstructionLength());
     return { };
 }
 
-PartialResult WARN_UNUSED_RETURN IPIntGenerator::store(StoreOpType, ExpressionType, ExpressionType, uint32_t offset)
+PartialResult WARN_UNUSED_RETURN IPIntGenerator::store(StoreOpType, ExpressionType, ExpressionType, uint64_t offset)
 {
     changeStackSize(-2);
-    m_metadata->addLEB128ConstantInt32AndLength(offset, getCurrentInstructionLength());
+    if (m_info.memory.isMemory64())
+        m_metadata->addLEB128ConstantInt64AndLength(offset, getCurrentInstructionLength());
+    else
+        m_metadata->addLEB128ConstantInt32AndLength(static_cast<uint32_t>(offset), getCurrentInstructionLength());
     return { };
 }
 

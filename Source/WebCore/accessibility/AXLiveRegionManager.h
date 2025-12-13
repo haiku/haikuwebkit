@@ -28,7 +28,11 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+#if PLATFORM(COCOA)
+
 #include "AXCoreObject.h"
+#include "AttributedString.h"
 #include <wtf/HashMap.h>
 #include <wtf/text/WTFString.h>
 
@@ -48,6 +52,8 @@ enum class LiveRegionRelevant : uint8_t {
 struct LiveRegionObject {
     AXID objectID;
     String text;
+    String language;
+    HashSet<AXID> descendants; // For atomic regions only, to track additions/removals of descendants.
 };
 
 struct LiveRegionSnapshot {
@@ -81,10 +87,12 @@ private:
     String textForObject(AccessibilityObject&) const;
     void postAnnouncementForChange(AccessibilityObject&, const LiveRegionSnapshot&, const LiveRegionSnapshot&);
     LiveRegionDiff computeChanges(const Vector<LiveRegionObject>&, const Vector<LiveRegionObject>&) const;
-    String computeAnnouncement(const LiveRegionSnapshot&, const LiveRegionDiff&) const;
+    AttributedString computeAnnouncement(const LiveRegionSnapshot&, const LiveRegionDiff&) const;
 
     CheckedRef<AXObjectCache> m_cache;
     HashMap<AXID, LiveRegionSnapshot> m_liveRegions;
 };
 
 } // namespace WebCore
+
+#endif // PLATFORM(COCOA)

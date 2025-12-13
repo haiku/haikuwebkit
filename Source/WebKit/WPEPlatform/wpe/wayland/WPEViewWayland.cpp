@@ -27,7 +27,7 @@
 #include "WPEViewWayland.h"
 
 #include "GRefPtrWPE.h"
-#include "WPEBufferDMABufFormats.h"
+#include "WPEBufferFormats.h"
 #include "WPEDisplayWaylandPrivate.h"
 #include "WPEToplevelWaylandPrivate.h"
 #include "WPEWaylandSHMPool.h"

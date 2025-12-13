@@ -94,7 +94,7 @@ template<CSS::Range nR = CSS::All, CSS::Range pR = nR, typename V = double> stru
     }
 
     constexpr NumberOrPercentageResolvedToNumber(Percentage percentage)
-        : value { percentage.value / 100.0 }
+        : value { percentage.value / static_cast<V>(100) }
     {
     }
 

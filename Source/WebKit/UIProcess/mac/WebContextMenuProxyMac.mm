@@ -212,12 +212,12 @@
 
 - (void)menuWillOpen:(NSMenu *)menu
 {
-    Ref { *_menuProxy }->protectedPage()->didShowContextMenu();
+    Ref { *_menuProxy }->didShowContextMenu(menu);
 }
 
 - (void)menuDidClose:(NSMenu *)menu
 {
-    Ref { *_menuProxy }->protectedPage()->didDismissContextMenu();
+    Ref { *_menuProxy }->didDismissContextMenu(menu);
 }
 
 #pragma mark - WKCaptionStyleMenuControllerDelegate
@@ -1090,7 +1090,7 @@ RetainPtr<NSArray> WebContextMenuProxyMac::platformData() const
 WKCaptionStyleMenuController *WebContextMenuProxyMac::captionStyleMenuController()
 {
     if (!m_captionStyleMenuController) {
-        m_captionStyleMenuController = adoptNS([[WKCaptionStyleMenuController alloc] init]);
+        m_captionStyleMenuController = [WKCaptionStyleMenuController menuController];
         [m_captionStyleMenuController setDelegate:RetainPtr { menuDelegate() }.get()];
     }
     return m_captionStyleMenuController.get();
@@ -1101,6 +1101,19 @@ WKMenuDelegate *WebContextMenuProxyMac::menuDelegate()
     if (!m_menuDelegate)
         m_menuDelegate = adoptNS([[WKMenuDelegate alloc] initWithMenuProxy:*this]);
     return m_menuDelegate.get();
+}
+
+void WebContextMenuProxyMac::didShowContextMenu(NSMenu *)
+{
+    protectedPage()->didShowContextMenu();
+}
+
+void WebContextMenuProxyMac::didDismissContextMenu(NSMenu *menu)
+{
+    protectedPage()->didDismissContextMenu();
+
+    if (m_captionStyleMenuController && [m_captionStyleMenuController hasAncestor:menu])
+        captionStyleMenuDidClose();
 }
 
 void WebContextMenuProxyMac::captionStyleMenuWillOpen()

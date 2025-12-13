@@ -59,6 +59,11 @@ void NetworkConnectionToWebProcess::getWindowSceneAndBundleIdentifierForPaymentP
 {
     networkProcess().parentProcessConnection()->sendWithAsyncReply(Messages::NetworkProcessProxy::GetWindowSceneAndBundleIdentifierForPaymentPresentation(webPageProxyIdentifier), WTFMove(completionHandler));
 }
+
+void NetworkConnectionToWebProcess::notifyWillPresentPaymentUI(WebPageProxyIdentifier webPageProxyIdentifier)
+{
+    networkProcess().parentProcessConnection()->send(Messages::NetworkProcessProxy::NotifyWillPresentPaymentUI(webPageProxyIdentifier), 0);
+}
 #endif
 
 void NetworkConnectionToWebProcess::getPaymentCoordinatorEmbeddingUserAgent(WebPageProxyIdentifier webPageProxyIdentifier, CompletionHandler<void(const String&)>&& completionHandler)

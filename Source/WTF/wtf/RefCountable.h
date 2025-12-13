@@ -34,6 +34,8 @@ namespace WTF {
 
 // RefCountable<T> makes any type reference-counted, including move-only types
 // In Swift, you can use cell.pointee.method()
+// FIXME: becomes largely unnecessary once rdar://162361370 is fixed in Swift/C++
+// interop.
 template<typename T>
 class RefCountable : public ThreadSafeRefCounted<RefCountable<T>> {
 public:
@@ -49,27 +51,29 @@ public:
     {
     }
 
-    T* WTF_NONNULL operator*()
-    {
-        return &m_value;
-    }
-
-    const T* WTF_NONNULL operator*() const
-    {
-        return &m_value;
-    }
-
 #ifdef __swift__
-    void swiftRef()
+    // FIXME: rdar://165684636 means we have to define these at this level of the
+    // type hierarchy.
+    void ref() const
     {
-        WTF::ref(this);
+        ThreadSafeRefCounted<RefCountable<T>>::ref();
     }
 
-    void swiftDeref()
+    void deref() const
     {
-        WTF::deref(this);
+        ThreadSafeRefCounted<RefCountable<T>>::deref();
     }
 #endif
+
+    T& operator*() LIFETIME_BOUND
+    {
+        return m_value;
+    }
+
+    const T& operator*() const LIFETIME_BOUND
+    {
+        return m_value;
+    }
 
 private:
     template<typename... Arguments>
@@ -80,6 +84,6 @@ private:
     }
 
     T m_value;
-} SWIFT_SHARED_REFERENCE(.swiftRef, .swiftDeref);
+} SWIFT_SHARED_REFERENCE(.ref, .deref);
 
 } // namespace WTF

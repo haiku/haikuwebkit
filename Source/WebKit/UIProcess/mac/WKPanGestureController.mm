@@ -36,6 +36,7 @@
 #import "WebEventModifier.h"
 #import "WebEventType.h"
 #import "WebPageProxy.h"
+#import "WebPreferences.h"
 #import "WebViewImpl.h"
 #import "WebWheelEvent.h"
 #import <WebCore/FloatPoint.h>

@@ -44,6 +44,7 @@ private:
     explicit MediaPlaybackTargetSerialized(MediaPlaybackTargetContextSerialized&&);
 
     // MediaPlaybackTarget
+    Type targetType() const final { return m_context.targetType(); }
     String deviceName() const final { return m_context.deviceName(); }
     bool hasActiveRoute() const final { return m_context.hasActiveRoute(); }
     bool supportsRemoteVideoPlayback() const final { return m_context.supportsRemoteVideoPlayback(); }

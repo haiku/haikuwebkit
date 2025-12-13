@@ -412,7 +412,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 
 + (WKWebsiteDataStore *)defaultDataStore
 {
-    return wrapper(WebKit::WebsiteDataStore::defaultDataStore()).autorelease();
+    return wrapper(WebKit::WebsiteDataStore::defaultDataStore());
 }
 
 + (WKWebsiteDataStore *)nonPersistentDataStore
@@ -739,7 +739,8 @@ struct WKWebsiteData {
             _WKWebsiteDataTypeCredentials,
             _WKWebsiteDataTypeAdClickAttributions,
             _WKWebsiteDataTypePrivateClickMeasurements,
-            _WKWebsiteDataTypeAlternativeServices
+            _WKWebsiteDataTypeAlternativeServices,
+            _WKWebsiteDataTypeEnhancedSecurityRecord
         ];
 
         return [retainPtr([self allWebsiteDataTypes]) setByAddingObjectsFromArray:privateTypes];
@@ -1130,7 +1131,7 @@ struct WKWebsiteData {
 
 - (id <_WKWebsiteDataStoreDelegate>)_delegate
 {
-    return _delegate.get().unsafeGet();
+    return _delegate.getAutoreleased();
 }
 
 - (void)set_delegate:(id <_WKWebsiteDataStoreDelegate>)delegate

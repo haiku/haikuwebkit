@@ -90,8 +90,8 @@ public:
     void append(const VariantList&);
     void append(VariantList&&);
 
-    auto begin() const { return const_iterator(spanToSize()); }
-    auto end() const   { return const_iterator(spanFromSizeToSize()); }
+    auto begin() const LIFETIME_BOUND { return const_iterator(spanToSize()); }
+    auto end() const LIFETIME_BOUND { return const_iterator(spanFromSizeToSize()); }
 
     template<typename...F> void forEach(F&&...) const;
 

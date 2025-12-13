@@ -74,7 +74,10 @@ CommandLineAPIHost::CommandLineAPIHost()
 {
 }
 
-CommandLineAPIHost::~CommandLineAPIHost() = default;
+CommandLineAPIHost::~CommandLineAPIHost()
+{
+    RELEASE_ASSERT(!m_instrumentingAgents);
+}
 
 void CommandLineAPIHost::disconnect()
 {

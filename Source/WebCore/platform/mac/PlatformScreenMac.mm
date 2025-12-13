@@ -98,13 +98,16 @@ static RetainPtr<NSWindow> protectedWindow(Widget* widget)
     return window(widget);
 }
 
+// If the widget is in a window, use that, otherwise use the display ID from the host window.
+// First case is for when the NSWindow is in the same process, second case for when it's not.
 static NSScreen *screen(Widget* widget)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    // If the widget is in a window, use that, otherwise use the display ID from the host window.
-    // First case is for when the NSWindow is in the same process, second case for when it's not.
-    if (RetainPtr<NSScreen> screenFromWindow = [protectedWindow(widget) screen])
-        return screenFromWindow.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNRETAINED_LOCAL if (NSScreen *screenFromWindow = [protectedWindow(widget) screen])
+        return screenFromWindow;
+
     return screen(displayID(widget));
 }
 

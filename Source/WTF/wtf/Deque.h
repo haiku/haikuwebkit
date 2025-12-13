@@ -114,9 +114,9 @@ public:
 
     void clear();
 
-    template<typename Predicate> iterator findIf(NOESCAPE const Predicate&);
-    template<typename Predicate> const_iterator findIf(NOESCAPE const Predicate&) const;
-    template<typename Predicate> bool containsIf(NOESCAPE const Predicate& predicate) const
+    template<typename Predicate> iterator findIf(NOESCAPE const Predicate&) LIFETIME_BOUND;
+    template<typename Predicate> const_iterator findIf(NOESCAPE const Predicate&) const LIFETIME_BOUND;
+    template<typename Predicate> bool containsIf(NOESCAPE const Predicate& predicate) const LIFETIME_BOUND
     {
         return findIf(predicate) != end();
     }

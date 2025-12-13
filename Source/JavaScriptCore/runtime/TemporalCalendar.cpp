@@ -330,8 +330,19 @@ ISO8601::PlainDate TemporalCalendar::isoDateFromFields(JSGlobalObject* globalObj
         day = std::min<unsigned>(day, ISO8601::daysInMonth(year, month));
     }
 
-    auto plainDate = ISO8601::PlainDate(year, month, day);
-    bool valid = ISO8601::isDateTimeWithinLimits(plainDate.year(), plainDate.month(), plainDate.day(), 12, 0, 0, 0, 0, 0);
+    auto plainDate = TemporalPlainDate::toPlainDate(globalObject, ISO8601::Duration(year, month, 0, day, 0, 0, 0, 0, 0, 0));
+    RETURN_IF_EXCEPTION(scope, { });
+
+    bool valid = true;
+    switch (format) {
+    case TemporalDateFormat::YearMonth:
+        valid = ISO8601::isYearMonthWithinLimits(plainDate.year(), plainDate.month());
+        break;
+    default:
+        valid = ISO8601::isDateTimeWithinLimits(plainDate.year(), plainDate.month(), plainDate.day(), 12, 0, 0, 0, 0, 0);
+        break;
+    }
+
     if (!valid) [[unlikely]] {
         throwRangeError(globalObject, scope, "date time is out of range of ECMAScript representation"_s);
         return { };
@@ -348,9 +359,9 @@ ISO8601::PlainDate TemporalCalendar::monthDayFromFields(JSGlobalObject* globalOb
 
     calendarResolveFields(globalObject, referenceYear, month, monthCode, TemporalDateFormat::MonthDay);
     RETURN_IF_EXCEPTION(scope, { });
-    double year = referenceYear.value_or(1972);
+    int32_t year = referenceYear.value_or(1972);
     auto result = TemporalDuration::regulateISODate(year, month, day, overflow);
-    if (!result || !ISO8601::isValidISODate(result->year(), result->month(), result->day())) [[unlikely]] {
+    if (!result || !ISO8601::isDateTimeWithinLimits(result->year(), result->month(), result->day(), 12, 0, 0, 0, 0, 0)) [[unlikely]] {
         throwRangeError(globalObject, scope, "monthDayFromFields: date is out of range of ECMAScript representation"_s);
         return { };
     }
@@ -401,7 +412,7 @@ ISO8601::PlainDate TemporalCalendar::isoDateAdd(JSGlobalObject* globalObject, co
     double months = plainDate.month() + duration.months();
     double days = plainDate.day();
     ISO8601::PlainYearMonth intermediate = balanceISOYearMonth(years, months);
-    std::optional<ISO8601::PlainDate> intermediate1 = TemporalDuration::regulateISODate(intermediate.year, intermediate.month, days, overflow);
+    std::optional<ISO8601::PlainDate> intermediate1 = TemporalDuration::regulateISODate(intermediate.year(), intermediate.month(), days, overflow);
     if (!intermediate1) {
         throwRangeError(globalObject, scope, "date time is out of range of ECMAScript representation"_s);
         return { };
@@ -506,10 +517,10 @@ ISO8601::Duration TemporalCalendar::calendarDateUntil(const ISO8601::PlainDate& 
 
         auto candidateMonths = sign;
         auto intermediate = balanceISOYearMonth(one.year() + years, one.month() + candidateMonths);
-        while (!isoDateSurpasses(sign, intermediate.year, intermediate.month, one.day(), two)) {
+        while (!isoDateSurpasses(sign, intermediate.year(), intermediate.month(), one.day(), two)) {
             months = candidateMonths;
             candidateMonths += sign;
-            intermediate = balanceISOYearMonth(intermediate.year, intermediate.month + sign);
+            intermediate = balanceISOYearMonth(intermediate.year(), intermediate.month() + sign);
         }
 
         if (largestUnit == TemporalUnit::Month) {
@@ -519,7 +530,7 @@ ISO8601::Duration TemporalCalendar::calendarDateUntil(const ISO8601::PlainDate& 
     }
 
     auto intermediate = balanceISOYearMonth(one.year() + years, one.month() + months);
-    auto constrained = TemporalDuration::regulateISODate(intermediate.year, intermediate.month, one.day(), TemporalOverflow::Constrain);
+    auto constrained = TemporalDuration::regulateISODate(intermediate.year(), intermediate.month(), one.day(), TemporalOverflow::Constrain);
     ASSERT(constrained); // regulateISODate() should succeed, because the overflow mode is Constrain
 
     double weeks = 0;

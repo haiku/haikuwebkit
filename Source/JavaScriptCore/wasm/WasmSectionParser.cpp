@@ -251,26 +251,56 @@ auto SectionParser::parseFunction() -> PartialResult
     return { };
 }
 
-auto SectionParser::parseResizableLimits(uint32_t& initial, std::optional<uint32_t>& maximum, bool& isShared, LimitsType limitsType) -> PartialResult
+static bool limitsFlagIsValid(uint8_t flags)
+{
+    constexpr uint8_t invalidFlagsMask = ~0x07;
+    const uint8_t hasInvalidFlags = flags & invalidFlagsMask;
+    return !hasInvalidFlags;
+}
+
+template <SectionParser::LimitsType LimitType>
+auto SectionParser::parseResizableLimits(uint64_t& initial, std::optional<uint64_t>& maximum, bool& isShared, bool& is64bit) -> PartialResult
 {
     ASSERT(!maximum);
 
     uint8_t flags;
+    constexpr uint8_t hasMaxMask = 1;
+    constexpr uint8_t isSharedMask = 1 << 1;
+    constexpr uint8_t is64bitMask = 1 << 2;
+
     WASM_PARSER_FAIL_IF(!parseUInt8(flags), "can't parse resizable limits flags"_s);
-    WASM_PARSER_FAIL_IF(flags != 0x0 && flags != 0x1 && flags != 0x3, "resizable limits flag should be 0x00, 0x01, or 0x03 but 0x"_s, hex(flags, 2, Lowercase));
-    WASM_PARSER_FAIL_IF(flags == 0x3 && limitsType != LimitsType::Memory, "can't use shared limits for non memory"_s);
-    WASM_PARSER_FAIL_IF(!parseVarUInt32(initial), "can't parse resizable limits initial page count"_s);
+    WASM_PARSER_FAIL_IF(!limitsFlagIsValid(flags), "resizable limits flag are not valid "_s, hex(flags, 2, Lowercase));
+    if constexpr (LimitType != LimitsType::Memory)
+        WASM_PARSER_FAIL_IF(flags & isSharedMask, "can't use shared limits for non memory"_s);
 
-    isShared = flags == 0x3;
+    isShared = flags & isSharedMask;
+    is64bit = flags & is64bitMask;
     WASM_PARSER_FAIL_IF(isShared && !Options::useWasmFaultSignalHandler(), "shared memory is not enabled"_s);
+    WASM_PARSER_FAIL_IF(is64bit && !Options::useWasmMemory64(), "Memory64 is not enabled"_s);
 
-    if (flags) {
-        uint32_t maximumInt;
-        WASM_PARSER_FAIL_IF(!parseVarUInt32(maximumInt), "can't parse resizable limits maximum page count"_s);
-        WASM_PARSER_FAIL_IF(initial > maximumInt, "resizable limits has an initial page count of "_s, initial, " which is greater than its maximum "_s, maximumInt);
-        maximum = maximumInt;
+    if (is64bit)
+        WASM_PARSER_FAIL_IF(!parseVarUInt64(initial), "can't parse resizable limits initial page count"_s);
+    else {
+        uint32_t initial32;
+        WASM_PARSER_FAIL_IF(!parseVarUInt32(initial32), "can't parse resizable limits initial page count"_s);
+        initial = initial32;
     }
 
+    if (flags & hasMaxMask) {
+        if (is64bit) {
+            uint64_t maximumInt;
+            WASM_PARSER_FAIL_IF(!parseVarUInt64(maximumInt), "can't parse resizable limits maximum page count"_s);
+            WASM_PARSER_FAIL_IF(initial > maximumInt, "resizable limits has an initial page count of "_s, initial, " which is greater than its maximum "_s, maximumInt);
+            maximum = maximumInt;
+        } else {
+            uint32_t maximumInt;
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(maximumInt), "can't parse resizable limits maximum page count"_s);
+            WASM_PARSER_FAIL_IF(initial > maximumInt, "resizable limits has an initial page count of "_s, initial, " which is greater than its maximum "_s, maximumInt);
+            maximum = maximumInt;
+        }
+    }
+
+    WASM_PARSER_FAIL_IF(isShared && !maximum, "shared memory must have a maximum size"_s);
     return { };
 }
 
@@ -297,10 +327,12 @@ auto SectionParser::parseTableHelper(bool isImport) -> PartialResult
     if (!hasInitExpr && !isImport)
         WASM_PARSER_FAIL_IF(!isDefaultableType(type), "Table's type must be defaultable"_s);
 
-    uint32_t initial;
-    std::optional<uint32_t> maximum;
+    uint64_t initial;
+    std::optional<uint64_t> maximum;
     bool isShared = false;
-    PartialResult limits = parseResizableLimits(initial, maximum, isShared, LimitsType::Table);
+    bool isTable64;
+    PartialResult limits = parseResizableLimits<LimitsType::Table>(initial, maximum, isShared, isTable64);
+    ASSERT(!isShared);
     if (!limits) [[unlikely]]
         return makeUnexpected(WTFMove(limits.error()));
     WASM_PARSER_FAIL_IF(initial > maxTableEntries, "Table's initial page count of "_s, initial, " is too big, maximum "_s, maxTableEntries);
@@ -354,11 +386,12 @@ auto SectionParser::parseMemoryHelper(bool isImport) -> PartialResult
 
     PageCount initialPageCount;
     PageCount maximumPageCount;
-    bool isShared = false;
+    bool isShared { false };
+    bool isMemory64 { false };
     {
-        uint32_t initial;
-        std::optional<uint32_t> maximum;
-        PartialResult limits = parseResizableLimits(initial, maximum, isShared, LimitsType::Memory);
+        uint64_t initial;
+        std::optional<uint64_t> maximum;
+        PartialResult limits = parseResizableLimits<LimitsType::Memory>(initial, maximum, isShared, isMemory64);
         if (!limits) [[unlikely]]
             return makeUnexpected(WTFMove(limits.error()));
         ASSERT(!maximum || *maximum >= initial);
@@ -374,7 +407,7 @@ auto SectionParser::parseMemoryHelper(bool isImport) -> PartialResult
     ASSERT(initialPageCount);
     ASSERT(!maximumPageCount || maximumPageCount >= initialPageCount);
 
-    m_info->memory = MemoryInformation(initialPageCount, maximumPageCount, isShared, isImport);
+    m_info->memory = MemoryInformation(initialPageCount, maximumPageCount, isShared, isImport, isMemory64);
     return { };
 }
 

@@ -106,7 +106,7 @@ public:
     const HitTestLocation& hitTestLocation() const { return m_hitTestLocation; }
 
     WEBCORE_EXPORT LocalFrame* frame() const;
-    WEBCORE_EXPORT Frame* targetFrame() const;
+    WEBCORE_EXPORT RefPtr<Frame> targetFrame() const;
     WEBCORE_EXPORT bool isSelected() const;
     WEBCORE_EXPORT bool allowsFollowingLink() const;
     WEBCORE_EXPORT bool allowsFollowingImageURL() const;

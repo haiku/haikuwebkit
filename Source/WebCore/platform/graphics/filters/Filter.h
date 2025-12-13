@@ -35,6 +35,12 @@ class FilterEffect;
 class FilterImage;
 class FilterResults;
 
+struct FilterGeometry {
+    FloatRect referenceBox;
+    FloatRect filterRegion;
+    FloatSize scale;
+};
+
 class Filter : public FilterFunction {
     using FilterFunction::apply;
     using FilterFunction::createFilterStyles;
@@ -45,11 +51,15 @@ public:
     OptionSet<FilterRenderingMode> filterRenderingModes() const { return m_filterRenderingModes; }
     WEBCORE_EXPORT void setFilterRenderingModes(OptionSet<FilterRenderingMode> preferredFilterRenderingModes);
 
-    FloatSize filterScale() const { return m_filterScale; }
-    void setFilterScale(const FloatSize& filterScale) { m_filterScale = filterScale; }
+    const FilterGeometry& geometry() const { return m_geometry; }
 
-    FloatRect filterRegion() const { return m_filterRegion; }
-    void setFilterRegion(const FloatRect& filterRegion) { m_filterRegion = filterRegion; }
+    FloatSize filterScale() const { return m_geometry.scale; }
+    void setFilterScale(const FloatSize& filterScale) { m_geometry.scale = filterScale; }
+
+    FloatRect filterRegion() const { return m_geometry.filterRegion; }
+    void setFilterRegion(const FloatRect& filterRegion) { m_geometry.filterRegion = filterRegion; }
+
+    FloatRect referenceBox() const { return m_geometry.referenceBox; }
 
     virtual FloatSize resolvedSize(const FloatSize& size) const { return size; }
     virtual FloatPoint3D resolvedPoint3D(const FloatPoint3D& point) const { return point; }
@@ -70,15 +80,14 @@ public:
 
 protected:
     Filter(Filter::Type, std::optional<RenderingResourceIdentifier> = std::nullopt);
-    Filter(Filter::Type, const FloatSize& filterScale, const FloatRect& filterRegion = { }, std::optional<RenderingResourceIdentifier> = std::nullopt);
+    Filter(Filter::Type, const FilterGeometry&, std::optional<RenderingResourceIdentifier> = std::nullopt);
 
     virtual RefPtr<FilterImage> apply(FilterImage* sourceImage, FilterResults&) = 0;
     virtual FilterStyleVector createFilterStyles(GraphicsContext&, const FilterStyle& sourceStyle) const = 0;
 
 private:
+    FilterGeometry m_geometry;
     OptionSet<FilterRenderingMode> m_filterRenderingModes { FilterRenderingMode::Software };
-    FloatSize m_filterScale;
-    FloatRect m_filterRegion;
 };
 
 } // namespace WebCore

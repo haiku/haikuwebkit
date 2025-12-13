@@ -40,7 +40,7 @@
 #include "LegacyRenderSVGResource.h"
 #include "LegacyRenderSVGRoot.h"
 #include "PointerEventsHitRules.h"
-#include "RenderBoxModelObjectInlines.h"
+#include "RenderBoxInlines.h"
 #include "RenderElementStyleInlines.h"
 #include "RenderIterator.h"
 #include "RenderObjectInlines.h"
@@ -49,7 +49,6 @@
 #include "RenderSVGInlineText.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGTextPath.h"
-#include "RenderStyleInlines.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGInlineFlowBox.h"
 #include "SVGInlineTextBox.h"
@@ -443,7 +442,8 @@ void RenderSVGText::layout()
 
 void RenderSVGText::computePerCharacterLayoutInformation()
 {
-    if (!hasLines())
+    auto hasSVGContent = legacyRootBox() || (inlineLayout() && inlineLayout()->hasContentfulInlineLine());
+    if (!hasSVGContent)
         return;
 
     if (m_layoutAttributes.isEmpty())

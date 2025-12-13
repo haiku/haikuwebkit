@@ -84,7 +84,7 @@ public:
         WTF::DefaultRefDerefTraits<T>::derefIfNotNull(m_data.pointer());
     }
 
-    T* pointer() const
+    T* pointer() const LIFETIME_BOUND
     {
         return m_data.pointer();
     }

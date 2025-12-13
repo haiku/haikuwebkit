@@ -151,16 +151,16 @@ RenderElement* Styleable::renderer() const
             return nullptr;
 
         // Find the right ::view-transition-group().
-        CheckedPtr correctGroup = element.renderer()->view().viewTransitionGroupForName(pseudoElementIdentifier->nameArgument);
+        WeakPtr correctGroup = element.renderer()->view().viewTransitionGroupForName(pseudoElementIdentifier->nameArgument);
         if (!correctGroup)
             return nullptr;
 
         // Return early if we're looking for ::view-transition-group().
         if (pseudoElementIdentifier->type == PseudoElementType::ViewTransitionGroup)
-            return correctGroup.unsafeGet();
+            return correctGroup.get();
 
         // Go through all descendants until we find the relevant pseudo element otherwise.
-        for (auto& descendant : descendantsOfType<RenderBox>(*correctGroup)) {
+        for (auto& descendant : descendantsOfType<RenderBox>(CheckedRef { *correctGroup }.get())) {
             if (descendant.style().pseudoElementType() == pseudoElementIdentifier->type)
                 return &descendant;
         }

@@ -203,7 +203,7 @@ Ref<Element> createTabSpanElement(Document&, String&& tabText);
 Ref<Element> createBlockPlaceholderElement(Document&);
 
 Element* editableRootForPosition(const Position&, EditableType = ContentIsEditable);
-Element* unsplittableElementForPosition(const Position&);
+RefPtr<Element> unsplittableElementForPosition(const Position&);
 
 bool canMergeLists(Element* firstList, Element* secondList);
 

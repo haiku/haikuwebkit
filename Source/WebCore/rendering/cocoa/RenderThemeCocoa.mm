@@ -436,6 +436,10 @@ static const String& macOSInlineMediaControlsStyleSheet()
         ".media-controls.mac.inline:not(.audio) .controls-bar.top-left {"
         "    border-radius: var(--inline-controls-border-radius);"
         "}"
+        "/* Hide top-right controls bar to prevent overlapping volume slider */"
+        ".media-controls.mac.inline:not(.audio) .controls-bar.top-right {"
+        "    display: none !important;"
+        "}"
         ".media-controls.mac.inline:not(.audio) {"
         "    display: flex;"
         "    flex-direction: column;"
@@ -475,11 +479,7 @@ static const String& macOSInlineMediaControlsStyleSheet()
         "    min-width: fit-content;"
         "}"
         ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .time-control {"
-        "    flex: 1 1 0;"
-        "    justify-content: center;"
-        "    min-width: 0;"
-        "    max-width: calc(100% - 200px);"
-        "    margin-inline: 12px;"
+        "    max-width: 540px;"
         "}"
         ".media-controls.mac.inline:not(.audio) > .controls-bar.bottom > .right-cluster {"
         "    flex: 0 0 auto;"
@@ -489,7 +489,7 @@ static const String& macOSInlineMediaControlsStyleSheet()
         ".media-controls.mac.inline:not(.audio) .buttons-container.right {"
         "    position: relative !important;"
         "    right: auto !important;"
-        "    left: 35px !important;"
+        "    left: 30px !important;"
         "    top: auto !important;"
         "    bottom: auto !important;"
         "    display: flex !important;"
@@ -499,7 +499,6 @@ static const String& macOSInlineMediaControlsStyleSheet()
         ".media-controls.mac.inline:not(.audio) .controls-bar.bottom .time-control .slider,"
         ".media-controls.mac.inline:not(.audio) .controls-bar.bottom .time-control .scrubber{"
         "  display: flex;"
-        "  flex: 1 1 auto;"
         "  max-width: 452px;"
         "  min-width: 0px;"
         "  position: relative;"
@@ -1800,7 +1799,7 @@ bool RenderThemeCocoa::paintColorWellDecorationsForVectorBasedControls(const Ren
     GraphicsContextStateSaver stateSaver(context);
     context.clip(rect);
 
-    const auto zoomFactor = box.style().zoom();
+    const auto zoomFactor = Style::evaluate<float>(box.style().zoom());
     const auto strokeThickness = 3.f * zoomFactor;
 
     constexpr std::array colorStops {
@@ -2873,9 +2872,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) - glyphPaddingEnd);
     else
-        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), box.style().usedZoomForLength()) + glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().borderEndWidth(), Style::ZoomNeeded { }) + glyphPaddingEnd);
 
     if (!isHorizontalWritingMode)
         glyphOrigin = glyphOrigin.transposedPoint();

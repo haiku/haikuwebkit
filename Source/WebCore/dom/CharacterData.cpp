@@ -87,8 +87,8 @@ static ContainerNode::ChildChange makeChildChange(CharacterData& characterData, 
     return {
         ContainerNode::ChildChange::Type::TextChanged,
         nullptr,
-        RefPtr { ElementTraversal::previousSibling(characterData) }.unsafeGet(),
-        RefPtr { ElementTraversal::nextSibling(characterData) }.unsafeGet(),
+        ElementTraversal::previousSibling(characterData),
+        ElementTraversal::nextSibling(characterData),
         source,
         ContainerNode::ChildChange::AffectsElements::No
     };

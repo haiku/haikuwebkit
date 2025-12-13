@@ -76,7 +76,7 @@ private:
     bool shouldPaintOverlayIntoLayer(Page&, RegionType) const;
 
     RegionOverlay* regionOverlayForPage(Page&, RegionType) const;
-    RegionOverlay& ensureRegionOverlayForPage(Page&, RegionType);
+    Ref<RegionOverlay> ensureRegionOverlayForPage(Page&, RegionType);
 
     WeakHashMap<Page, Vector<RefPtr<RegionOverlay>>> m_pageRegionOverlays;
 

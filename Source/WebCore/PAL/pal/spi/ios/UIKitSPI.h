@@ -204,7 +204,7 @@ typedef NS_ENUM(NSInteger, _UIDataOwner) {
 + (UIColor *)tableCellDefaultSelectionTintColor;
 @end
 
-#if __has_include(<UIFoundation/NSTextTable.h>)
+#if __has_include(<UIFoundation/NSTextTable.h>) && (!PLATFORM(MACCATALYST) || __has_include(<UIKit/NSTextTable.h>))
 #import <UIFoundation/NSTextTable.h>
 #else
 

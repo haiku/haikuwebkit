@@ -45,7 +45,7 @@ public:
 
     static_assert(sizeof(Pair) <= 4 * sizeof(uint64_t), "Don't use SmallMap with large types. It probably wastes memory.");
 
-    Value& ensure(const Key& key, NOESCAPE const auto& functor)
+    Value& ensure(const Key& key, NOESCAPE const auto& functor) LIFETIME_BOUND
     {
         ASSERT(Map::isValidKey(key));
         if (std::holds_alternative<std::monostate>(m_storage)) {
@@ -73,7 +73,7 @@ public:
             map->remove(key);
     }
 
-    const Value* get(const Key& key) const
+    const Value* get(const Key& key) const LIFETIME_BOUND
     {
         ASSERT(Map::isValidKey(key));
         if (auto* pair = std::get_if<Pair>(&m_storage)) {
@@ -108,7 +108,7 @@ public:
         });
     }
 
-    const Storage& rawStorage() const { return m_storage; }
+    const Storage& rawStorage() const LIFETIME_BOUND { return m_storage; }
 
 private:
     Storage m_storage;

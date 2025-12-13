@@ -229,7 +229,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             }
         });
     }
-    return protectedSelf->_parent.get().unsafeGet();
+    return protectedSelf->_parent.getAutoreleased();
 }
 
 ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN

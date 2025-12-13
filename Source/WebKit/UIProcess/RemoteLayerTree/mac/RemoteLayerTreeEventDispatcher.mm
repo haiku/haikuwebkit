@@ -26,7 +26,7 @@
 #import "config.h"
 #import "RemoteLayerTreeEventDispatcher.h"
 
-#if PLATFORM(MAC) && ENABLE(SCROLLING_THREAD)
+#if PLATFORM(MAC)
 
 #import "DisplayLink.h"
 #import "Logging.h"
@@ -619,6 +619,10 @@ void RemoteLayerTreeEventDispatcher::renderingUpdateComplete()
 
     Locker locker { m_scrollingTreeLock };
 
+#if ENABLE(THREADED_ANIMATIONS)
+    updateAnimations();
+#endif
+
     if (m_state == SynchronizationState::InRenderingUpdate)
         m_stateCondition.notifyOne();
 
@@ -656,14 +660,14 @@ void RemoteLayerTreeEventDispatcher::animationsWereRemovedFromNode(RemoteLayerTr
         animationStack->clear(node.protectedLayer().get());
 }
 
-void RemoteLayerTreeEventDispatcher::updateTimelineRegistration(WebCore::ProcessIdentifier processIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelineRepresentations, MonotonicTime now)
+void RemoteLayerTreeEventDispatcher::updateTimelinesRegistration(WebCore::ProcessIdentifier processIdentifier, const WebCore::AcceleratedTimelinesUpdate& timelinesUpdate, MonotonicTime now)
 {
     assertIsHeld(m_animationLock);
     if (auto scrollingTree = this->scrollingTree())
-        scrollingTree->updateTimelineRegistration(processIdentifier, timelineRepresentations);
+        scrollingTree->updateTimelinesRegistration(processIdentifier, timelinesUpdate);
     if (!m_monotonicTimelineRegistry)
         m_monotonicTimelineRegistry = makeUnique<RemoteMonotonicTimelineRegistry>();
-    m_monotonicTimelineRegistry->update(processIdentifier, timelineRepresentations, now);
+    m_monotonicTimelineRegistry->update(processIdentifier, timelinesUpdate, now);
     if (m_monotonicTimelineRegistry->isEmpty())
         m_monotonicTimelineRegistry = nullptr;
 }
@@ -682,7 +686,7 @@ RefPtr<const RemoteAnimationTimeline> RemoteLayerTreeEventDispatcher::timeline(c
 
 void RemoteLayerTreeEventDispatcher::updateAnimations()
 {
-    ASSERT(!isMainRunLoop());
+    ASSERT(isMainRunLoop() || ScrollingThread::isCurrentThread());
     Locker lock { m_animationLock };
 
     // FIXME: Rather than using 'now' at the point this is called, we
@@ -694,7 +698,7 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
     auto animationStacks = std::exchange(m_animationStacks, { });
     for (auto [layerID, currentAnimationStack] : animationStacks) {
         Ref animationStack = currentAnimationStack;
-        animationStack->applyEffectsFromScrollingThread();
+        animationStack->applyEffects();
 
         // We can clear the effect stack if it's empty, but the previous
         // call to applyEffects() is important so that the base values
@@ -712,6 +716,13 @@ RefPtr<const RemoteAnimationStack> RemoteLayerTreeEventDispatcher::animationStac
     if (it != m_animationStacks.end())
         return it->value.ptr();
     return nullptr;
+}
+
+HashSet<Ref<RemoteProgressBasedTimeline>> RemoteLayerTreeEventDispatcher::timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID scrollingNodeID)
+{
+    if (auto scrollingTree = this->scrollingTree())
+        return scrollingTree->timelinesForScrollingNodeIDForTesting(scrollingNodeID);
+    return { };
 }
 #endif
 
@@ -821,4 +832,4 @@ void RemoteLayerTreeEventDispatcher::flushMomentumEventLoggingSoon()
 
 } // namespace WebKit
 
-#endif // PLATFORM(MAC) && ENABLE(SCROLLING_THREAD)
+#endif // PLATFORM(MAC)

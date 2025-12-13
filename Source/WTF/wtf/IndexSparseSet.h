@@ -103,7 +103,7 @@ public:
 
     void validate();
     
-    const ValueList& values() const { return m_values; }
+    const ValueList& values() const LIFETIME_BOUND { return m_values; }
 
 private:
     Vector<unsigned, 0, OverflowHandler, 1> m_map;

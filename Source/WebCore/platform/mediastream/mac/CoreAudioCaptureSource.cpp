@@ -64,7 +64,7 @@ namespace WebCore {
 #if PLATFORM(MAC)
 CoreAudioCaptureSourceFactory& CoreAudioCaptureSourceFactory::singleton()
 {
-    static NeverDestroyed<CoreAudioCaptureSourceFactory> factory;
+    static NeverDestroyed<Ref<CoreAudioCaptureSourceFactory>> factory = adoptRef(*new CoreAudioCaptureSourceFactory);
     return factory.get();
 }
 #endif

@@ -73,7 +73,6 @@ public:
 
     AddStatus addSourceBuffer(const ContentType&, const MediaSourceConfiguration&, RefPtr<SourceBufferPrivate>&) final;
     void durationChanged(const MediaTime&) final;
-    void markEndOfStream(EndOfStreamStatus) final;
 
     FloatSize naturalSize() const;
 

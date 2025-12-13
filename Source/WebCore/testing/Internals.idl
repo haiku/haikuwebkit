@@ -500,6 +500,14 @@ enum ContentsFormat {
 
 [
     ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
+    JSGenerateToJSObject,
+] dictionary ScrollingNodeID {
+    unsigned long long nodeIdentifier;
+    unsigned long long processIdentifier;
+};
+
+[
+    ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
     LegacyNoInterfaceObject,
 ] interface Internals {
     DOMString address(Node node);
@@ -566,6 +574,8 @@ enum ContentsFormat {
     readonly attribute double animationsInterval;
 
     // Web Animations testing.
+    unsigned long long identifierForTimeline(AnimationTimeline timeline);
+    ScrollingNodeID scrollingNodeIDForTimeline(AnimationTimeline timeline);
     sequence<AcceleratedAnimation> acceleratedAnimationsForElement(Element element);
     unsigned long numberOfAnimationTimelineInvalidations();
     double timeToNextAnimationTick(WebAnimation animation);
@@ -792,7 +802,7 @@ enum ContentsFormat {
     unsigned long long horizontalScrollbarLayerID(optional Node? node = null);
     unsigned long long verticalScrollbarLayerID(optional Node? node = null);
     
-    sequence<unsigned long long> scrollingNodeIDForNode(optional Node? node = null);
+    ScrollingNodeID scrollingNodeIDForNode(optional Node? node = null);
 
     // Flags for platformLayerTreeAsText.
     const unsigned short PLATFORM_LAYER_TREE_DEBUG = 1;
@@ -1482,6 +1492,8 @@ enum ContentsFormat {
     [Conditional=MODEL_ELEMENT] undefined disableModelLoadDelaysForTesting();
     [Conditional=MODEL_ELEMENT] DOMString modelElementState(HTMLModelElement element);
     [Conditional=MODEL_ELEMENT] boolean isModelElementIntersectingViewport(HTMLModelElement element);
+
+    unsigned long fileConnectionHandleCount(FileSystemHandle handle);
 
     // Navigation API rate limiter testing
     undefined setNavigationRateLimiterParameters(DOMWindow window, unsigned long maxNavigations, double windowDurationSeconds);

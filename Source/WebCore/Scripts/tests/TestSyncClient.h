@@ -27,6 +27,8 @@
 #include "DOMAudioSession.h"
 #include <wtf/URL.h>
 #include "StringifyThis"
+#include <wtf/HashSet.h>
+#include <wtf/URL.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -50,6 +52,7 @@ public:
     void broadcastIsAutofocusProcessedToOtherProcesses(const bool&);
     void broadcastUserDidInteractWithPageToOtherProcesses(const bool&);
     void broadcastAnotherOneToOtherProcesses(const StringifyThis&);
+    void broadcastMultipleHeadersToOtherProcesses(const HashSet<URL>&);
 
 protected:
     virtual void broadcastTestSyncDataToOtherProcesses(const TestSyncSerializationData&) { }

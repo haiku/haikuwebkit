@@ -414,7 +414,7 @@ Seconds AnimationEffect::timeToNextTick(const BasicEffectTiming& timing)
     return Seconds::infinity();
 }
 
-void AnimationEffect::animationTimelineDidChange(const AnimationTimeline*)
+void AnimationEffect::animationTimelineDidChange()
 {
     m_timingDidMutate = true;
 }

@@ -58,15 +58,15 @@ public:
 
     bool isValid() const { return static_cast<bool>(m_data); }
 
-    T* get() const
+    T* get() const LIFETIME_BOUND
     {
         if (!isValid())
             return nullptr;
-        return **m_data;
+        return &**m_data;
     }
 
-    T& operator*() const { RELEASE_ASSERT(isValid()); return ***m_data; }
-    T* operator->() const { RELEASE_ASSERT(isValid()); return **m_data; }
+    T& operator*() const LIFETIME_BOUND { RELEASE_ASSERT(isValid()); return **m_data; }
+    T* operator->() const LIFETIME_BOUND { RELEASE_ASSERT(isValid()); return &**m_data; }
 
     explicit operator bool() const { return isValid(); }
 

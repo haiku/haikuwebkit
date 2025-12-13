@@ -55,7 +55,7 @@ Ref<CredentialRequestCoordinator> CredentialRequestCoordinator::create(Ref<Crede
 }
 
 CredentialRequestCoordinator::CredentialRequestCoordinator(Ref<CredentialRequestCoordinatorClient>&& client, Page& page)
-    : ActiveDOMObject(page.localTopDocument().get())
+    : ActiveDOMObject(page.localTopDocument())
     , m_client(WTFMove(client))
     , m_page(page)
 {
@@ -267,7 +267,7 @@ void CredentialRequestCoordinator::finalizeDigitalCredential(const DigitalCreden
         return;
     }
 
-    auto document = m_page->localTopDocument();
+    RefPtr document = m_page->localTopDocument();
     if (!document) {
         m_currentPromise->reject(ExceptionCode::InvalidStateError, "No Document."_s);
         m_currentPromise.reset();

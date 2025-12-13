@@ -210,6 +210,8 @@ WI.CSSManager = class CSSManager extends WI.Object
             return WI.unlocalizedString("::backdrop");
         case CSSManager.PseudoSelectorNames.SpellingError:
             return WI.unlocalizedString("::spelling-error");
+        case CSSManager.PseudoSelectorNames.Checkmark:
+            return WI.unlocalizedString("::checkmark");
         case CSSManager.PseudoSelectorNames.TargetText:
             return WI.unlocalizedString("::target-text");
         case CSSManager.PseudoSelectorNames.ViewTransition:
@@ -856,6 +858,7 @@ WI.CSSManager.PseudoSelectorNames = {
     After: "after",
     Before: "before",
     Backdrop: "backdrop",
+    Checkmark: "checkmark",
     FirstLetter: "first-letter",
     FirstLine: "first-line",
     Highlight: "highlight",

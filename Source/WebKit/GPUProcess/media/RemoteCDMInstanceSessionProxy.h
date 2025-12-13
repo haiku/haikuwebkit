@@ -48,6 +48,7 @@ public:
     virtual ~RemoteCDMInstanceSessionProxy();
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
 
+    // WebCore::CDMInstanceSessionClient, IPC::MessageReceiver.
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 

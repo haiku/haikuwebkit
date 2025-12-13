@@ -721,26 +721,14 @@ imported/w3c/web-platform-tests/media-source/ [ Pass ]
 imported/w3c/web-platform-tests/media-source/dedicated-worker/ [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/URL-createObjectURL-revoke.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-append-buffer.html [ Skip ]
-webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-appendbuffer-quota-exceeded.html [ Skip ]
-webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-config-change-mp4-av-framesize.html [ Skip ]
-webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-endofstream.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-errors.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-is-type-supported.html [ Skip ]
-webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-removesourcebuffer.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-seek-beyond-duration.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-sequencemode-append-buffer.html [ Skip ]
-webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-sourcebuffer-mode-timestamps.html [ Skip ]
 webkit.org/b/161725 imported/w3c/web-platform-tests/media-source/mediasource-sourcebuffer-mode.html [ Skip ]
 webkit.org/b/214166 imported/w3c/web-platform-tests/media-source/idlharness.window.html [ Skip ]
 
-# Requires WebM
-imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-a-bitrate.html [ Skip ]
-imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-audio-bitrate.html [ Skip ]
-imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-framesize.html [ Skip ]
-imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-video-bitrate.html [ Skip ]
-
 # Skipped in W3C Web Platform Test manifest
-imported/w3c/web-platform-tests/media-source/mediasource-getvideoplaybackquality.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-sourcebuffer-trackdefaults.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-trackdefault.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-trackdefaultlist.html [ Skip ]
@@ -1060,10 +1048,6 @@ webkit.org/b/168087 media/video-zoom.html [ Pass Failure ]
 
 # rdar://problem/23643423
 [ Debug ] fast/frames/exponential-frames.html [ Skip ]
-
-webkit.org/b/168094 imported/w3c/web-platform-tests/media-source/SourceBuffer-abort.html [ Pass Failure ]
-webkit.org/b/167975 imported/w3c/web-platform-tests/media-source/SourceBuffer-abort-removed.html [ Pass Failure ]
-webkit.org/b/187911 imported/w3c/web-platform-tests/media-source/SourceBuffer-abort-readyState.html [ Pass Failure ]
 
 [ Debug ] imported/w3c/web-platform-tests/hr-time/idlharness.any.html [ Slow ]
 
@@ -1418,9 +1402,6 @@ webkit.org/b/200128 imported/w3c/web-platform-tests/html/semantics/embedded-cont
 
 # See bug 232916; this test can't pass as we do not support mid-stream resolution change.
 webkit.org/b/231084 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-video-element/resize-during-playback.html [ Skip ]
-
-# The test runner is failing in an unrelated, unexplained, invisible to the human eye, 2 pixels difference.
-webkit.org/b/201401 imported/w3c/web-platform-tests/media-source/mediasource-video-is-visible.html [ Skip ]
 
 webkit.org/b/198867 webgl/many-contexts.html [ Skip ]
 
@@ -2532,10 +2513,10 @@ webkit.org/b/300994 fast/animation/request-animation-frame-throttling-aggressive
 webkit.org/b/300997 webrtc/filtering-ice-candidate-after-reload.html [ Pass Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=300996 [ macOS Tahoe ] 4 fast/forms tests (layout-tests) are constant image failures
-[ Tahoe Debug ] fast/forms/switch/pointer-tracking.html [ ImageOnlyFailure ]
-[ Tahoe Debug ] fast/forms/switch/click-animation.html [ ImageOnlyFailure ]
-[ Tahoe Debug ] fast/forms/switch/click-animation-redundant-disabled.html [ ImageOnlyFailure ]
-[ Tahoe Debug ] fast/forms/switch/click-animation-redundant-checked.html  [ ImageOnlyFailure ]
+[ Tahoe ] fast/forms/switch/pointer-tracking.html [ ImageOnlyFailure ]
+[ Tahoe ] fast/forms/switch/click-animation.html [ ImageOnlyFailure ]
+[ Tahoe ] fast/forms/switch/click-animation-redundant-disabled.html [ ImageOnlyFailure ]
+[ Tahoe ] fast/forms/switch/click-animation-redundant-checked.html  [ ImageOnlyFailure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=301002 [ macOS Tahoe ] fast/css/apple-system-control-colors.html is a constant text failure
 [ Tahoe Debug ] fast/css/apple-system-control-colors.html [ Failure ]

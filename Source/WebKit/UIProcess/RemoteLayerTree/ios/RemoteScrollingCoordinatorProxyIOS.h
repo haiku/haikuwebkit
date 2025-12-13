@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if PLATFORM(IOS_FAMILY) && ENABLE(ASYNC_SCROLLING)
+#if PLATFORM(IOS_FAMILY)
 
 #include "RemoteScrollingCoordinatorProxy.h"
 #include <wtf/TZoneMalloc.h>
@@ -66,17 +66,16 @@ public:
     CGPoint nearestActiveContentInsetAdjustedSnapOffset(CGFloat topInset, const CGPoint&) const;
 
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-    void removeDestroyedLayerIDs(const Vector<WebCore::PlatformLayerIdentifier>&);
-    HashSet<WebCore::PlatformLayerIdentifier> fixedScrollingNodeLayerIDs() const;
-    using OverlayRegionCandidatesMap = HashMap<RetainPtr<WKBaseScrollView>, HashSet<WebCore::PlatformLayerIdentifier>>;
-    OverlayRegionCandidatesMap overlayRegionCandidates() const;
+    void updateOverlayRegions(const Vector<WebCore::PlatformLayerIdentifier>& destroyedLayers = { }) override;
+    void overlayRegionsEnabledChanged() override;
 #endif
 
 #if ENABLE(THREADED_ANIMATIONS)
     void animationsWereAddedToNode(RemoteLayerTreeNode&) override WTF_IGNORES_THREAD_SAFETY_ANALYSIS;
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&) override;
-    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime) override;
+    void updateTimelinesRegistration(WebCore::ProcessIdentifier, const WebCore::AcceleratedTimelinesUpdate&, MonotonicTime) override;
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const override;
+    HashSet<Ref<RemoteProgressBasedTimeline>> timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID) const override;
     void progressBasedTimelinesWereUpdatedForNode(const WebCore::ScrollingTreeScrollingNode&) override;
     void updateAnimations();
 #endif
@@ -93,6 +92,11 @@ private:
     void connectStateNodeLayers(WebCore::ScrollingStateTree&, const RemoteLayerTreeHost&) override;
     void establishLayerTreeScrollingRelations(const RemoteLayerTreeHost&) override;
 
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+    void selectOverlayRegionScrollViewIfNeeded();
+    void updateOverlayRegionLayers();
+#endif
+
     WebCore::FloatRect currentLayoutViewport() const;
 
     bool shouldSnapForMainFrameScrolling(WebCore::ScrollEventAxis) const;
@@ -103,6 +107,10 @@ private:
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
     HashMap<WebCore::PlatformLayerIdentifier, WebCore::ScrollingNodeID> m_fixedScrollingNodesByLayerID;
     HashMap<WebCore::PlatformLayerIdentifier, WebCore::ScrollingNodeID> m_scrollingNodesByLayerID;
+
+    bool m_needsOverlayRegionScrollViewSelection { false };
+    HashSet<WebCore::IntRect> m_lastOverlayRegionRects;
+    RetainPtr<WKBaseScrollView> m_selectedOverlayRegionScrollView;
 #endif
 
 #if ENABLE(THREADED_ANIMATIONS)
@@ -115,4 +123,4 @@ private:
 
 SPECIALIZE_TYPE_TRAITS_REMOTE_SCROLLING_COORDINATOR_PROXY(RemoteScrollingCoordinatorProxyIOS, isRemoteScrollingCoordinatorProxyIOS());
 
-#endif // PLATFORM(IOS_FAMILY) && ENABLE(ASYNC_SCROLLING)
+#endif // PLATFORM(IOS_FAMILY)

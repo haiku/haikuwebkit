@@ -150,7 +150,7 @@ ExceptionOr<Ref<JSC::ArrayBuffer>> CompressionStreamEncoder::compressZlib(std::s
         storage.append(output);
     }
 
-    RefPtr compressedData = storage.takeAsArrayBuffer();
+    RefPtr compressedData = storage.takeBufferAsArrayBuffer();
     if (!compressedData)
         return Exception { ExceptionCode::OutOfMemoryError };
 

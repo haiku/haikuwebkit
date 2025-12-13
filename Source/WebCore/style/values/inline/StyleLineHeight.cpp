@@ -27,8 +27,10 @@
 #include "StyleLineHeight.h"
 
 #include "AnimationUtilities.h"
+
+#include "CSSPropertyParserConsumer+Font.h"
+#include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
-#include "StyleBuilderConverter.h"
 #include "StyleLengthWrapper+Blending.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"
 #include "StylePrimitiveNumericTypes+CSSValueConversion.h"
@@ -53,7 +55,7 @@ auto CSSValueConversion<LineHeight>::operator()(BuilderState& state, const CSSPr
 
     auto conversionData = state
         .cssToLengthConversionData()
-        .copyForLineHeight(zoomWithTextZoomFactor(state));
+        .copyForLineHeight(state.zoomWithTextZoomFactor());
 
     // If EvaluationTimeZoom is not enabled then we will scale the lengths in the
     // calc values when we create the CalculationValue below by using the zoom from conversionData.
@@ -68,9 +70,19 @@ auto CSSValueConversion<LineHeight>::operator()(BuilderState& state, const CSSPr
 
     if (primitiveValue.isLength() || primitiveValue.isCalculatedPercentageWithLength()) {
         double fixedValue = 0;
-        if (primitiveValue.isLength())
+        if (primitiveValue.isLength()) {
+            auto lengthUnit = CSS::toLengthUnit(primitiveValue.primitiveType());
             fixedValue = primitiveValue.resolveAsLength(conversionData);
-        else
+
+            // Apply text zoom to font-relative units when evaluationTimeZoomEnabled.
+            // This matches the behavior of percentage-based line-height (see primitiveValue.isPercentage() case below).
+            // When evaluationTimeZoomEnabled is true, computedSizeForRangeZoomOption returns
+            // the unzoomed font size, so we need to multiply by text zoom for font-relative units.
+            if (lengthUnit && CSS::isFontOrRootFontRelativeLength(*lengthUnit)) {
+                auto textZoom = evaluationTimeZoomEnabled(state) ? conversionData.zoom() : 1.0f;
+                fixedValue *= textZoom;
+            }
+        } else
             fixedValue = primitiveValue.protectedCssCalcValue()->createCalculationValue(conversionData, CSSCalcSymbolTable { })->evaluate(state.style().fontDescription().computedSizeForRangeZoomOption(conversionData.rangeZoomOption()), zoomFactor());
 
         if (multiplier != 1.0f)

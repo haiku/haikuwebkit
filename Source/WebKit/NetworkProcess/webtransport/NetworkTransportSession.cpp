@@ -71,6 +71,16 @@ void NetworkTransportSession::streamReceiveBytes(WebCore::WebTransportStreamIden
     send(Messages::WebTransportSession::StreamReceiveBytes(identifier, bytes, withFin, WTFMove(exception)));
 }
 
+void NetworkTransportSession::streamReceiveError(WebCore::WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    send(Messages::WebTransportSession::StreamReceiveError(identifier, errorCode));
+}
+
+void NetworkTransportSession::streamSendError(WebCore::WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    send(Messages::WebTransportSession::StreamSendError(identifier, errorCode));
+}
+
 void NetworkTransportSession::receiveIncomingUnidirectionalStream(WebCore::WebTransportStreamIdentifier identifier)
 {
     send(Messages::WebTransportSession::ReceiveIncomingUnidirectionalStream(identifier));

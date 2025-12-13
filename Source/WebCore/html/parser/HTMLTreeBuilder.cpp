@@ -1294,8 +1294,7 @@ void HTMLTreeBuilder::processStartTag(AtomHTMLToken&& token)
         case TagName::tbody:
         case TagName::tfoot:
         case TagName::thead:
-            // FIXME: This is slow.
-            if (!m_tree.openElements().inTableScope(HTML::tbody) && !m_tree.openElements().inTableScope(HTML::thead) && !m_tree.openElements().inTableScope(HTML::tfoot)) {
+            if (!m_tree.openElements().hasAnyInTableScope({ HTML::tbody, HTML::thead, HTML::tfoot })) {
                 ASSERT(isParsingFragmentOrTemplateContents());
                 parseError(token);
                 return;
@@ -1349,8 +1348,7 @@ void HTMLTreeBuilder::processStartTag(AtomHTMLToken&& token)
         case TagName::tbody:
         case TagName::tfoot:
         case TagName::thead:
-            // FIXME: This could be more efficient.
-            if (!m_tree.openElements().inTableScope(HTML::td) && !m_tree.openElements().inTableScope(HTML::th)) {
+            if (!m_tree.openElements().hasAnyInTableScope({ HTML::td, HTML::th })) {
                 ASSERT(isParsingFragment());
                 parseError(token);
                 return;
@@ -1831,8 +1829,7 @@ void HTMLTreeBuilder::processEndTagForInTableBody(AtomHTMLToken&& token)
         m_insertionMode = InsertionMode::InTable;
         return;
     case TagName::table:
-        // FIXME: This is slow.
-        if (!m_tree.openElements().inTableScope(HTML::tbody) && !m_tree.openElements().inTableScope(HTML::thead) && !m_tree.openElements().inTableScope(HTML::tfoot)) {
+        if (!m_tree.openElements().hasAnyInTableScope({ HTML::tbody, HTML::thead, HTML::tfoot })) {
             ASSERT(isParsingFragmentOrTemplateContents());
             parseError(token);
             return;

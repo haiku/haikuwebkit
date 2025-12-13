@@ -3212,7 +3212,7 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
             marginEndLength = 0_css_px;
     }
 
-    if (isGridItem() && downcast<RenderGrid>(containingBlock).isComputingTrackSizes()) {
+    if (auto* grid = dynamicDowncast<RenderGrid>(containingBlock); grid && grid->isComputingTrackSizes()) {
         if (marginStartLength.isAuto())
             marginStartLength = 0_css_px;
         if (marginEndLength.isAuto())
@@ -4154,8 +4154,10 @@ void RenderBox::computeOutOfFlowPositionedLogicalWidth(LogicalExtentComputedValu
     if (usedWidth < usedMinWidth)
         usedWidth = usedMinWidth;
 
+    bool hasWidthBorderBoxAspectRatio = style().hasAspectRatio() && style().boxSizingForAspectRatio() == BoxSizing::BorderBox && style().logicalWidth().isAuto();
+
     // Set the final width value.
-    computedValues.m_extent = usedWidth + inlineConstraints.bordersPlusPadding();
+    computedValues.m_extent = hasWidthBorderBoxAspectRatio ? usedWidth : usedWidth + inlineConstraints.bordersPlusPadding();
 
     // Calculate the position.
     inlineConstraints.resolvePosition(computedValues);

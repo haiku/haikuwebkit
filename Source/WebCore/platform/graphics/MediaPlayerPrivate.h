@@ -47,6 +47,8 @@ namespace WebCore {
 class MessageClientForTesting;
 class VideoFrame;
 
+enum class MediaPlaybackTargetType : uint8_t;
+
 // MediaPlayerPrivateInterface subclasses should be ref-counted, but each subclass may choose whether
 // to be RefCounted or ThreadSafeRefCounted. Therefore, each subclass must implement a pair of
 // virtual ref()/deref() methods. See NullMediaPlayerPrivate for an example.
@@ -179,6 +181,10 @@ public:
     virtual MediaPlayer::NetworkState networkState() const = 0;
     virtual MediaPlayer::ReadyState readyState() const = 0;
 
+#if ENABLE(MEDIA_SOURCE)
+    virtual void mediaSourceHasRetrievedAllData() { };
+#endif
+
     WEBCORE_EXPORT virtual const PlatformTimeRanges& seekable() const;
     virtual MediaTime maxTimeSeekable() const { return MediaTime::zeroTime(); }
     virtual MediaTime minTimeSeekable() const { return MediaTime::zeroTime(); }
@@ -218,7 +224,7 @@ public:
     virtual bool wirelessVideoPlaybackDisabled() const { return true; }
     virtual void setWirelessVideoPlaybackDisabled(bool) { }
 
-    virtual bool canPlayToWirelessPlaybackTarget() const { return false; }
+    virtual OptionSet<MediaPlaybackTargetType> supportedPlaybackTargetTypes() const;
     virtual bool isCurrentPlaybackTargetWireless() const { return false; }
     virtual void setWirelessPlaybackTarget(Ref<MediaPlaybackTarget>&&) { }
 

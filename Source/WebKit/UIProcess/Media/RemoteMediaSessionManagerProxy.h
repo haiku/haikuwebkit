@@ -85,6 +85,9 @@ public:
 
     const Ref<WebProcessProxy> process() const { return m_process; }
 
+    void addRemoteMediaSessionManager(WebCore::PageIdentifier);
+    void removeRemoteMediaSessionManager(WebCore::PageIdentifier);
+
 private:
     RemoteMediaSessionManagerProxy(WebCore::PageIdentifier, WebProcessProxy&);
 
@@ -93,6 +96,14 @@ private:
     void removeMediaSession(RemoteMediaSessionState&&);
     void setCurrentMediaSession(RemoteMediaSessionState&&);
     void updateMediaSessionState();
+    void mediaSessionStateChanged(WebKit::RemoteMediaSessionState&&);
+    void mediaSessionWillBeginPlayback(RemoteMediaSessionState&&, CompletionHandler<void(bool)>&&);
+
+    void setCurrentSession(WebCore::PlatformMediaSessionInterface&) final;
+
+    void addMediaSessionRestriction(WebCore::PlatformMediaSessionMediaType, WebCore::MediaSessionRestrictions);
+    void removeMediaSessionRestriction(WebCore::PlatformMediaSessionMediaType, WebCore::MediaSessionRestrictions);
+    void resetMediaSessionRestrictions();
 
 #if PLATFORM(COCOA)
     void remoteAudioHardwareDidBecomeActive();
@@ -125,7 +136,8 @@ private:
     CategoryType categoryOverride() const final  { return m_audioConfiguration.categoryOverride; }
 #endif
 
-    RefPtr<WebCore::PlatformMediaSessionInterface> findSession(RemoteMediaSessionState&);
+    void forEachRemoteSessionManager(NOESCAPE const Function<void(WebCore::PageIdentifier)>&);
+    RefPtr<WebCore::PlatformMediaSessionInterface> findAndUpdateSession(RemoteMediaSessionState&);
     Ref<RemoteMediaSessionManagerAudioHardwareListener> ensureAudioHardwareListenerProxy(WebCore::AudioHardwareListener::Client&);
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
@@ -141,8 +153,9 @@ private:
 #endif
 
     const Ref<WebProcessProxy> m_process;
-    WebCore::PageIdentifier m_topPageID;
+    WebCore::PageIdentifier m_localPageID;
     HashMap<WebCore::MediaSessionIdentifier, Ref<RemoteMediaSessionProxy>> m_sessionProxies;
+    HashSet<WebCore::PageIdentifier> m_remoteSessionManagerPages;
 
 #if PLATFORM(COCOA)
     RefPtr<RemoteMediaSessionManagerAudioHardwareListener> m_audioHardwareListenerProxy;
@@ -156,6 +169,7 @@ private:
 #endif
 
     bool m_isInterruptedForTesting { false };
+    bool m_isInSetCurrentSession { false };
 };
 
 #if !RELEASE_LOG_DISABLED

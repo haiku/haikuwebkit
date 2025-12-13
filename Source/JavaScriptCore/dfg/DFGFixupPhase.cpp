@@ -2739,7 +2739,7 @@ private:
                     m_graph.varArgChild(node, 0)->prediction(),
                     m_graph.varArgChild(node, 1)->prediction(),
                     SpecNone));
-
+            
             blessArrayOperation(m_graph.varArgChild(node, 0), m_graph.varArgChild(node, 1), m_graph.varArgChild(node, 2));
             fixEdge<CellUse>(m_graph.varArgChild(node, 0));
             fixEdge<Int32Use>(m_graph.varArgChild(node, 1));

@@ -55,7 +55,7 @@ void DocumentPictureInPicture::exitPictureInPicture(Document& document, Ref<Defe
         return;
     }
 
-    HTMLVideoElementPictureInPicture::from(*element)->exitPictureInPicture(WTFMove(promise));
+    HTMLVideoElementPictureInPicture::protectedFrom(*element)->exitPictureInPicture(WTFMove(promise));
 }
 
 DocumentPictureInPicture* DocumentPictureInPicture::from(Document& document)

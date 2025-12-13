@@ -62,7 +62,7 @@ static RenderBoxModelObject* nextContinuation(const RenderBoxModelObject* render
     return renderer->inlineContinuation();
 }
 
-RenderBoxModelObject& RenderTreeBuilder::Inline::parentCandidateInContinuation(RenderInline& parent, const RenderObject* beforeChild)
+CheckedRef<RenderBoxModelObject> RenderTreeBuilder::Inline::parentCandidateInContinuation(RenderInline& parent, const RenderObject* beforeChild)
 {
     if (beforeChild && beforeChild->parent() == &parent)
         return parent;
@@ -71,15 +71,15 @@ RenderBoxModelObject& RenderTreeBuilder::Inline::parentCandidateInContinuation(R
     CheckedPtr current = nextContinuation(&parent);
     while (current) {
         if (beforeChild && beforeChild->parent() == current)
-            return current->firstChild() == beforeChild ? *previous.unsafeGet() : *current.unsafeGet();
+            return current->firstChild() == beforeChild ? previous.releaseNonNull() : current.releaseNonNull();
         auto next = nextContinuation(current.get());
         if (!next)
-            return !beforeChild && !current->firstChild() ? *previous.unsafeGet() : *current.unsafeGet();
+            return !beforeChild && !current->firstChild() ? previous.releaseNonNull() : current.releaseNonNull();
         previous = current;
         current = next;
     }
     ASSERT_NOT_REACHED();
-    return *previous.unsafeGet();
+    return previous.releaseNonNull();
 }
 
 static RenderPtr<RenderInline> cloneAsContinuation(RenderInline& renderer)
@@ -128,16 +128,16 @@ void RenderTreeBuilder::Inline::insertChildToContinuation(RenderInline& parent, 
     ASSERT(m_buildsContinuations);
 
     if (!beforeChild) {
-        auto& parentCandidate = parentCandidateInContinuation(parent, { });
-        auto* lastContinuation = nextContinuation(&parentCandidate);
+        CheckedRef parentCandidate = parentCandidateInContinuation(parent, { });
+        auto* lastContinuation = nextContinuation(parentCandidate.ptr());
         if (!lastContinuation) {
             // parentCandidate is the last continuation.
             return m_builder.attachIgnoringContinuation(parentCandidate, WTFMove(child));
         }
         // The inline box inside the "post" part of the continuation is the preferred parent but we may not be able to put this child in there.
-        auto& nextToLastContinuation = parentCandidate;
+        CheckedRef nextToLastContinuation = parentCandidate;
         auto childIsInline = newChildIsInline(parent, *child);
-        if (childIsInline == lastContinuation->isInline() || childIsInline != nextToLastContinuation.isInline() || child->isFloatingOrOutOfFlowPositioned())
+        if (childIsInline == lastContinuation->isInline() || childIsInline != nextToLastContinuation->isInline() || child->isFloatingOrOutOfFlowPositioned())
             return m_builder.attachIgnoringContinuation(*lastContinuation, WTFMove(child));
         return m_builder.attachIgnoringContinuation(nextToLastContinuation, WTFMove(child));
     }
@@ -168,8 +168,8 @@ void RenderTreeBuilder::Inline::insertChildToContinuation(RenderInline& parent, 
         return m_builder.attachIgnoringContinuation(parentCandidateInContinuation(parent, beforeChild), WTFMove(child));
     }
 
-    auto& parentCandidate = parentCandidateInContinuation(parent, beforeChild);
-    if (&parentCandidate == beforeChildContinuationAncestor)
+    CheckedRef parentCandidate = parentCandidateInContinuation(parent, beforeChild);
+    if (parentCandidate.ptr() == beforeChildContinuationAncestor)
         return m_builder.attachIgnoringContinuation(parentCandidate, WTFMove(child), beforeChild);
     // A continuation always consists of two potential candidates: an inline or an anonymous block box holding block children.
     bool childInline = newChildIsInline(parent, *child);
@@ -177,7 +177,7 @@ void RenderTreeBuilder::Inline::insertChildToContinuation(RenderInline& parent, 
     // minimal # of continuations needed for the inline.
     if (childInline == beforeChildContinuationAncestor->isInline() || beforeChild->isInline())
         return m_builder.attachIgnoringContinuation(*beforeChildContinuationAncestor, WTFMove(child), beforeChild);
-    if (parentCandidate.isInline() == childInline)
+    if (parentCandidate->isInline() == childInline)
         return m_builder.attachIgnoringContinuation(parentCandidate, WTFMove(child)); // Just treat like an append.
     return m_builder.attachIgnoringContinuation(*beforeChildContinuationAncestor, WTFMove(child), beforeChild);
 }
@@ -462,6 +462,7 @@ void RenderTreeBuilder::Inline::wrapRunsOfBlocksInAnonymousBlock(RenderInline& p
 
     SingleThreadWeakPtr<RenderBox> firstInRun;
     SingleThreadWeakPtr<RenderBox> lastInRun;
+    auto isSingleAnonymousBlockRun = false;
 
     auto wrapRunInAnonymousBlockIfNeeded = [&] {
         // FIXME: Removing wrapping requires changes how RenderBlockFlow handles block formatting state.
@@ -474,25 +475,44 @@ void RenderTreeBuilder::Inline::wrapRunsOfBlocksInAnonymousBlock(RenderInline& p
         m_builder.attachToRenderElementInternal(parent, WTFMove(newBlock), firstInRun.get());
         m_builder.moveChildren(parent, block, firstInRun.get(), lastInRun->nextSibling(), RenderTreeBuilder::NormalizeAfterInsertion::No);
 
-        // We might have wrapped existing anonymous blocks and they are now nested. Get rid of them,
+        // We might have wrapped existing anonymous blocks and they are now nested. Get rid of them.
         dropNestedAnonymousBlocks(block);
+    };
+
+    auto dropSingleAnonymousBlockIfNotNeeded = [&] {
+        ASSERT(firstInRun == lastInRun);
+        ASSERT(firstInRun->isAnonymousBlock());
+
+        auto hasInFlowChild = [&] {
+            for (auto& child : childrenOfType<RenderObject>(*firstInRun)) {
+                if (child.isInFlow())
+                    return true;
+            }
+            return false;
+        };
+        if (hasInFlowChild())
+            return;
+        m_builder.moveAllChildren(*firstInRun, parent, RenderTreeBuilder::NormalizeAfterInsertion::No);
+        auto emptyAnonymousBlock = m_builder.detachFromRenderElement(parent, *firstInRun, WillBeDestroyed::Yes);
     };
 
     for (CheckedPtr child = parent.firstChild() ; child; child = child->nextSibling()) {
         if (child->isInline()) {
-            wrapRunInAnonymousBlockIfNeeded();
+            !isSingleAnonymousBlockRun ? wrapRunInAnonymousBlockIfNeeded() : dropSingleAnonymousBlockIfNotNeeded();
             firstInRun = nullptr;
             lastInRun = nullptr;
+            isSingleAnonymousBlockRun = false;
             continue;
         }
         if (auto* blockChild = dynamicDowncast<RenderBox>(*child); blockChild && blockChild->isInFlow()) {
             // Floats and out-of-flow boxes are wrapped if they are in the middle of a block run.
+            isSingleAnonymousBlockRun = !firstInRun && blockChild->isAnonymousBlock();
             if (!firstInRun)
                 firstInRun = blockChild;
             lastInRun = blockChild;
         }
     }
-    wrapRunInAnonymousBlockIfNeeded();
+    !isSingleAnonymousBlockRun ? wrapRunInAnonymousBlockIfNeeded() : dropSingleAnonymousBlockIfNotNeeded();
 }
 
 }

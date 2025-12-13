@@ -1336,14 +1336,15 @@ void WebPage::sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier requestID
         localMainFrame->loader().prefetchDNSIfNeeded(element->absoluteLinkURL());
     }
 
+    RefPtr updatedNode = node;
     if (RefPtr area = dynamicDowncast<HTMLAreaElement>(*node)) {
-        node = area->imageElement().unsafeGet();
-        if (!node)
+        updatedNode = area->imageElement();
+        if (!updatedNode)
             return;
     }
 
 #if ENABLE(PDF_PLUGIN)
-    if (RefPtr pluginView = pluginViewForFrame(node->document().frame())) {
+    if (RefPtr pluginView = pluginViewForFrame(updatedNode->document().frame())) {
         if (auto rect = pluginView->highlightRectForTapAtPoint(point)) {
             auto highlightColor = RenderThemeIOS::singleton().platformTapHighlightColor();
             auto highlightQuads = Vector { FloatQuad { WTFMove(*rect) } };
@@ -1354,12 +1355,12 @@ void WebPage::sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier requestID
 #endif // ENABLE(PDF_PLUGIN)
 
     Vector<FloatQuad> quads;
-    if (RenderObject *renderer = node->renderer()) {
+    if (RenderObject *renderer = updatedNode->renderer()) {
         renderer->absoluteQuads(quads);
         auto& style = renderer->style();
         auto highlightColor = style.colorResolvingCurrentColor(style.tapHighlightColor());
-        if (!node->document().frame()->isMainFrame()) {
-            auto* view = node->document().frame()->view();
+        if (!updatedNode->document().frame()->isMainFrame()) {
+            auto* view = updatedNode->document().frame()->view();
             for (auto& quad : quads)
                 quad = view->contentsToRootView(quad);
         }
@@ -1368,7 +1369,7 @@ void WebPage::sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier requestID
         if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(*renderer))
             borderRadii = renderBox->borderRadii();
 
-        RefPtr element = dynamicDowncast<Element>(*node);
+        RefPtr element = dynamicDowncast<Element>(*updatedNode);
         bool nodeHasBuiltInClickHandling = element && (is<HTMLFormControlElement>(*element) || is<HTMLAnchorElement>(*element) || is<HTMLLabelElement>(*element) || is<HTMLSummaryElement>(*element) || element->isLink());
         send(Messages::WebPageProxy::DidGetTapHighlightGeometries(requestID, highlightColor, quads, roundedIntSize(borderRadii.topLeft()), roundedIntSize(borderRadii.topRight()), roundedIntSize(borderRadii.bottomLeft()), roundedIntSize(borderRadii.bottomRight()), nodeHasBuiltInClickHandling));
     }
@@ -2114,9 +2115,9 @@ IntRect WebPage::absoluteInteractionBounds(const Node& node)
     auto& style = renderer->style();
     FloatRect boundingBox = renderer->absoluteBoundingBoxRect(true /* use transforms*/);
     // This is wrong. It's subtracting borders after converting to absolute coords on something that probably doesn't represent a rectangular element.
-    boundingBox.move(WebCore::Style::evaluate<float>(style.borderLeftWidth(), style.usedZoomForLength()), WebCore::Style::evaluate<float>(style.borderTopWidth(), style.usedZoomForLength()));
-    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate<float>(style.borderLeftWidth(), style.usedZoomForLength()) - WebCore::Style::evaluate<float>(style.borderRightWidth(), style.usedZoomForLength()));
-    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate<float>(style.borderBottomWidth(), style.usedZoomForLength()) - WebCore::Style::evaluate<float>(style.borderTopWidth(), style.usedZoomForLength()));
+    boundingBox.move(WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }), WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
+    boundingBox.setWidth(boundingBox.width() - WebCore::Style::evaluate<float>(style.borderLeftWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderRightWidth(), WebCore::Style::ZoomNeeded { }));
+    boundingBox.setHeight(boundingBox.height() - WebCore::Style::evaluate<float>(style.borderBottomWidth(), WebCore::Style::ZoomNeeded { }) - WebCore::Style::evaluate<float>(style.borderTopWidth(), WebCore::Style::ZoomNeeded { }));
     return enclosingIntRect(boundingBox);
 }
 
@@ -3669,10 +3670,8 @@ static void elementPositionInformation(WebPage& page, Element& element, const In
 
     auto* elementForScrollTesting = linkElement ? linkElement : &element;
     if (auto* renderer = elementForScrollTesting->renderer()) {
-#if ENABLE(ASYNC_SCROLLING)
         if (auto* scrollingCoordinator = page.scrollingCoordinator())
             info.containerScrollingNodeID = scrollingCoordinator->scrollableContainerNodeID(*renderer);
-#endif
     }
 
     info.needsPointerTouchCompatibilityQuirk = document->quirks().needsPointerTouchCompatibility(element);
@@ -4193,10 +4192,8 @@ std::optional<FocusedElementInformation> WebPage::focusedElementInformation()
         information.insideFixedPosition = inFixed;
         information.isRTL = renderer->writingMode().isBidiRTL();
 
-#if ENABLE(ASYNC_SCROLLING)
         if (auto* scrollingCoordinator = this->scrollingCoordinator())
             information.containerScrollingNodeID = scrollingCoordinator->scrollableContainerNodeID(*renderer);
-#endif
     } else
         information.interactionRect = { };
 

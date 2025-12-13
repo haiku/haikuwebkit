@@ -43,7 +43,7 @@
 #include <wtf/text/WTFString.h>
 
 #if ENABLE(THREADED_ANIMATIONS)
-#include <WebCore/AcceleratedTimeline.h>
+#include <WebCore/AcceleratedEffectStackUpdater.h>
 #endif
 
 #if ENABLE(MODEL_ELEMENT)
@@ -172,8 +172,8 @@ public:
     void setScrollPosition(WebCore::IntPoint p) { m_scrollPosition = p; }
 
 #if ENABLE(THREADED_ANIMATIONS)
-    const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelines() const { return m_timelines; }
-    void setTimelines(const HashSet<Ref<WebCore::AcceleratedTimeline>>& timelines) { m_timelines = timelines; }
+    const WebCore::AcceleratedTimelinesUpdate& timelinesUpdate() const { return m_timelinesUpdate; }
+    void setTimelinesUpdate(WebCore::AcceleratedTimelinesUpdate&& timelinesUpdate) { m_timelinesUpdate = WTFMove(timelinesUpdate); }
 #endif
 
 private:
@@ -194,7 +194,7 @@ private:
     WebCore::IntPoint m_scrollPosition;
 
 #if ENABLE(THREADED_ANIMATIONS)
-    HashSet<Ref<WebCore::AcceleratedTimeline>> m_timelines;
+    WebCore::AcceleratedTimelinesUpdate m_timelinesUpdate;
 #endif
 };
 

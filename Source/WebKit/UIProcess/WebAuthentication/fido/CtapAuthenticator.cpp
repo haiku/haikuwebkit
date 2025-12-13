@@ -43,6 +43,7 @@
 #include <WebCore/Pin.h>
 #include <WebCore/U2fCommandConstructor.h>
 #include <WebCore/WebAuthenticationUtils.h>
+#include <pal/crypto/CryptoDigest.h>
 #include <wtf/EnumTraits.h>
 #include <wtf/RunLoop.h>
 #include <wtf/text/Base64.h>
@@ -104,6 +105,18 @@ bool isPinError(const CtapDeviceResponseCode& error)
     default:
         return false;
     }
+}
+
+// Hash PRF input according to spec: SHA-256("WebAuthn PRF" || 0x00 || input)
+static Vector<uint8_t> hashPRFInput(const BufferSource& input)
+{
+    constexpr uint8_t prefix[] = { 'W', 'e', 'b', 'A', 'u', 't', 'h', 'n', ' ', 'P', 'R', 'F' };
+    constexpr uint8_t nullByte = 0x00;
+    auto crypto = PAL::CryptoDigest::create(PAL::CryptoDigest::Algorithm::SHA_256);
+    crypto->addBytes(std::span { prefix });
+    crypto->addBytes(std::span { &nullByte, 1 });
+    crypto->addBytes(input.span());
+    return crypto->computeHash();
 }
 
 } // namespace
@@ -170,7 +183,7 @@ void CtapAuthenticator::continueSilentlyCheckCredentials(Vector<uint8_t>&& data,
     }
 
     Vector<uint8_t> cborCmd;
-    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform);
+    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform, m_hmacSecretRequest);
     std::optional<PinParameters> pinParameters;
     if (!m_pinAuth.isEmpty())
         pinParameters = PinParameters { static_cast<uint8_t>(selectPinProtocol()), m_pinAuth };
@@ -215,13 +228,36 @@ void CtapAuthenticator::continueMakeCredentialAfterCheckExcludedCredentials(bool
         residentKeyAvailability = AuthenticatorSupportedOptions::ResidentKeyAvailability::kNotSupported;
     }
 
-    // If UV is required, then either built-in uv or a pin will work.
-    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && (!options.authenticatorSelection || options.authenticatorSelection->userVerification() != UserVerificationRequirement::Discouraged) && m_pinAuth.isEmpty())
-        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, residentKeyAvailability, authenticatorSupportedExtensions, std::nullopt, m_info.algorithms(), WTFMove(overrideExcludeCredentials));
-    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet)
-        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, residentKeyAvailability, authenticatorSupportedExtensions, PinParameters { static_cast<uint8_t>(selectPinProtocol()), m_pinAuth }, m_info.algorithms(), WTFMove(overrideExcludeCredentials));
+    bool needsPRF = options.extensions && options.extensions->prf;
+    CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: PRF check - extensions=%d, prf=%d", !!options.extensions, needsPRF);
+    bool supportsHmacSecret = authenticatorSupportedExtensions.contains(kExtensionHmacSecret);
+    std::optional<HmacSecretParameters> hmacSecretParams;
+    if (needsPRF && supportsHmacSecret && options.extensions->prf->eval) {
+        CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: PRF extension found with eval, preparing hmac-secret");
+        bool supportsHmacSecretMc = authenticatorSupportedExtensions.contains(kExtensionHmacSecretMc);
+        if (supportsHmacSecretMc) {
+            hmacSecretParams = prepareHmacSecretParameters(*options.extensions->prf, std::nullopt);
+            if (hmacSecretParams)
+                CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: PRF hmac-secret-mc parameters prepared");
+            else
+                CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: PRF hmac-secret-mc parameters failed to prepare");
+        } else
+            CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: Authenticator doesn't support hmac-secret-mc");
+    } else if (needsPRF) {
+        CTAP_RELEASE_LOG("continueMakeCredentialAfterCheckExcludedCredentials: PRF requested but conditions not met - supportsHmacSecret=%d, hasEval=%d",
+            supportsHmacSecret, options.extensions->prf->eval.has_value());
+    }
+
+    UserVerificationRequirement effectiveUVRequirement = (needsPRF && supportsHmacSecret)
+        ? UserVerificationRequirement::Required
+        : (options.authenticatorSelection ? options.authenticatorSelection->userVerification() : UserVerificationRequirement::Discouraged);
+
+    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && effectiveUVRequirement != UserVerificationRequirement::Discouraged && m_pinAuth.isEmpty())
+        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, residentKeyAvailability, authenticatorSupportedExtensions, std::nullopt, m_info.algorithms(), WTFMove(overrideExcludeCredentials), WTFMove(hmacSecretParams));
+    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet && effectiveUVRequirement != UserVerificationRequirement::Discouraged)
+        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, residentKeyAvailability, authenticatorSupportedExtensions, PinParameters { static_cast<uint8_t>(selectPinProtocol()), m_pinAuth }, m_info.algorithms(), WTFMove(overrideExcludeCredentials), WTFMove(hmacSecretParams));
     else
-        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, residentKeyAvailability, authenticatorSupportedExtensions, std::nullopt, m_info.algorithms(), WTFMove(overrideExcludeCredentials));
+        cborCmd = encodeMakeCredentialRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, residentKeyAvailability, authenticatorSupportedExtensions, std::nullopt, m_info.algorithms(), WTFMove(overrideExcludeCredentials), WTFMove(hmacSecretParams));
     CTAP_RELEASE_LOG("makeCredential: Sending %s", base64EncodeToString(cborCmd).utf8().data());
     if (m_info.maxMsgSize() && cborCmd.size() >= *m_info.maxMsgSize())
         CTAP_RELEASE_LOG("CtapAuthenticator::makeCredential cmdSize = %lu maxMsgSize = %u", cborCmd.size(), *m_info.maxMsgSize());
@@ -237,7 +273,7 @@ void CtapAuthenticator::continueMakeCredentialAfterResponseReceived(Vector<uint8
 {
     auto error = getResponseCode(data);
     CTAP_RELEASE_LOG("continueMakeCredentialAfterResponseReceived: Got error code: %hhu from authenticator.", enumToUnderlyingType(error));
-    auto response = readCTAPMakeCredentialResponse(data, AuthenticatorAttachment::CrossPlatform, transports(), std::get<PublicKeyCredentialCreationOptions>(requestData().options).attestation());
+    auto response = readCTAPMakeCredentialResponse(data, AuthenticatorAttachment::CrossPlatform, transports(), std::get<PublicKeyCredentialCreationOptions>(requestData().options).attestation(), m_hmacSecretRequest);
     if (!response) {
         CTAP_RELEASE_LOG("makeCredential: Failed to parse response %s", base64EncodeToString(data).utf8().data());
 
@@ -274,6 +310,10 @@ void CtapAuthenticator::continueMakeCredentialAfterResponseReceived(Vector<uint8
         return;
     }
     auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
+
+    if (m_hmacSecretRequest)
+        m_hmacSecretRequest = std::nullopt;
+
     if (options.extensions && options.extensions->credProps) {
         auto extensionOutputs = response->extensions();
 
@@ -346,14 +386,40 @@ void CtapAuthenticator::continueGetAssertionAfterCheckAllowCredentials()
     std::optional<Vector<PublicKeyCredentialDescriptor>> overrideAllowCredentials;
     if (options.allowCredentials.size() > 1 && m_currentBatch < m_batches.size())
         overrideAllowCredentials = m_batches[m_currentBatch];
+
+    bool needsPRF = options.extensions && options.extensions->prf;
+    CTAP_RELEASE_LOG("continueGetAssertionAfterCheckAllowCredentials: PRF check - extensions=%d, prf=%d", !!options.extensions, needsPRF);
+    bool supportsHmacSecret = authenticatorSupportedExtensions.contains(kExtensionHmacSecret);
+
+    std::optional<HmacSecretParameters> hmacSecretParams;
+    if (needsPRF && supportsHmacSecret) {
+        CTAP_RELEASE_LOG("continueGetAssertionAfterCheckAllowCredentials: PRF extension found, preparing hmac-secret");
+        // Determine which credential ID to use for evalByCredential matching
+        std::optional<Vector<uint8_t>> credentialId;
+        if (overrideAllowCredentials && !overrideAllowCredentials->isEmpty())
+            credentialId = overrideAllowCredentials->first().id.span();
+        else if (!options.allowCredentials.isEmpty())
+            credentialId = options.allowCredentials.first().id.span();
+        hmacSecretParams = prepareHmacSecretParameters(*options.extensions->prf, credentialId);
+        if (hmacSecretParams)
+            CTAP_RELEASE_LOG("continueGetAssertionAfterCheckAllowCredentials: PRF hmac-secret parameters prepared");
+        else
+            CTAP_RELEASE_LOG("continueGetAssertionAfterCheckAllowCredentials: PRF hmac-secret parameters failed to prepare");
+    } else if (needsPRF)
+        CTAP_RELEASE_LOG("continueGetAssertionAfterCheckAllowCredentials: PRF requested authenticator does not support hmac-secret");
+
     CTAP_RELEASE_LOG("getAssertion uv: %hhu internalUvAvailability %d", static_cast<uint8_t>(options.userVerification()), internalUVAvailability);
-    // If UV is required, then either built-in uv or a pin will work.
-    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && options.userVerification() != UserVerificationRequirement::Discouraged && m_pinAuth.isEmpty())
-        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials));
-    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet && options.userVerification() != UserVerificationRequirement::Discouraged)
-        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, PinParameters { static_cast<uint8_t>(selectPinProtocol()), m_pinAuth }, WTFMove(overrideAllowCredentials));
+
+    UserVerificationRequirement effectiveUVRequirement = (needsPRF && supportsHmacSecret)
+        ? UserVerificationRequirement::Required
+        : options.userVerification();
+
+    if (internalUVAvailability == UVAvailability::kSupportedAndConfigured && effectiveUVRequirement != UserVerificationRequirement::Discouraged && m_pinAuth.isEmpty())
+        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials), WTFMove(hmacSecretParams));
+    else if (m_info.options().clientPinAvailability() == AuthenticatorSupportedOptions::ClientPinAvailability::kSupportedAndPinSet && effectiveUVRequirement != UserVerificationRequirement::Discouraged)
+        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, authenticatorSupportedExtensions, PinParameters { static_cast<uint8_t>(selectPinProtocol()), m_pinAuth }, WTFMove(overrideAllowCredentials), WTFMove(hmacSecretParams));
     else
-        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials));
+        cborCmd = encodeGetAssertionRequestAsCBOR(requestData().hash, options, internalUVAvailability, effectiveUVRequirement, authenticatorSupportedExtensions, std::nullopt, WTFMove(overrideAllowCredentials), WTFMove(hmacSecretParams));
     if (m_info.maxMsgSize() && cborCmd.size() >= *m_info.maxMsgSize())
         CTAP_RELEASE_LOG("getAssertion cmdSize = %lu maxMsgSize = %u", cborCmd.size(), *m_info.maxMsgSize());
     CTAP_RELEASE_LOG("getAssertion: Sending %s", base64EncodeToString(cborCmd).utf8().data());
@@ -367,7 +433,7 @@ void CtapAuthenticator::continueGetAssertionAfterCheckAllowCredentials()
 
 void CtapAuthenticator::continueGetAssertionAfterResponseReceived(Vector<uint8_t>&& data)
 {
-    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform);
+    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform, m_hmacSecretRequest);
     auto error = getResponseCode(data);
     CTAP_RELEASE_LOG("continueGetAssertionAfterResponseReceived: errorcode: %hhu", enumToUnderlyingType(error));
     if (!response) {
@@ -400,6 +466,9 @@ void CtapAuthenticator::continueGetAssertionAfterResponseReceived(Vector<uint8_t
     }
     CTAP_RELEASE_LOG("continueGetAssertionAfterResponseReceived: Get %lu credentials back.", response->numberOfCredentials());
 
+    if (m_hmacSecretRequest)
+        m_hmacSecretRequest = std::nullopt;
+
     if (response->numberOfCredentials() <= 1) {
         receiveRespond(response.releaseNonNull());
         return;
@@ -422,7 +491,7 @@ void CtapAuthenticator::continueGetNextAssertionAfterResponseReceived(Vector<uin
 {
     auto error = getResponseCode(data);
     CTAP_RELEASE_LOG("continueGetNextAssertionAfterResponseReceived: errorcode: %hhu", enumToUnderlyingType(error));
-    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform);
+    auto response = readCTAPGetAssertionResponse(data, AuthenticatorAttachment::CrossPlatform, m_hmacSecretRequest);
     if (!response) {
         CTAP_RELEASE_LOG("continueGetNextAssertionAfterResponseReceived: Unable to parse response: %s", base64EncodeToString(data).utf8().data());
         receiveRespond(ExceptionData { ExceptionCode::UnknownError, makeString("Unknown internal error. Error code: "_s, static_cast<uint8_t>(error)) });
@@ -509,6 +578,7 @@ void CtapAuthenticator::continueRequestPinAfterGetKeyAgreement(Vector<uint8_t>&&
 
     if (RefPtr observer = this->observer()) {
         CTAP_RELEASE_LOG("continueRequestPinAfterGetKeyAgreement: Requesting pin from observer.");
+        m_cachedPeerKey = keyAgreement->peerKey.ptr();
         observer->requestPin(retries, [weakThis = WeakPtr { *this }, keyAgreement = WTFMove(*keyAgreement)] (const String& pin) {
             RELEASE_ASSERT(RunLoop::isMain());
             RefPtr protectedThis = weakThis.get();
@@ -780,6 +850,62 @@ void CtapAuthenticator::performAuthenticatorSelectionForSetupPin()
                 protectedThis->setupPin();
         });
     }
+}
+
+std::optional<HmacSecretParameters> CtapAuthenticator::prepareHmacSecretParameters(const AuthenticationExtensionsClientInputs::PRFInputs& prfInputs, const std::optional<Vector<uint8_t>>& credentialId)
+{
+    if (!m_cachedPeerKey) {
+        CTAP_RELEASE_LOG("prepareHmacSecretParameters: No cached peer key available (likely first attempt before PIN)");
+        return std::nullopt;
+    }
+
+    const AuthenticationExtensionsClientInputs::PRFValues* selectedValues = nullptr;
+
+    if (prfInputs.evalByCredential && credentialId) {
+        auto credentialIdString = base64URLEncodeToString(*credentialId);
+        for (const auto& entry : *prfInputs.evalByCredential) {
+            if (entry.key == credentialIdString) {
+                selectedValues = &entry.value;
+                CTAP_RELEASE_LOG("prepareHmacSecretParameters: Using evalByCredential for credential");
+                break;
+            }
+        }
+    }
+
+    if (!selectedValues && prfInputs.eval) {
+        selectedValues = &*prfInputs.eval;
+        CTAP_RELEASE_LOG("prepareHmacSecretParameters: Using eval");
+    }
+
+    if (!selectedValues) {
+        CTAP_RELEASE_LOG("prepareHmacSecretParameters: No applicable PRF values");
+        return std::nullopt;
+    }
+
+    auto salt1 = hashPRFInput(selectedValues->first);
+    std::optional<Vector<uint8_t>> salt2;
+    if (selectedValues->second)
+        salt2 = hashPRFInput(*selectedValues->second);
+
+    auto hmacSecretRequest = pin::HmacSecretRequest::create(selectPinProtocol(), salt1, salt2, m_cachedPeerKey.copyRef());
+    if (!hmacSecretRequest) {
+        CTAP_RELEASE_LOG("prepareHmacSecretParameters: Failed to create HmacSecretRequest");
+        return std::nullopt;
+    }
+
+    HmacSecretParameters params;
+    auto& coseKeyMap = hmacSecretRequest->coseKey();
+    cbor::CBORValue::MapValue clonedKeyAgreement;
+    for (const auto& entry : coseKeyMap)
+        clonedKeyAgreement[entry.first.clone()] = entry.second.clone();
+    params.keyAgreement = WTFMove(clonedKeyAgreement);
+    params.saltEnc = hmacSecretRequest->saltEnc();
+    params.saltAuth = hmacSecretRequest->saltAuth();
+    params.protocol = static_cast<int>(hmacSecretRequest->protocol());
+
+    m_hmacSecretRequest = WTFMove(hmacSecretRequest);
+
+    return params;
 }
 
 

@@ -20,8 +20,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-MainFrameURLChange : URL [Header=<wtf/URL.h>]
-AudioSessionType : WebCore::DOMAudioSessionType [Conditional=ENABLE(DOM_AUDIO_SESSION) Header="DOMAudioSession.h"]
+MainFrameURLChange : URL [Headers=<wtf/URL.h>]
+AudioSessionType : WebCore::DOMAudioSessionType [Conditional=ENABLE(DOM_AUDIO_SESSION) Headers="DOMAudioSession.h"]
 IsAutofocusProcessed : bool
 UserDidInteractWithPage : bool
-AnotherOne : StringifyThis [Header="StringifyThis"]
+AnotherOne : StringifyThis [Headers="StringifyThis"]
+MultipleHeaders : HashSet<URL> [Headers=<wtf/HashSet.h>,<wtf/URL.h>]

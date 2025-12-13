@@ -80,6 +80,8 @@ public:
     DOMWindow* window() const { return virtualWindow(); }
     RefPtr<DOMWindow> protectedWindow() const;
     FrameTree& tree() const { return m_treeNode; }
+    WEBCORE_EXPORT std::optional<size_t> indexInFrameTreeSiblings() const;
+    WEBCORE_EXPORT Vector<size_t> pathToFrame() const;
     FrameIdentifier frameID() const { return m_frameID; }
     inline Page* page() const; // Defined in DocumentPage.h.
     inline RefPtr<Page> protectedPage() const; // Defined in DocumentPage.h.
@@ -151,7 +153,7 @@ public:
     virtual bool frameCanCreatePaymentSession() const;
     FrameTreeSyncData& frameTreeSyncData() const { return m_frameTreeSyncData.get(); }
     Ref<FrameTreeSyncData> protectedFrameTreeSyncData() const { return m_frameTreeSyncData.get(); }
-    WEBCORE_EXPORT virtual RefPtr<SecurityOrigin> frameDocumentSecurityOrigin() const = 0;
+    WEBCORE_EXPORT virtual SecurityOrigin* frameDocumentSecurityOrigin() const = 0;
     WEBCORE_EXPORT virtual String frameURLProtocol() const = 0;
 
     WEBCORE_EXPORT virtual void setPrinting(bool printing, FloatSize pageSize, FloatSize originalPageSize, float maximumShrinkRatio, AdjustViewSize, NotifyUIProcess = NotifyUIProcess::Yes);

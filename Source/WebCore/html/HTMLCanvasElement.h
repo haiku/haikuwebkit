@@ -82,7 +82,7 @@ public:
     CanvasRenderingContext* renderingContext() const final { return m_context.get(); }
     ExceptionOr<std::optional<RenderingContext>> getContext(JSC::JSGlobalObject&, const String& contextId, FixedVector<JSC::Strong<JSC::Unknown>>&& arguments);
 
-    CanvasRenderingContext* getContext(const String&);
+    RefPtr<CanvasRenderingContext> getContext(const String&);
 
     static bool is2dType(const String&);
     CanvasRenderingContext2D* createContext2d(const String&, CanvasRenderingContext2DSettings&&);
@@ -92,7 +92,7 @@ public:
     static bool isWebGLType(const String&);
     static WebGLVersion toWebGLVersion(const String&);
     WebGLRenderingContextBase* createContextWebGL(WebGLVersion type, WebGLContextAttributes&& = { });
-    WebGLRenderingContextBase* getContextWebGL(WebGLVersion type, WebGLContextAttributes&& = { });
+    RefPtr<WebGLRenderingContextBase> getContextWebGL(WebGLVersion type, WebGLContextAttributes&& = { });
 #endif
 
     static bool isBitmapRendererType(const String&);

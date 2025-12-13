@@ -124,8 +124,10 @@ private:
     PathSegment* asSingle() { return std::get_if<PathSegment>(&m_data); }
     const PathSegment* asSingle() const { return std::get_if<PathSegment>(&m_data); }
 
-    RefPtr<PathImpl> asImpl();
-    RefPtr<const PathImpl> asImpl() const;
+    PathImpl* asImpl();
+    const PathImpl* asImpl() const;
+    RefPtr<PathImpl> asProtectedImpl();
+    RefPtr<const PathImpl> asProtectedImpl() const;
 
     std::optional<FloatPoint> initialMoveToPoint() const;
 
@@ -249,7 +251,7 @@ inline FloatPoint Path::currentPoint() const
         FloatPoint lastMoveToPoint;
         return segment->calculateEndPoint({ }, lastMoveToPoint);
     }
-    return asImpl()->currentPoint();
+    return asProtectedImpl()->currentPoint();
 }
 
 inline std::optional<FloatPoint> Path::initialMoveToPoint() const

@@ -67,7 +67,7 @@ RenderElement& RenderTreeBuilder::Ruby::findOrCreateParentForStyleBasedRubyChild
 {
     RenderElement* beforeChildAncestor = &parent;
     if (auto* rubyInline = dynamicDowncast<RenderInline>(parent); rubyInline && rubyInline->continuation())
-        beforeChildAncestor = &RenderTreeBuilder::Inline::parentCandidateInContinuation(*rubyInline, beforeChild);
+        beforeChildAncestor = RenderTreeBuilder::Inline::parentCandidateInContinuation(*rubyInline, beforeChild).ptr();
     else if (auto* rubyBlock = dynamicDowncast<RenderBlock>(parent); rubyBlock && rubyBlock->continuation())
         beforeChildAncestor = RenderTreeBuilder::Block::continuationBefore(*rubyBlock, beforeChild);
 

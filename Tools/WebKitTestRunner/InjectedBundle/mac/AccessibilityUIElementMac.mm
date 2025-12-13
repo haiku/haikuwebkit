@@ -35,6 +35,7 @@
 #import <Foundation/Foundation.h>
 #import <JavaScriptCore/JSObjectRef.h>
 #import <JavaScriptCore/JSStringRefCF.h>
+#import <WebCore/CocoaAccessibilityConstants.h>
 #import <WebCore/DateComponents.h>
 #import <WebKit/WKBundleFrame.h>
 #import <wtf/RetainPtr.h>
@@ -2608,6 +2609,9 @@ static JSRetainPtr<JSStringRef> createJSStringRef(id string, bool includeDidSpel
         id attachment = [attributes objectForKey:NSAccessibilityAttachmentTextAttribute];
         if (attachment)
             [mutableString appendFormat:@"%@: {present}\n", NSAccessibilityAttachmentTextAttribute];
+
+        if ([attributes objectForKey:NSAccessibilityTableAttribute])
+            [mutableString appendFormat:@"%@: {present}\n", NSAccessibilityTableAttribute];
     };
     [string enumerateAttributesInRange:NSMakeRange(0, [string length]) options:(NSAttributedStringEnumerationOptions)0 usingBlock:attributeEnumerationBlock];
     [mutableString appendString:[string string]];

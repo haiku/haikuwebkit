@@ -1738,8 +1738,6 @@ pas_local_allocator_try_allocate_slow_impl(pas_local_allocator* allocator,
         }
 
         PAS_TESTING_ASSERT(allocator->config_kind != pas_local_allocator_config_kind_unselected);
-        
-        PAS_TESTING_ASSERT(allocator->config_kind != pas_local_allocator_config_kind_unselected);
         PAS_TESTING_ASSERT(allocator->config_kind != pas_local_allocator_config_kind_null);
         PAS_TESTING_ASSERT(!pas_local_allocator_has_bitfit(allocator));
 

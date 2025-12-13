@@ -94,6 +94,10 @@
 #import <WebCore/DigitalCredentialsRequestData.h>
 #endif
 
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+#import "RemoteScrollingCoordinatorProxyIOS.h"
+#endif
+
 @interface UIWindow ()
 - (BOOL)_isHostedInAnotherProcess;
 @end
@@ -294,8 +298,14 @@ void PageClientImpl::modelProcessDidExit()
 void PageClientImpl::preferencesDidChange()
 {
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-    if (RetainPtr webView = this->webView())
-        [webView _updateOverlayRegions];
+    RetainPtr webView = this->webView();
+    if (!webView)
+        return;
+
+    if (auto page = webView->_page) {
+        if (CheckedPtr scrollingCoordinator = page->scrollingCoordinatorProxy())
+            scrollingCoordinator->overlayRegionsEnabledChanged();
+    }
 #else
     notImplemented();
 #endif
@@ -548,18 +558,15 @@ static NSString * const UIAccessibilitySpeechAttributeIsLiveRegion = @"UIAccessi
 
 void PageClientImpl::relayLiveRegionNotification(const WebCore::LiveRegionAnnouncementData& notificationData)
 {
-    RetainPtr message = notificationData.message.createNSString();
-
     // Assertive = UIAccessibilityPriorityDefault, Polite = UIAccessibilityPriorityLow
     RetainPtr priority = (notificationData.status == WebCore::LiveRegionStatus::Assertive) ? UIAccessibilityPriorityDefault : UIAccessibilityPriorityLow;
 
-    RetainPtr attributes = adoptNS([[NSDictionary alloc] initWithObjectsAndKeys:
-        priority.get(), UIAccessibilitySpeechAttributeAnnouncementPriority, @(YES), UIAccessibilitySpeechAttributeIsLiveRegion,
-        nil]);
+    RetainPtr nsAttributedString = notificationData.message.nsAttributedString();
+    auto mutableAttributedString = adoptNS([[NSMutableAttributedString alloc] initWithAttributedString:nsAttributedString.get()]);
+    [mutableAttributedString addAttribute:UIAccessibilitySpeechAttributeAnnouncementPriority value:priority.get() range:NSMakeRange(0, [mutableAttributedString length])];
+    [mutableAttributedString addAttribute:UIAccessibilitySpeechAttributeIsLiveRegion value:@(YES) range:NSMakeRange(0, [mutableAttributedString length])];
 
-    RetainPtr attributedString = adoptNS([[NSAttributedString alloc] initWithString:message.get() attributes:attributes.get()]);
-
-    UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, attributedString.get());
+    UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, mutableAttributedString.get());
 }
 
 IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)

@@ -33,6 +33,10 @@
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/text/CStringView.h>
 
+#if USE(GSTREAMER_GL)
+#include "GraphicsTypesGL.h"
+#endif
+
 namespace WTF {
 class MediaTime;
 class URL;
@@ -97,6 +101,7 @@ bool doCapsHaveType(const GstCaps*, ASCIILiteral);
 bool areEncryptedCaps(const GstCaps*);
 Vector<String> extractGStreamerOptionsFromCommandLine();
 void setGStreamerOptionsFromUIProcess(Vector<String>&&);
+bool ensureGStreamerInitializedNonWebProcess();
 bool ensureGStreamerInitialized();
 void registerWebKitGStreamerElements();
 void registerWebKitGStreamerVideoEncoder();
@@ -219,7 +224,9 @@ private:
 class GstMappedFrame {
     WTF_MAKE_TZONE_ALLOCATED(GstMappedFrame);
     WTF_MAKE_NONCOPYABLE(GstMappedFrame);
+
 public:
+    GstMappedFrame(GstMappedFrame&&);
     GstMappedFrame(GstBuffer*, const GstVideoInfo*, GstMapFlags);
     GstMappedFrame(const GRefPtr<GstSample>&, GstMapFlags);
 
@@ -243,6 +250,13 @@ public:
     bool isValid() const { return m_frame.buffer; }
     explicit operator bool() const { return m_frame.buffer; }
     bool operator!() const { return !m_frame.buffer; }
+
+#if USE(GSTREAMER_GL)
+    GLuint textureID(int) const;
+#endif
+
+    unsigned componentPlane(int) const;
+    unsigned componentPlaneOffset(int) const;
 
 private:
     GstVideoFrame m_frame;

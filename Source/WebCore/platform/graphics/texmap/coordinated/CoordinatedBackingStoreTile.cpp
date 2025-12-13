@@ -73,6 +73,9 @@ void CoordinatedBackingStoreTile::processPendingUpdates(TextureMapper& textureMa
         if (SkiaPaintingEngine::shouldUseLinearTileTextures()) {
             flags.add(BitmapTexture::Flags::BackedByDMABuf);
             flags.add(BitmapTexture::Flags::ForceLinearBuffer);
+        } else if (SkiaPaintingEngine::shouldUseVivanteSuperTiledTileTextures()) {
+            flags.add(BitmapTexture::Flags::BackedByDMABuf);
+            flags.add(BitmapTexture::Flags::ForceVivanteSuperTiledBuffer);
         }
 #endif
 

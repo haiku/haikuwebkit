@@ -176,6 +176,9 @@ public:
 #if ENABLE(MODEL_CONTEXT) && !ENABLE(GPU_PROCESS_MODEL)
     WEBCORE_EXPORT void setContentsToModelContext(Ref<ModelContext>, ContentsLayerPurpose) override;
 #endif
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    WEBCORE_EXPORT void removeModelContents() override;
+#endif
     WEBCORE_EXPORT void setContentsToVideoElement(HTMLVideoElement&, ContentsLayerPurpose) override;
     WEBCORE_EXPORT void setContentsDisplayDelegate(RefPtr<GraphicsLayerContentsDisplayDelegate>&&, ContentsLayerPurpose) override;
     WEBCORE_EXPORT PlatformLayerIdentifier setContentsToAsyncDisplayDelegate(RefPtr<GraphicsLayerContentsDisplayDelegate>, ContentsLayerPurpose);

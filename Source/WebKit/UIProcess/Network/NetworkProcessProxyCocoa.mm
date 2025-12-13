@@ -45,6 +45,10 @@
 #import <wtf/WeakPtr.h>
 #endif
 
+#if ENABLE(APPLE_PAY_REMOTE_UI_USES_SCENE)
+#import "APIUIClient.h"
+#endif
+
 namespace WebKit {
 
 using namespace WebCore;
@@ -151,6 +155,15 @@ void NetworkProcessProxy::getWindowSceneAndBundleIdentifierForPaymentPresentatio
         bundleIdentifier = [webViewUIDelegate _hostSceneBundleIdentifierForWebView:webView.get()];
 
     completionHandler(sceneIdentifier, bundleIdentifier);
+}
+
+void NetworkProcessProxy::notifyWillPresentPaymentUI(WebPageProxyIdentifier webPageProxyIdentifier)
+{
+    RefPtr page = WebProcessProxy::webPage(webPageProxyIdentifier);
+    if (!page || !page->pageClient())
+        return;
+
+    page->uiClient().willPresentModalUI(*page);
 }
 #endif
 

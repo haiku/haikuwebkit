@@ -408,6 +408,7 @@ private:
 
         void getGuessesForWord(const String&, const String&, const VisibleSelection&, Vector<String>&) final { }
         void requestCheckingOfString(TextCheckingRequest&, const VisibleSelection&) final;
+        void requestExtendedCheckingOfString(TextCheckingRequest&, const VisibleSelection&) final;
     };
 
     EmptyTextCheckerClient m_textCheckerClient;
@@ -1165,6 +1166,10 @@ void EmptyFrameLoaderClient::sendH2Ping(const URL& url, CompletionHandler<void(E
 }
 
 void EmptyEditorClient::EmptyTextCheckerClient::requestCheckingOfString(TextCheckingRequest&, const VisibleSelection&)
+{
+}
+
+void EmptyEditorClient::EmptyTextCheckerClient::requestExtendedCheckingOfString(TextCheckingRequest&, const VisibleSelection&)
 {
 }
 

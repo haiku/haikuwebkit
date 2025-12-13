@@ -286,4 +286,19 @@ ModelPlayerAccessibilityChildren PlaceholderModelPlayer::accessibilityChildren()
 
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+
+void PlaceholderModelPlayer::ensureImmersivePresentation(CompletionHandler<void(std::optional<LayerHostingContextIdentifier>)>&& completion)
+{
+    ASSERT_NOT_REACHED("PlaceholderModelPlayer cannot provide a layer context identifier");
+    completion(std::nullopt);
+}
+void PlaceholderModelPlayer::exitImmersivePresentation(CompletionHandler<void()>&& completion)
+{
+    ASSERT_NOT_REACHED("PlaceholderModelPlayer cannot exit an immersive presentation");
+    completion();
+}
+
+#endif
+
 } // namespace WebCore

@@ -28,6 +28,7 @@
 
 #if ENABLE(VIDEO)
 
+#include "MediaPlaybackTarget.h"
 #include "VideoFrame.h"
 #include "VideoFrameMetadata.h"
 #include <wtf/NativePromise.h>
@@ -72,7 +73,14 @@ MediaTime MediaPlayerPrivateInterface::currentOrPendingSeekTime() const
     return currentTime();
 }
 
+#if ENABLE(WIRELESS_PLAYBACK_TARGET)
+OptionSet<MediaPlaybackTargetType> MediaPlayerPrivateInterface::supportedPlaybackTargetTypes() const
+{
+    return { };
 }
+#endif
+
+} // namespace WebCore
 
 #endif
 

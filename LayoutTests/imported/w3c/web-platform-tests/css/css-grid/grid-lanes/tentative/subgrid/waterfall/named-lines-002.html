@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<!--
+     Any copyright is dedicated to the Public Domain.
+     http://creativecommons.org/publicdomain/zero/1.0/
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CSS Grid Lanes Subgrid Test: referencing lines named by parent grid</title>
+  <link rel="author" title="Brandon Stewart" href="mailto:brandonstewart@apple.com">
+  <link rel="help" href="https://drafts.csswg.org/css-grid-3/#subgrids">
+  <link rel="match" href="named-lines-002-ref.html">
+  <style>
+html, body {
+  color: black;
+  background: white;
+  font: 10px/1 monospace;
+  padding: 0;
+  margin: 0;
+}
+
+.grid {
+  display: inline-grid-lanes;
+  grid-lanes-direction: column;
+  grid-template-columns: [a] 40px [b] 60px [c] 80px [d] 100px [e] 120px [f];
+  border: 1px solid black;
+  margin: 10px;
+  background: lightgrey;
+}
+
+.subgrid {
+  display: grid;
+  grid-template-columns: subgrid [start] [] [end];
+  background: lightblue;
+}
+
+.item {
+  background: salmon;
+  border: 1px solid red;
+}
+
+.subitem {
+  background: lightgreen;
+  border: 1px solid green;
+}
+  </style>
+</head>
+<body>
+
+<!-- Subgrid at b-e, items use parent's line names and subgrid's own names (additive) -->
+<div class="grid">
+  <div class="item" style="grid-column: a">A</div>
+  <div class="subgrid" style="grid-column: b / e">
+    <div class="subitem" style="grid-column: end">d</div>
+    <div class="subitem" style="grid-column: start">b</div>
+    <div class="subitem" style="grid-column: c">c</div>
+  </div>
+  <div class="item" style="grid-column: e">E</div>
+</div>
+
+<!-- Using parent's line names with range -->
+<div class="grid">
+  <div class="item" style="grid-column: a">A</div>
+  <div class="subgrid" style="grid-column: b / e">
+    <div class="subitem" style="grid-column: d / e">d / e</div>
+    <div class="subitem" style="grid-column: b / d">b / d</div>
+  </div>
+  <div class="item" style="grid-column: e">E</div>
+</div>
+
+<!-- Subgrid spanning from c to f using parent names -->
+<div class="grid">
+  <div class="item" style="grid-column: a">A</div>
+  <div class="item" style="grid-column: b">B</div>
+  <div class="subgrid" style="grid-column: c / f">
+    <div class="subitem" style="grid-column: e / f">e / f</div>
+    <div class="subitem" style="grid-column: c / e">c / e</div>
+  </div>
+</div>
+
+<!-- Auto-placed subgrid using parent's names for item placement -->
+<div class="grid">
+  <div class="item">A</div>
+  <div class="subgrid" style="grid-column: span 3">
+    <div class="subitem" style="grid-column: c">c</div>
+    <div class="subitem" style="grid-column: d">d</div>
+    <div class="subitem" style="grid-column: b">b</div>
+  </div>
+  <div class="item">E</div>
+</div>
+
+</body>
+</html>

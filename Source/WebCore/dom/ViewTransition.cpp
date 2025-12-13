@@ -46,7 +46,7 @@
 #include "Logging.h"
 #include "RenderElementInlines.h"
 #include "PseudoElementRequest.h"
-#include "RenderBox.h"
+#include "RenderBoxInlines.h"
 #include "RenderFragmentedFlow.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
@@ -56,9 +56,9 @@
 #include "RenderView.h"
 #include "RenderViewTransitionCapture.h"
 #include "StyleExtractor.h"
-#include "StyleExtractorConverter.h"
 #include "StyleResolver.h"
 #include "StyleScope.h"
+#include "StyleTransformFunction.h"
 #include "Styleable.h"
 #include "TransformState.h"
 #include "ViewTransitionTypeSet.h"
@@ -965,7 +965,7 @@ void ViewTransition::copyElementBaseProperties(RenderLayerModelObject& renderer,
         transform.translate(output.size.width() / 2, output.size.height() / 2);
         transform.translateRight(-output.size.width() / 2, -output.size.height() / 2);
 
-        Ref transformListValue = CSSTransformListValue::create(Style::ExtractorConverter::convertTransformationMatrix(documentElementRenderer->style(), transform));
+        Ref transformListValue = CSSTransformListValue::create(Style::createCSSValue(CSSValuePool::singleton(), documentElementRenderer->style(), transform));
         RefPtr { output.properties }->setProperty(CSSPropertyTransform, WTFMove(transformListValue));
     }
 

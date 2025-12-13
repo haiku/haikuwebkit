@@ -28,6 +28,7 @@
 #if ENABLE(WEBXR)
 
 #include "EventTarget.h"
+#include "FakeXRWorldInit.h"
 #include "JSDOMPromiseDeferredForward.h"
 #include "WebFakeXRDevice.h"
 #include "XRSessionMode.h"
@@ -54,6 +55,10 @@ public:
 
         std::optional<FakeXRRigidTransformInit> floorOrigin;
         std::optional<FakeXRRigidTransformInit> viewerOrigin;
+
+#if ENABLE(WEBXR_HIT_TEST)
+        std::optional<FakeXRWorldInit> world;
+#endif
     };
 
     static Ref<WebXRTest> create(WeakPtr<WebXRSystem, WeakPtrImplWithEventTargetData>&& system) { return adoptRef(*new WebXRTest(WTFMove(system))); }

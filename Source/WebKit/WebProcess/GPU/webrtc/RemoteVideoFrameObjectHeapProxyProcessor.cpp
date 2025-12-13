@@ -139,11 +139,7 @@ void RemoteVideoFrameObjectHeapProxyProcessor::getVideoFrameBuffer(const RemoteV
         ASSERT(!m_callbacks.contains(frame.identifier()));
         m_callbacks.add(frame.identifier(), WTFMove(callback));
     }
-    RefPtr<IPC::Connection> connection;
-    {
-        Locker lock(m_connectionLock);
-        connection = m_connection;
-    }
+    RefPtr connection = this->connection();
     if (!connection) {
         takeCallback(frame.identifier())(nullptr);
         return;

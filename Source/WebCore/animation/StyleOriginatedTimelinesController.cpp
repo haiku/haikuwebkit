@@ -85,9 +85,9 @@ Vector<WeakStyleable> StyleOriginatedTimelinesController::relatedTimelineScopeEl
 
 ScrollTimeline& StyleOriginatedTimelinesController::inactiveNamedTimeline(const AtomString& name)
 {
-    auto inactiveTimeline = ScrollTimeline::createInactiveStyleOriginatedTimeline(name);
-    timelinesForName(name).append(inactiveTimeline);
-    return inactiveTimeline.unsafeGet();
+    auto& timelines = timelinesForName(name);
+    timelines.append(ScrollTimeline::createInactiveStyleOriginatedTimeline(name));
+    return timelines.last();
 }
 
 static bool containsElement(const Vector<WeakStyleable>& timelineScopeElements, Element* matchElement)

@@ -705,7 +705,7 @@ void HTMLMediaElement::initializeMediaSession()
     if (document->settings().invisibleAutoplayNotPermitted())
         mediaSession->addBehaviorRestriction(MediaElementSession::InvisibleAutoplayNotPermitted);
 
-    if (document->settings().requiresPageVisibilityToPlayAudio() || document->quirks().requirePageVisibilityToPlayAudioQuirk())
+    if (document->settings().requiresPageVisibilityToPlayAudio())
         mediaSession->addBehaviorRestriction(MediaElementSession::RequirePageVisibilityToPlayAudio);
 
     if (document->ownerElement() || !document->isMediaDocument()) {
@@ -1354,7 +1354,7 @@ void HTMLMediaElement::checkPlaybackTargetCompatibility()
         return;
 
     Ref player = *m_player;
-    if (player->canPlayToWirelessPlaybackTarget())
+    if (player->supportedPlaybackTargetTypes().contains(protectedMediaSession()->playbackTargetType()))
         return;
 
     auto tryToSwitchEngines = !m_remotePlaybackConfiguration && m_loadState == LoadingFromSourceElement;
@@ -4467,27 +4467,8 @@ void HTMLMediaElement::play()
     playInternal();
 }
 
-void HTMLMediaElement::playInternal()
+void HTMLMediaElement::completePlayInternal()
 {
-    HTMLMEDIAELEMENT_RELEASE_LOG(PLAYINTERNAL);
-
-    if (isSuspended()) {
-        ALWAYS_LOG(LOGIDENTIFIER, "returning because context is suspended");
-        return;
-    }
-
-    if (!document().hasBrowsingContext()) {
-        ALWAYS_LOG(LOGIDENTIFIER, "returning because there is no browsing context");
-        return;
-    }
-
-    Ref mediaSession = this->mediaSession();
-    mediaSession->setActive(true);
-    if (!mediaSession->clientWillBeginPlayback()) {
-        ALWAYS_LOG(LOGIDENTIFIER, "returning because of interruption");
-        return;
-    }
-
     // 4.8.10.9. Playing the media resource
     if (!m_player || m_networkState == NETWORK_EMPTY)
         selectMediaResource();
@@ -4534,6 +4515,40 @@ void HTMLMediaElement::playInternal()
     updatePlayState();
 
     ImageOverlay::removeOverlaySoonIfNeeded(*this);
+}
+
+void HTMLMediaElement::playInternal()
+{
+    HTMLMEDIAELEMENT_RELEASE_LOG(PLAYINTERNAL);
+
+    auto logSiteIdentifier = LOGIDENTIFIER;
+    if (isSuspended()) {
+        ALWAYS_LOG(logSiteIdentifier, "returning because context is suspended");
+        return;
+    }
+
+    if (!document().hasBrowsingContext()) {
+        ALWAYS_LOG(logSiteIdentifier, "returning because there is no browsing context");
+        return;
+    }
+
+    Ref mediaSession = this->mediaSession();
+    mediaSession->setActive(true);
+
+    CompletionHandler<void (bool)> canBeginPlaybackCompletion = [weakThis = WeakPtr { *this }, logSiteIdentifier = WTFMove(logSiteIdentifier)](bool canBegin) {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+
+        if (!canBegin) {
+            ALWAYS_LOG_WITH_THIS(protectedThis, logSiteIdentifier, "returning because of interruption");
+            return;
+        }
+
+        protectedThis->completePlayInternal();
+    };
+
+    mediaSession->clientWillBeginPlayback(WTFMove(canBeginPlaybackCompletion));
 }
 
 void HTMLMediaElement::pause()
@@ -6464,7 +6479,7 @@ void HTMLMediaElement::updatePlayState()
         invalidateOfficialPlaybackPosition();
 
         if (playerPaused) {
-            mediaSession->clientWillBeginPlayback();
+            mediaSession->clientWillBeginPlayback([](bool) { });
 
             // Set rate, muted and volume before calling play in case they were set before the media engine was set up.
             // The media engine should just stash the rate, muted and volume values since it isn't already playing.

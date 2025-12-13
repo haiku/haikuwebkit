@@ -828,7 +828,7 @@ static inline size_t indexOf(DebugPageOverlays::RegionType regionType)
     return static_cast<size_t>(regionType);
 }
 
-RegionOverlay& DebugPageOverlays::ensureRegionOverlayForPage(Page& page, RegionType regionType)
+Ref<RegionOverlay> DebugPageOverlays::ensureRegionOverlayForPage(Page& page, RegionType regionType)
 {
     auto it = m_pageRegionOverlays.find(page);
     if (it != m_pageRegionOverlays.end()) {
@@ -839,16 +839,16 @@ RegionOverlay& DebugPageOverlays::ensureRegionOverlayForPage(Page& page, RegionT
     }
 
     Vector<RefPtr<RegionOverlay>> visualizers(NumberOfRegionTypes);
-    auto visualizer = RegionOverlay::create(page, regionType);
+    Ref visualizer = RegionOverlay::create(page, regionType);
     visualizers[indexOf(regionType)] = visualizer.copyRef();
     m_pageRegionOverlays.add(page, WTFMove(visualizers));
-    return visualizer.unsafeGet();
+    return visualizer;
 }
 
 void DebugPageOverlays::showRegionOverlay(Page& page, RegionType regionType)
 {
-    auto& visualizer = ensureRegionOverlayForPage(page, regionType);
-    page.pageOverlayController().installPageOverlay(visualizer.overlay(), PageOverlay::FadeMode::DoNotFade);
+    Ref visualizer = ensureRegionOverlayForPage(page, regionType);
+    page.pageOverlayController().installPageOverlay(visualizer->overlay(), PageOverlay::FadeMode::DoNotFade);
 }
 
 void DebugPageOverlays::hideRegionOverlay(Page& page, RegionType regionType)

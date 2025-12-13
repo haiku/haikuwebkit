@@ -34,13 +34,13 @@ public:
         : m_data(WTFMove(data))
     { }
 
-    T* operator->()
+    T* operator->() LIFETIME_BOUND
     {
         ASSERT(isMainThread());
         return &m_data;
     }
 
-    T& operator*()
+    T& operator*() LIFETIME_BOUND
     {
         ASSERT(isMainThread());
         return m_data;

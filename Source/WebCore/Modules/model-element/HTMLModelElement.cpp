@@ -248,6 +248,8 @@ void HTMLModelElement::setSourceURL(const URL& url)
     if (!m_readyPromise->isFulfilled())
         m_readyPromise->reject(Exception { ExceptionCode::AbortError });
 
+    triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "The model URL was updated"_s });
+
     m_readyPromise = makeUniqueRef<ReadyPromise>(*this, &HTMLModelElement::readyPromiseResolve);
     m_shouldCreateModelPlayerUponRendererAttachment = false;
 
@@ -437,7 +439,12 @@ RefPtr<GraphicsLayer> HTMLModelElement::graphicsLayer() const
 
 bool HTMLModelElement::isVisible() const
 {
-    return !document().hidden() && m_isIntersectingViewport;
+    bool isVisibleInline = !document().hidden() && m_isIntersectingViewport;
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    return isVisibleInline || m_detachedForImmersive;
+#else
+    return isVisibleInline;
+#endif
 }
 
 void HTMLModelElement::logWarning(ModelPlayer& modelPlayer, const String& warningMessage)
@@ -455,12 +462,18 @@ void HTMLModelElement::modelDidChange()
     if (!page) {
         if (!m_readyPromise->isFulfilled())
             m_readyPromise->reject(Exception { ExceptionCode::AbortError });
+        triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "Model not associated with a page"_s });
         return;
     }
 
-    auto* renderer = this->renderer();
-    if (!renderer) {
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    bool hasRenderer = this->renderer() || m_detachedForImmersive;
+#else
+    bool hasRenderer = this->renderer();
+#endif
+    if (!hasRenderer) {
         m_shouldCreateModelPlayerUponRendererAttachment = true;
+        triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "Model cannot be rendered"_s });
         return;
     }
 
@@ -472,9 +485,8 @@ void HTMLModelElement::createModelPlayer()
     if (!m_model)
         return;
 
-    auto size = contentSize();
-    if (size.isEmpty())
-        return;
+    if (modelContainerSizeIsEmpty())
+        return triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "Model container size is empty"_s });
 
     if (m_modelPlayer)
         deleteModelPlayer();
@@ -497,6 +509,7 @@ void HTMLModelElement::createModelPlayer()
     if (!m_modelPlayer) {
         if (!m_readyPromise->isFulfilled())
             m_readyPromise->reject(Exception { ExceptionCode::AbortError });
+        triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "Model player creation failed"_s });
         return;
     }
 
@@ -516,14 +529,16 @@ void HTMLModelElement::createModelPlayer()
 
     // FIXME: We need to tell the player if the size changes as well, so passing this
     // in with load probably doesn't make sense.
-    m_modelPlayer->load(*m_model, size);
+    m_modelPlayer->load(*m_model, contentSize());
 
 #if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
     if (m_environmentMapData)
-        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeAsContiguous().get());
+        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeBufferAsContiguous().get());
     else if (!m_environmentMapURL.isEmpty())
         environmentMapRequestResource();
 #endif
+
+    triggerModelPlayerCreationCallbacksIfNeeded(RefPtr { m_modelPlayer });
 }
 
 void HTMLModelElement::deleteModelPlayer()
@@ -572,9 +587,8 @@ void HTMLModelElement::reloadModelPlayer()
         return;
     }
 
-    auto size = contentSize();
-    if (size.isEmpty()) {
-        RELEASE_LOG_INFO(ModelElement, "%p - HTMLModelElement::reloadModelPlayer: content size is empty", this);
+    if (modelContainerSizeIsEmpty()) {
+        RELEASE_LOG_INFO(ModelElement, "%p - HTMLModelElement::reloadModelPlayer: model container size is empty", this);
         return;
     }
 
@@ -594,11 +608,11 @@ void HTMLModelElement::reloadModelPlayer()
     }
 
     RELEASE_LOG(ModelElement, "%p - HTMLModelElement: Reloading previous states to new model player: %p", this, m_modelPlayer.get());
-    m_modelPlayer->reload(*m_model, size, *animationState, WTFMove(*transformState));
+    m_modelPlayer->reload(*m_model, contentSize(), *animationState, WTFMove(*transformState));
 
 #if ENABLE(MODEL_ELEMENT_ENVIRONMENT_MAP)
     if (m_environmentMapData)
-        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeAsContiguous().get());
+        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeBufferAsContiguous().get());
     else if (!m_environmentMapURL.isEmpty())
         environmentMapRequestResource();
 #endif
@@ -655,6 +669,9 @@ void HTMLModelElement::configureGraphicsLayer(GraphicsLayer& graphicsLayer, Colo
 #if ENABLE(MODEL_ELEMENT_PORTAL)
         .hasPortal = hasPortal(),
 #endif
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+        .detachedForImmersive = m_detachedForImmersive,
+#endif
     });
 }
 
@@ -669,7 +686,7 @@ ExceptionOr<void> HTMLModelElement::setEntityTransform(const DOMMatrixReadOnly& 
 {
 #if ENABLE(MODEL_ELEMENT_STAGE_MODE)
     if (canSetEntityTransform())
-        return Exception { ExceptionCode::InvalidStateError,  "Transform is read-only unless StageMode is set to 'none'"_s };
+        return Exception { ExceptionCode::InvalidStateError, "Transform is read-only unless StageMode is set to 'none'"_s };
 #endif
 
     auto player = m_modelPlayer;
@@ -1146,7 +1163,7 @@ void HTMLModelElement::environmentMapResourceFinished()
     }
     if (m_modelPlayer) {
         m_environmentMapDataMemoryCost.store(m_environmentMapData.size(), std::memory_order_relaxed);
-        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeAsContiguous().get());
+        m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeBufferAsContiguous().get());
     }
 
     m_environmentMapResource->removeClient(*this);
@@ -1182,12 +1199,13 @@ void HTMLModelElement::modelResourceFinished()
         if (!m_readyPromise->isFulfilled())
             m_readyPromise->reject(Exception { ExceptionCode::NetworkError });
 
+        triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::NetworkError, "The model resource failed to load"_s });
         return;
     }
 
     m_dataComplete = true;
     m_dataMemoryCost.store(m_data.size(), std::memory_order_relaxed);
-    m_model = Model::create(m_data.takeAsContiguous().get(), m_resource->mimeType(), m_resource->url());
+    m_model = Model::create(m_data.takeBufferAsContiguous().get(), m_resource->mimeType(), m_resource->url());
 
     ActiveDOMObject::queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().loadEvent, Event::CanBubble::No, Event::IsCancelable::No));
 
@@ -1377,7 +1395,104 @@ void HTMLModelElement::requestImmersive(DOMPromiseDeferred<void>&& promise)
     });
 }
 
+void HTMLModelElement::ensureImmersivePresentation(CompletionHandler<void(ExceptionOr<LayerHostingContextIdentifier>)>&& completion)
+{
+    setDetachedForImmersive(true);
+    ensureModelPlayer([weakThis = WeakPtr { *this }, completion = WTFMove(completion)] (auto result) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return completion(Exception { ExceptionCode::AbortError });
+
+        if (result.hasException()) {
+            protectedThis->setDetachedForImmersive(false);
+            completion(result.releaseException());
+            return;
+        }
+
+        RefPtr protectedModelPlayer = result.releaseReturnValue();
+        if (!protectedModelPlayer) {
+            protectedThis->setDetachedForImmersive(false);
+            completion(Exception { ExceptionCode::AbortError });
+            return;
+        }
+
+        protectedModelPlayer->ensureImmersivePresentation([weakThis, completion = WTFMove(completion)] (auto contextID) mutable {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis)
+                return completion(Exception { ExceptionCode::AbortError });
+
+            if (!contextID.has_value()) {
+                protectedThis->setDetachedForImmersive(false);
+                completion(Exception { ExceptionCode::TypeError, "Failed to decode model"_s });
+                return;
+            }
+
+            completion(WTFMove(contextID.value()));
+        });
+    });
+}
+
+void HTMLModelElement::exitImmersivePresentation(CompletionHandler<void()>&& completion)
+{
+    RefPtr protectedModelPlayer = m_modelPlayer;
+    if (!protectedModelPlayer) {
+        setDetachedForImmersive(false);
+        completion();
+        return;
+    }
+
+    protectedModelPlayer->exitImmersivePresentation([weakThis = WeakPtr { *this }, completion = WTFMove(completion)] () mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return completion();
+
+        protectedThis->setDetachedForImmersive(false);
+        completion();
+    });
+}
+
+void HTMLModelElement::setDetachedForImmersive(bool detachedForImmersive)
+{
+    m_detachedForImmersive = detachedForImmersive;
+    visibilityStateChanged();
+    invalidateStyleAndLayerComposition();
+    if (CheckedPtr renderer = this->renderer())
+        renderer->updateFromElement();
+}
+
+void HTMLModelElement::ensureModelPlayer(CompletionHandler<void(ExceptionOr<RefPtr<ModelPlayer>>)>&& completion)
+{
+    RefPtr modelPlayer = m_modelPlayer;
+    if (modelPlayer && modelPlayer->isPlaceholder())
+        reloadModelPlayer();
+
+    if (modelPlayer && !modelPlayer->isPlaceholder())
+        return completion(RefPtr { modelPlayer });
+
+    RELEASE_LOG_INFO(ModelElement, "%p - HTMLModelElement: Model Player creation request: STARTED", this);
+    m_modelPlayerCreationCallbacks.append(WTFMove(completion));
+    sourceRequestResource();
+}
+
 #endif
+
+void HTMLModelElement::triggerModelPlayerCreationCallbacksIfNeeded(ExceptionOr<RefPtr<ModelPlayer>>&& result)
+{
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    if (m_modelPlayerCreationCallbacks.isEmpty())
+        return;
+
+    if (result.hasException())
+        RELEASE_LOG_ERROR(ModelElement, "%p - HTMLModelElement: Model Player creation request: FAILED with error: %s", this, result.exception().message().utf8().data());
+    else
+        RELEASE_LOG_INFO(ModelElement, "%p - HTMLModelElement: Model Player creation request: SUCCEEDED", this);
+
+    for (auto& callback : std::exchange(m_modelPlayerCreationCallbacks, { }))
+        callback(result);
+#else
+    UNUSED_PARAM(result);
+#endif
+}
 
 bool HTMLModelElement::virtualHasPendingActivity() const
 {
@@ -1416,6 +1531,15 @@ LayoutSize HTMLModelElement::contentSize() const
         return downcast<RenderReplaced>(*renderer).replacedContentRect().size();
 
     return LayoutSize();
+}
+
+bool HTMLModelElement::modelContainerSizeIsEmpty() const
+{
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    return contentSize().isEmpty() && !m_detachedForImmersive;
+#else
+    return contentSize().isEmpty();
+#endif
 }
 
 #if ENABLE(ARKIT_INLINE_PREVIEW_MAC)
@@ -1535,7 +1659,7 @@ size_t HTMLModelElement::externalMemoryCost() const
 void HTMLModelElement::sourceRequestResource()
 {
     if (m_sourceURL.isEmpty())
-        return;
+        return triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::AbortError, "The source URL is empty"_s });
 
     auto request = createResourceRequest(m_sourceURL, FetchOptions::Destination::Model);
     auto resource = document().protectedCachedResourceLoader()->requestModelResource(WTFMove(request));
@@ -1543,6 +1667,8 @@ void HTMLModelElement::sourceRequestResource()
         ActiveDOMObject::queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().errorEvent, Event::CanBubble::No, Event::IsCancelable::No));
         if (!m_readyPromise->isFulfilled())
             m_readyPromise->reject(Exception { ExceptionCode::NetworkError });
+
+        triggerModelPlayerCreationCallbacksIfNeeded(Exception { ExceptionCode::NetworkError, "The model resource cannot be created"_s });
         return;
     }
 

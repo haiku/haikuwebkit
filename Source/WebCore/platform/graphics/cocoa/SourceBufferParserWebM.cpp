@@ -1047,7 +1047,7 @@ webm::Status WebMParser::TrackData::readFrameData(webm::Reader& reader, const we
     if (m_partialBytesRead < *m_completePacketSize)
         return webm::Status(webm::Status::kOkPartial);
 
-    m_completeBlockBuffer = m_currentBlockBuffer.take();
+    m_completeBlockBuffer = m_currentBlockBuffer.takeBuffer();
     m_completeFrameData = Ref { *m_completeBlockBuffer };
 
     m_completePacketSize = std::nullopt;

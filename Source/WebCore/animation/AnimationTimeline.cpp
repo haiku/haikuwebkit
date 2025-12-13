@@ -126,11 +126,15 @@ Style::SingleAnimationRange AnimationTimeline::defaultRange() const
 
 
 #if ENABLE(THREADED_ANIMATIONS)
-AcceleratedTimeline& AnimationTimeline::acceleratedRepresentation()
+Ref<AcceleratedTimeline> AnimationTimeline::acceleratedRepresentation()
 {
-    if (!m_acceleratedRepresentation)
-        m_acceleratedRepresentation = createAcceleratedRepresentation();
-    return *m_acceleratedRepresentation;
+    ASSERT(canBeAccelerated());
+    if (m_acceleratedRepresentation)
+        return *m_acceleratedRepresentation;
+
+    auto acceleratedRepresentation = createAcceleratedRepresentation();
+    m_acceleratedRepresentation = acceleratedRepresentation.ptr();
+    return acceleratedRepresentation;
 }
 
 Ref<AcceleratedTimeline> AnimationTimeline::createAcceleratedRepresentation() const
@@ -141,8 +145,6 @@ Ref<AcceleratedTimeline> AnimationTimeline::createAcceleratedRepresentation() co
 
 void AnimationTimeline::runPostRenderingUpdateTasks()
 {
-    m_acceleratedRepresentation = nullptr;
-
     bool previousCanBeAccelerated = std::exchange(m_canBeAccelerated, computeCanBeAccelerated());
     if (m_canBeAccelerated == previousCanBeAccelerated)
         return;

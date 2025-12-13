@@ -19,7 +19,7 @@
 
 #pragma once
 
-#if ENABLE(WEBXR) && USE(OPENXR)
+#if ENABLE(WEBXR_HIT_TEST) && USE(OPENXR)
 
 #include <WebCore/PlatformXR.h>
 #include <openxr/openxr.h>
@@ -44,4 +44,4 @@ private:
 
 } // namespace WebKit
 
-#endif // ENABLE(WEBXR) && USE(OPENXR)
+#endif // ENABLE(WEBXR_HIT_TEST) && USE(OPENXR)

@@ -58,7 +58,7 @@ public:
 
 #if PLATFORM(MAC)
     void initEffectsFromMainThread(PlatformLayer*);
-    void applyEffectsFromScrollingThread() const;
+    void applyEffects() const;
 #endif
 
     void applyEffectsFromMainThread(PlatformLayer*, bool backdropRootIsOpaque) const;

@@ -89,6 +89,11 @@ void WebXRTest::simulateDeviceConnection(ScriptExecutionContext& context, const 
         if (init.floorOrigin)
             device->setFloorOrigin(init.floorOrigin.value());
 
+#if ENABLE(WEBXR_HIT_TEST)
+        if (init.world)
+            device->setWorld(init.world.value());
+#endif
+
         Vector<XRSessionMode> supportedModes;
         if (init.supportedModes) {
             supportedModes = init.supportedModes.value();

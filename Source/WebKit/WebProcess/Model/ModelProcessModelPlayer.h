@@ -129,6 +129,11 @@ private:
     void animateModelToFitPortal(CompletionHandler<void(bool)>&&) final;
     void resetModelTransformAfterDrag() final;
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    void ensureImmersivePresentation(CompletionHandler<void(std::optional<WebCore::LayerHostingContextIdentifier>)>&&) final;
+    void exitImmersivePresentation(CompletionHandler<void()>&&) final;
+#endif
+
     WebCore::ModelPlayerIdentifier m_id;
     WeakPtr<WebPage> m_page;
     WeakPtr<WebCore::ModelPlayerClient> m_client;

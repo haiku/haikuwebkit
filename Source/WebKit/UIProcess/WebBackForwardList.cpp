@@ -71,12 +71,8 @@ WebBackForwardListItem* WebBackForwardList::itemForID(BackForwardItemIdentifier 
     if (!m_page)
         return nullptr;
 
-    RefPtr item = WebBackForwardListItem::itemForID(identifier);
-    if (!item)
-        return nullptr;
-
-    ASSERT(item->pageID() == m_page->identifier());
-    return item.unsafeGet();
+    ASSERT(!WebBackForwardListItem::itemForID(identifier) || WebBackForwardListItem::itemForID(identifier)->pageID() == m_page->identifier());
+    return WebBackForwardListItem::itemForID(identifier);
 }
 
 void WebBackForwardList::pageClosed()
@@ -684,6 +680,7 @@ void WebBackForwardList::backForwardAddItemShared(IPC::Connection& connection, R
         Ref item = WebBackForwardListItem::create(completeFrameStateForNavigation(WTFMove(navigatedFrameState)), webPageProxy->identifier(), navigatedFrameID, webPageProxy->protectedBrowsingContextGroup().ptr());
         item->setResourceDirectoryURL(webPageProxy->currentResourceDirectoryURL());
         item->setIsRemoteFrameNavigation(isRemoteFrameNavigation);
+        item->setEnhancedSecurity(process->enhancedSecurity());
         if (loadedWebArchive == LoadedWebArchive::Yes)
             item->setDataStoreForWebArchive(process->websiteDataStore());
         addItem(WTFMove(item));

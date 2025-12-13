@@ -203,8 +203,8 @@
 #include "JSWebAssemblyTag.h"
 #include "JSWithScope.h"
 #include "JSWrapForValidIteratorInlines.h"
-#include "JSPromiseAllContextInlines.h"
-#include "JSPromiseAllGlobalContext.h"
+#include "JSPromiseCombinatorsContextInlines.h"
+#include "JSPromiseCombinatorsGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "LazyClassStructureInlines.h"
 #include "LazyPropertyInlines.h"
@@ -273,6 +273,8 @@
 #include "TemporalPlainMonthDayPrototype.h"
 #include "TemporalPlainTime.h"
 #include "TemporalPlainTimePrototype.h"
+#include "TemporalPlainYearMonth.h"
+#include "TemporalPlainYearMonthPrototype.h"
 #include "TemporalTimeZone.h"
 #include "TemporalTimeZonePrototype.h"
 #include "VMTrapsInlines.h"
@@ -356,8 +358,6 @@ static JSC_DECLARE_HOST_FUNCTION(resolveWithoutPromiseForAsyncAwait);
 static JSC_DECLARE_HOST_FUNCTION(driveAsyncFunction);
 static JSC_DECLARE_HOST_FUNCTION(awaitValue);
 static JSC_DECLARE_HOST_FUNCTION(newHandledRejectedPromise);
-static JSC_DECLARE_HOST_FUNCTION(promiseOnRejectedWithContext);
-static JSC_DECLARE_HOST_FUNCTION(promiseAllOnFulfilled);
 static JSC_DECLARE_HOST_FUNCTION(promiseEmptyOnFulfilled);
 static JSC_DECLARE_HOST_FUNCTION(promiseEmptyOnRejected);
 static JSC_DECLARE_HOST_FUNCTION(promiseResolve);
@@ -834,45 +834,6 @@ JSC_DEFINE_HOST_FUNCTION(newHandledRejectedPromise, (JSGlobalObject* globalObjec
     return JSValue::encode(promise);
 }
 
-JSC_DEFINE_HOST_FUNCTION(promiseOnRejectedWithContext, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    JSValue argument = callFrame->uncheckedArgument(0);
-    auto* context = jsCast<JSPromiseAllContext*>(callFrame->uncheckedArgument(1));
-    auto* globalContext = jsCast<JSPromiseAllGlobalContext*>(context->globalContext());
-    auto* promise = jsCast<JSPromise*>(globalContext->promise());
-    promise->reject(globalObject->vm(), globalObject, argument);
-    return encodedJSUndefined();
-}
-
-JSC_DEFINE_HOST_FUNCTION(promiseAllOnFulfilled, (JSGlobalObject* globalObject, CallFrame* callFrame))
-{
-    VM& vm = globalObject->vm();
-    auto scope = DECLARE_THROW_SCOPE(vm);
-
-    JSValue argument = callFrame->uncheckedArgument(0);
-    auto* context = jsCast<JSPromiseAllContext*>(callFrame->uncheckedArgument(1));
-    auto* globalContext = jsCast<JSPromiseAllGlobalContext*>(context->globalContext());
-
-    auto* values = jsCast<JSArray*>(globalContext->values());
-    uint64_t index = context->index().toIndex(globalObject, "exceeding index size"_s);
-    RETURN_IF_EXCEPTION(scope, { });
-
-    values->putByIndexInline(globalObject, index, argument, true);
-    RETURN_IF_EXCEPTION(scope, { });
-
-    uint64_t count = globalContext->remainingElementsCount().toIndex(globalObject, "count exceeds size"_s);
-    RETURN_IF_EXCEPTION(scope, { });
-
-    --count;
-    globalContext->setRemainingElementsCount(vm, jsNumber(count));
-    if (!count) {
-        auto* promise = jsCast<JSPromise*>(globalContext->promise());
-        scope.release();
-        promise->resolve(globalObject, values);
-    }
-    return encodedJSUndefined();
-}
-
 JSC_DEFINE_HOST_FUNCTION(promiseEmptyOnFulfilled, (JSGlobalObject*, CallFrame* callFrame))
 {
     return JSValue::encode(callFrame->argument(0));
@@ -941,7 +902,7 @@ JSGlobalObject::~JSGlobalObject()
 {
     clearWeakTickets();
 #if ENABLE(REMOTE_INSPECTOR)
-    m_inspectorController->globalObjectDestroyed();
+    checkedInspectorController()->globalObjectDestroyed();
     m_inspectorDebuggable->globalObjectDestroyed();
 #endif
 
@@ -1063,7 +1024,7 @@ void JSGlobalObject::init(VM& vm)
     m_inspectorController = makeUnique<Inspector::JSGlobalObjectInspectorController>(*this);
     m_inspectorDebuggable = JSGlobalObjectDebuggable::create(*this);
     m_inspectorDebuggable->init();
-    m_consoleClient = m_inspectorController->consoleClient();
+    m_consoleClient = checkedInspectorController()->consoleClient();
 #endif
 
     m_functionPrototype.set(vm, this, FunctionPrototype::create(vm, FunctionPrototype::createStructure(vm, this, jsNull()))); // The real prototype will be set once ObjectPrototype is created.
@@ -1388,10 +1349,6 @@ void JSGlobalObject::init(VM& vm)
     auto* wrapForValidIteratorPrototype = WrapForValidIteratorPrototype::create(vm, this, WrapForValidIteratorPrototype::createStructure(vm, this, m_iteratorPrototype.get()));
     m_wrapForValidIteratorStructure.set(vm, this, JSWrapForValidIterator::createStructure(vm, this, wrapForValidIteratorPrototype));
 
-    m_promiseAllContextStructure.set(vm, this, JSPromiseAllContext::createStructure(vm, this, jsNull()));
-
-    m_promiseAllGlobalContextStructure.set(vm, this, JSPromiseAllGlobalContext::createStructure(vm, this, jsNull()));
-
     auto* asyncFromSyncIteratorPrototype = AsyncFromSyncIteratorPrototype::create(vm, this, AsyncFromSyncIteratorPrototype::createStructure(vm, this, m_iteratorPrototype.get()));
     m_asyncFromSyncIteratorStructure.set(vm, this, JSAsyncFromSyncIterator::createStructure(vm, this, asyncFromSyncIteratorPrototype));
 
@@ -1574,6 +1531,14 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
         [] (const Initializer<Structure>& init) {
             init.set(createPromiseCapabilityObjectStructure(init.vm, *init.owner));
         });
+    m_promiseAllSettledFulfilledResultStructure.initLater(
+        [] (const Initializer<Structure>& init) {
+            init.set(createPromiseAllSettledFulfilledResultStructure(init.vm, *init.owner));
+        });
+    m_promiseAllSettledRejectedResultStructure.initLater(
+        [] (const Initializer<Structure>& init) {
+            init.set(createPromiseAllSettledRejectedResultStructure(init.vm, *init.owner));
+        });
 
     m_collatorStructure.initLater(
         [] (const Initializer<Structure>& init) {
@@ -1724,6 +1689,13 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
                 init.set(TemporalPlainTime::createStructure(init.vm, globalObject, plainTimePrototype));
             });
 
+        m_plainYearMonthStructure.initLater(
+            [] (const Initializer<Structure>& init) {
+                auto* globalObject = jsCast<JSGlobalObject*>(init.owner);
+                auto* plainYearMonthPrototype = TemporalPlainYearMonthPrototype::create(init.vm, globalObject, TemporalPlainYearMonthPrototype::createStructure(init.vm, globalObject, globalObject->objectPrototype()));
+                init.set(TemporalPlainYearMonth::createStructure(init.vm, globalObject, plainYearMonthPrototype));
+            });
+
         m_timeZoneStructure.initLater(
             [] (const Initializer<Structure>& init) {
                 JSGlobalObject* globalObject = jsCast<JSGlobalObject*>(init.owner);
@@ -1804,16 +1776,6 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
     // AsyncFromSyncIterator Helpers
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::asyncFromSyncIteratorCreate)].initLater([](const Initializer<JSCell>& init) {
         init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "asyncFromSyncIteratorCreate"_s, asyncFromSyncIteratorPrivateFuncCreate, ImplementationVisibility::Private, AsyncFromSyncIteratorCreateIntrinsic));
-    });
-
-    // PromiseAllContext Helpers
-    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::promiseAllContextCreate)].initLater([](const Initializer<JSCell>& init) {
-        init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "promiseAllContextCreate"_s, promiseAllContextPrivateFuncCreate, ImplementationVisibility::Private, PromiseAllContextCreateIntrinsic));
-    });
-
-    // PromiseAllGlobalContext Helpers
-    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::promiseAllGlobalContextCreate)].initLater([](const Initializer<JSCell>& init) {
-        init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 3, "promiseAllGlobalContextCreate"_s, promiseAllGlobalContextPrivateFuncCreate, ImplementationVisibility::Private, PromiseAllGlobalContextCreateIntrinsic));
     });
 
     // RegExpStringIteratorHelpers
@@ -1935,12 +1897,6 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
         });
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::newHandledRejectedPromise)].initLater([] (const Initializer<JSCell>& init) {
             init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 1, "newHandledRejectedPromise"_s, newHandledRejectedPromise, ImplementationVisibility::Private));
-        });
-    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::promiseOnRejectedWithContext)].initLater([] (const Initializer<JSCell>& init) {
-            init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "promiseOnRejectedWithContext"_s, promiseOnRejectedWithContext, ImplementationVisibility::Private));
-        });
-    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::promiseAllOnFulfilled)].initLater([] (const Initializer<JSCell>& init) {
-            init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "promiseAllOnFulfilled"_s, promiseAllOnFulfilled, ImplementationVisibility::Private));
         });
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::promiseEmptyOnFulfilled)].initLater([] (const Initializer<JSCell>& init) {
             init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 1, "promiseEmptyOnFulfilled"_s, promiseEmptyOnFulfilled, ImplementationVisibility::Private));
@@ -2221,6 +2177,7 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
     installObjectPropertyChangeAdaptiveWatchpoint(setupAdaptiveWatchpoint(this, jsSetPrototype(), vm.propertyNames->keys), m_setPrimordialPropertiesWatchpointSet);
 
     installObjectPropertyChangeAdaptiveWatchpoint(setupAdaptiveWatchpoint(this, promisePrototype(), vm.propertyNames->then), m_promiseThenWatchpointSet);
+    installObjectPropertyChangeAdaptiveWatchpoint(setupAdaptiveWatchpoint(this, m_promiseConstructor.get(), vm.propertyNames->resolve), m_promiseResolveWatchpointSet);
 
     // Detect property absence.
     installObjectAdaptiveStructureWatchpoint(setupAbsenceAdaptiveWatchpoint(this, m_stringPrototype.get(), vm.propertyNames->replaceSymbol, objectPrototype()), m_stringSymbolReplaceWatchpointSet);
@@ -2885,6 +2842,7 @@ void JSGlobalObject::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     thisObject->m_plainDateTimeStructure.visit(visitor);
     thisObject->m_plainMonthDayStructure.visit(visitor);
     thisObject->m_plainTimeStructure.visit(visitor);
+    thisObject->m_plainYearMonthStructure.visit(visitor);
     thisObject->m_timeZoneStructure.visit(visitor);
 
     visitor.append(thisObject->m_nullGetterFunction);
@@ -2985,14 +2943,14 @@ void JSGlobalObject::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     visitor.append(thisObject->m_mapIteratorStructure);
     visitor.append(thisObject->m_setIteratorStructure);
     visitor.append(thisObject->m_wrapForValidIteratorStructure);
-    visitor.append(thisObject->m_promiseAllContextStructure);
-    visitor.append(thisObject->m_promiseAllGlobalContextStructure);
     visitor.append(thisObject->m_asyncFromSyncIteratorStructure);
     visitor.append(thisObject->m_regExpStringIteratorStructure);
     thisObject->m_iteratorResultObjectStructure.visit(visitor);
     thisObject->m_dataPropertyDescriptorObjectStructure.visit(visitor);
     thisObject->m_accessorPropertyDescriptorObjectStructure.visit(visitor);
     thisObject->m_promiseCapabilityObjectStructure.visit(visitor);
+    thisObject->m_promiseAllSettledFulfilledResultStructure.visit(visitor);
+    thisObject->m_promiseAllSettledRejectedResultStructure.visit(visitor);
     visitor.append(thisObject->m_regExpMatchesArrayStructure);
     visitor.append(thisObject->m_regExpMatchesArrayWithIndicesStructure);
     visitor.append(thisObject->m_regExpMatchesIndicesArrayStructure);
@@ -3773,6 +3731,16 @@ void JSGlobalObject::cachedFunctionExecutableForFunctionConstructor(FunctionExec
 Ref<JSGlobalObjectDebuggable> JSGlobalObject::protectedInspectorDebuggable()
 {
     return inspectorDebuggable();
+}
+
+Inspector::JSGlobalObjectInspectorController& JSGlobalObject::inspectorController() const
+{
+    return *m_inspectorController.get();
+}
+
+CheckedRef<Inspector::JSGlobalObjectInspectorController> JSGlobalObject::checkedInspectorController() const
+{
+    return *m_inspectorController;
 }
 #endif
 

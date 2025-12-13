@@ -1507,6 +1507,11 @@ void WebPageProxy::Internals::getWindowSceneAndBundleIdentifierForPaymentPresent
     completionHandler(nullString(), nullString());
 }
 
+void WebPageProxy::Internals::notifyWillPresentPaymentUI(WebPageProxyIdentifier)
+{
+    ASSERT_NOT_REACHED();
+}
+
 #endif
 
 static bool desktopClassBrowsingSupported()

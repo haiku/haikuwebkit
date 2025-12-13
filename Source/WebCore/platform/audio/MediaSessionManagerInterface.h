@@ -48,17 +48,6 @@ class PlatformMediaSessionInterface;
 struct MediaConfiguration;
 struct NowPlayingMetadata;
 
-enum class MediaSessionRestriction : uint32_t {
-    NoRestrictions = 0,
-    ConcurrentPlaybackNotPermitted = 1 << 0,
-    BackgroundProcessPlaybackRestricted = 1 << 1,
-    BackgroundTabPlaybackRestricted = 1 << 2,
-    InterruptedPlaybackNotPermitted = 1 << 3,
-    InactiveProcessPlaybackRestricted = 1 << 4,
-    SuspendedUnderLockPlaybackRestricted = 1 << 5,
-};
-using MediaSessionRestrictions = OptionSet<MediaSessionRestriction>;
-
 class WEBCORE_EXPORT MediaSessionManagerInterface
     : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<MediaSessionManagerInterface>
 #if !RELEASE_LOG_DISABLED
@@ -129,7 +118,7 @@ public:
     virtual MediaSessionRestrictions restrictions(PlatformMediaSessionMediaType);
     virtual void resetRestrictions();
 
-    virtual bool sessionWillBeginPlayback(PlatformMediaSessionInterface&);
+    virtual void sessionWillBeginPlayback(PlatformMediaSessionInterface&, CompletionHandler<void(bool)>&&);
     virtual void sessionWillEndPlayback(PlatformMediaSessionInterface&, DelayCallingUpdateNowPlaying);
     virtual void sessionStateChanged(PlatformMediaSessionInterface&);
     virtual void sessionDidEndRemoteScrubbing(PlatformMediaSessionInterface&) { }

@@ -510,14 +510,14 @@ static _WKWebsiteDeviceOrientationAndMotionAccessPolicy toWKWebsiteDeviceOrienta
 }
 
 ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
-- (void)_setEnhancedSecurityEnabled:(BOOL)enhancedSecurityEnabled
+- (void)_setEnhancedSecurityEnabled:(BOOL)isEnhancedSecurityEnabled
 {
-    _websitePolicies->setEnhancedSecurityEnabled(enhancedSecurityEnabled ? true : false);
+    _websitePolicies->setIsEnhancedSecurityEnabled(isEnhancedSecurityEnabled);
 }
 
 - (BOOL)_enhancedSecurityEnabled
 {
-    return _websitePolicies->enhancedSecurityEnabled();
+    return _websitePolicies->isEnhancedSecurityEnabled();
 }
 ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
@@ -844,15 +844,15 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     switch (mode) {
     case WKSecurityRestrictionModeNone:
-        _websitePolicies->setEnhancedSecurityEnabled(false);
+        _websitePolicies->setIsEnhancedSecurityEnabled(false);
         _websitePolicies->setLockdownModeEnabled(false);
         break;
     case WKSecurityRestrictionModeMaximizeCompatibility:
-        _websitePolicies->setEnhancedSecurityEnabled(true);
+        _websitePolicies->setIsEnhancedSecurityEnabled(true);
         _websitePolicies->setLockdownModeEnabled(false);
         break;
     case WKSecurityRestrictionModeLockdown:
-        _websitePolicies->setEnhancedSecurityEnabled(false);
+        _websitePolicies->setIsEnhancedSecurityEnabled(false);
         _websitePolicies->setLockdownModeEnabled(true);
         break;
     }
@@ -862,7 +862,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if (Ref { *_websitePolicies }->lockdownModeEnabled())
         return WKSecurityRestrictionModeLockdown;
-    if (_websitePolicies->enhancedSecurityEnabled())
+    if (_websitePolicies->isEnhancedSecurityEnabled())
         return WKSecurityRestrictionModeMaximizeCompatibility;
     return WKSecurityRestrictionModeNone;
 }

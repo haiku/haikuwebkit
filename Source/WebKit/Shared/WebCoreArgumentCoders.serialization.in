@@ -4142,16 +4142,6 @@ enum class WebCore::RunAsAsyncFunction : bool;
 enum class WebCore::ForceUserGesture : bool;
 enum class WebCore::RemoveTransientActivation : bool;
 
-struct WebKit::RunJavaScriptParameters {
-    String source;
-    JSC::SourceTaintedOrigin taintedness;
-    URL sourceURL;
-    WebCore::RunAsAsyncFunction runAsAsyncFunction;
-    std::optional<Vector<std::pair<String, WebKit::JavaScriptEvaluationResult>>> arguments;
-    WebCore::ForceUserGesture forceUserGesture;
-    WebCore::RemoveTransientActivation removeTransientActivation;
-}
-
 header: <WebCore/WritingDirection.h>
 enum class WebCore::WritingDirection : uint8_t {
     Natural,
@@ -6089,7 +6079,7 @@ struct WebCore::ServiceWorkerImportedScript {
 };
 
 class WebCore::ScriptBuffer {
-    RefPtr<const WebCore::FragmentedSharedBuffer> buffer();
+    RefPtr<const WebCore::FragmentedSharedBuffer> protectedBuffer();
 };
 
 header: <wtf/RobinHoodHashTable.h>
@@ -6538,6 +6528,13 @@ struct WebCore::ProgressResolutionData {
     Variant<Seconds, WebCore::ProgressResolutionData> data();
 };
 
+header: <WebCore/AcceleratedTimeline.h>
+[CustomHeader] struct WebCore::AcceleratedTimelinesUpdate {
+    HashSet<Ref<WebCore::AcceleratedTimeline>> created;
+    HashSet<Ref<WebCore::AcceleratedTimeline>> modified;
+    HashSet<WebCore::TimelineIdentifier> destroyed;
+};
+
 header: <WebCore/AcceleratedEffect.h>
 [CustomHeader, Nested] class WebCore::AcceleratedEffect::Keyframe {
     double offset();
@@ -6561,7 +6558,6 @@ header: <WebCore/AcceleratedEffect.h>
     std::optional<WebCore::WebAnimationTime> startTime();
     std::optional<WebCore::WebAnimationTime> holdTime();
 };
-
 #endif // ENABLE(THREADED_ANIMATIONS)
 
 #if PLATFORM(MAC)
@@ -6761,6 +6757,7 @@ header: <WebCore/TextExtractionTypes.h>
     HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> clientNodeAttributes;
     std::optional<WebCore::FloatRect> collectionRectInRootView;
     std::optional<WebCore::JSHandleIdentifier> targetNodeHandleIdentifier;
+    Vector<WebCore::JSHandleIdentifier> handleIdentifiersOfNodesToSkip;
     bool mergeParagraphs;
     bool skipNearlyTransparentContent;
     WebCore::TextExtraction::NodeIdentifierInclusion nodeIdentifierInclusion;
@@ -7579,6 +7576,13 @@ class WebCore::FilterOperations {
 }
 #endif // !USE(COORDINATED_GRAPHICS)
 
+header: <WebCore/Filter.h>
+[CustomHeader, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::FilterGeometry {
+    WebCore::FloatRect referenceBox;
+    WebCore::FloatRect filterRegion;
+    WebCore::FloatSize scale;
+}
+
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::Filter subclasses {
     WebCore::CSSFilterRenderer
     WebCore::SVGFilterRenderer
@@ -7586,22 +7590,17 @@ class WebCore::FilterOperations {
 
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::CSSFilterRenderer {
     Vector<Ref<WebCore::FilterFunction>> functions();
-
+    WebCore::FilterGeometry geometry();
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
-    WebCore::FloatSize filterScale();
-    WebCore::FloatRect filterRegion();
 }
 
 [AdditionalEncoder=StreamConnectionEncoder, RefCounted] class WebCore::SVGFilterRenderer {
-    WebCore::FloatRect targetBoundingBox();
     WebCore::SVGUnitTypes::SVGUnitType primitiveUnits();
     WebCore::SVGFilterExpression expression();
     [Validator='WebCore::SVGFilterRenderer::isValidSVGFilterExpression(*expression, *effects)'] Vector<Ref<WebCore::FilterEffect>> effects();
-    std::optional<WebCore::RenderingResourceIdentifier> renderingResourceIdentifierIfExists();
-
+    WebCore::FilterGeometry geometry();
     OptionSet<WebCore::FilterRenderingMode> filterRenderingModes();
-    WebCore::FloatSize filterScale();
-    WebCore::FloatRect filterRegion();
+    std::optional<WebCore::RenderingResourceIdentifier> renderingResourceIdentifierIfExists();
 }
 
 [Nested] enum class WebCore::UserStyleLevel : bool;
@@ -8049,6 +8048,9 @@ using WebCore::SourceBufferPrivate::SamplesPromise::Result = Expected<Vector<Str
 header: <WebCore/MediaSourceConfiguration.h>
 struct WebCore::MediaSourceConfiguration {
     bool textTracksEnabled;
+#if USE(MEDIAPARSERD)
+    bool demuxInProcess;
+#endif
 #if ENABLE(MEDIA_RECORDER_WEBM)
     bool supportsLimitedMatroska;
 #endif
@@ -9010,11 +9012,13 @@ header: <WebCore/AXObjectCache.h>
     String language;
 };
 
+#if PLATFORM(COCOA)
 header: <WebCore/AXObjectCache.h>
 [CustomHeader] struct WebCore::LiveRegionAnnouncementData {
-    String message;
+    WebCore::AttributedString message;
     WebCore::LiveRegionStatus status;
 };
+#endif
 
 header: <WebCore/ScriptTrackingPrivacyCategory.h>
 [OptionSet] enum class WebCore::ScriptTrackingPrivacyFlag : uint16_t {

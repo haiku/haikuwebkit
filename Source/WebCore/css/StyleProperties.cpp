@@ -232,14 +232,6 @@ static constexpr bool canUseShorthandForLonghand(CSSPropertyID shorthandID, CSSP
     // FIXME: If font-variant-ligatures is none, this depends on the value of the longhand.
     case CSSPropertyFontVariant:
     // FIXME: These shorthands are avoided for unknown legacy reasons, probably shouldn't be avoided.
-    case CSSPropertyBorderBlockEnd:
-    case CSSPropertyBorderBlockStart:
-    case CSSPropertyBorderBottom:
-    case CSSPropertyBorderInlineEnd:
-    case CSSPropertyBorderInlineStart:
-    case CSSPropertyBorderLeft:
-    case CSSPropertyBorderRight:
-    case CSSPropertyBorderTop:
     case CSSPropertyColumnRule:
     case CSSPropertyColumns:
     case CSSPropertyContainer:

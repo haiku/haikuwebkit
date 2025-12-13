@@ -882,7 +882,7 @@ static void reportExceptionToInspector(JSGlobalContextRef context, JSC::JSValue 
     JSC::JSGlobalObject* globalObject = toJS(context);
     JSC::VM& vm = globalObject->vm();
     JSC::Exception* exception = JSC::Exception::create(vm, exceptionValue);
-    globalObject->inspectorController().reportAPIException(globalObject, exception);
+    globalObject->checkedInspectorController()->reportAPIException(globalObject, exception);
 }
 #endif
 

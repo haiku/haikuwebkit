@@ -113,6 +113,7 @@
 #include "RenderLayerCompositor.h"
 #include "RenderLayerFilters.h"
 #include "RenderLayerInlines.h"
+#include "RenderLayerModelObjectInlines.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderMarquee.h"
 #include "RenderMultiColumnFlow.h"
@@ -3365,11 +3366,15 @@ void RenderLayer::paintLayerWithEffects(GraphicsContext& context, const LayerPai
         return;
 
     // If this layer is totally invisible then there is nothing to paint.
-    if (!renderer().opacity() && !is<AccessibilityRegionContext>(paintingInfo.regionContext)) {
+    if (!renderer().opacity()
+        && !is<AccessibilityRegionContext>(paintingInfo.regionContext)
+        && !paintFlags.contains(PaintLayerFlag::CollectingEventRegion)) {
         // However, we do want to continue painting for accessibility paints, as we still need accurate
         // geometry for opacity:0 things. It's very common to make form controls "screenreader-only" via
         // CSS, often involving opacity:0, while positioning some other visual-only / mouse-only control in
-        // its place. Having the correct geometry is vital for ensuring VoiceOver can still press these controls.
+        // its place. Having the correct geometry is vital for ensuring VoiceOver can still press these
+        // controls. We need to paint if we are collecting event regions as well to ensure that elements
+        // with opacity:0 are included.
         return;
     }
 

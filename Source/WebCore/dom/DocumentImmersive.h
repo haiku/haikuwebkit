@@ -75,6 +75,7 @@ protected:
 private:
     WeakRef<Document, WeakPtrImplWithEventTargetData> m_document;
     WeakPtr<HTMLModelElement, WeakPtrImplWithEventTargetData> m_immersiveElement;
+    void updateElementIsImmersive(HTMLModelElement*, bool);
 
     Deque<std::pair<EventType, GCReachableRef<Element>>> m_pendingEvents;
 };

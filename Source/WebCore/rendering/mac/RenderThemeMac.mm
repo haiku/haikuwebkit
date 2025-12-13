@@ -1816,9 +1816,9 @@ RenderThemeCocoa::IconAndSize RenderThemeMac::iconForAttachment(const String& fi
         return IconAndSize { nil, FloatSize() };
 
     if (auto icon = WebCore::iconForAttachment(fileName, attachmentType, title)) {
-        auto image = icon->image();
+        RetainPtr image = icon->image();
         auto size = [image size];
-        return IconAndSize { image, FloatSize(size) };
+        return IconAndSize { WTFMove(image), FloatSize(size) };
     }
 
     return IconAndSize { nil, FloatSize() };

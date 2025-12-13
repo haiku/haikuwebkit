@@ -52,32 +52,32 @@ public:
         return m_data.replace(WTFMove(other.m_data));
     }
 
-    operator const T&() const
+    operator const T&() const LIFETIME_BOUND
     {
         return m_data;
     }
 
-    const T* ptr() const
+    const T* ptr() const LIFETIME_BOUND
     {
         return m_data.ptr();
     }
 
-    const T& get() const
+    const T& get() const LIFETIME_BOUND
     {
         return m_data;
     }
 
-    const T& operator*() const
+    const T& operator*() const LIFETIME_BOUND
     {
         return m_data;
     }
 
-    const T* operator->() const
+    const T* operator->() const LIFETIME_BOUND
     {
         return m_data.ptr();
     }
 
-    T& access()
+    T& access() LIFETIME_BOUND
     {
         if (!m_data->hasOneRef())
             m_data = m_data->copy();

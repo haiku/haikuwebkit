@@ -3592,12 +3592,9 @@ void Texture::destroy()
                 view->destroy();
         }
     }
-    if (!m_canvasBacking) {
-        for (auto commandEncoder : m_commandEncoders) {
-            if (RefPtr ptr = m_device->commandEncoderFromIdentifier(commandEncoder))
-                ptr->makeSubmitInvalid();
-        }
-    }
+    if (!m_canvasBacking)
+        m_device->makeSubmitInvalidClearingEncoders(m_commandEncoders);
+
     m_commandEncoders.clear();
 
     m_textureViews.clear();

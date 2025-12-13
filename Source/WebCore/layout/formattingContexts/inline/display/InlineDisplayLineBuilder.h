@@ -44,8 +44,7 @@ public:
 
     static void applyEllipsisIfNeeded(LineEndingTruncationPolicy, InlineDisplay::Line&, InlineDisplay::Boxes&, bool isLegacyLineClamp);
     static void addLegacyLineClampTrailingLinkBoxIfApplicable(const InlineFormattingContext&, const InlineLayoutState&, InlineDisplay::Content&);
-    static std::optional<size_t> trailingLineWithBlockLevelBox(const InlineDisplay::Boxes&);
-    static void adjustLineBlockAfterSideWithCollapsedMargin(const BlockLayoutState::MarginState&, size_t lineIndexWithBlockLevelBox, InlineDisplay::Lines&);
+    static bool hasTrailingLineWithBlockContent(const InlineDisplay::Lines&);
 
 private:
     struct EnclosingLineGeometry {

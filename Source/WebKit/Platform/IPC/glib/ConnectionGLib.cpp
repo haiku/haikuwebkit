@@ -477,7 +477,7 @@ void Connection::sendCredentials() const
         if (g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED) || g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_CANCELLED))
             return;
 
-        g_error("Connection: Failed to send crendentials: %s", error->message);
+        g_error("Connection: Failed to send credentials: %s", error->message);
     }
     g_socket_set_blocking(m_socket.get(), FALSE);
 }

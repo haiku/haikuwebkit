@@ -267,6 +267,7 @@ public:
     uint32_t appleGPUFamily() const { return m_appleGPUFamily; }
     void setRasterizationMapsForTexture(MTLResourceID, id<MTLRasterizationRateMap> left, id<MTLRasterizationRateMap> right);
     static id<MTLFunction> nopVertexFunction(id<MTLDevice>);
+    void makeSubmitInvalidClearingEncoders(TrackedResourceContainer&);
 
 private:
     Device(id<MTLDevice>, id<MTLCommandQueue> defaultQueue, HardwareCapabilities&&, Adapter&);

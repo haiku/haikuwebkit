@@ -139,6 +139,10 @@ void RTCEncodedStreamProducer::enqueueFrame(Ref<RTCRtpTransformableFrame>&& fram
 
 ExceptionOr<void> RTCEncodedStreamProducer::writeFrame(ScriptExecutionContext& context, JSC::JSValue value)
 {
+    RefPtr transformBackend = m_transformBackend;
+    if (!transformBackend)
+        return { };
+
     auto* globalObject = context.globalObject();
     if (!globalObject)
         return { };
@@ -159,7 +163,7 @@ ExceptionOr<void> RTCEncodedStreamProducer::writeFrame(ScriptExecutionContext& c
 
     // If no data, skip the frame since there is nothing to packetize or decode.
     if (rtcFrame->data().data())
-        Ref { *m_transformBackend }->processTransformedFrame(rtcFrame.get());
+        transformBackend->processTransformedFrame(rtcFrame.get());
 
     return { };
 }

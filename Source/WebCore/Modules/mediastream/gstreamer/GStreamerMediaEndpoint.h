@@ -88,13 +88,13 @@ public:
 
     void configureSource(RealtimeOutgoingMediaSourceGStreamer&, GUniquePtr<GstStructure>&&);
 
-    ExceptionOr<std::unique_ptr<GStreamerRtpSenderBackend>> addTrack(MediaStreamTrack&, const FixedVector<String>&);
+    ExceptionOr<RefPtr<GStreamerRtpSenderBackend>> addTrack(MediaStreamTrack&, const FixedVector<String>&);
     void removeTrack(GStreamerRtpSenderBackend&);
 
     void recycleTransceiverForSenderTrack(GStreamerRtpTransceiverBackend*, MediaStreamTrack&, const FixedVector<String>&);
 
     struct Backends {
-        std::unique_ptr<GStreamerRtpSenderBackend> senderBackend;
+        RefPtr<GStreamerRtpSenderBackend> senderBackend;
         std::unique_ptr<GStreamerRtpReceiverBackend> receiverBackend;
         std::unique_ptr<GStreamerRtpTransceiverBackend> transceiverBackend;
     };

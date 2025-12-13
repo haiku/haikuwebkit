@@ -89,6 +89,7 @@ class EventListener;
 class ExtendableEvent;
 class FetchRequest;
 class FetchResponse;
+class FileSystemHandle;
 class File;
 class GCObservation;
 class HTMLAnchorElement;
@@ -128,6 +129,7 @@ class ReadableStream;
 class Range;
 class RenderedDocumentMarker;
 class SVGSVGElement;
+class ScrollTimeline;
 class ScrollableArea;
 class SerializedScriptValue;
 class ServiceWorker;
@@ -329,7 +331,13 @@ public:
         double speed;
         bool isThreaded;
     };
+    struct ScrollingNodeID {
+        uint64_t nodeIdentifier;
+        uint64_t processIdentifier;
+    };
     Vector<AcceleratedAnimation> acceleratedAnimationsForElement(Element&);
+    uint64_t identifierForTimeline(AnimationTimeline&) const;
+    ScrollingNodeID scrollingNodeIDForTimeline(AnimationTimeline&) const;
     unsigned numberOfAnimationTimelineInvalidations() const;
     double timeToNextAnimationTick(WebAnimation&) const;
 
@@ -344,7 +352,7 @@ public:
     String visiblePlaceholder(Element&);
     void setCanShowPlaceholder(Element&, bool);
 
-    Element* insertTextPlaceholder(int width, int height);
+    RefPtr<Element> insertTextPlaceholder(int width, int height);
     void removeTextPlaceholder(Element&);
 
     void selectColorInColorChooser(HTMLInputElement&, const String& colorValue);
@@ -543,8 +551,8 @@ public:
     ExceptionOr<String> layerTreeAsText(Document&, unsigned short flags) const;
     ExceptionOr<uint64_t> layerIDForElement(Element&);
     ExceptionOr<String> repaintRectsAsText() const;
-        
-    ExceptionOr<Vector<uint64_t>> scrollingNodeIDForNode(Node*);
+
+    ExceptionOr<ScrollingNodeID> scrollingNodeIDForNode(Node*);
 
     enum {
         // Values need to be kept in sync with Internals.idl.
@@ -1649,6 +1657,8 @@ public:
 #endif
 
     bool hasMediaSessionManager() const;
+
+    size_t fileConnectionHandleCount(const FileSystemHandle&) const;
 
 private:
     explicit Internals(Document&);

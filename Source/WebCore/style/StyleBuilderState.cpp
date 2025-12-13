@@ -50,6 +50,7 @@
 #include "ElementTraversal.h"
 #include "FontCache.h"
 #include "HTMLElement.h"
+#include "LocalFrame.h"
 #include "RenderStyleSetters.h"
 #include "RenderTheme.h"
 #include "SVGElementTypeHelpers.h"
@@ -68,6 +69,7 @@
 #include "StyleImageSet.h"
 #include "StyleNamedImage.h"
 #include "StylePaintImage.h"
+#include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 
 namespace WebCore {
@@ -85,6 +87,16 @@ BuilderState::BuilderState(RenderStyle& style, BuilderContext&& context)
     , m_context(WTFMove(context))
     , m_cssToLengthConversionData(style, *this)
 {
+}
+
+float BuilderState::zoomWithTextZoomFactor()
+{
+    if (RefPtr frame = document().frame()) {
+        float textZoomFactor = style().textZoom() != TextZoom::Reset ? frame->textZoomFactor() : 1.0f;
+        float usedZoom = evaluationTimeZoomEnabled(*this) ? 1.0f : style().usedZoom();
+        return usedZoom * textZoomFactor;
+    }
+    return cssToLengthConversionData().zoom();
 }
 
 // SVG handles zooming in a different way compared to CSS. The whole document is scaled instead

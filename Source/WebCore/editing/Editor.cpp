@@ -2263,8 +2263,8 @@ Node* Editor::nodeBeforeWritingSuggestions() const
     if (!container)
         return nullptr;
 
-    if (RefPtr text = dynamicDowncast<Text>(container))
-        return text.unsafeGet();
+    if (auto* text = dynamicDowncast<Text>(container.get()))
+        return text;
 
     return position.computeNodeBeforePosition();
 }
@@ -3208,6 +3208,16 @@ void Editor::markAllMisspellingsAndBadGrammarInRanges(OptionSet<TextCheckingType
     Vector<TextCheckingResult> results;
     checkTextOfParagraph(*textChecker(), paragraphToCheck.text(), resolvedOptions, results, document().selection().selection());
     markAndReplaceFor(request.releaseNonNull(), results);
+
+#if PLATFORM(COCOA)
+    bool extendedProofreadingEnabled = document().settings().extendedProofreadingEnabled();
+
+    if (shouldMarkGrammar && extendedProofreadingEnabled) {
+        RefPtr extendedRequest = SpellCheckRequest::create(resolvedOptions, TextCheckingProcessType::TextCheckingProcessIncremental, checkingRange, textReplacementRange, paragraphRange);
+        if (extendedRequest)
+            m_spellChecker->requestExtendedCheckingFor(extendedRequest.releaseNonNull(), results);
+    }
+#endif
 }
 
 static bool isAutomaticTextReplacementType(TextCheckingType type)
@@ -4393,8 +4403,8 @@ bool Editor::selectionStartHasMarkerFor(DocumentMarkerType markerType, int from,
 
     unsigned startOffset = static_cast<unsigned>(from);
     unsigned endOffset = static_cast<unsigned>(from + length);
-    for (auto& marker : markers->markersFor(*node)) {
-        if (marker->startOffset() <= startOffset && endOffset <= marker->endOffset() && marker->type() == markerType)
+    for (auto& marker : markers->markersFor(*node, markerType)) {
+        if (marker->startOffset() <= startOffset && endOffset <= marker->endOffset())
             return true;
     }
 

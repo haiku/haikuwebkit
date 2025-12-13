@@ -63,7 +63,7 @@ RemoteMediaSessionManager::RemoteMediaSessionManager(WebPage& topPage, WebPage& 
 {
     WebProcess::singleton().addMessageReceiver(Messages::RemoteMediaSessionManager::messageReceiverName(), m_localPageID, *this);
 
-    localPage.send(Messages::WebPageProxy::EnsureRemoteMediaSessionManagerProxy());
+    localPage.send(Messages::WebPageProxy::AddRemoteMediaSessionManager(m_localPageID));
 
 #if USE(AUDIO_SESSION)
     Ref sharedSession = WebCore::AudioSession::singleton();
@@ -87,6 +87,8 @@ RemoteMediaSessionManager::RemoteMediaSessionManager(WebPage& topPage, WebPage& 
 
 RemoteMediaSessionManager::~RemoteMediaSessionManager()
 {
+    if (RefPtr page = m_localPage.get())
+        page->send(Messages::WebPageProxy::RemoveRemoteMediaSessionManager(m_localPageID));
     WebProcess::singleton().removeMessageReceiver(Messages::RemoteMediaSessionManager::messageReceiverName(), m_localPageID);
 }
 
@@ -116,9 +118,38 @@ void RemoteMediaSessionManager::setCurrentSession(WebCore::PlatformMediaSessionI
     send(Messages::RemoteMediaSessionManagerProxy::SetCurrentMediaSession(currentSessionState(session)));
 }
 
+void RemoteMediaSessionManager::sessionWillBeginPlayback(WebCore::PlatformMediaSessionInterface& session, CompletionHandler<void(bool)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::RemoteMediaSessionManagerProxy::MediaSessionWillBeginPlayback(currentSessionState(session)), WTFMove(completionHandler));
+}
+
+void RemoteMediaSessionManager::addRestriction(WebCore::PlatformMediaSessionMediaType type, WebCore::MediaSessionRestrictions restrictions)
+{
+    send(Messages::RemoteMediaSessionManagerProxy::AddMediaSessionRestriction(type, restrictions));
+    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::addRestriction(type, restrictions);
+}
+
+void RemoteMediaSessionManager::removeRestriction(WebCore::PlatformMediaSessionMediaType type, WebCore::MediaSessionRestrictions restrictions)
+{
+    send(Messages::RemoteMediaSessionManagerProxy::RemoveMediaSessionRestriction(type, restrictions));
+    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::removeRestriction(type, restrictions);
+}
+
+void RemoteMediaSessionManager::resetRestrictions()
+{
+    send(Messages::RemoteMediaSessionManagerProxy::ResetMediaSessionRestrictions());
+    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::resetRestrictions();
+}
+
 void RemoteMediaSessionManager::updateSessionState()
 {
     send(Messages::RemoteMediaSessionManagerProxy::UpdateMediaSessionState());
+}
+
+void RemoteMediaSessionManager::sessionStateChanged(WebCore::PlatformMediaSessionInterface& session)
+{
+    send(Messages::RemoteMediaSessionManagerProxy::MediaSessionStateChanged(currentSessionState(session)));
+    REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::sessionStateChanged(session);
 }
 
 RefPtr<WebCore::PlatformMediaSessionInterface> RemoteMediaSessionManager::sessionWithIdentifier(WebCore::MediaSessionIdentifier identifier)
@@ -156,6 +187,15 @@ void RemoteMediaSessionManager::clientDidReceiveRemoteControlCommand(WebCore::Me
 {
     if (RefPtr session = sessionWithIdentifier(identifier))
         session->checkedClient()->didReceiveRemoteControlCommand(command, argument);
+}
+
+void RemoteMediaSessionManager::setCurrentMediaSession(std::optional<WebCore::MediaSessionIdentifier> identifier)
+{
+    if (!identifier)
+        return;
+
+    if (RefPtr session = sessionWithIdentifier(identifier.value()))
+        REMOTE_MEDIA_SESSION_MANAGER_BASE_CLASS::setCurrentSession(*session);
 }
 
 RemoteMediaSessionState& RemoteMediaSessionManager::currentSessionState(const WebCore::PlatformMediaSessionInterface& session)
@@ -210,6 +250,9 @@ void RemoteMediaSessionManager::tryToSetAudioSessionActive(bool active)
 
 void RemoteMediaSessionManager::updateCachedSessionState(const WebCore::PlatformMediaSessionInterface& session, RemoteMediaSessionState& state)
 {
+    state.mediaType = session.mediaType();
+    state.presentationType = session.presentationType();
+    state.displayType = session.displayType();
     state.state = session.state();
     state.stateToRestore = session.stateToRestore();
     state.interruptionType = session.interruptionType();

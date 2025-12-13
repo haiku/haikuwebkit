@@ -128,6 +128,7 @@ public:
     bool inScope(ElementName) const;
     bool inListItemScope(ElementName) const;
     bool inTableScope(ElementName) const;
+    bool hasAnyInTableScope(std::initializer_list<ElementName> targetElements) const;
     bool inButtonScope(ElementName) const;
     bool inSelectScope(ElementName) const;
 

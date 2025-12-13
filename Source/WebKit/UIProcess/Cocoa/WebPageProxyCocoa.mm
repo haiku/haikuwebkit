@@ -51,6 +51,7 @@
 #import "RemoteLayerTreeCommitBundle.h"
 #import "RemoteLayerTreeTransaction.h"
 #import "SafeBrowsingSPI.h"
+#import "SafeBrowsingUtilities.h"
 #import "SharedBufferReference.h"
 #import "SynapseSPI.h"
 #import "VideoPresentationManagerProxy.h"
@@ -132,8 +133,6 @@ SOFT_LINK_CLASS_OPTIONAL(Synapse, SYNotesActivationObserver)
 #if HAVE(SCREEN_CAPTURE_KIT)
 #import <WebCore/ScreenCaptureKitSharingSessionManager.h>
 #endif
-
-#import "SafeBrowsingSoftLink.h"
 
 #if ENABLE(APPLE_PAY_AMS_UI)
 SOFT_LINK_PRIVATE_FRAMEWORK_OPTIONAL(AppleMediaServices)
@@ -270,51 +269,45 @@ std::optional<IPC::AsyncReplyID> WebPageProxy::grantAccessToCurrentPasteboardDat
 void WebPageProxy::beginSafeBrowsingCheck(const URL& url, API::Navigation& navigation, bool forMainFrameNavigation)
 {
 #if HAVE(SAFE_BROWSING)
-    RetainPtr context = [getSSBLookupContextClassSingleton() sharedLookupContext];
-    if (!url.isValid() || !context)
+    if (!SafeBrowsingUtilities::canLookUp(url))
         return;
+
     size_t redirectChainIndex = navigation.redirectChainIndex(url);
 
     navigation.setSafeBrowsingCheckOngoing(redirectChainIndex, true);
 
-    auto performLookup = [weakThis = WeakPtr { *this }, navigation = Ref { navigation }, forMainFrameNavigation, url = url.isolatedCopy(), redirectChainIndex, context](RetainPtr<SSBLookupResult> cachedResult) mutable {
+    auto performLookup = [weakThis = WeakPtr { *this }, navigation = Ref { navigation }, forMainFrameNavigation, url = url.isolatedCopy(), redirectChainIndex](RetainPtr<SSBLookupResult> cachedResult) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
 
-        auto completionHandler = makeBlockPtr([weakThis = WTFMove(weakThis), navigation = WTFMove(navigation), forMainFrameNavigation, url = url.isolatedCopy(), redirectChainIndex] (SSBLookupResult *result, NSError *error) mutable {
-            RunLoop::mainSingleton().dispatch([weakThis = WTFMove(weakThis), navigation = WTFMove(navigation), result = retainPtr(result), error = retainPtr(error), forMainFrameNavigation, url = WTFMove(url).isolatedCopy(), redirectChainIndex] {
-                RefPtr protectedThis = weakThis.get();
-                if (!protectedThis)
-                    return;
-                navigation->setSafeBrowsingCheckOngoing(redirectChainIndex, false);
-                if (error)
-                    return;
+        auto navigationType = forMainFrameNavigation ? SafeBrowsingUtilities::NavigationType::MainFrame : SafeBrowsingUtilities::NavigationType::SubFrame;
+        SafeBrowsingUtilities::lookUp(url, navigationType, cachedResult.get(), [weakThis = WTFMove(weakThis), navigation = WTFMove(navigation), forMainFrameNavigation, url = url.isolatedCopy(), redirectChainIndex](SSBLookupResult *result, NSError *error) mutable {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis)
+                return;
 
-                RefPtr navigationState = NavigationState::fromWebPage(*protectedThis);
-                auto historyDelegate = navigationState ? navigationState->historyDelegate() : nullptr;
-                if (historyDelegate && [historyDelegate respondsToSelector:@selector(_webView:didReceiveSafeBrowsingResult:forURL:)]) {
-                    if (auto webView = protectedThis->cocoaView())
-                        [historyDelegate _webView:webView.get() didReceiveSafeBrowsingResult:result.get() forURL:url.createNSURL().get()];
-                }
+            navigation->setSafeBrowsingCheckOngoing(redirectChainIndex, false);
+            if (error)
+                return;
 
-                for (SSBServiceLookupResult *lookupResult in [result serviceLookupResults]) {
-                    if (lookupResult.isPhishing || lookupResult.isMalware || lookupResult.isUnwantedSoftware) {
-                        navigation->setSafeBrowsingWarning(BrowsingWarning::create(url, forMainFrameNavigation, BrowsingWarning::SafeBrowsingWarningData { lookupResult }));
-                        break;
-                    }
+            RefPtr navigationState = NavigationState::fromWebPage(*protectedThis);
+            auto historyDelegate = navigationState ? navigationState->historyDelegate() : nullptr;
+            if (historyDelegate && [historyDelegate respondsToSelector:@selector(_webView:didReceiveSafeBrowsingResult:forURL:)]) {
+                if (auto webView = protectedThis->cocoaView())
+                    [historyDelegate _webView:webView.get() didReceiveSafeBrowsingResult:result forURL:url.createNSURL().get()];
+            }
+
+            for (SSBServiceLookupResult *lookupResult in [result serviceLookupResults]) {
+                if (lookupResult.isPhishing || lookupResult.isMalware || lookupResult.isUnwantedSoftware) {
+                    navigation->setSafeBrowsingWarning(BrowsingWarning::create(url, forMainFrameNavigation, BrowsingWarning::SafeBrowsingWarningData { lookupResult }));
+                    break;
                 }
-                if (!navigation->safeBrowsingCheckOngoing() && navigation->safeBrowsingWarning() && navigation->safeBrowsingCheckTimedOut())
-                    protectedThis->showBrowsingWarning(navigation->safeBrowsingWarning());
-            });
+            }
+
+            if (!navigation->safeBrowsingCheckOngoing() && navigation->safeBrowsingWarning() && navigation->safeBrowsingCheckTimedOut())
+                protectedThis->showBrowsingWarning(navigation->safeBrowsingWarning());
         });
-
-        if ([context respondsToSelector:@selector(lookUpURL:isMainFrame:hasHighConfidenceOfSafety:cachedResult:completionHandler:)])
-            [context lookUpURL:url.createNSURL().get() isMainFrame:forMainFrameNavigation hasHighConfidenceOfSafety:NO cachedResult:cachedResult.get() completionHandler:completionHandler.get()];
-        else if ([context respondsToSelector:@selector(lookUpURL:isMainFrame:hasHighConfidenceOfSafety:completionHandler:)])
-            [context lookUpURL:url.createNSURL().get() isMainFrame:forMainFrameNavigation hasHighConfidenceOfSafety:NO completionHandler:completionHandler.get()];
-        else
-            [context lookUpURL:url.createNSURL().get() completionHandler:completionHandler.get()];
     };
 
     RefPtr navigationState = NavigationState::fromWebPage(*this);
@@ -1556,7 +1549,7 @@ void WebPageProxy::setTextIndicatorFromFrame(FrameIdentifier frameID, const RefP
         return;
 
     auto rect = textIndicator->textBoundingRectInRootViewCoordinates();
-    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, textIndicator = WTFMove(textIndicator), lifetime] (std::optional<FloatRect> convertedRect) mutable {
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame()->frameID(), [weakThis = WeakPtr { *this }, textIndicator = WTFMove(textIndicator), lifetime] (std::optional<FloatRect> convertedRect) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !convertedRect)
             return;
@@ -1601,7 +1594,7 @@ void WebPageProxy::updateTextIndicatorFromFrame(FrameIdentifier frameID, RefPtr<
         return;
 
     auto rect = textIndicator->textBoundingRectInRootViewCoordinates();
-    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, textIndicator = WTFMove(textIndicator)] (std::optional<FloatRect> convertedRect) mutable {
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame()->frameID(), [weakThis = WeakPtr { *this }, textIndicator = WTFMove(textIndicator)] (std::optional<FloatRect> convertedRect) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis || !convertedRect)
             return;
@@ -1684,7 +1677,7 @@ bool WebPageProxy::tryToSendCommandToActiveControlledVideo(PlatformMediaSession:
     if (!hasActiveVideoForControlsManager())
         return false;
 
-    WeakPtr model = protectedPlaybackSessionManager()->controlsManagerInterface()->playbackSessionModel();
+    WeakPtr model = protectedPlaybackSessionManager()->protectedControlsManagerInterface()->playbackSessionModel();
     if (!model)
         return false;
 

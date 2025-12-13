@@ -107,19 +107,19 @@ public:
 
     void setDisableNonLocalhostConnections(bool disableNonLocalhostConnections) { m_disableNonLocalhostConnections = disableNonLocalhostConnections; }
 
-    webrtc::AsyncPacketSocket* CreateUdpSocket(const webrtc::SocketAddress& address, uint16_t minPort, uint16_t maxPort) final
+    std::unique_ptr<webrtc::AsyncPacketSocket> CreateUdpSocket(const webrtc::Environment& env, const webrtc::SocketAddress& address, uint16_t minPort, uint16_t maxPort) final
     {
-        return m_socketFactory->CreateUdpSocket(prepareSocketAddress(address, m_disableNonLocalhostConnections), minPort, maxPort);
+        return m_socketFactory->CreateUdpSocket(env, prepareSocketAddress(address, m_disableNonLocalhostConnections), minPort, maxPort);
     }
 
-    webrtc::AsyncListenSocket* CreateServerTcpSocket(const webrtc::SocketAddress&, uint16_t, uint16_t, int) final
+    std::unique_ptr<webrtc::AsyncListenSocket> CreateServerTcpSocket(const webrtc::Environment&, const webrtc::SocketAddress&, uint16_t, uint16_t, int) final
     {
         return nullptr;
     }
 
-    webrtc::AsyncPacketSocket* CreateClientTcpSocket(const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions& options) final
+    std::unique_ptr<webrtc::AsyncPacketSocket> CreateClientTcpSocket(const webrtc::Environment& env, const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions& options) final
     {
-        return m_socketFactory->CreateClientTcpSocket(prepareSocketAddress(localAddress, m_disableNonLocalhostConnections), remoteAddress, options);
+        return m_socketFactory->CreateClientTcpSocket(env, prepareSocketAddress(localAddress, m_disableNonLocalhostConnections), remoteAddress, options);
     }
 
     std::unique_ptr<webrtc::AsyncDnsResolverInterface> CreateAsyncDnsResolver() final { return m_socketFactory->CreateAsyncDnsResolver(); }

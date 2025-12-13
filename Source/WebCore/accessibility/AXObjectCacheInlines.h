@@ -71,15 +71,19 @@ inline Node* AXObjectCache::nodeForID(std::optional<AXID> axID) const
 
 inline AccessibilityObject* AXObjectCache::getOrCreate(Node& node, IsPartOfRelation isPartOfRelation)
 {
-    if (RefPtr object = get(node))
-        return object.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* object = get(node))
+        return object;
     return getOrCreateSlow(node, isPartOfRelation);
 }
 
 inline AccessibilityObject* AXObjectCache::getOrCreate(Element& element, IsPartOfRelation isPartOfRelation)
 {
-    if (RefPtr object = get(element))
-        return object.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* object = get(element))
+        return object;
     return getOrCreateSlow(element, isPartOfRelation);
 }
 

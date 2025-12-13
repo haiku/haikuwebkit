@@ -118,18 +118,8 @@ void GridFormattingContext::layout(GridLayoutConstraints layoutConstraints)
         // For now, we handle fixed gaps only (not percentages or calc).
         CheckedRef gridStyle = root().style();
 
-        auto computeGapValue = [](const Style::GapGutter& gap) -> LayoutUnit {
-            if (gap.isNormal())
-                return 0_lu;
-            // Only handle fixed length gaps for now
-            if (auto fixedGap = gap.tryFixed())
-                return Style::evaluate<LayoutUnit>(*fixedGap, 0_lu, Style::ZoomNeeded { });
-            ASSERT_NOT_REACHED();
-            return 0_lu;
-        };
-
-        auto columnGap = computeGapValue(gridStyle->columnGap());
-        auto rowGap = computeGapValue(gridStyle->rowGap());
+        auto columnGap = GridLayoutUtils::computeGapValue(gridStyle->columnGap());
+        auto rowGap = GridLayoutUtils::computeGapValue(gridStyle->rowGap());
 
         for (auto& gridItemRect : gridItemRects) {
             auto& lineNumbersForGridArea = gridItemRect.lineNumbersForGridArea;

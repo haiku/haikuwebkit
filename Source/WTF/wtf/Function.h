@@ -127,7 +127,7 @@ public:
         return *this;
     }
 
-    Impl* leak()
+    Impl* leak() WARN_UNUSED_RETURN
     {
         return m_callableWrapper.release();
     }

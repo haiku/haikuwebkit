@@ -105,7 +105,7 @@ public:
 
     WebCore::PageIdentifier webPageID() const { return m_webPageID; }
     WebFrameProxy* mainFrame() const { return m_mainFrame.get(); }
-    BrowsingContextGroup& browsingContextGroup() { return m_browsingContextGroup.get(); }
+    BrowsingContextGroup& browsingContextGroup() const { return m_browsingContextGroup.get(); }
     WebProcessProxy& process();
     Ref<WebProcessProxy> protectedProcess();
     ProcessSwapRequestedByClient processSwapRequestedByClient() const { return m_processSwapRequestedByClient; }
@@ -225,7 +225,7 @@ private:
     ProcessSwapRequestedByClient m_processSwapRequestedByClient;
     bool m_wasCommitted { false };
     bool m_isProcessSwappingOnNavigationResponse { false };
-    const bool m_isProcessSwappingForNewWindow;
+    const bool m_shouldReuseMainFrame;
     bool m_needsCookieAccessAddedInNetworkProcess { false };
     bool m_needsDidStartProvisionalLoad { true };
     bool m_shouldClosePage { true };

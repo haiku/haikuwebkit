@@ -29,6 +29,7 @@
 #if ENABLE(THREADED_ANIMATIONS)
 
 #include "AnimationEffect.h"
+#include "AnimationTimeline.h"
 #include "AnimationUtilities.h"
 #include "BlendingKeyframes.h"
 #include "CSSPropertyNames.h"
@@ -170,12 +171,10 @@ static CSSPropertyID cssPropertyFromAcceleratedProperty(AcceleratedEffectPropert
     }
 }
 
-RefPtr<AcceleratedEffect> AcceleratedEffect::create(const KeyframeEffect& effect, const TimelineIdentifier& timelineIdentifier, const IntRect& borderBoxRect, const AcceleratedEffectValues& baseValues, OptionSet<AcceleratedEffectProperty>& disallowedProperties)
+Ref<AcceleratedEffect> AcceleratedEffect::create(const KeyframeEffect& effect, const IntRect& borderBoxRect, const AcceleratedEffectValues& baseValues, OptionSet<AcceleratedEffectProperty>& disallowedProperties)
 {
-    RefPtr acceleratedEffect = adoptRef(new AcceleratedEffect(effect, timelineIdentifier, borderBoxRect, disallowedProperties));
+    Ref acceleratedEffect = adoptRef(*new AcceleratedEffect(effect, borderBoxRect, disallowedProperties));
     acceleratedEffect->validateFilters(baseValues, disallowedProperties);
-    if (acceleratedEffect->animatedProperties().isEmpty())
-        return nullptr;
     return acceleratedEffect;
 }
 
@@ -205,9 +204,14 @@ Ref<AcceleratedEffect> AcceleratedEffect::copyWithProperties(OptionSet<Accelerat
     return adoptRef(*new AcceleratedEffect(*this, propertyFilter));
 }
 
-AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const TimelineIdentifier& timelineIdentifier, const IntRect& borderBoxRect, const OptionSet<AcceleratedEffectProperty>& disallowedProperties)
-    : m_timelineIdentifier(timelineIdentifier)
+AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect& borderBoxRect, const OptionSet<AcceleratedEffectProperty>& disallowedProperties)
+    : m_timelineIdentifier(effect.animation()->timeline()->acceleratedTimelineIdentifier())
 {
+    ASSERT(effect.animation());
+    ASSERT(effect.animation()->timeline());
+    ASSERT(effect.animation()->timeline()->canBeAccelerated());
+    m_timeline = Ref { *effect.animation()->timeline() }->acceleratedRepresentation();
+
     m_timing = effect.timing();
     m_compositeOperation = effect.composite();
     m_animationType = effect.animationType();

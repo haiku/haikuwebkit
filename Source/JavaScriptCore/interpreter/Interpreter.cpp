@@ -59,8 +59,8 @@
 #include "JSModuleRecord.h"
 #include "JSObject.h"
 #include "JSPromise.h"
-#include "JSPromiseAllContext.h"
-#include "JSPromiseAllGlobalContext.h"
+#include "JSPromiseCombinatorsContext.h"
+#include "JSPromiseCombinatorsGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "JSRemoteFunction.h"
 #include "JSString.h"
@@ -486,9 +486,9 @@ void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results,
         if (auto* generator = jsDynamicCast<JSGenerator*>(promiseContext))
             return generator;
 
-        // handle `Promise.all`
-        if (auto* promiseAllContext = jsDynamicCast<JSPromiseAllContext*>(promiseContext)) {
-            if (auto* globalContext = jsDynamicCast<JSPromiseAllGlobalContext*>(promiseAllContext->globalContext())) {
+        // handle `Promise.all`, `Promise.allSettled`, and `Promise.any`
+        if (auto* promiseCombinatorsContext = jsDynamicCast<JSPromiseCombinatorsContext*>(promiseContext)) {
+            if (auto* globalContext = jsDynamicCast<JSPromiseCombinatorsGlobalContext*>(promiseCombinatorsContext->globalContext())) {
                 JSValue promiseValue = globalContext->promise();
                 ASSERT(promiseValue);
                 if (auto* promise = jsDynamicCast<JSPromise*>(promiseValue)) {
@@ -500,7 +500,7 @@ void Interpreter::getAsyncStackTrace(JSCell* owner, Vector<StackFrame>& results,
             }
         }
 
-        // handle `Promise.any`, `Promise.race` and `Promise.allSettled`
+        // handle and `Promise.race`
         if (auto* contextPromise = jsDynamicCast<JSPromise*>(promiseContext)) {
             if (JSValue parentContext = getContextValueFromPromise(contextPromise)) {
                 if (auto* generator = jsDynamicCast<JSGenerator*>(parentContext))

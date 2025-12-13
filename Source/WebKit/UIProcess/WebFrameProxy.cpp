@@ -38,7 +38,6 @@
 #include "LoadedWebArchive.h"
 #include "MessageSenderInlines.h"
 #include "NetworkProcessMessages.h"
-#include "ProvisionalFrameCreationParameters.h"
 #include "ProvisionalFrameProxy.h"
 #include "ProvisionalPageProxy.h"
 #include "RemotePageProxy.h"
@@ -363,7 +362,7 @@ void WebFrameProxy::didChangeTitle(String&& title)
     m_title = WTFMove(title);
 }
 
-WebFramePolicyListenerProxy& WebFrameProxy::setUpPolicyListenerProxy(CompletionHandler<void(PolicyAction, API::WebsitePolicies*, ProcessSwapRequestedByClient, std::optional<NavigatingToAppBoundDomain>, WasNavigationIntercepted)>&& completionHandler, ShouldExpectSafeBrowsingResult expectSafeBrowsingResult, ShouldExpectAppBoundDomainResult expectAppBoundDomainResult, ShouldWaitForInitialLinkDecorationFilteringData shouldWaitForInitialLinkDecorationFilteringData)
+WebFramePolicyListenerProxy& WebFrameProxy::setUpPolicyListenerProxy(CompletionHandler<void(PolicyAction, API::WebsitePolicies*, ProcessSwapRequestedByClient, std::optional<NavigatingToAppBoundDomain>, WasNavigationIntercepted)>&& completionHandler, ShouldExpectSafeBrowsingResult expectSafeBrowsingResult, ShouldExpectAppBoundDomainResult expectAppBoundDomainResult, ShouldWaitForInitialLinkDecorationFilteringData shouldWaitForInitialLinkDecorationFilteringData, ShouldWaitForSiteHasStorageCheck shouldWaitForSiteHasStorageCheck)
 {
     if (RefPtr previousListener = m_activeListener)
         previousListener->ignore();
@@ -373,7 +372,7 @@ WebFramePolicyListenerProxy& WebFrameProxy::setUpPolicyListenerProxy(CompletionH
 
         completionHandler(action, policies, processSwapRequestedByClient, isNavigatingToAppBoundDomain, wasNavigationIntercepted);
         m_activeListener = nullptr;
-    }, expectSafeBrowsingResult, expectAppBoundDomainResult, shouldWaitForInitialLinkDecorationFilteringData);
+    }, expectSafeBrowsingResult, expectAppBoundDomainResult, shouldWaitForInitialLinkDecorationFilteringData, shouldWaitForSiteHasStorageCheck);
     return *m_activeListener;
 }
 
@@ -519,23 +518,19 @@ void WebFrameProxy::didCreateSubframe(WebCore::FrameIdentifier frameID, String&&
 #endif
 }
 
-void WebFrameProxy::prepareForProvisionalLoadInProcess(WebProcessProxy& process, API::Navigation& navigation, BrowsingContextGroup& group, std::optional<SecurityOriginData> effectiveOrigin, CompletionHandler<void(WebCore::PageIdentifier)>&& completionHandler)
+void WebFrameProxy::prepareForProvisionalLoadInProcess(WebProcessProxy& process, API::Navigation& navigation, BrowsingContextGroup& group, CompletionHandler<void(WebCore::PageIdentifier)>&& completionHandler)
 {
     if (isMainFrame())
         return completionHandler(*webPageIDInCurrentProcess());
 
-    Site site = effectiveOrigin ? Site { *effectiveOrigin } : Site { navigation.currentRequest().url() };
+    Site navigationSite(navigation.currentRequest().url());
     RefPtr page = m_page.get();
     // FIXME: Main resource (of main or subframe) request redirects should go straight from the network to UI process so we don't need to make the processes for each domain in a redirect chain. <rdar://116202119>
     Site mainFrameSite(page->mainFrame()->url());
     auto mainFrameDomain = mainFrameSite.domain();
 
-    // If we have an effectiveOrigin, it means we are loading about:blank which doesn't have any resources
-    // to load can commit it's provisional frame immediately
-    CommitTiming commitTiming = effectiveOrigin ? CommitTiming::Immediately : CommitTiming::WaitForLoad;
-
     m_provisionalFrame = nullptr;
-    m_provisionalFrame = adoptRef(*new ProvisionalFrameProxy(*this, group.ensureProcessForSite(site, mainFrameSite, process, page->protectedPreferences()), commitTiming));
+    m_provisionalFrame = adoptRef(*new ProvisionalFrameProxy(*this, group.ensureProcessForSite(navigationSite, mainFrameSite, process, page->protectedPreferences())));
     page->protectedWebsiteDataStore()->protectedNetworkProcess()->addAllowedFirstPartyForCookies(process, mainFrameDomain, LoadedWebArchive::No, [pageID = page->webPageIDInProcess(process), completionHandler = WTFMove(completionHandler)] mutable {
         completionHandler(pageID);
     });
@@ -746,21 +741,21 @@ auto WebFrameProxy::traverseNext(CanWrap canWrap) const -> TraversalResult
 auto WebFrameProxy::traversePrevious(CanWrap canWrap) -> TraversalResult
 {
     if (RefPtr previousSibling = this->previousSibling())
-        return { RefPtr { previousSibling->deepLastChild() }, DidWrap::No };
+        return { previousSibling->deepLastChild(), DidWrap::No };
     if (RefPtr parent = parentFrame())
         return { WTFMove(parent), DidWrap::No };
 
     if (canWrap == CanWrap::Yes)
-        return { RefPtr { deepLastChild() }, DidWrap::Yes };
+        return { deepLastChild(), DidWrap::Yes };
     return { };
 }
 
-WebFrameProxy* WebFrameProxy::deepLastChild()
+RefPtr<WebFrameProxy> WebFrameProxy::deepLastChild()
 {
     RefPtr result = this;
     for (RefPtr last = lastChild(); last; last = last->lastChild())
         result = last;
-    return result.unsafeGet();
+    return result;
 }
 
 WebFrameProxy* WebFrameProxy::firstChild() const
@@ -809,17 +804,25 @@ WebFrameProxy* WebFrameProxy::previousSibling() const
     return (--it)->ptr();
 }
 
+RefPtr<WebFrameProxy> WebFrameProxy::childFrame(size_t index) const
+{
+    RefPtr child = firstChild();
+    for (size_t i = 0; i < index && child; i++)
+        child = child->nextSibling();
+    return child;
+}
+
 void WebFrameProxy::updateOpener(WebCore::FrameIdentifier newOpener)
 {
     m_opener = WebFrameProxy::webFrame(newOpener);
 }
 
-WebFrameProxy& WebFrameProxy::rootFrame()
+Ref<WebFrameProxy> WebFrameProxy::rootFrame()
 {
     Ref rootFrame = *this;
     while (rootFrame->m_parentFrame && rootFrame->m_parentFrame->process().coreProcessIdentifier() == process().coreProcessIdentifier())
         rootFrame = *rootFrame->m_parentFrame;
-    return rootFrame.unsafeGet();
+    return rootFrame;
 }
 
 bool WebFrameProxy::isMainFrame() const
@@ -874,20 +877,6 @@ void WebFrameProxy::sendMessageToInspectorFrontend(const String& targetId, const
 {
     if (RefPtr page = m_page.get())
         page->inspectorController().sendMessageToInspectorFrontend(targetId, message);
-}
-
-ProvisionalFrameCreationParameters WebFrameProxy::provisionalFrameCreationParameters(std::optional<WebCore::FrameIdentifier> frameIDBeforeProvisionalNavigation, CommitTiming commitTiming)
-{
-    return ProvisionalFrameCreationParameters {
-        frameID(),
-        frameIDBeforeProvisionalNavigation,
-        layerHostingContextIdentifier(),
-        effectiveSandboxFlags(),
-        effectiveReferrerPolicy(),
-        scrollingMode(),
-        remoteFrameSize(),
-        commitTiming,
-    };
 }
 
 } // namespace WebKit

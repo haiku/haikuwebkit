@@ -529,6 +529,7 @@ set(WTF_SOURCES
     CPUTime.cpp
     ClockType.cpp
     CodePtr.cpp
+    CompactPtr.cpp
     CompilationThread.cpp
     ConcurrentBuffer.cpp
     ConcurrentPtrHashSet.cpp

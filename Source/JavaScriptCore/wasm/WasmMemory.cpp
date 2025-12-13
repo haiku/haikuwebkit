@@ -424,7 +424,7 @@ bool Memory::copy(uint32_t dstAddress, uint32_t srcAddress, uint32_t count)
     return true;
 }
 
-bool Memory::init(uint32_t offset, const uint8_t* data, uint32_t length)
+bool Memory::init(uint64_t offset, const uint8_t* data, uint32_t length)
 {
     if (sumOverflows<uint32_t>(offset, length))
         return false;

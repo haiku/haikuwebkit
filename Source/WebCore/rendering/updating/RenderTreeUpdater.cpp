@@ -151,7 +151,8 @@ void RenderTreeUpdater::updateRebuildRoots()
         auto* renderingAncestor = findRenderingAncestor(root);
         if (!renderingAncestor)
             return nullptr;
-        auto isInsideContinuation = root.renderer() && root.renderer()->parent()->isContinuation();
+        auto* rootRenderer = root.renderer();
+        auto isInsideContinuation = rootRenderer && rootRenderer->parent()->isContinuation();
         auto isInsideAnonymousFlexItemWithSiblings = [&] {
             if (!is<RenderFlexibleBox>(renderingAncestor->renderer()))
                 return false;
@@ -162,7 +163,12 @@ void RenderTreeUpdater::updateRebuildRoots()
                 return true;
             return false;
         };
-        if (isInsideContinuation || isInsideAnonymousFlexItemWithSiblings() || RenderTreeBuilder::isRebuildRootForChildren(*renderingAncestor->renderer()))
+        auto isBlockInInline = [&] {
+            if (!is<RenderInline>(renderingAncestor->renderer()))
+                return false;
+            return rootRenderer && rootRenderer->isInFlow() && !rootRenderer->isInline();
+        };
+        if (isInsideContinuation || isInsideAnonymousFlexItemWithSiblings() || isBlockInInline() || RenderTreeBuilder::isRebuildRootForChildren(*renderingAncestor->renderer()))
             return renderingAncestor;
         return nullptr;
     };

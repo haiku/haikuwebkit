@@ -39,8 +39,6 @@ internal import WebKit_Private
 @_spi(UIIntelligenceSupport) import AppKit
 #endif
 
-#if ENABLE_TEXT_EXTRACTION
-
 private func createEditable(for editable: WKTextExtractionEditable?) -> IntelligenceElement.Text.Editable? {
     guard let editable else {
         return nil
@@ -83,8 +81,6 @@ private func createIntelligenceElement(item: WKTextExtractionItem) -> Intelligen
     return element
 }
 
-#endif // ENABLE_TEXT_EXTRACTION
-
 @_spi(WKIntelligenceSupport)
 extension WKWebView {
     // swift-format-ignore: NoLeadingUnderscores
@@ -107,7 +103,6 @@ extension WKWebView {
         in visibleRect: CGRect,
         remoteContextWrapper: UIIntelligenceCollectionRemoteContextWrapper
     ) {
-        #if ENABLE_TEXT_EXTRACTION
         Task { @MainActor in
             let coordinator = IntelligenceCollectionCoordinator.shared
             let collector = coordinator.createCollector(remoteContextWrapper: remoteContextWrapper)
@@ -126,7 +121,6 @@ extension WKWebView {
 
             coordinator.finishCollection(collector)
         }
-        #endif // ENABLE_TEXT_EXTRACTION
     }
 }
 

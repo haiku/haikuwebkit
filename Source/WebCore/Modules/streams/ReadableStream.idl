@@ -39,6 +39,10 @@ dictionary ReadableWritablePair {
     required WritableStream writable;
 };
 
+dictionary ReadableStreamIteratorOptions {
+    boolean preventCancel = false;
+};
+
 typedef (ReadableStreamDefaultReader or ReadableStreamBYOBReader) ReadableStreamReader;
 
 [

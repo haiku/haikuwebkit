@@ -180,6 +180,9 @@ static RefPtr<DOMPromise> cancelReadableStream(JSDOMGlobalObject& globalObject, 
         return stream.cancel(globalObject, reason);
 
     auto value = internalReadableStream->cancel(globalObject, reason);
+    if (!value)
+        return nullptr;
+
     auto* promise = jsCast<JSC::JSPromise*>(value);
     if (!promise)
         return nullptr;
@@ -479,6 +482,8 @@ void StreamPipeToState::closingMustBePropagatedBackward()
             // FIXME: Check whether ok to take a strong.
             JSC::Strong<JSC::Unknown> error { vm, getError(*globalObject) };
             auto value = internalReadableStream->cancel(*globalObject, error.get());
+            if (!value)
+                return nullptr;
 
             auto getError2 = [error = WTFMove(error)](auto&) {
                 return error.get();

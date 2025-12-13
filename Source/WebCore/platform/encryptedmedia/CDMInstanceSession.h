@@ -30,25 +30,15 @@
 #include <WebCore/CDMKeyStatus.h>
 #include <WebCore/CDMMessageType.h>
 #include <WebCore/CDMSessionType.h>
+#include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
-#include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
-#include <wtf/WeakPtr.h>
 
 #if !RELEASE_LOG_DISABLED
 namespace WTF {
 class Logger;
 }
 #endif
-
-namespace WebCore {
-class CDMInstanceSessionClient;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedWeakRefSmartPointerException;
-template<> struct IsDeprecatedWeakRefSmartPointerException<WebCore::CDMInstanceSessionClient> : std::true_type { };
-}
 
 namespace WebCore {
 
@@ -64,7 +54,7 @@ enum class CDMInstanceSessionLoadFailure : uint8_t {
     Other,
 };
 
-class CDMInstanceSessionClient : public CanMakeWeakPtr<CDMInstanceSessionClient> {
+class CDMInstanceSessionClient : public AbstractRefCountedAndCanMakeWeakPtr<CDMInstanceSessionClient> {
 public:
     virtual ~CDMInstanceSessionClient() = default;
 

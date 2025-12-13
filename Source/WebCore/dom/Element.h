@@ -223,7 +223,7 @@ public:
     inline String attributeTrimmedWithDefaultARIA(const QualifiedName&) const;
 
     enum class TopLayerElementType : bool { Other, Popover };
-    HTMLElement* topmostPopoverAncestor(TopLayerElementType topLayerType);
+    RefPtr<HTMLElement> topmostPopoverAncestor(TopLayerElementType topLayerType);
 
     // https://github.com/w3c/aria/pull/2484
     // These ARIA attributes will become enumerated. Currently, they use [ReflectSetter] with custom getters

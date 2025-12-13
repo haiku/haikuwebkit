@@ -133,6 +133,7 @@ MediaPlayerPrivateMediaSourceAVFObjC::~MediaPlayerPrivateMediaSourceAVFObjC()
 
 class MediaPlayerFactoryMediaSourceAVFObjC final : public MediaPlayerFactory {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerFactoryMediaSourceAVFObjC);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaPlayerFactoryMediaSourceAVFObjC);
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::AVFoundationMSE; };
 
@@ -1087,6 +1088,12 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setNetworkState(MediaPlayer::NetworkS
     m_networkState = networkState;
     if (auto player = m_player.get())
         player->networkStateChanged();
+}
+
+void MediaPlayerPrivateMediaSourceAVFObjC::mediaSourceHasRetrievedAllData()
+{
+    assertIsMainThread();
+    setNetworkState(MediaPlayer::NetworkState::Loaded);
 }
 
 ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN

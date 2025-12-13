@@ -116,7 +116,7 @@ static RetainPtr<NSArray<NSHTTPCookie *>> cookiesByCappingExpiry(NSArray<NSHTTPC
 }
 
 #if ENABLE(OPT_IN_PARTITIONED_COOKIES) && defined(CFN_COOKIE_ACCEPTS_POLICY_PARTITION) && CFN_COOKIE_ACCEPTS_POLICY_PARTITION
-static NSArray<NSHTTPCookie *> *cookiesBySettingPartition(NSArray<NSHTTPCookie *> *cookies, NSString* partition)
+static RetainPtr<NSArray<NSHTTPCookie *>> cookiesBySettingPartition(NSArray<NSHTTPCookie *> *cookies, NSString* partition)
 {
     RetainPtr<NSMutableArray> partitionedCookies = [NSMutableArray arrayWithCapacity:cookies.count];
     for (NSHTTPCookie *cookie in cookies) {
@@ -124,7 +124,7 @@ static NSArray<NSHTTPCookie *> *cookiesBySettingPartition(NSArray<NSHTTPCookie *
         if (partitionedCookie)
             [partitionedCookies addObject:partitionedCookie.get()];
     }
-    return partitionedCookies.unsafeGet();
+    return partitionedCookies;
 }
 #endif
 
@@ -186,7 +186,7 @@ void NetworkTaskCocoa::setCookieTransformForThirdPartyRequest(const WebCore::Res
 
         // FIXME: Consider making these session cookies, as well.
         if (!cookiePartition.isEmpty())
-            cookiesSetInResponse = cookiesBySettingPartition(cookiesSetInResponse, cookiePartition.createNSString().get());
+            cookiesSetInResponse = cookiesBySettingPartition(cookiesSetInResponse, cookiePartition.createNSString().get()).autorelease();
 
         return cookiesSetInResponse;
     }).get();

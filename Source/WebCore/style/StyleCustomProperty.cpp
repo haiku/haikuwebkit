@@ -34,8 +34,6 @@
 #include "CSSVariableReferenceValue.h"
 #include "RenderStyle.h"
 #include "StyleCalculationValue.h"
-#include "StyleExtractorConverter.h"
-#include "StyleExtractorSerializer.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"
 #include "StylePrimitiveNumericTypes+Serialization.h"
 #include <wtf/TZoneMallocInlines.h>

@@ -957,4 +957,92 @@ TEST(WTF_HashSet, RangesAllAnyNoneOf)
     }));
 }
 
+// FIXME: Tests using ASSERT_DEATH currently panic on playstation
+#if !PLATFORM(PLAYSTATION)
+TEST(WTF_HashSetDeathTest, StringViewHashTranslatorEmptyValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<StringViewHashTranslator>(StringView(String())); // Results in HashTraits empty value
+    };
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+TEST(WTF_HashSetDeathTest, StringViewHashTranslatorDeletedValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<StringViewHashTranslator>(StringView(String(WTF::HashTableDeletedValue))); // Results in HashTraits deleted value
+    };
+
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+TEST(WTF_HashSetDeathTest, ASCIICaseInsensitiveStringViewHashTranslatorEmptyValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<ASCIICaseInsensitiveStringViewHashTranslator>(StringView(String())); // Results in HashTraits empty value
+    };
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+TEST(WTF_HashSetDeathTest, ASCIICaseInsensitiveStringViewHashTranslatorDeletedValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<ASCIICaseInsensitiveStringViewHashTranslator>(StringView(String(WTF::HashTableDeletedValue))); // Results in HashTraits deleted value
+    };
+
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+TEST(WTF_HashSetDeathTest, HashTranslatorASCIILiteralEmptyValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<HashTranslatorASCIILiteral>(ASCIILiteral()); // Results in HashTraits empty value
+    };
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+TEST(WTF_HashSetDeathTest, HashTranslatorASCIILiteralDeletedValue)
+{
+    HashSet<String> hashSet;
+    auto shouldCrash = [&] {
+        hashSet.add<HashTranslatorASCIILiteral>(ASCIILiteral::deletedValue()); // Results in HashTraits deleted value
+    };
+
+    ASSERT_DEATH_IF_SUPPORTED(shouldCrash(), "");
+}
+
+#ifdef NDEBUG
+TEST(WTF_HashSetDeathTest, HashTranslatorASCIILiteralCaseInsensitiveEmptyValue)
+{
+    HashSet<String> hashSet;
+    hashSet.reserveInitialCapacity(8); // All empty buckets
+    auto invalidLookup = [&] {
+        return hashSet.contains<HashTranslatorASCIILiteralCaseInsensitive>(ASCIILiteral()); // Results in HashTraits empty value
+    };
+    EXPECT_FALSE(invalidLookup());
+}
+
+TEST(WTF_HashSet, HashTranslatorASCIILiteralCaseInsensitiveDeletedValue)
+{
+    HashSet<String> hashSet;
+    hashSet.reserveInitialCapacity(8);
+    for (size_t i = 0; i < 8; ++i)
+        hashSet.add(String::number(i));
+    for (size_t i = 0; i < 8; ++i)
+        hashSet.remove(String::number(i)); // Lots of deleted buckets (100% deleted buckets is impossible, so we do our best)
+    auto invalidLookup = [&] {
+        return hashSet.contains<HashTranslatorASCIILiteralCaseInsensitive>(ASCIILiteral::deletedValue()); // Results in HashTraits deleted value
+    };
+
+    EXPECT_FALSE(invalidLookup());
+}
+#endif
+
+#endif
+
 } // namespace TestWebKitAPI

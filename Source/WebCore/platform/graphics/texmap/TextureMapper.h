@@ -76,6 +76,8 @@ public:
     void drawNumber(int number, const Color&, const FloatPoint&, const TransformationMatrix&);
 
     WEBCORE_EXPORT void drawTexture(const BitmapTexture&, const FloatRect& target, const TransformationMatrix& modelViewMatrix = TransformationMatrix(), float opacity = 1.0f, AllEdgesExposed = AllEdgesExposed::Yes);
+    void drawTextureWithPhysicalSize(const BitmapTexture&, const FloatRect& target, const TransformationMatrix& modelViewMatrix = TransformationMatrix(), float opacity = 1.0f, AllEdgesExposed = AllEdgesExposed::Yes);
+
 #if ENABLE(DAMAGE_TRACKING)
     void drawTextureFragment(const BitmapTexture& sourceTexture, const FloatRect& sourceRect, const FloatRect& targetRect);
 #endif
@@ -154,6 +156,8 @@ private:
     bool m_isMaskMode { false };
     TransformationMatrix m_patternTransform;
     WrapMode m_wrapMode { WrapMode::Stretch };
+    std::optional<FloatSize> m_uvClampMax;
+    std::optional<FloatSize> m_uvClampTexelSize;
     TextureMapperGLData* m_data;
     ClipStack m_clipStack;
 #if ENABLE(DAMAGE_TRACKING)

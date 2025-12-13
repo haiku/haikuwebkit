@@ -30,8 +30,6 @@ bindings/js/GarbageCollectionController.cpp
 bindings/js/JSLocationCustom.cpp
 bindings/js/JSPaintRenderingContext2DCustom.cpp
 bridge/objc/objc_runtime.h
-crypto/cocoa/CryptoAlgorithmEd25519Cocoa.cpp
-crypto/cocoa/CryptoKeyOKPCocoa.cpp
 css/CSSStyleProperties.h
 css/CSSToLengthConversionData.h
 css/MediaList.h

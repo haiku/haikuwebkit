@@ -105,10 +105,6 @@
 #include "VirtualAuthenticatorManager.h"
 #endif // ENABLE(WEB_AUTHN)
 
-#if HAVE(MODERN_DOWNLOADPROGRESS)
-#include <WebKitAdditions/DownloadProgressAdditions.h>
-#endif
-
 namespace WebKit {
 
 static bool allowsWebsiteDataRecordsForAllOrigins;
@@ -219,7 +215,7 @@ WebsiteDataStore::~WebsiteDataStore()
 }
 
 // FIXME: Remove this when rdar://95786441 is resolved.
-static RefPtr<WebsiteDataStore>& protectedDefaultDataStore()
+static RefPtr<WebsiteDataStore>& protectedGlobalDefaultDataStore()
 {
     static NeverDestroyed<RefPtr<WebsiteDataStore>> globalDefaultDataStore;
     return globalDefaultDataStore.get();
@@ -245,24 +241,27 @@ static IsPersistent defaultDataStoreIsPersistent()
 #endif
 }
 
-Ref<WebsiteDataStore> WebsiteDataStore::defaultDataStore()
+WebsiteDataStore& WebsiteDataStore::defaultDataStore()
 {
     InitializeWebKit2();
     auto& globalDatasStore = globalDefaultDataStore();
     if (globalDatasStore)
-        return Ref { *globalDatasStore };
+        return *globalDatasStore;
 
     auto isPersistent = defaultDataStoreIsPersistent();
-    Ref newDataStore = WebsiteDataStore::create(WebsiteDataStoreConfiguration::create(isPersistent), isPersistent == IsPersistent::Yes ? PAL::SessionID::defaultSessionID() : PAL::SessionID::generateEphemeralSessionID());
-    globalDatasStore = newDataStore.ptr();
-    protectedDefaultDataStore() = newDataStore.ptr();
+    protectedGlobalDefaultDataStore() = WebsiteDataStore::create(WebsiteDataStoreConfiguration::create(isPersistent), isPersistent == IsPersistent::Yes ? PAL::SessionID::defaultSessionID() : PAL::SessionID::generateEphemeralSessionID());
+    globalDatasStore = protectedGlobalDefaultDataStore().get();
+    return *protectedGlobalDefaultDataStore();
+}
 
-    return newDataStore;
+Ref<WebsiteDataStore> WebsiteDataStore::protectedDefaultDataStore()
+{
+    return defaultDataStore();
 }
 
 void WebsiteDataStore::deleteDefaultDataStoreForTesting()
 {
-    protectedDefaultDataStore() = nullptr;
+    protectedGlobalDefaultDataStore() = nullptr;
 }
 
 bool WebsiteDataStore::defaultDataStoreExists()
@@ -480,6 +479,9 @@ static void resolveDirectories(WebsiteDataStoreConfiguration::Directories& direc
     if (!directories.resourceMonitorThrottlerDirectory.isEmpty())
         directories.resourceMonitorThrottlerDirectory = resolveAndCreateReadWriteDirectoryForSandboxExtension(directories.resourceMonitorThrottlerDirectory);
 #endif
+
+    if (!directories.enhancedSecurityDirectory.isEmpty())
+        directories.enhancedSecurityDirectory = resolveAndCreateReadWriteDirectoryForSandboxExtension(directories.enhancedSecurityDirectory);
 }
 
 const WebsiteDataStoreConfiguration::Directories& WebsiteDataStore::resolvedDirectories() const
@@ -821,6 +823,16 @@ private:
         });
     }
 #endif
+
+    if (dataTypes.contains(WebsiteDataType::EnhancedSecurityRecord)) {
+        fetchAllEnhancedSecuritySites([callbackAggregator] (HashSet<WebCore::RegistrableDomain>&& enhancedSecuritySites) {
+            WebsiteData websiteData;
+            websiteData.entries = WTF::map(enhancedSecuritySites, [](auto& entry) {
+                return WebsiteData::Entry { WebCore::SecurityOriginData { "https"_s, entry.string(), std::nullopt }, WebsiteDataType::EnhancedSecurityRecord, 0 };
+            });
+            callbackAggregator->addWebsiteData(WTFMove(websiteData));
+        });
+    }
 }
 
 void WebsiteDataStore::fetchDataForRegistrableDomains(OptionSet<WebsiteDataType> dataTypes, OptionSet<WebsiteDataFetchOption> fetchOptions, Vector<WebCore::RegistrableDomain>&& domains, CompletionHandler<void(Vector<WebsiteDataRecord>&&, HashSet<WebCore::RegistrableDomain>&&)>&& completionHandler)
@@ -976,6 +988,9 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, WallTime
     if (dataTypes.contains(WebsiteDataType::ScreenTime) && isPersistent())
         ScreenTimeWebsiteDataSupport::removeScreenTimeDataWithInterval(modifiedSince, configuration());
 #endif
+
+    if (dataTypes.contains(WebsiteDataType::EnhancedSecurityRecord) && isPersistent())
+        removeAllEnhancedSecuritySites([callbackAggregator] { });
 }
 
 void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Vector<WebsiteDataRecord>& dataRecords, Function<void()>&& completionHandler)
@@ -1081,6 +1096,8 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Ve
         ScreenTimeWebsiteDataSupport::removeScreenTimeData(websitesToRemove, configuration());
     }
 #endif
+    if (dataTypes.contains(WebsiteDataType::EnhancedSecurityRecord) && isPersistent())
+        removeEnhancedSecuritySites(origins, [callbackAggregator] { });
 }
 
 DeviceIdHashSaltStorage& WebsiteDataStore::ensureDeviceIdHashSaltStorage()
@@ -1618,6 +1635,11 @@ void WebsiteDataStore::resetCrossSiteLoadsWithLinkDecorationForTesting(Completio
 void WebsiteDataStore::deleteCookiesForTesting(const URL& url, bool includeHttpOnlyCookies, CompletionHandler<void()>&& completionHandler)
 {
     protectedNetworkProcess()->deleteCookiesForTesting(m_sessionID, WebCore::RegistrableDomain { url }, includeHttpOnlyCookies, WTFMove(completionHandler));
+}
+
+void WebsiteDataStore::hasLocalStorageOrCookies(const URL& url, CompletionHandler<void(bool)>&& completionHandler) const
+{
+    protectedNetworkProcess()->hasLocalStorageOrCookies(m_sessionID, WebCore::RegistrableDomain { url }, WTFMove(completionHandler));
 }
 
 void WebsiteDataStore::hasLocalStorageForTesting(const URL& url, CompletionHandler<void(bool)>&& completionHandler) const
@@ -2560,7 +2582,7 @@ void WebsiteDataStore::forwardAppBoundDomainsToITPIfInitialized(CompletionHandle
         store->setAppBoundDomainsForITP(domains, [callbackAggregator] { });
     };
 
-    propagateAppBoundDomains(protectedDefaultDataStore().get(), *appBoundDomains);
+    propagateAppBoundDomains(protectedGlobalDefaultDataStore().get(), *appBoundDomains);
 
     for (auto& store : allDataStores().values())
         propagateAppBoundDomains(Ref { store.get() }.ptr(), *appBoundDomains);
@@ -2589,7 +2611,7 @@ void WebsiteDataStore::forwardManagedDomainsToITPIfInitialized(CompletionHandler
         store->setManagedDomainsForITP(domains, [callbackAggregator] { });
     };
 
-    propagateManagedDomains(protectedDefaultDataStore().get(), *managedDomains);
+    propagateManagedDomains(protectedGlobalDefaultDataStore().get(), *managedDomains);
 
     for (auto& store : allDataStores().values())
         propagateManagedDomains(Ref { store.get() }.ptr(), *managedDomains);
@@ -2751,7 +2773,7 @@ void WebsiteDataStore::resumeDownload(const DownloadProxy& downloadProxy, const 
 
     Vector<uint8_t> downloadProgressAccessToken;
 #if HAVE(MODERN_DOWNLOADPROGRESS)
-    downloadProgressAccessToken = activityAccessToken();
+    downloadProgressAccessToken = downloadProxy.activityAccessToken();
 #endif
 
     protectedNetworkProcess()->send(Messages::NetworkProcess::ResumeDownload(m_sessionID, downloadProxy.downloadID(), resumeData.span(), path, WTFMove(sandboxExtensionHandle), callDownloadDidStart, downloadProgressAccessToken.span()), 0);
@@ -2953,5 +2975,33 @@ void WebsiteDataStore::isStorageSuspendedForTesting(CompletionHandler<void(bool)
 {
     protectedNetworkProcess()->isStorageSuspendedForTesting(m_sessionID, WTFMove(completionHandler));
 }
+
+#if !PLATFORM(COCOA)
+
+void WebsiteDataStore::removeEnhancedSecuritySites(const Vector<WebCore::SecurityOriginData>&, CompletionHandler<void()>&& completionHandler)
+{
+    completionHandler();
+}
+
+void WebsiteDataStore::removeAllEnhancedSecuritySites(CompletionHandler<void()>&& completionHandler)
+{
+    completionHandler();
+}
+
+void WebsiteDataStore::fetchEnhancedSecurityOnlyDomains(CompletionHandler<void(HashSet<WebCore::RegistrableDomain>&&)>&& completionHandler)
+{
+    completionHandler({ });
+}
+
+void WebsiteDataStore::fetchAllEnhancedSecuritySites(CompletionHandler<void(HashSet<WebCore::RegistrableDomain>&&)>&& completionHandler)
+{
+    completionHandler({ });
+}
+
+void WebsiteDataStore::trackEnhancedSecurityForDomain(WebCore::RegistrableDomain&& domain, EnhancedSecurity reason)
+{
+}
+
+#endif
 
 } // namespace WebKit

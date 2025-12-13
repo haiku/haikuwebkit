@@ -31,6 +31,7 @@
 #include <QuartzCore/CALayer.h>
 #include <WebCore/FloatRect.h>
 #include <pal/spi/cocoa/FoundationSPI.h>
+#include <wtf/RefPtr.h>
 
 OBJC_CLASS AVPlayerController;
 OBJC_CLASS NSDictionary;
@@ -43,7 +44,7 @@ class VideoPresentationModel;
 WEBCORE_EXPORT @interface WebAVPlayerLayer : CALayer
 @property (nonatomic, retain, nullable) NSString *videoGravity;
 @property (nonatomic, getter=isReadyForDisplay) BOOL readyForDisplay;
-@property (nonatomic, assign, nullable) WebCore::VideoPresentationModel* presentationModel;
+@property (nonatomic, assign) RefPtr<WebCore::VideoPresentationModel> presentationModel;
 @property (nonatomic, retain, nonnull) AVPlayerController *playerController;
 @property (nonatomic, retain, nonnull) CALayer *videoSublayer;
 @property (nonatomic, retain, nullable) CALayer *captionsLayer;

@@ -274,6 +274,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-cell-overflow-explicit-height-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-cell-scroll-height.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-cell-writing-mode-computed.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-collapsed-row-or-column-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-has-box-sizing-border-box-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-has-box-sizing-border-box-001.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-tables/table-has-box-sizing-border-box-002-expected.xht

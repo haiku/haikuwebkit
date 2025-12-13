@@ -52,26 +52,6 @@ class MockRtpSender;
 void useMockRTCPeerConnectionFactory(LibWebRTCProvider*, const String&);
 void useRealRTCPeerConnectionFactory(LibWebRTCProvider&);
 
-class MockLibWebRTCSessionDescription: public webrtc::SessionDescriptionInterface {
-public:
-    explicit MockLibWebRTCSessionDescription(std::string&& sdp) : m_sdp(WTFMove(sdp)) { }
-
-private:
-    bool ToString(std::string* out) const final { *out = m_sdp; return true; }
-
-    webrtc::SessionDescription* description() final { return nullptr; }
-    const webrtc::SessionDescription* description() const final { return nullptr; }
-    std::string session_id() const final { return ""; }
-    std::string session_version() const final { return ""; }
-    std::string type() const final { return ""; }
-    bool AddCandidate(const webrtc::IceCandidate*) final { return true; }
-    bool RemoveCandidate(const webrtc::IceCandidate*) final { return true; }
-    size_t number_of_mediasections() const final { return 0; }
-    const webrtc::IceCandidateCollection* candidates(size_t) const final { return nullptr; }
-
-    std::string m_sdp;
-};
-
 class MockLibWebRTCAudioTrack : public webrtc::AudioTrackInterface {
 public:
     explicit MockLibWebRTCAudioTrack(const std::string& id, webrtc::AudioSourceInterface* source)
@@ -312,12 +292,10 @@ private:
     std::optional<bool> can_trickle_ice_candidates() final { return { }; }
     void AddAdaptationResource(webrtc::scoped_refptr<webrtc::Resource>) final { }
     webrtc::Thread* signaling_thread() const final { return nullptr; }
-    webrtc::NetworkControllerInterface* GetNetworkController() final { return nullptr; }
 
 protected:
     void SetRemoteDescription(webrtc::SetSessionDescriptionObserver*, webrtc::SessionDescriptionInterface*) final { ASSERT_NOT_REACHED(); }
     void SetRemoteDescription(std::unique_ptr<webrtc::SessionDescriptionInterface>, webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>) override;
-    bool RemoveIceCandidates(const std::vector<webrtc::Candidate>&) override { return true; }
     webrtc::scoped_refptr<webrtc::DtlsTransportInterface> LookupDtlsTransportByMid(const std::string&) override { return { }; }
     webrtc::scoped_refptr<webrtc::SctpTransportInterface> GetSctpTransport() const override { return { }; }
     webrtc::PeerConnectionInterface::PeerConnectionState peer_connection_state() override { return PeerConnectionState::kNew; }

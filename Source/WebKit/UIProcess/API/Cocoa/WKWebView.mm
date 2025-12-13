@@ -288,6 +288,11 @@ static void *screenTimeWebpageControllerBlockedKVOContext = &screenTimeWebpageCo
 #define THROW_IF_SUSPENDED if (_page && _page->isSuspended()) [[unlikely]] \
     [NSException raise:NSInternalInconsistencyException format:@"The WKWebView is suspended"]
 
+static RetainPtr<NSError> unknownError()
+{
+    return adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
+}
+
 RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::ExceptionDetails>& details)
 {
     if (!details)
@@ -1483,18 +1488,18 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
         argumentsMap->append({ keyString.get(), WTFMove(*serializedValue) });
     }
 
-    if (errorMessage && handler) {
-        RetainPtr<NSMutableDictionary> userInfo = adoptNS([[NSMutableDictionary alloc] init]);
+    if (errorMessage) {
+        if (handler) {
+            RetainPtr<NSMutableDictionary> userInfo = adoptNS([[NSMutableDictionary alloc] init]);
+            [userInfo setObject:localizedDescriptionForErrorCode(WKErrorJavaScriptExceptionOccurred).get() forKey:NSLocalizedDescriptionKey];
+            [userInfo setObject:errorMessage forKey:_WKJavaScriptExceptionMessageErrorKey];
 
-        [userInfo setObject:localizedDescriptionForErrorCode(WKErrorJavaScriptExceptionOccurred).get() forKey:NSLocalizedDescriptionKey];
-        [userInfo setObject:errorMessage forKey:_WKJavaScriptExceptionMessageErrorKey];
-
-        auto error = adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorJavaScriptExceptionOccurred userInfo:userInfo.get()]);
-        RunLoop::mainSingleton().dispatch([handler, error] {
-            auto rawHandler = (void (^)(id, NSError *))handler.get();
-            rawHandler(nil, error.get());
-        });
-
+            auto error = adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorJavaScriptExceptionOccurred userInfo:userInfo.get()]);
+            RunLoop::mainSingleton().dispatch([handler, error] {
+                auto rawHandler = (void (^)(id, NSError *))handler.get();
+                rawHandler(nil, error.get());
+            });
+        }
         return;
     }
     
@@ -1503,8 +1508,20 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
         frameID = frame._handle->_frameHandle->frameID();
 
     auto removeTransientActivation = !_dontResetTransientActivationAfterRunJavaScript && WebKit::shouldEvaluateJavaScriptWithoutTransientActivation() ? WebCore::RemoveTransientActivation::Yes : WebCore::RemoveTransientActivation::No;
+
+    auto scriptString = IPC::TransferString::create(javaScriptString);
+    if (!scriptString) {
+        if (handler) {
+            RunLoop::mainSingleton().dispatch([handler = WTFMove(handler)] {
+                auto rawHandler = (void (^)(id, NSError *))handler.get();
+                rawHandler(nil, unknownError().get());
+            });
+        }
+        return;
+    }
+
     _page->runJavaScriptInFrameInScriptWorld(WebKit::RunJavaScriptParameters {
-        javaScriptString,
+        WTFMove(*scriptString),
         JSC::SourceTaintedOrigin::Untainted,
         sourceURL,
         asAsyncFunction ? WebCore::RunAsAsyncFunction::Yes : WebCore::RunAsAsyncFunction::No,
@@ -2111,7 +2128,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
 }
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-- (void)_canEnterImmersiveElementFromURL:(const URL&)url completion:(CompletionHandler<void(bool)>&&)completion
+- (void)_allowImmersiveElementFromURL:(const URL&)url completion:(CompletionHandler<void(bool)>&&)completion
 {
     id<_WKImmersiveEnvironmentDelegate> immersiveEnvironmentDelegate = self._immersiveEnvironmentDelegate;
     if (!immersiveEnvironmentDelegate) {
@@ -2119,12 +2136,44 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
         return;
     }
 
-    auto completionBlock = makeBlockPtr(WTFMove(completion));
     auto nsURL = url.createNSURL();
+    [immersiveEnvironmentDelegate webView:self allowImmersiveEnvironmentFromURL:nsURL.get() completion:makeBlockPtr([completion = WTFMove(completion)](bool allow) mutable {
+        completion(allow);
+    }).get()];
+}
 
-    [immersiveEnvironmentDelegate webView:self canPresentImmersiveEnvironmentFromURL:nsURL.get() completion:^(bool canPresentImmersive) {
-        completionBlock(canPresentImmersive);
-    }];
+- (void)_presentImmersiveElement:(const WebCore::LayerHostingContextIdentifier)contextID completion:(CompletionHandler<void(bool)>&&)completion
+{
+    id<_WKImmersiveEnvironmentDelegate> immersiveEnvironmentDelegate = self._immersiveEnvironmentDelegate;
+    if (!immersiveEnvironmentDelegate) {
+        completion(false);
+        return;
+    }
+
+    RetainPtr environmentView = adoptNS([[UIView alloc] initWithFrame:CGRectZero]);
+    RetainPtr remoteModelView = adoptNS([[_UIRemoteView alloc] initWithFrame:CGRectZero pid:[self _webProcessIdentifier] contextID:contextID.toUInt64()]);
+    [environmentView addSubview:remoteModelView.get()];
+    // To match the assumptions made in ModelProcessModelPlayerProxy.mm, the frame of the model view must stay zero, and be centered inside its container.
+    // This ensures that the model is correctly placed at the world's origin when the client puts the view inside their Immersive Space.
+    [remoteModelView setFrame:CGRectZero];
+    [remoteModelView setAutoresizingMask:(UIViewAutoresizingNone | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin)];
+
+    [immersiveEnvironmentDelegate webView:self presentImmersiveEnvironment:environmentView.autorelease() completion:makeBlockPtr([completion = WTFMove(completion)](NSError *error) mutable {
+        completion(!error);
+    }).get()];
+}
+
+- (void)_dismissImmersiveElement:(CompletionHandler<void()>&&)completion
+{
+    id<_WKImmersiveEnvironmentDelegate> immersiveEnvironmentDelegate = self._immersiveEnvironmentDelegate;
+    if (!immersiveEnvironmentDelegate) {
+        completion();
+        return;
+    }
+
+    [immersiveEnvironmentDelegate webView:self dismissImmersiveEnvironment:makeBlockPtr([completion = WTFMove(completion)]() mutable {
+        completion();
+    }).get()];
 }
 #endif
 
@@ -2250,11 +2299,6 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
         auto data = pdfData->createCFData();
         handler((NSData *)data.get(), nil);
     });
-}
-
-static RetainPtr<NSError> unknownError()
-{
-    return adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
 }
 
 - (void)createWebArchiveDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler
@@ -5103,6 +5147,12 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
     return nil;
 }
 
+- (void)_simulateDeviceMotionChangeWithXAcceleration:(double)xAcceleration yAcceleration:(double)yAcceleration zAcceleration:(double)zAcceleration xAccelerationIncludingGravity:(double)xAccelerationIncludingGravity yAccelerationIncludingGravity:(double)yAccelerationIncludingGravity zAccelerationIncludingGravity:(double)zAccelerationIncludingGravity xRotationRate:(double)xRotationRate yRotationRate:(double)yRotationRate zRotationRate:(double)zRotationRate
+{
+    THROW_IF_SUSPENDED;
+    _page->simulateDeviceMotionChange(xAcceleration, yAcceleration, zAcceleration, xAccelerationIncludingGravity, yAccelerationIncludingGravity, zAccelerationIncludingGravity, xRotationRate, yRotationRate, zRotationRate);
+}
+
 - (void)_simulateDeviceOrientationChangeWithAlpha:(double)alpha beta:(double)beta gamma:(double)gamma
 {
     THROW_IF_SUSPENDED;
@@ -6628,16 +6678,6 @@ static Vector<Ref<API::TargetedElementInfo>> elementsFromWKElements(NSArray<_WKT
 #endif
 }
 
-- (void)_debugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(NSString *))completionHandler
-{
-#if ENABLE(TEXT_EXTRACTION)
-    [self _extractDebugTextWithConfiguration:configuration completionHandler:makeBlockPtr([completionHandler = makeBlockPtr(completionHandler)](_WKTextExtractionResult *result) {
-        completionHandler(result.textContent);
-    }).get()];
-#endif
-}
-
-#if ENABLE(TEXT_EXTRACTION)
 static HashMap<String, String> extractReplacementStrings(_WKTextExtractionConfiguration *configuration)
 {
     HashMap<String, String> result;
@@ -6649,6 +6689,13 @@ static HashMap<String, String> extractReplacementStrings(_WKTextExtractionConfig
         result.set(String { replacement }, String { [replacementStrings objectForKey:replacement] });
     }
     return result;
+}
+
+- (void)_debugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(NSString *))completionHandler
+{
+    [self _extractDebugTextWithConfiguration:configuration completionHandler:makeBlockPtr([completionHandler = makeBlockPtr(completionHandler)](_WKTextExtractionResult *result) {
+        completionHandler(result.textContent);
+    }).get()];
 }
 
 static WebKit::TextExtractionOutputFormat textExtractionOutputFormat(_WKTextExtractionConfiguration *configuration)
@@ -6665,11 +6712,9 @@ static WebKit::TextExtractionOutputFormat textExtractionOutputFormat(_WKTextExtr
         return WebKit::TextExtractionOutputFormat::TextTree;
     }
 }
-#endif // ENABLE(TEXT_EXTRACTION)
 
 - (void)_extractDebugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(_WKTextExtractionResult *))completionHandler
 {
-#if ENABLE(TEXT_EXTRACTION)
     bool allowFiltering = _page->protectedPreferences()->textExtractionFilterEnabled();
     bool filterUsingClassifier = allowFiltering && configuration.filterOptions & _WKTextExtractionFilterClassifier;
     bool filterHiddenText = allowFiltering && configuration.filterOptions & _WKTextExtractionFilterTextRecognition;
@@ -6833,7 +6878,6 @@ static WebKit::TextExtractionOutputFormat textExtractionOutputFormat(_WKTextExtr
             completionHandler(adoptNS([[_WKTextExtractionResult alloc] initWithTextContent:text.createNSString().get() filteredOutAnyText:filteredOutAnyText]).get());
         });
     }];
-#endif // ENABLE(TEXT_EXTRACTION)
 }
 
 static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const String& nodeIdentifier)
@@ -6844,7 +6888,6 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
     return WebCore::NodeIdentifier { *rawValue };
 }
 
-#if ENABLE(TEXT_EXTRACTION)
 - (WebCore::TextExtraction::Interaction)_convertToWebCoreInteraction:(_WKTextExtractionInteraction *)wkInteraction
 {
     WebCore::TextExtraction::Interaction interaction;
@@ -6884,11 +6927,10 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
     interaction.scrollDelta = WebCore::FloatSize { wkInteraction.scrollDelta };
     return interaction;
 }
-#endif // ENABLE(TEXT_EXTRACTION)
 
 - (void)_performInteraction:(_WKTextExtractionInteraction *)wkInteraction completionHandler:(void(^)(_WKTextExtractionInteractionResult *))completionHandler
 {
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
     if (!self._isValid)
         return completionHandler(adoptNS([[_WKTextExtractionInteractionResult alloc] initWithErrorDescription:@"Web view is invalid"]).get());
 
@@ -6933,7 +6975,7 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
             completionHandler(result.get());
         });
     });
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 }
 
 @end
@@ -6963,7 +7005,7 @@ static inline std::optional<WebCore::NodeIdentifier> toNodeIdentifier(const Stri
 
 @implementation WKWebView (WKTextExtraction)
 
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
 static std::optional<WebCore::JSHandleIdentifier> mainFrameJSHandleIdentifier(_WKJSHandle *nodeHandle)
 {
@@ -6977,6 +7019,18 @@ static std::optional<WebCore::JSHandleIdentifier> mainFrameJSHandleIdentifier(_W
     }
 
     return info.identifier;
+}
+
+static Vector<WebCore::JSHandleIdentifier> extractHandleIdentifiersOfNodesToSkip(_WKTextExtractionConfiguration *configuration)
+{
+    Vector<WebCore::JSHandleIdentifier> nodes;
+    RetainPtr nodesToSkip = [configuration nodesToSkip];
+    nodes.reserveInitialCapacity([nodesToSkip count]);
+    for (_WKJSHandle *handle in nodesToSkip.get()) {
+        if (auto identifier = mainFrameJSHandleIdentifier(handle))
+            nodes.append(WTFMove(*identifier));
+    }
+    return nodes;
 }
 
 static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClientNodeAttributes(_WKTextExtractionConfiguration *configuration)
@@ -6996,11 +7050,11 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
     return result;
 }
 
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
 - (void)_requestTextExtractionInternal:(_WKTextExtractionConfiguration *)configuration completion:(CompletionHandler<void(std::optional<WebCore::TextExtraction::Item>&&)>&&)completion
 {
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
     Ref preferences = _page->preferences();
     if (!self._isValid || !preferences->textExtractionEnabled())
         return completion({ });
@@ -7034,6 +7088,7 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
         .clientNodeAttributes = extractClientNodeAttributes(configuration),
         .collectionRectInRootView = WTFMove(rectInRootView),
         .targetNodeHandleIdentifier = mainFrameJSHandleIdentifier(configuration.targetNode),
+        .handleIdentifiersOfNodesToSkip = extractHandleIdentifiersOfNodesToSkip(configuration),
         .mergeParagraphs = mergeParagraphs,
         .skipNearlyTransparentContent = skipNearlyTransparentContent,
         .nodeIdentifierInclusion = nodeIdentifierInclusion,
@@ -7043,12 +7098,12 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
     };
 
     _page->requestTextExtraction(WTFMove(request), WTFMove(completion));
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 }
 
 - (void)_requestTextExtraction:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(WKTextExtractionItem *))completionHandler
 {
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
     [self _requestTextExtractionInternal:configuration completion:[completionHandler = makeBlockPtr(completionHandler), weakSelf = WeakObjCPtr<WKWebView>(self)](auto&& item) {
         RetainPtr strongSelf = weakSelf.get();
         if (!strongSelf)
@@ -7066,12 +7121,12 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
         });
         completionHandler(rootItem.get());
     }];
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 }
 
 - (void)_describeInteraction:(_WKTextExtractionInteraction *)wkInteraction completionHandler:(void (^)(NSString *, NSError *))completionHandler
 {
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
     if (!self._isValid)
         return completionHandler(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorWebViewInvalidated userInfo:nil]);
 
@@ -7112,14 +7167,13 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
         }
 #endif // ENABLE(TEXT_EXTRACTION_FILTER)
     });
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 }
 
 #if ENABLE(TEXT_EXTRACTION_FILTER)
 
 - (void)_validateText:(const String&)text inNode:(std::optional<WebCore::NodeIdentifier>&&)nodeIdentifier completionHandler:(CompletionHandler<void(const String&)>&&)completionHandler
 {
-#if ENABLE(TEXT_EXTRACTION)
     if (text.isEmpty())
         return completionHandler(text);
 
@@ -7168,7 +7222,6 @@ static HashMap<String, HashMap<WebCore::JSHandleIdentifier, String>> extractClie
             }
         });
     });
-#endif // ENABLE(TEXT_EXTRACTION)
 }
 
 - (void)_clearTextExtractionFilterCache

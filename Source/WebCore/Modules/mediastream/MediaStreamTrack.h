@@ -76,7 +76,7 @@ public:
     static Ref<MediaStreamTrack> create(ScriptExecutionContext&, UniqueRef<MediaStreamTrackDataHolder>&&);
     virtual ~MediaStreamTrack();
 
-    // ContextDestructionObserver.
+    // ContextDestructionObserver, AudioCaptureSource.
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
     USING_CAN_MAKE_WEAKPTR(EventTarget);

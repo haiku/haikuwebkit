@@ -249,16 +249,16 @@ void ReadableByteStreamController::closeAndRespondToPendingPullIntos(JSDOMGlobal
 }
 
 // https://streams.spec.whatwg.org/#readable-byte-stream-controller-close
-void ReadableByteStreamController::close(JSDOMGlobalObject& globalObject)
+bool ReadableByteStreamController::close(JSDOMGlobalObject& globalObject, ShouldThrowOnError shouldThrowOnError)
 {
     Ref stream = m_stream.get();
 
     if (m_closeRequested || stream->state() != ReadableStream::State::Readable)
-        return;
+        return true;
 
     if (m_queueTotalSize) {
         m_closeRequested = true;
-        return;
+        return true;
     }
 
     if (!m_pendingPullIntos.isEmpty()) {
@@ -271,13 +271,16 @@ void ReadableByteStreamController::close(JSDOMGlobalObject& globalObject)
             scope.assertNoExceptionExceptTermination();
 
             this->error(globalObject, error);
-            throwException(&globalObject, scope, error);
-            return;
+
+            if (shouldThrowOnError == ShouldThrowOnError::Yes)
+                throwException(&globalObject, scope, error);
+            return false;
         }
     }
 
     clearAlgorithms();
     stream->close();
+    return true;
 }
 
 // https://streams.spec.whatwg.org/#transfer-array-buffer
@@ -537,7 +540,9 @@ bool ReadableByteStreamController::shouldCallPull()
     if (byobReader && byobReader->readIntoRequestsSize() > 0)
         return true;
 
-    return getDesiredSize() > 0;
+    auto size = getDesiredSize();
+    ASSERT(size);
+    return *size > 0;
 }
 
 static void copyDataBlockBytes(JSC::ArrayBuffer& destination, size_t destinationStart, JSC::ArrayBuffer& source, size_t sourceOffset, size_t bytesToCopy)

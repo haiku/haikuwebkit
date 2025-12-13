@@ -55,6 +55,8 @@ public:
 
     WebCore::PageIdentifier pageIdentifier() const { return m_state.pageIdentifier; }
 
+    bool isRemoteSessionClientProxy() const final { return true; }
+
 protected:
 
     RefPtr<WebCore::MediaSessionManagerInterface> sessionManager() const final;
@@ -111,5 +113,9 @@ private:
 };
 
 } // namespace WebKit
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::RemoteMediaSessionClientProxy)
+static bool isType(const WebCore::PlatformMediaSessionClient& session) { return session.isRemoteSessionClientProxy(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif // ENABLE(VIDEO) || ENABLE(WEB_AUDIO)

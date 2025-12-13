@@ -61,14 +61,15 @@ enum class ReceiverName : uint8_t {
     , TestWithSuperclass = 17
     , TestWithSuperclassAndWantsAsyncDispatch = 18
     , TestWithSuperclassAndWantsDispatch = 19
-    , TestWithValidator = 20
-    , TestWithWantsAsyncDispatch = 21
-    , TestWithWantsDispatch = 22
-    , TestWithWantsDispatchNoSyncMessages = 23
-    , TestWithoutAttributes = 24
-    , TestWithoutUsingIPCConnection = 25
-    , IPC = 26
-    , Invalid = 27
+    , TestWithSwift = 20
+    , TestWithValidator = 21
+    , TestWithWantsAsyncDispatch = 22
+    , TestWithWantsDispatch = 23
+    , TestWithWantsDispatchNoSyncMessages = 24
+    , TestWithoutAttributes = 25
+    , TestWithoutUsingIPCConnection = 26
+    , IPC = 27
+    , Invalid = 28
 };
 
 enum class MessageName : uint16_t {
@@ -164,6 +165,8 @@ enum class MessageName : uint16_t {
     TestWithSuperclass_TestAsyncMessageWithNoArguments,
     TestWithSuperclass_TestAsyncMessageWithNoArgumentsReply,
 #endif
+    TestWithSwift_TestAsyncMessage,
+    TestWithSwift_TestAsyncMessageReply,
     TestWithValidator_AlwaysEnabled,
     TestWithValidator_EnabledIfPassValidation,
     TestWithValidator_EnabledIfSomeFeatureEnabledAndPassValidation,
@@ -243,6 +246,7 @@ enum class MessageName : uint16_t {
     TestWithSuperclassAndWantsDispatch_TestSyncMessage,
     TestWithSuperclass_TestSyncMessage,
     TestWithSuperclass_TestSynchronousMessage,
+    TestWithSwift_TestSyncMessage,
     TestWithWantsAsyncDispatch_TestSyncMessage,
     TestWithWantsDispatch_TestSyncMessage,
     TestWithoutAttributes_GetPluginProcessConnection,

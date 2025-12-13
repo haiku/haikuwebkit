@@ -146,7 +146,7 @@ void RemoteAnimationStack::initEffectsFromMainThread(PlatformLayer *layer)
     [m_presentationModifierGroup flushWithTransaction];
 }
 
-void RemoteAnimationStack::applyEffectsFromScrollingThread() const
+void RemoteAnimationStack::applyEffects() const
 {
     ASSERT(m_presentationModifierGroup);
 
@@ -166,7 +166,10 @@ void RemoteAnimationStack::applyEffectsFromScrollingThread() const
         [m_transformPresentationModifier setValue:transform.get()];
     }
 
-    [m_presentationModifierGroup flush];
+    if (isMainRunLoop())
+        [m_presentationModifierGroup flushWithTransaction];
+    else
+        [m_presentationModifierGroup flush];
 }
 #endif
 

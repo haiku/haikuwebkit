@@ -121,7 +121,7 @@ public:
         bool isNewEntry;
     };
 
-    inline AddResult add(T value)
+    inline AddResult add(T value) LIFETIME_BOUND
     {
         ASSERT(isValidEntry(value));
 

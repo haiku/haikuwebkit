@@ -526,9 +526,10 @@ TextStream& operator<<(TextStream& ts, EventListenerRegionType listenerType)
     case EventListenerRegionType::TouchEnd: ts << "touch end"_s; break;
     case EventListenerRegionType::NonPassiveTouchEnd: ts << "active touch end"_s; break;
     case EventListenerRegionType::TouchCancel: ts << "touch cancel"_s; break;
-    case EventListenerRegionType::NonPassiveTouchCancel: ts << "active touch cancel"_s; break;
     case EventListenerRegionType::TouchMove: ts << "touch move"_s; break;
     case EventListenerRegionType::NonPassiveTouchMove: ts << "active touch move"_s; break;
+    case EventListenerRegionType::TouchForceChange: ts << "touch force change"_s; break;
+    case EventListenerRegionType::NonPassiveTouchForceChange: ts << "active touch force change"_s; break;
     case EventListenerRegionType::PointerDown: ts << "pointer down"_s; break;
     case EventListenerRegionType::NonPassivePointerDown: ts << "active pointer down"_s; break;
     case EventListenerRegionType::PointerEnter: ts << "pointer enter"_s; break;
@@ -942,6 +943,7 @@ TextStream& operator<<(TextStream& ts, PseudoElementType pseudoElementType)
     case PseudoElementType::Selection: ts << "selection"_s; break;
     case PseudoElementType::SpellingError: ts << "spelling-error"_s; break;
     case PseudoElementType::TargetText: ts << "target-text"_s; break;
+    case PseudoElementType::Checkmark: ts << "checkmark"_s; break;
     case PseudoElementType::ViewTransition: ts << "view-transition"_s; break;
     case PseudoElementType::ViewTransitionGroup: ts << "view-transition-group"_s; break;
     case PseudoElementType::ViewTransitionImagePair: ts << "view-transition-image-pair"_s; break;

@@ -517,7 +517,7 @@ static RetainPtr<CAAnimation> createAnimation(CALayer *layer, RemoteLayerTreeHos
         if (properties.animations.size()) {
             [animationGroup setAnimations:createNSArray(properties.animations, [&] (auto& animationProperties) -> CAAnimation * {
                 if (PlatformCAAnimation::isValidKeyPath(properties.keyPath, properties.animationType))
-                    return createAnimation(layer, layerTreeHost, animationProperties).unsafeGet();
+                    return createAnimation(layer, layerTreeHost, animationProperties).autorelease();
                 ASSERT_NOT_REACHED();
                 return nil;
             }).get()];

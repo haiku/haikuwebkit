@@ -118,6 +118,7 @@ private:
 
     void addLength(size_t length);
     void addLEB128ConstantInt32AndLength(uint32_t value, size_t length);
+    void addLEB128ConstantInt64AndLength(uint64_t value, size_t length);
     void addLEB128ConstantAndLengthForType(Type, uint64_t value, size_t length);
     void addLEB128V128Constant(v128_t value, size_t length);
     void addReturnData(const FunctionSignature&, const CallInformation&);

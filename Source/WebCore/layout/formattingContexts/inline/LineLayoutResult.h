@@ -102,9 +102,10 @@ struct LineLayoutResult {
             return InflowContentType::Block;
         return { };
     }
-    bool hasInlineContent() const { return inflowContentType().value_or(InflowContentType::Block) == InflowContentType::Inline; }
-    bool hasBlockContent() const { return inflowContentType().value_or(InflowContentType::Inline) == InflowContentType::Block; }
-    bool hasInflowContent() const { return inflowContentType().has_value(); }
+    bool hasContentfulInFlowContent() const { return inflowContentType().has_value(); }
+    bool hasContentfulInlineContent() const { return hasContentfulInFlowContent() && *inflowContentType() == InflowContentType::Inline; }
+    bool isBlockContent() const { return hasContentfulInFlowContent() && *inflowContentType() == InflowContentType::Block; }
+
     bool endsWithHyphen() const { return inlineContentEnding && *inlineContentEnding == InlineContentEnding::Hyphen; }
     bool endsWithLineBreak() const { return inlineContentEnding && *inlineContentEnding == InlineContentEnding::LineBreak; }
 

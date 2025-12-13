@@ -76,16 +76,16 @@ void MediaResourceSniffer::cancel()
     m_content.reset();
 }
 
-MediaResourceSniffer::Promise& MediaResourceSniffer::promise() const
+Ref<MediaResourceSniffer::Promise> MediaResourceSniffer::promise() const
 {
-    return m_producer.promise().unsafeGet();
+    return m_producer.promise();
 }
 
 void MediaResourceSniffer::dataReceived(PlatformMediaResource&, const SharedBuffer& buffer)
 {
     m_received += buffer.size();
     m_content.append(buffer);
-    auto contiguousBuffer = m_content.get()->makeContiguous();
+    auto contiguousBuffer = m_content.protectedBuffer()->makeContiguous();
     auto mimeType = MIMESniffer::getMIMETypeFromContent(contiguousBuffer->span());
     if (mimeType.isEmpty() && m_received < m_maxSize)
         return;
@@ -105,7 +105,7 @@ void MediaResourceSniffer::loadFinished(PlatformMediaResource&, const NetworkLoa
 {
     if (m_producer.isSettled())
         return;
-    Ref contiguousBuffer = m_content.takeAsContiguous();
+    Ref contiguousBuffer = m_content.takeBufferAsContiguous();
     auto mimeType = MIMESniffer::getMIMETypeFromContent(contiguousBuffer->span());
     m_producer.resolve(ContentType { WTFMove(mimeType) });
     cancel();

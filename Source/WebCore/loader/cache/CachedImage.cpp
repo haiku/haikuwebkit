@@ -288,11 +288,10 @@ Image* CachedImage::imageForRenderer(const RenderObject* renderer)
         return &Image::nullImage();
 
     if (m_image->drawsSVGImage()) {
-        RefPtr image = m_svgImageCache->imageForRenderer(renderer);
-        if (image != &Image::nullImage())
-            return image.unsafeGet();
+        SUPPRESS_UNCOUNTED_LOCAL if (auto* image = m_svgImageCache->imageForRenderer(renderer); image != &Image::nullImage())
+            return image;
     }
-    return m_image.unsafeGet();
+    return m_image.get();
 }
 
 void CachedImage::setContainerContextForClient(const CachedImageClient& client, const LayoutSize& containerSize, float containerZoom, const URL& imageURL)
@@ -744,6 +743,14 @@ void CachedImage::scheduleRenderingUpdate(const Image& image)
     CachedResourceClientWalker<CachedImageClient> walker(*this);
     while (RefPtr client = walker.next())
         client->scheduleRenderingUpdateForImage(*this);
+}
+
+bool CachedImage::useSystemDarkAppearance() const
+{
+    CachedResourceClientWalker<CachedImageClient> walker(*this);
+    if (RefPtr client = walker.next())
+        return client->useSystemDarkAppearance();
+    return false;
 }
 
 bool CachedImage::allowsAnimation(const Image& image) const

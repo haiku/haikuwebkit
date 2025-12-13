@@ -55,6 +55,7 @@
 #include "WebTransportReceiveStreamSource.h"
 #include "WebTransportReliabilityMode.h"
 #include "WebTransportSendGroup.h"
+#include "WebTransportSendStream.h"
 #include "WebTransportSendStreamSink.h"
 #include "WebTransportSession.h"
 #include "WorkerGlobalScope.h"
@@ -122,7 +123,7 @@ ExceptionOr<Ref<WebTransport>> WebTransport::create(ScriptExecutionContext& cont
         };
 
         incomingDatagrams = ReadableStream::createReadableByteStream(domGlobalObject, WTFMove(pullAlgorithm), WTFMove(cancelAlgorithm), {
-            .isReachableFromOpaqueRootIfPulling = ReadableStream::IsReachableFromOpaqueRootIfPulling::Yes
+            .isSourceReachableFromOpaqueRoot = ReadableStream::IsSourceReachableFromOpaqueRoot::Yes
         });
         datagramSource = WTFMove(datagramByteSource);
     } else {
@@ -279,6 +280,8 @@ void WebTransport::receiveBidirectionalStream(Ref<WebTransportSendStreamSink>&& 
         m_receiveStreams.add(bidiStream->readable());
         ASSERT(!m_readStreamSources.contains(identifier));
         m_readStreamSources.add(identifier, WTFMove(incomingStream));
+        ASSERT(!m_writeStreams.contains(identifier));
+        m_writeStreams.add(identifier, bidiStream->writable());
     } else
         protectedSession()->destroyStream(identifier, std::nullopt);
 }
@@ -288,6 +291,47 @@ void WebTransport::streamReceiveBytes(WebTransportStreamIdentifier identifier, s
     ASSERT(m_readStreamSources.contains(identifier));
     if (RefPtr source = m_readStreamSources.get(identifier))
         source->receiveBytes(span, withFin, WTFMove(exception));
+}
+
+void WebTransport::streamReceiveError(WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    RefPtr context = scriptExecutionContext();
+    if (!context)
+        return;
+    auto* globalObject = context->globalObject();
+    if (!globalObject)
+        return;
+    if (!m_session)
+        return;
+
+    ASSERT(m_readStreamSources.contains(identifier));
+    if (RefPtr source = m_readStreamSources.get(identifier))
+        source->receiveError(*globalObject, errorCode);
+}
+
+void WebTransport::streamSendError(WebTransportStreamIdentifier identifier, uint64_t errorCode)
+{
+    RefPtr context = scriptExecutionContext();
+    if (!context)
+        return;
+    auto* globalObject = context->globalObject();
+    if (!globalObject)
+        return;
+    if (!m_session)
+        return;
+
+    ASSERT(m_writeStreams.contains(identifier));
+    if (RefPtr stream = m_writeStreams.get(identifier)) {
+        auto& jsDOMGlobalObject = *JSC::jsCast<JSDOMGlobalObject*>(globalObject);
+        Locker<JSC::JSLock> locker(jsDOMGlobalObject.vm().apiLock());
+
+        auto error = WebTransportError::create(String(emptyString()), WebTransportErrorOptions {
+            WebTransportErrorSource::Stream,
+            static_cast<unsigned>(errorCode)
+        });
+        auto jsError = toJS(globalObject, &jsDOMGlobalObject, error.get());
+        stream->errorIfPossible(jsDOMGlobalObject, jsError);
+    }
 }
 
 void WebTransport::getStats(ScriptExecutionContext& context, Ref<DeferredPromise>&& promise)
@@ -413,25 +457,51 @@ void WebTransport::close(WebTransportCloseInfo&& closeInfo)
 
 void WebTransport::cleanup(Ref<DOMException>&& exception, std::optional<WebTransportCloseInfo>&& closeInfo)
 {
+    RefPtr context = scriptExecutionContext();
+    if (!context)
+        return;
+    auto* globalObject = context->globalObject();
+    if (!globalObject)
+        return;
+
+    auto& jsDOMGlobalObject = *jsDynamicCast<JSDOMGlobalObject*>(globalObject);
+
+    auto jsException = [&] {
+        Locker<JSC::JSLock> locker(jsDOMGlobalObject.vm().apiLock());
+        return toJS(&jsDOMGlobalObject, &jsDOMGlobalObject, exception.get());
+    } ();
+
     // https://www.w3.org/TR/webtransport/#webtransport-cleanup
     for (auto& stream : std::exchange(m_sendStreams, { }))
-        stream->closeIfPossible();
-    for (auto& stream : std::exchange(m_receiveStreams, { }))
-        stream->cancel(Exception { ExceptionCode::NetworkError });
-    m_datagrams->readable().cancel(Exception { ExceptionCode::NetworkError });
-    for (Ref datagramsWritable : std::exchange(m_datagramsWritables, { }))
-        datagramsWritable->closeIfPossible();
-    m_incomingBidirectionalStreams->cancel(Exception { ExceptionCode::NetworkError });
-    m_incomingUnidirectionalStreams->cancel(Exception { ExceptionCode::NetworkError });
+        stream->errorIfPossible(jsDOMGlobalObject, jsException);
+
+    m_writeStreams = { };
+
+    auto readStreamSources = std::exchange(m_readStreamSources, { });
+    for (auto& source : readStreamSources.values())
+        source->error(jsDOMGlobalObject, jsException);
+
+    std::exchange(m_receiveStreams, { });
+
     if (closeInfo) {
         m_state = State::Closed;
         // FIXME: The six Safer CPP warnings here and elsewhere in this file are due to the lack of
         // support for const std::pair holding const smart pointers: rdar://155857105.
         m_closed.second->resolve<IDLDictionary<WebTransportCloseInfo>>(*closeInfo);
+        m_incomingBidirectionalStreams->close();
+        m_incomingUnidirectionalStreams->close();
+        m_datagrams->readable().close();
+        for (Ref datagramsWritable : std::exchange(m_datagramsWritables, { }))
+            datagramsWritable->closeIfPossible();
     } else {
         m_state = State::Failed;
         m_closed.second->reject<IDLInterface<DOMException>>(exception);
         m_ready.second->reject<IDLInterface<DOMException>>(exception);
+        m_bidirectionalStreamSource->error(jsDOMGlobalObject, jsException);
+        m_receiveStreamSource->error(jsDOMGlobalObject, jsException);
+        m_datagramSource->error(jsDOMGlobalObject, jsException);
+        for (Ref datagramsWritable : std::exchange(m_datagramsWritables, { }))
+            datagramsWritable->errorIfPossible(jsDOMGlobalObject, jsException);
     }
 
     m_session = nullptr;
@@ -479,6 +549,8 @@ void WebTransport::createBidirectionalStream(ScriptExecutionContext& context, We
         protectedThis->m_receiveStreams.add(bidiStream->readable());
         ASSERT(!protectedThis->m_readStreamSources.get(identifier));
         protectedThis->m_readStreamSources.add(identifier, WTFMove(incomingStream));
+        ASSERT(!protectedThis->m_writeStreams.contains(identifier));
+        protectedThis->m_writeStreams.add(identifier, bidiStream->writable());
         promise->resolveWithNewlyCreated<IDLInterface<WebTransportBidirectionalStream>>(WTFMove(bidiStream));
     });
 }
@@ -507,6 +579,7 @@ void WebTransport::createUnidirectionalStream(ScriptExecutionContext& context, W
         auto* globalObject = context->globalObject();
         if (!globalObject)
             return promise->reject(ExceptionCode::InvalidStateError);
+        auto identifier = (*sink)->identifier();
         auto& jsDOMGlobalObject = *JSC::jsCast<JSDOMGlobalObject*>(globalObject);
         auto stream = [&] {
             Locker<JSC::JSLock> locker(jsDOMGlobalObject.vm().apiLock());
@@ -516,6 +589,8 @@ void WebTransport::createUnidirectionalStream(ScriptExecutionContext& context, W
             return promise->reject(stream.releaseException());
         auto sendStream = stream.releaseReturnValue();
         protectedThis->m_sendStreams.add(sendStream);
+        ASSERT(!protectedThis->m_writeStreams.contains(identifier));
+        protectedThis->m_writeStreams.add(identifier, sendStream);
         promise->resolveWithNewlyCreated<IDLInterface<WebTransportSendStream>>(sendStream);
     });
 }
@@ -530,7 +605,7 @@ Ref<WebTransportSendGroup> WebTransport::createSendGroup()
     return WebTransportSendGroup::create(*this);
 }
 
-void WebTransport::didFail(std::optional<unsigned>&& code, String&& message)
+void WebTransport::didFail(std::optional<uint32_t>&& code, String&& message)
 {
     if (code) {
         WebTransportCloseInfo closeInfo {

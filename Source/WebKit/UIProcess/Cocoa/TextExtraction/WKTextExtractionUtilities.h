@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
 #import <wtf/Function.h>
 #import <wtf/RetainPtr.h>
@@ -51,4 +51,4 @@ std::optional<double> computeSimilarity(NSString *a, NSString *b, unsigned minim
 
 } // namespace WebKit
 
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))

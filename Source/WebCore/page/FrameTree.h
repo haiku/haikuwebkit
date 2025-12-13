@@ -78,17 +78,17 @@ public:
     Frame* child(unsigned index) const;
     Frame* childBySpecifiedName(const AtomString& name) const;
     Frame* descendantByFrameID(FrameIdentifier) const;
-    WEBCORE_EXPORT Frame* findByUniqueName(const AtomString&, Frame& activeFrame) const;
-    WEBCORE_EXPORT Frame* findBySpecifiedName(const AtomString&, Frame& activeFrame) const;
+    WEBCORE_EXPORT RefPtr<Frame> findByUniqueName(const AtomString&, Frame& activeFrame) const;
+    WEBCORE_EXPORT RefPtr<Frame> findBySpecifiedName(const AtomString&, Frame& activeFrame) const;
     WEBCORE_EXPORT unsigned childCount() const;
     unsigned descendantCount() const;
     WEBCORE_EXPORT Frame& top() const;
     Ref<Frame> protectedTop() const;
     unsigned depth() const;
 
-    WEBCORE_EXPORT Frame* scopedChild(unsigned index) const;
-    WEBCORE_EXPORT Frame* scopedChildByUniqueName(const AtomString&) const;
-    Frame* scopedChildBySpecifiedName(const AtomString& name) const;
+    WEBCORE_EXPORT RefPtr<Frame> scopedChild(unsigned index) const;
+    WEBCORE_EXPORT RefPtr<Frame> scopedChildByUniqueName(const AtomString&) const;
+    RefPtr<Frame> scopedChildBySpecifiedName(const AtomString& name) const;
     unsigned scopedChildCount() const;
 
 private:
@@ -96,11 +96,11 @@ private:
     Frame* deepLastChild() const;
     Frame* nextAncestorSibling(const Frame* stayWithin) const;
 
-    Frame* scopedChild(unsigned index, TreeScope*) const;
-    Frame* scopedChild(NOESCAPE const Function<bool(const FrameTree&)>& isMatch, TreeScope*) const;
+    RefPtr<Frame> scopedChild(unsigned index, TreeScope*) const;
+    RefPtr<Frame> scopedChild(NOESCAPE const Function<bool(const FrameTree&)>& isMatch, TreeScope*) const;
     unsigned scopedChildCount(TreeScope*) const;
 
-    template<typename F> Frame* find(const AtomString& name, F&& nameGetter, Frame& activeFrame) const;
+    template<typename F> RefPtr<Frame> find(const AtomString& name, F&& nameGetter, Frame& activeFrame) const;
 
     Ref<Frame> protectedThisFrame() const;
 

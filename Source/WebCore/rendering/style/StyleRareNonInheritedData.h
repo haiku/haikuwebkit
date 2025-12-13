@@ -82,6 +82,7 @@
 #include <WebCore/StyleWebKitInitialLetter.h>
 #include <WebCore/StyleWebKitLineClamp.h>
 #include <WebCore/StyleWillChange.h>
+#include <WebCore/StyleZoom.h>
 #include <memory>
 #include <wtf/DataRef.h>
 #include <wtf/Markable.h>
@@ -140,7 +141,7 @@ public:
 
     Style::WebkitLineClamp lineClamp;
 
-    float zoom;
+    Style::Zoom zoom;
 
     Style::MaximumLines maxLines;
 

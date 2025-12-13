@@ -97,13 +97,13 @@ public:
     unsigned capacity() const { return m_set.capacity(); }
     bool isEmpty() const { return m_set.isEmpty(); }
     
-    iterator begin() const { return m_set.begin(); }
-    iterator end() const { return m_set.end(); }
+    iterator begin() const LIFETIME_BOUND { return m_set.begin(); }
+    iterator end() const LIFETIME_BOUND { return m_set.end(); }
     
-    iterator random() { return m_set.random(); }
-    const_iterator random() const { return m_set.random(); }
+    iterator random() LIFETIME_BOUND { return m_set.random(); }
+    const_iterator random() const LIFETIME_BOUND { return m_set.random(); }
 
-    iterator find(const ValueType& value) const
+    iterator find(const ValueType& value) const LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print("{\n");
@@ -127,7 +127,7 @@ public:
     
     // FIXME: Implement the translator versions of find() and friends.
     
-    AddResult add(const ValueType& value)
+    AddResult add(const ValueType& value) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->add(");
@@ -137,7 +137,7 @@ public:
         return m_set.add(value);
     }
 
-    AddResult add(ValueType&& value)
+    AddResult add(ValueType&& value) LIFETIME_BOUND
     {
         StringPrintStream string;
         string.print(m_id, "->add(");

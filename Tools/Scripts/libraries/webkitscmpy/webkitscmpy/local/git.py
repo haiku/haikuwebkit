@@ -654,16 +654,14 @@ class Git(Scm):
 
     def _is_on_default_branch(self, hash):
         self._maybe_update_default_branch_ref_from_fetch_head()
-        branches = self.branches_for(remote=None)
         remote_keys = [None] + self.source_remotes()
         default_branch = self.default_branch
         for key in remote_keys:
-            if default_branch in branches.get(key, []):
-                if run([self.executable(), 'merge-base', '--is-ancestor', hash,
-                       f'remotes/{key}/{default_branch}' if key else default_branch],
-                       cwd=self.root_path, capture_output=True, encoding='utf-8').returncode == 0:
-                    return True
-        return default_branch in self.branches_for(hash)
+            if run([self.executable(), 'merge-base', '--is-ancestor', hash,
+                    f'refs/remotes/{key}/{default_branch}' if key is not None else f'refs/heads/{default_branch}'],
+                   cwd=self.root_path, capture_output=True, encoding='utf-8').returncode == 0:
+                return True
+        return False
 
     def branch_point(self, ref='HEAD'):
         branches = self.branches_for(remote=None)

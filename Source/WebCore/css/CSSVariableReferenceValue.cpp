@@ -116,7 +116,7 @@ static const Style::CustomProperty* propertyValueForVariableName(const AtomStrin
     // Apply this variable first, in case it is still unresolved
     builder.applyCustomProperty(variableName);
 
-    return builder.state().style().customPropertyValue(variableName);
+    return builder.state().checkedStyle()->customPropertyValue(variableName);
 }
 
 bool CSSVariableReferenceValue::resolveVariableReference(CSSParserTokenRange range, CSSValueID functionId, Vector<CSSParserToken>& tokens, Style::Builder& builder) const
@@ -132,7 +132,7 @@ bool CSSVariableReferenceValue::resolveVariableReference(CSSParserTokenRange ran
     if (fallbackResult == FallbackResult::Invalid)
         return false;
 
-    auto* property = propertyValueForVariableName(variableName, functionId, builder);
+    RefPtr property = propertyValueForVariableName(variableName, functionId, builder);
 
     if (!property || property->isGuaranteedInvalid()) {
         if (fallbackTokens.size() > maxSubstitutionTokens)
@@ -203,7 +203,7 @@ RefPtr<CSSVariableData> CSSVariableReferenceValue::tryResolveSimpleReference(Sty
 
     // Shortcut for the simple common case of property:var(--foo)
 
-    auto* property = propertyValueForVariableName(m_simpleReference->name, m_simpleReference->functionId, builder);
+    RefPtr property = propertyValueForVariableName(m_simpleReference->name, m_simpleReference->functionId, builder);
     if (!property || !std::holds_alternative<Ref<CSSVariableData>>(property->value()))
         return nullptr;
 
@@ -224,14 +224,12 @@ RefPtr<CSSVariableData> CSSVariableReferenceValue::resolveVariableReferences(Sty
 
 RefPtr<CSSValue> CSSVariableReferenceValue::resolveSingleValue(Style::Builder& builder, CSSPropertyID propertyID) const
 {
-    auto cacheValue = [&](auto data) {
+    if (!resolveAndCacheValue(builder, [this, propertyID](auto data) {
         m_cachedValue = CSSPropertyParser::parseStylePropertyLonghand(propertyID, data->tokens(), context());
 #if ASSERT_ENABLED
         m_cachePropertyID = propertyID;
 #endif
-    };
-
-    if (!resolveAndCacheValue(builder, cacheValue))
+    }))
         return nullptr;
 
     ASSERT(m_cachePropertyID == propertyID);

@@ -311,12 +311,9 @@ void StyleRule::setProperties(Ref<StyleProperties>&& properties)
 
 MutableStyleProperties& StyleRule::mutableProperties()
 {
-    if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
-        return *mutableProperties;
-    Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
-    m_properties = WTFMove(mutableProperties);
-    return mutablePropertiesRef;
+    if (!is<MutableStyleProperties>(m_properties))
+        m_properties = m_properties->mutableCopy();
+    return uncheckedDowncast<MutableStyleProperties>(m_properties.get());
 }
 
 void StyleRule::wrapperAdoptSelectorList(CSSSelectorList&& selectors)
@@ -464,12 +461,9 @@ Ref<StyleRulePage> StyleRulePage::create(Ref<StyleProperties>&& properties, CSSS
 
 MutableStyleProperties& StyleRulePage::mutableProperties()
 {
-    if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
-        return *mutableProperties;
-    Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
-    m_properties = WTFMove(mutableProperties);
-    return mutablePropertiesRef;
+    if (!is<MutableStyleProperties>(m_properties))
+        m_properties = m_properties->mutableCopy();
+    return uncheckedDowncast<MutableStyleProperties>(m_properties.get());
 }
 
 StyleRuleFontFace::StyleRuleFontFace(Ref<StyleProperties>&& properties)
@@ -488,12 +482,9 @@ StyleRuleFontFace::~StyleRuleFontFace() = default;
 
 MutableStyleProperties& StyleRuleFontFace::mutableProperties()
 {
-    if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(m_properties.get()))
-        return *mutableProperties;
-    Ref mutableProperties = m_properties->mutableCopy();
-    auto& mutablePropertiesRef = mutableProperties.unsafeGet();
-    m_properties = WTFMove(mutableProperties);
-    return mutablePropertiesRef;
+    if (!is<MutableStyleProperties>(m_properties))
+        m_properties = m_properties->mutableCopy();
+    return uncheckedDowncast<MutableStyleProperties>(m_properties.get());
 }
 
 StyleRuleFontFeatureValues::StyleRuleFontFeatureValues(const Vector<AtomString>& fontFamilies, Ref<FontFeatureValues>&& value)

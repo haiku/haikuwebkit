@@ -341,7 +341,7 @@ void DOMCache::addAll(Vector<RequestInfo>&& infos, DOMPromiseDeferred<void>&& pr
                 if (auto* chunk = result.returnValue())
                     data.append(*chunk);
                 else
-                    taskHandler->addResponseBody(recordPosition, response, data.takeAsContiguous());
+                    taskHandler->addResponseBody(recordPosition, response, data.takeBufferAsContiguous());
             });
         }, cachedResourceRequestInitiatorTypes().fetch);
     }
@@ -420,7 +420,7 @@ void DOMCache::put(RequestInfo&& info, Ref<FetchResponse>&& response, DOMPromise
             if (auto* chunk = result.returnValue())
                 data.append(*chunk);
             else
-                pendingActivity->object().putWithResponseData(WTFMove(promise), WTFMove(request), WTFMove(response), RefPtr<SharedBuffer> { data.takeAsContiguous() });
+                pendingActivity->object().putWithResponseData(WTFMove(promise), WTFMove(request), WTFMove(response), RefPtr<SharedBuffer> { data.takeBufferAsContiguous() });
         });
         return;
     }

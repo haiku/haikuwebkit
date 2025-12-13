@@ -174,16 +174,6 @@ void MediaSourcePrivateAVFObjC::durationChanged(const MediaTime& duration)
     });
 }
 
-void MediaSourcePrivateAVFObjC::markEndOfStream(EndOfStreamStatus status)
-{
-    if (status != EndOfStreamStatus::NoError)
-        return;
-    callOnMainThreadWithPlayer([](auto& player) {
-        player.setNetworkState(MediaPlayer::NetworkState::Loaded);
-    });
-    MediaSourcePrivate::markEndOfStream(status);
-}
-
 FloatSize MediaSourcePrivateAVFObjC::naturalSize() const
 {
     assertIsCurrent(m_dispatcher.get());

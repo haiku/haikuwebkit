@@ -69,6 +69,10 @@ public:
 
     void updateShouldRegisterAsSpeakerSamplesProducer();
 
+    // WebCore::AudioSessionInterruptionObserver.
+    void ref() const final { WebCore::AudioMediaStreamTrackRendererInternalUnit::Client::ref(); }
+    void deref() const final { WebCore::AudioMediaStreamTrackRendererInternalUnit::Client::deref(); }
+
     USING_CAN_MAKE_WEAKPTR(WebCore::AudioSessionInterruptionObserver);
 
 private:

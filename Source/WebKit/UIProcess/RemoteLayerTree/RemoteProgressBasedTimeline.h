@@ -47,7 +47,7 @@ public:
 
     WebCore::ScrollingNodeID source() const { return m_resolutionData.source; }
     WebCore::ProgressResolutionData resolutionData() const { return m_resolutionData; }
-    void setResolutionData(WebCore::ProgressResolutionData resolutionData) { m_resolutionData = resolutionData; }
+    void setResolutionData(const WebCore::ScrollingTreeScrollingNode*, WebCore::ProgressResolutionData);
 
     void updateCurrentTime(const WebCore::ScrollingTreeScrollingNode&);
 

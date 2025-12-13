@@ -53,8 +53,8 @@
 #include "JSFinalizationRegistry.h"
 #include "JSFunctionWithFields.h"
 #include "JSIterator.h"
-#include "JSPromiseAllContext.h"
-#include "JSPromiseAllGlobalContext.h"
+#include "JSPromiseCombinatorsContext.h"
+#include "JSPromiseCombinatorsGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "JSRawJSONObject.h"
 #include "JSRemoteFunction.h"
@@ -1220,6 +1220,8 @@ void Heap::addToRememberedSet(const JSCell* constCell)
 
 void Heap::sweepSynchronously()
 {
+    RELEASE_ASSERT(vm().currentThreadIsHoldingAPILock());
+
     if (!Options::useGC()) [[unlikely]]
         return;
 
@@ -1750,10 +1752,6 @@ NEVER_INLINE bool Heap::runEndPhase(GCConductor conn)
     }
 
     auto endingCollectionScope = *m_collectionScope;
-
-    // updateAllocationLimits() updates this for us.
-    if (overCriticalMemoryThreshold())
-        sweepSynchronously();
 
     didFinishCollection();
     
@@ -2700,7 +2698,8 @@ bool Heap::useGenerationalGC()
 
 bool Heap::shouldSweepSynchronously()
 {
-    return Options::sweepSynchronously() || VM::isInMiniMode();
+    // updateAllocationLimits() updates info that overCriticalMemoryThreshold() needs.
+    return overCriticalMemoryThreshold() || Options::sweepSynchronously() || VM::isInMiniMode();
 }
 
 bool Heap::shouldDoFullCollection()

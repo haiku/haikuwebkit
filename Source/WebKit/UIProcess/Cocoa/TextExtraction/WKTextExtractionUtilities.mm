@@ -26,7 +26,7 @@
 #import "config.h"
 #import "WKTextExtractionUtilities.h"
 
-#if ENABLE(TEXT_EXTRACTION)
+#if USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))
 
 #import "WKWebViewInternal.h"
 #import "_WKTextExtractionInternal.h"
@@ -287,4 +287,4 @@ std::optional<double> computeSimilarity(NSString *stringA, NSString *stringB, un
 
 } // namespace WebKit
 
-#endif // ENABLE(TEXT_EXTRACTION)
+#endif // USE(APPLE_INTERNAL_SDK) || (!PLATFORM(WATCHOS) && !PLATFORM(APPLETV))

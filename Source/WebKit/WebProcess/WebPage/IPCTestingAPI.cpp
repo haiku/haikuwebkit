@@ -68,6 +68,11 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 
+
+#if ENABLE(IPC_TESTING_SWIFT)
+#include "WebKit-Swift.h"
+#endif
+
 namespace WebKit::IPCTestingAPI {
 
 class JSIPC;
@@ -409,6 +414,9 @@ private:
         : m_webPage(webPage)
         , m_webFrame(webFrame)
         , m_testerProxy(IPCTesterReceiver::create())
+#if ENABLE(IPC_TESTING_SWIFT)
+        , m_swiftTesterProxy(IPCTesterReceiverSwift::init())
+#endif
     { }
 
     static JSIPC* unwrap(JSObjectRef);
@@ -455,6 +463,9 @@ private:
     WeakPtr<WebFrame> m_webFrame;
     Vector<Ref<JSMessageListener>> m_messageListeners;
     const Ref<IPCTesterReceiver> m_testerProxy;
+#if ENABLE(IPC_TESTING_SWIFT)
+    IPCTesterReceiverSwift m_swiftTesterProxy;
+#endif
     RefPtr<JSIPCConnection> m_uiConnection;
     RefPtr<JSIPCConnection> m_networkConnection;
     RefPtr<JSIPCConnection> m_gpuConnection;
@@ -2731,6 +2742,9 @@ JSValueRef JSIPC::addTesterReceiver(JSContextRef context, JSObjectRef, JSObjectR
     }
     // Currently supports only UI process, as there's no uniform way to add message receivers.
     WebProcess::singleton().addMessageReceiver(Messages::IPCTesterReceiver::messageReceiverName(), jsIPC->m_testerProxy.get());
+#if ENABLE(IPC_TESTING_SWIFT)
+    WebProcess::singleton().addMessageReceiver(Messages::IPCTesterReceiverSwift::messageReceiverName(), jsIPC->m_swiftTesterProxy.getMessageReceiver());
+#endif
     return JSValueMakeUndefined(context);
 }
 

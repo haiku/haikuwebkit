@@ -399,10 +399,7 @@ ExceptionOr<Vector<Ref<WebXRHitTestResult>>> WebXRFrame::getHitTestResults(const
     if (platformResults == platformResultsHash.end())
         return Exception { ExceptionCode::InvalidStateError, "Unable to obtain hit test results for specified hit test source."_s };
 
-    Vector<Ref<WebXRHitTestResult>> results(platformResults->value.size());
-    for (auto& platformResult : platformResults->value)
-        results.append(WebXRHitTestResult::create(*this, platformResult));
-    return results;
+    return platformResults->value.map([&](auto& platformResult) { return WebXRHitTestResult::create(*this, platformResult); });
 }
 
 // https://immersive-web.github.io/hit-test/#dom-xrframe-gethittestresultsfortransientinput
@@ -418,14 +415,12 @@ ExceptionOr<Vector<Ref<WebXRTransientInputHitTestResult>>> WebXRFrame::getHitTes
     if (platformResults == platformResultsHash.end())
         return Exception { ExceptionCode::InvalidStateError, "Unable to obtain transient input hit test results for specified transient input hit test source."_s };
 
-    Vector<Ref<WebXRTransientInputHitTestResult>> results(platformResults->value.size());
+    Vector<Ref<WebXRTransientInputHitTestResult>> results;
     for (auto& platformResult : platformResults->value) {
         RefPtr inputSource = m_session->inputSources().itemByHandle(platformResult.inputSource);
         if (!inputSource)
             continue;
-        Vector<Ref<WebXRHitTestResult>> hitTestResults(platformResult.results.size());
-        for (auto platformHitTestResult : platformResult.results)
-            hitTestResults.append(WebXRHitTestResult::create(*this, platformHitTestResult));
+        Vector<Ref<WebXRHitTestResult>> hitTestResults = platformResult.results.map([&](auto& platformHitTestResult) { return WebXRHitTestResult::create(*this, platformHitTestResult); });
         results.append(WebXRTransientInputHitTestResult::create(inputSource.releaseNonNull(), WTFMove(hitTestResults)));
     }
     return results;

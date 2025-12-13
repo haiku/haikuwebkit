@@ -42,7 +42,7 @@ void currentProcessMemoryStatus(ProcessMemoryStatus& memoryStatus)
     area_info area;
     ssize_t cookie = 0;
 
-    while(get_next_area_info(0, &cookie, &area) == B_OK) {
+    while (get_next_area_info(0, &cookie, &area) == B_OK) {
         memoryStatus.size += area.size;
         memoryStatus.resident += area.ram_size;
 

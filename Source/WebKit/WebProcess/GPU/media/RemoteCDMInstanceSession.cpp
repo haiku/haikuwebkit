@@ -142,20 +142,23 @@ void RemoteCDMInstanceSession::storeRecordOfKeyUsage(const String& sessionId)
 
 void RemoteCDMInstanceSession::updateKeyStatuses(KeyStatusVector&& keyStatuses)
 {
-    if (m_client)
-        m_client->updateKeyStatuses(WTFMove(keyStatuses));
+    if (RefPtr client = m_client.get())
+        client->updateKeyStatuses(WTFMove(keyStatuses));
 }
 
 void RemoteCDMInstanceSession::sendMessage(WebCore::CDMMessageType type, RefPtr<SharedBuffer>&& message)
 {
-    if (m_client && message)
-        m_client->sendMessage(type, message.releaseNonNull());
+    if (!message)
+        return;
+
+    if (RefPtr client = m_client.get())
+        client->sendMessage(type, message.releaseNonNull());
 }
 
 void RemoteCDMInstanceSession::sessionIdChanged(const String& sessionId)
 {
-    if (m_client)
-        m_client->sessionIdChanged(sessionId);
+    if (RefPtr client = m_client.get())
+        client->sessionIdChanged(sessionId);
 }
 
 }

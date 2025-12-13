@@ -78,7 +78,7 @@ static inline RTCIceGatheringState toRTCIceGatheringState(webrtc::IceGatheringSt
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-class LibWebRTCIceTransportBackendObserver final : public ThreadSafeRefCounted<LibWebRTCIceTransportBackendObserver>, public sigslot::has_slots<> {
+class LibWebRTCIceTransportBackendObserver final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<LibWebRTCIceTransportBackendObserver>, public sigslot::has_slots<> {
 public:
     static Ref<LibWebRTCIceTransportBackendObserver> create(RTCIceTransportBackendClient& client, Ref<webrtc::IceTransportInterface> backend) { return adoptRef(*new LibWebRTCIceTransportBackendObserver(client, WTFMove(backend))); }
 
@@ -110,7 +110,11 @@ void LibWebRTCIceTransportBackendObserver::start()
         auto* internal = m_backend->internal();
         if (!internal)
             return;
-        internal->SignalIceTransportStateChanged.connect(this, &LibWebRTCIceTransportBackendObserver::onIceTransportStateChanged);
+        internal->SubscribeIceTransportStateChanged([weakThis = ThreadSafeWeakPtr { * this }](auto* transport) {
+            if (RefPtr protectedThis = weakThis.get())
+                protectedThis->onIceTransportStateChanged(transport);
+        });
+
         internal->AddGatheringStateCallback(this, [this](auto* transport) { onGatheringStateChanged(transport); });
         internal->SignalNetworkRouteChanged.connect(this, &LibWebRTCIceTransportBackendObserver::onNetworkRouteChanged);
 
@@ -142,7 +146,6 @@ void LibWebRTCIceTransportBackendObserver::stop()
         auto* internal = m_backend->internal();
         if (!internal)
             return;
-        internal->SignalIceTransportStateChanged.disconnect(this);
         internal->RemoveGatheringStateCallback(this);
         internal->SignalNetworkRouteChanged.disconnect(this);
     });

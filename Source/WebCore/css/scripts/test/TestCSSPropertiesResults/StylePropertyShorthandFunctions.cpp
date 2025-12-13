@@ -14,7 +14,6 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestHighPriority,
         CSSPropertyID::CSSPropertyTestMediumPriority,
         CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete,
-        CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter,
         CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo,
         CSSPropertyID::CSSPropertyTestAnimationWrapper,
         CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways,
@@ -36,7 +35,6 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport,
         CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport,
         CSSPropertyID::CSSPropertyTestCustomExtractor,
-        CSSPropertyID::CSSPropertyTestExtractorConverter,
         CSSPropertyID::CSSPropertyTestFunctionBoundedParameters,
         CSSPropertyID::CSSPropertyTestFunctionFixedParameters,
         CSSPropertyID::CSSPropertyTestFunctionNoParameters,
@@ -104,7 +102,6 @@ StylePropertyShorthand allShorthand()
         CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference,
         CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue,
         CSSPropertyID::CSSPropertyTestSettingsOne,
-        CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter,
         CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMin,
         CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinNoSingleItemOpt,
         CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinSingleItemOpt,
@@ -183,7 +180,6 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline:
         return StylePropertyShorthandVector{allShorthand(), testShorthandTwoShorthand()};
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
-    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
     case CSSPropertyID::CSSPropertyTestAnimationWrapper:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
@@ -205,7 +201,6 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport:
     case CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport:
     case CSSPropertyID::CSSPropertyTestCustomExtractor:
-    case CSSPropertyID::CSSPropertyTestExtractorConverter:
     case CSSPropertyID::CSSPropertyTestFunctionBoundedParameters:
     case CSSPropertyID::CSSPropertyTestFunctionFixedParameters:
     case CSSPropertyID::CSSPropertyTestFunctionNoParameters:
@@ -274,7 +269,6 @@ StylePropertyShorthandVector matchingShorthandsForLonghand(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue:
     case CSSPropertyID::CSSPropertyTestSettingsOne:
-    case CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter:
     case CSSPropertyID::CSSPropertyTestTopPriority:
     case CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMin:
     case CSSPropertyID::CSSPropertyTestUnboundedRepetitionWithCommasWithMinNoSingleItemOpt:

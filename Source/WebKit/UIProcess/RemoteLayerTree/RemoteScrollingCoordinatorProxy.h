@@ -143,13 +143,19 @@ public:
     virtual void willCommitLayerAndScrollingTrees() { }
     virtual void didCommitLayerAndScrollingTrees() { }
 
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+    virtual void updateOverlayRegions(const Vector<WebCore::PlatformLayerIdentifier>& destroyedLayers = { }) { }
+    virtual void overlayRegionsEnabledChanged() { }
+#endif
+
 #if ENABLE(THREADED_ANIMATIONS)
     virtual void animationsWereAddedToNode(RemoteLayerTreeNode&) { }
     virtual void animationsWereRemovedFromNode(RemoteLayerTreeNode&) { }
-    virtual void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime) { }
+    virtual void updateTimelinesRegistration(WebCore::ProcessIdentifier, const WebCore::AcceleratedTimelinesUpdate&, MonotonicTime) { }
     virtual RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&) const { return nullptr; }
     virtual void progressBasedTimelinesWereUpdatedForNode(const WebCore::ScrollingTreeScrollingNode&) { }
     virtual RefPtr<const RemoteAnimationStack> animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier) const { return nullptr; }
+    virtual HashSet<Ref<RemoteProgressBasedTimeline>> timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID) const { return { }; }
 #endif
 
     String scrollingTreeAsText() const;

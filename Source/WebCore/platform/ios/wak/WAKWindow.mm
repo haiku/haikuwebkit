@@ -613,7 +613,7 @@ static RetainPtr<WebEvent>& currentEvent()
 {
     if (!_tileCache)
         return NULL;
-    return _tileCache->contentReplacementImage().unsafeGet();
+    return _tileCache->contentReplacementImage().autorelease();
 }
 
 - (void)displayRect:(NSRect)rect

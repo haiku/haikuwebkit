@@ -1,8 +1,16 @@
 
-FAIL Ensures subscription to hit test works with an XRSpace from input source - no move - webgl assert_equals: expected 1 but got 0
-FAIL Ensures subscription to hit test works with an XRSpace from input source - no move - webgl2 assert_equals: expected 1 but got 0
-FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - no results - webgl assert_equals: expected 1 but got 0
-FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - no results - webgl2 assert_equals: expected 1 but got 0
-FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - 1 result - webgl assert_equals: expected 1 but got 0
-FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - 1 result - webgl2 assert_equals: expected 1 but got 0
+PASS Ensures subscription to hit test works with an XRSpace from input source - no move - webgl
+PASS Ensures subscription to hit test works with an XRSpace from input source - no move - webgl2
+FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - no results - webgl assert_equals: expected 0 but got 1
+FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - no results - webgl2 assert_equals: expected 0 but got 1
+FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - 1 result - webgl assert_approx_equals: after-move-pose: positions must be equal Point comparison failed.
+ p1: {x: 0, y: 1, z: -2.5, w: 1}
+ p2: {x: -1.443, y: 1, z: -2.5, w: 1}
+ Difference in component x exceeded the given epsilon.
+ expected 0 +/- 0.001 but got -1.443
+FAIL Ensures subscription to hit test works with an XRSpace from input source - after move - 1 result - webgl2 assert_approx_equals: after-move-pose: positions must be equal Point comparison failed.
+ p1: {x: 0, y: 1, z: -2.5, w: 1}
+ p2: {x: -1.443, y: 1, z: -2.5, w: 1}
+ Difference in component x exceeded the given epsilon.
+ expected 0 +/- 0.001 but got -1.443
 

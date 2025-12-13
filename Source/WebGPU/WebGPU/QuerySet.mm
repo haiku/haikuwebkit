@@ -122,12 +122,7 @@ void QuerySet::destroy()
     // https://gpuweb.github.io/gpuweb/#dom-gpuqueryset-destroy
     m_visibilityBuffer = nil;
     m_timestampBufferWithOffset.buffer = nil;
-    for (auto commandEncoder : m_commandEncoders) {
-        if (RefPtr ptr = m_device->commandEncoderFromIdentifier(commandEncoder))
-            ptr->makeSubmitInvalid();
-    }
-
-    m_commandEncoders.clear();
+    m_device->makeSubmitInvalidClearingEncoders(m_commandEncoders);
 }
 
 void QuerySet::setLabel(String&& label)

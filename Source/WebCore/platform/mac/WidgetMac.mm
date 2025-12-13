@@ -113,7 +113,7 @@ void Widget::show()
     setSelfVisible(true);
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    [protectedOuterView() setHidden:NO];
+    [outerView() setHidden:NO];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -125,7 +125,7 @@ void Widget::hide()
     setSelfVisible(false);
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    [protectedOuterView() setHidden:YES];
+    [outerView() setHidden:YES];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -135,7 +135,7 @@ IntRect Widget::frameRect() const
         return m_frame;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return enclosingIntRect([protectedOuterView() frame]);
+    return enclosingIntRect([outerView() frame]);
     END_BLOCK_OBJC_EXCEPTIONS
     
     return m_frame;
@@ -164,7 +164,7 @@ void Widget::setFrameRect(const IntRect& rect)
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
-NSView *Widget::outerView() const
+RetainPtr<NSView> Widget::outerView() const
 {
     RetainPtr view = platformWidget();
 
@@ -176,12 +176,7 @@ NSView *Widget::outerView() const
         ASSERT(view);
     }
 
-    return view.unsafeGet();
-}
-
-RetainPtr<NSView> Widget::protectedOuterView() const
-{
-    return outerView();
+    return view;
 }
 
 void Widget::paint(GraphicsContext& p, const IntRect& r, SecurityOriginPaintPolicy, RegionContext*)
@@ -271,7 +266,7 @@ void Widget::setIsSelected(bool isSelected)
 void Widget::removeFromSuperview()
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    safeRemoveFromSuperview(protectedOuterView().get());
+    safeRemoveFromSuperview(outerView().get());
     END_BLOCK_OBJC_EXCEPTIONS
 }
 

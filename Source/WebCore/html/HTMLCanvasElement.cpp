@@ -336,7 +336,7 @@ ExceptionOr<std::optional<RenderingContext>> HTMLCanvasElement::getContext(JSC::
     return std::optional<RenderingContext> { std::nullopt };
 }
 
-CanvasRenderingContext* HTMLCanvasElement::getContext(const String& type)
+RefPtr<CanvasRenderingContext> HTMLCanvasElement::getContext(const String& type)
 {
     if (HTMLCanvasElement::is2dType(type))
         return getContext2d(type, { });
@@ -456,23 +456,21 @@ WebGLRenderingContextBase* HTMLCanvasElement::createContextWebGL(WebGLVersion ty
 
     // TODO(WEBXR): ensure the context is created in a compatible graphics
     // adapter when there is an active immersive device.
-    auto context = WebGLRenderingContextBase::create(*this, attrs, type);
-    WeakPtr weakContext = context.get();
-    m_context = WTFMove(context);
-    if (weakContext) {
+    m_context = WebGLRenderingContextBase::create(*this, attrs, type);
+    if (m_context) {
         // Need to make sure a RenderLayer and compositing layer get created for the Canvas.
         invalidateStyleAndLayerComposition();
         if (CheckedPtr box = renderBox())
             box->contentChanged(ContentChangeType::Canvas);
 #if ENABLE(WEBXR)
-        ASSERT(!attrs.xrCompatible || weakContext->isXRCompatible());
+        ASSERT(!attrs.xrCompatible || downcast<WebGLRenderingContextBase>(*m_context).isXRCompatible());
 #endif
     }
 
-    return weakContext.get();
+    return downcast<WebGLRenderingContextBase>(m_context.get());
 }
 
-WebGLRenderingContextBase* HTMLCanvasElement::getContextWebGL(WebGLVersion type, WebGLContextAttributes&& attrs)
+RefPtr<WebGLRenderingContextBase> HTMLCanvasElement::getContextWebGL(WebGLVersion type, WebGLContextAttributes&& attrs)
 {
     if (!shouldEnableWebGL(document().settings()))
         return nullptr;
@@ -487,7 +485,7 @@ WebGLRenderingContextBase* HTMLCanvasElement::getContextWebGL(WebGLVersion type,
     if ((type == WebGLVersion::WebGL1) != glContext->isWebGL1())
         return nullptr;
 
-    return glContext.unsafeGet();
+    return glContext;
 }
 
 #endif // ENABLE(WEBGL)

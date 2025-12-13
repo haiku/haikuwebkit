@@ -109,7 +109,7 @@ class TestFactory(Factory):
             self.addStep(ExtractTestResults())
             self.addStep(SetPermissions())
 
-        if platform.startswith(('win', 'mac', 'ios-simulator')) and self.LayoutTestClass != RunWorldLeaksTests:
+        if platform.startswith(('win', 'mac', 'ios-simulator', 'gtk', 'wpe')) and self.LayoutTestClass != RunWorldLeaksTests:
             self.addStep(RunAPITests())
 
         if platform.startswith('mac'):
@@ -122,11 +122,6 @@ class TestFactory(Factory):
 
         if platform.startswith(('mac', 'ios-simulator', 'visionos-simulator')):
             self.addStep(TriggerCrashLogSubmission())
-
-        if platform.startswith("gtk"):
-            self.addStep(RunGtkAPITests())
-        if platform == "wpe":
-            self.addStep(RunWPEAPITests())
 
 
 class BuildAndTestFactory(TestFactory):
@@ -279,12 +274,7 @@ class TestLayoutAndAPIOnlyFactory(Factory):
         self.addStep(UploadTestResults())
         self.addStep(ExtractTestResults())
         self.addStep(SetPermissions())
-        if platform.startswith("gtk"):
-            self.addStep(RunGtkAPITests())
-        elif platform == "wpe":
-            self.addStep(RunWPEAPITests())
-        else:
-            self.addStep(RunAPITests())
+        self.addStep(RunAPITests())
 
 
 class TestWebKit1Factory(TestFactory):

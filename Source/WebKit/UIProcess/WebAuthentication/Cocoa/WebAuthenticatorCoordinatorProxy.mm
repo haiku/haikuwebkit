@@ -772,13 +772,13 @@ void WebAuthenticatorCoordinatorProxy::performRequest(WebAuthenticationRequestDa
                     extensionOutputs.prf = { std::nullopt, { { first, second } } };
                 }
 #endif
+
+                if ([credential respondsToSelector:@selector(appID)]) {
+                    hasExtensionOutput = true;
+                    extensionOutputs.appid = credential.get().appID;
+                }
                 if (hasExtensionOutput)
                     response.extensionOutputs = extensionOutputs;
-                if ([credential respondsToSelector:@selector(appID)]) {
-                    AuthenticationExtensionsClientOutputs extensionOutputs;
-                    extensionOutputs.appid = credential.get().appID;
-                    response.extensionOutputs = extensionOutputs;
-                }
             }
 
             if (weakThis) {

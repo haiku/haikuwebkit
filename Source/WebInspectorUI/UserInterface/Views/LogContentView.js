@@ -61,7 +61,7 @@ WI.LogContentView = class LogContentView extends WI.ContentView
         this._lastMessageView = null;
 
         this._findBanner = new WI.FindBanner(this, {alwaysShowing: true, className: "console"});
-        this._findBanner.visibilityPriority = WI.NavigationItem.VisibilityPriority.Low;
+        this._findBanner.visibilityPriority = WI.NavigationItem.VisibilityPriority.High;
         this._findBanner.targetElement = this.element;
 
         this._currentSearchQuery = "";

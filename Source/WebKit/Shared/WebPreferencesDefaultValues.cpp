@@ -399,7 +399,7 @@ bool defaultPreferSpatialAudioExperience()
 bool defaultRTCEncodedStreamsQuirkEnabled()
 {
 #if PLATFORM(MAC)
-    return WTF::MacApplication::isSafariTechnologyPreview();
+    return true;
 #else
     return false;
 #endif
@@ -492,5 +492,12 @@ bool defaultAllowMultipleCommitLayerTreePending()
     return false;
 #endif
 }
+
+#if !PLATFORM(COCOA) && ENABLE(VIDEO)
+bool defaultCaptionDisplaySettingsEnabled()
+{
+    return false;
+}
+#endif
 
 } // namespace WebKit

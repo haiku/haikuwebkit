@@ -211,6 +211,7 @@ static const char* fragmentTemplateCommon =
         uniform mat4 u_yuvToRgb;
         uniform vec4 u_color;
         uniform vec2 u_texelSize;
+        uniform vec2 u_uvMax;
         uniform float u_gaussianKernel[GAUSSIAN_KERNEL_MAX_HALF_SIZE];
         uniform float u_gaussianKernelOffset[GAUSSIAN_KERNEL_MAX_HALF_SIZE];
         uniform int u_gaussianKernelHalfSize;
@@ -239,6 +240,12 @@ static const char* fragmentTemplateCommon =
         vec2 vertexTransformTexCoord() { return v_transformedTexCoord; }
 
         void applyManualRepeat(inout vec2 pos) { pos = fract(pos); }
+
+        void applyClampUVBounds(inout vec2 texCoord)
+        {
+            vec2 uvMax = u_uvMax - u_texelSize / 2.;
+            texCoord = clamp(texCoord, vec2(0.), uvMax);
+        }
 
         void applyTextureRGB(inout vec4 color, vec2 texCoord) { color = u_textureColorSpaceMatrix * texture2D(s_sampler, texCoord); }
 
@@ -545,6 +552,7 @@ static const char* fragmentTemplateCommon =
             vec4 color = vec4(1., 1., 1., 1.);
             vec2 texCoord = transformTexCoord();
             applyManualRepeatIfNeeded(texCoord);
+            applyClampUVBoundsIfNeeded(texCoord);
             applyTextureRGBIfNeeded(color, texCoord);
             applyTextureYUVIfNeeded(color, texCoord);
             applyTextureYUVAIfNeeded(color, texCoord);
@@ -608,6 +616,7 @@ Ref<TextureMapperShaderProgram> TextureMapperShaderProgram::create(TextureMapper
     SET_APPLIER_FROM_OPTIONS(AlphaToShadow);
     SET_APPLIER_FROM_OPTIONS(ContentTexture);
     SET_APPLIER_FROM_OPTIONS(ManualRepeat);
+    SET_APPLIER_FROM_OPTIONS(ClampUVBounds);
     SET_APPLIER_FROM_OPTIONS(TextureExternalOES);
     SET_APPLIER_FROM_OPTIONS(RoundedRectClip);
     SET_APPLIER_FROM_OPTIONS(Premultiply);

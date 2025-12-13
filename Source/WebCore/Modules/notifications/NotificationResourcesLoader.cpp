@@ -166,7 +166,7 @@ void NotificationResourcesLoader::ResourceLoader::didReceiveData(const SharedBuf
 {
     if (RefPtr image = m_image) {
         m_buffer.append(buffer);
-        image->setData(m_buffer.get(), false);
+        image->setData(m_buffer.buffer(), false);
     }
 }
 
@@ -175,7 +175,7 @@ void NotificationResourcesLoader::ResourceLoader::didFinishLoading(ScriptExecuti
     m_finished = true;
 
     if (RefPtr image = m_image)
-        image->setData(m_buffer.take(), true);
+        image->setData(m_buffer.takeBuffer(), true);
 
     if (m_completionHandler)
         m_completionHandler(this, WTFMove(m_image));

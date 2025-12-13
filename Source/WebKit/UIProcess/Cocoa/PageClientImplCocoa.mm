@@ -113,9 +113,19 @@ void PageClientImplCocoa::spatialBackdropSourceDidChange()
 #endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-void PageClientImplCocoa::canEnterImmersiveElementFromURL(const URL& url, CompletionHandler<void(bool)>&& completion)
+void PageClientImplCocoa::allowImmersiveElementFromURL(const URL& url, CompletionHandler<void(bool)>&& completion) const
 {
-    [m_webView _canEnterImmersiveElementFromURL:url completion:WTFMove(completion)];
+    [webView() _allowImmersiveElementFromURL:url completion:WTFMove(completion)];
+}
+
+void PageClientImplCocoa::presentImmersiveElement(const WebCore::LayerHostingContextIdentifier contextID, CompletionHandler<void(bool)>&& completion) const
+{
+    [webView() _presentImmersiveElement:contextID completion:WTFMove(completion)];
+}
+
+void PageClientImplCocoa::dismissImmersiveElement(CompletionHandler<void()>&& completion) const
+{
+    [webView() _dismissImmersiveElement:WTFMove(completion)];
 }
 #endif
 

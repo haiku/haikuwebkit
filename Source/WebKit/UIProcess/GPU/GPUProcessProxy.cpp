@@ -859,13 +859,13 @@ void GPUProcessProxy::voiceActivityDetected()
 
 void GPUProcessProxy::startMonitoringCaptureDeviceRotation(PageIdentifier pageID, const String& persistentId)
 {
-    if (auto page = WebProcessProxy::webPage(pageID))
+    if (RefPtr page = WebProcessProxy::webPage(pageID))
         page->startMonitoringCaptureDeviceRotation(persistentId);
 }
 
 void GPUProcessProxy::stopMonitoringCaptureDeviceRotation(PageIdentifier pageID, const String& persistentId)
 {
-    if (auto page = WebProcessProxy::webPage(pageID))
+    if (RefPtr page = WebProcessProxy::webPage(pageID))
         page->stopMonitoringCaptureDeviceRotation(persistentId);
 }
 
@@ -887,7 +887,7 @@ void GPUProcessProxy::microphoneMuteStatusChanged(bool isMuting)
 #if PLATFORM(IOS_FAMILY)
 void GPUProcessProxy::statusBarWasTapped(CompletionHandler<void()>&& completionHandler)
 {
-    if (auto page = WebProcessProxy::audioCapturingWebPage())
+    if (RefPtr page = WebProcessProxy::audioCapturingWebPage())
         page->statusBarWasTapped();
     // Find the web page capturing audio and put focus on it.
     completionHandler();

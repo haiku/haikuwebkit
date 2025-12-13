@@ -721,6 +721,16 @@ bool Quirks::needsGoogleTranslateScrollingQuirk() const
 #endif
 }
 
+// play.geforcenow.com https://webkit.org/b/303622
+// FIXME: Remove as soon as nvidia adjusts the site for Safari. https://webkit.org/b/303718
+bool Quirks::needsGeforcenowWarningDisplayNoneQuirk() const
+{
+    if (!needsQuirks()) [[unlikely]]
+        return false;
+
+    return m_quirksData.quirkIsEnabled(QuirksData::SiteSpecificQuirk::NeedsGeforcenowWarningDisplayNoneQuirk);
+}
+
 // Kugou Music rdar://74602294
 bool Quirks::shouldOmitHTMLDocumentSupportedPropertyNames()
 {
@@ -1711,19 +1721,6 @@ bool Quirks::shouldFlipScreenDimensions() const
 #endif
 }
 
-// Firefox and Firefox Focus (rdar://159977164)
-bool Quirks::requirePageVisibilityToPlayAudioQuirk() const
-{
-#if PLATFORM(IOS_FAMILY)
-    if (!needsQuirks()) [[unlikely]]
-        return false;
-
-    return m_quirksData.quirkIsEnabled(QuirksData::SiteSpecificQuirk::RequirePageVisibilityToPlayAudioQuirk);
-#else
-    return false;
-#endif
-}
-
 // This section is dedicated to UA override for iPad. iPads (but iPad Mini) are sending a desktop user agent
 // to websites. In some cases, the website breaks in some ways, not expecting a touch interface for the website.
 // Controls not active or too small, form factor, etc. In this case it is better to send the iPad Mini UA.
@@ -1970,7 +1967,7 @@ bool Quirks::shouldDispatchPointerOutAfterHandlingSyntheticClick() const
 
 #endif // ENABLE(TOUCH_EVENTS)
 
-// max.com: rdar://138424489
+// hbomax.com: rdar://138424489
 bool Quirks::needsZeroMaxTouchPointsQuirk() const
 {
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
@@ -2677,21 +2674,6 @@ static void handleGuardianQuirks(QuirksData& quirksData, const URL& /* quirksURL
 }
 #endif // PLATFORM(IOS_FAMILY)
 
-#if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
-static void handleMaxQuirks(QuirksData& quirksData, const URL& /* quirksURL */, const String& quirksDomainString, const URL&  /* documentURL */)
-{
-    if (quirksDomainString != "max.com"_s) [[unlikely]]
-        return;
-
-    quirksData.enableQuirks({
-        // max.com: rdar://138424489
-        QuirksData::SiteSpecificQuirk::NeedsZeroMaxTouchPointsQuirk,
-        // max.com: rdar://138806698
-        QuirksData::SiteSpecificQuirk::ShouldSupportHoverMediaQueriesQuirk
-    });
-}
-#endif
-
 #if ENABLE(MEDIA_STREAM)
 static void handleBaiduQuirks(QuirksData& quirksData, const URL& quirksURL, const String& /* quirksDomainString */, const URL& /* documentURL */)
 {
@@ -2933,6 +2915,14 @@ static void handleEAQuirks(QuirksData& quirksData, const URL& /* quirksURL */, c
     quirksData.isEA = true;
 }
 
+static void handleGeforcenowQuirks(QuirksData& quirksData, const URL& /* quirksURL */, const String& quirksDomainString, const URL&  /* documentURL */)
+{
+    if (quirksDomainString != "play.geforcenow.com"_s) [[unlikely]]
+        return;
+
+    quirksData.enableQuirk(QuirksData::SiteSpecificQuirk::NeedsGeforcenowWarningDisplayNoneQuirk);
+}
+
 static void handleGoogleQuirks(QuirksData& quirksData, const URL& quirksURL, const String& /* quirksDomainString */, const URL& /* documentURL */)
 {
     quirksData.isGoogleProperty = true;
@@ -2996,17 +2986,26 @@ static void handleHBOMaxQuirks(QuirksData& quirksData, const URL& quirksURL, con
         return;
 
     auto topDocumentHost = quirksURL.host();
-    if (topDocumentHost != "play.hbomax.com"_s)
-        return;
 
-    quirksData.enableQuirks({
-        // play.hbomax.com https://bugs.webkit.org/show_bug.cgi?id=244737
-        QuirksData::SiteSpecificQuirk::ShouldEnableFontLoadingAPIQuirk,
+    // Needed to be able to login on the site
+    // hbomax.com https://bugs.webkit.org/show_bug.cgi?id=244737
+    quirksData.enableQuirk(QuirksData::SiteSpecificQuirk::ShouldEnableFontLoadingAPIQuirk);
+
+    // Needed for the HBO player
+    if (topDocumentHost == "play.hbomax.com"_s) {
+        quirksData.enableQuirks({
 #if HAVE(PIP_SKIP_PREROLL)
-        // play.hbomax.com rdar://158430821
-        QuirksData::SiteSpecificQuirk::ShouldDisableAdSkippingInPip,
+            // play.hbomax.com rdar://158430821
+            QuirksData::SiteSpecificQuirk::ShouldDisableAdSkippingInPip,
 #endif
-    });
+#if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+            // hbomax.com: rdar://138424489
+            QuirksData::SiteSpecificQuirk::NeedsZeroMaxTouchPointsQuirk,
+            // hbomax.com: rdar://138806698
+            QuirksData::SiteSpecificQuirk::ShouldSupportHoverMediaQueriesQuirk
+#endif
+        });
+    }
 }
 
 static void handleHotelsQuirks(QuirksData& quirksData, const URL& /* quirksURL */, const String& quirksDomainString, const URL&  /* documentURL */)
@@ -3425,14 +3424,11 @@ void Quirks::determineRelevantQuirks()
 #if PLATFORM(IOS_FAMILY)
     static const bool shouldDisableLazyIframeLoadingQuirk = !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoUNIQLOLazyIframeLoadingQuirk) && WTF::IOSApplication::isUNIQLOApp();
     static const bool needsResettingTransitionCancelsRunningTransitionQuirk = !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::ResettingTransitionCancelsRunningTransitionQuirk) && WTF::IOSApplication::isDOFUSTouch();
-    static const bool requirePageVisibilityToPlayAudioQuirk = (WTF::IOSApplication::isFirefox() || WTF::IOSApplication::isFirefoxFocus()) && !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::AllowBackgroundAudioPlayback);
 
     m_quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::ShouldDisableLazyIframeLoadingQuirk, shouldDisableLazyIframeLoadingQuirk);
 
     // DOFUS Touch app (rdar://112679186)
     m_quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::NeedsResettingTransitionCancelsRunningTransitionQuirk, needsResettingTransitionCancelsRunningTransitionQuirk);
-
-    m_quirksData.setQuirkState(QuirksData::SiteSpecificQuirk::RequirePageVisibilityToPlayAudioQuirk, requirePageVisibilityToPlayAudioQuirk);
 #endif
 
 #if PLATFORM(MAC)
@@ -3494,6 +3490,7 @@ void Quirks::determineRelevantQuirks()
 #if PLATFORM(IOS_FAMILY)
         { "gizmodo"_s, &handleGizmodoQuirks },
 #endif
+        { "geforcenow"_s, &handleGeforcenowQuirks },
         { "google"_s, &handleGoogleQuirks },
         { "hbomax"_s, &handleHBOMaxQuirks },
         { "hotels"_s, &handleHotelsQuirks },
@@ -3510,9 +3507,6 @@ void Quirks::determineRelevantQuirks()
         { "mailchimp"_s, &handleMailChimpQuirks },
 #endif
         { "marcus"_s, &handleMarcusQuirks },
-#if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
-        { "max"_s, &handleMaxQuirks },
-#endif
         { "medium"_s, &handleMediumQuirks },
 #if PLATFORM(IOS_FAMILY)
         { "cloud"_s, &handleMicrosoftCloudQuirks },

@@ -36,6 +36,8 @@ namespace WebCore {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaPlayerPrivateWirelessPlayback);
 
 class MediaPlayerFactoryWirelessPlayback final : public MediaPlayerFactory {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerFactoryWirelessPlayback);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaPlayerFactoryWirelessPlayback);
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final
     {

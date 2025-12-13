@@ -48,9 +48,6 @@
 #include "ExceptionOr.h"
 #include "WebAuthenticationConstants.h"
 #include "WebAuthenticationUtils.h"
-#if HAVE(SWIFT_CPP_INTEROP)
-#include <pal/PALSwift.h>
-#endif
 #include <pal/crypto/CryptoDigest.h>
 #include <wtf/CryptographicallyRandomNumber.h>
 
@@ -486,7 +483,7 @@ HmacSecretRequest::HmacSecretRequest(Ref<CryptoKeyAES>&& sharedKey, CBORValue::M
 {
 }
 
-std::optional<HmacSecretRequest> HmacSecretRequest::create(PINUVAuthProtocol protocol, const Vector<uint8_t>& salt1, const std::optional<Vector<uint8_t>>& salt2, const CryptoKeyEC& peerKey)
+std::optional<HmacSecretRequest> HmacSecretRequest::create(PINUVAuthProtocol protocol, const Vector<uint8_t>& salt1, const std::optional<Vector<uint8_t>>& salt2, RefPtr<CryptoKeyEC>&& peerKey)
 {
     if (salt1.size() != 32)
         return std::nullopt;
@@ -499,7 +496,7 @@ std::optional<HmacSecretRequest> HmacSecretRequest::create(PINUVAuthProtocol pro
         return std::nullopt;
     auto keyPair = keyPairResult.releaseReturnValue();
 
-    auto sharedKeyResult = CryptoAlgorithmECDH::platformDeriveBits(downcast<CryptoKeyEC>(*keyPair.privateKey), peerKey);
+    auto sharedKeyResult = CryptoAlgorithmECDH::platformDeriveBits(downcast<CryptoKeyEC>(*keyPair.privateKey), *peerKey);
     if (!sharedKeyResult)
         return std::nullopt;
 

@@ -1365,11 +1365,11 @@ void Connection::enqueueIncomingMessage(UniqueRef<Decoder> incomingMessage)
     if (!m_syncState)
         return;
     if (isIncomingMessagesThrottlingEnabled()) {
-        dispatcher().dispatch([protectedThis = Ref { *this }] {
+        dispatcher()->dispatch([protectedThis = Ref { *this }] {
             protectedThis->dispatchIncomingMessages();
         });
     } else {
-        dispatcher().dispatch([protectedThis = Ref { *this }] {
+        dispatcher()->dispatch([protectedThis = Ref { *this }] {
             protectedThis->dispatchOneIncomingMessage();
         });
     }
@@ -1510,7 +1510,7 @@ size_t Connection::numberOfMessagesToProcess(size_t totalMessages)
     return std::min(totalMessages, batchSize);
 }
 
-SerialFunctionDispatcher& Connection::dispatcher()
+Ref<SerialFunctionDispatcher> Connection::dispatcher()
 {
     // dispatcher can only be accessed while the connection is valid,
     // and must have the incoming message lock held if not being
@@ -1527,7 +1527,7 @@ SerialFunctionDispatcher& Connection::dispatcher()
     // Our syncState is specific to the SerialFunctionDispatcher we have been
     // bound to during open(), so we can retrieve the SerialFunctionDispatcher
     // from it (rather than storing another pointer on this class).
-    return *dispatcher.unsafeGet(); // FIXME: This is unsafe. This function should return RefPtr instead.
+    return dispatcher.releaseNonNull();
 }
 
 void Connection::dispatchOneIncomingMessage()
@@ -1580,7 +1580,7 @@ void Connection::dispatchIncomingMessages()
         // Re-schedule ourselves *before* we dispatch the messages because we want to process follow-up messages if the client
         // spins a nested run loop while we're dispatching a message. Note that this means we can re-enter this method.
         if (!m_incomingMessages.isEmpty()) {
-            dispatcher().dispatch([protectedThis = Ref { *this }] {
+            dispatcher()->dispatch([protectedThis = Ref { *this }] {
                 protectedThis->dispatchIncomingMessages();
             });
         }
@@ -1667,7 +1667,7 @@ void Connection::wakeUpRunLoop()
 {
     if (!isValid())
         return;
-    if (&dispatcher() == &RunLoop::mainSingleton())
+    if (dispatcher().ptr() == &RunLoop::mainSingleton())
         RunLoop::mainSingleton().wakeUp();
 }
 
@@ -1683,7 +1683,7 @@ void Connection::dispatchToClientWithIncomingMessagesLock(F&& clientRunLoopTask)
 {
     if (!m_syncState)
         return;
-    dispatcher().dispatch(WTFMove(clientRunLoopTask));
+    dispatcher()->dispatch(WTFMove(clientRunLoopTask));
 }
 
 #if !USE(UNIX_DOMAIN_SOCKETS) && !OS(DARWIN) && !OS(WINDOWS) && !OS(HAIKU)

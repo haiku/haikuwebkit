@@ -1174,10 +1174,10 @@ void NetworkResourceLoader::didFinishLoading(const NetworkLoadMetrics& networkLo
 #endif
 
     if (isSynchronous())
-        sendReplyToSynchronousRequest(*m_synchronousLoadData, m_bufferedData.get().get(), networkLoadMetrics);
+        sendReplyToSynchronousRequest(*m_synchronousLoadData, m_bufferedData.protectedBuffer().get(), networkLoadMetrics);
     else {
         if (!m_bufferedData.isEmpty()) {
-            sendBuffer(*m_bufferedData.get());
+            sendBuffer(*m_bufferedData.protectedBuffer());
         }
 #if ENABLE(CONTENT_FILTERING)
         if (CheckedPtr contentFilter = m_contentFilter.get()) {
@@ -1611,12 +1611,12 @@ void NetworkResourceLoader::bufferingTimerFired()
         return;
 
 #if ENABLE(CONTENT_FILTERING)
-    auto sharedBuffer = m_bufferedData.takeAsContiguous();
+    auto sharedBuffer = m_bufferedData.takeBufferAsContiguous();
     bool shouldFilter = m_contentFilter && !checkedContentFilter()->continueAfterDataReceived(sharedBuffer);
     if (!shouldFilter)
         sendDidReceiveDataMessage(sharedBuffer);
 #else
-    sendDidReceiveDataMessage(m_bufferedData.takeAsContiguous());
+    sendDidReceiveDataMessage(m_bufferedData.takeBufferAsContiguous());
 #endif
     m_bufferedData.empty();
 }
@@ -1647,12 +1647,12 @@ void NetworkResourceLoader::tryStoreAsCacheEntry()
     if (isCrossOriginPrefetch()) {
         if (CheckedPtr session = protectedConnectionToWebProcess()->networkProcess().networkSession(sessionID())) {
             LOADER_RELEASE_LOG("tryStoreAsCacheEntry: Storing entry in prefetch cache");
-            session->checkedPrefetchCache()->store(m_networkLoad->currentRequest().url(), WTFMove(m_response), m_privateRelayed, m_bufferedDataForCache.take());
+            session->checkedPrefetchCache()->store(m_networkLoad->currentRequest().url(), WTFMove(m_response), m_privateRelayed, m_bufferedDataForCache.takeBuffer());
         }
         return;
     }
     LOADER_RELEASE_LOG("tryStoreAsCacheEntry: Storing entry in HTTP disk cache");
-    protectedCache()->store(m_networkLoad->currentRequest(), m_response, m_privateRelayed, m_bufferedDataForCache.take(), [loader = Ref { *this }](auto&& mappedBody) mutable {
+    protectedCache()->store(m_networkLoad->currentRequest(), m_response, m_privateRelayed, m_bufferedDataForCache.takeBuffer(), [loader = Ref { *this }](auto&& mappedBody) mutable {
 #if ENABLE(SHAREABLE_RESOURCE)
         if (!mappedBody.shareableResourceHandle)
             return;

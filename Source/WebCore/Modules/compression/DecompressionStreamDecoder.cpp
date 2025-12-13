@@ -166,7 +166,7 @@ ExceptionOr<Ref<JSC::ArrayBuffer>> DecompressionStreamDecoder::decompressZlib(st
         storage.append(output);
     }
 
-    RefPtr decompressedData = storage.takeAsArrayBuffer();
+    RefPtr decompressedData = storage.takeBufferAsArrayBuffer();
     if (!decompressedData)
         return Exception { ExceptionCode::OutOfMemoryError };
 

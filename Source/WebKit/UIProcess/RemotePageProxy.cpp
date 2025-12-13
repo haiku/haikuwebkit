@@ -63,6 +63,10 @@
 #include "RemotePageVideoPresentationManagerProxy.h"
 #endif
 
+#if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
+#include "WebDeviceOrientationUpdateProviderProxy.h"
+#endif
+
 namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemotePageProxy);
@@ -85,6 +89,10 @@ RemotePageProxy::RemotePageProxy(WebPageProxy& page, WebProcessProxy& process, c
         m_messageReceiverRegistration.startReceivingMessages(m_process, m_webPageID, *this, page.backForwardList());
 
     m_process->addRemotePageProxy(*this);
+
+#if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
+    m_page->webDeviceOrientationUpdateProviderProxy()->addAsMessageReceiverForProcess(m_process.get(), m_webPageID);
+#endif
 }
 
 void RemotePageProxy::injectPageIntoNewProcess()
@@ -98,6 +106,13 @@ void RemotePageProxy::injectPageIntoNewProcess()
         ASSERT_NOT_REACHED();
         return;
     }
+
+#if PLATFORM(MAC) && USE(RUNNINGBOARD)
+    if (page->preferences().backgroundWebContentRunningBoardThrottlingEnabled())
+        m_process->setRunningBoardThrottlingEnabled();
+#endif
+
+    page->takeActivitiesOnRemotePage(*this);
 
     Ref drawingArea = *page->drawingArea();
     m_drawingArea = RemotePageDrawingAreaProxy::create(drawingArea.get(), m_process);
@@ -143,6 +158,10 @@ void RemotePageProxy::processDidTerminate(WebProcessProxy& process, ProcessTermi
 
 RemotePageProxy::~RemotePageProxy()
 {
+#if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
+    m_page->webDeviceOrientationUpdateProviderProxy()->removeAsMessageReceiverForProcess(m_process.get(), m_webPageID);
+#endif
+
     if (RefPtr page = m_page.get())
         page->isNoLongerAssociatedWithRemotePage(*this);
     if (m_drawingArea)
@@ -154,6 +173,10 @@ void RemotePageProxy::didReceiveMessage(IPC::Connection& connection, IPC::Decode
 {
     if (decoder.messageName() == Messages::WebPageProxy::IsPlayingMediaDidChange::name()) {
         IPC::handleMessage<Messages::WebPageProxy::IsPlayingMediaDidChange>(connection, decoder, this, &RemotePageProxy::isPlayingMediaDidChange);
+        return;
+    }
+    if (decoder.messageName() == Messages::WebPageProxy::SetNetworkRequestsInProgress::name()) {
+        IPC::handleMessage<Messages::WebPageProxy::SetNetworkRequestsInProgress>(connection, decoder, this, &RemotePageProxy::setNetworkRequestsInProgress);
         return;
     }
 
@@ -209,6 +232,17 @@ void RemotePageProxy::isPlayingMediaDidChange(WebCore::MediaProducerMediaStateFl
     if (didStopAudioCapture || didStopVideoCapture)
         UserMediaProcessManager::singleton().revokeSandboxExtensionsIfNeeded(m_process);
 #endif
+}
+
+void RemotePageProxy::setNetworkRequestsInProgress(bool hasNetworkRequestsInProgress)
+{
+    m_hasNetworkRequestsInProgress = hasNetworkRequestsInProgress;
+
+    RefPtr page = m_page.get();
+    if (!page || page->isClosed())
+        return;
+
+    page->networkRequestsInProgressDidChange();
 }
 
 void RemotePageProxy::setDrawingArea(DrawingAreaProxy* drawingArea)

@@ -88,8 +88,6 @@ namespace JSC {
     macro(driveAsyncFunction) \
     macro(awaitValue) \
     macro(newHandledRejectedPromise) \
-    macro(promiseOnRejectedWithContext) \
-    macro(promiseAllOnFulfilled) \
     macro(promiseEmptyOnFulfilled) \
     macro(promiseEmptyOnRejected) \
     macro(promiseResolve) \
@@ -227,8 +225,6 @@ namespace JSC {
     macro(pop) \
     macro(wrapForValidIteratorCreate) \
     macro(asyncFromSyncIteratorCreate) \
-    macro(promiseAllContextCreate) \
-    macro(promiseAllGlobalContextCreate) \
     macro(regExpStringIteratorCreate) \
     macro(iteratorHelperCreate) \
     macro(syncIterator) \

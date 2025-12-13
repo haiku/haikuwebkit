@@ -96,8 +96,14 @@ webkit.org/b/254733 inspector/canvas/recording-offscreen-webgl-memoryLimit.html 
 webkit.org/b/254733 inspector/canvas/shaderProgram-add-remove-webgl2.html [ Failure ]
 webkit.org/b/254733 inspector/canvas/shaderProgram-add-remove-webgl.html [ Failure ]
 
+webkit.org/b/303375 inspector/debugger/async-stack-trace-basic.html [ Crash Timeout Pass ]
+webkit.org/b/303375 inspector/debugger/async-stack-trace-truncate.html [ Crash Timeout ]
+
 # Crash on EWS bot.
 webrtc/vp8-then-h264-gpu-process-crash.html [ Skip ]
+
+webkit.org/b/303366 webrtc/datachannel/multiple-connections.html [ Crash Pass ]
+webkit.org/b/303372 webrtc/datachannel/gather-candidates-networkprocess-crash.html [ Crash Pass ]
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End of Triaged Expectations
@@ -734,9 +740,6 @@ webkit.org/b/264664 fast/media/mq-prefers-reduced-motion-live-update-for-listene
 webkit.org/b/127742 fast/spatial-navigation/snav-unit-overflow-and-scroll-in-direction.html [ Failure ]
 
 webkit.org/b/143985 editing/pasteboard/drop-text-events.html [ Failure ]
-
-
-webkit.org/b/218320 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-destinationnode-interface/destination.html [ Failure ]
 
 webkit.org/b/156436 fast/harness/sample-fail-mismatch-reftest.html [ ImageOnlyFailure ]
 
@@ -1597,8 +1600,6 @@ imported/w3c/web-platform-tests/svg/fonts/font-size-adjust-scale-text.svg [ Imag
 media/adopt-node-after-showing-picker-crash.html [ Skip ]
 
 webkit.org/b/267992 [ Debug ] imported/w3c/web-platform-tests/html/anonymous-iframe/initial-empty-document.tentative.https.window.html [ Crash Pass ]
-
-imported/w3c/web-platform-tests/svg/shapes/rect-04.svg [ ImageOnlyFailure ]
 
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/skip-outbound-vt-before-reveal.html [ Failure Pass ]
 

@@ -176,14 +176,14 @@ public:
     virtual LayoutUnit marginAfter(const WritingMode) const = 0;
     virtual LayoutUnit marginStart(const WritingMode) const = 0;
     virtual LayoutUnit marginEnd(const WritingMode) const = 0;
-    LayoutUnit marginBefore() const { return marginBefore(writingMode()); }
-    LayoutUnit marginAfter() const { return marginAfter(writingMode()); }
-    LayoutUnit marginStart() const { return marginStart(writingMode()); }
-    LayoutUnit marginEnd() const { return marginEnd(writingMode()); }
-    LayoutUnit verticalMarginExtent() const { return marginTop() + marginBottom(); }
-    LayoutUnit horizontalMarginExtent() const { return marginLeft() + marginRight(); }
-    LayoutUnit marginLogicalHeight() const { return marginBefore() + marginAfter(); }
-    LayoutUnit marginLogicalWidth() const { return marginStart() + marginEnd(); }
+    inline LayoutUnit marginBefore() const;
+    inline LayoutUnit marginAfter() const;
+    inline LayoutUnit marginStart() const;
+    inline LayoutUnit marginEnd() const;
+    inline LayoutUnit verticalMarginExtent() const;
+    inline LayoutUnit horizontalMarginExtent() const;
+    inline LayoutUnit marginLogicalHeight() const;
+    inline LayoutUnit marginLogicalWidth() const;
 
     BorderShape borderShapeForContentClipping(const LayoutRect& borderBoxRect, RectEdges<bool> closedEdges = { true }) const;
 

@@ -322,7 +322,7 @@ UIDelegate::UIClient::~UIClient() = default;
 
 id<WKUIDelegatePrivate> UIDelegate::UIClient::uiDelegatePrivate()
 {
-    return m_uiDelegate ? (id<WKUIDelegatePrivate>)m_uiDelegate->m_delegate.get().unsafeGet() : nil;
+    return m_uiDelegate ? (id<WKUIDelegatePrivate>)m_uiDelegate->m_delegate.getAutoreleased() : nil;
 }
 
 RetainPtr<id<WKUIDelegatePrivate>> UIDelegate::UIClient::protectedUIDelegatePrivate()

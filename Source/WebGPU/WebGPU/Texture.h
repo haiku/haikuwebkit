@@ -25,6 +25,7 @@
 
 #pragma once
 
+#import "BindableResource.h"
 #import <Metal/Metal.h>
 #import <wtf/FastMalloc.h>
 #import <wtf/HashMap.h>
@@ -49,7 +50,7 @@ class Device;
 class TextureView;
 
 // https://gpuweb.github.io/gpuweb/#gputexture
-class Texture : public RefCountedAndCanMakeWeakPtr<Texture>, public WGPUTextureImpl {
+class Texture : public RefCountedAndCanMakeWeakPtr<Texture>, public WGPUTextureImpl, public TrackedResource {
     WTF_MAKE_TZONE_ALLOCATED(Texture);
 public:
     static Ref<Texture> create(id<MTLTexture> texture, const WGPUTextureDescriptor& descriptor, Vector<WGPUTextureFormat>&& viewFormats, Device& device)
@@ -183,7 +184,6 @@ private:
     Vector<WeakPtr<TextureView>> m_textureViews;
     bool m_destroyed { false };
     bool m_canvasBacking { false };
-    mutable Vector<uint64_t> m_commandEncoders;
     id<MTLSharedEvent> m_sharedEvent { nil };
     std::pair<id<MTLRasterizationRateMap>, id<MTLRasterizationRateMap>> m_leftRightRasterizationMaps;
 

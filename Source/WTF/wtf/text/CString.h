@@ -95,7 +95,7 @@ public:
     size_t length() const;
 
     bool isNull() const { return !m_buffer; }
-    bool isEmpty() const { return isNull() || m_buffer->length() <= 1; }
+    bool isEmpty() const { return isNull() || !m_buffer->length(); }
     bool isSafeToSendToAnotherThread() const;
 
     CStringBuffer* buffer() const LIFETIME_BOUND { return m_buffer.get(); }

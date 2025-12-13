@@ -112,8 +112,8 @@ static std::optional<std::pair<uint32_t, uint32_t>> findCrtc(int fd)
 
     // Get the first active connector.
     drmModeConnector* connector = nullptr;
-    for (int i = 0; i < resources->count_connectors; ++i) {
-        connector = drmModeGetConnector(fd, resources->connectors[i]);
+    for (uint32_t connectorId : unsafeMakeSpan(resources->connectors, resources->count_connectors)) {
+        auto* connector = drmModeGetConnector(fd, connectorId);
         if (!connector)
             continue;
 
@@ -142,9 +142,10 @@ static std::optional<std::pair<uint32_t, uint32_t>> findCrtc(int fd)
 
     std::optional<std::pair<uint32_t, uint32_t>> returnValue;
     if (drmModeEncoder* encoder = drmModeGetEncoder(fd, connector->encoder_id)) {
-        for (int i = 0; i < resources->count_crtcs; ++i) {
-            if (resources->crtcs[i] == encoder->crtc_id) {
-                if (drmModeCrtc* crtc = drmModeGetCrtc(fd, resources->crtcs[i])) {
+        const auto crtcIds = unsafeMakeSpan(resources->crtcs, resources->count_crtcs);
+        for (unsigned i = 0; i < crtcIds.size(); ++i) {
+            if (crtcIds[i] == encoder->crtc_id) {
+                if (drmModeCrtc* crtc = drmModeGetCrtc(fd, crtcIds[i])) {
                     returnValue = { i, modeRefreshRate(&crtc->mode) };
                     drmModeFreeCrtc(crtc);
                     break;

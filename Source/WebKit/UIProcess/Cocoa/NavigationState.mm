@@ -1578,9 +1578,6 @@ void NavigationState::willChangeIsLoading()
 #if USE(RUNNINGBOARD)
 void NavigationState::releaseNetworkActivity(NetworkActivityReleaseReason reason)
 {
-    if (!m_networkActivity)
-        return;
-
     switch (reason) {
     case NetworkActivityReleaseReason::LoadCompleted:
         RELEASE_LOG(ProcessSuspension, "%p NavigationState is releasing background process assertion because a page load completed", this);
@@ -1589,7 +1586,11 @@ void NavigationState::releaseNetworkActivity(NetworkActivityReleaseReason reason
         RELEASE_LOG(ProcessSuspension, "%p NavigationState is releasing background process assertion because the screen was locked", this);
         break;
     }
-    m_networkActivity = nullptr;
+
+    auto webView = this->webView();
+    if (webView)
+        webView->_page->dropNetworkActivity();
+
     m_releaseNetworkActivityTimer.stop();
 }
 #endif
@@ -1597,9 +1598,11 @@ void NavigationState::releaseNetworkActivity(NetworkActivityReleaseReason reason
 void NavigationState::didChangeIsLoading()
 {
     auto webView = this->webView();
+    if (!webView)
+        return;
 
 #if USE(RUNNINGBOARD)
-    if (webView && webView->_page->pageLoadState().isLoading()) {
+    if (webView->_page->pageLoadState().isLoading()) {
 #if PLATFORM(IOS_FAMILY)
         // We do not start a network activity if a load starts after the screen has been locked.
         if (UIApplication.sharedApplication.isSuspendedUnderLock)
@@ -1610,11 +1613,11 @@ void NavigationState::didChangeIsLoading()
             RELEASE_LOG(ProcessSuspension, "%p - NavigationState keeps its process network assertion because a new page load started", this);
             m_releaseNetworkActivityTimer.stop();
         }
-        if (!m_networkActivity) {
+        if (!webView->_page->hasValidNetworkActivity()) {
             RELEASE_LOG(ProcessSuspension, "%p - NavigationState is taking a process network assertion because a page load started", this);
-            m_networkActivity = webView->_page->legacyMainFrameProcess().protectedThrottler()->backgroundActivity("Page Load"_s);
+            webView->_page->takeNetworkActivity();
         }
-    } else if (m_networkActivity) {
+    } else if (webView->_page->hasValidNetworkActivity()) {
         // The application is visible so we delay releasing the background activity for 3 seconds to give it a chance to start another navigation
         // before suspending the WebContent process <rdar://problem/27910964>.
         RELEASE_LOG(ProcessSuspension, "%p - NavigationState will release its process network assertion soon because the page load completed", this);
@@ -1744,8 +1747,8 @@ void NavigationState::didSwapWebProcesses()
 #if USE(RUNNINGBOARD)
     // Transfer our background assertion from the old process to the new one.
     auto webView = this->webView();
-    if (m_networkActivity && webView)
-        m_networkActivity = webView->_page->legacyMainFrameProcess().protectedThrottler()->backgroundActivity("Page Load"_s);
+    if (webView && webView->_page->hasValidNetworkActivity())
+        webView->_page->takeNetworkActivity();
 #endif
 }
 

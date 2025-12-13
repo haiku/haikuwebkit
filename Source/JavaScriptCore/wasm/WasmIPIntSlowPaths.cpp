@@ -548,7 +548,7 @@ WASM_IPINT_EXTERN_CPP_DECL(table_grow, IPIntStackEntry* sp, TableGrowMetadata* m
     WASM_RETURN_TWO(std::bit_cast<void*>(Wasm::tableGrow(instance, metadata->tableIndex, fill, n)), 0);
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(memory_grow, int32_t delta)
+WASM_IPINT_EXTERN_CPP_DECL(memory_grow, int64_t delta)
 {
     WASM_RETURN_TWO(reinterpret_cast<void*>(Wasm::growMemory(instance, delta)), 0);
 }
@@ -557,7 +557,7 @@ WASM_IPINT_EXTERN_CPP_DECL(memory_init, int32_t dataIndex, IPIntStackEntry* sp)
 {
     int32_t n = sp[0].i32;
     int32_t s = sp[1].i32;
-    int32_t d = sp[2].i32;
+    int64_t d = sp[2].i64;
 
     if (!Wasm::memoryInit(instance, dataIndex, d, s, n))
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsMemoryAccess);
@@ -570,14 +570,14 @@ WASM_IPINT_EXTERN_CPP_DECL(data_drop, int32_t dataIndex)
     IPINT_END();
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(memory_copy, int32_t dst, int32_t src, int32_t count)
+WASM_IPINT_EXTERN_CPP_DECL(memory_copy, int64_t dst, int64_t src, int64_t count)
 {
     if (!Wasm::memoryCopy(instance, dst, src, count))
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsMemoryAccess);
     IPINT_END();
 }
 
-WASM_IPINT_EXTERN_CPP_DECL(memory_fill, int32_t dst, int32_t targetValue, int32_t count)
+WASM_IPINT_EXTERN_CPP_DECL(memory_fill, int64_t dst, int32_t targetValue, int64_t count)
 {
     if (!Wasm::memoryFill(instance, dst, targetValue, count))
         IPINT_THROW(Wasm::ExceptionType::OutOfBoundsMemoryAccess);

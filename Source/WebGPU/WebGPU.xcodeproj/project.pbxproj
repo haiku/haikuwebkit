@@ -1516,10 +1516,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 1CEBD7FC2716B64400A5254D /* WebGPU.xcconfig */;
 			buildSettings = {
-				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SYSTEM_LIBRARY_DIR)/SubFrameworks",
-				);
 			};
 			name = Debug;
 		};
@@ -1527,10 +1523,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 1CEBD7FC2716B64400A5254D /* WebGPU.xcconfig */;
 			buildSettings = {
-				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SYSTEM_LIBRARY_DIR)/SubFrameworks",
-				);
 			};
 			name = Release;
 		};
@@ -1559,10 +1551,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 1CEBD7FC2716B64400A5254D /* WebGPU.xcconfig */;
 			buildSettings = {
-				SYSTEM_FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SYSTEM_LIBRARY_DIR)/SubFrameworks",
-				);
 			};
 			name = Production;
 		};

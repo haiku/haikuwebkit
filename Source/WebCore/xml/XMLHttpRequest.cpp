@@ -213,7 +213,7 @@ Ref<Blob> XMLHttpRequest::createResponseBlob()
     // FIXME: We just received the data from NetworkProcess, and are sending it back. This is inefficient.
     Vector<uint8_t> data;
     if (m_binaryResponseBuilder)
-        data = m_binaryResponseBuilder.take()->extractData();
+        data = m_binaryResponseBuilder.takeBuffer()->extractData();
     return Blob::create(protectedScriptExecutionContext().get(), WTFMove(data), responseMIMEType(FinalMIMEType::Yes)); // responseMIMEType defaults to text/xml which may be incorrect.
 }
 
@@ -222,7 +222,7 @@ RefPtr<ArrayBuffer> XMLHttpRequest::createResponseArrayBuffer()
     ASSERT(responseType() == ResponseType::Arraybuffer);
     ASSERT(doneWithoutErrors());
 
-    return m_binaryResponseBuilder.takeAsArrayBuffer();
+    return m_binaryResponseBuilder.takeBufferAsArrayBuffer();
 }
 
 ExceptionOr<void> XMLHttpRequest::setTimeout(unsigned timeout)

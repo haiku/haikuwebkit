@@ -26,6 +26,7 @@
 #pragma once
 
 #include <WebCore/AXID.h>
+#include <WebCore/AXStitchGroup.h>
 #include <WebCore/AXTextRun.h>
 #include <WebCore/AccessibilityRole.h>
 #include <WebCore/CharacterRange.h>
@@ -786,6 +787,7 @@ public:
     bool crossFrameIsDescendantOfObject(const AXCoreObject&) const;
     // TODO: this name is not consistent with the others
     AXCoreObject* parentObjectIncludingCrossFrame() const;
+    AXCoreObject* parentObjectUnignoredIncludingCrossFrame() const;
 
     virtual AccessibilityChildrenVector findMatchingObjects(AccessibilitySearchCriteria&&) = 0;
     virtual bool isDescendantOfRole(AccessibilityRole) const = 0;
@@ -1001,13 +1003,13 @@ public:
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     bool onlyAddsUnignoredChildren() const { return isTableColumn() || role() == AccessibilityRole::TableHeaderContainer; }
     AccessibilityChildrenVector unignoredChildren(bool updateChildrenIfNeeded = true);
-    AXCoreObject* firstUnignoredChild();
+    bool hasUnignoredChild();
 #else
     const AccessibilityChildrenVector& unignoredChildren(bool updateChildrenIfNeeded = true) { return children(updateChildrenIfNeeded); }
-    AXCoreObject* firstUnignoredChild()
+    bool hasUnignoredChild()
     {
         const auto& children = this->children();
-        return children.size() ? children[0].ptr() : nullptr;
+        return !children.isEmpty();
     }
 #endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     AccessibilityChildrenVector stitchedUnignoredChildren();
@@ -1015,38 +1017,21 @@ public:
     virtual bool isBlockFlow() const { return false; }
     bool hasStitchableRole() const
     {
-        // FIXME: We probably want to stitch list markers too.
-        return role() == AccessibilityRole::StaticText;
+        return role() == AccessibilityRole::StaticText || role() == AccessibilityRole::ListMarker;
     }
     AXCoreObject* blockFlowAncestor() const;
     AXCoreObject* blockFlowAncestorForStitchable() const
     {
         return hasStitchableRole() ? blockFlowAncestor() : nullptr;
     }
-    struct StitchState {
-        // Given object |A| that produced this StitchState, |stitchedIntoID| represents
-        // the ID of the object that |A| is stitched into. This can be |A|'s own ID if
-        // it is the first member of its stitch group (and is thus what is stitched into).
-        // If std::nullopt, |A| is not stitched into any other object, nor is any other object
-        // stitched into it.
-        const std::optional<AXID> stitchedIntoID { std::nullopt };
-        // The stitch group that |A| belongs to, if any.
-        Vector<AXID> group;
 
-        StitchState() = default;
-        StitchState(std::optional<AXID> stitchedIntoID, const Vector<AXID>& group)
-            : stitchedIntoID(stitchedIntoID)
-            , group(group)
-        {
-            // If there is an object being stitched into, there _must_ be an associated group.
-            ASSERT(!stitchedIntoID || group.size());
-        }
-    };
-    enum class IncludeStitchGroup : bool { No, Yes };
-    virtual StitchState stitchState(IncludeStitchGroup = IncludeStitchGroup::Yes) const { return { }; }
+    enum class IncludeGroupMembers : bool { No, Yes };
+    virtual std::optional<AXStitchGroup> stitchGroup(IncludeGroupMembers = IncludeGroupMembers::Yes) const { return { }; }
     std::optional<AXID> stitchedIntoID() const
     {
-        return stitchState(IncludeStitchGroup::No).stitchedIntoID;
+        if (std::optional stitchGroup = this->stitchGroup(IncludeGroupMembers::No))
+            return stitchGroup->representativeID();
+        return std::nullopt;
     }
 
     // When ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE) is true, this returns IDs of ignored children.
@@ -1054,8 +1039,8 @@ public:
     // is the default, we should rename this function to childrenIDsIncludingIgnored, as that is what all
     // callers will expect at the time this comment was written.
     Vector<AXID> childrenIDs(bool updateChildrenIfNeeded = true);
-    AXCoreObject* nextInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
-    AXCoreObject* nextInPreOrder(bool updateChildrenIfNeeded, AXCoreObject* stayWithin, bool includeCrossFrame);
+    RefPtr<AXCoreObject> nextInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
+    RefPtr<AXCoreObject> nextInPreOrder(bool updateChildrenIfNeeded, AXCoreObject* stayWithin, bool includeCrossFrame);
     AXCoreObject* nextSiblingIncludingIgnored(bool updateChildrenIfNeeded) const;
     AXCoreObject* nextSiblingIncludingIgnored(bool updateChildrenIfNeeded, bool includeCrossFrame) const;
     AXCoreObject* nextUnignoredSibling(bool updateChildrenIfNeeded, AXCoreObject* unignoredParent = nullptr) const;
@@ -1066,7 +1051,7 @@ public:
         return object ? std::optional(object->objectID()) : std::nullopt;
     }
 
-    AXCoreObject* previousInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
+    RefPtr<AXCoreObject> previousInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
     AXCoreObject* previousSiblingIncludingIgnored(bool updateChildrenIfNeeded);
     AXCoreObject* deepestLastChildIncludingIgnored(bool updateChildrenIfNeeded);
 
@@ -1318,7 +1303,7 @@ protected:
         , m_id(axID)
     { }
 
-    StitchState stitchStateFromGroups(const Vector<Vector<AXID>>*, IncludeStitchGroup) const;
+    std::optional<AXStitchGroup> stitchGroupFromGroups(const Vector<AXStitchGroup>*, IncludeGroupMembers) const;
 
 private:
     virtual String debugDescriptionInternal(bool, std::optional<OptionSet<AXDebugStringOption>> = std::nullopt) const = 0;

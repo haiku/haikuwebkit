@@ -60,9 +60,8 @@ public:
         return webrtc::make_ref_counted<GStreamerEncodedImageBuffer>(data);
     }
 
-    const uint8_t* data() const final { return m_data.data(); }
-    uint8_t* data() final { return const_cast<uint8_t*>(m_data.data()); }
-    size_t size() const final { return m_data.size_bytes(); }
+    const uint8_t* data() const override { return m_data.data(); }
+    size_t size() const override { return m_data.size_bytes(); }
 
 protected:
     GStreamerEncodedImageBuffer(std::span<const uint8_t> data)

@@ -48,65 +48,53 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CSSFilterRenderer);
 
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::createGeneric(RenderElement& renderer, const auto& filter, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatSize& filterScale, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+RefPtr<CSSFilterRenderer> CSSFilterRenderer::createGeneric(RenderElement& renderer, const auto& filter, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
     bool hasFilterThatMovesPixels = filter.hasFilterThatMovesPixels();
     bool hasFilterThatShouldBeRestrictedBySecurityOrigin = filter.hasFilterThatShouldBeRestrictedBySecurityOrigin();
 
-    auto filterRenderer = adoptRef(*new CSSFilterRenderer(filterScale, hasFilterThatMovesPixels, hasFilterThatShouldBeRestrictedBySecurityOrigin));
+    auto filterRenderer = adoptRef(*new CSSFilterRenderer(geometry, hasFilterThatMovesPixels, hasFilterThatShouldBeRestrictedBySecurityOrigin));
 
-    if (!filterRenderer->buildFilterFunctions(renderer, filter, preferredFilterRenderingModes, targetBoundingBox, destinationContext)) {
+    if (!filterRenderer->buildFilterFunctions(renderer, filter, preferredRenderingModes, destinationContext)) {
         LOG_WITH_STREAM(Filters, stream << "CSSFilterRenderer::create: failed to build filters " << filter);
         return nullptr;
     }
 
-    filterRenderer->setFilterRenderingModes(preferredFilterRenderingModes);
+    filterRenderer->setFilterRenderingModes(preferredRenderingModes);
 
     LOG_WITH_STREAM(Filters, stream << "CSSFilterRenderer::create built filter " << filterRenderer.get() << " for " << filter << " supported rendering mode(s) " << filterRenderer->filterRenderingModes());
 
     return filterRenderer;
 }
 
-
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const Style::Filter& filter, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatSize& filterScale, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const Style::Filter& filter, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
-    return createGeneric(renderer, filter, preferredFilterRenderingModes, filterScale, targetBoundingBox, destinationContext);
+    return createGeneric(renderer, filter, geometry, preferredRenderingModes, destinationContext);
 }
 
-RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const FilterOperations& operations, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatSize& filterScale, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+RefPtr<CSSFilterRenderer> CSSFilterRenderer::create(RenderElement& renderer, const FilterOperations& operations, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
-    return createGeneric(renderer, operations, preferredFilterRenderingModes, filterScale, targetBoundingBox, destinationContext);
+    return createGeneric(renderer, operations, geometry, preferredRenderingModes, destinationContext);
 }
 
-Ref<CSSFilterRenderer> CSSFilterRenderer::create(Vector<Ref<FilterFunction>>&& functions)
+Ref<CSSFilterRenderer> CSSFilterRenderer::create(Vector<Ref<FilterFunction>>&& functions, const FilterGeometry& geometry, OptionSet<FilterRenderingMode> preferredRenderingModes)
 {
-    return adoptRef(*new CSSFilterRenderer(WTFMove(functions)));
-}
-
-Ref<CSSFilterRenderer> CSSFilterRenderer::create(Vector<Ref<FilterFunction>>&& functions, OptionSet<FilterRenderingMode> filterRenderingModes, const FloatSize& filterScale, const FloatRect& filterRegion)
-{
-    Ref filter = adoptRef(*new CSSFilterRenderer(WTFMove(functions), filterScale, filterRegion));
+    Ref filter = adoptRef(*new CSSFilterRenderer(WTFMove(functions), geometry));
     // Setting filter rendering modes cannot be moved to the constructor because it ends up
     // calling supportedFilterRenderingModes() which is a virtual function.
-    filter->setFilterRenderingModes(filterRenderingModes);
+    filter->setFilterRenderingModes(preferredRenderingModes);
     return filter;
 }
 
-CSSFilterRenderer::CSSFilterRenderer(const FloatSize& filterScale, bool hasFilterThatMovesPixels, bool hasFilterThatShouldBeRestrictedBySecurityOrigin)
-    : Filter(Filter::Type::CSSFilterRenderer, filterScale)
+CSSFilterRenderer::CSSFilterRenderer(const FilterGeometry& geometry, bool hasFilterThatMovesPixels, bool hasFilterThatShouldBeRestrictedBySecurityOrigin)
+    : Filter(Filter::Type::CSSFilterRenderer, geometry)
     , m_hasFilterThatMovesPixels(hasFilterThatMovesPixels)
     , m_hasFilterThatShouldBeRestrictedBySecurityOrigin(hasFilterThatShouldBeRestrictedBySecurityOrigin)
 {
 }
 
-CSSFilterRenderer::CSSFilterRenderer(Vector<Ref<FilterFunction>>&& functions)
-    : Filter(Type::CSSFilterRenderer)
-    , m_functions(WTFMove(functions))
-{
-}
-
-CSSFilterRenderer::CSSFilterRenderer(Vector<Ref<FilterFunction>>&& functions, const FloatSize& filterScale, const FloatRect& filterRegion)
-    : Filter(Type::CSSFilterRenderer, filterScale, filterRegion)
+CSSFilterRenderer::CSSFilterRenderer(Vector<Ref<FilterFunction>>&& functions, const FilterGeometry& geometry)
+    : Filter(Type::CSSFilterRenderer, geometry)
     , m_functions(WTFMove(functions))
 {
     clampFilterRegionIfNeeded();
@@ -229,7 +217,7 @@ static IntOutsets calculateReferenceFilterOutsets(const Style::ReferenceFilterOp
     return SVGFilterRenderer::calculateOutsets(*filterElement, targetBoundingBox);
 }
 
-static RefPtr<SVGFilterRenderer> createReferenceFilter(CSSFilterRenderer& filter, const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+static RefPtr<SVGFilterRenderer> createReferenceFilter(const CSSFilterRenderer& filter, const Style::ReferenceFilterOperation& filterOperation, RenderElement& renderer, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
     RefPtr filterElement = referenceFilterElement(filterOperation, renderer);
     if (!filterElement)
@@ -237,14 +225,15 @@ static RefPtr<SVGFilterRenderer> createReferenceFilter(CSSFilterRenderer& filter
 
     RefPtr contextElement = dynamicDowncast<SVGElement>(renderer.element());
 
-    auto filterRegion = SVGLengthContext::resolveRectangle(contextElement.get(), *filterElement, filterElement->filterUnits(), targetBoundingBox);
-    if (filterRegion.isEmpty())
+    auto geometry = filter.geometry();
+    geometry.filterRegion = SVGLengthContext::resolveRectangle(contextElement.get(), *filterElement, filterElement->filterUnits(), filter.referenceBox());
+    if (geometry.filterRegion.isEmpty())
         return nullptr;
 
-    return SVGFilterRenderer::create(contextElement.get(), *filterElement, preferredFilterRenderingModes, filter.filterScale(), filterRegion, targetBoundingBox, destinationContext);
+    return SVGFilterRenderer::create(contextElement.get(), *filterElement, geometry, preferredRenderingModes, destinationContext);
 }
 
-RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& renderer, const FilterOperation& operation, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& renderer, const FilterOperation& operation, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
     switch (operation.type()) {
     case FilterOperation::Type::AppleInvertLightness:
@@ -285,7 +274,7 @@ RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& ren
         return createSepiaEffect(downcast<BasicColorMatrixFilterOperation>(operation));
 
     case FilterOperation::Type::Reference:
-        return createReferenceFilter(*this, uncheckedDowncast<Style::ReferenceFilterOperation>(operation), renderer, preferredFilterRenderingModes, targetBoundingBox, destinationContext);
+        return createReferenceFilter(*this, uncheckedDowncast<Style::ReferenceFilterOperation>(operation), renderer, preferredRenderingModes, destinationContext);
 
     default:
         break;
@@ -294,10 +283,10 @@ RefPtr<FilterFunction> CSSFilterRenderer::buildFilterFunction(RenderElement& ren
     return nullptr;
 }
 
-bool CSSFilterRenderer::buildFilterFunctions(RenderElement& renderer, const auto& filter, OptionSet<FilterRenderingMode> preferredFilterRenderingModes, const FloatRect& targetBoundingBox, const GraphicsContext& destinationContext)
+bool CSSFilterRenderer::buildFilterFunctions(RenderElement& renderer, const auto& filter, OptionSet<FilterRenderingMode> preferredRenderingModes, const GraphicsContext& destinationContext)
 {
     for (auto& value : filter) {
-        auto function = buildFilterFunction(renderer, value.get(), preferredFilterRenderingModes, targetBoundingBox, destinationContext);
+        auto function = buildFilterFunction(renderer, value.get(), preferredRenderingModes, destinationContext);
         if (!function)
             continue;
 

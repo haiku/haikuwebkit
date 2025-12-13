@@ -50,6 +50,16 @@ static void ensureDebugCategoryIsRegistered()
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(GStreamerRtpSenderBackend);
 
+Ref<GStreamerRtpSenderBackend> GStreamerRtpSenderBackend::create(WeakPtr<GStreamerPeerConnectionBackend>&& backend, GRefPtr<GstWebRTCRTPSender>&& rtcSender)
+{
+    return adoptRef(*new GStreamerRtpSenderBackend(WTFMove(backend), WTFMove(rtcSender)));
+}
+
+Ref<GStreamerRtpSenderBackend> GStreamerRtpSenderBackend::create(WeakPtr<GStreamerPeerConnectionBackend>&& backend, GRefPtr<GstWebRTCRTPSender>&& rtcSender, Source&& source, GUniquePtr<GstStructure>&& initData)
+{
+    return adoptRef(*new GStreamerRtpSenderBackend(WTFMove(backend), WTFMove(rtcSender), WTFMove(source), WTFMove(initData)));
+}
+
 GStreamerRtpSenderBackend::GStreamerRtpSenderBackend(WeakPtr<GStreamerPeerConnectionBackend>&& backend, GRefPtr<GstWebRTCRTPSender>&& rtcSender)
     : m_peerConnectionBackend(WTFMove(backend))
     , m_rtcSender(WTFMove(rtcSender))

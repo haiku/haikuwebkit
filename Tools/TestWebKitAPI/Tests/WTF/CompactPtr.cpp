@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,6 +50,36 @@ TEST(WTF_CompactPtr, Basic)
         EXPECT_EQ(&a, ptr.get());
         EXPECT_EQ(&a, &*ptr);
         EXPECT_EQ(&a.name, &ptr->name);
+    }
+
+    {
+#if CPU(ADDRESS64)
+        // The following tests that encoding and decoding a pointer to a statically
+        // allocated object (which may potentially be outsized) also works.
+        // If the encoding / decoding works, then other functionality should also
+        // just work.
+        DerivedAlignedRefLogger* staticA = std::bit_cast<DerivedAlignedRefLogger*>(0x1234aaaa0000ull);
+        DerivedAlignedRefLogger* staticB = std::bit_cast<DerivedAlignedRefLogger*>(0x1234bbbb0000ull);
+#else
+        static DerivedAlignedRefLogger staticALogger("staticA");
+        static DerivedAlignedRefLogger staticBLogger("staticB");
+
+        DerivedAlignedRefLogger* staticA = &staticALogger;
+        DerivedAlignedRefLogger* staticB = &staticBLogger;
+#endif
+
+        CompactPtr<AlignedRefLogger> saPtr(staticA);
+        CompactPtr<AlignedRefLogger> sbPtr(staticB);
+        CompactPtr<AlignedRefLogger> sa2Ptr(staticA);
+
+        EXPECT_EQ(staticA, saPtr.get());
+        EXPECT_EQ(staticA, &*saPtr);
+
+        EXPECT_EQ(staticB, sbPtr.get());
+        EXPECT_EQ(staticB, &*sbPtr);
+
+        EXPECT_EQ(staticA, sa2Ptr.get());
+        EXPECT_EQ(staticA, &*sa2Ptr);
     }
 
     {

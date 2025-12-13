@@ -85,7 +85,7 @@ public:
 
     explicit operator bool() const { return !!m_function; }
 
-    Impl* leak() { return m_function.leak(); }
+    Impl* leak() WARN_UNUSED_RETURN { return m_function.leak(); }
 
     Out operator()(In... in)
     {

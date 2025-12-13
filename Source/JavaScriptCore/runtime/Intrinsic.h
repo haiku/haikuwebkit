@@ -108,12 +108,14 @@ namespace JSC {
     macro(ObjectGetOwnPropertyNamesIntrinsic) \
     macro(ObjectGetOwnPropertySymbolsIntrinsic) \
     macro(ObjectGetPrototypeOfIntrinsic) \
+    macro(ObjectHasOwnIntrinsic) \
     macro(ObjectIsIntrinsic) \
     macro(ObjectKeysIntrinsic) \
     macro(ObjectToStringIntrinsic) \
     macro(ReflectGetPrototypeOfIntrinsic) \
     macro(ReflectOwnKeysIntrinsic) \
     macro(StringConstructorIntrinsic) \
+    macro(StringPrototypeConcatIntrinsic) \
     macro(StringPrototypeAtIntrinsic) \
     macro(StringPrototypeCodePointAtIntrinsic) \
     macro(StringPrototypeIndexOfIntrinsic) \
@@ -199,8 +201,6 @@ namespace JSC {
     macro(IteratorHelperCreateIntrinsic) \
     macro(WrapForValidIteratorCreateIntrinsic) \
     macro(AsyncFromSyncIteratorCreateIntrinsic) \
-    macro(PromiseAllContextCreateIntrinsic) \
-    macro(PromiseAllGlobalContextCreateIntrinsic) \
     macro(RegExpStringIteratorCreateIntrinsic) \
     macro(ResolvePromiseWithFirstResolvingFunctionCallCheckIntrinsic) \
     macro(RejectPromiseWithFirstResolvingFunctionCallCheckIntrinsic) \

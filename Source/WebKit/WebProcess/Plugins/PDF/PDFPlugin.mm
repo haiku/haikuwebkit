@@ -148,7 +148,7 @@ static const int defaultScrollMagnitudeThresholdForPageFlip = 20;
             }
         });
     }
-    return protectedSelf->_parent.get().unsafeGet();
+    return protectedSelf->_parent.getAutoreleased();
 }
 
 - (void)setParent:(NSObject *)parent

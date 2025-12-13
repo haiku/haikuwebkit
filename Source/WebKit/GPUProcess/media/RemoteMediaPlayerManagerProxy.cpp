@@ -123,7 +123,7 @@ void RemoteMediaPlayerManagerProxy::deleteMediaPlayer(MediaPlayerIdentifier iden
 
 void RemoteMediaPlayerManagerProxy::getSupportedTypes(MediaPlayerEnums::MediaEngineIdentifier engineIdentifier, CompletionHandler<void(Vector<String>&&)>&& completionHandler)
 {
-    auto engine = MediaPlayer::mediaEngine(engineIdentifier);
+    CheckedPtr engine = MediaPlayer::mediaEngine(engineIdentifier);
     if (!engine) {
         WTFLogAlways("Failed to find media engine.");
         completionHandler({ });
@@ -142,7 +142,7 @@ void RemoteMediaPlayerManagerProxy::getSupportedTypes(MediaPlayerEnums::MediaEng
 
 void RemoteMediaPlayerManagerProxy::supportsTypeAndCodecs(MediaPlayerEnums::MediaEngineIdentifier engineIdentifier, const MediaEngineSupportParameters&& parameters, CompletionHandler<void(MediaPlayer::SupportsType)>&& completionHandler)
 {
-    auto engine = MediaPlayer::mediaEngine(engineIdentifier);
+    CheckedPtr engine = MediaPlayer::mediaEngine(engineIdentifier);
     if (!engine) {
         WTFLogAlways("Failed to find media engine.");
         completionHandler(MediaPlayer::SupportsType::IsNotSupported);
@@ -155,7 +155,7 @@ void RemoteMediaPlayerManagerProxy::supportsTypeAndCodecs(MediaPlayerEnums::Medi
 
 void RemoteMediaPlayerManagerProxy::supportsKeySystem(MediaPlayerEnums::MediaEngineIdentifier engineIdentifier, const String&& keySystem, const String&& mimeType, CompletionHandler<void(bool)>&& completionHandler)
 {
-    auto engine = MediaPlayer::mediaEngine(engineIdentifier);
+    CheckedPtr engine = MediaPlayer::mediaEngine(engineIdentifier);
     if (!engine) {
         WTFLogAlways("Failed to find media engine.");
         return;

@@ -67,6 +67,8 @@ protected:
     RenderBlock(Type, Document&, RenderStyle&&, OptionSet<TypeFlag>, TypeSpecificFlags = { });
 
 public:
+    String debugDescription() const override;
+
     virtual void layoutBlock(RelayoutChildren, LayoutUnit pageLogicalHeight = 0_lu);
 
     void addOutOfFlowBox(RenderBox&);
@@ -305,8 +307,6 @@ protected:
     bool childBoxIsUnsplittableForFragmentation(const RenderBox& child) const;
 
     static LayoutUnit layoutOverflowLogicalBottom(const RenderBlock&);
-
-    String debugDescription() const override;
 
     virtual bool isPointInOverflowControl(HitTestResult&, const LayoutPoint& locationInContainer, const LayoutPoint& accumulatedOffset);
 

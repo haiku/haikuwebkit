@@ -494,16 +494,9 @@ template<typename SearchCharacterType, typename MatchCharacterType>
     requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
 size_t findIgnoringASCIICase(std::span<const SearchCharacterType> source, std::span<const MatchCharacterType> matchCharacters, size_t startOffset = 0)
 {
-    ASSERT(source.size() >= matchCharacters.size());
-
-    auto startSearchedCharacters = source.subspan(startOffset);
-
-    // delta is the number of additional times to test; delta == 0 means test only once.
-    size_t delta = startSearchedCharacters.size() - matchCharacters.size();
-
-    for (size_t i = 0; i <= delta; ++i) {
-        if (equalIgnoringASCIICaseWithLength(startSearchedCharacters.subspan(i), matchCharacters, matchCharacters.size()))
-            return startOffset + i;
+    for (size_t offset = startOffset; offset <= source.size() && source.size() - offset >= matchCharacters.size(); ++offset) {
+        if (equalIgnoringASCIICaseWithLength(source.subspan(offset), matchCharacters, matchCharacters.size()))
+            return offset;
     }
     return notFound;
 }
@@ -804,6 +797,9 @@ inline bool contains(std::span<const CharacterType> characters, ASCIILiteral mat
 template <typename SearchCharacterType, typename MatchCharacterType>
 ALWAYS_INLINE static size_t reverseFindInner(std::span<const SearchCharacterType> searchCharacters, std::span<const MatchCharacterType> matchCharacters, size_t start)
 {
+    if (searchCharacters.size() < matchCharacters.size())
+        return notFound;
+
     // Optimization: keep a running hash of the strings,
     // only call equal if the hashes match.
 
@@ -830,9 +826,9 @@ ALWAYS_INLINE static size_t reverseFindInner(std::span<const SearchCharacterType
 
 template<typename SearchCharacterType, typename MatchCharacterType>
     requires(TriviallyComparableCodeUnits<SearchCharacterType, MatchCharacterType>)
-ALWAYS_INLINE static size_t reverseFind(std::span<const SearchCharacterType> searchCharacters, std::span<const MatchCharacterType> matchCharacters, size_t start = std::numeric_limits<size_t>::max())
+ALWAYS_INLINE static size_t reverseFind(std::span<const SearchCharacterType> searchCharacters, std::span<const MatchCharacterType> matchCharacters)
 {
-    return reverseFindInner(searchCharacters, matchCharacters, start);
+    return reverseFindInner(searchCharacters, matchCharacters, std::numeric_limits<size_t>::max());
 }
 
 template<OneByteCharacterType CharacterType>

@@ -86,7 +86,7 @@ bool WorkerFontLoadRequest::ensureCustomFontData()
     if (!m_fontCustomPlatformData && !m_errorOccurred && !m_isLoading) {
         RefPtr<SharedBuffer> contiguousData;
         if (m_data)
-            contiguousData = m_data.takeAsContiguous();
+            contiguousData = m_data.takeBufferAsContiguous();
         convertWOFFToSfntIfNecessary(contiguousData);
         if (contiguousData) {
             RefPtr fontCustomPlatformData = FontCustomPlatformData::create(*contiguousData, m_url.fragmentIdentifier().toString());

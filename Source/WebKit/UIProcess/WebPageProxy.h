@@ -29,6 +29,7 @@
 // Use forward declarations and WebPageProxyInternals.h instead.
 #include "APIObject.h"
 #include "MessageReceiver.h"
+#include <WebCore/LayerHostingContextIdentifier.h>
 #include <wtf/ApproximateTime.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/CompletionHandler.h>
@@ -200,6 +201,7 @@ enum class MediaProducerMutedState : uint8_t;
 enum class ModalContainerControlType : uint8_t;
 enum class ModalContainerDecision : uint8_t;
 enum class MouseEventPolicy : uint8_t;
+enum class NavigationType : uint8_t;
 enum class PermissionName : uint8_t;
 enum class PermissionState : uint8_t;
 enum class PlatformEventModifier : uint8_t;
@@ -620,6 +622,7 @@ struct RendererBufferFormat;
 enum class ColorControlSupportsAlpha : bool;
 enum class ContentAsStringIncludesChildFrames : bool;
 enum class DragControllerAction : uint8_t;
+enum class EnhancedSecurity : uint8_t;
 enum class FindDecorationStyle : uint8_t;
 enum class FindOptions : uint16_t;
 enum class ForceSoftwareCapturingViewportSnapshot : bool;
@@ -701,7 +704,7 @@ public:
     using Identifier = WebPageProxyIdentifier;
 
     Identifier identifier() const { return m_identifier; }
-    static RefPtr<WebPageProxy> fromIdentifier(std::optional<Identifier>);
+    static WebPageProxy* fromIdentifier(std::optional<Identifier>);
     WebCore::PageIdentifier webPageIDInMainFrameProcess() const { return m_webPageID; }
     WebCore::PageIdentifier identifierInSiteIsolatedProcess() const { return webPageIDInMainFrameProcess(); }
     WebCore::PageIdentifier webPageIDInProcess(const WebProcessProxy&) const;
@@ -730,7 +733,7 @@ public:
     bool isLockdownModeExplicitlySet() const { return m_isLockdownModeExplicitlySet; }
     bool shouldEnableLockdownMode() const;
 
-    bool shouldEnableEnhancedSecurity() const;
+    EnhancedSecurity currentEnhancedSecurityState(const API::WebsitePolicies* = nullptr) const;
 
     bool hasSameGPUAndNetworkProcessPreferencesAs(const API::PageConfiguration&) const;
     bool hasSameGPUAndNetworkProcessPreferencesAs(const WebPageProxy&) const;
@@ -745,7 +748,7 @@ public:
     void removeDataDetectedLinks(CompletionHandler<void(DataDetectionResult&&)>&&);
 #endif
         
-#if ENABLE(ASYNC_SCROLLING) && PLATFORM(COCOA)
+#if PLATFORM(COCOA)
     RemoteScrollingCoordinatorProxy* scrollingCoordinatorProxy() const { return m_scrollingCoordinatorProxy.get(); }
     CheckedPtr<RemoteScrollingCoordinatorProxy> checkedScrollingCoordinatorProxy() const;
 #endif
@@ -838,7 +841,8 @@ public:
     WebScreenOrientationManagerProxy* screenOrientationManager() { return m_screenOrientationManager.get(); }
 
 #if ENABLE(VIDEO) || ENABLE(WEB_AUDIO)
-    void ensureRemoteMediaSessionManagerProxy();
+    void addRemoteMediaSessionManager(WebCore::PageIdentifier);
+    void removeRemoteMediaSessionManager(WebCore::PageIdentifier);
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -962,6 +966,7 @@ public:
     void decodeImageData(Ref<WebCore::SharedBuffer>&&, std::optional<WebCore::FloatSize>, CompletionHandler<void(RefPtr<WebCore::ShareableBitmap>&&)>&&);
 #endif
 
+    void simulateDeviceMotionChange(double xAcceleration, double yAcceleration, double zAcceleration, double xAccelerationIncludingGravity, double yAccelerationIncludingGravity, double zAccelerationIncludingGravity, double xRotationRate, double yRotationRate, double zRotationRate);
     void simulateDeviceOrientationChange(double alpha, double beta, double gamma);
 
     void stopLoading();
@@ -1720,8 +1725,8 @@ public:
 #endif
 #endif
 
-    void processDidBecomeUnresponsive();
-    void processDidBecomeResponsive();
+    void processDidBecomeUnresponsive(WebProcessProxy&);
+    void processDidBecomeResponsive(WebProcessProxy&);
     void resetStateAfterProcessTermination(ProcessTerminationReason);
     void provisionalProcessDidTerminate();
     void dispatchProcessDidTerminate(WebProcessProxy&, ProcessTerminationReason);
@@ -2553,6 +2558,7 @@ public:
 
     void addOpenedPage(WebPageProxy&);
     bool hasOpenedPage() const;
+    bool hasPageOpenedByMainFrame() const;
 
     void requestImageBitmap(const WebCore::ElementContext&, CompletionHandler<void(std::optional<WebCore::ShareableBitmapHandle>&&, const String& sourceMIMEType)>&&);
 
@@ -2737,7 +2743,7 @@ public:
 
     API::WebsitePolicies* mainFrameWebsitePolicies() const { return m_mainFrameWebsitePolicies.get(); }
 
-#if ENABLE(ASYNC_SCROLLING) && PLATFORM(COCOA)
+#if PLATFORM(COCOA)
     void sendScrollUpdateForNode(std::optional<WebCore::FrameIdentifier>, WebCore::ScrollUpdate, bool isLastUpdate);
 #endif
 
@@ -2809,7 +2815,7 @@ public:
     void didRefreshDisplay();
 #endif
 
-#if PLATFORM(COCOA) && ENABLE(ASYNC_SCROLLING)
+#if PLATFORM(COCOA)
     WebCore::FloatPoint mainFrameScrollPosition() const;
 #endif
 
@@ -2863,6 +2869,18 @@ public:
 #if ENABLE(VIDEO)
     void showCaptionDisplaySettingsPreview(const FrameInfoData&, WebCore::HTMLMediaElementIdentifier);
     void hideCaptionDisplaySettingsPreview(const FrameInfoData&, WebCore::HTMLMediaElementIdentifier);
+#endif
+
+    void networkRequestsInProgressDidChange();
+
+    void takeNetworkActivity();
+    void dropNetworkActivity();
+    bool hasValidNetworkActivity() const;
+
+    void takeActivitiesOnRemotePage(RemotePageProxy&);
+
+#if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
+    RefPtr<WebDeviceOrientationUpdateProviderProxy> webDeviceOrientationUpdateProviderProxy();
 #endif
 
 private:
@@ -3061,7 +3079,9 @@ private:
 #endif
 
 #if ENABLE(MODEL_ELEMENT_IMMERSIVE)
-    void canEnterImmersiveElementFromURL(const URL&, CompletionHandler<void(bool)>&&);
+    void allowImmersiveElementFromURL(const URL&, CompletionHandler<void(bool)>&&) const;
+    void presentImmersiveElement(const WebCore::LayerHostingContextIdentifier, CompletionHandler<void(bool)>&&) const;
+    void dismissImmersiveElement(CompletionHandler<void()>&&) const;
 #endif
 
     WebCore::Color platformUnderPageBackgroundColor() const;
@@ -3176,6 +3196,7 @@ private:
     void learnWord(IPC::Connection&, const String& word);
     void ignoreWord(IPC::Connection&, const String& word);
     void requestCheckingOfString(TextCheckerRequestID, const WebCore::TextCheckingRequestData&, int32_t insertionPoint);
+    void requestExtendedCheckingOfString(TextCheckerRequestID, const WebCore::TextCheckingRequestData&, int32_t insertionPoint);
 
     void takeFocus(WebCore::FocusDirection);
     void setToolTip(const String&);
@@ -3520,6 +3541,13 @@ private:
     void setCustomUserAgentInternal();
     HashSet<Ref<WebProcessProxy>> webContentProcessesWithFrame();
 
+#if ENABLE(WEB_ARCHIVE)
+    using DataStoreUpdateResult = std::pair<RefPtr<WebsiteDataStore>, LoadedWebArchive>;
+    Expected<DataStoreUpdateResult, WebCore::ResourceError> updateDataStoreForWebArchiveLoad(WebFrameProxy&, WebCore::PolicyAction, WebCore::NavigationType, API::Navigation&);
+#endif
+
+    void beginSiteHasStorageCheck(const URL&, API::Navigation&, WebFramePolicyListenerProxy&);
+
     const UniqueRef<Internals> m_internals;
     Identifier m_identifier;
     WebCore::PageIdentifier m_webPageID;
@@ -3564,8 +3592,6 @@ private:
     RefPtr<DrawingAreaProxy> m_drawingArea;
 #if PLATFORM(COCOA)
     std::unique_ptr<RemoteLayerTreeHost> m_frozenRemoteLayerTreeHost;
-#endif
-#if PLATFORM(COCOA) && ENABLE(ASYNC_SCROLLING)
     std::unique_ptr<RemoteScrollingCoordinatorProxy> m_scrollingCoordinatorProxy;
 #endif
     Ref<WebProcessProxy> m_legacyMainFrameProcess;
@@ -4064,6 +4090,9 @@ private:
     bool m_statusBarIsVisible { true };
     bool m_menuBarIsVisible { true };
     bool m_toolbarsAreVisible { true };
+    bool m_hasNetworkRequestsInProgress { false };
+
+    HashSet<CheckedRef<WebProcessProxy>> m_unresponsiveProcesses;
 } SWIFT_SHARED_REFERENCE(refWebPageProxy, derefWebPageProxy);
 
 } // namespace WebKit

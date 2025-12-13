@@ -453,22 +453,22 @@ RefPtr<DataTransfer> CompositeEditCommand::inputEventDataTransfer() const
 EditCommandComposition* CompositeEditCommand::composition() const
 {
     for (RefPtr command = this; command; command = command->parent()) {
-        if (auto composition = command->m_composition) {
+        if (auto* composition = command->m_composition.get()) {
             ASSERT(!command->parent());
-            return composition.unsafeGet();
+            return composition;
         }
     }
     return nullptr;
 }
 
-EditCommandComposition& CompositeEditCommand::ensureComposition()
+Ref<EditCommandComposition> CompositeEditCommand::ensureComposition()
 {
-    RefPtr command { this };
+    Ref command { *this };
     while (RefPtr parent = command->parent())
-        command = WTFMove(parent);
+        command = parent.releaseNonNull();
     if (!command->m_composition)
         command->m_composition = EditCommandComposition::create(document(), startingSelection(), endingSelection(), editingAction());
-    return *command->m_composition.unsafeGet();
+    return *command->m_composition;
 }
 
 bool CompositeEditCommand::preservesTypingStyle() const
@@ -509,7 +509,7 @@ void CompositeEditCommand::applyCommandToComposite(Ref<EditCommand>&& command)
     command->doApply();
     if (auto* simpleCommand = dynamicDowncast<SimpleEditCommand>(command.get())) {
         command->setParent(nullptr);
-        ensureComposition().append(simpleCommand);
+        ensureComposition()->append(simpleCommand);
     }
     m_commands.append(WTFMove(command));
 }

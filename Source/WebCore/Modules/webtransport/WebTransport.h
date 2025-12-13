@@ -57,6 +57,7 @@ class WebTransportDatagramsWritable;
 class WebTransportError;
 class WebTransportReceiveStreamSource;
 class WebTransportSendGroup;
+class WebTransportSendStream;
 class WebTransportSendStreamSink;
 class WebTransportSession;
 class WorkerWebTransportSession;
@@ -116,7 +117,9 @@ private:
     void receiveIncomingUnidirectionalStream(WebTransportStreamIdentifier) final;
     void receiveBidirectionalStream(Ref<WebTransportSendStreamSink>&&) final;
     void streamReceiveBytes(WebTransportStreamIdentifier, std::span<const uint8_t>, bool, std::optional<Exception>&&) final;
-    void didFail(std::optional<unsigned>&&, String&&) final;
+    void streamReceiveError(WebTransportStreamIdentifier, uint64_t) final;
+    void streamSendError(WebTransportStreamIdentifier, uint64_t) final;
+    void didFail(std::optional<uint32_t>&&, String&&) final;
     void didDrain() final;
 
     RefPtr<WebTransportSession> protectedSession();
@@ -151,6 +154,7 @@ private:
     const Ref<WebTransportReceiveStreamSource> m_receiveStreamSource;
     const Ref<WebTransportBidirectionalStreamSource> m_bidirectionalStreamSource;
     HashMap<WebTransportStreamIdentifier, Ref<WebTransportReceiveStreamSource>> m_readStreamSources;
+    HashMap<WebTransportStreamIdentifier, Ref<WebTransportSendStream>> m_writeStreams;
     WeakHashSet<WebTransportDatagramsWritable> m_datagramsWritables;
 };
 

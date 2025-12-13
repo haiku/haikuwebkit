@@ -34,6 +34,7 @@
 #include <JavaScriptCore/InspectorAgentRegistry.h>
 #include <JavaScriptCore/InspectorEnvironment.h>
 #include <WebCore/InspectorOverlay.h>
+#include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/TZoneMalloc.h>
@@ -64,12 +65,20 @@ class PageDebugger;
 class WebInjectedScriptManager;
 struct PageAgentContext;
 
-class PageInspectorController final : public Inspector::InspectorEnvironment, public CanMakeWeakPtr<PageInspectorController> {
+class PageInspectorController final : public Inspector::InspectorEnvironment, public CanMakeCheckedPtr<PageInspectorController> {
     WTF_MAKE_NONCOPYABLE(PageInspectorController);
     WTF_MAKE_TZONE_ALLOCATED(PageInspectorController);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(PageInspectorController);
 public:
     PageInspectorController(Page&, std::unique_ptr<InspectorBackendClient>&&);
     ~PageInspectorController() override;
+
+    // AbstractCanMakeCheckedPtr overrides
+    uint32_t checkedPtrCount() const final { return CanMakeCheckedPtr::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const final { return CanMakeCheckedPtr::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const final { CanMakeCheckedPtr::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
+    void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
     WEBCORE_EXPORT void ref() const;
     WEBCORE_EXPORT void deref() const;

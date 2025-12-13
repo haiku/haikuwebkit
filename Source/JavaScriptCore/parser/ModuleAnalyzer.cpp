@@ -73,24 +73,24 @@ void ModuleAnalyzer::exportVariable(ModuleProgramNode& moduleProgramNode, const 
         return;
     }
 
+    std::optional<JSModuleRecord::ImportEntry> optionalImportEntry = moduleRecord()->tryGetImportEntry(localName.get());
+    ASSERT(optionalImportEntry);
+    const JSModuleRecord::ImportEntry& importEntry = *optionalImportEntry;
+
     if (variable.isImportedNamespace()) {
         // Exported namespace binding.
         // import * as namespace from "mod"
         // export { namespace }
         //
         // Sec 15.2.1.16.1 step 11-a-ii-2-b https://tc39.github.io/ecma262/#sec-parsemodule
-        // Namespace export is handled as local export since a namespace object binding itself is implemented as a local binding.
         for (auto& exportName : moduleProgramNode.moduleScopeData().exportedBindings().get(localName.get()))
-            moduleRecord()->addExportEntry(JSModuleRecord::ExportEntry::createLocal(Identifier::fromUid(m_vm, exportName.get()), Identifier::fromUid(m_vm, localName.get())));
+            moduleRecord()->addExportEntry(JSModuleRecord::ExportEntry::createNamespace(Identifier::fromUid(m_vm, exportName.get()), importEntry.moduleRequest));
         return;
     }
 
     // Indirectly exported binding.
     // import a from "mod"
     // export { a }
-    std::optional<JSModuleRecord::ImportEntry> optionalImportEntry = moduleRecord()->tryGetImportEntry(localName.get());
-    ASSERT(optionalImportEntry);
-    const JSModuleRecord::ImportEntry& importEntry = *optionalImportEntry;
     for (auto& exportName : moduleProgramNode.moduleScopeData().exportedBindings().get(localName.get()))
         moduleRecord()->addExportEntry(JSModuleRecord::ExportEntry::createIndirect(Identifier::fromUid(m_vm, exportName.get()), importEntry.importName, importEntry.moduleRequest));
 }

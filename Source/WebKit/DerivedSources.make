@@ -159,6 +159,7 @@ MESSAGE_RECEIVERS = \
 	Shared/IPCStreamTesterProxy \
 	Shared/IPCTester \
 	Shared/IPCTesterReceiver \
+	Shared/IPCTesterReceiverSwift \
 	UIProcess/WebFullScreenManagerProxy \
 	UIProcess/RemoteLayerTree/RemoteLayerTreeDrawingAreaProxy \
 	UIProcess/GPU/GPUProcessProxy \
@@ -621,6 +622,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Platform/IPC/SharedBufferReference.serialization.in \
 	Platform/IPC/SharedFileHandle.serialization.in \
 	Platform/IPC/StreamServerConnection.serialization.in \
+	Platform/IPC/TransferString.serialization.in \
 	Platform/cocoa/MediaPlaybackTargetContextSerialized.serialization.in \
 	Shared/AuxiliaryProcessCreationParameters.serialization.in \
 	Shared/JavaScriptEvaluationResult.serialization.in \
@@ -763,6 +765,7 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/RemoteWorkerType.serialization.in \
 	Shared/ResourceLoadInfo.serialization.in \
 	Shared/ResourceLoadStatisticsParameters.serialization.in \
+	Shared/RunJavaScriptParameters.serialization.in \
 	Shared/SameDocumentNavigationType.serialization.in \
 	Shared/SandboxExtension.serialization.in \
 	Shared/ScriptTrackingPrivacyFilter.serialization.in \
@@ -1041,6 +1044,7 @@ ifeq ($(USE_INTERNAL_SDK),YES)
 WEBKIT_ADDITIONS_SWIFT_FILES = \
 	WKSeparatedImageView.swift \
 	CredentialUpdaterShim.swift \
+	UIWindowScene+Extras.swift \
 #
 
 $(WEBKIT_ADDITIONS_SWIFT_FILES): %.swift : %.swift.in

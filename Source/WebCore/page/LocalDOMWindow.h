@@ -530,5 +530,5 @@ inline String LocalDOMWindow::status() const
 
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::LocalDOMWindow)
     static bool isType(const WebCore::DOMWindow& window) { return window.isLocalDOMWindow(); }
-    static bool isType(const WebCore::EventTarget& target) { return target.eventTargetInterface() == WebCore::EventTargetInterfaceType::DOMWindow; }
+    static bool isType(const WebCore::EventTarget& target) { return is<WebCore::DOMWindow>(target) && is<WebCore::LocalDOMWindow>(downcast<WebCore::DOMWindow>(target)); }
 SPECIALIZE_TYPE_TRAITS_END()

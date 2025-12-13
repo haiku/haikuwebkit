@@ -273,6 +273,11 @@ RetainPtr<NSMutableAttributedString> AXCoreObject::createAttributedString(String
 
         if (ancestor->role() == AccessibilityRole::Blockquote)
             ++blockquoteLevel;
+
+        if (ancestor->isExposableTable()) {
+            if (id wrapper = ancestor->wrapper())
+                [string.get() addAttribute:NSAccessibilityTableAttribute value:(__bridge id)adoptCF(NSAccessibilityCreateAXUIElementRef(wrapper)).get() range:range];
+        }
     }
     if (blockquoteLevel)
         [string.get() addAttribute:NSAccessibilityBlockQuoteLevelAttribute value:@(blockquoteLevel) range:range];
@@ -449,7 +454,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         // descendants. These anonymous renderers are the only accessible objects
         // containing the operator.
         role = AccessibilityRole::StaticText;
-    } else if (role == AccessibilityRole::Canvas && firstUnignoredChild() && !containsOnlyStaticText()) {
+    } else if (role == AccessibilityRole::Canvas && hasUnignoredChild() && !containsOnlyStaticText()) {
         // If this is a canvas with fallback content (one or more non-text thing), re-map to group.
         role = AccessibilityRole::Group;
     } else {
@@ -482,7 +487,7 @@ bool AXCoreObject::isEmptyGroup()
         return false;
 
     return [rolePlatformString().createNSString() isEqual:NSAccessibilityGroupRole]
-        && !firstUnignoredChild()
+        && !hasUnignoredChild()
         && ![renderWidgetChildren(*this) count];
 }
 

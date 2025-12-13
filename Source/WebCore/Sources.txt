@@ -2566,6 +2566,7 @@ platform/graphics/LayoutRoundedRect.cpp
 platform/graphics/LayoutSize.cpp
 platform/graphics/MIMESniffer.cpp
 platform/graphics/MIMETypeCache.cpp
+platform/graphics/MediaPlaybackTargetWirelessPlayback.cpp
 platform/graphics/MediaPlayer.cpp
 platform/graphics/MediaPlayerPrivate.cpp
 platform/graphics/MediaPlayerPrivateWirelessPlayback.cpp
@@ -2984,7 +2985,9 @@ rendering/style/OutlineValue.cpp
 rendering/style/PositionTryOrder.cpp
 rendering/style/ReferenceFilterOperation.cpp
 rendering/style/RenderStyle.cpp
+rendering/style/RenderStyleBase.cpp
 rendering/style/RenderStyleConstants.cpp
+rendering/style/RenderStylePropertiesGettersCustom.cpp
 rendering/style/SVGRenderStyle.cpp
 rendering/style/SVGRenderStyleDefs.cpp
 rendering/style/StyleAppleColorFilterData.cpp

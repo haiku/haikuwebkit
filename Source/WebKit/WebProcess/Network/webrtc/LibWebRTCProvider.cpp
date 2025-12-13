@@ -111,9 +111,9 @@ public:
 
 private:
     // SuspendableSocketFactory
-    webrtc::AsyncPacketSocket* CreateUdpSocket(const webrtc::SocketAddress&, uint16_t minPort, uint16_t maxPort) final;
-    webrtc::AsyncListenSocket* CreateServerTcpSocket(const webrtc::SocketAddress&, uint16_t minPort, uint16_t maxPort, int options) final { return nullptr; }
-    webrtc::AsyncPacketSocket* CreateClientTcpSocket(const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions&) final;
+    std::unique_ptr<webrtc::AsyncPacketSocket> CreateUdpSocket(const webrtc::Environment&, const webrtc::SocketAddress&, uint16_t minPort, uint16_t maxPort) final;
+    std::unique_ptr<webrtc::AsyncListenSocket> CreateServerTcpSocket(const webrtc::Environment&, const webrtc::SocketAddress&, uint16_t minPort, uint16_t maxPort, int options) final { return nullptr; }
+    std::unique_ptr<webrtc::AsyncPacketSocket> CreateClientTcpSocket(const webrtc::Environment&, const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions&) final;
     std::unique_ptr<webrtc::AsyncDnsResolverInterface> CreateAsyncDnsResolver() final;
     void suspend() final;
     void resume() final;
@@ -137,12 +137,12 @@ RTCSocketFactory::RTCSocketFactory(WebPageProxyIdentifier pageIdentifier, String
     m_flags.isFirstParty = isFirstParty;
 }
 
-webrtc::AsyncPacketSocket* RTCSocketFactory::CreateUdpSocket(const webrtc::SocketAddress& address, uint16_t minPort, uint16_t maxPort)
+std::unique_ptr<webrtc::AsyncPacketSocket> RTCSocketFactory::CreateUdpSocket(const webrtc::Environment&, const webrtc::SocketAddress& address, uint16_t minPort, uint16_t maxPort)
 {
     return WebProcess::singleton().libWebRTCNetwork().checkedSocketFactory()->createUdpSocket(m_contextIdentifier, address, minPort, maxPort, m_pageIdentifier, m_flags, m_domain);
 }
 
-webrtc::AsyncPacketSocket* RTCSocketFactory::CreateClientTcpSocket(const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions& options)
+std::unique_ptr<webrtc::AsyncPacketSocket> RTCSocketFactory::CreateClientTcpSocket(const webrtc::Environment&, const webrtc::SocketAddress& localAddress, const webrtc::SocketAddress& remoteAddress, const webrtc::PacketSocketTcpOptions& options)
 {
     return WebProcess::singleton().libWebRTCNetwork().checkedSocketFactory()->createClientTcpSocket(m_contextIdentifier, localAddress, remoteAddress, String { m_userAgent }, options, m_pageIdentifier, m_flags, m_domain);
 }

@@ -27,6 +27,7 @@
 #pragma once
 
 #include <WebCore/HTMLModelElementCamera.h>
+#include <WebCore/LayerHostingContextIdentifier.h>
 #include <WebCore/LayoutPoint.h>
 #include <WebCore/LayoutSize.h>
 #include <WebCore/ModelPlayerAccessibilityChildren.h>
@@ -149,6 +150,11 @@ public:
 
 #if ENABLE(MODEL_ELEMENT_STAGE_MODE)
     virtual void setStageMode(StageModeOperation);
+#endif
+
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    virtual void ensureImmersivePresentation(CompletionHandler<void(std::optional<LayerHostingContextIdentifier>)>&&);
+    virtual void exitImmersivePresentation(CompletionHandler<void()>&&);
 #endif
 };
 

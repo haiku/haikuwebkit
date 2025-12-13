@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if PLATFORM(MAC) && ENABLE(SCROLLING_THREAD)
+#if PLATFORM(MAC)
 
 #include "DisplayLinkObserverID.h"
 #include "MomentumEventDispatcher.h"
@@ -66,6 +66,7 @@ class DisplayLink;
 class NativeWebWheelEvent;
 #if ENABLE(THREADED_ANIMATIONS)
 class RemoteAnimationTimeline;
+class RemoteProgressBasedTimeline;
 #endif
 class RemoteScrollingCoordinatorProxyMac;
 class RemoteLayerTreeDrawingAreaProxyMac;
@@ -111,10 +112,11 @@ public:
     void unlockForAnimationChanges() WTF_RELEASES_LOCK(m_animationLock);
     void animationsWereAddedToNode(RemoteLayerTreeNode&);
     void animationsWereRemovedFromNode(RemoteLayerTreeNode&);
-    void updateTimelineRegistration(WebCore::ProcessIdentifier, const HashSet<Ref<WebCore::AcceleratedTimeline>>&, MonotonicTime);
+    void updateTimelinesRegistration(WebCore::ProcessIdentifier, const WebCore::AcceleratedTimelinesUpdate&, MonotonicTime);
     RefPtr<const RemoteAnimationTimeline> timeline(const TimelineID&);
     void updateAnimations();
     RefPtr<const RemoteAnimationStack> animationStackForNodeWithIDForTesting(WebCore::PlatformLayerIdentifier) const;
+    HashSet<Ref<RemoteProgressBasedTimeline>> timelinesForScrollingNodeIDForTesting(WebCore::ScrollingNodeID);
 #endif
 
 private:
@@ -216,4 +218,4 @@ private:
 
 } // namespace WebKit
 
-#endif // PLATFORM(MAC) && ENABLE(SCROLLING_THREAD)
+#endif // PLATFORM(MAC)

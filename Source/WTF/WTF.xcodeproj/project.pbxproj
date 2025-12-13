@@ -952,6 +952,7 @@
 		FE7ACFEF285DC2F9007FC8E9 /* RawHex.h in Headers */ = {isa = PBXBuildFile; fileRef = FE7ACFEE285DC2F8007FC8E9 /* RawHex.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FE9B8B1A28B1453D0088C6E1 /* CodePtr.h in Headers */ = {isa = PBXBuildFile; fileRef = FE9B8B1928B1453D0088C6E1 /* CodePtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FE9B8B1E28B1B1C70088C6E1 /* CodePtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE9B8B1D28B1B1C60088C6E1 /* CodePtr.cpp */; };
+		FEBD5A792EDAC1CE00E9E170 /* CompactPtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEBD5A782EDAC1CE00E9E170 /* CompactPtr.cpp */; };
 		FEC26BF3289DBBD300639A59 /* FunctionPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = FEC26BF2289DBBD300639A59 /* FunctionPtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FEDACD3D1630F83F00C69634 /* StackStats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEDACD3B1630F83F00C69634 /* StackStats.cpp */; };
 		FEEA4DF9216D7BE400AC0602 /* StackPointer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FEEA4DF8216D7BE400AC0602 /* StackPointer.cpp */; };
@@ -2050,6 +2051,7 @@
 		FE9B8B1928B1453D0088C6E1 /* CodePtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodePtr.h; sourceTree = "<group>"; };
 		FE9B8B1D28B1B1C60088C6E1 /* CodePtr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodePtr.cpp; sourceTree = "<group>"; };
 		FEB6B035201BE0B600B958C1 /* PointerPreparations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerPreparations.h; sourceTree = "<group>"; };
+		FEBD5A782EDAC1CE00E9E170 /* CompactPtr.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CompactPtr.cpp; sourceTree = "<group>"; };
 		FEC26BF2289DBBD300639A59 /* FunctionPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FunctionPtr.h; sourceTree = "<group>"; };
 		FEDACD3B1630F83F00C69634 /* StackStats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StackStats.cpp; sourceTree = "<group>"; };
 		FEDACD3C1630F83F00C69634 /* StackStats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StackStats.h; sourceTree = "<group>"; };
@@ -2339,6 +2341,7 @@
 				FE9B8B1928B1453D0088C6E1 /* CodePtr.h */,
 				0FC4EDE51696149600F65041 /* CommaPrinter.h */,
 				E3CF76902115D6BA0091DE48 /* CompactPointerTuple.h */,
+				FEBD5A782EDAC1CE00E9E170 /* CompactPtr.cpp */,
 				FFEE46F32825DF80003BC981 /* CompactPtr.h */,
 				FF895F10282AB96400E7BAE8 /* CompactRefPtr.h */,
 				E38020DB2401C0930037CA9E /* CompactRefPtrTuple.h */,
@@ -4381,6 +4384,7 @@
 				FE9B8B1E28B1B1C70088C6E1 /* CodePtr.cpp in Sources */,
 				A8A47460151A825B004123FF /* CollatorDefault.cpp in Sources */,
 				A8A47463151A825B004123FF /* CollatorICU.cpp in Sources */,
+				FEBD5A792EDAC1CE00E9E170 /* CompactPtr.cpp in Sources */,
 				0F8F2B92172E0103007DBDA5 /* CompilationThread.cpp in Sources */,
 				E3149A3B228BDCAC00BFA6C7 /* ConcurrentBuffer.cpp in Sources */,
 				0F30CB5A1FCDF134004B5323 /* ConcurrentPtrHashSet.cpp in Sources */,

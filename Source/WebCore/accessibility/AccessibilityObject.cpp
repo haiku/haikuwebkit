@@ -2446,13 +2446,13 @@ bool AccessibilityObject::isModalNode() const
 }
 
 
-static RenderObject* nearestRendererFromNode(Node& node)
+static CheckedPtr<RenderObject> nearestRendererFromNode(Node& node)
 {
     CheckedPtr renderer = node.renderer();
     for (RefPtr ancestor = &node; ancestor && !renderer; ancestor = composedParentIgnoringDocumentFragments(*ancestor))
         renderer = ancestor->renderer();
 
-    return renderer.unsafeGet();
+    return renderer;
 }
 
 static int zIndexFromRenderer(RenderObject* renderer)
@@ -2885,7 +2885,7 @@ bool AccessibilityObject::isLoaded() const
     return document && !document->parser();
 }
 
-RenderObject* AccessibilityObject::rendererOrNearestAncestor() const
+CheckedPtr<RenderObject> AccessibilityObject::rendererOrNearestAncestor() const
 {
     RefPtr node = this->node();
     return node ? nearestRendererFromNode(*node) : nullptr;

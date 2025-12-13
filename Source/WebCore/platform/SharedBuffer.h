@@ -383,18 +383,19 @@ public:
         m_buffer = nullptr;
     }
 
-    RefPtr<FragmentedSharedBuffer> get() const
+    FragmentedSharedBuffer* buffer() const LIFETIME_BOUND
     {
         updateBufferIfNeeded();
-        return m_buffer;
+        return m_buffer.get();
     }
-    Ref<FragmentedSharedBuffer> copy() const { return createBuffer(); }
+    RefPtr<FragmentedSharedBuffer> protectedBuffer() const { return buffer(); }
+    Ref<FragmentedSharedBuffer> copyBuffer() const { return createBuffer(); }
 
     WEBCORE_EXPORT RefPtr<ArrayBuffer> tryCreateArrayBuffer() const;
 
-    WEBCORE_EXPORT Ref<FragmentedSharedBuffer> take();
-    WEBCORE_EXPORT Ref<SharedBuffer> takeAsContiguous();
-    WEBCORE_EXPORT RefPtr<ArrayBuffer> takeAsArrayBuffer();
+    WEBCORE_EXPORT Ref<FragmentedSharedBuffer> takeBuffer();
+    WEBCORE_EXPORT Ref<SharedBuffer> takeBufferAsContiguous();
+    WEBCORE_EXPORT RefPtr<ArrayBuffer> takeBufferAsArrayBuffer();
 
     WEBCORE_EXPORT bool operator==(const SharedBufferBuilder&) const;
 

@@ -39,8 +39,8 @@
 namespace WTF {
 
 template<typename, typename, typename = DefaultWeakPtrImpl> class WeakHashMap;
-template<typename, typename = DefaultWeakPtrImpl, EnableWeakPtrThreadingAssertions = EnableWeakPtrThreadingAssertions::Yes> class WeakHashSet;
-template <typename, typename = DefaultWeakPtrImpl, EnableWeakPtrThreadingAssertions = EnableWeakPtrThreadingAssertions::Yes> class WeakListHashSet;
+template<typename, typename = DefaultWeakPtrImpl> class WeakHashSet;
+template<typename, typename = DefaultWeakPtrImpl> class WeakListHashSet;
 
 template<typename T, typename WeakPtrImpl, typename PtrTraits> class WeakPtr {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(WeakPtr);
@@ -173,9 +173,6 @@ public:
     }
 
 private:
-    template<typename, typename, typename> friend class WeakHashMap;
-    template<typename, typename, EnableWeakPtrThreadingAssertions> friend class WeakHashSet;
-    template<typename, typename, EnableWeakPtrThreadingAssertions> friend class WeakListHashSet;
     template<typename, typename, typename> friend class WeakPtr;
     template<typename, typename> friend class WeakPtrFactory;
     template<typename, typename> friend class WeakPtrFactoryWithBitField;
@@ -384,13 +381,13 @@ WeakPtr(const RefPtr<T>& value, EnableWeakPtrThreadingAssertions = EnableWeakPtr
 template<typename T, typename PtrTraits = RawPtrTraits<SingleThreadWeakPtrImpl>> using SingleThreadWeakPtr = WeakPtr<T, SingleThreadWeakPtrImpl, PtrTraits>;
 template<typename T> using SingleThreadPackedWeakPtr = WeakPtr<T, SingleThreadWeakPtrImpl, PackedPtrTraits<SingleThreadWeakPtrImpl>>;
 
-template<typename T, EnableWeakPtrThreadingAssertions enableWeakPtrThreadingAssertions = EnableWeakPtrThreadingAssertions::Yes>
-using SingleThreadWeakHashSet = WeakHashSet<T, SingleThreadWeakPtrImpl, enableWeakPtrThreadingAssertions>;
+template<typename T>
+using SingleThreadWeakHashSet = WeakHashSet<T, SingleThreadWeakPtrImpl>;
 
 template<typename KeyType, typename ValueType> using SingleThreadWeakHashMap = WeakHashMap<KeyType, ValueType, SingleThreadWeakPtrImpl>;
 
-template<typename T, EnableWeakPtrThreadingAssertions enableWeakPtrThreadingAssertions = EnableWeakPtrThreadingAssertions::Yes>
-using SingleThreadWeakListHashSet = WeakListHashSet<T, SingleThreadWeakPtrImpl, enableWeakPtrThreadingAssertions>;
+template<typename T>
+using SingleThreadWeakListHashSet = WeakListHashSet<T, SingleThreadWeakPtrImpl>;
 
 } // namespace WTF
 

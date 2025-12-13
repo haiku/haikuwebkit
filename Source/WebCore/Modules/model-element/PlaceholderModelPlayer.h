@@ -77,6 +77,11 @@ private:
     void setStageMode(WebCore::StageModeOperation) final;
 #endif
 
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    void ensureImmersivePresentation(CompletionHandler<void(std::optional<LayerHostingContextIdentifier>)>&&) final;
+    void exitImmersivePresentation(CompletionHandler<void()>&&) final;
+#endif
+
     // Empty implementation
     void configureGraphicsLayer(GraphicsLayer&, ModelPlayerGraphicsLayerConfiguration&&) final;
     void sizeDidChange(LayoutSize) final;

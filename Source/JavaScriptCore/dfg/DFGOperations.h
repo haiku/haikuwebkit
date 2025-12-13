@@ -176,8 +176,6 @@ JSC_DECLARE_JIT_OPERATION(operationNewSetIterator, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewIteratorHelper, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewWrapForValidIterator, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewAsyncFromSyncIterator, JSCell*, (VM*, Structure*));
-JSC_DECLARE_JIT_OPERATION(operationNewPromiseAllContext, JSCell*, (VM*, Structure*));
-JSC_DECLARE_JIT_OPERATION(operationNewPromiseAllGlobalContext, JSCell*, (VM*, Structure*));
 JSC_DECLARE_JIT_OPERATION(operationNewRegExpStringIterator, JSCell*, (VM*, Structure*));
 
 JSC_DECLARE_JIT_OPERATION(operationPutByValCellStringStrict, void, (JSGlobalObject*, JSCell*, JSCell* string, EncodedJSValue encodedValue));

@@ -77,9 +77,9 @@ void SpeechRecognitionServer::start(WebCore::SpeechRecognitionConnectionClientId
 {
     ASSERT(!m_requests.contains(clientIdentifier));
     auto requestInfo = WebCore::SpeechRecognitionRequestInfo { clientIdentifier, WTFMove(lang), continuous, interimResults, maxAlternatives, WTFMove(origin), mainFrameIdentifier };
-    auto& newRequest = m_requests.add(clientIdentifier, makeUnique<WebCore::SpeechRecognitionRequest>(WTFMove(requestInfo))).iterator->value;
+    auto& newRequest = m_requests.add(clientIdentifier, WebCore::SpeechRecognitionRequest::create(WTFMove(requestInfo))).iterator->value;
 
-    requestPermissionForRequest(*newRequest, WTFMove(frameInfo));
+    requestPermissionForRequest(newRequest, WTFMove(frameInfo));
 }
 
 void SpeechRecognitionServer::requestPermissionForRequest(WebCore::SpeechRecognitionRequest& request, FrameInfoData&& frameInfo)
@@ -90,14 +90,14 @@ void SpeechRecognitionServer::requestPermissionForRequest(WebCore::SpeechRecogni
             return;
 
         auto identifier = weakRequest->clientIdentifier();
-        auto request = protectedThis->m_requests.take(identifier);
+        RefPtr request = protectedThis->m_requests.take(identifier);
         if (error) {
             protectedThis->sendUpdate(identifier, WebCore::SpeechRecognitionUpdateType::Error, WTFMove(error));
             return;
         }
 
         ASSERT(request);
-        protectedThis->handleRequest(makeUniqueRefFromNonNullUniquePtr(WTFMove(request)));
+        protectedThis->handleRequest(request.releaseNonNull());
     });
 }
 
@@ -106,7 +106,7 @@ CheckedPtr<WebCore::SpeechRecognizer> SpeechRecognitionServer::checkedRecognizer
     return m_recognizer.get();
 }
 
-void SpeechRecognitionServer::handleRequest(UniqueRef<WebCore::SpeechRecognitionRequest>&& request)
+void SpeechRecognitionServer::handleRequest(Ref<WebCore::SpeechRecognitionRequest>&& request)
 {
     if (CheckedPtr recognizer = m_recognizer.get()) {
         recognizer->abort(WebCore::SpeechRecognitionError { WebCore::SpeechRecognitionErrorType::Aborted, "Another request is started"_s });

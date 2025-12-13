@@ -409,6 +409,7 @@ UIProcess/DeviceIdHashSaltStorage.cpp
 UIProcess/DisplayLink.cpp
 UIProcess/DisplayLinkProcessProxyClient.cpp
 UIProcess/DrawingAreaProxy.cpp
+UIProcess/EnhancedSecurityTracking.cpp
 UIProcess/FindStringCallbackAggregator.cpp
 UIProcess/FindTextMatchesCallbackAggregator.cpp
 UIProcess/FrameLoadState.cpp
@@ -668,6 +669,8 @@ UIProcess/WebAuthentication/Authenticator.cpp
 UIProcess/WebAuthentication/WebAuthenticatorCoordinatorProxy.cpp
 UIProcess/WebAuthentication/WebAuthenticationRequestData.cpp
 
+UIProcess/WebsiteData/EnhancedSecuritySitesHolder.cpp
+UIProcess/WebsiteData/EnhancedSecuritySitesPersistence.cpp
 UIProcess/WebsiteData/WebDeviceOrientationAndMotionAccessController.cpp
 UIProcess/WebsiteData/WebsiteDataRecord.cpp
 UIProcess/WebsiteData/WebsiteDataStore.cpp
@@ -747,7 +750,6 @@ WebProcess/Inspector/WebInspectorUI.cpp
 WebProcess/Inspector/WasmDebuggerDispatcher.cpp
 WebProcess/Inspector/WebInspectorUIExtensionController.cpp
 WebProcess/Inspector/WebPageInspectorTarget.cpp
-WebProcess/Inspector/WebPageInspectorTargetController.cpp
 WebProcess/Inspector/WebPageInspectorTargetFrontendChannel.cpp
 
 WebProcess/Media/RemoteMediaSessionManager.cpp

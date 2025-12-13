@@ -169,19 +169,6 @@ static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestDiscret
     return consumeUnboundedRepetition(range, state);
 }
 
-static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestThreeWithConverter(CSSParserTokenRange& range, CSS::PropertyParserState& state)
-{
-    // <number>#
-    auto consumeUnboundedRepetition = [](CSSParserTokenRange& range, CSS::PropertyParserState& state) -> RefPtr<CSSValue> {
-        auto consumeRepeatedTerm = [](CSSParserTokenRange& range, CSS::PropertyParserState& state) -> RefPtr<CSSValue> {
-            // <number>
-            return CSSPrimitiveValueResolver<CSS::Number<>>::consumeAndResolve(range, state);
-        };
-        return consumeListSeparatedBy<',', ListBounds::minimumOf(1), ListOptimization::SingleValue, CSSValueList>(range, consumeRepeatedTerm, state);
-    };
-    return consumeUnboundedRepetition(range, state);
-}
-
 static RefPtr<CSSValue> consumeBackgroundCoordinatedValueListPropertyTestTwo(CSSParserTokenRange& range, CSS::PropertyParserState& state)
 {
     // <number>#
@@ -3320,14 +3307,12 @@ RefPtr<CSSValue> CSSPropertyParsing::parseStylePropertyLonghand(CSSParserTokenRa
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationAlways:
     case CSSPropertyID::CSSPropertyTestAnimationWrapperAccelerationThreadedOnly:
     case CSSPropertyID::CSSPropertyTestCustomExtractor:
-    case CSSPropertyID::CSSPropertyTestExtractorConverter:
     case CSSPropertyID::CSSPropertyTestProperty:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelReference:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageOneLevelValue:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelReference:
     case CSSPropertyID::CSSPropertyTestRenderStyleStorageTwoLevelValue:
     case CSSPropertyID::CSSPropertyTestSettingsOne:
-    case CSSPropertyID::CSSPropertyTestSharedBuilderExtractorConverter:
     case CSSPropertyID::CSSPropertyTestSinkPriority:
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalHorizontal:
     case CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalVertical:
@@ -3336,8 +3321,6 @@ RefPtr<CSSValue> CSSPropertyParsing::parseStylePropertyLonghand(CSSParserTokenRa
         return CSSPrimitiveValueResolver<CSS::Number<>>::consumeAndResolve(range, state);
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestDiscrete:
         return consumeBackgroundCoordinatedValueListPropertyTestDiscrete(range, state);
-    case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestThreeWithConverter:
-        return consumeBackgroundCoordinatedValueListPropertyTestThreeWithConverter(range, state);
     case CSSPropertyID::CSSPropertyBackgroundCoordinatedValueListPropertyTestTwo:
         return consumeBackgroundCoordinatedValueListPropertyTestTwo(range, state);
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithCommas:

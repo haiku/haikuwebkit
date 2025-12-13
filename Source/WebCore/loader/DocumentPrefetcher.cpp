@@ -84,7 +84,10 @@ static ResourceRequest makePrefetchRequest(URL&& url, const Vector<String>& tags
         for (size_t i = 0; i < tags.size(); ++i) {
             if (i > 0)
                 builder.append(", "_s);
-            builder.append(tags[i]);
+            if (tags[i] == nullAtom())
+                builder.append("null"_s);
+            else
+                builder.append(tags[i]);
         }
         request.setHTTPHeaderField(HTTPHeaderName::SecSpeculationTags, builder.toString());
     }

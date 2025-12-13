@@ -264,7 +264,8 @@ public:
     void invalidate();
 
     bool canEnterVideoFullscreen() const { return !!m_controlsManagerContextId && m_controlsManagerContextIsVideo; }
-    RefPtr<WebCore::PlatformPlaybackSessionInterface> controlsManagerInterface();
+    WebCore::PlatformPlaybackSessionInterface* controlsManagerInterface();
+    RefPtr<WebCore::PlatformPlaybackSessionInterface> protectedControlsManagerInterface();
     void requestControlledElementID();
 
     bool isPaused(PlaybackSessionContextIdentifier) const;
@@ -287,7 +288,8 @@ private:
     ModelInterfaceTuple createModelAndInterface(PlaybackSessionContextIdentifier);
     const ModelInterfaceTuple& ensureModelAndInterface(PlaybackSessionContextIdentifier);
     Ref<PlaybackSessionModelContext> ensureModel(PlaybackSessionContextIdentifier);
-    Ref<WebCore::PlatformPlaybackSessionInterface> ensureInterface(PlaybackSessionContextIdentifier);
+    WebCore::PlatformPlaybackSessionInterface& ensureInterface(PlaybackSessionContextIdentifier);
+    Ref<WebCore::PlatformPlaybackSessionInterface> ensureProtectedInterface(PlaybackSessionContextIdentifier);
     void addClientForContext(PlaybackSessionContextIdentifier);
     void removeClientForContext(PlaybackSessionContextIdentifier);
 

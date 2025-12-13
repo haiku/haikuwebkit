@@ -249,7 +249,7 @@ static void* const safeAreaInsetsKVOContext = (void*)&safeAreaInsetsKVOContext;
         return nil;
 
     if (RefPtr inspectedPage = _inspectedPage.get())
-        return inspectedPage->cocoaView().unsafeGet();
+        return inspectedPage->cocoaView().autorelease();
 
     return nil;
 }

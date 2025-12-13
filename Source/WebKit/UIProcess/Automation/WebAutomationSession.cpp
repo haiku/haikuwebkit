@@ -669,7 +669,7 @@ void WebAutomationSession::waitForNavigationToCompleteOnFrame(WebFrameProxy& fra
 void WebAutomationSession::respondToPendingPageNavigationCallbacksWithTimeout(HashMap<WebPageProxyIdentifier, Inspector::CommandCallback<void>>& map)
 {
     for (auto id : copyToVector(map.keys())) {
-        auto page = WebProcessProxy::webPage(id);
+        RefPtr page = WebProcessProxy::webPage(id);
         auto callback = map.take(id);
         if (page && m_client->isShowingJavaScriptDialogOnPage(*this, *page))
             callback({ });

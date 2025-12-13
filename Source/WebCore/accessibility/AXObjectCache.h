@@ -44,6 +44,7 @@
 #include <wtf/WeakHashSet.h>
 
 #if PLATFORM(COCOA)
+#include <WebCore/AttributedString.h>
 #include <wtf/RetainPtr.h>
 #endif
 
@@ -152,13 +153,13 @@ struct AriaNotifyData {
     String language;
 };
 
+#if PLATFORM(COCOA)
 // When this is updated, WebCoreArgumentCoders.serialization.in must be updated as well.
 struct LiveRegionAnnouncementData {
-    String message;
+    AttributedString message;
     LiveRegionStatus status { LiveRegionStatus::Polite };
 };
 
-#if PLATFORM(COCOA)
 struct AXTextChangeContext {
     AXTextStateChangeIntent intent;
     String deletedText;
@@ -370,8 +371,8 @@ public:
     void onTextRunsChanged(const RenderObject&);
 #endif
 
-    void onLaidOutInlineContent(const RenderBlockFlow&);
-    const Vector<Vector<AXID>>* stitchGroupsOwnedBy(AccessibilityObject&);
+    void onLaidOutInlineContent(const RenderBlockFlow& renderBlock) { setDirtyStitchGroups(renderBlock); }
+    const Vector<AXStitchGroup>* stitchGroupsOwnedBy(AccessibilityObject&);
 
     void updateLoadingProgress(double);
     void loadingFinished() { updateLoadingProgress(1); }
@@ -533,7 +534,7 @@ public:
     }
     void postNotification(AccessibilityObject&, AXNotification);
     void postARIANotifyNotification(Node&, const String&, const AriaNotifyOptions&);
-    void postLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const String&);
+    void postLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&);
     // Requests clients to announce to the user the given message in the way they deem appropriate.
     WEBCORE_EXPORT void announce(const String&);
 
@@ -658,11 +659,11 @@ protected:
 #if PLATFORM(COCOA)
     WEBCORE_EXPORT void postPlatformAnnouncementNotification(const String&);
     WEBCORE_EXPORT void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&);
-    WEBCORE_EXPORT void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const String&);
+    WEBCORE_EXPORT void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&);
 #else
     void postPlatformAnnouncementNotification(const String&) { }
     void postPlatformARIANotifyNotification(const String&, NotifyPriority, InterruptBehavior, const String&) { }
-    void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const String&) { }
+    void postPlatformLiveRegionNotification(AccessibilityObject&, LiveRegionStatus, const AttributedString&) { }
 #endif
 
     void frameLoadingEventPlatformNotification(RenderView*, AXLoadingEvent);
@@ -737,7 +738,9 @@ private:
     void handleARIARoleDescriptionChanged(Element&);
     void handleMenuOpened(Element&);
     void handleLiveRegionCreated(Element&);
+#if PLATFORM(COCOA)
     void initializeLiveRegionManager();
+#endif
     void handleMenuItemSelected(Element*);
     void handleTabPanelSelected(Element*, Element*);
     void handleRowCountChanged(AccessibilityObject*, Document*);
@@ -763,6 +766,8 @@ private:
     void updateCurrentModalNode();
     bool isNodeVisible(const Node*) const;
     bool modalElementHasAccessibleContent(Element&);
+
+    void setDirtyStitchGroups(const RenderBlock&);
 
     // Relationships between objects.
     static Vector<QualifiedName>& relationAttributes();
@@ -820,7 +825,9 @@ private:
     WeakHashMap<RenderText, LineRange, SingleThreadWeakPtrImpl> m_mostRecentlyPaintedText;
 
     std::unique_ptr<AXComputedObjectAttributeCache> m_computedObjectAttributeCache;
+#if PLATFORM(COCOA)
     std::unique_ptr<AXLiveRegionManager> m_liveRegionManager;
+#endif
 
     WEBCORE_EXPORT static std::atomic<bool> gAccessibilityEnabled;
     static bool gAccessibilityEnhancedUserInterfaceEnabled;
@@ -868,9 +875,9 @@ private:
     bool m_modalNodesInitialized { false };
     bool m_isRetrievingCurrentModalNode { false };
 
+#if PLATFORM(COCOA)
     bool m_liveRegionManagerInitialized { false };
 
-#if PLATFORM(COCOA)
     static std::atomic<bool> gShouldRepostNotificationsForTests;
 #endif
 
@@ -932,7 +939,7 @@ private:
     VisibleSelection m_lastSelection;
 #endif
 
-    WeakHashMap<RenderObject, Vector<Vector<AXID>>, SingleThreadWeakPtrImpl> m_stitchGroups;
+    WeakHashMap<RenderObject, Vector<AXStitchGroup>, SingleThreadWeakPtrImpl> m_stitchGroups;
 };
 
 inline bool AXObjectCache::accessibilityEnabled()

@@ -283,12 +283,15 @@ ExceptionOr<Vector<Ref<ReadableStream>>> byteStreamTee(JSDOMGlobalObject& global
         return Ref { state->cancelPromise() };
     };
 
+    auto isSourceReachableFromOpaqueRoot = stream.isReachableFromOpaqueRoots() ? ReadableStream::IsSourceReachableFromOpaqueRoot::Yes : ReadableStream::IsSourceReachableFromOpaqueRoot::No;
     Vector<Ref<ReadableStream>> branches;
     Ref branch0 = ReadableStream::createReadableByteStream(globalObject, WTFMove(pull1Algorithm), WTFMove(cancel1Algorithm), {
-        .dependencyToVisit = state.ptr()
+        .dependencyToVisit = state.ptr(),
+        .isSourceReachableFromOpaqueRoot = isSourceReachableFromOpaqueRoot
     });
     Ref branch1 = ReadableStream::createReadableByteStream(globalObject, WTFMove(pull2Algorithm), WTFMove(cancel2Algorithm), {
-        .dependencyToVisit = state.ptr()
+        .dependencyToVisit = state.ptr(),
+        .isSourceReachableFromOpaqueRoot = isSourceReachableFromOpaqueRoot
     });
 
     state->setBranch1(branch0);
@@ -554,11 +557,16 @@ private:
         m_state->setReading(false);
         bool byobCanceled = m_forBranch2 ? m_state->canceled2() : m_state->canceled1();
         bool otherCanceled = m_forBranch2 ? m_state->canceled1() : m_state->canceled2();
+
+        bool shouldStopSteps = false;
         if (!byobCanceled && branch1)
-            branch1->controller()->close(*globalObject);
+            shouldStopSteps = !branch1->controller()->close(*globalObject, ReadableByteStreamController::ShouldThrowOnError::No);
 
         if (!otherCanceled && branch2)
-            branch2->controller()->close(*globalObject);
+            shouldStopSteps |= !branch2->controller()->close(*globalObject, ReadableByteStreamController::ShouldThrowOnError::No);
+
+        if (shouldStopSteps)
+            return;
 
         if (!value.isUndefined()) {
             auto scope = DECLARE_CATCH_SCOPE(globalObject->vm());

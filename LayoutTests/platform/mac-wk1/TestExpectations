@@ -53,6 +53,8 @@ imported/w3c/web-platform-tests/webcodecs [ Skip ]
 
 imported/w3c/web-platform-tests/speculation-rules [ Skip ]
 
+http/wpt/fs [ Skip ]
+
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End platform-specific directories.
 #//////////////////////////////////////////////////////////////////////////////////////////
@@ -69,6 +71,8 @@ imported/w3c/web-platform-tests/css/css-properties-values-api/ [ Skip ]
 css-custom-properties-api [ Skip ]
 css-typedom [ Skip ]
 css-dark-mode [ Skip ]
+svg/custom/svg-image-dark-mode-dynamic.html [ Skip ]
+svg/custom/svg-image-dark-mode-initial.html [ Skip ]
 
 media/audioSession [ Skip ]
 
@@ -1055,6 +1059,9 @@ accessibility/mac/iframe-hit-testing.html [ Skip ]
 accessibility/mac/aria-notify-with-options.html [ Skip ]
 accessibility/mac/aria-notify.html [ Skip ]
 
+# Skipping because announcement notifications don't work in the WK1 testrunner.
+accessibility/mac/live-regions/ [ Skip ]
+
 # DOM paste access requests are not implemented in WebKit1.
 editing/async-clipboard/clipboard-change-data-while-reading.html [ Skip ]
 editing/async-clipboard/clipboard-do-not-read-text-from-platform-if-text-changes.html [ Skip ]
@@ -1307,6 +1314,15 @@ media/media-source/media-source-ended.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-without-codecs-parameter.html [ Skip ]
 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play.html [ Skip ]
+imported/w3c/web-platform-tests/media-source/mediasource-video-is-visible.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/media-source/mediasource-getvideoplaybackquality.html [ Skip ]
+imported/w3c/web-platform-tests/media-source/mediasource-endofstream.html [ Skip ]
+
+# Requires WebM
+imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-a-bitrate.html [ Skip ]
+imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-audio-bitrate.html [ Skip ]
+imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-framesize.html [ Skip ]
+imported/w3c/web-platform-tests/media-source/mediasource-config-change-webm-av-video-bitrate.html [ Skip ]
 
 # Managed MediaSource isn't enabled on WK1
 media/media-source/media-managedmse-append.html [ Skip ]
@@ -3316,3 +3332,5 @@ fast/css/accent-color/datalist.html [ Skip ]
 
 # Flaky test on WK1
 css3/images/cross-fade-svg-fragments.html [ Skip ]
+
+imported/w3c/web-platform-tests/html/rendering/replaced-elements/images/img-represents-image-size-before-partially-available.html [ Skip ]

@@ -51,6 +51,10 @@ public:
     }
     virtual ~VideoTrack();
 
+    // VideoTrackPrivateClient.
+    void ref() const final { MediaTrackBase::ref(); }
+    void deref() const final { MediaTrackBase::deref(); }
+
     static const AtomString& signKeyword();
 
     bool selected() const { return m_selected; }

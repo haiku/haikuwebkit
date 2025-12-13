@@ -83,12 +83,12 @@ static const Seconds PostAnimationDelay { 100_ms };
     [super dealloc];
 }
 
-- (WebKit::VideoLayerRemoteParent*)parent
+- (RefPtr<WebKit::VideoLayerRemoteParent>)parent
 {
-    return _parent.get().unsafeGet();
+    return _parent.get();
 }
 
-- (void)setParent:(WebKit::VideoLayerRemoteParent*)parent
+- (void)setParent:(RefPtr<WebKit::VideoLayerRemoteParent>)parent
 {
     _parent = *parent;
 }

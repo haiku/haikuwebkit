@@ -52,6 +52,8 @@ class AudioContext final
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(AudioContext);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(AudioContext);
 public:
+    USING_CAN_MAKE_WEAKPTR(EventTarget);
+
     // Create an AudioContext for rendering to the audio hardware.
     static ExceptionOr<Ref<AudioContext>> create(Document&, AudioContextOptions&&);
     virtual ~AudioContext();
@@ -110,7 +112,7 @@ public:
 private:
     AudioContext(Document&, const AudioContextOptions&);
 
-    bool willBeginPlayback();
+    void willBeginPlayback(CompletionHandler<void(bool)>&&);
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final;

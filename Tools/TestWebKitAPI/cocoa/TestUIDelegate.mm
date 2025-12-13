@@ -164,6 +164,18 @@
 
 #endif
 
+#if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
+
+- (void)webView:(WKWebView *)webView requestDeviceOrientationAndMotionPermissionForOrigin:(WKSecurityOrigin *)origin initiatedByFrame:(WKFrameInfo *)requestingFrame decisionHandler:(void (^)(WKPermissionDecision))decisionHandler
+{
+    if (_requestDeviceOrientationAndMotionPermissionForOrigin)
+        _requestDeviceOrientationAndMotionPermissionForOrigin(origin, requestingFrame, decisionHandler);
+    else
+        decisionHandler(WKPermissionDecisionPrompt);
+}
+
+#endif
+
 - (NSString *)waitForAlert
 {
     EXPECT_FALSE(self.runJavaScriptAlertPanelWithMessage);

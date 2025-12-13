@@ -81,6 +81,7 @@ platform/graphics/gbm/GBMDevice.cpp
 platform/graphics/gbm/GraphicsContextGLTextureMapperGBM.cpp @no-unify
 platform/graphics/gbm/MemoryMappedGPUBuffer.cpp
 platform/graphics/gbm/PlatformDisplayGBM.cpp @no-unify
+platform/graphics/gbm/VivanteSuperTiledTexture.cpp
 
 platform/graphics/glib/IconGLib.cpp
 platform/graphics/glib/ImageAdapterGLib.cpp

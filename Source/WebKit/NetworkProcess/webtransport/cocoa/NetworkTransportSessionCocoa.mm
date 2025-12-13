@@ -330,13 +330,6 @@ void NetworkTransportSession::initialize(CompletionHandler<void(std::optional<We
                             protocol = String::fromUTF8(unsafeSpan(value));
                         });
                     }
-                    if (canLoad_Network_nw_webtransport_metadata_get_transport_mode()) {
-                        nw_webtransport_transport_mode_t transportMode = softLink_Network_nw_webtransport_metadata_get_transport_mode(metadata.get());
-                        if (transportMode == nw_webtransport_transport_mode_http3)
-                            reliabilityMode = WebCore::WebTransportReliabilityMode::SupportsUnreliable;
-                        else if (transportMode == nw_webtransport_transport_mode_http2)
-                            reliabilityMode = WebCore::WebTransportReliabilityMode::ReliableOnly;
-                    }
                 }
             }
             return creationCompletionHandler(WebCore::WebTransportConnectionInfo { WTFMove(protocol), reliabilityMode });
@@ -504,19 +497,35 @@ void NetworkTransportSession::setupConnectionHandler()
                 return;
             }
             RetainPtr metadata = adoptNS(nw_connection_copy_protocol_metadata(inboundConnection.get(), adoptNS(nw_protocol_copy_webtransport_definition()).get()));
-            if (nw_webtransport_metadata_get_is_unidirectional(metadata.get())) {
-                Ref stream = NetworkTransportStream::create(*protectedThis.get(), std::exchange(inboundConnection, nullptr).get(), NetworkTransportStreamType::IncomingUnidirectional);
-                auto identifier = stream->identifier();
-                ASSERT(!protectedThis->m_streams.contains(identifier));
-                protectedThis->m_streams.set(identifier, stream);
-                protectedThis->receiveIncomingUnidirectionalStream(identifier);
-                return;
-            }
-            Ref stream = NetworkTransportStream::create(*protectedThis.get(), std::exchange(inboundConnection, nullptr).get(), NetworkTransportStreamType::Bidirectional);
+            bool unidirectional = nw_webtransport_metadata_get_is_unidirectional(metadata.get());
+            auto streamType = unidirectional ? NetworkTransportStreamType::IncomingUnidirectional : NetworkTransportStreamType::Bidirectional;
+            Ref stream = NetworkTransportStream::create(*protectedThis.get(), std::exchange(inboundConnection, nullptr).get(), streamType);
             auto identifier = stream->identifier();
             ASSERT(!protectedThis->m_streams.contains(identifier));
             protectedThis->m_streams.set(identifier, stream);
-            protectedThis->receiveBidirectionalStream(identifier);
+
+            if (unidirectional)
+                protectedThis->receiveIncomingUnidirectionalStream(identifier);
+            else
+                protectedThis->receiveBidirectionalStream(identifier);
+
+            if (!unidirectional && canLoad_Network_nw_webtransport_metadata_set_remote_receive_error_handler()) {
+                softLink_Network_nw_webtransport_metadata_set_remote_receive_error_handler(metadata.get(), makeBlockPtr([weakThis = WeakPtr { *protectedThis }, identifier] (uint64_t errorCode) mutable {
+                    RefPtr protectedThis = weakThis.get();
+                    if (!protectedThis)
+                        return;
+                    protectedThis->send(Messages::WebTransportSession::StreamSendError(identifier, errorCode));
+                }).get(), mainDispatchQueueSingleton());
+            }
+
+            if (canLoad_Network_nw_webtransport_metadata_set_remote_send_error_handler()) {
+                softLink_Network_nw_webtransport_metadata_set_remote_send_error_handler(metadata.get(), makeBlockPtr([weakThis = WeakPtr { *protectedThis }, identifier] (uint64_t errorCode) mutable {
+                    RefPtr protectedThis = weakThis.get();
+                    if (!protectedThis)
+                        return;
+                    protectedThis->send(Messages::WebTransportSession::StreamReceiveError(identifier, errorCode));
+                }).get(), mainDispatchQueueSingleton());
+            }
         }).get());
         nw_connection_set_queue(inboundConnection, mainDispatchQueueSingleton());
         nw_connection_start(inboundConnection);
@@ -562,7 +571,10 @@ void NetworkTransportSession::createStream(NetworkTransportStreamType streamType
 
     nw_connection_set_state_changed_handler(connection.get(), makeBlockPtr([
         creationCompletionHandler = WTFMove(creationCompletionHandler),
-        stream = WTFMove(stream)
+        stream = WTFMove(stream),
+        connection,
+        streamType,
+        weakThis = WeakPtr { *this }
     ] (nw_connection_state_t state, nw_error_t error) mutable {
         switch (state) {
         case nw_connection_state_invalid:
@@ -570,12 +582,35 @@ void NetworkTransportSession::createStream(NetworkTransportStreamType streamType
         case nw_connection_state_preparing:
             return; // We will get another callback with another state change.
         case nw_connection_state_ready:
-            return creationCompletionHandler(WTFMove(stream));
+            break;
         case nw_connection_state_failed:
         case nw_connection_state_cancelled:
             return creationCompletionHandler(nullptr);
         }
-        RELEASE_ASSERT_NOT_REACHED();
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return creationCompletionHandler(nullptr);
+        RetainPtr metadata = adoptNS(nw_connection_copy_protocol_metadata(connection.get(), adoptNS(nw_protocol_copy_webtransport_definition()).get()));
+        bool unidirectional = streamType == NetworkTransportStreamType::OutgoingUnidirectional;
+        auto identifier = stream->identifier();
+        if (canLoad_Network_nw_webtransport_metadata_set_remote_receive_error_handler()) {
+            softLink_Network_nw_webtransport_metadata_set_remote_receive_error_handler(metadata.get(), makeBlockPtr([weakThis = WeakPtr { *protectedThis }, identifier] (uint64_t errorCode) mutable {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
+                protectedThis->send(Messages::WebTransportSession::StreamSendError(identifier, errorCode));
+            }).get(), mainDispatchQueueSingleton());
+        }
+
+        if (!unidirectional && canLoad_Network_nw_webtransport_metadata_set_remote_send_error_handler()) {
+            softLink_Network_nw_webtransport_metadata_set_remote_send_error_handler(metadata.get(), makeBlockPtr([weakThis = WeakPtr { *protectedThis }, identifier] (uint64_t errorCode) mutable {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis)
+                    return;
+                protectedThis->send(Messages::WebTransportSession::StreamReceiveError(identifier, errorCode));
+            }).get(), mainDispatchQueueSingleton());
+        }
+        return creationCompletionHandler(WTFMove(stream));
     }).get());
     nw_connection_set_queue(connection.get(), mainDispatchQueueSingleton());
     nw_connection_start(connection.get());
@@ -593,7 +628,7 @@ void NetworkTransportSession::receiveDatagramLoop()
         if (!protectedThis)
             return;
         if (error) {
-            if (!(nw_error_get_error_domain(error) == nw_error_domain_posix && nw_error_get_error_code(error) == ECANCELED))
+            if (nw_error_get_error_domain(error) != nw_error_domain_posix || nw_error_get_error_code(error) != ECANCELED)
                 protectedThis->receiveDatagram({ }, false, WebCore::Exception(WebCore::ExceptionCode::NetworkError));
             return;
         }
@@ -631,7 +666,8 @@ void NetworkTransportSession::terminate(WebCore::WebTransportSessionErrorCode co
     if (m_datagramConnection)
         nw_connection_cancel(m_datagramConnection.get());
 
-    for (auto& stream : std::exchange(m_streams, { }).values())
+    auto streams = std::exchange(m_streams, { });
+    for (auto& stream : streams.values())
         stream->cancel(code);
 
     nw_connection_group_cancel(m_connectionGroup.get());

@@ -341,29 +341,6 @@ function split(separator, limit)
 }
 
 @linkTimeConstant
-function stringConcatSlowPath()
-{
-    "use strict";
-
-    var result = @toString(this);
-    for (var i = 0, length = @argumentCount(); i < length; ++i)
-        result += @toString(arguments[i]);
-    return result;
-}
-
-function concat(arg /* ... */)
-{
-    "use strict";
-
-    if (@isUndefinedOrNull(this))
-        @throwTypeError("String.prototype.concat requires that |this| not be null or undefined");
-
-    if (@argumentCount() === 1)
-        return @toString(this) + @toString(arg);
-    return @tailCallForwardArguments(@stringConcatSlowPath, this);
-}
-
-@linkTimeConstant
 function createHTML(func, string, tag, attribute, value)
 {
     "use strict";

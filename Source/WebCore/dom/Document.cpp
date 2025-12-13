@@ -251,6 +251,7 @@
 #include "RenderLayoutState.h"
 #include "RenderLineBreak.h"
 #include "RenderObjectInlines.h"
+#include "RenderStyleSetters.h"
 #include "RenderTreeUpdater.h"
 #include "RenderView.h"
 #include "RenderWidgetInlines.h"
@@ -383,8 +384,10 @@
 #endif
 
 #if ENABLE(DEVICE_ORIENTATION)
+#include "DeviceMotionData.h"
 #include "DeviceMotionEvent.h"
 #include "DeviceOrientationAndMotionAccessController.h"
+#include "DeviceOrientationData.h"
 #include "DeviceOrientationEvent.h"
 #endif
 
@@ -2433,14 +2436,14 @@ bool Document::isBodyPotentiallyScrollable(HTMLBodyElement& body)
         && !body.computedStyle()->isOverflowVisible();
 }
 
-Element* Document::scrollingElementForAPI()
+RefPtr<Element> Document::scrollingElementForAPI()
 {
     if (inQuirksMode())
         updateLayoutIgnorePendingStylesheets();
     return scrollingElement();
 }
 
-Element* Document::scrollingElement()
+RefPtr<Element> Document::scrollingElement()
 {
     // See https://drafts.csswg.org/cssom-view/#dom-document-scrollingelement.
     // The scrollingElement attribute, on getting, must run these steps:
@@ -2449,7 +2452,7 @@ Element* Document::scrollingElement()
         // 1. If the HTML body element exists, and it is not potentially scrollable, return the
         // HTML body element and abort these steps.
         if (RefPtr firstBody = body(); firstBody && !isBodyPotentiallyScrollable(*firstBody))
-            return firstBody.unsafeGet();
+            return firstBody;
 
         // 2. Return null and abort these steps.
         return nullptr;
@@ -4828,13 +4831,46 @@ void Document::updateBaseURL()
     considerSpeculationRules();
 }
 
+// https://html.spec.whatwg.org/C#consider-speculative-loads
 void Document::considerSpeculationRules()
 {
     if (!settings().speculationRulesPrefetchEnabled())
         return;
+
+    // 1. If document's node navigable is not a top-level traversable, then return.
     RefPtr frame = this->frame();
-    if (!frame || frame->documentIsBeingReplaced() || !frame->window() || !isHTMLDocument())
+    if (!frame ||  !frame->isMainFrame() || frame->documentIsBeingReplaced() || !frame->window() || !isHTMLDocument() || !m_domWindow)
         return;
+
+    // 2. If document's consider speculative loads microtask queued is true, then return.
+    if (m_speculationRulesConsiderationScheduled)
+        return;
+
+    // 3. Set document's consider speculative loads microtask queued to true.
+    m_speculationRulesConsiderationScheduled = true;
+    // 4. Queue a microtask given document to run the following steps:
+    eventLoop().queueMicrotask([weakThis = WeakPtr<Document, WeakPtrImplWithEventTargetData> { *this }] {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+
+        // 4.1. Set document's consider speculative loads microtask queued to false.
+        protectedThis->m_speculationRulesConsiderationScheduled = false;
+        // 4.2 Run the inner consider speculative loads steps for document.
+        protectedThis->processSpeculationRules();
+    });
+}
+
+// https://html.spec.whatwg.org/C#inner-consider-speculative-loads-steps
+void Document::processSpeculationRules()
+{
+    // 1. If document is not fully active, then return.
+    if (!isFullyActive() || !isHTMLDocument())
+        return;
+
+    RefPtr frame = this->frame();
+    ASSERT(frame);
+
     auto anchors = links();
     auto iterator = anchors->createIterator(this);
     for (RefPtr element = iterator.next(); element; element = iterator.next()) {
@@ -4844,10 +4880,55 @@ void Document::considerSpeculationRules()
         }
     }
     // Prefetch all the URL lists that need to be prefetched immediately
+    // https://html.spec.whatwg.org/C#prefetch-candidate-grouping
     constexpr bool lowPriority { true };
+
+    struct PrefetchCandidate {
+        Vector<Vector<String>> tagSets;
+        std::optional<ReferrerPolicy> referrerPolicy;
+    };
+
+    HashMap<URL, PrefetchCandidate> urlGroups;
+
     for (const auto& rule : speculationRules()->prefetchRules()) {
-        for (const auto& url : rule.urls)
-            frame->loader().prefetch(url, rule.tags, rule.referrerPolicy, lowPriority);
+        for (const auto& url : rule.urls) {
+            auto& group = urlGroups.ensure(url, [] {
+                return PrefetchCandidate { };
+            }).iterator->value;
+
+            group.tagSets.append(rule.tags);
+
+            // Use the first referrer policy encountered for each URL
+            if (!group.referrerPolicy)
+                group.referrerPolicy = rule.referrerPolicy;
+        }
+    }
+
+    for (auto& [url, group] : urlGroups) {
+        // 7.2 Let tagsToSend be the result of collecting tags from speculative load candidates given group.
+        // https://html.spec.whatwg.org/C#collect-tags-from-speculative-load-candidates
+        HashSet<String> uniqueTags;
+        bool hasNullTag = false;
+        for (const auto& tags : group.tagSets) {
+            for (const auto& tag : tags) {
+                if (tag.isNull()) {
+                    hasNullTag = true;
+                    continue;
+                }
+                uniqueTags.add(tag);
+            }
+        }
+
+        Vector<String> tagsToSend;
+        tagsToSend.reserveCapacity(uniqueTags.size() + (hasNullTag ? 1 : 0));
+        if (hasNullTag)
+            tagsToSend.append(nullAtom());
+        for (const auto& tag : uniqueTags)
+            tagsToSend.append(tag);
+        std::sort(tagsToSend.begin(), tagsToSend.end(), codePointCompareLessThan);
+
+        // 7.4. Start a referrer-initiated navigational prefetch given document and prefetchRecord.
+        frame->loader().prefetch(url, tagsToSend, group.referrerPolicy, lowPriority);
     }
 }
 
@@ -8770,7 +8851,7 @@ WindowEventLoop& Document::windowEventLoop()
 {
     ASSERT(isMainThread());
     if (!m_eventLoop) [[unlikely]] {
-        m_eventLoop = WindowEventLoop::eventLoopForSecurityOrigin(contextDocument().securityOrigin());
+        m_eventLoop = WindowEventLoop::eventLoopForSecurityOrigin(securityOrigin());
         m_eventLoop->addAssociatedContext(*this);
     }
     return *m_eventLoop;
@@ -9037,13 +9118,7 @@ void Document::removeMediaCanStartListener(MediaCanStartListener& listener)
 
 MediaCanStartListener* Document::takeAnyMediaCanStartListener()
 {
-    if (m_mediaCanStartListeners.isEmptyIgnoringNullReferences())
-        return nullptr;
-
-    RefPtr listener = m_mediaCanStartListeners.begin().get();
-    m_mediaCanStartListeners.remove(*listener);
-
-    return listener.unsafeGet();
+    return m_mediaCanStartListeners.takeAny();
 }
 
 void Document::addDisplayChangedObserver(const DisplayChangedObserver& observer)
@@ -9140,6 +9215,13 @@ DeviceMotionController& Document::deviceMotionController() const
     return *m_deviceMotionController;
 }
 
+void Document::simulateDeviceMotionChange(double xAcceleration, double yAcceleration, double zAcceleration, double xAccelerationIncludingGravity, double yAccelerationIncludingGravity, double zAccelerationIncludingGravity, double xRotationRate, double yRotationRate, double zRotationRate)
+{
+    Ref motion = DeviceMotionData::create(DeviceMotionData::Acceleration::create(xAcceleration, yAcceleration, zAcceleration), DeviceMotionData::Acceleration::create(xAccelerationIncludingGravity, yAccelerationIncludingGravity, zAccelerationIncludingGravity), DeviceMotionData::RotationRate::create(xRotationRate, yRotationRate, zRotationRate), std::nullopt);
+
+    deviceMotionController().didChangeDeviceMotion(motion.ptr());
+}
+
 DeviceOrientationController& Document::deviceOrientationController() const
 {
     return *m_deviceOrientationController;
@@ -9147,7 +9229,7 @@ DeviceOrientationController& Document::deviceOrientationController() const
 
 void Document::simulateDeviceOrientationChange(double alpha, double beta, double gamma)
 {
-    auto orientation = DeviceOrientationData::create(alpha, beta, gamma, std::nullopt, std::nullopt);
+    Ref orientation = DeviceOrientationData::create(alpha, beta, gamma, std::nullopt, std::nullopt);
     deviceOrientationController().didChangeDeviceOrientation(orientation.ptr());
 }
 
@@ -10072,7 +10154,7 @@ void Document::didAssociateFormControlsTimerFired()
     }
 
     for (Ref control : controls) {
-        Ref event = Event::create(eventNames().webkitassociateformcontrolsEvent, Event::CanBubble::Yes, Event::IsCancelable::No);
+        Ref event = Event::create(eventNames().webkitassociateformcontrolsEvent, Event::CanBubble::Yes, Event::IsCancelable::No, Event::IsComposed::Yes);
         event->setIsAutofillEvent();
         event->setTarget(control.ptr());
         control->dispatchEvent(event);
@@ -10973,8 +11055,10 @@ void Document::addTopLayerElement(Element& element)
 #endif
         auto result = m_autoPopoverList.add(*candidatePopover);
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
-        if (!neededEventHandling)
+        if (!neededEventHandling) {
             invalidateRenderingDependentRegions();
+            invalidateEventListenerRegions();
+        }
 #endif
         RELEASE_ASSERT(result.isNewEntry);
     }
@@ -10988,8 +11072,10 @@ void Document::removeTopLayerElement(Element& element)
     if (auto* candidatePopover = dynamicDowncast<HTMLElement>(element); candidatePopover && candidatePopover->isPopoverShowing() && candidatePopover->popoverState() == PopoverState::Auto) {
         m_autoPopoverList.remove(*candidatePopover);
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
-        if (!needsPointerEventHandlingForPopover())
+        if (!needsPointerEventHandlingForPopover()) {
             invalidateRenderingDependentRegions();
+            invalidateEventListenerRegions();
+        }
 #endif
     }
 }
@@ -11958,10 +12044,8 @@ RefPtr<ViewTransition> Document::startViewTransition(StartViewTransitionCallback
         }, [&](StartViewTransitionOptions& options) {
             updateCallback = WTFMove(options.update);
 
-            if (options.types) {
-                ASSERT(settings().viewTransitionTypesEnabled());
+            if (options.types)
                 activeTypes = WTFMove(*options.types);
-            }
         });
     }
 

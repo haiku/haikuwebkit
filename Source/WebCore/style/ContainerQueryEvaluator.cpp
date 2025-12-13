@@ -104,7 +104,7 @@ auto ContainerQueryEvaluator::featureEvaluationContextForQuery(const CQ::Contain
     };
 }
 
-const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requiredAxes, const String& name, const Element& element, SelectionMode selectionMode, ScopeOrdinal scopeOrdinal, const ContainerQueryEvaluationState* evaluationState)
+RefPtr<const Element> ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requiredAxes, const String& name, const Element& element, SelectionMode selectionMode, ScopeOrdinal scopeOrdinal, const ContainerQueryEvaluationState* evaluationState)
 {
     // "For each element, the query container to be queried is selected from among the element’s
     // ancestor query containers that have a valid container-type for all the container features
@@ -181,7 +181,7 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
         // https://drafts.csswg.org/css-conditional-5/#container-queries
         for (RefPtr ancestor = originatingElement; ancestor; ancestor = ancestor->parentElementInComposedTree()) {
             if (isContainerForQuery(*ancestor.get(), originatingElement.get()))
-                return ancestor.unsafeGet();
+                return ancestor;
         }
         return nullptr;
     }
@@ -196,7 +196,7 @@ const Element* ContainerQueryEvaluator::selectContainer(OptionSet<CQ::Axis> requ
 
     for (RefPtr ancestor = element.parentElementInComposedTree(); ancestor; ancestor = ancestor->parentElementInComposedTree()) {
         if (isContainerForQuery(*ancestor.get()))
-            return ancestor.unsafeGet();
+            return ancestor;
     }
     return { };
 }

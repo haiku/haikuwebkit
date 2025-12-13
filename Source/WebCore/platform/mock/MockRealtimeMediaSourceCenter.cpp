@@ -311,10 +311,16 @@ class MockRealtimeAudioSourceFactory final
 #if PLATFORM(COCOA)
     : public CoreAudioCaptureSourceFactory
 #else
-    : public AudioCaptureFactory
+    : public AudioCaptureFactory, public RefCounted<MockRealtimeAudioSourceFactory>
 #endif
+
 {
 public:
+    static Ref<MockRealtimeAudioSourceFactory> create()
+    {
+        return adoptRef(*new MockRealtimeAudioSourceFactory);
+    }
+
     CaptureSourceOrError createAudioCaptureSource(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier) final
     {
         ASSERT(device.type() == CaptureDevice::DeviceType::Microphone);
@@ -329,6 +335,8 @@ public:
         return MockRealtimeAudioSource::create(String { device.persistentId() }, AtomString { device.label() }, WTFMove(hashSalts), constraints, pageIdentifier);
     }
 private:
+    MockRealtimeAudioSourceFactory() = default;
+
     CaptureDeviceManager& audioCaptureDeviceManager() final { return MockRealtimeMediaSourceCenter::singleton().audioCaptureDeviceManager(); }
     const Vector<CaptureDevice>& speakerDevices() const final { return MockRealtimeMediaSourceCenter::speakerDevices(); }
 };
@@ -648,7 +656,7 @@ Vector<CaptureDevice>& MockRealtimeMediaSourceCenter::displayDevices()
 
 AudioCaptureFactory& MockRealtimeMediaSourceCenter::audioCaptureFactory()
 {
-    static NeverDestroyed<MockRealtimeAudioSourceFactory> factory;
+    static NeverDestroyed<Ref<MockRealtimeAudioSourceFactory>> factory = MockRealtimeAudioSourceFactory::create();
     return factory.get();
 }
 

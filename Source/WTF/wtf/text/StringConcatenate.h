@@ -545,7 +545,7 @@ template<typename C> using EachTakingAccumulatorAndValueFunction = void(&)(Strin
 
 template<typename C, std::invocable<decltype(*std::begin(std::declval<C>()))> E, StringTypeAdaptable B>
     requires EachTakingValue<C, E>
-decltype(auto) interleave(const C& container, E each, const B& between)
+decltype(auto) interleave(const C& container, NOESCAPE E&& each, const B& between)
 {
     return Interleave {
         container,
@@ -556,7 +556,7 @@ decltype(auto) interleave(const C& container, E each, const B& between)
 
 template<typename C, std::invocable<decltype(std::declval<StringBuilder&>()), decltype(*std::begin(std::declval<C>()))> E, StringTypeAdaptable B>
     requires EachTakingAccumulatorAndValue<C, E>
-decltype(auto) interleave(const C& container, E each, const B& between)
+decltype(auto) interleave(const C& container, NOESCAPE E&& each, const B& between)
 {
     return Interleave {
         container,

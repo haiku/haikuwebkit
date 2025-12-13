@@ -1416,6 +1416,7 @@ WTFLogChannel& MediaPlayerPrivateWebM::logChannel() const
 
 class MediaPlayerFactoryWebM final : public MediaPlayerFactory {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerFactoryWebM);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaPlayerFactoryWebM);
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::CocoaWebM; };
 

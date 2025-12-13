@@ -26,6 +26,7 @@
 #include "config.h"
 #include "DatagramByteSource.h"
 
+#include "JSDOMGlobalObject.h"
 #include "JSDOMPromiseDeferred.h"
 #include "ReadableByteStreamController.h"
 #include "ReadableStream.h"
@@ -184,4 +185,11 @@ void DatagramByteSource::tryEnqueuing(JSC::ArrayBuffer& buffer, ReadableByteStre
         promise->resolve();
 }
 
+void DatagramByteSource::error(JSC::JSGlobalObject& globalObject, JSC::JSValue value)
+{
+    if (RefPtr controller = m_controller) {
+        auto& jsDOMGlobalObject = *JSC::jsCast<JSDOMGlobalObject*>(&globalObject);
+        controller->error(jsDOMGlobalObject, value);
+    }
+}
 }

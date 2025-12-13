@@ -125,7 +125,7 @@ ViewPlatform::ViewPlatform(WPEDisplay* display, const API::PageConfiguration& co
         webView.toplevelStateChanged(previousState, wpe_view_get_toplevel_state(view));
     }), this);
 #if USE(GBM)
-    g_signal_connect(m_wpeView.get(), "preferred-dma-buf-formats-changed", G_CALLBACK(+[](WPEView*, gpointer userData) {
+    g_signal_connect(m_wpeView.get(), "preferred-buffer-formats-changed", G_CALLBACK(+[](WPEView*, gpointer userData) {
         auto& webView = *reinterpret_cast<ViewPlatform*>(userData);
         webView.page().preferredBufferFormatsDidChange();
     }), this);

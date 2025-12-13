@@ -41,14 +41,14 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol WKCaptionStyleMenuControllerDelegate <NSObject>
 - (void)captionStyleMenuWillOpen:(PlatformMenu *)menu;
 - (void)captionStyleMenuDidClose:(PlatformMenu *)menu;
+@optional
+- (void)captionStyleMenu:(PlatformMenu *)menu didSelectProfile:(NSString *)profileID;
 @end
 
 WK_EXTERN
 @interface WKCaptionStyleMenuController : NSObject
 
-#if TARGET_OS_IPHONE
 + (instancetype)menuController;
-#endif
 
 @property (weak, nonatomic) id<WKCaptionStyleMenuControllerDelegate> delegate;
 @property (readonly, nonatomic) PlatformMenu *captionStyleMenu;
@@ -57,6 +57,7 @@ WK_EXTERN
 #endif
 
 - (BOOL)isAncestorOf:(PlatformMenu*)menu;
+- (BOOL)hasAncestor:(PlatformMenu*)menu;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -27,6 +27,7 @@
 #include "WebProcessActivityState.h"
 
 #include "APIPageConfiguration.h"
+#include "Logging.h"
 #include "RemotePageProxy.h"
 #include "WebPageProxy.h"
 #include "WebProcessPool.h"
@@ -104,6 +105,12 @@ void WebProcessActivityState::takeMutedCaptureAssertion()
     });
 }
 
+void WebProcessActivityState::takeNetworkActivity()
+{
+    RELEASE_LOG(Process, "Taking network activity on WebProcess with PID %d", protectedProcess()->processID());
+    m_networkActivity = protectedProcess()->protectedThrottler()->backgroundActivity("Page Load"_s);
+}
+
 void WebProcessActivityState::reset()
 {
     m_isVisibleActivity = nullptr;
@@ -116,6 +123,7 @@ void WebProcessActivityState::reset()
 #if PLATFORM(IOS_FAMILY)
     m_openingAppLinkActivity = nullptr;
 #endif
+    m_networkActivity = nullptr;
 }
 
 void WebProcessActivityState::dropVisibleActivity()
@@ -144,6 +152,12 @@ void WebProcessActivityState::dropMutedCaptureAssertion()
     m_isMutedCaptureAssertion = nullptr;
 }
 
+void WebProcessActivityState::dropNetworkActivity()
+{
+    RELEASE_LOG(Process, "Dropping network activity on WebProcess with PID %d", protectedProcess()->processID());
+    m_networkActivity = nullptr;
+}
+
 bool WebProcessActivityState::hasValidVisibleActivity() const
 {
     return m_isVisibleActivity && m_isVisibleActivity->isValid();
@@ -157,6 +171,11 @@ bool WebProcessActivityState::hasValidAudibleActivity() const
 bool WebProcessActivityState::hasValidCapturingActivity() const
 {
     return m_isCapturingActivity && m_isCapturingActivity->isValid();
+}
+
+bool WebProcessActivityState::hasValidNetworkActivity() const
+{
+    return m_networkActivity && m_networkActivity->isValid();
 }
 
 bool WebProcessActivityState::hasValidMutedCaptureAssertion() const

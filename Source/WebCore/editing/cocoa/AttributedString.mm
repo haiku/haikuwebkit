@@ -244,14 +244,14 @@ inline static RetainPtr<NSParagraphStyle> reconstructStyle(const ParagraphStyle&
 
     if (!style.textTableBlockIDs.isEmpty()) {
         RetainPtr blocks = createNSArray(style.textTableBlockIDs, [&] (auto& object) -> id {
-            return tableBlocks.get(object).unsafeGet();
+            return tableBlocks.get(object);
         });
         [mutableStyle setTextBlocks:blocks.get()];
     }
 
     if (!style.textListIDs.isEmpty()) {
         RetainPtr textLists = createNSArray(style.textListIDs, [&] (auto& object) -> id {
-            return lists.get(object).unsafeGet();
+            return lists.get(object);
         });
         [mutableStyle setTextLists:textLists.get()];
     }
@@ -619,7 +619,7 @@ inline static ParagraphStyle extractParagraphStyle(NSParagraphStyle *style, Tabl
                     [nsTable borderColorForEdge:NSRectEdgeMaxY]
                 },
                 tableID,
-                [nsTable numberOfColumns],
+                static_cast<uint64_t>([nsTable numberOfColumns]),
                 extractTextTableLayoutAlgorithm([nsTable layoutAlgorithm]),
                 !![nsTable collapsesBorders],
                 !![nsTable hidesEmptyCells],

@@ -133,7 +133,7 @@ StyleRareNonInheritedData::StyleRareNonInheritedData()
     , positionTryOrder(static_cast<unsigned>(RenderStyle::initialPositionTryOrder()))
     , positionVisibility(RenderStyle::initialPositionVisibility().toRaw())
     , fieldSizing(static_cast<unsigned>(RenderStyle::initialFieldSizing()))
-    , nativeAppearanceDisabled(static_cast<unsigned>(RenderStyle::initialNativeAppearanceDisabled()))
+    , nativeAppearanceDisabled(static_cast<unsigned>(false))
 #if HAVE(CORE_MATERIAL)
     , appleVisualEffect(static_cast<unsigned>(RenderStyle::initialAppleVisualEffect()))
 #endif

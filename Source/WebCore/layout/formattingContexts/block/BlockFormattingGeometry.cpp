@@ -328,10 +328,10 @@ IntrinsicWidthConstraints BlockFormattingGeometry::intrinsicWidthConstraints(con
         auto& style = layoutBox.style();
         const auto& zoomFactor = style.usedZoomForLength();
         return fixedValue(style.marginStart(), zoomFactor).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), zoomFactor)
+            + Style::evaluate<LayoutUnit>(style.borderLeftWidth(), Style::ZoomNeeded { })
             + fixedValue(style.paddingLeft(), zoomFactor).value_or(0)
             + fixedValue(style.paddingRight(), zoomFactor).value_or(0)
-            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), zoomFactor)
+            + Style::evaluate<LayoutUnit>(style.borderRightWidth(), Style::ZoomNeeded { })
             + fixedValue(style.marginEnd(), zoomFactor).value_or(0);
     };
 

@@ -182,7 +182,11 @@ GraphicsContext* RenderLayerFilters::beginFilterEffect(RenderElement& renderer, 
     if (!m_filter || m_targetBoundingBox != targetBoundingBox || m_preferredFilterRenderingModes != preferredFilterRenderingModes) {
         m_targetBoundingBox = targetBoundingBox;
         // FIXME: This rebuilds the entire effects chain even if the filter style didn't change.
-        m_filter = CSSFilterRenderer::create(renderer, renderer.style().filter(), preferredFilterRenderingModes, m_filterScale, m_targetBoundingBox, context);
+        m_filter = CSSFilterRenderer::create(renderer, renderer.style().filter(), {
+            .referenceBox = m_targetBoundingBox, // FIXME: It's wrong for the dirty rect to feed into the reference box: webkit.org/b/279290.
+            .filterRegion = m_targetBoundingBox,
+            .scale = m_filterScale,
+        }, preferredFilterRenderingModes, context);
     }
 
     if (!m_filter)

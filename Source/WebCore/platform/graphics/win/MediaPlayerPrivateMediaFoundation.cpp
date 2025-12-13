@@ -140,6 +140,8 @@ MediaPlayerPrivateMediaFoundation::~MediaPlayerPrivateMediaFoundation()
 }
 
 class MediaPlayerFactoryMediaFoundation final : public MediaPlayerFactory {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerFactoryMediaFoundation);
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(MediaPlayerFactoryMediaFoundation);
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::MediaFoundation; };
 

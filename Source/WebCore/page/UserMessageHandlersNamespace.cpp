@@ -78,7 +78,7 @@ bool UserMessageHandlersNamespace::isSupportedPropertyName(const AtomString&)
     return false;
 }
 
-UserMessageHandler* UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& world, const AtomString& name)
+RefPtr<UserMessageHandler> UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& world, const AtomString& name)
 {
     RefPtr frame = this->frame();
     if (!frame)
@@ -90,7 +90,7 @@ UserMessageHandler* UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& wor
 
     RefPtr handler = m_messageHandlers.get({ name, &world });
     if (handler)
-        return handler.unsafeGet();
+        return handler;
 
     userContentProvider->forEachUserMessageHandler([&](const UserMessageHandlerDescriptor& descriptor) {
         if (descriptor.name() != name || &descriptor.world() != &world)
@@ -102,7 +102,7 @@ UserMessageHandler* UserMessageHandlersNamespace::namedItem(DOMWrapperWorld& wor
         handler = addResult.iterator->value.get();
     });
 
-    return handler.unsafeGet();
+    return handler;
 }
 
 } // namespace WebCore

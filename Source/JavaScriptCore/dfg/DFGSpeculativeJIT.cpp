@@ -66,8 +66,6 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 #include "JSIteratorHelper.h"
 #include "JSLexicalEnvironment.h"
 #include "JSMapIterator.h"
-#include "JSPromiseAllContext.h"
-#include "JSPromiseAllGlobalContext.h"
 #include "JSPromiseReaction.h"
 #include "JSPropertyNameEnumerator.h"
 #include "JSRegExpStringIterator.h"
@@ -12310,9 +12308,24 @@ void SpeculativeJIT::speculateOther(Edge edge)
 {
     if (!needsTypeCheck(edge, SpecOther))
         return;
-    
+
     JSValueOperand operand(this, edge, ManualOperandSpeculation);
     speculateOther(edge, operand.jsValueRegs());
+}
+
+void SpeculativeJIT::speculateNotOther(Edge edge, JSValueRegs regs, GPRReg tempGPR)
+{
+    DFG_TYPE_CHECK(regs, edge, ~SpecOther, branchIfOther(regs, tempGPR));
+}
+
+void SpeculativeJIT::speculateNotOther(Edge edge)
+{
+    if (!needsTypeCheck(edge, ~SpecOther))
+        return;
+
+    JSValueOperand operand(this, edge, ManualOperandSpeculation);
+    GPRTemporary temp(this);
+    speculateNotOther(edge, operand.jsValueRegs(), temp.gpr());
 }
 
 void SpeculativeJIT::speculateMisc(Edge edge, JSValueRegs regs)
@@ -12482,6 +12495,9 @@ void SpeculativeJIT::speculate(Node*, Edge edge)
         break;
     case NotDoubleUse:
         speculateNotDouble(edge);
+        break;
+    case NotOtherUse:
+        speculateNotOther(edge);
         break;
     case NeitherDoubleNorHeapBigIntUse:
         speculateNeitherDoubleNorHeapBigInt(edge);
@@ -15584,12 +15600,6 @@ void SpeculativeJIT::compileNewInternalFieldObject(Node* node)
         break;
     case JSAsyncFromSyncIteratorType:
         compileNewInternalFieldObjectImpl<JSAsyncFromSyncIterator>(node, operationNewAsyncFromSyncIterator);
-        break;
-    case JSPromiseAllContextType:
-        compileNewInternalFieldObjectImpl<JSPromiseAllContext>(node, operationNewPromiseAllContext);
-        break;
-    case JSPromiseAllGlobalContextType:
-        compileNewInternalFieldObjectImpl<JSPromiseAllGlobalContext>(node, operationNewPromiseAllGlobalContext);
         break;
     case JSRegExpStringIteratorType:
         compileNewInternalFieldObjectImpl<JSRegExpStringIterator>(node, operationNewRegExpStringIterator);

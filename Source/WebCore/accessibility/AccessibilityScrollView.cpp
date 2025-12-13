@@ -448,8 +448,8 @@ Document* AccessibilityScrollView::document() const
 
 LocalFrameView* AccessibilityScrollView::documentFrameView() const
 {
-    if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
-        return localFrameView.unsafeGet();
+    if (auto* localFrameView = dynamicDowncast<LocalFrameView>(m_scrollView.get()))
+        return localFrameView;
 
     if (m_frameOwnerElement && m_frameOwnerElement->contentDocument())
         return m_frameOwnerElement->contentDocument()->view();

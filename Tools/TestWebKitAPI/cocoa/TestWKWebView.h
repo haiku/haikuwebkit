@@ -32,6 +32,7 @@
 #import <wtf/text/WTFString.h>
 #endif
 
+@class _WKContextMenuElementInfo;
 @class _WKFrameTreeNode;
 @class _WKJSHandle;
 @class _WKProcessPoolConfiguration;
@@ -265,6 +266,17 @@ class Color;
 - (WKFrameInfo *)secondChildFrame;
 - (void)evaluateJavaScript:(NSString *)string inFrame:(WKFrameInfo *)frame completionHandler:(void(^)(id, NSError *))completionHandler;
 - (WKFindResult *)findStringAndWait:(NSString *)string withConfiguration:(WKFindConfiguration *)configuration;
+@end
+
+#if PLATFORM(MAC)
+using MenuItemFilter = BOOL(^)(NSMenuItem *);
+#endif
+
+@interface TestWKWebView (ContextMenu)
+#if PLATFORM(MAC)
+- (void)rightClick:(NSPoint)clickLocation andSelectItemMatching:(MenuItemFilter)filter;
+- (_WKContextMenuElementInfo *)rightClickAtPointAndWaitForContextMenu:(NSPoint)clickLocation;
+#endif
 @end
 
 #endif // __cplusplus

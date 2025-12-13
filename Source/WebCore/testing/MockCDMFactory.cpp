@@ -143,7 +143,7 @@ Vector<String> MockCDM::supportedRobustnesses() const
 
 bool MockCDM::supportsConfiguration(const MediaKeySystemConfiguration& configuration) const
 {
-    auto capabilityHasSupportedEncryptionScheme = [&] (auto& capability) {
+    auto capabilityHasSupportedEncryptionScheme = [this, checkedThis = CheckedRef { *this }] (auto& capability) {
         if (capability.encryptionScheme)
             return m_factory->supportedEncryptionSchemes().contains(capability.encryptionScheme.value());
         return true;
@@ -198,7 +198,7 @@ RefPtr<CDMInstance> MockCDM::createInstance()
 {
     if (m_factory && !m_factory->canCreateInstances())
         return nullptr;
-    return adoptRef(new MockCDMInstance(*this));
+    return MockCDMInstance::create(*this);
 }
 
 void MockCDM::loadAndInitialize()
@@ -246,18 +246,24 @@ std::optional<String> MockCDM::sanitizeSessionId(const String& sessionId) const
     return std::nullopt;
 }
 
-MockCDMInstance::MockCDMInstance(WeakPtr<MockCDM> cdm)
+Ref<MockCDMInstance> MockCDMInstance::create(MockCDM& cdm)
+{
+    return adoptRef(*new MockCDMInstance(cdm));
+}
+
+MockCDMInstance::MockCDMInstance(MockCDM& cdm)
     : m_cdm(cdm)
 {
 }
 
 void MockCDMInstance::initializeWithConfiguration(const MediaKeySystemConfiguration& configuration, AllowDistinctiveIdentifiers distinctiveIdentifiers, AllowPersistentState persistentState, SuccessCallback&& callback)
 {
-    auto initialize = [&] {
-        if (!m_cdm || !m_cdm->supportsConfiguration(configuration))
+    auto initialize = [&, this, protectedThis = Ref { *this }] {
+        CheckedPtr cdm = m_cdm.get();
+        if (!cdm || !cdm->supportsConfiguration(configuration))
             return CDMInstanceSuccessValue::Failed;
 
-        MockCDMFactory* factory = m_cdm ? m_cdm->factory() : nullptr;
+        MockCDMFactory* factory = cdm->factory();
         if (!factory)
             return CDMInstanceSuccessValue::Failed;
 

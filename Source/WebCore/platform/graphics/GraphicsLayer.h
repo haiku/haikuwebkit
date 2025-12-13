@@ -571,6 +571,9 @@ public:
 #if ENABLE(MODEL_CONTEXT)
     virtual void setContentsToModelContext(Ref<ModelContext>, ContentsLayerPurpose) { }
 #endif
+#if ENABLE(MODEL_ELEMENT_IMMERSIVE)
+    virtual void removeModelContents() { }
+#endif
     virtual void setContentsToVideoElement(HTMLVideoElement&, ContentsLayerPurpose) { }
     virtual void setContentsDisplayDelegate(RefPtr<GraphicsLayerContentsDisplayDelegate>&&, ContentsLayerPurpose);
     WEBCORE_EXPORT virtual RefPtr<GraphicsLayerAsyncContentsDisplayDelegate> createAsyncContentsDisplayDelegate(GraphicsLayerAsyncContentsDisplayDelegate* existing);

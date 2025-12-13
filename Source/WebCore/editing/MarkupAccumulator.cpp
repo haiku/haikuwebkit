@@ -31,6 +31,7 @@
 #include "CDATASection.h"
 #include "Comment.h"
 #include "CommonAtomStrings.h"
+#include "CustomElementRegistry.h"
 #include "DocumentFragment.h"
 #include "DocumentLoader.h"
 #include "DocumentType.h"
@@ -381,7 +382,7 @@ std::pair<String, MarkupAccumulator::IsCreatedByURLReplacement> MarkupAccumulato
     return { element.resolveURLStringIfNeeded(urlString, m_resolveURLs), IsCreatedByURLReplacement::No };
 }
 
-const ShadowRoot* MarkupAccumulator::suitableShadowRoot(const Node& node)
+RefPtr<const ShadowRoot> MarkupAccumulator::suitableShadowRoot(const Node& node)
 {
     if (!shouldIncludeShadowRoots())
         return nullptr;
@@ -389,7 +390,7 @@ const ShadowRoot* MarkupAccumulator::suitableShadowRoot(const Node& node)
     RefPtr shadowRoot = dynamicDowncast<ShadowRoot>(node);
     if (!shadowRoot || !includeShadowRoot(*shadowRoot))
         return nullptr;
-    return shadowRoot.unsafeGet();
+    return shadowRoot;
 }
 
 void MarkupAccumulator::startAppendingNode(const Node& node, Namespaces* namespaces)
@@ -423,7 +424,19 @@ void MarkupAccumulator::startAppendingNode(const Node& node, Namespaces* namespa
             m_markup.append(" shadowrootserializable=\"\""_s);
         if (shadowRoot->isClonable())
             m_markup.append(" shadowrootclonable=\"\""_s);
-        if (shadowRoot->protectedHost()->customElementRegistry() != shadowRoot->registryForBindings())
+        bool shouldAppendRegistryAttribute = [&] {
+            Ref document = shadowRoot->document();
+            if (document->usesNullCustomElementRegistry() && shadowRoot->usesNullCustomElementRegistry())
+                return false;
+
+            RefPtr documentRegistry = document->customElementRegistry();
+            RefPtr shadowRegistry = shadowRoot->customElementRegistry();
+            bool documentHasGlobalRegistry = (documentRegistry && !documentRegistry->isScoped()) || document->window();
+            bool shadowHasGlobalRegistry = (shadowRegistry && !shadowRegistry->isScoped())
+                || (!shadowRegistry && !shadowRoot->usesNullCustomElementRegistry() && document->window());
+            return !(documentHasGlobalRegistry && shadowHasGlobalRegistry);
+        }();
+        if (shouldAppendRegistryAttribute)
             m_markup.append(" shadowrootcustomelementregistry=\"\""_s);
         m_markup.append('>');
     } else

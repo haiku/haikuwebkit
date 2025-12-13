@@ -610,7 +610,7 @@ typedef NS_ENUM(NSInteger, _WKPrintRenderingCallbackType) {
         _inspectorHighlightView = adoptNS([[WKInspectorHighlightView alloc] initWithFrame:CGRectZero]);
         [self insertSubview:_inspectorHighlightView.get() aboveSubview:_rootContentView.get()];
     }
-    [_inspectorHighlightView update:highlight scale:[self _contentZoomScale] frame:_page->unobscuredContentRect()];
+    [_inspectorHighlightView update:highlight scale:([self intrinsicDeviceScaleFactor] * [self _contentZoomScale]) frame:_page->unobscuredContentRect()];
 }
 
 - (void)_hideInspectorHighlight

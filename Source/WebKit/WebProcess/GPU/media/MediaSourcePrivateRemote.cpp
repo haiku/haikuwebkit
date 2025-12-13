@@ -189,7 +189,6 @@ void MediaSourcePrivateRemote::bufferedChanged(const PlatformTimeRanges& buffere
 
 void MediaSourcePrivateRemote::markEndOfStream(EndOfStreamStatus status)
 {
-    MediaSourcePrivate::markEndOfStream(status);
     ensureOnDispatcher([protectedThis = Ref { *this }, this, status] {
         auto gpuProcessConnection = m_gpuProcessConnection.get();
         if (!isGPURunning() || !gpuProcessConnection)

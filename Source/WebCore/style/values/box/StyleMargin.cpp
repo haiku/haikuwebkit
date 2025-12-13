@@ -27,7 +27,6 @@
 
 #include "RenderStyleInlines.h"
 #include "StyleBuilderChecking.h"
-#include "StyleBuilderConverter.h"
 #include "StyleLengthWrapper+CSSValueConversion.h"
 
 namespace WebCore {
@@ -53,7 +52,7 @@ auto CSSValueConversion<MarginEdge>::operator()(BuilderState& state, const CSSPr
         if (isFontIndependentUnit)
             usedZoom = evaluationTimeZoomEnabled(state) ? 1.0f : state.style().usedZoom();
         else
-            usedZoom = zoomWithTextZoomFactor(state);
+            usedZoom = state.zoomWithTextZoomFactor();
 
         return state.cssToLengthConversionData().copyWithAdjustedZoom(usedZoom, MarginEdge::Fixed::range.zoomOptions);
     };

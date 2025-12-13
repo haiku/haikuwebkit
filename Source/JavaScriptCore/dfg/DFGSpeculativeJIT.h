@@ -1985,6 +1985,8 @@ public:
     void speculateOther(Edge, JSValueRegs, GPRReg temp);
     void speculateOther(Edge, JSValueRegs);
     void speculateOther(Edge);
+    void speculateNotOther(Edge, JSValueRegs, GPRReg temp);
+    void speculateNotOther(Edge);
     void speculateMisc(Edge, JSValueRegs);
     void speculateMisc(Edge);
     void speculate(Node*, Edge);

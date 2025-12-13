@@ -468,6 +468,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     Platform/IPC/SharedBufferReference.serialization.in
     Platform/IPC/SharedFileHandle.serialization.in
     Platform/IPC/StreamServerConnection.serialization.in
+    Platform/IPC/TransferString.serialization.in
 
     Shared/AccessibilityPreferences.serialization.in
     Shared/AuxiliaryProcessCreationParameters.serialization.in
@@ -519,6 +520,7 @@ set(WebKit_SERIALIZATION_IN_FILES
     Shared/RemoteWorkerType.serialization.in
     Shared/ResourceLoadInfo.serialization.in
     Shared/ResourceLoadStatisticsParameters.serialization.in
+    Shared/RunJavaScriptParameters.serialization.in
     Shared/SameDocumentNavigationType.serialization.in
     Shared/SandboxExtension.serialization.in
     Shared/ScriptTrackingPrivacyFilter.serialization.in
@@ -786,7 +788,7 @@ if (USE_LIBWEBRTC)
     list(APPEND WebKit_LIBRARIES webrtc)
 endif ()
 
-if (USE_LIBRICE)
+if (USE_GSTREAMER_WEBRTC AND USE_LIBRICE)
     list(APPEND WebKit_LIBRARIES Rice::Io)
     list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES "${WEBKIT_DIR}/NetworkProcess/webrtc/rice")
 endif ()

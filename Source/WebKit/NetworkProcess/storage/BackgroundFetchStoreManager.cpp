@@ -247,7 +247,7 @@ void BackgroundFetchStoreManager::retrieveResponseBody(const String& identifier,
             callback(RefPtr<SharedBuffer> { });
             return;
         }
-        callback(iterator->value[index].copy()->makeContiguous());
+        callback(iterator->value[index].copyBuffer()->makeContiguous());
         return;
     }
 

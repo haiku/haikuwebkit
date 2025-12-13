@@ -48,15 +48,15 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
-ContainerNode* composedParentIgnoringDocumentFragments(const Node& node)
+RefPtr<ContainerNode> composedParentIgnoringDocumentFragments(const Node& node)
 {
     RefPtr ancestor = node.parentInComposedTree();
     while (is<DocumentFragment>(ancestor.get()))
         ancestor = ancestor->parentInComposedTree();
-    return ancestor.unsafeGet();
+    return ancestor;
 }
 
-ContainerNode* composedParentIgnoringDocumentFragments(const Node* node)
+RefPtr<ContainerNode> composedParentIgnoringDocumentFragments(const Node* node)
 {
     return node ? composedParentIgnoringDocumentFragments(*node) : nullptr;
 }
@@ -497,25 +497,15 @@ std::optional<CursorType> cursorTypeFrom(const StyleProperties& properties)
     return std::nullopt;
 }
 
-RefPtr<Node> lastNode(const Vector<AXID>& group, AXObjectCache& cache)
+RefPtr<Node> lastNode(const FixedVector<AXID>& axIDs, AXObjectCache& cache)
 {
     ASSERT(isMainThread());
 
-    for (auto axID = group.rbegin(); axID != group.rend(); ++axID) {
+    for (auto axID = axIDs.rbegin(); axID != axIDs.rend(); ++axID) {
         if (RefPtr object = cache.objectForID(*axID)) {
             if (RefPtr node = object->node())
                 return node;
         }
-    }
-
-    return nullptr;
-}
-
-RefPtr<AccessibilityObject> lastObject(const Vector<AXID>& group, AXObjectCache& cache)
-{
-    for (auto axID = group.rbegin(); axID != group.rend(); ++axID) {
-        if (RefPtr object = cache.objectForID(*axID))
-            return object;
     }
     return nullptr;
 }

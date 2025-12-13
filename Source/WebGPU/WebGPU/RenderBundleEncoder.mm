@@ -686,14 +686,16 @@ RenderBundleEncoder::FinalizeRenderCommand RenderBundleEncoder::drawIndexed(uint
     id<MTLBuffer> indexBuffer = m_indexBuffer ? m_indexBuffer->buffer() : nil;
     RenderPassEncoder::IndexCall useIndirectCall { RenderPassEncoder::IndexCall::Draw };
     id<MTLBuffer> indirectBuffer = nil;
+    uint64_t indirectBufferOffset = 0;
     RefPtr renderPassEncoder = m_renderPassEncoder.get();
     bool needsValidationLayerWorkaround = false;
     bool passWasSplit = false;
     if (renderPassEncoder) {
         auto [minVertexCount, minInstanceCount] = computeMininumVertexInstanceCount(needsValidationLayerWorkaround);
         auto result = RenderPassEncoder::clampIndexBufferToValidValues(indexCount, instanceCount, baseVertex, firstInstance, m_indexType, indexBufferOffsetInBytes, m_indexBuffer.get(), minVertexCount, minInstanceCount, *renderPassEncoder, m_device.get(), m_descriptor.sampleCount, m_primitiveType);
-        useIndirectCall = result.first;
-        indirectBuffer = result.second;
+        useIndirectCall = result.result;
+        indirectBuffer = result.buffer;
+        indirectBufferOffset = result.offset;
         if (useIndirectCall == RenderPassEncoder::IndexCall::IndirectDraw || useIndirectCall == RenderPassEncoder::IndexCall::CachedIndirectDraw)
             passWasSplit = renderPassEncoder->splitRenderPass();
     }
@@ -709,7 +711,7 @@ RenderBundleEncoder::FinalizeRenderCommand RenderBundleEncoder::drawIndexed(uint
         RefPtr renderPassEncoder = m_renderPassEncoder.get();
         if (renderPassEncoder && (useIndirectCall == RenderPassEncoder::IndexCall::IndirectDraw || useIndirectCall == RenderPassEncoder::IndexCall::CachedIndirectDraw)) {
             if (!m_makeSubmitInvalid)
-                [renderPassEncoder->renderCommandEncoder() drawIndexedPrimitives:m_primitiveType indexType:m_indexType indexBuffer:indexBuffer indexBufferOffset:0 indirectBuffer:indirectBuffer indirectBufferOffset:0];
+                [renderPassEncoder->renderCommandEncoder() drawIndexedPrimitives:m_primitiveType indexType:m_indexType indexBuffer:indexBuffer indexBufferOffset:0 indirectBuffer:indirectBuffer indirectBufferOffset:indirectBufferOffset];
         } else if (useIndirectCall != RenderPassEncoder::IndexCall::Skip) {
             auto checkedAddition = checkedSum<size_t>(indexBufferOffsetInBytes, indexCountTimesSizeInBytes);
             if (!checkedAddition.hasOverflowed() && checkedAddition.value() <= indexBuffer.length && !m_makeSubmitInvalid)

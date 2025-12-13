@@ -242,7 +242,7 @@ InspectorDebuggerAgent::InspectorDebuggerAgent(AgentContext& context)
     : InspectorAgentBase("Debugger"_s)
     , m_frontendDispatcher(makeUniqueRef<DebuggerFrontendDispatcher>(context.frontendRouter))
     , m_backendDispatcher(DebuggerBackendDispatcher::create(context.backendDispatcher, this))
-    , m_debugger(*context.environment.debugger())
+    , m_debugger(*CheckedRef { context.environment }->debugger())
     , m_injectedScriptManager(context.injectedScriptManager)
 {
     // FIXME: make pauseReason optional so that there was no need to init it with "other".
@@ -1780,7 +1780,7 @@ void InspectorDebuggerAgent::didPause(JSC::JSGlobalObject* globalObject, JSC::De
         m_continueToLocationDebuggerBreakpoint = nullptr;
     }
 
-    auto& stopwatch = m_injectedScriptManager.inspectorEnvironment().executionStopwatch();
+    auto& stopwatch = m_injectedScriptManager.checkedInspectorEnvironment()->executionStopwatch();
     if (stopwatch.isActive()) {
         stopwatch.stop();
         m_didPauseStopwatch = true;
@@ -1818,7 +1818,7 @@ void InspectorDebuggerAgent::breakpointActionProbe(JSC::JSGlobalObject* globalOb
         .setProbeId(actionID)
         .setBatchId(batchId)
         .setSampleId(sampleId)
-        .setTimestamp(m_injectedScriptManager.inspectorEnvironment().executionStopwatch().elapsedTime().seconds())
+        .setTimestamp(m_injectedScriptManager.checkedInspectorEnvironment()->executionStopwatch().elapsedTime().seconds())
         .setPayload(payload.releaseNonNull())
         .release();
     m_frontendDispatcher->didSampleProbe(WTFMove(result));
@@ -1828,7 +1828,7 @@ void InspectorDebuggerAgent::didContinue()
 {
     if (m_didPauseStopwatch) {
         m_didPauseStopwatch = false;
-        m_injectedScriptManager.inspectorEnvironment().executionStopwatch().start();
+        m_injectedScriptManager.checkedInspectorEnvironment()->executionStopwatch().start();
     }
 
     m_pausedGlobalObject = nullptr;

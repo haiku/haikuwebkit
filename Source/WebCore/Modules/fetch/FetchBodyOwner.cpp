@@ -406,7 +406,7 @@ ExceptionOr<void> FetchBodyOwner::createReadableStream(JSC::JSGlobalObject& stat
         }, {
             .highwaterMark = 1,
             .startSynchronously = ReadableStream::StartSynchronously::Yes,
-            .isReachableFromOpaqueRootIfPulling = ReadableStream::IsReachableFromOpaqueRootIfPulling::Yes
+            .isSourceReachableFromOpaqueRoot = ReadableStream::IsSourceReachableFromOpaqueRoot::Yes
         });
 
         m_readableStreamSource = readableStreamSource.ptr();

@@ -39,15 +39,22 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ProvisionalFrameProxy);
 
-ProvisionalFrameProxy::ProvisionalFrameProxy(WebFrameProxy& frame, Ref<FrameProcess>&& frameProcess, CommitTiming commitTiming)
+ProvisionalFrameProxy::ProvisionalFrameProxy(WebFrameProxy& frame, Ref<FrameProcess>&& frameProcess)
     : m_frame(frame)
     , m_frameProcess(WTFMove(frameProcess))
     , m_visitedLinkStore(frame.page()->visitedLinkStore())
 {
     Ref process = this->process();
     process->markProcessAsRecentlyUsed();
-    auto parameters = frame.provisionalFrameCreationParameters(std::nullopt, commitTiming);
-    process->send(Messages::WebFrame::CreateProvisionalFrame(parameters), frame.frameID());
+    process->send(Messages::WebFrame::CreateProvisionalFrame(ProvisionalFrameCreationParameters {
+        frame.frameID(),
+        std::nullopt,
+        frame.layerHostingContextIdentifier(),
+        frame.effectiveSandboxFlags(),
+        frame.effectiveReferrerPolicy(),
+        frame.scrollingMode(),
+        frame.remoteFrameSize()
+    }), frame.frameID());
 }
 
 ProvisionalFrameProxy::~ProvisionalFrameProxy()

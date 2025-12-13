@@ -372,10 +372,10 @@ bool PageConfiguration::lockdownModeEnabled() const
     return lockdownModeEnabledBySystem();
 }
 
-bool PageConfiguration::enhancedSecurityEnabled() const
+bool PageConfiguration::isEnhancedSecurityEnabled() const
 {
     if (RefPtr policies = m_data.defaultWebsitePolicies.getIfExists())
-        return policies->enhancedSecurityEnabled();
+        return policies->isEnhancedSecurityEnabled();
     return false;
 }
 

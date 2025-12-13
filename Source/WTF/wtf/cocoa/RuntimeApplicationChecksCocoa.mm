@@ -238,10 +238,8 @@ static SDKAlignedBehaviors computeSDKAlignedBehaviors()
     if (linkedBefore(dyld_2024_SU_F_os_versions, DYLD_IOS_VERSION_18_5, DYLD_MACOSX_VERSION_15_5))
         disableBehavior(SDKAlignedBehavior::NavigationActionSourceFrameNonNull);
 
-    if (linkedBefore(dyld_2025_SU_B_os_versions, DYLD_IOS_VERSION_26_1, DYLD_MACOSX_VERSION_26_1)) {
-        disableBehavior(SDKAlignedBehavior::AllowBackgroundAudioPlayback);
+    if (linkedBefore(dyld_2025_SU_B_os_versions, DYLD_IOS_VERSION_26_1, DYLD_MACOSX_VERSION_26_1))
         disableBehavior(SDKAlignedBehavior::GetBoundingClientRectZoomed);
-    }
 
     disableAdditionalSDKAlignedBehaviors(behaviors);
 
@@ -603,18 +601,6 @@ bool IOSApplication::isMyRideK12()
 {
     static bool isMyRideK12 = applicationBundleIsEqualTo("com.tylertech.myridek12"_s);
     return isMyRideK12;
-}
-
-bool IOSApplication::isFirefox()
-{
-    static bool isFirefox = applicationBundleIsEqualTo("org.mozilla.ios.Firefox"_s);
-    return isFirefox;
-}
-
-bool IOSApplication::isFirefoxFocus()
-{
-    static bool isFirefoxFocus = applicationBundleIsEqualTo("org.mozilla.ios.Focus"_s);
-    return isFirefoxFocus;
 }
 
 bool IOSApplication::isHimalaya()

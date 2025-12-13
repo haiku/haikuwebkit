@@ -131,39 +131,39 @@ Vector<RendererBufferFormat> WebPageProxy::preferredBufferFormats() const
     if (!view)
         return { };
 
-    auto* formats = wpe_view_get_preferred_dma_buf_formats(view);
+    auto* formats = wpe_view_get_preferred_buffer_formats(view);
     if (!formats)
         return { };
 
     Vector<RendererBufferFormat> bufferFormats;
-    WPEDRMDevice* mainDevice = wpe_buffer_dma_buf_formats_get_device(formats);
-    auto groupCount = wpe_buffer_dma_buf_formats_get_n_groups(formats);
+    WPEDRMDevice* mainDevice = wpe_buffer_formats_get_device(formats);
+    auto groupCount = wpe_buffer_formats_get_n_groups(formats);
     for (unsigned i = 0; i < groupCount; ++i) {
         RendererBufferFormat bufferFormat;
-        switch (wpe_buffer_dma_buf_formats_get_group_usage(formats, i)) {
-        case WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING:
+        switch (wpe_buffer_formats_get_group_usage(formats, i)) {
+        case WPE_BUFFER_FORMAT_USAGE_RENDERING:
             bufferFormat.usage = RendererBufferFormat::Usage::Rendering;
             break;
-        case WPE_BUFFER_DMA_BUF_FORMAT_USAGE_MAPPING:
+        case WPE_BUFFER_FORMAT_USAGE_MAPPING:
             bufferFormat.usage = RendererBufferFormat::Usage::Mapping;
             break;
-        case WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT:
+        case WPE_BUFFER_FORMAT_USAGE_SCANOUT:
             bufferFormat.usage = RendererBufferFormat::Usage::Scanout;
             break;
         }
 
-        WPEDRMDevice* targetDevice = wpe_buffer_dma_buf_formats_get_group_device(formats, i);
+        WPEDRMDevice* targetDevice = wpe_buffer_formats_get_group_device(formats, i);
         if (!targetDevice)
             targetDevice = mainDevice;
         if (targetDevice)
             bufferFormat.drmDevice = { CString(wpe_drm_device_get_primary_node(targetDevice)), CString(wpe_drm_device_get_render_node(targetDevice)) };
 
-        auto formatsCount = wpe_buffer_dma_buf_formats_get_group_n_formats(formats, i);
+        auto formatsCount = wpe_buffer_formats_get_group_n_formats(formats, i);
         bufferFormat.formats.reserveInitialCapacity(formatsCount);
         for (unsigned j = 0; j < formatsCount; ++j) {
             RendererBufferFormat::Format format;
-            format.fourcc = wpe_buffer_dma_buf_formats_get_format_fourcc(formats, i, j);
-            auto* modifiers = wpe_buffer_dma_buf_formats_get_format_modifiers(formats, i, j);
+            format.fourcc = wpe_buffer_formats_get_format_fourcc(formats, i, j);
+            auto* modifiers = wpe_buffer_formats_get_format_modifiers(formats, i, j);
             format.modifiers.reserveInitialCapacity(modifiers->len);
             for (unsigned k = 0; k < modifiers->len; ++k) {
                 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // WPE port

@@ -27,6 +27,7 @@
 #include "LayoutBox.h"
 
 #include "LayoutBoxGeometry.h"
+#include "LayoutBoxInlines.h"
 #include "LayoutContainingBlockChainIterator.h"
 #include "LayoutElementBox.h"
 #include "LayoutInitialContainingBlock.h"
@@ -174,7 +175,7 @@ bool Box::establishesGridFormattingContext() const
 
 bool Box::establishesIndependentFormattingContext() const
 {
-    return isLayoutContainmentBox() || isAbsolutelyPositioned() || isFlexItem();
+    return isLayoutContainmentBox() || isAbsolutelyPositioned() || isFlexItem() || isGridItem();
 }
 
 bool Box::isRelativelyPositioned() const

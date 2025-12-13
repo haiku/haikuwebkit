@@ -58,8 +58,8 @@ public:
     void setParent(WebBackForwardListFrameItem* parent) { m_parent = parent; }
     bool sharesAncestor(WebBackForwardListFrameItem&) const;
 
-    WebBackForwardListFrameItem& rootFrame();
-    WebBackForwardListFrameItem& mainFrame();
+    Ref<WebBackForwardListFrameItem> rootFrame();
+    Ref<WebBackForwardListFrameItem> mainFrame();
     Ref<WebBackForwardListFrameItem> protectedMainFrame();
     WebBackForwardListFrameItem* childItemForFrameID(WebCore::FrameIdentifier);
     RefPtr<WebBackForwardListFrameItem> protectedChildItemForFrameID(WebCore::FrameIdentifier);

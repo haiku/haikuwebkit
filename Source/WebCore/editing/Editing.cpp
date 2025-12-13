@@ -198,12 +198,12 @@ Element* editableRootForPosition(const Position& position, EditableType editable
 // Finds the enclosing element until which the tree can be split.
 // When a user hits ENTER, he/she won't expect this element to be split into two.
 // You may pass it as the second argument of splitTreeToNode.
-Element* unsplittableElementForPosition(const Position& position)
+RefPtr<Element> unsplittableElementForPosition(const Position& position)
 {
     // Since enclosingNodeOfType won't search beyond the highest root editable node,
     // this code works even if the closest table cell was outside of the root editable node.
-    if (auto enclosingCell = downcast<Element>(enclosingNodeOfType(position, &isTableCell)))
-        return enclosingCell.unsafeGet();
+    if (RefPtr enclosingCell = downcast<Element>(enclosingNodeOfType(position, &isTableCell)))
+        return enclosingCell;
     return editableRootForPosition(position);
 }
 

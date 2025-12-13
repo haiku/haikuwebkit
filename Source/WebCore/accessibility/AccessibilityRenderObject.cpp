@@ -530,8 +530,10 @@ RenderObject* AccessibilityRenderObject::renderParentObject() const
 
 AccessibilityObject* AccessibilityRenderObject::parentObject() const
 {
-    if (RefPtr ownerParent = ownerParentObject()) [[unlikely]]
-        return ownerParent.unsafeGet();
+    // FIXME: This is a safer cpp false positive. We should not need to ref the variable here
+    // as we merely return it right away (rdar://165602290).
+    SUPPRESS_UNCOUNTED_LOCAL if (auto* ownerParent = ownerParentObject()) [[unlikely]]
+        return ownerParent;
 
 #if USE(ATSPI)
     // FIXME: Consider removing this ATSPI-only branch with https://bugs.webkit.org/show_bug.cgi?id=282117.
@@ -893,18 +895,31 @@ LayoutRect AccessibilityRenderObject::boundingBoxRect() const
         isSVGRoot = true;
 
     if (auto* renderText = dynamicDowncast<RenderText>(*renderer)) {
-        auto stitchState = this->stitchState();
-        if (!stitchState.stitchedIntoID || *stitchState.stitchedIntoID != objectID() || stitchState.group.isEmpty())
+        std::optional stitchGroup  = this->stitchGroup();
+        if (!stitchGroup || stitchGroup->representativeID() != objectID() || stitchGroup->isEmpty())
             quads = renderText->absoluteQuadsClippedToEllipsis();
         else {
             // |this| is a stitching of multiple objects, so we need to combine all of their bounding boxes.
 
             CheckedPtr cache = axObjectCache();
-            RefPtr endNode = !stitchState.group.isEmpty() && cache ? lastNode(stitchState.group, *cache) : nullptr;
-            if (endNode && endNode != node) {
-                if (std::optional range = makeSimpleRange(positionBeforeNode(node.get()), positionAfterNode(endNode.get())))
+            RefPtr endNode = cache ? lastNode(stitchGroup->members(), *cache) : nullptr;
+            if (endNode) {
+                if (std::optional range = makeSimpleRange(positionBeforeNode(node.get()), positionAfterNode(endNode.get()))) {
                     quads = RenderObject::absoluteTextQuads(*range);
+
+                    if (CheckedPtr cache = axObjectCache()) {
+                        for (AXID axID : stitchGroup->members()) {
+                            if (axID == stitchGroup->representativeID())
+                                break;
+                            if (RefPtr object = cache->objectForID(axID)) {
+                                if (CheckedPtr renderListMarker = dynamicDowncast<RenderListMarker>(object->renderer()))
+                                    renderListMarker->absoluteFocusRingQuads(quads);
+                            }
+                        }
+                    }
+                }
             }
+
             if (quads.isEmpty())
                 quads = renderText->absoluteQuadsClippedToEllipsis();
         }
@@ -1412,8 +1427,11 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     // https://github.com/WebKit/WebKit/commit/ddeb923489b58fd890527bf0e432ebe6a477d2ef
     // Results in a lot of useless generics being exposed, which is wasteful. We should remove this.
     WeakPtr blockFlow = dynamicDowncast<RenderBlockFlow>(*m_renderer);
-    if (blockFlow && m_renderer->childrenInline() && !canSetFocusAttribute())
-        return !blockFlow->hasLines() && !clickableSelfOrAncestor();
+    if (blockFlow && m_renderer->childrenInline() && !canSetFocusAttribute() && !blockFlow->hasBlocksInInlineLayout()) {
+        // FIXME: Do we really need to check for SVG content here?
+        auto hasInlineOrSVGContent = blockFlow->hasContentfulInlineLine() || (blockFlow->svgTextLayout() && blockFlow->svgTextLayout()->lineCount());
+        return !hasInlineOrSVGContent && !clickableSelfOrAncestor();
+    }
 
     if (isCanvas()) {
         if (hasElementDescendant()) {

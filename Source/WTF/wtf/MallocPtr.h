@@ -57,7 +57,7 @@ public:
         Malloc::free(m_ptr);
     }
 
-    T* get() const
+    T* get() const LIFETIME_BOUND
     {
         return m_ptr;
     }
@@ -77,13 +77,13 @@ public:
         return !m_ptr;
     }
 
-    T& operator*() const
+    T& operator*() const LIFETIME_BOUND
     {
         ASSERT(m_ptr);
         return *m_ptr;
     }
 
-    T* operator->() const
+    T* operator->() const LIFETIME_BOUND
     {
         return m_ptr;
     }

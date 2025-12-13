@@ -615,8 +615,8 @@ void HTMLVideoElement::didEnterFullscreenOrPictureInPicture(const FloatSize& siz
         setChangingVideoFullscreenMode(false);
 
 #if ENABLE(PICTURE_IN_PICTURE_API)
-        if (m_pictureInPictureObserver)
-            m_pictureInPictureObserver->didEnterPictureInPicture(flooredIntSize(size));
+        if (RefPtr observer = m_pictureInPictureObserver.get())
+            observer->didEnterPictureInPicture(flooredIntSize(size));
 #else
         UNUSED_PARAM(size);
 #endif
@@ -626,8 +626,8 @@ void HTMLVideoElement::didEnterFullscreenOrPictureInPicture(const FloatSize& siz
     if (m_exitingPictureInPicture) {
         m_exitingPictureInPicture = false;
 #if ENABLE(PICTURE_IN_PICTURE_API)
-        if (m_pictureInPictureObserver)
-            m_pictureInPictureObserver->didExitPictureInPicture();
+        if (RefPtr observer = m_pictureInPictureObserver.get())
+            observer->didExitPictureInPicture();
 #endif
     }
 
@@ -644,8 +644,8 @@ void HTMLVideoElement::didExitFullscreenOrPictureInPicture()
         setChangingVideoFullscreenMode(false);
 
 #if ENABLE(PICTURE_IN_PICTURE_API)
-        if (m_pictureInPictureObserver)
-            m_pictureInPictureObserver->didExitPictureInPicture();
+        if (RefPtr observer = m_pictureInPictureObserver.get())
+            observer->didExitPictureInPicture();
 #endif
         return;
     }
@@ -684,8 +684,10 @@ void HTMLVideoElement::setVideoFullscreenFrame(const FloatRect& frame)
         return;
 
 #if ENABLE(PICTURE_IN_PICTURE_API)
-    if (!m_enteringPictureInPicture && !m_exitingPictureInPicture && m_pictureInPictureObserver)
-        m_pictureInPictureObserver->pictureInPictureWindowResized(IntSize(frame.size()));
+    if (!m_enteringPictureInPicture && !m_exitingPictureInPicture) {
+        if (RefPtr observer = m_pictureInPictureObserver.get())
+            observer->pictureInPictureWindowResized(IntSize(frame.size()));
+    }
 #endif
 }
 

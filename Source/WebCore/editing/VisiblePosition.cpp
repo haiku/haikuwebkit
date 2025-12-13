@@ -651,11 +651,11 @@ auto VisiblePosition::localCaretRect() const -> LocalCaretRect
         return { };
 
     auto boxAndOffset = inlineBoxAndOffset();
-    CheckedPtr renderer = boxAndOffset.box ? &boxAndOffset.box->renderer() : node->renderer();
+    CheckedPtr renderer = boxAndOffset.box ? const_cast<RenderObject*>(&boxAndOffset.box->renderer()) : node->renderer();
     if (!renderer)
         return { };
 
-    return { computeLocalCaretRect(*renderer, boxAndOffset), const_cast<RenderObject*>(renderer.unsafeGet()) };
+    return { computeLocalCaretRect(*renderer, boxAndOffset), WTFMove(renderer) };
 }
 
 IntRect VisiblePosition::absoluteCaretBounds(bool* insideFixed) const

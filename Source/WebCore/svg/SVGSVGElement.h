@@ -69,7 +69,7 @@ public: // DOM
     static Ref<SVGTransform> createSVGTransform();
     static Ref<SVGTransform> createSVGTransformFromMatrix(DOMMatrix2DInit&&);
 
-    Element* getElementById(const AtomString&);
+    RefPtr<Element> getElementById(const AtomString&);
 
     void pauseAnimations();
     void unpauseAnimations();

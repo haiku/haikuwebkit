@@ -1032,6 +1032,15 @@ Ref<SecurityOrigin> Page::protectedMainFrameOrigin() const
     return mainFrameOrigin();
 }
 
+RefPtr<Frame> Page::findFrameByPath(const Vector<size_t>& path) const
+{
+    RefPtr current = m_mainFrame.get();
+    for (size_t i = 0; i < path.size() && current; i++)
+        current = current->tree().child(path[i]);
+
+    return current;
+}
+
 bool Page::openedByDOM() const
 {
     return m_openedByDOM;
@@ -4383,6 +4392,13 @@ void Page::setUseColorAppearance(bool useDarkAppearance, bool useElevatedUserInt
 
     appearanceDidChange();
 #endif
+
+    forEachRenderableDocument([useDarkAppearance, useElevatedUserInterfaceLevel] (Document& document) {
+        for (auto& image : document.protectedCachedResourceLoader()->allCachedSVGImages()) {
+            if (RefPtr page = image->internalPage())
+                page->setUseColorAppearance(useDarkAppearance, useElevatedUserInterfaceLevel);
+        }
+    });
 }
 
 bool Page::useDarkAppearance() const
@@ -4491,24 +4507,12 @@ void Page::enableICECandidateFiltering()
 #endif
 }
 
-RefPtr<LocalFrame> Page::localMainFrame()
+LocalFrame* Page::localMainFrame() const
 {
     return dynamicDowncast<LocalFrame>(mainFrame());
 }
 
-RefPtr<const LocalFrame> Page::localMainFrame() const
-{
-    return dynamicDowncast<LocalFrame>(mainFrame());
-}
-
-RefPtr<Document> Page::localTopDocument()
-{
-    if (RefPtr localMainFrame = this->localMainFrame())
-        return localMainFrame->document();
-    return nullptr;
-}
-
-RefPtr<Document> Page::localTopDocument() const
+Document* Page::localTopDocument() const
 {
     if (RefPtr localMainFrame = this->localMainFrame())
         return localMainFrame->document();
@@ -4939,8 +4943,6 @@ OptionSet<FilterRenderingMode> Page::preferredFilterRenderingModes(const Graphic
 #endif
         if (settings().graphicsContextFiltersEnabled())
             modes.add(FilterRenderingMode::GraphicsContext);
-        if (settings().graphicsContextBlurFilterEnabled())
-            modes.add(FilterRenderingMode::GraphicsContextBlur);
 #if !HAVE(FIX_FOR_RADAR_104392017)
     }
 #endif

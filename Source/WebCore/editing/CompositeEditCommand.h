@@ -121,7 +121,7 @@ public:
     bool isFirstCommand(EditCommand* command) { return !m_commands.isEmpty() && m_commands.first() == command; }
     EditCommandComposition* composition() const;
     RefPtr<EditCommandComposition> protectedComposition() const { return composition(); }
-    EditCommandComposition& ensureComposition();
+    Ref<EditCommandComposition> ensureComposition();
 
     virtual bool isTypingCommand() const;
     virtual bool isDictationCommand() const { return false; }

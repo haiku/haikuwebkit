@@ -1085,11 +1085,11 @@ private:
 #if ENABLE(JUMP_ISLANDS)
         for (RegionAllocator& allocator : m_allocators) {
             using FunctionResultType = decltype(function(allocator));
-            if constexpr (std::is_same<IterationStatus, FunctionResultType>::value) {
+            if constexpr (std::same_as<IterationStatus, FunctionResultType>) {
                 if (function(allocator) == IterationStatus::Done)
                     break;
             } else {
-                static_assert(std::is_same<void, FunctionResultType>::value);
+                static_assert(std::same_as<void, FunctionResultType>);
                 function(allocator);
             }
         }

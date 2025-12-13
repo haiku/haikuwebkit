@@ -25,4 +25,6 @@
 
 // Add project-level C++ header files here to be able to access them from within Swift sources.
 
+#import "IPCTesterReceiverSwiftMessages.h"
+#import "IPCTesterReceiverSwiftTypes.h"
 #import "UIProcess/SwiftDemoLogoConfirmation.h"

@@ -699,9 +699,18 @@ constexpr ComparableLettersLiteral usdMIMETypeArray[] = {
     "model/vnd.usdz+zip"_s, // The official type: https://www.iana.org/assignments/media-types/model/vnd.usdz+zip
 };
 
+constexpr ComparableLettersLiteral gltfMIMETypeArray[] = {
+    "model/gltf-binary"_s, // The official glTF binary (.glb) format: https://www.iana.org/assignments/media-types/model/gltf-binary
+};
+
 FixedVector<ASCIILiteral> MIMETypeRegistry::usdMIMETypes()
 {
     return makeFixedVector(usdMIMETypeArray);
+}
+
+FixedVector<ASCIILiteral> MIMETypeRegistry::gltfMIMETypes()
+{
+    return makeFixedVector(gltfMIMETypeArray);
 }
 
 bool MIMETypeRegistry::isUSDMIMEType(const String& mimeType)
@@ -710,9 +719,15 @@ bool MIMETypeRegistry::isUSDMIMEType(const String& mimeType)
     return usdMIMETypeSet.contains(mimeType);
 }
 
+bool MIMETypeRegistry::isGLTFMIMEType(const String& mimeType)
+{
+    static constexpr SortedArraySet gltfMIMETypeSet { gltfMIMETypeArray };
+    return gltfMIMETypeSet.contains(mimeType);
+}
+
 bool MIMETypeRegistry::isSupportedModelMIMEType(const String& mimeType)
 {
-    return MIMETypeRegistry::isUSDMIMEType(mimeType);
+    return MIMETypeRegistry::isUSDMIMEType(mimeType) || MIMETypeRegistry::isGLTFMIMEType(mimeType);
 }
 
 // FIXME: Not great that CURL needs this concept; other platforms do not.
