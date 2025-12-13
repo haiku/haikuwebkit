@@ -43,25 +43,21 @@ void setPlatformUserPreferredLanguagesChangedCallback(void (*)()) { }
 
 static String platformLanguage()
 {
-	static BString locale;
-	static bool initialized = false;
-	if (!initialized) {
-		initialized = true;
+	static const BString locale = ([]() {
 		BLanguage language;
-		if (BLocale::Default()->GetLanguage(&language) == B_OK)
-			locale = language.ID();
-		else
-			locale = "c";
-		locale.ReplaceAll('_', '-');
-	}
+		if (BLocale::Default()->GetLanguage(&language) == B_OK) {
+			BString localeId = language.ID();
+			localeId.ReplaceAll('_', '-');
+			return localeId;
+		}
+		return BString("c");
+	})();
 	return String::fromUTF8(locale.String());
 }
 
 Vector<String> platformUserPreferredLanguages(WTF::ShouldMinimizeLanguages)
 {
-    Vector<String> userPreferredLanguages;
-    userPreferredLanguages.append(platformLanguage());
-    return userPreferredLanguages;
+    return { platformLanguage() };
 }
 
 }
