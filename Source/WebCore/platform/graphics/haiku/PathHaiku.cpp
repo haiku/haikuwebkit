@@ -253,69 +253,6 @@ bool PathHaiku::strokeContains(const FloatPoint& point, const Function<void(Grap
     return gHitTestBitmap.hitTest(&m_platformPath, point.x(), point.y(), applier);
 }
 
-#if 0
-void Path::translate(const FloatSize& size)
-{
-    // BShapeIterator allows us to modify the path data "in place"
-    class TranslateIterator : public BShapeIterator {
-    public:
-        TranslateIterator(const FloatSize& size)
-            : m_size(size)
-        {
-        }
-        virtual status_t IterateMoveTo(BPoint* point)
-        {
-            point->x += m_size.width();
-            point->y += m_size.height();
-            return B_OK;
-        }
-
-        virtual status_t IterateLineTo(int32 lineCount, BPoint* linePts)
-        {
-            while (lineCount--) {
-                linePts->x += m_size.width();
-                linePts->y += m_size.height();
-                linePts++;
-            }
-            return B_OK;
-        }
-
-        virtual status_t IterateBezierTo(int32 bezierCount, BPoint* bezierPts)
-        {
-            while (bezierCount--) {
-                bezierPts[0].x += m_size.width();
-                bezierPts[0].y += m_size.height();
-                bezierPts[1].x += m_size.width();
-                bezierPts[1].y += m_size.height();
-                bezierPts[2].x += m_size.width();
-                bezierPts[2].y += m_size.height();
-                bezierPts += 3;
-            }
-            return B_OK;
-        }
-
-        virtual status_t IterateArcTo(float& rx, float& ry,
-        	float& angle, bool largeArc, bool counterClockWise, BPoint& point)
-        {
-            point.x += m_size.width();
-            point.y += m_size.height();
-
-            return B_OK;
-        }
-
-        virtual status_t IterateClose()
-        {
-            return B_OK;
-        }
-
-    private:
-        const FloatSize& m_size;
-    } translateIterator(size);
-
-    translateIterator.Iterate(m_path);
-}
-#endif
-
 FloatRect PathHaiku::boundingRect() const
 {
     return m_platformPath.Bounds();
@@ -441,6 +378,7 @@ void PathHaiku::add(PathArcTo arcTo)
 void PathHaiku::addPath(const PathHaiku&, const AffineTransform&)
 {
     // FIXME: This should probably be very similar to Path::transform.
+    printf("FIXME addPath  notImplemented()");
     notImplemented();
 }
 
@@ -507,12 +445,6 @@ void PathHaiku::add(PathRoundedRect roundedRect)
     const FloatSize& bottomLeft = roundRect.radii().bottomLeft();
     const FloatSize& bottomRight = roundRect.radii().bottomRight();
 
-#if 0
-    // FIXME needs support for Composite SourceIn.
-    if (hasShadow())
-        shadowBlur().drawRectShadow(this, rect, FloatRoundedRect::Radii(topLeft, topRight, bottomLeft, bottomRight));
-#endif
-
     BPoint points[3];
     const float kRadiusBezierScale = 1.0f - 0.5522847498f; //  1 - (sqrt(2) - 1) * 4 / 3
 
@@ -556,12 +488,6 @@ void PathHaiku::add(PathContinuousRoundedRect roundedRect)
 {
     const FloatRect& rect = roundedRect.rect;
     const FloatSize& corner = { roundedRect.cornerWidth, roundedRect.cornerHeight };
-
-#if 0
-    // FIXME needs support for Composite SourceIn.
-    if (hasShadow())
-        shadowBlur().drawRectShadow(this, rect, FloatRoundedRect::Radii(topLeft, topRight, bottomLeft, bottomRight));
-#endif
 
     BPoint points[3];
     const float kRadiusBezierScale = 1.0f - 0.5522847498f; //  1 - (sqrt(2) - 1) * 4 / 3
@@ -655,13 +581,6 @@ void PathHaiku::add(PathEllipseInRect ellipseInRect)
     m_platformPath.BezierTo(points);
     m_platformPath.Close();
 }
-
-#if 0
-void Path::clear()
-{
-    m_path->Clear();
-}
-#endif
 
 
 void PathHaiku::applySegments(const PathSegmentApplier& applier) const
