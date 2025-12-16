@@ -58,6 +58,7 @@ public:
     void fillRect(const FloatRect&, const Color&) override;
     void fillRect(const WebCore::FloatRect&, WebCore::Gradient&, const WebCore::AffineTransform&, RequiresClipToRect) override;
     void fillRoundedRectImpl(const FloatRoundedRect&, const Color&) override;
+    void fillRectWithRoundedHole(const FloatRect&, const FloatRoundedRect& roundedHoleRect, const Color& color);
     void clearRect(const FloatRect&) override;
     void strokeRect(const FloatRect&, float lineWidth) override;
     void setLineCap(LineCap) override;
@@ -87,12 +88,14 @@ public:
     void endTransparencyLayer() override;
     IntRect clipBounds() const override;
 
-    void save(GraphicsContextState::Purpose) override;
-    void restore(GraphicsContextState::Purpose) override;
+    void save(GraphicsContextState::Purpose = GraphicsContextState::Purpose::SaveRestore) override;
+    void restore(GraphicsContextState::Purpose = GraphicsContextState::Purpose::SaveRestore) override;
 
     void drawBitmap(BBitmap*, const FloatRect& destRect, const FloatRect& srcRect, const ImagePaintingOptions& = { });
     void drawBitmap(BBitmap*, const FloatSize& imageSize, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform& patternTransform, const FloatPoint& phase, const FloatSize& spacing, const ImagePaintingOptions& = { });
     BView* m_view;
+    BView* m_painter;
+    BBitmap* m_fillBitmap;
     pattern m_strokeStyle;
 };
 

@@ -38,8 +38,10 @@
 #include "NotImplemented.h"
 #include "Path.h"
 #include "TransformationMatrix.h"
+#include "ShadowBlur.h"
 
 #include <wtf/text/CString.h>
+#include <wtf/text/TextStream.h>
 #include <Bitmap.h>
 #include <GraphicsDefs.h>
 #include <Picture.h>
@@ -55,8 +57,25 @@
 #	define HGTRACE(x) ;
 #endif
 
-namespace WebCore {
+namespace {
 
+class BlendModeGuard {
+    BView* m_view;
+    source_alpha m_sa;
+    alpha_function m_af;
+public:
+    BlendModeGuard(BView* view): m_view(view) {
+        m_view->GetBlendingMode(&m_sa, &m_af);
+    }
+    
+    ~BlendModeGuard() {
+        m_view->SetBlendingMode(m_sa, m_af);
+    }
+};
+
+}
+
+namespace WebCore {
 
 GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
     : GraphicsContext(IsDeferred::No, {
@@ -70,12 +89,21 @@ GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
     })
     , m_view(view)
     , m_strokeStyle(B_SOLID_HIGH)
+    , m_painter(nullptr)
 {
+    HGTRACE(("============= GraphicsContextHaiku new %p =============\n", view));
     didUpdateState(m_state);
+    
+    m_fillBitmap = new BBitmap(BRect(0, 0, 5, 5), B_RGBA32);
+    memset(m_fillBitmap->Bits(), 0, m_fillBitmap->BitsLength());
+    
+    m_view->SetDrawingMode(B_OP_ALPHA);
+    m_view->SetBlendingMode(B_PIXEL_ALPHA, B_ALPHA_COMPOSITE);
 }
 
 GraphicsContextHaiku::~GraphicsContextHaiku()
 {
+    HGTRACE(("============= GraphicsContextHaiku destroy %p =============\n", m_view));
 }
 
 // Draws a filled rectangle with a stroked border.
@@ -104,12 +132,13 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const FloatRect& destRect,
 {
     HGTRACE(("drawBitmap:  src([%f:%f] [%f:%f])\n", srcRect.x(), srcRect.y(), srcRect.width(), srcRect.height()));
     HGTRACE(("            dest([%f:%f] [%f:%f])\n", destRect.x(), destRect.y(), destRect.width(), destRect.height()));
-    m_view->PushState();
+
+    BlendModeGuard guard(m_view);
     setCompositeOperation(options.compositeOperator());
 
     // Test using example site at
     // http://www.meyerweb.com/eric/css/edge/complexspiral/demo.html
-    m_view->SetDrawingMode(B_OP_ALPHA);
+    //m_view->SetDrawingMode(B_OP_ALPHA);
 
     uint32 flags = 0;
 
@@ -117,9 +146,9 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const FloatRect& destRect,
     if (options.interpolationQuality() > InterpolationQuality::Low)
         flags |= B_FILTER_BITMAP_BILINEAR;
 
-    m_view->DrawBitmapAsync(image, BRect(srcRect), BRect(destRect), flags);
-
-    m_view->PopState();
+    // FIXME: Async doesn't draw shadows (rarely they do appear,
+    // so there is a data race somewhere)
+    m_view->DrawBitmap(image, BRect(srcRect), BRect(destRect), flags);
 }
 
 // This is only used to draw borders.
@@ -194,50 +223,77 @@ void GraphicsContextHaiku::strokePath(const Path& path)
 //      BGradient* gradient = m_state.strokeGradient->platformGradient();
 //      m_view->StrokeShape(shape(), *gradient);
     } else if (strokeColor().isVisible()) {
-        drawing_mode mode = m_view->DrawingMode();
-        if (m_view->HighColor().alpha < 255)
-            m_view->SetDrawingMode(B_OP_ALPHA);
-
         m_view->StrokeShape(path.platformPath(), m_strokeStyle);
-        m_view->SetDrawingMode(mode);
     }
 }
 
 void GraphicsContextHaiku::fillRect(const FloatRect& rect, const Color& color)
 {
     HGTRACE(("fillRect(color): [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
-    rgb_color previousColor = m_view->HighColor();
 
-#if 0
-    // FIXME needs support for Composite SourceIn.
-    if (hasShadow()) {
-        shadowBlur().drawRectShadow(this, rect, RoundedRect::Radii());
+    if (hasDropShadow()) {
+        HGTRACE(("hasDropShadow begin\n"));
+        const auto shadow = dropShadow();
+        ShadowBlur contextShadow(*shadow, shadowsIgnoreTransforms());
+        contextShadow.drawRectShadow(*this, FloatRoundedRect(rect));
+        HGTRACE(("hasDropShadow end\n"));
     }
-#endif
-
-    //setPlatformFillColor(color, ColorSpaceDeviceRGB);
-    m_view->SetHighColor(color);
-    m_view->FillRect(rect);
-
-    m_view->SetHighColor(previousColor);
+    
+    // FillRect doesn't respect blending modes, DrawBitmap does
+    const auto [r, g, b, a] = color.toColorTypeLossy<SRGBA<uint8_t>>().resolved();
+    const uint32_t c = ((a << 24) | (r << 16) | (g << 8) | b);
+    m_fillBitmap->Lock();
+    uint32_t *bits = reinterpret_cast<uint32_t *>(m_fillBitmap->Bits());
+    if(bits[0] != c) {
+        std::fill(bits, bits + m_fillBitmap->BitsLength() / 4, c);
+    }
+    // cannot be async because bitmap might change before the draw is executed
+    m_view->DrawTiledBitmap(m_fillBitmap, BRect(rect));
+    m_fillBitmap->Unlock();
 }
 
-void GraphicsContextHaiku::fillRect(const FloatRect& rect, RequiresClipToRect)
+void GraphicsContextHaiku::fillRect(const FloatRect& rect, RequiresClipToRect requiresClipToRect)
 {
     HGTRACE(("fillRect: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
-    // TODO fill the shadow
-    m_view->FillRect(rect, B_SOLID_LOW);
+    if (RefPtr fillGradient = this->fillGradient()) {
+        fillRect(rect, *fillGradient, fillGradientSpaceTransform(), requiresClipToRect);
+        return;
+    }    
+    
+    if (hasDropShadow()) {
+        HGTRACE(("hasDropShadow begin\n"));
+        const auto shadow = dropShadow();
+        ShadowBlur contextShadow(*shadow, shadowsIgnoreTransforms());
+        contextShadow.drawRectShadow(*this, FloatRoundedRect(rect));
+        HGTRACE(("hasDropShadow end\n"));
+    }
+    // FillRect doesn't respect blending modes, DrawBitmap does
+    const auto [r, g, b, a] = state().fillBrush().color().toColorTypeLossy<SRGBA<uint8_t>>().resolved();
+    const uint32_t c = ((a << 24) | (r << 16) | (g << 8) | b);
+    m_fillBitmap->Lock();
+    uint32_t *bits = reinterpret_cast<uint32_t *>(m_fillBitmap->Bits());
+    if(bits[0] != c) {
+        std::fill(bits, bits + m_fillBitmap->BitsLength() / 4, c);
+    }
+    // cannot be async because bitmap might change before the draw is executed
+    m_view->DrawTiledBitmap(m_fillBitmap, BRect(rect));
+    m_fillBitmap->Unlock();
 }
 
-void GraphicsContextHaiku::fillRect(const WebCore::FloatRect& r, WebCore::Gradient& g, const WebCore::AffineTransform&, RequiresClipToRect)
+void GraphicsContextHaiku::fillRect(const WebCore::FloatRect& r, WebCore::Gradient& g, const WebCore::AffineTransform&, RequiresClipToRect requiresClipToRect)
 {
+    HGTRACE(("fillRect(gradient): [%f:%f] [%f:%f]\n", r.x(), r.y(), r.width(), r.height()));
+    if (requiresClipToRect == RequiresClipToRect::Yes) {
+        m_view->ClipToRect(r);
+    }
+    
     // TODO handle the transform
     m_view->FillRect(r, g.getHaikuGradient());
 }
 
 void GraphicsContextHaiku::fillRoundedRectImpl(const FloatRoundedRect& roundRect, const Color& color)
 {
-    HGTRACE(("fillRoundedRectImpl: (--todo print values)\n"));
+    HGTRACE(("fillRoundedRectImpl: [%f:%f] [%f:%f]\n", roundRect.rect().x(), roundRect.rect().y(), roundRect.rect().width(), roundRect.rect().height()));
     if (!color.isVisible())
         return;
 
@@ -247,11 +303,13 @@ void GraphicsContextHaiku::fillRoundedRectImpl(const FloatRoundedRect& roundRect
     const FloatSize& bottomLeft = roundRect.radii().bottomLeft();
     const FloatSize& bottomRight = roundRect.radii().bottomRight();
 
-#if 0
-    // FIXME needs support for Composite SourceIn.
-    if (hasShadow())
-        shadowBlur().drawRectShadow(this, rect, FloatRoundedRect::Radii(topLeft, topRight, bottomLeft, bottomRight));
-#endif
+    if (hasDropShadow()) {
+        HGTRACE(("hasDropShadow begin\n"));
+        const auto shadow = dropShadow();
+        ShadowBlur contextShadow(*shadow, shadowsIgnoreTransforms());
+        contextShadow.drawRectShadow(*this, roundRect);
+        HGTRACE(("hasDropShadow end\n"));
+    }
 
     BPoint points[3];
     const float kRadiusBezierScale = 1.0f - 0.5522847498f; //  1 - (sqrt(2) - 1) * 4 / 3
@@ -291,16 +349,103 @@ void GraphicsContextHaiku::fillRoundedRectImpl(const FloatRoundedRect& roundRect
     shape.BezierTo(points);
     shape.Close(); // Automatically completes the shape with the top border
 
-    rgb_color oldColor = m_view->HighColor();
-    m_view->SetHighColor(color);
     m_view->MovePenTo(B_ORIGIN);
+    m_view->SetHighColor(color);
     m_view->FillShape(&shape);
+}
 
-    m_view->SetHighColor(oldColor);
+void GraphicsContextHaiku::fillRectWithRoundedHole(const FloatRect& rect, const FloatRoundedRect& roundedHoleRect, const Color& color)
+{
+    HGTRACE(("fillRectWithRoundedHole: [%f:%f] [%f:%f] hole: [%f:%f] [%f:%f]\n",
+        rect.x(), rect.y(), rect.width(), rect.height(),
+        roundedHoleRect.rect().x(), roundedHoleRect.rect().y(), roundedHoleRect.rect().width(), roundedHoleRect.rect().height()));
+    Path path;
+    path.addRect(rect);
+
+    if (!roundedHoleRect.radii().isZero())
+        path.addRoundedRect(roundedHoleRect);
+    else
+        path.addRect(roundedHoleRect.rect());
+
+    WindRule oldFillRule = fillRule();
+    Color oldFillColor = fillColor();
+
+    setFillRule(WindRule::EvenOdd);
+    setFillColor(color);
+
+    if (hasDropShadow()) {
+        HGTRACE(("hasDropShadow begin\n"));
+        const auto shadow = dropShadow();
+        ASSERT(shadow);
+        
+        ShadowBlur contextShadow(*shadow, shadowsIgnoreTransforms());
+        contextShadow.drawInsetShadow(*this, rect, roundedHoleRect);
+        HGTRACE(("hasDropShadow end\n"));
+    }
+
+    fillPath(path);
+
+    setFillRule(oldFillRule);
+    setFillColor(oldFillColor);
 }
 
 void GraphicsContextHaiku::fillPath(const Path& path)
 {
+#if 0
+    TextStream ts;
+    ts << "fillPath " << path;
+    HGTRACE(("%s\n", ts.release().ascii().data()));
+    FloatRect rect = path.fastBoundingRect();
+    FloatSize layerSize = getCTM().mapSize(rect.size());
+    FloatRect mappedRect = getCTM().mapRect(rect);
+    HGTRACE(("fillPath: fastBoundingRect = [%f:%f] [%f:%f], mappedRect = [%f %f]\n",
+        rect.x(), rect.y(), rect.width(), rect.height(), mappedRect.x(), mappedRect.y()));
+    BRect pathBounds = BRect(0, 0, rect.width() + 1, rect.height() + 1);
+    BBitmap *pathBitmap = new BBitmap(pathBounds, B_RGBA32, true, false);
+    if(m_painter == nullptr) {
+        m_painter = new BView(pathBounds, "painter", B_FOLLOW_ALL, B_WILL_DRAW);
+    }
+    if(!m_painter->Bounds().Contains(pathBounds)) {
+        m_painter->ResizeTo(pathBounds.Size());
+    }
+    pathBitmap->AddChild(m_painter);
+    pathBitmap->Lock();
+    m_painter->PushState();
+    m_painter->SetFillRule(fillRule() == WindRule::NonZero ? B_NONZERO : B_EVEN_ODD);
+    m_painter->MovePenTo(B_ORIGIN);
+    //m_painter->TranslateBy(-rect.x(), -rect.y());
+    m_painter->SetDrawingMode(B_OP_ALPHA);
+    m_painter->SetBlendingMode(B_PIXEL_ALPHA, B_ALPHA_COMPOSITE);
+    
+    // TODO: renderShadow
+
+    if (m_state.fillBrush().pattern()) {
+        HGTRACE(("fillPath(pattern)\n"));
+        notImplemented();
+    } else if (m_state.fillBrush().gradient()) {
+        HGTRACE(("fillPath(gradient)\n"));
+        const BGradient& gradient = m_state.fillBrush().gradient()->getHaikuGradient();
+        m_painter->FillShape(path.platformPath(), gradient);
+    } else {
+        HGTRACE(("fillPath(else)\n"));
+        m_painter->SetHighColor(m_state.fillBrush().color());
+        m_painter->FillShape(path.platformPath(), B_SOLID_HIGH);
+    }
+    m_painter->PopState();
+    pathBitmap->RemoveChild(m_painter);
+    
+    BlendModeGuard guard(m_view);
+    m_view->SetDrawingMode(B_OP_ALPHA);
+    m_view->SetBlendingMode(B_PIXEL_ALPHA, B_ALPHA_COMPOSITE);
+    getCTM();
+    m_view->PushState();
+    // FIXME: rect has negative coordinates so it writes all over memory
+    m_view->ClipToRect(m_view->Frame());
+    //m_view->DrawBitmap(pathBitmap, B_ORIGIN);
+    m_view->PopState();
+    pathBitmap->Unlock();
+    delete pathBitmap;
+#endif
     HGTRACE(("fillPath: (--todo print values)\n"));
     m_view->SetFillRule(fillRule() == WindRule::NonZero ? B_NONZERO : B_EVEN_ODD);
     m_view->MovePenTo(B_ORIGIN);
@@ -341,14 +486,30 @@ void GraphicsContextHaiku::clipPath(const Path& path, WindRule windRule)
     m_view->SetFillRule(fillRule);
 }
 
-void GraphicsContextHaiku::clipToImageBuffer(WebCore::ImageBuffer&, WebCore::FloatRect const&)
+void GraphicsContextHaiku::clipToImageBuffer(WebCore::ImageBuffer& imageBuffer, WebCore::FloatRect const& destRect)
 {
-    notImplemented();
+    HGTRACE(("clipToImageBuffer [%f:%f] [%f:%f]\n", destRect.x(), destRect.y(), destRect.width(), destRect.height()));
+    auto nativeImage = imageBuffer.createNativeImageReference();
+    if(!nativeImage)
+        return;
+    
+    BPicture picture;
+    m_view->BeginPicture(&picture);
+    BBitmap* bmp = nativeImage->platformImage().get();
+    
+	m_view->SetDrawingMode(B_OP_ALPHA);
+	m_view->SetBlendingMode(B_PIXEL_ALPHA, B_ALPHA_COMPOSITE);
+    m_view->SetHighColor(0,0,0,0);
+    m_view->FillRect(destRect);
+    m_view->DrawBitmap(bmp, destRect);
+    m_view->EndPicture();
+    m_view->ClipToPicture(&picture);
 }
 
 void GraphicsContextHaiku::resetClip()
 {
-    notImplemented();
+    HGTRACE(("resetClip\n"));
+    m_view->ClipToRect(m_view->Bounds());
 }
 
 
@@ -368,28 +529,7 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const WebCore::FloatSize& 
     if (!image->IsValid()) // If the image hasn't fully loaded.
         return;
 
-    // Figure out if the image has any alpha transparency, we can use faster drawing if not
-    bool hasAlpha = false;
-
-    uint8* bits = reinterpret_cast<uint8*>(image->Bits());
-    uint32 width = image->Bounds().IntegerWidth() + 1;
-    uint32 height = image->Bounds().IntegerHeight() + 1;
-
-    uint32 bytesPerRow = image->BytesPerRow();
-    for (uint32 y = 0; y < height && !hasAlpha; y++) {
-        uint8* p = bits;
-        for (uint32 x = 0; x < width && !hasAlpha; x++) {
-            hasAlpha = p[3] < 255;
-            p += 4;
-        }
-        bits += bytesPerRow;
-    }
-
     m_view->PushState();
-    if (hasAlpha)
-        m_view->SetDrawingMode(B_OP_ALPHA);
-    else
-        m_view->SetDrawingMode(B_OP_COPY);
 
     clip(enclosingIntRect(destRect));
     float phaseOffsetX = destRect.x() - phase.x();
@@ -428,11 +568,9 @@ void GraphicsContextHaiku::drawFocusRing(const Path& path, float width, const Co
     // look good.
     width = 1;
 
-    m_view->PushState();
     m_view->SetHighColor(color);
     m_view->SetPenSize(width);
     m_view->StrokeShape(path.platformPath(), B_SOLID_HIGH);
-    m_view->PopState();
 }
 
 void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float /*offset*/, float width, const Color& color)
@@ -445,8 +583,6 @@ void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float /
     if (rectCount <= 0)
         return;
 
-    m_view->PushState();
-
     // GTK forces this to 2, we use 1. A focus ring several pixels thick doesn't
     // look good.
     // FIXME this still draws a focus ring that looks not so good on "details"
@@ -458,8 +594,6 @@ void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float /
     // FIXME: maybe we should implement this with BShape?
     for (unsigned i = 0; i < rectCount; ++i)
         m_view->StrokeRect(rects[i], B_SOLID_HIGH);
-
-    m_view->PopState();
 }
 
 void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
@@ -503,11 +637,10 @@ void GraphicsContextHaiku::drawDotsForDocumentMarker(WebCore::FloatRect const&,
 void GraphicsContextHaiku::clearRect(const FloatRect& rect)
 {
     HGTRACE(("clearRect: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
-    m_view->PushState();
     m_view->SetHighColor(0, 0, 0, 0);
     m_view->SetDrawingMode(B_OP_COPY);
     m_view->FillRect(rect);
-    m_view->PopState();
+    m_view->SetDrawingMode(B_OP_ALPHA);
 }
 
 void GraphicsContextHaiku::setLineCap(LineCap lineCap)
@@ -563,8 +696,8 @@ void GraphicsContextHaiku::setMiterLimit(float limit)
 
 AffineTransform GraphicsContextHaiku::getCTM(IncludeDeviceScale) const
 {
-    HGTRACE(("getCTM: no values used\n"));
     BAffineTransform t = m_view->Transform();
+    HGTRACE(("getCTM: out[%f %f %f %f %f %f]\n", t.sx, t.shy, t.shx, t.sy, t.tx, t.ty));
     	// TODO: we actually need to use the combined transform here?
     AffineTransform matrix(t.sx, t.shy, t.shx, t.sy, t.tx, t.ty);
     return matrix;
@@ -610,22 +743,34 @@ void GraphicsContextHaiku::setCTM(const AffineTransform& transform)
 
 void GraphicsContextHaiku::didUpdateState(GraphicsContextState& state)
 {
-    HGTRACE(("didUpdateState: (--todo print values)\n"));
+    if(state.changes().isEmpty()) {
+        state.didApplyChanges();
+        return;
+    }
+        
+    TextStream ts;
+    ts << "didUpdateState ";
+    state.dump(ts);
+    HGTRACE(("%s\n", ts.release().ascii().data()));
 #if 0
-        StrokeGradientChange                    = 1 << 0,
-        StrokePatternChange                     = 1 << 1,
-        FillGradientChange // Handled directly in drawing operations
-        FillPatternChange                       = 1 << 3,
+        FillBrush                   = 1 << 0,
+        FillRule                    = 1 << 1,
+
+        StrokeBrush                 = 1 << 2,
+        StrokeThickness             = 1 << 3,
+        StrokeStyle                 = 1 << 4,
+        
+        Alpha                       = 1 << 8,
 #endif
-    if (state.changes().contains(GraphicsContextState::Change::StrokeThickness))
+    if (state.changes().contains(GraphicsContextState::Change::StrokeThickness)) {
         m_view->SetPenSize(state.strokeThickness());
-    if (state.changes().contains(GraphicsContextState::Change::StrokeBrush)
-        || state.changes().contains(GraphicsContextState::Change::Alpha)) {
+    }
+    if (state.changes().contains(GraphicsContextState::Change::StrokeBrush)) {
         rgb_color color = state.strokeBrush().color();
         // FIXME the alpha is only applied to plain colors, not bitmaps, gradients,
         // or anything else. Support should be moved to app_server using the trick
         // mentionned here: http://permalink.gmane.org/gmane.comp.graphics.agg/2241
-        color.alpha *= state.alpha();
+        //color.alpha *= state.alpha();
         m_view->SetHighColor(color);
     }
     if (state.changes().contains(GraphicsContextState::Change::StrokeStyle)) {
@@ -653,23 +798,36 @@ void GraphicsContextHaiku::didUpdateState(GraphicsContextState& state)
                 break;
         }
     }
-    if (state.changes().contains(GraphicsContextState::Change::FillBrush)
-        || state.changes().contains(GraphicsContextState::Change::Alpha)) {
+    if (state.changes().contains(GraphicsContextState::Change::FillBrush)) {
         rgb_color color = state.fillBrush().color();
         // FIXME the alpha is only applied to plain colors, not bitmaps, gradients,
         // or anything else. Support should be moved to app_server using the trick
         // mentionned here: http://permalink.gmane.org/gmane.comp.graphics.agg/2241
-        color.alpha *= state.alpha();
+        //color.alpha *= state.alpha();
 
         m_view->SetLowColor(color);
     }
     if (state.changes().contains(GraphicsContextState::Change::FillRule))
         m_view->SetFillRule(fillRule() == WindRule::NonZero ? B_NONZERO : B_EVEN_ODD);
 #if 0
-        ShadowChange                            = 1 << 9,
-        ShadowsIgnoreTransformsChange           = 1 << 10,
-        AlphaChange                             = 1 << 11,
+        CompositeMode               = 1 << 5,
+        DropShadow                  = 1 << 6,
+        Style                       = 1 << 7,
 #endif
+    if (state.changes().contains(GraphicsContextState::Change::Alpha)) {
+        rgb_color stroke = m_view->HighColor();
+        rgb_color fill = m_view->LowColor();
+        stroke.alpha = static_cast<uint8_t>(255 * state.alpha());
+        fill.alpha = static_cast<uint8_t>(255 * state.alpha());
+        m_view->SetHighColor(stroke);
+        m_view->SetLowColor(fill);
+    }
+    if (state.changes().contains(GraphicsContextState::Change::DropShadow)) {
+        /*drawing_mode mode = B_OP_ALPHA;
+        alpha_function blending_mode = B_ALPHA_COMPOSITE_SOURCE_IN;
+        m_view->SetDrawingMode(mode);
+        m_view->SetBlendingMode(B_PIXEL_ALPHA, blending_mode);*/
+    }
     if (state.changes().contains(GraphicsContextState::Change::CompositeMode)) {
         drawing_mode mode = B_OP_ALPHA;
         alpha_function blending_mode = B_ALPHA_COMPOSITE;
@@ -714,26 +872,24 @@ void GraphicsContextHaiku::didUpdateState(GraphicsContextState& state)
                 blending_mode = B_ALPHA_COMPOSITE_XOR;
                 break;
             case CompositeOperator::Copy:
-                mode = B_OP_COPY;
+                blending_mode = B_ALPHA_COMPOSITE;
                 break;
             default:
                 fprintf(stderr, "GraphicsContext::setCompositeOperation: Unsupported composite operation %s\n",
                         compositeOperatorName(compositeMode().operation, compositeMode().blendMode).utf8().data());
         }
         m_view->SetDrawingMode(mode);
-
-        if (mode == B_OP_ALPHA)
-            m_view->SetBlendingMode(B_PIXEL_ALPHA, blending_mode);
+        m_view->SetBlendingMode(B_PIXEL_ALPHA, blending_mode);
     }
 #if 0
-        BlendModeChange                         = 1 << 13,
-        TextDrawingModeChange                   = 1 << 14,
-        ShouldAntialiasChange                   = 1 << 15,
-        ShouldSmoothFontsChange                 = 1 << 16,
-        ShouldSubpixelQuantizeFontsChange       = 1 << 17,
-        DrawLuminanceMaskChange                 = 1 << 18,
-        ImageInterpolationQualityChange // Handled in drawNativeImage
-        UseDarkAppearanceChange                 = 1 << 20,
+        TextDrawingMode             = 1 << 9,
+        ImageInterpolationQuality   = 1 << 10,
+        
+        ShouldAntialias             = 1 << 11,
+        ShouldSmoothFonts           = 1 << 12,
+        ShouldSubpixelQuantizeFonts = 1 << 13,
+        ShadowsIgnoreTransforms     = 1 << 14,
+        DrawLuminanceMask           = 1 << 15,
 #endif
 
     state.didApplyChanges();
@@ -761,6 +917,7 @@ void GraphicsContextHaiku::beginTransparencyLayer(float opacity)
 {
     HGTRACE(("beginTransparencyLayer: %f\n", opacity));
     GraphicsContext::beginTransparencyLayer(opacity);
+    save(GraphicsContextState::Purpose::TransparencyLayer);
     m_view->BeginLayer(static_cast<uint8>(opacity * 255.0));
 }
 
@@ -769,6 +926,7 @@ void GraphicsContextHaiku::endTransparencyLayer()
     HGTRACE(("endTransparencyLayer: no values\n"));
     GraphicsContext::endTransparencyLayer();
     m_view->EndLayer();
+    restore(GraphicsContextState::Purpose::TransparencyLayer);
 }
 
 IntRect GraphicsContextHaiku::clipBounds() const
