@@ -30,20 +30,8 @@ namespace WebCore {
 
 void CurlSSLHandle::platformInitialize()
 {
-#if 0
-    auto certificateData = CertificateData::create();
-    CertificateStore::getTrustedRootCA(*certificateData);
-
-    CertificateInfo::Certificate caCertData;
-    caCertData.append(certificateData->data(), certificateData->size());
-    if (certificateData->size())
-        setCACertData(WTFMove(caCertData));
-
-    setCipherList(String::fromUTF8(CertificateStore::cipherSuites()));
-    setCurvesList(String::fromUTF8(CertificateStore::supportedGroups()));
-
-    setIgnoreSSLErrors(CertificateStore::shouldIgnoreTLSErrors());
-#endif
+    //m_caCertInfo = String("/system/data/ssl/CARootCertificates.pem"_s);
+    setIgnoreSSLErrors(true);
 }
 
 } // namespace WebCore
