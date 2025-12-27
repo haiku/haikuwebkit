@@ -160,7 +160,7 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const BMessage* message
         modifiers.add(WebEventModifier::CapsLockKey);
 
     return WebKeyboardEvent(
-        { type, modifiers, WallTime::now() }, //WebEvent
+        WebEvent{ type, modifiers, MonotonicTime::now() }, //WebEvent
         String::fromUTF8(bytes), // text
         String::fromUTF8(bytes), // unmodifiedText
         PlatformKeyboardEvent::KeyValueForKeyEvent(bytes, nativeVirtualKeyCode), // key
@@ -191,7 +191,7 @@ WebWheelEvent WebEventFactory::createWebWheelEvent(const BMessage* message)
     wheelDeltaY *= lineHeight; // what is this? natural scrolling? :(
 
     return WebWheelEvent(
-        { WebEventType::Wheel, modifiers, WallTime::now()},
+        WebEvent{ WebEventType::Wheel, modifiers, MonotonicTime::now()},
         IntPoint(0, 0), // position
         IntPoint(0, 0), // globalPosition
         FloatSize(wheelDeltaX, wheelDeltaY), //delta
