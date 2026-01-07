@@ -133,6 +133,7 @@
 
 #include <wtf/text/AtomString.h>
 #include <wtf/Assertions.h>
+#include <wtf/Language.h>
 #include <wtf/Threading.h>
 
 #if USE(GCRYPT)
@@ -219,6 +220,8 @@ void WebKitInitializeLogChannelsIfNecessary();
     PAL::UTF8Encoding();
 
     WebVisitedLinkStore::setShouldTrackVisitedLinks(true);
+
+    WTF::listenForLanguageChangeNotifications();
 
     RunLoop::run(); // This attaches it to the existing be_app looper
 }
