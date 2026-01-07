@@ -33,6 +33,7 @@
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/NotImplemented.h>
 #include <wtf/CallbackAggregator.h>
+#include <wtf/Language.h>
 
 namespace WebKit {
 
@@ -40,6 +41,9 @@ using namespace WebCore;
 
 void NetworkProcess::platformInitializeNetworkProcess(const NetworkProcessCreationParameters&)
 {
+#if PLATFORM(HAIKU)
+    WTF::listenForLanguageChangeNotifications();
+#endif
 }
 
 void NetworkProcess::allowSpecificHTTPSCertificateForHost(PAL::SessionID, const CertificateInfo& certificateInfo, const String& host)

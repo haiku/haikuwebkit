@@ -28,36 +28,51 @@
 #include <wtf/text/WTFString.h>
 #include "Language.h"
 
-/* Can't include these the normal way, because WTF header names collide. */
-#include <locale/Collator.h>
-#include <support/Locker.h>
-
-#include <Locale.h>
+#include <Application.h>
 #include <LocaleRoster.h>
-#include <stdio.h>
+#include <Message.h>
+#include <MessageFilter.h>
 
 
 namespace WTF {
 
-void setPlatformUserPreferredLanguagesChangedCallback(void (*)()) { }
-
-static String platformLanguage()
+static filter_result languagePreferencesDidChange(BMessage*, BHandler**, BMessageFilter*)
 {
-	static const BString locale = ([]() {
-		BLanguage language;
-		if (BLocale::Default()->GetLanguage(&language) == B_OK) {
-			BString localeId = language.ID();
-			localeId.ReplaceAll('_', '-');
-			return localeId;
+	languageDidChange();
+	return B_DISPATCH_MESSAGE;
+}
+
+void listenForLanguageChangeNotifications()
+{
+	static std::once_flag addedListener;
+	std::call_once(addedListener, [&] {
+		if (be_app->Lock()) {
+			BMessageFilter* localeListener = new BMessageFilter(B_LOCALE_CHANGED, languagePreferencesDidChange);
+			be_app->AddCommonFilter(localeListener);
+			be_app->Unlock();
 		}
-		return BString("c");
-	})();
-	return String::fromUTF8(locale.String());
+	});
 }
 
 Vector<String> platformUserPreferredLanguages(WTF::ShouldMinimizeLanguages)
 {
-    return { platformLanguage() };
+	BMessage languages;
+	int32 count = 0;
+
+	BLocaleRoster::Default()->Refresh();
+	if (BLocaleRoster::Default()->GetPreferredLanguages(&languages) != B_OK
+			|| languages.GetInfo("language", NULL, &count) != B_OK
+			|| count == 0)
+		return { "en"_s };
+
+	Vector<String> preferredLanguages(count, [&](size_t i) {
+		BString language;
+		languages.FindString("language", i, &language);
+		language.ReplaceAll('_', '-');
+		return String::fromUTF8(language.String());
+	});
+
+	return preferredLanguages;
 }
 
 }

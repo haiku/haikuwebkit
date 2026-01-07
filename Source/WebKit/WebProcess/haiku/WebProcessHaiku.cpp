@@ -31,6 +31,7 @@
 #include <WebCore/LogInitialization.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/PlatformDisplayHaiku.h>
+#include <wtf/Language.h>
 #include <wtf/LogInitialization.h>
 
 namespace WebKit {
@@ -43,6 +44,8 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
         PlatformDisplay::setSharedDisplay(WTFMove(display));
     }
     applyProcessCreationParameters(std::move(parameters.auxiliaryProcessParameters));
+
+    WTF::listenForLanguageChangeNotifications();
 }
 
 void WebProcess::platformInitializeProcess(const AuxiliaryProcessInitializationParameters&)
